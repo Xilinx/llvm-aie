@@ -212,7 +212,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fill_pop(v64bfp16ebs8_unali
 // CHECK-NEXT:    store ptr addrspace(5) [[TMP8]], ptr [[P]], align 4
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_09]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[NUM]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP10:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP9:![0-9]+]]
 //
 void test_intrinsic_annotated_pointer_reference_loop(
     v64bfp16ebs8_unaligned __aie_dm_resource_a *&p, v64bfp16ebs8 v, int num) {
@@ -252,7 +252,7 @@ void test_intrinsic_annotated_pointer_reference_loop(
 // CHECK-NEXT:    store ptr [[TMP8]], ptr [[P]], align 4
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_09]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[NUM]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
 //
 void test_intrinsic_default_pointer_reference_loop(
     v64bfp16ebs8_unaligned *&p, v64bfp16ebs8 v, int num) {
@@ -270,10 +270,9 @@ void test_intrinsic_default_pointer_reference_loop(
 // CHECK: [[TBAA5]] = !{[[META6:![0-9]+]], [[META6]], i64 0}
 // CHECK: [[META6]] = !{!"int", [[META3]], i64 0}
 // CHECK: [[TBAA7]] = !{[[META8:![0-9]+]], [[META8]], i64 0}
-// CHECK: [[META8]] = !{!"p1 void", [[META9:![0-9]+]], i64 0}
-// CHECK: [[META9]] = !{!"any pointer", [[META3]], i64 0}
-// CHECK: [[LOOP10]] = distinct !{[[LOOP10]], [[META11:![0-9]+]], [[META12:![0-9]+]]}
-// CHECK: [[META11]] = !{!"llvm.loop.mustprogress"}
-// CHECK: [[META12]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META11]], [[META12]]}
+// CHECK: [[META8]] = !{!"any pointer", [[META3]], i64 0}
+// CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META10:![0-9]+]], [[META11:![0-9]+]]}
+// CHECK: [[META10]] = !{!"llvm.loop.mustprogress"}
+// CHECK: [[META11]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META10]], [[META11]]}
 //.

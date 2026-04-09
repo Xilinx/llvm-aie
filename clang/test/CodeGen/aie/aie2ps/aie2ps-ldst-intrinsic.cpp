@@ -72,7 +72,7 @@ v128uint4 test_pack_conf(v128uint8 v, int sign, crsat_t sat) {
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2:![0-9]+]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7:![0-9]+]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10:![0-9]+]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9:![0-9]+]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 1
@@ -91,8 +91,8 @@ void test_fifo_ld_reset(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11:![0-9]+]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10:![0-9]+]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
@@ -109,20 +109,20 @@ void test_fifo_ld_fill(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-LABEL: define dso_local void @_Z16test_fifo_ld_popRrPU3AS59v64float8R12fifo_state_t(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META12:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META11:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META12]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META12]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META12]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]]), !noalias [[META12]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META11]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META11]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]]), !noalias [[META11]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 2
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 3
-// AIE2PS-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128, !noalias [[META12]]
-// AIE2PS-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64, !noalias [[META12]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP5]], ptr [[P]], align 4, !noalias [[META12]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META12]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128, !noalias [[META11]]
+// AIE2PS-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64, !noalias [[META11]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP5]], ptr [[P]], align 4, !noalias [[META11]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META11]]
 // AIE2PS-NEXT:    ret void
 //
 v64float8 test_fifo_ld_pop(v64float8 __aie_dm_resource_a *restrict &p,
@@ -132,21 +132,21 @@ v64float8 test_fifo_ld_pop(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-LABEL: define dso_local void @_Z24test_fifo_ld_pop_1d_byteRrPU3AS59v64float8R12fifo_state_ti(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META15:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META14:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META15]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META15]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META15]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META14]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META14]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META14]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
-// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.1d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]]), !noalias [[META15]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.1d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]]), !noalias [[META14]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 2
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 3
-// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META15]]
-// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META15]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP6]], ptr [[P]], align 4, !noalias [[META15]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META15]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META14]]
+// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META14]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP6]], ptr [[P]], align 4, !noalias [[META14]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META14]]
 // AIE2PS-NEXT:    ret void
 //
 v64float8 test_fifo_ld_pop_1d_byte(v64float8 __aie_dm_resource_a *restrict &p,
@@ -156,28 +156,28 @@ v64float8 test_fifo_ld_pop_1d_byte(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-LABEL: define dso_local void @_Z24test_fifo_ld_pop_2d_byteRrPU3AS59v64float8R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META18:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META17:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META18]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META18]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META18]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META17]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META17]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META17]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]], !noalias [[META18]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]], !noalias [[META17]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
-// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.ld.pop.2d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]]), !noalias [[META18]]
+// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.ld.pop.2d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]]), !noalias [[META17]]
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 0
 // AIE2PS-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 1
 // AIE2PS-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 2
 // AIE2PS-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 3
 // AIE2PS-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 4
 // AIE2PS-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
-// AIE2PS-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4, !noalias [[META18]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128, !noalias [[META18]]
-// AIE2PS-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64, !noalias [[META18]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP10]], ptr [[P]], align 4, !noalias [[META18]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP9]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META18]]
+// AIE2PS-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4, !noalias [[META17]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128, !noalias [[META17]]
+// AIE2PS-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64, !noalias [[META17]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP10]], ptr [[P]], align 4, !noalias [[META17]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP9]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META17]]
 // AIE2PS-NEXT:    ret void
 //
 v64float8 test_fifo_ld_pop_2d_byte(v64float8 __aie_dm_resource_a *restrict &p,
@@ -188,21 +188,21 @@ v64float8 test_fifo_ld_pop_2d_byte(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-LABEL: define dso_local void @_Z24test_fifo_ld_pop_3d_byteRrPU3AS59v64float8R12fifo_state_tiiRiiiS6_i(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META21:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META20:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META21]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META21]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META21]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META20]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META20]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META20]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]], !noalias [[META21]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]], !noalias [[META20]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]], !noalias [[META21]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]], !noalias [[META20]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
-// AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]]), !noalias [[META21]]
+// AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]]), !noalias [[META20]]
 // AIE2PS-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 0
 // AIE2PS-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 1
 // AIE2PS-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 2
@@ -211,12 +211,12 @@ v64float8 test_fifo_ld_pop_2d_byte(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
 // AIE2PS-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 5
 // AIE2PS-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
-// AIE2PS-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4, !noalias [[META21]]
-// AIE2PS-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4, !noalias [[META21]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128, !noalias [[META21]]
-// AIE2PS-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64, !noalias [[META21]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP14]], ptr [[P]], align 4, !noalias [[META21]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP13]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META21]]
+// AIE2PS-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4, !noalias [[META20]]
+// AIE2PS-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4, !noalias [[META20]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128, !noalias [[META20]]
+// AIE2PS-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64, !noalias [[META20]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP14]], ptr [[P]], align 4, !noalias [[META20]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP13]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META20]]
 // AIE2PS-NEXT:    ret void
 //
 v64float8 test_fifo_ld_pop_3d_byte(v64float8 __aie_dm_resource_a *restrict &p,
@@ -229,26 +229,26 @@ v64float8 test_fifo_ld_pop_3d_byte(v64float8 __aie_dm_resource_a *restrict &p,
 // AIE2PS-LABEL: define dso_local void @_Z17test_fifo_ld_popxRrP9v64float8R12fifo_state_tii(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[STEP:%.*]], i32 noundef [[MASK:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META24:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META23:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP]], 6
 // AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK]]
 // AIE2PS-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META24]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META24]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META24]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]], !noalias [[META24]]
-// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]]), !noalias [[META24]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META23]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META23]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META23]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]], !noalias [[META23]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]]), !noalias [[META23]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 2
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 3
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 4
-// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I]], align 64, !noalias [[META24]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META24]]
-// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META24]]
-// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META24]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META24]]
+// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I]], align 64, !noalias [[META23]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META23]]
+// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META23]]
+// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META23]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META23]]
 // AIE2PS-NEXT:    ret void
 //
 v64float8 test_fifo_ld_popx(v64float8 *restrict &p, fifo_state_t &s, int step,
@@ -258,25 +258,25 @@ v64float8 test_fifo_ld_popx(v64float8 *restrict &p, fifo_state_t &s, int step,
 // AIE2PS-LABEL: define dso_local void @_Z17test_fifo_ld_popxRrP9v64float8R12fifo_state_t(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META27:![0-9]+]])
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META30:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META26:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META29:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META33:![0-9]+]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META33]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA11]], !noalias [[META33]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA10]], !noalias [[META33]]
-// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015), !noalias [[META33]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META32:![0-9]+]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META32]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]], !noalias [[META32]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA9]], !noalias [[META32]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015), !noalias [[META32]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 2
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 3
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 4
-// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I_I]], align 64, !noalias [[META33]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META33]]
-// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I_I]], align 64, !noalias [[META33]]
-// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META33]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META33]]
+// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I_I]], align 64, !noalias [[META32]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META32]]
+// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I_I]], align 64, !noalias [[META32]]
+// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META32]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META32]]
 // AIE2PS-NEXT:    ret void
 //
 v64float8 test_fifo_ld_popx(v64float8 *restrict &p, fifo_state_t &s) {
@@ -288,7 +288,7 @@ v64float8 test_fifo_ld_popx(v64float8 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 1
@@ -306,8 +306,8 @@ void test_fifo_ld_reset(v64bfloat8 __aie_dm_resource_a *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
@@ -323,20 +323,20 @@ void test_fifo_ld_fill(v64bfloat8 __aie_dm_resource_a *&p, fifo_state_t &s) {
 // AIE2PS-LABEL: define dso_local void @_Z16test_fifo_ld_popRPU3AS510v64bfloat8R12fifo_state_t(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META34:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META33:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META34]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META34]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META34]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]]), !noalias [[META34]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META33]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META33]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META33]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]]), !noalias [[META33]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 2
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 3
-// AIE2PS-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128, !noalias [[META34]]
-// AIE2PS-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64, !noalias [[META34]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP5]], ptr [[P]], align 4, !noalias [[META34]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META34]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128, !noalias [[META33]]
+// AIE2PS-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64, !noalias [[META33]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP5]], ptr [[P]], align 4, !noalias [[META33]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META33]]
 // AIE2PS-NEXT:    ret void
 //
 v64bfloat8 test_fifo_ld_pop(v64bfloat8 __aie_dm_resource_a *&p,
@@ -346,21 +346,21 @@ v64bfloat8 test_fifo_ld_pop(v64bfloat8 __aie_dm_resource_a *&p,
 // AIE2PS-LABEL: define dso_local void @_Z24test_fifo_ld_pop_1d_byteRPU3AS510v64bfloat8R12fifo_state_ti(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META37:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META36:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META37]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META37]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META37]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META36]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META36]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META36]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
-// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.1d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]]), !noalias [[META37]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.1d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]]), !noalias [[META36]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 2
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 3
-// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META37]]
-// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META37]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP6]], ptr [[P]], align 4, !noalias [[META37]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META37]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META36]]
+// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META36]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP6]], ptr [[P]], align 4, !noalias [[META36]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META36]]
 // AIE2PS-NEXT:    ret void
 //
 v64bfloat8 test_fifo_ld_pop_1d_byte(v64bfloat8 __aie_dm_resource_a *&p,
@@ -370,28 +370,28 @@ v64bfloat8 test_fifo_ld_pop_1d_byte(v64bfloat8 __aie_dm_resource_a *&p,
 // AIE2PS-LABEL: define dso_local void @_Z24test_fifo_ld_pop_2d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META40:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META39:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META40]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META40]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META40]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META39]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META39]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META39]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]], !noalias [[META40]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]], !noalias [[META39]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
-// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.ld.pop.2d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]]), !noalias [[META40]]
+// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.ld.pop.2d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]]), !noalias [[META39]]
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 0
 // AIE2PS-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 1
 // AIE2PS-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 2
 // AIE2PS-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 3
 // AIE2PS-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } [[TMP8]], 4
 // AIE2PS-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
-// AIE2PS-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4, !noalias [[META40]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128, !noalias [[META40]]
-// AIE2PS-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64, !noalias [[META40]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP10]], ptr [[P]], align 4, !noalias [[META40]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP9]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META40]]
+// AIE2PS-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4, !noalias [[META39]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128, !noalias [[META39]]
+// AIE2PS-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64, !noalias [[META39]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP10]], ptr [[P]], align 4, !noalias [[META39]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP9]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META39]]
 // AIE2PS-NEXT:    ret void
 //
 v64bfloat8 test_fifo_ld_pop_2d_byte(v64bfloat8 __aie_dm_resource_a *&p,
@@ -402,21 +402,21 @@ v64bfloat8 test_fifo_ld_pop_2d_byte(v64bfloat8 __aie_dm_resource_a *&p,
 // AIE2PS-LABEL: define dso_local void @_Z24test_fifo_ld_pop_3d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRiiiS5_i(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META43:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META42:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META43]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META43]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META43]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META42]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META42]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META42]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]], !noalias [[META43]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]], !noalias [[META42]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]], !noalias [[META43]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]], !noalias [[META42]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
-// AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]]), !noalias [[META43]]
+// AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]]), !noalias [[META42]]
 // AIE2PS-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 0
 // AIE2PS-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 1
 // AIE2PS-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 2
@@ -425,12 +425,12 @@ v64bfloat8 test_fifo_ld_pop_2d_byte(v64bfloat8 __aie_dm_resource_a *&p,
 // AIE2PS-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
 // AIE2PS-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } [[TMP12]], 5
 // AIE2PS-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
-// AIE2PS-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4, !noalias [[META43]]
-// AIE2PS-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4, !noalias [[META43]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128, !noalias [[META43]]
-// AIE2PS-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64, !noalias [[META43]]
-// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP14]], ptr [[P]], align 4, !noalias [[META43]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP13]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META43]]
+// AIE2PS-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4, !noalias [[META42]]
+// AIE2PS-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4, !noalias [[META42]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128, !noalias [[META42]]
+// AIE2PS-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64, !noalias [[META42]]
+// AIE2PS-NEXT:    store ptr addrspace(5) [[TMP14]], ptr [[P]], align 4, !noalias [[META42]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP13]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META42]]
 // AIE2PS-NEXT:    ret void
 //
 v64bfloat8 test_fifo_ld_pop_3d_byte(v64bfloat8 __aie_dm_resource_a *&p,
@@ -443,26 +443,26 @@ v64bfloat8 test_fifo_ld_pop_3d_byte(v64bfloat8 __aie_dm_resource_a *&p,
 // AIE2PS-LABEL: define dso_local void @_Z17test_fifo_ld_popxRP10v64bfloat8R12fifo_state_tii(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]], i32 noundef [[STEP:%.*]], i32 noundef [[MASK:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META46:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META45:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP]], 6
 // AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK]]
 // AIE2PS-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META46]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META46]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]], !noalias [[META46]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]], !noalias [[META46]]
-// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]]), !noalias [[META46]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META45]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META45]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]], !noalias [[META45]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]], !noalias [[META45]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]]), !noalias [[META45]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 2
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 3
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 4
-// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I]], align 64, !noalias [[META46]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META46]]
-// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META46]]
-// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META46]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META46]]
+// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I]], align 64, !noalias [[META45]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META45]]
+// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64, !noalias [[META45]]
+// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META45]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META45]]
 // AIE2PS-NEXT:    ret void
 //
 v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s, int step,
@@ -472,25 +472,25 @@ v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s, int step,
 // AIE2PS-LABEL: define dso_local void @_Z17test_fifo_ld_popxRP10v64bfloat8R12fifo_state_t(
 // AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], ptr nonnull align 4 captures(none) dereferenceable(4) [[P:%.*]], ptr nonnull align 64 captures(none) dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META49:![0-9]+]])
-// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META52:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META48:![0-9]+]])
+// AIE2PS-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META51:![0-9]+]])
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META55:![0-9]+]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]], !noalias [[META55]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA11]], !noalias [[META55]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA10]], !noalias [[META55]]
-// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015), !noalias [[META55]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]], !noalias [[META54:![0-9]+]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]], !noalias [[META54]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]], !noalias [[META54]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA9]], !noalias [[META54]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015), !noalias [[META54]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 2
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 3
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 4
-// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I_I]], align 64, !noalias [[META55]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META55]]
-// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I_I]], align 64, !noalias [[META55]]
-// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META55]]
-// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA10]], !alias.scope [[META55]]
+// AIE2PS-NEXT:    store <16 x i32> [[TMP9]], ptr [[EXTRA3_I_I]], align 64, !noalias [[META54]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128, !noalias [[META54]]
+// AIE2PS-NEXT:    store i32 [[TMP8]], ptr [[POS1_I_I]], align 64, !noalias [[META54]]
+// AIE2PS-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4, !noalias [[META54]]
+// AIE2PS-NEXT:    store <64 x i8> [[TMP5]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA9]], !alias.scope [[META54]]
 // AIE2PS-NEXT:    ret void
 //
 v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s) {
@@ -502,7 +502,7 @@ v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 1
@@ -520,8 +520,8 @@ void test_fifo_ld_reset(v32float16 __aie_dm_resource_a *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
@@ -539,8 +539,8 @@ void test_fifo_ld_fill(v32float16 __aie_dm_resource_a *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
@@ -561,8 +561,8 @@ v32float16 test_fifo_ld_pop(v32float16 __aie_dm_resource_a *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.1d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 0
@@ -584,11 +584,11 @@ v32float16 test_fifo_ld_pop_1d_byte(v32float16 __aie_dm_resource_a *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.ld.pop.2d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -615,15 +615,15 @@ v32float16 test_fifo_ld_pop_2d_byte(v32float16 __aie_dm_resource_a *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -658,9 +658,9 @@ v32float16 test_fifo_ld_pop_3d_byte(v32float16 __aie_dm_resource_a *&p,
 // AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK]]
 // AIE2PS-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -684,9 +684,9 @@ v32float16 test_fifo_ld_popx(v32float16 *&p, fifo_state_t &s, int step,
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015)
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -709,7 +709,7 @@ v32float16 test_fifo_ld_popx(v32float16 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 1
@@ -728,8 +728,8 @@ void test_fifo_ld_reset(v32bfloat16 __aie_dm_resource_a *restrict &p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
@@ -748,8 +748,8 @@ void test_fifo_ld_fill(v32bfloat16 __aie_dm_resource_a *restrict &p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.512.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
@@ -771,8 +771,8 @@ v32bfloat16
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.pop.1d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 0
@@ -795,11 +795,11 @@ v32bfloat16
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.ld.pop.2d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -827,15 +827,15 @@ v32bfloat16
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr addrspace(5), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.ld.pop.3d.unaligned.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -869,9 +869,9 @@ test_fifo_ld_pop_3d_byte(v32bfloat16 __aie_dm_resource_a *restrict &p,
 // AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK]]
 // AIE2PS-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -895,9 +895,9 @@ v32bfloat16 test_fifo_ld_popx(v32bfloat16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.popx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015)
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -920,7 +920,7 @@ v32bfloat16 test_fifo_ld_popx(v32bfloat16 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP2]], 1
@@ -939,8 +939,8 @@ void test_fifo_ld_reset(v64mx9_unaligned __aie_dm_resource_b *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP3]], 1
@@ -959,8 +959,8 @@ void test_fifo_ld_fill(v64mx9_unaligned __aie_dm_resource_b *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, <16 x i32>, <2 x i32>, <2 x i32> } @llvm.aie2ps.fifo.ld.pop.BFP640.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32, <16 x i32>, <2 x i32>, <2 x i32> } [[TMP3]], 0
 // AIE2PS-NEXT:    store ptr addrspace(6) [[TMP4]], ptr [[P]], align 4
@@ -985,8 +985,8 @@ v64mx9 test_fifo_ld_pop(v64mx9_unaligned __aie_dm_resource_b *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, <16 x i32>, <2 x i32>, <2 x i32> } @llvm.aie2ps.fifo.ld.pop.1d.BFP640.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32, <16 x i32>, <2 x i32>, <2 x i32> } [[TMP4]], 0
@@ -1012,11 +1012,11 @@ v64mx9 test_fifo_ld_pop_1d_byte(v64mx9_unaligned __aie_dm_resource_b *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, i20, <16 x i32>, <2 x i32>, <2 x i32> } @llvm.aie2ps.fifo.ld.pop.2d.BFP640.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -1047,15 +1047,15 @@ v64mx9 test_fifo_ld_pop_2d_byte(v64mx9_unaligned __aie_dm_resource_b *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, i20, i20, <16 x i32>, <2 x i32>, <2 x i32> } @llvm.aie2ps.fifo.ld.pop.3d.BFP640.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -1094,9 +1094,9 @@ v64mx9 test_fifo_ld_pop_3d_byte(v64mx9_unaligned __aie_dm_resource_b *&p,
 // AIE2PS-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP]], 6
 // AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.fillx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -1118,9 +1118,9 @@ void test_fifo_ld_fillx(v64mx9_unaligned *&p, fifo_state_t &s, int step,
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.fillx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015)
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -1141,7 +1141,7 @@ void test_fifo_ld_fillx(v64mx9_unaligned *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP2]], 1
@@ -1160,8 +1160,8 @@ void test_fifo_ld_reset(v128mx4_unaligned __aie_dm_resource_b *restrict &p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32 } [[TMP3]], 1
@@ -1180,8 +1180,8 @@ void test_fifo_ld_fill(v128mx4_unaligned __aie_dm_resource_b *restrict &p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } @llvm.aie2ps.fifo.ld.pop.BFP768.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    store ptr addrspace(6) [[TMP4]], ptr [[P]], align 4
@@ -1216,8 +1216,8 @@ v128mx4 test_fifo_ld_pop(v128mx4_unaligned __aie_dm_resource_b *restrict &p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } @llvm.aie2ps.fifo.ld.pop.1d.BFP768.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(6), <32 x i32>, i32, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } [[TMP4]], 0
@@ -1253,11 +1253,11 @@ v128mx4 test_fifo_ld_pop_1d_byte(v128mx4_unaligned __aie_dm_resource_b *restrict
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, i20, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } @llvm.aie2ps.fifo.ld.pop.2d.BFP768.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -1298,15 +1298,15 @@ v128mx4 test_fifo_ld_pop_2d_byte(v128mx4_unaligned __aie_dm_resource_b *restrict
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32, i20, i20, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } @llvm.aie2ps.fifo.ld.pop.3d.BFP768.p6.p6(ptr addrspace(6) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -1354,9 +1354,9 @@ v128mx4 test_fifo_ld_pop_3d_byte(v128mx4_unaligned __aie_dm_resource_b *restrict
 // AIE2PS-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP]], 6
 // AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.fillx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 [[OR_I]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -1378,9 +1378,9 @@ void test_fifo_ld_fillx(v128mx4_unaligned *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2ps.fifo.ld.fillx.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015)
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
@@ -1401,7 +1401,7 @@ void test_fifo_ld_fillx(v128mx4_unaligned *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[POS_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[FIFO]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(14), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[FIFO]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[FIFO]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(14), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p14.p14(ptr addrspace(14) [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(14), <32 x i32>, i32 } [[TMP2]], 0
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(14), <32 x i32>, i32 } [[TMP2]], 1
@@ -1420,8 +1420,8 @@ void test_fifo_ld_reset(v256mx6_unaligned __aie_dm_resource_cd *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[FIFO]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(14), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[FIFO]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[FIFO]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(14), <32 x i32>, i32 } @llvm.aie2ps.fifo.ld.fill.p14.p14(ptr addrspace(14) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(14), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(14), <32 x i32>, i32 } [[TMP3]], 1
@@ -1440,8 +1440,8 @@ void test_fifo_ld_fill(v256mx6_unaligned __aie_dm_resource_cd *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[FIFO]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(14), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[FIFO]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[FIFO]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(14), <32 x i32>, i32, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } @llvm.aie2ps.fifo.ld.pop.BFP768.p14.p14(ptr addrspace(14) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(14), <32 x i32>, i32, <8 x i32>, <8 x i32>, <2 x i32>, <2 x i32>, i32, i32, i32, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    store ptr addrspace(14) [[TMP4]], ptr [[P]], align 4
@@ -1519,8 +1519,8 @@ v256mx6 test_fifo_ld_pop(v256mx6_unaligned __aie_dm_resource_cd *&p,
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
 // AIE2PS-NEXT:    store i32 [[TMP5]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr [[TMP3]], ptr [[P_O]], align 4, !tbaa [[TBAA56:![0-9]+]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP4]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr [[TMP3]], ptr [[P_O]], align 4, !tbaa [[TBAA55:![0-9]+]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP4]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v64bfloat8 *p, v64bfloat8 v, v64bfloat8 *&p_o,
@@ -1534,7 +1534,7 @@ void test_fifo_st_reset(v64bfloat8 *p, v64bfloat8 v, v64bfloat8 *&p_o,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP1:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP1]], <16 x i32> [[TMP3]], <32 x i32> [[TMP2]], i32 0)
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -1554,8 +1554,8 @@ void test_fifo_st_reset(v64bfloat8 *&p, v64bfloat8 v, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP1:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP1]], <16 x i32> [[TMP4]], <32 x i32> [[TMP2]], i32 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
@@ -1574,8 +1574,8 @@ void test_fifo_st_push(v64bfloat8 *&p, v64bfloat8 v, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -1593,8 +1593,8 @@ void test_fifo_st_flush(v64bfloat8 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -1613,11 +1613,11 @@ void test_fifo_st_flush_1d_byte(v64bfloat8 *&p, fifo_state_t &s, int off) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -1641,15 +1641,15 @@ void test_fifo_st_flush_2d_byte(v64bfloat8 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -1677,8 +1677,8 @@ void test_fifo_st_flush_3d_byte(v64bfloat8 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -1696,8 +1696,8 @@ void test_fifo_st_flush_bare(v64bfloat8 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -1716,11 +1716,11 @@ void test_fifo_st_flush_bare_1d_byte(v64bfloat8 *&p, fifo_state_t &s, int off) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -1744,15 +1744,15 @@ void test_fifo_st_flush_bare_2d_byte(v64bfloat8 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -1781,8 +1781,8 @@ void test_fifo_st_flush_bare_3d_byte(v64bfloat8 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -1800,8 +1800,8 @@ void test_fifo_st_flush_conv(v64bfloat8 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -1820,11 +1820,11 @@ void test_fifo_st_flush_conv_1d_byte(v64bfloat8 *&p, fifo_state_t &s, int off) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -1848,15 +1848,15 @@ void test_fifo_st_flush_conv_2d_byte(v64bfloat8 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -1890,8 +1890,8 @@ void test_fifo_st_flush_conv_3d_byte(v64bfloat8 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
 // AIE2PS-NEXT:    store i32 [[TMP5]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr [[TMP3]], ptr [[P_O]], align 4, !tbaa [[TBAA58:![0-9]+]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP4]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr [[TMP3]], ptr [[P_O]], align 4, !tbaa [[TBAA57:![0-9]+]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP4]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v64float8 *restrict p, v64float8 v, v64float8 *&p_o,
@@ -1905,7 +1905,7 @@ void test_fifo_st_reset(v64float8 *restrict p, v64float8 v, v64float8 *&p_o,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP1:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP1]], <16 x i32> [[TMP3]], <32 x i32> [[TMP2]], i32 0)
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -1925,8 +1925,8 @@ void test_fifo_st_reset(v64float8 *restrict &p, v64float8 v, fifo_state_t &s) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP1:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP3:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP3:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP1]], <16 x i32> [[TMP4]], <32 x i32> [[TMP2]], i32 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
@@ -1945,8 +1945,8 @@ void test_fifo_st_push(v64float8 *restrict &p, v64float8 v, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -1964,8 +1964,8 @@ void test_fifo_st_flush(v64float8 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -1985,11 +1985,11 @@ void test_fifo_st_flush_1d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2013,15 +2013,15 @@ void test_fifo_st_flush_2d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2049,8 +2049,8 @@ void test_fifo_st_flush_3d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2068,8 +2068,8 @@ void test_fifo_st_flush_bare(v64float8 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2089,11 +2089,11 @@ void test_fifo_st_flush_bare_1d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2118,15 +2118,15 @@ void test_fifo_st_flush_bare_2d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2156,8 +2156,8 @@ void test_fifo_st_flush_bare_3d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2175,8 +2175,8 @@ void test_fifo_st_flush_conv(v64float8 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2197,11 +2197,11 @@ void test_fifo_st_flush_conv_1d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2226,15 +2226,15 @@ void test_fifo_st_flush_conv_2d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2268,8 +2268,8 @@ void test_fifo_st_flush_conv_3d_byte(v64float8 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 1
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 2
 // AIE2PS-NEXT:    store i32 [[TMP4]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr [[TMP2]], ptr [[P_O]], align 4, !tbaa [[TBAA60:![0-9]+]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP3]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr [[TMP2]], ptr [[P_O]], align 4, !tbaa [[TBAA7]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP3]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v32float16 *restrict p, v32float16 v, v32float16 *&p_o,
@@ -2282,7 +2282,7 @@ void test_fifo_st_reset(v32float16 *restrict p, v32float16 v, v32float16 *&p_o,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <32 x half> [[V]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP0]], <16 x i32> [[TMP2]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
@@ -2302,8 +2302,8 @@ void test_fifo_st_reset(v32float16 *restrict &p, v32float16 v,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x half> [[V]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP0]], <16 x i32> [[TMP3]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2322,8 +2322,8 @@ void test_fifo_st_push(v32float16 *restrict &p, v32float16 v, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2341,8 +2341,8 @@ void test_fifo_st_flush(v32float16 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2362,11 +2362,11 @@ void test_fifo_st_flush_1d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2390,15 +2390,15 @@ void test_fifo_st_flush_2d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2426,8 +2426,8 @@ void test_fifo_st_flush_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2445,8 +2445,8 @@ void test_fifo_st_flush_bare(v32float16 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2466,11 +2466,11 @@ void test_fifo_st_flush_bare_1d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2495,15 +2495,15 @@ void test_fifo_st_flush_bare_2d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2533,8 +2533,8 @@ void test_fifo_st_flush_bare_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2552,8 +2552,8 @@ void test_fifo_st_flush_conv(v32float16 *restrict &p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2573,11 +2573,11 @@ void test_fifo_st_flush_conv_1d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2602,15 +2602,15 @@ void test_fifo_st_flush_conv_2d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2644,8 +2644,8 @@ void test_fifo_st_flush_conv_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 1
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 2
 // AIE2PS-NEXT:    store i32 [[TMP4]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr [[TMP2]], ptr [[P_O]], align 4, !tbaa [[TBAA60]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP3]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr [[TMP2]], ptr [[P_O]], align 4, !tbaa [[TBAA7]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP3]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v32bfloat16 *p, v32bfloat16 v, v32bfloat16 *&p_o,
@@ -2658,7 +2658,7 @@ void test_fifo_st_reset(v32bfloat16 *p, v32bfloat16 v, v32bfloat16 *&p_o,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <32 x bfloat> [[V]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP0]], <16 x i32> [[TMP2]], <32 x i32> [[TMP1]], i32 0)
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
@@ -2677,8 +2677,8 @@ void test_fifo_st_reset(v32bfloat16 *&p, v32bfloat16 v, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x bfloat> [[V]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.512.p0.p0(ptr [[TMP0]], <16 x i32> [[TMP3]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2697,8 +2697,8 @@ void test_fifo_st_push(v32bfloat16 *&p, v32bfloat16 v, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2716,8 +2716,8 @@ void test_fifo_st_flush(v32bfloat16 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2736,11 +2736,11 @@ void test_fifo_st_flush_1d_byte(v32bfloat16 *&p, fifo_state_t &s, int off) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2764,15 +2764,15 @@ void test_fifo_st_flush_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2800,8 +2800,8 @@ void test_fifo_st_flush_3d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2819,8 +2819,8 @@ void test_fifo_st_flush_bare(v32bfloat16 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2840,11 +2840,11 @@ void test_fifo_st_flush_bare_1d_byte(v32bfloat16 *&p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2868,15 +2868,15 @@ void test_fifo_st_flush_bare_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -2905,8 +2905,8 @@ void test_fifo_st_flush_bare_3d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -2924,8 +2924,8 @@ void test_fifo_st_flush_conv(v32bfloat16 *&p, fifo_state_t &s) {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
@@ -2945,11 +2945,11 @@ void test_fifo_st_flush_conv_1d_byte(v32bfloat16 *&p, fifo_state_t &s,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -2973,15 +2973,15 @@ void test_fifo_st_flush_conv_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p0.p0(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3016,8 +3016,8 @@ void test_fifo_st_flush_conv_3d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 2
 // AIE2PS-NEXT:    store i32 [[TMP6]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr addrspace(8) [[TMP4]], ptr [[P_O]], align 4, !tbaa [[TBAA61:![0-9]+]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP5]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr addrspace(8) [[TMP4]], ptr [[P_O]], align 4, !tbaa [[TBAA59:![0-9]+]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP5]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v64mx9_unaligned __aie_dm_resource_d *p, v64mx9 v,
@@ -3034,7 +3034,7 @@ void test_fifo_st_reset(v64mx9_unaligned __aie_dm_resource_d *p, v64mx9 v,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP4:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.BFP640.p8.p8(ptr addrspace(8) [[TMP3]], <32 x i32> [[TMP4]], i32 0, <16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]])
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP5]], 0
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP5]], 1
@@ -3056,8 +3056,8 @@ void test_fifo_st_reset(v64mx9_unaligned __aie_dm_resource_d *&p, v64mx9 v,
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[V_COERCE]], 2
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP3:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP4:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP4:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.BFP640.p8.p8(ptr addrspace(8) [[TMP3]], <32 x i32> [[TMP4]], i32 [[TMP5]], <16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]])
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP6]], 0
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP6]], 1
@@ -3076,8 +3076,8 @@ void test_fifo_st_push(v64mx9_unaligned __aie_dm_resource_d *&p, v64mx9 v,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3096,8 +3096,8 @@ void test_fifo_st_flush(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3117,11 +3117,11 @@ void test_fifo_st_flush_1d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3146,15 +3146,15 @@ void test_fifo_st_flush_2d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3183,8 +3183,8 @@ void test_fifo_st_flush_3d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3203,8 +3203,8 @@ void test_fifo_st_flush_bare(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3224,11 +3224,11 @@ void test_fifo_st_flush_bare_1d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3253,15 +3253,15 @@ void test_fifo_st_flush_bare_2d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3291,8 +3291,8 @@ void test_fifo_st_flush_bare_3d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3311,8 +3311,8 @@ void test_fifo_st_flush_conv(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3332,11 +3332,11 @@ void test_fifo_st_flush_conv_1d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3361,15 +3361,15 @@ void test_fifo_st_flush_conv_2d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3407,8 +3407,8 @@ void test_fifo_st_flush_conv_3d_byte(v64mx9_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 1
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 2
 // AIE2PS-NEXT:    store i32 [[TMP7]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr addrspace(8) [[TMP5]], ptr [[P_O]], align 4, !tbaa [[TBAA63:![0-9]+]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP6]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr addrspace(8) [[TMP5]], ptr [[P_O]], align 4, !tbaa [[TBAA61:![0-9]+]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP6]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v64mx6_unaligned __aie_dm_resource_d *p, v64mx6 v,
@@ -3426,7 +3426,7 @@ void test_fifo_st_reset(v64mx6_unaligned __aie_dm_resource_d *p, v64mx6 v,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.BFP384.p8.p8(ptr addrspace(8) [[TMP4]], <32 x i32> [[TMP5]], i32 0, <8 x i32> [[TMP0]], <2 x i32> [[TMP1]], i32 [[TMP2]], i32 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP6]], 0
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP6]], 1
@@ -3449,8 +3449,8 @@ void test_fifo_st_reset(v64mx6_unaligned __aie_dm_resource_d *&p, v64mx6 v,
 // AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX6]] [[V_COERCE]], 3
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP4:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP6:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP6:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP7:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.BFP384.p8.p8(ptr addrspace(8) [[TMP4]], <32 x i32> [[TMP5]], i32 [[TMP6]], <8 x i32> [[TMP0]], <2 x i32> [[TMP1]], i32 [[TMP2]], i32 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP8:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP7]], 0
 // AIE2PS-NEXT:    [[TMP9:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP7]], 1
@@ -3469,8 +3469,8 @@ void test_fifo_st_push(v64mx6_unaligned __aie_dm_resource_d *&p, v64mx6 v,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3489,8 +3489,8 @@ void test_fifo_st_flush(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3510,11 +3510,11 @@ void test_fifo_st_flush_1d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3539,15 +3539,15 @@ void test_fifo_st_flush_2d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3576,8 +3576,8 @@ void test_fifo_st_flush_3d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3596,8 +3596,8 @@ void test_fifo_st_flush_bare(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3617,11 +3617,11 @@ void test_fifo_st_flush_bare_1d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3646,15 +3646,15 @@ void test_fifo_st_flush_bare_2d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3684,8 +3684,8 @@ void test_fifo_st_flush_bare_3d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3704,8 +3704,8 @@ void test_fifo_st_flush_conv(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3725,11 +3725,11 @@ void test_fifo_st_flush_conv_1d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3754,15 +3754,15 @@ void test_fifo_st_flush_conv_2d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3804,8 +3804,8 @@ void test_fifo_st_flush_conv_3d_byte(v64mx6_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:    [[TMP10:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP8]], 1
 // AIE2PS-NEXT:    [[TMP11:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP8]], 2
 // AIE2PS-NEXT:    store i32 [[TMP11]], ptr [[POS_O]], align 4
-// AIE2PS-NEXT:    store ptr addrspace(8) [[TMP9]], ptr [[P_O]], align 4, !tbaa [[TBAA65:![0-9]+]]
-// AIE2PS-NEXT:    store <32 x i32> [[TMP10]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    store ptr addrspace(8) [[TMP9]], ptr [[P_O]], align 4, !tbaa [[TBAA63:![0-9]+]]
+// AIE2PS-NEXT:    store <32 x i32> [[TMP10]], ptr [[FIFO_O]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    ret void
 //
 void test_fifo_st_reset(v128mx4_unaligned __aie_dm_resource_d *p, v128mx4 v,
@@ -3827,7 +3827,7 @@ void test_fifo_st_reset(v128mx4_unaligned __aie_dm_resource_d *p, v128mx4 v,
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP8:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.BFP768.p8.p8(ptr addrspace(8) [[TMP8]], <32 x i32> [[TMP9]], i32 0, <8 x i32> [[TMP0]], <8 x i32> [[TMP1]], <2 x i32> [[TMP2]], <2 x i32> [[TMP3]], i32 [[TMP4]], i32 [[TMP5]], i32 [[TMP6]], i32 [[TMP7]])
 // AIE2PS-NEXT:    [[TMP11:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP10]], 0
 // AIE2PS-NEXT:    [[TMP12:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP10]], 1
@@ -3854,8 +3854,8 @@ void test_fifo_st_reset(v128mx4_unaligned __aie_dm_resource_d *&p, v128mx4 v,
 // AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V128MX4]] [[V_COERCE]], 7
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP8:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP11:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.push.BFP768.p8.p8(ptr addrspace(8) [[TMP8]], <32 x i32> [[TMP9]], i32 [[TMP10]], <8 x i32> [[TMP0]], <8 x i32> [[TMP1]], <2 x i32> [[TMP2]], <2 x i32> [[TMP3]], i32 [[TMP4]], i32 [[TMP5]], i32 [[TMP6]], i32 [[TMP7]])
 // AIE2PS-NEXT:    [[TMP12:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP11]], 0
 // AIE2PS-NEXT:    [[TMP13:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP11]], 1
@@ -3874,8 +3874,8 @@ void test_fifo_st_push(v128mx4_unaligned __aie_dm_resource_d *&p, v128mx4 v,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -3894,8 +3894,8 @@ void test_fifo_st_flush(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -3915,11 +3915,11 @@ void test_fifo_st_flush_1d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -3944,15 +3944,15 @@ void test_fifo_st_flush_2d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -3981,8 +3981,8 @@ void test_fifo_st_flush_3d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -4001,8 +4001,8 @@ void test_fifo_st_flush_bare(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -4022,11 +4022,11 @@ void test_fifo_st_flush_bare_1d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -4051,15 +4051,15 @@ void test_fifo_st_flush_bare_2d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -4089,8 +4089,8 @@ void test_fifo_st_flush_bare_3d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 0
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP3]], 1
@@ -4109,8 +4109,8 @@ void test_fifo_st_flush_conv(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32 } @llvm.aie2ps.fifo.st.flush.1d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
 // AIE2PS-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(8), <32 x i32>, i32 } [[TMP4]], 0
@@ -4130,11 +4130,11 @@ void test_fifo_st_flush_conv_1d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20 } @llvm.aie2ps.fifo.st.flush.2d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
@@ -4159,15 +4159,15 @@ void test_fifo_st_flush_conv_2d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr addrspace(8), ptr [[P]], align 4, !tbaa [[TBAA7]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA10]]
-// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF]] to i20
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[SIZE1]] to i20
-// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = load i32, ptr [[COUNT1]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // AIE2PS-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1]] to i20
 // AIE2PS-NEXT:    [[TMP8:%.*]] = trunc i32 [[SIZE2]] to i20
-// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA11]]
+// AIE2PS-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT2]], align 4, !tbaa [[TBAA10]]
 // AIE2PS-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // AIE2PS-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2]] to i20
 // AIE2PS-NEXT:    [[TMP12:%.*]] = tail call { ptr addrspace(8), <32 x i32>, i32, i20, i20 } @llvm.aie2ps.fifo.st.flush.3d.conv.p8.p8(ptr addrspace(8) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
@@ -4199,63 +4199,61 @@ void test_fifo_st_flush_conv_3d_byte(v128mx4_unaligned __aie_dm_resource_d *&p,
 // AIE2PS: [[META5]] = !{!"Simple C++ TBAA"}
 // AIE2PS: [[META6]] = !{!"int", [[META4]], i64 0}
 // AIE2PS: [[TBAA7]] = !{[[META8:![0-9]+]], [[META8]], i64 0}
-// AIE2PS: [[META8]] = !{!"p1 void", [[META9:![0-9]+]], i64 0}
-// AIE2PS: [[META9]] = !{!"any pointer", [[META4]], i64 0}
-// AIE2PS: [[TBAA10]] = !{[[META4]], [[META4]], i64 0}
-// AIE2PS: [[TBAA11]] = !{[[META6]], [[META6]], i64 0}
-// AIE2PS: [[META12]] = !{[[META13:![0-9]+]]}
-// AIE2PS: [[META13]] = distinct !{[[META13]], [[META14:![0-9]+]], !"_ZL11fifo_ld_popRrPU3AS59v64float8R12fifo_state_t: %agg.result"}
-// AIE2PS: [[META14]] = distinct !{[[META14]], !"_ZL11fifo_ld_popRrPU3AS59v64float8R12fifo_state_t"}
-// AIE2PS: [[META15]] = !{[[META16:![0-9]+]]}
-// AIE2PS: [[META16]] = distinct !{[[META16]], [[META17:![0-9]+]], !"_ZL19fifo_ld_pop_1d_byteRrPU3AS59v64float8R12fifo_state_ti: %agg.result"}
-// AIE2PS: [[META17]] = distinct !{[[META17]], !"_ZL19fifo_ld_pop_1d_byteRrPU3AS59v64float8R12fifo_state_ti"}
-// AIE2PS: [[META18]] = !{[[META19:![0-9]+]]}
-// AIE2PS: [[META19]] = distinct !{[[META19]], [[META20:![0-9]+]], !"_ZL19fifo_ld_pop_2d_byteRrPU3AS59v64float8R12fifo_state_tiiRii: %agg.result"}
-// AIE2PS: [[META20]] = distinct !{[[META20]], !"_ZL19fifo_ld_pop_2d_byteRrPU3AS59v64float8R12fifo_state_tiiRii"}
-// AIE2PS: [[META21]] = !{[[META22:![0-9]+]]}
-// AIE2PS: [[META22]] = distinct !{[[META22]], [[META23:![0-9]+]], !"_ZL19fifo_ld_pop_3d_byteRrPU3AS59v64float8R12fifo_state_tiiRiiiS6_i: %agg.result"}
-// AIE2PS: [[META23]] = distinct !{[[META23]], !"_ZL19fifo_ld_pop_3d_byteRrPU3AS59v64float8R12fifo_state_tiiRiiiS6_i"}
-// AIE2PS: [[META24]] = !{[[META25:![0-9]+]]}
-// AIE2PS: [[META25]] = distinct !{[[META25]], [[META26:![0-9]+]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii: %agg.result"}
-// AIE2PS: [[META26]] = distinct !{[[META26]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii"}
-// AIE2PS: [[META27]] = !{[[META28:![0-9]+]]}
-// AIE2PS: [[META28]] = distinct !{[[META28]], [[META29:![0-9]+]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_t: %agg.result"}
-// AIE2PS: [[META29]] = distinct !{[[META29]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_t"}
-// AIE2PS: [[META30]] = !{[[META31:![0-9]+]]}
-// AIE2PS: [[META31]] = distinct !{[[META31]], [[META32:![0-9]+]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii: %agg.result"}
-// AIE2PS: [[META32]] = distinct !{[[META32]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii"}
-// AIE2PS: [[META33]] = !{[[META31]], [[META28]]}
-// AIE2PS: [[META34]] = !{[[META35:![0-9]+]]}
-// AIE2PS: [[META35]] = distinct !{[[META35]], [[META36:![0-9]+]], !"_ZL11fifo_ld_popRPU3AS510v64bfloat8R12fifo_state_t: %agg.result"}
-// AIE2PS: [[META36]] = distinct !{[[META36]], !"_ZL11fifo_ld_popRPU3AS510v64bfloat8R12fifo_state_t"}
-// AIE2PS: [[META37]] = !{[[META38:![0-9]+]]}
-// AIE2PS: [[META38]] = distinct !{[[META38]], [[META39:![0-9]+]], !"_ZL19fifo_ld_pop_1d_byteRPU3AS510v64bfloat8R12fifo_state_ti: %agg.result"}
-// AIE2PS: [[META39]] = distinct !{[[META39]], !"_ZL19fifo_ld_pop_1d_byteRPU3AS510v64bfloat8R12fifo_state_ti"}
-// AIE2PS: [[META40]] = !{[[META41:![0-9]+]]}
-// AIE2PS: [[META41]] = distinct !{[[META41]], [[META42:![0-9]+]], !"_ZL19fifo_ld_pop_2d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRii: %agg.result"}
-// AIE2PS: [[META42]] = distinct !{[[META42]], !"_ZL19fifo_ld_pop_2d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRii"}
-// AIE2PS: [[META43]] = !{[[META44:![0-9]+]]}
-// AIE2PS: [[META44]] = distinct !{[[META44]], [[META45:![0-9]+]], !"_ZL19fifo_ld_pop_3d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRiiiS5_i: %agg.result"}
-// AIE2PS: [[META45]] = distinct !{[[META45]], !"_ZL19fifo_ld_pop_3d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRiiiS5_i"}
-// AIE2PS: [[META46]] = !{[[META47:![0-9]+]]}
-// AIE2PS: [[META47]] = distinct !{[[META47]], [[META48:![0-9]+]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii: %agg.result"}
-// AIE2PS: [[META48]] = distinct !{[[META48]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii"}
-// AIE2PS: [[META49]] = !{[[META50:![0-9]+]]}
-// AIE2PS: [[META50]] = distinct !{[[META50]], [[META51:![0-9]+]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_t: %agg.result"}
-// AIE2PS: [[META51]] = distinct !{[[META51]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_t"}
-// AIE2PS: [[META52]] = !{[[META53:![0-9]+]]}
-// AIE2PS: [[META53]] = distinct !{[[META53]], [[META54:![0-9]+]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii: %agg.result"}
-// AIE2PS: [[META54]] = distinct !{[[META54]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii"}
-// AIE2PS: [[META55]] = !{[[META53]], [[META50]]}
-// AIE2PS: [[TBAA56]] = !{[[META57:![0-9]+]], [[META57]], i64 0}
-// AIE2PS: [[META57]] = !{!"p1 _ZTS10v64bfloat8", [[META9]], i64 0}
-// AIE2PS: [[TBAA58]] = !{[[META59:![0-9]+]], [[META59]], i64 0}
-// AIE2PS: [[META59]] = !{!"p1 _ZTS9v64float8", [[META9]], i64 0}
-// AIE2PS: [[TBAA60]] = !{[[META9]], [[META9]], i64 0}
+// AIE2PS: [[META8]] = !{!"any pointer", [[META4]], i64 0}
+// AIE2PS: [[TBAA9]] = !{[[META4]], [[META4]], i64 0}
+// AIE2PS: [[TBAA10]] = !{[[META6]], [[META6]], i64 0}
+// AIE2PS: [[META11]] = !{[[META12:![0-9]+]]}
+// AIE2PS: [[META12]] = distinct !{[[META12]], [[META13:![0-9]+]], !"_ZL11fifo_ld_popRrPU3AS59v64float8R12fifo_state_t: %agg.result"}
+// AIE2PS: [[META13]] = distinct !{[[META13]], !"_ZL11fifo_ld_popRrPU3AS59v64float8R12fifo_state_t"}
+// AIE2PS: [[META14]] = !{[[META15:![0-9]+]]}
+// AIE2PS: [[META15]] = distinct !{[[META15]], [[META16:![0-9]+]], !"_ZL19fifo_ld_pop_1d_byteRrPU3AS59v64float8R12fifo_state_ti: %agg.result"}
+// AIE2PS: [[META16]] = distinct !{[[META16]], !"_ZL19fifo_ld_pop_1d_byteRrPU3AS59v64float8R12fifo_state_ti"}
+// AIE2PS: [[META17]] = !{[[META18:![0-9]+]]}
+// AIE2PS: [[META18]] = distinct !{[[META18]], [[META19:![0-9]+]], !"_ZL19fifo_ld_pop_2d_byteRrPU3AS59v64float8R12fifo_state_tiiRii: %agg.result"}
+// AIE2PS: [[META19]] = distinct !{[[META19]], !"_ZL19fifo_ld_pop_2d_byteRrPU3AS59v64float8R12fifo_state_tiiRii"}
+// AIE2PS: [[META20]] = !{[[META21:![0-9]+]]}
+// AIE2PS: [[META21]] = distinct !{[[META21]], [[META22:![0-9]+]], !"_ZL19fifo_ld_pop_3d_byteRrPU3AS59v64float8R12fifo_state_tiiRiiiS6_i: %agg.result"}
+// AIE2PS: [[META22]] = distinct !{[[META22]], !"_ZL19fifo_ld_pop_3d_byteRrPU3AS59v64float8R12fifo_state_tiiRiiiS6_i"}
+// AIE2PS: [[META23]] = !{[[META24:![0-9]+]]}
+// AIE2PS: [[META24]] = distinct !{[[META24]], [[META25:![0-9]+]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii: %agg.result"}
+// AIE2PS: [[META25]] = distinct !{[[META25]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii"}
+// AIE2PS: [[META26]] = !{[[META27:![0-9]+]]}
+// AIE2PS: [[META27]] = distinct !{[[META27]], [[META28:![0-9]+]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_t: %agg.result"}
+// AIE2PS: [[META28]] = distinct !{[[META28]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_t"}
+// AIE2PS: [[META29]] = !{[[META30:![0-9]+]]}
+// AIE2PS: [[META30]] = distinct !{[[META30]], [[META31:![0-9]+]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii: %agg.result"}
+// AIE2PS: [[META31]] = distinct !{[[META31]], !"_ZL12fifo_ld_popxRrP9v64float8R12fifo_state_tii"}
+// AIE2PS: [[META32]] = !{[[META30]], [[META27]]}
+// AIE2PS: [[META33]] = !{[[META34:![0-9]+]]}
+// AIE2PS: [[META34]] = distinct !{[[META34]], [[META35:![0-9]+]], !"_ZL11fifo_ld_popRPU3AS510v64bfloat8R12fifo_state_t: %agg.result"}
+// AIE2PS: [[META35]] = distinct !{[[META35]], !"_ZL11fifo_ld_popRPU3AS510v64bfloat8R12fifo_state_t"}
+// AIE2PS: [[META36]] = !{[[META37:![0-9]+]]}
+// AIE2PS: [[META37]] = distinct !{[[META37]], [[META38:![0-9]+]], !"_ZL19fifo_ld_pop_1d_byteRPU3AS510v64bfloat8R12fifo_state_ti: %agg.result"}
+// AIE2PS: [[META38]] = distinct !{[[META38]], !"_ZL19fifo_ld_pop_1d_byteRPU3AS510v64bfloat8R12fifo_state_ti"}
+// AIE2PS: [[META39]] = !{[[META40:![0-9]+]]}
+// AIE2PS: [[META40]] = distinct !{[[META40]], [[META41:![0-9]+]], !"_ZL19fifo_ld_pop_2d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRii: %agg.result"}
+// AIE2PS: [[META41]] = distinct !{[[META41]], !"_ZL19fifo_ld_pop_2d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRii"}
+// AIE2PS: [[META42]] = !{[[META43:![0-9]+]]}
+// AIE2PS: [[META43]] = distinct !{[[META43]], [[META44:![0-9]+]], !"_ZL19fifo_ld_pop_3d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRiiiS5_i: %agg.result"}
+// AIE2PS: [[META44]] = distinct !{[[META44]], !"_ZL19fifo_ld_pop_3d_byteRPU3AS510v64bfloat8R12fifo_state_tiiRiiiS5_i"}
+// AIE2PS: [[META45]] = !{[[META46:![0-9]+]]}
+// AIE2PS: [[META46]] = distinct !{[[META46]], [[META47:![0-9]+]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii: %agg.result"}
+// AIE2PS: [[META47]] = distinct !{[[META47]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii"}
+// AIE2PS: [[META48]] = !{[[META49:![0-9]+]]}
+// AIE2PS: [[META49]] = distinct !{[[META49]], [[META50:![0-9]+]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_t: %agg.result"}
+// AIE2PS: [[META50]] = distinct !{[[META50]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_t"}
+// AIE2PS: [[META51]] = !{[[META52:![0-9]+]]}
+// AIE2PS: [[META52]] = distinct !{[[META52]], [[META53:![0-9]+]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii: %agg.result"}
+// AIE2PS: [[META53]] = distinct !{[[META53]], !"_ZL12fifo_ld_popxRP10v64bfloat8R12fifo_state_tii"}
+// AIE2PS: [[META54]] = !{[[META52]], [[META49]]}
+// AIE2PS: [[TBAA55]] = !{[[META56:![0-9]+]], [[META56]], i64 0}
+// AIE2PS: [[META56]] = !{!"p1 _ZTS10v64bfloat8", [[META8]], i64 0}
+// AIE2PS: [[TBAA57]] = !{[[META58:![0-9]+]], [[META58]], i64 0}
+// AIE2PS: [[META58]] = !{!"p1 _ZTS9v64float8", [[META8]], i64 0}
+// AIE2PS: [[TBAA59]] = !{[[META60:![0-9]+]], [[META60]], i64 0}
+// AIE2PS: [[META60]] = !{!"p1 _ZTS16v64mx9_unaligned", [[META8]], i64 0}
 // AIE2PS: [[TBAA61]] = !{[[META62:![0-9]+]], [[META62]], i64 0}
-// AIE2PS: [[META62]] = !{!"p1 _ZTS16v64mx9_unaligned", [[META9]], i64 0}
+// AIE2PS: [[META62]] = !{!"p1 _ZTS16v64mx6_unaligned", [[META8]], i64 0}
 // AIE2PS: [[TBAA63]] = !{[[META64:![0-9]+]], [[META64]], i64 0}
-// AIE2PS: [[META64]] = !{!"p1 _ZTS16v64mx6_unaligned", [[META9]], i64 0}
-// AIE2PS: [[TBAA65]] = !{[[META66:![0-9]+]], [[META66]], i64 0}
-// AIE2PS: [[META66]] = !{!"p1 _ZTS17v128mx4_unaligned", [[META9]], i64 0}
+// AIE2PS: [[META64]] = !{!"p1 _ZTS17v128mx4_unaligned", [[META8]], i64 0}
 //.

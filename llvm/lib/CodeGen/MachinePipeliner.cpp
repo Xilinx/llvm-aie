@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -196,6 +196,10 @@ static cl::opt<int>
 static cl::opt<bool>
     MVECodeGen("pipeliner-mve-cg", cl::Hidden, cl::init(false),
                cl::desc("Use the MVE code generator for software pipelining"));
+
+static cl::opt<bool> SwpPragmaAsMaxII(
+    "pipeliner-pragma-as-max-ii", cl::Hidden, cl::init(false),
+    cl::desc("Treat pragma II as maximum bound instead of exact value"));
 
 namespace llvm {
 
@@ -545,7 +549,7 @@ bool MachinePipeliner::useWindowScheduler(bool Changed) {
 void SwingSchedulerDAG::setMII(unsigned ResMII, unsigned RecMII) {
   if (SwpForceII > 0)
     MII = SwpForceII;
-  else if (II_setByPragma > 0)
+  else if (II_setByPragma > 0 && !SwpPragmaAsMaxII)
     MII = II_setByPragma;
   else
     MII = std::max(ResMII, RecMII);

@@ -1691,3 +1691,10 @@ Register AIEBaseInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
                                               int &FrameIndex) const {
   return isStackSlotMemoryAccess(MI, FrameIndex, /*IsLoad=*/false);
 }
+
+ArrayRef<AIEBaseInstrInfo::WidenNarrowConversionPair>
+AIEBaseInstrInfo::getWidenNarrowConversionPairs() const {
+  // Default implementation returns empty array.
+  // Targets override this to provide their specific conversion pairs.
+  return {};
+}

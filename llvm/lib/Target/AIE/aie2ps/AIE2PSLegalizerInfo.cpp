@@ -234,6 +234,12 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
 
   getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64}).scalarize(0);
 
+  // Scalars: lower to G_XOR + sign mask (LegalizerHelper G_FNEG case).
+  // Vectors: custom lowering via G_AIE_BROADCAST_VECTOR + G_XOR.
+  getActionDefinitionsBuilder(G_FNEG)
+      .lowerFor({S16, S32, S64})
+      .customFor({V16S32, V32S32, V32S16, V64S8, V64S16, V128S8});
+
   getActionDefinitionsBuilder(G_FMUL)
       .legalFor({V64S16, V32S16})
       // We don't have an instruction to multiply bf16 scalars, so instead of
@@ -451,8 +457,10 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
   getActionDefinitionsBuilder({G_STACKSAVE, G_STACKRESTORE}).lower();
 
   getActionDefinitionsBuilder({G_SMIN, G_SMAX, G_UMIN, G_UMAX})
+      .lowerFor({S64})
+      .legalFor({S32})
       .widenScalarToNextPow2(0, 32)
-      .lower();
+      .clampScalar(0, S32, S32);
 
   getActionDefinitionsBuilder({G_FRAME_INDEX, G_GLOBAL_VALUE}).legalFor({P0});
 
@@ -817,6 +825,8 @@ bool AIE2PSLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_FPEXT(Helper, MI);
   case TargetOpcode::G_FABS:
     return AIEHelper.legalizeG_FABS(Helper, MI);
+  case TargetOpcode::G_FNEG:
+    return AIEHelper.legalizeG_FNEG(Helper, MI);
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FSUB:
     return AIEHelper.legalizeG_FADD_G_FSUB(Helper, MI);

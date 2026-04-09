@@ -421,6 +421,13 @@ bool matchFlattenNestedConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                               const AIEBaseInstrInfo &TII,
                               BuildFnTy &MatchInfo);
 
+/// Match redundant exact widen/narrow conversion pairs and eliminate them.
+/// Controlled by -aie-combine-redundant-widen-narrow-conversions flag.
+bool matchRedundantWidenNarrowConversion(MachineInstr &MI,
+                                         MachineRegisterInfo &MRI,
+                                         const AIEBaseInstrInfo &TII,
+                                         BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

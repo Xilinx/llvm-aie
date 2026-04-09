@@ -168,6 +168,9 @@ public:
   std::optional<unsigned>
   getOpcodeWithTupleOperands(unsigned Opcode) const override;
 
+  ArrayRef<WidenNarrowConversionPair>
+  getWidenNarrowConversionPairs() const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,

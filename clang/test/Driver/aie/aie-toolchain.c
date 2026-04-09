@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,6 +20,11 @@
 // CC1: "-mllvm" "-vectorize-loops=false"
 // CC1: "-mllvm" "-vectorize-slp=false"
 // CC1: "-mllvm" "--two-entry-phi-node-folding-threshold=10"
+// CC1: "-mllvm" "-mandatory-inlining-before-opt=false"
+// CC1: "-mllvm" "-basic-aa-full-phi-analysis=true"
+// CC1: "-mllvm" "-basic-aa-max-lookup-search-depth=10"
+// CC1: "-mllvm" "-enable-loop-iter-count-assumptions=true"
+// CC1: "-mllvm" "-pipeliner-pragma-as-max-ii=true"
 // CC1: "-fno-builtin-memset"
 // CC1: "-fno-builtin-memcpy"
 // CC1: "-fno-builtin-memmove"

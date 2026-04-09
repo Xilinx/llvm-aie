@@ -70,6 +70,11 @@ cl::opt<bool> MemsetOptimizations(
     "aie-optimize-memsets", cl::init(true), cl::Hidden,
     cl::desc("Apply memset optimizations (peeling/align/etc.)."));
 
+static cl::opt<bool> CombineRedundantWidenNarrowConversions(
+    "aie-combine-redundant-widen-narrow-conversions", cl::init(true),
+    cl::Hidden,
+    cl::desc("Eliminate redundant exact widen/narrow conversion pairs"));
+
 namespace {
 
 const LLT S8 = LLT::scalar(8);
@@ -1196,6 +1201,79 @@ void llvm::applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.buildCopy(MI.getOperand(0), MI.getOperand(1));
   Observer.erasingInstr(MI);
   MI.eraseFromParent();
+}
+
+//===----------------------------------------------------------------------===//
+// combine_redundant_widen_narrow_conversion
+//===----------------------------------------------------------------------===//
+
+/// Match redundant widen <-> narrow conversion pairs and eliminate them.
+/// Pattern matched:
+///   %wide:_(<16 x s32>) = G_INTRINSIC
+///   intrinsic(@llvm.aie2ps.v16bf16.to.v16accfloat), %narrow(<16 x s16>)
+///   %result:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS
+///   intrinsic(@llvm.aie2ps.v16accfloat.to.v16bf16), %wide(<16 x s32>)
+///
+/// Transforms to:
+///   %result:_(<16 x s16>) = COPY %narrow(<16 x s16>)
+bool llvm::matchRedundantWidenNarrowConversion(MachineInstr &MI,
+                                               MachineRegisterInfo &MRI,
+                                               const AIEBaseInstrInfo &TII,
+                                               BuildFnTy &MatchInfo) {
+  // Check if optimization is enabled
+  if (!CombineRedundantWidenNarrowConversions)
+    return false;
+
+  // Must be G_INTRINSIC_W_SIDE_EFFECTS (the "to narrow" conversion)
+  if (MI.getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS)
+    return false;
+
+  const auto *IntrMI = cast<GIntrinsic>(&MI);
+  const Intrinsic::ID ToNarrowID = IntrMI->getIntrinsicID();
+
+  // Get target-specific conversion pairs
+  ArrayRef<AIEBaseInstrInfo::WidenNarrowConversionPair> ConversionPairs =
+      TII.getWidenNarrowConversionPairs();
+
+  // Find matching conversion pair for this intrinsic
+  unsigned ToWideID = 0;
+  for (const auto &Pair : ConversionPairs) {
+    if (Pair.ToNarrowIntrinsicID == ToNarrowID) {
+      ToWideID = Pair.ToWideIntrinsicID;
+      break;
+    }
+  }
+
+  // Not a recognized "to narrow" conversion for this target
+  if (ToWideID == 0)
+    return false;
+
+  // Get the wide value source register (operand 2 for
+  // G_INTRINSIC_W_SIDE_EFFECTS)
+  const Register WideReg = MI.getOperand(2).getReg();
+
+  // Get the definition of the wide value
+  const MachineInstr *WideDefMI = MRI.getVRegDef(WideReg);
+  if (!WideDefMI || WideDefMI->getOpcode() != TargetOpcode::G_INTRINSIC)
+    return false;
+
+  // Check if it's the matching "to wide" conversion
+  const auto *WideIntrMI = cast<GIntrinsic>(WideDefMI);
+  if (WideIntrMI->getIntrinsicID() != ToWideID)
+    return false;
+
+  // Get the original narrow source (operand 2 for G_INTRINSIC)
+  const Register OrigNarrowReg = WideDefMI->getOperand(2).getReg();
+
+  // Get result register
+  const Register ResultReg = MI.getOperand(0).getReg();
+
+  // Build the transformation: replace with COPY
+  MatchInfo = [ResultReg, OrigNarrowReg](MachineIRBuilder &B) {
+    B.buildCopy(ResultReg, OrigNarrowReg);
+  };
+
+  return true;
 }
 
 // Return the base offset, base offset is decided based on the
