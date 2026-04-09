@@ -43,6 +43,7 @@ void AIETargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__ELF__");
 }
 
-llvm::SmallVector<Builtin::InfosShard> AIETargetInfo::getTargetBuiltins() const {
+llvm::SmallVector<Builtin::InfosShard>
+AIETargetInfo::getTargetBuiltins() const {
   return {{&BuiltinStrings, BuiltinInfos}};
 }
