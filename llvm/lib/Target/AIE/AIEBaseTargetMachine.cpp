@@ -375,24 +375,24 @@ void AIEBasePassConfig::addPreSched2() {
 }
 
 ScheduleDAGInstrs *
-AIEBasePassConfig::createPostMachineScheduler(MachineSchedContext *C) const {
+AIEBaseTargetMachine::createPostMachineScheduler(MachineSchedContext *C) const {
   ScheduleDAGMI *DAG =
       new AIEScheduleDAGMI(C, std::make_unique<AIEPostRASchedStrategy>(C),
                            /* RemoveKillFlags=*/true);
   for (auto &Mutation :
-       AIEBaseSubtarget::getPostRAMutationsImpl(TM->getTargetTriple(), C->AA))
+       AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), C->AA))
     DAG->addMutation(std::move(Mutation));
   return DAG;
 }
 
 ScheduleDAGInstrs *
-AIEBasePassConfig::createMachineScheduler(MachineSchedContext *C) const {
+AIEBaseTargetMachine::createMachineScheduler(MachineSchedContext *C) const {
   ScheduleDAGMILive *DAG =
       new AIEScheduleDAGMILive(C, std::make_unique<AIEPreRASchedStrategy>(C));
   DAG->addMutation(createCopyConstrainDAGMutation(DAG->TII, DAG->TRI));
 
   for (auto &Mutation :
-       AIEBaseSubtarget::getPreRAMutationsImpl(TM->getTargetTriple()))
+       AIEBaseSubtarget::getPreRAMutationsImpl(getTargetTriple()))
     DAG->addMutation(std::move(Mutation));
   return DAG;
 }
