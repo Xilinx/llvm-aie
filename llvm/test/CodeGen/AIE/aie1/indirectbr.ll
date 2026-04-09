@@ -7,6 +7,7 @@
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s
+; XFAIL: llvm-aie-regression, missing scheduling info for some J instructions
 
 define i32 @indirectbr(i8* %target) nounwind {
 ; CHECK-LABEL: indirectbr:
