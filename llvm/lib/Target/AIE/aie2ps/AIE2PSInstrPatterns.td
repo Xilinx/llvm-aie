@@ -148,6 +148,11 @@ def : PatGprGpr<or, OR, type>;
 def : PatGprGpr<xor, XOR, type>;
 // 4.1.13 MUL - Scalar multiplication
 def : PatGprGpr<mul, MUL, type>;
+// 4.1.14 MAX/MIN - Maximum/Minimum (signed and unsigned)
+def : PatGprGpr<smax, MAX, type>;
+def : PatGprGpr<smin, MIN, type>;
+def : PatGprGpr<umax, MAXU, type>;
+def : PatGprGpr<umin, MINU, type>;
 }
 defm : ALUPatterns<i32>;
 // We can safely select bitwise operators for v2i16 and v4i8 types.
