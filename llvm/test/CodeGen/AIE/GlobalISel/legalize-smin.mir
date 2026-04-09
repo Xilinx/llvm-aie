@@ -5,24 +5,50 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE %s
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2S %s
 
 ---
 name: smin_s32
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: smin_s32
-    ; CHECK: liveins: $r6, $r7
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY]](s32), [[COPY1]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[SELECT]](s32)
+    ; AIE-LABEL: name: smin_s32
+    ; AIE: liveins: $r6, $r7
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY]](s32), [[COPY1]]
+    ; AIE-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2-LABEL: name: smin_s32
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY]](s32), [[COPY1]]
+    ; AIE2-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2P-LABEL: name: smin_s32
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2P-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY]](s32), [[COPY1]]
+    ; AIE2P-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2S-LABEL: name: smin_s32
+    ; AIE2S: liveins: $r6, $r7
+    ; AIE2S-NEXT: {{  $}}
+    ; AIE2S-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2S-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2S-NEXT: [[SMIN:%[0-9]+]]:_(s32) = G_SMIN [[COPY]], [[COPY1]]
+    ; AIE2S-NEXT: $r0 = COPY [[SMIN]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
     %2:_(s32) = G_SMIN %0, %1
@@ -34,16 +60,48 @@ name: smin_8
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: smin_8
-    ; CHECK: liveins: $r6, $r7
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 8
-    ; CHECK-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 8
-    ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[SELECT]](s32)
+    ; AIE-LABEL: name: smin_8
+    ; AIE: liveins: $r6, $r7
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 8
+    ; AIE-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 8
+    ; AIE-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
+    ; AIE-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2-LABEL: name: smin_8
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 8
+    ; AIE2-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 8
+    ; AIE2-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
+    ; AIE2-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2P-LABEL: name: smin_8
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2P-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 8
+    ; AIE2P-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 8
+    ; AIE2P-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
+    ; AIE2P-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2S-LABEL: name: smin_8
+    ; AIE2S: liveins: $r6, $r7
+    ; AIE2S-NEXT: {{  $}}
+    ; AIE2S-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2S-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2S-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 8
+    ; AIE2S-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 8
+    ; AIE2S-NEXT: [[SMIN:%[0-9]+]]:_(s32) = G_SMIN [[SEXT_INREG]], [[SEXT_INREG1]]
+    ; AIE2S-NEXT: $r0 = COPY [[SMIN]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
     %2:_(s8) = G_TRUNC %0(s32)
@@ -58,16 +116,48 @@ name: smin_16
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: smin_16
-    ; CHECK: liveins: $r6, $r7
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 16
-    ; CHECK-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 16
-    ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[SELECT]](s32)
+    ; AIE-LABEL: name: smin_16
+    ; AIE: liveins: $r6, $r7
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 16
+    ; AIE-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 16
+    ; AIE-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
+    ; AIE-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2-LABEL: name: smin_16
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 16
+    ; AIE2-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 16
+    ; AIE2-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
+    ; AIE2-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2P-LABEL: name: smin_16
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2P-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 16
+    ; AIE2P-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 16
+    ; AIE2P-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SEXT_INREG]](s32), [[SEXT_INREG1]]
+    ; AIE2P-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2S-LABEL: name: smin_16
+    ; AIE2S: liveins: $r6, $r7
+    ; AIE2S-NEXT: {{  $}}
+    ; AIE2S-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2S-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2S-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 16
+    ; AIE2S-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 16
+    ; AIE2S-NEXT: [[SMIN:%[0-9]+]]:_(s32) = G_SMIN [[SEXT_INREG]], [[SEXT_INREG1]]
+    ; AIE2S-NEXT: $r0 = COPY [[SMIN]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
     %2:_(s16) = G_TRUNC %0(s32)
@@ -82,19 +172,60 @@ name: smin_17
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: smin_17
-    ; CHECK: liveins: $r6, $r7
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
-    ; CHECK-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
-    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
-    ; CHECK-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[SHL1]], [[C]](s32)
-    ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[ASHR]], [[ASHR1]]
-    ; CHECK-NEXT: $r0 = COPY [[SELECT]](s32)
+    ; AIE-LABEL: name: smin_17
+    ; AIE: liveins: $r6, $r7
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; AIE-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; AIE-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[SHL1]], [[C]](s32)
+    ; AIE-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2-LABEL: name: smin_17
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; AIE2-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE2-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; AIE2-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE2-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[SHL1]], [[C]](s32)
+    ; AIE2-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE2-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2P-LABEL: name: smin_17
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; AIE2P-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE2P-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; AIE2P-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE2P-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[SHL1]], [[C]](s32)
+    ; AIE2P-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2P-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE2P-NEXT: $r0 = COPY [[SELECT]](s32)
+    ;
+    ; AIE2S-LABEL: name: smin_17
+    ; AIE2S: liveins: $r6, $r7
+    ; AIE2S-NEXT: {{  $}}
+    ; AIE2S-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2S-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2S-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; AIE2S-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE2S-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; AIE2S-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE2S-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[SHL1]], [[C]](s32)
+    ; AIE2S-NEXT: [[SMIN:%[0-9]+]]:_(s32) = G_SMIN [[ASHR]], [[ASHR1]]
+    ; AIE2S-NEXT: $r0 = COPY [[SMIN]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
     %2:_(s17) = G_TRUNC %0(s32)
@@ -109,21 +240,69 @@ name: smin_64
 body: |
   bb.0:
     liveins: $r6, $r7, $r8, $r9
-    ; CHECK-LABEL: name: smin_64
-    ; CHECK: liveins: $r6, $r7, $r8, $r9
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
-    ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY2]]
-    ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[COPY3]]
-    ; CHECK-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY1]](s32), [[COPY3]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
-    ; CHECK-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY]], [[COPY2]]
-    ; CHECK-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY1]], [[COPY3]]
-    ; CHECK-NEXT: $r0 = COPY [[SELECT1]](s32)
-    ; CHECK-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ; AIE-LABEL: name: smin_64
+    ; AIE: liveins: $r6, $r7, $r8, $r9
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY2]]
+    ; AIE-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[COPY3]]
+    ; AIE-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY1]](s32), [[COPY3]]
+    ; AIE-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY]], [[COPY2]]
+    ; AIE-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY1]], [[COPY3]]
+    ; AIE-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ;
+    ; AIE2-LABEL: name: smin_64
+    ; AIE2: liveins: $r6, $r7, $r8, $r9
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY2]]
+    ; AIE2-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[COPY3]]
+    ; AIE2-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY1]](s32), [[COPY3]]
+    ; AIE2-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE2-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY]], [[COPY2]]
+    ; AIE2-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY1]], [[COPY3]]
+    ; AIE2-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE2-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ;
+    ; AIE2P-LABEL: name: smin_64
+    ; AIE2P: liveins: $r6, $r7, $r8, $r9
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2P-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY2]]
+    ; AIE2P-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[COPY3]]
+    ; AIE2P-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY1]](s32), [[COPY3]]
+    ; AIE2P-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE2P-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY]], [[COPY2]]
+    ; AIE2P-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY1]], [[COPY3]]
+    ; AIE2P-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE2P-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ;
+    ; AIE2S-LABEL: name: smin_64
+    ; AIE2S: liveins: $r6, $r7, $r8, $r9
+    ; AIE2S-NEXT: {{  $}}
+    ; AIE2S-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2S-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2S-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2S-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2S-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY2]]
+    ; AIE2S-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[COPY3]]
+    ; AIE2S-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY1]](s32), [[COPY3]]
+    ; AIE2S-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE2S-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY]], [[COPY2]]
+    ; AIE2S-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[COPY1]], [[COPY3]]
+    ; AIE2S-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE2S-NEXT: $r1 = COPY [[SELECT2]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
     %2:_(s32) = COPY $r8
@@ -141,38 +320,137 @@ name: smin_48
 body: |
   bb.0:
     liveins: $r6, $r7, $r8, $r9
-    ; CHECK-LABEL: name: smin_48
-    ; CHECK: liveins: $r6, $r7, $r8, $r9
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
-    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
-    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
-    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C]](s32)
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
-    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[SHL]], [[C]](s32)
-    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR]], [[C]](s32)
-    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[LSHR1]], [[SHL2]]
-    ; CHECK-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[OR]], [[C]](s32)
-    ; CHECK-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[COPY2]], [[C]](s32)
-    ; CHECK-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[COPY3]], [[C]](s32)
-    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C]](s32)
-    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL4]], [[LSHR2]]
-    ; CHECK-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[SHL3]], [[C]](s32)
-    ; CHECK-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C]](s32)
-    ; CHECK-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[SHL5]]
-    ; CHECK-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[OR2]], [[C]](s32)
-    ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[OR1]](s32), [[OR3]]
-    ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
-    ; CHECK-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[ASHR]](s32), [[ASHR1]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
-    ; CHECK-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[OR1]], [[OR3]]
-    ; CHECK-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[ASHR]], [[ASHR1]]
-    ; CHECK-NEXT: $r0 = COPY [[SELECT1]](s32)
-    ; CHECK-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ; AIE-LABEL: name: smin_48
+    ; AIE: liveins: $r6, $r7, $r8, $r9
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; AIE-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C]](s32)
+    ; AIE-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
+    ; AIE-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[SHL]], [[C]](s32)
+    ; AIE-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR]], [[C]](s32)
+    ; AIE-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[LSHR1]], [[SHL2]]
+    ; AIE-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[OR]], [[C]](s32)
+    ; AIE-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[COPY2]], [[C]](s32)
+    ; AIE-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[COPY3]], [[C]](s32)
+    ; AIE-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C]](s32)
+    ; AIE-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL4]], [[LSHR2]]
+    ; AIE-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[SHL3]], [[C]](s32)
+    ; AIE-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C]](s32)
+    ; AIE-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[SHL5]]
+    ; AIE-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[OR2]], [[C]](s32)
+    ; AIE-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[OR1]](s32), [[OR3]]
+    ; AIE-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[ASHR]](s32), [[ASHR1]]
+    ; AIE-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[OR1]], [[OR3]]
+    ; AIE-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ;
+    ; AIE2-LABEL: name: smin_48
+    ; AIE2: liveins: $r6, $r7, $r8, $r9
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; AIE2-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE2-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE2-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C]](s32)
+    ; AIE2-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
+    ; AIE2-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[SHL]], [[C]](s32)
+    ; AIE2-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR]], [[C]](s32)
+    ; AIE2-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[LSHR1]], [[SHL2]]
+    ; AIE2-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[OR]], [[C]](s32)
+    ; AIE2-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[COPY2]], [[C]](s32)
+    ; AIE2-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[COPY3]], [[C]](s32)
+    ; AIE2-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C]](s32)
+    ; AIE2-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL4]], [[LSHR2]]
+    ; AIE2-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[SHL3]], [[C]](s32)
+    ; AIE2-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C]](s32)
+    ; AIE2-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[SHL5]]
+    ; AIE2-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[OR2]], [[C]](s32)
+    ; AIE2-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[OR1]](s32), [[OR3]]
+    ; AIE2-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE2-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[OR1]], [[OR3]]
+    ; AIE2-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE2-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE2-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ;
+    ; AIE2P-LABEL: name: smin_48
+    ; AIE2P: liveins: $r6, $r7, $r8, $r9
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; AIE2P-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE2P-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE2P-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C]](s32)
+    ; AIE2P-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
+    ; AIE2P-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[SHL]], [[C]](s32)
+    ; AIE2P-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR]], [[C]](s32)
+    ; AIE2P-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[LSHR1]], [[SHL2]]
+    ; AIE2P-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[OR]], [[C]](s32)
+    ; AIE2P-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[COPY2]], [[C]](s32)
+    ; AIE2P-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[COPY3]], [[C]](s32)
+    ; AIE2P-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C]](s32)
+    ; AIE2P-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL4]], [[LSHR2]]
+    ; AIE2P-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[SHL3]], [[C]](s32)
+    ; AIE2P-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C]](s32)
+    ; AIE2P-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[SHL5]]
+    ; AIE2P-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[OR2]], [[C]](s32)
+    ; AIE2P-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[OR1]](s32), [[OR3]]
+    ; AIE2P-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2P-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2P-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE2P-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[OR1]], [[OR3]]
+    ; AIE2P-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE2P-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE2P-NEXT: $r1 = COPY [[SELECT2]](s32)
+    ;
+    ; AIE2S-LABEL: name: smin_48
+    ; AIE2S: liveins: $r6, $r7, $r8, $r9
+    ; AIE2S-NEXT: {{  $}}
+    ; AIE2S-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2S-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2S-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2S-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2S-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; AIE2S-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; AIE2S-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; AIE2S-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C]](s32)
+    ; AIE2S-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
+    ; AIE2S-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[SHL]], [[C]](s32)
+    ; AIE2S-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR]], [[C]](s32)
+    ; AIE2S-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[LSHR1]], [[SHL2]]
+    ; AIE2S-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[OR]], [[C]](s32)
+    ; AIE2S-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[COPY2]], [[C]](s32)
+    ; AIE2S-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[COPY3]], [[C]](s32)
+    ; AIE2S-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C]](s32)
+    ; AIE2S-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL4]], [[LSHR2]]
+    ; AIE2S-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[SHL3]], [[C]](s32)
+    ; AIE2S-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C]](s32)
+    ; AIE2S-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[SHL5]]
+    ; AIE2S-NEXT: [[ASHR1:%[0-9]+]]:_(s32) = G_ASHR [[OR2]], [[C]](s32)
+    ; AIE2S-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[OR1]](s32), [[OR3]]
+    ; AIE2S-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2S-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[ASHR]](s32), [[ASHR1]]
+    ; AIE2S-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP]], [[ICMP1]]
+    ; AIE2S-NEXT: [[SELECT1:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[OR1]], [[OR3]]
+    ; AIE2S-NEXT: [[SELECT2:%[0-9]+]]:_(s32) = G_SELECT [[SELECT]](s32), [[ASHR]], [[ASHR1]]
+    ; AIE2S-NEXT: $r0 = COPY [[SELECT1]](s32)
+    ; AIE2S-NEXT: $r1 = COPY [[SELECT2]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
     %2:_(s32) = COPY $r8

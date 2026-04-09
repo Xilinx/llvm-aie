@@ -457,8 +457,10 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
   getActionDefinitionsBuilder({G_STACKSAVE, G_STACKRESTORE}).lower();
 
   getActionDefinitionsBuilder({G_SMIN, G_SMAX, G_UMIN, G_UMAX})
+      .lowerFor({S64})
+      .legalFor({S32})
       .widenScalarToNextPow2(0, 32)
-      .lower();
+      .clampScalar(0, S32, S32);
 
   getActionDefinitionsBuilder({G_FRAME_INDEX, G_GLOBAL_VALUE}).legalFor({P0});
 
