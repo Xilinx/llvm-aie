@@ -1474,6 +1474,68 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
   return true;
 }
 
+bool AIELegalizerHelper::legalizeG_FNEG(LegalizerHelper &Helper,
+                                        MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  assert(DstTy.isVector() && "Expected vector type for custom G_FNEG");
+
+  const unsigned EltSize = DstTy.getScalarSizeInBits();
+  const APInt SignMask = APInt::getSignMask(EltSize);
+
+  // G_AIE_BROADCAST_VECTOR takes a 32-bit scalar. For s8/s16 element types
+  // the hardware VBCST instruction packs the lower bits of a 32-bit source
+  // into every lane, so extend the mask to i32.
+  const LLT ScalarTy = LLT::scalar(EltSize < 32 ? 32 : EltSize);
+  const Register ScalarMask =
+      MIRBuilder
+          .buildConstant(ScalarTy, SignMask.zext(ScalarTy.getSizeInBits()))
+          .getReg(0);
+
+  const unsigned BcstOpc = ST.getInstrInfo()->getGenericBroadcastVectorOpcode();
+  const unsigned LegalBits = ST.getInstrInfo()->getBasicVectorBitSize();
+  const unsigned VecBits = DstTy.getSizeInBits();
+
+  // AIE legal vector XOR is at most one basic vector (LegalBits, e.g. 512).
+  // Fits in one chunk: broadcast the mask to the full type and XOR once.
+  // Wider than that: one 512-bit broadcast, reuse the same mask for each
+  // source chunk (unmerge/XOR/concat) instead of a wide broadcast plus mask
+  // unmerge when the XOR is legalized.
+  if (VecBits <= LegalBits) {
+    // Broadcast the scalar sign mask across every lane — one VBCST instruction.
+    Register VecMask =
+        MIRBuilder.buildInstr(BcstOpc, {DstTy}, {ScalarMask}).getReg(0);
+    MIRBuilder.buildXor(DstReg, SrcReg, VecMask);
+  } else {
+    assert((VecBits % LegalBits == 0 && LegalBits % EltSize == 0) &&
+           "G_FNEG wide vector must split into whole basic-vector chunks");
+    const LLT ChunkTy =
+        LLT::fixed_vector(LegalBits / EltSize, DstTy.getElementType());
+    Register VecMask =
+        MIRBuilder.buildInstr(BcstOpc, {ChunkTy}, {ScalarMask}).getReg(0);
+
+    auto UnmergeMIB = MIRBuilder.buildUnmerge(ChunkTy, SrcReg);
+    MachineInstr *UnmergeI = UnmergeMIB.getInstr();
+    const unsigned NumChunks = VecBits / LegalBits;
+    SmallVector<Register, 4> XorParts;
+    XorParts.reserve(NumChunks);
+    for (unsigned I = 0; I != NumChunks; ++I) {
+      Register PartSrc = UnmergeI->getOperand(I).getReg();
+      Register PartDst = MRI.createGenericVirtualRegister(ChunkTy);
+      MIRBuilder.buildXor(PartDst, PartSrc, VecMask);
+      XorParts.push_back(PartDst);
+    }
+    MIRBuilder.buildConcatVectors(DstReg, XorParts);
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
                                                MachineInstr &MI) const {
 
