@@ -5573,10 +5573,8 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
           /*SkipImmediateInvocations=*/NestedDefaultChecking))
     return ExprError();
 
-  Expr *RewrittenExpr = (Init == Param->getDefaultArg() ? nullptr : Init);
   return CXXDefaultArgExpr::Create(Context, InitializationContext->Loc, Param,
-                                   RewrittenExpr,
-                                   InitializationContext->Context);
+                                   Init, InitializationContext->Context);
 }
 
 static FieldDecl *FindFieldDeclInstantiationPattern(const ASTContext &Ctx,
@@ -5694,11 +5692,10 @@ ExprResult Sema::BuildCXXDefaultInitExpr(SourceLocation Loc, FieldDecl *Field) {
       return ExprError();
     }
     Init = Res.get();
-    Expr *RewrittenInit =
-        (Init == Field->getInClassInitializer() ? nullptr : Init);
+
     return CXXDefaultInitExpr::Create(Context, InitializationContext->Loc,
                                       Field, InitializationContext->Context,
-                                      RewrittenInit);
+                                      Init);
   }
 
   // DR1351:
@@ -6703,7 +6700,7 @@ ExprResult Sema::BuildCallExpr(Scope *Scope, Expr *Fn, SourceLocation LParenLoc,
 
 Expr *Sema::BuildBuiltinCallExpr(SourceLocation Loc, Builtin::ID Id,
                                  MultiExprArg CallArgs) {
-  StringRef Name = Context.BuiltinInfo.getName(Id);
+  std::string Name = Context.BuiltinInfo.getName(Id);
   LookupResult R(*this, &Context.Idents.get(Name), Loc,
                  Sema::LookupOrdinaryName);
   LookupName(R, TUScope, /*AllowBuiltinCreation=*/true);
