@@ -234,6 +234,10 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
 
   getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64}).scalarize(0);
 
+  // Lower to G_XOR + per-lane sign mask (LegalizerHelper G_FNEG case).
+  getActionDefinitionsBuilder(G_FNEG).lowerFor(
+      {S16, S32, S64, V16S32, V32S32, V32S16, V64S8});
+
   getActionDefinitionsBuilder(G_FMUL)
       .legalFor({V64S16, V32S16})
       // We don't have an instruction to multiply bf16 scalars, so instead of
