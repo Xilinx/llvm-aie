@@ -367,6 +367,9 @@ void AIE2PSInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                 getLoSubReg(TRI, SrcReg), KillSrc);
     copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
                 getHiSubReg(TRI, SrcReg), KillSrc);
+  } else if ((AIE2PS::ePSRFLdFRegClass.contains(SrcReg)) &&
+             (AIE2PS::ePSRFLdFRegClass.contains(DstReg))) {
+    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
   } else {
     llvm_unreachable("unhandled case in copyPhysReg");
   }
