@@ -664,10 +664,10 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[VADD_32_]]
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ewl = COPY [[COPY2]].sub_256_lo
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:ewh = COPY [[COPY2]].sub_256_hi
-    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY3]]
-    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY3]]
-    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY4]]
-    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY4]]
+    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY3]] :: (load unknown-size from @softmax_ilut_ab, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY3]] :: (load unknown-size from @softmax_ilut_ab, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY4]] :: (load unknown-size from @softmax_ilut_ab, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY4]] :: (load unknown-size from @softmax_ilut_ab, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
     ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x16_lo]]
     ; CHECK-NEXT: $wl1 = COPY [[VLDB_4x16_hi]]
     ; CHECK-NEXT: $wl2 = COPY [[VLDB_4x16_lo1]]
