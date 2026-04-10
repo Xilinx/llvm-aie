@@ -15,16 +15,17 @@
 #include "AIEMCFixupKinds.h"
 #include "AIEMCFormats.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/MC/MCInst.h"
-
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -138,9 +139,15 @@ void getSImmOpValueXStep(const MCInst &MI, unsigned OpNo, APInt &Op,
       Min = minIntN(N + FixedZeroBits);
       Max = maxIntN(N + FixedZeroBits);
     }
-    assert((Imm & hexValue) == 0 && "Value must be divisible by step!");
-    assert(Imm >= Min && Imm <= Max &&
-           "can not represent value in the given immediate type range!");
+    if (Imm & hexValue)
+      report_fatal_error("immediate operand value " + Twine(Imm) +
+                             " is not a multiple of " + Twine(step),
+                         /*GenCrashDiag=*/false);
+    if (Imm < Min || Imm > Max)
+      report_fatal_error("immediate operand value " + Twine(Imm) +
+                             " is out of range [" + Twine(Min) + ", " +
+                             Twine(Max) + "]",
+                         /*GenCrashDiag=*/false);
     Imm >>= FixedZeroBits;
     Op = Imm;
   } else
