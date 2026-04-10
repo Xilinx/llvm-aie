@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file contains an interface to create constraints to model a software
@@ -221,7 +221,7 @@ void Z3Solver::genModel(const SolverData &Data, bool SEFStage) {
   const int II = getII();
   NumStages = std::max(NumStages, (Length + II - 1) / II);
 
-  LLVM_DEBUG(dbgs() << "Minimum stage count = " << NumStages
+  LLVM_DEBUG(dbgs() << "Solver: Minimum stage count = " << NumStages
                     << " SEFStage = " << SEFStage << "\n");
 
   vars(Data, SEFStage);
@@ -246,7 +246,8 @@ bool Z3Solver::solveModel() {
       return false;
     }
   }
-  DEBUG_SUMMARY(dbgs() << "Solving for II=" << getII() << " NS=" << NumStages);
+  DEBUG_SUMMARY(dbgs() << "Solver: Solving for II=" << getII()
+                       << " NS=" << NumStages);
   auto Start = std::chrono::high_resolution_clock::now();
   auto Outcome = Solver.check();
   auto End = std::chrono::high_resolution_clock::now();

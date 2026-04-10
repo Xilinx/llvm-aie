@@ -846,12 +846,13 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
 }
 
 namespace {
-void dumpEarliestChain(const ScheduleInfo &Info, int N) {
+void dumpEarliestChain(const ScheduleInfo &Info, int N, int NInstr) {
   auto Prev = Info[N].LastEarliestPusher;
   if (Prev) {
-    dumpEarliestChain(Info, *Prev);
+    dumpEarliestChain(Info, *Prev, NInstr);
   }
-  dbgs() << "  --> SU" << N << " @" << Info[N].Cycle << "\n";
+  dbgs() << "  --> SU" << N << "(" << N % NInstr << ") @" << Info[N].Cycle
+         << "\n";
 }
 
 #ifndef NDEBUG
@@ -896,10 +897,10 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
 
     // All iterations following the first one should fit exactly
     if (Earliest > Insert) {
-      LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
-                        << Insert << " (Earliest=" << Earliest
+      LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << "(" << N - NInstr
+                        << ") in cycle " << Insert << " (Earliest=" << Earliest
                         << " ModuloNode=SU" << N - NInstr << ")\n";
-                 dumpEarliestChain(Info, N));
+                 dumpEarliestChain(Info, N, NInstr));
       if (Strategy.mobility(ModuloSU) > 0) {
         // The modulo Node can be delayed
         ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
@@ -1283,6 +1284,8 @@ bool PostPipeliner::tryApproaches() {
   if (II == TargetII) {
     const SolverData Data = createSolverData();
     int NS = MinLength / II;
+    LLVM_DEBUG(dbgs() << "Solver: trying NS=" << NS << " with II=" << II
+                      << "\n");
     if (solve(Data, NS, false)) {
       return true;
     }
@@ -1292,6 +1295,8 @@ bool PostPipeliner::tryApproaches() {
         return true;
       }
     }
+  } else {
+    LLVM_DEBUG(dbgs() << "Solver: skipped TargetII not present!\n");
   }
 
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
@@ -1365,6 +1370,8 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
                                                 : Schedule) dbgs()
                                            << C << ", ";
                 dbgs() << "\n";);
+  DEBUG_SUMMARY(
+      dumpCycles(Info, II, TII->getFormatInterface()->getSlotLetters()));
   CheckFixedSchedule S{*DAG, Info, II * NS, Schedule};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
