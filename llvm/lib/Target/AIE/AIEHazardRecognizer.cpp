@@ -745,7 +745,10 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
 
 MemoryBankBits
 AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
-  if (!(MI->mayLoad() || MI->mayStore()))
+  // Bank tracking is load-only: stores cannot collide on banks because
+  // AIE has only one store slot per VLIW cycle, and load-vs-store uses separate
+  // HW ports.
+  if (!MI->mayLoad())
     return 0;
 
   if (MI->memoperands_empty())

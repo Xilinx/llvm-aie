@@ -105,9 +105,9 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    vlda x9, [p6], #64; vshift x11, x3, x5, r0
 ; CHECK-NEXT:    vldb x8, [p6], #64; vshift x11, x11, x9, r20; vmul.f cml0, x8, x0, r8
 ; CHECK-NEXT:    vlda x6, [p6], m2; vshift x4, x1, x3, r6
-; CHECK-NEXT:    vshift x6, x3, x5, r16
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml7, [p7], #64; vldb x8, [p6], #64; vshift x3, x1, x3, r0; vmac.f cml1, cml0, x11, x0, r8
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml6, [p7], #64; vshift x4, x4, x5, r22
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml7, [p7], #64; vshift x6, x3, x5, r16
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml6, [p7], #64; vldb x8, [p6], #64; vshift x3, x1, x3, r0; vmac.f cml1, cml0, x11, x0, r8
+; CHECK-NEXT:    vshift x4, x4, x5, r22
 ; CHECK-NEXT:    vshift x6, x6, x7, r24; vmac.f cml3, cml2, x3, x0, r8
 ; CHECK-NEXT:    vshuffle x7, x10, x5, r2
 ; CHECK-NEXT:    vshuffle x11, x10, x5, r4; vmac.f cml4, cml1, x6, x2, r8
@@ -127,7 +127,7 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x8, x5, x9, r18; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    lda lr, [sp, #-64]; nopx ; vshuffle x11, x7, x10, r4 // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-64]; nopb ; nopx ; vshuffle x11, x7, x10, r4 // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-44]; vshift x1, x6, x5, r0; vmac.f cml7, cml7, x6, x2, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r12, [sp, #-48]; vshift x7, x5, x9, r0; vmac.f cml6, cml6, x8, x2, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r10, [sp, #-52]; vshift x7, x7, x11, r20 // 4-byte Folded Reload
@@ -137,7 +137,6 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    vshift x3, x3, x9, r22
 ; CHECK-NEXT:    vmac.f cml6, cml6, x10, x2, r8
 ; CHECK-NEXT:    vmac.f cml7, cml7, x3, x2, r8
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda p7, [sp, #-40] // 4-byte Folded Reload
