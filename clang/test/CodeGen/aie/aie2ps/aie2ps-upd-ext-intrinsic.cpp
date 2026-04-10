@@ -1119,7 +1119,6 @@ v32float8 test_set_v32float8 (int idx, v16float8 a ) { return set_v32float8(idx,
 
 
 
-//
 // CHECK-LABEL: @_Z11test_insert10v64bfloat8i10v16bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[V_COERCE:%.*]], 0
@@ -1184,7 +1183,6 @@ v64bfloat8 test_insert (v64bfloat8 v, int idx, v16bfloat8 b ) { return insert(v,
 // CHECK-NEXT:    ret void
 //
 v64float8 test_insert (v64float8 v, int idx, v16float8 b ) { return insert(v, idx, b); }
-//
 // CHECK-LABEL: @_Z11test_insert10v32bfloat8i10v16bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
@@ -1348,6 +1346,7 @@ v32int8 test_extract_v32int8 (v64mx9 m, int idx) { return extract_v32int8(m, idx
 // CHECK-NEXT:    ret <64 x i8> [[RETVAL_0_I]]
 //
 v64int8 test_extract_v64int8 (v128mx9 m, int idx) { return extract_v64int8(m, idx); }
+//
 // CHECK-LABEL: @_Z11test_insert7v128mx9iDv64_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -1476,6 +1475,7 @@ v128mx9 test_concat (v64mx9 v0, v64mx9 v1) { return concat(v0, v1); }
 // CHECK-NEXT:    ret [[STRUCT_V128MX9]] [[CALL6_PN_I]]
 //
 v128mx9 test_insert (v128mx9 m, int idx, int exp) { return insert(m, idx, exp); }
+//
 // CHECK-LABEL: @_Z11test_insert7v128mx9iDv4_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp slt i32 [[IDX:%.*]], 2
@@ -1669,6 +1669,7 @@ v64mx6 test_insert (v64mx6 m, int idx, int expo) { return insert(m, idx, expo); 
 // CHECK-NEXT:    ret i32 [[RETVAL_0_I]]
 //
 int test_extract_expo (v64mx4 m, int idx) { return extract_expo(m, idx); }
+//
 // CHECK-LABEL: @_Z11test_insert6v64mx4ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -2015,8 +2016,8 @@ v64uint4 test_extract_v64uint4 (v256mx6 m, int idx) { return extract_v64uint4(m,
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 0
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 3
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 2
-// CHECK-NEXT:    [[TEMP1_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP0]], <8 x i32> [[TMP2]]
 // CHECK-NEXT:    [[TEMP0_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[TMP3]]
+// CHECK-NEXT:    [[TEMP1_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP0]], <8 x i32> [[TMP2]]
 // CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TEMP0_0_I]], <8 x i32> [[TEMP1_0_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[SHUFFLE_I_I_I]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP4]]
@@ -2864,8 +2865,8 @@ v64uint4 test_extract_v64uint4 (v256mx4 m, int idx) { return extract_v64uint4(m,
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 0
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 3
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 2
-// CHECK-NEXT:    [[TEMP1_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP0]], <8 x i32> [[TMP2]]
 // CHECK-NEXT:    [[TEMP0_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[TMP3]]
+// CHECK-NEXT:    [[TEMP1_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP0]], <8 x i32> [[TMP2]]
 // CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TEMP0_0_I]], <8 x i32> [[TEMP1_0_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[SHUFFLE_I_I_I]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP4]]
@@ -3493,9 +3494,9 @@ v128mx6 test_insert (v128mx6 s, int idx, v64mx6 m) { return insert(s, idx, m); }
 // CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP5_I]])
 // CHECK-NEXT:    br label [[_ZL11SET_V128MX6I6V64MX6_EXIT]]
 // CHECK:       _ZL11set_v128mx6i6v64mx6.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_6_0_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE_I]] ], [ undef, [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_6_0_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP0]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_ELSE_I]] ], [ undef, [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_12_0_I:%.*]] = phi i32 [ undef, [[IF_ELSE_I]] ], [ [[TMP2]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_15_0_I:%.*]] = phi i32 [ [[TMP2]], [[IF_ELSE_I]] ], [ undef, [[ENTRY]] ]
@@ -3525,9 +3526,9 @@ v128mx6 test_set_v128mx6 (int idx, v64mx6 m) { return set_v128mx6(idx, m); }
 // CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP5_I_I]])
 // CHECK-NEXT:    br label [[_ZL14SET_V128BFP13PI6V64MX6_EXIT]]
 // CHECK:       _ZL14set_v128bfp13pi6v64mx6.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_6_0_I_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_3_0_I_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE_I_I]] ], [ undef, [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_6_0_I_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP0]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_9_0_I_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_ELSE_I_I]] ], [ undef, [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_12_0_I_I:%.*]] = phi i32 [ undef, [[IF_ELSE_I_I]] ], [ [[TMP2]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi i32 [ [[TMP2]], [[IF_ELSE_I_I]] ], [ undef, [[ENTRY]] ]
@@ -3680,9 +3681,9 @@ v128mx4 test_insert (v128mx4 s, int idx, v64mx4 m) { return insert(s, idx, m); }
 // CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP5_I]])
 // CHECK-NEXT:    br label [[_ZL11SET_V128MX4I6V64MX4_EXIT]]
 // CHECK:       _ZL11set_v128mx4i6v64mx4.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_6_0_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_3_0_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE_I]] ], [ undef, [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_6_0_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I]] ], [ [[TMP0]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_9_0_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_ELSE_I]] ], [ undef, [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_12_0_I:%.*]] = phi i32 [ undef, [[IF_ELSE_I]] ], [ [[TMP2]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_15_0_I:%.*]] = phi i32 [ [[TMP2]], [[IF_ELSE_I]] ], [ undef, [[ENTRY]] ]
@@ -3712,9 +3713,9 @@ v128mx4 test_set_v128mx4 (int idx, v64mx4 m) { return set_v128mx4(idx, m); }
 // CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP5_I_I]])
 // CHECK-NEXT:    br label [[_ZL14SET_V128BFP11PI6V64MX4_EXIT]]
 // CHECK:       _ZL14set_v128bfp11pi6v64mx4.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_6_0_I_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP1]], [[ENTRY:%.*]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_3_0_I_I:%.*]] = phi <8 x i32> [ [[TMP0]], [[IF_ELSE_I_I]] ], [ undef, [[ENTRY]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_6_0_I_I:%.*]] = phi <2 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[RETVAL_SROA_0_0_I_I:%.*]] = phi <8 x i32> [ undef, [[IF_ELSE_I_I]] ], [ [[TMP0]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_9_0_I_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_ELSE_I_I]] ], [ undef, [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_12_0_I_I:%.*]] = phi i32 [ undef, [[IF_ELSE_I_I]] ], [ [[TMP2]], [[ENTRY]] ]
 // CHECK-NEXT:    [[RETVAL_SROA_15_0_I_I:%.*]] = phi i32 [ [[TMP2]], [[IF_ELSE_I_I]] ], [ undef, [[ENTRY]] ]

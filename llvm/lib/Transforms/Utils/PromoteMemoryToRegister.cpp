@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file promotes memory references to be register references.  It promotes
@@ -475,9 +478,34 @@ static void convertMetadataToAssumes(LoadInst *LI, Value *Val,
     addAssumeNonNull(AC, LI);
 }
 
+// Returns true when the lifetime intrinsic II covers the entire alloca AI.
+// For scalable-vector allocas, EmitLifetimeStart uses -1 as the size argument
+// to mean "full scalable object"; for fixed-size allocas, compare the size
+// argument against the alloca's TypeAllocSize.
+static bool lifetimeCoversFullAlloca(const IntrinsicInst *II,
+                                     const AllocaInst *AI) {
+  const DataLayout &DL = AI->getModule()->getDataLayout();
+  TypeSize AllocSize = DL.getTypeAllocSize(AI->getAllocatedType());
+  auto *SizeArg = cast<ConstantInt>(II->getArgOperand(0));
+  return AllocSize.isScalable()
+             ? SizeArg->isMinusOne()
+             : SizeArg->getValue() == AllocSize.getFixedValue();
+}
+
 static void removeIntrinsicUsers(AllocaInst *AI) {
   // Knowing that this alloca is promotable, we know that it's safe to kill all
   // instructions except for load and store.
+  //
+  // lifetime.start is replaced with a store of undef rather than simply
+  // deleted. This makes the alloca's content explicitly undefined at that
+  // point, so PromoteMemToReg's SSA renaming sees a real definition of undef.
+  // Back-edge phi nodes that would otherwise carry a stale value from the
+  // previous iteration are then naturally resolved to undef, eliminating
+  // spurious loop-carried dependences on the alloca's value.
+  //
+  // isAllocaPromotable currently requires every load/store type to equal
+  // AI->getAllocatedType(), so using the allocated type here matches the
+  // type PromoteMemToReg's renaming will use for those loads/stores.
 
   for (Use &U : llvm::make_early_inc_range(AI->uses())) {
     Instruction *I = cast<Instruction>(U.getUser());
@@ -490,10 +518,32 @@ static void removeIntrinsicUsers(AllocaInst *AI) {
       continue;
     }
 
+    if (auto *II = dyn_cast<IntrinsicInst>(I)) {
+      if (II->isLifetimeStartOrEnd()) {
+        // Replace lifetime intrinsics with a store of undef so SSA renaming
+        // treats the alloca as having an undefined value at those points.
+        // - lifetime.start: the alloca is undefined at the start of a new
+        //   lifetime, breaking spurious loop-carried back-edge phi nodes.
+        // - lifetime.end: the alloca is undefined after its lifetime ends,
+        //   shortening live ranges and reducing register pressure.
+        //
+        // Only do this when the lifetime covers the entire alloca. A partial
+        // lifetime does not make the whole object undefined, so we must not
+        // emit a full-type store of undef for it.
+        if (lifetimeCoversFullAlloca(II, AI))
+          new StoreInst(UndefValue::get(AI->getAllocatedType()), AI, II);
+        II->eraseFromParent();
+        continue;
+      }
+    }
+
     if (!I->getType()->isVoidTy()) {
       // The only users of this bitcast/GEP instruction are lifetime intrinsics.
       // Follow the use/def chain to erase them now instead of leaving it for
-      // dead code elimination later.
+      // dead code elimination later. Apply the same store-undef treatment as
+      // for direct lifetime uses — the GEP has all-zero indices (enforced by
+      // isAllocaPromotable), so it aliases the alloca base and the size
+      // argument is comparable to the alloca's alloc size.
       for (Use &UU : llvm::make_early_inc_range(I->uses())) {
         Instruction *Inst = cast<Instruction>(UU.getUser());
 
@@ -502,6 +552,9 @@ static void removeIntrinsicUsers(AllocaInst *AI) {
           Inst->dropDroppableUse(UU);
           continue;
         }
+        if (auto *LII = dyn_cast<IntrinsicInst>(Inst))
+          if (LII->isLifetimeStartOrEnd() && lifetimeCoversFullAlloca(LII, AI))
+            new StoreInst(UndefValue::get(AI->getAllocatedType()), AI, LII);
         Inst->eraseFromParent();
       }
     }
