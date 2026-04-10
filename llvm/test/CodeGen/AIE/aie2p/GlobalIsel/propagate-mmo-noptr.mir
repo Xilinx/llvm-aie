@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2p -run-pass=aie-post-select-optimize %s -o - | FileCheck %s
 
@@ -22,6 +22,7 @@
   define void @test_4x16_load_parameter() { ret void }
   define void @test_4x16_load_add_loaded_pointer() { ret void }
   define void @test_4x16_load_add_copied_pointer() { ret void }
+  define void @test_4x16_load_add_skip_copy() { ret void }
 ...
 
 # Case 1: here we have the common case (ADD (SEL (BROADCAST(G), BROADCAST(G))))
@@ -623,6 +624,67 @@ body:             |
     %140:vec512 = VADD_32 %138, %133
     %141:ewl = COPY %140.sub_256_lo
     %147:ewh = COPY %140.sub_256_hi
+    %142:vec256 = VLDB_4x16_lo %141
+    %145:vec256 = VLDB_4x16_hi %141
+    %148:vec256 = VLDB_4x16_lo %147
+    %150:vec256 = VLDB_4x16_hi %147
+    $wl0 = COPY %142
+    $wl1 = COPY %145
+    $wl2 = COPY %148
+    $wl3 = COPY %150
+    PseudoRET implicit $lr
+...
+
+# Case 9: here we have the case
+# COPY (COPY ((ADD (SEL (BROADCAST(G), BROADCAST(G))))))
+
+---
+name:            test_4x16_load_add_skip_copy
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0:
+  liveins: $p0, $wl0
+
+    ; CHECK-LABEL: name: test_4x16_load_add_skip_copy
+    ; CHECK: liveins: $p0, $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[MOVXM:%[0-9]+]]:ep_as_32bit = MOVXM target-flags(aie2p-global) @softmax_ilut_ab
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY [[MOVXM]]
+    ; CHECK-NEXT: [[MOVXM1:%[0-9]+]]:ep_as_32bit = MOVXM target-flags(aie2p-global) @softmax_ilut_cd
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY [[MOVXM1]]
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[COPY]]
+    ; CHECK-NEXT: [[VBCST_32_1:%[0-9]+]]:vec512 = VBCST_32 [[COPY1]]
+    ; CHECK-NEXT: [[MOVXM2:%[0-9]+]]:ers16 = MOVXM 52428
+    ; CHECK-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[VBCST_32_]], [[VBCST_32_1]], [[MOVXM2]]
+    ; CHECK-NEXT: [[VADD_32_:%[0-9]+]]:vec512 = VADD_32 [[VSEL_32_]], [[VBCST_32_]]
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[VADD_32_]]
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ewl = COPY [[COPY2]].sub_256_lo
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:ewh = COPY [[COPY2]].sub_256_hi
+    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY3]]
+    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY3]]
+    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY4]]
+    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY4]]
+    ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x16_lo]]
+    ; CHECK-NEXT: $wl1 = COPY [[VLDB_4x16_hi]]
+    ; CHECK-NEXT: $wl2 = COPY [[VLDB_4x16_lo1]]
+    ; CHECK-NEXT: $wl3 = COPY [[VLDB_4x16_hi1]]
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %97:ep_as_32bit = MOVXM target-flags(aie2p-global) @softmax_ilut_ab
+    %96:er = COPY %97
+    %100:ep_as_32bit = MOVXM target-flags(aie2p-global) @softmax_ilut_cd
+    %101:er = COPY %100
+    %136:vec512 = VBCST_32 %96
+    %137:vec512 = VBCST_32 %101
+    %139:ers16 = MOVXM 52428
+    %138:vec512 = VSEL_32 %136, %137, %139
+    %140:vec512 = VADD_32 %138, %136
+    %151:vec512 = COPY %140
+    %141:ewl = COPY %151.sub_256_lo
+    %147:ewh = COPY %151.sub_256_hi
     %142:vec256 = VLDB_4x16_lo %141
     %145:vec256 = VLDB_4x16_hi %141
     %148:vec256 = VLDB_4x16_lo %147
