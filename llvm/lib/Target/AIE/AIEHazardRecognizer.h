@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file defines the hazard recognizer for scheduling on AIE.
@@ -76,7 +76,11 @@ class FuncUnitWrapper {
   /// in cycles to be merged, but they will not be merged into the scoreboard.
   SlotBits Conflicts = 0;
 
-  /// The occupied bank
+  /// The occupied memory banks. Tracking is done only for loads:
+  /// AIE has multiple load ports, so two loads in the same cycle can
+  /// collide on the same bank. Stores cannot collide because the slot
+  /// structure permits only one store per cycle. If Stores overlap, Resource
+  /// conflicts already captures the conflict.
   MemoryBankBits MemoryBanks = 0;
 
   /// The occupied pointer objects
@@ -216,8 +220,7 @@ public:
   // Dump the scoreboard
   void dumpScoreboard() const;
 
-  /// The instructions with memory bank attribute return the address space
-  /// number
+  /// Return the memory banks accessed by \p MI, or 0 for non-loads.
   MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;
 
   /// For instructions using memory operands, return
