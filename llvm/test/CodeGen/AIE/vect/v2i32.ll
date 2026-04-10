@@ -33,10 +33,8 @@ define <2 x i32> @v2i32_insert(<2 x i32> inreg %arg0) {
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    add r12, r6, #10
 ; CHECK-NEXT:    mov cl1, r12
-; CHECK-NEXT:    add r12, r7, #20
-; CHECK-NEXT:    mov ch1, r12
+; CHECK-NEXT:    add r1, r7, #20
 ; CHECK-NEXT:    mov r0, cl1
-; CHECK-NEXT:    mov r1, ch1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -81,10 +79,10 @@ define <2 x i32> @v2i32_undef_intrinsic() {
 ; CHECK-NEXT:    mov.u20 r12, #200
 ; CHECK-NEXT:    st r12, [p0]
 ; CHECK-NEXT:    st.spil r12, [sp, #-32]
-; CHECK-NEXT:    lda ch0, [p0]
+; CHECK-NEXT:    lda r1, [p0]
 ; CHECK-NEXT:    lda.spil cl0, [sp, #-32]
-; CHECK-NEXT:    mov r1, ch0
 ; CHECK-NEXT:    padda [sp], #-32
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
