@@ -55,6 +55,10 @@ public:
   void registerDefaultAliasAnalyses(AAManager &) override;
   void registerPassBuilderCallbacks(PassBuilder &PB) override;
   bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
+  ScheduleDAGInstrs *
+  createPostMachineScheduler(MachineSchedContext *C) const override;
+  ScheduleDAGInstrs *
+  createMachineScheduler(MachineSchedContext *C) const override;
 
   virtual void setMBBPlacementOpts();
 };
@@ -77,12 +81,6 @@ public:
   void addPreEmitPass2() override;
   void addPreRegAlloc() override;
   void addPreSched2() override;
-
-  ScheduleDAGInstrs *
-  createPostMachineScheduler(MachineSchedContext *C) const override;
-
-  ScheduleDAGInstrs *
-  createMachineScheduler(MachineSchedContext *C) const override;
 
   std::unique_ptr<CSEConfigBase> getCSEConfig() const override;
 };
