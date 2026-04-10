@@ -5317,7 +5317,7 @@ bool llvm::matchSplitConcatStore(MachineInstr &StMI, MachineRegisterInfo &MRI,
   const Register PtrReg = StMI.getOperand(PtrOpIdx).getReg();
   const LLT PtrTy = MRI.getType(PtrReg);
 
-  MatchInfo = [=, &MRI, &StMI](MachineIRBuilder &B) {
+  MatchInfo = [=, &StMI](MachineIRBuilder &B) {
     MachineMemOperand *const MMO = *StMI.memoperands_begin();
 
     // Compute the effective base pointer.
