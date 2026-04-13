@@ -96,9 +96,18 @@ INTRINSIC(void)
 write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
   return __builtin_aie2ps_write_tm(regVal, (int *)(TMAddrSpaceStart + regAddr));
 }
+#endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
 
 // FIXME: this belongs to libc's stdio.h
 void printf(const char *__restrict, ...);
 
-#endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
+// _Float16 math function overloads: resolve ambiguity by promoting to float.
+// Without these, calls like std::sqrt(_Float16) are ambiguous between the
+// float and long double overloads in libc++.
+#if defined(__cplusplus)
+namespace std {
+inline float sqrt(_Float16 __x) { return __builtin_aie2ps_sqrtf((float)__x); }
+} // namespace std
+#endif // __cplusplus
+
 #endif /* __AIE2PSINTRIN_H */
