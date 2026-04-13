@@ -30,6 +30,7 @@
 #define DEBUG_TYPE "postpipeliner"
 #define DEBUG_SUMMARY(X) DEBUG_WITH_TYPE("postpipeliner-summary", X)
 #define DEBUG_FULL(X) DEBUG_WITH_TYPE("postpipeliner-full", X)
+#define DEBUG_DIAG(X) DEBUG_WITH_TYPE("postpipeliner-diag", X)
 
 namespace llvm::AIE {
 using namespace Solver;
@@ -721,6 +722,78 @@ void dumpCycles(const ScheduleInfo &Info, int II) {
   dumpSchedule(Info, FullStageLength, II,
                [&](int I, int K) { return I == Info[K].Cycle; });
 }
+
+#ifndef NDEBUG
+/// Dump a single node's scheduling metrics for diagnostic output.
+void dumpDiagNode(const SUnit &SU, const ScheduleInfo &Info,
+                  const PostPipelinerStrategy &Strategy, bool IsAvailable,
+                  StringRef Tag) {
+  const NodeInfo &NI = Info[SU.NodeNum];
+  const int Earliest = NI.Earliest;
+  const int Latest = NI.Latest;
+  const int Mobility = Latest - Earliest;
+  const int Depth = SU.getDepth();
+  const int Height = SU.getHeight();
+  dbgs() << "    " << Tag << "SU" << format("%-3d", SU.NodeNum) << " "
+         << OpcodeOnly(*SU.getInstr(), 20) << "  E=[" << Earliest << ","
+         << Latest << "] mob=" << Mobility << " depth=" << Depth
+         << " height=" << Height;
+  if (NI.LCDLatest != -1)
+    dbgs() << " lcd=" << NI.LCDLatest;
+  dbgs() << "\n";
+}
+
+/// Dump all unscheduled nodes, split into available and blocked.
+void dumpDiagAllNodes(const ScheduleDAGInstrs &DAG, const ScheduleInfo &Info,
+                      int NInstr, PostPipelinerStrategy &Strategy,
+                      int PickedNode) {
+  auto NotScheduled = [&](const auto &Dep) {
+    auto *SU = Dep.getSUnit();
+    if (SU->isBoundaryNode())
+      return false;
+    const int N = SU->NodeNum;
+    return N < NInstr && !Info[N].Scheduled;
+  };
+
+  // Collect available and blocked nodes.
+  SmallVector<const SUnit *, 16> Available;
+  SmallVector<std::pair<const SUnit *, SmallVector<int, 4>>, 16> Blocked;
+
+  for (int K = 0; K < NInstr; K++) {
+    if (Info[K].Scheduled)
+      continue;
+    const auto &SU = DAG.SUnits[K];
+    auto &Edges = Strategy.fromTop() ? SU.Preds : SU.Succs;
+    if (any_of(Edges, NotScheduled)) {
+      SmallVector<int, 4> Blockers;
+      for (const auto &Dep : Edges) {
+        auto *DepSU = Dep.getSUnit();
+        if (!DepSU->isBoundaryNode() && int(DepSU->NodeNum) < NInstr &&
+            !Info[DepSU->NodeNum].Scheduled)
+          Blockers.push_back(DepSU->NodeNum);
+      }
+      Blocked.push_back({&SU, std::move(Blockers)});
+    } else {
+      Available.push_back(&SU);
+    }
+  }
+
+  dbgs() << "  Available nodes (" << Available.size() << "):\n";
+  for (const SUnit *SU : Available) {
+    const StringRef Tag = (int(SU->NodeNum) == PickedNode) ? ">>> " : "    ";
+    dumpDiagNode(*SU, Info, Strategy, true, Tag);
+  }
+
+  dbgs() << "  Blocked nodes (" << Blocked.size() << "):\n";
+  for (const auto &[SU, Blockers] : Blocked) {
+    dumpDiagNode(*SU, Info, Strategy, false, "    ");
+    dbgs() << "      blocked by:";
+    for (int B : Blockers)
+      dbgs() << " SU" << B;
+    dbgs() << "\n";
+  }
+}
+#endif
 } // namespace
 
 int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
@@ -759,6 +832,9 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
   }
   LLVM_DEBUG(dbgs() << "\n");
   assert(Best >= 0);
+
+  DEBUG_DIAG(dumpDiagAllNodes(*DAG, Info, NInstr, Strategy, Best));
+
   return Best;
 }
 
@@ -782,6 +858,8 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   // Set up the basic schedule from the original instructions
   const int PipelineDepth = HR.getPipelineDepth();
   for (int K = 0; K < NInstr; K++) {
+    DEBUG_DIAG(dbgs() << "\n=== PostPipeliner Step " << K + 1 << "/" << NInstr
+                      << " [" << Strategy.name() << "] ===\n");
     const int N = mostUrgent(Strategy);
     SUnit &SU = DAG->SUnits[N];
     MachineInstr *const MI = SU.getInstr();
@@ -835,7 +913,11 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
 
-    DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
+    DEBUG_DIAG(dbgs() << "  => Placed SU" << N << " in cycle " << Actual
+                      << " (mod " << ModCycle << ") interval=[" << Earliest
+                      << "," << Latest << "]\n");
+
+    DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(II););
   }
 
   const bool Success = checkStages();
