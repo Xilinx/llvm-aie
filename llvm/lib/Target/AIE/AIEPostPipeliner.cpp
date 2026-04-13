@@ -455,6 +455,38 @@ void PostPipeliner::computeRecMII() {
   LLVM_DEBUG(dbgs() << "RecMII=" << RecMII << "\n");
 }
 
+void PostPipeliner::computeEffectiveHeight() {
+  // Walk nodes bottom-up to compute the length of the critical path
+  // below each node. Only slack-free edges contribute: if a successor
+  // is already driven by a longer independent path, the edge does not
+  // lie on the critical path and is ignored.
+  for (int K = NInstr - 1; K >= 0; K--) {
+    const SUnit &SU = DAG->SUnits[K];
+    int MaxEH = 0;
+    for (const SDep &Dep : SU.Succs) {
+      if (Dep.getKind() != SDep::Data)
+        continue;
+      const int S = Dep.getSUnit()->NodeNum;
+      const int Latency = Dep.getSignedLatency();
+
+      // Skip edges not on the critical path: the successor is already
+      // pushed later by another predecessor, so this edge has slack.
+      const bool HasSlack = Info[K].Earliest + Latency < Info[S].Earliest;
+      if (HasSlack)
+        continue;
+
+      // Accumulate height along this critical edge.
+      const bool IsLoopCarried = S >= NInstr;
+      const int SuccIdx = IsLoopCarried ? S - NInstr : S;
+      const int Candidate = Latency + Info[SuccIdx].EffectiveHeight;
+      MaxEH = std::max(MaxEH, Candidate);
+    }
+    Info[K].EffectiveHeight = MaxEH;
+    LLVM_DEBUG(dbgs() << "SU" << K << " EffectiveHeight="
+                      << Info[K].EffectiveHeight << "\n");
+  }
+}
+
 bool PostPipeliner::computeLoopCarriedParameters() {
 
   // Initialize slot counts.
@@ -533,6 +565,8 @@ bool PostPipeliner::computeLoopCarriedParameters() {
       LLVM_DEBUG(dbgs() << "SU" << K << " LCDLatest=" << Me.LCDLatest << "\n");
     }
   }
+
+  computeEffectiveHeight();
 
   // Save the static values for ease of reset
   for (auto &N : Info.Nodes) {
@@ -1089,7 +1123,26 @@ public:
     LCDLatest,
     DepLength, // Schedule "as deep as possible" first
     Liveness,  // Minimise liveness by looking at output deps
+    EffHeight, // Prefer nodes with more critical path below them
     Size
+  };
+
+  // Placement modifiers affect which cycle a node lands in, as opposed
+  // to PriorityComponents which affect which node is picked next.
+  enum PlacementModifier {
+    // Defer non-critical nodes (EffectiveHeight == 0) by one cycle,
+    // leaving their earliest modulo slot free for critical-path nodes.
+    DeferNonCritical,
+    PlacementSize
+  };
+  static std::string getPlacementName(PlacementModifier Mod) {
+    switch (Mod) {
+    case PlacementModifier::DeferNonCritical:
+      return "Defer";
+    default:
+      break;
+    }
+    return "PlacementSize - Illegal";
   };
   static std::string getPriorityName(PriorityComponent Component) {
     switch (Component) {
@@ -1107,6 +1160,8 @@ public:
       return "DepLength";
     case PriorityComponent::Liveness:
       return "Liveness";
+    case PriorityComponent::EffHeight:
+      return "EffHeight";
     default:
       break;
     }
@@ -1118,10 +1173,12 @@ public:
     bool Alternate = false;
     int Runs = 0;
     SmallVector<PriorityComponent, 4> Components;
+    SmallVector<PlacementModifier, 2> Modifiers;
   };
 
 private:
   std::string Name;
+  SmallVector<PlacementModifier, 2> Modifiers;
   std::set<int> SuccSiblingScheduled;
   std::set<int> PredSiblingScheduled;
   std::function<bool(const SUnit &A, const SUnit &B)>
@@ -1157,6 +1214,13 @@ private:
             // This tries to minimise live ranges of registers by favouring
             // nodes that have successors with negative latencies.
             return getMinOutputLat(A.Succs) < getMinOutputLat(B.Succs);
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            // Prefer nodes with more critical path below them.
+            // Deferring these risks extending the schedule length.
+            const auto &IA = Info[A.NodeNum];
+            const auto &IB = Info[B.NodeNum];
+            return IA.EffectiveHeight > IB.EffectiveHeight;
           },
       };
   std::vector<PriorityComponent> Priority;
@@ -1213,36 +1277,83 @@ public:
   std::string name() override { return Name; }
   ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
                  bool TopDown, bool Alternate,
-                 ArrayRef<PriorityComponent> Components)
+                 ArrayRef<PriorityComponent> Components,
+                 ArrayRef<PlacementModifier> Modifiers = {})
       : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown),
-        Alternate(Alternate) {
+        Alternate(Alternate), Modifiers(Modifiers.begin(), Modifiers.end()) {
     Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown) +
            "_" + std::to_string(Alternate);
     for (auto Comp : Components) {
       Name += "_" + getPriorityName(Comp);
       Priority.emplace_back(Comp);
     }
+    for (auto Mod : this->Modifiers)
+      Name += "_" + getPlacementName(Mod);
+  }
+
+  // Apply placement modifiers to adjust the cycle chosen for SU.
+  // Currently supports DeferNonCritical, which nudges non-critical
+  // nodes one cycle later so their earliest modulo slot stays free
+  // for critical-path nodes.
+  std::optional<int>
+  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
+                const AIEHazardRecognizer &HR,
+                ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
+    const bool ShouldDefer = llvm::is_contained(Modifiers, DeferNonCritical) &&
+                             Info[SU.NodeNum].EffectiveHeight == 0;
+    if (ShouldDefer && Earliest + 1 <= Latest) {
+      // Try the deferred range [Earliest+1, Latest] first. If no
+      // resource-free cycle exists there, fall back to the original
+      // range so the node is never left unscheduled.
+      auto Result = PostPipelinerStrategy::fitInInterval(
+          SU, Earliest + 1, Latest, II, HR, Scoreboard);
+      if (Result)
+        return Result;
+      // No need to retry [Earliest+1, Latest]
+      return PostPipelinerStrategy::fitInInterval(SU, Earliest, Earliest, II,
+                                                  HR, Scoreboard);
+    }
+    return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
+                                                Scoreboard);
   }
 };
 
 using Prio = ConfigStrategy::PriorityComponent;
+using Plc = ConfigStrategy::PlacementModifier;
 static const ConfigStrategy::Configuration Heuristics[] = {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
-    // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents}
-    {1, true, false, 1, {Prio::NodeNum}},
-    {1, true, false, HeuristicRuns, {Prio::Latest}},
-    {1, true, false, HeuristicRuns, {Prio::Critical}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}},
-    {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}},
-    {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}},
-    {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}},
-    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}},
+    // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
+    {1, true, false, 1, {Prio::NodeNum}, {}},
+    {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
+    {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
+    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
+    {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}, {}},
+    {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}, {}},
+    {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}, {}},
+    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}, {}},
+    // EffectiveHeight: prefer nodes with more critical path below them.
+    // DeferNonCritical defers non-critical nodes (EH=0) to leave early
+    // modulo cycles free for the critical path.
+    {1,
+     true,
+     false,
+     HeuristicRuns,
+     {Prio::EffHeight, Prio::Latest},
+     {Plc::DeferNonCritical}},
+    {1,
+     true,
+     false,
+     HeuristicRuns,
+     {Prio::EffHeight, Prio::Critical},
+     {Plc::DeferNonCritical}},
+    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Latest}, {}},
+    {1, true, false, HeuristicRuns, {Prio::EffHeight, Prio::Critical}, {}},
     // Bottom-up strategies
-    {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
-    {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
-    {1, false, false, 1, {Prio::NodeNum}}, // pure bottom up
+    {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+    {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
+    {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
 bool PostPipeliner::tryApproaches() {
@@ -1252,8 +1363,9 @@ bool PostPipeliner::tryApproaches() {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
-    ConfigStrategy S(*DAG, Info, MinLength + Config.ExtraStages * II,
-                     Config.TopDown, Config.Alternate, Config.Components);
+    const int StrategyLength = MinLength + Config.ExtraStages * II;
+    ConfigStrategy S(*DAG, Info, StrategyLength, Config.TopDown,
+                     Config.Alternate, Config.Components, Config.Modifiers);
     resetSchedule(/*FullReset=*/true);
     for (int Run = 0; Run < Config.Runs && Run < HeuristicRuns; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
