@@ -565,6 +565,45 @@ bool AIE2PSRegisterInfo::isFifoPhysReg(const Register Reg) const {
                               AIE2PS::FIFO1024RegClass.contains(Reg));
 }
 
+bool AIE2PSRegisterInfo::shouldCoalesce(
+    MachineInstr *MI, const TargetRegisterClass *SrcRC, unsigned SubReg,
+    const TargetRegisterClass *DstRC, unsigned DstSubReg,
+    const TargetRegisterClass *NewRC, LiveIntervals &LIS) const {
+
+  // The ePSRFLdF register class represents the complete FIFO load state as a
+  // composite of three sub-registers with very different sizes:
+  //   sub_ptr   (20-bit pointer, e.g. p0/p1)
+  //   sub_avail (32-bit availability count, e.g. r24/r25)
+  //   sub_fifo  (1024-bit FIFO buffer, e.g. lf0/lf1)
+  //
+  // When the coalescer eliminates a chain of copies tracing a pointer or count
+  // value back to an early definition (e.g. an argument in the entry block),
+  // it can promote the initialization of sub_ptr or sub_avail into that early
+  // block.  Because the composite register is treated as a unit, this makes
+  // the entire ePSRFLdF register — including the large sub_fifo — live from
+  // that early definition point, even though the FIFO buffer is only needed
+  // much later when the first VLD_FILL/VLD_POP instruction executes.
+  //
+  // The artificially extended live range forces the register allocator to hold
+  // a physical FIFO load state register (plfr0 or plfr1) across code regions
+  // where it is not yet needed, which can create pressure that causes
+  // unnecessary spills of the 1024-bit FIFO buffer.
+  //
+  // Blocking coalescing into the small sub-registers (sub_ptr, sub_avail) of
+  // ePSRFLdF keeps the composite register's live range starting at the site of
+  // the first real FIFO operation, where multiple FIFO virtual registers in
+  // disjoint control-flow regions can share the same two physical registers
+  // (plfr0, plfr1) without interference and without any spilling.
+
+  if (AIE2PS::ePSRFLdFRegClass.hasSubClassEq(NewRC) &&
+      SubReg != AIE2PS::NoSubRegister && SubReg != AIE2PS::sub_fifo) {
+    return false;
+  }
+
+  return AIEBaseRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC,
+                                             DstSubReg, NewRC, LIS);
+}
+
 void AIE2PSRegisterInfo::getTargetSubRegs(std::vector<unsigned> &Subregs,
                                           unsigned Size,
                                           const RegisterBank &RB) const {

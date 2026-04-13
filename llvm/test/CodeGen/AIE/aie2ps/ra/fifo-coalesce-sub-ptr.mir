@@ -13,7 +13,7 @@
 # register's live range back to the definition of the source, causing the
 # register allocator to spill the 1024-bit sub_fifo unnecessarily.
 # The sub_fifo sub-register is always allowed to coalesce.
-# FIXME: actually block coalescing
+
 ---
 name:  fifo_no_coalesce_sub_ptr
 alignment: 16
@@ -24,8 +24,11 @@ tracksRegLiveness: true
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: fifo_no_coalesce_sub_ptr
-    ; CHECK: undef %state.sub_ptr:epsrfldf = IMPLICIT_DEF
-    ; CHECK-NEXT: undef %state.sub_ptr:epsrfldf, %state.sub_fifo:epsrfldf, %state.sub_avail:epsrfldf = VLD_FILL_512_pseudo %state.sub_ptr, undef %state.sub_fifo, undef %state.sub_avail :: (load unknown-size, align 1, addrspace 5)
+    ; CHECK: %ptr:eps = IMPLICIT_DEF
+    ; CHECK-NEXT: %avail:mrf2a = IMPLICIT_DEF
+    ; CHECK-NEXT: undef %state.sub_ptr:epsrfldf = COPY %ptr
+    ; CHECK-NEXT: %state.sub_avail:epsrfldf = COPY %avail
+    ; CHECK-NEXT: %state.sub_ptr:epsrfldf, %state.sub_fifo:epsrfldf, %state.sub_avail:epsrfldf = VLD_FILL_512_pseudo %state.sub_ptr, undef %state.sub_fifo, %state.sub_avail :: (load unknown-size, align 1, addrspace 5)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit %state
     %ptr:eps = IMPLICIT_DEF
     %fifo:eldfiforeg = IMPLICIT_DEF
