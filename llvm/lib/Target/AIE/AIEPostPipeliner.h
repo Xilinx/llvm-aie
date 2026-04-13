@@ -89,6 +89,12 @@ public:
   // Latest corrected by taking Earliest of an LCD successor into account
   int LCDLatest = -1;
 
+  // The length of the critical path hanging below this node, counting
+  // only slack-free edges (slack: pred.Earliest + latency < succ.Earliest).
+  // Edges where the successor is already driven by a longer
+  // independent path are ignored.
+  int EffectiveHeight = 0;
+
   // The transitive closure of my predecessors
   std::unordered_set<int> Ancestors;
 
@@ -288,6 +294,7 @@ class PostPipeliner {
   void computeForward();
   bool computeBackward();
   void computeRecMII();
+  void computeEffectiveHeight();
 
   /// Given Earliest and Latest of each node in the first iteration,
   /// compute the smallest length of the linear schedule that is feasible.
