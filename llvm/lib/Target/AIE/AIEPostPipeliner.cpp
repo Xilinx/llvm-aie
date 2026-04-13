@@ -632,12 +632,38 @@ const char *getEdgeColor(SDep::Kind Kind) {
   return "gray";
 }
 
-void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
-  dbgs() << "digraph {\n";
+// Returns edge attributes string including label (latency + register) and
+// color.
+std::string edgeAttributes(const SDep &Dep, const TargetRegisterInfo *TRI) {
+  std::string Label = std::to_string(Dep.getSignedLatency());
+  switch (Dep.getKind()) {
+  case SDep::Data:
+  case SDep::Output:
+  case SDep::Anti: {
+    const Register Reg = Dep.getReg();
+    if (Reg.isPhysical()) {
+      Label += " ";
+      Label += TRI->getName(Reg);
+    } else if (Reg.isVirtual()) {
+      Label += " VR";
+      Label += std::to_string(Register::virtReg2Index(Reg));
+    }
+    break;
+  }
+  case SDep::Order:
+    break;
+  }
+  return "[label=\"" + Label + "\", color=" + getEdgeColor(Dep.getKind()) + "]";
+}
+
+void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG,
+               StringRef GraphId) {
+  dbgs() << "digraph " << GraphId << " {\n";
   const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
 
   // Collect backedge sources and destinations for mirroring.
-  SmallVector<std::tuple<int, int, int, SDep::Kind>, 16> Lcds;
+  // Store the full SDep to preserve latency, kind, and register information.
+  SmallVector<std::tuple<int, int, SDep>, 16> Lcds;
   SmallSet<int, 16> LcdSrc;
   SmallSet<int, 16> LcdDst;
 
@@ -654,7 +680,7 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
       }
       // This is a backedge from S to D in the next iteration.
       // Add it to the Lcds, and register src and dst nodes.
-      Lcds.emplace_back(S, D0, Dep.getSignedLatency(), Dep.getKind());
+      Lcds.emplace_back(S, D0, Dep);
       LcdSrc.insert(S);
       LcdDst.insert(D0);
     }
@@ -680,43 +706,26 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
            << "\"]\n";
   }
 
-  for (const auto &[Src, Dst, Latency, Kind] : Lcds) {
+  // Emit loop-carried dependency edges (mirror edges).
+  for (const auto &[Src, Dst, Dep] : Lcds) {
+    const std::string Attrs = edgeAttributes(Dep, TRI);
     // Create an edge from the split source to the destination.
-    dbgs() << format("\tSU%d_src -> SU%d [label=%d, color=%s]\n", Src, Dst,
-                     Latency, getEdgeColor(Kind));
-    // Create an edge from the source to the split destination
-    dbgs() << format("\tSU%d -> SU%d_dst [label=%d, color=%s]\n", Src, Dst,
-                     Latency, getEdgeColor(Kind));
+    dbgs() << format("\tSU%d_src -> SU%d ", Src, Dst) << Attrs << "\n";
+    // Create an edge from the source to the split destination.
+    dbgs() << format("\tSU%d -> SU%d_dst ", Src, Dst) << Attrs << "\n";
   }
 
+  // Emit regular (intra-iteration) edges.
   for (int K = 0; K < Info.NInstr; K++) {
-    auto &SU = DAG->SUnits[K];
-    for (auto &Dep : SU.Succs) {
-      auto *Succ = Dep.getSUnit();
+    const SUnit &SU = DAG->SUnits[K];
+    for (const SDep &Dep : SU.Succs) {
+      const SUnit *Succ = Dep.getSUnit();
       const int S = Succ->NodeNum;
-      if (S > Info.NInstr || S % Info.NInstr == K || Succ->isBoundaryNode()) {
+      if (S >= Info.NInstr || S % Info.NInstr == K || Succ->isBoundaryNode()) {
         continue;
       }
-
-      dbgs() << "\tSU" << K << " -> " << "SU" << S;
-      dbgs() << " [ label=\"" << Dep.getSignedLatency();
-      switch (Dep.getKind()) {
-      case SDep::Data:
-      case SDep::Output:
-      case SDep::Anti: {
-        const Register Reg = Dep.getReg();
-        if (Reg.isPhysical()) {
-          dbgs() << format(" %s ", TRI->getName(Reg));
-        } else {
-          dbgs() << format(" VR%d ", Register::virtReg2Index(Reg));
-        }
-        break;
-      }
-      case SDep::Order:
-        break;
-      }
-      dbgs() << "\" color=" << getEdgeColor(Dep.getKind()) << " ] ";
-      dbgs() << "\n";
+      dbgs() << "\tSU" << K << " -> SU" << S << " " << edgeAttributes(Dep, TRI)
+             << "\n";
     }
   }
   dbgs() << "}\n";
@@ -1580,7 +1589,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 
   computeLoopCarriedParameters();
 
-  LLVM_DEBUG(dumpGraph(Info, DAG));
+  LLVM_DEBUG(dumpGraph(Info, DAG, "PostPipeliner_II" + std::to_string(II)));
 
   if (II < RecMII) {
     return false;
