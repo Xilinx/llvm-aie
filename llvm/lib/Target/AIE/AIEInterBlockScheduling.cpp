@@ -62,7 +62,7 @@ static cl::opt<bool>
                        "iterative loop scheduling"));
 
 static cl::opt<int> PostPipelinerMaxII(
-    "aie-postpipeliner-maxii", cl::init(40),
+    "aie-postpipeliner-maxii", cl::init(60),
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
 
 static cl::opt<bool> EnableMultiSlotInstrMaterialization(
@@ -825,9 +825,12 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   if (BS.getRegions().size() == 1) {
     auto &PostSWP = BS.getPostSWP();
     if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
-      BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
-      BS.FixPoint.IITries = 1;
-      return SchedulingStage::Pipelining;
+      const int ResMII = PostSWP.getResMII(*BS.TheBlock);
+      if (ResMII <= PostPipelinerMaxII) {
+        BS.FixPoint.II = ResMII;
+        BS.FixPoint.IITries = 1;
+        return SchedulingStage::Pipelining;
+      }
     }
   }
   return SchedulingStage::SchedulingDone;
