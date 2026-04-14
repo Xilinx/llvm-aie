@@ -2045,7 +2045,6 @@ inline __attribute__((always_inline)) void * add_2d_int(void * , int , int , add
 inline __attribute__((always_inline)) void * add_2d_byte_int(void * , int , int , addr_t , addr_t , addr_t & );
 inline __attribute__((always_inline)) void * add_3d_int(void * , int , int , int , addr_t , addr_t , addr_t & , addr_t , addr_t , addr_t & );
 inline __attribute__((always_inline)) void * add_3d_byte_int(void * , int , int , int , addr_t , addr_t , addr_t & , addr_t , addr_t , addr_t & );
-inline __attribute__((always_inline)) void * byte_incr(void * , int );
 inline __attribute__((always_inline)) int delay1(int );
 inline __attribute__((always_inline)) int delay2(int );
 inline __attribute__((always_inline)) int delay3(int );
