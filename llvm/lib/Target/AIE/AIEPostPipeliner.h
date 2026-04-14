@@ -201,7 +201,7 @@ public:
   // fits. The default implementation uses fromTop() to determine scan
   // direction.
   virtual std::optional<int>
-  fitInInterval(MachineInstr &MI, int Earliest, int Latest, int II,
+  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard);
 };
