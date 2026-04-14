@@ -50,9 +50,9 @@ static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
 std::optional<int> PostPipelinerStrategy::fitInInterval(
-    MachineInstr &MI, int First, int Last, int II,
-    const AIEHazardRecognizer &HR,
+    const SUnit &SU, int First, int Last, int II, const AIEHazardRecognizer &HR,
     ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
+  MachineInstr &MI = *SU.getInstr();
   assert(First <= Last);
   const int Step = fromTop() ? 1 : -1;
   if (Step < 0) {
@@ -795,7 +795,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     }
 
     auto OptCycle =
-        Strategy.fitInInterval(*MI, Earliest, Latest, II, HR, Scoreboard);
+        Strategy.fitInInterval(SU, Earliest, Latest, II, HR, Scoreboard);
     if (!OptCycle) {
       LLVM_DEBUG(dbgs() << "Out of resources\n");
 
