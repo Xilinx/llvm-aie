@@ -16,8 +16,9 @@
 # MaxPool2D inner loop (10 instructions) with VSEL.
 # Similar to the 9-instr variant but with an extra VSEL_8 between
 # VSHIFT and VMAX_LT_8 in the compute chain.
-# The solver tries II=4 with a computed NS that is too small,
-# and the heuristic falls back to II=7.
+# The Z3 solver finds a solution at II=4 NS=4 but it fails
+# CheckFixedSchedule due to pipeline resource hazards.
+# Without the retry mechanism the heuristic falls back to II=7.
 
 --- |
   target triple = "aie2ps"
