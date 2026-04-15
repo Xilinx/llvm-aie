@@ -19,6 +19,7 @@
 #include "AIEDataDependenceHelper.h"
 #include "AIELoopClass.h"
 #include "AIESlotStatistics.h"
+#include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
 
 #include "llvm/ADT/BitVector.h"
@@ -178,6 +179,8 @@ private:
   LiveRegMatrix *LRM = nullptr;
   LiveIntervals *LIS = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
+  /// Per-loop option overrides from !llvm.loop metadata.
+  AIE::LoopOptionOverrides Overrides;
 
   /// Set Architecture specific Options
   void setArchSpecificPassOptions();
@@ -561,6 +564,9 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
 
+  // Build per-loop option overrides from !llvm.loop metadata.
+  Overrides = AIE::LoopOptionOverrides(*MBB);
+
   // Collect all the virtual registers that have at least a copy instruction
   // that defines them. Subregisters may contain constants that may be shared
   // across different virtual registers. Renaming would reintroduce unnecessary
@@ -577,7 +583,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "Stats="; Statistics.dumpShort(); dbgs() << "\n");
   LLVM_DEBUG(dbgs() << "LoopClass=" << LoopClass << "\n");
 
-  RewriteMode Mode = selectMode(RegRewriteMode, LoopClass);
+  RewriteMode Mode = selectMode(Overrides.get(RegRewriteMode), LoopClass);
 
   std::set<MCRegister> HighLatencyRegs;
   if (Mode == RewriteMode::LatencyAware) {
@@ -639,7 +645,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates\n");
 
   // If requested, unassign MBB's liveins as well to get even more freedom
-  if (AggressiveReAlloc) {
+  if (Overrides.get(AggressiveReAlloc)) {
     for (unsigned I = 0, E = MRI->getNumVirtRegs(); I != E; ++I) {
       Register Reg = Register::index2VirtReg(I);
       if (!LIS->hasInterval(Reg))
@@ -659,9 +665,10 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   RoundRobin LRURegisters = computeLRURegisters(Candidates);
 
   // Prime the LRURegisters, so that the allocation is loop-aware.
-  if (PreAlloc) {
+  if (Overrides.get(PreAlloc)) {
     preAllocate(Candidates, LRURegisters);
   }
+
   if (!reAllocate(Candidates, LRURegisters)) {
     revertAllocation(Candidates);
     return false;
@@ -681,7 +688,7 @@ bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
   // Only consider vec/acc registers as candidates, and optionally GPRs.
   bool IsCandidateClass =
       TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))) ||
-      (GPRRealloc &&
+      (Overrides.get(GPRRealloc) &&
        TRI->getGPRRegClass(*MF)->hasSubClassEq(MRI->getRegClass(Reg)));
   if (!IsCandidateClass)
     return false;
@@ -862,7 +869,7 @@ std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
       auto IsHighLatInstrOperand = [&]() {
         auto OperandCycle = ItinData->getOperandCycle(SchedClass, I);
         if (OperandCycle)
-          return OperandCycle.value() >= MinRegisterLatency;
+          return OperandCycle.value() >= Overrides.get(MinRegisterLatency);
         // If we have an instruction without OperandCycles, it is most probably
         // a pseudo instruction (no itinerary). In this case, if it is a _split
         // load, consider it as high latency.

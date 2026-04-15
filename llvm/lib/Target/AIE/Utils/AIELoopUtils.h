@@ -75,6 +75,21 @@ SmallVector<const MDNode *, 4> getLoopMetadataEntries(const MDNode *LoopID);
 std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
                                               const StringRef Name);
 
+/// Extract a boolean value (i64 0/1) from the named loop metadata entry.
+std::optional<bool> getLoopHintBool(const MDNode *LoopID, StringRef Key);
+std::optional<bool> getLoopHintBool(const MachineBasicBlock &MBB,
+                                    StringRef Key);
+
+/// Extract an integer value (i64) from the named loop metadata entry.
+std::optional<int64_t> getLoopHintInt(const MDNode *LoopID, StringRef Key);
+std::optional<int64_t> getLoopHintInt(const MachineBasicBlock &MBB,
+                                      StringRef Key);
+
+/// Extract a string value (MDString) from the named loop metadata entry.
+std::optional<StringRef> getLoopHintString(const MDNode *LoopID, StringRef Key);
+std::optional<StringRef> getLoopHintString(const MachineBasicBlock &MBB,
+                                           StringRef Key);
+
 // Returns true if the loop has an unroll(full) pragma.
 bool hasUnrollFullPragma(const MDNode *LoopID);
 
