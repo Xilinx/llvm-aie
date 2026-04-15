@@ -4,7 +4,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -273,99 +273,170 @@ protected:
   }
 };
 
-struct SinkReshapeOp : public SinkSpecificOp<tosa::ReshapeOp> {
-  using SinkSpecificOp<tosa::ReshapeOp>::SinkSpecificOp;
+struct ReshapeOperandInfo {
+  tosa::ReshapeOp reshape;
+  ShapedType inputType;
+  SmallVector<size_t> candidateAxes;
+};
+
+FailureOr<ReshapeOperandInfo> getReshapeOperandInfo(Value operand,
+                                                    uint32_t concatAxisAfter,
+                                                    tosa::ConcatOp concatOp,
+                                                    PatternRewriter &rewriter) {
+  if (!operand.hasOneUse())
+    return rewriter.notifyMatchFailure(
+        concatOp, "Operands must just connect to this concat.");
+
+  auto reshape = operand.getDefiningOp<tosa::ReshapeOp>();
+  if (!reshape)
+    return rewriter.notifyMatchFailure(concatOp,
+                                       "Operand is not a tosa.reshape");
+
+  const auto inputType = dyn_cast<ShapedType>(reshape.getInput1().getType());
+  const auto outputType = dyn_cast<ShapedType>(reshape.getType());
+  if (!inputType || !inputType.hasStaticShape() || !outputType ||
+      !outputType.hasStaticShape())
+    return rewriter.notifyMatchFailure(
+        concatOp, "Dynamic shapes for reshapes are not supported.");
+
+  if (inputType.getRank() == 0)
+    return rewriter.notifyMatchFailure(
+        concatOp, "Tensors of rank 0 cannot have an independent concat axis.");
+
+  int64_t prefixProductAfterReshape = 1;
+  for (size_t i = 0; i < concatAxisAfter; ++i)
+    prefixProductAfterReshape *= outputType.getDimSize(i);
+
+  int64_t prefixProductBeforeReshape = 1;
+  SmallVector<size_t> candidateAxes;
+  for (size_t i = 0; i < static_cast<size_t>(inputType.getRank()); ++i) {
+    if (prefixProductBeforeReshape == prefixProductAfterReshape)
+      candidateAxes.push_back(i);
+    prefixProductBeforeReshape *= inputType.getDimSize(i);
+  }
+
+  if (candidateAxes.empty())
+    return rewriter.notifyMatchFailure(
+        concatOp, "Sinking reshape not possible. No compatible dimension for "
+                  "concat axis found.");
+
+  ReshapeOperandInfo info;
+  info.reshape = reshape;
+  info.inputType = inputType;
+  info.candidateAxes = std::move(candidateAxes);
+  return info;
+}
+
+bool areConcatInputsCompatible(ArrayRef<ShapedType> inputTypes,
+                               size_t concatAxis) {
+  if (inputTypes.empty())
+    return false;
+
+  const ShapedType referenceType = inputTypes.front();
+  const int64_t rank = referenceType.getRank();
+  for (ShapedType inputType : inputTypes) {
+    if (inputType.getRank() != rank)
+      return false;
+
+    for (int64_t dim = 0; dim < rank; ++dim) {
+      if (static_cast<size_t>(dim) == concatAxis)
+        continue;
+      if (inputType.getDimSize(dim) != referenceType.getDimSize(dim))
+        return false;
+    }
+  }
+
+  return true;
+}
+
+struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
+  using OpRewritePattern<tosa::ConcatOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(tosa::ConcatOp concatOp,
                                 PatternRewriter &rewriter) const override {
-    auto reshapeOrError = doGenericChecks(concatOp, rewriter);
-    if (failed(reshapeOrError))
-      return reshapeOrError;
-    auto reshape = *reshapeOrError;
-
-    const auto tenType = reshape.getInput1().getType();
-    if (!tenType || !tenType.hasStaticShape())
+    // High-level algorithm:
+    //   Before rewrite:
+    //     reshape(x0), reshape(x1), ... -> concat(axis = A)
+    //   After rewrite:
+    //     concat(x0, x1, ... , axis = B) -> reshape
+    //
+    // Each reshape operand may admit several possible pre-reshape concat axes
+    // because the reshape can fold or unfold groups of dimensions around the
+    // post-reshape concat axis A. For every operand we compute the candidate
+    // axes B whose prefix product before B matches the prefix product before A
+    // in the reshaped tensor. This aligns the concat boundary in the same
+    // linearized position, independent of whether the reshapes inserted or
+    // removed size-1 dimensions or spread the concatenated chunk across
+    // multiple input dimensions.
+    //
+    // We then intersect those candidate sets across all operands and choose the
+    // first common axis that also makes the raw reshape inputs valid operands
+    // of a concat, i.e. they have the same rank, element type, and identical
+    // dimensions on all non-concat axes. If such an axis exists, we build the
+    // concat on the reshape inputs and restore the original result shape with a
+    // single reshape after the concat.
+    const auto concatResultType = dyn_cast<ShapedType>(concatOp.getType());
+    if (!concatResultType || !concatResultType.hasStaticShape())
       return rewriter.notifyMatchFailure(
-          concatOp, "Dynamic shapes for reshapes are not supported.");
-    const ArrayRef<int64_t> shapeBeforeReshape = tenType.getShape();
-    const ArrayRef<int64_t> shapeAfterReshape = reshape.getNewShape();
-    if (shapeBeforeReshape.size() == 0)
-      return rewriter.notifyMatchFailure(
-          concatOp,
-          "Tensors of rank 0 cannot have an independent concat axis.");
+          concatOp, "Concat result must be statically shaped.");
 
-    // Approach: Before rewrite, we have a reshape followed by a concat.
-    // This concat concatenates on the concatAxisAfterReshape. For switching, we
-    // need to calculate a new shape and a new concat axis
-    // (concatAxisBeforeReshape). For that, we check the product of the reshape
-    // dimensions before the concatAxisAfterReshape and match that with the
-    // product of the dimensions of the shapeBeforeReshape.
-    //
-    // Example:
-    // 6x1x6 --(reshape)--> 2x3x1x2x3 --(concat)--> 2x3x2x2x3
-    // concatAxisAfterReshape is 2, after rewrite it would be 1:
-    // 6x1x6 --(concat)--> 6x2x6 --(reshape)--> 2x3x2x2x3
-    //
-    // The axis is not always unique:
-    // 1x1x6 --(reshape)--> 1x1x1x6 --(concat)--> 2x1x1x6
-    // concatAxisAfterReshape is 0, after rewrite it can be 0 or 1:
-    // 1x1x6 --(concat)--> 2x1x6 --(reshape)--> 2x1x1x6
-    // 1x1x6 --(concat)--> 1x2x6 --(reshape)--> 2x1x1x6
-    //
-    // We also need to take the concat dimension into account:
-    // 1x4x1 --(reshape)--> 1x4 --(concat)--> 1x8
-    // concatAxisAfterReshape is 1, after rewrite it would be 1 as well:
-    // 1x4x1 --(concat)--> 1x8x1 --(reshape)--> 1x8
     const uint32_t concatAxisAfterReshape = concatOp.getAxis();
-    int64_t prefixProductAfterReshape = 1;
-    // also count the concat dimension itself
-    for (size_t i = 0; i <= concatAxisAfterReshape; ++i) {
-      prefixProductAfterReshape *= shapeAfterReshape[i];
+    SmallVector<ShapedType> inputTypes;
+    SmallVector<Value> concatOperands;
+    SmallVector<size_t> commonAxes;
+    SmallVector<Location> fusedLocs{concatOp.getLoc()};
+    [[maybe_unused]] Type inputElementType;
+
+    for (Value operand : concatOp.getOperands()) {
+      auto infoOrError = getReshapeOperandInfo(operand, concatAxisAfterReshape,
+                                               concatOp, rewriter);
+      if (failed(infoOrError))
+        return failure();
+
+      ReshapeOperandInfo &info = *infoOrError;
+      if (!inputElementType)
+        inputElementType = info.inputType.getElementType();
+      assert(info.inputType.getElementType() == inputElementType &&
+             "All reshape inputs must have the same element type.");
+
+      if (inputTypes.empty()) {
+        commonAxes = info.candidateAxes;
+      } else {
+        llvm::erase_if(commonAxes, [&](size_t axis) {
+          return !llvm::is_contained(info.candidateAxes, axis);
+        });
+      }
+
+      inputTypes.push_back(info.inputType);
+      concatOperands.push_back(info.reshape.getInput1());
+      fusedLocs.push_back(info.reshape.getLoc());
     }
 
-    int64_t prefixProductBeforeReshape = 1;
-    std::optional<size_t> concatAxisBeforeReshape = std::nullopt;
-    long sizeOfConcatDim = shapeAfterReshape[concatAxisAfterReshape];
-    for (size_t i = 0; i < shapeBeforeReshape.size(); ++i) {
-      prefixProductBeforeReshape *= shapeBeforeReshape[i];
-      if (prefixProductBeforeReshape == prefixProductAfterReshape &&
-          shapeBeforeReshape[i] == sizeOfConcatDim) {
-        concatAxisBeforeReshape = i;
+    if (commonAxes.empty())
+      return rewriter.notifyMatchFailure(
+          concatOp, "Sinking reshape not possible. No common compatible "
+                    "dimension for concat axis found.");
+
+    std::optional<size_t> concatAxisBeforeReshape;
+    for (size_t candidateAxis : commonAxes) {
+      if (areConcatInputsCompatible(inputTypes, candidateAxis)) {
+        concatAxisBeforeReshape = candidateAxis;
         break;
       }
     }
 
     if (!concatAxisBeforeReshape)
       return rewriter.notifyMatchFailure(
-          concatOp, "Sinking reshape not possible. No compatible dimension for "
-                    "concat axis found.");
+          concatOp, "Sinking reshape not possible. Reshape inputs are not "
+                    "concat-compatible on a common pre-reshape axis.");
 
-    SmallVector<Value> concatOperands;
-    for (auto val : concatOp.getOperands()) {
-      auto *producerOp = val.getDefiningOp();
-      assert(producerOp != nullptr &&
-             "Previous check about null already happened.");
-      for (auto val : producerOp->getOperands()) {
-        concatOperands.emplace_back(val);
-      }
-    }
-    auto concatNew = rewriter.create<tosa::ConcatOp>(
-        concatOp.getLoc(), concatOperands, *concatAxisBeforeReshape);
-    // calculate new shape for reshape by combining the shape of the concat with
-    // the remaining prefix of the old reshape
-    Type concatType = concatNew.getType();
-    auto concatShapeT = cast<ShapedType>(concatType);
-    assert(concatShapeT.hasStaticShape() &&
-           "op and thus concat must be static");
-    auto concatShape = concatShapeT.getShape();
-
-    SmallVector<int64_t> reshapeShape(shapeAfterReshape);
-    reshapeShape[concatAxisAfterReshape] =
-        concatShape[*concatAxisBeforeReshape];
-
-    auto reshapeNew = rewriter.create<tosa::ReshapeOp>(reshape.getLoc(),
-                                                       concatNew, reshapeShape);
-    rewriter.replaceOp(concatOp, reshapeNew);
+    Location fusedLoc = rewriter.getFusedLoc(fusedLocs);
+    auto concatNew = rewriter.create<tosa::ConcatOp>(fusedLoc, concatOperands,
+                                                     *concatAxisBeforeReshape);
+    auto reshapeNew = rewriter.create<tosa::ReshapeOp>(
+        fusedLoc, concatResultType, concatNew,
+        rewriter.getDenseI64ArrayAttr(concatResultType.getShape()));
+    rewriter.replaceOp(concatOp, reshapeNew.getResult());
     return success();
   }
 };
@@ -447,7 +518,8 @@ private:
       patterns.add<SinkMatmulOp>(ctx, /*benefit=*/2);
     }
     if (enableReshape) {
-      patterns.add<SinkReshapeOp>(ctx, /*benefit=*/2);
+      populateSinkInputOpsThroughConcatReshapePatterns(patterns,
+                                                       /*benefit=*/2);
     }
     if (matchUntransformedOperations) {
       patterns.add<SinkGenericOp>(ctx, /*benefit=*/1, operationFrequency, os);
@@ -458,6 +530,11 @@ private:
   llvm::raw_ostream &os = llvm::errs();
 };
 } // namespace
+
+void mlir::tosa::populateSinkInputOpsThroughConcatReshapePatterns(
+    RewritePatternSet &patterns, PatternBenefit benefit) {
+  patterns.add<SinkReshapeOp>(patterns.getContext(), benefit);
+}
 
 std::unique_ptr<Pass> mlir::tosa::createSinkInputOpsThroughConcatPass(
     SinkInputOpsThroughConcatOptions &options, llvm::raw_ostream &os) {
