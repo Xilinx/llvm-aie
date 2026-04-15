@@ -1304,7 +1304,6 @@ declare dso_local i32 @calcN(i32 noundef %n)
 define dso_local void @inconsistentMetadata(ptr %ptr) {
 ; CHECK-LABEL: @inconsistentMetadata(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    call void @llvm.assume(i1 false)
 ; CHECK-NEXT:    br label [[FOR_COND:%.*]]
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[J_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY:%.*]] ]
