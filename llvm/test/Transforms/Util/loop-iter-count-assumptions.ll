@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; unit test for the loop iteration metadata conversion to assumptions
 ;
 ; NOTE: Example file for converting loop iter count to assumptions in the Loop
@@ -1298,9 +1298,53 @@ for.inc:                                          ; preds = %if.end, %for.body
 
 declare dso_local i32 @calcN(i32 noundef %n)
 
+; Test that we don't create assume(false) when metadata is inconsistent
+; Loop runs 4 times (j: 0,1,2,3) but metadata claims 8 iterations
+; This should NOT create an assume at iteration 7 since 7 < 4 = false
+define dso_local void @inconsistentMetadata(ptr %ptr) {
+; CHECK-LABEL: @inconsistentMetadata(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    call void @llvm.assume(i1 false)
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[J_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[J_0]], 4
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_END:%.*]]
+; CHECK:       for.body:
+; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[PTR:%.*]], i32 [[J_0]]
+; CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 1
+; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[INC]] = add i32 [[J_0]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP6:![0-9]+]]
+; CHECK:       for.end:
+; CHECK-NEXT:    ret void
+;
+entry:
+  br label %for.cond
+
+for.cond:
+  %j.0 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %cmp = icmp ult i32 %j.0, 4
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:
+  %arrayidx = getelementptr inbounds i32, ptr %ptr, i32 %j.0
+  %0 = load i32, ptr %arrayidx, align 4
+  %add = add nsw i32 %0, 1
+  store i32 %add, ptr %arrayidx, align 4
+  %inc = add i32 %j.0, 1
+  br label %for.cond, !llvm.loop !10
+
+for.end:
+  ret void
+}
+
 !3 = distinct !{!3, !11, !7, !9}
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}
 !8 = !{!"llvm.loop.itercount.range", i64 4}
 !9 = !{!"llvm.loop.unroll.disable"}
+!10 = distinct !{!10, !7, !12, !9}
 !11 = !{!"llvm.loop.itercount.range", i64 10, i64 65}
+!12 = !{!"llvm.loop.itercount.range", i64 8}
