@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -54,6 +54,23 @@ bool isSingleMBBLoop(const MachineBasicBlock *MBB);
 /// and also layout predecessor, return it.
 /// Note: this function should be used only with single MBB loops.
 MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &EpilogueMBB);
+
+/// Extract the string key (operand 0) from a metadata entry node.
+/// Returns nullopt if operand 0 is missing or not an MDString.
+std::optional<StringRef> getMetadataKey(const MDNode &MD);
+
+/// Extract an integer value (operand 1) from a metadata entry node.
+/// Returns nullopt if operand 1 is missing or not a ConstantInt.
+std::optional<int64_t> getMetadataIntValue(const MDNode &MD);
+
+/// Extract a string value (operand 1) from a metadata entry node.
+/// Returns nullopt if operand 1 is missing or not an MDString.
+std::optional<StringRef> getMetadataStringValue(const MDNode &MD);
+
+/// Return all valid metadata entry nodes from a loop metadata node.
+/// Handles null LoopID (returns empty), validates the LoopID structure,
+/// and filters out non-MDNode operands.
+SmallVector<const MDNode *, 4> getLoopMetadataEntries(const MDNode *LoopID);
 
 std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
                                               const StringRef Name);
