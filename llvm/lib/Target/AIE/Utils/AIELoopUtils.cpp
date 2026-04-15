@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 #include "AIELoopUtils.h"
@@ -49,28 +49,15 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {
 }
 
 bool hasIIPragma(const MachineBasicBlock &LoopBlock) {
-  auto *LoopID = getLoopID(LoopBlock);
-  if (!LoopID) {
-    return {};
-  }
-
-  if (auto LoopMD =
-          getLoopMetadata(LoopID, "llvm.loop.pipeline.initiationinterval"))
-    return true;
-
-  return false;
+  return getLoopMetadata(getLoopID(LoopBlock),
+                         "llvm.loop.pipeline.initiationinterval")
+      .has_value();
 }
 
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
-  auto *LoopID = getLoopID(LoopBlock);
-  if (!LoopID) {
-    return {};
-  }
-
-  if (auto LoopMD = getLoopMetadata(LoopID, "llvm.loop.pipeline.disable"))
+  if (getLoopMetadata(getLoopID(LoopBlock), "llvm.loop.pipeline.disable"))
     return true;
-
-  return {};
+  return std::nullopt;
 }
 
 MachineBasicBlock *
@@ -142,23 +129,51 @@ MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &EpilogueMBB) {
   return LoopPred;
 }
 
-std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
-                                              const StringRef Name) {
+std::optional<StringRef> getMetadataKey(const MDNode &MD) {
+  if (MD.getNumOperands() == 0)
+    return std::nullopt;
+  if (const auto *S = dyn_cast<MDString>(MD.getOperand(0)))
+    return S->getString();
+  return std::nullopt;
+}
+
+std::optional<int64_t> getMetadataIntValue(const MDNode &MD) {
+  if (MD.getNumOperands() < 2)
+    return std::nullopt;
+  if (const auto *CI = mdconst::dyn_extract<ConstantInt>(MD.getOperand(1)))
+    return CI->getSExtValue();
+  return std::nullopt;
+}
+
+std::optional<StringRef> getMetadataStringValue(const MDNode &MD) {
+  if (MD.getNumOperands() < 2)
+    return std::nullopt;
+  if (const auto *S = dyn_cast<MDString>(MD.getOperand(1)))
+    return S->getString();
+  return std::nullopt;
+}
+
+SmallVector<const MDNode *, 4> getLoopMetadataEntries(const MDNode *LoopID) {
+  SmallVector<const MDNode *, 4> Entries;
+  if (!LoopID)
+    return Entries;
+
   // First operand should refer to the loop id itself.
   assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
   assert(dyn_cast_or_null<MDNode>(LoopID->getOperand(0)) == LoopID &&
          "invalid loop id");
 
   for (const MDOperand &MDO : llvm::drop_begin(LoopID->operands())) {
-    const MDNode *MD = dyn_cast<MDNode>(MDO);
-    if (!MD)
-      continue;
+    if (const auto *MD = dyn_cast<MDNode>(MDO))
+      Entries.push_back(MD);
+  }
+  return Entries;
+}
 
-    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (!S)
-      continue;
-
-    if (Name == S->getString())
+std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
+                                              const StringRef Name) {
+  for (const auto *MD : getLoopMetadataEntries(LoopID)) {
+    if (getMetadataKey(*MD) == Name)
       return MD;
   }
   return std::nullopt;
