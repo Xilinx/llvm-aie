@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,10 +18,12 @@
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/Analysis/MemorySSAUpdater.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Scalar/LICM.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
@@ -170,6 +172,22 @@ void tryInsertIterationAssumption(ICmpInst &LoopCmpInstr, Loop &CurrentLoop,
     Pred = LoopCmpInstr.getInversePredicate();
 
   Value *Cmp = Builder.CreateICmp(Pred, LHS, RHS);
+
+  // Check if the comparison constant-folded to false
+  if (auto *ConstCmp = dyn_cast<ConstantInt>(Cmp)) {
+    if (ConstCmp->isZero()) {
+      Function *F = CurrentLoop.getHeader()->getParent();
+
+      std::string Msg =
+          "Loop iteration count metadata (" + std::to_string(IterCount + 1) +
+          ") is inconsistent with loop condition (loop is iterating less).";
+
+      F->getContext().diagnose(DiagnosticInfoUnsupported(
+          *F, Msg, LoopCmpInstr.getDebugLoc(), DS_Warning));
+
+      return; // Don't insert assume(false)
+    }
+  }
 
   // Insert Assumption
   CallInst *Assumption = Builder.CreateAssumption(Cmp);
