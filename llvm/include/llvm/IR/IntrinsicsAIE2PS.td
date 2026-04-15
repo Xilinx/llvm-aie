@@ -17,7 +17,7 @@ let TargetPrefix = "aie2ps" in {
 
 //===----------------------------------------------------------------------===//
 class AIE2PSEventIntrinsic
-    : Intrinsic<[],
+    : DefaultAttrsIntrinsic<[],
                 [llvm_i32_ty],
                 [IntrHasSideEffects, IntrNoMem]>; //[IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 // Get Core ID
@@ -27,28 +27,28 @@ def int_aie2ps_get_coreid : ClangBuiltin<"__builtin_aie2ps_get_coreid">, AIE2PGe
 def int_aie2ps_clb : ClangBuiltin<"__builtin_aie2ps_clb">, AIE2PCLB;
 
 // UPS
-class AIE2PSV16AccFloatToV16Float16 : Intrinsic<[llvm_v16f16_ty],
+class AIE2PSV16AccFloatToV16Float16 : DefaultAttrsIntrinsic<[llvm_v16f16_ty],
                                           [llvm_v16f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIE2PSV16Float16ToV16AccFloat : Intrinsic<[llvm_v16f32_ty], [llvm_v16f16_ty], [IntrNoMem]>;
+class AIE2PSV16Float16ToV16AccFloat : DefaultAttrsIntrinsic<[llvm_v16f32_ty], [llvm_v16f16_ty], [IntrNoMem]>;
 
-class AIE2PSV32AccFloatToV32Float16 : Intrinsic<[llvm_v32f16_ty],
+class AIE2PSV32AccFloatToV32Float16 : DefaultAttrsIntrinsic<[llvm_v32f16_ty],
                                           [llvm_v32f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIE2PSV32Float16ToV32AccFloat : Intrinsic<[llvm_v32f32_ty], [llvm_v32f16_ty], [IntrNoMem]>;
+class AIE2PSV32Float16ToV32AccFloat : DefaultAttrsIntrinsic<[llvm_v32f32_ty], [llvm_v32f16_ty], [IntrNoMem]>;
 
 // SRS
-class AIE2PSV32AccFloatToV32Float8 : Intrinsic<[llvm_v32i8_ty],
+class AIE2PSV32AccFloatToV32Float8 : DefaultAttrsIntrinsic<[llvm_v32i8_ty],
                                           [llvm_v32f32_ty, llvm_i32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIE2PSV32AccFloatToV32Bf8 : Intrinsic<[llvm_v32i8_ty],
+class AIE2PSV32AccFloatToV32Bf8 : DefaultAttrsIntrinsic<[llvm_v32i8_ty],
                                           [llvm_v32f32_ty, llvm_i32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
 
-class AIE2PSV64AccFloatToV64MX6 : Intrinsic<[llvm_v8i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty],
+class AIE2PSV64AccFloatToV64MX6 : DefaultAttrsIntrinsic<[llvm_v8i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty],
                                           [llvm_v64f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIE2PSV64AccFloatToV64MX9 : Intrinsic<[llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
+class AIE2PSV64AccFloatToV64MX9 : DefaultAttrsIntrinsic<[llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
                                           [llvm_v64f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
 
@@ -74,7 +74,7 @@ def int_aie2ps_inv : ClangBuiltin<"__builtin_aie2ps_inv">, AIE2PNLF;
 def int_aie2ps_invsqrt : ClangBuiltin<"__builtin_aie2ps_invsqrt">, AIE2PNLF;
 def int_aie2ps_sqrtf : ClangBuiltin<"__builtin_aie2ps_sqrtf">, AIE2PNLF;
 def int_aie2ps_exp2 : ClangBuiltin<"__builtin_aie2ps_exp2">, AIE2PNLFVec;
-class AIE2PSNLFVecAcc : Intrinsic<[llvm_v16f32_ty], [llvm_v16f32_ty], [IntrNoMem]>;
+class AIE2PSNLFVecAcc : DefaultAttrsIntrinsic<[llvm_v16f32_ty], [llvm_v16f32_ty], [IntrNoMem]>;
 def int_aie2ps_exp2_bf20 : ClangBuiltin<"__builtin_aie2ps_exp2_bf20">, AIE2PSNLFVecAcc;
 def int_aie2ps_tanh : ClangBuiltin<"__builtin_aie2ps_tanh">, AIE2PNLFVec;
 // DIVS
@@ -276,8 +276,8 @@ class AIE2PS_BFP768_BFP1536_ACC2048_BF_MUL
                                llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
 
-class AIE2PS_CLR_ACC1024L : Intrinsic<[llvm_v32i32_ty], [], [IntrNoMem]>;
-class AIE2PS_CLR_ACC2048 : Intrinsic<[llvm_v32i64_ty], [], [IntrNoMem]>;
+class AIE2PS_CLR_ACC1024L : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [], [IntrNoMem]>;
+class AIE2PS_CLR_ACC2048 : DefaultAttrsIntrinsic<[llvm_v32i64_ty], [], [IntrNoMem]>;
 
 class AIE2PS_FP16_I1024_BF16_ACC2048_BF_ADDMAC
       : DefaultAttrsIntrinsic<[llvm_v64f32_ty],
@@ -740,41 +740,41 @@ class AIE2PSVShuffleBFP768
       llvm_v8i32_ty, llvm_v8i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // BFP FIFO Loads
-class AIE2PSFIFO_LD_POP_BFP640 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
+class AIE2PSFIFO_LD_POP_BFP640 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty], [IntrReadMem, IntrArgMemOnly]>;
 
-class AIE2PSFIFO_LD_POP_BFP768 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+class AIE2PSFIFO_LD_POP_BFP768 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty], [IntrReadMem, IntrArgMemOnly]>;
 
-class AIE2PSFIFO_LD_POP_1D_BFP640 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
+class AIE2PSFIFO_LD_POP_1D_BFP640 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty], [IntrReadMem, IntrArgMemOnly]>;
-class AIE2PSFIFO_LD_POP_1D_BFP768 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, 
+class AIE2PSFIFO_LD_POP_1D_BFP768 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
      llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty], [IntrReadMem, IntrArgMemOnly]>;
 
-class AIE2PSFIFO_LD_POP_2D_BFP640 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, 
+class AIE2PSFIFO_LD_POP_2D_BFP640 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty,
      llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty], [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty,
      llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty], [IntrReadMem, IntrArgMemOnly]>;
-class AIE2PSFIFO_LD_POP_2D_BFP768 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_v8i32_ty, llvm_v8i32_ty, 
+class AIE2PSFIFO_LD_POP_2D_BFP768 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_v8i32_ty, llvm_v8i32_ty,
      llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty], [IntrReadMem, IntrArgMemOnly]>;
 
-class AIE2PSFIFO_LD_POP_3D_BFP640 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, 
+class AIE2PSFIFO_LD_POP_3D_BFP640 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty,
      llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty], [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, 
      llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty], [IntrReadMem, IntrArgMemOnly]>;
-class AIE2PSFIFO_LD_POP_3D_BFP768 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, 
+class AIE2PSFIFO_LD_POP_3D_BFP768 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty,
      llvm_v8i32_ty, llvm_v8i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], 
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, 
      llvm_i20_ty, llvm_i20_ty, llvm_i20_ty], [IntrReadMem, IntrArgMemOnly]>;
 
 // BFP FIFO Stores
-class AIE2PSFIFO_ST_PUSH_BFP384 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+class AIE2PSFIFO_ST_PUSH_BFP384 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, 
      llvm_v8i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrWriteMem, IntrArgMemOnly]>;
-class AIE2PSFIFO_ST_PUSH_BFP640 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+class AIE2PSFIFO_ST_PUSH_BFP640 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, 
      llvm_v16i32_ty, llvm_v2i32_ty, llvm_v2i32_ty], [IntrWriteMem, IntrArgMemOnly]>;
-class AIE2PSFIFO_ST_PUSH_BFP768 : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+class AIE2PSFIFO_ST_PUSH_BFP768 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, 
      llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], 
      [IntrWriteMem, IntrArgMemOnly]>;
