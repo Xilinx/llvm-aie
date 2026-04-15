@@ -55,12 +55,14 @@
 #include "llvm/CodeGen/OptimizePHIs.h"
 #include "llvm/CodeGen/PHIElimination.h"
 #include "llvm/CodeGen/PeepholeOptimizer.h"
+#include "llvm/CodeGen/PostRASchedulerList.h"
 #include "llvm/CodeGen/PreISelIntrinsicLowering.h"
 #include "llvm/CodeGen/RegAllocFast.h"
 #include "llvm/CodeGen/RegUsageInfoCollector.h"
 #include "llvm/CodeGen/RegUsageInfoPropagate.h"
 #include "llvm/CodeGen/RegisterCoalescerPass.h"
 #include "llvm/CodeGen/RegisterUsageInfo.h"
+#include "llvm/CodeGen/RenameIndependentSubregs.h"
 #include "llvm/CodeGen/ReplaceWithVeclib.h"
 #include "llvm/CodeGen/SafeStack.h"
 #include "llvm/CodeGen/SelectOptimize.h"
@@ -960,7 +962,7 @@ Error CodeGenPassBuilder<Derived, TargetMachineT>::addMachinePasses(
     if (Opt.MISchedPostRA)
       addPass(PostMachineSchedulerPass(&TM));
     else
-      addPass(PostRASchedulerPass());
+      addPass(PostRASchedulerPass(&TM));
   }
 
   // GC
