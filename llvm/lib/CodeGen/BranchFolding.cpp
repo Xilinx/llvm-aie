@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass forwards branches to unconditional branches to make them branch
@@ -1351,7 +1354,35 @@ ReoptimizeBlock:
     if (MBB->pred_empty()) return MadeChange;
 
     if (FallThrough == MF.end()) {
-      // TODO: Simplify preds to not branch here if possible!
+      // Empty block at end of function with no layout successor. Remove
+      // branches from predecessors to this dead-end block.
+      SmallVector<MachineBasicBlock *, 4> Preds(MBB->predecessors());
+      for (MachineBasicBlock *Pred : Preds) {
+        MachineBasicBlock *PredTBB = nullptr, *PredFBB = nullptr;
+        SmallVector<MachineOperand, 4> PredCond;
+        if (TII->analyzeBranch(*Pred, PredTBB, PredFBB, PredCond,
+                               /*AllowModify=*/true))
+          continue;
+        DebugLoc Dl = Pred->findBranchDebugLoc();
+        TII->removeBranch(*Pred);
+        if (!PredCond.empty()) {
+          if (PredTBB == MBB && PredFBB) {
+            // cond br to MBB + uncond br to FBB → uncond br to FBB only.
+            if (!Pred->isLayoutSuccessor(PredFBB))
+              TII->insertBranch(*Pred, PredFBB, nullptr, {}, Dl);
+          } else if (PredFBB == MBB) {
+            // cond br to TBB + uncond br to MBB → cond br to TBB only.
+            if (!Pred->isLayoutSuccessor(PredTBB))
+              TII->insertBranch(*Pred, PredTBB, nullptr, PredCond, Dl);
+          }
+          // else: one-way cond br to MBB → removed, falls through.
+        }
+        // Unconditional branch to MBB: already removed, pred falls through.
+        Pred->removeSuccessor(MBB);
+        MadeChange = true;
+      }
+      if (MachineJumpTableInfo *MJTI = MF.getJumpTableInfo())
+        MJTI->ReplaceMBBInJumpTables(MBB, nullptr);
     } else if (FallThrough->isEHPad()) {
       // Don't rewrite to a landing pad fallthough.  That could lead to the case
       // where a BB jumps to more than one landing pad.
@@ -1374,6 +1405,16 @@ ReoptimizeBlock:
         }
       // If MBB was the target of a jump table, update jump tables to go to the
       // fallthrough instead.
+      if (MachineJumpTableInfo *MJTI = MF.getJumpTableInfo())
+        MJTI->ReplaceMBBInJumpTables(MBB, &*FallThrough);
+      MadeChange = true;
+    } else if (MBB->succ_empty()) {
+      // Empty block with no successors (e.g., from an unreachable IR block).
+      // Redirect all predecessors to the layout fallthrough.
+      while (!MBB->pred_empty()) {
+        MachineBasicBlock *Pred = *(MBB->pred_end() - 1);
+        Pred->ReplaceUsesOfBlockWith(MBB, &*FallThrough);
+      }
       if (MachineJumpTableInfo *MJTI = MF.getJumpTableInfo())
         MJTI->ReplaceMBBInJumpTables(MBB, &*FallThrough);
       MadeChange = true;

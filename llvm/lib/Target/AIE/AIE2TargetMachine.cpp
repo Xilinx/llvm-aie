@@ -226,6 +226,9 @@ void AIE2PassConfig::addMachineLateOptimization() {
 void AIE2PassConfig::addPreSched2() {
   // Remove dead code after PostRA Pseudo Instruction Expansion Pass.
   addPass(&DeadMachineInstructionElimID);
+  // DCE may leave behind empty blocks (e.g., from unreachable IR blocks).
+  // Run BranchFolding to clean them up before block placement.
+  addPass(&BranchFolderPassID);
   if (getOptLevel() != CodeGenOptLevel::None)
     addPass(&MachineBlockPlacementID);
 
