@@ -466,19 +466,22 @@ void PostPipeliner::computeEffectiveHeight() {
     for (const SDep &Dep : SU.Succs) {
       if (Dep.getKind() != SDep::Data)
         continue;
-      const int S = Dep.getSUnit()->NodeNum;
-      const int Latency = Dep.getSignedLatency();
 
+      const int S = Dep.getSUnit()->NodeNum;
+      // Only consider Instructions from the first Iteration
+      const bool IsLoopCarried = S >= NInstr;
+      if (IsLoopCarried)
+        continue;
+
+      const int Latency = Dep.getSignedLatency();
       // Skip edges not on the critical path: the successor is already
       // pushed later by another predecessor, so this edge has slack.
       const bool HasSlack = Info[K].Earliest + Latency < Info[S].Earliest;
       if (HasSlack)
         continue;
 
-      // Accumulate height along this critical edge.
-      const bool IsLoopCarried = S >= NInstr;
-      const int SuccIdx = IsLoopCarried ? S - NInstr : S;
-      const int Candidate = Latency + Info[SuccIdx].EffectiveHeight;
+      // Accumulate height along this critical edge
+      const int Candidate = Latency + Info[S].EffectiveHeight;
       MaxEH = std::max(MaxEH, Candidate);
     }
     Info[K].EffectiveHeight = MaxEH;
