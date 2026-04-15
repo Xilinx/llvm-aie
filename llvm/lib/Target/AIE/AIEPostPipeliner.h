@@ -247,10 +247,13 @@ class PostPipeliner {
   /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;
 
-  /// The II requested by a pragma. This will trigger expensive algorithms
-  /// like solvers or exhaustive searches to be run if the heuristic methods
-  /// don't find a solution.
+  /// User/pragma-requested II at which the solver is additionally run.
+  /// Stays 0 when no solver backend is compiled in.
   int TargetII = 0;
+
+  /// True when TargetII is a hard CLI one-shot (skip heuristics, bypass
+  /// MaxII), false when it's a soft pragma hint.
+  bool TargetIIIsHardLimit = false;
 
   /// The Preheader of the loop.
   MachineBasicBlock *Preheader = nullptr;
@@ -316,6 +319,14 @@ class PostPipeliner {
   /// If it returns true, a valid schedule is laid down in Info.
   bool tryApproaches();
 
+  /// Run the heuristic strategies (each ConfigStrategy plus the relaxed
+  /// IterCountSlackStrategy fallback) at the current II.
+  bool runHeuristics();
+
+  /// Run the solver-based last-resort attempts at the current II:
+  /// (NS, !SEF), (NS+1, SEF), (NS+1, !SEF).
+  bool runSolverFallback();
+
   /// Find the first available unscheduled instruction with the highest
   /// priority.
   int mostUrgent(PostPipelinerStrategy &Strategy);
@@ -345,6 +356,14 @@ public:
   /// Get a lowerbound for the II required to accommodate the slots.
   /// \pre isPostPipelineCandidate has returned true
   int getResMII(MachineBasicBlock &LoopBlock);
+
+  /// Return the user/pragma-requested II, or 0 if none was set.
+  /// \pre isPostPipelineCandidate has returned true
+  int getTargetII() const { return TargetII; }
+
+  /// True when TargetII is a hard CLI one-shot (vs a soft pragma hint).
+  /// \pre isPostPipelineCandidate has returned true
+  bool isTargetIIHardLimit() const { return TargetIIIsHardLimit; }
 
   // Schedule using the given InitiationInterval. Return true when successful.
   // In that case calls to the query methods below are legitimate.

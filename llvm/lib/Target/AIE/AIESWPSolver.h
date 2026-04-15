@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -182,6 +182,11 @@ public:
 
 // Return the set of solvers to try
 std::vector<std::unique_ptr<SWPSolver>> getSolvers();
+
+/// Return true if at least one SWP solver backend is compiled into this
+/// build. When false, getSolvers() returns an empty vector and any code
+/// path that depends on the solver must fall back gracefully.
+bool hasSolver();
 
 #if LLVM_WITH_Z3
 class Z3Solver : public SWPSolver {

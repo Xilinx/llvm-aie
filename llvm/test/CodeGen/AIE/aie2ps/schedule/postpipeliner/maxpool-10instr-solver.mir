@@ -10,7 +10,7 @@
 
 # RUN: llc -mtriple=aie2ps -O2 --start-before=postmisched %s \
 # RUN:   --aie-postpipeliner-heuristic-runs=1 \
-# RUN:   --aie-postpipeliner-target-ii=4 \
+# RUN:   --aie-postpipeliner-solver \
 # RUN:   -o - | FileCheck %s
 
 # MaxPool2D inner loop (10 instructions) with VSEL.
@@ -26,29 +26,36 @@
   define void @maxpool_inner_10instr(ptr addrspace(5) noalias %data, ptr addrspace(6) noalias %weights, ptr addrspace(7) noalias %out, i32 %n) {
   ; CHECK-LABEL: maxpool_inner_10instr:
   ; CHECK:       // %bb.0: // %preheader
-  ; CHECK-NEXT:    nopa ; movs p3, p1; nopx ; mov p0, p6
-  ; CHECK-NEXT:    vlda wl7, [p3], #32; vldb wh9, [p0, #32]; movs p5, p6; mov r24, p0
-  ; CHECK-NEXT:    vldb.3d wl9, [p5], d0; and r26, r24, r18
-  ; CHECK-NEXT:    movs p0, p5
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p0, p6; nops
+  ; CHECK-NEXT:    movs p3, p1; vldb wh9, [p0, #32]; mov p5, p6
+  ; CHECK-NEXT:    vlda wl7, [p3], #32; vldb.3d wl9, [p5], d0; mov r24, p0
   ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    movs p0, p5
+  ; CHECK-NEXT:    vldb wh9, [p0, #32]; and r26, r24, r18
+  ; CHECK-NEXT:    vlda wl7, [p3], #32; vldb.3d wl9, [p5], d0; add.nc lc, r2, #-3; mov r24, p0
   ; CHECK-NEXT:    movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r2, #-1; mov p4, p2; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; movs p0, p5; movxm le, #.L_LEnd0; nopv
+  ; CHECK-NEXT:    nopa ; vldb wh9, [p0, #32]; nops ; and r26, r24, r18; vshift x5, x9, x0, r26; nopv
+  ; CHECK-NEXT:    vlda wl7, [p3], #32; vldb.3d wl9, [p5], d0; nops ; nopx ; mov r24, p0; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; movs p4, p2; nopx ; vsel.8 x3, x0, x5, r5:r4; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; movs p0, p5; nopx ; vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1; nopv
   ; CHECK-NEXT:  .LBB0_1: // %loop_body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vlda wl7, [p3], #32; vldb wh9, [p0, #32]; nops ; nopx ; mov r24, p0; nopv
-  ; CHECK-NEXT:    nopa ; vldb.3d wl9, [p5], d0; nops ; and r26, r24, r18; vshift x5, x9, x0, r26; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; movs p0, p5; nopx ; vsel.8 x3, x0, x5, r5:r4; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; vst wl1, [p4], #32; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; vldb wh9, [p0, #32]; and r26, r24, r18; vshift x5, x9, x0, r26; nops
+  ; CHECK-NEXT:    vlda wl7, [p3], #32; vldb.3d wl9, [p5], d0; mov r24, p0
+  ; CHECK-NEXT:    vst wl1, [p4], #32; vsel.8 x3, x0, x5, r5:r4
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; movs p0, p5; nopx ; vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1; nopv
   ; CHECK-NEXT:  // %bb.2: // %exit
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vshift x5, x9, x0, r26
-  ; CHECK-NEXT:    vsel.8 x3, x0, x5, r5:r4
+  ; CHECK-NEXT:    nopa ; and r26, r24, r18; vshift x5, x9, x0, r26
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst wl1, [p4], #32; vsel.8 x3, x0, x5, r5:r4
   ; CHECK-NEXT:    vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1
+  ; CHECK-NEXT:    vshift x5, x9, x0, r26
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst wl1, [p4], #32; vsel.8 x3, x0, x5, r5:r4
+  ; CHECK-NEXT:    vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst wl1, [p4], #32
   ; CHECK-NEXT:    ret lr

@@ -10,6 +10,7 @@
 # RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 %s \
 # RUN:   --start-before=postmisched \
 # RUN:   --aie-postpipeliner-heuristic-runs=1 \
+# RUN:   --aie-postpipeliner-solver \
 # RUN:   -o - | FileCheck %s
 
 # derived from GEMM_Bfp16_opt_0

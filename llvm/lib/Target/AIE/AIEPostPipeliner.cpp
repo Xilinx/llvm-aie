@@ -44,9 +44,16 @@ static cl::opt<int>
                   cl::desc("Number of runs for heuristics that converge"),
                   cl::init(20), cl::Hidden);
 
-static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
-                             cl::desc("II for which to allow the solver"),
-                             cl::init(0), cl::Hidden);
+static cl::opt<bool>
+    UseSolver("aie-postpipeliner-solver",
+              cl::desc("Use the solver as fallback after heuristics fail"),
+              cl::init(false), cl::Hidden);
+
+static cl::opt<int>
+    PresetII("aie-postpipeliner-target-ii",
+             cl::desc("Run solver-only at this II; bypasses MaxII and "
+                      "skips heuristics"),
+             cl::init(0), cl::Hidden);
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
@@ -160,16 +167,35 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
     return false;
   }
 
-  if (PresetII) {
-    TargetII = PresetII;
+  // No solver backend compiled in: TargetII/--aie-postpipeliner-solver
+  // are no-ops. Keep pre-commit behavior (heuristics only).
+  if (!Solver::hasSolver()) {
+    const bool AnyRequest =
+        PresetII || UseSolver || getInitiationInterval(getLoopID(LoopBlock));
+    if (AnyRequest) {
+      DEBUG_SUMMARY(
+          dbgs() << " PostPipeliner: ignoring TargetII/solver request, "
+                    "no solver compiled in\n");
+    }
     return true;
   }
-  auto ParsedInitiationInterval = getInitiationInterval(getLoopID(LoopBlock));
-  if (ParsedInitiationInterval) {
-    TargetII = *ParsedInitiationInterval;
-    DEBUG_SUMMARY(dbgs() << " PostPipeliner: TargetII=" << TargetII << "\n");
+
+  // --aie-postpipeliner-target-ii: hard one-shot. Bypasses MaxII and
+  // skips heuristics; only the solver runs at exactly this II.
+  if (PresetII) {
+    TargetII = PresetII;
+    TargetIIIsHardLimit = true;
+  } else if (!UseSolver) {
+    // Pragma soft hint: heuristics iterate normally and the solver runs
+    // at II == TargetII. --aie-postpipeliner-solver overrides this.
+    if (const auto Pragma = getInitiationInterval(getLoopID(LoopBlock)))
+      TargetII = *Pragma;
   }
 
+  if (TargetII)
+    DEBUG_SUMMARY(dbgs() << " PostPipeliner: TargetII=" << TargetII
+                         << (TargetIIIsHardLimit ? " (hard)" : " (soft)")
+                         << "\n");
   return true;
 }
 
@@ -1431,8 +1457,7 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
-bool PostPipeliner::tryApproaches() {
-  DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+bool PostPipeliner::runHeuristics() {
   int HeuristicIndex = 0;
   for (const auto &Config : Heuristics) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
@@ -1459,29 +1484,45 @@ bool PostPipeliner::tryApproaches() {
     }
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
+  // Last-chance heuristic: relax the iteration-count constraint.
   IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
   resetSchedule(/*FullReset=*/true);
-  if (scheduleWithStrategy(Relaxed)) {
+  return scheduleWithStrategy(Relaxed);
+}
+
+bool PostPipeliner::runSolverFallback() {
+  const SolverData Data = createSolverData();
+  const int NS = MinLength / II;
+  if (solve(Data, NS, false)) {
     return true;
   }
-
-  // TargetII is the OK from the user to spend some time reaching this II.
-  // Therefore, if we haven't found a solution yet, bring in the big guns.
-  if (II == TargetII) {
-    const SolverData Data = createSolverData();
-    const int NS = MinLength / II;
-    if (solve(Data, NS, false)) {
-      return true;
-    }
-    // Let's try SEF solution.
-    if (solve(Data, NS + 1, true)) {
-      return true;
-    }
-    // Marsshot: last try with full NS + 1.
-    if (solve(Data, NS + 1, false)) {
-      return true;
-    }
+  // Let's try SEF solution.
+  if (solve(Data, NS + 1, true)) {
+    return true;
   }
+  // Marsshot: last try with full NS + 1.
+  return solve(Data, NS + 1, false);
+}
+
+bool PostPipeliner::tryApproaches() {
+  DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+
+  // CLI --aie-postpipeliner-target-ii: solver-only, skip heuristics.
+  const bool SolverOnly = TargetIIIsHardLimit;
+  const bool RunHeuristics = !SolverOnly;
+
+  // Solver runs at this II if the user asked for solver fallback at every
+  // II, or this II matches a TargetII (CLI hard or pragma soft hint).
+  const bool SolverAtThisII =
+      UseSolver || SolverOnly || (TargetII != 0 && II == TargetII);
+  // Belt-and-braces re-check: never call solve() with no backend, even
+  // though isPostPipelineCandidate already filtered the request out.
+  const bool RunSolver = Solver::hasSolver() && SolverAtThisII;
+
+  if (RunHeuristics && runHeuristics())
+    return true;
+  if (RunSolver && runSolverFallback())
+    return true;
 
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
   return false;

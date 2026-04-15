@@ -618,7 +618,14 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   if (BS.getRegions().size() == 1) {
     auto &PostSWP = BS.getPostSWP();
     if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
-      BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
+      // A CLI --aie-postpipeliner-target-ii is a hard limit: start at
+      // exactly that II (bypassing --aie-postpipeliner-maxii) and let
+      // updatePipelining one-shot it. A pragma-driven TargetII is a soft
+      // hint: start at ResMII and iterate normally; the solver fallback at
+      // II == TargetII is handled inside the post-pipeliner.
+      BS.FixPoint.II = PostSWP.isTargetIIHardLimit()
+                           ? PostSWP.getTargetII()
+                           : PostSWP.getResMII(*BS.TheBlock);
       BS.FixPoint.IITries = 1;
       return SchedulingStage::Pipelining;
     }
@@ -632,11 +639,17 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
     return BS.FixPoint.Stage;
   }
 
-  // Otherwise try a larger II.
-  // We cut off at larger IIs to prevent excessive compilation time.
-  if (++BS.FixPoint.II <= PostPipelinerMaxII &&
-      ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
-    return SchedulingStage::Pipelining;
+  // A CLI --aie-postpipeliner-target-ii is one-shot: try only the requested
+  // II, even if it exceeds --aie-postpipeliner-maxii. If that attempt
+  // failed, do not try any other II. A pragma-driven TargetII keeps the
+  // normal iteration (ResMII..MaxII).
+  if (!BS.getPostSWP().isTargetIIHardLimit()) {
+    // Otherwise try a larger II.
+    // We cut off at larger IIs to prevent excessive compilation time.
+    if (++BS.FixPoint.II <= PostPipelinerMaxII &&
+        ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
+      return SchedulingStage::Pipelining;
+    }
   }
 
   auto *BB = BS.TheBlock;

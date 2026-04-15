@@ -58,6 +58,14 @@ std::vector<std::unique_ptr<SWPSolver>> getSolvers() {
   return Solvers;
 }
 
+bool hasSolver() {
+#if LLVM_WITH_Z3
+  return true;
+#else
+  return false;
+#endif // LLVM_WITH_Z3
+}
+
 Slot &SolverData::addSlot(int N) {
   auto It = Slots.emplace(N, Slot(N)).first;
   return It->second;
