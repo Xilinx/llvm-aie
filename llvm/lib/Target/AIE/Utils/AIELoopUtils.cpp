@@ -179,6 +179,42 @@ std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
   return std::nullopt;
 }
 
+std::optional<bool> getLoopHintBool(const MDNode *LoopID, StringRef Key) {
+  if (const auto Val = getLoopHintInt(LoopID, Key))
+    return *Val != 0;
+  return std::nullopt;
+}
+
+std::optional<bool> getLoopHintBool(const MachineBasicBlock &MBB,
+                                    StringRef Key) {
+  return getLoopHintBool(getLoopID(MBB), Key);
+}
+
+std::optional<int64_t> getLoopHintInt(const MDNode *LoopID, StringRef Key) {
+  const auto MD = getLoopMetadata(LoopID, Key);
+  if (!MD)
+    return std::nullopt;
+  return getMetadataIntValue(**MD);
+}
+
+std::optional<int64_t> getLoopHintInt(const MachineBasicBlock &MBB,
+                                      StringRef Key) {
+  return getLoopHintInt(getLoopID(MBB), Key);
+}
+
+std::optional<StringRef> getLoopHintString(const MDNode *LoopID,
+                                           StringRef Key) {
+  const auto MD = getLoopMetadata(LoopID, Key);
+  if (!MD)
+    return std::nullopt;
+  return getMetadataStringValue(**MD);
+}
+
+std::optional<StringRef> getLoopHintString(const MachineBasicBlock &MBB,
+                                           StringRef Key) {
+  return getLoopHintString(getLoopID(MBB), Key);
+}
+
 // Returns true if the loop has an unroll(full) pragma.
 bool hasUnrollFullPragma(const MDNode *LoopID) {
   return getLoopMetadata(LoopID, "llvm.loop.unroll.full").has_value();
