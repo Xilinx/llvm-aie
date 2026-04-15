@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -O2 -mtriple=aie2p -verify-machineinstrs -start-before=greedy \
 # RUN: -stop-before=virtregrewriter %s -o - | FileCheck %s
@@ -45,10 +45,11 @@ body:             |
   ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:edch = COPY [[COPY4]]
   ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:ednh = COPY [[COPY3]]
   ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:edjh = COPY [[COPY5]]
+  ; CHECK-NEXT:   dead [[IMPLICIT_DEF:%[0-9]+]]:em_as_32bit = IMPLICIT_DEF
   ; CHECK-NEXT:   undef [[COPY14:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo1]]
   ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_fifo:epsrfldf = COPY [[COPY6]]
   ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_avail:epsrfldf = COPY [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split:%[0-9]+]]:vec576, dead [[COPY14:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY14:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY14:%[0-9]+]].sub_avail:epsrfldf, dead [[COPY7:%[0-9]+]]:edcl, dead [[COPY11:%[0-9]+]]:edch = VLD_POP_576_3D_pseudo_split [[COPY14]].sub_ptr, [[COPY14]].sub_fifo, [[COPY14]].sub_avail, [[COPY10]], [[COPY8]], [[COPY9]], [[COPY7]], undef %15:em_as_32bit, [[COPY12]], [[COPY13]], [[COPY11]], implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
+  ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split:%[0-9]+]]:vec576, dead [[COPY14:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY14:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY14:%[0-9]+]].sub_avail:epsrfldf, dead [[COPY7:%[0-9]+]]:edcl, dead [[COPY11:%[0-9]+]]:edch = VLD_POP_576_3D_pseudo_split [[COPY14]].sub_ptr, [[COPY14]].sub_fifo, [[COPY14]].sub_avail, [[COPY10]], [[COPY8]], [[COPY9]], [[COPY7]], undef [[IMPLICIT_DEF]], [[COPY12]], [[COPY13]], [[COPY11]], implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.1(0x80000000)

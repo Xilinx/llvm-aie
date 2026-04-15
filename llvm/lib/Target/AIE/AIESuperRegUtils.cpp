@@ -112,27 +112,36 @@ void rewriteFullCopy(MachineInstr &CopyMI, LiveIntervals &LIS,
   unsigned AdditionalFlags = RegState::Undef;
   SmallSet<Register, 8> RegistersToRepair;
   for (int SubRegIdx : CopySubRegs) {
-    if ((LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none()) {
-      LLVM_DEBUG(dbgs() << "        Skip undefined subreg "
-                        << TRI.getSubRegIndexName(SubRegIdx) << "\n");
-      continue;
-    }
+    const bool IsUndefined =
+        (LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none();
+    const unsigned Opc =
+        IsUndefined ? TargetOpcode::IMPLICIT_DEF : TargetOpcode::COPY;
 
-    MachineInstr *PartCopy =
-        BuildMI(*CopyMI.getParent(), CopyMI, CopyMI.getDebugLoc(),
-                TII.get(TargetOpcode::COPY))
-            .addReg(DstReg, RegState::Define | AdditionalFlags, SubRegIdx)
-            .addReg(SrcReg, 0, SubRegIdx)
-            .getInstr();
-    // Only for the first copy set the undefined flag
+    LLVM_DEBUG(dbgs() << (IsUndefined ? "        IMPLICIT_DEF for undefined "
+                                        "subreg "
+                                      : "        Copy subreg ")
+                      << TRI.getSubRegIndexName(SubRegIdx) << "\n");
+
+    MachineInstrBuilder MIB =
+        BuildMI(*CopyMI.getParent(), CopyMI, CopyMI.getDebugLoc(), TII.get(Opc))
+            .addReg(DstReg, RegState::Define | AdditionalFlags, SubRegIdx);
+    if (!IsUndefined)
+      MIB.addReg(SrcReg, 0, SubRegIdx);
+    MachineInstr *NewMI = MIB.getInstr();
+    // The full copy is decomposed into one MI per sub-register. Only the first
+    // of those MIs gets the `undef` flag on its def, which tells the verifier
+    // "this is a partial def of DstReg; the other sub-lanes are undefined
+    // here". Subsequent MIs are additional partial defs of an
+    // already-partially-live DstReg, so they must not carry `undef`.
     AdditionalFlags = 0;
 
-    LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
-    LIS.InsertMachineInstrInMaps(*PartCopy);
-    // Since we modified Source and Destination registers, we need to repair
-    // both LiveIntervals
-    RegistersToRepair.insert(PartCopy->getOperand(1).getReg());
-    RegistersToRepair.insert(PartCopy->getOperand(0).getReg());
+    LLVM_DEBUG(dbgs() << "        to " << *NewMI);
+    LIS.InsertMachineInstrInMaps(*NewMI);
+    // Since we may have modified both Source and Destination registers, we
+    // need to repair both LiveIntervals.
+    RegistersToRepair.insert(DstReg);
+    if (!IsUndefined)
+      RegistersToRepair.insert(SrcReg);
   }
 
   LLVM_DEBUG(dbgs() << "  Erasing copy at " << CopyIndex << ": " << CopyMI
@@ -215,12 +224,25 @@ createSubRegisterVRegs(Register Reg, const SmallSet<int, 8> &SubRegs,
 static void rewriteOperandsToSubRegs(
     Register Reg, SmallMapVector<int, Register, 8> &SubRegToVReg,
     MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
-    const TargetInstrInfo &TII, VirtRegMap &VRM) {
+    const TargetInstrInfo &TII, VirtRegMap &VRM, LiveIntervals &LIS) {
   for (MachineOperand &RegOp : make_early_inc_range(MRI.reg_operands(Reg))) {
     LLVM_DEBUG(dbgs() << printReg(RegOp.getReg(), &TRI, 0, &MRI)
                       << "  Changing " << *RegOp.getParent());
     int SubReg = RegOp.getSubReg();
     assert(SubReg);
+
+    // After decomposition the new sub-VReg inherits this use, but it may have
+    // no reaching definition when the corresponding sub-lane isn't live at this
+    // point in the original composite register. Mark such uses as undef.
+    auto CheckUndef = [&]() {
+      if (RegOp.isUndef() || !LIS.hasInterval(Reg))
+        return false;
+      SlotIndex UseIdx = LIS.getInstructionIndex(*RegOp.getParent());
+      LaneBitmask UseLaneMask = TRI.getSubRegIndexLaneMask(SubReg);
+      LaneBitmask LiveLanes = getLiveLanesAt(UseIdx, Reg, LIS);
+      return (LiveLanes & UseLaneMask).none();
+    };
+
     RegOp.setReg(SubRegToVReg[SubReg]);
     RegOp.setSubReg(0);
 
@@ -228,6 +250,8 @@ static void rewriteOperandsToSubRegs(
     // Now that each sub-lane has its own VReg, the qualifier is invalid.
     if (RegOp.isDef()) {
       RegOp.setIsUndef(false);
+    } else if (CheckUndef()) {
+      RegOp.setIsUndef(true);
     }
 
     // Make sure the right reg class is applied, some MIs might use compound
@@ -371,7 +395,7 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
 
   // Step 3: Rewrite operands to use the new subregister virtual registers
   LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
-  rewriteOperandsToSubRegs(Reg, SubRegToVReg, MRI, TRI, *TII, VRM);
+  rewriteOperandsToSubRegs(Reg, SubRegToVReg, MRI, TRI, *TII, VRM, LIS);
 
   // Step 4: Remove the original register's live interval
   LIS.removeInterval(Reg);
