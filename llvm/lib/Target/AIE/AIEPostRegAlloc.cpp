@@ -82,13 +82,8 @@ bool AIEPostRegAlloc::AllocState::canPlace(
     if (It != RegUnitOccupancy.end()) {
       // This RegUnit is occupied. Check if it conflicts with our VRegMasks.
       const auto &UnitOcc = It->second;
-      if (VRegMasks.overlaps(UnitOcc)) {
-        LLVM_DEBUG(dbgs() << "  RegUnit conflict detected for "
-                          << printReg(VReg, TRI) << " in "
-                          << printReg(PhysReg, TRI) << " (unit " << Unit
-                          << ")\n");
+      if (VRegMasks.overlaps(UnitOcc))
         return false;
-      }
     }
   }
 
@@ -376,11 +371,13 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     Register ChosenPhys = Register();
 
     for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << "\n");
+      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI));
       if (State.canPlace(VReg, PhysReg, VRegMasks, RC)) {
+        LLVM_DEBUG(dbgs() << "\n");
         ChosenPhys = PhysReg;
         break;
       }
+      LLVM_DEBUG(dbgs() << " Reject\n");
     }
 
     if (!ChosenPhys.isValid()) {

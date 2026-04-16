@@ -25,9 +25,11 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/Register.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/MC/MCRegister.h"
 
 namespace llvm {
@@ -41,6 +43,69 @@ class MachineOperand;
 class MachineRegisterInfo;
 class TargetRegisterInfo;
 class TargetRegisterClass;
+
+/// Represents a simplified (removed) scheduling dependency edge.
+struct SimplifiedEdge {
+  /// The kind of dependency (Anti or Output).
+  SDep::Kind DepKind;
+
+  /// The register on which the dependency was simplified.
+  Register Reg;
+
+  /// Source SUnit node number (the predecessor).
+  unsigned FromSU;
+
+  /// Destination SUnit node number (the successor).
+  unsigned ToSU;
+
+  SimplifiedEdge(SDep::Kind DepKind, Register Reg, unsigned FromSU,
+                 unsigned ToSU)
+      : DepKind(DepKind), Reg(Reg), FromSU(FromSU), ToSU(ToSU) {}
+
+  /// Get the dependency kind as a string.
+  const char *getKindName() const {
+    switch (DepKind) {
+    case SDep::Anti:
+      return "Anti";
+    case SDep::Output:
+      return "Output";
+    case SDep::Data:
+      return "Data";
+    case SDep::Order:
+      return "Order";
+    }
+    llvm_unreachable("Unknown SDep::Kind");
+  }
+};
+
+/// Tracks registers that had their anti and output dependencies simplified
+/// in the scheduling DAG. This information is used by PostRegAlloc to verify
+/// that the true live ranges on these registers don't overlap.
+class SimplifiedRegsInfo {
+  SmallSet<Register, 4> SimplifiedRegs;
+  SmallVector<SimplifiedEdge, 8> RemovedEdges;
+
+  /// Check if there are any simplified registers.
+  bool empty() const { return SimplifiedRegs.empty(); }
+
+  /// Dump the simplified registers and removed edges for debugging.
+  void dump(const TargetRegisterInfo *TRI) const;
+
+public:
+  SimplifiedRegsInfo() = default;
+  SimplifiedRegsInfo(SmallSet<Register, 4> Regs,
+                     SmallVector<SimplifiedEdge, 8> Edges)
+      : SimplifiedRegs(std::move(Regs)), RemovedEdges(std::move(Edges)) {}
+
+  /// Check if a register was simplified.
+  bool contains(Register Reg) const { return SimplifiedRegs.count(Reg); }
+
+  /// Get the set of simplified registers.
+  const SmallSet<Register, 4> &getRegs() const { return SimplifiedRegs; }
+
+  /// Get the list of removed edges.
+  ArrayRef<SimplifiedEdge> getRemovedEdges() const { return RemovedEdges; }
+};
 
 /// Represents a register operand with its sub-register index
 class RegOperandInfo {
@@ -235,6 +300,9 @@ class RegLiveRangeTracker {
 
   // Counter for assigning unique IDs to live ranges
   int NextLiveRangeID = 0;
+
+  // Information about registers with simplified anti/output dependencies.
+  SimplifiedRegsInfo SimplifiedRegs;
 
   /// Get the sub-register index if AccessReg is a sub-register of BaseReg
   /// Returns 0 if AccessReg is not a sub-register of BaseReg
@@ -473,6 +541,16 @@ public:
   const std::vector<const RegLiveRange *> &
   getMostPromisingScarceRanges() const {
     return MostPromisingScarceRanges;
+  }
+
+  /// Set information about registers with simplified dependencies.
+  void setSimplifiedRegsInfo(SimplifiedRegsInfo &&Info) {
+    SimplifiedRegs = Info;
+  }
+
+  /// Get information about registers with simplified dependencies.
+  const SimplifiedRegsInfo &getSimplifiedRegsInfo() const {
+    return SimplifiedRegs;
   }
 };
 

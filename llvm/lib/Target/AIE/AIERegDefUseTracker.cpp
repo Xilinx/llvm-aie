@@ -64,6 +64,22 @@ unsigned getSubRegIdx(MCRegister AccessReg, MCRegister BaseReg,
 
 } // end anonymous namespace
 
+void SimplifiedRegsInfo::dump(const TargetRegisterInfo *TRI) const {
+  if (empty()) {
+    dbgs() << "SimplifiedRegsInfo: (none)\n";
+    return;
+  }
+
+  dbgs() << "SimplifiedRegsInfo: " << RemovedEdges.size()
+         << " edges removed on " << SimplifiedRegs.size() << " registers\n";
+
+  for (const SimplifiedEdge &Edge : RemovedEdges) {
+    dbgs() << "  - " << Edge.getKindName() << " dep on "
+           << printReg(Edge.Reg, TRI) << " from SU(" << Edge.FromSU
+           << ") to SU(" << Edge.ToSU << ")\n";
+  }
+}
+
 void RegLiveRange::dumpBrief(const TargetRegisterInfo *TRI) const {
   StringRef Name =
       (BaseReg != MCRegister::NoRegister) ? TRI->getName(BaseReg) : "unknown";

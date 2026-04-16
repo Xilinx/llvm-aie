@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTPIPELINER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIERegDefUseTracker.h"
 #include "AIEScheduleInterpreter.h"
 #include "AIESchedulingTypes.h"
 #include "AIESlotCounts.h"
@@ -417,6 +418,12 @@ public:
   void updateVersionGuard() const;
 
   void dump() const;
+
+  /// Set information about registers with simplified dependencies in the
+  /// register tracker.
+  void setSimplifiedRegsInfo(SimplifiedRegsInfo &&Info) {
+    RegTracker.setSimplifiedRegsInfo(std::forward<SimplifiedRegsInfo>(Info));
+  }
 };
 
 } // namespace llvm::AIE

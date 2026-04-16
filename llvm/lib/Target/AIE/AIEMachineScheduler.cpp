@@ -11,6 +11,8 @@
 #include "AIEMachineScheduler.h"
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEBaseRegisterInfo.h"
+#include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
@@ -96,6 +98,11 @@ static cl::opt<bool> UseLoopHeuristics(
 static cl::opt<bool> PreSchedFollowsSkipPipeliner(
     "aie-presched-follows-skip-pipeliner", cl::init(true),
     cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
+
+static cl::opt<bool> SimplifyReservedRegs(
+    "aie-simplify-reserved-regs", cl::init(false),
+    cl::desc("Remove anti and output dependencies on simplifiable reserved "
+             "registers to give the scheduler maximum freedom"));
 
 namespace {
 // A sentinel value to represent an unknown SUnit.
@@ -1746,6 +1753,59 @@ void AIEScheduleDAGMILive::exitRegion() {
   ScheduleDAGMILive::exitRegion();
 }
 
+namespace {
+
+// Collect all edges in a separate vector. This allows modifying SU.Preds
+// without invalidating iterators.
+SmallVector<SDep, 4> getPreds(SUnit &SU) {
+  SmallVector<SDep, 4> Preds;
+  copy(SU.Preds, std::back_inserter(Preds));
+  return Preds;
+}
+
+/// Remove all Anti (WAR) and Output (WAW) dependencies on simplifiable
+/// reserved registers unconditionally. This function should only be called
+/// in virtualized postpipeliner mode where schedule correctness is verified
+/// afterward.
+///
+/// This gives maximum scheduling freedom for simplifiable reserved registers
+/// (e.g., mCR, mSR) by removing all ordering constraints between their
+/// accesses.
+///
+/// \param DAG The scheduling DAG to modify.
+/// \return Information about the registers that had their anti and output
+///         dependences removed.
+SimplifiedRegsInfo simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
+  MachineFunction &MF = DAG.MF;
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  const auto *RI = static_cast<const AIEBaseRegisterInfo *>(TRI);
+  SmallSet<Register, 4> SimplifiedRegs;
+  SmallVector<SimplifiedEdge, 8> RemovedEdges;
+
+  // Remove all Anti and Output dependencies on simplifiable reserved
+  // registers.
+  for (SUnit &SU : DAG.SUnits) {
+    for (const SDep &Dep : getPreds(SU)) {
+      if (Dep.getKind() != SDep::Anti && Dep.getKind() != SDep::Output)
+        continue;
+
+      const Register Reg = Dep.getReg();
+      if (!Reg.isPhysical() || !RI->isSimplifiableReservedReg(Reg))
+        continue;
+
+      // Record the edge before removing it.
+      RemovedEdges.emplace_back(Dep.getKind(), Reg, Dep.getSUnit()->NodeNum,
+                                SU.NodeNum);
+      SU.removePred(Dep);
+      SimplifiedRegs.insert(Reg);
+    }
+  }
+
+  return SimplifiedRegsInfo(std::move(SimplifiedRegs), std::move(RemovedEdges));
+}
+
+} // namespace
+
 void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
                                               RegPressureTracker *RPTracker,
                                               PressureDiffs *PDiffs,
@@ -1796,6 +1856,18 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.buildEdges(Context->AA, RPTracker, PDiffs, LIS, OverrideTrackLaneMasks,
                  AbandonSingleDefs);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
+
+  // Apply reserved register dependency simplification when enabled and in
+  // virtualized mode. This relaxes Anti and Output dependencies on
+  // simplifiable reserved registers to give the scheduler maximum freedom.
+  // The correctness of the resulting schedule is verified afterward.
+  const PostPipelinerMode Mode = BS.FixPoint.PipelinerMode;
+  if (SimplifyReservedRegs && (Mode == PostPipelinerMode::Virtual ||
+                               Mode == PostPipelinerMode::ReservedVirtual)) {
+    // Store the simplified registers so PostRegAlloc can verify that true
+    // live ranges on these registers don't overlap.
+    BS.getPostSWP().setSimplifiedRegsInfo(simplifyReservedRegDeps(DAG));
+  }
 }
 
 SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
