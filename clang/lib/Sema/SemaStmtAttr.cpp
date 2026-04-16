@@ -15,6 +15,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/ParsedAttr.h"
@@ -132,12 +133,19 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
     // #pragma clang loop hint(key) or hint(key, value)
     assert(StateLoc && StateLoc->Ident && "hint must have a key string.");
     StringRef HintKey = StateLoc->Ident->getName();
-    if (ValueExpr && !ValueExpr->isValueDependent()) {
-      if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc(),
-                              /*AllowZero=*/true))
-        return nullptr;
-    }
+    // If the value is a string literal, extract its content and treat it
+    // as a string-valued hint rather than an expression.
     StringRef ValueStr;
+    if (ValueExpr) {
+      if (const auto *SL = dyn_cast<StringLiteral>(ValueExpr)) {
+        ValueStr = SL->getString();
+        ValueExpr = nullptr;
+      } else if (!ValueExpr->isValueDependent()) {
+        if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc(),
+                                /*AllowZero=*/true))
+          return nullptr;
+      }
+    }
     if (ValueIdentLoc && ValueIdentLoc->Ident)
       ValueStr = ValueIdentLoc->Ident->getName();
     return GenericLoopHintAttr::CreateImplicit(S.Context, HintKey, ValueExpr,

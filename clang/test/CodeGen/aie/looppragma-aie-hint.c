@@ -232,9 +232,8 @@ int test_zero_hint(int *p, int n) {
   }
   return s;
 }
-// Hyphenated keys: identifiers separated by minus signs are merged
-// into a single key string, e.g. aie-gpr-realloc.
-// CHECK-LABEL: define dso_local i32 @test_hyphenated_hint(
+
+// CHECK-LABEL: define dso_local i32 @test_false_hint(
 // CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
@@ -269,6 +268,96 @@ int test_zero_hint(int *p, int n) {
 // CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
 // CHECK-NEXT:    ret i32 [[TMP6]]
 //
+int test_false_hint(int *p, int n) {
+  int s = 0;
+  #pragma clang loop hint(no_predication, false)
+  for (int i = 0; i < n; i++) {
+    s += *p++;
+  }
+  return s;
+}
+
+// CHECK-LABEL: define dso_local i32 @test_config_hint(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
+// CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[S:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[I:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store ptr [[P]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    store i32 [[N]], ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[S]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND:.*]]
+// CHECK:       [[FOR_COND]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[TMP1]]
+// CHECK-NEXT:    br i1 [[CMP]], label %[[FOR_BODY:.*]], label %[[FOR_END:.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds nuw i32, ptr [[TMP2]], i32 1
+// CHECK-NEXT:    store ptr [[INCDEC_PTR]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[TMP2]], align 4
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[TMP3]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[S]], align 4
+// CHECK-NEXT:    br label %[[FOR_INC:.*]]
+// CHECK:       [[FOR_INC]]:
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
+// CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP17:![0-9]+]]
+// CHECK:       [[FOR_END]]:
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    ret i32 [[TMP6]]
+//
+int test_config_hint(int *p, int n) {
+  int s = 0;
+  #pragma clang loop hint(config, "pipelinesolve(NS=4,II=7)")
+  for (int i = 0; i < n; i++) {
+    s += *p++;
+  }
+  return s;
+}
+
+// Hyphenated keys: identifiers separated by minus signs are merged
+// into a single key string, e.g. aie-gpr-realloc.
+// CHECK-LABEL: define dso_local i32 @test_hyphenated_hint(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
+// CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[S:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[I:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store ptr [[P]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    store i32 [[N]], ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[S]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND:.*]]
+// CHECK:       [[FOR_COND]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[TMP1]]
+// CHECK-NEXT:    br i1 [[CMP]], label %[[FOR_BODY:.*]], label %[[FOR_END:.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds nuw i32, ptr [[TMP2]], i32 1
+// CHECK-NEXT:    store ptr [[INCDEC_PTR]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[TMP2]], align 4
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[TMP3]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[S]], align 4
+// CHECK-NEXT:    br label %[[FOR_INC:.*]]
+// CHECK:       [[FOR_INC]]:
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
+// CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP19:![0-9]+]]
+// CHECK:       [[FOR_END]]:
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    ret i32 [[TMP6]]
+//
 int test_hyphenated_hint(int *p, int n) {
   int s = 0;
   #pragma clang loop hint(aie-realloc-loopaware, 1)
@@ -278,7 +367,6 @@ int test_hyphenated_hint(int *p, int n) {
   }
   return s;
 }
-
 //.
 // CHECK: attributes #[[ATTR0]] = { noinline nounwind optnone "no-builtin-memcpy" "no-builtin-memmove" "no-builtin-memset" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
 //.
@@ -298,7 +386,10 @@ int test_hyphenated_hint(int *p, int n) {
 // CHECK: [[META13]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
 // CHECK: [[LOOP14]] = distinct !{[[LOOP14]], [[META3]], [[META15:![0-9]+]]}
 // CHECK: [[META15]] = !{!"llvm.loop.hint.no_predication", i64 0}
-// CHECK: [[LOOP16]] = distinct !{[[LOOP16]], [[META3]], [[META17:![0-9]+]], [[META18:![0-9]+]]}
-// CHECK: [[META17]] = !{!"llvm.loop.hint.aie-realloc-loopaware", i64 1}
-// CHECK: [[META18]] = !{!"llvm.loop.hint.aie-gpr-realloc", i64 1}
+// CHECK: [[LOOP16]] = distinct !{[[LOOP16]], [[META3]], [[META15]]}
+// CHECK: [[LOOP17]] = distinct !{[[LOOP17]], [[META3]], [[META18:![0-9]+]]}
+// CHECK: [[META18]] = !{!"llvm.loop.hint.config", !"pipelinesolve(NS=4,II=7)"}
+// CHECK: [[LOOP19]] = distinct !{[[LOOP19]], [[META3]], [[META20:![0-9]+]], [[META21:![0-9]+]]}
+// CHECK: [[META20]] = !{!"llvm.loop.hint.aie-realloc-loopaware", i64 1}
+// CHECK: [[META21]] = !{!"llvm.loop.hint.aie-gpr-realloc", i64 1}
 //.

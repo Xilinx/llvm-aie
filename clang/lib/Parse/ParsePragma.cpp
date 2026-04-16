@@ -1585,8 +1585,9 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
       Hint.ValueExpr = R.get();
     }
   } else if (OptionInfo && OptionInfo->isStr("hint")) {
-    // Parse hint(key) or hint(key, value) where value is integer or
-    // identifier.
+    // Parse hint(key) or hint(key, value) where value is a bare integer,
+    // true/false, string literal, identifier, or expression. No expression
+    // evaluation is performed for non-expression value types.
     PP.EnterTokenStream(Toks, /*DisableMacroExpansion=*/false,
                         /*IsReinject=*/false);
     ConsumeAnnotationToken();
@@ -1617,15 +1618,41 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
     IdentifierInfo &MergedKey = PP.getIdentifierTable().get(HintKey);
     Hint.StateLoc = IdentifierLoc::create(Actions.Context, KeyLoc, &MergedKey);
 
-    // Optionally parse a comma followed by an integer or identifier value.
+    // Optionally parse a comma followed by a value.
     if (Tok.is(tok::comma)) {
       PP.Lex(Tok);
-      if (IdentifierInfo *ValIdent = Tok.getIdentifierInfo()) {
-        // String-typed value (e.g. hint(key, ident)).
+      // Check for true/false keywords or identifiers first so they map to
+      // integer 1/0 instead of being treated as string-valued hints.
+      const bool IsTrueKw = Tok.is(tok::kw_true);
+      const bool IsFalseKw = Tok.is(tok::kw_false);
+      IdentifierInfo *ValIdent = Tok.getIdentifierInfo();
+      const bool IsTrueIdent = ValIdent && ValIdent->isStr("true");
+      const bool IsFalseIdent = ValIdent && ValIdent->isStr("false");
+
+      if (IsTrueKw || IsFalseKw || IsTrueIdent || IsFalseIdent) {
+        // Boolean value -> integer literal 1 or 0.
+        const int64_t Val = (IsTrueKw || IsTrueIdent) ? 1 : 0;
+        Hint.ValueExpr =
+            Actions.ActOnIntegerConstant(Tok.getLocation(), Val).get();
+        PP.Lex(Tok);
+      } else if (ValIdent) {
+        // Identifier value (e.g. hint(key, pre)).
         Hint.ValueIdentLoc =
             IdentifierLoc::create(Actions.Context, Tok.getLocation(), ValIdent);
         PP.Lex(Tok);
+      } else if (Tok.is(tok::string_literal)) {
+        // String literal value (e.g. hint(config, "pipelinesolve(...)")).
+        ExprResult R = ParseStringLiteralExpression();
+        if (R.isInvalid()) {
+          while (Tok.isNot(tok::eof))
+            ConsumeAnyToken();
+          ConsumeToken();
+          return false;
+        }
+        Hint.ValueExpr = R.get();
       } else {
+        // Fall back to expression parsing for numeric constants and
+        // compound expressions (e.g. hint(swp_ii, 4), hint(key, 2+3)).
         ExprResult R = ParseConstantExpression();
         if (R.isInvalid() ||
             Actions.CheckLoopHintExpr(R.get(), Toks[0].getLocation(),
