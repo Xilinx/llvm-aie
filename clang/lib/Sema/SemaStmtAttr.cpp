@@ -148,6 +148,12 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
     }
     if (ValueIdentLoc && ValueIdentLoc->Ident)
       ValueStr = ValueIdentLoc->Ident->getName();
+
+    // Warn if no value was provided for the hint.
+    const bool HasNoValue = !ValueExpr && ValueStr.empty();
+    if (HasNoValue)
+      S.Diag(StateLoc->Loc, diag::warn_pragma_hint_missing_value) << HintKey;
+
     return GenericLoopHintAttr::CreateImplicit(S.Context, HintKey, ValueExpr,
                                                ValueStr, A);
   } else {
