@@ -160,7 +160,7 @@ int string_hint_peel(int n, int *p) {
 // CHECK: [[META4]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
 // CHECK: [[META5]] = !{!"Simple C/C++ TBAA"}
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META9:![0-9]+]], [[META10:![0-9]+]]}
-// CHECK: [[META7]] = !{!"llvm.loop.hint.no_predication"}
+// CHECK: [[META7]] = !{!"llvm.loop.hint.no_predication", i64 1}
 // CHECK: [[META8]] = !{!"llvm.loop.peeled.count", i32 2}
 // CHECK: [[META9]] = !{!"llvm.loop.itercount.range", i32 26, i32 35}
 // CHECK: [[META10]] = !{!"llvm.loop.unroll.disable"}

@@ -476,8 +476,6 @@ MDNode *LoopInfo::createMetadata(
       Metadata *Vals[] = {MDString::get(Ctx, MDName),
                           MDString::get(Ctx, *StrVal)};
       LoopProperties.push_back(MDNode::get(Ctx, Vals));
-    } else {
-      LoopProperties.push_back(MDNode::get(Ctx, MDString::get(Ctx, MDName)));
     }
   }
 
@@ -658,6 +656,9 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         Value = ValueAPS.getSExtValue();
       } else if (!GenericHint->getValueStr().empty()) {
         Value = GenericHint->getValueStr().str();
+      } else {
+        // Key-only hint (e.g. hint(no_predication)) defaults to true.
+        Value = static_cast<int64_t>(1);
       }
       addGenericHint(GenericHint->getHint(), std::move(Value));
       continue;

@@ -286,7 +286,7 @@ int string_hint_unroll(int n, int *p) {
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]]}
 // CHECK: [[META7]] = !{!"llvm.loop.unroll.disable"}
 // CHECK: [[LOOP8]] = distinct !{[[LOOP8]], [[META9:![0-9]+]], [[META10:![0-9]+]], [[META7]]}
-// CHECK: [[META9]] = !{!"llvm.loop.hint.no_predication"}
+// CHECK: [[META9]] = !{!"llvm.loop.hint.no_predication", i64 1}
 // CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i32 7}
 // CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]]}
 // CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META13:![0-9]+]], [[META10]], [[META7]]}
