@@ -431,6 +431,23 @@ bool matchRedundantWidenNarrowConversion(MachineInstr &MI,
                                          const AIEBaseInstrInfo &TII,
                                          BuildFnTy &MatchInfo);
 
+/// Match a pattern of chained G_PTR_ADD operations where both offsets
+/// come from non-constant sources, like G_TRUNC/G_ZEXTLOAD of s32 values. The
+/// pattern:
+///   %195:modregbank(s20) = G_TRUNC %1021(s32)
+///   %201:modregbank(s20) = G_TRUNC %164(s32)
+///   %337:ptrregbank(p0) = G_PTR_ADD %335, %195(s20)
+///   %339:ptrregbank(p0) = G_PTR_ADD %337, %201(s20)
+/// Can be optimized to:
+///   %combined:_(s32) = G_ADD %1021(s32), %164(s32)
+///   %offset:modregbank(s20) = G_TRUNC %combined(s32)
+///   %339:ptrregbank(p0) = G_PTR_ADD %335, %offset(s20)
+/// Requires one s32 source to dominate the other for safe insertion.
+bool matchChainedPtrAddWithNonConstOffsets(MachineInstr &MI,
+                                           MachineRegisterInfo &MRI,
+                                           CombinerHelper &Helper,
+                                           BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

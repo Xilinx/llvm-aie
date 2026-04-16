@@ -79,6 +79,7 @@ namespace {
 
 const LLT S8 = LLT::scalar(8);
 const LLT S16 = LLT::scalar(16);
+const LLT S20 = LLT::scalar(20);
 const LLT S32 = LLT::scalar(32);
 const LLT V32S16 = LLT::fixed_vector(32, 16);
 
@@ -1201,6 +1202,170 @@ void llvm::applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.buildCopy(MI.getOperand(0), MI.getOperand(1));
   Observer.erasingInstr(MI);
   MI.eraseFromParent();
+}
+
+/// Get an s32/s20 value from an s20 register that comes from either:
+/// 1. G_TRUNC of s32 -> returns the original s32 register
+/// 2. G_ZEXTLOAD of s16 -> returns the s20 register (already zero-extended)
+/// Returns std::nullopt if the pattern doesn't match
+/// This is not a generic function, this is a helper for some combiners.
+static std::optional<Register> getSourceFromS20(Register S20Reg,
+                                                MachineRegisterInfo &MRI) {
+  MachineInstr *DefMI = MRI.getVRegDef(S20Reg);
+  if (!DefMI)
+    return std::nullopt;
+
+  const LLT S20Ty = MRI.getType(S20Reg);
+  if (S20Ty != S20)
+    return std::nullopt;
+
+  // Case 1: G_TRUNC s32 -> s20
+  if (DefMI->getOpcode() == TargetOpcode::G_TRUNC) {
+    const Register SrcReg = DefMI->getOperand(1).getReg();
+    const LLT SrcTy = MRI.getType(SrcReg);
+    if (SrcTy == S32)
+      return SrcReg;
+  }
+
+  // Case 2: G_ZEXTLOAD (loads s16, zero-extends to s20)
+  if (DefMI->getOpcode() == TargetOpcode::G_ZEXTLOAD) {
+    if (!DefMI->memoperands_empty()) {
+      const MachineMemOperand *MMO = *DefMI->memoperands_begin();
+      if (MMO && MMO->getMemoryType() == S16) {
+        // The s20 value from ZEXTLOAD is already zero-extended from s16
+        return S20Reg;
+      }
+    }
+  }
+
+  return std::nullopt;
+}
+
+/// Match a pattern of chained G_PTR_ADD operations where offsets come from
+/// either G_TRUNC of s32 values or G_ZEXTLOAD of s16 values.
+/// Combines them into a single PTR_ADD by adding the offsets in s32 space.
+///
+/// Patterns matched:
+///   1. TRUNC + TRUNC:
+///      %s20_1 = G_TRUNC %s32_1
+///      %ptr_1 = G_PTR_ADD %base, %s20_1
+///      %s20_2 = G_TRUNC %s32_2
+///      %ptr_2 = G_PTR_ADD %ptr_1, %s20_2
+///
+///   2. ZEXTLOAD + TRUNC:
+///      %s20_1 = G_ZEXTLOAD %ptr :: (load s16)
+///      %ptr_1 = G_PTR_ADD %base, %s20_1
+///      %s20_2 = G_TRUNC %s32_2
+///      %ptr_2 = G_PTR_ADD %ptr_1, %s20_2
+///
+///   3. ZEXTLOAD + ZEXTLOAD:
+///      %s20_1 = G_ZEXTLOAD %ptr1 :: (load s16)
+///      %ptr_1 = G_PTR_ADD %base, %s20_1
+///      %s20_2 = G_ZEXTLOAD %ptr2 :: (load s16)
+///      %ptr_2 = G_PTR_ADD %ptr_1, %s20_2
+///
+/// Transforms to:
+///   %s32_combined = G_ADD %s32_1, %s32_2  (with G_ZEXT if needed)
+///   %s20_combined = G_TRUNC %s32_combined
+///   %ptr_2 = G_PTR_ADD %base, %s20_combined
+bool llvm::matchChainedPtrAddWithNonConstOffsets(MachineInstr &MI,
+                                                 MachineRegisterInfo &MRI,
+                                                 CombinerHelper &Helper,
+                                                 BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD && "Expected G_PTR_ADD");
+
+  // This is the second PTR_ADD in the chain
+  const Register SecondPtrAddDst = MI.getOperand(0).getReg();
+  const Register SecondPtrAddBase = MI.getOperand(1).getReg();
+  const Register SecondOffset = MI.getOperand(2).getReg();
+
+  // Get Offset source for second offset (from TRUNC or ZEXTLOAD)
+  auto SecondOffsetOpt = getSourceFromS20(SecondOffset, MRI);
+  if (!SecondOffsetOpt)
+    return false;
+  const Register SecondOffsetReg = *SecondOffsetOpt;
+
+  // Check if base comes from another G_PTR_ADD
+  MachineInstr *FirstPtrAddMI = MRI.getVRegDef(SecondPtrAddBase);
+  if (!FirstPtrAddMI || FirstPtrAddMI->getOpcode() != TargetOpcode::G_PTR_ADD)
+    return false;
+
+  // If we try to merge PADDs from different blocks, we may end-up de-hoisting
+  // PADDs as ADD inside loops.
+  if (MI.getParent() != FirstPtrAddMI->getParent())
+    return false;
+
+  const Register FirstPtrAddBase = FirstPtrAddMI->getOperand(1).getReg();
+  const Register FirstOffset = FirstPtrAddMI->getOperand(2).getReg();
+
+  // Get Offset source for first offset (from TRUNC or ZEXTLOAD)
+  auto FirstOffsetOpt = getSourceFromS20(FirstOffset, MRI);
+  if (!FirstOffsetOpt)
+    return false;
+  const Register FirstOffsetReg = *FirstOffsetOpt;
+
+  // Get the definitions of both s32/s20 source registers
+  MachineInstr *FirstOffsetDefMI = MRI.getVRegDef(FirstOffsetReg);
+  MachineInstr *SecondOffsetDefMI = MRI.getVRegDef(SecondOffsetReg);
+
+  if (!FirstOffsetDefMI || !SecondOffsetDefMI)
+    return false;
+
+  // Check dominance: we need one to dominate the other
+  MachineInstr *InsertionPoint = nullptr;
+  if (Helper.dominates(*FirstOffsetDefMI, *SecondOffsetDefMI)) {
+    InsertionPoint = SecondOffsetDefMI;
+  } else if (Helper.dominates(*SecondOffsetDefMI, *FirstOffsetDefMI)) {
+    InsertionPoint = FirstOffsetDefMI;
+  } else {
+    return false;
+  }
+
+  // Verify insertion point dominates the final use
+  if (!Helper.dominates(*InsertionPoint, MI))
+    return false;
+
+  // Build the transformation
+  MatchInfo = [=, &MRI, &MI](MachineIRBuilder &B) {
+    // Set insertion point right after the dominated definition
+    // Be careful to not insert between phi nodes.
+    MachineBasicBlock *InsertPtMBB = InsertionPoint->getParent();
+    MachineBasicBlock::iterator InsertPt =
+        std::next(InsertionPoint->getIterator());
+    if (InsertPt != InsertPtMBB->end() && InsertPt->isPHI())
+      InsertPt = InsertPtMBB->getFirstNonPHI();
+
+    B.setInsertPt(*InsertPtMBB, *InsertPt);
+
+    // Extend a register to S32 if it is currently S20 (from ZEXTLOAD).
+    auto ExtendToS32 = [&](Register Reg) -> Register {
+      if (MRI.getType(Reg) == S20) {
+        Register Extended = MRI.createGenericVirtualRegister(S32);
+        B.buildZExt(Extended, Reg);
+        return Extended;
+      }
+      return Reg;
+    };
+
+    // Handle the case where one or both values are s20 (from ZEXTLOAD)
+    // We need to extend them to s32 before adding
+    const Register FirstS32Extended = ExtendToS32(FirstOffsetReg);
+    const Register SecondS32Extended = ExtendToS32(SecondOffsetReg);
+
+    // Build G_ADD of the two s32 values
+    const Register CombinedS32 = MRI.createGenericVirtualRegister(S32);
+    B.buildAdd(CombinedS32, FirstS32Extended, SecondS32Extended);
+
+    // Build G_TRUNC to s20
+    const Register CombinedS20 = MRI.createGenericVirtualRegister(S20);
+    B.buildTrunc(CombinedS20, CombinedS32);
+
+    // Build the combined PTR_ADD at the location of the root (second PTR_ADD)
+    B.setInstr(MI);
+    B.buildPtrAdd(SecondPtrAddDst, FirstPtrAddBase, CombinedS20);
+  };
+
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
