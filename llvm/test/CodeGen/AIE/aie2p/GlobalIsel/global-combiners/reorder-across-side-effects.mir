@@ -35,10 +35,10 @@ body:             |
     ; CHECK-NEXT: %lockid:_(s32) = G_CONSTANT i32 50
     ; CHECK-NEXT: %lockval:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: %off:_(s20) = G_CONSTANT i20 12
-    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off(s20) :: (load (s32))
     ; CHECK-NEXT: %first:_(s32), %ptr1:_(p0), %d0:_(s20), %d1:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], %off, %off, %off, %off, %off, %off, %off :: (load (s32))
     ; CHECK-NEXT: G_STORE %first(s32), [[COPY]](p0) :: (store (s32))
     ; CHECK-NEXT: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.acquire), %lockid(s32), %lockval(s32)
+    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off(s20) :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit %first(s32), implicit %second(s32), implicit %ptr1(p0)
     %0:_(p0) = COPY $p0
     %lockid:_(s32) = G_CONSTANT i32 50
@@ -74,11 +74,11 @@ body:             |
     ; CHECK-NEXT: %lock2:_(s32) = G_CONSTANT i32 50
     ; CHECK-NEXT: %lockval:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: %off:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off(s20) :: (load (s32))
     ; CHECK-NEXT: %first:_(s32), %ptr1:_(p0), %d0:_(s20), %d1:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], %off, %off, %off, %off, %off, %off, %off :: (load (s32))
     ; CHECK-NEXT: G_STORE %first(s32), [[COPY]](p0) :: (store (s32))
     ; CHECK-NEXT: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.release), %lock1(s32), %lockval(s32)
     ; CHECK-NEXT: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.acquire), %lock2(s32), %lockval(s32)
+    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off(s20) :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit %first(s32), implicit %second(s32), implicit %ptr1(p0)
     %0:_(p0) = COPY $p0
     %lock1:_(s32) = G_CONSTANT i32 40
@@ -117,11 +117,11 @@ body:             |
     ; CHECK-NEXT: %lockval:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: %off1:_(s20) = G_CONSTANT i20 12
     ; CHECK-NEXT: %off2:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off1(s20) :: (load (s32))
-    ; CHECK-NEXT: %third:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off2(s20) :: (load (s32))
     ; CHECK-NEXT: %first:_(s32), %ptr1:_(p0), %d0:_(s20), %d1:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], %off1, %off1, %off1, %off1, %off1, %off1, %off1 :: (load (s32))
     ; CHECK-NEXT: G_STORE %first(s32), [[COPY]](p0) :: (store (s32))
     ; CHECK-NEXT: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.acquire), %lockid(s32), %lockval(s32)
+    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off1(s20) :: (load (s32))
+    ; CHECK-NEXT: %third:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off2(s20) :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit %first(s32), implicit %second(s32), implicit %third(s32), implicit %ptr1(p0)
     %0:_(p0) = COPY $p0
     %lockid:_(s32) = G_CONSTANT i32 50
@@ -213,6 +213,50 @@ body:             |
     %addr:_(p0) = nuw G_PTR_ADD %0, %off(s20)
     %second:_(s32) = G_LOAD %addr(p0) :: (load (s32))
     %ptr1:_(p0), %d0:_(s20), %d1:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %0:_(p0), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20)
+
+    PseudoRET implicit $lr, implicit %first, implicit %second, implicit %ptr1
+...
+
+# Both combiner positions sit between two barriers (acquire before,
+# release after). The load does not cross either barrier, so
+# combination should proceed.
+---
+name:            reorder_allowed_barrier_around_both
+legalized:       true
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $p0
+    ; CHECK-LABEL: name: reorder_allowed_barrier_around_both
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: %lock1:_(s32) = G_CONSTANT i32 40
+    ; CHECK-NEXT: %lock2:_(s32) = G_CONSTANT i32 50
+    ; CHECK-NEXT: %lockval:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: %off:_(s20) = G_CONSTANT i20 12
+    ; CHECK-NEXT: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.acquire), %lock1(s32), %lockval(s32)
+    ; CHECK-NEXT: %second:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), %off(s20) :: (load (s32))
+    ; CHECK-NEXT: %first:_(s32), %ptr1:_(p0), %d0:_(s20), %d1:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], %off, %off, %off, %off, %off, %off, %off :: (load (s32))
+    ; CHECK-NEXT: G_STORE %first(s32), [[COPY]](p0) :: (store (s32))
+    ; CHECK-NEXT: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.release), %lock2(s32), %lockval(s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit %first(s32), implicit %second(s32), implicit %ptr1(p0)
+    %0:_(p0) = COPY $p0
+    %lock1:_(s32) = G_CONSTANT i32 40
+    %lock2:_(s32) = G_CONSTANT i32 50
+    %lockval:_(s32) = G_CONSTANT i32 1
+    %off:_(s20) = G_CONSTANT i20 12
+
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.acquire), %lock1(s32), %lockval(s32)
+
+    %first:_(s32) = G_LOAD %0(p0) :: (load (s32))
+    G_STORE %first(s32), %0(p0) :: (store (s32))
+    %addr:_(p0) = nuw G_PTR_ADD %0, %off(s20)
+    %second:_(s32) = G_LOAD %addr(p0) :: (load (s32))
+    %ptr1:_(p0), %d0:_(s20), %d1:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %0:_(p0), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20), %off:_(s20)
+
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.release), %lock2(s32), %lockval(s32)
 
     PseudoRET implicit $lr, implicit %first, implicit %second, implicit %ptr1
 ...
