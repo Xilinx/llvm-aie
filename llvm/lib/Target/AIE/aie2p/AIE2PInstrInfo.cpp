@@ -1921,6 +1921,14 @@ unsigned AIE2PInstrInfo::getGenericBroadcastVectorOpcode() const {
   return AIE2P::G_AIE_BROADCAST_VECTOR;
 }
 
+unsigned AIE2PInstrInfo::getGenericPostIncLoadOpcode() const {
+  return AIE2P::G_AIE_POSTINC_LOAD;
+}
+
+unsigned AIE2PInstrInfo::getGenericPostIncStoreOpcode() const {
+  return AIE2P::G_AIE_POSTINC_STORE;
+}
+
 unsigned AIE2PInstrInfo::getGenericVSelOpcode() const {
   return AIE2P::G_AIE_VSEL;
 }

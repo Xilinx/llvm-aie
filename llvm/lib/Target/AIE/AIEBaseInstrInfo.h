@@ -286,6 +286,14 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericShuffleVectorOpcode() const {
     llvm_unreachable("Target didn't implement getGenericShuffleVectorOpcode!");
   }
+  /// Return the opcode to be used for post-increment load operations.
+  virtual unsigned getGenericPostIncLoadOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericPostIncLoadOpcode!");
+  }
+  /// Return the opcode to be used for post-increment store operations.
+  virtual unsigned getGenericPostIncStoreOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericPostIncStoreOpcode!");
+  }
   /// Return the opcode to be used for subvector extraction.
   virtual unsigned getGenericExtractSubvectorOpcode() const {
     llvm_unreachable(

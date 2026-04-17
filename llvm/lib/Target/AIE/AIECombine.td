@@ -358,6 +358,12 @@ def combine_chained_ptradd_with_s20_nonconst : GICombineRule<
   [{ return matchChainedPtrAddWithNonConstOffsets(*${root}, MRI, Helper, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_postincloadstore_ptradd_with_trunc : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD): $root,
+  [{ return matchPostIncLoadStorePtrAddWithTrunc(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 def combine_trunc_load : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_LOAD): $root,
@@ -579,7 +585,8 @@ def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
 
 // AIE2PS-specific final combines (runs after custom combiner to avoid conflicts).
 def aie2ps_postlegalizer_final_combines : GICombineGroup<[
-  combine_chained_ptradd_with_s20_nonconst
+  combine_chained_ptradd_with_s20_nonconst,
+  combine_postincloadstore_ptradd_with_trunc
 ]>;
 
 def AIE2PostLegalizerCustomCombiner
