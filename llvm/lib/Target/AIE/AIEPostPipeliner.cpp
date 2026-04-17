@@ -298,11 +298,13 @@ void PostPipeliner::biasForLocalResourceContention(NodeInfo &NI,
   // When we need more slots than we have data predecessors, we have local
   // resource contention that we can safely account for in Earliest.
   if (Count > 0 && Slots.max() > Count) {
-    int NewEarliest = std::max(NI.Earliest, PredEarliest + Slots.max() - 1);
-    LLVM_DEBUG(dbgs() << "  SU" << SU.NodeNum << " MaxSlots=" << Slots.max()
-                      << ": Earliest " << NI.Earliest << " -> " << NewEarliest
-                      << "\n");
-    NI.Earliest = NewEarliest;
+    const int NewEarliest = PredEarliest + Slots.max() - 1;
+    if (NewEarliest > NI.Earliest) {
+      LLVM_DEBUG(dbgs() << "  SU" << SU.NodeNum << " MaxSlots=" << Slots.max()
+                        << ": Earliest " << NI.Earliest << " -> " << NewEarliest
+                        << "\n");
+      NI.Earliest = NewEarliest;
+    }
   }
 }
 
@@ -339,12 +341,11 @@ void PostPipeliner::computeForward() {
       }
       auto &SInfo = Info[Succ->NodeNum];
       const int NewEarliest = Me.Earliest + Dep.getSignedLatency();
-      if (NewEarliest != SInfo.Earliest) {
+      if (NewEarliest > SInfo.Earliest) {
         LLVM_DEBUG(dbgs() << "  SU" << Succ->NodeNum << " : Earliest "
-                          << SInfo.Earliest << " -> "
-                          << std::max(SInfo.Earliest, NewEarliest) << "\n");
+                          << SInfo.Earliest << " -> " << NewEarliest << "\n");
+        SInfo.Earliest = NewEarliest;
       }
-      SInfo.Earliest = std::max(SInfo.Earliest, NewEarliest);
     }
   }
 }
@@ -589,14 +590,6 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   for (auto &N : Info.Nodes) {
     N.StaticEarliest = N.Earliest;
     N.StaticLatest = N.Latest;
-  }
-
-  LLVM_DEBUG(dbgs() << "Final Earliest - Latest:\n");
-  int K = 0;
-  for (const auto &N : Info.Nodes) {
-    LLVM_DEBUG(dbgs() << "  SU" << K << " : " << N.Earliest << " - " << N.Latest
-                      << "\n");
-    K++;
   }
 
   MinLength = computeMinScheduleLength();
