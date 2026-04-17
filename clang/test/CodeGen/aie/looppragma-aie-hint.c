@@ -412,6 +412,51 @@ int test_hyphenated_hint(int *p, int n) {
   }
   return s;
 }
+
+// Expression values in hint(): verify constant expression folding.
+// CHECK-LABEL: define dso_local i32 @test_expr_hint(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
+// CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[S:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[I:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store ptr [[P]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    store i32 [[N]], ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[S]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND:.*]]
+// CHECK:       [[FOR_COND]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[TMP1]]
+// CHECK-NEXT:    br i1 [[CMP]], label %[[FOR_BODY:.*]], label %[[FOR_END:.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds nuw i32, ptr [[TMP2]], i32 1
+// CHECK-NEXT:    store ptr [[INCDEC_PTR]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[TMP2]], align 4
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[TMP3]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[S]], align 4
+// CHECK-NEXT:    br label %[[FOR_INC:.*]]
+// CHECK:       [[FOR_INC]]:
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
+// CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP23:![0-9]+]]
+// CHECK:       [[FOR_END]]:
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    ret i32 [[TMP6]]
+//
+int test_expr_hint(int *p, int n) {
+  int s = 0;
+  #pragma clang loop hint(check, 4 + 7)
+  for (int i = 0; i < n; i++) {
+    s += *p++;
+  }
+  return s;
+}
 //.
 // CHECK: attributes #[[ATTR0]] = { noinline nounwind optnone "no-builtin-memcpy" "no-builtin-memmove" "no-builtin-memset" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
 //.
@@ -438,4 +483,6 @@ int test_hyphenated_hint(int *p, int n) {
 // CHECK: [[LOOP20]] = distinct !{[[LOOP20]], [[META3]], [[META21:![0-9]+]], [[META22:![0-9]+]]}
 // CHECK: [[META21]] = !{!"llvm.loop.hint.aie-realloc-loopaware", i64 1}
 // CHECK: [[META22]] = !{!"llvm.loop.hint.aie-gpr-realloc", i64 1}
+// CHECK: [[LOOP23]] = distinct !{[[LOOP23]], [[META3]], [[META24:![0-9]+]]}
+// CHECK: [[META24]] = !{!"llvm.loop.hint.check", i64 11}
 //.
