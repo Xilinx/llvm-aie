@@ -78,12 +78,15 @@ public:
 
   /// \return whether a Slot can be assigned to \b MI and assign it in the
   /// mapping.
-  bool isSlotAssignable(const MachineInstr &MI, const AIEHazardRecognizer &HR) {
+  bool tryAssignSlot(const MachineInstr &MI, const AIEHazardRecognizer &HR) {
     auto MemBankBits = HR.getMemoryBanks(&MI);
     LLVM_DEBUG(dbgs() << "Memory Bank: " << MemBankBits << " " << MI);
+    // Instructions without memory bank info are skipped -- they don't
+    // participate in bank-based assignment and will be handled by slot-pressure
+    // materialization instead.
     if (!MemBankBits) {
-      LLVM_DEBUG(dbgs() << "Warning: No MemoryBanks assigned to " << MI);
-      return false;
+      LLVM_DEBUG(dbgs() << "Skipping (no MemoryBanks): " << MI);
+      return true;
     }
 
     std::optional<MCSlotKind> SelectedSlot = getAssignedSlot(MemBankBits);
@@ -176,7 +179,7 @@ bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
     if (!MI.mayLoad() || !TII->isMultiSlotPseudo(MI))
       continue;
 
-    if (!SlotToBanks.isSlotAssignable(MI, HR)) {
+    if (!SlotToBanks.tryAssignSlot(MI, HR)) {
       return false;
     }
   }
@@ -434,6 +437,13 @@ void materializeSlots(const SlotMapping &SlotToBanks, MachineBasicBlock &MBB,
 
   for (auto &MI : MBB) {
     if (!MI.mayLoad() || !TII->isMultiSlotPseudo(MI))
+      continue;
+
+    // Skip instructions without memory bank info -- they were not assigned
+    // a slot by the bank-based strategy and remain as pseudos for
+    // slot-pressure materialization.
+    const auto MemBankBits = HR.getMemoryBanks(&MI);
+    if (!MemBankBits)
       continue;
 
     materializeInstr(MI, SlotToBanks, TII, HR);
