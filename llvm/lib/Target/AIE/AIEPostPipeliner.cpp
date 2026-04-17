@@ -958,9 +958,34 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
                         << Insert << " (Earliest=" << Earliest
                         << " ModuloNode=SU" << N - NInstr << ")\n";
                  dumpEarliestChain(Info, N));
-      if (Strategy.mobility(ModuloSU) > 0) {
-        // The modulo Node can be delayed
-        ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
+      // Check whether the modulo node can be delayed to resolve the
+      // violation. HasScheduleSlack means the current schedule still
+      // has room. CanPlaceLaterInOriginalInterval means scheduling
+      // tightened Latest beyond the original interval -- retrying
+      // with a higher TweakedEarliest can produce a different
+      // successor layout that doesn't squeeze as aggressively.
+
+      // The current schedule still has room for the modulo node.
+      const bool HasScheduleSlack = Strategy.mobility(ModuloSU) > 0;
+
+      // The strategy's schedule length shifts all Latest values by a
+      // constant offset. Recover it to translate StaticLatest into
+      // the strategy's coordinate system.
+      const int ScheduleLengthOffset =
+          Strategy.latest(ModuloSU) - Info[ModuloSU.NodeNum].Latest;
+
+      // The node's upper bound before scheduling tightened it.
+      const int OriginalLatest = ModuloNode.StaticLatest + ScheduleLengthOffset;
+
+      // The node hasn't reached the boundary of its pre-scheduling
+      // interval -- there is room to push it later.
+      const bool CanPlaceLaterInOriginalInterval =
+          ModuloNode.Earliest < OriginalLatest;
+
+      const bool CanDelayModuloNode =
+          HasScheduleSlack || CanPlaceLaterInOriginalInterval;
+      if (CanDelayModuloNode) {
+        ModuloNode.TweakedEarliest = ModuloNode.Cycle + 1;
         Strategy.setChanged();
         LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
                           << " with TweakedEarliest= "
@@ -1350,6 +1375,9 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
     // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
     {1, true, false, 1, {Prio::NodeNum}, {}},
+    // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
+    // when MinTripCount barely exceeds RecMII.
+    {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
     {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
     {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
     {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},
