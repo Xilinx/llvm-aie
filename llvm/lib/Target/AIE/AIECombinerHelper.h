@@ -448,6 +448,25 @@ bool matchChainedPtrAddWithNonConstOffsets(MachineInstr &MI,
                                            CombinerHelper &Helper,
                                            BuildFnTy &MatchInfo);
 
+/// Match a pattern of G_AIE_POSTINC_LOAD/STORE followed by G_PTR_ADD where both
+/// offsets come from G_TRUNC of s32 values. The pattern:
+///   %offset1:_(s20) = G_TRUNC %src1(s32)
+///   %offset2:_(s20) = G_TRUNC %src2(s32)
+///   %data:_(<32 x s16>), %ptr1:_(p0) = G_AIE_POSTINC_LOAD %base, %offset1(s20)
+///   %ptr2:_(p0) = G_PTR_ADD %ptr1, %offset2(s20)
+/// Can be optimized to:
+///   %combined:_(s32) = G_ADD %src1(s32), %src2(s32)
+///   %offset:_(s20) = G_TRUNC %combined(s32)
+///   %data:_(<32 x s16>), %ptr2:_(p0) = G_AIE_POSTINC_LOAD %base, %offset(s20)
+/// Requires the POSTINC's pointer output to have only one use (the
+/// PTR_ADD) and one s32 source to dominate the other for safe insertion.
+bool matchPostIncLoadStorePtrAddWithTrunc(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI,
+                                          CombinerHelper &Helper,
+                                          const AIEBaseInstrInfo &TII,
+                                          GISelChangeObserver &Observer,
+                                          BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

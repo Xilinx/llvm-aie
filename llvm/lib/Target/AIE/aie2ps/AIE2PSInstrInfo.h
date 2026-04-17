@@ -145,6 +145,8 @@ public:
   unsigned getGenericVSelOpcode() const override;
   unsigned getGenericVShiftOpcode() const override;
   unsigned getGenericShuffleVectorOpcode() const override;
+  unsigned getGenericPostIncLoadOpcode() const override;
+  unsigned getGenericPostIncStoreOpcode() const override;
   unsigned getGenericExtractSubvectorOpcode() const override;
   unsigned getGenericIntegerComparisonOpcode() const override;
 
