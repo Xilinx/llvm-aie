@@ -1,0 +1,9 @@
+# REQUIRES: x86-registered-target
+## Basic .ll test: single function with asm-printer remarks.
+
+# RUN: cp -f %S/Inputs/x86-ore-basic.ll %t.ll && %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-basic.ll.expected %t.ll
+
+## Verify idempotency:
+# RUN: %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-basic.ll.expected %t.ll
