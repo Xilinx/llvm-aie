@@ -318,6 +318,8 @@ public:
                             unsigned Opcode);
   bool selectBFP16_ADDMAC_CONF(MachineInstr &I, MachineRegisterInfo &MRI,
                                unsigned Opcode);
+  bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
+                               bool IsWrite);
 
 private:
   bool selectImpl(MachineInstr &I,
@@ -2056,6 +2058,26 @@ bool AIE2PSInstructionSelector::select(MachineInstr &I) {
       return selectBFP16_ADDMAC_CONF(I, MRI, AIE2PS::VADDMAC_f_vaddmac_bfp16);
     case Intrinsic::aie2ps_BFP640_BFP2560_ACC2048_bf_addmsc_conf:
       return selectBFP16_ADDMAC_CONF(I, MRI, AIE2PS::VADDMSC_f_vaddmac_bfp16);
+    case Intrinsic::aie2ps_scd_read_vec:
+    case Intrinsic::aie2ps_scd_read_acc32:
+    case Intrinsic::aie2ps_scd_expand_lo:
+    case Intrinsic::aie2ps_scd_expand_hi:
+    case Intrinsic::aie2ps_scd_ACC2048:
+    case Intrinsic::aie2ps_scd_expand_ACC1024:
+    case Intrinsic::aie2ps_scd_expand_ACC2048:
+    case Intrinsic::aie2ps_scd_expand_ACC1024_incr:
+    case Intrinsic::aie2ps_scd_expand_ACC2048_incr:
+      return selectCascadeStreamInsn(I, MRI, false);
+    case Intrinsic::aie2ps_mcd_write_vec:
+    case Intrinsic::aie2ps_mcd_write_acc32:
+      return selectCascadeStreamInsn(I, MRI, true);
+    case Intrinsic::aie2ps_get_ss:
+    case Intrinsic::aie2ps_get_ss_nb:
+      return selectGetSS(I, MRI, MIB);
+    case Intrinsic::aie2ps_put_ms:
+      return selectPutMSB(I, MRI, MIB);
+    case Intrinsic::aie2ps_put_ms_nb:
+      return selectPutMSNB(I, MRI, MIB);
     default:
       return selectImpl(I, *CoverageInfo);
     }
@@ -4800,6 +4822,89 @@ bool AIE2PSInstructionSelector::selectVST_FIFO(MachineInstr &I,
     return false;
   }
   return false;
+}
+
+bool AIE2PSInstructionSelector::selectCascadeStreamInsn(
+    MachineInstr &I, MachineRegisterInfo &MRI, bool IsWrite) {
+  const Register CascadeReg = I.getOperand(IsWrite ? 1 : 0).getReg();
+  Register EnableReg = I.getOperand(I.getNumOperands() - 1).getReg();
+  MachineInstrBuilder CascadeMV;
+  const unsigned OpCode = TII.getOpCode(I);
+
+  // Helper to extract ACC1024 sub-register from an ACC2048 result.
+  auto ExtractACC1024 = [&]() {
+    auto DestMI = MIB.buildInstr(TargetOpcode::COPY, {CascadeReg}, {})
+                      .addReg(CascadeMV->getOperand(0).getReg(), 0,
+                              AIE2PS::sub_1024_acc_lo);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *DestMI,
+                             AIE2PS::ACC1024RegClass, DestMI->getOperand(0));
+  };
+
+  if (IsWrite) {
+    CascadeMV = MIB.buildInstr(OpCode, {}, {}).addReg(CascadeReg);
+  } else {
+    auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+    switch (IntrinsicID) {
+    case Intrinsic::aie2ps_scd_expand_ACC2048: {
+      EnableReg = I.getOperand(I.getNumOperands() - 2).getReg();
+      const Register PosReg = I.getOperand(I.getNumOperands() - 1).getReg();
+      auto CopyPosReg = MIB.buildInstr(TargetOpcode::COPY,
+                                       {&AIE2PS::mR31_scdRegClass}, {PosReg});
+      if (!selectCopy(*CopyPosReg, MRI)) {
+        return false;
+      }
+      CascadeMV =
+          MIB.buildInstr(OpCode, {CascadeReg}, {}).addReg(CopyPosReg.getReg(0));
+      break;
+    }
+    case Intrinsic::aie2ps_scd_expand_ACC1024: {
+      EnableReg = I.getOperand(I.getNumOperands() - 2).getReg();
+      const Register PosReg = I.getOperand(I.getNumOperands() - 1).getReg();
+      auto CopyPosReg = MIB.buildInstr(TargetOpcode::COPY,
+                                       {&AIE2PS::mR31_scdRegClass}, {PosReg});
+      if (!selectCopy(*CopyPosReg, MRI)) {
+        return false;
+      }
+      Register DstReg = MRI.createVirtualRegister(&AIE2PS::ACC2048RegClass);
+      CascadeMV =
+          MIB.buildInstr(OpCode, {DstReg}, {}).addReg(CopyPosReg.getReg(0));
+      ExtractACC1024();
+      break;
+    }
+    case Intrinsic::aie2ps_scd_expand_ACC2048_incr: {
+      const Register R31 = I.getOperand(1).getReg();
+      EnableReg = I.getOperand(I.getNumOperands() - 2).getReg();
+      const Register PosPtrInReg =
+          I.getOperand(I.getNumOperands() - 1).getReg();
+      CascadeMV =
+          MIB.buildInstr(OpCode, {CascadeReg, R31}, {}).addReg(PosPtrInReg);
+      break;
+    }
+    case Intrinsic::aie2ps_scd_expand_ACC1024_incr: {
+      const Register R31 = I.getOperand(1).getReg();
+      EnableReg = I.getOperand(I.getNumOperands() - 2).getReg();
+      const Register PosPtrInReg =
+          I.getOperand(I.getNumOperands() - 1).getReg();
+      Register DstReg = MRI.createVirtualRegister(&AIE2PS::ACC2048RegClass);
+      auto CopyPosPtrInReg = MIB.buildInstr(
+          TargetOpcode::COPY, {&AIE2PS::mR31_scdRegClass}, {PosPtrInReg});
+      CascadeMV = MIB.buildInstr(OpCode, {DstReg, R31}, {})
+                      .addReg(CopyPosPtrInReg.getReg(0));
+      RBI.constrainGenericRegister(R31, AIE2PS::mR31_scdRegClass, MRI);
+      ExtractACC1024();
+      break;
+    }
+    default:
+      CascadeMV = MIB.buildInstr(OpCode, {CascadeReg}, {});
+      break;
+    }
+  }
+  setUnsetCtrlRegister(MIB, *CascadeMV, MRI,
+                       (IsWrite ? AIE2PS::crMCDEn : AIE2PS::crSCDEn), EnableReg,
+                       1);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*CascadeMV, TII, TRI, RBI);
 }
 
 namespace llvm {
