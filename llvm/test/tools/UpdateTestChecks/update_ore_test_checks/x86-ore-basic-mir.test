@@ -1,0 +1,9 @@
+# REQUIRES: x86-registered-target
+## Basic .mir test: single function with asm-printer remarks.
+
+# RUN: cp -f %S/Inputs/x86-ore-basic.mir %t.mir && %update_ore_test_checks %t.mir
+# RUN: diff -u %S/Inputs/x86-ore-basic.mir.expected %t.mir
+
+## Verify idempotency:
+# RUN: %update_ore_test_checks %t.mir
+# RUN: diff -u %S/Inputs/x86-ore-basic.mir.expected %t.mir

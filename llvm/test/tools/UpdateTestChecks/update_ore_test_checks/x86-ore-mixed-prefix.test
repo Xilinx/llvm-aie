@@ -1,0 +1,11 @@
+# REQUIRES: x86-registered-target
+## Mixed prefix test: ASM prefix for assembly checks, REMARKS prefix for
+## optimization remarks.  The script should only manage REMARKS lines
+## and leave ASM lines untouched.
+
+# RUN: cp -f %S/Inputs/x86-ore-mixed-prefix.ll %t.ll && %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-mixed-prefix.ll.expected %t.ll
+
+## Verify idempotency:
+# RUN: %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-mixed-prefix.ll.expected %t.ll

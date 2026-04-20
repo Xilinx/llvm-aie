@@ -1,0 +1,9 @@
+# REQUIRES: x86-registered-target
+## Multi-function .ll test: verify per-function grouping of remark CHECK lines.
+
+# RUN: cp -f %S/Inputs/x86-ore-multi-func.ll %t.ll && %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-multi-func.ll.expected %t.ll
+
+## Verify idempotency:
+# RUN: %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-multi-func.ll.expected %t.ll
