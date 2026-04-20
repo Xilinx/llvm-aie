@@ -50,7 +50,7 @@ std::unique_ptr<Pass> createTosaLayerwiseConstantFoldPass(
 std::unique_ptr<Pass> createTosaInferShapesPass();
 std::unique_ptr<Pass> createTosaMakeBroadcastablePass();
 std::unique_ptr<Pass>
-createSinkInputOpsThroughConcatPass(SinkInputOpsThroughConcatOptions &,
+createSinkInputOpsThroughConcatPass(const SinkInputOpsThroughConcatOptions &,
                                     llvm::raw_ostream &);
 std::unique_ptr<Pass> createTosaTestQuantUtilAPIPass();
 std::unique_ptr<Pass> createTosaOptionalDecompositions();

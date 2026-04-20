@@ -458,13 +458,13 @@ struct SinkInputOpsThroughConcat
             options) {}
 
   void runOnOperation() override {
-    auto func = getOperation();
-    RewritePatternSet patterns(func.getContext());
-    MLIRContext *ctx = func.getContext();
+    auto moduleOp = getOperation();
+    RewritePatternSet patterns(moduleOp.getContext());
+    MLIRContext *ctx = moduleOp.getContext();
 
     populateSinkInputOpsThroughConcatPattern(patterns, ctx);
 
-    if (applyPatternsGreedily(func, std::move(patterns)).failed())
+    if (applyPatternsGreedily(moduleOp, std::move(patterns)).failed())
       signalPassFailure();
   }
 
@@ -537,6 +537,6 @@ void mlir::tosa::populateSinkInputOpsThroughConcatReshapePatterns(
 }
 
 std::unique_ptr<Pass> mlir::tosa::createSinkInputOpsThroughConcatPass(
-    SinkInputOpsThroughConcatOptions &options, llvm::raw_ostream &os) {
+    const SinkInputOpsThroughConcatOptions &options, llvm::raw_ostream &os) {
   return std::make_unique<SinkInputOpsThroughConcat>(options, os);
 }
