@@ -751,8 +751,15 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
   // support WAR and WAW dependencies as well.
   // We also look a bit closer at zero-cost instructions to help pre-RA sched.
 
-  unsigned SrcClass = SrcMI.getDesc().getSchedClass();
-  unsigned DstClass = DstMI.getDesc().getSchedClass();
+  // Use resolved schedule classes based on register classes to get correct
+  // bypass information and operand latencies.
+  const MachineRegisterInfo &MRI = SrcMI.getMF()->getRegInfo();
+  const unsigned SrcClass = getSchedClass(
+      SrcMI.getDesc(), make_range(SrcMI.operands_begin(), SrcMI.operands_end()),
+      MRI);
+  const unsigned DstClass = getSchedClass(
+      DstMI.getDesc(), make_range(DstMI.operands_begin(), DstMI.operands_end()),
+      MRI);
   std::optional<unsigned> SrcCycle =
       ItinData->getOperandCycle(SrcClass, SrcOpIdx);
   std::optional<unsigned> DstCycle =
@@ -824,7 +831,7 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
   int DstCycleVal = *DstCycle;
   if (Kind == SDep::Data) {
     // Typical bypass case: data from a producer is available earlier for a
-    // consumer
+    // consumer.
     SrcCycleVal -=
         getNumBypassedCycles(ItinData, SrcMI, SrcOpIdx, DstMI, DstOpIdx);
   }
@@ -844,10 +851,16 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
 unsigned AIEBaseInstrInfo::getNumBypassedCycles(
     const InstrItineraryData *ItinData, const MachineInstr &DefMI,
     unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {
+  // Resolve schedule classes based on register classes of operands.
+  const MachineRegisterInfo &MRI = DefMI.getMF()->getRegInfo();
+  const unsigned DefSchedClass =
+      getSchedClass(DefMI.getDesc(), DefMI.operands(), MRI);
+  const unsigned UseSchedClass =
+      getSchedClass(UseMI.getDesc(), UseMI.operands(), MRI);
+
   // FIXME: This assumes one cycle benefit for every pipeline forwarding.
-  return ItinData->hasPipelineForwarding(
-             DefMI.getDesc().getSchedClass(), DefIdx,
-             UseMI.getDesc().getSchedClass(), UseIdx)
+  return ItinData->hasPipelineForwarding(DefSchedClass, DefIdx, UseSchedClass,
+                                         UseIdx)
              ? 1
              : 0;
 }
