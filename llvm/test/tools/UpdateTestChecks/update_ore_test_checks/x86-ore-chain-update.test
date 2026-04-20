@@ -1,0 +1,10 @@
+# REQUIRES: x86-registered-target
+## Chain update test: --update-llc-checks invokes update_llc_test_checks.py
+## first, then adds remark CHECK lines.  Input has no CHECK lines at all.
+
+# RUN: cp -f %S/Inputs/x86-ore-chain-update.ll %t.ll && %update_ore_test_checks --update-llc-checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-chain-update.ll.expected %t.ll
+
+## Verify idempotency via UTC_ARGS (no --update-llc-checks on the command line):
+# RUN: %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-chain-update.ll.expected %t.ll
