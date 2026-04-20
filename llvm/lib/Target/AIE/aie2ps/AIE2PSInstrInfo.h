@@ -131,6 +131,10 @@ public:
                          bool IsTailCall) const override;
   Register getPackSignCReg() const override;
   Register getUnpackSignCReg() const override;
+  Register getSSStatusReg() const override;
+  Register getMSStatusReg() const override;
+  unsigned getMoveToMSOpcode(MachineInstr &I,
+                             unsigned ConstTLastVal) const override;
   unsigned getCycleSeparatorOpcode() const override;
   unsigned getGenericAddVectorEltOpcode() const override;
   unsigned getGenericInsertVectorEltOpcode() const override;

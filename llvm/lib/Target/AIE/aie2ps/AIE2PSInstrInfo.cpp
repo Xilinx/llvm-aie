@@ -247,6 +247,54 @@ unsigned AIE2PSInstrInfo::getOpCode(MachineInstr &I) const {
       return isSigned ? AIE2PS::VUNPACK_mv_unpack_x_unpackSign1
                       : AIE2PS::VUNPACK_mv_unpack_x_unpackSign0;
   }
+  // Cascade stream read (SCD)
+  case Intrinsic::aie2ps_scd_read_vec:
+    return AIE2PS::VMOV_alu_mv_alu_mv_scd_x;
+  case Intrinsic::aie2ps_scd_read_acc32:
+    return AIE2PS::VMOV_alu_mv_alu_mv_scd_bm;
+  case Intrinsic::aie2ps_scd_expand_lo:
+    return AIE2PS::VMOV_0_mv_scd_cm;
+  case Intrinsic::aie2ps_scd_expand_hi:
+    return AIE2PS::VMOV_1_mv_scd_cm;
+  case Intrinsic::aie2ps_scd_ACC2048: {
+    Register SrcReg = I.getOperand(3).getReg();
+    if (auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
+      unsigned SrcConstVal = Src->Value.getZExtValue();
+      switch (SrcConstVal) {
+      case 0:
+        return AIE2PS::VMOV_0_mv_scd_dm_imm;
+      case 1:
+        return AIE2PS::VMOV_1_mv_scd_dm_imm;
+      case 2:
+        return AIE2PS::VMOV_2;
+      case 3:
+        return AIE2PS::VMOV_3;
+      default:
+        llvm_unreachable("Unexpected SrcConstVal for SCD");
+      }
+    }
+    llvm_unreachable("Unexpected non-constant for SCD");
+  }
+  case Intrinsic::aie2ps_scd_expand_ACC1024:
+  case Intrinsic::aie2ps_scd_expand_ACC2048:
+    return AIE2PS::VMOV_alu_mv_alu_mv_scd_dm_reg;
+  case Intrinsic::aie2ps_scd_expand_ACC1024_incr:
+  case Intrinsic::aie2ps_scd_expand_ACC2048_incr:
+    return AIE2PS::VMOV_alu_mv_alu_mv_scd_dm_dyn;
+  // Cascade stream write (MCD)
+  case Intrinsic::aie2ps_mcd_write_vec:
+    return AIE2PS::VMOV_st_mv_mcd_x;
+  case Intrinsic::aie2ps_mcd_write_acc32:
+    return AIE2PS::VMOV_st_mv_mcd_bm;
+  // Scalar stream intrinsics
+  case Intrinsic::aie2ps_get_ss:
+    return AIE2PS::MOV_lda;
+  case Intrinsic::aie2ps_get_ss_nb:
+    return AIE2PS::MOV_nb_lda;
+  case Intrinsic::aie2ps_put_ms:
+    return AIE2PS::MOV_st_mMStream_tlast_reg;
+  case Intrinsic::aie2ps_put_ms_nb:
+    return AIE2PS::MOV_nb_st_mMStream_tlast_reg;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
   }
@@ -1415,6 +1463,25 @@ Register AIE2PSInstrInfo::getPackSignCReg() const { return AIE2PS::packSign0; }
 
 Register AIE2PSInstrInfo::getUnpackSignCReg() const {
   return AIE2PS::unpackSign0;
+}
+
+Register AIE2PSInstrInfo::getSSStatusReg() const { return AIE2PS::srSS0; }
+
+Register AIE2PSInstrInfo::getMSStatusReg() const { return AIE2PS::srMS0; }
+
+unsigned AIE2PSInstrInfo::getMoveToMSOpcode(MachineInstr &I,
+                                            unsigned ConstTLastVal) const {
+  const bool UseTLastImm = (ConstTLastVal == 0);
+  const unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  switch (IntrinsicID) {
+  case Intrinsic::aie2ps_put_ms:
+    return UseTLastImm ? AIE2PS::MOV_st_mMStream_tlast_imm : AIE2PS::MOV_tlast;
+  case Intrinsic::aie2ps_put_ms_nb:
+    return UseTLastImm ? AIE2PS::MOV_nb_st_mMStream_tlast_imm
+                       : AIE2PS::MOV_nb_tlast;
+  default:
+    llvm_unreachable("Unexpected Intrinsic ID");
+  }
 }
 
 unsigned AIE2PSInstrInfo::getScalarRegSize() const { return 32; }
