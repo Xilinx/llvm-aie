@@ -912,6 +912,20 @@ void dumpEarliestChain(const ScheduleInfo &Info, int N) {
   dbgs() << "  --> SU" << N << " @" << Info[N].Cycle << "\n";
 }
 
+/// Check whether \p Target lies on the LastEarliestPusher chain starting
+/// from node \p Start. If so, delaying Target will push Start's Earliest
+/// by the same amount, making the delay futile for resolving a modulo
+/// constraint between them.
+bool isOnEarliestChain(const ScheduleInfo &Info, int Start, int Target) {
+  auto Prev = Info[Start].LastEarliestPusher;
+  while (Prev) {
+    if (*Prev == Target)
+      return true;
+    Prev = Info[*Prev].LastEarliestPusher;
+  }
+  return false;
+}
+
 #ifndef NDEBUG
 /// Recompute Earliest from direct predecessors only.
 int computeEarliestFromPreds(const SUnit &SU, const ScheduleInfo &Info) {
@@ -964,6 +978,8 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
       // tightened Latest beyond the original interval -- retrying
       // with a higher TweakedEarliest can produce a different
       // successor layout that doesn't squeeze as aggressively.
+      // DelayReducesGap guards against futile delays where the modulo
+      // node drives Node's Earliest through an LCD chain.
 
       // The current schedule still has room for the modulo node.
       const bool HasScheduleSlack = Strategy.mobility(ModuloSU) > 0;
@@ -982,8 +998,15 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
       const bool CanPlaceLaterInOriginalInterval =
           ModuloNode.Earliest < OriginalLatest;
 
+      // The delay actually reduces the Earliest-Insert gap. If the
+      // modulo node drives Node's Earliest through an LCD chain,
+      // both sides advance equally and the gap stays constant.
+      const bool DelayReducesGap =
+          !isOnEarliestChain(Info, N, ModuloSU.NodeNum);
+
       const bool CanDelayModuloNode =
-          HasScheduleSlack || CanPlaceLaterInOriginalInterval;
+          HasScheduleSlack ||
+          (CanPlaceLaterInOriginalInterval && DelayReducesGap);
       if (CanDelayModuloNode) {
         ModuloNode.TweakedEarliest = ModuloNode.Cycle + 1;
         Strategy.setChanged();
