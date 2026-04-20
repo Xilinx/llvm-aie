@@ -421,7 +421,8 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_unpad_unmerge,
   combine_pad_unpad_fusion,
   combine_concat_unpad_fusion,
-  combine_flatten_nested_concat
+  combine_flatten_nested_concat,
+  combine_chained_ptradd_with_s20_nonconst
 ]>;
 
 def AIE2PreLegalizerCombiner
