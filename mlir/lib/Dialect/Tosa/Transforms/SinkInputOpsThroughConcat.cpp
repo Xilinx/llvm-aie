@@ -402,7 +402,7 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
       if (inputTypes.empty()) {
         commonAxes = info.candidateAxes;
       } else {
-        llvm::erase_if(commonAxes, [&](size_t axis) {
+        llvm::erase_if(commonAxes, [&info](size_t axis) {
           return !llvm::is_contained(info.candidateAxes, axis);
         });
       }
