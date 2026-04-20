@@ -367,7 +367,12 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
     // in the reshaped tensor. This aligns the concat boundary in the same
     // linearized position, independent of whether the reshapes inserted or
     // removed size-1 dimensions or spread the concatenated chunk across
-    // multiple input dimensions.
+    // multiple input dimensions. For example:
+    //   6x1x6 --reshape--> 2x3x1x2x3 --concat(axis=2)--> 2x3x2x2x3
+    // can sink to:
+    //   6x1x6 --concat(axis=1)--> 6x2x6 --reshape--> 2x3x2x2x3
+    // because axis 1 is the input axis that preserves the same linearized
+    // concat boundary.
     //
     // We then intersect those candidate sets across all operands and choose the
     // first common axis that also makes the raw reshape inputs valid operands
@@ -385,7 +390,6 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
     SmallVector<Value> concatOperands;
     SmallVector<size_t> commonAxes;
     SmallVector<Location> fusedLocs{concatOp.getLoc()};
-    [[maybe_unused]] Type inputElementType;
 
     for (Value operand : concatOp.getOperands()) {
       auto infoOrError = getReshapeOperandInfo(operand, concatAxisAfterReshape,
@@ -394,10 +398,6 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
         return failure();
 
       ReshapeOperandInfo &info = *infoOrError;
-      if (!inputElementType)
-        inputElementType = info.inputType.getElementType();
-      assert(info.inputType.getElementType() == inputElementType &&
-             "All reshape inputs must have the same element type.");
 
       if (inputTypes.empty()) {
         commonAxes = info.candidateAxes;
