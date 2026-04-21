@@ -1,4 +1,4 @@
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 // RUN: mlir-opt --split-input-file --sink-input-ops-through-concat %s | FileCheck %s
 
 !in_type = tensor<1x8x8xf32>
@@ -284,9 +284,87 @@ func.func @reshape_big_concat_axis(%arg0: !in_type, %arg1: !in_type) -> !out_typ
 
 // CHECK-LABEL:  func.func @reshape_big_concat_axis
 // CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<1x4x1xf32>, [[PARAM_1_:%.+]]: tensor<1x4x1xf32>) -> tensor<1x8xf32> {
-// CHECK:           [[VAR_0_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]] {axis = 1 : i32} : (tensor<1x4x1xf32>, tensor<1x4x1xf32>) -> tensor<1x8x1xf32>
-// CHECK:           [[VAR_1_:%.+]] = tosa.reshape [[VAR_0_]] {new_shape = array<i64: 1, 8>} : (tensor<1x8x1xf32>) -> tensor<1x8xf32>
+// CHECK:           [[VAR_0_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]] {axis = 0 : i32} : (tensor<1x4x1xf32>, tensor<1x4x1xf32>) -> tensor<2x4x1xf32>
+// CHECK:           [[VAR_1_:%.+]] = tosa.reshape [[VAR_0_]] {new_shape = array<i64: 1, 8>} : (tensor<2x4x1xf32>) -> tensor<1x8xf32>
 // CHECK:           return [[VAR_1_]] : tensor<1x8xf32>
+// CHECK:         }
+// -----
+
+!in_type = tensor<2xf32>
+!re_type = tensor<1x2xf32>
+!out_type = tensor<2x2xf32>
+func.func @reshape_unit_dim_boundary_alignment(%arg0: !in_type, %arg1: !in_type) -> !out_type {
+    %0 = tosa.reshape %arg0 {new_shape = array<i64: 1, 2>} : (!in_type) -> !re_type
+    %1 = tosa.reshape %arg1 {new_shape = array<i64: 1, 2>} : (!in_type) -> !re_type
+    %2 = tosa.concat %0, %1 {axis = 0 : i32} : (!re_type, !re_type) -> !out_type
+  return %2 : !out_type
+}
+
+// CHECK-LABEL:  func.func @reshape_unit_dim_boundary_alignment
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<2xf32>, [[PARAM_1_:%.+]]: tensor<2xf32>) -> tensor<2x2xf32> {
+// CHECK:           [[VAR_0_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]] {axis = 0 : i32} : (tensor<2xf32>, tensor<2xf32>) -> tensor<4xf32>
+// CHECK:           [[VAR_1_:%.+]] = tosa.reshape [[VAR_0_]] {new_shape = array<i64: 2, 2>} : (tensor<4xf32>) -> tensor<2x2xf32>
+// CHECK:           return [[VAR_1_]] : tensor<2x2xf32>
+// CHECK:         }
+// -----
+
+!in_type0 = tensor<1x2001x1x1xi8>
+!in_type1 = tensor<1x1x1x1xi8>
+!re_type0 = tensor<1x2001xi8>
+!re_type1 = tensor<1x1xi8>
+!out_type = tensor<1x2002xi8>
+func.func @reshape_heterogeneous_shapes(%arg0: !in_type0, %arg1: !in_type1) -> !out_type {
+    %0 = tosa.reshape %arg0 {new_shape = array<i64: 1, 2001>} : (!in_type0) -> !re_type0
+    %1 = tosa.reshape %arg1 {new_shape = array<i64: 1, 1>} : (!in_type1) -> !re_type1
+    %2 = tosa.concat %0, %1 {axis = 1 : i32} : (!re_type0, !re_type1) -> !out_type
+  return %2 : !out_type
+}
+
+// CHECK-LABEL:  func.func @reshape_heterogeneous_shapes
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<1x2001x1x1xi8>, [[PARAM_1_:%.+]]: tensor<1x1x1x1xi8>) -> tensor<1x2002xi8> {
+// CHECK:           [[VAR_0_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]] {axis = 1 : i32} : (tensor<1x2001x1x1xi8>, tensor<1x1x1x1xi8>) -> tensor<1x2002x1x1xi8>
+// CHECK:           [[VAR_1_:%.+]] = tosa.reshape [[VAR_0_]] {new_shape = array<i64: 1, 2002>} : (tensor<1x2002x1x1xi8>) -> tensor<1x2002xi8>
+// CHECK:           return [[VAR_1_]] : tensor<1x2002xi8>
+// CHECK:         }
+// -----
+
+!in_type0 = tensor<1x2x3xf32>
+!in_type1 = tensor<2x3x1xf32>
+!re_type = tensor<2x3xf32>
+!out_type = tensor<2x6xf32>
+func.func @reshape_fail_no_common_axis(%arg0: !in_type0, %arg1: !in_type1) -> !out_type {
+    %0 = tosa.reshape %arg0 {new_shape = array<i64: 2, 3>} : (!in_type0) -> !re_type
+    %1 = tosa.reshape %arg1 {new_shape = array<i64: 2, 3>} : (!in_type1) -> !re_type
+    %2 = tosa.concat %0, %1 {axis = 1 : i32} : (!re_type, !re_type) -> !out_type
+  return %2 : !out_type
+}
+
+// CHECK-LABEL:  func.func @reshape_fail_no_common_axis
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<1x2x3xf32>, [[PARAM_1_:%.+]]: tensor<2x3x1xf32>) -> tensor<2x6xf32> {
+// CHECK-DAG:       [[VAR_0_:%.+]] = tosa.reshape [[PARAM_0_]] {new_shape = array<i64: 2, 3>} : (tensor<1x2x3xf32>) -> tensor<2x3xf32>
+// CHECK-DAG:       [[VAR_1_:%.+]] = tosa.reshape [[PARAM_1_]] {new_shape = array<i64: 2, 3>} : (tensor<2x3x1xf32>) -> tensor<2x3xf32>
+// CHECK:           [[VAR_2_:%.+]] = tosa.concat [[VAR_0_]], [[VAR_1_]] {axis = 1 : i32} : (tensor<2x3xf32>, tensor<2x3xf32>) -> tensor<2x6xf32>
+// CHECK:           return [[VAR_2_]] : tensor<2x6xf32>
+// CHECK:         }
+// -----
+
+!in_type0 = tensor<2x3x4xf32>
+!in_type1 = tensor<2x4x3xf32>
+!re_type = tensor<2x12xf32>
+!out_type = tensor<4x12xf32>
+func.func @reshape_fail_incompatible_raw_inputs(%arg0: !in_type0, %arg1: !in_type1) -> !out_type {
+    %0 = tosa.reshape %arg0 {new_shape = array<i64: 2, 12>} : (!in_type0) -> !re_type
+    %1 = tosa.reshape %arg1 {new_shape = array<i64: 2, 12>} : (!in_type1) -> !re_type
+    %2 = tosa.concat %0, %1 {axis = 0 : i32} : (!re_type, !re_type) -> !out_type
+  return %2 : !out_type
+}
+
+// CHECK-LABEL:  func.func @reshape_fail_incompatible_raw_inputs
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<2x3x4xf32>, [[PARAM_1_:%.+]]: tensor<2x4x3xf32>) -> tensor<4x12xf32> {
+// CHECK-DAG:       [[VAR_0_:%.+]] = tosa.reshape [[PARAM_0_]] {new_shape = array<i64: 2, 12>} : (tensor<2x3x4xf32>) -> tensor<2x12xf32>
+// CHECK-DAG:       [[VAR_1_:%.+]] = tosa.reshape [[PARAM_1_]] {new_shape = array<i64: 2, 12>} : (tensor<2x4x3xf32>) -> tensor<2x12xf32>
+// CHECK:           [[VAR_2_:%.+]] = tosa.concat [[VAR_0_]], [[VAR_1_]] {axis = 0 : i32} : (tensor<2x12xf32>, tensor<2x12xf32>) -> tensor<4x12xf32>
+// CHECK:           return [[VAR_2_]] : tensor<4x12xf32>
 // CHECK:         }
 // -----
 

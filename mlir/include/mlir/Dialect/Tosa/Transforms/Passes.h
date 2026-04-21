@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -17,6 +17,7 @@
 
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Tosa/Transforms/PassesEnums.h.inc"
+#include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
@@ -38,6 +39,8 @@ void populateTosaFoldConstantPatterns(
 void populateTosaConstantReduction(MLIRContext *ctx,
                                    RewritePatternSet &patterns,
                                    bool aggressiveReduceConstant);
+void populateSinkInputOpsThroughConcatReshapePatterns(
+    RewritePatternSet &patterns, PatternBenefit benefit = 1);
 
 void populateTosaTypeConversion(TypeConverter &converter);
 
@@ -47,7 +50,7 @@ std::unique_ptr<Pass> createTosaLayerwiseConstantFoldPass(
 std::unique_ptr<Pass> createTosaInferShapesPass();
 std::unique_ptr<Pass> createTosaMakeBroadcastablePass();
 std::unique_ptr<Pass>
-createSinkInputOpsThroughConcatPass(SinkInputOpsThroughConcatOptions &,
+createSinkInputOpsThroughConcatPass(const SinkInputOpsThroughConcatOptions &,
                                     llvm::raw_ostream &);
 std::unique_ptr<Pass> createTosaTestQuantUtilAPIPass();
 std::unique_ptr<Pass> createTosaOptionalDecompositions();
