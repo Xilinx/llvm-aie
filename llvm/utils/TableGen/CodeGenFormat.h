@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -25,6 +25,7 @@
 
 #include "Common/CodeGenInstruction.h"
 #include "Common/CodeGenTarget.h"
+#include "ConstTable.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/iterator_range.h"
@@ -40,7 +41,6 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
-#include <sstream>
 #include <stack>
 #include <string>
 #include <unordered_map>
@@ -53,67 +53,6 @@ class TGTargetSlots;
 class TGInstrLayout;
 class TGFieldLayout;
 class TGFieldIterator;
-
-// Helper class to create flat tables and some corresponding utilities
-class ConstTable {
-  std::stringstream Text;
-  std::string Type;
-  std::string Name;
-  unsigned Mark = 0;
-  unsigned Size = 0;
-
-public:
-  ConstTable(std::string Type, std::string Name) : Type(Type), Name(Name) {
-    Text << "static constexpr " << Type << " const " << Name << "[] = {\n";
-  }
-  const std::stringstream &text() const { return Text; }
-  std::stringstream &text() { return Text; }
-  unsigned size() { return Size; }
-
-  // Mark the start of a block of items
-  unsigned mark(const char *Comment = nullptr) {
-    if (Comment) {
-      Text << "// " << Comment << " " << Size << "\n";
-    }
-    Mark = Size;
-    return Mark;
-  }
-
-  // Make a reference to entry Idx, relative to the start of the table
-  std::string absRef(unsigned Idx) const {
-    return "&" + Name + "[" + std::to_string(Idx) + "]";
-  }
-  // Make a reference to entry Idx relative to the last marked block
-  std::string ref(unsigned Idx) const { return absRef(Mark + Idx); }
-  // Make a reference to the next entry
-  std::string refNext() const { return absRef(Size); }
-  // Return an ArrayRef of the entries since the last marked block
-  std::string arrayRef() const {
-    unsigned NumElements = Size - Mark;
-    if (NumElements == 0) {
-      return "{}";
-    }
-    return "llvm::ArrayRef<" + Type + ">(" + ref(0) + ", " +
-           std::to_string(NumElements) + ")";
-  }
-
-  // Move to the next entry
-  void next() {
-    Text << ",\n";
-    Size++;
-  }
-  void finish() { Text << "};\n\n"; }
-};
-
-template <typename T> ConstTable &operator<<(ConstTable &Table, T Item) {
-  Table.text() << Item;
-  return Table;
-}
-
-inline raw_ostream &operator<<(raw_ostream &O, const ConstTable &Table) {
-  O << Table.text().str();
-  return O;
-}
 
 /// Main class of CodeGenFormat, a TableGen Backend, allowing us to generate:
 /// - Format information (is it a composite instruction?).
