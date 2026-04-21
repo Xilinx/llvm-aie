@@ -88,21 +88,19 @@ body:             |
   ; CHECK-NEXT:   [[COPY34:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY33]].sub_hi_dim_then_sub_dim_count
   ; CHECK-NEXT:   [[COPY34:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY33]].sub_hi_dim_then_sub_dim_size
   ; CHECK-NEXT:   [[COPY34:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY33]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   undef [[COPY35:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY34]].sub_lo_dim {
-  ; CHECK-NEXT:     internal [[COPY35]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY34]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:     internal [[COPY35]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY34]].sub_hi_dim_then_sub_dim_size
-  ; CHECK-NEXT:     internal [[COPY35]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY34]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   undef [[COPY35:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY34]].sub_lo_dim
+  ; CHECK-NEXT:   [[COPY35:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY34]].sub_hi_dim_then_sub_dim_count
+  ; CHECK-NEXT:   [[COPY35:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY34]].sub_hi_dim_then_sub_dim_size
+  ; CHECK-NEXT:   [[COPY35:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY34]].sub_hi_dim_then_sub_dim_stride
   ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo2:%[0-9]+]]:ep, [[COPY35:%[0-9]+]].sub_dim_count:eds, [[COPY35:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo2]], [[COPY35]].sub_mod, [[COPY35]].sub_dim_size, [[COPY35]].sub_dim_stride, [[COPY35]].sub_dim_count, undef [[COPY35]].sub_hi_dim_then_sub_mod, [[COPY35]].sub_hi_dim_then_sub_dim_size, [[COPY35]].sub_hi_dim_then_sub_dim_stride, [[COPY35]].sub_hi_dim_then_sub_dim_count
   ; CHECK-NEXT:   [[COPY36:%[0-9]+]]:spill_edc_to_er = COPY [[COPY35]].sub_dim_count
   ; CHECK-NEXT:   [[COPY37:%[0-9]+]]:spill_edn_to_er = COPY [[COPY35]].sub_dim_size
   ; CHECK-NEXT:   [[COPY38:%[0-9]+]]:spill_edn_to_er = COPY [[COPY35]].sub_hi_dim_then_sub_dim_size
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   undef [[COPY39:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY17]].sub_lo_dim {
-  ; CHECK-NEXT:     internal [[COPY39]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:     internal [[COPY39]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_size
-  ; CHECK-NEXT:     internal [[COPY39]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   undef [[COPY39:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY17]].sub_lo_dim
+  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_count
+  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_size
+  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_stride
   ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo3:%[0-9]+]]:ep, [[COPY39:%[0-9]+]].sub_dim_count:eds, [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo3]], [[COPY39]].sub_mod, [[COPY39]].sub_dim_size, [[COPY39]].sub_dim_stride, [[COPY39]].sub_dim_count, undef [[COPY39]].sub_hi_dim_then_sub_mod, [[COPY39]].sub_hi_dim_then_sub_dim_size, [[COPY39]].sub_hi_dim_then_sub_dim_stride, [[COPY39]].sub_hi_dim_then_sub_dim_count
   ; CHECK-NEXT:   [[COPY40:%[0-9]+]]:spill_edc_to_er = COPY [[COPY39]].sub_dim_count
   ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:edcl = COPY [[COPY16]]
