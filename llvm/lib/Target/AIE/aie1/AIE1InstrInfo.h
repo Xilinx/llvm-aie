@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -92,6 +92,9 @@ public:
   unsigned getBasicVecRegSize() const override { return 256; };
 
   unsigned getMachineBlockAlignmentBytes() const override { return 16; }
+
+  // AIE1 has no variable itineraries, return empty interface.
+  VarItinInterface getVarItinInterface() const override { return {}; }
 
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
