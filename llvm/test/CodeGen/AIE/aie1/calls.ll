@@ -117,12 +117,11 @@ define i32 @test_call_external_many_args(i32 %a, float %b, <2 x i32> %c) nounwin
   ; CHECK-NEXT:   ST_SPIL_GPR killed $r10, -28, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:   renamable $r10 = COPY $r6
   ; CHECK-NEXT:   renamable $cl1 = COPY $r8, implicit-def $c1
-  ; CHECK-NEXT:   renamable $ch1 = COPY $r9, implicit killed $c1, implicit-def $c1
   ; CHECK-NEXT:   ST_SPIL_GPR $r9, -4, implicit $sp
   ; CHECK-NEXT:   ST_SPIL_GPR $r6, -8, implicit $sp
   ; CHECK-NEXT:   ST_SPIL_GPR killed renamable $r7, -12, implicit $sp
   ; CHECK-NEXT:   ST_SPIL_GPR $r6, -16, implicit $sp
-  ; CHECK-NEXT:   ST_SPIL_GPR renamable $cl1, -20, implicit $sp
+  ; CHECK-NEXT:   ST_SPIL_GPR $r8, -20, implicit $sp
   ; CHECK-NEXT:   ST_SPIL_GPR $r9, -24, implicit $sp
   ; CHECK-NEXT:   $r7 = COPY $r6
   ; CHECK-NEXT:   $r8 = COPY $r6
