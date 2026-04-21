@@ -23,8 +23,8 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:    padda [p1], m0; st p6, [sp, #-12] // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st lr, [sp, #-48] // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st r8, [sp, #-44] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r12, [sp, #-28]; movx r16, #0; mov p3, #0 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda r12, [p1, #0]; st r0, [sp, #-56]; vbcst.32 x0, r16 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda r12, [p1, #0]; st r12, [sp, #-28]; movx r16, #0; mov p3, #0 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r0, [sp, #-56]; vbcst.32 x0, r16 // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    st r1, [sp, #-52]; jl p3 // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    vst x0, [sp, #-192] // 64-byte Folded Spill Delay Slot 5
 ; FINE-GRAINED-NEXT:    vst x0, [sp, #-128]; mov p6, p0 // 64-byte Folded Spill Delay Slot 4

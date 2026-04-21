@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,6 +20,14 @@
 using namespace llvm;
 
 namespace {
+
+// Concrete test InstrInfo class that implements the pure virtual
+// getVarItinInterface() method.
+class AIETestInstrInfo : public AIEBaseInstrInfo {
+public:
+  AIETestInstrInfo() : AIEBaseInstrInfo() {}
+  VarItinInterface getVarItinInterface() const override { return {}; }
+};
 
 // Include helper functions to define a testing target.
 #include "MFCommon.inc"
@@ -48,10 +56,10 @@ SubtargetSubTypeKV ProcModels[] = {SubtargetSubTypeKV{
 
 } // namespace
 
-class AIETestSubTarget : public TestSubTarget<AIEBaseInstrInfo> {
+class AIETestSubTarget : public TestSubTarget<AIETestInstrInfo> {
 public:
   AIETestSubTarget(TargetMachine &TM)
-      : TestSubTarget<AIEBaseInstrInfo>(TM, "aie-test", "aie-test",
+      : TestSubTarget<AIETestInstrInfo>(TM, "aie-test", "aie-test",
                                         ProcModels) {}
 };
 

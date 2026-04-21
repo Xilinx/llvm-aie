@@ -913,11 +913,151 @@ AIEBaseInstrInfo::getMemoryCycles(unsigned SchedClass) const {
 int AIEBaseInstrInfo::getCoreStallCycleAfterLock() const { return 2; }
 int AIEBaseInstrInfo::getCoreResumeCycleAfterLock() const { return 8; }
 
+// Helper function to find instruction variant info by opcode using binary
+// search. Returns nullptr if not found.
+static const InstrVariantInfo *
+findInstrVariantInfo(const VarItinInterface &Interface, unsigned Opcode) {
+  if (!Interface.hasVariants())
+    return nullptr;
+
+  auto It = llvm::lower_bound(Interface.InstrVariants, Opcode,
+                              [](const InstrVariantInfo &Info, unsigned Op) {
+                                return Info.Opcode < Op;
+                              });
+
+  if (It != Interface.InstrVariants.end() && It->Opcode == Opcode)
+    return &*It;
+
+  return nullptr;
+}
+
+// Helper function to check if all operand RC requirements match for a variant.
+// An OperandRegInfo with neither RC nor Reg set (e.g. a non-register or
+// unclassified virtual register operand) causes the variant not to match,
+// falling back to the static default schedule class.
+static bool variantMatches(const SchedVariantInfo &Variant,
+                           ArrayRef<OperandRegInfo> OperandRegs) {
+  for (const OperandRCRequirement &Req : Variant.OperandRCs) {
+    // Check if the operand index is within bounds.
+    if (Req.OpIdx >= OperandRegs.size())
+      return false;
+
+    const OperandRegInfo &OpInfo = OperandRegs[Req.OpIdx];
+    const bool HasRC = OpInfo.RC != nullptr;
+    const bool HasReg = OpInfo.Reg.isValid();
+
+    // Non-register or unclassified virtual register operands cannot satisfy
+    // any RC requirement — this variant does not match.
+    if (!HasRC && !HasReg)
+      return false;
+
+    assert(!(HasRC && HasReg) && "OperandRegInfo cannot have both RC and Reg");
+    assert((!HasReg || OpInfo.Reg.isPhysical()) &&
+           "OperandRegInfo Reg must be physical");
+
+    if (HasRC) {
+      if (!Req.RC->hasSubClassEq(OpInfo.RC))
+        return false;
+    } else {
+      // Physical register - check if the required RC contains it.
+      if (!Req.RC->contains(OpInfo.Reg))
+        return false;
+    }
+  }
+  return true;
+}
+
+// Build a vector of OperandRegInfo from a range of MachineOperands.
+// Non-register operands and virtual registers with no register class are
+// represented as a default OperandRegInfo (both Reg invalid and RC null),
+// which causes any variant requiring that operand index not to match.
+static SmallVector<OperandRegInfo>
+buildOperandRegInfos(iterator_range<const MachineOperand *> Operands,
+                     const MachineRegisterInfo &MRI) {
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+  SmallVector<OperandRegInfo> Result;
+  for (const MachineOperand &MO : Operands) {
+    if (!MO.isReg() || !MO.getReg().isValid()) {
+      Result.emplace_back();
+      continue;
+    }
+    const Register Reg = MO.getReg();
+    if (Reg.isPhysical()) {
+      Result.emplace_back(Reg);
+    } else {
+      // Use getRegClassOrNull to avoid asserting on generic virtual registers
+      // (GlobalISel VRegs that have only types, not register classes). A null
+      // RC produces a default OperandRegInfo so variant matching falls back to
+      // the static default schedule class.
+      const TargetRegisterClass *RC = MRI.getRegClassOrNull(Reg);
+      if (RC && MO.getSubReg())
+        RC = TRI.getSubRegisterClass(RC, MO.getSubReg());
+      Result.emplace_back(RC);
+    }
+  }
+  return Result;
+}
+
+// Helper function to find the matching variant for given operand register
+// info. Returns nullptr if no variant matches.
+static const SchedVariantInfo *
+findMatchingVariant(const InstrVariantInfo *InstrInfo,
+                    ArrayRef<OperandRegInfo> OperandRegs) {
+  if (!InstrInfo)
+    return nullptr;
+
+  for (const SchedVariantInfo &Variant : InstrInfo->Variants) {
+    if (variantMatches(Variant, OperandRegs))
+      return &Variant;
+  }
+
+  return nullptr;
+}
+
 unsigned
 AIEBaseInstrInfo::getSchedClass(const MCInstrDesc &Desc,
                                 iterator_range<const MachineOperand *> Operands,
                                 const MachineRegisterInfo &MRI) const {
-  return Desc.getSchedClass();
+  return getSchedClass(Desc, buildOperandRegInfos(Operands, MRI));
+}
+
+unsigned
+AIEBaseInstrInfo::getSchedClass(const MCInstrDesc &Desc,
+                                ArrayRef<OperandRegInfo> OperandRegs) const {
+  // Get the interface from the derived class.
+  const VarItinInterface Interface = getVarItinInterface();
+
+  // Look up the instruction in the variant tables.
+  const InstrVariantInfo *InstrInfo =
+      findInstrVariantInfo(Interface, Desc.getOpcode());
+
+  // Find a matching variant based on operand register info.
+  const SchedVariantInfo *Variant = findMatchingVariant(InstrInfo, OperandRegs);
+
+  // Return the matched schedule class, or fall back to the default.
+  return Variant ? Variant->SchedClass : Desc.getSchedClass();
+}
+
+unsigned
+AIEBaseInstrInfo::getNumSchedClassVariants(const MCInstrDesc &Desc) const {
+  const VarItinInterface Interface = getVarItinInterface();
+  const InstrVariantInfo *InstrInfo =
+      findInstrVariantInfo(Interface, Desc.getOpcode());
+
+  return InstrInfo ? InstrInfo->Variants.size() : 0;
+}
+
+llvm::ArrayRef<OperandRCRequirement> AIEBaseInstrInfo::getMatchingOperandRCs(
+    const MCInstrDesc &Desc, iterator_range<const MachineOperand *> Operands,
+    const MachineRegisterInfo &MRI) const {
+  const VarItinInterface Interface = getVarItinInterface();
+  const InstrVariantInfo *InstrInfo =
+      findInstrVariantInfo(Interface, Desc.getOpcode());
+
+  const SchedVariantInfo *Variant =
+      findMatchingVariant(InstrInfo, buildOperandRegInfos(Operands, MRI));
+
+  return Variant ? Variant->OperandRCs : ArrayRef<OperandRCRequirement>();
 }
 
 bool AIEBaseInstrInfo::isLegalTypeToPad(const LLT &Ty,

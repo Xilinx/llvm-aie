@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: llvm-tblgen --gen-aie-alternate-itinerary-emitter -I %p/../../include -I %p/Common %s | FileCheck %s
@@ -39,9 +39,20 @@ class MOVInstruction : TestInstruction {
 let Itinerary = II_MOV  in
   def MOV_instr : MOVInstruction<>;
 
-// CHECK:      unsigned TestAIEInstrInfo::getSchedClass(
-// CHECK-NEXT:   const MCInstrDesc &Desc,
-// CHECK-NEXT:   iterator_range<const MachineOperand *> Operands,
-// CHECK-NEXT:   const MachineRegisterInfo &MRI) const {
-// CHECK-NEXT:   return Desc.getSchedClass();
+// CHECK:      static constexpr llvm::OperandRCRequirement const OperandRCRequirements[] = {
+// CHECK-NEXT: };
+// CHECK-EMPTY:
+// CHECK-NEXT: static constexpr SchedVariantInfo const SchedVariants[] = {
+// CHECK-NEXT: };
+// CHECK-EMPTY:
+// CHECK-NEXT: static constexpr InstrVariantInfo const InstrVariantInfos[] = {
+// CHECK-NEXT: };
+// CHECK-EMPTY:
+// CHECK-NEXT: // Interface object providing access to the variant tables.
+// CHECK-NEXT: static const VarItinInterface TestAIEVarItinInterfaceImpl = {
+// CHECK-NEXT:   InstrVariantInfos
+// CHECK-NEXT: };
+// CHECK-EMPTY:
+// CHECK-NEXT: VarItinInterface TestAIEInstrInfo::getVarItinInterface() const {
+// CHECK-NEXT:   return TestAIEVarItinInterfaceImpl;
 // CHECK-NEXT: }

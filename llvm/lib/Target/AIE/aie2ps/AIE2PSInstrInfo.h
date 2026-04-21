@@ -68,9 +68,7 @@ public:
 
   SmallVector<int, 2> getMemoryCycles(unsigned SchedClass) const override;
 
-  unsigned getSchedClass(const MCInstrDesc &Desc,
-                         iterator_range<const MachineOperand *> Operands,
-                         const MachineRegisterInfo &MRI) const override;
+  VarItinInterface getVarItinInterface() const override;
 
   ScheduleHazardRecognizer *
   CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
