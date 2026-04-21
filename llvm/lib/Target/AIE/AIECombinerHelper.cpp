@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
@@ -1202,6 +1203,166 @@ void llvm::applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.buildCopy(MI.getOperand(0), MI.getOperand(1));
   Observer.erasingInstr(MI);
   MI.eraseFromParent();
+}
+
+//===----------------------------------------------------------------------===//
+// combine_split_intrinsic_for_store
+//===----------------------------------------------------------------------===//
+
+/// Returns the split intrinsic ID for intrinsics that can be divided into
+/// two smaller operations. This is used to optimize wide intrinsics that feed
+/// stores by splitting them into narrower operations that may have better
+/// instruction selection.
+///
+/// Currently supported:
+/// - aie2ps_I512_v64_acc32_srs -> aie2ps_I256_v32_acc32_srs
+///
+/// \param OriginalID The intrinsic ID to check for splitting
+/// \return The split intrinsic ID if supported, std::nullopt otherwise
+///
+/// NOTE: This list may be extended in the future with additional intrinsics
+/// after proper benchmarking to ensure the split version provides performance
+/// benefits over the original wide intrinsic.
+static std::optional<Intrinsic::ID>
+getSplitIntrinsic(Intrinsic::ID OriginalID) {
+  switch (OriginalID) {
+  case Intrinsic::aie2ps_I512_v64_acc32_srs:
+    return Intrinsic::aie2ps_I256_v32_acc32_srs;
+  // Future intrinsics can be added here after benchmarking
+  default:
+    return std::nullopt;
+  }
+}
+
+/// Match and split wide intrinsics that feed stores into narrower operations.
+/// This combiner runs in the pre-legalizer stage and handles intrinsics that
+/// can be split into two half-width operations.
+///
+/// Pattern matched:
+///   %result = G_INTRINSIC[_W_SIDE_EFFECTS] @wide_intrinsic, %inputs...
+///   %bitcast = G_BITCAST %result
+///   %lo, %hi = G_UNMERGE_VALUES %bitcast
+///   G_STORE %lo, ...
+///   G_STORE %hi, ...
+///
+/// Transforms to:
+///   %acc_lo, %acc_hi = G_UNMERGE_VALUES %input_acc
+///   %result_lo = G_INTRINSIC[_W_SIDE_EFFECTS] @split_intrinsic, %acc_lo, ...
+///   %result_hi = G_INTRINSIC[_W_SIDE_EFFECTS] @split_intrinsic, %acc_hi, ...
+///   %new_lo = G_BITCAST %result_lo
+///   %new_hi = G_BITCAST %result_hi
+///   G_STORE %new_lo, ...
+///   G_STORE %new_hi, ...
+bool llvm::matchSplitIntrinsicForStore(MachineInstr &MI,
+                                       MachineRegisterInfo &MRI,
+                                       const AIEBaseInstrInfo &TII,
+                                       BuildFnTy &MatchInfo) {
+  // 1. Verify this is an intrinsic and check if it can be split
+  const unsigned Opcode = MI.getOpcode();
+  if (Opcode != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS &&
+      Opcode != TargetOpcode::G_INTRINSIC)
+    return false;
+
+  const auto *IntrMI = cast<GIntrinsic>(&MI);
+  const Intrinsic::ID IntrinsicID = IntrMI->getIntrinsicID();
+
+  const auto SplitIntrinsicID = getSplitIntrinsic(IntrinsicID);
+  if (!SplitIntrinsicID)
+    return false;
+
+  // 2. Get intrinsic output register and verify single use
+  const Register IntrinsicOutReg = MI.getOperand(0).getReg();
+
+  auto GetSingleOpcodeUse = [&MRI](Register Reg,
+                                   unsigned Opcode) -> MachineInstr * {
+    if (!MRI.hasOneNonDBGUse(Reg))
+      return nullptr;
+    MachineInstr *SingleMI = &*MRI.use_nodbg_instructions(Reg).begin();
+    if (SingleMI && (SingleMI->getOpcode() == Opcode))
+      return SingleMI;
+    return nullptr;
+  };
+
+  // 3. Check that the single use is a BITCAST
+  MachineInstr *BitcastMI =
+      GetSingleOpcodeUse(IntrinsicOutReg, TargetOpcode::G_BITCAST);
+  if (!BitcastMI)
+    return false;
+
+  const Register BitcastReg = BitcastMI->getOperand(0).getReg();
+
+  // 4. Check that the single use is an UNMERGE
+  MachineInstr *UnmergeMI =
+      GetSingleOpcodeUse(BitcastReg, TargetOpcode::G_UNMERGE_VALUES);
+  if (!UnmergeMI)
+    return false;
+
+  // 5. Verify UNMERGE produces exactly 2 results
+  if (UnmergeMI->getNumDefs() != 2)
+    return false;
+
+  // 6. Get the two unmerge output registers
+  const Register LoReg = UnmergeMI->getOperand(0).getReg();
+  const Register HiReg = UnmergeMI->getOperand(1).getReg();
+
+  if (!GetSingleOpcodeUse(LoReg, TargetOpcode::G_STORE) ||
+      !GetSingleOpcodeUse(HiReg, TargetOpcode::G_STORE))
+    return false;
+
+  // 7. Extract intrinsic operands (first operand after the intrinsic ID)
+  // For G_INTRINSIC_W_SIDE_EFFECTS: operand 0 = def, 1 = ID, 2+ = inputs
+  // For G_INTRINSIC: operand 0 = def, 1 = ID, 2+ = inputs
+  const Register AccReg = MI.getOperand(2).getReg();
+  const Register ShiftReg = MI.getOperand(3).getReg();
+  const Register SignReg = MI.getOperand(4).getReg();
+
+  // 8. Derive types from the IR (no hardcoded types!)
+  const LLT OrigAccTy = MRI.getType(AccReg);
+  const LLT OrigIntrOutTy = MRI.getType(IntrinsicOutReg);
+
+  // Calculate split types by dividing by 2
+  const LLT AccHalfTy = OrigAccTy.divide(2);
+  const LLT IntrOutHalfTy = OrigIntrOutTy.divide(2);
+
+  // 9. Build the transformation
+  // Note: We use applyBuildFnNoErase. We replace register uses and let DCE
+  // clean up dead instructions.
+  MatchInfo = [=, &MI, &MRI](MachineIRBuilder &B) {
+    // Step 1: Unmerge the accumulator into two halves
+    const Register AccLoReg = MRI.createGenericVirtualRegister(AccHalfTy);
+    const Register AccHiReg = MRI.createGenericVirtualRegister(AccHalfTy);
+    B.buildUnmerge({AccLoReg, AccHiReg}, AccReg);
+
+    // Step 2: Create two split intrinsics using the ID from getSplitIntrinsic
+    const bool HasSideEffects =
+        (Opcode == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS);
+
+    const Register IntrOutLoReg =
+        MRI.createGenericVirtualRegister(IntrOutHalfTy);
+    B.buildIntrinsic(*SplitIntrinsicID, IntrOutLoReg, HasSideEffects,
+                     /*isConvergent=*/false)
+        .addUse(AccLoReg)
+        .addUse(ShiftReg)
+        .addUse(SignReg);
+
+    const Register IntrOutHiReg =
+        MRI.createGenericVirtualRegister(IntrOutHalfTy);
+    B.buildIntrinsic(*SplitIntrinsicID, IntrOutHiReg, HasSideEffects,
+                     /*isConvergent=*/false)
+        .addUse(AccHiReg)
+        .addUse(ShiftReg)
+        .addUse(SignReg);
+
+    // Step 3: Bitcast each intrinsic result to the store type
+    B.buildBitcast(LoReg, IntrOutLoReg);
+    B.buildBitcast(HiReg, IntrOutHiReg);
+
+    MI.eraseFromParent();
+    UnmergeMI->eraseFromParent();
+    BitcastMI->eraseFromParent();
+  };
+
+  return true;
 }
 
 /// Get an s32/s20 value from an s20 register that comes from either:

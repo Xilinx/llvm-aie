@@ -395,6 +395,30 @@ void applyAlternatingBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  AIEAlternatingBuildVectorMatchData &MatchInfo,
                                  GISelChangeObserver &Observer);
 
+/// Match and split a 512-bit SRS intrinsic that feeds stores through BITCAST
+/// and UNMERGE. This enables later SRS+STORE fusion in instruction selection.
+/// Pattern matched:
+///   %srs:_(<64 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS
+///       intrinsic(@llvm.aie2ps.I512.v64.acc32.srs), %acc(<64 x s32>), %shift,
+///       %sign
+///   %bitcast:_(<16 x s32>) = G_BITCAST %srs
+///   %lo:_(<8 x s32>), %hi:_(<8 x s32>) = G_UNMERGE_VALUES %bitcast
+///   G_STORE %lo, %ptr1
+///   G_STORE %hi, %ptr2
+/// Transforms to:
+///   %acc_lo:_(<32 x s32>), %acc_hi:_(<32 x s32>) = G_UNMERGE_VALUES %acc
+///   %srs_lo:_(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS
+///       intrinsic(@llvm.aie2ps.I256.v32.acc32.srs), %acc_lo, %shift, %sign
+///   %srs_hi:_(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS
+///       intrinsic(@llvm.aie2ps.I256.v32.acc32.srs), %acc_hi, %shift, %sign
+///   %lo:_(<8 x s32>) = G_BITCAST %srs_lo
+///   %hi:_(<8 x s32>) = G_BITCAST %srs_hi
+///   G_STORE %lo, %ptr1
+///   G_STORE %hi, %ptr2
+bool matchSplitIntrinsicForStore(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo);
+
 bool matchVShiftChainToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                             const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 

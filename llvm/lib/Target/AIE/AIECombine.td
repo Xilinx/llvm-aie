@@ -77,6 +77,13 @@ def combine_alternating_build_vector : GICombineRule<
   (apply [{ applyAlternatingBuildVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
+def combine_split_intrinsic_for_store : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_INTRINSIC_W_SIDE_EFFECTS, G_INTRINSIC): $root,
+  [{ return matchSplitIntrinsicForStore(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
+>;
+
 def combine_splat_vector_matchdata: GIDefMatchData<"std::pair<Register, Register>">;
 def combine_splat_vector : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
@@ -600,9 +607,14 @@ def AIE2PPostLegalizerCustomCombiner
                  [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
 }
 
+// AIE2PS-specific pre-legalizer combines
+def aie2ps_prelegalizer_additional_combines : GICombineGroup<[
+  combine_split_intrinsic_for_store
+]>;
+
 def AIE2PSPreLegalizerCombiner
     : GICombiner<"AIE2PSPreLegalizerCombinerImpl",
-                      [aie_generic_combines, aie_additional_combines, aie2p_additional_combines]> {
+                      [aie_generic_combines, aie_additional_combines, aie2p_additional_combines, aie2ps_prelegalizer_additional_combines]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
