@@ -20,4 +20,10 @@ INTRINSIC(unsigned) clb(long long x) {
   return x >= 0 ? __builtin_clzll(x) : __builtin_clzll(~x);
 }
 
+INTRINSIC(unsigned) population_count(int x) { return __builtin_popcount(x); }
+
+INTRINSIC(unsigned) population_count(unsigned x) {
+  return __builtin_popcount(x);
+}
+
 #endif //__AIE2P_SCALAR_H__
