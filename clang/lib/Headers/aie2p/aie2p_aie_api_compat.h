@@ -607,8 +607,6 @@ inline __attribute__((always_inline)) v16cacc64 ups_to_v16cacc64(v16cint16 , int
 inline __attribute__((always_inline)) v16cacc64 ups_to_v16cacc64_conf(v16cint16 , int , int , crsat_t );
 inline __attribute__((always_inline)) int scalar_abs(int );
 inline __attribute__((always_inline)) void dstep(unsigned int , unsigned int , unsigned int & , unsigned int & , unsigned int );
-inline __attribute__((always_inline)) unsigned int population_count(unsigned int );
-inline __attribute__((always_inline)) unsigned int population_count(int );
 inline __attribute__((always_inline)) void nop(unsigned int );
 inline __attribute__((always_inline)) void nop();
 inline __attribute__((always_inline)) v32int8 pack_conf(v32int16 , int , crsat_t );

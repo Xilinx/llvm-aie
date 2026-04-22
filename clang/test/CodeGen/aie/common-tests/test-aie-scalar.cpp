@@ -123,5 +123,38 @@ unsigned test_clb(int x) { return clb(x); }
 unsigned test_clb(long long x) {
   return clb(x);
 }
+
+// CHECK-AIE2P-LABEL: define dso_local noundef range(i32 0, 33) i32 @_Z21test_population_counti(
+// CHECK-AIE2P-SAME: i32 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-AIE2P-NEXT:  entry:
+// CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef range(i32 0, 33) i32 @llvm.ctpop.i32(i32 [[X]])
+// CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// CHECK-AIE2PS-LABEL: define dso_local noundef range(i32 0, 33) i32 @_Z21test_population_counti(
+// CHECK-AIE2PS-SAME: i32 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef range(i32 0, 33) i32 @llvm.ctpop.i32(i32 [[X]])
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
+unsigned test_population_count(int x) {
+  return population_count(x);
+}
+
+// CHECK-AIE2P-LABEL: define dso_local noundef range(i32 0, 33) i32 @_Z21test_population_countj(
+// CHECK-AIE2P-SAME: i32 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-AIE2P-NEXT:  entry:
+// CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef range(i32 0, 33) i32 @llvm.ctpop.i32(i32 [[X]])
+// CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// CHECK-AIE2PS-LABEL: define dso_local noundef range(i32 0, 33) i32 @_Z21test_population_countj(
+// CHECK-AIE2PS-SAME: i32 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef range(i32 0, 33) i32 @llvm.ctpop.i32(i32 [[X]])
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
+unsigned test_population_count(unsigned x) {
+  return population_count(x);
+}
+
 // CHECK: [[RNG2]] = !{i32 0, i32 33}
 // CHECK: [[RNG3]] = !{i64 0, i64 65}

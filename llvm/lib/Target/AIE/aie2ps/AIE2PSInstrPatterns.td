@@ -125,6 +125,7 @@ def : Pat< (ptradd eP:$ptr, eM:$mod),
 def : PatGpr<int_aie2ps_clb, CLB, i32>;
 def : PatGpr<ctlz, CLZ, i32>;
 def : PatGpr<ctlz_zero_undef, CLZ, i32>;
+def : PatGpr<ctpop, POPCOUNT, i32>;
 
 // 4.1.4 EXTEND – Sign extend / Zero Extend
 // Note: Sign extensions are handled in AIE2PSInstructionSelector.cpp.
