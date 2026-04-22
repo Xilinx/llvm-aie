@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This contains code to emit Expr nodes as LLVM code.
@@ -5484,7 +5487,7 @@ LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
   return getOrCreateOpaqueLValueMapping(e);
 }
 
-std::pair<LValue, LValue>
+std::tuple<LValue, LValue, llvm::Value *>
 CodeGenFunction::EmitHLSLOutArgLValues(const HLSLOutArgExpr *E, QualType Ty) {
   // Emitting the casted temporary through an opaque value.
   LValue BaseLV = EmitLValue(E->getArgLValue());
@@ -5494,25 +5497,28 @@ CodeGenFunction::EmitHLSLOutArgLValues(const HLSLOutArgExpr *E, QualType Ty) {
   Address OutTemp = CreateIRTemp(ExprTy);
   LValue TempLV = MakeAddrLValue(OutTemp, ExprTy);
 
+  // Start the lifetime before the copy-in so that the temporary is live when
+  // the initial value is written. Otherwise the copy-in store sits outside
+  // the lifetime making the inout argument's undefined.
+  llvm::Type *ElTy = ConvertTypeForMem(TempLV.getType());
+  llvm::TypeSize Sz = CGM.getDataLayout().getTypeAllocSize(ElTy);
+  llvm::Value *LifetimeSize = EmitLifetimeStart(Sz, OutTemp.getBasePointer());
+
   if (E->isInOut())
     EmitInitializationToLValue(E->getCastedTemporary()->getSourceExpr(),
                                TempLV);
 
   OpaqueValueMappingData::bind(*this, E->getCastedTemporary(), TempLV);
-  return std::make_pair(BaseLV, TempLV);
+  return std::make_tuple(BaseLV, TempLV, LifetimeSize);
 }
 
 LValue CodeGenFunction::EmitHLSLOutArgExpr(const HLSLOutArgExpr *E,
                                            CallArgList &Args, QualType Ty) {
 
-  auto [BaseLV, TempLV] = EmitHLSLOutArgLValues(E, Ty);
+  auto [BaseLV, TempLV, LifetimeSize] = EmitHLSLOutArgLValues(E, Ty);
 
   llvm::Value *Addr = TempLV.getAddress().getBasePointer();
   llvm::Type *ElTy = ConvertTypeForMem(TempLV.getType());
-
-  llvm::TypeSize Sz = CGM.getDataLayout().getTypeAllocSize(ElTy);
-
-  llvm::Value *LifetimeSize = EmitLifetimeStart(Sz, Addr);
 
   Address TmpAddr(Addr, ElTy, TempLV.getAlignment());
   Args.addWriteback(BaseLV, TmpAddr, nullptr, E->getWritebackCast(),
