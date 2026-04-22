@@ -4391,8 +4391,8 @@ public:
   LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
   LValue EmitHLSLArrayAssignLValue(const BinaryOperator *E);
 
-  std::pair<LValue, LValue> EmitHLSLOutArgLValues(const HLSLOutArgExpr *E,
-                                                  QualType Ty);
+  std::tuple<LValue, LValue, llvm::Value *>
+  EmitHLSLOutArgLValues(const HLSLOutArgExpr *E, QualType Ty);
   LValue EmitHLSLOutArgExpr(const HLSLOutArgExpr *E, CallArgList &Args,
                             QualType Ty);
 
