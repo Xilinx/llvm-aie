@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEPostPipeliner.h"
+#include "AIEBaseRegisterInfo.h"
 #include "AIESWPSolver.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
@@ -183,8 +184,28 @@ bool isSideEffectFree(MachineInstr *MI) {
       MI->hasUnmodeledSideEffects()) {
     return false;
   }
-  return !any_of(MI->defs(), [MBB = MI->getParent()](MachineOperand &Def) {
-    return MBB->isLiveIn(Def.getReg());
+
+  // FIFO operations modify persistent hardware state (the FIFO
+  // position register). Executing an extra copy corrupts the FIFO
+  // state and is thus not side effect free.
+  const auto &TRI = static_cast<const AIEBaseRegisterInfo &>(
+      *MI->getMF()->getSubtarget().getRegisterInfo());
+
+  return !any_of(MI->defs(), [MBB = MI->getParent(),
+                              &TRI](MachineOperand &Def) {
+    Register Reg = Def.getReg();
+    unsigned SubReg = Def.getSubReg();
+    // Get the lane mask for the def operand: if it has a subreg, use that
+    // subreg's lane mask; otherwise assume all lanes are defined.
+    LaneBitmask DefLaneMask =
+        SubReg ? TRI.getSubRegIndexLaneMask(SubReg) : LaneBitmask::getAll();
+    return any_of(MBB->getLiveIns(),
+                  [Reg, DefLaneMask,
+                   &TRI](const MachineBasicBlock::RegisterMaskPair &LiveIn) {
+                    // Check if registers overlap AND the lane masks intersect.
+                    return TRI.regsOverlap(Reg, LiveIn.PhysReg) &&
+                           (DefLaneMask & LiveIn.LaneMask).any();
+                  });
   });
 }
 
