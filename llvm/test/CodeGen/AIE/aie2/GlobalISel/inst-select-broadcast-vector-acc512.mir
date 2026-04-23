@@ -1,0 +1,54 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+
+# Test that G_AIE_BROADCAST_VECTOR with v8i64 (acc512) destination is
+# selected to VBCST_64 + VMOV_mv_x (cross-bank copy from VEC512 to ACC512).
+# The v16i32 (vec512) case uses VBCST_64 directly via TableGen patterns.
+
+---
+name:            broadcast_vector_v8i64
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $l0
+    ; CHECK-LABEL: name: broadcast_vector_v8i64
+    ; CHECK: liveins: $l0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:el = COPY $l0
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[COPY]]
+    ; CHECK-NEXT: [[VMOV_mv_x_:%[0-9]+]]:mbmsm = VMOV_mv_x [[VBCST_64_]]
+    ; CHECK-NEXT: $bml0 = COPY [[VMOV_mv_x_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %0:gprregbank(<2 x s32>) = COPY $l0
+    %1:accregbank(<8 x s64>) = G_AIE_BROADCAST_VECTOR %0(<2 x s32>)
+    $bml0 = COPY %1:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
+
+---
+name:            broadcast_vector_v16i32_vec_src
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $l0
+    ; CHECK-LABEL: name: broadcast_vector_v16i32_vec_src
+    ; CHECK: liveins: $l0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:el = COPY $l0
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBCST_64_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %0:gprregbank(<2 x s32>) = COPY $l0
+    %1:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %0(<2 x s32>)
+    $x0 = COPY %1:vregbank(<16 x s32>)
+    PseudoRET implicit $lr, implicit $x0
+...
