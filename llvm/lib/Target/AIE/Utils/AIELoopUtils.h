@@ -50,6 +50,9 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
 SmallVector<const MachineBasicBlock *, 4>
 getSingleBlockLoopMBBs(const MachineFunction &MF);
 
+/// Non-const overload: returns mutable single-MBB loop blocks.
+SmallVector<MachineBasicBlock *, 4> getSingleBlockLoopMBBs(MachineFunction &MF);
+
 /// Check if this block is a single block loop.
 bool isSingleMBBLoop(const MachineBasicBlock *MBB);
 
@@ -114,7 +117,8 @@ findPrologueEpilogue(const MachineBasicBlock &LoopBB);
 
 /// For a ZOL loop block, check whether it was software-pipelined.
 /// Scans non-loop predecessors for the lowered LoopStart whose trip-count
-/// adjustment is non-zero (NS - 1).
+/// adjustment encodes the stage count: Adj == -(NS - 1) for an NS-stage
+/// pipelined loop. Adj == 0 means the loop was not software-pipelined.
 /// \return The number of stages (NS) if pipelined, std::nullopt otherwise.
 std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
                                          const AIEBaseInstrInfo &TII);

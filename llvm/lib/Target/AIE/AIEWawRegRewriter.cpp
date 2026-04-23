@@ -291,7 +291,7 @@ void AIEWawRegRewriter::setArchSpecificPassOptions() {
 
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
-  SmallVector<const MachineBasicBlock *, 4> LoopMBBs =
+  SmallVector<MachineBasicBlock *, 4> LoopMBBs =
       AIELoopUtils::getSingleBlockLoopMBBs(MF);
 
   if (LoopMBBs.empty())

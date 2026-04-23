@@ -361,6 +361,9 @@ class InterBlockScheduling {
   SchedulingStage updateScheduling(BlockState &BS);
   SchedulingStage updatePipelining(BlockState &BS);
 
+  /// Emit scheduling remarks for all loop blocks (post/pre/unpipelined).
+  void emitLoopRemarks();
+
   /// Calculate the number of cycles that are needed to respect
   /// latencies related to the loop whose the epilogue is associated
   int getCyclesToRespectTiming(const BlockState &EpilogueBS,

@@ -21,7 +21,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/Support/Debug.h"
@@ -1604,8 +1603,7 @@ void AIEScheduleDAGMI::schedule() {
 
     auto &PostSWP = BS.getPostSWP();
 
-    MachineOptimizationRemarkEmitter More(*getBB()->getParent(), nullptr);
-    if (PostSWP.schedule(*this, BS.FixPoint.II, More)) {
+    if (PostSWP.schedule(*this, BS.FixPoint.II)) {
       BS.setPipelined();
       LLVM_DEBUG(PostSWP.dump());
     }
