@@ -24,7 +24,6 @@
 namespace llvm {
 class MachineInstr;
 class AIEHazardRecognizer;
-class MachineOptimizationRemarkEmitter;
 } // namespace llvm
 
 namespace llvm::AIE {
@@ -348,11 +347,13 @@ public:
 
   // Schedule using the given InitiationInterval. Return true when successful.
   // In that case calls to the query methods below are legitimate.
-  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval,
-                MachineOptimizationRemarkEmitter &More);
+  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval);
 
   // Quick query for the stage count.
-  int getStageCount() { return NStages; }
+  int getStageCount() const { return NStages; }
+
+  // Quick query for the achieved initiation interval.
+  int getII() const { return II; }
 
   // After scheduling, interpret the results and call the appropriate methods
   // in the Visitor interface object.

@@ -108,6 +108,18 @@ getSingleBlockLoopMBBs(const MachineFunction &MF) {
   return LoopMBBs;
 }
 
+SmallVector<MachineBasicBlock *, 4>
+getSingleBlockLoopMBBs(MachineFunction &MF) {
+  // Delegate to the const overload so the LLVM_DEBUG output (and any future
+  // logic) stays in one place. The returned MBB pointers refer to MBBs in
+  // the non-const \p MF, so dropping const on each pointer is safe.
+  SmallVector<MachineBasicBlock *, 4> LoopMBBs;
+  for (const MachineBasicBlock *MBB :
+       getSingleBlockLoopMBBs(static_cast<const MachineFunction &>(MF)))
+    LoopMBBs.push_back(const_cast<MachineBasicBlock *>(MBB));
+  return LoopMBBs;
+}
+
 bool isSingleMBBLoop(const MachineBasicBlock *MBB) {
   int NumLoopEdges = 0;
   int NumExitEdges = 0;
@@ -270,6 +282,32 @@ findPrologueEpilogue(const MachineBasicBlock &LoopBB) {
     Epilogue = S;
   }
   return {Prologue, Epilogue};
+}
+
+std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
+                                         const AIEBaseInstrInfo &TII) {
+  // The lowered LoopStart in the preheader holds the trip-count adjustment
+  // applied by SWP. For an NS-stage pipelined loop, Adj == -(NS - 1)
+  // (negative because SWP peels NS-1 iterations into the prologue). Adj == 0
+  // means no SWP touched this loop. A positive Adj should never appear; if
+  // multiple non-loop preds exist they must all agree.
+  std::optional<unsigned> Result;
+  for (const MachineBasicBlock *Pred : LoopBB.predecessors()) {
+    if (Pred == &LoopBB)
+      continue;
+    const MachineInstr *TripCountDef = TII.findZOLTripCountDef(*Pred);
+    if (!TripCountDef)
+      continue;
+    const int Adj = TripCountDef->getOperand(2).getImm();
+    if (Adj == 0)
+      continue;
+    assert(Adj < 0 && "SWP trip-count adjustment must be negative");
+    const unsigned NS = static_cast<unsigned>(-Adj) + 1;
+    assert((!Result || *Result == NS) &&
+           "Disagreeing SWP stage counts across preheaders");
+    Result = NS;
+  }
+  return Result;
 }
 
 } // namespace llvm::AIELoopUtils
