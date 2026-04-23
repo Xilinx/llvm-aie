@@ -787,12 +787,20 @@ def : Pat<(int_aie2_vbroadcast32_bf512 eR:$s0), (VBCST_32 eR:$s0)>;
 def : Pat<(int_aie2_vbroadcast64_bf512 eL:$s0), (VBCST_64 eL:$s0)>;
 
 def bcst_vector_node : SDNode<"AIE2::G_AIE_BROADCAST_VECTOR",
-                              SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>>;
+                              SDTypeProfile<1, 1, []>>;
 def : GINodeEquiv<G_AIE_BROADCAST_VECTOR, bcst_vector_node>;
 
-def : Pat<(v64i8 (bcst_vector_node eR:$s0)), (VBCST_8 eR:$s0)>;
-def : Pat<(v32i16 (bcst_vector_node eR:$s0)), (VBCST_16 eR:$s0)>;
-def : Pat<(v16i32 (bcst_vector_node eR:$s0)), (VBCST_32 eR:$s0)>;
+// Scalar i32 src operands
+def : Pat<(v64i8 (bcst_vector_node (i32 eR:$s0))), (VBCST_8 eR:$s0)>;
+def : Pat<(v32i16 (bcst_vector_node (i32 eR:$s0))), (VBCST_16 eR:$s0)>;
+def : Pat<(v16i32 (bcst_vector_node (i32 eR:$s0))), (VBCST_32 eR:$s0)>;
+
+// 64-bit src vector types
+def : Pat<(v64i8 (bcst_vector_node (v8i8 eL:$s0))), (VBCST_64 eL:$s0)>;
+def : Pat<(v32i16 (bcst_vector_node (v4i16 eL:$s0))), (VBCST_64 eL:$s0)>;
+def : Pat<(v16i32 (bcst_vector_node (v2i32 eL:$s0))), (VBCST_64 eL:$s0)>;
+// v8i64 (acc512) broadcast is handled by custom C++ selection in
+// AIE2InstructionSelector::selectG_AIE_BROADCAST_VECTOR.
 
 // VCLR
 def : Pat<(int_aie2_vbroadcast_zero_acc1024), (VCLR_vclr)>;
