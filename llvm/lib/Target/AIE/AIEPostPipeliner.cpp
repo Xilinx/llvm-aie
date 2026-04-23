@@ -134,12 +134,7 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // pipelined before and we can't trust min itercount metadata.
   // Return on investment is probably low anyway.
   const bool Pristine = true;
-  for (auto &MI : reverse(*Preheader)) {
-    if (TII->isZOLTripCountDef(MI, Pristine)) {
-      TripCountDef = &MI;
-      break;
-    }
-  }
+  TripCountDef = TII->findZOLTripCountDef(*Preheader, Pristine);
   if (!TripCountDef) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No tripcount def\n");
     return false;
