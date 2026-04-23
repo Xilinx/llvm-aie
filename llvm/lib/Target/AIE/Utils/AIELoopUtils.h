@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 
 namespace llvm {
+struct AIEBaseInstrInfo;
 class MachineBasicBlock;
 } // namespace llvm
 
@@ -103,6 +104,20 @@ bool hasUnrollEnablePragma(const MDNode *LoopID);
 bool hasUnrollCountPragma(const MDNode *LoopID);
 
 bool hasUnrollPragma(const Loop *L);
+
+/// For a single-MBB loop, return its unique prologue (non-loop predecessor)
+/// and epilogue (non-loop successor). Either may be nullptr if the loop has
+/// no non-loop predecessor or successor (e.g. entry-block loops).
+/// Asserts uniqueness if a prologue or epilogue does exist.
+std::pair<MachineBasicBlock *, MachineBasicBlock *>
+findPrologueEpilogue(const MachineBasicBlock &LoopBB);
+
+/// For a ZOL loop block, check whether it was software-pipelined.
+/// Scans non-loop predecessors for the lowered LoopStart whose trip-count
+/// adjustment is non-zero (NS - 1).
+/// \return The number of stages (NS) if pipelined, std::nullopt otherwise.
+std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
+                                         const AIEBaseInstrInfo &TII);
 
 } // namespace llvm::AIELoopUtils
 

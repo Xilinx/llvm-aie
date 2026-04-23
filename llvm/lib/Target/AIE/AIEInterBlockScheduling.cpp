@@ -358,23 +358,17 @@ public:
   PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
                     const AIEBaseInstrInfo &TII)
       : Loop(BS), CurrentBundle(TII.getFormatInterface()) {
-    MachineBasicBlock *LoopBlock = Loop.TheBlock;
-    for (auto *P : LoopBlock->predecessors()) {
-      if (P == LoopBlock) {
-        continue;
-      }
-      Prologue = &InterBlock.getBlockState(P);
-    }
-    for (auto *S : LoopBlock->successors()) {
-      if (S == LoopBlock) {
-        continue;
-      }
-      Epilogue = &InterBlock.getBlockState(S);
-    }
+    auto [PrologueMBB, EpilogueMBB] =
+        AIELoopUtils::findPrologueEpilogue(*Loop.TheBlock);
+    Prologue = &InterBlock.getBlockState(PrologueMBB);
+    Epilogue = &InterBlock.getBlockState(EpilogueMBB);
   }
+  const BlockState *getPrologue() const { return Prologue; }
+  const BlockState *getEpilogue() const { return Epilogue; }
 };
 
 } // namespace
+
 bool InterBlockScheduling::leaveBlock() {
   DEBUG_BLOCKS(dbgs() << "  << leaveBlock "
                       << CurrentBlockState->TheBlock->getNumber() << "\n");

@@ -8,6 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AIELoopUtils.h"
+#include "AIEBaseInstrInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Metadata.h"
@@ -248,6 +249,27 @@ bool hasUnrollPragma(const Loop *L) {
   }
 
   return false;
+}
+
+std::pair<MachineBasicBlock *, MachineBasicBlock *>
+findPrologueEpilogue(const MachineBasicBlock &LoopBB) {
+  assert(isSingleMBBLoop(&LoopBB) && "Expected a single-MBB loop");
+
+  MachineBasicBlock *Prologue = nullptr;
+  MachineBasicBlock *Epilogue = nullptr;
+  for (MachineBasicBlock *P : LoopBB.predecessors()) {
+    if (P == &LoopBB)
+      continue;
+    assert(!Prologue && "Single-MBB loop has multiple non-loop predecessors");
+    Prologue = P;
+  }
+  for (MachineBasicBlock *S : LoopBB.successors()) {
+    if (S == &LoopBB)
+      continue;
+    assert(!Epilogue && "Single-MBB loop has multiple non-loop successors");
+    Epilogue = S;
+  }
+  return {Prologue, Epilogue};
 }
 
 } // namespace llvm::AIELoopUtils
