@@ -7,6 +7,7 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -O2 -mtriple=aie2p %s -o - | FileCheck %s --check-prefix=AIE2P
+; RUN: llc -O2 -mtriple=aie2ps %s -o - | FileCheck %s --check-prefix=AIE2PS
 
 declare i10 @llvm.bitreverse.i10(i10)
 
@@ -44,6 +45,40 @@ define i10 @test_bitreverse_i10(i10 %a) {
 ; AIE2P-NEXT:    mova r2, #-22; lshl r1, r3, r1 // Delay Slot 3
 ; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 2
 ; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 1
+;
+; AIE2PS-LABEL: test_bitreverse_i10:
+; AIE2PS:       // %bb.0:
+; AIE2PS-NEXT:    mova r0, #24; nopb ; nopxm
+; AIE2PS-NEXT:    mova r2, #-24; lshl r0, r1, r0
+; AIE2PS-NEXT:    lshl r2, r1, r2
+; AIE2PS-NEXT:    or r0, r2, r0
+; AIE2PS-NEXT:    movxm r2, #65280
+; AIE2PS-NEXT:    mova r4, #8; and r6, r1, r2
+; AIE2PS-NEXT:    lshl r4, r6, r4
+; AIE2PS-NEXT:    mova r4, #-8; or r0, r0, r4
+; AIE2PS-NEXT:    lshl r4, r1, r4
+; AIE2PS-NEXT:    and r2, r4, r2
+; AIE2PS-NEXT:    or r0, r0, r2
+; AIE2PS-NEXT:    movxm r2, #-252645136
+; AIE2PS-NEXT:    mova r16, #4; and r4, r0, r2
+; AIE2PS-NEXT:    mova r6, #-4; lshl r0, r0, r16
+; AIE2PS-NEXT:    lshl r4, r4, r6
+; AIE2PS-NEXT:    and r0, r0, r2
+; AIE2PS-NEXT:    movxm r2, #-858993460
+; AIE2PS-NEXT:    or r0, r4, r0
+; AIE2PS-NEXT:    mova r16, #2; and r4, r0, r2
+; AIE2PS-NEXT:    mova r6, #-2; lshl r0, r0, r16
+; AIE2PS-NEXT:    lshl r4, r4, r6
+; AIE2PS-NEXT:    and r0, r0, r2
+; AIE2PS-NEXT:    movxm r2, #-1431655766
+; AIE2PS-NEXT:    or r0, r4, r0
+; AIE2PS-NEXT:    and r6, r0, r2
+; AIE2PS-NEXT:    mova r4, #1; ret lr
+; AIE2PS-NEXT:    lshl r0, r0, r4 // Delay Slot 5
+; AIE2PS-NEXT:    mova r2, #-23; and r0, r0, r2 // Delay Slot 4
+; AIE2PS-NEXT:    mova r4, #-22; lshl r2, r6, r2 // Delay Slot 3
+; AIE2PS-NEXT:    lshl r0, r0, r4 // Delay Slot 2
+; AIE2PS-NEXT:    or r0, r2, r0 // Delay Slot 1
   %result = call i10 @llvm.bitreverse.i10(i10 %a)
   ret i10 %result
 }

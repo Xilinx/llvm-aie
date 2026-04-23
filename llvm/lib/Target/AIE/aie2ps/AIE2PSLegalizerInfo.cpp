@@ -297,6 +297,11 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
 
+  getActionDefinitionsBuilder(G_BITREVERSE)
+      .lowerFor({S16, S32})
+      .clampScalar(0, S32, S32);
+  getActionDefinitionsBuilder(G_BSWAP).lower();
+
   getActionDefinitionsBuilder(G_TRUNC)
       .legalIf([=](const LegalityQuery &Query) {
         const LLT &SrcTy = Query.Types[1];
