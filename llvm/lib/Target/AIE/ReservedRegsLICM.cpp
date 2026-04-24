@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -208,19 +208,20 @@ bool ReservedRegsLICM::runOnMachineFunction(MachineFunction &MF) {
 }
 
 BitVector ReservedRegsLICM::collectLoopReservedLiveins(const MachineLoop &L) {
-  const MachineBasicBlock &Header = *L.getHeader();
   LivePhysRegs LiveRegs(*TRI);
 
-  // Conservativaly assume reserved reserved regs are all liveouts
+  // Conservatively assume reserved regs are all liveouts
   for (MCPhysReg PhysReg : MRI->getReservedRegs().set_bits()) {
     if (MRI->canSimplifyPhysReg(PhysReg)) {
       LiveRegs.addReg(PhysReg);
     }
   }
 
-  // Traverse instructions to remove defs
-  for (const MachineInstr &MI : reverse(Header))
-    LiveRegs.stepBackward(MI);
+  // Traverse all blocks in the loop to remove defs. stepBackward handles
+  // regmask operands (calls) correctly.
+  for (MachineBasicBlock *MBB : L.getBlocks())
+    for (const MachineInstr &MI : reverse(*MBB))
+      LiveRegs.stepBackward(MI);
 
   BitVector ReservedLiveins(TRI->getNumRegs());
   for (MCRegister Reg : LiveRegs) {
@@ -241,9 +242,8 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
     return;
   }
 
-  // TODO: Handle simple multi-BB loops.
-  if (L.getNumBlocks() != 1) {
-    LLVM_DEBUG(dbgs() << "  Loop has multiple blocks.\n");
+  if (!L.getLoopLatch()) {
+    LLVM_DEBUG(dbgs() << "  Loop has no single latch.\n");
     return;
   }
   const MachineBasicBlock *LoopBlock = L.getExitingBlock();
@@ -265,9 +265,9 @@ void ReservedRegsLICM::processForExitSink(MachineLoop &L,
   LivePhysRegs LiveRegs(*TRI);
   Candidates SinkCandidates;
 
-  // Walk the entire region, track defs for each register, and
+  // Walk the latch block, track defs for each register, and
   // collect potential LICM candidates.
-  assert(L.getNumBlocks() == 1 && L.getLoopLatch());
+  assert(L.getLoopLatch());
   for (MachineInstr &MI : reverse(*L.getLoopLatch())) {
     CandidateInfo *CandInfo = SinkCandidates.getInfo(MI);
 
@@ -295,12 +295,15 @@ void ReservedRegsLICM::processForPreheaderHoist(
     MachineLoop &L, const BitVector &ReservedLiveins) {
   Candidates HoistCandidates;
 
-  // Walk the entire loop to find unique defs and LICM candidates
-  assert(L.getNumBlocks() == 1 && L.getHeader());
+  // Walk all blocks in the loop to find unique defs and LICM candidates.
+  // RegDefMap::addChangedRegs handles regmask (calls clear UniqueDefs).
+  assert(L.getHeader());
   RegDefMap PhysRegChanged(*TRI);
-  for (MachineInstr &MI : *L.getHeader()) {
-    PhysRegChanged.addChangedRegs(MI);
-    HoistCandidates.getInfo(MI);
+  for (MachineBasicBlock *MBB : L.getBlocks()) {
+    for (MachineInstr &MI : *MBB) {
+      PhysRegChanged.addChangedRegs(MI);
+      HoistCandidates.getInfo(MI);
+    }
   }
 
   for (auto &[Reg, CandInfo] : HoistCandidates) {
