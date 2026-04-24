@@ -21,7 +21,9 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/WithColor.h"
 
 using namespace llvm;
 
@@ -33,6 +35,36 @@ static cl::opt<bool> SkipSingleSlotAssignment(
              "same Slot."));
 
 namespace llvm::AIE {
+
+/// Emit a warning and an optimization remark for a load without a memory bank.
+/// The warning goes to stderr (always visible); the remark is available via
+/// -Rpass-missed=aie-multi-slot-pseudo.
+static void reportMissingMemoryBank(const MachineInstr &MI) {
+  const MachineBasicBlock *MBB = MI.getParent();
+
+  // Build the shared message: function name, block name, debug location.
+  std::string Msg;
+  raw_string_ostream MsgOS(Msg);
+  MsgOS << "No memory bank assigned to load in function '"
+        << MBB->getParent()->getName() << "', block '" << MBB->getName() << "'";
+  if (const DebugLoc &DL = MI.getDebugLoc())
+    MsgOS << " at " << DL;
+
+  // Per-instruction stderr warning (includes the instruction itself).
+  auto &WarnOS = WithColor::warning();
+  WarnOS << Msg << ": ";
+  MI.print(WarnOS, /*IsStandalone=*/true, /*SkipOpers=*/false,
+           /*SkipDebugLoc=*/true);
+
+  // Per-instruction optimization remark.
+  MachineOptimizationRemarkEmitter MORE(
+      const_cast<MachineFunction &>(*MBB->getParent()), nullptr);
+  MORE.emit([&]() {
+    return MachineOptimizationRemarkMissed(DEBUG_TYPE, "missing-memory-bank",
+                                           MI.getDebugLoc(), MBB)
+           << Msg;
+  });
+}
 
 class SlotMapping {
 public:
@@ -82,7 +114,7 @@ public:
     auto MemBankBits = HR.getMemoryBanks(&MI);
     LLVM_DEBUG(dbgs() << "Memory Bank: " << MemBankBits << " " << MI);
     if (!MemBankBits) {
-      LLVM_DEBUG(dbgs() << "Warning: No MemoryBanks assigned to " << MI);
+      reportMissingMemoryBank(MI);
       return false;
     }
 

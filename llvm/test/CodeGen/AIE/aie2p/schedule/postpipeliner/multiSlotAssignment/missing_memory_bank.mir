@@ -22,15 +22,16 @@
 # bank set (default `-aie-addrspace-none-is-safe=1`). The static materializer
 # cannot pre-assign a slot in that case and falls back to round-robin slot
 # assignment. This test pins the diagnostic surface for that path: codegen
-# must still produce valid asm, and at the current baseline neither a
-# `WithColor::warning()` line on stderr nor a `aie-multi-slot-pseudo`
-# optimization remark in the YAML output is emitted.
+# still produces valid asm, a `WithColor::warning()` line is emitted on
+# stderr, and a matching `aie-multi-slot-pseudo` / `missing-memory-bank`
+# optimization remark is written to the ORE YAML output.
 
-# STDERR-NOT: warning:
-# STDERR-NOT: No memory bank assigned
+# STDERR: warning: No memory bank assigned to load in function 'missing_memory_bank'
 
-# REMARK-NOT: aie-multi-slot-pseudo
-# REMARK-NOT: missing-memory-bank
+# REMARK:      --- !Missed
+# REMARK-NEXT: Pass:{{ +}}aie-multi-slot-pseudo
+# REMARK-NEXT: Name:{{ +}}missing-memory-bank
+# REMARK-NEXT: Function:{{ +}}missing_memory_bank
 
 --- |
   define dso_local void @missing_memory_bank(ptr noalias nocapture writeonly %d, ptr noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
