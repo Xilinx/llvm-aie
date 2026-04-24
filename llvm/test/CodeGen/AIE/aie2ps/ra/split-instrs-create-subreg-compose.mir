@@ -10,7 +10,6 @@
 # Verify that when a tuple operand already has a sub-register index,
 # the split correctly composes the indices. E.g., %R.sub_hi_dim split
 # into sub_mod should produce sub_hi_dim_then_sub_mod, not sub_mod.
-# FIXME: actually fix this bug
 
 ---
 name:            test_split_2D_with_subreg_hi_dim
@@ -27,7 +26,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
-    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_2D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_2D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
     %20:ep = COPY $p0
     %100:eds = COPY $d1_3d
     dead %20:ep, dead %100.sub_hi_dim_then_sub_dim_count:eds = PADD_2D_pseudo killed %20, killed %100.sub_hi_dim
