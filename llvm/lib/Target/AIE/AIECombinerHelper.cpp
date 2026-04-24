@@ -1407,6 +1407,18 @@ static std::optional<Register> getSourceFromS20(Register S20Reg,
   return std::nullopt;
 }
 
+/// Set the insertion point of \p B to right after \p InsertionPoint,
+/// skipping any PHI nodes that immediately follow it.
+static void setInsertPtAfterInstr(MachineIRBuilder &B,
+                                  MachineInstr *InsertionPoint) {
+  MachineBasicBlock *MBB = InsertionPoint->getParent();
+  MachineBasicBlock::iterator InsertPt =
+      std::next(InsertionPoint->getIterator());
+  if (InsertPt != MBB->end() && InsertPt->isPHI())
+    InsertPt = MBB->getFirstNonPHI();
+  B.setInsertPt(*MBB, *InsertPt);
+}
+
 /// Match a pattern of chained G_PTR_ADD operations where offsets come from
 /// either G_TRUNC of s32 values or G_ZEXTLOAD of s16 values.
 /// Combines them into a single PTR_ADD by adding the offsets in s32 space.
@@ -1493,15 +1505,9 @@ bool llvm::matchChainedPtrAddWithNonConstOffsets(MachineInstr &MI,
 
   // Build the transformation
   MatchInfo = [=, &MRI, &MI](MachineIRBuilder &B) {
-    // Set insertion point right after the dominated definition
-    // Be careful to not insert between phi nodes.
-    MachineBasicBlock *InsertPtMBB = InsertionPoint->getParent();
-    MachineBasicBlock::iterator InsertPt =
-        std::next(InsertionPoint->getIterator());
-    if (InsertPt != InsertPtMBB->end() && InsertPt->isPHI())
-      InsertPt = InsertPtMBB->getFirstNonPHI();
-
-    B.setInsertPt(*InsertPtMBB, *InsertPt);
+    // Set insertion point right after the dominated definition,
+    // skipping any PHI nodes that immediately follow it.
+    setInsertPtAfterInstr(B, InsertionPoint);
 
     // Extend a register to S32 if it is currently S20 (from ZEXTLOAD).
     auto ExtendToS32 = [&](Register Reg) -> Register {
@@ -1632,15 +1638,9 @@ bool llvm::matchPostIncLoadStorePtrAddWithTrunc(MachineInstr &MI,
 
   // Build the lambda that will perform the transformation
   MatchInfo = [=, &MRI, &MI, &Observer](MachineIRBuilder &B) {
-    // Set insertion point right after the dominated definition
-    // Be careful to not insert between phi nodes.
-    MachineBasicBlock *InsertPtMBB = InsertionPoint->getParent();
-    MachineBasicBlock::iterator InsertPt =
-        std::next(InsertionPoint->getIterator());
-    if (InsertPt != InsertPtMBB->end() && InsertPt->isPHI())
-      InsertPt = InsertPtMBB->getFirstNonPHI();
-
-    B.setInsertPt(*InsertPtMBB, *InsertPt);
+    // Set insertion point right after the dominated definition,
+    // skipping any PHI nodes that immediately follow it.
+    setInsertPtAfterInstr(B, InsertionPoint);
 
     // Build G_ADD of the two s32 values
     const Register CombinedS32 = MRI.createGenericVirtualRegister(S32);
