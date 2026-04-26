@@ -694,9 +694,17 @@ class AIE2PFIFO_LD_POPUnaligned : DefaultAttrsIntrinsic<[llvm_v64i8_ty, llvm_any
 class AIE2PFIFO_LD_POP_576_BFP16 : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v64i8_ty, llvm_v8i8_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
      [IntrReadMem, IntrArgMemOnly]>;
+// POP 640-bit sparse (v128int8_sparse-class). Returns ptr/fifo/pos updates
+// plus the 512-bit data half and the 128-bit sparsity-mask half.
+// Mirrors the BFP16 multi-output shape: data goes into a v64i8 (=v64char)
+// and the mask goes into a v16i8 (=v16char, 128 bits = sparsity_t storage).
+class AIE2PFIFO_LD_POP_640_Sparse : DefaultAttrsIntrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v64i8_ty, llvm_v16i8_ty],
+     [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
 def int_aie2p_fifo_ld_pop_unaligned: AIE2PFIFO_LD_POPUnaligned;
 def int_aie2p_fifo_ld_pop_576_bfp16: AIE2PFIFO_LD_POP_576_BFP16;
 def int_aie2p_fifo_ld_pop_544_bfp16: AIE2PFIFO_LD_POP_576_BFP16;
+def int_aie2p_fifo_ld_pop_640_unaligned_sparse: AIE2PFIFO_LD_POP_640_Sparse;
 
 // POP 1D
 class AIE2PFIFO_LD_POPUnaligned1D : DefaultAttrsIntrinsic<[llvm_v64i8_ty, llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],

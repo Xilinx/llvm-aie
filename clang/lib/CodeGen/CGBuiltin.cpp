@@ -23893,6 +23893,8 @@ static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2p_fifo_ld_pop_576_bfp16;
   case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
     return Intrinsic::aie2p_fifo_ld_pop_544_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_640_unaligned_sparse:
+    return Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse;
   case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned:
     return Intrinsic::aie2p_fifo_ld_pop_1d_unaligned;
   case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
@@ -24680,6 +24682,7 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_640_unaligned_sparse:
   case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP640:
   case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP768:
   case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP640:
@@ -24728,6 +24731,7 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
     case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
     case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_640_unaligned_sparse:
       MXStructCount = 2;
       break;
     case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP640:
@@ -25066,7 +25070,8 @@ Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
-  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16: {
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_640_unaligned_sparse: {
     return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
   }
   default:

@@ -488,6 +488,71 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     return fifo_ld_popx(p, s, 31, 31);                                         \
   }
 
+// Sparse FIFO load for the 640-bit-class types (data=v64* + sparsity_t mask).
+// Wires through the new __builtin_aie2p_fifo_ld_pop_640_unaligned_sparse
+// builtin, which lowers to silicon ops VLDA_POP_640_normal_pop /
+// VLDB_POP_640_normal_pop (selected via VLD_POP_640_normal_pop_pseudo).
+//
+// T must be a sparse vector struct (v128int8_sparse, v128uint8_sparse,
+// v64int16_sparse, v64uint16_sparse, v256int4_sparse, v256uint4_sparse)
+// with the standard {DATA data; sparsity_t mask;} layout from
+// aiebase_typedefs.h. T_DATA is the 512-bit dense data field type.
+#define FIFO_LD_SPARSE(T, T_DATA, DM_BANK, RESTRICT)                           \
+  INTRINSIC(void)                                                              \
+  fifo_ld_reset(T##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {         \
+    s.pos = 0;                                                                 \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_ld_fill((void DM_BANK *RESTRICT &)p, fifo, s.pos);    \
+  }                                                                            \
+                                                                               \
+  INTRINSIC(void)                                                              \
+  fifo_ld_fill(T##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {          \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_ld_fill((void DM_BANK *RESTRICT &)p, fifo, pos);      \
+  }                                                                            \
+                                                                               \
+  INTRINSIC(T)                                                                 \
+  fifo_ld_pop(T##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {           \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    T r;                                                                       \
+    __builtin_aie2p_fifo_ld_pop_640_unaligned_sparse(                          \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, (v64char &)r.data,             \
+        (v16char &)r.mask);                                                    \
+    return r;                                                                  \
+  }
+
+// Wide-pair sparse FIFO load: pop a smaller sparse vector twice and stitch
+// into the wider sparse vector via Followup H's set_##T1 + insert helpers.
+// T1 is the wide sparse type (e.g. v256int8_sparse, must have lo/hi fields
+// of T2 type per aiebase_typedefs.h composite-struct definitions).
+// T2 is the narrow sparse type (e.g. v128int8_sparse).
+#define FIFO_LD_SPARSE_WIDE(T1, T2, DM_BANK, RESTRICT)                         \
+  INTRINSIC(void)                                                              \
+  fifo_ld_reset(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {        \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_ld_reset(q, s);                                                       \
+  }                                                                            \
+                                                                               \
+  INTRINSIC(void)                                                              \
+  fifo_ld_fill(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {         \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_ld_fill(q, s);                                                        \
+  }                                                                            \
+                                                                               \
+  INTRINSIC(T1)                                                                \
+  fifo_ld_pop(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {          \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    T1 v;                                                                      \
+    v = set_##T1(0, fifo_ld_pop(q, s));                                        \
+    v = insert(v, 1, fifo_ld_pop(q, s));                                       \
+    return v;                                                                  \
+  }
+
 #define FIFO_LD_BFP16_WIDE(T1, T2, DM_BANK, RESTRICT)                          \
   INTRINSIC(void)                                                              \
   fifo_ld_reset(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {        \
@@ -571,7 +636,9 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
   FIFO_FILLX(v64bfp16ebs8_unaligned, DM_BANK, RESTRICT)                        \
   FIFO_FILLX(v64bfp16ebs16_unaligned, DM_BANK, RESTRICT)                       \
   FIFO_LD_BFP16_WIDE(v128bfp16ebs8, v64bfp16ebs8, DM_BANK, RESTRICT)           \
-  FIFO_LD_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, DM_BANK, RESTRICT)
+  FIFO_LD_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, DM_BANK, RESTRICT)         \
+  FIFO_LD_SPARSE(v128int8_sparse, v64int8, DM_BANK, RESTRICT)                  \
+  FIFO_LD_SPARSE_WIDE(v256int8_sparse, v128int8_sparse, DM_BANK, RESTRICT)
 
 FIFO_LD(, )
 FIFO_LD(__aie_dm_resource_a, )
@@ -602,6 +669,8 @@ FIFO_LD(__aie_dm_resource_cd, restrict)
 #undef FIFO_POPX
 #undef FIFO_FILLX
 #undef FIFO_LD_BFP16_WIDE
+#undef FIFO_LD_SPARSE
+#undef FIFO_LD_SPARSE_WIDE
 #undef FIFO_LD
 
 #endif // AIE2P_LDST_H

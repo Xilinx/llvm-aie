@@ -582,6 +582,12 @@ static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
     return checkFifoDstSrc(MI, FifoRegCandidate, 1, 7);
     break;
   }
+  case Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse: {
+    // Same shape as 544/576 BFP16: 5 outputs (ptr, fifo, pos, data, mask),
+    // intrinsic-id at 5, then ptr=6, fifo=7, pos=8.
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 7);
+    break;
+  }
   case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned: {
     return checkFifoDstSrc(MI, FifoRegCandidate, 2, 7);
     break;

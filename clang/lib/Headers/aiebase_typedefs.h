@@ -211,6 +211,7 @@ typedef int32_t v4int32 __attribute__((__vector_size__(16)))
 __attribute__((aligned(__MIN_ALIGNMENT_16)));
 typedef int16_t v8int16 __attribute__((__vector_size__(16)))
 __attribute__((aligned(__MIN_ALIGNMENT_16)));
+typedef char v16char __attribute__((__vector_size__(16)));
 typedef int8_t v16int8 __attribute__((__vector_size__(16)))
 __attribute__((aligned(__MIN_ALIGNMENT_16)));
 typedef uint32_t v4uint32 __attribute__((__vector_size__(16)))

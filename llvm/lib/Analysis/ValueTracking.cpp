@@ -6786,6 +6786,8 @@ static const Value *getUnderlyingObjectAIEIntrinsic(const Value *V) {
       case Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16:
       case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16:
       case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
+      // fifo ld pop 640 sparse
+      case Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse:
       // fifo st flush
       case Intrinsic::aie2p_fifo_st_flush:
       case Intrinsic::aie2p_fifo_st_flush_1d:
