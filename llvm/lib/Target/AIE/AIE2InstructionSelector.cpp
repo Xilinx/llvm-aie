@@ -114,7 +114,6 @@ public:
   // Select a control packet header stream write instruction from the
   // corresponding intrinsic.
   bool selectPutMS_CPH(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_AIE_BROADCAST_VECTOR(MachineInstr &I, MachineRegisterInfo &MRI);
 
   static const char *getName() { return DEBUG_TYPE; }
 
@@ -440,8 +439,6 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_UNPAD_VECTOR:
     return selectG_AIE_UNPAD_VECTOR(I, I.getOperand(0).getReg(),
                                     I.getOperand(1).getReg(), MRI, MF);
-  case AIE2::G_AIE_BROADCAST_VECTOR:
-    return selectG_AIE_BROADCAST_VECTOR(I, MRI);
   default:
     return selectImpl(I, *CoverageInfo);
   }
@@ -3613,29 +3610,6 @@ bool AIE2InstructionSelector::selectPutMS_CPH(MachineInstr &I,
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectG_AIE_BROADCAST_VECTOR(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-  Register DstReg = I.getOperand(0).getReg();
-  LLT DstTy = MRI.getType(DstReg);
-  if (DstTy != LLT::fixed_vector(8, 64))
-    return selectImpl(I, *CoverageInfo);
-
-  // Handle v8i64 (acc512) broadcast. VBCST_64 outputs to mXm (VEC512),
-  // not ACC512, so TableGen patterns cannot directly select this case.
-  // Emit VBCST_64 into a VEC512 temporary and VMOV_mv_x to copy it
-  // to the ACC512 destination. The register allocator will coalesce
-  // the copy when possible.
-  Register SrcReg = I.getOperand(1).getReg();
-  MRI.setRegClass(DstReg, &AIE2::ACC512RegClass);
-  Register TmpReg = MRI.createVirtualRegister(&AIE2::VEC512RegClass);
-  auto BcstMI = MIB.buildInstr(AIE2::VBCST_64, {TmpReg}, {SrcReg});
-  auto MovMI = MIB.buildInstr(AIE2::VMOV_mv_x, {DstReg}, {TmpReg});
-  I.eraseFromParent();
-  constrainSelectedInstRegOperands(*BcstMI, TII, TRI, RBI);
-  constrainSelectedInstRegOperands(*MovMI, TII, TRI, RBI);
-  return true;
 }
 
 namespace llvm {
