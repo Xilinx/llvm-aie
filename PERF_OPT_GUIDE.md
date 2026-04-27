@@ -1,6 +1,6 @@
 ---
 name: aie-kernel-perf-optimization
-description: "Performance optimization guide for custom AIE kernel development with Peano. Covers restrict pointers, DM bank annotations, loop pragmas, loop hints, software pipelining (pre-RA vs post-RA), loop versioning, function structure, pointer increments, sub-32-bit limitations, vector alignment, type conversion chains, and reading optimization remarks. Consult when writing or reviewing AIE kernel C++ code for throughput, when diagnosing pipelining failures or high II."
+description: "Performance optimization guide for custom AIE kernel development with Peano. Covers restrict pointers, DM bank annotations, loop pragmas, loop hints, software pipelining (pre-RA vs post-RA), loop versioning, function structure, pointer increments, sub-32-bit limitations, vector alignment, type conversion chains, and reading backend optimization hints from the compiler (remarks via -Rpass*/-fsave-optimization-record and warnings such as -Wpass-failed and the aie-multi-slot-pseudo missing-memory-bank hint). Consult when writing or reviewing AIE kernel C++ code for throughput, when diagnosing pipelining failures or high II, or when interpreting build-log warnings and missed-opportunity remarks from the AIE backend."
 ---
 
 <!--
@@ -316,6 +316,14 @@ v32bfloat16 IFM_DM_BANK *p_in_vec = (v32bfloat16 IFM_DM_BANK *)p_in;
 This is easy to miss when changing pointer element types (e.g.,
 scalar to vector) for FIFO or vector load operations. Always carry
 the bank qualifier through every cast in the chain.
+
+When a load reaches the multi-slot pseudo materializer without a DM
+bank qualifier, the compiler still picks a slot for that load, but
+it has to fall back to a bank-blind heuristic. The chosen slot is 
+often suboptimal and can prevent the pipeliner from finding the best II.
+The compiler reports this as a missed-opportunity hint -- a stderr 
+warning plus an `-Rpass-missed=aie-multi-slot-pseudo` remark. See 
+Section 14 for how to read these hints.
 
 
 ## 4. Sub-32-Bit Store Limitations
@@ -932,12 +940,34 @@ v16accfloat __aie_dm_resource_b *pB = ...;
 ```
 
 
-## 14. Reading Optimization Remarks
+## 14. Reading Optimization Hints (Remarks and Warnings)
 
-Optimization remarks are the primary tool for evaluating how well the
-compiler pipelined a loop and for diagnosing performance issues. They
-report the achieved II, stage count, prologue/epilogue cost, and
-whether a loop became a zero-overhead loop.
+Optimization remarks and warnings are the primary tool for evaluating
+how well the compiler pipelined a loop and for diagnosing performance
+issues. They report the achieved II, stage count, prologue/epilogue
+cost, and whether a loop became a zero-overhead loop, and they flag
+missed opportunities the compiler could not act on (e.g. a load
+without a memory-bank annotation).
+
+The AIE backend exposes this information through two channels:
+
+- **Remarks channel**: structured records emitted by AIE backend
+  passes (`postpipeliner`, `aie-hardware-loops`, `aie-asm-printer`,
+  `aie-multi-slot-pseudo`). Each remark has a kind: applied
+  (`Passed`), missed opportunity (`Missed`), or informational
+  (`Analysis`). Remarks are off by default -- they only appear when
+  a corresponding `-Rpass*` / `-pass-remarks*` flag is given, or via
+  the YAML optimization record.
+- **Warnings channel**: diagnostics that always reach the build log
+  without any remark flag. Two sources matter for kernel authors:
+  the default-on `-Wpass-failed` warnings for dropped IR-level
+  pragmas, and the AIE backend's own `WithColor::warning` calls
+  (currently the multi-slot materializer's missing-memory-bank
+  warning).
+
+The remaining subsections cover the existing llc / YAML workflow
+first, then the clang-driven view, then the warnings channel, and
+finally the new `aie-multi-slot-pseudo` missing-memory-bank hint.
 
 ### Enabling remarks
 Pass these flags to `llc` (or via the build system's compiler flags):
@@ -1110,6 +1140,122 @@ stalls caused by memory bank conflicts, lock contention, or DMA
 latency that the remarks don't capture.
 
 
+### Backend remark passes and how to view them
+
+The AIE backend currently emits remarks from four passes. Each remark
+has a kind -- `Passed` (transformation applied), `Missed` (missed
+opportunity), or `Analysis` (informational) -- and is surfaced by a
+matching flag: `-Rpass=`, `-Rpass-missed=`, or `-Rpass-analysis=` for
+a clang kernel build, with the equivalent `-pass-remarks=`,
+`-pass-remarks-missed=`, `-pass-remarks-analysis=` for `llc`. The
+earlier subsections show the llc / YAML workflow; the same remarks
+are reachable directly from a clang-driven kernel build using the
+flags in the last column below.
+
+| Pass                    | Name                  | Kind     | Reports                                                                | Flag to enable                            |
+|-------------------------|-----------------------|----------|------------------------------------------------------------------------|-------------------------------------------|
+| `postpipeliner`         | `schedule`            | Passed   | II, NS, prologue/epilogue bundles when a schedule is found             | `-Rpass=postpipeliner`                    |
+| `postpipeliner`         | `schedule`            | Missed   | Reason pipelining failed (e.g. `Longest circuit does not fit II`)      | `-Rpass-missed=postpipeliner`             |
+| `aie-hardware-loops`    | `analysis`            | Analysis | Per-loop ZOL conversion result (`Zero-Overhead-Loop: true/false`)      | `-Rpass-analysis=aie-hardware-loops`      |
+| `aie-asm-printer`       | `analysis`            | Analysis | Per-block `BundleCount` and `ByteCount`                                | `-Rpass-analysis=aie-asm-printer`         |
+| `aie-multi-slot-pseudo` | `missing-memory-bank` | Missed   | Load reached the multi-slot materializer without a DM bank annotation  | `-Rpass-missed=aie-multi-slot-pseudo`     |
+
+`-Rpass-missed` is the only way (besides the YAML record) to see
+`postpipeliner`'s "no schedule found" / "longest circuit does not
+fit II" remarks -- they are not emitted as warnings.
+
+For the YAML record (recommended for CI / postmortem analysis),
+clang exposes `-fsave-optimization-record`,
+`-foptimization-record-file=<path>`, and
+`-foptimization-record-passes=<regex>`; these write the same YAML
+format as `llc -pass-remarks-output=` documented earlier, and the
+`-passes=` flag corresponds to `llc -pass-remarks-filter=`.
+
+Recommended kernel-dev defaults:
+
+```bash
+clang ... \
+  -Rpass=postpipeliner \
+  -Rpass-missed='postpipeliner|aie-multi-slot-pseudo' \
+  -Rpass-analysis='aie-hardware-loops|aie-asm-printer'
+```
+
+### Warnings channel
+
+Warnings reach the build log without any remark flag.
+
+- **`-Wpass-failed`** (on by default): emitted by the IR-level
+  optimizer when an explicitly requested transformation cannot be
+  applied. This is what fires when a `#pragma clang loop` directive
+  (or an `AIE_*` macro that expands to one) is dropped, e.g.
+  `loop not vectorized: the optimizer was unable to perform the
+  requested transformation; the transformation might be disabled or
+  specified as part of an unsupported transformation ordering`.
+  Treat any `-Wpass-failed` warning as evidence that a pragma was
+  silently ignored.
+- **AIE backend warnings via `WithColor::warning`**: the AIE backend
+  also writes warnings directly to stderr, independent of `-Rpass*`
+  and of `-Wpass-failed`. The first such warning in tree is the
+  multi-slot materializer's missing-memory-bank warning, covered in
+  the next subsection.
+
+Note: `postpipeliner` missed schedules are **only** on the remarks
+channel -- they do not warn by default. Use
+`-Rpass-missed=postpipeliner` (or the YAML record) to see them.
+
+### Missing memory bank annotations (`aie-multi-slot-pseudo`)
+
+**What slot materialization does.** A multi-slot pseudo is a load
+opcode that has not yet been bound to a specific issue slot. The
+`aie-multi-slot-pseudo` pass picks a concrete slot-bound opcode for
+each such load before the post-RA pipeliner runs. Picking the right
+slot matters because two loads in the same VLIW bundle must use
+different load slots, and each load slot has affinity to specific
+memory banks. The materializer uses the load's DM bank annotation
+to map it to a slot whose ports match that bank, so that consecutive
+loads on different banks can issue in parallel.
+
+**What this hint means.** It fires when the materializer encounters
+a load whose pointer carries no DM bank annotation (see Section 3
+for the qualifier list). It is a **missed-opportunity** hint, not a
+functional failure: the materializer still picks a slot-bound opcode
+for the load, but it has to fall back to a bank-blind heuristic. 
+The chosen slot is often suboptimal
+-- the load lands in the wrong slot and blocks the load ordering
+the pipeliner would otherwise use, raising the achieved II.
+
+What the kernel author sees:
+
+- Always, on stderr (no flag required):
+  ```
+  warning: No memory bank assigned to load in function '<fn>',
+  block '<bb>' at <file>:<line>:<col>: <MI dump>
+  ```
+- With `-Rpass-missed=aie-multi-slot-pseudo` (or in the YAML record),
+  a `!Missed` remark anchored to the same debug location:
+  ```yaml
+  --- !Missed
+  Pass:            aie-multi-slot-pseudo
+  Name:            missing-memory-bank
+  Function:        <fn>
+  Args:
+    - String: "No memory bank assigned to load in function '<fn>', block '<bb>' at <loc>"
+  ```
+
+How to fix: annotate the offending pointer with a DM bank qualifier
+(`__aie_dm_resource_a` / `_b` / `_c` / `_d`) -- see Section 3 for
+the qualifier list and parallel-access rules. If the load comes from
+a helper or cast, check that the bank qualifier is preserved through
+every intermediate pointer and is not stripped by a cast (the same
+pitfall as Section 2 "Casting away restrict" applies to bank
+qualifiers).
+
+Ignoring the hint will not break the kernel, but the suboptimal slot
+choice typically shows up later as a higher achieved II in the
+`postpipeliner` remark, or as a `BundleCount` that exceeds the
+resource MII reported by `aie-asm-printer`.
+
+
 ## 15. Optimization Checklist
 
 Use this checklist when writing or reviewing kernel code:
@@ -1128,8 +1274,11 @@ Use this checklist when writing or reviewing kernel code:
 8. Post-increment addressing (`*ptr++`) preferred over indexed
    access (`ptr[i]`) in hot loops
 9. Accumulator structs use and proper `alignas`
-10. Optimization remarks checked: achieved II compared with target;
-    ZOL conversion confirmed for inner loops
+10. Optimization hints checked: achieved II compared with target and
+    ZOL conversion confirmed for each pipelined inner loop; scan
+    the build log for `-Wpass-failed` warnings and any
+    `aie-multi-slot-pseudo` missing-memory-bank warnings, and review
+    `-Rpass-missed=postpipeliner` output for missed schedules
 11. Parameter structs passed by `__restrict` reference
 12. `AIE_*` macros used instead of raw `#pragma clang loop`
 13. `std::make_tuple` uses explicit template types where type
