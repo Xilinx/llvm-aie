@@ -98,8 +98,14 @@ write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
 }
 #endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
 // FIXME: this belongs to libc's stdio.h
-void printf(const char *__restrict, ...);
+int printf(const char *__restrict, ...);
+#if defined(__cplusplus)
+}
+#endif
 
 // _Float16 math function overloads: resolve ambiguity by promoting to float.
 // Without these, calls like std::sqrt(_Float16) are ambiguous between the

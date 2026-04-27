@@ -49,6 +49,7 @@
 #include "aie2p/aie2p_nlf.h"
 #include "aie2p/aie2p_nlf_vector.h"
 #include "aie2p/aie2p_aie_api_compat.h"
+// clang-format on
 #endif /* __cplusplus */
 
 // Locks
@@ -70,8 +71,15 @@ INTRINSIC(void)
 write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
   return __builtin_aie2p_write_tm(regVal, (int *)(TMAddrSpaceStart + regAddr));
 }
-// FIXME: this belongs to libc's stdio.h
-void printf(const char *__restrict, ...);
-
 #endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+// FIXME: this belongs to libc's stdio.h
+int printf(const char *__restrict, ...);
+#if defined(__cplusplus)
+}
+#endif
+
 #endif /* __AIE2PINTRIN_H */

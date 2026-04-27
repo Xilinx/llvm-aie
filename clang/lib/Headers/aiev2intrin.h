@@ -82,7 +82,13 @@ INTRINSIC(bfloat16) as_bfloat16(short x) {
   return __builtin_bit_cast(bfloat16, x);
 }
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
 // FIXME: this belongs to libc's stdio.h
-void printf(const char *__restrict, ...);
+int printf(const char *__restrict, ...);
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* __AIEV2INTRIN_H */
