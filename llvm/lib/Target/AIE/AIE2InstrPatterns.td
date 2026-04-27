@@ -799,8 +799,10 @@ def : Pat<(v16i32 (bcst_vector_node (i32 eR:$s0))), (VBCST_32 eR:$s0)>;
 def : Pat<(v64i8 (bcst_vector_node (v8i8 eL:$s0))), (VBCST_64 eL:$s0)>;
 def : Pat<(v32i16 (bcst_vector_node (v4i16 eL:$s0))), (VBCST_64 eL:$s0)>;
 def : Pat<(v16i32 (bcst_vector_node (v2i32 eL:$s0))), (VBCST_64 eL:$s0)>;
-// v8i64 (acc512) broadcast is handled by custom C++ selection in
-// AIE2InstructionSelector::selectG_AIE_BROADCAST_VECTOR.
+// v8i64 (acc512) broadcast: VBCST_64 outputs to mXm (VEC512), so we need
+// COPY_TO_REGCLASS to move the result into ACC512.
+def : Pat<(v8i64 (bcst_vector_node (v2i32 eL:$s0))),
+           (COPY_TO_REGCLASS (VBCST_64 eL:$s0), ACC512)>;
 
 // VCLR
 def : Pat<(int_aie2_vbroadcast_zero_acc1024), (VCLR_vclr)>;

@@ -7,7 +7,7 @@
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 # Test that G_AIE_BROADCAST_VECTOR with v8i64 (acc512) destination is
-# selected to VBCST_64 + VMOV_mv_x (cross-bank copy from VEC512 to ACC512).
+# selected to VBCST_64 + COPY (cross-bank copy from VEC512 to ACC512).
 # The v16i32 (vec512) case uses VBCST_64 directly via TableGen patterns.
 
 ---
@@ -22,9 +22,9 @@ body:             |
     ; CHECK: liveins: $l0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:el = COPY $l0
-    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[COPY]]
-    ; CHECK-NEXT: [[VMOV_mv_x_:%[0-9]+]]:mbmsm = VMOV_mv_x [[VBCST_64_]]
-    ; CHECK-NEXT: $bml0 = COPY [[VMOV_mv_x_]]
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:mxm = VBCST_64 [[COPY]]
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY [[VBCST_64_]]
+    ; CHECK-NEXT: $bml0 = COPY [[COPY1]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
     %0:gprregbank(<2 x s32>) = COPY $l0
     %1:accregbank(<8 x s64>) = G_AIE_BROADCAST_VECTOR %0(<2 x s32>)
