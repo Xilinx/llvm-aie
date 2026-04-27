@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements an applicator that applies pattern rewrites based upon a
@@ -19,6 +22,34 @@
 
 using namespace mlir;
 using namespace mlir::detail;
+
+namespace {
+/// A listener that keeps the PDLL bytecode memory array consistent when
+/// operations are erased during a rewrite.  When a pattern rewrites the IR,
+/// the matched operations get erased.  Those same raw `Operation *` pointers
+/// may still reside in `PDLByteCodeMutableState::memory` from the previous
+/// `match()` call.  The next `match()` call would then dereference a dangling
+/// pointer and crash.
+///
+/// By scanning `memory` for every erased op and replacing its entry with
+/// `nullptr`, we allow the bytecode executor's existing `IsNotNull` guards to
+/// reject the stale slot gracefully instead of segfaulting.
+struct PDLMemoryErasureListener : public RewriterBase::ForwardingListener {
+  PDLMemoryErasureListener(OpBuilder::Listener *prevListener,
+                           MutableArrayRef<const void *> memory)
+      : ForwardingListener(prevListener), memory(memory) {}
+
+  void notifyOperationErased(Operation *op) override {
+    const void *ptr = static_cast<const void *>(op);
+    for (const void *&slot : memory)
+      if (slot == ptr)
+        slot = nullptr;
+    ForwardingListener::notifyOperationErased(op);
+  }
+
+  MutableArrayRef<const void *> memory;
+};
+} // namespace
 
 PatternApplicator::PatternApplicator(
     const FrozenRewritePatternSet &frozenPatternList)
@@ -137,6 +168,19 @@ LogicalResult PatternApplicator::matchAndRewrite(
   // conflicts.
   SmallVector<PDLByteCode::MatchResult, 4> pdlMatches;
   const PDLByteCode *bytecode = frozenPatternList.getPDLByteCode();
+
+  // Install a listener that nullifies stale `Operation *` entries in the
+  // shared PDLL bytecode memory array whenever an operation is erased.
+  // Without this, a dangling pointer left from a previous match() call can
+  // crash the bytecode executor in the next match() call.
+  OpBuilder::Listener *savedListener = rewriter.getListener();
+  std::optional<PDLMemoryErasureListener> erasureListener;
+  if (bytecode && mutableByteCodeState) {
+    erasureListener.emplace(savedListener,
+                            mutableByteCodeState->getMutableMemory());
+    rewriter.setListener(&*erasureListener);
+  }
+
   if (bytecode)
     bytecode->match(op, rewriter, pdlMatches, *mutableByteCodeState);
 
@@ -236,5 +280,10 @@ LogicalResult PatternApplicator::matchAndRewrite(
 
   if (mutableByteCodeState)
     mutableByteCodeState->cleanupAfterMatchAndRewrite();
+
+  // Restore the original listener now that the match+rewrite cycle is done.
+  if (erasureListener)
+    rewriter.setListener(savedListener);
+
   return result;
 }

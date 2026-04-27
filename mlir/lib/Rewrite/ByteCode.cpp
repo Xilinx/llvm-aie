@@ -1835,6 +1835,14 @@ void ByteCodeExecutor::executeGetAttribute() {
   unsigned memIndex = read();
   Operation *op = read<Operation *>();
   StringAttr attrName = read<StringAttr>();
+  if (!op) {
+    LLVM_DEBUG(
+        llvm::dbgs()
+        << "  * WARNING: GetAttribute on null op — stale PDLL memory slot "
+           "not guarded by IsNotNull; returning null attribute\n");
+    memory[memIndex] = Attribute().getAsOpaquePointer();
+    return;
+  }
   Attribute attr = op->getAttr(attrName);
 
   LLVM_DEBUG(llvm::dbgs() << "  * Operation: " << *op << "\n"
@@ -1880,6 +1888,13 @@ void ByteCodeExecutor::executeGetDefiningOp() {
 void ByteCodeExecutor::executeGetOperand(unsigned index) {
   Operation *op = read<Operation *>();
   unsigned memIndex = read();
+  if (!op) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "  * WARNING: GetOperand on null op — stale PDLL memory slot "
+                  "not guarded by IsNotNull; returning null value\n");
+    memory[memIndex] = Value().getAsOpaquePointer();
+    return;
+  }
   Value operand =
       index < op->getNumOperands() ? op->getOperand(index) : Value();
 
@@ -1950,6 +1965,14 @@ void ByteCodeExecutor::executeGetOperands() {
   Operation *op = read<Operation *>();
   ByteCodeField rangeIndex = read();
 
+  if (!op) {
+    LLVM_DEBUG(
+        llvm::dbgs()
+        << "  * WARNING: GetOperands on null op — stale PDLL memory slot "
+           "not guarded by IsNotNull; returning null range\n");
+    memory[read()] = nullptr;
+    return;
+  }
   void *result = executeGetOperandsResults<OpTrait::AttrSizedOperandSegments>(
       op->getOperands(), op, index, rangeIndex, "operandSegmentSizes",
       valueRangeMemory);
@@ -1961,6 +1984,13 @@ void ByteCodeExecutor::executeGetOperands() {
 void ByteCodeExecutor::executeGetResult(unsigned index) {
   Operation *op = read<Operation *>();
   unsigned memIndex = read();
+  if (!op) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "  * WARNING: GetResult on null op — stale PDLL memory slot "
+                  "not guarded by IsNotNull; returning null result\n");
+    memory[memIndex] = OpResult().getAsOpaquePointer();
+    return;
+  }
   OpResult result =
       index < op->getNumResults() ? op->getResult(index) : OpResult();
 
@@ -1976,6 +2006,13 @@ void ByteCodeExecutor::executeGetResults() {
   Operation *op = read<Operation *>();
   ByteCodeField rangeIndex = read();
 
+  if (!op) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "  * WARNING: GetResults on null op — stale PDLL memory slot "
+                  "not guarded by IsNotNull; returning null range\n");
+    memory[read()] = nullptr;
+    return;
+  }
   void *result = executeGetOperandsResults<OpTrait::AttrSizedResultSegments>(
       op->getResults(), op, index, rangeIndex, "resultSegmentSizes",
       valueRangeMemory);

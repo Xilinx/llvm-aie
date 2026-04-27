@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -83,6 +83,10 @@ public:
   /// method should be called irregardless of whether the match+rewrite was a
   /// success or not.
   void cleanupAfterMatchAndRewrite();
+
+  /// Return a mutable view of the raw memory buffer.  Used by listeners that
+  /// need to nullify stale operation pointers when ops are erased.
+  MutableArrayRef<const void *> getMutableMemory() { return memory; }
 
 private:
   /// Allow access to data fields.
