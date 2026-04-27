@@ -77,6 +77,13 @@ def combine_alternating_build_vector : GICombineRule<
   (apply [{ applyAlternatingBuildVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
+def combine_split_intrinsic_for_store : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_INTRINSIC_W_SIDE_EFFECTS, G_INTRINSIC): $root,
+  [{ return matchSplitIntrinsicForStore(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
+>;
+
 def combine_splat_vector_matchdata: GIDefMatchData<"std::pair<Register, Register>">;
 def combine_splat_vector : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
@@ -352,6 +359,18 @@ def combine_split_concat_store : GICombineRule<
          [{ return matchSplitConcatStore(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_chained_ptradd_with_s20_nonconst : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD): $root,
+  [{ return matchChainedPtrAddWithNonConstOffsets(*${root}, MRI, Helper, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
+def combine_postincloadstore_ptradd_with_trunc : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD): $root,
+  [{ return matchPostIncLoadStorePtrAddWithTrunc(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 def combine_trunc_load : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_LOAD): $root,
@@ -409,7 +428,8 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_unpad_unmerge,
   combine_pad_unpad_fusion,
   combine_concat_unpad_fusion,
-  combine_flatten_nested_concat
+  combine_flatten_nested_concat,
+  combine_chained_ptradd_with_s20_nonconst
 ]>;
 
 def AIE2PreLegalizerCombiner
@@ -571,6 +591,12 @@ def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_redundant_widen_narrow_conversion
 ]>;
 
+// AIE2PS-specific final combines (runs after custom combiner to avoid conflicts).
+def aie2ps_postlegalizer_final_combines : GICombineGroup<[
+  combine_chained_ptradd_with_s20_nonconst,
+  combine_postincloadstore_ptradd_with_trunc
+]>;
+
 def AIE2PostLegalizerCustomCombiner
     : GICombiner<"AIE2PostLegalizerCustomCombinerImpl",
                  [aie_postlegalizer_custom_shared_combines, aie2_postlegalizer_custom_combines]> {
@@ -581,9 +607,14 @@ def AIE2PPostLegalizerCustomCombiner
                  [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
 }
 
+// AIE2PS-specific pre-legalizer combines
+def aie2ps_prelegalizer_additional_combines : GICombineGroup<[
+  combine_split_intrinsic_for_store
+]>;
+
 def AIE2PSPreLegalizerCombiner
     : GICombiner<"AIE2PSPreLegalizerCombinerImpl",
-                      [aie_generic_combines, aie_additional_combines, aie2p_additional_combines]> {
+                      [aie_generic_combines, aie_additional_combines, aie2p_additional_combines, aie2ps_prelegalizer_additional_combines]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
@@ -594,6 +625,11 @@ def AIE2PSPostLegalizerGenericCombiner
 def AIE2PSPostLegalizerCustomCombiner
     : GICombiner<"AIE2PSPostLegalizerCustomCombinerImpl",
                  [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
+}
+
+def AIE2PSPostLegalizerFinalCombiner
+    : GICombiner<"AIE2PSPostLegalizerFinalCombinerImpl",
+                 [aie2ps_postlegalizer_final_combines]> {
 }
 
 def combine_copy_of_implicit_def : GICombineRule<

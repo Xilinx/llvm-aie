@@ -948,6 +948,14 @@ unsigned AIE2InstrInfo::getGenericBroadcastVectorOpcode() const {
   return AIE2::G_AIE_BROADCAST_VECTOR;
 }
 
+unsigned AIE2InstrInfo::getGenericPostIncLoadOpcode() const {
+  return AIE2::G_AIE_POSTINC_LOAD;
+}
+
+unsigned AIE2InstrInfo::getGenericPostIncStoreOpcode() const {
+  return AIE2::G_AIE_POSTINC_STORE;
+}
+
 unsigned int getVLDSparseOpcode(unsigned int PseudoOpc) {
   switch (PseudoOpc) {
   case AIE2::PSEUDO_VLD_SPARSE_POP_16_set_low:

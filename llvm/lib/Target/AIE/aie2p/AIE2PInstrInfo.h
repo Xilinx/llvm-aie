@@ -59,6 +59,8 @@ public:
   unsigned getGenericPadVectorOpcode() const override;
   unsigned getGenericUnpadVectorOpcode() const override;
   unsigned getGenericBroadcastVectorOpcode() const override;
+  unsigned getGenericPostIncLoadOpcode() const override;
+  unsigned getGenericPostIncStoreOpcode() const override;
   unsigned getGenericVSelOpcode() const override;
   unsigned getGenericVShiftOpcode() const override;
   unsigned getGenericShuffleVectorOpcode() const override;

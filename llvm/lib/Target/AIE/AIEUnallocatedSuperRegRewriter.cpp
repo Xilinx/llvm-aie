@@ -157,7 +157,7 @@ static void expandCopyBundles(
   SmallSet<Register, 8> RegistersToRepair;
   for (auto [VReg, SubRegs] : ExpandableRegs) {
 
-    for (MachineInstr &MI : MRI.def_instructions(VReg)) {
+    for (MachineInstr &MI : MRI.reg_instructions(VReg)) {
 
       // Finding the last instruction in a COPY/KILL bundle (which has a
       // predecessor but no successor).

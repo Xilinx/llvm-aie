@@ -935,8 +935,6 @@ inline __attribute__((always_inline)) unsigned int min_(unsigned int , unsigned 
 inline __attribute__((always_inline)) void dstep(unsigned int , unsigned int , unsigned int & , unsigned int & , unsigned int );
 inline __attribute__((always_inline)) unsigned int me_clz(int );
 inline __attribute__((always_inline)) unsigned int me_clz(unsigned int );
-inline __attribute__((always_inline)) unsigned int population_count(unsigned int );
-inline __attribute__((always_inline)) unsigned int population_count(int );
 inline __attribute__((always_inline)) void nop(unsigned int );
 inline __attribute__((always_inline)) void nop();
 inline __attribute__((always_inline)) int compute_control(int , int , int , int , int , int , int , int , int , int , int , int , int );

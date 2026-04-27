@@ -47,7 +47,8 @@ public:
 private:
   /// Add the atomic sub-regs of \p InitialMO as new operands to \p MIB.
   void addRegOperands(MachineInstrBuilder &MIB, const MachineOperand &InitialMO,
-                      ArrayRef<SubRegSplit> NewSubRegs);
+                      ArrayRef<SubRegSplit> NewSubRegs,
+                      const TargetRegisterInfo &TRI);
 
   /// Replace \p MI with a new instruction where the tuple operands are
   /// rewritten into multiple operands for their different sub-registers
@@ -79,11 +80,18 @@ bool AIESplitInstrBuilder::runOnMachineFunction(MachineFunction &MF) {
 
 void AIESplitInstrBuilder::addRegOperands(MachineInstrBuilder &MIB,
                                           const MachineOperand &InitialMO,
-                                          ArrayRef<SubRegSplit> NewSubRegs) {
+                                          ArrayRef<SubRegSplit> NewSubRegs,
+                                          const TargetRegisterInfo &TRI) {
   assert(!NewSubRegs.empty());
   for (const SubRegSplit &SRS : NewSubRegs) {
     MachineOperand NewMO = InitialMO;
-    NewMO.setSubReg(SRS.SubReg);
+    unsigned NewSubReg = SRS.SubReg;
+    // If the original operand already has a sub-register index, compose it
+    // with the new sub-register. E.g. if the operand is %R.sub_hi_dim and
+    // we split into sub_mod, the result should be sub_hi_dim_then_sub_mod.
+    if (unsigned ExistingSubReg = InitialMO.getSubReg())
+      NewSubReg = TRI.composeSubRegIndices(ExistingSubReg, NewSubReg);
+    NewMO.setSubReg(NewSubReg);
     if (SRS.IsUndef)
       NewMO.setIsUndef();
     MIB->addOperand(NewMO);
@@ -98,6 +106,7 @@ void AIESplitInstrBuilder::rewriteInstruction(
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   auto *TII = MF.getSubtarget().getInstrInfo();
+  auto *TRI = MF.getSubtarget().getRegisterInfo();
 
   unsigned NumInitialOps = MI.getNumOperands();
   MachineInstrBuilder MIB =
@@ -108,7 +117,7 @@ void AIESplitInstrBuilder::rewriteInstruction(
     const MachineOperand &MO = MI.getOperand(OpIdx);
     if (const OperandSubRegMapping *SRM = OperandsInfo.findOperandInfo(OpIdx);
         SRM && !SRM->SubRegsSplit.empty()) {
-      addRegOperands(MIB, MO, SRM->SubRegsSplit);
+      addRegOperands(MIB, MO, SRM->SubRegsSplit, *TRI);
     } else if (!MO.isImplicit()) {
       // Note implicit ops are added by default by BuildMI.
       MIB->addOperand(MO);

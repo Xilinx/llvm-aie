@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -427,6 +427,24 @@ bool OffsetCombiner::isReorderCandidate(
       // generate invalid mir
       return false;
     }
+  }
+
+  // Reject if a scheduling barrier (side-effecting instruction, call, etc.)
+  // sits between the two insertion points. Moving the load above such a
+  // barrier would violate memory ordering.
+  const SUnit &OffsetSU = DAG->SUnits[InsertionPointNodeNum];
+  for (const SDep &Pred : OffsetSU.Preds) {
+    if (!Pred.isBarrier())
+      continue;
+
+    // The instruction would move from its current position to the candidate's
+    // insertion point. Reject if the barrier sits in that range.
+    const unsigned BarrierNodeNum = Pred.getSUnit()->NodeNum;
+    const bool DestBeforeBarrier =
+        PostIncCombiner->InsertionPointNodeNum < BarrierNodeNum;
+    const bool SourceAfterBarrier = InsertionPointNodeNum > BarrierNodeNum;
+    if (DestBeforeBarrier && SourceAfterBarrier)
+      return false;
   }
 
   // OffsetCombiner occurs after PostIncCombiner

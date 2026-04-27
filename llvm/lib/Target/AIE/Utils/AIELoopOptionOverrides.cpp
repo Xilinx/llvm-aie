@@ -15,16 +15,15 @@
 
 #define DEBUG_TYPE "aie-loop-option-overrides"
 
-static llvm::cl::opt<bool> DisableLoopOptionOverrides(
-    "aie-disable-loop-option-overrides", llvm::cl::Hidden,
-    llvm::cl::init(false),
+static llvm::cl::opt<bool> IgnoreLoopHints(
+    "aie-ignore-loop-hints", llvm::cl::Hidden, llvm::cl::init(false),
     llvm::cl::desc(
         "Ignore per-loop option overrides from llvm.loop.hint metadata"));
 
 namespace llvm::AIE {
 
 LoopOptionOverrides::LoopOptionOverrides(const MDNode *LoopID) {
-  if (!LoopID || DisableLoopOptionOverrides)
+  if (!LoopID || IgnoreLoopHints)
     return;
 
   for (const auto *MD : AIELoopUtils::getLoopMetadataEntries(LoopID)) {

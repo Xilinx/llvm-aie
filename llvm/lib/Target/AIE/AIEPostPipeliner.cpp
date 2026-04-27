@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEPostPipeliner.h"
+#include "AIEBaseRegisterInfo.h"
 #include "AIESWPSolver.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
@@ -183,8 +184,28 @@ bool isSideEffectFree(MachineInstr *MI) {
       MI->hasUnmodeledSideEffects()) {
     return false;
   }
-  return !any_of(MI->defs(), [MBB = MI->getParent()](MachineOperand &Def) {
-    return MBB->isLiveIn(Def.getReg());
+
+  // FIFO operations modify persistent hardware state (the FIFO
+  // position register). Executing an extra copy corrupts the FIFO
+  // state and is thus not side effect free.
+  const auto &TRI = static_cast<const AIEBaseRegisterInfo &>(
+      *MI->getMF()->getSubtarget().getRegisterInfo());
+
+  return !any_of(MI->defs(), [MBB = MI->getParent(),
+                              &TRI](MachineOperand &Def) {
+    Register Reg = Def.getReg();
+    unsigned SubReg = Def.getSubReg();
+    // Get the lane mask for the def operand: if it has a subreg, use that
+    // subreg's lane mask; otherwise assume all lanes are defined.
+    LaneBitmask DefLaneMask =
+        SubReg ? TRI.getSubRegIndexLaneMask(SubReg) : LaneBitmask::getAll();
+    return any_of(MBB->getLiveIns(),
+                  [Reg, DefLaneMask,
+                   &TRI](const MachineBasicBlock::RegisterMaskPair &LiveIn) {
+                    // Check if registers overlap AND the lane masks intersect.
+                    return TRI.regsOverlap(Reg, LiveIn.PhysReg) &&
+                           (DefLaneMask & LiveIn.LaneMask).any();
+                  });
   });
 }
 
@@ -891,6 +912,20 @@ void dumpEarliestChain(const ScheduleInfo &Info, int N) {
   dbgs() << "  --> SU" << N << " @" << Info[N].Cycle << "\n";
 }
 
+/// Check whether \p Target lies on the LastEarliestPusher chain starting
+/// from node \p Start. If so, delaying Target will push Start's Earliest
+/// by the same amount, making the delay futile for resolving a modulo
+/// constraint between them.
+bool isOnEarliestChain(const ScheduleInfo &Info, int Start, int Target) {
+  auto Prev = Info[Start].LastEarliestPusher;
+  while (Prev) {
+    if (*Prev == Target)
+      return true;
+    Prev = Info[*Prev].LastEarliestPusher;
+  }
+  return false;
+}
+
 #ifndef NDEBUG
 /// Recompute Earliest from direct predecessors only.
 int computeEarliestFromPreds(const SUnit &SU, const ScheduleInfo &Info) {
@@ -937,9 +972,43 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
                         << Insert << " (Earliest=" << Earliest
                         << " ModuloNode=SU" << N - NInstr << ")\n";
                  dumpEarliestChain(Info, N));
-      if (Strategy.mobility(ModuloSU) > 0) {
-        // The modulo Node can be delayed
-        ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
+      // Check whether the modulo node can be delayed to resolve the
+      // violation. HasScheduleSlack means the current schedule still
+      // has room. CanPlaceLaterInOriginalInterval means scheduling
+      // tightened Latest beyond the original interval -- retrying
+      // with a higher TweakedEarliest can produce a different
+      // successor layout that doesn't squeeze as aggressively.
+      // DelayReducesGap guards against futile delays where the modulo
+      // node drives Node's Earliest through an LCD chain.
+
+      // The current schedule still has room for the modulo node.
+      const bool HasScheduleSlack = Strategy.mobility(ModuloSU) > 0;
+
+      // The strategy's schedule length shifts all Latest values by a
+      // constant offset. Recover it to translate StaticLatest into
+      // the strategy's coordinate system.
+      const int ScheduleLengthOffset =
+          Strategy.latest(ModuloSU) - Info[ModuloSU.NodeNum].Latest;
+
+      // The node's upper bound before scheduling tightened it.
+      const int OriginalLatest = ModuloNode.StaticLatest + ScheduleLengthOffset;
+
+      // The node hasn't reached the boundary of its pre-scheduling
+      // interval -- there is room to push it later.
+      const bool CanPlaceLaterInOriginalInterval =
+          ModuloNode.Earliest < OriginalLatest;
+
+      // The delay actually reduces the Earliest-Insert gap. If the
+      // modulo node drives Node's Earliest through an LCD chain,
+      // both sides advance equally and the gap stays constant.
+      const bool DelayReducesGap =
+          !isOnEarliestChain(Info, N, ModuloSU.NodeNum);
+
+      const bool CanDelayModuloNode =
+          HasScheduleSlack ||
+          (CanPlaceLaterInOriginalInterval && DelayReducesGap);
+      if (CanDelayModuloNode) {
+        ModuloNode.TweakedEarliest = ModuloNode.Cycle + 1;
         Strategy.setChanged();
         LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
                           << " with TweakedEarliest= "
@@ -1329,6 +1398,9 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
     // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents, Modifiers}
     {1, true, false, 1, {Prio::NodeNum}, {}},
+    // Tight schedule window: ExtraStages=0 keeps NS low, which is needed
+    // when MinTripCount barely exceeds RecMII.
+    {0, true, false, HeuristicRuns, {Prio::NodeNum}, {}},
     {1, true, false, HeuristicRuns, {Prio::Latest}, {}},
     {1, true, false, HeuristicRuns, {Prio::Critical}, {}},
     {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}, {}},

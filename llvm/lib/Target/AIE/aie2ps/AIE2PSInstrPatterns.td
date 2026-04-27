@@ -125,6 +125,7 @@ def : Pat< (ptradd eP:$ptr, eM:$mod),
 def : PatGpr<int_aie2ps_clb, CLB, i32>;
 def : PatGpr<ctlz, CLZ, i32>;
 def : PatGpr<ctlz_zero_undef, CLZ, i32>;
+def : PatGpr<ctpop, POPCOUNT, i32>;
 
 // 4.1.4 EXTEND – Sign extend / Zero Extend
 // Note: Sign extensions are handled in AIE2PSInstructionSelector.cpp.
@@ -165,21 +166,21 @@ def : PatGprGpr<xor, XOR, Ty>;
 // 4.1.8 SELECT
 class SelectPat<ValueType type> :
          Pat<(type (select (i32 mR27_select:$rs1), (type eR:$rs2), (type eR:$rs3))),
-          (SEL_NEZ eR:$rs2, eR:$rs3, mR27_select:$rs1)>;
+          (SEL_NEZ mRx:$rs2, mRy:$rs3, mR27_select:$rs1)>;
 def : SelectPat<ptr0>;
 def : SelectPat<i32>;
 
 
 class SelectNezPat<ValueType type> :
          Pat<(type (select (i32 (setne mR27_select:$rs1, (i32 0))), (type eR:$rs2), (type eR:$rs3))),
-          (SEL_NEZ eR:$rs2, eR:$rs3, mR27_select:$rs1)>;
+          (SEL_NEZ mRx:$rs2, mRy:$rs3, mR27_select:$rs1)>;
 
 def : SelectNezPat<ptr0>;
 def : SelectNezPat<i32>;
 
 class SelectNotPat<ValueType type> :
          Pat<(type (select (i32 (seteq mR27_select:$rs1, (i32 0))), (type eR:$rs2), (type eR:$rs3))),
-          (SEL_EQZ eR:$rs2, eR:$rs3, mR27_select:$rs1)>;
+          (SEL_EQZ mRx:$rs2, mRy:$rs3, mR27_select:$rs1)>;
 
 def : SelectNotPat<ptr0>;
 def : SelectNotPat<i32>;

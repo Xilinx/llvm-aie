@@ -443,6 +443,21 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
 
+  getActionDefinitionsBuilder(G_CTPOP)
+      .legalFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_CTTZ_ZERO_UNDEF)
+      .lowerFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_CTTZ)
+      .lowerFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
   getActionDefinitionsBuilder({G_FSHL, G_FSHR}).lower();
 
   getActionDefinitionsBuilder({G_MEMCPY, G_MEMSET, G_MEMMOVE})
