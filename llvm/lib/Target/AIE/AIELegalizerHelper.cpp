@@ -1611,6 +1611,7 @@ bool AIELegalizerHelper::legalizeLoopDecrement(LegalizerHelper &Helper,
 
 // Legalize < MaxBitSize-bit G_SELECT
 // Expand the source vectors to MaxBitSize-bits by padding it with undefs.
+// For pointer selects, convert to s32 select with PTRTOINT/INTTOPTR.
 bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
                                           MachineInstr &MI,
                                           const unsigned MaxBitSize) const {
@@ -1619,6 +1620,38 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
 
   const Register DstReg = MI.getOperand(0).getReg();
   const LLT DstTy = MRI.getType(DstReg);
+
+  // Handle pointer selects by converting to s32
+  if (DstTy.isPointer()) {
+    const Register CondReg = MI.getOperand(1).getReg();
+    const Register TrueReg = MI.getOperand(2).getReg();
+    const Register FalseReg = MI.getOperand(3).getReg();
+
+    // Convert pointers to s20
+    const Register TrueS20 = MRI.createGenericVirtualRegister(S20);
+    const Register FalseS20 = MRI.createGenericVirtualRegister(S20);
+    MIRBuilder.buildPtrToInt(TrueS20, TrueReg);
+    MIRBuilder.buildPtrToInt(FalseS20, FalseReg);
+
+    // Extend s20 to s32 for the select
+    const Register TrueS32 = MRI.createGenericVirtualRegister(S32);
+    const Register FalseS32 = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildAnyExt(TrueS32, TrueS20);
+    MIRBuilder.buildAnyExt(FalseS32, FalseS20);
+
+    // Perform select on s32
+    const Register ResultS32 = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildSelect(ResultS32, CondReg, TrueS32, FalseS32);
+
+    // Truncate back to s20 and convert to pointer
+    const Register ResultS20 = MRI.createGenericVirtualRegister(S20);
+    MIRBuilder.buildTrunc(ResultS20, ResultS32);
+    MIRBuilder.buildIntToPtr(DstReg, ResultS20);
+
+    MI.eraseFromParent();
+    return true;
+  }
+
   const unsigned DstVecSize = DstTy.getSizeInBits();
 
   assert(DstTy.isVector() && DstVecSize < MaxBitSize &&

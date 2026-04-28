@@ -395,6 +395,30 @@ void applyAlternatingBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  AIEAlternatingBuildVectorMatchData &MatchInfo,
                                  GISelChangeObserver &Observer);
 
+/// Match and split a 512-bit SRS intrinsic that feeds stores through BITCAST
+/// and UNMERGE. This enables later SRS+STORE fusion in instruction selection.
+/// Pattern matched:
+///   %srs:_(<64 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS
+///       intrinsic(@llvm.aie2ps.I512.v64.acc32.srs), %acc(<64 x s32>), %shift,
+///       %sign
+///   %bitcast:_(<16 x s32>) = G_BITCAST %srs
+///   %lo:_(<8 x s32>), %hi:_(<8 x s32>) = G_UNMERGE_VALUES %bitcast
+///   G_STORE %lo, %ptr1
+///   G_STORE %hi, %ptr2
+/// Transforms to:
+///   %acc_lo:_(<32 x s32>), %acc_hi:_(<32 x s32>) = G_UNMERGE_VALUES %acc
+///   %srs_lo:_(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS
+///       intrinsic(@llvm.aie2ps.I256.v32.acc32.srs), %acc_lo, %shift, %sign
+///   %srs_hi:_(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS
+///       intrinsic(@llvm.aie2ps.I256.v32.acc32.srs), %acc_hi, %shift, %sign
+///   %lo:_(<8 x s32>) = G_BITCAST %srs_lo
+///   %hi:_(<8 x s32>) = G_BITCAST %srs_hi
+///   G_STORE %lo, %ptr1
+///   G_STORE %hi, %ptr2
+bool matchSplitIntrinsicForStore(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo);
+
 bool matchVShiftChainToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                             const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 
@@ -430,6 +454,42 @@ bool matchRedundantWidenNarrowConversion(MachineInstr &MI,
                                          MachineRegisterInfo &MRI,
                                          const AIEBaseInstrInfo &TII,
                                          BuildFnTy &MatchInfo);
+
+/// Match a pattern of chained G_PTR_ADD operations where both offsets
+/// come from non-constant sources, like G_TRUNC/G_ZEXTLOAD of s32 values. The
+/// pattern:
+///   %195:modregbank(s20) = G_TRUNC %1021(s32)
+///   %201:modregbank(s20) = G_TRUNC %164(s32)
+///   %337:ptrregbank(p0) = G_PTR_ADD %335, %195(s20)
+///   %339:ptrregbank(p0) = G_PTR_ADD %337, %201(s20)
+/// Can be optimized to:
+///   %combined:_(s32) = G_ADD %1021(s32), %164(s32)
+///   %offset:modregbank(s20) = G_TRUNC %combined(s32)
+///   %339:ptrregbank(p0) = G_PTR_ADD %335, %offset(s20)
+/// Requires one s32 source to dominate the other for safe insertion.
+bool matchChainedPtrAddWithNonConstOffsets(MachineInstr &MI,
+                                           MachineRegisterInfo &MRI,
+                                           CombinerHelper &Helper,
+                                           BuildFnTy &MatchInfo);
+
+/// Match a pattern of G_AIE_POSTINC_LOAD/STORE followed by G_PTR_ADD where both
+/// offsets come from G_TRUNC of s32 values. The pattern:
+///   %offset1:_(s20) = G_TRUNC %src1(s32)
+///   %offset2:_(s20) = G_TRUNC %src2(s32)
+///   %data:_(<32 x s16>), %ptr1:_(p0) = G_AIE_POSTINC_LOAD %base, %offset1(s20)
+///   %ptr2:_(p0) = G_PTR_ADD %ptr1, %offset2(s20)
+/// Can be optimized to:
+///   %combined:_(s32) = G_ADD %src1(s32), %src2(s32)
+///   %offset:_(s20) = G_TRUNC %combined(s32)
+///   %data:_(<32 x s16>), %ptr2:_(p0) = G_AIE_POSTINC_LOAD %base, %offset(s20)
+/// Requires the POSTINC's pointer output to have only one use (the
+/// PTR_ADD) and one s32 source to dominate the other for safe insertion.
+bool matchPostIncLoadStorePtrAddWithTrunc(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI,
+                                          CombinerHelper &Helper,
+                                          const AIEBaseInstrInfo &TII,
+                                          GISelChangeObserver &Observer,
+                                          BuildFnTy &MatchInfo);
 
 } // namespace llvm
 

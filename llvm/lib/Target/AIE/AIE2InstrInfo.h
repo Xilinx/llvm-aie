@@ -60,6 +60,8 @@ public:
   unsigned getGenericPadVectorOpcode() const override;
   unsigned getGenericUnpadVectorOpcode() const override;
   unsigned getGenericBroadcastVectorOpcode() const override;
+  unsigned getGenericPostIncLoadOpcode() const override;
+  unsigned getGenericPostIncStoreOpcode() const override;
   unsigned getCycleSeparatorOpcode() const override;
   bool isLock(unsigned Opc) const override;
   std::optional<unsigned> getDoneLatency(unsigned) const override;

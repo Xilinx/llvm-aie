@@ -19,10 +19,12 @@ class PassRegistry;
 FunctionPass *createAIEPreLegalizerCombiner();
 FunctionPass *createAIEPostLegalizerGenericCombiner();
 FunctionPass *createAIEPostLegalizerCustomCombiner();
+FunctionPass *createAIEPostLegalizerFinalCombiner();
 
 void initializeAIEPreLegalizerCombinerPass(PassRegistry &);
 void initializeAIEPostLegalizerGenericCombinerPass(PassRegistry &);
 void initializeAIEPostLegalizerCustomCombinerPass(PassRegistry &);
+void initializeAIEPostLegalizerFinalCombinerPass(PassRegistry &);
 
 } // end namespace llvm
 

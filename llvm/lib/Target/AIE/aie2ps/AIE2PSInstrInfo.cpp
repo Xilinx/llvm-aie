@@ -1527,6 +1527,14 @@ unsigned AIE2PSInstrInfo::getGenericVShiftOpcode() const {
   return AIE2PS::G_AIE_VSHIFT_RIGHT;
 }
 
+unsigned AIE2PSInstrInfo::getGenericPostIncLoadOpcode() const {
+  return AIE2PS::G_AIE_POSTINC_LOAD;
+}
+
+unsigned AIE2PSInstrInfo::getGenericPostIncStoreOpcode() const {
+  return AIE2PS::G_AIE_POSTINC_STORE;
+}
+
 unsigned AIE2PSInstrInfo::getGenericShuffleVectorOpcode() const {
   return AIE2PS::G_AIE_SHUFFLE_VECTOR;
 }
