@@ -261,22 +261,36 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
 
 void ReservedRegsLICM::processForExitSink(MachineLoop &L,
                                           const BitVector &ReservedLiveins) {
+  // Pre-compute what's live at the entry of the latch block by walking it
+  // fully backward. For multi-block loops with conditional paths, a candidate
+  // register may be defined in some branches but not others, making it live at
+  // the latch entry on those paths. If the register is live at the latch entry
+  // (i.e., used before its first def in the latch), sinking its last def to
+  // the exit block would expose the wrong value on those paths.
+  assert(L.getLoopLatch());
+  LivePhysRegs LatchEntryLive(*TRI);
+  for (const MachineInstr &MI : reverse(*L.getLoopLatch()))
+    LatchEntryLive.stepBackward(MI);
+
   RegDefMap PhysRegChanged(*TRI);
   LivePhysRegs LiveRegs(*TRI);
   Candidates SinkCandidates;
 
   // Walk the latch block, track defs for each register, and
   // collect potential LICM candidates.
-  assert(L.getLoopLatch());
   for (MachineInstr &MI : reverse(*L.getLoopLatch())) {
     CandidateInfo *CandInfo = SinkCandidates.getInfo(MI);
 
     // First time we meet a reserved reg definition while iterating upwards.
-    // If that def is not a loop livein and it isn't used in this block either,
-    // then one can move the instruction to the exit BB of the loop.
+    // If that def is not a loop livein, it isn't used in this block after the
+    // def, and it isn't live at the latch entry (which would indicate it is
+    // used before its def in the latch, possibly carrying a value from a
+    // conditional path that skips the def), then one can move the instruction
+    // to the exit BB of the loop.
     if (CandInfo && !PhysRegChanged.hasChanged(CandInfo->DefinedReg) &&
         !ReservedLiveins.test(CandInfo->DefinedReg) &&
-        !LiveRegs.contains(CandInfo->DefinedReg)) {
+        !LiveRegs.contains(CandInfo->DefinedReg) &&
+        !LatchEntryLive.contains(CandInfo->DefinedReg)) {
       assert(!CandInfo->HoistCandidate);
       CandInfo->HoistCandidate = &MI;
     }
