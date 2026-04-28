@@ -88,6 +88,19 @@ struct CandidateInfo {
   MachineInstr *HoistCandidate = nullptr;
 };
 
+/// Describes a matched save/restore bracket for a reserved register:
+///   save:    vreg = COPY $reserved_reg   (first use in latch, before set)
+///   set:     $reserved_reg = <imm>       (loop-invariant, immediately after)
+///   restore: $reserved_reg = COPY vreg   (last def in latch)
+/// The transformation hoists save+set to the preheader and sinks restore to
+/// the exit block, so the loop body always sees the loop-invariant value.
+struct SaveRestoreBracket {
+  MachineInstr *Save = nullptr;
+  MachineInstr *Set = nullptr;
+  MachineInstr *Restore = nullptr;
+  MCPhysReg Reg = MCRegister::NoRegister;
+};
+
 /// Used to collect candidates for hoisting/sinking
 class Candidates {
   DenseMap<MCPhysReg, CandidateInfo> Candidates;
@@ -162,6 +175,19 @@ private:
 
   /// Hoist \p Cand to \p L's preheader if it is safe to do so.
   bool tryHoistToPreHeader(const CandidateInfo &Cand, MachineLoop &L);
+
+  /// Detect and transform a save/restore bracket in \p L's latch block.
+  /// A bracket has the form:
+  ///   vreg = COPY $reserved_reg   (save)
+  ///   $reserved_reg = <imm>       (set, loop-invariant)
+  ///   ...uses of $reserved_reg...
+  ///   $reserved_reg = COPY vreg   (restore)
+  /// Returns the matched bracket, or std::nullopt if not found.
+  std::optional<SaveRestoreBracket> findSaveRestoreBracket(MachineLoop &L);
+
+  /// Apply the save/restore bracket transformation: hoist save+set to the
+  /// preheader and sink restore to the exit block.
+  bool processSaveRestoreBracket(MachineLoop &L);
 
   /// Verify if \p Cand is loop invariant and can be safely hoisted.
   /// \pre Cand->DefinedReg has a unique live value within the loop. This is
@@ -257,7 +283,13 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
   BitVector ReservedLiveins = collectLoopReservedLiveins(L);
   processForExitSink(L, ReservedLiveins);
   processForPreheaderHoist(L, ReservedLiveins);
+  Changed |= processSaveRestoreBracket(L);
 }
+
+// Forward declaration — defined after processForPreheaderHoist.
+static void moveInstruction(const CandidateInfo &Cand,
+                            MachineBasicBlock::iterator InsertBefore,
+                            MachineBasicBlock &InsertMBB);
 
 void ReservedRegsLICM::processForExitSink(MachineLoop &L,
                                           const BitVector &ReservedLiveins) {
@@ -305,6 +337,145 @@ void ReservedRegsLICM::processForExitSink(MachineLoop &L,
   }
 }
 
+std::optional<SaveRestoreBracket>
+ReservedRegsLICM::findSaveRestoreBracket(MachineLoop &L) {
+  MachineBasicBlock *Latch = L.getLoopLatch();
+  assert(Latch);
+
+  for (MachineInstr &SaveMI : *Latch) {
+    // Look for: vreg = COPY $reserved_reg
+    if (!SaveMI.isCopy())
+      continue;
+    Register SaveDst = SaveMI.getOperand(0).getReg();
+    Register SaveSrc = SaveMI.getOperand(1).getReg();
+    if (!SaveDst.isVirtual() || !SaveSrc.isPhysical())
+      continue;
+    MCPhysReg PhysReg = SaveSrc.asMCReg();
+    if (!TRI->isSimplifiableReservedReg(PhysReg))
+      continue;
+
+    // The saved vreg must have exactly one non-debug use (the restore).
+    if (!MRI->hasOneNonDBGUse(SaveDst))
+      continue;
+
+    // Helper: does MI use PhysReg?
+    auto UsesPhysReg = [&](const MachineInstr &MI) {
+      return any_of(MI.operands(), [&](const MachineOperand &MO) {
+        return MO.isReg() && MO.isUse() && MO.getReg() == PhysReg;
+      });
+    };
+
+    // No uses of PhysReg before the save. Instructions before the save
+    // rely on the original value of PhysReg; hoisting the set would make
+    // them see the loop-invariant value instead.
+    auto BeforeSave =
+        make_range(Latch->begin(), MachineBasicBlock::iterator(SaveMI));
+    if (any_of(BeforeSave, UsesPhysReg))
+      continue;
+
+    // Find the set: the next def of PhysReg after the save.
+    // No use of PhysReg is allowed between the save and the set.
+    MachineInstr *SetMI = nullptr;
+    bool PhysRegUsedBeforeSet = false;
+    for (MachineInstr *Next = SaveMI.getNextNode(); Next;
+         Next = Next->getNextNode()) {
+      if (getSinglePhysRegDef(*Next) == PhysReg) {
+        SetMI = Next;
+        break;
+      }
+      if (UsesPhysReg(*Next)) {
+        PhysRegUsedBeforeSet = true;
+        break;
+      }
+    }
+    if (!SetMI || PhysRegUsedBeforeSet)
+      continue;
+
+    // The set must be loop-invariant (e.g. MOVX imm).
+    CandidateInfo SetCand(PhysReg);
+    SetCand.HoistCandidate = SetMI;
+    if (!isLoopInvariantInst(SetCand, L))
+      continue;
+
+    // Find the restore: the last def of PhysReg in the latch.
+    // It must be: $reserved_reg = COPY SaveDst.
+    MachineInstr *RestoreMI = nullptr;
+    for (MachineInstr &MI2 : reverse(*Latch)) {
+      if (getSinglePhysRegDef(MI2) == PhysReg) {
+        if (MI2.isCopy() && MI2.getOperand(1).getReg() == SaveDst)
+          RestoreMI = &MI2;
+        break;
+      }
+    }
+    if (!RestoreMI)
+      continue;
+
+    // No uses of PhysReg after the restore. Once the restore is sinked to
+    // the exit block, instructions after the restore position in the loop
+    // body would see the loop-invariant value (from the set) instead of
+    // the restored value.
+    auto AfterRestore = make_range(
+        std::next(MachineBasicBlock::iterator(RestoreMI)), Latch->end());
+    if (any_of(AfterRestore, UsesPhysReg))
+      continue;
+
+    // PhysReg must not be used in any non-latch block of the loop.
+    // If it were, those uses might see the wrong value after we hoist
+    // the set to the preheader.
+    if (any_of(L.getBlocks(), [&](MachineBasicBlock *MBB) {
+          return MBB != Latch && any_of(*MBB, UsesPhysReg);
+        }))
+      continue;
+
+    return SaveRestoreBracket{&SaveMI, SetMI, RestoreMI, PhysReg};
+  }
+  return std::nullopt;
+}
+
+bool ReservedRegsLICM::processSaveRestoreBracket(MachineLoop &L) {
+  std::optional<SaveRestoreBracket> BracketOpt = findSaveRestoreBracket(L);
+  if (!BracketOpt)
+    return false;
+
+  const SaveRestoreBracket &Bracket = *BracketOpt;
+  MachineBasicBlock *Preheader = L.getLoopPreheader();
+  MachineBasicBlock *ExitMBB = L.getExitBlock();
+  assert(Preheader && ExitMBB);
+
+  // Ensure the exit block is a dedicated exit (single predecessor).
+  // runOnLoop already verified that the critical edge can be split if needed.
+  if (!ExitMBB->getSinglePredecessor()) {
+    MachineBasicBlock *ExitingBlock = L.getExitingBlock();
+    ExitMBB = ExitingBlock->SplitCriticalEdge(ExitMBB, *this);
+    assert(ExitMBB);
+    LLVM_DEBUG(dbgs() << "Created dedicated exit: "
+                      << printMBBReference(*ExitMBB) << "\n");
+  }
+
+  LLVM_DEBUG(dbgs() << "Save/restore bracket for " << TRI->getName(Bracket.Reg)
+                    << ":\n"
+                    << "  Save:    " << *Bracket.Save << "  Set:     "
+                    << *Bracket.Set << "  Restore: " << *Bracket.Restore);
+
+  // Move save + set to the preheader (save first so it captures the
+  // pre-loop value before the set overwrites it).
+  auto InsertPt = Preheader->getFirstTerminator();
+  CandidateInfo SaveCand(Bracket.Reg);
+  SaveCand.HoistCandidate = Bracket.Save;
+  moveInstruction(SaveCand, InsertPt, *Preheader);
+
+  CandidateInfo SetCand(Bracket.Reg);
+  SetCand.HoistCandidate = Bracket.Set;
+  moveInstruction(SetCand, InsertPt, *Preheader);
+
+  // Sink restore to the exit block.
+  CandidateInfo RestoreCand(Bracket.Reg);
+  RestoreCand.HoistCandidate = Bracket.Restore;
+  moveInstruction(RestoreCand, ExitMBB->getFirstNonPHI(), *ExitMBB);
+
+  return true;
+}
+
 void ReservedRegsLICM::processForPreheaderHoist(
     MachineLoop &L, const BitVector &ReservedLiveins) {
   Candidates HoistCandidates;
@@ -333,9 +504,9 @@ void ReservedRegsLICM::processForPreheaderHoist(
 /// When an instruction is found to only use loop invariant operands that is
 /// safe to hoist/sink, this function is called to actually move the MI out of
 /// the loop.
-void moveInstruction(const CandidateInfo &Cand,
-                     MachineBasicBlock::iterator InsertBefore,
-                     MachineBasicBlock &InsertMBB) {
+static void moveInstruction(const CandidateInfo &Cand,
+                            MachineBasicBlock::iterator InsertBefore,
+                            MachineBasicBlock &InsertMBB) {
   MachineInstr &MI = *Cand.HoistCandidate;
   LLVM_DEBUG(dbgs() << "Moving to " << printMBBReference(InsertMBB) << " from "
                     << printMBBReference(*MI.getParent()) << ": " << MI);

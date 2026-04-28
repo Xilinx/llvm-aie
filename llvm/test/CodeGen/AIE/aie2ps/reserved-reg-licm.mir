@@ -330,6 +330,112 @@ body:             |
     PseudoJ_jump_imm %bb.1
 ...
 
+# $crsat save/restore bracket: the loop saves $crsat, sets it to 1, uses it,
+# then restores it. The save+set should be hoisted to the preheader and the
+# restore should be sinked to the exit block.
+---
+name:            crsat_save_restore_bracket
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: crsat_save_restore_bracket
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $r0, $r1, $s0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:acc1024 = COPY $r1
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $crsat
+  ; CHECK-NEXT:   $crsat = MOVX_mvx_cr_imm 1
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   $crsat = COPY [[COPY3]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[VSRS_4x_mv_w_srs_cm_srsSign1_:%[0-9]+]]:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 [[COPY1]], [[COPY2]], implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.2(0x80000000)
+    liveins: $r0, $r1, $s0
+
+    %0:er = COPY $r0
+    %1:acc1024 = COPY $r1
+    %2:es = COPY $s0
+    PseudoJ_jump_imm %bb.2
+
+  bb.1:
+    PseudoRET implicit $lr
+
+  bb.2:
+    successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+    %3:er = COPY $crsat
+    $crsat = MOVX_mvx_cr_imm 1
+    %4:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 %1, %2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $crsat = COPY %3
+    PseudoJNZ %0, %bb.2
+    PseudoJ_jump_imm %bb.1
+...
+
+# $crrnd save/restore bracket with uses before the save and after the restore.
+# The bracket must NOT be transformed because $crrnd is used outside the
+# [save, restore] window: once before the save and once after the restore.
+---
+name:            crrnd_bracket_uses_outside_window
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: crrnd_bracket_uses_outside_window
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $r0, $r1, $s0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:acc1024 = COPY $r1
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[VSRS_4x_mv_w_srs_cm_srsSign1_:%[0-9]+]]:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 [[COPY1]], [[COPY2]], implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $crrnd
+  ; CHECK-NEXT:   $crrnd = MOVX_mvx_cr_imm 0
+  ; CHECK-NEXT:   [[VSRS_4x_mv_w_srs_cm_srsSign1_1:%[0-9]+]]:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 [[COPY1]], [[COPY2]], implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+  ; CHECK-NEXT:   $crrnd = COPY [[COPY3]]
+  ; CHECK-NEXT:   [[VSRS_4x_mv_w_srs_cm_srsSign1_2:%[0-9]+]]:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 [[COPY1]], [[COPY2]], implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.2(0x80000000)
+    liveins: $r0, $r1, $s0
+
+    %0:er = COPY $r0
+    %1:acc1024 = COPY $r1
+    %2:es = COPY $s0
+    PseudoJ_jump_imm %bb.2
+
+  bb.1:
+    PseudoRET implicit $lr
+
+  bb.2:
+    successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+    %5:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 %1, %2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    %3:er = COPY $crrnd
+    $crrnd = MOVX_mvx_cr_imm 0
+    %4:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 %1, %2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $crrnd = COPY %3
+    %6:vec256 = VSRS_4x_mv_w_srs_cm_srsSign1 %1, %2, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    PseudoJNZ %0, %bb.2
+    PseudoJ_jump_imm %bb.1
+...
+
 # $srssign0 is defined in one conditional branch (bb.2) but not the other
 # (bb.3). The latch (bb.4) uses $srssign0 before defining it, so $srssign0 is
 # live at the latch entry on the path through bb.3. Sinking MOVX_mvx_cr_imm 0
