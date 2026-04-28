@@ -291,53 +291,46 @@ def IIT_MMX : IIT_VT<x86mmx, 17>;
 def IIT_TOKEN : IIT_VT<token, 18>;
 def IIT_METADATA : IIT_VT<MetadataVT, 19>;
 def IIT_EMPTYSTRUCT : IIT_VT<OtherVT, 20>;
-def IIT_STRUCT2 : IIT_Base<21>;
-def IIT_STRUCT3 : IIT_Base<22>;
-def IIT_STRUCT4 : IIT_Base<23>;
-def IIT_STRUCT5 : IIT_Base<24>;
-def IIT_EXTEND_ARG : IIT_Base<25>;
-def IIT_TRUNC_ARG : IIT_Base<26>;
-def IIT_ANYPTR : IIT_Base<27>;
-def IIT_V1 : IIT_Vec<1, 28>;
-def IIT_VARARG : IIT_VT<isVoid, 29>;
-def IIT_HALF_VEC_ARG : IIT_Base<30>;
-def IIT_SAME_VEC_WIDTH_ARG : IIT_Base<31>;
-def IIT_VEC_OF_ANYPTRS_TO_ELT : IIT_Base<34>;
-def IIT_I128 : IIT_Int<128, 35>;
-def IIT_V512 : IIT_Vec<512, 36>;
-def IIT_V1024 : IIT_Vec<1024, 37>;
-def IIT_STRUCT6 : IIT_Base<38>;
-def IIT_STRUCT7 : IIT_Base<39>;
-def IIT_STRUCT8 : IIT_Base<40>;
-def IIT_F128 : IIT_VT<f128, 41>;
-def IIT_VEC_ELEMENT : IIT_Base<42>;
-def IIT_SCALABLE_VEC : IIT_Base<43>;
-def IIT_SUBDIVIDE2_ARG : IIT_Base<44>;
-def IIT_SUBDIVIDE4_ARG : IIT_Base<45>;
-def IIT_VEC_OF_BITCASTS_TO_INT : IIT_Base<46>;
-def IIT_V128 : IIT_Vec<128, 47>;
-def IIT_BF16 : IIT_VT<bf16, 48>;
-def IIT_STRUCT9 : IIT_Base<49>;
-def IIT_V256 : IIT_Vec<256, 50>;
-def IIT_AMX : IIT_VT<x86amx, 51>;
-def IIT_PPCF128 : IIT_VT<ppcf128, 52>;
-def IIT_V3 : IIT_Vec<3, 53>;
-def IIT_EXTERNREF : IIT_VT<externref, 54>;
-def IIT_FUNCREF : IIT_VT<funcref, 55>;
-def IIT_I2 : IIT_Int<2, 57>;
-def IIT_I4 : IIT_Int<4, 58>;
-def IIT_AARCH64_SVCOUNT : IIT_VT<aarch64svcount, 59>;
-def IIT_V6 : IIT_Vec<6, 60>;
-def IIT_V10 : IIT_Vec<10, 61>;
-def IIT_I20 : IIT_Int<20, 62>;
-def IIT_I48 : IIT_Int<48, 63>;
-def IIT_STRUCT10 : IIT_Base<64>;
-def IIT_STRUCT11 : IIT_Base<65>;
-def IIT_STRUCT12 : IIT_Base<66>;
-def IIT_STRUCT13 : IIT_Base<67>;
-def IIT_STRUCT14 : IIT_Base<68>;
-def IIT_STRUCT15 : IIT_Base<69>;
-def IIT_STRUCT16 : IIT_Base<70>;
+def IIT_STRUCT : IIT_Base<21>;
+def IIT_EXTEND_ARG : IIT_Base<22>;
+def IIT_TRUNC_ARG : IIT_Base<23>;
+def IIT_ANYPTR : IIT_Base<24>;
+def IIT_V1 : IIT_Vec<1, 25>;
+def IIT_VARARG : IIT_VT<isVoid, 26>;
+def IIT_HALF_VEC_ARG : IIT_Base<27>;
+def IIT_SAME_VEC_WIDTH_ARG : IIT_Base<28>;
+def IIT_VEC_OF_ANYPTRS_TO_ELT : IIT_Base<29>;
+def IIT_I128 : IIT_Int<128, 30>;
+def IIT_V512 : IIT_Vec<512, 31>;
+def IIT_V1024 : IIT_Vec<1024, 32>;
+def IIT_STRUCT6 : IIT_Base<33>;
+def IIT_STRUCT7 : IIT_Base<34>;
+def IIT_STRUCT8 : IIT_Base<35>;
+def IIT_F128 : IIT_VT<f128, 36>;
+def IIT_VEC_ELEMENT : IIT_Base<37>;
+def IIT_SCALABLE_VEC : IIT_Base<38>;
+def IIT_SUBDIVIDE2_ARG : IIT_Base<39>;
+def IIT_SUBDIVIDE4_ARG : IIT_Base<40>;
+def IIT_VEC_OF_BITCASTS_TO_INT : IIT_Base<41>;
+def IIT_V128 : IIT_Vec<128, 42>;
+def IIT_BF16 : IIT_VT<bf16, 43>;
+def IIT_STRUCT9 : IIT_Base<44>;
+def IIT_V256 : IIT_Vec<256, 45>;
+def IIT_AMX : IIT_VT<x86amx, 46>;
+def IIT_PPCF128 : IIT_VT<ppcf128, 47>;
+def IIT_V3 : IIT_Vec<3, 48>;
+def IIT_EXTERNREF : IIT_VT<externref, 49>;
+def IIT_FUNCREF : IIT_VT<funcref, 50>;
+def IIT_I2 : IIT_Int<2, 51>;
+def IIT_I4 : IIT_Int<4, 52>;
+def IIT_AARCH64_SVCOUNT : IIT_VT<aarch64svcount, 53>;
+def IIT_V6 : IIT_Vec<6, 54>;
+def IIT_V10 : IIT_Vec<10, 55>;
+def IIT_ONE_THIRD_VEC_ARG : IIT_Base<56>;
+def IIT_ONE_FIFTH_VEC_ARG : IIT_Base<57>;
+def IIT_ONE_SEVENTH_VEC_ARG : IIT_Base<58>;
+def IIT_I20 : IIT_Int<20, 59>;
+def IIT_I48 : IIT_Int<48, 60>;
 }
 
 defvar IIT_all_FixedTypes = !filter(iit, IIT_all,
@@ -345,26 +338,6 @@ defvar IIT_all_FixedTypes = !filter(iit, IIT_all,
 
 defvar IIT_all_VectorTypes = !filter(iit, IIT_all,
   !isa<IIT_Vec>(iit));
-
-defvar IIT_RetNumbers = [
-  [IIT_Done.Number],
-  []<int>,
-  [IIT_STRUCT2.Number],
-  [IIT_STRUCT3.Number],
-  [IIT_STRUCT4.Number],
-  [IIT_STRUCT5.Number],
-  [IIT_STRUCT6.Number],
-  [IIT_STRUCT7.Number],
-  [IIT_STRUCT8.Number],
-  [IIT_STRUCT9.Number],
-  [IIT_STRUCT10.Number],
-  [IIT_STRUCT11.Number],
-  [IIT_STRUCT12.Number],
-  [IIT_STRUCT13.Number],
-  [IIT_STRUCT14.Number],
-  [IIT_STRUCT15.Number],
-  [IIT_STRUCT16.Number],
-];
 
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
@@ -484,6 +457,15 @@ class LLVMVectorElementType<int num> : LLVMMatchType<num, IIT_VEC_ELEMENT>;
 // vector type, but change the element count to be half as many.
 class LLVMHalfElementsVectorType<int num>
   : LLVMMatchType<num, IIT_HALF_VEC_ARG>;
+
+class LLVMOneThirdElementsVectorType<int num>
+  : LLVMMatchType<num, IIT_ONE_THIRD_VEC_ARG>;
+
+class LLVMOneFifthElementsVectorType<int num>
+  : LLVMMatchType<num, IIT_ONE_FIFTH_VEC_ARG>;
+
+class LLVMOneSeventhElementsVectorType<int num>
+  : LLVMMatchType<num, IIT_ONE_SEVENTH_VEC_ARG>;
 
 // Match the type of another intrinsic parameter that is expected to be a
 // vector type (i.e. <N x iM>) but with each element subdivided to
@@ -665,7 +647,10 @@ class TypeInfoGen<
     !if(!isa<LLVMMatchType>(ty), ACTys[MappingRIdxs[ty.Number]], ty));
 
   list<int> TypeSig = !listflatten(!listconcat(
-    [IIT_RetNumbers[!size(RetTypes)]],
+    [!cond(
+      !eq(!size(RetTypes), 0): [IIT_Done.Number],
+      !eq(!size(RetTypes), 1): []<int>,
+      true: [IIT_STRUCT.Number, !sub(!size(RetTypes), 2)])],
     !foreach(i, !range(AllTypes),
       !foreach(a, AllTypes[i].Sig,
         ResolveArgCode<
@@ -2754,6 +2739,54 @@ def int_vector_interleave2   : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
 
 def int_vector_deinterleave2 : DefaultAttrsIntrinsic<[LLVMHalfElementsVectorType<0>,
                                                       LLVMHalfElementsVectorType<0>],
+                                                     [llvm_anyvector_ty],
+                                                     [IntrNoMem]>;
+
+def int_vector_interleave3   : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
+                                                     [LLVMOneThirdElementsVectorType<0>,
+                                                      LLVMOneThirdElementsVectorType<0>,
+                                                      LLVMOneThirdElementsVectorType<0>],
+                                                     [IntrNoMem]>;
+
+def int_vector_deinterleave3 : DefaultAttrsIntrinsic<[LLVMOneThirdElementsVectorType<0>,
+                                                      LLVMOneThirdElementsVectorType<0>,
+                                                      LLVMOneThirdElementsVectorType<0>],
+                                                     [llvm_anyvector_ty],
+                                                     [IntrNoMem]>;
+
+def int_vector_interleave5   : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
+                                                     [LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>],
+                                                     [IntrNoMem]>;
+
+def int_vector_deinterleave5 : DefaultAttrsIntrinsic<[LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>,
+                                                      LLVMOneFifthElementsVectorType<0>],
+                                                     [llvm_anyvector_ty],
+                                                     [IntrNoMem]>;
+
+def int_vector_interleave7   : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
+                                                     [LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>],
+                                                     [IntrNoMem]>;
+
+def int_vector_deinterleave7 : DefaultAttrsIntrinsic<[LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>,
+                                                      LLVMOneSeventhElementsVectorType<0>],
                                                      [llvm_anyvector_ty],
                                                      [IntrNoMem]>;
 

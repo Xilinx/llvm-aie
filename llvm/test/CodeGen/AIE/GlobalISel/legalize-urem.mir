@@ -6,8 +6,8 @@
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=1 %s
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2 %s
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p %s
-# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2ps %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p_vec %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2ps_vec %s
 
 ---
 name: urem_s32

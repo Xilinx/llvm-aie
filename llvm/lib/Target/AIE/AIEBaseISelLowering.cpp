@@ -19,6 +19,7 @@
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "MCTargetDesc/aie2ps/AIE2PSMCTargetDesc.h"
+#include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/MC/MCRegister.h"
 using namespace llvm;
 
@@ -28,6 +29,11 @@ static cl::opt<bool>
     AllowVecRegMemOps("aie-vect-reg-mem-ops", cl::init(true), cl::Hidden,
                       cl::desc("Allow the usage of vector registers when "
                                "lowering mem[cpy|set|mov]."));
+
+cl::opt<bool>
+    VecCCLibcalls("aie-libcalls-preserve-vectors", cl::init(true), cl::Hidden,
+                  cl::desc("Assume all vector registers are callee-saved by "
+                           "builtin library functions."));
 
 AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
                                              const AIEBaseSubtarget &STI)

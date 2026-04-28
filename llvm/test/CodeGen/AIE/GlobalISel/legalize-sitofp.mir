@@ -4,9 +4,10 @@
 #
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2 --check-prefix=COMMON --check-prefix=AIE2 %s
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p --check-prefix=COMMON --check-prefix=AIE2P %s
-# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2ps --check-prefix=COMMON --check-prefix=AIE2PS %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p_vec --check-prefix=COMMON --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2ps_vec --check-prefix=COMMON --check-prefix=AIE2PS %s
 
+---
 ---
 name: test_sitofp_s32_to_s32
 body: |

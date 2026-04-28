@@ -209,7 +209,6 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   bool IsScalableVector = (LastInfo == IIT_SCALABLE_VEC);
 
   IIT_Info Info = IIT_Info(Infos[NextElt++]);
-  unsigned StructElts = 2;
 
   switch (Info) {
   case IIT_Done:
@@ -373,6 +372,24 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
         IITDescriptor::get(IITDescriptor::HalfVecArgument, ArgInfo));
     return;
   }
+  case IIT_ONE_THIRD_VEC_ARG: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(
+        IITDescriptor::get(IITDescriptor::OneThirdVecArgument, ArgInfo));
+    return;
+  }
+  case IIT_ONE_FIFTH_VEC_ARG: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(
+        IITDescriptor::get(IITDescriptor::OneFifthVecArgument, ArgInfo));
+    return;
+  }
+  case IIT_ONE_SEVENTH_VEC_ARG: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(
+        IITDescriptor::get(IITDescriptor::OneSeventhVecArgument, ArgInfo));
+    return;
+  }
   case IIT_SAME_VEC_WIDTH_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(
@@ -389,49 +406,9 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_EMPTYSTRUCT:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Struct, 0));
     return;
-  case IIT_STRUCT16:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT15:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT14:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT13:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT12:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT11:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT10:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT9:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT8:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT7:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT6:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT5:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT4:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT3:
-    ++StructElts;
-    [[fallthrough]];
-  case IIT_STRUCT2: {
+  case IIT_STRUCT: {
+    unsigned StructElts = Infos[NextElt++] + 2;
+
     OutputTable.push_back(
         IITDescriptor::get(IITDescriptor::Struct, StructElts));
 
@@ -587,6 +564,12 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::HalfVecArgument:
     return VectorType::getHalfElementsVectorType(
         cast<VectorType>(Tys[D.getArgumentNumber()]));
+  case IITDescriptor::OneThirdVecArgument:
+  case IITDescriptor::OneFifthVecArgument:
+  case IITDescriptor::OneSeventhVecArgument:
+    return VectorType::getOneNthElementsVectorType(
+        cast<VectorType>(Tys[D.getArgumentNumber()]),
+        3 + (D.Kind - IITDescriptor::OneThirdVecArgument) * 2);
   case IITDescriptor::SameVecWidthArgument: {
     Type *EltTy = DecodeFixedType(Infos, Tys, Context);
     Type *Ty = Tys[D.getArgumentNumber()];
@@ -963,6 +946,16 @@ matchIntrinsicType(Type *Ty, ArrayRef<Intrinsic::IITDescriptor> &Infos,
     return !isa<VectorType>(ArgTys[D.getArgumentNumber()]) ||
            VectorType::getHalfElementsVectorType(
                cast<VectorType>(ArgTys[D.getArgumentNumber()])) != Ty;
+  case IITDescriptor::OneThirdVecArgument:
+  case IITDescriptor::OneFifthVecArgument:
+  case IITDescriptor::OneSeventhVecArgument:
+    // If this is a forward reference, defer the check for later.
+    if (D.getArgumentNumber() >= ArgTys.size())
+      return IsDeferredCheck || DeferCheck(Ty);
+    return !isa<VectorType>(ArgTys[D.getArgumentNumber()]) ||
+           VectorType::getOneNthElementsVectorType(
+               cast<VectorType>(ArgTys[D.getArgumentNumber()]),
+               3 + (D.Kind - IITDescriptor::OneThirdVecArgument) * 2) != Ty;
   case IITDescriptor::SameVecWidthArgument: {
     if (D.getArgumentNumber() >= ArgTys.size()) {
       // Defer check and subsequent check for the vector element type.

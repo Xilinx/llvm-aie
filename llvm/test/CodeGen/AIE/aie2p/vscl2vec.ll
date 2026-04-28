@@ -520,24 +520,24 @@ entry:
 define dso_local noundef <16 x float> @_Z13test_upd_elemDv16_fif(<16 x float> noundef %v, i32 noundef %idx, float noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv16_fif:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; jl #__floatsisf
-; CHECK-NEXT:    paddxm [sp], #128 // Delay Slot 5
-; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; jl #__floatsisf
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    paddxm [sp], #64 // Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    vst x2, [sp, #-128] // 64-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-64]; nopxm // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-64]; nopb ; nopxm // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda x0, [sp, #-128] // 64-byte Folded Reload
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r29, r8 // Delay Slot 4
-; CHECK-NEXT:    paddxm [sp], #-128 // Delay Slot 3
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 3
+; CHECK-NEXT:    vinsert.32 x0, x2, r29, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast float %b to i32
