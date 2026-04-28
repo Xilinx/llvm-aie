@@ -345,7 +345,11 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
           [=](const LegalityQuery &Query) {
             return std::pair(0, LLT::scalar(32));
           })
-      .legalFor({{S32, S32}, {P0, S32}})
+      // Pointer selects are not supported in hardware - convert to s32.
+      // TODO: backport to previous versions.
+      .customIf(
+          [=](const LegalityQuery &Query) { return Query.Types[0] == P0; })
+      .legalFor({{S32, S32}})
       .clampScalar(1, S32, S32)
       // AIE2PS ISA supports only 512-bit vector select
       .legalFor({V16S32, V32S16, V64S8})
@@ -451,6 +455,16 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
 
   getActionDefinitionsBuilder(G_CTPOP)
       .legalFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_CTTZ_ZERO_UNDEF)
+      .lowerFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_CTTZ)
+      .lowerFor({{S32, S32}})
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
 
