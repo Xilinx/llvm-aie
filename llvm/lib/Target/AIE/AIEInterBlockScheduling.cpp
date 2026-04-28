@@ -61,6 +61,10 @@ static cl::opt<bool>
               cl::desc("[AIE] Try to bias the depth for hazard avoidance in "
                        "iterative loop scheduling"));
 
+static cl::opt<int> PostPipelinerMinII(
+    "aie-postpipeliner-minii", cl::init(1),
+    cl::desc("[AIE] Minimum II to be tried in the post-ra pipeliner"));
+
 static cl::opt<int> PostPipelinerMaxII(
     "aie-postpipeliner-maxii", cl::init(60),
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
@@ -826,8 +830,9 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
     auto &PostSWP = BS.getPostSWP();
     if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
       const int ResMII = PostSWP.getResMII(*BS.TheBlock);
-      if (ResMII <= PostPipelinerMaxII) {
-        BS.FixPoint.II = ResMII;
+      const int StartII = std::max(ResMII, PostPipelinerMinII.getValue());
+      if (StartII <= PostPipelinerMaxII) {
+        BS.FixPoint.II = StartII;
         BS.FixPoint.IITries = 1;
         return SchedulingStage::Pipelining;
       }
