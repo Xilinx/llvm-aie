@@ -95,6 +95,7 @@ set(aie2p_intrin_h
   aie2pintrin.h
   )
 set(aie2p_files
+  aie2p/aie2p_version.h
   aie2p/aie2p_upd_ext.h
   aie2p/aie2p_ldst.h
   aie2p/aie2p_undef.h
@@ -121,6 +122,7 @@ set(aie2ps_intrin_h
   aie2psintrin.h
   )
 set(aie2ps_files
+  aie2ps/aie2ps_version.h
   aie2ps/aie2ps_defines.h
   aie2ps/aie2ps_enums.h
   aie2ps/aie2ps_pp.h

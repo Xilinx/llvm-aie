@@ -11,16 +11,6 @@
 #ifndef __AIE2PS_AIE_API_COMPAT_H
 #define __AIE2PS_AIE_API_COMPAT_H
 
-#define __AIE2PS__
-#define __AIE_ARCH__ 22
-#define __AIE_ARCH_NAME__ AIE2PS
-#define __AIE_ARCH_NAME_STR__ "AIE2PS"
-#define __AIE_MODEL_VERSION__ 10300
-#define __AIE_ARCH_MODEL_VERSION__ 22010300
-#define __AIE_MODEL_VERSION_NAME_STR__ "aie2ps_arch_r1p3"
-#define __AIE_ARCH_MODEL_VERSION__LABEL                                        \
-  __AIE_ARCH_MODEL_VERSION__##__AIE_ARCH_MODEL_VERSION__
-
 struct mx9 {
   char m[16];
   char exp;

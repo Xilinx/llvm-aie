@@ -11,10 +11,6 @@
 #ifndef __AIE2PS_DEFINES_H__
 #define __AIE2PS_DEFINES_H__
 
-#define __AIE2PS__
-#define __AIE_ARCH__ 22
-#define __AIE_ARCH_NAME__ AIE2PS
-#define __AIE_ARCH_NAME_STR__ "AIE2PS"
 /// Natural alignment of vectors
 #define AIE_VECTOR_LDST_ALIGN 64
 

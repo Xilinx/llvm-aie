@@ -4,16 +4,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef __AIE2P_AIE_API_COMPAT_H
 #define __AIE2P_AIE_API_COMPAT_H
-
-#define __AIE_MODEL_VERSION__ 11000
-#define __AIE_ARCH_MODEL_VERSION__ 20011000
-#define __AIE_MODEL_VERSION_NAME_STR__ "aie2p_arch_r1p10"
 
 struct acc16 {};
 struct acc24 {};
