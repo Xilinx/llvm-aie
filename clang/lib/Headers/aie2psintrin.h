@@ -46,6 +46,7 @@
 #define CMODE_BF9_FP8 3   /*011*/
 #define CMODE_BF9_BF8 7   /*111*/
 
+#include "aie2ps/aie2ps_version.h"
 #include "aiebase_chess.h"
 #include "aiebase_typedefs.h"
 #ifdef __cplusplus
