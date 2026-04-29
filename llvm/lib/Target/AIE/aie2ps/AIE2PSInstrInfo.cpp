@@ -966,6 +966,9 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
              regClassMatches(AIE2PS::spill_eS_to_eRRegClass, RC, SrcReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
     return bounceViaRegClass(&AIE2PS::eRRegClass);
+  } else if (regClassMatches(AIE2PS::spill_vec512_to_compositeRegClass, RC,
+                             SrcReg)) {
+    Opcode = AIE2PS::VST_512_COMPOSED_REG_SPILL;
   } else {
     LLVM_DEBUG(I->dump());
     llvm_unreachable("Can't store this register to stack slot: is it virtual?");
@@ -1080,6 +1083,9 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
              regClassMatches(AIE2PS::spill_eS_to_eRRegClass, RC, DstReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
     return bounceViaRegClass(&AIE2PS::eRRegClass);
+  } else if (regClassMatches(AIE2PS::spill_vec512_to_compositeRegClass, RC,
+                             DstReg)) {
+    Opcode = AIE2PS::VLDA_512_COMPOSED_REG_SPILL;
   } else {
     LLVM_DEBUG(I->dump());
     llvm_unreachable(
@@ -1544,6 +1550,38 @@ bool AIE2PSInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
         .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
     return true;
+  }
+  case AIE2PS::VLDA_512_COMPOSED_REG_SPILL: {
+    unsigned int Opcode;
+    const Register Dst = MI.getOperand(0).getReg();
+    if (AIE2PS::VEC512RegClass.contains(Dst)) {
+      Opcode = AIE2PS::VLDA_dmx_lda_x_spill;
+    } else if (AIE2PS::ACC512RegClass.contains(Dst)) {
+      Opcode = AIE2PS::VLDA_dmx_lda_bm_spill;
+    } else {
+      // FIFO512 is part of the composite RC for parity with AIE2P, but
+      // AIE2PS has no native FIFO spill opcode. The allocator should not
+      // assign a FIFO physreg to a composite-class vreg in practice; if
+      // it does, fail loudly so the assumption can be revisited.
+      report_fatal_error("VLDA_512_COMPOSED_REG_SPILL: no native AIE2PS "
+                         "spill opcode for non-VEC/non-ACC physreg");
+    }
+    MI.setDesc(get(Opcode));
+    return false;
+  }
+  case AIE2PS::VST_512_COMPOSED_REG_SPILL: {
+    unsigned int Opcode;
+    const Register Src = MI.getOperand(0).getReg();
+    if (AIE2PS::VEC512RegClass.contains(Src)) {
+      Opcode = AIE2PS::VST_dmx_sts_x_spill;
+    } else if (AIE2PS::ACC512RegClass.contains(Src)) {
+      Opcode = AIE2PS::VST_dmx_sts_bm_spill;
+    } else {
+      report_fatal_error("VST_512_COMPOSED_REG_SPILL: no native AIE2PS "
+                         "spill opcode for non-VEC/non-ACC physreg");
+    }
+    MI.setDesc(get(Opcode));
+    return false;
   }
   }
   return false;

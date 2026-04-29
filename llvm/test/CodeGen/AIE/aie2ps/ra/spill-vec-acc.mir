@@ -31,7 +31,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x5 = VBCST_32 renamable $r16
   ; CHECK-NEXT:   renamable $r0 = MOVXM_lng_cg -19312
   ; CHECK-NEXT:   renamable $x0 = VBCST_16 killed renamable $r0
-  ; CHECK-NEXT:   VST_X_SPILL killed renamable $x0, %stack.0, implicit $sp :: (store (s512) into %stack.0)
+  ; CHECK-NEXT:   renamable $bmll2 = COPY killed renamable $x0
   ; CHECK-NEXT:   renamable $r0 = MOVXM_lng_cg -19360
   ; CHECK-NEXT:   renamable $x2 = VBCST_16 killed renamable $r0
   ; CHECK-NEXT:   renamable $r0 = MOVXM_lng_cg -19424
@@ -56,10 +56,10 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $cml0:0x000000000000000C, $r16, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10
+  ; CHECK-NEXT:   liveins: $bmll2, $cml0:0x000000000000000C, $r16, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $x11 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 renamable $cml0, implicit-def dead $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
-  ; CHECK-NEXT:   renamable $x0 = VLDA_X_SPILL %stack.0, implicit $sp :: (load (s512) from %stack.0)
+  ; CHECK-NEXT:   renamable $x0 = COPY renamable $bmll2
   ; CHECK-NEXT:   renamable $r18 = VGE_bf16 renamable $x11, killed renamable $x0, implicit $crbf8conf, implicit $crfp8conf
   ; CHECK-NEXT:   renamable $x0 = VSEL_16 renamable $x7, renamable $x10, killed renamable $r18, implicit $crbf8conf, implicit $crfp8conf
   ; CHECK-NEXT:   renamable $r18 = VGE_bf16 renamable $x11, renamable $x2, implicit $crbf8conf, implicit $crfp8conf

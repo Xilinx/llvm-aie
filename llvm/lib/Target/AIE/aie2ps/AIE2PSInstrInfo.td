@@ -160,6 +160,7 @@ def VST_Y_SPILL : Pseudo<(outs ), (ins VEC1024:$src, c17n_step128:$imm), "vst_y_
 def VST_BM_SPILL : Pseudo<(outs ), (ins ACC512:$src, c16n_step64:$imm), "vst_bm_spill", "$src, [sp, $imm]">;
 def VST_CM_SPILL : Pseudo<(outs ), (ins ACC1024:$src, c17n_step128:$imm), "vst_cm_spill", "$src, [sp, $imm]">;
 def VST_DM_SPILL : Pseudo<(outs ), (ins ACC2048:$src, c17n_step128:$imm), "vst_dm_spill", "$src, [sp, $imm]">;
+def VST_512_COMPOSED_REG_SPILL : Pseudo<(outs ), (ins spill_vec512_to_composite:$src, c16n_step64:$imm), "vst_512_composed_reg_spill", "${src}, [sp, $imm]">;
 
 def VST_E_SPILL : Pseudo<(outs ), (ins mEs:$src, c12n_step4:$imm), "vst_e_spill", "$src, [sp, $imm]">;
 def VST_EE_SPILL : Pseudo<(outs ), (ins mEEs:$src, c13n_step8:$imm), "vst_ee_spill", "$src, [sp, $imm]">;
@@ -193,6 +194,7 @@ def VLDA_Y_SPILL : Pseudo<(outs VEC1024:$dst), (ins c17n_step128:$imm), "vlda_y_
 def VLDA_BM_SPILL : Pseudo<(outs ACC512:$dst), (ins c16n_step64:$imm), "vlda_bm_spill", "${dst}, [sp, $imm]">;
 def VLDA_CM_SPILL : Pseudo<(outs ACC1024:$dst), (ins c17n_step128:$imm), "vlda_cm_spill", "${dst}, [sp, $imm]">;
 def VLDA_DM_SPILL : Pseudo<(outs ACC2048:$dst), (ins c17n_step128:$imm), "vlda_dm_spill", "${dst}, [sp, $imm]">;
+def VLDA_512_COMPOSED_REG_SPILL : Pseudo<(outs spill_vec512_to_composite:$dst), (ins c16n_step64:$imm), "vlda_512_composed_reg_spill", "${dst}, [sp, $imm]">;
 
 def VLDA_E_SPILL : Pseudo<(outs mEs:$dst), (ins c12n_step4:$imm), "vlda_e_spill", "$dst, [sp, $imm]">;
 def VLDA_EE_SPILL : Pseudo<(outs mEEs:$dst), (ins c13n_step8:$imm), "vlda_ee_spill", "$dst, [sp, $imm]">;

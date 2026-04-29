@@ -189,6 +189,8 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2PS::VST_dmw_sts_w_spill:
   case AIE2PS::VST_dmx_sts_bm_spill:
   case AIE2PS::VST_dmx_sts_x_spill:
+  case AIE2PS::VLDA_512_COMPOSED_REG_SPILL:
+  case AIE2PS::VST_512_COMPOSED_REG_SPILL:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
     return false;
   case AIE2PS::LDA_R_SPILL:
@@ -395,6 +397,10 @@ AIE2PSRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
     return &AIE2PS::spill_eDC_to_eRRegClass;
   if (AIE2PS::eSRegClass.hasSubClassEq(RC))
     return &AIE2PS::spill_eS_to_eRRegClass;
+  if (RC == &AIE2PS::ACC512RegClass || RC == &AIE2PS::VEC512RegClass)
+    // using hasSubClassEq leads to register coalescer changes (spill_vec512
+    // will be used more frequently) and thus change machine scheduling
+    return &AIE2PS::spill_vec512_to_compositeRegClass;
 
   return RC;
 }

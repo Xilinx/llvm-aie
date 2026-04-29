@@ -1207,6 +1207,10 @@ def spill_eDN_to_eR : AIE2PSScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PSScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PSScalarRegisterClass<(add eDC, eR)>;
 
+def spill_vec512_to_composite : AIE2PSVector512RegisterClass<(add mXm, mBMm, lfh0, lfh1, lfl0, lfl1, sfl, sfh, lfe)> {
+  let ConsiderInPreRAScheduling = false;
+}
+
 class AIE2PVector1076FifoRegisterClass<dag reglist> :
     AIE2PSRegisterClass<1088, 512, [i32], reglist>;
 def sub_fifo : SubRegIndex<1024, 0>;
