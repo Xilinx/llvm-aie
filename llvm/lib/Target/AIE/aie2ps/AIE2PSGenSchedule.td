@@ -2685,6 +2685,10 @@ def II_VUPS_4x_mv_ups_x2d_upsSign0 : InstrItinClass;
 def II_VUPS_4x_mv_ups_x2d_upsSign1 : InstrItinClass;
 def II_XOR : InstrItinClass;
 
+// HAND-CRAFTED BYPASSES AND ITINERARIES
+include "ExtraItinDecls.td"
+// END HAND-CRAFTED BYPASSES AND ITINERARIES
+
 def AIE2PSItineraries : ProcessorItineraries<
 [
 // Resources
@@ -2798,6 +2802,7 @@ ZACC_DML,
 // Bypasses
 MV_Bypass,
 VEC_Bypass,
+MV_L_Bypass,
 ],[
 // Itineraries
 
@@ -6235,6 +6240,7 @@ InstrItinData<II_VLT_8_vaddSign0, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign1
 InstrItinData<II_VLT_8_vaddSign1, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1, /*vaddSign1*/1], [/*cmp*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
+
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f16_compare__vlt_bf16__vec_cmp_out32__vec_add_mX__vec_add_nX
 InstrItinData<II_VLT_bf16, [SimpleCycle<CRBF8CONF_RV>, SimpleCycle<L_WM_L0_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*crBF8conf*/1, /*crFP8conf*/1], [/*cmp*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
 
@@ -7573,4 +7579,7 @@ InstrItinData<II_VUPS_4x_mv_ups_x2d_upsSign1, [SimpleCycle<CRSAT_RA>, PrefixCycl
 
 // id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__xor
 InstrItinData<II_XOR, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+include "ExtraItineraries.td"
+
 ]>;

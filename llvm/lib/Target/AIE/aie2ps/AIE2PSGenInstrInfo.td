@@ -5689,6 +5689,10 @@ let mv = {d, s1, s2, sel, 0b00, 0b1, 0b001};
 }
 
 let Itinerary = II_VADDSUB_8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VADDSUB_8_mLBypass, [OperandRegClass<3, eL>]>] in
+// END MANUAL ADDITION
 def VADDSUB_8 : AIE2PS_inst_mv_instr32 <(outs OP_mXm:$d), (ins OP_mXm:$s1, OP_mXn:$s2, eL:$sel), "vaddsub.8", " $d, $s1, $s2, $sel">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vaddsub__vec_mask_in__vec_mask_in64__mLm__vec_add_mX__vec_add_nX
 bits<4> d;
@@ -6264,6 +6268,10 @@ let mv = {cmp, s2, 0b10, 0b111010101111};
 }
 
 let Itinerary = II_VEQZ_8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VEQZ_8_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VEQZ_8 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXn:$s2), "veqz.8", " $cmp, $s2">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_eqz__vec_cmp_out__vec_cmp_out64__mLm__vec_add_nX
 bits<4> cmp;
@@ -6641,6 +6649,10 @@ let mv = {cmp, s1, s2, 0b1, 0b1, 0b10, 0b001011};
 }
 
 let Itinerary = II_VGE_8_vaddSign0, Uses = [crBF8conf, crFP8conf, vaddSign0] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VGE_8_vaddSign0_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VGE_8_vaddSign0 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vge.8", " $cmp, $s1, $s2, vaddsign0">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign0
 bits<4> cmp;
@@ -6651,6 +6663,10 @@ let mv = {cmp, s1, s2, 0b1, 0b0, 0b00, 0b001011};
 }
 
 let Itinerary = II_VGE_8_vaddSign1, Uses = [crBF8conf, crFP8conf, vaddSign1] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VGE_8_vaddSign1_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VGE_8_vaddSign1 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vge.8", " $cmp, $s1, $s2, vaddsign1">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign1
 bits<4> cmp;
@@ -6671,6 +6687,10 @@ let mv = {cmp, s1, s2, 0b01, 0b01110111};
 }
 
 let Itinerary = II_VGE_bf8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VGE_bf8_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VGE_bf8 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vge.bf8", " $cmp, $s1, $s2">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_compare__vge_bf8__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX
 bits<4> cmp;
@@ -6691,6 +6711,10 @@ let mv = {cmp, s1, s2, 0b11, 0b01110111};
 }
 
 let Itinerary = II_VGE_fp8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VGE_fp8_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VGE_fp8 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vge.fp8", " $cmp, $s1, $s2">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_compare__vge_fp8__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX
 bits<4> cmp;
@@ -8771,6 +8795,10 @@ let mv = {cmp, s1, s2, 0b0, 0b1, 0b10, 0b001011};
 }
 
 let Itinerary = II_VLT_8_vaddSign0, Uses = [crBF8conf, crFP8conf, vaddSign0] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VLT_8_vaddSign0_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VLT_8_vaddSign0 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vlt.8", " $cmp, $s1, $s2, vaddsign0">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign0
 bits<4> cmp;
@@ -8781,6 +8809,10 @@ let mv = {cmp, s1, s2, 0b0, 0b0, 0b00, 0b001011};
 }
 
 let Itinerary = II_VLT_8_vaddSign1, Uses = [crBF8conf, crFP8conf, vaddSign1] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VLT_8_vaddSign1_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VLT_8_vaddSign1 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vlt.8", " $cmp, $s1, $s2, vaddsign1">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign1
 bits<4> cmp;
@@ -8801,6 +8833,10 @@ let mv = {cmp, s1, s2, 0b00, 0b01110111};
 }
 
 let Itinerary = II_VLT_bf8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VLT_bf8_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VLT_bf8 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vlt.bf8", " $cmp, $s1, $s2">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_compare__vlt_bf8__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX
 bits<4> cmp;
@@ -8821,6 +8857,10 @@ let mv = {cmp, s1, s2, 0b10, 0b01110111};
 }
 
 let Itinerary = II_VLT_fp8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VLT_fp8_mLBypass, [OperandRegClass<0, eL>]>] in
+// END MANUAL ADDITION
 def VLT_fp8 : AIE2PS_inst_mv_instr32 <(outs eL:$cmp), (ins OP_mXm:$s1, OP_mXn:$s2), "vlt.fp8", " $cmp, $s1, $s2">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_f8_compare__vlt_fp8__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX
 bits<4> cmp;
@@ -10752,6 +10792,10 @@ let mv = {d, s1, s2, sel, 0b00, 0b0, 0b001};
 }
 
 let Itinerary = II_VSEL_8, Uses = [crBF8conf, crFP8conf] in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VSEL_8_mLBypass, [OperandRegClass<3, eL>]>] in
+// END MANUAL ADDITION
 def VSEL_8 : AIE2PS_inst_mv_instr32 <(outs OP_mXm:$d), (ins OP_mXm:$s1, OP_mXn:$s2, eL:$sel), "vsel.8", " $d, $s1, $s2, $sel">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vsel__vec_mask_in__vec_mask_in64__mLm__vec_add_mX__vec_add_nX
 bits<4> d;

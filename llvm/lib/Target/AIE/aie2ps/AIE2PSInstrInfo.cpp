@@ -1306,44 +1306,6 @@ bool AIE2PSInstrInfo::isOffsetInImmediateRange(
   }
 }
 
-unsigned AIE2PSInstrInfo::getNumBypassedCycles(
-    const InstrItineraryData *ItinData, const MachineInstr &DefMI,
-    unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {
-  auto IsScalarSubregister = [&](const MachineInstr &MI1,
-                                 const MachineInstr &MI2, unsigned OpIdx1,
-                                 unsigned OpIdx2) {
-    Register Reg1 = MI1.getOperand(OpIdx1).getReg();
-    Register Reg2 = MI2.getOperand(OpIdx2).getReg();
-
-    if (Reg1.isPhysical() && AIE2PS::eLRegClass.contains(Reg1)) {
-      return !(Reg2.isPhysical() && AIE2PS::eLRegClass.contains(Reg2));
-    }
-
-    if (Reg2.isPhysical() && AIE2PS::eLRegClass.contains(Reg2)) {
-      return !(Reg1.isPhysical() && AIE2PS::eLRegClass.contains(Reg1));
-    }
-
-    return false;
-  };
-
-  // In AIE2PS, there is no bypass from L to R registers.
-  if (IsScalarSubregister(DefMI, UseMI, DefIdx, UseIdx)) {
-    return 0;
-  }
-
-  auto GetForwardingClass = [&](const MachineInstr &MI, unsigned OpIdx) {
-    const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
-    return ItinData->getForwardingClass(
-        getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
-  };
-
-  // FIXME: This assumes one cycle benefit for every pipeline forwarding.
-  unsigned DefForwarding = GetForwardingClass(DefMI, DefIdx);
-  unsigned UseForwarding = GetForwardingClass(UseMI, UseIdx);
-
-  return (DefForwarding && DefForwarding == UseForwarding) ? 1 : 0;
-}
-
 unsigned AIE2PSInstrInfo::getOffsetMemOpcode(unsigned BaseMemOpcode) const {
   switch (BaseMemOpcode) {
   case TargetOpcode::G_STORE:
