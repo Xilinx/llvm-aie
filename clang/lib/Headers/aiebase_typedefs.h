@@ -597,68 +597,68 @@ typedef struct bfloat8 {
 /* Vector data types using 8-bit floating point (fp8) */
 struct v2float8 {
   v2int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v4float8 {
   int32_t data;
-};
+} __attribute__((return_in_regs));
 
 struct v8float8 {
   v8int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v16float8 {
   v16int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v32float8 {
   v32int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v64float8 {
   v64int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v128float8 {
   v128int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v256float8 {
   v64acc32 data;
-};
+} __attribute__((return_in_regs));
 
 /* Vector data types using 8-bit brain floating point (bfp8) */
 struct v2bfloat8 {
   v2int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v4bfloat8 {
   int32_t data;
-};
+} __attribute__((return_in_regs));
 
 struct v8bfloat8 {
   v8int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v16bfloat8 {
   v16int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v32bfloat8 {
   v32int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v64bfloat8 {
   v64int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v128bfloat8 {
   v128int8 data;
-};
+} __attribute__((return_in_regs));
 
 struct v256bfloat8 {
   v64acc32 data;
-};
+} __attribute__((return_in_regs));
 
 /* Vector data types using 16-bit floating point (fp16) */
 typedef float16 v2float16 __attribute__((__vector_size__(4)));

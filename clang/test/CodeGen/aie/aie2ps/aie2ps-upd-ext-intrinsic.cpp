@@ -90,8 +90,9 @@ v32float16 test_concat (v16float16 a0, v16float16 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V32BFLOAT810V64BFLOAT8I_EXIT]]
 // CHECK:       _ZL18extract_v32bfloat810v64bfloat8i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2:![0-9]+]], !alias.scope [[META5:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_extract_v32bfloat8 (v64bfloat8 a, int idx) { return extract_v32bfloat8(a, idx); }
 // CHECK-LABEL: @_Z11test_insert10v64bfloat8i10v32bfloat8(
@@ -112,8 +113,9 @@ v32bfloat8 test_extract_v32bfloat8 (v64bfloat8 a, int idx) { return extract_v32b
 // CHECK-NEXT:    br label [[_ZL6INSERT10V64BFLOAT8I10V32BFLOAT8_EXIT]]
 // CHECK:       _ZL6insert10v64bfloat8i10v32bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_END_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META8:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[TMP5]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_insert (v64bfloat8 a, int idx, v32bfloat8 b) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z19test_set_v64bfloat8i10v32bfloat8(
@@ -131,8 +133,9 @@ v64bfloat8 test_insert (v64bfloat8 a, int idx, v32bfloat8 b) { return insert(a, 
 // CHECK-NEXT:    br label [[_ZL14SET_V64BFLOAT8I10V32BFLOAT8_EXIT]]
 // CHECK:       _ZL14set_v64bfloat8i10v32bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META11:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8:%.*]] poison, <64 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_set_v64bfloat8 (int idx, v32bfloat8 b) { return set_v64bfloat8(idx, b); }
 // CHECK-LABEL: @_Z11test_concat10v32bfloat8S_(
@@ -142,8 +145,9 @@ v64bfloat8 test_set_v64bfloat8 (int idx, v32bfloat8 b) { return set_v64bfloat8(i
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i8> [[TMP0]] to <8 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i8> [[TMP1]] to <8 x i32>
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP2]], <8 x i32> [[TMP3]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    store <16 x i32> [[SHUFFLE_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META14:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[SHUFFLE_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8:%.*]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_concat (v32bfloat8 a0, v32bfloat8 a1) { return concat(a0, a1); }
 // CHECK-LABEL: @_Z22test_extract_v32float89v64float8i(
@@ -161,8 +165,9 @@ v64bfloat8 test_concat (v32bfloat8 a0, v32bfloat8 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    br label [[_ZL17EXTRACT_V32FLOAT89V64FLOAT8I_EXIT]]
 // CHECK:       _ZL17extract_v32float89v64float8i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META17:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32float8 test_extract_v32float8 (v64float8 a, int idx) { return extract_v32float8(a, idx); }
 // CHECK-LABEL: @_Z11test_insert9v64float8i9v32float8(
@@ -183,8 +188,9 @@ v32float8 test_extract_v32float8 (v64float8 a, int idx) { return extract_v32floa
 // CHECK-NEXT:    br label [[_ZL6INSERT9V64FLOAT8I9V32FLOAT8_EXIT]]
 // CHECK:       _ZL6insert9v64float8i9v32float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_END_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META20:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[TMP5]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_insert (v64float8 a, int idx, v32float8 b) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z18test_set_v64float8i9v32float8(
@@ -202,10 +208,12 @@ v64float8 test_insert (v64float8 a, int idx, v32float8 b) { return insert(a, idx
 // CHECK-NEXT:    br label [[_ZL13SET_V64FLOAT8I9V32FLOAT8_EXIT]]
 // CHECK:       _ZL13set_v64float8i9v32float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META23:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8:%.*]] poison, <64 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_set_v64float8 (int idx, v32float8 b) { return set_v64float8(idx, b); }
+//
 // CHECK-LABEL: @_Z11test_concat9v32float8S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32FLOAT8:%.*]] [[A0_COERCE:%.*]], 0
@@ -213,8 +221,9 @@ v64float8 test_set_v64float8 (int idx, v32float8 b) { return set_v64float8(idx, 
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i8> [[TMP0]] to <8 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i8> [[TMP1]] to <8 x i32>
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP2]], <8 x i32> [[TMP3]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    store <16 x i32> [[SHUFFLE_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META26:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[SHUFFLE_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8:%.*]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_concat (v32float8 a0, v32float8 a1) { return concat(a0, a1); }
 // CHECK-LABEL: @_Z23test_extract_v16float16Dv64_7float16i(
@@ -408,8 +417,9 @@ v64float16 test_concat (v32float16 a0, v32float16 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V32BFLOAT811V128BFLOAT8I_EXIT]]
 // CHECK:       _ZL18extract_v32bfloat811v128bfloat8i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META29:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP2]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_extract_v32bfloat8 (v128bfloat8 a, int idx) { return extract_v32bfloat8(a, idx); }
 // CHECK-LABEL: @_Z11test_insert11v128bfloat8i10v32bfloat8(
@@ -440,8 +450,9 @@ v32bfloat8 test_extract_v32bfloat8 (v128bfloat8 a, int idx) { return extract_v32
 // CHECK-NEXT:    br label [[_ZL6INSERT11V128BFLOAT8I10V32BFLOAT8_EXIT]]
 // CHECK:       _ZL6insert11v128bfloat8i10v32bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE2_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN5_I_I]] ], [ [[SHUFFLE11_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META32:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8]] poison, <128 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_insert (v128bfloat8 a, int idx, v32bfloat8 b) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z20test_set_v128bfloat8i10v32bfloat8(
@@ -472,8 +483,9 @@ v128bfloat8 test_insert (v128bfloat8 a, int idx, v32bfloat8 b) { return insert(a
 // CHECK-NEXT:    br label [[_ZL15SET_V128BFLOAT8I10V32BFLOAT8_EXIT]]
 // CHECK:       _ZL15set_v128bfloat8i10v32bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN4_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE14_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META35:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8:%.*]] poison, <128 x i8> [[TMP2]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_set_v128bfloat8 (int idx, v32bfloat8 b) { return set_v128bfloat8(idx, b); }
 // CHECK-LABEL: @_Z11test_concat10v32bfloat8S_S_S_(
@@ -489,8 +501,9 @@ v128bfloat8 test_set_v128bfloat8 (int idx, v32bfloat8 b) { return set_v128bfloat
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP4]], <8 x i32> [[TMP5]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP6]], <8 x i32> [[TMP7]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I]], <16 x i32> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    store <32 x i32> [[SHUFFLE2_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META38:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <32 x i32> [[SHUFFLE2_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8:%.*]] poison, <128 x i8> [[TMP8]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_concat (v32bfloat8 a0, v32bfloat8 a1, v32bfloat8 a2, v32bfloat8 a3) { return concat(a0, a1, a2, a3); }
 // CHECK-LABEL: @_Z23test_extract_v64bfloat811v128bfloat8i(
@@ -508,8 +521,9 @@ v128bfloat8 test_concat (v32bfloat8 a0, v32bfloat8 a1, v32bfloat8 a2, v32bfloat8
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V64BFLOAT811V128BFLOAT8I_EXIT]]
 // CHECK:       _ZL18extract_v64bfloat811v128bfloat8i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META41:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8:%.*]] poison, <64 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_extract_v64bfloat8 (v128bfloat8 a, int idx) { return extract_v64bfloat8(a, idx); }
 // CHECK-LABEL: @_Z11test_insert11v128bfloat8i10v64bfloat8(
@@ -530,8 +544,9 @@ v64bfloat8 test_extract_v64bfloat8 (v128bfloat8 a, int idx) { return extract_v64
 // CHECK-NEXT:    br label [[_ZL6INSERT11V128BFLOAT8I10V64BFLOAT8_EXIT]]
 // CHECK:       _ZL6insert11v128bfloat8i10v64bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_END_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META44:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8]] poison, <128 x i8> [[TMP5]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_insert (v128bfloat8 a, int idx, v64bfloat8 b) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z20test_set_v128bfloat8i10v64bfloat8(
@@ -549,8 +564,9 @@ v128bfloat8 test_insert (v128bfloat8 a, int idx, v64bfloat8 b) { return insert(a
 // CHECK-NEXT:    br label [[_ZL15SET_V128BFLOAT8I10V64BFLOAT8_EXIT]]
 // CHECK:       _ZL15set_v128bfloat8i10v64bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META47:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8:%.*]] poison, <128 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_set_v128bfloat8 (int idx, v64bfloat8 b) { return set_v128bfloat8(idx, b); }
 // CHECK-LABEL: @_Z11test_concat10v64bfloat8S_(
@@ -560,8 +576,9 @@ v128bfloat8 test_set_v128bfloat8 (int idx, v64bfloat8 b) { return set_v128bfloat
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <64 x i8> [[TMP1]] to <16 x i32>
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP2]], <16 x i32> [[TMP3]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    store <32 x i32> [[SHUFFLE_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META50:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[SHUFFLE_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8:%.*]] poison, <128 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_concat (v64bfloat8 a0, v64bfloat8 a1) { return concat(a0, a1); }
 // CHECK-LABEL: @_Z22test_extract_v32float810v128float8i(
@@ -588,8 +605,9 @@ v128bfloat8 test_concat (v64bfloat8 a0, v64bfloat8 a1) { return concat(a0, a1); 
 // CHECK-NEXT:    br label [[_ZL17EXTRACT_V32FLOAT810V128FLOAT8I_EXIT]]
 // CHECK:       _ZL17extract_v32float810v128float8i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META53:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP2]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32float8 test_extract_v32float8 (v128float8 a, int idx) { return extract_v32float8(a, idx); }
 // CHECK-LABEL: @_Z11test_insert10v128float8i9v32float8(
@@ -620,8 +638,9 @@ v32float8 test_extract_v32float8 (v128float8 a, int idx) { return extract_v32flo
 // CHECK-NEXT:    br label [[_ZL6INSERT10V128FLOAT8I9V32FLOAT8_EXIT]]
 // CHECK:       _ZL6insert10v128float8i9v32float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE2_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN5_I_I]] ], [ [[SHUFFLE11_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META56:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8]] poison, <128 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128float8 test_insert (v128float8 a, int idx, v32float8 b) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z19test_set_v128float8i9v32float8(
@@ -652,8 +671,9 @@ v128float8 test_insert (v128float8 a, int idx, v32float8 b) { return insert(a, i
 // CHECK-NEXT:    br label [[_ZL14SET_V128FLOAT8I9V32FLOAT8_EXIT]]
 // CHECK:       _ZL14set_v128float8i9v32float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN4_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE14_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META59:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8:%.*]] poison, <128 x i8> [[TMP2]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128float8 test_set_v128float8 (int idx, v32float8 b) { return set_v128float8(idx, b); }
 // CHECK-LABEL: @_Z11test_concat9v32float8S_S_S_(
@@ -669,8 +689,9 @@ v128float8 test_set_v128float8 (int idx, v32float8 b) { return set_v128float8(id
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP4]], <8 x i32> [[TMP5]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP6]], <8 x i32> [[TMP7]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I]], <16 x i32> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    store <32 x i32> [[SHUFFLE2_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META62:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <32 x i32> [[SHUFFLE2_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8:%.*]] poison, <128 x i8> [[TMP8]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128float8 test_concat (v32float8 a0, v32float8 a1, v32float8 a2, v32float8 a3) { return concat(a0, a1, a2, a3); }
 // CHECK-LABEL: @_Z22test_extract_v64float810v128float8i(
@@ -688,8 +709,9 @@ v128float8 test_concat (v32float8 a0, v32float8 a1, v32float8 a2, v32float8 a3) 
 // CHECK-NEXT:    br label [[_ZL17EXTRACT_V64FLOAT810V128FLOAT8I_EXIT]]
 // CHECK:       _ZL17extract_v64float810v128float8i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META65:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8:%.*]] poison, <64 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_extract_v64float8 (v128float8 a, int idx) { return extract_v64float8(a, idx); }
 // CHECK-LABEL: @_Z11test_insert10v128float8i9v64float8(
@@ -710,8 +732,9 @@ v64float8 test_extract_v64float8 (v128float8 a, int idx) { return extract_v64flo
 // CHECK-NEXT:    br label [[_ZL6INSERT10V128FLOAT8I9V64FLOAT8_EXIT]]
 // CHECK:       _ZL6insert10v128float8i9v64float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_END_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META68:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8]] poison, <128 x i8> [[TMP5]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128float8 test_insert (v128float8 a, int idx, v64float8 b) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z19test_set_v128float8i9v64float8(
@@ -729,8 +752,9 @@ v128float8 test_insert (v128float8 a, int idx, v64float8 b) { return insert(a, i
 // CHECK-NEXT:    br label [[_ZL14SET_V128FLOAT8I9V64FLOAT8_EXIT]]
 // CHECK:       _ZL14set_v128float8i9v64float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <32 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META71:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8:%.*]] poison, <128 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128float8 test_set_v128float8 (int idx, v64float8 b) { return set_v128float8(idx, b); }
 // CHECK-LABEL: @_Z11test_concat9v64float8S_(
@@ -740,8 +764,9 @@ v128float8 test_set_v128float8 (int idx, v64float8 b) { return set_v128float8(id
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <64 x i8> [[TMP1]] to <16 x i32>
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP2]], <16 x i32> [[TMP3]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    store <32 x i32> [[SHUFFLE_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META74:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[SHUFFLE_I_I]] to <128 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8:%.*]] poison, <128 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128float8 test_concat (v64float8 a0, v64float8 a1) { return concat(a0, a1); }
 
@@ -1001,8 +1026,9 @@ v16float8 test_extract_v16float8 ( v64float8 a, int idx ) { return extract_v16fl
 // CHECK-NEXT:    br label [[_ZL14SET_V64BFLOAT8I10V16BFLOAT8_EXIT]]
 // CHECK:       _ZL14set_v64bfloat8i10v16bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN4_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE14_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META77:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_set_v64bfloat8 ( int idx, v16bfloat8 a ) { return set_v64bfloat8(idx, a); }
 // CHECK-LABEL: @_Z18test_set_v64float8i9v16float8(
@@ -1033,8 +1059,9 @@ v64bfloat8 test_set_v64bfloat8 ( int idx, v16bfloat8 a ) { return set_v64bfloat8
 // CHECK-NEXT:    br label [[_ZL13SET_V64FLOAT8I9V16FLOAT8_EXIT]]
 // CHECK:       _ZL13set_v64float8i9v16float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN4_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE14_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META80:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_set_v64float8 ( int idx, v16float8 a ) { return set_v64float8(idx, a); }
 
@@ -1093,8 +1120,9 @@ v16float8 test_extract_v16float8 ( v32float8 a, int idx ) { return extract_v16fl
 // CHECK-NEXT:    br label [[_ZL14SET_V32BFLOAT8I10V16BFLOAT8_EXIT]]
 // CHECK:       _ZL14set_v32bfloat8i10v16bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META83:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_set_v32bfloat8 (int idx, v16bfloat8 a ) { return set_v32bfloat8(idx, a); }
 // CHECK-LABEL: @_Z18test_set_v32float8i9v16float8(
@@ -1112,13 +1140,15 @@ v32bfloat8 test_set_v32bfloat8 (int idx, v16bfloat8 a ) { return set_v32bfloat8(
 // CHECK-NEXT:    br label [[_ZL13SET_V32FLOAT8I9V16FLOAT8_EXIT]]
 // CHECK:       _ZL13set_v32float8i9v16float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META86:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP3]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32float8 test_set_v32float8 (int idx, v16float8 a ) { return set_v32float8(idx, a); }
 
 
 
+//
 // CHECK-LABEL: @_Z11test_insert10v64bfloat8i10v16bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[V_COERCE:%.*]], 0
@@ -1147,8 +1177,9 @@ v32float8 test_set_v32float8 (int idx, v16float8 a ) { return set_v32float8(idx,
 // CHECK-NEXT:    br label [[_ZL6INSERT10V64BFLOAT8I10V16BFLOAT8_EXIT]]
 // CHECK:       _ZL6insert10v64bfloat8i10v16bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE2_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN5_I_I]] ], [ [[SHUFFLE11_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META89:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_insert (v64bfloat8 v, int idx, v16bfloat8 b ) { return insert(v, idx, b); }
 // CHECK-LABEL: @_Z11test_insert9v64float8i9v16float8(
@@ -1179,8 +1210,9 @@ v64bfloat8 test_insert (v64bfloat8 v, int idx, v16bfloat8 b ) { return insert(v,
 // CHECK-NEXT:    br label [[_ZL6INSERT9V64FLOAT8I9V16FLOAT8_EXIT]]
 // CHECK:       _ZL6insert9v64float8i9v16float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE2_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN5_I_I]] ], [ [[SHUFFLE11_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <16 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META92:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_insert (v64float8 v, int idx, v16float8 b ) { return insert(v, idx, b); }
 // CHECK-LABEL: @_Z11test_insert10v32bfloat8i10v16bfloat8(
@@ -1201,8 +1233,9 @@ v64float8 test_insert (v64float8 v, int idx, v16float8 b ) { return insert(v, id
 // CHECK-NEXT:    br label [[_ZL6INSERT10V32BFLOAT8I10V16BFLOAT8_EXIT]]
 // CHECK:       _ZL6insert10v32bfloat8i10v16bfloat8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META95:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8]] poison, <32 x i8> [[TMP5]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_insert (v32bfloat8 a, int idx, v16bfloat8 b ) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z11test_insert9v32float8i9v16float8(
@@ -1223,8 +1256,9 @@ v32bfloat8 test_insert (v32bfloat8 a, int idx, v16bfloat8 b ) { return insert(a,
 // CHECK-NEXT:    br label [[_ZL6INSERT9V32FLOAT8I9V16FLOAT8_EXIT]]
 // CHECK:       _ZL6insert9v32float8i9v16float8.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    store <8 x i32> [[RETVAL_0_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META98:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8]] poison, <32 x i8> [[TMP5]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32float8 test_insert (v32float8 a, int idx, v16float8 b ) { return insert(a, idx, b); }
 // CHECK-LABEL: @_Z11test_concat10v16bfloat8S_S_S_(
@@ -1240,8 +1274,9 @@ v32float8 test_insert (v32float8 a, int idx, v16float8 b ) { return insert(a, id
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP4]], <4 x i32> [[TMP5]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <4 x i32> [[TMP6]], <4 x i32> [[TMP7]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[SHUFFLE1_I_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    store <16 x i32> [[SHUFFLE2_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META101:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <16 x i32> [[SHUFFLE2_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8:%.*]] poison, <64 x i8> [[TMP8]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_concat (v16bfloat8 v0, v16bfloat8 v1, v16bfloat8 v2, v16bfloat8 v3 ) { return concat(v0, v1, v2, v3); }
 // CHECK-LABEL: @_Z11test_concat9v16float8S_S_S_(
@@ -1257,8 +1292,9 @@ v64bfloat8 test_concat (v16bfloat8 v0, v16bfloat8 v1, v16bfloat8 v2, v16bfloat8 
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP4]], <4 x i32> [[TMP5]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <4 x i32> [[TMP6]], <4 x i32> [[TMP7]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[SHUFFLE1_I_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    store <16 x i32> [[SHUFFLE2_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA2]], !alias.scope [[META104:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <16 x i32> [[SHUFFLE2_I_I]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8:%.*]] poison, <64 x i8> [[TMP8]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_concat (v16float8 v0, v16float8 v1, v16float8 v2, v16float8 v3 ) { return concat(v0, v1, v2, v3); }
 // CHECK-LABEL: @_Z11test_concat10v16bfloat8S_(
@@ -1268,8 +1304,9 @@ v64float8 test_concat (v16float8 v0, v16float8 v1, v16float8 v2, v16float8 v3 ) 
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i8> [[TMP1]] to <4 x i32>
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP2]], <4 x i32> [[TMP3]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    store <8 x i32> [[SHUFFLE_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META107:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <8 x i32> [[SHUFFLE_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_concat (v16bfloat8 v0, v16bfloat8 v1 ) { return concat(v0, v1); }
 // CHECK-LABEL: @_Z11test_concat9v16float8S_(
@@ -1279,8 +1316,9 @@ v32bfloat8 test_concat (v16bfloat8 v0, v16bfloat8 v1 ) { return concat(v0, v1); 
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i8> [[TMP1]] to <4 x i32>
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP2]], <4 x i32> [[TMP3]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    store <8 x i32> [[SHUFFLE_I_I]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META110:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <8 x i32> [[SHUFFLE_I_I]] to <32 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP4]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32float8 test_concat (v16float8 v0, v16float8 v1 ) { return concat(v0, v1); }
 
@@ -1346,7 +1384,6 @@ v32int8 test_extract_v32int8 (v64mx9 m, int idx) { return extract_v32int8(m, idx
 // CHECK-NEXT:    ret <64 x i8> [[RETVAL_0_I]]
 //
 v64int8 test_extract_v64int8 (v128mx9 m, int idx) { return extract_v64int8(m, idx); }
-//
 // CHECK-LABEL: @_Z11test_insert7v128mx9iDv64_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -1669,7 +1706,6 @@ v64mx6 test_insert (v64mx6 m, int idx, int expo) { return insert(m, idx, expo); 
 // CHECK-NEXT:    ret i32 [[RETVAL_0_I]]
 //
 int test_extract_expo (v64mx4 m, int idx) { return extract_expo(m, idx); }
-//
 // CHECK-LABEL: @_Z11test_insert6v64mx4ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -2622,6 +2658,7 @@ v32uint4 test_extract_msb_v32uint4 (v256mx4 m, int idx) { return extract_msb_v32
 // CHECK-NEXT:    ret [[STRUCT_V256MX4]] [[DOTFCA_15_INSERT_I]]
 //
 v256mx4 test_update (v256mx4 s, int idx, v16uint4 m) { return update(s, idx, m); }
+//
 // CHECK-LABEL: @_Z11test_update7v256mx4iDv16_DU8_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x i8> [[M:%.*]] to <4 x i32>

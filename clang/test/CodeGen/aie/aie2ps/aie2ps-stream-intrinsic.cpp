@@ -20,21 +20,23 @@
 //
 v32float16 test_get_scd_v32float16(int en) { return get_scd_v32float16(en); }
 
-// CHECK-LABEL: define dso_local void @_Z22test_get_scd_v64float8i(
-// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-LABEL: define dso_local %struct.v64float8 @_Z22test_get_scd_v64float8i(
+// CHECK-SAME: i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2ps.scd.read.vec(i32 [[EN]])
-// CHECK-NEXT:    store <16 x i32> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2:![0-9]+]], !alias.scope [[META5:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[TMP0]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_get_scd_v64float8(int en) { return get_scd_v64float8(en); }
 
-// CHECK-LABEL: define dso_local void @_Z23test_get_scd_v64bfloat8i(
-// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-LABEL: define dso_local %struct.v64bfloat8 @_Z23test_get_scd_v64bfloat8i(
+// CHECK-SAME: i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2ps.scd.read.vec(i32 [[EN]])
-// CHECK-NEXT:    store <16 x i32> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2]], !alias.scope [[META8:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[TMP0]] to <64 x i8>
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_get_scd_v64bfloat8(int en) { return get_scd_v64bfloat8(en); }
 
@@ -114,7 +116,7 @@ void test_put_mcd(v64float16 a, int en) { put_mcd(a, en); }
 void test_put_mcd(v64bfloat16 a, int en) { put_mcd(a, en); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv2_7float16i(
-// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
+// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
 // CHECK-NEXT:    tail call void @llvm.aie2ps.put.ms(i32 [[TMP0]], i32 [[TLAST]])
@@ -123,7 +125,7 @@ void test_put_mcd(v64bfloat16 a, int en) { put_mcd(a, en); }
 void test_put_ms(v2float16 val, int tlast) { put_ms(val, tlast); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv2_7float16(
-// CHECK-SAME: <2 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <2 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
 // CHECK-NEXT:    tail call void @llvm.aie2ps.put.ms(i32 [[TMP0]], i32 0)
@@ -132,13 +134,13 @@ void test_put_ms(v2float16 val, int tlast) { put_ms(val, tlast); }
 void test_put_ms(v2float16 val) { put_ms(val); }
 
 // CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_7float16iRb(
-// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST]])
 // CHECK-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA11:![0-9]+]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2:![0-9]+]]
 // CHECK-NEXT:    ret void
 //
 void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
@@ -146,19 +148,19 @@ void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
 }
 
 // CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_7float16Rb(
-// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA11]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_put_ms_nb(v2float16 val, bool &success) { put_ms_nb(val, success); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_7float16(
-// CHECK-SAME: <8 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <8 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[VAL]] to <4 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I:%.*]] = extractelement <4 x i32> [[TMP0]], i64 0
@@ -174,7 +176,7 @@ void test_put_ms_nb(v2float16 val, bool &success) { put_ms_nb(val, success); }
 void test_put_ms(v8float16 val) { put_ms(val); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_7float16i(
-// CHECK-SAME: <8 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <8 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[VAL]] to <4 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I:%.*]] = extractelement <4 x i32> [[TMP0]], i64 0
@@ -190,7 +192,7 @@ void test_put_ms(v8float16 val) { put_ms(val); }
 void test_put_ms(v8float16 val, int tlast) { put_ms(val, tlast); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_8bfloat16(
-// CHECK-SAME: <8 x bfloat> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <8 x bfloat> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x bfloat> [[VAL]] to <4 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I:%.*]] = extractelement <4 x i32> [[TMP0]], i64 0
@@ -206,7 +208,7 @@ void test_put_ms(v8float16 val, int tlast) { put_ms(val, tlast); }
 void test_put_ms(v8bfloat16 val) { put_ms(val); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_8bfloat16i(
-// CHECK-SAME: <8 x bfloat> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <8 x bfloat> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x bfloat> [[VAL]] to <4 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I:%.*]] = extractelement <4 x i32> [[TMP0]], i64 0
@@ -222,7 +224,7 @@ void test_put_ms(v8bfloat16 val) { put_ms(val); }
 void test_put_ms(v8bfloat16 val, int tlast) { put_ms(val, tlast); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv16_7float16(
-// CHECK-SAME: <16 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <16 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[VAL]] to <8 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I:%.*]] = extractelement <8 x i32> [[TMP0]], i64 0
@@ -246,7 +248,7 @@ void test_put_ms(v8bfloat16 val, int tlast) { put_ms(val, tlast); }
 void test_put_ms(v16float16 val) { put_ms(val); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv16_7float16i(
-// CHECK-SAME: <16 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <16 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[VAL]] to <8 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I:%.*]] = extractelement <8 x i32> [[TMP0]], i64 0
@@ -270,7 +272,7 @@ void test_put_ms(v16float16 val) { put_ms(val); }
 void test_put_ms(v16float16 val, int tlast) { put_ms(val, tlast); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv32_7float16(
-// CHECK-SAME: <32 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <32 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[VAL]] to <16 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I5_I:%.*]] = extractelement <16 x i32> [[TMP0]], i64 0
@@ -310,7 +312,7 @@ void test_put_ms(v16float16 val, int tlast) { put_ms(val, tlast); }
 void test_put_ms(v32float16 val) { put_ms(val); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv32_7float16i(
-// CHECK-SAME: <32 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <32 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[VAL]] to <16 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I5_I:%.*]] = extractelement <16 x i32> [[TMP0]], i64 0
@@ -350,7 +352,7 @@ void test_put_ms(v32float16 val) { put_ms(val); }
 void test_put_ms(v32float16 val, int tlast) { put_ms(val, tlast); }
 
 // CHECK-LABEL: define dso_local void @_Z11test_put_msDv64_7float16ii(
-// CHECK-SAME: <64 x half> noundef [[VAL:%.*]], i32 noundef [[EN:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <64 x half> noundef [[VAL:%.*]], i32 noundef [[EN:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[VAL]] to <32 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I5_I_I_I:%.*]] = extractelement <32 x i32> [[TMP0]], i64 0
@@ -422,7 +424,7 @@ void test_put_ms(v32float16 val, int tlast) { put_ms(val, tlast); }
 void test_put_ms(v64float16 val, int en, int tlast) { put_ms(val, en, tlast); }
 
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z21test_get_ss_v2float16v(
-// CHECK-SAME: ) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
@@ -431,8 +433,9 @@ void test_put_ms(v64float16 val, int en, int tlast) { put_ms(val, en, tlast); }
 //
 v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 
+//
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z21test_get_ss_v2float16Rb(
-// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
@@ -440,13 +443,13 @@ v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x half>
 // CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA11]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret <2 x half> [[TMP3]]
 //
 v2float16 test_get_ss_v2float16(bool &tlast) { return get_ss_v2float16(tlast); }
 
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z24test_get_ss_nb_v2float16Rb(
-// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss.nb()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
@@ -455,13 +458,13 @@ v2float16 test_get_ss_v2float16(bool &tlast) { return get_ss_v2float16(tlast); }
 // CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // CHECK-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA11]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret <2 x half> [[TMP3]]
 //
 v2float16 test_get_ss_nb_v2float16(bool &success) { return get_ss_nb_v2float16(success); }
 
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z24test_get_ss_nb_v2float16RbS_(
-// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss.nb()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
@@ -469,10 +472,10 @@ v2float16 test_get_ss_nb_v2float16(bool &success) { return get_ss_nb_v2float16(s
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x half>
 // CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // CHECK-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
-// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA11]]
+// CHECK-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST]], align 1, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
 // CHECK-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
-// CHECK-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA11]]
+// CHECK-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS]], align 1, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret <2 x half> [[TMP3]]
 //
 v2float16 test_get_ss_nb_v2float16(bool &success, bool &tlast) {
@@ -480,7 +483,7 @@ v2float16 test_get_ss_nb_v2float16(bool &success, bool &tlast) {
 }
 
 // CHECK-LABEL: define dso_local noundef <8 x half> @_Z21test_get_ss_v8float16v(
-// CHECK-SAME: ) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
@@ -500,7 +503,7 @@ v2float16 test_get_ss_nb_v2float16(bool &success, bool &tlast) {
 v8float16 test_get_ss_v8float16() { return get_ss_v8float16(); }
 
 // CHECK-LABEL: define dso_local noundef <16 x half> @_Z22test_get_ss_v16float16v(
-// CHECK-SAME: ) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
@@ -533,7 +536,7 @@ v8float16 test_get_ss_v8float16() { return get_ss_v8float16(); }
 v16float16 test_get_ss_v16float16() { return get_ss_v16float16(); }
 
 // CHECK-LABEL: define dso_local noundef <32 x half> @_Z22test_get_ss_v32float16v(
-// CHECK-SAME: ) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
@@ -589,7 +592,7 @@ v16float16 test_get_ss_v16float16() { return get_ss_v16float16(); }
 v32float16 test_get_ss_v32float16() { return get_ss_v32float16(); }
 
 // CHECK-LABEL: define dso_local noundef <64 x half> @_Z22test_get_ss_v64float16v(
-// CHECK-SAME: ) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
@@ -694,14 +697,7 @@ v32float16 test_get_ss_v32float16() { return get_ss_v32float16(); }
 v64float16 test_get_ss_v64float16() { return get_ss_v64float16(); }
 //.
 // CHECK: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
-// CHECK: [[META3]] = !{!"omnipotent char", [[META4:![0-9]+]], i64 0}
-// CHECK: [[META4]] = !{!"Simple C++ TBAA"}
-// CHECK: [[META5]] = !{[[META6:![0-9]+]]}
-// CHECK: [[META6]] = distinct !{[[META6]], [[META7:![0-9]+]], !"_ZL17get_scd_v64float8i: %agg.result"}
-// CHECK: [[META7]] = distinct !{[[META7]], !"_ZL17get_scd_v64float8i"}
-// CHECK: [[META8]] = !{[[META9:![0-9]+]]}
-// CHECK: [[META9]] = distinct !{[[META9]], [[META10:![0-9]+]], !"_ZL18get_scd_v64bfloat8i: %agg.result"}
-// CHECK: [[META10]] = distinct !{[[META10]], !"_ZL18get_scd_v64bfloat8i"}
-// CHECK: [[TBAA11]] = !{[[META12:![0-9]+]], [[META12]], i64 0}
-// CHECK: [[META12]] = !{!"bool", [[META3]], i64 0}
+// CHECK: [[META3]] = !{!"bool", [[META4:![0-9]+]], i64 0}
+// CHECK: [[META4]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
+// CHECK: [[META5]] = !{!"Simple C++ TBAA"}
 //.

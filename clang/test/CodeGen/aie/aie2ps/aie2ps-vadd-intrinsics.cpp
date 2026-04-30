@@ -18,15 +18,14 @@
 v64bfloat8
 // CHECK-COMMON-LABEL: @_Z22test_min_ge_v64bfloat810v64bfloat8S_Ry(
 // CHECK-COMMON-NEXT:  entry:
-// CHECK-COMMON-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META2:![0-9]+]])
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.gebfloat8(<64 x i8> [[TMP0]], <64 x i8> [[TMP1]])
 // CHECK-COMMON-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 1
-// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8, !noalias [[META2]]
+// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8
 // CHECK-COMMON-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 0
-// CHECK-COMMON-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5:![0-9]+]], !alias.scope [[META2]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 test_min_ge_v64bfloat8(v64bfloat8 a, v64bfloat8 b, unsigned long long &cmp) {
   return min_ge(a, b, cmp);
@@ -34,15 +33,14 @@ test_min_ge_v64bfloat8(v64bfloat8 a, v64bfloat8 b, unsigned long long &cmp) {
 v64bfloat8
 // CHECK-COMMON-LABEL: @_Z22test_max_lt_v64bfloat810v64bfloat8S_Ry(
 // CHECK-COMMON-NEXT:  entry:
-// CHECK-COMMON-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META8:![0-9]+]])
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.ltbfloat8(<64 x i8> [[TMP0]], <64 x i8> [[TMP1]])
 // CHECK-COMMON-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 1
-// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8, !noalias [[META8]]
+// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8
 // CHECK-COMMON-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 0
-// CHECK-COMMON-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META8]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 test_max_lt_v64bfloat8(v64bfloat8 a, v64bfloat8 b, unsigned long long &cmp) {
   return max_lt(a, b, cmp);
@@ -52,8 +50,8 @@ test_max_lt_v64bfloat8(v64bfloat8 a, v64bfloat8 b, unsigned long long &cmp) {
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[AND_I:%.*]] = and <64 x i8> [[TMP1]], [[TMP0]]
-// CHECK-COMMON-NEXT:    store <64 x i8> [[AND_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META11:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[AND_I]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_band_v64bfloat8(v64bfloat8 a, v64bfloat8 b) {
   return band(a, b);
@@ -63,8 +61,8 @@ v64bfloat8 test_band_v64bfloat8(v64bfloat8 a, v64bfloat8 b) {
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[OR_I:%.*]] = or <64 x i8> [[TMP1]], [[TMP0]]
-// CHECK-COMMON-NEXT:    store <64 x i8> [[OR_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META14:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[OR_I]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_bor_v64bfloat8(v64bfloat8 a, v64bfloat8 b) {
   return bor(a, b);
@@ -73,8 +71,8 @@ v64bfloat8 test_bor_v64bfloat8(v64bfloat8 a, v64bfloat8 b) {
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[AND_I_I:%.*]] = and <64 x i8> [[TMP0]], splat (i8 127)
-// CHECK-COMMON-NEXT:    store <64 x i8> [[AND_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META17:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[AND_I_I]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I_I]]
 //
 v64bfloat8 test_abs_v64bfloat8(v64bfloat8 a) {
   return abs(a);
@@ -120,8 +118,8 @@ unsigned long long test_eqz_v64bfloat8(v64bfloat8 a) {
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP2:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
 // CHECK-COMMON-NEXT:    [[TMP3:%.*]] = tail call <64 x i8> @llvm.aie2ps.vsel8(<64 x i8> [[TMP0]], <64 x i8> [[TMP1]], <2 x i32> [[TMP2]])
-// CHECK-COMMON-NEXT:    store <64 x i8> [[TMP3]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META22:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFLOAT8]] poison, <64 x i8> [[TMP3]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_sel_v64bfloat8(v64bfloat8 a, v64bfloat8 b, unsigned long long s) {
   return sel(a, b, s);
@@ -132,15 +130,14 @@ v64bfloat8 test_sel_v64bfloat8(v64bfloat8 a, v64bfloat8 b, unsigned long long s)
 v64float8
 // CHECK-COMMON-LABEL: @_Z21test_min_ge_v64float89v64float8S_Ry(
 // CHECK-COMMON-NEXT:  entry:
-// CHECK-COMMON-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META25:![0-9]+]])
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.gefloat8(<64 x i8> [[TMP0]], <64 x i8> [[TMP1]])
 // CHECK-COMMON-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 1
-// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8, !noalias [[META25]]
+// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8
 // CHECK-COMMON-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 0
-// CHECK-COMMON-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META25]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 test_min_ge_v64float8(v64float8 a, v64float8 b, unsigned long long &cmp) {
   return min_ge(a, b, cmp);
@@ -148,15 +145,14 @@ test_min_ge_v64float8(v64float8 a, v64float8 b, unsigned long long &cmp) {
 v64float8
 // CHECK-COMMON-LABEL: @_Z21test_max_lt_v64float89v64float8S_Ry(
 // CHECK-COMMON-NEXT:  entry:
-// CHECK-COMMON-NEXT:    tail call void @llvm.experimental.noalias.scope.decl(metadata [[META28:![0-9]+]])
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.ltfloat8(<64 x i8> [[TMP0]], <64 x i8> [[TMP1]])
 // CHECK-COMMON-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 1
-// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8, !noalias [[META28]]
+// CHECK-COMMON-NEXT:    store <2 x i32> [[TMP3]], ptr [[CMP:%.*]], align 8
 // CHECK-COMMON-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 0
-// CHECK-COMMON-NEXT:    store <64 x i8> [[TMP4]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META28]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[TMP4]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 test_max_lt_v64float8(v64float8 a, v64float8 b, unsigned long long &cmp) {
   return max_lt(a, b, cmp);
@@ -176,7 +172,6 @@ test_max_lt_v32bfloat16(v32bfloat16 a, v32bfloat16 b, unsigned int &cmp) {
 }
 
 v32float16
-//
 // CHECK-COMMON-LABEL: @_Z22test_max_lt_v32float16Dv32_7float16S0_Rj(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = tail call { <32 x half>, i32 } @llvm.aie2ps.vmax.ltfloat16(<32 x half> [[A:%.*]], <32 x half> [[B:%.*]])
@@ -193,8 +188,8 @@ test_max_lt_v32float16(v32float16 a, v32float16 b, unsigned int &cmp) {
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[AND_I:%.*]] = and <64 x i8> [[TMP1]], [[TMP0]]
-// CHECK-COMMON-NEXT:    store <64 x i8> [[AND_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META31:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[AND_I]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_band_v64float8(v64float8 a, v64float8 b) {
   return band(a, b);
@@ -204,8 +199,8 @@ v64float8 test_band_v64float8(v64float8 a, v64float8 b) {
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[OR_I:%.*]] = or <64 x i8> [[TMP1]], [[TMP0]]
-// CHECK-COMMON-NEXT:    store <64 x i8> [[OR_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META34:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[OR_I]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_bor_v64float8(v64float8 a, v64float8 b) {
   return bor(a, b);
@@ -214,8 +209,8 @@ v64float8 test_bor_v64float8(v64float8 a, v64float8 b) {
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[AND_I_I:%.*]] = and <64 x i8> [[TMP0]], splat (i8 127)
-// CHECK-COMMON-NEXT:    store <64 x i8> [[AND_I_I]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META37:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[AND_I_I]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I_I]]
 //
 v64float8 test_abs_v64float8(v64float8 a) {
   return abs(a);
@@ -244,6 +239,7 @@ unsigned long long
 test_ge_v64float8(v64float8 a, v64float8 b) {
   return ge(a, b);
 }
+//
 // CHECK-COMMON-LABEL: @_Z18test_eqz_v64float89v64float8(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8:%.*]] [[A_COERCE:%.*]], 0
@@ -261,8 +257,8 @@ unsigned long long test_eqz_v64float8(v64float8 a) {
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], 0
 // CHECK-COMMON-NEXT:    [[TMP2:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
 // CHECK-COMMON-NEXT:    [[TMP3:%.*]] = tail call <64 x i8> @llvm.aie2ps.vsel8(<64 x i8> [[TMP0]], <64 x i8> [[TMP1]], <2 x i32> [[TMP2]])
-// CHECK-COMMON-NEXT:    store <64 x i8> [[TMP3]], ptr [[AGG_RESULT:%.*]], align 64, !tbaa [[TBAA5]], !alias.scope [[META42:![0-9]+]]
-// CHECK-COMMON-NEXT:    ret void
+// CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64FLOAT8]] poison, <64 x i8> [[TMP3]], 0
+// CHECK-COMMON-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_sel_v64float8(v64float8 a, v64float8 b, unsigned long long s) {
   return sel(a, b, s);

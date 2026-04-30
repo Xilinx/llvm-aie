@@ -173,16 +173,16 @@ v16bfloat16 test_undef_v16bfloat16() { return undef_v16bfloat16(); }
 // CHECK-NEXT:    ret <16 x half> undef
 //
 v16float16 test_undef_v16float16() { return undef_v16float16(); }
-// CHECK-LABEL: define dso_local void @_Z21test_undef_v32bfloat8v(
-// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V32BFLOAT8:%.*]]) align 32 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-LABEL: define dso_local %struct.v32bfloat8 @_Z21test_undef_v32bfloat8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8:%.*]] undef
 //
 v32bfloat8 test_undef_v32bfloat8() { return undef_v32bfloat8(); }
-// CHECK-LABEL: define dso_local void @_Z20test_undef_v32float8v(
-// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V32FLOAT8:%.*]]) align 32 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-LABEL: define dso_local %struct.v32float8 @_Z20test_undef_v32float8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8:%.*]] undef
 //
 v32float8 test_undef_v32float8() { return undef_v32float8(); }
 // CHECK-LABEL: define dso_local noundef <8 x float> @_Z18test_undef_v8floatv(
@@ -290,16 +290,16 @@ v32bfloat16 test_undef_v32bfloat16() { return undef_v32bfloat16(); }
 // CHECK-NEXT:    ret <32 x half> undef
 //
 v32float16 test_undef_v32float16() { return undef_v32float16(); }
-// CHECK-LABEL: define dso_local void @_Z21test_undef_v64bfloat8v(
-// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-LABEL: define dso_local %struct.v64bfloat8 @_Z21test_undef_v64bfloat8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8:%.*]] undef
 //
 v64bfloat8 test_undef_v64bfloat8() { return undef_v64bfloat8(); }
-// CHECK-LABEL: define dso_local void @_Z20test_undef_v64float8v(
-// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-LABEL: define dso_local %struct.v64float8 @_Z20test_undef_v64float8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    ret [[STRUCT_V64FLOAT8:%.*]] undef
 //
 v64float8 test_undef_v64float8() { return undef_v64float8(); }
 // CHECK-LABEL: define dso_local noundef <16 x float> @_Z19test_undef_v16floatv(
@@ -407,16 +407,16 @@ v64bfloat16 test_undef_v64bfloat16() { return undef_v64bfloat16(); }
 // CHECK-NEXT:    ret <64 x half> undef
 //
 v64float16 test_undef_v64float16() { return undef_v64float16(); }
-// CHECK-LABEL: define dso_local void @_Z22test_undef_v128bfloat8v(
-// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V128BFLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-LABEL: define dso_local %struct.v128bfloat8 @_Z22test_undef_v128bfloat8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8:%.*]] undef
 //
 v128bfloat8 test_undef_v128bfloat8() { return undef_v128bfloat8(); }
-// CHECK-LABEL: define dso_local void @_Z21test_undef_v128float8v(
-// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V128FLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-LABEL: define dso_local %struct.v128float8 @_Z21test_undef_v128float8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    ret [[STRUCT_V128FLOAT8:%.*]] undef
 //
 v128float8 test_undef_v128float8() { return undef_v128float8(); }
 // CHECK-LABEL: define dso_local noundef <32 x float> @_Z19test_undef_v32floatv(
