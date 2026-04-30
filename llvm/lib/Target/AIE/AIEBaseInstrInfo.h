@@ -692,12 +692,19 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                                              SDep::Kind Kind) const;
 
   /// Returns the number of cycles that are saved if there is a bypass (pipeline
-  /// forwarding) between \p DefMI and \p UseMI for the given operands.
-  /// This returns 0 if no bypass is taken.
+  /// forwarding) between \p DefMI (schedule class \p DefSchedClass) and
+  /// \p UseMI (schedule class \p UseSchedClass) for the given operand indices.
+  /// The schedule classes are pre-computed by the caller; they are passed
+  /// explicitly so the base implementation avoids calling getSchedClass again.
+  /// Subclasses may additionally inspect the MachineInstrs for analysis data.
+  /// Returns 0 if no bypass is taken.
+  /// PLEASE NOTE: overriding this is discouraged. Instead, use itinerary reg
+  /// pairs to switch the itinerary.
   virtual unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
                                         const MachineInstr &DefMI,
-                                        unsigned DefIdx,
+                                        unsigned DefSchedClass, unsigned DefIdx,
                                         const MachineInstr &UseMI,
+                                        unsigned UseSchedClass,
                                         unsigned UseIdx) const;
 
   /// Returns the latency to be observed to preserve the ordering of aliasing

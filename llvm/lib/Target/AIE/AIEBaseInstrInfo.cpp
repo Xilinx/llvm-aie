@@ -832,15 +832,15 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
   if (Kind == SDep::Data) {
     // Typical bypass case: data from a producer is available earlier for a
     // consumer.
-    SrcCycleVal -=
-        getNumBypassedCycles(ItinData, SrcMI, SrcOpIdx, DstMI, DstOpIdx);
+    SrcCycleVal -= getNumBypassedCycles(ItinData, SrcMI, SrcClass, SrcOpIdx,
+                                        DstMI, DstClass, DstOpIdx);
   }
   if (Kind == SDep::Anti) {
     // "Reverse" case: we need to penalize WAR dependencies, because if the
     // bypass is taken by the write, then the read could get the newly-written
     // value, not respecting the WAR edge. See negative_latencies/bypass.mir
-    DstCycleVal -=
-        getNumBypassedCycles(ItinData, DstMI, DstOpIdx, SrcMI, SrcOpIdx);
+    DstCycleVal -= getNumBypassedCycles(ItinData, DstMI, DstClass, DstOpIdx,
+                                        SrcMI, SrcClass, SrcOpIdx);
   }
 
   int Diff = SrcCycleVal - DstCycleVal;
@@ -850,13 +850,8 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
 
 unsigned AIEBaseInstrInfo::getNumBypassedCycles(
     const InstrItineraryData *ItinData, const MachineInstr &DefMI,
-    unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {
-  // Resolve schedule classes based on register classes of operands.
-  const MachineRegisterInfo &MRI = DefMI.getMF()->getRegInfo();
-  const unsigned DefSchedClass =
-      getSchedClass(DefMI.getDesc(), DefMI.operands(), MRI);
-  const unsigned UseSchedClass =
-      getSchedClass(UseMI.getDesc(), UseMI.operands(), MRI);
+    unsigned DefSchedClass, unsigned DefIdx, const MachineInstr &UseMI,
+    unsigned UseSchedClass, unsigned UseIdx) const {
 
   // FIXME: This assumes one cycle benefit for every pipeline forwarding.
   return ItinData->hasPipelineForwarding(DefSchedClass, DefIdx, UseSchedClass,
