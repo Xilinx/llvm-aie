@@ -18,7 +18,7 @@
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Support/LogicalResult.h"
-
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -181,7 +181,8 @@ SmallVector<Value> mlir::makeRegionIsolatedFromAbove(
 /// if any blocks were erased, failure otherwise.
 // TODO: We could likely merge this with the DCE algorithm below.
 LogicalResult mlir::eraseUnreachableBlocks(RewriterBase &rewriter,
-                                           MutableArrayRef<Region> regions) {
+                                           MutableArrayRef<Region> regions,
+                                           bool recurse) {
   // Set of blocks found to be reachable within a given region.
   llvm::df_iterator_default_set<Block *, 16> reachable;
   // If any blocks were found to be dead.
@@ -197,10 +198,11 @@ LogicalResult mlir::eraseUnreachableBlocks(RewriterBase &rewriter,
       continue;
 
     // If this is a single block region, just collect the nested regions.
-    if (std::next(region->begin()) == region->end()) {
-      for (Operation &op : region->front())
-        for (Region &region : op.getRegions())
-          worklist.push_back(&region);
+    if (region->hasOneBlock()) {
+      if (recurse)
+        for (Operation &op : region->front())
+          for (Region &region : op.getRegions())
+            worklist.push_back(&region);
       continue;
     }
 
@@ -220,9 +222,10 @@ LogicalResult mlir::eraseUnreachableBlocks(RewriterBase &rewriter,
       }
 
       // Walk any regions within this block.
-      for (Operation &op : block)
-        for (Region &region : op.getRegions())
-          worklist.push_back(&region);
+      if (recurse)
+        for (Operation &op : block)
+          for (Region &region : op.getRegions())
+            worklist.push_back(&region);
     }
   }
 
@@ -478,6 +481,98 @@ LogicalResult mlir::runRegionDCE(RewriterBase &rewriter,
   } while (liveMap.hasChanged());
 
   return deleteDeadness(rewriter, regions, liveMap);
+}
+
+bool mlir::eliminateTriviallyDeadOps(RewriterBase &rewriter, Region &region,
+                                     bool includeNestedRegions) {
+
+  bool changed = false;
+  unsigned erasedOps = 0;
+  unsigned seededOps = 0;
+  unsigned enqueuedDefs = 0;
+
+  // Step 1: walk each op in reverse program order. If the op is already
+  // trivially dead, erase it outright — there's no point recursing into
+  // regions that will be destroyed with it. Otherwise, if
+  // `includeNestedRegions` is set, recurse into its nested regions so values
+  // defined in `region` may lose their last user and show up as dead in
+  // step 2's seed. Reverse iteration lets dead chains propagate within this
+  // single pass.
+  for (Block &block : llvm::reverse(region)) {
+    for (Operation &op :
+         llvm::make_early_inc_range(llvm::reverse(block.getOperations()))) {
+      if (isOpTriviallyDead(&op)) {
+        rewriter.eraseOp(&op);
+        changed = true;
+        ++erasedOps;
+        continue;
+      }
+      if (includeNestedRegions) {
+        for (Region &nested : op.getRegions()) {
+          bool nestedChanged =
+              eliminateTriviallyDeadOps(rewriter, nested, includeNestedRegions);
+          changed |= nestedChanged;
+        }
+      }
+    }
+  }
+
+  // Step 2: worklist over ops in this region only.
+  //
+  // Worklist invariant: an op is pushed *only* once we have verified it is
+  // trivially dead. No speculative enqueues — every op on the worklist will
+  // be erased when popped. Two things enforce this:
+  //   - the initial seed below calls isOpTriviallyDead before enqueueing,
+  //   - the propagation inside the loop drops the erasing op's use of
+  //     `defOp` *before* re-checking isOpTriviallyDead(defOp), so the check
+  //     sees the post-erase use count and only enqueues when actually dead.
+  // Deadness is monotonic within this pass (we never add users, only remove
+  // them), so an op that was dead at enqueue time is still dead at pop time.
+  // The `visited` set is just for dedup; no re-check is needed on pop.
+  SmallVector<Operation *> worklist;
+  DenseSet<Operation *> visited;
+
+  for (Operation &op : region.getOps()) {
+    if (isOpTriviallyDead(&op) && visited.insert(&op).second) {
+      worklist.push_back(&op);
+      changed = true;
+      ++seededOps;
+    }
+  }
+
+  while (!worklist.empty()) {
+    Operation *op = worklist.pop_back_val();
+    /// Erase each operand to drop its use count before checking its defining
+    /// op: by the time we call isOpTriviallyDead on defOp, the
+    /// about-to-be-erased `op` is no longer counted as a user. Only
+    /// actually-dead ops enter the worklist.
+    ///
+    /// Walk nested operations as well because erasing `op` also implicitly
+    /// erases every operation nested under it and therefore drops their operand
+    /// uses.
+    op->walk([&](Operation *erasedOp) {
+      for (OpOperand &opOperand : erasedOp->getOpOperands()) {
+        Operation *defOp = opOperand.get().getDefiningOp();
+        if (!defOp) {
+          continue;
+        }
+        if (defOp->getParentRegion() != &region) {
+          continue;
+        }
+        if (visited.count(defOp)) {
+          continue;
+        }
+        opOperand.drop();
+        if (isOpTriviallyDead(defOp)) {
+          worklist.push_back(defOp);
+          ++enqueuedDefs;
+        }
+      }
+    });
+    rewriter.eraseOp(op);
+    ++erasedOps;
+  }
+  return changed;
 }
 
 //===----------------------------------------------------------------------===//
