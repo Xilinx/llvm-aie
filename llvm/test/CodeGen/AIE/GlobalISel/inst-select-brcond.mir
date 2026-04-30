@@ -7,8 +7,8 @@
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
-# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
-# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name:            brcond
@@ -33,9 +33,930 @@ body: |
   ; AIE2-NEXT:   PseudoJNZ [[COPY]], %bb.1
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
+  ;
+  ; AIE2P-LABEL: name: brcond
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ;
+  ; AIE2PS-LABEL: name: brcond
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2PS-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
   bb.0:
     %0:gprregbank(s32) = COPY $r6
     G_BRCOND %0, %bb.1
 
   bb.1:
+...
+
+---
+name:            brcond_xor_icmp
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[EQ:%[0-9]+]]:gpr = EQ [[COPY]], [[COPY1]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[EQ]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[EQ]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[EQ]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[EQ:%[0-9]+]]:mlockid_reg = EQ [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[EQ]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(eq), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_ne
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_ne
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[NE:%[0-9]+]]:gpr = NE [[COPY]], [[COPY1]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[NE]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_ne
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[NE]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_ne
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[NE]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_ne
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[NE:%[0-9]+]]:mlockid_reg = NE [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[NE]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(ne), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_slt
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_slt
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[LT:%[0-9]+]]:gpr = LT [[COPY]], [[COPY1]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[LT]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_slt
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_slt
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_slt
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[LT:%[0-9]+]]:mlockid_reg = LT [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(slt), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_sge
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_sge
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[GE:%[0-9]+]]:gpr = GE [[COPY]], [[COPY1]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[GE]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_sge
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_sge
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_sge
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[GE:%[0-9]+]]:mlockid_reg = GE [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(sge), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_sgt
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_sgt
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[LT:%[0-9]+]]:gpr = LT [[COPY1]], [[COPY]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[LT]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_sgt
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_sgt
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_sgt
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[LT:%[0-9]+]]:mlockid_reg = LT [[COPY1]], [[COPY]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(sgt), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_sle
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_sle
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[GE:%[0-9]+]]:gpr = GE [[COPY1]], [[COPY]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[GE]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_sle
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_sle
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_sle
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[GE:%[0-9]+]]:mlockid_reg = GE [[COPY1]], [[COPY]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(sle), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_ult
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_ult
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[LTU:%[0-9]+]]:gpr = LTU [[COPY]], [[COPY1]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[LTU]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_ult
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_ult
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_ult
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(ult), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_uge
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_uge
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[GEU:%[0-9]+]]:gpr = GEU [[COPY]], [[COPY1]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[GEU]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_uge
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_uge
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_uge
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(uge), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_ugt
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_ugt
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[LTU:%[0-9]+]]:gpr = LTU [[COPY1]], [[COPY]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[LTU]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_ugt
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_ugt
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_ugt
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY1]], [[COPY]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(ugt), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_icmp_ule
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_icmp_ule
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[COPY1:%[0-9]+]]:gpr = COPY $r7
+  ; AIE-NEXT:   [[GEU:%[0-9]+]]:gpr = GEU [[COPY1]], [[COPY]]
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[GEU]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_icmp_ule
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_icmp_ule
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; AIE2P-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_icmp_ule
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+  ; AIE2PS-NEXT:   [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY1]], [[COPY]]
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = COPY $r7
+    %2:gprregbank(s32) = G_ICMP intpred(ule), %0, %1
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(s32) = G_XOR %2, %3
+    G_BRCOND %4, %bb.2
+
+  bb.1:
+
+  bb.2:
+...
+
+---
+name:            brcond_xor_non_boolean
+legalized:       true
+regBankSelected: true
+
+body: |
+  ; AIE-LABEL: name: brcond_xor_non_boolean
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 1
+  ; AIE-NEXT:   [[XOR:%[0-9]+]]:gpr = XOR [[COPY]], [[MOV_U20_]]
+  ; AIE-NEXT:   BNEZ [[XOR]], %bb.2
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ; AIE-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.2:
+  ;
+  ; AIE2-LABEL: name: brcond_xor_non_boolean
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[COPY]], [[MOV_RLC_imm10_pseudo]]
+  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.2:
+  ;
+  ; AIE2P-LABEL: name: brcond_xor_non_boolean
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[COPY]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.2:
+  ;
+  ; AIE2PS-LABEL: name: brcond_xor_non_boolean
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  bb.0:
+    successors: %bb.1, %bb.2
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = G_CONSTANT i32 1
+    %2:gprregbank(s32) = G_XOR %0, %1
+    G_BRCOND %2, %bb.2
+
+  bb.1:
+
+  bb.2:
 ...
