@@ -15,6 +15,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef AIE_VEXTRACT_BROADCAST128_I512
+#error                                                                         \
+    "Define AIE_VEXTRACT_BROADCAST128_I512(v, idx) before including this file"
+#endif
+
 #ifndef __AIE_UPD_EXT_COMMON_H__
 #define __AIE_UPD_EXT_COMMON_H__
 
@@ -26,15 +31,15 @@ INTRINSIC(v4int32) extract_128_256(v8int32 a, int idx) {
     return __builtin_shufflevector(a, a, 4, 5, 6, 7);
 }
 
+// Lower runtime-idx 128-bit extract via the per-arch VEXTBCST.128
+// instruction (a single op that extracts the chosen 128-bit lane and
+// broadcasts it into a 512-bit vector). The shufflevector then keeps the
+// low 128 bits, which the broadcast guarantees equal to the chosen lane.
+// This avoids the 4-way switch+shufflevector+phi shape that the previous
+// if-chain produced for runtime indices, which blocked HW-loop formation.
 INTRINSIC(v4int32) extract_128_512(v16int32 a, int idx) {
-  if (idx % 4 == 0)
-    return __builtin_shufflevector(a, a, 0, 1, 2, 3);
-  if (idx % 4 == 1)
-    return __builtin_shufflevector(a, a, 4, 5, 6, 7);
-  if (idx % 4 == 2)
-    return __builtin_shufflevector(a, a, 8, 9, 10, 11);
-  else
-    return __builtin_shufflevector(a, a, 12, 13, 14, 15);
+  v16int32 bcst = AIE_VEXTRACT_BROADCAST128_I512(a, idx);
+  return __builtin_shufflevector(bcst, bcst, 0, 1, 2, 3);
 }
 
 // Generic 128-bit insert primitives

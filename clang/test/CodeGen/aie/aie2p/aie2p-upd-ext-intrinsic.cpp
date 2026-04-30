@@ -1793,7 +1793,7 @@ unsigned int test_extract_elem(v2uint32 v, int idx)
 
 //!   @name Scalar updates and extracts
 // CHECK-LABEL: define dso_local noundef i64 @_Z11test_insertyij(
-// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
@@ -1814,7 +1814,7 @@ unsigned long long test_insert(unsigned long long a, int idx, unsigned int b)
     return insert(a, idx, b);
 }
 // CHECK-LABEL: define dso_local noundef i64 @_Z15test_set_uint64ij(
-// CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
@@ -1834,7 +1834,7 @@ unsigned long long test_set_uint64(int idx, unsigned int b)
     return set_uint64(idx, b);
 }
 // CHECK-LABEL: define dso_local noundef i32 @_Z19test_extract_uint32yi(
-// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
@@ -1854,7 +1854,7 @@ unsigned int test_extract_uint32(unsigned long long a, int idx)
     return extract_uint32(a, idx);
 }
 // CHECK-LABEL: define dso_local noundef i64 @_Z11test_concatjj(
-// CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[A]], 0
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
@@ -5618,28 +5618,10 @@ v32acc64 test_concat (v16acc64 a0, v16acc64 a1)
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V32UINT4DV64_DU8_I_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V32UINT4DV64_DU8_I_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V32UINT4DV64_DU8_I_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V32UINT4DV64_DU8_I_EXIT]]
-// CHECK:       _ZL16extract_v32uint4Dv64_DU8_i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <16 x i8>
-// CHECK-NEXT:    ret <16 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <16 x i8>
+// CHECK-NEXT:    ret <16 x i8> [[TMP2]]
 //
 v32uint4 test_extract_v32uint4 ( v128uint4 a, int idx )
 {
@@ -5651,28 +5633,10 @@ v32uint4 test_extract_v32uint4 ( v128uint4 a, int idx )
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V32INT4DV64_DB8_I_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V32INT4DV64_DB8_I_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V32INT4DV64_DB8_I_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V32INT4DV64_DB8_I_EXIT]]
-// CHECK:       _ZL15extract_v32int4Dv64_DB8_i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <16 x i8>
-// CHECK-NEXT:    ret <16 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <16 x i8>
+// CHECK-NEXT:    ret <16 x i8> [[TMP2]]
 //
 v32int4 test_extract_v32int4 ( v128int4 a, int idx )
 {
@@ -5684,28 +5648,10 @@ v32int4 test_extract_v32int4 ( v128int4 a, int idx )
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V16UINT8DV64_HI_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V16UINT8DV64_HI_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V16UINT8DV64_HI_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V16UINT8DV64_HI_EXIT]]
-// CHECK:       _ZL16extract_v16uint8Dv64_hi.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <16 x i8>
-// CHECK-NEXT:    ret <16 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <16 x i8>
+// CHECK-NEXT:    ret <16 x i8> [[TMP2]]
 //
 v16uint8 test_extract_v16uint8 ( v64uint8 a, int idx )
 {
@@ -5717,28 +5663,10 @@ v16uint8 test_extract_v16uint8 ( v64uint8 a, int idx )
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V16INT8DV64_AI_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V16INT8DV64_AI_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V16INT8DV64_AI_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V16INT8DV64_AI_EXIT]]
-// CHECK:       _ZL15extract_v16int8Dv64_ai.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <16 x i8>
-// CHECK-NEXT:    ret <16 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <16 x i8>
+// CHECK-NEXT:    ret <16 x i8> [[TMP2]]
 //
 v16int8 test_extract_v16int8 ( v64int8 a, int idx )
 {
@@ -5750,28 +5678,10 @@ v16int8 test_extract_v16int8 ( v64int8 a, int idx )
 // CHECK-SAME: <32 x i16> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V8UINT16DV32_TI_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V8UINT16DV32_TI_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V8UINT16DV32_TI_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V8UINT16DV32_TI_EXIT]]
-// CHECK:       _ZL16extract_v8uint16Dv32_ti.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <8 x i16>
-// CHECK-NEXT:    ret <8 x i16> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <8 x i16>
+// CHECK-NEXT:    ret <8 x i16> [[TMP2]]
 //
 v8uint16 test_extract_v8uint16 ( v32uint16 a, int idx )
 {
@@ -5783,28 +5693,10 @@ v8uint16 test_extract_v8uint16 ( v32uint16 a, int idx )
 // CHECK-SAME: <32 x i16> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V8INT16DV32_SI_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V8INT16DV32_SI_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V8INT16DV32_SI_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V8INT16DV32_SI_EXIT]]
-// CHECK:       _ZL15extract_v8int16Dv32_si.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <8 x i16>
-// CHECK-NEXT:    ret <8 x i16> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <8 x i16>
+// CHECK-NEXT:    ret <8 x i16> [[TMP2]]
 //
 v8int16 test_extract_v8int16 ( v32int16 a, int idx )
 {
@@ -5815,27 +5707,9 @@ v8int16 test_extract_v8int16 ( v32int16 a, int idx )
 // CHECK-LABEL: define dso_local noundef <4 x i32> @_Z21test_extract_v4uint32Dv16_ji(
 // CHECK-SAME: <16 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V4UINT32DV16_JI_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V4UINT32DV16_JI_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V4UINT32DV16_JI_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_V4UINT32DV16_JI_EXIT]]
-// CHECK:       _ZL16extract_v4uint32Dv16_ji.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    ret <4 x i32> [[RETVAL_0_I_I]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[A]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    ret <4 x i32> [[SHUFFLE_I_I]]
 //
 v4uint32 test_extract_v4uint32 ( v16uint32 a, int idx )
 {
@@ -5846,27 +5720,9 @@ v4uint32 test_extract_v4uint32 ( v16uint32 a, int idx )
 // CHECK-LABEL: define dso_local noundef <4 x i32> @_Z20test_extract_v4int32Dv16_ii(
 // CHECK-SAME: <16 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4INT32DV16_II_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4INT32DV16_II_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4INT32DV16_II_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[A]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4INT32DV16_II_EXIT]]
-// CHECK:       _ZL15extract_v4int32Dv16_ii.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    ret <4 x i32> [[RETVAL_0_I_I]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[A]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    ret <4 x i32> [[SHUFFLE_I_I]]
 //
 v4int32 test_extract_v4int32 ( v16int32 a, int idx )
 {
@@ -5878,28 +5734,10 @@ v4int32 test_extract_v4int32 ( v16int32 a, int idx )
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V8BFLOAT16DV32_8BFLOAT16I_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V8BFLOAT16DV32_8BFLOAT16I_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V8BFLOAT16DV32_8BFLOAT16I_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V8BFLOAT16DV32_8BFLOAT16I_EXIT]]
-// CHECK:       _ZL18extract_v8bfloat16Dv32_8bfloat16i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <8 x bfloat>
-// CHECK-NEXT:    ret <8 x bfloat> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[SHUFFLE_I_I]] to <8 x bfloat>
+// CHECK-NEXT:    ret <8 x bfloat> [[TMP2]]
 //
 v8bfloat16 test_extract_v8bfloat16 ( v32bfloat16 a, int idx )
 {
@@ -5911,28 +5749,10 @@ v8bfloat16 test_extract_v8bfloat16 ( v32bfloat16 a, int idx )
 // CHECK-SAME: <16 x float> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
-// CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX]], 4
-// CHECK-NEXT:    switch i32 [[REM_I_I]], label [[IF_ELSE_I_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[IF_THEN_I_I:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN3_I_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN8_I_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4FLOATDV16_FI_EXIT:%.*]]
-// CHECK:       if.then3.i.i:
-// CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4FLOATDV16_FI_EXIT]]
-// CHECK:       if.then8.i.i:
-// CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4FLOATDV16_FI_EXIT]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL15EXTRACT_V4FLOATDV16_FI_EXIT]]
-// CHECK:       _ZL15extract_v4floatDv16_fi.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <4 x float>
-// CHECK-NEXT:    ret <4 x float> [[TMP1]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2p.vextract.broadcast128.I512(<16 x i32> [[TMP0]], i32 [[IDX]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[TMP1]] to <16 x float>
+// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <16 x float> [[TMP2]], <16 x float> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:    ret <4 x float> [[TMP3]]
 //
 v4float test_extract_v4float ( v16float a, int idx )
 {

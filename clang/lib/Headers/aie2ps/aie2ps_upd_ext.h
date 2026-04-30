@@ -1399,7 +1399,10 @@ INTRINSIC(v32acc64) concat(v16acc64 a0, v16acc64 a1) {
 }
 
 // shared with aie2p — see clang/lib/Headers/aie_upd_ext_common.h
+#define AIE_VEXTRACT_BROADCAST128_I512(v, idx)                                 \
+  __builtin_aie2ps_vextract_broadcast128_I512((v), (idx))
 #include "../aie_upd_ext_common.h"
+#undef AIE_VEXTRACT_BROADCAST128_I512
 
 // v64bfloat8
 
