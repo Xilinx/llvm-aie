@@ -278,6 +278,26 @@ def : Pat <(brcond (i32 (setne eR:$mRx, (i32 0))), bb:$addr), (PseudoJNZ eR:$mRx
 // Absorb logical negation by reversing branch condition
 def : Pat <(brcond (i32 (seteq eR:$mRx, (i32 0))), bb:$addr), (PseudoJZ eR:$mRx, bb:$addr)>;
 
+// Absorb negation through xor(setcc,1) by inverting conditional branch
+multiclass BrcondXorCmpPat<PatFrag CondOp, Instruction CmpInst> {
+  def : Pat<(brcond (i32 (xor (i32 (CondOp (i32 eR:$a), (i32 eR:$b))), (i32 1))), bb:$addr),
+            (PseudoJZ (CmpInst eR:$a, eR:$b), bb:$addr)>;
+}
+multiclass BrcondXorCmpSwapPat<PatFrag CondOp, Instruction CmpInst> {
+  def : Pat<(brcond (i32 (xor (i32 (CondOp (i32 eR:$a), (i32 eR:$b))), (i32 1))), bb:$addr),
+            (PseudoJZ (CmpInst eR:$b, eR:$a), bb:$addr)>;
+}
+defm : BrcondXorCmpPat<seteq, EQ>;
+defm : BrcondXorCmpPat<setne, NE>;
+defm : BrcondXorCmpPat<setlt, LT>;
+defm : BrcondXorCmpPat<setge, GE>;
+defm : BrcondXorCmpPat<setult, LTU>;
+defm : BrcondXorCmpPat<setuge, GEU>;
+defm : BrcondXorCmpSwapPat<setgt, LT>;
+defm : BrcondXorCmpSwapPat<setle, GE>;
+defm : BrcondXorCmpSwapPat<setugt, LTU>;
+defm : BrcondXorCmpSwapPat<setule, GEU>;
+
 
 // MUL Intrinsic
 def : Pat<(int_aie2_I512_I512_acc64_mul_conf VEC512:$s1, VEC512:$s2, eR:$c),

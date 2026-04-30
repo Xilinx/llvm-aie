@@ -87,9 +87,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[EQ]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[EQ]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -103,9 +101,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[EQ]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[EQ]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -119,9 +115,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[EQ:%[0-9]+]]:mlockid_reg = EQ [[COPY]], [[COPY1]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[EQ]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[EQ]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -170,9 +164,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[NE]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[NE]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -186,9 +178,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[NE]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[NE]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -202,9 +192,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[NE:%[0-9]+]]:mlockid_reg = NE [[COPY]], [[COPY1]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[NE]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[NE]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -253,9 +241,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[LT]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -269,9 +255,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[LT]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -285,9 +269,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[LT:%[0-9]+]]:mlockid_reg = LT [[COPY]], [[COPY1]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[LT]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -336,9 +318,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[GE]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -352,9 +332,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[GE]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -368,9 +346,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[GE:%[0-9]+]]:mlockid_reg = GE [[COPY]], [[COPY1]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[GE]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -419,9 +395,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[LT]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -435,9 +409,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[LT]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -451,9 +423,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[LT:%[0-9]+]]:mlockid_reg = LT [[COPY1]], [[COPY]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LT]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[LT]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -502,9 +472,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[GE]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -518,9 +486,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[GE]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -534,9 +500,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[GE:%[0-9]+]]:mlockid_reg = GE [[COPY1]], [[COPY]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GE]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[GE]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -585,9 +549,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[LTU]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -601,9 +563,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[LTU]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -617,9 +577,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY]], [[COPY1]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[LTU]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -668,9 +626,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[GEU]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -684,9 +640,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[GEU]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -700,9 +654,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY]], [[COPY1]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[GEU]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -751,9 +703,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[LTU]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -767,9 +717,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[LTU]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -783,9 +731,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY1]], [[COPY]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[LTU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[LTU]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
@@ -834,9 +780,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2-NEXT:   PseudoJZ [[GEU]], %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
   ; AIE2-NEXT:   successors: %bb.2(0x80000000)
@@ -850,9 +794,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2P-NEXT:   PseudoJZ [[GEU]], %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
@@ -866,9 +808,7 @@ body: |
   ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
   ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
   ; AIE2PS-NEXT:   [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY1]], [[COPY]]
-  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
-  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[GEU]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2PS-NEXT:   PseudoJNZ [[XOR]], %bb.2
+  ; AIE2PS-NEXT:   PseudoJZ [[GEU]], %bb.2
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT: bb.1:
   ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
