@@ -1502,23 +1502,6 @@ bool AIE2InstrInfo::isOffsetInImmediateRange(
 
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }
 
-unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
-                                             const MachineInstr &DefMI,
-                                             unsigned DefIdx,
-                                             const MachineInstr &UseMI,
-                                             unsigned UseIdx) const {
-  auto GetForwardingClass = [&](const MachineInstr &MI, unsigned OpIdx) {
-    const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
-    return ItinData->getForwardingClass(
-        getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
-  };
-
-  // FIXME: This assumes one cycle benefit for every pipeline forwarding.
-  unsigned DefForwarding = GetForwardingClass(DefMI, DefIdx);
-  unsigned UseForwarding = GetForwardingClass(UseMI, UseIdx);
-  return (DefForwarding && DefForwarding == UseForwarding) ? 1 : 0;
-}
-
 std::pair<unsigned, unsigned>
 AIE2InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
   const unsigned Mask = AIEII::MO_DIRECT_FLAG_MASK;

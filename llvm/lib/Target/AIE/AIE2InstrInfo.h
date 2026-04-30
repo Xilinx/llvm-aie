@@ -113,11 +113,6 @@ public:
 
   virtual unsigned getPseudoJNZDOpcode() const override;
 
-  unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
-                                const MachineInstr &DefMI, unsigned DefIdx,
-                                const MachineInstr &UseMI,
-                                unsigned UseIdx) const override;
-
   std::optional<int> getFirstMemoryCycle(unsigned SchedClass) const override;
 
   std::optional<int> getLastMemoryCycle(unsigned SchedClass) const override;
