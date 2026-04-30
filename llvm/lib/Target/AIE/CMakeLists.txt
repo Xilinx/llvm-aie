@@ -52,6 +52,7 @@ tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEB
 
 #aie2p
 set(LLVM_TARGET_DEFINITIONS AIE2P.td)
+list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 tablegen(LLVM AIE2PGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2PGenCallingConv.inc -gen-callingconv)
@@ -73,9 +74,12 @@ tablegen(LLVM AIE2PGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combine
               -combiners="AIE2PPostLegalizerCustomCombiner")
 tablegen(LLVM AIE2PGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
+list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 
-# aie2ps 
+# aie2ps
 set(LLVM_TARGET_DEFINITIONS AIE2PS.td)
+# Add aie2ps/ to the tablegen include search path (see aie2p comment above).
+list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2ps")
 tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PSGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2PSGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
@@ -99,6 +103,7 @@ tablegen(LLVM AIE2PSGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combin
 tablegen(LLVM AIE2PSGenPostLegalizerGIFinalCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PSPostLegalizerFinalCombiner")
 tablegen(LLVM AIE2PSGenAsmMatcher.inc -gen-asm-matcher)
+list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2ps")
 
 add_public_tablegen_target(AIECommonTableGen)
 
