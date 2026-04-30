@@ -771,8 +771,8 @@ v32float16 test_to_v32float16_conf(v32accfloat a, crrnd_t rnd) {
 // CHECK-LABEL: @_Z17test_to_v32float8Dv32_u10__accfloat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32float8(<32 x float> [[A:%.*]], i32 0)
-// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2:![0-9]+]], !alias.scope [[META5:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP0]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I_I]]
 //
 v32float8 test_to_v32float8(v32accfloat a) {
   return to_v32float8(a);
@@ -784,10 +784,10 @@ v32float8 test_to_v32float8(v32accfloat a) {
 // CHECK-NEXT:    [[CONV3_I_I:%.*]] = zext i4 [[RND:%.*]] to i32
 // CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV3_I_I]])
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32float8(<32 x float> [[A:%.*]], i32 0)
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META10:![0-9]+]]
-// CHECK-NEXT:    [[CONV6_I_I:%.*]] = and i32 [[TMP0]], 15
-// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV6_I_I]])
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[CONV7_I_I:%.*]] = and i32 [[TMP0]], 15
+// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV7_I_I]])
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I_I_I]]
 //
 v32float8 test_to_v32float8_conf(v32accfloat a, crrnd_t rnd) {
   return to_v32float8_conf(a, rnd);
@@ -797,8 +797,8 @@ v32float8 test_to_v32float8_conf(v32accfloat a, crrnd_t rnd) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV_I:%.*]] = zext i6 [[SHFT:%.*]] to i32
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32float8(<32 x float> [[A:%.*]], i32 [[CONV_I]])
-// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META17:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP0]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32float8 test_to_v32float8(v32accfloat a, uint6_t shft) {
   return to_v32float8(a, shft);
@@ -811,10 +811,10 @@ v32float8 test_to_v32float8(v32accfloat a, uint6_t shft) {
 // CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV3_I]])
 // CHECK-NEXT:    [[CONV_I_I:%.*]] = zext i6 [[SHFT:%.*]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32float8(<32 x float> [[A:%.*]], i32 [[CONV_I_I]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META20:![0-9]+]]
-// CHECK-NEXT:    [[CONV6_I:%.*]] = and i32 [[TMP0]], 15
-// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV6_I]])
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[CONV7_I:%.*]] = and i32 [[TMP0]], 15
+// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV7_I]])
+// CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I_I]]
 //
 v32float8 test_to_v32float8_conf(v32accfloat a, uint6_t shft, crrnd_t rnd) {
   return to_v32float8_conf(a, shft, rnd);
@@ -823,8 +823,8 @@ v32float8 test_to_v32float8_conf(v32accfloat a, uint6_t shft, crrnd_t rnd) {
 // CHECK-LABEL: @_Z18test_to_v32bfloat8Dv32_u10__accfloat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32bfloat8(<32 x float> [[A:%.*]], i32 0)
-// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META25:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP0]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I_I]]
 //
 v32bfloat8 test_to_v32bfloat8(v32accfloat a) {
   return to_v32bfloat8(a);
@@ -836,10 +836,10 @@ v32bfloat8 test_to_v32bfloat8(v32accfloat a) {
 // CHECK-NEXT:    [[CONV3_I_I:%.*]] = zext i4 [[RND:%.*]] to i32
 // CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV3_I_I]])
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32bfloat8(<32 x float> [[A:%.*]], i32 0)
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META30:![0-9]+]]
-// CHECK-NEXT:    [[CONV6_I_I:%.*]] = and i32 [[TMP0]], 15
-// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV6_I_I]])
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[CONV7_I_I:%.*]] = and i32 [[TMP0]], 15
+// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV7_I_I]])
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I_I_I]]
 //
 v32bfloat8 test_to_v32bfloat8_conf(v32accfloat a, crrnd_t rnd) {
   return to_v32bfloat8_conf(a, rnd);
@@ -849,8 +849,8 @@ v32bfloat8 test_to_v32bfloat8_conf(v32accfloat a, crrnd_t rnd) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV_I:%.*]] = zext i6 [[SHFT:%.*]] to i32
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32bfloat8(<32 x float> [[A:%.*]], i32 [[CONV_I]])
-// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META37:![0-9]+]]
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP0]], 0
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_to_v32bfloat8(v32accfloat a, uint6_t shft) {
   return to_v32bfloat8(a, shft);
@@ -863,10 +863,10 @@ v32bfloat8 test_to_v32bfloat8(v32accfloat a, uint6_t shft) {
 // CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV3_I]])
 // CHECK-NEXT:    [[CONV_I_I:%.*]] = zext i6 [[SHFT:%.*]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <32 x i8> @llvm.aie2ps.v32accfloat.to.v32bfloat8(<32 x float> [[A:%.*]], i32 [[CONV_I_I]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[AGG_RESULT:%.*]], align 32, !tbaa [[TBAA2]], !alias.scope [[META40:![0-9]+]]
-// CHECK-NEXT:    [[CONV6_I:%.*]] = and i32 [[TMP0]], 15
-// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV6_I]])
-// CHECK-NEXT:    ret void
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[CONV7_I:%.*]] = and i32 [[TMP0]], 15
+// CHECK-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 range(i32 0, 16) [[CONV7_I]])
+// CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I_I]]
 //
 v32bfloat8 test_to_v32bfloat8_conf(v32accfloat a, uint6_t shft, crrnd_t rnd) {
   return to_v32bfloat8_conf(a, shft, rnd);
