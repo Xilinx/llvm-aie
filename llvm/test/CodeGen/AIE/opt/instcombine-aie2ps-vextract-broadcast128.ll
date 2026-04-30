@@ -27,8 +27,7 @@ declare <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32>, i32)
 ; Constant idx 0 -- should fold to shufflevector picking lanes 0..3 of %v.
 define <4 x i32> @test_vextbcst128_const_idx0(<16 x i32> %v) {
 ; CHECK-LABEL: @test_vextbcst128_const_idx0(
-; CHECK-NEXT:    [[BCST:%.*]] = call <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32> [[V:%.*]], i32 0)
-; CHECK-NEXT:    [[R:%.*]] = shufflevector <16 x i32> [[BCST]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <16 x i32> [[BCST:%.*]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
 ; CHECK-NEXT:    ret <4 x i32> [[R]]
 ;
   %bcst = call <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32> %v, i32 0)
@@ -39,8 +38,7 @@ define <4 x i32> @test_vextbcst128_const_idx0(<16 x i32> %v) {
 ; Constant idx 2 -- should fold to shufflevector picking lanes 8..11 of %v.
 define <4 x i32> @test_vextbcst128_const_idx2(<16 x i32> %v) {
 ; CHECK-LABEL: @test_vextbcst128_const_idx2(
-; CHECK-NEXT:    [[BCST:%.*]] = call <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32> [[V:%.*]], i32 2)
-; CHECK-NEXT:    [[R:%.*]] = shufflevector <16 x i32> [[BCST]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <16 x i32> [[V:%.*]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
 ; CHECK-NEXT:    ret <4 x i32> [[R]]
 ;
   %bcst = call <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32> %v, i32 2)
@@ -51,8 +49,7 @@ define <4 x i32> @test_vextbcst128_const_idx2(<16 x i32> %v) {
 ; Constant idx 3 -- should fold to shufflevector picking lanes 12..15 of %v.
 define <4 x i32> @test_vextbcst128_const_idx3(<16 x i32> %v) {
 ; CHECK-LABEL: @test_vextbcst128_const_idx3(
-; CHECK-NEXT:    [[BCST:%.*]] = call <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32> [[V:%.*]], i32 3)
-; CHECK-NEXT:    [[R:%.*]] = shufflevector <16 x i32> [[BCST]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <16 x i32> [[V:%.*]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
 ; CHECK-NEXT:    ret <4 x i32> [[R]]
 ;
   %bcst = call <16 x i32> @llvm.aie2ps.vextract.broadcast128.I512(<16 x i32> %v, i32 3)

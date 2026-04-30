@@ -76,6 +76,8 @@ AIE2PSTTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
     break;
   case Intrinsic::aie2ps_vsel32:
     return AIEIRUtils::instCombineDemandedBits(IC, II, 16, 2);
+  case Intrinsic::aie2ps_vextract_broadcast128_I512:
+    return AIEIRUtils::instCombineVExtractBroadcast(IC, II, /*LaneBits=*/128);
   }
   return std::nullopt;
 }

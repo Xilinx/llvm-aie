@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,6 +40,21 @@ std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,
                                                      IntrinsicInst &II,
                                                      unsigned NumBits,
                                                      unsigned Operand = 0);
+
+/// Fold a `vextract_broadcast{8,16,32,64,128}_I512` (or _bf512) call with a
+/// constant lane index into an equivalent `shufflevector` that broadcasts the
+/// chosen lane (LaneBits wide) across all lanes of the 512-bit result. Once
+/// the opaque intrinsic is replaced, downstream low-N shuffles collapse to a
+/// single constant-mask shuffle, restoring the codegen quality of constant-idx
+/// callers (e.g. `extract_v*(_, 0)` from the `GET_SS_4`/`GET_SS_8` macros and
+/// any templated `extract<>(constant)` chain).
+///
+/// The intrinsic is assumed to take (vec512, i32 idx) and return the same
+/// vector type. The shape is uniform across AIE2 / AIE2P / AIE2PS, so the
+/// caller passes the lane width in bits and this helper does the rest.
+std::optional<Instruction *> instCombineVExtractBroadcast(InstCombiner &IC,
+                                                          IntrinsicInst &II,
+                                                          unsigned LaneBits);
 
 } // namespace llvm::AIEIRUtils
 

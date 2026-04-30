@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,6 +29,49 @@ std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,
     return &II;
 
   return std::nullopt;
+}
+
+std::optional<Instruction *> instCombineVExtractBroadcast(InstCombiner &IC,
+                                                          IntrinsicInst &II,
+                                                          unsigned LaneBits) {
+  // The fold only applies when the lane index is a compile-time constant.
+  // For runtime indices we leave the opaque intrinsic so the backend can
+  // select a single VEXTBCST instruction.
+  auto *IdxC = dyn_cast<ConstantInt>(II.getArgOperand(1));
+  if (!IdxC)
+    return std::nullopt;
+
+  Value *Vec = II.getArgOperand(0);
+  auto *VecTy = cast<FixedVectorType>(Vec->getType());
+  const unsigned ElemBits =
+      VecTy->getElementType()->getPrimitiveSizeInBits().getFixedValue();
+
+  // The lane width must be a whole multiple of the element width, and the
+  // 512-bit register must split into a whole number of LaneBits-wide lanes.
+  // Bail out instead of asserting so the optimisation is robust against
+  // unexpected intrinsic signatures introduced later.
+  if (ElemBits == 0 || LaneBits % ElemBits != 0)
+    return std::nullopt;
+  const unsigned LaneElems = LaneBits / ElemBits;
+  const unsigned NumElems = VecTy->getNumElements();
+  if (LaneElems == 0 || NumElems % LaneElems != 0)
+    return std::nullopt;
+  const unsigned NumLanes = NumElems / LaneElems;
+
+  // VEXTBCST encodes the index modulo the number of lanes (the upper bits of
+  // the 6-bit immediate field are documented as zero-extended).
+  const unsigned LaneIdx = IdxC->getZExtValue() & (NumLanes - 1);
+  const unsigned Base = LaneIdx * LaneElems;
+
+  // Build a mask that broadcasts elements [Base, Base+LaneElems) across all
+  // NumLanes quadrants of the 512-bit result.
+  SmallVector<int, 64> Mask;
+  Mask.reserve(NumElems);
+  for (unsigned Lane = 0; Lane < NumLanes; ++Lane)
+    for (unsigned E = 0; E < LaneElems; ++E)
+      Mask.push_back(Base + E);
+
+  return new ShuffleVectorInst(Vec, Mask);
 }
 
 /// Helper function to recursively check if a user (and all its users if it's a
