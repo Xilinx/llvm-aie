@@ -1739,40 +1739,6 @@ AIE2PInstrInfo::getTiedRegInfoForSplitting(unsigned Opcode) const {
   return {};
 }
 
-unsigned AIE2PInstrInfo::getNumBypassedCycles(
-    const InstrItineraryData *ItinData, const MachineInstr &DefMI,
-    unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {
-  // TODO: This should be tablegen-erated. This way we also wouldn't need
-  // trickery to find the class of the MOV_Bypass
-  const unsigned MovSlotBypassClass = ItinData->getForwardingClass(
-      get(AIE2P::VMOV_alu_mv_mv_w).getSchedClass(), 0);
-  assert(MovSlotBypassClass != 0);
-
-  auto GetForwardingClass = [&](const MachineInstr &MI, unsigned OpIdx) {
-    Register Reg = MI.getOperand(OpIdx).getReg();
-    switch (MI.getOpcode()) {
-    // This instruction uses the Move slot bypass for vector inputs only.
-    // It only works for WL registers. It does not work for WH registers
-    case AIE2P::VCONV_fp32_bf16_mv_ups_wbf:
-    case AIE2P::VEXP2:
-    case AIE2P::VTANH:
-      assert(OpIdx < 2);
-      return Reg.isPhysical() && AIE2P::eWLRegClass.contains(Reg)
-                 ? MovSlotBypassClass
-                 : 0U;
-    default:
-      const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
-      return ItinData->getForwardingClass(
-          getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
-    }
-  };
-
-  // FIXME: This assumes one cycle benefit for every pipeline forwarding.
-  unsigned DefForwarding = GetForwardingClass(DefMI, DefIdx);
-  unsigned UseForwarding = GetForwardingClass(UseMI, UseIdx);
-  return (DefForwarding && DefForwarding == UseForwarding) ? 1 : 0;
-}
-
 std::pair<unsigned, unsigned>
 AIE2PInstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
   const unsigned Mask = AIEII::MO_DIRECT_FLAG_MASK;

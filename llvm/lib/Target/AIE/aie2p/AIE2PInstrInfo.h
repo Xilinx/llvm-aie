@@ -119,11 +119,6 @@ public:
   bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
                                 std::optional<APInt> Immediate) const override;
 
-  unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
-                                const MachineInstr &DefMI, unsigned DefIdx,
-                                const MachineInstr &UseMI,
-                                unsigned UseIdx) const override;
-
   std::optional<int> getFirstMemoryCycle(unsigned SchedClass) const override;
 
   std::optional<int> getLastMemoryCycle(unsigned SchedClass) const override;

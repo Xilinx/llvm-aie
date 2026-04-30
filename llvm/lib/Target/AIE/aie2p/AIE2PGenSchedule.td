@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //* Automatically generated file, do not edit! *
@@ -4218,6 +4218,10 @@ def II_VUPS_4x_mv_ups_w2c_upsSign1 : InstrItinClass;
 def II_VUPS_4x_mv_ups_x2d_upsSign0 : InstrItinClass;
 def II_VUPS_4x_mv_ups_x2d_upsSign1 : InstrItinClass;
 def II_XOR : InstrItinClass;
+
+// HAND-CRAFTED BYPASSES AND ITINERARIES
+include "ExtraItinDecls.td"
+// END HAND-CRAFTED BYPASSES AND ITINERARIES
 
 def AIE2PItineraries : ProcessorItineraries<
 [
@@ -10069,4 +10073,6 @@ InstrItinData<II_VUPS_4x_mv_ups_x2d_upsSign1, [SimpleCycle<CRSAT_RA>, PrefixCycl
 
 // id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__xor__mRx__mRy
 InstrItinData<II_XOR, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+// HAND-CRAFTED: eWH NoBypass itinerary overrides for eWH register operands.
+include "ExtraItineraries.td"
 ]>;

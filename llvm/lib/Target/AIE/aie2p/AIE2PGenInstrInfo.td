@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //* Automatically generated file, do not edit! *
@@ -6229,6 +6229,12 @@ let st = {dst, dontcare{1}, 0b0, 0b010, src, 0b01, 0b1, 0b01100};
 }
 
 let Itinerary = II_VCONV_fp32_bf16_mv_ups_wbf in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VCONV_fp32_bf16_mv_ups_wbf_eWHNoBypass, [OperandRegClass<1, eWH>]>,
+ItinRegClassPair<II_VCONV_fp32_bf16_mv_ups_wbf, [OperandRegClass<1, eWL>]>
+] in
+// END MANUAL ADDITION
 def VCONV_fp32_bf16_mv_ups_wbf : AIE2P_inst_mv_instr32 <(outs OP_mBMm:$dst), (ins OP_mWm:$src), "vconv.fp32.bf16", "$dst, $src">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_wbf
 bits<5> dst;
@@ -6274,6 +6280,12 @@ let mv = {cmp, s2, 0b00, 0b001001010111};
 }
 
 let Itinerary = II_VEXP2 in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VEXP2_eWHNoBypass, [OperandRegClass<0, eWH>]>,
+ItinRegClassPair<II_VEXP2, [OperandRegClass<0, eWL>]>
+] in
+// END MANUAL ADDITION
 def VEXP2 : AIE2P_inst_mv_instr32 <(outs OP_mWm:$dst), (ins OP_mBMm:$src), "vexp2", " $dst, $src">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_nlf__vexp2_subn
 bits<5> dst;
@@ -11821,6 +11833,11 @@ let vec = {acc, dst, acc1, 0b111, dontcare{4-1}, 0b1111, 0b1, 0b1, dontcare{1}, 
 }
 
 let Itinerary = II_VTANH in
+// START MANUAL ADDITION  See ExtraItineraries.td.
+let ItineraryRegPairs = [
+ItinRegClassPair<II_VTANH_eWHNoBypass, [OperandRegClass<0, eWH>]>,
+ItinRegClassPair<II_VTANH, [OperandRegClass<0, eWL>]>] in
+// END MANUAL ADDITION
 def VTANH : AIE2P_inst_mv_instr32 <(outs OP_mWm:$dst), (ins OP_mBMm:$src), "vtanh", " $dst, $src">{
 // id: me__instr128_or__alu_mv__alumv_or__mv__vec_nlf__vtanh
 bits<5> dst;
