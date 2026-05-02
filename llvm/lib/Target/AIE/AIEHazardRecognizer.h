@@ -240,6 +240,15 @@ public:
   // Dump the scoreboard
   void dumpScoreboard() const;
 
+  /// Mutable access to the internal scoreboard. Used by callers that
+  /// route scoreboard manipulation through a FixedRegionScoreboardScheduler
+  /// — the engine constructed in borrow-mode operates on the same
+  /// scoreboard the HR uses for its own scheduling-loop hazard checks.
+  ResourceScoreboard<FuncUnitWrapper> &getScoreboard() { return Scoreboard; }
+  const ResourceScoreboard<FuncUnitWrapper> &getScoreboard() const {
+    return Scoreboard;
+  }
+
   /// The instructions with memory bank attribute return the address space
   /// number
   MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;

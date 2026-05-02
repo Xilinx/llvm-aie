@@ -12,6 +12,7 @@
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBundle.h"
+#include "AIEFixedRegionScoreboardScheduler.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
 #include "AIEMaxLatencyFinder.h"
@@ -271,26 +272,28 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   // getTop() used below behaves sanely.
   assert(!doMBBSchedRegionsTopDown());
   AIEHazardRecognizer *BotHazardRec = getAIEHazardRecognizer(Bot);
-  const int Depth = BotHazardRec->getMaxLookAhead();
-  assert(unsigned(Depth) >= BotHazardRec->getPipelineDepth());
+  AIE::FixedRegionScoreboardScheduler::Config Cfg;
+  // Cfg.II = 0; LowestCycle/HighestCycle unused in borrow mode.
+  AIE::FixedRegionScoreboardScheduler Engine(
+      *BotHazardRec, BotHazardRec->getScoreboard(), Cfg);
+  const int Depth = Engine.getMaxLookAhead();
+  assert(unsigned(Depth) >= Engine.getPipelineDepth());
 
   /// These lambdas are an abstraction of the scoreboard manipulations,
   /// hiding the details of the implementation. In particular, we need to
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
-  auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(MI, MI.getDesc(), Cycle - Depth);
+  auto InsertInCycle = [&](MachineInstr &MI, int Cycle) {
+    Engine.emitInstr(MI, Cycle - Depth);
   };
-  auto BlockCycle = [=](int Cycle) {
-    BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
-  };
+  auto BlockCycle = [&](int Cycle) { Engine.blockCycle(Cycle - Depth); };
 
   /// Do the final alignment of the scoreboard to the position where we
   /// want it. We started it at -Depth representing Cycle 0. The scoreboard
   /// should have CurrentCycle representing the last cycle of the current
   /// block/region so we have to shift it to be in Cycle 1.
-  auto AlignScoreboardToCycleOne = [=]() {
-    BotHazardRec->recedeScoreboard(Depth + 1);
+  auto AlignScoreboardToCycleOne = [&]() {
+    Engine.recedeScoreboard(Depth + 1);
   };
 
   // This tracks unknown cycles resulting from blocks that are too short.
@@ -305,7 +308,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
     // responsibilty lies with our caller not setting Conservative.
     // This may be legitimate to represent a 'done' or 'flush_pipeline'
     // instruction in future
-    FirstBlockedCycle = BotHazardRec->getPipelineDepth();
+    FirstBlockedCycle = Engine.getPipelineDepth();
     for (llvm::MachineBasicBlock *SuccMBB : CurMBB->successors()) {
       // Replay bundles into scoreboard.
       DEBUG_BLOCKS(dbgs() << " SuccBB " << SuccMBB->getNumber() << "\n");
@@ -339,7 +342,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
 
   auto Cap = InterBlock.getBlockedResourceCap(CurMBB);
   if (Cap && IsBottomRegion) {
-    int Margin = BotHazardRec->getPipelineDepth() - *Cap;
+    int Margin = Engine.getPipelineDepth() - *Cap;
     FirstBlockedCycle = std::max(FirstBlockedCycle, Margin);
     DEBUG_BLOCKS(dbgs() << "FirstBlockedCycle = " << Margin << "\n");
   }
@@ -350,7 +353,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   }
 
   AlignScoreboardToCycleOne();
-  DEBUG_BLOCKS(BotHazardRec->dumpScoreboard());
+  DEBUG_BLOCKS(Engine.dumpScoreboard());
 }
 
 void AIEPostRASchedStrategy::initializeTopScoreBoard() {
@@ -369,11 +372,13 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
     return;
 
   AIEHazardRecognizer *TopHazardRec = getAIEHazardRecognizer(Top);
-  auto EmitInstr = [=](MachineInstr &MI) {
-    TopHazardRec->emitInScoreboard(MI, MI.getDesc(), 0);
-  };
+  AIE::FixedRegionScoreboardScheduler::Config Cfg;
+  // Cfg.II = 0 (non-modulo) is the default; LowestCycle/HighestCycle
+  // are unused in borrow mode.
+  AIE::FixedRegionScoreboardScheduler Engine(
+      *TopHazardRec, TopHazardRec->getScoreboard(), Cfg);
 
-  const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
+  const unsigned ConflictHorizon = Engine.getConflictHorizon();
   ArrayRef<MachineBundle> LoopBundles = EpilogueContextOpt->Loop;
   const unsigned LoopCount = EpilogueContextOpt->LoopCount;
   const unsigned LoopSize = LoopBundles.size();
@@ -395,24 +400,24 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   for (int I = 0; I < LoopReplayTimes; I++) {
     for (auto &Bundle : LoopBundles) {
       for (MachineInstr *MI : Bundle.getInstrs()) {
-        EmitInstr(*MI);
+        Engine.emitInstr(*MI, 0);
       }
-      TopHazardRec->AdvanceCycle();
+      Engine.advanceCycle();
     }
   }
 
   // Block cycles, if needed.
   for (int I = 0; I < BlockedCycles; ++I) {
-    TopHazardRec->blockCycleInScoreboard(0);
-    TopHazardRec->AdvanceCycle();
+    Engine.blockCycle(0);
+    Engine.advanceCycle();
   }
 
   // Receed to the starting point.
   for (int I = 0; I < BlockedCycles; ++I) {
-    TopHazardRec->RecedeCycle();
+    Engine.recedeCycle();
   }
 
-  DEBUG_BLOCKS(TopHazardRec->dumpScoreboard());
+  DEBUG_BLOCKS(Engine.dumpScoreboard());
 }
 
 static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
