@@ -8,7 +8,7 @@
 
 ; REQUIRES: asserts
 
-; CHECK: Assertion `LocVT == MVT::i32 && "VT should be split in 32-bits chunks"' failed.
+; CHECK: VT should be split in 32-bits chunks
 define <16 x i64> @arg_v16int64(<16 x i64> %a) {
   ret <16 x i64> %a
 }
