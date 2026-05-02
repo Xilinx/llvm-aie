@@ -122,6 +122,7 @@ add_llvm_target(AIECodeGen
    AIEDumpArtifacts.cpp
    AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
+   AIEFixedRegionScoreboardScheduler.cpp
    AIEGlobalCombiner.cpp
    AIEGlobalCombinerPtrMods.cpp
    AIEHazardRecognizer.cpp
