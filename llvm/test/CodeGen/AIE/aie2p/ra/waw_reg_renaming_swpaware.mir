@@ -55,28 +55,28 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
   ; CHECK-NEXT:   liveins: $dc0, $dc1, $dc4, $dj0, $dj1, $dj4, $dm2:0x000000001800000C, $dm4:0x000000001800000C, $dn0, $dn1, $dn4, $m0, $m1, $p0, $p1, $p2, $r0, $r2, $r3, $r4, $r5, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $x2, $p2, $dc1 = VLD_2D_x_pseudo_split killed $p2, $m1, $dn1, $dj1, killed $dc1 :: (load (<16 x s32>), addrspace 6)
-  ; CHECK-NEXT:   renamable $x4, renamable $p1 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p1, 64 :: (load (<32 x s16>), addrspace 5)
-  ; CHECK-NEXT:   renamable $x6, renamable $p1 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p1, 64 :: (load (<32 x s16>), addrspace 5)
-  ; CHECK-NEXT:   $x8, $p1, $dc0, $dc4 = VLD_3D_x_pseudo_split killed $p1, $m0, $dn0, $dj0, killed $dc0, undef $m4, $dn4, $dj4, killed $dc4 :: (load (<32 x s16>), addrspace 5)
-  ; CHECK-NEXT:   renamable $x10 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x2, 0
-  ; CHECK-NEXT:   renamable $x1 = VSHIFT renamable $x4, renamable $x6, renamable $r0
-  ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm2, renamable $x4, renamable $x10, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x3 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x2, 1
-  ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, renamable $x6, killed renamable $x10, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x7 = VSHIFT renamable $x6, renamable $x8, renamable $r0
-  ; CHECK-NEXT:   renamable $x5 = VSHIFT renamable $x4, renamable $x6, renamable $r3
-  ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x1, renamable $x3, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x9 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x2, 2
-  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, killed renamable $x7, killed renamable $x3, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x10 = VSHIFT renamable $x6, renamable $x8, renamable $r3
-  ; CHECK-NEXT:   renamable $x4 = VSHIFT killed renamable $x4, renamable $x6, renamable $r4
-  ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x5, renamable $x9, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x11 = VEXTBCST_128_vec_extract_broadcast_imm killed renamable $x2, 3
-  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x10, killed renamable $x9, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x6 = VSHIFT killed renamable $x6, killed renamable $x8, renamable $r4
-  ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm0, killed renamable $x4, renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x6, killed renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   $x8, $p2, $dc1 = VLD_2D_x_pseudo_split killed $p2, $m1, $dn1, $dj1, killed $dc1 :: (load (<16 x s32>), addrspace 6)
+  ; CHECK-NEXT:   renamable $x10, renamable $p1 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p1, 64 :: (load (<32 x s16>), addrspace 5)
+  ; CHECK-NEXT:   renamable $x1, renamable $p1 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p1, 64 :: (load (<32 x s16>), addrspace 5)
+  ; CHECK-NEXT:   $x6, $p1, $dc0, $dc4 = VLD_3D_x_pseudo_split killed $p1, $m0, $dn0, $dj0, killed $dc0, undef $m4, $dn4, $dj4, killed $dc4 :: (load (<32 x s16>), addrspace 5)
+  ; CHECK-NEXT:   renamable $x9 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x8, 0
+  ; CHECK-NEXT:   renamable $x5 = VSHIFT renamable $x10, renamable $x1, renamable $r0
+  ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm2, renamable $x10, renamable $x9, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x11 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x8, 1
+  ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, renamable $x1, killed renamable $x9, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x3 = VSHIFT renamable $x1, renamable $x6, renamable $r0
+  ; CHECK-NEXT:   renamable $x7 = VSHIFT renamable $x10, renamable $x1, renamable $r3
+  ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x5, renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x2 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x8, 2
+  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, killed renamable $x3, killed renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x5 = VSHIFT renamable $x1, renamable $x6, renamable $r3
+  ; CHECK-NEXT:   renamable $x10 = VSHIFT killed renamable $x10, renamable $x1, renamable $r4
+  ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x7, renamable $x2, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x4 = VEXTBCST_128_vec_extract_broadcast_imm killed renamable $x8, 3
+  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x5, killed renamable $x2, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x7 = VSHIFT killed renamable $x1, killed renamable $x6, renamable $r4
+  ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm0, killed renamable $x10, renamable $x4, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x7, killed renamable $x4, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
