@@ -125,6 +125,14 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   return *this;
 }
 
+bool FuncUnitWrapper::hasInternalConflict() const {
+  if ((Slots & Conflicts) != 0)
+    return true;
+  if (Slots && !FormatInterface->isFormatAvailable(Slots))
+    return true;
+  return false;
+}
+
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
       (MemObjectsBits & Other.MemObjectsBits) != 0 ||
@@ -140,6 +148,17 @@ bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   // the slot and format details.
   return Slots && Other.Slots &&
          !FormatInterface->isFormatAvailable(Slots | Other.Slots);
+}
+
+void llvm::unionInto(ResourceScoreboard<FuncUnitWrapper> &Dst,
+                     const ResourceScoreboard<FuncUnitWrapper> &Src) {
+  const int First = Src.firstOccupied();
+  const int Last = Src.lastOccupied();
+  for (int C = First; C <= Last; ++C) {
+    if (!Dst.isInRange(C))
+      continue;
+    Dst[C] |= Src[C];
+  }
 }
 
 namespace {

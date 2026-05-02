@@ -123,7 +123,31 @@ public:
 
   FuncUnitWrapper &operator|=(const FuncUnitWrapper &Other);
   bool conflict(const FuncUnitWrapper &Other) const;
+
+  /// Returns true iff this single FuncUnitWrapper, taken on its own,
+  /// cannot be issued as one bundle. Used by the FixedRegionScoreboardScheduler
+  /// shift loop after merging Top/Bot fixed footprints into one cycle.
+  ///
+  /// Detects:
+  ///   - Slots that are also marked as Conflicts (a slot blocking itself).
+  ///   - A non-empty Slot mask that no available format covers.
+  ///
+  /// Does NOT detect "two contributions wanted the same Required FU" once
+  /// they have already been merged via |=, because Required is a bitset and
+  /// the merge is idempotent. Detect that case by calling conflict() on the
+  /// pre-merge contributions instead.
+  bool hasInternalConflict() const;
 };
+
+/// Per-cycle union: for each cycle in the overlapping range,
+/// Dst[c] |= Src[c]. Cycles outside Src's range leave Dst untouched.
+///
+/// Used to merge per-neighbour resource footprints (predecessor tails,
+/// successor heads) into one combined projection scoreboard for the
+/// FixedRegionScoreboardScheduler. The OR semantics is the natural
+/// "any path could exhibit this demand" join from dataflow.
+void unionInto(ResourceScoreboard<FuncUnitWrapper> &Dst,
+               const ResourceScoreboard<FuncUnitWrapper> &Src);
 
 struct MemoryObjectEnumerator {
 private:
