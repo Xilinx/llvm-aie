@@ -42,7 +42,7 @@ void FixedRegionScoreboardScheduler::emitFixedBundleAt(
   }
 }
 
-void FixedRegionScoreboardScheduler::primeAllRegions() {
+bool FixedRegionScoreboardScheduler::primeAllRegions() {
   // Top-fixed bundles anchored at cycle LowestCycle + i.
   for (size_t I = 0; I < Cfg.TopFixedBundles.size(); ++I) {
     const int Cycle = Cfg.LowestCycle + static_cast<int>(I);
@@ -51,9 +51,15 @@ void FixedRegionScoreboardScheduler::primeAllRegions() {
 
   // Bot-fixed bundles anchored at the high end. The first bundle in the
   // array sits earliest, so cycle = HighestCycle - (size - 1 - i).
+  // In modulo mode, before each Bot-fixed emission we check that the
+  // target modulo slot is not already claimed by a Top-fixed bundle —
+  // if it is, report failure so the caller can grow the scoreboard and
+  // retry (the cycle-by-cycle push described in the plan file).
   const int K_bot = static_cast<int>(Cfg.BotFixedBundles.size());
   for (int I = 0; I < K_bot; ++I) {
     const int Cycle = Cfg.HighestCycle - (K_bot - 1 - I);
+    if (Cfg.II > 0 && bundleConflictsAt(Cfg.BotFixedBundles[I], Cycle))
+      return false;
     emitFixedBundleAt(Cfg.BotFixedBundles[I], Cycle);
   }
 
@@ -65,6 +71,24 @@ void FixedRegionScoreboardScheduler::primeAllRegions() {
     unionInto(Scoreboard, *Cfg.PredScoreboard);
   if (Cfg.SuccScoreboard)
     unionInto(Scoreboard, *Cfg.SuccScoreboard);
+
+  return true;
+}
+
+bool FixedRegionScoreboardScheduler::bundleConflictsAt(
+    const MachineBundle &Bundle, int Cycle) const {
+  // A bundle "conflicts at Cycle" iff any of its instructions would
+  // see a hazard when emitted at Cycle — i.e. any cycle in the bundle's
+  // resource footprint overlaps an already-occupied slot.
+  // Bundle.getInstrs() returns a vector of non-const MachineInstr*
+  // pointers; the const-ness here is on the bundle itself.
+  for (MachineInstr *MI : Bundle.getInstrs()) {
+    if (!MI)
+      continue;
+    if (HR.checkConflict(Scoreboard, *MI, conflictSlot(Cycle)))
+      return true;
+  }
+  return false;
 }
 
 std::optional<int>

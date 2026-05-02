@@ -84,7 +84,21 @@ public:
   /// Fixed-region cycles are NOT modulo-broadcast — they execute exactly
   /// once per outer iteration even when Cfg.II > 0. Free instructions
   /// (driven through emit()) get the modulo broadcast.
-  void primeAllRegions();
+  ///
+  /// Returns true on success, false if a Top-fixed bundle and a Bot-fixed
+  /// bundle would collide on the same modulo slot (only possible when
+  /// Cfg.II > 0 and both fixed regions are non-empty). On failure the
+  /// central scoreboard is left in a partially-primed state — the caller
+  /// should discard the engine and rebuild with a larger scoreboard
+  /// (the "shift Bot down by one cycle, grow L" loop described in the
+  /// plan file) or report unsatisfiable resource demand to its own
+  /// caller.
+  ///
+  /// In Cfg.II == 0 mode the only way for Top and Bot to collide is a
+  /// length error caught by the Region-construction precondition
+  /// L >= K_top + K_bot, so this method always returns true in that mode
+  /// for well-formed inputs.
+  [[nodiscard]] bool primeAllRegions();
 
   /// Scan [Earliest, Latest] for a cycle whose modulo slot has no
   /// scoreboard conflict with MI's demand. BottomUp = true scans high
@@ -125,6 +139,12 @@ private:
   /// Emit one bundle's resource demand at the given absolute cycle (no
   /// modulo broadcast — used for fixed-region priming).
   void emitFixedBundleAt(const MachineBundle &Bundle, int Cycle);
+
+  /// Return true iff any instruction in \p Bundle would see a scoreboard
+  /// hazard if emitted at \p Cycle. Used by primeAllRegions() in modulo
+  /// mode to detect Top/Bot fixed-region collisions before committing
+  /// the Bot emission.
+  bool bundleConflictsAt(const MachineBundle &Bundle, int Cycle) const;
 
   /// Map an absolute cycle to the scoreboard slot used for conflict
   /// queries (Cycle % II when modulo, else Cycle).
