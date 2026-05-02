@@ -129,6 +129,24 @@ public:
   int NumIters = 0;
 };
 
+/// A MachineBundle entry in TopFixedBundles / BotFixedBundles is "pinned"
+/// when it carries one or more MachineInstrs. Pinned entries are anchored
+/// to a specific MIR iterator position; the scheduler may not place other
+/// SUs at that cycle and may not move the pinned MIs.
+///
+/// Empty entries (Instrs.empty()) are *fillable cycle anchors* — they
+/// reserve a cycle slot but contribute no resource demand. The scheduler
+/// may place a free SU at that cycle; if no SU lands there, the slot
+/// materialises as a NOP at emission time.
+inline bool bundleIsPinned(const MachineBundle &B) { return !B.empty(); }
+
+/// Count the pinned entries in \p Bundles. Used by Region's iterator math
+/// to convert "logical cycle count" (Bundles.size()) into "MIR iterator
+/// positions consumed at the MBB end" (= number of pinned entries).
+inline size_t countPinned(ArrayRef<MachineBundle> Bundles) {
+  return llvm::count_if(Bundles, bundleIsPinned);
+}
+
 // For interblock scheduling we need the original code (SemanticOrder) to
 // compute inter-block dependences and the scheduled code (Bundles) to check
 // interblock contraints
@@ -220,6 +238,14 @@ public:
   /// in the preheader and exit block.
   std::vector<MachineBundle> TopInsert;
   std::vector<MachineBundle> BottomInsert;
+
+  /// Intra-MBB fixed bundles — backing array for Region::BotFixedBundles
+  /// when the fixed content stays inside this MBB. Distinct from
+  /// BottomInsert: content here is NOT pushed to an adjacent MBB by
+  /// emitInterBlockBottom; it describes constraints on this MBB's own
+  /// bottom region. Used (in a follow-up commit) to anchor a delay-slot
+  /// branch and its trailing fillable cycle anchors.
+  std::vector<MachineBundle> LocalBottomFixed;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
