@@ -731,6 +731,54 @@ BlockState &InterBlockScheduling::getBlockState(MachineBasicBlock *BB) {
   return Blocks.at(BB);
 }
 
+/// If the region's trailing terminator has delay slots, synthesise an in-MBB
+/// BotFixedBundles backing array so the scheduler treats the branch and its
+/// trailing N delay-slot cycles as fixed cycles. Behaviour:
+///   - Branch becomes BS.LocalBottomFixed[0] — pinned at cycle L-N-1.
+///   - N empty BUNDLE pseudo MIs are inserted after the branch in MBB to
+///     back the trailing fillable cycle anchors. Each is one MIR position.
+///   - BS.LocalBottomFixed[1..N] are empty MachineBundle entries; the
+///     scheduler doesn't pick anything for them. If a free SU lands at one
+///     of those cycles via the engine's resource-aware fitInInterval, the
+///     existing fixed-SUnit chain mechanism keeps it co-located there at
+///     commit time.
+/// Idempotent: only fires once per MBB (guarded on BS.LocalBottomFixed
+/// being empty).
+static void synthesiseDelaySlotBotFixed(BlockState &BS, MachineBasicBlock *BB,
+                                        MachineBasicBlock::iterator RegionEnd,
+                                        const AIEBaseInstrInfo *TII) {
+  if (!BS.LocalBottomFixed.empty())
+    return;
+  if (RegionEnd != BB->end())
+    return;
+  if (RegionEnd == BB->begin())
+    return;
+  MachineBasicBlock::iterator BranchIt = std::prev(RegionEnd);
+  if (!BranchIt->hasDelaySlot())
+    return;
+  const unsigned N = TII->getNumDelaySlots(*BranchIt);
+  if (N == 0)
+    return;
+
+  // Insert N empty BUNDLE pseudo MIs after the branch — one MIR position
+  // per delay-slot cycle. Same primitive emitBundles uses today for SWP
+  // empties (AIEInterBlockScheduling.cpp:815).
+  DebugLoc DL;
+  for (unsigned I = 0; I < N; ++I)
+    BuildMI(*BB, BB->end(), DL, TII->get(TargetOpcode::BUNDLE));
+
+  // Build BS.LocalBottomFixed = [branch_bundle, empty × N]. branch_bundle
+  // wraps the existing terminator; the N empty MachineBundles back the
+  // trailing empty BUNDLE pseudos we just inserted. MachineBundle requires
+  // a FormatInterface at construction (no default ctor).
+  const AIEBaseMCFormats *FormatInterface = TII->getFormatInterface();
+  MachineBundle BranchBundle(FormatInterface);
+  BranchBundle.add(&*BranchIt);
+  BS.LocalBottomFixed.push_back(std::move(BranchBundle));
+  for (unsigned I = 0; I < N; ++I)
+    BS.LocalBottomFixed.emplace_back(FormatInterface);
+}
+
 void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
                                        MachineBasicBlock::iterator RegionBegin,
                                        MachineBasicBlock::iterator RegionEnd) {
@@ -741,12 +789,27 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   // Only add regions of loops when in the GatheringRegions phase
   if (BS.Kind != BlockType::Loop ||
       BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
+    // Synthesise an in-MBB BotFixedBundles backing for delay-slot
+    // terminators. After this, the branch and its N delay-slot cycles
+    // are fixed cycles in the Region — the branch is no longer a free
+    // SU. The legacy delay-slot machinery (RegionBottomUpCycles floor,
+    // top-zone reject, tie-break, getDelaySlotInstr) becomes redundant
+    // and is removed in a follow-up step.
+    synthesiseDelaySlotBotFixed(BS, BB, RegionEnd, TII);
+
     ArrayRef<MachineBundle> TopFixedBundles =
         RegionBegin == BB->begin() ? ArrayRef<MachineBundle>(BS.TopInsert)
                                    : ArrayRef<MachineBundle>();
-    ArrayRef<MachineBundle> BotFixedBundles =
-        RegionEnd == BB->end() ? ArrayRef<MachineBundle>(BS.BottomInsert)
-                               : ArrayRef<MachineBundle>();
+    ArrayRef<MachineBundle> BotFixedBundles;
+    if (RegionEnd == BB->end()) {
+      // Prefer the in-MBB synthesis (delay-slot anchor) over BottomInsert
+      // (cross-MBB SWP push). They never both apply to the same MBB
+      // since SWP push targets adjacent MBBs.
+      if (!BS.LocalBottomFixed.empty())
+        BotFixedBundles = ArrayRef<MachineBundle>(BS.LocalBottomFixed);
+      else
+        BotFixedBundles = ArrayRef<MachineBundle>(BS.BottomInsert);
+    }
     BS.addRegion(BB, RegionBegin, RegionEnd, TopFixedBundles, BotFixedBundles);
   }
 }
