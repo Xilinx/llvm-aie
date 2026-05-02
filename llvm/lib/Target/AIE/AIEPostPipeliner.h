@@ -18,6 +18,7 @@
 #include "AIESlotCounts.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include <memory>
 #include <unordered_set>
 #include <vector>
 
@@ -28,6 +29,7 @@ class MachineOptimizationRemarkEmitter;
 } // namespace llvm
 
 namespace llvm::AIE {
+class FixedRegionScoreboardScheduler;
 namespace Solver {
 class SolverData;
 class SWPSolver;
@@ -205,11 +207,11 @@ public:
   // Decide a cycle in [Earliest, Latest] to insert MI, based on resource
   // hazards. Returns the chosen cycle on success, or an empty optional if none
   // fits. The default implementation uses fromTop() to determine scan
-  // direction.
+  // direction and delegates to the FixedRegionScoreboardScheduler engine,
+  // which owns the scoreboard, the current II, and the hazard recognizer.
   virtual std::optional<int>
-  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
-                const AIEHazardRecognizer &HR,
-                ResourceScoreboard<FuncUnitWrapper> &Scoreboard);
+  fitInInterval(const SUnit &SU, int Earliest, int Latest,
+                FixedRegionScoreboardScheduler &Engine);
 };
 
 class PipelineScheduleVisitor {
@@ -241,8 +243,11 @@ class PostPipeliner {
   /// The length of the longest circuit in the graph.
   int RecMII = 0;
 
-  // The scoreboard.
-  ResourceScoreboard<FuncUnitWrapper> Scoreboard;
+  /// The shared scoreboard scheduling engine. Owns the central scoreboard
+  /// and primes/queries/emits to it. Constructed at the start of schedule()
+  /// once II and ScoreboardSize are known; reset between strategy attempts
+  /// via Engine->clear().
+  std::unique_ptr<FixedRegionScoreboardScheduler> Engine;
 
   /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;
@@ -337,6 +342,9 @@ class PostPipeliner {
 
 public:
   PostPipeliner(const AIEHazardRecognizer &HR, int NInstr);
+  /// Out-of-line destructor: required because the Engine member is held by
+  /// unique_ptr to a forward-declared type.
+  ~PostPipeliner();
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
   /// leaves some useful information.

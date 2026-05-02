@@ -13,6 +13,7 @@
 
 #include "AIEPostPipeliner.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEFixedRegionScoreboardScheduler.h"
 #include "AIESWPSolver.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
@@ -50,25 +51,10 @@ static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
-std::optional<int> PostPipelinerStrategy::fitInInterval(
-    const SUnit &SU, int First, int Last, int II, const AIEHazardRecognizer &HR,
-    ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
-  MachineInstr &MI = *SU.getInstr();
-  assert(First <= Last);
-  const int Step = fromTop() ? 1 : -1;
-  if (Step < 0) {
-    std::swap(First, Last);
-  }
-
-  const int Limit = Last + Step;
-  for (int C = First; C != Limit; C += Step) {
-    const int Mod = C % II;
-    if (!HR.checkConflict(Scoreboard, MI, Mod)) {
-      return C;
-    }
-  }
-
-  return std::nullopt;
+std::optional<int>
+PostPipelinerStrategy::fitInInterval(const SUnit &SU, int Earliest, int Latest,
+                                     FixedRegionScoreboardScheduler &Engine) {
+  return Engine.fitInInterval(SU, Earliest, Latest, /*BottomUp=*/!fromTop());
 }
 
 class PostPipelineDumper : public PipelineScheduleVisitor {
@@ -98,6 +84,8 @@ public:
 
 PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr)
     : HR(HR), NInstr(NInstr) {}
+
+PostPipeliner::~PostPipeliner() = default;
 
 bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // We leave the single-block loop criterion to our caller. It is fulfilled
@@ -821,7 +809,7 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
 }
 
 void PostPipeliner::resetSchedule(bool FullReset) {
-  Scoreboard.clear();
+  Engine->clear();
   int K = 0;
   for (auto &N : Info.Nodes) {
     N.reset(FullReset);
@@ -838,11 +826,9 @@ void PostPipeliner::resetSchedule(bool FullReset) {
 
 bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   // Set up the basic schedule from the original instructions
-  const int PipelineDepth = HR.getPipelineDepth();
   for (int K = 0; K < NInstr; K++) {
     const int N = mostUrgent(Strategy);
     SUnit &SU = DAG->SUnits[N];
-    MachineInstr *const MI = SU.getInstr();
     const int Earliest = Strategy.earliest(SU);
     const int Latest = Strategy.latest(SU);
     LLVM_DEBUG(
@@ -852,8 +838,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       return false;
     }
 
-    auto OptCycle =
-        Strategy.fitInInterval(SU, Earliest, Latest, II, HR, Scoreboard);
+    auto OptCycle = Strategy.fitInInterval(SU, Earliest, Latest, *Engine);
     if (!OptCycle) {
       LLVM_DEBUG(dbgs() << "Out of resources\n");
 
@@ -865,35 +850,20 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     }
     const int Actual = *OptCycle;
     Strategy.selected(SU);
-    const int ModCycle = Actual % II;
-    const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
-    const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
-    int Cycle = ModCycle;
-    // We are scheduling the first iteration, checking for conflicts with other
-    // instructions that were scheduled earlier.
-    // Newly scheduled instruction have ModCycle < II,
-    // and have no conflict beyond
-    // ModCycle + PipelineDepth
-    const int Horizon =
-        std::min(II + PipelineDepth, ScoreboardSize - PipelineDepth);
-    LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    int Iter = 0;
-    while (Cycle < Horizon) {
-      if (HR.checkConflict(Scoreboard, *MI, Cycle)) {
-        LLVM_DEBUG(dbgs() << "Conflict in iteration N=" << Iter << "\n");
-        return false;
-      }
+    LLVM_DEBUG(dbgs() << "  Emit in " << (Actual % II) << "\n");
 
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
-                          MI->operands(), MI->getMF()->getRegInfo(), Cycle);
-      Cycle += II;
-      Iter++;
-    }
+    // Emit the new instruction's resource demand at its modulo cell and
+    // broadcast it across all future iteration windows up to the horizon.
+    // Returns false if any future-iteration emission detects a conflict
+    // with an already-scheduled instruction — matches the legacy
+    // "Conflict in iteration N=…" early-out behaviour.
+    if (!Engine->emit(SU, Actual))
+      return false;
 
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
 
-    DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
+    DEBUG_FULL(dbgs() << "Scoreboard\n"; Engine->getScoreboard().dumpFull(););
   }
 
   const bool Success = checkStages();
@@ -1320,25 +1290,23 @@ public:
   // nodes one cycle later so their earliest modulo slot stays free
   // for critical-path nodes.
   std::optional<int>
-  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
-                const AIEHazardRecognizer &HR,
-                ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
+  fitInInterval(const SUnit &SU, int Earliest, int Latest,
+                FixedRegionScoreboardScheduler &Engine) override {
     const bool ShouldDefer = llvm::is_contained(Modifiers, DeferNonCritical) &&
                              Info[SU.NodeNum].EffectiveHeight == 0;
     if (ShouldDefer && Earliest + 1 <= Latest) {
       // Try the deferred range [Earliest+1, Latest] first. If no
       // resource-free cycle exists there, fall back to the original
       // range so the node is never left unscheduled.
-      auto Result = PostPipelinerStrategy::fitInInterval(
-          SU, Earliest + 1, Latest, II, HR, Scoreboard);
+      auto Result = PostPipelinerStrategy::fitInInterval(SU, Earliest + 1,
+                                                         Latest, Engine);
       if (Result)
         return Result;
       // No need to retry [Earliest+1, Latest]
-      return PostPipelinerStrategy::fitInInterval(SU, Earliest, Earliest, II,
-                                                  HR, Scoreboard);
+      return PostPipelinerStrategy::fitInInterval(SU, Earliest, Earliest,
+                                                  Engine);
     }
-    return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
-                                                Scoreboard);
+    return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, Engine);
   }
 };
 
@@ -1527,7 +1495,11 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   const int InsertRange = std::max(II, int(HR.getPipelineDepth()));
 
   ScoreboardSize = InsertRange + HR.getPipelineDepth();
-  Scoreboard.config(0, ScoreboardSize - 1);
+  FixedRegionScoreboardScheduler::Config Cfg;
+  Cfg.II = II;
+  Cfg.LowestCycle = 0;
+  Cfg.HighestCycle = ScoreboardSize - 1;
+  Engine = std::make_unique<FixedRegionScoreboardScheduler>(HR, Cfg);
 
   Info.init(NInstr);
 
