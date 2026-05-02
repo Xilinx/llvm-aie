@@ -22,11 +22,23 @@ using namespace llvm::AIE;
 
 FixedRegionScoreboardScheduler::FixedRegionScoreboardScheduler(
     const AIEHazardRecognizer &HR, const Config &Cfg)
-    : HR(HR), Cfg(Cfg) {
+    : HR(HR), Cfg(Cfg), Scoreboard(OwnedScoreboard) {
   assert(Cfg.LowestCycle <= Cfg.HighestCycle &&
          "Empty scoreboard configuration");
   assert(Cfg.II >= 0 && "II must be non-negative (0 disables modulo)");
   Scoreboard.config(Cfg.LowestCycle, Cfg.HighestCycle);
+}
+
+FixedRegionScoreboardScheduler::FixedRegionScoreboardScheduler(
+    const AIEHazardRecognizer &HR,
+    ResourceScoreboard<FuncUnitWrapper> &Borrowed, const Config &Cfg)
+    : HR(HR), Cfg(Cfg), Scoreboard(Borrowed) {
+  assert(Cfg.II >= 0 && "II must be non-negative (0 disables modulo)");
+  // Borrow mode: caller owns and has already configured the scoreboard.
+  // We do not assert Cfg.LowestCycle/HighestCycle against the borrowed
+  // size because the regular scheduler uses an HR-internal scoreboard
+  // whose bounds are set independently and may not match what Cfg
+  // documents.
 }
 
 void FixedRegionScoreboardScheduler::emitFixedBundleAt(
@@ -146,6 +158,38 @@ bool FixedRegionScoreboardScheduler::emit(const SUnit &SU, int Cycle) {
     Emit += Cfg.II;
   }
   return true;
+}
+
+void FixedRegionScoreboardScheduler::emitInstr(const MachineInstr &MI,
+                                               int Cycle) {
+  HR.emitInScoreboard(Scoreboard, MI, MI.getDesc(), Cycle);
+}
+
+void FixedRegionScoreboardScheduler::blockCycle(int Cycle) {
+  assert(Scoreboard.isInRange(Cycle) &&
+         "blockCycle called with out-of-range Cycle");
+  Scoreboard[Cycle].blockResources();
+}
+
+void FixedRegionScoreboardScheduler::advanceCycle() { Scoreboard.advance(); }
+
+void FixedRegionScoreboardScheduler::recedeCycle() { Scoreboard.recede(); }
+
+void FixedRegionScoreboardScheduler::recedeScoreboard(int N) {
+  while (N--)
+    Scoreboard.recede();
+}
+
+unsigned FixedRegionScoreboardScheduler::getMaxLookAhead() const {
+  return HR.getMaxLookAhead();
+}
+
+int FixedRegionScoreboardScheduler::getConflictHorizon() const {
+  return HR.getConflictHorizon();
+}
+
+unsigned FixedRegionScoreboardScheduler::getPipelineDepth() const {
+  return HR.getPipelineDepth();
 }
 
 void FixedRegionScoreboardScheduler::dump() const {

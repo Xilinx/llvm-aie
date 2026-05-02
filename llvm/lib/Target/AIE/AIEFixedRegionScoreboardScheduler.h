@@ -74,7 +74,24 @@ public:
         FixedRegionScoreboardTrust::Conservative;
   };
 
+  /// Owned-scoreboard mode: engine allocates and configures its own
+  /// ResourceScoreboard from Cfg.LowestCycle/HighestCycle. Used by the
+  /// post-pipeliner — the scoreboard is private to one schedule()
+  /// invocation and discarded afterward.
   FixedRegionScoreboardScheduler(const AIEHazardRecognizer &HR,
+                                 const Config &Cfg);
+
+  /// Borrowed-scoreboard mode: engine operates on \p Scoreboard, which
+  /// the caller owns and has already configured. Used by the regular
+  /// post-RA scheduler so the engine and the AIEHazardRecognizer's
+  /// scheduling-loop usage share one scoreboard.
+  ///
+  /// Cfg.LowestCycle / HighestCycle are not used to (re)configure the
+  /// borrowed scoreboard — the caller is responsible for sizing.
+  /// Cfg.II is still consulted for modulo behaviour in fitInInterval/
+  /// emit, but the regular scheduler always passes Cfg.II = 0.
+  FixedRegionScoreboardScheduler(const AIEHazardRecognizer &HR,
+                                 ResourceScoreboard<FuncUnitWrapper> &Borrowed,
                                  const Config &Cfg);
 
   /// Emit the fixed-region demands (Top/Bot bundles + Pred/Succ
@@ -129,12 +146,57 @@ public:
   /// scoreboards are caller-owned and untouched.
   void clear() { Scoreboard.clear(); }
 
+  /// Emit one MachineInstr's resource demand at \p Cycle (no modulo
+  /// broadcast). Counterpart to AIEHazardRecognizer's no-extra-args
+  /// emitInScoreboard for use by callers that prime cycle-by-cycle
+  /// (e.g. the regular scheduler replaying successor heads).
+  void emitInstr(const MachineInstr &MI, int Cycle);
+
+  /// Mark the cycle's resources as fully blocked. Counterpart to
+  /// AIEHazardRecognizer::blockCycleInScoreboard.
+  void blockCycle(int Cycle);
+
+  /// Advance / recede the scoreboard by one cycle. Counterparts to
+  /// the same-named methods on AIEHazardRecognizer (which forward to
+  /// the underlying ResourceScoreboard). Side note: HR's AdvanceCycle/
+  /// RecedeCycle additionally decrement its ReservedCycles counter;
+  /// the engine forwarders don't, because they're meant for priming
+  /// contexts where ReservedCycles is zero.
+  void advanceCycle();
+  void recedeCycle();
+
+  /// Recede the scoreboard by \p N cycles. Counterpart to
+  /// AIEHazardRecognizer::recedeScoreboard.
+  void recedeScoreboard(int N);
+
+  /// HR pass-through accessors used by the regular scheduler at sizing
+  /// and horizon-decision time. Provided here so callers that route
+  /// scoreboard ops through the engine can also read these without
+  /// keeping a separate HR reference around. Signatures match HR's
+  /// (unsigned for getMaxLookAhead/getPipelineDepth, int for
+  /// getConflictHorizon).
+  unsigned getMaxLookAhead() const;
+  int getConflictHorizon() const;
+  unsigned getPipelineDepth() const;
+
+  /// Dump the scoreboard. Counterpart to
+  /// AIEHazardRecognizer::dumpScoreboard.
+  void dumpScoreboard() const { Scoreboard.dump(); }
+
   void dump() const;
 
 private:
   const AIEHazardRecognizer &HR;
   Config Cfg;
-  ResourceScoreboard<FuncUnitWrapper> Scoreboard;
+
+  /// Owned in owned-scoreboard mode; left unused (default-constructed)
+  /// in borrowed-scoreboard mode.
+  ResourceScoreboard<FuncUnitWrapper> OwnedScoreboard;
+
+  /// References either OwnedScoreboard or the caller-owned scoreboard
+  /// passed to the borrow constructor. All engine internal logic talks
+  /// to this reference; mode (owned vs borrowed) is invisible.
+  ResourceScoreboard<FuncUnitWrapper> &Scoreboard;
 
   /// Emit one bundle's resource demand at the given absolute cycle (no
   /// modulo broadcast — used for fixed-region priming).
