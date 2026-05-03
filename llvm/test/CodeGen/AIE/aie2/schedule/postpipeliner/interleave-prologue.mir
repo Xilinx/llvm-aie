@@ -345,13 +345,13 @@ body:             |
   ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $x2 = VBCST_16 killed $r2
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit $p0, implicit killed $x6, implicit $x1, implicit $r8 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $r4, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit $p0, implicit killed $x6, implicit $x1, implicit $r8 {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:     $r4 = MOVX_alu_cg 0
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x6, $x1, $r8
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $r4, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit killed $p0, implicit $m0, implicit killed $x5, implicit $x2, implicit $r8 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit killed $p0, implicit $m0, implicit killed $x5, implicit $x2, implicit $r8 {
   ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
-  ; CHECK-NEXT:     $r4 = MOVX_alu_cg 0
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}

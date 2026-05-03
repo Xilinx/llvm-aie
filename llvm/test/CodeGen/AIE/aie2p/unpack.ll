@@ -10,13 +10,14 @@
 define dso_local noundef <64 x i8> @_Z17unpack_I512_I8_I4Dv32_DB8_b(<32 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z17unpack_I512_I8_I4Dv32_DB8_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack x0, wl2, unpacksign0; nopxm
+; CHECK-NEXT:    vunpack x0, wl2, unpacksign0; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 3
-; CHECK-NEXT:    mov crunpacksize, #0 // Delay Slot 2
-; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 1
+; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 4
+; CHECK-NEXT:    mov crunpacksize, #0 // Delay Slot 3
+; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call noundef <64 x i8> @llvm.aie2p.unpack.I512.I8.I4(<32 x i8> %v, i32 %conv.i)
@@ -26,13 +27,14 @@ entry:
 define dso_local noundef <32 x i16> @_Z18unpack_I512_I16_I8Dv32_hb(<32 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z18unpack_I512_I16_I8Dv32_hb:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack x0, wl2, unpacksign0; nopxm
+; CHECK-NEXT:    vunpack x0, wl2, unpacksign0; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 3
-; CHECK-NEXT:    mov crunpacksize, #1 // Delay Slot 2
-; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 1
+; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 4
+; CHECK-NEXT:    mov crunpacksize, #1 // Delay Slot 3
+; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call noundef <32 x i16> @llvm.aie2p.unpack.I512.I16.I8(<32 x i8> %v, i32 %conv.i)
@@ -42,13 +44,14 @@ entry:
 define dso_local noundef <128 x i8> @_Z18unpack_I1024_I8_I4Dv64_DB8_b(<64 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z18unpack_I1024_I8_I4Dv64_DB8_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack y2, x0, unpacksign0; nopxm
+; CHECK-NEXT:    vunpack y2, x0, unpacksign0; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 3
-; CHECK-NEXT:    mov crunpacksize, #0 // Delay Slot 2
-; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 1
+; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 4
+; CHECK-NEXT:    mov crunpacksize, #0 // Delay Slot 3
+; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call noundef <128 x i8> @llvm.aie2p.unpack.I1024.I8.I4(<64 x i8> %v, i32 %conv.i)
@@ -58,13 +61,14 @@ entry:
 define dso_local noundef <64 x i16> @_Z19unpack_I1024_I16_I8Dv64_ab(<64 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z19unpack_I1024_I16_I8Dv64_ab:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack y2, x0, unpacksign0; nopxm
+; CHECK-NEXT:    vunpack y2, x0, unpacksign0; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 3
-; CHECK-NEXT:    mov crunpacksize, #1 // Delay Slot 2
-; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 1
+; CHECK-NEXT:    mov unpacksign0, r0 // Delay Slot 4
+; CHECK-NEXT:    mov crunpacksize, #1 // Delay Slot 3
+; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call noundef <64 x i16> @llvm.aie2p.unpack.I1024.I16.I8(<64 x i8> %v, i32 %conv.i)

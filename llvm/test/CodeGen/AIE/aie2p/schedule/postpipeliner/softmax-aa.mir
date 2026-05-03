@@ -152,8 +152,8 @@
   ; CHECK-NEXT:    movxm ls, #.LBB1_3; vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; movxm le, #.L_LEnd1; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    padda [p0], m0; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:    padda [p0], m0; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB1_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB1_2 Depth=1

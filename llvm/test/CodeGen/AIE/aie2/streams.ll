@@ -27,11 +27,11 @@ define i32 @put_ms_nb(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_nb:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
-; CHECK-NEXT:    mov.nb.tlast ms, r1 // Delay Slot 4
+; CHECK-NEXT:    mov.nb.tlast ms, r1; nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %b = tail call i32 @llvm.aie2.put.ms.nb(i32 %a, i32 1)
   ret i32 %b
@@ -40,15 +40,16 @@ entry:
 define { i32, i32 } @get_ss(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: get_ss:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mov r0, SS; nopb ; nopxm
+; CHECK-NEXT:    mov r0, SS; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r1, srSS0 // Delay Slot 1
+; CHECK-NEXT:    mov r1, srSS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = call { i32, i32 } @llvm.aie2.get.ss()
   ret { i32, i32 } %0
@@ -57,15 +58,16 @@ entry:
 define { i32, i32 } @get_ss_nb(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: get_ss_nb:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mov.nb r0, SS; nopb ; nopxm
+; CHECK-NEXT:    mov.nb r0, SS; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r1, srSS0 // Delay Slot 1
+; CHECK-NEXT:    mov r1, srSS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = call { i32, i32 } @llvm.aie2.get.ss.nb()
   ret { i32, i32 } %0
@@ -108,8 +110,8 @@ define i32 @put_ms_ph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %dstID) local_un
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.put.ms.nb.packet.header(i32 %tlast, i32 %dstID, i32 5)
   ret i32 %0
@@ -122,8 +124,8 @@ define i32 @put_ms_ph_nb(i32 inreg %dstID) local_unnamed_addr {
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.put.ms.nb.packet.header(i32 0, i32 %dstID, i32 5)
   ret i32 %0
@@ -167,8 +169,8 @@ define i32 @put_ms_cph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inre
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.put.ms.nb.ctrl.packet.header(i32 %tlast, i32 %addr, i32 4, i32 3, i32 %rspID)
   ret i32 %0
@@ -182,8 +184,8 @@ define i32 @put_ms_cph_nb(i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr 
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.put.ms.nb.ctrl.packet.header(i32 0, i32 %addr, i32 1, i32 13, i32 %rspID)
   ret i32 %0

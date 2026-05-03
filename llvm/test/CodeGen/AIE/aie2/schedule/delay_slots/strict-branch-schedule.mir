@@ -20,15 +20,16 @@ body:             |
     ; CHECK-LABEL: name: lda_slot
     ; CHECK: liveins: $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $r1, implicit killed $r0 {
-    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 1
+    ; CHECK-NEXT: $r1 = MOVA_lda_cg 1
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit killed $r0 {
+    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 2
     ; CHECK-NEXT:   JNZ killed renamable $r0, 200
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r2 = MOVA_lda_cg 2
     ; CHECK-NEXT: $r3 = MOVA_lda_cg 3
     ; CHECK-NEXT: $r4 = MOVA_lda_cg 4
     ; CHECK-NEXT: $r5 = MOVA_lda_cg 5
     ; CHECK-NEXT: $r6 = MOVA_lda_cg 6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier
     $r1 = MOVA_lda_cg 1
     $r2 = MOVA_lda_cg 2
@@ -51,12 +52,13 @@ body:             |
     ; CHECK: liveins: $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r1 = MOVXM_lng_cg 1
-    ; CHECK-NEXT: JNZ killed renamable $r0, 200
     ; CHECK-NEXT: $r2 = MOVXM_lng_cg 2
+    ; CHECK-NEXT: JNZ killed renamable $r0, 200
     ; CHECK-NEXT: $r3 = MOVXM_lng_cg 3
     ; CHECK-NEXT: $r4 = MOVXM_lng_cg 4
     ; CHECK-NEXT: $r5 = MOVXM_lng_cg 5
     ; CHECK-NEXT: $r6 = MOVXM_lng_cg 6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier
     $r1 = MOVXM_lng_cg 1
     $r2 = MOVXM_lng_cg 2
@@ -81,12 +83,13 @@ body:             |
     ; CHECK: liveins: $r0, $r6
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
+    ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: JNZ killed renamable $r0, 200
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
-    ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier
     $r6 = ADD $r6, $r6, implicit-def $srcarry
     $r6 = ADD $r6, $r6, implicit-def $srcarry
@@ -110,12 +113,13 @@ body:             |
     ; CHECK: liveins: $r0, $r6
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
+    ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
-    ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier
     $r6 = ADD $r6, $r6, implicit-def $srcarry
     $r6 = ADD $r6, $r6, implicit-def $srcarry

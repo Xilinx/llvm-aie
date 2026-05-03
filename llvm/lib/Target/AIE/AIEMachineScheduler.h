@@ -71,9 +71,12 @@ public:
                   RegPressureTracker *RPTracker, PressureDiffs *PDiffs,
                   LiveIntervals *LIS, bool TrackLaneMasks) override;
 
-  /// Adds a SUnit for the given fixed instruction
+  /// Records the given fixed instruction's SUnit in the fixed-range
+  /// bookkeeping. The SUnit is expected to already exist in the SchedDAG
+  /// (created in buildGraph before DAG.buildEdges runs, so that register
+  /// dep edges between free and fixed SUs are computed).
   /// \param IsTop Whether MI is fixed at the top or bottom of the region
-  SUnit &addFixedSUnit(MachineInstr &MI, bool IsTop);
+  SUnit &markFixedSUnit(MachineInstr &MI, bool IsTop);
 
   /// Whether \p SU is fixed in a specific cycle of the given zone.
   bool isFixedSU(const SUnit &SU, bool IsTop) const;
@@ -96,6 +99,17 @@ public:
   void initializeBotScoreBoard(ScoreboardTrust Trust);
 
   void initializeTopScoreBoard();
+
+  /// After Bot scoreboard is primed (Conservative blocking, successor-tail
+  /// replay, AccountForAlign slack, ZOL margins), walk every free SU and
+  /// upgrade its F → ExitSU artificial edge latency to a "safe distance"
+  /// that prevents F's resource reservation from colliding with anything
+  /// already on the scoreboard. This makes implicit scoreboard-blocking
+  /// constraints explicit in the SchedDAG, eliminating the lockstep
+  /// BotReadyCycle/CurrCycle inflation in `pickOnlyChoice` for free SUs
+  /// whose natural BotReady would otherwise land them in the
+  /// scoreboard-blocked band.
+  void upgradeFreeSUExitEdgesViaScoreboard(ScheduleDAGMI *Dag);
 
   MachineBasicBlock *nextBlock() override;
 
@@ -135,9 +149,13 @@ protected:
   SUnit *getNextUnscheduledFixedInstr(const SchedBoundary &Zone) const;
 
   /// SU numbers for fixed instructions.
-  /// "top" fixed SUnits belong in [FirstTopFixedSU,FirstBotFixedSU)
-  /// "bot" fixed SUnits belong in [FirstBotFixedSU,LastBotFixedSU]
+  /// "top" fixed SUnits belong in [FirstTopFixedSU, LastTopFixedSU]
+  /// "bot" fixed SUnits belong in [FirstBotFixedSU, LastBotFixedSU]
+  /// (Phase 0b creates SUs in MIR order: top-fixed | free | bot-fixed,
+  /// so Last*FixedSU bounds are necessary — free SUs interleave between
+  /// top and bot fixed in the NodeNum range.)
   std::optional<unsigned> FirstTopFixedSU;
+  std::optional<unsigned> LastTopFixedSU;
   std::optional<unsigned> FirstBotFixedSU;
   std::optional<unsigned> LastBotFixedSU;
 

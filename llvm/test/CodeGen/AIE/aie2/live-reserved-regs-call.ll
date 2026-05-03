@@ -16,9 +16,9 @@ define void @caller1() {
 ; CHECK-NEXT:    nopb ; nopa ; nops ; j #callee1; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crSat, #1 // Delay Slot 2
-; CHECK-NEXT:    mov crRnd, #12 // Delay Slot 1
+; CHECK-NEXT:    mov crSat, #1 // Delay Slot 3
+; CHECK-NEXT:    mov crRnd, #12 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
 	call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
   	call void @llvm.aie2.set.ctrl.reg(i32 6, i32 12)

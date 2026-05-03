@@ -11,11 +11,11 @@ define i64 @test_eqz_v64i8(<64 x i8> %a) {
 ; CHECK-LABEL: test_eqz_v64i8:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    veqz.8 r25:r24, x0 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    veqz.8 r25:r24, x0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov r0, r24 // Delay Slot 3
+; CHECK-NEXT:    mov r1, r25 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <2 x i32> @llvm.aie2.veqz8(<64 x i8> %a)
   %1 = bitcast <2 x i32> %0 to i64
@@ -26,11 +26,11 @@ define i32 @test_eqz_v32i16(<32 x i16> %a) {
 ; CHECK-LABEL: test_eqz_v32i16:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    veqz.16 r16, x0 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    veqz.16 r16, x0 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov r0, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.veqz16(<32 x i16> %a)
   ret i32 %0
@@ -40,11 +40,11 @@ define i32 @test_eqz_v16i32(<16 x i32> %a) {
 ; CHECK-LABEL: test_eqz_v16i32:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    veqz.32 r16, x0 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    veqz.32 r16, x0 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov r0, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.veqz32(<16 x i32> %a)
   ret i32 %0
@@ -54,11 +54,11 @@ define i32 @test_eqz_v32bf16(<32 x bfloat> %a) {
 ; CHECK-LABEL: test_eqz_v32bf16:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    veqz.16 r16, x0 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    veqz.16 r16, x0 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov r0, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %a to <32 x i16>
   %1 = tail call i32 @llvm.aie2.veqz16(<32 x i16> %0)

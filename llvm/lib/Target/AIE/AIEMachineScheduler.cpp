@@ -431,6 +431,62 @@ static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
   return &(*It);
 }
 
+void AIEPostRASchedStrategy::upgradeFreeSUExitEdgesViaScoreboard(
+    ScheduleDAGMI *Dag) {
+  AIEHazardRecognizer *BotHR = getAIEHazardRecognizer(Bot);
+  if (!BotHR || BotHR->getMaxLookAhead() == 0)
+    return;
+
+  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+
+  SmallPtrSet<const MachineInstr *, 16> FixedMIs;
+  for (const MachineInstr &MI : Reg.top_fixed_instrs())
+    FixedMIs.insert(&MI);
+  for (const MachineInstr &MI : Reg.bot_fixed_instrs())
+    FixedMIs.insert(&MI);
+
+  const int MaxOffset = static_cast<int>(BotHR->getMaxLookAhead());
+
+  for (SUnit &SU : Dag->SUnits) {
+    MachineInstr *MI = SU.getInstr();
+    if (!MI || FixedMIs.count(MI))
+      continue;
+
+    // Walk distance D upward from 0 until F fits at scoreboard offset -D
+    // without hazard. Math: F at distance D reserves bot cycles
+    // [D - M + 1, D] where M = MaxLatency(F); the primed scoreboard
+    // covers some band [0, K-1] (Conservative post-exit reservation,
+    // successor-tail replay, ZOL margin, AccountForAlign slack). The
+    // smallest D with no overlap is K + M - 1 in the simple case.
+    //
+    // Use BotHR->getHazardType(SU, DeltaCycles), the same entry point
+    // the runtime hazard scan uses. It handles:
+    //   - meta instructions (NoHazard early exit),
+    //   - reserved-cycle check (delay-slot interaction),
+    //   - issue-limit check,
+    //   - alternate-opcode resolution via getAlternateInstsOpcode + the
+    //     SelectedAltDescs side-effect (we tolerate the side-effect — the
+    //     runtime path will pick a different alt later if needed and
+    //     overwrite this).
+    // This avoids the `getSlot() / hasSingleSlot()` assertion that the
+    // raw checkConflict path triggers on multi-slot pseudos whose alt
+    // hasn't been resolved yet.
+    int SafeDistance = 0;
+    while (SafeDistance < MaxOffset &&
+           BotHR->getHazardType(&SU, -SafeDistance) !=
+               ScheduleHazardRecognizer::NoHazard)
+      ++SafeDistance;
+
+    if (SafeDistance == 0)
+      continue; // SU already fits at the current cycle.
+
+    // addPred dedups via SDep::overlaps and extends latency to max.
+    SDep Dep(&SU, SDep::Artificial);
+    Dep.setLatency(static_cast<unsigned>(SafeDistance));
+    Dag->ExitSU.addPred(Dep, /*Required=*/true);
+  }
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
@@ -445,6 +501,17 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   initializeBotScoreBoard(Conservative ? ScoreboardTrust::Conservative
                                        : NonConservative);
   initializeTopScoreBoard();
+
+  // The bot scoreboard now reflects every implicit reservation the
+  // scheduler will respect (Conservative post-exit band, successor-tail
+  // replay, AccountForAlign slack, ZOL margins). Make those reservations
+  // explicit in the SchedDAG by upgrading each free SU's F → ExitSU
+  // artificial edge to a latency at which the SU's resources don't
+  // conflict with the primed scoreboard. Without this, free SUs whose
+  // natural BotReadyCycle is below the blocked band hit the
+  // hazard-scan-fall-through path in isAvailableNode and trigger lockstep
+  // BotReadyCycle / CurrCycle growth in pickOnlyChoice's cycle-bump loop.
+  upgradeFreeSUExitEdgesViaScoreboard(Dag);
 
   // Delay slots are scheduled bottom up to be sure the control-flow instruction
   // is issued exactly TII->getNumDelaySlots() before the end of the region.
@@ -641,16 +708,14 @@ SUnit *AIEPostRASchedStrategy::getNextUnscheduledFixedInstr(
 bool AIEPostRASchedStrategy::isFixedSU(const SUnit &SU, bool IsTop) const {
   if (IsTop) {
     return FirstTopFixedSU && SU.NodeNum >= *FirstTopFixedSU &&
-           SU.NodeNum < FirstBotFixedSU.value_or(DAG->SUnits.size());
+           SU.NodeNum <= LastTopFixedSU.value();
   }
   return FirstBotFixedSU && SU.NodeNum >= *FirstBotFixedSU &&
          SU.NodeNum <= LastBotFixedSU.value();
 }
 
 bool AIEPostRASchedStrategy::isFreeSU(const SUnit &SU) const {
-  const unsigned NumUpperBound = DAG->SUnits.size();
-  return SU.NodeNum < FirstTopFixedSU.value_or(NumUpperBound) &&
-         SU.NodeNum < FirstBotFixedSU.value_or(NumUpperBound);
+  return !isFixedSU(SU, /*IsTop=*/true) && !isFixedSU(SU, /*IsTop=*/false);
 }
 
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
@@ -716,6 +781,36 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 /// Called after ScheduleDAGMI has scheduled an instruction and updated
 /// scheduled/remaining flags in the DAG nodes.
 void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
+  // Fixed SUs are anchored at specific cycles by the artificial chain in
+  // EmitFixedSUnits. The standard `Zone.bumpNode` advances the zone's
+  // CurrCycle to the SU's emission cycle (via `bumpCycle(NextCycle)` if
+  // NextCycle > CurrCycle), which is correct for free SUs scheduled in
+  // dependency order. For fixed SUs picked via the bypass, that advance
+  // drags every other free SU's effective BotReady (via the
+  // `std::max(CurrCycle, BotReady)` clamp in isAvailableNode) into the
+  // scoreboard's blocked band, triggering pickOnlyChoice's lockstep
+  // cycle-bumping. Avoid this by emitting fixed SUs to the scoreboard
+  // directly at their anchor offset, without touching CurrCycle. Free SUs
+  // that come after see the original CurrCycle and schedule normally.
+  if (isFixedSU(*SU, /*IsTop=*/IsTopNode)) {
+    AIEHazardRecognizer *HR = getAIEHazardRecognizer(IsTopNode ? Top : Bot);
+    SchedBoundary &Zone = IsTopNode ? Top : Bot;
+    int DeltaCycles;
+    if (IsTopNode)
+      DeltaCycles = int(SU->TopReadyCycle) - int(Zone.getCurrCycle());
+    else
+      DeltaCycles = int(Zone.getCurrCycle()) - int(SU->BotReadyCycle);
+    HR->EmitInstruction(SU, DeltaCycles);
+    // SchedBoundary::bumpNode normally emits a "  Ready @Nc" debug line
+    // right after "Scheduling SU(N)". Since our custom emit-only path
+    // bypasses bumpNode, emit the marker manually so QoR sentinel parsers
+    // (e.g. llvm/utils/imisched.py's schedlogparser.SCHED_ACTION_RE) can
+    // match every scheduled SU to a complete schedule action block.
+    unsigned ReadyCycle = IsTopNode ? SU->TopReadyCycle : SU->BotReadyCycle;
+    LLVM_DEBUG(dbgs() << "  Ready @" << ReadyCycle << "c\n");
+    return;
+  }
+
   if (IsTopNode) {
     const int DeltaCycles = int(SU->TopReadyCycle) - int(Top.getCurrCycle());
     assert(DeltaCycles <= 0);
@@ -878,6 +973,7 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   RegionEnd = nullptr;
   IsBottomRegion = false;
   FirstTopFixedSU = {};
+  LastTopFixedSU = {};
   FirstBotFixedSU = {};
   LastBotFixedSU = {};
   BS.advanceRegion();
@@ -1485,6 +1581,56 @@ void AIEScheduleDAGMILive::exitRegion() {
   ScheduleDAGMILive::exitRegion();
 }
 
+/// Strip non-artificial edges whose both endpoints are fixed-SU MIs.
+///
+/// Phase 0b puts fixed SUs in the SchedDAG before DAG.buildEdges runs so
+/// buildEdges can compute free↔fixed register/memory edges (this is what
+/// fixes correctness for cases like `aie2/set.ll`, where a free `and`
+/// must precede a fixed-SU `jz` that reads its result). The collateral
+/// damage is fixed↔fixed register/memory edges, which buildEdges also
+/// produces — and which break SWP modulo schedules in two ways:
+///   1. Real operand latencies (e.g. lat=4 from a MAC) dominate the
+///      artificial chain's lat=1, inflating fixed-SU heights past the
+///      cycle anchored by the chain.
+///   2. Modulo-cloned BUNDLE wrappers expose the same physreg as both
+///      def and use, and buildEdges' kill-and-redefine bookkeeping can
+///      register edges in both directions between two adjacent wrappers,
+///      forming a cycle in the Pred/Succ graph that hangs ComputeDepth /
+///      ComputeHeight.
+///
+/// The artificial chain installed by `EmitFixedSUnits` is the source of
+/// truth for fixed↔fixed cycle distance under SWP modulo arithmetic, and
+/// this strip leaves it untouched (we only remove non-Artificial edges).
+static void removeFixedFixedRegisterEdges(ScheduleDAGMI &DAG,
+                                          const Region &CurRegion) {
+  SmallPtrSet<const MachineInstr *, 16> FixedMIs;
+  for (const MachineInstr &MI : CurRegion.top_fixed_instrs())
+    FixedMIs.insert(&MI);
+  for (const MachineInstr &MI : CurRegion.bot_fixed_instrs())
+    FixedMIs.insert(&MI);
+  if (FixedMIs.empty())
+    return;
+
+  for (SUnit &SU : DAG.SUnits) {
+    if (!FixedMIs.count(SU.getInstr()))
+      continue;
+    // Snapshot Preds before mutating; removePred invalidates iterators
+    // and removes the symmetric Succs entry on the other end too. Skip
+    // Order edges marked Artificial (the chain installed by
+    // EmitFixedSUnits is artificial) — those are the source of truth
+    // for fixed↔fixed cycle distance.
+    SmallVector<SDep, 8> ToRemove;
+    for (const SDep &Dep : SU.Preds) {
+      if (Dep.isArtificial())
+        continue;
+      if (FixedMIs.count(Dep.getSUnit()->getInstr()))
+        ToRemove.push_back(Dep);
+    }
+    for (const SDep &Dep : ToRemove)
+      SU.removePred(Dep);
+  }
+}
+
 void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
                                               RegPressureTracker *RPTracker,
                                               PressureDiffs *PDiffs,
@@ -1516,38 +1662,71 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   }
   DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
   for (int S = 0; S < NCopies; S++) {
-    // Only add SUnits for "free" instructions, fixed instructions will be added
-    // later in a DAGMutator.
-    for (MachineInstr *I : Region.getFreeInstructions()) {
+    // Add SUnits for top-fixed (forward), free, then bot-fixed (reverse).
+    // Doing this BEFORE buildEdges lets buildEdges compute register def→use
+    // dependency edges between every pair, including free↔fixed. Reverse
+    // iteration over bot-fixed matches EmitFixedSUnits's reverse chain
+    // creation order, preserving the FirstBotFixedSU/LastBotFixedSU NodeNum
+    // range invariant (lowest = bottommost-MIR, highest = topmost-MIR).
+    for (MachineInstr &MI : Region.top_fixed_instrs())
+      DAG.initSUnit(MI);
+    for (MachineInstr *I : Region.getFreeInstructions())
       DAG.initSUnit(*I);
-    }
+    for (MachineInstr &MI : reverse(Region.bot_fixed_instrs()))
+      DAG.initSUnit(MI);
   }
   DAG.ExitSU.setInstr(Region.getExitInstr());
   DAG.makeMaps();
   DAG.buildEdges(Context->AA);
+
+  // Strip every non-Artificial edge whose BOTH endpoints are fixed SUs.
+  //
+  // Why: SWP push places modulo-cloned BUNDLE pseudos into TopFixedBundles
+  // (epilogue) and BottomInsert (prologue). Each BUNDLE wrapper's operand
+  // list is the merged def/use set of its inner MIs; multiple modulo
+  // iterations of the same loop body share physical registers in patterns
+  // that are well-defined under modulo arithmetic but APPEAR ambiguous to
+  // a linear def→use walk. buildEdges, processing the wrappers in MIR
+  // order, can:
+  //   - inflate fixed-SU heights by adding register edges with real
+  //     operand latencies (e.g. lat=4 MAC chains) that override the
+  //     artificial chain's lat=1, breaking the
+  //     `BotReadyCycle == getHeight()` invariant;
+  //   - in the worst case (kill-and-redefine of the same physreg appearing
+  //     as both def and use in two adjacent BUNDLE wrappers), register
+  //     edges in BOTH directions between the same pair, forming a CYCLE
+  //     in the Pred/Succ graph that hangs ComputeDepth/ComputeHeight on
+  //     the very first call.
+  // The artificial chain installed by EmitFixedSUnits (created in
+  // createFixedSUDAGNodes) is the source of truth for fixed-fixed cycle
+  // distance — modulo arithmetic legitimises e.g. "MAC chain at 1-cycle
+  // spacing" that the linear DAG can't represent. Free↔fixed edges are
+  // KEPT (they're what fix set.ll-style branch correctness, and they
+  // represent real cross-boundary data flow that the scheduler must
+  // respect).
+  removeFixedFixedRegisterEdges(DAG, Region);
+
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
 }
 
-SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
-  DEBUG_BLOCKS(dbgs() << "Adding Fixed MI: " << MI);
-  DEBUG_BLOCKS(dbgs() << "  DAG size=" << DAG->SUnits.size()
-                      << " capacity=" << DAG->SUnits.capacity() << "\n");
+SUnit &AIEPostRASchedStrategy::markFixedSUnit(MachineInstr &MI, bool IsTop) {
+  DEBUG_BLOCKS(dbgs() << "Marking Fixed MI: " << MI);
   assert(!(IsTop && FirstBotFixedSU) && "Top-fixed SUnits must be added first");
-  assert(DAG->SUnits.size() < DAG->SUnits.capacity() &&
-         "SUnits need to be re-allocated.");
-  unsigned SUNum = DAG->initSUnit(MI).value();
-  SUnit &SU = DAG->SUnits[SUNum];
+  SUnit *SU = DAG->getSUnit(&MI);
+  assert(SU && "Fixed MI must already have an SUnit from buildGraph");
+  unsigned SUNum = SU->NodeNum;
 
   if (IsTop) {
     if (!FirstTopFixedSU)
       FirstTopFixedSU = SUNum;
+    LastTopFixedSU = SUNum;
   } else {
     if (!FirstBotFixedSU)
       FirstBotFixedSU = SUNum;
     LastBotFixedSU = SUNum;
   }
 
-  return SU;
+  return *SU;
 }
 
 bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {

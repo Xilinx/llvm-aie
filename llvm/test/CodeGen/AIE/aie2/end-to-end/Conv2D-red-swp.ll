@@ -169,8 +169,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    nop // Delay Slot 5
 ; DCL-NEXT:    nop // Delay Slot 4
 ; DCL-NEXT:    nop // Delay Slot 3
-; DCL-NEXT:    nop // Delay Slot 2
-; DCL-NEXT:    paddb [sp], #-160 // Delay Slot 1
+; DCL-NEXT:    paddb [sp], #-160 // Delay Slot 2
+; DCL-NEXT:    nop // Delay Slot 1
 ;
 ; ZOL-LABEL: conv2d.loop.nest:
 ; ZOL:       // %bb.0: // %newFuncRoot
@@ -302,8 +302,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    nop // Delay Slot 5
 ; ZOL-NEXT:    nop // Delay Slot 4
 ; ZOL-NEXT:    nop // Delay Slot 3
-; ZOL-NEXT:    nop // Delay Slot 2
-; ZOL-NEXT:    paddb [sp], #-160 // Delay Slot 1
+; ZOL-NEXT:    paddb [sp], #-160 // Delay Slot 2
+; ZOL-NEXT:    nop // Delay Slot 1
 
 newFuncRoot:
   br label %outer.loop.header

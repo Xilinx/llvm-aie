@@ -182,14 +182,15 @@ entry:
 define dso_local %class.bfloat16 @_Z13test_ext_elemDv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z13test_ext_elemDv32_u6__bf16ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r3, r16
+; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r16, r1
+; CHECK-NEXT:    mov crVaddSign, r2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
-; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
+; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r3 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %v to <32 x i16>
   %1 = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> %0, i32 %idx, i32 %sign)
@@ -202,14 +203,15 @@ entry:
 define dso_local noundef <2 x bfloat> @_Z23test_extract_v2bfloat16Dv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z23test_extract_v2bfloat16Dv32_u6__bf16ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r3, r16
+; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r16, r1
+; CHECK-NEXT:    mov crVaddSign, r2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
-; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
+; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r3 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %v to <16 x i32>
   %1 = tail call i32 @llvm.aie2.vextract.elem32.I512(<16 x i32> %0, i32 %idx, i32 %sign)
@@ -225,11 +227,11 @@ define dso_local noundef i64 @_Z12test_ext_u64Dv32_u6__bf16ii(<32 x bfloat> noun
 ; CHECK-NEXT:    mov crVaddSign, r3
 ; CHECK-NEXT:    vextract.d64 r25:r24, x0, r16
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
-; CHECK-NEXT:    mov r16, r4 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 5
+; CHECK-NEXT:    mov r16, r4 // Delay Slot 4
+; CHECK-NEXT:    mov r0, r24 // Delay Slot 3
+; CHECK-NEXT:    mov r1, r25 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %v to <16 x i32>
   %1 = tail call <2 x i32> @llvm.aie2.vextract.elem64.I512(<16 x i32> %0, i32 %idx, i32 %sign)
@@ -240,12 +242,13 @@ entry:
 define dso_local noundef <4 x bfloat> @_Z23test_extract_v4bfloat16Dv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z23test_extract_v4bfloat16Dv32_u6__bf16ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 4
-; CHECK-NEXT:    vextract.d64 r17:r16, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r16, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 5
+; CHECK-NEXT:    vextract.d64 r17:r16, x0, r16 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <32 x bfloat> %v to <16 x i32>
   %1 = tail call <2 x i32> @llvm.aie2.vextract.elem64.I512(<16 x i32> %0, i32 %idx, i32 %sign)

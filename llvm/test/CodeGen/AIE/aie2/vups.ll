@@ -43,8 +43,8 @@ define dso_local <8 x i64> @_Z9test_lupsDv8_iii(<8 x i32> noundef %a, i32 nounde
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 bml0, wl0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> %a, i32 %shft, i32 %sign)
   ret <8 x i64> %0
@@ -57,8 +57,8 @@ define dso_local <16 x i64> @_Z9test_supsDv32_hii(<32 x i8> noundef %a, i32 noun
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d8 cm0, wl0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i64> @llvm.aie2.acc32.v32.I256.ups(<32 x i8> %a, i32 %shft, i32 %sign)
   ret <16 x i64> %0
@@ -71,8 +71,8 @@ define dso_local <16 x i64> @_Z9test_lupsDv16_sii(<16 x i16> noundef %a, i32 nou
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d16 cm0, wl0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i64> @llvm.aie2.acc64.v16.I256.ups(<16 x i16> %a, i32 %shft, i32 %sign)
   ret <16 x i64> %0
@@ -85,8 +85,8 @@ define dso_local <8 x i64> @_Z19test_ups_to_v8acc64Dv8_iii(<8 x i32> noundef %a,
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 bml0, wl0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> %a, i32 %shft, i32 %sign)
   ret <8 x i64> %0
@@ -99,8 +99,8 @@ define dso_local <8 x i64> @_Z20test_ups_to_v16acc32Dv16_tii(<16 x i16> noundef 
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d16 bml0, wl0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> %a, i32 %shft, i32 %sign)
   ret <8 x i64> %0
@@ -113,8 +113,8 @@ define dso_local <16 x i64> @_Z20test_ups_to_v16acc64Dv16_iii(<16 x i32> noundef
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 cm0, x0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i64> @llvm.aie2.acc64.v16.I512.ups(<16 x i32> %a, i32 %shft, i32 %sign)
   ret <16 x i64> %0
@@ -127,8 +127,8 @@ define dso_local <16 x i64> @_Z20test_ups_to_v32acc32Dv32_sii(<32 x i16> noundef
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d16 cm0, x0, s0 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUPSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i64> @llvm.aie2.acc32.v32.I512.ups(<32 x i16> %a, i32 %shft, i32 %sign)
   ret <16 x i64> %0

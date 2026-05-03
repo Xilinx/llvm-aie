@@ -35,7 +35,7 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-LABEL: add2d:
 ; ASM:       // %bb.0: // %newFuncRoot
 ; ASM-NEXT:    paddb [p0], #40; lda r2, [p0, #64]; nops ; nopxm ; nopv
-; ASM-NEXT:    lda m2, [p0], #-4; nopx
+; ASM-NEXT:    lda m2, [p0], #-4
 ; ASM-NEXT:    lda m5, [p0], #8
 ; ASM-NEXT:    lda m4, [p0], #8
 ; ASM-NEXT:    lda m3, [p0], #-24
@@ -57,24 +57,25 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    lda p0, [p7], #-4; st p6, [sp, #-32]; nez r4, r1 // 4-byte Folded Spill
 ; ASM-NEXT:    lda p5, [p7], #-4; st r3, [p4, #0]
 ; ASM-NEXT:    lda p6, [p7], #-4; st r4, [p5, #0]
-; ASM-NEXT:    lda p0, [p7], #-4; st m1, [p0, #0]; add r7, r2, #-1; mov r6, #1
-; ASM-NEXT:    lda p4, [p7], #-4; st m0, [p0, #0]; ne r6, r0, r6
-; ASM-NEXT:    lda r13, [p7], #-4; st dj0, [p0, #0]; movx r0, #3
-; ASM-NEXT:    st dj4, [p0, #0]; ltu r7, r7, r0
-; ASM-NEXT:    st dn0, [p0, #0]; nez r1, r1
-; ASM-NEXT:    lda r9, [p7], #-4; st dn4, [p5, #0]; jz r7, #.LBB0_2
-; ASM-NEXT:    lda r10, [p7], #-4; st r1, [p6, #0] // Delay Slot 5
-; ASM-NEXT:    lda r11, [p7], #-4; st r5, [p0, #0] // Delay Slot 4
-; ASM-NEXT:    lda p7, [p7, #-4]; paddb [p2], m5; st r6, [p4, #0] // Delay Slot 3
-; ASM-NEXT:    lda r12, [p7, #0]; paddb [p2], m4; and r8, r2, r0; mov p0, r13; padds [p1], m2 // Delay Slot 2
-; ASM-NEXT:    mova r0, #0; paddb [p2], m3; st r8, [p0, #0] // Delay Slot 1
+; ASM-NEXT:    lda p0, [p7], #-4; st m1, [p0, #0]
+; ASM-NEXT:    lda p4, [p7], #-4; st m0, [p0, #0]
+; ASM-NEXT:    lda r13, [p7], #-4; st dj0, [p0, #0]; add r7, r2, #-1; mov r6, #1
+; ASM-NEXT:    mova r0, #3; st dj4, [p0, #0]; ne r6, r0, r6
+; ASM-NEXT:    st dn0, [p0, #0]; ltu r7, r7, r0
+; ASM-NEXT:    lda r9, [p7], #-4; st dn4, [p5, #0]; nez r1, r1
+; ASM-NEXT:    lda r10, [p7], #-4; st r1, [p6, #0]; jz r7, #.LBB0_2
+; ASM-NEXT:    lda r11, [p7], #-4; st r5, [p0, #0] // Delay Slot 5
+; ASM-NEXT:    lda r12, [p7, #0]; paddb [p2], m5; st r6, [p4, #0] // Delay Slot 4
+; ASM-NEXT:    lda p7, [p7, #-4]; paddb [p2], m4; and r8, r2, r0; mov p0, r13; padds [p1], m2 // Delay Slot 3
+; ASM-NEXT:    mova r0, #0; paddb [p2], m3; st r8, [p0, #0] // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 ; ASM-NEXT:  // %bb.1:
 ; ASM-NEXT:    j #.LBB0_5
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    nop // Delay Slot 2
-; ASM-NEXT:    mova r1, #0 // Delay Slot 1
+; ASM-NEXT:    mova r1, #0 // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 ; ASM-NEXT:  .LBB0_2: // %entry.new
 ; ASM-NEXT:    nopb ; vlda.ups.s32.d8 cm0, s1, [p1], m1; nops ; nopx ; mov dc0, #0; nopv
 ; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; nopx ; mov dc4, dc0
@@ -130,8 +131,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    mov p0, r10 // Delay Slot 5
 ; ASM-NEXT:    st p2, [p0, #0] // Delay Slot 4
 ; ASM-NEXT:    mov p0, r9 // Delay Slot 3
-; ASM-NEXT:    st p1, [p0, #0] // Delay Slot 2
-; ASM-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; ASM-NEXT:    paddb [sp], #-32; st p1, [p0, #0] // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %entry.split
 

@@ -25,8 +25,8 @@ define dso_local noundef <16 x i16> @_Z5test0Dv16_u7__acc32(<8 x i64> noundef %a
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -60,8 +60,8 @@ define dso_local noundef <8 x i32> @_Z5test1Dv8_u7__acc64(<8 x i64> noundef %acc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <8 x i32>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -89,8 +89,8 @@ define dso_local noundef <16 x i16> @_Z5test2Dv16_u7__acc32(<8 x i64> noundef %a
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -118,8 +118,8 @@ define dso_local noundef <8 x i32> @_Z5test3Dv8_u7__acc64(<8 x i64> noundef %acc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <8 x i32>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -147,8 +147,8 @@ define dso_local noundef <16 x i16> @_Z5test4Dv16_u7__acc64(<16 x i64> noundef %
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -176,8 +176,8 @@ define dso_local noundef <32 x i8> @_Z5test5Dv32_u7__acc32(<16 x i64> noundef %a
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -205,8 +205,8 @@ define dso_local noundef <16 x i16> @_Z5test6Dv16_u7__acc64(<16 x i64> noundef %
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -234,8 +234,8 @@ define dso_local noundef <32 x i8> @_Z5test7Dv32_u7__acc32(<16 x i64> noundef %a
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -263,8 +263,8 @@ define dso_local noundef <16 x i16> @_Z5test8Dv16_u7__acc64(<16 x i64> noundef %
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -292,8 +292,8 @@ define dso_local noundef <32 x i8> @_Z5test9Dv32_u7__acc32(<16 x i64> noundef %a
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -321,8 +321,8 @@ define dso_local noundef <16 x i16> @_Z6test10Dv16_u7__acc32(<8 x i64> noundef %
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)
@@ -350,8 +350,8 @@ define dso_local noundef <8 x i32> @_Z6test11Dv8_u7__acc64(<8 x i64> noundef %ac
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <8 x i32>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %a)

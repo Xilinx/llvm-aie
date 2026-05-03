@@ -19,10 +19,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r12 = MUL_mul_r_rr killed $r6, killed $r7
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r13 = ADD killed $r12, killed $r8, implicit-def $srcarry
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r13
     $r12 = MUL_mul_r_rr $r6, $r7
     $r13 = ADD $r12, $r8, implicit-def $srcarry
@@ -42,12 +42,13 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm killed $p1, 4
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r7 = MOV_mv_scl killed $r6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r7
     $r6 = LDA_dms_lda_idx_imm $p1, 4
     $r7 = MOV_mv_scl $r6
@@ -68,12 +69,13 @@ body:             |
     ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm killed $p1, 4
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r7 = MOV_mv_scl killed $r6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r7
     $r6 = LDA_dms_lda_idx_imm $p1, 4
     $r6 = ADD $r6, $r6, implicit-def $srcarry
@@ -96,12 +98,13 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r7 = MOV_mv_scl killed $r6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r7
     $r6 = LDA_dms_lda_idx_imm $p1, 4
     $r6 = ADD $r6, $r6, implicit-def $srcarry
@@ -126,12 +129,13 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r6 = ADD killed $r6, $r6, implicit-def $srcarry
     ; CHECK-NEXT: $r7 = MOV_mv_scl killed $r6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r7
     $r6 = LDA_dms_lda_idx_imm $p1, 4
     $r6 = ADD $r6, $r6, implicit-def $srcarry

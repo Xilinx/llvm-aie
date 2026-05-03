@@ -29,13 +29,14 @@ entry:
 define dso_local noundef <64 x i8> @_Z20test_min_ge_v64uint8Dv64_hS_bRy(<64 x i8> noundef %a, <64 x i8> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(8) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_min_ge_v64uint8Dv64_hS_bRy:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
 ; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmin.ge8(<64 x i8> %a, <64 x i8> %b, i32 %conv.i)
@@ -64,11 +65,11 @@ define dso_local noundef <64 x i8> @_Z17test_min_v64uint8Dv64_hS_b(<64 x i8> nou
 ; CHECK-LABEL: _Z17test_min_v64uint8Dv64_hS_b:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 4
-; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmin.ge8(<64 x i8> %a, <64 x i8> %b, i32 %conv.i.i)
@@ -98,13 +99,14 @@ entry:
 define dso_local noundef <64 x i8> @_Z19test_min_ge_v64int8Dv64_aS_bRy(<64 x i8> noundef %a, <64 x i8> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(8) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_min_ge_v64int8Dv64_aS_bRy:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
 ; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmin.ge8(<64 x i8> %a, <64 x i8> %b, i32 %conv.i)
@@ -133,11 +135,11 @@ define dso_local noundef <64 x i8> @_Z16test_min_v64int8Dv64_aS_b(<64 x i8> noun
 ; CHECK-LABEL: _Z16test_min_v64int8Dv64_aS_b:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 4
-; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmin_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmin.ge8(<64 x i8> %a, <64 x i8> %b, i32 %conv.i.i)
@@ -150,11 +152,11 @@ define dso_local noundef <32 x i16> @_Z21test_min_ge_v32uint16Dv32_tS_Rj(<32 x i
 ; CHECK-LABEL: _Z21test_min_ge_v32uint16Dv32_tS_Rj:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 0)
   %1 = extractvalue { <32 x i16>, i32 } %0, 1
@@ -167,13 +169,15 @@ entry:
 define dso_local noundef <32 x i16> @_Z21test_min_ge_v32uint16Dv32_tS_bRj(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_min_ge_v32uint16Dv32_tS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i)
@@ -188,10 +192,10 @@ define dso_local noundef <32 x i16> @_Z18test_min_v32uint16Dv32_tS_(<32 x i16> n
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 3
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 0)
   %1 = extractvalue { <32 x i16>, i32 } %0, 0
@@ -201,12 +205,13 @@ entry:
 define dso_local noundef <32 x i16> @_Z18test_min_v32uint16Dv32_tS_b(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z18test_min_v32uint16Dv32_tS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i.i)
@@ -219,11 +224,11 @@ define dso_local noundef <32 x i16> @_Z20test_min_ge_v32int16Dv32_sS_Rj(<32 x i1
 ; CHECK-LABEL: _Z20test_min_ge_v32int16Dv32_sS_Rj:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.s16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.s16 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 1)
   %1 = extractvalue { <32 x i16>, i32 } %0, 1
@@ -236,13 +241,15 @@ entry:
 define dso_local noundef <32 x i16> @_Z20test_min_ge_v32int16Dv32_sS_bRj(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_min_ge_v32int16Dv32_sS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i)
@@ -257,10 +264,10 @@ define dso_local noundef <32 x i16> @_Z17test_min_v32int16Dv32_sS_(<32 x i16> no
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmin_ge.s16 x0, r16, x2, x4 // Delay Slot 3
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.s16 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 1)
   %1 = extractvalue { <32 x i16>, i32 } %0, 0
@@ -270,12 +277,13 @@ entry:
 define dso_local noundef <32 x i16> @_Z17test_min_v32int16Dv32_sS_b(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_min_v32int16Dv32_sS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmin.ge16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i.i)
@@ -287,13 +295,15 @@ entry:
 define dso_local noundef <16 x i32> @_Z21test_min_ge_v16uint32Dv16_jS_bRj(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_min_ge_v16uint32Dv16_jS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -308,10 +318,10 @@ define dso_local noundef <16 x i32> @_Z18test_min_v16uint32Dv16_jS_(<16 x i32> n
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 3
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 0)
   %1 = extractvalue { <16 x i32>, i32 } %0, 0
@@ -321,12 +331,13 @@ entry:
 define dso_local noundef <16 x i32> @_Z18test_min_v16uint32Dv16_jS_b(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z18test_min_v16uint32Dv16_jS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i.i)
@@ -339,11 +350,11 @@ define dso_local noundef <16 x i32> @_Z20test_min_ge_v16int32Dv16_iS_Rj(<16 x i3
 ; CHECK-LABEL: _Z20test_min_ge_v16int32Dv16_iS_Rj:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.s32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.s32 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 1)
   %1 = extractvalue { <16 x i32>, i32 } %0, 1
@@ -356,13 +367,15 @@ entry:
 define dso_local noundef <16 x i32> @_Z20test_min_ge_v16int32Dv16_iS_bRj(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_min_ge_v16int32Dv16_iS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -377,10 +390,10 @@ define dso_local noundef <16 x i32> @_Z17test_min_v16int32Dv16_iS_(<16 x i32> no
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmin_ge.s32 x0, r16, x2, x4 // Delay Slot 3
-; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
+; CHECK-NEXT:    vmin_ge.s32 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 1)
   %1 = extractvalue { <16 x i32>, i32 } %0, 0
@@ -390,12 +403,13 @@ entry:
 define dso_local noundef <16 x i32> @_Z17test_min_v16int32Dv16_iS_b(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_min_v16int32Dv16_iS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 5
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmin.ge32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i.i)

@@ -49,11 +49,11 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r2, implicit killed $r0 {
   ; CHECK-NEXT:     $r1 = MOVX_alu_cg 1
   ; CHECK-NEXT:     $r2 = MOV_mv_scl killed $r0
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1, implicit killed $r2
   bb.0:
     liveins: $r0

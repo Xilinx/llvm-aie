@@ -21,8 +21,8 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-NEXT:    paddb [sp], #2048; nopx
 ; CHECK-NEXT:    jl #memcpy
 ; CHECK-NEXT:    mov p1, sp // Delay Slot 5
-; CHECK-NEXT:    st lr, [sp, #-988] // 4-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    padda [p1], #-2048 // Delay Slot 3
+; CHECK-NEXT:    padda [p1], #-2048 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-988] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    st p1, [sp, #-992] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r0, #32 // Delay Slot 1
 ; CHECK-NEXT:    lda p0, [sp, #-992]; nopxm // 4-byte Folded Reload
@@ -45,8 +45,8 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-2048 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-2048 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca [16 x i16], align 256
   %b = alloca <16 x i16>, align 1024
@@ -71,11 +71,11 @@ define i32 @_Z13test_alignas1v() {
 ; CHECK-NEXT:    movxm p0, #n9
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov p1, sp // Delay Slot 4
+; CHECK-NEXT:    mov p1, sp // Delay Slot 5
+; CHECK-NEXT:    paddb [sp], #-2048 // Delay Slot 4
 ; CHECK-NEXT:    padda [p1], #-1792 // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p1, #0] // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-2048 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %s1 = alloca %struct.S1, align 512
   %b = alloca i32, align 64

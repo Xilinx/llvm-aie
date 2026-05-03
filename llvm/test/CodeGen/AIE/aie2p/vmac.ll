@@ -119,8 +119,8 @@ define dso_local inreg noundef <64 x i32> @_Z27test_addmac_4x16_16x16_confDv64_h
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 1
+; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %a to <16 x i32>
   %1 = tail call <16 x i32> @llvm.aie2p.vshuffle(<16 x i32> %0, <16 x i32> undef, i32 50)
@@ -182,8 +182,8 @@ define dso_local inreg noundef <64 x i32> @_Z27test_addmsc_4x16_16x16_confDv64_h
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 1
+; CHECK-NEXT:    mov unpacksign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %a to <16 x i32>
   %1 = tail call <16 x i32> @llvm.aie2p.vshuffle(<16 x i32> %0, <16 x i32> undef, i32 50)

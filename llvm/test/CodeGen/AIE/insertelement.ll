@@ -15,18 +15,18 @@ define <2 x i32> @insert_v2i32(<2 x i32> %v, i32 %e) nounwind {
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
-; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    mov r16, r18 // Delay Slot 2
-; AIE2-NEXT:    mov r17, r0 // Delay Slot 1
+; AIE2-NEXT:    mov r16, r18 // Delay Slot 3
+; AIE2-NEXT:    mov r17, r0 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v2i32:
 ; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    mov r0, r2 // Delay Slot 2
-; AIE2P-NEXT:    mov r1, r4 // Delay Slot 1
+; AIE2P-NEXT:    mov r0, r2 // Delay Slot 3
+; AIE2P-NEXT:    mov r1, r4 // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = insertelement <2 x i32> %v, i32 %e, i32 1
   ret <2 x i32> %1
 }
@@ -36,19 +36,19 @@ define <2 x i32> @insert_v2i32_dyn(<2 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    nop // Delay Slot 4
-; AIE2-NEXT:    mov r27, r1 // Delay Slot 3
-; AIE2-NEXT:    sel.nez r16, r18, r0, r27 // Delay Slot 2
-; AIE2-NEXT:    sel.nez r17, r0, r19, r27 // Delay Slot 1
+; AIE2-NEXT:    mov r27, r1 // Delay Slot 4
+; AIE2-NEXT:    sel.nez r16, r18, r0, r27 // Delay Slot 3
+; AIE2-NEXT:    sel.nez r17, r0, r19, r27 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v2i32_dyn:
 ; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    mov r27, r5 // Delay Slot 3
-; AIE2P-NEXT:    sel.nez r0, r2, r4, r27 // Delay Slot 2
-; AIE2P-NEXT:    sel.nez r1, r4, r3, r27 // Delay Slot 1
+; AIE2P-NEXT:    mov r27, r5 // Delay Slot 4
+; AIE2P-NEXT:    sel.nez r0, r2, r4, r27 // Delay Slot 3
+; AIE2P-NEXT:    sel.nez r1, r4, r3, r27 // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = insertelement <2 x i32> %v, i32 %e, i32 %idx
   ret <2 x i32> %1
 }
@@ -370,8 +370,8 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v128i8_dyn:
 ; AIE2P:       // %bb.0:
@@ -454,8 +454,8 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v64i16_dyn:
 ; AIE2P:       // %bb.0:
@@ -534,8 +534,8 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i32_dyn:
 ; AIE2P:       // %bb.0:

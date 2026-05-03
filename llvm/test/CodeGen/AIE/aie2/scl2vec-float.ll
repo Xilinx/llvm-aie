@@ -26,14 +26,15 @@ entry:
 define float @test_extract_elem_floatv16(<16 x float> %v, i32 %idx, i32 %sign) {
 ; CHECK-LABEL: test_extract_elem_floatv16:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r3, r16
+; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r16, r1
+; CHECK-NEXT:    mov crVaddSign, r2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
-; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
+; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r3 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <16 x float> %v to <16 x i32>
   %1 = tail call i32 @llvm.aie2.vextract.elem32.I512(<16 x i32> %0, i32 %idx, i32 %sign)

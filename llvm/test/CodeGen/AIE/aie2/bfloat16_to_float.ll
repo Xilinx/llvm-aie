@@ -15,9 +15,9 @@ define dso_local noundef float @bfloat16_to_float_test(%class.bfloat16 %bf.coerc
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mova r0, #16 // Delay Slot 2
-; CHECK-NEXT:    lshl r0, r1, r0 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #16 // Delay Slot 3
+; CHECK-NEXT:    lshl r0, r1, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %bf.coerce.fca.0.extract = extractvalue %class.bfloat16 %bf.coerce, 0
   %0 = bitcast bfloat %bf.coerce.fca.0.extract to i16

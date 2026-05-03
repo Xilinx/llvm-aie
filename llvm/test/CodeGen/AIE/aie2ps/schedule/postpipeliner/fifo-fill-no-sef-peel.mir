@@ -41,8 +41,8 @@
   ; CHECK-NEXT:    nopa ; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.fill [p0, lf0, r24]; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.fill [p0, lf0, r24]; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; vldb.pop.3d x6, [p0, lf0, r24, d0]; movs p7, p2; nopx ; vmax_lt.bf16 x2, r16, x4, x6; nopv
+  ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.fill [p0, lf0, r24]; nops ; nopx ; mov p7, p2; nopv
+  ; CHECK-NEXT:    nopa ; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopx ; vmax_lt.bf16 x2, r16, x4, x6; nopv
   ; CHECK-NEXT:  .LBB0_1: // %loop_body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.fill [p0, lf0, r24]; nops ; nopxm ; nopv

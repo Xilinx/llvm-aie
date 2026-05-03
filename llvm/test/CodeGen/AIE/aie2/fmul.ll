@@ -28,8 +28,8 @@ define bfloat @test_fmul_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32; vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %fmul = fmul bfloat %a, %b
   ret bfloat %fmul
@@ -55,8 +55,8 @@ define float @test_fmul_float(float %a, float %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %fmul = fmul float %a, %b
   ret float %fmul
@@ -82,8 +82,8 @@ define double @test_fmul_double(double %a, double %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %fmul = fmul double %a, %b
   ret double %fmul

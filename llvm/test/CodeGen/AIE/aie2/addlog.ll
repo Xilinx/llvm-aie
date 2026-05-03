@@ -13,9 +13,9 @@ define dso_local noundef signext i8 @_Z11test_selectbcc(i1 noundef zeroext %sel,
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r27, r1 // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r2, r3, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r27, r1 // Delay Slot 3
+; CHECK-NEXT:    sel.nez r0, r2, r3, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cond.i = select i1 %sel, i8 %a, i8 %b
   ret i8 %cond.i
@@ -27,9 +27,9 @@ define dso_local noundef signext i16 @_Z11test_selectbss(i1 noundef zeroext %sel
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r27, r1 // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r2, r3, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r27, r1 // Delay Slot 3
+; CHECK-NEXT:    sel.nez r0, r2, r3, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cond.i = select i1 %sel, i16 %a, i16 %b
   ret i16 %cond.i
@@ -41,9 +41,9 @@ define dso_local noundef i32 @_Z11test_selectbii(i1 noundef zeroext %sel, i32 no
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r27, r1 // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r2, r3, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r27, r1 // Delay Slot 3
+; CHECK-NEXT:    sel.nez r0, r2, r3, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cond.i = select i1 %sel, i32 %a, i32 %b
   ret i32 %cond.i
@@ -53,11 +53,11 @@ define dso_local ptr @_Z11test_selectbPvS_(i1 noundef zeroext %sel, ptr readnone
 ; CHECK-LABEL: _Z11test_selectbPvS_:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr ; nopm
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    or r27, r0, r0; mov r0, p1 // Delay Slot 4
-; CHECK-NEXT:    mov r1, p2 // Delay Slot 3
-; CHECK-NEXT:    sel.nez r0, r0, r1, r27 // Delay Slot 2
-; CHECK-NEXT:    mov p0, r0 // Delay Slot 1
+; CHECK-NEXT:    or r27, r0, r0; mov r0, p1 // Delay Slot 5
+; CHECK-NEXT:    mov r1, p2 // Delay Slot 4
+; CHECK-NEXT:    sel.nez r0, r0, r1, r27 // Delay Slot 3
+; CHECK-NEXT:    mov p0, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cond.i = select i1 %sel, ptr %a, ptr %b
   ret ptr %cond.i

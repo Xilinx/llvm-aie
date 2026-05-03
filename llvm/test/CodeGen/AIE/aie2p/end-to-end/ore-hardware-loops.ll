@@ -72,9 +72,9 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movxm ls, #.LBB0_1
 ; ASM-NEXT:    movxm le, #.L_LEnd0
 ; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; add.nc lc, r0, #-3; nopv
-; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; nops ; nopx ; vconv.fp32.bf16 cml1, x6; nopv
-; ASM-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
-; ASM-NEXT:    nopa ; nopb ; movs dc0, dj0; nopx ; mov p2, p1; nopv
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; movs dc0, dj0; nopx ; vconv.fp32.bf16 cml1, x6; nopv
+; ASM-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movs p2, p1; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
+; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:  .LBB0_1: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
 ; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv

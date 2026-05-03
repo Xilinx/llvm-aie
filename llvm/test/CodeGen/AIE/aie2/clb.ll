@@ -16,8 +16,8 @@ define i32 @f(i32 %x) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    clb r0, r1 // Delay Slot 1
+; CHECK-NEXT:    clb r0, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = call i32 @llvm.aie2.clb(i32 %x)
   ret i32 %0

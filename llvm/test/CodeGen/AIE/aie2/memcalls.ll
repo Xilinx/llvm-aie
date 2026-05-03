@@ -26,8 +26,8 @@ define void @callmemcpy(ptr %p, ptr %q) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr %p, ptr %q, i32 40, i1 false)
   ret void
@@ -38,10 +38,10 @@ define void @callmemmov(ptr %p, ptr %q) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; j #memmov; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov p2, p1 // Delay Slot 3
-; CHECK-NEXT:    mov p1, p0 // Delay Slot 2
-; CHECK-NEXT:    mova r0, #40 // Delay Slot 1
+; CHECK-NEXT:    mov p2, p1 // Delay Slot 4
+; CHECK-NEXT:    mov p1, p0 // Delay Slot 3
+; CHECK-NEXT:    mova r0, #40 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %call = tail call ptr @memmov(ptr %p, ptr %q, i32 40)
   ret void
@@ -68,8 +68,8 @@ define void @callmemset(ptr %p) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memset.p0.i32(ptr %p, i8 42, i32 40, i1 false)
   ret void

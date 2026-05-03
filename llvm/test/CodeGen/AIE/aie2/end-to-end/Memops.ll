@@ -221,8 +221,8 @@ define dso_local void @lowerMemcpyUsingAlignedWordCall() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(256) @buffer1, ptr noundef nonnull align 4 dereferenceable(256) @buffer2, i32 256, i1 false)
   ret void

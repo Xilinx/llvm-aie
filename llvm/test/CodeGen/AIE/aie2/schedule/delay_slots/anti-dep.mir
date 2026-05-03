@@ -24,8 +24,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r0 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     ST_S16_ag_idx_imm $r0, $p0, 2
     $r0 = MOVXM_lng_cg 0

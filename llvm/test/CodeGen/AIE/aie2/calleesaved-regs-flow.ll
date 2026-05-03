@@ -16,9 +16,9 @@ define <2 x i32> @no_save_L(<2 x i32> %a) {
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r18 // Delay Slot 2
-; CHECK-NEXT:    mov r17, r19 // Delay Slot 1
+; CHECK-NEXT:    mov r16, r18 // Delay Slot 3
+; CHECK-NEXT:    mov r17, r19 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
   ret <2 x i32> %a
 }
 
@@ -43,10 +43,10 @@ define <2 x i32> @preserve_L(<2 x i32> %a, <2 x i32> %b) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 3
-; CHECK-NEXT:    mov r16, r18 // Delay Slot 2
-; CHECK-NEXT:    mov r17, r19 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 4
+; CHECK-NEXT:    mov r16, r18 // Delay Slot 3
+; CHECK-NEXT:    mov r17, r19 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
   call void @foo(<2 x i32> %b)
   ret <2 x i32> %a
 }
@@ -70,9 +70,9 @@ define i32 @preserve_R(i32 %a, <2 x i32> %b) {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r18 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    mov r0, r18 // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
   call void @foo(<2 x i32> %b)
   ret i32 %a
 }
@@ -84,8 +84,8 @@ define i32 @no_CC_CSR_overlap(i32 %a) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, r1 // Delay Slot 1
+; CHECK-NEXT:    mov r0, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
   ret i32 %a
 }
 

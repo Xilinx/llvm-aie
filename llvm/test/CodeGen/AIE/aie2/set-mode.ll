@@ -14,8 +14,8 @@ define dso_local void @_Z16test_set_satmodej(i32 noundef %val) local_unnamed_add
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSat, r0 // Delay Slot 1
+; CHECK-NEXT:    mov crSat, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 %val)
   ret void
@@ -28,8 +28,8 @@ define dso_local void @_Z12test_set_satv() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSat, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crSat, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
   ret void
@@ -42,8 +42,8 @@ define dso_local void @_Z15test_set_symsatv() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSat, #3 // Delay Slot 1
+; CHECK-NEXT:    mov crSat, #3 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 3)
   ret void
@@ -56,8 +56,8 @@ define dso_local void @_Z12test_clr_satv() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSat, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSat, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
   ret void
@@ -70,8 +70,8 @@ define dso_local void @_Z12test_set_rndj(i32 noundef %val) local_unnamed_addr #0
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crRnd, r0 // Delay Slot 1
+; CHECK-NEXT:    mov crRnd, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 %val)
   ret void
@@ -84,8 +84,8 @@ define dso_local void @_Z22test_set_fpmulmac_maskj(i32 noundef %val) local_unnam
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crFPMask, r0 // Delay Slot 1
+; CHECK-NEXT:    mov crFPMask, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 3, i32 %val)
   ret void
@@ -98,8 +98,8 @@ define dso_local void @_Z20test_set_fp2int_maskj(i32 noundef %val) local_unnamed
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crF2IMask, r0 // Delay Slot 1
+; CHECK-NEXT:    mov crF2IMask, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 2, i32 %val)
   ret void
@@ -112,8 +112,8 @@ define dso_local void @_Z19test_set_fp2bf_maskj(i32 noundef %val) local_unnamed_
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crF2FMask, r0 // Delay Slot 1
+; CHECK-NEXT:    mov crF2FMask, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 1, i32 %val)
   ret void
@@ -126,8 +126,8 @@ define dso_local noundef i32 @_Z16test_get_satmodev() local_unnamed_addr #1 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, crSat // Delay Slot 1
+; CHECK-NEXT:    mov r0, crSat // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
   ret i32 %0
@@ -140,8 +140,8 @@ define dso_local noundef i32 @_Z12test_get_satv() local_unnamed_addr #1 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, crSat // Delay Slot 1
+; CHECK-NEXT:    mov r0, crSat // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
   ret i32 %0
@@ -154,8 +154,8 @@ define dso_local noundef i32 @_Z12test_get_rndv() local_unnamed_addr #1 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, crRnd // Delay Slot 1
+; CHECK-NEXT:    mov r0, crRnd // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 6)
   ret i32 %0
@@ -168,8 +168,8 @@ define dso_local noundef i32 @_Z22test_get_fpmulmac_maskv() local_unnamed_addr #
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, crFPMask // Delay Slot 1
+; CHECK-NEXT:    mov r0, crFPMask // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 3)
   ret i32 %0
@@ -182,8 +182,8 @@ define dso_local noundef i32 @_Z20test_get_fp2int_maskv() local_unnamed_addr #1 
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, crF2IMask // Delay Slot 1
+; CHECK-NEXT:    mov r0, crF2IMask // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 2)
   ret i32 %0
@@ -196,8 +196,8 @@ define dso_local noundef i32 @_Z19test_get_fp2bf_maskv() local_unnamed_addr #1 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, crF2FMask // Delay Slot 1
+; CHECK-NEXT:    mov r0, crF2FMask // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 1)
   ret i32 %0

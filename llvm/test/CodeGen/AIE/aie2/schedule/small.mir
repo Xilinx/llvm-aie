@@ -18,8 +18,8 @@ body:             |
 name:            only_return
 body:             |
   bb.0.entry:
-    ; CHECK: bb.0.entry
-    ; CHECK-NEXT: RET implicit $lr
+    ; CHECK-LABEL: name: only_return
+    ; CHECK: RET implicit $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -39,8 +39,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
     RET implicit $lr

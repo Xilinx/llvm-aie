@@ -13,7 +13,7 @@ declare i10 @llvm.bitreverse.i10(i10)
 define i10 @test_bitreverse_i10(i10 %a) {
 ; AIE2P-LABEL: test_bitreverse_i10:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    mova r0, #24; nopb ; nopxm
+; AIE2P-NEXT:    mova r0, #24; nopxm
 ; AIE2P-NEXT:    mova r2, #-24; lshl r0, r1, r0
 ; AIE2P-NEXT:    lshl r2, r1, r2
 ; AIE2P-NEXT:    or r0, r2, r0
@@ -37,13 +37,14 @@ define i10 @test_bitreverse_i10(i10 %a) {
 ; AIE2P-NEXT:    and r0, r0, r1
 ; AIE2P-NEXT:    movxm r1, #-1431655766
 ; AIE2P-NEXT:    or r0, r2, r0
-; AIE2P-NEXT:    and r3, r0, r1
-; AIE2P-NEXT:    mova r2, #1; ret lr
-; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 5
-; AIE2P-NEXT:    mova r1, #-23; and r0, r0, r1 // Delay Slot 4
-; AIE2P-NEXT:    mova r2, #-22; lshl r1, r3, r1 // Delay Slot 3
-; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 2
-; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 1
+; AIE2P-NEXT:    mova r2, #1; and r3, r0, r1
+; AIE2P-NEXT:    lshl r0, r0, r2
+; AIE2P-NEXT:    ret lr
+; AIE2P-NEXT:    mova r1, #-23; and r0, r0, r1 // Delay Slot 5
+; AIE2P-NEXT:    mova r2, #-22; lshl r1, r3, r1 // Delay Slot 4
+; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 3
+; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
   %result = call i10 @llvm.bitreverse.i10(i10 %a)
   ret i10 %result
 }

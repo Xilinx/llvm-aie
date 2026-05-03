@@ -27,8 +27,8 @@ define dso_local inreg noundef <64 x float> @test_mul_4x16_16x16T6v64mx97v256mx9
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
+; CHECK-NEXT:    mov r8, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = extractvalue %struct.v64mx9 %a.coerce, 0
   %1 = extractvalue %struct.v64mx9 %a.coerce, 1
@@ -59,8 +59,8 @@ define dso_local inreg noundef <64 x float> @test_mul_4x16_16x16T7v128mx67v256mx
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
+; CHECK-NEXT:    mov r8, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = extractvalue %struct.v128mx6 %a.coerce, 0
   %1 = extractvalue %struct.v128mx6 %a.coerce, 1

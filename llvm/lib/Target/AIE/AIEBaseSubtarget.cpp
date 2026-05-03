@@ -273,10 +273,42 @@ class RegionEndEdges : public ScheduleDAGMutation {
     // recompute all of them.
     removeExitSUPreds(DAG);
 
+    // Identify fixed-SU MIs by Region position. Fixed SUs are
+    // cycle-anchored by the artificial chain installed by
+    // EmitFixedSUnits and must NOT receive the (K, K-1) asymmetric
+    // edge added below: that asymmetry is intended to let pipeline-K
+    // free SUs issue at cycle K-1 (one cycle later than their height
+    // implies), but for fixed SUs the chain is the source of truth
+    // and the `BotReadyCycle == getHeight()` invariant in
+    // `getNextUnscheduledFixedInstr` requires both directions of the
+    // edge to carry the same latency.
+    //
+    // Today (before fixed SUs are added in `buildGraph`) this set is
+    // empty — fixed SUs are created later by `EmitFixedSUnits`, so
+    // `DAG->getSUnit(MI)` returns null for them at this point and
+    // they aren't in `DAG->SUnits`. The skip therefore matches
+    // nothing; this is a pure NFC plumbing change to enable a
+    // follow-up commit that puts fixed SUs in the DAG before
+    // `buildEdges`.
+    SmallPtrSet<const MachineInstr *, 16> FixedMIs;
+    if (auto *Sched = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl()) {
+      auto &Blocks = Sched->getInterBlock();
+      MachineBasicBlock *BB = DAG->getBB();
+      if (BB && Blocks.isTrackedBlock(BB)) {
+        const Region &Reg = Blocks.getBlockState(BB).getCurrentRegion();
+        for (const MachineInstr &MI : Reg.top_fixed_instrs())
+          FixedMIs.insert(&MI);
+        for (const MachineInstr &MI : Reg.bot_fixed_instrs())
+          FixedMIs.insert(&MI);
+      }
+    }
+
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
     for (SUnit &SU : DAG->SUnits) {
       MachineInstr &MI = *SU.getInstr();
+      if (FixedMIs.count(&MI))
+        continue;
 
       SDep ExitDep(&SU, SDep::Artificial);
 
@@ -360,15 +392,20 @@ private:
   void createFixedSUDAGNodes(ScheduleDAGInstrs *DAG,
                              AIEPostRASchedStrategy *Scheduler,
                              const Region &CurRegion) {
-    // First, create SUnits for all "fixed" instructions
-    // Those will be chained from/to the EntrySU/ExitSU to ensure they are
-    // placed in the correct cycle. The scheduler will enforce that these fixed
-    // SUnits get placed exactly at their depth (for the Top zone) or height
-    // (for the Bot zone).
+    // The fixed SUnits already exist in the SchedDAG (created in
+    // AIEPostRASchedStrategy::buildGraph before DAG.buildEdges runs, so
+    // that buildEdges can compute register def→use edges between every
+    // pair, including free↔fixed). markFixedSUnit only records the fixed
+    // SU's NodeNum in the FirstTopFixedSU / FirstBotFixedSU / LastBotFixedSU
+    // bookkeeping. We then chain them from/to EntrySU/ExitSU so the
+    // scheduler enforces their cycle anchoring (depth for top, height for
+    // bot).
+    const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
+
     SUnit *Pred = &DAG->EntrySU;
     // We iterate over BUNDLEs or standalone instructions.
     for (MachineInstr &MI : CurRegion.top_fixed_instrs()) {
-      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/true);
+      SUnit &FixedSU = Scheduler->markFixedSUnit(MI, /*IsTop=*/true);
       SDep Dep(Pred, SDep::Artificial);
       Dep.setLatency(Pred == &DAG->EntrySU ? 0 : 1);
       FixedSU.addPred(Dep);
@@ -377,12 +414,40 @@ private:
 
     SUnit *Succ = &DAG->ExitSU;
     for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
-      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/false);
+      SUnit &FixedSU = Scheduler->markFixedSUnit(MI, /*IsTop=*/false);
       SDep Dep(&FixedSU, SDep::Artificial);
-      Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
+      // For the bottom-most chain edge (Succ == ExitSU), if MI is a
+      // delay-slot branch in a single-entry BotFixedBundles, anchor its
+      // cycle at "N from bot" via the chain latency. The N delay-slot
+      // positions stay free MIR cycles for the legacy
+      // RegionBottomUpCycles floor / free-SU fill / NOP padding to handle
+      // — exactly what they do today. No empty BUNDLE pseudos in MIR.
+      unsigned Lat = (Succ == &DAG->ExitSU) ? 0 : 1;
+      if (Succ == &DAG->ExitSU && MI.hasDelaySlot())
+        Lat = TII->getNumDelaySlots(MI);
+      Dep.setLatency(Lat);
       Succ->addPred(Dep);
       Succ = &FixedSU;
     }
+
+    // With Phase 0b's free→fixed register edges, a fixed SU's Preds vector
+    // mixes register edges from free SUs with the chain edge from this
+    // mutator. releasePredecessors iterates Preds in vector order; cascading
+    // release of a free pred can trigger getNextUnscheduledFixedInstr's
+    // BotReady == Height assertion BEFORE the chain Pred has propagated
+    // through releasePred. Pre-set BotReadyCycle / TopReadyCycle here from
+    // the chain-determined heights / depths so the invariant holds
+    // regardless of subsequent release order. Subsequent releasePred calls
+    // re-set max(BotReady, succ.BotReady + chain_lat) = Height — a no-op.
+    for (MachineInstr &MI : CurRegion.bot_fixed_instrs())
+      if (SUnit *SU = DAG->getSUnit(&MI))
+        SU->BotReadyCycle =
+            std::max<unsigned>(SU->BotReadyCycle, SU->getHeight());
+    for (MachineInstr &MI : CurRegion.top_fixed_instrs())
+      if (SUnit *SU = DAG->getSUnit(&MI))
+        SU->TopReadyCycle =
+            std::max<unsigned>(SU->TopReadyCycle, SU->getDepth());
+
     DAG->makeMaps();
   }
 
@@ -694,9 +759,11 @@ class MemoryEdges : public ScheduleDAGMutation {
           continue;
         }
 
-        // Get the correct latency from the Sched model.
-        std::optional<int> MemLat = TII->getMemoryLatency(
-            SrcMI.getDesc().getSchedClass(), MI.getDesc().getSchedClass());
+        // Get the correct latency from the Sched model. Bundle-aware:
+        // if either MI is a BUNDLE pseudo (= SWP-pushed bundle in the
+        // SchedDAG), the worst-case latency across all (src_inner,
+        // dst_inner) memory-op pairs is used.
+        std::optional<int> MemLat = TII->getMaxMemoryLatency(SrcMI, MI);
         int Latency = 1;
         if (MemLat.has_value()) {
           Latency = *MemLat;

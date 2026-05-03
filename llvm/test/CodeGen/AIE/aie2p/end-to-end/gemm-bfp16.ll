@@ -87,8 +87,8 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; add.nc lc, r5, #-3
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]; movs p7, p2; mov p1, p6
 ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml2, [p6], d1; vldb.3d x9, [p2], d0; vconv.bfp16ebs8.fp32 ex3, dm2; vshuffle x10, x9, x8, r0
-; CHECK-NEXT:    padda [p7], m4; vldb x8, [p7, #64]; vshuffle x11, x9, x8, r1
-; CHECK-NEXT:    padda.2d [p5], d2; vldb x7, [p7, #0]; vconv.bfp16ebs8.fp32 ex6, dm2; vshuffle x10, x7, x5, r0
+; CHECK-NEXT:    padda [p7], m4; vldb x8, [p7, #64]; padds.2d [p5], d2; vshuffle x11, x9, x8, r1
+; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex6, dm2; vldb x7, [p7, #0]; vshuffle x10, x7, x5, r0
 ; CHECK-NEXT:  .LBB0_2: // %for.body46.i
 ; CHECK-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
@@ -104,19 +104,19 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup45.i
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-NEXT:    nopa ; vldb x5, [p7, #64]; vconv.bfp16ebs8.fp32 ex4, dm2; nopx ; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    paddb [p1], m5; nopxm
+; CHECK-NEXT:    nopa ; paddb [p1], m5; nopxm ; nops
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1, #0]; vconv.bfp16ebs8.fp32 ex2, dm2; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; add r4, r4, #1; mov p4, p0
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]; mov p1, p6; vmac.f dm1, dm1, ex3, ex6, r3
 ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml2, [p6], d1; vconv.bfp16ebs8.fp32 ex3, dm2; vshuffle x10, x9, x8, r0; vmac.f dm0, dm0, ex3, ex4, r3
-; CHECK-NEXT:    mova m1, #84; vshuffle x11, x9, x8, r1; vmac.f dm4, dm4, ex2, ex6, r3
+; CHECK-NEXT:    vshuffle x11, x9, x8, r1; vmac.f dm4, dm4, ex2, ex6, r3
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex6, dm2; vshuffle x10, x7, x5, r0; vmac.f dm3, dm3, ex2, ex4, r3
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex4, dm2; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
 ; CHECK-NEXT:    paddb [p1], m5
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1, #0]; vconv.bfp16ebs8.fp32 ex2, dm2; vmul.f dm2, y5, y0, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]
 ; CHECK-NEXT:    mov p1, p0; vmac.f dm1, dm1, ex3, ex6, r3
-; CHECK-NEXT:    padda [p1], m3; vconv.bfp16ebs8.fp32 ex3, dm2; mov m3, r6; vmac.f dm0, dm0, ex3, ex4, r3
+; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex3, dm2; vmac.f dm0, dm0, ex3, ex4, r3
 ; CHECK-NEXT:    vmac.f dm4, dm4, ex2, ex6, r3
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex6, dm2; vmac.f dm3, dm3, ex2, ex4, r3
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex4, dm2
@@ -128,11 +128,11 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    vmac.f dm4, dm4, ex2, ex6, r3
 ; CHECK-NEXT:    vmac.f dm3, dm3, ex2, ex4, r3
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    padda [p1], m3
 ; CHECK-NEXT:    vst bmll1, [p1, #0]
 ; CHECK-NEXT:    vst bmlh1, [p1, #64]
 ; CHECK-NEXT:    vst bmhl1, [p1, #128]
-; CHECK-NEXT:    vst bmhh1, [p1, #192]; mov p1, p3
+; CHECK-NEXT:    mova m1, #84; vst bmhh1, [p1, #192]; mov p1, p3
 ; CHECK-NEXT:    padda [p1], m1
 ; CHECK-NEXT:    lda m1, [p1], #4
 ; CHECK-NEXT:    nop
@@ -140,7 +140,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p4, p0
 ; CHECK-NEXT:    padda [p4], m1
 ; CHECK-NEXT:    vst bmll0, [p4, #0]
 ; CHECK-NEXT:    vst bmlh0, [p4, #64]
@@ -176,13 +176,13 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    add r4, r4, #1
 ; CHECK-NEXT:    lt r5, r4, r5
 ; CHECK-NEXT:    jnz r5, #.LBB0_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov m3, r6 // Delay Slot 2
 ; CHECK-NEXT:    paddb.2d [p0], d3 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %exit.exitStub
 ; CHECK-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload

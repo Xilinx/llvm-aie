@@ -19,8 +19,8 @@ define <32 x i8> @_Z5test0Dv64_a(<64 x i8> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
@@ -48,8 +48,8 @@ define <32 x i8> @_Z5test2Dv32_s(<32 x i16> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
@@ -72,8 +72,8 @@ define <32 x i8> @_Z5test1Dv64_a(<64 x i8> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
@@ -97,8 +97,8 @@ define <32 x i8> @_Z5test3Dv32_s(<32 x i16> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
@@ -121,8 +121,8 @@ define <32 x i8> @_Z5test4Dv64_a(<64 x i8> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
@@ -146,8 +146,8 @@ define <32 x i8> @_Z5test6Dv32_s(<32 x i16> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)

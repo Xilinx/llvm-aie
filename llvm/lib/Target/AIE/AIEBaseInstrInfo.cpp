@@ -879,6 +879,56 @@ AIEBaseInstrInfo::getMemoryLatency(unsigned SrcSchedClass,
 }
 
 std::optional<int>
+AIEBaseInstrInfo::getMaxMemoryLatency(const MachineInstr &SrcMI,
+                                      const MachineInstr &DstMI) const {
+  if (!AccurateMemEdges)
+    return 1;
+
+  // Walks `MI` (and its bundle inner MIs if MI is a BUNDLE pseudo),
+  // applies `Op` to each memory-op MI's SchedClass, and aggregates
+  // via `Combine`. Returns the aggregated value, or std::nullopt if
+  // no inner memory MI yielded a value.
+  auto AggregateOverBundle =
+      [](const MachineInstr &MI,
+         std::optional<int> (AIEBaseInstrInfo::*Query)(unsigned) const,
+         const AIEBaseInstrInfo *Self,
+         int (*Combine)(int, int)) -> std::optional<int> {
+    auto Process = [&](const MachineInstr &Inner) -> std::optional<int> {
+      if (!Inner.mayLoadOrStore())
+        return std::nullopt;
+      return (Self->*Query)(Inner.getDesc().getSchedClass());
+    };
+
+    if (!MI.isBundle())
+      return Process(MI);
+
+    std::optional<int> Acc;
+    auto It = std::next(MI.getIterator());
+    auto End = MI.getParent()->instr_end();
+    for (; It != End && It->isBundledWithPred(); ++It) {
+      auto Cur = Process(*It);
+      if (!Cur)
+        continue;
+      Acc = Acc ? Combine(*Acc, *Cur) : *Cur;
+    }
+    return Acc;
+  };
+
+  auto MaxFn = [](int A, int B) { return std::max(A, B); };
+  auto MinFn = [](int A, int B) { return std::min(A, B); };
+
+  std::optional<int> SrcCycle = AggregateOverBundle(
+      SrcMI, &AIEBaseInstrInfo::getLastMemoryCycle, this, MaxFn);
+  std::optional<int> DstCycle = AggregateOverBundle(
+      DstMI, &AIEBaseInstrInfo::getFirstMemoryCycle, this, MinFn);
+
+  if (!SrcCycle || !DstCycle)
+    return std::nullopt;
+
+  return *SrcCycle - *DstCycle + 1;
+}
+
+std::optional<int>
 AIEBaseInstrInfo::getFirstMemoryCycle(unsigned SchedClass) const {
   return std::nullopt;
 }

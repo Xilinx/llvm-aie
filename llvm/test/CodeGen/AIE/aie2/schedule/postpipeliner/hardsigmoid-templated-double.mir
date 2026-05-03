@@ -36,7 +36,7 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; vst.srs.s8.s32 cm1, s0, [p1], #32; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
   ; CHECK-NEXT:  .LBB0_2:
-  ; CHECK-NEXT:    nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32; vmin_ge.s16 x8, r16, x6, x0
   ; CHECK-NEXT:    vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32; vmin_ge.s16 x8, r16, x6, x0
@@ -45,9 +45,9 @@
   ; CHECK-NEXT:    vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
   ; CHECK-NEXT:    add.nc lc, r0, #-7; vmac cm1, cm0, x10, x4, r0
-  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32; movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd0; nopv
-  ; CHECK-NEXT:    nopa ; vst.srs.s8.s32 cm1, s0, [p1], #32; nopx
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0
@@ -55,12 +55,12 @@
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0
-  ; CHECK-NEXT:    vmin_ge.s16 x8, r16, x6, x0
-  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; vmax_lt.s16 x10, r16, x8, x2
-  ; CHECK-NEXT:    vmin_ge.s16 x8, r16, x6, x0
-  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
+  ; CHECK-NEXT:    movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopa ; nops ; movxm le, #.L_LEnd0; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
+  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopa ; nops ; nopx ; vmax_lt.s16 x10, r16, x8, x2; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
+  ; CHECK-NEXT:    nopa ; vldb.unpack.s16.s8 x6, [p0], m0; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vmin_ge.s16 x8, r16, x6, x0
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vmin_ge.s16 x8, r16, x6, x0

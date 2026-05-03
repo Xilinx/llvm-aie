@@ -16,7 +16,7 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2-LABEL: test_simple_dyn_alloca:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
-; AIE2-NEXT:    mova r1, #2; nopx
+; AIE2-NEXT:    mova r1, #2
 ; AIE2-NEXT:    st p7, [sp, #-28] // 4-byte Folded Spill
 ; AIE2-NEXT:    mov p7, sp
 ; AIE2-NEXT:    mov p1, sp
@@ -25,12 +25,13 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; AIE2-NEXT:    padda [p7], #-32
 ; AIE2-NEXT:    add r0, r0, #31
+; AIE2-NEXT:    mov p0, p1
 ; AIE2-NEXT:    jl #extern_call
-; AIE2-NEXT:    mov p0, p1 // Delay Slot 5
-; AIE2-NEXT:    and r0, r0, r1 // Delay Slot 4
-; AIE2-NEXT:    mov m0, r0 // Delay Slot 3
-; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 2
-; AIE2-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2-NEXT:    and r0, r0, r1 // Delay Slot 5
+; AIE2-NEXT:    mov m0, r0 // Delay Slot 4
+; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 3
+; AIE2-NEXT:    mov sp, p1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ; AIE2-NEXT:    nopa ; nopb ; nopx ; mov sp, p7; nops
 ; AIE2-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
 ; AIE2-NEXT:    nop
@@ -43,12 +44,12 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_simple_dyn_alloca:
 ; AIE2P:       // %bb.0: // %entry
-; AIE2P-NEXT:    mova r1, #2; nopb ; nops ; nopxm ; nopv
+; AIE2P-NEXT:    mova r1, #2; nopb ; nopxm ; nops
 ; AIE2P-NEXT:    paddxm [sp], #64
 ; AIE2P-NEXT:    lshl r0, r0, r1
 ; AIE2P-NEXT:    st p7, [sp, #-60] // 4-byte Folded Spill
@@ -58,12 +59,13 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill
 ; AIE2P-NEXT:    add r0, r0, #63
 ; AIE2P-NEXT:    mov p0, p1
+; AIE2P-NEXT:    padda [p7], #-64
 ; AIE2P-NEXT:    jl #extern_call
-; AIE2P-NEXT:    padda [p7], #-64 // Delay Slot 5
-; AIE2P-NEXT:    and r0, r0, r1 // Delay Slot 4
-; AIE2P-NEXT:    mov m0, r0 // Delay Slot 3
-; AIE2P-NEXT:    padda [p1], m0 // Delay Slot 2
-; AIE2P-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2P-NEXT:    and r0, r0, r1 // Delay Slot 5
+; AIE2P-NEXT:    mov m0, r0 // Delay Slot 4
+; AIE2P-NEXT:    padda [p1], m0 // Delay Slot 3
+; AIE2P-NEXT:    mov sp, p1 // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:    nopa ; nopb ; nopx ; mov sp, p7
 ; AIE2P-NEXT:    lda lr, [sp, #-64] // 4-byte Folded Reload
 ; AIE2P-NEXT:    nop
@@ -82,7 +84,7 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2PS-LABEL: test_simple_dyn_alloca:
 ; AIE2PS:       // %bb.0: // %entry
 ; AIE2PS-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
-; AIE2PS-NEXT:    mova r2, #2; nopx
+; AIE2PS-NEXT:    mova r2, #2
 ; AIE2PS-NEXT:    lshl r0, r0, r2
 ; AIE2PS-NEXT:    st p7, [sp, #-60] // 4-byte Folded Spill
 ; AIE2PS-NEXT:    mov p7, sp
@@ -91,12 +93,13 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2PS-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill
 ; AIE2PS-NEXT:    padda [p7], #-64
 ; AIE2PS-NEXT:    add r0, r0, #63
+; AIE2PS-NEXT:    mov p0, p1
 ; AIE2PS-NEXT:    jl #extern_call
-; AIE2PS-NEXT:    mov p0, p1 // Delay Slot 5
-; AIE2PS-NEXT:    and r0, r0, r2 // Delay Slot 4
-; AIE2PS-NEXT:    mov m0, r0 // Delay Slot 3
-; AIE2PS-NEXT:    padda [p1], m0 // Delay Slot 2
-; AIE2PS-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2PS-NEXT:    and r0, r0, r2 // Delay Slot 5
+; AIE2PS-NEXT:    mov m0, r0 // Delay Slot 4
+; AIE2PS-NEXT:    padda [p1], m0 // Delay Slot 3
+; AIE2PS-NEXT:    mov sp, p1 // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 ; AIE2PS-NEXT:    nopa ; nopb ; nopx ; mov sp, p7; nops
 ; AIE2PS-NEXT:    lda lr, [sp, #-64] // 4-byte Folded Reload
 ; AIE2PS-NEXT:    nop
@@ -109,8 +112,8 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
-; AIE2PS-NEXT:    nop // Delay Slot 2
-; AIE2PS-NEXT:    paddxm [sp], #-64 // Delay Slot 1
+; AIE2PS-NEXT:    paddxm [sp], #-64 // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 entry:
   %0 = trunc i32 %n to i20
   %vla = alloca i32, i20 %0, align 4
@@ -177,8 +180,8 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-64 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-64 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_loop_dyn_alloca:
 ; AIE2P:       // %bb.0: // %entry
@@ -299,8 +302,8 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
-; AIE2PS-NEXT:    nop // Delay Slot 2
-; AIE2PS-NEXT:    paddxm [sp], #-64 // Delay Slot 1
+; AIE2PS-NEXT:    paddxm [sp], #-64 // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 entry:
   br label %for.body
 
@@ -321,7 +324,7 @@ for.body:
 define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2-LABEL: test_huge_stack:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    nopa ; paddb [sp], #40032; nopxm ; nops
+; AIE2-NEXT:    nopa ; paddb [sp], #40032; nopxm
 ; AIE2-NEXT:    movxm m0, #-40032
 ; AIE2-NEXT:    mova r1, #0
 ; AIE2-NEXT:    mova r2, #2
@@ -351,18 +354,19 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2-NEXT:    st r0, [p2, #0]
 ; AIE2-NEXT:    add r2, r2, #31
 ; AIE2-NEXT:    and r2, r2, r3
+; AIE2-NEXT:    mov m0, r2
 ; AIE2-NEXT:    jl #extern_call
-; AIE2-NEXT:    mov m0, r2 // Delay Slot 5
-; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 4
-; AIE2-NEXT:    movxm m0, #-40032 // Delay Slot 3
-; AIE2-NEXT:    paddb [p6], m0 // Delay Slot 2
-; AIE2-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 5
+; AIE2-NEXT:    movxm m0, #-40032 // Delay Slot 4
+; AIE2-NEXT:    paddb [p6], m0 // Delay Slot 3
+; AIE2-NEXT:    mov sp, p1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; jl #extern_call; nopv
 ; AIE2-NEXT:    nopa ; nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    mov p0, p6 // Delay Slot 1
+; AIE2-NEXT:    mov p0, p6 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; nopx ; mov p0, r16; nopv
 ; AIE2-NEXT:    lda p0, [p0, #0]; nopx
 ; AIE2-NEXT:    nop
@@ -384,13 +388,13 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-40032 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-40032 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_huge_stack:
 ; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; movxm m0, #-40064; nopv
-; AIE2P-NEXT:    mova r1, #0; nopx
+; AIE2P-NEXT:    mova r1, #0
 ; AIE2P-NEXT:    mova r2, #2
 ; AIE2P-NEXT:    mova r3, #-64
 ; AIE2P-NEXT:    paddxm [sp], #40064
@@ -422,18 +426,19 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    st r0, [p2, #0]
 ; AIE2P-NEXT:    add r2, r2, #63
 ; AIE2P-NEXT:    and r2, r2, r3
+; AIE2P-NEXT:    mov m0, r2
 ; AIE2P-NEXT:    jl #extern_call
-; AIE2P-NEXT:    mov m0, r2 // Delay Slot 5
-; AIE2P-NEXT:    padda [p1], m0 // Delay Slot 4
-; AIE2P-NEXT:    movxm m0, #-40048 // Delay Slot 3
+; AIE2P-NEXT:    padda [p1], m0 // Delay Slot 5
+; AIE2P-NEXT:    movxm m0, #-40048 // Delay Slot 4
+; AIE2P-NEXT:    mov sp, p1 // Delay Slot 3
 ; AIE2P-NEXT:    padda [p6], m0 // Delay Slot 2
-; AIE2P-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; jl #extern_call; nopv
 ; AIE2P-NEXT:    nopa ; nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    nop // Delay Slot 2
-; AIE2P-NEXT:    mov p0, p6 // Delay Slot 1
+; AIE2P-NEXT:    mov p0, p6 // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; nopx ; mov p0, r8; nopv
 ; AIE2P-NEXT:    lda p0, [p0, #0]
 ; AIE2P-NEXT:    nop
@@ -460,7 +465,7 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ;
 ; AIE2PS-LABEL: test_huge_stack:
 ; AIE2PS:       // %bb.0: // %entry
-; AIE2PS-NEXT:    paddxm [sp], #40064; nopx
+; AIE2PS-NEXT:    paddxm [sp], #40064
 ; AIE2PS-NEXT:    movxm m0, #-40064
 ; AIE2PS-NEXT:    mova r1, #0
 ; AIE2PS-NEXT:    mova r2, #2
@@ -492,18 +497,19 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2PS-NEXT:    add r2, r2, #63
 ; AIE2PS-NEXT:    and r2, r2, r4
 ; AIE2PS-NEXT:    mov m0, r2
+; AIE2PS-NEXT:    padda [p1], m0
 ; AIE2PS-NEXT:    jl #extern_call
-; AIE2PS-NEXT:    padda [p1], m0 // Delay Slot 5
-; AIE2PS-NEXT:    mova m0, #-48 // Delay Slot 4
-; AIE2PS-NEXT:    padda [p2], m0 // Delay Slot 3
+; AIE2PS-NEXT:    mova m0, #-48 // Delay Slot 5
+; AIE2PS-NEXT:    padda [p2], m0 // Delay Slot 4
+; AIE2PS-NEXT:    mov sp, p1 // Delay Slot 3
 ; AIE2PS-NEXT:    st r1:r0, [p2, #0] // Delay Slot 2
-; AIE2PS-NEXT:    mov sp, p1 // Delay Slot 1
+; AIE2PS-NEXT:    nop // Delay Slot 1
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; jl #extern_call; nopv
 ; AIE2PS-NEXT:    nopa ; nopx // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
-; AIE2PS-NEXT:    nop // Delay Slot 2
-; AIE2PS-NEXT:    mov p0, r9 // Delay Slot 1
+; AIE2PS-NEXT:    mov p0, r9 // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 ; AIE2PS-NEXT:    lda p0, [p6, #0]; nopx
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
@@ -524,8 +530,8 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
-; AIE2PS-NEXT:    nop // Delay Slot 2
-; AIE2PS-NEXT:    paddxm [sp], #-40064 // Delay Slot 1
+; AIE2PS-NEXT:    paddxm [sp], #-40064 // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 entry:
   %n.addr = alloca i32, align 4
   %t = alloca [10000 x i32], align 16

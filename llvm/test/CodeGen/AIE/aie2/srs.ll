@@ -31,8 +31,8 @@ define dso_local noundef <32 x i8> @_Z14test_ssrs_gen0Dv16_u9__acc32x2ii(<16 x i
 ; CHECK-NEXT:    mov crSRSSign, r1 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d8.s32 wl0, cm0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> %acc, i32 %shft, i32 %sign)
   ret <32 x i8> %0
@@ -46,8 +46,8 @@ define dso_local noundef <16 x i16> @_Z14test_ssrs_gen1Dv16_u7__acc64ii(<16 x i6
 ; CHECK-NEXT:    mov crSRSSign, r1 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d16.s64 wl0, cm0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> %acc, i32 %shft, i32 %sign)
   ret <16 x i16> %0
@@ -61,8 +61,8 @@ define dso_local noundef <32 x i16> @_Z15test_ulsrs_gen0Dv16_u9__acc32x2ii(<16 x
 ; CHECK-NEXT:    mov crSRSSign, r1 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d16.s32 x0, cm0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> %acc, i32 %shft, i32 %sign)
   ret <32 x i16> %0
@@ -76,8 +76,8 @@ define dso_local noundef <16 x i32> @_Z14test_lsrs_gen0Dv16_u7__acc64ii(<16 x i6
 ; CHECK-NEXT:    mov crSRSSign, r1 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d32.s64 x0, cm0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> %acc, i32 %shft, i32 %sign)
   ret <16 x i32> %0
@@ -91,8 +91,8 @@ define dso_local noundef <8 x i32> @_Z14test_lsrs_gen1Dv8_u7__acc64ii(<8 x i64> 
 ; CHECK-NEXT:    mov crSRSSign, r1 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d32.s64 wl0, bml0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> %acc, i32 %shft, i32 %sign)
   ret <8 x i32> %0
@@ -106,8 +106,8 @@ define dso_local noundef <16 x i16> @_Z14test_lsrs_gen3Dv8_u9__acc32x2ii(<8 x i6
 ; CHECK-NEXT:    mov crSRSSign, r1 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d16.s32 wl0, bml0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> %acc, i32 %shft, i32 %sign)
   ret <16 x i16> %0

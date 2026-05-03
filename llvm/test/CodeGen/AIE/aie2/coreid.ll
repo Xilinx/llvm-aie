@@ -15,8 +15,8 @@ define dso_local noundef i32 @_Z15test_get_coreidv() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r0, CORE_ID // Delay Slot 1
+; CHECK-NEXT:    mov r0, CORE_ID // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.get.coreid()
   ret i32 %0

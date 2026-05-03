@@ -26,9 +26,9 @@ define dso_local noundef i64 @_Z14return_v2int32v() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mova r0, #100 // Delay Slot 2
-; CHECK-NEXT:    mova r1, #0 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #100 // Delay Slot 3
+; CHECK-NEXT:    mova r1, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   ret i64 100
 }
@@ -37,11 +37,11 @@ define dso_local noundef i64 @_Z19pass_return_int64_t(i64 noundef %a) local_unna
 ; CHECK-LABEL: _Z19pass_return_int64_t:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r1, #100 // Delay Slot 4
-; CHECK-NEXT:    add r0, r2, r1 // Delay Slot 3
-; CHECK-NEXT:    ltu r1, r0, r1 // Delay Slot 2
-; CHECK-NEXT:    add r1, r3, r1 // Delay Slot 1
+; CHECK-NEXT:    mova r1, #100 // Delay Slot 5
+; CHECK-NEXT:    add r0, r2, r1 // Delay Slot 4
+; CHECK-NEXT:    ltu r1, r0, r1 // Delay Slot 3
+; CHECK-NEXT:    add r1, r3, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %add = add nsw i64 %a, 100
   ret i64 %add

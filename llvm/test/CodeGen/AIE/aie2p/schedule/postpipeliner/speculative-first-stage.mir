@@ -74,8 +74,8 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd1; nopv
   ; CHECK-NEXT:    vlda x1, [p0, #64]; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vlda x2, [p0], #128; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vlda x1, [p0, #64]; nopb ; nops ; nopx ; vbcst.32 x0, r0; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vbcst.32 x0, r0; nopv
+  ; CHECK-NEXT:    vlda x1, [p0, #64]; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB1_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

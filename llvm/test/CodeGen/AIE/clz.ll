@@ -26,8 +26,8 @@ define i32 @f(i32 %x) {
 ; COMMON-NEXT:    nop // Delay Slot 5
 ; COMMON-NEXT:    nop // Delay Slot 4
 ; COMMON-NEXT:    nop // Delay Slot 3
-; COMMON-NEXT:    nop // Delay Slot 2
-; COMMON-NEXT:    clz r0, r1 // Delay Slot 1
+; COMMON-NEXT:    clz r0, r1 // Delay Slot 2
+; COMMON-NEXT:    nop // Delay Slot 1
 entry:
   %0 = call i32 @llvm.ctlz.i32(i32 %x, i1 false)
   ret i32 %0

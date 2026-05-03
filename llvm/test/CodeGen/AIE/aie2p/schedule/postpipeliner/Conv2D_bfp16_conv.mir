@@ -16,7 +16,7 @@
   ; CONSERVATIVE-LABEL: convert_bf16_to_bfp16:
   ; CONSERVATIVE:         .p2align 4
   ; CONSERVATIVE-NEXT:  // %bb.0: // %entry
-  ; CONSERVATIVE-NEXT:    lda r0, [p2, #0]
+  ; CONSERVATIVE-NEXT:    lda r0, [p2, #0]; nopb ; nopx
   ; CONSERVATIVE-NEXT:    nop
   ; CONSERVATIVE-NEXT:    nop
   ; CONSERVATIVE-NEXT:    nop
@@ -44,19 +44,19 @@
   ; CONSERVATIVE-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; mov dn1, dn0
   ; CONSERVATIVE-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]
   ; CONSERVATIVE-NEXT:    nop
-  ; CONSERVATIVE-NEXT:    nop
   ; CONSERVATIVE-NEXT:    mov p2, p1
-  ; CONSERVATIVE-NEXT:    vldb.fill.512 [p0, lf0, r24]; add.nc lc, r0, #-2
-  ; CONSERVATIVE-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; movxm ls, #.LBB0_2
-  ; CONSERVATIVE-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; movxm le, #.L_LEnd0; nopv
+  ; CONSERVATIVE-NEXT:    add.nc lc, r0, #-2
+  ; CONSERVATIVE-NEXT:    vldb.fill.512 [p0, lf0, r24]; movxm ls, #.LBB0_2
+  ; CONSERVATIVE-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; nops ; movxm le, #.L_LEnd0; nopv
+  ; CONSERVATIVE-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; mov dc0, dj0; nopv
   ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
   ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
-  ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; mov dc0, dj0; nopv
+  ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CONSERVATIVE-NEXT:    .p2align 4
   ; CONSERVATIVE-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
-  ; CONSERVATIVE-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv
-  ; CONSERVATIVE-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; vst.flush.512.conv [p2, sf, r26]; nopxm ; nopv
-  ; CONSERVATIVE-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nopx
+  ; CONSERVATIVE-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nopx ; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
+  ; CONSERVATIVE-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; vst.flush.512.conv [p2, sf, r26]
+  ; CONSERVATIVE-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vst.flush.512.conv.2d [p2, sf, r26, d0]
   ; CONSERVATIVE-NEXT:    vconv.fp32.bf16 cml0, x0
   ; CONSERVATIVE-NEXT:    vconv.fp32.bf16 cmh0, x2
   ; CONSERVATIVE-NEXT:  .L_LEnd0:
@@ -115,19 +115,19 @@
   ; OPTIMISTIC-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; mov dn1, dn0
   ; OPTIMISTIC-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]
   ; OPTIMISTIC-NEXT:    nop
-  ; OPTIMISTIC-NEXT:    vldb.fill.512 [p0, lf0, r24]
-  ; OPTIMISTIC-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; mov p2, p1
-  ; OPTIMISTIC-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; add.nc lc, r0, #-3
-  ; OPTIMISTIC-NEXT:    movxm ls, #.LBB0_2
-  ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; movxm le, #.L_LEnd0; nopv
+  ; OPTIMISTIC-NEXT:    vldb.fill.512 [p0, lf0, r24]; mov p2, p1
+  ; OPTIMISTIC-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; add.nc lc, r0, #-3
+  ; OPTIMISTIC-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; movxm ls, #.LBB0_2
+  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
+  ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; mov dc0, dj0; nopv
   ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
   ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
-  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopx ; mov dc0, dj0; nopv
+  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; OPTIMISTIC-NEXT:    .p2align 4
   ; OPTIMISTIC-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
-  ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv
-  ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; vst.flush.512.conv [p2, sf, r26]; nopx ; vconv.fp32.bf16 cml0, x0; nopv
-  ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vst.flush.512.conv.2d [p2, sf, r26, d0]; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
+  ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nopx ; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
+  ; OPTIMISTIC-NEXT:    vst.flush.512.conv [p2, sf, r26]; vldb.pop.512 x0, [p0, lf0, r24]; vconv.fp32.bf16 cml0, x0
+  ; OPTIMISTIC-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vconv.fp32.bf16 cmh0, x2
   ; OPTIMISTIC-NEXT:  .L_LEnd0:
   ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; OPTIMISTIC-NEXT:  // %bb.3:

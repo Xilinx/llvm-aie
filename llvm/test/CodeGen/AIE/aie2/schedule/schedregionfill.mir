@@ -30,11 +30,11 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   BUNDLE implicit-def $r2, implicit-def $r13 {
   ; CHECK-NEXT:     $r2 = MOVA_lda_cg 2
   ; CHECK-NEXT:     $r13 = MOVXM_lng_cg 12345
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -52,9 +52,9 @@ body:             |
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r0 = AND $r1, killed $r3
   ; CHECK-NEXT:   $r0 = AND killed $r1, killed $r13
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r0
   bb.0:
     liveins: $r0

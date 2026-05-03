@@ -26,9 +26,9 @@
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    mova r3, #0; vldb x2, [p0], #64; nops ; nopx ; mov crsrsmode, #0; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; mov s0, r3; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

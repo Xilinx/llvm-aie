@@ -155,11 +155,11 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $r17, implicit $sp {
   ; CHECK-NEXT:     $r17 = LDA_dms_spill -24, implicit $sp :: (load (s32) from %stack.2)
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r16, implicit $sp {
-  ; CHECK-NEXT:     $r16 = LDA_dms_spill -28, implicit $sp :: (load (s32) from %stack.1)
-  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $r16, implicit $sp {
+  ; CHECK-NEXT:     $r16 = LDA_dms_spill -28, implicit $sp :: (load (s32) from %stack.1)
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit $lr {
   ; CHECK-NEXT:     RET implicit $lr
@@ -173,12 +173,12 @@ body:             |
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
-  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   frame-destroy BUNDLE implicit-def $r0, implicit-def $sp, implicit $sp {
   ; CHECK-NEXT:     $r0 = MOVA_lda_cg 0
   ; CHECK-NEXT:     frame-destroy PADDB_sp_imm -32, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r0
   bb.1.entry:

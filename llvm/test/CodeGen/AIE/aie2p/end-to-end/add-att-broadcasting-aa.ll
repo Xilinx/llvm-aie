@@ -288,22 +288,21 @@ define dso_local void @add_attribute_bcast_epilogue1(ptr noalias %ifm2, ptr noal
 ; CHECK-NEXT:  .L_LEnd2:
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; vst.conv.bf16.fp32 cml4, [p2], #64; nopxm ; vadd.f dm3, dm3, dm0, r1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    nopa ; st r0, [p3, #0]; nopx
+; CHECK-NEXT:    nopa ; nopxm
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64; vadd.f dm4, dm1, dm2, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml4, [p2], #64; vadd.f dm3, dm3, dm0, r1
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r0, [p3, #0]
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml4, [p2], #64
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64
-; CHECK-NEXT:    st r0, [p4, #0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    st r0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %if.end
@@ -525,7 +524,7 @@ define dso_local void @add_attribute_bcast_epilogue3(ptr noalias %ifm2, ptr noal
 ; CHECK-NEXT:  .L_LEnd4:
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; vst.conv.bf16.fp32 cml4, [p2], #64; nopxm ; vadd.f dm3, dm3, dm0, r1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    lda r1, [p3, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nopxm
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64; vadd.f dm4, dm1, dm2, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml4, [p2], #64; vadd.f dm3, dm3, dm0, r1
@@ -536,6 +535,7 @@ define dso_local void @add_attribute_bcast_epilogue3(ptr noalias %ifm2, ptr noal
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64
 ; CHECK-NEXT:    lda r0, [p4, #0]
+; CHECK-NEXT:    lda r1, [p3, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

@@ -167,8 +167,8 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vst.conv.bf16.fp32 bmh2, [p1], #32 // Delay Slot 4
 ; CHECK-NEXT:    vst.conv.bf16.fp32 bmh0, [p1], #32 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r8 // Delay Slot 1
+; CHECK-NEXT:    mov r16, r8 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 for.body.lr.ph:
   %0 = tail call noundef <16 x bfloat> @llvm.aie2.v16bfloat16()
   %1 = tail call noundef <8 x i64> @llvm.aie2.v16accfloat()

@@ -23,8 +23,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     JL 0, implicit-def $lr
     DelayedSchedBarrier csr_aie2, implicit-def $r0

@@ -164,17 +164,18 @@ entry:
 define dso_local ptr @test_add_2d_ptr_backTOback_call(ptr %a, i32 noundef %off, i32 noundef %size1, i32 noundef %inc1) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_add_2d_ptr_backTOback_call:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nops ; mov p0, p1
+; CHECK-NEXT:    nopx ; mov p0, p1
 ; CHECK-NEXT:    mova r3, #6
 ; CHECK-NEXT:    mova dc0, #0
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
+; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov m0, r0 // Delay Slot 5
-; CHECK-NEXT:    lshl r0, r2, r3 // Delay Slot 4
-; CHECK-NEXT:    mov dj0, r0 // Delay Slot 3
+; CHECK-NEXT:    lshl r0, r2, r3 // Delay Slot 5
+; CHECK-NEXT:    mov dj0, r0 // Delay Slot 4
+; CHECK-NEXT:    paddb.2d [p0], d0 // Delay Slot 3
 ; CHECK-NEXT:    paddb.2d [p0], d0 // Delay Slot 2
-; CHECK-NEXT:    paddb.2d [p0], d0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %mul.i = shl i32 %off, 6
   %0 = trunc i32 %mul.i to i20
@@ -193,7 +194,7 @@ entry:
 define dso_local ptr @test_add_3d_ptr_backTOback_call(ptr %a, i32 noundef %off, i32 noundef %size1, i32 noundef %inc1, i32 noundef %size2, i32 noundef %inc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_add_3d_ptr_backTOback_call:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nops ; mov p0, p1
+; CHECK-NEXT:    nopx ; mov p0, p1
 ; CHECK-NEXT:    mova r5, #6
 ; CHECK-NEXT:    mova dc0, #0
 ; CHECK-NEXT:    mov dn0, r1
@@ -202,12 +203,13 @@ define dso_local ptr @test_add_3d_ptr_backTOback_call(ptr %a, i32 noundef %off, 
 ; CHECK-NEXT:    mov dc4, dc0
 ; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    lshl r0, r2, r5
+; CHECK-NEXT:    mov dj0, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov dj0, r0 // Delay Slot 5
-; CHECK-NEXT:    lshl r0, r4, r5 // Delay Slot 4
-; CHECK-NEXT:    mov dj4, r0 // Delay Slot 3
+; CHECK-NEXT:    lshl r0, r4, r5 // Delay Slot 5
+; CHECK-NEXT:    mov dj4, r0 // Delay Slot 4
+; CHECK-NEXT:    paddb.3d [p0], d0 // Delay Slot 3
 ; CHECK-NEXT:    paddb.3d [p0], d0 // Delay Slot 2
-; CHECK-NEXT:    paddb.3d [p0], d0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %mul.i = shl i32 %off, 6
   %0 = trunc i32 %mul.i to i20

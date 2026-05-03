@@ -188,8 +188,8 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r0 = MUL_mul_r_rr killed $r1, $r1
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -354,7 +354,6 @@ body:             |
   ; CHECK-NEXT:   liveins: $bml0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $p0 = PADDS_st_ptr_inc_idx_imm killed $p0, 4
   ; CHECK-NEXT:   BUNDLE implicit-def $wl1, implicit-def $srf2fflags, implicit-def $p1, implicit killed $bml0, implicit $crf2fmask, implicit $crrnd, implicit killed $p0 {
   ; CHECK-NEXT:     $wl1 = VCONV_BF16_FP32 killed $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
@@ -362,6 +361,7 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
   ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
 
   bb.0:

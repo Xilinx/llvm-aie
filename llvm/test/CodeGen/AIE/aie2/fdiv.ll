@@ -28,8 +28,8 @@ define bfloat @test_fdiv_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32; vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %fdiv = fdiv bfloat %a, %b
   ret bfloat %fdiv
@@ -55,8 +55,8 @@ define float @test_fdiv_float(float %a, float %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %fdiv = fdiv float %a, %b
   ret float %fdiv
@@ -82,8 +82,8 @@ define double @test_fdiv_double(double %a, double %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %fdiv = fdiv double %a, %b
   ret double %fdiv

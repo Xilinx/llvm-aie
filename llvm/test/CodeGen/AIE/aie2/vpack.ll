@@ -10,12 +10,12 @@
 define <32 x i8> @test_pack_d8_d16_dyn(<32 x i16> %v, i32 %sign) {
 ; CHECK-LABEL: test_pack_d8_d16_dyn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov crPackSign, r0 // Delay Slot 3
-; CHECK-NEXT:    vpack.d8.d16 wl0, x2 // Delay Slot 2
-; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    vpack.d8.d16 wl0, x2; mov crPackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign)
   ret <32 x i8> %0
@@ -24,12 +24,12 @@ entry:
 define <32 x i8> @test_pack_d4_d8_dyn(<64 x i8> %v, i32 %sign) {
 ; CHECK-LABEL: test_pack_d4_d8_dyn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov crPackSign, r0 // Delay Slot 3
-; CHECK-NEXT:    vpack.d4.d8 wl0, x2 // Delay Slot 2
-; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    vpack.d4.d8 wl0, x2; mov crPackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %v to <32 x i16>
   %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 %sign)

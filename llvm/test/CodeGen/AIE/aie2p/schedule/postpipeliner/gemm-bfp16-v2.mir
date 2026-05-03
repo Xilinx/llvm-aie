@@ -30,10 +30,10 @@
   ; CHECK-NEXT:    vshuffle x0, x4, x6, r0
   ; CHECK-NEXT:    vshuffle x1, x4, x6, r1; vmul.f dm4, y4, y5, r2
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p3, #0]; vmul.f dm4, y0, y5, r2
-  ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh4, [p3, #64]; add.nc lc, r0, #-1
-  ; CHECK-NEXT:    movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
+  ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p3, #0]; add.nc lc, r0, #-1; vmul.f dm4, y0, y5, r2
+  ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh4, [p3, #64]; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    nopa ; nopb ; movxm le, #.L_LEnd0; nops
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

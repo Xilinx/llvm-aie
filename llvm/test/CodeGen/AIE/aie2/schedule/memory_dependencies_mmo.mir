@@ -112,8 +112,8 @@ body:             |
     ; CHECK-NEXT: $s0 = MOV_mv_scl killed $r0
     ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm killed renamable $p1, 0, killed renamable $bml0, killed renamable $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into %ir.ptr1)
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r0 = MOVA_lda_cg 0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $wl0
     $s0 = MOV_mv_scl killed $r0
     $m0 = MOV_mv_scl killed $r0

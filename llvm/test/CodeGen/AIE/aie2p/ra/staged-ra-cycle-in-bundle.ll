@@ -13,22 +13,22 @@
 define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0.copyload.i, i32 %dimsAI.sroa.9.0.copyload.i, i32 %dimsAO.sroa.7.0.copyload.i, i32 %dimsAO.sroa.4.0.copyload.i, i32 %dimsAO.sroa.6.0.copyload.i, i32 %dimsAO.sroa.0.0.copyload.i, i32 %dimsAO.sroa.5.0.copyload.i, i32 %dimsW.sroa.4.0.copyload.i, i32 %dimsW.sroa.6.0.copyload.i, i20 %0, i1 %1, i32 %dimsAI.sroa.11.0.copyload.i) {
 ; FINE-GRAINED-LABEL: heavy_3d_user:
 ; FINE-GRAINED:       // %bb.0: // %entry
-; FINE-GRAINED-NEXT:    paddxm [sp], #192
-; FINE-GRAINED-NEXT:    st r13, [sp, #-24] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    nopa ; nopb ; nops ; paddxm [sp], #192; nopv
+; FINE-GRAINED-NEXT:    st r13, [sp, #-24]; nopb ; nopx // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    st r14, [sp, #-20] // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    st r15, [sp, #-16] // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    st r9, [sp, #-40] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r10, [sp, #-36] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    mova m0, #-196; st r11, [sp, #-32]; mov p1, sp // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    padda [p1], m0; st p6, [sp, #-12] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st lr, [sp, #-48] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st r8, [sp, #-44] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r12, [sp, #-28]; movx r16, #0; mov p3, #0 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda r12, [p1, #0]; st r0, [sp, #-56]; vbcst.32 x0, r16 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r1, [sp, #-52]; jl p3 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    vst x0, [sp, #-192] // 64-byte Folded Spill Delay Slot 5
-; FINE-GRAINED-NEXT:    vst x0, [sp, #-128]; mov p6, p0 // 64-byte Folded Spill Delay Slot 4
-; FINE-GRAINED-NEXT:    mova p2, #0; st dj0, [sp, #-64]; or r13, r2, r2; mov r14, r3 // 4-byte Folded Spill Delay Slot 3
+; FINE-GRAINED-NEXT:    mova m0, #-196; st r10, [sp, #-36]; mov p1, sp // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    padda [p1], m0; st r11, [sp, #-32] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st p6, [sp, #-12] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r8, [sp, #-44] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st r12, [sp, #-28]; movx r16, #0 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r0, [sp, #-56]; vbcst.32 x0, r16 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda r12, [p1, #0]; st r1, [sp, #-52]; mov p3, #0 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    vst x0, [sp, #-192]; jl p3 // 64-byte Folded Spill
+; FINE-GRAINED-NEXT:    vst x0, [sp, #-128] // 64-byte Folded Spill Delay Slot 5
+; FINE-GRAINED-NEXT:    mova p2, #0; st dj0, [sp, #-64]; mov r13, r2 // 4-byte Folded Spill Delay Slot 4
+; FINE-GRAINED-NEXT:    st lr, [sp, #-48]; or r14, r3, r3; mov p6, p0 // 4-byte Folded Spill Delay Slot 3
 ; FINE-GRAINED-NEXT:    mova p0, #0; st dj0, [sp, #-60]; or r15, r4, r4; mov r9, r5 // 4-byte Folded Spill Delay Slot 2
 ; FINE-GRAINED-NEXT:    mova p1, #0; or r10, r6, r6; mov r11, r7 // Delay Slot 1
 ; FINE-GRAINED-NEXT:    movs dn3, r10; mov dj3, r15

@@ -37,11 +37,11 @@ define void @load_store_with_call() {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova p0, #0
 ; CHECK-NEXT:    jl p5
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova p1, #0 // Delay Slot 4
-; CHECK-NEXT:    mova p2, #0 // Delay Slot 3
-; CHECK-NEXT:    mova p3, #0 // Delay Slot 2
-; CHECK-NEXT:    mova p4, #0 // Delay Slot 1
+; CHECK-NEXT:    mova p1, #0 // Delay Slot 5
+; CHECK-NEXT:    mova p2, #0 // Delay Slot 4
+; CHECK-NEXT:    mova p3, #0 // Delay Slot 3
+; CHECK-NEXT:    mova p4, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-64]; nopb ; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop

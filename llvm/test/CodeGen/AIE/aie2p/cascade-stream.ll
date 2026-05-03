@@ -15,8 +15,8 @@ define dso_local noundef <64 x i8> @_Z21test_get_scd_v128int4i(i32 noundef %en) 
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call <16 x i32> @llvm.aie2p.scd.read.vec(i32 %en)
   %1 = bitcast <16 x i32> %0 to <64 x i8>
@@ -32,8 +32,8 @@ define dso_local inreg noundef <16 x i32> @_Z21test_get_scd_v16acc32i(i32 nounde
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <16 x i32> @llvm.aie2p.scd.read.acc32(i32 %en)
   ret <16 x i32> %0
@@ -48,8 +48,8 @@ define dso_local inreg noundef <32 x i32> @_Z24test_get_scd_v32acc32_loi(i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <32 x i32> @llvm.aie2p.scd.expand.lo(i32 %en)
   ret <32 x i32> %0
@@ -64,8 +64,8 @@ define dso_local inreg noundef <32 x i32> @_Z24test_get_scd_v32acc32_hii(i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <32 x i32> @llvm.aie2p.scd.expand.hi(i32 %en)
   ret <32 x i32> %0
@@ -80,8 +80,8 @@ define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_0i(i32 noun
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, #0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <64 x i32> @llvm.aie2p.scd.ACC2048(i32 %en, i32 0)
   ret <64 x i32> %0
@@ -112,8 +112,8 @@ define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_2i(i32 noun
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, #2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <64 x i32> @llvm.aie2p.scd.ACC2048(i32 %en, i32 2)
   ret <64 x i32> %0
@@ -128,8 +128,8 @@ define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_3i(i32 noun
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, #3 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <64 x i32> @llvm.aie2p.scd.ACC2048(i32 %en, i32 3)
   ret <64 x i32> %0
@@ -144,8 +144,8 @@ define dso_local inreg noundef <32 x i32> @_Z28test_get_scd_expand_v32acc32ii(i3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    or r31, r1, r1; mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <32 x i32> @llvm.aie2p.scd.expand.ACC1024(i32 %en, i32 %pos)
   ret <32 x i32> %0
@@ -160,8 +160,8 @@ define dso_local inreg noundef <64 x i32> @_Z28test_get_scd_expand_v64acc32ii(i3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    or r31, r1, r1; mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <64 x i32> @llvm.aie2p.scd.expand.ACC2048(i32 %en, i32 %pos)
   ret <64 x i32> %0
@@ -170,16 +170,16 @@ entry:
 define dso_local inreg noundef <32 x i32> @_Z33test_get_scd_expand_v32acc32_incriRi(i32 noundef %en, ptr nocapture nonnull align 4 dereferenceable(4) %pos) {
 ; CHECK-LABEL: _Z33test_get_scd_expand_v32acc32_incriRi:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r31, [p0, #0]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda r31, [p0, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmov dm0, scd, r31++
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    st r31, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    st r31, [p0, #0]; mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = load i20, ptr %pos, align 4
   %1 = inttoptr i20 %0 to ptr
@@ -194,16 +194,16 @@ entry:
 define dso_local inreg noundef <64 x i32> @_Z33test_get_scd_expand_v64acc32_incriRi(i32 noundef %en, ptr nocapture nonnull align 4 dereferenceable(4) %pos) {
 ; CHECK-LABEL: _Z33test_get_scd_expand_v64acc32_incriRi:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r31, [p0, #0]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda r31, [p0, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmov dm0, scd, r31++
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    st r31, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
+; CHECK-NEXT:    st r31, [p0, #0]; mov crscden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = load i20, ptr %pos, align 4
   %1 = inttoptr i20 %0 to ptr

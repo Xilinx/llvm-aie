@@ -85,11 +85,11 @@ define dso_local noundef i32 @_Z21test_extract_exponent13v64bfp16ebs16i(%struct.
 ; CHECK-LABEL: _Z21test_extract_exponent13v64bfp16ebs16i:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r2, el0 // Delay Slot 4
-; CHECK-NEXT:    mov r3, eh0 // Delay Slot 3
-; CHECK-NEXT:    or r27, r1, r1 // Delay Slot 2
-; CHECK-NEXT:    sel.eqz r0, r2, r3, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r2, el0 // Delay Slot 5
+; CHECK-NEXT:    mov r3, eh0 // Delay Slot 4
+; CHECK-NEXT:    or r27, r1, r1 // Delay Slot 3
+; CHECK-NEXT:    sel.eqz r0, r2, r3, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %v.coerce.fca.1.extract.i = extractvalue %struct.v64bfp16ebs16 %v.coerce, 1
   %cmp.i = icmp eq i32 %idx, 0
@@ -173,11 +173,11 @@ define dso_local noundef i32 @_Z21test_extract_exponent12v64bfp16ebs8i(%struct.v
 ; CHECK-LABEL: _Z21test_extract_exponent12v64bfp16ebs8i:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r2, el0 // Delay Slot 4
-; CHECK-NEXT:    mov r3, eh0 // Delay Slot 3
-; CHECK-NEXT:    or r27, r1, r1 // Delay Slot 2
-; CHECK-NEXT:    sel.eqz r0, r2, r3, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r2, el0 // Delay Slot 5
+; CHECK-NEXT:    mov r3, eh0 // Delay Slot 4
+; CHECK-NEXT:    or r27, r1, r1 // Delay Slot 3
+; CHECK-NEXT:    sel.eqz r0, r2, r3, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %v.coerce.fca.1.extract.i = extractvalue %struct.v64bfp16ebs8 %v.coerce, 1
   %cmp.i = icmp eq i32 %idx, 0
@@ -339,17 +339,17 @@ define dso_local %struct.v128bfp16ebs8 @_Z11test_insert13v128bfp16ebs8i12v64bfp1
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; jz r0, #.LBB15_2
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vmov x1, x2 // Delay Slot 4
 ; CHECK-NEXT:    mov r4, el2 // Delay Slot 3
-; CHECK-NEXT:    vmov x1, x2 // Delay Slot 2
-; CHECK-NEXT:    mov r5, eh2 // Delay Slot 1
+; CHECK-NEXT:    mov r5, eh2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end.i
 ; CHECK-NEXT:    j #.LBB15_3
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmov x0, x4 // Delay Slot 3
-; CHECK-NEXT:    mov r2, el4 // Delay Slot 2
-; CHECK-NEXT:    mov r3, eh4 // Delay Slot 1
+; CHECK-NEXT:    vmov x0, x4 // Delay Slot 4
+; CHECK-NEXT:    mov r2, el4 // Delay Slot 3
+; CHECK-NEXT:    mov r3, eh4 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB15_2:
 ; CHECK-NEXT:    vmov x0, x1
 ; CHECK-NEXT:    mov r2, r4
@@ -417,21 +417,21 @@ entry:
 define dso_local %struct.v128bfp16ebs8 @_Z11test_insert13v128bfp16ebs8ii(%struct.v128bfp16ebs8 %v.coerce, i32 noundef %idx, i32 noundef %exp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insert13v128bfp16ebs8ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #2; nopb ; nopx
-; CHECK-NEXT:    and r7, r0, r2; vmov x0, x4
+; CHECK-NEXT:    mova r2, #2; nopx ; vmov x0, x4
+; CHECK-NEXT:    and r7, r0, r2; vmov x1, x5
 ; CHECK-NEXT:    jnz r7, #.LBB17_2
-; CHECK-NEXT:    vmov x1, x5 // Delay Slot 5
-; CHECK-NEXT:    mov r3, eh4 // Delay Slot 4
-; CHECK-NEXT:    mov r4, el5 // Delay Slot 3
-; CHECK-NEXT:    mova r6, #1; mov r5, eh5 // Delay Slot 2
-; CHECK-NEXT:    and r27, r0, r6; mov r2, el4 // Delay Slot 1
+; CHECK-NEXT:    mov r3, eh4 // Delay Slot 5
+; CHECK-NEXT:    mov r4, el5 // Delay Slot 4
+; CHECK-NEXT:    mova r6, #1; mov r5, eh5 // Delay Slot 3
+; CHECK-NEXT:    and r27, r0, r6; mov r2, el4 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then.i
 ; CHECK-NEXT:    j #.LBB17_3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    sel.eqz r3, r3, r1, r27 // Delay Slot 2
-; CHECK-NEXT:    sel.eqz r2, r1, r2, r27 // Delay Slot 1
+; CHECK-NEXT:    sel.eqz r3, r3, r1, r27 // Delay Slot 3
+; CHECK-NEXT:    sel.eqz r2, r1, r2, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB17_2: // %if.end.i
 ; CHECK-NEXT:    nopa ; nopb ; sel.eqz r5, r5, r1, r27; nopm
 ; CHECK-NEXT:    sel.eqz r4, r1, r4, r27
@@ -488,9 +488,9 @@ define dso_local noundef i32 @_Z21test_extract_exponent13v128bfp16ebs8i(%struct.
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jz r1, #.LBB18_5; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r4, el0 // Delay Slot 2
-; CHECK-NEXT:    mova r27, #0; mov r5, eh0 // Delay Slot 1
+; CHECK-NEXT:    mov r4, el0 // Delay Slot 3
+; CHECK-NEXT:    mova r27, #0; mov r5, eh0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %entry
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    eq r0, r1, r0
@@ -517,15 +517,15 @@ define dso_local noundef i32 @_Z21test_extract_exponent13v128bfp16ebs8i(%struct.
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 1
+; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB18_5:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov r2, r4 // Delay Slot 3
-; CHECK-NEXT:    mov r3, r5 // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r2, r4 // Delay Slot 4
+; CHECK-NEXT:    mov r3, r5 // Delay Slot 3
+; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %v.coerce.fca.2.extract.i = extractvalue %struct.v128bfp16ebs8 %v.coerce, 2
   %v.coerce.fca.3.extract.i = extractvalue %struct.v128bfp16ebs8 %v.coerce, 3
@@ -621,17 +621,17 @@ define dso_local %struct.v128bfp16ebs16 @_Z11test_insert14v128bfp16ebs16i13v64bf
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; jz r0, #.LBB22_2
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vmov x1, x2 // Delay Slot 4
 ; CHECK-NEXT:    mov r4, el2 // Delay Slot 3
-; CHECK-NEXT:    vmov x1, x2 // Delay Slot 2
-; CHECK-NEXT:    mov r5, eh2 // Delay Slot 1
+; CHECK-NEXT:    mov r5, eh2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end.i
 ; CHECK-NEXT:    j #.LBB22_3
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmov x0, x4 // Delay Slot 3
-; CHECK-NEXT:    mov r2, el4 // Delay Slot 2
-; CHECK-NEXT:    mov r3, eh4 // Delay Slot 1
+; CHECK-NEXT:    vmov x0, x4 // Delay Slot 4
+; CHECK-NEXT:    mov r2, el4 // Delay Slot 3
+; CHECK-NEXT:    mov r3, eh4 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB22_2:
 ; CHECK-NEXT:    vmov x0, x1
 ; CHECK-NEXT:    mov r2, r4
@@ -699,21 +699,21 @@ entry:
 define dso_local %struct.v128bfp16ebs16 @_Z11test_insert14v128bfp16ebs16ii(%struct.v128bfp16ebs16 %v.coerce, i32 noundef %idx, i32 noundef %exp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insert14v128bfp16ebs16ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #2; nopb ; nopx
-; CHECK-NEXT:    ge r7, r0, r2; vmov x0, x4
+; CHECK-NEXT:    mova r2, #2; nopx ; vmov x0, x4
+; CHECK-NEXT:    ge r7, r0, r2; vmov x1, x5
 ; CHECK-NEXT:    jnz r7, #.LBB24_2
-; CHECK-NEXT:    vmov x1, x5 // Delay Slot 5
-; CHECK-NEXT:    mov r3, eh4 // Delay Slot 4
-; CHECK-NEXT:    mov r4, el5 // Delay Slot 3
-; CHECK-NEXT:    mova r6, #1; mov r5, eh5 // Delay Slot 2
-; CHECK-NEXT:    and r27, r0, r6; mov r2, el4 // Delay Slot 1
+; CHECK-NEXT:    mov r3, eh4 // Delay Slot 5
+; CHECK-NEXT:    mov r4, el5 // Delay Slot 4
+; CHECK-NEXT:    mova r6, #1; mov r5, eh5 // Delay Slot 3
+; CHECK-NEXT:    and r27, r0, r6; mov r2, el4 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then.i
 ; CHECK-NEXT:    j #.LBB24_3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    sel.eqz r3, r3, r1, r27 // Delay Slot 2
-; CHECK-NEXT:    sel.eqz r2, r1, r2, r27 // Delay Slot 1
+; CHECK-NEXT:    sel.eqz r3, r3, r1, r27 // Delay Slot 3
+; CHECK-NEXT:    sel.eqz r2, r1, r2, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB24_2: // %if.end.i
 ; CHECK-NEXT:    nopa ; nopb ; sel.eqz r5, r5, r1, r27; nopm
 ; CHECK-NEXT:    sel.eqz r4, r1, r4, r27
@@ -770,9 +770,9 @@ define dso_local noundef i32 @_Z21test_extract_exponent14v128bfp16ebs16i(%struct
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jz r1, #.LBB25_5; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r4, el0 // Delay Slot 2
-; CHECK-NEXT:    mova r27, #0; mov r5, eh0 // Delay Slot 1
+; CHECK-NEXT:    mov r4, el0 // Delay Slot 3
+; CHECK-NEXT:    mova r27, #0; mov r5, eh0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %entry
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    eq r0, r1, r0
@@ -799,15 +799,15 @@ define dso_local noundef i32 @_Z21test_extract_exponent14v128bfp16ebs16i(%struct
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 1
+; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB25_5:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov r2, r4 // Delay Slot 3
-; CHECK-NEXT:    mov r3, r5 // Delay Slot 2
-; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 1
+; CHECK-NEXT:    mov r2, r4 // Delay Slot 4
+; CHECK-NEXT:    mov r3, r5 // Delay Slot 3
+; CHECK-NEXT:    sel.nez r0, r3, r2, r27 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %v.coerce.fca.2.extract.i = extractvalue %struct.v128bfp16ebs16 %v.coerce, 2
   %v.coerce.fca.3.extract.i = extractvalue %struct.v128bfp16ebs16 %v.coerce, 3

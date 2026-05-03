@@ -19,7 +19,7 @@
   ; CHECK-NEXT:    mova m0, #4; nopb ; nopxm ; nops
   ; CHECK-NEXT:    mova dn0, #16; mov m1, m0
   ; CHECK-NEXT:    mova dc1, #0; movs p1, p0; mov dn1, dn0
-  ; CHECK-NEXT:    movs dj1, m0; mov dc0, dc1
+  ; CHECK-NEXT:    movs dc0, dc1; mov dj1, m0
   ; CHECK-NEXT:    lda.2d r1, [p1], d1
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    mova r1, #4; movxm ls, #.LBB0_1

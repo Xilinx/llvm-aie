@@ -13,10 +13,10 @@ define i32 @test_div_step(i32 noundef %a, i32 noundef %b, ptr nocapture nonnull 
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mova r0, #0; mov r31, r1 // Delay Slot 3
-; CHECK-NEXT:    divs r0, r31, r0, r2 // Delay Slot 2
-; CHECK-NEXT:    mov r0, r31 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #0; mov r31, r1 // Delay Slot 4
+; CHECK-NEXT:    divs r0, r31, r0, r2 // Delay Slot 3
+; CHECK-NEXT:    mov r0, r31 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { i32, i32 } @llvm.aie2p.divs(i32 %a, i32 0, i32 %b)
   %1 = extractvalue { i32, i32 } %0, 1
@@ -29,9 +29,9 @@ define i32 @test_mod_step(i32 noundef %a, i32 noundef %b) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mova r0, #0; mov r31, r1 // Delay Slot 2
-; CHECK-NEXT:    divs r0, r31, r0, r2 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #0; mov r31, r1 // Delay Slot 3
+; CHECK-NEXT:    divs r0, r31, r0, r2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { i32, i32 } @llvm.aie2p.divs(i32 %a, i32 0, i32 %b)
   %1 = extractvalue { i32, i32 } %0, 0

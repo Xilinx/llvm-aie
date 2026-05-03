@@ -10,13 +10,14 @@
 define dso_local noundef <32 x i16> @_Z11test_unpackDv32_ab(<32 x i8> noundef %v, i1 noundef zeroext %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_unpackDv32_ab:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack.d16.d8 x0, wl2; nopxm ; nops
+; CHECK-NEXT:    nopa ; vunpack.d16.d8 x0, wl2; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 2
-; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 3
+; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8> %v, i32 %conv.i)
@@ -27,13 +28,14 @@ entry:
 define dso_local noundef <32 x i16> @_Z11test_unpackDv32_hb(<32 x i8> noundef %v, i1 noundef zeroext %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_unpackDv32_hb:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack.d16.d8 x0, wl2; nopxm ; nops
+; CHECK-NEXT:    nopa ; vunpack.d16.d8 x0, wl2; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 2
-; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 3
+; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8> %v, i32 %conv.i)
@@ -44,13 +46,14 @@ entry:
 define dso_local noundef <64 x i8> @_Z11test_unpackDv32_DB8_b(<32 x i8> noundef %v, i1 noundef zeroext %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_unpackDv32_DB8_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack.d8.d4 x0, wl2; nopxm ; nops
+; CHECK-NEXT:    nopa ; vunpack.d8.d4 x0, wl2; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 2
-; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 3
+; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8> %v, i32 %conv.i)
@@ -62,13 +65,14 @@ entry:
 define dso_local noundef <64 x i8> @_Z11test_unpackDv32_DU8_b(<32 x i8> noundef %v, i1 noundef zeroext %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_unpackDv32_DU8_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; vunpack.d8.d4 x0, wl2; nopxm ; nops
+; CHECK-NEXT:    nopa ; vunpack.d8.d4 x0, wl2; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 2
-; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    mov crUnpackSign, r0 // Delay Slot 3
+; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
   %0 = tail call <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8> %v, i32 %conv.i)

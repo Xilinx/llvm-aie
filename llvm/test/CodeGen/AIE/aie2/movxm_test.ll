@@ -14,16 +14,17 @@
 define dso_local noundef i32 @_Z4getAv() {
 ; CHECK-LABEL: _Z4getAv:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    movxm p0, #(d+4)
-; CHECK-NEXT:    lda r0, [p0, #0]
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #(d+4); nopv
+; CHECK-NEXT:    lda r0, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda r1, [p0, #4]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    add r0, r1, r0 // Delay Slot 1
+; CHECK-NEXT:    add r0, r1, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = load i32, ptr getelementptr inbounds (%struct.Data, ptr @d, i20 0, i32 1), align 4
   %1 = load i32, ptr getelementptr inbounds (%struct.Data, ptr @d, i20 0, i32 2), align 4
@@ -39,16 +40,17 @@ entry:
 define dso_local noundef i32 @foo() {
 ; CHECK-LABEL: foo:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    movxm p0, #(X+4)
-; CHECK-NEXT:    lda.s16 r0, [p0, #-2]
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #(X+4); nopv
+; CHECK-NEXT:    lda.s16 r0, [p0, #-2]; nopb ; nopx
 ; CHECK-NEXT:    lda r1, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 1
+; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = load i16, ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 1), align 2
   %conv = sext i16 %0 to i32
@@ -65,18 +67,19 @@ entry:
 define dso_local noundef i32 @bar() {
 ; CHECK-LABEL: bar:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; movxm p0, #(Y+4)
+; CHECK-NEXT:    nop ; movxm p0, #(Y+4)
 ; CHECK-NEXT:    lda.s16 r0, [p0, #-2]
 ; CHECK-NEXT:    lda.s16 r1, [p0, #-4]
 ; CHECK-NEXT:    lda.s8 r2, [p0, #0]
 ; CHECK-NEXT:    lda r3, [p0, #4]
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 3
-; CHECK-NEXT:    add r0, r0, r2 // Delay Slot 2
-; CHECK-NEXT:    add r0, r0, r3 // Delay Slot 1
+; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 4
+; CHECK-NEXT:    add r0, r0, r2 // Delay Slot 3
+; CHECK-NEXT:    add r0, r0, r3 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = load i16, ptr getelementptr inbounds (%struct.test, ptr @Y, i32 0, i32 1), align 2
   %conv = sext i16 %0 to i32

@@ -192,10 +192,15 @@ public:
   ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
 
   /// Iterate over the instructions that are fixed at the bottom. Typically
-  /// those represent a SWP prologue.
+  /// those represent a SWP prologue OR a delay-slot branch anchored by
+  /// single-entry BotFixedBundles. Anchored at the region's end (ExitInstr
+  /// when set, else BB->end()) so the barrier-trailed shape (production
+  /// delay-slot region: branch immediately followed by DelayedSchedBarrier,
+  /// where ExitInstr points at the barrier) lands on the branch.
   inline iterator_range<fixed_iterator> bot_fixed_instrs() const {
-    fixed_iterator FixedBegin = std::prev(BB->end(), BotFixedBundles.size());
-    return make_range(FixedBegin, BB->end());
+    fixed_iterator End = ExitInstr ? ExitInstr->getIterator() : BB->end();
+    fixed_iterator FixedBegin = std::prev(End, BotFixedBundles.size());
+    return make_range(FixedBegin, End);
   }
   ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
 
@@ -239,13 +244,17 @@ public:
   std::vector<MachineBundle> TopInsert;
   std::vector<MachineBundle> BottomInsert;
 
-  /// Intra-MBB fixed bundles — backing array for Region::BotFixedBundles
-  /// when the fixed content stays inside this MBB. Distinct from
-  /// BottomInsert: content here is NOT pushed to an adjacent MBB by
-  /// emitInterBlockBottom; it describes constraints on this MBB's own
-  /// bottom region. Used (in a follow-up commit) to anchor a delay-slot
-  /// branch and its trailing fillable cycle anchors.
-  std::vector<MachineBundle> LocalBottomFixed;
+  /// Per-region single-entry [branch_bundle] backing for
+  /// Region::BotFixedBundles when the region ends in a delay-slot branch.
+  /// Indexed in lockstep with Regions: RegionBottomFixed[i] is the backing for
+  /// Regions[i]. Empty inner vector when the region has no delay-slot MI.
+  ///
+  /// Stability: each inner vector is push_back'd exactly once during
+  /// synthesiseDelaySlotBotFixed (one branch_bundle), then frozen. Outer
+  /// reallocation moves the inner vectors via std::vector's move constructor
+  /// which preserves the inner heap buffer's address — so ArrayRefs into the
+  /// inner vector stay valid across outer growth.
+  std::vector<std::vector<MachineBundle>> RegionBottomFixed;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -408,6 +417,13 @@ public:
   /// Retrieve the inter-block state for BB
   const BlockState &getBlockState(MachineBasicBlock *BB) const;
   BlockState &getBlockState(MachineBasicBlock *BB);
+
+  /// Whether BB has a tracked BlockState. Callers that may run before
+  /// the InterBlockScheduling pass has populated Blocks (e.g. some
+  /// DAG mutators) use this to gate `getBlockState(BB)`.
+  bool isTrackedBlock(const MachineBasicBlock *BB) const {
+    return Blocks.find(const_cast<MachineBasicBlock *>(BB)) != Blocks.end();
+  }
 
   /// Return the maximum interblock latency we need to account for
   /// for the given successor. This represents the latency margin we assume for

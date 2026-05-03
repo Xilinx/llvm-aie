@@ -52,19 +52,20 @@ entry:
 define <64 x i8> @insert_128_in_512(<64 x i8> noundef %v, i32 noundef %idx, <16 x i8> noundef %b) {
 ; CHECK-LABEL: insert_128_in_512:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r5, r16; nopv
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r5, r16; nops
 ; CHECK-NEXT:    mova r1, #4
 ; CHECK-NEXT:    mova r2, #64
 ; CHECK-NEXT:    mova r3, #2
 ; CHECK-NEXT:    mova r4, #15
 ; CHECK-NEXT:    lshl r1, r0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
+; CHECK-NEXT:    sub r1, r2, r1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    sub r1, r2, r1 // Delay Slot 5
-; CHECK-NEXT:    lshl r16, r4, r0 // Delay Slot 4
-; CHECK-NEXT:    vshift x0, x0, x4, r1 // Delay Slot 3
-; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r5 // Delay Slot 1
+; CHECK-NEXT:    lshl r16, r4, r0 // Delay Slot 5
+; CHECK-NEXT:    vshift x0, x0, x4, r1 // Delay Slot 4
+; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r5 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <16 x i8> %b to <4 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> %0)
@@ -83,19 +84,20 @@ entry:
 define dso_local noundef <32 x i8> @insert_128_in_256(<32 x i8> noundef %v, i32 noundef %idx, <16 x i8> noundef %b) {
 ; CHECK-LABEL: insert_128_in_256:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r5, r16; nopv
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r5, r16; nops
 ; CHECK-NEXT:    mova r1, #4
 ; CHECK-NEXT:    mova r2, #64
 ; CHECK-NEXT:    mova r3, #2
 ; CHECK-NEXT:    mova r4, #15
 ; CHECK-NEXT:    lshl r1, r0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
+; CHECK-NEXT:    sub r1, r2, r1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    sub r1, r2, r1 // Delay Slot 5
-; CHECK-NEXT:    lshl r16, r4, r0 // Delay Slot 4
-; CHECK-NEXT:    vshift x0, x0, x4, r1 // Delay Slot 3
-; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r5 // Delay Slot 1
+; CHECK-NEXT:    lshl r16, r4, r0 // Delay Slot 5
+; CHECK-NEXT:    vshift x0, x0, x4, r1 // Delay Slot 4
+; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r5 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <32 x i8> %v to <8 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %0, i32 0)
@@ -116,8 +118,8 @@ entry:
 define <64 x i8> @test_concat_4_v32uint4(<16 x i8> noundef %v0, <16 x i8> noundef %v1, <16 x i8> noundef %v2, <16 x i8> noundef %v3) {
 ; CHECK-LABEL: test_concat_4_v32uint4:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mov r3, r16
-; CHECK-NEXT:    mov r4, r17
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r3, r16; nopv
+; CHECK-NEXT:    nopa ; mov r4, r17
 ; CHECK-NEXT:    mov r5, r18
 ; CHECK-NEXT:    mova r0, #48
 ; CHECK-NEXT:    mova r1, #32
@@ -129,12 +131,13 @@ define <64 x i8> @test_concat_4_v32uint4(<16 x i8> noundef %v0, <16 x i8> nounde
 ; CHECK-NEXT:    vshift x4, x0, x6, r1
 ; CHECK-NEXT:    vsel.32 x0, x0, x4, r16
 ; CHECK-NEXT:    mov r16, r3
+; CHECK-NEXT:    vshift x4, x0, x8, r2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vshift x4, x0, x8, r2 // Delay Slot 5
-; CHECK-NEXT:    vsel.32 x0, x0, x4, r17 // Delay Slot 4
-; CHECK-NEXT:    mov r17, r4 // Delay Slot 3
-; CHECK-NEXT:    vsel.32 x0, x0, x2, r18 // Delay Slot 2
-; CHECK-NEXT:    mov r18, r5 // Delay Slot 1
+; CHECK-NEXT:    vsel.32 x0, x0, x4, r17 // Delay Slot 5
+; CHECK-NEXT:    mov r17, r4 // Delay Slot 4
+; CHECK-NEXT:    vsel.32 x0, x0, x2, r18 // Delay Slot 3
+; CHECK-NEXT:    mov r18, r5 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <16 x i8> %v1 to <4 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> %0)
@@ -158,13 +161,14 @@ entry:
 define <32 x i8> @test_concat_2_v32uint4(<16 x i8> noundef %v0, <16 x i8> noundef %v1) {
 ; CHECK-LABEL: test_concat_2_v32uint4:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov r1, r16
+; CHECK-NEXT:    nopa ; mov r1, r16
+; CHECK-NEXT:    mova r0, #48
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r0, #48 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #15 // Delay Slot 4
-; CHECK-NEXT:    vshift x0, x0, x4, r0 // Delay Slot 3
-; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    mova r16, #15 // Delay Slot 5
+; CHECK-NEXT:    vshift x0, x0, x4, r0 // Delay Slot 4
+; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <16 x i8> %v1 to <4 x i32>
   %1 = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> %0)

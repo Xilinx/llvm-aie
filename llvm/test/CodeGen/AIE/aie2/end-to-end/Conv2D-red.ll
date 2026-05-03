@@ -145,8 +145,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    nop // Delay Slot 2
-; ASM-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; ASM-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %outer.loop.header
 

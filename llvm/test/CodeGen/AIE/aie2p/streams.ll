@@ -13,9 +13,9 @@ define dso_local void @_Z12test_put_mcdDv64_DB8_i(<64 x i8> noundef %a, i32 noun
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crmcden, r0 // Delay Slot 2
-; CHECK-NEXT:    vmov mcd, x0; mov crmcden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crmcden, r0 // Delay Slot 3
+; CHECK-NEXT:    vmov mcd, x0; mov crmcden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %a to <16 x i32>
   tail call void @llvm.aie2p.mcd.write.vec(<16 x i32> %0, i32 %en)
@@ -29,9 +29,9 @@ define dso_local void @_Z12test_put_mcdDv8_u7__acc64i(<8 x i64> inreg noundef %a
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crmcden, r0 // Delay Slot 2
-; CHECK-NEXT:    vmov mcd, bmll0; mov crmcden, #1 // Delay Slot 1
+; CHECK-NEXT:    mov crmcden, r0 // Delay Slot 3
+; CHECK-NEXT:    vmov mcd, bmll0; mov crmcden, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2p.mcd.write.acc32(<8 x i64> %a, i32 %en)
   ret void

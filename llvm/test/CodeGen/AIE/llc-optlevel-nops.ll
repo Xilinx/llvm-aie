@@ -17,16 +17,17 @@
 define i32 @load_ptr(i8 *%a) {
 ; AIE2-O0-LABEL: load_ptr:
 ; AIE2-O0:       // %bb.0:
-; AIE2-O0-NEXT:    mova m0, #1; nopx
+; AIE2-O0-NEXT:    mova m0, #1
 ; AIE2-O0-NEXT:    paddb [p0], m0
 ; AIE2-O0-NEXT:    lda.s8 r0, [p0, #0]
+; AIE2-O0-NEXT:    nop
 ; AIE2-O0-NEXT:    nop
 ; AIE2-O0-NEXT:    ret lr
 ; AIE2-O0-NEXT:    nop // Delay Slot 5
 ; AIE2-O0-NEXT:    nop // Delay Slot 4
 ; AIE2-O0-NEXT:    nop // Delay Slot 3
-; AIE2-O0-NEXT:    nop // Delay Slot 2
-; AIE2-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 1
+; AIE2-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 2
+; AIE2-O0-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2-O2-LABEL: load_ptr:
 ; AIE2-O2:       // %bb.0:
@@ -40,16 +41,17 @@ define i32 @load_ptr(i8 *%a) {
 ;
 ; AIE2P-O0-LABEL: load_ptr:
 ; AIE2P-O0:       // %bb.0:
-; AIE2P-O0-NEXT:    mova m0, #1; nopx
+; AIE2P-O0-NEXT:    mova m0, #1
 ; AIE2P-O0-NEXT:    padda [p0], m0
 ; AIE2P-O0-NEXT:    lda.s8 r0, [p0, #0]
+; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    ret lr
 ; AIE2P-O0-NEXT:    nop // Delay Slot 5
 ; AIE2P-O0-NEXT:    nop // Delay Slot 4
 ; AIE2P-O0-NEXT:    nop // Delay Slot 3
-; AIE2P-O0-NEXT:    nop // Delay Slot 2
-; AIE2P-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 1
+; AIE2P-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 2
+; AIE2P-O0-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-O2-LABEL: load_ptr:
 ; AIE2P-O2:       // %bb.0:
@@ -69,16 +71,17 @@ define i32 @load_ptr(i8 *%a) {
 define i32 @load_ptr_optnone(i8 *%a) noinline optnone {
 ; AIE2-O0-LABEL: load_ptr_optnone:
 ; AIE2-O0:       // %bb.0:
-; AIE2-O0-NEXT:    mova m0, #1; nopx
+; AIE2-O0-NEXT:    mova m0, #1
 ; AIE2-O0-NEXT:    paddb [p0], m0
 ; AIE2-O0-NEXT:    lda.s8 r0, [p0, #0]
+; AIE2-O0-NEXT:    nop
 ; AIE2-O0-NEXT:    nop
 ; AIE2-O0-NEXT:    ret lr
 ; AIE2-O0-NEXT:    nop // Delay Slot 5
 ; AIE2-O0-NEXT:    nop // Delay Slot 4
 ; AIE2-O0-NEXT:    nop // Delay Slot 3
-; AIE2-O0-NEXT:    nop // Delay Slot 2
-; AIE2-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 1
+; AIE2-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 2
+; AIE2-O0-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2-O2-LABEL: load_ptr_optnone:
 ; AIE2-O2:       // %bb.0:
@@ -92,16 +95,17 @@ define i32 @load_ptr_optnone(i8 *%a) noinline optnone {
 ;
 ; AIE2P-O0-LABEL: load_ptr_optnone:
 ; AIE2P-O0:       // %bb.0:
-; AIE2P-O0-NEXT:    mova m0, #1; nopx
+; AIE2P-O0-NEXT:    mova m0, #1
 ; AIE2P-O0-NEXT:    padda [p0], m0
 ; AIE2P-O0-NEXT:    lda.s8 r0, [p0, #0]
+; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    nop
 ; AIE2P-O0-NEXT:    ret lr
 ; AIE2P-O0-NEXT:    nop // Delay Slot 5
 ; AIE2P-O0-NEXT:    nop // Delay Slot 4
 ; AIE2P-O0-NEXT:    nop // Delay Slot 3
-; AIE2P-O0-NEXT:    nop // Delay Slot 2
-; AIE2P-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 1
+; AIE2P-O0-NEXT:    extend.s8 r0, r0 // Delay Slot 2
+; AIE2P-O0-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-O2-LABEL: load_ptr_optnone:
 ; AIE2P-O2:       // %bb.0:

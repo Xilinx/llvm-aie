@@ -648,6 +648,21 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   std::optional<int> getMemoryLatency(unsigned SrcSchedClass,
                                       unsigned DstSchedClass) const;
 
+  /// Like getMemoryLatency(SchedClass, SchedClass), but operates on
+  /// MachineInstr arguments and handles BUNDLE pseudos by walking inner
+  /// MIs and returning the WORST-CASE latency across (src_inner,
+  /// dst_inner) memory-op pairs:
+  ///   max(LastMemoryCycle of src inner mems) -
+  ///   min(FirstMemoryCycle of dst inner mems) + 1.
+  /// A bundle that wraps multiple memory MIs (e.g. `VLD` and
+  /// `VLD_Fill` with different latencies) needs the most conservative
+  /// latency so the dependency between Src and Dst is correctly
+  /// enforced for ANY pair of inner MIs that could be the dep
+  /// participants.
+  /// Single-MI inputs reduce to today's getMemoryLatency behaviour.
+  std::optional<int> getMaxMemoryLatency(const MachineInstr &SrcMI,
+                                         const MachineInstr &DstMI) const;
+
   /// Returns the worst-case latency to be observed to preserve the
   /// ordering of aliasing memory operations. We don't know the destination
   /// of the edge

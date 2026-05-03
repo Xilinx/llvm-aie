@@ -32,8 +32,8 @@
   ; CHECK-NEXT:    nopa ; nopb ; movs p3, p7; movxm le, #.L_LEnd0; nopv
   ; CHECK-NEXT:    nopa ; vldb wh5, [p3, #32]; nops ; and r24, r22, r20; vshift x1, x5, x0, r24; nopv
   ; CHECK-NEXT:    vlda wl3, [p5], #32; vldb.3d wl5, [p7], d0; nops ; nopx ; mov r22, p3; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; movs p3, p7; nopx ; mov p6, p2; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; movs p6, p2; nopx ; vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; movs p3, p7; nopxm ; nopv
   ; CHECK-NEXT:  .LBB0_1: // %loop_body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    nopa ; vldb wh5, [p3, #32]; and r24, r22, r20; vshift x1, x5, x0, r24; nops

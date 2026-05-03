@@ -13,11 +13,11 @@ define <32 x i8> @test_select_32xi8(i1 noundef zeroext %sel, <32 x i8> noundef %
 ; AIE2-LABEL: test_select_32xi8:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 4
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_32xi8:
 ; AIE2P:       // %bb.0: // %entry
@@ -36,11 +36,11 @@ define <16 x i16> @test_select_16xi16(i1 noundef zeroext %sel, <16 x i16> nounde
 ; AIE2-LABEL: test_select_16xi16:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 4
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_16xi16:
 ; AIE2P:       // %bb.0: // %entry
@@ -59,11 +59,11 @@ define <8 x i32> @test_select_8xi32(i1 noundef zeroext %sel, <8 x i32> noundef %
 ; AIE2-LABEL: test_select_8xi32:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 4
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_8xi32:
 ; AIE2P:       // %bb.0: // %entry
@@ -82,11 +82,11 @@ define <64 x i8> @test_select_64xi8(i1 noundef zeroext %sel, <64 x i8> noundef %
 ; AIE2-LABEL: test_select_64xi8:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 4
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_64xi8:
 ; AIE2P:       // %bb.0: // %entry
@@ -105,11 +105,11 @@ define <32 x i16> @test_select_32xi16(i1 noundef zeroext %sel, <32 x i16> nounde
 ; AIE2-LABEL: test_select_32xi16:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 4
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_32xi16:
 ; AIE2P:       // %bb.0: // %entry
@@ -128,11 +128,11 @@ define <16 x i32> @test_select_16xi32(i1 noundef zeroext %sel, <16 x i32> nounde
 ; AIE2-LABEL: test_select_16xi32:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; AIE2-NEXT:    nop // Delay Slot 5
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 4
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x0, x2, x4, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_16xi32:
 ; AIE2P:       // %bb.0: // %entry
@@ -150,12 +150,13 @@ entry:
 define <128 x i8> @test_select_128xi8(i1 noundef zeroext %sel, <128 x i8> noundef %a, <128 x i8> noundef %b) {
 ; AIE2-LABEL: test_select_128xi8:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
-; AIE2-NEXT:    vsel.32 x4, x6, x8, r16 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    nopa ; nopx ; mov r1, r16
+; AIE2-NEXT:    ret lr
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 5
+; AIE2-NEXT:    vsel.32 x4, x6, x8, r16 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_128xi8:
 ; AIE2P:       // %bb.0: // %entry
@@ -173,12 +174,13 @@ entry:
 define <64 x i16> @test_select_64xi16(i1 noundef zeroext %sel, <64 x i16> noundef %a, <64 x i16> noundef %b) {
 ; AIE2-LABEL: test_select_64xi16:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
-; AIE2-NEXT:    vsel.32 x4, x6, x8, r16 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    nopa ; nopx ; mov r1, r16
+; AIE2-NEXT:    ret lr
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 5
+; AIE2-NEXT:    vsel.32 x4, x6, x8, r16 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_64xi16:
 ; AIE2P:       // %bb.0: // %entry
@@ -196,12 +198,13 @@ entry:
 define <32 x i32> @test_select_32xi32(i1 noundef zeroext %sel, <32 x i32> noundef %a, <32 x i32> noundef %b) {
 ; AIE2-LABEL: test_select_32xi32:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm
-; AIE2-NEXT:    mov r1, r16 // Delay Slot 5
-; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 4
-; AIE2-NEXT:    vsel.32 x4, x6, x8, r16 // Delay Slot 3
-; AIE2-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 2
-; AIE2-NEXT:    mov r16, r1 // Delay Slot 1
+; AIE2-NEXT:    nopa ; nopx ; mov r1, r16
+; AIE2-NEXT:    ret lr
+; AIE2-NEXT:    add r16, r0, #-1 // Delay Slot 5
+; AIE2-NEXT:    vsel.32 x4, x6, x8, r16 // Delay Slot 4
+; AIE2-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 3
+; AIE2-NEXT:    mov r16, r1 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test_select_32xi32:
 ; AIE2P:       // %bb.0: // %entry

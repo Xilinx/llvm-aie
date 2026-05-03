@@ -731,52 +731,50 @@ BlockState &InterBlockScheduling::getBlockState(MachineBasicBlock *BB) {
   return Blocks.at(BB);
 }
 
-/// If the region's trailing terminator has delay slots, synthesise an in-MBB
-/// BotFixedBundles backing array so the scheduler treats the branch and its
-/// trailing N delay-slot cycles as fixed cycles. Behaviour:
-///   - Branch becomes BS.LocalBottomFixed[0] — pinned at cycle L-N-1.
-///   - N empty BUNDLE pseudo MIs are inserted after the branch in MBB to
-///     back the trailing fillable cycle anchors. Each is one MIR position.
-///   - BS.LocalBottomFixed[1..N] are empty MachineBundle entries; the
-///     scheduler doesn't pick anything for them. If a free SU lands at one
-///     of those cycles via the engine's resource-aware fitInInterval, the
-///     existing fixed-SUnit chain mechanism keeps it co-located there at
-///     commit time.
-/// Idempotent: only fires once per MBB (guarded on BS.LocalBottomFixed
-/// being empty).
+/// If the region contains a delay-slot branch, synthesise a single-entry
+/// BotFixedBundles backing for it so the scheduler treats the branch as a
+/// cycle-anchored fixed SU instead of a free SU. Cycle anchoring is done
+/// by EmitFixedSUnits::createFixedSUDAGNodes via the chain edge
+/// `branch → ExitSU` with latency = TII->getNumDelaySlots(branch). The N
+/// delay-slot positions remain free MIR cycles for the legacy
+/// RegionBottomUpCycles floor / free-SU fill / NOP padding to handle —
+/// exactly what they do today. No MIR mutation, no empty BUNDLE pseudos.
+///
+/// Pushes one element to BS.RegionBottomFixed in lockstep with addRegion:
+/// either an empty inner vector (region has no delay-slot MI) or a
+/// single-entry [branch_bundle] vector.
 static void synthesiseDelaySlotBotFixed(BlockState &BS, MachineBasicBlock *BB,
+                                        MachineBasicBlock::iterator RegionBegin,
                                         MachineBasicBlock::iterator RegionEnd,
                                         const AIEBaseInstrInfo *TII) {
-  if (!BS.LocalBottomFixed.empty())
-    return;
-  if (RegionEnd != BB->end())
-    return;
-  if (RegionEnd == BB->begin())
-    return;
-  MachineBasicBlock::iterator BranchIt = std::prev(RegionEnd);
-  if (!BranchIt->hasDelaySlot())
-    return;
-  const unsigned N = TII->getNumDelaySlots(*BranchIt);
-  if (N == 0)
+  BS.RegionBottomFixed.emplace_back();
+
+  // Loops cannot have fixed instructions — `initInterBlock` asserts on
+  // this, and the SWP fixpoint / pipelining stages would corrupt the
+  // modulo schedule if we anchored a delay-slot terminator inside a
+  // loop body. Loop terminators are handled by their own machinery
+  // (PseudoLoopEnd is non-delay-slot; non-ZOL loop tails fall through
+  // to the legacy free-SU path).
+  if (BS.Kind == BlockType::Loop)
     return;
 
-  // Insert N empty BUNDLE pseudo MIs after the branch — one MIR position
-  // per delay-slot cycle. Same primitive emitBundles uses today for SWP
-  // empties (AIEInterBlockScheduling.cpp:815).
-  DebugLoc DL;
-  for (unsigned I = 0; I < N; ++I)
-    BuildMI(*BB, BB->end(), DL, TII->get(TargetOpcode::BUNDLE));
+  // Find the unique delay-slot MI in the region. Mid-MBB CALLs and trailing
+  // RET/J/JZ/etc. each have one in their own region (regions are split by
+  // DelayedSchedBarrier). getDelaySlotInstr-style scan with uniqueness
+  // assertion.
+  auto HasDelaySlot = [](const MachineInstr &MI) { return MI.hasDelaySlot(); };
+  auto It = std::find_if(RegionBegin, RegionEnd, HasDelaySlot);
+  if (It == RegionEnd)
+    return;
+  assert(std::find_if(std::next(It), RegionEnd, HasDelaySlot) == RegionEnd &&
+         "Region has multiple delay-slot MIs.");
+  if (TII->getNumDelaySlots(*It) == 0)
+    return;
 
-  // Build BS.LocalBottomFixed = [branch_bundle, empty × N]. branch_bundle
-  // wraps the existing terminator; the N empty MachineBundles back the
-  // trailing empty BUNDLE pseudos we just inserted. MachineBundle requires
-  // a FormatInterface at construction (no default ctor).
   const AIEBaseMCFormats *FormatInterface = TII->getFormatInterface();
   MachineBundle BranchBundle(FormatInterface);
-  BranchBundle.add(&*BranchIt);
-  BS.LocalBottomFixed.push_back(std::move(BranchBundle));
-  for (unsigned I = 0; I < N; ++I)
-    BS.LocalBottomFixed.emplace_back(FormatInterface);
+  BranchBundle.add(&*It);
+  BS.RegionBottomFixed.back().push_back(std::move(BranchBundle));
 }
 
 void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
@@ -789,26 +787,26 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   // Only add regions of loops when in the GatheringRegions phase
   if (BS.Kind != BlockType::Loop ||
       BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
-    // Synthesise an in-MBB BotFixedBundles backing for delay-slot
-    // terminators. After this, the branch and its N delay-slot cycles
-    // are fixed cycles in the Region — the branch is no longer a free
-    // SU. The legacy delay-slot machinery (RegionBottomUpCycles floor,
-    // top-zone reject, tie-break, getDelaySlotInstr) becomes redundant
-    // and is removed in a follow-up step.
-    synthesiseDelaySlotBotFixed(BS, BB, RegionEnd, TII);
+    // Per-region synthesis: appends one entry to BS.RegionBottomFixed in
+    // lockstep with addRegion. Single-entry [branch_bundle] when the
+    // region has a delay-slot MI; empty otherwise. The branch becomes a
+    // cycle-anchored fixed SU, bypassing the legacy free-SU machinery
+    // (RegionBottomUpCycles floor, top-zone reject, tie-break,
+    // getDelaySlotInstr) that today routes delay-slot branches.
+    synthesiseDelaySlotBotFixed(BS, BB, RegionBegin, RegionEnd, TII);
 
     ArrayRef<MachineBundle> TopFixedBundles =
         RegionBegin == BB->begin() ? ArrayRef<MachineBundle>(BS.TopInsert)
                                    : ArrayRef<MachineBundle>();
     ArrayRef<MachineBundle> BotFixedBundles;
-    if (RegionEnd == BB->end()) {
-      // Prefer the in-MBB synthesis (delay-slot anchor) over BottomInsert
-      // (cross-MBB SWP push). They never both apply to the same MBB
-      // since SWP push targets adjacent MBBs.
-      if (!BS.LocalBottomFixed.empty())
-        BotFixedBundles = ArrayRef<MachineBundle>(BS.LocalBottomFixed);
-      else
-        BotFixedBundles = ArrayRef<MachineBundle>(BS.BottomInsert);
+    const auto &RegionDelaySlot = BS.RegionBottomFixed.back();
+    if (!RegionDelaySlot.empty()) {
+      // Prefer the per-region delay-slot anchor over BottomInsert. They
+      // never both apply to the same region since SWP push targets
+      // adjacent MBBs (preheaders never end in delay-slot branches).
+      BotFixedBundles = ArrayRef<MachineBundle>(RegionDelaySlot);
+    } else if (RegionEnd == BB->end()) {
+      BotFixedBundles = ArrayRef<MachineBundle>(BS.BottomInsert);
     }
     BS.addRegion(BB, RegionBegin, RegionEnd, TopFixedBundles, BotFixedBundles);
   }
@@ -1153,7 +1151,11 @@ Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                                                    const MachineInstr *MI) {
            return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
          }));
-  assert(BotFixedBundles.empty() || End == BB->end());
+  // BotFixedBundles applies when the region's MIR ends at BB->end() OR at
+  // a DelayedSchedBarrier (production delay-slot region: branch
+  // immediately followed by the barrier; barrier sits AT End and is
+  // excluded from the region's MIR range). The next assertion (alignment
+  // check on BotFixedBundles.front()) catches misalignment in either case.
   assert(
       BotFixedBundles.empty() ||
       all_of(BotFixedBundles.front().Instrs, [FreeEnd](const MachineInstr *MI) {

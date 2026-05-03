@@ -17,8 +17,8 @@ define dso_local noundef <8 x i32> @_Z4testDv8_i(<8 x i32> noundef %vec) local_u
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %temp = alloca <8 x i32>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %temp)
@@ -41,8 +41,8 @@ define dso_local noundef <4 x i64> @_Z4testDv8_u7__acc32(<4 x i64> noundef %vec)
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %temp = alloca <4 x i64>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %temp)

@@ -26,12 +26,13 @@ body:             |
     ; CHECK-NEXT: $dn0 = MOV_alu_mv_mv_mv_scl killed $r1
     ; CHECK-NEXT: $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
     ; CHECK-NEXT: $dc0 = MOV_alu_mv_mv_mv_scl killed $r3
-    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: $dn4 = MOV_alu_mv_mv_mv_scl killed $r5
+    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: $dj4 = MOV_alu_mv_mv_mv_scl killed $r6
     ; CHECK-NEXT: $dc4 = MOV_alu_mv_mv_mv_scl killed $r7
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
     ; CHECK-NEXT: $p0, dead $dc0, $dc4 = PADDA_3D killed $p0, killed $d0_3d
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $dc4
     %0:em =  COPY $r0
     %1:edn = COPY $r1
@@ -223,12 +224,13 @@ body:             |
   ; CHECK-NEXT:   $m0 = MOV_alu_mv_mv_mv_scl killed $r0
   ; CHECK-NEXT:   $dn0 = MOV_alu_mv_mv_mv_scl killed $r1
   ; CHECK-NEXT:   $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
-  ; CHECK-NEXT:   JNZ renamable $r8, %bb.2
   ; CHECK-NEXT:   $dc0 = MOV_alu_mv_mv_mv_scl killed $r3
+  ; CHECK-NEXT:   JNZ renamable $r8, %bb.2
   ; CHECK-NEXT:   $dn4 = MOV_alu_mv_mv_mv_scl killed $r5
   ; CHECK-NEXT:   $dj4 = MOV_alu_mv_mv_mv_scl killed $r6
   ; CHECK-NEXT:   $dc4 = MOV_alu_mv_mv_mv_scl killed $r7
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -288,12 +290,13 @@ body:             |
   ; CHECK-NEXT:   $m0 = MOV_alu_mv_mv_mv_scl killed $r0
   ; CHECK-NEXT:   $dn0 = MOV_alu_mv_mv_mv_scl killed $r1
   ; CHECK-NEXT:   $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
-  ; CHECK-NEXT:   JZ renamable $r8, %bb.1
   ; CHECK-NEXT:   $dc0 = MOV_alu_mv_mv_mv_scl killed $r3
+  ; CHECK-NEXT:   JZ renamable $r8, %bb.1
   ; CHECK-NEXT:   $dn4 = MOV_alu_mv_mv_mv_scl killed $r5
   ; CHECK-NEXT:   $dj4 = MOV_alu_mv_mv_mv_scl killed $r6
   ; CHECK-NEXT:   $dc4 = MOV_alu_mv_mv_mv_scl killed $r7
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -303,9 +306,9 @@ body:             |
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $dc0 = MOV_alu_mv_mv_mv_scl $r9
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, killed $d0_3d
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0, implicit killed renamable $dc4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -315,8 +318,8 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, killed $d0_3d
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0, implicit killed renamable $dc4
   bb.0.entry:
     liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9

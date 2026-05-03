@@ -85,11 +85,11 @@ define dso_local void @conv2d_dw_bf16(i32 %0, ptr %output, ptr %input, ptr addrs
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x8, x7, x5, r3; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup27
 ; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vextbcst.128 x11, x9, #2; vmac.f dm3, dm0, x2, x4, r5 // 4-byte Folded Reload
-; CHECK-NEXT:    nopx ; vshift x2, x5, x3, r3; vmac.f dm2, dm4, x6, x4, r5
+; CHECK-NEXT:    vshift x2, x5, x3, r3; vmac.f dm2, dm4, x6, x4, r5
 ; CHECK-NEXT:    vshift x1, x7, x5, r4
 ; CHECK-NEXT:    vextbcst.128 x10, x9, #3; vmac.f dm1, dm3, x8, x11, r5
 ; CHECK-NEXT:    vshift x8, x5, x3, r4; vmac.f dm0, dm2, x2, x11, r5
-; CHECK-NEXT:    paddxm [sp], #-64
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmac.f dm4, dm1, x1, x10, r5
 ; CHECK-NEXT:    vmac.f dm3, dm0, x8, x10, r5
 ; CHECK-NEXT:    nop
@@ -102,7 +102,7 @@ define dso_local void @conv2d_dw_bf16(i32 %0, ptr %output, ptr %input, ptr addrs
 ; CHECK-NEXT:    vshuffle x2, x2, x4, r2 // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.bf16 x0, r16, x2, x0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vst x0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    vst x0, [p0, #0]; paddxm [sp], #-64 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %for.body

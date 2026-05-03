@@ -11,13 +11,14 @@
 define void @test_pack_sat_I16_s(<32 x i16> %v, ptr %p1, ptr %p2, i32 %sign) {
 ; CHECK-LABEL: test_pack_sat_I16_s:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crSat, #0
+; CHECK-NEXT:    nopa ; mov crSat, #0
+; CHECK-NEXT:    mov crPackSign, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov crPackSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vst.pack.d8.d16 x0, [p0, #0] // Delay Slot 4
-; CHECK-NEXT:    mov crSat, #1 // Delay Slot 3
-; CHECK-NEXT:    vst.pack.d8.d16 x0, [p1, #0] // Delay Slot 2
-; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    vst.pack.d8.d16 x0, [p0, #0] // Delay Slot 5
+; CHECK-NEXT:    mov crSat, #1 // Delay Slot 4
+; CHECK-NEXT:    vst.pack.d8.d16 x0, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
   %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign)
@@ -32,13 +33,14 @@ entry:
 define void @test_pack_sat_I8_s(<64 x i8>  %v, ptr %p1, ptr %p2, i32 %sign) {
 ; CHECK-LABEL: test_pack_sat_I8_s:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crSat, #0
+; CHECK-NEXT:    nopa ; mov crSat, #0
+; CHECK-NEXT:    mov crPackSign, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov crPackSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vst.pack.d4.d8 x0, [p0, #0] // Delay Slot 4
-; CHECK-NEXT:    mov crSat, #1 // Delay Slot 3
-; CHECK-NEXT:    vst.pack.d4.d8 x0, [p1, #0] // Delay Slot 2
-; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
+; CHECK-NEXT:    vst.pack.d4.d8 x0, [p0, #0] // Delay Slot 5
+; CHECK-NEXT:    mov crSat, #1 // Delay Slot 4
+; CHECK-NEXT:    vst.pack.d4.d8 x0, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
   %0 = bitcast <64 x i8> %v to <32 x i16>

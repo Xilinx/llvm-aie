@@ -57,9 +57,9 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    and r1, r3, r2 // Delay Slot 2
-; CHECK-NEXT:    or r0, r1, r0 // Delay Slot 1
+; CHECK-NEXT:    and r1, r3, r2 // Delay Slot 3
+; CHECK-NEXT:    or r0, r1, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   br label %do.body
 

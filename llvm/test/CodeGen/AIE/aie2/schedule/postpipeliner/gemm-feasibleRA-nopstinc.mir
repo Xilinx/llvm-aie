@@ -53,11 +53,11 @@
   ; CHECK-NEXT:    vldb wl2, [p0], #32; vshuffle x8, x8, x8, r6; vmac.f bmh5, bmh1, x6, x9, r2
   ; CHECK-NEXT:    vlda wh2, [p0], #32; vmac.f bmh7, bmh3, x7, x9, r2
   ; CHECK-NEXT:    vldb wl3, [p0], #32; vmac.f bmh8, bmh0, x4, x10, r2
-  ; CHECK-NEXT:    vlda.3d wh3, [p0], d0; vmac.f bml0, bmh1, x6, x10, r2
-  ; CHECK-NEXT:    vldb wl10, [p1], m5; add.nc lc, r0, #-2; vmac.f bml1, bmh2, x5, x10, r2
-  ; CHECK-NEXT:    vlda wh10, [p1], m6; movxm ls, #.LBB0_2; vmac.f bml2, bmh3, x7, x10, r2
+  ; CHECK-NEXT:    vlda.3d wh3, [p0], d0; add.nc lc, r0, #-2; vmac.f bml0, bmh1, x6, x10, r2
+  ; CHECK-NEXT:    vldb wl10, [p1], m5; movxm ls, #.LBB0_2; vmac.f bml1, bmh2, x5, x10, r2
+  ; CHECK-NEXT:    vlda wh10, [p1], m6; movxm le, #.L_LEnd0; vmac.f bml2, bmh3, x7, x10, r2
   ; CHECK-NEXT:    vldb wl11, [p1], m5; vshuffle x9, x9, x9, r6; vmac.f bml3, bmh0, x4, x11, r2
-  ; CHECK-NEXT:    vlda.3d wh11, [p1], d1; movxm le, #.L_LEnd0; vmac.f bml4, bmh1, x6, x11, r2
+  ; CHECK-NEXT:    vlda.3d wh11, [p1], d1; vmac.f bml4, bmh1, x6, x11, r2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

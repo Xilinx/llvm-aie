@@ -22,18 +22,20 @@
 define dso_local void @_Z16addToSymbolTablePKci(ptr nocapture readonly %name, i32 noundef %dataType) {
 ; AIE2-LABEL: _Z16addToSymbolTablePKci:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    nopa ; paddb [sp], #32; nopx
+; AIE2-NEXT:    paddb [sp], #32
 ; AIE2-NEXT:    st p7, [sp, #-16]; movxm p7, #symbolCount // 4-byte Folded Spill
 ; AIE2-NEXT:    lda r17, [p7, #0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
-; AIE2-NEXT:    mova r1, #56; mov p2, p0
-; AIE2-NEXT:    st r17, [sp, #-24]; jl #strcpy // 4-byte Folded Spill
-; AIE2-NEXT:    st p6, [sp, #-20]; mul r1, r17, r1 // 4-byte Folded Spill Delay Slot 5
-; AIE2-NEXT:    st lr, [sp, #-32]; movxm p6, #symbolTable // 4-byte Folded Spill Delay Slot 4
-; AIE2-NEXT:    mov m0, r1 // Delay Slot 3
+; AIE2-NEXT:    nop
+; AIE2-NEXT:    st r17, [sp, #-24]; movx r1, #56 // 4-byte Folded Spill
+; AIE2-NEXT:    mul r1, r17, r1; mov p2, p0
+; AIE2-NEXT:    jl #strcpy
+; AIE2-NEXT:    st p6, [sp, #-20] // 4-byte Folded Spill Delay Slot 5
+; AIE2-NEXT:    mov m0, r1 // Delay Slot 4
+; AIE2-NEXT:    st lr, [sp, #-32]; movxm p6, #symbolTable // 4-byte Folded Spill Delay Slot 3
 ; AIE2-NEXT:    paddb [p6], m0; st r16, [sp, #-28] // 4-byte Folded Spill Delay Slot 2
 ; AIE2-NEXT:    or r16, r0, r0; mov p1, p6 // Delay Slot 1
 ; AIE2-NEXT:    lda lr, [sp, #-32]; nopx // 4-byte Folded Reload
@@ -47,8 +49,8 @@ define dso_local void @_Z16addToSymbolTablePKci(ptr nocapture readonly %name, i3
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    st r16, [p6, #52] // Delay Slot 4
 ; AIE2-NEXT:    add r0, r17, #1 // Delay Slot 3
-; AIE2-NEXT:    st r0, [p7, #0] // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-32; st r0, [p7, #0] // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z16addToSymbolTablePKci:
 ; AIE2P:       // %bb.0: // %entry
@@ -193,8 +195,8 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z5test4i:
 ; AIE2P:       // %bb.0: // %entry
@@ -300,8 +302,8 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: memcpy_lowered_to_call:
 ; AIE2P:       // %bb.0: // %entry
@@ -416,8 +418,8 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: __addsf3_lowered_to_call:
 ; AIE2P:       // %bb.0: // %entry

@@ -16,9 +16,9 @@ define dso_local noundef <8 x i32> @test1() {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 3
 ; CHECK-NEXT:    vmov wl0, q0 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <4 x i32>, align 16
   %a.0.a.0.a.0.a.0. = load volatile <4 x i32>, ptr %a, align 16
@@ -55,9 +55,9 @@ define dso_local noundef <8 x i32> @test3() {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 3
 ; CHECK-NEXT:    vmov wl0, q0 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %temp = alloca <4 x i32>, align 16
   %temp1 = getelementptr inbounds i16, ptr %temp, i20 240
@@ -78,8 +78,8 @@ define dso_local noundef <8 x i32> @test4() {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %temp = alloca <4 x i32>, align 16
   %temp1 = getelementptr inbounds i16, ptr %temp, i20 256

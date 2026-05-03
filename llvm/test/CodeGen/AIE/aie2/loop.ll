@@ -50,8 +50,8 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mova r0, #0 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cmp6 = icmp sgt i32 %size, 0
   br i1 %cmp6, label %for.body, label %for.cond.cleanup

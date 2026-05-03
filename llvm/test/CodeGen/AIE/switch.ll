@@ -133,8 +133,8 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
-; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: test:
 ; AIE2P:       // %bb.0: // %entry

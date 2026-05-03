@@ -9,12 +9,12 @@
 define dso_local noundef <32 x i8> @_Z15pack_I512_I4_I8Dv64_ai(<64 x i8> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z15pack_I512_I4_I8Dv64_ai:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #0 // Delay Slot 4
 ; CHECK-NEXT:    mov packsign0, r0 // Delay Slot 3
-; CHECK-NEXT:    vpack wl0, x2, packsign0 // Delay Slot 2
-; CHECK-NEXT:    mov packsign0, #0 // Delay Slot 1
+; CHECK-NEXT:    vpack wl0, x2, packsign0; mov packsign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <32 x i8> @llvm.aie2p.pack.I512.I4.I8(<64 x i8> %v, i32 %sign)
   ret <32 x i8> %0
@@ -23,12 +23,12 @@ entry:
 define dso_local noundef <32 x i8> @_Z16pack_I512_I8_I16Dv32_si(<32 x i16> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z16pack_I512_I8_I16Dv32_si:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #1 // Delay Slot 4
 ; CHECK-NEXT:    mov packsign0, r0 // Delay Slot 3
-; CHECK-NEXT:    vpack wl0, x2, packsign0 // Delay Slot 2
-; CHECK-NEXT:    mov packsign0, #0 // Delay Slot 1
+; CHECK-NEXT:    vpack wl0, x2, packsign0; mov packsign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <32 x i8> @llvm.aie2p.pack.I512.I8.I16(<32 x i16> %v, i32 %sign)
   ret <32 x i8> %0
@@ -37,12 +37,12 @@ entry:
 define dso_local noundef <64 x i8> @_Z16pack_I1024_I4_I8Dv128_ai(<128 x i8> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z16pack_I1024_I4_I8Dv128_ai:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #0 // Delay Slot 4
 ; CHECK-NEXT:    mov packsign0, r0 // Delay Slot 3
-; CHECK-NEXT:    vpack x0, y2, packsign0 // Delay Slot 2
-; CHECK-NEXT:    mov packsign0, #0 // Delay Slot 1
+; CHECK-NEXT:    vpack x0, y2, packsign0; mov packsign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <64 x i8> @llvm.aie2p.pack.I1024.I4.I8(<128 x i8> %v, i32 %sign)
   ret <64 x i8> %0
@@ -51,12 +51,12 @@ entry:
 define dso_local noundef <64 x i8> @_Z17pack_I1024_I8_I16Dv64_ti(<64 x i16> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z17pack_I1024_I8_I16Dv64_ti:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #1 // Delay Slot 4
 ; CHECK-NEXT:    mov packsign0, r0 // Delay Slot 3
-; CHECK-NEXT:    vpack x0, y2, packsign0 // Delay Slot 2
-; CHECK-NEXT:    mov packsign0, #0 // Delay Slot 1
+; CHECK-NEXT:    vpack x0, y2, packsign0; mov packsign0, #0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call noundef <64 x i8> @llvm.aie2p.pack.I1024.I8.I16(<64 x i16> %v, i32 %sign)
   ret <64 x i8> %0

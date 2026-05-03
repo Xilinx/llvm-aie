@@ -41,12 +41,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri $r2, 5, implicit-def $srcarry
-  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r2, 5, implicit-def $srcarry
+  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 7, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 8, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 9, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 10, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
 
 
@@ -102,12 +103,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 5, implicit-def $srcarry
-  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r2, 5, implicit-def $srcarry
+  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 7, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 8, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 9, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 10, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
 
 
@@ -161,12 +163,14 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r1, $r2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r2, 5, implicit-def $srcarry
+  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 7, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 8, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 9, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 10, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
 
 
@@ -225,12 +229,14 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r1, 5, implicit-def $srcarry
+  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 7, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r2, 8, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 9, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 10, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
 
 
@@ -288,12 +294,13 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 5, implicit-def $srcarry
+  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 7, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r2, 8, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 9, implicit-def $srcarry
   ; CHECK-NEXT:   $r1 = ADD_add_r_ri killed $r1, 10, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
 
 
@@ -349,12 +356,13 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r1, $r2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 5, implicit-def $srcarry
+  ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 7, implicit-def $srcarry
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 8, implicit-def $srcarry
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 9, implicit-def $srcarry
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 10, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r1
 
 
@@ -510,8 +518,8 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r2 = nsw ADD_add_r_ri $r3, -1, implicit-def $srcarry
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r3
 
 

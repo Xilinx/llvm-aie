@@ -21,8 +21,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r7 = MOV_mv_scl killed $r6
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r7
     $r7 = MOV_mv_scl $r6
     RET implicit $lr

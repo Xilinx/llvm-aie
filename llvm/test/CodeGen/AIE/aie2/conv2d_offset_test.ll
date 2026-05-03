@@ -19,7 +19,7 @@ target triple = "aie2"
 define dso_local noundef i32 @_Z3foov() #0 {
 ; CHECK-LABEL: _Z3foov:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nop ; movxm p1, #(X+92)
+; CHECK-NEXT:    movxm p1, #(X+92)
 ; CHECK-NEXT:    mova m0, #-164
 ; CHECK-NEXT:    mov p0, p1
 ; CHECK-NEXT:    paddb [p0], #8
@@ -31,26 +31,27 @@ define dso_local noundef i32 @_Z3foov() #0 {
 ; CHECK-NEXT:    mova m0, #60
 ; CHECK-NEXT:    lda.u8 r1, [p0], m0
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r1, [p0], #76
 ; CHECK-NEXT:    add r0, r0, r1
+; CHECK-NEXT:    lda r1, [p0], #76
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0], #12
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0], #-48
+; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0], #32
 ; CHECK-NEXT:    lda r1, [p1, #8]
 ; CHECK-NEXT:    lda r1, [p0], #-136
 ; CHECK-NEXT:    lda r1, [p0, #0]
+; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 5
 ; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 3
 ; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 2
-; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = load i32, ptr getelementptr inbounds (%struct.conv2d_internal_params, ptr @X, i32 0, i32 51), align 4
   %1 = load i8, ptr getelementptr inbounds (%struct.conv2d_internal_params, ptr @X, i32 0, i32 73), align 4

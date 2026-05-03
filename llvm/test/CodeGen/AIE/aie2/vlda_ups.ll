@@ -32,8 +32,8 @@ define dso_local noundef <8 x i64> @_Z5test0Dv16_s(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <8 x i64>, align 64
@@ -80,8 +80,8 @@ define dso_local noundef <8 x i64> @_Z5test1Dv8_i(<8 x i32> noundef %arg0) local
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <8 x i32>, align 32
   %b = alloca <8 x i64>, align 64
@@ -126,8 +126,8 @@ define dso_local noundef <16 x i64> @_Z5test2Dv32_a(<32 x i8> noundef %arg0) loc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <32 x i8>, align 32
   %b = alloca <16 x i64>, align 128
@@ -168,8 +168,8 @@ define dso_local noundef <8 x i64> @_Z5test3Dv16_s(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <8 x i64>, align 64
@@ -214,8 +214,8 @@ define dso_local noundef <16 x i64> @_Z5test4Dv16_s(<16 x i16> noundef %arg0) lo
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <16 x i64>, align 128
@@ -260,8 +260,8 @@ define dso_local noundef <16 x i64> @_Z5test5Dv16_s(<16 x i16> noundef %arg0) lo
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <16 x i64>, align 128
@@ -306,8 +306,8 @@ define dso_local noundef <16 x i64> @_Z5test6Dv16_s(<16 x i16> noundef %arg0) lo
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-256 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <16 x i64>, align 128
@@ -348,8 +348,8 @@ define dso_local noundef <8 x i64> @_Z5test7Dv16_s(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <8 x i64>, align 64
@@ -390,8 +390,8 @@ define dso_local noundef <8 x i64> @_Z5test8Dv16_t(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-128 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %a = alloca <16 x i16>, align 32
   %b = alloca <8 x i64>, align 64
