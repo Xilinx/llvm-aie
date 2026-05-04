@@ -78,8 +78,10 @@ TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool AIE2PassConfig::addPreISel() {
-  if (TM->getOptLevel() != CodeGenOptLevel::None)
+  if (TM->getOptLevel() != CodeGenOptLevel::None) {
     addPass(createHardwareLoopsLegacyPass());
+    addPass(createAIEOuterLoopPipelinerPass());
+  }
   return false;
 }
 
