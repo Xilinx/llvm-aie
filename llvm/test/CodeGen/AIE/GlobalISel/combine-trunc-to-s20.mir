@@ -316,9 +316,8 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s20) = G_LOAD [[COPY]](p0) :: (dereferenceable load (s20), align 4)
-    ; CHECK-NEXT: [[INTTOPTR:%[0-9]+]]:_(p0) = G_INTTOPTR [[LOAD]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[INTTOPTR]](p0)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(p0) = G_LOAD [[COPY]](p0) :: (dereferenceable load (p0), align 4)
+    ; CHECK-NEXT: $p0 = COPY [[LOAD]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s24) = G_LOAD %0:_(p0) :: (dereferenceable load (s24), align 4)
     %2:_(s20) = G_TRUNC %1
