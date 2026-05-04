@@ -82,6 +82,10 @@ const LLT S8 = LLT::scalar(8);
 const LLT S16 = LLT::scalar(16);
 const LLT S20 = LLT::scalar(20);
 const LLT S32 = LLT::scalar(32);
+// AIE pointers are 20-bit and AIEAddressSpaceFlattening normalizes
+// every pointer to address space 0 before the pre-legalizer combiner
+// runs, so a single P0 LLT covers all pointer types we see here.
+const LLT P0 = LLT::pointer(0, 20);
 const LLT V32S16 = LLT::fixed_vector(32, 16);
 
 const llvm::AIEBaseInstrInfo &getAIETII(MachineIRBuilder &B) {
@@ -5102,6 +5106,44 @@ bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
     B.buildZExt(DstReg, NewDstReg);
   };
 
+  return true;
+}
+
+/// Fold a G_LOAD of s20 whose only non-debug users are G_INTTOPTR (to a
+/// 20-bit pointer) into a G_LOAD that produces the pointer directly. The
+/// AIE pointer width matches the load's value width, so the conversion
+/// is bit-exact and lets the load materialize straight into a P-bank
+/// register.
+bool llvm::matchLoadInttoptrFold(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 CombinerHelper &Helper,
+                                 GISelChangeObserver &Observer,
+                                 BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_LOAD);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  if (MRI.getType(DstReg) != S20)
+    return false;
+
+  // After AIEAddressSpaceFlattening every pointer is P0, so a 20-bit
+  // load and a P0 G_INTTOPTR have identical bit width.
+  auto IsP0Inttoptr = [&](const MachineInstr &Use) {
+    return Use.getOpcode() == TargetOpcode::G_INTTOPTR &&
+           MRI.getType(Use.getOperand(0).getReg()) == P0;
+  };
+  if (!allNonDbgUsersMatch(DstReg, MRI, IsP0Inttoptr))
+    return false;
+
+  MatchInfo = [=, &MI, &MRI, &Observer, &Helper](MachineIRBuilder &B) {
+    const Register NewDstReg = retypeLoadDest(MI, P0, MRI, Observer);
+
+    // Snapshot G_INTTOPTR users before mutating, then let the
+    // CombinerHelper handle observer + replace + erase per user.
+    SmallVector<MachineInstr *, 4> InttoptrUsers;
+    for (MachineInstr &Use : MRI.use_nodbg_instructions(DstReg))
+      InttoptrUsers.push_back(&Use);
+    for (MachineInstr *Use : InttoptrUsers)
+      Helper.replaceSingleDefInstWithReg(*Use, NewDstReg);
+  };
   return true;
 }
 
