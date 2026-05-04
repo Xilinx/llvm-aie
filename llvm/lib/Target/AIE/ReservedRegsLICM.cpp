@@ -17,6 +17,7 @@
 
 #include "AIE.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -234,28 +235,75 @@ bool ReservedRegsLICM::runOnMachineFunction(MachineFunction &MF) {
 }
 
 BitVector ReservedRegsLICM::collectLoopReservedLiveins(const MachineLoop &L) {
-  LivePhysRegs LiveRegs(*TRI);
+  // Compute the live-in set at the loop header using a backward dataflow
+  // worklist algorithm. A flat sequential backward walk over all loop blocks
+  // is incorrect for multi-block loops with conditional paths: a def in one
+  // branch can incorrectly kill a register that is used (without a preceding
+  // def) in a sibling branch, making the register appear to not be a livein.
+  //
+  // The worklist algorithm propagates liveness backward through the CFG until
+  // a fixed point is reached, correctly handling all control-flow shapes.
 
-  // Conservatively assume reserved regs are all liveouts
+  // Conservative liveout assumption: all candidate reserved regs are live at
+  // the exit of the loop (they may be used by code after the loop).
+  BitVector InitLive(TRI->getNumRegs());
   for (MCPhysReg PhysReg : MRI->getReservedRegs().set_bits()) {
     if (MRI->canSimplifyPhysReg(PhysReg)) {
-      LiveRegs.addReg(PhysReg);
+      InitLive.set(PhysReg);
     }
   }
 
-  // Traverse all blocks in the loop to remove defs. stepBackward handles
-  // regmask operands (calls) correctly.
+  // live_in[MBB] = set of reserved registers live at the entry of MBB.
+  // Initialised to empty; the worklist grows these sets monotonically.
+  DenseMap<MachineBasicBlock *, BitVector> LiveIn;
   for (MachineBasicBlock *MBB : L.getBlocks())
+    LiveIn[MBB] = BitVector(TRI->getNumRegs());
+
+  // Seed the worklist with every block in the loop.
+  SmallPtrSet<MachineBasicBlock *, 8> InWorklist;
+  SmallVector<MachineBasicBlock *, 8> Worklist;
+  for (MachineBasicBlock *MBB : L.getBlocks()) {
+    Worklist.push_back(MBB);
+    InWorklist.insert(MBB);
+  }
+
+  while (!Worklist.empty()) {
+    MachineBasicBlock *MBB = Worklist.pop_back_val();
+    InWorklist.erase(MBB);
+
+    // live-out(MBB) = union of live-in of successors.
+    // For successors outside the loop use InitLive conservatively.
+    LivePhysRegs LiveRegs(*TRI);
+    for (MachineBasicBlock *Succ : MBB->successors()) {
+      const BitVector &SuccLive = L.contains(Succ) ? LiveIn[Succ] : InitLive;
+      for (unsigned Reg : SuccLive.set_bits())
+        LiveRegs.addReg(Reg);
+    }
+
+    // Walk backward through MBB to compute live-in. stepBackward handles
+    // regmask operands (calls) correctly.
     for (const MachineInstr &MI : reverse(*MBB))
       LiveRegs.stepBackward(MI);
 
-  BitVector ReservedLiveins(TRI->getNumRegs());
-  for (MCRegister Reg : LiveRegs) {
-    if (MRI->isReserved(Reg)) {
-      ReservedLiveins.set(Reg);
+    // Convert to a BitVector, keeping only reserved registers.
+    BitVector NewLiveIn(TRI->getNumRegs());
+    for (MCRegister Reg : LiveRegs)
+      if (MRI->isReserved(Reg))
+        NewLiveIn.set(Reg);
+
+    // If the live-in set grew, re-process all in-loop predecessors.
+    if (NewLiveIn != LiveIn[MBB]) {
+      LiveIn[MBB] = NewLiveIn;
+      for (MachineBasicBlock *Pred : MBB->predecessors()) {
+        if (L.contains(Pred) && !InWorklist.count(Pred)) {
+          Worklist.push_back(Pred);
+          InWorklist.insert(Pred);
+        }
+      }
     }
   }
-  return ReservedLiveins;
+
+  return LiveIn[L.getHeader()];
 }
 
 /// Walk the specified region of the CFG and hoist loop invariants out to the

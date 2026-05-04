@@ -436,6 +436,88 @@ body:             |
     PseudoJ_jump_imm %bb.1
 ...
 
+# $srssign0 is used in one conditional branch (bb.2) but defined in the other
+# (bb.3). The latch (bb.4) defines $srssign0 = MOVX 0 without using it first,
+# so LatchEntryLive does NOT flag it. However, $srssign0 IS a true loop livein
+# because bb.2 can execute on the first iteration without going through bb.3.
+# collectLoopReservedLiveins must detect this via backward dataflow and prevent
+# the MOVX from being sunk to the exit block.
+---
+name:            livein_bug_no_sink
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: livein_bug_no_sink
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
+  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $r0, $r1, $dm0, $s0
+    %0:er = COPY $r0
+    %1:ep = COPY $p0
+    %2:er = COPY $r1
+    %3:edm = COPY $dm0
+    %4:es = COPY $s0
+    PseudoJ_jump_imm %bb.1
+
+  bb.1:
+    successors: %bb.2(0x40000000), %bb.3(0x40000000)
+    PseudoJNZ %0, %bb.3
+
+  bb.2:
+    successors: %bb.4(0x80000000)
+    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    PseudoJ_jump_imm %bb.4
+
+  bb.3:
+    successors: %bb.4(0x80000000)
+    $srssign0 = COPY %2
+    PseudoJ_jump_imm %bb.4
+
+  bb.4:
+    successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+    $srssign0 = MOVX_mvx_cr_imm 0
+    PseudoJNZ %0, %bb.1
+    PseudoJ_jump_imm %bb.5
+
+  bb.5:
+    PseudoRET implicit $lr
+...
+
 # $srssign0 is defined in one conditional branch (bb.2) but not the other
 # (bb.3). The latch (bb.4) uses $srssign0 before defining it, so $srssign0 is
 # live at the latch entry on the path through bb.3. Sinking MOVX_mvx_cr_imm 0
