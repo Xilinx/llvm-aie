@@ -375,23 +375,14 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
 
   const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
   ArrayRef<MachineBundle> LoopBundles = EpilogueContextOpt->Loop;
-  const unsigned LoopCount = EpilogueContextOpt->LoopCount;
   const unsigned LoopSize = LoopBundles.size();
 
-  int BlockedCycles = 0;
-  int LoopReplayTimes = 0;
+  // ceil(LoopSize / ConflictHorizon)
+  const int LoopReplayTimes =
+      (LoopSize + ConflictHorizon - 1) / ConflictHorizon;
 
-  // If we can get a full horizon of pipeline conflicts, go for it,
-  // otherwise, stick to the min iteration count and block some cycles.
-  const unsigned LastGuaranteedLoopCycles = LoopCount * LoopSize;
-  if (LastGuaranteedLoopCycles < ConflictHorizon) {
-    BlockedCycles = ConflictHorizon - LastGuaranteedLoopCycles;
-    LoopReplayTimes = LoopCount;
-  } else {
-    LoopReplayTimes = (ConflictHorizon + (LoopSize - 1)) / LoopSize;
-  }
-
-  // Replay SWP loop enough times.
+  // Replay SWP loop enough times (right before the epilogue) until the
+  // scoreboard reaches a steady state.
   for (int I = 0; I < LoopReplayTimes; I++) {
     for (auto &Bundle : LoopBundles) {
       for (MachineInstr *MI : Bundle.getInstrs()) {
@@ -399,17 +390,6 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
       }
       TopHazardRec->AdvanceCycle();
     }
-  }
-
-  // Block cycles, if needed.
-  for (int I = 0; I < BlockedCycles; ++I) {
-    TopHazardRec->blockCycleInScoreboard(0);
-    TopHazardRec->AdvanceCycle();
-  }
-
-  // Receed to the starting point.
-  for (int I = 0; I < BlockedCycles; ++I) {
-    TopHazardRec->RecedeCycle();
   }
 
   DEBUG_BLOCKS(TopHazardRec->dumpScoreboard());

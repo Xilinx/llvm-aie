@@ -103,10 +103,10 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nopa ; vldb x7, [p7, #0]; vconv.bfp16ebs8.fp32 ex6, dm2; nopx ; vshuffle x10, x7, x5, r0; vmac.f dm3, dm3, ex2, ex4, r3
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup45.i
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-NEXT:    nopa ; vldb x5, [p7, #64]; vconv.bfp16ebs8.fp32 ex4, dm2; nopx ; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    paddb [p1], m5; nopxm
+; CHECK-NEXT:    nopa ; vldb x5, [p7, #64]; vconv.bfp16ebs8.fp32 ex4, dm2; add r4, r4, #1; vshuffle x11, x7, x5, r1; vmul.f dm2, y5, y0, r2
+; CHECK-NEXT:    nopa ; paddb [p1], m5; nops ; nopx ; mov p4, p0; nopv
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1, #0]; vconv.bfp16ebs8.fp32 ex2, dm2; vmul.f dm2, y5, y0, r2
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]; add r4, r4, #1; mov p4, p0
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p1, #64]
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh2, [p6, #64]; mov p1, p6; vmac.f dm1, dm1, ex3, ex6, r3
 ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml2, [p6], d1; vconv.bfp16ebs8.fp32 ex3, dm2; vshuffle x10, x9, x8, r0; vmac.f dm0, dm0, ex3, ex4, r3
 ; CHECK-NEXT:    mova m1, #84; vshuffle x11, x9, x8, r1; vmac.f dm4, dm4, ex2, ex6, r3
