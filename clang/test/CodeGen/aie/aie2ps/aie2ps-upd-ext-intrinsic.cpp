@@ -193,27 +193,21 @@ v16float16 test_extract_v16float16 (v64float16 a, int idx) { return extract_v16f
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x half> [[B:%.*]] to <8 x i32>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[SHUFFLE7_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE3_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 // CHECK-NEXT:    [[SHUFFLE5_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV16_S__EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 // CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV16_S__EXIT]]
-// CHECK:       _ZL6insertDv64_7float16iDv16_S_.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE5_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE4_I_I]], [[COND_FALSE_I_I]] ]
-// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    [[SHUFFLE7_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE3_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[SHUFFLE6_SHUFFLE7_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE6_I_I]], <32 x i32> [[SHUFFLE7_I_I]]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE4_I_I]], <32 x i32> [[SHUFFLE5_I_I]]
+// CHECK-NEXT:    [[COND13_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE6_I_I]], <32 x i32> [[SHUFFLE7_I_I]]
 // CHECK-NEXT:    [[AND14_I_I:%.*]] = and i32 [[IDX]], 2
 // CHECK-NEXT:    [[TOBOOL15_NOT_I_I:%.*]] = icmp eq i32 [[AND14_I_I]], 0
-// CHECK-NEXT:    [[COND19_I_I:%.*]] = select i1 [[TOBOOL15_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[SHUFFLE6_SHUFFLE7_I_I]]
+// CHECK-NEXT:    [[COND19_I_I:%.*]] = select i1 [[TOBOOL15_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[COND13_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[COND19_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP2]]
 //
@@ -221,23 +215,17 @@ v64float16 test_insert (v64float16 a, int idx, v16float16 b) { return insert(a, 
 // CHECK-LABEL: @_Z19test_set_v64float16iDv16_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[B:%.*]] to <8 x i32>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_7FLOAT16_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_7FLOAT16_EXIT]]
-// CHECK:       _ZL14set_v64float16iDv16_7float16.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE_I_I]], [[COND_FALSE_I_I]] ]
-// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[SHUFFLE2_SHUFFLE3_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> [[SHUFFLE3_I_I]]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[SHUFFLE1_I_I]]
+// CHECK-NEXT:    [[COND9_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> [[SHUFFLE3_I_I]]
 // CHECK-NEXT:    [[AND10_I_I:%.*]] = and i32 [[IDX]], 2
 // CHECK-NEXT:    [[TOBOOL11_NOT_I_I:%.*]] = icmp eq i32 [[AND10_I_I]], 0
-// CHECK-NEXT:    [[COND15_I_I:%.*]] = select i1 [[TOBOOL11_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[SHUFFLE2_SHUFFLE3_I_I]]
+// CHECK-NEXT:    [[COND15_I_I:%.*]] = select i1 [[TOBOOL11_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[COND9_I_I]]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i32> [[COND15_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP1]]
 //
@@ -274,15 +262,9 @@ v32float16 test_extract_v32float16 (v64float16 a, int idx) { return extract_v32f
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV32_S__EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV32_S__EXIT]]
-// CHECK:       _ZL6insertDv64_7float16iDv32_S_.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE2_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE1_I_I]], [[COND_FALSE_I_I]] ]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[SHUFFLE2_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[COND_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP2]]
 //
@@ -292,15 +274,9 @@ v64float16 test_insert (v64float16 a, int idx, v32float16 b) { return insert(a, 
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[B:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV32_7FLOAT16_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV32_7FLOAT16_EXIT]]
-// CHECK:       _ZL14set_v64float16iDv32_7float16.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE_I_I]], [[COND_FALSE_I_I]] ]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i32> [[COND_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP1]]
 //
@@ -335,34 +311,27 @@ v64float16 test_concat (v32float16 a0, v32float16 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v32bfloat8 test_extract_v32bfloat8 (v128bfloat8 a, int idx) { return extract_v32bfloat8(a, idx); }
-//
 // CHECK-LABEL: @_Z11test_insert11v128bfloat8i10v32bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFLOAT8:%.*]] [[A_COERCE:%.*]], 0
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V32BFLOAT8:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <128 x i8> [[TMP0]] to <32 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i8> [[TMP1]] to <8 x i32>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[SHUFFLE7_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE3_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 // CHECK-NEXT:    [[SHUFFLE5_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERT11V128BFLOAT8I10V32BFLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 // CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP2]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERT11V128BFLOAT8I10V32BFLOAT8_EXIT]]
-// CHECK:       _ZL6insert11v128bfloat8i10v32bfloat8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE5_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE4_I_I]], [[COND_FALSE_I_I]] ]
-// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    [[SHUFFLE7_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE3_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[SHUFFLE6_SHUFFLE7_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE6_I_I]], <32 x i32> [[SHUFFLE7_I_I]]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE4_I_I]], <32 x i32> [[SHUFFLE5_I_I]]
+// CHECK-NEXT:    [[COND13_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE6_I_I]], <32 x i32> [[SHUFFLE7_I_I]]
 // CHECK-NEXT:    [[AND14_I_I:%.*]] = and i32 [[IDX]], 2
 // CHECK-NEXT:    [[TOBOOL15_NOT_I_I:%.*]] = icmp eq i32 [[AND14_I_I]], 0
-// CHECK-NEXT:    [[COND19_I_I:%.*]] = select i1 [[TOBOOL15_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[SHUFFLE6_SHUFFLE7_I_I]]
+// CHECK-NEXT:    [[COND19_I_I:%.*]] = select i1 [[TOBOOL15_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[COND13_I_I]]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[COND19_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8]] poison, <128 x i8> [[TMP4]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -372,23 +341,17 @@ v128bfloat8 test_insert (v128bfloat8 a, int idx, v32bfloat8 b) { return insert(a
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32BFLOAT8:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i8> [[TMP0]] to <8 x i32>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL15SET_V128BFLOAT8I10V32BFLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL15SET_V128BFLOAT8I10V32BFLOAT8_EXIT]]
-// CHECK:       _ZL15set_v128bfloat8i10v32bfloat8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE_I_I]], [[COND_FALSE_I_I]] ]
-// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[SHUFFLE2_SHUFFLE3_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> [[SHUFFLE3_I_I]]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[SHUFFLE1_I_I]]
+// CHECK-NEXT:    [[COND9_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> [[SHUFFLE3_I_I]]
 // CHECK-NEXT:    [[AND10_I_I:%.*]] = and i32 [[IDX]], 2
 // CHECK-NEXT:    [[TOBOOL11_NOT_I_I:%.*]] = icmp eq i32 [[AND10_I_I]], 0
-// CHECK-NEXT:    [[COND15_I_I:%.*]] = select i1 [[TOBOOL11_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[SHUFFLE2_SHUFFLE3_I_I]]
+// CHECK-NEXT:    [[COND15_I_I:%.*]] = select i1 [[TOBOOL11_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[COND9_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[COND15_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8:%.*]] poison, <128 x i8> [[TMP2]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -436,15 +399,9 @@ v64bfloat8 test_extract_v64bfloat8 (v128bfloat8 a, int idx) { return extract_v64
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP3]], <16 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47>
-// CHECK-NEXT:    br label [[_ZL6INSERT11V128BFLOAT8I10V64BFLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP2]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERT11V128BFLOAT8I10V64BFLOAT8_EXIT]]
-// CHECK:       _ZL6insert11v128bfloat8i10v64bfloat8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE2_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE1_I_I]], [[COND_FALSE_I_I]] ]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[SHUFFLE2_I_I]]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[COND_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8]] poison, <128 x i8> [[TMP4]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -456,20 +413,15 @@ v128bfloat8 test_insert (v128bfloat8 a, int idx, v64bfloat8 b) { return insert(a
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL15SET_V128BFLOAT8I10V64BFLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL15SET_V128BFLOAT8I10V64BFLOAT8_EXIT]]
-// CHECK:       _ZL15set_v128bfloat8i10v64bfloat8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE_I_I]], [[COND_FALSE_I_I]] ]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[COND_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFLOAT8:%.*]] poison, <128 x i8> [[TMP2]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_set_v128bfloat8 (int idx, v64bfloat8 b) { return set_v128bfloat8(idx, b); }
+//
 // CHECK-LABEL: @_Z11test_concat10v64bfloat8S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[A0_COERCE:%.*]], 0
@@ -508,27 +460,21 @@ v32float8 test_extract_v32float8 (v128float8 a, int idx) { return extract_v32flo
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V32FLOAT8:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <128 x i8> [[TMP0]] to <32 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i8> [[TMP1]] to <8 x i32>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[SHUFFLE7_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE3_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 // CHECK-NEXT:    [[SHUFFLE5_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERT10V128FLOAT8I9V32FLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 // CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP2]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERT10V128FLOAT8I9V32FLOAT8_EXIT]]
-// CHECK:       _ZL6insert10v128float8i9v32float8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE5_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE4_I_I]], [[COND_FALSE_I_I]] ]
-// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    [[SHUFFLE7_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE3_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP3]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[SHUFFLE6_SHUFFLE7_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE6_I_I]], <32 x i32> [[SHUFFLE7_I_I]]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE4_I_I]], <32 x i32> [[SHUFFLE5_I_I]]
+// CHECK-NEXT:    [[COND13_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE6_I_I]], <32 x i32> [[SHUFFLE7_I_I]]
 // CHECK-NEXT:    [[AND14_I_I:%.*]] = and i32 [[IDX]], 2
 // CHECK-NEXT:    [[TOBOOL15_NOT_I_I:%.*]] = icmp eq i32 [[AND14_I_I]], 0
-// CHECK-NEXT:    [[COND19_I_I:%.*]] = select i1 [[TOBOOL15_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[SHUFFLE6_SHUFFLE7_I_I]]
+// CHECK-NEXT:    [[COND19_I_I:%.*]] = select i1 [[TOBOOL15_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[COND13_I_I]]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[COND19_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8]] poison, <128 x i8> [[TMP4]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -538,23 +484,17 @@ v128float8 test_insert (v128float8 a, int idx, v32float8 b) { return insert(a, i
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32FLOAT8:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i8> [[TMP0]] to <8 x i32>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL14SET_V128FLOAT8I9V32FLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL14SET_V128FLOAT8I9V32FLOAT8_EXIT]]
-// CHECK:       _ZL14set_v128float8i9v32float8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE_I_I]], [[COND_FALSE_I_I]] ]
-// CHECK-NEXT:    [[SHUFFLE3_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[SHUFFLE2_SHUFFLE3_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> [[SHUFFLE3_I_I]]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[SHUFFLE1_I_I]]
+// CHECK-NEXT:    [[COND9_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE2_I_I]], <32 x i32> [[SHUFFLE3_I_I]]
 // CHECK-NEXT:    [[AND10_I_I:%.*]] = and i32 [[IDX]], 2
 // CHECK-NEXT:    [[TOBOOL11_NOT_I_I:%.*]] = icmp eq i32 [[AND10_I_I]], 0
-// CHECK-NEXT:    [[COND15_I_I:%.*]] = select i1 [[TOBOOL11_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[SHUFFLE2_SHUFFLE3_I_I]]
+// CHECK-NEXT:    [[COND15_I_I:%.*]] = select i1 [[TOBOOL11_NOT_I_I]], <32 x i32> [[COND_I_I]], <32 x i32> [[COND9_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[COND15_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8:%.*]] poison, <128 x i8> [[TMP2]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -601,15 +541,9 @@ v64float8 test_extract_v64float8 (v128float8 a, int idx) { return extract_v64flo
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP3]], <16 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <32 x i32> [[TMP2]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47>
-// CHECK-NEXT:    br label [[_ZL6INSERT10V128FLOAT8I9V64FLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP2]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERT10V128FLOAT8I9V64FLOAT8_EXIT]]
-// CHECK:       _ZL6insert10v128float8i9v64float8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE2_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE1_I_I]], [[COND_FALSE_I_I]] ]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[SHUFFLE2_I_I]]
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i32> [[COND_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8]] poison, <128 x i8> [[TMP4]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -621,15 +555,9 @@ v128float8 test_insert (v128float8 a, int idx, v64float8 b) { return insert(a, i
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label [[COND_FALSE_I_I:%.*]], label [[COND_TRUE_I_I:%.*]]
-// CHECK:       cond.true.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <32 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V128FLOAT8I9V64FLOAT8_EXIT:%.*]]
-// CHECK:       cond.false.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    br label [[_ZL14SET_V128FLOAT8I9V64FLOAT8_EXIT]]
-// CHECK:       _ZL14set_v128float8i9v64float8.exit:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[COND_TRUE_I_I]] ], [ [[SHUFFLE_I_I]], [[COND_FALSE_I_I]] ]
+// CHECK-NEXT:    [[COND_I_I:%.*]] = select i1 [[TOBOOL_NOT_I_I]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[COND_I_I]] to <128 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128FLOAT8:%.*]] poison, <128 x i8> [[TMP2]], 0
 // CHECK-NEXT:    ret [[STRUCT_V128FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -693,15 +621,9 @@ v32float16 test_set_v32float16 ( int idx, v8float16 a ) { return set_v32float16(
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[A:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP1]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV16_7FLOAT16I_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV16_7FLOAT16I_EXIT]]
-// CHECK:       _ZL17extract_v8float16Dv16_7float16i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <4 x i32> [[SHUFFLE_I_I]], <4 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <8 x half>
 // CHECK-NEXT:    ret <8 x half> [[TMP2]]
 //
@@ -711,15 +633,9 @@ v8float16 test_extract_v8float16 ( v16float16 a, int idx ) { return extract_v8fl
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[A:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP1]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL14SET_V16FLOAT16IDV8_7FLOAT16_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL14SET_V16FLOAT16IDV8_7FLOAT16_EXIT]]
-// CHECK:       _ZL14set_v16float16iDv8_7float16.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <16 x half>
 // CHECK-NEXT:    ret <16 x half> [[TMP2]]
 //
@@ -754,6 +670,7 @@ v16float16 test_set_v16float16 (int idx, v8float16 a ) { return set_v16float16(i
 // CHECK-NEXT:    ret <32 x half> [[TMP2]]
 //
 v32float16 test_insert (v32float16 v, int idx, v8float16 b ) { return insert(v, idx, b); }
+//
 // CHECK-LABEL: @_Z11test_insertDv16_7float16iDv8_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[A:%.*]] to <8 x i32>
@@ -761,19 +678,14 @@ v32float16 test_insert (v32float16 v, int idx, v8float16 b ) { return insert(v, 
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP2]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[TMP0]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV16_7FLOAT16IDV8_S__EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV16_7FLOAT16IDV8_S__EXIT]]
-// CHECK:       _ZL6insertDv16_7float16iDv8_S_.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <8 x i32> [[SHUFFLE1_I_I]], <8 x i32> [[SHUFFLE2_I_I]]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <16 x half>
 // CHECK-NEXT:    ret <16 x half> [[TMP3]]
 //
 v16float16 test_insert (v16float16 a, int idx, v8float16 b ) { return insert(a, idx, b); }
+//
 // CHECK-LABEL: @_Z11test_concatDv8_7float16S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[V0:%.*]] to <4 x i32>
@@ -895,15 +807,9 @@ v64float8 test_set_v64float8 ( int idx, v16float8 a ) { return set_v64float8(idx
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i8> [[TMP0]] to <8 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP2]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16BFLOAT810V32BFLOAT8I_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16BFLOAT810V32BFLOAT8I_EXIT]]
-// CHECK:       _ZL18extract_v16bfloat810v32bfloat8i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <4 x i32> [[SHUFFLE_I_I]], <4 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <16 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V16BFLOAT8:%.*]] poison, <16 x i8> [[TMP3]], 0
 // CHECK-NEXT:    ret [[STRUCT_V16BFLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -915,15 +821,9 @@ v16bfloat8 test_extract_v16bfloat8 ( v32bfloat8 a, int idx ) { return extract_v1
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i8> [[TMP0]] to <8 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP2]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V16FLOAT89V32FLOAT8I_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP1]], <8 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V16FLOAT89V32FLOAT8I_EXIT]]
-// CHECK:       _ZL17extract_v16float89v32float8i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <4 x i32> [[SHUFFLE_I_I]], <4 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <16 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V16FLOAT8:%.*]] poison, <16 x i8> [[TMP3]], 0
 // CHECK-NEXT:    ret [[STRUCT_V16FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -935,15 +835,9 @@ v16float8 test_extract_v16float8 ( v32float8 a, int idx ) { return extract_v16fl
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP2]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL14SET_V32BFLOAT8I10V16BFLOAT8_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL14SET_V32BFLOAT8I10V16BFLOAT8_EXIT]]
-// CHECK:       _ZL14set_v32bfloat8i10v16bfloat8.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8:%.*]] poison, <32 x i8> [[TMP3]], 0
 // CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -955,15 +849,9 @@ v32bfloat8 test_set_v32bfloat8 (int idx, v16bfloat8 a ) { return set_v32bfloat8(
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i8> [[TMP0]] to <4 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP2]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL13SET_V32FLOAT8I9V16FLOAT8_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL13SET_V32FLOAT8I9V16FLOAT8_EXIT]]
-// CHECK:       _ZL13set_v32float8i9v16float8.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8:%.*]] poison, <32 x i8> [[TMP3]], 0
 // CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -1048,15 +936,9 @@ v64float8 test_insert (v64float8 v, int idx, v16float8 b ) { return insert(v, id
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP3]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[TMP4:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP4]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[TMP2]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL6INSERT10V32BFLOAT8I10V16BFLOAT8_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP2]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL6INSERT10V32BFLOAT8I10V16BFLOAT8_EXIT]]
-// CHECK:       _ZL6insert10v32bfloat8i10v16bfloat8.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <8 x i32> [[SHUFFLE1_I_I]], <8 x i32> [[SHUFFLE2_I_I]]
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32BFLOAT8]] poison, <32 x i8> [[TMP5]], 0
 // CHECK-NEXT:    ret [[STRUCT_V32BFLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -1071,15 +953,9 @@ v32bfloat8 test_insert (v32bfloat8 a, int idx, v16bfloat8 b ) { return insert(a,
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP3]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[TMP4:%.*]] = and i32 [[IDX:%.*]], 1
 // CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[TMP4]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[TMP2]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL6INSERT9V32FLOAT8I9V16FLOAT8_EXIT:%.*]]
-// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP2]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL6INSERT9V32FLOAT8I9V16FLOAT8_EXIT]]
-// CHECK:       _ZL6insert9v32float8i9v16float8.exit:
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = select i1 [[CMP_I_I]], <8 x i32> [[SHUFFLE1_I_I]], <8 x i32> [[SHUFFLE2_I_I]]
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <32 x i8>
 // CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V32FLOAT8]] poison, <32 x i8> [[TMP5]], 0
 // CHECK-NEXT:    ret [[STRUCT_V32FLOAT8]] [[DOTFCA_0_INSERT_I]]
@@ -1103,6 +979,7 @@ v32float8 test_insert (v32float8 a, int idx, v16float8 b ) { return insert(a, id
 // CHECK-NEXT:    ret [[STRUCT_V64BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64bfloat8 test_concat (v16bfloat8 v0, v16bfloat8 v1, v16bfloat8 v2, v16bfloat8 v3 ) { return concat(v0, v1, v2, v3); }
+//
 // CHECK-LABEL: @_Z11test_concat9v16float8S_S_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V16FLOAT8:%.*]] [[V0_COERCE:%.*]], 0
@@ -1565,23 +1442,32 @@ v16uint4 test_extract_msb_v16uint4 (v256mx6 m, int idx) { return extract_msb_v16
 // CHECK-LABEL: @_Z25test_extract_msb_v32uint47v256mx6i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX6:%.*]] [[M_COERCE:%.*]], 7
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 6
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 5
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 4
-// CHECK-NEXT:    [[DOTSINK63_I:%.*]] = select i1 [[CMP_I]], <2 x i32> [[TMP3]], <2 x i32> [[TMP1]]
-// CHECK-NEXT:    [[DOTSINK61_I:%.*]] = select i1 [[CMP_I]], <2 x i32> [[TMP2]], <2 x i32> [[TMP0]]
-// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <2 x i32> [[DOTSINK63_I]] to <8 x i8>
-// CHECK-NEXT:    [[TMP5:%.*]] = shufflevector <8 x i8> [[TMP4]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <8 x i8> [[TMP4]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP7:%.*]] = bitcast <2 x i32> [[DOTSINK61_I]] to <8 x i8>
-// CHECK-NEXT:    [[TMP8:%.*]] = shufflevector <8 x i8> [[TMP7]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP9:%.*]] = shufflevector <8 x i8> [[TMP7]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP10:%.*]] = shufflevector <16 x i8> [[TMP5]], <16 x i8> <i8 poison, i8 poison, i8 poison, i8 poison, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[TMP11:%.*]] = shufflevector <16 x i8> [[TMP10]], <16 x i8> [[TMP6]], <16 x i32> <i32 0, i32 20, i32 poison, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    [[TMP12:%.*]] = shufflevector <16 x i8> [[TMP11]], <16 x i8> [[TMP8]], <16 x i32> <i32 0, i32 1, i32 16, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    [[VECINIT50_I:%.*]] = shufflevector <16 x i8> [[TMP12]], <16 x i8> [[TMP9]], <16 x i32> <i32 0, i32 1, i32 2, i32 20, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    ret <16 x i8> [[VECINIT50_I]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX6:%.*]] [[M_COERCE:%.*]], 5
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 4
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to <8 x i8>
+// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <8 x i8> [[TMP2]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <8 x i8> [[TMP2]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <2 x i32> [[TMP0]] to <8 x i8>
+// CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <8 x i8> [[TMP5]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP7:%.*]] = shufflevector <8 x i8> [[TMP5]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP8:%.*]] = shufflevector <16 x i8> [[TMP3]], <16 x i8> <i8 poison, i8 poison, i8 poison, i8 poison, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP9:%.*]] = shufflevector <16 x i8> [[TMP8]], <16 x i8> [[TMP4]], <16 x i32> <i32 0, i32 20, i32 poison, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP10:%.*]] = shufflevector <16 x i8> [[TMP9]], <16 x i8> [[TMP6]], <16 x i32> <i32 0, i32 1, i32 16, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[VECINIT23_I:%.*]] = shufflevector <16 x i8> [[TMP10]], <16 x i8> [[TMP7]], <16 x i32> <i32 0, i32 1, i32 2, i32 20, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 7
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 6
+// CHECK-NEXT:    [[TMP13:%.*]] = bitcast <2 x i32> [[TMP12]] to <8 x i8>
+// CHECK-NEXT:    [[TMP14:%.*]] = shufflevector <8 x i8> [[TMP13]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP15:%.*]] = shufflevector <8 x i8> [[TMP13]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP16:%.*]] = bitcast <2 x i32> [[TMP11]] to <8 x i8>
+// CHECK-NEXT:    [[TMP17:%.*]] = shufflevector <8 x i8> [[TMP16]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP18:%.*]] = shufflevector <8 x i8> [[TMP16]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP19:%.*]] = shufflevector <16 x i8> [[TMP14]], <16 x i8> <i8 poison, i8 poison, i8 poison, i8 poison, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP20:%.*]] = shufflevector <16 x i8> [[TMP19]], <16 x i8> [[TMP15]], <16 x i32> <i32 0, i32 20, i32 poison, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP21:%.*]] = shufflevector <16 x i8> [[TMP20]], <16 x i8> [[TMP17]], <16 x i32> <i32 0, i32 1, i32 16, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[VECINIT50_I:%.*]] = shufflevector <16 x i8> [[TMP21]], <16 x i8> [[TMP18]], <16 x i32> <i32 0, i32 1, i32 2, i32 20, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = select i1 [[CMP_I]], <16 x i8> [[VECINIT23_I]], <16 x i8> [[VECINIT50_I]]
+// CHECK-NEXT:    ret <16 x i8> [[RETVAL_0_I]]
 //
 v32uint4 test_extract_msb_v32uint4 (v256mx6 m, int idx) { return extract_msb_v32uint4(m, idx); }
 // CHECK-LABEL: @_Z11test_update7v256mx6iDv8_DU8_(
@@ -2415,23 +2301,32 @@ v16uint4 test_extract_msb_v16uint4 (v256mx4 m, int idx) { return extract_msb_v16
 // CHECK-LABEL: @_Z25test_extract_msb_v32uint47v256mx4i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX4:%.*]] [[M_COERCE:%.*]], 7
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 6
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 5
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 4
-// CHECK-NEXT:    [[DOTSINK63_I:%.*]] = select i1 [[CMP_I]], <2 x i32> [[TMP3]], <2 x i32> [[TMP1]]
-// CHECK-NEXT:    [[DOTSINK61_I:%.*]] = select i1 [[CMP_I]], <2 x i32> [[TMP2]], <2 x i32> [[TMP0]]
-// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <2 x i32> [[DOTSINK63_I]] to <8 x i8>
-// CHECK-NEXT:    [[TMP5:%.*]] = shufflevector <8 x i8> [[TMP4]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <8 x i8> [[TMP4]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP7:%.*]] = bitcast <2 x i32> [[DOTSINK61_I]] to <8 x i8>
-// CHECK-NEXT:    [[TMP8:%.*]] = shufflevector <8 x i8> [[TMP7]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP9:%.*]] = shufflevector <8 x i8> [[TMP7]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP10:%.*]] = shufflevector <16 x i8> [[TMP5]], <16 x i8> <i8 poison, i8 poison, i8 poison, i8 poison, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[TMP11:%.*]] = shufflevector <16 x i8> [[TMP10]], <16 x i8> [[TMP6]], <16 x i32> <i32 0, i32 20, i32 poison, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    [[TMP12:%.*]] = shufflevector <16 x i8> [[TMP11]], <16 x i8> [[TMP8]], <16 x i32> <i32 0, i32 1, i32 16, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    [[VECINIT50_I:%.*]] = shufflevector <16 x i8> [[TMP12]], <16 x i8> [[TMP9]], <16 x i32> <i32 0, i32 1, i32 2, i32 20, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    ret <16 x i8> [[VECINIT50_I]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX4:%.*]] [[M_COERCE:%.*]], 5
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 4
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to <8 x i8>
+// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <8 x i8> [[TMP2]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <8 x i8> [[TMP2]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <2 x i32> [[TMP0]] to <8 x i8>
+// CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <8 x i8> [[TMP5]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP7:%.*]] = shufflevector <8 x i8> [[TMP5]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP8:%.*]] = shufflevector <16 x i8> [[TMP3]], <16 x i8> <i8 poison, i8 poison, i8 poison, i8 poison, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP9:%.*]] = shufflevector <16 x i8> [[TMP8]], <16 x i8> [[TMP4]], <16 x i32> <i32 0, i32 20, i32 poison, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP10:%.*]] = shufflevector <16 x i8> [[TMP9]], <16 x i8> [[TMP6]], <16 x i32> <i32 0, i32 1, i32 16, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[VECINIT23_I:%.*]] = shufflevector <16 x i8> [[TMP10]], <16 x i8> [[TMP7]], <16 x i32> <i32 0, i32 1, i32 2, i32 20, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 7
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 6
+// CHECK-NEXT:    [[TMP13:%.*]] = bitcast <2 x i32> [[TMP12]] to <8 x i8>
+// CHECK-NEXT:    [[TMP14:%.*]] = shufflevector <8 x i8> [[TMP13]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP15:%.*]] = shufflevector <8 x i8> [[TMP13]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP16:%.*]] = bitcast <2 x i32> [[TMP11]] to <8 x i8>
+// CHECK-NEXT:    [[TMP17:%.*]] = shufflevector <8 x i8> [[TMP16]], <8 x i8> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP18:%.*]] = shufflevector <8 x i8> [[TMP16]], <8 x i8> poison, <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 4, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP19:%.*]] = shufflevector <16 x i8> [[TMP14]], <16 x i8> <i8 poison, i8 poison, i8 poison, i8 poison, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP20:%.*]] = shufflevector <16 x i8> [[TMP19]], <16 x i8> [[TMP15]], <16 x i32> <i32 0, i32 20, i32 poison, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP21:%.*]] = shufflevector <16 x i8> [[TMP20]], <16 x i8> [[TMP17]], <16 x i32> <i32 0, i32 1, i32 16, i32 poison, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[VECINIT50_I:%.*]] = shufflevector <16 x i8> [[TMP21]], <16 x i8> [[TMP18]], <16 x i32> <i32 0, i32 1, i32 2, i32 20, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = select i1 [[CMP_I]], <16 x i8> [[VECINIT23_I]], <16 x i8> [[VECINIT50_I]]
+// CHECK-NEXT:    ret <16 x i8> [[RETVAL_0_I]]
 //
 v32uint4 test_extract_msb_v32uint4 (v256mx4 m, int idx) { return extract_msb_v32uint4(m, idx); }
 // CHECK-LABEL: @_Z11test_update7v256mx4iDv8_DU8_(

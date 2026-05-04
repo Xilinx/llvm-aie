@@ -147,6 +147,32 @@ public:
   bool shouldMergeCongruentIVs(const PHINode *IV1, const PHINode *IV2) const {
     return shouldMergeCongruentIVsImpl(IV1, IV2);
   }
+
+  /// For the `TCK_SizeAndLatency` cost kind report all shufflevectors as
+  /// free. This is the cost kind queried by
+  /// `SimplifyCFG::computeSpeculationCost` (the function that decides
+  /// whether to fold a `br + 2 BBs + phi` diamond back into a `select`)
+  /// via `BasicTTIImplBase::computeSpeculationCost` →
+  /// `TTI::getInstructionCost(I, ..., TCK_SizeAndLatency)`. On AIE every
+  /// shufflevector that survives to ISel maps to a register-class view
+  /// (`wl0`/`wh0`/etc.) or a single-cycle `vshift`/`vsel`, so reporting
+  /// the default per-element scalarised cost there is wildly conservative
+  /// and blows the `4 * TCC_Basic` speculation budget for
+  /// `c ? wide_a : wide_b` ternaries — leaving a real branch in the
+  /// final asm. The throughput / latency / recip-throughput cost kinds
+  /// fall through to the base implementation so the loop vectoriser and
+  /// other passes still see the realistic per-element cost.
+  InstructionCost getShuffleCost(TTI::ShuffleKind Kind, VectorType *Tp,
+                                 ArrayRef<int> Mask,
+                                 TTI::TargetCostKind CostKind, int Index,
+                                 VectorType *SubTp,
+                                 ArrayRef<const Value *> Args = {},
+                                 const Instruction *CxtI = nullptr) {
+    if (CostKind == TTI::TCK_SizeAndLatency)
+      return TTI::TCC_Free;
+    return BaseT::getShuffleCost(Kind, Tp, Mask, CostKind, Index, SubTp, Args,
+                                 CxtI);
+  }
 };
 
 } // end namespace llvm
