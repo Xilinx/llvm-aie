@@ -53,6 +53,10 @@ public:
                                 unsigned UseIdx) const override;
   bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
 
+  bool isFifoStoreConvOpcode(unsigned Opcode) const override;
+  std::optional<unsigned>
+  getStoreFlushConvOpcode(unsigned StoreFlushOpcode) const override;
+
   std::optional<int> getFirstMemoryCycle(unsigned SchedClass) const override;
 
   std::optional<int> getLastMemoryCycle(unsigned SchedClass) const override;

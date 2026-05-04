@@ -1365,6 +1365,27 @@ bool AIE2PSInstrInfo::isGenericOffsetMemOpcode(unsigned Opcode) const {
           (Opcode == AIE2PS::G_AIE_OFFSET_ZEXTLOAD));
 }
 
+bool AIE2PSInstrInfo::isFifoStoreConvOpcode(unsigned Opcode) const {
+  return ((Opcode == AIE2PS::VST_PUSH_256_CONV_mx4_fp32) ||
+          (Opcode == AIE2PS::VST_PUSH_384_CONV_mx6_fp32) ||
+          (Opcode == AIE2PS::VST_PUSH_576_CONV_mx9_fp32));
+}
+
+std::optional<unsigned>
+AIE2PSInstrInfo::getStoreFlushConvOpcode(unsigned StoreFlushOpcode) const {
+  switch (StoreFlushOpcode) {
+  case AIE2PS::VST_FLUSH_normal_flush:
+    return AIE2PS::VST_FLUSH_d_normal_flush;
+  case AIE2PS::VST_FLUSH_fifo_1d_flush:
+    return AIE2PS::VST_FLUSH_d_fifo_1d_flush;
+  case AIE2PS::VST_FLUSH_2D:
+    return AIE2PS::VST_FLUSH_d_2D;
+  case AIE2PS::VST_FLUSH_3D:
+    return AIE2PS::VST_FLUSH_d_3D;
+  }
+  return std::nullopt;
+}
+
 std::optional<unsigned> AIE2PSInstrInfo::getCombinedPostIncOpcode(
     MachineInstr &BaseMemI, MachineInstr &PostIncI, TypeSize Size) const {
   switch (PostIncI.getOpcode()) {
