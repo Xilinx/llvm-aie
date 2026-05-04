@@ -5045,6 +5045,32 @@ bool llvm::matchNarrowTruncConstant(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// True iff Reg has at least one non-debug user and every non-debug
+/// user satisfies Pred. Wraps the empty-check + all_of idiom that
+/// load-rewriting combines repeat.
+template <typename Predicate>
+static bool allNonDbgUsersMatch(Register Reg, const MachineRegisterInfo &MRI,
+                                Predicate Pred) {
+  return !MRI.use_nodbg_empty(Reg) &&
+         all_of(MRI.use_nodbg_instructions(Reg), Pred);
+}
+
+/// Re-type \p MI (a G_LOAD) to produce a fresh vreg of \p NewDstTy, with
+/// proper observer notifications. Returns the new destination register.
+/// The caller's old destination register survives in MRI (now without a
+/// def) and can still be walked via use lists for any post-rewrite
+/// cleanup.
+static Register retypeLoadDest(MachineInstr &MI, LLT NewDstTy,
+                               MachineRegisterInfo &MRI,
+                               GISelChangeObserver &Observer) {
+  assert(MI.getOpcode() == TargetOpcode::G_LOAD);
+  const Register NewDstReg = MRI.createGenericVirtualRegister(NewDstTy);
+  Observer.changingInstr(MI);
+  changeLoadStoreDataRegister(MI, NewDstReg, MRI);
+  Observer.changedInstr(MI);
+  return NewDstReg;
+}
+
 /// Narrow operations that are feeding truncations to s20.
 /// Covers G_LOAD.
 bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
@@ -5054,7 +5080,6 @@ bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   assert(MI.getOpcode() == TargetOpcode::G_LOAD);
 
-  const LLT S20 = LLT::scalar(20);
   auto IsProfitableTruncToS20 = [&](const MachineInstr &MaybeTruncMI) {
     if (MaybeTruncMI.getOpcode() != TargetOpcode::G_TRUNC)
       return false;
@@ -5066,15 +5091,11 @@ bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   // We should have a G_LOAD feeding interesting truncations.
   const Register DstReg = MI.getOperand(0).getReg();
-  if (MRI.use_nodbg_empty(DstReg) ||
-      !all_of(MRI.use_instructions(DstReg), IsProfitableTruncToS20))
+  if (!allNonDbgUsersMatch(DstReg, MRI, IsProfitableTruncToS20))
     return false;
 
   MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
-    const Register NewDstReg = MRI.createGenericVirtualRegister(S20);
-    Observer.changingInstr(MI);
-    changeLoadStoreDataRegister(MI, NewDstReg, MRI);
-    Observer.changedInstr(MI);
+    const Register NewDstReg = retypeLoadDest(MI, S20, MRI, Observer);
     // Build Zext after the load, not before.
     MachineBasicBlock &MBB = *MI.getParent();
     B.setInsertPt(MBB, MI.getNextNode() ? MI.getNextNode() : MBB.end());
