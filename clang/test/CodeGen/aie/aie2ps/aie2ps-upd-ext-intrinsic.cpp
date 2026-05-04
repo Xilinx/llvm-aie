@@ -213,7 +213,6 @@ v64float8 test_insert (v64float8 a, int idx, v32float8 b) { return insert(a, idx
 // CHECK-NEXT:    ret [[STRUCT_V64FLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v64float8 test_set_v64float8 (int idx, v32float8 b) { return set_v64float8(idx, b); }
-//
 // CHECK-LABEL: @_Z11test_concat9v32float8S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32FLOAT8:%.*]] [[A0_COERCE:%.*]], 0
@@ -345,7 +344,6 @@ v64float16 test_concat (v16float16 a0, v16float16 a1, v16float16 a2, v16float16 
 // CHECK-NEXT:    ret <32 x half> [[TMP2]]
 //
 v32float16 test_extract_v32float16 (v64float16 a, int idx) { return extract_v32float16(a, idx); }
-//
 // CHECK-LABEL: @_Z11test_insertDv64_7float16iDv32_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
@@ -582,6 +580,7 @@ v128bfloat8 test_set_v128bfloat8 (int idx, v64bfloat8 b) { return set_v128bfloat
 // CHECK-NEXT:    ret [[STRUCT_V128BFLOAT8]] [[DOTFCA_0_INSERT_I]]
 //
 v128bfloat8 test_concat (v64bfloat8 a0, v64bfloat8 a1) { return concat(a0, a1); }
+//
 // CHECK-LABEL: @_Z22test_extract_v32float810v128float8i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128FLOAT8:%.*]] [[A_COERCE:%.*]], 0
@@ -1268,6 +1267,7 @@ v32bfloat8 test_concat (v16bfloat8 v0, v16bfloat8 v1 ) { return concat(v0, v1); 
 //
 v32float8 test_concat (v16float8 v0, v16float8 v1 ) { return concat(v0, v1); }
 
+//
 // CHECK-LABEL: @_Z11test_insert6v64mx9ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9:%.*]] [[M_COERCE:%.*]], 2
@@ -1330,7 +1330,6 @@ v32int8 test_extract_v32int8 (v64mx9 m, int idx) { return extract_v32int8(m, idx
 // CHECK-NEXT:    ret <64 x i8> [[RETVAL_0_I]]
 //
 v64int8 test_extract_v64int8 (v128mx9 m, int idx) { return extract_v64int8(m, idx); }
-//
 // CHECK-LABEL: @_Z11test_insert7v128mx9iDv64_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -1352,6 +1351,7 @@ v64int8 test_extract_v64int8 (v128mx9 m, int idx) { return extract_v64int8(m, id
 // CHECK-NEXT:    ret [[STRUCT_V128MX9]] [[DOTFCA_5_INSERT_I]]
 //
 v128mx9 test_insert (v128mx9 m, int idx, v64int8 v) { return insert(m, idx, v); }
+//
 // CHECK-LABEL: @_Z11test_insert7v128mx9i6v64mx9(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9:%.*]] [[V_COERCE:%.*]], 0
@@ -1459,7 +1459,6 @@ v128mx9 test_concat (v64mx9 v0, v64mx9 v1) { return concat(v0, v1); }
 // CHECK-NEXT:    ret [[STRUCT_V128MX9]] [[CALL6_PN_I]]
 //
 v128mx9 test_insert (v128mx9 m, int idx, int exp) { return insert(m, idx, exp); }
-//
 // CHECK-LABEL: @_Z11test_insert7v128mx9iDv4_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp slt i32 [[IDX:%.*]], 2
@@ -2256,6 +2255,7 @@ v64bfp13p test_extract_v64bfp13p (v256bfp13p m, int idx) { return extract_v64bfp
 // CHECK-NEXT:    ret [[STRUCT_V256MX6]] [[DOTFCA_15_INSERT_I]]
 //
 v256mx6 test_update (v256mx6 s, int idx, v64mx6 m) { return update(s, idx, m); }
+//
 // CHECK-LABEL: @_Z20test_extract_v128mx67v256mx6i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -2605,7 +2605,6 @@ v32uint4 test_extract_msb_v32uint4 (v256mx4 m, int idx) { return extract_msb_v32
 // CHECK-NEXT:    ret [[STRUCT_V256MX4]] [[DOTFCA_15_INSERT_I]]
 //
 v256mx4 test_update (v256mx4 s, int idx, v16uint4 m) { return update(s, idx, m); }
-//
 // CHECK-LABEL: @_Z11test_update7v256mx4iDv16_DU8_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x i8> [[M:%.*]] to <4 x i32>

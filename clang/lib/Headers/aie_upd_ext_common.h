@@ -23,6 +23,35 @@
 #ifndef __AIE_UPD_EXT_COMMON_H__
 #define __AIE_UPD_EXT_COMMON_H__
 
+// Scalar 64-bit updates and extracts.
+// Branchless across both arches: a single vsel (runtime) or a single mov
+// (constant idx). Replaces a per-arch if/else dispatch over an
+// immediate-only intrinsic that previously failed ISel for runtime idx
+// on AIE2P.
+INTRINSIC(unsigned long long)
+insert(unsigned long long a, int idx, unsigned int b) {
+  v2uint32 temp = (v2uint32)a;
+  temp[idx] = b;
+  return (unsigned long long)temp;
+}
+INTRINSIC(unsigned long long) set_uint64(int idx, unsigned int b) {
+  // Initialize the placeholder vector via a shufflevector with an all -1
+  // mask: the C-level idiom that emits a poison value for the unwritten
+  // lane (asm-equivalent to leaving the lane uninitialized; codegen DCEs
+  // the unwritten lane either way).
+  v2uint32 zero = {0, 0};
+  v2uint32 temp = __builtin_shufflevector(zero, zero, -1, -1);
+  temp[idx] = b;
+  return (unsigned long long)temp;
+}
+INTRINSIC(unsigned int) extract_uint32(unsigned long long a, int idx) {
+  v2uint32 temp = (v2uint32)a;
+  return temp[idx];
+}
+INTRINSIC(unsigned long long) concat(unsigned int a, unsigned int b) {
+  return insert(set_uint64(a, 0), 1, b);
+}
+
 // Generic 128-bit extract primitives
 INTRINSIC(v4int32) extract_128_256(v8int32 a, int idx) {
   if (idx % 2 == 0)

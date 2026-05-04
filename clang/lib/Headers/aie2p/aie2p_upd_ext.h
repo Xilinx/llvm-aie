@@ -393,29 +393,8 @@ INTRINSIC(unsigned int) extract_elem(v2uint32 v, int idx) {
 
 */
 
-//!   @name Scalar updates and extracts
-INTRINSIC(unsigned long long)
-insert(unsigned long long a, int idx, unsigned int b) {
-  if (idx == 0)
-    return (unsigned long long)__builtin_aiev2p_upd_I64_I32((v2uint32)a, b, 0);
-  else
-    return (unsigned long long)__builtin_aiev2p_upd_I64_I32((v2uint32)a, b, 1);
-}
-INTRINSIC(unsigned long long) set_uint64(int idx, unsigned int b) {
-  if (idx == 0)
-    return (unsigned long long)__builtin_aiev2p_set_I64_I32(b, 0);
-  else
-    return (unsigned long long)__builtin_aiev2p_set_I64_I32(b, 1);
-}
-INTRINSIC(unsigned int) extract_uint32(unsigned long long a, int idx) {
-  if (idx == 0)
-    return __builtin_aiev2p_ext_I32_I64((v2uint32)a, 0);
-  else
-    return __builtin_aiev2p_ext_I32_I64((v2uint32)a, 1);
-}
-INTRINSIC(unsigned long long) concat(unsigned int a, unsigned int b) {
-  return insert(set_uint64(a, 0), 1, b);
-}
+// Scalar updates and extracts (insert/set_uint64/extract_uint32/concat) live
+// in aie_upd_ext_common.h alongside the other shared helpers.
 
 // Generic extract primitives
 INTRINSIC(v8int32) extract_256_512(v16int32 a, int idx) {

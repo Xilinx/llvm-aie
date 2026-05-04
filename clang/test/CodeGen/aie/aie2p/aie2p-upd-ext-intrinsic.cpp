@@ -1153,7 +1153,6 @@ v16int4 test_insert(v16int4 v, int idx, int val)
  {
     return insert(v, idx, val);
  }
-//
 // CHECK-LABEL: define dso_local noundef <2 x i8> @_Z11test_insertDv2_aii(
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -1334,6 +1333,7 @@ v2int32 test_insert(v2int32 v, int idx, int val)   {
  {
     return insert(v, idx, val);
  }
+//
 // CHECK-LABEL: define dso_local noundef <8 x i8> @_Z11test_insertDv8_DU8_ij(
 // CHECK-SAME: <8 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -1795,19 +1795,10 @@ unsigned int test_extract_elem(v2uint32 v, int idx)
 // CHECK-LABEL: define dso_local noundef i64 @_Z11test_insertyij(
 // CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
-// CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
-// CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.aie2p.upd.I64.I32(<2 x i32> [[TMP0]], i32 [[B]], i32 0)
-// CHECK-NEXT:    br label [[_ZL6INSERTYIJ_EXIT:%.*]]
-// CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x i32> @llvm.aie2p.upd.I64.I32(<2 x i32> [[TMP0]], i32 [[B]], i32 1)
-// CHECK-NEXT:    br label [[_ZL6INSERTYIJ_EXIT]]
-// CHECK:       _ZL6insertyij.exit:
-// CHECK-NEXT:    [[RETVAL_0_IN_I:%.*]] = phi <2 x i32> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP2]], [[IF_ELSE_I]] ]
-// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = bitcast <2 x i32> [[RETVAL_0_IN_I]] to i64
-// CHECK-NEXT:    ret i64 [[RETVAL_0_I]]
+// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <2 x i32> [[TMP0]], i32 [[B]], i32 [[IDX]]
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[VECINS_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_insert(unsigned long long a, int idx, unsigned int b)
 {
@@ -1816,18 +1807,9 @@ unsigned long long test_insert(unsigned long long a, int idx, unsigned int b)
 // CHECK-LABEL: define dso_local noundef i64 @_Z15test_set_uint64ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
-// CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
-// CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.set.I64.I32(i32 [[B]], i32 0)
-// CHECK-NEXT:    br label [[_ZL10SET_UINT64IJ_EXIT:%.*]]
-// CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.aie2p.set.I64.I32(i32 [[B]], i32 1)
-// CHECK-NEXT:    br label [[_ZL10SET_UINT64IJ_EXIT]]
-// CHECK:       _ZL10set_uint64ij.exit:
-// CHECK-NEXT:    [[RETVAL_0_IN_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
-// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = bitcast <2 x i32> [[RETVAL_0_IN_I]] to i64
-// CHECK-NEXT:    ret i64 [[RETVAL_0_I]]
+// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <2 x i32> poison, i32 [[B]], i32 [[IDX]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[VECINS_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP0]]
 //
 unsigned long long test_set_uint64(int idx, unsigned int b)
 {
@@ -1836,18 +1818,9 @@ unsigned long long test_set_uint64(int idx, unsigned int b)
 // CHECK-LABEL: define dso_local noundef i32 @_Z19test_extract_uint32yi(
 // CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
-// CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
-// CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.ext.I32.I64(<2 x i32> [[TMP0]], i32 0)
-// CHECK-NEXT:    br label [[_ZL14EXTRACT_UINT32YI_EXIT:%.*]]
-// CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call i32 @llvm.aie2p.ext.I32.I64(<2 x i32> [[TMP0]], i32 1)
-// CHECK-NEXT:    br label [[_ZL14EXTRACT_UINT32YI_EXIT]]
-// CHECK:       _ZL14extract_uint32yi.exit:
-// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi i32 [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP2]], [[IF_ELSE_I]] ]
-// CHECK-NEXT:    ret i32 [[RETVAL_0_I]]
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP0]], i32 [[IDX]]
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
 //
 unsigned int test_extract_uint32(unsigned long long a, int idx)
 {
@@ -1856,24 +1829,66 @@ unsigned int test_extract_uint32(unsigned long long a, int idx)
 // CHECK-LABEL: define dso_local noundef i64 @_Z11test_concatjj(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[A]], 0
-// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
-// CHECK:       if.then.i.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.set.I64.I32(i32 0, i32 0)
-// CHECK-NEXT:    br label [[_ZL6CONCATJJ_EXIT:%.*]]
-// CHECK:       if.else.i.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.aie2p.set.I64.I32(i32 0, i32 1)
-// CHECK-NEXT:    br label [[_ZL6CONCATJJ_EXIT]]
-// CHECK:       _ZL6concatjj.exit:
-// CHECK-NEXT:    [[RETVAL_0_IN_I_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_THEN_I_I]] ], [ [[TMP1]], [[IF_ELSE_I_I]] ]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x i32> @llvm.aie2p.upd.I64.I32(<2 x i32> [[RETVAL_0_IN_I_I]], i32 [[B]], i32 1)
-// CHECK-NEXT:    [[RETVAL_0_I4_I:%.*]] = bitcast <2 x i32> [[TMP2]] to i64
-// CHECK-NEXT:    ret i64 [[RETVAL_0_I4_I]]
+// CHECK-NEXT:    [[VECINS_I_I:%.*]] = insertelement <2 x i32> poison, i32 0, i32 [[A]]
+// CHECK-NEXT:    [[VECINS_I2_I:%.*]] = insertelement <2 x i32> [[VECINS_I_I]], i32 [[B]], i64 1
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[VECINS_I2_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP0]]
 //
 unsigned long long test_concat(unsigned int a, unsigned int b)
 {
     return concat(a,b);
 }
+
+// Constant-idx companions: verify each helper folds to a single op.
+// CHECK-LABEL: define dso_local noundef i64 @_Z20test_insert_u64_idx0yj(
+// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
+// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <2 x i32> [[TMP0]], i32 [[B]], i64 0
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[VECINS_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP1]]
+//
+unsigned long long test_insert_u64_idx0(unsigned long long a, unsigned int b) { return insert(a, 0, b); }
+// CHECK-LABEL: define dso_local noundef i64 @_Z20test_insert_u64_idx1yj(
+// CHECK-SAME: i64 noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
+// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <2 x i32> [[TMP0]], i32 [[B]], i64 1
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[VECINS_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP1]]
+//
+unsigned long long test_insert_u64_idx1(unsigned long long a, unsigned int b) { return insert(a, 1, b); }
+// CHECK-LABEL: define dso_local noundef i64 @_Z20test_set_uint64_idx0j(
+// CHECK-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <2 x i32> poison, i32 [[B]], i64 0
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[VECINS_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP0]]
+//
+unsigned long long test_set_uint64_idx0(unsigned int b) { return set_uint64(0, b); }
+// CHECK-LABEL: define dso_local noundef i64 @_Z20test_set_uint64_idx1j(
+// CHECK-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <2 x i32> poison, i32 [[B]], i64 1
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[VECINS_I]] to i64
+// CHECK-NEXT:    ret i64 [[TMP0]]
+//
+unsigned long long test_set_uint64_idx1(unsigned int b) { return set_uint64(1, b); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z24test_extract_uint32_idx0y(
+// CHECK-SAME: i64 noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = trunc i64 [[A]] to i32
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+unsigned int test_extract_uint32_idx0(unsigned long long a) { return extract_uint32(a, 0); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z24test_extract_uint32_idx1y(
+// CHECK-SAME: i64 noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast i64 [[A]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP0]], i64 1
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+unsigned int test_extract_uint32_idx1(unsigned long long a) { return extract_uint32(a, 1); }
 
 
 // Conversions
