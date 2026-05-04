@@ -1175,6 +1175,7 @@ v2int8 test_insert(v2int8 v, int idx, int val)
     return insert(v, idx, val);
  }
 
+//
 // CHECK-LABEL: define dso_local noundef <4 x i8> @_Z11test_insertDv4_aii(
 // CHECK-SAME: <4 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -1215,7 +1216,6 @@ v8int8 test_insert(v8int8 v, int idx, int val)
  {
     return insert(v, idx, val);
  }
-//
 // CHECK-LABEL: define dso_local noundef <2 x i16> @_Z11test_insertDv2_sii(
 // CHECK-SAME: <2 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -7047,27 +7047,21 @@ v128bfp16ebs8 test_concat(v64bfp16ebs8 v1, v64bfp16ebs8 v2) {return concat(v1,v2
 // CHECK-LABEL: define dso_local %struct.v128bfp16ebs8 @_Z11test_insert13v128bfp16ebs8i12v64bfp16ebs8(
 // CHECK-SAME: [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[VSUB_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 1
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
-// CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_END_I:%.*]]
-// CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    br label [[_ZL6INSERT13V128BFP16EBS8I12V64BFP16EBS8_EXIT:%.*]]
-// CHECK:       if.end.i:
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 2
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 0
-// CHECK-NEXT:    br label [[_ZL6INSERT13V128BFP16EBS8I12V64BFP16EBS8_EXIT]]
-// CHECK:       _ZL6insert13v128bfp16ebs8i12v64bfp16ebs8.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <64 x i8> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP5]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_3_0_I:%.*]] = phi <64 x i8> [ [[TMP3]], [[IF_THEN_I]] ], [ [[TMP0]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_6_0_I:%.*]] = phi <8 x i8> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP4]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_9_0_I:%.*]] = phi <8 x i8> [ [[TMP2]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] poison, <64 x i8> [[RETVAL_SROA_0_0_I]], 0
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[RETVAL_SROA_3_0_I]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[RETVAL_SROA_6_0_I]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[RETVAL_SROA_9_0_I]], 3
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 0
+// CHECK-NEXT:    [[CMP_NOT_I:%.*]] = icmp eq i32 [[IDX]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[COND_I:%.*]] = select i1 [[CMP_NOT_I]], <64 x i8> [[TMP1]], <64 x i8> [[TMP2]]
+// CHECK-NEXT:    [[COND8_I:%.*]] = select i1 [[CMP_NOT_I]], <64 x i8> [[TMP0]], <64 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[COND14_I:%.*]] = select i1 [[CMP_NOT_I]], <8 x i8> [[TMP3]], <8 x i8> [[TMP5]]
+// CHECK-NEXT:    [[COND21_I:%.*]] = select i1 [[CMP_NOT_I]], <8 x i8> [[TMP4]], <8 x i8> [[TMP3]]
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] poison, <64 x i8> [[COND_I]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[COND8_I]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[COND14_I]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[COND21_I]], 3
 // CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I]]
 //
 v128bfp16ebs8 test_insert(v128bfp16ebs8 v , int idx, v64bfp16ebs8 vsub) { return insert(v,idx,vsub);}
@@ -7168,27 +7162,21 @@ v128bfp16ebs16 test_concat(v64bfp16ebs16 v1, v64bfp16ebs16 v2) { return concat(v
 // CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z11test_insert14v128bfp16ebs16i13v64bfp16ebs16(
 // CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V64BFP16EBS16:%.*]] [[VSUB_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 1
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
-// CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_END_I:%.*]]
-// CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
-// CHECK-NEXT:    br label [[_ZL6INSERT14V128BFP16EBS16I13V64BFP16EBS16_EXIT:%.*]]
-// CHECK:       if.end.i:
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
-// CHECK-NEXT:    br label [[_ZL6INSERT14V128BFP16EBS16I13V64BFP16EBS16_EXIT]]
-// CHECK:       _ZL6insert14v128bfp16ebs16i13v64bfp16ebs16.exit:
-// CHECK-NEXT:    [[RETVAL_SROA_0_0_I:%.*]] = phi <64 x i8> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP5]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_3_0_I:%.*]] = phi <64 x i8> [ [[TMP3]], [[IF_THEN_I]] ], [ [[TMP0]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_6_0_I:%.*]] = phi <8 x i8> [ [[TMP1]], [[IF_THEN_I]] ], [ [[TMP4]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[RETVAL_SROA_9_0_I:%.*]] = phi <8 x i8> [ [[TMP2]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_END_I]] ]
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] poison, <64 x i8> [[RETVAL_SROA_0_0_I]], 0
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[RETVAL_SROA_3_0_I]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[RETVAL_SROA_6_0_I]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[RETVAL_SROA_9_0_I]], 3
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 0
+// CHECK-NEXT:    [[CMP_NOT_I:%.*]] = icmp eq i32 [[IDX]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[COND_I:%.*]] = select i1 [[CMP_NOT_I]], <64 x i8> [[TMP1]], <64 x i8> [[TMP2]]
+// CHECK-NEXT:    [[COND8_I:%.*]] = select i1 [[CMP_NOT_I]], <64 x i8> [[TMP0]], <64 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[COND14_I:%.*]] = select i1 [[CMP_NOT_I]], <8 x i8> [[TMP3]], <8 x i8> [[TMP5]]
+// CHECK-NEXT:    [[COND21_I:%.*]] = select i1 [[CMP_NOT_I]], <8 x i8> [[TMP4]], <8 x i8> [[TMP3]]
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] poison, <64 x i8> [[COND_I]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[COND8_I]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[COND14_I]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[COND21_I]], 3
 // CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I]]
 //
 v128bfp16ebs16 test_insert(v128bfp16ebs16 v, int idx, v64bfp16ebs16 vsub) {return insert(v,idx,vsub);}

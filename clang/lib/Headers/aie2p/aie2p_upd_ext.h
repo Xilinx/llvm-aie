@@ -1185,17 +1185,28 @@ INTRINSIC(v128bfp16ebs8) concat(v64bfp16ebs8 v1, v64bfp16ebs8 v2) {
   return {v1.mantissa, v2.mantissa, v1.exponent, v2.exponent};
 }
 
+// Per-field selects (instead of a single struct-level if/else) so the
+// merge block has 0 phi nodes. SimplifyCFG's `foldTwoEntryPHINode` has a
+// hard `NumPhis > 2` cap that rejects the entire fold when a struct-typed
+// ternary creates one phi per field; the per-field form sidesteps it and
+// the four scalar ternaries each lower to a single `select` directly.
 INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, v64bfp16ebs8 vsub) {
-  if (idx == 0)
-    return {vsub.mantissa, v.mantissaX1, vsub.exponent, v.exponentE1};
-  return {v.mantissaX0, vsub.mantissa, v.exponentE0, vsub.exponent};
+  bool sel_hi = (idx != 0);
+  return {sel_hi ? v.mantissaX0 : vsub.mantissa,
+          sel_hi ? vsub.mantissa : v.mantissaX1,
+          sel_hi ? v.exponentE0 : vsub.exponent,
+          sel_hi ? vsub.exponent : v.exponentE1};
 }
 
 INTRINSIC(v128bfp16ebs8) set_v128bfp16ebs8(int idx, v64bfp16ebs8 vsub) {
   // Initialize the placeholder fields via shufflevector with an all -1
   // mask: the C-level idiom that emits a poison value (rather than the
-  // older-style uninitialised-vector value) for the unused half of the
-  // result. The unused half is still unspecified per the API contract.
+  // older-style uninitialised-vector value) for the unused select arm.
+  // Letting clang see poison here also enables a follow-on InstCombine
+  // fold that collapses `select cond, poison, X` to `X`, so both halves
+  // of the result get the valid `vsub` data and the runtime case lowers
+  // to a few `mov`/`vmov` in the ret delay slots instead of a `vsel.32`
+  // chain. The unused half is still unspecified per the API contract.
   v64int8 zm = {};
   v8int8 ze = {};
   v64int8 placeholder_m = __builtin_shufflevector(
@@ -1205,9 +1216,11 @@ INTRINSIC(v128bfp16ebs8) set_v128bfp16ebs8(int idx, v64bfp16ebs8 vsub) {
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
   v8int8 placeholder_e =
       __builtin_shufflevector(ze, ze, -1, -1, -1, -1, -1, -1, -1, -1);
-  if (idx == 0)
-    return {vsub.mantissa, placeholder_m, vsub.exponent, placeholder_e};
-  return {placeholder_m, vsub.mantissa, placeholder_e, vsub.exponent};
+  bool sel_hi = (idx != 0);
+  return {sel_hi ? placeholder_m : vsub.mantissa,
+          sel_hi ? vsub.mantissa : placeholder_m,
+          sel_hi ? placeholder_e : vsub.exponent,
+          sel_hi ? vsub.exponent : placeholder_e};
 }
 
 INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, int exp) {
@@ -1240,15 +1253,19 @@ INTRINSIC(v128bfp16ebs16) concat(v64bfp16ebs16 v1, v64bfp16ebs16 v2) {
   return {v1.mantissa, v2.mantissa, v1.exponent, v2.exponent};
 }
 
+// Per-field selects — see comment on the v128bfp16ebs8 sibling above.
 INTRINSIC(v128bfp16ebs16)
 insert(v128bfp16ebs16 v, int idx, v64bfp16ebs16 vsub) {
-  if (idx == 0)
-    return {vsub.mantissa, v.mantissaX1, vsub.exponent, v.exponentE1};
-  return {v.mantissaX0, vsub.mantissa, v.exponentE0, vsub.exponent};
+  bool sel_hi = (idx != 0);
+  return {sel_hi ? v.mantissaX0 : vsub.mantissa,
+          sel_hi ? vsub.mantissa : v.mantissaX1,
+          sel_hi ? v.exponentE0 : vsub.exponent,
+          sel_hi ? vsub.exponent : v.exponentE1};
 }
 
 INTRINSIC(v128bfp16ebs16) set_v128bfp16ebs16(int idx, v64bfp16ebs16 vsub) {
-  // Poison-init the placeholder fields. See set_v128bfp16ebs8 sibling above.
+  // Poison-init the placeholder fields. See the set_v128bfp16ebs8 sibling
+  // above for the full rationale.
   v64int8 zm = {};
   v8int8 ze = {};
   v64int8 placeholder_m = __builtin_shufflevector(
@@ -1258,9 +1275,11 @@ INTRINSIC(v128bfp16ebs16) set_v128bfp16ebs16(int idx, v64bfp16ebs16 vsub) {
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
   v8int8 placeholder_e =
       __builtin_shufflevector(ze, ze, -1, -1, -1, -1, -1, -1, -1, -1);
-  if (idx == 0)
-    return {vsub.mantissa, placeholder_m, vsub.exponent, placeholder_e};
-  return {placeholder_m, vsub.mantissa, placeholder_e, vsub.exponent};
+  bool sel_hi = (idx != 0);
+  return {sel_hi ? placeholder_m : vsub.mantissa,
+          sel_hi ? vsub.mantissa : placeholder_m,
+          sel_hi ? placeholder_e : vsub.exponent,
+          sel_hi ? vsub.exponent : placeholder_e};
 }
 
 INTRINSIC(v128bfp16ebs16) insert(v128bfp16ebs16 v, int idx, int exp) {
