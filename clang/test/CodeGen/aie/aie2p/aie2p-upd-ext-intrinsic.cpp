@@ -1215,6 +1215,7 @@ v8int8 test_insert(v8int8 v, int idx, int val)
  {
     return insert(v, idx, val);
  }
+//
 // CHECK-LABEL: define dso_local noundef <2 x i16> @_Z11test_insertDv2_sii(
 // CHECK-SAME: <2 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -7656,17 +7657,12 @@ v128bfp16ebs8 test_insert(v128bfp16ebs8 v , int idx, v64bfp16ebs8 vsub) { return
 // CHECK-LABEL: define dso_local %struct.v128bfp16ebs8 @_Z22test_set_v128bfp16ebs8i12v64bfp16ebs8(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[VSUB_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 1
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
-// CHECK-NEXT:    [[DOT_I:%.*]] = select i1 [[CMP_I]], <64 x i8> [[TMP0]], <64 x i8> undef
-// CHECK-NEXT:    [[DOT15_I:%.*]] = select i1 [[CMP_I]], <64 x i8> undef, <64 x i8> [[TMP0]]
-// CHECK-NEXT:    [[DOT16_I:%.*]] = select i1 [[CMP_I]], <8 x i8> [[TMP1]], <8 x i8> undef
-// CHECK-NEXT:    [[DOT17_I:%.*]] = select i1 [[CMP_I]], <8 x i8> undef, <8 x i8> [[TMP1]]
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[DOT_I]], 0
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[DOT15_I]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[DOT16_I]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[DOT17_I]], 3
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[VSUB_COERCE]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[TMP0]], 3
 // CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I]]
 //
 v128bfp16ebs8 test_set_v128bfp16ebs8(int idx, v64bfp16ebs8 vsub) {return set_v128bfp16ebs8(idx, vsub);}
@@ -7697,23 +7693,13 @@ v128bfp16ebs8 test_insert(v128bfp16ebs8 v , int idx , int exp ) {return insert(v
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 2
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
-// CHECK-NEXT:    switch i32 [[IDX]], label [[IF_END9_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[_ZL16EXTRACT_EXPONENT13V128BFP16EBS8I_EXIT:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN2_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN6_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then2.i:
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPONENT13V128BFP16EBS8I_EXIT]]
-// CHECK:       if.then6.i:
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPONENT13V128BFP16EBS8I_EXIT]]
-// CHECK:       if.end9.i:
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPONENT13V128BFP16EBS8I_EXIT]]
-// CHECK:       _ZL16extract_exponent13v128bfp16ebs8i.exit:
-// CHECK-NEXT:    [[DOTSINK20_I:%.*]] = phi <8 x i8> [ [[TMP1]], [[IF_END9_I]] ], [ [[TMP1]], [[IF_THEN6_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[DOTSINK_I:%.*]] = phi i64 [ 1, [[IF_END9_I]] ], [ 0, [[IF_THEN6_I]] ], [ 1, [[IF_THEN2_I]] ], [ 0, [[ENTRY]] ]
-// CHECK-NEXT:    [[SHUFFLE10_BC_I:%.*]] = bitcast <8 x i8> [[DOTSINK20_I]] to <2 x i32>
-// CHECK-NEXT:    [[SHUFFLE10_EXTRACT_I:%.*]] = extractelement <2 x i32> [[SHUFFLE10_BC_I]], i64 [[DOTSINK_I]]
-// CHECK-NEXT:    ret i32 [[SHUFFLE10_EXTRACT_I]]
+// CHECK-NEXT:    [[AND_I:%.*]] = and i32 [[IDX]], 2
+// CHECK-NEXT:    [[TOBOOL_NOT_I:%.*]] = icmp eq i32 [[AND_I]], 0
+// CHECK-NEXT:    [[COND_I:%.*]] = select i1 [[TOBOOL_NOT_I]], <8 x i8> [[TMP0]], <8 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i8> [[COND_I]] to <2 x i32>
+// CHECK-NEXT:    [[AND1_I:%.*]] = and i32 [[IDX]], 1
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP2]], i32 [[AND1_I]]
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
 //
 int test_extract_exponent(v128bfp16ebs8 v, int idx) {return extract_exponent(v,idx);}
 
@@ -7792,17 +7778,12 @@ v128bfp16ebs16 test_insert(v128bfp16ebs16 v, int idx, v64bfp16ebs16 vsub) {retur
 // CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z23test_set_v128bfp16ebs16i13v64bfp16ebs16(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], [[STRUCT_V64BFP16EBS16:%.*]] [[VSUB_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 1
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX]], 0
-// CHECK-NEXT:    [[DOT_I:%.*]] = select i1 [[CMP_I]], <64 x i8> [[TMP0]], <64 x i8> undef
-// CHECK-NEXT:    [[DOT15_I:%.*]] = select i1 [[CMP_I]], <64 x i8> undef, <64 x i8> [[TMP0]]
-// CHECK-NEXT:    [[DOT16_I:%.*]] = select i1 [[CMP_I]], <8 x i8> [[TMP1]], <8 x i8> undef
-// CHECK-NEXT:    [[DOT17_I:%.*]] = select i1 [[CMP_I]], <8 x i8> undef, <8 x i8> [[TMP1]]
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[DOT_I]], 0
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[DOT15_I]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[DOT16_I]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[DOT17_I]], 3
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[TMP0]], 3
 // CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I]]
 //
 v128bfp16ebs16 test_set_v128bfp16ebs16(int idx, v64bfp16ebs16 vsub) {return set_v128bfp16ebs16(idx, vsub);}
@@ -7833,23 +7814,13 @@ v128bfp16ebs16 test_insert(v128bfp16ebs16 v , int idx, int exp) {return insert(v
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
-// CHECK-NEXT:    switch i32 [[IDX]], label [[IF_END9_I:%.*]] [
-// CHECK-NEXT:      i32 0, label [[_ZL16EXTRACT_EXPONENT14V128BFP16EBS16I_EXIT:%.*]]
-// CHECK-NEXT:      i32 1, label [[IF_THEN2_I:%.*]]
-// CHECK-NEXT:      i32 2, label [[IF_THEN6_I:%.*]]
-// CHECK-NEXT:    ]
-// CHECK:       if.then2.i:
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPONENT14V128BFP16EBS16I_EXIT]]
-// CHECK:       if.then6.i:
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPONENT14V128BFP16EBS16I_EXIT]]
-// CHECK:       if.end9.i:
-// CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPONENT14V128BFP16EBS16I_EXIT]]
-// CHECK:       _ZL16extract_exponent14v128bfp16ebs16i.exit:
-// CHECK-NEXT:    [[DOTSINK20_I:%.*]] = phi <8 x i8> [ [[TMP1]], [[IF_END9_I]] ], [ [[TMP1]], [[IF_THEN6_I]] ], [ [[TMP0]], [[IF_THEN2_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[DOTSINK_I:%.*]] = phi i64 [ 1, [[IF_END9_I]] ], [ 0, [[IF_THEN6_I]] ], [ 1, [[IF_THEN2_I]] ], [ 0, [[ENTRY]] ]
-// CHECK-NEXT:    [[SHUFFLE10_BC_I:%.*]] = bitcast <8 x i8> [[DOTSINK20_I]] to <2 x i32>
-// CHECK-NEXT:    [[SHUFFLE10_EXTRACT_I:%.*]] = extractelement <2 x i32> [[SHUFFLE10_BC_I]], i64 [[DOTSINK_I]]
-// CHECK-NEXT:    ret i32 [[SHUFFLE10_EXTRACT_I]]
+// CHECK-NEXT:    [[AND_I:%.*]] = and i32 [[IDX]], 2
+// CHECK-NEXT:    [[TOBOOL_NOT_I:%.*]] = icmp eq i32 [[AND_I]], 0
+// CHECK-NEXT:    [[COND_I:%.*]] = select i1 [[TOBOOL_NOT_I]], <8 x i8> [[TMP0]], <8 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i8> [[COND_I]] to <2 x i32>
+// CHECK-NEXT:    [[AND1_I:%.*]] = and i32 [[IDX]], 1
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP2]], i32 [[AND1_I]]
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
 //
 int test_extract_exponent(v128bfp16ebs16 v, int idx) {return extract_exponent(v,idx);}
 
@@ -7889,3 +7860,162 @@ v64bfp16ebs16 test_extract_v64bfp16ebs16(v128bfp16ebs16 m, int idx) {
 v64bfp16ebs8 test_extract_v64bfp16ebs8(v128bfp16ebs8 m, int idx) {
   return extract_v64bfp16ebs8(m, idx);
 }
+
+// Constant-idx companions for the bfp16ebs* helpers — verify each
+// folds to a single op (rewritten extract_exponent included).
+// CHECK-LABEL: define dso_local noundef <32 x i8> @_Z25test_extract_v32int8_idx013v64bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[SHUFFLE_I_I]] to <32 x i8>
+// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+//
+v32int8 test_extract_v32int8_idx0(v64bfp16ebs16 v) { return extract_v32int8(v, 0); }
+// CHECK-LABEL: define dso_local noundef <32 x i8> @_Z25test_extract_v32int8_idx113v64bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
+// CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[SHUFFLE1_I_I]] to <32 x i8>
+// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+//
+v32int8 test_extract_v32int8_idx1(v64bfp16ebs16 v) { return extract_v32int8(v, 1); }
+// CHECK-LABEL: define dso_local noundef <64 x i8> @_Z40test_extract_v64int8_v128bfp16ebs16_idx014v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
+// CHECK-NEXT:    ret <64 x i8> [[TMP0]]
+//
+v64int8 test_extract_v64int8_v128bfp16ebs16_idx0(v128bfp16ebs16 v) { return extract_v64int8(v, 0); }
+// CHECK-LABEL: define dso_local noundef <64 x i8> @_Z40test_extract_v64int8_v128bfp16ebs16_idx114v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    ret <64 x i8> [[TMP0]]
+//
+v64int8 test_extract_v64int8_v128bfp16ebs16_idx1(v128bfp16ebs16 v) { return extract_v64int8(v, 1); }
+// CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z39test_insert_v128bfp16ebs16_v64int8_idx014v128bfp16ebs16Dv64_a(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], <64 x i8> noundef [[M:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] poison, <64 x i8> [[M]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[TMP2]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[TMP1]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I]]
+//
+v128bfp16ebs16 test_insert_v128bfp16ebs16_v64int8_idx0(v128bfp16ebs16 v, v64int8 m) { return insert(v, 0, m); }
+// CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z39test_insert_v128bfp16ebs16_v64int8_idx114v128bfp16ebs16Dv64_a(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], <64 x i8> noundef [[M:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], <64 x i8> [[M]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[TMP0]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I]]
+//
+v128bfp16ebs16 test_insert_v128bfp16ebs16_v64int8_idx1(v128bfp16ebs16 v, v64int8 m) { return insert(v, 1, m); }
+// CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z28test_set_v128bfp16ebs16_idx013v64bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[VSUB_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[TMP0]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I]]
+//
+v128bfp16ebs16 test_set_v128bfp16ebs16_idx0(v64bfp16ebs16 vsub) { return set_v128bfp16ebs16(0, vsub); }
+// CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z28test_set_v128bfp16ebs16_idx113v64bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[VSUB_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[VSUB_COERCE]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <64 x i8> [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I]], <8 x i8> [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I]], <8 x i8> [[TMP0]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I]]
+//
+v128bfp16ebs16 test_set_v128bfp16ebs16_idx1(v64bfp16ebs16 vsub) { return set_v128bfp16ebs16(1, vsub); }
+// CHECK-LABEL: define dso_local %struct.v64bfp16ebs16 @_Z31test_extract_v64bfp16ebs16_idx014v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[M_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[M_COERCE]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[M_COERCE]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP0]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs16 test_extract_v64bfp16ebs16_idx0(v128bfp16ebs16 m) { return extract_v64bfp16ebs16(m, 0); }
+// CHECK-LABEL: define dso_local %struct.v64bfp16ebs16 @_Z31test_extract_v64bfp16ebs16_idx114v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[M_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[M_COERCE]], 3
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[M_COERCE]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP0]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs16 test_extract_v64bfp16ebs16_idx1(v128bfp16ebs16 m) { return extract_v64bfp16ebs16(m, 1); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z41test_extract_exponent_v128bfp16ebs16_idx014v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP1]], i64 0
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+int test_extract_exponent_v128bfp16ebs16_idx0(v128bfp16ebs16 v) { return extract_exponent(v, 0); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z41test_extract_exponent_v128bfp16ebs16_idx114v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP1]], i64 1
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+int test_extract_exponent_v128bfp16ebs16_idx1(v128bfp16ebs16 v) { return extract_exponent(v, 1); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z41test_extract_exponent_v128bfp16ebs16_idx214v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP1]], i64 0
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+int test_extract_exponent_v128bfp16ebs16_idx2(v128bfp16ebs16 v) { return extract_exponent(v, 2); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z41test_extract_exponent_v128bfp16ebs16_idx314v128bfp16ebs16(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP1]], i64 1
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+int test_extract_exponent_v128bfp16ebs16_idx3(v128bfp16ebs16 v) { return extract_exponent(v, 3); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z40test_extract_exponent_v128bfp16ebs8_idx013v128bfp16ebs8(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP1]], i64 0
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+int test_extract_exponent_v128bfp16ebs8_idx0(v128bfp16ebs8 v) { return extract_exponent(v, 0); }
+// CHECK-LABEL: define dso_local noundef i32 @_Z40test_extract_exponent_v128bfp16ebs8_idx313v128bfp16ebs8(
+// CHECK-SAME: [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <2 x i32> [[TMP1]], i64 1
+// CHECK-NEXT:    ret i32 [[VECEXT_I]]
+//
+int test_extract_exponent_v128bfp16ebs8_idx3(v128bfp16ebs8 v) { return extract_exponent(v, 3); }

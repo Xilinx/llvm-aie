@@ -1157,11 +1157,15 @@ INTRINSIC(v64bfp16ebs8) insert(v64bfp16ebs8 v, int idx, int exp32) {
   return {v.mantissa, exp64};
 }
 
-INTRINSIC(v32int8) extract_v32int8(v64bfp16ebs16 v, int idx) {
+// Returns mantissa bytes only — the corresponding exponent is not
+// included in the result. Branchiness is handled by extract_256_512.
+INTRINSIC(v32int8)
+extract_v32int8(v64bfp16ebs16 v, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_256_512(v.mantissa, idx);
 }
 
-INTRINSIC(v32int8) extract_v32int8(v64bfp16ebs8 v, int idx) {
+INTRINSIC(v32int8)
+extract_v32int8(v64bfp16ebs8 v, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_256_512(v.mantissa, idx);
 }
 
@@ -1188,12 +1192,22 @@ INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, v64bfp16ebs8 vsub) {
 }
 
 INTRINSIC(v128bfp16ebs8) set_v128bfp16ebs8(int idx, v64bfp16ebs8 vsub) {
-  v64bfp16ebs8 undefValue;
+  // Initialize the placeholder fields via shufflevector with an all -1
+  // mask: the C-level idiom that emits a poison value (rather than the
+  // older-style uninitialised-vector value) for the unused half of the
+  // result. The unused half is still unspecified per the API contract.
+  v64int8 zm = {};
+  v8int8 ze = {};
+  v64int8 placeholder_m = __builtin_shufflevector(
+      zm, zm, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+  v8int8 placeholder_e =
+      __builtin_shufflevector(ze, ze, -1, -1, -1, -1, -1, -1, -1, -1);
   if (idx == 0)
-    return {vsub.mantissa, undefValue.mantissa, vsub.exponent,
-            undefValue.exponent};
-  return {undefValue.mantissa, vsub.mantissa, undefValue.exponent,
-          vsub.exponent};
+    return {vsub.mantissa, placeholder_m, vsub.exponent, placeholder_e};
+  return {placeholder_m, vsub.mantissa, placeholder_e, vsub.exponent};
 }
 
 INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, int exp) {
@@ -1205,15 +1219,9 @@ INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, int exp) {
 }
 
 INTRINSIC(int) extract_exponent(v128bfp16ebs8 v, int idx) {
-  v8int8 exp0 = v.exponentE0;
-  v8int8 exp1 = v.exponentE1;
-  if (idx == 0)
-    return (int)__builtin_shufflevector(exp0, exp0, 0, 1, 2, 3);
-  else if (idx == 1)
-    return (int)__builtin_shufflevector(exp0, exp0, 4, 5, 6, 7);
-  else if (idx == 2)
-    return (int)__builtin_shufflevector(exp1, exp1, 0, 1, 2, 3);
-  return (int)__builtin_shufflevector(exp1, exp1, 4, 5, 6, 7);
+  // idx ∈ [0..3]: bit 1 picks E0 vs E1, bit 0 picks the 32-bit lane.
+  v8int8 exp = (idx & 2) ? v.exponentE1 : v.exponentE0;
+  return ((v2int32)exp)[idx & 1];
 }
 
 INTRINSIC(v64int8) extract_v64int8(v128bfp16ebs16 v, int idx) {
@@ -1240,12 +1248,19 @@ insert(v128bfp16ebs16 v, int idx, v64bfp16ebs16 vsub) {
 }
 
 INTRINSIC(v128bfp16ebs16) set_v128bfp16ebs16(int idx, v64bfp16ebs16 vsub) {
-  v64bfp16ebs16 undefValue;
+  // Poison-init the placeholder fields. See set_v128bfp16ebs8 sibling above.
+  v64int8 zm = {};
+  v8int8 ze = {};
+  v64int8 placeholder_m = __builtin_shufflevector(
+      zm, zm, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+  v8int8 placeholder_e =
+      __builtin_shufflevector(ze, ze, -1, -1, -1, -1, -1, -1, -1, -1);
   if (idx == 0)
-    return {vsub.mantissa, undefValue.mantissa, vsub.exponent,
-            undefValue.exponent};
-  return {undefValue.mantissa, vsub.mantissa, undefValue.exponent,
-          vsub.exponent};
+    return {vsub.mantissa, placeholder_m, vsub.exponent, placeholder_e};
+  return {placeholder_m, vsub.mantissa, placeholder_e, vsub.exponent};
 }
 
 INTRINSIC(v128bfp16ebs16) insert(v128bfp16ebs16 v, int idx, int exp) {
@@ -1257,15 +1272,9 @@ INTRINSIC(v128bfp16ebs16) insert(v128bfp16ebs16 v, int idx, int exp) {
 }
 
 INTRINSIC(int) extract_exponent(v128bfp16ebs16 v, int idx) {
-  v8int8 exp0 = v.exponentE0;
-  v8int8 exp1 = v.exponentE1;
-  if (idx == 0)
-    return (int)__builtin_shufflevector(exp0, exp0, 0, 1, 2, 3);
-  else if (idx == 1)
-    return (int)__builtin_shufflevector(exp0, exp0, 4, 5, 6, 7);
-  else if (idx == 2)
-    return (int)__builtin_shufflevector(exp1, exp1, 0, 1, 2, 3);
-  return (int)__builtin_shufflevector(exp1, exp1, 4, 5, 6, 7);
+  // idx ∈ [0..3]: bit 1 picks E0 vs E1, bit 0 picks the 32-bit lane.
+  v8int8 exp = (idx & 2) ? v.exponentE1 : v.exponentE0;
+  return ((v2int32)exp)[idx & 1];
 }
 
 INTRINSIC(v64bfp16ebs16) extract_v64bfp16ebs16(v128bfp16ebs16 m, int idx) {
