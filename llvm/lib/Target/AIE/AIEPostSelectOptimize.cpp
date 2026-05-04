@@ -820,9 +820,11 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
     Changed |= fixLoadMemOpInfo(MF, MBB, MF.getRegInfo());
   }
 
-  // 5. Convert store flush instructions only on AIE2P targets: when VST.FLUSH
-  // and VST.PUSH.CONV are chained, replace VST.FLUSH with VST.FLUSH.CONV
-  if (MF.getTarget().getTargetTriple().isAIE2P()) {
+  // 5. Convert store flush instructions only on AIE2P/AIE2PS targets: when
+  // VST.FLUSH and VST.PUSH.CONV are chained, replace VST.FLUSH with
+  // VST.FLUSH.CONV
+  if (MF.getTarget().getTargetTriple().isAIE2P() ||
+      MF.getTarget().getTargetTriple().isAIE2PS()) {
     for (MachineBasicBlock &MBB : MF) {
       Changed |= modifyStoreFlush(MBB, MF.getRegInfo());
     }
