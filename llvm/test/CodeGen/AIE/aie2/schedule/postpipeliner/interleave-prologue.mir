@@ -58,13 +58,11 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0:
@@ -167,13 +165,11 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0:
@@ -270,13 +266,11 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0:
@@ -397,12 +391,9 @@ body:             |
   ; CHECK-NEXT:   $cm2 = VMAC_vmac_cm_core_dense killed $cm2, killed $x5, killed $x0, killed $r4
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   VST_SRS_S8_S32_ag_idx_imm killed $p1, 0, killed $cm2, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   VST_SRS_S8_S32_ag_idx_imm killed $p1, 0, killed $cm2, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -492,13 +483,11 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0:

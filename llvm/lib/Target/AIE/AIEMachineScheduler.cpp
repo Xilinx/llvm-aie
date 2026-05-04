@@ -494,9 +494,26 @@ bool AIEPostRASchedStrategy::mustSwitchToBottomUp() {
 
   // We must switch when we have an empty AQ and instructions that cannot
   // progress in the PQ.
-  return AQ.size() == 0 && all_of(PQ, [&](const SUnit *SU) {
-           return doesNotProgressInZone(Zone, *SU);
-         });
+  if (AQ.size() == 0 && all_of(PQ, [&](const SUnit *SU) {
+        return doesNotProgressInZone(Zone, *SU);
+      }))
+    return true;
+
+  // Also switch when the AQ is empty and all progressable pending instructions
+  // would only become ready at a cycle >= RegionTopDownCycles (i.e., beyond
+  // the top-fixed bundle region). Scheduling them top-down would waste cycles
+  // and push anti-dependent instructions into the bottom zone as standalone
+  // instructions, degrading bundle packing.
+  if (RegionTopDownCycles && AQ.size() == 0) {
+    for (const SUnit *SU : PQ) {
+      if (!doesNotProgressInZone(Zone, *SU) &&
+          SU->TopReadyCycle < RegionTopDownCycles)
+        return false;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
