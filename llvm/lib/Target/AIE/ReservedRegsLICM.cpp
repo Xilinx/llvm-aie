@@ -341,36 +341,44 @@ static void moveInstruction(const CandidateInfo &Cand,
 
 void ReservedRegsLICM::processForExitSink(MachineLoop &L,
                                           const BitVector &ReservedLiveins) {
-  // Pre-compute what's live at the entry of the latch block by walking it
+  // Sink candidates must come from the exiting block (the block that has the
+  // edge to the exit block), not the latch. When the latch and the exiting
+  // block differ, instructions in the latch are not on the exit path: sinking
+  // them to the exit block would insert a def that was never executed on that
+  // path, corrupting the register's exit value.
+  MachineBasicBlock *ExitingBlock = L.getExitingBlock();
+  assert(ExitingBlock);
+
+  // Pre-compute what's live at the entry of the exiting block by walking it
   // fully backward. For multi-block loops with conditional paths, a candidate
   // register may be defined in some branches but not others, making it live at
-  // the latch entry on those paths. If the register is live at the latch entry
-  // (i.e., used before its first def in the latch), sinking its last def to
-  // the exit block would expose the wrong value on those paths.
-  assert(L.getLoopLatch());
-  LivePhysRegs LatchEntryLive(*TRI);
-  for (const MachineInstr &MI : reverse(*L.getLoopLatch()))
-    LatchEntryLive.stepBackward(MI);
+  // the exiting block entry on those paths. If the register is live at the
+  // exiting block entry (i.e., used before its first def in the exiting block,
+  // possibly carrying a value from a conditional path that skips the def),
+  // sinking its last def to the exit block would expose the wrong value.
+  LivePhysRegs ExitingBlockEntryLive(*TRI);
+  for (const MachineInstr &MI : reverse(*ExitingBlock))
+    ExitingBlockEntryLive.stepBackward(MI);
 
   RegDefMap PhysRegChanged(*TRI);
   LivePhysRegs LiveRegs(*TRI);
   Candidates SinkCandidates;
 
-  // Walk the latch block, track defs for each register, and
+  // Walk the exiting block, track defs for each register, and
   // collect potential LICM candidates.
-  for (MachineInstr &MI : reverse(*L.getLoopLatch())) {
+  for (MachineInstr &MI : reverse(*ExitingBlock)) {
     CandidateInfo *CandInfo = SinkCandidates.getInfo(MI);
 
     // First time we meet a reserved reg definition while iterating upwards.
     // If that def is not a loop livein, it isn't used in this block after the
-    // def, and it isn't live at the latch entry (which would indicate it is
-    // used before its def in the latch, possibly carrying a value from a
-    // conditional path that skips the def), then one can move the instruction
-    // to the exit BB of the loop.
+    // def, and it isn't live at the exiting block entry (which would indicate
+    // it is used before its def in the exiting block, possibly carrying a
+    // value from a conditional path that skips the def), then one can move
+    // the instruction to the exit BB of the loop.
     if (CandInfo && !PhysRegChanged.hasChanged(CandInfo->DefinedReg) &&
         !ReservedLiveins.test(CandInfo->DefinedReg) &&
         !LiveRegs.contains(CandInfo->DefinedReg) &&
-        !LatchEntryLive.contains(CandInfo->DefinedReg)) {
+        !ExitingBlockEntryLive.contains(CandInfo->DefinedReg)) {
       assert(!CandInfo->HoistCandidate);
       CandInfo->HoistCandidate = &MI;
     }
