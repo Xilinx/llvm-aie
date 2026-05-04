@@ -565,7 +565,8 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
 }
 
 int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
-  // Top-down scheduling does not support DeltaCycles
+  // DeltaCycles for top-down are handled directly in isAvailableNode via the
+  // TopReadyCycle loop; this function only governs the bottom-up delta window.
   if (Zone.isTop() || Zone.getCurrCycle() >= RegionBottomUpCycles - 1)
     return 0;
   return std::min({int(RegionBottomUpCycles - 1 - Zone.getCurrCycle()),
@@ -1429,6 +1430,32 @@ void AIEScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
   --PredSU->NumSuccsLeft;
   if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU)
     SchedImpl->releaseBottomNode(PredSU);
+}
+
+void AIEScheduleDAGMI::releaseSucc(SUnit *SU, SDep *SuccEdge) {
+
+  if (SuccEdge->isWeak())
+    return ScheduleDAGMI::releaseSucc(SU, SuccEdge);
+
+  // Update the ready cycle of SU's successor. When AllowNegativeLatencies is
+  // enabled, use the signed latency so that a successor with a negative-latency
+  // edge can be scheduled in a cycle earlier than SU->TopReadyCycle + latency.
+  // This is the top-down counterpart of the negative-latency handling in
+  // releasePred: just as a predecessor can be pulled closer to its consumer
+  // (bottom-up), a successor can be pulled closer to its producer (top-down).
+  SUnit *SuccSU = SuccEdge->getSUnit();
+  const int Latency = AllowNegativeLatencies ? SuccEdge->getSignedLatency()
+                                             : (int)SuccEdge->getLatency();
+  // Use signed arithmetic to correctly handle negative latencies. The result
+  // is clamped to zero since TopReadyCycle is unsigned and a negative ready
+  // cycle has no meaning (the instruction is ready from the very first cycle).
+  const int NewReadyCycle = int(SU->TopReadyCycle) + Latency;
+  if (NewReadyCycle > int(SuccSU->TopReadyCycle))
+    SuccSU->TopReadyCycle = NewReadyCycle;
+
+  --SuccSU->NumPredsLeft;
+  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
+    SchedImpl->releaseTopNode(SuccSU);
 }
 
 AIEPreRASchedStrategy *AIEScheduleDAGMILive::getSchedImpl() const {

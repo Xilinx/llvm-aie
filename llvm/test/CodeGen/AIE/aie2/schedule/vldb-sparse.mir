@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi-negative-lat %s -o - | FileCheck %s --check-prefix=CHECK-NEG-LAT
 
 
 ---
@@ -27,6 +28,20 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_FILL_input
+    ; CHECK-NEG-LAT: $p0 = LDA_dms_lda_idx_imm killed $p7, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p0 = VLDB_SPARSE_FILL_4 killed $p0, implicit-def $srsparse_of, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0 = LDA_dms_lda_idx_imm $p7, 0
     $p0 = VLDB_SPARSE_FILL_4 $p0, implicit-def $srsparse_of, implicit $dp
 ...
@@ -44,6 +59,14 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_FILL_output
+    ; CHECK-NEG-LAT: $p0 = VLDB_SPARSE_FILL_4 killed $p0, implicit-def $srsparse_of, implicit $dp
+    ; CHECK-NEG-LAT-NEXT: $p0 = VLDB_SPARSE_FILL_4 killed $p0, implicit-def $srsparse_of, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0 = VLDB_SPARSE_FILL_4 $p0, implicit-def $srsparse_of, implicit $dp
     $p0 = VLDB_SPARSE_FILL_4 $p0, implicit-def $srsparse_of, implicit $dp
 ...
@@ -67,6 +90,20 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_RESET_input
+    ; CHECK-NEG-LAT: $p0 = LDA_dms_lda_idx_imm killed $p7, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0 = LDA_dms_lda_idx_imm $p7, 0
     $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
 ...
@@ -84,6 +121,14 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_RESET_output
+    ; CHECK-NEG-LAT: $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
     $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
 ...
@@ -108,6 +153,21 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_PEEK_input
+    ; CHECK-NEG-LAT: $p0 = LDA_dms_lda_idx_imm killed $p7, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p0, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0 = LDA_dms_lda_idx_imm $p7, 0
     $p0, $qwh0 = VLDB_SPARSE_PEEK_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
 ...
@@ -130,6 +190,19 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_PEEK_output
+    ; CHECK-NEG-LAT: $p0, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $cm0 = VMAC_vmac_cm_core_sparse_narrow killed $cm1, killed $x4, killed $qx0, killed $r9
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0, $qwh0 = VLDB_SPARSE_PEEK_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
     $cm0 = VMAC_vmac_cm_core_sparse_narrow $cm1, $x4, $qx0, $r9
 ...
@@ -154,6 +227,21 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_POP_input
+    ; CHECK-NEG-LAT: $p0 = LDA_dms_lda_idx_imm killed $p7, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p0, $qwh0 = VLDB_SPARSE_POP_4 killed $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0 = LDA_dms_lda_idx_imm $p7, 0
     $p0, $qwh0 = VLDB_SPARSE_POP_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
 ...
@@ -176,6 +264,19 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_POP_output
+    ; CHECK-NEG-LAT: $p0, $qwh0 = VLDB_SPARSE_POP_4 killed $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $cm0 = VMAC_vmac_cm_core_sparse_narrow killed $cm1, killed $x4, killed $qx0, killed $r9
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p0, $qwh0 = VLDB_SPARSE_POP_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
     $cm0 = VMAC_vmac_cm_core_sparse_narrow $cm1, $x4, $qx0, $r9
 ...
@@ -202,6 +303,19 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_implicit_ops
+    ; CHECK-NEG-LAT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $p1, $qwh0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
     $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
     $p1, $qwh0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
@@ -223,6 +337,14 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_FILL_implicit_RAW
+    ; CHECK-NEG-LAT: $p0 = VLDB_SPARSE_FILL_4 killed $p0, implicit-def $srsparse_of, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srsparse_of
     $p0 = VLDB_SPARSE_FILL_4 $p0, implicit-def $srsparse_of, implicit $dp
     $r1 = MOV_mv_scl $srsparse_of
 ...
@@ -249,6 +371,15 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dp
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_RESET_implicit_RAW
+    ; CHECK-NEG-LAT: $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl killed $dp
     $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
     $r1 = MOV_mv_scl $srsparse_of
     $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
@@ -276,6 +407,15 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r1 = MOV_mv_scl $srcompr_uf
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_PEEK_implicit_RAW
+    ; CHECK-NEG-LAT: $p1, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srcompr_uf
     $p1, $qwh0 = VLDB_SPARSE_PEEK_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
     $r1 = MOV_mv_scl $srsparse_of
     $p1, $qwh0 = VLDB_SPARSE_PEEK_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
@@ -312,6 +452,16 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r1 = MOV_mv_scl $srcompr_uf
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_VLDB_SPARSE_POP_implicit_RAW
+    ; CHECK-NEG-LAT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl killed $dp
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srcompr_uf
     $p1, $qwh0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
     $r1 = MOV_mv_scl $srsparse_of
     $p1, $qwh0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
