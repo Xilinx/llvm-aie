@@ -38,7 +38,7 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; vst.srs.2x cml0, s0, srssign1, [p1], #64; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; nopb ; vst.srs.2x cml0, s0, srssign1, [p1], #64; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
@@ -51,9 +51,8 @@
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
-  ; CHECK-NEXT:    event #1
   ; CHECK-NEXT:    ret lr
-  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    event #1 // Delay Slot 5
   ; CHECK-NEXT:    event #0 // Delay Slot 4
   ; CHECK-NEXT:    event #1 // Delay Slot 3
   ; CHECK-NEXT:    event #0 // Delay Slot 2

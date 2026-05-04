@@ -30,20 +30,18 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopx ; vadd.16 x6, x4, x6; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
+; CHECK-NEXT:    nops ; vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
-; CHECK-NEXT:    vadd.16 x6, x4, x6
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vmov x0, x6
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vmov x0, x6 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   br label %for.body
