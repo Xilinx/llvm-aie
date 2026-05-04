@@ -51,6 +51,7 @@ set(aie_files
   aiebase_typedefs.h
   aie_addlog.h
   aie_upd_ext_common.h
+  aie_upd_ext_primitives.h
   )
 # aiev1
 set(aiev1_intrin_h
