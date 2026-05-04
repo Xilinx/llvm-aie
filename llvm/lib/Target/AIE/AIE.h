@@ -115,6 +115,11 @@ llvm::FunctionPass *createAIERegClassConstrainer();
 extern char &ReservedRegsLICMID;
 void initializeReservedRegsLICMPass(PassRegistry &);
 llvm::FunctionPass *createReservedRegsLICMPass();
+
+// Outer Loop Pipeliner (IR-level, aie2p and aie2ps targets)
+extern char &AIEOuterLoopPipelinerID;
+void initializeAIEOuterLoopPipelinerPass(PassRegistry &);
+llvm::FunctionPass *createAIEOuterLoopPipelinerPass();
 } // namespace llvm
 
 #endif

@@ -162,6 +162,8 @@
 ; AIE-O1-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O1-NEXT:      Optimization Remark Emitter
 ; AIE-O1-NEXT:      Hardware Loop Insertion
+; AIE-O1-NEXT:      AIE Outer Loop Pipeliner
+; AIE-O1-NEXT:      Dominator Tree Construction
 ; AIE-O1-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; AIE-O1-NEXT:      Function Alias Analysis Results
 ; AIE-O1-NEXT:      ObjC ARC contraction
@@ -384,6 +386,8 @@
 ; AIE-O23-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O23-NEXT:      Optimization Remark Emitter
 ; AIE-O23-NEXT:      Hardware Loop Insertion
+; AIE-O23-NEXT:      AIE Outer Loop Pipeliner
+; AIE-O23-NEXT:      Dominator Tree Construction
 ; AIE-O23-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; AIE-O23-NEXT:      Function Alias Analysis Results
 ; AIE-O23-NEXT:      ObjC ARC contraction
