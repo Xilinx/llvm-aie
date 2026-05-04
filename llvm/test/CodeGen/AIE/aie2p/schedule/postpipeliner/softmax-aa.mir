@@ -56,14 +56,14 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup4
   ; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
-  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    nopa ; add r0, r0, #-1
   ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    add r0, r0, #-1
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    jnz r0, #.LBB0_2
@@ -165,14 +165,14 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup4
   ; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
-  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    nopa ; add r0, r0, #-1
   ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    add r0, r0, #-1
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    jnz r0, #.LBB1_2
