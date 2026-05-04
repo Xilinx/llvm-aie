@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi-negative-lat %s -o - | FileCheck %s --check-prefix=CHECK-NEG-LAT
 
 # This test shows how ordered load/stores are handled.
 # In most cases, we just need to keep them one cycle appart, but for example
@@ -61,6 +62,37 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: STORE_E5_LOAD_E5
+    ; CHECK-NEG-LAT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
+    ; CHECK-NEG-LAT-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEG-LAT-NEXT: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEG-LAT-NEXT: }
+    ; CHECK-NEG-LAT-NEXT: ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
+    ; CHECK-NEG-LAT-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEG-LAT-NEXT: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEG-LAT-NEXT: }
+    ; CHECK-NEG-LAT-NEXT: $p1 = ST_dmv_sts_q_ag_pstm_nrm_imm $q0, killed $p1, 0
+    ; CHECK-NEG-LAT-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
+    ; CHECK-NEG-LAT-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEG-LAT-NEXT: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEG-LAT-NEXT: }
+    ; CHECK-NEG-LAT-NEXT: $p2, $dc0 = ST_2D_dmv_sts_q $q0, killed $p2, killed $d0
+    ; CHECK-NEG-LAT-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
+    ; CHECK-NEG-LAT-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEG-LAT-NEXT: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEG-LAT-NEXT: }
+    ; CHECK-NEG-LAT-NEXT: $p3, $dc1, $dc5 = ST_3D_dmv_sts_q killed $q0, killed $p3, killed $d1_3d
+    ; CHECK-NEG-LAT-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK-NEG-LAT-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEG-LAT-NEXT: $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEG-LAT-NEXT: }
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
     $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0                 ; II_ST_Q
@@ -95,6 +127,17 @@ body:             |
     ; CHECK-NEXT: $p3, $dc1, $dc5 = ST_3D_dmv_sts_q killed $q0, killed $p3, killed $d1_3d
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r2, killed $p0, 0
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: STORE_E5_STORE_E5
+    ; CHECK-NEG-LAT: ST_dms_sts_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: ST_dms_sts_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: $p1 = ST_dmv_sts_q_ag_pstm_nrm_imm $q0, killed $p1, 0
+    ; CHECK-NEG-LAT-NEXT: ST_dms_sts_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: $p2, $dc0 = ST_2D_dmv_sts_q $q0, killed $p2, killed $d0
+    ; CHECK-NEG-LAT-NEXT: ST_dms_sts_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: $p3, $dc1, $dc5 = ST_3D_dmv_sts_q killed $q0, killed $p3, killed $d1_3d
+    ; CHECK-NEG-LAT-NEXT: ST_dms_sts_idx_imm killed $r2, killed $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
     ST_dms_sts_idx_imm $r2, $p0, 0
     ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0                 ; II_ST_Q
     ST_dms_sts_idx_imm $r2, $p0, 0
@@ -134,6 +177,19 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: STORE_E5_STORE_E7
+    ; CHECK-NEG-LAT: VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEG-LAT-NEXT: ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEG-LAT-NEXT: $p1 = ST_dmv_sts_q_ag_pstm_nrm_imm $q0, killed $p1, 0
+    ; CHECK-NEG-LAT-NEXT: VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEG-LAT-NEXT: $p2, $dc0 = ST_2D_dmv_sts_q $q0, killed $p2, killed $d0
+    ; CHECK-NEG-LAT-NEXT: VST_SRS_D8_S32_ag_idx_imm killed $p0, 0, killed $cm0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEG-LAT-NEXT: $p3, $dc1, $dc5 = ST_3D_dmv_sts_q killed $q0, killed $p3, killed $d1_3d
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0                 ; II_ST_Q
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
@@ -193,6 +249,47 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: STORE_E5_STORE_E11
+    ; CHECK-NEG-LAT: ST_S8_ag_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: ST_S8_ag_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p1 = ST_dmv_sts_q_ag_pstm_nrm_imm $q0, killed $p1, 0
+    ; CHECK-NEG-LAT-NEXT: ST_S8_ag_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p2, $dc0 = ST_2D_dmv_sts_q $q0, killed $p2, killed $d0
+    ; CHECK-NEG-LAT-NEXT: ST_S8_ag_idx_imm $r2, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $p3, $dc1, $dc5 = ST_3D_dmv_sts_q killed $q0, killed $p3, killed $d1_3d
+    ; CHECK-NEG-LAT-NEXT: ST_S8_ag_idx_imm killed $r2, killed $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     ST_S8_ag_idx_imm $r2, $p0, 0
     ST_dmv_sts_q_ag_idx_imm $q0, $p0, 0                 ; II_ST_Q
     ST_S8_ag_idx_imm $r2, $p0, 0

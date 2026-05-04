@@ -4,9 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 %topdown-single -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
+# RUN: llc -march=aie2 %topdown-single-negative-lat -run-pass=postmisched %s -o - \
+# RUN:   | FileCheck %s --check-prefix=CHECK-NEG-LAT
 
 ---
 name:            bypass
@@ -18,6 +20,11 @@ body:             |
     ; CHECK-NEXT: $x0 = VADD_16 killed $x0, $x1
     ; CHECK-NEXT: $x0 = VADD_32 killed $x0, killed $x1
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: bypass
+    ; CHECK-NEG-LAT: $x0 = VADD_8 killed $x0, $x1
+    ; CHECK-NEG-LAT-NEXT: $x0 = VADD_16 killed $x0, $x1
+    ; CHECK-NEG-LAT-NEXT: $x0 = VADD_32 killed $x0, killed $x1
+    ; CHECK-NEG-LAT-NEXT: NOP
     $x0 = VADD_8 $x0, $x1
     $x0 = VADD_16 $x0, $x1
     $x0 = VADD_32 $x0, $x1
@@ -39,6 +46,15 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wl0, killed $p0, 0
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: no_bypass
+    ; CHECK-NEG-LAT: $x0 = VADD_8 killed $x0, $x1
+    ; CHECK-NEG-LAT-NEXT: $x0 = VADD_16 killed $x0, $x1
+    ; CHECK-NEG-LAT-NEXT: VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
+    ; CHECK-NEG-LAT-NEXT: $x0 = VADD_32 killed $x0, killed $x1
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wl0, killed $p0, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
     $x0 = VADD_8 $x0, $x1
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
     $x0 = VADD_16 $x0, $x1

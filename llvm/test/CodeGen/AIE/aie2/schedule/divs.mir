@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -run-pass=postmisched %topdown-multi-negative-lat %s -o - | FileCheck %s --check-prefix=CHECK-NEG-LAT
 
 ---
 name:            test_inputs
@@ -45,6 +46,19 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r12, $r31 = DIVS killed $r31, killed $r0, killed $r2
+    ; CHECK-NEG-LAT-LABEL: name: test_inputs
+    ; CHECK-NEG-LAT: liveins: $r0, $r2, $r12, $r31, $p1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT: $r31 = LDA_dms_lda_idx_imm $p1, 0
+    ; CHECK-NEG-LAT-NEXT: $r0 = LDA_dms_lda_idx_imm $p1, 4
+    ; CHECK-NEG-LAT-NEXT: $r2 = LDA_dms_lda_idx_imm killed $p1, 8
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r12, $r31 = DIVS killed $r31, $r0, $r2
+    ; CHECK-NEG-LAT-NEXT: $r12, $r31 = DIVS killed $r31, $r0, $r2
+    ; CHECK-NEG-LAT-NEXT: $r12, $r31 = DIVS killed $r31, killed $r0, killed $r2
     $r31 = LDA_dms_lda_idx_imm $p1, 0
     $r12, $r31 = DIVS  $r31, $r0, $r2
     $r0 = LDA_dms_lda_idx_imm $p1, 4
@@ -71,6 +85,16 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r31, killed $p1, 0
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: test_outputs
+    ; CHECK-NEG-LAT: liveins: $r0, $r2, $r12, $r31, $p1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT: $r12, $r31 = DIVS killed $r31, $r0, $r2
+    ; CHECK-NEG-LAT-NEXT: BUNDLE implicit-def $r12, implicit-def $r31, implicit killed $r12, implicit $p1, implicit killed $r31, implicit killed $r0, implicit killed $r2 {
+    ; CHECK-NEG-LAT-NEXT: ST_dms_sts_idx_imm killed $r12, $p1, 0
+    ; CHECK-NEG-LAT-NEXT: $r12, $r31 = DIVS killed $r31, killed $r0, killed $r2
+    ; CHECK-NEG-LAT-NEXT: }
+    ; CHECK-NEG-LAT-NEXT: ST_dms_sts_idx_imm killed $r31, killed $p1, 0
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r12, $r31 = DIVS  $r31, $r0, $r2
     ST_dms_sts_idx_imm $r12, $p1, 0
     $r12, $r31 = DIVS  $r31, $r0, $r2

@@ -4,8 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 %topdown-single -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -march=aie2 %topdown-single-negative-lat -run-pass=postmisched %s -o - \
+# RUN:   | FileCheck %s --check-prefix=CHECK-NEG-LAT
 
 
 ---
@@ -32,6 +34,23 @@ body:             |
     ; CHECK-NEXT: MOV_TLAST_mv_scl2ms killed renamable $r0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: streams
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: renamable $r0 = MOV_mv_ss2scl implicit-def $srss0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r28 = MOV_mv_scl $srss0
+    ; CHECK-NEG-LAT-NEXT: MOV_mv_scl2ms_doTlast_reg renamable $r0, killed renamable $r28
+    ; CHECK-NEG-LAT-NEXT: MOV_mv_scl2ms renamable $r0
+    ; CHECK-NEG-LAT-NEXT: MOV_TLAST_mv_scl2ms killed renamable $r0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     renamable $r0 = MOV_mv_ss2scl implicit-def $srss0
     $r28 = MOV_mv_scl $srss0
     MOV_mv_scl2ms_doTlast_reg renamable $r0, killed renamable $r28
@@ -66,6 +85,23 @@ body:             |
     ; CHECK-NEXT: MOV_NB_TLAST_mv_scl2ms killed renamable $r1, implicit-def $srms0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: streams_nb
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: renamable $r1 = MOV_NB_mv_ss2scl implicit-def $srss0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r28 = MOV_mv_scl $srss0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_scl2ms_doTlast_reg renamable $r1, killed renamable $r28, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_scl2ms renamable $r1, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_TLAST_mv_scl2ms killed renamable $r1, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: $r0 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
     renamable $r1 = MOV_NB_mv_ss2scl implicit-def $srss0
     $r28 = MOV_mv_scl $srss0
     MOV_NB_mv_scl2ms_doTlast_reg renamable $r1, killed renamable $r28, implicit-def $srms0
@@ -97,6 +133,22 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_MOV_PH_B
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: $r0 = LDA_dms_lda_idx_imm killed $p1, 4
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: MOV_mv_ph2ms killed $r0, 1
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r0 = LDA_dms_lda_idx_imm $p1, 4
     MOV_mv_ph2ms $r0, 1
 ...
@@ -117,6 +169,16 @@ body:             |
     ; CHECK-NEXT: $r1 = MOV_mv_scl $srms0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_MOV_PH_NB
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_ph2ms killed $r1, 1, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r1 = MOV_mv_scl $srms0
     MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
     $r1 = MOV_mv_scl $srms0
@@ -142,6 +204,20 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_MOV_PH_NB_TLAST_REG
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: $r28 = MOV_mv_scl $srss0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_ph2ms_doTlast_reg killed $r1, 1, $r28, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_ph2ms_doTlast_reg killed $r1, 1, killed $r28, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r28 = MOV_mv_scl $srss0
     MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
     $r1 = MOV_mv_scl $srms0
@@ -178,6 +254,30 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_MOV_CPH_B
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: $r0 = LDA_dms_lda_idx_imm killed $p1, 4
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: MOV_mv_cph2ms killed $m0, 1, 2, $r0
+    ; CHECK-NEG-LAT-NEXT: $m0 = LDA_dms_lda_idx_imm killed $p2, 4
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: MOV_mv_cph2ms killed $m0, 1, 2, killed $r0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r0 = LDA_dms_lda_idx_imm $p1, 4
     MOV_mv_cph2ms $m0, 1, 2, $r0
     $m0 = LDA_dms_lda_idx_imm $p2, 4
@@ -204,6 +304,20 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_MOV_CPH_NB
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_cph2ms killed $m1, 1, 2, $r1, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $m1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_cph2ms killed $m1, 1, 2, killed $r1, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r1 = MOV_mv_scl $srms0
     MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
     $m1 = MOV_mv_scl $srms0
@@ -234,6 +348,24 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEG-LAT-LABEL: name: II_MOV_CPH_NB_TLAST_REG
+    ; CHECK-NEG-LAT: liveins: $r1
+    ; CHECK-NEG-LAT-NEXT: {{  $}}
+    ; CHECK-NEG-LAT-NEXT: $r28 = MOV_mv_scl $srss0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, killed $r1, $r28, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $r1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_cph2ms_doTlast_reg killed $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: $m1 = MOV_mv_scl $srms0
+    ; CHECK-NEG-LAT-NEXT: MOV_NB_mv_cph2ms_doTlast_reg killed $m1, 1, 2, killed $r1, killed $r28, implicit-def $srms0
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
+    ; CHECK-NEG-LAT-NEXT: NOP
     $r28 = MOV_mv_scl $srss0
     MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
     $r1 = MOV_mv_scl $srms0
