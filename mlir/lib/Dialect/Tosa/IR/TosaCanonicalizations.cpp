@@ -7,6 +7,9 @@
 // Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // \file
@@ -1506,13 +1509,24 @@ OpFoldResult CastOp::fold(FoldAdaptor adaptor) {
     }
   }
 
-  // Fold cast from bf16 -> f32 -> bf16 into no-op.
+  // Fold cast from
+  //   bf16 -> f32 -> bf16
+  //   f16 -> f32 -> f16
+  // into no-op.
   if (auto cast = getInput().getDefiningOp<CastOp>()) {
     auto sourceElTy = cast.getInput().getType().getElementType();
     auto intermediateElTy = cast.getType().getElementType();
     auto finalElTy = getType().getElementType();
-    if (isa<BFloat16Type>(sourceElTy) && isa<Float32Type>(intermediateElTy) &&
-        isa<BFloat16Type>(finalElTy)) {
+
+    // Check the conditions for folding cast from
+    //   narrowFP -> wideFP -> narrowFP into no-op.
+    auto isFold = [&](auto narrowTyTag) {
+      using NarrowTy = decltype(narrowTyTag);
+      return isa<NarrowTy>(sourceElTy) && isa<Float32Type>(intermediateElTy) &&
+             isa<NarrowTy>(finalElTy);
+    };
+
+    if (isFold(BFloat16Type{}) || isFold(Float16Type{})) {
       getInputMutable().assign(cast.getInput());
       return getResult();
     }
