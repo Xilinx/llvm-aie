@@ -601,9 +601,12 @@ bool AIE2PSRegisterInfo::shouldCoalesce(
   // disjoint control-flow regions can share the same two physical registers
   // (plfr0, plfr1) without interference and without any spilling.
 
-  if (AIE2PS::ePSRFLdFRegClass.hasSubClassEq(NewRC) &&
-      SubReg != AIE2PS::NoSubRegister && SubReg != AIE2PS::sub_fifo) {
-    return false;
+  if (AIE2PS::ePSRFLdFRegClass.hasSubClassEq(NewRC)) {
+    // Block coalescing into sub_ptr or sub_avail from either direction
+    if ((SubReg != AIE2PS::NoSubRegister && SubReg != AIE2PS::sub_fifo) ||
+        (DstSubReg != AIE2PS::NoSubRegister && DstSubReg != AIE2PS::sub_fifo)) {
+      return false;
+    }
   }
 
   return AIEBaseRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC,
