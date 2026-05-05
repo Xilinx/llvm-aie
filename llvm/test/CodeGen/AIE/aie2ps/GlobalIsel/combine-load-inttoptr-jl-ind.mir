@@ -9,17 +9,12 @@
 # Constrained-callee variant of the load-into-pointer fold: a
 # G_LOAD(s20) whose only user is a G_INTTOPTR feeding the callee
 # operand of PseudoJL_IND. The IRTranslator constrains the
-# G_INTTOPTR's destination to the `ep` regclass, which makes a naive
-# single-def replacement trip canReplaceReg() in the AIE pre-legalizer
-# combiner.
-#
-# Pre-fix the test crashes during the combine; XFAIL keeps the
-# baseline green. The companion fix removes the XFAIL and finalises
-# the CHECK lines.
+# G_INTTOPTR's destination to the `ep` regclass; the combine copies
+# the constrained vreg with a COPY from the new p0-typed load
+# destination instead of replacing it directly.
 #
 # RUN: llc -mtriple=aie2ps -run-pass=aie-prelegalizer-combiner \
 # RUN:   -verify-machineinstrs %s -o - | FileCheck %s
-# XFAIL: *
 
 ---
 name: load_inttoptr_into_jl_ind
@@ -28,6 +23,15 @@ body:             |
   bb.0:
     liveins: $p0
     ; CHECK-LABEL: name: load_inttoptr_into_jl_ind
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(p0) = G_LOAD [[COPY]](p0) :: (load (p0), align 4)
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep(p0) = COPY [[LOAD]](p0)
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoJL_IND [[COPY1]](p0), csr_aie2ps, implicit-def $lr
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(s20) = G_LOAD %0:_(p0) :: (load (s20), align 4)
     %2:ep(p0) = G_INTTOPTR %1
