@@ -5133,16 +5133,10 @@ bool llvm::matchLoadInttoptrFold(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (!allNonDbgUsersMatch(DstReg, MRI, IsP0Inttoptr))
     return false;
 
-  MatchInfo = [=, &MI, &MRI, &Observer, &Helper](MachineIRBuilder &B) {
+  MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
+    const Register OldDstReg = MI.getOperand(0).getReg();
     const Register NewDstReg = retypeLoadDest(MI, P0, MRI, Observer);
-
-    // Snapshot G_INTTOPTR users before mutating, then let the
-    // CombinerHelper handle observer + replace + erase per user.
-    SmallVector<MachineInstr *, 4> InttoptrUsers;
-    for (MachineInstr &Use : MRI.use_nodbg_instructions(DstReg))
-      InttoptrUsers.push_back(&Use);
-    for (MachineInstr *Use : InttoptrUsers)
-      Helper.replaceSingleDefInstWithReg(*Use, NewDstReg);
+    B.buildPtrToInt(OldDstReg, NewDstReg);
   };
   return true;
 }
