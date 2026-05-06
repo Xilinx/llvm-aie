@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aie2p | FileCheck %s
 
 %struct.v64bfp16ebs8 = type <{ <64 x i8>, <8 x i8> }>
@@ -708,8 +708,8 @@ define dso_local void @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov dj0, #128
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movx r24, #0; mov p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0; movx r24, #0; mov dj0, #128
 ; CHECK-NEXT:    st r24, [p1, dj0]
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop

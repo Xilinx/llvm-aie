@@ -5,13 +5,13 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: not llc -O2 -mtriple=aie2ps -run-pass=machine-scheduler,greedy,virtregrewriter %s -o /dev/null 2>&1 | FileCheck %s
+# RUN: llc -O2 -mtriple=aie2ps -run-pass=machine-scheduler,greedy,virtregrewriter %s -o - | FileCheck %s
 
-# Reproduce ran out of registers during register allocation.
+# Tests that FuncArgCopyEdges prevents ran out of registers during register allocation.
+# The mutator prevents the scheduler from moving the function argument copies past instructions
 # This is because the scheduler is moving the function argument copies past instructions
 # that need a register of the class in question which is scarce
 
-# CHECK: error: <unknown>:0:0: ran out of registers during register allocation in function 'test_singleton_copy_edges'
 ---
 name:            test_singleton_copy_edges
 alignment:       16
@@ -22,6 +22,27 @@ tracksRegLiveness: true
 body:             |
     bb.0.entry:
     liveins: $p0, $p1
+    ; CHECK-LABEL: name: test_singleton_copy_edges
+    ; CHECK: liveins: $p0, $p1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $r25 = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $x0 = VBCST_32 renamable $r25
+    ; CHECK-NEXT: renamable $p2 = COPY $p0
+    ; CHECK-NEXT: renamable $p3 = COPY $p1
+    ; CHECK-NEXT: renamable $m0 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $p0 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $x1 = COPY renamable $x0
+    ; CHECK-NEXT: renamable $lf1 = COPY renamable $y0
+    ; CHECK-NEXT: renamable $lf0 = COPY killed renamable $y0
+    ; CHECK-NEXT: renamable $r24 = COPY renamable $r25
+    ; CHECK-NEXT: dead $x0, $p0, $lf0, $r24 = VLD_POP_512_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m0, implicit-def $srfifo_uf :: (load unknown-size from `ptr null`, align 1)
+    ; CHECK-NEXT: renamable $p1 = COPY renamable $p3
+    ; CHECK-NEXT: dead $x0, dead $p1, dead $lf1, dead $r25 = VLD_POP_512_fifo_1d_pop_pseudo killed $p1, $lf1, $r25, killed $m0, implicit-def $srfifo_uf :: (load unknown-size from `ptr null`, align 1)
+    ; CHECK-NEXT: renamable $p1 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm renamable $p1, killed renamable $p2, 0 :: (store (p0), align 4)
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm killed renamable $p1, renamable $p3, 0 :: (store (p0), align 4)
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm killed renamable $p0, killed renamable $p3, 0 :: (store (p0), align 4)
+    ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ep = COPY $p0
     %1:ep = COPY $p1
     %6:ep_as_32bit_and_eps = MOV_PD_imm11_pseudo 0

@@ -34,6 +34,11 @@ static cl::opt<bool> EnableStrongCopyEdges(
     "aie-strong-copy-edges", cl::Hidden, cl::init(true),
     cl::desc("Enforces edges between COPY sources and other users of those "
              "sources to limit live range overlaps"));
+
+static cl::opt<bool> EnableFuncArgCopyEdges(
+    "aie-func-arg-copy-edges", cl::Hidden, cl::init(true),
+    cl::desc("Add edges between function argument copies and instructions "
+             "with scarce register class defs to prevent interference"));
 static cl::opt<bool> EnablePreMISchedPropagateIncomingLatencies(
     "aie-premisched-propagate-incoming-latencies", cl::Hidden, cl::init(false),
     cl::desc(
@@ -266,6 +271,89 @@ class BiasDepth : public ScheduleDAGMutation {
       }
     }
   };
+};
+
+/// Prevents the pre-scheduler from moving COPY instructions of function
+/// argument physical registers past instructions that define virtual registers
+/// in small (scarce) register classes overlapping with those physical
+/// registers. Without this, the scheduler could create live range interferences
+/// that the register allocator cannot resolve.
+class FuncArgCopyEdges : public ScheduleDAGMutation {
+  /// Return true if \p SU defines a virtual register in a small register class
+  /// (at most 2 registers) that overlaps with \p PhysReg.
+  static bool conflictsWithPhysReg(const MachineRegisterInfo &MRI,
+                                   const TargetRegisterInfo *TRI,
+                                   MCPhysReg PhysReg, const SUnit &SU) {
+    return any_of(SU.getInstr()->defs(),
+                  [&MRI, TRI, PhysReg](const MachineOperand &DefMO) {
+                    if (!DefMO.isReg() || DefMO.getReg().isPhysical())
+                      return false;
+                    const TargetRegisterClass *RC =
+                        MRI.getRegClass(DefMO.getReg());
+                    // We target small register classes (at most 2 registers)
+                    // that overlap with PhysReg. This covers singleton classes
+                    // and composite classes like ePSRFLdF where p0 is a
+                    // subregister of plfr0.
+                    if (RC->getNumRegs() > 2)
+                      return false;
+                    for (MCPhysReg ClassReg : *RC) {
+                      if (TRI->regsOverlap(ClassReg, PhysReg))
+                        return true;
+                    }
+                    return false;
+                  });
+  }
+
+  void apply(ScheduleDAGInstrs *DAG) override {
+    const MachineRegisterInfo &MRI = DAG->MRI;
+    const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+    MachineBasicBlock *MBB = DAG->getBB();
+
+    // First pass: collect COPYs of live-in physical registers (func args).
+    // There are typically very few of these (one per pointer/scalar argument).
+    SmallVector<std::pair<SUnit *, MCPhysReg>> FuncArgCopies;
+    SmallPtrSet<SUnit *, 8> FuncArgCopySUs;
+    for (SUnit &SU : DAG->SUnits) {
+      const MachineInstr &MI = *SU.getInstr();
+      if (!MI.isCopy())
+        continue;
+      const MachineOperand &SrcMO = MI.getOperand(1);
+      if (!SrcMO.isReg() || !SrcMO.getReg().isPhysical())
+        continue;
+      MCPhysReg PhysReg = SrcMO.getReg().asMCReg();
+      if (!MBB->isLiveIn(PhysReg))
+        continue;
+      FuncArgCopies.emplace_back(&SU, PhysReg);
+      FuncArgCopySUs.insert(&SU);
+    }
+
+    if (FuncArgCopies.empty())
+      return;
+
+    // Second pass: for each non-COPY SUnit, check if it has a def conflicting
+    // with any of the collected function argument registers. This is O(N * K)
+    // where K is the number of func-arg COPYs (typically very small).
+    // We skip other func-arg COPYs: two COPYs of function arguments into
+    // overlapping small register classes (e.g. ePS = {p0, p1}) would create
+    // edges in both directions, forming a cycle.
+    for (SUnit &SU : DAG->SUnits) {
+      if (FuncArgCopySUs.contains(&SU))
+        continue;
+      for (auto &[CopySU, PhysReg] : FuncArgCopies) {
+        if (!conflictsWithPhysReg(MRI, TRI, PhysReg, SU))
+          continue;
+        assert(DAG->canAddEdge(&SU, CopySU) &&
+               "Unexpected cycle: func-arg COPY must be schedulable before "
+               "the conflicting instruction");
+        LLVM_DEBUG(dbgs() << "FuncArgCopyEdges: Adding edge from COPY of "
+                          << printReg(PhysReg, TRI) << " to "
+                          << *SU.getInstr());
+        SDep Dep(CopySU, SDep::Artificial);
+        Dep.setLatency(0);
+        SU.addPred(Dep, /*Required=*/true);
+      }
+    }
+  }
 };
 
 class RegionEndEdges : public ScheduleDAGMutation {
@@ -942,6 +1030,8 @@ AIEBaseSubtarget::getPreRAMutationsImpl(const Triple &TT) {
     Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   if (EnableStrongCopyEdges)
     Mutations.emplace_back(std::make_unique<EnforceCopyEdges>());
+  if (EnableFuncArgCopyEdges)
+    Mutations.emplace_back(std::make_unique<FuncArgCopyEdges>());
   return Mutations;
 }
 
