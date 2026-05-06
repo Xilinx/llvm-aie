@@ -7,8 +7,6 @@
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2ps -run-pass=postmisched %s -o - | FileCheck %s
 
-# This test shows that we are reading old value of srfifo_u because VLD_POP_640_fifo_1d_pop_pseudo 
-# is missing dependency on srFifo_uf.
 ---
 name:            fifo_pop_then_read_srfifo_uf
 tracksRegLiveness: true
@@ -20,10 +18,10 @@ body:             |
     ; CHECK: liveins: $p0, $lf0, $r24, $m0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $ex0, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_ex_bfp16_fifo_1d_pop killed $p0, killed $lf0, killed $r24, $m0, implicit-def $srfifo_uf
-    ; CHECK-NEXT: BUNDLE implicit-def $ex0, implicit-def $ewl0, implicit-def $wl0, implicit-def $gl0, implicit-def $el0, implicit-def $egl0, implicit-def $ewh0, implicit-def $wh0, implicit-def $gh0, implicit-def $eh0, implicit-def $egh0, implicit-def $e0, implicit-def $g0, implicit-def $x0, implicit-def $eg0, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $r0, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m0 {
-    ; CHECK-NEXT:   $ex0, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_ex_bfp16_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m0, implicit-def $srfifo_uf
-    ; CHECK-NEXT:   $r0 = MOV_alu_mv_mv_mv_r_sc internal $srfifo_uf
-    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $ex0, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_ex_bfp16_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m0, implicit-def $srfifo_uf
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r0 = MOV_alu_mv_mv_mv_r_sc $srfifo_uf
     ; CHECK-NEXT: $r0 = MOV_alu_mv_mv_mv_r_sc $srfifo_uf
     ; CHECK-NEXT: $r0 = MOV_alu_mv_mv_mv_r_sc $srfifo_uf
     ; CHECK-NEXT: $r0 = MOV_alu_mv_mv_mv_r_sc $srfifo_uf

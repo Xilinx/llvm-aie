@@ -100,7 +100,7 @@ body:             |
     liveins: $dc0, $dc4, $p1, $p2, $p6, $p7, $r2, $plfr0:0x00000000A2000040, $d0_3d:0x3800000040001C00
 
     $p0, $lf0, $r24 = VLD_FILL_512_pseudo $p0, $lf0, $r24 :: (load unknown-size from %ir.ifm, align 1)
-    $x6, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d :: (load unknown-size from %ir.ifm, align 1)
+    $x6, $p0, $lf0, $r24, $dc0, $dc4 = VLD_POP_512_3D_pseudo $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf :: (load unknown-size from %ir.ifm, align 1)
     renamable $x4, renamable $p6 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p6, 64 :: (load (<32 x s16>) from %ir.ofm_load, addrspace 6)
     renamable $x2, dead renamable $r16 = VMAX_LT_bf16 killed renamable $x4, killed renamable $x6, implicit $crbf8conf, implicit $crfp8conf
     renamable $p7 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p7, 64 :: (store (<32 x s16>) into %ir.ofm_write, addrspace 6)
