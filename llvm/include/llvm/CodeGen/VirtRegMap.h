@@ -176,6 +176,14 @@ public:
     }
   }
 
+  /// clearSplitFromReg - Remove the split-from mapping for virtReg,
+  /// making it its own original. This restores the register to the
+  /// same canonical state as a freshly created vreg (no split parent).
+  void clearSplitFromReg(Register virtReg) {
+    assert(virtReg.isVirtual());
+    Virt2SplitMap[virtReg] = Register();
+  }
+
   /// returns the live interval virtReg is split from.
   Register getPreSplitReg(Register virtReg) const {
     return Virt2SplitMap[virtReg];

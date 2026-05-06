@@ -19,9 +19,45 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "aie-ra"
+
+namespace {
+
+/// RAII delegate that keeps VirtRegMap in sync when new virtual registers
+/// are created during super-reg rewriting. Mirrors the protocol used by
+/// LiveRangeEdit's MRI delegate callbacks:
+///   - MRI_NoteNewVirtualRegister → VRM.grow()
+///   - MRI_NoteCloneVirtualRegister → VRM.grow() + requiredPhys propagation
+///
+/// The delegate intentionally does NOT set setIsSplitFromReg in the callback —
+/// matching LiveRangeEdit's design where the split chain is a semantic decision
+/// made by the caller, not a generic "vreg was created" concern.
+class VRMDelegateRAII : public llvm::MachineRegisterInfo::Delegate {
+  llvm::MachineRegisterInfo &MRI;
+  llvm::VirtRegMap &VRM;
+
+public:
+  VRMDelegateRAII(llvm::MachineRegisterInfo &MRI, llvm::VirtRegMap &VRM)
+      : MRI(MRI), VRM(VRM) {
+    MRI.addDelegate(this);
+  }
+  ~VRMDelegateRAII() { MRI.resetDelegate(this); }
+
+  void MRI_NoteNewVirtualRegister(llvm::Register Reg) override {
+    VRM.grow();
+  }
+  void MRI_NoteCloneVirtualRegister(llvm::Register NewReg,
+                                    llvm::Register SrcReg) override {
+    VRM.grow();
+    if (VRM.hasRequiredPhys(SrcReg))
+      VRM.setRequiredPhys(NewReg, VRM.getRequiredPhys(SrcReg));
+  }
+};
+
+} // end anonymous namespace
 
 namespace llvm::AIESuperRegUtils {
 
@@ -323,9 +359,16 @@ splitAndAssignSubPhysRegs(SmallMapVector<int, Register, 8> &SubRegToVReg,
     SmallVector<LiveInterval *, 4> LIComponents;
     LIS.splitSeparateComponents(SubRegLI, LIComponents);
     LIComponents.push_back(&SubRegLI);
-    // todo: there is a bug in splitSeparateComponents, so we have to manually
-    // grow the VRM (due to abstraction complexity on MRI::Delegate "protocol")
-    VRM.grow();
+    // VRM.grow() is handled automatically by the VRMDelegateRAII installed
+    // in rewriteSuperReg — no manual call needed.
+
+    // Maintain VRM split chain for component vregs created by
+    // splitSeparateComponents (matches the SplitKit/LiveRangeEdit protocol).
+    Register Original = VRM.getOriginal(VReg);
+    for (LiveInterval *LI : LIComponents) {
+      if (LI != &SubRegLI)
+        VRM.setIsSplitFromReg(LI->reg(), Original);
+    }
 
     if (!AssignedPhysReg.has_value())
       continue;
@@ -359,7 +402,13 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
   auto *TII =
       static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
+  // Install an MRI delegate to keep VRM in sync when new vregs are created.
+  // This mirrors the protocol LiveRangeEdit uses: VRM.grow() on every vreg
+  // creation, and requiredPhys propagation on clone.
+  VRMDelegateRAII VRMDelegate(MRI, VRM);
+
   // Step 1: Create virtual registers for each subregister
+  // The delegate automatically calls VRM.grow() for each new vreg.
   SmallMapVector<int, Register, 8> SubRegToVReg =
       createSubRegisterVRegs(Reg, SubRegs, AssignedPhysReg, MRI, TRI, MF);
 
@@ -372,6 +421,44 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
   // Step 3: Rewrite operands to use the new subregister virtual registers
   LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
   rewriteOperandsToSubRegs(Reg, SubRegToVReg, MRI, TRI, *TII, VRM);
+
+  // Step 3b: Orphan split-chain descendants of Reg's original.
+  // Reg's LiveInterval is about to be removed. A prior Greedy session may have
+  // split Reg's original into multiple products — Reg and siblings like %35.
+  // The split chain is flattened: getPreSplitReg(sibling) == Original, not Reg.
+  // After removing Reg's interval and rewriting its instructions in-place,
+  // any sibling V that traces getOriginal(V) → Original would find stale
+  // VNInfos in the Original's LI (pointing at instructions that were rewritten)
+  // or a missing interval. Clear ALL children of the Original so each becomes
+  // its own original — preventing stale rematerialization and SplitKit asserts.
+  // Note: upstream LLVM doesn't need this because it never removes an
+  // interval between Greedy sessions while active split products reference it.
+  Register Original = VRM.getOriginal(Reg);
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    Register V = Register::index2VirtReg(I);
+    if (MRI.reg_nodbg_empty(V))
+      continue;
+    if (VRM.getPreSplitReg(V) == Original) {
+      LLVM_DEBUG(dbgs() << "  Clearing split-from for "
+                        << printReg(V, &TRI, 0, &MRI) << " (was split from "
+                        << printReg(Original, &TRI, 0, &MRI) << ")\n");
+      VRM.clearSplitFromReg(V);
+    }
+  }
+
+  // Also clear the Original's own LI if it exists and is different from Reg.
+  // After rewriting Reg's instructions in-place, the Original's LI has stale
+  // VNInfos at slots where instructions were modified. If a sibling (now its
+  // own original) is later split by Greedy, SplitKit could trace to the
+  // sibling's own LI, find a VNInfo at a slot where the instruction was
+  // rewritten, and rematerialize incorrectly (e.g., a sub-lane MOV_PD as a
+  // full compound register def). Clearing the Original's LI prevents this
+  // by making its VNInfos unavailable for remat lookups.
+  if (Original != Reg && LIS.hasInterval(Original)) {
+    LLVM_DEBUG(dbgs() << "  Clearing stale ancestor LI for "
+                      << printReg(Original, &TRI, 0, &MRI) << "\n");
+    LIS.removeInterval(Original);
+  }
 
   // Step 4: Remove the original register's live interval
   LIS.removeInterval(Reg);
