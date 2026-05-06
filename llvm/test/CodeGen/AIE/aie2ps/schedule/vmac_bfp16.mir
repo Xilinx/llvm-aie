@@ -55,16 +55,16 @@ body:             |
     ; CHECK-NEXT:   $dm7 = VMAC_f_vmac_bfp16 killed $dm7, internal $ewl2, $ey3, $ey0, internal $ewh2, $r8, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0, $lf0, $r24 = VLDB_FILL killed $p0, killed $lf0, killed $r24 :: (load unknown-size, align 1, addrspace 6)
-    ; CHECK-NEXT: BUNDLE implicit-def $ex10, implicit-def $ewl10, implicit-def $wl10, implicit-def $gl10, implicit-def $el10, implicit-def $egl10, implicit-def $ewh10, implicit-def $wh10, implicit-def $gh10, implicit-def $eh10, implicit-def $egh10, implicit-def $e10, implicit-def $g10, implicit-def $x10, implicit-def $eg10, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $ex11, implicit-def $ewl11, implicit-def $wl11, implicit-def $gl11, implicit-def $el11, implicit-def $egl11, implicit-def $ewh11, implicit-def $wh11, implicit-def $gh11, implicit-def $eh11, implicit-def $egh11, implicit-def $e11, implicit-def $g11, implicit-def $x11, implicit-def $eg11, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $ex3, implicit undef $ex0, implicit $r4 {
-    ; CHECK-NEXT:   $ex10, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24 :: (load unknown-size, align 1, addrspace 6)
+    ; CHECK-NEXT: BUNDLE implicit-def $ex10, implicit-def $ewl10, implicit-def $wl10, implicit-def $gl10, implicit-def $el10, implicit-def $egl10, implicit-def $ewh10, implicit-def $wh10, implicit-def $gh10, implicit-def $eh10, implicit-def $egh10, implicit-def $e10, implicit-def $g10, implicit-def $x10, implicit-def $eg10, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex11, implicit-def $ewl11, implicit-def $wl11, implicit-def $gl11, implicit-def $el11, implicit-def $egl11, implicit-def $ewh11, implicit-def $wh11, implicit-def $gh11, implicit-def $eh11, implicit-def $egh11, implicit-def $e11, implicit-def $g11, implicit-def $x11, implicit-def $eg11, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $ex3, implicit undef $ex0, implicit $r4 {
+    ; CHECK-NEXT:   $ex10, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     ; CHECK-NEXT:   renamable $ex11 = VSHUFFLE_vec_shuffle_egx killed renamable $ex3, undef renamable $ex0, renamable $r4
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $ex8, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24 :: (load unknown-size, align 1, addrspace 6)
-    ; CHECK-NEXT: BUNDLE implicit-def $ex5, implicit-def $ewl5, implicit-def $wl5, implicit-def $gl5, implicit-def $el5, implicit-def $egl5, implicit-def $ewh5, implicit-def $wh5, implicit-def $gh5, implicit-def $eh5, implicit-def $egh5, implicit-def $e5, implicit-def $g5, implicit-def $x5, implicit-def $eg5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dm6, implicit-def $cml6, implicit-def $bmll6, implicit-def $bmlh6, implicit-def $cmh6, implicit-def $bmhl6, implicit-def $bmhh6, implicit-def $srfpflags, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $dm6, implicit killed $ewl11, implicit $ey3, implicit $ey0, implicit killed $ewh11, implicit $r8, implicit $crfpmask {
-    ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24 :: (load unknown-size, align 1, addrspace 6)
+    ; CHECK-NEXT: $ex8, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
+    ; CHECK-NEXT: BUNDLE implicit-def $ex5, implicit-def $ewl5, implicit-def $wl5, implicit-def $gl5, implicit-def $el5, implicit-def $egl5, implicit-def $ewh5, implicit-def $wh5, implicit-def $gh5, implicit-def $eh5, implicit-def $egh5, implicit-def $e5, implicit-def $g5, implicit-def $x5, implicit-def $eg5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $dm6, implicit-def $cml6, implicit-def $bmll6, implicit-def $bmlh6, implicit-def $cmh6, implicit-def $bmhl6, implicit-def $bmhh6, implicit-def $srfpflags, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $dm6, implicit killed $ewl11, implicit $ey3, implicit $ey0, implicit killed $ewh11, implicit $r8, implicit $crfpmask {
+    ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     ; CHECK-NEXT:   $dm6 = VMAC_f_vmac_bfp16 killed $dm6, killed $ewl11, $ey3, $ey0, killed $ewh11, $r8, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $ex3, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_3D_dmx_ldb_fifo_ex_bfp16 killed $p0, killed $lf0, killed $r24, killed $d1_3d :: (load unknown-size, align 1, addrspace 6)
+    ; CHECK-NEXT: $ex3, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_3D_dmx_ldb_fifo_ex_bfp16 killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     ; CHECK-NEXT: BUNDLE implicit-def $ex4, implicit-def $ewl4, implicit-def $wl4, implicit-def $gl4, implicit-def $el4, implicit-def $egl4, implicit-def $ewh4, implicit-def $wh4, implicit-def $gh4, implicit-def $eh4, implicit-def $egh4, implicit-def $e4, implicit-def $g4, implicit-def $x4, implicit-def $eg4, implicit-def $dm5, implicit-def $cml5, implicit-def $bmll5, implicit-def $bmlh5, implicit-def $cmh5, implicit-def $bmhl5, implicit-def $bmhh5, implicit-def $srfpflags, implicit killed $ex4, implicit undef $ex0, implicit $r4, implicit killed $dm5, implicit killed $ewl2, implicit $ey3, implicit $ey0, implicit killed $ewh2, implicit $r8, implicit $crfpmask {
     ; CHECK-NEXT:   renamable $ex4 = VSHUFFLE_vec_shuffle_egx killed renamable $ex4, undef renamable $ex0, renamable $r4
     ; CHECK-NEXT:   $dm5 = VMAC_f_vmac_bfp16 killed $dm5, killed $ewl2, $ey3, $ey0, killed $ewh2, $r8, implicit-def $srfpflags, implicit $crfpmask
@@ -88,16 +88,16 @@ body:             |
     renamable $ex2 = VSHUFFLE_vec_shuffle_egx killed renamable $ex2, undef renamable $ex0, renamable $r4
     $p0, $lf0, $r24 = VLD_FILL_512_pseudo $p0, $lf0, $r24 :: (load unknown-size, align 1, addrspace 6)
     renamable $ex6 = VSHUFFLE_vec_shuffle_egx renamable $ex0, renamable $ex1, renamable $r6
-    $ex10, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p0, $lf0, $r24 :: (load unknown-size, align 1, addrspace 6)
+    $ex10, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     renamable $ex0 = VSHUFFLE_vec_shuffle_egx killed renamable $ex0, killed renamable $ex1, renamable $r16
-    $ex8, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p0, $lf0, $r24 :: (load unknown-size, align 1, addrspace 6)
+    $ex8, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     $ex1 = VMOV_alu_mv_mv_mv_egx $ex5
     renamable $ex7 = VSHUFFLE_vec_shuffle_egx $ex5, renamable $ex11, renamable $r6
-    $ex5, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p0, $lf0, $r24 :: (load unknown-size, align 1, addrspace 6)
+    $ex5, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     renamable $ex1 = VSHUFFLE_vec_shuffle_egx killed renamable $ex1, killed renamable $ex11, renamable $r16
     renamable $ex11 = VSHUFFLE_vec_shuffle_egx killed renamable $ex3, undef renamable $ex0, renamable $r4
     $dm7 = VMAC_f_vmac_bfp16 killed $dm7, killed $ewl2, $ey3, $ey0, $ewh2, $r8, implicit-def $srfpflags, implicit $crfpmask
-    $ex3, $p0, $lf0, $r24, $dc1, $dc5 = VLD_POP_640_3D_pseudo $p0, $lf0, $r24, $d1_3d :: (load unknown-size, align 1, addrspace 6)
+    $ex3, $p0, $lf0, $r24, $dc1, $dc5 = VLD_POP_640_3D_pseudo $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf :: (load unknown-size, align 1, addrspace 6)
     renamable $ex2 = VSHUFFLE_vec_shuffle_egx killed renamable $ex4, undef renamable $ex0, renamable $r4
     $dm6 = VMAC_f_vmac_bfp16 killed $dm6, killed $ewl11, $ey3, $ey0, $ewh11, $r8, implicit-def $srfpflags, implicit $crfpmask
     $wl4 = VLDA_dmw_lda_w_spill -640, implicit $sp :: (load (s256), align 64)

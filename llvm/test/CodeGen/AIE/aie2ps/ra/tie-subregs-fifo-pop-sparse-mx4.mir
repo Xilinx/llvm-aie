@@ -27,7 +27,7 @@ body:             |
     %0:eps = IMPLICIT_DEF
     %1:eldfiforeg = IMPLICIT_DEF
     %2:mrf2a = IMPLICIT_DEF
-    %3:mexa, %4:eps, %5:eldfiforeg, %6:mrf2a = VLD_POP_s_normal_pop_pseudo %0, %1, %2
+    %3:mexa, %4:eps, %5:eldfiforeg, %6:mrf2a = VLD_POP_s_normal_pop_pseudo %0, %1, %2, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %3, implicit %4, implicit %5, implicit %6
 
 ...
@@ -53,7 +53,7 @@ body:             |
     %1:eldfiforeg = IMPLICIT_DEF
     %2:mrf2a = IMPLICIT_DEF
     %3:em = IMPLICIT_DEF
-    %4:mexa, %5:eps, %6:eldfiforeg, %7:mrf2a = VLD_POP_s_fifo_1d_pop_pseudo %0, %1, %2, %3
+    %4:mexa, %5:eps, %6:eldfiforeg, %7:mrf2a = VLD_POP_s_fifo_1d_pop_pseudo %0, %1, %2, %3, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %4, implicit %5, implicit %6, implicit %7
 
 ...
@@ -88,7 +88,7 @@ body:             |
     %5:edc = IMPLICIT_DEF
     %6:edj = IMPLICIT_DEF
     %12:ed = REG_SEQUENCE %3, %subreg.sub_mod, %4, %subreg.sub_dim_size, %6, %subreg.sub_dim_stride, %5, %subreg.sub_dim_count
-    %7:mexa, %8:eps, %9:eldfiforeg, %10:mrf2a, %11:edc = VLD_POP_s_2D_pseudo %0, %1, %2, %12
+    %7:mexa, %8:eps, %9:eldfiforeg, %10:mrf2a, %11:edc = VLD_POP_s_2D_pseudo %0, %1, %2, %12, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %7, implicit %8, implicit %9, implicit %10, implicit %11
 
 ...
@@ -129,7 +129,7 @@ body:             |
     %8:edc = IMPLICIT_DEF
     %9:edj = IMPLICIT_DEF
     %16:eds = REG_SEQUENCE %3, %subreg.sub_mod, %4, %subreg.sub_dim_size, %6, %subreg.sub_dim_stride, %5, %subreg.sub_dim_count, %7, %subreg.sub_hi_dim_then_sub_dim_size, %9, %subreg.sub_hi_dim_then_sub_dim_stride, %8, %subreg.sub_hi_dim_then_sub_dim_count
-    %10:mexa, %11:eps, %12:eldfiforeg, %13:mrf2a, %14:edcl, %15:edch = VLD_POP_s_3D_pseudo %0, %1, %2, %16
+    %10:mexa, %11:eps, %12:eldfiforeg, %13:mrf2a, %14:edcl, %15:edch = VLD_POP_s_3D_pseudo %0, %1, %2, %16, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %10, implicit %11, implicit %12, implicit %13, implicit %14, implicit %15
 
 ...
@@ -153,7 +153,7 @@ body:             |
     %0:eps = IMPLICIT_DEF
     %1:eldfiforeg = IMPLICIT_DEF
     %2:mrf2a = IMPLICIT_DEF
-    %3:mfexa, %4:eps, %5:eldfiforeg, %6:mrf2a = VLD_POP_mx4_normal_pop_pseudo %0, %1, %2
+    %3:mfexa, %4:eps, %5:eldfiforeg, %6:mrf2a = VLD_POP_mx4_normal_pop_pseudo %0, %1, %2, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %3, implicit %4, implicit %5, implicit %6
 
 ...
@@ -179,7 +179,7 @@ body:             |
     %1:eldfiforeg = IMPLICIT_DEF
     %2:mrf2a = IMPLICIT_DEF
     %3:em = IMPLICIT_DEF
-    %4:mfexa, %5:eps, %6:eldfiforeg, %7:mrf2a = VLD_POP_mx4_fifo_1d_pop_pseudo %0, %1, %2, %3
+    %4:mfexa, %5:eps, %6:eldfiforeg, %7:mrf2a = VLD_POP_mx4_fifo_1d_pop_pseudo %0, %1, %2, %3, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %4, implicit %5, implicit %6, implicit %7
 
 ...
@@ -214,7 +214,7 @@ body:             |
     %5:edc = IMPLICIT_DEF
     %6:edj = IMPLICIT_DEF
     %12:ed = REG_SEQUENCE %3, %subreg.sub_mod, %4, %subreg.sub_dim_size, %6, %subreg.sub_dim_stride, %5, %subreg.sub_dim_count
-    %7:mfexa, %8:eps, %9:eldfiforeg, %10:mrf2a, %11:edc = VLD_POP_mx4_2D_pseudo %0, %1, %2, %12
+    %7:mfexa, %8:eps, %9:eldfiforeg, %10:mrf2a, %11:edc = VLD_POP_mx4_2D_pseudo %0, %1, %2, %12, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %7, implicit %8, implicit %9, implicit %10, implicit %11
 
 ...
@@ -255,7 +255,7 @@ body:             |
     %8:edc = IMPLICIT_DEF
     %9:edj = IMPLICIT_DEF
     %16:eds = REG_SEQUENCE %3, %subreg.sub_mod, %4, %subreg.sub_dim_size, %6, %subreg.sub_dim_stride, %5, %subreg.sub_dim_count, %7, %subreg.sub_hi_dim_then_sub_dim_size, %9, %subreg.sub_hi_dim_then_sub_dim_stride, %8, %subreg.sub_hi_dim_then_sub_dim_count
-    %10:mfexa, %11:eps, %12:eldfiforeg, %13:mrf2a, %14:edcl, %15:edch = VLD_POP_mx4_3D_pseudo %0, %1, %2, %16
+    %10:mfexa, %11:eps, %12:eldfiforeg, %13:mrf2a, %14:edcl, %15:edch = VLD_POP_mx4_3D_pseudo %0, %1, %2, %16, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %10, implicit %11, implicit %12, implicit %13, implicit %14, implicit %15
 
 ...

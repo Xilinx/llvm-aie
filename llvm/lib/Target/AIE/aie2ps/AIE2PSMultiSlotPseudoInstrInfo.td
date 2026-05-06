@@ -80,21 +80,21 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // Fifo normal pop.
-  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_x_normal_pop in {
+  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_x_normal_pop, Defs = [srFifo_uf] in {
   def VLD_POP_512_normal_pop_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos),
       "vld_pop_512_normal_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos]",
       [VLDB_POP_dmx_ldb_fifo_x_normal_pop, VLDA_POP_dmx_lda_fifo_x_normal_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_ex_bfp16_normal_pop in {
+  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_ex_bfp16_normal_pop, Defs = [srFifo_uf] in {
   def VLD_POP_640_normal_pop_pseudo : MultiSlot_Pseudo< (outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos),
       "vld_pop_640_normal_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos]",
       [VLDA_POP_dmx_lda_fifo_ex_bfp16_normal_pop, VLDB_POP_dmx_ldb_fifo_ex_bfp16_normal_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_fex_bfp13_normal_pop in {
+  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_fex_bfp13_normal_pop, Defs = [srFifo_uf] in {
   def VLD_POP_768_normal_pop_pseudo : MultiSlot_Pseudo<(outs mFEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos),
       "vld_pop_768_normal_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos]",
@@ -102,21 +102,21 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // Fifo 1D variants.
-  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_x_fifo_1d_pop in {
+  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_x_fifo_1d_pop, Defs = [srFifo_uf] in {
   def VLD_POP_512_fifo_1d_pop_pseudo : MultiSlot_Pseudo<(outs mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eM:$mod),
       "vld_pop_512_fifo_1d_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_dmx_ldb_fifo_x_fifo_1d_pop, VLDA_POP_dmx_lda_fifo_x_fifo_1d_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_ex_bfp16_fifo_1d_pop in {
+  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_ex_bfp16_fifo_1d_pop, Defs = [srFifo_uf] in {
   def VLD_POP_640_fifo_1d_pop_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eM:$mod),
       "vld_pop_640_fifo_1d_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_dmx_ldb_fifo_ex_bfp16_fifo_1d_pop, VLDA_POP_dmx_lda_fifo_ex_bfp16_fifo_1d_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_fex_bfp13_fifo_1d_pop in {
+  let Itinerary = II_VLDB_POP_dmx_ldb_fifo_fex_bfp13_fifo_1d_pop, Defs = [srFifo_uf] in {
   def VLD_POP_768_fifo_1d_pop_pseudo : MultiSlot_Pseudo<(outs mFEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eM:$mod),
       "vld_pop_768_fifo_1d_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
@@ -124,21 +124,21 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // Fifo 2D variants.
-  let Itinerary = II_VLDB_POP_2D_dmx_ldb_fifo_x in {
+  let Itinerary = II_VLDB_POP_2D_dmx_ldb_fifo_x, Defs = [srFifo_uf] in {
   def VLD_POP_512_2D_pseudo : MultiSlot_Pseudo<(outs OP_mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDC:$dc),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eD:$mod),
       "vld_pop_512_2d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_2D_dmx_ldb_fifo_x, VLDA_POP_2D_dmx_lda_fifo_x]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_2D_dmx_ldb_fifo_ex_bfp16 in {
+  let Itinerary = II_VLDB_POP_2D_dmx_ldb_fifo_ex_bfp16, Defs = [srFifo_uf] in {
   def VLD_POP_640_2D_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDC:$dc),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eD:$mod),
       "vld_pop_640_2d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_2D_dmx_ldb_fifo_ex_bfp16, VLDA_POP_2D_dmx_lda_fifo_ex_bfp16]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_2D_dmx_ldb_fifo_fex_bfp13 in {
+  let Itinerary = II_VLDB_POP_2D_dmx_ldb_fifo_fex_bfp13, Defs = [srFifo_uf] in {
   def VLD_POP_768_2D_pseudo : MultiSlot_Pseudo<(outs mFEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDC:$dc),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eD:$mod),
       "vld_pop_768_2d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
@@ -146,21 +146,21 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // Fifo 3D variants.
-  let Itinerary = II_VLDB_POP_3D_dmx_ldb_fifo_x in {
+  let Itinerary = II_VLDB_POP_3D_dmx_ldb_fifo_x, Defs = [srFifo_uf] in {
   def VLD_POP_512_3D_pseudo : MultiSlot_Pseudo<(outs OP_mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDCL:$dcl, eDCH:$dch),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eDS:$mod),
       "vld_pop_512_3d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_3D_dmx_ldb_fifo_x, VLDA_POP_3D_dmx_lda_fifo_x]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_3D_dmx_ldb_fifo_ex_bfp16 in {
+  let Itinerary = II_VLDB_POP_3D_dmx_ldb_fifo_ex_bfp16, Defs = [srFifo_uf] in {
   def VLD_POP_640_3D_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDCL:$dcl, eDCH:$dch),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eDS:$mod),
       "vld_pop_640_3d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_3D_dmx_ldb_fifo_ex_bfp16, VLDA_POP_3D_dmx_lda_fifo_ex_bfp16]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_3D_dmx_ldb_fifo_fex_bfp13 in {
+  let Itinerary = II_VLDB_POP_3D_dmx_ldb_fifo_fex_bfp13, Defs = [srFifo_uf] in {
   def VLD_POP_768_3D_pseudo : MultiSlot_Pseudo<(outs mFEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDCL:$dcl, eDCH:$dch),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eDS:$mod),
       "vld_pop_768_3d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
@@ -309,28 +309,28 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // Sparse (s) POP variants.
-  let Itinerary = II_VLDB_POP_s_normal_pop in {
+  let Itinerary = II_VLDB_POP_s_normal_pop, Defs = [srFifo_uf] in {
   def VLD_POP_s_normal_pop_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos),
       "vld_pop_s_normal_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos]",
       [VLDB_POP_s_normal_pop, VLDA_POP_s_normal_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_s_fifo_1d_pop in {
+  let Itinerary = II_VLDB_POP_s_fifo_1d_pop, Defs = [srFifo_uf] in {
   def VLD_POP_s_fifo_1d_pop_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eM:$mod),
       "vld_pop_s_fifo_1d_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_s_fifo_1d_pop, VLDA_POP_s_fifo_1d_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_s_2D in {
+  let Itinerary = II_VLDB_POP_s_2D, Defs = [srFifo_uf] in {
   def VLD_POP_s_2D_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDC:$dc),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eD:$mod),
       "vld_pop_s_2d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_s_2D, VLDA_POP_s_2D]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_s_3D in {
+  let Itinerary = II_VLDB_POP_s_3D, Defs = [srFifo_uf] in {
   def VLD_POP_s_3D_pseudo : MultiSlot_Pseudo<(outs mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDCL:$dcl, eDCH:$dch),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eDS:$mod),
       "vld_pop_s_3d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
@@ -338,28 +338,28 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // mx4 POP variants.
-  let Itinerary = II_VLDB_POP_mx4_normal_pop in {
+  let Itinerary = II_VLDB_POP_mx4_normal_pop, Defs = [srFifo_uf] in {
   def VLD_POP_mx4_normal_pop_pseudo : MultiSlot_Pseudo<(outs mFEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos),
       "vld_pop_mx4_normal_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos]",
       [VLDB_POP_mx4_normal_pop, VLDA_POP_mx4_normal_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_mx4_fifo_1d_pop in {
+  let Itinerary = II_VLDB_POP_mx4_fifo_1d_pop, Defs = [srFifo_uf] in {
   def VLD_POP_mx4_fifo_1d_pop_pseudo : MultiSlot_Pseudo<(outs mFEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eM:$mod),
       "vld_pop_mx4_fifo_1d_pop_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_mx4_fifo_1d_pop, VLDA_POP_mx4_fifo_1d_pop]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_mx4_2D in {
+  let Itinerary = II_VLDB_POP_mx4_2D, Defs = [srFifo_uf] in {
   def VLD_POP_mx4_2D_pseudo : MultiSlot_Pseudo<(outs mFEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDC:$dc),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eD:$mod),
       "vld_pop_mx4_2d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_mx4_2D, VLDA_POP_mx4_2D]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_POP_mx4_3D in {
+  let Itinerary = II_VLDB_POP_mx4_3D, Defs = [srFifo_uf] in {
   def VLD_POP_mx4_3D_pseudo : MultiSlot_Pseudo<(outs mFEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, mRF2b:$pos_out, eDCL:$dcl, eDCH:$dch),
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, mRF2b:$pos, eDS:$mod),
       "vld_pop_mx4_3d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",

@@ -38,7 +38,7 @@ body:             |
     %5:edc = IMPLICIT_DEF
     %6:edj = IMPLICIT_DEF
     %12:ed = REG_SEQUENCE %3, %subreg.sub_mod, %4, %subreg.sub_dim_size, %6, %subreg.sub_dim_stride, %5, %subreg.sub_dim_count
-    %7:vec512, %8:eps, %9:eldfiforeg, %10:mrf2a, %11:edc = VLD_POP_512_2D_pseudo %0, %1, %2, %12
+    %7:vec512, %8:eps, %9:eldfiforeg, %10:mrf2a, %11:edc = VLD_POP_512_2D_pseudo %0, %1, %2, %12, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %7, implicit %8, implicit %9, implicit %10, implicit %11
 
 ...
@@ -79,7 +79,7 @@ body:             |
     %8:edc = IMPLICIT_DEF
     %9:edj = IMPLICIT_DEF
     %16:eds = REG_SEQUENCE %3, %subreg.sub_mod, %4, %subreg.sub_dim_size, %6, %subreg.sub_dim_stride, %5, %subreg.sub_dim_count, %7, %subreg.sub_hi_dim_then_sub_dim_size, %9, %subreg.sub_hi_dim_then_sub_dim_stride, %8, %subreg.sub_hi_dim_then_sub_dim_count
-    %10:vec512, %11:eps, %12:eldfiforeg, %13:mrf2a, %14:edcl, %15:edch = VLD_POP_512_3D_pseudo %0, %1, %2, %16
+    %10:vec512, %11:eps, %12:eldfiforeg, %13:mrf2a, %14:edcl, %15:edch = VLD_POP_512_3D_pseudo %0, %1, %2, %16, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit %10, implicit %11, implicit %12, implicit %13, implicit %14, implicit %15
 
 ...
