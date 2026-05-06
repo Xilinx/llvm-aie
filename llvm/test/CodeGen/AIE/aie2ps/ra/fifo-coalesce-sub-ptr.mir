@@ -61,20 +61,19 @@ body: |
   ; CHECK-NEXT:   undef [[COPY2:%[0-9]+]].sub_1024_acc_lo:acc2048 = COPY [[VBCST_32_]]
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]].sub_1024_acc_hi:acc2048 = COPY [[COPY2]].sub_1024_acc_lo
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:ep_as_32bit = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:eldfiforeg = COPY [[COPY2]]
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
   ; CHECK-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY1]], [[MOV_RLC_imm11_pseudo1]]
   ; CHECK-NEXT:   [[AND:%[0-9]+]]:mlockid_reg = AND [[XOR]], [[MOV_RLC_imm11_pseudo1]]
+  ; CHECK-NEXT:   undef [[COPY4:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo1]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x04000000), %bb.1(0x7c000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   undef [[COPY4:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo1]]
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]].sub_fifo:epsrfldf = COPY [[COPY3]]
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]].sub_avail:epsrfldf = COPY [[MOV_RLC_imm11_pseudo]]
   ; CHECK-NEXT:   dead [[VLD_POP_512_fifo_1d_pop_pseudo:%[0-9]+]]:mxs, [[COPY4:%[0-9]+]].sub_ptr:epsrfldf, [[COPY4:%[0-9]+]].sub_fifo:epsrfldf, [[COPY4:%[0-9]+]].sub_avail:epsrfldf = VLD_POP_512_fifo_1d_pop_pseudo [[COPY4]].sub_ptr, [[COPY4]].sub_fifo, [[COPY4]].sub_avail, [[MOV_PD_imm11_pseudo]], implicit-def $srfifo_uf :: (load unknown-size, align 1)
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:ep_as_32bit = COPY [[COPY4]].sub_ptr
   ; CHECK-NEXT:   PseudoJNZ [[AND]], %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
