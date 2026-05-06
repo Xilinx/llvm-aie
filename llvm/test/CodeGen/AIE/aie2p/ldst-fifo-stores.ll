@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aie2p | FileCheck %s
 
 %struct.v64bfp16ebs8 = type <{ <64 x i8>, <8 x i8> }>
@@ -153,15 +153,15 @@ entry:
 define dso_local void @_Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda p4, [p0, #0]; nopx
-; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
-; CHECK-NEXT:    lda r26, [p1, dj1]
+; CHECK-NEXT:    lda p2, [p0, #0]; nopb ; nopx ; mov dj1, #128
+; CHECK-NEXT:    lda r26, [p1, dj1]; mov p3, p2
+; CHECK-NEXT:    lda dc0, [p3, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda sfh, [p1, #64]
 ; CHECK-NEXT:    vlda sfl, [p1, #0]
-; CHECK-NEXT:    movs p3, p2
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    movs dj0, r2; mov p2, p4
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -199,17 +199,17 @@ entry:
 define dso_local void @_Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    vlda sfh, [p1, #64]; nopxm
-; CHECK-NEXT:    lda p5, [p0, #0]
-; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    vlda sfh, [p1, #64]; nopb ; nopxm ; nops
+; CHECK-NEXT:    lda p2, [p0, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
-; CHECK-NEXT:    lda r26, [p1, dj1]
+; CHECK-NEXT:    lda r26, [p1, dj1]; mov p4, p2
+; CHECK-NEXT:    lda dc0, [p4, #0]
 ; CHECK-NEXT:    vlda sfl, [p1, #0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    movs p4, p2
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    movs dj0, r2; mov dn4, r3
-; CHECK-NEXT:    movs dj4, r4; mov p2, p5
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vst.flush.512.3d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p4, #0]
@@ -326,16 +326,16 @@ entry:
 define dso_local void @_Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    vlda sfh, [p1, #64]; nopb ; nopx
-; CHECK-NEXT:    lda p4, [p0, #0]
-; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
-; CHECK-NEXT:    lda r26, [p1, dj1]
+; CHECK-NEXT:    vlda sfh, [p1, #64]; nopb ; nopxm
+; CHECK-NEXT:    lda p2, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda r26, [p1, dj1]; mov p3, p2
+; CHECK-NEXT:    lda dc0, [p3, #0]
 ; CHECK-NEXT:    vlda sfl, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    movs p3, p2
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    movs dj0, r2; mov p2, p4
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vst.flush.512.2d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p3, #0]; ret lr
@@ -371,16 +371,16 @@ entry:
 define dso_local void @_Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda p5, [p0, #0]; nopb ; nopx
-; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    lda p2, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
-; CHECK-NEXT:    lda r26, [p1, dj1]
+; CHECK-NEXT:    lda r26, [p1, dj1]; mov p4, p2
+; CHECK-NEXT:    lda dc0, [p4, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda sfh, [p1, #64]
-; CHECK-NEXT:    vlda sfl, [p1, #0]; movs p4, p2
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    movs dj0, r2; mov dn4, r3
-; CHECK-NEXT:    movs dj4, r4; mov p2, p5
+; CHECK-NEXT:    vlda sfl, [p1, #0]
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vst.flush.512.conv.3d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
