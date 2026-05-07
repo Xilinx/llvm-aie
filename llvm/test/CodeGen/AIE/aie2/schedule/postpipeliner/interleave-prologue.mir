@@ -55,12 +55,12 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
-  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit $lr, implicit killed $x0, implicit $x6 {
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
@@ -162,12 +162,12 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
-  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit $lr, implicit killed $x0, implicit $x6 {
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
@@ -263,12 +263,12 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
-  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit $lr, implicit killed $x0, implicit $x6 {
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP
@@ -480,12 +480,12 @@ body:             |
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
-  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit $lr, implicit killed $x0, implicit $x6 {
+  ; CHECK-NEXT:     RET implicit $lr
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
   ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
-  ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
   ; CHECK-NEXT:   NOP

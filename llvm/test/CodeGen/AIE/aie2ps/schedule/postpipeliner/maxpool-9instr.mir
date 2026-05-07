@@ -19,8 +19,8 @@
   target triple = "aie2ps"
 
   define void @maxpool_inner_9instr(ptr addrspace(5) noalias %data, ptr addrspace(6) noalias %weights, ptr addrspace(7) noalias %out, i32 %n) {
-  ; CHECK-LABEL: maxpool_inner_9instr: // @maxpool_inner_9instr
-  ; CHECK-NEXT:    // %bb.0: // %preheader
+  ; CHECK-LABEL: maxpool_inner_9instr:
+  ; CHECK:       // %bb.0: // %preheader
   ; CHECK-NEXT:    movs p5, p1; nopx ; mov p3, p0
   ; CHECK-NEXT:    vlda wl3, [p5], #32; vldb wh5, [p3, #32]; mov p7, p0
   ; CHECK-NEXT:    vldb.3d wl5, [p7], d0; mov r22, p3
@@ -34,28 +34,23 @@
   ; CHECK-NEXT:    nopa ; vldb.3d wl5, [p7], d0; nops ; and r24, r22, r20; mov r22, p3; nopv
   ; CHECK-NEXT:    nopa ; nopb ; movs p3, p7; nopx ; vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov p6, p2; nopv
-  ; CHECK-NEXT:    .LBB0_1: // %loop_body
+  ; CHECK-NEXT:  .LBB0_1: // %loop_body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    vlda wl3, [p5], #32; vldb wh5, [p3, #32]; vst wl10, [p6], #32; nopx ; vshift x1, x5, x0, r24; nopv
   ; CHECK-NEXT:    nopa ; vldb.3d wl5, [p7], d0; nops ; and r24, r22, r20; mov r22, p3; nopv
   ; CHECK-NEXT:    nopa ; nopb ; movs p3, p7; nopx ; vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1; nopv
-  ; CHECK-NEXT:    .L_LEnd0:
+  ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    // %bb.2: // %exit
-  ; CHECK-NEXT:    nopa ; nopb ; vst wl10, [p6], #32; nopx ; vshift x1, x5, x0, r24; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; and r24, r22, r20
+  ; CHECK-NEXT:  // %bb.2: // %exit
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vshift x1, x5, x0, r24; vst wl10, [p6], #32
+  ; CHECK-NEXT:    and r24, r22, r20
   ; CHECK-NEXT:    vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst wl10, [p6], #32; vshift x1, x5, x0, r24
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst wl10, [p6], #32
-  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    vst wl10, [p6], #32; ret lr; vshift x1, x5, x0, r24
   ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    vmax_lt.8 x10, r17:r16, x3, x1, vaddsign1 // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    vst wl10, [p6], #32 // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   preheader:
     call void @llvm.set.loop.iterations.i32(i32 %n)

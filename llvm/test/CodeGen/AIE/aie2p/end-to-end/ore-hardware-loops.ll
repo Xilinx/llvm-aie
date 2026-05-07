@@ -5,10 +5,10 @@
 ;
 ; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p --aie-force-postpipeliner %s -o - | FileCheck %s --check-prefix ASM
-
 ; RUN: llc -mtriple=aie2p --aie-force-postpipeliner \
 ; RUN:   -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter='aie-hardware-loops|aie-asm-printer' %s -o /dev/null | FileCheck %s --check-prefix REMARKS
+
 
 ; This unit-test is based on conv2d_bfp16_convert.ll
 
@@ -50,7 +50,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      for.cond.cleanup
-; REMARKS-NEXT:   - BundleCount:     '17'
+; REMARKS-NEXT:   - BundleCount:     '15'
 ; REMARKS-NEXT:   - ByteCount:       '80'
 ; REMARKS-NEXT: ...
 ;
@@ -84,8 +84,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:  // %bb.2: // %for.cond.cleanup
-; ASM-NEXT:    nopa ; nopb ; nopxm ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
-; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml1, x6
+; ASM-NEXT:    nopa ; nopb ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; nopx ; vconv.fp32.bf16 cml1, x6
 ; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
@@ -93,10 +93,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
-; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]
-; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
-; ASM-NEXT:    ret lr
-; ASM-NEXT:    nop // Delay Slot 5
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; ret lr
+; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0] // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    nop // Delay Slot 2

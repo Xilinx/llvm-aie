@@ -37,18 +37,13 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle x3, x1, x2, r10; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmax_lt.32 x0, r16, x0, x3, vaddsign1; nops
+  ; CHECK-NEXT:    nops ; vmax_lt.32 x0, r16, x0, x3, vaddsign1
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vshuffle x3, x1, x2, r10
-  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vshuffle x3, x1, x2, r10
-  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1
-  ; CHECK-NEXT:    ret lr
-  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    ret lr; vshuffle x3, x1, x2, r10
+  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1 // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    vshuffle x3, x1, x2, r10 // Delay Slot 3
+  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1 // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   entry:
     call void @llvm.set.loop.iterations.i32(i32 16)
@@ -83,17 +78,12 @@
   ; CHECK-NEXT:  .L_LEnd1:
   ; CHECK-NEXT:    vlda x1, [p0, #64]; nopb ; nops ; nopx ; vmax_lt.32 x0, r16, x0, x3, vaddsign1; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vshuffle x3, x1, x2, r10
-  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vshuffle x3, x1, x2, r10
-  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1
-  ; CHECK-NEXT:    ret lr
-  ; CHECK-NEXT:    nop // Delay Slot 5
+  ; CHECK-NEXT:    nopa ; nopxm
+  ; CHECK-NEXT:    ret lr; vshuffle x3, x1, x2, r10
+  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1 // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    vshuffle x3, x1, x2, r10 // Delay Slot 3
+  ; CHECK-NEXT:    vmax_lt.32 x0, r16, x0, x3, vaddsign1 // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   entry:
     call void @llvm.set.loop.iterations.i32(i32 16)

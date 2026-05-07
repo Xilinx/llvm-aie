@@ -269,6 +269,8 @@ public:
   bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                      MachineInstr &MI, int DeltaCycles) const;
 
+  bool checkConflict(MachineInstr &MI, int DeltaCycles) const;
+
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
                                                      int DeltaCycles) const;

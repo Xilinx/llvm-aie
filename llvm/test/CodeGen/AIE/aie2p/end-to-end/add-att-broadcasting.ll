@@ -51,21 +51,16 @@ define dso_local void @add_attribute_bcast(ptr noalias %ifm2, ptr noalias %ifm1,
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; vst.conv.bf16.fp32 cml4, [p3], #64; nopxm ; vadd.f dm3, dm3, dm0, r1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64; vadd.f dm4, dm1, dm2, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml4, [p3], #64; vadd.f dm3, dm3, dm0, r1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml4, [p3], #64
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml4, [p3], #64 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %if.end

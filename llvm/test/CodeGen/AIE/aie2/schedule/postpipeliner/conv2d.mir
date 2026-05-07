@@ -420,7 +420,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.1.outer.loop.header
   ; CHECK-NEXT:   - PrologueBundles: '28'
   ; CHECK-NEXT:   - Epilogue:        bb.3.outer.loop.latch
-  ; CHECK-NEXT:   - EpilogueBundles: '33'
+  ; CHECK-NEXT:   - EpilogueBundles: '37'
   ; CHECK-NEXT: ...
   bb.0.newFuncRoot (align 16):
     successors: %bb.1(0x80000000)

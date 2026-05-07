@@ -43,8 +43,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
-; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml1, x6
+; CHECK-NEXT:    nopa ; nopb ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv
+; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]; nopx ; vconv.fp32.bf16 cml1, x6
 ; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
@@ -52,10 +52,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
-; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]
-; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]; ret lr
+; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0] // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
