@@ -1047,10 +1047,9 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
     ++NopCounter;
   }
 
-  DEBUG_LOOPAWARE(dbgs() << "Resource conflict avoidance between"
-                         << " loop: " << *LoopMBB
-                         << " And epilogue: " << EpilogueMBB << " Requires "
-                         << NopCounter << " Nops\n");
+  DEBUG_LOOPAWARE(dbgs() << "Resource conflict avoidance between" << " loop: "
+                         << *LoopMBB << " And epilogue: " << EpilogueMBB
+                         << " Requires " << NopCounter << " Nops\n");
 
   return NopCounter;
 }
