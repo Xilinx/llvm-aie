@@ -84,6 +84,23 @@ void repairLiveIntervals(SmallSet<Register, 8> &RegistersToRepair,
                          VirtRegMap &VRM, LiveRegMatrix &LRM,
                          LiveIntervals &LIS);
 
+/// Sever VRM split-from chain for descendants of \p TaintedOriginals so that
+/// SplitKit::defFromParent consults the descendant's own (repaired) LI, not
+/// the stale ancestor LI which may still hold VNs at slots whose MIs were
+/// rewritten/unbundled by an AIE register-rewriter pass. Each affected
+/// descendant is restored via VRM.clearSplitFromReg() to the canonical
+/// "no split parent" state of a freshly created vreg.
+///
+///   before:                    after:
+///   %0 (stale LI)              %0 (stale LI, ignored)
+///    | split-from               x  (chain cut)
+///   %35 ----.                  %35 (no split parent)
+///    | split-from
+///   %141..%144 (future split   greedy splits will use %35's LI
+///   would consult %0's LI)     instead of %0's
+void clearStaleSplitFromMappings(const SmallSet<Register, 8> &TaintedOriginals,
+                                 MachineRegisterInfo &MRI, VirtRegMap &VRM);
+
 } // namespace llvm::AIESuperRegUtils
 
 #endif
