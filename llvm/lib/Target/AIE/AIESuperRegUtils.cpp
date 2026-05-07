@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "aie-ra"
@@ -401,6 +402,30 @@ bool isRegUsedBy2DOr3DInstruction(const MachineRegisterInfo &MRI,
         return TII.getOpcodeWithTupleOperands(MI.getOpcode()).has_value() ||
                TII.getOpcodeWithAtomicOperands(MI.getOpcode()).has_value();
       });
+}
+
+void clearStaleSplitFromMappings(const SmallSet<Register, 8> &TaintedOriginals,
+                                 MachineRegisterInfo &MRI, VirtRegMap &VRM) {
+  if (TaintedOriginals.empty())
+    return;
+
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    const Register V = Register::index2VirtReg(I);
+    if (MRI.reg_nodbg_empty(V))
+      continue;
+    const Register Orig = VRM.getPreSplitReg(V);
+    if (!Orig || !TaintedOriginals.count(Orig))
+      continue;
+
+    LLVM_DEBUG({
+      const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+      dbgs() << "  Clearing stale split-from for " << printReg(V, TRI, 0, &MRI)
+             << " (was split from " << printReg(Orig, TRI, 0, &MRI) << ")\n";
+    });
+    // Restore V to the canonical "no split parent" state so getOriginal(V)==V
+    // and isAssignedReg() does not treat V as a split product.
+    VRM.clearSplitFromReg(V);
+  }
 }
 
 void repairLiveIntervals(SmallSet<Register, 8> &RegistersToRepair,

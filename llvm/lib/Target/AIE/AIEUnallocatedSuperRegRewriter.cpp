@@ -229,12 +229,22 @@ bool AIEUnallocatedSuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     return false;
   }
 
+  // Snapshot Originals whose LI is about to go stale.
+  SmallSet<Register, 8> TaintedOriginals;
+  for (auto &P : Info.ExpandableRegs)
+    TaintedOriginals.insert(VRM.getOriginal(P.first));
+  for (auto &P : Info.RewritableRegs)
+    TaintedOriginals.insert(VRM.getOriginal(P.first));
+
   LLVM_DEBUG(dbgs() << "Expanding copy bundles...\n");
   expandCopyBundles(Info.ExpandableRegs, MRI, Indexes, LIS, VRM, LRM);
 
   LLVM_DEBUG(dbgs() << "Performing register rewrites...\n");
   rewriteCandidates(Info.RewritableRegs, MRI, TRI, VRM, LRM, LIS, Indexes,
                     DebugVars);
+
+  // Prevent SplitKit from rematerializing through stale ancestor LIs.
+  AIESuperRegUtils::clearStaleSplitFromMappings(TaintedOriginals, MRI, VRM);
 
   LLVM_DEBUG(dbgs() << "Successfully rewrote " << Info.RewritableRegs.size()
                     << " register(s)\n");
