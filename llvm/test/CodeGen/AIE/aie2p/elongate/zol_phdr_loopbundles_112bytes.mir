@@ -40,16 +40,13 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; vldb x1, [p0], #128; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vadd.16 x6, x4, x1
-  ; CHECK-NEXT:    vadd.16 x4, x6, x0
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vadd.16 x6, x4, x1; nopv
+  ; CHECK-NEXT:    nopx ; vadd.16 x4, x6, x0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vadd.16 x6, x4, x1
-  ; CHECK-NEXT:    vadd.16 x4, x6, x0
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vadd.16 x6, x4, x1
-  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    ret lr; vadd.16 x4, x6, x0
   ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    vadd.16 x6, x4, x1 // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
   ; CHECK-NEXT:    vmov x0, x6 // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1

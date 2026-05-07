@@ -34,7 +34,7 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:   - Prologue:        bb.0.entry
 ; CHECK-NEXT:   - PrologueBundles: '9'
 ; CHECK-NEXT:   - Epilogue:        bb.2.for.cond.cleanup
-; CHECK-NEXT:   - EpilogueBundles: '13'
+; CHECK-NEXT:   - EpilogueBundles: '10'
 ; CHECK-NEXT: ...
 entry:
   br label %for.body

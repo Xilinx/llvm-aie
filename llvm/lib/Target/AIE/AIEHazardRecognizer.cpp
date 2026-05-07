@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -557,6 +557,11 @@ bool AIEHazardRecognizer::checkConflict(
       getConflictSet(Desc, *TII->getFormatInterface()), MemoryBanks,
       MemObjectsBits, TII->getMemoryCycles(SchedClass), DeltaCycles,
       std::nullopt);
+}
+
+bool AIEHazardRecognizer::checkConflict(MachineInstr &MI,
+                                        int DeltaCycles) const {
+  return checkConflict(Scoreboard, MI, DeltaCycles);
 }
 
 bool AIEHazardRecognizer::checkConflict(

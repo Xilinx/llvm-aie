@@ -73,6 +73,13 @@ static cl::opt<unsigned> ReservedDelaySlots(
     "aie-reserved-delay-slots", cl::init(0),
     cl::desc("[AIE] Number of delay slots to be left empty"));
 
+static cl::opt<bool> EnableDelaySlotTopDown(
+    "aie-delay-slot-topdown", cl::init(true),
+    cl::desc("[AIE] When top-fixed bundles and a delay slot instruction "
+             "coexist, schedule the whole region top-down and fix up the "
+             "branch position in leaveRegion() instead of forcing bottom-up "
+             "cycles"));
+
 /// This is a testing option. Resetting it prevents inter-block conflicts from
 /// the scoreboard, so that all interblock scheduling effects can be blamed on
 /// the latencies.
@@ -420,24 +427,41 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
                                        : NonConservative);
   initializeTopScoreBoard();
 
-  // Delay slots are scheduled bottom up to be sure the control-flow instruction
-  // is issued exactly TII->getNumDelaySlots() before the end of the region.
+  // Compute RegionTopDownCycles first so the delay slot logic can inspect it.
+  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  RegionTopDownCycles = Reg.getTopFixedBundles().size();
+
+  // Delay slots are normally scheduled bottom-up so the control-flow
+  // instruction is issued exactly TII->getNumDelaySlots() before the end of
+  // the region.  However, when top-fixed bundles are present and
+  // -aie-delay-slot-topdown is enabled, we schedule the whole region top-down
+  // and rely on fixupDelaySlotPosition() (called from leaveRegion) to move
+  // the branch to the correct position afterwards.
   unsigned DelaySlotCycles = 0;
+  PersistentTopDown = false;
   if (MachineInstr *MI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
     auto *TII = getTII(CurMBB);
     assert(RegionEnd != MI->getParent()->instr_end() &&
            TII->isDelayedSchedBarrier(*RegionEnd));
-    // Schedule bottom-up for at least getNumDelaySlots() cycles, and an extra
-    // one for the delay slot instruction itself.
-    DelaySlotCycles = TII->getNumDelaySlots(*MI) + 1;
     unsigned Reserved = std::max(ReservedDelaySlots.getValue(),
                                  TII->getNumReservedDelaySlots(*MI));
     getAIEHazardRecognizer(Bot)->setReservedCycles(Reserved);
+
+    if (RegionTopDownCycles > 0 && EnableDelaySlotTopDown &&
+        Reg.getBotFixedBundles().empty()) {
+      // Top-fixed bundles present, no bot-fixed bundles, and the option is
+      // enabled: schedule fully top-down and fix up the branch position in
+      // leaveRegion(). Bot-fixed bundles are incompatible with this path
+      // because fixupDelaySlotPosition requires BotBundles to be empty.
+      PersistentTopDown = true;
+    } else {
+      // Normal case: force enough bottom-up cycles to place the branch at the
+      // correct distance from the end of the region.
+      DelaySlotCycles = TII->getNumDelaySlots(*MI) + 1;
+    }
   }
 
   RegionBottomUpCycles = std::max(BottomUpCycles.getValue(), DelaySlotCycles);
-  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
-  RegionTopDownCycles = Reg.getTopFixedBundles().size();
   // Start with top-down when we have TopInsert bundles.
   IsTopDown = (RegionBottomUpCycles == 0) || (RegionTopDownCycles > 0);
   if (!IsTopDown) {
@@ -478,8 +502,11 @@ bool AIEPostRASchedStrategy::doesNotProgressInZone(const SchedBoundary &Zone,
   if (isFixedSU(SU, !Zone.isTop()))
     return true;
 
-  // We cannot proceed with delay slot instructions in the top zone.
-  return Zone.isTop() && SU.getInstr()->hasDelaySlot();
+  // We cannot proceed with delay slot instructions in the top zone, unless we
+  // are using the post-scheduling fixup path (PersistentTopDown).  In that
+  // case the branch is allowed to be scheduled anywhere and its position will
+  // be corrected in leaveRegion().
+  return Zone.isTop() && SU.getInstr()->hasDelaySlot() && !PersistentTopDown;
 }
 
 // This function returns true when it is impossible to continue with top-down
@@ -528,11 +555,14 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
     // RegionBottomUpCycles.
     LLVM_DEBUG(dbgs() << "*** Switching to top-down ***\n");
     IsTopDown = true;
-  } else if (IsTopDown && RegionTopDownCycles &&
+  } else if (IsTopDown && RegionTopDownCycles && !PersistentTopDown &&
              (Top.getCurrCycle() >= RegionTopDownCycles ||
               mustSwitchToBottomUp())) {
     // We have scheduled all top-fixed instructions, filling as many slots as
     // possible. Now it is time to proceed with the bottom-up approach.
+    // Note: when PersistentTopDown is true (top-fixed bundles + delay slot),
+    // we stay top-down for the entire region and fix up the branch position
+    // in leaveRegion().
     LLVM_DEBUG(dbgs() << "*** Switching to bottom-up ***\n");
     IsTopDown = false;
   }
@@ -842,6 +872,157 @@ void AIEPostRASchedStrategy::enterRegion(MachineBasicBlock *BB,
   RegionEnd = End;
 }
 
+/// Return the index of the first bundle in \p Bundles that contains \p MI,
+/// or -1 if not found.
+static int findInBundles(ArrayRef<AIE::MachineBundle> Bundles,
+                         const MachineInstr *MI) {
+  auto It = llvm::find_if(Bundles, [MI](const AIE::MachineBundle &B) {
+    return llvm::is_contained(B.getInstrs(), MI);
+  });
+  assert(It != Bundles.end() && "MI not found in any bundle");
+  return static_cast<unsigned>(std::distance(Bundles.begin(), It));
+}
+
+/// Return the MBB iterator at which \p BranchMI should be spliced: just after
+/// the last non-BranchMI instruction in bundles[0..\p PlacedIdx], searching
+/// backward from \p PlacedIdx.
+static MachineBasicBlock::iterator
+computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
+                   MachineInstr *BranchMI, MachineBasicBlock *MBB) {
+  for (int I = static_cast<int>(PlacedIdx); I >= 0; --I) {
+    const auto &Instrs = Bundles[I].getInstrs();
+    auto It =
+        llvm::find_if(llvm::reverse(Instrs),
+                      [BranchMI](MachineInstr *MI) { return MI != BranchMI; });
+    if (It != Instrs.rend())
+      return getBundleEnd((*It)->getIterator());
+  }
+  return MBB->end();
+}
+
+/// Remove \p MI from \p Bundle, keeping Instrs, SlotMap and OccupiedSlots
+/// in sync.
+static void removeFromBundle(AIE::MachineBundle &Bundle, MachineInstr *MI) {
+  auto &Instrs = Bundle.Instrs;
+  Instrs.erase(std::remove(Instrs.begin(), Instrs.end(), MI), Instrs.end());
+  // Remove from SlotMap and update OccupiedSlots.
+  auto MapIt = llvm::find_if(Bundle.SlotMap,
+                             [MI](const auto &P) { return P.second == MI; });
+  assert(MapIt != Bundle.SlotMap.end() && "MI not found in bundle SlotMap");
+  const auto *SlotInfo = Bundle.FormatInterface->getSlotInfo(MapIt->first);
+  assert(SlotInfo && "No SlotInfo for slot containing MI");
+  Bundle.OccupiedSlots &= ~SlotInfo->getSlotSet();
+  Bundle.SlotMap.erase(MapIt);
+}
+
+void AIEPostRASchedStrategy::fixupDelaySlotPosition(
+    std::vector<AIE::MachineBundle> &TopBundles,
+    std::vector<AIE::MachineBundle> &BotBundles, MachineInstr *BranchMI,
+    unsigned NumDelaySlots) {
+
+  // Only reached when PersistentTopDown is true: fully top-down region,
+  // no bot-fixed bundles. All NOPs go into TopBundles, keeping
+  // Top.getCurrCycle() in sync.
+  assert(BotBundles.empty() &&
+         "fixupDelaySlotPosition: BotBundles must be empty on entry");
+
+  const AIEBaseMCFormats *FmtIface = getTII(CurMBB)->getFormatInterface();
+  AIEHazardRecognizer *TopHR = getAIEHazardRecognizer(Top);
+  // Appends one empty NOP to TopBundles and advances Top's scoreboard.
+  auto AppendNop = [&]() {
+    Top.bumpCycle(Top.getCurrCycle() + 1);
+    TopBundles.emplace_back(FmtIface);
+  };
+
+  const int BranchIdx = findInBundles(TopBundles, BranchMI);
+
+  // May increase as NOPs are appended or before the re-placement runs.
+  unsigned BundlesAfterBranch =
+      TopBundles.size() - static_cast<unsigned>(BranchIdx) - 1;
+
+  LLVM_DEBUG({
+    dbgs() << "fixupDelaySlotPosition: BranchIdx=" << BranchIdx
+           << " BundlesAfterBranch=" << BundlesAfterBranch
+           << " NumDelaySlots=" << NumDelaySlots << "\n";
+    for (unsigned I = 0; I < TopBundles.size(); ++I) {
+      dbgs() << "  Bundle[" << I << "]:";
+      for (MachineInstr *MI : TopBundles[I].getInstrs())
+        dbgs() << " "
+               << MI->getMF()->getSubtarget().getInstrInfo()->getName(
+                      MI->getOpcode());
+      dbgs() << "\n";
+    }
+  });
+
+  // Append NOPs until exactly NumDelaySlots bundles follow the branch.
+  // If the inter-zone scoreboard is also clean afterwards, we are done.
+  // Otherwise fall through to resolve the conflict by moving the branch
+  // forward.
+  while (BundlesAfterBranch < NumDelaySlots) {
+    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: appending empty bundle\n");
+    AppendNop();
+    BundlesAfterBranch++;
+  }
+
+  if (BundlesAfterBranch == NumDelaySlots &&
+      !checkInterZoneConflicts(BotBundles)) {
+    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: done, position is correct "
+                         "and scoreboard are aligned.\n");
+    return;
+  }
+
+  // Branch too early (or inter-zone conflict after NOP padding) – extract it
+  // and re-place at a conflict-free slot. Each conflict appends a NOP
+  // (advancing Top's scoreboard), maintaining exactly NumDelaySlots bundles
+  // after the final placement.
+  const unsigned MoveDown = BundlesAfterBranch - NumDelaySlots;
+  const unsigned TargetIdx = static_cast<unsigned>(BranchIdx) + MoveDown;
+
+  LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: extracting branch from bundle "
+                    << BranchIdx << " and placing at/after bundle " << TargetIdx
+                    << "\n");
+
+  // Remove BranchMI from its current bundle.
+  removeFromBundle(TopBundles[BranchIdx], BranchMI);
+
+  // Scan forward from TargetIdx. Delta = -(NumDelaySlots + 1) is constant:
+  // each AppendNop advances the Top scoreboard ring by one slot, so successive
+  // checks probe cycles TargetIdx, TargetIdx+1, ... The branch never conflicts
+  // with its own old booking at a later cycle.
+  const int Delta = -(static_cast<int>(NumDelaySlots) + 1);
+  unsigned PlacedIdx = TargetIdx;
+  while (TopHR->checkConflict(*BranchMI, Delta) ||
+         checkInterZoneConflicts(BotBundles)) {
+    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: conflict at bundle "
+                      << PlacedIdx << ", appending empty bundle\n");
+    AppendNop();
+    ++PlacedIdx;
+  }
+
+  LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: placing branch at bundle "
+                    << PlacedIdx << "\n");
+
+  // Add BranchMI to the chosen bundle and record its resource bookings in the
+  // Top scoreboard so subsequent inter-zone checks are accurate.
+  TopBundles[PlacedIdx].add(BranchMI);
+  TopHR->emitInScoreboard(*BranchMI, BranchMI->getDesc(), Delta);
+
+  // Physically move BranchMI to its correct position in the MBB.
+  CurMBB->splice(computeSplicePoint(TopBundles, PlacedIdx, BranchMI, CurMBB),
+                 CurMBB, BranchMI->getIterator());
+
+  // Now that the branch's resource bookings are in the Top scoreboard,
+  // re-check for inter-zone conflicts caused by the branch itself. If one is
+  // found, append a NOP and recurse (MoveDown = 1). Terminates because the
+  // scoreboard has finite depth.
+  if (checkInterZoneConflicts(BotBundles)) {
+    LLVM_DEBUG(dbgs() << "fixupDelaySlotPosition: post-placement inter-zone "
+                         "conflict, appending NOP and retrying\n");
+    AppendNop();
+    fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
+  }
+}
+
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
 
@@ -863,6 +1044,19 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   std::vector<AIE::MachineBundle> TopBundles = computeAndFinalizeBundles(Top);
   std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(Bot);
   handleRegionConflicts(ExitSU, TopBundles, BotBundles);
+
+  // When the delay slot instruction was scheduled top-down (because top-fixed
+  // bundles were present), fix up its position in the bundle sequence so that
+  // exactly NumDelaySlots bundles follow it.
+  if (PersistentTopDown) {
+    if (MachineInstr *BranchMI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
+      const auto *TII = getTII(CurMBB);
+      const unsigned NumDelaySlots = TII->getNumDelaySlots(*BranchMI);
+      fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
+    }
+    PersistentTopDown = false;
+  }
+
   assert(BS.getCurrentRegion().Bundles.empty());
   BS.addBundles(TopBundles);
   BS.addBundles(BotBundles);

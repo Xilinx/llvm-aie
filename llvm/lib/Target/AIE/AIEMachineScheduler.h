@@ -144,6 +144,11 @@ protected:
   /// Keeps track of the current zone used for scheduling. See getSchedZone().
   bool IsTopDown = true;
 
+  /// When true, the delay slot instruction was allowed to be scheduled in the
+  /// top-down phase (because top-fixed bundles are present).  After scheduling,
+  /// fixupDelaySlotPosition() will reposition it correctly.
+  bool PersistentTopDown = false;
+
   MachineBasicBlock *CurMBB = nullptr;
   MachineBasicBlock::iterator RegionBegin = nullptr;
   MachineBasicBlock::iterator RegionEnd = nullptr;
@@ -175,6 +180,19 @@ protected:
 
   // After scheduling a block, fill in nops, apply bundling, etc.
   void commitBlockSchedule(MachineBasicBlock *BB);
+
+  /// After top-down scheduling of a region that contains a delay slot
+  /// instruction, fix up its position in the bundle sequence so that exactly
+  /// NumDelaySlots bundles follow it.
+  ///
+  /// If the branch ended up too early (too many bundles after it), we try to
+  /// move it down toward the end, checking for resource hazards at each step.
+  /// If moving is not possible, we fall back to appending empty (NOP) bundles
+  /// at the end.  If the branch ended up too late (too few bundles after it),
+  /// we simply append the missing empty bundles.
+  void fixupDelaySlotPosition(std::vector<AIE::MachineBundle> &TopBundles,
+                              std::vector<AIE::MachineBundle> &BotBundles,
+                              MachineInstr *BranchMI, unsigned NumDelaySlots);
 
   // This function returns true when it is impossible to continue with top-down
   // without entering an infinite loop because the only remaining instructions

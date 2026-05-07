@@ -43,7 +43,7 @@ define void @reduceMeanTemplated(ptr noalias %ifm, ptr addrspace(6) noalias %ofm
 ; CHECK-NEXT:   - Prologue:        bb.0.entry
 ; CHECK-NEXT:   - PrologueBundles: '18'
 ; CHECK-NEXT:   - Epilogue:        bb.2.for.cond.cleanup67
-; CHECK-NEXT:   - EpilogueBundles: '17'
+; CHECK-NEXT:   - EpilogueBundles: '11'
 ; CHECK-NEXT: ...
 entry:
   call void @llvm.set.loop.iterations.i32(i32 1)
