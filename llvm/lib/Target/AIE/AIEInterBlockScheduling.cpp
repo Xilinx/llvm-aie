@@ -685,20 +685,37 @@ InterBlockScheduling::getBlockedResourceCap(MachineBasicBlock *BB) const {
 }
 
 void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
-  // First do the (single-block) loops. We don't want these to be constrained
-  // by their epilogues
-  for (auto &[MBB, BS] : Blocks) {
-    if (BS.Kind == BlockType::Loop) {
+  // Membership-only set used to deduplicate pushes across phases.
+  SmallPtrSet<const MachineBasicBlock *, 16> Emitted;
+  auto Push = [&](MachineBasicBlock *MBB) {
+    if (Emitted.insert(MBB).second) {
+      // Insertion into the Scheduling Order.
       MBBSequence.push_back(MBB);
     }
+  };
+
+  // Phase 1: schedule loops first so the loop's own schedule is available
+  // when prologues and epilogues are scheduled.
+  for (MachineBasicBlock &MBB : *MF) {
+    if (getBlockState(&MBB).Kind == BlockType::Loop)
+      Push(&MBB);
   }
 
-  // Then the rest in postorder to optimize the number of already scheduled
-  // successors
+  // Phase 2: for each epilogue, walk its CFG-successor sub-tree in
+  // post-order. post_order(E) ends with E itself, so E is scheduled AFTER
+  // everything reachable from it (its successors are already done -> precise
+  // inter-block latency for E) and BEFORE its non-loop predecessors.
   for (MachineBasicBlock *MBB : post_order(MF)) {
-    if (getBlockState(MBB).Kind != BlockType::Loop) {
-      MBBSequence.push_back(MBB);
-    }
+    if (getBlockState(MBB).Kind != BlockType::Epilogue)
+      continue;
+    for (MachineBasicBlock *Sub : post_order(MBB))
+      Push(Sub);
+  }
+
+  // Phase 3: everything else in post-order to optimize the number of already
+  // scheduled successors.
+  for (MachineBasicBlock *MBB : post_order(MF)) {
+    Push(MBB);
   }
 
   // Now initialize the index to the start.

@@ -346,7 +346,7 @@ class InterBlockScheduling {
   /// latencies converged.
   MachineInstr *latencyConverged(BlockState &BS) const;
 
-  /// After finding the loops, determine the epilogue blocks
+  /// After finding the loops, determine the epilogue blocks.
   void markEpilogueBlocks();
 
   /// define the scheduling order, loops first then the reset bottom-up over
