@@ -80,8 +80,8 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; ASM-NEXT:    lda r2, [p5], m0; mov dj1, #-144
 ; ASM-NEXT:    lda m2, [p5, dj1]; mov dj0, #-48
 ; ASM-NEXT:    lda m0, [p5, dj0]
-; ASM-NEXT:    lda m1, [p5, #-20]
 ; ASM-NEXT:    lda r6, [p5, #0]
+; ASM-NEXT:    lda m1, [p5, #-20]
 ; ASM-NEXT:    lda dn5, [p5, #-28]
 ; ASM-NEXT:    lda dc1, [p5, #-16]
 ; ASM-NEXT:    lda dj5, [p5, #-24]
