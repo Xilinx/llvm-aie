@@ -30,9 +30,9 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-LABEL: _Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_one_of_vIT0_ahS0_7float16EEvPS1_S3_R25avgpool2d_internal_paramsIS1_E:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddxm [sp], #64; nopb ; nopx
-; CHECK-NEXT:    lda.u8 r0, [p2, #0]; st r10, [sp, #-52]; mov m0, #46 // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #-42; paddb [p2], m0; st p6, [sp, #-44] // 4-byte Folded Spill
-; CHECK-NEXT:    lda.s16 r2, [p2], m0; st p7, [sp, #-40] // 4-byte Folded Spill
+; CHECK-NEXT:    lda.u8 r0, [p2, #0]; st p6, [sp, #-44]; mov m0, #46 // 4-byte Folded Spill
+; CHECK-NEXT:    mova m0, #-42; paddb [p2], m0; st p7, [sp, #-40] // 4-byte Folded Spill
+; CHECK-NEXT:    lda.s16 r2, [p2], m0; st r10, [sp, #-52] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r9:r8, [sp, #-64] // 8-byte Folded Spill
 ; CHECK-NEXT:    st lr, [sp, #-56] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r12, [sp, #-48]; jl #__floatsisf // 4-byte Folded Spill
