@@ -32,6 +32,8 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
 
 bool hasIIPragma(const MachineBasicBlock &LoopBlock);
 
+bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch);
+
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,
 /// none otherwise.
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
