@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -207,6 +207,10 @@ class BlockState {
   // This holds an instance of the PostPipeliner for candidate loops.
   std::unique_ptr<PostPipeliner> PostSWP;
 
+  // This holds the information if this is an epilogue of a loop that was
+  // optimized by the outer-loop pipeliner.
+  bool IsEpilogueOfOuterPipelinedLoop = false;
+
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
@@ -287,6 +291,10 @@ public:
   int getSafetyMargin() const;
 
   int getScheduleLength() const;
+
+  bool isEpilogueOfOuterPipelinedLoop() const {
+    return IsEpilogueOfOuterPipelinedLoop;
+  }
 
 protected:
   void classify();

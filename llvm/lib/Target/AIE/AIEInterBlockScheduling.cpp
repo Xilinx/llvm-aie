@@ -1172,6 +1172,11 @@ void BlockState::classify() {
   // We will mark the epilogues in a second sweep, when all states have been
   // constructed. That sweep is driven by the Loops we've classified on
   // construction.
+
+  // We use the classification engine as a place to determine if this block
+  // is the epilogue of an outerloop pipelined loop.
+  IsEpilogueOfOuterPipelinedLoop =
+      AIELoopUtils::isOuterLoopPipelined(*TheBlock);
 }
 
 void BlockState::initInterBlock(const MachineSchedContext &Context,
