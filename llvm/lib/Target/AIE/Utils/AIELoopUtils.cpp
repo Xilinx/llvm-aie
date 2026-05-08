@@ -54,6 +54,15 @@ bool hasIIPragma(const MachineBasicBlock &LoopBlock) {
       .has_value();
 }
 
+bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch) {
+  // This metadata should be inserted by outerloop pipeliner.
+  // We just check the availability. No other pass is expected
+  // to insert this metadata.
+  return getLoopMetadata(getLoopID(LoopLatch),
+                         "llvm.loop.hint.aie_outerloop_pipeliner_success")
+      .has_value();
+}
+
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   if (getLoopMetadata(getLoopID(LoopBlock), "llvm.loop.pipeline.disable"))
     return true;
