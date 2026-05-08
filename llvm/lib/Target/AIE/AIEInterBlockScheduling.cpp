@@ -19,6 +19,7 @@
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
+#include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -75,6 +76,10 @@ static cl::opt<bool> MaterializePipeline(
 static cl::opt<int> PostPipelinerMaxTryII(
     "aie-postpipeliner-maxtry-ii", cl::init(20),
     cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
+
+static cl::opt<bool> PostSchedIgnoreMemoryDeps(
+    "aie-safe-to-ignore-memory-deps", cl::init(false),
+    cl::desc("Ignore memory deps when we know that it is safe."));
 
 namespace llvm::AIE {
 
@@ -1109,6 +1114,7 @@ Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
 
 BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
   classify();
+  setBlockProperties();
 }
 
 // This safety margin is independent of the successor block, and is therefore
@@ -1172,11 +1178,21 @@ void BlockState::classify() {
   // We will mark the epilogues in a second sweep, when all states have been
   // constructed. That sweep is driven by the Loops we've classified on
   // construction.
+}
 
+void BlockState::setBlockProperties() {
   // We use the classification engine as a place to determine if this block
   // is the epilogue of an outerloop pipelined loop.
   IsEpilogueOfOuterPipelinedLoop =
       AIELoopUtils::isOuterLoopPipelined(*TheBlock);
+
+  // We never skip AA check. Except for epilogues of outer-pipelined loops.
+  // This is a pre-condition of the optimization (sometimes restrict information
+  // may not help).
+  auto Overrides = AIE::LoopOptionOverrides(*TheBlock);
+  IsSafeToIgnoreMemDeps = IsEpilogueOfOuterPipelinedLoop
+                              ? true
+                              : Overrides.get(PostSchedIgnoreMemoryDeps);
 }
 
 void BlockState::initInterBlock(const MachineSchedContext &Context,
