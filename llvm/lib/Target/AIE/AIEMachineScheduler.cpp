@@ -1571,6 +1571,10 @@ SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
 
 bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
   BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
+
+  if (BS.isSafeToIgnoreMemDeps())
+    return false;
+
   if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
     int NInstr = BS.getCurrentRegion().getFreeInstructions().size();
     int IterA = SUa->NodeNum / NInstr;

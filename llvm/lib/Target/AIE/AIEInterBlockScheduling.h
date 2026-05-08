@@ -211,6 +211,12 @@ class BlockState {
   // optimized by the outer-loop pipeliner.
   bool IsEpilogueOfOuterPipelinedLoop = false;
 
+  // This holds the information wether is safe to drop memory dependencies,
+  // for example, a load -> process -> store using the same pointer, where
+  // we know that the store will never overwrite a memory position that
+  // will be loaded in a further iteration.
+  bool IsSafeToIgnoreMemDeps = false;
+
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
@@ -296,8 +302,11 @@ public:
     return IsEpilogueOfOuterPipelinedLoop;
   }
 
+  bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
+
 protected:
   void classify();
+  void setBlockProperties();
 };
 
 // Represents how accurate our successor information is
