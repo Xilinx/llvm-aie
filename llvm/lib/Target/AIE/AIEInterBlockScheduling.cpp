@@ -698,21 +698,23 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
   }
 
   // Phase 2: for each epilogue, walk its CFG-successor sub-tree in
-  // post-order. post_order(E) ends with E itself, so E is scheduled AFTER
-  // everything reachable from it (its successors are already done -> precise
-  // inter-block latency for E) and BEFORE its non-loop predecessors. The
-  // latter is what keeps MaxLatencyFinder in precise mode for SWP prologues
-  // when they reach phase 3.
+  // post-order, but SKIP the epilogue itself. This pre-schedules everything
+  // reachable from the epilogue (so those blocks have their successors
+  // already done -> precise inter-block latency), while leaving the
+  // epilogue itself to be emitted by phase 3 at its natural post-order
+  // position in the function CFG.
   for (auto &[MBB, BS] : Blocks) {
-    if (BS.Kind == BlockType::Epilogue) {
-      for (MachineBasicBlock *Sub : post_order(MBB)) {
-        Push(Sub);
-      }
+    if (BS.Kind != BlockType::Epilogue)
+      continue;
+    for (MachineBasicBlock *Sub : post_order(MBB)) {
+      if (Sub == MBB)
+        continue;
+      Push(Sub);
     }
   }
 
   // Phase 3: everything else in post-order to optimize the number of already
-  // scheduled successors.
+  // scheduled successors. This is where the epilogues get emitted.
   for (MachineBasicBlock *MBB : post_order(MF)) {
     Push(MBB);
   }
