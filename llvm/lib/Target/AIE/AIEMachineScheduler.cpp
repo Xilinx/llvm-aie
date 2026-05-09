@@ -414,6 +414,20 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   // as found in the top regions of the successor blocks. If we don't know,
   // assume the worst.
   const bool Conservative = !(IsBottomRegion && successorsAreScheduled(CurMBB));
+  // Regions are entered bottom-up by the post-RA scheduler, so Regions[0] is
+  // the bottom region of the MBB and Regions[size-1] is the top one. The
+  // index below therefore counts from the bottom up.
+  const auto &RegionsRef = InterBlock.getBlockState(CurMBB).getRegions();
+  const unsigned RegionFromBottom =
+      &InterBlock.getBlockState(CurMBB).getCurrentRegion() - RegionsRef.data();
+  DEBUG_BLOCKS({
+    dbgs() << "MBB=" << CurMBB->getNumber();
+    if (RegionsRef.size() > 1)
+      dbgs() << " RegionFromBottom=" << RegionFromBottom << "/"
+             << RegionsRef.size();
+    dbgs() << " IsBottomRegion=" << (IsBottomRegion ? "true" : "false")
+           << " CONSERVATIVE=" << (Conservative ? "true" : "false") << "\n";
+  });
   const ScoreboardTrust NonConservative = InterBlockAlignment
                                               ? ScoreboardTrust::AccountForAlign
                                               : ScoreboardTrust::Absolute;

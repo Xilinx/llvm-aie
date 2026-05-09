@@ -1,0 +1,145 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=sched-blocks \
+# RUN: --aie-loop-aware=1 %s -o /dev/null |& FileCheck %s
+# REQUIRES: asserts
+
+# Pin down the conservative-scoreboard regression for the epilogue's
+# fallthrough.
+#
+# CFG:
+#   bb.0  (outer-loop header / inner-loop pre-header) <----+
+#    |                                                     |
+#    v                                                     | outer
+#   bb.1  (single-MBB inner Loop, self-edge + exit)        | backedge
+#    |                                                     |
+#    v                                                     |
+#   bb.2  (Epilogue of bb.1, also outer-loop latch) -------+
+#    |  fallthrough
+#    v
+#   bb.3  (epilogue's fallthrough; only successor is bb.4)
+#    |
+#    v
+#   bb.4  (RET)
+#
+# bb.3 is a plain fallthrough block whose only successor (bb.4) is scheduled
+# before it, yet its bottom scoreboard is currently initialized
+# CONSERVATIVE=true. This test locks that suboptimal behaviour so a future
+# fix flips the CHECK in a single, reviewable diff.
+---
+name:            epiFallthroughOuterBackedge
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: epiFallthroughOuterBackedge
+  ;
+  ; Phase 1 (Loop) then post_order(Epilogue) for Phase 2.
+  ; CHECK: MBB scheduling sequence : 1 -> 0 -> 4 -> 3 -> 2 ->
+  ;
+  ; Per-(MBB, region) scoreboard-trust trace. All blocks are single-region
+  ; here so the RegionFromBottom field is omitted.
+  ; CHECK:     MBB=1 IsBottomRegion=true CONSERVATIVE=true
+  ; CHECK:     MBB=4 IsBottomRegion=true CONSERVATIVE=true
+  ; CHECK:     MBB=3 IsBottomRegion=true CONSERVATIVE=false
+  ; CHECK:     MBB=2 IsBottomRegion=true CONSERVATIVE=false
+  bb.0:
+    liveins: $r0, $r1
+    successors: %bb.1
+  bb.1:
+    liveins: $r0, $r1
+    successors: %bb.1, %bb.2
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.2:
+    liveins: $r0, $r1
+    successors: %bb.0, %bb.3
+    $r1 = ADD_add_r_ri $r1, -1, implicit-def $srcarry
+    JNZ $r1, %bb.0
+    DelayedSchedBarrier
+  bb.3:
+    liveins: $r0
+    successors: %bb.4
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+  bb.4:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+# Same outer-loop / inner-loop shape, but the outer loop body now contains a
+# diamond branch BEFORE the innermost loop. Both arms join on a shared
+# fallthrough block (bb.2) sitting right in front of the inner loop:
+#
+#   bb.0  (outer header) <-------------------------------------------+
+#    |  JNZ  \                                                       |
+#    |        \                                                      |
+#    v         \                                                     |
+#   bb.1        \                                                    |
+#    | fallth.   \                                                   | outer
+#    v            \                                                  | backedge
+#   bb.2  <--------+   (shared fallthrough right before inner loop)  |
+#    |                                                               |
+#    v                                                               |
+#   bb.3  (inner Loop, self-edge + exit)                             |
+#    |                                                               |
+#    v                                                               |
+#   bb.4  (Epilogue of bb.3, also outer-loop latch) -----------------+
+#    |  fallthrough
+#    v
+#   bb.5  (epilogue's fallthrough; only successor is bb.6)
+#    |
+#    v
+#   bb.6  (RET)
+---
+name:            epiFallthroughOuterBackedgeWithBranch
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: epiFallthroughOuterBackedgeWithBranch
+  ;
+  ; CHECK: MBB scheduling sequence : 3 -> 2 -> 1 -> 0 -> 6 -> 5 -> 4 ->
+  ;
+  ; bb.2 is empty (no instructions, no scheduling regions) so it does not
+  ; appear in the trace. Both bb.5 (epilogue's fallthrough) and bb.4
+  ; (epilogue) come out CONSERVATIVE=false because their successors are
+  ; already scheduled by the time they are visited.
+  ; CHECK:     MBB=3 IsBottomRegion=true CONSERVATIVE=true
+  ; CHECK:     MBB=1 IsBottomRegion=true CONSERVATIVE=false
+  ; CHECK:     MBB=0 IsBottomRegion=true CONSERVATIVE=false
+  ; CHECK:     MBB=6 IsBottomRegion=true CONSERVATIVE=true
+  ; CHECK:     MBB=5 IsBottomRegion=true CONSERVATIVE=false
+  ; CHECK:     MBB=4 IsBottomRegion=true CONSERVATIVE=false
+  bb.0:
+    liveins: $r0, $r1, $r2
+    successors: %bb.1, %bb.2
+    JNZ $r2, %bb.2
+    DelayedSchedBarrier
+  bb.1:
+    liveins: $r0, $r1, $r2
+    successors: %bb.2
+    $r2 = ADD_add_r_ri $r2, 1, implicit-def $srcarry
+  bb.2:
+    liveins: $r0, $r1
+    successors: %bb.3
+  bb.3:
+    liveins: $r0, $r1
+    successors: %bb.3, %bb.4
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+    JNZ $r0, %bb.3
+    DelayedSchedBarrier
+  bb.4:
+    liveins: $r0, $r1, $r2
+    successors: %bb.0, %bb.5
+    $r1 = ADD_add_r_ri $r1, -1, implicit-def $srcarry
+    JNZ $r1, %bb.0
+    DelayedSchedBarrier
+  bb.5:
+    liveins: $r0
+    successors: %bb.6
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+  bb.6:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
