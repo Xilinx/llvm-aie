@@ -67,6 +67,13 @@ static const llvm::InstrStage MockStages[] = {
     {6, 2, 0, Req},
     {6, 3, 0, Req},
 
+    // Class 13: store-port resource 7 at cycle 4 (matches mem cycle 5)
+    {0, 16, 4, Req},
+    {1, 7, 1, Req},
+    // Class 14: store-port resource 7 at cycle 5 (matches mem cycle 6)
+    {0, 16, 5, Req},
+    {1, 7, 1, Req},
+
 };
 
 class MockItineraries : public InstrItineraryData {
@@ -90,12 +97,18 @@ public:
       return {MockStages + 6, 2};
     case 12:
       return {MockStages + 8, 4};
+    // Class 13: store-port resource at mem-access cycle 5.
+    case 13:
+      return {MockStages + 16, 2};
+    // Class 14: store-port resource at mem-access cycle 6.
+    case 14:
+      return {MockStages + 18, 2};
     default:
       return {MockStages, 1};
     }
   }
   bool isEndMarker(unsigned SchedClass) const override {
-    return SchedClass > 12;
+    return SchedClass > 14;
   }
   bool isEmpty() const override { return false; }
   std::optional<unsigned> getOperandCycle(unsigned SchedClass,
@@ -614,4 +627,57 @@ TEST(HazardRecognizer, objectConflictHazard) {
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
                          /*ObjectsBits=*/0b101,
                          /*MemoryAccessCycle=*/{6}));
+}
+
+/// Two same-class stores at the same emission cycle conflict on the
+/// shared store-port resource (and the slot in real AIE), even with
+/// MemoryBanks=0.
+TEST(HazardRecognizer, storeStoreSameMemoryCycleSerializes) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  HR.emit(13, 0, /*SlotSet=*/0b1, /*MemoryBanks=*/0, /*ObjectsBits=*/0,
+          /*MemoryAccessCycle=*/{5});
+
+  // Slot + resource both fire.
+  EXPECT_TRUE(HR.hazard(13, 0, /*SlotSet=*/0b1, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{5}));
+
+  // Resource alone catches it without slot bits.
+  EXPECT_TRUE(HR.hazard(13, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{5}));
+
+  // One cycle apart -> no overlap.
+  EXPECT_FALSE(HR.hazard(13, 1, /*SlotSet=*/0b1, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazard(13, -1, /*SlotSet=*/0b1, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{5}));
+}
+
+/// Stores in classes 13 (mem 5) and 14 (mem 6) collide on the slot at
+/// the same emission cycle, and on the shared resource at delta=-1
+/// where their resource cycles align at scoreboard cycle 4.
+TEST(HazardRecognizer, storeStoreDifferentMemoryCycleSerializes) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  // Emit's resource lands at scoreboard cycle 4.
+  HR.emit(13, 0, /*SlotSet=*/0b1, /*MemoryBanks=*/0, /*ObjectsBits=*/0,
+          /*MemoryAccessCycle=*/{5});
+
+  // Same-cycle: slot fires (resources at 4 vs 5 don't overlap).
+  EXPECT_TRUE(HR.hazard(14, 0, /*SlotSet=*/0b1, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{6}));
+
+  // delta=-1: resource at -1+5=4 aligns with emit's resource.
+  EXPECT_TRUE(HR.hazard(14, -1, /*SlotSet=*/0b1, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{6}));
+
+  // Same staggered case, resource alone (no slot).
+  EXPECT_TRUE(HR.hazard(14, -1, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{6}));
+
+  // Same cycle without slot, resources don't overlap -> no hazard.
+  EXPECT_FALSE(HR.hazard(14, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{6}));
 }
