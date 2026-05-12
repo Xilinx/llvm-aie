@@ -2,35 +2,39 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 ;
-; Pre-commit test for llvm-aie#480. Documents the current status quo on
-; AIE2: under -O2, the LoopVectorizer and SLP create sub-512-bit vector
-; arithmetic ops (e.g., <4 x i8>, <2 x i16>) without target guidance.
-; The AIE2 GlobalISel Legalizer only has rules for 512-bit vector
-; arithmetic (V64S8, V32S16, V16S32), so the resulting IR cannot be
-; legalized and llc aborts with a fatal error.
+; Regression test for llvm-aie#480: vectorizers must not create sub-512-bit
+; vector arithmetic on AIE2. The GlobalISel Legalizer only has rules for
+; 512-bit vector arithmetic (V64S8, V32S16, V16S32).
 ;
-; The first RUN line captures the sub-512-bit vectorization in the
-; optimizer output. The second RUN line confirms the legalization crash
-; via `not --crash` plus a FileCheck on the error message.
+; Three TTI overrides prevent this:
+;   - getRegisterBitWidth(RGK_FixedWidthVector) = 512: prevents the loop
+;     vectorizer from choosing sub-512-bit VF (e.g., VF=4 -> <4 x i8>).
+;   - getMinVectorRegisterBitWidth() = 512: prevents the SLP vectorizer
+;     from creating sub-512-bit vectors via its minimum size check.
+;   - getArithmeticInstrCost() = Invalid for sub-512-bit: prevents the SLP
+;     vectorizer's cost model from treating <8 x i8> adds as profitable
+;     (after loop unrolling, SLP may find adjacent scalar ops to vectorize).
 ;
-; A subsequent commit adds TTI overrides that change this behavior and
-; updates both RUN lines and CHECK patterns to match the fixed state.
+; The first RUN line verifies the optimizer creates 512-bit vectors (V64S8),
+; not sub-512-bit ones. The second RUN line verifies the full pipeline compiles.
 
 ; RUN: opt -mtriple=aie2 -O2 -S < %s | FileCheck %s
-; RUN: opt -mtriple=aie2 -O2 -S < %s 2>/dev/null | \
-; RUN:   not --crash llc --march=aie2 -O2 --function-sections --filetype=obj -o /dev/null 2>&1 | \
-; RUN:   FileCheck %s --check-prefix=CRASH
+; RUN: opt -mtriple=aie2 -O2 -S < %s | \
+; RUN:   llc --march=aie2 -O2 --function-sections --filetype=obj -o /dev/null
 
 ; --------------------------------------------------------------------------
 ; Test 1: Large trip count loop (vectorized by LoopVectorize).
-; Without getRegisterBitWidth = 512, the vectorizer picks VF=4 for i8 and
-; emits <4 x i8> adds rather than the V64S8 width AIE2 can legalize.
+; Without getRegisterBitWidth = 512, the vectorizer creates <4 x i8> adds.
+; With the fix, it creates <64 x i8> adds (512-bit, matching V64S8).
 
 ; CHECK-LABEL: @add_i8_kernel
-; CHECK: add <4 x i8>
-; CHECK-NOT: add <64 x i8>
+; CHECK: add <64 x i8>
+; CHECK-NOT: add <4 x i8>
+; CHECK-NOT: add <8 x i8>
+; CHECK-NOT: add <16 x i8>
+; CHECK-NOT: add <32 x i8>
 
 @buf_in = external global [4096 x i8]
 @buf_out = external global [4096 x i8]
@@ -69,14 +73,14 @@ done:
 
 ; --------------------------------------------------------------------------
 ; Test 2: Small trip count loop (unrolled, then SLP attempts to vectorize).
-; After unrolling, SLP finds adjacent scalar adds. Without the
+; After unrolling, SLP finds 8 adjacent scalar adds. Without the
 ; getArithmeticInstrCost override returning Invalid for sub-512-bit vectors,
-; SLP's cost model treats sub-512-bit vector adds as profitable and emits
-; <4 x i8> adds (32-bit, illegal on AIE2).
+; SLP would create <8 x i8> adds (64-bit, illegal) because its cost model
+; thinks vector add costs 1 vs scalar cost 8.
 
 ; CHECK-LABEL: @add_i8_small_kernel
-; CHECK: add <4 x i8>
-; CHECK-NOT: add <64 x i8>
+; CHECK-NOT: add <8 x i8>
+; CHECK-NOT: add <4 x i8>
 
 @small_in = external global [8 x i8]
 @small_out = external global [8 x i8]
@@ -107,12 +111,12 @@ exit:
 }
 
 ; --------------------------------------------------------------------------
-; Test 3: i16 variant. Without the override, VF=2 produces <2 x i16> adds
-; instead of the V32S16 width AIE2 can legalize.
+; Test 3: i16 variant to verify 512-bit vectorization (V32S16).
 
 ; CHECK-LABEL: @add_i16_kernel
-; CHECK: add <2 x i16>
-; CHECK-NOT: add <32 x i16>
+; CHECK: add <32 x i16>
+; CHECK-NOT: add <2 x i16>
+; CHECK-NOT: add <4 x i16>
 
 @buf_in_i16 = external global [1024 x i16]
 @buf_out_i16 = external global [1024 x i16]
@@ -134,11 +138,3 @@ loop:
 exit:
   ret void
 }
-
-; --------------------------------------------------------------------------
-; CRASH-prefix checks: full-pipeline `llc` aborts at GlobalISel legalization
-; on the sub-512-bit G_ADD produced by Test 1's vectorized loop.
-
-; CRASH: LLVM ERROR: unable to legalize instruction
-; CRASH-SAME: G_ADD
-; CRASH-SAME: in function: add_i8_kernel
