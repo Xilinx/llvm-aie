@@ -95,3 +95,69 @@ define <32 x i16> @test_aligned_v32i16_load(ptr align 64 dereferenceable(64) %p)
   %splat = shufflevector <32 x i16> %insert, <32 x i16> poison, <32 x i32> zeroinitializer
   ret <32 x i16> %splat
 }
+
+; The cases above exercise widenSubvectorLoad (shufflevector input). The
+; cases below exercise vectorizeLoadInsert (insertelement directly returned,
+; no shufflevector in source). vectorizeLoadInsert reads
+; getMinVectorRegisterBitWidth() to choose the load width directly, so it
+; is the path most affected by the AIE 512-bit override (llvm-aie#480).
+;
+; With the override, scalar loads here widen to a 512-bit vector load
+; followed by a shuffle that picks element 0 and leaves the rest poison.
+; The wider IR-level load lowers to the natural width: for a 256-bit output
+; type, llc emits a single 256-bit `vldb wl0, [p0, #0]` -- the backend
+; narrows the load when the shuffle's poison mask makes the upper half
+; dead. Codegen is identical to a plain 256-bit IR load.
+
+define <32 x i16> @test_loadinsert_i16_to_v32i16(ptr align 64 dereferenceable(64) %p) {
+; CHECK-LABEL: @test_loadinsert_i16_to_v32i16(
+; CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i16>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    ret <32 x i16> [[TMP1]]
+;
+  %scalar = load i16, ptr %p, align 64
+  %insert = insertelement <32 x i16> poison, i16 %scalar, i64 0
+  ret <32 x i16> %insert
+}
+
+define <16 x i16> @test_loadinsert_i16_to_v16i16(ptr align 64 dereferenceable(64) %p) {
+; CHECK-LABEL: @test_loadinsert_i16_to_v16i16(
+; CHECK-NEXT:    [[INSERT:%.*]] = load <16 x i16>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    ret <16 x i16> [[INSERT]]
+;
+  %scalar = load i16, ptr %p, align 64
+  %insert = insertelement <16 x i16> poison, i16 %scalar, i64 0
+  ret <16 x i16> %insert
+}
+
+define <8 x i32> @test_loadinsert_i32_to_v8i32(ptr align 64 dereferenceable(64) %p) {
+; CHECK-LABEL: @test_loadinsert_i32_to_v8i32(
+; CHECK-NEXT:    [[INSERT:%.*]] = load <8 x i32>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    ret <8 x i32> [[INSERT]]
+;
+  %scalar = load i32, ptr %p, align 64
+  %insert = insertelement <8 x i32> poison, i32 %scalar, i64 0
+  ret <8 x i32> %insert
+}
+
+define <32 x i8> @test_loadinsert_i8_to_v32i8(ptr align 64 dereferenceable(64) %p) {
+; CHECK-LABEL: @test_loadinsert_i8_to_v32i8(
+; CHECK-NEXT:    [[INSERT:%.*]] = load <32 x i8>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    ret <32 x i8> [[INSERT]]
+;
+  %scalar = load i8, ptr %p, align 64
+  %insert = insertelement <32 x i8> poison, i8 %scalar, i64 0
+  ret <32 x i8> %insert
+}
+
+; Insufficient dereferenceable bytes for a 512-bit load: the gating in
+; vectorizeLoadInsert bails, leaving the scalar load and insertelement
+; intact. This guards the deref check.
+define <16 x i16> @test_loadinsert_i16_short_deref(ptr align 32 dereferenceable(32) %p) {
+; CHECK-LABEL: @test_loadinsert_i16_short_deref(
+; CHECK-NEXT:    [[INSERT:%.*]] = load <16 x i16>, ptr [[P:%.*]], align 32
+; CHECK-NEXT:    ret <16 x i16> [[INSERT]]
+;
+  %scalar = load i16, ptr %p, align 32
+  %insert = insertelement <16 x i16> poison, i16 %scalar, i64 0
+  ret <16 x i16> %insert
+}
