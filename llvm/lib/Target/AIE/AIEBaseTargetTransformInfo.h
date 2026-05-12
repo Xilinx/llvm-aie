@@ -104,6 +104,61 @@ public:
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
 
+  // AIE vector arithmetic operates on 512-bit registers. The default
+  // getRegisterBitWidth returns 32 (scalar width), which causes the loop
+  // vectorizer to choose VF=4 for i8, creating <4 x i8> vectors. The
+  // GlobalISel Legalizer only has rules for 512-bit vector arithmetic
+  // (V64S8, V32S16, V16S32), so sub-512-bit vector ops are illegal.
+  // Return 512 for vector register kinds to match the legal types.
+  //
+  // See {AIE1,AIE2,AIE2P,AIE2PS}LegalizerInfo.cpp for the authoritative
+  // legal-types list (search for `legalFor({V16S32, V32S16, V64S8})` on the
+  // G_ADD/G_SUB/G_XOR rules; AIE1 has no legal vector arithmetic). If a
+  // future target legalizes additional widths, the three TTI overrides
+  // below must be revisited.
+  TypeSize getRegisterBitWidth(TargetTransformInfo::RegisterKind K) const {
+    switch (K) {
+    case TargetTransformInfo::RGK_Scalar:
+      return TypeSize::getFixed(32);
+    case TargetTransformInfo::RGK_FixedWidthVector:
+      return TypeSize::getFixed(512);
+    case TargetTransformInfo::RGK_ScalableVector:
+      // Use a scalable TypeSize to represent "no scalable vector registers".
+      return TypeSize::getScalable(0);
+    }
+    llvm_unreachable("Unsupported register kind");
+  }
+
+  // Minimum vector width for the SLP vectorizer and VectorCombine.
+  // Must match the Legalizer's supported vector arithmetic widths (512-bit).
+  unsigned getMinVectorRegisterBitWidth() const { return 512; }
+
+  // AIE vector arithmetic only supports 512-bit operations (V64S8, V32S16,
+  // V16S32). Sub-512-bit vector ops like <8 x i8> are illegal in the
+  // GlobalISel Legalizer and would crash during code generation. Return
+  // Invalid cost to prevent vectorizers (especially SLP) from creating them.
+  //
+  // The < 512 width filter is conservative on the upper end: a 512-bit
+  // vector that is not in the legal-arithmetic list (e.g. V8S64) would also
+  // be illegal, but no current vectorizer pass produces such types from AIE
+  // workloads in practice. Querying LegalizerInfo directly from TTI would be
+  // the precise solution but is a cross-layer violation -- TTI operates on
+  // LLVM IR types during mid-level optimization, while LegalizerInfo uses
+  // LLT machine types and is only initialized when GlobalISel is active.
+  // No upstream LLVM target queries LegalizerInfo from TTI.
+  InstructionCost getArithmeticInstrCost(
+      unsigned Opcode, Type *Ty, TTI::TargetCostKind CostKind,
+      TTI::OperandValueInfo Opd1Info = {TTI::OK_AnyValue, TTI::OP_None},
+      TTI::OperandValueInfo Opd2Info = {TTI::OK_AnyValue, TTI::OP_None},
+      ArrayRef<const Value *> Args = {}, const Instruction *CxtI = nullptr) {
+    if (auto *VTy = dyn_cast<FixedVectorType>(Ty)) {
+      if (VTy->getPrimitiveSizeInBits() < 512)
+        return InstructionCost::getInvalid();
+    }
+    return BaseT::getArithmeticInstrCost(Opcode, Ty, CostKind, Opd1Info,
+                                         Opd2Info, Args, CxtI);
+  }
+
   // We define a store vector factor of  4 for 8-bit and 2 for 16-bit. This
   // allows combining 2 16-bit stores or 4 8-bit stores into a single 32-bit
   // vector store. This is deemed beneficial because of the LMS nature of

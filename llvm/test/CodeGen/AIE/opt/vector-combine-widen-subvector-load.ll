@@ -112,7 +112,8 @@ define <32 x i16> @test_aligned_v32i16_load(ptr align 64 dereferenceable(64) %p)
 define <32 x i16> @test_loadinsert_i16_to_v32i16(ptr align 64 dereferenceable(64) %p) {
 ; CHECK-LABEL: @test_loadinsert_i16_to_v32i16(
 ; CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i16>, ptr [[P:%.*]], align 64
-; CHECK-NEXT:    ret <32 x i16> [[TMP1]]
+; CHECK-NEXT:    [[INSERT:%.*]] = shufflevector <32 x i16> [[TMP1]], <32 x i16> poison, <32 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+; CHECK-NEXT:    ret <32 x i16> [[INSERT]]
 ;
   %scalar = load i16, ptr %p, align 64
   %insert = insertelement <32 x i16> poison, i16 %scalar, i64 0
@@ -121,7 +122,8 @@ define <32 x i16> @test_loadinsert_i16_to_v32i16(ptr align 64 dereferenceable(64
 
 define <16 x i16> @test_loadinsert_i16_to_v16i16(ptr align 64 dereferenceable(64) %p) {
 ; CHECK-LABEL: @test_loadinsert_i16_to_v16i16(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <16 x i16>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i16>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    [[INSERT:%.*]] = shufflevector <32 x i16> [[TMP1]], <32 x i16> poison, <16 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 ; CHECK-NEXT:    ret <16 x i16> [[INSERT]]
 ;
   %scalar = load i16, ptr %p, align 64
@@ -131,7 +133,8 @@ define <16 x i16> @test_loadinsert_i16_to_v16i16(ptr align 64 dereferenceable(64
 
 define <8 x i32> @test_loadinsert_i32_to_v8i32(ptr align 64 dereferenceable(64) %p) {
 ; CHECK-LABEL: @test_loadinsert_i32_to_v8i32(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <8 x i32>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    [[TMP1:%.*]] = load <16 x i32>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    [[INSERT:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <8 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 ; CHECK-NEXT:    ret <8 x i32> [[INSERT]]
 ;
   %scalar = load i32, ptr %p, align 64
@@ -141,7 +144,8 @@ define <8 x i32> @test_loadinsert_i32_to_v8i32(ptr align 64 dereferenceable(64) 
 
 define <32 x i8> @test_loadinsert_i8_to_v32i8(ptr align 64 dereferenceable(64) %p) {
 ; CHECK-LABEL: @test_loadinsert_i8_to_v32i8(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <32 x i8>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    [[TMP1:%.*]] = load <64 x i8>, ptr [[P:%.*]], align 64
+; CHECK-NEXT:    [[INSERT:%.*]] = shufflevector <64 x i8> [[TMP1]], <64 x i8> poison, <32 x i32> <i32 0, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
 ; CHECK-NEXT:    ret <32 x i8> [[INSERT]]
 ;
   %scalar = load i8, ptr %p, align 64
@@ -154,7 +158,8 @@ define <32 x i8> @test_loadinsert_i8_to_v32i8(ptr align 64 dereferenceable(64) %
 ; intact. This guards the deref check.
 define <16 x i16> @test_loadinsert_i16_short_deref(ptr align 32 dereferenceable(32) %p) {
 ; CHECK-LABEL: @test_loadinsert_i16_short_deref(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <16 x i16>, ptr [[P:%.*]], align 32
+; CHECK-NEXT:    [[SCALAR:%.*]] = load i16, ptr [[P:%.*]], align 32
+; CHECK-NEXT:    [[INSERT:%.*]] = insertelement <16 x i16> poison, i16 [[SCALAR]], i64 0
 ; CHECK-NEXT:    ret <16 x i16> [[INSERT]]
 ;
   %scalar = load i16, ptr %p, align 32
