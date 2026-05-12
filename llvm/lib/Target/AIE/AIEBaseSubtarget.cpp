@@ -16,6 +16,7 @@
 #include "AIE.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEInterBlockScheduling.h"
+#include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIERegMemEventTracker.h"
@@ -156,6 +157,17 @@ void AIEBaseSubtarget::adjustSchedDependency(
 
 const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
   return static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
+}
+
+std::optional<Register>
+AIEBaseSubtarget::getSpillGroupOriginal(const MachineFunction &MF,
+                                        Register VirtReg) const {
+  // The MFI is created lazily; if for some reason the MF has not allocated one
+  // (e.g. very early in pipeline), there is nothing to look up.
+  const auto *MFI = MF.getInfo<AIEMachineFunctionInfo>();
+  if (!MFI)
+    return std::nullopt;
+  return MFI->getSpillGroupOriginal(VirtReg);
 }
 
 namespace {

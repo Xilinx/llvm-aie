@@ -96,6 +96,13 @@ public:
 
   // All AIE targets need post scheduling for correct instruction timing
   bool forcePostRAScheduling() const override { return true; }
+
+  /// See TargetSubtargetInfo::getSpillGroupOriginal. Forwards to the side map
+  /// in AIEMachineFunctionInfo populated by AIE register-rewriter passes when
+  /// they sever the VRM split-from chain for correctness.
+  std::optional<Register>
+  getSpillGroupOriginal(const MachineFunction &MF,
+                        Register VirtReg) const override;
 };
 } // namespace llvm
 
