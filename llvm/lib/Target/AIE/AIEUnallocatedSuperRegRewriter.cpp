@@ -244,7 +244,7 @@ bool AIEUnallocatedSuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
                     DebugVars);
 
   // Prevent SplitKit from rematerializing through stale ancestor LIs.
-  AIESuperRegUtils::clearStaleSplitFromMappings(TaintedOriginals, MRI, VRM);
+  AIESuperRegUtils::clearStaleSplitFromMappings(TaintedOriginals, MF, MRI, VRM);
 
   LLVM_DEBUG(dbgs() << "Successfully rewrote " << Info.RewritableRegs.size()
                     << " register(s)\n");

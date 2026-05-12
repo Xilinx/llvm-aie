@@ -10,6 +10,7 @@
 #include "AIESuperRegUtils.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEMachineFunctionInfo.h"
 #include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
@@ -405,9 +406,16 @@ bool isRegUsedBy2DOr3DInstruction(const MachineRegisterInfo &MRI,
 }
 
 void clearStaleSplitFromMappings(const SmallSet<Register, 8> &TaintedOriginals,
-                                 MachineRegisterInfo &MRI, VirtRegMap &VRM) {
+                                 MachineFunction &MF, MachineRegisterInfo &MRI,
+                                 VirtRegMap &VRM) {
   if (TaintedOriginals.empty())
     return;
+
+  // Record the pre-severance "logical group original" in the target-side
+  // side map so that InlineSpiller (via TargetSubtargetInfo::
+  // getSpillGroupOriginal) can still merge sibling spills onto a shared
+  // stack slot after we cut the VRM split-from chain below.
+  auto *MFI = MF.getInfo<AIEMachineFunctionInfo>();
 
   for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
     const Register V = Register::index2VirtReg(I);
@@ -420,10 +428,15 @@ void clearStaleSplitFromMappings(const SmallSet<Register, 8> &TaintedOriginals,
     LLVM_DEBUG({
       const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
       dbgs() << "  Clearing stale split-from for " << printReg(V, TRI, 0, &MRI)
-             << " (was split from " << printReg(Orig, TRI, 0, &MRI) << ")\n";
+             << " (was split from " << printReg(Orig, TRI, 0, &MRI)
+             << "); recorded for spill-group sharing\n";
     });
+    // Remember the chain so InlineSpiller can still group V's spills with
+    // the rest of Orig's descendants on a shared stack slot.
+    if (MFI)
+      MFI->recordSpillGroupOriginal(V, Orig);
     // Restore V to the canonical "no split parent" state so getOriginal(V)==V
-    // and isAssignedReg() does not treat V as a split product.
+    // and SplitKit::defFromParent stops consulting the (stale) ancestor LI.
     VRM.clearSplitFromReg(V);
   }
 }

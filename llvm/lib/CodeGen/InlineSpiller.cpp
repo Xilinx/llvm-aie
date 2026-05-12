@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // The inline spiller modifies the machine function directly instead of
@@ -1289,6 +1292,16 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
          "Trying to spill a stack slot.");
   // Share a stack slot among all descendants of Original.
   Original = VRM.getOriginal(edit.getReg());
+  // Allow the target to redirect this lookup. Some target passes deliberately
+  // sever the VirtRegMap split-from chain (clearSplitFromReg) for correctness
+  // (e.g. to stop SplitKit from rematerializing through a stale ancestor LI),
+  // but still want spills of the descendants to share a stack slot with the
+  // logical group's original. The hook returns that "logical group original"
+  // when it should be used here.
+  if (auto SyntheticOrig =
+          MF.getSubtarget().getSpillGroupOriginal(MF, Original))
+    if (LIS.hasInterval(*SyntheticOrig))
+      Original = *SyntheticOrig;
   StackSlot = VRM.getStackSlot(Original);
   StackInt = nullptr;
 

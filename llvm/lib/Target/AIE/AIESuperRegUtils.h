@@ -19,6 +19,7 @@
 
 namespace llvm {
 class Register;
+class MachineFunction;
 class MachineRegisterInfo;
 struct AIEBaseRegisterInfo;
 class MachineInstr;
@@ -98,8 +99,14 @@ void repairLiveIntervals(SmallSet<Register, 8> &RegistersToRepair,
 ///    | split-from
 ///   %141..%144 (future split   greedy splits will use %35's LI
 ///   would consult %0's LI)     instead of %0's
+///
+/// Before severing, the pre-severance Original is recorded in
+/// AIEMachineFunctionInfo's spill-group side map so that InlineSpiller (via
+/// TargetSubtargetInfo::getSpillGroupOriginal) can still merge sibling spills
+/// of these descendants onto a shared stack slot.
 void clearStaleSplitFromMappings(const SmallSet<Register, 8> &TaintedOriginals,
-                                 MachineRegisterInfo &MRI, VirtRegMap &VRM);
+                                 MachineFunction &MF, MachineRegisterInfo &MRI,
+                                 VirtRegMap &VRM);
 
 } // namespace llvm::AIESuperRegUtils
 

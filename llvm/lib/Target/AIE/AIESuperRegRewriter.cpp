@@ -128,7 +128,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Prevent SplitKit from rematerializing through stale ancestor LIs.
-  AIESuperRegUtils::clearStaleSplitFromMappings(TaintedOriginals, MRI, VRM);
+  AIESuperRegUtils::clearStaleSplitFromMappings(TaintedOriginals, MF, MRI, VRM);
 
   LLVM_DEBUG(VRM.dump());
   return !AssignedPhysRegs.empty();
