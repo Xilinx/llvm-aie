@@ -512,7 +512,7 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
                                  {S32, P0, S16, 16},
                                  {S20, P0, S20, 32},
                                  {S32, P0, S32, 32},
-                                 {S64, P0, S64, 32},
+                                 {S64, P0, S64, 64},
                                  {P0, P0, S20, 32},
                                  {V16S8, P0, V16S8, 128},
                                  {V8S16, P0, V8S16, 128},
