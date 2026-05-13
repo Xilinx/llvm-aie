@@ -1,5 +1,7 @@
 # -*- Python -*-
 
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
 # Configuration file for the 'lit' test runner.
 
 import os
@@ -662,6 +664,9 @@ if config.have_curl:
 
 if config.have_httplib:
     config.available_features.add("httplib")
+
+if config.have_z3_solver:
+    config.available_features.add("enable_z3_solver")
 
 if config.have_opt_viewer_modules:
     config.available_features.add("have_opt_viewer_modules")
