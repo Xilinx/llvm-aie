@@ -19,12 +19,12 @@ body: |
     ;AIE2PS-LABEL: name:            load_s64
 
     ;AIE2PS: [[COPY_0:%[0-9]+]]:ep = COPY $p0
-    ;AIE2PS-NEXT: [[LDA__1:%[0-9]+]]:el = LDA_dml_lda_scalar_L_ld_idx_imm [[COPY_0]], 0 :: (load (s64), align 4)
+    ;AIE2PS-NEXT: [[LDA__1:%[0-9]+]]:el = LDA_dml_lda_scalar_L_ld_idx_imm [[COPY_0]], 0 :: (load (s64))
     ;AIE2PS-NEXT: $l0 = COPY [[LDA__1]]
     ;AIE2PS-NEXT: PseudoRET implicit $lr, implicit $l0
 
     %0:ptrregbank(p0) = COPY $p0
-    %1:gprregbank(s64) = G_LOAD %0 :: (load (s64), align 4)
+    %1:gprregbank(s64) = G_LOAD %0 :: (load (s64), align 8)
     $l0 = COPY %1
     PseudoRET implicit $lr, implicit $l0
 
