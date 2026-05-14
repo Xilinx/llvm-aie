@@ -38,7 +38,8 @@ struct InstrAndCycle {
 ///          found.
 InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
                               ArrayRef<MachineBundle> Bundles, int Prune,
-                              AAResults *AA = nullptr);
+                              AAResults *AA = nullptr,
+                              bool SafeToIgnoreMemDeps = false);
 
 class MaxLatencyFinder {
   const AIEPostRASchedStrategy *const Scheduler;
@@ -48,6 +49,7 @@ class MaxLatencyFinder {
   MachineBasicBlock *const CurBB;
   const bool InterBlock;
   AAResults *AA;
+  bool SafeToIgnoreMemDeps;
 
   // Check whether this region connects to the successor blocks
   //
