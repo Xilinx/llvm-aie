@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
 #include <string>
@@ -1538,13 +1539,41 @@ bool PostPipeliner::solve(const SolverData &Data, int NS, bool SEFStage) {
   return false;
 }
 
+// Register \p MI's per-cycle FU footprint into \p Data so
+// SWPSolver::resourceConflicts can forbid same-cycle co-occupation.
+static void addResourceUses(SolverData &Data, int Id, const MachineInstr *MI,
+                            const AIEBaseInstrInfo *TII) {
+  const InstrItineraryData *Itin =
+      MI->getMF()->getSubtarget().getInstrItineraryData();
+  if (!Itin || Itin->isEmpty()) {
+    return;
+  }
+  const unsigned SchedClass = MI->getDesc().getSchedClass();
+  int Cycle = 0;
+  for (const InstrStage &IS : Itin->getStages(SchedClass)) {
+    const bool IsRequired = IS.getReservationKind() == InstrStage::Required;
+    const bool IsReserved = IS.getReservationKind() == InstrStage::Reserved;
+    assert(IsRequired != IsReserved &&
+           "ReservationKind must be exactly one of Required/Reserved");
+
+    assert(IS.getNextCycles() >= 0 &&
+           "Negative NextCycles breaks cumulative offset");
+    const unsigned FUIndex = TII->getFuncUnitIndex(IS.getUnits());
+    for (unsigned C = 0; C < IS.getCycles(); C++) {
+      const int Off = Cycle + C;
+      Data.addResourceUse(Id, Off, FUIndex, IsRequired);
+    }
+    Cycle += IS.getNextCycles();
+  }
+}
+
 SolverData PostPipeliner::createSolverData() {
   SolverData Data;
   // Add the forward dependence edges within the first iteration
   for (int N = 0; N < NInstr; N++) {
     const SUnit &SU = DAG->SUnits[N];
     MachineInstr *const MI = SU.getInstr();
-    auto SlotKind = TII->getSlotKind(MI->getOpcode());
+    const auto SlotKind = TII->getSlotKind(MI->getOpcode());
 
     const uint64_t MemoryBanks = HR.getMemoryBanks(MI);
     const int Id =
@@ -1555,6 +1584,7 @@ SolverData PostPipeliner::createSolverData() {
       assert(From < NInstr);
       Data.addLatency(From, N, Dep.getSignedLatency());
     }
+    addResourceUses(Data, Id, MI, TII);
   }
 
   // Add loop-carried dependences to future iterations. The iteration
@@ -1577,10 +1607,8 @@ SolverData PostPipeliner::createSolverData() {
 bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
                                 int NS, bool SEFStage) {
 
-  // We don't model the resource hazards. They would be very tedious to express,
-  // since resource uses are offset relative to the instruction cycle. We would
-  // need to interpret raw itinerary data, and the modulo constraints on those
-  // would lead to very awkard expressions.
+  // FU resource hazards are modeled by SWPSolver::resourceConflicts via
+  // SolverData::ResourceUses (Required/Reserved bits per InstrItin stage).
   Solver.setScheduleSize(II, NS);
   Solver.genModel(Data, SEFStage);
   if (!Solver.solveModel()) {

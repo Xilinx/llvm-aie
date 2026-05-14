@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file contains an interface to create constraints to model a software
@@ -78,6 +78,35 @@ int SolverData::addInstruction(int SlotNumber, uint64_t MemoryBanks,
   Instructions.emplace_back(Id, Slot, MemoryBanks, HasSideEffect);
   Slot->Instructions.insert(Id);
   return Id;
+}
+
+// Grow \p BV so bit index \p Idx is in range, then set it.
+static void setFU(BitVector &BV, unsigned Idx) {
+  if (Idx >= BV.size())
+    BV.resize(Idx + 1);
+  BV.set(Idx);
+}
+
+void SolverData::addResourceUse(int InstrId, int CycleOffset, unsigned FUIndex,
+                                bool IsRequired) {
+  // Try to merge into an existing entry for this (instruction, offset).
+  for (ResourceUseEntry &E : ResourceUses) {
+    const bool IsSameSlot = E.Instr == InstrId && E.CycleOffset == CycleOffset;
+    if (!IsSameSlot)
+      continue;
+
+    BitVector &TargetBV = IsRequired ? E.Required : E.Reserved;
+    setFU(TargetBV, FUIndex);
+    assert(!E.Required.anyCommon(E.Reserved) &&
+           "FU cannot be both Required and Reserved at the same offset");
+    return;
+  }
+
+  // No matching entry: append a fresh one and set the requested bit.
+  ResourceUses.push_back({InstrId, CycleOffset, BitVector(), BitVector()});
+  ResourceUseEntry &New = ResourceUses.back();
+  BitVector &TargetBV = IsRequired ? New.Required : New.Reserved;
+  setFU(TargetBV, FUIndex);
 }
 
 void SolverData::addLatency(int Src, int Dst, int Latency, int Distance) {
@@ -182,6 +211,40 @@ void SWPSolver::conflicts(const SolverData &Data) {
   }
 }
 
+// True iff \p A and \p B touch a shared FU under FuncUnitWrapper::conflict()
+// rules: Req-Req, Req-Res, or Res-Req overlap (Res-Res is not a conflict).
+static bool fuConflict(const ResourceUseEntry &A, const ResourceUseEntry &B) {
+  return A.Required.anyCommon(B.Required) || A.Reserved.anyCommon(B.Required) ||
+         A.Required.anyCommon(B.Reserved);
+}
+
+void SWPSolver::resourceConflicts(const SolverData &Data) {
+  const auto &Uses = Data.getResourceUses();
+  const auto &Insts = Data.getInstructions();
+  for (size_t I = 0; I < Uses.size(); ++I) {
+    for (size_t J = I + 1; J < Uses.size(); ++J) {
+      const ResourceUseEntry &UA = Uses[I];
+      const ResourceUseEntry &UB = Uses[J];
+      // Self-conflicts are tracked by the scoreboard pre-check, not here.
+      if (UA.Instr == UB.Instr) {
+        continue;
+      }
+      // Only emit when FuncUnitWrapper would also flag this pair (keeps the
+      // solver model and the real scoreboard in lockstep).
+      if (!fuConflict(UA, UB)) {
+        continue;
+      }
+      // Same-slot, same-offset is already forbidden by genSlotConstraint;
+      // skip the redundant resource constraint to keep the model small.
+      if (UA.CycleOffset == UB.CycleOffset &&
+          Insts[UA.Instr].TheSlot == Insts[UB.Instr].TheSlot) {
+        continue;
+      }
+      genConflict(UA.Instr, UB.Instr, UA.CycleOffset, UB.CycleOffset);
+    }
+  }
+}
+
 #if LLVM_WITH_Z3
 Z3Solver::Z3Solver() : Solver(Context), Zero(Context.int_val(0)) {
   // timeout behaves undeterministically
@@ -238,6 +301,7 @@ void Z3Solver::genModel(const SolverData &Data, bool SEFStage) {
   cycles(Data);
   latencies(Data);
   conflicts(Data);
+  resourceConflicts(Data);
 }
 
 bool Z3Solver::solveModel() {
@@ -399,15 +463,28 @@ void Z3BinarySolver::genSlotConstraint(int SlotNo, const Slot &Slot) {
   }
 }
 
-void Z3BinarySolver::genConflict(int M, int N) {
+void Z3BinarySolver::genConflict(int InstrA, int InstrB, int OffsetA,
+                                 int OffsetB) {
   const int II = getII();
-  z3::expr_vector Elements(Context);
-  // All stages have a contribution to a particular cycle)
-  for (int C = 0; C < II; C++) {
+  // Collision condition for two instructions sharing a resource:
+  //   issueA + OffsetA = issueB + OffsetB (mod II).
+  // Equivalently:
+  //   issueB = issueA + (OffsetA - OffsetB) (mod II).
+  // Memory-bank callers pass OffsetA = OffsetB = 0, so this reduces to
+  // issueA != issueB (mod II).
+  const int OffsetDiff = OffsetA - OffsetB;
+  // Normalize into [0, II); +II handles a negative OffsetDiff.
+  const int Delta = (OffsetDiff % II + II) % II;
+
+  // For each CA the colliding CB is unique.
+  for (int CA = 0; CA < II; CA++) {
+    // Unwrap then wrap back into [0, II).
+    const int CBRaw = CA + Delta;
+    const int CB = CBRaw % II;
     z3::expr_vector Elements(Context);
     for (int S = 0; S < NumStages; S++) {
-      addVar(M, S, C, Elements);
-      addVar(N, S, C, Elements);
+      addVar(InstrA, S, CA, Elements);
+      addVar(InstrB, S, CB, Elements);
     }
     if (Elements.empty()) {
       continue;
@@ -459,8 +536,14 @@ z3::expr Z3IntegerSolver::genCycle(int N) {
   return StageVarDecls[N] * getII() + CycleVarDecls[N];
 }
 
-void Z3IntegerSolver::genConflict(int M, int N) {
-  Solver.add(CycleVarDecls[M] != CycleVarDecls[N]);
+void Z3IntegerSolver::genConflict(int InstrA, int InstrB, int OffsetA,
+                                  int OffsetB) {
+  // Non-zero offsets need z3::mod against II (NIA, not LIA); only the
+  // delta-zero memory-bank case is supported today.
+  assert(OffsetA == 0 && OffsetB == 0 &&
+         "Z3IntegerSolver::genConflict with non-zero offsets is not "
+         "implemented (would require z3::mod, pushing the model into NIA).");
+  Solver.add(CycleVarDecls[InstrA] != CycleVarDecls[InstrB]);
 }
 
 void Z3IntegerSolver::genSlotConstraint(int SlotNo, const Slot &Slot) {

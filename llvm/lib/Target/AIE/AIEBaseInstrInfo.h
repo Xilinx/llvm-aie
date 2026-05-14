@@ -406,6 +406,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement getNumReservedDelaySlots");
   }
 
+  /// Convert an InstrStage's getUnits() value to an FU bit position.
+  /// Default: identity, matching AIE's FUNCUNIT_REPRESENTATION(x) = (x).
+  virtual unsigned getFuncUnitIndex(uint64_t Units) const { return Units; }
+
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.
   virtual bool isJNZ(unsigned Opc) const { return false; }

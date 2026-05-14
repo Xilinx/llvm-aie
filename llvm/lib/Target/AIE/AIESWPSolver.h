@@ -11,6 +11,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIESWPSOLVER_H
 #define LLVM_LIB_TARGET_AIE_AIESWPSOLVER_H
 
+#include "llvm/ADT/BitVector.h"
 #include "llvm/Config/config.h"
 #if LLVM_WITH_Z3
 #include "z3++.h"
@@ -69,6 +70,15 @@ public:
         HasSideEffect(HasSideEffect) {}
 };
 
+// Per-cycle FU fingerprint of an instruction. BitVector (not uint64_t)
+// so the model scales past 64 FUs (AIE2PS has 106). See fuConflict().
+struct ResourceUseEntry {
+  int Instr;
+  int CycleOffset; // relative to the instruction's issue cycle
+  BitVector Required;
+  BitVector Reserved;
+};
+
 class ProblemSize {
 public:
   ProblemSize();
@@ -99,6 +109,9 @@ class SolverData {
   std::vector<Instruction> Instructions;
   // Holds all latencies.
   std::vector<Latency> Latencies;
+  // One entry per (Instr, CycleOffset) with Required/Reserved BitVectors
+  // OR-aggregated across stages covering CycleOffset.
+  std::vector<ResourceUseEntry> ResourceUses;
   // Add a slot to the problem
   Slot &addSlot(int N);
 
@@ -109,6 +122,10 @@ public:
   // Distance represents the iteration distance, i.e. the number of
   // cfg backedges it spans.
   void addLatency(int Src, int Dst, int Latency, int Distance = 0);
+  /// Mark FU bit \p FUIndex as Required (\p IsRequired) or Reserved on
+  /// the (\p InstrId, \p CycleOffset) entry, creating it if absent.
+  void addResourceUse(int InstrId, int CycleOffset, unsigned FUIndex,
+                      bool IsRequired);
 
   // Post-process when all data has been added.
   // II supplies the initiation interval.
@@ -129,6 +146,9 @@ public:
   const std::vector<Latency> &getLatencies() const { return Latencies; }
   const std::vector<Instruction> &getInstructions() const {
     return Instructions;
+  }
+  const std::vector<ResourceUseEntry> &getResourceUses() const {
+    return ResourceUses;
   }
 };
 
@@ -156,9 +176,11 @@ public:
   virtual void genSlotConstraint(int SlotNo, const Slot &Slot) = 0;
   // Generate a constraint that represents a dependence latency
   virtual void genLatencyConstraint(const Latency &L) = 0;
-  // Generate a mutual exclusion constraint for instructions M and N in any
-  // cycle
-  virtual void genConflict(int M, int N) = 0;
+  // Forbid (\p InstrA, \p InstrB) from colliding at the same modular cycle:
+  // issueA + \p OffsetA = issueB + \p OffsetB (mod II). Default offsets 0
+  // recover the legacy "issueA != issueB (mod II)" memory-bank constraint.
+  virtual void genConflict(int InstrA, int InstrB, int OffsetA = 0,
+                           int OffsetB = 0) = 0;
 
   // Return the vector of instruction cycles
   // \pre genModel() has returned true
@@ -178,6 +200,10 @@ public:
   virtual bool solveModel() = 0;
   // Generate further instruction conflict constraints
   void conflicts(const SolverData &Data);
+  // Emit FU exclusion constraints from \p Data.ResourceUses: every pair of
+  // instructions sharing an FU bit is forbidden from co-occupying its modular
+  // cycle.
+  void resourceConflicts(const SolverData &Data);
 };
 
 // Return the set of solvers to try
@@ -254,7 +280,8 @@ class Z3BinarySolver : public Z3Solver {
 
   void genSlotConstraint(int SlotNo, const Slot &Slot) override;
   void genLatencyConstraint(const Latency &L) override;
-  void genConflict(int M, int N) override;
+  void genConflict(int InstrA, int InstrB, int OffsetA = 0,
+                   int OffsetB = 0) override;
   z3::expr genCycle(int I) override;
   void vars(const SolverData &Data, bool SEFStage) override;
   void scheduled(const SolverData &Data) override;
@@ -274,7 +301,7 @@ class Z3IntegerSolver : public Z3Solver {
   void vars(const SolverData &Data, bool SEFStage) override;
   void scheduled(const SolverData &Data) override;
   z3::expr genCycle(int N) override;
-  void genConflict(int M, int N) override;
+  void genConflict(int A, int B, int OffsetA = 0, int OffsetB = 0) override;
   void genSlotConstraint(int SlotNo, const Slot &Slot) override;
 
 public:
