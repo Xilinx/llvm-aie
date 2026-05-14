@@ -171,8 +171,8 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    // in Loop: Header=BB0_8 Depth=1
 ; CHECK-NEXT:    vlda x4, [p7, #192]; paddb [p1], m3; padds [p7], #128; add r4, r4, #-1; nopm ; vmac dm0, dm0, x2, x4, r8
 ; CHECK-NEXT:    vlda x6, [p7, #128]; paddb [p4], #128; padds [p6], #128; nopx ; vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
-; CHECK-NEXT:    vlda x4, [p7, #192]; paddb.3d [p0], d1; nopx ; padds [p7], #128; vmac dm0, dm0, x2, x4, r8
-; CHECK-NEXT:    paddb.3d [p1], d2; vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
+; CHECK-NEXT:    vlda x4, [p7, #192]; paddb.3d [p0], d1; padds [p7], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
+; CHECK-NEXT:    nopa ; paddb.3d [p1], d2; nops ; nopx ; vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
 ; CHECK-NEXT:    vmac dm0, dm0, x2, x4, r8
 ; CHECK-NEXT:    vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
 ; CHECK-NEXT:    vmac dm0, dm0, x2, x4, r8
@@ -182,15 +182,12 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    vmac dm0, dm0, x2, x4, r8
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst.srs.2x cml1, s1, srssign1, [p3], #64
-; CHECK-NEXT:    vst.srs.2x cmh1, s1, srssign1, [p3], #64; jnz r4, #.LBB0_8
-; CHECK-NEXT:    vst.srs.2x cml0, s1, srssign1, [p5], #64 // Delay Slot 5
-; CHECK-NEXT:    vst.srs.2x cmh0, s1, srssign1, [p5], #64 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    jnz r4, #.LBB0_8
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vst.srs.2x cml1, s1, srssign1, [p3], #64 // Delay Slot 4
+; CHECK-NEXT:    vst.srs.2x cmh1, s1, srssign1, [p3], #64 // Delay Slot 3
+; CHECK-NEXT:    vst.srs.2x cml0, s1, srssign1, [p5], #64 // Delay Slot 2
+; CHECK-NEXT:    vst.srs.2x cmh0, s1, srssign1, [p5], #64 // Delay Slot 1
 ; CHECK-NEXT:  .LBB0_11: // %sw.epilog
 ; CHECK-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-64] // 4-byte Folded Reload

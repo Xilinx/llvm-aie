@@ -171,16 +171,17 @@ MaxLatencyFinder::MaxLatencyFinder(
     const AIEPostRASchedStrategy *const Scheduler,
     const AIEBaseInstrInfo *const TII,
     const InstrItineraryData *const Itineraries,
-    const MCRegisterInfo *const TRI, MachineBasicBlock *const CurBB)
+    const MCRegisterInfo *const TRI, MachineBasicBlock *const CurBB,
+    AAResults *AA)
     : Scheduler(Scheduler), TII(TII), Itineraries(Itineraries), TRI(TRI),
-      CurBB(CurBB), InterBlock(true) {}
+      CurBB(CurBB), InterBlock(true), AA(AA) {}
 
 // This is called from different contexts, so we need some case analysis
 // If we have a basic block, we are in a regular MachineScheduler invocation,
 // and we will be able to retrieve its strategy,
 // Otherwise we are an abstract region; Scheduler will be nullptr, which
 // will not be derefenced.
-MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
+MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG, AAResults *AA)
     : Scheduler(DAG->getBB()
                     ? static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl()
                     : nullptr),
@@ -189,7 +190,8 @@ MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
       TRI(DAG->MF.getSubtarget().getRegisterInfo()), CurBB(DAG->getBB()),
       InterBlock(InterBlockLatency && CurBB &&
                  isBottomRegion(DAG->ExitSU.getInstr()) &&
-                 Scheduler->successorsAreScheduled(CurBB)) {}
+                 Scheduler->successorsAreScheduled(CurBB)),
+      AA(AA) {}
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << MI << "\n");
@@ -232,7 +234,7 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
       continue;
     }
     const std::vector<AIE::MachineBundle> &TopBundles = SBS.getTop().Bundles;
-    Earliest = findEarliestRef(MI, TopBundles, Earliest).Cycle;
+    Earliest = findEarliestRef(MI, TopBundles, Earliest, AA).Cycle;
   }
 
   LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");

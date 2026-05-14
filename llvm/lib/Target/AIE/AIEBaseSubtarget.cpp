@@ -257,6 +257,8 @@ class BiasDepth : public ScheduleDAGMutation {
 };
 
 class RegionEndEdges : public ScheduleDAGMutation {
+  AAResults *AA;
+
   void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
     SUnit &ExitSU = DAG->ExitSU;
     while (!ExitSU.Preds.empty()) {
@@ -264,7 +266,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
   }
   void apply(ScheduleDAGInstrs *DAG) override {
-    AIE::MaxLatencyFinder MaxLatency(DAG);
+    AIE::MaxLatencyFinder MaxLatency(DAG, AA);
     MachineBasicBlock *PrologueMBB = DAG->getBB();
     unsigned int ZOLBundlesCount = 0;
 
@@ -333,6 +335,9 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
     DAG->ExitSU.setDepthDirty();
   };
+
+public:
+  RegionEndEdges(AAResults *AA = nullptr) : AA(AA) {}
 };
 
 /// This Mutator is responsible for emitting "fixed" SUnits at the top or bottom
@@ -895,7 +900,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
-    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
+    Mutations.emplace_back(std::make_unique<RegionEndEdges>(AA));
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
