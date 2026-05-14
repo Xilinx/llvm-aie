@@ -107,8 +107,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup99
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-NEXT:    nopa ; paddb.2d [p4], d3; movs m0, p5; add r0, r0, #-1; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; nops ; ne r26, r0, r22; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    nopa ; vldb.128 wl10, [p4, #0]; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; CHECK-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; ne r26, r0, r22; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vldb.128 wl10, [p4, #0]; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; CHECK-NEXT:    vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; CHECK-NEXT:    vldb x3, [p1], m4; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
 ; CHECK-NEXT:    vldb.3d x5, [p1], d1; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
@@ -119,13 +119,13 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64
 ; CHECK-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64
 ; CHECK-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64
-; CHECK-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; vst.srs.4x dm3, s1, srssign0, [p3], #64
-; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vst.srs.4x dm2, s1, srssign0, [p3], m5; jnz r26, #.LBB0_1
-; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vst.srs.4x dm1, s1, srssign0, [p3], #64 // Delay Slot 5
-; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; vshuffle x10, x3, x0, r1 // Delay Slot 4
-; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vshuffle x10, x10, x0, r2 // Delay Slot 3
-; CHECK-NEXT:    vshuffle x1, x5, x0, r3 // Delay Slot 2
-; CHECK-NEXT:    movx srssign0, #0; vshuffle x1, x1, x0, r4 // Delay Slot 1
+; CHECK-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64
+; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; jnz r26, #.LBB0_1
+; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64 // Delay Slot 5
+; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; vst.srs.4x dm3, s1, srssign0, [p3], #64; vshuffle x10, x3, x0, r1 // Delay Slot 4
+; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vst.srs.4x dm2, s1, srssign0, [p3], m5; vshuffle x10, x10, x0, r2 // Delay Slot 3
+; CHECK-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; vshuffle x1, x5, x0, r3 // Delay Slot 2
+; CHECK-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; movx srssign0, #0; vshuffle x1, x1, x0, r4 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %cooldown.entry
 ; CHECK-NEXT:    vldb x3, [p1], m4; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1
@@ -368,9 +368,9 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; USE-JNZD-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; USE-JNZD-NEXT:  // %bb.3: // %for.cond.cleanup99
 ; USE-JNZD-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; USE-JNZD-NEXT:    movs m0, p5; paddb.2d [p4], d3; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
-; USE-JNZD-NEXT:    vldb.128 wl1, [p4, #16]; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
-; USE-JNZD-NEXT:    vldb.128 wl10, [p4, #0]; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; USE-JNZD-NEXT:    nopa ; paddb.2d [p4], d3; movs m0, p5; nopx ; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
+; USE-JNZD-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; nops ; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; USE-JNZD-NEXT:    vldb.128 wl10, [p4, #0]; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; USE-JNZD-NEXT:    vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; USE-JNZD-NEXT:    vldb x3, [p1], m4; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
 ; USE-JNZD-NEXT:    vldb.3d x5, [p1], d1; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
@@ -381,13 +381,13 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; USE-JNZD-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64
 ; USE-JNZD-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64
 ; USE-JNZD-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64
-; USE-JNZD-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; vst.srs.4x dm3, s1, srssign0, [p3], #64
-; USE-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vst.srs.4x dm2, s1, srssign0, [p3], m5; jnzd r5, r5, p6
-; USE-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vst.srs.4x dm1, s1, srssign0, [p3], #64 // Delay Slot 5
-; USE-JNZD-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; vshuffle x10, x3, x0, r1 // Delay Slot 4
-; USE-JNZD-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vshuffle x1, x10, x0, r2 // Delay Slot 3
-; USE-JNZD-NEXT:    vshuffle x10, x5, x0, r3 // Delay Slot 2
-; USE-JNZD-NEXT:    movx srssign0, #0; vshuffle x10, x10, x0, r4 // Delay Slot 1
+; USE-JNZD-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64
+; USE-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; jnzd r5, r5, p6
+; USE-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64 // Delay Slot 5
+; USE-JNZD-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p2], #64; vst.srs.4x dm3, s1, srssign0, [p3], #64; vshuffle x10, x3, x0, r1 // Delay Slot 4
+; USE-JNZD-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vst.srs.4x dm2, s1, srssign0, [p3], m5; vshuffle x1, x10, x0, r2 // Delay Slot 3
+; USE-JNZD-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; vshuffle x10, x5, x0, r3 // Delay Slot 2
+; USE-JNZD-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; movx srssign0, #0; vshuffle x10, x10, x0, r4 // Delay Slot 1
 ; USE-JNZD-NEXT:  // %bb.4: // %cooldown.entry
 ; USE-JNZD-NEXT:    vldb x3, [p1], m4
 ; USE-JNZD-NEXT:    vlda.3d x1, [p1], d1; vmul dm4, x0, x4, r12
