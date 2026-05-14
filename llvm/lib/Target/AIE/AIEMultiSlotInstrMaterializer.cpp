@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/WithColor.h"
 
 using namespace llvm;
 
@@ -36,33 +35,16 @@ static cl::opt<bool> SkipSingleSlotAssignment(
 
 namespace llvm::AIE {
 
-/// Emit a warning and an optimization remark for a load without a memory bank.
-/// The warning goes to stderr (always visible); the remark is available via
-/// -Rpass-missed=aie-multi-slot-pseudo.
-static void reportMissingMemoryBank(const MachineInstr &MI) {
-  const MachineBasicBlock *MBB = MI.getParent();
+/// Emit a missed-optimization remark for a load without a memory bank.
+static void reportMissingMemoryBank(MachineInstr &MI) {
+  MachineBasicBlock *MBB = MI.getParent();
+  MachineFunction &MF = *MBB->getParent();
 
-  // Build the shared message: function name, block name, debug location.
-  std::string Msg;
-  raw_string_ostream MsgOS(Msg);
-  MsgOS << "No memory bank assigned to load in function '"
-        << MBB->getParent()->getName() << "', block '" << MBB->getName() << "'";
-  if (const DebugLoc &DL = MI.getDebugLoc())
-    MsgOS << " at " << DL;
-
-  // Per-instruction stderr warning (includes the instruction itself).
-  auto &WarnOS = WithColor::warning();
-  WarnOS << Msg << ": ";
-  MI.print(WarnOS, /*IsStandalone=*/true, /*SkipOpers=*/false,
-           /*SkipDebugLoc=*/true);
-
-  // Per-instruction optimization remark.
-  MachineOptimizationRemarkEmitter MORE(
-      const_cast<MachineFunction &>(*MBB->getParent()), nullptr);
+  MachineOptimizationRemarkEmitter MORE(MF, nullptr);
   MORE.emit([&]() {
     return MachineOptimizationRemarkMissed(DEBUG_TYPE, "missing-memory-bank",
                                            MI.getDebugLoc(), MBB)
-           << Msg;
+           << ore::MNV("Instruction", MI);
   });
 }
 
@@ -110,7 +92,7 @@ public:
 
   /// \return whether a Slot can be assigned to \b MI and assign it in the
   /// mapping.
-  bool isSlotAssignable(const MachineInstr &MI, const AIEHazardRecognizer &HR) {
+  bool isSlotAssignable(MachineInstr &MI, const AIEHazardRecognizer &HR) {
     auto MemBankBits = HR.getMemoryBanks(&MI);
     LLVM_DEBUG(dbgs() << "Memory Bank: " << MemBankBits << " " << MI);
     if (!MemBankBits) {
@@ -201,17 +183,20 @@ SlotMapping getAssignedSlots(const MachineBasicBlock &MBB,
 /// Multi-Slot pseudo load instructions in \p MBB get a Slot assigned, according
 /// to the MemoyBankBits that is attached to the MachineInstr. Existing mappings
 /// in \p SlotToBanks are used and updated.
-bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
+bool assignSlots(SlotMapping &SlotToBanks, MachineBasicBlock &MBB,
                  const AIEBaseInstrInfo *TII, const AIEHazardRecognizer &HR) {
   LLVM_DEBUG(dbgs() << "Assigning Slots\n");
-  for (const auto &MI : MBB) {
+  // Visit every load so each missing-memory-bank gets its own remark.
+  bool AllAssignable = true;
+  for (auto &MI : MBB) {
     if (!MI.mayLoad() || !TII->isMultiSlotPseudo(MI))
       continue;
 
-    if (!SlotToBanks.isSlotAssignable(MI, HR)) {
-      return false;
-    }
+    if (!SlotToBanks.isSlotAssignable(MI, HR))
+      AllAssignable = false;
   }
+  if (!AllAssignable)
+    return false;
 
   const bool SingleSlotAssignment = SlotToBanks.hasSingleMapping();
   if (SingleSlotAssignment)
