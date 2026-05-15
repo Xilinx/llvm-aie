@@ -51,8 +51,8 @@ declare i1 @llvm.loop.decrement.i32(i32) #3
 define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, ptr %psum_1_tdm, ptr %ifm, ptr %add.ptr.i, <64 x i8> %1, i32 %conv10.i, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i32 %7, i32 %or25.i.i.i, i32 %8, i20 %9, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i20 %17, i20 %18, i20 %19, i32 %conv91.i, i32 %20, i20 %idx.ext.i216.i, i20 %21, i20 %22, i20 %23, i32 %or22.i.i.i) #4 {
 ; CHECK-LABEL: conv2d:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; nopxm ; nops
-; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    st p6, [sp, #-40] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova m0, #-68; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0
 ; CHECK-NEXT:    lda m0, [p6], #-4
@@ -79,13 +79,13 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; CHECK-NEXT:    vldb.pop.3d x1, [p1, lf1, r25, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vldb.128 wl2, [p5, #0]
-; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movx r18, #5; mov r23, r12
-; CHECK-NEXT:    mova r20, #1; vldb x8, [p0, #0]; or r19, r8, r8; mov s0, r1
-; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x6, [p0, #64]; or r21, r10, r10; mov s1, r5
-; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; or r10, r3, r3; mov dc3, dc7
-; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vldb.128 wl4, [p5, #16]; or r8, r7, r7; mov dc2, dc7; movs dc6, dc7
-; CHECK-NEXT:    mova r22, #16; movs dc5, dc7; movx crupsmode, #0; vshuffle x10, x10, x1, r2
-; CHECK-NEXT:    mova r12, #264; movs dc1, dc7; movx crsrsmode, #0; mov m5, r17
+; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64
+; CHECK-NEXT:    mova r18, #5; vldb x8, [p0, #0]; st r13:r12, [sp, #-48]; mov s0, r1 // 8-byte Folded Spill
+; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x6, [p0, #64]; movx r20, #1; mov s1, r5; st r11:r10, [sp, #-56] // 8-byte Folded Spill
+; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; st r9:r8, [sp, #-64]; movx crupsmode, #0; mov dc3, dc7 // 8-byte Folded Spill
+; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vldb.128 wl4, [p5, #16]; movx crsrsmode, #0; mov dc2, dc7; movs dc6, dc7
+; CHECK-NEXT:    mova r22, #16; movs dc5, dc7; or r10, r3, r3; vshuffle x10, x10, x1, r2
+; CHECK-NEXT:    mova r12, #264; movs dc1, dc7; or r8, r7, r7; mov m5, r17
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
@@ -148,16 +148,16 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; CHECK-NEXT:  // %bb.6: // %cooldown.exit
 ; CHECK-NEXT:    vlda x2, [p0, #192]; padds [p0], #128; nopx ; vmac dm0, dm0, x0, x2, r8
 ; CHECK-NEXT:    vlda x4, [p0, #128]; nopb ; movs dj0, r17; movx crsrsmode, #0; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    vlda x2, [p0, #192]; nopb ; padds [p0], #128; or r12, r23, r23; mov s0, r5; vmac dm0, dm0, x0, x2, r8
-; CHECK-NEXT:    or r10, r21, r21; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    mov srssign0, r6; vmac dm0, dm0, x0, x2, r8
-; CHECK-NEXT:    vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
+; CHECK-NEXT:    vlda x2, [p0, #192]; padds [p0], #128; mov s0, r5; vmac dm0, dm0, x0, x2, r8
+; CHECK-NEXT:    lda r13:r12, [sp, #-48]; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 8-byte Folded Reload
+; CHECK-NEXT:    lda r11:r10, [sp, #-56]; mov srssign0, r6; vmac dm0, dm0, x0, x2, r8 // 8-byte Folded Reload
+; CHECK-NEXT:    lda r9:r8, [sp, #-64]; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 8-byte Folded Reload
 ; CHECK-NEXT:    vmac dm0, dm0, x0, x2, r8
 ; CHECK-NEXT:    vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
 ; CHECK-NEXT:    vmac dm0, dm0, x0, x2, r8
 ; CHECK-NEXT:    vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    lda p6, [sp, #-64]; vmac dm0, dm0, x0, x2, r8 // 4-byte Folded Reload
-; CHECK-NEXT:    paddxm [sp], #-64; mov r8, r19
+; CHECK-NEXT:    lda p6, [sp, #-40]; vmac dm0, dm0, x0, x2, r8 // 4-byte Folded Reload
+; CHECK-NEXT:    paddxm [sp], #-64
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
@@ -169,8 +169,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ;
 ; NO-PROLOGUE-SPLIT-LABEL: conv2d:
 ; NO-PROLOGUE-SPLIT:       // %bb.0: // %newFuncRoot
-; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #64; nopb ; nopxm
-; NO-PROLOGUE-SPLIT-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #64; nopxm
+; NO-PROLOGUE-SPLIT-NEXT:    st p6, [sp, #-40] // 4-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:    mova m0, #-68; mov p6, sp
 ; NO-PROLOGUE-SPLIT-NEXT:    padda [p6], m0
 ; NO-PROLOGUE-SPLIT-NEXT:    lda m0, [p6], #-4
@@ -199,17 +199,17 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2, #0]
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x10, [p0, #0]
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2, #64]
+; NO-PROLOGUE-SPLIT-NEXT:    nop
 ; NO-PROLOGUE-SPLIT-NEXT:    mov s0, r1
-; NO-PROLOGUE-SPLIT-NEXT:    mov r1, p5
-; NO-PROLOGUE-SPLIT-NEXT:    mova r12, #264; mov r23, r12
+; NO-PROLOGUE-SPLIT-NEXT:    mova r12, #264; st r13:r12, [sp, #-48]; mov r1, p5 // 8-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3, #0]; vldb x1, [p0, #64]; movx crupsmode, #0; vshuffle x2, x4, x6, r2; vmul dm2, x0, x2, r12
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #64]; or r21, r10, r10; mov r10, r3
-; NO-PROLOGUE-SPLIT-NEXT:    mov p5, p2; vaddmac dm1, dm1, dm2, x2, x10, r10
-; NO-PROLOGUE-SPLIT-NEXT:    st p7, [sp, #-60]; mov s1, r5; vmul dm3, x0, x8, r12 // 4-byte Folded Spill
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #64]; st r11:r10, [sp, #-56]; mov r10, r3 // 8-byte Folded Spill
+; NO-PROLOGUE-SPLIT-NEXT:    st r9:r8, [sp, #-64]; mov p5, p2; vaddmac dm1, dm1, dm2, x2, x10, r10 // 8-byte Folded Spill
+; NO-PROLOGUE-SPLIT-NEXT:    st p7, [sp, #-36]; mov s1, r5; vmul dm3, x0, x8, r12 // 4-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:    movs p7, p0; mov dc3, dc7
-; NO-PROLOGUE-SPLIT-NEXT:    mova r18, #5; movs dc6, dc7; or r19, r8, r8; mov dc2, dc7
-; NO-PROLOGUE-SPLIT-NEXT:    mova r20, #1; movs dc5, dc7; or r8, r7, r7; mov dc1, dc7
-; NO-PROLOGUE-SPLIT-NEXT:    mova r22, #16; nopb ; movs p4, p3; movx crsrsmode, #0; mov m5, r17; vaddmac dm0, dm0, dm3, x2, x1, r10
+; NO-PROLOGUE-SPLIT-NEXT:    mova r18, #5; movs dc6, dc7; mov dc2, dc7
+; NO-PROLOGUE-SPLIT-NEXT:    mova r20, #1; movs dc5, dc7; movx crsrsmode, #0; mov dc1, dc7
+; NO-PROLOGUE-SPLIT-NEXT:    mova r22, #16; nopb ; movs p4, p3; or r8, r7, r7; mov m5, r17; vaddmac dm0, dm0, dm3, x2, x1, r10
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %for.body.i
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    // Child Loop BB0_2 Depth 2
@@ -273,18 +273,18 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:  .L_LEnd0:
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:  // %bb.6: // %cooldown.exit
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x2, [p7, #192]; padds [p7], #128; vmac dm0, dm0, x0, x2, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x2, [p7, #192]; nopb ; padds [p7], #128; nopxm ; vmac dm0, dm0, x0, x2, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7, #128]; nopb ; movs dj0, r17; movx crsrsmode, #0; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x2, [p7, #192]; nopb ; padds [p7], #128; or r12, r23, r23; mov s0, r5; vmac dm0, dm0, x0, x2, r8
-; NO-PROLOGUE-SPLIT-NEXT:    lda p7, [sp, #-60]; or r10, r21, r21; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 4-byte Folded Reload
-; NO-PROLOGUE-SPLIT-NEXT:    mov srssign0, r6; vmac dm0, dm0, x0, x2, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vmac dm0, dm0, x0, x2, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x2, [p7, #192]; nopb ; padds [p7], #128; nopx ; mov s0, r5; vmac dm0, dm0, x0, x2, r8
+; NO-PROLOGUE-SPLIT-NEXT:    lda p7, [sp, #-36]; nopb ; nops ; nopx ; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 4-byte Folded Reload
+; NO-PROLOGUE-SPLIT-NEXT:    lda r13:r12, [sp, #-48]; mov srssign0, r6; vmac dm0, dm0, x0, x2, r8 // 8-byte Folded Reload
+; NO-PROLOGUE-SPLIT-NEXT:    lda r11:r10, [sp, #-56]; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 8-byte Folded Reload
+; NO-PROLOGUE-SPLIT-NEXT:    lda r9:r8, [sp, #-64]; vmac dm0, dm0, x0, x2, r8 // 8-byte Folded Reload
 ; NO-PROLOGUE-SPLIT-NEXT:    vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vmac dm0, dm0, x0, x2, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vmac dm1, dm1, x0, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    lda p6, [sp, #-64]; vmac dm0, dm0, x0, x2, r8 // 4-byte Folded Reload
-; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #-64; mov r8, r19
+; NO-PROLOGUE-SPLIT-NEXT:    lda p6, [sp, #-40]; vmac dm0, dm0, x0, x2, r8 // 4-byte Folded Reload
+; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #-64
 ; NO-PROLOGUE-SPLIT-NEXT:    nop
 ; NO-PROLOGUE-SPLIT-NEXT:    nop
 ; NO-PROLOGUE-SPLIT-NEXT:    ret lr
@@ -296,8 +296,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ;
 ; USE-JNZD-LABEL: conv2d:
 ; USE-JNZD:       // %bb.0: // %newFuncRoot
-; USE-JNZD-NEXT:    paddxm [sp], #64
-; USE-JNZD-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; USE-JNZD-NEXT:    paddxm [sp], #64; nopx
+; USE-JNZD-NEXT:    st p6, [sp, #-40] // 4-byte Folded Spill
 ; USE-JNZD-NEXT:    mova m0, #-68; mov p6, sp
 ; USE-JNZD-NEXT:    padda [p6], m0
 ; USE-JNZD-NEXT:    lda m0, [p6], #-4
@@ -323,14 +323,14 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; USE-JNZD-NEXT:    movs dc0, dc7; vldb.popx x10, [p1, lf1, r25]; mov dc4, dc7
 ; USE-JNZD-NEXT:    vldb.pop.3d x1, [p1, lf1, r25, d0]
 ; USE-JNZD-NEXT:    nop
-; USE-JNZD-NEXT:    vldb.128 wl2, [p5, #0]; or r22, r12, r12; mov r19, r8
-; USE-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; or r21, r10, r10; mov s0, r1
-; USE-JNZD-NEXT:    mova r16, #5; vldb x8, [p0, #0]; or r10, r3, r3; mov s1, r5
+; USE-JNZD-NEXT:    vldb.128 wl2, [p5, #0]; st r13:r12, [sp, #-48] // 8-byte Folded Spill
+; USE-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; st r11:r10, [sp, #-56]; mov s0, r1 // 8-byte Folded Spill
+; USE-JNZD-NEXT:    mova r16, #5; vldb x8, [p0, #0]; movx crupsmode, #0; mov s1, r5; st r9:r8, [sp, #-64] // 8-byte Folded Spill
 ; USE-JNZD-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x6, [p0, #64]; add r0, r0, #-1; mov dc6, dc7; movs dc3, dc7
-; USE-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; movs dc2, dc7; or r8, r7, r7; addm.nc r1, r0, #-1
+; USE-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; movs dc2, dc7; movx crsrsmode, #0; addm.nc r1, r0, #-1
 ; USE-JNZD-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vldb.128 wl4, [p5, #16]; movxm p4, #.LBB0_1; movs dc5, dc7
-; USE-JNZD-NEXT:    mova r18, #16; movs dc1, dc7; movx crupsmode, #0; vshuffle x10, x10, x1, r2
-; USE-JNZD-NEXT:    mova r12, #264; st p7, [sp, #-60]; movx crsrsmode, #0; mov m5, r17 // 4-byte Folded Spill
+; USE-JNZD-NEXT:    mova r18, #16; movs dc1, dc7; or r10, r3, r3; vshuffle x10, x10, x1, r2
+; USE-JNZD-NEXT:    mova r12, #264; st p7, [sp, #-36]; or r8, r7, r7; mov m5, r17 // 4-byte Folded Spill
 ; USE-JNZD-NEXT:  .LBB0_1: // %for.body.i
 ; USE-JNZD-NEXT:    // =>This Loop Header: Depth=1
 ; USE-JNZD-NEXT:    // Child Loop BB0_2 Depth 2
@@ -390,18 +390,18 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; USE-JNZD-NEXT:  .L_LEnd0:
 ; USE-JNZD-NEXT:    vlda x4, [p0, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
 ; USE-JNZD-NEXT:  // %bb.6: // %cooldown.exit
-; USE-JNZD-NEXT:    vlda x2, [p0, #192]; padds [p0], #128; vmac dm0, dm0, x0, x2, r8
+; USE-JNZD-NEXT:    vlda x2, [p0, #192]; nopb ; padds [p0], #128; nopxm ; vmac dm0, dm0, x0, x2, r8
 ; USE-JNZD-NEXT:    vlda x4, [p0, #128]; nopb ; movs dj0, r17; movx crsrsmode, #0; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
-; USE-JNZD-NEXT:    vlda x2, [p0, #192]; nopb ; padds [p0], #128; or r12, r22, r22; mov s0, r5; vmac dm0, dm0, x0, x2, r8
-; USE-JNZD-NEXT:    lda p7, [sp, #-60]; or r10, r21, r21; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 4-byte Folded Reload
-; USE-JNZD-NEXT:    mov srssign0, r6; vmac dm0, dm0, x0, x2, r8
-; USE-JNZD-NEXT:    vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
-; USE-JNZD-NEXT:    vmac dm0, dm0, x0, x2, r8
+; USE-JNZD-NEXT:    vlda x2, [p0, #192]; nopb ; padds [p0], #128; nopx ; mov s0, r5; vmac dm0, dm0, x0, x2, r8
+; USE-JNZD-NEXT:    lda p7, [sp, #-36]; nopb ; nops ; nopx ; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 4-byte Folded Reload
+; USE-JNZD-NEXT:    lda r13:r12, [sp, #-48]; mov srssign0, r6; vmac dm0, dm0, x0, x2, r8 // 8-byte Folded Reload
+; USE-JNZD-NEXT:    lda r11:r10, [sp, #-56]; vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8 // 8-byte Folded Reload
+; USE-JNZD-NEXT:    lda r9:r8, [sp, #-64]; vmac dm0, dm0, x0, x2, r8 // 8-byte Folded Reload
 ; USE-JNZD-NEXT:    vshuffle x0, x8, x6, r2; vmac dm1, dm1, x0, x4, r8
 ; USE-JNZD-NEXT:    vmac dm0, dm0, x0, x2, r8
 ; USE-JNZD-NEXT:    vmac dm1, dm1, x0, x4, r8
-; USE-JNZD-NEXT:    lda p6, [sp, #-64]; vmac dm0, dm0, x0, x2, r8 // 4-byte Folded Reload
-; USE-JNZD-NEXT:    paddxm [sp], #-64; mov r8, r19
+; USE-JNZD-NEXT:    lda p6, [sp, #-40]; vmac dm0, dm0, x0, x2, r8 // 4-byte Folded Reload
+; USE-JNZD-NEXT:    paddxm [sp], #-64
 ; USE-JNZD-NEXT:    nop
 ; USE-JNZD-NEXT:    nop
 ; USE-JNZD-NEXT:    ret lr

@@ -223,7 +223,7 @@ def CC_AIE2PS : CallingConv<[
 ]>;
 
 def CSR_AIE2PS
-    : CalleeSavedRegs<(add lr, r8, r9, r10, r11, r12, r13, r14, r15, p6, p7)>;
+    : CalleeSavedRegs<(add lr, l4, l5, l6, l7, r8, r9, r10, r11, r12, r13, r14, r15, p6, p7)>;
 
 def CSR_AIE2PS_Vec
     : CalleeSavedRegs<(add lr, r8, r9, r10, r11, r12, r13, r14, r15, p6, p7,
