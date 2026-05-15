@@ -199,11 +199,11 @@ define i32 @test_call_fastcc(i32 %a, i32 %b) nounwind {
   ; AIE2PS-NEXT: {{  $}}
   ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
   ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $lr, -56, implicit $sp :: (store (s32) into %stack.0)
-  ; AIE2PS-NEXT:   ST_dml_sts_scalar_spill killed $l4, -64, implicit $sp :: (store (s64) into %stack.1, align 4)
+  ; AIE2PS-NEXT:   ST_dml_sts_scalar_spill killed $l4, -64, implicit $sp :: (store (s64) into %stack.1)
   ; AIE2PS-NEXT:   renamable $r9 = COPY $r1
   ; AIE2PS-NEXT:   PseudoJL @fastcc_function, csr_aie2ps, implicit-def $lr, implicit $r1, implicit $r2, implicit-def dead $r0
   ; AIE2PS-NEXT:   $r0 = COPY killed renamable $r9
-  ; AIE2PS-NEXT:   $l4 = LDA_dml_lda_scalar_L_spill -64, implicit $sp :: (load (s64) from %stack.1, align 4)
+  ; AIE2PS-NEXT:   $l4 = LDA_dml_lda_scalar_L_spill -64, implicit $sp :: (load (s64) from %stack.1)
   ; AIE2PS-NEXT:   $lr = LDA_dms_lda_scalar_spill -56, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit killed $r0
