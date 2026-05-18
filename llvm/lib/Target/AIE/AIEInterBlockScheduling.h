@@ -153,9 +153,7 @@ class Region {
 
 public:
   Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
-         MachineBasicBlock::iterator End,
-         ArrayRef<MachineBundle> TopFixedBundles,
-         ArrayRef<MachineBundle> BotFixedBundles);
+         MachineBasicBlock::iterator End);
 
   using free_iterator = std::vector<MachineInstr *>::const_iterator;
   using fixed_iterator = MachineBasicBlock::iterator;
@@ -180,6 +178,18 @@ public:
     return make_range(FixedBegin, BB->end());
   }
   ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
+
+  /// Set the fixed bundles at the top of the region (e.g. a SWP epilogue).
+  /// The instructions must already be physically present at the start of the
+  /// block. Trims SemanticOrder to exclude the newly fixed instructions.
+  /// \pre The region starts at BB->begin().
+  void setTopFixedBundles(ArrayRef<MachineBundle> Bundles);
+
+  /// Set the fixed bundles at the bottom of the region (e.g. a SWP prologue).
+  /// The instructions must already be physically present at the end of the
+  /// block. Trims SemanticOrder to exclude the newly fixed instructions.
+  /// \pre The region ends at BB->end().
+  void setBotFixedBundles(ArrayRef<MachineBundle> Bundles);
 
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
@@ -240,15 +250,12 @@ public:
     TheBundles.insert(TheBundles.end(), Bundles.begin(), Bundles.end());
   }
   void addRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator RegionBegin,
-                 MachineBasicBlock::iterator RegionEnd,
-                 ArrayRef<MachineBundle> TopFixedBundles,
-                 ArrayRef<MachineBundle> BotFixedBundles) {
+                 MachineBasicBlock::iterator RegionEnd) {
     assert((Kind == BlockType::Loop &&
             FixPoint.Stage == SchedulingStage::GatheringRegions) ||
            FixPoint.Stage == SchedulingStage::Scheduling);
     CurrentRegion = Regions.size();
-    Regions.emplace_back(BB, RegionBegin, RegionEnd, TopFixedBundles,
-                         BotFixedBundles);
+    Regions.emplace_back(BB, RegionBegin, RegionEnd);
   }
   auto &getCurrentRegion() const { return Regions.at(CurrentRegion); }
   auto &getCurrentRegion() { return Regions[CurrentRegion]; }

@@ -878,16 +878,17 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
                       << "\n");
 
-  // Only add regions of loops when in the GatheringRegions phase
+  // Only add regions of loops when in the GatheringRegions phase.
   if (BS.Kind != BlockType::Loop ||
       BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
-    ArrayRef<MachineBundle> TopFixedBundles =
-        RegionBegin == BB->begin() ? ArrayRef<MachineBundle>(BS.TopInsert)
-                                   : ArrayRef<MachineBundle>();
-    ArrayRef<MachineBundle> BotFixedBundles =
-        RegionEnd == BB->end() ? ArrayRef<MachineBundle>(BS.BottomInsert)
-                               : ArrayRef<MachineBundle>();
-    BS.addRegion(BB, RegionBegin, RegionEnd, TopFixedBundles, BotFixedBundles);
+    BS.addRegion(BB, RegionBegin, RegionEnd);
+    // Fixed bundles result from loop pipelining and are set separately on the
+    // region, after the instructions have been physically inserted into the
+    // block by emitInterBlockTop / emitInterBlockBottom.
+    if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
+      BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
+    if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
+      BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert);
   }
 }
 
@@ -1213,37 +1214,46 @@ bool InterBlockEdges::isPostBoundaryNode(SUnit *SU) const {
 }
 
 Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
-               MachineBasicBlock::iterator End,
-               ArrayRef<MachineBundle> TopFixedBundles,
-               ArrayRef<MachineBundle> BotFixedBundles)
-    : BB(BB), TopFixedBundles(TopFixedBundles),
-      BotFixedBundles(BotFixedBundles) {
-  MachineBasicBlock::iterator FreeBegin =
-      std::next(Begin, TopFixedBundles.size());
-  MachineBasicBlock::iterator FreeEnd = std::prev(End, BotFixedBundles.size());
-
-  // Verify that all fixed instructions are at the right place in the MBB
-  assert(TopFixedBundles.empty() || Begin == BB->begin());
-  assert(TopFixedBundles.empty() ||
-         all_of(TopFixedBundles.back().Instrs, [FreeBegin](
-                                                   const MachineInstr *MI) {
-           return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
-         }));
-  assert(BotFixedBundles.empty() || End == BB->end());
-  assert(
-      BotFixedBundles.empty() ||
-      all_of(BotFixedBundles.front().Instrs, [FreeEnd](const MachineInstr *MI) {
-        return getBundleStart(MI->getIterator()) == FreeEnd;
-      }));
-
+               MachineBasicBlock::iterator End)
+    : BB(BB) {
   // When the region is created, its instructions haven't been re-ordered yet,
-  // so this is effectively saving the semantic order.
-  for (auto It = FreeBegin; It != FreeEnd; ++It) {
+  // so this is effectively saving the semantic order. Fixed bundles (if any)
+  // are set separately via setTopFixedBundles / setBotFixedBundles, which
+  // will trim the corresponding entries from SemanticOrder.
+  for (auto It = Begin; It != End; ++It) {
     SemanticOrder.push_back(&*It);
   }
   if (End != BB->end()) {
     ExitInstr = &*End;
   }
+}
+
+void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
+  assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
+  // Verify the fixed instructions are physically at the top of the block.
+  const auto FreeBegin = std::next(BB->begin(), Bundles.size());
+  assert(all_of(Bundles.back().Instrs, [FreeBegin](const MachineInstr *MI) {
+    return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
+  }));
+  TopFixedBundles = Bundles;
+  // Remove the fixed instructions from the front of SemanticOrder so that
+  // getFreeInstructions() returns only the truly free instructions.
+  SemanticOrder.erase(SemanticOrder.begin(),
+                      SemanticOrder.begin() + Bundles.size());
+}
+
+void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
+  assert(BotFixedBundles.empty() && "BotFixedBundles already set.");
+  // Verify the fixed instructions are physically at the bottom of the block.
+  const auto FreeEnd = std::prev(BB->end(), Bundles.size());
+  assert(all_of(Bundles.front().Instrs, [FreeEnd](const MachineInstr *MI) {
+    return getBundleStart(MI->getIterator()) == FreeEnd;
+  }));
+  BotFixedBundles = Bundles;
+  // Remove the fixed instructions from the back of SemanticOrder so that
+  // getFreeInstructions() returns only the truly free instructions.
+  SemanticOrder.erase(SemanticOrder.end() - Bundles.size(),
+                      SemanticOrder.end());
 }
 
 BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
