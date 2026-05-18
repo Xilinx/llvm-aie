@@ -267,20 +267,37 @@ std::pair<MachineBasicBlock *, MachineBasicBlock *>
 findPrologueEpilogue(const MachineBasicBlock &LoopBB) {
   assert(isSingleMBBLoop(&LoopBB) && "Expected a single-MBB loop");
 
+  // Return nullptr for the ambiguous side if the loop has multiple non-loop
+  // predecessors/successors. A valid do-while style outer loop may take its
+  // backedge from a different block than the one that enters it, producing
+  // two non-loop predecessors. Callers that require uniqueness (e.g. the
+  // pipeliner's PipelineExtractor) must check for nullptr themselves.
   MachineBasicBlock *Prologue = nullptr;
   MachineBasicBlock *Epilogue = nullptr;
+  bool MultiplePrologues = false;
+  bool MultipleEpilogues = false;
   for (MachineBasicBlock *P : LoopBB.predecessors()) {
     if (P == &LoopBB)
       continue;
-    assert(!Prologue && "Single-MBB loop has multiple non-loop predecessors");
+    if (Prologue) {
+      MultiplePrologues = true;
+      break;
+    }
     Prologue = P;
   }
   for (MachineBasicBlock *S : LoopBB.successors()) {
     if (S == &LoopBB)
       continue;
-    assert(!Epilogue && "Single-MBB loop has multiple non-loop successors");
+    if (Epilogue) {
+      MultipleEpilogues = true;
+      break;
+    }
     Epilogue = S;
   }
+  if (MultiplePrologues)
+    Prologue = nullptr;
+  if (MultipleEpilogues)
+    Epilogue = nullptr;
   return {Prologue, Epilogue};
 }
 
