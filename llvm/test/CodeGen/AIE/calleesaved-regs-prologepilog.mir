@@ -6,7 +6,7 @@
 #
 # (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -verify-machineinstrs --march=aie2p -run-pass=prologepilog %s -o - | FileCheck %s
-# RUN: llc -verify-machineinstrs --march=aie2ps -run-pass=prologepilog %s -o - | FileCheck -check-prefix=AIE2PS %s
+# RUN: llc -verify-machineinstrs --march=aie2ps -run-pass=prologepilog %s -o - | FileCheck %s
 
 # l4 is composed of r8-r9, which are callee-saved. None of those regs
 # are used as CC registers, so r16-r17 should be saved-restored by PEI.
@@ -24,16 +24,6 @@ body:             |
     ; CHECK-NEXT: $r9 = PseudoMove killed $r1
     ; CHECK-NEXT: $r8 = PseudoMove killed $r0
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l4
-    ;
-    ; AIE2PS-LABEL: name: save_L
-    ; AIE2PS: liveins: $l1, $l4
-    ; AIE2PS-NEXT: {{  $}}
-    ; AIE2PS-NEXT: frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
-    ; AIE2PS-NEXT: ST_dml_sts_scalar_spill killed $l4, -64, implicit $sp :: (store (s64) into %stack.0, align 4)
-    ; AIE2PS-NEXT: $l4 = COPY $l1
-    ; AIE2PS-NEXT: $l4 = LDA_dml_lda_scalar_L_spill -64, implicit $sp :: (load (s64) from %stack.0, align 4)
-    ; AIE2PS-NEXT: frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
-    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $l4
     $l4 = COPY $l1
     PseudoRET implicit $lr, implicit $l4
 ...
@@ -51,12 +41,6 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $l4 = COPY $l1
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l4
-    ;
-    ; AIE2PS-LABEL: name: no_save_L
-    ; AIE2PS: liveins: $l1
-    ; AIE2PS-NEXT: {{  $}}
-    ; AIE2PS-NEXT: $l4 = COPY $l1
-    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $l4
     $l4 = COPY $l1
     PseudoRET implicit $lr, implicit $l4
 ...
@@ -74,13 +58,6 @@ body:             |
     ; CHECK-NEXT: $r8 = COPY $r0
     ; CHECK-NEXT: $r9 = COPY $r1
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
-    ;
-    ; AIE2PS-LABEL: name: no_save_L_subregs
-    ; AIE2PS: liveins: $l0
-    ; AIE2PS-NEXT: {{  $}}
-    ; AIE2PS-NEXT: $r8 = COPY $r0
-    ; AIE2PS-NEXT: $r9 = COPY $r1
-    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     $r8 = COPY $r0
     $r9 = COPY $r1
     PseudoRET implicit $lr, implicit $r0, implicit $r1
@@ -102,14 +79,6 @@ body:             |
     ; CHECK-NEXT: $l4 = COPY $l1
     ; CHECK-NEXT: $r9 = PseudoMove killed $r0
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l4
-    ;
-    ; AIE2PS-LABEL: name: save_partial_L
-    ; AIE2PS: liveins: $l1, $r9
-    ; AIE2PS-NEXT: {{  $}}
-    ; AIE2PS-NEXT: $r0 = PseudoMove killed $r9
-    ; AIE2PS-NEXT: $l4 = COPY $l1
-    ; AIE2PS-NEXT: $r9 = PseudoMove killed $r0
-    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $l4
     $l4 = COPY $l1
     PseudoRET implicit $lr, implicit $l4
 ...

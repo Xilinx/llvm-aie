@@ -20,16 +20,15 @@ target triple = "aie2ps"
 define dso_local inreg noundef <64 x float> @test_mul_4x16_16x16T6v64mx97v256mx9(%struct.v64mx9 %a.coerce, %struct.v256mx9 %b.coerce) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_mul_4x16_16x16T6v64mx97v256mx9:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r8, #972; nopb ; st r9:r8, [sp, #-64] // 8-byte Folded Spill
+; CHECK-NEXT:    mova r8, #972; nopx ; mov r0, r8
 ; CHECK-NEXT:    vmul.f dm0, ex0, ey2, ey3, r8
-; CHECK-NEXT:    lda r9:r8, [sp, #-64] // 8-byte Folded Reload
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 1
+; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
 entry:
   %0 = extractvalue %struct.v64mx9 %a.coerce, 0
   %1 = extractvalue %struct.v64mx9 %a.coerce, 1
@@ -54,15 +53,14 @@ entry:
 define dso_local inreg noundef <64 x float> @test_mul_4x16_16x16T7v128mx67v256mx6(%struct.v128mx6 %a.coerce, %struct.v256mx6 %b.coerce) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_mul_4x16_16x16T7v128mx67v256mx6:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r8, #772; nopb ; st r9:r8, [sp, #-64] // 8-byte Folded Spill
-; CHECK-NEXT:    lda r9:r8, [sp, #-64]; vmul.f dm0, fex0, fey1, r8 // 8-byte Folded Reload
+; CHECK-NEXT:    mova r8, #772; nopb ; nopx ; mov r0, r8
+; CHECK-NEXT:    vmul.f dm0, fex0, fey1, r8
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 1
+; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
 entry:
   %0 = extractvalue %struct.v128mx6 %a.coerce, 0
   %1 = extractvalue %struct.v128mx6 %a.coerce, 1
