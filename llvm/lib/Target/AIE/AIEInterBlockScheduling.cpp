@@ -223,21 +223,41 @@ InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
                                            bool InterBlock)
     : Context(C), InterBlockScoreboard(InterBlock) {}
 
-// This sets up the scheduling mode for each block. It defines which
-// CFG edges will be prioritized for interblock scheduling and which blocks
-// should take care of the latency repair.
-void InterBlockScheduling::markEpilogueBlocks() {
-  // Mark up the epilogues of the Loops we have found
-  for (auto &[MBB, BS] : Blocks) {
-    if (BS.Kind != BlockType::Loop) {
-      continue;
-    }
-    llvm::for_each(MBB->successors(), [L = MBB, this](auto *S) {
-      if (S != L) {
-        getBlockState(S).Kind = BlockType::Epilogue;
-      }
-    });
+void InterBlockScheduling::classifyBlock(BlockState &BS) {
+  // Detect whether this block is amenable to loop-aware scheduling.
+  // We must push the safety margin to our epilogue block(s)
+  // This can only be done if we have an epilogue and the epilogue is not itself
+  // a loop.
+  auto IsLoop = [](const MachineBasicBlock *MBB) {
+    return AIELoopUtils::isSingleMBBLoop(MBB);
+  };
+
+  // We generalize slightly; we require the epilogue to be a dedicated exit of
+  // the loop or a fallthrough block that is not a loop, so that we can
+  // squeeze in a dedicated exit.
+  auto CanFixLoopSchedule = [LBB = BS.TheBlock,
+                             &IsLoop](const MachineBasicBlock *S) {
+    // Either the backedge, or a dedicated loop exit, or a fallthrough loop exit
+    return S == LBB || S->pred_size() == 1 ||
+           (LBB->isLayoutSuccessor(S) && !IsLoop(S));
+  };
+
+  // If we don't mark up any loops, we will iterate in the same order and apply
+  // the same safety margins as before.
+  if (LoopAware && IsLoop(BS.TheBlock) &&
+      llvm::all_of(BS.TheBlock->successors(), CanFixLoopSchedule)) {
+    BS.Kind = BlockType::Loop;
+    return;
   }
+  // A block is an Epilogue iff at least one of its predecessors is a Loop
+  // block.
+  for (MachineBasicBlock *Pred : BS.TheBlock->predecessors()) {
+    if (Blocks.count(Pred) && getBlockState(Pred).Kind == BlockType::Loop) {
+      BS.Kind = BlockType::Epilogue;
+      return;
+    }
+  }
+  BS.Kind = BlockType::Regular;
 }
 
 void InterBlockScheduling::enterFunction(MachineFunction *MF) {
@@ -259,6 +279,8 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   for (MachineBasicBlock &MBB : *MF) {
     auto Itr = Blocks.emplace(&MBB, &MBB).first;
     BlockState &BS = Itr->second;
+
+    classifyBlock(BS);
     BS.LiveOuts.init(*TRI);
     // Calculating LiveOuts by iterating over each successor of the MBB and
     // adding each successor's LiveIns to LiveOuts.
@@ -276,10 +298,16 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   if (LoopAware) {
     // Mark epilogues of the loops we found. This is only necessary if
     // we have created Loops in the first place, as indicated by LoopAware.
-    markEpilogueBlocks();
+    for (auto &[_, BS] : Blocks) {
+      classifyBlock(BS);
+    }
   }
 
+  // Compute the scheduling order once up-front. We use it for both the
+  // region gathering phase and the scheduling phase, even if the former
+  // is independent of order.
   defineSchedulingOrder(MF);
+  IsGatheringPhase = true;
 }
 
 /// Emit a loop scheduling optimization remark with pipeliner kind, II, NS,
@@ -383,6 +411,15 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
                       << CurrentBlockState->kindAsString() << " FixPointIter="
                       << CurrentBlockState->FixPoint.NumIters
                       << " II=" << CurrentBlockState->FixPoint.II << "\n");
+
+  if (IsGatheringPhase) {
+    return;
+  }
+
+  // When relevant, pick up the fixed fragments left by scheduling other
+  // blocks, in particular the pipeliner's prologue and epilogue.
+  emitInterBlockTop(*CurrentBlockState);
+  emitInterBlockBottom(*CurrentBlockState);
 }
 namespace {
 /// This implements the interface to the postpipeliner to extract the
@@ -499,10 +536,21 @@ bool InterBlockScheduling::leaveBlock() {
   // After scheduling a basic block, check convergence to determine which block
   // to schedule next and with what parameters
   auto &BS = *CurrentBlockState;
+  if (IsGatheringPhase) {
+    // This is the first visit to this block. The region decomposition has been
+    // gathered. Now transition to Scheduling so the next pass actually
+    // schedules the gathered regions.
+    if (BS.Kind == BlockType::Loop) {
+      // For loops, also create the interblock edges between the top and the
+      // bottom region.
+      BS.initInterBlock(*Context, *HR);
+    }
+    return false;
+  }
+
   const auto Stage = updateFixPoint(BS);
   BS.FixPoint.Stage = Stage;
   switch (Stage) {
-  case SchedulingStage::GatheringRegions:
   case SchedulingStage::SchedulingNotConverged:
   case SchedulingStage::Scheduling:
   case SchedulingStage::Pipelining:
@@ -642,17 +690,10 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
 }
 
 SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
+  assert(!IsGatheringPhase);
+
   if (BS.Kind != BlockType::Loop) {
     return SchedulingStage::SchedulingDone;
-  }
-
-  if (BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
-    // This is the first time we schedule this loop. In that first
-    // iteration, we have recorded the region decomposition.
-    // Now we can create the interblock edges between the top and the bottom
-    // region
-    BS.initInterBlock(*Context, *HR);
-    return SchedulingStage::Scheduling;
   }
 
   BS.FixPoint.NumIters++;
@@ -849,17 +890,35 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
 }
 
 MachineBasicBlock *InterBlockScheduling::nextBlock() {
+  if (IsGatheringPhase) {
+    if (NextInOrder < MBBSequence.size()) {
+      // Each call returns the next block to gather; NextInOrder tracks which
+      // blocks have already been returned (and thus gathered).
+      return MBBSequence[NextInOrder++];
+    }
+
+    // All blocks gathered. Build per-successor inter-block DDG edges for
+    // every block.
+    for (MachineBasicBlock *MBB : MBBSequence) {
+      getBlockState(MBB).resetRegion();
+      buildPerSuccEdges(MBB);
+    }
+
+    // Now run the scheduling phase. We reset the iterator and switch the mode.
+    NextInOrder = 0;
+    IsGatheringPhase = false;
+  }
+
   auto &BS = getBlockState(MBBSequence[NextInOrder]);
   if (!BS.isScheduled() ||
       (BS.FixPoint.II && !BS.isPipelined() && !BS.pipeliningFailed())) {
     return MBBSequence[NextInOrder];
   }
 
-  ++NextInOrder;
-  if (NextInOrder >= MBBSequence.size()) {
-    return nullptr;
+  if (++NextInOrder < MBBSequence.size()) {
+    return MBBSequence[NextInOrder];
   }
-  return MBBSequence[NextInOrder];
+  return nullptr;
 }
 
 const BlockState &
@@ -871,6 +930,50 @@ BlockState &InterBlockScheduling::getBlockState(MachineBasicBlock *BB) {
   return Blocks.at(BB);
 }
 
+void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
+  const BlockState &BS = getBlockState(DAG.getPred());
+  const Region &Bot = BS.getBottom();
+
+  // Pre-boundary: free instructions of the current region.
+  for (MachineInstr *MI : Bot.getFreeInstructions())
+    DAG.addNode(MI);
+
+  DAG.markBoundary();
+
+  // Post-boundary: always use getFreeInstructions() as the single source
+  // of node identity.  Empty regions signify empty basic blocks; in that
+  // case no post-boundary nodes are added.
+  const BlockState &SBS = getBlockState(DAG.getSucc());
+  if (!SBS.getRegions().empty()) {
+    for (MachineInstr *MI : SBS.getTop().getFreeInstructions())
+      DAG.addNode(MI);
+  }
+
+  DAG.buildEdges();
+}
+
+void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {
+  BlockState &BS = getBlockState(BB);
+  // The current region must have been gathered before we can build edges.
+  // Blocks that are just created (e.g. DedicatedExit) may have empty regions
+  // until enterRegion is called; skip building in that case.
+  if (BS.getRegions().empty())
+    return;
+
+  const MachineSchedContext &C = *Context;
+  const bool SafeToIgnoreMemDeps = BS.isSafeToIgnoreMemDeps();
+
+  auto &PerSuccEdges = BS.getPerSuccEdges();
+
+  for (MachineBasicBlock *SuccBB : BB->successors()) {
+    DEBUG_BLOCKS(dbgs() << "Building InterBlockEdge: Pred=" << BB->getNumber()
+                        << " Succ=" << SuccBB->getNumber() << "\n");
+    InterBlockEdges &SE = *PerSuccEdges.emplace_back(
+        std::make_unique<InterBlockEdges>(C, SafeToIgnoreMemDeps, BB, SuccBB));
+    buildGraph(SE);
+  }
+}
+
 void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
                                        MachineBasicBlock::iterator RegionBegin,
                                        MachineBasicBlock::iterator RegionEnd) {
@@ -878,13 +981,31 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
                       << "\n");
 
-  // Only add regions of loops when in the GatheringRegions phase.
-  if (BS.Kind != BlockType::Loop ||
-      BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
+  if (IsGatheringPhase) {
+    // Gather region boundaries and capture the invariant SemanticOrder for all
+    // block types. Fixed bundles are NOT set here: they result from loop
+    // pipelining, which happens during Scheduling, and are applied via the
+    // setTopFixedBundles / setBotFixedBundles calls in the Scheduling pass.
     BS.addRegion(BB, RegionBegin, RegionEnd);
-    // Fixed bundles result from loop pipelining and are set separately on the
-    // region, after the instructions have been physically inserted into the
-    // block by emitInterBlockTop / emitInterBlockBottom.
+    return;
+  }
+  if (BS.Kind != BlockType::Loop) {
+    // Scheduling pass for non-loop blocks: set fixed bundles on the
+    // pre-gathered region now that emitInterBlockTop / emitInterBlockBottom
+    // has physically inserted the SWP instructions into the block.
+    //
+    // If Regions is empty, the block was empty during GatheringRegions (e.g.
+    // a newly-created dedicated exit block). The machine scheduler skips
+    // enterRegion for empty blocks so no region was captured. Create it now
+    // with correct free-instruction boundaries, excluding any fixed bundles.
+    if (BS.getRegions().empty()) {
+      const unsigned TopCount =
+          (RegionBegin == BB->begin()) ? BS.TopInsert.size() : 0u;
+      const unsigned BotCount =
+          (RegionEnd == BB->end()) ? BS.BottomInsert.size() : 0u;
+      BS.addRegion(BB, std::next(RegionBegin, TopCount),
+                   std::prev(RegionEnd, BotCount));
+    }
     if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
       BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
     if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
@@ -1190,29 +1311,6 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
   return NopCounter;
 }
 
-void InterBlockEdges::addNode(MachineInstr *MI) {
-  if (auto Index = DDG.initSUnit(*MI)) {
-    IndexMap &TheMap = Boundary ? SuccMap : PredMap;
-    TheMap.emplace(MI, *Index);
-  }
-}
-
-// Mark the boundary between the predecessor block and the successor block
-void InterBlockEdges::markBoundary() { Boundary = DDG.SUnits.size(); }
-
-const SUnit *InterBlockEdges::getPreBoundaryNode(MachineInstr *MI) const {
-  auto Found = PredMap.find(MI);
-  if (Found == PredMap.end()) {
-    return nullptr;
-  }
-
-  return &DDG.SUnits.at(Found->second);
-}
-
-bool InterBlockEdges::isPostBoundaryNode(SUnit *SU) const {
-  return Boundary ? SU->NodeNum >= *Boundary : false;
-}
-
 Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                MachineBasicBlock::iterator End)
     : BB(BB) {
@@ -1236,10 +1334,9 @@ void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
     return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
   }));
   TopFixedBundles = Bundles;
-  // Remove the fixed instructions from the front of SemanticOrder so that
-  // getFreeInstructions() returns only the truly free instructions.
-  SemanticOrder.erase(SemanticOrder.begin(),
-                      SemanticOrder.begin() + Bundles.size());
+  // SemanticOrder was captured during the gathering phase before the fixed
+  // bundles were inserted into the block, so it already contains only the
+  // free instructions. No adjustment is needed.
 }
 
 void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
@@ -1250,14 +1347,12 @@ void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
     return getBundleStart(MI->getIterator()) == FreeEnd;
   }));
   BotFixedBundles = Bundles;
-  // Remove the fixed instructions from the back of SemanticOrder so that
-  // getFreeInstructions() returns only the truly free instructions.
-  SemanticOrder.erase(SemanticOrder.end() - Bundles.size(),
-                      SemanticOrder.end());
+  // SemanticOrder was captured during the gathering phase before the fixed
+  // bundles were inserted into the block, so it already contains only the
+  // free instructions. No adjustment is needed.
 }
 
 BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
-  classify();
   setBlockProperties();
 }
 
@@ -1292,38 +1387,6 @@ void BlockState::clearSchedule() {
   CurrentRegion = 0;
 }
 
-void BlockState::classify() {
-  // Detect whether this block is amenable to loop-aware scheduling.
-  // We must push the safety margin to our epilogue block(s)
-  // This can only be done if we have an epilogue and the epilogue is not itself
-  // a loop.
-  auto IsLoop = [](const MachineBasicBlock *MBB) {
-    return AIELoopUtils::isSingleMBBLoop(MBB);
-  };
-
-  // We generalize slightly; we require the epilogue to be a dedicated exit of
-  // the loop or a fallthrough block that is not a loop, so that we can
-  // squeeze in a dedicated exit.
-  auto CanFixLoopSchedule = [L = TheBlock,
-                             &IsLoop](const MachineBasicBlock *S) {
-    // Either the backedge, or a dedicated loop exit, or a fallthrough loop exit
-    return S == L || S->pred_size() == 1 ||
-           (L->isLayoutSuccessor(S) && !IsLoop(S));
-  };
-
-  // If we don't mark up any loops, we will iterate in the same order and apply
-  // the same safety margins as before.
-  if (LoopAware && IsLoop(TheBlock) &&
-      llvm::all_of(TheBlock->successors(), CanFixLoopSchedule)) {
-    Kind = BlockType::Loop;
-    FixPoint.Stage = SchedulingStage::GatheringRegions;
-  }
-
-  // We will mark the epilogues in a second sweep, when all states have been
-  // constructed. That sweep is driven by the Loops we've classified on
-  // construction.
-}
-
 void BlockState::setBlockProperties() {
   // We use the classification engine as a place to determine if this block
   // is the epilogue of an outerloop pipelined loop.
@@ -1339,9 +1402,22 @@ void BlockState::setBlockProperties() {
                               : Overrides.get(PostSchedIgnoreMemoryDeps);
 }
 
+InterBlockEdges *BlockState::getLoopSelfEdge() {
+  for (auto &SEPtr : PerSuccEdges)
+    if (SEPtr->getSucc() == TheBlock)
+      return SEPtr.get();
+  return nullptr;
+}
+
+const InterBlockEdges *BlockState::getLoopSelfEdge() const {
+  for (auto &SEPtr : PerSuccEdges)
+    if (SEPtr->getSucc() == TheBlock)
+      return SEPtr.get();
+  return nullptr;
+}
+
 void BlockState::initInterBlock(const MachineSchedContext &Context,
                                 const AIEHazardRecognizer &HR) {
-  assert(!BoundaryEdges);
   assert(Kind == BlockType::Loop);
   assert(all_of(Regions,
                 [](const Region &R) {
@@ -1349,7 +1425,6 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
                          R.bot_fixed_instrs().empty();
                 }) &&
          "Loop cannot have fixed instructions");
-  BoundaryEdges = std::make_unique<InterBlockEdges>(Context);
   if (Regions.size() == 1) {
     // Don't worry, this just constructs a mostly empty container class
     auto NumInstrs = getTop().getFreeInstructions().size();
@@ -1362,19 +1437,6 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
                                                  MaterializePipeline);
     }
   }
-
-  // We are called just after the first round of scheduling a block.
-  // These loops run over the original 'semantical order' that was collected
-  // in this first fixpoint iteration
-  for (auto *MI : getBottom().getFreeInstructions()) {
-    BoundaryEdges->addNode(MI);
-  }
-  BoundaryEdges->markBoundary();
-  for (auto *MI : getTop().getFreeInstructions()) {
-    BoundaryEdges->addNode(MI);
-  }
-  BoundaryEdges->buildEdges();
-  DEBUG_LOOPAWARE(dumpInterBlock(*BoundaryEdges));
 }
 
 std::optional<SWPEpilogueContext>

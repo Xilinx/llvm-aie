@@ -794,13 +794,8 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
   CurMBB = MBB;
   // We force bottom up region processing, so the first region
   // from a block is the bottom one. We reset this when leaving any
-  // region
+  // region.
   IsBottomRegion = true;
-
-  // The block may have a timed region, append its instructions.
-  auto &BS = InterBlock.getBlockState(MBB);
-  InterBlock.emitInterBlockTop(BS);
-  InterBlock.emitInterBlockBottom(BS);
 }
 
 static MachineBasicBlock::iterator
@@ -1038,7 +1033,8 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
 
   auto &BS = InterBlock.getBlockState(CurMBB);
-  if (BS.FixPoint.Stage != SchedulingStage::Scheduling) {
+  if (InterBlock.isGatheringPhase() ||
+      BS.FixPoint.Stage != SchedulingStage::Scheduling) {
     return;
   }
   materializeMultiOpcodeInstrs();
@@ -1795,10 +1791,11 @@ bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
 void AIEScheduleDAGMI::schedule() {
   BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
 
-  switch (BS.FixPoint.Stage) {
-  case SchedulingStage::GatheringRegions:
+  if (getSchedImpl()->getInterBlock().isGatheringPhase()) {
     // We are only gathering regions in the MBB, no scheduling to do.
     return;
+  }
+  switch (BS.FixPoint.Stage) {
   case SchedulingStage::Pipelining: {
     // We've gone past regular scheduling. Try to find a valid modulo schedule
     // If it succeeds, we need to implement it, if we fail we fall back on the

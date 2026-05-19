@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -70,6 +70,83 @@ void DataDependenceHelper::dumpDot(raw_ostream &OS,
     }
   }
   OS << "}\n";
+}
+
+void InterBlockEdges::addNode(MachineInstr *MI) {
+  const auto Index = initSUnit(*MI);
+  if (!Index) {
+    return;
+  }
+
+  IndexMap &TheMap = Boundary ? SuccMap : PredMap;
+  TheMap.emplace(MI, *Index);
+}
+
+void InterBlockEdges::markBoundary() {
+  assert(!Boundary.has_value());
+  Boundary = SUnits.size();
+}
+
+bool InterBlockEdges::mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) {
+  if (SafeToIgnoreMemDeps && Boundary) {
+    // Suppress memory edges that cross the pre/post boundary.
+    const bool AIsPost = SUa->NodeNum >= *Boundary;
+    const bool BIsPost = SUb->NodeNum >= *Boundary;
+    if (AIsPost != BIsPost)
+      return false;
+  }
+  return DataDependenceHelper::mayAlias(SUa, SUb, TBAA);
+}
+
+const SUnit *InterBlockEdges::getPreBoundaryNode(MachineInstr *MI) const {
+  const auto Found = PredMap.find(MI);
+  if (Found == PredMap.end()) {
+    return nullptr;
+  }
+  return &SUnits.at(Found->second);
+}
+
+bool InterBlockEdges::isPostBoundaryNode(SUnit *SU) const {
+  return Boundary ? SU->NodeNum >= *Boundary : false;
+}
+
+void InterBlockEdges::clearPostDepths() {
+  PostDepths.clear();
+  PostRegionMaxDepth = 0;
+}
+
+void InterBlockEdges::clear() {
+  clearDAG();
+  Boundary = {};
+  clearPostDepths();
+}
+
+// Record code at a particular depth that is not represented
+// by a MachineInstr, for instance an empty bundle.
+void InterBlockEdges::recordPostDepth(int Depth) {
+  PostRegionMaxDepth = std::max(PostRegionMaxDepth, Depth);
+}
+
+void InterBlockEdges::recordPostDepth(MachineInstr *MI, int Depth) {
+  // Even if we can't find an index, our caller has found evidence
+  // that we have code at this depth. As a common example,
+  // consider bundles with BottomFixed instructions that are not
+  // part of the first iteration.
+  recordPostDepth(Depth);
+
+  const auto Found = SuccMap.find(MI);
+  if (Found == SuccMap.end()) {
+    // When inserting scheduled bundles, we may be interleaved with
+    // instructions from Fixed regions. It's easiest to ignore them
+    // here.
+    return;
+  }
+  PostDepths[Found->second] = Depth;
+}
+
+int InterBlockEdges::getPostDepthOr(const SUnit *SU, int Default) const {
+  const auto It = PostDepths.find(SU->NodeNum);
+  return It != PostDepths.end() ? It->second : Default;
 }
 
 } // end namespace llvm::AIE
