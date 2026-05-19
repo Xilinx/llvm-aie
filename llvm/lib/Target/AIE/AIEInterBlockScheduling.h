@@ -31,62 +31,12 @@
 
 namespace llvm::AIE {
 
-/// This class generates all edges between nodes in two flow-adjacent regions
-/// The nodes are added in forward flow order, marking the boundary at the
-/// appropriate point.
-class InterBlockEdges {
-  DataDependenceHelper DDG;
-  // the boundary between Pred and Succ nodes
-  std::optional<unsigned> Boundary;
-
-  /// We can add the same instruction on both sides of the boundary.
-  /// We maintain explicit maps to retrieve the corresponding SUnit
-  using IndexMap = std::map<MachineInstr *, unsigned>;
-  IndexMap PredMap;
-  IndexMap SuccMap;
-
-public:
-  InterBlockEdges(const MachineSchedContext &Context)
-      : DDG(Context, true, true) {}
-
-  /// Add a Node to the DAG.
-  void addNode(MachineInstr *);
-
-  /// Mark the boundary between the predecessor block and the successor block.
-  /// In normal operation, there should just be one call to this method.
-  /// Nodes added before are part of the predecesor, nodes added after are
-  /// part of the successor
-  void markBoundary();
-
-  /// Create all the edges by interpreting read and write events of the nodes
-  // in reverse order.
-  void buildEdges() { DDG.buildEdges(); }
-
-  /// To iterate forward across the SUnits of the underlying DDG.
-  auto begin() const { return DDG.SUnits.begin(); }
-  auto end() const { return DDG.SUnits.end(); }
-
-  /// The following two methods are used to find the cross-boundary edges,
-  /// by starting from a pre-boundary node and select its successor edges that
-  /// connect to a post-boundary node.
-  /// ---
-  /// Retrieve the SUnit that represents MI's instance before the
-  /// boundary, null if not found.
-  const SUnit *getPreBoundaryNode(MachineInstr *MI) const;
-
-  /// Check whether SU represents an instruction after the boundary
-  bool isPostBoundaryNode(SUnit *SU) const;
-};
-
 // BlockType determines scheduling priority, direction and safety margin
 // handling.
 enum class BlockType { Regular, Loop, Epilogue };
 
 // These are states in the state machine that drives scheduling
 enum class SchedulingStage {
-  // We are gathering all regions in the block to initialize the BlockState.
-  GatheringRegions,
-
   // We are scheduling, which includes iterating during loop-aware scheduling
   Scheduling,
 
@@ -210,9 +160,10 @@ class BlockState {
   /// Maintain the index of the region that is currently being updated.
   unsigned CurrentRegion = 0;
 
-  // This holds pre-computed dependences between two blocks.
-  // Currently only used for loops, where both blocks are the same.
-  std::unique_ptr<InterBlockEdges> BoundaryEdges;
+  /// Per-CFG-successor inter-block DDG edges, built during the DAG mutation
+  /// phase by MaxLatencyFinder::buildInterBlockEdges(). Persists into the
+  /// initialize() phase so that initializeBotScoreBoard() can also use them.
+  std::vector<std::unique_ptr<InterBlockEdges>> PerSuccEdges;
 
   // This holds an instance of the PostPipeliner for candidate loops.
   std::unique_ptr<PostPipeliner> PostSWP;
@@ -221,7 +172,7 @@ class BlockState {
   // optimized by the outer-loop pipeliner.
   bool IsEpilogueOfOuterPipelinedLoop = false;
 
-  // This holds the information wether is safe to drop memory dependencies,
+  // This holds the information whether it is safe to drop memory dependencies,
   // for example, a load -> process -> store using the same pointer, where
   // we know that the store will never overwrite a memory position that
   // will be loaded in a further iteration.
@@ -251,9 +202,7 @@ public:
   }
   void addRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator RegionBegin,
                  MachineBasicBlock::iterator RegionEnd) {
-    assert((Kind == BlockType::Loop &&
-            FixPoint.Stage == SchedulingStage::GatheringRegions) ||
-           FixPoint.Stage == SchedulingStage::Scheduling);
+    // During the gathering pass addRegion is called once per region.
     CurrentRegion = Regions.size();
     Regions.emplace_back(BB, RegionBegin, RegionEnd);
   }
@@ -263,9 +212,23 @@ public:
   const Region &getTop() const { return Regions.back(); }
   Region &getTop() { return Regions.back(); }
   const Region &getBottom() const { return Regions.front(); }
+  /// Return the self-loop back-edge DAG from PerSuccEdges, or null if absent.
+  /// Populated by buildPerSuccEdges().
+  InterBlockEdges *getLoopSelfEdge();
+  const InterBlockEdges *getLoopSelfEdge() const;
+
+  /// Return the loop self-edge, asserting it is present.
   const InterBlockEdges &getBoundaryEdges() const {
-    assert(Kind == BlockType::Loop && BoundaryEdges);
-    return *BoundaryEdges;
+    const InterBlockEdges *SE = getLoopSelfEdge();
+    assert(SE && "Loop block must have a self-edge in PerSuccEdges");
+    return *SE;
+  }
+
+  std::vector<std::unique_ptr<InterBlockEdges>> &getPerSuccEdges() {
+    return PerSuccEdges;
+  }
+  const std::vector<std::unique_ptr<InterBlockEdges>> &getPerSuccEdges() const {
+    return PerSuccEdges;
   }
   const std::vector<Region> &getRegions() const { return Regions; }
   const char *kindAsString() const {
@@ -312,7 +275,6 @@ public:
   bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
 
 protected:
-  void classify();
   void setBlockProperties();
 };
 
@@ -328,7 +290,7 @@ enum class ScoreboardTrust {
 };
 
 class InterBlockScheduling {
-  const MachineSchedContext *Context;
+  const MachineSchedContext *Context = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
 
   // Captures the command line option from AIEMachineScheduler.cpp
@@ -342,6 +304,12 @@ class InterBlockScheduling {
   std::vector<MachineBasicBlock *> MBBSequence;
   unsigned NextInOrder = 0;
 
+  // True during the global first pass where regions are gathered for every
+  // block before any block is actually scheduled.
+  // Once all blocks have been visited this flag is cleared to begin
+  // the scheduling pass.
+  bool IsGatheringPhase = true;
+
   /// Return one instruction that needs to be moved higher to avoid a resource
   /// conflict, or nullptr if all resources converged.
   /// \param FindInBottomRegion Whether the conflicting instruction is searched
@@ -353,8 +321,8 @@ class InterBlockScheduling {
   /// latencies converged.
   MachineInstr *latencyConverged(BlockState &BS) const;
 
-  /// After finding the loops, determine the epilogue blocks.
-  void markEpilogueBlocks();
+  // Determine the kind of a block, Loop, Epilogue or Regular
+  void classifyBlock(BlockState &BS);
 
   /// define the scheduling order, loops first then the reset bottom-up over
   /// the control flow graph
@@ -442,7 +410,18 @@ public:
 
   bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);
 
+  /// Build the per-successor inter-block DDG edges for BB and store them in
+  /// BlockState::PerSuccEdges.  Called from enterBlock before each scheduling
+  /// pass so that MaxLatencyFinder::computeEffectiveLatency and
+  /// latencyConverged() always have up-to-date data.
+  void buildPerSuccEdges(MachineBasicBlock *BB);
+
+  void buildGraph(InterBlockEdges &);
+
   AIEAlternateDescriptors &getSelectedAltDescs() { return SelectedAltDescs; }
+
+  const MachineSchedContext *getContext() const { return Context; }
+  bool isGatheringPhase() const { return IsGatheringPhase; }
 
   std::optional<SWPEpilogueContext>
   getSWPEpilogueContext(MachineBasicBlock *MBB);
