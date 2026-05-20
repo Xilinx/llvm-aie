@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple=aie2p %topdown-multi -run-pass=postmisched %s -o - \
+# RUN: llc -mtriple=aie2p -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
 
 # An REL followed by a load must keep the load outside the lock's core-resume
@@ -61,6 +61,9 @@ body:             |
   ; CHECK-NEXT:   liveins: $p1, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   REL_mLockId_imm 0, killed $r0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -135,7 +138,6 @@ body:             |
   ; CHECK-NEXT:   $r8 = LDA_dms_lda_idx_imm $p1, 12
   ; CHECK-NEXT:   $r9 = LDA_dms_lda_idx_imm $p1, 16
   ; CHECK-NEXT:   $r10 = LDA_dms_lda_idx_imm killed $p1, 20
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -260,6 +262,9 @@ body:             |
   ; CHECK-NEXT:   liveins: $p1, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   REL_mLockId_reg killed $r0, killed $r1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:

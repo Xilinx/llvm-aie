@@ -74,150 +74,88 @@ bool MaxLatencyFinder::isBottomRegion(MachineInstr *ExitMI) {
   return std::next(It) == CurBB->end();
 }
 
-/// Check whether SrcOp and DstOp might refer to the same value
-static bool overlap(const MachineOperand &SrcOp, const MachineOperand &DstOp,
-                    const TargetRegisterInfo *TRI) {
-  Register SrcReg = SrcOp.getReg();
-  Register DstReg = DstOp.getReg();
-
-  // Use TRI's regsOverlap which handles both physical and virtual registers,
-  // including subregisters and lane masks
-  return TRI->regsOverlap(SrcReg, DstReg);
-}
-
-/// Check whether Dst depends on Src
-static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
-                    const TargetRegisterInfo *TRI, AAResults *AA,
-                    bool SafeToIgnoreMemDeps) {
-
-  const AIEBaseInstrInfo *const TII = static_cast<const AIEBaseInstrInfo *>(
-      Src.getMF()->getSubtarget().getInstrInfo());
-  // Detect dependency between lock and ld/st intructions.
-  if ((TII->isLock(Src.getOpcode()) && (Dst.mayLoadOrStore())) ||
-      (TII->isLock(Dst.getOpcode()) && (Src.mayLoadOrStore()))) {
-    return true;
-  }
-
-  // We detect any common register input/output between Dst and Src
-  for (auto &SrcOp : Src.operands()) {
-    if (!SrcOp.isReg()) {
-      continue;
-    }
-    for (auto &DstOp : Dst.operands()) {
-      if (!DstOp.isReg()) {
-        continue;
-      }
-      // Exclude the RAR case
-      if (SrcOp.isUse() && DstOp.isUse()) {
-        continue;
-      }
-      if (overlap(SrcOp, DstOp, TRI)) {
-        return true;
-      }
-    }
-  }
-
-  // Use alias analysis if available.
-  // The memory latency is accounted for by maxLatency() and any
-  // possible dependence will be corrected for by its scheduled cycle.
-  // (RAW || WAW) ||
-  // (WAR)
-  if ((Src.mayStore() && (Dst.mayLoad() || Dst.mayStore())) ||
-      (Src.mayLoad() && Dst.mayStore())) {
-
-    // For non-part-word memory instructions, use alias analysis (if available)
-    // to determine if Src and Dst may alias. Part-word instructions are always
-    // treated conservatively due to their read-modify-write behavior.
-    auto IsPartWordStore = [&TII](const MachineInstr &MaybePartStore) {
-      return MaybePartStore.mayStore() &&
-             TII->isPartWordMemoryInst(MaybePartStore);
-    };
-
-    if (!IsPartWordStore(Src)) {
-
-      // If it's safe to ignore memory dependencies, skip memory checks.
-      if (SafeToIgnoreMemDeps)
-        return false;
-
-      if (AA)
-        return Src.mayAlias(AA, Dst, true);
-    }
-
-    // Conservative: assume dependency for part-word instructions or when AA
-    // is unavailable
-    return true;
-  }
-
-  return false;
-}
-
-InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
-                              ArrayRef<MachineBundle> Bundles, int Prune,
-                              AAResults *AA, bool SafeToIgnoreMemDeps) {
-  const TargetRegisterInfo *TRI =
-      SrcMI.getMF()->getSubtarget().getRegisterInfo();
-  int Cycle = 0;
-  for (const auto &Bundle : Bundles) {
-    if (Cycle >= Prune) {
-      LLVM_DEBUG(dbgs() << " prune at " << Cycle << "\n");
-      return {/*MI=*/nullptr, Cycle};
-    }
-    for (MachineInstr *DstMI : Bundle.getInstrs()) {
-      LLVM_DEBUG(dbgs() << " " << *DstMI);
-      if (depends(SrcMI, *DstMI, TRI, AA, SafeToIgnoreMemDeps)) {
-        LLVM_DEBUG(dbgs() << "    depends in cycle=" << Cycle << "\n");
-        return {DstMI, Cycle};
-      }
-    }
-    Cycle++;
-  }
-  return {/*MI=*/nullptr, Cycle};
-}
-
-MaxLatencyFinder::MaxLatencyFinder(
-    const AIEPostRASchedStrategy *const Scheduler,
-    const AIEBaseInstrInfo *const TII,
-    const InstrItineraryData *const Itineraries,
-    const MCRegisterInfo *const TRI, MachineBasicBlock *const CurBB,
-    AAResults *AA)
-    : Scheduler(Scheduler), TII(TII), Itineraries(Itineraries), TRI(TRI),
-      CurBB(CurBB), InterBlock(true), AA(AA), SafeToIgnoreMemDeps(false) {}
-
 // This is called from different contexts, so we need some case analysis
 // If we have a basic block, we are in a regular MachineScheduler invocation,
 // and we will be able to retrieve its strategy,
 // Otherwise we are an abstract region; Scheduler will be nullptr, which
-// will not be derefenced.
-MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG, AAResults *AA)
+// will not be dereferenced.
+MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
     : Scheduler(DAG->getBB()
                     ? static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl()
                     : nullptr),
       TII(static_cast<const AIEBaseInstrInfo *>(DAG->TII)),
       Itineraries(DAG->getSchedModel()->getInstrItineraries()),
       TRI(DAG->MF.getSubtarget().getRegisterInfo()), CurBB(DAG->getBB()),
-      InterBlock(InterBlockLatency && CurBB &&
-                 isBottomRegion(DAG->ExitSU.getInstr()) &&
-                 Scheduler->successorsAreScheduled(CurBB)),
-      AA(AA),
-      // This is a current assumption needed to achieve a proper compact
-      // schedule.
-      // A loop is considered a candidate for outer loop pipelining if there are
-      // no memory-carried dependencies. The outer loop pipeliner attaches
-      // related metadata to the loop/epilogue, which we capture here. This
-      // metadata indicates that epilogue stores will not alias with loads from
-      // the peeled iteration. We will further analyze why AA is too
-      // conservative in some cases and remove this assumption when possible.
-      SafeToIgnoreMemDeps(Scheduler && CurBB &&
-                          Scheduler->getInterBlock()
-                              .getBlockState(CurBB)
-                              .isSafeToIgnoreMemDeps()) {}
+      IsBottomRegion(isBottomRegion(DAG->ExitSU.getInstr())),
+      SuccessorsAreScheduled(IsBottomRegion && CurBB &&
+                             Scheduler->successorsAreScheduled(CurBB)) {
+  HasUnknownSuccessors = CurBB && CurBB->succ_empty();
+  // PerSuccEdges graph was built by InterBlockScheduling::buildPerSuccEdges.
+  // Update post-depths now that the scheduler may have produced bundles.
+  if (CurBB && Scheduler && IsBottomRegion)
+    Scheduler->getInterBlock().recordPostDepths(CurBB);
+  ReduceLatency = IsBottomRegion && !HasUnknownSuccessors && InterBlockLatency;
+}
+
+int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
+  int EffectiveLatency = 0;
+  int SuccNo = 0;
+  const auto &PerSuccEdges =
+      Scheduler->getInterBlock().getBlockState(CurBB).getPerSuccEdges();
+  for (auto &SEPtr : PerSuccEdges) {
+    InterBlockEdges &SE = *SEPtr;
+    LLVM_DEBUG(
+        dbgs() << "Processing InterBlockEdge: Pred="
+               << (SE.getPred() ? SE.getPred()->getNumber() : -1) << " Succ="
+               << (SE.getSucc() ? SE.getSucc()->getNumber() : -1) << "\n");
+    LLVM_DEBUG(dbgs() << format("Successor %d PostRegionMaxDepth=%d\n", SuccNo,
+                                SE.getPostRegionMaxDepth()));
+    const SUnit *Pred = SE.getPreBoundaryNode(&MI);
+    if (!Pred) {
+      LLVM_DEBUG(
+          dbgs() << "   No pre-boundary node for this successor, skip\n");
+      continue;
+    }
+    LLVM_DEBUG(dbgs() << "   Pre-boundary " << Pred->NodeNum << " has "
+                      << Pred->Succs.size() << " successor edge(s)\n");
+
+    for (const SDep &Dep : Pred->Succs) {
+      SUnit *Succ = Dep.getSUnit();
+      if (!SE.isPostBoundaryNode(Succ)) {
+        LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
+                          << " is not a post-boundary node, skip\n");
+        continue;
+      }
+
+      // For ExitSU the depth is the full length of the successor block's
+      // top region (all its cycles have elapsed before reaching ExitSU).
+      // For a regular instruction node the depth is its scheduled cycle
+      // within the block.
+      const int Depth = Succ->isBoundaryNode() ? SE.getPostRegionMaxDepth() + 1
+                                               : SE.getPostDepthOr(Succ, 0);
+      const int EdgeLat = Dep.getSignedLatency();
+      const int Remaining = EdgeLat - Depth;
+      LLVM_DEBUG(
+          dbgs() << "   " << (Succ->isBoundaryNode() ? "ExitSU" : "SU")
+                 << (Succ->isBoundaryNode() ? ""
+                                            : std::to_string(Succ->NodeNum))
+                 << ": latency=" << EdgeLat << ", depth=" << Depth
+                 << ", remaining=" << Remaining
+                 << ", updating EffectiveLatency " << EffectiveLatency << " -> "
+                 << std::max(EffectiveLatency, Remaining) << "\n");
+      EffectiveLatency = std::max(EffectiveLatency, Remaining);
+    }
+    SuccNo++;
+  }
+  return EffectiveLatency;
+}
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << MI << "\n");
   // If we don't use interblock information, include the 'StageLatency'
   // in maxLatency. This influences the height parameters, telling the
   // scheduler to prefer deep-pipeline instructions over shorter ones.
-  int Latency = maxLatency(&MI, *TII, *Itineraries, !InterBlock);
+  int Latency = maxLatency(&MI, *TII, *Itineraries, !SuccessorsAreScheduled);
   LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
   if (!CurBB) {
     // This indicates we are called from an abstract block, e.g.
@@ -225,42 +163,29 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
     return Latency;
   }
 
-  // We have two distinct modes here. For interblock, we have perfect
-  // information, and we try to reduce the latency by detailed analysis of
-  // the successor schedules.
-  // For non interblock, we may be given an optimistic cap on the latency
-  // which will gradually increase during convergence of iteratively
-  // scheduling a loop.
-  const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
-  if (!InterBlock) {
-    if (auto Cap = IB.getLatencyCap(MI)) {
-      LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
-      Latency = std::min(Latency, *Cap);
-    }
+  if (HasUnknownSuccessors) {
+    LLVM_DEBUG(dbgs() << "Unkown successors MaxLatency=" << Latency << "\n");
     return Latency;
   }
-  LLVM_DEBUG(dbgs() << "Earliest for: " << MI);
-  // Track the earliest use in any successor block, given the cycles in
-  // which these uses are scheduled
-  int Earliest = Latency;
-  for (MachineBasicBlock *SuccBB : CurBB->successors()) {
-    auto &SBS = IB.getBlockState(SuccBB);
-    assert(SBS.isScheduled());
-    if (SBS.getRegions().empty()) {
-      // Blocks can be empty. getTop() will fail, and Earliest=0 is
-      // a conservative value
-      Earliest = 0;
-      continue;
+
+  const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
+  // Loop-aware convergence: gradually tighten the ExitSU latency from zero
+  // toward the real value.
+  if (IB.getBlockState(CurBB).Kind == BlockType::Loop) {
+    if (auto Cap = IB.getLatencyCap(MI)) {
+      LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
+      return std::min(Latency, *Cap);
     }
-    const std::vector<AIE::MachineBundle> &TopBundles = SBS.getTop().Bundles;
-    Earliest =
-        findEarliestRef(MI, TopBundles, Earliest, AA, SafeToIgnoreMemDeps)
-            .Cycle;
   }
 
-  LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");
-  Latency = std::max(Latency - Earliest, 1);
-  LLVM_DEBUG(dbgs() << "EffectiveLatency=" << Latency << "\n");
+  LLVM_DEBUG(dbgs() << format("ReduceLatency=%d\n", ReduceLatency));
+
+  if (ReduceLatency) {
+    int EffectiveLatency = computeEffectiveLatency(MI);
+    Latency = std::max(0, EffectiveLatency);
+    LLVM_DEBUG(dbgs() << "   EffectiveLatency=" << EffectiveLatency << "\n");
+  }
+
   return Latency;
 }
 

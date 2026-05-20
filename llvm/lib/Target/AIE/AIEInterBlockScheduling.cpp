@@ -609,7 +609,7 @@ InterBlockScheduling::resourcesConverged(BlockState &BS,
   return nullptr;
 }
 
-MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
+MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
   const auto &SubTarget = BS.TheBlock->getParent()->getSubtarget();
   auto *TII = static_cast<const AIEBaseInstrInfo *>(SubTarget.getInstrInfo());
   auto *ItinData = SubTarget.getInstrItineraryData();
@@ -623,16 +623,20 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
   // If the successor is in Top, we lookup its depth in TopDepth
   const Region &Bottom = BS.getBottom();
   const Region &Top = BS.getTop();
-  const InterBlockEdges &BackEdges = BS.getBoundaryEdges();
+  InterBlockEdges *BackEdge = BS.getLoopSelfEdge();
+  assert(BackEdge && "Loop block must have a self-edge in PerSuccEdges");
 
-  // Record the depth of all instructions in Top. Don't record the ones that
-  // can't cause problems
-  std::map<MachineInstr *, int> TopDepth;
+  // Repopulate the post-boundary depths from the current scheduled bundles of
+  // the top region, capped at the conflict horizon.  Clear first so that stale
+  // values from a previous fixpoint iteration are not retained.
+  BackEdge->clearPostDepths();
   int Depth = 0;
   for (auto &Bundle : Top.Bundles) {
     for (auto *MI : Bundle.getInstrs()) {
-      TopDepth[MI] = Depth;
+      BackEdge->recordPostDepth(MI, Depth);
     }
+    // For empty bundles...
+    BackEdge->recordPostDepth(Depth);
     if (++Depth > HR->getConflictHorizon()) {
       break;
     }
@@ -652,21 +656,21 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
         continue;
       }
       MaxExtent = std::max(MaxExtent, Extending);
-      const SUnit *Pred = BackEdges.getPreBoundaryNode(MI);
+      const SUnit *Pred = BackEdge->getPreBoundaryNode(MI);
       for (auto &SDep : Pred->Succs) {
         auto *Succ = SDep.getSUnit();
-        if (!BackEdges.isPostBoundaryNode(Succ)) {
+        if (!BackEdge->isPostBoundaryNode(Succ)) {
           continue;
         }
         DEBUG_LOOPAWARE(dbgs() << "  Backedge to " << Succ->NodeNum << "\n");
-        auto DepthIt = TopDepth.find(Succ->getInstr());
-        if (DepthIt == TopDepth.end()) {
-          // Over the horizon
-          continue;
-        }
-        DEBUG_LOOPAWARE(dbgs() << "  Depth=" << DepthIt->second << "\n");
+        // Instructions beyond the conflict horizon default to ConflictHorizon,
+        // so that Distance = Height + ConflictHorizon >= 1 + ConflictHorizon,
+        // which is always >= Latency, naturally avoiding false positives.
+        const int SuccDepth =
+            BackEdge->getPostDepthOr(Succ, HR->getConflictHorizon());
+        DEBUG_LOOPAWARE(dbgs() << "  Depth=" << SuccDepth << "\n");
         int Latency = SDep.getSignedLatency();
-        int Distance = Height + DepthIt->second;
+        int Distance = Height + SuccDepth;
         if (Distance < Latency) {
           DEBUG_LOOPAWARE(dbgs() << "  Latency(" << Pred->NodeNum << "->"
                                  << Succ->NodeNum << ")=" << Latency
@@ -803,14 +807,6 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
   // after the loop schedule has stabilized. Failure is observable by the
   // absence of a "Schedule found" remark on this loop.
   return SchedulingStage::PipeliningFailed;
-}
-
-bool InterBlockScheduling::successorsAreScheduled(
-    MachineBasicBlock *MBB) const {
-  return llvm::all_of(MBB->successors(), [&](MachineBasicBlock *B) {
-    const auto &BS = getBlockState(B);
-    return BS.isScheduled();
-  });
 }
 
 std::optional<int> InterBlockScheduling::getLatencyCap(MachineInstr &MI) const {
@@ -974,6 +970,44 @@ void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {
   }
 }
 
+void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
+  for (const auto &SEPtr : getBlockState(BB).getPerSuccEdges()) {
+    InterBlockEdges &SE = *SEPtr;
+    MachineBasicBlock *SuccBB = SE.getSucc();
+    if (!SuccBB)
+      continue;
+    const BlockState &SBS = getBlockState(SuccBB);
+    if (SBS.getRegions().empty())
+      continue;
+    SE.clearPostDepths();
+    if (!SBS.isScheduled()) {
+      // Compute a static lower-bound on each instruction's cycle position
+      // within the successor block, using the inter-block DDG latencies.
+      for (auto &SU : SE.SUnits) {
+        if (!SE.isPostBoundaryNode(&SU))
+          continue;
+        int Depth = 0;
+        for (auto &Dep : SU.Preds) {
+          const int NewDepth =
+              Dep.getLatency() + SE.getPostDepthOr(Dep.getSUnit(), 0);
+          Depth = std::max(Depth, NewDepth);
+        }
+        SE.recordPostDepth(SU.getInstr(), Depth);
+      }
+    } else {
+      int Cycle = 0;
+      for (const MachineBundle &Bundle : SBS.getTop().Bundles) {
+        for (MachineInstr *MI : Bundle.getInstrs())
+          SE.recordPostDepth(MI, Cycle);
+
+        // For empty bundles...
+        SE.recordPostDepth(Cycle);
+        ++Cycle;
+      }
+    }
+  }
+}
+
 void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
                                        MachineBasicBlock::iterator RegionBegin,
                                        MachineBasicBlock::iterator RegionEnd) {
@@ -989,29 +1023,34 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     BS.addRegion(BB, RegionBegin, RegionEnd);
     return;
   }
-  if (BS.Kind != BlockType::Loop) {
-    // Scheduling pass for non-loop blocks: set fixed bundles on the
-    // pre-gathered region now that emitInterBlockTop / emitInterBlockBottom
-    // has physically inserted the SWP instructions into the block.
-    //
-    // If Regions is empty, the block was empty during GatheringRegions (e.g.
-    // a newly-created dedicated exit block). The machine scheduler skips
-    // enterRegion for empty blocks so no region was captured. Create it now
-    // with correct free-instruction boundaries, excluding any fixed bundles.
-    if (BS.getRegions().empty()) {
-      const unsigned TopCount =
-          (RegionBegin == BB->begin()) ? BS.TopInsert.size() : 0u;
-      const unsigned BotCount =
-          (RegionEnd == BB->end()) ? BS.BottomInsert.size() : 0u;
-      BS.addRegion(BB, std::next(RegionBegin, TopCount),
-                   std::prev(RegionEnd, BotCount));
-    }
-    if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
-      BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
-    if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
-      BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert);
+
+  if (BS.Kind == BlockType::Loop) {
+    return;
   }
+
+  // Scheduling pass for non-loop blocks: set fixed bundles on the
+  // pre-gathered region now that emitInterBlockTop / emitInterBlockBottom
+  // has physically inserted the SWP instructions into the block.
+  //
+  // If Regions is empty, the block was empty during the gathering phase (e.g.
+  // a newly-created dedicated exit block). The machine scheduler skips
+  // enterRegion for empty blocks so no region was captured. Create it now
+  // with correct free-instruction boundaries, excluding any fixed bundles.
+  if (BS.getRegions().empty()) {
+    const unsigned TopCount =
+        (RegionBegin == BB->begin()) ? BS.TopInsert.size() : 0u;
+    const unsigned BotCount =
+        (RegionEnd == BB->end()) ? BS.BottomInsert.size() : 0u;
+    BS.addRegion(BB, std::next(RegionBegin, TopCount),
+                 std::prev(RegionEnd, BotCount));
+  }
+  if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
+    BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
+  if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
+    BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert);
 }
+
+namespace {
 
 // Create a block, insert it before Succ, and route the control flow edge
 // between Pred and Succ through it.
@@ -1045,6 +1084,8 @@ MachineBasicBlock *makeDedicatedLoopExit(MachineBasicBlock *LoopMBB,
   }
   return DedicatedExit;
 }
+
+} // namespace
 
 int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
                                           MachineBasicBlock *Epilogue) const {
@@ -1221,6 +1262,7 @@ int InterBlockScheduling::getCyclesToRespectTiming(
   // First part is the loop
   AddRegionToEdges(LoopBS.getBottom());
   Edges.markBoundary();
+
   // Second part is the epilogue itself
   AddRegionToEdges(EpilogueBS.getTop());
   Edges.buildEdges();
@@ -1430,7 +1472,7 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
     auto NumInstrs = getTop().getFreeInstructions().size();
     PostSWP = std::make_unique<PostPipeliner>(HR, NumInstrs);
 
-    // perform static assignment of multi-slot pseudos
+    // Perform static assignment of multi-slot pseudos.
     if (EnableMultiSlotInstrMaterialization &&
         PostSWP->isPostPipelineCandidate(*TheBlock)) {
       staticallyMaterializeMultiSlotInstructions(*TheBlock, HR,

@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc --mtriple=aie2 -O2 --aie-pipeliner-max-guards=2 -enable-aie-zol-without-minitercount=false %s -o - | FileCheck %s
 
 ; Similar to stage0.ll, but now with a do-while. Again we expect a three
@@ -18,14 +18,13 @@
 define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, i32 noundef %n) {
 ; CHECK-LABEL: dot:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; movxm m0, #2044
-; CHECK-NEXT:    lda r3, [p1], m0; add r5, r1, #-1
-; CHECK-NEXT:    lda r2, [p0], m0; jz r5, #.LBB0_5
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; add r5, r1, #-1; nopm
+; CHECK-NEXT:    jz r5, #.LBB0_5
+; CHECK-NEXT:    movxm m0, #2044 // Delay Slot 5
+; CHECK-NEXT:    lda r2, [p0], m0 // Delay Slot 4
+; CHECK-NEXT:    lda r3, [p1], m0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    movx r0, #0 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %do.body
 ; CHECK-NEXT:    lda r4, [p1], m0; add r5, r5, #-1
 ; CHECK-NEXT:    lda r1, [p0], m0; jz r5, #.LBB0_4

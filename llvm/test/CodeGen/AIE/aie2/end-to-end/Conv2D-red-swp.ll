@@ -216,7 +216,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopx
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopb ; nopx
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m7, p5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7
@@ -229,17 +229,17 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; vldb wh3, [p0], m6
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m7; vldb wl7, [p0], m6
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]; vldb.3d wh7, [p0], d0
-; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5; movxm ls, #.LBB0_2
-; ZOL-NEXT:    vldb wl6, [p1], #32; movxm le, #.L_LEnd0
-; ZOL-NEXT:    vlda wh6, [p1], #32; vldb wl5, [p0], m6; mov r1, p0
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb wh5, [p0], m6; and r0, r0, r9
-; ZOL-NEXT:    vlda wl8, [p1], #32; vldb wl3, [p0], m6; add r0, r0, #33
-; ZOL-NEXT:    vlda wh8, [p1], #32; vldb.3d wh3, [p0], d0; vshift.align x4, x4, s1, x3, r0
-; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; vldb wl1, [p1], #32; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0
-; ZOL-NEXT:    vldb wh1, [p1], #32; add r0, r1, #33; mov r1, p0
-; ZOL-NEXT:    vldb wl10, [p1], #32; vshuffle x7, x4, x2, r2
-; ZOL-NEXT:    vldb wh10, [p1], #32; vshuffle x9, x7, x0, r8
-; ZOL-NEXT:    nopb ; nopa ; nops ; and r1, r1, r9; add.nc lc, r5, #-2; nopv
+; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5
+; ZOL-NEXT:    vldb wl6, [p1], #32; movxm ls, #.LBB0_2
+; ZOL-NEXT:    vldb wh6, [p1], #32; movxm le, #.L_LEnd0
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb wl5, [p0], m6; and r0, r0, r9; mov r1, p0
+; ZOL-NEXT:    vlda wl8, [p1], #32; vldb wh5, [p0], m6; add r0, r0, #33
+; ZOL-NEXT:    vlda wh8, [p1], #32; vldb wl3, [p0], m6; vshift.align x4, x4, s1, x3, r0
+; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; vldb.3d wh3, [p0], d0; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0
+; ZOL-NEXT:    vldb wl1, [p1], #32; add r0, r1, #33; mov r1, p0
+; ZOL-NEXT:    vldb wh1, [p1], #32; vshuffle x7, x4, x2, r2
+; ZOL-NEXT:    vldb wl10, [p1], #32; vshuffle x9, x7, x0, r8
+; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; add.nc lc, r5, #-2; nopv
 ; ZOL-NEXT:  .LBB0_2: // %inner.loop
 ; ZOL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ZOL-NEXT:    // => This Inner Loop Header: Depth=2

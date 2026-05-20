@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aie2p | FileCheck %s
 
 %struct.v64bfp16ebs16 = type <{ <64 x i8>, <8 x i8> }>
@@ -197,8 +197,8 @@ define dso_local noundef <32 x i8> @_Z20test_extract_v32int813v64bfp16ebs16i(%st
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vmov x0, x2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i.i
 ; CHECK-NEXT:    vmov wl0, wh0
 ; CHECK-NEXT:  .LBB10_2: // %_ZL15extract_v32int813v64bfp16ebs16i.exit
@@ -238,8 +238,8 @@ define dso_local noundef <32 x i8> @_Z20test_extract_v32int812v64bfp16ebs8i(%str
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vmov x0, x2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i.i
 ; CHECK-NEXT:    vmov wl0, wh0
 ; CHECK-NEXT:  .LBB11_2: // %_ZL15extract_v32int812v64bfp16ebs8i.exit
@@ -340,8 +340,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z11test_insert13v128bfp16ebs8i12v64bfp1
 ; CHECK-NEXT:    nopa ; jz r0, #.LBB15_2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov r4, el2 // Delay Slot 3
-; CHECK-NEXT:    vmov x1, x2 // Delay Slot 2
+; CHECK-NEXT:    vmov x1, x2 // Delay Slot 3
+; CHECK-NEXT:    mov r4, el2 // Delay Slot 2
 ; CHECK-NEXT:    mov r5, eh2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end.i
 ; CHECK-NEXT:    j #.LBB15_3
@@ -622,8 +622,8 @@ define dso_local %struct.v128bfp16ebs16 @_Z11test_insert14v128bfp16ebs16i13v64bf
 ; CHECK-NEXT:    nopa ; jz r0, #.LBB22_2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov r4, el2 // Delay Slot 3
-; CHECK-NEXT:    vmov x1, x2 // Delay Slot 2
+; CHECK-NEXT:    vmov x1, x2 // Delay Slot 3
+; CHECK-NEXT:    mov r4, el2 // Delay Slot 2
 ; CHECK-NEXT:    mov r5, eh2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end.i
 ; CHECK-NEXT:    j #.LBB22_3

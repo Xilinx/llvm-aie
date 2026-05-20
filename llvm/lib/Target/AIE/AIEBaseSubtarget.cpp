@@ -354,8 +354,6 @@ class FuncArgCopyEdges : public ScheduleDAGMutation {
 };
 
 class RegionEndEdges : public ScheduleDAGMutation {
-  AAResults *AA;
-
   void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
     SUnit &ExitSU = DAG->ExitSU;
     while (!ExitSU.Preds.empty()) {
@@ -363,7 +361,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
   }
   void apply(ScheduleDAGInstrs *DAG) override {
-    AIE::MaxLatencyFinder MaxLatency(DAG, AA);
+    AIE::MaxLatencyFinder MaxLatency(DAG);
     MachineBasicBlock *PrologueMBB = DAG->getBB();
     unsigned int ZOLBundlesCount = 0;
 
@@ -386,7 +384,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
       // Extend the edge latency if MI requires delay slots. This makes sure
       // there are at least getNumDelaySlots() cycles between MI and ExitSU.
       if (DelaySlots) {
-        assert(EdgeLatency < DelaySlots);
+        assert(EdgeLatency <= DelaySlots + 1);
         EdgeLatency = DelaySlots + 1;
       }
 
@@ -434,7 +432,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
   };
 
 public:
-  RegionEndEdges(AAResults *AA = nullptr) : AA(AA) {}
+  RegionEndEdges() {}
 };
 
 /// This Mutator is responsible for emitting "fixed" SUnits at the top or bottom
@@ -997,7 +995,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
-    Mutations.emplace_back(std::make_unique<RegionEndEdges>(AA));
+    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());

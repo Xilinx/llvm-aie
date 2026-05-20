@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 \
 ; RUN:    %s -o - | FileCheck %s
@@ -65,6 +65,7 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm r3, #16512; nopv
 ; CHECK-NEXT:    nopa ; movxm r4, #-16256
 ; CHECK-NEXT:    movxm r5, #32767
+; CHECK-NEXT:    movxm r6, #15616
 ; CHECK-NEXT:    movxm r0, #16256
 ; CHECK-NEXT:    movxm r1, #16384
 ; CHECK-NEXT:    lda r0, [p2, #0]; movxm r2, #16128
@@ -73,37 +74,36 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:    vbcst.16 x2, r2
 ; CHECK-NEXT:    mova r1, #0; vconv.fp32.bf16 bmh0, wl2
 ; CHECK-NEXT:    vbcst.16 x2, r1
-; CHECK-NEXT:    vldb wl3, [p0], #32; vmov wh0, wl2
-; CHECK-NEXT:    mova r1, #-5; vmov wh3, wl2
+; CHECK-NEXT:    vmov wh0, wl2
+; CHECK-NEXT:    mova r1, #-5; vldb wl3, [p0], #32; vmov wh3, wl2
 ; CHECK-NEXT:    mova r1, #60; lshl r2, r0, r1; vconv.fp32.bf16 bmh1, wl3
-; CHECK-NEXT:    movxm r6, #15616; vmul.f bmh2, x0, x3, r1
-; CHECK-NEXT:    movxm r7, #16000
+; CHECK-NEXT:    movxm r7, #16000; vmul.f bmh2, x0, x3, r1
 ; CHECK-NEXT:    vbcst.16 x1, r3
 ; CHECK-NEXT:    vbcst.16 x8, r4
-; CHECK-NEXT:    vbcst.16 x10, r5; vmul.f bmh3, x0, x3, r1
+; CHECK-NEXT:    vbcst.16 x10, r5
 ; CHECK-NEXT:    vbcst.16 x6, r6
-; CHECK-NEXT:    vconv.bf16.fp32 wl3, bmh2; vbcst.16 x4, r7
-; CHECK-NEXT:    vmov wh6, wl2
+; CHECK-NEXT:    vbcst.16 x4, r7; vmul.f bmh3, x0, x3, r1
+; CHECK-NEXT:    vconv.bf16.fp32 wl3, bmh2; vmov wh6, wl2
+; CHECK-NEXT:    vmov wh4, wl2
 ; CHECK-NEXT:    vmin_ge.bf16 x3, r16, x3, x1
 ; CHECK-NEXT:    or r8, r16, r16; vmax_lt.bf16 x3, r16, x3, x8
-; CHECK-NEXT:    vconv.bf16.fp32 wl5, bmh3; vband x7, x10, x3
-; CHECK-NEXT:    vmov wh7, wl2
+; CHECK-NEXT:    vband x7, x10, x3
+; CHECK-NEXT:    vconv.bf16.fp32 wl5, bmh3; vmov wh3, wl2
+; CHECK-NEXT:    vldb wl7, [p0], #32; vmov wh7, wl2
 ; CHECK-NEXT:    vmin_ge.bf16 x5, r16, x5, x1
 ; CHECK-NEXT:    vldb wl7, [p0], #32; vmax_lt.bf16 x5, r16, x5, x8
-; CHECK-NEXT:    vband x7, x10, x5
-; CHECK-NEXT:    vldb wl7, [p0], #32; vmov wh7, wl2; vmul.f bmh2, x6, x7, r1
-; CHECK-NEXT:    vmov wh4, wl2
-; CHECK-NEXT:    vmov wh3, wl2; vmul.f bmh4, x6, x7, r1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vmov wh5, wl2; vmac.f bmh3, bmh0, x3, x4, r1
+; CHECK-NEXT:    vband x7, x10, x5; vmul.f bmh2, x6, x7, r1
+; CHECK-NEXT:    vmov wh7, wl2
+; CHECK-NEXT:    vmac.f bmh3, bmh0, x3, x4, r1
+; CHECK-NEXT:    vmul.f bmh4, x6, x7, r1
 ; CHECK-NEXT:    vmul.f bmh5, x0, x7, r1
-; CHECK-NEXT:    vmac.f bmh6, bmh0, x5, x4, r1
+; CHECK-NEXT:    vmov wh5, wl2
 ; CHECK-NEXT:    vconv.bf16.fp32 wl7, bmh2; vmul.f bmh7, x0, x7, r1
-; CHECK-NEXT:    vconv.bf16.fp32 wl3, bmh4
+; CHECK-NEXT:    vmac.f bmh6, bmh0, x5, x4, r1
 ; CHECK-NEXT:    vmsc.f bmh3, bmh3, x7, x3, r1
-; CHECK-NEXT:    movxm ls, #.LBB0_1; vmsc.f bml4, bmh6, x3, x5, r1
+; CHECK-NEXT:    vconv.bf16.fp32 wl3, bmh4; movxm ls, #.LBB0_1
 ; CHECK-NEXT:    vconv.bf16.fp32 wl3, bmh5; movxm le, #.L_LEnd0
-; CHECK-NEXT:    add.nc lc, r2, #-2
+; CHECK-NEXT:    add.nc lc, r2, #-2; vmsc.f bml4, bmh6, x3, x5, r1
 ; CHECK-NEXT:    vconv.bf16.fp32 wl5, bmh7; vmin_ge.bf16 x3, r16, x3, x1
 ; CHECK-NEXT:    vmax_lt.bf16 x3, r16, x3, x8
 ; CHECK-NEXT:    mova r0, #28; vconv.bf16.fp32 wl7, bmh3; vmin_ge.bf16 x11, r16, x5, x1

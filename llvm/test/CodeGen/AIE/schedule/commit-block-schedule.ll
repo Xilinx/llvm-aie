@@ -23,8 +23,8 @@ define void @test_commit_block_schedule(i1 %0) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov cml2, cml0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov cml2, cml0; nopv
 ; CHECK-NEXT:  .LBB0_2: // %for.body54
 ; CHECK-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2

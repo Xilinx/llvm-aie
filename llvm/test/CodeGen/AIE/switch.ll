@@ -164,8 +164,8 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 2
-; AIE2P-NEXT:    nop // Delay Slot 1
+; AIE2P-NEXT:    nop // Delay Slot 2
+; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 1
 ; AIE2P-NEXT:  // %bb.1: // %entry
 ; AIE2P-NEXT:    movxm p0, ##.LJTI0_0
 ; AIE2P-NEXT:    movxm r1, #1048575

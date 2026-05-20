@@ -55,7 +55,7 @@ define dso_local i32 @dot(ptr addrspace(6) nocapture readonly %a, ptr addrspace(
 ; PRE-NEXT:   - NS:              '3'
 ; PRE-NEXT:   - Loop:            bb.2.for.body
 ; PRE-NEXT:   - Prologue:        bb.1.for.body.preheader
-; PRE-NEXT:   - PrologueBundles: '10'
+; PRE-NEXT:   - PrologueBundles: '7'
 ; PRE-NEXT:   - Epilogue:        bb.3
 ; PRE-NEXT:   - EpilogueBundles: '6'
 ; PRE-NEXT: ...

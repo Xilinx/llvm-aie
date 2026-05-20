@@ -217,13 +217,6 @@ public:
   InterBlockEdges *getLoopSelfEdge();
   const InterBlockEdges *getLoopSelfEdge() const;
 
-  /// Return the loop self-edge, asserting it is present.
-  const InterBlockEdges &getBoundaryEdges() const {
-    const InterBlockEdges *SE = getLoopSelfEdge();
-    assert(SE && "Loop block must have a self-edge in PerSuccEdges");
-    return *SE;
-  }
-
   std::vector<std::unique_ptr<InterBlockEdges>> &getPerSuccEdges() {
     return PerSuccEdges;
   }
@@ -319,7 +312,7 @@ class InterBlockScheduling {
 
   /// Return one instruction that needs a higher latency cap, or nullptr if all
   /// latencies converged.
-  MachineInstr *latencyConverged(BlockState &BS) const;
+  MachineInstr *latencyConverged(BlockState &BS);
 
   // Determine the kind of a block, Loop, Epilogue or Regular
   void classifyBlock(BlockState &BS);
@@ -371,15 +364,12 @@ public:
                    MachineBasicBlock::iterator RegionBegin,
                    MachineBasicBlock::iterator RegionEnd);
 
-  /// Check whether all successors of BB have been scheduled.
-  bool successorsAreScheduled(MachineBasicBlock *BB) const;
-
   /// Retrieve the inter-block state for BB
   const BlockState &getBlockState(MachineBasicBlock *BB) const;
   BlockState &getBlockState(MachineBasicBlock *BB);
 
   /// Return the maximum interblock latency we need to account for
-  /// for the given successor. This represents the latency margin we assume for
+  /// the given successor. This represents the latency margin we assume for
   /// an unscheduled successor.
   std::optional<int> getLatencyCap(MachineInstr &MI) const;
 
@@ -417,6 +407,13 @@ public:
   void buildPerSuccEdges(MachineBasicBlock *BB);
 
   void buildGraph(InterBlockEdges &);
+
+  /// Clear and repopulate the PostDepths of every per-successor inter-block
+  /// edge for BB. For scheduled successors, records the actual scheduled cycle
+  /// of each instruction; for unscheduled ones, computes a static lower bound
+  /// from the inter-block DDG topology. Called from initializeBotScoreBoard
+  /// and MaxLatencyFinder::recordPerSuccDepths so both are self-contained.
+  void recordPostDepths(MachineBasicBlock *BB);
 
   AIEAlternateDescriptors &getSelectedAltDescs() { return SelectedAltDescs; }
 

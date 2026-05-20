@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 --run-pass=postmisched \
 # RUN:     %s -o - | FileCheck %s
@@ -35,9 +35,6 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $s1 = MOV_mv_scl killed $r2
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def dead $srcarry, implicit-def $s0, implicit killed $r1, implicit killed $r4 {
   ; CHECK-NEXT:     renamable $r1 = ADD_add_r_ri killed renamable $r1, -4, implicit-def dead $srcarry
   ; CHECK-NEXT:     $s0 = MOV_mv_scl killed $r4
