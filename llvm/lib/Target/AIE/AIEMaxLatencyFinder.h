@@ -16,8 +16,11 @@
 #define LLVM_LIB_TARGET_AIE_MAXLATENCYFINDER_H
 
 #include "AIEBaseSubtarget.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIEMachineScheduler.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include <memory>
+#include <vector>
 
 using namespace llvm;
 
@@ -27,45 +30,35 @@ namespace llvm::AIE {
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
                const InstrItineraryData &Itineraries, bool IncludeStages);
 
-struct InstrAndCycle {
-  MachineInstr *MI = nullptr;
-  int Cycle;
-};
-
-/// Find the first dependence on SrcMI in Bundles[0,Prune)
-/// \returns the Cycle in which the dependence happens or a conservative lower
-///          bound and the instruction responsible for the dependency if it is
-///          found.
-InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
-                              ArrayRef<MachineBundle> Bundles, int Prune,
-                              AAResults *AA = nullptr,
-                              bool SafeToIgnoreMemDeps = false);
-
 class MaxLatencyFinder {
-  const AIEPostRASchedStrategy *const Scheduler;
+  AIEPostRASchedStrategy *const Scheduler;
   const AIEBaseInstrInfo *const TII;
   const InstrItineraryData *const Itineraries;
   const MCRegisterInfo *const TRI;
   MachineBasicBlock *const CurBB;
-  const bool InterBlock;
-  AAResults *AA;
-  bool SafeToIgnoreMemDeps;
 
-  // Check whether this region connects to the successor blocks
-  //
+  const bool IsBottomRegion;
+
+  const bool SuccessorsAreScheduled;
+
+  /// True when CurBB has no CFG successors (e.g. a return block), requiring
+  /// the conservative raw latency as a floor.
+  bool HasUnknownSuccessors = false;
+
+  /// Reflects opportunity to reduce maxLatency and wires in the commandline
+  /// flag
+  bool ReduceLatency;
+
+  // Check whether this region connects to the successor blocks.
   bool isBottomRegion(MachineInstr *ExitMI);
 
+  // Use the interblock edges to get an sharper bound on maxlatency
+  int computeEffectiveLatency(MachineInstr &MI);
+
 public:
-  // Constructors
-  MaxLatencyFinder(const AIEPostRASchedStrategy *const Scheduler,
-                   const AIEBaseInstrInfo *const TII,
-                   const InstrItineraryData *const Itineraries,
-                   const MCRegisterInfo *const TRI,
-                   MachineBasicBlock *const CurBB, AAResults *AA = nullptr);
+  explicit MaxLatencyFinder(ScheduleDAGInstrs *DAG);
 
-  MaxLatencyFinder(ScheduleDAGInstrs *DAG, AAResults *AA = nullptr);
-
-  // Find the maximum latency of MI taking  successors into account
+  // Find the maximum latency of MI taking successors into account.
   unsigned operator()(MachineInstr &MI);
 };
 

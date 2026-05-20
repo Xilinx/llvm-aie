@@ -74,9 +74,9 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movs dc1, dj0; mov dn1, dn0
 ; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]
 ; ASM-NEXT:    nop
-; ASM-NEXT:    lda m0, [p2, #4]; vldb.fill.512 [p0, lf0, r24]
+; ASM-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]
-; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movxm ls, #.LBB0_1
+; ASM-NEXT:    lda m0, [p2, #4]; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movxm ls, #.LBB0_1
 ; ASM-NEXT:    movxm le, #.L_LEnd0
 ; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; add.nc lc, r0, #-3; nopv
 ; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; nops ; nopx ; vconv.fp32.bf16 cml1, x6; nopv

@@ -204,8 +204,8 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 2
-; AIE2P-NEXT:    nop // Delay Slot 1
+; AIE2P-NEXT:    nop // Delay Slot 2
+; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 1
 ; AIE2P-NEXT:  .LBB1_1: // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; jl #_Z16addToSymbolTablePKci; nops
@@ -309,10 +309,10 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2P-NEXT:    nopa ; nopb ; st r8, [sp, #-60]; ge r0, r1, r0; mov r8, r0; nopv // 4-byte Folded Spill
 ; AIE2P-NEXT:    jnz r0, #.LBB2_3
 ; AIE2P-NEXT:    nopx // Delay Slot 5
-; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 4
-; AIE2P-NEXT:    st p6, [sp, #-56] // 4-byte Folded Spill Delay Slot 3
-; AIE2P-NEXT:    st p7, [sp, #-52] // 4-byte Folded Spill Delay Slot 2
-; AIE2P-NEXT:    nop // Delay Slot 1
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 3
+; AIE2P-NEXT:    st p6, [sp, #-56] // 4-byte Folded Spill Delay Slot 2
+; AIE2P-NEXT:    st p7, [sp, #-52] // 4-byte Folded Spill Delay Slot 1
 ; AIE2P-NEXT:  // %bb.1:
 ; AIE2P-NEXT:    movs p6, p0; mov p7, p1
 ; AIE2P-NEXT:  .LBB2_2: // %for.body

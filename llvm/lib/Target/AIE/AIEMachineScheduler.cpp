@@ -1177,10 +1177,8 @@ int getEarliestLoopCarriedUse(const SUnit &SU,
   for (const SDep &Succ : SUInCurrentIteration->Succs) {
     if (!LoopEdges.isPostBoundaryNode(Succ.getSUnit()))
       continue;
-
     EarliestCycle = std::min(EarliestCycle, int(Succ.getSUnit()->getHeight()));
   }
-
   return EarliestCycle;
 }
 
@@ -1241,17 +1239,18 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     const BlockState &BS = getInterBlock().getBlockState(CurMBB);
     if (UseLoopHeuristics && BS.Kind == AIE::BlockType::Loop &&
         BS.getRegions().size() == 1 && BS.FixPoint.NumIters > 0) {
-      const InterBlockEdges &LoopEdges = BS.getBoundaryEdges();
-
-      // For instructions with equal dependence chains, prioritize scheduling
-      // instructions that are used later in the next iteration. The point is
-      // to teach our heuristics a tiny bit about LCDs.
-      if (tryLess(getEarliestLoopCarriedUse(*TryCand.SU, LoopEdges) +
-                      TryCand.SU->BotReadyCycle,
-                  getEarliestLoopCarriedUse(*Cand.SU, LoopEdges) +
-                      Cand.SU->BotReadyCycle,
-                  TryCand, Cand, BotPathReduce)) {
-        return TryCand.Reason != NoCand;
+      if (const InterBlockEdges *LoopEdgesPtr = BS.getLoopSelfEdge()) {
+        const InterBlockEdges &LoopEdges = *LoopEdgesPtr;
+        // For instructions with equal dependence chains, prioritize scheduling
+        // instructions that are used later in the next iteration. The point is
+        // to teach our heuristics a tiny bit about LCDs.
+        if (tryLess(getEarliestLoopCarriedUse(*TryCand.SU, LoopEdges) +
+                        TryCand.SU->BotReadyCycle,
+                    getEarliestLoopCarriedUse(*Cand.SU, LoopEdges) +
+                        Cand.SU->BotReadyCycle,
+                    TryCand, Cand, BotPathReduce)) {
+          return TryCand.Reason != NoCand;
+        }
       }
     }
 

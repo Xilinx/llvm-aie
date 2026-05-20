@@ -44,18 +44,15 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:  .LBB0_1: // %for.body.i
 ; FINE-GRAINED-NEXT:    // =>This Loop Header: Depth=1
 ; FINE-GRAINED-NEXT:    // Child Loop BB0_2 Depth 2
-; FINE-GRAINED-NEXT:    nopa ; nopb ; nopx ; mov dn2, r3; movs dj2, p6
-; FINE-GRAINED-NEXT:    movs dn6, r3; mov r17, dc6
-; FINE-GRAINED-NEXT:    movs dj6, p6; mov m2, m4
-; FINE-GRAINED-NEXT:    mova p1, #0; movs dc6, r4; mov r25, r18
-; FINE-GRAINED-NEXT:    vldb.pop.576.3d ex0, [p1, lf1, r25, d2]
-; FINE-GRAINED-NEXT:    nop
+; FINE-GRAINED-NEXT:    nopa ; nopb ; movs dj2, p6; nopx ; mov dn2, r3; nopv
+; FINE-GRAINED-NEXT:    nopa ; movs dn6, r3; nopx ; mov r17, dc6
+; FINE-GRAINED-NEXT:    movs dj6, p6; or r6, r5, r5; mov r5, dj4
+; FINE-GRAINED-NEXT:    movs m2, m4; vmov lfl1, lfl0
 ; FINE-GRAINED-NEXT:    movs m1, m5; mov dn1, r3
-; FINE-GRAINED-NEXT:    movs dc1, dc0; vmov lfl1, lfl0
-; FINE-GRAINED-NEXT:    movs dj1, m5; vmov lfh1, lfh0
+; FINE-GRAINED-NEXT:    movs dc1, dc0; mov dj1, m5
 ; FINE-GRAINED-NEXT:    mova p0, #0; movs dn5, r3; mov dj5, m5
-; FINE-GRAINED-NEXT:    paddb.3d [p0], d1; or r6, r5, r5; mov r5, dj4
-; FINE-GRAINED-NEXT:    mova p0, #0; mov r21, dc5
+; FINE-GRAINED-NEXT:    mova p1, #0; paddb.3d [p0], d1; or r25, r18, r18; vmov lfh1, lfh0; movs dc6, r4
+; FINE-GRAINED-NEXT:    mova p0, #0; vldb.pop.576.3d ex0, [p1, lf1, r25, d2]; mov r21, dc5
 ; FINE-GRAINED-NEXT:  .LBB0_2: // %for.body125.i
 ; FINE-GRAINED-NEXT:    // Parent Loop BB0_1 Depth=1
 ; FINE-GRAINED-NEXT:    // => This Inner Loop Header: Depth=2

@@ -16,8 +16,8 @@ define dso_local noundef <64 x i8> @_Z29test_set_v128uint_set_512_256iDv32_DU8_(
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vmov wl0, wl2 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vmov wl0, wl2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
 ; CHECK-NEXT:    vmov wh0, wl0
 ; CHECK-NEXT:  .LBB0_2: // %_ZL13set_v128uint4iDv32_DU8_.exit
@@ -199,8 +199,8 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_512iDv64_DU8_(i
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vmov x4, x0 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vmov x4, x0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
 ; CHECK-NEXT:    vmov x5, x4
 ; CHECK-NEXT:  .LBB4_2: // %_ZL13set_v256uint4iDv64_DU8_.exit

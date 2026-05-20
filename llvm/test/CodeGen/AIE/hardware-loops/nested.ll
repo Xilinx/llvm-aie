@@ -24,15 +24,14 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2:       // %bb.0: // %for.cond3.preheader.lr.ph
 ; AIE2-NEXT:    nopb ; mova r3, #0; nops ; nopxm ; nopv
 ; AIE2-NEXT:    mova r4, #2; nopx
-; AIE2-NEXT:    movxm p2, #.LBB0_2
 ; AIE2-NEXT:    lda r2, [p0, #0]
+; AIE2-NEXT:    movxm p2, #.LBB0_2
 ; AIE2-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; AIE2-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2-NEXT:    // Child Loop BB0_2 Depth 2
-; AIE2-NEXT:    nopa ; lshl r5, r3, r4; nopm
+; AIE2-NEXT:    nopa ; nopb ; lshl r5, r3, r4; nopm
 ; AIE2-NEXT:    mov dj0, r5
 ; AIE2-NEXT:    lda p3, [p1, dj0]
-; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    mova r6, #0
@@ -73,15 +72,14 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P:       // %bb.0: // %for.cond3.preheader.lr.ph
 ; AIE2P-NEXT:    mova r3, #0; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    mova r4, #2; nopx
-; AIE2P-NEXT:    movxm p2, #.LBB0_2
 ; AIE2P-NEXT:    lda r2, [p0, #0]
+; AIE2P-NEXT:    movxm p2, #.LBB0_2
 ; AIE2P-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; AIE2P-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2P-NEXT:    // Child Loop BB0_2 Depth 2
-; AIE2P-NEXT:    nopa ; lshl r5, r3, r4; nopm
+; AIE2P-NEXT:    nopa ; nopb ; lshl r5, r3, r4; nopm
 ; AIE2P-NEXT:    mov dj0, r5
 ; AIE2P-NEXT:    lda p3, [p1, dj0]
-; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    mova r6, #0
@@ -127,10 +125,9 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2PS-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; AIE2PS-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2PS-NEXT:    // Child Loop BB0_2 Depth 2
-; AIE2PS-NEXT:    nopa ; lshl r16, r4, r6; nopm
+; AIE2PS-NEXT:    nopa ; nopb ; lshl r16, r4, r6; nopm
 ; AIE2PS-NEXT:    mov dj0, r16
 ; AIE2PS-NEXT:    lda p3, [p1, dj0]
-; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    addm.nc r3, r1, #-1
