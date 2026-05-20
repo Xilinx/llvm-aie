@@ -86,7 +86,7 @@ static cl::opt<bool> EnableOuterLoopHardwareLoop(
     "aie-outer-loop-hw-loop",
     cl::desc("Convert downcounting outer loops to JNZD hardware loops after "
              "outer loop pipelining"),
-    cl::init(false), cl::Hidden);
+    cl::init(true), cl::Hidden);
 
 // Type alias for split strategy predicates.
 // A split strategy is a function that identifies "anchor" instructions
