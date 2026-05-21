@@ -149,6 +149,21 @@ static bool isSafePointerIncrementIntrinsic(Intrinsic::ID IID) {
 
 namespace {
 
+// Cached result of latch exit condition analysis.
+// Populated once by canAdjustLoopBound() and reused by adjustLoopBound() and
+// getDowncountingInfo() to avoid repeating the same icmp pattern-matching.
+// All pointer fields are guaranteed non-null when the struct is returned.
+// Latch exit condition analysis result, computed once by analyzeLoopStructure()
+// and stored in LoopStructure::Bound. All pointer fields guaranteed non-null.
+struct LatchBoundInfo {
+  ICmpInst *Cmp = nullptr;           // latch exit icmp condition
+  Value *Limit = nullptr;            // loop-invariant limit operand
+  unsigned LimitIdx = 0;             // index of Limit in Cmp's operand list
+  int64_t Step = 0;                  // non-zero induction step (from add)
+  BinaryOperator *Counter = nullptr; // add instr feeding the icmp (phi+step)
+  PHINode *OldIV = nullptr;          // counting PHI in outer header
+};
+
 // Loop structure for outer loop pipelining.
 // We only support the linear structure:
 //   outer.header (prologue) → inner loop → outer.latch (epilogue)
@@ -196,6 +211,10 @@ struct LoopStructure {
   BranchInst *getLatchBranch() const {
     return cast<BranchInst>(OuterLatch->getTerminator());
   }
+
+  // Latch exit condition analysis; populated by analyzeLoopStructure().
+  // Always valid: LoopStructure is only returned after Bound is set.
+  LatchBoundInfo Bound;
 };
 
 // Holds the pre-validated components of a downcounting outer loop exit
@@ -286,9 +305,19 @@ private:
                             const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
                             const SmallVectorImpl<Instruction *> &Part2Insts);
 
-  // Adjust the outer loop trip count from N to N-1.
-  // Returns the new limit Value (the adjusted trip count), or nullptr if the
-  // bound could not be adjusted.
+  // Validates the latch exit condition, computes the induction step, and
+  // caches all discovered components in LS.LatchBound for later use by
+  // adjustLoopBound() and getDowncountingInfo(). Returns true if the loop
+  // bound can be adjusted (Step != 0). Must be called before
+  // performTransformation.
+  // Validates the latch exit condition and returns all components needed to
+  // adjust the loop bound. Called from analyzeLoopStructure(); the result is
+  // stored in LS.Bound so downstream functions can use it without re-scanning.
+  std::optional<LatchBoundInfo>
+  canAdjustLoopBound(const LoopStructure &LS) const;
+
+  // Adjust the outer loop trip count from N to N-1 using the pre-computed
+  // LS.LatchBound. Returns the new limit Value.
   Value *adjustLoopBound(const LoopStructure &LS);
 
   // Repair loop metadata (trip count changed).
@@ -453,6 +482,15 @@ AIEOuterLoopPipeliner::analyzeLoopStructure(Loop *L) {
 
   LLVM_DEBUG(dbgs() << "    Linear structure: outer.header -> inner loop -> "
                        "outer.latch\n");
+
+  // Verify and cache the latch exit condition. LoopStructure is only returned
+  // when the bound can be adjusted; LS.Bound is then always valid.
+  auto MaybeBound = canAdjustLoopBound(LS);
+  if (!MaybeBound) {
+    LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound\n");
+    return std::nullopt;
+  }
+  LS.Bound = *MaybeBound;
   return LS;
 }
 
@@ -522,6 +560,7 @@ bool AIEOuterLoopPipeliner::isProfitableToRotate(
     LLVM_DEBUG(dbgs() << "    No stores in epilogue\n");
     return false;
   }
+  // Loop bound adjustability was verified in analyzeLoopStructure().
   return true;
 }
 
@@ -905,31 +944,21 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
                     << " -> " << CoolExit->getName() << "\n");
 }
 
-// Adjust the outer loop trip count from N to N-1 by modifying the latch icmp.
-//
-// The unified formula is:   NewLimit = Limit - Step
-//
-// where Step is the induction step of the outer loop counter:
-//   Step > 0 (increment): limit decreases → loop exits one iteration sooner.
-//   Step < 0 (decrement): limit increases by |Step| → loop exits sooner.
-//
-// The step is extracted from the add instruction that produces the
-// non-invariant icmp operand (e.g., %counter = add %phi, C → Step = C).
-// If the counter is a plain PHI (no visible add), a unit step is inferred
-// from the comparison predicate (SLT/ULT → +1, SGT/UGT → -1).
-// For EQ/NE without a visible constant step the direction is ambiguous and
-// the bound cannot be adjusted.
-//
-// Returns the new limit Value, or nullptr if the bound cannot be adjusted.
-Value *AIEOuterLoopPipeliner::adjustLoopBound(const LoopStructure &LS) {
-  BranchInst *BI = dyn_cast<BranchInst>(LS.OuterLatch->getTerminator());
+// Validates the latch exit condition and caches all discovered components in
+// LS.LatchBound. Returns true if the loop bound can be adjusted (Step != 0).
+// All subsequent uses of the latch icmp pattern (adjustLoopBound,
+// getDowncountingInfo) read from LS.LatchBound without re-scanning.
+std::optional<LatchBoundInfo>
+AIEOuterLoopPipeliner::canAdjustLoopBound(const LoopStructure &LS) const {
+  auto *BI = dyn_cast<BranchInst>(LS.OuterLatch->getTerminator());
+  if (!BI || !BI->isConditional())
+    return std::nullopt;
+  auto *Cmp = dyn_cast<ICmpInst>(BI->getCondition());
+  if (!Cmp)
+    return std::nullopt;
+  ICmpInst::Predicate Pred = Cmp->getPredicate();
 
-  assert(BI->isConditional() && "Outer latch must have conditional branch");
-
-  ICmpInst *Cmp = dyn_cast<ICmpInst>(BI->getCondition());
-  assert(Cmp && "Outer latch condition must be icmp");
-
-  // Find the loop-invariant limit operand and the non-invariant counter.
+  // Find the loop-invariant limit and non-invariant counter.
   Value *Limit = nullptr;
   Value *Counter = nullptr;
   unsigned LimitIdx = 0;
@@ -942,30 +971,78 @@ Value *AIEOuterLoopPipeliner::adjustLoopBound(const LoopStructure &LS) {
       break;
     }
   }
+  if (!Limit)
+    return std::nullopt;
 
-  assert(Limit &&
-         "Loop exit condition must have a loop-invariant limit operand");
-
-  // Determine the induction step. If the counter is an add with a constant
-  // operand, extract the step directly (handles any step magnitude).
-  // Otherwise, infer a unit step from the comparison predicate.
+  // Determine the induction step. If Counter is an add with a constant
+  // operand, extract the step directly. Otherwise, infer from the predicate.
   // EQ/NE without a visible constant step is ambiguous — bail out.
   int64_t Step = 0;
+  BinaryOperator *CounterAdd = nullptr;
   if (auto *Add = dyn_cast<BinaryOperator>(Counter)) {
     if (Add->getOpcode() == Instruction::Add) {
-      if (auto *C = dyn_cast<ConstantInt>(Add->getOperand(1)))
+      if (auto *C = dyn_cast<ConstantInt>(Add->getOperand(1))) {
         Step = C->getSExtValue();
+        CounterAdd = Add;
+      }
+    }
+  }
+  if (Step == 0) {
+    if (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT)
+      Step = 1;
+    else if (Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT)
+      Step = -1;
+    else {
+      LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: EQ/NE with no "
+                           "visible constant step\n");
+      return std::nullopt;
     }
   }
 
-  assert(Step != 0);
+  // CounterAdd must be non-null: the step must come from an explicit add
+  // instruction so that we can identify the counting PHI (OldIV) and verify
+  // the loop induction structure. Plain-PHI counters (no visible add) are
+  // rejected to avoid relying on an unverifiable step assumption.
+  if (!CounterAdd) {
+    LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: counter is not an add "
+                         "instruction\n");
+    return std::nullopt;
+  }
 
-  // NewLimit = Limit - Step removes exactly one outer iteration for any step.
+  // Find the counting PHI in the outer header that feeds CounterAdd.
+  // Without OldIV we cannot verify the induction structure or support JNZD.
+  PHINode *OldIV = nullptr;
+  for (Value *Op : CounterAdd->operands()) {
+    if (auto *PHI = dyn_cast<PHINode>(Op)) {
+      if (PHI->getParent() == LS.OuterHeader) {
+        OldIV = PHI;
+        break;
+      }
+    }
+  }
+  if (!OldIV) {
+    LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: counting PHI not "
+                         "found in outer header\n");
+    return std::nullopt;
+  }
+
+  return LatchBoundInfo{Cmp, Limit, LimitIdx, Step, CounterAdd, OldIV};
+}
+
+// Adjust the outer loop trip count from N to N-1 using the pre-computed
+// LS.LatchBound (populated by canAdjustLoopBound). The unified formula is:
+//   NewLimit = Limit - Step
+// which correctly handles increment (Step > 0) and decrement (Step < 0) loops
+// of any constant step magnitude.
+Value *AIEOuterLoopPipeliner::adjustLoopBound(const LoopStructure &LS) {
+  // LS.Bound is always valid (set by analyzeLoopStructure).
+  const LatchBoundInfo &B = LS.Bound;
   IRBuilder<> Builder(LS.getPreheader()->getTerminator());
   Value *NewLimit = Builder.CreateSub(
-      Limit, ConstantInt::getSigned(Limit->getType(), Step), "outer.trip.adj");
-  Cmp->setOperand(LimitIdx, NewLimit);
-  LLVM_DEBUG(dbgs() << "    Adjusted loop bound: N -> N-1 (step=" << Step
+      B.Limit, ConstantInt::getSigned(B.Limit->getType(), B.Step),
+      "outer.trip.adj");
+  B.Cmp->setOperand(B.LimitIdx, NewLimit);
+  LLVM_DEBUG(dbgs() << "    Adjusted loop bound: N -> N-1 (step=" << B.Step
                     << ")\n");
   return NewLimit;
 }
@@ -1364,54 +1441,17 @@ bool AIEOuterLoopPipeliner::performTransformation(
   return true;
 }
 
-// Returns the downcounting pattern components if the outer latch has the
-// canonical downcounting icmp pattern:
-//   %counter = add i32 %phi, -1
-//   %cond    = icmp eq/ne i32 %counter, <limit>
-// that can be replaced by @llvm.loop.decrement.reg, or std::nullopt otherwise.
-// Also discovers the counting PHI (%phi) that feeds %counter, so that
-// convertOuterLoopToHardwareLoop does not need to repeat this work.
+// Returns the downcounting pattern components for @llvm.loop.decrement.reg
+// conversion if the latch has the canonical pattern (icmp eq/ne, step -1).
+// All LatchBound fields are guaranteed non-null, so only the step is checked.
+// Returns the downcounting pattern components for JNZD hardware loop
+// conversion. LS.Bound is always valid; only the step is checked.
 std::optional<DowncountingInfo>
 AIEOuterLoopPipeliner::getDowncountingInfo(const LoopStructure &LS) const {
-  auto *BI = dyn_cast<BranchInst>(LS.OuterLatch->getTerminator());
-  if (!BI || !BI->isConditional())
+  // Hardware loop requires step == -1 (loop.decrement.reg decrements by 1).
+  if (LS.Bound.Step != -1)
     return std::nullopt;
-  auto *Cmp = dyn_cast<ICmpInst>(BI->getCondition());
-  if (!Cmp)
-    return std::nullopt;
-  // We need icmp eq or icmp ne (the canonical downcounting exit condition).
-  ICmpInst::Predicate Pred = Cmp->getPredicate();
-  if (Pred != ICmpInst::ICMP_EQ && Pred != ICmpInst::ICMP_NE)
-    return std::nullopt;
-  // Find the non-invariant operand (the counter add).
-  // Pre-condition: downcounting loop
-  BinaryOperator *Counter = nullptr;
-  for (unsigned I = 0; I < 2; ++I) {
-    if (!LS.OuterLoop->isLoopInvariant(Cmp->getOperand(I))) {
-      Counter = dyn_cast<BinaryOperator>(Cmp->getOperand(I));
-      break;
-    }
-  }
-  // The counter must be produced by an add with a negative constant step.
-  if (!Counter || Counter->getOpcode() != Instruction::Add)
-    return std::nullopt;
-  auto *Step = dyn_cast<ConstantInt>(Counter->getOperand(1));
-  if (!Step || !Step->isMinusOne())
-    return std::nullopt;
-  // Find the counting PHI in the outer header that feeds Counter.
-  // Without OldIV we cannot compute the correct JNZD trip count, so bail out.
-  PHINode *OldIV = nullptr;
-  for (Value *Op : Counter->operands()) {
-    if (auto *PHI = dyn_cast<PHINode>(Op)) {
-      if (PHI->getParent() == LS.OuterHeader) {
-        OldIV = PHI;
-        break;
-      }
-    }
-  }
-  if (!OldIV)
-    return std::nullopt;
-  return DowncountingInfo{Cmp, Counter, OldIV};
+  return DowncountingInfo{LS.Bound.Cmp, LS.Bound.Counter, LS.Bound.OldIV};
 }
 
 // Convert the outer loop to a JNZD hardware loop.
