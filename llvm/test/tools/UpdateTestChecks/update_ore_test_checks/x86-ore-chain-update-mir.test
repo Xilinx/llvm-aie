@@ -1,0 +1,10 @@
+# REQUIRES: x86-registered-target
+## Chain update test for MIR: --update-mir-checks invokes
+## update_mir_test_checks.py first, then adds remark CHECK lines.
+
+# RUN: cp -f %S/Inputs/x86-ore-chain-update.mir %t.mir && %update_ore_test_checks --update-mir-checks %t.mir
+# RUN: diff -u %S/Inputs/x86-ore-chain-update.mir.expected %t.mir
+
+## Verify idempotency via UTC_ARGS (no --update-mir-checks on the command line):
+# RUN: %update_ore_test_checks %t.mir
+# RUN: diff -u %S/Inputs/x86-ore-chain-update.mir.expected %t.mir

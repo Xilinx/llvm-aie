@@ -383,6 +383,22 @@ bool AIEBaseInstrInfo::isZeroOverheadLoopSetupInstr(
             MI.getOperand(0).getReg() == *ZOLSupport->LERegister)));
 }
 
+const MachineInstr *
+AIEBaseInstrInfo::findZOLTripCountDef(const MachineBasicBlock &MBB,
+                                      bool Pristine) const {
+  for (auto It = MBB.instr_rbegin(), End = MBB.instr_rend(); It != End; ++It) {
+    if (isZOLTripCountDef(*It, Pristine))
+      return &*It;
+  }
+  return nullptr;
+}
+
+MachineInstr *AIEBaseInstrInfo::findZOLTripCountDef(MachineBasicBlock &MBB,
+                                                    bool Pristine) const {
+  return const_cast<MachineInstr *>(findZOLTripCountDef(
+      static_cast<const MachineBasicBlock &>(MBB), Pristine));
+}
+
 void AIEBaseInstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
   assert(isZOLTripCountDef(MI));
   auto &Imm = MI.getOperand(2);

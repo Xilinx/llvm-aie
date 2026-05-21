@@ -70,7 +70,7 @@
   ; CHECK-NEXT:  .L_LEnd1:
   ; CHECK-NEXT:    nopb ; nopa ; vst.srs.s8.s32 cm1, s0, [p1], #32; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
   ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32; vmin_ge.s16 x8, r16, x6, x0
   ; CHECK-NEXT:    vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32; vmin_ge.s16 x8, r16, x6, x0
@@ -81,12 +81,9 @@
   ; CHECK-NEXT:    vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32
-  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32; ret lr
   ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm1, s0, [p1], #32 // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1

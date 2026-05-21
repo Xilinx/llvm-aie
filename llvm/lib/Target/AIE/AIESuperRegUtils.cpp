@@ -10,6 +10,7 @@
 #include "AIESuperRegUtils.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEMachineFunctionInfo.h"
 #include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
@@ -19,6 +20,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "aie-ra"
@@ -376,16 +378,6 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
   // Step 4: Remove the original register's live interval
   LIS.removeInterval(Reg);
 
-  // Step 4b: Clear stale ancestor live intervals. The operand rewrite in
-  // step 3 modified instructions in-place (e.g., stripping sub-register
-  // indices). Any ancestor register in the VRM split chain still has VNInfos
-  // pointing to those instruction slots. If a later Greedy pass traces back
-  // via VRM.getOriginal(), it would find a stale instruction and could produce
-  // an invalid rematerialization. Clearing the ancestor interval prevents this.
-  Register Original = VRM.getOriginal(Reg);
-  if (Original != Reg && LIS.hasInterval(Original))
-    LIS.getInterval(Original).clear();
-
   // Step 5: Filter out empty subregisters
   markEffectiveEmptyCopiesDead(SubRegToVReg, MRI, TRI, LIS);
 
@@ -411,6 +403,42 @@ bool isRegUsedBy2DOr3DInstruction(const MachineRegisterInfo &MRI,
         return TII.getOpcodeWithTupleOperands(MI.getOpcode()).has_value() ||
                TII.getOpcodeWithAtomicOperands(MI.getOpcode()).has_value();
       });
+}
+
+void clearStaleSplitFromMappings(const SmallSet<Register, 8> &TaintedOriginals,
+                                 MachineFunction &MF, MachineRegisterInfo &MRI,
+                                 VirtRegMap &VRM) {
+  if (TaintedOriginals.empty())
+    return;
+
+  // Record the pre-severance "logical group original" in the target-side
+  // side map so that InlineSpiller (via TargetSubtargetInfo::
+  // getSpillGroupOriginal) can still merge sibling spills onto a shared
+  // stack slot after we cut the VRM split-from chain below.
+  auto *MFI = MF.getInfo<AIEMachineFunctionInfo>();
+
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    const Register V = Register::index2VirtReg(I);
+    if (MRI.reg_nodbg_empty(V))
+      continue;
+    const Register Orig = VRM.getPreSplitReg(V);
+    if (!Orig || !TaintedOriginals.count(Orig))
+      continue;
+
+    LLVM_DEBUG({
+      const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+      dbgs() << "  Clearing stale split-from for " << printReg(V, TRI, 0, &MRI)
+             << " (was split from " << printReg(Orig, TRI, 0, &MRI)
+             << "); recorded for spill-group sharing\n";
+    });
+    // Remember the chain so InlineSpiller can still group V's spills with
+    // the rest of Orig's descendants on a shared stack slot.
+    if (MFI)
+      MFI->recordSpillGroupOriginal(V, Orig);
+    // Restore V to the canonical "no split parent" state so getOriginal(V)==V
+    // and SplitKit::defFromParent stops consulting the (stale) ancestor LI.
+    VRM.clearSplitFromReg(V);
+  }
 }
 
 void repairLiveIntervals(SmallSet<Register, 8> &RegistersToRepair,

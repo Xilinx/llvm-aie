@@ -1,0 +1,168 @@
+; This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+; See https://llvm.org/LICENSE.txt for license information.
+; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+;
+; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+;
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -stop-after=aie-outer-loop-pipeliner \
+; RUN:     -o - %s 2>&1 | FileCheck %s
+
+; Test for pointer update lifting in the AIE Outer Loop Pipeliner pass.
+;
+; When pointer update instructions (GEPs, addrspacecasts, add.2d, add.3d, etc.)
+; are in the epilogue but feed outer header PHIs, they should be lifted to
+; the prologue IF they have no uses in the epilogue (outside the chain).
+;
+; Key behaviors tested:
+;   1. Pointer-type PHI chains ARE lifted if no epilogue uses
+;   2. Integer-type PHI chains (loop counters) are NOT lifted - they're used by icmp
+;   3. Chains with inner loop dependencies cannot be lifted
+;
+; ============================================================================
+; Test 1: Basic pointer update lifting with loop counter preservation
+;
+; The GEPs (a.ptr.next, c.ptr.next) are lifted because:
+;   - They have NO uses in the epilogue (stores use c.ptr, not c.ptr.next)
+;
+; The loop counter (iv.next) is NOT lifted because:
+;   - It's used by the icmp in the epilogue (epilogue use)
+; ============================================================================
+
+; CHECK-LABEL: define void @ptr_lifting_basic
+
+; Warm-up block: loads only
+; CHECK: outer.header.peel.pro:
+; CHECK:   %v0.peel = load i32, ptr %a, align 4
+; CHECK:   br label %outer.header
+
+; Outer header: GEPs are lifted here (no epilogue uses)
+; CHECK: outer.header:
+; CHECK:   %iv = phi i32
+; CHECK:   %a.ptr = phi ptr
+; CHECK:   %c.ptr = phi ptr
+; CHECK:   %v0.phi = phi i32 [ %v0.peel, %outer.header.peel.pro ], [ %v0.epi, %outer.latch ]
+; GEPs lifted from epilogue (no epilogue uses - stores use c.ptr, not c.ptr.next)
+; CHECK:   %a.ptr.next = getelementptr inbounds i8, ptr %a.ptr, i64 128
+; CHECK:   %c.ptr.next = getelementptr inbounds i8, ptr %c.ptr, i64 128
+; CHECK:   br label %inner.header
+
+; Outer latch: loop counter update stays here (used by icmp = has epilogue use)
+; CHECK: outer.latch:
+; CHECK:   store i32
+; GEPs are NOT here (they were lifted)
+; CHECK-NOT: getelementptr{{.*}}128
+; Loop counter stays in epilogue (used by icmp)
+; CHECK:   %iv.next = add i32 %iv, -1
+; CHECK:   %outer.cond = icmp eq i32 %iv.next,
+; CHECK:   %v0.epi = load i32, ptr %a.ptr.next, align 4
+
+define void @ptr_lifting_basic(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
+entry:
+  %cmp.outer = icmp sgt i32 %N, 1
+  br i1 %cmp.outer, label %outer.header, label %exit
+
+outer.header:
+  %iv = phi i32 [ %N, %entry ], [ %iv.next, %outer.latch ]
+  %a.ptr = phi ptr [ %a, %entry ], [ %a.ptr.next, %outer.latch ]
+  %c.ptr = phi ptr [ %c, %entry ], [ %c.ptr.next, %outer.latch ]
+  %v0 = load i32, ptr %a.ptr, align 4
+  call void @llvm.set.loop.iterations.i32(i32 %M)
+  br label %inner.header
+
+inner.header:
+  %acc = phi i32 [ 0, %outer.header ], [ %acc.next, %inner.header ]
+  %acc.next = add i32 %acc, %v0
+  %inner.cond = call i1 @llvm.loop.decrement.i32(i32 1)
+  br i1 %inner.cond, label %inner.header, label %outer.latch, !llvm.loop !1
+
+outer.latch:
+  store i32 %acc.next, ptr %c.ptr, align 4
+  ; Pointer updates - lifted to prologue (no epilogue uses)
+  %a.ptr.next = getelementptr inbounds i8, ptr %a.ptr, i64 128
+  %c.ptr.next = getelementptr inbounds i8, ptr %c.ptr, i64 128
+  ; Loop counter update - NOT lifted (used by icmp below)
+  %iv.next = add i32 %iv, -1
+  %outer.cond = icmp eq i32 %iv.next, 0
+  br i1 %outer.cond, label %exit, label %outer.header, !llvm.loop !0
+
+exit:
+  ret void
+}
+
+declare void @llvm.set.loop.iterations.i32(i32)
+declare i1 @llvm.loop.decrement.i32(i32)
+
+!0 = distinct !{!0, !2, !3}
+!1 = distinct !{!1, !2}
+!2 = !{!"llvm.loop.mustprogress"}
+!3 = !{!"llvm.loop.itercount.range", i32 2}
+
+; ============================================================================
+; Test 2: Inner loop dependency prevents lifting
+;
+; When a pointer update chain depends on values produced by the inner loop,
+; it cannot be lifted to the prologue. The lifting should be skipped for
+; such chains while other independent chains can still be lifted.
+; ============================================================================
+
+; CHECK-LABEL: define void @ptr_lifting_inner_dep
+
+; Warm-up: load only
+; CHECK: outer.header.peel.pro:
+; CHECK:   %v0.peel = load i32, ptr %a, align 4
+; CHECK:   br label %outer.header
+
+; Outer header: c.ptr.next is lifted (no inner loop dependency, no epilogue uses)
+; CHECK: outer.header:
+; The a.ptr update has inner loop dependency, so NOT lifted
+; CHECK:   %a.ptr = phi ptr [ %a.ptr.next, %outer.latch ], [ %a, %outer.header.peel.pro ]
+; CHECK:   %c.ptr.next = getelementptr inbounds i8, ptr %c.ptr, i64 64
+; CHECK:   br label %inner.header
+
+; Outer latch: a.ptr.next stays here (inner loop dependency)
+; CHECK: outer.latch:
+; CHECK:   %offset = sext i32 %acc.next to i64
+; CHECK:   %a.ptr.next = getelementptr inbounds i8, ptr %a.ptr, i64 %offset
+
+define void @ptr_lifting_inner_dep(ptr noalias %a, ptr noalias %b, ptr noalias %c,
+                                    i32 %N, i32 %M) {
+entry:
+  %cmp.outer = icmp sgt i32 %N, 1
+  br i1 %cmp.outer, label %outer.header, label %exit
+
+outer.header:
+  %iv = phi i32 [ %N, %entry ], [ %iv.next, %outer.latch ]
+  %a.ptr = phi ptr [ %a, %entry ], [ %a.ptr.next, %outer.latch ]
+  %b.ptr = phi ptr [ %b, %entry ], [ %b.ptr.next, %outer.latch ]
+  %c.ptr = phi ptr [ %c, %entry ], [ %c.ptr.next, %outer.latch ]
+  %v0 = load i32, ptr %a.ptr, align 4
+  call void @llvm.set.loop.iterations.i32(i32 %M)
+  br label %inner.header
+
+inner.header:
+  %acc = phi i32 [ 0, %outer.header ], [ %acc.next, %inner.header ]
+  %acc.next = add i32 %acc, %v0
+  %inner.cond = call i1 @llvm.loop.decrement.i32(i32 1)
+  br i1 %inner.cond, label %inner.header, label %outer.latch, !llvm.loop !5
+
+outer.latch:
+  store i32 %acc.next, ptr %c.ptr, align 4
+  ; This pointer update depends on inner loop result - CANNOT be lifted
+  %offset = sext i32 %acc.next to i64
+  %a.ptr.next = getelementptr inbounds i8, ptr %a.ptr, i64 %offset
+  ; This pointer update has no inner loop dependency - CAN be lifted
+  %b.ptr.next = getelementptr inbounds i8, ptr %b.ptr, i64 64
+  %c.ptr.next = getelementptr inbounds i8, ptr %c.ptr, i64 64
+  %iv.next = add i32 %iv, -1
+  %outer.cond = icmp eq i32 %iv.next, 0
+  br i1 %outer.cond, label %exit, label %outer.header, !llvm.loop !4
+
+exit:
+  ret void
+}
+
+!4 = distinct !{!4, !6, !7}
+!5 = distinct !{!5, !6}
+!6 = !{!"llvm.loop.mustprogress"}
+!7 = !{!"llvm.loop.itercount.range", i32 2}

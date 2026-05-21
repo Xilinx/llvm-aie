@@ -67,7 +67,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle ex11, ex9, ex7, r4; vmac.f dm0, dm0, ex11, ex3, r0
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup89.i.exitStub
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle ex1, ex9, ex7, r5; vmac.f dm4, dm4, ex1, ex3, r0
-; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; nopx ; vmac.f dm2, dm2, ex11, ex5, r0
+; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vmac.f dm2, dm2, ex11, ex5, r0
 ; CHECK-NEXT:    mov p0, r3; vmac.f dm1, dm1, ex1, ex5, r0
 ; CHECK-NEXT:    vshuffle ex11, ex9, ex7, r4; vmac.f dm0, dm0, ex11, ex3, r0
 ; CHECK-NEXT:    vshuffle ex1, ex9, ex7, r5; vmac.f dm4, dm4, ex1, ex3, r0
@@ -78,7 +78,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vmac.f dm2, dm2, ex11, ex5, r0
 ; CHECK-NEXT:    vmac.f dm1, dm1, ex1, ex5, r0
 ; CHECK-NEXT:    vmac.f dm0, dm0, ex11, ex3, r0
-; CHECK-NEXT:    vmac.f dm4, dm4, ex1, ex3, r0
+; CHECK-NEXT:    lda p7, [sp, #-60]; vmac.f dm4, dm4, ex1, ex3, r0 // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst bmhh2, [p7, #192]
@@ -90,13 +90,13 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vst bmlh1, [p0, #64]
 ; CHECK-NEXT:    vst bmll1, [p0, #0]; mov p0, r2
 ; CHECK-NEXT:    vst bmhh0, [p0, #192]
-; CHECK-NEXT:    lda p7, [sp, #-60]; vst bmhl0, [p0, #128] // 4-byte Folded Reload
-; CHECK-NEXT:    lda p6, [sp, #-64]; vst bmlh0, [p0, #64] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-64]; vst bmhl0, [p0, #128] // 4-byte Folded Reload
+; CHECK-NEXT:    vst bmlh0, [p0, #64]; paddxm [sp], #-64
 ; CHECK-NEXT:    vst bmll0, [p0, #0]; ret lr
 ; CHECK-NEXT:    vst bmhh4, [p6, #192] // Delay Slot 5
 ; CHECK-NEXT:    vst bmhl4, [p6, #128] // Delay Slot 4
 ; CHECK-NEXT:    vst bmlh4, [p6, #64] // Delay Slot 3
-; CHECK-NEXT:    vst bmll4, [p6, #0]; paddxm [sp], #-64 // Delay Slot 2
+; CHECK-NEXT:    vst bmll4, [p6, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %for.body90.i

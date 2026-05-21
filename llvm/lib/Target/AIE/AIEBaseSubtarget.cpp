@@ -16,6 +16,7 @@
 #include "AIE.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEInterBlockScheduling.h"
+#include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIERegMemEventTracker.h"
@@ -158,6 +159,17 @@ const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
   return static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
 }
 
+std::optional<Register>
+AIEBaseSubtarget::getSpillGroupOriginal(const MachineFunction &MF,
+                                        Register VirtReg) const {
+  // The MFI is created lazily; if for some reason the MF has not allocated one
+  // (e.g. very early in pipeline), there is nothing to look up.
+  const auto *MFI = MF.getInfo<AIEMachineFunctionInfo>();
+  if (!MFI)
+    return std::nullopt;
+  return MFI->getSpillGroupOriginal(VirtReg);
+}
+
 namespace {
 
 // Set latency and declare height/depth dirty if it changes
@@ -257,6 +269,8 @@ class BiasDepth : public ScheduleDAGMutation {
 };
 
 class RegionEndEdges : public ScheduleDAGMutation {
+  AAResults *AA;
+
   void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
     SUnit &ExitSU = DAG->ExitSU;
     while (!ExitSU.Preds.empty()) {
@@ -264,7 +278,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
   }
   void apply(ScheduleDAGInstrs *DAG) override {
-    AIE::MaxLatencyFinder MaxLatency(DAG);
+    AIE::MaxLatencyFinder MaxLatency(DAG, AA);
     MachineBasicBlock *PrologueMBB = DAG->getBB();
     unsigned int ZOLBundlesCount = 0;
 
@@ -333,6 +347,9 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
     DAG->ExitSU.setDepthDirty();
   };
+
+public:
+  RegionEndEdges(AAResults *AA = nullptr) : AA(AA) {}
 };
 
 /// This Mutator is responsible for emitting "fixed" SUnits at the top or bottom
@@ -895,7 +912,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
-    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
+    Mutations.emplace_back(std::make_unique<RegionEndEdges>(AA));
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());

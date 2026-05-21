@@ -18,9 +18,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "Utils/AIEMachineInstrPrint.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
@@ -134,12 +132,7 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // pipelined before and we can't trust min itercount metadata.
   // Return on investment is probably low anyway.
   const bool Pristine = true;
-  for (auto &MI : reverse(*Preheader)) {
-    if (TII->isZOLTripCountDef(MI, Pristine)) {
-      TripCountDef = &MI;
-      break;
-    }
-  }
+  TripCountDef = TII->findZOLTripCountDef(*Preheader, Pristine);
   if (!TripCountDef) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No tripcount def\n");
     return false;
@@ -1564,8 +1557,7 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   return false;
 }
 
-bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
-                             MachineOptimizationRemarkEmitter &More) {
+bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 
   II = InitiationInterval;
   DAG = &TheDAG;
@@ -1590,33 +1582,15 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
-  auto *BB = TheDAG.getBB();
-  auto DbgLoc = BB->begin()->getDebugLoc();
   if (II < RecMII) {
-    More.emit([&]() {
-      return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
-                                             DbgLoc, BB)
-             << "Longest circuit does not fit II." << ore::NV("II", II)
-             << ore::NV("BasicBlock", BB->getName());
-    });
     return false;
   }
   LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
   if (!tryApproaches()) {
-    More.emit([&]() {
-      return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
-                                             DbgLoc, BB)
-             << "No schedule found.";
-    });
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
   }
 
-  More.emit([&]() {
-    return MachineOptimizationRemark("postpipeliner", "schedule", DbgLoc, BB)
-           << "Schedule found" << ore::NV("NS", NStages) << ore::NV("II", II)
-           << ore::NV("BasicBlock", BB->getName());
-  });
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
   return true;
 }

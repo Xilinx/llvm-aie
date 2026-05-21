@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -38,7 +38,8 @@ struct InstrAndCycle {
 ///          found.
 InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
                               ArrayRef<MachineBundle> Bundles, int Prune,
-                              AAResults *AA = nullptr);
+                              AAResults *AA = nullptr,
+                              bool SafeToIgnoreMemDeps = false);
 
 class MaxLatencyFinder {
   const AIEPostRASchedStrategy *const Scheduler;
@@ -47,6 +48,8 @@ class MaxLatencyFinder {
   const MCRegisterInfo *const TRI;
   MachineBasicBlock *const CurBB;
   const bool InterBlock;
+  AAResults *AA;
+  bool SafeToIgnoreMemDeps;
 
   // Check whether this region connects to the successor blocks
   //
@@ -58,9 +61,9 @@ public:
                    const AIEBaseInstrInfo *const TII,
                    const InstrItineraryData *const Itineraries,
                    const MCRegisterInfo *const TRI,
-                   MachineBasicBlock *const CurBB);
+                   MachineBasicBlock *const CurBB, AAResults *AA = nullptr);
 
-  MaxLatencyFinder(ScheduleDAGInstrs *DAG);
+  MaxLatencyFinder(ScheduleDAGInstrs *DAG, AAResults *AA = nullptr);
 
   // Find the maximum latency of MI taking  successors into account
   unsigned operator()(MachineInstr &MI);

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -114,6 +114,11 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  // Snapshot Originals whose LI is about to go stale.
+  SmallSet<Register, 8> TaintedOriginals;
+  for (auto &[VReg, _] : AssignedPhysRegs)
+    TaintedOriginals.insert(VRM.getOriginal(VReg));
+
   // Re-write all the collected VRegs
   for (auto &[VReg, PhysRegAndSubRegs] : AssignedPhysRegs) {
     const Register PhysReg = PhysRegAndSubRegs.first;
@@ -121,6 +126,9 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     AIESuperRegUtils::rewriteSuperReg(VReg, PhysReg, SubRegs, MRI, TRI, VRM,
                                       LRM, LIS, Indexes, DebugVars);
   }
+
+  // Prevent SplitKit from rematerializing through stale ancestor LIs.
+  AIESuperRegUtils::clearStaleSplitFromMappings(TaintedOriginals, MF, MRI, VRM);
 
   LLVM_DEBUG(VRM.dump());
   return !AssignedPhysRegs.empty();

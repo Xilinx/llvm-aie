@@ -494,6 +494,17 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isZOLTripCountDef(const MachineInstr &MI,
                                  bool Pristine = false) const;
 
+  /// Find the ZOL trip-count definition in \p MBB, seeing through BUNDLEs.
+  /// If \p Pristine is set, only match instructions whose adjustment is zero.
+  /// On blocks with multiple matches, returns the def closest to the loop
+  /// entry (the one that reaches the backedge).
+  const MachineInstr *findZOLTripCountDef(const MachineBasicBlock &MBB,
+                                          bool Pristine = false) const;
+
+  /// Non-const overload: returns the matching instruction in mutable form.
+  MachineInstr *findZOLTripCountDef(MachineBasicBlock &MBB,
+                                    bool Pristine = false) const;
+
   /// Lower the tripcount defined by MI with Update, which is a small
   /// negative integer that should be added to the tripcount
   /// \pre isZOLTripCountDef(MI)

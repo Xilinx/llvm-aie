@@ -22,6 +22,7 @@
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -281,8 +282,97 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   defineSchedulingOrder(MF);
 }
 
+/// Emit a loop scheduling optimization remark with pipeliner kind, II, NS,
+/// loop name, and prologue/epilogue MBB names and bundle counts.
+static void emitPipelinerRemark(MachineOptimizationRemarkEmitter &More,
+                                const char *Pipeliner,
+                                MachineBasicBlock *LoopBB, int II, unsigned NS,
+                                const BlockState *PrologueBS,
+                                unsigned PrologueBundles,
+                                const BlockState *EpilogueBS,
+                                unsigned EpilogueBundles) {
+  const auto DbgLoc = LoopBB->begin()->getDebugLoc();
+  auto MBBLabel = [](const MachineBasicBlock *MBB) {
+    // return "bb.<N>.<irname>" when an IR name is present, or "bb.<N>".
+    std::string Buf;
+    raw_string_ostream OS(Buf);
+    MBB->printName(OS, MachineBasicBlock::PrintNameIr);
+    return Buf;
+  };
+  More.emit([&]() {
+    auto R = MachineOptimizationRemark("pipeliner", "schedule", DbgLoc, LoopBB);
+    R << "Schedule found" << ore::NV("Pipeliner", Pipeliner)
+      << ore::NV("II", II) << ore::NV("NS", NS)
+      << ore::NV("Loop", MBBLabel(LoopBB));
+    if (PrologueBS)
+      R << ore::NV("Prologue", MBBLabel(PrologueBS->TheBlock))
+        << ore::NV("PrologueBundles", PrologueBundles);
+    if (EpilogueBS)
+      R << ore::NV("Epilogue", MBBLabel(EpilogueBS->TheBlock))
+        << ore::NV("EpilogueBundles", EpilogueBundles);
+    return R;
+  });
+}
+
+/// Emit scheduling remarks for single-MBB loop blocks. Each loop gets
+/// exactly one remark reporting II, NS, and prologue/epilogue bundle counts.
+/// The "Pipeliner" field distinguishes which pipeliner (if any) handled it.
+void InterBlockScheduling::emitLoopRemarks() {
+  if (Blocks.empty())
+    return;
+
+  // Iterate single-MBB loops in MachineFunction layout order so remark
+  // output is deterministic and independent of the pointer-keyed
+  // `Blocks` map. Only loops tracked here and classified as
+  // BlockType::Loop receive a remark.
+  MachineFunction &MF = *Blocks.begin()->first->getParent();
+  MachineOptimizationRemarkEmitter More(MF, nullptr);
+  for (MachineBasicBlock *LoopBB : AIELoopUtils::getSingleBlockLoopMBBs(MF)) {
+    if (!Blocks.count(LoopBB))
+      continue;
+    const BlockState &BS = getBlockState(LoopBB);
+    if (BS.Kind != BlockType::Loop)
+      continue;
+
+    auto [PrologueMBB, EpilogueMBB] =
+        AIELoopUtils::findPrologueEpilogue(*LoopBB);
+
+    // Skip loops without a proper prologue/epilogue or whose
+    // prologue/epilogue blocks are not tracked (e.g. entry-block loops
+    // or isolated --run-pass=postmisched on partial MIR).
+    if (!PrologueMBB || !EpilogueMBB)
+      continue;
+    if (!Blocks.count(PrologueMBB) || !Blocks.count(EpilogueMBB))
+      continue;
+
+    const BlockState &PrologueBS = getBlockState(PrologueMBB);
+    const BlockState &EpilogueBS = getBlockState(EpilogueMBB);
+
+    // Determine the pipeliner kind, II and NS.
+    const char *Pipeliner = nullptr;
+    // For a non-pipelined loop, "II" is the unpipelined loop body length;
+    // we keep the field name "II" for tooling compatibility.
+    int II = BS.getScheduleLength();
+    unsigned NS = 1;
+    if (BS.isPipelined()) {
+      Pipeliner = "postpipeliner";
+      const auto &SWP = BS.getPostSWP();
+      II = SWP.getII();
+      NS = SWP.getStageCount();
+    } else if (auto SWP_NS = AIELoopUtils::getSWPStageCount(*LoopBB, *TII)) {
+      Pipeliner = "prepipeliner";
+      NS = *SWP_NS;
+    }
+
+    emitPipelinerRemark(More, Pipeliner, LoopBB, II, NS, &PrologueBS,
+                        PrologueBS.getScheduleLength(), &EpilogueBS,
+                        EpilogueBS.getScheduleLength());
+  }
+}
+
 void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
+  emitLoopRemarks();
   Blocks.clear();
 }
 
@@ -358,23 +448,19 @@ public:
   PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
                     const AIEBaseInstrInfo &TII)
       : Loop(BS), CurrentBundle(TII.getFormatInterface()) {
-    MachineBasicBlock *LoopBlock = Loop.TheBlock;
-    for (auto *P : LoopBlock->predecessors()) {
-      if (P == LoopBlock) {
-        continue;
-      }
-      Prologue = &InterBlock.getBlockState(P);
-    }
-    for (auto *S : LoopBlock->successors()) {
-      if (S == LoopBlock) {
-        continue;
-      }
-      Epilogue = &InterBlock.getBlockState(S);
-    }
+    auto [PrologueMBB, EpilogueMBB] =
+        AIELoopUtils::findPrologueEpilogue(*Loop.TheBlock);
+    assert(PrologueMBB && EpilogueMBB &&
+           "Pipelined loop must have a unique prologue and epilogue");
+    Prologue = &InterBlock.getBlockState(PrologueMBB);
+    Epilogue = &InterBlock.getBlockState(EpilogueMBB);
   }
+  const BlockState *getPrologue() const { return Prologue; }
+  const BlockState *getEpilogue() const { return Epilogue; }
 };
 
 } // namespace
+
 bool InterBlockScheduling::leaveBlock() {
   DEBUG_BLOCKS(dbgs() << "  << leaveBlock "
                       << CurrentBlockState->TheBlock->getNumber() << "\n");
@@ -400,6 +486,7 @@ bool InterBlockScheduling::leaveBlock() {
     auto &PostSWP = BS.getPostSWP();
     PostSWP.visitPipelineSchedule(GenSchedule);
     PostSWP.updateTripCount();
+
     break;
   }
   case SchedulingStage::SchedulingDone:
@@ -639,17 +726,9 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
     return SchedulingStage::Pipelining;
   }
 
-  auto *BB = BS.TheBlock;
-  auto DbgLoc = BB->begin()->getDebugLoc();
-  MachineOptimizationRemarkEmitter More(*BB->getParent(), nullptr);
-  More.emit([&]() {
-    return MachineOptimizationRemarkMissed("postpipeliner", "schedule", DbgLoc,
-                                           BB)
-           << "No schedule found.";
-  });
-
   // Fall back to the loop schedule. Note that we can only enter pipeline mode
-  // after the loop schedule has stabilized.
+  // after the loop schedule has stabilized. Failure is observable by the
+  // absence of a "Schedule found" remark on this loop.
   return SchedulingStage::PipeliningFailed;
 }
 

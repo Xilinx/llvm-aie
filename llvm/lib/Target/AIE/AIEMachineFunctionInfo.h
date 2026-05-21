@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -15,9 +15,11 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEMACHINEFUNCTIONINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEMACHINEFUNCTIONINFO_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/Register.h"
 #include <optional>
 
 namespace llvm {
@@ -74,6 +76,17 @@ private:
 
   const TileMemoryPSV TileMemory;
 
+  /// Side map: descendant vreg -> "logical group original" (the VRM Original
+  /// before the split-from chain was deliberately severed by an AIE
+  /// register-rewriter pass).
+  ///
+  /// The chain is severed for correctness so that SplitKit::defFromParent
+  /// no longer rematerializes through the now-stale ancestor LiveInterval.
+  /// However, InlineSpiller still wants to share a stack slot among all
+  /// descendants of that group. This map remembers the pre-severance original
+  /// so getSpillGroupOriginal() can answer that lookup for InlineSpiller.
+  DenseMap<Register, Register> SpillGroupOriginal;
+
 public:
   //  AIEMachineFunctionInfo() = default;
 
@@ -88,6 +101,24 @@ public:
 
   unsigned getBytesInStackArgArea() const { return BytesInStackArgArea; }
   void setBytesInStackArgArea(unsigned bytes) { BytesInStackArgArea = bytes; }
+
+  /// Record that \p Descendant logically belongs to the spill group whose
+  /// "original" is \p OldOriginal. Called by AIE register-rewriter passes
+  /// just before they sever the VRM split-from chain for \p Descendant.
+  void recordSpillGroupOriginal(Register Descendant, Register OldOriginal) {
+    SpillGroupOriginal[Descendant] = OldOriginal;
+  }
+
+  /// Return the "logical group original" recorded for \p V, if any. Used by
+  /// the AIEBaseSubtarget override of
+  /// TargetSubtargetInfo::getSpillGroupOriginal which InlineSpiller consults
+  /// for stack-slot sharing.
+  std::optional<Register> getSpillGroupOriginal(Register V) const {
+    auto It = SpillGroupOriginal.find(V);
+    if (It == SpillGroupOriginal.end())
+      return std::nullopt;
+    return It->second;
+  }
 
   MachineFunctionInfo *
   clone(BumpPtrAllocator &Allocator, MachineFunction &DestMF,

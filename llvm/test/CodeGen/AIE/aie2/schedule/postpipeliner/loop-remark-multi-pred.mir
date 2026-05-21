@@ -1,0 +1,79 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# Regression test: AIELoopUtils::findPrologueEpilogue must not assert when a
+# single-MBB loop has multiple non-loop predecessors. The remark emitter
+# in InterBlockScheduling runs on every single-MBB loop -- not just
+# pipelined ones -- so the helper has to tolerate non-pipelined CFGs.
+#
+# Here bb.1 is a single-MBB loop (self-edge), reached both from the
+# function entry (bb.0) and from an end-of-iteration cleanup block (bb.3).
+# That gives bb.1 two non-loop predecessors -- {bb.0, bb.3} -- which used
+# to trip an assertion in findPrologueEpilogue once emitLoopRemarks
+# started visiting non-pipelined loops.
+
+# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -filetype=null \
+# RUN:   -pass-remarks-output=- -pass-remarks-filter=pipeliner \
+# RUN:   | FileCheck --allow-empty %s
+
+# Compilation must succeed (no assertion) and the ambiguous loop must not
+# get a "Schedule found" remark, since its prologue is not unique.
+# CHECK-NOT: Schedule found
+
+--- |
+  define dso_local void @multi_pred_loop(i32 noundef %n) local_unnamed_addr {
+  entry:
+    br label %loop_header
+
+  loop_header:
+    %i = phi i32 [ 0, %entry ], [ %i_next, %iter_end ], [ %i, %loop_header ]
+    %done = icmp sge i32 %i, %n
+    br i1 %done, label %loop_header, label %work
+
+  work:
+    br label %iter_end
+
+  iter_end:
+    %i_next = add nsw i32 %i, 1
+    br label %loop_header
+  }
+...
+---
+name:            multi_pred_loop
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x80000000)
+    liveins: $r0
+
+    renamable $r1 = MOV_RLC_imm10_pseudo 0
+    J_jump_imm %bb.1
+    DelayedSchedBarrier
+
+  bb.1.loop_header (align 16):
+    successors: %bb.1(0x40000000), %bb.2(0x40000000)
+    liveins: $r0, $r1
+
+    renamable $r2 = GE renamable $r1, renamable $r0
+    JNZ killed renamable $r2, %bb.1
+    DelayedSchedBarrier
+
+  bb.2.work:
+    successors: %bb.3(0x80000000)
+    liveins: $r0, $r1
+
+    J_jump_imm %bb.3
+    DelayedSchedBarrier
+
+  bb.3.iter_end:
+    successors: %bb.1(0x80000000)
+    liveins: $r0, $r1
+
+    renamable $r1 = nsw ADD_add_r_ri killed renamable $r1, 1, implicit-def dead $srcarry
+    J_jump_imm %bb.1
+    DelayedSchedBarrier
+...

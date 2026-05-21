@@ -183,28 +183,19 @@ DenseElementsAttr applyElementWise(
   return newTensor;
 }
 
-/// Function that checks if \p toCheck is a dense TOSA constant tensor.
+/// Function that checks if \p toCheck is a dense constant tensor produced by
+/// any op with the ConstantLike trait (e.g. tosa.const, onnx.Constant,
+/// arith.constant) whose fold() returns a DenseElementsAttr.
 LogicalResult notifyIfNoTosaDenseConstantTensor(Value toCheck, TosaOp location,
                                                 PatternRewriter &rewriter) {
-  // Check whether the tensor is constant and dense
-  // TODO We currently ensure the tensor is dense by using the correct type for
-  // the bind_value, however we do not actually need this value. It would be
-  // nicer to only have a check here.
+  // matchPattern with DenseElementsAttr already requires the defining op to
+  // have ConstantLike trait and fold to a dense (non-sparse) attribute.
   DenseElementsAttr tmp;
   if (!matchPattern(toCheck, m_Constant(&tmp))) {
     return rewriter.notifyMatchFailure(location,
                                        "Non-const or non-dense input tensor");
   }
-
-  // Make sure it actually is a TOSA constant (the match allows for other
-  // constants as well)
-  if (isa<ConstOp>(toCheck.getDefiningOp())) {
-    return success();
-  }
-
-  return rewriter.notifyMatchFailure(location,
-                                     "The reciprocal can only be folded if "
-                                     "it operates on a TOSA constant");
+  return success();
 }
 
 template <typename BaseType, typename RangeT>

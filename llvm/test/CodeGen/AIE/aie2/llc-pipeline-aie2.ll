@@ -102,6 +102,8 @@
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O123-NEXT:      Optimization Remark Emitter
 ; AIE-O123-NEXT:      Hardware Loop Insertion
+; AIE-O123-NEXT:      AIE Outer Loop Pipeliner
+; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; AIE-O123-NEXT:      Function Alias Analysis Results
 ; AIE-O123-NEXT:      ObjC ARC contraction

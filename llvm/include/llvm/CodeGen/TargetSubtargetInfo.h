@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -21,11 +21,13 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/MacroFusion.h"
 #include "llvm/CodeGen/PBQPRAConstraint.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace llvm {
@@ -139,6 +141,24 @@ public:
   /// or specific subtarget.
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return nullptr;
+  }
+
+  /// Optional target hook used by InlineSpiller to recover a "logical group
+  /// original" for stack-slot sharing when a target pass has deliberately
+  /// severed the VirtRegMap split-from chain (via clearSplitFromReg) for
+  /// correctness reasons (e.g. to stop SplitKit::defFromParent from
+  /// rematerializing through a stale ancestor LiveInterval).
+  ///
+  /// If the target returns a valid Register \p R, InlineSpiller will use
+  /// \p R as the "Original" for stack-slot sharing (HoistSpillHelper /
+  /// MergeableSpills) instead of VRM.getOriginal(VirtReg). The returned
+  /// register must still have a valid LiveInterval; otherwise the override
+  /// is ignored.
+  ///
+  /// Default: no override.
+  virtual std::optional<Register>
+  getSpillGroupOriginal(const MachineFunction &MF, Register VirtReg) const {
+    return std::nullopt;
   }
 
   /// Resolve a SchedClass at runtime, where SchedClass identifies an

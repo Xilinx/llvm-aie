@@ -87,7 +87,8 @@ static bool overlap(const MachineOperand &SrcOp, const MachineOperand &DstOp,
 
 /// Check whether Dst depends on Src
 static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
-                    const TargetRegisterInfo *TRI, AAResults *AA) {
+                    const TargetRegisterInfo *TRI, AAResults *AA,
+                    bool SafeToIgnoreMemDeps) {
 
   const AIEBaseInstrInfo *const TII = static_cast<const AIEBaseInstrInfo *>(
       Src.getMF()->getSubtarget().getInstrInfo());
@@ -132,8 +133,14 @@ static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
              TII->isPartWordMemoryInst(MaybePartStore);
     };
 
-    if (AA && !IsPartWordStore(Src)) {
-      return Src.mayAlias(AA, Dst, true);
+    if (!IsPartWordStore(Src)) {
+
+      // If it's safe to ignore memory dependencies, skip memory checks.
+      if (SafeToIgnoreMemDeps)
+        return false;
+
+      if (AA)
+        return Src.mayAlias(AA, Dst, true);
     }
 
     // Conservative: assume dependency for part-word instructions or when AA
@@ -146,7 +153,7 @@ static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
 
 InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
                               ArrayRef<MachineBundle> Bundles, int Prune,
-                              AAResults *AA) {
+                              AAResults *AA, bool SafeToIgnoreMemDeps) {
   const TargetRegisterInfo *TRI =
       SrcMI.getMF()->getSubtarget().getRegisterInfo();
   int Cycle = 0;
@@ -157,7 +164,7 @@ InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
     }
     for (MachineInstr *DstMI : Bundle.getInstrs()) {
       LLVM_DEBUG(dbgs() << " " << *DstMI);
-      if (depends(SrcMI, *DstMI, TRI, AA)) {
+      if (depends(SrcMI, *DstMI, TRI, AA, SafeToIgnoreMemDeps)) {
         LLVM_DEBUG(dbgs() << "    depends in cycle=" << Cycle << "\n");
         return {DstMI, Cycle};
       }
@@ -171,16 +178,17 @@ MaxLatencyFinder::MaxLatencyFinder(
     const AIEPostRASchedStrategy *const Scheduler,
     const AIEBaseInstrInfo *const TII,
     const InstrItineraryData *const Itineraries,
-    const MCRegisterInfo *const TRI, MachineBasicBlock *const CurBB)
+    const MCRegisterInfo *const TRI, MachineBasicBlock *const CurBB,
+    AAResults *AA)
     : Scheduler(Scheduler), TII(TII), Itineraries(Itineraries), TRI(TRI),
-      CurBB(CurBB), InterBlock(true) {}
+      CurBB(CurBB), InterBlock(true), AA(AA), SafeToIgnoreMemDeps(false) {}
 
 // This is called from different contexts, so we need some case analysis
 // If we have a basic block, we are in a regular MachineScheduler invocation,
 // and we will be able to retrieve its strategy,
 // Otherwise we are an abstract region; Scheduler will be nullptr, which
 // will not be derefenced.
-MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
+MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG, AAResults *AA)
     : Scheduler(DAG->getBB()
                     ? static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl()
                     : nullptr),
@@ -189,7 +197,20 @@ MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
       TRI(DAG->MF.getSubtarget().getRegisterInfo()), CurBB(DAG->getBB()),
       InterBlock(InterBlockLatency && CurBB &&
                  isBottomRegion(DAG->ExitSU.getInstr()) &&
-                 Scheduler->successorsAreScheduled(CurBB)) {}
+                 Scheduler->successorsAreScheduled(CurBB)),
+      AA(AA),
+      // This is a current assumption needed to achieve a proper compact
+      // schedule.
+      // A loop is considered a candidate for outer loop pipelining if there are
+      // no memory-carried dependencies. The outer loop pipeliner attaches
+      // related metadata to the loop/epilogue, which we capture here. This
+      // metadata indicates that epilogue stores will not alias with loads from
+      // the peeled iteration. We will further analyze why AA is too
+      // conservative in some cases and remove this assumption when possible.
+      SafeToIgnoreMemDeps(Scheduler && CurBB &&
+                          Scheduler->getInterBlock()
+                              .getBlockState(CurBB)
+                              .isSafeToIgnoreMemDeps()) {}
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << MI << "\n");
@@ -232,7 +253,9 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
       continue;
     }
     const std::vector<AIE::MachineBundle> &TopBundles = SBS.getTop().Bundles;
-    Earliest = findEarliestRef(MI, TopBundles, Earliest).Cycle;
+    Earliest =
+        findEarliestRef(MI, TopBundles, Earliest, AA, SafeToIgnoreMemDeps)
+            .Cycle;
   }
 
   LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");
