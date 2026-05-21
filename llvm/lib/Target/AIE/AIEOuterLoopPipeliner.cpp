@@ -198,6 +198,16 @@ struct LoopStructure {
   }
 };
 
+// Holds the pre-validated components of a downcounting outer loop exit
+// condition, computed once by getDowncountingInfo and consumed by
+// convertOuterLoopToHardwareLoop.
+// All fields are guaranteed non-null when the struct is returned.
+struct DowncountingInfo {
+  ICmpInst *Cmp;           // latch exit condition (icmp eq/ne)
+  BinaryOperator *Counter; // add instruction (phi + (-step))
+  PHINode *OldIV;          // counting PHI in outer header feeding Counter
+};
+
 class AIEOuterLoopPipeliner : public FunctionPass {
 public:
   static char ID;
@@ -298,13 +308,17 @@ private:
   // WarmUp is the warm-up block that now precedes the outer header (the PHI
   // incoming block for the initial counter value).
   // AdjustedTripCount is the N-1 value produced by adjustLoopBound.
+  // Info contains the pre-validated downcounting pattern components.
   void convertOuterLoopToHardwareLoop(const LoopStructure &LS,
                                       BasicBlock *WarmUp,
-                                      Value *AdjustedTripCount);
+                                      Value *AdjustedTripCount,
+                                      const DowncountingInfo &Info);
 
-  // Returns true if the outer latch has a downcounting icmp pattern that can
-  // be replaced by @llvm.loop.decrement.reg.
-  bool isOuterLoopDowncounting(const LoopStructure &LS) const;
+  // Returns the downcounting pattern components if the outer latch has the
+  // canonical downcounting icmp pattern that can be replaced by
+  // @llvm.loop.decrement.reg, or std::nullopt otherwise.
+  std::optional<DowncountingInfo>
+  getDowncountingInfo(const LoopStructure &LS) const;
 
   // Collect the "Part 1" prologue instructions for split-prologue mode.
   // Part 1 = all instructions reachable from loads (forward tracking) that
@@ -891,21 +905,22 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
                     << " -> " << CoolExit->getName() << "\n");
 }
 
-// Adjust the outer loop trip count from N to N-1.
+// Adjust the outer loop trip count from N to N-1 by modifying the latch icmp.
 //
-// Two canonical forms are handled:
+// The unified formula is:   NewLimit = Limit - Step
 //
-//  Increment loop:  icmp slt/ult %counter, %N
-//    → decrement limit: %N - 1
+// where Step is the induction step of the outer loop counter:
+//   Step > 0 (increment): limit decreases → loop exits one iteration sooner.
+//   Step < 0 (decrement): limit increases by |Step| → loop exits sooner.
 //
-//  Decrement loop:  icmp eq %counter, 0   (counter = phi - 1)
-//    → increment limit: 0 + 1 = 1
-//    (loop exits when counter reaches 1 instead of 0)
+// The step is extracted from the add instruction that produces the
+// non-invariant icmp operand (e.g., %counter = add %phi, C → Step = C).
+// If the counter is a plain PHI (no visible add), a unit step is inferred
+// from the comparison predicate (SLT/ULT → +1, SGT/UGT → -1).
+// For EQ/NE without a visible constant step the direction is ambiguous and
+// the bound cannot be adjusted.
 //
-// For icmp eq/ne we detect the counter direction by inspecting the add
-// instruction that produces the non-invariant operand.
-//
-// Returns the new limit Value (the adjusted trip count).
+// Returns the new limit Value, or nullptr if the bound cannot be adjusted.
 Value *AIEOuterLoopPipeliner::adjustLoopBound(const LoopStructure &LS) {
   BranchInst *BI = dyn_cast<BranchInst>(LS.OuterLatch->getTerminator());
 
@@ -931,38 +946,27 @@ Value *AIEOuterLoopPipeliner::adjustLoopBound(const LoopStructure &LS) {
   assert(Limit &&
          "Loop exit condition must have a loop-invariant limit operand");
 
-  // Determine whether to increment or decrement the limit.
-  //   Increment loop (icmp slt/ult %i, N)  → decrement limit (N-1)
-  //   Decrement loop (icmp eq %i, 0)       → increment limit (0+1=1)
-  //   icmp sgt/ugt                         → increment limit
-  ICmpInst::Predicate Pred = Cmp->getPredicate();
-  bool IncrementLimit = false;
-
-  if (Pred == ICmpInst::ICMP_EQ || Pred == ICmpInst::ICMP_NE) {
-    // Detect counter direction from the add that produces the counter value.
-    if (auto *Add = dyn_cast<BinaryOperator>(Counter)) {
-      if (Add->getOpcode() == Instruction::Add) {
-        if (auto *C = dyn_cast<ConstantInt>(Add->getOperand(1)))
-          IncrementLimit =
-              C->isNegative(); // decrement counter → increment limit
-      }
+  // Determine the induction step. If the counter is an add with a constant
+  // operand, extract the step directly (handles any step magnitude).
+  // Otherwise, infer a unit step from the comparison predicate.
+  // EQ/NE without a visible constant step is ambiguous — bail out.
+  int64_t Step = 0;
+  if (auto *Add = dyn_cast<BinaryOperator>(Counter)) {
+    if (Add->getOpcode() == Instruction::Add) {
+      if (auto *C = dyn_cast<ConstantInt>(Add->getOperand(1)))
+        Step = C->getSExtValue();
     }
-  } else if (Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT) {
-    IncrementLimit = true;
   }
-  // ICMP_SLT / ICMP_ULT: decrement limit (IncrementLimit = false, default)
 
+  assert(Step != 0);
+
+  // NewLimit = Limit - Step removes exactly one outer iteration for any step.
   IRBuilder<> Builder(LS.getPreheader()->getTerminator());
-  Value *NewLimit;
-  if (IncrementLimit) {
-    NewLimit = Builder.CreateAdd(Limit, ConstantInt::get(Limit->getType(), 1),
-                                 "outer.trip.plus1");
-  } else {
-    NewLimit = Builder.CreateSub(Limit, ConstantInt::get(Limit->getType(), 1),
-                                 "outer.trip.minus1");
-  }
+  Value *NewLimit = Builder.CreateSub(
+      Limit, ConstantInt::getSigned(Limit->getType(), Step), "outer.trip.adj");
   Cmp->setOperand(LimitIdx, NewLimit);
-  LLVM_DEBUG(dbgs() << "    Adjusted loop bound: N -> N-1\n");
+  LLVM_DEBUG(dbgs() << "    Adjusted loop bound: N -> N-1 (step=" << Step
+                    << ")\n");
   return NewLimit;
 }
 
@@ -1343,9 +1347,9 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // cycle.  By running convertOuterLoopToHardwareLoop first, we erase
   // OldCond, OldCounter, and the pure-counter PHI (OldIV) from the latch
   // BEFORE the peel step iterates over it, so they are never cloned.
-  if (EnableOuterLoopHardwareLoop && AdjustedTripCount &&
-      isOuterLoopDowncounting(LS))
-    convertOuterLoopToHardwareLoop(LS, WarmUp, AdjustedTripCount);
+  if (EnableOuterLoopHardwareLoop && AdjustedTripCount)
+    if (auto Info = getDowncountingInfo(LS))
+      convertOuterLoopToHardwareLoop(LS, WarmUp, AdjustedTripCount, *Info);
 
   // Create the cool-down region (peeled last iteration):
   //   set.loop.iterations + Part2 clones + inner loop clone + epilogue stores.
@@ -1360,38 +1364,54 @@ bool AIEOuterLoopPipeliner::performTransformation(
   return true;
 }
 
-// Returns true if the outer latch has a downcounting icmp pattern:
+// Returns the downcounting pattern components if the outer latch has the
+// canonical downcounting icmp pattern:
 //   %counter = add i32 %phi, -1
-//   %cond    = icmp eq i32 %counter, <limit>
-// This is the pattern that can be replaced by @llvm.loop.decrement.reg.
-bool AIEOuterLoopPipeliner::isOuterLoopDowncounting(
-    const LoopStructure &LS) const {
+//   %cond    = icmp eq/ne i32 %counter, <limit>
+// that can be replaced by @llvm.loop.decrement.reg, or std::nullopt otherwise.
+// Also discovers the counting PHI (%phi) that feeds %counter, so that
+// convertOuterLoopToHardwareLoop does not need to repeat this work.
+std::optional<DowncountingInfo>
+AIEOuterLoopPipeliner::getDowncountingInfo(const LoopStructure &LS) const {
   auto *BI = dyn_cast<BranchInst>(LS.OuterLatch->getTerminator());
   if (!BI || !BI->isConditional())
-    return false;
+    return std::nullopt;
   auto *Cmp = dyn_cast<ICmpInst>(BI->getCondition());
   if (!Cmp)
-    return false;
+    return std::nullopt;
   // We need icmp eq or icmp ne (the canonical downcounting exit condition).
   ICmpInst::Predicate Pred = Cmp->getPredicate();
   if (Pred != ICmpInst::ICMP_EQ && Pred != ICmpInst::ICMP_NE)
-    return false;
-  // Find the non-invariant operand (the counter).
-  Value *Counter = nullptr;
+    return std::nullopt;
+  // Find the non-invariant operand (the counter add).
+  // Pre-condition: downcounting loop
+  BinaryOperator *Counter = nullptr;
   for (unsigned I = 0; I < 2; ++I) {
     if (!LS.OuterLoop->isLoopInvariant(Cmp->getOperand(I))) {
-      Counter = Cmp->getOperand(I);
+      Counter = dyn_cast<BinaryOperator>(Cmp->getOperand(I));
       break;
     }
   }
-  if (!Counter)
-    return false;
   // The counter must be produced by an add with a negative constant step.
-  auto *Add = dyn_cast<BinaryOperator>(Counter);
-  if (!Add || Add->getOpcode() != Instruction::Add)
-    return false;
-  auto *Step = dyn_cast<ConstantInt>(Add->getOperand(1));
-  return Step && Step->isNegative();
+  if (!Counter || Counter->getOpcode() != Instruction::Add)
+    return std::nullopt;
+  auto *Step = dyn_cast<ConstantInt>(Counter->getOperand(1));
+  if (!Step || !Step->isMinusOne())
+    return std::nullopt;
+  // Find the counting PHI in the outer header that feeds Counter.
+  // Without OldIV we cannot compute the correct JNZD trip count, so bail out.
+  PHINode *OldIV = nullptr;
+  for (Value *Op : Counter->operands()) {
+    if (auto *PHI = dyn_cast<PHINode>(Op)) {
+      if (PHI->getParent() == LS.OuterHeader) {
+        OldIV = PHI;
+        break;
+      }
+    }
+  }
+  if (!OldIV)
+    return std::nullopt;
+  return DowncountingInfo{Cmp, Counter, OldIV};
 }
 
 // Convert the outer loop to a JNZD hardware loop.
@@ -1428,44 +1448,18 @@ bool AIEOuterLoopPipeliner::isOuterLoopDowncounting(
 //     ; (old %counter add and %cond icmp become dead and are deleted)
 //
 void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
-    const LoopStructure &LS, BasicBlock *WarmUp, Value *AdjustedTripCount) {
+    const LoopStructure &LS, BasicBlock *WarmUp, Value *AdjustedTripCount,
+    const DowncountingInfo &Info) {
   LLVMContext &Ctx = LS.OuterHeader->getContext();
   Type *I32Ty = Type::getInt32Ty(Ctx);
 
-  // Find OldIV (the counting PHI feeding OldCounter) early.
-  // We need OldIV to:
-  //   (a) compute the correct JNZD trip count (OldIV's initial value - 1), and
-  //   (b) clean up the OldIV/OldCounter use cycle after replacing the icmp.
-  //
+  // Unpack the pre-validated downcounting pattern from Info.
   // Note: AdjustedTripCount (returned by adjustLoopBound) is the new icmp
   // *threshold* (e.g., the constant 1 for a decrement loop), NOT the loop
   // trip count.  The actual trip count for JNZD is:
   //   OldIV_initial_value - 1
   // where OldIV_initial_value is the preheader/warm-up incoming of OldIV.
-  BranchInst *LatchBrEarly = LS.getLatchBranch();
-  ICmpInst *OldCmpEarly = cast<ICmpInst>(LatchBrEarly->getCondition());
-
-  // Find the non-invariant counter operand of the icmp.
-  Value *OldCounterEarly = nullptr;
-  for (unsigned I = 0; I < 2; ++I) {
-    if (!LS.OuterLoop->isLoopInvariant(OldCmpEarly->getOperand(I))) {
-      OldCounterEarly = OldCmpEarly->getOperand(I);
-      break;
-    }
-  }
-
-  // Find the IV PHI in the outer header that feeds OldCounter.
-  PHINode *OldIVEarly = nullptr;
-  if (OldCounterEarly) {
-    for (Value *Op : cast<Instruction>(OldCounterEarly)->operands()) {
-      if (auto *PHI = dyn_cast<PHINode>(Op)) {
-        if (PHI->getParent() == LS.OuterHeader) {
-          OldIVEarly = PHI;
-          break;
-        }
-      }
-    }
-  }
+  PHINode *OldIV = Info.OldIV;
 
   // Compute the JNZD trip count = OldIV_initial_value - 1.
   // OldIV's entry predecessor is WarmUp (set by updateOuterHeaderPHIs).
@@ -1474,23 +1468,14 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   BasicBlock *Preheader = LS.getPreheader();
   IRBuilder<> PreBuilder(Preheader->getTerminator());
 
-  Value *TripCount;
-  if (OldIVEarly) {
-    Value *InitN = OldIVEarly->getIncomingValueForBlock(WarmUp);
-    TripCount = PreBuilder.CreateSub(
-        InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
-    // Ensure i32.
-    if (TripCount->getType() != I32Ty)
-      TripCount =
-          PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
-  } else {
-    // Fallback: use AdjustedTripCount (should not happen for decrement loops
-    // that passed isOuterLoopDowncounting, but be safe).
-    TripCount = AdjustedTripCount;
-    if (TripCount->getType() != I32Ty)
-      TripCount =
-          PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.trip.i32");
-  }
+  // OldIV is guaranteed non-null (getDowncountingInfo ensures this).
+  Value *InitN = OldIV->getIncomingValueForBlock(WarmUp);
+  Value *TripCount = PreBuilder.CreateSub(
+      InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
+  // Ensure i32.
+  if (TripCount->getType() != I32Ty)
+    TripCount =
+        PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
 
   Value *CtrInit = PreBuilder.CreateIntrinsic(
       Intrinsic::start_loop_iterations, {I32Ty}, {TripCount},
@@ -1506,10 +1491,9 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   // The latch incoming value will be set after we create %ctr.next below.
 
   // Replace the latch icmp+add with loop.decrement.reg.
-  // Re-use the latch branch and counter pointers identified earlier.
-  BranchInst *LatchBr = LatchBrEarly;
-  Value *OldCounter = OldCounterEarly;
-  PHINode *OldIV = OldIVEarly;
+  // Use the pre-validated components from Info.
+  BranchInst *LatchBr = LS.getLatchBranch();
+  BinaryOperator *OldCounter = Info.Counter;
 
   IRBuilder<> LatchBuilder(LatchBr);
   Value *CtrNext =
@@ -1554,7 +1538,7 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   if (OldCounter) {
     // If OldIV is a pure counting PHI (no uses outside OldCounter), break
     // the cycle so both the PHI and the add can be deleted.
-    if (OldIV && OldIV->hasOneUse()) {
+    if (OldIV->hasOneUse()) {
       int LatchIdx = OldIV->getBasicBlockIndex(LS.OuterLatch);
       if (LatchIdx >= 0)
         OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
