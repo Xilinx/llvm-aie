@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc < %s --issue-limit=1 -verify-machineinstrs -mtriple=aie2 \
 ; RUN:   | FileCheck %s
 
@@ -12,10 +12,9 @@
 define dso_local noundef <16 x i16> @_Z5test0Dv16_u7__acc32(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test0Dv16_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -47,10 +46,9 @@ declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #1
 define dso_local noundef <8 x i32> @_Z5test1Dv8_u7__acc64(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test1Dv8_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d32.s64 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -76,10 +74,9 @@ entry:
 define dso_local noundef <16 x i16> @_Z5test2Dv16_u7__acc32(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test2Dv16_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -105,10 +102,9 @@ entry:
 define dso_local noundef <8 x i32> @_Z5test3Dv8_u7__acc64(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test3Dv8_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s32.s64 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -134,10 +130,9 @@ entry:
 define dso_local noundef <16 x i16> @_Z5test4Dv16_u7__acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test4Dv16_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s16.s64 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -163,10 +158,9 @@ entry:
 define dso_local noundef <32 x i8> @_Z5test5Dv32_u7__acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test5Dv32_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s8.s32 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -192,10 +186,9 @@ entry:
 define dso_local noundef <16 x i16> @_Z5test6Dv16_u7__acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test6Dv16_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d16.s64 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -221,10 +214,9 @@ entry:
 define dso_local noundef <32 x i8> @_Z5test7Dv32_u7__acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test7Dv32_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -250,10 +242,9 @@ entry:
 define dso_local noundef <16 x i16> @_Z5test8Dv16_u7__acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test8Dv16_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s16.s64 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -279,10 +270,9 @@ entry:
 define dso_local noundef <32 x i8> @_Z5test9Dv32_u7__acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test9Dv32_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #2
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s8.s32 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -308,10 +298,9 @@ entry:
 define dso_local noundef <16 x i16> @_Z6test10Dv16_u7__acc32(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z6test10Dv16_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #4
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #4
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -337,10 +326,9 @@ entry:
 define dso_local noundef <8 x i32> @_Z6test11Dv8_u7__acc64(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z6test11Dv8_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r0, #4
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    mov s0, #4
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov s0, r0
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d32.s64 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -366,8 +354,7 @@ entry:
 define dso_local noundef <16 x i16> @test_postincrement(ptr %array, <8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_postincrement:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; mov s0, r0
+; CHECK-NEXT:    nopa ; mov s0, #2
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

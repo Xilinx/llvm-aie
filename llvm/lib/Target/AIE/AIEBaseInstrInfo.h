@@ -666,6 +666,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                                             const MachineInstr &UseMI,
                                             unsigned UseIdx) const override;
 
+  /// Try to fold an immediate from DefMI into UseMI.
+  /// When DefMI is a move-immediate and UseMI is a COPY, replace the COPY
+  /// with a move-immediate to the destination register directly.
+  bool foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI, Register Reg,
+                     MachineRegisterInfo *MRI) const override;
   // Check if the MII points to a BUNDLE which contains a call instruction
   bool isCallBundle(MachineBasicBlock::iterator MII) const;
   // Check if the MII points to a BUNDLE which contains an instruction

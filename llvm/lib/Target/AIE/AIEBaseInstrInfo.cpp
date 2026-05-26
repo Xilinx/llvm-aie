@@ -24,6 +24,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -32,6 +33,7 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <limits>
@@ -39,6 +41,20 @@
 #define DEBUG_TYPE "aie-codegen"
 
 using namespace llvm;
+
+STATISTIC(NumFoldImmAttempts, "Number of foldImmediate attempts (AIE)");
+STATISTIC(NumFoldImmBlockedMultiUse,
+          "foldImmediate calls blocked by hasOneNonDBGUse mitigation");
+STATISTIC(NumFoldImmSuccesses, "Number of foldImmediate successes (AIE)");
+static cl::opt<bool> AIEFoldImmRequireOneUse(
+    "aie-fold-imm-require-one-use", cl::init(true), cl::Hidden,
+    cl::desc("Only fold immediate into COPY when the constant has a single "
+             "non-debug use (so the def can be DCE'd)."));
+
+static cl::opt<bool> AIEDisableFoldImm(
+    "aie-disable-fold-imm", cl::init(false), cl::Hidden,
+    cl::desc("Completely disable the AIE foldImmediate override (fall back to "
+             "default no-op behaviour)."));
 
 static cl::opt<bool>
     NoCheapInstHoisting("aie-no-cheap-inst-hoising",
@@ -537,6 +553,64 @@ unsigned AIEBaseInstrInfo::getAIEMachineBundleSize(
     return Format->getSize();
   }
   return 0;
+}
+
+// TODO: implement folding for opcodes other than COPY
+bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
+                                     Register Reg,
+                                     MachineRegisterInfo *MRI) const {
+
+  if (AIEDisableFoldImm)
+    return false;
+
+  // Only handle COPY instructions as the use
+  if (!UseMI.isCopy())
+    return false;
+
+  // Check if DefMI is a move-immediate instruction
+  if (!isIConst(DefMI.getOpcode()))
+    return false;
+
+  // Bail out if operand 1 is not an immediate (e.g., a GlobalAddress
+  // relocation)
+  if (!DefMI.getOperand(1).isImm())
+    return false;
+
+  int64_t ImmVal = DefMI.getOperand(1).getImm();
+
+  // Get the destination register of the COPY
+  Register DstReg = UseMI.getOperand(0).getReg();
+
+  // Only handle virtual registers - physical registers are more complex
+  if (!DstReg.isVirtual())
+    return false;
+
+  ++NumFoldImmAttempts;
+
+  // Only fold when the constant has a single non-debug use.
+  // The TargetInstrInfo::foldImmediate contract lets the caller (PeepholeOpt)
+  // erase DefMI when hasOneNonDBGUse(Reg) holds; without this guard we leave
+  // DefMI alive for other consumers and end up materializing the constant
+  // twice, inflating register pressure.
+  if (AIEFoldImmRequireOneUse && !MRI->hasOneNonDBGUse(Reg)) {
+    ++NumFoldImmBlockedMultiUse;
+    return false;
+  }
+
+  // Get the appropriate move-immediate opcode for the destination register
+  APInt ImmAPInt(32, ImmVal, /*isSigned=*/true);
+  unsigned NewOpc = getConstantMovOpcode(*MRI, DstReg, ImmAPInt);
+
+  // Build the new move-immediate instruction
+  MachineBasicBlock &MBB = *UseMI.getParent();
+  const DebugLoc &DL = UseMI.getDebugLoc();
+  BuildMI(MBB, UseMI, DL, get(NewOpc), DstReg).addImm(ImmAPInt.getSExtValue());
+
+  // Remove the old COPY
+  UseMI.eraseFromParent();
+
+  ++NumFoldImmSuccesses;
+  return true;
 }
 
 unsigned
