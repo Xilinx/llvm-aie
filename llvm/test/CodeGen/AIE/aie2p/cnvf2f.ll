@@ -4,16 +4,16 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p -verify-machineinstrs -o - < %s | FileCheck %s
 
 define dso_local noundef float @test_fix2float(i32 noundef %n) {
 ; CHECK-LABEL: test_fix2float:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r0, #0 // Delay Slot 4
-; CHECK-NEXT:    mov s2, r0 // Delay Slot 3
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov s2, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r1.fx2flt, s2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -25,9 +25,9 @@ define dso_local noundef i32 @test_float2fix(float noundef %n) {
 ; CHECK-LABEL: test_float2fix:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r0, #0 // Delay Slot 4
-; CHECK-NEXT:    mov s3, r0 // Delay Slot 3
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov s3, #0 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r1.flt2fx, s3 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

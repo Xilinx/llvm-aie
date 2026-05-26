@@ -25,8 +25,8 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mbmm = COPY $bmhh0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mcmm = COPY $cml0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edm = COPY $dm0
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $cml0, $p2, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 [[COPY5]], $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: [[MOV_S_imm11_pseudo:%[0-9]+]]:es = MOV_S_imm11_pseudo 0
+    ; CHECK-NEXT: $cml0, $p2, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 [[MOV_S_imm11_pseudo]], $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cml0
     %21:er = MOV_RLC_imm11_pseudo 0
     %20:ep = COPY $p0
@@ -55,8 +55,8 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mbmm = COPY $bmhh0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mcmm = COPY $cml0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edm = COPY $dm0
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mr27_select = COPY [[MOVXM_lng_cg]]
-    ; CHECK-NEXT: $r15 = SEL_EQZ $r23, $r22, [[COPY5]]
+    ; CHECK-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:mr27_select = MOVXM_lng_cg 544654748
+    ; CHECK-NEXT: $r15 = SEL_EQZ $r23, $r22, [[MOVXM_lng_cg1]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r15
     %21:er = MOVXM_lng_cg 544654748
     %20:ep = COPY $p0
