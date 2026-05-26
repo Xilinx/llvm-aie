@@ -61,6 +61,8 @@ public:
   unsigned getGenericBroadcastVectorOpcode() const override;
   unsigned getGenericPostIncLoadOpcode() const override;
   unsigned getGenericPostIncStoreOpcode() const override;
+  std::optional<PtrPostIncOpInfo>
+  getPtrPostIncOpInfo(unsigned Opcode) const override;
   unsigned getGenericVSelOpcode() const override;
   unsigned getGenericVShiftOpcode() const override;
   unsigned getGenericShuffleVectorOpcode() const override;

@@ -371,6 +371,13 @@ def combine_postincloadstore_ptradd_with_trunc : GICombineRule<
   [{ return matchPostIncLoadStorePtrAddWithTrunc(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_lag_ptr_add_matchdata : GIDefMatchData<"LagPtrAddMatchInfo">;
+def combine_lag_ptr_add : GICombineRule<
+  (defs root:$root, combine_lag_ptr_add_matchdata:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD):$root,
+         [{ return matchLagPtrAdd(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Helper, ${matchinfo}); }]),
+  (apply [{ applyLagPtrAdd(*${root}, MRI, B, Observer, ${matchinfo}); }])>;
+
 def combine_trunc_load : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_LOAD): $root,
@@ -589,6 +596,7 @@ def aie2_postlegalizer_custom_combines : GICombineGroup<[
 
 // Post-legalizer custom combines for AIE2P and more recent targets (AIE2PS, etc.).
 def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
+  combine_lag_ptr_add,
   combine_extract_vector_assert_combine,
   combine_extract_broadcast_to_scalar,
   combine_vshift_chain_to_copy,

@@ -63,6 +63,14 @@ struct OperandRegInfo {
       : Reg(R), RC(RegClass) {}
 };
 
+/// Operand indices that describe a pointer-post-increment instruction's key
+/// operands. All indices are absolute (defs precede uses in MachineInstr).
+struct PtrPostIncOpInfo {
+  int PostPtrDefIdx;  ///< Operand index of the post-increment pointer def.
+  int PrePtrUseIdx;   ///< Operand index of the pre-increment pointer use.
+  int ModifierUseIdx; ///< Operand index of the s20 step/modifier use.
+};
+
 // Structure representing a schedule class variant.
 struct SchedVariantInfo {
   unsigned SchedClass;
@@ -343,6 +351,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Return the opcode to be used for post-increment store operations.
   virtual unsigned getGenericPostIncStoreOpcode() const {
     llvm_unreachable("Target didn't implement getGenericPostIncStoreOpcode!");
+  }
+  /// Map a POSTINC opcode to its key operand indices, or std::nullopt if the
+  /// opcode is not a pointer-post-increment instruction for this target.
+  virtual std::optional<PtrPostIncOpInfo>
+  getPtrPostIncOpInfo(unsigned Opcode) const {
+    return std::nullopt;
   }
   /// Return the opcode to be used for subvector extraction.
   virtual unsigned getGenericExtractSubvectorOpcode() const {

@@ -53,8 +53,7 @@ body:             |
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 32
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
+  ; CHECK-NEXT:   %adjusted:_(p0) = COPY %post(p0)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -109,8 +108,8 @@ body:             |
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %offset:_(s20) = G_CONSTANT i20 96
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %offset(s20)
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %post, [[C3]](s20)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -165,8 +164,7 @@ body:             |
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 32
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
+  ; CHECK-NEXT:   %adjusted:_(p0) = COPY %post(p0)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -223,8 +221,7 @@ body:             |
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
+  ; CHECK-NEXT:   %adjusted:_(p0) = COPY %post(p0)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -282,8 +279,7 @@ body:             |
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
+  ; CHECK-NEXT:   %adjusted:_(p0) = COPY %post(p0)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -342,8 +338,7 @@ body:             |
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
+  ; CHECK-NEXT:   %adjusted:_(p0) = COPY %post(p0)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0

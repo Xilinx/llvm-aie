@@ -1518,6 +1518,43 @@ unsigned AIE2PSInstrInfo::getGenericPostIncStoreOpcode() const {
   return AIE2PS::G_AIE_POSTINC_STORE;
 }
 
+std::optional<PtrPostIncOpInfo>
+AIE2PSInstrInfo::getPtrPostIncOpInfo(unsigned Opcode) const {
+  switch (Opcode) {
+  // %val(0), %ptrDst(1) = G_AIE_POSTINC_LOAD/ZEXTLOAD/SEXTLOAD %ptrSrc(2),
+  // %modifier(3)
+  case AIE2PS::G_AIE_POSTINC_LOAD:
+  case AIE2PS::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_SEXTLOAD:
+    return PtrPostIncOpInfo{1, 2, 3};
+  // %ptrDst(0) = G_AIE_POSTINC_STORE %val(1), %ptrSrc(2), %modifier(3)
+  case AIE2PS::G_AIE_POSTINC_STORE:
+    return PtrPostIncOpInfo{0, 2, 3};
+  // %val(0), %ptrDst(1), %cntDst(2) = G_AIE_POSTINC_2D_LOAD* %ptrSrc(3),
+  // %modifier(4), ...
+  case AIE2PS::G_AIE_POSTINC_2D_LOAD:
+  case AIE2PS::G_AIE_POSTINC_2D_ZEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_2D_SEXTLOAD:
+    return PtrPostIncOpInfo{1, 3, 4};
+  // %ptrDst(0), %cntDst(1) = G_AIE_POSTINC_2D_STORE %val(2), %ptrSrc(3),
+  // %modifier(4), ...
+  case AIE2PS::G_AIE_POSTINC_2D_STORE:
+    return PtrPostIncOpInfo{0, 3, 4};
+  // %val(0), %ptrDst(1), %cnt1Dst(2), %cnt2Dst(3) = G_AIE_POSTINC_3D_LOAD*
+  // %ptrSrc(4), %modifier(5), ...
+  case AIE2PS::G_AIE_POSTINC_3D_LOAD:
+  case AIE2PS::G_AIE_POSTINC_3D_ZEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_3D_SEXTLOAD:
+    return PtrPostIncOpInfo{1, 4, 5};
+  // %ptrDst(0), %cnt1Dst(1), %cnt2Dst(2) = G_AIE_POSTINC_3D_STORE %val(3),
+  // %ptrSrc(4), %modifier(5), ...
+  case AIE2PS::G_AIE_POSTINC_3D_STORE:
+    return PtrPostIncOpInfo{0, 4, 5};
+  default:
+    return std::nullopt;
+  }
+}
+
 unsigned AIE2PSInstrInfo::getGenericShuffleVectorOpcode() const {
   return AIE2PS::G_AIE_SHUFFLE_VECTOR;
 }

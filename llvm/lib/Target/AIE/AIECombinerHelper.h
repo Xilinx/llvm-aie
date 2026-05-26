@@ -495,6 +495,26 @@ bool matchPostIncLoadStorePtrAddWithTrunc(MachineInstr &MI,
                                           GISelChangeObserver &Observer,
                                           BuildFnTy &MatchInfo);
 
+/// Match data for combine_lag_ptr_add: the post-increment pointer register
+/// produced by a dominating POSTINC instruction and the step constant S it
+/// adds to the pre-increment pointer.
+struct LagPtrAddMatchInfo {
+  Register PostReg; ///< %post_ptr produced by the dominating POSTINC.
+  int64_t Step;     ///< Step constant S added by the POSTINC (post = pre + S).
+};
+
+/// Eliminate lag-register copies by rewriting G_PTR_ADD uses of the
+/// pre-increment pointer register in terms of the POSTINC's post-pointer def.
+/// Rewrites  %dst = G_PTR_ADD %pre, C
+/// to        %dst = COPY %post           (when C == S)
+/// or        %dst = G_PTR_ADD %post, (C-S)  (otherwise)
+bool matchLagPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                    const AIEBaseInstrInfo &TII, CombinerHelper &Helper,
+                    LagPtrAddMatchInfo &MatchInfo);
+void applyLagPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                    MachineIRBuilder &B, GISelChangeObserver &Observer,
+                    LagPtrAddMatchInfo &MatchInfo);
+
 } // namespace llvm
 
 #endif

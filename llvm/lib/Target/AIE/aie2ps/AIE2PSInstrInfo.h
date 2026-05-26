@@ -145,6 +145,8 @@ public:
   unsigned getGenericShuffleVectorOpcode() const override;
   unsigned getGenericPostIncLoadOpcode() const override;
   unsigned getGenericPostIncStoreOpcode() const override;
+  std::optional<PtrPostIncOpInfo>
+  getPtrPostIncOpInfo(unsigned Opcode) const override;
   unsigned getGenericExtractSubvectorOpcode() const override;
   unsigned getGenericIntegerComparisonOpcode() const override;
 

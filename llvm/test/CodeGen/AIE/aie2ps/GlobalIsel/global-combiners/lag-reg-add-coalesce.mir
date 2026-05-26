@@ -58,8 +58,7 @@ body:             |
   ; CHECK-COMBINER-NEXT:   G_BR %bb.2
   ; CHECK-COMBINER-NEXT: {{  $}}
   ; CHECK-COMBINER-NEXT: bb.2:
-  ; CHECK-COMBINER-NEXT:   %step:_(s20) = G_CONSTANT i20 32
-  ; CHECK-COMBINER-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
+  ; CHECK-COMBINER-NEXT:   %adjusted:_(p0) = COPY %post(p0)
   ; CHECK-COMBINER-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   ;
   ; CHECK-COALESCER-LABEL: name: ptr-postinc-coalesce
@@ -75,7 +74,6 @@ body:             |
   ; CHECK-COALESCER-NEXT: bb.1:
   ; CHECK-COALESCER-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-COALESCER-NEXT: {{  $}}
-  ; CHECK-COALESCER-NEXT:   %adjusted:ep_as_32bit = COPY [[COPY]]
   ; CHECK-COALESCER-NEXT:   dead %val:er, [[COPY]]:ep_as_32bit = LDA_dms_lda_scalar_ld_pstm_nrm [[COPY]], [[MOV_PD_imm11_pseudo]] :: (load (s32))
   ; CHECK-COALESCER-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = ADD_add_r_ri [[COPY1]], -1, implicit-def dead $srcarry
   ; CHECK-COALESCER-NEXT:   %cond:mlockid_reg = LT [[MOV_RLC_imm11_pseudo]], [[COPY1]]
@@ -83,9 +81,7 @@ body:             |
   ; CHECK-COALESCER-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-COALESCER-NEXT: {{  $}}
   ; CHECK-COALESCER-NEXT: bb.2:
-  ; CHECK-COALESCER-NEXT:   %step:em = MOV_PD_imm11_pseudo 32
-  ; CHECK-COALESCER-NEXT:   %adjusted:ep_as_32bit = PADD_mod_pseudo %adjusted, %step
-  ; CHECK-COALESCER-NEXT:   PseudoRET implicit $lr, implicit %adjusted
+  ; CHECK-COALESCER-NEXT:   PseudoRET implicit $lr, implicit [[COPY]]
   ;
   ; CHECK-LABEL: name: ptr-postinc-coalesce
   ; CHECK: bb.0:
@@ -99,7 +95,6 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT:   liveins: $m0, $p0, $r0, $r2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $p1 = COPY renamable $p0
   ; CHECK-NEXT:   dead renamable $r1, renamable $p0 = LDA_dms_lda_scalar_ld_pstm_nrm killed renamable $p0, renamable $m0 :: (load (s32))
   ; CHECK-NEXT:   renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:   renamable $r4 = LT renamable $r2, renamable $r0
@@ -107,11 +102,9 @@ body:             |
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $p1
+  ; CHECK-NEXT:   liveins: $p0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $m0 = MOV_PD_imm11_pseudo 32
-  ; CHECK-NEXT:   renamable $p1 = PADD_mod_pseudo killed renamable $p1, killed renamable $m0
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p1
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0
   bb.0:
     liveins: $p0, $r0
     %0:_(p0) = COPY $p0

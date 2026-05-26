@@ -1544,6 +1544,127 @@ bool llvm::matchChainedPtrAddWithNonConstOffsets(MachineInstr &MI,
   return true;
 }
 
+// Prologue for combine_lag_ptr_add:
+//   * bail out when the root's def feeds a real (non-side-effecting) load/store
+//   * require a compile-time constant offset on operand 2
+// On success, returns {PreReg (pre-increment register, operand 1),
+//                      C (constant offset)}; std::nullopt otherwise.
+static std::optional<std::pair<Register, int64_t>>
+getLagRootPreReg(const MachineInstr &MI, MachineRegisterInfo &MRI) {
+  Register DefReg = MI.getOperand(0).getReg();
+  for (const MachineInstr &UseMI : MRI.use_nodbg_instructions(DefReg)) {
+    if (UseMI.mayLoadOrStore() && !UseMI.hasUnmodeledSideEffects())
+      return std::nullopt;
+  }
+  auto MaybeCst =
+      getIConstantVRegValWithLookThrough(MI.getOperand(2).getReg(), MRI);
+  if (!MaybeCst)
+    return std::nullopt;
+  return std::make_pair(MI.getOperand(1).getReg(),
+                        MaybeCst->Value.getSExtValue());
+}
+
+// POSTINC pointer-modifying AIE intrinsics take a "pre" (pre-increment)
+// base pointer and a constant %step (S), and produce a "post"
+// (post-increment) pointer holding pre + S. So with the dataflow:
+//
+//   %post_ptr = G_AIE_..._POSTINC_... %pre_ptr, ..., %step   ; %post = %pre + S
+//   ...                                                       ; (dominates the
+//   G_PTR_ADD)
+//   %add      = G_PTR_ADD %pre_ptr, C
+//
+// the G_PTR_ADD is "lagging": it recomputes %pre + C even though %post
+// = %pre + S is already available. Substituting:
+//
+//   %pre + C = (%post - S) + C = %post + (C - S)
+//
+// lets the G_PTR_ADD reuse %post and free %pre. When C == S the
+// remaining offset is zero, so %post IS the result and we emit a COPY
+// (later folded by register coalescing, which fuses the live ranges
+// of %pre and %post):
+//
+//   %post_ptr = G_AIE_..._POSTINC_... %pre_ptr, ..., %step
+//   ...
+//   %add      = COPY %post_ptr
+//
+// Otherwise emit the adjusted G_PTR_ADD (requires (C - S) to fit in
+// the original offset type, else the rebuilt G_CONSTANT would wrap):
+//
+//   %post_ptr = G_AIE_..._POSTINC_... %pre_ptr, ..., %step
+//   ...
+//   %add      = G_PTR_ADD %post_ptr, (C - S)
+//
+// Bails out when the G_PTR_ADD's def is consumed by a real (non-side-
+// effecting) load/store, since those are rewritten by the memory-op-
+// rooted siblings.
+bool llvm::matchLagPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                          const AIEBaseInstrInfo &TII, CombinerHelper &Helper,
+                          LagPtrAddMatchInfo &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD && "Expected G_PTR_ADD");
+
+  auto Root = getLagRootPreReg(MI, MRI);
+  if (!Root)
+    return false;
+  auto [PreReg, C] = *Root;
+
+  for (MachineInstr &UseMI : MRI.use_nodbg_instructions(PreReg)) {
+    // UseMI (the POSTINC) must come before MI (the G_PTR_ADD root) in program
+    // order.
+    if (!Helper.dominates(UseMI, MI))
+      continue;
+    // Find a POSTINC instruction with PreReg as base pointer.
+    auto MaybeInfo = TII.getPtrPostIncOpInfo(UseMI.getOpcode());
+    if (!MaybeInfo)
+      continue;
+    if (!UseMI.getOperand(MaybeInfo->PrePtrUseIdx).isReg() ||
+        UseMI.getOperand(MaybeInfo->PrePtrUseIdx).getReg() != PreReg)
+      continue;
+    // Step must be a compile-time constant.
+    auto MaybeStep = getIConstantVRegValWithLookThrough(
+        UseMI.getOperand(MaybeInfo->ModifierUseIdx).getReg(), MRI);
+    if (!MaybeStep)
+      continue;
+    // Replacement offset NewC = C - step must fit in the original offset
+    // type; otherwise the G_CONSTANT built in apply silently wraps.
+    const int64_t S = MaybeStep->Value.getSExtValue();
+    LLT OffTy = MRI.getType(MI.getOperand(2).getReg());
+    if (!isIntN(OffTy.getSizeInBits(), C - S))
+      continue;
+    MatchInfo = {UseMI.getOperand(MaybeInfo->PostPtrDefIdx).getReg(), S};
+    return true;
+  }
+  return false;
+}
+
+void llvm::applyLagPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                          MachineIRBuilder &B, GISelChangeObserver &Observer,
+                          LagPtrAddMatchInfo &MatchInfo) {
+  Register DstReg = MI.getOperand(0).getReg();
+  auto MaybeCst =
+      getIConstantVRegValWithLookThrough(MI.getOperand(2).getReg(), MRI);
+  assert(MaybeCst && "matchLagPtrAdd should have verified constant");
+  int64_t NewC = MaybeCst->Value.getSExtValue() - MatchInfo.Step;
+
+  B.setInsertPt(*MI.getParent(), MI.getIterator());
+  B.setDebugLoc(MI.getDebugLoc());
+
+  if (NewC == 0) {
+    // C == step: %post_ptr IS the result; insert a COPY that copy-propagation
+    // will later eliminate.
+    B.buildCopy(DstReg, MatchInfo.PostReg);
+  } else {
+    // C != step: adjust from %post_ptr by the remaining offset. Preserve the
+    // type of the original offset operand.
+    LLT OffTy = MRI.getType(MI.getOperand(2).getReg());
+    auto NewCst = B.buildConstant(OffTy, NewC);
+    B.buildInstr(TargetOpcode::G_PTR_ADD, {DstReg},
+                 {MatchInfo.PostReg, NewCst});
+  }
+
+  Observer.erasingInstr(MI);
+  MI.eraseFromParent();
+}
+
 /// Match a pattern of G_AIE_POSTINC_LOAD/STORE followed by G_PTR_ADD where both
 /// offsets come from G_TRUNC of s32 values. Combines them by updating the
 /// POSTINC to use the combined offset.
