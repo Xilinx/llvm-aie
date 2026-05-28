@@ -164,28 +164,25 @@ define dso_local void @gemm_int8_psum_0(
 ; CHECK-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r2; vmac dm2, dm2, x3, x10, r8
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup143
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-NEXT:    nopa ; paddb.2d [p3], d3; nops ; nopx ; vshuffle x10, x1, x0, r4; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    nopa ; vldb.128 wl1, [p3, #16]; nops ; nopx ; vshuffle x8, x7, x0, r6; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    vldb.128 wl10, [p3, #0]; vshuffle x6, x8, x0, r16; vmac dm3, dm3, x5, x10, r8
-; CHECK-NEXT:    vshuffle x1, x9, x0, r2; vmac dm2, dm2, x3, x10, r8
-; CHECK-NEXT:    vldb x3, [p1], m4; vshuffle x10, x1, x0, r4; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    vldb.3d x5, [p1], d1; vshuffle x8, x7, x0, r6; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    vlda bmll3, [p4], #64; vldb x6, [p0], #64; vshuffle x6, x8, x0, r16; vmac dm3, dm3, x5, x10, r8
-; CHECK-NEXT:    vlda bmlh3, [p4], #64; vldb.3d x8, [p0], d0; mov srssign0, r18; vmac dm2, dm2, x3, x10, r8
-; CHECK-NEXT:    vlda bmhl3, [p4], #64; vsel.32 x2, x2, x1, r30; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    vlda bmhh3, [p4], #64; vsel.32 x4, x4, x10, r30; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    vlda bmll2, [p4], #64
-; CHECK-NEXT:    vlda bmlh2, [p4], #64; vshuffle x10, x3, x0, r22
-; CHECK-NEXT:    vlda bmhl2, [p4], #64; vst.srs.4x dm3, s0, srssign0, [p2], #64; vshuffle x1, x5, x0, r24
-; CHECK-NEXT:    vlda bmhh2, [p4], #64; vst.srs.4x dm2, s0, srssign0, [p2], m5; vshuffle x10, x10, x0, r20
-; CHECK-NEXT:    vlda bmll1, [p4], #64; vst.srs.4x dm1, s0, srssign0, [p2], #64; vshuffle x1, x1, x0, r26
-; CHECK-NEXT:    vlda bmlh1, [p4], #64; vst.2d.srs.4x dm0, s0, srssign0, [p2], d2; movx srssign0, #0
-; CHECK-NEXT:    vlda bmhl1, [p4], #64; jnzd r1, r1, p5
-; CHECK-NEXT:    vlda bmhh1, [p4], #64 // Delay Slot 5
-; CHECK-NEXT:    vlda bmll0, [p4], #64 // Delay Slot 4
-; CHECK-NEXT:    vlda bmlh0, [p4], #64 // Delay Slot 3
-; CHECK-NEXT:    vlda bmhl0, [p4], #64 // Delay Slot 2
-; CHECK-NEXT:    vlda bmhh0, [p4], #64 // Delay Slot 1
+; CHECK-NEXT:    vlda bmll4, [p4], #64; paddb.2d [p3], d3; nops ; nopx ; vshuffle x10, x1, x0, r4; vmac dm1, dm1, x5, x6, r8
+; CHECK-NEXT:    vlda bmlh4, [p4], #64; vldb.128 wl1, [p3, #16]; nops ; nopx ; vshuffle x8, x7, x0, r6; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vlda bmhl4, [p4], #64; vldb.128 wl10, [p3, #0]; nopx ; vshuffle x6, x8, x0, r16; vmac dm3, dm3, x5, x10, r8
+; CHECK-NEXT:    vlda bmhh4, [p4], #64; vshuffle x1, x9, x0, r2; vmac dm2, dm2, x3, x10, r8
+; CHECK-NEXT:    vlda bmll5, [p4], #64; vldb x3, [p1], m4; vshuffle x10, x1, x0, r4; vmac dm1, dm1, x5, x6, r8
+; CHECK-NEXT:    vlda bmlh5, [p4], #64; vldb.3d x5, [p1], d1; vshuffle x8, x7, x0, r6; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vlda bmhl5, [p4], #64; vldb x6, [p0], #64; vshuffle x6, x8, x0, r16; vmac dm3, dm3, x5, x10, r8
+; CHECK-NEXT:    vlda bmhh5, [p4], #64; vldb.3d x8, [p0], d0; mov srssign0, r18; vmac dm2, dm2, x3, x10, r8
+; CHECK-NEXT:    vlda bmll1, [p4], #64; vsel.32 x2, x2, x1, r30; vmac dm1, dm1, x5, x6, r8
+; CHECK-NEXT:    vlda bmlh1, [p4], #64; vsel.32 x4, x4, x10, r30; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vlda bmhl1, [p4], #64
+; CHECK-NEXT:    vlda bmhh1, [p4], #64; vshuffle x10, x3, x0, r22
+; CHECK-NEXT:    vlda bmll0, [p4], #64; vst.srs.4x dm3, s0, srssign0, [p2], #64; vshuffle x1, x5, x0, r24
+; CHECK-NEXT:    vlda bmlh0, [p4], #64; vst.srs.4x dm2, s0, srssign0, [p2], m5; jnzd r1, r1, p5; vshuffle x10, x10, x0, r20
+; CHECK-NEXT:    vlda bmhl0, [p4], #64; vst.srs.4x dm1, s0, srssign0, [p2], #64; vshuffle x1, x1, x0, r26 // Delay Slot 5
+; CHECK-NEXT:    vlda bmhh0, [p4], #64; vst.2d.srs.4x dm0, s0, srssign0, [p2], d2; movx srssign0, #0; vmov cml3, cml4 // Delay Slot 4
+; CHECK-NEXT:    vmov cmh3, cmh4 // Delay Slot 3
+; CHECK-NEXT:    vmov cml2, cml5 // Delay Slot 2
+; CHECK-NEXT:    vmov cmh2, cmh5 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %cooldown.entry
 ; CHECK-NEXT:    vldb x3, [p1], m4; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1

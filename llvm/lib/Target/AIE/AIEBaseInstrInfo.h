@@ -409,6 +409,15 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement getNumReservedDelaySlots");
   }
 
+  /// Number of free move-pipe issue cycles AIEWARBreaker may spend on
+  /// same-LI glue COPYs in an outer-loop pipeliner epilog. This models
+  /// the slack in the epilog's trailing branch-delay window. The value
+  /// here is a generic default (validated on AIE2PS); targets whose
+  /// delay-slot window differs should override it. A target that returns
+  /// 0 disables same-LI WAR breaking (different-LI breaking is
+  /// unaffected, as it costs no COPYs).
+  virtual unsigned getOuterLoopEpilogCopySlack() const { return 4; }
+
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.
   virtual bool isJNZ(unsigned Opc) const { return false; }

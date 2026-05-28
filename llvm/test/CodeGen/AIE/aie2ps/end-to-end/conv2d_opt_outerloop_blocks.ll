@@ -107,18 +107,19 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; ASM-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; ASM-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    vlda x4, [p7, #192]; paddb.3d [p1], d1; padds [p7], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    vlda x4, [p7, #192]; paddb.3d [p1], d1; padds [p7], #128; vmac dm0, dm0, x2, x4, r8
 ; ASM-NEXT:    vlda x6, [p7, #128]; paddb [p0], m4; movs dc4, dc7; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; ASM-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p7], #128; nopx ; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
-; ASM-NEXT:    vlda.pop.3d x1, [p1, lf1, r25, d0]; paddb.3d [p0], d2; nops ; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; ASM-NEXT:    vldb x8, [p0, #0]; nopx ; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
-; ASM-NEXT:    vldb x6, [p0, #64]; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; ASM-NEXT:    or r20, r0, r18; mov dj7, r0; vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; paddb.3d [p0], d2; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p3], #64; vldb.pop.3d x1, [p1, lf1, r25, d0]; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p3], #64; vldb x8, [p0, #0]; or r20, r0, r18; mov dj7, r0; vmac dm0, dm0, x2, x4, r8
 ; ASM-NEXT:    movs dj7, r20; vldb.128 wl2, [p5, dj7]; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb.128 wl4, [p5, dj7]; vmac dm0, dm0, x2, x4, r8
-; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vmac dm1, dm1, x2, x6, r8
-; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vmac dm0, dm0, x2, x4, r8
-; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; jnzd r1, r1, p4; vshuffle x10, x10, x1, r2
+; ASM-NEXT:    vldb.128 wl4, [p5, dj7]; vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    vldb x6, [p0, #64]; vmac dm1, dm1, x2, x6, r8
+; ASM-NEXT:    vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    nop
+; ASM-NEXT:    jnzd r1, r1, p4; vshuffle x10, x10, x1, r2
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
@@ -229,14 +230,22 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; paddb [p7], m4; padds [p0], #128; nopx ; mov dc4, dc7; vmac dm0, dm0, x2, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p0, #128]; paddb.3d [p7], d2; padds.3d [p1], d1; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; nopb ; padds [p0], #128; nopx ; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    movs p0, r3; vldb x10, [p7, #0]; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p7, #64]; vldb.popx x4, [p1, lf1, r25]; or r20, r0, r18; mov dj7, r0; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml5, s0, upssign1, [p3, #128]; vldb x10, [p7, #0]; movs p0, r3; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p7, #64]; vldb.popx x4, [p1, lf1, r25]; nops ; or r20, r0, r18; mov dj7, r0; vmac dm0, dm0, x2, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl2, [p0, dj7]; vldb.pop.3d x6, [p1, lf1, r25, d0]; movs dj7, r20; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl8, [p0, dj7]; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2, #128]; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2, #192]; nopb ; movs p2, p5; movxm p0, #.LBB0_1; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3, #128]; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #192]; mov p3, p4; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl8, [p0, dj7]; nopb ; nops ; movxm p0, #.LBB0_1; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml4, s0, upssign1, [p2, #128]; nopb ; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh4, s0, upssign1, [p2, #192]; movs p2, p5; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh5, s0, upssign1, [p3, #192]; mov p3, p4; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    nop
+; NO-PROLOGUE-SPLIT-NEXT:    vmul dm2, x0, x2, r12
+; NO-PROLOGUE-SPLIT-NEXT:    vshuffle x2, x4, x6, r2; vmul dm3, x0, x8, r12
+; NO-PROLOGUE-SPLIT-NEXT:    nop
+; NO-PROLOGUE-SPLIT-NEXT:    vst.srs.4x dm1, s1, srssign0, [p6], m5; vaddmac dm4, dm4, dm2, x2, x10, r10
+; NO-PROLOGUE-SPLIT-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p6], d3; movx srssign0, #0; vaddmac dm5, dm5, dm3, x2, x1, r10
+; NO-PROLOGUE-SPLIT-NEXT:    nop
+; NO-PROLOGUE-SPLIT-NEXT:    nop
 ; NO-PROLOGUE-SPLIT-NEXT:    jnzd r1, r1, p0
 ; NO-PROLOGUE-SPLIT-NEXT:    vmul dm2, x0, x2, r12 // Delay Slot 5
 ; NO-PROLOGUE-SPLIT-NEXT:    vshuffle x2, x4, x6, r2; vmul dm3, x0, x8, r12 // Delay Slot 4
@@ -345,14 +354,14 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-JNZD-NEXT:    vlda x4, [p4, #192]; paddb [p0], m4; padds [p4], #128; add r0, r0, #-1; mov dc4, dc7; vmac dm0, dm0, x2, x4, r8
 ; NO-JNZD-NEXT:    vlda x6, [p4, #128]; paddb.3d [p1], d1; padds.3d [p0], d2; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; NO-JNZD-NEXT:    vlda x4, [p4, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p4], #128; nopx ; mov r16, dc6; vmac dm0, dm0, x2, x4, r8
-; NO-JNZD-NEXT:    vlda x8, [p0, #0]; vldb.pop.3d x1, [p1, lf1, r25, d0]; nops ; lshl r16, r16, r18; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-JNZD-NEXT:    vlda x6, [p0, #64]; nopb ; or r24, r16, r22; mov dj7, r16; vmac dm0, dm0, x2, x4, r8
-; NO-JNZD-NEXT:    movs dj7, r24; vldb.128 wl2, [p5, dj7]; eq r16, r0, r20; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-JNZD-NEXT:    vldb.128 wl4, [p5, dj7]; vmac dm0, dm0, x2, x4, r8
-; NO-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
-; NO-JNZD-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vmac dm1, dm1, x2, x6, r8
-; NO-JNZD-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vmac dm0, dm0, x2, x4, r8
+; NO-JNZD-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p2], #64; vldb.pop.3d x1, [p1, lf1, r25, d0]; nops ; lshl r16, r16, r18; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-JNZD-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p3], #64; nopb ; nops ; or r24, r16, r22; mov dj7, r16; vmac dm0, dm0, x2, x4, r8
+; NO-JNZD-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p2], #64; nopb ; nops ; eq r16, r0, r20; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-JNZD-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p3], #64; vldb.128 wl2, [p5, dj7]; movs dj7, r24; vmac dm0, dm0, x2, x4, r8
+; NO-JNZD-NEXT:    vldb.128 wl4, [p5, dj7]; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-JNZD-NEXT:    vldb x8, [p0, #0]; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
+; NO-JNZD-NEXT:    vldb x6, [p0, #64]; vmac dm1, dm1, x2, x6, r8
+; NO-JNZD-NEXT:    vmac dm0, dm0, x2, x4, r8
 ; NO-JNZD-NEXT:    vshuffle x10, x10, x1, r2
 ; NO-JNZD-NEXT:    jz r16, #.LBB0_1
 ; NO-JNZD-NEXT:    nop // Delay Slot 5

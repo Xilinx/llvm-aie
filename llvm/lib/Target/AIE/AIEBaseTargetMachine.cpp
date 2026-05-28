@@ -112,6 +112,12 @@ cl::opt<bool>
                         cl::init(true), cl::Hidden);
 
 cl::opt<bool>
+    EnableWARBreaker("aie-enable-war-breaker",
+                     cl::desc("Enable the post-RA WAR breaker on outer-loop "
+                              "pipeliner epilogs"),
+                     cl::init(true), cl::Hidden);
+
+cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
@@ -165,6 +171,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIESuperRegRewriterPass(*PR);
   initializeAIEUnallocatedSuperRegRewriterPass(*PR);
   initializeAIEWawRegRewriterPass(*PR);
+  initializeAIEWARBreakerPass(*PR);
   initializeAIEOutlineMemoryGEPPass(*PR);
   initializeAIEFinalizeBundlePass(*PR);
   initializeAIEMachineAlignmentPass(*PR);

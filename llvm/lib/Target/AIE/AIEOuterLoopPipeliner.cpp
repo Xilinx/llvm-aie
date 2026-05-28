@@ -1603,11 +1603,14 @@ void CloneLoopStructure::adjustLoopBound() const {
 }
 
 // Copy Source's hint entries dropping the consumed enable hint, append the
-// pipeliner success marker, and self-reference operand 0 as a loop ID requires.
+// pipeliner success marker and the steady-state epilog marker, and
+// self-reference operand 0 as a loop ID requires.
 static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
   const std::string EnableHintKey =
       (AIE::LoopOptionOverrides::Prefix + EnableOuterLoopPipelining.ArgStr)
           .str();
+  static constexpr StringLiteral EpilogKey{
+      "llvm.loop.hint.aie-outer-loop-epilog"};
 
   SmallVector<Metadata *, 8> MDs;
   for (unsigned I = 1, E = Source->getNumOperands(); I < E; ++I) {
@@ -1626,6 +1629,14 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
        ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
   MDs.push_back(SuccessEntry);
 
+  // Append the steady-state epilog marker:
+  // !{!"llvm.loop.hint.aie-outer-loop-epilog", i64 1}
+  MDNode *EpilogEntry = MDNode::get(
+      Ctx,
+      {MDString::get(Ctx, EpilogKey),
+       ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
+  MDs.push_back(EpilogEntry);
+
   MDNode *FinalLoopID = MDNode::get(Ctx, MDs);
   FinalLoopID->replaceOperandWith(0, FinalLoopID);
   return FinalLoopID;
@@ -1643,7 +1654,7 @@ void CloneLoopStructure::updateLoopMetadata() const {
       /*FixMax=*/[](int64_t V) { return V - 1; });
   MDNode *Source = AdjustedID ? AdjustedID : LoopID;
 
-  // Drop the consumed enable hint and append the success marker.
+  // Drop the consumed enable hint and append the success and epilog markers.
   MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, Source);
 
   // Write onto the latch terminator (what Loop::setLoopID does internally) so
