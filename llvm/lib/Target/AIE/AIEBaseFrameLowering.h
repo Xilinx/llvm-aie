@@ -74,6 +74,13 @@ protected:
 
   void determineFrameLayout(MachineFunction &MF) const;
 
+  /// Optimize callee-saved L registers by deciding whether to save as L
+  /// register pair or individual GPRs based on usage and call patterns.
+  void optimizeLRegCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
+                               const TargetRegisterClass &LRegClass,
+                               unsigned SubRegIdxEven,
+                               unsigned SubRegIdxOdd) const;
+
 private:
   virtual void adjustSPReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, const DebugLoc &DL,
