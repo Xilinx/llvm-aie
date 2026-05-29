@@ -446,3 +446,83 @@ void AIEBaseFrameLowering::orderFrameObjects(
     dbgs() << "\n";
   });
 }
+
+void AIEBaseFrameLowering::optimizeLRegCalleeSaves(
+    MachineFunction &MF, BitVector &SavedRegs,
+    const TargetRegisterClass &LRegClass, unsigned SubRegIdxEven,
+    unsigned SubRegIdxOdd) const {
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+
+  // When both L registers and their sub-GPRs are in the CSR list, we need to
+  // decide whether to save as L register or individual GPRs.
+  //
+  // Strategy:
+  // - If only one GPR of the pair is used: save just that GPR
+  // - If both GPRs are used AND function has calls: use L register save
+  //   (stack spill is required, 1 L spill is more efficient than 2 GPR spills)
+  // - If both GPRs are used AND no calls: use individual GPR saves
+  //   (allows GPR-to-GPR spilling via scratch registers)
+
+  // Build the list of callee-saved L registers from the callee-saved regs
+  // provided by CSR list.
+  SmallVector<MCPhysReg, 4> CalleeSavedLRegs;
+  const MCPhysReg *CSRegs = MF.getRegInfo().getCalleeSavedRegs();
+  for (unsigned I = 0; CSRegs[I]; ++I) {
+    MCPhysReg Reg = CSRegs[I];
+    if (LRegClass.contains(Reg))
+      CalleeSavedLRegs.push_back(Reg);
+  }
+
+  for (MCPhysReg LReg : CalleeSavedLRegs) {
+    // Get the two GPR subregisters of this L register
+    MCPhysReg EvenGPR = TRI->getSubReg(LReg, SubRegIdxEven);
+    MCPhysReg OddGPR = TRI->getSubReg(LReg, SubRegIdxOdd);
+
+    // Check what's marked for saving by the base determineCalleeSaves.
+    // This already reflects which registers are actually clobbered.
+    const bool LRegMarked = SavedRegs.test(LReg);
+    const bool EvenMarked = SavedRegs.test(EvenGPR);
+    const bool OddMarked = SavedRegs.test(OddGPR);
+
+    if (!LRegMarked && !EvenMarked && !OddMarked)
+      continue;
+
+    SavedRegs.reset(EvenGPR);
+    SavedRegs.reset(OddGPR);
+    SavedRegs.reset(LReg);
+
+    assert((!(EvenMarked || OddMarked) || LRegMarked) &&
+           "sub-reg mark without L pair mark violates invariant");
+
+    // Determine if both subregisters actually need saving.
+    // LRegMarked alone doesn't mean both - check individual GPR marks.
+    const bool BothNeeded =
+        (EvenMarked && OddMarked) || (LRegMarked && !EvenMarked && !OddMarked);
+
+    // When there is calls we mark the L register so that we get a single
+    // spill instead of 2. When there are no calls, we prefer marking the
+    // subregisters since they can be copied to non CSR registers instead of
+    // spilled to memory (There is no move instruction between L registers).
+    // For the call case we have no choice but to spill anyway since we don't
+    // know which registers the callee is going to use.
+    if (BothNeeded) {
+      // Both subregisters need saving.
+      if (MFI.hasCalls()) {
+        // Use L register save. Stack spill is required (scratch regs
+        // clobbered by calls), so 1 L spill is more efficient than 2 GPR
+        // spills.
+        SavedRegs.set(LReg);
+      } else {
+        // No calls: use individual GPRs for GPR-to-GPR copy.
+        SavedRegs.set(EvenGPR);
+        SavedRegs.set(OddGPR);
+      }
+    } else if (EvenMarked) {
+      SavedRegs.set(EvenGPR);
+    } else {
+      assert(OddMarked);
+      SavedRegs.set(OddGPR);
+    }
+  }
+}
