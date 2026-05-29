@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -verify-machineinstrs --march=aie2p -run-pass=prologepilog %s -o - | FileCheck %s
 # RUN: llc -verify-machineinstrs --march=aie2ps -run-pass=prologepilog %s -o - | FileCheck %s
 

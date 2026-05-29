@@ -111,7 +111,7 @@ class AIE2PSScalarRegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
                         idx>;
 
 class AIE2PSScalar64RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-    : AIE2PSRegisterClass<64, 32, [i64, v8i8, v4i16, v4bf16, v4f16,v2i32, v2f32, v64i1], reglist,
+    : AIE2PSRegisterClass<64, 64, [i64, v8i8, v4i16, v4bf16, v4f16,v2i32, v2f32, v64i1], reglist,
                         idx>;
 
 class AIE2PSVector128RegisterClass<dag reglist> :

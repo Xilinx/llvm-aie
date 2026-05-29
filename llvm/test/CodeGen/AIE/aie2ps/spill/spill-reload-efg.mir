@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2ps --verify-machineinstrs -run-pass=greedy -run-pass=virtregrewriter %s -o - | FileCheck %s
 
 # There is only one register available, it will then be used for the %0
@@ -75,10 +75,10 @@ body:             |
     ; CHECK-LABEL: name: test_ee_scarce_regs
     ; CHECK: liveins: $e0, $e1, $e2, $e3, $e4, $e5, $e6, $e7, $e8, $e9, $e10, $e11, $p0, $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_EE_SPILL $e0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_EE_SPILL $e0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: $e0 = COPY $e1
     ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm $r0, $p0, 0, implicit $e0, implicit $e1, implicit $e2, implicit $e3, implicit $e4, implicit $e5, implicit $e6, implicit $e7, implicit $e8, implicit $e9, implicit $e10, implicit $e11
-    ; CHECK-NEXT: renamable $e0 = VLDA_EE_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $e0 = VLDA_EE_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $e0
     %0:mees = COPY $e0 ; -> only $e0 is available
 
@@ -102,9 +102,9 @@ body:             |
     ; CHECK-LABEL: name: test_ee_caller_saved
     ; CHECK: liveins: $e0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_EE_SPILL $e0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_EE_SPILL $e0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
-    ; CHECK-NEXT: renamable $e0 = VLDA_EE_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $e0 = VLDA_EE_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $e0
     %0:mees = COPY $e0
     PseudoJL 32, csr_aie2ps, implicit-def $lr
@@ -125,10 +125,10 @@ body:             |
     ; CHECK-LABEL: name: test_f_scarce_regs
     ; CHECK: liveins: $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $fl0, $p0, $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_F_SPILL $fl0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_F_SPILL $fl0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: $f0 = COPY $f1
     ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm $r0, $p0, 0, implicit $f0, implicit $f1, implicit $f2, implicit $f3, implicit $f4, implicit $f5, implicit $f6, implicit $f7, implicit $f8, implicit $f9, implicit $f10, implicit $f11
-    ; CHECK-NEXT: renamable $fl0 = VLDA_F_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $fl0 = VLDA_F_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $fl0
     %0:mfs = COPY $fl0 ; -> only $f0 is available
 
@@ -153,9 +153,9 @@ body:             |
     ; CHECK: liveins: $f0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $fl0 = COPY $f0
-    ; CHECK-NEXT: VST_F_SPILL killed renamable $fl0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_F_SPILL killed renamable $fl0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
-    ; CHECK-NEXT: renamable $fl0 = VLDA_F_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $fl0 = VLDA_F_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $fl0
     %0:mfs = COPY $f0
     PseudoJL 32, csr_aie2ps, implicit-def $lr
@@ -277,10 +277,10 @@ body:             |
     ; CHECK-LABEL: name: test_gg_scarce_regs
     ; CHECK: liveins: $g0, $g1, $g2, $g3, $g4, $g5, $g6, $g7, $g8, $g9, $g10, $g11, $p0, $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_GG_SPILL $g0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_GG_SPILL $g0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: $g0 = COPY $g1
     ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm $r0, $p0, 0, implicit $g0, implicit $g1, implicit $g2, implicit $g3, implicit $g4, implicit $g5, implicit $g6, implicit $g7, implicit $g8, implicit $g9, implicit $g10, implicit $g11
-    ; CHECK-NEXT: renamable $g0 = VLDA_GG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $g0 = VLDA_GG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $g0
     %0:mggs = COPY $g0 ; -> only $g0 is available
 
@@ -304,9 +304,9 @@ body:             |
     ; CHECK-LABEL: name: test_gg_caller_saved
     ; CHECK: liveins: $g0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_GG_SPILL $g0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_GG_SPILL $g0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
-    ; CHECK-NEXT: renamable $g0 = VLDA_GG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $g0 = VLDA_GG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $g0
     %0:mggs = COPY $g0
     PseudoJL 32, csr_aie2ps, implicit-def $lr
@@ -327,10 +327,10 @@ body:             |
     ; CHECK-LABEL: name: test_eg_scarce_regs
     ; CHECK: liveins: $eg1, $eg2, $eg3, $eg4, $eg5, $eg6, $eg7, $eg8, $eg9, $eg10, $eg11, $egl0, $p0, $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_EG_SPILL $egl0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_EG_SPILL $egl0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: $eg0 = COPY $eg1
     ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm $r0, $p0, 0, implicit $eg0, implicit $eg1, implicit $eg2, implicit $eg3, implicit $eg4, implicit $eg5, implicit $eg6, implicit $eg7, implicit $eg8, implicit $eg9, implicit $eg10, implicit $eg11
-    ; CHECK-NEXT: renamable $egl0 = VLDA_EG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $egl0 = VLDA_EG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $egl0
     %0:megs = COPY $egl0 ; -> only $eg0 is available
 
@@ -355,9 +355,9 @@ body:             |
     ; CHECK: liveins: $eg0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $egl0 = COPY $eg0
-    ; CHECK-NEXT: VST_EG_SPILL killed renamable $egl0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
+    ; CHECK-NEXT: VST_EG_SPILL killed renamable $egl0, %stack.0, implicit $sp :: (store (s64) into %stack.0)
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
-    ; CHECK-NEXT: renamable $egl0 = VLDA_EG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $egl0 = VLDA_EG_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $egl0
     %0:megs = COPY $eg0
     PseudoJL 32, csr_aie2ps, implicit-def $lr
