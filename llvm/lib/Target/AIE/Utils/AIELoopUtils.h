@@ -91,6 +91,23 @@ std::optional<int64_t> getLoopHintInt(const MDNode *LoopID, StringRef Key);
 std::optional<int64_t> getLoopHintInt(const MachineBasicBlock &MBB,
                                       StringRef Key);
 
+/// Loop-hint key that enables AIE loop versioning. Integer value semantics:
+///   absent / <= 0 : disabled
+///   == 1          : enabled, the postpipeliner derives the trip count itself
+///   >  1          : enabled, the value is the postpipeliner trip-count target
+constexpr StringLiteral LoopVersioningHintKey =
+    "llvm.loop.hint.aie-loop-versioning";
+
+/// Guard threshold a versioned loop starts with when the postpipeliner is left
+/// to derive the stage count. It is the minimum pipelined stage count and is
+/// overwritten with the real stage count after scheduling. Chosen >= 2 so the
+/// `tripcount < threshold` guard is not canonicalized to `tripcount == 0`.
+constexpr int64_t DefaultLoopVersionGuardThreshold = 2;
+
+/// Read the loop-versioning hint of a single-block loop. Returns the raw hint
+/// value (see LoopVersioningHintKey) or nullopt when the hint is absent.
+std::optional<int64_t> getLoopVersioningHint(const MachineBasicBlock &MBB);
+
 /// Extract a string value (MDString) from the named loop metadata entry.
 std::optional<StringRef> getLoopHintString(const MDNode *LoopID, StringRef Key);
 std::optional<StringRef> getLoopHintString(const MachineBasicBlock &MBB,

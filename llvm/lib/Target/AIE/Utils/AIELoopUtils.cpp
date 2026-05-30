@@ -224,6 +224,10 @@ std::optional<int64_t> getLoopHintInt(const MachineBasicBlock &MBB,
   return getLoopHintInt(getLoopID(MBB), Key);
 }
 
+std::optional<int64_t> getLoopVersioningHint(const MachineBasicBlock &MBB) {
+  return getLoopHintInt(MBB, LoopVersioningHintKey);
+}
+
 std::optional<StringRef> getLoopHintString(const MDNode *LoopID,
                                            StringRef Key) {
   const auto MD = getLoopMetadata(LoopID, Key);
