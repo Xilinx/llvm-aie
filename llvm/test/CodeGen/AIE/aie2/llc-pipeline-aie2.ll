@@ -98,6 +98,10 @@
 ; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Natural Loop Information
 ; AIE-O123-NEXT:      Scalar Evolution Analysis
+; AIE-O123-NEXT:      AIE Loop Versioning
+; AIE-O123-NEXT:      Dominator Tree Construction
+; AIE-O123-NEXT:      Natural Loop Information
+; AIE-O123-NEXT:      Scalar Evolution Analysis
 ; AIE-O123-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O123-NEXT:      Optimization Remark Emitter

@@ -120,6 +120,11 @@ llvm::FunctionPass *createReservedRegsLICMPass();
 extern char &AIEOuterLoopPipelinerID;
 void initializeAIEOuterLoopPipelinerPass(PassRegistry &);
 llvm::FunctionPass *createAIEOuterLoopPipelinerPass();
+
+// Loop Versioning (IR-level): guards a pipelined fast copy against a slow copy
+// on a runtime trip-count check.
+void initializeAIELoopVersioningPass(PassRegistry &);
+llvm::FunctionPass *createAIELoopVersioningPass();
 } // namespace llvm
 
 #endif

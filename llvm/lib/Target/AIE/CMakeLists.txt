@@ -183,6 +183,7 @@ add_llvm_target(AIECodeGen
    AIEUnallocatedSuperRegRewriter.cpp
    ReservedRegsLICM.cpp
    AIEOuterLoopPipeliner.cpp
+   AIELoopVersioning.cpp
    AIEOutlineMemoryGEP.cpp
    AIEWawRegRewriter.cpp
    # aie1
