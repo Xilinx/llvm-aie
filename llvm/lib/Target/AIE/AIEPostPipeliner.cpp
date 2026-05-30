@@ -17,11 +17,13 @@
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "Utils/AIEMachineInstrPrint.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
 #include <string>
@@ -142,15 +144,28 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // This is just a minimum check to save useless work; the real stage
   // count is checked before accepting the schedule.
   using namespace AIELoopUtils;
-  auto ParsedMinTripCount = getMinTripCount(LoopBlock);
-  if (!ParsedMinTripCount) {
-    LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
-    return false;
-  }
-  MinTripCount = *ParsedMinTripCount;
-  if (MinTripCount < 2) {
-    LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
-    return false;
+  DeriveStageCount = false;
+  IsVersioned = false;
+  if (std::optional<int64_t> VersioningHint =
+          getLoopVersioningHint(LoopBlock)) {
+    IsVersioned = true;
+    // Versioned fast copy: the runtime trip-count guard guarantees enough
+    // iterations, so the static min-tripcount gate must not block us. A target
+    // > 1 caps the stage count like a min tripcount; value 1 lets us minimize
+    // II and derive the stage count from the schedule.
+    DeriveStageCount = *VersioningHint <= 1;
+    MinTripCount = DeriveStageCount ? 0 : *VersioningHint;
+  } else {
+    auto ParsedMinTripCount = getMinTripCount(LoopBlock);
+    if (!ParsedMinTripCount) {
+      LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
+      return false;
+    }
+    MinTripCount = *ParsedMinTripCount;
+    if (MinTripCount < 2) {
+      LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
+      return false;
+    }
   }
 
   if (PresetII) {
@@ -1598,7 +1613,9 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 // Pipelining reduces the iteration count by NS - 1
 // The result should be > 0, because ZOL doesn't support zero iterations.
 bool PostPipeliner::hasSufficientMinTripCount(int NS) const {
-  return MinTripCount - (NS - 1) > 0;
+  // A versioned loop with a derived stage count is protected by the runtime
+  // guard, so any stage count is acceptable here.
+  return DeriveStageCount || MinTripCount - (NS - 1) > 0;
 }
 
 // This visitor counts the initial bundles without any side-effect,
@@ -1749,7 +1766,112 @@ void PostPipeliner::updateTripCount() const {
   TII->adjustTripCount(*TripCountDef, -Delta);
 }
 
+// Reaching definition of Reg seen from Use, scanning backwards into
+// predecessors — the threshold may have been hoisted into a dominating block.
+static MachineInstr *
+findReachingDef(MachineBasicBlock &BB, MachineBasicBlock::reverse_iterator Use,
+                Register Reg, const TargetRegisterInfo &TRI,
+                SmallPtrSetImpl<MachineBasicBlock *> &Visited) {
+  for (auto It = Use, End = BB.rend(); It != End; ++It)
+    if (It->definesRegister(Reg, &TRI))
+      return &*It;
+  if (!Visited.insert(&BB).second)
+    return nullptr;
+  for (MachineBasicBlock *Pred : BB.predecessors())
+    if (MachineInstr *Found =
+            findReachingDef(*Pred, Pred->rbegin(), Reg, TRI, Visited))
+      return Found;
+  return nullptr;
+}
+
+MachineBasicBlock *PostPipeliner::findVersionGuard() const {
+  // The fast copy's preheader is entered from the guard block, the unique
+  // predecessor that conditionally branches to the fast and slow copies.
+  for (MachineBasicBlock *Pred : Preheader->predecessors())
+    if (Pred->succ_size() == 2)
+      return Pred;
+  return nullptr;
+}
+
+// The register tested by the guard's conditional branch (the trip-count compare
+// result), or an invalid register if none. The branch is the instruction that
+// both targets a block and reads a register.
+static Register findGuardConditionReg(MachineBasicBlock &Guard) {
+  Register CondReg;
+  for (MachineInstr &MI : Guard) {
+    bool TargetsBlock = false;
+    Register RegUse;
+    for (const MachineOperand &MO : MI.operands()) {
+      if (MO.isMBB())
+        TargetsBlock = true;
+      else if (MO.isReg() && MO.isUse() && MO.getReg().isPhysical())
+        RegUse = MO.getReg();
+    }
+    if (TargetsBlock && RegUse.isValid())
+      CondReg = RegUse;
+  }
+  return CondReg;
+}
+
+// The constant move feeding the guard compare: of the compare's operands the
+// trip count is computed while the threshold is a constant. Null if there is no
+// unique such constant.
+static MachineInstr *findThresholdConst(MachineInstr &Cmp,
+                                        const AIEBaseInstrInfo &TII,
+                                        const TargetRegisterInfo &TRI) {
+  MachineInstr *Threshold = nullptr;
+  for (const MachineOperand &MO : Cmp.uses()) {
+    if (!MO.isReg() || !MO.getReg().isPhysical())
+      continue;
+    SmallPtrSet<MachineBasicBlock *, 8> Visited;
+    MachineInstr *Def = findReachingDef(
+        *Cmp.getParent(), Cmp.getReverseIterator(), MO.getReg(), TRI, Visited);
+    if (Def && TII.isIConst(Def->getOpcode())) {
+      if (Threshold && Threshold != Def)
+        return nullptr; // ambiguous
+      Threshold = Def;
+    }
+  }
+  return Threshold;
+}
+
+void PostPipeliner::updateVersionGuard() const {
+  if (!IsVersioned)
+    return;
+
+  auto Fatal = [](const Twine &Msg) {
+    report_fatal_error(Twine("AIE loop versioning: ") + Msg);
+  };
+
+  // Locate the threshold structurally (not by value), so a sibling loop's guard
+  // can never be matched, then overwrite it with the actual stage count.
+  MachineBasicBlock *Guard = findVersionGuard();
+  if (!Guard)
+    Fatal("guard block not found");
+  const TargetRegisterInfo &TRI =
+      *Guard->getParent()->getSubtarget().getRegisterInfo();
+
+  Register CondReg = findGuardConditionReg(*Guard);
+  if (!CondReg.isValid())
+    Fatal("guard conditional branch not found");
+
+  SmallPtrSet<MachineBasicBlock *, 8> Visited;
+  MachineInstr *Cmp =
+      findReachingDef(*Guard, Guard->rbegin(), CondReg, TRI, Visited);
+  if (!Cmp)
+    Fatal("guard compare not found");
+
+  MachineInstr *Threshold = findThresholdConst(*Cmp, *TII, TRI);
+  if (!Threshold)
+    Fatal("guard threshold constant not found");
+
+  Threshold->getOperand(1).setImm(NStages);
+}
+
 int PostPipeliner::getFinalMinTripCount() const {
+  // The runtime guard guarantees the pipelined kernel runs at least once.
+  if (DeriveStageCount)
+    return 1;
   const int Delta = NStages - 1;
   return MinTripCount - Delta;
 }

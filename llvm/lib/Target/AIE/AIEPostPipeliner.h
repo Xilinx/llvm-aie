@@ -246,6 +246,15 @@ class PostPipeliner {
   /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;
 
+  /// Set for a versioned fast copy whose trip-count target is left to us: the
+  /// runtime guard guarantees enough iterations, so the min-tripcount gate is
+  /// lifted and we minimize II and derive the stage count from the schedule.
+  bool DeriveStageCount = false;
+
+  /// Set when this loop is the fast copy of a versioned loop, i.e. it carries
+  /// the loop-versioning hint and has a runtime guard to update.
+  bool IsVersioned = false;
+
   /// The II requested by a pragma. This will trigger expensive algorithms
   /// like solvers or exhaustive searches to be run if the heuristic methods
   /// don't find a solution.
@@ -373,6 +382,15 @@ public:
 
   // Modify the tripcount to run StageCount-1 less iterations.
   void updateTripCount() const;
+
+  // For a versioned loop, overwrite the runtime guard's placeholder threshold
+  // with the actual stage count, so it selects the fast copy exactly when the
+  // trip count is large enough (TC >= NStages). No-op when not versioned.
+  void updateVersionGuard() const;
+
+  // The guard block of a versioned loop: the predecessor of the preheader that
+  // conditionally branches to the fast and slow copies. Null if not versioned.
+  MachineBasicBlock *findVersionGuard() const;
 
   int getFinalMinTripCount() const;
 

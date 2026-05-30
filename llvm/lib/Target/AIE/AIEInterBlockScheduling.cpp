@@ -486,6 +486,7 @@ bool InterBlockScheduling::leaveBlock() {
     auto &PostSWP = BS.getPostSWP();
     PostSWP.visitPipelineSchedule(GenSchedule);
     PostSWP.updateTripCount();
+    PostSWP.updateVersionGuard();
 
     break;
   }
