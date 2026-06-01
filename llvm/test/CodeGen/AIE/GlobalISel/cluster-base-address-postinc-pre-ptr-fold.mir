@@ -48,20 +48,21 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %val:_(s32), %post:_(p0) = G_AIE_POSTINC_LOAD %pre, [[C2]](s20) :: (load (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 32
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %step(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -131,20 +132,21 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %val:_(s32), %post:_(p0) = G_AIE_POSTINC_LOAD %pre, [[C2]](s20) :: (load (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %offset:_(s20) = G_CONSTANT i20 96
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %offset(s20)
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %offset(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -214,20 +216,21 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %post:_(p0) = G_AIE_POSTINC_STORE [[COPY1]](s32), %pre, [[C2]](s20) :: (store (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 32
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %step(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -299,20 +302,21 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %val:_(s32), %post:_(p0), %ctrn:_(s20) = G_AIE_POSTINC_2D_LOAD %pre, [[C2]], [[C2]], [[C2]], %ctr :: (load (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %step(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -385,20 +389,21 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %post:_(p0), %ctrn:_(s20) = G_AIE_POSTINC_2D_STORE [[COPY1]](s32), %pre, [[C2]], [[C2]], [[C2]], %ctr :: (store (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %step(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -472,20 +477,21 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %val:_(s32), %post:_(p0), %ctr1n:_(s20), %ctr2n:_ = G_AIE_POSTINC_3D_LOAD %pre, [[C2]], [[C2]], [[C2]], %ctr1, [[C2]], [[C2]], %ctr2 :: (load (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %pre, %step(s20)
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %step(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   %adjusted:_(p0) = G_PTR_ADD %lk_ptr2, [[C5]](s20)
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C5]](s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %adjusted(p0)
   bb.0:
     liveins: $p0, $r0
@@ -558,19 +564,20 @@ body:             |
   ; CHECK-NEXT:   %i:_(s32) = G_PHI [[COPY1]](s32), %bb.0, %inext(s32), %bb.1
   ; CHECK-NEXT:   %val:_(s32), %post:_(p0) = G_AIE_POSTINC_LOAD %pre, [[C2]](s20) :: (load (s32))
   ; CHECK-NEXT:   %lk_off1:_(s20) = G_CONSTANT i20 8
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %lk_off1(s20) :: (store (s32))
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   %lk_ptr1:_(p0) = G_PTR_ADD %pre, %lk_off1(s20)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %lk_ptr2:_(p0) = G_AIE_POSTINC_STORE [[C]](s32), %lk_ptr1, [[C4]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[C]](s32), %lk_ptr2(p0) :: (store (s32))
   ; CHECK-NEXT:   %inext:_(s32) = G_ADD %i, [[C1]]
   ; CHECK-NEXT:   %cond:_(s32) = G_ICMP intpred(sgt), %inext(s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND %cond(s32), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   %step:_(s20) = G_CONSTANT i20 32
-  ; CHECK-NEXT:   %loaded:_(s32) = G_AIE_OFFSET_LOAD %pre(p0), %step(s20) :: (load (s32))
-  ; CHECK-NEXT:   %ep_off2:_(s20) = G_CONSTANT i20 40
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %pre(p0), %ep_off2(s20) :: (store (s32))
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+  ; CHECK-NEXT:   %loaded:_(s32) = G_AIE_OFFSET_LOAD %lk_ptr2(p0), [[C5]](s20) :: (load (s32))
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[C]](s32), %lk_ptr2(p0), [[C6]](s20) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %loaded(s32)
   bb.0:
     liveins: $p0, $r0

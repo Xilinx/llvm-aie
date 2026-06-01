@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie-cluster-base-address  %s -verify-machineinstrs -o - | FileCheck %s
 
 # Address Chaining test across multiple MBBs.
@@ -34,11 +34,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 15
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C6]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD2]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 42
-  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 23
-  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C7]](s20)
+  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 42
+  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 23
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C8]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD3]](p0) :: (store (s32))
 
   bb.0.entry:
@@ -99,29 +100,32 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD %InputPtr, [[C4]](s20)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C5]](s20)
   ; CHECK-NEXT:   G_STORE [[C]](s32), [[PTR_ADD2]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 -1
-  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C6]](s20)
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 -1
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C7]](s20)
   ; CHECK-NEXT:   G_STORE [[C]](s32), [[PTR_ADD3]](p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD %InputPtr, [[C7]](s20)
+  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
+  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C9]](s20)
   ; CHECK-NEXT:   G_STORE [[C]](s32), [[PTR_ADD4]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 -2
-  ; CHECK-NEXT:   [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD4]], [[C9]](s20)
+  ; CHECK-NEXT:   [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
+  ; CHECK-NEXT:   [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 -2
+  ; CHECK-NEXT:   [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD4]], [[C11]](s20)
   ; CHECK-NEXT:   G_STORE [[C]](s32), [[PTR_ADD5]](p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
-  ; CHECK-NEXT:   [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD %InputPtr, [[C10]](s20)
+  ; CHECK-NEXT:   [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 19
+  ; CHECK-NEXT:   [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 17
+  ; CHECK-NEXT:   [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C13]](s20)
   ; CHECK-NEXT:   G_STORE [[C]](s32), [[PTR_ADD6]](p0) :: (store (s32))
 
   bb.0:
@@ -297,15 +301,16 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 15
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C5]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), [[PTR_ADD2]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C6]](s20)
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
+  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C7]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), [[PTR_ADD3]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
-  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
+  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
+  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C9]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), [[PTR_ADD4]](p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.3
   ; CHECK-NEXT: {{  $}}
@@ -313,11 +318,12 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   %B12:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   %B13:_(p0) = G_PTR_ADD [[COPY]], %B12(s20)
+  ; CHECK-NEXT:   [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 15
+  ; CHECK-NEXT:   %B13:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C10]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B13(p0) :: (store (s32))
   ; CHECK-NEXT:   %B14:_(s20) = G_CONSTANT i20 20
-  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-  ; CHECK-NEXT:   %B15:_(p0) = G_PTR_ADD %B13, [[C9]](s20)
+  ; CHECK-NEXT:   [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+  ; CHECK-NEXT:   %B15:_(p0) = G_PTR_ADD %B13, [[C11]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B15(p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.3
   ; CHECK-NEXT: {{  $}}
@@ -331,25 +337,27 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   %B412:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   %B413:_(p0) = G_PTR_ADD [[COPY]], %B412(s20)
+  ; CHECK-NEXT:   [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 15
+  ; CHECK-NEXT:   %B413:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C12]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B413(p0) :: (store (s32))
   ; CHECK-NEXT:   %B414:_(s20) = G_CONSTANT i20 20
-  ; CHECK-NEXT:   [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-  ; CHECK-NEXT:   %B415:_(p0) = G_PTR_ADD %B413, [[C10]](s20)
+  ; CHECK-NEXT:   [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+  ; CHECK-NEXT:   %B415:_(p0) = G_PTR_ADD %B413, [[C13]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B415(p0) :: (store (s32))
   ; CHECK-NEXT:   %B416:_(s20) = G_CONSTANT i20 12
-  ; CHECK-NEXT:   [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
-  ; CHECK-NEXT:   %B417:_(p0) = G_PTR_ADD %B415, [[C11]](s20)
+  ; CHECK-NEXT:   [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   %B417:_(p0) = G_PTR_ADD %B415, [[C14]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B417(p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   %B512:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   %B513:_(p0) = G_PTR_ADD [[COPY]], %B512(s20)
+  ; CHECK-NEXT:   [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 15
+  ; CHECK-NEXT:   %B513:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C15]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B513(p0) :: (store (s32))
   ; CHECK-NEXT:   %B514:_(s20) = G_CONSTANT i20 20
-  ; CHECK-NEXT:   [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-  ; CHECK-NEXT:   %B515:_(p0) = G_PTR_ADD %B513, [[C12]](s20)
+  ; CHECK-NEXT:   [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+  ; CHECK-NEXT:   %B515:_(p0) = G_PTR_ADD %B513, [[C16]](s20)
   ; CHECK-NEXT:   G_STORE [[COPY1]](s32), %B515(p0) :: (store (s32))
   bb.0:
     successors: %bb.2, %bb.1
