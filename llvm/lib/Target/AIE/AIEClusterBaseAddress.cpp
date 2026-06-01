@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -94,6 +94,15 @@ LLT getLoadStoreType(const MachineInstr &MI) {
   return (*MI.memoperands_begin())->getMemoryType();
 }
 
+std::optional<int64_t> getConstOffset(const MachineInstr &MI,
+                                      const MachineRegisterInfo &MRI) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD);
+  auto Off = getIConstantVRegValWithLookThrough(MI.getOperand(2).getReg(), MRI);
+  if (!Off)
+    return std::nullopt;
+  return Off->Value.getSExtValue();
+}
+
 /// Try and re-order PTR_ADD instructions to maximise the size of constant
 /// PTR_ADD chains.
 bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
@@ -114,8 +123,7 @@ bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
     assert(PtrAdd->getOpcode() == TargetOpcode::G_PTR_ADD);
     Register OutputPtr = PtrAdd->getOperand(0).getReg();
     Register OffsetReg = PtrAdd->getOperand(2).getReg();
-    if (getIConstantVRegValWithLookThrough(OffsetReg, MRI) ||
-        !MRI.hasOneNonDBGUser(OutputPtr))
+    if (getConstOffset(*PtrAdd, MRI) || !MRI.hasOneNonDBGUser(OutputPtr))
       continue;
 
     // We found a non-constant PTRADD with a single user, now check if that
@@ -124,9 +132,7 @@ bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
     MachineInstr &OutputUser = *MRI.use_instructions(OutputPtr).begin();
     if (OutputUser.getOpcode() != TargetOpcode::G_PTR_ADD)
       continue;
-    Register SecondOffsetReg = OutputUser.getOperand(2).getReg();
-    std::optional<ValueAndVReg> CstOffset =
-        getIConstantVRegValWithLookThrough(SecondOffsetReg, MRI);
+    std::optional<int64_t> CstOffset = getConstOffset(OutputUser, MRI);
     if (!CstOffset)
       continue;
 
@@ -136,8 +142,7 @@ bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
     Observer.changingInstr(*PtrAdd);
     MIB.setInstr(*PtrAdd);
     Register NewOffsetReg =
-        MIB.buildConstant(LLT::scalar(20), CstOffset->Value.getSExtValue())
-            .getReg(0);
+        MIB.buildConstant(LLT::scalar(20), *CstOffset).getReg(0);
     PtrAdd->getOperand(2).setReg(NewOffsetReg);
     Observer.changedInstr(*PtrAdd);
     Observer.changingInstr(OutputUser);
@@ -195,8 +200,8 @@ private:
   //  * Unknown offsets.
   //  * Pointer shared between load(s) and store(s).
   bool shouldBreakChain(MachineInstr *MIA, MachineInstr *MIB,
-                        std::optional<ValueAndVReg> OffsetA,
-                        std::optional<ValueAndVReg> OffsetB);
+                        std::optional<int64_t> OffsetA,
+                        std::optional<int64_t> OffsetB);
 
   // Return true if the instructions are used by both loads and stores.
   bool hasMixedLoadStoreUse(SmallVector<MachineInstr *, 2> Instrs);
@@ -450,10 +455,8 @@ bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
   for (unsigned I = 0; I < Instrs.size() - 1; I++) {
     MachineInstr *MI = Instrs[I];
     MachineInstr *MINext = Instrs[I + 1];
-    auto OffsetMI =
-        getIConstantVRegValWithLookThrough(MI->getOperand(2).getReg(), *MRI);
-    auto OffsetMINext = getIConstantVRegValWithLookThrough(
-        MINext->getOperand(2).getReg(), *MRI);
+    std::optional<int64_t> OffsetMI = getConstOffset(*MI, *MRI);
+    std::optional<int64_t> OffsetMINext = getConstOffset(*MINext, *MRI);
 
     // Evaluate if we should restart the chain from the base
     // pointer. This is necessary when we deal with unknown offsets
@@ -464,9 +467,8 @@ bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
       continue;
     }
 
-    AccumulatedOffset += OffsetMI->Value.getSExtValue();
-    const int64_t NewNextOffset =
-        OffsetMINext->Value.getSExtValue() - AccumulatedOffset;
+    AccumulatedOffset += *OffsetMI;
+    const int64_t NewNextOffset = *OffsetMINext - AccumulatedOffset;
     MIB.setInsertPt(MBB, MINext->getIterator());
 
     Register NewOffsetReg =
@@ -481,9 +483,10 @@ bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
   return Changed;
 }
 
-bool AIEClusterBaseAddress::shouldBreakChain(
-    MachineInstr *MIA, MachineInstr *MIB, std::optional<ValueAndVReg> OffsetA,
-    std::optional<ValueAndVReg> OffsetB) {
+bool AIEClusterBaseAddress::shouldBreakChain(MachineInstr *MIA,
+                                             MachineInstr *MIB,
+                                             std::optional<int64_t> OffsetA,
+                                             std::optional<int64_t> OffsetB) {
 
   // If one of the offsets is not constant, it is better to break the chain.
   if (!OffsetA || !OffsetB)
