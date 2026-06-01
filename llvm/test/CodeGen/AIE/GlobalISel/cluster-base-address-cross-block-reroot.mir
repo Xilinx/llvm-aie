@@ -127,11 +127,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   %off_b1:_(s20) = G_CONSTANT i20 3840
-  ; CHECK-NEXT:   %b1:_(p0) = G_PTR_ADD %base, %off_b1(s20)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 3328
+  ; CHECK-NEXT:   %b1:_(p0) = G_PTR_ADD %a3, [[C2]](s20)
   ; CHECK-NEXT:   %v0:_(s32) = G_LOAD %b1(p0) :: (load (s32))
   ; CHECK-NEXT:   G_STORE %v0(s32), %b1(p0) :: (store (s32))
   ; CHECK-NEXT:   %off_b2:_(s20) = G_CONSTANT i20 3968
-  ; CHECK-NEXT:   %b2:_(p0) = G_PTR_ADD %base, %off_b2(s20)
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 3456
+  ; CHECK-NEXT:   %b2:_(p0) = G_PTR_ADD %a3, [[C3]](s20)
   ; CHECK-NEXT:   %v1:_(s32) = G_LOAD %b2(p0) :: (load (s32))
   ; CHECK-NEXT:   G_STORE %v1(s32), %b2(p0) :: (store (s32))
   bb.0:
@@ -196,11 +198,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   %off_b1:_(s20) = G_CONSTANT i20 256
-  ; CHECK-NEXT:   %b1:_(p0) = G_PTR_ADD %base, %off_b1(s20)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -256
+  ; CHECK-NEXT:   %b1:_(p0) = G_PTR_ADD %a2, [[C1]](s20)
   ; CHECK-NEXT:   G_STORE %zero(s32), %b1(p0) :: (store (s32))
   ; CHECK-NEXT:   %off_b2:_(s20) = G_CONSTANT i20 384
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
-  ; CHECK-NEXT:   %b2:_(p0) = G_PTR_ADD %b1, [[C1]](s20)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+  ; CHECK-NEXT:   %b2:_(p0) = G_PTR_ADD %b1, [[C2]](s20)
   ; CHECK-NEXT:   G_STORE %zero(s32), %b2(p0) :: (store (s32))
   bb.0:
     successors: %bb.1
@@ -257,7 +260,8 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   %off_b1:_(s20) = G_CONSTANT i20 256
-  ; CHECK-NEXT:   %b1:_(p0) = G_PTR_ADD %base, %off_b1(s20)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -256
+  ; CHECK-NEXT:   %b1:_(p0) = G_PTR_ADD %a2, [[C1]](s20)
   ; CHECK-NEXT:   %v0:_(s32) = G_LOAD %b1(p0) :: (load (s32))
   ; CHECK-NEXT:   G_STORE %v0(s32), %b1(p0) :: (store (s32))
   bb.0:
