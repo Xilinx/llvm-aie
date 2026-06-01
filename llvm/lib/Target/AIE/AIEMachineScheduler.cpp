@@ -689,10 +689,9 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
       return false;
     if (Zone.isTop()) {
       return CurrCycle == TopReadyCycle;
-    } else {
-      const int DeltaCycles = CurrCycle - BotReadyCycle;
-      return DeltaCycles >= MinDelta;
     }
+    const int DeltaCycles = CurrCycle - BotReadyCycle;
+    return DeltaCycles >= MinDelta;
   }
 
   if (doesNotProgressInZone(Zone, SU))
@@ -704,9 +703,20 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     // This SU should be scheduled after CurrCycle.
     if (TopReadyCycle > CurrCycle)
       return false;
-    for (int DeltaCycles = TopReadyCycle - CurrCycle; DeltaCycles <= 0;
-         ++DeltaCycles) {
-      // TopReadyCycle is always lesser or equal to the current cycle here,
+    // Clamp the search start to the scoreboard's valid backward range.
+    // On large basic blocks TopReadyCycle can be much smaller than
+    // CurrCycle - MaxLookAhead. Cycles before the scoreboard window are
+    // guaranteed empty: resources are always inserted forward in time, so
+    // once the scoreboard has advanced past a cycle its entries have been
+    // cleared. Attempting to access those out-of-window cycles would
+    // assert in checkConflict/enterResources. When no slot is found within
+    // the valid window the callers' bump mechanism rotates the scoreboard
+    // forward to open fresh slots, mirroring the !isTop path.
+    const int MaxLookAhead =
+        int(getAIEHazardRecognizer(Zone)->getMaxLookAhead());
+    const int Start = std::max(TopReadyCycle - CurrCycle, -MaxLookAhead);
+    for (int DeltaCycles = Start; DeltaCycles <= 0; ++DeltaCycles) {
+      // TopReadyCycle is always less or equal to the current cycle here,
       // (if not, we could violate dependencies) so DeltaCycles will
       // always be less or equal to 0.
       if (Zone.checkHazard(&SU, DeltaCycles))
@@ -714,7 +724,8 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
       SU.TopReadyCycle = CurrCycle + DeltaCycles;
       return true;
     }
-    // We know that we can't schedule in any cycle <= CurrCycle.
+    // No slot found in the scoreboard window. The callers' bump loop will
+    // advance the scoreboard by one cycle so the next call sees a fresh slot.
     SU.TopReadyCycle = CurrCycle + 1;
     return false;
   }
