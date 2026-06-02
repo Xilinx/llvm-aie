@@ -38,8 +38,9 @@ public:
   unsigned getOppositeBranchOpcode(unsigned Opc) const override;
   unsigned getJumpOpcode() const override;
   unsigned getPseudoMoveOpcode() const override;
-  unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
-                                APInt &Val) const override;
+  std::optional<unsigned> getConstantMovOpcode(MachineRegisterInfo &MRI,
+                                               unsigned int Reg,
+                                               APInt &Val) const override;
   unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
   unsigned getMvSclOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;

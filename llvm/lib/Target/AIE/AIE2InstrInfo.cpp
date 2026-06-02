@@ -838,9 +838,9 @@ AIE2InstrInfo::getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
   }
 }
 
-unsigned AIE2InstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
-                                             unsigned int Reg,
-                                             APInt &Val) const {
+std::optional<unsigned>
+AIE2InstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
+                                    APInt &Val) const {
 
   const auto &TRI =
       static_cast<const AIE2RegisterInfo *>(MRI.getTargetRegisterInfo());
@@ -869,13 +869,10 @@ unsigned AIE2InstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
     if (regClassMatches(AIE2::ePmDmRegClass, DstRegClass, Reg))
       return AIE2::MOV_PD_imm11_pseudo;
   }
-  if (ImmSize <= 32) {
+  if (ImmSize <= 32)
     return AIE2::MOVXM_lng_cg;
-  }
-  dbgs() << "Imm. Size: " << ImmSize << "\n"
-         << "DstRegClass ID: " << DstRegClass->getID() << "\n";
-  llvm_unreachable("Expected imm. size <= 32 bits");
-  dbgs() << "DstRegClass ID: " << DstRegClass->getID() << "\n";
+
+  return std::nullopt;
 }
 
 unsigned AIE2InstrInfo::getScalarMovOpcode(Register DstReg,

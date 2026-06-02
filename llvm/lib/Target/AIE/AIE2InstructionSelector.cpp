@@ -458,7 +458,8 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
   if (auto Const =
           getIConstantVRegValWithLookThrough(I.getOperand(2).getReg(), MRI)) {
     auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Const->Value);
-    auto Mov = MIB.buildInstr(OpCode, {DstReg}, {})
+    assert(OpCode && "Failed to get constant mov opcode during ISel");
+    auto Mov = MIB.buildInstr(*OpCode, {DstReg}, {})
                    .addImm(Const->Value.getSExtValue() - 1);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*Mov, TII, TRI, RBI);
