@@ -1120,9 +1120,9 @@ unsigned AIE2PSInstrInfo::getPseudoMoveOpcode() const {
   return AIE2PS::PseudoMove;
 }
 
-unsigned AIE2PSInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
-                                               unsigned int Reg,
-                                               APInt &Val) const {
+std::optional<unsigned>
+AIE2PSInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
+                                      unsigned int Reg, APInt &Val) const {
   const auto &TRI =
       static_cast<const AIE2PRegisterInfo *>(MRI.getTargetRegisterInfo());
   unsigned int ImmSize = Val.getSignificantBits();
@@ -1147,12 +1147,10 @@ unsigned AIE2PSInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
     if (regClassMatches(AIE2PS::mMvSclDstRegClass, DstRegClass, Reg))
       return AIE2PS::MOV_scalar_imm11_pseudo;
   }
-  if (ImmSize <= 32) {
+  if (ImmSize <= 32)
     return AIE2PS::MOVXM_lng_cg;
-  }
-  dbgs() << "Imm. Size: " << ImmSize << "\n"
-         << "DstRegClass ID: " << DstRegClass->getID() << "\n";
-  llvm_unreachable("Expected imm. size <= 32 bits");
+
+  return std::nullopt;
 }
 
 unsigned AIE2PSInstrInfo::getScalarMovOpcode(Register DstReg,

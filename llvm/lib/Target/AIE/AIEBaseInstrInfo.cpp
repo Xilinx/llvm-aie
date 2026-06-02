@@ -597,14 +597,16 @@ bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
     return false;
   }
 
-  // Get the appropriate move-immediate opcode for the destination register
+  // Get the appropriate move-immediate opcode for the destination register.
+  // Bail out if no suitable opcode exists for this register/immediate combo.
   APInt ImmAPInt(32, ImmVal, /*isSigned=*/true);
-  unsigned NewOpc = getConstantMovOpcode(*MRI, DstReg, ImmAPInt);
+  std::optional<unsigned> NewOpc = getConstantMovOpcode(*MRI, DstReg, ImmAPInt);
+  if (!NewOpc)
+    return false;
 
-  // Build the new move-immediate instruction
   MachineBasicBlock &MBB = *UseMI.getParent();
   const DebugLoc &DL = UseMI.getDebugLoc();
-  BuildMI(MBB, UseMI, DL, get(NewOpc), DstReg).addImm(ImmAPInt.getSExtValue());
+  BuildMI(MBB, UseMI, DL, get(*NewOpc), DstReg).addImm(ImmAPInt.getSExtValue());
 
   // Remove the old COPY
   UseMI.eraseFromParent();

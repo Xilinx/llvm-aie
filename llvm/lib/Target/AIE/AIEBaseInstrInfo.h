@@ -249,10 +249,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getJumpOpcode() const {
     llvm_unreachable("Target didn't implement getJumpOpcode");
   }
-  /// Return Multi-Slot Pseudo opcode based on Reg type and imm. size
-  virtual unsigned getConstantMovOpcode(MachineRegisterInfo &MRI,
-                                        unsigned int Reg, APInt &Val) const {
-    llvm_unreachable("Target didn't implement getConstantMovOpcode");
+  /// Return Multi-Slot Pseudo opcode based on Reg type and imm. size.
+  /// Returns std::nullopt when no suitable opcode exists for the given
+  /// register class / immediate combination.
+  virtual std::optional<unsigned> getConstantMovOpcode(MachineRegisterInfo &MRI,
+                                                       unsigned int Reg,
+                                                       APInt &Val) const {
+    return std::nullopt;
   }
   /// Return Multi-Slot Pseudo opcode based on Reg type
   virtual unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const {
