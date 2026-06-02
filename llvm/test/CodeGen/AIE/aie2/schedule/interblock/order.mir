@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=sched-blocks \
 # RUN: --aie-loop-aware=1 %s -o /dev/null |& FileCheck %s
 # REQUIRES: asserts
@@ -189,6 +189,61 @@ body:             |
     JNZ $r0, %bb.4
     DelayedSchedBarrier
   bb.9:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            nestedEpilogueCycle
+tracksRegLiveness: true
+body:             |
+  ; Entry reaches outer prologue (bb.4) and inner loop (bb.1) separately. Outer
+  ; epilogue (bb.6) forward-reaches inner epilogue (bb.2) via bb.6->bb.2. Phase-2
+  ; post_order(bb.6) pushes epilogue (bb.6) before prologue (bb.4).
+  ; CHECK-LABEL: nestedEpilogueCycle
+  ; CHECK: MBB scheduling sequence : 1 -> 5 -> 7 -> 6 -> 4 -> 3 -> 2 -> 0 ->
+  bb.0:
+    liveins: $r0, $r1
+    successors: %bb.4, %bb.1
+    JNZ $r0, %bb.4
+    DelayedSchedBarrier
+    J_jump_imm %bb.1
+    DelayedSchedBarrier
+  bb.1:
+    liveins: $r0, $r1
+    successors: %bb.1, %bb.2
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.2:
+    liveins: $r1
+    successors: %bb.3
+    J_jump_imm %bb.3
+    DelayedSchedBarrier
+  bb.3:
+    successors: %bb.4
+    J_jump_imm %bb.4
+    DelayedSchedBarrier
+  bb.4:
+    liveins: $r1
+    successors: %bb.5
+    J_jump_imm %bb.5
+    DelayedSchedBarrier
+  bb.5:
+    liveins: $r1
+    successors: %bb.5, %bb.6
+    $r1 = ADD_add_r_ri $r1, -1, implicit-def $srcarry
+    JNZ $r1, %bb.5
+    DelayedSchedBarrier
+  bb.6:
+    liveins: $r1
+    successors: %bb.4, %bb.7, %bb.2
+    JNZ $r1, %bb.4
+    DelayedSchedBarrier
+    J_jump_imm %bb.7
+    DelayedSchedBarrier
+    J_jump_imm %bb.2
+    DelayedSchedBarrier
+  bb.7:
     RET implicit $lr
     DelayedSchedBarrier
 ...
