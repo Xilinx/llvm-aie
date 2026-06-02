@@ -196,11 +196,17 @@ body:             |
 name:            nestedEpilogueCycle
 tracksRegLiveness: true
 body:             |
-  ; Entry reaches outer prologue (bb.4) and inner loop (bb.1) separately. Outer
-  ; epilogue (bb.6) forward-reaches inner epilogue (bb.2) via bb.6->bb.2. Phase-2
-  ; post_order(bb.6) pushes epilogue (bb.6) before prologue (bb.4).
+  ; bb.1 nest ($r0): loop bb.1, prologue bb.0, epilogue bb.2.
+  ; bb.5 nest ($r1): loop bb.5, prologue bb.4, epilogue bb.6 (loop-back bb.6->bb.4,
+  ; dedicated exit bb.7).
+  ; Main pipeline: bb.0 -> bb.1 -> bb.2 -> bb.3 -> bb.4 -> bb.5 -> bb.6.
+  ; bb.0 also branches directly to bb.4 (JNZ); bb.6 also jumps to bb.2 (bb.6->bb.2).
+  ; Phase-2 post_order(bb.6) can visit bb.2 (bb.1 epilogue) before bb.4 (bb.5
+  ; prologue); without nested-epilogue recursion bb.6 may be pushed before bb.4
+  ; (wrong). Recursive ProcessEpilogue(bb.2) schedules the bb.1 subtree first so
+  ; bb.4 precedes bb.6.
   ; CHECK-LABEL: nestedEpilogueCycle
-  ; CHECK: MBB scheduling sequence : 1 -> 5 -> 7 -> 6 -> 4 -> 3 -> 2 -> 0 ->
+  ; CHECK: MBB scheduling sequence : 1 -> 5 -> 7 -> 4 -> 3 -> 2 -> 6 -> 0 ->
   bb.0:
     liveins: $r0, $r1
     successors: %bb.4, %bb.1
