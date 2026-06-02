@@ -475,13 +475,13 @@ public:
       : IBS(IBS), Emitted(Emitted), Processing(Processing), Push(Push) {}
 
   void operator()(MachineBasicBlock *EpilogueRoot) const {
-    if (!Processing.insert(EpilogueRoot).second)
+    if (Emitted.contains(EpilogueRoot) ||
+        !Processing.insert(EpilogueRoot).second)
       return;
 
     for (MachineBasicBlock *Sub : post_order(EpilogueRoot)) {
       if (Sub != EpilogueRoot &&
-          IBS.getBlockState(Sub).Kind == BlockType::Epilogue &&
-          !Emitted.contains(Sub) && !Processing.contains(Sub)) {
+          IBS.getBlockState(Sub).Kind == BlockType::Epilogue) {
         (*this)(Sub);
       }
       Push(Sub);
@@ -826,8 +826,6 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
 
   for (MachineBasicBlock *MBB : post_order(MF)) {
     if (getBlockState(MBB).Kind != BlockType::Epilogue)
-      continue;
-    if (Emitted.contains(MBB))
       continue;
     ProcessEpilogue(MBB);
   }
