@@ -1519,18 +1519,19 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // lifted instructions are included in the data-load chain.
   liftEpiloguePointerUpdatesToPrologue(LS);
 
-  // Collect the data-load chain instructions from the outer header.
+  // Collect the data-load chain instructions from the prologue region.
   // Hardware-loop setup calls (set.loop.iterations) are excluded.
-  // In split-prologue mode, we split the in the prologue in two parts
+  // Split-prologue keeps the 2048-bit producers in the branch-free steady
+  // header and clones them into cool-down; otherwise the whole region is
+  // pipelined. collectPrologueInstructionsForSplit returns false when there is
+  // no split point, requesting the whole-region path.
   SmallVector<Instruction *, 16> PInsts;
-  if (Overrides.get(SplitPrologue)) {
-    if (!collectPrologueInstructionsForSplit(LS, PInsts)) {
-      LLVM_DEBUG(dbgs() << "    Split-prologue: no split points\n");
-      collectPrologueInstructions(LS, PInsts);
-    } else {
-      LLVM_DEBUG(dbgs() << "    Split-prologue: pipelining " << PInsts.size()
-                        << " Part-1 instructions\n");
-    }
+  bool SplitApplied = false;
+  if (Overrides.get(SplitPrologue) &&
+      collectPrologueInstructionsForSplit(LS, PInsts)) {
+    SplitApplied = true;
+    LLVM_DEBUG(dbgs() << "    Split-prologue: pipelining " << PInsts.size()
+                      << " Part-1 instructions\n");
   } else {
     collectPrologueInstructions(LS, PInsts);
   }
@@ -1566,7 +1567,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // outer.header and must also be cloned into cooldown.entry.
   // Must be done while Part 1 instructions still exist for forward-tracking.
   SmallVector<Instruction *, 16> Part2Insts;
-  if (Overrides.get(SplitPrologue) && !PInsts.empty()) {
+  if (SplitApplied) {
     SmallPtrSet<Instruction *, 32> Part1Set;
     Part1Set.insert(PInsts.begin(), PInsts.end());
     collectPart2Instructions(LS, Part1Set, Part2Insts);
