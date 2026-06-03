@@ -40,6 +40,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
@@ -1609,6 +1610,18 @@ bool AIEOuterLoopPipeliner::performTransformation(
 
   // Adjust itercount metadata to reflect the reduced trip count.
   updateLoopMetadata(LS);
+
+  // Emit a remark with the chosen strategy and the prologue block count.
+  OptimizationRemarkEmitter ORE(LS.OuterHeader->getParent());
+  ORE.emit([&]() {
+    return OptimizationRemark(DEBUG_TYPE, "pipelined",
+                              LS.OuterHeader->getTerminator())
+           << "pipelined outer loop "
+           << ore::NV("Mode", StringRef(SplitApplied ? "split-prologue"
+                                                     : "whole-region"))
+           << ore::NV("PrologueBlocks",
+                      static_cast<int64_t>(LS.PrologueRegion.size()));
+  });
 
   return true;
 }
