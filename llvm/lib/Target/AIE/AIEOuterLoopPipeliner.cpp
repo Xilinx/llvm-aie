@@ -386,6 +386,7 @@ private:
   // Replace uses of I in the inner loop with phi_I, then erase I.
   void createPipelinedPHIs(const LoopStructure &LS, BasicBlock *WarmUp,
                            const SmallVectorImpl<Instruction *> &PInsts,
+                           const SmallVectorImpl<Instruction *> &Part2Insts,
                            const ValueToValueMapTy &WarmUpVMap,
                            const ValueToValueMapTy &EpiVMap);
 
@@ -394,6 +395,16 @@ private:
   // (a branch-free steady region). No-op for a linear prologue, and a safe
   // no-op when the interior blocks are not fully drained or the exit has PHIs.
   void collapseDrainedPrologueRegion(LoopStructure &LS);
+
+  // After a successful collapse, fuse the now-empty outer header with its sole
+  // successor (the region exit / inner preheader) so the steady-state header
+  // carries the inner-loop setup and branch instead of just a fall-through.
+  // BranchFolder deletes empty fall-through MBBs but does not rewrite
+  // MO_MachineBasicBlock value operands; the JNZD back-edge address planted by
+  // convertOuterLoopToHardwareLoop would otherwise dangle and print as %bb.-1.
+  // No-op unless the collapse produced the expected 2-block linear shape with
+  // a single-predecessor, no-PHI exit.
+  void mergeCollapsedHeaderWithExit(LoopStructure &LS);
 
   // Create the cool-down region (peeled epilogue for last iteration):
   //   cooldown.entry: set.loop.iterations (cloned) + Part2Insts clones
@@ -485,6 +496,13 @@ private:
   // fall back to collectPrologueInstructions).
   bool collectPrologueInstructionsForSplit(
       const LoopStructure &LS, SmallVectorImpl<Instruction *> &Out) const;
+
+  // True if every anchor's block dominates the region exit (each anchor is
+  // unconditionally executed in the region). A guarded anchor makes the
+  // split-prologue strategy illegal; the caller falls back to whole-region.
+  bool allAnchorsDominateRegionExit(
+      const LoopStructure &LS,
+      const SmallPtrSetImpl<Instruction *> &Anchors) const;
 
   // Collect the "Part 2" prologue instructions for split-prologue mode.
   // Part 2 = Strategy matched instructions reachable from Part 1 instructions,
@@ -1033,21 +1051,29 @@ void AIEOuterLoopPipeliner::updateOuterHeaderPHIs(const LoopStructure &LS,
 void AIEOuterLoopPipeliner::createPipelinedPHIs(
     const LoopStructure &LS, BasicBlock *WarmUp,
     const SmallVectorImpl<Instruction *> &PInsts,
+    const SmallVectorImpl<Instruction *> &Part2Insts,
     const ValueToValueMapTy &WarmUpVMap, const ValueToValueMapTy &EpiVMap) {
   Instruction *InsertPt = &*LS.OuterHeader->getFirstInsertionPt();
 
-  // For a guarded prologue, only region live-outs (values consumed outside the
-  // region) get a header PHI: they are defined in unconditionally executed
-  // region blocks (entry or exit) so they dominate the exit on both prefetch
-  // paths. Interior and guarded values are consumed inside the cloned regions
-  // and are merely erased from the loop below. For the linear case every value
-  // is effectively a live-out, so the predicate is bypassed.
+  // For a diamond, only values consumed by the steady loop (inner loop /
+  // epilogue, or a Part-2 instruction kept in the header) need a header PHI;
+  // values consumed only within Part 1 or by the collapsed guard do not. Such
+  // pipelined values are defined in unconditionally executed region blocks, so
+  // they dominate the region exit on both prefetch paths and the PHI is well
+  // formed. The linear case effectively pipelines every value out, so the
+  // predicate is bypassed.
   const bool Diamond = LS.hasMultiBlockPrologue();
-  auto IsLiveOut = [&](Instruction *I) {
-    for (User *U : I->users())
-      if (auto *UI = dyn_cast<Instruction>(U))
-        if (!llvm::is_contained(LS.PrologueRegion, UI->getParent()))
-          return true;
+  SmallPtrSet<Instruction *, 32> Part2Set(Part2Insts.begin(), Part2Insts.end());
+  auto NeedsPHI = [&](Instruction *I) {
+    for (User *U : I->users()) {
+      auto *UI = dyn_cast<Instruction>(U);
+      if (!UI)
+        continue;
+      if (!llvm::is_contained(LS.PrologueRegion, UI->getParent()))
+        return true;
+      if (Part2Set.count(UI))
+        return true;
+    }
     return false;
   };
 
@@ -1058,7 +1084,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(
     // execution path simply runs its own cloned copy independently.
     if (I->getType()->isVoidTy())
       continue;
-    if (Diamond && !IsLiveOut(I))
+    if (Diamond && !NeedsPHI(I))
       continue;
     auto WIt = WarmUpVMap.find(I);
     auto EIt = EpiVMap.find(I);
@@ -1143,6 +1169,58 @@ void AIEOuterLoopPipeliner::collapseDrainedPrologueRegion(LoopStructure &LS) {
   if (Guard && Guard->use_empty())
     Guard->eraseFromParent();
   LS.PrologueRegion.assign({Entry, Exit});
+}
+
+void AIEOuterLoopPipeliner::mergeCollapsedHeaderWithExit(LoopStructure &LS) {
+  // Only meaningful after a successful collapse: a 2-block region with a
+  // single unconditional edge Entry -> Exit, Entry empty of non-PHI work, and
+  // Exit owned solely by Entry with no PHIs.
+  if (LS.PrologueRegion.size() != 2)
+    return;
+  BasicBlock *Entry = LS.OuterHeader;
+  BasicBlock *Exit = LS.getPrologueExit();
+  if (Entry == Exit)
+    return;
+  auto *Br = dyn_cast<BranchInst>(Entry->getTerminator());
+  const bool ShapeOK =
+      Br && Br->isUnconditional() && Br->getSuccessor(0) == Exit &&
+      Exit->getSinglePredecessor() == Entry && Exit->phis().empty();
+  if (!ShapeOK)
+    return;
+  // Entry must be empty of non-PHI work other than the branch itself.
+  for (Instruction &I : *Entry)
+    if (!isa<PHINode>(&I) && &I != Br)
+      return;
+
+  // Splice Exit's body (incl. its terminator) into Entry, replacing "br Exit".
+  Br->eraseFromParent();
+  Entry->splice(Entry->end(), Exit);
+
+  // PHIs in Entry's new successors that named Exit as their incoming block
+  // now see Entry on that edge.
+  for (BasicBlock *Succ : successors(Entry))
+    Succ->replacePhiUsesWith(Exit, Entry);
+
+  // Drop Exit from analyses before erasing the block. LI->removeBlock walks
+  // every containing loop and removes Exit from each. DT->eraseNode requires
+  // a leaf, so reparent Exit's dominator-tree children to Entry first; this is
+  // correct because Entry was Exit's only predecessor and therefore Exit's
+  // idom, so any block previously dominated through Exit is now dominated
+  // through Entry.
+  LI->removeBlock(Exit);
+  if (DomTreeNode *ExitNode = DT->getNode(Exit)) {
+    DomTreeNode *EntryNode = DT->getNode(Entry);
+    SmallVector<DomTreeNode *, 8> Children(ExitNode->begin(), ExitNode->end());
+    for (DomTreeNode *Child : Children)
+      DT->changeImmediateDominator(Child, EntryNode);
+  }
+  DT->eraseNode(Exit);
+  Exit->eraseFromParent();
+
+  // OuterHeader now also plays the role of the inner preheader.
+  LS.InnerPreheader = Entry;
+  LS.PrologueRegion.assign({Entry});
+  LLVM_DEBUG(dbgs() << "    Merged collapsed outer header with region exit\n");
 }
 
 // Create the cool-down region for the last outer iteration (N-1).
@@ -1506,13 +1584,28 @@ void AIEOuterLoopPipeliner::updateLoopMetadata(const LoopStructure &LS) {
   LS.OuterLoop->setLoopID(FinalLoopID);
 }
 
+// True if every anchor's block dominates the region exit, i.e. each anchor is
+// unconditionally executed within the prologue region. A guarded anchor would
+// require its guard in the branch-free steady header, so split-prologue is
+// illegal and the caller must fall back to whole-region pipelining.
+bool AIEOuterLoopPipeliner::allAnchorsDominateRegionExit(
+    const LoopStructure &LS,
+    const SmallPtrSetImpl<Instruction *> &Anchors) const {
+  for (Instruction *A : Anchors)
+    if (!DT->dominates(A->getParent(), LS.getPrologueExit())) {
+      LLVM_DEBUG(dbgs() << "    Split-prologue: anchor in a guarded block; "
+                           "falling back to whole-region pipelining\n");
+      return false;
+    }
+  return true;
+}
+
 bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
     const LoopStructure &LS, SmallVectorImpl<Instruction *> &Out) const {
-  // Find Part 2 anchors = relevant producing CallInsts within the
-  // prologue that are reachable from loads (forward-tracking).
-  // We forward-track from loads to find anchors, then collect all their
-  // descendants. Part 1 = everything else (all prologue instructions that are
-  // not Part 2 anchors or their descendants, and not set.loop.iterations).
+  // Find Part 2 anchors = matched producing CallInsts in the region reachable
+  // from loads (forward-tracking, traversing region-internal merge PHIs); then
+  // collect the anchors' descendants (Part 2). Part 1 = the remaining
+  // pipelineable region instructions (load/address/guard chain + merge seed).
   SmallPtrSet<Instruction *, 32> ReachableFromLoad;
   SmallVector<Instruction *, 32> FwdWorklist;
   forEachRegionInstruction(LS, [&](Instruction *I) {
@@ -1542,7 +1635,13 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
   if (Anchors.empty())
     return false;
 
-  // Find all descendants of anchors within the prologue (Part 2 set).
+  // A split keeps Part 2 in the branch-free steady header, so reject guarded
+  // anchors and fall back to whole-region pipelining.
+  if (!allAnchorsDominateRegionExit(LS, Anchors))
+    return false;
+
+  // Part 2 = anchors + their forward descendants in the region. Merge PHIs are
+  // upstream seeds and stay in Part 1, so PHIs are not pulled into Part 2.
   SmallPtrSet<Instruction *, 32> Part2Set;
   Part2Set.insert(Anchors.begin(), Anchors.end());
   SmallVector<Instruction *, 16> DescWorklist(Anchors.begin(), Anchors.end());
@@ -1557,9 +1656,8 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
     }
   }
 
-  // Part 1 = region pipeline candidates not in Part 2 (the load/address chain;
-  // the post-anchor cone stays in Part 2). Loop-carried PHIs, terminators, and
-  // hardware-loop setup are excluded by forEachRegionPipelineCandidate.
+  // Part 1 = region pipeline candidates not in Part 2 (the load/address/guard
+  // chain and the merge seed; the post-merge anchor cone stays in Part 2).
   forEachRegionPipelineCandidate(LS, [&](Instruction *I) {
     if (!Part2Set.count(I))
       Out.push_back(I);
@@ -1731,7 +1829,7 @@ void AIEOuterLoopPipeliner::collectPart2Instructions(
   });
 
   LLVM_DEBUG(dbgs() << "    Split-prologue: " << Out.size()
-                    << " Part-2 instructions (stay in outer.header + "
+                    << " Part-2 instructions (stay in steady header + "
                        "cooldown.entry)\n");
 }
 
@@ -1744,14 +1842,14 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // lifted instructions are included in the data-load chain.
   liftEpiloguePointerUpdatesToPrologue(LS);
 
-  // Collect the data-load chain instructions from the prologue region.
-  // Hardware-loop setup calls (set.loop.iterations) are excluded.
-  // Split-prologue keeps the 2048-bit producers in the steady header; it is
-  // only wired up for the linear prologue so far, so a guarded (diamond)
-  // prologue always uses whole-region pipelining.
+  // Collect the data-load chain from the prologue region (hardware-loop setup
+  // excluded). Split-prologue keeps the matched producers in the steady header
+  // and clones them into cool-down; legality is enforced by
+  // collectPrologueInstructionsForSplit (false means fall back to
+  // whole-region).
   SmallVector<Instruction *, 16> PInsts;
   bool SplitApplied = false;
-  if (Overrides.get(SplitPrologue) && !LS.hasMultiBlockPrologue() &&
+  if (Overrides.get(SplitPrologue) &&
       collectPrologueInstructionsForSplit(LS, PInsts)) {
     SplitApplied = true;
     LLVM_DEBUG(dbgs() << "    Split-prologue: pipelining " << PInsts.size()
@@ -1797,16 +1895,17 @@ bool AIEOuterLoopPipeliner::performTransformation(
     collectPart2Instructions(LS, Part1Set, Part2Insts);
   }
 
-  // Create pipelined PHI nodes in the outer header for each data-load
-  // value. Replace uses of Part 1 instructions with PHI nodes, erase originals.
-  // After this step, Part 2 instructions in outer.header automatically use the
-  // new PHI nodes (via replaceAllUsesWith), so cloning them into cooldown.entry
-  // with CoolVMap will correctly use the last epilogue values.
-  createPipelinedPHIs(LS, WarmUp, PInsts, WarmUpVMap, EpiVMap);
+  // Create pipelined PHI nodes in the steady header for each pipelined value
+  // consumed outside Part 1 (the inner loop / epilogue or a Part 2
+  // instruction), replace those uses, and erase the originals. Part 2
+  // instructions then read the new PHIs, so cloning them into cooldown.entry
+  // with CoolVMap correctly uses the last epilogue values.
+  createPipelinedPHIs(LS, WarmUp, PInsts, Part2Insts, WarmUpVMap, EpiVMap);
 
   // Collapse the now-drained in-loop guard diamond so the steady-state header
   // is branch-free (the guard survives only at the prefetch sites).
   collapseDrainedPrologueRegion(LS);
+  mergeCollapsedHeaderWithExit(LS);
 
   // Adjust the outer loop trip count from N to N-1.
   // Must happen before peelLastIterationEpilogue so that the hardware loop
