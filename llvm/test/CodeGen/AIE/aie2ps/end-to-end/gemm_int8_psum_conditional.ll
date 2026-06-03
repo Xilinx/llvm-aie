@@ -752,7 +752,7 @@ for.body:                                         ; preds = %for.cond.cleanup143
   %84 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %83, <16 x i32> poison, i32 %49)
   %85 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %75, <16 x i32> poison, i32 %52)
   %86 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %85, <16 x i32> poison, i32 %53)
-  br i1 %psum_in_zero, label %if.end, label %if.then
+  br i1 %psum_in_zero, label %if.end, label %if.then, !prof !300
 
 if.then:                                          ; preds = %for.body
   %87 = load <8 x i64>, ptr %p_psum_in.0.in930, align 64, !tbaa !63, !noalias !92
@@ -876,7 +876,7 @@ for.cond.cleanup143:                              ; preds = %for.body144
   %145 = extractvalue { ptr, i20 } %142, 0
   %lsr.iv.next972 = add nsw i32 %lsr.iv971, -1
   %exitcond942.not = icmp eq i32 %lsr.iv.next972, 0
-  br i1 %exitcond942.not, label %for.cond.cleanup, label %for.body, !llvm.loop !204
+  br i1 %exitcond942.not, label %for.cond.cleanup, label %for.body, !llvm.loop !204, !prof !301
 
 for.body144:                                      ; preds = %for.body144, %if.end
   %lsr.iv = phi i32 [ %62, %if.end ], [ %lsr.iv.next, %for.body144 ]
@@ -928,7 +928,7 @@ for.body144:                                      ; preds = %for.body144, %if.en
   %p_mat_b.1.in = extractvalue { ptr, i20, i20 } %159, 0
   %lsr.iv.next = add nsw i32 %lsr.iv, -1
   %exitcond.not = icmp eq i32 %lsr.iv.next, 0
-  br i1 %exitcond.not, label %for.cond.cleanup143, label %for.body144, !llvm.loop !235
+  br i1 %exitcond.not, label %for.cond.cleanup143, label %for.body144, !llvm.loop !235, !prof !302
 }
 
 declare { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr, i20, i20, i20, i20, i20, i20, i20) #1
@@ -1185,3 +1185,6 @@ attributes #3 = { nocallback nofree nosync nounwind willreturn memory(inaccessib
 !234 = distinct !{!234, !"_ZN3aie6load_vILj64EL15aie_dm_resource0ETkNS_21DecoratedElemBaseTypeEU3AS5aEENS_6vectorIN22aie_dm_resource_removeIT1_E4typeEXT_EEEPKS5_"}
 !235 = distinct !{!235, !205, !236}
 !236 = !{!"llvm.loop.itercount.range", i64 4}
+!300 = !{!"branch_weights", i32 100, i32 1}
+!301 = !{!"branch_weights", i32 1, i32 10}
+!302 = !{!"branch_weights", i32 1, i32 40}
