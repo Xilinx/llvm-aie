@@ -147,6 +147,22 @@ static bool isSafePointerIncrementIntrinsic(Intrinsic::ID IID) {
   }
 }
 
+// True for @llvm.set.loop.iterations / @llvm.start.loop.iterations: the
+// hardware-loop setup calls that must stay in the loop (the inner preheader)
+// and be cloned only into the cool-down — never pipelined into the prefetch
+// sites.
+static bool isHardwareLoopSetup(const Instruction *I) {
+  const auto *Call = dyn_cast<CallInst>(I);
+  if (!Call)
+    return false;
+  const auto *Fn = Call->getCalledFunction();
+  if (!Fn)
+    return false;
+  Intrinsic::ID IID = Fn->getIntrinsicID();
+  return IID == Intrinsic::set_loop_iterations ||
+         IID == Intrinsic::start_loop_iterations;
+}
+
 namespace {
 
 // Cached result of latch exit condition analysis.
@@ -165,19 +181,31 @@ struct LatchBoundInfo {
 };
 
 // Loop structure for outer loop pipelining.
-// We only support the linear structure:
-//   outer.header (prologue) → inner loop → outer.latch (epilogue)
-// where prologue instructions are in the outer header and epilogue
-// instructions are in the outer latch (no separate blocks).
+// The prologue is a single-entry/single-exit (SESE) region of blocks between
+// the outer header (region entry) and the inner preheader (region exit). For
+// the common linear loop this region is just {OuterHeader} and
+// OuterHeader == InnerPreheader; for a guarded prologue it is a diamond
+// (e.g. outer.header → if.then → if.end). The epilogue stays a single block
+// (the outer latch).
 struct LoopStructure {
   Loop *OuterLoop;
   Loop *InnerLoop;
-  BasicBlock *OuterHeader; // Contains prologue instructions
+  BasicBlock *OuterHeader; // Prologue region entry
   BasicBlock *OuterLatch;  // Contains epilogue instructions
   BasicBlock *InnerPreheader;
   BasicBlock *InnerHeader;
   BasicBlock *InnerLatch;
   BasicBlock *InnerExit;
+
+  // The prologue region in program order: entry (OuterHeader) first, exit
+  // (InnerPreheader) last. Populated by analyzeLoopStructure once the region is
+  // validated. A single-element vector is the degenerate linear case.
+  SmallVector<BasicBlock *, 4> PrologueRegion;
+
+  // The epilogue blocks in program order, ending at the latch (back-branch).
+  // Defaults to {OuterLatch}; clonePrologueIntoEpilogue widens it when it
+  // splits the latch to host the prefetch diamond.
+  SmallVector<BasicBlock *, 4> EpilogueRegion;
 
   // Constructs a LoopStructure from an outer loop.
   // Preconditions (caller must verify before constructing):
@@ -194,9 +222,36 @@ struct LoopStructure {
     assert(OuterLatch && "Requires single outer latch");
   }
 
-  // Returns true if I is in the prologue block (outer header).
   bool isInPrologue(const Instruction *I) const {
-    return I->getParent() == OuterHeader;
+    return llvm::is_contained(PrologueRegion, I->getParent());
+  }
+
+  BasicBlock *getPrologueExit() const { return InnerPreheader; }
+
+  bool hasMultiBlockPrologue() const { return PrologueRegion.size() > 1; }
+
+  // A region-internal merge PHI merges values produced inside the prologue
+  // region (every incoming block is a region block). It is pipelined with the
+  // region. A loop-carried PHI in the entry instead has incoming edges from the
+  // preheader and latch (outside the region) and is resolved to a concrete
+  // value when cloning, never cloned as a PHI.
+  bool isRegionInternalPhi(const PHINode *PN) const {
+    for (const BasicBlock *IB : PN->blocks())
+      if (!llvm::is_contained(PrologueRegion, IB))
+        return false;
+    return true;
+  }
+
+  // A value is pipelineable when it lives in the region and is a plain
+  // instruction or a region-internal merge PHI. Loop-carried PHIs are excluded:
+  // they resolve to concrete values via the clone VMap rather than being
+  // pipelined.
+  bool isPipelineableValue(const Instruction *I) const {
+    if (!isInPrologue(I))
+      return false;
+    if (const auto *PN = dyn_cast<PHINode>(I))
+      return isRegionInternalPhi(PN);
+    return true;
   }
 
   // Returns true if I is in the epilogue block (outer latch).
@@ -247,6 +302,12 @@ private:
 
   bool runOnLoop(Loop *L);
   std::optional<LoopStructure> analyzeLoopStructure(Loop *L);
+  // Discover and validate the SESE prologue region (entry = outer header, exit
+  // = inner preheader) and populate LS.PrologueRegion in program order. Returns
+  // false if the region is not a clonable SESE region (early loop exit inside
+  // the prologue, a jump into the middle of the region, a prologue path that
+  // bypasses the inner loop, or any block outside the region/inner-loop/latch).
+  bool discoverPrologueRegion(LoopStructure &LS) const;
   bool isInnerLoopHardwareLoop(const LoopStructure &LS) const;
   bool isProfitableToRotate(const LoopStructure &LS,
                             const AIE::LoopOptionOverrides &Overrides);
@@ -266,7 +327,25 @@ private:
   bool performTransformation(LoopStructure &LS,
                              const AIE::LoopOptionOverrides &Overrides);
 
-  // Clone data-load chain into a warm-up block before the outer loop.
+  // Clone the prologue region's Part-1 instructions (PInsts) as a parallel
+  // block subgraph that preserves the region's internal control flow. VMap must
+  // be pre-seeded with loop-carried PHI -> concrete value entries. New blocks
+  // are inserted before InsertBefore in region order and appended to NewBlocks.
+  // The exit clone's terminator is NOT created (the caller wires it). Returns
+  // {entryClone, exitClone}. For a single-block region this is one block.
+  std::pair<BasicBlock *, BasicBlock *>
+  cloneRegionSubgraph(const LoopStructure &LS,
+                      const SmallVectorImpl<Instruction *> &PInsts,
+                      ValueToValueMapTy &VMap, const Twine &BlockSuffix,
+                      const Twine &InstSuffix, BasicBlock *InsertBefore,
+                      SmallVectorImpl<BasicBlock *> &NewBlocks);
+
+  void cloneInstChainBefore(Instruction *InsertBefore,
+                            const SmallVectorImpl<Instruction *> &PInsts,
+                            ValueToValueMapTy &VMap, const Twine &InstSuffix);
+
+  // Clone data-load chain into a warm-up region before the outer loop. Returns
+  // the warm-up exit block (the new preheader-side predecessor of the header).
   BasicBlock *
   clonePrologueAsWarmUp(const LoopStructure &LS,
                         const SmallVectorImpl<Instruction *> &PInsts,
@@ -304,6 +383,29 @@ private:
   peelLastIterationEpilogue(const LoopStructure &LS,
                             const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
                             const SmallVectorImpl<Instruction *> &Part2Insts);
+
+  // Step helpers of peelLastIterationEpilogue, in call order.
+  BasicBlock *getLatchExitSuccessor(const LoopStructure &LS) const;
+  void cloneHardwareLoopSetupInto(BasicBlock *Dest, const LoopStructure &LS,
+                                  ValueToValueMapTy &CoolVMap) const;
+  BasicBlock *
+  createCooldownSkeleton(const LoopStructure &LS, BasicBlock *CoolEntry,
+                         BasicBlock *OrigExit,
+                         SmallVectorImpl<BasicBlock *> &ClonedInnerBlocks,
+                         ValueToValueMapTy &CoolVMap) const;
+  void
+  clonePart2InstructionsInto(BasicBlock *Dest,
+                             const SmallVectorImpl<Instruction *> &Part2Insts,
+                             ValueToValueMapTy &CoolVMap) const;
+  void
+  cloneInnerLoopInto(const LoopStructure &LS, BasicBlock *CoolEntry,
+                     const SmallVectorImpl<BasicBlock *> &ClonedInnerBlocks,
+                     ValueToValueMapTy &CoolVMap) const;
+  void populateCooldownExit(BasicBlock *CoolExit, const LoopStructure &LS,
+                            const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
+                            ValueToValueMapTy &CoolVMap) const;
+  void wireCooldownIntoCFG(const LoopStructure &LS, BasicBlock *CoolEntry,
+                           BasicBlock *CoolExit, BasicBlock *OrigExit) const;
 
   // Validates the latch exit condition, computes the induction step, and
   // caches all discovered components in LS.LatchBound for later use by
@@ -450,38 +552,35 @@ AIEOuterLoopPipeliner::analyzeLoopStructure(Loop *L) {
     return std::nullopt;
   }
 
-  // We only support the linear structure:
-  //   outer.header (prologue) → inner loop → outer.latch (epilogue)
-  // Check that there are no separate prologue/epilogue blocks.
-  for (BasicBlock *BB : L->blocks()) {
-    if (LS.InnerLoop->contains(BB))
-      continue;
-    // BB is in the outer loop but not the inner loop.
-    // It must be either the outer header or the outer latch.
-    if (BB != LS.OuterHeader && BB != LS.OuterLatch) {
-      LLVM_DEBUG(dbgs() << "    Separate prologue/epilogue blocks not "
-                           "supported (found "
-                        << BB->getName() << ")\n");
-      return std::nullopt;
-    }
-  }
-
-  // Validate: prologue is in outer header (inner preheader == outer header
-  // or inner preheader is the unique successor of outer header).
-  // For simplicity, we require inner preheader == outer header.
-  if (LS.InnerPreheader != LS.OuterHeader) {
-    LLVM_DEBUG(dbgs() << "    Inner preheader != outer header\n");
-    return std::nullopt;
-  }
-
-  // Validate: epilogue is in outer latch (inner exit == outer latch).
+  // Epilogue must be a single block: inner exit == outer latch.
   if (LS.InnerExit != LS.OuterLatch) {
     LLVM_DEBUG(dbgs() << "    Inner exit != outer latch\n");
     return std::nullopt;
   }
 
-  LLVM_DEBUG(dbgs() << "    Linear structure: outer.header -> inner loop -> "
-                       "outer.latch\n");
+  // Discover and validate the prologue region (outer.header .. inner
+  // preheader). This generalizes the linear case (region == {outer.header}) to
+  // a guarded SESE diamond, and rejects any other shape.
+  if (!discoverPrologueRegion(LS))
+    return std::nullopt;
+
+  // Every outer-loop block must belong to the prologue region, the inner loop,
+  // or the single-block epilogue (latch); anything else is an unknown shape.
+  for (BasicBlock *BB : L->blocks()) {
+    if (LS.InnerLoop->contains(BB) || BB == LS.OuterLatch ||
+        llvm::is_contained(LS.PrologueRegion, BB))
+      continue;
+    LLVM_DEBUG(dbgs() << "    Unexpected outer-loop block: " << BB->getName()
+                      << "\n");
+    return std::nullopt;
+  }
+
+  // Epilogue starts as the single latch block; clonePrologueIntoEpilogue widens
+  // it if it splits the latch for a guarded prologue.
+  LS.EpilogueRegion.assign({LS.OuterLatch});
+
+  LLVM_DEBUG(dbgs() << "    Prologue region: " << LS.PrologueRegion.size()
+                    << " block(s); epilogue in outer.latch\n");
 
   // Verify and cache the latch exit condition. LoopStructure is only returned
   // when the bound can be adjusted; LS.Bound is then always valid.
@@ -492,6 +591,16 @@ AIEOuterLoopPipeliner::analyzeLoopStructure(Loop *L) {
   }
   LS.Bound = *MaybeBound;
   return LS;
+}
+
+// Discover and validate the prologue region; only the linear case is accepted.
+bool AIEOuterLoopPipeliner::discoverPrologueRegion(LoopStructure &LS) const {
+  if (LS.InnerPreheader != LS.OuterHeader) {
+    LLVM_DEBUG(dbgs() << "    Inner preheader != outer header\n");
+    return false;
+  }
+  LS.PrologueRegion.assign({LS.OuterHeader});
+  return true;
 }
 
 bool AIEOuterLoopPipeliner::isInnerLoopHardwareLoop(
@@ -585,6 +694,26 @@ bool AIEOuterLoopPipeliner::isSafeToReorderMemoryOps(const LoopStructure &LS) {
   return true;
 }
 
+static void forEachRegionInstruction(const LoopStructure &LS,
+                                     function_ref<void(Instruction *)> Visit) {
+  for (Instruction &I : *LS.OuterHeader)
+    Visit(&I);
+}
+
+// Iterate the region's pipelining candidates: drops terminators, hardware-loop
+// setup, and loop-carried PHIs; passes region-internal merge PHIs through.
+static void
+forEachRegionPipelineCandidate(const LoopStructure &LS,
+                               function_ref<void(Instruction *)> Keep) {
+  forEachRegionInstruction(LS, [&](Instruction *I) {
+    if (I->isTerminator() || isHardwareLoopSetup(I))
+      return;
+    if (isa<PHINode>(I))
+      return;
+    Keep(I);
+  });
+}
+
 // Collect the data-load chain instructions from the outer header that feed
 // the inner loop. Uses backward value tracking from inner loop operands.
 // Hardware-loop setup calls (@llvm.set.loop.iterations) are intentionally
@@ -592,12 +721,11 @@ bool AIEOuterLoopPipeliner::isSafeToReorderMemoryOps(const LoopStructure &LS) {
 // the cool-down block.
 void AIEOuterLoopPipeliner::collectPrologueInstructions(
     const LoopStructure &LS, SmallVectorImpl<Instruction *> &Out) const {
-  // Prologue is always in OuterHeader (linear structure).
   SmallPtrSet<Instruction *, 32> Visited;
   SmallVector<Instruction *, 16> Worklist;
   auto Seed = [&](Value *V) {
     auto *I = dyn_cast<Instruction>(V);
-    if (!I || isa<PHINode>(I) || I->getParent() != LS.OuterHeader)
+    if (!I || !LS.isPipelineableValue(I))
       return;
     if (Visited.insert(I).second)
       Worklist.push_back(I);
@@ -617,54 +745,99 @@ void AIEOuterLoopPipeliner::collectPrologueInstructions(
     Instruction *I = Worklist.pop_back_val();
     for (Value *Op : I->operands()) {
       auto *OpI = dyn_cast<Instruction>(Op);
-      if (!OpI || isa<PHINode>(OpI) || OpI->getParent() != LS.OuterHeader)
+      if (!OpI || !LS.isPipelineableValue(OpI))
         continue;
       if (Visited.insert(OpI).second)
         Worklist.push_back(OpI);
     }
   }
-  // Emit in program order, excluding terminators.
-  // Hardware-loop setup calls are excluded (they stay in the outer header).
-  for (Instruction &I : *LS.OuterHeader) {
-    if (isa<PHINode>(&I) || I.isTerminator())
-      continue;
-    if (!Visited.count(&I))
-      continue;
-    Out.push_back(&I);
-  }
+  // Emit the reached candidates in region program order.
+  forEachRegionPipelineCandidate(LS, [&](Instruction *I) {
+    if (Visited.count(I))
+      Out.push_back(I);
+  });
 }
 
-// Clone the data-load chain into a new warm-up block inserted between the
-// preheader and the outer header. The warm-up block contains only the data
-// loads (no set.loop.iterations). PHI initial values are used so that the
-// cloned loads use the entry pointer values, not the PHI nodes.
-BasicBlock *AIEOuterLoopPipeliner::clonePrologueAsWarmUp(
+// Build a parallel subgraph for the region; the exit clone's terminator is
+// left for the caller to wire.
+std::pair<BasicBlock *, BasicBlock *>
+AIEOuterLoopPipeliner::cloneRegionSubgraph(
     const LoopStructure &LS, const SmallVectorImpl<Instruction *> &PInsts,
-    ValueToValueMapTy &WarmUpVMap) {
+    ValueToValueMapTy &VMap, const Twine &BlockSuffix, const Twine &InstSuffix,
+    BasicBlock *InsertBefore, SmallVectorImpl<BasicBlock *> &NewBlocks) {
   Function *F = LS.OuterHeader->getParent();
-  BasicBlock *Preheader = LS.getPreheader();
-  BasicBlock *WarmUp = BasicBlock::Create(
-      F->getContext(), LS.OuterHeader->getName() + ".peel.pro", F,
-      LS.OuterHeader);
 
-  // Pre-populate WarmUpVMap with the initial (preheader) values of outer
-  // header PHI nodes so that cloned loads use the entry pointer values.
-  populateVMapFromPHIs(WarmUpVMap, LS, Preheader);
+  // Create a clone block for each prologue-region block (currently the single
+  // outer header) so branch targets and PHI incoming blocks can be remapped to
+  // the clones afterwards.
+  BasicBlock *CB = BasicBlock::Create(F->getContext(),
+                                      LS.OuterHeader->getName() + BlockSuffix,
+                                      F, InsertBefore);
+  VMap[LS.OuterHeader] = CB;
+  NewBlocks.push_back(CB);
 
+  // Clone the Part-1 instructions into their block clone.
   for (Instruction *I : PInsts) {
     Instruction *Clone = I->clone();
     if (!Clone->getType()->isVoidTy())
-      Clone->setName(I->getName() + ".peel");
-    Clone->insertInto(WarmUp, WarmUp->end());
-    WarmUpVMap[I] = Clone;
+      Clone->setName(I->getName() + InstSuffix);
+    Clone->insertInto(CB, CB->end());
+    VMap[I] = Clone;
   }
-  for (Instruction &I : *WarmUp)
-    RemapInstruction(&I, WarmUpVMap,
+
+  // Remap operands to the clones.
+  for (BasicBlock *NB : NewBlocks)
+    for (Instruction &I : *NB)
+      RemapInstruction(&I, VMap,
+                       RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+
+  return {CB, CB};
+}
+
+// Clone the flat Part-1 instruction chain immediately before InsertBefore,
+// recording the clones in VMap; remap after inserting all of them (avoids
+// iterator invalidation).
+void AIEOuterLoopPipeliner::cloneInstChainBefore(
+    Instruction *InsertBefore, const SmallVectorImpl<Instruction *> &PInsts,
+    ValueToValueMapTy &VMap, const Twine &InstSuffix) {
+  SmallVector<Instruction *, 16> Clones;
+  for (Instruction *I : PInsts) {
+    Instruction *Clone = I->clone();
+    if (!Clone->getType()->isVoidTy())
+      Clone->setName(I->getName() + InstSuffix);
+    Clone->insertBefore(InsertBefore->getIterator());
+    VMap[I] = Clone;
+    Clones.push_back(Clone);
+  }
+  for (Instruction *Clone : Clones)
+    RemapInstruction(Clone, VMap,
                      RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
-  BranchInst::Create(LS.OuterHeader, WarmUp);
-  Preheader->getTerminator()->replaceSuccessorWith(LS.OuterHeader, WarmUp);
-  LLVM_DEBUG(dbgs() << "    Created warm-up: " << WarmUp->getName() << "\n");
-  return WarmUp;
+}
+
+// Clone the data-load chain into a warm-up region inserted between the
+// preheader and the outer header, using the entry (preheader) pointer values.
+// Returns the warm-up exit block, which becomes the header's new
+// preheader-side predecessor.
+BasicBlock *AIEOuterLoopPipeliner::clonePrologueAsWarmUp(
+    const LoopStructure &LS, const SmallVectorImpl<Instruction *> &PInsts,
+    ValueToValueMapTy &WarmUpVMap) {
+  BasicBlock *Preheader = LS.getPreheader();
+
+  // Pre-populate WarmUpVMap with the initial (preheader) values of outer header
+  // PHIs so cloned loads use the entry pointer values.
+  populateVMapFromPHIs(WarmUpVMap, LS, Preheader);
+
+  SmallVector<BasicBlock *, 4> NewBlocks;
+  auto [EntryClone, ExitClone] = cloneRegionSubgraph(
+      LS, PInsts, WarmUpVMap, ".peel.pro", ".peel", LS.OuterHeader, NewBlocks);
+
+  // The warm-up region flows into the outer header; the preheader now flows
+  // into the warm-up region entry.
+  BranchInst::Create(LS.OuterHeader, ExitClone);
+  Preheader->getTerminator()->replaceSuccessorWith(LS.OuterHeader, EntryClone);
+  LLVM_DEBUG(dbgs() << "    Created warm-up region: " << NewBlocks.size()
+                    << " block(s)\n");
+  return ExitClone;
 }
 
 // Clone the data-load chain into the epilogue block (outer latch), inserting
@@ -674,26 +847,13 @@ BasicBlock *AIEOuterLoopPipeliner::clonePrologueAsWarmUp(
 void AIEOuterLoopPipeliner::clonePrologueIntoEpilogue(
     const LoopStructure &LS, const SmallVectorImpl<Instruction *> &PInsts,
     ValueToValueMapTy &EpiVMap) {
-  // Epilogue is always in OuterLatch (linear structure).
-  Instruction *InsertBefore = LS.OuterLatch->getTerminator();
-
   // Pre-populate EpiVMap with the NEXT-iteration values of outer header PHIs.
   // This ensures that cloned loads use %a.ptr.next, %b.ptr.next, etc.
   populateVMapFromPHIs(EpiVMap, LS, LS.OuterLatch);
 
-  SmallVector<Instruction *, 16> EpiClones;
-  for (Instruction *I : PInsts) {
-    Instruction *Clone = I->clone();
-    if (!Clone->getType()->isVoidTy())
-      Clone->setName(I->getName() + ".epi");
-    Clone->insertBefore(InsertBefore->getIterator());
-    EpiVMap[I] = Clone;
-    EpiClones.push_back(Clone);
-  }
-  // Remap after all clones are inserted to avoid iterator invalidation.
-  for (Instruction *Clone : EpiClones)
-    RemapInstruction(Clone, EpiVMap,
-                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+  // Epilogue is always in OuterLatch (linear structure): insert the flat clone
+  // chain before the latch terminator.
+  cloneInstChainBefore(LS.OuterLatch->getTerminator(), PInsts, EpiVMap, ".epi");
   LLVM_DEBUG(dbgs() << "    Cloned prologue into epilogue\n");
 }
 
@@ -778,10 +938,39 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
   Function *F = LS.OuterHeader->getParent();
   LLVMContext &Ctx = F->getContext();
 
-  // Find the original exit block (false branch of outer latch).
+  BasicBlock *OrigExit = getLatchExitSuccessor(LS);
+
+  // Map each outer header PHI to its latch (last-iteration) incoming value so
+  // every clone below picks up the final epilogue values:
+  //   %v0.phi -> %v0.epi, %c.ptr -> %c.ptr.next, etc.
+  ValueToValueMapTy CoolVMap;
+  populateVMapFromPHIs(CoolVMap, LS, LS.OuterLatch);
+
+  // cooldown.entry holds the hardware-loop setup and the Part-2 accumulator
+  // seeds; build it, then the inner-loop skeleton, then fill everything in.
+  BasicBlock *CoolEntry =
+      BasicBlock::Create(Ctx, "cooldown.entry", F, OrigExit);
+  cloneHardwareLoopSetupInto(CoolEntry, LS, CoolVMap);
+
+  SmallVector<BasicBlock *, 8> ClonedInnerBlocks;
+  BasicBlock *CoolExit = createCooldownSkeleton(LS, CoolEntry, OrigExit,
+                                                ClonedInnerBlocks, CoolVMap);
+
+  clonePart2InstructionsInto(CoolEntry, Part2Insts, CoolVMap);
+  cloneInnerLoopInto(LS, CoolEntry, ClonedInnerBlocks, CoolVMap);
+  populateCooldownExit(CoolExit, LS, OrigEpiInsts, CoolVMap);
+  wireCooldownIntoCFG(LS, CoolEntry, CoolExit, OrigExit);
+
+  LLVM_DEBUG(dbgs() << "    Created cool-down: " << CoolEntry->getName()
+                    << " -> " << CoolExit->getName() << "\n");
+}
+
+// The outer latch's non-header successor: the loop's original exit block.
+BasicBlock *
+AIEOuterLoopPipeliner::getLatchExitSuccessor(const LoopStructure &LS) const {
   BranchInst *LatchBr = LS.getLatchBranch();
   assert(LatchBr->isConditional() && "Outer latch must be conditional");
-  // The true branch goes back to outer.header; false branch goes to exit.
+  // The true branch goes back to outer.header; the other goes to the exit.
   BasicBlock *OrigExit = nullptr;
   for (unsigned I = 0; I < LatchBr->getNumSuccessors(); ++I) {
     BasicBlock *Succ = LatchBr->getSuccessor(I);
@@ -790,126 +979,121 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
       break;
     }
   }
-
   assert(OrigExit && "Outer latch must have an exit successor");
+  return OrigExit;
+}
 
-  // Build the cool-down VMap: map each outer header PHI to its latch value.
-  // This gives us: %v0.phi -> %v0.epi, %c.ptr -> %c.ptr.next, etc.
-  ValueToValueMapTy CoolVMap;
-  populateVMapFromPHIs(CoolVMap, LS, LS.OuterLatch);
-
-  // Create cooldown.entry.
-  BasicBlock *CoolEntry =
-      BasicBlock::Create(Ctx, "cooldown.entry", F, OrigExit);
-
-  // Clone set.loop.iterations from the outer header into cooldown.entry.
+// Clone the hardware-loop setup (set.loop.iterations) from the outer header
+// into Dest, remapping operands through CoolVMap.
+void AIEOuterLoopPipeliner::cloneHardwareLoopSetupInto(
+    BasicBlock *Dest, const LoopStructure &LS,
+    ValueToValueMapTy &CoolVMap) const {
   for (Instruction &I : *LS.OuterHeader) {
     if (I.isTerminator())
       break;
-    auto *Call = dyn_cast<CallInst>(&I);
-    if (!Call)
+    if (!isHardwareLoopSetup(&I))
       continue;
-    auto *Fn = Call->getCalledFunction();
-    if (!Fn)
-      continue;
-    Intrinsic::ID IID = Fn->getIntrinsicID();
-    if (IID != Intrinsic::set_loop_iterations &&
-        IID != Intrinsic::start_loop_iterations)
-      continue;
-    Instruction *Clone = Call->clone();
-    Clone->insertInto(CoolEntry, CoolEntry->end());
+    Instruction *Clone = I.clone();
+    Clone->insertInto(Dest, Dest->end());
     RemapInstruction(Clone, CoolVMap,
                      RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
     CoolVMap[&I] = Clone;
   }
+}
 
-  // Clone the inner loop blocks.
-  // Collect inner loop blocks in RPO order.
-  SmallVector<BasicBlock *, 8> InnerBlocks(LS.InnerLoop->block_begin(),
-                                           LS.InnerLoop->block_end());
+// Create empty cool-down blocks (one per inner-loop block plus cooldown.exit)
+// and register the block remaps; returns cooldown.exit.
+BasicBlock *AIEOuterLoopPipeliner::createCooldownSkeleton(
+    const LoopStructure &LS, BasicBlock *CoolEntry, BasicBlock *OrigExit,
+    SmallVectorImpl<BasicBlock *> &ClonedInnerBlocks,
+    ValueToValueMapTy &CoolVMap) const {
+  Function *F = LS.OuterHeader->getParent();
+  LLVMContext &Ctx = F->getContext();
 
-  // Create cloned blocks.
-  SmallVector<BasicBlock *, 8> ClonedInnerBlocks;
-  for (BasicBlock *BB : InnerBlocks) {
+  // One empty clone per inner-loop block, in block_begin..block_end order so it
+  // aligns with cloneInnerLoopInto's re-derived block list.
+  for (BasicBlock *BB : LS.InnerLoop->blocks()) {
     BasicBlock *ClonedBB =
         BasicBlock::Create(Ctx, BB->getName() + ".cd", F, OrigExit);
     CoolVMap[BB] = ClonedBB;
     ClonedInnerBlocks.push_back(ClonedBB);
   }
 
-  // Map outer.header -> cooldown.entry (for PHI incoming blocks in inner loop).
+  // Inner-loop PHIs incoming from the outer header now come from
+  // cooldown.entry.
   CoolVMap[LS.OuterHeader] = CoolEntry;
-  // Map outer.latch -> cooldown.exit (will be created below; use placeholder).
-  // We'll fix this after creating cooldown.exit.
 
-  // Create cooldown.exit.
+  // cooldown.exit receives the latch (and, in the single-block case, the inner
+  // exit) so the cloned inner loop and epilogue resolve their exits to it.
   BasicBlock *CoolExit = BasicBlock::Create(Ctx, "cooldown.exit", F, OrigExit);
   CoolVMap[LS.OuterLatch] = CoolExit;
-  // Also map inner exit (which is outer.latch in the single-block case).
   if (LS.InnerExit == LS.OuterLatch)
     CoolVMap[LS.InnerExit] = CoolExit;
+  return CoolExit;
+}
 
-  // Clone Part 2 instructions into cooldown.entry (split-prologue mode).
-  // Part 2 = matched intrinsics + their descendants. They stay in
-  // outer.header and must also appear in cooldown.entry so the cloned inner
-  // loop has correct initial accumulator values.
-  // IMPORTANT: This must happen BEFORE cloning inner loop instructions and
-  // remapping, so that CoolVMap[Part2_inst] is set when the cloned inner loop
-  // PHIs (which reference Part 2 results from outer.header) are remapped.
-  // CoolVMap already maps Part 1 PHI nodes → their latch values (= epilogue
-  // clones), so remapping Part 2 clones automatically uses the last epilogue
-  // values for Part 1 operands.
+// Clone Part-2 instructions into Dest. Must run before cloneInnerLoopInto so
+// the cloned inner-loop PHIs that reference Part-2 results resolve to them.
+void AIEOuterLoopPipeliner::clonePart2InstructionsInto(
+    BasicBlock *Dest, const SmallVectorImpl<Instruction *> &Part2Insts,
+    ValueToValueMapTy &CoolVMap) const {
   SmallVector<Instruction *, 16> Part2Clones;
   for (Instruction *I : Part2Insts) {
     Instruction *Clone = I->clone();
     if (!Clone->getType()->isVoidTy())
       Clone->setName(I->getName() + ".cd");
-    Clone->insertInto(CoolEntry, CoolEntry->end());
+    Clone->insertInto(Dest, Dest->end());
     CoolVMap[I] = Clone;
     Part2Clones.push_back(Clone);
   }
   for (Instruction *Clone : Part2Clones)
     RemapInstruction(Clone, CoolVMap,
                      RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+}
 
-  // Clone instructions into inner loop clone blocks.
+// Clone the inner-loop bodies into the skeleton blocks and branch
+// cooldown.entry into the cloned inner-loop header.
+void AIEOuterLoopPipeliner::cloneInnerLoopInto(
+    const LoopStructure &LS, BasicBlock *CoolEntry,
+    const SmallVectorImpl<BasicBlock *> &ClonedInnerBlocks,
+    ValueToValueMapTy &CoolVMap) const {
+  SmallVector<BasicBlock *, 8> InnerBlocks(LS.InnerLoop->block_begin(),
+                                           LS.InnerLoop->block_end());
   for (unsigned I = 0; I < InnerBlocks.size(); ++I) {
     BasicBlock *Orig = InnerBlocks[I];
     BasicBlock *Clone = ClonedInnerBlocks[I];
-    for (Instruction &I : *Orig) {
-      Instruction *CloneI = I.clone();
+    for (Instruction &Inst : *Orig) {
+      Instruction *CloneI = Inst.clone();
       if (!CloneI->getType()->isVoidTy())
-        CloneI->setName(I.getName() + ".cd");
+        CloneI->setName(Inst.getName() + ".cd");
       CloneI->insertInto(Clone, Clone->end());
-      CoolVMap[&I] = CloneI;
+      CoolVMap[&Inst] = CloneI;
     }
   }
-
-  // Remap all cloned inner loop instructions.
-  // CoolVMap now contains Part 2 entries, so inner loop PHIs that reference
-  // Part 2 results from outer.header will correctly use the cooldown.entry
-  // Part 2 clones.
   for (BasicBlock *BB : ClonedInnerBlocks)
-    for (Instruction &I : *BB)
-      RemapInstruction(&I, CoolVMap,
+    for (Instruction &Inst : *BB)
+      RemapInstruction(&Inst, CoolVMap,
                        RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
 
-  // Branch from cooldown.entry to the cloned inner loop header.
   BasicBlock *ClonedInnerHeader = cast<BasicBlock>(CoolVMap[LS.InnerHeader]);
   BranchInst::Create(ClonedInnerHeader, CoolEntry);
+}
 
-  // Populate cooldown.exit with epilogue stores (no loads, no prologue
-  // clones). Only copy instructions that were in the original epilogue block
-  // BEFORE clonePrologueIntoEpilogue inserted the prologue load clones.
-  // Epilogue is always in OuterLatch (linear structure).
+// Populate cooldown.exit with the original epilogue stores only — no prefetch
+// loads, and none of the prologue clones inserted into the epilogue earlier
+// (OrigEpiInsts is the snapshot taken before those clones were inserted).
+void AIEOuterLoopPipeliner::populateCooldownExit(
+    BasicBlock *CoolExit, const LoopStructure &LS,
+    const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
+    ValueToValueMapTy &CoolVMap) const {
   SmallVector<Instruction *, 16> EpiClones;
   for (Instruction &I : *LS.OuterLatch) {
     if (I.isTerminator())
       break;
     if (isa<LoadInst>(&I))
-      continue; // Skip loads -- no prefetch in cool-down
+      continue; // no prefetch in cool-down
     if (!OrigEpiInsts.count(&I))
-      continue; // Skip prologue clones inserted by clonePrologueIntoEpilogue
+      continue; // skip prologue clones inserted by clonePrologueIntoEpilogue
     Instruction *Clone = I.clone();
     if (!Clone->getType()->isVoidTy())
       Clone->setName(I.getName() + ".cd");
@@ -920,28 +1104,30 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
   for (Instruction *Clone : EpiClones)
     RemapInstruction(Clone, CoolVMap,
                      RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+}
 
-  // Branch from cooldown.exit to the original exit.
+// Splice the cool-down into the CFG: cooldown.exit -> original exit, repoint
+// the exit's latch-predecessor PHIs to cooldown.exit, and redirect the latch's
+// exit edge to cooldown.entry.
+void AIEOuterLoopPipeliner::wireCooldownIntoCFG(const LoopStructure &LS,
+                                                BasicBlock *CoolEntry,
+                                                BasicBlock *CoolExit,
+                                                BasicBlock *OrigExit) const {
   BranchInst::Create(OrigExit, CoolExit);
 
-  // Update PHI nodes in OrigExit: replace outer.latch predecessor with
-  // cooldown.exit.
   for (PHINode &PHI : OrigExit->phis()) {
     const int LatchIdx = PHI.getBasicBlockIndex(LS.OuterLatch);
     assert(LatchIdx >= 0);
     PHI.setIncomingBlock(LatchIdx, CoolExit);
   }
 
-  // Redirect the outer latch's false branch to cooldown.entry.
+  BranchInst *LatchBr = LS.getLatchBranch();
   for (unsigned I = 0; I < LatchBr->getNumSuccessors(); ++I) {
     if (LatchBr->getSuccessor(I) == OrigExit) {
       LatchBr->setSuccessor(I, CoolEntry);
       break;
     }
   }
-
-  LLVM_DEBUG(dbgs() << "    Created cool-down: " << CoolEntry->getName()
-                    << " -> " << CoolExit->getName() << "\n");
 }
 
 // Validates the latch exit condition and caches all discovered components in
@@ -1104,18 +1290,17 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
   // not Part 2 anchors or their descendants, and not set.loop.iterations).
   SmallPtrSet<Instruction *, 32> ReachableFromLoad;
   SmallVector<Instruction *, 32> FwdWorklist;
-
-  for (Instruction &I : *LS.OuterHeader)
-    if (isa<LoadInst>(&I)) {
-      ReachableFromLoad.insert(&I);
-      FwdWorklist.push_back(&I);
+  forEachRegionInstruction(LS, [&](Instruction *I) {
+    if (isa<LoadInst>(I)) {
+      ReachableFromLoad.insert(I);
+      FwdWorklist.push_back(I);
     }
-
+  });
   while (!FwdWorklist.empty()) {
     Instruction *I = FwdWorklist.pop_back_val();
     for (User *U : I->users()) {
       auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
+      if (!UI || !LS.isPipelineableValue(UI))
         continue;
       if (ReachableFromLoad.insert(UI).second)
         FwdWorklist.push_back(UI);
@@ -1147,28 +1332,13 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
     }
   }
 
-  // Part 1 = all prologue instructions that are NOT in Part 2 and NOT
-  // set.loop.iterations. This naturally includes loads, address computation
-  // (GEPs, addrspacecasts, add.3d, extractvalues, truncs, zexts), ups
-  // conversions, bitcasts, shufflevectors — everything except matched
-  // intrinsics producing chains.
-  for (Instruction &I : *LS.OuterHeader) {
-    if (isa<PHINode>(&I) || I.isTerminator())
-      continue;
-    if (Part2Set.count(&I))
-      continue;
-    // Exclude set.loop.iterations / start.loop.iterations — they stay in
-    // outer.header and are cloned separately into cooldown.entry.
-    if (auto *Call = dyn_cast<CallInst>(&I)) {
-      if (auto *Fn = Call->getCalledFunction()) {
-        Intrinsic::ID IID = Fn->getIntrinsicID();
-        if (IID == Intrinsic::set_loop_iterations ||
-            IID == Intrinsic::start_loop_iterations)
-          continue;
-      }
-    }
-    Out.push_back(&I);
-  }
+  // Part 1 = region pipeline candidates not in Part 2 (the load/address chain;
+  // the post-anchor cone stays in Part 2). Loop-carried PHIs, terminators, and
+  // hardware-loop setup are excluded by forEachRegionPipelineCandidate.
+  forEachRegionPipelineCandidate(LS, [&](Instruction *I) {
+    if (!Part2Set.count(I))
+      Out.push_back(I);
+  });
 
   LLVM_DEBUG(dbgs() << "    Split-prologue: " << Anchors.size()
                     << " Number of anchor(s), " << Out.size()
@@ -1329,10 +1499,11 @@ void AIEOuterLoopPipeliner::collectPart2Instructions(
     }
   }
 
-  // Emit Part2Set in program order.
-  for (Instruction &I : *LS.OuterHeader)
-    if (Part2Set.count(&I))
-      Out.push_back(&I);
+  // Emit Part2Set in region program order.
+  forEachRegionInstruction(LS, [&](Instruction *I) {
+    if (Part2Set.count(I))
+      Out.push_back(I);
+  });
 
   LLVM_DEBUG(dbgs() << "    Split-prologue: " << Out.size()
                     << " Part-2 instructions (stay in outer.header + "
