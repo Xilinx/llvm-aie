@@ -37,13 +37,13 @@ define <16 x i32> @removable_trampoline(i1 %cond, ptr addrspace(6) %p) {
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
   ; CHECK-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR killed [[COPY]], [[MOV_RLC_imm11_pseudo]]
   ; CHECK-NEXT:   [[AND:%[0-9]+]]:mlockid_reg = AND killed [[XOR]], killed [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
   ; CHECK-NEXT:   PseudoJZ killed [[AND]], %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:ep = COPY killed [[COPY1]]
-  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.hot:
@@ -88,6 +88,7 @@ define <16 x i32> @required_trampoline(i1 %cond, ptr addrspace(6) %p) {
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
   ; CHECK-NEXT:   [[XOR:%[0-9]+]]:mlockid_reg = XOR killed [[COPY]], [[MOV_RLC_imm11_pseudo]]
   ; CHECK-NEXT:   [[AND:%[0-9]+]]:mlockid_reg = AND killed [[XOR]], killed [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
   ; CHECK-NEXT:   PseudoJZ killed [[AND]], %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -95,7 +96,6 @@ define <16 x i32> @required_trampoline(i1 %cond, ptr addrspace(6) %p) {
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo killed [[COPY1]], 64
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:ep = COPY killed [[PADD_imm_pseudo]]
-  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.hot:

@@ -339,6 +339,23 @@ static bool allPhiOperandsUndefined(const MachineInstr &MPhi,
   }
   return true;
 }
+/// Return the block that should hold the IMPLICIT_DEF materialising an undef
+/// PHI incoming for \p OpBlock. The def carries no value, so it can live in
+/// any dominator. When OpBlock is a critical-edge trampoline (single
+/// predecessor, no PHIs), return the predecessor so the trampoline stays
+/// branch-only and can be folded away; otherwise OpBlock itself.
+static MachineBasicBlock &
+findImplicitDefInsertBlock(MachineBasicBlock &OpBlock) {
+  if (OpBlock.pred_size() != 1 || OpBlock.succ_size() != 1)
+    return OpBlock;
+  MachineBasicBlock &Pred = **OpBlock.pred_begin();
+  // A loop latch would hoist into its own header and stretch the live range
+  // over the loop body.
+  if (&Pred == *OpBlock.succ_begin())
+    return OpBlock;
+  return Pred;
+}
+
 /// LowerPHINode - Lower the PHI node at the top of the specified block.
 void PHIEliminationImpl::LowerPHINode(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator LastPHIIt,
@@ -594,9 +611,22 @@ void PHIEliminationImpl::LowerPHINode(MachineBasicBlock &MBB,
         // The source register is undefined, so there is no need for a real
         // COPY, but we still need to ensure joint dominance by defs.
         // Insert an IMPLICIT_DEF instruction.
+        //
+        // An IMPLICIT_DEF carries no value, so it can live in any block that
+        // dominates opBlock. Hoist it out of critical-edge trampolines into
+        // their single predecessor: a trampoline whose only payload is the
+        // IMPLICIT_DEF becomes branch-only and can be folded away.
+        MachineBasicBlock &ImpDefBlock = findImplicitDefInsertBlock(opBlock);
+        MachineBasicBlock::iterator ImpDefPos =
+            &ImpDefBlock == &opBlock ? InsertPos
+                                     : ImpDefBlock.getFirstTerminator();
         NewSrcInstr =
-            BuildMI(opBlock, InsertPos, MPhi->getDebugLoc(),
+            BuildMI(ImpDefBlock, ImpDefPos, MPhi->getDebugLoc(),
                     TII->get(TargetOpcode::IMPLICIT_DEF), IncomingReg);
+
+        // When hoisted, IncomingReg lives through opBlock to the PHI.
+        if (&ImpDefBlock != &opBlock && LV)
+          LV->getVarInfo(IncomingReg).AliveBlocks.set(opBlock.getNumber());
 
         // Clean up the old implicit-def, if there even was one.
         if (MachineInstr *DefMI = MRI->getVRegDef(SrcReg))
@@ -672,6 +702,16 @@ void PHIEliminationImpl::LowerPHINode(MachineBasicBlock &MBB,
       if (NewSrcInstr) {
         LIS->InsertMachineInstrInMaps(*NewSrcInstr);
         LIS->addSegmentToEndOfBlock(IncomingReg, *NewSrcInstr);
+
+        // An IMPLICIT_DEF hoisted out of opBlock keeps IncomingReg live
+        // through the whole of opBlock.
+        if (NewSrcInstr->getParent() != &opBlock) {
+          LiveInterval &IncomingLI = LIS->getInterval(IncomingReg);
+          VNInfo *VNI = IncomingLI.getVNInfoAt(
+              LIS->getInstructionIndex(*NewSrcInstr).getRegSlot());
+          IncomingLI.addSegment(LiveInterval::Segment(
+              LIS->getMBBStartIdx(&opBlock), LIS->getMBBEndIdx(&opBlock), VNI));
+        }
       }
 
       if (!SrcUndef &&
