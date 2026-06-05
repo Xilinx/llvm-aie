@@ -819,6 +819,15 @@ let trueConstant = op<arith.constant> {value = attr<"true">};
 let applyResult = op<affine.apply>(args: ValueRange) {map = attr<"affine_map<(d0, d1) -> (d1 - 3)>">}
 ```
 
+The `true` and `false` keywords are provided as shorthand for the boolean
+attributes `attr<"true">` and `attr<"false">` respectively:
+
+```pdll
+let trueConstant = op<arith.constant> {value = true};
+
+let falseConstant = op<arith.constant> {value = false};
+```
+
 ### Type Expression
 
 A type expression represents a literal MLIR type. It allows for statically

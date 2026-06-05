@@ -348,6 +348,7 @@ private:
   /// Identifier expressions.
   FailureOr<ast::Expr *> parseArrayAttrExpr();
   FailureOr<ast::Expr *> parseAttributeExpr();
+  FailureOr<ast::Expr *> parseBooleanExpr();
   FailureOr<ast::Expr *> parseCallExpr(ast::Expr *parentExpr,
                                        bool isNegated = false);
   FailureOr<ast::Expr *> parseDeclRefExpr(StringRef name, SMRange loc);
@@ -2302,6 +2303,10 @@ FailureOr<ast::Expr *> Parser::parseOtherExpr() {
   case Token::integer:
     lhsExpr = parseIntegerExpr();
     break;
+  case Token::kw_true:
+  case Token::kw_false:
+    lhsExpr = parseBooleanExpr();
+    break;
   case Token::string:
     lhsExpr = parseStringExpr();
     break;
@@ -2584,6 +2589,13 @@ FailureOr<ast::Expr *> Parser::parseIntegerExpr() {
 
   auto allocated = copyStringWithNull(ctx, (Twine(value) + ":" + type).str());
   return ast::AttributeExpr::create(ctx, loc, allocated);
+}
+
+FailureOr<ast::Expr *> Parser::parseBooleanExpr() {
+  SMRange loc = curToken.getLoc();
+  StringRef value = curToken.getSpelling();
+  consumeToken();
+  return ast::AttributeExpr::create(ctx, loc, value);
 }
 
 FailureOr<ast::Expr *> Parser::parseStringExpr() {

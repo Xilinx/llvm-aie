@@ -395,6 +395,8 @@ Token Lexer::lexIdentifier(const char *tokStart) {
                          .Case("type", Token::kw_type)
                          .Case("Type", Token::kw_Type)
                          .Case("TypeRange", Token::kw_TypeRange)
+                         .Case("true", Token::kw_true)
+                         .Case("false", Token::kw_false)
                          .Case("Value", Token::kw_Value)
                          .Case("ValueRange", Token::kw_ValueRange)
                          .Case("with", Token::kw_with)

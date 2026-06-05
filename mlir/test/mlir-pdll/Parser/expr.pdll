@@ -33,6 +33,34 @@ Pattern {
 // -----
 
 // CHECK-LABEL: Module
+// CHECK: `-AttributeExpr {{.*}} Value<"true">
+Pattern {
+  let attr = true;
+  erase _: Op;
+}
+
+// -----
+
+// CHECK-LABEL: Module
+// CHECK: `-AttributeExpr {{.*}} Value<"false">
+Pattern {
+  let attr = false;
+  erase _: Op;
+}
+
+// -----
+
+// `true`/`false` keywords are still usable as attribute names in a dictionary.
+// CHECK-LABEL: Module
+// CHECK: NamedAttributeDecl {{.*}} Name<true>
+// CHECK: NamedAttributeDecl {{.*}} Name<false>
+Pattern {
+  erase op<test.op> { true = attr<"1">, false = attr<"0"> };
+}
+
+// -----
+
+// CHECK-LABEL: Module
 // CHECK: |-NamedAttributeDecl {{.*}}  Name<some_array>
 // CHECK: `-UserRewriteDecl {{.*}} Name<__builtin_addElemToArrayAttrRewriter> ResultType<Attr>
 // CHECK:   `Arguments`
