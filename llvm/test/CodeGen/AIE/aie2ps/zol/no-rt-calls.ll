@@ -5,7 +5,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 --mtriple=aie2p %s -o - --stop-before=irtranslator | \
+; RUN: llc -O2 --mtriple=aie2ps %s -o - --stop-before=irtranslator | \
 ; RUN:   FileCheck %s
 
 ; We have float operations in the loop body, and we check whether ZOL loops
@@ -38,16 +38,15 @@ for.cond.cleanup:                                 ; preds = %for.body
 ; CHECK-NOT: llvm.set.loop.iterations
 ; CHECK-NOT: llvm.loop.decrement
 
-define dso_local float @uitofpConv(i32 noundef %n) local_unnamed_addr {
+define dso_local float @uitofpConv(i32 noundef %n, i32 %idx, <16 x float> %init) local_unnamed_addr {
 entry:
-  %s32 = add i32 undef, 0
   br label %for.body
 
 for.body:                                         ; preds = %entry, %for.body
   %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %20 = phi <16 x float> [ undef, %entry ], [ %vecins.i.i.i.i.i, %for.body ]
-  %conv = uitofp i32 %s32 to float
-  %vecins.i.i.i.i.i = insertelement <16 x float> %20, float %conv, i32 %s32
+  %20 = phi <16 x float> [ %init, %entry ], [ %vecins.i.i.i.i.i, %for.body ]
+  %conv = uitofp i32 %idx to float
+  %vecins.i.i.i.i.i = insertelement <16 x float> %20, float %conv, i32 %idx
   %inc = add nuw nsw i32 %i.05, 1
   %exitcond.not = icmp eq i32 %inc, %n
   br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
@@ -62,16 +61,15 @@ for.cond.cleanup:                                 ; preds = %for.body
 ; CHECK-NOT: llvm.set.loop.iterations
 ; CHECK-NOT: llvm.loop.decrement
 
-define dso_local float @sitofpConv(i32 noundef %n) local_unnamed_addr {
+define dso_local float @sitofpConv(i32 noundef %n, i32 %idx, <16 x float> %init) local_unnamed_addr {
 entry:
-  %s32 = add i32 undef, 0
   br label %for.body
 
 for.body:                                         ; preds = %entry, %for.body
   %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %20 = phi <16 x float> [ undef, %entry ], [ %vecins.i.i.i.i.i, %for.body ]
-  %conv = sitofp i32 %s32 to float
-  %vecins.i.i.i.i.i = insertelement <16 x float> %20, float %conv, i32 %s32
+  %20 = phi <16 x float> [ %init, %entry ], [ %vecins.i.i.i.i.i, %for.body ]
+  %conv = sitofp i32 %idx to float
+  %vecins.i.i.i.i.i = insertelement <16 x float> %20, float %conv, i32 %idx
   %inc = add nuw nsw i32 %i.05, 1
   %exitcond.not = icmp eq i32 %inc, %n
   br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
