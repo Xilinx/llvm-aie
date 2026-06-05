@@ -26,6 +26,7 @@
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -139,10 +140,11 @@ struct FrameIndexInfo {
                                    Align Alignment,
                                    const TargetRegisterClass *RC) {
     if (ReplacementSlot *R = findSlot(Offset)) {
-      if (Size > R->Size) {
-        R->Size = Size;
-        R->RC = RC;
-      }
+      // hasConflictingLanes() rejects any slot whose live lanes share an offset
+      // with mismatched sizes, so a shared offset must have a matching size.
+      // Alignment can still differ: equal size does not imply the same register
+      // class, and alignment derives from the class, so keep the max.
+      assert(Size == R->Size && "Lanes sharing an offset must have equal size");
       if (Alignment > R->Alignment)
         R->Alignment = Alignment;
       return *R;
@@ -519,22 +521,54 @@ void AIESpillSlotOptimization::processReloadsForSlot(
   }
 }
 
+/// Return true if two live lanes map to the same byte offset with different
+/// sizes. StackSlotColoring can coalesce registers from different register
+/// files onto one frame index (e.g. a DS descriptor and a DM accumulator).
+/// Their lanes then overlap at an offset with mismatched sizes (e.g. a 4-byte
+/// scalar and a 128-byte accumulator at offset 0), so a single replacement slot
+/// cannot be sized correctly for both. Such slots must be left intact.
+static bool hasConflictingLanes(const FrameIndexInfo &Info) {
+  // A register's own lanes never share an offset, so a second lane at an
+  // occupied offset comes from another coalesced register; a differing size
+  // means the lanes belong to different register classes.
+  DenseMap<int64_t, unsigned> SizeAtOffset;
+  auto LanesConflict =
+      [&](const SmallVectorImpl<std::unique_ptr<SpillPoint>> &SpillPoints) {
+        for (const auto &SpillPoint : SpillPoints)
+          for (const SubRegInfo &SubReg : SpillPoint->SubRegs) {
+            if (!SubReg.IsLive)
+              continue;
+            auto [It, Inserted] =
+                SizeAtOffset.try_emplace(SubReg.ByteOffset, SubReg.SizeBytes);
+            if (!Inserted && It->second != SubReg.SizeBytes)
+              return true;
+          }
+        return false;
+      };
+  return LanesConflict(Info.Spills) || LanesConflict(Info.Reloads);
+}
+
 bool AIESpillSlotOptimization::rewriteInstructions(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "=== Phase 2: Rewrite Instructions ===\n");
 
   SmallVector<MachineInstr *, 32> ToErase;
 
   for (auto &[FI, Info] : OrigSlotDecompositions) {
-    // All-or-nothing: if any spill on this slot cannot be decomposed, skip
-    // the entire slot. This ensures we never partially rewrite a slot, which
-    // would leave some instructions referencing the original (later removed)
-    // slot while others use replacement slots.
-    const bool AllSpillsProfitable =
-        llvm::all_of(Info.Spills, [](const std::unique_ptr<SpillPoint> &SP) {
-          return SP->DecomposeProfitable;
-        });
-    if (!AllSpillsProfitable)
+    // Decompose all-or-nothing, and only when safe and profitable:
+    //  - every spill must be profitable, else a partial rewrite splits the slot
+    //    across the original and replacement objects; and
+    //  - no coalesced lanes may conflict, which would give the replacement slot
+    //    the wrong size.
+    const bool CanDecomposeSlot =
+        llvm::all_of(Info.Spills,
+                     [](const std::unique_ptr<SpillPoint> &SP) {
+                       return SP->DecomposeProfitable;
+                     }) &&
+        !hasConflictingLanes(Info);
+    if (!CanDecomposeSlot) {
+      LLVM_DEBUG(dbgs() << "  FI=" << FI << ": skipping decomposition\n");
       continue;
+    }
 
     const DenseSet<int64_t> StoredOffsets =
         processSpillsForSlot(FI, Info, ToErase);
