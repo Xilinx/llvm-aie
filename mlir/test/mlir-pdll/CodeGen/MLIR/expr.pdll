@@ -11,6 +11,16 @@ Pattern AttrExpr => erase op<> { attr = attr<"10"> };
 
 // -----
 
+// `true`/`false` keywords desugar to the same boolean attribute as
+// `attr<"true">`/`attr<"false">`.
+// CHECK: pdl.pattern @BoolAttrExpr
+// CHECK: %[[TRUE:.*]] = attribute = true
+// CHECK: %[[FALSE:.*]] = attribute = false
+// CHECK: operation({{.*}}) {"t" = %[[TRUE]], "f" = %[[FALSE]]}
+Pattern BoolAttrExpr => erase op<> { t = true, f = false };
+
+// -----
+
 //===----------------------------------------------------------------------===//
 // CallExpr
 //===----------------------------------------------------------------------===//

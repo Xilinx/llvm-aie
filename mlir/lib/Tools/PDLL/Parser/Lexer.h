@@ -66,6 +66,8 @@ public:
     kw_Rewrite,
     kw_Type,
     kw_TypeRange,
+    kw_true,
+    kw_false,
     kw_Value,
     kw_ValueRange,
     kw_with,
