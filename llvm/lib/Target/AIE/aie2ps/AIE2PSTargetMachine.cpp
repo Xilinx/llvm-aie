@@ -16,6 +16,7 @@
 #include "AIE2PSTargetTransformInfo.h"
 #include "AIECombiners.h"
 #include "AIESuperRegUtils.h"
+#include "llvm/CodeGen/GlobalISel/Localizer.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 using namespace llvm;
@@ -69,8 +70,13 @@ void AIE2PSPassConfig::addPreRegBankSelect() {
 
 void AIE2PSPassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
-  if (getOptLevel() != CodeGenOptLevel::None)
+  if (getOptLevel() != CodeGenOptLevel::None) {
     addPass(createAIEPreLegalizerCombiner());
+    // Sink the constants the IRTranslator materialized at the top of the entry
+    // block (including vector splats) back towards their uses, so their live
+    // ranges don't cross intervening calls.
+    addPass(new Localizer());
+  }
   addPass(createAIEEliminateDuplicatePHI());
 }
 

@@ -25,12 +25,12 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s16) = G_FCONSTANT bfloat 0xRFF80
-    ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $p0 = COPY [[COPY]](p0)
     ; CHECK-NEXT: PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s16) = G_FCONSTANT bfloat 0xRFF80
+    ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
     ; CHECK-NEXT: $x0 = COPY [[BUILD_VECTOR]](<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:_(p0) = COPY $p0
@@ -56,12 +56,12 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[C]](s32)
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $p0 = COPY [[COPY]](p0)
     ; CHECK-NEXT: PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[C]](s32)
     ; CHECK-NEXT: $x0 = COPY [[AIE_BROADCAST_VECTOR]](<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:_(p0) = COPY $p0
@@ -173,16 +173,16 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = COPY [[COPY]](p0)
+    ; CHECK-NEXT: PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = COPY [[COPY]](p0)
+    ; CHECK-NEXT: PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s16) = G_FCONSTANT bfloat 0xRFF80
     ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
-    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $p0 = COPY [[COPY]](p0)
-    ; CHECK-NEXT: PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
-    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $p0 = COPY [[COPY]](p0)
-    ; CHECK-NEXT: PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
-    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $x0 = COPY [[BUILD_VECTOR]](<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:_(p0) = COPY $p0
@@ -215,12 +215,12 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s16) = G_FCONSTANT bfloat 0xRFF80
-  ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $p0 = COPY [[COPY]](p0)
   ; CHECK-NEXT:   PseudoJL &callee, csr_aie2ps, implicit-def $lr, implicit $p0
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s16) = G_FCONSTANT bfloat 0xRFF80
+  ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
   ; CHECK-NEXT:   G_BR %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:

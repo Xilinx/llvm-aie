@@ -72,7 +72,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; REMARKS-NEXT:   - NS:              '7'
 ; REMARKS-NEXT:   - Loop:            bb.10.for.body55.i.cd
 ; REMARKS-NEXT:   - Prologue:        bb.9.cooldown.entry
-; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - PrologueBundles: '13'
 ; REMARKS-NEXT:   - Epilogue:        bb.11.cooldown.exit
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT: ...

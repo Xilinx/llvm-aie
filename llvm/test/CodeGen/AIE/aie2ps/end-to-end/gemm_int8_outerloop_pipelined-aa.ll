@@ -43,34 +43,33 @@ declare i1 @llvm.loop.decrement.i32(i32) #2
 define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, ptr %p_psum, ptr %p_c, ptr %p_bias, i20 %3, i20 %4, i20 %5, i20 %6, i20 %7, i20 %idx.ext.i, i20 %8, i20 %9, i20 %10, i20 %11, i20 %12, i32 %13, i32 %14, i32 %15, i32 %16, i32 %or23.i.i.i.i, <64 x i8> %17, i32 %18, i32 %19, i32 %20, i32 %21, i32 %22, i32 %or22.i.i.i.i, i32 %conv166, i32 %conv.i.i.i.i, i20 %idx.ext.i478, i20 %23, i20 %24, i20 %25, i20 %26, i20 %27, i20 %28) #3 {
 ; CHECK-LABEL: gemm:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; nopxm ; nops
-; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
-; CHECK-NEXT:    mov p6, sp
+; CHECK-NEXT:    paddxm [sp], #64; nopb ; nopxm
 ; CHECK-NEXT:    st p7, [sp, #-60] // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #-68; mov p7, p2
-; CHECK-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p7], #64; paddb [p6], m0
-; CHECK-NEXT:    lda dj0, [p6], #-4
-; CHECK-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p7], #64
-; CHECK-NEXT:    lda dj4, [p6], #-4
-; CHECK-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p7], #64; movx r22, #0
-; CHECK-NEXT:    lda dn0, [p6], #-4; mov s0, r22
-; CHECK-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p7], #64; movx crupsmode, #0
+; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    mova m0, #-68; mov p6, sp
+; CHECK-NEXT:    padda [p6], m0; mov p7, p2
+; CHECK-NEXT:    lda dj0, [p6], #-4; vldb x2, [p7], #64
+; CHECK-NEXT:    lda dj4, [p6], #-4; vldb x6, [p7], #64
+; CHECK-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p7], #64
+; CHECK-NEXT:    lda dn0, [p6], #-4
+; CHECK-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p7], #64
 ; CHECK-NEXT:    lda dn4, [p6], #-4
-; CHECK-NEXT:    lda m4, [p6], #-4
-; CHECK-NEXT:    lda m1, [p6], #-4
+; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p7], #64; movx r22, #0
+; CHECK-NEXT:    lda m4, [p6], #-4; mov s0, r22
+; CHECK-NEXT:    lda m1, [p6], #-4; movx crupsmode, #0
 ; CHECK-NEXT:    lda dj1, [p6], #-4
 ; CHECK-NEXT:    lda dj5, [p6], #-4
 ; CHECK-NEXT:    lda dn1, [p6], #-4
 ; CHECK-NEXT:    lda dn5, [p6], #-4
-; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p7], #64
 ; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p7], #64
-; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p7, #64]; vldb.128 wl2, [p4, #0]; mov dc0, #0
-; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p7, #0]; vldb x10, [p1], m4; mov m2, p5
-; CHECK-NEXT:    lda r16, [p6], #-4; vldb x6, [p0], #64; movs dc2, dc0; mov dc6, dc0
-; CHECK-NEXT:    lda r18, [p6], #-4; vldb.128 wl1, [p4, #16]; movs dc1, dc0; mov dc5, dc0
+; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p7, #64]
+; CHECK-NEXT:    mova dc0, #0; vldb.128 wl2, [p4, #0]; vbcst.32 x4, r22
+; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p7, #0]; vldb x10, [p1], m4; movs m2, p5; mov dc2, dc0
+; CHECK-NEXT:    lda r16, [p6], #-4; vldb.128 wl1, [p4, #16]; movs dc6, dc0; mov dc1, dc0
+; CHECK-NEXT:    lda r18, [p6], #-4; vldb x6, [p0], #64; movs dc5, dc0; vups.2x cml3, x2, s0, upssign1
 ; CHECK-NEXT:    lda r20, [p6], #-4; vldb.3d x3, [p1], d1; movs dj2, dj0; mov dn2, dn0
 ; CHECK-NEXT:    lda r8, [p6], #-4; movs dj6, dj4; mov dn6, dn4
-; CHECK-NEXT:    lda r17, [p6], #-4; vldb.3d x8, [p0], d2; movx r22, #15; vbcst.32 x4, r22
+; CHECK-NEXT:    lda r17, [p6], #-4; vldb.3d x8, [p0], d2; movx r22, #15; vups.2x cmh3, x6, s0, upssign1
 ; CHECK-NEXT:    lda r19, [p6], #-4; or r23, r10, r10; vsel.32 x2, x4, x2, r22
 ; CHECK-NEXT:    lda m2, [p6], #-4; movx r10, #776; vshuffle x10, x10, x0, r1
 ; CHECK-NEXT:    lda m3, [p6], #-4; or r24, r12, r12; vshuffle x10, x10, x0, r2; vmul dm4, x0, x2, r10
@@ -106,27 +105,27 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup99
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-NEXT:    padda [p2], m5; paddb.2d [p4], d7; movs m0, p5; add r0, r0, #-1; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    nopa ; vldb x8, [p0], #64; movs p6, p2; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    nopa ; vldb x10, [p1], m4; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
-; CHECK-NEXT:    nopa ; vldb.3d x5, [p1], d1; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
-; CHECK-NEXT:    vlda.3d x1, [p0], d0; vldb.128 wl6, [p4, #0]; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p6], #64; vldb.128 wl3, [p4, #16]; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p6], #64; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
-; CHECK-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p6], #64; mov srssign0, r19; vmac dm2, dm2, x3, x10, r8
-; CHECK-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p6], #64; vmac dm1, dm1, x5, x6, r8
-; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p6], #64; vmac dm0, dm0, x3, x6, r8
-; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p6], #64
-; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6, #64]; vsel.32 x2, x2, x6, r22
-; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6, #0]; vst.srs.4x dm3, s1, srssign0, [p3], #64; vshuffle x6, x10, x0, r1
-; CHECK-NEXT:    vst.srs.4x dm2, s1, srssign0, [p3], m2; vshuffle x6, x6, x0, r2; vmul dm4, x0, x2, r10
-; CHECK-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; vsel.32 x4, x4, x3, r22
-; CHECK-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d3; movx srssign0, #0; vshuffle x10, x5, x0, r3; vaddmac dm3, dm3, dm4, x8, x6, r12
-; CHECK-NEXT:    vshuffle x6, x10, x0, r4; vaddmac dm2, dm2, dm4, x1, x6, r12
+; CHECK-NEXT:    nopa ; nopb ; movs p6, p2; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vlda.128 wl10, [p4, #16]; vldb x8, [p6], #64; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; CHECK-NEXT:    vlda x5, [p1], m4; vldb x1, [p6], #64; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
+; CHECK-NEXT:    vlda x6, [p0], #64; vldb.128 wl3, [p4, #0]; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
+; CHECK-NEXT:    vlda.ups.2x cml2, s0, upssign1, [p6], #64; vldb.3d x1, [p1], d1; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vldb.3d x8, [p0], d0; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; CHECK-NEXT:    vlda.ups.2x cmh2, s0, upssign1, [p6], #64; mov srssign0, r19; vmac dm2, dm2, x3, x10, r8
+; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p6], #64; vmac dm1, dm1, x5, x6, r8
+; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p6], #64; vsel.32 x4, x4, x10, r22; vmac dm0, dm0, x3, x6, r8
+; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6, #64]; vups.2x cmh3, x1, s0, upssign1
+; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6, #0]; vsel.32 x2, x2, x3, r22
+; CHECK-NEXT:    vst.srs.4x dm3, s1, srssign0, [p3], #64; vups.2x cml3, x8, s0, upssign1
+; CHECK-NEXT:    vst.srs.4x dm2, s1, srssign0, [p3], m2; vshuffle x3, x5, x0, r1; vmul dm4, x0, x2, r10
+; CHECK-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; vshuffle x3, x3, x0, r2
+; CHECK-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d3; movx srssign0, #0; vshuffle x10, x1, x0, r3
+; CHECK-NEXT:    vshuffle x10, x10, x0, r4; vaddmac dm3, dm3, dm4, x6, x3, r12
+; CHECK-NEXT:    vaddmac dm2, dm2, dm4, x8, x3, r12
 ; CHECK-NEXT:    vmul dm4, x0, x4, r10
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    jnz r0, #.LBB0_1; vaddmac dm1, dm1, dm4, x8, x6, r12
-; CHECK-NEXT:    vaddmac dm0, dm0, dm4, x1, x6, r12 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    jnz r0, #.LBB0_1
+; CHECK-NEXT:    vaddmac dm1, dm1, dm4, x6, x10, r12 // Delay Slot 5
+; CHECK-NEXT:    vaddmac dm0, dm0, dm4, x8, x10, r12 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1

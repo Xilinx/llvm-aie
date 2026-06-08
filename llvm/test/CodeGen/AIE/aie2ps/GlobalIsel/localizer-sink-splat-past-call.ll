@@ -28,20 +28,20 @@ declare void @callee(ptr)
 define <32 x i16> @splat_phi_across_call(ptr %p, i32 %n) {
 ; CHECK-LABEL: splat_phi_across_call:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddxm [sp], #128; nopb ; nops ; jl #callee; nopv
-; CHECK-NEXT:    mova r2, #7; nopb ; nopxm // Delay Slot 5
-; CHECK-NEXT:    st r8, [sp, #-60]; vbcst.16 x0, r2 // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; jl #callee; nops
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    paddxm [sp], #64 // Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    vst x0, [sp, #-128] // 64-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm ls, #.LBB0_1; nopv
-; CHECK-NEXT:    mova r0, #1; movxm le, #.L_LEnd0
-; CHECK-NEXT:    vlda x2, [sp, #-128]; max r0, r8, r0 // 64-byte Folded Reload
+; CHECK-NEXT:    mova r0, #1; nopb ; movxm le, #.L_LEnd0
+; CHECK-NEXT:    max r0, r8, r0
 ; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r0, #0; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r2, #7; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vbcst.16 x2, r2; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_1: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -61,7 +61,7 @@ define <32 x i16> @splat_phi_across_call(ptr %p, i32 %n) {
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddxm [sp], #-128 // Delay Slot 1
+; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 1
 entry:
   call void @callee(ptr %p)
   br label %loop

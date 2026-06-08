@@ -72,14 +72,14 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ;
 ; AIE2PS-LABEL: simple:
 ; AIE2PS:       // %bb.0: // %for.body.lr.ph
-; AIE2PS-NEXT:    mova r4, #0; nopb ; nopxm ; nops
-; AIE2PS-NEXT:    addm.nc r1, r0, #-1
-; AIE2PS-NEXT:    mova r0, #2
+; AIE2PS-NEXT:    nopa ; nopb ; nopx ; addm.nc r1, r0, #-1; nops
+; AIE2PS-NEXT:    mova r0, #0
+; AIE2PS-NEXT:    mova r4, #2
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_1
 ; AIE2PS-NEXT:    lda r2, [p0, #0]
 ; AIE2PS-NEXT:  .LBB0_1: // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
-; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r6, r4, r0; nopm ; nopv
+; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r6, r0, r4; nopm ; nopv
 ; AIE2PS-NEXT:    nopx ; mov dj0, r6
 ; AIE2PS-NEXT:    lda r6, [p1, dj0]
 ; AIE2PS-NEXT:    nop
@@ -87,7 +87,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2PS-NEXT:    jnzd r1, r1, p2
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
-; AIE2PS-NEXT:    add r4, r4, #1 // Delay Slot 3
+; AIE2PS-NEXT:    add r0, r0, #1 // Delay Slot 3
 ; AIE2PS-NEXT:    add r2, r2, r6 // Delay Slot 2
 ; AIE2PS-NEXT:    st r2, [p0, #0] // Delay Slot 1
 ; AIE2PS-NEXT:  // %bb.2: // %for.cond.cleanup
