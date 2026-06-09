@@ -199,15 +199,13 @@ class LockDelays : public ScheduleDAGMutation {
   bool ExactLatencies = true;
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-    const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
-    const int CoreResumeCycle = TII->getCoreResumeCycleAfterLock();
 
     // Iterate over all the predecessors and successors of Lock instructions
     // to increase the edge latency.
     // Note that scalar streams are kept away from locks using
     // a reserved FuncUnit instead.  See AIE2Schedule.td
-    // Be conservative for DONE instruction as we don't expect it to appear
-    // without a sched barrier.
+    // DONE is included here to enforce backward latencies (memory → DONE);
+    // it should never appear as a predecessor of memory instructions.
     for (auto &SU : DAG->SUnits) {
       MachineInstr *MI = SU.getInstr();
       if (!MI || !(TII->isLock(MI->getOpcode()) ||
@@ -219,26 +217,29 @@ class LockDelays : public ScheduleDAGMutation {
         if (PredEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
-        // Ensure memory operation happens before the core stalls
-        auto OptLastMemCycle =
-            TII->getLastMemoryCycle(LdSt->getDesc().SchedClass);
-        assert(!ExactLatencies || OptLastMemCycle);
-        const int LastMemCycle = OptLastMemCycle.value_or(7);
-        const int Delay = LastMemCycle - CoreStallCycle + 1;
-        updatePredLatency(PredEdge, SU, Delay);
+
+        // Ensure the memory operation retires before the core stalls. The same
+        // per-(memop, lock) delay backs the cross-block exit edge in
+        // MaxLatencyFinder, so spacing is identical across an MBB border.
+        std::optional<int> Delay = TII->getLockStallDelay(*LdSt);
+        if (!Delay)
+          continue;
+        updatePredLatency(PredEdge, SU, *Delay);
       }
       for (auto &SuccEdge : SU.Succs) {
         MachineInstr *LdSt = SuccEdge.getSUnit()->getInstr();
         if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
-        auto OptFirstMemCycle =
-            TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass);
-        assert(!ExactLatencies || OptFirstMemCycle);
-        const int FirstMemCycle = OptFirstMemCycle.value_or(4);
-        // Ensure memory operation happens after the core resumes
-        const int Delay = CoreResumeCycle - FirstMemCycle + 1;
-        updateSuccLatency(SuccEdge, SU, Delay);
+        assert(!TII->getDoneLatency(MI->getOpcode()) &&
+               "DONE with a memory successor is not supported");
+        // Ensure the memory operation happens after the core resumes. The same
+        // per-(lock, memop) delay backs the cross-block exit edge in
+        // MaxLatencyFinder, so spacing is identical across an MBB border.
+        std::optional<int> Delay = TII->getLockResumeDelay(*MI, *LdSt);
+        if (!Delay)
+          continue;
+        updateSuccLatency(SuccEdge, SU, *Delay);
       }
     }
   }

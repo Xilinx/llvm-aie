@@ -1025,6 +1025,65 @@ int AIEBaseInstrInfo::getCoreResumeCycleAfterReleaseLoad() const {
   return getCoreResumeCycleAfterLock();
 }
 
+std::optional<int>
+AIEBaseInstrInfo::getLockResumeDelay(const MachineInstr &Lock,
+                                     const MachineInstr &MemMI) const {
+  // The resume window only constrains memory operations.
+  if (!MemMI.mayLoadOrStore())
+    return std::nullopt;
+
+  const unsigned SchedClass = getSchedClass(MemMI.getDesc(), MemMI.operands(),
+                                            MemMI.getMF()->getRegInfo());
+
+  // TM ops hold no lckLdaRsrc/lckStRsrc tokens, so the resume-cycle formula
+  // does not apply; only same-bundle issue must be prevented.
+  if (isTMAccessSchedClass(SchedClass))
+    return 1;
+
+  // some Instructions have mayLoadOrStore but dont access memory, i.e. stream
+  // ss moves
+  std::optional<int> OptFirstMemCycle =
+      getFirstMemoryCycleForLockOrdering(SchedClass);
+  if (!OptFirstMemCycle)
+    return std::nullopt;
+
+  const bool IsLoad = MemMI.mayLoad();
+  // Handle partword stores, that load and store
+  const bool IsLoadOnly = !MemMI.mayStore();
+  const int AcquireResumeCycle = IsLoad ? getCoreResumeCycleAfterAcquireLoad()
+                                        : getCoreResumeCycleAfterAcquireStore();
+  const int ReleaseResumeCycle = IsLoadOnly
+                                     ? getCoreResumeCycleAfterReleaseLoad()
+                                     : getCoreResumeCycleAfterReleaseStore();
+  const int CoreResumeCycle = isAcquire(Lock.getOpcode()) ? AcquireResumeCycle
+                              : isRelease(Lock.getOpcode())
+                                  ? ReleaseResumeCycle
+                                  : getCoreResumeCycleAfterLock();
+
+  return CoreResumeCycle - *OptFirstMemCycle + 1;
+}
+
+std::optional<int>
+AIEBaseInstrInfo::getLockStallDelay(const MachineInstr &MemMI) const {
+  // The stall window only constrains memory operations.
+  if (!MemMI.mayLoadOrStore())
+    return std::nullopt;
+
+  // Ensure the memory operation retires before the core stalls. For load-only
+  // instructions, use the lock-ordering cycle (write-back stage) rather than
+  // the bare memory-access cycle, since the load data must be fully committed
+  // before the lock can observe it. nullopt means no backward lock-ordering
+  // constraint for this class (e.g. vmovx ss has mayLoadOrStore but does not
+  // access memory).
+  const bool IsLoadOnly = MemMI.mayLoad() && !MemMI.mayStore();
+  std::optional<int> OptLastMemCycle =
+      getLastMemoryCycleForLockOrdering(MemMI.getDesc().SchedClass, IsLoadOnly);
+  if (!OptLastMemCycle)
+    return std::nullopt;
+
+  return *OptLastMemCycle - getCoreStallCycleAfterLock() + 1;
+}
+
 // Helper function to find instruction variant info by opcode using binary
 // search. Returns nullptr if not found.
 static const InstrVariantInfo *
