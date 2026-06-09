@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains utilities for registering options with compiler passes and
@@ -67,7 +70,15 @@ static void printOptionValue(raw_ostream &os, const std::string &str) {
   const size_t escapeIndex =
       std::min({str.find_first_of('{'), str.find_first_of('\''),
                 str.find_first_of('"')});
-  const bool requiresEscape = spaceIndex < escapeIndex;
+  // A value that starts with a wrapper character ('{', '\'' or '"') is stripped
+  // of one matching outer pair by the option parser (extractArgAndUpdateOptions
+  // in PassRegistry.cpp) when it is read back. We must wrap it in an extra
+  // '{...}' so the value round-trips; otherwise e.g. a JSON value '{"k":1}'
+  // would be parsed back as '"k":1' (the outer braces silently dropped).
+  const bool startsWithWrapper =
+      !str.empty() &&
+      (str.front() == '{' || str.front() == '\'' || str.front() == '"');
+  const bool requiresEscape = spaceIndex < escapeIndex || startsWithWrapper;
   if (requiresEscape)
     os << "{";
   os << str;
