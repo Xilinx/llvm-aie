@@ -196,7 +196,6 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
 // The initial graph will have ordering edges induced by hasSideEffects of the
 // locks/DONE.
 class LockDelays : public ScheduleDAGMutation {
-  bool ExactLatencies = true;
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
 
@@ -243,9 +242,6 @@ class LockDelays : public ScheduleDAGMutation {
       }
     }
   }
-
-public:
-  LockDelays(bool ExactLatencies) : ExactLatencies(ExactLatencies) {};
 };
 
 #undef DEBUG_TYPE
@@ -909,7 +905,7 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>(true));
+  Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
@@ -927,7 +923,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getDDGMutationsImpl(const Triple &TT, bool ExactLatencies) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>(ExactLatencies));
+  Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(ExactLatencies));
