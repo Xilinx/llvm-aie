@@ -212,6 +212,60 @@ MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG, AAResults *AA)
                               .getBlockState(CurBB)
                               .isSafeToIgnoreMemDeps()) {}
 
+// Upper bound on the lock-ordering delay MI can require against any successor
+// candidate. For a lock (forward), a dependent memory op may sit at the top of
+// the successor, so assume the earliest possible one. For a memory op
+// (backward), the stall delay is constant. Doubles as the conservative
+// fallback and the scan-pruning window.
+int MaxLatencyFinder::conservativeOrderingDelay(const MachineInstr &MI) {
+  if (TII->isLock(MI.getOpcode()))
+    return TII->getCoreResumeCycleAfterLock() - TII->getMinFirstMemoryCycle() +
+           1;
+  if (MI.mayLoadOrStore())
+    return TII->getLockStallDelay(MI).value_or(0);
+  return 0;
+}
+
+// A lock and a dependent memory op must stay a resume/stall window apart. When
+// an MBB border separates them, the latency channel is MI's edge to ExitSU, so
+// extend it by the window. The successor schedules are known here, so only pad
+// as far as a reachable candidate actually requires, and contribute nothing
+// when none exists. The per-pair distance comes from TII->getLockOrderingDelay,
+// the same helper LockDelays uses for the intra-region edges, so spacing is
+// identical regardless of an intervening border.
+int MaxLatencyFinder::lockOrderingExitLatency(const MachineInstr &MI) {
+  const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
+
+  // Upper bound on the delay MI can require, also the scan-pruning window: past
+  // it, no candidate can extend the edge any further.
+  const int MaxDelay = conservativeOrderingDelay(MI);
+  if (MaxDelay <= 0)
+    return 0;
+
+  int ExitLatency = 0;
+  for (MachineBasicBlock *SuccBB : CurBB->successors()) {
+    const AIE::BlockState &SBS = IB.getBlockState(SuccBB);
+    // An unscheduled or empty successor offers no bundles to inspect. The
+    // conservative window is the upper bound on any refined result, so no
+    // other successor can raise it further.
+    if (!SBS.isScheduled() || SBS.getRegions().empty())
+      return MaxDelay;
+    int Cycle = 0;
+    for (const AIE::MachineBundle &Bundle : SBS.getTop().Bundles) {
+      if (Cycle >= MaxDelay)
+        break;
+      for (MachineInstr *SuccMI : Bundle.getInstrs()) {
+        // The candidate is scheduled Cycle cycles into the successor, so it has
+        // already covered that much of the window.
+        if (std::optional<int> Delay = TII->getLockOrderingDelay(MI, *SuccMI))
+          ExitLatency = std::max(ExitLatency, *Delay - Cycle);
+      }
+      ++Cycle;
+    }
+  }
+  return std::max(0, ExitLatency);
+}
+
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << MI << "\n");
   // If we don't use interblock information, include the 'StageLatency'
@@ -260,6 +314,13 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
 
   LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");
   Latency = std::max(Latency - Earliest, 1);
+
+  // A lock-ordering pair (lock <-> memory op) must stay a resume/stall window
+  // apart, which is wider than the ordinary operand/memory latency captured
+  // above. Across an MBB border this edge is the only channel that enforces it.
+  if (TII->isLock(MI.getOpcode()) || MI.mayLoadOrStore())
+    Latency = std::max<int>(Latency, lockOrderingExitLatency(MI));
+
   LLVM_DEBUG(dbgs() << "EffectiveLatency=" << Latency << "\n");
   return Latency;
 }

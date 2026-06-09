@@ -55,6 +55,18 @@ class MaxLatencyFinder {
   //
   bool isBottomRegion(MachineInstr *ExitMI);
 
+  // Upper bound on the lock-ordering delay \p MI can require against any
+  // successor candidate, used both as the conservative fallback when a
+  // successor schedule cannot be inspected and as the scan-pruning window.
+  // Returns 0 when \p MI participates in no lock-ordering edge.
+  int conservativeOrderingDelay(const MachineInstr &MI);
+
+  // Exit-edge latency for a lock-ordering pair split by an MBB border: a lock
+  // keeping successor memory ops out of its resume window, or a memory op held
+  // away from a successor lock's stall window. Returns 0 when no dependent
+  // candidate is reachable.
+  int lockOrderingExitLatency(const MachineInstr &MI);
+
 public:
   // Constructors
   MaxLatencyFinder(const AIEPostRASchedStrategy *const Scheduler,

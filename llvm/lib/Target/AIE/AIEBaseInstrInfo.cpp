@@ -1084,6 +1084,18 @@ AIEBaseInstrInfo::getLockStallDelay(const MachineInstr &MemMI) const {
   return *OptLastMemCycle - getCoreStallCycleAfterLock() + 1;
 }
 
+std::optional<int>
+AIEBaseInstrInfo::getLockOrderingDelay(const MachineInstr &Pred,
+                                       const MachineInstr &Succ) const {
+  // Forward: a lock must keep a following memory op outside its resume window.
+  if (isLock(Pred.getOpcode()) && Succ.mayLoadOrStore())
+    return getLockResumeDelay(Pred, Succ);
+  // Backward: a memory op must retire before a following lock stalls the core.
+  if (Pred.mayLoadOrStore() && isLock(Succ.getOpcode()))
+    return getLockStallDelay(Pred);
+  return std::nullopt;
+}
+
 // Helper function to find instruction variant info by opcode using binary
 // search. Returns nullptr if not found.
 static const InstrVariantInfo *

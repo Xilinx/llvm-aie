@@ -61,6 +61,9 @@ body:             |
   ; CHECK-NEXT:   liveins: $p1, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   ACQ_mLockId_imm 0, killed $r0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -261,6 +264,9 @@ body:             |
   ; CHECK-NEXT:   liveins: $p1, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   ACQ_mLockId_reg killed $r0, killed $r1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
