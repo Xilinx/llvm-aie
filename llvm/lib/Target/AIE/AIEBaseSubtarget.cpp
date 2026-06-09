@@ -201,18 +201,15 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
 // The initial graph will have ordering edges induced by hasSideEffects of the
 // locks/DONE.
 class LockDelays : public ScheduleDAGMutation {
-  bool ExactLatencies = true;
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-    const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
-    const int CoreResumeCycle = TII->getCoreResumeCycleAfterLock();
 
     // Iterate over all the predecessors and successors of Lock instructions
     // to increase the edge latency.
     // Note that scalar streams are kept away from locks using
     // a reserved FuncUnit instead.  See AIE2Schedule.td
-    // Be conservative for DONE instruction as we don't expect it to appear
-    // without a sched barrier.
+    // DONE is included here to enforce backward latencies (memory → DONE);
+    // it should never appear as a predecessor of memory instructions.
     for (auto &SU : DAG->SUnits) {
       MachineInstr *MI = SU.getInstr();
       if (!MI || !(TII->isLock(MI->getOpcode()) ||
@@ -224,32 +221,32 @@ class LockDelays : public ScheduleDAGMutation {
         if (PredEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
-        // Ensure memory operation happens before the core stalls
-        auto OptLastMemCycle =
-            TII->getLastMemoryCycle(LdSt->getDesc().SchedClass);
-        assert(!ExactLatencies || OptLastMemCycle);
-        const int LastMemCycle = OptLastMemCycle.value_or(7);
-        const int Delay = LastMemCycle - CoreStallCycle + 1;
-        updatePredLatency(PredEdge, SU, Delay);
+
+        // Ensure the memory operation retires before the core stalls. The same
+        // per-(memop, lock) delay backs the cross-block exit edge in
+        // MaxLatencyFinder, so spacing is identical across an MBB border.
+        std::optional<int> Delay = TII->getLockStallDelay(*LdSt);
+        if (!Delay)
+          continue;
+        updatePredLatency(PredEdge, SU, *Delay);
       }
       for (auto &SuccEdge : SU.Succs) {
         MachineInstr *LdSt = SuccEdge.getSUnit()->getInstr();
         if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
-        auto OptFirstMemCycle =
-            TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass);
-        assert(!ExactLatencies || OptFirstMemCycle);
-        const int FirstMemCycle = OptFirstMemCycle.value_or(4);
-        // Ensure memory operation happens after the core resumes
-        const int Delay = CoreResumeCycle - FirstMemCycle + 1;
-        updateSuccLatency(SuccEdge, SU, Delay);
+        assert(!TII->getDoneLatency(MI->getOpcode()) &&
+               "DONE with a memory successor is not supported");
+        // Ensure the memory operation happens after the core resumes. The same
+        // per-(lock, memop) delay backs the cross-block exit edge in
+        // MaxLatencyFinder, so spacing is identical across an MBB border.
+        std::optional<int> Delay = TII->getLockResumeDelay(*MI, *LdSt);
+        if (!Delay)
+          continue;
+        updateSuccLatency(SuccEdge, SU, *Delay);
       }
     }
   }
-
-public:
-  LockDelays(bool ExactLatencies) : ExactLatencies(ExactLatencies) {};
 };
 
 #undef DEBUG_TYPE
@@ -996,7 +993,7 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>(true));
+  Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
@@ -1014,7 +1011,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getDDGMutationsImpl(const Triple &TT, bool ExactLatencies) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>(ExactLatencies));
+  Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(ExactLatencies));
