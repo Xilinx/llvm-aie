@@ -1026,6 +1026,18 @@ AIEBaseInstrInfo::getMemoryCycles(unsigned SchedClass) const {
 /// the ISA. The numbers are therefore conservative.
 int AIEBaseInstrInfo::getCoreStallCycleAfterLock() const { return 2; }
 int AIEBaseInstrInfo::getCoreResumeCycleAfterLock() const { return 8; }
+int AIEBaseInstrInfo::getCoreResumeCycleAfterAcquireStore() const {
+  return getCoreResumeCycleAfterLock();
+}
+int AIEBaseInstrInfo::getCoreResumeCycleAfterAcquireLoad() const {
+  return getCoreResumeCycleAfterLock();
+}
+int AIEBaseInstrInfo::getCoreResumeCycleAfterReleaseStore() const {
+  return getCoreResumeCycleAfterLock();
+}
+int AIEBaseInstrInfo::getCoreResumeCycleAfterReleaseLoad() const {
+  return getCoreResumeCycleAfterLock();
+}
 
 // Helper function to find instruction variant info by opcode using binary
 // search. Returns nullptr if not found.
