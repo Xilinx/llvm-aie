@@ -4,9 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --issue-limit=6 --run-pass=postmisched \
-# RUN:   --aie-latency-margin=0 --aie-interblock-alignment=false \
+# RUN:   --aie-latency-margin=0 \
 # RUN:   --aie-loop-aware=false %s -o - | FileCheck %s
 
 # Check that inter-block scoreboard is ok. We disable the latency safety

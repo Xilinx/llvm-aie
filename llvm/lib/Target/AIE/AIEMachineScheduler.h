@@ -26,7 +26,6 @@ namespace llvm {
 using BlockState = AIE::BlockState;
 using BlockType = AIE::BlockType;
 using Region = AIE::Region;
-using ScoreboardTrust = AIE::ScoreboardTrust;
 
 namespace AIE {
 std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone);
@@ -91,9 +90,10 @@ public:
 
   /// Initialize Bot scoreboard by replaying all Bundles from the
   /// successor blocks of CurBB for InterBlock scheduling
-  /// \param Conservative If this is set, make sure we cannot reserve resources
-  /// outside of the region, i.e. block all resources.
-  void initializeBotScoreBoard(ScoreboardTrust Trust);
+  /// Populate the Bot scoreboard from scheduled successors.
+  /// Only applicable for bottom regions with known successors; all other
+  /// cases are handled conservatively.
+  void initializeBotScoreBoard();
 
   void initializeTopScoreBoard();
 
