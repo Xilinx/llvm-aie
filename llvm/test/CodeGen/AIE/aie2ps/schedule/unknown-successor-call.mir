@@ -7,7 +7,7 @@
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2ps --issue-limit=6 --run-pass=postmisched \
-# RUN:   --aie-latency-margin=0 --aie-interblock-alignment=false \
+# RUN:   --aie-latency-margin=0 \
 # RUN:   --aie-loop-aware=false %s -o - | FileCheck %s
 
 # We whould not trust successors if we have a call

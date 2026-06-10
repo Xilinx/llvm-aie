@@ -87,12 +87,6 @@ static cl::opt<bool>
     InterBlockScoreboard("aie-interblock-scoreboard", cl::init(true),
                          cl::desc("Initialize the interblock scoreboard"));
 
-/// This option indicates that there may be an alignment nop cycle inserted
-/// in a successor block. It can be reset for testing purposes.
-static cl::opt<bool>
-    InterBlockAlignment("aie-interblock-alignment", cl::init(true),
-                        cl::desc("Allow for alignment of successor blocks"));
-
 static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
@@ -263,7 +257,7 @@ bool AIEPostRASchedStrategy::successorsAreScheduled(
          });
 }
 
-void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
+void AIEPostRASchedStrategy::initializeBotScoreBoard() {
 
   if (!InterBlockScoreboard) {
     DEBUG_BLOCKS(dbgs() << "Interblock scoreboard explicitly disabled\n");
@@ -280,12 +274,28 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   const int Depth = BotHazardRec->getMaxLookAhead();
   assert(unsigned(Depth) >= BotHazardRec->getPipelineDepth());
 
+  const AIEBaseInstrInfo *TheTII = getTII(CurMBB);
+
   /// These lambdas are an abstraction of the scoreboard manipulations,
   /// hiding the details of the implementation. In particular, we need to
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
+  // Insert \p MI into the scoreboard at \p Cycle. If \p MI is a
+  // MultiSlotPseudo, insert each of its alternatives separately.
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(MI, MI.getDesc(), Cycle - Depth);
+    if (TheTII->isMultiSlotPseudo(MI)) {
+      // Insert each alternative instead of blocking all resources. This is
+      // less conservative than the fallback while still accounting for all
+      // possible slot assignments.
+      const auto *AltOpcodes =
+          TheTII->getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode());
+      assert(AltOpcodes && "MultiSlotPseudo must have alternative opcodes");
+      for (unsigned AltOpcode : *AltOpcodes)
+        BotHazardRec->emitInScoreboard(MI, TheTII->get(AltOpcode),
+                                       Cycle - Depth);
+    } else {
+      BotHazardRec->emitInScoreboard(MI, MI.getDesc(), Cycle - Depth);
+    }
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
@@ -299,26 +309,62 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
     BotHazardRec->recedeScoreboard(Depth + 1);
   };
 
-  // This tracks unknown cycles resulting from blocks that are too short.
-  // The conservative estimate is to declare all cycles unknown.
-  // The conservative case includes the fixpoint iteration on a loop. For that
-  // case we are not actually conservative; we assume a number of empty cycles
-  // in the scoreboard given by the fixpoint parameters.
+  // When getBlockedResourceCap returns a value, this is a loop-aware
+  // scheduling block. Its FirstBlockedCycle is determined solely by the cap
+  // and not by successor information, so exclude it from CanUseSuccessors.
+  const auto Cap = InterBlock.getBlockedResourceCap(CurMBB);
+
+  // Successor information is only applicable for bottom regions without
+  // unknown successors and not under loop-aware scheduling (which uses a
+  // conservative scoreboard determined by the resource cap instead).
+  const bool CanUseSuccessors =
+      IsBottomRegion &&
+      !hasUnknownSuccessors(make_range(RegionBegin, RegionEnd), CurMBB) && !Cap;
+
+  // Populate the scoreboard from each successor block individually.
+  // Scheduled successors have their top-region bundles replayed.
+  // unscheduled successors use the static depth of the successor nodes.
+  // Empty and unknown successors are treated conservatively
+  // (FirstBlockedCycle = 0).
+  // The pipeline depth is the starting supremum: it is reduced as we see
+  // known successor cycles, or collapsed to zero for uncertain ones.
   int FirstBlockedCycle = 0;
-  if (Trust != ScoreboardTrust::Conservative) {
-    // The pipeline depth is a suitable supremum for the minimum we compute.
-    // Note that if the loop isn't entered (we have no successors), the
-    // responsibilty lies with our caller not setting Conservative.
-    // This may be legitimate to represent a 'done' or 'flush_pipeline'
-    // instruction in future
+  if (CanUseSuccessors) {
+    // Populate PostDepths for all per-successor edges before using them.
+    // This mirrors MaxLatencyFinder's latency correction and makes
+    // initializeBotScoreBoard self-contained.
+    InterBlock.recordPostDepths(CurMBB);
     FirstBlockedCycle = BotHazardRec->getPipelineDepth();
-    for (llvm::MachineBasicBlock *SuccMBB : CurMBB->successors()) {
-      // Replay bundles into scoreboard.
+    const BlockState &BS = InterBlock.getBlockState(CurMBB);
+    for (auto &SEPtr : BS.getPerSuccEdges()) {
+      InterBlockEdges &SE = *SEPtr;
+      MachineBasicBlock *SuccMBB = SE.getSucc();
+      if (!SuccMBB)
+        continue;
       DEBUG_BLOCKS(dbgs() << " SuccBB " << SuccMBB->getNumber() << "\n");
-      auto &SBS = InterBlock.getBlockState(SuccMBB);
+      const BlockState &SBS = InterBlock.getBlockState(SuccMBB);
       if (SBS.getRegions().empty()) {
         DEBUG_BLOCKS(dbgs() << " Empty Successor\n");
         FirstBlockedCycle = 0;
+        continue;
+      }
+      if (!SBS.isScheduled()) {
+        // For unscheduled successors, use the static depths recorded in the
+        // inter-block DDG to insert each instruction at every cycle it could
+        // possibly occupy (i.e., from its static depth to FirstBlockedCycle-1).
+        // InsertInCycle handles MultiSlotPseudo alternatives internally.
+        DEBUG_BLOCKS(dbgs() << " Unscheduled Successor\n");
+        for (SUnit &SU : SE) {
+          if (!SE.isPostBoundaryNode(&SU))
+            continue;
+          MachineInstr *MI = SU.getInstr();
+          if (!MI)
+            continue;
+          const int StaticDepth = SE.getPostDepthOr(&SU, 0);
+          // Insert at every cycle from StaticDepth to FirstBlockedCycle-1.
+          for (int C = StaticDepth; C < FirstBlockedCycle; C++)
+            InsertInCycle(*MI, C);
+        }
         continue;
       }
       DEBUG_BLOCKS(dbgs() << " Replay bundles\n");
@@ -332,10 +378,9 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
         DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
                             << Bundle.getInstrs().size() << " instrs\n");
         for (MachineInstr *MI : Bundle.getInstrs()) {
+          assert(!TheTII->isMultiSlotPseudo(*MI) &&
+                 "Scheduled bundles must not contain MultiSlotPseudos");
           InsertInCycle(*MI, Cycle);
-          if (Trust == ScoreboardTrust::AccountForAlign && Cycle + 1 < Depth) {
-            InsertInCycle(*MI, Cycle + 1);
-          }
         }
         Cycle++;
       }
@@ -343,17 +388,17 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
     }
   }
 
-  auto Cap = InterBlock.getBlockedResourceCap(CurMBB);
-  if (Cap && IsBottomRegion) {
-    int Margin = BotHazardRec->getPipelineDepth() - *Cap;
+  // For loop-aware scheduling, FirstBlockedCycle is determined by the resource
+  // cap: the number of cycles that must be reserved for the loop body to drain.
+  if (Cap) {
+    const int Margin = BotHazardRec->getPipelineDepth() - *Cap;
     FirstBlockedCycle = std::max(FirstBlockedCycle, Margin);
     DEBUG_BLOCKS(dbgs() << "FirstBlockedCycle = " << Margin << "\n");
   }
 
-  // We have to assume the worst for any cycle we haven't completely seen
-  for (int Cycle = FirstBlockedCycle; Cycle < Depth; Cycle++) {
+  // We have to assume the worst for any cycle we haven't completely seen.
+  for (int Cycle = FirstBlockedCycle; Cycle < Depth; Cycle++)
     BlockCycle(Cycle);
-  }
 
   AlignScoreboardToCycleOne();
   DEBUG_BLOCKS(BotHazardRec->dumpScoreboard());
@@ -416,15 +461,11 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
 
-  // Update Bot scoreboard of the bottom region with the foreseeable future
-  // as found in the top regions of the successor blocks. If we don't know,
-  // assume the worst.
-  const bool Conservative = !(IsBottomRegion && successorsAreScheduled(CurMBB));
-  const ScoreboardTrust NonConservative = InterBlockAlignment
-                                              ? ScoreboardTrust::AccountForAlign
-                                              : ScoreboardTrust::Absolute;
-  initializeBotScoreBoard(Conservative ? ScoreboardTrust::Conservative
-                                       : NonConservative);
+  // Update Bot scoreboard from the scheduled top regions of successor blocks.
+  // Conservativeness (whether to replay bundles or block all cycles) is
+  // determined inside initializeBotScoreBoard() based on IsBottomRegion and
+  // whether the current block has known successors.
+  initializeBotScoreBoard();
   initializeTopScoreBoard();
 
   // Compute RegionTopDownCycles first so the delay slot logic can inspect it.

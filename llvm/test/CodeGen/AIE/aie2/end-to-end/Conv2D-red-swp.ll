@@ -83,28 +83,26 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:  .LBB0_1: // %outer.loop.header
 ; DCL-NEXT:    // =>This Loop Header: Depth=1
 ; DCL-NEXT:    // Child Loop BB0_2 Depth 2
-; DCL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopx
+; DCL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopxm
 ; DCL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m7, p5
 ; DCL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh2, s0, [p2, #32]
 ; DCL-NEXT:    vlda.ups.s32.s16 bml2, s0, [p2], m5
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]; mov m1, r11
-; DCL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m1
-; DCL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
-; DCL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5; vldb wl3, [p0], m6; mov r0, p0
-; DCL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; vldb wh3, [p0], m6
-; DCL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m7; vldb wl7, [p0], m6
-; DCL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]; vldb.3d wh7, [p0], d0
-; DCL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5
-; DCL-NEXT:    vldb wl6, [p1], #32
+; DCL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m1; vldb wl3, [p0], m6; mov r0, p0
+; DCL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]; vldb wh3, [p0], m6
+; DCL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5; vldb wl7, [p0], m6
+; DCL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; vldb.3d wh7, [p0], d0
+; DCL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m7; vldb wl6, [p1], #32
 ; DCL-NEXT:    vldb wh6, [p1], #32
-; DCL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb wl10, [p0], m6; and r0, r0, r9; mov r1, p0
-; DCL-NEXT:    vlda wl8, [p1], #32; vldb wh10, [p0], m6; add r0, r0, #33
-; DCL-NEXT:    vlda wh8, [p1], #32; vldb wl3, [p0], m6; vshift.align x5, x4, s1, x3, r0
-; DCL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; vldb.3d wh3, [p0], d0; and r10, r1, r9; vshift.align x2, x2, s1, x7, r0
+; DCL-NEXT:    vldb wl8, [p1], #32
+; DCL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]; vldb wl10, [p0], m6; and r0, r0, r9; mov r1, p0
+; DCL-NEXT:    vlda wh8, [p1], #32; vldb wh10, [p0], m6; add r0, r0, #33
+; DCL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5; vldb wl3, [p0], m6; vshift.align x5, x4, s1, x3, r0
+; DCL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb.3d wh3, [p0], d0; and r10, r1, r9; vshift.align x2, x2, s1, x7, r0
 ; DCL-NEXT:    vldb wl9, [p1], #32; add r0, r10, #33; mov r10, p0
-; DCL-NEXT:    vldb wh9, [p1], #32; add r1, r5, #-1; vshuffle x7, x5, x2, r2
+; DCL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; vldb wh9, [p1], #32; add r1, r5, #-1; vshuffle x7, x5, x2, r2
 ; DCL-NEXT:    vldb wl1, [p1], #32; add r1, r1, #-1; vshuffle x4, x7, x0, r8
 ; DCL-NEXT:    vldb wh1, [p1], #32; and r10, r10, r9
 ; DCL-NEXT:  .LBB0_2: // %inner.loop
@@ -216,30 +214,28 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopb ; nopx
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopb ; nopxm ; nops
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m7, p5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh2, s0, [p2, #32]
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml2, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]; mov m1, r10
-; ZOL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m1
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
-; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5; vldb wl3, [p0], m6; mov r0, p0
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; vldb wh3, [p0], m6
-; ZOL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m7; vldb wl7, [p0], m6
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]; vldb.3d wh7, [p0], d0
-; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5
-; ZOL-NEXT:    vldb wl6, [p1], #32; movxm ls, #.LBB0_2
-; ZOL-NEXT:    vldb wh6, [p1], #32; movxm le, #.L_LEnd0
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb wl5, [p0], m6; and r0, r0, r9; mov r1, p0
-; ZOL-NEXT:    vlda wl8, [p1], #32; vldb wh5, [p0], m6; add r0, r0, #33
-; ZOL-NEXT:    vlda wh8, [p1], #32; vldb wl3, [p0], m6; vshift.align x4, x4, s1, x3, r0
-; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; vldb.3d wh3, [p0], d0; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0
+; ZOL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m1; vldb wl3, [p0], m6; mov r0, p0
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]; vldb wh3, [p0], m6
+; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5; vldb wl7, [p0], m6
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; vldb.3d wh7, [p0], d0
+; ZOL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m7; vldb wl6, [p1], #32
+; ZOL-NEXT:    vldb wh6, [p1], #32; movxm ls, #.LBB0_2
+; ZOL-NEXT:    vldb wl8, [p1], #32; movxm le, #.L_LEnd0
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]; vldb wl5, [p0], m6; and r0, r0, r9; mov r1, p0
+; ZOL-NEXT:    vlda wh8, [p1], #32; vldb wh5, [p0], m6; add r0, r0, #33
+; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5; vldb wl3, [p0], m6; vshift.align x4, x4, s1, x3, r0
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb.3d wh3, [p0], d0; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0
 ; ZOL-NEXT:    vldb wl1, [p1], #32; add r0, r1, #33; mov r1, p0
 ; ZOL-NEXT:    vldb wh1, [p1], #32; vshuffle x7, x4, x2, r2
 ; ZOL-NEXT:    vldb wl10, [p1], #32; vshuffle x9, x7, x0, r8
-; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; add.nc lc, r5, #-2; nopv
+; ZOL-NEXT:    vldb wh10, [p1], #32; vlda.ups.s32.s16 bml6, s0, [p2, #0]; nops ; and r1, r1, r9; add.nc lc, r5, #-2; nopv
 ; ZOL-NEXT:  .LBB0_2: // %inner.loop
 ; ZOL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ZOL-NEXT:    // => This Inner Loop Header: Depth=2

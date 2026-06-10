@@ -125,7 +125,9 @@ public:
   void markBoundary();
 
   /// To iterate forward across the SUnits of the underlying DDG.
+  auto begin() { return SUnits.begin(); }
   auto begin() const { return SUnits.begin(); }
+  auto end() { return SUnits.end(); }
   auto end() const { return SUnits.end(); }
 
   /// The following two methods are used to find the cross-boundary edges,

@@ -271,17 +271,6 @@ protected:
   void setBlockProperties();
 };
 
-// Represents how accurate our successor information is
-enum class ScoreboardTrust {
-  // The bundles represent the true start of the blocks
-  Absolute,
-  // The bundles are accurate, but may shift at most one cycle
-  // due to alignment of a successor block
-  AccountForAlign,
-  // We don't have bundles for all successors
-  Conservative
-};
-
 class InterBlockScheduling {
   const MachineSchedContext *Context = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;

@@ -36,7 +36,7 @@
 define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %cond, ptr %cond.i50, <16 x i32> %0, i32 %cond67.i79, i20 %idx.ext.i.i81, i20 %idx.ext.i404.i, i20 %idx.ext.i410.i, i20 %idx.ext.i434.i85, i32 %1, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i32 %7, i32 %8, i32 %or9.i.i.i.i.i96, i32 %9, i20 %idx.ext.i422.i82, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i20 %17, i20 %18, i20 %19, i20 %20, i20 %21, i20 %22, i20 %23, i32 %conv192.i107, i20 %24, i20 %idx.ext.i428.i, i20 %25, i20 %26, i20 %27, i32 %28) #1 {
 ; ASM-LABEL: conv2d.loop.nest:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddb [sp], #32; nopxm
+; ASM-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; ASM-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
 ; ASM-NEXT:    mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-36
@@ -51,23 +51,20 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    lda r12, [p6], #-4
 ; ASM-NEXT:    lda dj1, [p6], #-4
 ; ASM-NEXT:    lda r13, [p6], #-4
-; ASM-NEXT:    lda dn1, [p6], #-4
-; ASM-NEXT:    lda r14, [p6], #-4
-; ASM-NEXT:    lda r15, [p6], #-4
+; ASM-NEXT:    lda dn1, [p6], #-4; mov s0, r0
+; ASM-NEXT:    lda r14, [p6], #-4; mov s1, r1
+; ASM-NEXT:    lda r15, [p6], #-4; mov s2, r6
 ; ASM-NEXT:    lda dj2, [p6], #-4; mov dj3, #0
-; ASM-NEXT:    lda dj6, [p6], #-4; mov s0, r0
-; ASM-NEXT:    lda dn2, [p6], #-4; mov s1, r1
-; ASM-NEXT:    lda dn6, [p6], #-4; mov s2, r6
-; ASM-NEXT:    lda r24, [p6], #-4; mov m7, p4
-; ASM-NEXT:    lda dj7, [p6], #-4; mov s3, r6
-; ASM-NEXT:    lda dn3, [p6], #-4; mov dc0, dj3
-; ASM-NEXT:    lda dn7, [p6], #-4; mov dc4, dj3
-; ASM-NEXT:    lda m4, [p6], #-4; mov dc1, dj3
-; ASM-NEXT:    mov r26, dj3
-; ASM-NEXT:    lda r25, [p6], #-4; mov dc2, dj3
-; ASM-NEXT:    lda m5, [p6], #-4; mov dc6, dj3
-; ASM-NEXT:    mov dc3, dj3
-; ASM-NEXT:    mov dc7, dj3
+; ASM-NEXT:    lda dj6, [p6], #-4; mov m7, p4
+; ASM-NEXT:    lda dn2, [p6], #-4; mov s3, r6
+; ASM-NEXT:    lda dn6, [p6], #-4; mov dc0, dj3
+; ASM-NEXT:    lda r24, [p6], #-4; mov dc4, dj3
+; ASM-NEXT:    lda dj7, [p6], #-4; mov dc1, dj3
+; ASM-NEXT:    lda dn3, [p6], #-4; mov r26, dj3
+; ASM-NEXT:    lda dn7, [p6], #-4; mov dc2, dj3
+; ASM-NEXT:    lda m4, [p6], #-4; mov dc6, dj3
+; ASM-NEXT:    lda r25, [p6], #-4; mov dc3, dj3
+; ASM-NEXT:    lda m5, [p6], #-4; mov dc7, dj3
 ; ASM-NEXT:    lda r29, [p6, #0]; movx r8, #11; mov r27, dj3
 ; ASM-NEXT:    lda r28, [p6, #-4]; movx r9, #31; mov m3, r24
 ; ASM-NEXT:  .LBB0_1: // %outer.loop.header
