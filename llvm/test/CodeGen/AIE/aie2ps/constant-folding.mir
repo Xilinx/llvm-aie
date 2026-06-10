@@ -68,3 +68,36 @@ body: |
     $r15 = SEL_EQZ $r23, $r22, %4
     PseudoRET implicit $lr, implicit $r15
 ...
+
+---
+name: test_imm_control_reg
+legalized: true
+tracksRegLiveness: true
+body: |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_imm_control_reg
+    ; CHECK: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 5
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mcrsat = COPY [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $crsat
+    %0:er = MOV_RLC_imm11_pseudo 5
+    %1:mcrsat = COPY %0:er
+    $crsat = COPY %1:mcrsat
+    PseudoRET implicit $lr, implicit $crsat
+...
+
+---
+name: test_imm_constant_fold_large_imm_into_ptr
+legalized: true
+tracksRegLiveness: true
+body: |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_imm_constant_fold_large_imm_into_ptr
+    ; CHECK: [[MOVXM_lng_cg:%[0-9]+]]:ep_as_32bit = MOVXM_lng_cg 70000
+    ; CHECK-NEXT: $p0 = COPY [[MOVXM_lng_cg]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $p0
+    %0:er = MOVXM_lng_cg 70000
+    %1:ep = COPY %0:er
+    $p0 = COPY %1:ep
+    PseudoRET implicit $lr, implicit $p0
+...
