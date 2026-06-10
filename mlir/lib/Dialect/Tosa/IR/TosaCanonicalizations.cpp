@@ -23,6 +23,7 @@
 #include "mlir/Dialect/Tosa/Utils/ConversionUtils.h"
 #include "mlir/Dialect/Tosa/Utils/QuantUtils.h"
 #include "mlir/Dialect/Tosa/Utils/ShapeUtils.h"
+#include "mlir/Dialect/UB/IR/UBOps.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypeInterfaces.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -744,9 +745,185 @@ struct PadPadOptimization : public OpRewritePattern<tosa::PadOp> {
   }
 };
 
+// Folds `pad(slice(x))` back to `x` when the pad re-adds exactly the region the
+// slice removed and fills it with a poison (don't-care) value. The re-added
+// region holds poison rather than the original data, so this is only valid
+// under poison semantics, where replacing poison with the original tensor is a
+// legal refinement.
+struct SlicePadFold : public OpRewritePattern<tosa::PadOp> {
+  using OpRewritePattern<tosa::PadOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::PadOp padOp,
+                                PatternRewriter &rewriter) const override {
+    // The pad must fill with a poison (don't-care) value.
+    Value padConst = padOp.getPadConst();
+    if (!padConst || !padConst.getDefiningOp<ub::PoisonOp>())
+      return rewriter.notifyMatchFailure(padOp, "pad is not filling poison");
+
+    auto sliceOp = padOp.getInput1().getDefiningOp<tosa::SliceOp>();
+    if (!sliceOp)
+      return rewriter.notifyMatchFailure(padOp, "producer is not a slice");
+
+    // The pad must restore exactly the slice's input type.
+    auto sliceInputType =
+        dyn_cast<RankedTensorType>(sliceOp.getInput1().getType());
+    auto padOutputType = dyn_cast<RankedTensorType>(padOp.getResult().getType());
+    if (!sliceInputType || !sliceInputType.hasStaticShape() ||
+        sliceInputType != padOutputType)
+      return rewriter.notifyMatchFailure(
+          padOp, "pad result does not match the slice input type");
+
+    ElementsAttr paddingElems;
+    if (!matchPattern(padOp.getPadding(), m_Constant(&paddingElems)))
+      return rewriter.notifyMatchFailure(padOp, "padding must be constant");
+    const int64_t rank = sliceInputType.getRank();
+    SmallVector<int64_t> paddings;
+    paddings.reserve(2 * rank);
+    for (APInt padVal : paddingElems.getValues<APInt>())
+      paddings.push_back(padVal.getSExtValue());
+    if (static_cast<int64_t>(paddings.size()) != 2 * rank)
+      return rewriter.notifyMatchFailure(padOp, "unexpected padding rank");
+
+    // On every axis the pad must re-add exactly what the slice dropped: the low
+    // pad equals the slice start and the high pad equals the trailing elements
+    // the slice discarded.
+    ArrayRef<int64_t> sliceStart = sliceOp.getStart();
+    ArrayRef<int64_t> sliceSize = sliceOp.getSize();
+    for (int64_t axis = 0; axis < rank; ++axis) {
+      const int64_t droppedHigh = sliceInputType.getDimSize(axis) -
+                                  (sliceStart[axis] + sliceSize[axis]);
+      if (paddings[2 * axis] != sliceStart[axis] ||
+          paddings[2 * axis + 1] != droppedHigh)
+        return rewriter.notifyMatchFailure(padOp,
+                                           "pad does not cancel the slice");
+    }
+
+    rewriter.replaceOp(padOp, sliceOp.getInput1());
+    return success();
+  }
+};
+
+// Returns true if the sub-box `[0:boxSizes]` occupies a contiguous prefix
+// `[0, prod(boxSizes))` of a row-major tensor of shape `shape`. This holds iff,
+// for the outermost dimension not taken in full, all outer dimensions have
+// extent 1 and all inner dimensions are taken in full.
+static bool isContiguousPrefix(ArrayRef<int64_t> boxSizes,
+                               ArrayRef<int64_t> shape) {
+  assert(boxSizes.size() == shape.size());
+  size_t firstReduced = boxSizes.size();
+  for (size_t i = 0; i < boxSizes.size(); ++i)
+    if (boxSizes[i] != shape[i]) {
+      firstReduced = i;
+      break;
+    }
+  if (firstReduced == boxSizes.size())
+    return true; // The box covers the whole tensor.
+  for (size_t i = 0; i < firstReduced; ++i)
+    if (boxSizes[i] != 1)
+      return false;
+  for (size_t i = firstReduced + 1; i < boxSizes.size(); ++i)
+    if (boxSizes[i] != shape[i])
+      return false;
+  return true;
+}
+
+// Rewrites a poison (don't-care) pad of a slice into a single flattened poison
+// pad followed by a reshape.
+//
+// When a slice keeps a contiguous linear prefix of its input and the following
+// pad fills the rest with poison, the only meaningful data is that prefix.
+// Dropping the trailing poison (the slice) and then re-adding poison (the pad)
+// is, under poison semantics, equivalent to extending the original tensor with
+// poison and reshaping it to the final shape:
+//
+//   slice(x)[0:s] -> pad_poison -> P
+// becomes
+//   reshape(x, 1D) -> pad_poison([0, |P| - |x|]) -> reshape(P)
+//
+// This eliminates the slice (its dropped elements are poison anyway) so the
+// original tensor's trailing region can simply ride along as poison.
+struct SlicePadToFlatPadReshape : public OpRewritePattern<tosa::PadOp> {
+  using OpRewritePattern<tosa::PadOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::PadOp padOp,
+                                PatternRewriter &rewriter) const override {
+    // The pad must fill with a poison (don't-care) value.
+    Value padConst = padOp.getPadConst();
+    if (!padConst || !padConst.getDefiningOp<ub::PoisonOp>())
+      return rewriter.notifyMatchFailure(padOp, "pad is not filling poison");
+
+    auto sliceOp = padOp.getInput1().getDefiningOp<tosa::SliceOp>();
+    if (!sliceOp)
+      return rewriter.notifyMatchFailure(padOp, "producer is not a slice");
+
+    auto sliceInputType =
+        dyn_cast<RankedTensorType>(sliceOp.getInput1().getType());
+    auto sliceResultType =
+        dyn_cast<RankedTensorType>(sliceOp.getResult().getType());
+    auto padOutputType = dyn_cast<RankedTensorType>(padOp.getResult().getType());
+    if (!sliceInputType || !sliceInputType.hasStaticShape() ||
+        !sliceResultType || !sliceResultType.hasStaticShape() ||
+        !padOutputType || !padOutputType.hasStaticShape())
+      return rewriter.notifyMatchFailure(padOp, "requires static shapes");
+
+    // The exact-cancellation case is handled by SlicePadFold.
+    if (sliceInputType == padOutputType)
+      return rewriter.notifyMatchFailure(padOp, "handled by SlicePadFold");
+
+    // The slice must keep a contiguous linear prefix of its input.
+    if (llvm::any_of(sliceOp.getStart(), [](int64_t s) { return s != 0; }))
+      return rewriter.notifyMatchFailure(padOp, "slice does not start at 0");
+    if (!isContiguousPrefix(sliceResultType.getShape(),
+                            sliceInputType.getShape()))
+      return rewriter.notifyMatchFailure(
+          padOp, "slice does not keep a contiguous linear prefix");
+
+    // The pad must keep that prefix at the start of its result: no leading
+    // padding and the kept box stays a contiguous prefix of the result.
+    ElementsAttr paddingElems;
+    if (!matchPattern(padOp.getPadding(), m_Constant(&paddingElems)))
+      return rewriter.notifyMatchFailure(padOp, "padding must be constant");
+    bool isLow = true;
+    for (APInt padVal : paddingElems.getValues<APInt>()) {
+      if (isLow && padVal.getSExtValue() != 0)
+        return rewriter.notifyMatchFailure(padOp, "pad has leading padding");
+      isLow = !isLow;
+    }
+    if (!isContiguousPrefix(sliceResultType.getShape(),
+                            padOutputType.getShape()))
+      return rewriter.notifyMatchFailure(
+          padOp, "pad does not keep the prefix contiguous");
+
+    const int64_t origElems = sliceInputType.getNumElements();
+    const int64_t finalElems = padOutputType.getNumElements();
+    if (finalElems < origElems)
+      return rewriter.notifyMatchFailure(
+          padOp, "final tensor is smaller than the slice input");
+
+    Location loc = padOp.getLoc();
+    Type elemType = sliceInputType.getElementType();
+    auto flatInType = RankedTensorType::get({origElems}, elemType);
+    auto flatOutType = RankedTensorType::get({finalElems}, elemType);
+
+    Value flat = rewriter.create<tosa::ReshapeOp>(
+        loc, flatInType, sliceOp.getInput1(),
+        rewriter.getDenseI64ArrayAttr({origElems}));
+    SmallVector<int64_t> flatPadding = {0, finalElems - origElems};
+    Value paddingShape = tosa::getTosaConstShape(rewriter, loc, flatPadding);
+    Value padded = rewriter.create<tosa::PadOp>(
+        loc, flatOutType, flat, paddingShape, padOp.getPadConst());
+    auto reshapeBack = rewriter.create<tosa::ReshapeOp>(
+        loc, padOutputType, padded,
+        rewriter.getDenseI64ArrayAttr(padOutputType.getShape()));
+    rewriter.replaceOp(padOp, reshapeBack.getResult());
+    return success();
+  }
+};
+
 void PadOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                         MLIRContext *context) {
-  results.add<MaterializePadValue, PadPadOptimization>(context);
+  results.add<MaterializePadValue, PadPadOptimization, SlicePadFold,
+              SlicePadToFlatPadReshape>(context);
 }
 
 struct MaxPool2dIsNoOp : public OpRewritePattern<tosa::MaxPool2dOp> {
@@ -1077,10 +1254,122 @@ struct TileSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
   }
 };
 
+/// This pattern reduces a tosa.pad that is consumed by a tosa.slice so that
+/// only the input region and the padding actually read by the slice are
+/// materialized. The slice is rewritten to slice the pad's input and (if any
+/// padding is still read) pad that sub-region instead. When the slice window
+/// lies entirely within the unpadded input, the padding is fully dropped and
+/// the slice reads the pad's input directly. This generalizes the simpler
+/// slice-of-slice fold to slice-of-pad.
+struct PadSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
+  using OpRewritePattern<tosa::SliceOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::SliceOp sliceOp,
+                                PatternRewriter &rewriter) const override {
+    Value sliceInput = sliceOp.getInput1();
+    auto padOp = sliceInput.getDefiningOp<tosa::PadOp>();
+    if (!padOp)
+      return rewriter.notifyMatchFailure(sliceOp,
+                                         "slice input must be pad operation");
+    if (!padOp->hasOneUse())
+      return rewriter.notifyMatchFailure(
+          sliceOp, "preceding pad must have a single use"); // Do not insert
+                                                            // additional pads
+
+    auto padInputType =
+        dyn_cast<RankedTensorType>(padOp.getInput1().getType());
+    if (!padInputType || !padInputType.hasStaticShape())
+      return rewriter.notifyMatchFailure(
+          sliceOp, "input to preceding pad op must be a static ranked tensor");
+
+    ElementsAttr paddingElems;
+    if (!matchPattern(padOp.getPadding(), m_Constant(&paddingElems)))
+      return rewriter.notifyMatchFailure(
+          sliceOp, "preceding pad must have a constant padding value");
+
+    const int64_t rank = padInputType.getRank();
+    SmallVector<int64_t> paddings;
+    paddings.reserve(2 * rank);
+    for (APInt padVal : paddingElems.getValues<APInt>())
+      paddings.push_back(padVal.getZExtValue());
+    if (static_cast<int64_t>(paddings.size()) != 2 * rank)
+      return rewriter.notifyMatchFailure(sliceOp, "unexpected padding rank");
+
+    SmallVector<int64_t> newInStart(rank);
+    SmallVector<int64_t> newInSize(rank);
+    SmallVector<int64_t> newPadding(2 * rank, 0);
+    bool changed = false;
+    for (auto [axis, sliceStart, sliceSize] :
+         llvm::enumerate(sliceOp.getStart(), sliceOp.getSize())) {
+      if (sliceSize <= 0)
+        return rewriter.notifyMatchFailure(
+            sliceOp, "degenerate slice with zero sized dim");
+
+      const int64_t lowPad = paddings[2 * axis];
+      const int64_t highPad = paddings[2 * axis + 1];
+      const int64_t inDim = padInputType.getDimSize(axis);
+      const int64_t windowEnd = sliceStart + sliceSize;
+
+      // Portion of the leading/trailing padding that the slice still reads.
+      const int64_t newLow =
+          std::clamp(lowPad - sliceStart, int64_t(0), sliceSize);
+      const int64_t newHigh =
+          std::max(int64_t(0), windowEnd - std::max(sliceStart, lowPad + inDim));
+
+      // Sub-region of the (unpadded) input that the slice reads.
+      const int64_t inStart = std::max(sliceStart - lowPad, int64_t(0));
+      const int64_t inEnd = std::min(windowEnd - lowPad, inDim);
+      const int64_t inSize = inEnd - inStart;
+      if (inSize <= 0)
+        return rewriter.notifyMatchFailure(
+            sliceOp, "slice reads only padding; left to constant folding");
+
+      newInStart[axis] = inStart;
+      newInSize[axis] = inSize;
+      newPadding[2 * axis] = newLow;
+      newPadding[2 * axis + 1] = newHigh;
+      
+
+      if (newLow != lowPad || newHigh != highPad || inStart != 0 ||
+          inSize != inDim)
+        changed = true;
+    }
+    if (!changed)
+      return rewriter.notifyMatchFailure(
+          sliceOp, "could not reduce preceding pad");
+
+    // Slice the pad's input down to the region the slice actually reads.
+    Value newInput = padOp.getInput1();
+    if (newInStart != SmallVector<int64_t>(rank, 0) ||
+        newInSize != SmallVector<int64_t>(padInputType.getShape())) {
+      newInput = rewriter.create<tosa::SliceOp>(
+          sliceOp.getLoc(), padInputType.clone(newInSize), newInput,
+          rewriter.getDenseI64ArrayAttr(newInStart),
+          rewriter.getDenseI64ArrayAttr(newInSize));
+    }
+
+    // Re-pad only with the padding the slice still reads. If nothing is left,
+    // the slice reads the input region directly.
+    if (llvm::all_of(newPadding, [](int64_t v) { return v == 0; })) {
+      rewriter.replaceOp(sliceOp, newInput);
+      return success();
+    }
+
+    auto padConst = tosa::getTosaConstShape(rewriter, padOp.getPadding().getLoc(),
+                                            newPadding);
+    auto newPad = rewriter.create<tosa::PadOp>(
+        padOp.getLoc(), sliceOp.getType(),
+        ValueRange{newInput, padConst, padOp.getPadConst()}, padOp->getAttrs());
+    rewriter.replaceOp(sliceOp, newPad.getResult());
+    return success();
+  }
+};
+
 void SliceOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                           MLIRContext *context) {
   results.add<ConcatSliceOptimization>(context);
   results.add<TileSliceOptimization>(context);
+  results.add<PadSliceOptimization>(context);
 }
 
 struct MinToClampOptimization : public OpRewritePattern<tosa::MinimumOp> {

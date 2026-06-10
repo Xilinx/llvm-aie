@@ -46,6 +46,7 @@
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
 #include "mlir/IR/BuiltinAttributes.h"
+#include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/PatternMatch.h"
@@ -349,6 +350,159 @@ bool areConcatInputsCompatible(ArrayRef<ShapedType> inputTypes,
   return true;
 }
 
+// Describes how a single reshape operand decomposes around a candidate
+// pre-reshape concat axis B: the dims before B (prefix), the dims of the
+// "concat group" after B that collapse into the post-reshape concat axis
+// (innerGroup), and the dims after the group (suffix). The group spans the
+// contiguous input axes [B, hi) whose product equals the post-reshape concat
+// dim; axis B itself is the per-operand concat axis and is therefore not part
+// of innerGroup.
+struct OperandAxisLayout {
+  SmallVector<int64_t> prefix;
+  SmallVector<int64_t> innerGroup;
+  SmallVector<int64_t> suffix;
+};
+
+std::optional<OperandAxisLayout>
+computeOperandAxisLayout(ShapedType inputType, ShapedType outputType,
+                         size_t concatAxisAfter, size_t axisB) {
+  ArrayRef<int64_t> inShape = inputType.getShape();
+  if (axisB >= inShape.size())
+    return std::nullopt;
+
+  const int64_t target = outputType.getDimSize(concatAxisAfter);
+  int64_t product = 1;
+  size_t hi = axisB;
+  for (; hi < inShape.size(); ++hi) {
+    product *= inShape[hi];
+    if (product == target) {
+      ++hi;
+      break;
+    }
+    if (product > target)
+      return std::nullopt;
+  }
+  if (product != target)
+    return std::nullopt;
+
+  OperandAxisLayout layout;
+  layout.prefix.assign(inShape.begin(), inShape.begin() + axisB);
+  layout.innerGroup.assign(inShape.begin() + axisB + 1, inShape.begin() + hi);
+  layout.suffix.assign(inShape.begin() + hi, inShape.end());
+  return layout;
+}
+
+// Plan for sinking reshapes whose operands decompose the concat axis
+// differently. All operands are brought to a single shared decomposition by
+// inserting one adapter reshape on each "minority" operand, after which a
+// single higher-rank concat plus one trailing reshape is enough.
+struct ReshapeSinkAdapterPlan {
+  size_t concatAxis;
+  SmallVector<SmallVector<int64_t>> adaptedShapes;
+  SmallVector<bool> needsAdapter;
+};
+
+// Try to find, among the common candidate axes, a pre-reshape concat axis where
+// the operands agree on everything except how they split the concat axis, and
+// where adapting the minority operand(s) to the majority decomposition strictly
+// reduces the number of reshapes (so we never increase the reshape count).
+std::optional<ReshapeSinkAdapterPlan>
+tryComputeAdapterPlan(ArrayRef<tosa::ReshapeOp> reshapes,
+                      ArrayRef<ShapedType> inputTypes,
+                      ArrayRef<size_t> commonAxes, size_t concatAxisAfter) {
+  const size_t numOperands = inputTypes.size();
+  for (size_t axisB : commonAxes) {
+    SmallVector<OperandAxisLayout> layouts;
+    layouts.reserve(numOperands);
+    bool laidOut = true;
+    for (size_t k = 0; k < numOperands; ++k) {
+      tosa::ReshapeOp reshape = reshapes[k];
+      auto outputType = cast<ShapedType>(reshape.getType());
+      auto layout = computeOperandAxisLayout(inputTypes[k], outputType,
+                                             concatAxisAfter, axisB);
+      if (!layout) {
+        laidOut = false;
+        break;
+      }
+      layouts.push_back(std::move(*layout));
+    }
+    if (!laidOut)
+      continue;
+
+    // The concat is only valid if all operands match on every dimension except
+    // the concat axis itself, i.e. identical prefix and suffix around the group.
+    const bool prefixSuffixMatch = llvm::all_of(layouts, [&](const auto &l) {
+      return l.prefix == layouts.front().prefix &&
+             l.suffix == layouts.front().suffix;
+    });
+    if (!prefixSuffixMatch)
+      continue;
+
+    // Pick the decomposition shared by the most operands (majority rule, with a
+    // first-occurrence tie-break) so the fewest adapters are needed.
+    SmallVector<int64_t> referenceInnerGroup;
+    size_t bestCount = 0;
+    for (const OperandAxisLayout &candidate : layouts) {
+      const size_t count = llvm::count_if(layouts, [&](const auto &l) {
+        return l.innerGroup == candidate.innerGroup;
+      });
+      if (count > bestCount) {
+        bestCount = count;
+        referenceInnerGroup = candidate.innerGroup;
+      }
+    }
+
+    int64_t referenceInnerProduct = 1;
+    for (int64_t dim : referenceInnerGroup)
+      referenceInnerProduct *= dim;
+    if (referenceInnerProduct == 0)
+      continue;
+
+    SmallVector<SmallVector<int64_t>> adaptedShapes(numOperands);
+    SmallVector<bool> needsAdapter(numOperands, false);
+    size_t adapters = 0;
+    bool feasible = true;
+    for (size_t k = 0; k < numOperands; ++k) {
+      if (layouts[k].innerGroup == referenceInnerGroup) {
+        adaptedShapes[k].assign(inputTypes[k].getShape().begin(),
+                                inputTypes[k].getShape().end());
+        continue;
+      }
+
+      tosa::ReshapeOp reshape = reshapes[k];
+      const int64_t concatDim =
+          cast<ShapedType>(reshape.getType()).getDimSize(concatAxisAfter);
+      if (concatDim % referenceInnerProduct != 0) {
+        feasible = false;
+        break;
+      }
+
+      SmallVector<int64_t> shape(layouts[k].prefix);
+      shape.push_back(concatDim / referenceInnerProduct);
+      shape.append(referenceInnerGroup.begin(), referenceInnerGroup.end());
+      shape.append(layouts[k].suffix.begin(), layouts[k].suffix.end());
+      adaptedShapes[k] = std::move(shape);
+      needsAdapter[k] = true;
+      ++adapters;
+    }
+    if (!feasible)
+      continue;
+
+    // Cost gate: the rewrite produces `adapters` reshapes plus one trailing
+    // reshape. Only proceed when that is strictly fewer than the original
+    // per-operand reshapes.
+    if (adapters + 1 >= numOperands)
+      continue;
+
+    ReshapeSinkAdapterPlan plan;
+    plan.concatAxis = axisB;
+    plan.adaptedShapes = std::move(adaptedShapes);
+    plan.needsAdapter = std::move(needsAdapter);
+    return plan;
+  }
+  return std::nullopt;
+}
+
 struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
   using OpRewritePattern<tosa::ConcatOp>::OpRewritePattern;
 
@@ -388,6 +542,7 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
     const uint32_t concatAxisAfterReshape = concatOp.getAxis();
     SmallVector<ShapedType> inputTypes;
     SmallVector<Value> concatOperands;
+    SmallVector<tosa::ReshapeOp> reshapes;
     SmallVector<size_t> commonAxes;
     SmallVector<Location> fusedLocs{concatOp.getLoc()};
 
@@ -409,6 +564,7 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
 
       inputTypes.push_back(info.inputType);
       concatOperands.push_back(info.reshape.getInput1());
+      reshapes.push_back(info.reshape);
       fusedLocs.push_back(info.reshape.getLoc());
     }
 
@@ -425,14 +581,47 @@ struct SinkReshapeOp : public OpRewritePattern<tosa::ConcatOp> {
       }
     }
 
-    if (!concatAxisBeforeReshape)
+    const Location fusedLoc = rewriter.getFusedLoc(fusedLocs);
+
+    if (concatAxisBeforeReshape) {
+      auto concatNew = rewriter.create<tosa::ConcatOp>(
+          fusedLoc, concatOperands, *concatAxisBeforeReshape);
+      auto reshapeNew = rewriter.create<tosa::ReshapeOp>(
+          fusedLoc, concatResultType, concatNew,
+          rewriter.getDenseI64ArrayAttr(concatResultType.getShape()));
+      rewriter.replaceOp(concatOp, reshapeNew.getResult());
+      return success();
+    }
+
+    // The raw reshape inputs are not directly concat-compatible. They may still
+    // differ only in how they split the concat axis; in that case adapt the
+    // minority operand(s) to the majority decomposition and sink as usual.
+    auto plan = tryComputeAdapterPlan(reshapes, inputTypes, commonAxes,
+                                      concatAxisAfterReshape);
+    if (!plan)
       return rewriter.notifyMatchFailure(
           concatOp, "Sinking reshape not possible. Reshape inputs are not "
-                    "concat-compatible on a common pre-reshape axis.");
+                    "concat-compatible on a common pre-reshape axis, even after "
+                    "adapting operand decompositions.");
 
-    Location fusedLoc = rewriter.getFusedLoc(fusedLocs);
-    auto concatNew = rewriter.create<tosa::ConcatOp>(fusedLoc, concatOperands,
-                                                     *concatAxisBeforeReshape);
+    SmallVector<Value> adaptedOperands;
+    adaptedOperands.reserve(reshapes.size());
+    for (size_t k = 0; k < reshapes.size(); ++k) {
+      Value input = reshapes[k].getInput1();
+      if (!plan->needsAdapter[k]) {
+        adaptedOperands.push_back(input);
+        continue;
+      }
+      auto adaptedType = RankedTensorType::get(plan->adaptedShapes[k],
+                                               inputTypes[k].getElementType());
+      auto adapter = rewriter.create<tosa::ReshapeOp>(
+          fusedLoc, adaptedType, input,
+          rewriter.getDenseI64ArrayAttr(plan->adaptedShapes[k]));
+      adaptedOperands.push_back(adapter);
+    }
+
+    auto concatNew = rewriter.create<tosa::ConcatOp>(fusedLoc, adaptedOperands,
+                                                     plan->concatAxis);
     auto reshapeNew = rewriter.create<tosa::ReshapeOp>(
         fusedLoc, concatResultType, concatNew,
         rewriter.getDenseI64ArrayAttr(concatResultType.getShape()));

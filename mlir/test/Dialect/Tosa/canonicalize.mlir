@@ -542,6 +542,113 @@ func.func @no_pad_pad_optimization_different_value(%arg0: tensor<1x478x640x32xbf
 
 // -----
 
+// CHECK-LABEL: @slice_pad_fold_poison
+// CHECK-SAME:   %[[ARG:.*]]: tensor<1x10x134x4xf32>
+func.func @slice_pad_fold_poison(%arg0: tensor<1x10x134x4xf32>) -> tensor<1x10x134x4xf32> {
+  // CHECK-NOT: tosa.slice
+  // CHECK-NOT: tosa.pad
+  // CHECK: return %[[ARG]]
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 10, 133, 4>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x10x134x4xf32>) -> tensor<1x10x133x4xf32>
+  %poison = ub.poison : tensor<f32>
+  %shape = tosa.const_shape {value = dense<[0, 0, 0, 0, 0, 1, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %poison : (tensor<1x10x133x4xf32>, !tosa.shape<8>, tensor<f32>) -> tensor<1x10x134x4xf32>
+  return %padded : tensor<1x10x134x4xf32>
+}
+
+// -----
+
+// The pad re-adds the sliced region but does not fill poison, so it must not fold.
+// CHECK-LABEL: @slice_pad_no_fold_nonpoison
+func.func @slice_pad_no_fold_nonpoison(%arg0: tensor<1x10x134x4xf32>) -> tensor<1x10x134x4xf32> {
+  // CHECK: tosa.slice
+  // CHECK: tosa.pad
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 10, 133, 4>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x10x134x4xf32>) -> tensor<1x10x133x4xf32>
+  %zero = "tosa.const"() <{value = dense<0.0> : tensor<f32>}> : () -> tensor<f32>
+  %shape = tosa.const_shape {value = dense<[0, 0, 0, 0, 0, 1, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %zero : (tensor<1x10x133x4xf32>, !tosa.shape<8>, tensor<f32>) -> tensor<1x10x134x4xf32>
+  return %padded : tensor<1x10x134x4xf32>
+}
+
+// -----
+
+// The pad does not re-add exactly what the slice removed (low pad 2 != slice
+// start 0 on the padded axis), so it must not fold even with poison.
+// CHECK-LABEL: @slice_pad_no_fold_mismatched_region
+func.func @slice_pad_no_fold_mismatched_region(%arg0: tensor<1x10x134x4xf32>) -> tensor<1x10x134x4xf32> {
+  // CHECK: tosa.slice
+  // CHECK: tosa.pad
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 10, 133, 4>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x10x134x4xf32>) -> tensor<1x10x133x4xf32>
+  %poison = ub.poison : tensor<f32>
+  %shape = tosa.const_shape {value = dense<[0, 0, 0, 0, 1, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %poison : (tensor<1x10x133x4xf32>, !tosa.shape<8>, tensor<f32>) -> tensor<1x10x134x4xf32>
+  return %padded : tensor<1x10x134x4xf32>
+}
+
+// -----
+
+// A slice that keeps a contiguous linear prefix followed by a poison pad on a
+// different axis is rewritten into a flattened poison pad plus a reshape. The
+// slice (dropping trailing poison) disappears.
+// CHECK-LABEL: @slice_pad_to_flat_pad_reshape_poison
+// CHECK-SAME:   %[[ARG:.*]]: tensor<1x1008x1x1xbf16>
+func.func @slice_pad_to_flat_pad_reshape_poison(%arg0: tensor<1x1008x1x1xbf16>) -> tensor<16x1000x1x1xbf16> {
+  // CHECK-NOT: tosa.slice
+  // CHECK: %[[FLAT:.*]] = tosa.reshape %[[ARG]] {new_shape = array<i64: 1008>} : (tensor<1x1008x1x1xbf16>) -> tensor<1008xbf16>
+  // CHECK: %[[PAD:.*]] = tosa.pad %[[FLAT]], %{{.*}}, %{{.*}} : (tensor<1008xbf16>, !tosa.shape<2>, tensor<bf16>) -> tensor<16000xbf16>
+  // CHECK: %[[RES:.*]] = tosa.reshape %[[PAD]] {new_shape = array<i64: 16, 1000, 1, 1>} : (tensor<16000xbf16>) -> tensor<16x1000x1x1xbf16>
+  // CHECK: return %[[RES]]
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 1000, 1, 1>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x1008x1x1xbf16>) -> tensor<1x1000x1x1xbf16>
+  %poison = ub.poison : tensor<bf16>
+  %shape = tosa.const_shape {value = dense<[0, 15, 0, 0, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %poison : (tensor<1x1000x1x1xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<16x1000x1x1xbf16>
+  return %padded : tensor<16x1000x1x1xbf16>
+}
+
+// -----
+
+// Negative: pad with a non-poison value must not be rewritten.
+// CHECK-LABEL: @slice_pad_to_flat_pad_reshape_no_fold_nonpoison
+func.func @slice_pad_to_flat_pad_reshape_no_fold_nonpoison(%arg0: tensor<1x1008x1x1xbf16>) -> tensor<16x1000x1x1xbf16> {
+  // CHECK: tosa.slice
+  // CHECK: tosa.pad
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 1000, 1, 1>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x1008x1x1xbf16>) -> tensor<1x1000x1x1xbf16>
+  %zero = "tosa.const"() <{value = dense<0.0> : tensor<bf16>}> : () -> tensor<bf16>
+  %shape = tosa.const_shape {value = dense<[0, 15, 0, 0, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %zero : (tensor<1x1000x1x1xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<16x1000x1x1xbf16>
+  return %padded : tensor<16x1000x1x1xbf16>
+}
+
+// -----
+
+// Negative: the slice does not start at 0, so it does not keep the linear prefix.
+// CHECK-LABEL: @slice_pad_to_flat_pad_reshape_no_fold_offset
+func.func @slice_pad_to_flat_pad_reshape_no_fold_offset(%arg0: tensor<1x1008x1x1xbf16>) -> tensor<16x1000x1x1xbf16> {
+  // CHECK: tosa.slice
+  // CHECK: tosa.pad
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 1000, 1, 1>, start = array<i64: 0, 8, 0, 0>} : (tensor<1x1008x1x1xbf16>) -> tensor<1x1000x1x1xbf16>
+  %poison = ub.poison : tensor<bf16>
+  %shape = tosa.const_shape {value = dense<[0, 15, 0, 0, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %poison : (tensor<1x1000x1x1xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<16x1000x1x1xbf16>
+  return %padded : tensor<16x1000x1x1xbf16>
+}
+
+// -----
+
+// Negative: the slice does not keep a contiguous linear prefix because an outer
+// dimension (axis 1) has extent > 1 while an inner axis is reduced.
+// CHECK-LABEL: @slice_pad_to_flat_pad_reshape_no_fold_noncontiguous
+func.func @slice_pad_to_flat_pad_reshape_no_fold_noncontiguous(%arg0: tensor<1x2x1008x1xbf16>) -> tensor<16x2x1000x1xbf16> {
+  // CHECK: tosa.slice
+  // CHECK: tosa.pad
+  %sliced = tosa.slice %arg0 {size = array<i64: 1, 2, 1000, 1>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x2x1008x1xbf16>) -> tensor<1x2x1000x1xbf16>
+  %poison = ub.poison : tensor<bf16>
+  %shape = tosa.const_shape {value = dense<[0, 15, 0, 0, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %padded = tosa.pad %sliced, %shape, %poison : (tensor<1x2x1000x1xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<16x2x1000x1xbf16>
+  return %padded : tensor<16x2x1000x1xbf16>
+}
+
+// -----
+
 // CHECK-LABEL: @mul_one_float
 func.func @mul_one_float(%arg0: tensor<2x3xf32>) -> tensor<2x3xf32> {
   // CHECK: return %arg0
@@ -1244,6 +1351,56 @@ func.func @canonicalize_tile_slice_multi_output(%arg0 : tensor<1x12x12x10x10xf32
   %0 = tosa.tile %arg0, %cst : (tensor<1x12x12x10x10xf32>, !tosa.shape<5>) -> tensor<10x120x120x100x100xf32>
   %1 = tosa.slice %0 {size = array<i64: 1, 12, 12, 10, 16>, start = array<i64: 0, 0, 1, 1, 18>} : (tensor<10x120x120x100x100xf32>) -> tensor<1x12x12x10x16xf32>
   return  %0, %1 :  tensor<10x120x120x100x100xf32>, tensor<1x12x12x10x16xf32>
+}
+
+// -----
+
+// The slice window lies entirely within the unpadded input, so the pad is
+// dropped and the slice reads the pad's input directly.
+// CHECK-LABEL:  func.func @canonicalize_pad_slice_drop_pad
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<3x51xf32>)
+// CHECK-NOT:       tosa.pad
+// CHECK:           [[VAR_0_:%.+]] = tosa.slice [[PARAM_0_]] {size = array<i64: 3, 1>, start = array<i64: 0, 4>} : (tensor<3x51xf32>) -> tensor<3x1xf32>
+// CHECK:           return [[VAR_0_]] : tensor<3x1xf32>
+func.func @canonicalize_pad_slice_drop_pad(%arg0: tensor<3x51xf32>) -> tensor<3x1xf32> {
+  %padding = tosa.const_shape {value = dense<[0, 0, 0, 1]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %pad_const = "tosa.const"() <{value = dense<0.000000e+00> : tensor<f32>}> : () -> tensor<f32>
+  %0 = tosa.pad %arg0, %padding, %pad_const : (tensor<3x51xf32>, !tosa.shape<4>, tensor<f32>) -> tensor<3x52xf32>
+  %1 = tosa.slice %0 {size = array<i64: 3, 1>, start = array<i64: 0, 4>} : (tensor<3x52xf32>) -> tensor<3x1xf32>
+  return %1 : tensor<3x1xf32>
+}
+
+// -----
+
+// The slice reads part of the leading pad, so the pad is reduced to only the
+// padding still read and applied to the input sub-region the slice covers.
+// CHECK-LABEL:  func.func @canonicalize_pad_slice_reduce_pad
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<3x51xf32>)
+// CHECK-DAG:       [[VAL:%.+]] = "tosa.const"() <{value = dense<0.000000e+00> : tensor<f32>}> : () -> tensor<f32>
+// CHECK-DAG:       [[PAD:%.+]] = tosa.const_shape  {value = dense<[0, 0, 1, 0]> : tensor<4xindex>} : () -> !tosa.shape<4>
+// CHECK:           [[SLICE:%.+]] = tosa.slice [[PARAM_0_]] {size = array<i64: 3, 3>, start = array<i64: 0, 0>} : (tensor<3x51xf32>) -> tensor<3x3xf32>
+// CHECK:           [[PADDED:%.+]] = tosa.pad [[SLICE]], [[PAD]], [[VAL]] : (tensor<3x3xf32>, !tosa.shape<4>, tensor<f32>) -> tensor<3x4xf32>
+// CHECK:           return [[PADDED]] : tensor<3x4xf32>
+func.func @canonicalize_pad_slice_reduce_pad(%arg0: tensor<3x51xf32>) -> tensor<3x4xf32> {
+  %padding = tosa.const_shape {value = dense<[0, 0, 2, 2]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %pad_const = "tosa.const"() <{value = dense<0.000000e+00> : tensor<f32>}> : () -> tensor<f32>
+  %0 = tosa.pad %arg0, %padding, %pad_const : (tensor<3x51xf32>, !tosa.shape<4>, tensor<f32>) -> tensor<3x55xf32>
+  %1 = tosa.slice %0 {size = array<i64: 3, 4>, start = array<i64: 0, 1>} : (tensor<3x55xf32>) -> tensor<3x4xf32>
+  return %1 : tensor<3x4xf32>
+}
+
+// -----
+
+// The pad has multiple uses, so it must not be modified.
+// CHECK-LABEL:  func.func @canonicalize_pad_slice_multi_use
+// CHECK:           tosa.pad
+// CHECK:           tosa.slice
+func.func @canonicalize_pad_slice_multi_use(%arg0: tensor<3x51xf32>) -> (tensor<3x52xf32>, tensor<3x1xf32>) {
+  %padding = tosa.const_shape {value = dense<[0, 0, 0, 1]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %pad_const = "tosa.const"() <{value = dense<0.000000e+00> : tensor<f32>}> : () -> tensor<f32>
+  %0 = tosa.pad %arg0, %padding, %pad_const : (tensor<3x51xf32>, !tosa.shape<4>, tensor<f32>) -> tensor<3x52xf32>
+  %1 = tosa.slice %0 {size = array<i64: 3, 1>, start = array<i64: 0, 4>} : (tensor<3x52xf32>) -> tensor<3x1xf32>
+  return %0, %1 : tensor<3x52xf32>, tensor<3x1xf32>
 }
 
 // -----

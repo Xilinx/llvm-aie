@@ -496,6 +496,106 @@ func.func @reshape_complex_match(%arg0: tensor<1x42x1x1xbf16>, %arg1: tensor<1x4
 // CHECK:         }
 // -----
 
+// Operands reshape to the same concat shape but split the concat axis
+// differently: three split 256 as 16x16, one as 32x8. The odd operand is
+// adapted to the majority 16x16 split so a single high-rank concat plus one
+// trailing reshape can sink all four reshapes.
+func.func @reshape_differing_decomposition(%arg0: tensor<64x16x16x80x1xbf16>, %arg1: tensor<64x16x16x80x1xbf16>, %arg2: tensor<64x16x16x80x1xbf16>, %arg3: tensor<64x32x8x80x1xbf16>) -> tensor<64x1024x80x1xbf16> {
+  %0 = tosa.reshape %arg0 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %1 = tosa.reshape %arg1 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %2 = tosa.reshape %arg2 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %3 = tosa.reshape %arg3 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x32x8x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %4 = tosa.concat %0, %1, %2, %3 {axis = 1 : i32} : (tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>) -> tensor<64x1024x80x1xbf16>
+  return %4 : tensor<64x1024x80x1xbf16>
+}
+
+// CHECK-LABEL:  func.func @reshape_differing_decomposition
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_1_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_2_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_3_:%.+]]: tensor<64x32x8x80x1xbf16>) -> tensor<64x1024x80x1xbf16> {
+// CHECK:           [[VAR_0_:%.+]] = tosa.reshape [[PARAM_3_]] {new_shape = array<i64: 64, 16, 16, 80, 1>} : (tensor<64x32x8x80x1xbf16>) -> tensor<64x16x16x80x1xbf16>
+// CHECK:           [[VAR_1_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]], [[PARAM_2_]], [[VAR_0_]] {axis = 1 : i32} : (tensor<64x16x16x80x1xbf16>, tensor<64x16x16x80x1xbf16>, tensor<64x16x16x80x1xbf16>, tensor<64x16x16x80x1xbf16>) -> tensor<64x64x16x80x1xbf16>
+// CHECK:           [[VAR_2_:%.+]] = tosa.reshape [[VAR_1_]] {new_shape = array<i64: 64, 1024, 80, 1>} : (tensor<64x64x16x80x1xbf16>) -> tensor<64x1024x80x1xbf16>
+// CHECK:           return [[VAR_2_]] : tensor<64x1024x80x1xbf16>
+// CHECK:         }
+// -----
+
+// Two minority operands (32x8 and 8x32) are both adapted to the 16x16 majority.
+// 4 reshapes -> 2 adapters + 1 trailing reshape still reduces the count.
+func.func @reshape_two_minorities(%arg0: tensor<64x16x16x80x1xbf16>, %arg1: tensor<64x16x16x80x1xbf16>, %arg2: tensor<64x32x8x80x1xbf16>, %arg3: tensor<64x8x32x80x1xbf16>) -> tensor<64x1024x80x1xbf16> {
+  %0 = tosa.reshape %arg0 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %1 = tosa.reshape %arg1 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %2 = tosa.reshape %arg2 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x32x8x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %3 = tosa.reshape %arg3 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x8x32x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %4 = tosa.concat %0, %1, %2, %3 {axis = 1 : i32} : (tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>) -> tensor<64x1024x80x1xbf16>
+  return %4 : tensor<64x1024x80x1xbf16>
+}
+
+// CHECK-LABEL:  func.func @reshape_two_minorities
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_1_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_2_:%.+]]: tensor<64x32x8x80x1xbf16>, [[PARAM_3_:%.+]]: tensor<64x8x32x80x1xbf16>) -> tensor<64x1024x80x1xbf16> {
+// CHECK-DAG:       [[VAR_0_:%.+]] = tosa.reshape [[PARAM_2_]] {new_shape = array<i64: 64, 16, 16, 80, 1>} : (tensor<64x32x8x80x1xbf16>) -> tensor<64x16x16x80x1xbf16>
+// CHECK-DAG:       [[VAR_1_:%.+]] = tosa.reshape [[PARAM_3_]] {new_shape = array<i64: 64, 16, 16, 80, 1>} : (tensor<64x8x32x80x1xbf16>) -> tensor<64x16x16x80x1xbf16>
+// CHECK:           [[VAR_2_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]], [[VAR_0_]], [[VAR_1_]] {axis = 1 : i32} : (tensor<64x16x16x80x1xbf16>, tensor<64x16x16x80x1xbf16>, tensor<64x16x16x80x1xbf16>, tensor<64x16x16x80x1xbf16>) -> tensor<64x64x16x80x1xbf16>
+// CHECK:           [[VAR_3_:%.+]] = tosa.reshape [[VAR_2_]] {new_shape = array<i64: 64, 1024, 80, 1>} : (tensor<64x64x16x80x1xbf16>) -> tensor<64x1024x80x1xbf16>
+// CHECK:           return [[VAR_3_]] : tensor<64x1024x80x1xbf16>
+// CHECK:         }
+// -----
+
+// The majority operands keep the concat axis unsplit (single axis 16); the
+// minority 4x4 split is collapsed to match. The trailing identity reshape folds
+// away, leaving just the adapter reshape and the concat.
+func.func @reshape_collapse_minority(%arg0: tensor<4x16x5xbf16>, %arg1: tensor<4x16x5xbf16>, %arg2: tensor<4x4x4x5xbf16>) -> tensor<4x48x5xbf16> {
+  %0 = tosa.reshape %arg0 {new_shape = array<i64: 4, 16, 5>} : (tensor<4x16x5xbf16>) -> tensor<4x16x5xbf16>
+  %1 = tosa.reshape %arg1 {new_shape = array<i64: 4, 16, 5>} : (tensor<4x16x5xbf16>) -> tensor<4x16x5xbf16>
+  %2 = tosa.reshape %arg2 {new_shape = array<i64: 4, 16, 5>} : (tensor<4x4x4x5xbf16>) -> tensor<4x16x5xbf16>
+  %3 = tosa.concat %0, %1, %2 {axis = 1 : i32} : (tensor<4x16x5xbf16>, tensor<4x16x5xbf16>, tensor<4x16x5xbf16>) -> tensor<4x48x5xbf16>
+  return %3 : tensor<4x48x5xbf16>
+}
+
+// CHECK-LABEL:  func.func @reshape_collapse_minority
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<4x16x5xbf16>, [[PARAM_1_:%.+]]: tensor<4x16x5xbf16>, [[PARAM_2_:%.+]]: tensor<4x4x4x5xbf16>) -> tensor<4x48x5xbf16> {
+// CHECK:           [[VAR_0_:%.+]] = tosa.reshape [[PARAM_2_]] {new_shape = array<i64: 4, 16, 5>} : (tensor<4x4x4x5xbf16>) -> tensor<4x16x5xbf16>
+// CHECK:           [[VAR_1_:%.+]] = tosa.concat [[PARAM_0_]], [[PARAM_1_]], [[VAR_0_]] {axis = 1 : i32} : (tensor<4x16x5xbf16>, tensor<4x16x5xbf16>, tensor<4x16x5xbf16>) -> tensor<4x48x5xbf16>
+// CHECK:           return [[VAR_1_]] : tensor<4x48x5xbf16>
+// CHECK:         }
+// -----
+
+// No decomposition is shared by a majority (all three operands differ), so
+// adapting would not reduce the reshape count: the pass must not fire.
+func.func @reshape_no_majority(%arg0: tensor<4x4x4x5xbf16>, %arg1: tensor<4x2x8x5xbf16>, %arg2: tensor<4x8x2x5xbf16>) -> tensor<4x48x5xbf16> {
+  %0 = tosa.reshape %arg0 {new_shape = array<i64: 4, 16, 5>} : (tensor<4x4x4x5xbf16>) -> tensor<4x16x5xbf16>
+  %1 = tosa.reshape %arg1 {new_shape = array<i64: 4, 16, 5>} : (tensor<4x2x8x5xbf16>) -> tensor<4x16x5xbf16>
+  %2 = tosa.reshape %arg2 {new_shape = array<i64: 4, 16, 5>} : (tensor<4x8x2x5xbf16>) -> tensor<4x16x5xbf16>
+  %3 = tosa.concat %0, %1, %2 {axis = 1 : i32} : (tensor<4x16x5xbf16>, tensor<4x16x5xbf16>, tensor<4x16x5xbf16>) -> tensor<4x48x5xbf16>
+  return %3 : tensor<4x48x5xbf16>
+}
+
+// CHECK-LABEL:  func.func @reshape_no_majority
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<4x4x4x5xbf16>, [[PARAM_1_:%.+]]: tensor<4x2x8x5xbf16>, [[PARAM_2_:%.+]]: tensor<4x8x2x5xbf16>) -> tensor<4x48x5xbf16> {
+// CHECK-DAG:       [[VAR_0_:%.+]] = tosa.reshape [[PARAM_0_]] {new_shape = array<i64: 4, 16, 5>} : (tensor<4x4x4x5xbf16>) -> tensor<4x16x5xbf16>
+// CHECK-DAG:       [[VAR_1_:%.+]] = tosa.reshape [[PARAM_1_]] {new_shape = array<i64: 4, 16, 5>} : (tensor<4x2x8x5xbf16>) -> tensor<4x16x5xbf16>
+// CHECK-DAG:       [[VAR_2_:%.+]] = tosa.reshape [[PARAM_2_]] {new_shape = array<i64: 4, 16, 5>} : (tensor<4x8x2x5xbf16>) -> tensor<4x16x5xbf16>
+// CHECK:           [[VAR_3_:%.+]] = tosa.concat [[VAR_0_]], [[VAR_1_]], [[VAR_2_]] {axis = 1 : i32} : (tensor<4x16x5xbf16>, tensor<4x16x5xbf16>, tensor<4x16x5xbf16>) -> tensor<4x48x5xbf16>
+// CHECK:           return [[VAR_3_]] : tensor<4x48x5xbf16>
+// CHECK:         }
+// -----
+
+// Differing split *and* a mismatching suffix (40x2 vs 80x1) around the concat
+// group: the operands are not concat-compatible, so the pass must not fire.
+func.func @reshape_suffix_mismatch(%arg0: tensor<64x16x16x80x1xbf16>, %arg1: tensor<64x16x16x80x1xbf16>, %arg2: tensor<64x16x16x80x1xbf16>, %arg3: tensor<64x32x8x40x2xbf16>) -> tensor<64x1024x80x1xbf16> {
+  %0 = tosa.reshape %arg0 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %1 = tosa.reshape %arg1 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %2 = tosa.reshape %arg2 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x16x16x80x1xbf16>) -> tensor<64x256x80x1xbf16>
+  %3 = tosa.reshape %arg3 {new_shape = array<i64: 64, 256, 80, 1>} : (tensor<64x32x8x40x2xbf16>) -> tensor<64x256x80x1xbf16>
+  %4 = tosa.concat %0, %1, %2, %3 {axis = 1 : i32} : (tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>) -> tensor<64x1024x80x1xbf16>
+  return %4 : tensor<64x1024x80x1xbf16>
+}
+
+// CHECK-LABEL:  func.func @reshape_suffix_mismatch
+// CHECK-SAME:   ([[PARAM_0_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_1_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_2_:%.+]]: tensor<64x16x16x80x1xbf16>, [[PARAM_3_:%.+]]: tensor<64x32x8x40x2xbf16>) -> tensor<64x1024x80x1xbf16> {
+// CHECK:           [[VAR_3_:%.+]] = tosa.concat {{.*}} {axis = 1 : i32} : (tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>, tensor<64x256x80x1xbf16>) -> tensor<64x1024x80x1xbf16>
+// CHECK:           return [[VAR_3_]] : tensor<64x1024x80x1xbf16>
+// CHECK:         }
+// -----
+
 // valid tests for all supported operations
 
 !in_type = tensor<1x8x8xf32>
