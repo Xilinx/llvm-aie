@@ -2747,7 +2747,11 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
        CombOpInstID != Intrinsic::aie2p_unpack_I1024_I8_I4))
     return {};
 
-  if (!MemOp.mayLoad())
+  // The unpack may be fed by an op that reports mayLoad() but is not an actual
+  // memory access (e.g. the SRS narrowing intrinsic that lowers
+  // acc.to_vector<int8>()). Such ops carry no memory operand, so bail out
+  // before getLoadStoreSize() dereferences a non-existent one.
+  if (!MemOp.mayLoad() || MemOp.memoperands_empty())
     return {};
 
   assert(((getLoadStoreSize(MemOp) == 256 &&
