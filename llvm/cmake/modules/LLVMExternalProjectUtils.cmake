@@ -1,3 +1,14 @@
+#===----------------------------------------------------------------------===#
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+#
+#===----------------------------------------------------------------------===#
+
 include(ExternalProject)
 
 # llvm_ExternalProject_BuildCmd(out_var target)
@@ -397,9 +408,6 @@ function(llvm_ExternalProject_Add name source_dir)
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
     BUILD_ALWAYS 1
-    USES_TERMINAL_CONFIGURE 1
-    USES_TERMINAL_BUILD 1
-    USES_TERMINAL_INSTALL 1
     LIST_SEPARATOR |
     )
   if (ARG_FOLDER)
