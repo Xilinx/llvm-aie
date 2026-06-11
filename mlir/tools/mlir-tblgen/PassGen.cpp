@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // PassGen uses the description of passes to generate base classes for passes
@@ -123,6 +126,18 @@ static void emitPassDecls(const Pass &pass, raw_ostream &os) {
 
   os << "#ifdef " << enableVarName << "\n";
   emitPassOptionsStruct(pass, os);
+
+  if (pass.getGenOptionsParser()) {
+    if (ArrayRef<PassOption> options = pass.getOptions(); !options.empty())
+      os << formatv(
+          R"(/// Parse the options string into the generated options struct.
+/// This only performs option parsing and does not call pass initialization hooks.
+::mlir::FailureOr<{0}Options> parse{0}Options(
+    ::llvm::StringRef options,
+    ::llvm::function_ref<::mlir::LogicalResult(const ::llvm::Twine &)> errorHandler);
+)",
+          passName);
+  }
 
   if (StringRef constructor = pass.getConstructor(); constructor.empty()) {
     // Default constructor declaration.
@@ -266,10 +281,12 @@ std::unique_ptr<::mlir::Pass> create{0}({0}Options options) {{
 )";
 
 /// Emit the declarations for each of the pass options.
-static void emitPassOptionDecls(const Pass &pass, raw_ostream &os) {
+static void emitPassOptionDecls(const Pass &pass, raw_ostream &os,
+                                StringRef optionClassPrefix,
+                                unsigned indent = 2) {
   for (const PassOption &opt : pass.getOptions()) {
-    os.indent(2) << "::mlir::Pass::"
-                 << (opt.isListOption() ? "ListOption" : "Option");
+    os.indent(indent) << optionClassPrefix
+                      << (opt.isListOption() ? "ListOption" : "Option");
 
     os << formatv(R"(<{0}> {1}{{*this, "{2}", ::llvm::cl::desc("{3}"))",
                   opt.getType(), opt.getCppVariableName(), opt.getArgument(),
@@ -280,6 +297,48 @@ static void emitPassOptionDecls(const Pass &pass, raw_ostream &os) {
       os << ", " << *additionalFlags;
     os << "};\n";
   }
+}
+
+/// Emit a function that parses options into the generated option struct.
+static void emitParsePassOptionsDef(const Pass &pass, raw_ostream &os) {
+  StringRef passName = pass.getDef()->getName();
+  ArrayRef<PassOption> options = pass.getOptions();
+  if (!pass.getGenOptionsParser() || options.empty())
+    return;
+
+  os << formatv(R"(
+::mlir::FailureOr<{0}Options> parse{0}Options(
+    ::llvm::StringRef options,
+    ::llvm::function_ref<::mlir::LogicalResult(const ::llvm::Twine &)> errorHandler) {{
+)",
+                passName);
+  os.indent(2) << "struct OptionsParser : public "
+                  "::mlir::detail::PassOptions {\n";
+  emitPassOptionDecls(pass, os, "::mlir::detail::PassOptions::",
+                      /*indent=*/4);
+  os.indent(2) << "};\n";
+  os.indent(2) << "OptionsParser parser;\n";
+  os.indent(2) << "std::string error;\n";
+  os.indent(2) << "::llvm::raw_string_ostream errorStream(error);\n";
+  os.indent(2) << "if (::mlir::failed(parser.parseFromString(options, "
+                  "errorStream))) {\n";
+  os.indent(4) << "errorStream.flush();\n";
+  os.indent(4) << "return errorHandler(error);\n";
+  os.indent(2) << "}\n";
+  os.indent(2) << formatv("{0}Options parsedOptions;\n", passName);
+  for (const PassOption &opt : options) {
+    StringRef cppName = opt.getCppVariableName();
+    if (opt.isListOption()) {
+      os.indent(2) << formatv("parsedOptions.{0}.assign((*parser.{0}).begin(), "
+                              "(*parser.{0}).end());\n",
+                              cppName);
+      continue;
+    }
+    os.indent(2) << formatv("parsedOptions.{0} = parser.{0}.getValue();\n",
+                            cppName);
+  }
+  os.indent(2) << "return parsedOptions;\n";
+  os << "}\n";
 }
 
 /// Emit the declarations for each of the pass statistics.
@@ -336,7 +395,7 @@ static void emitPassDefs(const Pass &pass, raw_ostream &os) {
 
   // Protected content
   os << "protected:\n";
-  emitPassOptionDecls(pass, os);
+  emitPassOptionDecls(pass, os, "::mlir::Pass::");
   emitPassStatisticDecls(pass, os);
 
   // Private content
@@ -351,6 +410,8 @@ static void emitPassDefs(const Pass &pass, raw_ostream &os) {
 
   os << "};\n";
   os << "} // namespace impl\n";
+
+  emitParsePassOptionsDef(pass, os);
 
   if (emitDefaultConstructors) {
     os << formatv(defaultConstructorDefTemplate, passName);
@@ -441,7 +502,7 @@ static void emitOldPassDecl(const Pass &pass, raw_ostream &os) {
   os << formatv(oldPassDeclBegin, defName, pass.getBaseClass(),
                 pass.getArgument(), pass.getSummary(),
                 dependentDialectRegistrations);
-  emitPassOptionDecls(pass, os);
+  emitPassOptionDecls(pass, os, "::mlir::Pass::");
   emitPassStatisticDecls(pass, os);
   os << "};\n";
 }
