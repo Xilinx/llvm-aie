@@ -328,6 +328,8 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
 
   getActionDefinitionsBuilder({G_FSHL, G_FSHR}).lower();
 
+  getActionDefinitionsBuilder({G_ROTL, G_ROTR}).lower();
+
   getActionDefinitionsBuilder({G_MEMCPY, G_MEMSET, G_MEMMOVE})
       .customIf([=](const LegalityQuery &Query) {
         const LLT SizeArg = Query.Types[2];
