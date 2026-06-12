@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // FileCheck does a line-by line check of a file that validates whether it
@@ -17,6 +20,7 @@
 
 #include "llvm/FileCheck/FileCheck.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
@@ -24,6 +28,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cmath>
+#include <cstring>
 #include <map>
 using namespace llvm;
 
@@ -169,13 +174,384 @@ static cl::list<unsigned> DumpInputContexts(
              "this option, the largest specified <N> has precedence.  The\n"
              "default is 5.\n"));
 
+static cl::opt<bool> ShowDiff(
+    "show-diff",
+    cl::desc(
+        "Replace normal error diagnostics with a two-column side-by-side\n"
+        "diff report. Each row shows a CHECK directive on the left and the\n"
+        "best-matching actual output line on the right, with all CHECK\n"
+        "lines shown for context. Failed directives are highlighted.\n"
+        "Structured FILECHECK-PATCH blocks are also emitted for use by\n"
+        "update_filecheck_checks.py to update test files automatically."));
+
+static cl::opt<unsigned> DiffWidth(
+    "diff-width",
+    cl::desc("Width of the left (check-pattern) column in the --show-diff\n"
+             "report. 0 means auto-compute from the longest check line."),
+    cl::value_desc("N"), cl::init(0));
+
 typedef cl::list<std::string>::const_iterator prefix_iterator;
 
+// Returns the human-readable directive label for a check type, e.g.
+// "CHECK-NEXT".
+static std::string getCheckLabel(const Check::FileCheckType &CheckTy) {
+  switch (static_cast<Check::FileCheckKind>(CheckTy)) {
+  case Check::CheckPlain:
+    if (CheckTy.getCount() > 1)
+      return "CHECK-COUNT-" + std::to_string(CheckTy.getCount());
+    return "CHECK";
+  case Check::CheckNext:
+    return "CHECK-NEXT";
+  case Check::CheckSame:
+    return "CHECK-SAME";
+  case Check::CheckNot:
+    return "CHECK-NOT";
+  case Check::CheckDAG:
+    return "CHECK-DAG";
+  case Check::CheckLabel:
+    return "CHECK-LABEL";
+  case Check::CheckEmpty:
+    return "CHECK-EMPTY";
+  case Check::CheckComment:
+    return "COM";
+  case Check::CheckEOF:
+    return "CHECK-EOF";
+  default:
+    return "CHECK";
+  }
+}
 
+// Returns the content of input line LineNo (1-based) from Buffer.
+static StringRef getInputLine(StringRef Buffer, unsigned LineNo) {
+  const char *P = Buffer.data();
+  const char *End = Buffer.data() + Buffer.size();
+  for (unsigned L = 1; L < LineNo && P < End; ++L) {
+    const char *NL = static_cast<const char *>(memchr(P, '\n', End - P));
+    if (!NL)
+      return StringRef();
+    P = NL + 1;
+  }
+  if (P >= End)
+    return StringRef();
+  const char *LineEnd = static_cast<const char *>(memchr(P, '\n', End - P));
+  if (!LineEnd)
+    LineEnd = End;
+  return StringRef(P, LineEnd - P);
+}
 
+// Returns the pattern portion of a check line (the text from CheckLoc to EOL).
+static StringRef getPatternText(SMLoc CheckLoc) {
+  const char *P = CheckLoc.getPointer();
+  if (!P)
+    return StringRef();
+  const char *End = P;
+  while (*End && *End != '\n' && *End != '\r')
+    ++End;
+  return StringRef(P, End - P);
+}
 
+// Returns the complete source line containing CheckLoc (e.g. "; CHECK: foo").
+static std::string getFullCheckLine(const SourceMgr &SM, SMLoc CheckLoc) {
+  unsigned BufID = SM.FindBufferContainingLoc(CheckLoc);
+  if (BufID == 0)
+    return "";
+  unsigned Col = SM.getLineAndColumn(CheckLoc, BufID).second;
+  const char *P = CheckLoc.getPointer() - (Col - 1);
+  const char *End = CheckLoc.getPointer();
+  while (*End && *End != '\n' && *End != '\r')
+    ++End;
+  return std::string(P, End);
+}
 
+// Builds a proposed replacement check line, keeping the comment prefix.
+// If the pattern contains regex metacharacters, a FIXME marker is appended.
+static std::string buildNewCheckLine(StringRef OldLine, StringRef PatText,
+                                     StringRef ActualLine) {
+  size_t PatOffset = OldLine.find(PatText);
+  if (PatOffset == StringRef::npos)
+    PatOffset = OldLine.size();
+  std::string Prefix = OldLine.substr(0, PatOffset).str();
+  bool HasRegex = PatText.find_first_of("{{([\\") != StringRef::npos;
+  if (HasRegex)
+    return Prefix + PatText.str() + " ; FIXME: update regex";
+  return Prefix + ActualLine.str();
+}
 
+// Pads S to exactly Width characters, or truncates with "..." suffix.
+static std::string padOrTruncate(StringRef S, unsigned Width) {
+  if (S.size() <= Width)
+    return S.str() + std::string(Width - S.size(), ' ');
+  if (Width <= 3)
+    return S.substr(0, Width).str();
+  return S.substr(0, Width - 3).str() + "...";
+}
+
+// One row of the two-column display table.
+struct DiffRow {
+  unsigned CheckFileLine = 0;
+  std::string CheckLabel, PatText, FullCheckLine;
+  unsigned InputLine = 0;
+  std::string InputText;
+  FileCheckDiag::MatchType MatchTy = FileCheckDiag::MatchFoundAndExpected;
+  std::string FuzzyText;
+  unsigned FuzzyLine = 0;
+  bool NeedsPatch = false;
+};
+
+// Converts the flat Diags vector into DiffRow objects.
+// A MatchFuzzy entry immediately preceding a MatchNoneButExpected for the
+// same check is merged into a single row.
+static std::vector<DiffRow>
+buildDiffRows(const SourceMgr &SM, StringRef InputFileContent,
+              const std::vector<FileCheckDiag> &Diags) {
+  std::vector<DiffRow> Rows;
+  size_t I = 0;
+  while (I < Diags.size()) {
+    const FileCheckDiag &D = Diags[I];
+    // Skip internal synthetic check types that don't represent user directives.
+    const Check::FileCheckKind Kind = D.CheckTy;
+    if (Kind == Check::CheckNone || Kind == Check::CheckEOF ||
+        Kind == Check::CheckBadNot || Kind == Check::CheckBadCount) {
+      ++I;
+      continue;
+    }
+
+    DiffRow Row;
+    Row.MatchTy = D.MatchTy;
+    unsigned BufID = SM.FindBufferContainingLoc(D.CheckLoc);
+    if (BufID != 0)
+      Row.CheckFileLine = SM.getLineAndColumn(D.CheckLoc, BufID).first;
+    Row.CheckLabel = getCheckLabel(D.CheckTy);
+    Row.PatText = getPatternText(D.CheckLoc).str();
+    Row.FullCheckLine = getFullCheckLine(SM, D.CheckLoc);
+
+    if (D.MatchTy == FileCheckDiag::MatchFoundAndExpected ||
+        D.MatchTy == FileCheckDiag::MatchFoundButExcluded ||
+        D.MatchTy == FileCheckDiag::MatchFoundButWrongLine ||
+        D.MatchTy == FileCheckDiag::MatchNoneAndExcluded) {
+      Row.InputLine = D.InputStartLine;
+      Row.InputText = getInputLine(InputFileContent, D.InputStartLine).str();
+      ++I;
+    } else if (D.MatchTy == FileCheckDiag::MatchNoneButExpected) {
+      // FileCheck can emit multiple MatchNoneButExpected entries for the same
+      // check (the main "no match" entry plus one per captured variable
+      // binding, e.g. "with REG equal to r0").  Consume all of them, then
+      // absorb the optional trailing MatchFuzzy for the same check so the
+      // entire failure appears as a single merged row.
+      Row.NeedsPatch = true;
+      ++I;
+      while (I < Diags.size() &&
+             Diags[I].MatchTy == FileCheckDiag::MatchNoneButExpected &&
+             Diags[I].CheckLoc == D.CheckLoc) {
+        ++I;
+      }
+      if (I < Diags.size() && Diags[I].MatchTy == FileCheckDiag::MatchFuzzy &&
+          Diags[I].CheckLoc == D.CheckLoc) {
+        Row.FuzzyLine = Diags[I].InputStartLine;
+        Row.FuzzyText =
+            getInputLine(InputFileContent, Diags[I].InputStartLine).str();
+        Row.InputLine = Row.FuzzyLine;
+        Row.InputText = Row.FuzzyText;
+        ++I;
+      }
+    } else if (D.MatchTy == FileCheckDiag::MatchFuzzy) {
+      // Standalone fuzzy match (no preceding MatchNoneButExpected merged).
+      Row.FuzzyText = getInputLine(InputFileContent, D.InputStartLine).str();
+      Row.FuzzyLine = D.InputStartLine;
+      Row.InputLine = Row.FuzzyLine;
+      Row.InputText = Row.FuzzyText;
+      Row.NeedsPatch = true;
+      ++I;
+    } else {
+      Row.NeedsPatch = true;
+      ++I;
+    }
+    Rows.push_back(std::move(Row));
+  }
+  return Rows;
+}
+
+// Discards all SM diagnostics when --show-diff is active.
+static void NullDiagHandler(const SMDiagnostic &, void *) {}
+
+// Emits Act to OS with per-character GREEN/RED coloring based on its alignment
+// with Pat via the Longest Common Subsequence (LCS).  Characters in Act that
+// appear in the LCS are shown in GREEN (they match something in Pat); the rest
+// are shown in RED (they are unique to the actual output).
+//
+// Falls back to a simple prefix-only highlight for very long lines (> 512
+// chars each) to avoid O(n^2) work, which is never a concern in practice since
+// FileCheck patterns are short.
+static void emitInlineDiff(raw_ostream &OS, StringRef Pat, StringRef Act) {
+  const size_t P = Pat.size();
+  const size_t A = Act.size();
+
+  if (P > 512 || A > 512) {
+    // Fallback: just highlight the common prefix and leave the rest red.
+    size_t Pre = 0;
+    while (Pre < P && Pre < A && Pat[Pre] == Act[Pre])
+      ++Pre;
+    if (Pre > 0)
+      WithColor(OS, raw_ostream::GREEN).get() << Act.substr(0, Pre);
+    if (Pre < A)
+      WithColor(OS, raw_ostream::RED).get() << Act.substr(Pre);
+    return;
+  }
+
+  // Standard LCS dynamic programming: lcs[i][j] is the length of the LCS of
+  // Pat[0..i) and Act[0..j).
+  std::vector<std::vector<unsigned short>> Lcs(
+      P + 1, std::vector<unsigned short>(A + 1, 0));
+  for (size_t I = 1; I <= P; ++I)
+    for (size_t J = 1; J <= A; ++J)
+      Lcs[I][J] = (Pat[I - 1] == Act[J - 1])
+                      ? Lcs[I - 1][J - 1] + 1
+                      : std::max(Lcs[I - 1][J], Lcs[I][J - 1]);
+
+  // Backtrack through the DP table to mark which positions in Act participate
+  // in the LCS (i.e., match some character in Pat).
+  std::vector<bool> Matched(A, false);
+  for (size_t I = P, J = A; I > 0 && J > 0;) {
+    if (Pat[I - 1] == Act[J - 1]) {
+      Matched[--J] = true;
+      --I;
+    } else if (Lcs[I - 1][J] >= Lcs[I][J - 1]) {
+      --I;
+    } else {
+      --J;
+    }
+  }
+
+  // Walk Act and emit contiguous green (matched) and red (unmatched) segments.
+  size_t K = 0;
+  while (K < A) {
+    if (Matched[K]) {
+      const size_t Start = K;
+      while (K < A && Matched[K])
+        ++K;
+      WithColor(OS, raw_ostream::GREEN).get() << Act.substr(Start, K - Start);
+    } else {
+      const size_t Start = K;
+      while (K < A && !Matched[K])
+        ++K;
+      WithColor(OS, raw_ostream::RED).get() << Act.substr(Start, K - Start);
+    }
+  }
+}
+
+// Emits the two-column diff report and FILECHECK-PATCH blocks.
+static void
+PrintSideBySideReport(raw_ostream &OS, const SourceMgr &SM,
+                      const FileCheckRequest &Req, StringRef CheckFilename,
+                      StringRef InputFilename, StringRef InputFileContent,
+                      const std::vector<FileCheckDiag> &Diags, bool Colors) {
+  if (Diags.empty())
+    return;
+  std::vector<DiffRow> Rows = buildDiffRows(SM, InputFileContent, Diags);
+  if (Rows.empty())
+    return;
+
+  unsigned LeftWidth = Req.DiffWidth;
+  if (LeftWidth == 0) {
+    for (const DiffRow &R : Rows) {
+      unsigned N =
+          6u + (unsigned)R.CheckLabel.size() + 2u + (unsigned)R.PatText.size();
+      if (N > LeftWidth)
+        LeftWidth = N;
+    }
+    if (LeftWidth > 80u)
+      LeftWidth = 80u;
+    if (LeftWidth < 20u)
+      LeftWidth = 20u;
+  }
+  const unsigned RightWidth = LeftWidth;
+
+  OS << "\n=== FileCheck side-by-side diff: " << CheckFilename << " vs "
+     << InputFilename << " ===\n";
+  OS << padOrTruncate(std::string(4, ' ') + "| CHECK directive", LeftWidth)
+     << " || " << std::string(4, ' ') << "| Actual output\n";
+  OS << std::string(LeftWidth, '-') << "-++-" << std::string(RightWidth, '-')
+     << "\n";
+
+  for (const DiffRow &R : Rows) {
+    const bool Fail = R.MatchTy != FileCheckDiag::MatchFoundAndExpected &&
+                      R.MatchTy != FileCheckDiag::MatchNoneAndExcluded;
+    std::string CheckNum =
+        R.CheckFileLine ? std::to_string(R.CheckFileLine) : "";
+    std::string LeftCell =
+        formatv("{0,4}| {1}: {2}", CheckNum, R.CheckLabel, R.PatText).str();
+    const std::string RightText =
+        R.InputText.empty() ? "(no match)" : R.InputText;
+    std::string InputNum = R.InputLine ? std::to_string(R.InputLine) : "--";
+
+    if (Colors) {
+      // Left column: whole cell colored red (fail) or green (pass) to show
+      // overall match status at a glance.
+      const raw_ostream::Colors LC =
+          Fail ? raw_ostream::RED : raw_ostream::GREEN;
+      WithColor(OS, LC).get() << padOrTruncate(LeftCell, LeftWidth);
+      OS << " || ";
+      // Right column: print line-number prefix uncolored, then highlight the
+      // actual text with character-level green/red so the user can see exactly
+      // which prefix matched and where it diverges.
+      OS << formatv("{0,4}| ", InputNum);
+      if (!Fail) {
+        // Perfect match: the whole text is green.
+        WithColor(OS, raw_ostream::GREEN).get() << RightText;
+      } else if (R.InputText.empty()) {
+        // No candidate at all.
+        WithColor(OS, raw_ostream::RED).get() << RightText;
+      } else {
+        // Use the LCS-based diff to highlight all matching and mismatching
+        // regions, so the user sees green for every character that aligns with
+        // the expected pattern and red for every character that does not,
+        // including multiple interleaved mismatch regions.
+        emitInlineDiff(OS, R.PatText, R.InputText);
+      }
+      OS << "\n";
+    } else {
+      // Non-color mode: whole-line display with a trailing marker and a '^'
+      // pointer on the next line.
+      std::string RightCell = formatv("{0,4}| {1}", InputNum, RightText).str();
+      OS << padOrTruncate(LeftCell, LeftWidth) << " || " << RightCell;
+      if (Fail)
+        OS << "  <-- FAILED";
+      OS << "\n";
+      // Emit '^' under the first differing character.
+      if (Fail && !R.InputText.empty() && !R.PatText.empty()) {
+        size_t D2 = 0;
+        while (D2 < R.PatText.size() && D2 < R.InputText.size() &&
+               R.PatText[D2] == R.InputText[D2])
+          ++D2;
+        OS << std::string(LeftWidth + 4u + 6u + D2, ' ') << "^\n";
+      }
+    }
+  }
+  OS << std::string(LeftWidth, '-') << "-++-" << std::string(RightWidth, '-')
+     << "\n";
+
+  bool First = true;
+  for (const DiffRow &R : Rows) {
+    if (!R.NeedsPatch)
+      continue;
+    if (First) {
+      OS << "\n";
+      First = false;
+    }
+    const StringRef Best =
+        R.FuzzyText.empty() ? StringRef(R.InputText) : StringRef(R.FuzzyText);
+    const std::string NewLine =
+        buildNewCheckLine(R.FullCheckLine, R.PatText, Best);
+    OS << "--- FILECHECK-PATCH ---\n"
+       << "file: " << CheckFilename << "\n"
+       << "check-line: " << R.CheckFileLine << "\n"
+       << "type: " << R.CheckLabel << "\n"
+       << "old: '" << R.FullCheckLine << "'\n"
+       << "actual: '" << Best << "'\n"
+       << "new: '" << NewLine << "'\n"
+       << "--- END PATCH ---\n";
+  }
+}
 
 static void DumpCommandLine(int argc, char **argv) {
   errs() << "FileCheck command line: ";
@@ -797,6 +1173,8 @@ int main(int argc, char **argv) {
   Req.NoCanonicalizeWhiteSpace = NoCanonicalizeWhiteSpace;
   Req.MatchFullLines = MatchFullLines;
   Req.IgnoreCase = IgnoreCase;
+  Req.ShowDiff = ShowDiff;
+  Req.DiffWidth = DiffWidth;
 
   if (VerboseVerbose)
     Req.Verbose = true;
@@ -854,13 +1232,23 @@ int main(int argc, char **argv) {
                             InputFileText, InputFile.getBufferIdentifier()),
                         SMLoc());
 
+  // Suppress normal SM error output when --show-diff is active; the side-by-
+  // side report replaces it.
+  if (Req.ShowDiff)
+    SM.setDiagHandler(NullDiagHandler, nullptr);
+
   std::vector<FileCheckDiag> Diags;
-  int ExitCode = FC.checkInput(SM, InputFileText,
-                               DumpInput == DumpInputNever ? nullptr : &Diags)
+  const bool NeedDiags = DumpInput != DumpInputNever || Req.ShowDiff;
+  int ExitCode = FC.checkInput(SM, InputFileText, NeedDiags ? &Diags : nullptr)
                      ? EXIT_SUCCESS
                      : 1;
-  if (DumpInput == DumpInputAlways ||
-      (ExitCode == 1 && DumpInput == DumpInputFail)) {
+
+  if (Req.ShowDiff) {
+    const bool Colors = WithColor(errs()).colorsEnabled();
+    PrintSideBySideReport(errs(), SM, Req, CheckFilename, InputFilename,
+                          InputFileText, Diags, Colors);
+  } else if (DumpInput == DumpInputAlways ||
+             (ExitCode == 1 && DumpInput == DumpInputFail)) {
     errs() << "\n"
            << "Input file: " << InputFilename << "\n"
            << "Check file: " << CheckFilename << "\n"

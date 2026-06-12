@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file This file has some utilities to use FileCheck as an API
@@ -42,6 +45,14 @@ struct FileCheckRequest {
   bool AllowDeprecatedDagOverlap = false;
   bool Verbose = false;
   bool VerboseVerbose = false;
+  /// When true, replace normal error diagnostics with a two-column
+  /// side-by-side diff report showing check lines paired with the
+  /// best-matching actual output lines.  Structured FILECHECK-PATCH blocks
+  /// are also emitted for use by update_filecheck_checks.py.
+  bool ShowDiff = false;
+  /// Left-column width for the --show-diff report.
+  /// 0 means auto-compute from the maximum check-line length.
+  unsigned DiffWidth = 0;
 };
 
 namespace Check {
