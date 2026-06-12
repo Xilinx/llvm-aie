@@ -29,46 +29,44 @@ declare <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32>, <16 x i32>, i32) #1
 define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_one_of_vIT0_ahS0_7float16EEvPS1_S3_R25avgpool2d_internal_paramsIS1_E(ptr noalias %ifm_ptr, ptr noalias %ofm_ptr, ptr nonnull align 64 dereferenceable(64) %avgpool2d_params) local_unnamed_addr #2 comdat {
 ; CHECK-LABEL: _Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_one_of_vIT0_ahS0_7float16EEvPS1_S3_R25avgpool2d_internal_paramsIS1_E:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; nopx
-; CHECK-NEXT:    lda.u8 r0, [p2, #0]; st r10, [sp, #-52]; mov m0, #46 // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #-42; paddb [p2], m0; st p6, [sp, #-44] // 4-byte Folded Spill
-; CHECK-NEXT:    lda.s16 r2, [p2], m0; st p7, [sp, #-40] // 4-byte Folded Spill
-; CHECK-NEXT:    st r9:r8, [sp, #-64] // 8-byte Folded Spill
-; CHECK-NEXT:    st lr, [sp, #-56] // 4-byte Folded Spill
-; CHECK-NEXT:    st r12, [sp, #-48]; jl #__floatsisf // 4-byte Folded Spill
+; CHECK-NEXT:    paddxm [sp], #64; nopxm
+; CHECK-NEXT:    lda.u8 r0, [p2, #0]; st p6, [sp, #-52]; mov m0, #46 // 4-byte Folded Spill
+; CHECK-NEXT:    mova m0, #-42; paddb [p2], m0; st p7, [sp, #-48] // 4-byte Folded Spill
+; CHECK-NEXT:    lda.s16 r8, [p2], m0; st lr, [sp, #-56] // 4-byte Folded Spill
+; CHECK-NEXT:    st r9:r8, [sp, #-64]; jl #__floatsisf // 8-byte Folded Spill
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    movxm r8, #50332476 // Delay Slot 3
-; CHECK-NEXT:    movs p6, p0; vbcst.16 x0, r2 // Delay Slot 2
-; CHECK-NEXT:    mova r10, #1; movs p7, p1; add r1, r0, #-2; mov r9, p2 // Delay Slot 1
-; CHECK-NEXT:    nopa ; nopb ; nopx ; vinsert.32 x2, x0, #0, r0
-; CHECK-NEXT:    vmov bmll0, x2
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov p6, p0 // Delay Slot 2
+; CHECK-NEXT:    movs p7, p1; add r1, r0, #-2; mov r9, p2 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vinsert.32 x0, x0, #0, r0; nopv
+; CHECK-NEXT:    vmov bmll0, x0
 ; CHECK-NEXT:    mova m0, #24; mov p0, r9
 ; CHECK-NEXT:    lda.u16 r26, [p0], m0; vconv.bf16.fp32 wl2, bmll0
-; CHECK-NEXT:    lda.s16 r22, [p0], #12
-; CHECK-NEXT:    lda.s8 r2, [p0], #1; movxm r12, #50331708
-; CHECK-NEXT:    lda.s8 r4, [p0], #-8; vmul.f cml0, x0, x2, r12
+; CHECK-NEXT:    lda.s16 r28, [p0], #12; vbcst.16 x0, r8
+; CHECK-NEXT:    lda.s8 r2, [p0], #1; movxm r8, #50331708
+; CHECK-NEXT:    lda.s8 r4, [p0], #-8; vmul.f cml0, x0, x2, r8
 ; CHECK-NEXT:    lda.s8 r6, [p0], #1
 ; CHECK-NEXT:    lda.s8 r16, [p0], #1
 ; CHECK-NEXT:    lda.s8 r18, [p0], #1; vldb x4, [p6], #64
 ; CHECK-NEXT:    lda.s8 r20, [p0], #1; vldb x6, [p6], #64
-; CHECK-NEXT:    lda.s8 r24, [p0], #1; vldb x8, [p6], #64
-; CHECK-NEXT:    lda.s8 r28, [p0], #1; vldb x10, [p6], #64; mov m1, r22
-; CHECK-NEXT:    vlda x7, [p6], m1; vconv.bf16.fp32 x2, cml0; movxm ls, #.LBB0_1
+; CHECK-NEXT:    lda.s8 r22, [p0], #1; vldb x8, [p6], #64; movxm ls, #.LBB0_1
+; CHECK-NEXT:    lda.s8 r24, [p0], #1; vldb x10, [p6], #64; mov m1, r28
+; CHECK-NEXT:    vlda x7, [p6], m1; vconv.bf16.fp32 x2, cml0; movxm le, #.L_LEnd0
 ; CHECK-NEXT:    vlda x10, [p6], #64; mov m0, #-9
-; CHECK-NEXT:    lda.s8 r30, [p0], m0; movxm le, #.L_LEnd0
-; CHECK-NEXT:    lda.s16 r1, [p0], #-6; vextbcst.16 x2, x2, #0
-; CHECK-NEXT:    lshl r0, r6, r10; vshuffle x1, x4, x6, r2
-; CHECK-NEXT:    lshl r6, r16, r10; vshuffle x3, x4, x6, r4
-; CHECK-NEXT:    lshl r16, r18, r10; vshuffle x5, x8, x10, r2; vmul.f cml2, x1, x0, r8
-; CHECK-NEXT:    lshl r18, r20, r10; vshuffle x9, x8, x10, r4
+; CHECK-NEXT:    lda.s8 r30, [p0], m0; movxm r8, #50332476
+; CHECK-NEXT:    lda.s16 r1, [p0], #-6; movx r3, #1; vextbcst.16 x2, x2, #0
+; CHECK-NEXT:    lshl r0, r6, r3; vshuffle x1, x4, x6, r2
+; CHECK-NEXT:    lshl r6, r16, r3; vshuffle x3, x4, x6, r4
+; CHECK-NEXT:    lshl r16, r18, r3; vshuffle x5, x8, x10, r2; vmul.f cml2, x1, x0, r8
+; CHECK-NEXT:    lshl r18, r20, r3; vshuffle x9, x8, x10, r4
 ; CHECK-NEXT:    vlda x5, [p6], #64; vshift x8, x3, x5, r18
-; CHECK-NEXT:    vlda x9, [p6], #64; lshl r20, r24, r10; vshift x11, x3, x5, r0
+; CHECK-NEXT:    vlda x9, [p6], #64; lshl r20, r22, r3; vshift x11, x3, x5, r0
 ; CHECK-NEXT:    movs m2, r1; vldb x8, [p6], #64; vshift x11, x11, x9, r20; vmul.f cml0, x8, x0, r8
 ; CHECK-NEXT:    vlda x6, [p6], m2; vshift x4, x1, x3, r6
 ; CHECK-NEXT:    vshift x6, x3, x5, r16
-; CHECK-NEXT:    lda m0, [p0], #-8; vldb x8, [p6], #64; lshl r22, r28, r10; vshift x3, x1, x3, r0; vmac.f cml1, cml0, x11, x0, r8
-; CHECK-NEXT:    lda dn0, [p0], #-8; lshl r24, r30, r10; vshift x4, x4, x5, r22
+; CHECK-NEXT:    lda m0, [p0], #-8; vldb x8, [p6], #64; lshl r22, r24, r3; vshift x3, x1, x3, r0; vmac.f cml1, cml0, x11, x0, r8
+; CHECK-NEXT:    lda dn0, [p0], #-8; lshl r24, r30, r3; vshift x4, x4, x5, r22
 ; CHECK-NEXT:    lda dj0, [p0], #12; vshift x6, x6, x7, r24; vmac.f cml3, cml2, x3, x0, r8
 ; CHECK-NEXT:    lda dn4, [p0, #0]; vshuffle x7, x10, x5, r2
 ; CHECK-NEXT:    lda dj4, [p0, #-8]; vshuffle x11, x10, x5, r4; vmac.f cml4, cml1, x6, x2, r8
@@ -126,10 +124,10 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x8, x5, x9, r18; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    lda lr, [sp, #-56]; vshuffle x11, x7, x10, r4 // 4-byte Folded Reload
-; CHECK-NEXT:    lda p6, [sp, #-44]; vshift x1, x6, x5, r0; vmac.f cml7, cml7, x6, x2, r8 // 4-byte Folded Reload
-; CHECK-NEXT:    lda r12, [sp, #-48]; vshift x7, x5, x9, r0; vmac.f cml6, cml6, x8, x2, r8 // 4-byte Folded Reload
-; CHECK-NEXT:    lda r10, [sp, #-52]; vshift x7, x7, x11, r20 // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-56]; nopx ; vshuffle x11, x7, x10, r4 // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-52]; vshift x1, x6, x5, r0; vmac.f cml7, cml7, x6, x2, r8 // 4-byte Folded Reload
+; CHECK-NEXT:    vshift x7, x5, x9, r0; vmac.f cml6, cml6, x8, x2, r8
+; CHECK-NEXT:    vshift x7, x7, x11, r20
 ; CHECK-NEXT:    lda r9:r8, [sp, #-64]; vshift x3, x6, x5, r6; vmac.f cml7, cml7, x1, x2, r8 // 8-byte Folded Reload
 ; CHECK-NEXT:    vshift x10, x5, x9, r16; vmac.f cml6, cml6, x7, x2, r8
 ; CHECK-NEXT:    vshift x10, x10, x4, r24
@@ -138,7 +136,7 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    vmac.f cml7, cml7, x3, x2, r8
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda p7, [sp, #-40] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p7, [sp, #-48] // 4-byte Folded Reload
 ; CHECK-NEXT:    paddxm [sp], #-64
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

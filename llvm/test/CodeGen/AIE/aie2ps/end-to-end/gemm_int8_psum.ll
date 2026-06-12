@@ -77,7 +77,7 @@ define dso_local void @gemm_int8_psum(
 ; REMARKS-NEXT:   - NS:              '4'
 ; REMARKS-NEXT:   - Loop:            bb.5.for.body144.cd
 ; REMARKS-NEXT:   - Prologue:        bb.4.cooldown.entry
-; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - PrologueBundles: '13'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT: ...

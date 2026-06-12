@@ -110,27 +110,27 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ;
 ; AIE2PS-LABEL: sibling:
 ; AIE2PS:       // %bb.0: // %for.body.lr.ph
-; AIE2PS-NEXT:    mova r2, #0; nopxm
-; AIE2PS-NEXT:    addm.nc r3, r0, #-1
-; AIE2PS-NEXT:    mova r0, #2
+; AIE2PS-NEXT:    nopa ; nopb ; nopx ; addm.nc r3, r0, #-1; nops
+; AIE2PS-NEXT:    mova r0, #0
+; AIE2PS-NEXT:    mova r4, #2
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_1
-; AIE2PS-NEXT:    mova r6, #0
-; AIE2PS-NEXT:    lda r4, [p0, #0]
+; AIE2PS-NEXT:    lda r2, [p0, #0]
 ; AIE2PS-NEXT:  .LBB0_1: // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
-; AIE2PS-NEXT:    nopa ; nopb ; lshl r16, r6, r0; nopm ; nops
-; AIE2PS-NEXT:    mov dj0, r16
-; AIE2PS-NEXT:    lda r16, [p1, dj0]
+; AIE2PS-NEXT:    nopa ; lshl r6, r0, r4; nopm
+; AIE2PS-NEXT:    mov dj0, r6
+; AIE2PS-NEXT:    lda r6, [p1, dj0]
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    jnzd r3, r3, p2
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
-; AIE2PS-NEXT:    add r6, r6, #1 // Delay Slot 3
-; AIE2PS-NEXT:    add r4, r4, r16 // Delay Slot 2
-; AIE2PS-NEXT:    st r4, [p0, #0] // Delay Slot 1
+; AIE2PS-NEXT:    add r0, r0, #1 // Delay Slot 3
+; AIE2PS-NEXT:    add r2, r2, r6 // Delay Slot 2
+; AIE2PS-NEXT:    st r2, [p0, #0] // Delay Slot 1
 ; AIE2PS-NEXT:  // %bb.2: // %for.body6.lr.ph
 ; AIE2PS-NEXT:    addm.nc r1, r1, #-1
+; AIE2PS-NEXT:    mova r2, #0
 ; AIE2PS-NEXT:    mova r4, #2
 ; AIE2PS-NEXT:    movxm p2, #.LBB0_3
 ; AIE2PS-NEXT:    lda r0, [p0, #0]

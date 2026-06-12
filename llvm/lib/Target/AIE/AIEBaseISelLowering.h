@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -80,6 +80,14 @@ public:
   virtual MVT getRegisterTypeForCallingConv(LLVMContext &Context,
                                             CallingConv::ID CC,
                                             EVT VT) const override;
+
+  /// Extend the default localization policy to also cover constant vector
+  /// splats (G_BUILD_VECTOR with all-equal operands and the target's broadcast
+  /// pseudo). The IRTranslator materializes these at the top of the entry
+  /// block, where their live range can cross intervening calls and force a
+  /// vector spill/reload; localizing sinks them back towards their uses.
+  bool shouldLocalize(const MachineInstr &MI,
+                      const TargetTransformInfo *TTI) const override;
 
 protected:
   bool isEligibleForTailCallOptimization(

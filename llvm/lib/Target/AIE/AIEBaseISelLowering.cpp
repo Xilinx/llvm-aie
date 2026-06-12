@@ -14,11 +14,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseISelLowering.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "MCTargetDesc/aie2ps/AIE2PSMCTargetDesc.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/MC/MCRegister.h"
 using namespace llvm;
@@ -930,4 +934,32 @@ MVT AIEBaseTargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
     return MVT::i32;
 
   return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+}
+
+bool AIEBaseTargetLowering::shouldLocalize(
+    const MachineInstr &MI, const TargetTransformInfo *TTI) const {
+  const MachineFunction &MF = *MI.getMF();
+  const auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+
+  // The target broadcast pseudo is a cheap constant-splat materialization;
+  // sink it close to its uses so its live range does not cross calls.
+  if (MI.getOpcode() == TII->getGenericBroadcastVectorOpcode())
+    return true;
+
+  // A G_BUILD_VECTOR whose operands are all identical is a splat, i.e. another
+  // cheaply rematerializable constant-like value worth localizing.
+  if (MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR) {
+    const Register Src = MI.getOperand(1).getReg();
+    bool IsSplat = true;
+    for (unsigned I = 2, E = MI.getNumOperands(); I < E; ++I)
+      if (MI.getOperand(I).getReg() != Src) {
+        IsSplat = false;
+        break;
+      }
+    if (IsSplat)
+      return true;
+  }
+
+  return TargetLoweringBase::shouldLocalize(MI, TTI);
 }
