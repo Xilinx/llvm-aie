@@ -28,6 +28,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT: Function:        two_regions
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      entry
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '8'
 ; REMARKS-NEXT:   - ByteCount:       '32'
 ; REMARKS-NEXT:   - Offset:          '0'
@@ -38,6 +39,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT: Function:        two_regions
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      epilog
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '8'
 ; REMARKS-NEXT:   - ByteCount:       '32'
 ; REMARKS-NEXT:   - Offset:          '32'
@@ -48,6 +50,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT: Function:        two_regions
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      loop.preheader
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '3'
 ; REMARKS-NEXT:   - ByteCount:       '16'
 ; REMARKS-NEXT:   - Offset:          '64'
@@ -58,6 +61,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT: Function:        two_regions
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      loop
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '6'
 ; REMARKS-NEXT:   - ByteCount:       '30'
 ; REMARKS-NEXT:   - Offset:          '80'
@@ -68,8 +72,9 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT: Function:        two_regions
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      latch
-; REMARKS-NEXT:   - BundleCount:     '12'
-; REMARKS-NEXT:   - ByteCount:       '34'
+; REMARKS-NEXT:   - RegionIndex:     '0'
+; REMARKS-NEXT:   - BundleCount:     '6'
+; REMARKS-NEXT:   - ByteCount:       '18'
 ; REMARKS-NEXT:   - Offset:          '110'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
@@ -77,7 +82,19 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT: Name:            analysis
 ; REMARKS-NEXT: Function:        two_regions
 ; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - BasicBlock:      latch
+; REMARKS-NEXT:   - RegionIndex:     '1'
+; REMARKS-NEXT:   - BundleCount:     '6'
+; REMARKS-NEXT:   - ByteCount:       '16'
+; REMARKS-NEXT:   - Offset:          '128'
+; REMARKS-NEXT: ...
+; REMARKS: --- !Analysis
+; REMARKS-NEXT: Pass:            aie-asm-printer
+; REMARKS-NEXT: Name:            analysis
+; REMARKS-NEXT: Function:        two_regions
+; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      exit
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '6'
 ; REMARKS-NEXT:   - ByteCount:       '16'
 ; REMARKS-NEXT:   - Offset:          '144'
