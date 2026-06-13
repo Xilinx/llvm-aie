@@ -36,8 +36,8 @@ class AIE2AsmPrinter : public AIEBaseAsmPrinter {
   void assertLayoutOrder(const MachineBasicBlock &MBB);
 #endif
 
-  // Emit the bundle-count analysis remark for the block.
-  void emitBundleCount(const MachineBasicBlock &MBB);
+  // Emit one analysis remark per execution region of the block.
+  void emitRegionRemarks(const MachineBasicBlock &MBB);
 
 public:
   explicit AIE2AsmPrinter(TargetMachine &TM,

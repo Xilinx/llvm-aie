@@ -74,6 +74,70 @@ bool AIE2AsmPrinter::lowerOperand(const MachineOperand &MO,
   return LowerAIEMachineOperandToMCOperand(MO, MCOp, *this);
 }
 
+namespace {
+/// One execution region of an MBB: consecutive bundles run the same number of
+/// times. A delay-slotted branch ends a region; bundles after it start next.
+class BundleRegion {
+  unsigned BundleCount = 0;
+  unsigned ByteCount = 0;
+  // Delay-slot bundles still owed by an open branch; 0 = no open branch.
+  unsigned PendingDelaySlots = 0;
+
+  void tally(const MachineInstr &MI, const AIEBaseInstrInfo &TII) {
+    BundleCount++;
+    ByteCount += TII.getAIEMachineBundleSize(MI);
+  }
+
+  bool hasPendingDelaySlots() const { return PendingDelaySlots > 0; }
+  void consumeDelaySlot() { --PendingDelaySlots; }
+  bool delaySlotsExhausted() const { return PendingDelaySlots == 0; }
+
+  // Open a window of N delay slots (N == 0 opens nothing).
+  void beginDelaySlots(unsigned N) { PendingDelaySlots = N; }
+
+public:
+  unsigned getBundleCount() const { return BundleCount; }
+  unsigned getByteCount() const { return ByteCount; }
+  bool empty() const { return BundleCount == 0; }
+
+  /// Add one bundle; true when it ends the region (a branch's last delay slot).
+  bool appendBundleEndsRegion(const MachineInstr &MI,
+                              const AIEBaseInstrInfo &TII) {
+    tally(MI, TII);
+
+    // In a branch's delay slots: drain one; the region ends at the last.
+    if (hasPendingDelaySlots()) {
+      consumeDelaySlot();
+      return delaySlotsExhausted();
+    }
+
+    // A delay-slotted branch opens a window; other bundles continue the region.
+    beginDelaySlots(TII.getNumDelaySlots(MI));
+    return false;
+  }
+};
+} // namespace
+
+/// Split MBB's bundles into execution regions in layout order; empty if none.
+static SmallVector<BundleRegion, 2>
+partitionIntoRegions(const MachineBasicBlock &MBB,
+                     const AIEBaseInstrInfo &TII) {
+  SmallVector<BundleRegion, 2> Regions;
+  BundleRegion Current;
+  for (const MachineInstr &MI : MBB) {
+    if (!MI.isBundle())
+      continue;
+    if (Current.appendBundleEndsRegion(MI, TII)) {
+      Regions.push_back(Current);
+      Current = BundleRegion();
+    }
+  }
+  // Trailing bundles after the last branch (the common single-region block).
+  if (!Current.empty())
+    Regions.push_back(Current);
+  return Regions;
+}
+
 // Reset the offset at each function's entry block; avoids a stale MF pointer.
 void AIE2AsmPrinter::resetOffsetForNewFunction(const MachineBasicBlock &MBB) {
   if (!MBB.getPrevNode())
@@ -90,44 +154,35 @@ void AIE2AsmPrinter::assertLayoutOrder(const MachineBasicBlock &MBB) {
 }
 #endif
 
-void AIE2AsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
+void AIE2AsmPrinter::emitRegionRemarks(const MachineBasicBlock &MBB) {
   resetOffsetForNewFunction(MBB);
 #ifndef NDEBUG
   assertLayoutOrder(MBB);
 #endif
 
-  unsigned BundleCount = 0;
-  unsigned ByteCount = 0;
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
       MBB.getParent()->getSubtarget().getInstrInfo());
-  for (auto &MI : MBB) {
-    if (!MI.isBundle())
-      continue;
 
-    BundleCount++;
-    ByteCount += TII->getAIEMachineBundleSize(MI);
+  // One remark per region; RegionIndex distinguishes a multi-region block.
+  unsigned RegionIndex = 0;
+  for (const BundleRegion &Region : partitionIntoRegions(MBB, *TII)) {
+    const unsigned Offset = LayoutByteOffset;
+    LayoutByteOffset += Region.getByteCount();
+    ORE->emit([&]() {
+      return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
+                                               MBB.begin()->getDebugLoc(), &MBB)
+             << ore::NV("BasicBlock", MBB.getName())
+             << ore::NV("RegionIndex", RegionIndex)
+             << ore::NV("BundleCount", Region.getBundleCount())
+             << ore::NV("ByteCount", Region.getByteCount())
+             << ore::NV("Offset", Offset);
+    });
+    RegionIndex++;
   }
-
-  if (BundleCount == 0) {
-    // encountered empty MBB, no need to dump Bundle info, this could be an
-    // empty back-edge
-    return;
-  }
-
-  // Layout-order byte position of this block; advance past it.
-  const unsigned Offset = LayoutByteOffset;
-  LayoutByteOffset += ByteCount;
-  ORE->emit([&]() {
-    return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
-                                             MBB.begin()->getDebugLoc(), &MBB)
-           << ore::NV("BasicBlock", MBB.getName())
-           << ore::NV("BundleCount", BundleCount)
-           << ore::NV("ByteCount", ByteCount) << ore::NV("Offset", Offset);
-  });
 }
 
 void AIE2AsmPrinter::emitBasicBlockStart(const MachineBasicBlock &MBB) {
-  emitBundleCount(MBB);
+  emitRegionRemarks(MBB);
 
   AsmPrinter::emitBasicBlockStart(MBB);
 }
