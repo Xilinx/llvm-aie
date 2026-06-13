@@ -30,6 +30,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT:   - BasicBlock:      entry
 ; REMARKS-NEXT:   - BundleCount:     '8'
 ; REMARKS-NEXT:   - ByteCount:       '32'
+; REMARKS-NEXT:   - Offset:          '0'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -39,6 +40,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT:   - BasicBlock:      epilog
 ; REMARKS-NEXT:   - BundleCount:     '8'
 ; REMARKS-NEXT:   - ByteCount:       '32'
+; REMARKS-NEXT:   - Offset:          '32'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -48,6 +50,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT:   - BasicBlock:      loop.preheader
 ; REMARKS-NEXT:   - BundleCount:     '3'
 ; REMARKS-NEXT:   - ByteCount:       '16'
+; REMARKS-NEXT:   - Offset:          '64'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -57,6 +60,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT:   - BasicBlock:      loop
 ; REMARKS-NEXT:   - BundleCount:     '6'
 ; REMARKS-NEXT:   - ByteCount:       '30'
+; REMARKS-NEXT:   - Offset:          '80'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -66,6 +70,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT:   - BasicBlock:      latch
 ; REMARKS-NEXT:   - BundleCount:     '12'
 ; REMARKS-NEXT:   - ByteCount:       '34'
+; REMARKS-NEXT:   - Offset:          '110'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -75,6 +80,7 @@ define void @two_regions(i1 %enter, i1 %c, i1 %d, ptr %p) {
 ; REMARKS-NEXT:   - BasicBlock:      exit
 ; REMARKS-NEXT:   - BundleCount:     '6'
 ; REMARKS-NEXT:   - ByteCount:       '16'
+; REMARKS-NEXT:   - Offset:          '144'
 ; REMARKS-NEXT: ...
 entry:
   br i1 %enter, label %loop, label %epilog

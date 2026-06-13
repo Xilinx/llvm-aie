@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -74,7 +74,28 @@ bool AIE2AsmPrinter::lowerOperand(const MachineOperand &MO,
   return LowerAIEMachineOperandToMCOperand(MO, MCOp, *this);
 }
 
+// Reset the offset at each function's entry block; avoids a stale MF pointer.
+void AIE2AsmPrinter::resetOffsetForNewFunction(const MachineBasicBlock &MBB) {
+  if (!MBB.getPrevNode())
+    LayoutByteOffset = 0;
+}
+
+#ifndef NDEBUG
+// Blocks must arrive in layout order; LastEmittedMBB is compared, not deref'd.
+void AIE2AsmPrinter::assertLayoutOrder(const MachineBasicBlock &MBB) {
+  const MachineBasicBlock *LayoutPred = MBB.getPrevNode();
+  assert((!LayoutPred || LastEmittedMBB == LayoutPred) &&
+         "MBBs emitted out of layout order; region byte offsets are invalid");
+  LastEmittedMBB = &MBB;
+}
+#endif
+
 void AIE2AsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
+  resetOffsetForNewFunction(MBB);
+#ifndef NDEBUG
+  assertLayoutOrder(MBB);
+#endif
+
   unsigned BundleCount = 0;
   unsigned ByteCount = 0;
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
@@ -93,12 +114,15 @@ void AIE2AsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
     return;
   }
 
+  // Layout-order byte position of this block; advance past it.
+  const unsigned Offset = LayoutByteOffset;
+  LayoutByteOffset += ByteCount;
   ORE->emit([&]() {
     return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
                                              MBB.begin()->getDebugLoc(), &MBB)
            << ore::NV("BasicBlock", MBB.getName())
            << ore::NV("BundleCount", BundleCount)
-           << ore::NV("ByteCount", ByteCount);
+           << ore::NV("ByteCount", ByteCount) << ore::NV("Offset", Offset);
   });
 }
 
