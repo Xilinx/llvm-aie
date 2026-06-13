@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -21,7 +21,22 @@
 namespace llvm {
 
 class AIE2AsmPrinter : public AIEBaseAsmPrinter {
-  // Dump Bundle Count to Optimization Remarks
+  // Byte offset of the current block in its function; a remark ordering key.
+  unsigned LayoutByteOffset = 0;
+#ifndef NDEBUG
+  // Previous emitted block; for the layout-order assert (never deref'd).
+  const MachineBasicBlock *LastEmittedMBB = nullptr;
+#endif
+
+  // Restart LayoutByteOffset at the entry block of each function.
+  void resetOffsetForNewFunction(const MachineBasicBlock &MBB);
+
+#ifndef NDEBUG
+  // Assert blocks are emitted in layout order, and record the block.
+  void assertLayoutOrder(const MachineBasicBlock &MBB);
+#endif
+
+  // Emit the bundle-count analysis remark for the block.
   void emitBundleCount(const MachineBasicBlock &MBB);
 
 public:
