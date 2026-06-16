@@ -279,7 +279,9 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   for (MachineBasicBlock &MBB : *MF) {
     auto Itr = Blocks.emplace(&MBB, &MBB).first;
     BlockState &BS = Itr->second;
-
+    // This is the first classification, picking out the loops. It may pick out
+    // some epilogues already, but we make an explicit second classification
+    // sweep once we have established the set of loops.
     classifyBlock(BS);
     BS.LiveOuts.init(*TRI);
     // Calculating LiveOuts by iterating over each successor of the MBB and
@@ -540,6 +542,13 @@ bool InterBlockScheduling::leaveBlock() {
     // This is the first visit to this block. The region decomposition has been
     // gathered. Now transition to Scheduling so the next pass actually
     // schedules the gathered regions.
+    //
+    // The machine scheduler may skip enterRegion entirely for blocks that have
+    // no schedulable region (empty blocks or single-instruction blocks). Ensure
+    // the invariant that every block has at least one region by creating one
+    // that covers the full block content.
+    if (BS.getRegions().empty())
+      BS.addRegion(BS.TheBlock, BS.TheBlock->begin(), BS.TheBlock->end());
     if (BS.Kind == BlockType::Loop) {
       // For loops, also create the interblock edges between the top and the
       // bottom region.
@@ -950,16 +959,14 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
 
 void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {
   BlockState &BS = getBlockState(BB);
-  // The current region must have been gathered before we can build edges.
-  // Blocks that are just created (e.g. DedicatedExit) may have empty regions
-  // until enterRegion is called; skip building in that case.
-  if (BS.getRegions().empty())
-    return;
+  assert(!BS.getRegions().empty() &&
+         "Every block in Blocks must have at least one region.");
 
   const MachineSchedContext &C = *Context;
   const bool SafeToIgnoreMemDeps = BS.isSafeToIgnoreMemDeps();
 
   auto &PerSuccEdges = BS.getPerSuccEdges();
+  PerSuccEdges.clear();
 
   for (MachineBasicBlock *SuccBB : BB->successors()) {
     DEBUG_BLOCKS(dbgs() << "Building InterBlockEdge: Pred=" << BB->getNumber()
@@ -977,8 +984,8 @@ void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
     if (!SuccBB)
       continue;
     const BlockState &SBS = getBlockState(SuccBB);
-    if (SBS.getRegions().empty())
-      continue;
+    assert(!SBS.getRegions().empty() &&
+           "Every block in Blocks must have at least one region.");
     SE.clearPostDepths();
     if (!SBS.isScheduled()) {
       // Compute a static lower-bound on each instruction's cycle position
@@ -1031,19 +1038,8 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   // Scheduling pass for non-loop blocks: set fixed bundles on the
   // pre-gathered region now that emitInterBlockTop / emitInterBlockBottom
   // has physically inserted the SWP instructions into the block.
-  //
-  // If Regions is empty, the block was empty during the gathering phase (e.g.
-  // a newly-created dedicated exit block). The machine scheduler skips
-  // enterRegion for empty blocks so no region was captured. Create it now
-  // with correct free-instruction boundaries, excluding any fixed bundles.
-  if (BS.getRegions().empty()) {
-    const unsigned TopCount =
-        (RegionBegin == BB->begin()) ? BS.TopInsert.size() : 0u;
-    const unsigned BotCount =
-        (RegionEnd == BB->end()) ? BS.BottomInsert.size() : 0u;
-    BS.addRegion(BB, std::next(RegionBegin, TopCount),
-                 std::prev(RegionEnd, BotCount));
-  }
+  assert(!BS.getRegions().empty() &&
+         "Every block in Blocks must have at least one region.");
   if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
     BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
   if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
@@ -1070,22 +1066,30 @@ MachineBasicBlock *splitEdge(MachineBasicBlock *Pred, MachineBasicBlock *Succ) {
   return NewBB;
 }
 
-// If the loop does not have a dedicated exit block, create one and return it.
-// If the current exit is already dedicated, simply return the current exit
-// instead.
-MachineBasicBlock *makeDedicatedLoopExit(MachineBasicBlock *LoopMBB,
-                                         MachineBasicBlock *CurrentBB) {
-  MachineBasicBlock *DedicatedExit = CurrentBB;
-  if (CurrentBB->pred_size() > 1) {
-    // The loop is a fallthrough predecessor by construction. We insert a
-    // new block that will be a dedicated exit to the loop.
-    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
-    DedicatedExit = splitEdge(LoopMBB, CurrentBB);
-  }
-  return DedicatedExit;
-}
-
 } // namespace
+
+MachineBasicBlock *
+InterBlockScheduling::makeDedicatedLoopExit(MachineBasicBlock *LoopMBB,
+                                            MachineBasicBlock *CurrentMBB) {
+  if (CurrentMBB->pred_size() > 1) {
+    MachineBasicBlock *DedicatedExit = splitEdge(LoopMBB, CurrentMBB);
+    Blocks.emplace(DedicatedExit, DedicatedExit);
+    // Add an empty region so the invariant holds: every block in Blocks has
+    // at least one region.
+    BlockState &NewBS = Blocks.at(DedicatedExit);
+    NewBS.addRegion(DedicatedExit, DedicatedExit->begin(),
+                    DedicatedExit->end());
+    // Re-classify both affected blocks based on the updated CFG.
+    classifyBlock(NewBS);
+    BlockState &CurrentBS = getBlockState(CurrentMBB);
+    classifyBlock(CurrentBS);
+    // Rebuild successor edges now that the CFG has been updated.
+    buildPerSuccEdges(LoopMBB);
+    buildPerSuccEdges(DedicatedExit);
+    return DedicatedExit;
+  }
+  return CurrentMBB;
+}
 
 int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
                                           MachineBasicBlock *Epilogue) const {
@@ -1148,7 +1152,7 @@ getMBBAndParentLoopMBB(const BlockState &EpilogueBS,
   return {std::make_pair(EpilogueBB, LoopMBB)};
 }
 
-void InterBlockScheduling::emitTopSafetyMargin(const BlockState &BS) const {
+void InterBlockScheduling::emitTopSafetyMargin(const BlockState &BS) {
 
   auto EpilogueAndParentLoopMBBs =
       getMBBAndParentLoopMBB(BS, *this, /*bool IsLoopPipelined=*/false);
@@ -1199,23 +1203,13 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
                 /*Move=*/false, /*EmitNops=*/false);
   } else {
-    // If not, create a new block state and transfer the timed region,
-    // Change old BS to regular, without TopInsert.
-    auto Itr = Blocks.emplace(DedicatedExit, DedicatedExit).first;
-    BlockState &NewBS = Itr->second;
-    NewBS.Kind = BlockType::Epilogue;
+    // If not, transfer the timed region to the new block state created
+    // by makeDedicatedLoopExit. The Kind of both blocks was already updated
+    // there via classifyNonLoop.
+    MBBSequence.push_back(DedicatedExit);
+    BlockState &NewBS = getBlockState(DedicatedExit);
     NewBS.TopInsert = BS.TopInsert;
     BS.TopInsert.clear();
-    // But BS can still be the epilogue of a DCL, let's
-    // check it. Otherwise mark as Regular block.
-    BS.Kind = any_of(EpilogueBB->predecessors(),
-                     [this](auto *L) {
-                       return getBlockState(L).Kind == BlockType::Loop;
-                     })
-                  ? BlockType::Epilogue
-                  : BlockType::Regular;
-
-    MBBSequence.push_back(DedicatedExit);
   }
 }
 
