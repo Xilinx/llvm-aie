@@ -408,6 +408,7 @@ function(llvm_ExternalProject_Add name source_dir)
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
     BUILD_ALWAYS 1
+    CONFIGURE_HANDLED_BY_BUILD 1
     LIST_SEPARATOR |
     )
   if (ARG_FOLDER)
