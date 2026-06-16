@@ -22,7 +22,11 @@
   define void @test(ptr addrspace(5) noalias %data, ptr addrspace(6) noalias %weights, ptr addrspace(7) noalias %out, i32 %n) {
   ; CHECK-LABEL: test:
   ; CHECK:       // %bb.0: // %entry
-  ; CHECK-NEXT:    lda p0, [p0, #0]; nopx
+  ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm ; nops
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:  // %bb.1: // %preheader
   ; CHECK-NEXT:    add.nc lc, r2, #-3
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
