@@ -303,7 +303,16 @@ class InterBlockScheduling {
   /// latencies converged.
   MachineInstr *latencyConverged(BlockState &BS);
 
-  // Determine the kind of a block, Loop, Epilogue or Regular
+  /// Derive the Kind for \p BS from the current CFG:
+  /// A Loop block has an edge to itself and an exit edge.
+  /// An Epilogue block is the exit successor of a Loop.
+  /// Any other block is Regular.
+  /// Epilogue blocks rely on the Loop classifcation, so the
+  /// classification runs in two sweeps, one to establish the loops,
+  /// the second to find their epilogues.
+  /// The Loop state is persistent, i.e. once a loop always a loop.
+  /// Epilogues sometimes revert to Regular, when a dedicated loop exit
+  /// block is created.
   void classifyBlock(BlockState &BS);
 
   /// define the scheduling order, loops first then the reset bottom-up over
@@ -383,7 +392,7 @@ public:
 
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues
-  void emitTopSafetyMargin(const BlockState &BS) const;
+  void emitTopSafetyMargin(const BlockState &BS);
   void emitInterBlockTop(BlockState &BS);
   void emitInterBlockBottom(const BlockState &BS) const;
 
@@ -411,6 +420,13 @@ public:
 
   std::optional<SWPEpilogueContext>
   getSWPEpilogueContext(MachineBasicBlock *MBB);
+
+  /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
+  /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB
+  /// by a new block.
+  /// We return the now dediecated exit block of the loopexit block.
+  MachineBasicBlock *makeDedicatedLoopExit(MachineBasicBlock *LoopMBB,
+                                           MachineBasicBlock *CurrentMBB);
 };
 
 } // end namespace llvm::AIE
