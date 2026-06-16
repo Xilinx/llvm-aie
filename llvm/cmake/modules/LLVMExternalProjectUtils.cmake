@@ -11,6 +11,14 @@
 
 include(ExternalProject)
 
+# The per-target runtime sub-builds run their configure/build/install steps in
+# Ninja's console pool (USES_TERMINAL), which serializes them across targets.
+# Builds whose runtime targets write to per-target output dirs can set this to
+# OFF to let the sub-builds overlap. Defaults ON to preserve the historical
+# serial behavior for every other build.
+set(LLVM_EXTERNAL_PROJECT_USES_TERMINAL ON CACHE BOOL
+  "Run per-target runtime ExternalProject steps in the console pool (serial)")
+
 # llvm_ExternalProject_BuildCmd(out_var target)
 #   Utility function for constructing command lines for external project targets
 function(llvm_ExternalProject_BuildCmd out_var target bin_dir stamp_dir)
@@ -409,6 +417,9 @@ function(llvm_ExternalProject_Add name source_dir)
     STEP_TARGETS configure build
     BUILD_ALWAYS 1
     CONFIGURE_HANDLED_BY_BUILD 1
+    USES_TERMINAL_CONFIGURE ${LLVM_EXTERNAL_PROJECT_USES_TERMINAL}
+    USES_TERMINAL_BUILD ${LLVM_EXTERNAL_PROJECT_USES_TERMINAL}
+    USES_TERMINAL_INSTALL ${LLVM_EXTERNAL_PROJECT_USES_TERMINAL}
     LIST_SEPARATOR |
     )
   if (ARG_FOLDER)
