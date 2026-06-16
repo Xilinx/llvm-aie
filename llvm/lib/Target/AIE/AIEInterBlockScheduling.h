@@ -192,6 +192,13 @@ public:
   std::vector<MachineBundle> TopInsert;
   std::vector<MachineBundle> BottomInsert;
 
+  /// For pipelined loop preheaders: a parallel array to the loop body's
+  /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
+  /// for the corresponding original loop instruction, or nullptr when that
+  /// instruction has no copy in the prologue. Populated by PipelineExtractor
+  /// during PipeliningDone.
+  std::vector<MachineInstr *> BottomInsertSemanticOrder;
+
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
 
@@ -398,11 +405,10 @@ public:
 
   bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);
 
-  /// Build the per-successor inter-block DDG edges for BB and store them in
-  /// BlockState::PerSuccEdges.  Called from enterBlock before each scheduling
-  /// pass so that MaxLatencyFinder::computeEffectiveLatency and
-  /// latencyConverged() always have up-to-date data.
   void buildPerSuccEdges(MachineBasicBlock *BB);
+
+  /// Update PerSuccEdges of BB for the successor \p For
+  void updatePerSuccEdges(MachineBasicBlock *BB, MachineBasicBlock *For);
 
   void buildGraph(InterBlockEdges &);
 

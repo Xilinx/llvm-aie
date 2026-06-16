@@ -21,6 +21,7 @@
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -436,10 +437,13 @@ class PipelineExtractor : public PipelineScheduleVisitor {
   MachineBundle CurrentBundle;
   std::vector<MachineBundle> TimedRegion;
   bool InLoop = false;
+  // True while visiting the prologue section.
+  bool InPrologue = false;
+  // Maps each original loop instruction to its first-iteration clone in the
+  // prologue. Only the first occurrence of each original is recorded.
+  DenseMap<const MachineInstr *, MachineInstr *> PrologueFirstIterClones;
 
-  void startPrologue() override {
-    // Nothing at this time, but let's keep the override around
-  }
+  void startPrologue() override { InPrologue = true; }
   void startLoop() override {
     auto &CopyTo = Prologue->BottomInsert;
     assert(CopyTo.empty() && "PreHeader already has a timed region at Bottom.");
@@ -451,6 +455,19 @@ class PipelineExtractor : public PipelineScheduleVisitor {
       }
     }
     TimedRegion.clear();
+
+    // We finished the prologue and collected the first copy of each
+    // instruction emitted there. Now populate the semantic order of BotFixed
+    // by following the original semantic order of the loop body. Only
+    // instructions that were actually cloned into the prologue are recorded;
+    // loop body instructions without a prologue copy are omitted.
+    for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
+      const auto It = PrologueFirstIterClones.find(OrigMI);
+      if (It != PrologueFirstIterClones.end())
+        Prologue->BottomInsertSemanticOrder.push_back(It->second);
+    }
+
+    InPrologue = false;
     InLoop = true;
   }
   void startEpilogue() override {
@@ -480,6 +497,12 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     MachineInstr *ToBeEmitted =
         InLoop ? MI : Loop.TheBlock->getParent()->CloneMachineInstr(MI);
     CurrentBundle.add(ToBeEmitted);
+
+    // Record the first-iteration prologue clone for each original instruction.
+    // try_emplace only inserts when the key is absent, so only the first
+    // occurrence (i.e. the first-iteration copy) is kept.
+    if (InPrologue)
+      PrologueFirstIterClones.try_emplace(MI, ToBeEmitted);
   }
   void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
 
@@ -581,6 +604,19 @@ bool InterBlockScheduling::leaveBlock() {
   case SchedulingStage::SchedulingDone:
   case SchedulingStage::PipeliningFailed:
     break;
+  }
+
+  // After scheduling a block that contains BotFixed (SWP prologue) bundles,
+  // update the PerSuccEdges entry for this block in each predecessor's edge
+  // set. By now emitInterBlockBottom has run and the prologue clones are
+  // physically in their MBB, so they carry valid MF context for DAG edge
+  // building. Only the edge to this specific block is rebuilt; other successor
+  // edges of each predecessor are preserved.
+  if (!BS.getBottom().getBotFixedBundles().empty()) {
+    for (MachineBasicBlock *PredBB : BS.TheBlock->predecessors()) {
+      if (Blocks.count(PredBB))
+        updatePerSuccEdges(PredBB, /*For=*/BS.TheBlock);
+    }
   }
 
   CurrentBlockState = nullptr;
@@ -945,14 +981,19 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
 
   DAG.markBoundary();
 
-  // Post-boundary: always use getFreeInstructions() as the single source
-  // of node identity.  Empty regions signify empty basic blocks; in that
-  // case no post-boundary nodes are added.
+  // Post-boundary: free instructions. Empty regions signify empty basic
+  // blocks; in that case no post-boundary nodes are added.
   const BlockState &SBS = getBlockState(DAG.getSucc());
   if (!SBS.getRegions().empty()) {
     for (MachineInstr *MI : SBS.getTop().getFreeInstructions())
       DAG.addNode(MI);
   }
+
+  // Post-boundary: BotFixed first-iteration copies (SWP prologue clones),
+  // in the semantic order of the original loop instructions. This vector is
+  // empty for non-pipelined blocks.
+  for (MachineInstr *MI : SBS.BottomInsertSemanticOrder)
+    DAG.addNode(MI);
 
   DAG.buildEdges();
 }
@@ -975,6 +1016,22 @@ void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {
         std::make_unique<InterBlockEdges>(C, SafeToIgnoreMemDeps, BB, SuccBB));
     buildGraph(SE);
   }
+}
+
+void InterBlockScheduling::updatePerSuccEdges(MachineBasicBlock *BB,
+                                              MachineBasicBlock *For) {
+  BlockState &BS = getBlockState(BB);
+  assert(!BS.getRegions().empty() &&
+         "Every block in Blocks must have at least one region.");
+
+  auto &PerSuccEdges = BS.getPerSuccEdges();
+  auto It = llvm::find_if(PerSuccEdges, [For](const auto &SEPtr) {
+    return SEPtr->getSucc() == For;
+  });
+  assert(It != PerSuccEdges.end());
+  InterBlockEdges &DAG = **It;
+  DAG.clear();
+  buildGraph(DAG);
 }
 
 void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
