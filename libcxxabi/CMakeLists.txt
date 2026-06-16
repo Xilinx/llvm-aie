@@ -1,3 +1,14 @@
+#===----------------------------------------------------------------------===#
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+#
+#===----------------------------------------------------------------------===#
+
 # See www/CMake.html for instructions on how to build libcxxabi with CMake.
 
 #===============================================================================
@@ -95,7 +106,16 @@ set(LIBCXXABI_STATIC_OUTPUT_NAME "c++abi" CACHE STRING "Output name for the stat
 set(LIBCXXABI_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/c++/v1" CACHE STRING "Path to install the libc++abi headers at.")
 
 if(LLVM_LIBRARY_OUTPUT_INTDIR)
-  set(LIBCXXABI_GENERATED_INCLUDE_DIR "${LLVM_BINARY_DIR}/include/c++/v1")
+  # Keep in lockstep with libcxx's LIBCXX_GENERATED_INCLUDE_DIR: under
+  # PER_TARGET_RUNTIME_DIR the runtimes sub-builds share LLVM_BINARY_DIR, so a
+  # shared dir races on parallel per-architecture builds. libc++abi copies its
+  # headers into the same generated include dir libc++ consumes, so both must
+  # use the same per-target path.
+  if(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR AND NOT APPLE)
+    set(LIBCXXABI_GENERATED_INCLUDE_DIR "${LLVM_BINARY_DIR}/include/${LLVM_DEFAULT_TARGET_TRIPLE}/c++/v1")
+  else()
+    set(LIBCXXABI_GENERATED_INCLUDE_DIR "${LLVM_BINARY_DIR}/include/c++/v1")
+  endif()
 else()
   set(LIBCXXABI_GENERATED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include/c++/v1")
 endif()

@@ -1,3 +1,14 @@
+#===----------------------------------------------------------------------===#
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+#
+#===----------------------------------------------------------------------===#
+
 #===============================================================================
 # Setup Project
 #===============================================================================
@@ -423,8 +434,13 @@ if(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR AND NOT APPLE)
     string(APPEND LIBCXX_TARGET_SUBDIR /${LIBCXX_LIBDIR_SUBDIR})
   endif()
   set(LIBCXX_LIBRARY_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR}/${LIBCXX_TARGET_SUBDIR})
-  set(LIBCXX_GENERATED_INCLUDE_DIR "${LLVM_BINARY_DIR}/include/c++/v1")
-  set(LIBCXX_GENERATED_MODULE_DIR "${LLVM_BINARY_DIR}/modules/c++/v1")
+  # Per-target generated dirs: with PER_TARGET_RUNTIME_DIR every runtimes
+  # sub-build shares LLVM_BINARY_DIR, so a dir keyed only on LLVM_BINARY_DIR
+  # races when the per-architecture configures/builds run in parallel. The
+  # generated headers and modules are target-independent, so giving each
+  # target its own copy is safe (content is identical across architectures).
+  set(LIBCXX_GENERATED_INCLUDE_DIR "${LLVM_BINARY_DIR}/include/${LIBCXX_TARGET_SUBDIR}/c++/v1")
+  set(LIBCXX_GENERATED_MODULE_DIR "${LLVM_BINARY_DIR}/modules/${LIBCXX_TARGET_SUBDIR}/c++/v1")
   set(LIBCXX_GENERATED_INCLUDE_TARGET_DIR "${LLVM_BINARY_DIR}/include/${LIBCXX_TARGET_SUBDIR}/c++/v1")
   set(LIBCXX_INSTALL_LIBRARY_DIR lib${LLVM_LIBDIR_SUFFIX}/${LIBCXX_TARGET_SUBDIR} CACHE STRING
       "Path where built libc++ libraries should be installed.")
