@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains definitions for defining pass registration and other
@@ -86,6 +89,9 @@ class PassBase<string passArg, string base> {
 
   // A set of options provided by this pass.
   list<Option> options = [];
+
+  // Generate a free function that parses a string into the generated options struct.
+  bit genOptionsParser = 0;
 
   // A set of statistics provided by this pass.
   list<Statistic> statistics = [];

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef MLIR_TABLEGEN_PASS_H_
@@ -99,6 +102,10 @@ public:
 
   /// Return the options provided by this pass.
   ArrayRef<PassOption> getOptions() const;
+
+  /// Return whether to generate a free function to parse this pass's
+  /// options.
+  bool getGenOptionsParser() const;
 
   /// Return the statistics provided by this pass.
   ArrayRef<PassStatistic> getStatistics() const;
