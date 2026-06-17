@@ -6,7 +6,12 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 #
-# RUN: llc -mtriple=aie2ps -run-pass=peephole-opt %s -verify-machineinstrs -o - | FileCheck %s
+# Test the AIE foldImmediate peephole (MOVA reg, #imm / COPY dst, reg → MOVA dst, #imm).
+#
+# Default run: folding is OFF (aie-enable-fold-imm defaults to false); the COPY survives.
+# RUN: llc -mtriple=aie2ps -run-pass=peephole-opt %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=NOFOLD
+# Opt-in run: folding is ON; the COPY is replaced by a new MOVA at the consumer site.
+# RUN: llc -mtriple=aie2ps -run-pass=peephole-opt -aie-enable-fold-imm %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=FOLD
 
 
 ---
@@ -25,8 +30,10 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mbmm = COPY $bmhh0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mcmm = COPY $cml0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edm = COPY $dm0
-    ; CHECK-NEXT: [[MOV_S_imm11_pseudo:%[0-9]+]]:es = MOV_S_imm11_pseudo 0
-    ; CHECK-NEXT: $cml0, $p2, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 [[MOV_S_imm11_pseudo]], $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; NOFOLD-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[MOV_RLC_imm11_pseudo]]
+    ; NOFOLD-NEXT: $cml0, $p2, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 [[COPY5]], $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; FOLD-NEXT: [[MOV_S_imm11_pseudo:%[0-9]+]]:es = MOV_S_imm11_pseudo 0
+    ; FOLD-NEXT: $cml0, $p2, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 [[MOV_S_imm11_pseudo]], $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cml0
     %21:er = MOV_RLC_imm11_pseudo 0
     %20:ep = COPY $p0
@@ -55,8 +62,10 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mbmm = COPY $bmhh0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mcmm = COPY $cml0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edm = COPY $dm0
-    ; CHECK-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:mr27_select = MOVXM_lng_cg 544654748
-    ; CHECK-NEXT: $r15 = SEL_EQZ $r23, $r22, [[MOVXM_lng_cg1]]
+    ; NOFOLD-NEXT: [[COPY5:%[0-9]+]]:mr27_select = COPY [[MOVXM_lng_cg]]
+    ; NOFOLD-NEXT: $r15 = SEL_EQZ $r23, $r22, [[COPY5]]
+    ; FOLD-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:mr27_select = MOVXM_lng_cg 544654748
+    ; FOLD-NEXT: $r15 = SEL_EQZ $r23, $r22, [[MOVXM_lng_cg1]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r15
     %21:er = MOVXM_lng_cg 544654748
     %20:ep = COPY $p0
@@ -75,6 +84,8 @@ legalized: true
 tracksRegLiveness: true
 body: |
   bb.1.entry:
+    ; Folding into a control register class (mcrsat) is rejected even with FOLD
+    ; because getConstantMovOpcode returns nullopt for control regs.
     ; CHECK-LABEL: name: test_imm_control_reg
     ; CHECK: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 5
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:mcrsat = COPY [[MOV_RLC_imm11_pseudo]]
@@ -92,9 +103,15 @@ legalized: true
 tracksRegLiveness: true
 body: |
   bb.1.entry:
+    ; Without folding: the COPY remains.
+    ; With folding: constrainRegClass widens the dst to ep_as_32bit (which is
+    ; a superclass of ep), so the fold succeeds and produces a second MOVXM.
     ; CHECK-LABEL: name: test_imm_constant_fold_large_imm_into_ptr
-    ; CHECK: [[MOVXM_lng_cg:%[0-9]+]]:ep_as_32bit = MOVXM_lng_cg 70000
-    ; CHECK-NEXT: $p0 = COPY [[MOVXM_lng_cg]]
+    ; CHECK: [[MOVXM_lng_cg:%[0-9]+]]:er = MOVXM_lng_cg 70000
+    ; NOFOLD-NEXT: [[COPY:%[0-9]+]]:ep = COPY [[MOVXM_lng_cg]]
+    ; NOFOLD-NEXT: $p0 = COPY [[COPY]]
+    ; FOLD-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:ep_as_32bit = MOVXM_lng_cg 70000
+    ; FOLD-NEXT: $p0 = COPY [[MOVXM_lng_cg1]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $p0
     %0:er = MOVXM_lng_cg 70000
     %1:ep = COPY %0:er

@@ -9,9 +9,9 @@ define dso_local noundef float @test_fix2float(i32 noundef %n) {
 ; CHECK-LABEL: test_fix2float:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov s2, #0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mova r3, #0 // Delay Slot 4
+; CHECK-NEXT:    mov s2, r3 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r1.fx2flt, s2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

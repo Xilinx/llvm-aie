@@ -29,8 +29,9 @@ entry:
 define void @callee1() {
 ; CHECK-LABEL: callee1:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopa ; mov s0, #1 // Delay Slot 5
+; CHECK-NEXT:    mova r0, #1; nopb ; nopxm ; nops
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    vsrs.d8.s32 wh0, cm0, s0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2

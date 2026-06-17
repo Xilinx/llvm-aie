@@ -51,10 +51,24 @@ static cl::opt<bool> AIEFoldImmRequireOneUse(
     cl::desc("Only fold immediate into COPY when the constant has a single "
              "non-debug use (so the def can be DCE'd)."));
 
-static cl::opt<bool> AIEDisableFoldImm(
-    "aie-disable-fold-imm", cl::init(false), cl::Hidden,
-    cl::desc("Completely disable the AIE foldImmediate override (fall back to "
-             "default no-op behaviour)."));
+// Opt-in flag for the foldImmediate peephole (disabled by default).
+//
+// foldImmediate collapses MOVA reg, #imm / COPY dst, reg pairs into a single
+// MOVA dst, #imm at the consumer site.  While functionally correct, it removes
+// a pre-RA scheduling constraint: the original COPY gave the post-RA scheduler
+// a data edge that kept the MOVA far from its downstream consumers.  Without
+// that edge, the post-RA scheduler may place a VBCST.16 write (which fills an
+// entire x-register) immediately before a VMOV that reads only the lower-half
+// wl sub-register.  The wl forwarding bypass modelled in the AIE2 itinerary
+// for VMOV_W_WMH_WML consumers does not apply when the producer is a VBCST,
+// so the 2-cycle output latency is insufficient and the hardware reads a stale
+// value.  The correct fix requires a more precise itinerary (either a new
+// bypass class or increased VBCST output latency for wl readers); this flag
+// provides a safe fallback in the meantime.
+static cl::opt<bool> AIEEnableFoldImm(
+    "aie-enable-fold-imm", cl::init(false), cl::Hidden,
+    cl::desc("Enable the AIE foldImmediate peephole that collapses "
+             "MOVA+COPY pairs into a single MOVA at the consumer site."));
 
 static cl::opt<bool>
     NoCheapInstHoisting("aie-no-cheap-inst-hoising",
@@ -510,7 +524,8 @@ unsigned AIEBaseInstrInfo::getRegionSizeInBytes(
     Size += getAIEMachineBundleSize(It);
   }
   LLVM_DEBUG(dbgs() << "---Region End---\n");
-  LLVM_DEBUG(dbgs() << "Region Size" << " " << Size << "\n");
+  LLVM_DEBUG(dbgs() << "Region Size"
+                    << " " << Size << "\n");
   return Size;
 }
 
@@ -560,7 +575,7 @@ bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
                                      Register Reg,
                                      MachineRegisterInfo *MRI) const {
 
-  if (AIEDisableFoldImm)
+  if (!AIEEnableFoldImm)
     return false;
 
   // Only handle COPY instructions as the use
