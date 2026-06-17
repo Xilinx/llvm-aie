@@ -28,13 +28,9 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_CMAKE_BUILD_TYPE Release CACHE STRING "")
   set(BUILTINS_${target}_LLVM_USE_LINKER lld CACHE STRING "")
   set(RUNTIMES_${target}_LLVM_INCLUDE_TESTS OFF CACHE STRING "")
-  # -mno-vitis-headers suppresses the driver's auto -include of the AIE
-  # intrinsics header. The runtime sources don't use intrinsics, and parsing
-  # that header dominates every compiler probe (incl. CMake's ID/ABI detection,
-  # which reads CMAKE_<LANG>_FLAGS).
-  set(BUILTINS_${target}_CMAKE_C_FLAGS "--target=${target} -mno-vitis-headers" CACHE STRING "")
-  set(BUILTINS_${target}_CMAKE_CXX_FLAGS "--target=${target} -mno-vitis-headers" CACHE STRING "")
-  set(BUILTINS_${target}_CMAKE_ASM_FLAGS "--target=${target} -mno-vitis-headers" CACHE STRING "")
+  set(BUILTINS_${target}_CMAKE_C_FLAGS "--target=${target}" CACHE STRING "")
+  set(BUILTINS_${target}_CMAKE_CXX_FLAGS "--target=${target}" CACHE STRING "")
+  set(BUILTINS_${target}_CMAKE_ASM_FLAGS "--target=${target}" CACHE STRING "")
   # The runtimes CMake system passes the LLVM_USE_LINKER option set for the host
   # compilation down to the runtimes build. That triggers a compile & link check
   # for the cross compiler, which does not have a complete sysroot yet.
@@ -66,11 +62,6 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_LIBCXX_EXTRA_SITE_DEFINES "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES" CACHE STRING "")
   # disable inclusion of vitis headers for compiler checks
   set(RUNTIMES_${target}_CMAKE_REQUIRED_FLAGS "-mno-vitis-headers" CACHE STRING "")
-  # CMAKE_REQUIRED_FLAGS only covers check_* probes; CMAKE_<LANG>_FLAGS is also
-  # read by CMake's built-in compiler ID/ABI detection, the slowest probes.
-  set(RUNTIMES_${target}_CMAKE_C_FLAGS "-mno-vitis-headers" CACHE STRING "")
-  set(RUNTIMES_${target}_CMAKE_CXX_FLAGS "-mno-vitis-headers" CACHE STRING "")
-  set(RUNTIMES_${target}_CMAKE_ASM_FLAGS "-mno-vitis-headers" CACHE STRING "")
 
   set(RUNTIMES_${target}_LIBC_ENABLE_USE_BY_CLANG ON CACHE STRING "")
   # LIBC includes C++ sources which by default trigger inclusion of standard libc++ headers
