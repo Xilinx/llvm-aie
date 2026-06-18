@@ -32,8 +32,10 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      entry
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '20'
 ; REMARKS-NEXT:   - ByteCount:       '144'
+; REMARKS-NEXT:   - Offset:          '0'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -41,8 +43,10 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      for.body
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '4'
 ; REMARKS-NEXT:   - ByteCount:       '64'
+; REMARKS-NEXT:   - Offset:          '144'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -50,8 +54,10 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      for.cond.cleanup
+; REMARKS-NEXT:   - RegionIndex:     '0'
 ; REMARKS-NEXT:   - BundleCount:     '15'
 ; REMARKS-NEXT:   - ByteCount:       '80'
+; REMARKS-NEXT:   - Offset:          '208'
 ; REMARKS-NEXT: ...
 ;
 ; ASM-LABEL: convert_bf16_to_bfp16:

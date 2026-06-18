@@ -604,9 +604,23 @@ bool AIEBaseInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
   if (!NewOpc)
     return false;
 
+  // The returned opcode may require a register class that is wider (32-bit)
+  // than the current DstReg class (e.g. 20-bit pointer classes). Constrain
+  // DstReg to the intersection of its current class and the instruction's
+  // operand class. This handles e.g. eP → eP_as_32Bit for MOVXM.
+  // If constraining fails, DstReg is in an incompatible class (e.g. a control
+  // register) and we must bail out.
+  const MCInstrDesc &NewMCID = get(*NewOpc);
+  const TargetRegisterInfo *TRI = MRI->getTargetRegisterInfo();
+  const MachineFunction &MF = *UseMI.getParent()->getParent();
+  if (const TargetRegisterClass *OpRC = getRegClass(NewMCID, 0, TRI, MF)) {
+    if (!MRI->constrainRegClass(DstReg, OpRC))
+      return false;
+  }
+
   MachineBasicBlock &MBB = *UseMI.getParent();
   const DebugLoc &DL = UseMI.getDebugLoc();
-  BuildMI(MBB, UseMI, DL, get(*NewOpc), DstReg).addImm(ImmAPInt.getSExtValue());
+  BuildMI(MBB, UseMI, DL, NewMCID, DstReg).addImm(ImmAPInt.getSExtValue());
 
   // Remove the old COPY
   UseMI.eraseFromParent();

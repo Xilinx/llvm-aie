@@ -110,6 +110,13 @@ bool AIETTICommon::isLoweredToCall(const Function *F) {
     return true;
   }
 
+  // fmin/fmax are legal for f32 but lower to a libcall for f64 (double).
+  if ((F->getIntrinsicID() == Intrinsic::minnum ||
+       F->getIntrinsicID() == Intrinsic::maxnum) &&
+      F->getReturnType()->getScalarType()->isDoubleTy()) {
+    return true;
+  }
+
   return !F->isIntrinsic();
 }
 
@@ -154,11 +161,22 @@ bool AIETTICommon::isAllowedInZOL(Instruction &I) {
   }
 
   case Instruction::FDiv:
+  case Instruction::FRem:
   case Instruction::FPToSI:
   case Instruction::FPToUI:
   case Instruction::UIToFP:
   case Instruction::SIToFP:
     return false;
+  case Instruction::SDiv:
+  case Instruction::UDiv:
+  case Instruction::SRem:
+  case Instruction::URem:
+    return false;
+  case Instruction::Mul:
+    // i32 MUL is legal; i64 MUL lowers to a __muldi3 libcall.
+    if (!Ty->isVectorTy() && Ty->getScalarType()->getScalarSizeInBits() > 32)
+      return false;
+    break;
   }
   return true;
 }

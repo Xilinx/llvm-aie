@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -45,10 +45,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/CSEMIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -88,11 +90,98 @@ static cl::opt<bool>
     EnableStackChaining("aie-chain-stack", cl::Hidden, cl::init(true),
                         cl::desc("Enable pointer chaining for stack access."));
 
+static cl::opt<bool> EnableCrossBlockChainReuse(
+    "aie-chain-addr-cross-block-reuse", cl::Hidden, cl::init(true),
+    cl::desc("Reuse the tail of a ptr-add chain produced in a strictly "
+             "dominating MBB when starting a new chain on the same base."));
+
+static cl::opt<unsigned> CrossBlockReuseMaxDomSteps(
+    "aie-chain-addr-cross-block-reuse-max-steps", cl::Hidden, cl::init(8),
+    cl::desc("Maximum number of dominator-tree steps to climb when searching "
+             "for a reusable ptr-add chain tail. Bounds the liveness extension "
+             "of the reused anchor."));
+
 namespace {
 
 LLT getLoadStoreType(const MachineInstr &MI) {
   return (*MI.memoperands_begin())->getMemoryType();
 }
+
+std::optional<int64_t> getConstOffset(const MachineInstr &MI,
+                                      const MachineRegisterInfo &MRI) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD);
+  auto Off = getIConstantVRegValWithLookThrough(MI.getOperand(2).getReg(), MRI);
+  if (!Off)
+    return std::nullopt;
+  return Off->Value.getSExtValue();
+}
+
+/// SSA def that equals BaseReg + Offset after the chain built in some MBB
+/// has run to completion.
+struct BlockEndOffset {
+  Register EndReg;
+  int64_t Offset;
+};
+
+/// Chain-tail defs published by a single MBB, keyed by base register.
+using BaseToEndOffset = DenseMap<Register, BlockEndOffset>;
+
+/// Per-(MBB, BaseReg) record of the chain-tail def published by each MBB.
+class PtrChainEndTracker {
+  const MachineDominatorTree &MDT;
+  DenseMap<MachineBasicBlock *, BaseToEndOffset> Records;
+
+public:
+  PtrChainEndTracker(const MachineDominatorTree &MDT) : MDT(MDT) {}
+
+  void recordOffsetAtBlockEnd(Register BaseReg, MachineBasicBlock *MBB,
+                              Register EndReg, int64_t Offset) {
+    assert(!Records[MBB].count(BaseReg) &&
+           "duplicate base record for this MBB");
+    Records[MBB][BaseReg] = {EndReg, Offset};
+  }
+
+  /// Walk MBB's idom chain upward and return the nearest dominating block's
+  /// record for BaseReg, if any. The climb is bounded so the reused anchor's
+  /// live range stays short: it stops after a fixed number of steps, never
+  /// climbs past BaseReg's defining block (no dominator above it can hold a
+  /// record for BaseReg), and never reuses an anchor across a call.
+  std::optional<BlockEndOffset>
+  findDominatingBlockEndOffset(Register BaseReg, MachineBasicBlock &MBB,
+                               const MachineRegisterInfo &MRI) const {
+    const MachineInstr *BaseDef = MRI.getVRegDef(BaseReg);
+    const MachineBasicBlock *DefMBB = BaseDef ? BaseDef->getParent() : nullptr;
+
+    auto *N = MDT.getNode(&MBB);
+    unsigned StepsLeft = CrossBlockReuseMaxDomSteps;
+    for (N = N ? N->getIDom() : nullptr; N && StepsLeft; N = N->getIDom()) {
+      --StepsLeft;
+      const MachineBasicBlock *DomBlock = N->getBlock();
+
+      // Look up a tail this dominator published for BaseReg. A dominator with
+      // no records at all, or none for BaseReg, just falls through and we keep
+      // climbing toward a higher dominator that may hold one.
+      const auto BlockIt = Records.find(DomBlock);
+      if (BlockIt != Records.end()) {
+        const auto It = BlockIt->second.find(BaseReg);
+        if (It != BlockIt->second.end())
+          return It->second;
+      }
+
+      // No dominator above BaseReg's defining block can hold a record for it.
+      if (DomBlock == DefMBB)
+        break;
+
+      // Reusing an anchor from a higher dominator would stretch its live range
+      // across this block's call, exposing it to callee clobbers and spills.
+      const bool DomBlockHasCall = llvm::any_of(
+          *DomBlock, [](const MachineInstr &MI) { return MI.isCall(); });
+      if (DomBlockHasCall)
+        break;
+    }
+    return std::nullopt;
+  }
+};
 
 /// Try and re-order PTR_ADD instructions to maximise the size of constant
 /// PTR_ADD chains.
@@ -114,8 +203,7 @@ bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
     assert(PtrAdd->getOpcode() == TargetOpcode::G_PTR_ADD);
     Register OutputPtr = PtrAdd->getOperand(0).getReg();
     Register OffsetReg = PtrAdd->getOperand(2).getReg();
-    if (getIConstantVRegValWithLookThrough(OffsetReg, MRI) ||
-        !MRI.hasOneNonDBGUser(OutputPtr))
+    if (getConstOffset(*PtrAdd, MRI) || !MRI.hasOneNonDBGUser(OutputPtr))
       continue;
 
     // We found a non-constant PTRADD with a single user, now check if that
@@ -124,9 +212,7 @@ bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
     MachineInstr &OutputUser = *MRI.use_instructions(OutputPtr).begin();
     if (OutputUser.getOpcode() != TargetOpcode::G_PTR_ADD)
       continue;
-    Register SecondOffsetReg = OutputUser.getOperand(2).getReg();
-    std::optional<ValueAndVReg> CstOffset =
-        getIConstantVRegValWithLookThrough(SecondOffsetReg, MRI);
+    std::optional<int64_t> CstOffset = getConstOffset(OutputUser, MRI);
     if (!CstOffset)
       continue;
 
@@ -136,8 +222,7 @@ bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
     Observer.changingInstr(*PtrAdd);
     MIB.setInstr(*PtrAdd);
     Register NewOffsetReg =
-        MIB.buildConstant(LLT::scalar(20), CstOffset->Value.getSExtValue())
-            .getReg(0);
+        MIB.buildConstant(LLT::scalar(20), *CstOffset).getReg(0);
     PtrAdd->getOperand(2).setReg(NewOffsetReg);
     Observer.changedInstr(*PtrAdd);
     Observer.changingInstr(OutputUser);
@@ -167,7 +252,12 @@ private:
   const MachineRegisterInfo *MRI = nullptr;
 
   bool processBasicBlock(MachineBasicBlock &MBB, MachineIRBuilder &MIB,
-                         GISelObserverWrapper &Observer);
+                         GISelObserverWrapper &Observer,
+                         PtrChainEndTracker &Tracker);
+
+  bool rerootChainsInBlock(MachineBasicBlock &MBB, MachineIRBuilder &MIB,
+                           GISelObserverWrapper &Observer,
+                           PtrChainEndTracker &Tracker);
 
   // Create chaining opportunities related to FRAME_INDEX.
   bool convertFIToPtrAdd(MachineBasicBlock &MBB, MachineIRBuilder &MIB,
@@ -190,13 +280,21 @@ private:
                   MachineBasicBlock &MBB, MachineIRBuilder &MIB,
                   GISelObserverWrapper &Observer);
 
+  // Re-root every G_PTR_ADD on BaseReg in MBB onto the tail of a dominating
+  // chain. All-or-nothing: leaving any sibling on BaseReg keeps BaseReg live
+  // through the rerouted chain and forces a reload around it.
+  bool tryRerootBucket(Register BaseReg, ArrayRef<MachineInstr *> Heads,
+                       MachineBasicBlock &MBB, MachineIRBuilder &MIB,
+                       GISelObserverWrapper &Observer,
+                       PtrChainEndTracker &Tracker);
+
   // Evaluate if we should break the chain construction.
   // Criteria:
   //  * Unknown offsets.
   //  * Pointer shared between load(s) and store(s).
   bool shouldBreakChain(MachineInstr *MIA, MachineInstr *MIB,
-                        std::optional<ValueAndVReg> OffsetA,
-                        std::optional<ValueAndVReg> OffsetB);
+                        std::optional<int64_t> OffsetA,
+                        std::optional<int64_t> OffsetB);
 
   // Return true if the instructions are used by both loads and stores.
   bool hasMixedLoadStoreUse(SmallVector<MachineInstr *, 2> Instrs);
@@ -225,6 +323,7 @@ void AIEClusterBaseAddress::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineModuleInfoWrapperPass>();
   AU.addRequired<GISelCSEAnalysisWrapperPass>();
   AU.addRequired<TargetPassConfig>();
+  AU.addRequired<MachineDominatorTreeWrapperPass>();
   AU.setPreservesAll();
 }
 
@@ -249,17 +348,30 @@ bool AIEClusterBaseAddress::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
+  const MachineDominatorTree &MDT =
+      getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  PtrChainEndTracker Tracker(MDT);
+
+  // Phase 1: build chains and record each chain tail at end of its MBB.
   for (MachineBasicBlock &MBB : MF) {
     if (EnableStackChaining)
       Changed |= convertFIToPtrAdd(MBB, MIB, Observer);
-    Changed |= processBasicBlock(MBB, MIB, Observer);
+    Changed |= processBasicBlock(MBB, MIB, Observer, Tracker);
   }
+
+  // Phase 2: with all tails recorded, try to re-root each chain head on a
+  // dominating chain's tail. Independent of iteration order.
+  if (EnableCrossBlockChainReuse)
+    for (MachineBasicBlock &MBB : MF)
+      Changed |= rerootChainsInBlock(MBB, MIB, Observer, Tracker);
+
   return Changed;
 }
 
 bool AIEClusterBaseAddress::processBasicBlock(MachineBasicBlock &MBB,
                                               MachineIRBuilder &MIB,
-                                              GISelObserverWrapper &Observer) {
+                                              GISelObserverWrapper &Observer,
+                                              PtrChainEndTracker &Tracker) {
 
   bool Changed = false;
 
@@ -278,16 +390,40 @@ bool AIEClusterBaseAddress::processBasicBlock(MachineBasicBlock &MBB,
   }
 
   // Create chains, when profitable.
-  for (auto RegAndUse : RegAndUses) {
-
-    SmallVector<MachineInstr *, 8> &Instrs = RegAndUse.second;
+  for (auto &[BaseReg, Instrs] : RegAndUses) {
     // Chaining acceptance criteria.
-    if (shouldSkipChaining(RegAndUse.first, Instrs, MBB))
+    if (shouldSkipChaining(BaseReg, Instrs, MBB))
       continue;
 
-    // Build chain, breaking it (or restarting it) when necessary
+    // Snapshot the tail's offset from BaseReg before buildChain rewrites
+    // operand(2) into a per-hop delta.
+    const std::optional<int64_t> TailOffsetFromBase =
+        getConstOffset(*Instrs.back(), *MRI);
+
+    // Build chain, breaking it (or restarting it) when necessary.
     Changed |= buildChain(Instrs, MBB, MIB, Observer);
+    // Record the chain tail offset at the end of the block.
+    if (TailOffsetFromBase)
+      Tracker.recordOffsetAtBlockEnd(BaseReg, &MBB,
+                                     Instrs.back()->getOperand(0).getReg(),
+                                     *TailOffsetFromBase);
   }
+  return Changed;
+}
+
+bool AIEClusterBaseAddress::rerootChainsInBlock(MachineBasicBlock &MBB,
+                                                MachineIRBuilder &MIB,
+                                                GISelObserverWrapper &Observer,
+                                                PtrChainEndTracker &Tracker) {
+  // Group G_PTR_ADDs in MBB by base register. Reroot each bucket only if
+  // every head in it can be rerouted onto the same dominating anchor -
+  // otherwise rerooting a subset leaves BaseReg live in MBB and forces a
+  // reload of the live-in around the chain.
+  RegUseMap RegAndUses = collectPtrUses(MBB);
+  bool Changed = false;
+  for (auto &RegAndUse : RegAndUses)
+    Changed |= tryRerootBucket(RegAndUse.first, RegAndUse.second, MBB, MIB,
+                               Observer, Tracker);
   return Changed;
 }
 
@@ -450,10 +586,8 @@ bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
   for (unsigned I = 0; I < Instrs.size() - 1; I++) {
     MachineInstr *MI = Instrs[I];
     MachineInstr *MINext = Instrs[I + 1];
-    auto OffsetMI =
-        getIConstantVRegValWithLookThrough(MI->getOperand(2).getReg(), *MRI);
-    auto OffsetMINext = getIConstantVRegValWithLookThrough(
-        MINext->getOperand(2).getReg(), *MRI);
+    std::optional<int64_t> OffsetMI = getConstOffset(*MI, *MRI);
+    std::optional<int64_t> OffsetMINext = getConstOffset(*MINext, *MRI);
 
     // Evaluate if we should restart the chain from the base
     // pointer. This is necessary when we deal with unknown offsets
@@ -464,9 +598,8 @@ bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
       continue;
     }
 
-    AccumulatedOffset += OffsetMI->Value.getSExtValue();
-    const int64_t NewNextOffset =
-        OffsetMINext->Value.getSExtValue() - AccumulatedOffset;
+    AccumulatedOffset += *OffsetMI;
+    const int64_t NewNextOffset = *OffsetMINext - AccumulatedOffset;
     MIB.setInsertPt(MBB, MINext->getIterator());
 
     Register NewOffsetReg =
@@ -481,9 +614,111 @@ bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
   return Changed;
 }
 
-bool AIEClusterBaseAddress::shouldBreakChain(
-    MachineInstr *MIA, MachineInstr *MIB, std::optional<ValueAndVReg> OffsetA,
-    std::optional<ValueAndVReg> OffsetB) {
+// True iff some non-head instruction in MBB still reads BaseReg. Rerooting
+// walks BaseReg's physreg in place, destroying the live-in; a surviving
+// non-head use would force the allocator to spill BaseReg around the chain.
+// Out-of-MBB uses are fine — they see BaseReg's original SSA def.
+static bool baseStillNeededInBlock(Register BaseReg, MachineBasicBlock &MBB,
+                                   ArrayRef<MachineInstr *> Heads,
+                                   const MachineRegisterInfo &MRI) {
+  SmallPtrSet<const MachineInstr *, 4> HeadSet(Heads.begin(), Heads.end());
+  return llvm::any_of(
+      MRI.use_nodbg_instructions(BaseReg), [&](const MachineInstr &UseMI) {
+        return UseMI.getParent() == &MBB && !HeadSet.contains(&UseMI);
+      });
+}
+
+// True iff EndReg already has any use in MBB. A new chain rooted on it would
+// walk EndReg in place between the existing user and the new heads, clobbering
+// it. We forbid every in-block use rather than just memory users: the hazard
+// is the in-place walk, which corrupts the value for any consumer.
+static bool anchorStillUsedInBlock(Register EndReg, MachineBasicBlock &MBB,
+                                   const MachineRegisterInfo &MRI) {
+  for (const MachineInstr &UseMI : MRI.use_nodbg_instructions(EndReg))
+    if (UseMI.getParent() == &MBB)
+      return true;
+  return false;
+}
+
+struct RerootRewrite {
+  MachineInstr *Head;
+  LLT OffTy;
+  int64_t NewOffset;
+};
+
+// Validate every head and pre-compute its rewrite. Returns nullopt if any
+// head has a non-constant or non-scalar offset, or if any new offset
+// (HeadOffset - AnchorOffset) does not fit the head's offset width.
+static std::optional<SmallVector<RerootRewrite, 4>>
+computeRerootRewrites(ArrayRef<MachineInstr *> Heads, int64_t AnchorOffset,
+                      const MachineRegisterInfo &MRI) {
+  SmallVector<RerootRewrite, 4> Rewrites;
+  Rewrites.reserve(Heads.size());
+  for (MachineInstr *Head : Heads) {
+    const std::optional<int64_t> HeadOffset = getConstOffset(*Head, MRI);
+    const LLT OffTy = MRI.getType(Head->getOperand(2).getReg());
+    if (!HeadOffset || !OffTy.isScalar())
+      return std::nullopt;
+    const int64_t NewOffset = *HeadOffset - AnchorOffset;
+    if (!isIntN(OffTy.getSizeInBits(), NewOffset))
+      return std::nullopt;
+    Rewrites.push_back({Head, OffTy, NewOffset});
+  }
+  return Rewrites;
+}
+
+// Rewrite each head in place: re-root onto AnchorEndReg with the
+// precomputed offset. Pure mutation; assumes the rewrites have already
+// been validated by computeRerootRewrites.
+static void applyRerootRewrites(ArrayRef<RerootRewrite> Rewrites,
+                                Register AnchorEndReg, MachineBasicBlock &MBB,
+                                MachineIRBuilder &MIB,
+                                GISelObserverWrapper &Observer) {
+  for (const RerootRewrite &R : Rewrites) {
+    MIB.setInsertPt(MBB, R.Head->getIterator());
+    Register NewOff = MIB.buildConstant(R.OffTy, R.NewOffset).getReg(0);
+    Observer.changingInstr(*R.Head);
+    R.Head->getOperand(1).setReg(AnchorEndReg);
+    R.Head->getOperand(2).setReg(NewOff);
+    Observer.changedInstr(*R.Head);
+  }
+}
+
+bool AIEClusterBaseAddress::tryRerootBucket(Register BaseReg,
+                                            ArrayRef<MachineInstr *> Heads,
+                                            MachineBasicBlock &MBB,
+                                            MachineIRBuilder &MIB,
+                                            GISelObserverWrapper &Observer,
+                                            PtrChainEndTracker &Tracker) {
+  if (Heads.empty())
+    return false;
+
+  const std::optional<BlockEndOffset> Anchor =
+      Tracker.findDominatingBlockEndOffset(BaseReg, MBB, *MRI);
+  if (!Anchor)
+    return false;
+
+  if (baseStillNeededInBlock(BaseReg, MBB, Heads, *MRI))
+    return false;
+
+  // Distinct from the BaseReg check above: that one guards the chain's input;
+  // this one guards the dominating chain's tail (a different vreg).
+  if (anchorStillUsedInBlock(Anchor->EndReg, MBB, *MRI))
+    return false;
+
+  const std::optional<SmallVector<RerootRewrite, 4>> Rewrites =
+      computeRerootRewrites(Heads, Anchor->Offset, *MRI);
+  if (!Rewrites)
+    return false;
+
+  applyRerootRewrites(*Rewrites, Anchor->EndReg, MBB, MIB, Observer);
+  return true;
+}
+
+bool AIEClusterBaseAddress::shouldBreakChain(MachineInstr *MIA,
+                                             MachineInstr *MIB,
+                                             std::optional<int64_t> OffsetA,
+                                             std::optional<int64_t> OffsetB) {
 
   // If one of the offsets is not constant, it is better to break the chain.
   if (!OffsetA || !OffsetB)

@@ -459,6 +459,38 @@ public:
   const BlockState *getEpilogue() const { return Epilogue; }
 };
 
+/// Recursive post-order walker for epilogue scheduling in
+/// defineSchedulingOrder.
+class EpilogueProcessor {
+  InterBlockScheduling &IBS;
+  SmallPtrSet<const MachineBasicBlock *, 16> &Emitted;
+  SmallPtrSet<const MachineBasicBlock *, 16> &Processing;
+  llvm::function_ref<void(MachineBasicBlock *)> Push;
+
+public:
+  EpilogueProcessor(InterBlockScheduling &IBS,
+                    SmallPtrSet<const MachineBasicBlock *, 16> &Emitted,
+                    SmallPtrSet<const MachineBasicBlock *, 16> &Processing,
+                    llvm::function_ref<void(MachineBasicBlock *)> Push)
+      : IBS(IBS), Emitted(Emitted), Processing(Processing), Push(Push) {}
+
+  void operator()(MachineBasicBlock *EpilogueRoot) const {
+    if (Emitted.contains(EpilogueRoot) ||
+        !Processing.insert(EpilogueRoot).second)
+      return;
+
+    for (MachineBasicBlock *Sub : post_order(EpilogueRoot)) {
+      if (Sub != EpilogueRoot &&
+          IBS.getBlockState(Sub).Kind == BlockType::Epilogue) {
+        (*this)(Sub);
+      }
+      Push(Sub);
+    }
+
+    Processing.erase(EpilogueRoot);
+  }
+};
+
 } // namespace
 
 bool InterBlockScheduling::leaveBlock() {
@@ -784,11 +816,18 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
   // post-order. post_order(E) ends with E itself, so E is scheduled AFTER
   // everything reachable from it (its successors are already done -> precise
   // inter-block latency for E) and BEFORE its non-loop predecessors.
+  //
+  // When an outer epilogue's forward walk reaches a nested epilogue inside a
+  // cyclic region, post-order rooted at the outer epilogue can emit the inner
+  // epilogue before its prologue (loop-back). Recursively process nested
+  // epilogues with their own root so post_order picks the correct order.
+  SmallPtrSet<const MachineBasicBlock *, 16> Processing;
+  EpilogueProcessor ProcessEpilogue{*this, Emitted, Processing, Push};
+
   for (MachineBasicBlock *MBB : post_order(MF)) {
     if (getBlockState(MBB).Kind != BlockType::Epilogue)
       continue;
-    for (MachineBasicBlock *Sub : post_order(MBB))
-      Push(Sub);
+    ProcessEpilogue(MBB);
   }
 
   // Phase 3: everything else in post-order to optimize the number of already

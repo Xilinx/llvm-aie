@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Pass/Pass.h"
@@ -83,6 +86,37 @@ TEST(PassGenTest, PassOptions) {
   EXPECT_EQ(unwrap(pass)->getTestOption(), 57);
   EXPECT_EQ(unwrap(pass)->getTestListOption()[0], 1);
   EXPECT_EQ(unwrap(pass)->getTestListOption()[1], 2);
+}
+
+TEST(PassGenTest, PassOptionsParse) {
+  mlir::MLIRContext context;
+
+  auto parsedOptions = parseTestPassWithOptionsOptions(
+      "testOption=57 test-list-option={1,2}",
+      [](const llvm::Twine &) { return mlir::failure(); });
+  ASSERT_TRUE(mlir::succeeded(parsedOptions));
+
+  const auto unwrap = [](const std::unique_ptr<mlir::Pass> &pass) {
+    return static_cast<const TestPassWithOptions *>(pass.get());
+  };
+
+  const auto pass = createTestPassWithOptions(std::move(*parsedOptions));
+
+  EXPECT_EQ(unwrap(pass)->getTestOption(), 57);
+  EXPECT_EQ(unwrap(pass)->getTestListOption()[0], 1);
+  EXPECT_EQ(unwrap(pass)->getTestListOption()[1], 2);
+}
+
+TEST(PassGenTest, PassOptionsParseFailure) {
+  std::string error;
+  auto parsedOptions = parseTestPassWithOptionsOptions(
+      "unknown-option=57", [&](const llvm::Twine &message) {
+        error = message.str();
+        return mlir::failure();
+      });
+
+  EXPECT_TRUE(mlir::failed(parsedOptions));
+  EXPECT_THAT(error, testing::HasSubstr("no such option unknown-option"));
 }
 
 struct TestPassWithCustomConstructor

@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie-cluster-base-address --aie-chain-addr-scl-ldst --aie-chain-addr-vec-ldst=false %s -verify-machineinstrs -o - | FileCheck %s
 
 # In this test, we chain the ptradds until we reach a store, then break the chain
@@ -264,15 +264,16 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 19
-  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 15
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C6]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD2]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C7]](s20)
+  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
+  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C8]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD3]](p0) :: (store (s32))
-  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
-  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C9]](s20)
+  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
+  ; CHECK-NEXT:   [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C10]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD4]](p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.1
   bb.0.entry:

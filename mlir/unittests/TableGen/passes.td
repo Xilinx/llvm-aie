@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 include "mlir/Pass/PassBase.td"
@@ -16,6 +19,7 @@ def TestPass : Pass<"test"> {
 
 def TestPassWithOptions : Pass<"test"> {
   let summary = "Test pass with options";
+  let genOptionsParser = 1;
 
   let options = [
     Option<"testOption", "testOption", "int", "0", "Test option">,
