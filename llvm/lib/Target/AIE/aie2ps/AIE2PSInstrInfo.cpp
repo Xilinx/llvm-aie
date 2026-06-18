@@ -69,7 +69,8 @@ unsigned AIE2PSInstrInfo::getMvSclMultiSlotPseudoOpcode() const {
 static MCRegister getLoSubReg(const TargetRegisterInfo &TRI, MCRegister Reg) {
   if (AIE2PS::eLRegClass.contains(Reg))
     return TRI.getSubReg(Reg, AIE2PS::sub_l_even);
-  if (AIE2PS::EXPVEC64RegClass.contains(Reg))
+  if (AIE2PS::EXPVEC64RegClass.contains(Reg) ||
+      AIE2PS::mGGaRegClass.contains(Reg))
     return TRI.getSubReg(Reg, AIE2PS::sub_lo_exp);
   if (AIE2PS::mEYwRegClass.contains(Reg))
     return TRI.getSubReg(Reg, AIE2PS::sub_bfp640_lo);
@@ -91,7 +92,8 @@ static MCRegister getLoSubReg(const TargetRegisterInfo &TRI, MCRegister Reg) {
 static MCRegister getHiSubReg(const TargetRegisterInfo &TRI, MCRegister Reg) {
   if (AIE2PS::eLRegClass.contains(Reg))
     return TRI.getSubReg(Reg, AIE2PS::sub_l_odd);
-  if (AIE2PS::EXPVEC64RegClass.contains(Reg))
+  if (AIE2PS::EXPVEC64RegClass.contains(Reg) ||
+      AIE2PS::mGGaRegClass.contains(Reg))
     return TRI.getSubReg(Reg, AIE2PS::sub_hi_exp);
   if (AIE2PS::mEYwRegClass.contains(Reg))
     return TRI.getSubReg(Reg, AIE2PS::sub_bfp640_hi);
@@ -387,6 +389,14 @@ void AIE2PSInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                 getLoSubReg(TRI, SrcReg), KillSrc);
     copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
                 getHiSubReg(TRI, SrcReg), KillSrc);
+  } else if ((AIE2PS::eLRegClass.contains(SrcReg) &&
+              AIE2PS::mGGaRegClass.contains(DstReg)) ||
+             (AIE2PS::mGGaRegClass.contains(SrcReg) &&
+              AIE2PS::eLRegClass.contains(DstReg))) {
+    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
+                getLoSubReg(TRI, SrcReg), KillSrc);
+    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
+                getHiSubReg(TRI, SrcReg), KillSrc);
   } else if ((AIE2PS::mEYwRegClass.contains(SrcReg)) &&
              (AIE2PS::mEYwRegClass.contains(DstReg))) {
     copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
@@ -419,6 +429,8 @@ void AIE2PSInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
              (AIE2PS::ePSRFLdFRegClass.contains(DstReg))) {
     copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
   } else {
+    errs() << "copyPhysReg: cannot copy " << TRI.getName(SrcReg) << " -> "
+           << TRI.getName(DstReg) << '\n';
     llvm_unreachable("unhandled case in copyPhysReg");
   }
 }
