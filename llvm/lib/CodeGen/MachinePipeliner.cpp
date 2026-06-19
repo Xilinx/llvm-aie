@@ -197,7 +197,7 @@ static cl::opt<bool>
     MVECodeGen("pipeliner-mve-cg", cl::Hidden, cl::init(false),
                cl::desc("Use the MVE code generator for software pipelining"));
 
-static cl::opt<bool> SwpPragmaAsMaxII(
+cl::opt<bool> SwpPragmaAsMaxII(
     "pipeliner-pragma-as-max-ii", cl::Hidden, cl::init(false),
     cl::desc("Treat pragma II as maximum bound instead of exact value"));
 
