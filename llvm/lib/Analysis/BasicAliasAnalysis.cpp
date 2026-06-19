@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -73,17 +73,16 @@ static cl::opt<bool> EnableRecPhiAnalysis("basic-aa-recphi", cl::Hidden,
                                           cl::init(true));
 
 /// Enable full analysis of PHI nodes.
-static cl::opt<bool> EnableFullPHIAnalysis("basic-aa-full-phi-analysis",
-                                           cl::Hidden, cl::init(false));
+cl::opt<bool> EnableFullPHIAnalysis("basic-aa-full-phi-analysis", cl::Hidden,
+                                    cl::init(false));
 
 static cl::opt<bool> EnableSeparateStorageAnalysis("basic-aa-separate-storage",
                                                    cl::Hidden, cl::init(true));
 
 // The max limit of the search depth in DecomposeGEPExpression() and
 // getUnderlyingObject().
-static cl::opt<unsigned>
-    MaxLookupSearchDepth("basic-aa-max-lookup-search-depth", cl::Hidden,
-                         cl::init(6));
+cl::opt<unsigned> MaxLookupSearchDepth("basic-aa-max-lookup-search-depth",
+                                       cl::Hidden, cl::init(6));
 
 /// SearchLimitReached / SearchTimes shows how often the limit of
 /// to decompose GEPs is reached. It will affect the precision
