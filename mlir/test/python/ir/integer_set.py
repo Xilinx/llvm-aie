@@ -61,13 +61,15 @@ def testIntegerSetGet():
         try:
             IntegerSet.get(2, 1, [0], [True])
         except RuntimeError as e:
-            # CHECK: Invalid expression when attempting to create an IntegerSet
+            # CHECK: Invalid expression
+            # CHECK-SAME: attempting to create an IntegerSet
             print(e)
 
         try:
             IntegerSet.get(2, 1, [None], [True])
         except RuntimeError as e:
-            # CHECK: Invalid expression (None?) when attempting to create an IntegerSet
+            # CHECK: Invalid expression
+            # CHECK-SAME: attempting to create an IntegerSet
             print(e)
 
         try:
@@ -85,13 +87,15 @@ def testIntegerSetGet():
         try:
             set0.get_replaced([d0, 1], [s0], 1, 1)
         except RuntimeError as e:
-            # CHECK: Invalid expression when attempting to create an IntegerSet by replacing dimensions
+            # CHECK: Invalid expression
+            # CHECK-SAME: attempting to create an IntegerSet by replacing dimensions
             print(e)
 
         try:
             set0.get_replaced([d0, d1], [None], 1, 1)
         except RuntimeError as e:
-            # CHECK: Invalid expression (None?) when attempting to create an IntegerSet by replacing symbols
+            # CHECK: Invalid expression
+            # CHECK-SAME: attempting to create an IntegerSet by replacing symbols
             print(e)
 
 
