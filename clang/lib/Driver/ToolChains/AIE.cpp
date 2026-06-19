@@ -187,9 +187,6 @@ void AIEToolChain::addClangTargetOptions(
   // Enable Loop Iteration Count Assumptions
   CC1Args.append({"-mllvm", "-enable-loop-iter-count-assumptions=true"});
 
-  // Treat pragma II as maximum bound instead of exact value
-  CC1Args.append({"-mllvm", "-pipeliner-pragma-as-max-ii=true"});
-
   bool UseBuiltins = DriverArgs.hasFlag(options::OPT_fbuiltin,
                                         options::OPT_fno_builtin, false);
 

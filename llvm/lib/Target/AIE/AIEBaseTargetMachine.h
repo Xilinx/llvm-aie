@@ -63,6 +63,8 @@ public:
   virtual void setMBBPlacementOpts();
 
   virtual void setAliasAnalysisOpts();
+
+  virtual void setPipelinerOpts();
 };
 
 class AIEBasePassConfig : public TargetPassConfig {
