@@ -66,13 +66,15 @@ def testAffineMapGet():
         try:
             AffineMap.get(1, 1, [1])
         except RuntimeError as e:
-            # CHECK: Invalid expression when attempting to create an AffineMap
+            # CHECK: Invalid expression
+            # CHECK-SAME: attempting to create an AffineMap
             print(e)
 
         try:
             AffineMap.get(1, 1, [None])
         except RuntimeError as e:
-            # CHECK: Invalid expression (None?) when attempting to create an AffineMap
+            # CHECK: Invalid expression
+            # CHECK-SAME: attempting to create an AffineMap
             print(e)
 
         try:

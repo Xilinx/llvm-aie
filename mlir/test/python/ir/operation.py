@@ -838,7 +838,8 @@ def testCreateWithInvalidAttributes():
         try:
             Operation.create("builtin.module", attributes={"some_key": None})
         except Exception as e:
-            # CHECK: Found an invalid (`None`?) attribute value for the key "some_key" when attempting to create the operation "builtin.module"
+            # COM: Invalid/invalid depends on pybind/nanobind version, so we do not check it here
+            # CHECK: attribute value for the key "some_key" when attempting to create the operation "builtin.module"
             print(e)
 
 

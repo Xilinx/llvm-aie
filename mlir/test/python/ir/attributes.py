@@ -625,12 +625,14 @@ def testArrayAttr():
         try:
             ArrayAttr.get([None])
         except RuntimeError as e:
-            # CHECK: Error: Invalid attribute (None?) when attempting to create an ArrayAttribute
+            # CHECK: Error: Invalid attribute
+            # CHECK-SAME: attempting to create an ArrayAttribute
             print("Error: ", e)
         try:
             ArrayAttr.get([42])
         except RuntimeError as e:
-            # CHECK: Error: Invalid attribute when attempting to create an ArrayAttribute
+            # CHECK: Error: Invalid attribute
+            # CHECK-SAME: attempting to create an ArrayAttribute
             print("Error: ", e)
 
     with Context():
