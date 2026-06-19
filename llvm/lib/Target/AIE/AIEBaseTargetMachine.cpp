@@ -58,6 +58,8 @@ using namespace llvm;
 extern cl::opt<unsigned> JumpInstCost;
 extern cl::opt<unsigned> MisfetchCost;
 extern cl::opt<bool> ForcePreciseRotationCost;
+extern cl::opt<bool> EnableFullPHIAnalysis;
+extern cl::opt<unsigned> MaxLookupSearchDepth;
 
 static cl::opt<bool>
     EnableCustomAliasAnalysisOpt("aie-enable-alias-analysis",
@@ -203,6 +205,7 @@ AIEBaseTargetMachine::AIEBaseTargetMachine(const Target &T, const Triple &TT,
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;
 
   setMBBPlacementOpts();
+  setAliasAnalysisOpts();
 }
 
 void AIEBaseTargetMachine::setMBBPlacementOpts() {
@@ -212,6 +215,17 @@ void AIEBaseTargetMachine::setMBBPlacementOpts() {
   MisfetchCost = 0;
   // Attempt to rotate loops based on profile data to reduce branch costs.
   ForcePreciseRotationCost = true;
+}
+
+void AIEBaseTargetMachine::setAliasAnalysisOpts() {
+  // Perform complete AA analysis on phi nodes.
+  if (EnableFullPHIAnalysis.getNumOccurrences() == 0)
+    EnableFullPHIAnalysis = true;
+
+  // Extend the max search depth in BasicAA's GEP/underlying-object
+  // decomposition so deeper pointer chains can be disambiguated.
+  if (MaxLookupSearchDepth.getNumOccurrences() == 0)
+    MaxLookupSearchDepth = 10;
 }
 
 yaml::MachineFunctionInfo *
