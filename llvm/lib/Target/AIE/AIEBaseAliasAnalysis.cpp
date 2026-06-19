@@ -15,15 +15,18 @@
 
 #include "AIEBaseAliasAnalysis.h"
 #include "AIE.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
 #include "llvm/IR/IntrinsicsAIE2PS.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -41,6 +44,12 @@ static cl::opt<bool> DisambiguateAccessSameOriginPointers(
     "aie-alias-analysis-disambiguation",
     cl::desc("Disambiguate pointers derived from the same origin"),
     cl::init(true), cl::Hidden);
+
+static cl::opt<bool> DisambiguateNoAliasArgRoots(
+    "aie-alias-analysis-noalias-arg-roots",
+    cl::desc("Disambiguate pointers that trace back to different noalias "
+             "function arguments (looks through GEP/cast/phi/select/load) "),
+    cl::init(false), cl::Hidden);
 
 #define DEBUG_TYPE "aie-aa"
 
@@ -592,6 +601,9 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
   return AliasResult::NoAlias;
 }
 
+// Forward declarations for helpers defined later in this file.
+static const Argument *traceToNoAliasArgRoot(const Value *V);
+
 AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
                                    const MemoryLocation &LocB,
                                    AAQueryInfo &AAQI, const Instruction *) {
@@ -603,6 +615,16 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
       aliasAIEIntrinsic(LocA.Ptr, LocB.Ptr, BaseA, BaseB, 0, 0
                         /*No virtually unrolled*/) == AliasResult::NoAlias)
     return AliasResult::NoAlias;
+
+  // Distinct noalias function-arg roots. Complements getUnderlyingObjectAIE
+  // (GEP/cast/AIE intrinsics): also walks phi/select and LoadInst for the
+  // io_buffer pattern (data pointer loaded from inside a noalias arg).
+  if (DisambiguateNoAliasArgRoots) {
+    const Argument *RootA = traceToNoAliasArgRoot(LocA.Ptr);
+    const Argument *RootB = traceToNoAliasArgRoot(LocB.Ptr);
+    if (RootA && RootB && RootA != RootB)
+      return AliasResult::NoAlias;
+  }
 
   // Our look-through didn't reveal a different object, pass on to the next
   // alias analysis
@@ -651,6 +673,82 @@ static std::optional<int64_t> getGEPConstantOffset(const Value *V) {
   if (!GEP->hasAllConstantIndices())
     return std::nullopt;
   return cast<ConstantInt>(GEP->getOperand(1))->getSExtValue();
+}
+
+// Trace V to a noalias function argument through GEP/cast/phi/select/load.
+// Load look-through assumes the AIE io_buffer model: pointers loaded from a
+// noalias arg's storage point to buffers disjoint from other noalias args.
+static const Argument *
+traceToNoAliasArgRoot(const Value *V,
+                      llvm::SmallPtrSetImpl<const Value *> &Visited,
+                      unsigned Depth = 0) {
+  if (!V)
+    return nullptr;
+  // Bound recursion to avoid quadratic blowup in pathological IR.
+  if (Depth > BaseObjectSearchLimit)
+    return nullptr;
+  if (!Visited.insert(V).second)
+    return nullptr;
+
+  V = lookThroughAIEAddressingModes(V);
+
+  // If we landed on a noalias function argument, that is our root.
+  if (const auto *A = dyn_cast<Argument>(V)) {
+    if (A->hasNoAliasAttr())
+      return A;
+    return nullptr;
+  }
+
+  // Look through pointer arithmetic and casts.
+  if (const auto *GEP = dyn_cast<GEPOperator>(V))
+    return traceToNoAliasArgRoot(GEP->getPointerOperand(), Visited, Depth + 1);
+  if (const auto *BC = dyn_cast<BitCastInst>(V))
+    return traceToNoAliasArgRoot(BC->getOperand(0), Visited, Depth + 1);
+  if (const auto *ASC = dyn_cast<AddrSpaceCastInst>(V))
+    return traceToNoAliasArgRoot(ASC->getOperand(0), Visited, Depth + 1);
+  if (const auto *Cast = dyn_cast<CastInst>(V))
+    if (Cast->isNoopCast(Cast->getModule()->getDataLayout()))
+      return traceToNoAliasArgRoot(Cast->getOperand(0), Visited, Depth + 1);
+
+  // Phi: all incoming values must trace to the same noalias arg.
+  if (const auto *Phi = dyn_cast<PHINode>(V)) {
+    const Argument *Common = nullptr;
+    for (const Value *In : Phi->incoming_values()) {
+      const Argument *A = traceToNoAliasArgRoot(In, Visited, Depth + 1);
+      if (!A)
+        return nullptr;
+      if (!Common)
+        Common = A;
+      else if (Common != A)
+        return nullptr;
+    }
+    return Common;
+  }
+
+  // Select: both arms must agree on the noalias arg root.
+  if (const auto *Sel = dyn_cast<SelectInst>(V)) {
+    const Argument *T =
+        traceToNoAliasArgRoot(Sel->getTrueValue(), Visited, Depth + 1);
+    if (!T)
+      return nullptr;
+    const Argument *F =
+        traceToNoAliasArgRoot(Sel->getFalseValue(), Visited, Depth + 1);
+    if (!F)
+      return nullptr;
+    return (T == F) ? T : nullptr;
+  }
+
+  // LoadInst: not handled by getUnderlyingObject (stops at the loaded pointer).
+  if (const auto *Load = dyn_cast<LoadInst>(V))
+    return traceToNoAliasArgRoot(Load->getPointerOperand(), Visited, Depth + 1);
+
+  return nullptr;
+}
+
+// Convenience wrapper that owns the visited set.
+static const Argument *traceToNoAliasArgRoot(const Value *V) {
+  llvm::SmallPtrSet<const Value *, 16> Visited;
+  return traceToNoAliasArgRoot(V, Visited, 0);
 }
 
 AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
@@ -711,9 +809,21 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
       if (aliasAIEIntrinsic(ValueBasePairA->first, ValueBasePairB->first,
                             ValueBasePairA->second, ValueBasePairB->second,
                             UnrollLevelMIA,
-                            UnrollLevelMIB) == AliasResult::MayAlias) {
-        return AliasResult::MayAlias;
+                            UnrollLevelMIB) == AliasResult::NoAlias)
+        continue;
+
+      // Fall back to a noalias-arg-root analysis. This handles the common
+      // case where two pointers used in the loop derive from different
+      // noalias function arguments via a chain of pointer arithmetic, phi,
+      // select and loads.
+      if (DisambiguateNoAliasArgRoots) {
+        const Argument *RootA = traceToNoAliasArgRoot(ValueBasePairA->first);
+        const Argument *RootB = traceToNoAliasArgRoot(ValueBasePairB->first);
+        if (RootA && RootB && RootA != RootB)
+          continue;
       }
+
+      return AliasResult::MayAlias;
     }
   }
   return AliasResult::NoAlias;
