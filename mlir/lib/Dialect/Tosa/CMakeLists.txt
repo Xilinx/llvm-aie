@@ -22,6 +22,7 @@ add_mlir_dialect_library(MLIRTosaDialect
   MLIRQuantUtils
   MLIRSideEffectInterfaces
   MLIRTensorDialect
+  MLIRUBDialect
   MLIRVectorInterfaces
   MLIRViewLikeInterface
   )
