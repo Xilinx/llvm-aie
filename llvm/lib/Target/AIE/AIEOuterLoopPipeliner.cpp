@@ -306,6 +306,22 @@ private:
                             const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
                             const SmallVectorImpl<Instruction *> &Part2Insts);
 
+  // Clone I into Dest before InsertPt, record orig->clone in VMap, and return
+  // the clone. A non-empty Suffix renames non-void clones to "<orig><Suffix>".
+  static Instruction *cloneInstInto(Instruction &I, BasicBlock &Dest,
+                                    BasicBlock::iterator InsertPt,
+                                    ValueToValueMapTy &VMap,
+                                    const Twine &Suffix);
+  // Clone Insts (in order) into DstBB before InsertPt, then remap operands of
+  // all the clones through VMap. Returns the clones, parallel to Insts.
+  static SmallVector<Instruction *, 16>
+  cloneAndRemapInsts(ArrayRef<Instruction *> Insts, BasicBlock &DstBB,
+                     BasicBlock::iterator InsertPt, ValueToValueMapTy &VMap,
+                     const Twine &Suffix);
+  // Second-pass remap of freshly inserted clones, once all are in place.
+  static void remapClones(ArrayRef<Instruction *> Clones,
+                          ValueToValueMapTy &VMap);
+
   // Validates the latch exit condition, computes the induction step, and
   // caches all discovered components in LS.LatchBound for later use by
   // adjustLoopBound() and getDowncountingInfo(). Returns true if the loop
@@ -668,6 +684,39 @@ BasicBlock *AIEOuterLoopPipeliner::clonePrologueAsWarmUp(
   return WarmUp;
 }
 
+Instruction *AIEOuterLoopPipeliner::cloneInstInto(Instruction &I,
+                                                  BasicBlock &Dest,
+                                                  BasicBlock::iterator InsertPt,
+                                                  ValueToValueMapTy &VMap,
+                                                  const Twine &Suffix) {
+  Instruction *Clone = I.clone();
+  SmallString<32> SuffixStorage;
+  StringRef SuffixStr = Suffix.toStringRef(SuffixStorage);
+  if (!SuffixStr.empty() && !Clone->getType()->isVoidTy())
+    Clone->setName(I.getName() + SuffixStr);
+  Clone->insertBefore(Dest, InsertPt);
+  VMap[&I] = Clone;
+  return Clone;
+}
+
+void AIEOuterLoopPipeliner::remapClones(ArrayRef<Instruction *> Clones,
+                                        ValueToValueMapTy &VMap) {
+  for (Instruction *CloneI : Clones)
+    RemapInstruction(CloneI, VMap,
+                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+}
+
+SmallVector<Instruction *, 16> AIEOuterLoopPipeliner::cloneAndRemapInsts(
+    ArrayRef<Instruction *> Insts, BasicBlock &DstBB,
+    BasicBlock::iterator InsertPt, ValueToValueMapTy &VMap,
+    const Twine &Suffix) {
+  SmallVector<Instruction *, 16> Clones;
+  for (Instruction *I : Insts)
+    Clones.push_back(cloneInstInto(*I, DstBB, InsertPt, VMap, Suffix));
+  remapClones(Clones, VMap);
+  return Clones;
+}
+
 // Clone the data-load chain into the epilogue block (outer latch), inserting
 // the clones before the terminator. The clones use the NEXT-iteration pointer
 // values (the latch incoming values of the outer header PHIs) so that the
@@ -675,26 +724,15 @@ BasicBlock *AIEOuterLoopPipeliner::clonePrologueAsWarmUp(
 void AIEOuterLoopPipeliner::clonePrologueIntoEpilogue(
     const LoopStructure &LS, const SmallVectorImpl<Instruction *> &PInsts,
     ValueToValueMapTy &EpiVMap) {
-  // Epilogue is always in OuterLatch (linear structure).
-  Instruction *InsertBefore = LS.OuterLatch->getTerminator();
-
   // Pre-populate EpiVMap with the NEXT-iteration values of outer header PHIs.
   // This ensures that cloned loads use %a.ptr.next, %b.ptr.next, etc.
   populateVMapFromPHIs(EpiVMap, LS, LS.OuterLatch);
 
-  SmallVector<Instruction *, 16> EpiClones;
-  for (Instruction *I : PInsts) {
-    Instruction *Clone = I->clone();
-    if (!Clone->getType()->isVoidTy())
-      Clone->setName(I->getName() + ".epi");
-    Clone->insertBefore(InsertBefore->getIterator());
-    EpiVMap[I] = Clone;
-    EpiClones.push_back(Clone);
-  }
-  // Remap after all clones are inserted to avoid iterator invalidation.
-  for (Instruction *Clone : EpiClones)
-    RemapInstruction(Clone, EpiVMap,
-                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+  // Epilogue is always in OuterLatch (linear structure): insert the flat clone
+  // chain before the latch terminator.
+  Instruction *LatchTerm = LS.OuterLatch->getTerminator();
+  cloneAndRemapInsts(PInsts, *LS.OuterLatch, LatchTerm->getIterator(), EpiVMap,
+                     ".epi");
   LLVM_DEBUG(dbgs() << "    Cloned prologue into epilogue\n");
 }
 
