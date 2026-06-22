@@ -413,6 +413,40 @@ private:
   static void remapClones(ArrayRef<Instruction *> Clones,
                           ValueToValueMapTy &VMap);
 
+  // Step helpers of peelLastIterationEpilogue, in call order.
+  // The original block the latch branched to on loop exit.
+  BasicBlock *getExitBlock(const LoopStructure &LS) const;
+
+  // Clone the hardware-loop setup (set.loop.iterations) from the outer header
+  // into Dest, remapping operands through CoolVMap.
+  void cloneHardwareLoopSetupInto(BasicBlock *Dest, const LoopStructure &LS,
+                                  ValueToValueMapTy &CoolVMap) const;
+
+  // Creates the empty cool-down inner-loop blocks (clones of the inner-loop
+  // blocks, recorded in CoolVMap; bodies filled later by
+  // cloneInnerLoopIntoCooldown). Returns the cool-down exit block.
+  BasicBlock *createCooldownSkeleton(const LoopStructure &LS,
+                                     BasicBlock *CoolEntry,
+                                     BasicBlock *OrigExit,
+                                     ValueToValueMapTy &CoolVMap) const;
+
+  // Fills the cool-down inner-loop block clones (from createCooldownSkeleton,
+  // resolved via CoolVMap) with remapped instruction bodies.
+  void cloneInnerLoopIntoCooldown(const LoopStructure &LS,
+                                  BasicBlock *CoolEntry,
+                                  ValueToValueMapTy &CoolVMap) const;
+
+  // Populate cooldown.exit with the original epilogue stores only — no prefetch
+  // loads, and none of the prologue clones inserted into the epilogue earlier.
+  void populateCooldownExit(BasicBlock *CoolExit, const LoopStructure &LS,
+                            const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
+                            ValueToValueMapTy &CoolVMap) const;
+
+  // Splice the cool-down into the CFG: cooldown.exit -> original exit, repoint
+  // the exit's latch-predecessor PHIs to cooldown.exit, redirect latch exit.
+  void wireCooldownIntoCFG(const LoopStructure &LS, BasicBlock *CoolEntry,
+                           BasicBlock *CoolExit, BasicBlock *OrigExit) const;
+
   // Validates the latch exit condition, computes the induction step, and
   // caches all discovered components in LS.LatchBound for later use by
   // adjustLoopBound() and getDowncountingInfo(). Returns true if the loop
@@ -921,10 +955,38 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
   Function *F = LS.OuterHeader->getParent();
   LLVMContext &Ctx = F->getContext();
 
-  // Find the original exit block (false branch of outer latch).
+  BasicBlock *OrigExit = getExitBlock(LS);
+
+  // Map each outer header PHI to its latch (last-iteration) incoming value so
+  // every clone below picks up the final epilogue values:
+  //   %v0.phi -> %v0.epi, %c.ptr -> %c.ptr.next, etc.
+  ValueToValueMapTy CoolVMap;
+  populateVMapFromPHIs(CoolVMap, LS, LS.OuterLatch);
+
+  // cooldown.entry holds the hardware-loop setup and the Part-2 accumulator
+  // seeds; build it, then the inner-loop skeleton, then fill everything in.
+  BasicBlock *CoolEntry =
+      BasicBlock::Create(Ctx, "cooldown.entry", F, OrigExit);
+  cloneHardwareLoopSetupInto(CoolEntry, LS, CoolVMap);
+
+  BasicBlock *CoolExit =
+      createCooldownSkeleton(LS, CoolEntry, OrigExit, CoolVMap);
+
+  // Clone Part-2 instructions into cooldown.entry before the inner loop so the
+  // cloned inner-loop PHIs that reference Part-2 results resolve to them.
+  cloneAndRemapInsts(Part2Insts, *CoolEntry, CoolEntry->end(), CoolVMap, ".cd");
+  cloneInnerLoopIntoCooldown(LS, CoolEntry, CoolVMap);
+  populateCooldownExit(CoolExit, LS, OrigEpiInsts, CoolVMap);
+  wireCooldownIntoCFG(LS, CoolEntry, CoolExit, OrigExit);
+
+  LLVM_DEBUG(dbgs() << "    Created cool-down: " << CoolEntry->getName()
+                    << " -> " << CoolExit->getName() << "\n");
+}
+
+BasicBlock *AIEOuterLoopPipeliner::getExitBlock(const LoopStructure &LS) const {
   BranchInst *LatchBr = LS.getLatchBranch();
   assert(LatchBr->isConditional() && "Outer latch must be conditional");
-  // The true branch goes back to outer.header; false branch goes to exit.
+  // The true branch goes back to outer.header; the other goes to the exit.
   BasicBlock *OrigExit = nullptr;
   for (unsigned I = 0; I < LatchBr->getNumSuccessors(); ++I) {
     BasicBlock *Succ = LatchBr->getSuccessor(I);
@@ -933,150 +995,103 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
       break;
     }
   }
-
   assert(OrigExit && "Outer latch must have an exit successor");
+  return OrigExit;
+}
 
-  // Build the cool-down VMap: map each outer header PHI to its latch value.
-  // This gives us: %v0.phi -> %v0.epi, %c.ptr -> %c.ptr.next, etc.
-  ValueToValueMapTy CoolVMap;
-  populateVMapFromPHIs(CoolVMap, LS, LS.OuterLatch);
-
-  // Create cooldown.entry.
-  BasicBlock *CoolEntry =
-      BasicBlock::Create(Ctx, "cooldown.entry", F, OrigExit);
-
-  // Clone set.loop.iterations from the outer header into cooldown.entry.
+void AIEOuterLoopPipeliner::cloneHardwareLoopSetupInto(
+    BasicBlock *Dest, const LoopStructure &LS,
+    ValueToValueMapTy &CoolVMap) const {
+  SmallVector<Instruction *, 4> SetupInsts;
   for (Instruction &I : *LS.OuterHeader) {
     if (I.isTerminator())
       break;
-    if (!AIEIRUtils::isHardwareLoopSetup(&I))
-      continue;
-    Instruction *Clone = I.clone();
-    Clone->insertInto(CoolEntry, CoolEntry->end());
-    RemapInstruction(Clone, CoolVMap,
-                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
-    CoolVMap[&I] = Clone;
+    if (AIEIRUtils::isHardwareLoopSetup(&I))
+      SetupInsts.push_back(&I);
   }
+  cloneAndRemapInsts(SetupInsts, *Dest, Dest->end(), CoolVMap, /*Suffix=*/"");
+}
 
-  // Clone the inner loop blocks.
-  // Collect inner loop blocks in RPO order.
-  SmallVector<BasicBlock *, 8> InnerBlocks(LS.InnerLoop->block_begin(),
-                                           LS.InnerLoop->block_end());
+BasicBlock *AIEOuterLoopPipeliner::createCooldownSkeleton(
+    const LoopStructure &LS, BasicBlock *CoolEntry, BasicBlock *OrigExit,
+    ValueToValueMapTy &CoolVMap) const {
+  Function *F = LS.OuterHeader->getParent();
+  LLVMContext &Ctx = F->getContext();
 
-  // Create cloned blocks.
-  SmallVector<BasicBlock *, 8> ClonedInnerBlocks;
-  for (BasicBlock *BB : InnerBlocks) {
-    BasicBlock *ClonedBB =
-        BasicBlock::Create(Ctx, BB->getName() + ".cd", F, OrigExit);
-    CoolVMap[BB] = ClonedBB;
-    ClonedInnerBlocks.push_back(ClonedBB);
-  }
+  // One empty clone per inner-loop block, recorded in CoolVMap so
+  // cloneInnerLoopIntoCooldown can resolve each block to its clone.
+  for (BasicBlock *BB : LS.InnerLoop->blocks())
+    CoolVMap[BB] = BasicBlock::Create(Ctx, BB->getName() + ".cd", F, OrigExit);
 
-  // Map outer.header -> cooldown.entry (for PHI incoming blocks in inner loop).
+  // Inner-loop PHIs incoming from the outer header now come from
+  // cooldown.entry.
   CoolVMap[LS.OuterHeader] = CoolEntry;
-  // Map outer.latch -> cooldown.exit (will be created below; use placeholder).
-  // We'll fix this after creating cooldown.exit.
 
-  // Create cooldown.exit.
+  // cooldown.exit receives the latch (and, in the single-block case, the inner
+  // exit) so the cloned inner loop and epilogue resolve their exits to it.
   BasicBlock *CoolExit = BasicBlock::Create(Ctx, "cooldown.exit", F, OrigExit);
   CoolVMap[LS.OuterLatch] = CoolExit;
-  // Also map inner exit (which is outer.latch in the single-block case).
   if (LS.InnerExit == LS.OuterLatch)
     CoolVMap[LS.InnerExit] = CoolExit;
+  return CoolExit;
+}
 
-  // Clone Part 2 instructions into cooldown.entry (split-prologue mode).
-  // Part 2 = matched intrinsics + their descendants. They stay in
-  // outer.header and must also appear in cooldown.entry so the cloned inner
-  // loop has correct initial accumulator values.
-  // IMPORTANT: This must happen BEFORE cloning inner loop instructions and
-  // remapping, so that CoolVMap[Part2_inst] is set when the cloned inner loop
-  // PHIs (which reference Part 2 results from outer.header) are remapped.
-  // CoolVMap already maps Part 1 PHI nodes → their latch values (= epilogue
-  // clones), so remapping Part 2 clones automatically uses the last epilogue
-  // values for Part 1 operands.
-  SmallVector<Instruction *, 16> Part2Clones;
-  for (Instruction *I : Part2Insts) {
-    Instruction *Clone = I->clone();
-    if (!Clone->getType()->isVoidTy())
-      Clone->setName(I->getName() + ".cd");
-    Clone->insertInto(CoolEntry, CoolEntry->end());
-    CoolVMap[I] = Clone;
-    Part2Clones.push_back(Clone);
+void AIEOuterLoopPipeliner::cloneInnerLoopIntoCooldown(
+    const LoopStructure &LS, BasicBlock *CoolEntry,
+    ValueToValueMapTy &CoolVMap) const {
+  // Clone every inner-loop block's body into its skeleton clone (resolved via
+  // CoolVMap) first, so all cross-block references exist before any remap runs.
+  SmallVector<Instruction *, 32> Clones;
+  for (BasicBlock *Orig : LS.InnerLoop->blocks()) {
+    auto *Clone = cast<BasicBlock>(CoolVMap[Orig]);
+    for (Instruction &Inst : *Orig)
+      Clones.push_back(
+          cloneInstInto(Inst, *Clone, Clone->end(), CoolVMap, ".cd"));
   }
-  for (Instruction *Clone : Part2Clones)
-    RemapInstruction(Clone, CoolVMap,
-                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+  remapClones(Clones, CoolVMap);
 
-  // Clone instructions into inner loop clone blocks.
-  for (unsigned I = 0; I < InnerBlocks.size(); ++I) {
-    BasicBlock *Orig = InnerBlocks[I];
-    BasicBlock *Clone = ClonedInnerBlocks[I];
-    for (Instruction &I : *Orig) {
-      Instruction *CloneI = I.clone();
-      if (!CloneI->getType()->isVoidTy())
-        CloneI->setName(I.getName() + ".cd");
-      CloneI->insertInto(Clone, Clone->end());
-      CoolVMap[&I] = CloneI;
-    }
-  }
-
-  // Remap all cloned inner loop instructions.
-  // CoolVMap now contains Part 2 entries, so inner loop PHIs that reference
-  // Part 2 results from outer.header will correctly use the cooldown.entry
-  // Part 2 clones.
-  for (BasicBlock *BB : ClonedInnerBlocks)
-    for (Instruction &I : *BB)
-      RemapInstruction(&I, CoolVMap,
-                       RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
-
-  // Branch from cooldown.entry to the cloned inner loop header.
   BasicBlock *ClonedInnerHeader = cast<BasicBlock>(CoolVMap[LS.InnerHeader]);
   BranchInst::Create(ClonedInnerHeader, CoolEntry);
+}
 
-  // Populate cooldown.exit with epilogue stores (no loads, no prologue
-  // clones). Only copy instructions that were in the original epilogue block
-  // BEFORE clonePrologueIntoEpilogue inserted the prologue load clones.
-  // Epilogue is always in OuterLatch (linear structure).
-  SmallVector<Instruction *, 16> EpiClones;
+void AIEOuterLoopPipeliner::populateCooldownExit(
+    BasicBlock *CoolExit, const LoopStructure &LS,
+    const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
+    ValueToValueMapTy &CoolVMap) const {
+  SmallVector<Instruction *, 16> EpiInsts;
   for (Instruction &I : *LS.OuterLatch) {
     if (I.isTerminator())
       break;
+    // No prefetch in the cool-down.
     if (isa<LoadInst>(&I))
-      continue; // Skip loads -- no prefetch in cool-down
+      continue;
+    // Skip the prologue clones inserted into the epilogue earlier.
     if (!OrigEpiInsts.count(&I))
-      continue; // Skip prologue clones inserted by clonePrologueIntoEpilogue
-    Instruction *Clone = I.clone();
-    if (!Clone->getType()->isVoidTy())
-      Clone->setName(I.getName() + ".cd");
-    Clone->insertInto(CoolExit, CoolExit->end());
-    CoolVMap[&I] = Clone;
-    EpiClones.push_back(Clone);
+      continue;
+    EpiInsts.push_back(&I);
   }
-  for (Instruction *Clone : EpiClones)
-    RemapInstruction(Clone, CoolVMap,
-                     RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+  cloneAndRemapInsts(EpiInsts, *CoolExit, CoolExit->end(), CoolVMap, ".cd");
+}
 
-  // Branch from cooldown.exit to the original exit.
+void AIEOuterLoopPipeliner::wireCooldownIntoCFG(const LoopStructure &LS,
+                                                BasicBlock *CoolEntry,
+                                                BasicBlock *CoolExit,
+                                                BasicBlock *OrigExit) const {
   BranchInst::Create(OrigExit, CoolExit);
 
-  // Update PHI nodes in OrigExit: replace outer.latch predecessor with
-  // cooldown.exit.
   for (PHINode &PHI : OrigExit->phis()) {
     const int LatchIdx = PHI.getBasicBlockIndex(LS.OuterLatch);
     assert(LatchIdx >= 0);
     PHI.setIncomingBlock(LatchIdx, CoolExit);
   }
 
-  // Redirect the outer latch's false branch to cooldown.entry.
+  BranchInst *LatchBr = LS.getLatchBranch();
   for (unsigned I = 0; I < LatchBr->getNumSuccessors(); ++I) {
     if (LatchBr->getSuccessor(I) == OrigExit) {
       LatchBr->setSuccessor(I, CoolEntry);
       break;
     }
   }
-
-  LLVM_DEBUG(dbgs() << "    Created cool-down: " << CoolEntry->getName()
-                    << " -> " << CoolExit->getName() << "\n");
 }
 
 // Validates the latch exit condition and caches all discovered components in
