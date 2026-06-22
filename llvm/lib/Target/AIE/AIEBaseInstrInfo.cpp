@@ -1470,8 +1470,16 @@ bool AIEBaseInstrInfo::canHoistCheapInst(const MachineInstr &MI) const {
 bool AIEBaseInstrInfo::regClassMatches(const TargetRegisterClass &TRC,
                                        const TargetRegisterClass *RC,
                                        unsigned Reg) {
-  if (RC && TRC.hasSubClassEq(RC))
-    return true;
+  if (RC) {
+    // Check if TRC is a superclass of RC.
+    if (TRC.hasSubClassEq(RC))
+      return true;
+    // For two equivalent classes TableGen generates an asymmetric
+    // subclass relation. We make it symmetrical if the register
+    // classes have the same number of registers.
+    if (RC->getNumRegs() == TRC.getNumRegs() && RC->hasSubClassEq(&TRC))
+      return true;
+  }
   if (TRC.contains(Reg))
     return true;
   return false;
