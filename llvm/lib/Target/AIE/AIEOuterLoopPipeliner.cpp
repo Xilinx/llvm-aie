@@ -35,6 +35,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -806,17 +807,9 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
   for (Instruction &I : *LS.OuterHeader) {
     if (I.isTerminator())
       break;
-    auto *Call = dyn_cast<CallInst>(&I);
-    if (!Call)
+    if (!AIEIRUtils::isHardwareLoopSetup(&I))
       continue;
-    auto *Fn = Call->getCalledFunction();
-    if (!Fn)
-      continue;
-    Intrinsic::ID IID = Fn->getIntrinsicID();
-    if (IID != Intrinsic::set_loop_iterations &&
-        IID != Intrinsic::start_loop_iterations)
-      continue;
-    Instruction *Clone = Call->clone();
+    Instruction *Clone = I.clone();
     Clone->insertInto(CoolEntry, CoolEntry->end());
     RemapInstruction(Clone, CoolVMap,
                      RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
@@ -1159,14 +1152,8 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
       continue;
     // Exclude set.loop.iterations / start.loop.iterations — they stay in
     // outer.header and are cloned separately into cooldown.entry.
-    if (auto *Call = dyn_cast<CallInst>(&I)) {
-      if (auto *Fn = Call->getCalledFunction()) {
-        Intrinsic::ID IID = Fn->getIntrinsicID();
-        if (IID == Intrinsic::set_loop_iterations ||
-            IID == Intrinsic::start_loop_iterations)
-          continue;
-      }
-    }
+    if (AIEIRUtils::isHardwareLoopSetup(&I))
+      continue;
     Out.push_back(&I);
   }
 
