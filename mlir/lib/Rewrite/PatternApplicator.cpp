@@ -201,6 +201,9 @@ LogicalResult PatternApplicator::matchAndRewrite(
           Operation *dumpRootOp = getDumpRootOp(op);
 #endif
           if (pdlMatch) {
+            LLVM_DEBUG(llvm::dbgs()
+                       << "Applying PDL rewrite \""
+                       << pdlMatch->pattern->getDebugName() << "\"");
             result =
                 bytecode->rewrite(rewriter, *pdlMatch, *mutableByteCodeState);
           } else {
