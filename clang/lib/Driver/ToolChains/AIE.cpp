@@ -184,17 +184,8 @@ void AIEToolChain::addClangTargetOptions(
   // otherwise noalias attributes can get lost and hurt AA results.
   CC1Args.append({"-mllvm", "-mandatory-inlining-before-opt=false"});
 
-  // Perform complete AA analysis on phi nodes.
-  CC1Args.append({"-mllvm", "-basic-aa-full-phi-analysis=true"});
-
-  // Extend the max limit of the search depth in BasicAA
-  CC1Args.append({"-mllvm", "-basic-aa-max-lookup-search-depth=10"});
-
   // Enable Loop Iteration Count Assumptions
   CC1Args.append({"-mllvm", "-enable-loop-iter-count-assumptions=true"});
-
-  // Treat pragma II as maximum bound instead of exact value
-  CC1Args.append({"-mllvm", "-pipeliner-pragma-as-max-ii=true"});
 
   bool UseBuiltins = DriverArgs.hasFlag(options::OPT_fbuiltin,
                                         options::OPT_fno_builtin, false);

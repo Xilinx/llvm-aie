@@ -58,6 +58,9 @@ using namespace llvm;
 extern cl::opt<unsigned> JumpInstCost;
 extern cl::opt<unsigned> MisfetchCost;
 extern cl::opt<bool> ForcePreciseRotationCost;
+extern cl::opt<bool> EnableFullPHIAnalysis;
+extern cl::opt<unsigned> MaxLookupSearchDepth;
+extern cl::opt<bool> SwpPragmaAsMaxII;
 
 static cl::opt<bool>
     EnableCustomAliasAnalysisOpt("aie-enable-alias-analysis",
@@ -203,6 +206,8 @@ AIEBaseTargetMachine::AIEBaseTargetMachine(const Target &T, const Triple &TT,
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;
 
   setMBBPlacementOpts();
+  setAliasAnalysisOpts();
+  setPipelinerOpts();
 }
 
 void AIEBaseTargetMachine::setMBBPlacementOpts() {
@@ -212,6 +217,24 @@ void AIEBaseTargetMachine::setMBBPlacementOpts() {
   MisfetchCost = 0;
   // Attempt to rotate loops based on profile data to reduce branch costs.
   ForcePreciseRotationCost = true;
+}
+
+void AIEBaseTargetMachine::setAliasAnalysisOpts() {
+  // Perform complete AA analysis on phi nodes.
+  if (EnableFullPHIAnalysis.getNumOccurrences() == 0)
+    EnableFullPHIAnalysis = true;
+
+  // Extend the max search depth in BasicAA's GEP/underlying-object
+  // decomposition so deeper pointer chains can be disambiguated.
+  if (MaxLookupSearchDepth.getNumOccurrences() == 0)
+    MaxLookupSearchDepth = 10;
+}
+
+void AIEBaseTargetMachine::setPipelinerOpts() {
+  // Treat a pragma-specified initiation interval as an upper bound rather than
+  // an exact value, letting the pipeliner search for a smaller (better) II.
+  if (SwpPragmaAsMaxII.getNumOccurrences() == 0)
+    SwpPragmaAsMaxII = true;
 }
 
 yaml::MachineFunctionInfo *

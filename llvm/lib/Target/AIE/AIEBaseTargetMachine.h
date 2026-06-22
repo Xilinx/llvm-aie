@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -61,6 +61,10 @@ public:
   createMachineScheduler(MachineSchedContext *C) const override;
 
   virtual void setMBBPlacementOpts();
+
+  virtual void setAliasAnalysisOpts();
+
+  virtual void setPipelinerOpts();
 };
 
 class AIEBasePassConfig : public TargetPassConfig {
