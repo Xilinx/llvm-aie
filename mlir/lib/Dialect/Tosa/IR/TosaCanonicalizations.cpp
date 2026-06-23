@@ -786,6 +786,17 @@ struct SlicePadPoisonOptimization : public OpRewritePattern<tosa::PadOp> {
 
     // For each axis, intersect the padded window with the slice input: the
     // overlap is read by a widened slice and the remainder stays as poison pad.
+    // Example with inDim=10, sliceStart=3, sliceSize=4, lowPad=4, highPad=4 (so
+    // windowStart=-1, paddedSize=12). The slice keeps x[3:7]; poison is
+    // don't-care, so the slice is widened to read all of x (backfilling the
+    // dropped x[0:3] and x[7:10]) and only the padding outside x is kept:
+    //
+    //   padded idx:   0  1  2  3   4  5  6  7   8  9 10 11
+    //               [ P  P  P  P][x3 x4 x5 x6][ P  P  P  P]
+    //                <- low=4 ->|<- sliceSize=4 ->|<- high=4 ->
+    //
+    //               newLow=1 |<-------- inSize=10 -------->| newHigh=1
+    //               (idx 0)    (inStart=0 .. inEnd=10)      (idx 11)
     ArrayRef<int64_t> sliceStart = sliceOp.getStart();
     ArrayRef<int64_t> sliceSize = sliceOp.getSize();
     SmallVector<int64_t> newStart(rank);
