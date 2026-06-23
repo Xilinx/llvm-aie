@@ -237,6 +237,14 @@ class LockDelays : public ScheduleDAGMutation {
         if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
+        // lock no_fence: when the target supports it, no forward latency is
+        // needed for ACQ/REL. The predecessor loop above already enforces the
+        // MEM->lock gap (draining any in-flight memory before the lock issues),
+        // so no memory can be in-flight at lock issue regardless of whether a
+        // memory pred exists in the DAG.
+        // Note: DONE is excluded — it keeps conservative forward latency.
+        if (TII->isLock(MI->getOpcode()) && TII->hasLockNoFenceSemantics())
+          continue;
         auto OptFirstMemCycle =
             TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass);
         assert(!ExactLatencies || OptFirstMemCycle);

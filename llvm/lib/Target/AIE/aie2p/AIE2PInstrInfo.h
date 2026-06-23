@@ -68,6 +68,7 @@ public:
   unsigned getGenericExtractSubvectorOpcode() const override;
   unsigned getGenericIntegerComparisonOpcode() const override;
   bool isLock(unsigned Opc) const override;
+  bool hasLockNoFenceSemantics() const override { return true; }
   std::optional<unsigned> getDoneLatency(unsigned) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
   bool isSchedBarrier(const MachineInstr &MI) const override;
