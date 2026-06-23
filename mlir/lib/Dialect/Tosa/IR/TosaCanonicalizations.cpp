@@ -23,6 +23,7 @@
 #include "mlir/Dialect/Tosa/Utils/ConversionUtils.h"
 #include "mlir/Dialect/Tosa/Utils/QuantUtils.h"
 #include "mlir/Dialect/Tosa/Utils/ShapeUtils.h"
+#include "mlir/Dialect/UB/IR/UBOps.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypeInterfaces.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -744,9 +745,119 @@ struct PadPadOptimization : public OpRewritePattern<tosa::PadOp> {
   }
 };
 
+/// Fold a tosa.pad of a tosa.slice that fills with poison. Poison is
+/// don't-care, so it is backfilled from the data the slice dropped: the slice
+/// is widened to the overlap of the padded window with its input, and padding
+/// is kept only where the window runs past the input. The dual of
+/// PadSliceOptimization.
+struct SlicePadPoisonOptimization : public OpRewritePattern<tosa::PadOp> {
+  using OpRewritePattern<tosa::PadOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::PadOp padOp,
+                                PatternRewriter &rewriter) const override {
+    if (!padOp.getPadConst().getDefiningOp<ub::PoisonOp>())
+      return rewriter.notifyMatchFailure(padOp, "pad does not fill poison");
+
+    auto sliceOp = padOp.getInput1().getDefiningOp<tosa::SliceOp>();
+    if (!sliceOp)
+      return rewriter.notifyMatchFailure(padOp, "pad input must be a slice");
+    if (!sliceOp->hasOneUse())
+      return rewriter.notifyMatchFailure(
+          padOp, "preceding slice must have a single use");
+
+    auto sliceInputType =
+        dyn_cast<RankedTensorType>(sliceOp.getInput1().getType());
+    if (!sliceInputType || !sliceInputType.hasStaticShape())
+      return rewriter.notifyMatchFailure(
+          padOp, "slice input must be a static ranked tensor");
+
+    ElementsAttr paddingElems;
+    if (!matchPattern(padOp.getPadding(), m_Constant(&paddingElems)))
+      return rewriter.notifyMatchFailure(padOp,
+                                         "pad must have constant padding");
+
+    const int64_t rank = sliceInputType.getRank();
+    SmallVector<int64_t> paddings;
+    paddings.reserve(2 * rank);
+    for (const APInt &padVal : paddingElems.getValues<APInt>())
+      paddings.push_back(padVal.getZExtValue());
+    assert(static_cast<int64_t>(paddings.size()) == 2 * rank &&
+           "pad padding must have 2 * rank elements");
+
+    // For each axis, intersect the padded window with the slice input: the
+    // overlap is read by a widened slice and the remainder stays as poison pad.
+    // Example with inDim=10, sliceStart=3, sliceSize=4, lowPad=4, highPad=4 (so
+    // windowStart=-1, paddedSize=12). The slice keeps x[3:7]; poison is
+    // don't-care, so the slice is widened to read all of x (backfilling the
+    // dropped x[0:3] and x[7:10]) and only the padding outside x is kept:
+    //
+    //   padded idx:   0  1  2  3   4  5  6  7   8  9 10 11
+    //               [ P  P  P  P][x3 x4 x5 x6][ P  P  P  P]
+    //                <- low=4 ->|<- sliceSize=4 ->|<- high=4 ->
+    //
+    //               newLow=1 |<-------- inSize=10 -------->| newHigh=1
+    //               (idx 0)    (inStart=0 .. inEnd=10)      (idx 11)
+    ArrayRef<int64_t> sliceStart = sliceOp.getStart();
+    ArrayRef<int64_t> sliceSize = sliceOp.getSize();
+    SmallVector<int64_t> newStart(rank);
+    SmallVector<int64_t> newSize(rank);
+    SmallVector<int64_t> newPadding(2 * rank, 0);
+    bool needsSlice = false;
+    bool changed = false;
+    for (int64_t axis = 0; axis < rank; ++axis) {
+      const int64_t inDim = sliceInputType.getDimSize(axis);
+      const int64_t lowPad = paddings[2 * axis];
+      const int64_t highPad = paddings[2 * axis + 1];
+      const int64_t paddedSize = lowPad + sliceSize[axis] + highPad;
+
+      // Slice-input index the padded window starts at; negative when the
+      // leading pad extends before the input.
+      const int64_t windowStart = sliceStart[axis] - lowPad;
+      const int64_t inStart = std::clamp(windowStart, int64_t(0), inDim);
+      const int64_t inEnd =
+          std::clamp(windowStart + paddedSize, int64_t(0), inDim);
+
+      newStart[axis] = inStart;
+      newSize[axis] = inEnd - inStart;
+      newPadding[2 * axis] = inStart - windowStart;
+      newPadding[2 * axis + 1] = paddedSize - (inEnd - windowStart);
+
+      needsSlice |= inStart != 0 || newSize[axis] != inDim;
+      changed |= newStart[axis] != sliceStart[axis] ||
+                 newSize[axis] != sliceSize[axis];
+    }
+    if (!changed)
+      return rewriter.notifyMatchFailure(padOp, "pad reads only poison");
+
+    // Read the overlapping region directly from the slice's input.
+    Value newInput = sliceOp.getInput1();
+    if (needsSlice)
+      newInput = rewriter.create<tosa::SliceOp>(
+          sliceOp.getLoc(), sliceInputType.clone(newSize), newInput,
+          rewriter.getDenseI64ArrayAttr(newStart),
+          rewriter.getDenseI64ArrayAttr(newSize));
+
+    // Keep poison padding only where the window extends past the input.
+    if (llvm::all_of(newPadding, [](int64_t pad) { return pad == 0; })) {
+      rewriter.replaceOp(padOp, newInput);
+      return success();
+    }
+
+    Value newPaddingShape =
+        getTosaConstShape(rewriter, padOp.getPadding().getLoc(), newPadding);
+    rewriter.replaceOpWithNewOp<tosa::PadOp>(
+        padOp, padOp.getType(),
+        ValueRange{newInput, newPaddingShape, padOp.getPadConst()},
+        padOp->getAttrs());
+    return success();
+  }
+};
+
 void PadOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                         MLIRContext *context) {
-  results.add<MaterializePadValue, PadPadOptimization>(context);
+  results
+      .add<MaterializePadValue, PadPadOptimization, SlicePadPoisonOptimization>(
+          context);
 }
 
 struct MaxPool2dIsNoOp : public OpRewritePattern<tosa::MaxPool2dOp> {

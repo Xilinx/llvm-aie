@@ -542,6 +542,195 @@ func.func @no_pad_pad_optimization_different_value(%arg0: tensor<1x478x640x32xbf
 
 // -----
 
+// CHECK-LABEL: func.func @slice_pad_drop_low_poison(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
+// CHECK-NEXT:   return [[X]] : tensor<10xf32>
+func.func @slice_pad_drop_low_poison(%arg0: tensor<10xf32>) -> tensor<10xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 7>, start = array<i64: 3>} : (tensor<10xf32>) -> tensor<7xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[3, 0]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<7xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<10xf32>
+  return %1 : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_drop_high_poison(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
+// CHECK-NEXT:   return [[X]] : tensor<10xf32>
+func.func @slice_pad_drop_high_poison(%arg0: tensor<10xf32>) -> tensor<10xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 7>, start = array<i64: 0>} : (tensor<10xf32>) -> tensor<7xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[0, 3]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<7xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<10xf32>
+  return %1 : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_drop_both_poison(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
+// CHECK-NEXT:   return [[X]] : tensor<10xf32>
+func.func @slice_pad_drop_both_poison(%arg0: tensor<10xf32>) -> tensor<10xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 6>, start = array<i64: 2>} : (tensor<10xf32>) -> tensor<6xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[2, 2]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<6xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<10xf32>
+  return %1 : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_multi_axis_poison(
+// CHECK-SAME:   [[X:%.+]]: tensor<8x10xf32>
+// CHECK-NEXT:   return [[X]] : tensor<8x10xf32>
+func.func @slice_pad_multi_axis_poison(%arg0: tensor<8x10xf32>) -> tensor<8x10xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 6, 5>, start = array<i64: 1, 2>} : (tensor<8x10xf32>) -> tensor<6x5xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[1, 1, 2, 3]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %1 = tosa.pad %0, %p, %poison : (tensor<6x5xf32>, !tosa.shape<4>, tensor<f32>) -> tensor<8x10xf32>
+  return %1 : tensor<8x10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_drop_both_poison_i8(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xi8>
+// CHECK-NEXT:   return [[X]] : tensor<10xi8>
+func.func @slice_pad_drop_both_poison_i8(%arg0: tensor<10xi8>) -> tensor<10xi8> {
+  %0 = tosa.slice %arg0 {size = array<i64: 6>, start = array<i64: 2>} : (tensor<10xi8>) -> tensor<6xi8>
+  %poison = ub.poison : tensor<i8>
+  %p = tosa.const_shape {value = dense<[2, 2]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<6xi8>, !tosa.shape<2>, tensor<i8>) -> tensor<10xi8>
+  return %1 : tensor<10xi8>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_backfill_low(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
+// CHECK-DAG:    [[POISON:%.+]] = ub.poison : tensor<f32>
+// CHECK-DAG:    [[PAD:%.+]] = tosa.const_shape {value = dense<[2, 0]> : tensor<2xindex>}
+// CHECK:        [[R:%.+]] = tosa.pad [[X]], [[PAD]], [[POISON]]
+// CHECK-SAME:   -> tensor<12xf32>
+// CHECK:        return [[R]]
+func.func @slice_pad_backfill_low(%arg0: tensor<10xf32>) -> tensor<12xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 8>, start = array<i64: 2>} : (tensor<10xf32>) -> tensor<8xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[4, 0]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<8xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<12xf32>
+  return %1 : tensor<12xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_backfill_high(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
+// CHECK-DAG:    [[POISON:%.+]] = ub.poison : tensor<f32>
+// CHECK-DAG:    [[PAD:%.+]] = tosa.const_shape {value = dense<[0, 2]> : tensor<2xindex>}
+// CHECK:        [[R:%.+]] = tosa.pad [[X]], [[PAD]], [[POISON]]
+// CHECK-SAME:   -> tensor<12xf32>
+// CHECK:        return [[R]]
+func.func @slice_pad_backfill_high(%arg0: tensor<10xf32>) -> tensor<12xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 6>, start = array<i64: 0>} : (tensor<10xf32>) -> tensor<6xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[0, 6]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<6xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<12xf32>
+  return %1 : tensor<12xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_backfill_to_slice(
+// CHECK-SAME:   [[X:%.+]]: tensor<12xf32>
+// CHECK:        [[R:%.+]] = tosa.slice [[X]] {size = array<i64: 6>, start = array<i64: 2>}
+// CHECK-NOT:    tosa.pad
+// CHECK:        return [[R]]
+func.func @slice_pad_backfill_to_slice(%arg0: tensor<12xf32>) -> tensor<6xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 4>, start = array<i64: 3>} : (tensor<12xf32>) -> tensor<4xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[1, 1]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<4xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<6xf32>
+  return %1 : tensor<6xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_widen_slice_keep_pad(
+// CHECK-SAME:   [[X:%.+]]: tensor<12xf32>
+// CHECK-DAG:    [[POISON:%.+]] = ub.poison : tensor<f32>
+// CHECK-DAG:    [[PAD:%.+]] = tosa.const_shape {value = dense<[5, 0]> : tensor<2xindex>}
+// CHECK-DAG:    [[SLICE:%.+]] = tosa.slice [[X]] {size = array<i64: 9>, start = array<i64: 0>}
+// CHECK:        [[R:%.+]] = tosa.pad [[SLICE]], [[PAD]], [[POISON]]
+// CHECK-SAME:   -> tensor<14xf32>
+// CHECK:        return [[R]]
+func.func @slice_pad_widen_slice_keep_pad(%arg0: tensor<12xf32>) -> tensor<14xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 4>, start = array<i64: 5>} : (tensor<12xf32>) -> tensor<4xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[10, 0]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<4xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<14xf32>
+  return %1 : tensor<14xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_multi_axis_partial(
+// CHECK-SAME:   [[X:%.+]]: tensor<8x8xf32>
+// CHECK-DAG:    [[POISON:%.+]] = ub.poison : tensor<f32>
+// CHECK-DAG:    [[PAD:%.+]] = tosa.const_shape {value = dense<[0, 0, 1, 0]> : tensor<4xindex>}
+// CHECK-DAG:    [[SLICE:%.+]] = tosa.slice [[X]] {size = array<i64: 6, 6>, start = array<i64: 1, 0>}
+// CHECK:        [[R:%.+]] = tosa.pad [[SLICE]], [[PAD]], [[POISON]]
+// CHECK-SAME:   -> tensor<6x7xf32>
+// CHECK:        return [[R]]
+func.func @slice_pad_multi_axis_partial(%arg0: tensor<8x8xf32>) -> tensor<6x7xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 4, 4>, start = array<i64: 2, 2>} : (tensor<8x8xf32>) -> tensor<4x4xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[1, 1, 3, 0]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %1 = tosa.pad %0, %p, %poison : (tensor<4x4xf32>, !tosa.shape<4>, tensor<f32>) -> tensor<6x7xf32>
+  return %1 : tensor<6x7xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_no_fold_nonpoison(
+// CHECK:        tosa.slice
+// CHECK:        tosa.pad
+func.func @slice_pad_no_fold_nonpoison(%arg0: tensor<10xf32>) -> tensor<10xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 7>, start = array<i64: 3>} : (tensor<10xf32>) -> tensor<7xf32>
+  %zero = "tosa.const"() <{value = dense<0.0> : tensor<f32>}> : () -> tensor<f32>
+  %p = tosa.const_shape {value = dense<[3, 0]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %zero : (tensor<7xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<10xf32>
+  return %1 : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_no_fold_mismatched_region(
+// CHECK:        tosa.slice
+// CHECK:        tosa.pad
+func.func @slice_pad_no_fold_mismatched_region(%arg0: tensor<10xf32>) -> tensor<10xf32> {
+  %0 = tosa.slice %arg0 {size = array<i64: 7>, start = array<i64: 0>} : (tensor<10xf32>) -> tensor<7xf32>
+  %poison = ub.poison : tensor<f32>
+  %p = tosa.const_shape {value = dense<[3, 0]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %1 = tosa.pad %0, %p, %poison : (tensor<7xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<10xf32>
+  return %1 : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @slice_pad_unsupported_grows_tensor(
+// CHECK:        tosa.slice
+// CHECK:        tosa.pad
+func.func @slice_pad_unsupported_grows_tensor(%arg0: tensor<1x1008x1x1xbf16>) -> tensor<16x1000x1x1xbf16> {
+  %0 = tosa.slice %arg0 {size = array<i64: 1, 1000, 1, 1>, start = array<i64: 0, 0, 0, 0>} : (tensor<1x1008x1x1xbf16>) -> tensor<1x1000x1x1xbf16>
+  %poison = ub.poison : tensor<bf16>
+  %p = tosa.const_shape {value = dense<[0, 15, 0, 0, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = tosa.pad %0, %p, %poison : (tensor<1x1000x1x1xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<16x1000x1x1xbf16>
+  return %1 : tensor<16x1000x1x1xbf16>
+}
+
+// -----
+
 // CHECK-LABEL: @mul_one_float
 func.func @mul_one_float(%arg0: tensor<2x3xf32>) -> tensor<2x3xf32> {
   // CHECK: return %arg0
