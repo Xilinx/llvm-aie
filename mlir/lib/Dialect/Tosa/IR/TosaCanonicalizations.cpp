@@ -1077,10 +1077,127 @@ struct TileSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
   }
 };
 
+/// Fold a tosa.pad consumed by a tosa.slice so the slice reads directly from
+/// the pad's input, re-padding only the region the slice still covers. When the
+/// slice window lies entirely within the unpadded input, the pad is dropped.
+struct PadSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
+  using OpRewritePattern<tosa::SliceOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::SliceOp sliceOp,
+                                PatternRewriter &rewriter) const override {
+    Value sliceInput = sliceOp.getInput1();
+    auto padOp = sliceInput.getDefiningOp<tosa::PadOp>();
+    if (!padOp)
+      return rewriter.notifyMatchFailure(sliceOp,
+                                         "slice input must be pad operation");
+    if (!padOp->hasOneUse())
+      return rewriter.notifyMatchFailure(
+          sliceOp, "preceding pad must have a single use");
+
+    auto padInputType = dyn_cast<RankedTensorType>(padOp.getInput1().getType());
+    if (!padInputType || !padInputType.hasStaticShape())
+      return rewriter.notifyMatchFailure(
+          sliceOp, "input to preceding pad op must be a static ranked tensor");
+
+    ElementsAttr paddingElems;
+    if (!matchPattern(padOp.getPadding(), m_Constant(&paddingElems)))
+      return rewriter.notifyMatchFailure(
+          sliceOp, "preceding pad must have constant padding");
+
+    const int64_t rank = padInputType.getRank();
+    SmallVector<int64_t> paddings;
+    paddings.reserve(2 * rank);
+    for (const APInt &padVal : paddingElems.getValues<APInt>())
+      paddings.push_back(padVal.getZExtValue());
+    assert(static_cast<int64_t>(paddings.size()) == 2 * rank &&
+           "pad padding must have 2 * rank elements");
+
+    // For each axis, split the slice window into the leading padding, the
+    // unpadded input, and the trailing padding it reads, and rewrite the slice
+    // as pad(slice(input)). Example with lowPad=3, inDim=10, highPad=3 and a
+    // slice of sliceStart=1, sliceSize=14 (so windowEnd=15):
+    //
+    //   padded idx:   0  1  2   3  4  5  6  7  8  9 10 11 12  13 14 15
+    //               [ P  P  P][ I  I  I  I  I  I  I  I  I  I][ P  P  P]
+    //                <-low=3->|<--------- inDim=10 -------->|<-high=3->
+    //   slice:          [<------------ sliceSize=14 ------------>)
+    //                   sliceStart=1                         windowEnd=15
+    //
+    //               newLow=2 |<------ inSize=10 ------>| newHigh=2
+    //               (idx 1,2)  (inStart=0 .. inEnd=10)   (idx 13,14)
+    SmallVector<int64_t> newInStart(rank);
+    SmallVector<int64_t> newInSize(rank);
+    SmallVector<int64_t> newPadding(2 * rank, 0);
+    bool needsInputSlice = false;
+    bool changed = false;
+    for (auto [axis, sliceStart, sliceSize] :
+         llvm::enumerate(sliceOp.getStart(), sliceOp.getSize())) {
+      if (sliceSize <= 0)
+        return rewriter.notifyMatchFailure(
+            sliceOp, "degenerate slice with zero sized dim");
+
+      const int64_t lowPad = paddings[2 * axis];
+      const int64_t highPad = paddings[2 * axis + 1];
+      const int64_t inDim = padInputType.getDimSize(axis);
+      const int64_t windowEnd = sliceStart + sliceSize;
+
+      // Portion of the leading/trailing padding that the slice still reads.
+      const int64_t newLow =
+          std::clamp(lowPad - sliceStart, int64_t(0), sliceSize);
+      const int64_t newHigh = std::max(
+          int64_t(0), windowEnd - std::max(sliceStart, lowPad + inDim));
+
+      // Sub-region of the (unpadded) input that the slice reads.
+      const int64_t inStart = std::max(sliceStart - lowPad, int64_t(0));
+      const int64_t inEnd = std::min(windowEnd - lowPad, inDim);
+      const int64_t inSize = inEnd - inStart;
+      if (inSize <= 0)
+        return rewriter.notifyMatchFailure(
+            sliceOp, "slice reads only padding; left to constant folding");
+
+      newInStart[axis] = inStart;
+      newInSize[axis] = inSize;
+      newPadding[2 * axis] = newLow;
+      newPadding[2 * axis + 1] = newHigh;
+
+      needsInputSlice |= inStart != 0 || inSize != inDim;
+      changed |= needsInputSlice || newLow != lowPad || newHigh != highPad;
+    }
+    if (!changed)
+      return rewriter.notifyMatchFailure(sliceOp,
+                                         "could not reduce preceding pad");
+
+    // Slice the pad's input down to the region the slice actually reads.
+    Value newInput = padOp.getInput1();
+    if (needsInputSlice)
+      newInput = rewriter.create<tosa::SliceOp>(
+          sliceOp.getLoc(), padInputType.clone(newInSize), newInput,
+          rewriter.getDenseI64ArrayAttr(newInStart),
+          rewriter.getDenseI64ArrayAttr(newInSize));
+
+    // Re-pad only with the padding the slice still reads. If nothing is left,
+    // the slice reads the input region directly.
+    if (llvm::all_of(newPadding, [](int64_t pad) { return pad == 0; })) {
+      rewriter.replaceOp(sliceOp, newInput);
+      return success();
+    }
+
+    Value newPaddingShape =
+        getTosaConstShape(rewriter, padOp.getPadding().getLoc(), newPadding);
+    auto newPad = rewriter.create<tosa::PadOp>(
+        padOp.getLoc(), sliceOp.getType(),
+        ValueRange{newInput, newPaddingShape, padOp.getPadConst()},
+        padOp->getAttrs());
+    rewriter.replaceOp(sliceOp, newPad.getResult());
+    return success();
+  }
+};
+
 void SliceOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                           MLIRContext *context) {
   results.add<ConcatSliceOptimization>(context);
   results.add<TileSliceOptimization>(context);
+  results.add<PadSliceOptimization>(context);
 }
 
 struct MinToClampOptimization : public OpRewritePattern<tosa::MinimumOp> {
