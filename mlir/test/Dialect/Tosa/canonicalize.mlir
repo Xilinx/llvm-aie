@@ -1266,7 +1266,9 @@ func.func @pad_slice_reduce_low_pad(%arg0: tensor<10xf32>) -> tensor<11xf32> {
 
 // CHECK-LABEL: func.func @pad_slice_drop_low_pad_exact(
 // CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
-// CHECK-NEXT:   return [[X]] : tensor<10xf32>
+// CHECK-NOT:    tosa.pad
+// CHECK-NOT:    tosa.slice
+// CHECK:        return [[X]] : tensor<10xf32>
 func.func @pad_slice_drop_low_pad_exact(%arg0: tensor<10xf32>) -> tensor<10xf32> {
   %p = tosa.const_shape {value = dense<[4, 0]> : tensor<2xindex>} : () -> !tosa.shape<2>
   %c = "tosa.const"() <{value = dense<0.0> : tensor<f32>}> : () -> tensor<f32>
@@ -1310,7 +1312,9 @@ func.func @pad_slice_reduce_high_pad(%arg0: tensor<10xf32>) -> tensor<11xf32> {
 
 // CHECK-LABEL: func.func @pad_slice_drop_high_pad_exact(
 // CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
-// CHECK-NEXT:   return [[X]] : tensor<10xf32>
+// CHECK-NOT:    tosa.pad
+// CHECK-NOT:    tosa.slice
+// CHECK:        return [[X]] : tensor<10xf32>
 func.func @pad_slice_drop_high_pad_exact(%arg0: tensor<10xf32>) -> tensor<10xf32> {
   %p = tosa.const_shape {value = dense<[0, 4]> : tensor<2xindex>} : () -> !tosa.shape<2>
   %c = "tosa.const"() <{value = dense<0.0> : tensor<f32>}> : () -> tensor<f32>
@@ -1378,6 +1382,22 @@ func.func @pad_slice_low_retained_high_dropped(%arg0: tensor<10xf32>) -> tensor<
   %c = "tosa.const"() <{value = dense<0.0> : tensor<f32>}> : () -> tensor<f32>
   %0 = tosa.pad %arg0, %p, %c : (tensor<10xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<18xf32>
   %1 = tosa.slice %0 {size = array<i64: 10>, start = array<i64: 2>} : (tensor<18xf32>) -> tensor<10xf32>
+  return %1 : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @pad_slice_start_in_input_end_in_high_pad(
+// CHECK-SAME:   [[X:%.+]]: tensor<10xf32>
+// CHECK-DAG:    [[P:%.+]] = tosa.const_shape {{.*}}dense<[0, 2]> : tensor<2xindex>
+// CHECK-DAG:    [[C:%.+]] = "tosa.const"{{.*}}dense<0.000000e+00> : tensor<f32>
+// CHECK:        [[S:%.+]] = tosa.slice [[X]] {size = array<i64: 8>, start = array<i64: 2>} : (tensor<10xf32>) -> tensor<8xf32>
+// CHECK:        tosa.pad [[S]], [[P]], [[C]] : (tensor<8xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<10xf32>
+func.func @pad_slice_start_in_input_end_in_high_pad(%arg0: tensor<10xf32>) -> tensor<10xf32> {
+  %p = tosa.const_shape {value = dense<[3, 3]> : tensor<2xindex>} : () -> !tosa.shape<2>
+  %c = "tosa.const"() <{value = dense<0.0> : tensor<f32>}> : () -> tensor<f32>
+  %0 = tosa.pad %arg0, %p, %c : (tensor<10xf32>, !tosa.shape<2>, tensor<f32>) -> tensor<16xf32>
+  %1 = tosa.slice %0 {size = array<i64: 10>, start = array<i64: 5>} : (tensor<16xf32>) -> tensor<10xf32>
   return %1 : tensor<10xf32>
 }
 

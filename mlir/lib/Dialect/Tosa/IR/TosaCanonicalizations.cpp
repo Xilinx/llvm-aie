@@ -1113,8 +1113,18 @@ struct PadSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
            "pad padding must have 2 * rank elements");
 
     // For each axis, split the slice window into the leading padding, the
-    // unpadded input, and the trailing padding it reads, expressing the result
-    // as pad(slice(input)).
+    // unpadded input, and the trailing padding it reads, and rewrite the slice
+    // as pad(slice(input)). Example with lowPad=3, inDim=10, highPad=3 and a
+    // slice of sliceStart=1, sliceSize=14 (so windowEnd=15):
+    //
+    //   padded idx:   0  1  2   3  4  5  6  7  8  9 10 11 12  13 14 15
+    //               [ P  P  P][ I  I  I  I  I  I  I  I  I  I][ P  P  P]
+    //                <-low=3->|<--------- inDim=10 -------->|<-high=3->
+    //   slice:          [<------------ sliceSize=14 ------------>)
+    //                   sliceStart=1                         windowEnd=15
+    //
+    //               newLow=2 |<------ inSize=10 ------>| newHigh=2
+    //               (idx 1,2)  (inStart=0 .. inEnd=10)   (idx 13,14)
     SmallVector<int64_t> newInStart(rank);
     SmallVector<int64_t> newInSize(rank);
     SmallVector<int64_t> newPadding(2 * rank, 0);
