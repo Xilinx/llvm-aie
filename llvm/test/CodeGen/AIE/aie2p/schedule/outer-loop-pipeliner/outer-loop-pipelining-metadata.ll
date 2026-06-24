@@ -36,12 +36,12 @@
 ;   !{!"llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 1}
 ;
 ; Expected: the pass pipelines the loop even without the global flag.
-; The warm-up block (outer.header.peel.pro) must be present.
+; The peel block (outer.header.peel.pro) must be present.
 ; ============================================================================
 
 ; CHECK-LABEL: define void @metadata_opt_in
 
-; Warm-up block must be created (metadata opt-in triggered pipelining).
+; Peel block must be created (metadata opt-in triggered pipelining).
 ; CHECK: steady.preheader:
 ; CHECK:   %v0.steady.peel = load i32, ptr %a, align 4
 ; CHECK:   %v1.steady.peel = load i32, ptr %b, align 4
@@ -106,13 +106,13 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ;   !{!"llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 0}
 ;
 ; Expected: the pass skips the loop (global flag is OFF, metadata says 0).
-; The warm-up block (outer.header.peel.pro) must NOT appear inside this
+; The peel block (outer.header.peel.pro) must NOT appear inside this
 ; function (checked between the function label and the first outer.header).
 ; ============================================================================
 
 ; CHECK-LABEL: define void @metadata_opt_out
 
-; No warm-up/steady block between the function entry and outer.header (the loop
+; No peel/steady block between the function entry and outer.header (the loop
 ; opted out, so it is left untransformed with its original names).
 ; CHECK-NOT: steady.preheader
 ; The outer header must retain the original loads (no pipelined PHIs).

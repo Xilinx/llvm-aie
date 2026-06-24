@@ -17,7 +17,7 @@
 ;
 ; This tests that address computation instructions (GEPs) between PHI pointers
 ; and loads are correctly identified as part of the data-load chain and are
-; included in the warm-up and epilogue clones.
+; included in the peel and epilogue clones.
 ;
 ; Input structure:
 ;   %a.ptr = phi ptr [...]
@@ -25,7 +25,7 @@
 ;   %v0 = load i32, ptr %a.gep
 ;
 ; Expected after transformation:
-;   - Warm-up: GEP cloned with initial PHI values, load uses cloned GEP
+;   - Peel: GEP cloned with initial PHI values, load uses cloned GEP
 ;   - Outer header: pipelined PHIs for both GEPs and loads
 ;   - Epilogue: GEP cloned with next-iteration pointers, load uses cloned GEP
 ;
@@ -34,7 +34,7 @@
 
 ; CHECK-LABEL: define void @nested_loop_with_gep
 
-; Warm-up block: GEPs + loads cloned with initial values (using %a, %b)
+; Peel block: GEPs + loads cloned with initial values (using %a, %b)
 ; CHECK: steady.preheader:
 ; CHECK:   %a.gep.steady.peel = getelementptr inbounds i32, ptr %a, i32 %offset
 ; CHECK:   %b.gep.steady.peel = getelementptr inbounds i32, ptr %b, i32 %offset
@@ -59,16 +59,16 @@
 ; CHECK:   %b.gep.steady.epi = getelementptr inbounds i32, ptr %b.ptr.next.steady, i32 %offset
 ; CHECK:   %v0.steady.epi = load i32, ptr %a.gep.steady.epi, align 4
 ; CHECK:   %v1.steady.epi = load i32, ptr %b.gep.steady.epi, align 4
-; CHECK:   br i1 %outer.cond.steady, label %steady.header, label %cooldown.entry
+; CHECK:   br i1 %outer.cond.steady, label %steady.header, label %lastiter.prologue
 
 ; Cool-down (last iteration) blocks follow the steady loop.
-; Cool-down entry: set.loop.iterations for last iteration
-; CHECK: cooldown.entry:
+; Last-iteration entry: set.loop.iterations for last iteration
+; CHECK: lastiter.prologue:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %steady.inner.header.cd
+; CHECK:   br label %steady.inner.header.lastiter
 
-; Cool-down exit: stores only (no prologue GEPs, no prologue loads)
-; CHECK: cooldown.exit:
+; Last-iteration exit: stores only (no prologue GEPs, no prologue loads)
+; CHECK: lastiter.epilogue:
 ; CHECK:   store i32
 ; CHECK:   br label %exit
 

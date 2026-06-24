@@ -33,7 +33,7 @@
 ;
 ; Expected output after transformation:
 ;
-;   [outer.header.peel.pro]  <- warm-up: DATA LOADS ONLY (no set.loop.iterations)
+;   [outer.header.peel.pro]  <- peel: DATA LOADS ONLY (no set.loop.iterations)
 ;       v0.peel = load(a)
 ;       v1.peel = load(b)
 ;       br outer.header
@@ -48,17 +48,17 @@
 ;       store result
 ;       v0.epi = load(a.ptr.next)   ; uses next-iteration pointer
 ;       v1.epi = load(b.ptr.next)
-;       br outer.header or cooldown.entry
+;       br outer.header or lastiter.prologue
 ;
-;   [cooldown.entry]         <- set.loop.iterations for last iteration
+;   [lastiter.prologue]         <- set.loop.iterations for last iteration
 ;       call void @llvm.set.loop.iterations.i32(i32 %M)
-;       br inner.header.cd
+;       br inner.header.lastiter
 ;
-;   [inner.header.cd]        <- cloned inner loop
-;       br cooldown.exit
+;   [inner.header.lastiter]        <- cloned inner loop
+;       br lastiter.epilogue
 ;
-;   [cooldown.exit]          <- stores only (no loads)
-;       store result.cd
+;   [lastiter.epilogue]          <- stores only (no loads)
+;       store result.lastiter
 ;       br exit
 
 ; CHECK-LABEL: define void @nested_loop_basic
@@ -84,19 +84,19 @@
 ; CHECK:   store i32
 ; CHECK:   %v0.steady.epi = load i32, ptr %a.ptr.next.steady, align 4
 ; CHECK:   %v1.steady.epi = load i32, ptr %b.ptr.next.steady, align 4
-; CHECK:   br i1 %outer.cond.steady, label %steady.header, label %cooldown.entry
+; CHECK:   br i1 %outer.cond.steady, label %steady.header, label %lastiter.prologue
 
 ; Cool-down entry: set.loop.iterations for last iteration
-; CHECK: cooldown.entry:
+; CHECK: lastiter.prologue:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %steady.inner.header.cd
+; CHECK:   br label %steady.inner.header.lastiter
 
 ; Cloned inner loop
-; CHECK: steady.inner.header.cd:
-; CHECK:   br i1 %inner.cond.steady.cd, label %steady.inner.header.cd, label %cooldown.exit
+; CHECK: steady.inner.header.lastiter:
+; CHECK:   br i1 %inner.cond.steady.lastiter, label %steady.inner.header.lastiter, label %lastiter.epilogue
 
 ; Cool-down exit: stores only (no loads), branches to exit
-; CHECK: cooldown.exit:
+; CHECK: lastiter.epilogue:
 ; CHECK:   store i32
 ; CHECK-NOT: load
 ; CHECK:   br label %exit
@@ -156,10 +156,10 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; value of the inner loop accumulator PHI.
 ;
 ; After transformation:
-;   - %init_acc.peel = mul %v0.peel, %v1.peel  (in warm-up)
-;   - %init_acc.phi = phi [peel, warm-up], [epi, latch]  (in outer.header)
+;   - %init_acc.peel = mul %v0.peel, %v1.peel  (in peel)
+;   - %init_acc.phi = phi [peel, peel], [epi, latch]  (in outer.header)
 ;   - %acc = phi [%init_acc.phi, outer.header], [%acc.next, inner.header]
-;   - %acc.cd = phi [%init_acc.epi, cooldown.entry], [...]  (in cool-down)
+;   - %acc.lastiter = phi [%init_acc.epi, lastiter.prologue], [...]  (in last-iteration)
 ; ============================================================================
 
 ; CHECK-LABEL: define void @outer_to_inner_phi
@@ -190,19 +190,19 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK:   %v0.steady.epi = load i32, ptr %a.ptr.next.steady, align 4
 ; CHECK:   %v1.steady.epi = load i32, ptr %b.ptr.next.steady, align 4
 ; CHECK:   %init_acc.steady.epi = mul i32 %v0.steady.epi, %v1.steady.epi
-; CHECK:   br i1 %outer.cond.steady, label %steady.header, label %cooldown.entry
+; CHECK:   br i1 %outer.cond.steady, label %steady.header, label %lastiter.prologue
 
 ; Cool-down: inner loop uses last epilogue's init_acc value
-; CHECK: cooldown.entry:
+; CHECK: lastiter.prologue:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %steady.inner.header.cd
+; CHECK:   br label %steady.inner.header.lastiter
 
-; CHECK: steady.inner.header.cd:
-; CHECK:   %acc.steady.cd = phi i32 [ %init_acc.steady.epi, %cooldown.entry ], [ %acc.next.steady.cd, %steady.inner.header.cd ]
-; CHECK:   br i1 %inner.cond.steady.cd, label %steady.inner.header.cd, label %cooldown.exit
+; CHECK: steady.inner.header.lastiter:
+; CHECK:   %acc.steady.lastiter = phi i32 [ %init_acc.steady.epi, %lastiter.prologue ], [ %acc.next.steady.lastiter, %steady.inner.header.lastiter ]
+; CHECK:   br i1 %inner.cond.steady.lastiter, label %steady.inner.header.lastiter, label %lastiter.epilogue
 
-; CHECK: cooldown.exit:
-; CHECK:   store i32 %acc.next.steady.cd
+; CHECK: lastiter.epilogue:
+; CHECK:   store i32 %acc.next.steady.lastiter
 ; CHECK:   br label %exit
 
 define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
@@ -256,10 +256,10 @@ exit:
 ;
 ; The outer loop has itercount.range=2 (dropped after transformation since
 ; the trip count changes to N-1). The inner loop has itercount.range=8 which
-; must be preserved in both the original inner loop and the cool-down clone.
+; must be preserved in both the original inner loop and the last-iteration clone.
 ;
 ; Key checks:
-;   - Both inner.header and inner.header.cd reference the SAME !llvm.loop node
+;   - Both inner.header and inner.header.lastiter reference the SAME !llvm.loop node
 ;   - That node contains "llvm.loop.itercount.range", i32 8
 ;   - The outer loop's !llvm.loop node does NOT contain itercount.range
 ; ============================================================================
@@ -274,9 +274,9 @@ exit:
 ; CHECK: steady.latch:
 ; CHECK:   br i1 %outer.cond.steady{{.*}}, !llvm.loop [[OUTER_MD:![0-9]+]]
 
-; The cool-down clone must reference the SAME inner loop metadata node.
-; CHECK: steady.inner.header.cd:
-; CHECK:   br i1 %inner.cond.steady.cd{{.*}}, !llvm.loop [[INNER_MD]]
+; The last-iteration clone must reference the SAME inner loop metadata node.
+; CHECK: steady.inner.header.lastiter:
+; CHECK:   br i1 %inner.cond.steady.lastiter{{.*}}, !llvm.loop [[INNER_MD]]
 
 ; Outer loop's itercount.range=2 must be UPDATED to 1 (trip count changed to N-1).
 ; CHECK-NOT: "llvm.loop.itercount.range", i32 2

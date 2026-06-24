@@ -70,10 +70,10 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '2'
 ; REMARKS-NEXT:   - NS:              '7'
-; REMARKS-NEXT:   - Loop:            bb.10.steady.for.body55.i.cd
-; REMARKS-NEXT:   - Prologue:        bb.9.cooldown.entry
+; REMARKS-NEXT:   - Loop:            bb.10.steady.for.body55.i.lastiter
+; REMARKS-NEXT:   - Prologue:        bb.9.lastiter.prologue
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.11.cooldown.exit
+; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.epilogue
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT: ...
 entry:

@@ -35,7 +35,7 @@
 ; CHECK: outermost.header:
 ; CHECK:   br label %steady.preheader
 
-; The middle loop is pipelined into the steady-state clone: warm-up block.
+; The middle loop is pipelined into the steady-state clone: peel block.
 ; CHECK: steady.preheader:
 ; CHECK:   %v0.steady.peel = load i32, ptr %a, align 4
 ; CHECK:   %v1.steady.peel = load i32, ptr %b, align 4
@@ -54,19 +54,19 @@
 ; CHECK:   store i32
 ; CHECK:   %v0.steady.epi = load i32, ptr %a.ptr.next.steady, align 4
 ; CHECK:   %v1.steady.epi = load i32, ptr %b.ptr.next.steady, align 4
-; CHECK:   br i1 %middle.cond.steady, label %steady.header, label %cooldown.entry
+; CHECK:   br i1 %middle.cond.steady, label %steady.header, label %lastiter.prologue
 
-; The cool-down (last iteration) blocks follow the steady loop.
-; CHECK: cooldown.entry:
+; Cool-down (last iteration) blocks follow the steady loop.
+; CHECK: lastiter.prologue:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %steady.innermost.header.cd
+; CHECK:   br label %steady.innermost.header.lastiter
 
 ; Cloned inner loop
-; CHECK: steady.innermost.header.cd:
-; CHECK:   br i1 %innermost.cond.steady.cd, label %steady.innermost.header.cd, label %cooldown.exit
+; CHECK: steady.innermost.header.lastiter:
+; CHECK:   br i1 %innermost.cond.steady.lastiter, label %steady.innermost.header.lastiter, label %lastiter.epilogue
 
-; Cool-down exit should have stores only (no loads), branches to outermost.latch
-; CHECK: cooldown.exit:
+; Last-iteration exit should have stores only (no loads), branches to outermost.latch
+; CHECK: lastiter.epilogue:
 ; CHECK:   store i32
 ; CHECK:   br label %outermost.latch
 
