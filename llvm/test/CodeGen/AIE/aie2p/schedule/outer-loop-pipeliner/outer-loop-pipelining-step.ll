@@ -35,27 +35,27 @@
 
 ; Warm-up block: data load only, no outer hardware-loop setup.
 ; Absence of @llvm.start.loop.iterations here confirms no JNZD conversion.
-; CHECK: outer.header.peel.pro:
-; CHECK:   %v0.peel = load i32
+; CHECK: steady.preheader:
+; CHECK:   %v0.steady.peel = load i32
 ; CHECK-NOT: @llvm.start.loop.iterations
-; CHECK:   br label %outer.header
+; CHECK:   br label %steady.header
 
 ; Outer header: pipelined load PHI, standard inner-loop set.loop.iterations.
 ; No @llvm.start.loop.iterations for outer (outer loop is NOT a JNZD hw loop).
-; CHECK: outer.header:
-; CHECK:   %v0.phi = phi i32 [ %v0.peel, %outer.header.peel.pro ], [ %v0.epi, %outer.latch ]
+; CHECK: steady.header:
+; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.peel, %steady.preheader ], [ %v0.steady.epi, %steady.latch ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %inner.header
+; CHECK:   br label %steady.inner.header
 
 ; Outer latch: step-2 counter + adjusted limit, then epilogue load.
 ; The limit is adjusted to 2 (constant folded: 0 - (-2) = 2), not 1.
 ; No @llvm.loop.decrement.reg — outer loop kept as software icmp (step != -1).
-; CHECK: outer.latch:
+; CHECK: steady.latch:
 ; CHECK:   store i32
-; CHECK:   %iv.next = add i32 %iv, -2
-; CHECK:   %outer.cond = icmp eq i32 %iv.next, 2
-; CHECK:   %v0.epi = load i32
-; CHECK-NEXT:   br i1 %outer.cond, label %cooldown.entry, label %outer.header
+; CHECK:   %iv.next.steady = add i32 %iv.steady, -2
+; CHECK:   %outer.cond.steady = icmp eq i32 %iv.next.steady, 2
+; CHECK:   %v0.steady.epi = load i32
+; CHECK-NEXT:   br i1 %outer.cond.steady, label %cooldown.entry, label %steady.header
 
 define void @decrement_step2(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
@@ -112,25 +112,25 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK-LABEL: define void @decrement_step1
 
 ; Warm-up block: data load + outer JNZD hardware-loop setup (step -1 only).
-; CHECK: outer.header.peel.pro:
-; CHECK:   %v0.peel = load i32
+; CHECK: steady.preheader:
+; CHECK:   %v0.steady.peel = load i32
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
 ; CHECK:   %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
-; CHECK:   br label %outer.header
+; CHECK:   br label %steady.header
 
 ; Outer header: hardware-loop counter PHI for the outer JNZD loop.
-; CHECK: outer.header:
-; CHECK:   %v0.phi = phi i32 [ %v0.peel, %outer.header.peel.pro ], [ %v0.epi, %outer.latch ]
-; CHECK:   %outer.ctr = phi i32 [ %outer.ctr.init, %outer.header.peel.pro ]
+; CHECK: steady.header:
+; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.peel, %steady.preheader ], [ %v0.steady.epi, %steady.latch ]
+; CHECK:   %outer.ctr = phi i32 [ %outer.ctr.init, %steady.preheader ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 
 ; Outer latch: @llvm.loop.decrement.reg replaces the software %iv.next/%outer.cond.
-; CHECK: outer.latch:
+; CHECK: steady.latch:
 ; CHECK:   store i32
-; CHECK:   %v0.epi = load i32
+; CHECK:   %v0.steady.epi = load i32
 ; CHECK:   %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32
 ; CHECK:   %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
-; CHECK:   br i1 %outer.loop.cond, label %outer.header, label %cooldown.entry
+; CHECK:   br i1 %outer.loop.cond, label %steady.header, label %cooldown.entry
 
 define void @decrement_step1(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
