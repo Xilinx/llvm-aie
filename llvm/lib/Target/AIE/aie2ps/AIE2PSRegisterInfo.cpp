@@ -103,6 +103,29 @@ const uint32_t *AIE2PSRegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }
 
+// Fully expand a spill/reload pseudo (\p SubMI) that has already had its stack
+// offset materialized as an immediate, turning it into native instructions.
+// If \p Encodable is false, the offset is too large to be encoded directly, so
+// the stack pointer is first moved into a scratch register and indexed
+// addressing is used (mirrors the standalone scalar-spill handling).
+static void emitAndExpandSubSpill(MachineBasicBlock &MBB, const DebugLoc &DL,
+                                  const AIE2PSInstrInfo *TII,
+                                  const TargetRegisterInfo &TRI,
+                                  MachineInstr *SubMI, int64_t SubOffset,
+                                  bool Encodable, Register SPRegPhys) {
+  if (Encodable) {
+    TII->expandSpillPseudo(*SubMI, TRI, /*SubRegOffsetAlign=*/Align(4));
+  } else {
+    MachineFunction &MF = *MBB.getParent();
+    Register SPReg =
+        MF.getRegInfo().createVirtualRegister(&AIE2PS::eP_as_32BitRegClass);
+    BuildMI(MBB, *SubMI, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+        .addReg(SPRegPhys);
+    TII->expandSpillPseudo(*SubMI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                           SubOffset);
+  }
+}
+
 bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                              int SPAdj, unsigned FIOperandNum,
                                              RegScavenger *RS) const {
@@ -330,6 +353,94 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
                              Offset);
     }
+    return true;
+  }
+  case AIE2PS::VST_PLFR_SPILL:
+  case AIE2PS::VLDA_PLFR_SPILL: {
+    // The ePSRFLdF composite is laid out in the spill slot as:
+    //   [sub_fifo (bounced via VEC1024)] [sub_avail (32b)] [sub_ptr (32b)]
+    // sub_fifo uses the Y (step-128) path and the two scalar halves the
+    // scalar (R) path. Each sub-spill is emitted at its own stack offset and
+    // then fully expanded into native instructions.
+    //
+    // Operand layouts:
+    //   VST_PLFR_SPILL  $fifo(use), $avail(use), $ptr(use), <FI>
+    //   VLDA_PLFR_SPILL $fifo(def, VEC1024 scratch), $plfr(full def), <FI>
+    // For the store the FIFO half has already been bounced into the VEC1024
+    // operand. For the reload the scalar halves are sub-registers of the
+    // composite $plfr def, and the FIFO half is loaded into the VEC1024 scratch
+    // and then bounced into $plfr's sub_fifo with a copy.
+    const bool IsStore = (Opc == AIE2PS::VST_PLFR_SPILL);
+    const int FifoSize = 128;
+    const int ScalarSize = 4;
+    const Register SPPhys = getStackPointerRegister();
+    const MachineMemOperand *OrigMMO =
+        MI.memoperands_empty() ? nullptr : *MI.memoperands_begin();
+
+    const Register FifoBounce = MI.getOperand(0).getReg();
+    Register FifoPhys, AvailReg, PtrReg;
+    if (IsStore) {
+      AvailReg = MI.getOperand(1).getReg();
+      PtrReg = MI.getOperand(2).getReg();
+    } else {
+      const Register Plfr = MI.getOperand(1).getReg();
+      FifoPhys = TRI.getSubReg(Plfr, AIE2PS::sub_fifo);
+      AvailReg = TRI.getSubReg(Plfr, AIE2PS::sub_avail);
+      PtrReg = TRI.getSubReg(Plfr, AIE2PS::sub_ptr);
+    }
+
+    auto SubMMO = [&](int ByteOff, int Size) -> MachineMemOperand * {
+      return OrigMMO ? MF.getMachineMemOperand(OrigMMO, ByteOff, Size)
+                     : nullptr;
+    };
+
+    struct PendingSub {
+      MachineInstr *MI;
+      int64_t Offset;
+      bool Encodable;
+    };
+    SmallVector<PendingSub, 3> PendingSubs;
+    auto BuildSub = [&](unsigned Opcode, Register Reg, int ByteOff, int Size,
+                        bool Encodable) {
+      const int64_t SubOff = Offset + ByteOff;
+      MachineInstrBuilder MIB = BuildMI(MBB, II, DL, TII->get(Opcode));
+      if (IsStore)
+        MIB.addReg(Reg);
+      else
+        MIB.addReg(Reg, RegState::Define);
+      MIB.addImm(SubOff);
+      if (MachineMemOperand *MMO = SubMMO(ByteOff, Size))
+        MIB.addMemOperand(MMO);
+      PendingSubs.push_back({MIB.getInstr(), SubOff, Encodable});
+    };
+
+    const unsigned FifoOpc =
+        IsStore ? AIE2PS::VST_Y_SPILL : AIE2PS::VLDA_Y_SPILL;
+    const unsigned ScalarOpc =
+        IsStore ? AIE2PS::ST_R_SPILL : AIE2PS::LDA_R_SPILL;
+
+    // The FIFO half is bounced through a VEC1024 and spilled with VST_Y_SPILL /
+    // VLDA_Y_SPILL, which expand into the native dmx x stores/loads. Those
+    // natives encode the SP offset as c16n_step64, so the encodable range is
+    // determined by the step-64 access (not the 128-byte logical size of the
+    // composite), matching the standalone VEC512 (X) spill check.
+    BuildSub(FifoOpc, FifoBounce, /*ByteOff=*/0, FifoSize,
+             isEncodableAsNegativeInt<9, 64>(Offset));
+    BuildSub(ScalarOpc, AvailReg, /*ByteOff=*/FifoSize, ScalarSize,
+             isEncodableAsNegativeInt<9, 4>(Offset + FifoSize));
+    BuildSub(ScalarOpc, PtrReg, /*ByteOff=*/FifoSize + ScalarSize, ScalarSize,
+             isEncodableAsNegativeInt<9, 4>(Offset + FifoSize + ScalarSize));
+
+    // For the reload, bounce the loaded FIFO data from the VEC1024 scratch into
+    // the composite's sub_fifo physical register.
+    if (!IsStore)
+      BuildMI(MBB, II, DL, TII->get(AIE2PS::COPY), FifoPhys)
+          .addReg(FifoBounce, getKillRegState(true));
+
+    MI.eraseFromParent();
+    for (const PendingSub &Sub : PendingSubs)
+      emitAndExpandSubSpill(MBB, DL, TII, TRI, Sub.MI, Sub.Offset,
+                            Sub.Encodable, SPPhys);
     return true;
   }
   case AIE2PS::PseudoFI: {
