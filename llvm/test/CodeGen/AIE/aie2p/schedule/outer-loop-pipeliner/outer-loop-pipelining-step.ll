@@ -33,7 +33,7 @@
 
 ; CHECK-LABEL: define void @decrement_step2
 
-; Warm-up block: data load only, no outer hardware-loop setup.
+; Peel block: data load only, no outer hardware-loop setup.
 ; Absence of @llvm.start.loop.iterations here confirms no JNZD conversion.
 ; CHECK: steady.preheader:
 ; CHECK:   %v0.steady.peel = load i32
@@ -55,7 +55,7 @@
 ; CHECK:   %iv.next.steady = add i32 %iv.steady, -2
 ; CHECK:   %outer.cond.steady = icmp eq i32 %iv.next.steady, 2
 ; CHECK:   %v0.steady.epi = load i32
-; CHECK-NEXT:   br i1 %outer.cond.steady, label %cooldown.entry, label %steady.header
+; CHECK-NEXT:   br i1 %outer.cond.steady, label %lastiter.prologue, label %steady.header
 
 define void @decrement_step2(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
@@ -105,13 +105,13 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; Test 2: Decrement outer loop with step -1 (regression guard).
 ;
 ; With step -1, the outer loop is both pipelined AND converted to a JNZD
-; hardware loop. @llvm.start.loop.iterations appears in the warm-up block
+; hardware loop. @llvm.start.loop.iterations appears in the peel block
 ; and @llvm.loop.decrement.reg replaces the software icmp in the latch.
 ; ============================================================================
 
 ; CHECK-LABEL: define void @decrement_step1
 
-; Warm-up block: data load + outer JNZD hardware-loop setup (step -1 only).
+; Peel block: data load + outer JNZD hardware-loop setup (step -1 only).
 ; CHECK: steady.preheader:
 ; CHECK:   %v0.steady.peel = load i32
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
@@ -130,7 +130,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK:   %v0.steady.epi = load i32
 ; CHECK:   %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32
 ; CHECK:   %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
-; CHECK:   br i1 %outer.loop.cond, label %steady.header, label %cooldown.entry
+; CHECK:   br i1 %outer.loop.cond, label %steady.header, label %lastiter.prologue
 
 define void @decrement_step1(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:

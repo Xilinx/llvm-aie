@@ -123,7 +123,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    vst.srs.4x dm1, s1, srssign0, [p3], #64; vshuffle x10, x10, x0, r4 // Delay Slot 3
 ; CHECK-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p3], d2; movx srssign0, #0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.4: // %cooldown.entry
+; CHECK-NEXT:  // %bb.4: // %lastiter.prologue
 ; CHECK-NEXT:    vldb x3, [p1], m4
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1; vmul dm4, x0, x4, r12
 ; CHECK-NEXT:    vldb x10, [p0], #64; mov m0, p5
@@ -136,14 +136,14 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; CHECK-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; CHECK-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; CHECK-NEXT:  .LBB0_5: // %steady.for.body100.cd
+; CHECK-NEXT:  .LBB0_5: // %steady.for.body100.lastiter
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vldb x3, [p1], m4; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
 ; CHECK-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; CHECK-NEXT:  // %bb.6: // %cooldown.exit
+; CHECK-NEXT:  // %bb.6: // %lastiter.epilogue
 ; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    paddxm [sp], #-64; nopb ; nops ; movx crsrsmode, #0; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
 ; CHECK-NEXT:    or r12, r24, r24; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
@@ -255,7 +255,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    vaddmac dm0, dm0, dm4, x10, x6, r10 // Delay Slot 3
 ; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 2
 ; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 1
-; NO-PROLOGUE-SPLIT-NEXT:  // %bb.4: // %cooldown.entry
+; NO-PROLOGUE-SPLIT-NEXT:  // %bb.4: // %lastiter.prologue
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x3, [p1], m4
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x1, [p1], d1
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x10, [p0], #64; mov m0, p5
@@ -268,14 +268,14 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_5: // %steady.for.body100.cd
+; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_5: // %steady.for.body100.lastiter
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Inner Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x3, [p1], m4; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:  .L_LEnd0:
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:  // %bb.6: // %cooldown.exit
+; NO-PROLOGUE-SPLIT-NEXT:  // %bb.6: // %lastiter.epilogue
 ; NO-PROLOGUE-SPLIT-NEXT:    lda p7, [sp, #-60]; nopb ; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8 // 4-byte Folded Reload
 ; NO-PROLOGUE-SPLIT-NEXT:    lda p6, [sp, #-64]; nopb ; movx crsrsmode, #0; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8 // 4-byte Folded Reload
 ; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #-64; or r12, r24, r24; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
@@ -381,7 +381,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-JNZD-NEXT:    nop // Delay Slot 3
 ; NO-JNZD-NEXT:    nop // Delay Slot 2
 ; NO-JNZD-NEXT:    nop // Delay Slot 1
-; NO-JNZD-NEXT:  // %bb.4: // %cooldown.entry
+; NO-JNZD-NEXT:  // %bb.4: // %lastiter.prologue
 ; NO-JNZD-NEXT:    vldb x3, [p1], m4; vmul dm4, x0, x4, r12
 ; NO-JNZD-NEXT:    vlda.3d x1, [p1], d1
 ; NO-JNZD-NEXT:    vldb x10, [p0], #64; mov m0, p5; vaddmac dm3, dm3, dm4, x6, x10, r10
@@ -394,14 +394,14 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-JNZD-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; NO-JNZD-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; NO-JNZD-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; NO-JNZD-NEXT:  .LBB0_5: // %steady.for.body100.cd
+; NO-JNZD-NEXT:  .LBB0_5: // %steady.for.body100.lastiter
 ; NO-JNZD-NEXT:    // =>This Inner Loop Header: Depth=1
 ; NO-JNZD-NEXT:    nopa ; vldb x3, [p1], m4; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8
 ; NO-JNZD-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
 ; NO-JNZD-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; NO-JNZD-NEXT:  .L_LEnd0:
 ; NO-JNZD-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; NO-JNZD-NEXT:  // %bb.6: // %cooldown.exit
+; NO-JNZD-NEXT:  // %bb.6: // %lastiter.epilogue
 ; NO-JNZD-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8 // 4-byte Folded Reload
 ; NO-JNZD-NEXT:    paddxm [sp], #-64; nopb ; nops ; movx crsrsmode, #0; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
 ; NO-JNZD-NEXT:    or r12, r25, r25; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8

@@ -36,10 +36,10 @@
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
-; REMARKS-NEXT:   - Loop:            bb.5.for.body100.cd
-; REMARKS-NEXT:   - Prologue:        bb.4.cooldown.entry
+; REMARKS-NEXT:   - Loop:            bb.5.for.body100.lastiter
+; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.prologue
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
+; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.epilogue
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 
 ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
@@ -161,7 +161,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    vaddmac dm0, dm0, dm4, x1, x6, r12 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.4: // %cooldown.entry
+; CHECK-NEXT:  // %bb.4: // %lastiter.prologue
 ; CHECK-NEXT:    vldb x3, [p1], m4
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1
 ; CHECK-NEXT:    vldb x10, [p0], #64; mov m0, p5
@@ -174,14 +174,14 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; CHECK-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; CHECK-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; CHECK-NEXT:  .LBB0_5: // %for.body100.cd
+; CHECK-NEXT:  .LBB0_5: // %for.body100.lastiter
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vldb x3, [p1], m4; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
 ; CHECK-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; CHECK-NEXT:  // %bb.6: // %cooldown.exit
+; CHECK-NEXT:  // %bb.6: // %lastiter.epilogue
 ; CHECK-NEXT:    lda p7, [sp, #-60]; nopb ; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; movx crsrsmode, #0; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    paddxm [sp], #-64; or r12, r24, r24; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
@@ -638,43 +638,43 @@ for.cond.cleanup99:                               ; preds = %for.body100
   %p_mat_a.1736.epi = addrspacecast ptr %p_mat_a.1.in735.epi to ptr addrspace(5)
   %p_mat_b.1.in737.epi = extractvalue { ptr, i20, i20 } %.epi94, 0
   %p_mat_b.1738.epi = addrspacecast ptr %p_mat_b.1.in737.epi to ptr addrspace(5)
-  br i1 %exitcond777.not, label %cooldown.entry, label %for.body, !llvm.loop !94
+  br i1 %exitcond777.not, label %lastiter.prologue, label %for.body, !llvm.loop !94
 
-cooldown.entry:                                   ; preds = %for.cond.cleanup99
+lastiter.prologue:                                   ; preds = %for.cond.cleanup99
   call void @llvm.set.loop.iterations.i32(i32 %18)
-  br label %for.body100.cd
+  br label %for.body100.lastiter
 
-for.body100.cd:                                   ; preds = %cooldown.entry, %for.body100.cd
-  %p_mat_b.1751.cd = phi ptr addrspace(5) [ %p_mat_b.1738.epi, %cooldown.entry ], [ %p_mat_b.1.cd, %for.body100.cd ]
-  %p_mat_b.1.in750.cd = phi ptr [ %p_mat_b.1.in737.epi, %cooldown.entry ], [ %p_mat_b.1.in.cd, %for.body100.cd ]
-  %p_mat_a.1749.cd = phi ptr addrspace(5) [ %p_mat_a.1736.epi, %cooldown.entry ], [ %p_mat_a.1.cd, %for.body100.cd ]
-  %p_mat_a.1.in748.cd = phi ptr [ %p_mat_a.1.in735.epi, %cooldown.entry ], [ %p_mat_a.1.in.cd, %for.body100.cd ]
-  %iterator_mat_a_cnt0.1746.cd = phi i32 [ %.epi86, %cooldown.entry ], [ %.cd237, %for.body100.cd ]
-  %iterator_mat_a_cnt1.1745.cd = phi i32 [ %.epi88, %cooldown.entry ], [ %.cd239, %for.body100.cd ]
-  %iterator_mat_b_cnt0.1744.cd = phi i32 [ %.epi96, %cooldown.entry ], [ %.cd246, %for.body100.cd ]
-  %iterator_mat_b_cnt1.1743.cd = phi i32 [ %.epi98, %cooldown.entry ], [ %.cd248, %for.body100.cd ]
-  %Ci3.sroa.0.0742.cd = phi <64 x i32> [ %.epi154, %cooldown.entry ], [ %.cd258, %for.body100.cd ]
-  %Ci2.sroa.0.0741.cd = phi <64 x i32> [ %.epi153, %cooldown.entry ], [ %.cd257, %for.body100.cd ]
-  %Ci1.sroa.0.0740.cd = phi <64 x i32> [ %.epi152, %cooldown.entry ], [ %.cd255, %for.body100.cd ]
-  %Ci0.sroa.0.0739.cd = phi <64 x i32> [ %.epi151, %cooldown.entry ], [ %.cd254, %for.body100.cd ]
-  %.cd = load <32 x i16>, ptr addrspace(5) %p_mat_a.1749.cd, align 64, !tbaa !4, !noalias !63
-  %add.ptr.i485.cd = getelementptr inbounds nuw i8, ptr %p_mat_a.1.in748.cd, i20 64
-  %add.ptr.ascast.i486.cd = addrspacecast ptr %add.ptr.i485.cd to ptr addrspace(5)
-  %.cd232 = load <32 x i16>, ptr addrspace(5) %add.ptr.ascast.i486.cd, align 64, !tbaa !4, !noalias !70
-  %.cd233 = trunc nuw i32 %iterator_mat_a_cnt0.1746.cd to i20
-  %.cd234 = trunc nuw i32 %iterator_mat_a_cnt1.1745.cd to i20
-  %.cd235 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %add.ptr.i485.cd, i20 %3, i20 %4, i20 %5, i20 %6, i20 %.cd233, i20 %7, i20 %.cd234)
+for.body100.lastiter:                                   ; preds = %lastiter.prologue, %for.body100.lastiter
+  %p_mat_b.1751.lastiter = phi ptr addrspace(5) [ %p_mat_b.1738.epi, %lastiter.prologue ], [ %p_mat_b.1.lastiter, %for.body100.lastiter ]
+  %p_mat_b.1.in750.lastiter = phi ptr [ %p_mat_b.1.in737.epi, %lastiter.prologue ], [ %p_mat_b.1.in.lastiter, %for.body100.lastiter ]
+  %p_mat_a.1749.lastiter = phi ptr addrspace(5) [ %p_mat_a.1736.epi, %lastiter.prologue ], [ %p_mat_a.1.lastiter, %for.body100.lastiter ]
+  %p_mat_a.1.in748.lastiter = phi ptr [ %p_mat_a.1.in735.epi, %lastiter.prologue ], [ %p_mat_a.1.in.lastiter, %for.body100.lastiter ]
+  %iterator_mat_a_cnt0.1746.lastiter = phi i32 [ %.epi86, %lastiter.prologue ], [ %.cd237, %for.body100.lastiter ]
+  %iterator_mat_a_cnt1.1745.lastiter = phi i32 [ %.epi88, %lastiter.prologue ], [ %.cd239, %for.body100.lastiter ]
+  %iterator_mat_b_cnt0.1744.lastiter = phi i32 [ %.epi96, %lastiter.prologue ], [ %.cd246, %for.body100.lastiter ]
+  %iterator_mat_b_cnt1.1743.lastiter = phi i32 [ %.epi98, %lastiter.prologue ], [ %.cd248, %for.body100.lastiter ]
+  %Ci3.sroa.0.0742.lastiter = phi <64 x i32> [ %.epi154, %lastiter.prologue ], [ %.cd258, %for.body100.lastiter ]
+  %Ci2.sroa.0.0741.lastiter = phi <64 x i32> [ %.epi153, %lastiter.prologue ], [ %.cd257, %for.body100.lastiter ]
+  %Ci1.sroa.0.0740.lastiter = phi <64 x i32> [ %.epi152, %lastiter.prologue ], [ %.cd255, %for.body100.lastiter ]
+  %Ci0.sroa.0.0739.lastiter = phi <64 x i32> [ %.epi151, %lastiter.prologue ], [ %.cd254, %for.body100.lastiter ]
+  %.lastiter = load <32 x i16>, ptr addrspace(5) %p_mat_a.1749.lastiter, align 64, !tbaa !4, !noalias !63
+  %add.ptr.i485.lastiter = getelementptr inbounds nuw i8, ptr %p_mat_a.1.in748.lastiter, i20 64
+  %add.ptr.ascast.i486.lastiter = addrspacecast ptr %add.ptr.i485.lastiter to ptr addrspace(5)
+  %.cd232 = load <32 x i16>, ptr addrspace(5) %add.ptr.ascast.i486.lastiter, align 64, !tbaa !4, !noalias !70
+  %.cd233 = trunc nuw i32 %iterator_mat_a_cnt0.1746.lastiter to i20
+  %.cd234 = trunc nuw i32 %iterator_mat_a_cnt1.1745.lastiter to i20
+  %.cd235 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr nonnull %add.ptr.i485.lastiter, i20 %3, i20 %4, i20 %5, i20 %6, i20 %.cd233, i20 %7, i20 %.cd234)
   %.cd236 = extractvalue { ptr, i20, i20 } %.cd235, 1
   %.cd237 = zext i20 %.cd236 to i32
   %.cd238 = extractvalue { ptr, i20, i20 } %.cd235, 2
   %.cd239 = zext i20 %.cd238 to i32
-  %.cd240 = load <16 x i32>, ptr addrspace(5) %p_mat_b.1751.cd, align 64, !tbaa !4, !noalias !77
-  %add.ptr.i490.cd = getelementptr inbounds i8, ptr %p_mat_b.1.in750.cd, i20 %idx.ext.i
-  %add.ptr.ascast.i491.cd = addrspacecast ptr %add.ptr.i490.cd to ptr addrspace(5)
-  %.cd241 = load <16 x i32>, ptr addrspace(5) %add.ptr.ascast.i491.cd, align 64, !tbaa !4, !noalias !84
-  %.cd242 = trunc nuw i32 %iterator_mat_b_cnt0.1744.cd to i20
-  %.cd243 = trunc nuw i32 %iterator_mat_b_cnt1.1743.cd to i20
-  %.cd244 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %add.ptr.i490.cd, i20 %8, i20 %9, i20 %10, i20 %11, i20 %.cd242, i20 %12, i20 %.cd243)
+  %.cd240 = load <16 x i32>, ptr addrspace(5) %p_mat_b.1751.lastiter, align 64, !tbaa !4, !noalias !77
+  %add.ptr.i490.lastiter = getelementptr inbounds i8, ptr %p_mat_b.1.in750.lastiter, i20 %idx.ext.i
+  %add.ptr.ascast.i491.lastiter = addrspacecast ptr %add.ptr.i490.lastiter to ptr addrspace(5)
+  %.cd241 = load <16 x i32>, ptr addrspace(5) %add.ptr.ascast.i491.lastiter, align 64, !tbaa !4, !noalias !84
+  %.cd242 = trunc nuw i32 %iterator_mat_b_cnt0.1744.lastiter to i20
+  %.cd243 = trunc nuw i32 %iterator_mat_b_cnt1.1743.lastiter to i20
+  %.cd244 = tail call { ptr, i20, i20 } @llvm.aie2ps.add.3d(ptr %add.ptr.i490.lastiter, i20 %8, i20 %9, i20 %10, i20 %11, i20 %.cd242, i20 %12, i20 %.cd243)
   %.cd245 = extractvalue { ptr, i20, i20 } %.cd244, 1
   %.cd246 = zext i20 %.cd245 to i32
   %.cd247 = extractvalue { ptr, i20, i20 } %.cd244, 2
@@ -684,39 +684,39 @@ for.body100.cd:                                   ; preds = %cooldown.entry, %fo
   %.cd251 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.cd241, <16 x i32> poison, i32 %21)
   %.cd252 = tail call <16 x i32> @llvm.aie2ps.vshuffle(<16 x i32> %.cd251, <16 x i32> poison, i32 %22)
   %.cd253 = bitcast <16 x i32> %.cd250 to <32 x i16>
-  %.cd254 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd, <32 x i16> %.cd253, <64 x i32> %Ci0.sroa.0.0739.cd, i32 %or22.i.i.i.i)
-  %.cd255 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd232, <32 x i16> %.cd253, <64 x i32> %Ci1.sroa.0.0740.cd, i32 %or22.i.i.i.i)
+  %.cd254 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter, <32 x i16> %.cd253, <64 x i32> %Ci0.sroa.0.0739.lastiter, i32 %or22.i.i.i.i)
+  %.cd255 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd232, <32 x i16> %.cd253, <64 x i32> %Ci1.sroa.0.0740.lastiter, i32 %or22.i.i.i.i)
   %.cd256 = bitcast <16 x i32> %.cd252 to <32 x i16>
-  %.cd257 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd, <32 x i16> %.cd256, <64 x i32> %Ci2.sroa.0.0741.cd, i32 %or22.i.i.i.i)
-  %.cd258 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd232, <32 x i16> %.cd256, <64 x i32> %Ci3.sroa.0.0742.cd, i32 %or22.i.i.i.i)
-  %p_mat_a.1.in.cd = extractvalue { ptr, i20, i20 } %.cd235, 0
-  %p_mat_a.1.cd = addrspacecast ptr %p_mat_a.1.in.cd to ptr addrspace(5)
-  %p_mat_b.1.in.cd = extractvalue { ptr, i20, i20 } %.cd244, 0
-  %p_mat_b.1.cd = addrspacecast ptr %p_mat_b.1.in.cd to ptr addrspace(5)
+  %.cd257 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.lastiter, <32 x i16> %.cd256, <64 x i32> %Ci2.sroa.0.0741.lastiter, i32 %or22.i.i.i.i)
+  %.cd258 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd232, <32 x i16> %.cd256, <64 x i32> %Ci3.sroa.0.0742.lastiter, i32 %or22.i.i.i.i)
+  %p_mat_a.1.in.lastiter = extractvalue { ptr, i20, i20 } %.cd235, 0
+  %p_mat_a.1.lastiter = addrspacecast ptr %p_mat_a.1.in.lastiter to ptr addrspace(5)
+  %p_mat_b.1.in.lastiter = extractvalue { ptr, i20, i20 } %.cd244, 0
+  %p_mat_b.1.lastiter = addrspacecast ptr %p_mat_b.1.in.lastiter to ptr addrspace(5)
   %.cd259 = call i1 @llvm.loop.decrement.i32(i32 1)
-  br i1 %.cd259, label %for.body100.cd, label %cooldown.exit, !llvm.loop !91
+  br i1 %.cd259, label %for.body100.lastiter, label %lastiter.epilogue, !llvm.loop !91
 
-cooldown.exit:                                    ; preds = %for.body100.cd
-  %.cd260 = addrspacecast ptr %p_mat_b.1.in.cd to ptr addrspace(5)
-  %.cd261 = addrspacecast ptr %p_mat_a.1.in.cd to ptr addrspace(5)
+lastiter.epilogue:                                    ; preds = %for.body100.lastiter
+  %.cd260 = addrspacecast ptr %p_mat_b.1.in.lastiter to ptr addrspace(5)
+  %.cd261 = addrspacecast ptr %p_mat_a.1.in.lastiter to ptr addrspace(5)
   %.cd262 = addrspacecast ptr %69 to ptr addrspace(6)
-  %add.ptr.i370.cd = getelementptr inbounds nuw i8, ptr %add.ptr.i370, i20 512
+  %add.ptr.i370.lastiter = getelementptr inbounds nuw i8, ptr %add.ptr.i370, i20 512
   %.cd263 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.cd254, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
   store <64 x i8> %.cd263, ptr addrspace(6) %.cd262, align 64, !tbaa !4
-  %add.ptr.i475.cd = getelementptr inbounds nuw i8, ptr %69, i20 64
-  %add.ptr.ascast.i476.cd = addrspacecast ptr %add.ptr.i475.cd to ptr addrspace(6)
+  %add.ptr.i475.lastiter = getelementptr inbounds nuw i8, ptr %69, i20 64
+  %add.ptr.ascast.i476.lastiter = addrspacecast ptr %add.ptr.i475.lastiter to ptr addrspace(6)
   %.cd264 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.cd255, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
-  store <64 x i8> %.cd264, ptr addrspace(6) %add.ptr.ascast.i476.cd, align 64, !tbaa !4
-  %add.ptr.i479.cd = getelementptr inbounds i8, ptr %add.ptr.i475.cd, i20 %idx.ext.i478
-  %add.ptr.ascast.i480.cd = addrspacecast ptr %add.ptr.i479.cd to ptr addrspace(6)
+  store <64 x i8> %.cd264, ptr addrspace(6) %add.ptr.ascast.i476.lastiter, align 64, !tbaa !4
+  %add.ptr.i479.lastiter = getelementptr inbounds i8, ptr %add.ptr.i475.lastiter, i20 %idx.ext.i478
+  %add.ptr.ascast.i480.lastiter = addrspacecast ptr %add.ptr.i479.lastiter to ptr addrspace(6)
   %.cd265 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.cd257, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
-  store <64 x i8> %.cd265, ptr addrspace(6) %add.ptr.ascast.i480.cd, align 64, !tbaa !4
-  %add.ptr.i482.cd = getelementptr inbounds nuw i8, ptr %add.ptr.i479.cd, i20 64
-  %add.ptr.ascast.i483.cd = addrspacecast ptr %add.ptr.i482.cd to ptr addrspace(6)
+  store <64 x i8> %.cd265, ptr addrspace(6) %add.ptr.ascast.i480.lastiter, align 64, !tbaa !4
+  %add.ptr.i482.lastiter = getelementptr inbounds nuw i8, ptr %add.ptr.i479.lastiter, i20 64
+  %add.ptr.ascast.i483.lastiter = addrspacecast ptr %add.ptr.i482.lastiter to ptr addrspace(6)
   %.cd266 = tail call noundef <64 x i8> @llvm.aie2ps.I512.v64.acc32.srs(<64 x i32> %.cd258, i32 %conv166, i32 range(i32 0, 2) %conv.i.i.i.i)
-  store <64 x i8> %.cd266, ptr addrspace(6) %add.ptr.ascast.i483.cd, align 64, !tbaa !4
+  store <64 x i8> %.cd266, ptr addrspace(6) %add.ptr.ascast.i483.lastiter, align 64, !tbaa !4
   %.cd267 = trunc nuw i32 %68 to i20
-  %.cd268 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %add.ptr.i482.cd, i20 %23, i20 %24, i20 %25, i20 %.cd267)
+  %.cd268 = tail call { ptr, i20 } @llvm.aie2ps.add.2d(ptr nonnull %add.ptr.i482.lastiter, i20 %23, i20 %24, i20 %25, i20 %.cd267)
   %.cd269 = extractvalue { ptr, i20 } %.cd268, 1
   %.cd270 = zext i20 %.cd269 to i32
   %.cd271 = extractvalue { ptr, i20 } %.cd268, 0
@@ -725,11 +725,11 @@ cooldown.exit:                                    ; preds = %for.body100.cd
   %.cd274 = extractvalue { ptr, i20 } %.cd273, 1
   %.cd275 = zext i20 %.cd274 to i32
   %.cd276 = extractvalue { ptr, i20 } %.cd273, 0
-  %lsr.iv.next807.cd = add nsw i32 %lsr.iv.next807, -1
-  %exitcond777.not.cd = icmp eq i32 %lsr.iv.next807.cd, 0
+  %lsr.iv.next807.lastiter = add nsw i32 %lsr.iv.next807, -1
+  %exitcond777.not.lastiter = icmp eq i32 %lsr.iv.next807.lastiter, 0
   br label %for.cond.cleanup
 
-for.cond.cleanup:                                 ; preds = %cooldown.exit
+for.cond.cleanup:                                 ; preds = %lastiter.epilogue
   ret void
 }
 
