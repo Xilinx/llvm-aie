@@ -6,8 +6,40 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2ps %s -o - | FileCheck %s
+; RUN: llc -mtriple=aie2ps -pass-remarks-output=- -pass-remarks-filter='pipeliner' \
+; RUN:   %s -o /dev/null | FileCheck %s --check-prefix=REMARKS
 
 ; Test metadata related to command line option (relax mem deps).
+
+; Main inner loop and its cooldown clone must hit the same II/NS and bundle counts.
+; REMARKS:      --- !Passed
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            schedule
+; REMARKS-NEXT: Function:        gemm
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Schedule found
+; REMARKS-NEXT:   - Pipeliner:       postpipeliner
+; REMARKS-NEXT:   - II:              '4'
+; REMARKS-NEXT:   - NS:              '4'
+; REMARKS-NEXT:   - Loop:            bb.2.for.body100
+; REMARKS-NEXT:   - Prologue:        bb.1.for.body
+; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup99
+; REMARKS-NEXT:   - EpilogueBundles: '23'
+; REMARKS:      --- !Passed
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            schedule
+; REMARKS-NEXT: Function:        gemm
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Schedule found
+; REMARKS-NEXT:   - Pipeliner:       postpipeliner
+; REMARKS-NEXT:   - II:              '4'
+; REMARKS-NEXT:   - NS:              '4'
+; REMARKS-NEXT:   - Loop:            bb.5.for.body100.cd
+; REMARKS-NEXT:   - Prologue:        bb.4.cooldown.entry
+; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
+; REMARKS-NEXT:   - EpilogueBundles: '19'
 
 ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
 declare { ptr, i20 } @llvm.aie2ps.add.2d(ptr, i20, i20, i20, i20) #0
