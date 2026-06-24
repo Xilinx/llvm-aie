@@ -1291,7 +1291,7 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
     Instruction *I = DescWorklist.pop_back_val();
     for (User *U : I->users()) {
       auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
+      if (!UI || !LS.isPipelineableValue(UI))
         continue;
       if (PartTwoSet.insert(UI).second)
         DescWorklist.push_back(UI);
@@ -1444,7 +1444,7 @@ void AIEOuterLoopPipeliner::collectPartTwoInstructions(
   for (Instruction *P1 : PartOneSet) {
     for (User *U : P1->users()) {
       auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
+      if (!UI || !LS.isPipelineableValue(UI))
         continue;
       if (!PartOneSet.count(UI) && isAnchorInstruction(UI)) {
         if (PartTwoSet.insert(UI).second)
@@ -1458,7 +1458,7 @@ void AIEOuterLoopPipeliner::collectPartTwoInstructions(
     Instruction *I = Worklist.pop_back_val();
     for (User *U : I->users()) {
       auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
+      if (!UI || !LS.isPipelineableValue(UI))
         continue;
       if (!PartOneSet.count(UI) && PartTwoSet.insert(UI).second)
         Worklist.push_back(UI);
