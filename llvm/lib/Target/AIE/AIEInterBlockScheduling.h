@@ -199,6 +199,19 @@ public:
   /// during PipeliningDone.
   std::vector<MachineInstr *> BottomInsertSemanticOrder;
 
+  /// For pipelined loop epilogues: the mirror of BottomInsertSemanticOrder. A
+  /// software-pipelined epilogue overlaps several iterations, so the same loop
+  /// instruction can appear multiple times in TopInsert. This holds the single
+  /// canonical copy per loop instruction (the last-iteration clone), ordered by
+  /// the loop body's SemanticOrder. Because the pipeliner never renames across
+  /// iterations, the last copy is the final writer and its distance-to-ExitSU
+  /// constraint dominates the earlier copies, which are therefore omitted.
+  /// These instructions are added as pre-boundary producer nodes to the
+  /// inter-block DDG so that the top-fixed -> ExitSU latency can be tightened
+  /// using successor information. Populated by PipelineExtractor during
+  /// PipeliningDone.
+  std::vector<MachineInstr *> TopInsertSemanticOrder;
+
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
 

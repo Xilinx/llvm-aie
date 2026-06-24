@@ -443,9 +443,14 @@ class PipelineExtractor : public PipelineScheduleVisitor {
   bool InLoop = false;
   // True while visiting the prologue section.
   bool InPrologue = false;
+  // True while visiting the epilogue section.
+  bool InEpilogue = false;
   // Maps each original loop instruction to its first-iteration clone in the
   // prologue. Only the first occurrence of each original is recorded.
   DenseMap<const MachineInstr *, MachineInstr *> PrologueFirstIterClones;
+  // Maps each original loop instruction to its last-iteration clone in the
+  // epilogue. Only the last occurrence of each original is kept.
+  DenseMap<const MachineInstr *, MachineInstr *> EpilogueLastIterClones;
 
   void startPrologue() override { InPrologue = true; }
   void startLoop() override {
@@ -478,21 +483,7 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     Loop.getTop().Bundles = TimedRegion;
     TimedRegion.clear();
     InLoop = false;
-  }
-  void finish() override {
-    auto &CopyTo = Epilogue->TopInsert;
-    assert(CopyTo.empty() && "Epilogue already has a timed region at Top.");
-
-    // Establish the number of bundles to copy. Note that std::distance on a
-    // vector is O(1)
-    int NonEmpty = std::distance(
-        find_if(reverse(TimedRegion), [](const auto &B) { return !B.empty(); }),
-        TimedRegion.rend());
-    // And copy them.
-    for (int I = 0; I < NonEmpty; I++) {
-      CopyTo.push_back(TimedRegion[I]);
-    }
-    TimedRegion.clear();
+    InEpilogue = true;
   }
   void startBundle() override { CurrentBundle.clear(); }
   void addToBundle(MachineInstr *MI) override {
@@ -507,8 +498,50 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // occurrence (i.e. the first-iteration copy) is kept.
     if (InPrologue)
       PrologueFirstIterClones.try_emplace(MI, ToBeEmitted);
+
+    // Record the last-iteration epilogue clone for each original instruction.
+    // Plain assignment overwrites, so the final occurrence (i.e. the
+    // last-iteration copy) is kept.
+    if (InEpilogue)
+      EpilogueLastIterClones[MI] = ToBeEmitted;
   }
   void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
+  void finish() override {
+    auto &CopyTo = Epilogue->TopInsert;
+    assert(CopyTo.empty() && "Epilogue already has a timed region at Top.");
+
+    // Establish the number of bundles to copy. Note that std::distance on a
+    // vector is O(1)
+    int NonEmpty = std::distance(
+        find_if(reverse(TimedRegion), [](const auto &B) { return !B.empty(); }),
+        TimedRegion.rend());
+    // And copy them.
+    for (int I = 0; I < NonEmpty; I++) {
+      CopyTo.push_back(TimedRegion[I]);
+    }
+
+    // Populate the epilogue semantic order, the exact mirror of the prologue's
+    // BottomInsertSemanticOrder. A software-pipelined epilogue contains several
+    // overlapping iterations, so the same loop instruction can be emitted more
+    // than once. We keep a single canonical copy per loop instruction: the
+    // last-iteration clone. Because the pipeliner never renames across
+    // iterations, that last copy is the final writer of the value, so its
+    // distance-to-ExitSU constraint dominates every earlier copy (an earlier
+    // copy is scheduled an integral number of IIs before it, with a dead def at
+    // the boundary). Earlier copies are therefore redundant as pre-boundary
+    // producers and are dropped here. We follow the original loop body order so
+    // the result is deterministic and parallel to the loop's SemanticOrder.
+    auto &TopOrder = Epilogue->TopInsertSemanticOrder;
+    assert(TopOrder.empty() && "Epilogue already has a top semantic order.");
+    for (MachineInstr *OrigMI : Loop.getTop().getFreeInstructions()) {
+      const auto It = EpilogueLastIterClones.find(OrigMI);
+      if (It != EpilogueLastIterClones.end())
+        TopOrder.push_back(It->second);
+    }
+
+    TimedRegion.clear();
+    InEpilogue = false;
+  }
 
 public:
   PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
@@ -985,6 +1018,21 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
   for (MachineInstr *MI : Bot.getFreeInstructions())
     DAG.addNode(MI);
 
+  // Pre-boundary: top-fixed instructions of the predecessor (a SWP epilogue).
+  // These are immovable producers whose results may be consumed in the
+  // successor block. Adding them lets computeEffectiveLatency() tighten the
+  // top-fixed -> ExitSU latency using successor depths. The vector is empty
+  // for blocks without a pipelined epilogue. Only instructions that are
+  // already physically emitted into a block are added: until emitInterBlockTop
+  // runs, the epilogue clones have no parent MBB and cannot participate in
+  // edge building. This may happen when a predecessor's edges are rebuilt
+  // (e.g. from the prologue path in leaveBlock) before the epilogue itself is
+  // entered for scheduling. In that case we simply fall back to the
+  // conservative latency for those producers.
+  for (MachineInstr *MI : BS.TopInsertSemanticOrder)
+    if (MI->getParent())
+      DAG.addNode(MI);
+
   DAG.markBoundary();
 
   // Post-boundary: free instructions. Empty regions signify empty basic
@@ -1265,6 +1313,15 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
     // If we are in the same BB, just emit.
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
                 /*Move=*/false, /*EmitNops=*/false);
+
+    // The SWP epilogue instructions are now physically present at the top of
+    // this block and carry valid MF context. Rebuild this block's own
+    // inter-block DDG edges so that its top-fixed instructions appear as
+    // pre-boundary producer nodes (via TopInsertSemanticOrder). This lets
+    // MaxLatencyFinder tighten the top-fixed -> ExitSU latency using successor
+    // depths when this block is scheduled (which happens right after this).
+    if (!BS.TopInsertSemanticOrder.empty())
+      buildPerSuccEdges(DedicatedExit);
   } else {
     // If not, transfer the timed region to the new block state created
     // by makeDedicatedLoopExit. The Kind of both blocks was already updated
@@ -1273,6 +1330,10 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
     BlockState &NewBS = getBlockState(DedicatedExit);
     NewBS.TopInsert = BS.TopInsert;
     BS.TopInsert.clear();
+    // Transfer the top semantic order alongside the bundles. The dedicated
+    // exit will rebuild its own DDG edges when it is entered for scheduling.
+    NewBS.TopInsertSemanticOrder = std::move(BS.TopInsertSemanticOrder);
+    BS.TopInsertSemanticOrder.clear();
   }
 }
 

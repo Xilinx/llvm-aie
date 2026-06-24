@@ -75,7 +75,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.1.for.body.preheader
   ; CHECK-NEXT:   - PrologueBundles: '12'
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup
-  ; CHECK-NEXT:   - EpilogueBundles: '15'
+  ; CHECK-NEXT:   - EpilogueBundles: '12'
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1, %bb.3
