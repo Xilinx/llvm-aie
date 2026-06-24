@@ -6,9 +6,41 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2ps %s -o - | FileCheck %s
+; RUN: llc -mtriple=aie2ps -pass-remarks-output=- -pass-remarks-filter='pipeliner' \
+; RUN:   %s -o /dev/null | FileCheck %s --check-prefix=REMARKS
 
 ; Test scheduling capabilities related to prologue and epilogue scheduling
 ; of outerloop-pipelined kernels
+
+; Main inner loop and its cooldown clone must hit the same II/NS and bundle counts.
+; REMARKS:      --- !Passed
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            schedule
+; REMARKS-NEXT: Function:        conv2d
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Schedule found
+; REMARKS-NEXT:   - Pipeliner:       postpipeliner
+; REMARKS-NEXT:   - II:              '2'
+; REMARKS-NEXT:   - NS:              '6'
+; REMARKS-NEXT:   - Loop:            bb.2.for.body159.i
+; REMARKS-NEXT:   - Prologue:        bb.1.for.body.i
+; REMARKS-NEXT:   - PrologueBundles: '10'
+; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup158.i
+; REMARKS-NEXT:   - EpilogueBundles: '27'
+; REMARKS:      --- !Passed
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            schedule
+; REMARKS-NEXT: Function:        conv2d
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Schedule found
+; REMARKS-NEXT:   - Pipeliner:       postpipeliner
+; REMARKS-NEXT:   - II:              '2'
+; REMARKS-NEXT:   - NS:              '6'
+; REMARKS-NEXT:   - Loop:            bb.5.for.body159.i.cd
+; REMARKS-NEXT:   - Prologue:        bb.4.cooldown.entry
+; REMARKS-NEXT:   - PrologueBundles: '10'
+; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
+; REMARKS-NEXT:   - EpilogueBundles: '21'
 
 ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: read)
 declare <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16>, i32, i32) #0
