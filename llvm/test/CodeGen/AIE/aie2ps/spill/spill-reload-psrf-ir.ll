@@ -4,7 +4,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc < %s -mtriple=aie2ps | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=aie2ps | FileCheck %s
 
 ; End-to-end (IR -> assembly) test for ePSRFLdF (plfr) register spill/reload
 ; across a function call. The fifo state {ptr, fifo_buf, avail_count} must

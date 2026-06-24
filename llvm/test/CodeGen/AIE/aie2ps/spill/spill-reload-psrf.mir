@@ -4,8 +4,8 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple=aie2ps -run-pass=greedy -run-pass=virtregrewriter %s -o - | FileCheck %s
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple=aie2ps -run-pass=greedy -run-pass=virtregrewriter --verify-machineinstrs %s -o - | FileCheck %s
 
 ---
 name:            test_epsrfldf_caller_saved
@@ -21,15 +21,10 @@ body:             |
     ; CHECK: liveins: $plfr0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $y0 = COPY $lf0
-    ; CHECK-NEXT: VST_Y_SPILL killed renamable $y0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
-    ; CHECK-NEXT: ST_R_SPILL $r24, %stack.0, implicit $sp :: (store (s32) into %stack.0 + 128, align 64)
-    ; CHECK-NEXT: ST_R_SPILL $p0, %stack.0, implicit $sp :: (store (s32) into %stack.0 + 132, basealign 64)
+    ; CHECK-NEXT: VST_PLFR_SPILL killed renamable $y0, $r24, $p0, %stack.0, implicit $sp :: (store (s1088) into %stack.0, align 64)
     ; CHECK-NEXT: PseudoJL 32, csr_aie2ps, implicit-def $lr
-    ; CHECK-NEXT: renamable $y0 = VLDA_Y_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
-    ; CHECK-NEXT: dead renamable $lf0 = COPY killed renamable $y0
-    ; CHECK-NEXT: dead renamable $r24 = LDA_R_SPILL %stack.0, implicit $sp :: (load (s32) from %stack.0 + 128, align 64)
-    ; CHECK-NEXT: renamable $p0 = LDA_R_SPILL %stack.0, implicit $sp :: (load (s32) from %stack.0 + 132, basealign 64)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit renamable $plfr0
+    ; CHECK-NEXT: dead renamable $y0, renamable $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp :: (load (s1088) from %stack.0, align 64)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $plfr0
     %0:epsrfldf = COPY $plfr0
     PseudoJL 32, csr_aie2ps, implicit-def $lr
     PseudoRET implicit $lr, implicit %0
@@ -50,16 +45,11 @@ body:             |
     ; CHECK: liveins: $lf1, $p0, $plfr0, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $y0 = COPY $lf0
-    ; CHECK-NEXT: VST_Y_SPILL killed renamable $y0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
-    ; CHECK-NEXT: ST_R_SPILL $r24, %stack.0, implicit $sp :: (store (s32) into %stack.0 + 128, align 64)
-    ; CHECK-NEXT: ST_R_SPILL $p0, %stack.0, implicit $sp :: (store (s32) into %stack.0 + 132, basealign 64)
+    ; CHECK-NEXT: VST_PLFR_SPILL killed renamable $y0, $r24, $p0, %stack.0, implicit $sp :: (store (s1088) into %stack.0, align 64)
     ; CHECK-NEXT: $lf0 = COPY $lf1
     ; CHECK-NEXT: ST_dms_sts_scalar_st_idx_imm $r0, $p0, 0, implicit $lf0, implicit $lf1
-    ; CHECK-NEXT: renamable $y0 = VLDA_Y_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
-    ; CHECK-NEXT: dead renamable $lf0 = COPY killed renamable $y0
-    ; CHECK-NEXT: dead renamable $r24 = LDA_R_SPILL %stack.0, implicit $sp :: (load (s32) from %stack.0 + 128, align 64)
-    ; CHECK-NEXT: renamable $p0 = LDA_R_SPILL %stack.0, implicit $sp :: (load (s32) from %stack.0 + 132, basealign 64)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit renamable $plfr0
+    ; CHECK-NEXT: dead renamable $y0, renamable $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp :: (load (s1088) from %stack.0, align 64)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $plfr0
     %0:epsrfldf = COPY $plfr0 ; -> only $lfe is available
 
     $lf0 = COPY $lf1
