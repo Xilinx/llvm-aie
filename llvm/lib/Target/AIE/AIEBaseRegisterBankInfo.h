@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -90,6 +90,12 @@ public:
 
   bool requiresPTRRegBank(const MachineInstr &MI,
                           const MachineRegisterInfo &MRI, unsigned Depth) const;
+
+  /// Return true if \p MI is a load whose pointer-typed result is only ever
+  /// used by GPR-requiring instructions, so its def should be mapped to the
+  /// GPR bank instead of the (default) pointer bank.
+  bool pointerLoadDefShouldBeGPR(const MachineInstr &MI,
+                                 const MachineRegisterInfo &MRI) const;
 
   using RegisterUsedAsSpecificBankFcn =
       std::function<bool(const MachineInstr &MI, const MachineRegisterInfo &MRI,

@@ -1161,6 +1161,11 @@ void AIE2PSRegisterBankInfo::setAIEGenericInstrMapping(
   case AIE2PS::G_AIE_OFFSET_SEXTLOAD: {
     // Offset is operand #2
     OpRegBankIdx[2] = PMI_MOD;
+    // A loaded pointer whose every use forces it onto a GPR is mapped to the
+    // GPR bank directly, avoiding a ptr->gpr bridging copy.
+    if (MI.getOpcode() == AIE2PS::G_AIE_OFFSET_LOAD &&
+        pointerLoadDefShouldBeGPR(MI, MRI))
+      OpRegBankIdx[0] = PMI_GPR;
     break;
   }
   case AIE2PS::G_AIE_POSTINC_STORE:
@@ -1169,6 +1174,13 @@ void AIE2PSRegisterBankInfo::setAIEGenericInstrMapping(
   case AIE2PS::G_AIE_POSTINC_SEXTLOAD: {
     // Offset is operand #3
     OpRegBankIdx[3] = PMI_MOD;
+    // The loaded value is def #0 (def #1 is the incremented pointer, which
+    // stays on the pointer bank for addressing). If the loaded pointer value's
+    // every use forces it onto a GPR, map def #0 to the GPR bank directly to
+    // avoid a ptr->gpr bridging copy.
+    if (MI.getOpcode() == AIE2PS::G_AIE_POSTINC_LOAD &&
+        pointerLoadDefShouldBeGPR(MI, MRI))
+      OpRegBankIdx[0] = PMI_GPR;
     break;
   }
   case AIE2PS::G_AIE_UNPAD_VECTOR:
