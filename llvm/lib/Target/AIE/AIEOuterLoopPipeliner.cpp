@@ -650,14 +650,8 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(
     Replacements.push_back({I, PHI});
   }
 
-  // Replace ALL uses of original prologue instructions with the PHI nodes.
-  // This covers both:
-  //   (a) uses inside the inner loop (the primary goal), and
-  //   (b) intra-prologue uses in the outer header (e.g., a shuffle that uses
-  //       a load result — both are prologue instructions, and the shuffle's
-  //       use of the load must be replaced so the load becomes use_empty).
-  // The peel and epilogue clones do not use the originals (they use cloned
-  // values via PeelVMap/EpiVMap), so replaceAllUsesWith is safe here.
+  // Replace all uses of the originals (inner-loop and intra-prologue) with the
+  // merge PHIs; the peel/epilogue clones use mapped values, not the originals.
   for (auto &[Orig, PHI] : Replacements)
     Orig->replaceAllUsesWith(PHI);
 
@@ -1051,8 +1045,8 @@ void LoopStructure::updateLoopMetadata() const {
   // Adjust itercount.range (N → N-1).
   MDNode *UpdatedID =
       LoopID ? updateIterCounts(
-                   Ctx, LoopID, [](int64_t V) { return V - 1; }, // FixMin
-                   [](int64_t V) { return V - 1; })              // FixMax
+                   Ctx, LoopID, /*FixMin=*/[](int64_t V) { return V - 1; },
+                   /*FixMax=*/[](int64_t V) { return V - 1; })
              : nullptr;
 
   // Rebuild the metadata node, dropping the consumed hint and
@@ -1070,8 +1064,9 @@ void LoopStructure::updateLoopMetadata() const {
   for (unsigned I = 1, E = Source->getNumOperands(); I < E; ++I) {
     MDNode *Entry = cast<MDNode>(Source->getOperand(I));
     auto Key = AIELoopUtils::getMetadataKey(*Entry);
+    // Drop the consumed enable hint.
     if (Key && *Key == HintKey)
-      continue; // drop the consumed enable hint
+      continue;
     MDs.push_back(Entry);
   }
 
@@ -1155,18 +1150,9 @@ bool LoopStructure::collectPeeledForSplit(
   return true;
 }
 
-// Lift update instructions from the epilogue to the end of the prologue.
-// This allows the main pipelining transformation to naturally include them
-// when cloning the prologue to peel and epilogue.
-//
-// Approach: For each outer header PHI node, find the latch incoming value.
-// If it's an instruction defined in the epilogue, backward-track to find
-// the entire computation chain. Validate each chain independently and only
-// lift chains that can be lifted:
-//   1. No inner loop dependencies
-//   2. No uses by other epilogue instructions (outside the chain)
-//
-// This ensures we don't lift chains used by stores or loop control logic.
+// Lift each outer-header PHI's epilogue-defined pointer-update chain to the end
+// of the prologue, so the main transform clones them into peel and epilogue.
+// Only chains with no inner-loop dependency and no external epilogue use lift.
 bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
     const LoopStructure &OrigLS) {
   Instruction *InsertPt = OrigLS.getOuterHeader()->getTerminator();
@@ -1409,40 +1395,8 @@ std::optional<DowncountingInfo> LoopStructure::getDowncountingInfo() const {
   return DowncountingInfo{bound().Cmp, bound().Counter, bound().OldIV};
 }
 
-// Convert the outer loop to a JNZD hardware loop.
-//
-// Before (after adjustLoopBound):
-//   preheader:
-//     %outer.trip.minus1 = sub i32 %N, 1
-//     br outer.header
-//
-//   outer.header:
-//     %phi = phi i32 [%init, %steady.preheader], [%next, %outer.latch]
-//     ...
-//
-//   outer.latch:
-//     %counter = add i32 %phi, -1
-//     %cond    = icmp eq i32 %counter, %limit   ; limit = 1 after
-//     adjustLoopBound br i1 %cond, label %lastiter.prologue, label
-//     %outer.header
-//
-// After:
-//   preheader:
-//     %outer.trip.minus1 = sub i32 %N, 1        ; already there
-//     %ctr.init = call i32 @llvm.start.loop.iterations.i32(i32
-//     %outer.trip.minus1) br outer.header
-//
-//   outer.header:
-//     %phi = phi i32 [%init, %steady.preheader], [%next, %outer.latch]
-//     %ctr = phi i32 [%ctr.init, %steady.preheader], [%ctr.next, %outer.latch]
-//     ...
-//
-//   outer.latch:
-//     %ctr.next = call i32 @llvm.loop.decrement.reg.i32(i32 %ctr, i32 1)
-//     %loop.cond = icmp ne i32 %ctr.next, 0
-//     br i1 %loop.cond, label %outer.header, label %lastiter.prologue
-//     ; (old %counter add and %cond icmp become dead and are deleted)
-//
+// Convert the outer loop to a JNZD hardware loop: replace the latch's
+// downcounting add+icmp with start.loop.iterations / loop.decrement.reg.
 void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
     const LoopStructure &SteadyLS, const DowncountingInfo &Info) {
   LLVMContext &Ctx = SteadyLS.getOuterHeader()->getContext();
@@ -1508,34 +1462,16 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   // Delete the old icmp (now dead: branch condition was replaced above).
   RecursivelyDeleteTriviallyDeadInstructions(OldCond);
 
-  // OldCounter (the add) and OldIV (the counting PHI) form a use cycle:
-  //   OldIV  = phi [..., OldCounter, outer.latch]
-  //   OldCounter = add OldIV, -1
-  // RecursivelyDeleteTriviallyDeadInstructions cannot break this cycle because
-  // neither is trivially dead in isolation.
-  //
-  // If OldIV is a pure counting PHI (only used by OldCounter), break the
-  // cycle: replace OldCounter's latch slot in OldIV with PoisonValue, then
-  // both become dead and are deleted.
-  // If OldIV has other uses (e.g., address computation), leave the PHI alive.
-  //
-  // NOTE: This conversion runs BEFORE peelLastIteration.  That ordering is
-  // critical: peelLastIteration clones all instructions currently in the outer
-  // latch.  By erasing OldCounter and OldIV here first, the peel step never
-  // sees them and never creates live last-iteration clones that would keep
-  // OldCounter alive.
+  // OldCounter (add) and OldIV (counting PHI) form a use cycle that trivial-DCE
+  // cannot break. If OldIV is used only by OldCounter, poison its latch slot so
+  // both become dead; otherwise leave the PHI for its other users.
   if (OldCounter) {
-    // If OldIV is a pure counting PHI (no uses outside OldCounter), break
-    // the cycle so both the PHI and the add can be deleted.
     if (OldIV->hasOneUse()) {
       int LatchIdx = OldIV->getBasicBlockIndex(SteadyLS.getOuterLatch());
       if (LatchIdx >= 0)
         OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
     }
-    // RecursivelyDeleteTriviallyDeadInstructions(OldCounter) will also delete
-    // OldIV transitively if OldIV becomes dead (0 users) after OldCounter is
-    // removed.  Do NOT reference OldIV after this call — it may be a dangling
-    // pointer.
+    // OldIV may be deleted transitively here; do not reference it afterwards.
     RecursivelyDeleteTriviallyDeadInstructions(OldCounter);
   }
 
