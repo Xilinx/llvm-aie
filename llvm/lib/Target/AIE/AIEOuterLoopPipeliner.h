@@ -379,6 +379,10 @@ private:
   const AIEBaseInstrInfo *TII = nullptr;
 
   bool runOnLoop(Loop *L);
+  // Build the LoopStructure for L and run every pipelining precondition as a
+  // flat early-return guard; performs the transform iff all pass. Returns true
+  // if L was pipelined.
+  bool tryPipelineLoop(Loop *L, const AIE::LoopOptionOverrides &Overrides);
   // Populate VMap with the incoming values of outer header PHIs from FromBlock.
   void populateVMapFromPHIs(ValueToValueMapTy &VMap, const LoopStructure &LS,
                             BasicBlock *FromBlock) const;
