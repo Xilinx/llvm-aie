@@ -154,24 +154,8 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   // Build per-loop option overrides from !llvm.loop.hint.* metadata.
   AIE::LoopOptionOverrides Overrides(L->getLoopID());
 
-  if (!Overrides.get(EnableOuterLoopPipelining)) {
-    LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
-  } else if (LoopStructure LS(L); LS.isValid()) {
-    if (!LS.isProfitableToRotate(
-            *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
-      LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
-    } else if (!LS.isSafeToReorderMemoryOps()) {
-      LLVM_DEBUG(
-          dbgs() << "    Not pipelining: unsafe to reorder memory ops\n");
-    } else {
-      LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining on ";
-                 LS.getOuterHeader()->printAsOperand(dbgs(), false);
-                 dbgs() << "\n");
-      return performTransformation(LS, Overrides);
-    }
-  } else {
-    LLVM_DEBUG(dbgs() << "    Not pipelining: unsupported loop structure\n");
-  }
+  if (tryPipelineLoop(L, Overrides))
+    return true;
 
   // If this loop was not transformed, recursively try its subloops.
   // This handles nested structures like: outermost { middle { innermost } }
@@ -180,6 +164,36 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   for (Loop *SubLoop : L->getSubLoops())
     Changed |= runOnLoop(SubLoop);
   return Changed;
+}
+
+bool AIEOuterLoopPipeliner::tryPipelineLoop(
+    Loop *L, const AIE::LoopOptionOverrides &Overrides) {
+  if (!Overrides.get(EnableOuterLoopPipelining)) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
+    return false;
+  }
+
+  LoopStructure LS(L);
+  if (!LS.isValid()) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: unsupported loop structure\n");
+    return false;
+  }
+
+  if (!LS.isProfitableToRotate(
+          *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
+    return false;
+  }
+
+  if (!LS.isSafeToReorderMemoryOps()) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: unsafe to reorder memory ops\n");
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining on ";
+             LS.getOuterHeader()->printAsOperand(dbgs(), false);
+             dbgs() << "\n");
+  return performTransformation(LS, Overrides);
 }
 
 bool LoopStructure::analyzeLoopStructure() {
