@@ -69,6 +69,9 @@
 ; AIE-O0-NEXT:      Prologue/Epilogue Insertion & Frame Finalization
 ; AIE-O0-NEXT:      Post-RA pseudo instruction expansion pass
 ; AIE-O0-NEXT:      Remove dead machine instructions
+; AIE-O0-NEXT:      MachineDominator Tree Construction
+; AIE-O0-NEXT:      Machine Natural Loop Construction
+; AIE-O0-NEXT:      Machine LICM for reserved regs
 ; AIE-O0-NEXT:      AIE pseudo branch expansion
 ; AIE-O0-NEXT:      MachineDominator Tree Construction
 ; AIE-O0-NEXT:      Machine Natural Loop Construction
@@ -216,7 +219,6 @@
 ; AIE-O1-NEXT:      Machine Block Frequency Analysis
 ; AIE-O1-NEXT:      Function Alias Analysis Results
 ; AIE-O1-NEXT:      Early Machine Loop Invariant Code Motion
-; AIE-O1-NEXT:      Machine LICM for reserved regs
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Machine Block Frequency Analysis
 ; AIE-O1-NEXT:      Machine Common Subexpression Elimination
@@ -293,6 +295,7 @@
 ; AIE-O1-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O1-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O1-NEXT:      AIE Hardware Loops pass
+; AIE-O1-NEXT:      Machine LICM for reserved regs
 ; AIE-O1-NEXT:      AIE pseudo branch expansion
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Machine Natural Loop Construction
@@ -440,7 +443,6 @@
 ; AIE-O23-NEXT:      Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Function Alias Analysis Results
 ; AIE-O23-NEXT:      Early Machine Loop Invariant Code Motion
-; AIE-O23-NEXT:      Machine LICM for reserved regs
 ; AIE-O23-NEXT:      MachineDominator Tree Construction
 ; AIE-O23-NEXT:      Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Machine Common Subexpression Elimination
@@ -525,6 +527,7 @@
 ; AIE-O23-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O23-NEXT:      AIE Hardware Loops pass
+; AIE-O23-NEXT:      Machine LICM for reserved regs
 ; AIE-O23-NEXT:      AIE pseudo branch expansion
 ; AIE-O23-NEXT:      MachineDominator Tree Construction
 ; AIE-O23-NEXT:      Machine Natural Loop Construction

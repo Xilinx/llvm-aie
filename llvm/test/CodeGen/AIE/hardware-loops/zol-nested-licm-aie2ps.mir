@@ -20,14 +20,14 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p2 = MOVXM_lng_cg %bb.1
+  ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+  ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_1120>, implicit-def $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p2, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $lc = ADD_NC_add_lc_ri $r1, 0
-  ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
-  ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_1120>, implicit-def $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)

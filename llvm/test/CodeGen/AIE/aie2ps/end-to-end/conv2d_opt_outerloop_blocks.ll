@@ -51,7 +51,7 @@ declare i1 @llvm.loop.decrement.i32(i32) #3
 define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, ptr %psum_1_tdm, ptr %ifm, ptr %add.ptr.i, <64 x i8> %1, i32 %conv10.i, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i32 %7, i32 %or25.i.i.i, i32 %8, i20 %9, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i20 %17, i20 %18, i20 %19, i32 %conv91.i, i32 %20, i20 %idx.ext.i216.i, i20 %21, i20 %22, i20 %23, i32 %or22.i.i.i) #4 {
 ; CHECK-LABEL: conv2d:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64; nopx
+; CHECK-NEXT:    paddxm [sp], #64; nopxm
 ; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova m0, #-68; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0
@@ -72,14 +72,14 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; CHECK-NEXT:    lda dn2, [p6], #-4
 ; CHECK-NEXT:    lda dn6, [p6], #-4
 ; CHECK-NEXT:    lda r17, [p6], #-4
-; CHECK-NEXT:    lda m3, [p6], #-4
+; CHECK-NEXT:    lda m3, [p6], #-4; or r22, r12, r12; mov s0, r1
 ; CHECK-NEXT:    lda dj3, [p6, #0]; movx r30, #63; mov dc7, #0
 ; CHECK-NEXT:    lda dn3, [p6, #-4]; movs p6, p1; movx r25, #0; mov p1, p4
-; CHECK-NEXT:    movs dc0, dc7; vldb.popx x10, [p1, lf1, r25]; mov dc4, dc7
-; CHECK-NEXT:    vldb.pop.3d x1, [p1, lf1, r25, d0]; mov r22, r12
-; CHECK-NEXT:    or r19, r8, r8; mov s0, r1
-; CHECK-NEXT:    mova r16, #5; or r21, r10, r10; mov s1, r5
-; CHECK-NEXT:    mova r18, #16; vldb.128 wl4, [p5, #16]; or r10, r3, r3; mov srssign0, r6
+; CHECK-NEXT:    movs dc0, dc7; vldb.popx x10, [p1, lf1, r25]; or r19, r8, r8; mov dc4, dc7
+; CHECK-NEXT:    vldb.pop.3d x1, [p1, lf1, r25, d0]; or r21, r10, r10; mov s1, r5
+; CHECK-NEXT:    or r10, r3, r3; mov srssign0, r6
+; CHECK-NEXT:    mova r16, #5; movxm ls, #.LBB0_2
+; CHECK-NEXT:    mova r18, #16; vldb.128 wl4, [p5, #16]; movxm le, #.L_LEnd1
 ; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movs dc3, dc7; or r8, r7, r7; mov dc6, dc7
 ; CHECK-NEXT:    mova r12, #264; vldb.128 wl2, [p5, #0]; add r0, r0, #-1; mov dc5, dc7; movs dc2, dc7
 ; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x8, [p0, #0]; movx crupsmode, #0; addm.nc r1, r0, #-1; movs dc1, dc7
@@ -88,13 +88,13 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
-; CHECK-NEXT:    nopa ; vldb.popx x10, [p1, lf1, r25]; nops ; nopxm ; nopv
+; CHECK-NEXT:    vldb.popx x10, [p1, lf1, r25]; nopx
 ; CHECK-NEXT:    vldb.pop.3d x8, [p1, lf1, r25, d0]
 ; CHECK-NEXT:    vldb.popx x10, [p1, lf1, r25]; mov p7, p0
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; vmul dm2, x0, x2, r12
-; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p1, lf1, r25]; add.nc lc, r4, #-6; padds [p7], #128; vmul dm3, x0, x4, r12
-; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; movxm ls, #.LBB0_2; vaddmac dm1, dm1, dm2, x10, x8, r10
-; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p7], #128; movxm le, #.L_LEnd1; vaddmac dm0, dm0, dm3, x10, x6, r10
+; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p7], #128; vmul dm3, x0, x4, r12
+; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; vaddmac dm1, dm1, dm2, x10, x8, r10
+; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p7], #128; add.nc lc, r4, #-6; nopm ; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p7], #128; nopxm ; nopv
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x2, x10, x8, r2; nopv
@@ -167,7 +167,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ;
 ; NO-PROLOGUE-SPLIT-LABEL: conv2d:
 ; NO-PROLOGUE-SPLIT:       // %bb.0: // %newFuncRoot
-; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #64; nopb ; nopxm ; nops
+; NO-PROLOGUE-SPLIT-NEXT:    paddxm [sp], #64; nopb ; nops ; nopxm ; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:    mova m0, #-68; mov p6, sp
 ; NO-PROLOGUE-SPLIT-NEXT:    padda [p6], m0
@@ -188,17 +188,17 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn2, [p6], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn6, [p6], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda r17, [p6], #-4
-; NO-PROLOGUE-SPLIT-NEXT:    lda m3, [p6], #-4
+; NO-PROLOGUE-SPLIT-NEXT:    lda m3, [p6], #-4; mov s0, r1
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj3, [p6, #0]; movx r30, #63; mov dc7, #0
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn3, [p6, #-4]; movs p6, p1; movx r25, #0; mov p1, p4
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl2, [p5, #0]; vldb.popx x4, [p1, lf1, r25]; movs dc0, dc7; mov dc4, dc7
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl8, [p5, #16]; vldb.pop.3d x6, [p1, lf1, r25, d0]
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p0, #64]; mov s0, r1
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2, #0]; mov s1, r5
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl8, [p5, #16]; vldb.pop.3d x6, [p1, lf1, r25, d0]; mov s1, r5
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p0, #64]; mov srssign0, r6
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2, #0]; movxm ls, #.LBB0_2
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3, #0]; vldb x10, [p0, #0]; mov r21, r10
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2, #64]; or r10, r3, r3; mov r3, p5
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #64]; mov p5, p2
-; NO-PROLOGUE-SPLIT-NEXT:    st p7, [sp, #-60]; add r0, r0, #-1; mov srssign0, r6 // 4-byte Folded Spill
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #64]; add r0, r0, #-1; mov p5, p2
+; NO-PROLOGUE-SPLIT-NEXT:    st p7, [sp, #-60]; movxm le, #.L_LEnd1 // 4-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:    mova r12, #264; movs p7, p0; or r22, r12, r12; mov dc3, dc7
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc6, dc7; movx crupsmode, #0; vshuffle x2, x4, x6, r2; vmul dm2, x0, x2, r12
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc2, dc7; or r19, r8, r8; addm.nc r1, r0, #-1; vmul dm3, x0, x8, r12
@@ -207,13 +207,13 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %for.body.i
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    // Child Loop BB0_2 Depth 2
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb.popx x10, [p1, lf1, r25]; nopx
-; NO-PROLOGUE-SPLIT-NEXT:    vldb.pop.3d x8, [p1, lf1, r25, d0]
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb.popx x10, [p1, lf1, r25]; nops ; nopxm ; nopv
+; NO-PROLOGUE-SPLIT-NEXT:    vldb.pop.3d x8, [p1, lf1, r25, d0]; nopx
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb.popx x10, [p1, lf1, r25]; mov p0, p7
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; add.nc lc, r4, #-6; padds [p0], #128
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; movxm ls, #.LBB0_2
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; movxm le, #.L_LEnd1; nopv
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; add.nc lc, r4, #-6; nopm ; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopxm ; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; nopxm ; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; padds [p5], #128; nopx ; vshuffle x2, x10, x8, r2; nopv
@@ -286,7 +286,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ;
 ; NO-JNZD-LABEL: conv2d:
 ; NO-JNZD:       // %bb.0: // %newFuncRoot
-; NO-JNZD-NEXT:    paddxm [sp], #64; nopb ; nopxm ; nops
+; NO-JNZD-NEXT:    paddxm [sp], #64
 ; NO-JNZD-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; NO-JNZD-NEXT:    mova m0, #-68; mov p6, sp
 ; NO-JNZD-NEXT:    padda [p6], m0
@@ -311,11 +311,11 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-JNZD-NEXT:    lda dj3, [p6, #0]; movx r30, #63; mov dc7, #0
 ; NO-JNZD-NEXT:    lda dn3, [p6, #-4]; movs p6, p1; movx r25, #0; mov p1, p4
 ; NO-JNZD-NEXT:    movs dc0, dc7; vldb.popx x10, [p1, lf1, r25]; mov dc4, dc7
-; NO-JNZD-NEXT:    vldb.pop.3d x1, [p1, lf1, r25, d0]
-; NO-JNZD-NEXT:    movx r18, #5
-; NO-JNZD-NEXT:    mova r20, #1; or r23, r12, r12; mov s0, r1
-; NO-JNZD-NEXT:    mova r22, #16; vldb.128 wl4, [p5, #16]; or r19, r8, r8; mov s1, r5
-; NO-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; or r21, r10, r10; mov srssign0, r6
+; NO-JNZD-NEXT:    mova r18, #5; vldb.pop.3d x1, [p1, lf1, r25, d0]; or r23, r12, r12; mov s0, r1
+; NO-JNZD-NEXT:    or r19, r8, r8; mov s1, r5
+; NO-JNZD-NEXT:    mova r20, #1; or r21, r10, r10; mov srssign0, r6
+; NO-JNZD-NEXT:    mova r22, #16; vldb.128 wl4, [p5, #16]; movxm ls, #.LBB0_2
+; NO-JNZD-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; movxm le, #.L_LEnd1
 ; NO-JNZD-NEXT:    mova r12, #264; vldb.128 wl2, [p5, #0]; or r10, r3, r3; mov dc3, dc7
 ; NO-JNZD-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x8, [p0, #0]; or r8, r7, r7; mov dc2, dc7; movs dc6, dc7
 ; NO-JNZD-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; movs dc5, dc7; movx crupsmode, #0; mov dc1, dc7
@@ -323,13 +323,13 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-JNZD-NEXT:  .LBB0_1: // %for.body.i
 ; NO-JNZD-NEXT:    // =>This Loop Header: Depth=1
 ; NO-JNZD-NEXT:    // Child Loop BB0_2 Depth 2
-; NO-JNZD-NEXT:    nopa ; vldb.popx x10, [p1, lf1, r25]; nops ; nopxm ; nopv
+; NO-JNZD-NEXT:    vldb.popx x10, [p1, lf1, r25]; nopx
 ; NO-JNZD-NEXT:    vldb.pop.3d x8, [p1, lf1, r25, d0]
 ; NO-JNZD-NEXT:    vldb.popx x10, [p1, lf1, r25]; mov p4, p0
 ; NO-JNZD-NEXT:    vlda x6, [p4, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; vmul dm2, x0, x2, r12
-; NO-JNZD-NEXT:    vlda x4, [p4, #192]; vldb.popx x10, [p1, lf1, r25]; add.nc lc, r4, #-6; padds [p4], #128; vmul dm3, x0, x4, r12
-; NO-JNZD-NEXT:    vlda x6, [p4, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; movxm ls, #.LBB0_2; vaddmac dm1, dm1, dm2, x10, x8, r10
-; NO-JNZD-NEXT:    vlda x4, [p4, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p4], #128; movxm le, #.L_LEnd1; vaddmac dm0, dm0, dm3, x10, x6, r10
+; NO-JNZD-NEXT:    vlda x4, [p4, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p4], #128; vmul dm3, x0, x4, r12
+; NO-JNZD-NEXT:    vlda x6, [p4, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; vaddmac dm1, dm1, dm2, x10, x8, r10
+; NO-JNZD-NEXT:    vlda x4, [p4, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p4], #128; add.nc lc, r4, #-6; nopm ; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; NO-JNZD-NEXT:    vlda x6, [p4, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopxm ; nopv
 ; NO-JNZD-NEXT:    vlda x4, [p4, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p4], #128; nopxm ; nopv
 ; NO-JNZD-NEXT:    vlda x6, [p4, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x2, x10, x8, r2; nopv

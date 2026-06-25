@@ -24,6 +24,8 @@ body:             |
   ; CHECK-NEXT:   renamable $r0 = ADD_NC killed renamable $r0, -1
   ; CHECK-NEXT:   renamable $r4 = MOV_RLC_imm10_pseudo 2
   ; CHECK-NEXT:   renamable $p2 = MOVXM_lng_cg %bb.1
+  ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
+  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1 (align 16):
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
@@ -33,8 +35,6 @@ body:             |
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r5
   ; CHECK-NEXT:   renamable $p3 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0 :: (load (p0), align 4)
   ; CHECK-NEXT:   $lc = ADD_NC $r1, 0
-  ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
-  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   renamable $r5 = MOV_RLC_imm10_pseudo 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):

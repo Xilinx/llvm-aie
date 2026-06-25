@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 -enable-aie-zol-without-minitercount=false %s -o - | FileCheck %s
 ; RUN: opt -mtriple=aie2 -passes=aa-eval -print-all-alias-modref-info -disable-output < %s 2>&1 | FileCheck %s --check-prefix=AA
@@ -51,9 +51,9 @@ declare <16 x i64> @llvm.aie2.v32acc32()
 define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_ptr, %struct.mul2d_params %params.coerce) {
 ; CHECK-LABEL: mul2d:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #2; nopb ; extend.u16 r1, r4; nopm ; nops
-; CHECK-NEXT:    ltu r0, r1, r0
-; CHECK-NEXT:    jnz r0, #.LBB0_5
+; CHECK-NEXT:    nopb ; mova r1, #2; nops ; extend.u16 r0, r4; nopm ; nopv
+; CHECK-NEXT:    ltu r1, r0, r1
+; CHECK-NEXT:    jnz r1, #.LBB0_4
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -62,48 +62,41 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
 ; CHECK-NEXT:    mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-4
-; CHECK-NEXT:    lda.u8 r0, [p3], #-4
+; CHECK-NEXT:    lda.u8 r2, [p3], #-4
 ; CHECK-NEXT:    lda dj0, [p3], #-4
 ; CHECK-NEXT:    lda dj4, [p3], #-4
 ; CHECK-NEXT:    lda dn0, [p3], #-4
 ; CHECK-NEXT:    lda dn4, [p3, #0]
-; CHECK-NEXT:    lda m0, [p3, #-4]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r4, #-1
-; CHECK-NEXT:    mova dc0, #0; vldb wl8, [p1], #32; lshl r1, r1, r4
-; CHECK-NEXT:    vldb wl2, [p1], #32; add r1, r1, #-1; mov dc4, dc0
-; CHECK-NEXT:    vldb.3d wl6, [p0], d0; jz r1, #.LBB0_4
-; CHECK-NEXT:    vldb.3d wl4, [p0], d0 // Delay Slot 5
-; CHECK-NEXT:    extend.u8 r5, r5 // Delay Slot 4
-; CHECK-NEXT:    mova r3, #0; movx r2, #1; mov s0, r5 // Delay Slot 3
-; CHECK-NEXT:    ne r2, r0, r2; vbcst.8 x0, r3 // Delay Slot 2
-; CHECK-NEXT:    mova r0, #808; mov crSRSSign, r2 // Delay Slot 1
-; CHECK-NEXT:  // %bb.2:
-; CHECK-NEXT:    vmov wh6, wl0
-; CHECK-NEXT:    vmov wh4, wl0
-; CHECK-NEXT:  .LBB0_3: // %for.body
+; CHECK-NEXT:    mova dc0, #0; extend.u8 r5, r5
+; CHECK-NEXT:    lda m0, [p3, #-4]; mov s0, r5
+; CHECK-NEXT:    mova r4, #0; mov dc4, dc0
+; CHECK-NEXT:    vbcst.8 x0, r4
+; CHECK-NEXT:    mova r3, #1; vmov wh6, wl0
+; CHECK-NEXT:    mova r1, #-1; ne r2, r2, r3; vmov wh2, wl0
+; CHECK-NEXT:    mova r1, #808; lshl r0, r0, r1; mov crSRSSign, r2
+; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vldb wl8, [p1], #32; nopxm
-; CHECK-NEXT:    vldb.3d wl6, [p0], d0; add r1, r1, #-1; vmul cm1, x6, x8, r0
-; CHECK-NEXT:    vldb.3d wl4, [p0], d0; jnz r1, #.LBB0_3; vmul cm0, x4, x2, r0
-; CHECK-NEXT:    vldb wl2, [p1], #32 // Delay Slot 5
+; CHECK-NEXT:    vldb wl2, [p1], #32; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vldb.3d wl6, [p0], d0; nopx
+; CHECK-NEXT:    vldb wl4, [p1], #32
+; CHECK-NEXT:    vldb.3d wl2, [p0], d0
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    add r0, r0, #-1; vmul cm0, x6, x2, r1
+; CHECK-NEXT:    jnz r0, #.LBB0_2; vmul cm1, x2, x4, r1
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32 // Delay Slot 2
-; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32 // Delay Slot 1
-; CHECK-NEXT:  .LBB0_4:
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wh6, wl0; nopv
-; CHECK-NEXT:    nopa ; vmov wh4, wl0
-; CHECK-NEXT:    vmul cm0, x6, x8, r0
-; CHECK-NEXT:    vmul cm1, x4, x2, r0
+; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32 // Delay Slot 2
+; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32 // Delay Slot 1
+; CHECK-NEXT:  // %bb.3:
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32
-; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32; mov crSRSSign, #0
-; CHECK-NEXT:  .LBB0_5: // %for.cond.cleanup
+; CHECK-NEXT:    mov crSRSSign, #0
+; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

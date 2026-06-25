@@ -25,46 +25,42 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_loop
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.2(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.2:
     successors: %bb.2(0x7c000000), %bb.1(0x04000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.2
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.1
+
 ...
 
 # Similar to above, but the loop has no dedicated exit.
@@ -75,57 +71,56 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_loop_no_dedicated_exit
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.3, %bb.1
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.3
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.3:
     successors: %bb.2
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
 
   bb.2:
     successors: %bb.2, %bb.1
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.2
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.1
+
 ...
 
 ---
@@ -135,61 +130,60 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_nested_loop
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.4(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.2
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.3
 
   bb.3:
-    PseudoJNZ %0, %bb.1
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.4
 
   bb.4:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
 ...
@@ -202,48 +196,44 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_loop_clobber
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJL 32, CustomRegMask($lr,$p0,$r0,$r1,$r2,$r3), implicit-def $lr
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.2(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.2:
     successors: %bb.2(0x7c000000), %bb.1(0x04000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
     PseudoJL 32, CustomRegMask($lr,$p0,$r0,$r1,$r2,$r3), implicit-def $lr
-    PseudoJNZ %0, %bb.2
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.1
+
 ...
 
 # $srssign0 has different live values within the loop, no hoisting
@@ -254,48 +244,44 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_different_assign
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_1:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.2(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.2:
     successors: %bb.2(0x7c000000), %bb.1(0x04000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    %6:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-    PseudoJNZ %0, %bb.2
+    $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.1
+
 ...
 
 # Verify that non-reserved physical registers aren't considered for LICM
@@ -308,34 +294,36 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $r0, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:mxs = COPY $x0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $r0, $x0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $r0, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $x0 = COPY [[COPY1]]
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   $x0 = COPY $x0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.2(0x80000000)
     liveins: $r0, $x0
-    %0:er = COPY $r0
-    %1:mxs = COPY $x0
     PseudoJ_jump_imm %bb.2
 
   bb.1:
+    liveins: $r0, $x0
     PseudoRET implicit $lr
 
   bb.2:
     successors: %bb.2(0x7c000000), %bb.1(0x04000000)
-    $x0 = COPY %1
-    PseudoJNZ %0, %bb.2
+    liveins: $r0, $x0
+    $x0 = COPY $x0
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.1
+
 ...
 
 # The latch (bb.3) defines $srssign0 = MOVX 0 but is NOT the exiting block.
@@ -349,64 +337,64 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_latch_vs_exiting_no_sink
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x80000000)
-    $srssign0 = COPY %2
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
     PseudoJ_jump_imm %bb.2
 
   bb.2:
     successors: %bb.3(0x7c000000), %bb.4(0x04000000)
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    PseudoJNZ $r0, %bb.3
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.1(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
     PseudoJ_jump_imm %bb.1
 
   bb.4:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 
 # $srssign0 is used in one conditional branch (bb.2) but defined in the other
@@ -416,79 +404,82 @@ body:             |
 # collectLoopReservedLiveins detects this for hoist; sink is blocked by
 # isRegLiveInAtInLoopSuccessor on the continue edge to the header (bb.4→bb.1),
 # not by a separate header live-in test in processForExitSink.
+---
 name:            srs_dyn_sign_cond_livein_opposite_branch
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_livein_opposite_branch
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x40000000), %bb.3(0x40000000)
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.3
 
   bb.2:
     successors: %bb.4(0x80000000)
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.4(0x80000000)
-    $srssign0 = COPY %2
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.1
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.5
 
   bb.5:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 
 # $srssign0 is defined in one conditional branch (bb.2) but not the other
@@ -503,73 +494,75 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_skipdef_latch_use_before_def
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x40000000), %bb.3(0x40000000)
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.3
 
   bb.2:
     successors: %bb.4(0x80000000)
-    $srssign0 = COPY %2
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.4(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.1(0x7c000000), %bb.5(0x04000000)
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.1
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.5
 
   bb.5:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 # bb.1 is the header; bb.3 is the latch (COPY + VSRS); bb.2 is the exiting block
 # with only MOVX on the direct exit path (no VSRS use before the def). The header
@@ -583,66 +576,66 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_exiting_block_hoist_sink
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.1
 
     bb.1:
       successors: %bb.2(0x04000000), %bb.3(0x7c000000)
-      PseudoJNZ %0, %bb.3
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.3
       PseudoJ_jump_imm %bb.2
 
     bb.2:
       successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.3
+      PseudoJNZ $r0, %bb.3
       PseudoJ_jump_imm %bb.4
 
     bb.3:
       successors: %bb.1(0x80000000)
-      $srssign0 = COPY %2
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       PseudoJ_jump_imm %bb.1
 
     bb.4:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
+
 ...
 
 # Side-block COPY could hoist to preheader; MOVX must stay in bb.4 (bb.4→bb.3 continue
@@ -656,75 +649,77 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_side_block_hoist_no_sink
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.5(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.1
 
     bb.1:
       successors: %bb.2(0x7c000000), %bb.4(0x04000000)
-      PseudoJNZ %0, %bb.2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.2
       PseudoJ_jump_imm %bb.4
 
     bb.2:
       successors: %bb.3(0x80000000)
-      $srssign0 = COPY %2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
       PseudoJ_jump_imm %bb.3
 
     bb.3:
       successors: %bb.1(0x80000000)
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       PseudoJ_jump_imm %bb.1
 
     bb.4:
       successors: %bb.3(0x7c000000), %bb.5(0x04000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.3
+      PseudoJNZ $r0, %bb.3
       PseudoJ_jump_imm %bb.5
 
     bb.5:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
+
 ...
 
 # Multi-block loop like exiting_block_sink, but CustomRegMask in the latch (bb.3)
@@ -737,66 +732,66 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_multiblock_clobber
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJL 32, CustomRegMask($lr,$p0,$r0,$r1,$r2,$r3), implicit-def $lr
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.1
 
     bb.1:
       successors: %bb.2(0x04000000), %bb.3(0x7c000000)
-      PseudoJNZ %0, %bb.3
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.3
       PseudoJ_jump_imm %bb.2
 
     bb.2:
       successors: %bb.4(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       $srssign0 = MOVX_mvx_cr_imm 0
       PseudoJ_jump_imm %bb.4
 
     bb.3:
       successors: %bb.1(0x80000000)
-      $srssign0 = COPY %2
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       PseudoJL 32, CustomRegMask($lr,$p0,$r0,$r1,$r2,$r3), implicit-def $lr
       PseudoJ_jump_imm %bb.1
 
     bb.4:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
+
 ...
 
 # bb.0 and bb.5 are both outside preds of loop header bb.2; there is no single
@@ -809,57 +804,53 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_no_preheader
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
     bb.0:
       successors: %bb.2(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.2
 
     bb.5:
       successors: %bb.2(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.2
 
     bb.1:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
 
     bb.2:
       successors: %bb.2(0x7c000000), %bb.1(0x04000000)
-      $srssign0 = COPY %2
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.2
+      PseudoJNZ $r0, %bb.2
       PseudoJ_jump_imm %bb.1
+
 ...
 
 # The loop has two distinct exit blocks (bb.1 and bb.3). getExitBlock() is null,
@@ -872,54 +863,53 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_multiple_exit_blocks
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x54000000), %bb.1(0x28000000), %bb.3(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.2(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.2:
     successors: %bb.2(0x54000000), %bb.1(0x28000000), %bb.3(0x04000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.2
-    PseudoJNZ %0, %bb.1
+    PseudoJNZ $r0, %bb.2
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.3
 
   bb.3:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 # bb.2 and bb.3 are both latches (back-edges to header bb.1); exit is only from
 # bb.1. runOnLoop returns early when !L.getLoopLatch().
@@ -931,72 +921,72 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_multi_latch
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x3d70a3d7), %bb.3(0x3d70a3d7), %bb.4(0x051eb852)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_1:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.1
 
     bb.1:
       successors: %bb.2(0x30000000), %bb.3(0x30000000), %bb.4(0x04000000)
-      PseudoJNZ %0, %bb.3
-      PseudoJNZ %0, %bb.2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.3
+      PseudoJNZ $r0, %bb.2
       PseudoJ_jump_imm %bb.4
 
     bb.2:
       successors: %bb.1(0x80000000)
-      $srssign0 = COPY %2
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $srssign0 = MOVX_mvx_cr_imm 0
       PseudoJ_jump_imm %bb.1
 
     bb.3:
       successors: %bb.1(0x80000000)
-      $srssign0 = COPY %2
-      %6:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $srssign0 = MOVX_mvx_cr_imm 0
       PseudoJ_jump_imm %bb.1
 
     bb.4:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
+
 ...
 
 # bb.5 is the preheader; exit bb.1 also has pred bb.0 (no dedicated exit). The
@@ -1010,55 +1000,53 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_unsplittable_critical_edge
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.1(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
     bb.0:
       successors: %bb.5(0x40000000), %bb.1(0x40000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
-      PseudoJNZ %0, %bb.5
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.5
 
     bb.1:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
 
     bb.5:
       successors: %bb.2(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.2
 
     bb.2:
       successors: %bb.2(0x40000000), %bb.1(0x40000000)
-      $srssign0 = COPY %2
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.2
-      PseudoJNZ %0, %bb.1
+      PseudoJNZ $r0, %bb.2
+      PseudoJNZ $r0, %bb.1
+
 ...
 
 # Like srs_dyn_sign_loop_no_dedicated_exit but multi-block: COPY@bb.4, VSRS@bb.5
@@ -1072,84 +1060,88 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_multiblock_no_dedicated_exit
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.6(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.4
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.6
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.6:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.5
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.5
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
     bb.0:
       successors: %bb.2(0x40000000), %bb.1(0x40000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
-      PseudoJNZ %0, %bb.2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.2
 
     bb.1:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
 
     bb.2:
       successors: %bb.3(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.3
 
     bb.3:
       successors: %bb.4(0x7c000000), %bb.6(0x04000000)
-      PseudoJNZ %0, %bb.4
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.4
       PseudoJ_jump_imm %bb.6
 
     bb.4:
       successors: %bb.5(0x80000000)
-      $srssign0 = COPY %2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
       PseudoJ_jump_imm %bb.5
 
     bb.5:
       successors: %bb.3(0x80000000)
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       PseudoJ_jump_imm %bb.3
 
     bb.6:
       successors: %bb.5(0x7c000000), %bb.1(0x04000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.5
+      PseudoJNZ $r0, %bb.5
       PseudoJ_jump_imm %bb.1
+
 ...
 
 # Similar to multiblock_no_dedicated_exit but
@@ -1163,84 +1155,88 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_multiblock_exiting_vsrs_movx
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.6(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.4
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.6
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.6:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.5
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.5
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
     bb.0:
       successors: %bb.2(0x40000000), %bb.1(0x40000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
-      PseudoJNZ %0, %bb.2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.2
 
     bb.1:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
 
     bb.2:
       successors: %bb.3(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.3
 
     bb.3:
       successors: %bb.4(0x7c000000), %bb.6(0x04000000)
-      PseudoJNZ %0, %bb.4
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.4
       PseudoJ_jump_imm %bb.6
 
     bb.4:
       successors: %bb.5(0x80000000)
-      $srssign0 = COPY %2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
       PseudoJ_jump_imm %bb.5
 
     bb.5:
       successors: %bb.3(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.3
 
     bb.6:
       successors: %bb.5(0x7c000000), %bb.1(0x04000000)
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.5
+      PseudoJNZ $r0, %bb.5
       PseudoJ_jump_imm %bb.1
+
 ...
 
 # Outer loop hoists COPY to bb.0 and sinks MOVX to bb.5. Inner loop spans bb.2 and
@@ -1254,77 +1250,79 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_nested_multiblock_inner
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.5(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.1
 
     bb.1:
       successors: %bb.2(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.2
 
     bb.2:
       successors: %bb.6(0x40000000), %bb.3(0x40000000)
-      $srssign0 = COPY %2
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.6
+      PseudoJNZ $r0, %bb.6
       PseudoJ_jump_imm %bb.3
 
     bb.6:
       successors: %bb.2(0x80000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.2
 
     bb.3:
       successors: %bb.1(0x40000000), %bb.4(0x40000000)
-      PseudoJNZ %0, %bb.1
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.1
       PseudoJ_jump_imm %bb.4
 
     bb.4:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       $srssign0 = MOVX_mvx_cr_imm 0
       PseudoRET implicit $lr
+
 ...
 
 # $srssign0 uses the exiting-block sink pattern; $crsat has two defs in the latch
@@ -1337,70 +1335,70 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_two_reserved_regs
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $crsat = MOVX_mvx_cr_imm 1
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $crsat = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
-      liveins: $p0, $r0, $r1, $dm0, $s0
-      %0:er = COPY $r0
-      %1:ep = COPY $p0
-      %2:er = COPY $r1
-      %3:edm = COPY $dm0
-      %4:es = COPY $s0
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoJ_jump_imm %bb.1
 
     bb.1:
       successors: %bb.2(0x04000000), %bb.3(0x7c000000)
-      PseudoJNZ %0, %bb.3
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      PseudoJNZ $r0, %bb.3
       PseudoJ_jump_imm %bb.2
 
     bb.2:
       successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       $srssign0 = MOVX_mvx_cr_imm 0
-      PseudoJNZ %0, %bb.3
+      PseudoJNZ $r0, %bb.3
       PseudoJ_jump_imm %bb.4
 
     bb.3:
       successors: %bb.1(0x80000000)
-      $srssign0 = COPY %2
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+      $srssign0 = COPY $r1
       $crsat = MOVX_mvx_cr_imm 1
-      %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+      $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
       $crsat = MOVX_mvx_cr_imm 0
       PseudoJ_jump_imm %bb.1
 
     bb.4:
+      liveins: $x0, $p0, $r0, $r1, $dm0, $s0
       PseudoRET implicit $lr
+
 ...
 
 # Complement of srs_dyn_sign_cond_latch_vs_exiting_no_sink: MOVX in exiting block,
@@ -1412,64 +1410,64 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_exiting_movx_latch_vsrs
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x80000000)
-    $srssign0 = COPY %2
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
     PseudoJ_jump_imm %bb.2
 
   bb.2:
     successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.3
+    PseudoJNZ $r0, %bb.3
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.1(0x80000000)
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     PseudoJ_jump_imm %bb.1
 
   bb.4:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 
 # COPY+VSRS in bb.2; MOVX already in exit bb.5. bb.3 skips bb.2, so $srssign0 is
@@ -1482,73 +1480,75 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_hoist_sink_same_branch
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x40000000), %bb.3(0x40000000)
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.3
 
   bb.2:
     successors: %bb.4(0x80000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.4(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.1(0x7c000000), %bb.5(0x04000000)
-    PseudoJNZ %0, %bb.1
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.5
 
   bb.5:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
     PseudoRET implicit $lr
+
 ...
 
 # Same diamond as srs_dyn_sign_cond_livein_opposite_branch but MOVX on exit-only
@@ -1560,73 +1560,75 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_livein_exit_path_sink
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.5(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x40000000), %bb.3(0x40000000)
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.3
 
   bb.2:
     successors: %bb.4(0x80000000)
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.4(0x80000000)
-    $srssign0 = COPY %2
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.1(0x7c000000), %bb.5(0x04000000)
-    PseudoJNZ %0, %bb.1
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.5
 
   bb.5:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
     PseudoRET implicit $lr
+
 ...
 
 # COPY+VSRS both reach merge bb.4; MOVX on exit.
@@ -1638,82 +1640,86 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_merge_def_use
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.6(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.6
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.6:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x40000000), %bb.3(0x40000000)
-    PseudoJNZ %0, %bb.3
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.3
 
   bb.2:
     successors: %bb.4(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.4
 
   bb.3:
     successors: %bb.4(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.5(0x80000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     PseudoJ_jump_imm %bb.5
 
   bb.5:
     successors: %bb.1(0x7c000000), %bb.6(0x04000000)
-    PseudoJNZ %0, %bb.1
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.6
 
   bb.6:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
     PseudoRET implicit $lr
+
 ...
 
 # Like srs_dyn_sign_loop, but bb.0 can skip the loop: branch to bb.4 (exit) or
@@ -1729,63 +1735,64 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_cond_latch_is_exit
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.4(0x40000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.4
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.3(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x40000000), %bb.4(0x40000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
-    PseudoJNZ %0, %bb.4
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.4
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.2:
     successors: %bb.1(0x7c000000), %bb.3(0x04000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.1
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.3
 
   bb.3:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.4:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 
 # Two sibling inner loops with separate $r1 and $r2 invariants.
@@ -1799,103 +1806,107 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_two_inner_loops
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $r2
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY4]], [[COPY5]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY3]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_1:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY4]], [[COPY5]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.5
+  ; CHECK-NEXT:   $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.5
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.6
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.6:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.7(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $r2, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %6:er = COPY $r2
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.2(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.2:
     successors: %bb.3(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
     PseudoJ_jump_imm %bb.3
 
   bb.3:
     successors: %bb.3(0x7c000000), %bb.4(0x04000000)
-    $srssign0 = COPY %2
-    %7:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.3
+    PseudoJNZ $r0, %bb.3
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.5(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
     PseudoJ_jump_imm %bb.5
 
   bb.5:
     successors: %bb.5(0x7c000000), %bb.6(0x04000000)
-    $srssign0 = COPY %6
-    %8:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
+    $srssign0 = COPY $r2
+    $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.5
+    PseudoJNZ $r0, %bb.5
     PseudoJ_jump_imm %bb.6
 
   bb.6:
     successors: %bb.1(0x7c000000), %bb.7(0x04000000)
-    PseudoJNZ %0, %bb.1
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
+    PseudoJNZ $r0, %bb.1
     PseudoJ_jump_imm %bb.7
 
   bb.7:
+    liveins: $x0, $p0, $r0, $r1, $r2, $dm0, $s0
     PseudoRET implicit $lr
+
 ...
 
 # Outer loop with header skip around nested inner loop.
@@ -1909,77 +1920,79 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_outer_if_inner_loop
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.5(0x04000000), %bb.2(0x7c000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.5
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.5
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT:   $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
     successors: %bb.5(0x04000000), %bb.2(0x7c000000)
-    PseudoJNZ %0, %bb.5
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    PseudoJNZ $r0, %bb.5
     PseudoJ_jump_imm %bb.2
 
   bb.2:
     successors: %bb.3(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.3
 
   bb.3:
     successors: %bb.3(0x7c000000), %bb.4(0x04000000)
-    $srssign0 = COPY %2
-    %6:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
-    PseudoJNZ %0, %bb.3
+    PseudoJNZ $r0, %bb.3
     PseudoJ_jump_imm %bb.4
 
   bb.4:
     successors: %bb.1(0x80000000)
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.1
 
   bb.5:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     $srssign0 = MOVX_mvx_cr_imm 0
     PseudoRET implicit $lr
+
 ...
 
 # Call-like regmask clobber (ABI preserved set without $srssign0).
@@ -1990,50 +2003,46 @@ body:             |
   ; CHECK-LABEL: name: srs_dyn_sign_real_call_clobber
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   PseudoRET implicit $lr
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.1(0x04000000)
+  ; CHECK-NEXT:   liveins: $x0, $p0, $r0, $r1, $dm0, $s0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
-  ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   $srssign0 = COPY $r1
+  ; CHECK-NEXT:   $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoJL 32, CustomRegMask($lr,$p0,$r0,$r1,$r2,$r3,$r4,$r5,$r6,$r7), implicit-def $lr
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT:   PseudoJNZ $r0, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.2(0x80000000)
-    liveins: $p0, $r0, $r1, $dm0, $s0
-    %0:er = COPY $r0
-    %1:ep = COPY $p0
-    %2:er = COPY $r1
-    %3:edm = COPY $dm0
-    %4:es = COPY $s0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoJ_jump_imm %bb.2
 
   bb.1:
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
     PseudoRET implicit $lr
 
   bb.2:
     successors: %bb.2(0x7c000000), %bb.1(0x04000000)
-    $srssign0 = COPY %2
-    %5:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 %3, %4, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    liveins: $x0, $p0, $r0, $r1, $dm0, $s0
+    $srssign0 = COPY $r1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     $srssign0 = MOVX_mvx_cr_imm 0
     ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     PseudoJL 32, CustomRegMask($lr,$p0,$r0,$r1,$r2,$r3,$r4,$r5,$r6,$r7), implicit-def $lr
     ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-    PseudoJNZ %0, %bb.2
+    PseudoJNZ $r0, %bb.2
     PseudoJ_jump_imm %bb.1
+
 ...

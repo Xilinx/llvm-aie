@@ -172,7 +172,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ;
 ; ZOL-LABEL: conv2d.loop.nest:
 ; ZOL:       // %bb.0: // %newFuncRoot
-; ZOL-NEXT:    paddb [sp], #160; nopa ; nops ; nopxm ; nopv
+; ZOL-NEXT:    paddb [sp], #160; nopx
 ; ZOL-NEXT:    st p6, [sp, #-16] // 4-byte Folded Spill
 ; ZOL-NEXT:    mov p6, sp
 ; ZOL-NEXT:    paddb [p6], #-164
@@ -189,7 +189,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    lda r13, [p6], #-4
 ; ZOL-NEXT:    lda dn1, [p6], #-4
 ; ZOL-NEXT:    lda dn5, [p6], #-4
-; ZOL-NEXT:    lda r14, [p6], #-4
+; ZOL-NEXT:    lda r14, [p6], #-4; movxm ls, #.LBB0_2
 ; ZOL-NEXT:    lda dj2, [p6], #-4; mov dj3, #0
 ; ZOL-NEXT:    lda dj6, [p6], #-4; mov s0, r0
 ; ZOL-NEXT:    lda dn2, [p6], #-4; mov s1, r1
@@ -209,12 +209,12 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vst wl0, [sp, #-160]; mov dj5, r13 // 32-byte Folded Spill
 ; ZOL-NEXT:    vst wh0, [sp, #-128]; mov m3, r15 // 32-byte Folded Spill
 ; ZOL-NEXT:    st m7, [sp, #-32] // 4-byte Folded Spill
-; ZOL-NEXT:    st dn7, [sp, #-28] // 4-byte Folded Spill
-; ZOL-NEXT:    mova r9, #31; st dj7, [sp, #-24]; movx r8, #11 // 4-byte Folded Spill
+; ZOL-NEXT:    mova r8, #11; st dn7, [sp, #-28] // 4-byte Folded Spill
+; ZOL-NEXT:    mova r9, #31; st dj7, [sp, #-24]; movxm le, #.L_LEnd0 // 4-byte Folded Spill
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopb ; nopxm ; nops
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopxm
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m7, p5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7
@@ -226,8 +226,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5; vldb wl7, [p0], m6
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; vldb.3d wh7, [p0], d0
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m7; vldb wl6, [p1], #32
-; ZOL-NEXT:    vldb wh6, [p1], #32; movxm ls, #.LBB0_2
-; ZOL-NEXT:    vldb wl8, [p1], #32; movxm le, #.L_LEnd0
+; ZOL-NEXT:    vldb wh6, [p1], #32
+; ZOL-NEXT:    vldb wl8, [p1], #32
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]; vldb wl5, [p0], m6; and r0, r0, r9; mov r1, p0
 ; ZOL-NEXT:    vlda wh8, [p1], #32; vldb wh5, [p0], m6; add r0, r0, #33
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5; vldb wl3, [p0], m6; vshift.align x4, x4, s1, x3, r0

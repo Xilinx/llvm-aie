@@ -43,8 +43,8 @@ declare i1 @llvm.loop.decrement.i32(i32) #3
 define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr %ifm, i32 %cond88.i, i20 %idx.ext.i.i, i20 %idx.ext.i330.i, i20 %idx.ext.i334.i, i32 %1, i20 %idx.ext.i338.i, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i20 %7, i20 %8, i20 %9, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i32 %conv197.i, i32 %conv.i.i.i.i.i, i20 %idx.ext.i342.i, i20 %idx.ext.i344.i, i20 %17, i20 %18, i20 %19, i32 %or.i.i, i32 %cond15.i.i.i.i.i, i20 %20, i20 %21, i20 %22, i20 %23, i20 %24, i32 %or22.i.i.i.i.i) #4 personality ptr @__gxx_personality_v0 {
 ; CHECK-LABEL: conv2d:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64; nopb ; nops ; nopx ; mov m4, p4; nopv
-; CHECK-NEXT:    mova m0, #-68; nopb ; st p6, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    paddxm [sp], #64; mov m4, p4
+; CHECK-NEXT:    mova m0, #-68; st p6, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m4; movs m2, p5; mov p6, sp
 ; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m2; paddb [p6], m0
 ; CHECK-NEXT:    lda m5, [p6], #-4
@@ -65,12 +65,12 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-NEXT:    lda dn3, [p6], #-4
 ; CHECK-NEXT:    lda dn7, [p6], #-4
 ; CHECK-NEXT:    lda r20, [p6], #-4
-; CHECK-NEXT:    lda m6, [p6], #-4
-; CHECK-NEXT:    lda r1, [p6], #-4
-; CHECK-NEXT:    lda r26, [p6], #-4; mov dj4, #0
-; CHECK-NEXT:    lda r22, [p6], #-4; mov s1, r3
-; CHECK-NEXT:    lda m2, [p6], #-4; mov srssign0, r4
-; CHECK-NEXT:    lda dj2, [p6], #-4; or r28, r8, r8; mov dj3, #0
+; CHECK-NEXT:    lda m6, [p6], #-4; mov dj4, #0
+; CHECK-NEXT:    lda r1, [p6], #-4; mov s1, r3
+; CHECK-NEXT:    lda r26, [p6], #-4; mov dj3, #0
+; CHECK-NEXT:    lda r22, [p6], #-4; or r28, r8, r8; mov srssign0, r4
+; CHECK-NEXT:    lda m2, [p6], #-4; movxm ls, #.LBB0_2
+; CHECK-NEXT:    lda dj2, [p6], #-4; movxm le, #.L_LEnd1
 ; CHECK-NEXT:    lda dj6, [p6], #-4; movs dc2, dj4; or r30, r5, r5; mov r5, dj4
 ; CHECK-NEXT:    lda dn2, [p6, #0]; movs dc6, dj4; or r8, r7, r7; mov r7, dj4
 ; CHECK-NEXT:    lda dn6, [p6, #-4]; movs dc0, dj4; mov dj1, r31
@@ -82,11 +82,11 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
-; CHECK-NEXT:    vldb.popx x6, [p0, lf0, r24]
+; CHECK-NEXT:    nopa ; vldb.popx x6, [p0, lf0, r24]; nopxm
 ; CHECK-NEXT:    padds.3d [p0], d2; mov p3, p6
-; CHECK-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; add.nc lc, r2, #-5
-; CHECK-NEXT:    vlda x2, [p3], #64; padds.3d [p0], d2; movxm ls, #.LBB0_2
-; CHECK-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; movxm le, #.L_LEnd1; nopv
+; CHECK-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]
+; CHECK-NEXT:    vlda x2, [p3], #64; padds.3d [p0], d2
+; CHECK-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; add.nc lc, r2, #-5; nopm ; nopv
 ; CHECK-NEXT:    vlda x2, [p3], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv
 ; CHECK-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda x2, [p3], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv

@@ -117,10 +117,6 @@ bool AIE2PassConfig::addGlobalInstructionSelect() {
     addPass(createAIEPostSelectOptimize());
     addPass(
         createDeadMachineInstructionElim(/*KeepLifetimeInstructions=*/true));
-    if (EnableReservedRegsLICM) {
-      /// Try and hoist assignments to reserved registers out of loops.
-      insertPass(&EarlyMachineLICMID, &ReservedRegsLICMID);
-    }
   }
   return false;
 }
@@ -233,6 +229,9 @@ void AIE2PassConfig::addPreSched2() {
 
   if (TM->getOptLevel() != CodeGenOptLevel::None)
     addPass(createAIEBaseHardwareLoopsPass());
+
+  if (EnableReservedRegsLICM)
+    addPass(createReservedRegsLICMPass());
 
   addPass(createAIEPseudoBranchExpansion());
   if (AIEDumpArtifacts)

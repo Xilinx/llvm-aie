@@ -133,6 +133,24 @@ static bool isRegLiveInAtInLoopSuccessor(
   return false;
 }
 
+static bool areUsesLoopInvariant(const MachineLoop &L, const MachineInstr &MI,
+                                 MCRegister ExcludeReg,
+                                 const TargetRegisterInfo &TRI,
+                                 const MachineRegisterInfo &MRI) {
+  for (const MachineOperand &MO : MI.operands()) {
+    if (!MO.isReg() || !MO.isUse() || !MO.readsReg())
+      continue;
+    Register Reg = MO.getReg();
+    if (!Reg || Reg == ExcludeReg)
+      continue;
+    for (const MachineInstr &DefMI : MRI.def_instructions(Reg)) {
+      if (L.contains(DefMI.getParent()))
+        return false;
+    }
+  }
+  return true;
+}
+
 CandidateInfo *Candidates::getInfo(const MachineInstr &MI) {
   const TargetRegisterInfo &TRI = *MI.getMF()->getSubtarget().getRegisterInfo();
   if (MCRegister Reg = getHoistablePhysRegDef(MI, TRI)) {
@@ -216,7 +234,6 @@ bool ReservedRegsLICM::runOnMachineFunction(MachineFunction &MF) {
   const TargetSubtargetInfo &ST = MF.getSubtarget();
   TRI = ST.getRegisterInfo();
   MRI = &MF.getRegInfo();
-  assert(MRI->isSSA() && "ReservedRegsLICM can only deal with SSA vregs");
 
   LLVM_DEBUG(dbgs() << "******** Reserved register LICM: " << MF.getName()
                     << " ********\n");
@@ -459,26 +476,15 @@ bool ReservedRegsLICM::isLoopInvariantInst(const CandidateInfo &Cand,
 
   // Check if it's safe to move the instruction.
   bool DontMoveAcrossStore = true;
-  if (MI.mayLoadOrStore() ||
-      !MI.isSafeToMove(DontMoveAcrossStore)) {
+  if (MI.mayLoadOrStore() || !MI.isSafeToMove(DontMoveAcrossStore)) {
     LLVM_DEBUG(dbgs() << "LICM: Instruction not safe to move: " << MI);
     return false;
   }
 
-  // Then verify all operands are loop invariant
-  auto IsInvariantOperand = [&](const MachineOperand &MO) -> bool {
-    if (MO.isImm())
-      return true;
-    if (MO.isReg()) {
-      Register Reg = MO.getReg();
-      if (MO.isDef())
-        return Reg == Cand.DefinedReg;
-      return Reg.isVirtual() && !L.contains(MRI->getUniqueVRegDef(Reg));
-    }
-    return false;
-  };
-  if (!all_of(MI.operands(), IsInvariantOperand)) {
-    LLVM_DEBUG(dbgs() << "LICM: Operands not loop invariant: " << MI);
+  // Verify source operands are loop invariant. Reserved-reg setup MOVs often
+  // use physical registers post-RA, which generic isLoopInvariant rejects.
+  if (!areUsesLoopInvariant(L, MI, Cand.DefinedReg, *TRI, *MRI)) {
+    LLVM_DEBUG(dbgs() << "LICM: Instruction not loop invariant: " << MI);
     return false;
   }
 

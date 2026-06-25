@@ -170,7 +170,6 @@
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Function Alias Analysis Results
 ; AIE-O123-NEXT:      Early Machine Loop Invariant Code Motion
-; AIE-O123-NEXT:      Machine LICM for reserved regs
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Machine Common Subexpression Elimination
@@ -260,6 +259,10 @@
 ; AIE-O0123-NEXT:      Post-RA pseudo instruction expansion pass
 ; AIE-O0123-NEXT:      Remove dead machine instructions
 
+; AIE-O0-NEXT:      MachineDominator Tree Construction
+; AIE-O0-NEXT:      Machine Natural Loop Construction
+; AIE-O0-NEXT:      Machine LICM for reserved regs
+
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Natural Loop Construction
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
@@ -272,6 +275,7 @@
 ; AIE-O123-NEXT:      Lazy Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O123-NEXT:      AIE Hardware Loops pass
+; AIE-O123-NEXT:      Machine LICM for reserved regs
 
 ; AIE-O0123-NEXT:      AIE pseudo branch expansion
 ; AIE-O0123-NEXT:      MachineDominator Tree Construction
