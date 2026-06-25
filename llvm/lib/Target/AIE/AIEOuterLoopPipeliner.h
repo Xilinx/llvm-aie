@@ -143,6 +143,12 @@ struct DowncountingInfo {
 // One LS instance, describing the outer loop and its single inner loop. Used
 // both for the original loop and for the steady-state / last-iteration clones
 // produced during the transform.
+//
+// Value mapping uses two distinct relations, kept separate on purpose:
+//   Fact A — clone correspondence (CloneMap / cloneOf): source -> its clone,
+//     keyed by the immediate source domain; cross-domain lookups compose.
+//   Fact B — edge resolution (seedHeaderPhiEdge): a header PHI -> its concrete
+//     incoming on a chosen edge. Transient, keyed by (phi, edge).
 class LoopStructure {
   // Original Loop Structure Exclusive Attributes
   // OuterLoop/InnerLoop are the LoopInfo loops for the ORIGINAL LS only. They
@@ -181,12 +187,9 @@ class LoopStructure {
   SmallVector<Instruction *, 16> PeeledInsts;
   SmallVector<Instruction *, 16> KeptInsts;
 
-  // Fact A — clone correspondence. Maps a value of this clone's IMMEDIATE
-  // source domain to its copy in this clone (SteadyLS: orig->steady;
-  // LastIterLS: steady->lastiter). Empty on the original LS. Owned here:
-  // write-once at construction, read-many via cloneOf. ValueMap is neither
-  // copyable nor movable, so LoopStructure is built in place (clone
-  // constructors below), never returned by value.
+  // Fact A — clone correspondence: a value of this clone's immediate source
+  // domain to its copy here. Empty on the original LS; write-once, read via
+  // cloneOf. ValueMap is non-movable, so a LoopStructure is built in place.
   ValueToValueMapTy CloneMap;
 
   // The outer LoopInfo loop (original LS only; null on clones).
@@ -408,9 +411,11 @@ private:
   // flat early-return guard; performs the transform iff all pass. Returns true
   // if L was pipelined.
   bool tryPipelineLoop(Loop *L, const AIE::LoopOptionOverrides &Overrides);
-  // Populate VMap with the incoming values of outer header PHIs from FromBlock.
-  void populateVMapFromPHIs(ValueToValueMapTy &VMap, const LoopStructure &LS,
-                            BasicBlock *FromBlock) const;
+  // Fact B (edge resolution): seed Map with each outer-header PHI -> its
+  // incoming value on the FromEdge edge, collapsing loop-carried PHIs to the
+  // concrete values seen when entering a region via that edge.
+  void seedHeaderPhiEdge(ValueToValueMapTy &Map, const LoopStructure &LS,
+                         BasicBlock *FromEdge) const;
   bool performTransformation(LoopStructure &OrigLS,
                              const AIE::LoopOptionOverrides &Overrides);
 

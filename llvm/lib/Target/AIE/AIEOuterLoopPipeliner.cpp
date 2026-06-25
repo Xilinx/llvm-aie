@@ -321,14 +321,13 @@ SmallVector<StoreInst *, 8> LoopStructure::collectEpilogueStores() const {
   return Stores;
 }
 
-// Populate VMap with the incoming values of outer header PHIs from FromBlock.
-void AIEOuterLoopPipeliner::populateVMapFromPHIs(ValueToValueMapTy &VMap,
-                                                 const LoopStructure &LS,
-                                                 BasicBlock *FromBlock) const {
+void AIEOuterLoopPipeliner::seedHeaderPhiEdge(ValueToValueMapTy &Map,
+                                              const LoopStructure &LS,
+                                              BasicBlock *FromEdge) const {
   for (PHINode &PHI : LS.getOuterHeader()->phis()) {
-    int Idx = PHI.getBasicBlockIndex(FromBlock);
+    int Idx = PHI.getBasicBlockIndex(FromEdge);
     if (Idx >= 0)
-      VMap[&PHI] = PHI.getIncomingValue(Idx);
+      Map[&PHI] = PHI.getIncomingValue(Idx);
   }
 }
 
@@ -440,7 +439,7 @@ void AIEOuterLoopPipeliner::clonePrologueAsPeel(const LoopStructure &OrigLS,
 
   // Seed PeelVMap with the entry (preheader) values of the outer header PHIs so
   // the peel's loads use the entry pointers.
-  populateVMapFromPHIs(PeelVMap, SteadyLS, Preheader);
+  seedHeaderPhiEdge(PeelVMap, SteadyLS, Preheader);
 
   BasicBlock *Peel = BasicBlock::Create(F->getContext(), "steady.preheader", F,
                                         SteadyLS.getOuterHeader());
@@ -647,7 +646,7 @@ void AIEOuterLoopPipeliner::clonePrologueIntoEpilogue(
     ValueToValueMapTy &EpiVMap) {
   // Seed EpiVMap with the next-iteration (latch incoming) values of the outer
   // header PHIs so the cloned loads prefetch the next iteration's pointers.
-  populateVMapFromPHIs(EpiVMap, SteadyLS, SteadyLS.getOuterLatch());
+  seedHeaderPhiEdge(EpiVMap, SteadyLS, SteadyLS.getOuterLatch());
 
   SmallVector<Instruction *, 16> PeeledInsts =
       remapToClone(OrigLS.peeledInsts(), SteadyLS.cloneMap());
@@ -713,7 +712,7 @@ void AIEOuterLoopPipeliner::peelLastIteration(const LoopStructure &OrigLS,
 
   // Fact-B seed: each steady outer-header PHI resolves to its latch-incoming
   // value, so every clone below picks up the final epilogue values.
-  populateVMapFromPHIs(LastIterMap, SteadyLS, SteadyLS.getOuterLatch());
+  seedHeaderPhiEdge(LastIterMap, SteadyLS, SteadyLS.getOuterLatch());
 
   // Fill each block. The prologue holds the hardware-loop setup and the kept
   // accumulator seeds; both must be in place before the inner loop is filled so
