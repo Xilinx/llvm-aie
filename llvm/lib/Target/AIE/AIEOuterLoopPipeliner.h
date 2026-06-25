@@ -123,12 +123,12 @@ public:
 };
 
 struct LatchConditionInfo {
-  ICmpInst *Cmp = nullptr;           // latch exit icmp condition
-  Value *Limit = nullptr;            // loop-invariant limit operand
-  unsigned LimitIdx = 0;             // index of Limit in Cmp's operand list
-  int64_t Step = 0;                  // non-zero induction step (from add)
-  BinaryOperator *Counter = nullptr; // add instr feeding the icmp (phi+step)
-  PHINode *OldIV = nullptr;          // counting PHI in outer header
+  ICmpInst *Cmp = nullptr;
+  Value *Limit = nullptr;
+  unsigned LimitIdx = 0;
+  int64_t Step = 0;
+  BinaryOperator *Counter = nullptr;
+  PHINode *OldIV = nullptr;
 };
 
 // Holds the pre-validated components of a downcounting outer loop exit
@@ -136,20 +136,13 @@ struct LatchConditionInfo {
 // convertOuterLoopToHardwareLoop.
 // All fields are guaranteed non-null when the struct is returned.
 struct DowncountingInfo {
-  ICmpInst *Cmp;           // latch exit condition (icmp eq/ne)
-  BinaryOperator *Counter; // add instruction (phi + (-step))
-  PHINode *OldIV;          // counting PHI in outer header feeding Counter
+  ICmpInst *Cmp;
+  BinaryOperator *Counter;
+  PHINode *OldIV;
 };
 
 // One instance of the outer loop nest, used both for the original loop and for
 // the steady-state / last-iteration clones produced during the transform.
-//
-// The outer header and outer latch are not stored directly: the header is the
-// entry block of PrologueRegion and the latch is the exit block of
-// EpilogueRegion, so getOuterHeader()/getOuterLatch() derive from the regions.
-// Today both regions are a single block (the prologue is the outer header, the
-// epilogue is the outer latch); the BlockRegion wrapper keeps the door open for
-// multi-block regions without changing callers.
 class LoopStructure {
   // Original Loop Structure Exclusive Attributes
   // OuterLoop/InnerLoop are the LoopInfo loops for the ORIGINAL nest only. They
@@ -168,10 +161,6 @@ class LoopStructure {
 
   SmallVector<BasicBlock *, 4> InnerLoopBlocks;
 
-  // The outer loop's loop-id metadata (llvm.loop on the outer latch), captured
-  // so updateLoopMetadata can re-apply the adjusted id to a clone's outer latch
-  // without a LoopInfo Loop. (The inner loop's own llvm.loop metadata travels
-  // with the cloned inner-latch terminator automatically.)
   MDNode *OuterLoopID = nullptr;
 
   // The prologue region in program order; its entry block is the outer header.
@@ -241,9 +230,6 @@ public:
                 BasicBlock *InnerExit, ArrayRef<BasicBlock *> InnerBlocks,
                 MDNode *OuterLoopID);
 
-  // The outer header is the prologue entry; the outer latch is the epilogue
-  // exit. Both derive from the regions, the single source of truth for nest
-  // shape.
   BasicBlock *getOuterHeader() const { return PrologueRegion.entry(); }
   BasicBlock *getOuterLatch() const { return EpilogueRegion.back(); }
 
@@ -263,9 +249,7 @@ public:
   LatchConditionInfo &bound() { return OuterLoopCondition; }
   const LatchConditionInfo &bound() const { return OuterLoopCondition; }
 
-  // The peeled / kept lists live only on the original nest. Clones obtain
-  // steady-resident instructions by remapping the original's lists, so reaching
-  // for these on a clone is a bug.
+  // The peeled / kept lists live only on the original nest.
   SmallVectorImpl<Instruction *> &peeledInsts();
   const SmallVectorImpl<Instruction *> &peeledInsts() const;
   SmallVectorImpl<Instruction *> &keptInsts();
@@ -285,10 +269,7 @@ public:
     return EpilogueRegion.contains(I);
   }
 
-  // Returns the outer loop preheader. For the original nest this queries
-  // LoopInfo live (so after peel insertion it returns the peel block, the
-  // current single-predecessor preheader). Clones have no LoopInfo loop and use
-  // OuterPreheader directly.
+  // Returns the outer loop preheader.
   BasicBlock *getPreheader() const {
     return OuterLoop ? OuterLoop->getLoopPreheader() : OuterPreheader;
   }

@@ -68,14 +68,8 @@ static cl::opt<bool> EnableOuterLoopHardwareLoop(
              "outer loop pipelining"),
     cl::init(true), cl::Hidden);
 
-// Type alias for split strategy predicates.
-// A split strategy is a function that identifies "anchor" instructions
-// which define the split point between peeled and kept instructions.
 using SplitStrategy = std::function<bool(const Instruction *)>;
 
-// Returns true if I is a CallInst whose return type is a 2048-bit vector.
-// These are the "anchor" instructions that define the split point between
-// peeled and kept instructions.
 static bool produces2048BitVector(const Instruction *I) {
   if (!isa<CallInst>(I))
     return false;
@@ -83,15 +77,10 @@ static bool produces2048BitVector(const Instruction *I) {
   return VT && VT->getPrimitiveSizeInBits() == 2048;
 }
 
-// Get all available split strategies in priority order.
-// Each strategy identifies anchor instructions; if any strategy returns
-// true for at least one instruction, that instruction is an anchor.
 static SmallVector<SplitStrategy, 4> getSplitStrategies() {
+  // todo: add more split Strategies
   return {
-      produces2048BitVector, // Current default: 2048-bit producing CallInsts
-                             // Additional strategies can be added here, e.g.:
-                             // produces1024BitVector,
-                             // isAccumulatorIntrinsic,
+      produces2048BitVector,
   };
 }
 
@@ -142,9 +131,7 @@ void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
 bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   if (skipFunction(F))
     return false;
-  // Don't gate on EnableOuterLoopPipelining here: individual loops may opt-in
-  // via !llvm.loop.hint.aie-enable-outer-loop-pipelining metadata even when
-  // the global flag is off.
+
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
@@ -153,6 +140,7 @@ bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   TII = static_cast<const AIEBaseInstrInfo *>(
       TM.getSubtargetImpl(F)->getInstrInfo());
   LLVM_DEBUG(dbgs() << "AIEOuterLoopPipeliner: " << F.getName() << "\n");
+
   bool Changed = false;
   SmallVector<Loop *, 4> TopLevelLoops(LI->begin(), LI->end());
   for (Loop *L : TopLevelLoops)
@@ -166,9 +154,6 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   // Build per-loop option overrides from !llvm.loop.hint.* metadata.
   AIE::LoopOptionOverrides Overrides(L->getLoopID());
 
-  // Try to transform this loop if enabled (globally or via metadata). Each gate
-  // below bails with a reason; the deeper helpers (analyzeLoopStructure,
-  // isProfitableToRotate, isSafeToReorderMemoryOps) emit the specific cause.
   if (!Overrides.get(EnableOuterLoopPipelining)) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
   } else if (std::optional<LoopStructure> MaybeLS = analyzeLoopStructure(L)) {
@@ -590,10 +575,6 @@ void LoopStructure::removeFromCFG() const {
   DeleteDeadBlocks(Dead);
 }
 
-// Clone the peeled instructions into the epilogue block (outer latch) before
-// its terminator. The clones use the next-iteration pointer values (the latch
-// incoming values of the outer header PHIs) so the loads prefetch for the next
-// outer iteration.
 void AIEOuterLoopPipeliner::clonePrologueIntoEpilogue(
     const LoopStructure &OrigLS, const LoopStructure &SteadyLS,
     const ValueToValueMapTy &SteadyVMap, ValueToValueMapTy &EpiVMap) {
