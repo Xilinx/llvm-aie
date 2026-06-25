@@ -8,7 +8,15 @@
 
 # RUN: llc -mtriple aie2ps -run-pass=reserved-reg-licm %s -verify-machineinstrs -o - \
 # RUN:    | FileCheck %s
-
+#
+# NOTE: Tests where pass output is suboptimal but correct:
+# NOTE:   srs_dyn_sign_cond_side_block_hoist_no_sink — COPY not hoisted; MOVX stays in bb.4.
+# NOTE:   srs_dyn_sign_cond_latch_is_exit — MOVX not sunk to exit bb.3.
+# NOTE:   srs_dyn_sign_nested_multiblock_inner — duplicate MOVX at outer exit bb.5.
+# NOTE:   srs_dyn_sign_two_inner_loops — inner loop B COPY not hoisted to bb.4 preheader.
+# NOTE:   srs_dyn_sign_outer_if_inner_loop — outer COPY at inner preheader bb.2, not bb.0.
+# NOTE: Sink blocked by isRegLiveInAtInLoopSuccessor (not header ReservedLiveins):
+# NOTE:   srs_dyn_sign_cond_livein_opposite_branch, srs_dyn_sign_cond_side_block_hoist_no_sink.
 
 ---
 name:            srs_dyn_sign_loop
@@ -134,12 +142,12 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -152,11 +160,11 @@ body:             |
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     liveins: $p0, $r0, $r1, $dm0, $s0
@@ -405,9 +413,9 @@ body:             |
 # (bb.3). The latch (bb.4) defines $srssign0 = MOVX 0 without using it first,
 # so LatchEntryLive does NOT flag it. However, $srssign0 IS a true loop livein
 # because bb.2 can execute on the first iteration without going through bb.3.
-# collectLoopReservedLiveins must detect this via backward dataflow and prevent
-# the MOVX from being sunk to the exit block.
----
+# collectLoopReservedLiveins detects this for hoist; sink is blocked by
+# isRegLiveInAtInLoopSuccessor on the continue edge to the header (bb.4→bb.1),
+# not by a separate header live-in test in processForExitSink.
 name:            srs_dyn_sign_cond_livein_opposite_branch
 tracksRegLiveness: true
 body:             |
@@ -582,6 +590,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -593,18 +602,17 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
@@ -637,9 +645,10 @@ body:             |
       PseudoRET implicit $lr
 ...
 
-# Side-block COPY hoists to preheader. MOVX must stay in bb.4 (bb.4→bb.3 continue
-# needs it before VSRS). Pass incorrectly sinks MOVX to bb.5 (COPY hoisted to
-# preheader, MOVX sunk to exit).
+# Side-block COPY could hoist to preheader; MOVX must stay in bb.4 (bb.4→bb.3 continue
+# needs it before VSRS). Pass: no COPY hoist, MOVX stays in bb.4. Sink blocked by
+# isRegLiveInAtInLoopSuccessor on bb.4→bb.3 (header loop live-in is false).
+# Result is suboptimal but correct.
 ---
 name:            srs_dyn_sign_cond_side_block_hoist_no_sink
 tracksRegLiveness: true
@@ -1236,7 +1245,8 @@ body:             |
 
 # Outer loop hoists COPY to bb.0 and sinks MOVX to bb.5. Inner loop spans bb.2 and
 # bb.3 (side latch block on the back-edge path); inner COPY/MOVX are handled first.
-# Expected: outer COPY hoisted to bb.0; outer MOV sunk to bb.5.
+# Expected: single outer MOVX at bb.5. Pass: duplicate MOVX at bb.5 (inner + outer).
+# Result is suboptimal but correct.
 ---
 name:            srs_dyn_sign_nested_multiblock_inner
 tracksRegLiveness: true
@@ -1251,6 +1261,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -1261,9 +1272,7 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
@@ -1279,6 +1288,7 @@ body:             |
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
@@ -1334,6 +1344,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -1345,20 +1356,19 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.4(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   $crsat = MOVX_mvx_cr_imm 1
   ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   $crsat = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
     bb.0:
       successors: %bb.1(0x80000000)
@@ -1462,8 +1472,9 @@ body:             |
     PseudoRET implicit $lr
 ...
 
-# COPY+VSRS in merge block bb.4; MOVX on exit bb.5 only.
-# Expected: COPY hoisted to preheader, MOVX sunk to exit.
+# COPY+VSRS in bb.2; MOVX already in exit bb.5. bb.3 skips bb.2, so $srssign0 is
+# loop live-in at header bb.1 and COPY hoist is blocked.
+# Expected: no COPY hoist; MOVX unchanged in exit bb.5.
 ---
 name:            srs_dyn_sign_cond_hoist_sink_same_branch
 tracksRegLiveness: true
@@ -1634,6 +1645,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:edm = COPY $dm0
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:es = COPY $s0
+  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -1654,7 +1666,6 @@ body:             |
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   [[VSRS_4x_mv_x_srs_dm_srsSign0_:%[0-9]+]]:mxs = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
@@ -1709,8 +1720,8 @@ body:             |
 # enter bb.1 → bb.2. bb.2 is both loop body and latch (COPY, VSRS, MOVX).
 # Expected: no COPY hoist to bb.0 (would run on the skip path); MOVX sunk to
 # exit bb.3 only (must not run when skipping via bb.4).
-# Pass: COPY correctly stays in bb.2; MOVX also stays in bb.2 (sink not applied,
-# but still correct).
+# Pass: COPY correctly stays in bb.2; MOVX also stays in bb.2 (missed sink).
+# Result is suboptimal but correct.
 ---
 name:            srs_dyn_sign_cond_latch_is_exit
 tracksRegLiveness: true
@@ -1778,6 +1789,9 @@ body:             |
 ...
 
 # Two sibling inner loops with separate $r1 and $r2 invariants.
+# Expected: each inner loop COPY hoisted to its preheader (bb.2 and bb.4).
+# Pass: inner loop A ok; inner loop B COPY stays in bb.5.
+# Result is suboptimal but correct.
 ---
 name:            srs_dyn_sign_two_inner_loops
 tracksRegLiveness: true
@@ -1830,11 +1844,11 @@ body:             |
   ; CHECK-NEXT: bb.6:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7:
+  ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     successors: %bb.1(0x80000000)
@@ -1886,8 +1900,8 @@ body:             |
 
 # Outer loop with header skip around nested inner loop.
 # Expected: outer COPY hoisted to bb.0, outer MOVX sunk to bb.5 only.
-# Pass: COPY hoisted to inner preheader bb.2 only; MOVX remains in bb.4 and bb.5
-# (still correct).
+# Pass: COPY hoisted to inner preheader bb.2 only; MOVX in inner bb.3 and outer exit bb.5.
+# Result is suboptimal but correct.
 ---
 name:            srs_dyn_sign_outer_if_inner_loop
 tracksRegLiveness: true

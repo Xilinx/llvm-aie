@@ -44,7 +44,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-LABEL: conv2d:
 ; CHECK:       // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    paddxm [sp], #64; nopb ; nops ; nopx ; mov m4, p4; nopv
-; CHECK-NEXT:    mova m0, #-68; st p6, [sp, #-64]; nopx // 4-byte Folded Spill
+; CHECK-NEXT:    mova m0, #-68; nopb ; st p6, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m4; movs m2, p5; mov p6, sp
 ; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m2; paddb [p6], m0
 ; CHECK-NEXT:    lda m5, [p6], #-4
@@ -67,9 +67,9 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-NEXT:    lda r20, [p6], #-4
 ; CHECK-NEXT:    lda m6, [p6], #-4
 ; CHECK-NEXT:    lda r1, [p6], #-4
-; CHECK-NEXT:    lda r26, [p6], #-4
-; CHECK-NEXT:    lda r22, [p6], #-4; mov dj4, #0
-; CHECK-NEXT:    lda m2, [p6], #-4; mov s1, r3
+; CHECK-NEXT:    lda r26, [p6], #-4; mov dj4, #0
+; CHECK-NEXT:    lda r22, [p6], #-4; mov s1, r3
+; CHECK-NEXT:    lda m2, [p6], #-4; mov srssign0, r4
 ; CHECK-NEXT:    lda dj2, [p6], #-4; or r28, r8, r8; mov dj3, #0
 ; CHECK-NEXT:    lda dj6, [p6], #-4; movs dc2, dj4; or r30, r5, r5; mov r5, dj4
 ; CHECK-NEXT:    lda dn2, [p6, #0]; movs dc6, dj4; or r8, r7, r7; mov r7, dj4
@@ -101,13 +101,13 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup158.i
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; CHECK-NEXT:    vlda x4, [p3], #64; nopb ; movs dj0, r20; add r0, r0, #-1; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    vlda x2, [p3], #64; nopb ; movs m5, r17; nopx ; mov srssign0, r4; vmac dm0, dm0, x0, x2, r8
-; CHECK-NEXT:    padda [p1], m5; movs p3, p2; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    padda [p3], m6; movs dc4, r7; mov m7, r20; vmac dm0, dm0, x0, x2, r8
-; CHECK-NEXT:    movs m5, p5; paddb.3d [p1], d3; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    movs dn4, r22; vmac dm0, dm0, x0, x2, r8
-; CHECK-NEXT:    movs dj4, r26; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; CHECK-NEXT:    mov m0, r23; vmac dm0, dm0, x0, x2, r8
+; CHECK-NEXT:    vlda x2, [p3], #64; nopb ; movs dc4, r7; nopx ; mov m5, r17; vmac dm0, dm0, x0, x2, r8
+; CHECK-NEXT:    padda [p1], m5; nopb ; movs p3, p2; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
+; CHECK-NEXT:    padda [p3], m6; nopb ; movs dn4, r22; nopx ; mov m7, r20; vmac dm0, dm0, x0, x2, r8
+; CHECK-NEXT:    movs m5, p5; paddb.3d [p1], d3; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
+; CHECK-NEXT:    movs dj4, r26; vmac dm0, dm0, x0, x2, r8
+; CHECK-NEXT:    movs m0, r23; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
+; CHECK-NEXT:    vmac dm0, dm0, x0, x2, r8
 ; CHECK-NEXT:    vmac dm1, dm1, x0, x4, r8
 ; CHECK-NEXT:    vmac dm0, dm0, x0, x2, r8
 ; CHECK-NEXT:    nop
@@ -117,7 +117,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-NEXT:    vst.srs.4x cmh1, s1, srssign0, [p2, dj0]; mov dj0, r29
 ; CHECK-NEXT:    vst.srs.4x cml1, s1, srssign0, [p2, #0]; mov p2, p3
 ; CHECK-NEXT:    padda [p2], m7; vst.srs.4x cml0, s1, srssign0, [p3, #0]; mov m7, p4
-; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m7; vst.2d.srs.4x cmh0, s1, srssign0, [p2], d4; movx srssign0, #0; mov dj4, r25
+; CHECK-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m7; vst.2d.srs.4x cmh0, s1, srssign0, [p2], d4; mov dj4, r25
 ; CHECK-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m5; movs m5, r19; mov r7, dc4
 ; CHECK-NEXT:    padda [p1], m7; paddb [p6], m5; movs dc4, r5; mov dn4, r27
 ; CHECK-NEXT:    padda [p1], m0; paddb.3d [p6], d1; mov m0, r21
@@ -137,7 +137,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda x2, [p6], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv
 ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopx ; vshuffle x0, x6, x6, r6; nopv
-; CHECK-NEXT:    vlda x2, [p6], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p6], #64; nopb ; padds.3d [p0], d2; movx srssign0, #0; nopm ; nopv
 ; CHECK-NEXT:  .LBB0_5: // %for.body159.i.cd
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8

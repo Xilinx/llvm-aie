@@ -17,6 +17,7 @@
 
 #include "AIE.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -115,6 +116,23 @@ static MCRegister getHoistablePhysRegDef(const MachineInstr &MI,
   return MCRegister();
 }
 
+/// The exiting block may branch to the loop exit and to another block still
+/// inside the loop. Exit sinking moves a definition into the exit block, so it
+/// runs only when leaving the loop. Return true if \p Reg is live-in at the
+/// entry of any in-loop successor of \p ExitingBlock; sinking is then unsafe
+/// because the other branch still needs \p Reg but would skip that definition.
+static bool isRegLiveInAtInLoopSuccessor(
+    const MachineLoop &L, const MachineBasicBlock &ExitingBlock, MCRegister Reg,
+    const DenseMap<MachineBasicBlock *, BitVector> &LoopLiveIn) {
+  for (MachineBasicBlock *Succ : ExitingBlock.successors()) {
+    if (!L.contains(Succ))
+      continue;
+    if (LoopLiveIn.lookup(Succ).test(Reg))
+      return true;
+  }
+  return false;
+}
+
 CandidateInfo *Candidates::getInfo(const MachineInstr &MI) {
   const TargetRegisterInfo &TRI = *MI.getMF()->getSubtarget().getRegisterInfo();
   if (MCRegister Reg = getHoistablePhysRegDef(MI, TRI)) {
@@ -146,15 +164,18 @@ public:
   }
 
 private:
-  /// Collect all simplifiable reserved registers that all livein for \p L.
-  BitVector collectLoopReservedLiveins(const MachineLoop &L);
+  /// Per-block reserved register live-in sets for \p L.
+  DenseMap<MachineBasicBlock *, BitVector>
+  collectLoopReservedLiveins(const MachineLoop &L);
 
   /// Go through \p L to look for instructions to hoist into the preheader or
   /// sink into the exit block.
   void runOnLoop(MachineLoop &L);
 
   /// Find instructions to sink into the exit block
-  void processForExitSink(MachineLoop &L, const BitVector &ReservedLiveins);
+  void processForExitSink(
+      MachineLoop &L,
+      const DenseMap<MachineBasicBlock *, BitVector> &LoopLiveIn);
 
   /// Sink \p Cand to \p L's exit block if it is safe to do so.
   bool trySinkToExitBlock(const CandidateInfo &Cand, MachineLoop &L);
@@ -210,28 +231,72 @@ bool ReservedRegsLICM::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
-BitVector ReservedRegsLICM::collectLoopReservedLiveins(const MachineLoop &L) {
-  const MachineBasicBlock &Header = *L.getHeader();
-  LivePhysRegs LiveRegs(*TRI);
+DenseMap<MachineBasicBlock *, BitVector>
+ReservedRegsLICM::collectLoopReservedLiveins(const MachineLoop &L) {
+  // Fixed-point backward dataflow for per-block reserved-reg live-in. A single
+  // backward walk of the header is wrong when defs and uses sit on sibling
+  // branches.
 
-  // Conservativaly assume reserved reserved regs are all liveouts
+  // Conservative liveout assumption: all candidate reserved regs are live at
+  // the exit of the loop (they may be used by code after the loop).
+  BitVector InitLive(TRI->getNumRegs());
   for (MCPhysReg PhysReg : MRI->getReservedRegs().set_bits()) {
     if (MRI->canSimplifyPhysReg(PhysReg)) {
-      LiveRegs.addReg(PhysReg);
+      InitLive.set(PhysReg);
     }
   }
 
-  // Traverse instructions to remove defs
-  for (const MachineInstr &MI : reverse(Header))
-    LiveRegs.stepBackward(MI);
+  // live_in[MBB] = set of reserved registers live at the entry of MBB.
+  // Initialised to empty; the worklist grows these sets monotonically.
+  DenseMap<MachineBasicBlock *, BitVector> LiveIn;
+  for (MachineBasicBlock *MBB : L.getBlocks())
+    LiveIn[MBB] = BitVector(TRI->getNumRegs());
 
-  BitVector ReservedLiveins(TRI->getNumRegs());
-  for (MCRegister Reg : LiveRegs) {
-    if (MRI->isReserved(Reg)) {
-      ReservedLiveins.set(Reg);
+  // Seed the worklist with every block in the loop.
+  SmallPtrSet<MachineBasicBlock *, 8> InWorklist;
+  SmallVector<MachineBasicBlock *, 8> Worklist;
+  for (MachineBasicBlock *MBB : L.getBlocks()) {
+    Worklist.push_back(MBB);
+    InWorklist.insert(MBB);
+  }
+
+  while (!Worklist.empty()) {
+    MachineBasicBlock *MBB = Worklist.pop_back_val();
+    InWorklist.erase(MBB);
+
+    // live-out(MBB) = union of live-in of successors.
+    // For successors outside the loop use InitLive conservatively.
+    LivePhysRegs LiveRegs(*TRI);
+    for (MachineBasicBlock *Succ : MBB->successors()) {
+      const BitVector &SuccLive = L.contains(Succ) ? LiveIn[Succ] : InitLive;
+      for (unsigned Reg : SuccLive.set_bits())
+        LiveRegs.addReg(Reg);
+    }
+
+    // Walk backward through MBB to compute live-in. stepBackward handles
+    // regmask operands (calls) correctly.
+    for (const MachineInstr &MI : reverse(*MBB))
+      LiveRegs.stepBackward(MI);
+
+    // Convert to a BitVector, keeping only reserved registers.
+    BitVector NewLiveIn(TRI->getNumRegs());
+    for (MCRegister Reg : LiveRegs)
+      if (MRI->isReserved(Reg))
+        NewLiveIn.set(Reg);
+
+    // If the live-in set grew, re-process all in-loop predecessors.
+    if (NewLiveIn != LiveIn[MBB]) {
+      LiveIn[MBB] = NewLiveIn;
+      for (MachineBasicBlock *Pred : MBB->predecessors()) {
+        if (L.contains(Pred) && !InWorklist.count(Pred)) {
+          Worklist.push_back(Pred);
+          InWorklist.insert(Pred);
+        }
+      }
     }
   }
-  return ReservedLiveins;
+
+  return LiveIn;
 }
 
 /// Walk the specified region of the CFG and hoist loop invariants out to the
@@ -244,9 +309,8 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
     return;
   }
 
-  // TODO: Handle simple multi-BB loops.
-  if (L.getNumBlocks() != 1) {
-    LLVM_DEBUG(dbgs() << "  Loop has multiple blocks.\n");
+  if (!L.getLoopLatch()) {
+    LLVM_DEBUG(dbgs() << "  Loop has no single latch.\n");
     return;
   }
   const MachineBasicBlock *LoopBlock = L.getExitingBlock();
@@ -257,29 +321,43 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
     return;
   }
 
-  BitVector ReservedLiveins = collectLoopReservedLiveins(L);
-  processForExitSink(L, ReservedLiveins);
+  DenseMap<MachineBasicBlock *, BitVector> LoopLiveIn =
+      collectLoopReservedLiveins(L);
+  const BitVector &ReservedLiveins = LoopLiveIn[L.getHeader()];
+  processForExitSink(L, LoopLiveIn);
   processForPreheaderHoist(L, ReservedLiveins);
 }
 
-void ReservedRegsLICM::processForExitSink(MachineLoop &L,
-                                          const BitVector &ReservedLiveins) {
+void ReservedRegsLICM::processForExitSink(
+    MachineLoop &L,
+    const DenseMap<MachineBasicBlock *, BitVector> &LoopLiveIn) {
+  // Sink candidates must come from the exiting block (the block that has the
+  // edge to the exit block), not the latch. When the latch and the exiting
+  // block differ, instructions in the latch are not on the exit path: sinking
+  // them to the exit block would insert a def that was never executed on that
+  // path, corrupting the register's exit value.
+  MachineBasicBlock *ExitingBlock = L.getExitingBlock();
+  assert(ExitingBlock);
+
+  // Last def in the exiting block may sink only if the reg is not used below
+  // the def, not live at block entry, and not live-in on a continue edge
+  // (isRegLiveInAtInLoopSuccessor).
+  LivePhysRegs ExitingBlockEntryLive(*TRI);
+  for (const MachineInstr &MI : reverse(*ExitingBlock))
+    ExitingBlockEntryLive.stepBackward(MI);
+
   RegDefMap PhysRegChanged(*TRI);
   LivePhysRegs LiveRegs(*TRI);
   Candidates SinkCandidates;
 
-  // Walk the entire region, track defs for each register, and
-  // collect potential LICM candidates.
-  assert(L.getNumBlocks() == 1 && L.getLoopLatch());
-  for (MachineInstr &MI : reverse(*L.getLoopLatch())) {
+  for (MachineInstr &MI : reverse(*ExitingBlock)) {
     CandidateInfo *CandInfo = SinkCandidates.getInfo(MI);
 
-    // First time we meet a reserved reg definition while iterating upwards.
-    // If that def is not a loop livein and it isn't used in this block either,
-    // then one can move the instruction to the exit BB of the loop.
     if (CandInfo && !PhysRegChanged.hasChanged(CandInfo->DefinedReg) &&
-        !ReservedLiveins.test(CandInfo->DefinedReg) &&
-        !LiveRegs.contains(CandInfo->DefinedReg)) {
+        !LiveRegs.contains(CandInfo->DefinedReg) &&
+        !ExitingBlockEntryLive.contains(CandInfo->DefinedReg) &&
+        !isRegLiveInAtInLoopSuccessor(L, *ExitingBlock, CandInfo->DefinedReg,
+                                      LoopLiveIn)) {
       assert(!CandInfo->HoistCandidate);
       CandInfo->HoistCandidate = &MI;
     }
@@ -298,12 +376,15 @@ void ReservedRegsLICM::processForPreheaderHoist(
     MachineLoop &L, const BitVector &ReservedLiveins) {
   Candidates HoistCandidates;
 
-  // Walk the entire loop to find unique defs and LICM candidates
-  assert(L.getNumBlocks() == 1 && L.getHeader());
+  // Walk all blocks in the loop to find unique defs and LICM candidates.
+  // RegDefMap::addChangedRegs handles regmask (calls clear UniqueDefs).
+  assert(L.getHeader());
   RegDefMap PhysRegChanged(*TRI);
-  for (MachineInstr &MI : *L.getHeader()) {
-    PhysRegChanged.addChangedRegs(MI);
-    HoistCandidates.getInfo(MI);
+  for (MachineBasicBlock *MBB : L.getBlocks()) {
+    for (MachineInstr &MI : *MBB) {
+      PhysRegChanged.addChangedRegs(MI);
+      HoistCandidates.getInfo(MI);
+    }
   }
 
   for (auto &[Reg, CandInfo] : HoistCandidates) {
