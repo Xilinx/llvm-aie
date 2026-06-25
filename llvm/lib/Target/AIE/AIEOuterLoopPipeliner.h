@@ -67,7 +67,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -182,11 +181,6 @@ class LoopStructure {
   SmallVector<Instruction *, 16> PeeledInsts;
   SmallVector<Instruction *, 16> KeptInsts;
 
-  // Snapshot of the epilogue (outer latch) contents taken before
-  // clonePrologueIntoEpilogue inserts prefetch clones, so the last-iteration
-  // epilogue can be filtered back to the original stores only.
-  SmallPtrSet<Instruction *, 32> EpilogueSnapshot;
-
   // The outer LoopInfo loop (original LS only; null on clones).
   Loop *getOuterLoop() const { return OuterLoop; }
 
@@ -282,12 +276,6 @@ public:
   const SmallVectorImpl<Instruction *> &peeledInsts() const;
   SmallVectorImpl<Instruction *> &keptInsts();
   const SmallVectorImpl<Instruction *> &keptInsts() const;
-  SmallPtrSetImpl<Instruction *> &epilogueSnapshot() {
-    return EpilogueSnapshot;
-  }
-  const SmallPtrSetImpl<Instruction *> &epilogueSnapshot() const {
-    return EpilogueSnapshot;
-  }
 
   // Only clones store the preheader; the original derives it from LoopInfo.
   void setOuterPreheader(BasicBlock *BB);
@@ -496,12 +484,15 @@ private:
                                   const LoopStructure &LastIterLS,
                                   ValueToValueMapTy &LastIterVMap) const;
 
-  // Populate the last-iteration epilogue with the original epilogue stores only
-  // — no prefetch loads, and none of the prologue clones inserted into the
-  // epilogue earlier. The original stores are recovered from
-  // SteadyLS.epilogueSnapshot().
-  void populateLastIterEpilogue(const LoopStructure &LastIterLS,
+  // Populate the last-iteration epilogue with the original epilogue stores and
+  // pointer updates only — no prefetch loads. The instructions are read from
+  // the pristine OrigLS latch (never touched by the prefetch-cloning steps),
+  // translated Orig -> Steady via SteadyVMap, then cloned into the
+  // last-iteration epilogue.
+  void populateLastIterEpilogue(const LoopStructure &OrigLS,
                                 const LoopStructure &SteadyLS,
+                                const LoopStructure &LastIterLS,
+                                const ValueToValueMapTy &SteadyVMap,
                                 ValueToValueMapTy &LastIterVMap) const;
 
   // Splice the last-iteration into the CFG: last-iteration epilogue -> original
