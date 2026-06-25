@@ -105,6 +105,31 @@ static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
   return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
 }
 
+// Reroute the incoming edge of each PHI in BB that comes from OldPred so it
+// instead comes from NewPred, with value MapVal(oldValue). When KeepOldPred is
+// true the OldPred entry is left in place and a new (NewPred, value) incoming
+// is appended — required when OldPred still branches to BB (e.g. a
+// not-yet-deleted block) so its PHI entry survives to be dropped cleanly later;
+// otherwise the OldPred entry is repointed in place. MapVal defaults to
+// identity (a pure block rename). This is the single PHI-incoming reroute used
+// wherever the pass moves a predecessor edge.
+static void reroutePhiIncomings(
+    BasicBlock *BB, BasicBlock *OldPred, BasicBlock *NewPred, bool KeepOldPred,
+    function_ref<Value *(Value *)> MapVal = [](Value *V) { return V; }) {
+  for (PHINode &PHI : BB->phis()) {
+    int Idx = PHI.getBasicBlockIndex(OldPred);
+    if (Idx < 0)
+      continue;
+    Value *NewVal = MapVal(PHI.getIncomingValue(Idx));
+    if (KeepOldPred) {
+      PHI.addIncoming(NewVal, NewPred);
+    } else {
+      PHI.setIncomingValue(Idx, NewVal);
+      PHI.setIncomingBlock(Idx, NewPred);
+    }
+  }
+}
+
 char AIEOuterLoopPipeliner::ID = 0;
 char &llvm::AIEOuterLoopPipelinerID = AIEOuterLoopPipeliner::ID;
 
@@ -546,20 +571,11 @@ void AIEOuterLoopPipeliner::swapInClonedLS(const LoopStructure &OrigLS,
   // The clone's latch exit edge still points at OrigExit (left external by the
   // clone constructor); that is correct. Add a clone-latch incoming to the
   // exit's loop-carried PHIs, mapping each value through SteadyLS.cloneOf so
-  // the exit sees the clone's definitions.
-  //
-  // Add — do not rename the original-latch entry: when the exit is reached
-  // directly by the latch (shared with the preheader-bypass edge, no dedicated
-  // exit.loopexit), the original latch still branches here until removeFromCFG
-  // deletes it, so its phi entry must survive to be removed cleanly. The entry
-  // is later retargeted to the last-iteration epilogue in wireLastIterIntoCFG.
-  for (PHINode &PHI : OrigExit->phis()) {
-    int Idx = PHI.getBasicBlockIndex(OrigLS.getOuterLatch());
-    if (Idx < 0)
-      continue;
-    PHI.addIncoming(SteadyLS.cloneOf(PHI.getIncomingValue(Idx)),
-                    SteadyLS.getOuterLatch());
-  }
+  // the exit sees the clone's definitions. KeepOldPred: the original latch
+  // still branches here until removeFromCFG, so its entry must survive.
+  reroutePhiIncomings(
+      OrigExit, OrigLS.getOuterLatch(), SteadyLS.getOuterLatch(),
+      /*KeepOldPred=*/true, [&](Value *V) { return SteadyLS.cloneOf(V); });
 }
 
 void AIEOuterLoopPipeliner::remapBoundToClone(LoopStructure &SteadyLS) const {
@@ -941,12 +957,8 @@ BasicBlock *LoopStructure::getExitBlock() const {
 }
 
 void LoopStructure::adoptPeelAsPreheader(BasicBlock *Peel) {
-  BasicBlock *OldPreheader = getPreheader();
-  for (PHINode &PHI : getOuterHeader()->phis()) {
-    const int PreIdx = PHI.getBasicBlockIndex(OldPreheader);
-    assert(PreIdx >= 0);
-    PHI.setIncomingBlock(PreIdx, Peel);
-  }
+  reroutePhiIncomings(getOuterHeader(), getPreheader(), Peel,
+                      /*KeepOldPred=*/false);
   setOuterPreheader(Peel);
 }
 
