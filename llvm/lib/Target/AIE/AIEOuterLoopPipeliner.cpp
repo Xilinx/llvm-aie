@@ -271,14 +271,8 @@ bool LoopStructure::isInnerLoopHardwareLoop() const {
   auto *BI = dyn_cast<BranchInst>(getInnerLatch()->getTerminator());
   if (!BI || !BI->isConditional())
     return false;
-  auto *Call = dyn_cast<CallInst>(BI->getCondition());
-  if (!Call)
-    return false;
-  auto *Fn = Call->getCalledFunction();
-  if (!Fn)
-    return false;
-  Intrinsic::ID IID = Fn->getIntrinsicID();
-  return IID == Intrinsic::loop_decrement;
+  auto *Cond = dyn_cast<Instruction>(BI->getCondition());
+  return Cond && AIEIRUtils::isHardwareLoopDecrement(Cond);
 }
 
 SmallVector<LoadInst *, 8> LoopStructure::collectPrologueLoads() const {
