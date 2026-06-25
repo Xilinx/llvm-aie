@@ -80,6 +80,7 @@
 #include <optional>
 
 namespace llvm {
+struct AIEBaseInstrInfo;
 class DominatorTree;
 class Function;
 class ScalarEvolution;
@@ -376,6 +377,7 @@ private:
   LoopInfo *LI = nullptr;
   DominatorTree *DT = nullptr;
   ScalarEvolution *SE = nullptr;
+  const AIEBaseInstrInfo *TII = nullptr;
 
   bool runOnLoop(Loop *L);
   std::optional<LoopStructure> analyzeLoopStructure(Loop *L);

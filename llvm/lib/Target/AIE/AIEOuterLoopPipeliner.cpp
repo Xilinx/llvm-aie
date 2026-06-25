@@ -14,6 +14,7 @@
 
 #include "AIEOuterLoopPipeliner.h"
 #include "AIE.h"
+#include "AIEBaseInstrInfo.h"
 #include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
@@ -21,6 +22,7 @@
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
@@ -28,9 +30,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IntrinsicsAIE2.h"
-#include "llvm/IR/IntrinsicsAIE2P.h"
-#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Support/Debug.h"
@@ -109,22 +108,11 @@ static bool isAnchorInstruction(const Instruction *I) {
 // (2D/3D addressing) that can be lifted from epilogue to prologue.
 // These intrinsics have no side effects (IntrNoMem) and are pure pointer
 // computations. Any other intrinsic may have unknown side effects and should
-// not be lifted.
-static bool isSafePointerIncrementIntrinsic(Intrinsic::ID IID) {
-  switch (IID) {
-  // AIE2 2D/3D pointer increment intrinsics
-  case Intrinsic::aie2_add_2d:
-  case Intrinsic::aie2_add_3d:
-  // AIE2P 2D/3D pointer increment intrinsics
-  case Intrinsic::aie2p_add_2d:
-  case Intrinsic::aie2p_add_3d:
-  // AIE2PS 2D/3D pointer increment intrinsics
-  case Intrinsic::aie2ps_add_2d:
-  case Intrinsic::aie2ps_add_3d:
-    return true;
-  default:
-    return false;
-  }
+// not be lifted. The 2D/3D intrinsic IDs are the per-target canonical source
+// on AIEBaseInstrInfo, so a new target needs no edit here.
+static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
+                                            Intrinsic::ID IID) {
+  return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
 }
 
 char AIEOuterLoopPipeliner::ID = 0;
@@ -135,6 +123,7 @@ INITIALIZE_PASS_BEGIN(AIEOuterLoopPipeliner, DEBUG_TYPE,
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(AIEOuterLoopPipeliner, DEBUG_TYPE,
                     "AIE Outer Loop Pipeliner", false, false)
 
@@ -146,6 +135,7 @@ void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
+  AU.addRequired<TargetPassConfig>();
   FunctionPass::getAnalysisUsage(AU);
 }
 
@@ -158,6 +148,10 @@ bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  const TargetMachine &TM =
+      getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
+  TII = static_cast<const AIEBaseInstrInfo *>(
+      TM.getSubtargetImpl(F)->getInstrInfo());
   LLVM_DEBUG(dbgs() << "AIEOuterLoopPipeliner: " << F.getName() << "\n");
   bool Changed = false;
   SmallVector<Loop *, 4> TopLevelLoops(LI->begin(), LI->end());
@@ -1183,7 +1177,7 @@ bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
       // We only allow lifting chains that contain 2D/3D pointer intrinsics;
       // any other intrinsic may have unknown side effects.
       if (auto *II = dyn_cast<IntrinsicInst>(I)) {
-        if (!isSafePointerIncrementIntrinsic(II->getIntrinsicID())) {
+        if (!isSafePointerIncrementIntrinsic(*TII, II->getIntrinsicID())) {
           CanLift = false;
           LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName()
                             << ": cannot lift (unsafe intrinsic "
