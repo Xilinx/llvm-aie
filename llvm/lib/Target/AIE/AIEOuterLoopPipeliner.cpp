@@ -257,6 +257,7 @@ AIEOuterLoopPipeliner::analyzeLoopStructure(Loop *L) {
 }
 
 bool LoopStructure::discoverPrologueRegion() {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   if (getInnerPreheader() != getOuterHeader()) {
     LLVM_DEBUG(dbgs() << "    Inner preheader != outer header\n");
     return false;
@@ -266,6 +267,7 @@ bool LoopStructure::discoverPrologueRegion() {
 }
 
 bool LoopStructure::isInnerLoopHardwareLoop() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   auto *BI = dyn_cast<BranchInst>(getInnerLatch()->getTerminator());
   if (!BI || !BI->isConditional())
     return false;
@@ -280,6 +282,7 @@ bool LoopStructure::isInnerLoopHardwareLoop() const {
 }
 
 SmallVector<LoadInst *, 8> LoopStructure::collectPrologueLoads() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // The prologue is the single outer header block.
   SmallVector<LoadInst *, 8> Loads;
   for (Instruction &I : *getOuterHeader())
@@ -289,6 +292,7 @@ SmallVector<LoadInst *, 8> LoopStructure::collectPrologueLoads() const {
 }
 
 SmallVector<StoreInst *, 8> LoopStructure::collectEpilogueStores() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // The epilogue is the single outer latch block.
   SmallVector<StoreInst *, 8> Stores;
   for (Instruction &I : *getOuterLatch())
@@ -310,6 +314,7 @@ void AIEOuterLoopPipeliner::populateVMapFromPHIs(ValueToValueMapTy &VMap,
 
 bool LoopStructure::isProfitableToRotate(ScalarEvolution &SE,
                                          unsigned MinTripCount) const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   if (!isInnerLoopHardwareLoop()) {
     LLVM_DEBUG(dbgs() << "    Inner loop is not a hardware loop\n");
     return false;
@@ -331,6 +336,7 @@ bool LoopStructure::isProfitableToRotate(ScalarEvolution &SE,
 }
 
 bool LoopStructure::isSafeToReorderMemoryOps() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // TODO: Add alias/dependence analysis to verify that moving prologue loads
   // before epilogue stores is safe. For now, only reject volatile/atomic
   // operations which can never be reordered.
@@ -355,6 +361,7 @@ bool LoopStructure::isSafeToReorderMemoryOps() const {
 // stay in the outer header and are cloned separately into the last-iteration
 // block.
 void LoopStructure::collectPeeledInstructions() {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   SmallPtrSet<Instruction *, 32> Visited;
   SmallVector<Instruction *, 16> Worklist;
   auto Seed = [&](Value *V) {
@@ -580,10 +587,8 @@ void AIEOuterLoopPipeliner::remapBoundToClone(
   B.OldIV = cast_or_null<PHINode>(Map(B.OldIV));
 }
 
-void LoopStructure::deleteNest() const {
-  // The nest is unreachable after swapInClonedNest. Collect its blocks and
-  // delete them as a set (DeleteDeadBlocks drops inter-block references within
-  // the set, e.g. the back-edge and PHIs).
+void LoopStructure::removeFromCFG() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   SmallVector<BasicBlock *, 8> Dead;
   Dead.push_back(getOuterHeader());
   Dead.append(getInnerBlocks().begin(), getInnerBlocks().end());
@@ -1088,6 +1093,7 @@ void LoopStructure::updateLoopMetadata() const {
 
 bool LoopStructure::collectPeeledForSplit(
     function_ref<bool(const Instruction *)> IsAnchor) {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // Forward-track from loads to find anchors, then collect all their
   // descendants (the kept set). Peeled = everything else: prologue pipeline
   // candidates that are neither anchors nor anchor descendants.
@@ -1270,6 +1276,7 @@ bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
 
 void LoopStructure::collectKeptInstructions(
     function_ref<bool(const Instruction *)> IsAnchor) {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   SmallPtrSet<Instruction *, 32> PeeledSet;
   PeeledSet.insert(peeledInsts().begin(), peeledInsts().end());
 
@@ -1387,8 +1394,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // Adjust itercount metadata to reflect the reduced trip count.
   SteadyLS.updateLoopMetadata();
 
-  // The original nest is unreachable; delete it.
-  OrigLS.deleteNest();
+  OrigLS.removeFromCFG();
 
   return true;
 }

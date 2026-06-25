@@ -192,58 +192,13 @@ class LoopStructure {
   // epilogue can be filtered back to the original stores only.
   SmallPtrSet<Instruction *, 32> EpilogueSnapshot;
 
-public:
-  explicit LoopStructure(Loop *L);
-
-  // Constructor for Copied LoopStructures that do not provide valid LoopInfo
-  LoopStructure(BasicBlock *OuterPreheader, BasicBlock *OuterHeader,
-                BasicBlock *OuterLatch, BasicBlock *InnerPreheader,
-                BasicBlock *InnerHeader, BasicBlock *InnerLatch,
-                BasicBlock *InnerExit, ArrayRef<BasicBlock *> InnerBlocks,
-                MDNode *OuterLoopID);
-
-  // The outer header is the prologue entry; the outer latch is the epilogue
-  // exit. Both derive from the regions, the single source of truth for nest
-  // shape.
-  BasicBlock *getOuterHeader() const { return PrologueRegion.entry(); }
-  BasicBlock *getOuterLatch() const { return EpilogueRegion.back(); }
-
+  // The outer LoopInfo loop (original nest only; null on clones).
   Loop *getOuterLoop() const { return OuterLoop; }
-  Loop *getInnerLoop() const { return InnerLoop; }
-  BasicBlock *getInnerPreheader() const { return InnerPreheader; }
-  BasicBlock *getInnerHeader() const { return InnerHeader; }
-  BasicBlock *getInnerLatch() const { return InnerLatch; }
-  BasicBlock *getInnerExit() const { return InnerExit; }
-  ArrayRef<BasicBlock *> getInnerBlocks() const { return InnerLoopBlocks; }
-  MDNode *getOuterLoopID() const { return OuterLoopID; }
 
-  BlockRegion &prologueRegion() { return PrologueRegion; }
-  const BlockRegion &prologueRegion() const { return PrologueRegion; }
-  BlockRegion &epilogueRegion() { return EpilogueRegion; }
-  const BlockRegion &epilogueRegion() const { return EpilogueRegion; }
-
-  LatchConditionInfo &bound() { return OuterLoopCondition; }
-  const LatchConditionInfo &bound() const { return OuterLoopCondition; }
-
+  // True for the original nest; false for steady / last-iteration clones.
   bool isOrigLS() const { return IsOrigLS; }
 
-  // The peeled / kept lists live only on the original nest. Clones obtain
-  // steady-resident instructions by remapping the original's lists, so reaching
-  // for these on a clone is a bug.
-  SmallVectorImpl<Instruction *> &peeledInsts();
-  const SmallVectorImpl<Instruction *> &peeledInsts() const;
-  SmallVectorImpl<Instruction *> &keptInsts();
-  const SmallVectorImpl<Instruction *> &keptInsts() const;
-  SmallPtrSetImpl<Instruction *> &epilogueSnapshot() {
-    return EpilogueSnapshot;
-  }
-  const SmallPtrSetImpl<Instruction *> &epilogueSnapshot() const {
-    return EpilogueSnapshot;
-  }
-
-  // Only clones store the preheader; the original derives it from LoopInfo.
-  void setOuterPreheader(BasicBlock *BB);
-
+  // Returns true if I is in the prologue region (outer header).
   bool isInPrologue(const Instruction *I) const {
     return PrologueRegion.contains(I);
   }
@@ -264,6 +219,65 @@ public:
   // are excluded. Combine with prologueRegion().forEachInstruction to walk
   // candidates in program order.
   bool isPipelineCandidate(const Instruction *I) const;
+
+  // Returns true if the inner loop is a hardware (JNZD) loop, i.e. its latch is
+  // controlled by an @llvm.loop.decrement intrinsic.
+  bool isInnerLoopHardwareLoop() const;
+
+  // Returns the prologue (outer header) loads.
+  SmallVector<LoadInst *, 8> collectPrologueLoads() const;
+
+  // Returns the epilogue (outer latch) stores.
+  SmallVector<StoreInst *, 8> collectEpilogueStores() const;
+
+public:
+  explicit LoopStructure(Loop *L);
+
+  // Constructor for Copied LoopStructures that do not provide valid LoopInfo
+  LoopStructure(BasicBlock *OuterPreheader, BasicBlock *OuterHeader,
+                BasicBlock *OuterLatch, BasicBlock *InnerPreheader,
+                BasicBlock *InnerHeader, BasicBlock *InnerLatch,
+                BasicBlock *InnerExit, ArrayRef<BasicBlock *> InnerBlocks,
+                MDNode *OuterLoopID);
+
+  // The outer header is the prologue entry; the outer latch is the epilogue
+  // exit. Both derive from the regions, the single source of truth for nest
+  // shape.
+  BasicBlock *getOuterHeader() const { return PrologueRegion.entry(); }
+  BasicBlock *getOuterLatch() const { return EpilogueRegion.back(); }
+
+  Loop *getInnerLoop() const { return InnerLoop; }
+  BasicBlock *getInnerPreheader() const { return InnerPreheader; }
+  BasicBlock *getInnerHeader() const { return InnerHeader; }
+  BasicBlock *getInnerLatch() const { return InnerLatch; }
+  BasicBlock *getInnerExit() const { return InnerExit; }
+  ArrayRef<BasicBlock *> getInnerBlocks() const { return InnerLoopBlocks; }
+  MDNode *getOuterLoopID() const { return OuterLoopID; }
+
+  BlockRegion &prologueRegion() { return PrologueRegion; }
+  const BlockRegion &prologueRegion() const { return PrologueRegion; }
+  BlockRegion &epilogueRegion() { return EpilogueRegion; }
+  const BlockRegion &epilogueRegion() const { return EpilogueRegion; }
+
+  LatchConditionInfo &bound() { return OuterLoopCondition; }
+  const LatchConditionInfo &bound() const { return OuterLoopCondition; }
+
+  // The peeled / kept lists live only on the original nest. Clones obtain
+  // steady-resident instructions by remapping the original's lists, so reaching
+  // for these on a clone is a bug.
+  SmallVectorImpl<Instruction *> &peeledInsts();
+  const SmallVectorImpl<Instruction *> &peeledInsts() const;
+  SmallVectorImpl<Instruction *> &keptInsts();
+  const SmallVectorImpl<Instruction *> &keptInsts() const;
+  SmallPtrSetImpl<Instruction *> &epilogueSnapshot() {
+    return EpilogueSnapshot;
+  }
+  const SmallPtrSetImpl<Instruction *> &epilogueSnapshot() const {
+    return EpilogueSnapshot;
+  }
+
+  // Only clones store the preheader; the original derives it from LoopInfo.
+  void setOuterPreheader(BasicBlock *BB);
 
   // Returns true if I is in the epilogue region (outer latch).
   bool isInEpilogue(const Instruction *I) const {
@@ -302,10 +316,6 @@ public:
   // header and the inner loop), which is not handled.
   bool discoverPrologueRegion();
 
-  // Returns true if the inner loop is a hardware (JNZD) loop, i.e. its latch is
-  // controlled by an @llvm.loop.decrement intrinsic.
-  bool isInnerLoopHardwareLoop() const;
-
   // Returns true if this nest is profitable to rotate: the inner loop is a
   // hardware loop, the outer trip count meets MinTripCount, and the epilogue
   // has stores. SE supplies the outer-loop minimum trip count.
@@ -314,12 +324,6 @@ public:
   // Returns true if it is safe to reorder the prologue loads before the
   // epilogue stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
-
-  // Returns the prologue (outer header) loads.
-  SmallVector<LoadInst *, 8> collectPrologueLoads() const;
-
-  // Returns the epilogue (outer latch) stores.
-  SmallVector<StoreInst *, 8> collectEpilogueStores() const;
 
   // Collect the peeled instructions from the outer header that feed the inner
   // loop into peeledInsts(). Does NOT include hardware-loop setup calls
@@ -344,7 +348,7 @@ public:
   collectKeptInstructions(function_ref<bool(const Instruction *)> IsAnchor);
 
   // Delete this (now unreachable) loop nest's blocks.
-  void deleteNest() const;
+  void removeFromCFG() const;
 
   // Adjust the outer loop trip count from N to N-1 using the pre-computed
   // bound(). Returns the new limit Value.
