@@ -675,7 +675,7 @@ void AIEOuterLoopPipeliner::peelLastIteration(
   cloneInnerLoopIntoLastIter(SteadyLS, LastIterLS, LastIterVMap);
   populateLastIterEpilogue(OrigLS, SteadyLS, LastIterLS, SteadyVMap,
                            LastIterVMap);
-  wireLastIterIntoCFG(SteadyLS, LastIterLS);
+  wireLastIterIntoCFG(SteadyLS, LastIterLS, SteadyVMap, LastIterVMap);
 
   LLVM_DEBUG(dbgs() << "    Created last-iteration: "
                     << LastIterLS.getOuterHeader()->getName() << " -> "
@@ -797,15 +797,47 @@ void AIEOuterLoopPipeliner::populateLastIterEpilogue(
 }
 
 void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
-    const LoopStructure &SteadyLS, const LoopStructure &LastIterLS) const {
+    const LoopStructure &SteadyLS, const LoopStructure &LastIterLS,
+    const ValueToValueMapTy &SteadyVMap,
+    const ValueToValueMapTy &LastIterVMap) const {
   BasicBlock *OrigExit = SteadyLS.getExitBlock();
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
   BranchInst::Create(OrigExit, LastIterEpilogue);
 
+  // Map a loop-carried live-out to its last-iteration clone. The operand may
+  // still be an original value (a live-out rematerialized into the exit block,
+  // untouched by swapInClonedLS) or already a steady clone (an exit PHI value
+  // that swapInClonedLS retargeted): translate orig -> steady ->
+  // last-iteration, tolerating an already-steady input. Returns nullptr when no
+  // clone exists.
+  auto ToLastIter = [&](Value *V) -> Value * {
+    Value *Steady = V;
+    if (auto It = SteadyVMap.find(V); It != SteadyVMap.end())
+      Steady = It->second;
+    if (auto It = LastIterVMap.find(Steady); It != LastIterVMap.end())
+      return It->second;
+    return nullptr;
+  };
+
+  // Repoint each exit PHI's latch edge to the last-iteration epilogue and
+  // retarget its value to the last-iteration clone.
   for (PHINode &PHI : OrigExit->phis()) {
     const int LatchIdx = PHI.getBasicBlockIndex(SteadyLS.getOuterLatch());
     assert(LatchIdx >= 0);
+    if (Value *LastIterVal = ToLastIter(PHI.getIncomingValue(LatchIdx)))
+      PHI.setIncomingValue(LatchIdx, LastIterVal);
     PHI.setIncomingBlock(LatchIdx, LastIterEpilogue);
+  }
+
+  // Retarget non-PHI live-outs (LCSSA values rematerialized into the dedicated
+  // exit block) so their operands read the last-iteration clones.
+  for (Instruction &I : *OrigExit) {
+    if (isa<PHINode>(&I))
+      continue;
+    for (Use &U : I.operands())
+      if (auto *OpI = dyn_cast<Instruction>(U.get()))
+        if (Value *LastIterVal = ToLastIter(OpI))
+          U.set(LastIterVal);
   }
 
   BranchInst *LatchBr = SteadyLS.getLatchBranch();

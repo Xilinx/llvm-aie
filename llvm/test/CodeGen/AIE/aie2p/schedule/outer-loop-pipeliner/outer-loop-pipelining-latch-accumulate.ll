@@ -7,17 +7,34 @@
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
-
-; An accumulation that lives in the outer latch (epilogue) — not just stores —
-; must be cloned into the last-iteration epilogue. The last-iteration runs the
-; final outer iteration, so omitting latch work would drop that iteration's
-; contribution and produce a wrong result for any value read after the loop.
 ;
-; Here %sum.next = %sum + %acc.next runs in the latch and is stored to %total.
-; The last-iteration epilogue must reproduce BOTH the inner-loop store and the
-; latch accumulation + its store, so %total holds the full N-iteration sum.
+; CHECK lines mirror the full pass-output IR (the RUN command's `--- |`
+; section); regenerate them whenever the pass output changes.
 
-; CHECK-LABEL: define void @latch_accumulate_store(ptr noalias %a, ptr noalias %c, ptr noalias %total, i32 %N, i32 %M) {
+; %sum is accumulated across all outer iterations entirely in the outer latch
+; (%sum.next = %sum + %acc.next) and returned after the loop. The pipeliner
+; peels the last outer iteration into lastiter.epilogue, so that block must (1)
+; recompute the latch accumulation and (2) feed it to the exit live-out —
+; otherwise the returned sum drops the final iteration's contribution.
+
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+
+;
+;
+;
+;
+;
+
+; CHECK-LABEL: define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 ; CHECK: entry:
 ; CHECK-NEXT:   %cmp.outer = icmp sgt i32 %N, 1
 ; CHECK-NEXT:   br i1 %cmp.outer, label %outer.header.preheader, label %exit
@@ -50,7 +67,6 @@
 ; CHECK: steady.latch:                                     ; preds = %steady.inner.header
 ; CHECK-NEXT:   store i32 %acc.next.steady, ptr %c.ptr.steady, align 4
 ; CHECK-NEXT:   %sum.next.steady = add i32 %sum.steady, %acc.next.steady
-; CHECK-NEXT:   store i32 %sum.next.steady, ptr %total, align 4
 ; CHECK-NEXT:   %i.next.steady = add i32 %i.steady, 1
 ; CHECK-NEXT:   %outer.cond.steady = icmp slt i32 %i.next.steady, %outer.trip.adj
 ; CHECK-NEXT:   %v0.steady.epi = load i32, ptr %a.ptr.next.steady, align 4
@@ -69,29 +85,18 @@
 ; CHECK: lastiter.epilogue:                                ; preds = %steady.inner.header.lastiter
 ; CHECK-NEXT:   store i32 %acc.next.steady.lastiter, ptr %c.ptr.next.steady, align 4
 ; CHECK-NEXT:   %sum.next.steady.lastiter = add i32 %sum.next.steady, %acc.next.steady.lastiter
-; CHECK-NEXT:   store i32 %sum.next.steady.lastiter, ptr %total, align 4
+; CHECK-NEXT:   br label %exit.loopexit
+;
+; CHECK: exit.loopexit:                                    ; preds = %lastiter.epilogue
+; CHECK-NEXT:   %0 = add i32 %sum.next.steady, %acc.next.steady.lastiter
 ; CHECK-NEXT:   br label %exit
 ;
-; CHECK: exit:                                             ; preds = %lastiter.epilogue, %entry
-; CHECK-NEXT:   ret void
+; CHECK: exit:                                             ; preds = %exit.loopexit, %entry
+; CHECK-NEXT:   %sum.lcssa = phi i32 [ 0, %entry ], [ %0, %exit.loopexit ]
+; CHECK-NEXT:   ret i32 %sum.lcssa
 ; CHECK: }
 
-;
-; CHECK: ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
-; CHECK: declare void @llvm.set.loop.iterations.i32(i32) #0
-;
-; CHECK: ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
-; CHECK: declare i1 @llvm.loop.decrement.i32(i32) #0
-;
-; CHECK: attributes #0 = { nocallback noduplicate nofree nosync nounwind willreturn }
-;
-; CHECK: !0 = distinct !{!0, !1}
-; CHECK: !1 = !{!"llvm.loop.mustprogress"}
-; CHECK: !2 = distinct !{!2, !3}
-; CHECK: !3 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
-;
-define void @latch_accumulate_store(ptr noalias %a, ptr noalias %c,
-                                    ptr noalias %total, i32 %N, i32 %M) {
+define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:
   %cmp.outer = icmp sgt i32 %N, 1
   br i1 %cmp.outer, label %outer.header, label %exit
@@ -114,9 +119,8 @@ inner.header:
 outer.latch:
   ; Inner-loop result store.
   store i32 %acc.next, ptr %c.ptr, align 4
-  ; Accumulation that lives in the latch and escapes via a store.
+  ; Cross-iteration accumulation kept only in the latch; read after the loop.
   %sum.next = add i32 %sum, %acc.next
-  store i32 %sum.next, ptr %total, align 4
   %a.ptr.next = getelementptr inbounds i32, ptr %a.ptr, i32 1
   %c.ptr.next = getelementptr inbounds i32, ptr %c.ptr, i32 1
   %i.next = add i32 %i, 1
@@ -124,7 +128,8 @@ outer.latch:
   br i1 %outer.cond, label %outer.header, label %exit, !llvm.loop !0
 
 exit:
-  ret void
+  %sum.lcssa = phi i32 [ 0, %entry ], [ %sum.next, %outer.latch ]
+  ret i32 %sum.lcssa
 }
 
 declare void @llvm.set.loop.iterations.i32(i32)

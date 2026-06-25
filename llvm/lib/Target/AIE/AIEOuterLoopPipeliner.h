@@ -496,10 +496,19 @@ private:
                                 ValueToValueMapTy &LastIterVMap) const;
 
   // Splice the last-iteration into the CFG: last-iteration epilogue -> original
-  // exit, repoint the exit's latch-predecessor PHIs to it, redirect the steady
-  // latch exit to the last-iteration prologue.
+  // exit, redirect the steady latch exit to the last-iteration prologue, and
+  // remap the exit block's live-out values to their last-iteration clones.
+  // The exit's loop-carried live-outs (LCSSA PHIs or instructions
+  // rematerialized into a dedicated exit block) still reference the
+  // steady/original latch defs; since the final outer iteration now executes in
+  // lastiter.epilogue, they must be retargeted to its clones (orig -> steady
+  // via SteadyVMap, then steady -> last-iteration via LastIterVMap), otherwise
+  // the value read after the loop omits the last iteration (or dangles once the
+  // original loop is deleted).
   void wireLastIterIntoCFG(const LoopStructure &SteadyLS,
-                           const LoopStructure &LastIterLS) const;
+                           const LoopStructure &LastIterLS,
+                           const ValueToValueMapTy &SteadyVMap,
+                           const ValueToValueMapTy &LastIterVMap) const;
 
   // Lift pointer update instructions (add.2d,
   // add.3d, and their forward chain) from the epilogue to the end of the
