@@ -8,6 +8,11 @@
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
+
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
+; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
+
 ; Test for pointer update lifting in the AIE Outer Loop Pipeliner pass.
 ;
 ; When pointer update instructions (GEPs, addrspacecasts, add.2d, add.3d, etc.)

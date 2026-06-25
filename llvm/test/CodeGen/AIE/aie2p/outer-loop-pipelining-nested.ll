@@ -7,6 +7,10 @@
 ; RUN: llc -mtriple=aie2p -O2 -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
+
+; RUN: llc -mtriple=aie2p -O2 -stop-after=aie-outer-loop-pipeliner -o - %s \
+; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
+
 ; Test for the AIE Outer Loop Pipelining pass with nested loop structures.
 ;
 ; This test verifies that the pass correctly handles triple-nested loops
