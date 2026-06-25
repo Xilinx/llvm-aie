@@ -181,6 +181,14 @@ class LoopStructure {
   SmallVector<Instruction *, 16> PeeledInsts;
   SmallVector<Instruction *, 16> KeptInsts;
 
+  // Fact A — clone correspondence. Maps a value of this clone's IMMEDIATE
+  // source domain to its copy in this clone (SteadyLS: orig->steady;
+  // LastIterLS: steady->lastiter). Empty on the original LS. Owned here:
+  // write-once at construction, read-many via cloneOf. ValueMap is neither
+  // copyable nor movable, so LoopStructure is built in place (clone
+  // constructors below), never returned by value.
+  ValueToValueMapTy CloneMap;
+
   // The outer LoopInfo loop (original LS only; null on clones).
   Loop *getOuterLoop() const { return OuterLoop; }
 
@@ -244,6 +252,24 @@ public:
                 BasicBlock *InnerHeader, BasicBlock *InnerLatch,
                 BasicBlock *InnerExit, ArrayRef<BasicBlock *> InnerBlocks,
                 MDNode *OuterLoopID);
+
+  // Clone-constructor: deep-clone Src's blocks into fresh "<name>.<Suffix>"
+  // IR, recording Src->clone in this->CloneMap and remapping internal control
+  // flow / data refs to the clones. Edges leaving the LS (e.g. the exit
+  // successor) are left pointing at Src's externals for the caller to rewire.
+  // Built in place (ValueMap is non-movable, so the LS is never returned by
+  // value).
+  LoopStructure(const LoopStructure &Src, const Twine &Suffix);
+
+  // Fact A lookup: the clone of a source-domain value in this LS, or V itself
+  // if absent (loop-invariants/args pass through). Direction is source->clone,
+  // matching RemapInstruction.
+  Value *cloneOf(Value *V) const {
+    auto It = CloneMap.find(V);
+    return It != CloneMap.end() ? static_cast<Value *>(It->second) : V;
+  }
+  ValueToValueMapTy &cloneMap() { return CloneMap; }
+  const ValueToValueMapTy &cloneMap() const { return CloneMap; }
 
   // True if the loop was validated as a supported pipelining candidate by the
   // LoopStructure(Loop *) constructor. Always false on cloned structures.
@@ -377,54 +403,40 @@ private:
   bool performTransformation(LoopStructure &OrigLS,
                              const AIE::LoopOptionOverrides &Overrides);
 
-  // Clone an entire LS (outer header + inner-loop blocks + outer latch)
-  // into fresh IR blocks named "<orig><Suffix>". Records old->new in VMap and
-  // remaps all cloned instructions so internal control flow and data references
-  // point at the clones; edges leaving the LS (e.g. the exit successor) are
-  // left pointing at the originals for the caller to rewire. Returns a
-  // LoopStructure over the clone blocks (OuterLoop/InnerLoop null;
-  // OuterPreheader null until the caller creates one). The clone is a faithful
-  // copy of SrcLS at call time — the caller then transforms it.
-  LoopStructure cloneLS(const LoopStructure &SrcLS, const Twine &Suffix,
-                        ValueToValueMapTy &VMap) const;
-
   // Swap a freshly cloned, not-yet-transformed steady-state LS in for the
   // original: rewire the original preheader to the clone's header, repoint the
   // exit's PHIs from the original latch to the clone's latch, and set the
   // clone's outer preheader. After this the clone is the live loop (reachable
   // from the preheader, feeding the exit) and the original is unreachable,
   // ready for deletion once the transform completes.
-  void swapInClonedLS(const LoopStructure &OrigLS, LoopStructure &SteadyLS,
-                      const ValueToValueMapTy &SteadyVMap) const;
+  void swapInClonedLS(const LoopStructure &OrigLS,
+                      LoopStructure &SteadyLS) const;
 
   // Remap SteadyLS.bound()'s cached instruction pointers (Cmp/Counter/OldIV and
   // the Limit, if it is an instruction in the LS) from the original LS to their
-  // clones, so adjustLoopBound / getDowncountingInfo operate on the clone.
-  void remapBoundToClone(LoopStructure &SteadyLS,
-                         const ValueToValueMapTy &SteadyVMap) const;
+  // clones (via SteadyLS.cloneOf), so adjustLoopBound / getDowncountingInfo
+  // operate on the clone.
+  void remapBoundToClone(LoopStructure &SteadyLS) const;
 
   // Clone OrigLS's peeled instructions (translated to steady clones via
-  // SteadyVMap) into a peel block before the steady loop, then adopt the peel
-  // as the steady preheader.
+  // SteadyLS.cloneMap()) into a peel block before the steady loop, then adopt
+  // the peel as the steady preheader.
   void clonePrologueAsPeel(const LoopStructure &OrigLS, LoopStructure &SteadyLS,
-                           const ValueToValueMapTy &SteadyVMap,
                            ValueToValueMapTy &PeelVMap);
 
   // Clone OrigLS's peeled instructions (translated to steady clones via
-  // SteadyVMap) into the epilogue (outer latch), using the NEXT-iteration
-  // pointer values so the loads prefetch for the next iteration.
+  // SteadyLS.cloneMap()) into the epilogue (outer latch), using the
+  // NEXT-iteration pointer values so the loads prefetch for the next iteration.
   void clonePrologueIntoEpilogue(const LoopStructure &OrigLS,
                                  const LoopStructure &SteadyLS,
-                                 const ValueToValueMapTy &SteadyVMap,
                                  ValueToValueMapTy &EpiVMap);
 
-  // For each steady peeled instruction (translated from OrigLS via SteadyVMap),
-  // create a PHI selecting the peel value on the entry edge and the epilogue
-  // value on the back edge, replace the instruction's uses with it, and erase
-  // the instruction.
+  // For each steady peeled instruction (translated from OrigLS via
+  // SteadyLS.cloneMap()), create a PHI selecting the peel value on the entry
+  // edge and the epilogue value on the back edge, replace the instruction's
+  // uses with it, and erase the instruction.
   void createPipelinedPHIs(const LoopStructure &OrigLS,
                            const LoopStructure &SteadyLS,
-                           const ValueToValueMapTy &SteadyVMap,
                            const ValueToValueMapTy &PeelVMap,
                            const ValueToValueMapTy &EpiVMap);
 
@@ -433,11 +445,10 @@ private:
   //   inner loop clone: uses last epilogue load values + kept results
   //   lastiter.epilogue: epilogue stores only (no loads, no prologue clones)
   // Redirects the outer latch's false branch to lastiter.prologue. OrigLS's
-  // kept list is translated to steady clones via SteadyVMap; the epilogue
-  // snapshot is read off SteadyLS.
+  // kept list is translated to steady clones via SteadyLS.cloneMap(); the
+  // epilogue snapshot is read off SteadyLS.
   void peelLastIteration(const LoopStructure &OrigLS,
-                         const LoopStructure &SteadyLS,
-                         const ValueToValueMapTy &SteadyVMap);
+                         const LoopStructure &SteadyLS);
 
   // Clone I into Dest before InsertPt, record orig->clone in VMap, and return
   // the clone. A non-empty Suffix renames non-void clones to "<orig><Suffix>".
