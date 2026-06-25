@@ -371,6 +371,10 @@ class RegionEndEdges : public ScheduleDAGMutation {
     removeExitSUPreds(DAG);
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
+    const MachineInstr *EndMI = DAG->ExitSU.getInstr();
+    const TargetRegisterInfo *TRI = DAG->MF.getSubtarget().getRegisterInfo();
+    const InstrItineraryData *Itins =
+        DAG->MF.getSubtarget().getInstrItineraryData();
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
     for (SUnit &SU : DAG->SUnits) {
       MachineInstr &MI = *SU.getInstr();
@@ -395,10 +399,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
       // during fixpoint convergence; that must not let a producer of such a
       // value be pulled into the call's delay-slot shadow. Floor the edge by
       // the real, uncapped producer latency for any register the barrier uses.
-      if (const MachineInstr *EndMI = DAG->ExitSU.getInstr()) {
-        const TargetRegisterInfo *TRI = DAG->MF.getSubtarget().getRegisterInfo();
-        const InstrItineraryData *Itins =
-            DAG->MF.getSubtarget().getInstrItineraryData();
+      if (EndMI) {
         auto FeedsBarrierReg = [&]() {
           for (const MachineOperand &MO : MI.operands())
             if (MO.isReg() && MO.isDef() && MO.getReg() &&
