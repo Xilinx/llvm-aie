@@ -141,11 +141,12 @@ struct DowncountingInfo {
   PHINode *OldIV;
 };
 
-// One instance of the outer loop nest, used both for the original loop and for
-// the steady-state / last-iteration clones produced during the transform.
+// One LS instance, describing the outer loop and its single inner loop. Used
+// both for the original loop and for the steady-state / last-iteration clones
+// produced during the transform.
 class LoopStructure {
   // Original Loop Structure Exclusive Attributes
-  // OuterLoop/InnerLoop are the LoopInfo loops for the ORIGINAL nest only. They
+  // OuterLoop/InnerLoop are the LoopInfo loops for the ORIGINAL LS only. They
   // are null on cloned structures (steady-state / last-iteration).
   Loop *OuterLoop = nullptr;
   Loop *InnerLoop = nullptr;
@@ -172,7 +173,7 @@ class LoopStructure {
   LatchConditionInfo OuterLoopCondition;
 
   // The peeled / kept split of the prologue instructions, in program order.
-  // Populated on the original nest only; clones never store these (see
+  // Populated on the original LS only; clones never store these (see
   // IsOrigLS).
   SmallVector<Instruction *, 16> PeeledInsts;
   SmallVector<Instruction *, 16> KeptInsts;
@@ -182,10 +183,10 @@ class LoopStructure {
   // epilogue can be filtered back to the original stores only.
   SmallPtrSet<Instruction *, 32> EpilogueSnapshot;
 
-  // The outer LoopInfo loop (original nest only; null on clones).
+  // The outer LoopInfo loop (original LS only; null on clones).
   Loop *getOuterLoop() const { return OuterLoop; }
 
-  // True for the original nest; false for steady / last-iteration clones.
+  // True for the original LS; false for steady / last-iteration clones.
   bool isOrigLS() const { return IsOrigLS; }
 
   // Returns true if I is in the prologue region (outer header).
@@ -249,7 +250,7 @@ public:
   LatchConditionInfo &bound() { return OuterLoopCondition; }
   const LatchConditionInfo &bound() const { return OuterLoopCondition; }
 
-  // The peeled / kept lists live only on the original nest.
+  // The peeled / kept lists live only on the original LS.
   SmallVectorImpl<Instruction *> &peeledInsts();
   const SmallVectorImpl<Instruction *> &peeledInsts() const;
   SmallVectorImpl<Instruction *> &keptInsts();
@@ -282,7 +283,7 @@ public:
   // The latch successor that leaves the loop (the non-header edge).
   BasicBlock *getExitBlock() const;
 
-  // Splice a freshly created peel block in as this nest's preheader: repoint
+  // Splice a freshly created peel block in as this LS's preheader: repoint
   // the header PHIs' incoming edge from the current preheader to Peel, then
   // record Peel. The current preheader is read before it is overwritten, so the
   // two steps must stay in this order.
@@ -298,7 +299,7 @@ public:
   // header and the inner loop), which is not handled.
   bool discoverPrologueRegion();
 
-  // Returns true if this nest is profitable to rotate: the inner loop is a
+  // Returns true if this LS is profitable to rotate: the inner loop is a
   // hardware loop, the outer trip count meets MinTripCount, and the epilogue
   // has stores. SE supplies the outer-loop minimum trip count.
   bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
@@ -329,7 +330,7 @@ public:
   void
   collectKeptInstructions(function_ref<bool(const Instruction *)> IsAnchor);
 
-  // Delete this (now unreachable) loop nest's blocks.
+  // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
 
   // Adjust the outer loop trip count from N to N-1 using the pre-computed
@@ -368,28 +369,28 @@ private:
   bool performTransformation(LoopStructure &OrigLS,
                              const AIE::LoopOptionOverrides &Overrides);
 
-  // Clone an entire loop nest (outer header + inner-loop blocks + outer latch)
+  // Clone an entire LS (outer header + inner-loop blocks + outer latch)
   // into fresh IR blocks named "<orig><Suffix>". Records old->new in VMap and
   // remaps all cloned instructions so internal control flow and data references
-  // point at the clones; edges leaving the nest (e.g. the exit successor) are
+  // point at the clones; edges leaving the LS (e.g. the exit successor) are
   // left pointing at the originals for the caller to rewire. Returns a
   // LoopStructure over the clone blocks (OuterLoop/InnerLoop null;
   // OuterPreheader null until the caller creates one). The clone is a faithful
   // copy of SrcLS at call time — the caller then transforms it.
-  LoopStructure cloneLoopNest(const LoopStructure &SrcLS, const Twine &Suffix,
-                              ValueToValueMapTy &VMap) const;
+  LoopStructure cloneLS(const LoopStructure &SrcLS, const Twine &Suffix,
+                        ValueToValueMapTy &VMap) const;
 
-  // Swap a freshly cloned, not-yet-transformed steady-state nest in for the
+  // Swap a freshly cloned, not-yet-transformed steady-state LS in for the
   // original: rewire the original preheader to the clone's header, repoint the
   // exit's PHIs from the original latch to the clone's latch, and set the
   // clone's outer preheader. After this the clone is the live loop (reachable
   // from the preheader, feeding the exit) and the original is unreachable,
   // ready for deletion once the transform completes.
-  void swapInClonedNest(const LoopStructure &OrigLS, LoopStructure &SteadyLS,
-                        const ValueToValueMapTy &SteadyVMap) const;
+  void swapInClonedLS(const LoopStructure &OrigLS, LoopStructure &SteadyLS,
+                      const ValueToValueMapTy &SteadyVMap) const;
 
   // Remap SteadyLS.bound()'s cached instruction pointers (Cmp/Counter/OldIV and
-  // the Limit, if it is an in-nest instruction) from the original nest to their
+  // the Limit, if it is an instruction in the LS) from the original LS to their
   // clones, so adjustLoopBound / getDowncountingInfo operate on the clone.
   void remapBoundToClone(LoopStructure &SteadyLS,
                          const ValueToValueMapTy &SteadyVMap) const;
@@ -446,15 +447,15 @@ private:
   static void remapClones(ArrayRef<Instruction *> Clones,
                           ValueToValueMapTy &VMap);
 
-  // Translate each original-nest instruction to its clone via VMap (entries not
-  // in the map, e.g. loop-invariant operands, pass through unchanged). Used to
-  // turn OrigLS's peeled / kept lists into steady-resident instructions at the
-  // point each transform step needs them.
+  // Translate each instruction of the original LS to its clone via VMap
+  // (entries not in the map, e.g. loop-invariant operands, pass through
+  // unchanged). Used to turn OrigLS's peeled / kept lists into steady-resident
+  // instructions at the point each transform step needs them.
   static SmallVector<Instruction *, 16>
   remapToClone(ArrayRef<Instruction *> Insts, const ValueToValueMapTy &VMap);
 
   // Step helpers of peelLastIteration, in call order.
-  // Creates the empty last-iteration nest: lastiter.prologue (outer header),
+  // Creates the empty last-iteration LS: lastiter.prologue (outer header),
   // one clone per inner-loop block, and lastiter.epilogue (outer latch), all
   // spliced before the steady loop's exit successor and recorded in
   // LastIterVMap. Bodies are filled later by the helpers below. Returns a

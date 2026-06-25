@@ -411,7 +411,7 @@ void AIEOuterLoopPipeliner::clonePrologueAsPeel(
   Preheader->getTerminator()->replaceSuccessorWith(SteadyLS.getOuterHeader(),
                                                    Peel);
 
-  // The peel is now the preheader for the steady nest.
+  // The peel is now the preheader for the steady LS.
   SteadyLS.adoptPeelAsPreheader(Peel);
   LLVM_DEBUG(dbgs() << "    Created peel block: " << Peel->getName() << "\n");
 }
@@ -449,13 +449,12 @@ SmallVector<Instruction *, 16> AIEOuterLoopPipeliner::cloneAndRemapInsts(
   return Clones;
 }
 
-LoopStructure
-AIEOuterLoopPipeliner::cloneLoopNest(const LoopStructure &SrcLS,
-                                     const Twine &Suffix,
-                                     ValueToValueMapTy &VMap) const {
+LoopStructure AIEOuterLoopPipeliner::cloneLS(const LoopStructure &SrcLS,
+                                             const Twine &Suffix,
+                                             ValueToValueMapTy &VMap) const {
   Function *F = SrcLS.getOuterHeader()->getParent();
 
-  // The nest in program order: outer header (== inner preheader for the linear
+  // The LS in program order: outer header (== inner preheader for the linear
   // prologue), the inner-loop blocks, then the outer latch (== inner exit).
   // Clone each block; CloneBasicBlock copies all instructions and seeds VMap
   // with per-instruction old->new entries.
@@ -473,16 +472,16 @@ AIEOuterLoopPipeliner::cloneLoopNest(const LoopStructure &SrcLS,
   for (BasicBlock *BB : OrigBlocks) {
     BasicBlock *CB = CloneBasicBlock(BB, VMap, "." + SuffixStr, F);
     // CloneBasicBlock appends to the end of F; move the clone just before its
-    // original so the cloned nest occupies the original's slot. After the
-    // original nest is deleted the clone keeps the original program-order
+    // original so the cloned LS occupies the original's slot. After the
+    // original LS is deleted the clone keeps the original program-order
     // layout (steady loop ahead of the peeled last-iteration and the exit).
     CB->moveBefore(BB);
     VMap[BB] = CB;
     CloneBlocks.push_back(CB);
   }
 
-  // Remap intra-nest references (branch targets, PHI incoming blocks, operands)
-  // to the clones. Edges to blocks outside the nest (e.g. the exit successor)
+  // Remap within-LS references (branch targets, PHI incoming blocks, operands)
+  // to the clones. Edges to blocks outside the LS (e.g. the exit successor)
   // are absent from VMap and remain pointing at the originals for the caller to
   // rewire.
   remapInstructionsInBlocks(CloneBlocks, VMap);
@@ -507,7 +506,7 @@ AIEOuterLoopPipeliner::cloneLoopNest(const LoopStructure &SrcLS,
   CloneLS.epilogueRegion().assign({MapBlock(SrcLS.getOuterLatch())});
 
   // Copy the cached latch-bound; its instruction pointers still reference the
-  // original nest and are remapped to the clone by remapBoundToClone.
+  // original LS and are remapped to the clone by remapBoundToClone.
   CloneLS.bound() = SrcLS.bound();
 
   // Give the clone blocks clean role-based names (the "<orig>.<suffix>" names
@@ -521,13 +520,13 @@ AIEOuterLoopPipeliner::cloneLoopNest(const LoopStructure &SrcLS,
   return CloneLS;
 }
 
-void AIEOuterLoopPipeliner::swapInClonedNest(
+void AIEOuterLoopPipeliner::swapInClonedLS(
     const LoopStructure &OrigLS, LoopStructure &SteadyLS,
     const ValueToValueMapTy &SteadyVMap) const {
   BasicBlock *Preheader = OrigLS.getPreheader();
   BasicBlock *OrigExit = OrigLS.getExitBlock();
 
-  // Redirect the preheader to the clone's header. This leaves the original nest
+  // Redirect the preheader to the clone's header. This leaves the original LS
   // unreachable, so capture the preheader on the clone now — afterwards
   // LoopInfo can no longer recover it for the original.
   Preheader->getTerminator()->replaceSuccessorWith(OrigLS.getOuterHeader(),
@@ -535,7 +534,7 @@ void AIEOuterLoopPipeliner::swapInClonedNest(
   SteadyLS.setOuterPreheader(Preheader);
 
   // The clone's latch exit edge still points at OrigExit (left external by
-  // cloneLoopNest); that is correct. Repoint the exit's loop-carried PHIs from
+  // cloneLS); that is correct. Repoint the exit's loop-carried PHIs from
   // the original latch to the clone's latch, mapping each incoming value
   // through the clone VMap so the exit sees the clone's definitions.
   for (PHINode &PHI : OrigExit->phis()) {
@@ -646,7 +645,7 @@ void AIEOuterLoopPipeliner::peelLastIteration(
   ValueToValueMapTy LastIterVMap;
   populateVMapFromPHIs(LastIterVMap, SteadyLS, SteadyLS.getOuterLatch());
 
-  // Create the empty last-iteration nest (prologue + inner-loop skeleton +
+  // Create the empty last-iteration LS (prologue + inner-loop skeleton +
   // epilogue), then fill each block in. The prologue holds the hardware-loop
   // setup and the kept accumulator seeds; both must be in place before the
   // inner loop is filled so its PHIs that reference kept results resolve.
@@ -686,12 +685,12 @@ LoopStructure AIEOuterLoopPipeliner::createLastIterSkeleton(
   Function *F = SteadyLS.getOuterHeader()->getParent();
   LLVMContext &Ctx = F->getContext();
 
-  // The last-iteration nest is spliced just before the steady loop's exit
+  // The last-iteration LS is spliced just before the steady loop's exit
   // successor; all its blocks are created before that block.
   BasicBlock *OrigExit = SteadyLS.getExitBlock();
 
   // lastiter.prologue is the last-iteration outer header (and, for the linear
-  // nest, its inner preheader); inner-loop PHIs incoming from the outer header
+  // LS, its inner preheader); inner-loop PHIs incoming from the outer header
   // now come from it.
   BasicBlock *LastIterPrologue =
       BasicBlock::Create(Ctx, "lastiter.prologue", F, OrigExit);
@@ -846,22 +845,22 @@ LoopStructure::LoopStructure(BasicBlock *OuterPreheader,
 }
 
 SmallVectorImpl<Instruction *> &LoopStructure::peeledInsts() {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original nest");
+  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
   return PeeledInsts;
 }
 
 const SmallVectorImpl<Instruction *> &LoopStructure::peeledInsts() const {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original nest");
+  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
   return PeeledInsts;
 }
 
 SmallVectorImpl<Instruction *> &LoopStructure::keptInsts() {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original nest");
+  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
   return KeptInsts;
 }
 
 const SmallVectorImpl<Instruction *> &LoopStructure::keptInsts() const {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original nest");
+  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
   return KeptInsts;
 }
 
@@ -1298,7 +1297,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
                       << OrigLS.peeledInsts().size()
                       << " peeled instructions\n");
     // The kept set forward-tracks from the peeled set, so collect it while both
-    // still live on the original nest.
+    // still live on the original LS.
     OrigLS.collectKeptInstructions(isAnchorInstruction);
   } else {
     if (SplitMode)
@@ -1310,14 +1309,14 @@ bool AIEOuterLoopPipeliner::performTransformation(
     return false;
   }
 
-  // Clone the whole nest into a fresh, steady-state copy and swap it into the
+  // Clone the whole LS into a fresh, steady-state copy and swap it into the
   // CFG in the original's place (preheader -> clone header -> ... -> exit). The
   // clone inherits the cached bound (remapped to its blocks); all transform
   // steps below run on the clone so the original is never mutated and is
   // deleted at the end.
   ValueToValueMapTy SteadyVMap;
-  LoopStructure SteadyLS = cloneLoopNest(OrigLS, "steady", SteadyVMap);
-  swapInClonedNest(OrigLS, SteadyLS, SteadyVMap);
+  LoopStructure SteadyLS = cloneLS(OrigLS, "steady", SteadyVMap);
+  swapInClonedLS(OrigLS, SteadyLS, SteadyVMap);
   remapBoundToClone(SteadyLS, SteadyVMap);
 
   // Snapshot the steady epilogue (latch) contents now, before any prefetch
