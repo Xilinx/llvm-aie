@@ -4,13 +4,13 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 %s --run-pass=block-placement \
 # RUN:   -verify-machineinstrs -o - | FileCheck %s
 
 # This stresses block placement to a point where a ZOL doesn't fall-through
-# to its exit point. This gives rise to insertBranch of a PseudoLoopEnd with
+# to its exit point. This gives rise to insertBranch of a PseudoLoopEnd with, implicit $ls, implicit $le
 # a non-null FBB, which should generate an unconditional branch
 
 #             /------------<--------------------\
@@ -116,7 +116,7 @@ body:             |
   ; CHECK-NEXT: bb.7:
   ; CHECK-NEXT:   successors: %bb.7(0x40000000), %bb.8(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.7
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.7, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.8
   bb.0.entry:
     successors: %bb.1, %bb.4
@@ -170,7 +170,7 @@ body:             |
 
   bb.7:
     successors: %bb.7, %bb.8
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.7
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.7, implicit $ls, implicit $le
 
   bb.8:
     successors: %bb.5

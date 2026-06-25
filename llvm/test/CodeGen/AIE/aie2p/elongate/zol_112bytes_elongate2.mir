@@ -95,7 +95,7 @@ body:             |
   ; CHECK-NEXT:     $crunpacksize = MOV_alu_mv_mv_mv_cg 1
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   BUNDLE implicit $lr {
@@ -186,7 +186,7 @@ body:             |
       $crunpacksize = MOV_alu_mv_mv_mv_cg 1
       NOPV
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   bb.2:
     BUNDLE implicit $lr {
       RET implicit $lr

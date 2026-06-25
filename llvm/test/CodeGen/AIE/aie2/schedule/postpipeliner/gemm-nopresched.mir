@@ -140,7 +140,7 @@ body:             |
     $bml6 = VMAC_F_vmac_bm_core_dense $bml6, $x10, $x7, $r2, implicit-def $srfpflags, implicit $crfpmask
     $bml5 = VMAC_F_vmac_bm_core_dense $bml5, $x9, $x7, $r2, implicit-def $srfpflags, implicit $crfpmask
 
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

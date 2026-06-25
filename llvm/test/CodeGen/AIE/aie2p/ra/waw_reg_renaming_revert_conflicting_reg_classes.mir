@@ -82,7 +82,7 @@ body:             |
   ; CHECK-NEXT:   renamable $dm1 = VMAC_vmul_cm_core_Y_X killed renamable $dm1, renamable $y4, renamable $x0, renamable $r1
   ; CHECK-NEXT:   dead renamable $x3 = IMPLICIT_DEF
   ; CHECK-NEXT:   dead renamable $x2 = IMPLICIT_DEF
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
@@ -141,7 +141,7 @@ body:             |
     %97:acc2048 = VMAC_vmul_cm_core_Y_X %97, %24, %2, %12
     dead %68:vec512 = IMPLICIT_DEF
     dead %74:vec512 = IMPLICIT_DEF
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.4
 
   bb.4:

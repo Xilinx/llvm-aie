@@ -587,7 +587,7 @@ body:             |
     $r6 = MOV_mv_scl $p0
     renamable $r5 = AND killed renamable $r6, renamable $r9
     renamable $r0 = nuw nsw ADD_add_r_ri killed renamable $r5, 33, implicit-def dead $srcarry
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.outer.loop.latch:
     successors: %bb.4(0x04000000), %bb.1(0x7c000000)

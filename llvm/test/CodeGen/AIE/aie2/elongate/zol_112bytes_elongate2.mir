@@ -123,7 +123,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3 (align 16):
   ; CHECK-NEXT:   BUNDLE {
@@ -207,7 +207,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     BUNDLE {

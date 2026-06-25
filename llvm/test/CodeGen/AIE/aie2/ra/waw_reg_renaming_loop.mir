@@ -39,7 +39,7 @@ body:             |
   ; CHECK-NEXT:   renamable $p3 = COPY $p2
   ; CHECK-NEXT:   renamable $d3 = COPY $d2
   ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl4, killed $p3, $d3
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -60,7 +60,7 @@ body:             |
     %120:ep = COPY $p2
     %121:ed = COPY $d2
     %120:ep, %121.sub_dim_count:ed = VST_2D_dmw_sts_w %7.sub_256_lo:mxm, killed %120, killed %121
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...
@@ -256,7 +256,7 @@ body:             |
   ; CHECK-NEXT:   renamable $p3 = COPY $p2
   ; CHECK-NEXT:   renamable $d3 = COPY $d2
   ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl10, killed $p3, $d3
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $wh3, $wl0, $wl1, $y2, $y3
@@ -279,7 +279,7 @@ body:             |
     %120:ep = COPY $p2
     %121:ed = COPY $d2
     %120:ep, %121.sub_dim_count:ed = VST_2D_dmw_sts_w %7.sub_256_lo:mxm, killed %120, killed %121
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     liveins: $wl0, $wl1, $wh3, $y2, $y3
     PseudoRET implicit $lr,  implicit $wl0, implicit $wl1, implicit $wh3, implicit $y2, implicit $y3
@@ -313,7 +313,7 @@ body:             |
   ; CHECK-NEXT:   renamable $p3 = COPY $p2
   ; CHECK-NEXT:   renamable $d3 = COPY $d2
   ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl4, killed $p3, $d3
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -335,7 +335,7 @@ body:             |
     %120:ep = COPY $p2
     %121:ed = COPY $d2
     %120:ep, %121.sub_dim_count:ed = VST_2D_dmw_sts_w %7.sub_256_lo:mxm, killed %120, killed %121
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...
@@ -369,7 +369,7 @@ body:             |
   ; CHECK-NEXT:   renamable $wh4 = COPY $wl0
   ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl4
   ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x4, renamable $x4, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
@@ -391,7 +391,7 @@ body:             |
     %282.sub_256_hi:vec512 = COPY $wl0
     %272:acc512 = VCONV_FP32_BF16 %282.sub_256_lo:vec512
     $bml2 = VMAC_F_vmac_bm_core_dense %272, %282:vec512, %282:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     liveins: $p0, $wl0, $r6, $bml1, $bml2
     PseudoRET implicit $lr
@@ -427,7 +427,7 @@ body:             |
   ; CHECK-NEXT:   renamable $wh2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 96
   ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl2
   ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
@@ -449,7 +449,7 @@ body:             |
     %282.sub_256_hi:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 96
     %272:acc512 = VCONV_FP32_BF16 %282.sub_256_lo:vec512
     $bml2 = VMAC_F_vmac_bm_core_dense %272, %282:vec512, %282:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     liveins: $p0, $wl0, $r6, $bml1, $bml2
     PseudoRET implicit $lr
@@ -483,7 +483,7 @@ body:             |
   ; CHECK-NEXT:   renamable $cm3 = VADD killed renamable $cm0, renamable $cm0, $r25
   ; CHECK-NEXT:   VST_SRS_D16_S32_ag_idx $p0, $dj0, killed renamable $bmh2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
   ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx $p0, $dj0, killed renamable $cm3, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r25, $r26, $s0, $x10
@@ -503,7 +503,7 @@ body:             |
     %11:mcmm = VADD %10, %10, $r25
     VST_SRS_D16_S32_ag_idx $p0, $dj0, %4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     VST_SRS_D8_S32_ag_idx $p0, $dj0, %11, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0
     PseudoRET implicit $lr
@@ -561,7 +561,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x7 = VSHUFFLE killed renamable $x7, renamable $x7, renamable $r2
   ; CHECK-NEXT:   renamable $x9 = VSHUFFLE killed renamable $x9, renamable $x9, renamable $r2
   ; CHECK-NEXT:   renamable $x11 = VSHUFFLE killed renamable $x11, renamable $x11, renamable $r2
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit killed renamable $x8, implicit killed renamable $x10, implicit killed renamable $x1, implicit killed renamable $x3, implicit killed renamable $x5, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x11
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le, implicit killed renamable $x8, implicit killed renamable $x10, implicit killed renamable $x1, implicit killed renamable $x3, implicit killed renamable $x5, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x11
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -607,7 +607,7 @@ body:             |
     %411:vec512 = VSHUFFLE %386, %386, %20
     %412:vec512 = VSHUFFLE %394, %394, %20
     %413:vec512 = VSHUFFLE %402, %402, %20
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit %369, implicit %370, implicit %371, implicit %372, implicit %410, implicit %411, implicit %412, implicit %413
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le, implicit %369, implicit %370, implicit %371, implicit %372, implicit %410, implicit %411, implicit %412, implicit %413
 
   bb.2:
     PseudoRET implicit $lr
@@ -635,7 +635,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r3 = AND $r1, $r8
   ; CHECK-NEXT:   renamable $r0 = AND killed renamable $r0, renamable $r3
   ; CHECK-NEXT:   dead renamable $r0 = AND killed renamable $r3, killed renamable $r0
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -650,7 +650,7 @@ body:             |
     %1:er = AND $r1, $r8
     %2:er = AND %0, %1
     %3:er = AND %1, %2
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...

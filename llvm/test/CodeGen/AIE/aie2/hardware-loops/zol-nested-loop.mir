@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-hardware-loops \
 # RUN:   --enable-aie-hardware-loops --enable-aie-zero-overhead-loops %s -verify-machineinstrs -o - | \
@@ -46,7 +46,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r2 = nsw ADD killed renamable $r2, killed renamable $r6, implicit-def $srcarry
   ; CHECK-NEXT:   ST_dms_sts_idx_imm renamable $r2, renamable $p0, 0 :: (store (s32))
   ; CHECK-NEXT:   renamable $r5 = nuw nsw ADD_add_r_ri killed renamable $r5, 1, implicit-def $srcarry
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.4(0x04000000)
@@ -87,7 +87,7 @@ body:             |
     renamable $r2 = nsw ADD killed renamable $r2, killed renamable $r6, implicit-def $srcarry
     ST_dms_sts_idx_imm renamable $r2, renamable $p0, 0 :: (store (s32))
     renamable $r5 = nuw nsw ADD_add_r_ri killed renamable $r5, 1, implicit-def $srcarry
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2, implicit $ls, implicit $le
 
   bb.3:
     successors: %bb.1(0x7c000000), %bb.4(0x04000000)

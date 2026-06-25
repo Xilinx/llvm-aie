@@ -142,7 +142,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY60:%[0-9]+]]:edjh = COPY [[COPY1]]
   ; CHECK-NEXT:   [[COPY61:%[0-9]+]]:edch = COPY [[COPY7]]
   ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo7:%[0-9]+]]:ep, [[COPY10:%[0-9]+]]:edcl, dead [[COPY61:%[0-9]+]]:edch = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo7]], [[COPY58]], [[COPY4]], [[COPY59]], [[COPY10]], undef %52:em_as_32bit, [[COPY5]], [[COPY60]], [[COPY61]]
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
@@ -227,7 +227,7 @@ body:             |
     %99.sub_hi_dim_then_sub_dim_stride:eds = COPY %105.sub_dim_stride
     %99.sub_hi_dim_then_sub_dim_count:eds = COPY %104
     dead %18:ep, %99.sub_dim_count:eds, %99.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %18, %99.sub_mod, %99.sub_dim_size, %99.sub_dim_stride, %99.sub_dim_count, undef %99.sub_hi_dim_then_sub_mod, %99.sub_hi_dim_then_sub_dim_size, %99.sub_hi_dim_then_sub_dim_stride, %99.sub_hi_dim_then_sub_dim_count
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.4:

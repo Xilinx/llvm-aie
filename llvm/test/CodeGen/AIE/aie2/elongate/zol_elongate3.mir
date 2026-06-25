@@ -119,7 +119,7 @@ body:             |
   ; CHECK-NEXT:     NOPM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.for.cond.cleanup:
   ; CHECK-NEXT:   BUNDLE implicit $lr {
@@ -184,7 +184,7 @@ body:             |
       renamable $r4 = LSHL renamable $r2, renamable $r3
     }
 
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
 
   bb.2.for.cond.cleanup:
     BUNDLE implicit $lr {

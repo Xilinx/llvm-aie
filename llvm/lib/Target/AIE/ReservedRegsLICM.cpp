@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -99,26 +99,29 @@ public:
   CandidateIt end() { return Candidates.end(); }
 };
 
-static MCRegister getSinglePhysRegDef(const MachineInstr &MI) {
-  if (MI.getNumDefs() == 1 && MI.getNumExplicitDefs() == 1) {
-    const MachineOperand &MO = MI.getOperand(0);
-    if (MO.getReg().isPhysical())
-      return MO.getReg().asMCReg();
-  }
+static MCRegister getHoistablePhysRegDef(const MachineInstr &MI,
+                                         const TargetRegisterInfo &TRI) {
+  if (MI.getNumDefs() != 1)
+    return MCRegister();
+
+  // CR/SR reserved registers (explicit def) and aie2ps ZOL setup (implicit
+  // def of $ls/$le).
+  const MachineOperand &MO = *MI.all_defs().begin();
+  if (!MO.isReg() || !MO.getReg().isPhysical())
+    return MCRegister();
+  MCRegister Reg = MO.getReg().asMCReg();
+  if (TRI.isSimplifiableReservedReg(Reg))
+    return Reg;
   return MCRegister();
 }
 
 CandidateInfo *Candidates::getInfo(const MachineInstr &MI) {
   const TargetRegisterInfo &TRI = *MI.getMF()->getSubtarget().getRegisterInfo();
-  if (MCRegister Reg = getSinglePhysRegDef(MI)) {
+  if (MCRegister Reg = getHoistablePhysRegDef(MI, TRI)) {
     auto It = Candidates.find(Reg);
-    if (It != Candidates.end()) {
+    if (It != Candidates.end())
       return &It->second;
-    }
-    if (TRI.isSimplifiableReservedReg(Reg)) {
-      // Only consider "simplifiable" reserved regs in this pass.
-      return &Candidates.try_emplace(Reg, Reg).first->second;
-    }
+    return &Candidates.try_emplace(Reg, Reg).first->second;
   }
   return nullptr;
 }

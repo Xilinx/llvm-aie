@@ -5,7 +5,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple=aie2 -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter \
 # RUN:   --aie-gpr-realloc %s -o - | FileCheck %s
@@ -33,7 +33,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r3 = AND $r1, $r8
   ; CHECK-NEXT:   renamable $r4 = AND killed renamable $r0, renamable $r3
   ; CHECK-NEXT:   dead renamable $r5 = AND killed renamable $r3, killed renamable $r4
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -48,7 +48,7 @@ body:             |
     %1:er = AND $r1, $r8
     %2:er = AND %0, %1
     %3:er = AND %1, %2
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...

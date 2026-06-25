@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-hardware-loops \
 # RUN:   --enable-aie-hardware-loops --enable-aie-zero-overhead-loops %s \
@@ -33,7 +33,7 @@ body:             |
     LoopStart $r0, 0
   bb.1:
     successors: %bb.1, %bb.2
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...

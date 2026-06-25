@@ -99,7 +99,7 @@ body:             |
     renamable $x4, renamable $p6 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p6, 64 :: (load (<32 x s16>) from %ir.ofm_load, addrspace 6)
     renamable $x2, dead renamable $r16 = VMAX_LT_bf16 killed renamable $x4, killed renamable $x6, implicit $crbf8conf, implicit $crfp8conf
     renamable $p7 = VST_dmx_sts_x_st_pstm_nrm_imm killed renamable $x2, killed renamable $p7, 64 :: (store (<32 x s16>) into %ir.ofm_write, addrspace 6)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.exit:
     liveins: $p6, $p7

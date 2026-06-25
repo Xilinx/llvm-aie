@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 --run-pass=postmisched \
 # RUN:  -aie-loop-epilogue-analysis=false %s -o - | FileCheck %s
@@ -31,7 +31,7 @@ body:             |
   ; CHECK-NEXT:   $r3 = OR killed $r10, $r2
   ; CHECK-NEXT:   $cm2 = VADD $cm0, $cm1, killed $r3
   ; CHECK-NEXT:   $cm3 = VMOV_mv_cm $cm1
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r0
@@ -59,7 +59,7 @@ body:             |
   ; CHECK-EP-ANALYSIS-NEXT:   $r3 = OR killed $r10, $r2
   ; CHECK-EP-ANALYSIS-NEXT:   $cm2 = VADD $cm0, $cm1, killed $r3
   ; CHECK-EP-ANALYSIS-NEXT:   $cm3 = VMOV_mv_cm $cm1
-  ; CHECK-EP-ANALYSIS-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; CHECK-EP-ANALYSIS-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
   ; CHECK-EP-ANALYSIS-NEXT: bb.2:
   ; CHECK-EP-ANALYSIS-NEXT:   liveins: $r0
@@ -80,7 +80,7 @@ body:             |
     $r10 = OR $r0, $r1
     $r3 = OR $r10, $r2
     $cm2 = VADD $cm0, $cm1, $r3
-    PseudoLoopEnd %bb.2, %bb.1
+    PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $r0

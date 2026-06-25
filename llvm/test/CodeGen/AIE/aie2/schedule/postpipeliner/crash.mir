@@ -77,7 +77,7 @@ body:             |
     $r0 = LDA_dms_lda_idx_imm $p2, 0
     ST_dms_sts_idx_imm killed $r0, $p0, 0
     $p2 = MOV_mv_scl $p1
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.for.cond.cleanup:
     RET implicit $lr

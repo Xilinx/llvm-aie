@@ -104,7 +104,7 @@ body:             |
 
     renamable $x3 = VUNPACK_D16_D8  $wh1, implicit $crunpacksign
     renamable $r1 = VEXTRACT_S8  $x3, $r16
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.loop.exit:
     liveins: $wh2

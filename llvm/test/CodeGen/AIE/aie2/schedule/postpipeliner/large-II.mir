@@ -202,7 +202,7 @@ body:             |
     $p1 = ST_dms_sts_pstm_nrm_imm $r5, $p1, 4 :: (store (s32) into %ir.out.addr.028, !tbaa !7, addrspace 6)
     $p1 = ST_dms_sts_pstm_nrm_imm $r6, $p1, 4 :: (store (s32) into %ir.out.addr.028, !tbaa !7, addrspace 6)
     $p1 = ST_dms_sts_pstm_nrm_imm $r7, $p1, 4 :: (store (s32) into %ir.out.addr.028, !tbaa !7, addrspace 6)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

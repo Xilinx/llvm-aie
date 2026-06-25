@@ -61,7 +61,7 @@ body:             |
     renamable $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm1, renamable $ex10, killed renamable $ex2, renamable $r0, implicit-def dead $srfpflags, implicit $crfpmask
     renamable $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm2, killed renamable $ex8, renamable $ex6, renamable $r0, implicit-def dead $srfpflags, implicit $crfpmask
     renamable $dm3 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm3, killed renamable $ex10, killed renamable $ex6, renamable $r0, implicit-def dead $srfpflags, implicit $crfpmask
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $dm0:0x000000001800000C, $dm1:0x000000001800000C, $dm2:0x000000001800000C, $dm3:0x000000001800000C

@@ -199,7 +199,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
@@ -329,7 +329,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.6
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.6, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
@@ -509,7 +509,7 @@ body:             |
     BUNDLE implicit-def $p1, implicit killed $x4, implicit killed $p1 {
       renamable $p1 = VST_dmx_sts_x_pstm_nrm_imm killed renamable $x4, killed renamable $p1, 64 :: (store (<64 x s8>))
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3, implicit $ls, implicit $le
 
   bb.17:
     successors: %bb.14(0x80000000)
@@ -605,7 +605,7 @@ body:             |
     BUNDLE implicit-def $p1, implicit killed $x8, implicit killed $p1 {
       renamable $p1 = VST_dmx_sts_x_pstm_nrm_imm killed renamable $x8, killed renamable $p1, 64 :: (store (<64 x s8>))
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.5, implicit $ls, implicit $le
 
   bb.15:
     successors: %bb.14(0x80000000)

@@ -42,7 +42,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r6 = AND killed renamable $r4, renamable $r1
   ; CHECK-NEXT:   renamable $r16 = AND killed renamable $r2, killed renamable $r6
   ; CHECK-NEXT:   dead renamable $r18 = AND killed renamable $r16, renamable $r1
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -61,7 +61,7 @@ body:             |
     %3:mlockid_reg = AND %2, %11
     %4:mlockid_reg = AND %1, %3
     dead %5:mlockid_reg = AND %4, %11
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...
@@ -91,7 +91,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r4 = AND killed renamable $r4, renamable $r2
   ; CHECK-NEXT:   renamable $r6 = AND killed renamable $r0, killed renamable $r4
   ; CHECK-NEXT:   dead renamable $r16 = AND killed renamable $r6, renamable $r2
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -110,7 +110,7 @@ body:             |
     %3:mlockid_reg = AND %2, %11
     %4:mlockid_reg = AND %1, %3
     dead %5:mlockid_reg = AND %4, %11
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...

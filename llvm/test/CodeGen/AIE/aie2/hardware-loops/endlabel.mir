@@ -2,14 +2,14 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -start-after=aie-machine-alignment \
 # RUN:   %s -verify-machineinstrs -o - | FileCheck %s
 # CHECK: .AnyLabelDefinedHere:
 # CHECK:        lda     r1, [p0], #4;           nopx
 
-# Check that asmprinter emits the last-bundle label from PseudoLoopEnd
+# Check that asmprinter emits the last-bundle label from PseudoLoopEnd, implicit $ls, implicit $le
 # in the right position
 
 ---
@@ -25,7 +25,7 @@ body:             |
       $r1, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, 4
       NOPX
     }
-    PseudoLoopEnd <mcsymbol .AnyLabelDefinedHere>, %bb.1
+    PseudoLoopEnd <mcsymbol .AnyLabelDefinedHere>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     PseudoRET implicit $lr

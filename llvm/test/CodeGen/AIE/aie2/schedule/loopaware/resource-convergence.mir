@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 --run-pass=postmisched \
 # RUN:     %s -o - | FileCheck %s
@@ -35,7 +35,7 @@ body:             |
   ; CHECK-NEXT:     $r5 = MOV_mv_scl $r0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p0 = ST_dms_sts_pstm_nrm_imm killed $r5, killed $p0, 4
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r1
@@ -57,7 +57,7 @@ body:             |
     $r5 = MOV_mv_scl $r0
     $r1 = MUL_mul_r_rr $r1, $r2
     $p0 = ST_dms_sts_pstm_nrm_imm killed $r5, killed $p0, 4
-    PseudoLoopEnd %bb.2, %bb.1
+    PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   bb.2:
     liveins: $r1
     RET implicit $lr

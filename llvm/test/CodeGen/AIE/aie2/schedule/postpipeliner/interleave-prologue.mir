@@ -46,7 +46,7 @@ body:             |
   ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $x0
@@ -81,7 +81,7 @@ body:             |
 
     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm $p0, $m0
     $x0 = VADD_16 $x0, $x6
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $p0, $p1, $x0
@@ -149,7 +149,7 @@ body:             |
   ; CHECK-NEXT:     $x6 = VUNPACK_S16_S8 internal $wl4
   ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $x0
@@ -189,7 +189,7 @@ body:             |
     $wl4, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, $m0
     $x6 = VUNPACK_S16_S8 $wl4
     $x0 = VADD_16 $x0, $x6
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $p0, $p1, $x0
@@ -254,7 +254,7 @@ body:             |
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, killed $x6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $x0
@@ -290,7 +290,7 @@ body:             |
     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm $p0, 64 :: (load (<16 x s16>))
     $x0 = VADD_16 $x0, $x6
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $p0, $p1, $x0
@@ -362,7 +362,7 @@ body:             |
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
   ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $cm2, $s0
@@ -422,7 +422,7 @@ body:             |
     $x5 = VSHUFFLE $x6, $x1, $r8
     $x5 = VSHUFFLE $x5, $x2, $r8
     $cm2 = VMAC_vmac_cm_core_dense $cm2, $x5, $x0, $r4
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $p0, $p1, $cm2, $s0
@@ -471,7 +471,7 @@ body:             |
   ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $x0
@@ -507,7 +507,7 @@ body:             |
 
     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm $p0, $m0
     $x0 = VADD_16 $x0, $x6
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $p0, $p1, $x0

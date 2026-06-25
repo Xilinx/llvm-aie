@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2p -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -104,7 +104,7 @@ body:             |
   ; CHECK-NEXT:     $crunpacksize = MOV_alu_mv_mv_mv_cg 1
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   BUNDLE implicit $lr {
@@ -201,7 +201,7 @@ body:             |
       $crunpacksize = MOV_alu_mv_mv_mv_cg 1
       NOPV
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   bb.2:
     BUNDLE implicit $lr {
       RET implicit $lr

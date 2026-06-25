@@ -99,7 +99,7 @@ body:             |
     $cml1 = VMAC_f_vmac_bf_half_vmul_bf_core_X_Y killed $cml1, killed $x8, $y5, $r8, implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask, debug-location !5
     $cml0 = VMAC_f_vmac_bf_half_vmul_bf_core_X_Y killed $cml0, killed $x6, killed $y5, $r8, implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask, debug-location !5
     $p0, $dc1, $dc5 = PADD_3D_pseudo $p0, $d1_3d, debug-location !5
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, debug-location !5
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le, debug-location !5
 
   bb.3.for.cond.cleanup265.i:
     liveins: $cml0, $cml1, $cml2, $cml3

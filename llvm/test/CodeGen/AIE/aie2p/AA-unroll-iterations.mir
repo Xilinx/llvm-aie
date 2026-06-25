@@ -175,7 +175,7 @@ body:             |
     $r1, $p1, $dc1 = LDA_2D_dms_lda killed $p1, $d1 :: (load (s32) from %ir.get.08, !tbaa !2)
     renamable $r1 = nsw MUL killed renamable $r1, renamable $r0
     $p0, $dc0 = ST_2D_dms_sts killed $r1, killed $p0, $d0 :: (store (s32) into %ir.put.09, !tbaa !2)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.for.cond.cleanup:
     RET implicit $lr

@@ -119,7 +119,7 @@ body:             |
     $x6 = VBOR $x4, $x5
     VST_dmw_sts_w_ag_idx_imm $wh6, $p2, 32 :: (store (<32 x s8>) into %ir.out.addr.015 + 32, !tbaa !2, addrspace 7)
     $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl6, $p2, 64 :: (store (<32 x s8>) into %ir.out.addr.015, !tbaa !2, addrspace 7)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

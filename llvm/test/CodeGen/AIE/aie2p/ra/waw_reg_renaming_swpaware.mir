@@ -77,7 +77,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x6 = VSHIFT killed renamable $x6, killed renamable $x8, renamable $r4
   ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm0, killed renamable $x4, renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x6, killed renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -151,7 +151,7 @@ body:             |
     %85:vec512 = VSHIFT %64, %67, %82
     %162:acc2048 = VMAC_f_vmac_bf_vmul_bf_core_X_X %159, %81, %99, %105, implicit-def dead $srfpflags, implicit $crfpmask
     %154:acc2048 = VMAC_f_vmac_bf_vmul_bf_core_X_X %151, %85, %99, %105, implicit-def dead $srfpflags, implicit $crfpmask
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.3
 
   bb.3:

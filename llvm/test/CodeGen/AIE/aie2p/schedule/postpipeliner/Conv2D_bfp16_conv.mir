@@ -94,7 +94,7 @@ body:             |
     renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_576_CONV_bfp16ebs8_fp32 killed renamable $sf, killed renamable $dm0, killed renamable $p2, killed renamable $r26, implicit-def $srf2bflags, implicit-def $srfifo_of, implicit $crf2bmask, implicit $crrnd :: (store unknown-size into %ir.out, align 4)
     renamable $sf, renamable $p2, renamable $r26 = VST_FLUSH_512_CONV_normal_flush killed renamable $sf, killed renamable $p2, killed renamable $r26, implicit-def $srfifo_of :: (store unknown-size into %ir.out, align 4)
     $sf, $p2, $r26, $dc0 = VST_FLUSH_512_CONV_2D killed $sf, killed $p2, killed $r26, $d0, implicit-def $srfifo_of :: (store unknown-size into %ir.out, align 4)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     RET implicit $lr

@@ -2,7 +2,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 \
 # RUN:   --issue-limit=6 --aie-postpipeliner-cutoff=1 --aie-postpipeliner-limit=1 \
 # RUN:   -debug-only=aie-pipeliner %s -o - 2>&1 | FileCheck  %s --check-prefix=CHECK-TC-4
@@ -59,7 +59,7 @@ body:             |
     %14:er = ABS %9, implicit-def $srcarry
     %24:er27 = LT %5, %14
     %0:er = SELNEZ %14, %5, %24
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:

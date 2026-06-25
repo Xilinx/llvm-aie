@@ -128,7 +128,7 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   dead renamable $wh1 = IMPLICIT_DEF
   ; CHECK-NEXT:   dead renamable $wl1 = IMPLICIT_DEF
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
@@ -231,7 +231,7 @@ body:             |
     }
     dead renamable $wh1 = IMPLICIT_DEF
     dead renamable $wl1 = IMPLICIT_DEF
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.4:
     successors: %bb.3(0x80000000)

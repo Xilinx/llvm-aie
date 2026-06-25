@@ -124,7 +124,7 @@ body:             |
     $cml1 = VMAC_f_vmac_bf_half_vmul_bf_core_X_Y killed $cml1, killed $x3, $y3, $r10, implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask, debug-location !5
     $cml0 = VMAC_f_vmac_bf_half_vmul_bf_core_X_Y killed $cml0, killed $x4, killed $y3, $r10, implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask, debug-location !5
     $p0, $dc1, $dc5 = PADDB_3D $p0, $d1_3d, debug-location !5
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, debug-location !5
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le, debug-location !5
 
   bb.3.exit:
     RET implicit $lr

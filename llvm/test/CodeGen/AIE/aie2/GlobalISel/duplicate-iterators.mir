@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-post-select-optimize -verify-machineinstrs %s -o - | FileCheck %s
 # RUN: llc -mtriple aie2 -start-before=aie-post-select-optimize -stop-after=register-coalescer -verify-machineinstrs \
@@ -55,7 +55,7 @@ body:             |
   ; CHECK-NEXT:   [[VLDA_2D_dmw_lda_w:%[0-9]+]]:ewl, [[VLDA_2D_dmw_lda_w1:%[0-9]+]]:ep, [[VLDA_2D_dmw_lda_w2:%[0-9]+]]:edc = VLDA_2D_dmw_lda_w [[PHI2]], [[REG_SEQUENCE]]
   ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_stride, [[PHI1]], %subreg.sub_dim_count
   ; CHECK-NEXT:   [[VST_2D_dmw_sts_w:%[0-9]+]]:ep, [[VST_2D_dmw_sts_w1:%[0-9]+]]:edc = VST_2D_dmw_sts_w [[VLDA_2D_dmw_lda_w]], [[PHI3]], [[REG_SEQUENCE1]]
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -85,7 +85,7 @@ body:             |
   ; POST-COALESCER-NEXT: {{  $}}
   ; POST-COALESCER-NEXT:   [[VLDA_2D_dmw_lda_w:%[0-9]+]]:ewl, [[COPY:%[0-9]+]]:ep_as_32bit, [[PseudoMove:%[0-9]+]].sub_dim_count:ed = VLDA_2D_dmw_lda_w [[COPY]], [[PseudoMove]]
   ; POST-COALESCER-NEXT:   [[COPY1:%[0-9]+]]:ep_as_32bit, [[MOV_PD_imm10_pseudo:%[0-9]+]].sub_dim_count:ed = VST_2D_dmw_sts_w [[VLDA_2D_dmw_lda_w]], [[COPY1]], [[MOV_PD_imm10_pseudo]]
-  ; POST-COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+  ; POST-COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
   ; POST-COALESCER-NEXT:   PseudoJ_jump_imm %bb.2
   ; POST-COALESCER-NEXT: {{  $}}
   ; POST-COALESCER-NEXT: bb.2:
@@ -115,7 +115,7 @@ body:             |
   ; COALESCER-NEXT:   [[MOV_PD_imm10_pseudo1:%[0-9]+]].sub_dim_size:ed = COPY [[MOV_PD_imm10_pseudo]].sub_dim_size
   ; COALESCER-NEXT:   [[MOV_PD_imm10_pseudo1:%[0-9]+]].sub_dim_stride:ed = COPY [[MOV_PD_imm10_pseudo]].sub_dim_stride
   ; COALESCER-NEXT:   [[COPY1:%[0-9]+]]:ep_as_32bit, [[MOV_PD_imm10_pseudo1:%[0-9]+]].sub_dim_count:ed = VST_2D_dmw_sts_w [[VLDA_2D_dmw_lda_w]], [[COPY1]], [[MOV_PD_imm10_pseudo1]]
-  ; COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+  ; COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
   ; COALESCER-NEXT:   PseudoJ_jump_imm %bb.2
   ; COALESCER-NEXT: {{  $}}
   ; COALESCER-NEXT: bb.2:
@@ -144,7 +144,7 @@ body:             |
     %8:ewl, %9:ep, %10:edc = VLDA_2D_dmw_lda_w %17, %7
     %11:ed = REG_SEQUENCE %2, %subreg.sub_mod, %3, %subreg.sub_dim_size, %4, %subreg.sub_dim_stride, %16, %subreg.sub_dim_count
     %12:ep, %13:edc = VST_2D_dmw_sts_w %8, %18, %11
-    PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:
@@ -197,7 +197,7 @@ body:             |
   ; CHECK-NEXT:   %25:ewl, %21:ep, %13:edc, %VAL:edc = VLDA_3D_dmw_lda_w [[PHI4]], [[REG_SEQUENCE]]
   ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_stride, [[PHI2]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo7]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo8]], %subreg.sub_hi_dim_then_sub_dim_stride, [[PHI3]], %subreg.sub_hi_dim_then_sub_dim_count
   ; CHECK-NEXT:   %23:ep, %15:edc, %VAL2:edc = VST_3D_dmw_sts_w %25, [[PHI5]], [[REG_SEQUENCE1]]
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -237,7 +237,7 @@ body:             |
   ; POST-COALESCER-NEXT:   [[PseudoMove:%[0-9]+]].sub_dim_count:eds = COPY [[COPY3]].sub_dim_count
   ; POST-COALESCER-NEXT:   [[PseudoMove:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[MOV_PD_imm10_pseudo]].sub_dim_count
   ; POST-COALESCER-NEXT:   [[MOV_PD_imm10_pseudo:%[0-9]+]].sub_dim_count:eds = COPY [[COPY3]].sub_hi_dim_then_sub_dim_count
-  ; POST-COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+  ; POST-COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
   ; POST-COALESCER-NEXT:   PseudoJ_jump_imm %bb.2
   ; POST-COALESCER-NEXT: {{  $}}
   ; POST-COALESCER-NEXT: bb.2:
@@ -275,7 +275,7 @@ body:             |
   ; COALESCER-NEXT:   [[MOV_PD_imm10_pseudo:%[0-9]+]].sub_dim_count:eds = COPY [[COPY3]].sub_dim_count
   ; COALESCER-NEXT:   [[MOV_PD_imm10_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[MOV_PD_imm10_pseudo2]].sub_dim_count
   ; COALESCER-NEXT:   [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edc_as_32bit = COPY [[COPY3]].sub_hi_dim_then_sub_dim_count
-  ; COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+  ; COALESCER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
   ; COALESCER-NEXT:   PseudoJ_jump_imm %bb.2
   ; COALESCER-NEXT: {{  $}}
   ; COALESCER-NEXT: bb.2:
@@ -311,7 +311,7 @@ body:             |
     %11:eds = REG_SEQUENCE %2, %subreg.sub_mod, %3, %subreg.sub_dim_size, %4, %subreg.sub_dim_stride, %21, %subreg.sub_dim_count, %16, %subreg.sub_hi_dim_then_sub_dim_size, %17, %subreg.sub_hi_dim_then_sub_dim_stride, %22, %subreg.sub_hi_dim_then_sub_dim_count
     %12:ep, %13:edc, %VAL2:edc = VST_3D_dmw_sts_w %8, %24, %11
 
-    PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:

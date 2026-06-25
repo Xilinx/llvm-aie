@@ -104,7 +104,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   BUNDLE implicit $lr {
@@ -186,7 +186,7 @@ body:             |
     BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p1, implicit killed $p1 {
       renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p1, 128 :: (load (<32 x s16>))
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     BUNDLE implicit $lr {
@@ -294,7 +294,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
@@ -379,7 +379,7 @@ body:             |
     BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p1, implicit killed $p1 {
       renamable $x1, renamable $p1 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p1, 128 :: (load (<32 x s16>))
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
 

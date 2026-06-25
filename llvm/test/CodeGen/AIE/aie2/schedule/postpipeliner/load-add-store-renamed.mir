@@ -131,7 +131,7 @@ body:             |
     renamable $r0, renamable $p1 = LDA_dms_lda_pstm_nrm_imm killed renamable $p1, 4 :: (load (s32) from %ir.s.addr.06, !tbaa !2)
     renamable $r1 = nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
     renamable $p0 = ST_dms_sts_pstm_nrm_imm killed renamable $r1, killed renamable $p0, 4 :: (store (s32) into %ir.d.addr.07, !tbaa !2)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

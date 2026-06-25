@@ -62,7 +62,7 @@ body:             |
     renamable $r7 = MOV_RLC_imm11_pseudo 20
     renamable $r2 = ADD_alu_r_rr renamable $r2, killed renamable $r6, implicit-def $srcarry
     renamable $r3 = ADD_alu_r_rr renamable $r3, killed renamable $r7, implicit-def $srcarry
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     RET implicit $lr

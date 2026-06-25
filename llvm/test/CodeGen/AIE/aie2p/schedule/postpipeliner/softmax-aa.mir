@@ -317,7 +317,7 @@ body:             |
     renamable $wl2, renamable $p1 = VLD_w_pstm_nrm_imm_pseudo killed renamable $p1, 32 :: (load (<8 x s32>) from %ir.it_scale.sroa.0.132, align 64)
     renamable $dm0 = VMUL_f_vmul_bf_vmul_bf_core_X_X renamable $x2, renamable $x0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
     renamable $p0 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm killed renamable $bmll0, killed renamable $p0, 32, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd :: (store (<16 x s16>) into %ir.it_soft_out.sroa.0.131, align 64)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
 
   bb.4.for.cond.cleanup4:
     successors: %bb.5(0x04000000), %bb.2(0x7c000000)
@@ -438,7 +438,7 @@ body:             |
     renamable $wl2, renamable $p1 = VLD_w_pstm_nrm_imm_pseudo killed renamable $p1, 32 :: (load (<8 x s32>) from %ir.it_scale.sroa.0.132, align 64)
     renamable $dm0 = VMUL_f_vmul_bf_vmul_bf_core_X_X renamable $x2, renamable $x0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
     renamable $p0 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm killed renamable $bmll0, killed renamable $p0, 32, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd :: (store (<16 x s16>) into %ir.it_soft_out.sroa.0.131, align 64)
-    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.3, implicit $ls, implicit $le
 
   bb.4.for.cond.cleanup4:
     successors: %bb.5(0x04000000), %bb.2(0x7c000000)
@@ -556,7 +556,7 @@ body:             |
     renamable $wl2, renamable $p1 = VLD_w_pstm_nrm_imm_pseudo killed renamable $p1, 32 :: (load (<8 x s32>) from %ir.it_scale.sroa.0.132, align 64)
     renamable $dm0 = VMUL_f_vmul_bf_vmul_bf_core_X_X renamable $x2, renamable $x0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
     renamable $p0 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm killed renamable $bmll0, killed renamable $p0, 64, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd :: (store (<16 x s16>) into %ir.it_soft_out.sroa.0.131, align 64)
-    PseudoLoopEnd <mcsymbol .L_LEnd2>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd2>, %bb.3, implicit $ls, implicit $le
 
   bb.4.for.cond.cleanup4:
     successors: %bb.5(0x04000000), %bb.2(0x7c000000)
@@ -676,7 +676,7 @@ body:             |
     renamable $wl2, renamable $p1 = VLD_w_pstm_nrm_imm_pseudo killed renamable $p1, 32 :: (load (<8 x s32>) from %ir.it_scale.sroa.0.132, align 64)
     renamable $dm0 = VMUL_f_vmul_bf_vmul_bf_core_X_X renamable $x2, renamable $x0, renamable $r2, implicit-def dead $srfpflags, implicit $crfpmask
     renamable $p0 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm killed renamable $bmll0, killed renamable $p0, 32, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd :: (store (<16 x s16>) into %ir.it_soft_out.sroa.0.131, align 64)
-    PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd3>, %bb.3, implicit $ls, implicit $le
 
   bb.4.for.cond.cleanup4:
     successors: %bb.5(0x04000000), %bb.2(0x7c000000)

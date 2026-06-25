@@ -10,7 +10,7 @@
 # CHECK:         lda	r1, [p0], #4;		nopx
 # CHECK:         // implicit-def: $wh1
 
-# Check that asmprinter emits the last-bundle label from PseudoLoopEnd
+# Check that asmprinter emits the last-bundle label from PseudoLoopEnd, implicit $ls, implicit $le
 # in the right position
 
 ---
@@ -27,7 +27,7 @@ body:             |
       NOPX
     }
     dead renamable $wh1 = IMPLICIT_DEF
-    PseudoLoopEnd <mcsymbol .AnyLabelDefinedHere>, %bb.1
+    PseudoLoopEnd <mcsymbol .AnyLabelDefinedHere>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     PseudoRET implicit $lr

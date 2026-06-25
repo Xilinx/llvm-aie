@@ -143,7 +143,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
@@ -247,7 +247,7 @@ body:             |
       $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 11)
       $p1, $lf1, $r25 = VLDB_FILL_512 killed $p1, killed $lf1, killed $r25 :: (load (<32 x s16>), addrspace 7)
     }
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3:
     successors: %bb.4(0x80000000)

@@ -100,7 +100,7 @@ body:             |
     renamable $x10, dead renamable $l8 = VMAX_LT_8_vaddSign1 renamable $x3, killed renamable $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
     renamable $p6 = VST_dmw_sts_w_st_pstm_nrm_imm killed renamable $wl10, killed renamable $p6, 32 :: (store (<8 x s32>) into %ir.out.phi, addrspace 6)
     $p3 = MOV_scalar_pseudo $p7
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.exit:
     liveins: $p5, $p6

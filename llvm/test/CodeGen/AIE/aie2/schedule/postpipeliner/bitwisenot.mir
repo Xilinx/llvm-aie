@@ -85,7 +85,7 @@ body:             |
     $x1, $r21 = VBNEG_LTZ_S16 $x0
     VST_dmw_sts_w_ag_idx_imm $wh1, $p1, 32 ::  (store (<16 x s16>) into %ir.d.addr.07)
     $p1 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl1, $p1, 64 ::  (store (<16 x s16>) into %ir.d.addr.07)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.for.cond.cleanup:
     RET implicit $lr

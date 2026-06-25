@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 %s \
 # RUN:     --aie-postpipeliner-limit=1 --aie-pipeliner-max-stagecount=4 -o - | FileCheck  %s
@@ -75,7 +75,7 @@ body:             |
   ; CHECK-NEXT:   [[PADD_mod_pseudo3:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI]], [[COPY2]]
   ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
   ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[SELNEZ]], [[ABS1]]
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.6
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.6, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7:
@@ -135,7 +135,7 @@ body:             |
   ; POSTPIPELINER-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
   ; POSTPIPELINER-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI1]], [[ABS]]
   ; POSTPIPELINER-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI1]], [[LT]]
-  ; POSTPIPELINER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; POSTPIPELINER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.2
   ; POSTPIPELINER-NEXT: {{  $}}
   ; POSTPIPELINER-NEXT: bb.2:
@@ -159,7 +159,7 @@ body:             |
     %14:er = ABS %9, implicit-def $srcarry
     %24:er27 = LT %5, %14
     %0:er = SELNEZ %14, %5, %24
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:
@@ -230,7 +230,7 @@ body:             |
   ; CHECK-NEXT:   [[PADD_mod_pseudo3:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI]], [[COPY2]]
   ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
   ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[SELNEZ]], [[ABS1]]
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.6
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.6, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7:
@@ -291,7 +291,7 @@ body:             |
   ; POSTPIPELINER-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
   ; POSTPIPELINER-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI1]], [[ABS]]
   ; POSTPIPELINER-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI1]], [[LT]]
-  ; POSTPIPELINER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; POSTPIPELINER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.2
   ; POSTPIPELINER-NEXT: {{  $}}
   ; POSTPIPELINER-NEXT: bb.2:
@@ -317,7 +317,7 @@ body:             |
     %14:er = ABS %9, implicit-def $srcarry
     %24:er27 = LT %5, %14
     %0:er = SELNEZ %14, %5, %24
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:

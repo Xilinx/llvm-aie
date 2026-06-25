@@ -116,7 +116,7 @@ body:             |
     renamable $x4 = VADD_16 killed renamable $x6, killed renamable $x0
     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
     renamable $x6 = VADD_16 killed renamable $x4, killed renamable $x1
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.for.cond.cleanup:
     liveins: $x6

@@ -137,7 +137,7 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def dead $srcarry, implicit killed $r0 {
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.3, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   BUNDLE implicit-def $lr, implicit $sp {
@@ -224,6 +224,6 @@ body:             |
 
     %7:er = PHI %9, %bb.6, %0, %bb.4
     %9:er = ADD_add_r_ri %7, 1, implicit-def dead $srcarry
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.6
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.6, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.5
 ...

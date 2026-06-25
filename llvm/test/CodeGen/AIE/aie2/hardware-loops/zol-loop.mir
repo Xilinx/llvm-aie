@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-hardware-loops \
 # RUN:   --enable-aie-hardware-loops --enable-aie-zero-overhead-loops %s -verify-machineinstrs -o - | \
@@ -43,7 +43,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r1 = nuw nsw ADD_add_r_ri killed renamable $r1, 1, implicit-def $srcarry
   ; CHECK-NEXT:   ST_dms_sts_idx killed renamable $r3, renamable $p1, killed renamable $dj0 :: (store (s32))
   ; CHECK-NEXT:   renamable $r0 = nsw ADD_add_r_ri killed renamable $r0, -1, implicit-def $srcarry
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3 (align 16):
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -74,7 +74,7 @@ body:             |
     renamable $r1 = nuw nsw ADD_add_r_ri killed renamable $r1, 1, implicit-def $srcarry
     ST_dms_sts_idx killed renamable $r3, renamable $p1, killed renamable $dj0 :: (store (s32))
     renamable $r0 = nsw ADD_add_r_ri killed renamable $r0, -1, implicit-def $srcarry
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     PseudoRET implicit $lr
@@ -101,7 +101,7 @@ body:             |
   ; CHECK-NEXT:   liveins: $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = nsw MUL_mul_r_rr killed renamable $r0, renamable $r0
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r0
@@ -120,7 +120,7 @@ body:             |
     liveins: $r0
 
     renamable $r0 = nsw MUL_mul_r_rr killed renamable $r0, renamable $r0
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $r0

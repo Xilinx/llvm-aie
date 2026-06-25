@@ -109,7 +109,7 @@ body:             |
     $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex2, $ex1, $r3, implicit-def $srfpflags, implicit $crfpmask
     $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex2, $ex3, $r3, implicit-def $srfpflags, implicit $crfpmask
 
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     RET implicit $lr

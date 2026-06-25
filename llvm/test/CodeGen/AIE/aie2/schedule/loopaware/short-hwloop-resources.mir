@@ -40,7 +40,7 @@ body:             |
   ; NO-LOOPAWARE-SCOREBOARD-NEXT:   liveins: $s1, $p2
   ; NO-LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; NO-LOOPAWARE-SCOREBOARD-NEXT:   $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm $s1, killed $p2, 32, implicit-def $srups_of, implicit $crsat
-  ; NO-LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; NO-LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; NO-LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; NO-LOOPAWARE-SCOREBOARD-NEXT: bb.2:
   ; NO-LOOPAWARE-SCOREBOARD-NEXT:   liveins: $p2, $s2
@@ -71,7 +71,7 @@ body:             |
   ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
   ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
   ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
-  ; LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; LOOPAWARE-SCOREBOARD-NEXT: bb.2:
   ; LOOPAWARE-SCOREBOARD-NEXT:   liveins: $p2, $s2
@@ -94,7 +94,7 @@ body:             |
     successors: %bb.1, %bb.2
     liveins: $s1, $p2
     $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm $s1, $p2, 32, implicit-def $srups_of, implicit $crsat
-    PseudoLoopEnd %bb.2, %bb.1
+    PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $p2, $s2
@@ -122,7 +122,7 @@ body:             |
   ; NO-LOOPAWARE-SCOREBOARD-NEXT:   liveins: $s1, $p2
   ; NO-LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; NO-LOOPAWARE-SCOREBOARD-NEXT:   $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm $s1, killed $p2, 32, implicit-def $srups_of, implicit $crsat
-  ; NO-LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; NO-LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; NO-LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; NO-LOOPAWARE-SCOREBOARD-NEXT: bb.2:
   ; NO-LOOPAWARE-SCOREBOARD-NEXT:   liveins: $cm6, $s2
@@ -153,7 +153,7 @@ body:             |
   ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
   ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
   ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
-  ; LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1
+  ; LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
   ; LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; LOOPAWARE-SCOREBOARD-NEXT: bb.2:
   ; LOOPAWARE-SCOREBOARD-NEXT:   liveins: $cm6, $s2
@@ -176,7 +176,7 @@ body:             |
     successors: %bb.1, %bb.2
     liveins: $s1, $p2
     $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm $s1, $p2, 32, implicit-def $srups_of, implicit $crsat
-    PseudoLoopEnd %bb.2, %bb.1
+    PseudoLoopEnd %bb.2, %bb.1, implicit $ls, implicit $le
 
   bb.2:
     liveins: $cm6, $s2

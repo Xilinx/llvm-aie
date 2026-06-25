@@ -150,7 +150,7 @@ body:             |
     renamable $x2, renamable $p0 = VLD_x_pstm_nrm_imm_pseudo killed renamable $p0, 64 :: (load (<16 x s32>) from %ir.pA1.07)
     renamable $dm0 = VMUL_vmul_cm_core_Y_Y renamable $y1, renamable $y0, renamable $r0
     renamable $p1 = VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1 killed renamable $cml0, renamable $s0, killed renamable $p1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1 :: (store (<32 x s16>) into %ir.pC1.06)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
 
   bb.2.for.cond.cleanup:
     EVENT_event1

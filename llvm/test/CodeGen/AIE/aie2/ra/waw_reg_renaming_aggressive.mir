@@ -5,7 +5,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # unit test for the WAW register renaming pass and check edge cases
 # RUN: llc -mtriple=aie2 -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter \
 # RUN:    --aie-aggressive-realloc %s -o - | FileCheck %s
@@ -70,7 +70,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x7 = VSHUFFLE killed renamable $x7, renamable $x7, renamable $r2
   ; CHECK-NEXT:   renamable $x9 = VSHUFFLE killed renamable $x9, renamable $x9, renamable $r2
   ; CHECK-NEXT:   renamable $x11 = VSHUFFLE killed renamable $x11, renamable $x11, renamable $r2
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit killed renamable $x8, implicit killed renamable $x10, implicit killed renamable $x1, implicit killed renamable $x3, implicit killed renamable $x5, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x11
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le, implicit killed renamable $x8, implicit killed renamable $x10, implicit killed renamable $x1, implicit killed renamable $x3, implicit killed renamable $x5, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x11
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   renamable $x0 = VLDA_X_SPILL %stack.0, implicit $sp :: (load (s512) from %stack.0, align 32)
@@ -125,7 +125,7 @@ body:             |
     %411:vec512 = VSHUFFLE %386, %386, %20
     %412:vec512 = VSHUFFLE %394, %394, %20
     %413:vec512 = VSHUFFLE %402, %402, %20
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit %369, implicit %370, implicit %371, implicit %372, implicit %410, implicit %411, implicit %412, implicit %413
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le, implicit %369, implicit %370, implicit %371, implicit %372, implicit %410, implicit %411, implicit %412, implicit %413
 
   bb.2:
     PseudoRET implicit $lr, implicit %10, implicit %11, implicit %12

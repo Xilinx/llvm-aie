@@ -109,7 +109,8 @@ BitVector AIE2PRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 bool AIE2PRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
   return SimplifyCRSRRegs && (AIE2P::mCRmRegClass.contains(PhysReg) ||
                               AIE2P::mSRmRegClass.contains(PhysReg) ||
-                              AIE2P::mCRFPRegClass.contains(PhysReg));
+                              AIE2P::mCRFPRegClass.contains(PhysReg) ||
+                              PhysReg == AIE2P::ls || PhysReg == AIE2P::le);
 }
 
 const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {

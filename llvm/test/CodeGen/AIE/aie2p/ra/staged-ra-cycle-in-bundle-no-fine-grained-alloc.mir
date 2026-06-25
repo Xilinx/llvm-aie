@@ -275,7 +275,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY56:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo3]]
   ; CHECK-NEXT:   [[COPY56:%[0-9]+]].sub_avail:epsrfldf = COPY [[MOV_RLC_imm11_pseudo]]
   ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split1:%[0-9]+]]:vec576, dead [[COPY56:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY56:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY56:%[0-9]+]].sub_avail:epsrfldf, [[COPY21:%[0-9]+]].sub_dim_count:eds, [[COPY21:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_POP_576_3D_pseudo_split [[COPY56]].sub_ptr, [[COPY56]].sub_fifo, [[COPY56]].sub_avail, [[COPY21]].sub_mod, [[COPY21]].sub_dim_size, [[COPY21]].sub_dim_stride, [[COPY21]].sub_dim_count, undef [[COPY21]].sub_hi_dim_then_sub_mod, [[COPY21]].sub_hi_dim_then_sub_dim_size, [[COPY21]].sub_hi_dim_then_sub_dim_stride, [[COPY21]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
@@ -404,7 +404,7 @@ body:             |
     %171.sub_ptr:epsrfldf = COPY %52
     %171.sub_avail:epsrfldf = COPY %37
     dead %144:vec576, dead %171.sub_ptr:epsrfldf, dead %171.sub_fifo:epsrfldf, dead %171.sub_avail:epsrfldf, %172.sub_dim_count:eds, %172.sub_hi_dim_then_sub_dim_count:eds = VLD_POP_576_3D_pseudo_split %171.sub_ptr, %171.sub_fifo, %171.sub_avail, %172.sub_mod, %172.sub_dim_size, %172.sub_dim_stride, %172.sub_dim_count, undef %172.sub_hi_dim_then_sub_mod, %172.sub_hi_dim_then_sub_dim_size, %172.sub_hi_dim_then_sub_dim_stride, %172.sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.4:

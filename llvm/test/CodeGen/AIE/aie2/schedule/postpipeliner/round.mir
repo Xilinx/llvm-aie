@@ -125,7 +125,7 @@ body:             |
     $p1 = VST_SRS_S8_S32_ag_pstm_nrm_imm $p1, 32, $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<32 x s8>) into %ir.out.addr.015, !tbaa !4, addrspace 6)
     $p1 = VST_SRS_S8_S32_ag_pstm_nrm_imm $p1, 32, $cm3, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<32 x s8>) into %ir.out.addr.015, !tbaa !4, addrspace 6)
 
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

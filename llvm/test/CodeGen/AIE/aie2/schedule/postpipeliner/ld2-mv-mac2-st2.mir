@@ -104,7 +104,7 @@ body:             |
     $cm2 = VMAC_vmac_cm_core_dense $cm0, $x4, $x2, $r0
     $p1 = VST_SRS_D8_S32_ag_pstm_nrm $p1, $m2, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into %ir.d.addr.07, addrspace 6)
     $p1, $dc1 = VST_2D_SRS_D8_S32 $p1, $d1, $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into %ir.d.addr.07, addrspace 7)
-    PseudoLoopEnd <mcsymbol .L_LEnd9>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd9>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

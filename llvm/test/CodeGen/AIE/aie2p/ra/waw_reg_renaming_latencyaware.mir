@@ -5,7 +5,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # Basic test for the WAW register renaming pass with latency-aware policy.
 # Basically, we are using all vector registers, so full renaming is not possible.
@@ -79,7 +79,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x8 = VSHIFT killed renamable $x5, killed renamable $x3, renamable $r4
   ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x1, renamable $x10, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm0, killed renamable $x8, killed renamable $x10, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -153,7 +153,7 @@ body:             |
     %85:vec512 = VSHIFT %64, %67, %82
     %162:acc2048 = VMAC_f_vmac_bf_vmul_bf_core_X_X %159, %81, %99, %105, implicit-def dead $srfpflags, implicit $crfpmask
     %154:acc2048 = VMAC_f_vmac_bf_vmul_bf_core_X_X %151, %85, %99, %105, implicit-def dead $srfpflags, implicit $crfpmask
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.3
 
   bb.3:

@@ -120,7 +120,7 @@ let hasSideEffects = true, mayLoad = false, mayStore = false,
   // conditional branch to the loop body. We make this a meta instruction,
   // since it doesn't need to be emitted itself, it only carries info for
   // its predecessor bundle
-  let isBranch = true, isTerminator = true, isMeta = true in
+  let isBranch = true, isTerminator = true, isMeta = true, Uses = [ls, le] in
     def PseudoLoopEnd : Pseudo<(outs), (ins cpmaddr:$lastInstr, cpmaddr:$target),
       "pseudo_loop_end", "${lastInstr}, ${target}">;
 }

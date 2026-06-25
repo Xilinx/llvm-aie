@@ -121,7 +121,8 @@ BitVector AIE2RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 bool AIE2RegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
   return SimplifyCRSRRegs && (AIE2::mCRmRegClass.contains(PhysReg) ||
-                              AIE2::mSRmRegClass.contains(PhysReg));
+                              AIE2::mSRmRegClass.contains(PhysReg) ||
+                              PhysReg == AIE2::LS || PhysReg == AIE2::LE);
 }
 
 bool AIE2RegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {

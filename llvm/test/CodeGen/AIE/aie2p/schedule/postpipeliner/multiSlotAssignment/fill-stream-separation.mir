@@ -245,7 +245,7 @@ body:             |
     VST_dmx_sts_bm_idx_imm renamable $bmlh0, renamable $p3, 64 :: (store (<16 x s32>) into %ir.st1 + 128, !tbaa !2, !alias.scope !34, !noalias !35, addrspace 5)
     $p3, $dc0 = VST_2D_dmx_sts_bm killed $bmll0, killed $p3, $d0 :: (store (<16 x s32>) into %ir.st1 + 192, !tbaa !2, !alias.scope !34, !noalias !35, addrspace 5)
 
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     RET implicit $lr

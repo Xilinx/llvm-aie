@@ -5,7 +5,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # Basic test for the WAW register renaming pass. Check AIE2 tests for more
 # coverage. Additional pass options are disabled because we are testing the
@@ -36,7 +36,7 @@ body:             |
   ; CHECK-NEXT:   renamable $x6, renamable $p0 = VLDA_dmx_lda_x_pstm_nrm_imm killed renamable $p0, 64
   ; CHECK-NEXT:   renamable $x8, dead renamable $r16 = VMAX_LT_32_vaddSign1 killed renamable $x6, renamable $x0, implicit $vaddsign1
   ; CHECK-NEXT:   renamable $p1 = VST_dmx_sts_x_pstm_nrm_imm killed renamable $x8, killed renamable $p1, 64
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -54,7 +54,7 @@ body:             |
     %10:vec512, %0:ep = VLDA_dmx_lda_x_pstm_nrm_imm %0, 64
     %11:vec512, %12:mr16_vcompare = VMAX_LT_32_vaddSign1 %10, %1, implicit $vaddsign1
     %2:ep = VST_dmx_sts_x_pstm_nrm_imm %11, %2, 64
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit $ls, implicit $le
   bb.2:
     PseudoRET implicit $lr
 ...
@@ -99,7 +99,7 @@ body:             |
   ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm0, renamable $ex11, killed renamable $ex5, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm1, killed renamable $ex9, renamable $ex7, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm2, killed renamable $ex11, killed renamable $ex7, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -140,7 +140,7 @@ body:             |
     %8:acc2048 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX %8, %143, %146, %105, implicit-def dead $srfpflags, implicit $crfpmask
     %7:acc2048 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX %7, %145, %142, %105, implicit-def dead $srfpflags, implicit $crfpmask
     %6:acc2048 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX %6, %143, %142, %105, implicit-def dead $srfpflags, implicit $crfpmask
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:

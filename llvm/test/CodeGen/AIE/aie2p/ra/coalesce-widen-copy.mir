@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=register-coalescer %s -verify-machineinstrs -o - \
 # RUN:    | FileCheck %s
 
@@ -89,7 +89,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   undef [[COPY:%[0-9]+]].sub_1024_acc_lo:acc2048 = COPY [[VCONV_fp32_bf16_mv_ups_xbf]]
   ; CHECK-NEXT:   dead [[VADD_vmac_cm2_add_reg:%[0-9]+]]:acc2048 = VADD_vmac_cm2_add_reg [[COPY]], [[COPY]], [[MOV_RLC_imm11_pseudo1]]
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -107,7 +107,7 @@ body:             |
 
     undef %62.sub_1024_acc_lo:acc2048 = COPY %77
     %42:acc2048 = VADD_vmac_cm2_add_reg %62, %62, %18
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1, implicit $ls, implicit $le
     PseudoJ_jump_imm %bb.2
 
   bb.2:

@@ -168,7 +168,7 @@ body:             |
     $cm3 = VUPS_S32_S8_mv_ups_w2c $wh2, $s1, implicit-def dead $srups_of, implicit $crsat
     $p1 = VST_SRS_D8_S32_ag_pstm_nrm_imm $p1, 32, $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into %ir.out.addr.015, !tbaa !4, addrspace 6)
 
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.loop.exit:
     successors: %bb.4(0x80000000)

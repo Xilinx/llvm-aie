@@ -147,7 +147,7 @@ body:             |
     $r2 = AND $r1, $r0
     $r3 = nuw nsw ADD_add_r_ri $r2, 34, implicit-def $srcarry
     $p2 = MOV_mv_scl $p5
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr

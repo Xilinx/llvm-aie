@@ -90,7 +90,7 @@ body:             |
     $ex6, $p0, $lf0, $r24 = VLD_POP_576_normal_pop_pseudo killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load (<32 x s16>), addrspace 5)
     $p1, $lf1, $r25 = VLD_FILL_512_pseudo killed $p1, killed $lf1, killed $r25 :: (load (<32 x s16>), addrspace 6)
 
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2, implicit $ls, implicit $le
 
   bb.3 (align 16):
     RET implicit $lr
