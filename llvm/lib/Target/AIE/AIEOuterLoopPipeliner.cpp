@@ -156,8 +156,7 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
 
   if (!Overrides.get(EnableOuterLoopPipelining)) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
-  } else if (std::optional<LoopStructure> MaybeLS = analyzeLoopStructure(L)) {
-    LoopStructure &LS = *MaybeLS;
+  } else if (LoopStructure LS(L); LS.isValid()) {
     if (!LS.isProfitableToRotate(
             *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
       LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
@@ -183,56 +182,64 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   return Changed;
 }
 
-std::optional<LoopStructure>
-AIEOuterLoopPipeliner::analyzeLoopStructure(Loop *L) {
-  // Early validation before constructing LoopStructure.
-  if (L->getSubLoops().size() != 1) {
+bool LoopStructure::analyzeLoopStructure() {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
+  // Early validation before populating the inner-loop fields.
+  if (OuterLoop->getSubLoops().size() != 1) {
     LLVM_DEBUG(dbgs() << "    Not exactly one subloop\n");
-    return std::nullopt;
+    return false;
   }
-  if (!L->getLoopLatch()) {
+  if (!OuterLoop->getLoopLatch()) {
     LLVM_DEBUG(dbgs() << "    No single outer latch\n");
-    return std::nullopt;
+    return false;
   }
 
-  // Construct the LoopStructure (constructor asserts preconditions).
-  LoopStructure OrigLS(L);
+  // Populate the inner-loop fields and prologue/epilogue regions.
+  InnerLoop = OuterLoop->getSubLoops()[0];
+  InnerPreheader = InnerLoop->getLoopPreheader();
+  InnerHeader = InnerLoop->getHeader();
+  InnerLatch = InnerLoop->getLoopLatch();
+  InnerExit = InnerLoop->getExitBlock();
+  OuterPreheader = OuterLoop->getLoopPreheader();
+  InnerLoopBlocks.assign(InnerLoop->block_begin(), InnerLoop->block_end());
+  OuterLoopID = OuterLoop->getLoopID();
+  PrologueRegion.assign({OuterLoop->getHeader()});
+  EpilogueRegion.assign({OuterLoop->getLoopLatch()});
 
   // Validate inner loop components.
-  if (!OrigLS.getInnerPreheader() || !OrigLS.getInnerExit() ||
-      !OrigLS.getInnerLatch()) {
+  if (!getInnerPreheader() || !getInnerExit() || !getInnerLatch()) {
     LLVM_DEBUG(dbgs() << "    Inner loop missing preheader/exit/latch\n");
-    return std::nullopt;
+    return false;
   }
 
   // Epilogue must be a single block: inner exit == outer latch.
-  if (OrigLS.getInnerExit() != OrigLS.getOuterLatch()) {
+  if (getInnerExit() != getOuterLatch()) {
     LLVM_DEBUG(dbgs() << "    Inner exit != outer latch\n");
-    return std::nullopt;
+    return false;
   }
 
-  if (!OrigLS.discoverPrologueRegion())
-    return std::nullopt;
+  if (!discoverPrologueRegion())
+    return false;
 
   // Every outer-loop block must belong to the prologue region, the inner loop,
   // or the single-block epilogue (latch); anything else is an unknown shape.
-  for (BasicBlock *BB : L->blocks()) {
-    if (OrigLS.getInnerLoop()->contains(BB) || BB == OrigLS.getOuterLatch() ||
-        OrigLS.prologueRegion().contains(BB))
+  for (BasicBlock *BB : OuterLoop->blocks()) {
+    if (getInnerLoop()->contains(BB) || BB == getOuterLatch() ||
+        prologueRegion().contains(BB))
       continue;
     LLVM_DEBUG(dbgs() << "    Unexpected outer-loop block: " << BB->getName()
                       << "\n");
-    return std::nullopt;
+    return false;
   }
 
-  LLVM_DEBUG(dbgs() << "    Prologue region: " << OrigLS.prologueRegion().size()
+  LLVM_DEBUG(dbgs() << "    Prologue region: " << prologueRegion().size()
                     << " block(s); epilogue in outer.latch\n");
 
-  if (!OrigLS.tryAdjustLoopBound()) {
+  if (!tryAdjustLoopBound()) {
     LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound\n");
-    return std::nullopt;
+    return false;
   }
-  return OrigLS;
+  return true;
 }
 
 bool LoopStructure::discoverPrologueRegion() {
@@ -813,19 +820,8 @@ void BlockRegion::forEachInstruction(
       Visit(&I);
 }
 
-LoopStructure::LoopStructure(Loop *L)
-    : OuterLoop(L), InnerLoop(L->getSubLoops()[0]), IsOrigLS(true),
-      InnerPreheader(InnerLoop->getLoopPreheader()),
-      InnerHeader(InnerLoop->getHeader()),
-      InnerLatch(InnerLoop->getLoopLatch()),
-      InnerExit(InnerLoop->getExitBlock()),
-      OuterPreheader(L->getLoopPreheader()),
-      InnerLoopBlocks(InnerLoop->block_begin(), InnerLoop->block_end()),
-      OuterLoopID(L->getLoopID()) {
-  assert(L->getSubLoops().size() == 1 && "Requires exactly one subloop");
-  assert(L->getLoopLatch() && "Requires single outer latch");
-  PrologueRegion.assign({L->getHeader()});
-  EpilogueRegion.assign({L->getLoopLatch()});
+LoopStructure::LoopStructure(Loop *L) : OuterLoop(L), IsOrigLS(true) {
+  Valid = analyzeLoopStructure();
 }
 
 LoopStructure::LoopStructure(BasicBlock *OuterPreheader,

@@ -152,6 +152,10 @@ class LoopStructure {
   Loop *InnerLoop = nullptr;
   bool IsOrigLS = false;
 
+  // True once the constructor's analyzeLoopStructure has validated the loop as
+  // a supported pipelining candidate. Always false on cloned structures.
+  bool Valid = false;
+
   // Generic Attributes
   BasicBlock *InnerPreheader = nullptr;
   BasicBlock *InnerHeader = nullptr;
@@ -188,6 +192,22 @@ class LoopStructure {
 
   // True for the original LS; false for steady / last-iteration clones.
   bool isOrigLS() const { return IsOrigLS; }
+
+  // Populate the inner-loop fields and prologue/epilogue regions from
+  // OuterLoop, validating that the loop is a supported pipelining candidate.
+  // Called once by the LoopStructure(Loop *) constructor; the result is cached
+  // in Valid.
+  bool analyzeLoopStructure();
+
+  // Validate that the prologue is the linear single-block case (the outer
+  // header is the inner preheader) and populate prologueRegion(). Returns false
+  // for any other shape (a separate inner preheader block between the outer
+  // header and the inner loop), which is not handled.
+  bool discoverPrologueRegion();
+
+  /// \return true if latch exit condition are valid and the loop bound can be
+  /// adjusted (Step != 0).
+  bool tryAdjustLoopBound();
 
   // Returns true if I is in the prologue region (outer header).
   bool isInPrologue(const Instruction *I) const {
@@ -230,6 +250,13 @@ public:
                 BasicBlock *InnerHeader, BasicBlock *InnerLatch,
                 BasicBlock *InnerExit, ArrayRef<BasicBlock *> InnerBlocks,
                 MDNode *OuterLoopID);
+
+  // True if the loop was validated as a supported pipelining candidate by the
+  // LoopStructure(Loop *) constructor. Always false on cloned structures.
+  bool isValid() const {
+    assert(isOrigLS() && "Only valid on the original LoopStructure");
+    return Valid;
+  }
 
   BasicBlock *getOuterHeader() const { return PrologueRegion.entry(); }
   BasicBlock *getOuterLatch() const { return EpilogueRegion.back(); }
@@ -288,16 +315,6 @@ public:
   // record Peel. The current preheader is read before it is overwritten, so the
   // two steps must stay in this order.
   void adoptPeelAsPreheader(BasicBlock *Peel);
-
-  /// \return true if latch exit condition are valid and the loop bound can be
-  /// adjusted (Step != 0).
-  bool tryAdjustLoopBound();
-
-  // Validate that the prologue is the linear single-block case (the outer
-  // header is the inner preheader) and populate prologueRegion(). Returns false
-  // for any other shape (a separate inner preheader block between the outer
-  // header and the inner loop), which is not handled.
-  bool discoverPrologueRegion();
 
   // Returns true if this LS is profitable to rotate: the inner loop is a
   // hardware loop, the outer trip count meets MinTripCount, and the epilogue
@@ -362,7 +379,6 @@ private:
   const AIEBaseInstrInfo *TII = nullptr;
 
   bool runOnLoop(Loop *L);
-  std::optional<LoopStructure> analyzeLoopStructure(Loop *L);
   // Populate VMap with the incoming values of outer header PHIs from FromBlock.
   void populateVMapFromPHIs(ValueToValueMapTy &VMap, const LoopStructure &LS,
                             BasicBlock *FromBlock) const;
