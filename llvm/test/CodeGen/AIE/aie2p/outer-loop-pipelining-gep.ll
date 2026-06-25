@@ -8,6 +8,11 @@
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
+
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
+; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
+
 ; Test for the AIE Outer Loop Pipelining pass with GEP instructions.
 ;
 ; This tests that address computation instructions (GEPs) between PHI pointers

@@ -7,6 +7,10 @@
 ; RUN: llc -mtriple=aie2p -O2 -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
+
+; RUN: llc -mtriple=aie2p -O2 -stop-after=aie-outer-loop-pipeliner -o - %s \
+; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
+
 ; Tests for per-loop metadata control of the AIE Outer Loop Pipelining pass
 ; via !llvm.loop.hint.aie-enable-outer-loop-pipelining.
 ;
