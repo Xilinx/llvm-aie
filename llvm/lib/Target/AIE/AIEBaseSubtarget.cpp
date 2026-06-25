@@ -388,6 +388,30 @@ class RegionEndEdges : public ScheduleDAGMutation {
         EdgeLatency = DelaySlots + 1;
       }
 
+      // A register value that the region-end barrier consumes (e.g. a call
+      // argument, modeled as an implicit use on the DelayedSchedBarrier) must
+      // be available when the callee reads it, i.e. after the branch delay
+      // slots. The loop-aware latency cap can shrink MaxLatency(MI) toward zero
+      // during fixpoint convergence; that must not let a producer of such a
+      // value be pulled into the call's delay-slot shadow. Floor the edge by
+      // the real, uncapped producer latency for any register the barrier uses.
+      if (const MachineInstr *EndMI = DAG->ExitSU.getInstr()) {
+        const TargetRegisterInfo *TRI = DAG->MF.getSubtarget().getRegisterInfo();
+        const InstrItineraryData *Itins =
+            DAG->MF.getSubtarget().getInstrItineraryData();
+        auto FeedsBarrierReg = [&]() {
+          for (const MachineOperand &MO : MI.operands())
+            if (MO.isReg() && MO.isDef() && MO.getReg() &&
+                EndMI->readsRegister(MO.getReg(), TRI))
+              return true;
+          return false;
+        };
+        if (Itins && FeedsBarrierReg())
+          EdgeLatency = std::max<unsigned>(
+              EdgeLatency,
+              AIE::maxLatency(&MI, *TII, *Itins, /*IncludeStages=*/false));
+      }
+
       // "Implicit" latency for special instructions.
       const unsigned ImplicitLatency = TII->getImplicitLatency(MI);
       EdgeLatency = std::max(EdgeLatency, ImplicitLatency);
