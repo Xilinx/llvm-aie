@@ -556,6 +556,51 @@ LoopStructure::LoopStructure(const LoopStructure &Src, const Twine &Suffix)
     Clone->setName(SuffixStr + "." + Orig->getName());
 }
 
+LoopStructure::LoopStructure(const LoopStructure &Steady, LastIterSkeletonTag)
+    : IsOrigLS(false), OuterLoopID(Steady.getOuterLoopID()) {
+  Function *F = Steady.getOuterHeader()->getParent();
+  LLVMContext &Ctx = F->getContext();
+
+  // The last-iteration LS is spliced just before the steady loop's exit
+  // successor; all its blocks are created before that block.
+  BasicBlock *Exit = Steady.getExitBlock();
+
+  // lastiter.prologue is the last-iteration outer header (and, for the linear
+  // LS, its inner preheader); inner-loop PHIs incoming from the outer header
+  // now come from it.
+  BasicBlock *LastIterPrologue =
+      BasicBlock::Create(Ctx, "lastiter.prologue", F, Exit);
+  CloneMap[Steady.getOuterHeader()] = LastIterPrologue;
+  InnerPreheader = LastIterPrologue;
+
+  // One empty clone per inner-loop block, recorded in CloneMap so the body
+  // cloners can resolve each block to its clone.
+  for (BasicBlock *BB : Steady.getInnerBlocks()) {
+    BasicBlock *Clone =
+        BasicBlock::Create(Ctx, BB->getName() + ".lastiter", F, Exit);
+    CloneMap[BB] = Clone;
+    InnerLoopBlocks.push_back(Clone);
+  }
+
+  // lastiter.epilogue is the last-iteration outer latch; it receives the steady
+  // latch (and, in the single-block case, the inner exit) so the cloned inner
+  // loop and epilogue resolve their exits to it.
+  BasicBlock *LastIterEpilogue =
+      BasicBlock::Create(Ctx, "lastiter.epilogue", F, Exit);
+  CloneMap[Steady.getOuterLatch()] = LastIterEpilogue;
+  if (Steady.getInnerExit() == Steady.getOuterLatch())
+    CloneMap[Steady.getInnerExit()] = LastIterEpilogue;
+
+  auto MapBlock = [&](BasicBlock *BB) {
+    return cast<BasicBlock>(CloneMap[BB]);
+  };
+  InnerHeader = MapBlock(Steady.getInnerHeader());
+  InnerLatch = MapBlock(Steady.getInnerLatch());
+  InnerExit = LastIterEpilogue;
+  PrologueRegion.assign({LastIterPrologue});
+  EpilogueRegion.assign({LastIterEpilogue});
+}
+
 void AIEOuterLoopPipeliner::swapInClonedLS(const LoopStructure &OrigLS,
                                            LoopStructure &SteadyLS) const {
   BasicBlock *Preheader = OrigLS.getPreheader();
@@ -661,26 +706,27 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(
 // Create the last-iteration region for the last outer iteration (N-1).
 void AIEOuterLoopPipeliner::peelLastIteration(const LoopStructure &OrigLS,
                                               const LoopStructure &SteadyLS) {
-  // Seed the last-iteration map with each outer header PHI's latch incoming
-  // value, so every clone below picks up the final epilogue values.
-  ValueToValueMapTy LastIterVMap;
-  populateVMapFromPHIs(LastIterVMap, SteadyLS, SteadyLS.getOuterLatch());
+  // Build the empty last-iteration LS. It owns its Fact-A clone map
+  // (steady->lastiter); the skeleton constructor records the block mappings.
+  LoopStructure LastIterLS(SteadyLS, LoopStructure::LastIterSkeletonTag{});
+  ValueToValueMapTy &LastIterMap = LastIterLS.cloneMap();
 
-  // Create the empty last-iteration LS (prologue + inner-loop skeleton +
-  // epilogue), then fill each block in. The prologue holds the hardware-loop
-  // setup and the kept accumulator seeds; both must be in place before the
-  // inner loop is filled so its PHIs that reference kept results resolve.
-  LoopStructure LastIterLS = createLastIterSkeleton(SteadyLS, LastIterVMap);
-  cloneHardwareLoopSetupInto(LastIterLS, SteadyLS, LastIterVMap);
+  // Fact-B seed: each steady outer-header PHI resolves to its latch-incoming
+  // value, so every clone below picks up the final epilogue values.
+  populateVMapFromPHIs(LastIterMap, SteadyLS, SteadyLS.getOuterLatch());
+
+  // Fill each block. The prologue holds the hardware-loop setup and the kept
+  // accumulator seeds; both must be in place before the inner loop is filled so
+  // its PHIs that reference kept results resolve.
+  cloneHardwareLoopSetupInto(LastIterLS, SteadyLS);
   SmallVector<Instruction *, 16> KeptInsts =
       remapToClone(OrigLS.keptInsts(), SteadyLS.cloneMap());
   cloneAndRemapInsts(KeptInsts, *LastIterLS.getOuterHeader(),
-                     LastIterLS.getOuterHeader()->end(), LastIterVMap,
+                     LastIterLS.getOuterHeader()->end(), LastIterMap,
                      ".lastiter");
-  cloneInnerLoopIntoLastIter(SteadyLS, LastIterLS, LastIterVMap);
-  populateLastIterEpilogue(OrigLS, SteadyLS, LastIterLS, SteadyLS.cloneMap(),
-                           LastIterVMap);
-  wireLastIterIntoCFG(SteadyLS, LastIterLS, SteadyLS.cloneMap(), LastIterVMap);
+  cloneInnerLoopIntoLastIter(SteadyLS, LastIterLS);
+  populateLastIterEpilogue(OrigLS, SteadyLS, LastIterLS);
+  wireLastIterIntoCFG(OrigLS, SteadyLS, LastIterLS);
 
   LLVM_DEBUG(dbgs() << "    Created last-iteration: "
                     << LastIterLS.getOuterHeader()->getName() << " -> "
@@ -688,8 +734,7 @@ void AIEOuterLoopPipeliner::peelLastIteration(const LoopStructure &OrigLS,
 }
 
 void AIEOuterLoopPipeliner::cloneHardwareLoopSetupInto(
-    const LoopStructure &LastIterLS, const LoopStructure &SteadyLS,
-    ValueToValueMapTy &LastIterVMap) const {
+    LoopStructure &LastIterLS, const LoopStructure &SteadyLS) const {
   SmallVector<Instruction *, 4> SetupInsts;
   for (Instruction &I : *SteadyLS.getOuterHeader()) {
     if (I.isTerminator())
@@ -698,77 +743,31 @@ void AIEOuterLoopPipeliner::cloneHardwareLoopSetupInto(
       SetupInsts.push_back(&I);
   }
   BasicBlock *Dest = LastIterLS.getOuterHeader();
-  cloneAndRemapInsts(SetupInsts, *Dest, Dest->end(), LastIterVMap,
+  cloneAndRemapInsts(SetupInsts, *Dest, Dest->end(), LastIterLS.cloneMap(),
                      /*Suffix=*/"");
 }
 
-LoopStructure AIEOuterLoopPipeliner::createLastIterSkeleton(
-    const LoopStructure &SteadyLS, ValueToValueMapTy &LastIterVMap) const {
-  Function *F = SteadyLS.getOuterHeader()->getParent();
-  LLVMContext &Ctx = F->getContext();
-
-  // The last-iteration LS is spliced just before the steady loop's exit
-  // successor; all its blocks are created before that block.
-  BasicBlock *OrigExit = SteadyLS.getExitBlock();
-
-  // lastiter.prologue is the last-iteration outer header (and, for the linear
-  // LS, its inner preheader); inner-loop PHIs incoming from the outer header
-  // now come from it.
-  BasicBlock *LastIterPrologue =
-      BasicBlock::Create(Ctx, "lastiter.prologue", F, OrigExit);
-  LastIterVMap[SteadyLS.getOuterHeader()] = LastIterPrologue;
-
-  // One empty clone per inner-loop block, recorded in LastIterVMap so
-  // cloneInnerLoopIntoLastIter can resolve each block to its clone.
-  SmallVector<BasicBlock *, 4> LastIterInnerBlocks;
-  for (BasicBlock *BB : SteadyLS.getInnerBlocks()) {
-    BasicBlock *Clone =
-        BasicBlock::Create(Ctx, BB->getName() + ".lastiter", F, OrigExit);
-    LastIterVMap[BB] = Clone;
-    LastIterInnerBlocks.push_back(Clone);
-  }
-
-  // lastiter.epilogue is the last-iteration outer latch; it receives the steady
-  // latch (and, in the single-block case, the inner exit) so the cloned inner
-  // loop and epilogue resolve their exits to it.
-  BasicBlock *LastIterEpilogue =
-      BasicBlock::Create(Ctx, "lastiter.epilogue", F, OrigExit);
-  LastIterVMap[SteadyLS.getOuterLatch()] = LastIterEpilogue;
-  if (SteadyLS.getInnerExit() == SteadyLS.getOuterLatch())
-    LastIterVMap[SteadyLS.getInnerExit()] = LastIterEpilogue;
-
-  auto MapBlock = [&](BasicBlock *BB) {
-    return cast<BasicBlock>(LastIterVMap[BB]);
-  };
-  return LoopStructure(
-      /*OuterPreheader=*/nullptr, LastIterPrologue, LastIterEpilogue,
-      /*InnerPreheader=*/LastIterPrologue, MapBlock(SteadyLS.getInnerHeader()),
-      MapBlock(SteadyLS.getInnerLatch()), LastIterEpilogue, LastIterInnerBlocks,
-      SteadyLS.getOuterLoopID());
-}
-
 void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
-    const LoopStructure &SteadyLS, const LoopStructure &LastIterLS,
-    ValueToValueMapTy &LastIterVMap) const {
+    const LoopStructure &SteadyLS, LoopStructure &LastIterLS) const {
+  ValueToValueMapTy &LastIterMap = LastIterLS.cloneMap();
   // Clone every inner-loop block's body into its skeleton clone (resolved via
-  // LastIterVMap) first, so all cross-block references exist before any remap
+  // the clone map) first, so all cross-block references exist before any remap
   // runs.
   SmallVector<Instruction *, 32> Clones;
   for (BasicBlock *Orig : SteadyLS.getInnerBlocks()) {
-    auto *Clone = cast<BasicBlock>(LastIterVMap[Orig]);
+    auto *Clone = cast<BasicBlock>(LastIterMap[Orig]);
     for (Instruction &Inst : *Orig)
       Clones.push_back(
-          cloneInstInto(Inst, *Clone, Clone->end(), LastIterVMap, ".lastiter"));
+          cloneInstInto(Inst, *Clone, Clone->end(), LastIterMap, ".lastiter"));
   }
-  remapClones(Clones, LastIterVMap);
+  remapClones(Clones, LastIterMap);
 
   BranchInst::Create(LastIterLS.getInnerHeader(), LastIterLS.getOuterHeader());
 }
 
 void AIEOuterLoopPipeliner::populateLastIterEpilogue(
     const LoopStructure &OrigLS, const LoopStructure &SteadyLS,
-    const LoopStructure &LastIterLS, const ValueToValueMapTy &SteadyVMap,
-    ValueToValueMapTy &LastIterVMap) const {
+    LoopStructure &LastIterLS) const {
   // Read the pristine original epilogue: OrigLS is never mutated by the
   // prefetch-cloning steps, so its latch holds the full last-iteration work
   // (stores and any latch-resident accumulation) with no prefetch loads to
@@ -779,7 +778,7 @@ void AIEOuterLoopPipeliner::populateLastIterEpilogue(
   // The outer back-edge control (the counting add and the exit icmp) is the
   // sole exception — it is dead in a non-looping last iteration, and its steady
   // clone may already be erased by convertOuterLoopToHardwareLoop, so mapping
-  // it through SteadyVMap would dereference freed IR.
+  // it through the steady clone map would dereference freed IR.
   const LatchConditionInfo &Bound = OrigLS.bound();
   SmallVector<Instruction *, 16> OrigEpiInsts;
   for (Instruction &I : *OrigLS.getOuterLatch()) {
@@ -795,44 +794,32 @@ void AIEOuterLoopPipeliner::populateLastIterEpilogue(
   }
   // Translate Orig -> Steady, then clone Steady -> last-iteration.
   SmallVector<Instruction *, 16> SteadyEpiInsts =
-      remapToClone(OrigEpiInsts, SteadyVMap);
+      remapToClone(OrigEpiInsts, SteadyLS.cloneMap());
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
   cloneAndRemapInsts(SteadyEpiInsts, *LastIterEpilogue, LastIterEpilogue->end(),
-                     LastIterVMap, ".lastiter");
+                     LastIterLS.cloneMap(), ".lastiter");
 }
 
 void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
-    const LoopStructure &SteadyLS, const LoopStructure &LastIterLS,
-    const ValueToValueMapTy &SteadyVMap,
-    const ValueToValueMapTy &LastIterVMap) const {
+    const LoopStructure &OrigLS, const LoopStructure &SteadyLS,
+    const LoopStructure &LastIterLS) const {
   BasicBlock *OrigExit = SteadyLS.getExitBlock();
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
   BranchInst::Create(OrigExit, LastIterEpilogue);
 
-  // Map a loop-carried live-out to its last-iteration clone. The operand may
-  // still be an original value (a live-out rematerialized into the exit block,
-  // untouched by swapInClonedLS) or already a steady clone (an exit PHI value
-  // that swapInClonedLS retargeted): translate orig -> steady ->
-  // last-iteration, tolerating an already-steady input. Returns nullptr when no
-  // clone exists.
-  auto ToLastIter = [&](Value *V) -> Value * {
-    Value *Steady = V;
-    if (auto It = SteadyVMap.find(V); It != SteadyVMap.end())
-      Steady = It->second;
-    if (auto It = LastIterVMap.find(Steady); It != LastIterVMap.end())
-      return It->second;
-    return nullptr;
+  // An exit live-out is an interior def of the loop; its last-iteration value
+  // is the composed clone orig -> steady -> lastiter (cloneOf passes
+  // non-clones, e.g. invariants, through). A PHI incoming is already a steady
+  // value (one hop); a live-out rematerialized into the exit block is an orig
+  // value (two hops) — the composition handles both.
+  auto ToLastIter = [&](Value *V) {
+    return LastIterLS.cloneOf(SteadyLS.cloneOf(V));
   };
 
-  // Repoint each exit PHI's latch edge to the last-iteration epilogue and
-  // retarget its value to the last-iteration clone.
-  for (PHINode &PHI : OrigExit->phis()) {
-    const int LatchIdx = PHI.getBasicBlockIndex(SteadyLS.getOuterLatch());
-    assert(LatchIdx >= 0);
-    if (Value *LastIterVal = ToLastIter(PHI.getIncomingValue(LatchIdx)))
-      PHI.setIncomingValue(LatchIdx, LastIterVal);
-    PHI.setIncomingBlock(LatchIdx, LastIterEpilogue);
-  }
+  // Repoint each exit PHI's latch edge to the last-iteration epilogue,
+  // retargeting the value to its last-iteration clone.
+  reroutePhiIncomings(OrigExit, SteadyLS.getOuterLatch(), LastIterEpilogue,
+                      /*KeepOldPred=*/false, ToLastIter);
 
   // Retarget non-PHI live-outs (LCSSA values rematerialized into the dedicated
   // exit block) so their operands read the last-iteration clones.
@@ -841,17 +828,11 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
       continue;
     for (Use &U : I.operands())
       if (auto *OpI = dyn_cast<Instruction>(U.get()))
-        if (Value *LastIterVal = ToLastIter(OpI))
-          U.set(LastIterVal);
+        U.set(ToLastIter(OpI));
   }
 
   BranchInst *LatchBr = SteadyLS.getLatchBranch();
-  for (unsigned I = 0; I < LatchBr->getNumSuccessors(); ++I) {
-    if (LatchBr->getSuccessor(I) == OrigExit) {
-      LatchBr->setSuccessor(I, LastIterLS.getOuterHeader());
-      break;
-    }
-  }
+  LatchBr->replaceSuccessorWith(OrigExit, LastIterLS.getOuterHeader());
 }
 
 bool BlockRegion::isSingleEntrySingleExit() const {

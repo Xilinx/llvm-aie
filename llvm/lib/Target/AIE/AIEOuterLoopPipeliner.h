@@ -261,6 +261,17 @@ public:
   // value).
   LoopStructure(const LoopStructure &Src, const Twine &Suffix);
 
+  // Tag for the last-iteration skeleton constructor below.
+  struct LastIterSkeletonTag {};
+
+  // Last-iteration skeleton constructor: create the empty last-iteration blocks
+  // (lastiter.prologue = outer header, one empty clone per inner-loop block,
+  // lastiter.epilogue = outer latch) spliced just before Steady's exit
+  // successor, recording the Steady->lastiter BLOCK mappings in this->CloneMap.
+  // Instruction bodies and the Fact-B header seeds are filled by the caller
+  // afterwards (also into CloneMap). Built in place (non-movable map member).
+  LoopStructure(const LoopStructure &Steady, LastIterSkeletonTag);
+
   // Fact A lookup: the clone of a source-domain value in this LS, or V itself
   // if absent (loop-invariants/args pass through). Direction is source->clone,
   // matching RemapInstruction.
@@ -473,38 +484,28 @@ private:
   static SmallVector<Instruction *, 16>
   remapToClone(ArrayRef<Instruction *> Insts, const ValueToValueMapTy &VMap);
 
-  // Step helpers of peelLastIteration, in call order.
-  // Creates the empty last-iteration LS: lastiter.prologue (outer header),
-  // one clone per inner-loop block, and lastiter.epilogue (outer latch), all
-  // spliced before the steady loop's exit successor and recorded in
-  // LastIterVMap. Bodies are filled later by the helpers below. Returns a
-  // LoopStructure over the new blocks.
-  LoopStructure createLastIterSkeleton(const LoopStructure &SteadyLS,
-                                       ValueToValueMapTy &LastIterVMap) const;
+  // Step helpers of peelLastIteration, in call order. The last-iteration LS is
+  // built by its skeleton constructor and owns its Fact-A clone map
+  // (steady->lastiter); these helpers fill its blocks through that map.
 
   // Clone the hardware-loop setup (set.loop.iterations) from the steady outer
-  // header into the last-iteration prologue, remapping through LastIterVMap.
-  void cloneHardwareLoopSetupInto(const LoopStructure &LastIterLS,
-                                  const LoopStructure &SteadyLS,
-                                  ValueToValueMapTy &LastIterVMap) const;
+  // header into the last-iteration prologue.
+  void cloneHardwareLoopSetupInto(LoopStructure &LastIterLS,
+                                  const LoopStructure &SteadyLS) const;
 
-  // Fills the last-iteration inner-loop block clones (created by
-  // createLastIterSkeleton, resolved via LastIterVMap) with remapped
-  // instruction bodies and wires the prologue into the inner header.
+  // Fill the last-iteration inner-loop block clones with remapped instruction
+  // bodies and wire the prologue into the inner header.
   void cloneInnerLoopIntoLastIter(const LoopStructure &SteadyLS,
-                                  const LoopStructure &LastIterLS,
-                                  ValueToValueMapTy &LastIterVMap) const;
+                                  LoopStructure &LastIterLS) const;
 
   // Populate the last-iteration epilogue with the original epilogue stores and
   // pointer updates only — no prefetch loads. The instructions are read from
   // the pristine OrigLS latch (never touched by the prefetch-cloning steps),
-  // translated Orig -> Steady via SteadyVMap, then cloned into the
-  // last-iteration epilogue.
+  // translated Orig -> Steady via SteadyLS.cloneMap(), then cloned into the
+  // last-iteration epilogue via LastIterLS.cloneMap().
   void populateLastIterEpilogue(const LoopStructure &OrigLS,
                                 const LoopStructure &SteadyLS,
-                                const LoopStructure &LastIterLS,
-                                const ValueToValueMapTy &SteadyVMap,
-                                ValueToValueMapTy &LastIterVMap) const;
+                                LoopStructure &LastIterLS) const;
 
   // Splice the last-iteration into the CFG: last-iteration epilogue -> original
   // exit, redirect the steady latch exit to the last-iteration prologue, and
@@ -512,14 +513,13 @@ private:
   // The exit's loop-carried live-outs (LCSSA PHIs or instructions
   // rematerialized into a dedicated exit block) still reference the
   // steady/original latch defs; since the final outer iteration now executes in
-  // lastiter.epilogue, they must be retargeted to its clones (orig -> steady
-  // via SteadyVMap, then steady -> last-iteration via LastIterVMap), otherwise
-  // the value read after the loop omits the last iteration (or dangles once the
-  // original loop is deleted).
-  void wireLastIterIntoCFG(const LoopStructure &SteadyLS,
-                           const LoopStructure &LastIterLS,
-                           const ValueToValueMapTy &SteadyVMap,
-                           const ValueToValueMapTy &LastIterVMap) const;
+  // lastiter.epilogue, they are retargeted to its clones via the composed
+  // lookup LastIterLS.cloneOf(SteadyLS.cloneOf(v)), otherwise the value read
+  // after the loop omits the last iteration (or dangles once the original loop
+  // is deleted).
+  void wireLastIterIntoCFG(const LoopStructure &OrigLS,
+                           const LoopStructure &SteadyLS,
+                           const LoopStructure &LastIterLS) const;
 
   // Lift pointer update instructions (add.2d,
   // add.3d, and their forward chain) from the epilogue to the end of the
