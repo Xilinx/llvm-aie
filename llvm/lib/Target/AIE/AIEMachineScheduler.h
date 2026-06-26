@@ -170,6 +170,26 @@ protected:
   bool checkInterZoneConflicts(
       const std::vector<AIE::MachineBundle> &BotBundles) const;
 
+#ifndef NDEBUG
+  /// Return true iff every committed fixed instruction sits at exactly the
+  /// cycle its reference fixed bundle demanded. The reference bundle sequences
+  /// (getTopFixedBundles / getBotFixedBundles) are the intended layout
+  /// including empty NOP/stall bundles; top-fixed is pinned flush at the region
+  /// top and bot-fixed flush at the bottom, so each reference bundle (empty or
+  /// not) maps to one exact cycle. Comparing committed cycles against that
+  /// mapping verifies placement, flush-at-edge, and that requested NOP bundles
+  /// landed at the right positions. Free instructions may co-issue into a
+  /// band's cycles.
+  bool isFixedBandPlacementValid(
+      const std::vector<AIE::MachineBundle> &TopBundles,
+      const std::vector<AIE::MachineBundle> &BotBundles) const;
+
+  /// Debug-only assert wrapper around isFixedBandPlacementValid().
+  void verifyFixedBandPlacement(
+      const std::vector<AIE::MachineBundle> &TopBundles,
+      const std::vector<AIE::MachineBundle> &BotBundles) const;
+#endif
+
   /// Identify and fix issues in the scheduling region by inserting NOPs.
   /// In particular, this makes sure no instructions are in flight when leaving
   /// the region, and that the Top and Bot zones can be safely "concatenated".
