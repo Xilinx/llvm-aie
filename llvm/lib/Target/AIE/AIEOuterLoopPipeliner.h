@@ -29,13 +29,13 @@
 //   [preheader]
 //       |
 //   [outer.header]  <----------\  <- Prologue Content:
-//       |                       |        stage 0 (load/address chain)
-//       |                       |        stage 1 (set.loop.iterations)
-//       |                       |
+//       |                       |        Stage 0
+//       |                       |        Stage 1 (+ set.loop.iterations)
 //       |                       |
 //   [outer.inner.*]             |  <- inner loop [Stage 1]
 //       |                       |
-//   [outer.latch]  ------------/  <- Epilogue [Stage 1]
+//       |                       |
+//   [outer.latch]  ------------/  <- Epilogue [Stage 1] + Latch
 //       |  (exit branch)
 //   [exit]
 //
@@ -43,19 +43,22 @@
 //
 //   [preheader]
 //       |
-//   [steady.preheader]    <- peel: DATA LOADS ONLY (no set.loop.iter)
+//   [steady.preheader]    <- Stage 0:
 //       |
-//   [steady.header]  <---------\  <- PHIs: v0/v1 from peel or epilogue
-//       |                       |     set.loop.iterations stays here
-//   [steady.inner.*]            |  <- steady-state inner loop
+//   [steady.header]  <---------\  <- Stage 1: Prologue
+//       |                       |     (+ set.loop.iterations)
 //       |                       |
-//   [steady.latch]  -----------/  <- outer.latch + stage-0 instructions
+//   [steady.inner.*]            |  <- Stage 1: steady-state inner loop
+//       |                       |
+//       |                       |
+//   [steady.latch]  -----------/  <- Stage 1: outer.latch + Stage 0 Prologue
 //       |  (exit branch)
-//   [lastiter.prologue]        <- set.loop.iterations (cloned)
+//   [lastiter.prologue]        <- Stage 1: Prologue
+//       |                             (+ set.loop.iterations)
 //       |
-//   [steady.inner.*.lastiter]  <- inner loop clone, uses last epilogue values
+//   [steady.inner.*.lastiter]  <- Stage 1: inner loop clone
 //       |
-//   [lastiter.epilogue]
+//   [lastiter.epilogue]        <- Stage 1: Epilog
 //       |
 //   [exit]
 //
