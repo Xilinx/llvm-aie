@@ -1070,6 +1070,60 @@ void AIEPostRASchedStrategy::fixupDelaySlotPosition(
   }
 }
 
+const SUnit &getBundledSUnit(const ScheduleDAGMI *DAG, MachineInstr *MI);
+
+#ifndef NDEBUG
+// Every instruction of reference band bundle I must appear in committed bundle
+// Region[Offset + I] (free instructions may also co-issue there, so only the
+// reference members must be present).
+static bool bandPlacedAt(ArrayRef<MachineBundle> Region,
+                         ArrayRef<MachineBundle> Ref, int Offset) {
+  if (Offset < 0 || Offset + int(Ref.size()) > int(Region.size()))
+    return false;
+  for (int I = 0, E = int(Ref.size()); I < E; ++I) {
+    SmallPtrSet<const MachineInstr *, 8> Committed(
+        Region[Offset + I].getInstrs().begin(),
+        Region[Offset + I].getInstrs().end());
+    for (MachineInstr *MI : Ref[I].getInstrs())
+      if (!Committed.contains(MI))
+        return false;
+  }
+  return true;
+}
+
+bool AIEPostRASchedStrategy::isFixedBandPlacementValid(
+    const std::vector<AIE::MachineBundle> &TopBundles,
+    const std::vector<AIE::MachineBundle> &BotBundles) const {
+  const Region &R = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  ArrayRef<MachineBundle> TopRef = R.getTopFixedBundles();
+  ArrayRef<MachineBundle> BotRef = R.getBotFixedBundles();
+
+  // The committed region top-to-bottom is TopBundles followed by BotBundles.
+  // In that view a band's position is independent of whether it was scheduled
+  // top-down or bottom-up: top-fixed is always the first NumTop bundles and
+  // bot-fixed the last NumBot bundles. Checking this concatenation avoids
+  // depending on the (changing) top-down/bottom-up decision.
+  SmallVector<MachineBundle> Committed;
+  Committed.reserve(TopBundles.size() + BotBundles.size());
+  Committed.append(TopBundles.begin(), TopBundles.end());
+  Committed.append(BotBundles.begin(), BotBundles.end());
+
+  const int Total = int(Committed.size());
+  const bool TopBandPlaced = bandPlacedAt(Committed, TopRef, /*Offset=*/0);
+  const bool BotBandPlaced =
+      bandPlacedAt(Committed, BotRef, Total - int(BotRef.size()));
+
+  return TopBandPlaced && BotBandPlaced;
+}
+
+void AIEPostRASchedStrategy::verifyFixedBandPlacement(
+    const std::vector<AIE::MachineBundle> &TopBundles,
+    const std::vector<AIE::MachineBundle> &BotBundles) const {
+  assert(isFixedBandPlacementValid(TopBundles, BotBundles) &&
+         "fixed band not committed at its pinned cycles");
+}
+#endif
+
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
 
@@ -1108,6 +1162,11 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   assert(BS.getCurrentRegion().Bundles.empty());
   BS.addBundles(TopBundles);
   BS.addBundles(BotBundles);
+
+#ifndef NDEBUG
+  verifyFixedBandPlacement(TopBundles, BotBundles);
+#endif
+
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   IsBottomRegion = false;
