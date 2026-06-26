@@ -67,6 +67,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -310,13 +311,28 @@ public:
   const LatchConditionInfo &bound() const { return OuterLoopCondition; }
 
   // The peeled / kept lists live only on the original LS.
-  SmallVectorImpl<Instruction *> &peeledInsts();
-  const SmallVectorImpl<Instruction *> &peeledInsts() const;
-  SmallVectorImpl<Instruction *> &keptInsts();
-  const SmallVectorImpl<Instruction *> &keptInsts() const;
+  SmallVectorImpl<Instruction *> &peeledInsts() {
+    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
+    return PeeledInsts;
+  }
+  const SmallVectorImpl<Instruction *> &peeledInsts() const {
+    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
+    return PeeledInsts;
+  }
+  SmallVectorImpl<Instruction *> &keptInsts() {
+    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
+    return KeptInsts;
+  }
+  const SmallVectorImpl<Instruction *> &keptInsts() const {
+    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
+    return KeptInsts;
+  }
 
   // Only clones store the preheader; the original derives it from LoopInfo.
-  void setOuterPreheader(BasicBlock *BB);
+  void setOuterPreheader(BasicBlock *BB) {
+    assert(!IsOrigLS && "Original derives its preheader from LoopInfo");
+    OuterPreheader = BB;
+  }
 
   // Returns true if I is in the epilogue region (outer latch).
   bool isInEpilogue(const Instruction *I) const {
@@ -521,6 +537,13 @@ private:
   void wireLastIterIntoCFG(const LoopStructure &OrigLS,
                            const LoopStructure &SteadyLS,
                            const LoopStructure &LastIterLS) const;
+
+  // The epilogue instructions forming PHI's next-iteration pointer-update
+  // chain, or nullopt if the chain cannot be safely lifted: it depends on an
+  // inner-loop value, runs an unsafe (non-2D/3D-pointer) intrinsic, or is used
+  // by an epilogue instruction outside the chain (a store, the exit icmp, ...).
+  std::optional<SmallPtrSet<Instruction *, 16>>
+  collectLiftableEpilogueChain(const LoopStructure &OrigLS, PHINode &PHI) const;
 
   // Lift pointer update instructions (add.2d,
   // add.3d, and their forward chain) from the epilogue to the end of the

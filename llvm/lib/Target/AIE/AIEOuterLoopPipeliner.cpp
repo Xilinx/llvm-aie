@@ -79,7 +79,7 @@ static bool produces2048BitVector(const Instruction *I) {
 }
 
 static SmallVector<SplitStrategy, 4> getSplitStrategies() {
-  // todo: add more split Strategies
+  // TODO: add more split strategies.
   return {
       produces2048BitVector,
   };
@@ -94,12 +94,6 @@ static bool isAnchorInstruction(const Instruction *I) {
   return false;
 }
 
-// Returns true if the intrinsic ID is a safe pointer increment intrinsic
-// (2D/3D addressing) that can be lifted from epilogue to prologue.
-// These intrinsics have no side effects (IntrNoMem) and are pure pointer
-// computations. Any other intrinsic may have unknown side effects and should
-// not be lifted. The 2D/3D intrinsic IDs are the per-target canonical source
-// on AIEBaseInstrInfo, so a new target needs no edit here.
 static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
                                             Intrinsic::ID IID) {
   return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
@@ -264,8 +258,10 @@ bool LoopStructure::analyzeLoopStructure() {
   // Every outer-loop block must belong to the prologue region, the inner loop,
   // or the single-block epilogue (latch); anything else is an unknown shape.
   for (BasicBlock *BB : OuterLoop->blocks()) {
-    if (getInnerLoop()->contains(BB) || BB == getOuterLatch() ||
-        prologueRegion().contains(BB))
+    const bool BlockIsAccountedFor = getInnerLoop()->contains(BB) ||
+                                     BB == getOuterLatch() ||
+                                     prologueRegion().contains(BB);
+    if (BlockIsAccountedFor)
       continue;
     LLVM_DEBUG(dbgs() << "    Unexpected outer-loop block: " << BB->getName()
                       << "\n");
@@ -339,7 +335,8 @@ bool LoopStructure::isProfitableToRotate(ScalarEvolution &SE,
     return false;
   }
   std::optional<int64_t> MinTC = llvm::getMinTripCount(getOuterLoop(), &SE);
-  if (!MinTC || *MinTC < (int64_t)MinTripCount) {
+  const bool TripCountTooLow = !MinTC || *MinTC < (int64_t)MinTripCount;
+  if (TripCountTooLow) {
     LLVM_DEBUG(dbgs() << "    Trip count too low\n");
     return false;
   }
@@ -354,31 +351,30 @@ bool LoopStructure::isProfitableToRotate(ScalarEvolution &SE,
   return true;
 }
 
+// A volatile or atomic memory op can never be reordered.
+template <typename MemInstT>
+static bool anyVolatileOrAtomic(ArrayRef<MemInstT *> MemOps) {
+  return llvm::any_of(MemOps, [](const MemInstT *M) {
+    return M->isVolatile() || M->isAtomic();
+  });
+}
+
 bool LoopStructure::isSafeToReorderMemoryOps() const {
   assert(isOrigLS() && "Only valid on the original LoopStructure");
   // TODO: Add alias/dependence analysis to verify that moving prologue loads
   // before epilogue stores is safe. For now, only reject volatile/atomic
   // operations which can never be reordered.
-  SmallVector<LoadInst *, 8> PrologueLoads = collectPrologueLoads();
-  SmallVector<StoreInst *, 8> EpilogueStores = collectEpilogueStores();
-  for (LoadInst *L : PrologueLoads)
-    if (L->isVolatile() || L->isAtomic()) {
-      LLVM_DEBUG(dbgs() << "    Unsafe: volatile/atomic prologue load\n");
-      return false;
-    }
-  for (StoreInst *S : EpilogueStores)
-    if (S->isVolatile() || S->isAtomic()) {
-      LLVM_DEBUG(dbgs() << "    Unsafe: volatile/atomic epilogue store\n");
-      return false;
-    }
+  if (anyVolatileOrAtomic<LoadInst>(collectPrologueLoads())) {
+    LLVM_DEBUG(dbgs() << "    Unsafe: volatile/atomic prologue load\n");
+    return false;
+  }
+  if (anyVolatileOrAtomic<StoreInst>(collectEpilogueStores())) {
+    LLVM_DEBUG(dbgs() << "    Unsafe: volatile/atomic epilogue store\n");
+    return false;
+  }
   return true;
 }
 
-// Collect the peeled instructions from the outer header that feed the inner
-// loop. Uses backward value tracking from inner loop operands. Hardware-loop
-// setup calls (@llvm.set.loop.iterations) are intentionally excluded — they
-// stay in the outer header and are cloned separately into the last-iteration
-// block.
 void LoopStructure::collectPeeledInstructions() {
   assert(isOrigLS() && "Only valid on the original LoopStructure");
   SmallPtrSet<Instruction *, 32> Visited;
@@ -649,9 +645,6 @@ void AIEOuterLoopPipeliner::clonePrologueIntoEpilogue(
   LLVM_DEBUG(dbgs() << "    Cloned prologue into epilogue\n");
 }
 
-// For each steady peeled instruction, create a PHI selecting the peel value on
-// the entry edge and the epilogue value on the back edge, then replace the
-// instruction's uses with it and erase it.
 void AIEOuterLoopPipeliner::createPipelinedPHIs(const LoopStructure &OrigLS,
                                                 const LoopStructure &SteadyLS,
                                                 const RemapTable &PeelVMap,
@@ -696,7 +689,6 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const LoopStructure &OrigLS,
   }
 }
 
-// Create the last-iteration region for the last outer iteration (N-1).
 void AIEOuterLoopPipeliner::peelLastIteration(const LoopStructure &OrigLS,
                                               const LoopStructure &SteadyLS) {
   // Build the empty last-iteration LS. It owns its steady->lastiter clone map;
@@ -780,8 +772,9 @@ void AIEOuterLoopPipeliner::populateLastIterEpilogue(
     // No prefetch in the last-iteration.
     if (isa<LoadInst>(&I))
       continue;
-    // Skip the outer loop's back-edge control (dead without a back-edge).
-    if (&I == Bound.Counter || &I == Bound.Cmp)
+    // The back-edge control is dead without a back-edge.
+    const bool IsBackEdgeControl = &I == Bound.Counter || &I == Bound.Cmp;
+    if (IsBackEdgeControl)
       continue;
     OrigEpiInsts.push_back(&I);
   }
@@ -875,31 +868,6 @@ LoopStructure::LoopStructure(BasicBlock *OuterPreheader,
   EpilogueRegion.assign({OuterLatch});
 }
 
-SmallVectorImpl<Instruction *> &LoopStructure::peeledInsts() {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-  return PeeledInsts;
-}
-
-const SmallVectorImpl<Instruction *> &LoopStructure::peeledInsts() const {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-  return PeeledInsts;
-}
-
-SmallVectorImpl<Instruction *> &LoopStructure::keptInsts() {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-  return KeptInsts;
-}
-
-const SmallVectorImpl<Instruction *> &LoopStructure::keptInsts() const {
-  assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-  return KeptInsts;
-}
-
-void LoopStructure::setOuterPreheader(BasicBlock *BB) {
-  assert(!IsOrigLS && "Original derives its preheader from LoopInfo");
-  OuterPreheader = BB;
-}
-
 bool LoopStructure::isRegionInternalPhi(const PHINode *PHI) const {
   for (const BasicBlock *IB : PHI->blocks())
     if (!PrologueRegion.contains(IB))
@@ -936,6 +904,34 @@ void LoopStructure::adoptPeelAsPreheader(BasicBlock *Peel) {
   setOuterPreheader(Peel);
 }
 
+// The `add Counter, C` (with constant C) that defines Counter, or nullptr.
+static BinaryOperator *getConstantStepAdd(Value *Counter) {
+  auto *Add = dyn_cast<BinaryOperator>(Counter);
+  const bool IsConstantStepAdd = Add && Add->getOpcode() == Instruction::Add &&
+                                 isa<ConstantInt>(Add->getOperand(1));
+  return IsConstantStepAdd ? Add : nullptr;
+}
+
+// The induction step the predicate implies for a unit-stride loop, or nullopt
+// for EQ/NE (ambiguous without a visible constant step).
+static std::optional<int64_t> stepFromPredicate(ICmpInst::Predicate Pred) {
+  if (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT)
+    return 1;
+  if (Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT)
+    return -1;
+  return std::nullopt;
+}
+
+// The counting PHI in Header that feeds Add, or nullptr.
+static PHINode *findCountingPhi(BinaryOperator *Add, const BasicBlock *Header) {
+  for (Value *Op : Add->operands()) {
+    auto *PHI = dyn_cast<PHINode>(Op);
+    if (PHI && PHI->getParent() == Header)
+      return PHI;
+  }
+  return nullptr;
+}
+
 bool LoopStructure::tryAdjustLoopBound() {
   auto *BI = dyn_cast<BranchInst>(getOuterLatch()->getTerminator());
   if (!BI || !BI->isConditional())
@@ -943,9 +939,8 @@ bool LoopStructure::tryAdjustLoopBound() {
   auto *Cmp = dyn_cast<ICmpInst>(BI->getCondition());
   if (!Cmp)
     return false;
-  ICmpInst::Predicate Pred = Cmp->getPredicate();
 
-  // Find the loop-invariant limit and non-invariant counter.
+  // Split the compare into its loop-invariant limit and its counter operand.
   Value *Limit = nullptr;
   Value *Counter = nullptr;
   unsigned LimitIdx = 0;
@@ -961,52 +956,31 @@ bool LoopStructure::tryAdjustLoopBound() {
   if (!Limit)
     return false;
 
-  // Determine the induction step. If Counter is an add with a constant
-  // operand, extract the step directly. Otherwise, infer from the predicate.
-  // EQ/NE without a visible constant step is ambiguous — bail out.
-  int64_t Step = 0;
-  BinaryOperator *CounterAdd = nullptr;
-  if (auto *Add = dyn_cast<BinaryOperator>(Counter)) {
-    if (Add->getOpcode() == Instruction::Add) {
-      if (auto *C = dyn_cast<ConstantInt>(Add->getOperand(1))) {
-        Step = C->getSExtValue();
-        CounterAdd = Add;
-      }
-    }
-  }
+  // The step comes from the counting add's constant; a zero/absent constant
+  // falls back to the predicate's unit stride.
+  BinaryOperator *CounterAdd = getConstantStepAdd(Counter);
+  int64_t Step =
+      CounterAdd ? cast<ConstantInt>(CounterAdd->getOperand(1))->getSExtValue()
+                 : 0;
   if (Step == 0) {
-    if (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT)
-      Step = 1;
-    else if (Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT)
-      Step = -1;
-    else {
+    std::optional<int64_t> PredStep = stepFromPredicate(Cmp->getPredicate());
+    if (!PredStep) {
       LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: EQ/NE with no "
                            "visible constant step\n");
       return false;
     }
+    Step = *PredStep;
   }
 
-  // CounterAdd must be non-null: the step must come from an explicit add
-  // instruction so that we can identify the counting PHI (OldIV) and verify
-  // the loop induction structure. Plain-PHI counters (no visible add) are
-  // rejected to avoid relying on an unverifiable step assumption.
+  // A plain-PHI counter has no add to identify OldIV from, so its step is
+  // unverifiable and JNZD conversion is impossible; reject it.
   if (!CounterAdd) {
     LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: counter is not an add "
                          "instruction\n");
     return false;
   }
 
-  // Find the counting PHI in the outer header that feeds CounterAdd.
-  // Without OldIV we cannot verify the induction structure or support JNZD.
-  PHINode *OldIV = nullptr;
-  for (Value *Op : CounterAdd->operands()) {
-    if (auto *PHI = dyn_cast<PHINode>(Op)) {
-      if (PHI->getParent() == getOuterHeader()) {
-        OldIV = PHI;
-        break;
-      }
-    }
-  }
+  PHINode *OldIV = findCountingPhi(CounterAdd, getOuterHeader());
   if (!OldIV) {
     LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound: counting PHI not "
                          "found in outer header\n");
@@ -1017,13 +991,9 @@ bool LoopStructure::tryAdjustLoopBound() {
   return true;
 }
 
-// Adjust the outer loop trip count from N to N-1 using the pre-computed
-// LS.bound() (populated by canAdjustLoopBound). The unified formula is:
-//   NewLimit = Limit - Step
-// which correctly handles increment (Step > 0) and decrement (Step < 0) loops
-// of any constant step magnitude.
+// NewLimit = Limit - Step covers increment (Step > 0) and decrement (Step < 0)
+// loops of any constant step magnitude.
 Value *LoopStructure::adjustLoopBound() {
-  // bound() is always valid (set by analyzeLoopStructure).
   const LatchConditionInfo &B = bound();
   IRBuilder<> Builder(getPreheader()->getTerminator());
   Value *NewLimit = Builder.CreateSub(
@@ -1035,27 +1005,9 @@ Value *LoopStructure::adjustLoopBound() {
   return NewLimit;
 }
 
-// Adjust loop metadata after a successful outer-loop pipelining transformation:
-//   1. Decrement llvm.loop.itercount.range by 1 (one iteration was peeled).
-//   2. Drop llvm.loop.hint.aie-enable-outer-loop-pipelining (consumed).
-//   3. Insert llvm.loop.hint.aie_outerloop_pipeliner_success = i64 1.
-void LoopStructure::updateLoopMetadata() const {
-  MDNode *LoopID = getOuterLoopID();
-  LLVMContext &Ctx = getOuterHeader()->getContext();
-
-  // Adjust itercount.range (N → N-1).
-  MDNode *UpdatedID =
-      LoopID ? updateIterCounts(
-                   Ctx, LoopID, /*FixMin=*/[](int64_t V) { return V - 1; },
-                   /*FixMax=*/[](int64_t V) { return V - 1; })
-             : nullptr;
-
-  // Rebuild the metadata node, dropping the consumed hint and
-  // appending the success marker.
-  MDNode *Source = UpdatedID ? UpdatedID : LoopID;
-  if (!Source)
-    return;
-
+// Copy Source's hint entries dropping the consumed enable hint, append the
+// pipeliner success marker, and self-reference operand 0 as a loop ID requires.
+static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
   static constexpr StringLiteral HintKey{
       "llvm.loop.hint.aie-enable-outer-loop-pipelining"};
   static constexpr StringLiteral SuccessKey{
@@ -1081,8 +1033,26 @@ void LoopStructure::updateLoopMetadata() const {
 
   MDNode *FinalLoopID = MDNode::get(Ctx, MDs);
   FinalLoopID->replaceOperandWith(0, FinalLoopID);
-  // Write llvm.loop onto the outer latch terminator (what Loop::setLoopID does
-  // internally), so this works on a clone with no LoopInfo Loop.
+  return FinalLoopID;
+}
+
+void LoopStructure::updateLoopMetadata() const {
+  MDNode *LoopID = getOuterLoopID();
+  if (!LoopID)
+    return;
+  LLVMContext &Ctx = getOuterHeader()->getContext();
+
+  // Decrement itercount.range (N -> N-1) to reflect the peeled iteration.
+  MDNode *AdjustedID = updateIterCounts(
+      Ctx, LoopID, /*FixMin=*/[](int64_t V) { return V - 1; },
+      /*FixMax=*/[](int64_t V) { return V - 1; });
+  MDNode *Source = AdjustedID ? AdjustedID : LoopID;
+
+  // Drop the consumed enable hint and append the success marker.
+  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, Source);
+
+  // Write onto the latch terminator (what Loop::setLoopID does internally) so
+  // this works on a clone with no LoopInfo Loop.
   getOuterLatch()->getTerminator()->setMetadata(LLVMContext::MD_loop,
                                                 FinalLoopID);
 }
@@ -1151,108 +1121,97 @@ bool LoopStructure::collectPeeledForSplit(
   return true;
 }
 
-// Lift each outer-header PHI's epilogue-defined pointer-update chain to the end
-// of the prologue, so the main transform clones them into peel and epilogue.
-// Only chains with no inner-loop dependency and no external epilogue use lift.
-bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
-    const LoopStructure &OrigLS) {
-  Instruction *InsertPt = OrigLS.getOuterHeader()->getTerminator();
+// An intrinsic other than a safe 2D/3D pointer increment, whose unknown side
+// effects forbid moving it out of the epilogue.
+static bool isUnsafeIntrinsicToLift(const AIEBaseInstrInfo &TII,
+                                    const Instruction *I) {
+  const auto *II = dyn_cast<IntrinsicInst>(I);
+  return II && !isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID());
+}
 
-  // Collect all liftable chains across all PHIs.
-  SmallPtrSet<Instruction *, 32> AllLiftable;
-
-  // Process each PHI independently to allow partial lifting.
-  for (PHINode &PHI : OrigLS.getOuterHeader()->phis()) {
-    // Get the incoming value from the latch (back-edge).
-    Value *LatchVal = PHI.getIncomingValueForBlock(OrigLS.getOuterLatch());
-    auto *LatchInst = dyn_cast<Instruction>(LatchVal);
-    if (!LatchInst || !OrigLS.isInEpilogue(LatchInst))
-      continue;
-
-    // Backward-track from LatchInst to find all epilogue instructions that
-    // form the computation chain for this PHI's next-iteration value.
-    SmallPtrSet<Instruction *, 16> Chain;
-    SmallVector<Instruction *, 16> Worklist;
-    Chain.insert(LatchInst);
-    Worklist.push_back(LatchInst);
-
-    bool CanLift = true;
-    while (!Worklist.empty() && CanLift) {
-      Instruction *I = Worklist.pop_back_val();
-
-      // If this is an intrinsic call, check if it's a safe pointer increment.
-      // We only allow lifting chains that contain 2D/3D pointer intrinsics;
-      // any other intrinsic may have unknown side effects.
-      if (auto *II = dyn_cast<IntrinsicInst>(I)) {
-        if (!isSafePointerIncrementIntrinsic(*TII, II->getIntrinsicID())) {
-          CanLift = false;
-          LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName()
-                            << ": cannot lift (unsafe intrinsic "
-                            << II->getName() << ")\n");
-          break;
-        }
-      }
-
-      for (Value *Op : I->operands()) {
-        auto *OpI = dyn_cast<Instruction>(Op);
-        if (!OpI)
-          continue;
-        // If the operand is defined in the inner loop, we cannot lift.
-        if (OrigLS.getInnerLoop()->contains(OpI->getParent())) {
-          CanLift = false;
-          break;
-        }
-        // If the operand is defined in the epilogue, add to the chain.
-        if (OrigLS.isInEpilogue(OpI)) {
-          if (Chain.insert(OpI).second)
-            Worklist.push_back(OpI);
-        }
-        // Operands from outer header (PHIs) or preheader are OK - they're
-        // already available before the inner loop.
-      }
+// A chain instruction used by an epilogue instruction outside the chain (a
+// store, the exit icmp, ...), or nullptr if none. Such a use pins the chain to
+// the epilogue, so it cannot be lifted.
+static Instruction *
+findExternalEpilogueUser(const LoopStructure &OrigLS,
+                         const SmallPtrSetImpl<Instruction *> &Chain) {
+  for (Instruction *I : Chain)
+    for (User *U : I->users()) {
+      auto *UI = dyn_cast<Instruction>(U);
+      const bool IsExternalEpilogueUse =
+          UI && OrigLS.isInEpilogue(UI) && !Chain.contains(UI);
+      if (IsExternalEpilogueUse)
+        return UI;
     }
+  return nullptr;
+}
 
-    // Additional check: if any instruction in the chain has uses by other
-    // epilogue instructions (outside the chain), we cannot lift this chain.
-    // This excludes chains used by stores, loop control (icmp), etc.
-    if (CanLift) {
-      for (Instruction *I : Chain) {
-        for (User *U : I->users()) {
-          auto *UI = dyn_cast<Instruction>(U);
-          if (!UI)
-            continue;
-          // If the user is in the epilogue AND not part of this chain,
-          // this chain has external epilogue uses - don't lift it.
-          if (OrigLS.isInEpilogue(UI) && !Chain.count(UI)) {
-            CanLift = false;
-            LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName()
-                              << ": cannot lift (epilogue use by "
-                              << UI->getName() << ")\n");
-            break;
-          }
-        }
-        if (!CanLift)
-          break;
-      }
-    }
+std::optional<SmallPtrSet<Instruction *, 16>>
+AIEOuterLoopPipeliner::collectLiftableEpilogueChain(const LoopStructure &OrigLS,
+                                                    PHINode &PHI) const {
+  Value *LatchVal = PHI.getIncomingValueForBlock(OrigLS.getOuterLatch());
+  auto *LatchInst = dyn_cast<Instruction>(LatchVal);
+  const bool EpilogueDefinedBackEdge =
+      LatchInst && OrigLS.isInEpilogue(LatchInst);
+  if (!EpilogueDefinedBackEdge)
+    return std::nullopt;
 
-    if (CanLift) {
-      AllLiftable.insert(Chain.begin(), Chain.end());
-      LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName() << ": lifting chain of "
-                        << Chain.size() << " instructions\n");
+  // Backward-track from the back-edge value, collecting the epilogue operands
+  // that feed it; bail if the chain reaches an inner-loop value or an unsafe
+  // intrinsic.
+  SmallPtrSet<Instruction *, 16> Chain;
+  SmallVector<Instruction *, 16> Worklist;
+  Chain.insert(LatchInst);
+  Worklist.push_back(LatchInst);
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.pop_back_val();
+    if (isUnsafeIntrinsicToLift(*TII, I))
+      return std::nullopt;
+
+    for (Value *Op : I->operands()) {
+      auto *OpI = dyn_cast<Instruction>(Op);
+      if (!OpI)
+        continue;
+      // A value computed in the inner loop cannot be lifted above it.
+      const bool DependsOnInnerLoopValue =
+          OrigLS.getInnerLoop()->contains(OpI->getParent());
+      if (DependsOnInnerLoopValue)
+        return std::nullopt;
+      const bool ExtendsChain = OrigLS.isInEpilogue(OpI);
+      if (!ExtendsChain)
+        continue;
+      const bool NewlyReached = Chain.insert(OpI).second;
+      if (NewlyReached)
+        Worklist.push_back(OpI);
     }
   }
+
+  const bool ChainPinnedToEpilogue = findExternalEpilogueUser(OrigLS, Chain);
+  if (ChainPinnedToEpilogue)
+    return std::nullopt;
+
+  LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName() << ": lifting chain of "
+                    << Chain.size() << " instructions\n");
+  return Chain;
+}
+
+bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
+    const LoopStructure &OrigLS) {
+  // Union the liftable chains of every PHI (each lifts independently).
+  SmallPtrSet<Instruction *, 32> AllLiftable;
+  for (PHINode &PHI : OrigLS.getOuterHeader()->phis())
+    if (auto Chain = collectLiftableEpilogueChain(OrigLS, PHI))
+      AllLiftable.insert(Chain->begin(), Chain->end());
 
   if (AllLiftable.empty())
     return false;
 
-  // Collect liftable instructions in program order.
+  // Move the liftable instructions to the prologue end in program order.
+  Instruction *InsertPt = OrigLS.getOuterHeader()->getTerminator();
   SmallVector<Instruction *, 32> ToLift;
   for (Instruction &I : *OrigLS.getOuterLatch())
     if (AllLiftable.count(&I))
       ToLift.push_back(&I);
-
-  // Move each instruction to the end of the prologue block (before terminator).
   for (Instruction *I : ToLift)
     I->moveBefore(InsertPt->getIterator());
 
@@ -1274,17 +1233,16 @@ void LoopStructure::collectKeptInstructions(
   SmallVector<Instruction *, 16> Worklist;
 
   // Seed: forward-track from peeled instructions to find anchor instructions.
-  for (Instruction *P1 : PeeledSet) {
+  for (Instruction *P1 : PeeledSet)
     for (User *U : P1->users()) {
       auto *UI = dyn_cast<Instruction>(U);
       if (!UI || !isPipelineableValue(UI))
         continue;
-      if (!PeeledSet.count(UI) && IsAnchor(UI)) {
-        if (KeptSet.insert(UI).second)
-          Worklist.push_back(UI);
-      }
+      const bool IsUnpeeledAnchor = !PeeledSet.count(UI) && IsAnchor(UI);
+      const bool NewlyKept = IsUnpeeledAnchor && KeptSet.insert(UI).second;
+      if (NewlyKept)
+        Worklist.push_back(UI);
     }
-  }
 
   // Forward-track from anchors to collect all descendants within the prologue.
   while (!Worklist.empty()) {
@@ -1293,7 +1251,8 @@ void LoopStructure::collectKeptInstructions(
       auto *UI = dyn_cast<Instruction>(U);
       if (!UI || !isPipelineableValue(UI))
         continue;
-      if (!PeeledSet.count(UI) && KeptSet.insert(UI).second)
+      const bool NewlyKept = !PeeledSet.count(UI) && KeptSet.insert(UI).second;
+      if (NewlyKept)
         Worklist.push_back(UI);
     }
   }
@@ -1381,39 +1340,27 @@ bool AIEOuterLoopPipeliner::performTransformation(
   return true;
 }
 
-// Returns the downcounting pattern for JNZD conversion if the latch has the
-// canonical pattern (icmp eq/ne, step -1). bound() is always valid here, so
-// only the step is checked.
 std::optional<DowncountingInfo> LoopStructure::getDowncountingInfo() const {
-  // Hardware loop requires step == -1 (loop.decrement.reg decrements by 1).
+  // loop.decrement.reg only decrements by 1, so JNZD needs step == -1.
   if (bound().Step != -1)
     return std::nullopt;
   return DowncountingInfo{bound().Cmp, bound().Counter, bound().OldIV};
 }
 
-// Convert the outer loop to a JNZD hardware loop: replace the latch's
-// downcounting add+icmp with start.loop.iterations / loop.decrement.reg.
 void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
     const LoopStructure &SteadyLS, const DowncountingInfo &Info) {
   LLVMContext &Ctx = SteadyLS.getOuterHeader()->getContext();
   Type *I32Ty = Type::getInt32Ty(Ctx);
-
-  // Unpack the pre-validated downcounting pattern from Info. The JNZD trip
-  // count is NOT the adjusted icmp threshold (the constant 1 for a decrement
-  // loop); it is:
-  //   OldIV_initial_value - 1
-  // where OldIV_initial_value is the peel incoming of OldIV.
   PHINode *OldIV = Info.OldIV;
 
-  // The JNZD trip count is the peel-incoming value of OldIV minus 1: for a
-  // decrement loop starting at N, peeling one iteration leaves N-1 to run.
+  // For a decrement loop starting at N, peeling one iteration leaves N-1 to
+  // run; the JNZD trip count is therefore the peel-incoming value of OldIV - 1
+  // (NOT the adjusted icmp threshold), zero-extended/truncated to i32.
   BasicBlock *Peel = SteadyLS.getPreheader();
   IRBuilder<> PreBuilder(Peel->getTerminator());
-
   Value *InitN = OldIV->getIncomingValueForBlock(Peel);
   Value *TripCount = PreBuilder.CreateSub(
       InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
-  // Ensure i32.
   if (TripCount->getType() != I32Ty)
     TripCount =
         PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
@@ -1430,7 +1377,6 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
   CtrPHI->addIncoming(CtrInit, Peel);
 
   // Replace the latch icmp+add with loop.decrement.reg.
-  // Use the pre-validated components from Info.
   BranchInst *LatchBr = SteadyLS.getLatchBranch();
   BinaryOperator *OldCounter = Info.Counter;
 
@@ -1440,36 +1386,32 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
                                    {CtrPHI, ConstantInt::get(I32Ty, 1)},
                                    /*FMFSource=*/nullptr, "outer.ctr.next");
 
-  // The loop continues while CtrNext != 0.
   Value *NewCond = LatchBuilder.CreateICmpNE(
       CtrNext, ConstantInt::get(I32Ty, 0), "outer.loop.cond");
 
-  // Update the branch: true successor must be the loop header.
   Value *OldCond = LatchBr->getCondition();
   LatchBr->setCondition(NewCond);
-
-  // Ensure the true branch goes back to the outer header (loop continues).
-  if (LatchBr->getSuccessor(0) != SteadyLS.getOuterHeader())
+  const bool TrueBranchContinuesLoop =
+      LatchBr->getSuccessor(0) == SteadyLS.getOuterHeader();
+  if (!TrueBranchContinuesLoop)
     LatchBr->swapSuccessors();
 
-  // Complete the counter PHI with the latch back-edge value.
   CtrPHI->addIncoming(CtrNext, SteadyLS.getOuterLatch());
 
-  // Delete the old icmp (now dead: branch condition was replaced above).
+  // The condition was just replaced, so the old icmp is now dead.
   RecursivelyDeleteTriviallyDeadInstructions(OldCond);
 
   // OldCounter (add) and OldIV (counting PHI) form a use cycle that trivial-DCE
   // cannot break. If OldIV is used only by OldCounter, poison its latch slot so
   // both become dead; otherwise leave the PHI for its other users.
-  if (OldCounter) {
-    if (OldIV->hasOneUse()) {
-      int LatchIdx = OldIV->getBasicBlockIndex(SteadyLS.getOuterLatch());
-      if (LatchIdx >= 0)
-        OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
-    }
-    // OldIV may be deleted transitively here; do not reference it afterwards.
-    RecursivelyDeleteTriviallyDeadInstructions(OldCounter);
+  assert(OldCounter && "DowncountingInfo guarantees a non-null Counter");
+  if (OldIV->hasOneUse()) {
+    int LatchIdx = OldIV->getBasicBlockIndex(SteadyLS.getOuterLatch());
+    if (LatchIdx >= 0)
+      OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
   }
+  // OldIV may be deleted transitively here; do not reference it afterwards.
+  RecursivelyDeleteTriviallyDeadInstructions(OldCounter);
 
   LLVM_DEBUG(dbgs() << "    Converted outer loop to JNZD hardware loop\n");
 }
