@@ -153,10 +153,6 @@ struct DowncountingInfo {
   PHINode *OldIV;
 };
 
-// Shared base describing an outer loop and its single inner loop. Two roles
-// specialize it: OrigLoopStructure (built from LoopInfo) and CloneLoopStructure
-// (the steady-state / last-iteration clones produced during the transform). The
-// only operation the two roles implement differently is getPreheader().
 class LoopStructure {
 protected:
   BasicBlock *InnerExit = nullptr;
