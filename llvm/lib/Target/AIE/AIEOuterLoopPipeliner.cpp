@@ -99,14 +99,9 @@ static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
   return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
 }
 
-// Reroute the incoming edge of each PHI in BB that comes from OldPred so it
-// instead comes from NewPred, with value MapVal(oldValue). When KeepOldPred is
-// true the OldPred entry is left in place and a new (NewPred, value) incoming
-// is appended — required when OldPred still branches to BB (e.g. a
-// not-yet-deleted block) so its PHI entry survives to be dropped cleanly later;
-// otherwise the OldPred entry is repointed in place. MapVal defaults to
-// identity (a pure block rename). This is the single PHI-incoming reroute used
-// wherever the pass moves a predecessor edge.
+// Reroute each PHI incoming in BB from OldPred to NewPred, with value
+// MapVal(oldValue) (default identity). KeepOldPred appends a new incoming
+// instead of repointing — needed while OldPred still branches to BB.
 static void reroutePhiIncomings(
     BasicBlock *BB, BasicBlock *OldPred, BasicBlock *NewPred, bool KeepOldPred,
     function_ref<Value *(Value *)> MapVal = [](Value *V) { return V; }) {
@@ -342,8 +337,7 @@ bool LoopStructure::isProfitableToRotate(ScalarEvolution &SE,
   }
 
   SmallVector<StoreInst *, 8> EpilogueStores = collectEpilogueStores();
-  // TODO: Do we actually need this? Do we have cases without
-  // stores?
+  // TODO: Confirm whether a store-free epilogue can ever be profitable.
   if (EpilogueStores.empty()) {
     LLVM_DEBUG(dbgs() << "    No stores in epilogue\n");
     return false;
@@ -488,10 +482,7 @@ LoopStructure::LoopStructure(const LoopStructure &Src, const Twine &Suffix)
     : IsOrigLS(false) {
   Function *F = Src.getOuterHeader()->getParent();
 
-  // The LS in program order: outer header (== inner preheader for the linear
-  // prologue), the inner-loop blocks, then the outer latch (== inner exit).
-  // Clone each block; CloneBasicBlock copies all instructions and seeds
-  // CloneMap (src->clone) with per-instruction old->new entries.
+  // Blocks in program order; CloneBasicBlock seeds CloneMap (src->clone).
   SmallVector<BasicBlock *, 8> OrigBlocks;
   OrigBlocks.push_back(Src.getOuterHeader());
   OrigBlocks.append(Src.getInnerBlocks().begin(), Src.getInnerBlocks().end());
@@ -504,19 +495,15 @@ LoopStructure::LoopStructure(const LoopStructure &Src, const Twine &Suffix)
   SmallVector<BasicBlock *, 8> CloneBlocks;
   for (BasicBlock *BB : OrigBlocks) {
     BasicBlock *CB = CloneBasicBlock(BB, CloneMap, "." + SuffixStr, F);
-    // CloneBasicBlock appends to the end of F; move the clone just before its
-    // original so the cloned LS occupies the original's slot. After the
-    // original LS is deleted the clone keeps the original program-order
-    // layout (steady loop ahead of the peeled last-iteration and the exit).
+    // Move the clone before its original so it inherits the program-order slot
+    // once the original LS is deleted.
     CB->moveBefore(BB);
     CloneMap[BB] = CB;
     CloneBlocks.push_back(CB);
   }
 
-  // Remap within-LS references (branch targets, PHI incoming blocks, operands)
-  // to the clones. Edges to blocks outside the LS (e.g. the exit successor)
-  // are absent from CloneMap and remain pointing at the originals for the
-  // caller to rewire.
+  // Remap within-LS references; edges leaving the LS stay pointed at the
+  // originals for the caller to rewire (they are absent from CloneMap).
   remapInstructionsInBlocks(CloneBlocks, CloneMap);
 
   InnerPreheader = clonedBlock(Src.getInnerPreheader());
@@ -527,8 +514,7 @@ LoopStructure::LoopStructure(const LoopStructure &Src, const Twine &Suffix)
     InnerLoopBlocks.push_back(clonedBlock(BB));
   OuterLoopID = Src.getOuterLoopID();
 
-  // Mirror the prologue/epilogue regions onto the clone blocks so membership
-  // queries (isPipelineableValue, isInEpilogue) work on the clone.
+  // Mirror the regions onto the clones so membership queries work on the clone.
   SmallVector<BasicBlock *, 4> CloneProBlocks;
   for (BasicBlock *BB : Src.prologueRegion().blocks())
     CloneProBlocks.push_back(clonedBlock(BB));
@@ -539,8 +525,8 @@ LoopStructure::LoopStructure(const LoopStructure &Src, const Twine &Suffix)
   // source LS and are remapped to the clone by remapBoundToClone.
   OuterLoopCondition = Src.bound();
 
-  // Give the clone blocks clean role-based names (the "<orig>.<suffix>" names
-  // from CloneBasicBlock read as if they were still the original loop).
+  // Rename clones by role; CloneBasicBlock's "<orig>.<suffix>" names read as
+  // the original loop.
   getOuterHeader()->setName(SuffixStr + ".header");
   getOuterLatch()->setName(SuffixStr + ".latch");
   for (auto [Orig, Clone] : zip(Src.getInnerBlocks(), getInnerBlocks()))
@@ -594,18 +580,15 @@ void AIEOuterLoopPipeliner::swapInClonedLS(const LoopStructure &OrigLS,
   BasicBlock *Preheader = OrigLS.getPreheader();
   BasicBlock *OrigExit = OrigLS.getExitBlock();
 
-  // Redirect the preheader to the clone's header. This leaves the original LS
-  // unreachable, so capture the preheader on the clone now — afterwards
-  // LoopInfo can no longer recover it for the original.
+  // Redirecting leaves the original LS unreachable, so capture the preheader on
+  // the clone now — LoopInfo can no longer recover it afterwards.
   Preheader->getTerminator()->replaceSuccessorWith(OrigLS.getOuterHeader(),
                                                    SteadyLS.getOuterHeader());
   SteadyLS.setOuterPreheader(Preheader);
 
-  // The clone's latch exit edge still points at OrigExit (left external by the
-  // clone constructor); that is correct. Add a clone-latch incoming to the
-  // exit's loop-carried PHIs, mapping each value through SteadyLS.cloneOf so
-  // the exit sees the clone's definitions. KeepOldPred: the original latch
-  // still branches here until removeFromCFG, so its entry must survive.
+  // Add a clone-latch incoming to the exit PHIs so the exit sees the clone's
+  // defs. KeepOldPred: the original latch still branches here until
+  // removeFromCFG, so its entry must survive.
   reroutePhiIncomings(
       OrigExit, OrigLS.getOuterLatch(), SteadyLS.getOuterLatch(),
       /*KeepOldPred=*/true, [&](Value *V) { return SteadyLS.cloneOf(V); });
@@ -656,16 +639,13 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const LoopStructure &OrigLS,
       remapToClone(OrigLS.peeledInsts(), SteadyLS.cloneMap());
   SmallVector<std::pair<Instruction *, PHINode *>, 8> Replacements;
   for (Instruction *I : PeeledInsts) {
-    // Void-typed instructions (stores, side-effect-only intrinsics) don't
-    // produce values, so there's nothing to merge via a PHI node. Each
-    // execution path simply runs its own cloned copy independently.
+    // Void-typed instructions produce no value to merge; each path runs its
+    // own clone.
     if (I->getType()->isVoidTy())
       continue;
     auto WIt = PeelVMap.find(I);
     auto EIt = EpiVMap.find(I);
-    // Both cloning functions (clonePrologueAsPeel, clonePrologueIntoEpilogue)
-    // unconditionally add every peeled entry to their respective maps, so
-    // every non-void instruction must be present in both.
+    // Both cloners add every peeled entry, so every non-void inst is in both.
     assert(WIt != PeelVMap.end() && EIt != EpiVMap.end() &&
            "Prologue instruction must be in both Peel and Epilogue VMaps");
     Value *PeelVal = WIt->second;
@@ -753,17 +733,10 @@ void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
 void AIEOuterLoopPipeliner::populateLastIterEpilogue(
     const LoopStructure &OrigLS, const LoopStructure &SteadyLS,
     LoopStructure &LastIterLS) const {
-  // Read the pristine original epilogue: OrigLS is never mutated by the
-  // prefetch-cloning steps, so its latch holds the full last-iteration work
-  // (stores and any latch-resident accumulation) with no prefetch loads to
-  // drop. Cloning the whole latch is required for correctness: a value the
-  // outer loop accumulates in the latch is read after the loop, so a
-  // last-iteration that omits it would compute a wrong result.
-  //
-  // The outer back-edge control (the counting add and the exit icmp) is the
-  // sole exception — it is dead in a non-looping last iteration, and its steady
-  // clone may already be erased by convertOuterLoopToHardwareLoop, so mapping
-  // it through the steady clone map would dereference freed IR.
+  // Clone the whole pristine original latch: a value accumulated there is read
+  // after the loop, so omitting it would compute a wrong last iteration.
+  // Back-edge control is the exception — dead without a back-edge, and its
+  // steady clone may already be freed by convertOuterLoopToHardwareLoop.
   const LatchConditionInfo &Bound = OrigLS.bound();
   SmallVector<Instruction *, 16> OrigEpiInsts;
   for (Instruction &I : *OrigLS.getOuterLatch()) {
@@ -793,11 +766,9 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
   BranchInst::Create(OrigExit, LastIterEpilogue);
 
-  // An exit live-out is an interior def of the loop; its last-iteration value
-  // is the composed clone orig -> steady -> lastiter (cloneOf passes
-  // non-clones, e.g. invariants, through). A PHI incoming is already a steady
-  // value (one hop); a live-out rematerialized into the exit block is an orig
-  // value (two hops) — the composition handles both.
+  // Compose orig -> steady -> lastiter: a PHI incoming is a steady value (one
+  // hop), a rematerialized live-out is an orig value (two hops); cloneOf passes
+  // non-clones through, so both resolve correctly.
   auto ToLastIter = [&](Value *V) {
     return LastIterLS.cloneOf(SteadyLS.cloneOf(V));
   };
@@ -1295,13 +1266,9 @@ bool AIEOuterLoopPipeliner::performTransformation(
     return false;
   }
 
-  // Clone the whole LS into a fresh, steady-state copy and swap it into the
-  // CFG in the original's place (preheader -> clone header -> ... -> exit). The
-  // clone inherits the cached bound (remapped to its blocks); all transform
-  // steps below run on the clone so the original is never mutated and is
-  // deleted at the end.
-  // SteadyLS owns its orig->steady clone map; downstream steps read it via
-  // SteadyLS.cloneMap()/cloneOf().
+  // Clone the LS into a steady-state copy and swap it into the original's CFG
+  // slot; all transform steps below run on the clone, leaving OrigLS pristine
+  // for removal at the end.
   LoopStructure SteadyLS(OrigLS, "steady");
   swapInClonedLS(OrigLS, SteadyLS);
   remapBoundToClone(SteadyLS);
