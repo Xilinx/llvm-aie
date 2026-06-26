@@ -85,8 +85,9 @@ static SmallVector<SplitStrategy, 4> getSplitStrategies() {
   };
 }
 
-// Returns true if any split strategy identifies this instruction as an anchor.
-static bool isAnchorInstruction(const Instruction *I) {
+// Returns true if any split strategy marks this instruction as the point where
+// stage 1 begins (e.g. a wide-vector producer; see produces2048BitVector).
+static bool isStage1SplitPoint(const Instruction *I) {
   for (const auto &Strategy : getSplitStrategies()) {
     if (Strategy(I))
       return true;
@@ -369,8 +370,70 @@ bool LoopStructure::isSafeToReorderMemoryOps() const {
   return true;
 }
 
-void LoopStructure::collectPeeledInstructions() {
+void LoopStructure::forwardClosure(SmallVectorImpl<Instruction *> &Worklist,
+                                   SmallPtrSetImpl<Instruction *> &Set) const {
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.pop_back_val();
+    for (User *U : I->users()) {
+      auto *UI = dyn_cast<Instruction>(U);
+      if (!UI || !isPipelineableValue(UI))
+        continue;
+      if (Set.insert(UI).second)
+        Worklist.push_back(UI);
+    }
+  }
+}
+
+SmallPtrSet<Instruction *, 32> LoopStructure::collectStage1Cone(
+    function_ref<bool(const Instruction *)> IsSplitPoint) const {
+  // Forward closure from the prologue loads: the candidates a stage-1 split
+  // point (e.g. a wide-vector producer; see isStage1SplitPoint) is found among.
+  SmallPtrSet<Instruction *, 32> ReachableFromLoad;
+  SmallVector<Instruction *, 32> Worklist;
+  prologueRegion().forEachInstruction([&](Instruction *I) {
+    if (isa<LoadInst>(I)) {
+      ReachableFromLoad.insert(I);
+      Worklist.push_back(I);
+    }
+  });
+  forwardClosure(Worklist, ReachableFromLoad);
+
+  // Seed the cone with those split points, then take their forward closure (all
+  // descendants within the prologue).
+  SmallPtrSet<Instruction *, 32> Cone;
+  SmallVector<Instruction *, 16> ConeWorklist;
+  for (Instruction *I : ReachableFromLoad)
+    if (IsSplitPoint(I) && Cone.insert(I).second)
+      ConeWorklist.push_back(I);
+  forwardClosure(ConeWorklist, Cone);
+  return Cone;
+}
+
+void LoopStructure::collectStages(
+    function_ref<bool(const Instruction *)> IsSplitPoint) {
   assert(isOrigLS() && "Only valid on the original LoopStructure");
+
+  // Stage 1 is the split-point cone. With no split point every candidate
+  // backward-reachable from the inner loop is stage 0.
+  const SmallPtrSet<Instruction *, 32> Stage1Set =
+      collectStage1Cone(IsSplitPoint);
+  if (Stage1Set.empty()) {
+    collectStage0FromInnerLoop();
+    return;
+  }
+
+  // Stage 0 is every other pipeline candidate (the load/address chain).
+  prologueRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I))
+      return;
+    (Stage1Set.count(I) ? stage1Insts() : stage0Insts()).push_back(I);
+  });
+
+  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void LoopStructure::collectStage0FromInnerLoop() {
   SmallPtrSet<Instruction *, 32> Visited;
   SmallVector<Instruction *, 16> Worklist;
   auto Seed = [&](Value *V) {
@@ -404,7 +467,7 @@ void LoopStructure::collectPeeledInstructions() {
   // Emit the reached candidates in region program order.
   prologueRegion().forEachInstruction([&](Instruction *I) {
     if (isPipelineCandidate(I) && Visited.count(I))
-      peeledInsts().push_back(I);
+      stage0Insts().push_back(I);
   });
 }
 
@@ -434,7 +497,7 @@ void AIEOuterLoopPipeliner::clonePrologueAsPeel(const LoopStructure &OrigLS,
   BasicBlock *Peel = BasicBlock::Create(F->getContext(), "steady.preheader", F,
                                         SteadyLS.getOuterHeader());
   PeelVMap[SteadyLS.getOuterHeader()] = Peel;
-  cloneAndRemapInsts(remapToClone(OrigLS.peeledInsts(), SteadyLS.cloneMap()),
+  cloneAndRemapInsts(remapToClone(OrigLS.stage0Insts(), SteadyLS.cloneMap()),
                      *Peel, Peel->end(), PeelVMap, ".peel");
 
   BranchInst::Create(SteadyLS.getOuterHeader(), Peel);
@@ -620,10 +683,10 @@ void AIEOuterLoopPipeliner::clonePrologueIntoEpilogue(
   // header PHIs so the cloned loads prefetch the next iteration's pointers.
   seedHeaderPhiEdge(EpiVMap, SteadyLS, SteadyLS.getOuterLatch());
 
-  SmallVector<Instruction *, 16> PeeledInsts =
-      remapToClone(OrigLS.peeledInsts(), SteadyLS.cloneMap());
+  SmallVector<Instruction *, 16> Stage0Insts =
+      remapToClone(OrigLS.stage0Insts(), SteadyLS.cloneMap());
   Instruction *LatchTerm = SteadyLS.getOuterLatch()->getTerminator();
-  cloneAndRemapInsts(PeeledInsts, *SteadyLS.getOuterLatch(),
+  cloneAndRemapInsts(Stage0Insts, *SteadyLS.getOuterLatch(),
                      LatchTerm->getIterator(), EpiVMap, ".epi");
   LLVM_DEBUG(dbgs() << "    Cloned prologue into epilogue\n");
 }
@@ -635,17 +698,17 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const LoopStructure &OrigLS,
   BasicBlock *Peel = SteadyLS.getPreheader();
   Instruction *InsertPt = &*SteadyLS.getOuterHeader()->getFirstInsertionPt();
 
-  SmallVector<Instruction *, 16> PeeledInsts =
-      remapToClone(OrigLS.peeledInsts(), SteadyLS.cloneMap());
+  SmallVector<Instruction *, 16> Stage0Insts =
+      remapToClone(OrigLS.stage0Insts(), SteadyLS.cloneMap());
   SmallVector<std::pair<Instruction *, PHINode *>, 8> Replacements;
-  for (Instruction *I : PeeledInsts) {
+  for (Instruction *I : Stage0Insts) {
     // Void-typed instructions produce no value to merge; each path runs its
     // own clone.
     if (I->getType()->isVoidTy())
       continue;
     auto WIt = PeelVMap.find(I);
     auto EIt = EpiVMap.find(I);
-    // Both cloners add every peeled entry, so every non-void inst is in both.
+    // Both cloners add every stage-0 entry, so every non-void inst is in both.
     assert(WIt != PeelVMap.end() && EIt != EpiVMap.end() &&
            "Prologue instruction must be in both Peel and Epilogue VMaps");
     Value *PeelVal = WIt->second;
@@ -663,7 +726,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const LoopStructure &OrigLS,
     Orig->replaceAllUsesWith(PHI);
 
   // Erase original prologue instructions from the outer header (reverse order).
-  for (Instruction *I : reverse(PeeledInsts)) {
+  for (Instruction *I : reverse(Stage0Insts)) {
     if (I->use_empty())
       I->eraseFromParent();
   }
@@ -680,13 +743,13 @@ void AIEOuterLoopPipeliner::peelLastIteration(const LoopStructure &OrigLS,
   // clone below picks up the final epilogue values.
   seedHeaderPhiEdge(LastIterMap, SteadyLS, SteadyLS.getOuterLatch());
 
-  // Fill each block. The prologue holds the hardware-loop setup and the kept
-  // accumulator seeds; both must be in place before the inner loop is filled so
-  // its PHIs that reference kept results resolve.
+  // Fill each block. The prologue holds the hardware-loop setup and the
+  // stage-1 accumulator seeds; both must be in place before the inner loop is
+  // filled so its PHIs that reference stage-1 results resolve.
   cloneHardwareLoopSetupInto(LastIterLS, SteadyLS);
-  SmallVector<Instruction *, 16> KeptInsts =
-      remapToClone(OrigLS.keptInsts(), SteadyLS.cloneMap());
-  cloneAndRemapInsts(KeptInsts, *LastIterLS.getOuterHeader(),
+  SmallVector<Instruction *, 16> Stage1Insts =
+      remapToClone(OrigLS.stage1Insts(), SteadyLS.cloneMap());
+  cloneAndRemapInsts(Stage1Insts, *LastIterLS.getOuterHeader(),
                      LastIterLS.getOuterHeader()->end(), LastIterMap,
                      ".lastiter");
   cloneInnerLoopIntoLastIter(SteadyLS, LastIterLS);
@@ -1028,70 +1091,6 @@ void LoopStructure::updateLoopMetadata() const {
                                                 FinalLoopID);
 }
 
-bool LoopStructure::collectPeeledForSplit(
-    function_ref<bool(const Instruction *)> IsAnchor) {
-  assert(isOrigLS() && "Only valid on the original LoopStructure");
-  // Forward-track from loads to find anchors, then collect all their
-  // descendants (the kept set). Peeled = everything else: prologue pipeline
-  // candidates that are neither anchors nor anchor descendants.
-  SmallPtrSet<Instruction *, 32> ReachableFromLoad;
-  SmallVector<Instruction *, 32> FwdWorklist;
-  prologueRegion().forEachInstruction([&](Instruction *I) {
-    if (isa<LoadInst>(I)) {
-      ReachableFromLoad.insert(I);
-      FwdWorklist.push_back(I);
-    }
-  });
-  while (!FwdWorklist.empty()) {
-    Instruction *I = FwdWorklist.pop_back_val();
-    for (User *U : I->users()) {
-      auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || !isPipelineableValue(UI))
-        continue;
-      if (ReachableFromLoad.insert(UI).second)
-        FwdWorklist.push_back(UI);
-    }
-  }
-
-  // Find anchors = instructions matching any split strategy in
-  // ReachableFromLoad.
-  SmallPtrSet<Instruction *, 16> Anchors;
-  for (Instruction *I : ReachableFromLoad)
-    if (IsAnchor(I))
-      Anchors.insert(I);
-
-  if (Anchors.empty())
-    return false;
-
-  // Find all descendants of anchors within the prologue (the kept set).
-  SmallPtrSet<Instruction *, 32> KeptSet;
-  KeptSet.insert(Anchors.begin(), Anchors.end());
-  SmallVector<Instruction *, 16> DescWorklist(Anchors.begin(), Anchors.end());
-  while (!DescWorklist.empty()) {
-    Instruction *I = DescWorklist.pop_back_val();
-    for (User *U : I->users()) {
-      auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || !isPipelineableValue(UI))
-        continue;
-      if (KeptSet.insert(UI).second)
-        DescWorklist.push_back(UI);
-    }
-  }
-
-  // Peeled = region pipeline candidates not in the kept set (the load/address
-  // chain; the post-anchor cone is kept). Loop-carried PHIs, terminators, and
-  // hardware-loop setup are excluded by isPipelineCandidate.
-  prologueRegion().forEachInstruction([&](Instruction *I) {
-    if (isPipelineCandidate(I) && !KeptSet.count(I))
-      peeledInsts().push_back(I);
-  });
-
-  LLVM_DEBUG(dbgs() << "    Split-prologue: " << Anchors.size()
-                    << " Number of anchor(s), " << peeledInsts().size()
-                    << " peeled instructions\n");
-  return true;
-}
-
 // An intrinsic other than a safe 2D/3D pointer increment, whose unknown side
 // effects forbid moving it out of the epilogue.
 static bool isUnsafeIntrinsicToLift(const AIEBaseInstrInfo &TII,
@@ -1191,78 +1190,17 @@ bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
   return true;
 }
 
-void LoopStructure::collectKeptInstructions(
-    function_ref<bool(const Instruction *)> IsAnchor) {
-  assert(isOrigLS() && "Only valid on the original LoopStructure");
-  SmallPtrSet<Instruction *, 32> PeeledSet;
-  PeeledSet.insert(peeledInsts().begin(), peeledInsts().end());
-
-  // Find anchors: instructions matching any split strategy that are direct
-  // users of peeled instructions (or transitively reachable from the peeled set
-  // within the prologue).
-  SmallPtrSet<Instruction *, 32> KeptSet;
-  SmallVector<Instruction *, 16> Worklist;
-
-  // Seed: forward-track from peeled instructions to find anchor instructions.
-  for (Instruction *P1 : PeeledSet)
-    for (User *U : P1->users()) {
-      auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || !isPipelineableValue(UI))
-        continue;
-      const bool IsUnpeeledAnchor = !PeeledSet.count(UI) && IsAnchor(UI);
-      const bool NewlyKept = IsUnpeeledAnchor && KeptSet.insert(UI).second;
-      if (NewlyKept)
-        Worklist.push_back(UI);
-    }
-
-  // Forward-track from anchors to collect all descendants within the prologue.
-  while (!Worklist.empty()) {
-    Instruction *I = Worklist.pop_back_val();
-    for (User *U : I->users()) {
-      auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || !isPipelineableValue(UI))
-        continue;
-      const bool NewlyKept = !PeeledSet.count(UI) && KeptSet.insert(UI).second;
-      if (NewlyKept)
-        Worklist.push_back(UI);
-    }
-  }
-
-  // Emit KeptSet in region program order.
-  prologueRegion().forEachInstruction([&](Instruction *I) {
-    if (KeptSet.count(I))
-      keptInsts().push_back(I);
-  });
-
-  LLVM_DEBUG(dbgs() << "    Split-prologue: " << keptInsts().size()
-                    << " kept instructions (stay in outer.header + "
-                       "lastiter.prologue)\n");
-}
-
 bool AIEOuterLoopPipeliner::performTransformation(
     LoopStructure &OrigLS, const AIE::LoopOptionOverrides &Overrides) {
-  // Lift pointer update instructions from epilogue to prologue.
-  // This must happen BEFORE collecting prologue instructions so that the
-  // lifted instructions are included in the peeled chain.
   liftEpiloguePointerUpdatesToPrologue(OrigLS);
 
-  // Collect the peeled (and, in split-prologue mode, kept) instructions into
-  // OrigLS. Hardware-loop setup calls (set.loop.iterations) are excluded.
   const bool SplitMode = Overrides.get(SplitPrologue);
-  if (SplitMode && OrigLS.collectPeeledForSplit(isAnchorInstruction)) {
-    LLVM_DEBUG(dbgs() << "    Split-prologue: pipelining "
-                      << OrigLS.peeledInsts().size()
-                      << " peeled instructions\n");
-    // The kept set forward-tracks from the peeled set, so collect it while both
-    // still live on the original LS.
-    OrigLS.collectKeptInstructions(isAnchorInstruction);
-  } else {
-    if (SplitMode)
-      LLVM_DEBUG(dbgs() << "    Split-prologue: no split points\n");
-    OrigLS.collectPeeledInstructions();
-  }
-  if (OrigLS.peeledInsts().empty()) {
-    LLVM_DEBUG(dbgs() << "    No prologue instructions found\n");
+  const auto IsSplitPoint = [SplitMode](const Instruction *I) {
+    return SplitMode && isStage1SplitPoint(I);
+  };
+  OrigLS.collectStages(IsSplitPoint);
+  if (OrigLS.stage0Insts().empty()) {
+    LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");
     return false;
   }
 
@@ -1273,12 +1211,12 @@ bool AIEOuterLoopPipeliner::performTransformation(
   swapInClonedLS(OrigLS, SteadyLS);
   remapBoundToClone(SteadyLS);
 
-  // Peel the peeled chain before the steady header (entry pointer values); this
-  // also adopts the peel as the steady preheader.
+  // Peel the stage-0 chain before the steady header (entry pointer values);
+  // this also adopts the peel as the steady preheader.
   RemapTable PeelVMap;
   clonePrologueAsPeel(OrigLS, SteadyLS, PeelVMap);
 
-  // Prefetch the peeled chain in the epilogue (next-iteration pointer values).
+  // Prefetch the stage-0 chain in the epilogue (next-iteration pointer values).
   RemapTable EpiVMap;
   clonePrologueIntoEpilogue(OrigLS, SteadyLS, EpiVMap);
 

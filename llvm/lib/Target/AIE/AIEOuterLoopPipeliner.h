@@ -8,33 +8,34 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Outer loop pipelining for AIE: overlaps the peeled chain (prologue) of outer
+// Outer loop pipelining for AIE: overlaps the stage-0 chain (prologue) of outer
 // iteration i+1 with the inner loop + store chain (epilogue) of iteration i.
 //
-// The prologue (the outer header) splits into peeled and kept instructions by
-// what the transform does with each:
-//   Peeled = the load/address chain: loads plus the pointer/address arithmetic
-//            feeding the inner loop. Peeled out of the steady header — copied
-//            before the loop and prefetched in the epilogue for the next
-//            iteration.
-//   Kept   = the anchor cone: the anchor instructions (see isAnchorInstruction)
-//            reachable from the peeled chain, plus their descendants in the
-//            prologue. Kept in the steady header and re-cloned into
-//            lastiter.prologue. Only split-prologue mode keeps anything; with
-//            it off the whole prologue chain is peeled.
+// The prologue (the outer header) splits into stage-0 and stage-1 instructions
+// by what the transform does with each:
+//   Stage 0 = the load/address chain: loads plus the pointer/address arithmetic
+//             feeding the inner loop. Moved out of the steady header — copied
+//             before the loop and prefetched in the epilogue for the next
+//             iteration.
+//   Stage 1 = the split-point cone: the stage-1 split points (see
+//             isStage1SplitPoint) reachable from the stage-0 chain, plus their
+//             descendants in the prologue. Kept in the steady header and
+//             re-cloned into lastiter.prologue. Only split-prologue mode
+//             populates stage 1; with it off the whole prologue chain is
+//             stage 0.
 //
 // Original CFG:
 //
 //   [preheader]
 //       |
 //   [outer.header]  <----------\  <- Prologue Content:
-//       |                       |        peeled (load/address chain)
-//       |                       |        kept (anchor cone)
-//       |                       |        set.loop.iterations
+//       |                       |        stage 0 (load/address chain)
+//       |                       |        stage 1 (set.loop.iterations)
 //       |                       |
-//   [outer.inner.*]             |  <- inner loop
 //       |                       |
-//   [outer.latch]  ------------/  <- Epilogue
+//   [outer.inner.*]             |  <- inner loop [Stage 1]
+//       |                       |
+//   [outer.latch]  ------------/  <- Epilogue [Stage 1]
 //       |  (exit branch)
 //   [exit]
 //
@@ -48,13 +49,13 @@
 //       |                       |     set.loop.iterations stays here
 //   [steady.inner.*]            |  <- steady-state inner loop
 //       |                       |
-//   [steady.latch]  -----------/  <- stores + loads for NEXT iteration
+//   [steady.latch]  -----------/  <- outer.latch + stage-0 instructions
 //       |  (exit branch)
 //   [lastiter.prologue]        <- set.loop.iterations (cloned)
 //       |
 //   [steady.inner.*.lastiter]  <- inner loop clone, uses last epilogue values
 //       |
-//   [lastiter.epilogue]        <- stores only, no loads
+//   [lastiter.epilogue]
 //       |
 //   [exit]
 //
@@ -183,11 +184,11 @@ class LoopStructure {
 
   LatchConditionInfo OuterLoopCondition;
 
-  // The peeled / kept split of the prologue instructions, in program order.
+  // The stage-0 / stage-1 split of the prologue instructions, in program order.
   // Populated on the original LS only; clones never store these (see
   // IsOrigLS).
-  SmallVector<Instruction *, 16> PeeledInsts;
-  SmallVector<Instruction *, 16> KeptInsts;
+  SmallVector<Instruction *, 16> Stage0Insts;
+  SmallVector<Instruction *, 16> Stage1Insts;
 
   // Each source value mapped to its clone in this LS; empty on the original LS.
   RemapTable CloneMap;
@@ -310,22 +311,22 @@ public:
   LatchConditionInfo &bound() { return OuterLoopCondition; }
   const LatchConditionInfo &bound() const { return OuterLoopCondition; }
 
-  // The peeled / kept lists live only on the original LS.
-  SmallVectorImpl<Instruction *> &peeledInsts() {
-    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-    return PeeledInsts;
+  // The stage-0 / stage-1 lists live only on the original LS.
+  SmallVectorImpl<Instruction *> &stage0Insts() {
+    assert(IsOrigLS && "stage-0/stage-1 lists exist only on the original LS");
+    return Stage0Insts;
   }
-  const SmallVectorImpl<Instruction *> &peeledInsts() const {
-    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-    return PeeledInsts;
+  const SmallVectorImpl<Instruction *> &stage0Insts() const {
+    assert(IsOrigLS && "stage-0/stage-1 lists exist only on the original LS");
+    return Stage0Insts;
   }
-  SmallVectorImpl<Instruction *> &keptInsts() {
-    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-    return KeptInsts;
+  SmallVectorImpl<Instruction *> &stage1Insts() {
+    assert(IsOrigLS && "stage-0/stage-1 lists exist only on the original LS");
+    return Stage1Insts;
   }
-  const SmallVectorImpl<Instruction *> &keptInsts() const {
-    assert(IsOrigLS && "peeled/kept lists exist only on the original LS");
-    return KeptInsts;
+  const SmallVectorImpl<Instruction *> &stage1Insts() const {
+    assert(IsOrigLS && "stage-0/stage-1 lists exist only on the original LS");
+    return Stage1Insts;
   }
 
   // Only clones store the preheader; the original derives it from LoopInfo.
@@ -367,27 +368,31 @@ public:
   // epilogue stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
 
-  // Collect the peeled instructions from the outer header that feed the inner
-  // loop into peeledInsts(). Does NOT include hardware-loop setup calls
-  // (@llvm.set.loop.iterations) — those stay in the outer header.
-  void collectPeeledInstructions();
+  // Drain Worklist, adding each pipelineable user of a popped instruction to
+  // Set (and the worklist) once. Set must already contain the seeds.
+  void forwardClosure(SmallVectorImpl<Instruction *> &Worklist,
+                      SmallPtrSetImpl<Instruction *> &Set) const;
 
-  // Collect the peeled prologue instructions for split-prologue mode into
-  // peeledInsts(): the load/address chain, i.e. prologue pipeline candidates
-  // that are not anchors or anchor descendants. IsAnchor identifies anchor
-  // instructions. Returns true if at least one anchor was found (the split is
-  // meaningful); false if no anchors were found (caller should fall back to
-  // collectPeeledInstructions).
-  bool collectPeeledForSplit(function_ref<bool(const Instruction *)> IsAnchor);
+  // The split-point cone: the stage-1 split points (IsSplitPoint, reachable
+  // from the prologue loads) plus all their forward-reachable descendants
+  // within the prologue. Empty when no split point is found. This is the
+  // stage-1 set.
+  SmallPtrSet<Instruction *, 32>
+  collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
 
-  // Collect the kept prologue instructions for split-prologue mode into
-  // keptInsts(), reading the peeled set from peeledInsts(): the anchors
-  // reachable from the peeled chain plus all their forward-reachable
-  // descendants within the prologue. IsAnchor identifies anchor instructions.
-  // These stay in outer.header and are also cloned into lastiter.prologue so
-  // the cloned inner loop has correct initial values.
-  void
-  collectKeptInstructions(function_ref<bool(const Instruction *)> IsAnchor);
+  // The non-split stage-0 collection: pipeline candidates backward-reachable
+  // from inner-loop uses, in program order, into stage0Insts(). Used by
+  // collectStages when no split point is found. Does NOT include hardware-loop
+  // setup calls (@llvm.set.loop.iterations) — those stay in the outer header.
+  void collectStage0FromInnerLoop();
+
+  // Split the prologue pipeline candidates into stage0Insts() and
+  // stage1Insts(): stage 1 is the split-point cone, stage 0 is the rest (the
+  // load/address chain). IsSplitPoint identifies where stage 1 begins; with no
+  // split point the whole chain is stage 0 (via collectStage0FromInnerLoop).
+  // Hardware-loop setup (@llvm.set.loop.iterations), loop-carried PHIs, and
+  // terminators are excluded by isPipelineCandidate.
+  void collectStages(function_ref<bool(const Instruction *)> IsSplitPoint);
 
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
@@ -448,20 +453,20 @@ private:
   // operate on the clone.
   void remapBoundToClone(LoopStructure &SteadyLS) const;
 
-  // Clone OrigLS's peeled instructions (translated to steady clones via
+  // Clone OrigLS's stage-0 instructions (translated to steady clones via
   // SteadyLS.cloneMap()) into a peel block before the steady loop, then adopt
   // the peel as the steady preheader.
   void clonePrologueAsPeel(const LoopStructure &OrigLS, LoopStructure &SteadyLS,
                            RemapTable &PeelVMap);
 
-  // Clone OrigLS's peeled instructions (translated to steady clones via
+  // Clone OrigLS's stage-0 instructions (translated to steady clones via
   // SteadyLS.cloneMap()) into the epilogue (outer latch), using the
   // NEXT-iteration pointer values so the loads prefetch for the next iteration.
   void clonePrologueIntoEpilogue(const LoopStructure &OrigLS,
                                  const LoopStructure &SteadyLS,
                                  RemapTable &EpiVMap);
 
-  // For each steady peeled instruction (translated from OrigLS via
+  // For each steady stage-0 instruction (translated from OrigLS via
   // SteadyLS.cloneMap()), create a PHI selecting the peel value on the entry
   // edge and the epilogue value on the back edge, replace the instruction's
   // uses with it, and erase the instruction.
@@ -471,11 +476,11 @@ private:
                            const RemapTable &EpiVMap);
 
   // Create the last-iteration region (peeled epilogue for last iteration):
-  //   lastiter.prologue: set.loop.iterations (cloned) + kept clones
-  //   inner loop clone: uses last epilogue load values + kept results
+  //   lastiter.prologue: set.loop.iterations (cloned) + stage-1 clones
+  //   inner loop clone: uses last epilogue load values + stage-1 results
   //   lastiter.epilogue: epilogue stores only (no loads, no prologue clones)
   // Redirects the outer latch's false branch to lastiter.prologue. OrigLS's
-  // kept list is translated to steady clones via SteadyLS.cloneMap(); the
+  // stage-1 list is translated to steady clones via SteadyLS.cloneMap(); the
   // epilogue snapshot is read off SteadyLS.
   void peelLastIteration(const LoopStructure &OrigLS,
                          const LoopStructure &SteadyLS);
@@ -496,8 +501,8 @@ private:
 
   // Translate each instruction of the original LS to its clone via VMap
   // (entries not in the map, e.g. loop-invariant operands, pass through
-  // unchanged). Used to turn OrigLS's peeled / kept lists into steady-resident
-  // instructions at the point each transform step needs them.
+  // unchanged). Used to turn OrigLS's stage-0 / stage-1 lists into
+  // steady-resident instructions at the point each transform step needs them.
   static SmallVector<Instruction *, 16>
   remapToClone(ArrayRef<Instruction *> Insts, const RemapTable &VMap);
 
