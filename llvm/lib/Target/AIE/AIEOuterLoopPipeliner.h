@@ -87,6 +87,13 @@ class ScalarEvolution;
 
 namespace llvm::OuterLoopPipelining {
 
+// A substitution table consumed by RemapInstruction in a single pass: each
+// source value maps to its replacement, either a clone or the concrete
+// incoming value of a header PHI resolved on a chosen edge. Instructions and
+// basic blocks share one table because the remapper rewrites operands and
+// branch / PHI-incoming targets together.
+using RemapTable = ValueToValueMapTy;
+
 // An ordered, contiguous run of basic blocks in program order (entry first,
 // exit last). Today the prologue and epilogue are each a single block; the
 // wrapper lets callers test membership and iterate instructions through one
@@ -143,12 +150,6 @@ struct DowncountingInfo {
 // One LS instance, describing the outer loop and its single inner loop. Used
 // both for the original loop and for the steady-state / last-iteration clones
 // produced during the transform.
-//
-// Value mapping uses two distinct relations, kept separate on purpose:
-//   Fact A — clone correspondence (CloneMap / cloneOf): source -> its clone,
-//     keyed by the immediate source domain; cross-domain lookups compose.
-//   Fact B — edge resolution (seedHeaderPhiEdge): a header PHI -> its concrete
-//     incoming on a chosen edge. Transient, keyed by (phi, edge).
 class LoopStructure {
   // Original Loop Structure Exclusive Attributes
   // OuterLoop/InnerLoop are the LoopInfo loops for the ORIGINAL LS only. They
@@ -187,10 +188,8 @@ class LoopStructure {
   SmallVector<Instruction *, 16> PeeledInsts;
   SmallVector<Instruction *, 16> KeptInsts;
 
-  // Fact A — clone correspondence: a value of this clone's immediate source
-  // domain to its copy here. Empty on the original LS; write-once, read via
-  // cloneOf. ValueMap is non-movable, so a LoopStructure is built in place.
-  ValueToValueMapTy CloneMap;
+  // Each source value mapped to its clone in this LS; empty on the original LS.
+  RemapTable CloneMap;
 
   // The outer LoopInfo loop (original LS only; null on clones).
   Loop *getOuterLoop() const { return OuterLoop; }
@@ -256,34 +255,33 @@ public:
                 BasicBlock *InnerExit, ArrayRef<BasicBlock *> InnerBlocks,
                 MDNode *OuterLoopID);
 
-  // Clone-constructor: deep-clone Src's blocks into fresh "<name>.<Suffix>"
-  // IR, recording Src->clone in this->CloneMap and remapping internal control
-  // flow / data refs to the clones. Edges leaving the LS (e.g. the exit
-  // successor) are left pointing at Src's externals for the caller to rewire.
-  // Built in place (ValueMap is non-movable, so the LS is never returned by
-  // value).
+  // Deep-clone Src's blocks into "<name>.<Suffix>" IR, recording Src->clone in
+  // CloneMap and remapping internal references to the clones. Edges leaving the
+  // LS are left pointing at Src's externals for the caller to rewire. Built in
+  // place: RemapTable is non-movable.
   LoopStructure(const LoopStructure &Src, const Twine &Suffix);
 
   // Tag for the last-iteration skeleton constructor below.
   struct LastIterSkeletonTag {};
 
-  // Last-iteration skeleton constructor: create the empty last-iteration blocks
-  // (lastiter.prologue = outer header, one empty clone per inner-loop block,
-  // lastiter.epilogue = outer latch) spliced just before Steady's exit
-  // successor, recording the Steady->lastiter BLOCK mappings in this->CloneMap.
-  // Instruction bodies and the Fact-B header seeds are filled by the caller
-  // afterwards (also into CloneMap). Built in place (non-movable map member).
+  // Create the empty last-iteration blocks spliced just before Steady's exit,
+  // recording the Steady->lastiter block mappings in CloneMap. The caller fills
+  // the instruction bodies afterwards. Built in place: RemapTable is
+  // non-movable.
   LoopStructure(const LoopStructure &Steady, LastIterSkeletonTag);
 
-  // Fact A lookup: the clone of a source-domain value in this LS, or V itself
-  // if absent (loop-invariants/args pass through). Direction is source->clone,
-  // matching RemapInstruction.
+  // Clone of V in this LS, or V itself if it has none (invariants/args pass
+  // through). Direction is source->clone, matching RemapInstruction.
   Value *cloneOf(Value *V) const {
     auto It = CloneMap.find(V);
     return It != CloneMap.end() ? static_cast<Value *>(It->second) : V;
   }
-  ValueToValueMapTy &cloneMap() { return CloneMap; }
-  const ValueToValueMapTy &cloneMap() const { return CloneMap; }
+  // Clone of block BB in this LS. BB must have been cloned into this LS.
+  BasicBlock *clonedBlock(BasicBlock *BB) const {
+    return cast<BasicBlock>(cloneOf(BB));
+  }
+  RemapTable &cloneMap() { return CloneMap; }
+  const RemapTable &cloneMap() const { return CloneMap; }
 
   // True if the loop was validated as a supported pipelining candidate by the
   // LoopStructure(Loop *) constructor. Always false on cloned structures.
@@ -411,10 +409,10 @@ private:
   // flat early-return guard; performs the transform iff all pass. Returns true
   // if L was pipelined.
   bool tryPipelineLoop(Loop *L, const AIE::LoopOptionOverrides &Overrides);
-  // Fact B (edge resolution): seed Map with each outer-header PHI -> its
-  // incoming value on the FromEdge edge, collapsing loop-carried PHIs to the
-  // concrete values seen when entering a region via that edge.
-  void seedHeaderPhiEdge(ValueToValueMapTy &Map, const LoopStructure &LS,
+  // Seed Map with each outer-header PHI's incoming value on the FromEdge edge,
+  // collapsing loop-carried PHIs to the concrete values seen when entering a
+  // region via that edge.
+  void seedHeaderPhiEdge(RemapTable &Map, const LoopStructure &LS,
                          BasicBlock *FromEdge) const;
   bool performTransformation(LoopStructure &OrigLS,
                              const AIE::LoopOptionOverrides &Overrides);
@@ -438,14 +436,14 @@ private:
   // SteadyLS.cloneMap()) into a peel block before the steady loop, then adopt
   // the peel as the steady preheader.
   void clonePrologueAsPeel(const LoopStructure &OrigLS, LoopStructure &SteadyLS,
-                           ValueToValueMapTy &PeelVMap);
+                           RemapTable &PeelVMap);
 
   // Clone OrigLS's peeled instructions (translated to steady clones via
   // SteadyLS.cloneMap()) into the epilogue (outer latch), using the
   // NEXT-iteration pointer values so the loads prefetch for the next iteration.
   void clonePrologueIntoEpilogue(const LoopStructure &OrigLS,
                                  const LoopStructure &SteadyLS,
-                                 ValueToValueMapTy &EpiVMap);
+                                 RemapTable &EpiVMap);
 
   // For each steady peeled instruction (translated from OrigLS via
   // SteadyLS.cloneMap()), create a PHI selecting the peel value on the entry
@@ -453,8 +451,8 @@ private:
   // uses with it, and erase the instruction.
   void createPipelinedPHIs(const LoopStructure &OrigLS,
                            const LoopStructure &SteadyLS,
-                           const ValueToValueMapTy &PeelVMap,
-                           const ValueToValueMapTy &EpiVMap);
+                           const RemapTable &PeelVMap,
+                           const RemapTable &EpiVMap);
 
   // Create the last-iteration region (peeled epilogue for last iteration):
   //   lastiter.prologue: set.loop.iterations (cloned) + kept clones
@@ -470,28 +468,26 @@ private:
   // the clone. A non-empty Suffix renames non-void clones to "<orig><Suffix>".
   static Instruction *cloneInstInto(Instruction &I, BasicBlock &Dest,
                                     BasicBlock::iterator InsertPt,
-                                    ValueToValueMapTy &VMap,
-                                    const Twine &Suffix);
+                                    RemapTable &VMap, const Twine &Suffix);
   // Clone Insts (in order) into DstBB before InsertPt, then remap operands of
   // all the clones through VMap. Returns the clones, parallel to Insts.
   static SmallVector<Instruction *, 16>
   cloneAndRemapInsts(ArrayRef<Instruction *> Insts, BasicBlock &DstBB,
-                     BasicBlock::iterator InsertPt, ValueToValueMapTy &VMap,
+                     BasicBlock::iterator InsertPt, RemapTable &VMap,
                      const Twine &Suffix);
   // Second-pass remap of freshly inserted clones, once all are in place.
-  static void remapClones(ArrayRef<Instruction *> Clones,
-                          ValueToValueMapTy &VMap);
+  static void remapClones(ArrayRef<Instruction *> Clones, RemapTable &VMap);
 
   // Translate each instruction of the original LS to its clone via VMap
   // (entries not in the map, e.g. loop-invariant operands, pass through
   // unchanged). Used to turn OrigLS's peeled / kept lists into steady-resident
   // instructions at the point each transform step needs them.
   static SmallVector<Instruction *, 16>
-  remapToClone(ArrayRef<Instruction *> Insts, const ValueToValueMapTy &VMap);
+  remapToClone(ArrayRef<Instruction *> Insts, const RemapTable &VMap);
 
   // Step helpers of peelLastIteration, in call order. The last-iteration LS is
-  // built by its skeleton constructor and owns its Fact-A clone map
-  // (steady->lastiter); these helpers fill its blocks through that map.
+  // built by its skeleton constructor and owns its steady->lastiter clone map;
+  // these helpers fill its blocks through that map.
 
   // Clone the hardware-loop setup (set.loop.iterations) from the steady outer
   // header into the last-iteration prologue.
