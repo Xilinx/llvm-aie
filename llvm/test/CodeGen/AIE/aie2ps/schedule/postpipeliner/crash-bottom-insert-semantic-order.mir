@@ -4,7 +4,6 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# XFAIL: *
 # RUN: llc -mtriple=aie2ps -O2 --start-before=postmisched %s -o /dev/null
 
 # This test reproduces a crash triggered by
