@@ -60,7 +60,7 @@ def sub_hi_exp : SubRegIndex<32, 32>;
 def sub_bfp_exp : SubRegIndex<32,   0>;
 def sub_bfp_vec : SubRegIndex<256, 32>;
 
-def sub_bfp16_e : SubRegIndex<576,   512>;
+def sub_bfp16_e : SubRegIndex<64,   512>;
 def sub_bfp16_x : SubRegIndex<512, 0>;
 
 def sub_bfp576_lo : SubRegIndex<576,   0>;
