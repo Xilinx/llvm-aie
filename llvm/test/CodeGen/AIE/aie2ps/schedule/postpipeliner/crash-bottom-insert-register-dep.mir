@@ -4,7 +4,6 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# XFAIL: *
 # RUN: llc -mtriple=aie2ps -O2 --start-before=postmisched %s -o /dev/null
 
 # Variant of crash-bottom-insert-semantic-order.mir that exercises a crash that

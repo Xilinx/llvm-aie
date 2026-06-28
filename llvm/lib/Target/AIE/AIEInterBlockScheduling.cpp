@@ -978,7 +978,10 @@ BlockState &InterBlockScheduling::getBlockState(MachineBasicBlock *BB) {
 }
 
 void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
-  const BlockState &BS = getBlockState(DAG.getPred());
+
+  MachineBasicBlock *PredBB = DAG.getPred();
+
+  const BlockState &BS = getBlockState(PredBB);
   const Region &Bot = BS.getBottom();
 
   // Pre-boundary: free instructions of the current region.
@@ -989,17 +992,27 @@ void InterBlockScheduling::buildGraph(InterBlockEdges &DAG) {
 
   // Post-boundary: free instructions. Empty regions signify empty basic
   // blocks; in that case no post-boundary nodes are added.
-  const BlockState &SBS = getBlockState(DAG.getSucc());
-  if (!SBS.getRegions().empty()) {
-    for (MachineInstr *MI : SBS.getTop().getFreeInstructions())
+  MachineBasicBlock *SuccBB = DAG.getSucc();
+  const BlockState &SuccBS = getBlockState(SuccBB);
+  if (!SuccBS.getRegions().empty()) {
+    for (MachineInstr *MI : SuccBS.getTop().getFreeInstructions())
       DAG.addNode(MI);
   }
 
   // Post-boundary: BotFixed first-iteration copies (SWP prologue clones),
   // in the semantic order of the original loop instructions. This vector is
   // empty for non-pipelined blocks.
-  for (MachineInstr *MI : SBS.BottomInsertSemanticOrder)
+  for (MachineInstr *MI : SuccBS.BottomInsertSemanticOrder) {
     DAG.addNode(MI);
+    // Some queries in edge building require a parent to get to SubTarget.
+    // We push them in the corresponding block. edge building uses the
+    // insertion order in the DAG, not the block, so position within the block
+    // is irrelevant. The instructions will be removed again before the regular
+    // reinsertion that is part of scheduling Fixed regions.
+    if (!MI->getParent()) {
+      SuccBB->push_back(MI);
+    }
+  }
 
   DAG.buildEdges();
 }
@@ -1018,6 +1031,7 @@ void InterBlockScheduling::buildPerSuccEdges(MachineBasicBlock *BB) {
   for (MachineBasicBlock *SuccBB : BB->successors()) {
     DEBUG_BLOCKS(dbgs() << "Building InterBlockEdge: Pred=" << BB->getNumber()
                         << " Succ=" << SuccBB->getNumber() << "\n");
+
     InterBlockEdges &SE = *PerSuccEdges.emplace_back(
         std::make_unique<InterBlockEdges>(C, SafeToIgnoreMemDeps, BB, SuccBB));
     buildGraph(SE);
@@ -1283,6 +1297,13 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
   MachineBasicBlock *PreHeader = BS.TheBlock;
   assert(PreHeader->end() == PreHeader->getFirstTerminator() &&
          "PreHeader is not fall-through");
+  // BottomInsertSemanticOrder instructions may have been temporarily placed in
+  // the block by buildPerSuccEdges to enable dependency analysis. Remove them
+  // before emitBundles re-inserts all BottomInsert instructions properly.
+  for (MachineInstr *MI : BS.BottomInsertSemanticOrder) {
+    if (MI->getParent() == PreHeader)
+      PreHeader->remove_instr(MI);
+  }
   emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
               /*EmitNops=*/false);
 }
