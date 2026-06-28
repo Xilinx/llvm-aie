@@ -2612,6 +2612,22 @@ AIE2PInstructionSelector::getCombinedOpcodeCONVStore(
     return std::nullopt;
   }
 
+  // The bfp16 conversions produce an aggregate {mantissa, exponent} value and
+  // only have a fused store-convert form on the FIFO push path (the
+  // G_INTRINSIC_W_SIDE_EFFECTS cases below). On the plain vector-store path
+  // there is no VST.CONV.bfp16 opcode: the mantissa is written with an
+  // ordinary vector store. Folding it into a plain store selected a bf16
+  // store-convert and read the conversion source from operand 2, which is the
+  // intrinsic ID -- these conversions have two defs, shifting the source to
+  // operand 3 -- so getReg() trips the isReg() assertion in
+  // selectG_AIE_STORE_CONV. See the -O0 ICE in
+  // https://github.com/Xilinx/llvm-aie/issues/847.
+  if ((CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8 ||
+       CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16 ||
+       CombOpID == Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16) &&
+      MemOp.getOpcode() != AIE2P::G_INTRINSIC_W_SIDE_EFFECTS)
+    return {};
+
   assert(((CombOpID == Intrinsic::aie2p_v16accfloat_to_v16bf16 &&
            getLoadStoreSize(MemOp) == 256) ||
           (CombOpID == Intrinsic::aie2p_v32accfloat_to_v32bf16 &&
