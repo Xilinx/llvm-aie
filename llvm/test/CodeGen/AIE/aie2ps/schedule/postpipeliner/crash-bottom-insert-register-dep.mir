@@ -1,0 +1,141 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# XFAIL: *
+# RUN: llc -mtriple=aie2ps -O2 --start-before=postmisched %s -o /dev/null
+
+# Variant of crash-bottom-insert-semantic-order.mir that exercises a crash that
+# does not involve isDereferenceableInvariantLoad().
+# Please refer to the original test for an expose of the basic block structure.
+# This one differs only in the sense that the second loop does not contain a
+# Load, which cause a second failure path to be shortcircuited.
+ 
+--- |
+  target triple = "aie2ps"
+
+  define void @test(ptr addrspace(5) noalias %p0, ptr addrspace(6) noalias %p1,
+                    i32 %n0, i32 %n1) {
+  entry:
+    %skip = icmp eq i32 %n0, 0
+    br i1 %skip, label %between_loops, label %preheader_a
+
+  preheader_a:
+    call void @llvm.set.loop.iterations.i32(i32 %n0)
+    br label %loop_a
+
+  loop_a:
+    %pa = phi ptr addrspace(5) [ %p0, %preheader_a ], [ %pa.next, %loop_a ]
+    %pb = phi ptr addrspace(6) [ %p1, %preheader_a ], [ %pb.next, %loop_a ]
+    %da = load <8 x i32>, ptr addrspace(5) %pa, align 64
+    %pa.next = getelementptr inbounds i8, ptr addrspace(5) %pa, i32 64
+    store <8 x i32> %da, ptr addrspace(6) %pb, align 64
+    %pb.next = getelementptr inbounds i8, ptr addrspace(6) %pb, i32 64
+    %deca = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %deca, label %loop_a, label %between_loops, !llvm.loop !0
+
+  between_loops:
+    call void @llvm.set.loop.iterations.i32(i32 %n1)
+    br label %loop_b
+
+  loop_b:
+    %pc = phi ptr addrspace(5) [ %p0, %between_loops ], [ %pc.next, %loop_b ]
+    %pd = phi ptr addrspace(6) [ %p1, %between_loops ], [ %pd.next, %loop_b ]
+    %db = load <8 x i32>, ptr addrspace(5) %pc, align 64
+    %pc.next = getelementptr inbounds i8, ptr addrspace(5) %pc, i32 64
+    store <8 x i32> %db, ptr addrspace(6) %pd, align 64
+    %pd.next = getelementptr inbounds i8, ptr addrspace(6) %pd, i32 64
+    %decb = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %decb, label %loop_b, label %exit, !llvm.loop !2
+
+  exit:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1}
+  !1 = !{!"llvm.loop.itercount.range", i64 4}
+  !2 = distinct !{!2, !3}
+  !3 = !{!"llvm.loop.itercount.range", i64 16}
+
+...
+---
+name:            test
+tracksRegLiveness: true
+body:             |
+  ; bb.0 has two successors: bb.1 (fallthrough when r0==0) and bb.3 (jump
+  ; when r0!=0, skipping Loop A entirely). This gives bb.3 two predecessors
+  ; (bb.0 and bb.2), which is the condition that triggers makeDedicatedLoopExit
+  ; to split the bb.2->bb.3 edge when scheduling bb.3 as Loop A's epilogue.
+  bb.0.entry:
+    successors: %bb.1(0x40000000), %bb.3(0x40000000)
+    liveins: $r0, $r1, $p0, $p1
+
+    JNZ $r0, %bb.3
+    DelayedSchedBarrier
+
+  ; bb.1 is the dedicated fallthrough preheader of bb.2 (Loop A).
+  ; succ_size==1 satisfies getDedicatedFallThroughPreheader, making bb.2
+  ; a post-pipeline candidate.
+  bb.1.preheader_a:
+    successors: %bb.2
+    liveins: $r0, $p0, $p1
+
+    $lc = ADD_NC_add_lc_ri $r0, 0
+    MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  ; bb.2 is Loop A: a single-block ZOL with a VLDA and a VST.
+  ; After scheduling, the PostPipeliner pipelines it, creating prologue
+  ; clones stored in bb.1.BottomInsertSemanticOrder.
+  bb.2.loop_a:
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $p0, $p1
+
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64 :: (load (<8 x s32>) from %ir.pa, addrspace 5)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (<8 x s32>) into %ir.pb, addrspace 6)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  ; bb.3 is simultaneously:
+  ;   (a) The epilogue of Loop A (bb.2 -> bb.3 exit edge), classified
+  ;       as BlockType::Epilogue because bb.2 is a Loop predecessor.
+  ;   (b) The dedicated fallthrough preheader of Loop B (bb.4):
+  ;       succ_size==1, no terminator, layout-adjacent to bb.4.
+  ; After Loop B (bb.4) is pipelined, bb.3.BottomInsertSemanticOrder
+  ; holds Loop B prologue clones created by CloneMachineInstr but not
+  ; yet inserted into any MachineBasicBlock.
+  bb.3.between_loops:
+    successors: %bb.4
+    liveins: $r1, $p0, $p1, $x0
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.4, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd1>, implicit-def $le
+    ; Store $x0 (live-in from loop_a) before entering Loop B. This creates a
+    ; register dependence with the VBCST_32 prologue clone of Loop B, triggering
+    ; the getSignedOperandLatency crash path.
+    $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p0, 64 :: (store (<8 x s32>) into %ir.pb, addrspace 6)
+
+  ; bb.4 is Loop B: VBCST_32 (mv slot) + VST (st slot), no loads.
+  ; With itercount=16 and II=1, the PostPipeliner creates a prologue whose
+  ; first-iteration VBCST_32 clone lands in bb.3.BottomInsertSemanticOrder.
+  bb.4.loop_b:
+    successors: %bb.4(0x7c000000), %bb.5(0x04000000)
+    liveins: $r1, $p1
+
+    ; VBCST_32 (mv slot) broadcasts scalar $r1 into vector $x0. This is not a
+    ; memory load so isDereferenceableInvariantLoad() returns false immediately.
+    ; After pipelining (II=1), the first-iteration clone of VBCST_32 goes into
+    ; bb.3.BottomInsertSemanticOrder without a parent MachineBasicBlock.
+    $x0 = VBCST_32 $r1
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (<8 x s32>) into %ir.pd, addrspace 6)
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.4
+
+  bb.5.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
