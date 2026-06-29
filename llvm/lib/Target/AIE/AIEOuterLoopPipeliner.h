@@ -137,14 +137,10 @@ struct LatchConditionInfo {
   int64_t Step = 0;
   BinaryOperator *Counter = nullptr;
   PHINode *OldIV = nullptr;
-};
 
-// The pre-validated downcounting components consumed by
-// convertOuterLoopToHardwareLoop; references encode the non-null contract.
-struct DowncountingInfo {
-  ICmpInst &Cmp;
-  BinaryOperator &Counter;
-  PHINode &OldIV;
+  // A unit-downcounting latch (step -1), convertible to
+  // @llvm.loop.decrement.reg.
+  bool isDowncounting() const { return Step == -1; }
 };
 
 class LoopStructure {
@@ -373,10 +369,6 @@ public:
   // Repair loop metadata (trip count changed): decrement itercount.range, drop
   // the consumed enable hint, and append the success marker.
   void updateLoopMetadata() const;
-
-  // The downcounting components if the latch matches the canonical pattern
-  // replaceable by @llvm.loop.decrement.reg, else std::nullopt.
-  std::optional<DowncountingInfo> getDowncountingInfo() const;
 };
 
 class AIEOuterLoopPipeliner : public FunctionPass {
@@ -488,9 +480,8 @@ private:
 
   // Convert the steady loop to a JNZD hardware loop: start.loop.iterations in
   // the preheader, a counter PHI in the header, loop.decrement.reg in the
-  // latch.
-  void convertOuterLoopToHardwareLoop(const CloneLoopStructure &SteadyLS,
-                                      const DowncountingInfo &Info);
+  // latch. Requires latchCondition().isDowncounting().
+  void convertOuterLoopToHardwareLoop(const CloneLoopStructure &SteadyLS);
 };
 
 } // namespace llvm::OuterLoopPipelining

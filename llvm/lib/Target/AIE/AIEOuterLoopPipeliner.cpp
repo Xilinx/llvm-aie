@@ -1233,9 +1233,8 @@ bool AIEOuterLoopPipeliner::performTransformation(
 
   // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
   // counting add/icmp are erased from the latch before the peel clones it.
-  if (EnableOuterLoopHardwareLoop)
-    if (auto Info = SteadyLS.getDowncountingInfo())
-      convertOuterLoopToHardwareLoop(SteadyLS, *Info);
+  if (EnableOuterLoopHardwareLoop && SteadyLS.latchCondition().isDowncounting())
+    convertOuterLoopToHardwareLoop(SteadyLS);
 
   // Create the last-iteration region from the steady loop.
   peelLastIteration(OrigLS, SteadyLS);
@@ -1246,16 +1245,6 @@ bool AIEOuterLoopPipeliner::performTransformation(
   OrigLS.removeFromCFG();
 
   return true;
-}
-
-std::optional<DowncountingInfo>
-CloneLoopStructure::getDowncountingInfo() const {
-  // loop.decrement.reg only decrements by 1, so JNZD needs step == -1.
-  const LatchConditionInfo &B = latchCondition();
-  if (B.Step != -1)
-    return std::nullopt;
-  // tryAdjustLoopBound guarantees these are non-null for a valid condition.
-  return DowncountingInfo{*B.Cmp, *B.Counter, *B.OldIV};
 }
 
 // The i32 JNZD trip count materialized in the peel: peeling one iteration from
@@ -1313,23 +1302,26 @@ static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
 // Break the dead OldCounter/OldIV use cycle that trivial-DCE cannot: poison
 // OldIV's latch slot when it feeds only OldCounter, then DCE the add.
 static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
-                                 const DowncountingInfo &Info) {
-  PHINode &OldIV = Info.OldIV;
-  if (OldIV.hasOneUse()) {
-    int LatchIdx = OldIV.getBasicBlockIndex(SteadyLS.getOuterLatch());
+                                 const LatchConditionInfo &Info) {
+  PHINode *OldIV = Info.OldIV;
+  if (OldIV->hasOneUse()) {
+    int LatchIdx = OldIV->getBasicBlockIndex(SteadyLS.getOuterLatch());
     if (LatchIdx >= 0)
-      OldIV.setIncomingValue(LatchIdx, PoisonValue::get(OldIV.getType()));
+      OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
   }
   // OldIV may be deleted transitively here; do not reference it afterwards.
-  RecursivelyDeleteTriviallyDeadInstructions(&Info.Counter);
+  RecursivelyDeleteTriviallyDeadInstructions(Info.Counter);
 }
 
 void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
-    const CloneLoopStructure &SteadyLS, const DowncountingInfo &Info) {
+    const CloneLoopStructure &SteadyLS) {
+  const LatchConditionInfo &Info = SteadyLS.latchCondition();
+  assert(Info.isDowncounting() && Info.Cmp && Info.Counter && Info.OldIV &&
+         "JNZD conversion needs a fully validated downcounting latch");
   Type *I32Ty = Type::getInt32Ty(SteadyLS.getOuterHeader()->getContext());
 
   Value *TripCount =
-      computeJNZDTripCount(SteadyLS.getPreheader(), Info.OldIV, I32Ty);
+      computeJNZDTripCount(SteadyLS.getPreheader(), *Info.OldIV, I32Ty);
   PHINode *CtrPHI = createOuterCounterPHI(SteadyLS, TripCount, I32Ty);
   rewriteLatchToDecrement(SteadyLS, CtrPHI, I32Ty);
   eraseOldCounterCycle(SteadyLS, Info);
