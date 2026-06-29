@@ -210,6 +210,14 @@ def split_pipeline(run_line):
     return stages
 
 
+def has_asm_run_lines(run_lines):
+    """True if any RUN line is a non-remark run the sibling asm/MIR update
+    script can regenerate. A test whose RUN lines are all remark runs has no
+    assembly to update, so the sibling script must not be invoked on it (after
+    the remark runs are stripped it would see a file with no RUN lines)."""
+    return any(not PASS_REMARKS_OUTPUT_RE.search(rl) for rl in run_lines)
+
+
 def parse_remark_runs(run_lines, test_path):
     """Identify RUN lines that produce remark YAML output.
 
@@ -522,15 +530,19 @@ def main():
         else:
             asm_flag = parse_utc_args(first_line)
 
-        # Optionally regenerate assembly CHECK lines first.
-        if asm_flag:
+        run_lines = common.find_run_lines(test_path, input_lines)
+
+        # Regenerate assembly CHECK lines first, but only when there is a
+        # non-remark RUN line to regenerate. Delegating for a remark-only test
+        # would hand the sibling script a file with no RUN lines.
+        if asm_flag and has_asm_run_lines(run_lines):
             invoke_asm_update_script(test_path, args.llc_binary, asm_flag)
 
-            # Re-read the file after the asm script rewrote it.
+            # Re-read the file (and its RUN lines) after the asm script rewrote it.
             with open(test_path) as f:
                 input_lines = [l.rstrip() for l in f]
+            run_lines = common.find_run_lines(test_path, input_lines)
 
-        run_lines = common.find_run_lines(test_path, input_lines)
         remark_runs = parse_remark_runs(run_lines, test_path)
 
         if not remark_runs:
