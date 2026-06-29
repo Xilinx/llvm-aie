@@ -100,18 +100,23 @@ static bool isSafePointerIncrementIntrinsic(const AIEBaseInstrInfo &TII,
   return IID == TII.getAddrIntrinsic2D() || IID == TII.getAddrIntrinsic3D();
 }
 
-// Reroute each PHI incoming in BB from OldPred to NewPred, with value
-// MapVal(oldValue) (default identity). KeepOldPred appends a new incoming
-// instead of repointing — needed while OldPred still branches to BB.
+// How reroutePhiIncomings treats OldPred's existing incoming entry.
+enum class PhiEdge {
+  Repoint,   // overwrite OldPred's entry to point at NewPred
+  AppendNew, // keep OldPred's entry and add a parallel one for NewPred
+};
+
+// Reroute each PHI incoming in BB from OldPred to NewPred, value MapVal(old).
+// AppendNew adds a parallel incoming (OldPred still live); Repoint overwrites.
 static void reroutePhiIncomings(
-    BasicBlock *BB, BasicBlock *OldPred, BasicBlock *NewPred, bool KeepOldPred,
+    BasicBlock *BB, BasicBlock *OldPred, BasicBlock *NewPred, PhiEdge Edge,
     function_ref<Value *(Value *)> MapVal = [](Value *V) { return V; }) {
   for (PHINode &PHI : BB->phis()) {
     int Idx = PHI.getBasicBlockIndex(OldPred);
     if (Idx < 0)
       continue;
     Value *NewVal = MapVal(PHI.getIncomingValue(Idx));
-    if (KeepOldPred) {
+    if (Edge == PhiEdge::AppendNew) {
       PHI.addIncoming(NewVal, NewPred);
     } else {
       PHI.setIncomingValue(Idx, NewVal);
@@ -173,9 +178,8 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   if (tryPipelineLoop(L, Overrides))
     return true;
 
-  // If this loop was not transformed, recursively try its subloops.
-  // This handles nested structures like: outermost { middle { innermost } }
-  // where only the middle loop is annotated for pipelining.
+  // Untransformed: recurse into subloops, e.g. a nested middle loop is the only
+  // one annotated for pipelining.
   bool Changed = false;
   for (Loop *SubLoop : L->getSubLoops())
     Changed |= runOnLoop(SubLoop);
@@ -189,27 +193,27 @@ bool AIEOuterLoopPipeliner::tryPipelineLoop(
     return false;
   }
 
-  OrigLoopStructure LS(L);
-  if (!LS.isValid()) {
+  std::unique_ptr<OrigLoopStructure> LS = OrigLoopStructure::analyze(L);
+  if (!LS) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: unsupported loop structure\n");
     return false;
   }
 
-  if (!LS.isProfitableToRotate(
+  if (!LS->isProfitableToRotate(
           *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
     return false;
   }
 
-  if (!LS.isSafeToReorderMemoryOps()) {
+  if (!LS->isSafeToReorderMemoryOps()) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: unsafe to reorder memory ops\n");
     return false;
   }
 
   LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining on ";
-             LS.getOuterHeader()->printAsOperand(dbgs(), false);
+             LS->getOuterHeader()->printAsOperand(dbgs(), false);
              dbgs() << "\n");
-  return performTransformation(LS, Overrides);
+  return performTransformation(*LS, Overrides);
 }
 
 bool OrigLoopStructure::analyzeLoopStructure() {
@@ -247,18 +251,8 @@ bool OrigLoopStructure::analyzeLoopStructure() {
   if (!discoverPrologueRegion())
     return false;
 
-  // Every outer-loop block must belong to the prologue region, the inner loop,
-  // or the single-block epilogue (latch); anything else is an unknown shape.
-  for (BasicBlock *BB : OuterLoop->blocks()) {
-    const bool BlockIsAccountedFor = getInnerLoop()->contains(BB) ||
-                                     BB == getOuterLatch() ||
-                                     prologueRegion().contains(BB);
-    if (BlockIsAccountedFor)
-      continue;
-    LLVM_DEBUG(dbgs() << "    Unexpected outer-loop block: " << BB->getName()
-                      << "\n");
+  if (!allOuterBlocksAccountedFor())
     return false;
-  }
 
   LLVM_DEBUG(dbgs() << "    Prologue region: " << prologueRegion().size()
                     << " block(s); epilogue in outer.latch\n");
@@ -277,7 +271,21 @@ bool OrigLoopStructure::discoverPrologueRegion() {
     LLVM_DEBUG(dbgs() << "    Inner preheader != outer header\n");
     return false;
   }
-  prologueRegion().assign({getOuterHeader()});
+  PrologueRegion.assign({getOuterHeader()});
+  return true;
+}
+
+bool OrigLoopStructure::allOuterBlocksAccountedFor() const {
+  for (BasicBlock *BB : OuterLoop->blocks()) {
+    const bool Accounted = getInnerLoop()->contains(BB) ||
+                           BB == getOuterLatch() ||
+                           prologueRegion().contains(BB);
+    if (Accounted)
+      continue;
+    LLVM_DEBUG(dbgs() << "    Unexpected outer-loop block: " << BB->getName()
+                      << "\n");
+    return false;
+  }
   return true;
 }
 
@@ -348,9 +356,8 @@ static bool anyVolatileOrAtomic(ArrayRef<MemInstT *> MemOps) {
 }
 
 bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
-  // TODO: Add alias/dependence analysis to verify that moving prologue loads
-  // before epilogue stores is safe. For now, only reject volatile/atomic
-  // operations which can never be reordered.
+  // TODO(outer-loop-pipeliner): add alias/dependence analysis for load/store
+  // reordering; for now only reject never-reorderable volatile/atomic ops.
   if (anyVolatileOrAtomic<LoadInst>(collectPrologueLoads())) {
     LLVM_DEBUG(dbgs() << "    Unsafe: volatile/atomic prologue load\n");
     return false;
@@ -373,6 +380,21 @@ void OrigLoopStructure::forwardClosure(
         continue;
       if (Set.insert(UI).second)
         Worklist.push_back(UI);
+    }
+  }
+}
+
+void OrigLoopStructure::backwardClosure(
+    SmallVectorImpl<Instruction *> &Worklist,
+    SmallPtrSetImpl<Instruction *> &Set) const {
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.pop_back_val();
+    for (Value *Op : I->operands()) {
+      auto *OpI = dyn_cast<Instruction>(Op);
+      if (!OpI || !isPipelineableValue(OpI))
+        continue;
+      if (Set.insert(OpI).second)
+        Worklist.push_back(OpI);
     }
   }
 }
@@ -417,7 +439,7 @@ void OrigLoopStructure::collectStages(
   prologueRegion().forEachInstruction([&](Instruction *I) {
     if (!isPipelineCandidate(I))
       return;
-    (Stage1Set.count(I) ? stage1Insts() : stage0Insts()).push_back(I);
+    (Stage1Set.count(I) ? Stage1Insts : Stage0Insts).push_back(I);
   });
 
   LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
@@ -444,21 +466,13 @@ void OrigLoopStructure::collectStage0FromInnerLoop() {
     for (unsigned I = 0; I < PHI.getNumIncomingValues(); ++I)
       if (PHI.getIncomingBlock(I) == getInnerPreheader())
         Seed(PHI.getIncomingValue(I));
-  // Backward-track through operands.
-  while (!Worklist.empty()) {
-    Instruction *I = Worklist.pop_back_val();
-    for (Value *Op : I->operands()) {
-      auto *OpI = dyn_cast<Instruction>(Op);
-      if (!OpI || !isPipelineableValue(OpI))
-        continue;
-      if (Visited.insert(OpI).second)
-        Worklist.push_back(OpI);
-    }
-  }
+
+  backwardClosure(Worklist, Visited);
+
   // Emit the reached candidates in region program order.
   prologueRegion().forEachInstruction([&](Instruction *I) {
     if (isPipelineCandidate(I) && Visited.count(I))
-      stage0Insts().push_back(I);
+      Stage0Insts.push_back(I);
   });
 }
 
@@ -537,12 +551,7 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
   Function *F = Src.getOuterHeader()->getParent();
 
   // Blocks in program order; CloneBasicBlock seeds CloneMap (src->clone).
-  SmallVector<BasicBlock *, 8> OrigBlocks;
-  OrigBlocks.push_back(Src.getOuterHeader());
-  OrigBlocks.append(Src.getInnerBlocks().begin(), Src.getInnerBlocks().end());
-  // OuterLatch == InnerExit (validated in analyzeLoopStructure), so it is not
-  // in InnerBlocks; append it once.
-  OrigBlocks.push_back(Src.getOuterLatch());
+  SmallVector<BasicBlock *, 8> OrigBlocks = Src.blocksInProgramOrder();
 
   SmallString<32> SuffixStorage;
   StringRef SuffixStr = Suffix.toStringRef(SuffixStorage);
@@ -572,9 +581,9 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
   PrologueRegion.assign(CloneProBlocks);
   EpilogueRegion.assign({clonedBlock(Src.getOuterLatch())});
 
-  // Copy the cached latch-bound; its instruction pointers still reference the
-  // source LS and are remapped to the clone by remapBoundToClone.
-  OuterLoopCondition = Src.bound();
+  // Copy the cached latch condition; its pointers still reference the source LS
+  // until remapBoundThroughCloneMap retargets them to this clone.
+  OuterLoopCondition = Src.latchCondition();
 
   // Rename clones by role; CloneBasicBlock's "<orig>.<suffix>" names read as
   // the original loop.
@@ -594,9 +603,8 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Steady,
   // successor; all its blocks are created before that block.
   BasicBlock *Exit = Steady.getExitBlock();
 
-  // lastiter.prologue is the last-iteration outer header (and, for the linear
-  // LS, its inner preheader); inner-loop PHIs incoming from the outer header
-  // now come from it.
+  // lastiter.prologue is the last-iteration outer header (and inner preheader);
+  // inner-loop PHIs incoming from the outer header now come from it.
   BasicBlock *LastIterPrologue =
       BasicBlock::Create(Ctx, "lastiter.prologue", F, Exit);
   CloneMap[Steady.getOuterHeader()] = LastIterPrologue;
@@ -610,9 +618,8 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Steady,
     InnerLoopBlocks.push_back(Clone);
   }
 
-  // lastiter.epilogue is the last-iteration outer latch; it receives the steady
-  // latch (and, in the single-block case, the inner exit) so the cloned inner
-  // loop and epilogue resolve their exits to it.
+  // lastiter.epilogue is the last-iteration outer latch (and inner exit), so
+  // the cloned inner loop and epilogue resolve their exits to it.
   BasicBlock *LastIterEpilogue =
       BasicBlock::Create(Ctx, "lastiter.epilogue", F, Exit);
   CloneMap[Steady.getOuterLatch()] = LastIterEpilogue;
@@ -633,20 +640,18 @@ void AIEOuterLoopPipeliner::swapInClonedLS(const OrigLoopStructure &OrigLS,
   // the clone now — LoopInfo can no longer recover it afterwards.
   Preheader->getTerminator()->replaceSuccessorWith(OrigLS.getOuterHeader(),
                                                    SteadyLS.getOuterHeader());
-  SteadyLS.setOuterPreheader(Preheader);
+  SteadyLS.recordExistingPreheader(Preheader);
 
-  // Add a clone-latch incoming to the exit PHIs so the exit sees the clone's
-  // defs. KeepOldPred: the original latch still branches here until
-  // removeFromCFG, so its entry must survive.
-  reroutePhiIncomings(
-      OrigExit, OrigLS.getOuterLatch(), SteadyLS.getOuterLatch(),
-      /*KeepOldPred=*/true, [&](Value *V) { return SteadyLS.cloneOf(V); });
+  // Add a clone-latch incoming to the exit PHIs. AppendNew: the original latch
+  // still branches here until removeFromCFG, so its entry must survive.
+  reroutePhiIncomings(OrigExit, OrigLS.getOuterLatch(),
+                      SteadyLS.getOuterLatch(), PhiEdge::AppendNew,
+                      [&](Value *V) { return SteadyLS.cloneOf(V); });
 }
 
-void AIEOuterLoopPipeliner::remapBoundToClone(
-    CloneLoopStructure &SteadyLS) const {
-  auto Map = [&](Value *V) -> Value * { return V ? SteadyLS.cloneOf(V) : V; };
-  LatchConditionInfo &B = SteadyLS.bound();
+void CloneLoopStructure::remapBoundThroughCloneMap() {
+  auto Map = [&](Value *V) -> Value * { return V ? cloneOf(V) : V; };
+  LatchConditionInfo &B = OuterLoopCondition;
   B.Cmp = cast<ICmpInst>(Map(B.Cmp));
   // A loop-invariant Limit is not in the clone map and maps to itself.
   B.Limit = Map(B.Limit);
@@ -655,10 +660,7 @@ void AIEOuterLoopPipeliner::remapBoundToClone(
 }
 
 void OrigLoopStructure::removeFromCFG() const {
-  SmallVector<BasicBlock *, 8> Dead;
-  Dead.push_back(getOuterHeader());
-  Dead.append(getInnerBlocks().begin(), getInnerBlocks().end());
-  Dead.push_back(getOuterLatch());
+  SmallVector<BasicBlock *, 8> Dead = blocksInProgramOrder();
   DeleteDeadBlocks(Dead);
 }
 
@@ -729,9 +731,8 @@ void AIEOuterLoopPipeliner::peelLastIteration(
   // clone below picks up the final epilogue values.
   seedHeaderPhiEdge(LastIterMap, SteadyLS, SteadyLS.getOuterLatch());
 
-  // Fill each block. The prologue holds the hardware-loop setup and the
-  // stage-1 accumulator seeds; both must be in place before the inner loop is
-  // filled so its PHIs that reference stage-1 results resolve.
+  // Fill the prologue (hardware-loop setup + stage-1 seeds) before the inner
+  // loop, so its PHIs referencing stage-1 results resolve.
   cloneHardwareLoopSetupInto(LastIterLS, SteadyLS);
   SmallVector<Instruction *, 16> Stage1Insts =
       remapToClone(OrigLS.stage1Insts(), SteadyLS.cloneMap());
@@ -764,9 +765,8 @@ void AIEOuterLoopPipeliner::cloneHardwareLoopSetupInto(
 void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
     const CloneLoopStructure &SteadyLS, CloneLoopStructure &LastIterLS) const {
   RemapTable &LastIterMap = LastIterLS.cloneMap();
-  // Clone every inner-loop block's body into its skeleton clone (resolved via
-  // the clone map) first, so all cross-block references exist before any remap
-  // runs.
+  // Clone every inner-loop body into its skeleton clone first, so all
+  // cross-block references exist before any remap runs.
   SmallVector<Instruction *, 32> Clones;
   for (BasicBlock *Orig : SteadyLS.getInnerBlocks()) {
     auto *Clone = cast<BasicBlock>(LastIterMap[Orig]);
@@ -782,11 +782,9 @@ void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
 void AIEOuterLoopPipeliner::populateLastIterEpilogue(
     const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS,
     CloneLoopStructure &LastIterLS) const {
-  // Clone the whole pristine original latch: a value accumulated there is read
-  // after the loop, so omitting it would compute a wrong last iteration.
-  // Back-edge control is the exception — dead without a back-edge, and its
-  // steady clone may already be freed by convertOuterLoopToHardwareLoop.
-  const LatchConditionInfo &Bound = OrigLS.bound();
+  // Clone the pristine original latch except its back-edge control: accumulated
+  // values are read after the loop, but the counter and compare are now dead.
+  const LatchConditionInfo &Bound = OrigLS.latchCondition();
   SmallVector<Instruction *, 16> OrigEpiInsts;
   for (Instruction &I : *OrigLS.getOuterLatch()) {
     if (I.isTerminator())
@@ -815,9 +813,9 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
   BranchInst::Create(OrigExit, LastIterEpilogue);
 
-  // Compose orig -> steady -> lastiter: a PHI incoming is a steady value (one
-  // hop), a rematerialized live-out is an orig value (two hops); cloneOf passes
-  // non-clones through, so both resolve correctly.
+  // Compose orig -> steady -> lastiter; cloneOf passes non-clones through, so a
+  // one-hop steady PHI value and a two-hop rematerialized live-out both
+  // resolve.
   auto ToLastIter = [&](Value *V) {
     return LastIterLS.cloneOf(SteadyLS.cloneOf(V));
   };
@@ -825,7 +823,7 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   // Repoint each exit PHI's latch edge to the last-iteration epilogue,
   // retargeting the value to its last-iteration clone.
   reroutePhiIncomings(OrigExit, SteadyLS.getOuterLatch(), LastIterEpilogue,
-                      /*KeepOldPred=*/false, ToLastIter);
+                      PhiEdge::Repoint, ToLastIter);
 
   // Retarget non-PHI live-outs (LCSSA values rematerialized into the dedicated
   // exit block) so their operands read the last-iteration clones.
@@ -868,8 +866,12 @@ void BlockRegion::forEachInstruction(
       Visit(&I);
 }
 
-OrigLoopStructure::OrigLoopStructure(Loop *L) : OuterLoop(L) {
-  Valid = analyzeLoopStructure();
+std::unique_ptr<OrigLoopStructure> OrigLoopStructure::analyze(Loop *L) {
+  // Private constructor: a validated LS is only reachable through here.
+  auto LS = std::unique_ptr<OrigLoopStructure>(new OrigLoopStructure(L));
+  if (!LS->analyzeLoopStructure())
+    return nullptr;
+  return LS;
 }
 
 bool OrigLoopStructure::isRegionInternalPhi(const PHINode *PHI) const {
@@ -893,6 +895,23 @@ bool OrigLoopStructure::isPipelineCandidate(const Instruction *I) const {
   return isPipelineableValue(I);
 }
 
+BasicBlock *LoopStructure::getInnerLatch() const {
+  for (BasicBlock *Pred : predecessors(getInnerHeader()))
+    if (is_contained(InnerLoopBlocks, Pred))
+      return Pred;
+  return nullptr;
+}
+
+SmallVector<BasicBlock *, 8> LoopStructure::blocksInProgramOrder() const {
+  SmallVector<BasicBlock *, 8> Blocks;
+  Blocks.push_back(getOuterHeader());
+  Blocks.append(getInnerBlocks().begin(), getInnerBlocks().end());
+  // OuterLatch == InnerExit (validated in analyzeLoopStructure), so it is not
+  // in InnerBlocks; append it once.
+  Blocks.push_back(getOuterLatch());
+  return Blocks;
+}
+
 BasicBlock *LoopStructure::getExitBlock() const {
   BranchInst *LatchBr = getLatchBranch();
   assert(LatchBr->isConditional() && "Outer latch must be conditional");
@@ -902,10 +921,19 @@ BasicBlock *LoopStructure::getExitBlock() const {
   llvm_unreachable("Outer latch must have an exit successor");
 }
 
+void CloneLoopStructure::recordExistingPreheader(BasicBlock *BB) {
+  assert(llvm::all_of(
+             getOuterHeader()->phis(),
+             [&](PHINode &PHI) { return PHI.getBasicBlockIndex(BB) >= 0; }) &&
+         "header PHIs must already reference the recorded preheader");
+  OuterPreheader = BB;
+}
+
 void CloneLoopStructure::installPreheader(BasicBlock *NewPreheader) {
-  reroutePhiIncomings(getOuterHeader(), getPreheader(), NewPreheader,
-                      /*KeepOldPred=*/false);
-  setOuterPreheader(NewPreheader);
+  BasicBlock *OldPreheader = getPreheader();
+  reroutePhiIncomings(getOuterHeader(), OldPreheader, NewPreheader,
+                      PhiEdge::Repoint);
+  OuterPreheader = NewPreheader;
 }
 
 // The `add Counter, C` (with constant C) that defines Counter, or nullptr.
@@ -936,6 +964,28 @@ static PHINode *findCountingPhi(BinaryOperator *Add, const BasicBlock *Header) {
   return nullptr;
 }
 
+namespace {
+// Cmp's operands split into its loop-invariant limit (with operand index) and
+// the remaining counter operand.
+struct LimitCounterSplit {
+  Value *Limit;
+  unsigned LimitIdx;
+  Value *Counter;
+};
+} // namespace
+
+// Split Cmp into its loop-invariant limit and counter operand, or nullopt when
+// neither operand is loop-invariant.
+static std::optional<LimitCounterSplit>
+splitCompareIntoLimitAndCounter(const Loop *L, ICmpInst *Cmp) {
+  for (unsigned I = 0; I < 2; ++I) {
+    Value *Op = Cmp->getOperand(I);
+    if (L->isLoopInvariant(Op))
+      return LimitCounterSplit{Op, I, Cmp->getOperand(1 - I)};
+  }
+  return std::nullopt;
+}
+
 bool OrigLoopStructure::tryAdjustLoopBound() {
   auto *BI = dyn_cast<BranchInst>(getOuterLatch()->getTerminator());
   if (!BI || !BI->isConditional())
@@ -944,21 +994,11 @@ bool OrigLoopStructure::tryAdjustLoopBound() {
   if (!Cmp)
     return false;
 
-  // Split the compare into its loop-invariant limit and its counter operand.
-  Value *Limit = nullptr;
-  Value *Counter = nullptr;
-  unsigned LimitIdx = 0;
-  for (unsigned I = 0; I < 2; ++I) {
-    Value *Op = Cmp->getOperand(I);
-    if (getOuterLoop()->isLoopInvariant(Op)) {
-      Limit = Op;
-      LimitIdx = I;
-      Counter = Cmp->getOperand(1 - I);
-      break;
-    }
-  }
-  if (!Limit)
+  std::optional<LimitCounterSplit> Split =
+      splitCompareIntoLimitAndCounter(getOuterLoop(), Cmp);
+  if (!Split)
     return false;
+  auto [Limit, LimitIdx, Counter] = *Split;
 
   // The step comes from the counting add's constant; a zero/absent constant
   // falls back to the predicate's unit stride.
@@ -998,7 +1038,7 @@ bool OrigLoopStructure::tryAdjustLoopBound() {
 // NewLimit = Limit - Step covers increment (Step > 0) and decrement (Step < 0)
 // loops of any constant step magnitude.
 Value *CloneLoopStructure::adjustLoopBound() {
-  const LatchConditionInfo &B = bound();
+  const LatchConditionInfo &B = latchCondition();
   IRBuilder<> Builder(getPreheader()->getTerminator());
   Value *NewLimit = Builder.CreateSub(
       B.Limit, ConstantInt::getSigned(B.Limit->getType(), B.Step),
@@ -1069,21 +1109,18 @@ static bool isUnsafeIntrinsicToLift(const AIEBaseInstrInfo &TII,
   return II && !isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID());
 }
 
-// A chain instruction used by an epilogue instruction outside the chain (a
-// store, the exit icmp, ...), or nullptr if none. Such a use pins the chain to
-// the epilogue, so it cannot be lifted.
-static Instruction *
-findExternalEpilogueUser(const LoopStructure &OrigLS,
-                         const SmallPtrSetImpl<Instruction *> &Chain) {
+// True if a chain instruction is used by an epilogue instruction outside the
+// chain (a store, the exit icmp, ...), which pins the chain to the epilogue.
+static bool
+hasExternalEpilogueUser(const LoopStructure &OrigLS,
+                        const SmallPtrSetImpl<Instruction *> &Chain) {
   for (Instruction *I : Chain)
     for (User *U : I->users()) {
       auto *UI = dyn_cast<Instruction>(U);
-      const bool IsExternalEpilogueUse =
-          UI && OrigLS.isInEpilogue(UI) && !Chain.contains(UI);
-      if (IsExternalEpilogueUse)
-        return UI;
+      if (UI && OrigLS.isInEpilogue(UI) && !Chain.contains(UI))
+        return true;
     }
-  return nullptr;
+  return false;
 }
 
 std::optional<SmallPtrSet<Instruction *, 16>>
@@ -1096,9 +1133,8 @@ AIEOuterLoopPipeliner::collectLiftableEpilogueChain(
   if (!EpilogueDefinedBackEdge)
     return std::nullopt;
 
-  // Backward-track from the back-edge value, collecting the epilogue operands
-  // that feed it; bail if the chain reaches an inner-loop value or an unsafe
-  // intrinsic.
+  // Collect the epilogue operands feeding the back-edge value; bail if the
+  // chain reaches an inner-loop value or an unsafe intrinsic.
   SmallPtrSet<Instruction *, 16> Chain;
   SmallVector<Instruction *, 16> Worklist;
   Chain.insert(LatchInst);
@@ -1126,8 +1162,7 @@ AIEOuterLoopPipeliner::collectLiftableEpilogueChain(
     }
   }
 
-  const bool ChainPinnedToEpilogue = findExternalEpilogueUser(OrigLS, Chain);
-  if (ChainPinnedToEpilogue)
+  if (hasExternalEpilogueUser(OrigLS, Chain))
     return std::nullopt;
 
   LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName() << ": lifting chain of "
@@ -1175,11 +1210,10 @@ bool AIEOuterLoopPipeliner::performTransformation(
   }
 
   // Clone the LS into a steady-state copy and swap it into the original's CFG
-  // slot; all transform steps below run on the clone, leaving OrigLS pristine
-  // for removal at the end.
+  // slot; transform steps below run on the clone, leaving OrigLS pristine.
   CloneLoopStructure SteadyLS(OrigLS, "steady");
   swapInClonedLS(OrigLS, SteadyLS);
-  remapBoundToClone(SteadyLS);
+  SteadyLS.remapBoundThroughCloneMap();
 
   // Peel the stage-0 chain before the steady header (entry pointer values);
   // this also adopts the peel as the steady preheader.
@@ -1197,9 +1231,8 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // so the hardware-loop conversion can find the right icmp to replace.
   SteadyLS.adjustLoopBound();
 
-  // Optionally convert the steady loop to a JNZD hardware loop. MUST run before
-  // peelLastIteration so the counting add/icmp are erased from the
-  // latch before the peel step clones it.
+  // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
+  // counting add/icmp are erased from the latch before the peel clones it.
   if (EnableOuterLoopHardwareLoop)
     if (auto Info = SteadyLS.getDowncountingInfo())
       convertOuterLoopToHardwareLoop(SteadyLS, *Info);
@@ -1218,76 +1251,88 @@ bool AIEOuterLoopPipeliner::performTransformation(
 std::optional<DowncountingInfo>
 CloneLoopStructure::getDowncountingInfo() const {
   // loop.decrement.reg only decrements by 1, so JNZD needs step == -1.
-  if (bound().Step != -1)
+  const LatchConditionInfo &B = latchCondition();
+  if (B.Step != -1)
     return std::nullopt;
-  return DowncountingInfo{bound().Cmp, bound().Counter, bound().OldIV};
+  // tryAdjustLoopBound guarantees these are non-null for a valid condition.
+  return DowncountingInfo{*B.Cmp, *B.Counter, *B.OldIV};
 }
 
-void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
-    const CloneLoopStructure &SteadyLS, const DowncountingInfo &Info) {
-  LLVMContext &Ctx = SteadyLS.getOuterHeader()->getContext();
-  Type *I32Ty = Type::getInt32Ty(Ctx);
-  PHINode *OldIV = Info.OldIV;
-
-  // For a decrement loop starting at N, peeling one iteration leaves N-1 to
-  // run; the JNZD trip count is therefore the peel-incoming value of OldIV - 1
-  // (NOT the adjusted icmp threshold), zero-extended/truncated to i32.
-  BasicBlock *Peel = SteadyLS.getPreheader();
+// The i32 JNZD trip count materialized in the peel: peeling one iteration from
+// a decrement loop starting at N leaves N-1 to run (NOT the adjusted
+// threshold).
+static Value *computeJNZDTripCount(BasicBlock *Peel, PHINode &OldIV,
+                                   Type *I32Ty) {
   IRBuilder<> PreBuilder(Peel->getTerminator());
-  Value *InitN = OldIV->getIncomingValueForBlock(Peel);
+  Value *InitN = OldIV.getIncomingValueForBlock(Peel);
   Value *TripCount = PreBuilder.CreateSub(
       InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
   if (TripCount->getType() != I32Ty)
     TripCount =
         PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
+  return TripCount;
+}
 
+// Create the outer-header counter PHI seeded from start_loop_iterations in the
+// peel; its back-edge incoming is filled by rewriteLatchToDecrement.
+static PHINode *createOuterCounterPHI(const CloneLoopStructure &SteadyLS,
+                                      Value *TripCount, Type *I32Ty) {
+  BasicBlock *Peel = SteadyLS.getPreheader();
+  IRBuilder<> PreBuilder(Peel->getTerminator());
   Value *CtrInit = PreBuilder.CreateIntrinsic(
       Intrinsic::start_loop_iterations, {I32Ty}, {TripCount},
       /*FMFSource=*/nullptr, "outer.ctr.init");
-
-  // Counter PHI in the outer header: entry value from the peel, back-edge value
-  // filled in once the decrement is created below.
   Instruction *InsertPt = &*SteadyLS.getOuterHeader()->getFirstInsertionPt();
   PHINode *CtrPHI =
       PHINode::Create(I32Ty, 2, "outer.ctr", InsertPt->getIterator());
   CtrPHI->addIncoming(CtrInit, Peel);
+  return CtrPHI;
+}
 
-  // Replace the latch icmp+add with loop.decrement.reg.
+// Replace the latch condition with loop.decrement.reg(CtrPHI) != 0, keep the
+// loop-continue edge as the true successor, close CtrPHI, and DCE the old icmp.
+static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
+                                    PHINode *CtrPHI, Type *I32Ty) {
   BranchInst *LatchBr = SteadyLS.getLatchBranch();
-  BinaryOperator *OldCounter = Info.Counter;
-
   IRBuilder<> LatchBuilder(LatchBr);
   Value *CtrNext =
       LatchBuilder.CreateIntrinsic(Intrinsic::loop_decrement_reg, {I32Ty},
                                    {CtrPHI, ConstantInt::get(I32Ty, 1)},
                                    /*FMFSource=*/nullptr, "outer.ctr.next");
-
   Value *NewCond = LatchBuilder.CreateICmpNE(
       CtrNext, ConstantInt::get(I32Ty, 0), "outer.loop.cond");
 
   Value *OldCond = LatchBr->getCondition();
   LatchBr->setCondition(NewCond);
-  const bool TrueBranchContinuesLoop =
-      LatchBr->getSuccessor(0) == SteadyLS.getOuterHeader();
-  if (!TrueBranchContinuesLoop)
+  if (LatchBr->getSuccessor(0) != SteadyLS.getOuterHeader())
     LatchBr->swapSuccessors();
-
   CtrPHI->addIncoming(CtrNext, SteadyLS.getOuterLatch());
-
-  // The condition was just replaced, so the old icmp is now dead.
   RecursivelyDeleteTriviallyDeadInstructions(OldCond);
+}
 
-  // OldCounter (add) and OldIV (counting PHI) form a use cycle that trivial-DCE
-  // cannot break. If OldIV is used only by OldCounter, poison its latch slot so
-  // both become dead; otherwise leave the PHI for its other users.
-  assert(OldCounter && "DowncountingInfo guarantees a non-null Counter");
-  if (OldIV->hasOneUse()) {
-    int LatchIdx = OldIV->getBasicBlockIndex(SteadyLS.getOuterLatch());
+// Break the dead OldCounter/OldIV use cycle that trivial-DCE cannot: poison
+// OldIV's latch slot when it feeds only OldCounter, then DCE the add.
+static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
+                                 const DowncountingInfo &Info) {
+  PHINode &OldIV = Info.OldIV;
+  if (OldIV.hasOneUse()) {
+    int LatchIdx = OldIV.getBasicBlockIndex(SteadyLS.getOuterLatch());
     if (LatchIdx >= 0)
-      OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
+      OldIV.setIncomingValue(LatchIdx, PoisonValue::get(OldIV.getType()));
   }
   // OldIV may be deleted transitively here; do not reference it afterwards.
-  RecursivelyDeleteTriviallyDeadInstructions(OldCounter);
+  RecursivelyDeleteTriviallyDeadInstructions(&Info.Counter);
+}
+
+void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
+    const CloneLoopStructure &SteadyLS, const DowncountingInfo &Info) {
+  Type *I32Ty = Type::getInt32Ty(SteadyLS.getOuterHeader()->getContext());
+
+  Value *TripCount =
+      computeJNZDTripCount(SteadyLS.getPreheader(), Info.OldIV, I32Ty);
+  PHINode *CtrPHI = createOuterCounterPHI(SteadyLS, TripCount, I32Ty);
+  rewriteLatchToDecrement(SteadyLS, CtrPHI, I32Ty);
+  eraseOldCounterCycle(SteadyLS, Info);
 
   LLVM_DEBUG(dbgs() << "    Converted outer loop to JNZD hardware loop\n");
 }
