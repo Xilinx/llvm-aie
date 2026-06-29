@@ -1,6 +1,35 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
 # ------------------------------------------------------------------------------
 # Cpu features definition and flags
 # ------------------------------------------------------------------------------
+
+# Reports wall-clock (HH:MM:SS.mmm) and epoch milliseconds for probe timing.
+# Falls back to whole-second resolution if `date` is unavailable (non-POSIX host).
+if(NOT COMMAND _libc_probe_now)
+  function(_libc_probe_now out_wall out_epoch_ms)
+    execute_process(
+      COMMAND date "+%H:%M:%S.%3N %s%3N"
+      OUTPUT_VARIABLE now OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE rc ERROR_QUIET)
+    if(rc EQUAL 0)
+      separate_arguments(now)
+      list(GET now 0 wall)
+      list(GET now 1 epoch_ms)
+    else()
+      string(TIMESTAMP wall "%H:%M:%S")
+      string(TIMESTAMP epoch_s "%s")
+      math(EXPR epoch_ms "${epoch_s} * 1000")
+    endif()
+    set(${out_wall} "${wall}" PARENT_SCOPE)
+    set(${out_epoch_ms} "${epoch_ms}" PARENT_SCOPE)
+  endfunction()
+endif()
 
 # Initialize ALL_CPU_FEATURES as empty list.
 set(ALL_CPU_FEATURES "")
@@ -58,12 +87,18 @@ else()
   # Try compile a C file to check if flag is supported.
   set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
   foreach(feature IN LISTS ALL_CPU_FEATURES)
+    set(check_src ${LIBC_SOURCE_DIR}/cmake/modules/cpu_features/check_${feature}.cpp)
+    _libc_probe_now(probe_wall probe_start_ms)
+    message(STATUS "[${probe_wall}] CPU feature probe '${feature}' start (src: ${check_src})")
     try_compile(
       has_feature
       ${CMAKE_CURRENT_BINARY_DIR}/cpu_features
-      SOURCES ${LIBC_SOURCE_DIR}/cmake/modules/cpu_features/check_${feature}.cpp
+      SOURCES ${check_src}
       COMPILE_DEFINITIONS -I${LIBC_SOURCE_DIR} ${LIBC_COMPILE_OPTIONS_NATIVE}
     )
+    _libc_probe_now(probe_wall probe_end_ms)
+    math(EXPR probe_ms "${probe_end_ms} - ${probe_start_ms}")
+    message(STATUS "[${probe_wall}] CPU feature probe '${feature}' done ${probe_ms}ms (supported: ${has_feature})")
     if(has_feature)
       list(APPEND AVAILABLE_CPU_FEATURES ${feature})
     endif()

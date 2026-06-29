@@ -1,6 +1,35 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
 # ------------------------------------------------------------------------------
 # Compiler features definition and flags
 # ------------------------------------------------------------------------------
+
+# Reports wall-clock (HH:MM:SS.mmm) and epoch milliseconds for probe timing.
+# Falls back to whole-second resolution if `date` is unavailable (non-POSIX host).
+if(NOT COMMAND _libc_probe_now)
+  function(_libc_probe_now out_wall out_epoch_ms)
+    execute_process(
+      COMMAND date "+%H:%M:%S.%3N %s%3N"
+      OUTPUT_VARIABLE now OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE rc ERROR_QUIET)
+    if(rc EQUAL 0)
+      separate_arguments(now)
+      list(GET now 0 wall)
+      list(GET now 1 epoch_ms)
+    else()
+      string(TIMESTAMP wall "%H:%M:%S")
+      string(TIMESTAMP epoch_s "%s")
+      math(EXPR epoch_ms "${epoch_s} * 1000")
+    endif()
+    set(${out_wall} "${wall}" PARENT_SCOPE)
+    set(${out_epoch_ms} "${epoch_ms}" PARENT_SCOPE)
+  endfunction()
+endif()
 
 set(
   ALL_COMPILER_FEATURES
@@ -82,6 +111,10 @@ foreach(feature IN LISTS ALL_COMPILER_FEATURES)
     set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
   endif()
 
+  set(check_src ${LIBC_SOURCE_DIR}/cmake/modules/compiler_features/check_${feature}.cpp)
+  _libc_probe_now(probe_wall probe_start_ms)
+  message(STATUS "[${probe_wall}] compiler feature probe '${feature}' start (src: ${check_src})")
+
   if(LIBC_TARGET_OS_IS_GPU)
     # CUDA shouldn't be required to build the libc, only to test it, so we can't
     # try to build CUDA binaries here. Since GPU builds are always compiled with
@@ -96,11 +129,15 @@ foreach(feature IN LISTS ALL_COMPILER_FEATURES)
     try_compile(
       has_feature
       ${CMAKE_CURRENT_BINARY_DIR}/compiler_features
-      SOURCES ${LIBC_SOURCE_DIR}/cmake/modules/compiler_features/check_${feature}.cpp
+      SOURCES ${check_src}
       COMPILE_DEFINITIONS -I${LIBC_SOURCE_DIR} ${compile_options}
       LINK_OPTIONS ${link_options}
     )
   endif()
+
+  _libc_probe_now(probe_wall probe_end_ms)
+  math(EXPR probe_ms "${probe_end_ms} - ${probe_start_ms}")
+  message(STATUS "[${probe_wall}] compiler feature probe '${feature}' done ${probe_ms}ms (supported: ${has_feature})")
 
   if(has_feature)
     list(APPEND AVAILABLE_COMPILER_FEATURES ${feature})
