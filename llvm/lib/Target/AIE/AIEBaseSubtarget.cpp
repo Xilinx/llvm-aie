@@ -608,27 +608,15 @@ private:
     auto IsTopFixedSU = [Scheduler](const SUnit &SU) {
       return Scheduler->isFixedSU(SU, true);
     };
-    // Establish dependencies to ExitSU for each top-fixed sched. unit.
-    //
-    // When MaxLatencyFinder cannot use successor information (unknown
-    // successors, non-bottom region, or an abstract block) it returns the
-    // conservative AIE::maxLatency(). Otherwise it returns the effective
-    // latency: the part of the latency that is not already absorbed by the
-    // successor's leading cycles, computed from the cross-boundary edges of the
-    // instruction's pre-boundary node in the inter-block DDG. This tightens the
-    // region length and avoids padding the epilogue with unnecessary NOPs.
-    //
-    // Only the canonical (last-iteration) copy of each epilogue instruction is
-    // registered as a pre-boundary producer (see TopInsertSemanticOrder).
-    // Earlier-iteration copies have no pre-boundary node, so they get an
-    // effective latency of 0 here: their value is overwritten before the
-    // boundary, so the last copy's edge to ExitSU dominates and the earlier
-    // copies need no constraint of their own.
-    AIE::MaxLatencyFinder MaxLatency(DAG);
+    // TODO: this is pessimistic, we can handle this in RegionEndEdges after
+    // a mutation reordering.
+    // Establish dependencies to ExitSU for each top-fixed sched. unit by taking
+    // into account MaxLatency.
     for (SUnit &FixedSU : make_filter_range(DAG->SUnits, IsTopFixedSU)) {
-      MachineInstr &MI = *FixedSU.getInstr();
+      const MachineInstr &MI = *FixedSU.getInstr();
       SDep Dep(&FixedSU, SDep::Artificial);
-      Dep.setLatency(MaxLatency(MI));
+      Dep.setLatency(
+          AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true));
       DAG->ExitSU.addPred(Dep, /*Required=*/true);
     }
   }

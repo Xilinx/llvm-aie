@@ -13,18 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEMaxLatencyFinder.h"
-#include "AIEHazardRecognizer.h"
-#include "llvm/ADT/SmallVector.h"
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "sched-blocks"
 
 namespace llvm::AIE {
-
-// Typical number of instructions in a VLIW bundle. This is only the inline
-// capacity of the SmallVector below, not a hard limit, so larger bundles still
-// work without heap allocation in the common case.
-static constexpr unsigned MaxBundleSlots = 8;
 
 // Resetting aie-interblock-latency will use worst case instruction latencies
 // on ExitSU edges. This reverts to the 'classical' safety margin for
@@ -117,55 +110,40 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
                << (SE.getSucc() ? SE.getSucc()->getNumber() : -1) << "\n");
     LLVM_DEBUG(dbgs() << format("Successor %d PostRegionMaxDepth=%d\n", SuccNo,
                                 SE.getPostRegionMaxDepth()));
-    // A top-fixed instruction is represented as a BUNDLE root in the
-    // scheduling DAG, but the inter-block DDG holds the individual bundled
-    // instructions. Collect the pre-boundary nodes for every member so the
-    // bundle's effective latency is the max over its instructions.
-    SmallVector<const SUnit *, MaxBundleSlots> Preds;
-    if (MI.isBundle()) {
-      for (const MachineInstr &BundledMI : const_bundled_instrs(MI))
-        if (const SUnit *Pred =
-                SE.getPreBoundaryNode(const_cast<MachineInstr *>(&BundledMI)))
-          Preds.push_back(Pred);
-    } else if (const SUnit *Pred = SE.getPreBoundaryNode(&MI)) {
-      Preds.push_back(Pred);
-    }
-    if (Preds.empty()) {
+    const SUnit *Pred = SE.getPreBoundaryNode(&MI);
+    if (!Pred) {
       LLVM_DEBUG(
           dbgs() << "   No pre-boundary node for this successor, skip\n");
       continue;
     }
+    LLVM_DEBUG(dbgs() << "   Pre-boundary " << Pred->NodeNum << " has "
+                      << Pred->Succs.size() << " successor edge(s)\n");
 
-    for (const SUnit *Pred : Preds) {
-      LLVM_DEBUG(dbgs() << "   Pre-boundary " << Pred->NodeNum << " has "
-                        << Pred->Succs.size() << " successor edge(s)\n");
-      for (const SDep &Dep : Pred->Succs) {
-        SUnit *Succ = Dep.getSUnit();
-        if (!SE.isPostBoundaryNode(Succ)) {
-          LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
-                            << " is not a post-boundary node, skip\n");
-          continue;
-        }
-
-        // For ExitSU the depth is the full length of the successor block's
-        // top region (all its cycles have elapsed before reaching ExitSU).
-        // For a regular instruction node the depth is its scheduled cycle
-        // within the block.
-        const int Depth = Succ->isBoundaryNode()
-                              ? SE.getPostRegionMaxDepth() + 1
-                              : SE.getPostDepthOr(Succ, 0);
-        const int EdgeLat = Dep.getSignedLatency();
-        const int Remaining = EdgeLat - Depth;
-        LLVM_DEBUG(
-            dbgs() << "   " << (Succ->isBoundaryNode() ? "ExitSU" : "SU")
-                   << (Succ->isBoundaryNode() ? ""
-                                              : std::to_string(Succ->NodeNum))
-                   << ": latency=" << EdgeLat << ", depth=" << Depth
-                   << ", remaining=" << Remaining
-                   << ", updating EffectiveLatency " << EffectiveLatency
-                   << " -> " << std::max(EffectiveLatency, Remaining) << "\n");
-        EffectiveLatency = std::max(EffectiveLatency, Remaining);
+    for (const SDep &Dep : Pred->Succs) {
+      SUnit *Succ = Dep.getSUnit();
+      if (!SE.isPostBoundaryNode(Succ)) {
+        LLVM_DEBUG(dbgs() << "   SU" << Succ->NodeNum
+                          << " is not a post-boundary node, skip\n");
+        continue;
       }
+
+      // For ExitSU the depth is the full length of the successor block's
+      // top region (all its cycles have elapsed before reaching ExitSU).
+      // For a regular instruction node the depth is its scheduled cycle
+      // within the block.
+      const int Depth = Succ->isBoundaryNode() ? SE.getPostRegionMaxDepth() + 1
+                                               : SE.getPostDepthOr(Succ, 0);
+      const int EdgeLat = Dep.getSignedLatency();
+      const int Remaining = EdgeLat - Depth;
+      LLVM_DEBUG(
+          dbgs() << "   " << (Succ->isBoundaryNode() ? "ExitSU" : "SU")
+                 << (Succ->isBoundaryNode() ? ""
+                                            : std::to_string(Succ->NodeNum))
+                 << ": latency=" << EdgeLat << ", depth=" << Depth
+                 << ", remaining=" << Remaining
+                 << ", updating EffectiveLatency " << EffectiveLatency << " -> "
+                 << std::max(EffectiveLatency, Remaining) << "\n");
+      EffectiveLatency = std::max(EffectiveLatency, Remaining);
     }
     SuccNo++;
   }
