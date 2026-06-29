@@ -28,7 +28,12 @@ using BlockType = AIE::BlockType;
 using Region = AIE::Region;
 
 namespace AIE {
-std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone);
+/// Build the bundle sequence for \p Zone. If \p Conflict is non-null, a
+/// slot/cycle collision (a free instruction forced into a top-fixed bundle's
+/// cycle) is reported via *Conflict instead of asserting, so the caller can
+/// reschedule the region with a larger SchedulingLength.
+std::vector<AIE::MachineBundle>
+computeAndFinalizeBundles(SchedBoundary &Zone, bool *Conflict = nullptr);
 } // namespace AIE
 
 /// A MachineSchedStrategy implementation for AIE post RA scheduling.
@@ -134,6 +139,10 @@ protected:
   /// Return the next "fixed" instruction to place down.
   SUnit *getNextUnscheduledFixedInstr(const SchedBoundary &Zone) const;
 
+  /// Lowest-pinned-height unscheduled bottom-ready fixed SU, or null. With
+  /// \p BotFixedOnly, only bot-fixed instructions are considered.
+  SUnit *getLowestUnscheduledFixedSU(bool BotFixedOnly = false) const;
+
   /// SU numbers for fixed instructions.
   /// "top" fixed SUnits belong in [FirstTopFixedSU,FirstBotFixedSU)
   /// "bot" fixed SUnits belong in [FirstBotFixedSU,LastBotFixedSU]
@@ -142,11 +151,12 @@ protected:
   std::optional<unsigned> LastBotFixedSU;
 
   /// Keeps track of the current zone used for scheduling. See getSchedZone().
+  /// In FixPoint mode, post-RA AIE regions always schedule bottom-up.
   bool IsTopDown = true;
 
-  /// When true, the delay slot instruction was allowed to be scheduled in the
-  /// top-down phase (because top-fixed bundles are present).  After scheduling,
-  /// fixupDelaySlotPosition() will reposition it correctly.
+  /// Legacy (non-FixPoint) only. When true, the delay slot instruction was
+  /// allowed to be scheduled in the top-down phase (because top-fixed bundles
+  /// are present). After scheduling, fixupDelaySlotPosition() repositions it.
   bool PersistentTopDown = false;
 
   MachineBasicBlock *CurMBB = nullptr;
@@ -156,9 +166,9 @@ protected:
   /// Minimum number of cycles to be scheduled bottom-up in the current region.
   unsigned RegionBottomUpCycles = 0;
 
-  /// The minimum number of cycles that should be scheduled in top-down
-  /// direction in the current region. This is related to the quantity of top
-  /// fixed bundles.
+  /// Legacy (non-FixPoint) only. The minimum number of cycles that should be
+  /// scheduled in top-down direction in the current region. This is related to
+  /// the quantity of top fixed bundles.
   unsigned RegionTopDownCycles = 0;
 
   /// Materialize "multi-opcode" instructions into the option that was selected
@@ -171,15 +181,12 @@ protected:
       const std::vector<AIE::MachineBundle> &BotBundles) const;
 
 #ifndef NDEBUG
-  /// Return true iff every committed fixed instruction sits at exactly the
-  /// cycle its reference fixed bundle demanded. The reference bundle sequences
-  /// (getTopFixedBundles / getBotFixedBundles) are the intended layout
-  /// including empty NOP/stall bundles; top-fixed is pinned flush at the region
-  /// top and bot-fixed flush at the bottom, so each reference bundle (empty or
-  /// not) maps to one exact cycle. Comparing committed cycles against that
-  /// mapping verifies placement, flush-at-edge, and that requested NOP bundles
-  /// landed at the right positions. Free instructions may co-issue into a
-  /// band's cycles.
+  /// Return true iff the committed fixed bands sit at their pinned positions:
+  /// viewing the committed region as TopBundles followed by BotBundles, the
+  /// top-fixed band is the first bundles and the bot-fixed band the last,
+  /// matching their reference layout (including empty NOP/stall bundles). This
+  /// is independent of whether a band was scheduled top-down or bottom-up. Free
+  /// instructions may co-issue into a band's cycles.
   bool isFixedBandPlacementValid(
       const std::vector<AIE::MachineBundle> &TopBundles,
       const std::vector<AIE::MachineBundle> &BotBundles) const;
@@ -201,22 +208,16 @@ protected:
   // After scheduling a block, fill in nops, apply bundling, etc.
   void commitBlockSchedule(MachineBasicBlock *BB);
 
-  /// After top-down scheduling of a region that contains a delay slot
-  /// instruction, fix up its position in the bundle sequence so that exactly
-  /// NumDelaySlots bundles follow it.
-  ///
-  /// If the branch ended up too early (too many bundles after it), we try to
-  /// move it down toward the end, checking for resource hazards at each step.
-  /// If moving is not possible, we fall back to appending empty (NOP) bundles
-  /// at the end.  If the branch ended up too late (too few bundles after it),
-  /// we simply append the missing empty bundles.
+  /// Legacy (non-FixPoint) only. After top-down scheduling of a region that
+  /// contains a delay slot instruction, fix up its position in the bundle
+  /// sequence so that exactly NumDelaySlots bundles follow it.
   void fixupDelaySlotPosition(std::vector<AIE::MachineBundle> &TopBundles,
                               std::vector<AIE::MachineBundle> &BotBundles,
                               MachineInstr *BranchMI, unsigned NumDelaySlots);
 
-  // This function returns true when it is impossible to continue with top-down
-  // without entering an infinite loop because the only remaining instructions
-  // cannot be scheduled in the top zone.
+  /// Legacy (non-FixPoint) only. Returns true when it is impossible to continue
+  /// top-down without an infinite loop because the only remaining instructions
+  /// cannot be scheduled in the top zone.
   bool mustSwitchToBottomUp();
 
   // Verify whether a Scheduling Unit (SU) can be scheduled in a particular
