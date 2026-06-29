@@ -20,9 +20,9 @@
 //   Stage 1 = the split-point cone: the stage-1 split points (see
 //             isStage1SplitPoint) reachable from the stage-0 chain, plus their
 //             descendants in the prologue. Kept in the steady header and
-//             re-cloned into lastiter.prologue. Only split-prologue mode
-//             populates stage 1; with it off the whole prologue chain is
-//             stage 0.
+//             re-cloned into the last-iteration outer header. Only
+//             split-prologue mode populates stage 1; with it off the whole
+//             prologue chain is stage 0.
 //
 // Original CFG:
 //
@@ -43,22 +43,24 @@
 //
 //   [preheader]
 //       |
-//   [steady.preheader]    <- Stage 0:
+//   [steady.stage0.top]    <- Stage 0: peel (prime loads)
 //       |
-//   [steady.header]  <---------\  <- Stage 1: Prologue
-//       |                       |     (+ set.loop.iterations)
-//       |                       |
-//   [steady.inner.*]            |  <- Stage 1: steady-state inner loop
-//       |                       |
-//       |                       |
-//   [steady.latch]  -----------/  <- Stage 1: outer.latch + Stage 0 Prologue
-//       |  (exit branch)
-//   [lastiter.prologue]        <- Stage 1: Prologue
-//       |                             (+ set.loop.iterations)
+//   [steady.stage1.top]  <-----------------\  <- Stage 1: Prologue
+//       |                                   |     (+ set.loop.iterations)
+//       |                                   |
+//   [steady.stage1.inner.*]                 |  <- Stage 1: steady-state inner
+//   loop
+//       |                                   |
+//       |                                   |
+//   [steady.stage1.bottom_and_stage0.top]--/  <- overlap: Stage 1 stores (iter
+//   i)
+//       |  (exit branch)                          + Stage 0 prefetch (iter i+1)
+//   [lastiter.stage1.top]        <- Stage 1: Prologue
+//       |                               (+ set.loop.iterations)
 //       |
-//   [steady.inner.*.lastiter]  <- Stage 1: inner loop clone
+//   [lastiter.stage1.inner.*]    <- Stage 1: inner loop clone
 //       |
-//   [lastiter.epilogue]        <- Stage 1: Epilog
+//   [lastiter.stage1.bottom]     <- Stage 1: Epilog (drain stores)
 //       |
 //   [exit]
 //
@@ -361,10 +363,12 @@ public:
   struct LastIterSkeletonTag {};
 
   // Create the empty last-iteration blocks spliced just before Steady's exit,
-  // recording the Steady->lastiter block mappings in CloneMap. The caller fills
-  // the instruction bodies afterwards. Built in place: RemapTable is
-  // non-movable.
-  CloneLoopStructure(const LoopStructure &Steady, LastIterSkeletonTag);
+  // recording the Orig->lastiter block mappings in CloneMap (the last iteration
+  // is cloned from the pristine Orig LS; Steady supplies only the splice point
+  // and loop ID). The caller fills the instruction bodies afterwards. Built in
+  // place: RemapTable is non-movable.
+  CloneLoopStructure(const LoopStructure &Orig, const LoopStructure &Steady,
+                     LastIterSkeletonTag);
 
   // Clone of V in this LS, or V itself if it has none (invariants/args pass
   // through). Direction is source->clone, matching RemapInstruction.
@@ -467,15 +471,18 @@ private:
                            const RemapTable &PeelVMap,
                            const RemapTable &EpiVMap);
 
-  // Create the last-iteration region (peeled epilogue for last iteration):
-  //   lastiter.prologue: set.loop.iterations (cloned) + stage-1 clones
+  // Create the last-iteration region (peeled epilogue for last iteration),
+  // cloned from the pristine OrigLS:
+  //   lastiter.stage1.top: set.loop.iterations (cloned) + stage-1 clones
   //   inner loop clone: uses last epilogue load values + stage-1 results
-  //   lastiter.epilogue: epilogue stores only (no loads, no prologue clones)
-  // Redirects the outer latch's false branch to lastiter.prologue. OrigLS's
-  // stage-1 list is translated to steady clones via SteadyLS.cloneMap(); the
-  // epilogue snapshot is read off SteadyLS.
+  //   lastiter.stage1.bottom: epilogue stores only (no loads, no prologue
+  //   clones)
+  // Redirects the steady latch's exit branch to lastiter.stage1.top. EpiVMap
+  // supplies the prefetched-load values (keyed on orig stage-0) consumed by the
+  // last iteration.
   void peelLastIteration(const OrigLoopStructure &OrigLS,
-                         const CloneLoopStructure &SteadyLS);
+                         const CloneLoopStructure &SteadyLS,
+                         const RemapTable &EpiVMap);
 
   // Clone I into Dest before InsertPt, record orig->clone in VMap, and return
   // the clone. A non-empty Suffix renames non-void clones to "<orig><Suffix>".
@@ -499,40 +506,45 @@ private:
   remapToClone(ArrayRef<Instruction *> Insts, const RemapTable &VMap);
 
   // Step helpers of peelLastIteration, in call order. The last-iteration LS is
-  // built by its skeleton constructor and owns its steady->lastiter clone map;
-  // these helpers fill its blocks through that map.
+  // built by its skeleton constructor and owns its orig->lastiter clone map;
+  // these helpers clone the pristine OrigLS bodies through that map.
 
-  // Clone the hardware-loop setup (set.loop.iterations) from the steady outer
-  // header into the last-iteration prologue.
-  void cloneHardwareLoopSetupInto(CloneLoopStructure &LastIterLS,
-                                  const CloneLoopStructure &SteadyLS) const;
+  // Seed the last-iteration clone map with the inputs it consumes from the
+  // final steady iteration: loop-carried values (orig header PHIs ->
+  // steady-clone latch incoming) and prefetched loads (orig stage-0 -> EpiVMap
+  // epilogue clones). Keyed on orig values, matching the orig-rooted clone.
+  void seedLastIterInputs(const OrigLoopStructure &OrigLS,
+                          const CloneLoopStructure &SteadyLS,
+                          const RemapTable &EpiVMap,
+                          RemapTable &LastIterMap) const;
 
-  // Fill the last-iteration inner-loop block clones with remapped instruction
-  // bodies and wire the prologue into the inner header.
-  void cloneInnerLoopIntoLastIter(const CloneLoopStructure &SteadyLS,
+  // Clone the hardware-loop setup (set.loop.iterations) from the orig outer
+  // header into the last-iteration outer header.
+  void cloneHardwareLoopSetupInto(const OrigLoopStructure &OrigLS,
+                                  CloneLoopStructure &LastIterLS) const;
+
+  // Fill the last-iteration inner-loop block clones with remapped orig
+  // instruction bodies and wire the outer header into the inner header.
+  void cloneInnerLoopIntoLastIter(const OrigLoopStructure &OrigLS,
                                   CloneLoopStructure &LastIterLS) const;
 
   // Populate the last-iteration epilogue with the original epilogue stores and
   // pointer updates only — no prefetch loads. The instructions are read from
-  // the pristine OrigLS latch (never touched by the prefetch-cloning steps),
-  // translated Orig -> Steady via SteadyLS.cloneMap(), then cloned into the
-  // last-iteration epilogue via LastIterLS.cloneMap().
+  // the pristine OrigLS latch and cloned into the last-iteration epilogue
+  // directly through the orig-keyed LastIterLS.cloneMap().
   void populateLastIterEpilogue(const OrigLoopStructure &OrigLS,
-                                const CloneLoopStructure &SteadyLS,
                                 CloneLoopStructure &LastIterLS) const;
 
   // Splice the last-iteration into the CFG: last-iteration epilogue -> original
-  // exit, redirect the steady latch exit to the last-iteration prologue, and
-  // remap the exit block's live-out values to their last-iteration clones.
+  // exit, redirect the steady latch exit to the last-iteration outer header,
+  // and remap the exit block's live-out values to their last-iteration clones.
   // The exit's loop-carried live-outs (LCSSA PHIs or instructions
-  // rematerialized into a dedicated exit block) still reference the
-  // steady/original latch defs; since the final outer iteration now executes in
-  // lastiter.epilogue, they are retargeted to its clones via the composed
-  // lookup LastIterLS.cloneOf(SteadyLS.cloneOf(v)), otherwise the value read
-  // after the loop omits the last iteration (or dangles once the original loop
-  // is deleted).
-  void wireLastIterIntoCFG(const OrigLoopStructure &OrigLS,
-                           const CloneLoopStructure &SteadyLS,
+  // rematerialized into a dedicated exit block) are in orig-space
+  // (swapInClonedLS kept the orig defs); since the final outer iteration now
+  // executes in the last-iteration epilogue, they are retargeted to its clones
+  // via LastIterLS.cloneOf(v), otherwise the value read after the loop omits
+  // the last iteration (or dangles once the original loop is deleted).
+  void wireLastIterIntoCFG(const CloneLoopStructure &SteadyLS,
                            const CloneLoopStructure &LastIterLS) const;
 
   // The epilogue instructions forming PHI's next-iteration pointer-update

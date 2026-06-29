@@ -15,15 +15,15 @@
 ; The prologue contains a 2048-bit-producing call (the "anchor") fed by two
 ; loads. The pass splits the prologue into Part 1 (the loads, which are
 ; pipelined) and Part 2 (the anchor + its descendants, which stay in
-; outer.header and are cloned into lastiter.prologue for the last iteration).
+; the steady header and are cloned into lastiter.stage1.top for the last iteration).
 ;
 ; Expected structure after transformation:
 ;
-;   [outer.header.peel.pro]  <- peel: Part-1 loads only, no anchor call
-;   [outer.header]           <- PHIs for pipelined loads + anchor call remains
-;   [outer.latch]            <- Part-1 epilogue loads for next iteration
-;   [lastiter.prologue]         <- anchor call cloned (uses epilogue loads)
-;   [inner.header.lastiter / lastiter.epilogue]  <- cloned inner loop + final store
+;   [steady.stage0.top]      <- peel: Part-1 loads only, no anchor call
+;   [steady.stage1.top]      <- PHIs for pipelined loads + anchor call remains
+;   [steady.stage1.bottom_and_stage0.top]  <- Part-1 epilogue loads for next iteration
+;   [lastiter.stage1.top]       <- anchor call cloned (uses epilogue loads)
+;   [lastiter.stage1.inner.* / lastiter.stage1.bottom]  <- cloned inner loop + final store
 
 
 ; Peel: Part-1 loads only -- anchor call and set.loop.iterations absent
@@ -64,7 +64,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
   ; CHECK-NEXT: bb.2.outer.header.preheader:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.steady.preheader:
+  ; CHECK-NEXT: bb.3.steady.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(<16 x s32>) = G_LOAD [[COPY]](p0) :: (load (<16 x s32>) from %ir.a_ptr_init)
@@ -76,7 +76,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
   ; CHECK-NEXT:   %14:_(p0) = nuw nusw G_PTR_ADD [[COPY2]], [[C3]](s20)
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY3]], [[C]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.header:
+  ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %32(s32), %bb.6, [[C1]](s32), %bb.3
@@ -91,7 +91,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(<32 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2p.I512.I512.ACC2048.mul.conf), [[PHI4]](<16 x s32>), [[PHI5]](<32 x s16>), [[COPY5]](s32)
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY4]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.inner.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI9:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.4, %30(s32), %bb.5
@@ -102,7 +102,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.latch:
+  ; CHECK-NEXT: bb.6.steady.stage1.bottom_and_stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI3]](p0) :: (store (s32) into %ir.c_ptr.steady)
@@ -118,13 +118,13 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.lastiter.prologue:
+  ; CHECK-NEXT: bb.7.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY4]](s32)
   ; CHECK-NEXT:   [[INT2:%[0-9]+]]:_(<32 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2p.I512.I512.ACC2048.mul.conf), [[LOAD2]](<16 x s32>), [[LOAD3]](<32 x s16>), [[COPY5]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.steady.inner.header.lastiter:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI10:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.7, %45(s32), %bb.8
@@ -135,7 +135,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
   ; CHECK-NEXT:   G_BRCOND [[INT3]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.lastiter.epilogue:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), [[PHI8]](p0) :: (store (s32) into %ir.c_ptr.next.steady.phi)

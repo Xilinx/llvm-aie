@@ -34,31 +34,31 @@
 ;
 ; Expected output after transformation:
 ;
-;   [outer.header.peel.pro]  <- peel: DATA LOADS ONLY (no set.loop.iterations)
+;   [steady.stage0.top]      <- peel: DATA LOADS ONLY (no set.loop.iterations)
 ;       v0.peel = load(a)
 ;       v1.peel = load(b)
-;       br outer.header
+;       br steady.stage1.top
 ;
-;   [outer.header]           <- PHIs for pipelined values + set.loop.iterations
-;       %v0.phi = phi [v0.peel, peel.pro], [v0.epi, outer.latch]
-;       %v1.phi = phi [v1.peel, peel.pro], [v1.epi, outer.latch]
+;   [steady.stage1.top]      <- PHIs for pipelined values + set.loop.iterations
+;       %v0.phi = phi [v0.peel, steady.stage0.top], [v0.epi, steady...bottom]
+;       %v1.phi = phi [v1.peel, steady.stage0.top], [v1.epi, steady...bottom]
 ;       call void @llvm.set.loop.iterations.i32(i32 %M)
-;       br inner.header
+;       br steady.stage1.inner.header
 ;
-;   [outer.latch]            <- stores + loads for NEXT iteration
+;   [steady.stage1.bottom_and_stage0.top]  <- stores + loads for NEXT iteration
 ;       store result
 ;       v0.epi = load(a.ptr.next)   ; uses next-iteration pointer
 ;       v1.epi = load(b.ptr.next)
-;       br outer.header or lastiter.prologue
+;       br steady.stage1.top or lastiter.stage1.top
 ;
-;   [lastiter.prologue]         <- set.loop.iterations for last iteration
+;   [lastiter.stage1.top]       <- set.loop.iterations for last iteration
 ;       call void @llvm.set.loop.iterations.i32(i32 %M)
-;       br inner.header.lastiter
+;       br lastiter.stage1.inner.header
 ;
-;   [inner.header.lastiter]        <- cloned inner loop
-;       br lastiter.epilogue
+;   [lastiter.stage1.inner.header]  <- cloned inner loop
+;       br lastiter.stage1.bottom
 ;
-;   [lastiter.epilogue]          <- stores only (no loads)
+;   [lastiter.stage1.bottom]     <- stores only (no loads)
 ;       store result.lastiter
 ;       br exit
 
@@ -95,7 +95,7 @@ define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT: bb.2.outer.header.preheader:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.steady.preheader:
+  ; CHECK-NEXT: bb.3.steady.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
@@ -103,7 +103,7 @@ define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   [[MUL:%[0-9]+]]:_(s32) = G_MUL [[LOAD]], [[LOAD1]]
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY3]], [[C]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.header:
+  ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %25(s32), %bb.6, [[C1]](s32), %bb.3
@@ -119,7 +119,7 @@ define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   %20:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT:   %21:_(p0) = nuw nusw G_PTR_ADD [[PHI3]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.inner.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI %24(s32), %bb.5, [[C1]](s32), %bb.4
@@ -128,7 +128,7 @@ define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.latch:
+  ; CHECK-NEXT: bb.6.steady.stage1.bottom_and_stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI3]](p0) :: (store (s32) into %ir.c.ptr.steady)
@@ -140,12 +140,12 @@ define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.lastiter.prologue:
+  ; CHECK-NEXT: bb.7.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY4]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.steady.inner.header.lastiter:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:_(s32) = G_PHI %32(s32), %bb.8, [[C1]](s32), %bb.7
@@ -154,7 +154,7 @@ define void @nested_loop_basic(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.lastiter.epilogue:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %21(p0) :: (store (s32) into %ir.c.ptr.next.steady)
@@ -211,9 +211,9 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ;
 ; After transformation:
 ;   - %init_acc.peel = mul %v0.peel, %v1.peel  (in peel)
-;   - %init_acc.phi = phi [peel, peel], [epi, latch]  (in outer.header)
-;   - %acc = phi [%init_acc.phi, outer.header], [%acc.next, inner.header]
-;   - %acc.lastiter = phi [%init_acc.epi, lastiter.prologue], [...]  (in last-iteration)
+;   - %init_acc.phi = phi [peel, peel], [epi, latch]  (in steady.stage1.top)
+;   - %acc = phi [%init_acc.phi, steady.stage1.top], [%acc.next, inner.header]
+;   - %acc.lastiter = phi [%init_acc.epi, lastiter.stage1.top], [...]  (in last-iteration)
 ; ============================================================================
 
 
@@ -249,7 +249,7 @@ define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT: bb.2.outer.header.preheader:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.steady.preheader:
+  ; CHECK-NEXT: bb.3.steady.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
@@ -257,7 +257,7 @@ define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   [[MUL:%[0-9]+]]:_(s32) = G_MUL [[LOAD]], [[LOAD1]]
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY3]], [[C]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.header:
+  ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %26(s32), %bb.6, [[C1]](s32), %bb.3
@@ -273,7 +273,7 @@ define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   %20:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT:   %21:_(p0) = nuw nusw G_PTR_ADD [[PHI3]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.inner.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[PHI6]](s32), %bb.4, %24(s32), %bb.5
@@ -283,7 +283,7 @@ define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.latch:
+  ; CHECK-NEXT: bb.6.steady.stage1.bottom_and_stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI3]](p0) :: (store (s32) into %ir.c.ptr.steady)
@@ -295,12 +295,12 @@ define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.lastiter.prologue:
+  ; CHECK-NEXT: bb.7.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY4]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.steady.inner.header.lastiter:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:_(s32) = G_PHI [[MUL2]](s32), %bb.7, %33(s32), %bb.8
@@ -310,7 +310,7 @@ define void @outer_to_inner_phi(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.lastiter.epilogue:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %21(p0) :: (store (s32) into %ir.c.ptr.next.steady)
@@ -366,7 +366,7 @@ exit:
 ; must be preserved in both the original inner loop and the last-iteration clone.
 ;
 ; Key checks:
-;   - Both inner.header and inner.header.lastiter reference the SAME !llvm.loop node
+;   - Both the steady and last-iteration inner loops reference the SAME !llvm.loop node
 ;   - That node contains "llvm.loop.itercount.range", i32 8
 ;   - The outer loop's !llvm.loop node does NOT contain itercount.range
 ; ============================================================================
@@ -402,7 +402,7 @@ define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %
   ; CHECK-NEXT: bb.2.outer.header.preheader:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.steady.preheader:
+  ; CHECK-NEXT: bb.3.steady.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
@@ -410,7 +410,7 @@ define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %
   ; CHECK-NEXT:   [[MUL:%[0-9]+]]:_(s32) = G_MUL [[LOAD]], [[LOAD1]]
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY3]], [[C]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.header:
+  ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %25(s32), %bb.6, [[C1]](s32), %bb.3
@@ -426,7 +426,7 @@ define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %
   ; CHECK-NEXT:   %20:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT:   %21:_(p0) = nuw nusw G_PTR_ADD [[PHI3]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.inner.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI %24(s32), %bb.5, [[C1]](s32), %bb.4
@@ -435,7 +435,7 @@ define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.latch:
+  ; CHECK-NEXT: bb.6.steady.stage1.bottom_and_stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI3]](p0) :: (store (s32) into %ir.c.ptr.steady)
@@ -447,12 +447,12 @@ define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.lastiter.prologue:
+  ; CHECK-NEXT: bb.7.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY4]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.steady.inner.header.lastiter:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:_(s32) = G_PHI %32(s32), %bb.8, [[C1]](s32), %bb.7
@@ -461,7 +461,7 @@ define void @inner_range_preserved(ptr noalias %a, ptr noalias %b, ptr noalias %
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.lastiter.epilogue:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %21(p0) :: (store (s32) into %ir.c.ptr.next.steady)
