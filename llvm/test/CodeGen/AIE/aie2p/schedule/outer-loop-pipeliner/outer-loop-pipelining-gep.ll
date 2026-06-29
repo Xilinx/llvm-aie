@@ -121,8 +121,8 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(p0) = COPY [[PTR_ADD2]](p0)
   ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD %30, [[MUL2]](s20)
   ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(p0) = COPY [[PTR_ADD3]](p0)
-  ; CHECK-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[COPY8]](p0) :: (load (s32) from %ir.a.gep.steady.epi)
-  ; CHECK-NEXT:   [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[COPY9]](p0) :: (load (s32) from %ir.b.gep.steady.epi)
+  ; CHECK-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[COPY8]](p0) :: (load (s32) from %ir.a.gep.steady.bottom)
+  ; CHECK-NEXT:   [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[COPY9]](p0) :: (load (s32) from %ir.b.gep.steady.bottom)
   ; CHECK-NEXT:   [[MUL3:%[0-9]+]]:_(s32) = G_MUL [[LOAD2]], [[LOAD3]]
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7

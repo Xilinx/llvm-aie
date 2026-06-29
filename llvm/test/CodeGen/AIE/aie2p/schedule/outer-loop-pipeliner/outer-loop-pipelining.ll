@@ -40,15 +40,15 @@
 ;       br outer.header
 ;
 ;   [outer.header]           <- PHIs for pipelined values + set.loop.iterations
-;       %v0.phi = phi [v0.peel, peel.pro], [v0.epi, outer.latch]
-;       %v1.phi = phi [v1.peel, peel.pro], [v1.epi, outer.latch]
+;       %v0.phi = phi [v0.peel, peel.pro], [v0.bottom, outer.latch]
+;       %v1.phi = phi [v1.peel, peel.pro], [v1.bottom, outer.latch]
 ;       call void @llvm.set.loop.iterations.i32(i32 %M)
 ;       br inner.header
 ;
 ;   [outer.latch]            <- stores + loads for NEXT iteration
 ;       store result
-;       v0.epi = load(a.ptr.next)   ; uses next-iteration pointer
-;       v1.epi = load(b.ptr.next)
+;       v0.bottom = load(a.ptr.next)   ; uses next-iteration pointer
+;       v1.bottom = load(b.ptr.next)
 ;       br outer.header or lastiter.stage1.top
 ;
 ;   [lastiter.stage1.top]         <- set.loop.iterations for last iteration
@@ -213,7 +213,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ;   - %init_acc.peel = mul %v0.peel, %v1.peel  (in peel)
 ;   - %init_acc.phi = phi [peel, peel], [epi, latch]  (in outer.header)
 ;   - %acc = phi [%init_acc.phi, outer.header], [%acc.next, inner.header]
-;   - %acc.lastiter = phi [%init_acc.epi, lastiter.stage1.top], [...]  (in last-iteration)
+;   - %acc.lastiter = phi [%init_acc.bottom, lastiter.stage1.top], [...]  (in last-iteration)
 ; ============================================================================
 
 

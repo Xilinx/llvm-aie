@@ -673,23 +673,24 @@ void OrigLoopStructure::removeFromCFG() const {
 
 void AIEOuterLoopPipeliner::cloneStage0IntoBottom(
     const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS,
-    RemapTable &EpiVMap) {
-  // Seed EpiVMap with the next-iteration (latch incoming) values of the outer
-  // header PHIs so the cloned loads prefetch the next iteration's pointers.
-  seedHeaderPhiEdge(EpiVMap, SteadyLS, SteadyLS.getBottom());
+    RemapTable &BottomVMap) {
+  // Seed BottomVMap with the next-iteration (latch incoming) values of the
+  // outer header PHIs so the cloned loads prefetch the next iteration's
+  // pointers.
+  seedHeaderPhiEdge(BottomVMap, SteadyLS, SteadyLS.getBottom());
 
   SmallVector<Instruction *, 16> Stage0Insts =
       remapToClone(OrigLS.stage0Insts(), SteadyLS.cloneMap());
   Instruction *LatchTerm = SteadyLS.getBottom()->getTerminator();
   cloneAndRemapInsts(Stage0Insts, *SteadyLS.getBottom(),
-                     LatchTerm->getIterator(), EpiVMap, ".epi");
+                     LatchTerm->getIterator(), BottomVMap, ".bottom");
   LLVM_DEBUG(dbgs() << "    Cloned stage-0 into bottom block\n");
 }
 
 void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                                                 CloneLoopStructure &SteadyLS,
                                                 const RemapTable &PeelVMap,
-                                                const RemapTable &EpiVMap) {
+                                                const RemapTable &BottomVMap) {
   BasicBlock *Peel = SteadyLS.getPreheader();
   Instruction *InsertPt = &*SteadyLS.getTop()->getFirstInsertionPt();
 
@@ -704,15 +705,15 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
     // own clone.
     if (I->getType()->isVoidTy())
       continue;
-    auto WIt = PeelVMap.find(I);
-    auto EIt = EpiVMap.find(I);
+    auto PeelIt = PeelVMap.find(I);
+    auto BottomIt = BottomVMap.find(I);
     // Both cloners add every stage-0 entry, so every non-void inst is in both.
-    assert(WIt != PeelVMap.end() && EIt != EpiVMap.end() &&
+    assert(PeelIt != PeelVMap.end() && BottomIt != BottomVMap.end() &&
            "Stage-0 instruction must be in both the peel and bottom VMaps");
     PHINode *PHI = PHINode::Create(I->getType(), 2, I->getName() + ".phi");
     PHI->insertBefore(InsertPt->getIterator());
-    PHI->addIncoming(WIt->second, Peel);
-    PHI->addIncoming(EIt->second, SteadyLS.getBottom());
+    PHI->addIncoming(PeelIt->second, Peel);
+    PHI->addIncoming(BottomIt->second, SteadyLS.getBottom());
 
     // The inner-loop and intra-top uses now read the merge PHI; the peel /
     // bottom clones keep using their own mapped values.
@@ -805,7 +806,7 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
   // Clone the pristine original latch except its back-edge control: accumulated
   // values are read after the loop, but the counter and compare are now dead.
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
-  SmallVector<Instruction *, 16> OrigEpiInsts;
+  SmallVector<Instruction *, 16> OrigBottomInsts;
   for (Instruction &I : *OrigLS.getBottom()) {
     if (I.isTerminator())
       break;
@@ -816,10 +817,10 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
     const bool IsBackEdgeControl = &I == Bound.Counter || &I == Bound.Cmp;
     if (IsBackEdgeControl)
       continue;
-    OrigEpiInsts.push_back(&I);
+    OrigBottomInsts.push_back(&I);
   }
   BasicBlock *LastIterBottom = LastIterLS.getBottom();
-  cloneAndRemapInsts(OrigEpiInsts, *LastIterBottom, LastIterBottom->end(),
+  cloneAndRemapInsts(OrigBottomInsts, *LastIterBottom, LastIterBottom->end(),
                      LastIterLS.cloneMap(), ".lastiter");
 }
 
@@ -1235,11 +1236,11 @@ bool AIEOuterLoopPipeliner::performTransformation(
 
   // Prefetch the stage-0 chain in the bottom block (next-iteration pointer
   // values).
-  RemapTable EpiVMap;
-  cloneStage0IntoBottom(OrigLS, SteadyLS, EpiVMap);
+  RemapTable BottomVMap;
+  cloneStage0IntoBottom(OrigLS, SteadyLS, BottomVMap);
 
   // Merge the peel and bottom copies into the steady header via PHIs.
-  createPipelinedPHIs(OrigLS, SteadyLS, PeelVMap, EpiVMap);
+  createPipelinedPHIs(OrigLS, SteadyLS, PeelVMap, BottomVMap);
 
   // Adjust the outer loop trip count from N to N-1. Must happen before the peel
   // so the hardware-loop conversion can find the right icmp to replace.

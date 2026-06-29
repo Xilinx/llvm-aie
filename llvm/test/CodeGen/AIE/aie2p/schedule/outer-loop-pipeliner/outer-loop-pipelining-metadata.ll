@@ -50,8 +50,8 @@
 
 ; Top block must have pipelined PHIs.
 ; CHECK: steady.stage1.top:
-; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.peel, %stage0.top ], [ %v0.steady.epi, %steady.stage1.bottom.and.stage0.top ]
-; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.peel, %stage0.top ], [ %v1.steady.epi, %steady.stage1.bottom.and.stage0.top ]
+; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.peel, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.peel, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 
 define void @metadata_opt_in(ptr noalias %a, ptr noalias %b, ptr noalias %c,
                               i32 %N, i32 %M) {

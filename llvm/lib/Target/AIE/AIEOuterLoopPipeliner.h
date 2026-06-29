@@ -407,7 +407,7 @@ private:
   // pointer values, so the loads prefetch for the next iteration.
   void cloneStage0IntoBottom(const OrigLoopStructure &OrigLS,
                              const CloneLoopStructure &SteadyLS,
-                             RemapTable &EpiVMap);
+                             RemapTable &BottomVMap);
 
   // For each steady stage-0 instruction, merge its peel (entry-edge) and
   // bottom (back-edge) clones via a header PHI, erase the instruction, and
@@ -415,7 +415,7 @@ private:
   void createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                            CloneLoopStructure &SteadyLS,
                            const RemapTable &PeelVMap,
-                           const RemapTable &EpiVMap);
+                           const RemapTable &BottomVMap);
 
   // Create the last-iteration region (top + inner-loop clone + stores-only
   // bottom) and redirect the steady latch exit into it.
