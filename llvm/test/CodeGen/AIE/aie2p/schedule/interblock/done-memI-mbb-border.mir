@@ -1,0 +1,124 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple=aie2p -run-pass=postmisched %s -o - \
+# RUN:   | FileCheck %s
+
+# A DONE at the end of a block whose successor contains a memory operation.
+# Multi-block DAG construction builds an ordering edge from the DONE
+# (pre-boundary) to the successor's load/store (post-boundary). DONE and the
+# memory op are in different regions across the boundary, so LockDelays must not
+# assert; the DONE -> memory spacing is provided by the region-end exit edge.
+#
+# The *_rev_* functions cover the reverse direction: a memory op in the
+# predecessor and the DONE alone in the successor. The backward memory -> DONE
+# distance is carried across the border by the existing LockDelays pred edge.
+#
+# The *_same_mbb function keeps the DONE and the load in one MBB, separated by a
+# SCHED_BARRIER: the barrier splits the block into two scheduling regions, so the
+# DONE and the load are never in the same DAG.
+#
+# XFAIL: *
+# LockDelays asserts that a DONE never has a memory successor. That holds within
+# a single region, but the inter-block DDG splices a DONE-terminated block with a
+# memory-bearing neighbor, tripping the assert until the region check is fixed.
+---
+name:            done_load_mbb_border
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.1
+    liveins: $p1
+    DONE
+    DelayedSchedBarrier
+
+  bb.1:
+    liveins: $p1
+    $r6 = LDA_dms_lda_idx_imm $p1, 4
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            done_store_mbb_border
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.1
+    liveins: $p0, $r1
+    DONE
+    DelayedSchedBarrier
+
+  bb.1:
+    liveins: $p0, $r1
+    ST_dms_sts_idx_imm $r1, $p0, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            load_done_rev_mbb_border
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.1
+    liveins: $p1
+    $r6 = LDA_dms_lda_idx_imm $p1, 4
+    DelayedSchedBarrier
+
+  bb.1:
+    DONE
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            store_done_rev_mbb_border
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.1
+    liveins: $p0, $r1
+    ST_dms_sts_idx_imm $r1, $p0, 0
+    DelayedSchedBarrier
+
+  bb.1:
+    DONE
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            done_barrier_load_same_mbb
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $p1
+    DONE
+    SCHED_BARRIER
+    $r6 = LDA_dms_lda_idx_imm $p1, 4
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            done_barrier_store_same_mbb
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $p1, $r1
+    DONE
+    SCHED_BARRIER
+    ST_dms_sts_idx_imm $r1, $p1, 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
