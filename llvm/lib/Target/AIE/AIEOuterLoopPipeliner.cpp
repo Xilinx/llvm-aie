@@ -1308,7 +1308,9 @@ static void rewriteLatchToDecrement(const CloneLoopStructure &SteadyLS,
 
   Value *OldCond = LatchBr->getCondition();
   LatchBr->setCondition(NewCond);
-  if (LatchBr->getSuccessor(0) != SteadyLS.getTop())
+  const bool TopIsTakenSuccessor =
+      LatchBr->getSuccessor(0) == SteadyLS.getTop();
+  if (!TopIsTakenSuccessor)
     LatchBr->swapSuccessors();
   CtrPHI->addIncoming(CtrNext, SteadyLS.getBottom());
   RecursivelyDeleteTriviallyDeadInstructions(OldCond);
@@ -1321,7 +1323,8 @@ static void eraseOldCounterCycle(const CloneLoopStructure &SteadyLS,
   PHINode *OldIV = Info.OldIV;
   if (OldIV->hasOneUse()) {
     int LatchIdx = OldIV->getBasicBlockIndex(SteadyLS.getBottom());
-    if (LatchIdx >= 0)
+    const bool HasLatchIncoming = LatchIdx >= 0;
+    if (HasLatchIncoming)
       OldIV->setIncomingValue(LatchIdx, PoisonValue::get(OldIV->getType()));
   }
   // OldIV may be deleted transitively here; do not reference it afterwards.
