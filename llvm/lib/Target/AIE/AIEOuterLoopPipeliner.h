@@ -317,9 +317,11 @@ public:
   // Tag for the last-iteration skeleton constructor below.
   struct LastIterSkeletonTag {};
 
-  // Create the empty last-iteration blocks spliced before Steady's exit and
-  // record the Steady->lastiter block mappings; the caller fills the bodies.
-  CloneLoopStructure(const LoopStructure &Steady, LastIterSkeletonTag);
+  // Create the empty last-iteration blocks spliced before Src's exit and record
+  // the Src->lastiter block mappings; the caller fills the bodies. Src is the
+  // structural source (the original loop), so the last iteration is a clone of
+  // the original body.
+  CloneLoopStructure(const LoopStructure &Src, LastIterSkeletonTag);
 
   // Clone of V in this LS, or V itself if it has none (invariants/args pass
   // through). Direction is source->clone, matching RemapInstruction.
@@ -333,6 +335,16 @@ public:
   }
   RemapTable &cloneMap() { return CloneMap; }
   const RemapTable &cloneMap() const { return CloneMap; }
+
+  // Repoint Src's recorded clone to NewClone. Used when a clone is superseded,
+  // e.g. a stage-0 clone replaced by a pipelined header PHI, so the map keeps
+  // naming the value that actually represents Src in this loop.
+  void retargetClone(Value *Src, Value *NewClone) { CloneMap[Src] = NewClone; }
+
+  // The value Src carries into the final (peeled) iteration: if Src's clone is
+  // a header PHI of this loop, the value on its back edge (the prefetched /
+  // next-iteration value); otherwise the clone itself.
+  Value *lastIterInputFor(Value *Src) const;
 
   BasicBlock *getPreheader() const override { return OuterPreheader; }
 
@@ -399,9 +411,10 @@ private:
                              RemapTable &EpiVMap);
 
   // For each steady stage-0 instruction, merge its peel (entry-edge) and
-  // epilogue (back-edge) clones via a header PHI, then erase the instruction.
+  // epilogue (back-edge) clones via a header PHI, erase the instruction, and
+  // retarget SteadyLS's clone map so the slot now resolves to the merged PHI.
   void createPipelinedPHIs(const OrigLoopStructure &OrigLS,
-                           const CloneLoopStructure &SteadyLS,
+                           CloneLoopStructure &SteadyLS,
                            const RemapTable &PeelVMap,
                            const RemapTable &EpiVMap);
 
@@ -429,27 +442,34 @@ private:
   static SmallVector<Instruction *, 16>
   remapToClone(ArrayRef<Instruction *> Insts, const RemapTable &VMap);
 
-  // Step helpers of peelLastIteration, in call order; each fills the
-  // last-iteration LS's blocks through its steady->lastiter clone map.
+  // Step helpers of peelLastIteration, in call order. The last iteration is
+  // cloned structurally from OrigLS (orig->lastiter map); its live-in values
+  // come from SteadyLS via seedLastIterInputs / lastIterInputFor.
 
-  // Clone the hardware-loop setup (set.loop.iterations) from the steady outer
-  // header into the last-iteration prologue.
+  // Seed Map so each stage-0 slot and loop-carried header PHI of OrigLS
+  // resolves to the value SteadyLS carries into the last iteration (its
+  // prefetch / next-iteration value).
+  void seedLastIterInputs(RemapTable &Map, const OrigLoopStructure &OrigLS,
+                          const CloneLoopStructure &SteadyLS) const;
+
+  // Clone the hardware-loop setup (set.loop.iterations) from Src's top into the
+  // last-iteration top.
   void cloneHardwareLoopSetupInto(CloneLoopStructure &LastIterLS,
-                                  const CloneLoopStructure &SteadyLS) const;
+                                  const LoopStructure &Src) const;
 
-  // Fill the last-iteration inner-loop block clones with remapped instruction
-  // bodies and wire the prologue into the inner header.
-  void cloneInnerLoopIntoLastIter(const CloneLoopStructure &SteadyLS,
+  // Fill the last-iteration inner-loop block clones with remapped OrigLS
+  // instruction bodies and wire the top into the inner header.
+  void cloneInnerLoopIntoLastIter(const OrigLoopStructure &OrigLS,
                                   CloneLoopStructure &LastIterLS) const;
 
-  // Fill the last-iteration epilogue with the pristine original stores and
-  // pointer updates only (no prefetch loads), via Orig -> Steady -> lastiter.
+  // Fill the last-iteration bottom with the pristine original stores and
+  // pointer updates only (no prefetch loads), cloned directly from OrigLS.
   void populateLastIterBottom(const OrigLoopStructure &OrigLS,
-                              const CloneLoopStructure &SteadyLS,
                               CloneLoopStructure &LastIterLS) const;
 
   // Splice the last-iteration into the CFG and retarget the exit's live-outs to
-  // its clones, so the value read after the loop reflects the final iteration.
+  // their last-iteration clones (single orig->lastiter hop), so the value read
+  // after the loop reflects the final iteration.
   void wireLastIterIntoCFG(const OrigLoopStructure &OrigLS,
                            const CloneLoopStructure &SteadyLS,
                            const CloneLoopStructure &LastIterLS) const;
