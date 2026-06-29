@@ -184,12 +184,6 @@ struct BandGeometry {
   DenseMap<MachineInstr *, unsigned> MIToCycle;
   /// Number of cycles the band spans = number of bundles, empties included.
   unsigned NumCycles = 0;
-
-  /// Bottom-up height of the topmost bundle when the bottom bundle is at
-  /// \p BottomHeight. An N-cycle band spans BottomHeight .. BottomHeight+N-1.
-  int topHeight(int BottomHeight = 0) const {
-    return NumCycles == 0 ? BottomHeight : BottomHeight + int(NumCycles) - 1;
-  }
 };
 
 /// Walk \p Band once, recording each real instruction's cycle (one per bundle,

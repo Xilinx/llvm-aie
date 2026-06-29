@@ -1360,6 +1360,15 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   const bool HasTopFixed = !BS.getCurrentRegion().getTopFixedBundles().empty();
   const bool DidNotFit = BS.getCurrentRegion().FixPoint.TopFixedDidNotFit;
 
+  // Bottom-up emission stops at the tallest instruction, dropping leading NOP
+  // band bundles; bump the Bot zone to the full band height to materialize
+  // them.
+  if (HasTopFixed && !DidNotFit) {
+    const unsigned BandHeight = BS.getCurrentRegion().FixPoint.SchedulingLength;
+    if (Bot.getCurrCycle() < BandHeight)
+      Bot.bumpCycle(BandHeight);
+  }
+
   std::vector<AIE::MachineBundle> TopBundles = computeAndFinalizeBundles(Top);
   bool Conflict = false;
   std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(

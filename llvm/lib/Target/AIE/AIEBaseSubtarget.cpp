@@ -520,8 +520,8 @@ private:
           if (Scheduler->isFreeSU(SU))
             StaticDepthFreeInstrs =
                 std::max<int>(StaticDepthFreeInstrs, SU.getHeight());
-        const int Seed = std::max(
-            {StaticDepthFreeInstrs, TopGeo.topHeight(), BotGeo.topHeight()});
+        const int Seed = std::max({StaticDepthFreeInstrs, int(TopGeo.NumCycles),
+                                   int(BotGeo.NumCycles)});
         FP.SchedulingLength = std::max(Seed, FP.SchedulingLength);
         FP.SchedulingLengthSeeded = true;
         LLVM_DEBUG(dbgs() << "[FPSCHED][seed] MBB=" << DAG->getBB()->getNumber()
@@ -536,8 +536,10 @@ private:
       // bundle cycle, so co-issued instructions share a cycle.
       const DenseMap<MachineInstr *, unsigned> &MIToBundle = TopGeo.MIToCycle;
       // Top bundle pinned at SchedulingLength; bottom bundle sits below it.
+      // The band spans NumCycles bundles, so its bottom sits at
+      // SchedulingLength - NumCycles (leaving the leading NOP slots above).
       const int BottomTopFixedHeight =
-          std::max(0, FP.SchedulingLength - TopGeo.topHeight());
+          std::max(0, FP.SchedulingLength - int(TopGeo.NumCycles));
       LLVM_DEBUG(dbgs() << "[FPSCHED][pin] MBB=" << DAG->getBB()->getNumber()
                         << " SchedulingLength=" << FP.SchedulingLength
                         << " NumTopFixedBundles=" << TopGeo.NumCycles
@@ -566,6 +568,15 @@ private:
                           << "\n");
         Succ = FixedSU;
         PrevBundle = CurBundle;
+      }
+      // Pin the top side: EntrySU -> each top-fixed SU with latency = its
+      // reference bundle index, honoring the band's distance from the region
+      // top.
+      for (SUnit *FixedSU : TopFixedSUs) {
+        const unsigned CurBundle = MIToBundle.at(FixedSU->getInstr());
+        SDep Dep(&DAG->EntrySU, SDep::Artificial);
+        Dep.setLatency(CurBundle);
+        FixedSU->addPred(Dep);
       }
       LLVM_DEBUG({
         // Cross-check seed (SchedulingLength) against chain (top SU height).
