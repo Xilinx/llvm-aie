@@ -202,7 +202,8 @@ class OrigLoopStructure : public LoopStructure {
   Loop *OuterLoop = nullptr;
   Loop *InnerLoop = nullptr;
 
-  // The stage-0 / stage-1 split of the prologue instructions, in program order.
+  // The stage-0 / stage-1 split of the top-block instructions, in program
+  // order.
   SmallVector<Instruction *, 16> Stage0Insts;
   SmallVector<Instruction *, 16> Stage1Insts;
 
@@ -210,16 +211,16 @@ class OrigLoopStructure : public LoopStructure {
 
   Loop *getOuterLoop() const { return OuterLoop; }
 
-  // Populate the inner-loop fields and prologue/bottom regions from
+  // Populate the inner-loop fields and top/bottom regions from
   // OuterLoop; returns false unless the loop is a supported pipelining
   // candidate.
   bool analyzeLoopStructure();
 
-  // Every outer-loop block belongs to the prologue, the inner loop, or the
-  // single-block epilogue; false on any other (unsupported) shape.
+  // Every outer-loop block belongs to the top, the inner loop, or the
+  // single-block bottom; false on any other (unsupported) shape.
   bool allOuterBlocksAccountedFor() const;
 
-  // Validate the linear single-block prologue (top block == inner preheader)
+  // Validate the linear single-block top (top block == inner preheader)
   // and populate the top region; false for any other shape.
   bool discoverTopRegion();
 
@@ -232,7 +233,7 @@ class OrigLoopStructure : public LoopStructure {
   // cloning.
   bool isRegionInternalPhi(const PHINode *PHI) const;
 
-  // True if I lives in the prologue and is a plain instruction or a
+  // True if I lives in the top and is a plain instruction or a
   // region-internal PHI; loop-carried PHIs are excluded.
   bool isPipelineableValue(const Instruction *I) const;
 
@@ -244,10 +245,10 @@ class OrigLoopStructure : public LoopStructure {
   // controlled by an @llvm.loop.decrement intrinsic.
   bool isInnerLoopHardwareLoop() const;
 
-  // Returns the prologue (top block) loads.
+  // Returns the top-block loads.
   SmallVector<LoadInst *, 8> collectTopLoads() const;
 
-  // Returns the epilogue (bottom block) stores.
+  // Returns the bottom-block stores.
   SmallVector<StoreInst *, 8> collectBottomStores() const;
 
   // Worklist closure over pipelineable neighbours (forward via users, backward
@@ -258,7 +259,7 @@ class OrigLoopStructure : public LoopStructure {
                        SmallPtrSetImpl<Instruction *> &Set) const;
 
   // The stage-1 set: the split points (IsSplitPoint, reachable from the
-  // top-block loads) and their prologue descendants. Empty if none is found.
+  // top-block loads) and their top-block descendants. Empty if none is found.
   SmallPtrSet<Instruction *, 32>
   collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
 
@@ -284,14 +285,14 @@ public:
   }
 
   // True if rotating pays off: hardware inner loop, outer trip count (from SE)
-  // meets MinTripCount, and the epilogue has stores.
+  // meets MinTripCount, and the bottom has stores.
   bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
 
   // Returns true if it is safe to reorder the top-block loads before the
   // bottom-block stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
 
-  // Split the prologue pipeline candidates into the stage-1 split-point cone
+  // Split the top-block pipeline candidates into the stage-1 split-point cone
   // and the stage-0 remainder (the load/address chain).
   void collectStages(function_ref<bool(const Instruction *)> IsSplitPoint);
 
@@ -402,22 +403,22 @@ private:
   void cloneStage0AsPeel(const OrigLoopStructure &OrigLS,
                          CloneLoopStructure &SteadyLS, RemapTable &PeelVMap);
 
-  // Clone OrigLS's stage-0 chain into the epilogue using next-iteration pointer
-  // values, so the loads prefetch for the next iteration.
+  // Clone OrigLS's stage-0 chain into the bottom block using next-iteration
+  // pointer values, so the loads prefetch for the next iteration.
   void cloneStage0IntoBottom(const OrigLoopStructure &OrigLS,
                              const CloneLoopStructure &SteadyLS,
                              RemapTable &EpiVMap);
 
   // For each steady stage-0 instruction, merge its peel (entry-edge) and
-  // epilogue (back-edge) clones via a header PHI, erase the instruction, and
+  // bottom (back-edge) clones via a header PHI, erase the instruction, and
   // retarget SteadyLS's clone map so the slot now resolves to the merged PHI.
   void createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                            CloneLoopStructure &SteadyLS,
                            const RemapTable &PeelVMap,
                            const RemapTable &EpiVMap);
 
-  // Create the last-iteration region (prologue + inner-loop clone + stores-only
-  // epilogue) and redirect the steady latch exit into it.
+  // Create the last-iteration region (top + inner-loop clone + stores-only
+  // bottom) and redirect the steady latch exit into it.
   void peelLastIteration(const OrigLoopStructure &OrigLS,
                          const CloneLoopStructure &SteadyLS);
 
@@ -472,14 +473,15 @@ private:
                            const CloneLoopStructure &SteadyLS,
                            const CloneLoopStructure &LastIterLS) const;
 
-  // The epilogue instructions forming PHI's next-iteration pointer-update
+  // The bottom instructions forming PHI's next-iteration pointer-update
   // chain, or nullopt if it cannot be safely lifted.
   std::optional<SmallPtrSet<Instruction *, 16>>
   collectLiftableBottomChain(const OrigLoopStructure &OrigLS,
                              PHINode &PHI) const;
 
-  // Lift the epilogue pointer-update chains (add.2d/add.3d and descendants) to
-  // the prologue end so prologue cloning naturally covers them. True if moved.
+  // Lift the bottom pointer-update chains (add.2d/add.3d and descendants) to
+  // the top-block end so top-block cloning naturally covers them. True if
+  // moved.
   bool liftBottomPointerUpdatesToTop(const OrigLoopStructure &OrigLS);
 
   // Convert the steady loop to a JNZD hardware loop: start.loop.iterations in

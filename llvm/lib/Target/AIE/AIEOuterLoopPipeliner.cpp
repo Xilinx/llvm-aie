@@ -234,14 +234,14 @@ bool OrigLoopStructure::analyzeLoopStructure() {
     return false;
   }
 
-  // Populate the prologue/bottom regions and the derived-field backing state.
+  // Populate the top/bottom regions and the derived-field backing state.
   InnerExit = InnerLoop->getExitBlock();
   InnerLoopBlocks.assign(InnerLoop->block_begin(), InnerLoop->block_end());
   OuterLoopID = OuterLoop->getLoopID();
   TopRegion.assign({OuterLoop->getHeader()});
   BottomRegion.assign({OuterLoop->getLoopLatch()});
 
-  // Epilogue must be a single block: inner exit == bottom block.
+  // The bottom must be a single block: inner exit == bottom block.
   if (getInnerExit() != getBottom()) {
     LLVM_DEBUG(dbgs() << "    Inner exit != bottom block\n");
     return false;
@@ -254,7 +254,7 @@ bool OrigLoopStructure::analyzeLoopStructure() {
     return false;
 
   LLVM_DEBUG(dbgs() << "    top region: " << topRegion().size()
-                    << " block(s); epilogue in bottom block\n");
+                    << " block(s); stores in bottom block\n");
 
   if (!tryAdjustLoopBound()) {
     LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound\n");
@@ -264,7 +264,7 @@ bool OrigLoopStructure::analyzeLoopStructure() {
 }
 
 bool OrigLoopStructure::discoverTopRegion() {
-  // The derived getTop() assumes the linear single-block prologue
+  // The derived getTop() assumes the linear single-block top
   // (top block == inner preheader); validate that against LoopInfo here.
   if (InnerLoop->getLoopPreheader() != getTop()) {
     LLVM_DEBUG(dbgs() << "    Inner preheader != top block\n");
@@ -296,7 +296,7 @@ bool OrigLoopStructure::isInnerLoopHardwareLoop() const {
 }
 
 SmallVector<LoadInst *, 8> OrigLoopStructure::collectTopLoads() const {
-  // The prologue is the single top block.
+  // Loads live in the single top block.
   SmallVector<LoadInst *, 8> Loads;
   for (Instruction &I : *getTop())
     if (auto *L = dyn_cast<LoadInst>(&I))
@@ -305,7 +305,7 @@ SmallVector<LoadInst *, 8> OrigLoopStructure::collectTopLoads() const {
 }
 
 SmallVector<StoreInst *, 8> OrigLoopStructure::collectBottomStores() const {
-  // The epilogue is the single bottom block.
+  // Stores live in the single bottom block.
   SmallVector<StoreInst *, 8> Stores;
   for (Instruction &I : *getBottom())
     if (auto *S = dyn_cast<StoreInst>(&I))
@@ -336,10 +336,10 @@ bool OrigLoopStructure::isProfitableToRotate(ScalarEvolution &SE,
     return false;
   }
 
-  SmallVector<StoreInst *, 8> EpilogueStores = collectBottomStores();
-  // TODO: Confirm whether a store-free epilogue can ever be profitable.
-  if (EpilogueStores.empty()) {
-    LLVM_DEBUG(dbgs() << "    No stores in epilogue\n");
+  SmallVector<StoreInst *, 8> BottomStores = collectBottomStores();
+  // TODO: Confirm whether a store-free bottom can ever be profitable.
+  if (BottomStores.empty()) {
+    LLVM_DEBUG(dbgs() << "    No stores in bottom\n");
     return false;
   }
   return true;
@@ -412,7 +412,7 @@ SmallPtrSet<Instruction *, 32> OrigLoopStructure::collectStage1Cone(
   forwardClosure(Worklist, ReachableFromLoad);
 
   // Seed the cone with those split points, then take their forward closure (all
-  // descendants within the prologue).
+  // descendants within the top).
   SmallPtrSet<Instruction *, 32> Cone;
   SmallVector<Instruction *, 16> ConeWorklist;
   for (Instruction *I : ReachableFromLoad)
@@ -572,10 +572,10 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src,
   OuterLoopID = Src.getOuterLoopID();
 
   // Mirror the regions onto the clones so membership queries work on the clone.
-  SmallVector<BasicBlock *, 4> CloneProBlocks;
+  SmallVector<BasicBlock *, 4> CloneTopBlocks;
   for (BasicBlock *BB : Src.topRegion().blocks())
-    CloneProBlocks.push_back(clonedBlock(BB));
-  TopRegion.assign(CloneProBlocks);
+    CloneTopBlocks.push_back(clonedBlock(BB));
+  TopRegion.assign(CloneTopBlocks);
   BottomRegion.assign({clonedBlock(Src.getBottom())});
 
   // Copy the cached latch condition; its pointers still reference the source LS
@@ -708,7 +708,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
     auto EIt = EpiVMap.find(I);
     // Both cloners add every stage-0 entry, so every non-void inst is in both.
     assert(WIt != PeelVMap.end() && EIt != EpiVMap.end() &&
-           "Prologue instruction must be in both Peel and Epilogue VMaps");
+           "Stage-0 instruction must be in both the peel and bottom VMaps");
     PHINode *PHI = PHINode::Create(I->getType(), 2, I->getName() + ".phi");
     PHI->insertBefore(InsertPt->getIterator());
     PHI->addIncoming(WIt->second, Peel);
@@ -1117,18 +1117,17 @@ void CloneLoopStructure::updateLoopMetadata() const {
 }
 
 // An intrinsic other than a safe 2D/3D pointer increment, whose unknown side
-// effects forbid moving it out of the epilogue.
+// effects forbid moving it out of the bottom block.
 static bool isUnsafeIntrinsicToLift(const AIEBaseInstrInfo &TII,
                                     const Instruction *I) {
   const auto *II = dyn_cast<IntrinsicInst>(I);
   return II && !isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID());
 }
 
-// True if a chain instruction is used by an epilogue instruction outside the
-// chain (a store, the exit icmp, ...), which pins the chain to the epilogue.
-static bool
-hasExternalEpilogueUser(const LoopStructure &OrigLS,
-                        const SmallPtrSetImpl<Instruction *> &Chain) {
+// True if a chain instruction is used by a bottom instruction outside the
+// chain (a store, the exit icmp, ...), which pins the chain to the bottom.
+static bool hasExternalBottomUser(const LoopStructure &OrigLS,
+                                  const SmallPtrSetImpl<Instruction *> &Chain) {
   for (Instruction *I : Chain)
     for (User *U : I->users()) {
       auto *UI = dyn_cast<Instruction>(U);
@@ -1143,12 +1142,11 @@ AIEOuterLoopPipeliner::collectLiftableBottomChain(
     const OrigLoopStructure &OrigLS, PHINode &PHI) const {
   Value *LatchVal = PHI.getIncomingValueForBlock(OrigLS.getBottom());
   auto *LatchInst = dyn_cast<Instruction>(LatchVal);
-  const bool EpilogueDefinedBackEdge =
-      LatchInst && OrigLS.isInBottom(LatchInst);
-  if (!EpilogueDefinedBackEdge)
+  const bool BottomDefinedBackEdge = LatchInst && OrigLS.isInBottom(LatchInst);
+  if (!BottomDefinedBackEdge)
     return std::nullopt;
 
-  // Collect the epilogue operands feeding the back-edge value; bail if the
+  // Collect the bottom operands feeding the back-edge value; bail if the
   // chain reaches an inner-loop value or an unsafe intrinsic.
   SmallPtrSet<Instruction *, 16> Chain;
   SmallVector<Instruction *, 16> Worklist;
@@ -1177,7 +1175,7 @@ AIEOuterLoopPipeliner::collectLiftableBottomChain(
     }
   }
 
-  if (hasExternalEpilogueUser(OrigLS, Chain))
+  if (hasExternalBottomUser(OrigLS, Chain))
     return std::nullopt;
 
   LLVM_DEBUG(dbgs() << "    PHI " << PHI.getName() << ": lifting chain of "
@@ -1235,11 +1233,12 @@ bool AIEOuterLoopPipeliner::performTransformation(
   RemapTable PeelVMap;
   cloneStage0AsPeel(OrigLS, SteadyLS, PeelVMap);
 
-  // Prefetch the stage-0 chain in the epilogue (next-iteration pointer values).
+  // Prefetch the stage-0 chain in the bottom block (next-iteration pointer
+  // values).
   RemapTable EpiVMap;
   cloneStage0IntoBottom(OrigLS, SteadyLS, EpiVMap);
 
-  // Merge the peel and epilogue copies into the steady header via PHIs.
+  // Merge the peel and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PeelVMap, EpiVMap);
 
   // Adjust the outer loop trip count from N to N-1. Must happen before the peel
