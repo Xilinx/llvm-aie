@@ -34,7 +34,7 @@ body:             |
   ; CONSERVATIVE-NEXT:   - Prologue:        bb.1
   ; CONSERVATIVE-NEXT:   - PrologueBundles: '22'
   ; CONSERVATIVE-NEXT:   - Epilogue:        bb.4
-  ; CONSERVATIVE-NEXT:   - EpilogueBundles: '11'
+  ; CONSERVATIVE-NEXT:   - EpilogueBundles: '15'
   ; CONSERVATIVE-NEXT: ...
   ; OPTIMISTIC: --- !Passed
   ; OPTIMISTIC-NEXT: Pass:            pipeliner
@@ -49,7 +49,7 @@ body:             |
   ; OPTIMISTIC-NEXT:   - Prologue:        bb.1
   ; OPTIMISTIC-NEXT:   - PrologueBundles: '22'
   ; OPTIMISTIC-NEXT:   - Epilogue:        bb.4
-  ; OPTIMISTIC-NEXT:   - EpilogueBundles: '11'
+  ; OPTIMISTIC-NEXT:   - EpilogueBundles: '15'
   ; OPTIMISTIC-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.3(0x30000000), %bb.1(0x50000000)
