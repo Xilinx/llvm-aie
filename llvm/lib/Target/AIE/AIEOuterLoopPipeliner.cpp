@@ -296,7 +296,7 @@ bool OrigLoopStructure::isInnerLoopHardwareLoop() const {
 }
 
 SmallVector<LoadInst *, 8> OrigLoopStructure::collectTopLoads() const {
-  // The prologue is the single top block block.
+  // The prologue is the single top block.
   SmallVector<LoadInst *, 8> Loads;
   for (Instruction &I : *getTop())
     if (auto *L = dyn_cast<LoadInst>(&I))
@@ -305,7 +305,7 @@ SmallVector<LoadInst *, 8> OrigLoopStructure::collectTopLoads() const {
 }
 
 SmallVector<StoreInst *, 8> OrigLoopStructure::collectBottomStores() const {
-  // The epilogue is the single bottom block block.
+  // The epilogue is the single bottom block.
   SmallVector<StoreInst *, 8> Stores;
   for (Instruction &I : *getBottom())
     if (auto *S = dyn_cast<StoreInst>(&I))
@@ -1053,7 +1053,7 @@ bool OrigLoopStructure::tryAdjustLoopBound() {
 
 // NewLimit = Limit - Step covers increment (Step > 0) and decrement (Step < 0)
 // loops of any constant step magnitude.
-Value *CloneLoopStructure::adjustLoopBound() {
+Value *CloneLoopStructure::adjustLoopBound() const {
   const LatchConditionInfo &B = latchCondition();
   IRBuilder<> Builder(getPreheader()->getTerminator());
   Value *NewLimit = Builder.CreateSub(

@@ -12,15 +12,13 @@
 // i+1 with the inner loop + store chain of iteration i.
 //
 // Positions are named top / inner / bottom (the outer loop's header, inner
-// loop, and latch). The top block splits into stage-0 and stage-1 instructions:
-//   Stage 0 = the load/address chain: loads plus the pointer/address arithmetic
-//             feeding the inner loop. Peeled above the steady loop and
-//             prefetched in the bottom block for the next iteration.
-//   Stage 1 = the split-point cone: the stage-1 split points (see
-//             isStage1SplitPoint) reachable from the stage-0 chain, plus their
-//             descendants. Kept in the steady top and re-cloned into the
-//             last-iteration top. Only split-prologue mode populates stage 1;
-//             with it off the whole chain is stage 0.
+// loop, and latch). The top block splits into stage-0 and stage-1 instructions
+// by role (the partitioning strategy lives in collectStages):
+//   Stage 0 = the prefetched chain: peeled above the steady loop and prefetched
+//             in the bottom block for the next iteration.
+//   Stage 1 = the rest of the top: kept in the steady top and re-cloned into
+//             the last-iteration top. May be empty, in which case the whole top
+//             is stage 0.
 //
 // Original CFG:
 //
@@ -252,6 +250,22 @@ class OrigLoopStructure : public LoopStructure {
   // Returns the epilogue (bottom block) stores.
   SmallVector<StoreInst *, 8> collectBottomStores() const;
 
+  // Worklist closure over pipelineable neighbours (forward via users, backward
+  // via operands), each added to Set once; Set must already hold the seeds.
+  void forwardClosure(SmallVectorImpl<Instruction *> &Worklist,
+                      SmallPtrSetImpl<Instruction *> &Set) const;
+  void backwardClosure(SmallVectorImpl<Instruction *> &Worklist,
+                       SmallPtrSetImpl<Instruction *> &Set) const;
+
+  // The stage-1 set: the split points (IsSplitPoint, reachable from the
+  // top-block loads) and their prologue descendants. Empty if none is found.
+  SmallPtrSet<Instruction *, 32>
+  collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
+
+  // The fallback stage-0 collection (no split point): pipeline candidates
+  // backward-reachable from inner-loop uses, in program order.
+  void collectStage0FromInnerLoop();
+
 public:
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
   static std::unique_ptr<OrigLoopStructure> analyze(Loop *L);
@@ -276,22 +290,6 @@ public:
   // Returns true if it is safe to reorder the top-block loads before the
   // bottom-block stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
-
-  // Worklist closure over pipelineable neighbours (forward via users, backward
-  // via operands), each added to Set once; Set must already hold the seeds.
-  void forwardClosure(SmallVectorImpl<Instruction *> &Worklist,
-                      SmallPtrSetImpl<Instruction *> &Set) const;
-  void backwardClosure(SmallVectorImpl<Instruction *> &Worklist,
-                       SmallPtrSetImpl<Instruction *> &Set) const;
-
-  // The stage-1 set: the split points (IsSplitPoint, reachable from the
-  // top-block loads) and their prologue descendants. Empty if none is found.
-  SmallPtrSet<Instruction *, 32>
-  collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
-
-  // The fallback stage-0 collection (no split point): pipeline candidates
-  // backward-reachable from inner-loop uses, in program order.
-  void collectStage0FromInnerLoop();
 
   // Split the prologue pipeline candidates into the stage-1 split-point cone
   // and the stage-0 remainder (the load/address chain).
@@ -362,7 +360,7 @@ public:
 
   // Adjust the outer loop trip count from N to N-1. Returns the new limit
   // Value.
-  Value *adjustLoopBound();
+  Value *adjustLoopBound() const;
 
   // Repair loop metadata (trip count changed): decrement itercount.range, drop
   // the consumed enable hint, and append the success marker.
