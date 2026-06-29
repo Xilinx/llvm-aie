@@ -73,7 +73,7 @@ define void @nested_three_level(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %36(s32), %bb.11, [[C]](s32), %bb.2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.preheader:
+  ; CHECK-NEXT: bb.4.stage0.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
@@ -81,7 +81,7 @@ define void @nested_three_level(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   [[MUL:%[0-9]+]]:_(s32) = G_MUL [[LOAD]], [[LOAD1]]
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY4]], [[C1]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.6(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[C]](s32), %bb.4, %28(s32), %bb.7
@@ -97,7 +97,7 @@ define void @nested_three_level(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   %23:_(p0) = nuw nusw G_PTR_ADD [[PHI3]], [[C2]](s20)
   ; CHECK-NEXT:   %24:_(p0) = nuw nusw G_PTR_ADD [[PHI4]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.innermost.header:
+  ; CHECK-NEXT: bb.6.steady.stage1.inner.innermost.header:
   ; CHECK-NEXT:   successors: %bb.6(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:_(s32) = G_PHI %27(s32), %bb.6, [[C]](s32), %bb.5
@@ -106,7 +106,7 @@ define void @nested_three_level(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.6
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.steady.latch:
+  ; CHECK-NEXT: bb.7.steady.stage1.bottom.and.stage0.top:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.8(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI4]](p0) :: (store (s32) into %ir.c.ptr.steady)
@@ -118,12 +118,12 @@ define void @nested_three_level(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.8
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.lastiter.prologue:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.9(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY5]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.steady.innermost.header.lastiter:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.inner.innermost.header:
   ; CHECK-NEXT:   successors: %bb.9(0x7c000000), %bb.10(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI9:%[0-9]+]]:_(s32) = G_PHI %35(s32), %bb.9, [[C]](s32), %bb.8
@@ -132,7 +132,7 @@ define void @nested_three_level(ptr noalias %a, ptr noalias %b, ptr noalias %c,
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.9
   ; CHECK-NEXT:   G_BR %bb.10
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.10.lastiter.epilogue:
+  ; CHECK-NEXT: bb.10.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.11(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %24(p0) :: (store (s32) into %ir.c.ptr.next.steady)

@@ -8,34 +8,29 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Outer loop pipelining for AIE: overlaps the stage-0 chain (prologue) of outer
-// iteration i+1 with the inner loop + store chain (epilogue) of iteration i.
+// Outer loop pipelining for AIE: overlaps the stage-0 chain of outer iteration
+// i+1 with the inner loop + store chain of iteration i.
 //
-// The prologue (the outer header) splits into stage-0 and stage-1 instructions
-// by what the transform does with each:
+// Positions are named top / inner / bottom (the outer loop's header, inner
+// loop, and latch). The top block splits into stage-0 and stage-1 instructions:
 //   Stage 0 = the load/address chain: loads plus the pointer/address arithmetic
-//             feeding the inner loop. Moved out of the steady header — copied
-//             before the loop and prefetched in the epilogue for the next
-//             iteration.
+//             feeding the inner loop. Peeled above the steady loop and
+//             prefetched in the bottom block for the next iteration.
 //   Stage 1 = the split-point cone: the stage-1 split points (see
 //             isStage1SplitPoint) reachable from the stage-0 chain, plus their
-//             descendants in the prologue. Kept in the steady header and
-//             re-cloned into lastiter.prologue. Only split-prologue mode
-//             populates stage 1; with it off the whole prologue chain is
-//             stage 0.
+//             descendants. Kept in the steady top and re-cloned into the
+//             last-iteration top. Only split-prologue mode populates stage 1;
+//             with it off the whole chain is stage 0.
 //
 // Original CFG:
 //
 //   [preheader]
 //       |
-//   [outer.header]  <----------\  <- Prologue Content:
-//       |                       |        Stage 0
-//       |                       |        Stage 1 (+ set.loop.iterations)
-//       |                       |
-//   [outer.inner.*]             |  <- inner loop [Stage 1]
-//       |                       |
-//       |                       |
-//   [outer.latch]  ------------/  <- Epilogue [Stage 1] + Latch
+//   [top]  <------------------\  <- stage 0 + stage 1 (+ set.loop.iterations)
+//       |                      |
+//   [inner.*]                  |  <- inner loop
+//       |                      |
+//   [bottom]  ----------------/   <- stage 1 + latch
 //       |  (exit branch)
 //   [exit]
 //
@@ -43,22 +38,19 @@
 //
 //   [preheader]
 //       |
-//   [steady.preheader]    <- Stage 0:
+//   [stage0.top]                             <- stage 0 (peeled)
 //       |
-//   [steady.header]  <---------\  <- Stage 1: Prologue
-//       |                       |     (+ set.loop.iterations)
-//       |                       |
-//   [steady.inner.*]            |  <- Stage 1: steady-state inner loop
-//       |                       |
-//       |                       |
-//   [steady.latch]  -----------/  <- Stage 1: outer.latch + Stage 0 Prologue
+//   [steady.stage1.top]  <---------------\   <- stage 1 (+ set.loop.iterations)
+//       |                                 |
+//   [steady.stage1.inner.*]              |   <- steady-state inner loop
+//       |                                 |
+//   [steady.stage1.bottom.and.stage0.top]-/  <- stage 1 + next-iter stage 0
 //       |  (exit branch)
-//   [lastiter.prologue]        <- Stage 1: Prologue
-//       |                             (+ set.loop.iterations)
+//   [lastiter.stage1.top]                    <- stage 1 (+ set.loop.iterations)
 //       |
-//   [steady.inner.*.lastiter]  <- Stage 1: inner loop clone
+//   [lastiter.stage1.inner.*]                <- inner loop clone
 //       |
-//   [lastiter.epilogue]        <- Stage 1: Epilog
+//   [lastiter.stage1.bottom]                 <- stage 1 stores only
 //       |
 //   [exit]
 //
@@ -151,29 +143,24 @@ protected:
 
   MDNode *OuterLoopID = nullptr;
 
-  // The prologue region in program order; its entry block is the outer header.
-  BlockRegion PrologueRegion;
+  // The top region in program order; its entry is the top block.
+  BlockRegion TopRegion;
 
-  // The epilogue region in program order; its exit block is the outer latch.
-  BlockRegion EpilogueRegion;
+  // The bottom region in program order; its exit is the bottom block.
+  BlockRegion BottomRegion;
 
   LatchConditionInfo OuterLoopCondition;
 
-  // Returns true if I is in the prologue region (outer header).
-  bool isInPrologue(const Instruction *I) const {
-    return PrologueRegion.contains(I);
-  }
+  // Returns true if I is in the top region.
+  bool isInTop(const Instruction *I) const { return TopRegion.contains(I); }
 
 public:
   LoopStructure() = default;
   virtual ~LoopStructure() = default;
 
-  BasicBlock *getOuterHeader() const { return PrologueRegion.entry(); }
-  BasicBlock *getOuterLatch() const { return EpilogueRegion.back(); }
+  BasicBlock *getTop() const { return TopRegion.entry(); }
+  BasicBlock *getBottom() const { return BottomRegion.back(); }
 
-  // The inner preheader is the prologue entry: the linear single-block prologue
-  // is the outer header, which is also the inner loop's preheader.
-  BasicBlock *getInnerPreheader() const { return getOuterHeader(); }
   // LoopInfo lists a loop's header first, and cloning preserves block order.
   BasicBlock *getInnerHeader() const { return InnerLoopBlocks.front(); }
   // The single inner-loop predecessor of the inner header (single-latch form).
@@ -182,32 +169,31 @@ public:
   ArrayRef<BasicBlock *> getInnerBlocks() const { return InnerLoopBlocks; }
   MDNode *getOuterLoopID() const { return OuterLoopID; }
 
-  // The LS blocks in program order: outer header, inner-loop blocks, outer
-  // latch.
+  // The LS blocks in program order: top, inner-loop blocks, bottom.
   SmallVector<BasicBlock *, 8> blocksInProgramOrder() const;
 
-  const BlockRegion &prologueRegion() const { return PrologueRegion; }
-  const BlockRegion &epilogueRegion() const { return EpilogueRegion; }
+  const BlockRegion &topRegion() const { return TopRegion; }
+  const BlockRegion &bottomRegion() const { return BottomRegion; }
 
   const LatchConditionInfo &latchCondition() const {
     return OuterLoopCondition;
   }
 
-  // Returns true if I is in the epilogue region (outer latch).
-  bool isInEpilogue(const Instruction *I) const {
-    return EpilogueRegion.contains(I);
+  // Returns true if I is in the bottom region.
+  bool isInBottom(const Instruction *I) const {
+    return BottomRegion.contains(I);
   }
 
   // The outer loop preheader. The original derives it from LoopInfo; a clone
   // returns its stored preheader.
   virtual BasicBlock *getPreheader() const = 0;
 
-  // Returns the outer latch terminator as a BranchInst.
+  // Returns the bottom-block terminator as a BranchInst.
   BranchInst *getLatchBranch() const {
-    return cast<BranchInst>(getOuterLatch()->getTerminator());
+    return cast<BranchInst>(getBottom()->getTerminator());
   }
 
-  // The latch successor that leaves the loop (the non-header edge).
+  // The bottom successor that leaves the loop (the non-top edge).
   BasicBlock *getExitBlock() const;
 };
 
@@ -226,7 +212,7 @@ class OrigLoopStructure : public LoopStructure {
 
   Loop *getOuterLoop() const { return OuterLoop; }
 
-  // Populate the inner-loop fields and prologue/epilogue regions from
+  // Populate the inner-loop fields and prologue/bottom regions from
   // OuterLoop; returns false unless the loop is a supported pipelining
   // candidate.
   bool analyzeLoopStructure();
@@ -235,15 +221,15 @@ class OrigLoopStructure : public LoopStructure {
   // single-block epilogue; false on any other (unsupported) shape.
   bool allOuterBlocksAccountedFor() const;
 
-  // Validate the linear single-block prologue (outer header == inner preheader)
-  // and populate the prologue region; false for any other shape.
-  bool discoverPrologueRegion();
+  // Validate the linear single-block prologue (top block == inner preheader)
+  // and populate the top region; false for any other shape.
+  bool discoverTopRegion();
 
   /// \return true if latch exit condition are valid and the loop bound can be
   /// adjusted (Step != 0).
   bool tryAdjustLoopBound();
 
-  // True if every incoming block is inside the prologue region (cloned with
+  // True if every incoming block is inside the top region (cloned with
   // it), as opposed to a loop-carried PHI resolved to a concrete value when
   // cloning.
   bool isRegionInternalPhi(const PHINode *PHI) const;
@@ -260,11 +246,11 @@ class OrigLoopStructure : public LoopStructure {
   // controlled by an @llvm.loop.decrement intrinsic.
   bool isInnerLoopHardwareLoop() const;
 
-  // Returns the prologue (outer header) loads.
-  SmallVector<LoadInst *, 8> collectPrologueLoads() const;
+  // Returns the prologue (top block) loads.
+  SmallVector<LoadInst *, 8> collectTopLoads() const;
 
-  // Returns the epilogue (outer latch) stores.
-  SmallVector<StoreInst *, 8> collectEpilogueStores() const;
+  // Returns the epilogue (bottom block) stores.
+  SmallVector<StoreInst *, 8> collectBottomStores() const;
 
 public:
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
@@ -287,8 +273,8 @@ public:
   // meets MinTripCount, and the epilogue has stores.
   bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
 
-  // Returns true if it is safe to reorder the prologue loads before the
-  // epilogue stores (rejects volatile/atomic memory ops).
+  // Returns true if it is safe to reorder the top-block loads before the
+  // bottom-block stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
 
   // Worklist closure over pipelineable neighbours (forward via users, backward
@@ -299,7 +285,7 @@ public:
                        SmallPtrSetImpl<Instruction *> &Set) const;
 
   // The stage-1 set: the split points (IsSplitPoint, reachable from the
-  // prologue loads) and their prologue descendants. Empty if none is found.
+  // top-block loads) and their prologue descendants. Empty if none is found.
   SmallPtrSet<Instruction *, 32>
   collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
 
@@ -403,14 +389,14 @@ private:
 
   // Clone OrigLS's stage-0 chain into a peel block before the steady loop and
   // adopt the peel as the steady preheader (entry pointer values).
-  void clonePrologueAsPeel(const OrigLoopStructure &OrigLS,
-                           CloneLoopStructure &SteadyLS, RemapTable &PeelVMap);
+  void cloneStage0AsPeel(const OrigLoopStructure &OrigLS,
+                         CloneLoopStructure &SteadyLS, RemapTable &PeelVMap);
 
   // Clone OrigLS's stage-0 chain into the epilogue using next-iteration pointer
   // values, so the loads prefetch for the next iteration.
-  void clonePrologueIntoEpilogue(const OrigLoopStructure &OrigLS,
-                                 const CloneLoopStructure &SteadyLS,
-                                 RemapTable &EpiVMap);
+  void cloneStage0IntoBottom(const OrigLoopStructure &OrigLS,
+                             const CloneLoopStructure &SteadyLS,
+                             RemapTable &EpiVMap);
 
   // For each steady stage-0 instruction, merge its peel (entry-edge) and
   // epilogue (back-edge) clones via a header PHI, then erase the instruction.
@@ -458,9 +444,9 @@ private:
 
   // Fill the last-iteration epilogue with the pristine original stores and
   // pointer updates only (no prefetch loads), via Orig -> Steady -> lastiter.
-  void populateLastIterEpilogue(const OrigLoopStructure &OrigLS,
-                                const CloneLoopStructure &SteadyLS,
-                                CloneLoopStructure &LastIterLS) const;
+  void populateLastIterBottom(const OrigLoopStructure &OrigLS,
+                              const CloneLoopStructure &SteadyLS,
+                              CloneLoopStructure &LastIterLS) const;
 
   // Splice the last-iteration into the CFG and retarget the exit's live-outs to
   // its clones, so the value read after the loop reflects the final iteration.
@@ -471,12 +457,12 @@ private:
   // The epilogue instructions forming PHI's next-iteration pointer-update
   // chain, or nullopt if it cannot be safely lifted.
   std::optional<SmallPtrSet<Instruction *, 16>>
-  collectLiftableEpilogueChain(const OrigLoopStructure &OrigLS,
-                               PHINode &PHI) const;
+  collectLiftableBottomChain(const OrigLoopStructure &OrigLS,
+                             PHINode &PHI) const;
 
   // Lift the epilogue pointer-update chains (add.2d/add.3d and descendants) to
   // the prologue end so prologue cloning naturally covers them. True if moved.
-  bool liftEpiloguePointerUpdatesToPrologue(const OrigLoopStructure &OrigLS);
+  bool liftBottomPointerUpdatesToTop(const OrigLoopStructure &OrigLS);
 
   // Convert the steady loop to a JNZD hardware loop: start.loop.iterations in
   // the preheader, a counter PHI in the header, loop.decrement.reg in the

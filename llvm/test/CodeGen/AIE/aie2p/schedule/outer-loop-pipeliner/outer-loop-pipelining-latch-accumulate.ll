@@ -13,7 +13,7 @@
 
 ; %sum is accumulated across all outer iterations entirely in the outer latch
 ; (%sum.next = %sum + %acc.next) and returned after the loop. The pipeliner
-; peels the last outer iteration into lastiter.epilogue, so that block must (1)
+; peels the last outer iteration into lastiter.stage1.bottom, so that block must (1)
 ; recompute the latch accumulation and (2) feed it to the exit live-out —
 ; otherwise the returned sum drops the final iteration's contribution.
 
@@ -64,13 +64,13 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT: bb.2.outer.header.preheader:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.steady.preheader:
+  ; CHECK-NEXT: bb.3.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY2]], [[C]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.header:
+  ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %21(s32), %bb.6, [[C1]](s32), %bb.3
@@ -83,7 +83,7 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   %15:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
   ; CHECK-NEXT:   %16:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.inner.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.4, %18(s32), %bb.5
@@ -92,7 +92,7 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.latch:
+  ; CHECK-NEXT: bb.6.steady.stage1.bottom.and.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI2]](p0) :: (store (s32) into %ir.c.ptr.steady)
@@ -103,12 +103,12 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.lastiter.prologue:
+  ; CHECK-NEXT: bb.7.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.steady.inner.header.lastiter:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.7, %25(s32), %bb.8
@@ -117,7 +117,7 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.lastiter.epilogue:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD3]](s32), %16(p0) :: (store (s32) into %ir.c.ptr.next.steady)

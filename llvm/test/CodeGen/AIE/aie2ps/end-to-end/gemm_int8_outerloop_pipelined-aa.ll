@@ -36,9 +36,9 @@
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
 ; REMARKS-NEXT:   - Loop:            bb.5.for.body100.lastiter
-; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.prologue
+; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.epilogue
+; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 
 ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
@@ -160,7 +160,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    vaddmac dm0, dm0, dm4, x1, x6, r12 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.4: // %lastiter.prologue
+; CHECK-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; CHECK-NEXT:    vldb x3, [p1], m4
 ; CHECK-NEXT:    vlda.3d x1, [p1], d1
 ; CHECK-NEXT:    vldb x10, [p0], #64; mov m0, p5
@@ -180,7 +180,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; CHECK-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; CHECK-NEXT:  // %bb.6: // %lastiter.epilogue
+; CHECK-NEXT:  // %bb.6: // %lastiter.stage1.bottom
 ; CHECK-NEXT:    lda p7, [sp, #-60]; nopb ; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; movx crsrsmode, #0; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8 // 4-byte Folded Reload
 ; CHECK-NEXT:    paddxm [sp], #-64; or r12, r24, r24; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
@@ -637,25 +637,25 @@ for.cond.cleanup99:                               ; preds = %for.body100
   %p_mat_a.1736.epi = addrspacecast ptr %p_mat_a.1.in735.epi to ptr addrspace(5)
   %p_mat_b.1.in737.epi = extractvalue { ptr, i20, i20 } %.epi94, 0
   %p_mat_b.1738.epi = addrspacecast ptr %p_mat_b.1.in737.epi to ptr addrspace(5)
-  br i1 %exitcond777.not, label %lastiter.prologue, label %for.body, !llvm.loop !94
+  br i1 %exitcond777.not, label %lastiter.stage1.top, label %for.body, !llvm.loop !94
 
-lastiter.prologue:                                   ; preds = %for.cond.cleanup99
+lastiter.stage1.top:                                   ; preds = %for.cond.cleanup99
   call void @llvm.set.loop.iterations.i32(i32 %18)
   br label %for.body100.lastiter
 
-for.body100.lastiter:                                   ; preds = %lastiter.prologue, %for.body100.lastiter
-  %p_mat_b.1751.lastiter = phi ptr addrspace(5) [ %p_mat_b.1738.epi, %lastiter.prologue ], [ %p_mat_b.1.lastiter, %for.body100.lastiter ]
-  %p_mat_b.1.in750.lastiter = phi ptr [ %p_mat_b.1.in737.epi, %lastiter.prologue ], [ %p_mat_b.1.in.lastiter, %for.body100.lastiter ]
-  %p_mat_a.1749.lastiter = phi ptr addrspace(5) [ %p_mat_a.1736.epi, %lastiter.prologue ], [ %p_mat_a.1.lastiter, %for.body100.lastiter ]
-  %p_mat_a.1.in748.lastiter = phi ptr [ %p_mat_a.1.in735.epi, %lastiter.prologue ], [ %p_mat_a.1.in.lastiter, %for.body100.lastiter ]
-  %iterator_mat_a_cnt0.1746.lastiter = phi i32 [ %.epi86, %lastiter.prologue ], [ %.cd237, %for.body100.lastiter ]
-  %iterator_mat_a_cnt1.1745.lastiter = phi i32 [ %.epi88, %lastiter.prologue ], [ %.cd239, %for.body100.lastiter ]
-  %iterator_mat_b_cnt0.1744.lastiter = phi i32 [ %.epi96, %lastiter.prologue ], [ %.cd246, %for.body100.lastiter ]
-  %iterator_mat_b_cnt1.1743.lastiter = phi i32 [ %.epi98, %lastiter.prologue ], [ %.cd248, %for.body100.lastiter ]
-  %Ci3.sroa.0.0742.lastiter = phi <64 x i32> [ %.epi154, %lastiter.prologue ], [ %.cd258, %for.body100.lastiter ]
-  %Ci2.sroa.0.0741.lastiter = phi <64 x i32> [ %.epi153, %lastiter.prologue ], [ %.cd257, %for.body100.lastiter ]
-  %Ci1.sroa.0.0740.lastiter = phi <64 x i32> [ %.epi152, %lastiter.prologue ], [ %.cd255, %for.body100.lastiter ]
-  %Ci0.sroa.0.0739.lastiter = phi <64 x i32> [ %.epi151, %lastiter.prologue ], [ %.cd254, %for.body100.lastiter ]
+for.body100.lastiter:                                   ; preds = %lastiter.stage1.top, %for.body100.lastiter
+  %p_mat_b.1751.lastiter = phi ptr addrspace(5) [ %p_mat_b.1738.epi, %lastiter.stage1.top ], [ %p_mat_b.1.lastiter, %for.body100.lastiter ]
+  %p_mat_b.1.in750.lastiter = phi ptr [ %p_mat_b.1.in737.epi, %lastiter.stage1.top ], [ %p_mat_b.1.in.lastiter, %for.body100.lastiter ]
+  %p_mat_a.1749.lastiter = phi ptr addrspace(5) [ %p_mat_a.1736.epi, %lastiter.stage1.top ], [ %p_mat_a.1.lastiter, %for.body100.lastiter ]
+  %p_mat_a.1.in748.lastiter = phi ptr [ %p_mat_a.1.in735.epi, %lastiter.stage1.top ], [ %p_mat_a.1.in.lastiter, %for.body100.lastiter ]
+  %iterator_mat_a_cnt0.1746.lastiter = phi i32 [ %.epi86, %lastiter.stage1.top ], [ %.cd237, %for.body100.lastiter ]
+  %iterator_mat_a_cnt1.1745.lastiter = phi i32 [ %.epi88, %lastiter.stage1.top ], [ %.cd239, %for.body100.lastiter ]
+  %iterator_mat_b_cnt0.1744.lastiter = phi i32 [ %.epi96, %lastiter.stage1.top ], [ %.cd246, %for.body100.lastiter ]
+  %iterator_mat_b_cnt1.1743.lastiter = phi i32 [ %.epi98, %lastiter.stage1.top ], [ %.cd248, %for.body100.lastiter ]
+  %Ci3.sroa.0.0742.lastiter = phi <64 x i32> [ %.epi154, %lastiter.stage1.top ], [ %.cd258, %for.body100.lastiter ]
+  %Ci2.sroa.0.0741.lastiter = phi <64 x i32> [ %.epi153, %lastiter.stage1.top ], [ %.cd257, %for.body100.lastiter ]
+  %Ci1.sroa.0.0740.lastiter = phi <64 x i32> [ %.epi152, %lastiter.stage1.top ], [ %.cd255, %for.body100.lastiter ]
+  %Ci0.sroa.0.0739.lastiter = phi <64 x i32> [ %.epi151, %lastiter.stage1.top ], [ %.cd254, %for.body100.lastiter ]
   %.lastiter = load <32 x i16>, ptr addrspace(5) %p_mat_a.1749.lastiter, align 64, !tbaa !4, !noalias !63
   %add.ptr.i485.lastiter = getelementptr inbounds nuw i8, ptr %p_mat_a.1.in748.lastiter, i20 64
   %add.ptr.ascast.i486.lastiter = addrspacecast ptr %add.ptr.i485.lastiter to ptr addrspace(5)
@@ -693,9 +693,9 @@ for.body100.lastiter:                                   ; preds = %lastiter.prol
   %p_mat_b.1.in.lastiter = extractvalue { ptr, i20, i20 } %.cd244, 0
   %p_mat_b.1.lastiter = addrspacecast ptr %p_mat_b.1.in.lastiter to ptr addrspace(5)
   %.cd259 = call i1 @llvm.loop.decrement.i32(i32 1)
-  br i1 %.cd259, label %for.body100.lastiter, label %lastiter.epilogue, !llvm.loop !91
+  br i1 %.cd259, label %for.body100.lastiter, label %lastiter.stage1.bottom, !llvm.loop !91
 
-lastiter.epilogue:                                    ; preds = %for.body100.lastiter
+lastiter.stage1.bottom:                                    ; preds = %for.body100.lastiter
   %.cd260 = addrspacecast ptr %p_mat_b.1.in.lastiter to ptr addrspace(5)
   %.cd261 = addrspacecast ptr %p_mat_a.1.in.lastiter to ptr addrspace(5)
   %.cd262 = addrspacecast ptr %69 to ptr addrspace(6)
@@ -728,7 +728,7 @@ lastiter.epilogue:                                    ; preds = %for.body100.las
   %exitcond777.not.lastiter = icmp eq i32 %lsr.iv.next807.lastiter, 0
   br label %for.cond.cleanup
 
-for.cond.cleanup:                                 ; preds = %lastiter.epilogue
+for.cond.cleanup:                                 ; preds = %lastiter.stage1.bottom
   ret void
 }
 

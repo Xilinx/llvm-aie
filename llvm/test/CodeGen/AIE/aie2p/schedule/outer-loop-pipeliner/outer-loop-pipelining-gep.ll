@@ -66,7 +66,7 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT: bb.2.outer.header.preheader:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.steady.preheader:
+  ; CHECK-NEXT: bb.3.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[COPY5]](s32)
@@ -81,7 +81,7 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   [[MUL1:%[0-9]+]]:_(s32) = G_MUL [[LOAD]], [[LOAD1]]
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY3]], [[C]]
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.steady.header:
+  ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %35(s32), %bb.6, [[C1]](s32), %bb.3
@@ -99,7 +99,7 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   %30:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C3]](s20)
   ; CHECK-NEXT:   %31:_(p0) = nuw nusw G_PTR_ADD [[PHI3]], [[C3]](s20)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.5.steady.inner.header:
+  ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI9:%[0-9]+]]:_(s32) = G_PHI %34(s32), %bb.5, [[C1]](s32), %bb.4
@@ -108,7 +108,7 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.6.steady.latch:
+  ; CHECK-NEXT: bb.6.steady.stage1.bottom.and.stage0.top:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI3]](p0) :: (store (s32) into %ir.c.ptr.steady)
@@ -127,12 +127,12 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.7.lastiter.prologue:
+  ; CHECK-NEXT: bb.7.lastiter.stage1.top:
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY4]](s32)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.8.steady.inner.header.lastiter:
+  ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI10:%[0-9]+]]:_(s32) = G_PHI %49(s32), %bb.8, [[C1]](s32), %bb.7
@@ -141,7 +141,7 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.9.lastiter.epilogue:
+  ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %31(p0) :: (store (s32) into %ir.c.ptr.next.steady)
