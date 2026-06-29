@@ -230,13 +230,31 @@ class LockDelays : public ScheduleDAGMutation {
           continue;
         updatePredLatency(PredEdge, SU, *Delay);
       }
+      // The inter-block DDG has no single MBB; it splices a predecessor
+      // region (pre-boundary) with a successor region (post-boundary). Two
+      // nodes are in the same region iff they sit on the same side of that
+      // boundary. A plain single-region scheduler DAG has a real MBB and no
+      // boundary, so its nodes are always same-region.
+      const auto *InterBlockDAG =
+          DAG->getBB() ? nullptr : static_cast<AIE::InterBlockEdges *>(DAG);
       for (auto &SuccEdge : SU.Succs) {
         MachineInstr *LdSt = SuccEdge.getSUnit()->getInstr();
         if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
-        assert(!TII->getDoneLatency(MI->getOpcode()) &&
+        const bool SameRegion =
+            !InterBlockDAG ||
+            InterBlockDAG->isPostBoundaryNode(&SU) ==
+                InterBlockDAG->isPostBoundaryNode(SuccEdge.getSUnit());
+        const bool DoneWithSameRegionLdSt =
+            TII->getDoneLatency(MI->getOpcode()) && SameRegion;
+        assert(!DoneWithSameRegionLdSt &&
                "DONE with a memory successor is not supported");
+        // A DONE in a different region than its memory successor needs no
+        // resume edge: the DONE -> region-end spacing is already provided by
+        // the region-end exit edge, and the resume window is lock-only.
+        if (TII->getDoneLatency(MI->getOpcode()))
+          continue;
         // Ensure the memory operation happens after the core resumes. The same
         // per-(lock, memop) delay backs the cross-block exit edge in
         // MaxLatencyFinder, so spacing is identical across an MBB border.
