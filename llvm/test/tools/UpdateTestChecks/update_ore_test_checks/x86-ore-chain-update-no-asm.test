@@ -1,0 +1,12 @@
+# REQUIRES: x86-registered-target
+## Remark-only test (no asm RUN line) updated with --update-llc-checks. The
+## asm-update step must be skipped because there is nothing to regenerate;
+## previously it stripped the remark RUN line and crashed the sibling
+## update_llc_test_checks.py with an UnboundLocalError on an empty run list.
+
+# RUN: cp -f %S/Inputs/x86-ore-chain-update-no-asm.ll %t.ll && %update_ore_test_checks --update-llc-checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-chain-update-no-asm.ll.expected %t.ll
+
+## Idempotency via UTC_ARGS (no --update-llc-checks on the command line):
+# RUN: %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/x86-ore-chain-update-no-asm.ll.expected %t.ll
