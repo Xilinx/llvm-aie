@@ -1071,26 +1071,24 @@ Value *CloneLoopStructure::adjustLoopBound() const {
 // Copy Source's hint entries dropping the consumed enable hint, append the
 // pipeliner success marker, and self-reference operand 0 as a loop ID requires.
 static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
-  static constexpr StringLiteral HintKey{
-      "llvm.loop.hint.aie-enable-outer-loop-pipelining"};
-  static constexpr StringLiteral SuccessKey{
-      "llvm.loop.hint.aie_outerloop_pipeliner_success"};
+  const std::string EnableHintKey =
+      (AIE::LoopOptionOverrides::Prefix + EnableOuterLoopPipelining.ArgStr)
+          .str();
 
   SmallVector<Metadata *, 8> MDs;
   for (unsigned I = 1, E = Source->getNumOperands(); I < E; ++I) {
     MDNode *Entry = cast<MDNode>(Source->getOperand(I));
     auto Key = AIELoopUtils::getMetadataKey(*Entry);
     // Drop the consumed enable hint.
-    if (Key && *Key == HintKey)
+    if (Key && *Key == EnableHintKey)
       continue;
     MDs.push_back(Entry);
   }
 
-  // Append the success marker:
-  // !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+  // Append the success marker: !{!"<OuterLoopPipelinedKey>", i64 1}
   MDNode *SuccessEntry = MDNode::get(
       Ctx,
-      {MDString::get(Ctx, SuccessKey),
+      {MDString::get(Ctx, AIELoopUtils::OuterLoopPipelinedKey),
        ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
   MDs.push_back(SuccessEntry);
 
