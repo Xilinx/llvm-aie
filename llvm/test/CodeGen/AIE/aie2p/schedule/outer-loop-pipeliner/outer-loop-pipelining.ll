@@ -34,14 +34,14 @@
 ;
 ; Expected output after transformation:
 ;
-;   [outer.header.peel.pro]  <- peel: DATA LOADS ONLY (no set.loop.iterations)
-;       v0.peel = load(a)
-;       v1.peel = load(b)
+;   [stage0.top]             <- stage-0 top: DATA LOADS ONLY (no set.loop.iterations)
+;       v0.top = load(a)
+;       v1.top = load(b)
 ;       br outer.header
 ;
 ;   [outer.header]           <- PHIs for pipelined values + set.loop.iterations
-;       %v0.phi = phi [v0.peel, peel.pro], [v0.bottom, outer.latch]
-;       %v1.phi = phi [v1.peel, peel.pro], [v1.bottom, outer.latch]
+;       %v0.phi = phi [v0.top, stage0.top], [v0.bottom, outer.latch]
+;       %v1.phi = phi [v1.top, stage0.top], [v1.bottom, outer.latch]
 ;       call void @llvm.set.loop.iterations.i32(i32 %M)
 ;       br inner.header
 ;
@@ -210,8 +210,8 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; value of the inner loop accumulator PHI.
 ;
 ; After transformation:
-;   - %init_acc.peel = mul %v0.peel, %v1.peel  (in peel)
-;   - %init_acc.phi = phi [peel, peel], [epi, latch]  (in outer.header)
+;   - %init_acc.top = mul %v0.top, %v1.top  (in stage0.top)
+;   - %init_acc.phi = phi [top, top], [epi, latch]  (in outer.header)
 ;   - %acc = phi [%init_acc.phi, outer.header], [%acc.next, inner.header]
 ;   - %acc.lastiter = phi [%init_acc.bottom, lastiter.stage1.top], [...]  (in last-iteration)
 ; ============================================================================

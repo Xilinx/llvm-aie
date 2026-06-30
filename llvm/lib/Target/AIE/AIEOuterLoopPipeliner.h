@@ -14,8 +14,9 @@
 // Positions are named top / inner / bottom (the outer loop's header, inner
 // loop, and latch). The top block splits into stage-0 and stage-1 instructions
 // by role (the partitioning strategy lives in collectStages):
-//   Stage 0 = the prefetched chain: peeled above the steady loop and prefetched
-//             in the bottom block for the next iteration.
+//   Stage 0 = the prefetched chain: cloned into the stage0.top preheader above
+//             the steady loop and prefetched in the bottom block for the next
+//             iteration.
 //   Stage 1 = the rest of the top: kept in the steady top and re-cloned into
 //             the last-iteration top. May be empty, in which case the whole top
 //             is stage 0.
@@ -36,7 +37,7 @@
 //
 //   [preheader]
 //       |
-//   [stage0.top]                             <- stage 0 (peeled)
+//   [stage0.top]                             <- stage 0 (preheader copy)
 //       |
 //   [steady.stage1.top]  <---------------\   <- stage 1 (+ set.loop.iterations)
 //       |                                 |
@@ -398,10 +399,11 @@ private:
   void swapInClonedLS(const OrigLoopStructure &OrigLS,
                       CloneLoopStructure &SteadyLS) const;
 
-  // Clone OrigLS's stage-0 chain into a peel block before the steady loop and
-  // adopt the peel as the steady preheader (entry pointer values).
-  void cloneStage0AsPeel(const OrigLoopStructure &OrigLS,
-                         CloneLoopStructure &SteadyLS, RemapTable &PeelVMap);
+  // Clone OrigLS's stage-0 chain into a new stage-0 top block before the steady
+  // loop and adopt it as the steady preheader (entry pointer values).
+  void cloneStage0IntoPreheader(const OrigLoopStructure &OrigLS,
+                                CloneLoopStructure &SteadyLS,
+                                RemapTable &PreheaderVMap);
 
   // Clone OrigLS's stage-0 chain into the bottom block using next-iteration
   // pointer values, so the loads prefetch for the next iteration.
@@ -409,12 +411,12 @@ private:
                              const CloneLoopStructure &SteadyLS,
                              RemapTable &BottomVMap);
 
-  // For each steady stage-0 instruction, merge its peel (entry-edge) and
+  // For each steady stage-0 instruction, merge its preheader (entry-edge) and
   // bottom (back-edge) clones via a header PHI, erase the instruction, and
   // retarget SteadyLS's clone map so the slot now resolves to the merged PHI.
   void createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                            CloneLoopStructure &SteadyLS,
-                           const RemapTable &PeelVMap,
+                           const RemapTable &PreheaderVMap,
                            const RemapTable &BottomVMap);
 
   // Create the last-iteration region (top + inner-loop clone + stores-only

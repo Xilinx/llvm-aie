@@ -163,7 +163,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; Test 2: Decrement outer loop with step -1 (regression guard).
 ;
 ; With step -1, the outer loop is both pipelined AND converted to a JNZD
-; hardware loop. @llvm.start.loop.iterations appears in the peel block
+; hardware loop. @llvm.start.loop.iterations appears in the stage-0 top block
 ; and @llvm.loop.decrement.reg replaces the software icmp in the latch.
 ; ============================================================================
 

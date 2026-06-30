@@ -19,7 +19,7 @@
 ;
 ; Expected structure after transformation:
 ;
-;   [outer.header.peel.pro]  <- peel: Part-1 loads only, no anchor call
+;   [stage0.top]             <- stage-0 top: Part-1 loads only, no anchor call
 ;   [outer.header]           <- PHIs for pipelined loads + anchor call remains
 ;   [outer.latch]            <- Part-1 epilogue loads for next iteration
 ;   [lastiter.stage1.top]         <- anchor call cloned (uses epilogue loads)

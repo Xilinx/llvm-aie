@@ -18,7 +18,7 @@
 ;
 ; This tests that address computation instructions (GEPs) between PHI pointers
 ; and loads are correctly identified as part of the data-load chain and are
-; included in the peel and epilogue clones.
+; included in the stage-0 top and epilogue clones.
 ;
 ; Input structure:
 ;   %a.ptr = phi ptr [...]
@@ -76,8 +76,8 @@ define void @nested_loop_with_gep(ptr noalias %a, ptr noalias %b, ptr noalias %c
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
   ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[MUL]](s20)
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(p0) = COPY [[PTR_ADD1]](p0)
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY6]](p0) :: (load (s32) from %ir.a.gep.steady.peel)
-  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[COPY7]](p0) :: (load (s32) from %ir.b.gep.steady.peel)
+  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY6]](p0) :: (load (s32) from %ir.a.gep.steady.top)
+  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[COPY7]](p0) :: (load (s32) from %ir.b.gep.steady.top)
   ; CHECK-NEXT:   [[MUL1:%[0-9]+]]:_(s32) = G_MUL [[LOAD]], [[LOAD1]]
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY3]], [[C]]
   ; CHECK-NEXT: {{  $}}

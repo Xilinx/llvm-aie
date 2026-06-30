@@ -489,28 +489,30 @@ AIEOuterLoopPipeliner::remapToClone(ArrayRef<Instruction *> Insts,
   return Out;
 }
 
-void AIEOuterLoopPipeliner::cloneStage0AsPeel(const OrigLoopStructure &OrigLS,
-                                              CloneLoopStructure &SteadyLS,
-                                              RemapTable &PeelVMap) {
+void AIEOuterLoopPipeliner::cloneStage0IntoPreheader(
+    const OrigLoopStructure &OrigLS, CloneLoopStructure &SteadyLS,
+    RemapTable &PreheaderVMap) {
   Function *F = SteadyLS.getTop()->getParent();
   BasicBlock *Preheader = SteadyLS.getPreheader();
 
-  // Seed PeelVMap with the entry (preheader) values of the top block PHIs so
-  // the peel's loads use the entry pointers.
-  seedHeaderPhiEdge(PeelVMap, SteadyLS, Preheader);
+  // Seed PreheaderVMap with the entry (preheader) values of the top block PHIs
+  // so the entry clone's loads use the entry pointers.
+  seedHeaderPhiEdge(PreheaderVMap, SteadyLS, Preheader);
 
-  BasicBlock *Peel =
+  BasicBlock *Stage0Top =
       BasicBlock::Create(F->getContext(), "stage0.top", F, SteadyLS.getTop());
-  PeelVMap[SteadyLS.getTop()] = Peel;
+  PreheaderVMap[SteadyLS.getTop()] = Stage0Top;
   cloneAndRemapInsts(remapToClone(OrigLS.stage0Insts(), SteadyLS.cloneMap()),
-                     *Peel, Peel->end(), PeelVMap, ".peel");
+                     *Stage0Top, Stage0Top->end(), PreheaderVMap, ".top");
 
-  BranchInst::Create(SteadyLS.getTop(), Peel);
-  Preheader->getTerminator()->replaceSuccessorWith(SteadyLS.getTop(), Peel);
+  BranchInst::Create(SteadyLS.getTop(), Stage0Top);
+  Preheader->getTerminator()->replaceSuccessorWith(SteadyLS.getTop(),
+                                                   Stage0Top);
 
-  // The peel is now the preheader for the steady LS.
-  SteadyLS.installPreheader(Peel);
-  LLVM_DEBUG(dbgs() << "    Created peel block: " << Peel->getName() << "\n");
+  // The stage-0 top block is now the preheader for the steady LS.
+  SteadyLS.installPreheader(Stage0Top);
+  LLVM_DEBUG(dbgs() << "    Created stage-0 top block: " << Stage0Top->getName()
+                    << "\n");
 }
 
 Instruction *AIEOuterLoopPipeliner::cloneInstInto(Instruction &I,
@@ -691,9 +693,9 @@ void AIEOuterLoopPipeliner::cloneStage0IntoBottom(
 
 void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
                                                 CloneLoopStructure &SteadyLS,
-                                                const RemapTable &PeelVMap,
+                                                const RemapTable &PreheaderVMap,
                                                 const RemapTable &BottomVMap) {
-  BasicBlock *Peel = SteadyLS.getPreheader();
+  BasicBlock *Preheader = SteadyLS.getPreheader();
   Instruction *InsertPt = &*SteadyLS.getTop()->getFirstInsertionPt();
 
   // Walk OrigLS stage-0 and its steady clones together: the merged PHI replaces
@@ -707,17 +709,18 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
     // own clone.
     if (I->getType()->isVoidTy())
       continue;
-    auto PeelIt = PeelVMap.find(I);
+    auto PreheaderIt = PreheaderVMap.find(I);
     auto BottomIt = BottomVMap.find(I);
     // Both cloners add every stage-0 entry, so every non-void inst is in both.
-    assert(PeelIt != PeelVMap.end() && BottomIt != BottomVMap.end() &&
-           "Stage-0 instruction must be in both the peel and bottom VMaps");
+    assert(
+        PreheaderIt != PreheaderVMap.end() && BottomIt != BottomVMap.end() &&
+        "Stage-0 instruction must be in both the preheader and bottom VMaps");
     PHINode *PHI = PHINode::Create(I->getType(), 2, I->getName() + ".phi");
     PHI->insertBefore(InsertPt->getIterator());
-    PHI->addIncoming(PeelIt->second, Peel);
+    PHI->addIncoming(PreheaderIt->second, Preheader);
     PHI->addIncoming(BottomIt->second, SteadyLS.getBottom());
 
-    // The inner-loop and intra-top uses now read the merge PHI; the peel /
+    // The inner-loop and intra-top uses now read the merge PHI; the preheader /
     // bottom clones keep using their own mapped values.
     I->replaceAllUsesWith(PHI);
     SteadyLS.retargetClone(OrigI, PHI);
@@ -1229,18 +1232,18 @@ bool AIEOuterLoopPipeliner::performTransformation(
   swapInClonedLS(OrigLS, SteadyLS);
   SteadyLS.remapBoundThroughCloneMap();
 
-  // Peel the stage-0 chain before the steady header (entry pointer values);
-  // this also adopts the peel as the steady preheader.
-  RemapTable PeelVMap;
-  cloneStage0AsPeel(OrigLS, SteadyLS, PeelVMap);
+  // Clone the stage-0 chain above the steady header (entry pointer values);
+  // this also adopts that block as the steady preheader.
+  RemapTable PreheaderVMap;
+  cloneStage0IntoPreheader(OrigLS, SteadyLS, PreheaderVMap);
 
   // Prefetch the stage-0 chain in the bottom block (next-iteration pointer
   // values).
   RemapTable BottomVMap;
   cloneStage0IntoBottom(OrigLS, SteadyLS, BottomVMap);
 
-  // Merge the peel and bottom copies into the steady header via PHIs.
-  createPipelinedPHIs(OrigLS, SteadyLS, PeelVMap, BottomVMap);
+  // Merge the preheader and bottom copies into the steady header via PHIs.
+  createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
   // Adjust the outer loop trip count from N to N-1. Must happen before the peel
   // so the hardware-loop conversion can find the right icmp to replace.
@@ -1262,13 +1265,13 @@ bool AIEOuterLoopPipeliner::performTransformation(
   return true;
 }
 
-// The i32 JNZD trip count materialized in the peel: peeling one iteration from
-// a decrement loop starting at N leaves N-1 to run (NOT the adjusted
+// The i32 JNZD trip count materialized in the preheader: peeling one iteration
+// from a decrement loop starting at N leaves N-1 to run (NOT the adjusted
 // threshold).
-static Value *computeJNZDTripCount(BasicBlock *Peel, PHINode &OldIV,
+static Value *computeJNZDTripCount(BasicBlock *Preheader, PHINode &OldIV,
                                    Type *I32Ty) {
-  IRBuilder<> PreBuilder(Peel->getTerminator());
-  Value *InitN = OldIV.getIncomingValueForBlock(Peel);
+  IRBuilder<> PreBuilder(Preheader->getTerminator());
+  Value *InitN = OldIV.getIncomingValueForBlock(Preheader);
   Value *TripCount = PreBuilder.CreateSub(
       InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
   if (TripCount->getType() != I32Ty)
@@ -1278,18 +1281,18 @@ static Value *computeJNZDTripCount(BasicBlock *Peel, PHINode &OldIV,
 }
 
 // Create the outer-header counter PHI seeded from start_loop_iterations in the
-// peel; its back-edge incoming is filled by rewriteLatchToDecrement.
+// preheader; its back-edge incoming is filled by rewriteLatchToDecrement.
 static PHINode *createOuterCounterPHI(const CloneLoopStructure &SteadyLS,
                                       Value *TripCount, Type *I32Ty) {
-  BasicBlock *Peel = SteadyLS.getPreheader();
-  IRBuilder<> PreBuilder(Peel->getTerminator());
+  BasicBlock *Preheader = SteadyLS.getPreheader();
+  IRBuilder<> PreBuilder(Preheader->getTerminator());
   Value *CtrInit = PreBuilder.CreateIntrinsic(
       Intrinsic::start_loop_iterations, {I32Ty}, {TripCount},
       /*FMFSource=*/nullptr, "outer.ctr.init");
   Instruction *InsertPt = &*SteadyLS.getTop()->getFirstInsertionPt();
   PHINode *CtrPHI =
       PHINode::Create(I32Ty, 2, "outer.ctr", InsertPt->getIterator());
-  CtrPHI->addIncoming(CtrInit, Peel);
+  CtrPHI->addIncoming(CtrInit, Preheader);
   return CtrPHI;
 }
 

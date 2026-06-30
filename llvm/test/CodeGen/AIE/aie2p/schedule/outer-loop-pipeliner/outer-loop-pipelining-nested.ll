@@ -33,7 +33,7 @@
 ; The outermost loop remains unchanged; it now branches into the cloned
 ; steady-state middle loop.
 
-; The middle loop is pipelined into the steady-state clone: peel block.
+; The middle loop is pipelined into the steady-state clone: stage-0 top block.
 
 ; Steady header should have PHI nodes for pipelined values
 
