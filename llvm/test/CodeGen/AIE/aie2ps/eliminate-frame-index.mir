@@ -196,7 +196,7 @@ body:             |
     ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmhl0, -128, implicit $sp :: (store (s512) into %stack.0 + 128)
     ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmhh0, -64, implicit $sp :: (store (s512) into %stack.0 + 192)
     $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
-    VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
 ...
 
 ---
@@ -960,7 +960,128 @@ body:             |
     renamable $p0 = PseudoFI %stack.0, implicit $sp
     ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
-    VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+# The Y/CM/DM spill pseudos expand into native dmx x/bm stores/loads whose SP
+# offset field is c16n_step64 (encodable range ~ +/-32 KB). The *_big_offset
+# tests above use a ~72 KB frame, which is out of range under both a step-64 and
+# a step-128 check, so they don't pin down the threshold. The *_mid_offset tests
+# below use a ~50 KB frame: that is in range for a (wrong) step-128 check but out
+# of range for the correct step-64 check, so they require the expanded x/bm
+# spills to use indexed addressing (a step-128 check would emit an unencodable
+# immediate here).
+---
+name:            test_vec1024_mid_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 50000, alignment: 64 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 128, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+    ; CHECK-LABEL: name: test_vec1024_mid_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 50240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -50240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50240
+    ; CHECK-NEXT: $x0 = VLDA_dmx_lda_x_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50176
+    ; CHECK-NEXT: $x1 = VLDA_dmx_lda_x_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50240
+    ; CHECK-NEXT: VST_dmx_sts_x_st_idx $x0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50176
+    ; CHECK-NEXT: VST_dmx_sts_x_st_idx $x1, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -50240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $y0 = VLDA_Y_SPILL %stack.0, implicit $sp
+    VST_Y_SPILL $y0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_acc1024_mid_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 50000, alignment: 64 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 128, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+    ; CHECK-LABEL: name: test_acc1024_mid_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 50240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -50240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50240
+    ; CHECK-NEXT: $bmll0 = VLDA_dmx_lda_bm_ld_idx $p0, killed $dj0 :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50176
+    ; CHECK-NEXT: $bmlh0 = VLDA_dmx_lda_bm_ld_idx killed $p0, killed $dj0 :: (load (s512) from %stack.0 + 64)
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50240
+    ; CHECK-NEXT: VST_dmx_sts_bm_st_idx $bmll0, $p0, killed $dj0 :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50176
+    ; CHECK-NEXT: VST_dmx_sts_bm_st_idx $bmlh0, killed $p0, killed $dj0 :: (store (s512) into %stack.0 + 64)
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -50240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $cml0 = VLDA_CM_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
+    VST_CM_SPILL $cml0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_acc2048_mid_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 50000, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+    ; CHECK-LABEL: name: test_acc2048_mid_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 50304, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -50048
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50048
+    ; CHECK-NEXT: $bmll0 = VLDA_dmx_lda_bm_ld_idx $p0, killed $dj0 :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -49984
+    ; CHECK-NEXT: $bmlh0 = VLDA_dmx_lda_bm_ld_idx $p0, killed $dj0 :: (load (s512) from %stack.0 + 64)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -49920
+    ; CHECK-NEXT: $bmhl0 = VLDA_dmx_lda_bm_ld_idx $p0, killed $dj0 :: (load (s512) from %stack.0 + 128)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -49856
+    ; CHECK-NEXT: $bmhh0 = VLDA_dmx_lda_bm_ld_idx killed $p0, killed $dj0 :: (load (s512) from %stack.0 + 192)
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -50048
+    ; CHECK-NEXT: VST_dmx_sts_bm_st_idx $bmll0, $p0, killed $dj0 :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -49984
+    ; CHECK-NEXT: VST_dmx_sts_bm_st_idx $bmlh0, $p0, killed $dj0 :: (store (s512) into %stack.0 + 64)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -49920
+    ; CHECK-NEXT: VST_dmx_sts_bm_st_idx $bmhl0, $p0, killed $dj0 :: (store (s512) into %stack.0 + 128)
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -49856
+    ; CHECK-NEXT: VST_dmx_sts_bm_st_idx $bmhh0, killed $p0, killed $dj0 :: (store (s512) into %stack.0 + 192)
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -50304, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+    VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
     ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     PseudoRET implicit $lr
 ...

@@ -314,7 +314,12 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2PS::VST_CM_SPILL:
   case AIE2PS::VLDA_DM_SPILL:
   case AIE2PS::VST_DM_SPILL: {
-    if (isEncodableAsNegativeInt<9, 128>(Offset)) {
+    // These expand into the native dmx x/bm stores/loads, whose SP offset field
+    // is c16n_step64. The encodable range is therefore the step-64 range of the
+    // expanded access, not the 128-byte logical size of the composite register
+    // (using step 128 would wrongly accept offsets in [-65536, -32768) and emit
+    // an unencodable immediate on the expanded x/bm spill).
+    if (isEncodableAsNegativeInt<9, 64>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     } else {
