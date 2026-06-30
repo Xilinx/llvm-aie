@@ -146,6 +146,66 @@ public:
   std::vector<MachineBundle> Bundles;
 };
 
+/// Describes the role of a FixedInsert and controls how its bundles are
+/// emitted into the target block:
+///   - None: uninitialized / empty insert (default-constructed).
+///   - Prologue: SWP prologue clones placed at the bottom of the pre-header.
+///     Instructions are freshly inserted (Move=false); empty bundles become
+///     BUNDLE placeholders (EmitNops=false).
+///   - Epilogue: SWP epilogue clones placed at the top of the dedicated exit.
+///     Same emission behaviour as Prologue.
+///   - LoopBody: the pipelined loop body placed before the loop terminator.
+///     Instructions are moved within the block (Move=true); empty bundles
+///     become real NOPs (EmitNops=true).
+enum class InsertKind { None, Prologue, Epilogue, LoopBody };
+
+/// Holds the schedule fragment (bundles) to insert at a block boundary for a
+/// software-pipelined loop, together with the ordered slice of canonical
+/// instruction copies used for inter-block dependency-graph construction.
+///
+/// Bundles are physically emitted into the block; SemanticOrder holds the
+/// corresponding ordered slice of clones that appear as pre- or post-boundary
+/// nodes in the inter-block DDG.
+///
+/// For TopInsert (Epilogue kind), emitInterBlockTop calls buildPerSuccEdges
+/// before emitFixedInsert, so the clones are always parentless when
+/// buildGraph runs.
+///
+/// For BottomInsert (Prologue kind), edge rebuilding is done in the loop's
+/// PipeliningDone leaveBlock before emitFixedInsert places the clones.
+/// Placed is false for prologue predecessor edges but may be true when
+/// accessed from emitInterBlockTop's buildPerSuccEdges.
+class FixedInsert {
+public:
+  /// The role of this insert, which controls Move and EmitNops in
+  /// emitFixedInsert.
+  InsertKind Kind;
+
+  /// Bundles to physically insert into the block.
+  std::vector<MachineBundle> Bundles;
+  /// Canonical copies ordered by the loop body's SemanticOrder.
+  /// Only populated for Prologue and Epilogue kinds.
+  std::vector<MachineInstr *> SemanticOrder;
+  /// True once the Bundles have been physically emitted into the block.
+  /// Set symmetrically after emitFixedInsert runs for all kinds.
+  ///
+  /// For Epilogue: emitInterBlockTop calls buildPerSuccEdges before
+  /// emitFixedInsert, so the clones are always parentless when buildGraph
+  /// runs. Placed is set for consistency but is not checked by buildGraph.
+  ///
+  /// For Prologue: buildGraph checks Placed and skips the pro-forma
+  /// insert/remove when true (Placed == isScheduled() for the owning block).
+  bool Placed = false;
+
+  FixedInsert() : Kind(InsertKind::None) {}
+  explicit FixedInsert(InsertKind K) : Kind(K) {}
+  FixedInsert(InsertKind K, std::vector<MachineBundle> B)
+      : Kind(K), Bundles(std::move(B)) {}
+
+  bool empty() const { return Bundles.empty(); }
+  size_t size() const { return Bundles.size(); }
+};
+
 // Struct used do give a preceding execution context to an epilogue
 // of a SWP loop.
 struct SWPEpilogueContext {
@@ -185,19 +245,13 @@ public:
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
 
-  /// These are owned bundles of instructions that need to be inserted
-  /// in the top and the bottom of the block respectively.
-  /// PostPipelined loops use these to push out the epilogue and prologue
-  /// in the preheader and exit block.
-  std::vector<MachineBundle> TopInsert;
-  std::vector<MachineBundle> BottomInsert;
-
-  /// For pipelined loop preheaders: a parallel array to the loop body's
-  /// SemanticOrder. Each entry is the first-iteration clone from BottomInsert
-  /// for the corresponding original loop instruction, or nullptr when that
-  /// instruction has no copy in the prologue. Populated by PipelineExtractor
-  /// during PipeliningDone.
-  std::vector<MachineInstr *> BottomInsertSemanticOrder;
+  /// Instructions to insert at the top (SWP epilogue) and bottom (SWP
+  /// prologue) of the block respectively. PostPipelined loops use these to
+  /// push out the epilogue and prologue into the preheader and exit block.
+  /// Each holds the physical bundles and the canonical ordered clone slice
+  /// for inter-block DDG construction.
+  FixedInsert TopInsert;
+  FixedInsert BottomInsert;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -387,21 +441,19 @@ public:
   int getSafetyMargin(MachineBasicBlock *Loop,
                       MachineBasicBlock *Epilogue) const;
 
-  /// Insert the instructions from Bundles into BB before the
-  /// iterator Before and applies MIR bundling.
-  ///
-  /// \param Move Whether the instructions are assumed to be in the block
-  ///        already, and need to be moved, not inserted
-  /// \param EmitNops Whether to emit a NOP instead of an empty BUNDLE.
-  void emitBundles(const std::vector<MachineBundle> &TimedRegion,
-                   MachineBasicBlock *BB, MachineBasicBlock::iterator Before,
-                   bool Move, bool EmitNops) const;
-
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues
   void emitTopSafetyMargin(const BlockState &BS);
   void emitInterBlockTop(BlockState &BS);
-  void emitInterBlockBottom(const BlockState &BS) const;
+  void emitInterBlockBottom(BlockState &BS) const;
+
+  /// Emit the bundles from \p FI into \p BB at \p Before and mark \p FI as
+  /// placed. The InsertKind controls whether instructions are moved vs inserted
+  /// and whether empty bundles become real NOPs or BUNDLE placeholders.
+  /// Unconditionally sets FI.Placed = true, reflecting the invariant that
+  /// Placed == isScheduled() for the owning block.
+  void emitFixedInsert(FixedInsert &FI, MachineBasicBlock *BB,
+                       MachineBasicBlock::iterator Before) const;
 
   bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);
 

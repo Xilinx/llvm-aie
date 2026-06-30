@@ -874,8 +874,8 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   if (BS.isPipelined()) {
     assert(BS.getRegions().size() == 1);
     MachineBasicBlock::iterator It = BB->getFirstTerminator();
-    InterBlock.emitBundles(BS.getRegions().front().Bundles, BB, It,
-                           /*Move=*/true, /*EmitNops=*/true);
+    FixedInsert LoopBodyFI{InsertKind::LoopBody, BS.getTop().Bundles};
+    InterBlock.emitFixedInsert(LoopBodyFI, BB, It);
   } else {
     // Emit bundles for each region in the block. Regions are stored in the
     // order they were scheduled (bottom-up), so we must reverse them to emit
