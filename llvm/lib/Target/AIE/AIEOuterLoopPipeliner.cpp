@@ -57,11 +57,13 @@ static cl::opt<unsigned> OuterLoopPipeliningMinTripCount(
     cl::desc("Minimum trip count required for outer loop pipelining"),
     cl::init(2), cl::Hidden);
 
-static cl::opt<bool>
-    SplitPrologue("aie-outer-loop-pipelining-split-prologue",
-                  cl::desc("Split prologue using different strategies to reach "
-                           "more compact schedules"),
-                  cl::init(true), cl::Hidden);
+// External flag name keeps the legacy "split-prologue" spelling for test
+// stability; the in-tree symbol and prose use the stage-0/stage-1 vocabulary.
+static cl::opt<bool> SplitStages(
+    "aie-outer-loop-pipelining-split-prologue",
+    cl::desc("Split the top block into stage-0 and stage-1 using "
+             "different strategies to reach more compact schedules"),
+    cl::init(true), cl::Hidden);
 
 static cl::opt<bool> EnableOuterLoopHardwareLoop(
     "aie-outer-loop-hw-loop",
@@ -1213,7 +1215,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
     OrigLoopStructure &OrigLS, const AIE::LoopOptionOverrides &Overrides) {
   liftBottomPointerUpdatesToTop(OrigLS);
 
-  const bool SplitMode = Overrides.get(SplitPrologue);
+  const bool SplitMode = Overrides.get(SplitStages);
   const auto IsSplitPoint = [SplitMode](const Instruction *I) {
     return SplitMode && isStage1SplitPoint(I);
   };
