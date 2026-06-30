@@ -56,6 +56,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/InitializePasses.h"
 #include <optional>
@@ -676,6 +677,17 @@ static void applyRerootRewrites(ArrayRef<RerootRewrite> Rewrites,
                                 GISelObserverWrapper &Observer) {
   for (const RerootRewrite &R : Rewrites) {
     MIB.setInsertPt(MBB, R.Head->getIterator());
+    // A zero offset means the head's value is exactly the anchor pointer, so
+    // the G_PTR_ADD is an identity. Emit a plain COPY from the anchor instead
+    // of a redundant G_PTR_ADD anchor, 0
+    if (R.NewOffset == 0) {
+      Observer.changingInstr(*R.Head);
+      R.Head->setDesc(MIB.getTII().get(TargetOpcode::COPY));
+      R.Head->getOperand(1).setReg(AnchorEndReg);
+      R.Head->removeOperand(2);
+      Observer.changedInstr(*R.Head);
+      continue;
+    }
     Register NewOff = MIB.buildConstant(R.OffTy, R.NewOffset).getReg(0);
     Observer.changingInstr(*R.Head);
     R.Head->getOperand(1).setReg(AnchorEndReg);
