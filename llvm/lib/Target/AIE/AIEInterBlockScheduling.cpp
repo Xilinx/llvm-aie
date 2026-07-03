@@ -1347,8 +1347,11 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
     if (MI->getParent() == PreHeader)
       PreHeader->remove_instr(MI);
   }
+  // FixPoint reserves bot-fixed instrs standalone (NOP bundles dropped, cycles
+  // re-encoded as DAG latencies), mirroring the top band; legacy emits bundled.
+  const bool ApplyBundling = !isFixPointScheduling();
   emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
-              /*EmitNops=*/false);
+              /*EmitNops=*/false, ApplyBundling);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
@@ -1501,14 +1504,36 @@ BandGeometry computeBandGeometry(ArrayRef<MachineBundle> Band) {
   return G;
 }
 
+// Count the real (non-NOP-bundle) instructions across a fixed band. In
+// FixPoint mode the band is reserved standalone, so its range is measured in
+// instructions, not bundles.
+static unsigned countBandInstrs(ArrayRef<MachineBundle> Bundles) {
+  unsigned Count = 0;
+  for (const MachineBundle &B : Bundles)
+    Count += B.getInstrs().size();
+  return Count;
+}
+
 void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
   TopFixedBundles = Bundles;
-  // The top-fixed instructions are reserved standalone at the block start;
-  // count the real instructions (not bundles) for the top_fixed_instrs() range.
-  TopFixedInstrCount = 0;
-  for (const MachineBundle &B : Bundles)
-    TopFixedInstrCount += B.getInstrs().size();
+  TopFixedInstrCount = countBandInstrs(Bundles);
+#ifndef NDEBUG
+  // The top-fixed instructions are reserved as the first TopFixedInstrCount
+  // standalone MIs of the block (NOP bundles dropped); verify the last real
+  // band instruction sits exactly at that offset, matching what
+  // top_fixed_instrs() assumes.
+  if (TopFixedInstrCount > 0) {
+    const MachineInstr *LastBandMI = nullptr;
+    for (const MachineBundle &B : reverse(Bundles))
+      if (!B.getInstrs().empty()) {
+        LastBandMI = B.getInstrs().back();
+        break;
+      }
+    assert(&*std::next(BB->begin(), TopFixedInstrCount - 1) == LastBandMI &&
+           "Top-fixed instructions are not at the block start.");
+  }
+#endif
   // SemanticOrder was captured during the gathering phase before the fixed
   // instructions were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
@@ -1516,12 +1541,24 @@ void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
 
 void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(BotFixedBundles.empty() && "BotFixedBundles already set.");
-  // Verify the fixed instructions are physically at the bottom of the block.
-  const auto FreeEnd = std::prev(BB->end(), Bundles.size());
-  assert(all_of(Bundles.front().Instrs, [FreeEnd](const MachineInstr *MI) {
-    return getBundleStart(MI->getIterator()) == FreeEnd;
-  }));
   BotFixedBundles = Bundles;
+  BotFixedInstrCount = countBandInstrs(Bundles);
+#ifndef NDEBUG
+  // The bot-fixed instructions are reserved as the last BotFixedInstrCount
+  // standalone MIs of the block (NOP bundles dropped); verify the first real
+  // band instruction sits exactly at that offset, matching what
+  // bot_fixed_instrs() assumes.
+  if (BotFixedInstrCount > 0) {
+    const MachineInstr *FirstBandMI = nullptr;
+    for (const MachineBundle &B : Bundles)
+      if (!B.getInstrs().empty()) {
+        FirstBandMI = B.getInstrs().front();
+        break;
+      }
+    assert(&*std::prev(BB->end(), BotFixedInstrCount) == FirstBandMI &&
+           "Bot-fixed instructions are not at the block bottom.");
+  }
+#endif
   // SemanticOrder was captured during the gathering phase before the fixed
   // bundles were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.

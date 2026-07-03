@@ -509,13 +509,28 @@ private:
     for (MachineInstr &MI : CurRegion.top_fixed_instrs())
       TopFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/true));
 
+    // Bot-fixed instrs are standalone (NOP bundles dropped); their cycle
+    // distances become ExitSU edge latencies, so NOP bundles are gaps not
+    // SUnits.
+    SmallVector<SUnit *, 8> BotFixedSUs;
+    for (MachineInstr &MI : CurRegion.bot_fixed_instrs())
+      BotFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/false));
+
+    const AIE::BandGeometry &BotGeo = CurRegion.getBotBandGeometry();
+    const DenseMap<MachineInstr *, unsigned> &BotMIToBundle = BotGeo.MIToCycle;
+    // Chain bottom-up from ExitSU, spacing instrs by their bundle-cycle gap.
     SUnit *Succ = &DAG->ExitSU;
-    for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
-      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/false);
-      SDep Dep(&FixedSU, SDep::Artificial);
-      Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
+    unsigned PrevBotBundle = ~0u;
+    for (SUnit *FixedSU : reverse(BotFixedSUs)) {
+      const unsigned CurBundle = BotMIToBundle.at(FixedSU->getInstr());
+      const unsigned Latency = (Succ == &DAG->ExitSU)
+                                   ? (BotGeo.NumCycles - 1 - CurBundle)
+                                   : (PrevBotBundle - CurBundle);
+      SDep Dep(FixedSU, SDep::Artificial);
+      Dep.setLatency(Latency);
       Succ->addPred(Dep);
-      Succ = &FixedSU;
+      Succ = FixedSU;
+      PrevBotBundle = CurBundle;
     }
 
     // Pin the top-fixed band as a non-negative height floor from ExitSU; the
@@ -523,9 +538,9 @@ private:
     if (!TopFixedSUs.empty()) {
       DAG->ExitSU.setDepthDirty();
       AIE::RegionSchedulingState &RS = CurRegion.Sched;
-      // Shared geometry so seed and pin (below) cannot drift apart.
+      // Shared geometry so seed and pin (below) cannot drift apart; BotGeo is
+      // reused from the bot-fixed chain above.
       const AIE::BandGeometry &TopGeo = CurRegion.getTopBandGeometry();
-      const AIE::BandGeometry &BotGeo = CurRegion.getBotBandGeometry();
 
       // Seed SchedulingLength once at a true lower bound (driver only grows
       // it).

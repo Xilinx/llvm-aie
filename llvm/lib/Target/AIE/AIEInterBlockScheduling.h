@@ -138,6 +138,9 @@ class Region {
   /// Instructions that are already scheduled at the bottom, e.g. an swp
   /// prologue. Those should not be re-ordered by the scheduler.
   ArrayRef<MachineBundle> BotFixedBundles;
+  /// Count of standalone bot-fixed instructions (FixPoint mode keeps them
+  /// un-bundled, so this counts instructions, not bundles).
+  unsigned BotFixedInstrCount = 0;
 
   /// Cycle geometry of TopFixedBundles/BotFixedBundles, memoized on first
   /// access; never stale since both bundle sets are written exactly once.
@@ -166,10 +169,13 @@ public:
   }
   ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
 
-  /// Iterate over the instructions that are fixed at the bottom. Typically
-  /// those represent a SWP prologue.
+  /// Iterate over the instructions that are fixed at the bottom (typically a
+  /// SWP prologue). FixPoint spans BotFixedInstrCount standalone instructions;
+  /// legacy spans one entry per bot-fixed bundle.
   inline iterator_range<fixed_iterator> bot_fixed_instrs() const {
-    fixed_iterator FixedBegin = std::prev(BB->end(), BotFixedBundles.size());
+    const size_t Count =
+        isFixPointScheduling() ? BotFixedInstrCount : BotFixedBundles.size();
+    fixed_iterator FixedBegin = std::prev(BB->end(), Count);
     return make_range(FixedBegin, BB->end());
   }
   ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
