@@ -414,19 +414,26 @@ void InterBlockScheduling::leaveFunction() {
 void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   CurrentBlockState = &getBlockState(BB);
   CurrentBlockState->resetRegion();
-  DEBUG_BLOCKS(dbgs() << "  >> enterBlock " << BB->getNumber() << " "
-                      << CurrentBlockState->kindAsString() << " LoopStateIter="
-                      << CurrentBlockState->LoopState.NumIters
-                      << " II=" << CurrentBlockState->LoopState.II << "\n");
+  DEBUG_BLOCKS(if (!CurrentBlockState->getRegions().empty()) dbgs()
+               << "  >> enterBlock " << BB->getNumber() << " "
+               << CurrentBlockState->kindAsString()
+               << " LoopStateIter=" << CurrentBlockState->LoopState.NumIters
+               << " II=" << CurrentBlockState->LoopState.II << "\n");
 
   if (IsGatheringPhase) {
     return;
   }
 
-  // When relevant, pick up the fixed fragments left by scheduling other
-  // blocks, in particular the pipeliner's prologue and epilogue.
-  emitInterBlockTop(*CurrentBlockState);
-  emitInterBlockBottom(*CurrentBlockState);
+  // Emit the pipeliner's prologue/epilogue fragments once at the block start;
+  // on reschedule iterations restore the already-emitted ones to the start/end.
+  if (!CurrentBlockState->InterBlockEmitted) {
+    emitInterBlockTop(*CurrentBlockState);
+    emitInterBlockBottom(*CurrentBlockState);
+    CurrentBlockState->InterBlockEmitted = true;
+  } else {
+    CurrentBlockState->restoreTopFixedToBlockStart();
+    CurrentBlockState->restoreBotFixedToBlockEnd();
+  }
 }
 namespace {
 /// This implements the interface to the postpipeliner to extract the
@@ -584,7 +591,7 @@ bool InterBlockScheduling::leaveBlock() {
     return false;
   }
 
-  const auto Stage = updateLoopState(BS);
+  const auto Stage = updateFixPoint(BS);
   BS.LoopState.Stage = Stage;
   switch (Stage) {
   case SchedulingStage::SchedulingNotConverged:
@@ -740,15 +747,42 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
   return nullptr;
 }
 
-SchedulingStage InterBlockScheduling::updateLoopState(BlockState &BS) {
+SchedulingStage InterBlockScheduling::updateTopFixedScheduling(BlockState &BS) {
+  // Reschedule regions whose free instructions overran their top-fixed band,
+  // growing SchedulingLength by one cycle per retry until they fit.
+  bool NeedReschedule = false;
+  for (Region &R : BS.getRegionsMutable()) {
+    if (!R.Sched.TopFixedDidNotFit)
+      continue;
+    R.Sched.TopFixedDidNotFit = false;
+    ++R.Sched.SchedulingLength;
+    LLVM_DEBUG(dbgs() << "[FPSCHED][bump] MBB=" << BS.TheBlock->getNumber()
+                      << " -> SchedulingLength=" << R.Sched.SchedulingLength
+                      << " (reschedule iter " << R.Sched.RescheduleIters + 1
+                      << ")\n");
+    if (++R.Sched.RescheduleIters >
+        MaxExpensiveIterations + 2 * HR->getConflictHorizon())
+      report_fatal_error("Top-fixed scheduling did not converge.");
+    NeedReschedule = true;
+  }
+  return NeedReschedule ? SchedulingStage::Scheduling
+                        : SchedulingStage::SchedulingDone;
+}
+
+SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
   assert(!IsGatheringPhase);
 
-  if (BS.Kind != BlockType::Loop) {
-    return SchedulingStage::SchedulingDone;
+  // Top-fixed band fitting is independent of loop-pipelining convergence and
+  // applies per-region to any block, so run it first regardless of Kind.
+  const SchedulingStage BandFitStage = updateTopFixedScheduling(BS);
+  if (BS.Kind != BlockType::Loop ||
+      BandFitStage == SchedulingStage::Scheduling) {
+    return BandFitStage;
   }
 
-  BS.LoopState.NumIters++;
-  if (BS.LoopState.Stage == SchedulingStage::Scheduling) {
+  LoopPipeliningState &FP = BS.LoopState;
+  FP.NumIters++;
+  if (FP.Stage == SchedulingStage::Scheduling) {
     return updateScheduling(BS);
   }
 
@@ -756,25 +790,24 @@ SchedulingStage InterBlockScheduling::updateLoopState(BlockState &BS) {
 }
 
 SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
-  if (BS.LoopState.NumIters >
-      MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
+  LoopPipeliningState &FP = BS.LoopState;
+  if (FP.NumIters > MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
     report_fatal_error("Inter-block scheduling did not converge.");
 
     return SchedulingStage::SchedulingNotConverged;
   }
 
   if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
-    auto Res = BS.LoopState.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    auto Res = FP.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
     // Increase the latency margin per instruction, unless we already iterated
     // more than MaxExpensiveIterations without converging.
-    if (BS.LoopState.NumIters <= MaxExpensiveIterations) {
+    if (FP.NumIters <= MaxExpensiveIterations) {
       ++Res.first->second;
     } else {
-      BS.LoopState.LatencyMargin++;
+      FP.LatencyMargin++;
     }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: latency RM="
-                           << BS.LoopState.ResourceMargin
-                           << " LM=" << BS.LoopState.LatencyMargin
+                           << FP.ResourceMargin << " LM=" << FP.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
     return SchedulingStage::Scheduling;
@@ -782,11 +815,11 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
 
   // Before pushing BS.getBottom() instructions up to avoid resource hazards,
   // try and bias the depth of some instructions in BS.getTop()
-  if (BiasDepth && BS.LoopState.NumIters <= MaxExpensiveIterations) {
+  if (BiasDepth && FP.NumIters <= MaxExpensiveIterations) {
     if (MachineInstr *MINeedsHigherCap =
             resourcesConverged(BS, /*FindInBottomRegion=*/false);
         InterBlockScoreboard && MINeedsHigherCap) {
-      auto Res = BS.LoopState.PerMIExtraDepth.try_emplace(MINeedsHigherCap, 1);
+      auto Res = FP.PerMIExtraDepth.try_emplace(MINeedsHigherCap, 1);
       int &ExtraDepth = Res.first->second;
       if (ExtraDepth >= 0) {
         if (!Res.second) // Depth was already biased, try a negative bias
@@ -804,25 +837,23 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   if (MachineInstr *MINeedsHigherCap =
           resourcesConverged(BS, /*FindInBottomRegion=*/true);
       InterBlockScoreboard && MINeedsHigherCap) {
-    auto Res = BS.LoopState.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
-    if (BS.LoopState.NumIters <= MaxExpensiveIterations) {
+    auto Res = FP.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    if (FP.NumIters <= MaxExpensiveIterations) {
       ++Res.first->second;
     } else {
-      BS.LoopState.PerMIExtraDepth.clear();
-      BS.LoopState.ResourceMargin++;
+      FP.PerMIExtraDepth.clear();
+      FP.ResourceMargin++;
     }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: resources RM="
-                           << BS.LoopState.ResourceMargin
-                           << " LM=" << BS.LoopState.LatencyMargin
+                           << FP.ResourceMargin << " LM=" << FP.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
     return SchedulingStage::Scheduling;
   }
 
   DEBUG_LOOPAWARE(dbgs() << "Converged,"
-                         << " LatencyExtent=" << BS.LoopState.MaxLatencyExtent
-                         << " ResourceExtent=" << BS.LoopState.MaxResourceExtent
-                         << "\n");
+                         << " LatencyExtent=" << FP.MaxLatencyExtent
+                         << " ResourceExtent=" << FP.MaxResourceExtent << "\n");
 
   // The loop schedule has converged, so we could declare our work done.
   // But first try SWP
@@ -832,8 +863,8 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
       const int ResMII = PostSWP.getResMII(*BS.TheBlock);
       const int StartII = std::max(ResMII, PostPipelinerMinII.getValue());
       if (StartII <= PostPipelinerMaxII) {
-        BS.LoopState.II = StartII;
-        BS.LoopState.IITries = 1;
+        FP.II = StartII;
+        FP.IITries = 1;
         return SchedulingStage::Pipelining;
       }
     }
@@ -842,15 +873,15 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
 }
 
 SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
+  LoopPipeliningState &FP = BS.LoopState;
   // We have been pipelining. Check whether we were successful.
-  if (BS.LoopState.Stage == SchedulingStage::PipeliningDone) {
-    return BS.LoopState.Stage;
+  if (FP.Stage == SchedulingStage::PipeliningDone) {
+    return FP.Stage;
   }
 
   // Otherwise try a larger II.
   // We cut off at larger IIs to prevent excessive compilation time.
-  if (++BS.LoopState.II <= PostPipelinerMaxII &&
-      ++BS.LoopState.IITries <= PostPipelinerMaxTryII) {
+  if (++FP.II <= PostPipelinerMaxII && ++FP.IITries <= PostPipelinerMaxTryII) {
     return SchedulingStage::Pipelining;
   }
 
@@ -865,10 +896,11 @@ std::optional<int> InterBlockScheduling::getLatencyCap(MachineInstr &MI) const {
   if (BS.Kind != BlockType::Loop) {
     return {};
   }
-  if (BS.LoopState.LatencyMargin)
-    return BS.LoopState.LatencyMargin;
-  if (const auto *It = BS.LoopState.PerMILatencyMargin.find(&MI);
-      It != BS.LoopState.PerMILatencyMargin.end()) {
+  const LoopPipeliningState &FP = BS.LoopState;
+  if (FP.LatencyMargin)
+    return FP.LatencyMargin;
+  if (const auto *It = FP.PerMILatencyMargin.find(&MI);
+      It != FP.PerMILatencyMargin.end()) {
     return It->second;
   }
   return 0;
@@ -1096,8 +1128,9 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
                                        MachineBasicBlock::iterator RegionBegin,
                                        MachineBasicBlock::iterator RegionEnd) {
   auto &BS = getBlockState(BB);
-  DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.LoopState.NumIters
-                      << "\n");
+  DEBUG_BLOCKS(if (!BS.getRegions().empty()) dbgs()
+               << "    >> enterRegion, Iter="
+               << BS.getCurrentRegion().Sched.RescheduleIters << "\n");
 
   if (IsGatheringPhase) {
     // Gather region boundaries and capture the invariant SemanticOrder for all
@@ -1112,15 +1145,17 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     return;
   }
 
-  // Scheduling pass for non-loop blocks: set fixed bundles on the
-  // pre-gathered region now that emitInterBlockTop / emitInterBlockBottom
-  // has physically inserted the SWP instructions into the block.
+  // Set fixed bundles on the pre-gathered region once, after emitInterBlockTop/
+  // Bottom inserted the SWP instructions; left alone on reschedule iterations.
   assert(!BS.getRegions().empty() &&
          "Every block in Blocks must have at least one region.");
-  if (RegionBegin == BB->begin() && !BS.TopInsert.empty())
-    BS.getCurrentRegion().setTopFixedBundles(BS.TopInsert);
-  if (RegionEnd == BB->end() && !BS.BottomInsert.empty())
-    BS.getCurrentRegion().setBotFixedBundles(BS.BottomInsert);
+  Region &CurRegion = BS.getCurrentRegion();
+  if (RegionBegin == BB->begin() && !BS.TopInsert.empty() &&
+      CurRegion.getTopFixedBundles().empty())
+    CurRegion.setTopFixedBundles(BS.TopInsert);
+  if (RegionEnd == BB->end() && !BS.BottomInsert.empty() &&
+      CurRegion.getBotFixedBundles().empty())
+    CurRegion.setBotFixedBundles(BS.BottomInsert);
 }
 
 namespace {
@@ -1189,9 +1224,14 @@ int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
 
 void InterBlockScheduling::emitBundles(
     const std::vector<MachineBundle> &Bundles, MachineBasicBlock *BB,
-    MachineBasicBlock::iterator Before, bool Move, bool EmitNops) const {
+    MachineBasicBlock::iterator Before, bool Move, bool EmitNops,
+    bool ApplyBundling) const {
   for (auto &Bundle : Bundles) {
     if (Bundle.empty()) {
+      // Empty bundle = a 1-cycle stall. When reserving (no bundling), the stall
+      // is materialized later at commit; skip it now.
+      if (!ApplyBundling)
+        continue;
       if (EmitNops)
         TII->insertNoop(*BB, Before);
       else {
@@ -1207,7 +1247,8 @@ void InterBlockScheduling::emitBundles(
       BB->insert(Before, MI);
     }
   }
-  AIEHazardRecognizer::applyBundles(Bundles, BB);
+  if (ApplyBundling)
+    AIEHazardRecognizer::applyBundles(Bundles, BB);
 }
 
 std::optional<std::pair<MachineBasicBlock *, MachineBasicBlock *>>
@@ -1276,9 +1317,11 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
       }
     }
 
-    // If we are in the same BB, just emit.
+    // FixPoint mode reserves them standalone until commitBlockSchedule bundles
+    // them; legacy mode emits them bundled up front.
+    const bool ApplyBundling = !isFixPointScheduling();
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
-                /*Move=*/false, /*EmitNops=*/false);
+                /*Move=*/false, /*EmitNops=*/false, ApplyBundling);
   } else {
     // If not, transfer the timed region to the new block state created
     // by makeDedicatedLoopExit. The Kind of both blocks was already updated
@@ -1446,16 +1489,28 @@ Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
   }
 }
 
+BandGeometry computeBandGeometry(ArrayRef<MachineBundle> Band) {
+  BandGeometry G;
+  for (const MachineBundle &B : Band) {
+    for (MachineInstr *MI : B.getInstrs())
+      G.MIToCycle[MI] = G.NumCycles;
+    // Advance the cycle even for an empty (NOP) bundle: every bundle, real or
+    // NOP, occupies exactly one cycle.
+    ++G.NumCycles;
+  }
+  return G;
+}
+
 void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
-  // Verify the fixed instructions are physically at the top of the block.
-  const auto FreeBegin = std::next(BB->begin(), Bundles.size());
-  assert(all_of(Bundles.back().Instrs, [FreeBegin](const MachineInstr *MI) {
-    return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
-  }));
   TopFixedBundles = Bundles;
+  // The top-fixed instructions are reserved standalone at the block start;
+  // count the real instructions (not bundles) for the top_fixed_instrs() range.
+  TopFixedInstrCount = 0;
+  for (const MachineBundle &B : Bundles)
+    TopFixedInstrCount += B.getInstrs().size();
   // SemanticOrder was captured during the gathering phase before the fixed
-  // bundles were inserted into the block, so it already contains only the
+  // instructions were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
 }
 
@@ -1500,12 +1555,47 @@ int BlockState::getScheduleLength() const {
 }
 
 void BlockState::clearSchedule() {
-  // We are rescheduling this block. Clear the results of the previous
-  // iteration, to prepare for the next round.
+  // Clear previous bundles for the rerun; convergence state (LoopState /
+  // Region::Sched) is preserved so convergence parameters carry across.
   for (auto &R : Regions) {
     R.Bundles.clear();
   }
   CurrentRegion = 0;
+}
+
+void BlockState::restoreTopFixedToBlockStart() {
+  // top_fixed_instrs() references them by position, so undo the previous
+  // pass's physical placement before the next pass re-reads them.
+  for (Region &R : Regions) {
+    if (R.getTopFixedBundles().empty())
+      continue;
+    SmallVector<MachineInstr *, 16> TopFixed;
+    for (const MachineBundle &Bundle : R.getTopFixedBundles())
+      for (MachineInstr *MI : Bundle.getInstrs())
+        TopFixed.push_back(MI);
+    for (MachineInstr *MI : TopFixed)
+      TheBlock->remove(MI);
+    MachineBasicBlock::iterator Begin = TheBlock->begin();
+    for (MachineInstr *MI : TopFixed)
+      TheBlock->insert(Begin, MI);
+  }
+}
+
+void BlockState::restoreBotFixedToBlockEnd() {
+  // bot_fixed_instrs() references them by position, so undo the previous
+  // pass's physical placement before the next pass re-reads them.
+  for (Region &R : Regions) {
+    if (R.getBotFixedBundles().empty())
+      continue;
+    SmallVector<MachineInstr *, 16> BotFixed;
+    for (const MachineBundle &Bundle : R.getBotFixedBundles())
+      for (MachineInstr *MI : Bundle.getInstrs())
+        BotFixed.push_back(MI);
+    for (MachineInstr *MI : BotFixed)
+      TheBlock->remove(MI);
+    for (MachineInstr *MI : BotFixed)
+      TheBlock->insert(TheBlock->end(), MI);
+  }
 }
 
 void BlockState::setBlockProperties() {

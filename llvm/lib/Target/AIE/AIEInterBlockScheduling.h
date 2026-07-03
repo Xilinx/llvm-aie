@@ -28,8 +28,13 @@
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include <memory>
+#include <optional>
 
 namespace llvm::AIE {
+
+/// True when height-pinned FixPoint scheduling of top/bot-fixed bands is
+/// selected (-aie-fixpoint-scheduling); false selects the legacy top-down path.
+bool isFixPointScheduling();
 
 // BlockType determines scheduling priority, direction and safety margin
 // handling.
@@ -60,7 +65,8 @@ enum class SchedulingStage {
   PipeliningFailed
 };
 
-/// Parameters that drive fixpoint convergence
+/// Convergence state for loop-aware scheduling and SWP pipelining. Owned
+/// directly by BlockState: it only ever applies to (single-region) Loop blocks.
 class LoopPipeliningState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
@@ -76,8 +82,37 @@ public:
   // Results from the convergence test
   int MaxLatencyExtent = 0;
   int MaxResourceExtent = 0;
+  // The number of loop-aware convergence iterations we've made.
   int NumIters = 0;
 };
+
+/// Convergence state for fitting a region's free instructions around its
+/// pinned top-fixed band. Owned by Region: applies per-region, to any block.
+class RegionSchedulingState {
+public:
+  // Pinned height of the top-fixed band; 0 means no top-fixed pinning.
+  int SchedulingLength = 0;
+  // Set when free instructions overran the band, triggering a reschedule.
+  bool TopFixedDidNotFit = false;
+  // True once SchedulingLength has been seeded from the region critical path.
+  bool SchedulingLengthSeeded = false;
+  // The number of reschedule attempts made to grow SchedulingLength.
+  int RescheduleIters = 0;
+};
+
+/// Single source of truth for fixed-band cycle geometry: all consumers (seed,
+/// height pinning, placement verifier) share one walk so they cannot drift.
+struct BandGeometry {
+  /// Cycle index (0 = top bundle) of each real instruction; empty NOP bundles
+  /// advance the counter without an entry.
+  DenseMap<MachineInstr *, unsigned> MIToCycle;
+  /// Number of cycles the band spans = number of bundles, empties included.
+  unsigned NumCycles = 0;
+};
+
+/// Walk \p Band once, recording each real instruction's cycle (one per bundle,
+/// empty NOP bundles included).
+BandGeometry computeBandGeometry(ArrayRef<MachineBundle> Band);
 
 // For interblock scheduling we need the original code (SemanticOrder) to
 // compute inter-block dependences and the scheduled code (Bundles) to check
@@ -96,10 +131,18 @@ class Region {
   /// Instructions that are already scheduled at the top, e.g. an swp epilogue.
   /// Those should not be re-ordered by the scheduler.
   ArrayRef<MachineBundle> TopFixedBundles;
+  /// Count of standalone top-fixed instructions (FixPoint mode keeps them
+  /// un-bundled, so this counts instructions, not bundles).
+  unsigned TopFixedInstrCount = 0;
 
   /// Instructions that are already scheduled at the bottom, e.g. an swp
   /// prologue. Those should not be re-ordered by the scheduler.
   ArrayRef<MachineBundle> BotFixedBundles;
+
+  /// Cycle geometry of TopFixedBundles/BotFixedBundles, memoized on first
+  /// access; never stale since both bundle sets are written exactly once.
+  mutable std::optional<BandGeometry> TopGeometry;
+  mutable std::optional<BandGeometry> BotGeometry;
 
 public:
   Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
@@ -113,10 +156,12 @@ public:
     return SemanticOrder;
   }
 
-  /// Iterate over the instructions that are fixed at the top. Typically those
-  /// represent a SWP epilogue.
+  /// Iterate over the instructions fixed at the top (typically a SWP
+  /// epilogue): TopFixedInstrCount in FixPoint, one per bundle in legacy.
   inline iterator_range<fixed_iterator> top_fixed_instrs() const {
-    fixed_iterator FixedEnd = std::next(BB->begin(), TopFixedBundles.size());
+    const size_t Count =
+        isFixPointScheduling() ? TopFixedInstrCount : TopFixedBundles.size();
+    fixed_iterator FixedEnd = std::next(BB->begin(), Count);
     return make_range(BB->begin(), FixedEnd);
   }
   ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
@@ -144,6 +189,23 @@ public:
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
+
+  /// Per-region convergence state for fitting free instructions around this
+  /// region's top-fixed band: each region of a block converges independently.
+  RegionSchedulingState Sched;
+
+  /// Cached geometry of TopFixedBundles, computed on first access.
+  const BandGeometry &getTopBandGeometry() const {
+    if (!TopGeometry)
+      TopGeometry = computeBandGeometry(TopFixedBundles);
+    return *TopGeometry;
+  }
+  /// Cached geometry of BotFixedBundles, computed on first access.
+  const BandGeometry &getBotBandGeometry() const {
+    if (!BotGeometry)
+      BotGeometry = computeBandGeometry(BotFixedBundles);
+    return *BotGeometry;
+  }
 };
 
 // Struct used do give a preceding execution context to an epilogue
@@ -181,9 +243,12 @@ class BlockState {
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
-  LoopPipeliningState LoopState;
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
+
+  /// True once the inter-block fragments (SWP prologue/epilogue) have been
+  /// emitted; guards against re-inserting them on reschedule iterations.
+  bool InterBlockEmitted = false;
 
   /// These are owned bundles of instructions that need to be inserted
   /// in the top and the bottom of the block respectively.
@@ -198,6 +263,10 @@ public:
   /// instruction has no copy in the prologue. Populated by PipelineExtractor
   /// during PipeliningDone.
   std::vector<MachineInstr *> BottomInsertSemanticOrder;
+
+  /// Loop-aware scheduling and SWP pipelining convergence state; only
+  /// meaningful for Kind == Loop (always single-region).
+  LoopPipeliningState LoopState;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -219,6 +288,8 @@ public:
   const Region &getTop() const { return Regions.back(); }
   Region &getTop() { return Regions.back(); }
   const Region &getBottom() const { return Regions.front(); }
+  Region &getBottom() { return Regions.front(); }
+
   /// Return the self-loop back-edge DAG from PerSuccEdges, or null if absent.
   /// Populated by buildPerSuccEdges().
   InterBlockEdges *getLoopSelfEdge();
@@ -231,6 +302,7 @@ public:
     return PerSuccEdges;
   }
   const std::vector<Region> &getRegions() const { return Regions; }
+  std::vector<Region> &getRegionsMutable() { return Regions; }
   const char *kindAsString() const {
     return Kind == BlockType::Loop       ? "Loop"
            : Kind == BlockType::Epilogue ? "Epilogue"
@@ -249,6 +321,14 @@ public:
   /// intact, but the actual schedule is cleared.
   /// It rewinds to the first region.
   void clearSchedule();
+
+  /// Undo the previous pass's physical placement of the top-fixed (SWP
+  /// epilogue) instructions, restoring them per Region::top_fixed_instrs().
+  void restoreTopFixedToBlockStart();
+
+  /// Undo the previous pass's physical placement of the bot-fixed (SWP
+  /// prologue) instructions, restoring them per Region::bot_fixed_instrs().
+  void restoreBotFixedToBlockEnd();
 
   void setPipelined();
   bool isScheduled() const {
@@ -329,10 +409,14 @@ class InterBlockScheduling {
   /// Perform the convergence checks and set convergence parameters
   /// for the next iteration.
   /// Returns the stage this block is now in.
-  SchedulingStage updateLoopState(BlockState &BS);
+  SchedulingStage updateFixPoint(BlockState &BS);
 
   SchedulingStage updateScheduling(BlockState &BS);
   SchedulingStage updatePipelining(BlockState &BS);
+
+  /// If a region's free instructions overran its top-fixed band, raise the
+  /// band's SchedulingLength and reschedule; SchedulingDone once all fit.
+  SchedulingStage updateTopFixedScheduling(BlockState &BS);
 
   /// Emit scheduling remarks for all loop blocks (post/pre/unpipelined).
   void emitLoopRemarks();
@@ -393,9 +477,11 @@ public:
   /// \param Move Whether the instructions are assumed to be in the block
   ///        already, and need to be moved, not inserted
   /// \param EmitNops Whether to emit a NOP instead of an empty BUNDLE.
+  /// \param ApplyBundling When false, insert instructions standalone and skip
+  ///        empty bundles (reserve top-fixed during search; bundle at commit).
   void emitBundles(const std::vector<MachineBundle> &TimedRegion,
                    MachineBasicBlock *BB, MachineBasicBlock::iterator Before,
-                   bool Move, bool EmitNops) const;
+                   bool Move, bool EmitNops, bool ApplyBundling = true) const;
 
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues

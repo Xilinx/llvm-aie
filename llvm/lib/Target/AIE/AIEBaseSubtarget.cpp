@@ -278,9 +278,10 @@ class BiasDepth : public ScheduleDAGMutation {
 
     // It's important to iterate in topological order over SUnits, because
     // all its successors will be marked as having a "dirty" depth.
+    const AIE::LoopPipeliningState &FP = BS.LoopState;
     for (SUnit &SU : DAG->SUnits) {
-      if (auto *It = BS.LoopState.PerMIExtraDepth.find(SU.getInstr());
-          It != BS.LoopState.PerMIExtraDepth.end()) {
+      if (auto *It = FP.PerMIExtraDepth.find(SU.getInstr());
+          It != FP.PerMIExtraDepth.end()) {
         unsigned NewDepth = std::max(0, int(SU.getDepth()) + It->second);
         SU.setDepthToAtLeast(NewDepth);
       }
@@ -477,21 +478,36 @@ class EmitFixedSUnits : public ScheduleDAGMutation {
 private:
   void createFixedSUDAGNodes(ScheduleDAGInstrs *DAG,
                              AIEPostRASchedStrategy *Scheduler,
-                             const Region &CurRegion) {
-    // First, create SUnits for all "fixed" instructions
-    // Those will be chained from/to the EntrySU/ExitSU to ensure they are
-    // placed in the correct cycle. The scheduler will enforce that these fixed
-    // SUnits get placed exactly at their depth (for the Top zone) or height
-    // (for the Bot zone).
-    SUnit *Pred = &DAG->EntrySU;
-    // We iterate over BUNDLEs or standalone instructions.
-    for (MachineInstr &MI : CurRegion.top_fixed_instrs()) {
-      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/true);
-      SDep Dep(Pred, SDep::Artificial);
-      Dep.setLatency(Pred == &DAG->EntrySU ? 0 : 1);
-      FixedSU.addPred(Dep);
-      Pred = &FixedSU;
+                             Region &CurRegion) {
+    if (!AIE::isFixPointScheduling()) {
+      // Legacy: chain top-fixed from EntrySU (depth-pinned) and bot-fixed to
+      // ExitSU (height-pinned); the scheduler enforces exact placement.
+      SUnit *Pred = &DAG->EntrySU;
+      for (MachineInstr &MI : CurRegion.top_fixed_instrs()) {
+        SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/true);
+        SDep Dep(Pred, SDep::Artificial);
+        Dep.setLatency(Pred == &DAG->EntrySU ? 0 : 1);
+        FixedSU.addPred(Dep);
+        Pred = &FixedSU;
+      }
+
+      SUnit *Succ = &DAG->ExitSU;
+      for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
+        SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/false);
+        SDep Dep(&FixedSU, SDep::Artificial);
+        Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
+        Succ->addPred(Dep);
+        Succ = &FixedSU;
+      }
+      DAG->makeMaps();
+      return;
     }
+
+    // Place both bands bottom-up by height in the Bot zone. Create top-fixed
+    // SUnits before bot-fixed to keep the NodeNum ordering isFixedSU() needs.
+    SmallVector<SUnit *, 8> TopFixedSUs;
+    for (MachineInstr &MI : CurRegion.top_fixed_instrs())
+      TopFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/true));
 
     SUnit *Succ = &DAG->ExitSU;
     for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
@@ -500,6 +516,106 @@ private:
       Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
       Succ->addPred(Dep);
       Succ = &FixedSU;
+    }
+
+    // Pin the top-fixed band as a non-negative height floor from ExitSU; the
+    // band floats up if the free instructions below need more room.
+    if (!TopFixedSUs.empty()) {
+      DAG->ExitSU.setDepthDirty();
+      AIE::RegionSchedulingState &RS = CurRegion.Sched;
+      // Shared geometry so seed and pin (below) cannot drift apart.
+      const AIE::BandGeometry &TopGeo = CurRegion.getTopBandGeometry();
+      const AIE::BandGeometry &BotGeo = CurRegion.getBotBandGeometry();
+
+      // Seed SchedulingLength once at a true lower bound (driver only grows
+      // it).
+      if (!RS.SchedulingLengthSeeded) {
+        int StaticDepthFreeInstrs = 0;
+        for (const SUnit &SU : DAG->SUnits)
+          if (Scheduler->isFreeSU(SU))
+            StaticDepthFreeInstrs =
+                std::max<int>(StaticDepthFreeInstrs, SU.getHeight());
+        const int Seed = std::max({StaticDepthFreeInstrs, int(TopGeo.NumCycles),
+                                   int(BotGeo.NumCycles)});
+        RS.SchedulingLength = std::max(Seed, RS.SchedulingLength);
+        RS.SchedulingLengthSeeded = true;
+        LLVM_DEBUG(dbgs() << "[FPSCHED][seed] MBB=" << DAG->getBB()->getNumber()
+                          << " StaticDepthFreeInstrs=" << StaticDepthFreeInstrs
+                          << " NumTopFixedInstrs=" << TopFixedSUs.size()
+                          << " NumTopFixedBundles=" << TopGeo.NumCycles
+                          << " NumBotFixedBundles=" << BotGeo.NumCycles
+                          << " seed SchedulingLength=" << RS.SchedulingLength
+                          << "\n");
+      }
+      // Pin standalone top-fixed instructions by their original SWP-epilogue
+      // bundle cycle, so co-issued instructions share a cycle.
+      const DenseMap<MachineInstr *, unsigned> &MIToBundle = TopGeo.MIToCycle;
+      // The band spans NumCycles bundles below SchedulingLength, leaving the
+      // leading NOP slots above it.
+      const int BottomTopFixedHeight =
+          std::max(0, RS.SchedulingLength - int(TopGeo.NumCycles));
+      LLVM_DEBUG(dbgs() << "[FPSCHED][pin] MBB=" << DAG->getBB()->getNumber()
+                        << " SchedulingLength=" << RS.SchedulingLength
+                        << " NumTopFixedBundles=" << TopGeo.NumCycles
+                        << " BottomTopFixedHeight=" << BottomTopFixedHeight
+                        << "\n");
+      // Chain bottom-up from ExitSU, spacing consecutive bundles by their cycle
+      // gap so empty (NOP) reference bundles still consume a cycle.
+      Succ = &DAG->ExitSU;
+      unsigned PrevBundle = ~0u;
+      for (SUnit *FixedSU : reverse(TopFixedSUs)) {
+        const unsigned CurBundle = MIToBundle.at(FixedSU->getInstr());
+        const unsigned Latency = (Succ == &DAG->ExitSU)
+                                     ? BottomTopFixedHeight
+                                     : PrevBundle - CurBundle;
+        SDep Dep(FixedSU, SDep::Artificial);
+        Dep.setLatency(Latency);
+        Succ->addPred(Dep);
+        LLVM_DEBUG(dbgs() << "[FPSCHED][chain] MBB="
+                          << DAG->getBB()->getNumber() << " SU"
+                          << FixedSU->NodeNum << " refbundle=" << CurBundle
+                          << " --lat" << Latency << "--> "
+                          << (Succ == FixedSU ? "self" : "")
+                          << (PrevBundle == ~0u
+                                  ? std::string("ExitSU")
+                                  : ("SU" + std::to_string(Succ->NodeNum)))
+                          << "\n");
+        Succ = FixedSU;
+        PrevBundle = CurBundle;
+      }
+      // Pin the top side: EntrySU -> each top-fixed SU, latency = its
+      // reference bundle index (distance from the region top).
+      for (SUnit *FixedSU : TopFixedSUs) {
+        const unsigned CurBundle = MIToBundle.at(FixedSU->getInstr());
+        SDep Dep(&DAG->EntrySU, SDep::Artificial);
+        Dep.setLatency(CurBundle);
+        FixedSU->addPred(Dep);
+      }
+      LLVM_DEBUG({
+        // Cross-check seed (SchedulingLength) against chain (top SU height).
+        const int TopHeight =
+            TopFixedSUs.empty() ? 0 : int(TopFixedSUs.front()->getHeight());
+        dbgs() << "[FPSCHED][heightcheck] MBB=" << DAG->getBB()->getNumber()
+               << " SchedulingLength=" << RS.SchedulingLength
+               << " bandTopHeight=" << TopHeight
+               << " mismatch=" << (RS.SchedulingLength - TopHeight)
+               << " (NumTopFixedBundles=" << TopGeo.NumCycles
+               << " NumTopFixedInstrs=" << TopFixedSUs.size() << ")\n";
+      });
+
+#ifndef NDEBUG
+      // Every instruction sharing an original top-fixed bundle must pin to the
+      // same cycle.
+      DenseMap<unsigned, int> BundlePinnedCycle;
+      for (SUnit *FixedSU : TopFixedSUs) {
+        const unsigned Bundle = MIToBundle.at(FixedSU->getInstr());
+        const int Cycle = int(FixedSU->getHeight());
+        auto [Entry, Inserted] = BundlePinnedCycle.try_emplace(Bundle, Cycle);
+        assert(Entry->second == Cycle &&
+               "Top-fixed instructions sharing a bundle pinned at different "
+               "cycles");
+      }
+#endif
     }
     DAG->makeMaps();
   }
@@ -619,6 +735,8 @@ private:
     }
   }
 
+  // Legacy only. Adds latency edges from top-fixed SUs (depth-pinned from
+  // EntrySU) to ExitSU so the region length accounts for their latency.
   void establishSafeFixedSUToExitSUDistances(
       ScheduleDAGInstrs *DAG, AIEPostRASchedStrategy *Scheduler,
       const AIEBaseInstrInfo *TII, const InstrItineraryData *ItinData) {
@@ -648,9 +766,8 @@ public:
     auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     auto *ItinData = DAG->MF.getSubtarget().getInstrItineraryData();
     const TargetRegisterInfo *TRI = DAG->MF.getSubtarget().getRegisterInfo();
-    const BlockState &BS =
-        Scheduler->getInterBlock().getBlockState(DAG->getBB());
-    const Region &CurRegion = BS.getCurrentRegion();
+    BlockState &BS = Scheduler->getInterBlock().getBlockState(DAG->getBB());
+    Region &CurRegion = BS.getCurrentRegion();
 
     createFixedSUDAGNodes(DAG, Scheduler, CurRegion);
 
@@ -658,7 +775,10 @@ public:
 
     establishSafeFreeSUToEpilogueDistances(DAG, Scheduler, TRI, TII, ItinData);
 
-    establishSafeFixedSUToExitSUDistances(DAG, Scheduler, TII, ItinData);
+    // FixPoint pins top-fixed by height (handled in createFixedSUDAGNodes), so
+    // the legacy depth-driven ExitSU edges are only needed in legacy mode.
+    if (!AIE::isFixPointScheduling())
+      establishSafeFixedSUToExitSUDistances(DAG, Scheduler, TII, ItinData);
   }
 };
 

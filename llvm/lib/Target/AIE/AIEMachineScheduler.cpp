@@ -91,6 +91,13 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
+static cl::opt<bool> FixPointScheduling(
+    "aie-fixpoint-scheduling", cl::init(false),
+    cl::desc("Use the iterative FixPoint scheduling loop with scoreboard "
+             "hazard checks for top/bot-fixed bands"));
+
+bool llvm::AIE::isFixPointScheduling() { return FixPointScheduling; }
+
 static cl::opt<bool> PreSchedFollowsSkipPipeliner(
     "aie-presched-follows-skip-pipeliner", cl::init(true),
     cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
@@ -149,13 +156,15 @@ void bumpCycleForBundles(unsigned ToCycle,
 
 } // namespace
 
-std::vector<AIE::MachineBundle>
-llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
+AIE::FinalizedBundles
+llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone,
+                                     bool DetectConflicts) {
   LLVM_DEBUG(dbgs() << "Computing Bundles for Zone "
                     << (Zone.isTop() ? "Top\n" : "Bot\n"));
   const ScheduleDAGMI &DAG = *Zone.DAG;
   bool ComputeSlots = !DAG.hasVRegLiveness();
-  std::vector<AIE::MachineBundle> Bundles;
+  AIE::FinalizedBundles Result;
+  std::vector<AIE::MachineBundle> &Bundles = Result.Bundles;
   AIE::MachineBundle CurrBundle(getTII(DAG)->getFormatInterface());
 
   auto AddInBundles = [&](auto Range, const AIEHazardRecognizer &HazardRec) {
@@ -179,6 +188,15 @@ llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
 
       for (MachineInstr &BundledMI : bundled_instrs(MI, /*IncludeRoot=*/true)) {
         LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << BundledMI);
+        // A failed add means free and top-fixed instructions were forced into
+        // the same cycle/slot; report it so the region can be rescheduled.
+        const bool DetectingConflicts = DetectConflicts && ComputeSlots;
+        const bool SlotConflict =
+            DetectingConflicts && !CurrBundle.canAdd(&BundledMI);
+        if (SlotConflict) {
+          Result.Conflict = true;
+          return;
+        }
         CurrBundle.add(&BundledMI,
                        HazardRec.getSelectedAltDescs().getOpcode(&BundledMI),
                        ComputeSlots);
@@ -224,7 +242,7 @@ llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
       std::reverse(Bundle.Instrs.begin(), Bundle.Instrs.end());
     }
   }
-  return Bundles;
+  return Result;
 }
 
 namespace {
@@ -457,6 +475,19 @@ static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
   return &(*It);
 }
 
+MachineInstr *AIEPostRASchedStrategy::reserveDelaySlotCycles() {
+  MachineInstr *MI = getDelaySlotInstr(RegionBegin, RegionEnd);
+  if (!MI)
+    return nullptr;
+  const auto *TII = getTII(CurMBB);
+  assert(RegionEnd != MI->getParent()->instr_end() &&
+         TII->isDelayedSchedBarrier(*RegionEnd));
+  unsigned Reserved = std::max(ReservedDelaySlots.getValue(),
+                               TII->getNumReservedDelaySlots(*MI));
+  getAIEHazardRecognizer(Bot)->setReservedCycles(Reserved);
+  return MI;
+}
+
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(PostRADirection == MISched::Direction::Unspecified);
@@ -468,48 +499,52 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   initializeBotScoreBoard();
   initializeTopScoreBoard();
 
-  // Compute RegionTopDownCycles first so the delay slot logic can inspect it.
   const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
-  RegionTopDownCycles = Reg.getTopFixedBundles().size();
 
-  // Delay slots are normally scheduled bottom-up so the control-flow
-  // instruction is issued exactly TII->getNumDelaySlots() before the end of
-  // the region.  However, when top-fixed bundles are present and
-  // -aie-delay-slot-topdown is enabled, we schedule the whole region top-down
-  // and rely on fixupDelaySlotPosition() (called from leaveRegion) to move
-  // the branch to the correct position afterwards.
-  unsigned DelaySlotCycles = 0;
-  PersistentTopDown = false;
-  if (MachineInstr *MI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
-    auto *TII = getTII(CurMBB);
-    assert(RegionEnd != MI->getParent()->instr_end() &&
-           TII->isDelayedSchedBarrier(*RegionEnd));
-    unsigned Reserved = std::max(ReservedDelaySlots.getValue(),
-                                 TII->getNumReservedDelaySlots(*MI));
-    getAIEHazardRecognizer(Bot)->setReservedCycles(Reserved);
+  if (!FixPointScheduling) {
+    // Legacy path: top-fixed regions are scheduled top-down, with the branch's
+    // delay-slot position fixed up afterwards in leaveRegion().
+    RegionTopDownCycles = Reg.getTopFixedBundles().size();
 
-    if (RegionTopDownCycles > 0 && EnableDelaySlotTopDown &&
-        Reg.getBotFixedBundles().empty()) {
-      // Top-fixed bundles present, no bot-fixed bundles, and the option is
-      // enabled: schedule fully top-down and fix up the branch position in
-      // leaveRegion(). Bot-fixed bundles are incompatible with this path
-      // because fixupDelaySlotPosition requires BotBundles to be empty.
-      PersistentTopDown = true;
-    } else {
-      // Normal case: force enough bottom-up cycles to place the branch at the
-      // correct distance from the end of the region.
-      DelaySlotCycles = TII->getNumDelaySlots(*MI) + 1;
+    unsigned DelaySlotCycles = 0;
+    PersistentTopDown = false;
+    if (MachineInstr *MI = reserveDelaySlotCycles()) {
+      // Top-fixed but no bot-fixed bundles: schedule top-down and fix up the
+      // branch afterwards. Otherwise force the bottom-up delay-slot distance.
+      if (RegionTopDownCycles > 0 && EnableDelaySlotTopDown &&
+          Reg.getBotFixedBundles().empty())
+        PersistentTopDown = true;
+      else
+        DelaySlotCycles = getTII(CurMBB)->getNumDelaySlots(*MI) + 1;
     }
+
+    RegionBottomUpCycles = std::max(BottomUpCycles.getValue(), DelaySlotCycles);
+    IsTopDown = (RegionBottomUpCycles == 0) || (RegionTopDownCycles > 0);
+    return;
   }
+
+  // FixPoint path: both bands are height-pinned in the Bot zone; the Top zone
+  // only carries the SWP-epilogue resource ceiling.
+
+  // Delay slots are scheduled bottom-up so the control-flow instruction is
+  // issued exactly TII->getNumDelaySlots() before the end of the region.
+  unsigned DelaySlotCycles = 0;
+  if (MachineInstr *MI = reserveDelaySlotCycles())
+    DelaySlotCycles = getTII(CurMBB)->getNumDelaySlots(*MI) + 1;
 
   RegionBottomUpCycles = std::max(BottomUpCycles.getValue(), DelaySlotCycles);
-  // Start with top-down when we have TopInsert bundles.
-  IsTopDown = (RegionBottomUpCycles == 0) || (RegionTopDownCycles > 0);
-  if (!IsTopDown) {
-    LLVM_DEBUG(dbgs() << "*** Using bottom-up scheduling for the region ***\n");
-  } else {
-    LLVM_DEBUG(dbgs() << "*** Using top-down scheduling for the region ***\n");
-  }
+  // Top-down only when explicitly requested via aie-bottomup-cycles=0;
+  // top-fixed regions are height-pinned in the Bot zone instead.
+  IsTopDown = (RegionBottomUpCycles == 0);
+  assert(!(IsTopDown && !Reg.getTopFixedBundles().empty()) &&
+         "Top-fixed regions must be scheduled bottom-up");
+  LLVM_DEBUG(dbgs() << "[FPSCHED][dir] MBB " << CurMBB->getNumber() << " ("
+                    << CurMBB->getName()
+                    << ") region: " << (IsTopDown ? "TOP-DOWN" : "BOTTOM-UP")
+                    << " | TopFixedBundles=" << Reg.getTopFixedBundles().size()
+                    << " BotFixedBundles=" << Reg.getBotFixedBundles().size()
+                    << " RegionBottomUpCycles=" << RegionBottomUpCycles
+                    << "\n");
 }
 
 /// Compute the minimum cycle for Zone in which one can ever find
@@ -539,20 +574,29 @@ static unsigned getMinSchedulableCycle(SchedBoundary &Zone) {
 
 bool AIEPostRASchedStrategy::doesNotProgressInZone(const SchedBoundary &Zone,
                                                    const SUnit &SU) const {
-  // If SU is a fixed instruction in the other zone, it isn't available.
-  if (isFixedSU(SU, !Zone.isTop()))
+  if (!FixPointScheduling) {
+    // Legacy: a fixed instruction belonging to the other zone is not available.
+    if (isFixedSU(SU, !Zone.isTop()))
+      return true;
+    // Delay slot instructions can't proceed in the top zone, unless using
+    // PersistentTopDown, which fixes them up in leaveRegion().
+    return Zone.isTop() && SU.getInstr()->hasDelaySlot() && !PersistentTopDown;
+  }
+
+  // Fixed instructions are height-pinned in the Bot zone; never available in
+  // the Top zone, where checkHazard would reject their already-bundled MIs.
+  if (Zone.isTop() &&
+      (isFixedSU(SU, /*IsTop=*/true) || isFixedSU(SU, /*IsTop=*/false)))
     return true;
 
-  // We cannot proceed with delay slot instructions in the top zone, unless we
-  // are using the post-scheduling fixup path (PersistentTopDown).  In that
-  // case the branch is allowed to be scheduled anywhere and its position will
-  // be corrected in leaveRegion().
-  return Zone.isTop() && SU.getInstr()->hasDelaySlot() && !PersistentTopDown;
+  // Delay slot instructions cannot be scheduled top-down: they must be placed
+  // bottom-up at a fixed distance from the region end.
+  return Zone.isTop() && SU.getInstr()->hasDelaySlot();
 }
 
 // This function returns true when it is impossible to continue with top-down
 // without entering an infinite loop because the only remaining instructions
-// cannot be scheduled in the top zone.
+// cannot be scheduled in the top zone. Legacy (non-FixPoint) only.
 bool AIEPostRASchedStrategy::mustSwitchToBottomUp() {
   assert(IsTopDown);
   SchedBoundary &Zone = getSchedZone();
@@ -588,25 +632,23 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
   LLVM_DEBUG(dbgs() << "** AIEPostRASchedStrategy::pickNode TopCycle="
                     << Top.getCurrCycle() << " BotCycle=" << Bot.getCurrCycle()
                     << "\n");
-  if (!IsTopDown && Bot.getCurrCycle() >= RegionBottomUpCycles) {
-    // Note that there is no guarantee we can issue an available instruction
-    // in the current cycle. In case of hazards, PostGenericScheduler::pickNode
-    // will bump the cycle until it finds a schedulable instruction. As a
-    // consequence, the picked instruction can issue in a cycle greater than
-    // RegionBottomUpCycles.
-    LLVM_DEBUG(dbgs() << "*** Switching to top-down ***\n");
-    IsTopDown = true;
-  } else if (IsTopDown && RegionTopDownCycles && !PersistentTopDown &&
-             (Top.getCurrCycle() >= RegionTopDownCycles ||
-              mustSwitchToBottomUp())) {
-    // We have scheduled all top-fixed instructions, filling as many slots as
-    // possible. Now it is time to proceed with the bottom-up approach.
-    // Note: when PersistentTopDown is true (top-fixed bundles + delay slot),
-    // we stay top-down for the entire region and fix up the branch position
-    // in leaveRegion().
-    LLVM_DEBUG(dbgs() << "*** Switching to bottom-up ***\n");
-    IsTopDown = false;
+  if (!FixPointScheduling) {
+    if (!IsTopDown && Bot.getCurrCycle() >= RegionBottomUpCycles) {
+      // No guarantee we issue in the current cycle: on hazards, pickNode
+      // bumps it, so the picked instruction can exceed RegionBottomUpCycles.
+      LLVM_DEBUG(dbgs() << "*** Switching to top-down ***\n");
+      IsTopDown = true;
+    } else if (IsTopDown && RegionTopDownCycles && !PersistentTopDown &&
+               (Top.getCurrCycle() >= RegionTopDownCycles ||
+                mustSwitchToBottomUp())) {
+      // Top-fixed instructions are all scheduled; proceed bottom-up unless
+      // PersistentTopDown, which stays top-down and fixes up in leaveRegion().
+      LLVM_DEBUG(dbgs() << "*** Switching to bottom-up ***\n");
+      IsTopDown = false;
+    }
   }
+  // FixPoint mode fixes IsTopDown for the whole region in initialize() instead
+  // (top-fixed regions are always bottom-up; no mid-region flip).
 
   SchedBoundary &Zone = getSchedZone();
   if (DAG->top() == DAG->bottom()) {
@@ -638,11 +680,40 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
   // scheduling, we might have picked an instruction to be scheduled in a cycle
   // lesser than CurrCycle. See isAvailableNode(). Make sure to set the
   // EmissionCycle right.
+  if (!FixPointScheduling) {
+    if (IsTopNode) {
+      assert(SU->TopReadyCycle <= Zone.getCurrCycle());
+      EmissionCycle = SU->TopReadyCycle;
+    } else {
+      assert(SU->BotReadyCycle >= Zone.getCurrCycle());
+      EmissionCycle = SU->BotReadyCycle;
+    }
+    LLVM_DEBUG(dbgs() << "Scheduling SU(" << SU->NodeNum << ") "
+                      << *SU->getInstr());
+    return SU;
+  }
+
+  // FixPoint: an overrun pass is discarded and rescheduled with a larger
+  // SchedulingLength, so its cycle invariants may not hold; just clamp below.
+  Region &CurReg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  const bool HasTopFixed = !CurReg.getTopFixedBundles().empty();
+  (void)HasTopFixed;
+  bool &DidNotFit = CurReg.Sched.TopFixedDidNotFit;
   if (IsTopNode) {
-    assert(SU->TopReadyCycle <= Zone.getCurrCycle());
+    // A violation here means the top-fixed band didn't fit; flag it for
+    // reschedule and clamp so this doomed pass completes consistently.
+    if (SU->TopReadyCycle > Zone.getCurrCycle()) {
+      assert(HasTopFixed && "unexpected top cycle in a non-top-fixed region");
+      DidNotFit = true;
+      SU->TopReadyCycle = Zone.getCurrCycle();
+    }
     EmissionCycle = SU->TopReadyCycle;
   } else {
-    assert(SU->BotReadyCycle >= Zone.getCurrCycle());
+    if (int(SU->BotReadyCycle) < int(Zone.getCurrCycle())) {
+      assert(HasTopFixed && "unexpected bot cycle in a non-top-fixed region");
+      DidNotFit = true;
+      SU->BotReadyCycle = Zone.getCurrCycle();
+    }
     EmissionCycle = SU->BotReadyCycle;
   }
 
@@ -661,8 +732,39 @@ int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
                    BottomUpDelta.getValue()});
 }
 
-/// Returns the number of emitted instructions in the Top or Bot zone.
-unsigned getNumEmittedInstrs(ScheduleDAGMI *DAG, bool IsTop) {
+SUnit *
+AIEPostRASchedStrategy::getLowestUnscheduledFixedSU(bool BotFixedOnly) const {
+  const Region &CurRegion = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  if (CurRegion.getBotFixedBundles().empty() &&
+      CurRegion.getTopFixedBundles().empty())
+    return nullptr;
+
+  // Fixed SUs occupy one contiguous NodeNum range at the end of the DAG (see
+  // addFixedSUnit); scan only that range instead of every SUnit in the region.
+  const std::optional<unsigned> RangeBegin =
+      BotFixedOnly ? FirstBotFixedSU
+                   : (FirstTopFixedSU ? FirstTopFixedSU : FirstBotFixedSU);
+  if (!RangeBegin)
+    return nullptr;
+  const unsigned RangeEnd =
+      LastBotFixedSU.value_or(unsigned(DAG->SUnits.size()) - 1);
+
+  // Lowest pinned-height fixed SU among bottom-ready ones (free instructions
+  // co-issue into the bands, so identify by height, not physical position).
+  SUnit *NextSU = nullptr;
+  for (unsigned N = *RangeBegin; N <= RangeEnd; ++N) {
+    SUnit &SU = DAG->SUnits[N];
+    if (SU.isScheduled || !SU.isBottomReady())
+      continue;
+    if (!NextSU || SU.getHeight() < NextSU->getHeight())
+      NextSU = &SU;
+  }
+  return NextSU;
+}
+
+/// Returns the number of emitted instructions in the Top or Bot zone. Legacy
+/// (non-FixPoint) only.
+static unsigned getNumEmittedInstrs(ScheduleDAGMI *DAG, bool IsTop) {
   if (IsTop)
     return DAG->top().isValid() ? std::distance(DAG->begin(), DAG->top()) : 0;
   return DAG->bottom().isValid() ? std::distance(DAG->bottom(), DAG->end()) : 0;
@@ -670,35 +772,53 @@ unsigned getNumEmittedInstrs(ScheduleDAGMI *DAG, bool IsTop) {
 
 SUnit *AIEPostRASchedStrategy::getNextUnscheduledFixedInstr(
     const SchedBoundary &Zone) const {
-  const Region &CurRegion = InterBlock.getBlockState(CurMBB).getCurrentRegion();
-  const unsigned NumEmitted = getNumEmittedInstrs(DAG, Zone.isTop());
-  // If the zone still has unscheduled fixed instructions, the next one to
-  // pick is (DAG->bottom() - 1) for bottom-up, or DAG->top() for top-down.
-  if (Zone.isTop()) {
-    if (NumEmitted < CurRegion.getTopFixedBundles().size()) {
-      MachineInstr &NextMI =
-          *(DAG->top().isValid() ? DAG->top() : DAG->begin());
-      SUnit *NextSU = DAG->getSUnit(&NextMI);
-      assert(NextSU);
-      assert(NextSU->TopReadyCycle == NextSU->getDepth() &&
-             "Fixed instruction won't be placed at the correct cycle");
-      assert(Zone.getCurrCycle() <= NextSU->TopReadyCycle);
-      return NextSU;
+  if (!FixPointScheduling) {
+    const Region &CurRegion =
+        InterBlock.getBlockState(CurMBB).getCurrentRegion();
+    const unsigned NumEmitted = getNumEmittedInstrs(DAG, Zone.isTop());
+    // If the zone still has unscheduled fixed instructions, the next one to
+    // pick is (DAG->bottom() - 1) for bottom-up, or DAG->top() for top-down.
+    if (Zone.isTop()) {
+      if (NumEmitted < CurRegion.getTopFixedBundles().size()) {
+        MachineInstr &NextMI =
+            *(DAG->top().isValid() ? DAG->top() : DAG->begin());
+        SUnit *NextSU = DAG->getSUnit(&NextMI);
+        assert(NextSU);
+        assert(NextSU->TopReadyCycle == NextSU->getDepth() &&
+               "Fixed instruction won't be placed at the correct cycle");
+        assert(Zone.getCurrCycle() <= NextSU->TopReadyCycle);
+        return NextSU;
+      }
+    } else {
+      if (NumEmitted < CurRegion.getBotFixedBundles().size()) {
+        MachineInstr &NextMI =
+            *std::prev(DAG->bottom().isValid() ? DAG->bottom() : DAG->end());
+        SUnit *NextSU = DAG->getSUnit(&NextMI);
+        assert(NextSU);
+        assert(NextSU->BotReadyCycle == NextSU->getHeight() &&
+               "Fixed instruction won't be placed at the correct cycle");
+        assert(Zone.getCurrCycle() <= NextSU->BotReadyCycle);
+        return NextSU;
+      }
     }
-  } else {
-    if (NumEmitted < CurRegion.getBotFixedBundles().size()) {
-      MachineInstr &NextMI =
-          *std::prev(DAG->bottom().isValid() ? DAG->bottom() : DAG->end());
-      SUnit *NextSU = DAG->getSUnit(&NextMI);
-      assert(NextSU);
-      assert(NextSU->BotReadyCycle == NextSU->getHeight() &&
-             "Fixed instruction won't be placed at the correct cycle");
-      assert(Zone.getCurrCycle() <= NextSU->BotReadyCycle);
-      return NextSU;
-    }
+    return nullptr;
   }
 
-  return nullptr;
+  // All fixed instructions are pinned bottom-up in the Bot zone; the Top zone
+  // only carries the SWP-epilogue resource ceiling, never a fixed instruction.
+  if (Zone.isTop())
+    return nullptr;
+
+  SUnit *NextSU = getLowestUnscheduledFixedSU();
+  if (!NextSU)
+    return nullptr;
+
+  // Below the pinned height the band has open slots: let free instructions fill
+  // them rather than forcing the fixed instruction here.
+  if (int(Zone.getCurrCycle()) < int(NextSU->getHeight()))
+    return nullptr;
+
+  return NextSU;
 }
 
 bool AIEPostRASchedStrategy::isFixedSU(const SUnit &SU, bool IsTop) const {
@@ -724,15 +844,36 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
   const int TopReadyCycle = SU.TopReadyCycle;
   const int CurrCycle = Zone.getCurrCycle();
 
-  // If the Zone has remaining fixed instructions, only one SU is available.
-  if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
-    if (FixedSU != &SU)
-      return false;
-    if (Zone.isTop()) {
-      return CurrCycle == TopReadyCycle;
+  if (!FixPointScheduling) {
+    // Legacy: if the Zone has remaining fixed instructions, only one is
+    // available, and it is forced at its pinned cycle.
+    if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
+      if (FixedSU != &SU)
+        return false;
+      if (Zone.isTop())
+        return CurrCycle == TopReadyCycle;
+      const int DeltaCycles = CurrCycle - BotReadyCycle;
+      return DeltaCycles >= MinDelta;
     }
-    const int DeltaCycles = CurrCycle - BotReadyCycle;
-    return DeltaCycles >= MinDelta;
+  } else {
+    // At a fixed instruction's pinned height it is the only available SU
+    // (no hazard re-check); below a pin, free instructions fill open slots.
+    if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
+      if (FixedSU != &SU)
+        return false;
+      if (Zone.isTop())
+        return CurrCycle == TopReadyCycle;
+      if (CurrCycle == BotReadyCycle)
+        return true;
+      // BotReadyCycle >= CurrCycle always, so the only remaining case is
+      // BotReadyCycle > CurrCycle: the fixed instruction isn't ready yet.
+      return false;
+    }
+
+    // Otherwise a fixed instruction is not available: it must not fall through
+    // to checkHazard(), which rejects its (possibly bundled) MI.
+    if (isFixedSU(SU, /*IsTop=*/true) || isFixedSU(SU, /*IsTop=*/false))
+      return false;
   }
 
   if (doesNotProgressInZone(Zone, SU))
@@ -771,8 +912,15 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     return false;
   }
 
-  for (int DeltaCycles = CurrCycle - BotReadyCycle; DeltaCycles >= MinDelta;
-       --DeltaCycles) {
+  // FixPoint: unscheduled fixed instructions aren't in the scoreboard yet, so
+  // floor the upward reach at the current cycle to avoid landing above it.
+  const bool ClampToBotFixedBand =
+      FixPointScheduling && getLowestUnscheduledFixedSU(/*BotFixedOnly=*/true);
+  const int MinDeltaForFixed =
+      ClampToBotFixedBand ? std::max(MinDelta, 0) : MinDelta;
+
+  for (int DeltaCycles = CurrCycle - BotReadyCycle;
+       DeltaCycles >= MinDeltaForFixed; --DeltaCycles) {
     // ReadyCycle is always greater or equal to the current cycle,
     // so DeltaCycles will always be less or equal to 0.
     if (Zone.checkHazard(&SU, DeltaCycles))
@@ -782,8 +930,12 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
   }
 
   // Didn't find a cycle in which to emit SU, move it to the Pending queue.
-  // Still, update BotReadyCycle so next calls to isAvailableNode are quicker
-  SU.BotReadyCycle = std::max(BotReadyCycle, CurrCycle - MinDelta);
+  // Still, update BotReadyCycle so next calls to isAvailableNode are quicker.
+  // FixPoint: defer by one cycle so SU is re-evaluated as the band advances.
+  if (ClampToBotFixedBand)
+    SU.BotReadyCycle = std::max<int>(BotReadyCycle, CurrCycle + 1);
+  else
+    SU.BotReadyCycle = std::max(BotReadyCycle, CurrCycle - MinDelta);
   return false;
 }
 
@@ -919,8 +1071,8 @@ void AIEPostRASchedStrategy::enterRegion(MachineBasicBlock *BB,
   RegionEnd = End;
 }
 
-/// Return the index of the first bundle in \p Bundles that contains \p MI,
-/// or -1 if not found.
+/// Return the index of the first bundle in \p Bundles that contains \p MI.
+/// Legacy (non-FixPoint) only.
 static int findInBundles(ArrayRef<AIE::MachineBundle> Bundles,
                          const MachineInstr *MI) {
   auto It = llvm::find_if(Bundles, [MI](const AIE::MachineBundle &B) {
@@ -932,7 +1084,7 @@ static int findInBundles(ArrayRef<AIE::MachineBundle> Bundles,
 
 /// Return the MBB iterator at which \p BranchMI should be spliced: just after
 /// the last non-BranchMI instruction in bundles[0..\p PlacedIdx], searching
-/// backward from \p PlacedIdx.
+/// backward from \p PlacedIdx. Legacy (non-FixPoint) only.
 static MachineBasicBlock::iterator
 computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
                    MachineInstr *BranchMI, MachineBasicBlock *MBB) {
@@ -948,7 +1100,7 @@ computeSplicePoint(ArrayRef<AIE::MachineBundle> Bundles, unsigned PlacedIdx,
 }
 
 /// Remove \p MI from \p Bundle, keeping Instrs, SlotMap and OccupiedSlots
-/// in sync.
+/// in sync. Legacy (non-FixPoint) only.
 static void removeFromBundle(AIE::MachineBundle &Bundle, MachineInstr *MI) {
   auto &Instrs = Bundle.Instrs;
   Instrs.erase(std::remove(Instrs.begin(), Instrs.end(), MI), Instrs.end());
@@ -1124,6 +1276,16 @@ void AIEPostRASchedStrategy::verifyFixedBandPlacement(
 }
 #endif
 
+void AIEPostRASchedStrategy::finishRegion() {
+  RegionBegin = nullptr;
+  RegionEnd = nullptr;
+  IsBottomRegion = false;
+  FirstTopFixedSU = {};
+  FirstBotFixedSU = {};
+  LastBotFixedSU = {};
+  InterBlock.getBlockState(CurMBB).advanceRegion();
+}
+
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
 
@@ -1143,37 +1305,106 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
     BS.clearSchedule();
   }
 
-  std::vector<AIE::MachineBundle> TopBundles = computeAndFinalizeBundles(Top);
-  std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(Bot);
-  handleRegionConflicts(ExitSU, TopBundles, BotBundles);
+  if (!FixPointScheduling) {
+    std::vector<AIE::MachineBundle> TopBundles =
+        computeAndFinalizeBundles(Top).Bundles;
+    std::vector<AIE::MachineBundle> BotBundles =
+        computeAndFinalizeBundles(Bot).Bundles;
+    handleRegionConflicts(ExitSU, TopBundles, BotBundles);
 
-  // When the delay slot instruction was scheduled top-down (because top-fixed
-  // bundles were present), fix up its position in the bundle sequence so that
-  // exactly NumDelaySlots bundles follow it.
-  if (PersistentTopDown) {
-    if (MachineInstr *BranchMI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
-      const auto *TII = getTII(CurMBB);
-      const unsigned NumDelaySlots = TII->getNumDelaySlots(*BranchMI);
-      fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
+    // If scheduled top-down (top-fixed bundles present), fix up the delay slot
+    // instruction's position so exactly NumDelaySlots bundles follow it.
+    if (PersistentTopDown) {
+      if (MachineInstr *BranchMI = getDelaySlotInstr(RegionBegin, RegionEnd)) {
+        const auto *TII = getTII(CurMBB);
+        const unsigned NumDelaySlots = TII->getNumDelaySlots(*BranchMI);
+        fixupDelaySlotPosition(TopBundles, BotBundles, BranchMI, NumDelaySlots);
+      }
+      PersistentTopDown = false;
     }
-    PersistentTopDown = false;
+
+    assert(BS.getCurrentRegion().Bundles.empty());
+    BS.addBundles(TopBundles);
+    BS.addBundles(BotBundles);
+
+#ifndef NDEBUG
+    verifyFixedBandPlacement(TopBundles, BotBundles);
+#endif
+
+    finishRegion();
+    DEBUG_BLOCKS(dbgs() << "    << leaveRegion\n");
+    return;
   }
+
+  // Free instrs overrunning (isAvailableNode) or colliding with (Conflict
+  // below) the top-fixed band both discard this pass for a larger length.
+  const bool HasTopFixed = !BS.getCurrentRegion().getTopFixedBundles().empty();
+  const bool DidNotFit = BS.getCurrentRegion().Sched.TopFixedDidNotFit;
+
+  // Bottom-up emission stops at the tallest instr, dropping leading NOP band
+  // bundles; bump the Bot zone to the full band height to materialize them.
+  if (HasTopFixed && !DidNotFit) {
+    const unsigned BandHeight = BS.getCurrentRegion().Sched.SchedulingLength;
+    if (Bot.getCurrCycle() < BandHeight)
+      Bot.bumpCycle(BandHeight);
+  }
+
+  std::vector<AIE::MachineBundle> TopBundles =
+      computeAndFinalizeBundles(Top).Bundles;
+  const bool DetectConflicts = HasTopFixed && !DidNotFit;
+  AIE::FinalizedBundles BotResult =
+      computeAndFinalizeBundles(Bot, DetectConflicts);
+  const bool Conflict = BotResult.Conflict;
+  std::vector<AIE::MachineBundle> BotBundles = std::move(BotResult.Bundles);
+
+  // An inter-zone conflict means SchedulingLength is too small: discard and let
+  // the driver grow it, rather than padding the Top zone off the pinned cycles.
+  const bool TopFixedNeedsMoreLength =
+      HasTopFixed && !DidNotFit && checkInterZoneConflicts(BotBundles);
+
+  if (DidNotFit || Conflict || TopFixedNeedsMoreLength) {
+    LLVM_DEBUG(dbgs() << "[FPSCHED][discard] MBB " << CurMBB->getNumber()
+                      << " (" << CurMBB->getName() << ") pass discarded: "
+                      << (DidNotFit  ? "free instrs overran the band"
+                          : Conflict ? "free/top-fixed slot conflict"
+                                     : "band needs headroom (inter-zone)")
+                      << " (SchedulingLength="
+                      << BS.getCurrentRegion().Sched.SchedulingLength
+                      << ", TopFixedBundles="
+                      << BS.getCurrentRegion().getTopFixedBundles().size()
+                      << ", FreeInstrs="
+                      << BS.getCurrentRegion().getFreeInstructions().size()
+                      << ")\n");
+    BS.getCurrentRegion().Sched.TopFixedDidNotFit = true;
+    finishRegion();
+    return;
+  }
+
+  handleRegionConflicts(ExitSU, TopBundles, BotBundles);
 
   assert(BS.getCurrentRegion().Bundles.empty());
   BS.addBundles(TopBundles);
   BS.addBundles(BotBundles);
 
 #ifndef NDEBUG
-  verifyFixedBandPlacement(TopBundles, BotBundles);
+  const bool ScheduleCompleted = !BS.getCurrentRegion().Sched.TopFixedDidNotFit;
+  if (ScheduleCompleted)
+    verifyFixedBandPlacement(TopBundles, BotBundles);
 #endif
 
-  RegionBegin = nullptr;
-  RegionEnd = nullptr;
-  IsBottomRegion = false;
-  FirstTopFixedSU = {};
-  FirstBotFixedSU = {};
-  LastBotFixedSU = {};
-  BS.advanceRegion();
+  // Log the committed region length (reported by the pipeliner remark as
+  // Prologue/EpilogueBundles) to explain length changes without a -debug dump.
+  LLVM_DEBUG({
+    const Region &R = BS.getCurrentRegion();
+    dbgs() << "[FPSCHED][layout] MBB " << CurMBB->getNumber() << " ("
+           << CurMBB->getName() << ") committed: " << R.Bundles.size()
+           << " bundles (Top=" << TopBundles.size()
+           << " Bot=" << BotBundles.size()
+           << ") | BotFixedBundles=" << R.getBotFixedBundles().size()
+           << " TopFixedBundles=" << R.getTopFixedBundles().size()
+           << " FreeInstrs=" << R.getFreeInstructions().size() << "\n";
+  });
+  finishRegion();
   DEBUG_BLOCKS(dbgs() << "    << leaveRegion\n");
 }
 
@@ -1451,7 +1682,8 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "Leave Region\n");
   assert(RegionPolicy.OnlyBottomUp);
 
-  std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(Bot);
+  std::vector<AIE::MachineBundle> BotBundles =
+      computeAndFinalizeBundles(Bot).Bundles;
 
   // If requested, insert a CYCLE_SEPARATOR after each bundle.
   if (InsertCycleSeparators) {
@@ -1872,6 +2104,11 @@ SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
     LastBotFixedSU = SUNum;
   }
 
+  DEBUG_BLOCKS(dbgs() << "[FixedSU] MBB " << CurMBB->getNumber() << " "
+                      << (IsTop ? "TOP-fixed" : "BOT-fixed") << " SU(" << SUNum
+                      << ") pinned@"
+                      << (IsTop ? SU.TopReadyCycle : SU.BotReadyCycle) << ": "
+                      << MI);
   return SU;
 }
 
