@@ -92,7 +92,7 @@ static cl::opt<bool> UseLoopHeuristics(
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
 static cl::opt<bool> FixPointScheduling(
-    "aie-fixpoint-scheduling", cl::init(false),
+    "aie-fixpoint-scheduling", cl::init(true),
     cl::desc("Use the iterative FixPoint scheduling loop with scoreboard "
              "hazard checks for top/bot-fixed bands"));
 
