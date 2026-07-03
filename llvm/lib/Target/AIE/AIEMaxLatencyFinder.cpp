@@ -171,7 +171,7 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
   // Loop-aware convergence: gradually tighten the ExitSU latency from zero
   // toward the real value.
-  if (IB.getBlockState(CurBB).Kind == BlockType::Loop) {
+  if (IB.getBlockState(CurBB).Kind == BlockType::Loop && IsBottomRegion) {
     if (auto Cap = IB.getLatencyCap(MI)) {
       LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
       return std::min(Latency, *Cap);

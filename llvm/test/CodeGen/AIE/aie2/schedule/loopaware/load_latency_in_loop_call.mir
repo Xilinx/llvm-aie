@@ -23,12 +23,14 @@
   ; CHECK-LABEL: test:
   ; CHECK:       // %bb.0:
   ; CHECK-NEXT:  .LBB0_1: // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__floatsisf; nopv
-  ; CHECK-NEXT:    nopx // Delay Slot 5
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov dj0, r22
+  ; CHECK-NEXT:    lda r1, [p6, dj0]
+  ; CHECK-NEXT:    jl #__floatsisf
+  ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    mov dj0, r22 // Delay Slot 2
-  ; CHECK-NEXT:    lda r1, [p6, dj0] // Delay Slot 1
+  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:    nopa ; add r17, r17, #1; nopm
   ; CHECK-NEXT:    eq r1, r16, r17
   ; CHECK-NEXT:    jz r1, #.LBB0_1
