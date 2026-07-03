@@ -49,17 +49,16 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    vlda x4, [p6], #64; vldb.pop.3d x6, [p0, lf0, r24, d0]; vst x2, [p7], #64; nopx ; vmax_lt.bf16 x2, r16, x4, x6; nopv
   ; CHECK-NEXT:  // %bb.2: // %exit
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vst x2, [p7], #64; vmax_lt.bf16 x2, r16, x4, x6
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst x2, [p7], #64; vmax_lt.bf16 x2, r16, x4, x6
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst x2, [p7], #64; ret lr; vmax_lt.bf16 x2, r16, x4, x6
-  ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    vst x2, [p7], #64; vmax_lt.bf16 x2, r16, x4, x6 // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    vst x2, [p7], #64 // Delay Slot 2
-  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:    vst x2, [p7], #64; vmax_lt.bf16 x2, r16, x4, x6
+  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    vst x2, [p7], #64; vmax_lt.bf16 x2, r16, x4, x6 // Delay Slot 5
+  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    vst x2, [p7], #64; vmax_lt.bf16 x2, r16, x4, x6 // Delay Slot 3
+  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    vst x2, [p7], #64 // Delay Slot 1
   preheader:
     call void @llvm.set.loop.iterations.i32(i32 %n)
     br label %loop_body

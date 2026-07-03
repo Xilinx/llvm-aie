@@ -67,7 +67,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.0.entry
   ; CHECK-NEXT:   - PrologueBundles: '20'
   ; CHECK-NEXT:   - Epilogue:        bb.2
-  ; CHECK-NEXT:   - EpilogueBundles: '33'
+  ; CHECK-NEXT:   - EpilogueBundles: '27'
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.2

@@ -90,7 +90,6 @@ body:             |
     ; CHECK-NEXT: $dn6 = MOV_mv_scl killed $r5
     ; CHECK-NEXT: $dj6 = MOV_mv_scl killed $r6
     ; CHECK-NEXT: $dc6 = MOV_mv_scl killed $r7
-    ; CHECK-NEXT: ST_dms_spill killed $r8, -32, implicit $sp :: (store (s32) into %stack.1)
     ; CHECK-NEXT: $m1 = MOV_mv_scl $m2
     ; CHECK-NEXT: $dn1 = MOV_mv_scl $dn2
     ; CHECK-NEXT: $dj1 = MOV_mv_scl $dj2
@@ -99,14 +98,18 @@ body:             |
     ; CHECK-NEXT: $dn5 = MOV_mv_scl $dn6
     ; CHECK-NEXT: $dj5 = MOV_mv_scl $dj6
     ; CHECK-NEXT: $dc5 = MOV_mv_scl $dc6
+    ; CHECK-NEXT: ST_dms_spill killed $r8, -32, implicit $sp :: (store (s32) into %stack.1)
     ; CHECK-NEXT: $p0, $dc1, $dc5 = PADDA_3D killed $p0, $d1_3d
     ; CHECK-NEXT: renamable $m1 = LDA_dms_spill -32, implicit $sp :: (load (s32) from %stack.1)
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $p2 = MOV_mv_scl $p1
     ; CHECK-NEXT: $p2, $dc2, $dc6 = PADDA_3D killed $p2, $d2_3d
+    ; CHECK-NEXT: frame-destroy PADDB_sp_imm -32, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $dn1 = MOV_mv_scl killed $r9
     ; CHECK-NEXT: $dj1 = MOV_mv_scl killed $r10
     ; CHECK-NEXT: $dn5 = MOV_mv_scl killed $r13
-    ; CHECK-NEXT: frame-destroy PADDB_sp_imm -32, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $dj5 = MOV_mv_scl killed $r14
     ; CHECK-NEXT: $dc2 = MOV_mv_scl killed $dc1
     ; CHECK-NEXT: RET implicit $lr

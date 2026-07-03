@@ -40,18 +40,17 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; nopb ; movs p0, p5; nopx ; vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1; nopv
   ; CHECK-NEXT:  // %bb.2: // %exit
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; and r26, r24, r18; vshift x5, x9, x0, r26; nopv
-  ; CHECK-NEXT:    nopa ; nopx
+  ; CHECK-NEXT:    and r26, r24, r18; vshift x5, x9, x0, r26
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst wl1, [p4], #32; vsel.8 x3, x0, x5, r5:r4
   ; CHECK-NEXT:    vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1
   ; CHECK-NEXT:    vshift x5, x9, x0, r26
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst wl1, [p4], #32; ret lr; vsel.8 x3, x0, x5, r5:r4
-  ; CHECK-NEXT:    vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1 // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
+  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    vst wl1, [p4], #32; vsel.8 x3, x0, x5, r5:r4 // Delay Slot 5
+  ; CHECK-NEXT:    vmax_lt.8 x1, r17:r16, x7, x3, vaddsign1 // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    vst wl1, [p4], #32 // Delay Slot 2
-  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:    nop // Delay Slot 2
+  ; CHECK-NEXT:    vst wl1, [p4], #32 // Delay Slot 1
   preheader:
     call void @llvm.set.loop.iterations.i32(i32 %n)
     br label %loop_body

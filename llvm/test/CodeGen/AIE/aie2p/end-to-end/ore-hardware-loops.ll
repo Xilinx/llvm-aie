@@ -55,8 +55,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      for.cond.cleanup
 ; REMARKS-NEXT:   - RegionIndex:     '0'
-; REMARKS-NEXT:   - BundleCount:     '15'
-; REMARKS-NEXT:   - ByteCount:       '80'
+; REMARKS-NEXT:   - BundleCount:     '11'
+; REMARKS-NEXT:   - ByteCount:       '64'
 ; REMARKS-NEXT:   - Offset:          '208'
 ; REMARKS-NEXT: ...
 ;
@@ -90,21 +90,17 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; ASM-NEXT:  // %bb.2: // %for.cond.cleanup
-; ASM-NEXT:    nopa ; nopb ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv
-; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; nopx ; vconv.fp32.bf16 cml1, x6
-; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
-; ASM-NEXT:    nop
-; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
+; ASM-NEXT:    nopa ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopx
 ; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml1, x6
 ; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
-; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; ret lr
-; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0] // Delay Slot 5
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; ret lr; vconv.fp32.bf16 cml1, x6
+; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4 // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
-; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    nop // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26] // Delay Slot 3
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26] // Delay Slot 2
+; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0] // Delay Slot 1
 entry:
   %num = getelementptr inbounds i8, ptr %params, i20 4
   %0 = load i32, ptr %num, align 4, !tbaa !4

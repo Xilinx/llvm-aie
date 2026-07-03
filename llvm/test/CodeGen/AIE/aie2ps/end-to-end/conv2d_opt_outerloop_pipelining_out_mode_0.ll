@@ -14,9 +14,6 @@
 
 ; Function Attrs: mustprogress
 define void @conv2d_opt_outerloop_out_mode_0(
-    ptr noalias %ifm, ptr noalias %wts, ptr noalias %ofm,
-    ptr nonnull align 64 dereferenceable(384) %conv2d_params,
-    ptr noalias %psum_0_tdm, ptr noalias %psum_1_tdm) local_unnamed_addr #0 {
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            pipeliner
 ; REMARKS-NEXT: Name:            schedule
@@ -59,7 +56,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; REMARKS-NEXT:   - Prologue:        bb.6.for.body.i
 ; REMARKS-NEXT:   - PrologueBundles: '12'
 ; REMARKS-NEXT:   - Epilogue:        bb.8.for.cond.cleanup54.i
-; REMARKS-NEXT:   - EpilogueBundles: '17'
+; REMARKS-NEXT:   - EpilogueBundles: '18'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -76,6 +73,9 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; REMARKS-NEXT:   - Epilogue:        bb.11.cooldown.exit
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT: ...
+    ptr noalias %ifm, ptr noalias %wts, ptr noalias %ofm,
+    ptr nonnull align 64 dereferenceable(384) %conv2d_params,
+    ptr noalias %psum_0_tdm, ptr noalias %psum_1_tdm) local_unnamed_addr #0 {
 entry:
   %0 = getelementptr inbounds nuw i8, ptr %conv2d_params, i20 92
   %1 = load i32, ptr %0, align 4, !tbaa !4

@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -O2 -mtriple=aie2p --issue-limit=1 --aie-bottomup-cycles=0 -verify-machineinstrs \
 # RUN:    -start-before=phi-node-elimination -stop-before=aie-finalize-mi-bundles \
 # RUN:    %s -o - | FileCheck %s
@@ -181,16 +181,16 @@ body:             |
     ; CHECK-LABEL: name: test_4_padd_scarce
     ; CHECK: liveins: $d2, $d3, $d4, $d5, $d6, $d7, $m0, $p0, $p1, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl $r3
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl $r1
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl $r2
-    ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl $r0
-    ; CHECK-NEXT: $m7 = MOV_alu_mv_mv_mv_scl killed $r0
-    ; CHECK-NEXT: $dn7 = MOV_alu_mv_mv_mv_scl killed $r1
-    ; CHECK-NEXT: $dj7 = MOV_alu_mv_mv_mv_scl killed $r2
-    ; CHECK-NEXT: $dc7 = MOV_alu_mv_mv_mv_scl killed $r3
-    ; CHECK-NEXT: $p0, dead $dc1 = PADDA_2D killed $p0, killed $d1
+    ; CHECK-NEXT: $m7 = MOV_alu_mv_mv_mv_scl $r0
+    ; CHECK-NEXT: $dn7 = MOV_alu_mv_mv_mv_scl $r1
+    ; CHECK-NEXT: $dj7 = MOV_alu_mv_mv_mv_scl $r2
+    ; CHECK-NEXT: $dc7 = MOV_alu_mv_mv_mv_scl $r3
+    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl killed $r3
+    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r1
+    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
+    ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl killed $r0
     ; CHECK-NEXT: $p2 = MOV_alu_mv_mv_mv_scl $p1
+    ; CHECK-NEXT: $p0, dead $dc1 = PADDA_2D killed $p0, killed $d1
     ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl killed $r4
     ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r5
     ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl killed $r6
@@ -241,10 +241,10 @@ body:             |
     ; CHECK: liveins: $d2, $d3, $d4, $d5, $d6, $d7, $m0, $p0, $p1, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl $r0
+    ; CHECK-NEXT: $dc7 = MOV_alu_mv_mv_mv_scl killed $r7
     ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl $r1
     ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl $r2
     ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl killed $r3
-    ; CHECK-NEXT: $dc7 = MOV_alu_mv_mv_mv_scl killed $r7
     ; CHECK-NEXT: $m7 = MOV_alu_mv_mv_mv_scl killed $r0
     ; CHECK-NEXT: $dn7 = MOV_alu_mv_mv_mv_scl killed $r1
     ; CHECK-NEXT: $dj7 = MOV_alu_mv_mv_mv_scl killed $r2

@@ -368,19 +368,19 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $cm2, $s0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $x5 = VSHUFFLE $x6, $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x5 = VSHUFFLE $x6, $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x5 = VSHUFFLE $x6, $x1, $r8
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def dead $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit $x2, implicit $r8, implicit killed $cm2, implicit $x0, implicit $r4 {
   ; CHECK-NEXT:     $x5 = VSHUFFLE killed $x5, $x2, $r8
-  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal $x5, $x0, $r4
+  ; CHECK-NEXT:     $cm2 = VMAC_vmac_cm_core_dense killed $cm2, internal killed $x5, $x0, $r4
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x5 = VSHUFFLE killed $x6, killed $x1, $r8
   ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit killed $x5, implicit killed $x2, implicit killed $r8, implicit killed $cm2, implicit $x0, implicit $r4 {

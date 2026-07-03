@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2 -run-pass=postmisched --aie-bottomup-cycles=2 %s -o - | FileCheck %s
 
 # ST_S8 uses r_wa in E7.
@@ -15,12 +15,16 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: r_wa_port_conflict
     ; CHECK: ST_S8_ag_idx_imm killed $r0, killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r1 = MOVA_lda_cg 1
     ; CHECK-NEXT: $r2 = MOVA_lda_cg 2
     ; CHECK-NEXT: $r3 = MOVA_lda_cg 3
     ; CHECK-NEXT: $r4 = MOVA_lda_cg 4
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r5 = MOVA_lda_cg 5
     ; CHECK-NEXT: $r6 = MOVA_lda_cg 6
     ; CHECK-NEXT: $r7 = MOVA_lda_cg 7

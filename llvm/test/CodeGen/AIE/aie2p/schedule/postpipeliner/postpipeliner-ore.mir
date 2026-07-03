@@ -96,7 +96,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.0.entry
   ; CHECK-NEXT:   - PrologueBundles: '28'
   ; CHECK-NEXT:   - Epilogue:        bb.2
-  ; CHECK-NEXT:   - EpilogueBundles: '29'
+  ; CHECK-NEXT:   - EpilogueBundles: '23'
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.2
@@ -162,7 +162,7 @@ body:             |
   ; CHECK-NEXT:   - Prologue:        bb.0.entry
   ; CHECK-NEXT:   - PrologueBundles: '16'
   ; CHECK-NEXT:   - Epilogue:        bb.2
-  ; CHECK-NEXT:   - EpilogueBundles: '21'
+  ; CHECK-NEXT:   - EpilogueBundles: '15'
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.2

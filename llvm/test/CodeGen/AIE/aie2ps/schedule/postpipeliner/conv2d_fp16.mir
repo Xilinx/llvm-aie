@@ -40,25 +40,18 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    vlda x8, [p5], #64; paddb.3d [p0], d1; nops ; nopx ; vshuffle x4, x1, x10, r20; vmac.f cml0, cml0, x4, y3, r10
   ; CHECK-NEXT:  // %bb.3: // %exit
-  ; CHECK-NEXT:    vlda x9, [p5], #64; nopb ; nopxm ; vmac.f cml5, cml5, x3, y4, r10
+  ; CHECK-NEXT:    vlda x9, [p5], #64; nopb ; nopx ; vmac.f cml5, cml5, x3, y4, r10
   ; CHECK-NEXT:    vlda x6, [p5], #64; vmac.f cml3, cml3, x4, y4, r10
   ; CHECK-NEXT:    vlda x7, [p5], #64; vshuffle x3, x1, x10, r22; vmac.f cml1, cml1, x3, y3, r10
   ; CHECK-NEXT:    vshuffle x4, x1, x10, r20; vmac.f cml0, cml0, x4, y3, r10
   ; CHECK-NEXT:    vmac.f cml5, cml5, x3, y4, r10
   ; CHECK-NEXT:    vmac.f cml3, cml3, x4, y4, r10
-  ; CHECK-NEXT:    vshuffle x3, x1, x10, r22; vmac.f cml1, cml1, x3, y3, r10
-  ; CHECK-NEXT:    vshuffle x4, x1, x10, r20; vmac.f cml0, cml0, x4, y3, r10
-  ; CHECK-NEXT:    vmac.f cml5, cml5, x3, y4, r10
-  ; CHECK-NEXT:    vmac.f cml3, cml3, x4, y4, r10
-  ; CHECK-NEXT:    vmac.f cml1, cml1, x3, y3, r10
-  ; CHECK-NEXT:    vmac.f cml0, cml0, x4, y3, r10
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    ret lr
-  ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    nop // Delay Slot 2
-  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:    ret lr; vshuffle x3, x1, x10, r22; vmac.f cml1, cml1, x3, y3, r10
+  ; CHECK-NEXT:    vshuffle x4, x1, x10, r20; vmac.f cml0, cml0, x4, y3, r10 // Delay Slot 5
+  ; CHECK-NEXT:    vmac.f cml5, cml5, x3, y4, r10 // Delay Slot 4
+  ; CHECK-NEXT:    vmac.f cml3, cml3, x4, y4, r10 // Delay Slot 3
+  ; CHECK-NEXT:    vmac.f cml1, cml1, x3, y3, r10 // Delay Slot 2
+  ; CHECK-NEXT:    vmac.f cml0, cml0, x4, y3, r10 // Delay Slot 1
   entry:
     br label %preheader
   preheader:

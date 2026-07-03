@@ -22,8 +22,8 @@
   ; CHECK-NEXT:    vlda wl2, [p0], #64
   ; CHECK-NEXT:    vldb wh2, [p0, #32]
   ; CHECK-NEXT:    vlda wl2, [p0], #64
-  ; CHECK-NEXT:    mova r2, #-5; vldb wh2, [p0, #32]; vbcst.16 x0, r0
-  ; CHECK-NEXT:    vlda wl2, [p0], #64; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    vlda wl2, [p0], #64; movx r2, #-5; vbcst.16 x0, r0
   ; CHECK-NEXT:    mova r0, #824; vldb wh2, [p0, #32]; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    vlda wl2, [p0], #64; lshl r1, r1, r2
   ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopx ; add.nc lc, r1, #-7; vmul cm0, x2, x0, r0
@@ -39,22 +39,20 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; vlda wl2, [p0], #64; vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; nopx ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vst.srs.s16.s32 bml0, s0, [p1], #64; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; vmul cm0, x2, x0, r0
-  ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]
-  ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; ret lr
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32] // Delay Slot 5
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64 // Delay Slot 4
-  ; CHECK-NEXT:    event #1 // Delay Slot 3
-  ; CHECK-NEXT:    nop // Delay Slot 2
-  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32] // Delay Slot 3
+  ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64 // Delay Slot 2
+  ; CHECK-NEXT:    event #1 // Delay Slot 1
   entry:
     tail call void @llvm.aie2.event(i32 0)
     %div8 = lshr i32 %N, 5

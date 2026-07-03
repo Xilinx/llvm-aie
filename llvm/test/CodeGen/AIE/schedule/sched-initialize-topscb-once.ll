@@ -25,14 +25,13 @@ define void @load_store_with_call() {
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; vst x2, [p5, #0]; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %exit
-; CHECK-NEXT:    mova p0, #0; vst x2, [p5, #0]; nopx
-; CHECK-NEXT:    mova p1, #0; vst x2, [p5, #0]
-; CHECK-NEXT:    mova p2, #0; vst x2, [p5, #0]; jl p5
-; CHECK-NEXT:    mova p3, #0; vst x2, [p5, #0] // Delay Slot 5
-; CHECK-NEXT:    mova p4, #0; vst x2, [p5, #0] // Delay Slot 4
-; CHECK-NEXT:    vst x2, [p5, #0] // Delay Slot 3
-; CHECK-NEXT:    vst x2, [p5, #0] // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vst x2, [p5, #0]
+; CHECK-NEXT:    vst x2, [p5, #0]; jl p5
+; CHECK-NEXT:    mova p0, #0; vst x2, [p5, #0] // Delay Slot 5
+; CHECK-NEXT:    mova p1, #0; vst x2, [p5, #0] // Delay Slot 4
+; CHECK-NEXT:    mova p2, #0; vst x2, [p5, #0] // Delay Slot 3
+; CHECK-NEXT:    mova p3, #0; vst x2, [p5, #0] // Delay Slot 2
+; CHECK-NEXT:    mova p4, #0; vst x2, [p5, #0] // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-64]; nopb ; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop

@@ -11,17 +11,17 @@
 define void @sigmoid_int8_1() {
 ; CHECK-LABEL: sigmoid_int8_1:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov crunpacksize, #1; nopv
+; CHECK-NEXT:    nops ; mov crunpacksize, #1
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
-; CHECK-NEXT:    mova p0, #0; nopb ; movxm le, #.L_LEnd0
-; CHECK-NEXT:    mova r0, #0; vldb.unpack x3, unpacksign0, [p0, #0]; mov crsrsmode, #0
-; CHECK-NEXT:    vbcst.32 x4, r0
-; CHECK-NEXT:    mova r1, #1; nopb ; nops ; nopx ; add.nc lc, r0, #-3; nopv
-; CHECK-NEXT:    vbcst.16 x0, r1
+; CHECK-NEXT:    mova p0, #0; movxm le, #.L_LEnd0
+; CHECK-NEXT:    mova r1, #1; vldb.unpack x3, unpacksign0, [p0, #0]; mov crsrsmode, #0
+; CHECK-NEXT:    mova r0, #0; vbcst.16 x0, r1
 ; CHECK-NEXT:    vbcst.16 x2, r0
-; CHECK-NEXT:    vldb.unpack x3, unpacksign0, [p0, #0]; vmov x7, x2
-; CHECK-NEXT:    vmov x6, x2
-; CHECK-NEXT:    vmin_ge.16 x9, r16, x3, x0, vaddsign0
+; CHECK-NEXT:    vbcst.32 x4, r0
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; add.nc lc, r0, #-3; nopv
+; CHECK-NEXT:    nopa ; vldb.unpack x3, unpacksign0, [p0, #0]; nops ; nopx ; vmov x7, x2; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov x6, x2; nopv
+; CHECK-NEXT:    nopx ; vmin_ge.16 x9, r16, x3, x0, vaddsign0
 ; CHECK-NEXT:    vmax_lt.16 x8, r16, x9, x2, vaddsign0; vclr dm0
 ; CHECK-NEXT:    vmov x9, x8
 ; CHECK-NEXT:    vldb.unpack x3, unpacksign0, [p0, #0]; mov s0, r0
@@ -38,7 +38,7 @@ define void @sigmoid_int8_1() {
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; vsrs.4x wh11, cml4, s0, srssign0; nopx ; vmov x9, x8; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    nopx
+; CHECK-NEXT:    nopa ; nopxm
 ; CHECK-NEXT:    vmac dm3, dm0, y4, y3,r0
 ; CHECK-NEXT:    vmin_ge.16 x9, r16, x3, x0, vaddsign0
 ; CHECK-NEXT:    vmax_lt.16 x8, r16, x9, x2, vaddsign0; vmsc dm4, dm3, y2, y4,r0
@@ -47,15 +47,12 @@ define void @sigmoid_int8_1() {
 ; CHECK-NEXT:    vmac dm3, dm0, y4, y3,r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmsc dm4, dm3, y2, y4,r0
-; CHECK-NEXT:    vsrs.4x wh11, cml4, s0, srssign0
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vsrs.4x wh11, cml4, s0, srssign0; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vsrs.4x wh11, cml4, s0, srssign0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    vsrs.4x wh11, cml4, s0, srssign0 // Delay Slot 1
 entry:
   br label %for.body
 

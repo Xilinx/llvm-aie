@@ -126,26 +126,25 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x8, x5, x9, r18; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    lda lr, [sp, #-56]; vshuffle x11, x7, x10, r4 // 4-byte Folded Reload
-; CHECK-NEXT:    lda p6, [sp, #-44]; vshift x1, x6, x5, r0; vmac.f cml7, cml7, x6, x2, r8 // 4-byte Folded Reload
-; CHECK-NEXT:    lda r12, [sp, #-48]; vshift x7, x5, x9, r0; vmac.f cml6, cml6, x8, x2, r8 // 4-byte Folded Reload
-; CHECK-NEXT:    lda r10, [sp, #-52]; vshift x7, x7, x11, r20 // 4-byte Folded Reload
-; CHECK-NEXT:    lda r9:r8, [sp, #-64]; vshift x3, x6, x5, r6; vmac.f cml7, cml7, x1, x2, r8 // 8-byte Folded Reload
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle x11, x7, x10, r4; nopv
+; CHECK-NEXT:    nopx ; vshift x1, x6, x5, r0; vmac.f cml7, cml7, x6, x2, r8
+; CHECK-NEXT:    vshift x7, x5, x9, r0; vmac.f cml6, cml6, x8, x2, r8
+; CHECK-NEXT:    vshift x7, x7, x11, r20
+; CHECK-NEXT:    vshift x3, x6, x5, r6; vmac.f cml7, cml7, x1, x2, r8
 ; CHECK-NEXT:    vshift x10, x5, x9, r16; vmac.f cml6, cml6, x7, x2, r8
-; CHECK-NEXT:    vshift x10, x10, x4, r24
+; CHECK-NEXT:    lda lr, [sp, #-56]; vshift x10, x10, x4, r24 // 4-byte Folded Reload
 ; CHECK-NEXT:    vshift x3, x3, x9, r22
-; CHECK-NEXT:    vmac.f cml6, cml6, x10, x2, r8
-; CHECK-NEXT:    vmac.f cml7, cml7, x3, x2, r8
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda p6, [sp, #-44]; vmac.f cml6, cml6, x10, x2, r8 // 4-byte Folded Reload
+; CHECK-NEXT:    lda r12, [sp, #-48]; vmac.f cml7, cml7, x3, x2, r8 // 4-byte Folded Reload
+; CHECK-NEXT:    lda r10, [sp, #-52] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r9:r8, [sp, #-64] // 8-byte Folded Reload
 ; CHECK-NEXT:    lda p7, [sp, #-40] // 4-byte Folded Reload
-; CHECK-NEXT:    paddxm [sp], #-64
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml7, [p7], #64 // Delay Slot 4
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml6, [p7], #64 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml7, [p7], #64 // Delay Slot 3
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml6, [p7], #64 // Delay Slot 2
+; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 1
 entry:
   %div_factor1 = getelementptr inbounds i8, ptr %avgpool2d_params, i20 46
   %0 = load bfloat, ptr %div_factor1, align 2, !tbaa !4

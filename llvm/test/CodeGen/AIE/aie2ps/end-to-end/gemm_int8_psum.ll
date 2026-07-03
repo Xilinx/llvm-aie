@@ -19,9 +19,6 @@
 
 ; Function Attrs: mustprogress noinline
 define dso_local void @gemm_int8_psum(
-    ptr noalias %p_a, ptr noalias %p_b, ptr noalias %p_c,
-    ptr noalias %p_bias, ptr noalias %p_psum,
-    ptr nonnull align 32 dereferenceable(160) %param) local_unnamed_addr #0 {
 ; REMARKS: --- !Analysis
 ; REMARKS-NEXT: Pass:            pipeliner
 ; REMARKS-NEXT: Name:            schedule
@@ -77,10 +74,13 @@ define dso_local void @gemm_int8_psum(
 ; REMARKS-NEXT:   - NS:              '4'
 ; REMARKS-NEXT:   - Loop:            bb.5.for.body144.cd
 ; REMARKS-NEXT:   - Prologue:        bb.4.cooldown.entry
-; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - PrologueBundles: '13'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT: ...
+    ptr noalias %p_a, ptr noalias %p_b, ptr noalias %p_c,
+    ptr noalias %p_bias, ptr noalias %p_psum,
+    ptr nonnull align 32 dereferenceable(160) %param) local_unnamed_addr #0 {
 entry:
   %bias_zero_flag = getelementptr inbounds nuw i8, ptr %param, i20 48
   %0 = load i8, ptr %bias_zero_flag, align 16, !tbaa !4
