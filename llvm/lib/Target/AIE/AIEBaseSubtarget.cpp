@@ -279,8 +279,8 @@ class BiasDepth : public ScheduleDAGMutation {
     // It's important to iterate in topological order over SUnits, because
     // all its successors will be marked as having a "dirty" depth.
     for (SUnit &SU : DAG->SUnits) {
-      if (auto *It = BS.FixPoint.PerMIExtraDepth.find(SU.getInstr());
-          It != BS.FixPoint.PerMIExtraDepth.end()) {
+      if (auto *It = BS.LoopState.PerMIExtraDepth.find(SU.getInstr());
+          It != BS.LoopState.PerMIExtraDepth.end()) {
         unsigned NewDepth = std::max(0, int(SU.getDepth()) + It->second);
         SU.setDepthToAtLeast(NewDepth);
       }

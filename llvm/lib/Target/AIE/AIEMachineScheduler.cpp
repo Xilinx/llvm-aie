@@ -1129,7 +1129,7 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
 
   auto &BS = InterBlock.getBlockState(CurMBB);
   if (InterBlock.isGatheringPhase() ||
-      BS.FixPoint.Stage != SchedulingStage::Scheduling) {
+      BS.LoopState.Stage != SchedulingStage::Scheduling) {
     return;
   }
   materializeMultiOpcodeInstrs();
@@ -1338,7 +1338,7 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     // loop-aware scheduler knows how to reassign those.
     const BlockState &BS = getInterBlock().getBlockState(CurMBB);
     if (UseLoopHeuristics && BS.Kind == AIE::BlockType::Loop &&
-        BS.getRegions().size() == 1 && BS.FixPoint.NumIters > 0) {
+        BS.getRegions().size() == 1 && BS.LoopState.NumIters > 0) {
       if (const InterBlockEdges *LoopEdgesPtr = BS.getLoopSelfEdge()) {
         const InterBlockEdges &LoopEdges = *LoopEdgesPtr;
         // For instructions with equal dependence chains, prioritize scheduling
@@ -1821,7 +1821,7 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   auto &BS = InterBlock.getBlockState(CurMBB);
   const auto &Region = BS.getCurrentRegion();
   int NCopies = 1;
-  if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
+  if (BS.LoopState.Stage == SchedulingStage::Pipelining) {
     assert(BS.Kind == BlockType::Loop);
     assert(BS.getRegions().size() == 1);
     assert(Region.getBotFixedBundles().empty());
@@ -1881,7 +1881,7 @@ bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
   if (BS.isSafeToIgnoreMemDeps())
     return false;
 
-  if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
+  if (BS.LoopState.Stage == SchedulingStage::Pipelining) {
     int NInstr = BS.getCurrentRegion().getFreeInstructions().size();
     int IterA = SUa->NodeNum / NInstr;
     int IterB = SUb->NodeNum / NInstr;
@@ -1901,7 +1901,7 @@ void AIEScheduleDAGMI::schedule() {
     // We are only gathering regions in the MBB, no scheduling to do.
     return;
   }
-  switch (BS.FixPoint.Stage) {
+  switch (BS.LoopState.Stage) {
   case SchedulingStage::Pipelining: {
     // We've gone past regular scheduling. Try to find a valid modulo schedule
     // If it succeeds, we need to implement it, if we fail we fall back on the
@@ -1911,7 +1911,7 @@ void AIEScheduleDAGMI::schedule() {
 
     auto &PostSWP = BS.getPostSWP();
 
-    if (PostSWP.schedule(*this, BS.FixPoint.II)) {
+    if (PostSWP.schedule(*this, BS.LoopState.II)) {
       BS.setPipelined();
       LLVM_DEBUG(PostSWP.dump());
     }

@@ -201,7 +201,7 @@ MachineInstr *checkResourceConflictsTopDown(
     const std::vector<MachineBundle> &SuccBundles,
     const AIEHazardRecognizer &HR,
     const AIEAlternateDescriptors &SelectedDescriptors,
-    const FixedpointState &Fixedpoint) {
+    const LoopPipeliningState &LoopState) {
   DEBUG_LOOPAWARE(dbgs() << "Interblock Predecessor scoreboard:\n";
                   Scoreboard.dump());
 
@@ -213,7 +213,7 @@ MachineInstr *checkResourceConflictsTopDown(
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Top cycle=" << TopCycle
                                << ": " << *MI);
         ConflictMI = MI;
-        if (!Fixedpoint.PerMIExtraDepth.contains(MI))
+        if (!LoopState.PerMIExtraDepth.contains(MI))
           return MI;
       }
     }
@@ -415,9 +415,9 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   CurrentBlockState = &getBlockState(BB);
   CurrentBlockState->resetRegion();
   DEBUG_BLOCKS(dbgs() << "  >> enterBlock " << BB->getNumber() << " "
-                      << CurrentBlockState->kindAsString() << " FixPointIter="
-                      << CurrentBlockState->FixPoint.NumIters
-                      << " II=" << CurrentBlockState->FixPoint.II << "\n");
+                      << CurrentBlockState->kindAsString() << " LoopStateIter="
+                      << CurrentBlockState->LoopState.NumIters
+                      << " II=" << CurrentBlockState->LoopState.II << "\n");
 
   if (IsGatheringPhase) {
     return;
@@ -584,8 +584,8 @@ bool InterBlockScheduling::leaveBlock() {
     return false;
   }
 
-  const auto Stage = updateFixPoint(BS);
-  BS.FixPoint.Stage = Stage;
+  const auto Stage = updateLoopState(BS);
+  BS.LoopState.Stage = Stage;
   switch (Stage) {
   case SchedulingStage::SchedulingNotConverged:
   case SchedulingStage::Scheduling:
@@ -645,11 +645,11 @@ InterBlockScheduling::resourcesConverged(BlockState &BS,
   // safety margin.
   ResourceScoreboard<FuncUnitWrapper> Bottom =
       createTopDownScoreboard(BS.getBottom().Bundles, *HR, SelectedAltDescs);
-  BS.FixPoint.MaxResourceExtent = Bottom.lastOccupied();
+  BS.LoopState.MaxResourceExtent = Bottom.lastOccupied();
 
   if (!FindInBottomRegion) {
     if (MachineInstr *MICausingConflict = checkResourceConflictsTopDown(
-            Bottom, BS.getTop().Bundles, *HR, SelectedAltDescs, BS.FixPoint))
+            Bottom, BS.getTop().Bundles, *HR, SelectedAltDescs, BS.LoopState))
       return MICausingConflict;
   }
 
@@ -736,19 +736,19 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) {
   // MaxExtent tracks anything sticking out of the block, so is a safe
   // upperbound of the latency safety margin that should be provided by
   // the epilogue
-  BS.FixPoint.MaxLatencyExtent = MaxExtent;
+  BS.LoopState.MaxLatencyExtent = MaxExtent;
   return nullptr;
 }
 
-SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
+SchedulingStage InterBlockScheduling::updateLoopState(BlockState &BS) {
   assert(!IsGatheringPhase);
 
   if (BS.Kind != BlockType::Loop) {
     return SchedulingStage::SchedulingDone;
   }
 
-  BS.FixPoint.NumIters++;
-  if (BS.FixPoint.Stage == SchedulingStage::Scheduling) {
+  BS.LoopState.NumIters++;
+  if (BS.LoopState.Stage == SchedulingStage::Scheduling) {
     return updateScheduling(BS);
   }
 
@@ -756,7 +756,7 @@ SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
 }
 
 SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
-  if (BS.FixPoint.NumIters >
+  if (BS.LoopState.NumIters >
       MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
     report_fatal_error("Inter-block scheduling did not converge.");
 
@@ -764,17 +764,17 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   }
 
   if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
-    auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    auto Res = BS.LoopState.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
     // Increase the latency margin per instruction, unless we already iterated
     // more than MaxExpensiveIterations without converging.
-    if (BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+    if (BS.LoopState.NumIters <= MaxExpensiveIterations) {
       ++Res.first->second;
     } else {
-      BS.FixPoint.LatencyMargin++;
+      BS.LoopState.LatencyMargin++;
     }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: latency RM="
-                           << BS.FixPoint.ResourceMargin
-                           << " LM=" << BS.FixPoint.LatencyMargin
+                           << BS.LoopState.ResourceMargin
+                           << " LM=" << BS.LoopState.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
     return SchedulingStage::Scheduling;
@@ -782,11 +782,11 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
 
   // Before pushing BS.getBottom() instructions up to avoid resource hazards,
   // try and bias the depth of some instructions in BS.getTop()
-  if (BiasDepth && BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+  if (BiasDepth && BS.LoopState.NumIters <= MaxExpensiveIterations) {
     if (MachineInstr *MINeedsHigherCap =
             resourcesConverged(BS, /*FindInBottomRegion=*/false);
         InterBlockScoreboard && MINeedsHigherCap) {
-      auto Res = BS.FixPoint.PerMIExtraDepth.try_emplace(MINeedsHigherCap, 1);
+      auto Res = BS.LoopState.PerMIExtraDepth.try_emplace(MINeedsHigherCap, 1);
       int &ExtraDepth = Res.first->second;
       if (ExtraDepth >= 0) {
         if (!Res.second) // Depth was already biased, try a negative bias
@@ -804,24 +804,24 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   if (MachineInstr *MINeedsHigherCap =
           resourcesConverged(BS, /*FindInBottomRegion=*/true);
       InterBlockScoreboard && MINeedsHigherCap) {
-    auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
-    if (BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+    auto Res = BS.LoopState.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    if (BS.LoopState.NumIters <= MaxExpensiveIterations) {
       ++Res.first->second;
     } else {
-      BS.FixPoint.PerMIExtraDepth.clear();
-      BS.FixPoint.ResourceMargin++;
+      BS.LoopState.PerMIExtraDepth.clear();
+      BS.LoopState.ResourceMargin++;
     }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: resources RM="
-                           << BS.FixPoint.ResourceMargin
-                           << " LM=" << BS.FixPoint.LatencyMargin
+                           << BS.LoopState.ResourceMargin
+                           << " LM=" << BS.LoopState.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
     return SchedulingStage::Scheduling;
   }
 
   DEBUG_LOOPAWARE(dbgs() << "Converged,"
-                         << " LatencyExtent=" << BS.FixPoint.MaxLatencyExtent
-                         << " ResourceExtent=" << BS.FixPoint.MaxResourceExtent
+                         << " LatencyExtent=" << BS.LoopState.MaxLatencyExtent
+                         << " ResourceExtent=" << BS.LoopState.MaxResourceExtent
                          << "\n");
 
   // The loop schedule has converged, so we could declare our work done.
@@ -832,8 +832,8 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
       const int ResMII = PostSWP.getResMII(*BS.TheBlock);
       const int StartII = std::max(ResMII, PostPipelinerMinII.getValue());
       if (StartII <= PostPipelinerMaxII) {
-        BS.FixPoint.II = StartII;
-        BS.FixPoint.IITries = 1;
+        BS.LoopState.II = StartII;
+        BS.LoopState.IITries = 1;
         return SchedulingStage::Pipelining;
       }
     }
@@ -843,14 +843,14 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
 
 SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
   // We have been pipelining. Check whether we were successful.
-  if (BS.FixPoint.Stage == SchedulingStage::PipeliningDone) {
-    return BS.FixPoint.Stage;
+  if (BS.LoopState.Stage == SchedulingStage::PipeliningDone) {
+    return BS.LoopState.Stage;
   }
 
   // Otherwise try a larger II.
   // We cut off at larger IIs to prevent excessive compilation time.
-  if (++BS.FixPoint.II <= PostPipelinerMaxII &&
-      ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
+  if (++BS.LoopState.II <= PostPipelinerMaxII &&
+      ++BS.LoopState.IITries <= PostPipelinerMaxTryII) {
     return SchedulingStage::Pipelining;
   }
 
@@ -865,10 +865,10 @@ std::optional<int> InterBlockScheduling::getLatencyCap(MachineInstr &MI) const {
   if (BS.Kind != BlockType::Loop) {
     return {};
   }
-  if (BS.FixPoint.LatencyMargin)
-    return BS.FixPoint.LatencyMargin;
-  if (const auto *It = BS.FixPoint.PerMILatencyMargin.find(&MI);
-      It != BS.FixPoint.PerMILatencyMargin.end()) {
+  if (BS.LoopState.LatencyMargin)
+    return BS.LoopState.LatencyMargin;
+  if (const auto *It = BS.LoopState.PerMILatencyMargin.find(&MI);
+      It != BS.LoopState.PerMILatencyMargin.end()) {
     return It->second;
   }
   return 0;
@@ -880,7 +880,7 @@ InterBlockScheduling::getBlockedResourceCap(MachineBasicBlock *BB) const {
   if (BS.Kind != BlockType::Loop) {
     return {};
   }
-  return BS.FixPoint.ResourceMargin;
+  return BS.LoopState.ResourceMargin;
 }
 
 void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
@@ -958,7 +958,7 @@ MachineBasicBlock *InterBlockScheduling::nextBlock() {
 
   auto &BS = getBlockState(MBBSequence[NextInOrder]);
   if (!BS.isScheduled() ||
-      (BS.FixPoint.II && !BS.isPipelined() && !BS.pipeliningFailed())) {
+      (BS.LoopState.II && !BS.isPipelined() && !BS.pipeliningFailed())) {
     return MBBSequence[NextInOrder];
   }
 
@@ -1096,7 +1096,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
                                        MachineBasicBlock::iterator RegionBegin,
                                        MachineBasicBlock::iterator RegionEnd) {
   auto &BS = getBlockState(BB);
-  DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
+  DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.LoopState.NumIters
                       << "\n");
 
   if (IsGatheringPhase) {
@@ -1481,13 +1481,14 @@ BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
 int BlockState::getSafetyMargin() const {
   assert(Kind == BlockType::Loop);
   assert(isScheduled());
-  auto Margin = std::max(FixPoint.MaxLatencyExtent, FixPoint.MaxResourceExtent);
+  auto Margin =
+      std::max(LoopState.MaxLatencyExtent, LoopState.MaxResourceExtent);
   DEBUG_LOOPAWARE(dbgs() << "Epilogue margin=" << Margin << "\n");
   return Margin;
 }
 
 void BlockState::setPipelined() {
-  FixPoint.Stage = SchedulingStage::PipeliningDone;
+  LoopState.Stage = SchedulingStage::PipeliningDone;
 }
 
 int BlockState::getScheduleLength() const {

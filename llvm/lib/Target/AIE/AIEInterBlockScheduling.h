@@ -61,7 +61,7 @@ enum class SchedulingStage {
 };
 
 /// Parameters that drive fixpoint convergence
-class FixedpointState {
+class LoopPipeliningState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
   // Parameters of the loop-aware convergence
@@ -181,7 +181,7 @@ class BlockState {
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
-  FixedpointState FixPoint;
+  LoopPipeliningState LoopState;
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
 
@@ -252,14 +252,14 @@ public:
 
   void setPipelined();
   bool isScheduled() const {
-    return FixPoint.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
-           pipeliningFailed();
+    return LoopState.Stage == SchedulingStage::SchedulingDone ||
+           isPipelined() || pipeliningFailed();
   }
   bool isPipelined() const {
-    return FixPoint.Stage == SchedulingStage::PipeliningDone;
+    return LoopState.Stage == SchedulingStage::PipeliningDone;
   }
   bool pipeliningFailed() const {
-    return FixPoint.Stage == SchedulingStage::PipeliningFailed;
+    return LoopState.Stage == SchedulingStage::PipeliningFailed;
   }
 
   /// return the safety margin that the epilogue of this loop should provide
@@ -329,7 +329,7 @@ class InterBlockScheduling {
   /// Perform the convergence checks and set convergence parameters
   /// for the next iteration.
   /// Returns the stage this block is now in.
-  SchedulingStage updateFixPoint(BlockState &BS);
+  SchedulingStage updateLoopState(BlockState &BS);
 
   SchedulingStage updateScheduling(BlockState &BS);
   SchedulingStage updatePipelining(BlockState &BS);
