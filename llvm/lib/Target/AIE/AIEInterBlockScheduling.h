@@ -308,7 +308,7 @@ public:
     return PerSuccEdges;
   }
   const std::vector<Region> &getRegions() const { return Regions; }
-  std::vector<Region> &getRegionsMutable() { return Regions; }
+  std::vector<Region> &getRegions() { return Regions; }
   const char *kindAsString() const {
     return Kind == BlockType::Loop       ? "Loop"
            : Kind == BlockType::Epilogue ? "Epilogue"
@@ -415,7 +415,7 @@ class InterBlockScheduling {
   /// Perform the convergence checks and set convergence parameters
   /// for the next iteration.
   /// Returns the stage this block is now in.
-  SchedulingStage updateFixPoint(BlockState &BS);
+  SchedulingStage updateConvergence(BlockState &BS);
 
   SchedulingStage updateScheduling(BlockState &BS);
   SchedulingStage updatePipelining(BlockState &BS);

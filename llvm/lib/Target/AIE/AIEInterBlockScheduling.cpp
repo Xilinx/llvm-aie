@@ -591,7 +591,7 @@ bool InterBlockScheduling::leaveBlock() {
     return false;
   }
 
-  const auto Stage = updateFixPoint(BS);
+  const auto Stage = updateConvergence(BS);
   BS.LoopState.Stage = Stage;
   switch (Stage) {
   case SchedulingStage::SchedulingNotConverged:
@@ -751,7 +751,7 @@ SchedulingStage InterBlockScheduling::updateTopFixedScheduling(BlockState &BS) {
   // Reschedule regions whose free instructions overran their top-fixed band,
   // growing SchedulingLength by one cycle per retry until they fit.
   bool NeedReschedule = false;
-  for (Region &R : BS.getRegionsMutable()) {
+  for (Region &R : BS.getRegions()) {
     if (!R.Sched.TopFixedDidNotFit)
       continue;
     R.Sched.TopFixedDidNotFit = false;
@@ -769,7 +769,7 @@ SchedulingStage InterBlockScheduling::updateTopFixedScheduling(BlockState &BS) {
                         : SchedulingStage::SchedulingDone;
 }
 
-SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
+SchedulingStage InterBlockScheduling::updateConvergence(BlockState &BS) {
   assert(!IsGatheringPhase);
 
   // Top-fixed band fitting is independent of loop-pipelining convergence and
