@@ -1055,9 +1055,11 @@ void InterBlockScheduling::updatePerSuccEdges(MachineBasicBlock *BB,
 }
 
 void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
+  DEBUG_BLOCKS(dbgs() << format("recordPostDepth Pred=%d\n", BB->getNumber()));
   for (const auto &SEPtr : getBlockState(BB).getPerSuccEdges()) {
     InterBlockEdges &SE = *SEPtr;
     MachineBasicBlock *SuccBB = SE.getSucc();
+
     if (!SuccBB)
       continue;
     const BlockState &SBS = getBlockState(SuccBB);
@@ -1067,18 +1069,24 @@ void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
     if (!SBS.isScheduled()) {
       // Compute a static lower-bound on each instruction's cycle position
       // within the successor block, using the inter-block DDG latencies.
+      DEBUG_BLOCKS(dbgs() << " Unscheduled\n");
       for (auto &SU : SE.SUnits) {
         if (!SE.isPostBoundaryNode(&SU))
           continue;
         int Depth = 0;
         for (auto &Dep : SU.Preds) {
-          const int NewDepth =
-              Dep.getLatency() + SE.getPostDepthOr(Dep.getSUnit(), 0);
-          Depth = std::max(Depth, NewDepth);
+          SUnit *PredSU = Dep.getSUnit();
+          if (SE.isPostBoundaryNode(PredSU)) {
+            const int NewDepth =
+                Dep.getLatency() + SE.getPostDepthOr(PredSU, 0);
+            Depth = std::max(Depth, NewDepth);
+          }
         }
         SE.recordPostDepth(SU.getInstr(), Depth);
+        DEBUG_BLOCKS(dbgs() << format("     Depth=%d\n", Depth));
       }
     } else {
+      DEBUG_BLOCKS(dbgs() << " Scheduled\n");
       int Cycle = 0;
       for (const MachineBundle &Bundle : SBS.getTop().Bundles) {
         for (MachineInstr *MI : Bundle.getInstrs())
@@ -1086,9 +1094,13 @@ void InterBlockScheduling::recordPostDepths(MachineBasicBlock *BB) {
 
         // For empty bundles...
         SE.recordPostDepth(Cycle);
+        DEBUG_BLOCKS(dbgs() << format("     Depth=%d\n", Cycle));
         ++Cycle;
       }
     }
+    DEBUG_BLOCKS(dbgs() << format("  Succ=%d MaxDepth=%d\n",
+                                  SuccBB->getNumber(),
+                                  SE.getPostRegionMaxDepth()));
   }
 }
 
