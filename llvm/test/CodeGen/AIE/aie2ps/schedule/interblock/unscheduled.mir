@@ -55,11 +55,8 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $p0, implicit-def $r3, implicit-def $srcarry, implicit killed $p0, implicit $r0 {
-  ; CHECK-NEXT:     $r1, $p0 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed $p0, 4
-  ; CHECK-NEXT:     $r3 = ADD_alu_r_rr $r0, $r0, implicit-def $srcarry
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $r1, $p0 = LDA_dms_lda_scalar_ld_pstm_nrm_imm killed $p0, 4
+  ; CHECK-NEXT:   $r3 = ADD_alu_r_rr $r0, $r0, implicit-def $srcarry
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
@@ -102,6 +99,82 @@ body:             |
 
   bb.4:
     liveins: $cml0, $cml1, $cml2, $cml3
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+# Another unscheduled case from an error case.
+# The computed 'unscheduled' depth of the post-boundary nodes
+# included part of the cross boundary latency.
+---
+name:            test2
+alignment:       16
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+body:             |
+  ; CHECK-LABEL: name: test2
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $r0, $r2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   JNZ $r0, %bb.3
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $r8 = SUB $r0, killed $r2, implicit-def $srcarry
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.4(0x40000000)
+  ; CHECK-NEXT:   liveins: $r0, $p6
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r2 = LDA_dms_lda_scalar_ld_idx_imm killed $p6, 0 :: (load (s32))
+  ; CHECK-NEXT:   JNZ $r0, %bb.1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0.entry:
+    successors: %bb.1
+    liveins:
+  bb.1:
+    successors: %bb.2, %bb.3
+    liveins: $r0, $r2
+    $r8 = SUB $r0, $r2, implicit-def $srcarry
+    JNZ $r0, %bb.3
+    DelayedSchedBarrier
+
+  bb.2:
+    successors: %bb.3
+
+  bb.3:
+    successors: %bb.1, %bb.4
+    liveins: $r0, $p6
+    $r2 = LDA_dms_lda_scalar_ld_idx_imm $p6, 0 :: (load (s32))
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+
+  bb.4:
     RET implicit $lr
     DelayedSchedBarrier
 ...
