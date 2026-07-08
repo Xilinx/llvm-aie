@@ -9,12 +9,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEIRUtils.h"
+#include "AIELoopUtils.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/KnownBits.h"
+#include "llvm/TargetParser/Triple.h"
 #include "llvm/Transforms/InstCombine/InstCombiner.h"
 #include "llvm/Transforms/Utils/Local.h"
 
@@ -36,6 +44,35 @@ bool isHardwareLoopSetup(const Instruction *I) {
 
 bool isHardwareLoopDecrement(const Instruction *I) {
   return getIntrinsicID(I) == Intrinsic::loop_decrement;
+}
+
+Intrinsic::ID getLoopVersionThresholdIntrinsic(const Triple &TT) {
+  if (TT.isAIE2())
+    return Intrinsic::aie2_loop_version_threshold;
+  if (TT.isAIE2P())
+    return Intrinsic::aie2p_loop_version_threshold;
+  if (TT.isAIE2PS())
+    return Intrinsic::aie2ps_loop_version_threshold;
+  return Intrinsic::not_intrinsic;
+}
+
+void dropLoopMetadata(Loop &L, ArrayRef<StringRef> KeysToDrop) {
+  const MDNode *LoopID = L.getLoopID();
+  if (!LoopID || KeysToDrop.empty())
+    return;
+  LLVMContext &Ctx = L.getHeader()->getContext();
+  // Operand 0 of a loop id is a self-reference; reserve it with a placeholder.
+  SmallVector<Metadata *, 8> MDs(1, nullptr);
+  for (unsigned I = 1, E = LoopID->getNumOperands(); I < E; ++I) {
+    MDNode *Entry = cast<MDNode>(LoopID->getOperand(I));
+    auto Key = AIELoopUtils::getMetadataKey(*Entry);
+    if (Key && llvm::is_contained(KeysToDrop, *Key))
+      continue;
+    MDs.push_back(Entry);
+  }
+  MDNode *NewLoopID = MDNode::getDistinct(Ctx, MDs);
+  NewLoopID->replaceOperandWith(0, NewLoopID);
+  L.setLoopID(NewLoopID);
 }
 
 std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,
