@@ -1,0 +1,190 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2 -run-pass=postmisched -verify-machineinstrs %s -o - | FileCheck %s
+#
+# Same versioned loop as postpipeliner-version-guard.mir, but the guard block
+# holds a second PseudoLoopVersionThreshold. The post-pipeliner identifies the
+# placeholder as the unique threshold def of the guard block, so an ambiguous
+# block must leave both untouched rather than guess. Both keep the -1
+# placeholder, which selects the un-pipelined low-trip-count copy at runtime.
+#
+# The guard logic is target independent, so aie2 alone covers it.
+#
+# CHECK-LABEL: name: versioned
+# CHECK-LABEL: bb.0.loop.lver.guard:
+# Both placeholders still hold -1 rather than the stage count: the one feeding
+# the compare, and the spare one after the branch.
+# CHECK: MOVA_lda_cg -1
+# CHECK: LTU
+# CHECK: MOV_mv_cg -1
+# CHECK-LABEL: bb.1.loop.ph:
+
+--- |
+  ; ModuleID = '/tmp/ver.ll'
+  source_filename = "/tmp/ver.ll"
+  target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"
+  target triple = "aie2"
+  
+  define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
+  loop.lver.guard:
+    %smax = call i32 @llvm.smax.i32(i32 %n, i32 1)
+    %0 = zext nneg i32 %smax to i33
+    %lver.threshold = call i32 @llvm.aie2.loop.version.threshold(i32 -1)
+    %lver.tc.i32 = trunc i33 %0 to i32
+    %lver.low = icmp ult i32 %lver.tc.i32, %lver.threshold
+    br i1 %lver.low, label %loop.ph, label %loop.ph.lver.high
+  
+  loop.ph.lver.high:                                ; preds = %loop.lver.guard
+    call void @llvm.set.loop.iterations.i32(i32 %smax)
+    br label %loop.lver.high
+  
+  loop.lver.high:                                   ; preds = %loop.lver.high, %loop.ph.lver.high
+    %i.lver.high = phi i32 [ 0, %loop.ph.lver.high ], [ %i.next.lver.high, %loop.lver.high ]
+    %pa.lver.high = getelementptr i32, ptr %a, i32 %i.lver.high
+    %x.lver.high = load i32, ptr %pa.lver.high, align 4
+    %m1.lver.high = mul i32 %x.lver.high, %x.lver.high
+    %m2.lver.high = mul i32 %m1.lver.high, %x.lver.high
+    %m3.lver.high = add i32 %m2.lver.high, %m1.lver.high
+    %m4.lver.high = xor i32 %m3.lver.high, %x.lver.high
+    %pb.lver.high = getelementptr i32, ptr %b, i32 %i.lver.high
+    store i32 %m4.lver.high, ptr %pb.lver.high, align 4
+    %i.next.lver.high = add i32 %i.lver.high, 1
+    %1 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %1, label %loop.lver.high, label %exit.loopexit, !llvm.loop !0
+  
+  loop.ph:                                          ; preds = %loop.lver.guard
+    call void @llvm.set.loop.iterations.i32(i32 %smax)
+    br label %loop
+  
+  loop:                                             ; preds = %loop, %loop.ph
+    %i = phi i32 [ 0, %loop.ph ], [ %i.next, %loop ]
+    %pa = getelementptr i32, ptr %a, i32 %i
+    %x = load i32, ptr %pa, align 4
+    %m1 = mul i32 %x, %x
+    %m2 = mul i32 %m1, %x
+    %m3 = add i32 %m2, %m1
+    %m4 = xor i32 %m3, %x
+    %pb = getelementptr i32, ptr %b, i32 %i
+    store i32 %m4, ptr %pb, align 4
+    %i.next = add i32 %i, 1
+    %2 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %2, label %loop, label %exit.loopexit1, !llvm.loop !1
+  
+  exit.loopexit:                                    ; preds = %loop.lver.high
+    br label %exit
+  
+  exit.loopexit1:                                   ; preds = %loop
+    br label %exit
+  
+  exit:                                             ; preds = %exit.loopexit1, %exit.loopexit
+    ret void
+  }
+  
+  ; Function Attrs: nocallback nofree nosync nounwind speculatable willreturn memory(none)
+  declare i32 @llvm.smax.i32(i32, i32) #0
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i32 @llvm.aie2.loop.version.threshold(i32 immarg) #1
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare void @llvm.set.loop.iterations.i32(i32) #1
+  
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i1 @llvm.loop.decrement.i32(i32) #1
+  
+  attributes #0 = { nocallback nofree nosync nounwind speculatable willreturn memory(none) }
+  attributes #1 = { nocallback noduplicate nofree nosync nounwind willreturn }
+  
+  !0 = distinct !{!0, !2}
+  !1 = distinct !{!1}
+  !2 = !{!"llvm.loop.hint.aie-loop-versioned", i32 1}
+
+...
+---
+name:            versioned
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$r16', '$r17', '$r18', '$r19', '$r20', 
+                        '$r21', '$r22', '$r23', '$p6', '$p7' ]
+body:             |
+  bb.0.loop.lver.guard:
+    successors: %bb.3(0x40000000), %bb.1(0x40000000)
+    liveins: $p0, $p1, $r0
+  
+    renamable $r1 = MOV_RLC_imm10_pseudo 1
+    renamable $r27 = LT renamable $r1, renamable $r0
+    renamable $r1 = SELNEZ killed renamable $r0, killed renamable $r1, killed renamable $r27
+    renamable $r0 = PseudoLoopVersionThreshold -1
+    dead renamable $r3 = PseudoLoopVersionThreshold -1
+    renamable $r2 = LTU renamable $r1, killed renamable $r0
+    renamable $r0 = MOV_RLC_imm10_pseudo 0
+    JZ killed renamable $r2, %bb.1
+    DelayedSchedBarrier
+  
+  bb.3.loop.ph:
+    successors: %bb.4(0x80000000)
+    liveins: $p0, $p1, $r0, $r1
+  
+    $lc = ADD_NC $r1, 0
+    $ls = MOVXM_lng_cg %bb.4
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+    renamable $r1 = MOV_RLC_imm10_pseudo 2
+  
+  bb.4.loop:
+    successors: %bb.4(0x7c000000), %bb.6(0x04000000)
+    liveins: $p0, $p1, $r0, $r1
+  
+    renamable $r2 = LSHL renamable $r0, renamable $r1
+    $dj0 = MOV_mv_scl killed $r2
+    renamable $r2 = LDA_dms_lda_idx renamable $p0, renamable $dj0 :: (load (s32) from %ir.pa)
+    renamable $r3 = MUL_mul_r_rr renamable $r2, renamable $r2
+    renamable $r4 = MUL_mul_r_rr renamable $r3, renamable $r2
+    renamable $r3 = ADD killed renamable $r4, killed renamable $r3, implicit-def dead $srcarry
+    renamable $r2 = XOR killed renamable $r3, killed renamable $r2
+    ST_dms_sts_idx killed renamable $r2, renamable $p1, killed renamable $dj0 :: (store (s32) into %ir.pb)
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.4
+  
+  bb.6.exit:
+    successors: %bb.5(0x80000000)
+  
+    J_jump_imm %bb.5
+    DelayedSchedBarrier
+  
+  bb.1.loop.ph.lver.high:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $p1, $r0, $r1
+  
+    $lc = ADD_NC $r1, 0
+    $ls = MOVXM_lng_cg %bb.2
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd1>
+    renamable $r1 = MOV_RLC_imm10_pseudo 2
+  
+  bb.2.loop.lver.high:
+    successors: %bb.2(0x7c000000), %bb.5(0x04000000)
+    liveins: $p0, $p1, $r0, $r1
+  
+    renamable $r2 = LSHL renamable $r0, renamable $r1
+    $dj0 = MOV_mv_scl killed $r2
+    renamable $r2 = LDA_dms_lda_idx renamable $p0, renamable $dj0 :: (load (s32) from %ir.pa.lver.high)
+    renamable $r3 = MUL_mul_r_rr renamable $r2, renamable $r2
+    renamable $r4 = MUL_mul_r_rr renamable $r3, renamable $r2
+    renamable $r3 = ADD killed renamable $r4, killed renamable $r3, implicit-def dead $srcarry
+    renamable $r2 = XOR killed renamable $r3, killed renamable $r2
+    ST_dms_sts_idx killed renamable $r2, renamable $p1, killed renamable $dj0 :: (store (s32) into %ir.pb.lver.high)
+    renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.2
+  
+  bb.5.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
