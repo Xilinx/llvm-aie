@@ -1571,20 +1571,20 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
   }
 }
 
-std::optional<SWPEpilogueContext>
-InterBlockScheduling::getSWPEpilogueContext(MachineBasicBlock *MBB) {
+std::optional<ArrayRef<MachineBundle>>
+InterBlockScheduling::getSWPLoopBundlesForEpilogue(
+    MachineBasicBlock *Epilogue) {
 
-  BlockState &BS = getBlockState(MBB);
+  BlockState &BS = getBlockState(Epilogue);
   if (BS.Kind != BlockType::Epilogue)
     return std::nullopt;
 
-  BlockState &LoopBS = getBlockState(*MBB->pred_begin());
+  BlockState &LoopBS = getBlockState(*Epilogue->pred_begin());
 
   if (!LoopBS.isPipelined())
     return std::nullopt;
 
-  return SWPEpilogueContext{LoopBS.getTop().Bundles,
-                            LoopBS.getPostSWP().getFinalMinTripCount()};
+  return LoopBS.getTop().Bundles;
 }
 
 } // namespace llvm::AIE

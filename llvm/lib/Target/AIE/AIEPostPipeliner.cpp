@@ -1763,11 +1763,6 @@ void PostPipeliner::updateTripCount() const {
   TII->adjustTripCount(*TripCountDef, -Delta);
 }
 
-int PostPipeliner::getFinalMinTripCount() const {
-  const int Delta = NStages - 1;
-  return MinTripCount - Delta;
-}
-
 void PostPipeliner::materializePipeline(PipelineScheduleVisitor &Visitor) {
   // A schedule NS=N, II=L is compatible with NS=1, II=N*L.
   // In general, we can take any divisor of N.

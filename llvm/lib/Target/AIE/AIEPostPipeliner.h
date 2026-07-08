@@ -376,8 +376,6 @@ public:
 
   void materializePipeline(PipelineScheduleVisitor &Visitor);
 
-  int getFinalMinTripCount() const;
-
   void dump() const;
 };
 
