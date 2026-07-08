@@ -11,6 +11,9 @@
 #ifndef LLVM_LIB_TARGET_AIE_UTILS_AIEIRUTILS_H
 #define LLVM_LIB_TARGET_AIE_UTILS_AIEIRUTILS_H
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Intrinsics.h"
 #include <optional>
 
 namespace llvm {
@@ -18,6 +21,8 @@ class Instruction;
 class IntrinsicInst;
 class Type;
 class InstCombiner;
+class Triple;
+class Loop;
 } // namespace llvm
 
 namespace llvm::AIEIRUtils {
@@ -48,6 +53,14 @@ std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,
                                                      IntrinsicInst &II,
                                                      unsigned NumBits,
                                                      unsigned Operand = 0);
+
+/// Return the subtarget-specific loop-version-threshold intrinsic for \p TT, or
+/// Intrinsic::not_intrinsic if the subtarget does not support loop versioning.
+Intrinsic::ID getLoopVersionThresholdIntrinsic(const Triple &TT);
+
+/// Rebuild \p L's loop id, dropping every metadata entry whose string key is in
+/// \p KeysToDrop. A no-op if the loop has no loop id or nothing is requested.
+void dropLoopMetadata(Loop &L, ArrayRef<StringRef> KeysToDrop);
 
 } // namespace llvm::AIEIRUtils
 

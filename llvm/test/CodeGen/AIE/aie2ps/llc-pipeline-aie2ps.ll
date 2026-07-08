@@ -164,6 +164,13 @@
 ; AIE-O1-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O1-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O1-NEXT:      Optimization Remark Emitter
+; AIE-O1-NEXT:      AIE Inner Loop Versioning
+; AIE-O1-NEXT:      Dominator Tree Construction
+; AIE-O1-NEXT:      Natural Loop Information
+; AIE-O1-NEXT:      Scalar Evolution Analysis
+; AIE-O1-NEXT:      Lazy Branch Probability Analysis
+; AIE-O1-NEXT:      Lazy Block Frequency Analysis
+; AIE-O1-NEXT:      Optimization Remark Emitter
 ; AIE-O1-NEXT:      Hardware Loop Insertion
 ; AIE-O1-NEXT:      AIE Outer Loop Pipeliner
 ; AIE-O1-NEXT:      Dominator Tree Construction
@@ -385,6 +392,13 @@
 ; AIE-O23-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O23-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O23-NEXT:      AIE outline Memory GEP
+; AIE-O23-NEXT:      Dominator Tree Construction
+; AIE-O23-NEXT:      Natural Loop Information
+; AIE-O23-NEXT:      Scalar Evolution Analysis
+; AIE-O23-NEXT:      Lazy Branch Probability Analysis
+; AIE-O23-NEXT:      Lazy Block Frequency Analysis
+; AIE-O23-NEXT:      Optimization Remark Emitter
+; AIE-O23-NEXT:      AIE Inner Loop Versioning
 ; AIE-O23-NEXT:      Dominator Tree Construction
 ; AIE-O23-NEXT:      Natural Loop Information
 ; AIE-O23-NEXT:      Scalar Evolution Analysis
