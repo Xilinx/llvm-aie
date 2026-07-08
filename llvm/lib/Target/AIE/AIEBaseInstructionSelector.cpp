@@ -142,6 +142,18 @@ bool AIEBaseInstructionSelector::selectSetLoopIterations(
   return constrainSelectedInstRegOperands(*LS, TII, TRI, RBI);
 }
 
+bool AIEBaseInstructionSelector::selectLoopVersionThreshold(
+    MachineInstr &I, MachineRegisterInfo &MRI, MachineIRBuilder &MIB) {
+  auto Opcode = TII.getLoopVersionThresholdOpcode();
+  assert(Opcode && "Loop versioning not supported on this subtarget");
+
+  const Register DstReg = I.getOperand(0).getReg();
+  const int64_t Threshold = I.getOperand(2).getImm();
+  auto Mov = MIB.buildInstr(*Opcode, {DstReg}, {}).addImm(Threshold);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*Mov, TII, TRI, RBI);
+}
+
 // Try to match BRCOND(Intrinsic::loop_decrement)
 bool AIEBaseInstructionSelector::selectBrCondLoopDecrement(
     MachineInstr &BrCond, MachineRegisterInfo &MRI) {

@@ -1043,4 +1043,10 @@ def int_aie2ps_fifo_st_flush_2d_conv: AIE2PFIFO_ST_FLUSH_2D;
 def int_aie2ps_fifo_st_flush_3d: AIE2PFIFO_ST_FLUSH_3D;
 def int_aie2ps_fifo_st_flush_3d_conv: AIE2PFIFO_ST_FLUSH_3D;
 
+// Loop-versioning trip-count guard threshold. See IntrinsicsAIE2.td.
+def int_aie2ps_loop_version_threshold
+    : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                            [IntrNoMem, IntrHasSideEffects, IntrNoDuplicate,
+                             ImmArg<ArgIndex<0>>]>;
+
 } // TargetPrefix = "aie2ps"

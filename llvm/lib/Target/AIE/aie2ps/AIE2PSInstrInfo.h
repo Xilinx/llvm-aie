@@ -152,6 +152,7 @@ public:
 
   std::optional<ZOLSupport> getZOLSupport() const override;
   std::optional<JNZDSupport> getJNZDSupport() const override;
+  std::optional<unsigned> getLoopVersionThresholdOpcode() const override;
   std::optional<IfConvSupport> getIfConvSupport() const override;
 
   // Implement MIR serialization of target flags

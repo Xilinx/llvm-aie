@@ -520,6 +520,22 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \pre isZOLTripCountDef(MI)
   virtual void adjustTripCount(MachineInstr &MI, int Update) const;
 
+  /// Opcode of this subtarget's loop-versioning threshold pseudo
+  /// (PseudoLoopVersionThreshold), or std::nullopt if unsupported. The pseudo
+  /// defines the threshold register (operand 0) and holds the patchable
+  /// threshold immediate (operand 1); see its def for the design rationale.
+  virtual std::optional<unsigned> getLoopVersionThresholdOpcode() const {
+    return std::nullopt;
+  }
+
+  /// Check whether \p MI is the loop-versioning threshold move.
+  bool isLoopVersionThresholdDef(const MachineInstr &MI) const;
+
+  /// Set the guard threshold immediate on the loop-versioning threshold
+  /// move \p MI to the (absolute) minimum trip count \p MinTripCount.
+  /// \pre isLoopVersionThresholdDef(MI)
+  void setLoopVersionThreshold(MachineInstr &MI, int MinTripCount) const;
+
   /// Check whether this is a zero-overhead loop start block
   virtual bool isZeroOverheadLoopSetupInstr(const MachineInstr &) const;
 
