@@ -424,6 +424,8 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
       return selectVLD_FIFO_POP_BFP16_3D(I, MRI);
     case Intrinsic::set_loop_iterations:
       return selectSetLoopIterations(I, MRI, MIB);
+    case Intrinsic::aie2p_loop_version_threshold:
+      return selectLoopVersionThreshold(I, MRI, MIB);
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
     case Intrinsic::aie2p_acquire_ptr:

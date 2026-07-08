@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -966,5 +966,13 @@ def int_aie2_extract_I128_I512 : ClangBuiltin<"__builtin_aiev2_extract_I128_I512
 
 // Set Sub-Vector
 def int_aie2_set_I512_I128 : ClangBuiltin<"__builtin_aiev2_set_I512_I128">, AIEV2Set_I512_I128;
+
+// Loop-versioning trip-count guard threshold used to pick the pipelined or
+// original copy of a versioned loop. The immediate is a placeholder, patched
+// by the post-pipeliner once the required minimum trip count is known.
+def int_aie2_loop_version_threshold
+    : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty],
+                            [IntrNoMem, IntrHasSideEffects, IntrNoDuplicate,
+                             ImmArg<ArgIndex<0>>]>;
 
 } // TargetPrefix = "aie2"

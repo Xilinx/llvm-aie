@@ -155,6 +155,8 @@ public:
                  MachineIRBuilder &MIB, MachineInstrBuilder &MI);
   bool selectSetLoopIterations(MachineInstr &I, MachineRegisterInfo &MRI,
                                MachineIRBuilder &MIB);
+  bool selectLoopVersionThreshold(MachineInstr &I, MachineRegisterInfo &MRI,
+                                  MachineIRBuilder &MIB);
   bool selectBrCondLoopDecrement(MachineInstr &BrCond,
                                  MachineRegisterInfo &MRI);
   bool selectBrCondLoopDecrementReg(MachineInstr &BrCond,

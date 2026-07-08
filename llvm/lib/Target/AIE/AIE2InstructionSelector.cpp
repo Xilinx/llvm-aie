@@ -337,6 +337,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectStartLoop(I, MRI);
     case Intrinsic::set_loop_iterations:
       return selectSetLoopIterations(I, MRI, MIB);
+    case Intrinsic::aie2_loop_version_threshold:
+      return selectLoopVersionThreshold(I, MRI, MIB);
     case Intrinsic::aie2_scd_read_vec:
     case Intrinsic::aie2_scd_read_acc32:
     case Intrinsic::aie2_scd_expand_lo:

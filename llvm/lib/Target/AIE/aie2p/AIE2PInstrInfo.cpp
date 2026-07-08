@@ -1791,6 +1791,10 @@ AIE2PInstrInfo::getZOLSupport() const {
   return Result;
 }
 
+std::optional<unsigned> AIE2PInstrInfo::getLoopVersionThresholdOpcode() const {
+  return AIE2P::PseudoLoopVersionThreshold;
+}
+
 std::optional<AIEBaseInstrInfo::JNZDSupport>
 AIE2PInstrInfo::getJNZDSupport() const {
   AIEBaseInstrInfo::JNZDSupport Result;

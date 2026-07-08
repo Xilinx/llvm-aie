@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -70,6 +70,18 @@ let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1, Itinerary = II_
       "mov_PD_imm11_pseudo ", "$dst, $i",
       [MOVA_lda_cg, MOVXM_lng_cg]>;
 }
+
+// Loop-versioning trip-count guard threshold, produced by the AIE loop
+// versioning pass. The post-pipeliner patches its immediate operand with the
+// required minimum trip count once a modulo schedule is found.
+// Side-effecting and non-duplicable so MachineCSE never merges sibling guards'
+// placeholders; dest is eR (the guard compare's class) so MOVA can be used.
+let isMoveImm = 1, Itinerary = II_MOV, hasSideEffects = 1, isNotDuplicable = 1,
+    mayLoad = 0, mayStore = 0 in
+  def PseudoLoopVersionThreshold
+      : MultiSlot_Pseudo<(outs eR:$dst), (ins simm10:$i),
+                         "pseudo_loop_version_threshold", "$dst, $i",
+                         [MOVA_lda_cg, MOV_mv_cg, MOVXM_lng_cg]>;
 
 // Pseudo VLD
 let hasSideEffects = false, mayLoad = true, mayStore = false in {
