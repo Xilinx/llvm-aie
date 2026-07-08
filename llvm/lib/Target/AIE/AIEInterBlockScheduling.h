@@ -146,13 +146,6 @@ public:
   std::vector<MachineBundle> Bundles;
 };
 
-// Struct used do give a preceding execution context to an epilogue
-// of a SWP loop.
-struct SWPEpilogueContext {
-  ArrayRef<MachineBundle> Loop;
-  int LoopCount;
-};
-
 class BlockState {
   /// This vector is created during the first fixpoint iteration, triggered
   /// by the enterRegion callback
@@ -424,8 +417,11 @@ public:
   const MachineSchedContext *getContext() const { return Context; }
   bool isGatheringPhase() const { return IsGatheringPhase; }
 
-  std::optional<SWPEpilogueContext>
-  getSWPEpilogueContext(MachineBasicBlock *MBB);
+  // Returns the scheduled bundles of the pipelined loop body preceding
+  // \p Epilogue. Returns nullopt if \p Epilogue is not the epilogue of a
+  // pipelined loop.
+  std::optional<ArrayRef<MachineBundle>>
+  getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB
