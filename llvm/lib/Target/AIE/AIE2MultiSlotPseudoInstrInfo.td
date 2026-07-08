@@ -74,8 +74,12 @@ let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1, Itinerary = II_
 // Loop-versioning trip-count guard threshold, produced by the AIE loop
 // versioning pass. The post-pipeliner patches its immediate operand with the
 // required minimum trip count once a modulo schedule is found.
-// Side-effecting and non-duplicable so MachineCSE never merges sibling guards'
-// placeholders; dest is eR (the guard compare's class) so MOVA can be used.
+// Side-effecting and non-duplicable pins it to the guard block it was emitted
+// into: no CSE across sibling guards, no hoisting out, no tail duplication.
+// PostPipeliner::updateVersionGuard depends on that, identifying it as the
+// unique threshold def of the guard block. Clearing either flag lets the
+// pseudo drift, and the guard is then silently left unpatched.
+// Dest is eR (the guard compare's class) so MOVA can be used.
 let isMoveImm = 1, Itinerary = II_MOV, hasSideEffects = 1, isNotDuplicable = 1,
     mayLoad = 0, mayStore = 0 in
   def PseudoLoopVersionThreshold

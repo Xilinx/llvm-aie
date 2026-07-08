@@ -437,7 +437,8 @@ void AIEBaseInstrInfo::setLoopVersionThreshold(MachineInstr &MI,
   // narrowest field width (AIE2's simm10) across subtargets. A stage count is
   // tiny in practice, so this only trips on a pathological schedule. Checked
   // unconditionally, not just under assert: a truncated threshold would select
-  // the fast copy for trip counts too small for the schedule, a miscompile.
+  // the high-trip-count copy for trip counts too small for the schedule, a
+  // miscompile.
   if (!isInt<10>(MinTripCount))
     report_fatal_error("PseudoLoopVersionThreshold: minimum trip count does "
                        "not fit the scalar-move immediate");

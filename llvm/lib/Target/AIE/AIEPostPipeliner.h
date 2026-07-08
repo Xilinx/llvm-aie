@@ -246,6 +246,11 @@ class PostPipeliner {
   /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;
 
+  /// Set when the loop is a runtime-guarded ("versioned") loop, in which case
+  /// the minimum trip-count requirement is lifted and the guard threshold is
+  /// patched with the required minimum after a schedule is found.
+  bool IsVersionedGuarded = false;
+
   /// The II requested by a pragma. This will trigger expensive algorithms
   /// like solvers or exhaustive searches to be run if the heuristic methods
   /// don't find a solution.
@@ -375,6 +380,10 @@ public:
   void updateTripCount() const;
 
   void materializePipeline(PipelineScheduleVisitor &Visitor);
+
+  /// For a versioned loop, patch the guard's placeholder threshold pseudo with
+  /// the actual stage count. No-op when not versioned.
+  void updateVersionGuard() const;
 
   void dump() const;
 };

@@ -17,11 +17,15 @@
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "Utils/AIEMachineInstrPrint.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
 #include <string>
@@ -152,12 +156,19 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // count is checked before accepting the schedule.
   using namespace AIELoopUtils;
   auto ParsedMinTripCount = getMinTripCount(LoopBlock);
-  if (!ParsedMinTripCount) {
+  MinTripCount = ParsedMinTripCount.value_or(0);
+
+  IsVersionedGuarded = isLoopVersioned(LoopBlock);
+  LLVM_DEBUG(if (IsVersionedGuarded) dbgs()
+             << " PostPipeliner: " << printMBBReference(LoopBlock)
+             << " is loop versioned; its runtime guard supplies the minimum "
+                "trip count, so the static gate below is skipped and the "
+                "guard threshold is patched in updateVersionGuard\n");
+  if (!IsVersionedGuarded && !ParsedMinTripCount) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
     return false;
   }
-  MinTripCount = *ParsedMinTripCount;
-  if (MinTripCount < 2) {
+  if (!IsVersionedGuarded && MinTripCount < 2) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
     return false;
   }
@@ -1612,6 +1623,10 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 // Pipelining reduces the iteration count by NS - 1
 // The result should be > 0, because ZOL doesn't support zero iterations.
 bool PostPipeliner::hasSufficientMinTripCount(int NS) const {
+  // A versioned loop's runtime guard makes any stage count safe (see
+  // updateVersionGuard).
+  if (IsVersionedGuarded)
+    return true;
   return MinTripCount - (NS - 1) > 0;
 }
 
@@ -1763,6 +1778,75 @@ void PostPipeliner::updateTripCount() const {
   TII->adjustTripCount(*TripCountDef, -Delta);
 }
 
+// The threshold placeholder of \p Guard, or nullptr if the block does not hold
+// exactly one: with several placeholders there is no way to tell which one
+// feeds the compare, so bail rather than patch an arbitrary copy. See
+// PseudoLoopVersionThreshold for why scanning the guard block alone is
+// sufficient.
+static MachineInstr *findVersionThreshold(MachineBasicBlock &Guard,
+                                          const AIEBaseInstrInfo &TII) {
+  MachineInstr *Threshold = nullptr;
+  for (MachineInstr &MI : Guard.instrs()) {
+    if (!TII.isLoopVersionThresholdDef(MI))
+      continue;
+    if (Threshold) {
+      LLVM_DEBUG(dbgs() << "AIE loop versioning: multiple threshold pseudos in "
+                        << printMBBReference(Guard) << "\n");
+      return nullptr;
+    }
+    Threshold = &MI;
+  }
+  return Threshold;
+}
+
+void PostPipeliner::updateVersionGuard() const {
+  if (!IsVersionedGuarded)
+    return;
+
+  // If the guard is no longer recognizable (e.g. a later MIR pass reshaped the
+  // region), bail without patching: the IR pass seeds the placeholder with the
+  // maximal threshold, so an un-patched guard keeps the loop on the
+  // low-trip-count copy. Diagnosable via debug output, never fatal.
+  MachineOptimizationRemarkEmitter ORE(*Preheader->getParent(), nullptr);
+  // The first instruction of a fall-through preheader often carries no
+  // location, so take the first one that does; an empty preheader leaves the
+  // remark unlocated.
+  const auto Located = llvm::find_if(*Preheader, [](const MachineInstr &MI) {
+    return bool(MI.getDebugLoc());
+  });
+  const DebugLoc GuardLoc =
+      Located != Preheader->end() ? Located->getDebugLoc() : DebugLoc();
+  auto BailWithMsg = [&](StringRef Msg) {
+    LLVM_DEBUG(dbgs() << "AIE loop versioning: " << Msg
+                      << "; leaving guard unpatched (low-trip-count copy stays "
+                         "live)\n");
+    ORE.emit([&] {
+      return MachineOptimizationRemarkMissed(
+                 DEBUG_TYPE, "VersionGuardUnpatched", GuardLoc, Preheader)
+             << "versioned loop was pipelined but its runtime guard could not "
+                "be patched ("
+             << ore::NV("Reason", Msg)
+             << "); execution stays on the un-pipelined copy";
+    });
+  };
+
+  MachineBasicBlock *Guard = AIELoopUtils::getVersionGuardBlock(*Preheader);
+  if (!Guard) {
+    BailWithMsg("guard block not found");
+    return;
+  }
+
+  MachineInstr *Threshold = findVersionThreshold(*Guard, *TII);
+  if (!Threshold) {
+    BailWithMsg("guard threshold pseudo not found");
+    return;
+  }
+
+  // Patch the minimum trip count required by this schedule: peeling NStages-1
+  // stages needs at least NStages iterations for the pipelined loop to be safe.
+  TII->setLoopVersionThreshold(*Threshold, NStages);
+}
+
 void PostPipeliner::materializePipeline(PipelineScheduleVisitor &Visitor) {
   // A schedule NS=N, II=L is compatible with NS=1, II=N*L.
   // In general, we can take any divisor of N.
@@ -1786,6 +1870,7 @@ void PostPipeliner::materializePipeline(PipelineScheduleVisitor &Visitor) {
 
   visitPipelineSchedule(Visitor);
   updateTripCount();
+  updateVersionGuard();
 }
 
 void NodeInfo::reset(bool FullReset) {
