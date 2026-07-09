@@ -19,9 +19,11 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
@@ -50,6 +52,30 @@ static cl::opt<bool> DisambiguateNoAliasArgRoots(
     cl::desc("Disambiguate pointers that trace back to different noalias "
              "function arguments (looks through GEP/cast/phi/select/load) "),
     cl::init(false), cl::Hidden);
+
+/// Function attribute (emitted by clang for the `aie_propagate_restrict`
+/// attribute) that enables noalias-arg-root disambiguation for a single
+/// function, independently of the module-wide command-line option.
+static constexpr const char *NoAliasArgRootsAttrName = "aie-propagate-restrict";
+
+/// Returns true if noalias-arg-root disambiguation should be applied for \p F.
+/// This is the case when the module-wide option is set, or when \p F carries
+/// the per-function opt-in attribute.
+static bool useNoAliasArgRoots(const Function *F) {
+  if (DisambiguateNoAliasArgRoots)
+    return true;
+  return F && F->hasFnAttribute(NoAliasArgRootsAttrName);
+}
+
+/// Best-effort recovery of the enclosing function of an IR value, used to look
+/// up the per-function opt-in attribute.
+static const Function *getEnclosingFunction(const Value *V) {
+  if (const auto *I = dyn_cast<Instruction>(V))
+    return I->getFunction();
+  if (const auto *A = dyn_cast<Argument>(V))
+    return A->getParent();
+  return nullptr;
+}
 
 #define DEBUG_TYPE "aie-aa"
 
@@ -619,7 +645,7 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
   // Distinct noalias function-arg roots. Complements getUnderlyingObjectAIE
   // (GEP/cast/AIE intrinsics): also walks phi/select and LoadInst for the
   // io_buffer pattern (data pointer loaded from inside a noalias arg).
-  if (DisambiguateNoAliasArgRoots) {
+  if (useNoAliasArgRoots(getEnclosingFunction(LocA.Ptr))) {
     const Argument *RootA = traceToNoAliasArgRoot(LocA.Ptr);
     const Argument *RootB = traceToNoAliasArgRoot(LocB.Ptr);
     if (RootA && RootB && RootA != RootB)
@@ -816,7 +842,7 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
       // case where two pointers used in the loop derive from different
       // noalias function arguments via a chain of pointer arithmetic, phi,
       // select and loads.
-      if (DisambiguateNoAliasArgRoots) {
+      if (useNoAliasArgRoots(&MIA->getMF()->getFunction())) {
         const Argument *RootA = traceToNoAliasArgRoot(ValueBasePairA->first);
         const Argument *RootB = traceToNoAliasArgRoot(ValueBasePairB->first);
         if (RootA && RootB && RootA != RootB)

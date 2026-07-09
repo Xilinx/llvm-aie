@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // These classes wrap the information about a call or function
@@ -2391,6 +2394,12 @@ void CodeGenModule::ConstructAttributeList(StringRef Name,
       FuncAttrs.addAttribute(llvm::Attribute::NoDuplicate);
     if (TargetDecl->hasAttr<ConvergentAttr>())
       FuncAttrs.addAttribute(llvm::Attribute::Convergent);
+
+    // AIE: forward the per-function noalias-arg-root opt-in to a string
+    // function attribute that the AIE alias analysis queries. Kept as an
+    // opaque string attribute so it survives into the MachineFunction.
+    if (TargetDecl->hasAttr<AIEPropagateRestrictAttr>())
+      FuncAttrs.addAttribute("aie-propagate-restrict");
 
     if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
       AddAttributesFromFunctionProtoType(
