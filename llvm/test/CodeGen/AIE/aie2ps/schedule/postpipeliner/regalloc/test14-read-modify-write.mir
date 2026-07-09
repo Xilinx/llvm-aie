@@ -33,7 +33,7 @@
 # live ranges when a subreg is redefined within a super-register range.
 #
 # CHECK: FINAL LIVE RANGES
-# CHECK: Live Range #7 for x10:
+# CHECK: Live Range #10 for x10:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: x10 $x10, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1
 # CHECK-NEXT:   Uses (1):
