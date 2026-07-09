@@ -18,6 +18,7 @@
 #include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -672,8 +673,9 @@ void AIEOuterLoopPipeliner::peelLastIteration(
                      LastIterLS.getOuterHeader()->end(), LastIterVMap,
                      ".lastiter");
   cloneInnerLoopIntoLastIter(SteadyLS, LastIterLS, LastIterVMap);
-  populateLastIterEpilogue(LastIterLS, SteadyLS, LastIterVMap);
-  wireLastIterIntoCFG(SteadyLS, LastIterLS);
+  populateLastIterEpilogue(OrigLS, SteadyLS, LastIterLS, SteadyVMap,
+                           LastIterVMap);
+  wireLastIterIntoCFG(SteadyLS, LastIterLS, SteadyVMap, LastIterVMap);
 
   LLVM_DEBUG(dbgs() << "    Created last-iteration: "
                     << LastIterLS.getOuterHeader()->getName() << " -> "
@@ -759,37 +761,83 @@ void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
 }
 
 void AIEOuterLoopPipeliner::populateLastIterEpilogue(
-    const LoopStructure &LastIterLS, const LoopStructure &SteadyLS,
+    const LoopStructure &OrigLS, const LoopStructure &SteadyLS,
+    const LoopStructure &LastIterLS, const ValueToValueMapTy &SteadyVMap,
     ValueToValueMapTy &LastIterVMap) const {
-  const SmallPtrSetImpl<Instruction *> &EpiSnapshot =
-      SteadyLS.epilogueSnapshot();
-  SmallVector<Instruction *, 16> EpiInsts;
-  for (Instruction &I : *SteadyLS.getOuterLatch()) {
+  // Read the pristine original epilogue: OrigLS is never mutated by the
+  // prefetch-cloning steps, so its latch holds the full last-iteration work
+  // (stores and any latch-resident accumulation) with no prefetch loads to
+  // drop. Cloning the whole latch is required for correctness: a value the
+  // outer loop accumulates in the latch is read after the loop, so a
+  // last-iteration that omits it would compute a wrong result.
+  //
+  // The outer back-edge control (the counting add and the exit icmp) is the
+  // sole exception — it is dead in a non-looping last iteration, and its steady
+  // clone may already be erased by convertOuterLoopToHardwareLoop, so mapping
+  // it through SteadyVMap would dereference freed IR.
+  const LatchConditionInfo &Bound = OrigLS.bound();
+  SmallVector<Instruction *, 16> OrigEpiInsts;
+  for (Instruction &I : *OrigLS.getOuterLatch()) {
     if (I.isTerminator())
       break;
     // No prefetch in the last-iteration.
     if (isa<LoadInst>(&I))
       continue;
-    // Skip the prologue clones inserted into the epilogue earlier.
-    if (!EpiSnapshot.count(&I))
+    // Skip the outer loop's back-edge control (dead without a back-edge).
+    if (&I == Bound.Counter || &I == Bound.Cmp)
       continue;
-    EpiInsts.push_back(&I);
+    OrigEpiInsts.push_back(&I);
   }
+  // Translate Orig -> Steady, then clone Steady -> last-iteration.
+  SmallVector<Instruction *, 16> SteadyEpiInsts =
+      remapToClone(OrigEpiInsts, SteadyVMap);
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
-  cloneAndRemapInsts(EpiInsts, *LastIterEpilogue, LastIterEpilogue->end(),
+  cloneAndRemapInsts(SteadyEpiInsts, *LastIterEpilogue, LastIterEpilogue->end(),
                      LastIterVMap, ".lastiter");
 }
 
 void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
-    const LoopStructure &SteadyLS, const LoopStructure &LastIterLS) const {
+    const LoopStructure &SteadyLS, const LoopStructure &LastIterLS,
+    const ValueToValueMapTy &SteadyVMap,
+    const ValueToValueMapTy &LastIterVMap) const {
   BasicBlock *OrigExit = SteadyLS.getExitBlock();
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
   BranchInst::Create(OrigExit, LastIterEpilogue);
 
+  // Map a loop-carried live-out to its last-iteration clone. The operand may
+  // still be an original value (a live-out rematerialized into the exit block,
+  // untouched by swapInClonedLS) or already a steady clone (an exit PHI value
+  // that swapInClonedLS retargeted): translate orig -> steady ->
+  // last-iteration, tolerating an already-steady input. Returns nullptr when no
+  // clone exists.
+  auto ToLastIter = [&](Value *V) -> Value * {
+    Value *Steady = V;
+    if (auto It = SteadyVMap.find(V); It != SteadyVMap.end())
+      Steady = It->second;
+    if (auto It = LastIterVMap.find(Steady); It != LastIterVMap.end())
+      return It->second;
+    return nullptr;
+  };
+
+  // Repoint each exit PHI's latch edge to the last-iteration epilogue and
+  // retarget its value to the last-iteration clone.
   for (PHINode &PHI : OrigExit->phis()) {
     const int LatchIdx = PHI.getBasicBlockIndex(SteadyLS.getOuterLatch());
     assert(LatchIdx >= 0);
+    if (Value *LastIterVal = ToLastIter(PHI.getIncomingValue(LatchIdx)))
+      PHI.setIncomingValue(LatchIdx, LastIterVal);
     PHI.setIncomingBlock(LatchIdx, LastIterEpilogue);
+  }
+
+  // Retarget non-PHI live-outs (LCSSA values rematerialized into the dedicated
+  // exit block) so their operands read the last-iteration clones.
+  for (Instruction &I : *OrigExit) {
+    if (isa<PHINode>(&I))
+      continue;
+    for (Use &U : I.operands())
+      if (auto *OpI = dyn_cast<Instruction>(U.get()))
+        if (Value *LastIterVal = ToLastIter(OpI))
+          U.set(LastIterVal);
   }
 
   BranchInst *LatchBr = SteadyLS.getLatchBranch();
@@ -1322,12 +1370,6 @@ bool AIEOuterLoopPipeliner::performTransformation(
   LoopStructure SteadyLS = cloneLS(OrigLS, "steady", SteadyVMap);
   swapInClonedLS(OrigLS, SteadyLS, SteadyVMap);
   remapBoundToClone(SteadyLS, SteadyVMap);
-
-  // Snapshot the steady epilogue (latch) contents now, before any prefetch
-  // clones are inserted into it, so the last-iteration epilogue can later be
-  // filtered back to the original stores.
-  for (Instruction &I : *SteadyLS.getOuterLatch())
-    SteadyLS.epilogueSnapshot().insert(&I);
 
   // Peel the peeled chain before the steady header (entry pointer values); this
   // also adopts the peel as the steady preheader.

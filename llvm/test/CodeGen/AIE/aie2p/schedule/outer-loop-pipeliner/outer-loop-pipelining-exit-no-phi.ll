@@ -39,7 +39,6 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s32) = COPY $r2
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.steady.preheader:
@@ -100,13 +99,11 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD3]](s32), %15(p0) :: (store (s32) into %ir.c.ptr.next.steady)
   ; CHECK-NEXT:   [[ADD4:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
-  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[ADD2]], [[C]]
-  ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s1) = G_ICMP intpred(slt), [[ADD5]](s32), [[SUB]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.9.exit:
-  ; CHECK-NEXT:   [[ADD6:%[0-9]+]]:_(s32) = G_ADD [[DEF]], [[DEF]]
-  ; CHECK-NEXT:   [[ADD7:%[0-9]+]]:_(s32) = G_ADD [[ADD6]], [[C]]
-  ; CHECK-NEXT:   $r0 = COPY [[ADD7]](s32)
+  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
+  ; CHECK-NEXT:   [[ADD6:%[0-9]+]]:_(s32) = G_ADD [[ADD5]], [[C]]
+  ; CHECK-NEXT:   $r0 = COPY [[ADD6]](s32)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
 entry:
   br label %outer.header
