@@ -1060,10 +1060,10 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
 
     // All iterations following the first one should fit exactly
     if (Earliest > Insert) {
-      LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
-                        << Insert << " (Earliest=" << Earliest
-                        << " ModuloNode=SU" << N - NInstr << ")\n";
-                 dumpEarliestChain(Info, N));
+      DEBUG_SUMMARY(dbgs() << "Latency not met for SU" << N << " in cycle "
+                           << Insert << " (Earliest=" << Earliest
+                           << " ModuloNode=SU" << N - NInstr << ")\n";
+                    dumpEarliestChain(Info, N));
       // Check whether the modulo node can be delayed to resolve the
       // violation. HasScheduleSlack means the current schedule still
       // has room. CanPlaceLaterInOriginalInterval means scheduling
@@ -1142,6 +1142,8 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
       MachineInstr &MI = *SU.getInstr();
       int ModCycle = Info[I].ModuloCycle;
       if (HR.checkConflict(Resources, MI, ModCycle)) {
+        DEBUG_SUMMARY(dbgs()
+                      << "Resource conflict for SU " << SU.NodeNum << "\n");
         return false;
       }
       HR.emitInScoreboard(Resources, MI, MI.getDesc(), ModCycle);
