@@ -749,8 +749,10 @@ void RegLiveRangeTracker::computeAvailablePhysRegs(
   // register that overlaps with a reserved register.
   AvailablePhysRegs.clear();
   for (const RegLiveRange &LR : LiveRanges) {
-    assert(LR.getRegisterClass() &&
-           "Live range must have a valid register class");
+    // Virtualizable ranges must have an RC; non-virtualizable ranges
+    // intentionally bypass RC computation and have null RC.
+    assert((!LR.isVirtualizable() || LR.getRegisterClass()) &&
+           "Virtualizable live range must have a valid register class");
     assert(LR.getBaseReg() != MCRegister::NoRegister &&
            "Live range must have a base register");
     assert(LR.getBaseReg().isPhysical() &&
@@ -1081,7 +1083,7 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
 void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
                                                    LivenessScanState &State) {
   for (MachineOperand &MO : MI.defs()) {
-    if (!MO.isReg() || !MO.getReg().isPhysical() || MO.isImplicit())
+    if (!MO.isReg() || !MO.getReg().isPhysical())
       continue;
 
     const MCRegister Reg = MO.getReg().asMCReg();
@@ -1101,7 +1103,7 @@ void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
 void RegLiveRangeTracker::processUsesInInstruction(MachineInstr &MI,
                                                    LivenessScanState &State) {
   for (MachineOperand &MO : MI.uses()) {
-    if (!MO.isReg() || !MO.getReg().isPhysical() || MO.isImplicit())
+    if (!MO.isReg() || !MO.getReg().isPhysical())
       continue;
 
     const MCRegister Reg = MO.getReg().asMCReg();
@@ -1152,28 +1154,6 @@ void RegLiveRangeTracker::applySafetyFiltering(
       continue;
     }
 
-    // Filter out any live range that uses an implicit register.
-    auto UsesImplicitReg = [&State](const RegOperandInfo &OperInfo) {
-      const MCRegister Reg = OperInfo.getOperand()->getReg().asMCReg();
-      return State.ImplicitRegs.count(Reg) > 0;
-    };
-
-    if (llvm::any_of(LR.operands(), UsesImplicitReg)) {
-      LLVM_DEBUG({
-        dbgs() << "Reject: uses implicit register ";
-        for (const auto &OI : LR.operands()) {
-          MCRegister R = OI.getOperand()->getReg().asMCReg();
-          if (State.ImplicitRegs.count(R)) {
-            dbgs() << TRI->getName(R) << " ";
-            break;
-          }
-        }
-        dbgs() << ": ";
-        LR.dumpBrief(TRI);
-      });
-      continue;
-    }
-
     // Reject tied operands.
     if (hasTiedOperands(LR)) {
       LLVM_DEBUG({
@@ -1201,6 +1181,13 @@ void RegLiveRangeTracker::computeRegisterClassesAndFilter() {
 
   SmallVector<RegLiveRange, 16> ValidRanges;
   for (RegLiveRange &LR : LiveRanges) {
+    // Non-virtualizable ranges (containing implicit operands) bypass RC
+    // computation: they may reference registers outside any allocatable class.
+    if (!LR.isVirtualizable()) {
+      ValidRanges.push_back(std::move(LR));
+      continue;
+    }
+
     computeRegisterClass(LR);
 
     // Filter out ranges with no valid register class.
@@ -1249,15 +1236,6 @@ void RegLiveRangeTracker::computeRegisterClassesAndFilter() {
 void RegLiveRangeTracker::collectVariableItinInstructions(
     VarItinInstrMap &VarItinInstrs) const {
 
-  // Build a map from operand to live range index for efficient lookup.
-  DenseMap<MachineOperand *, unsigned> OperandToLRIdx;
-  for (unsigned LRIdx = 0; LRIdx < LiveRanges.size(); ++LRIdx) {
-    const RegLiveRange &LR = LiveRanges[LRIdx];
-    for (const auto &OpInfo : LR.operands()) {
-      OperandToLRIdx[OpInfo.getOperand()] = LRIdx;
-    }
-  }
-
   // Collect all instructions connected to live ranges that have variable
   // itineraries (more than one schedule class variant).
   for (unsigned LRIdx = 0; LRIdx < LiveRanges.size(); ++LRIdx) {
@@ -1277,24 +1255,11 @@ void RegLiveRangeTracker::collectVariableItinInstructions(
       if (NumVariants <= 1)
         continue;
 
-      // This instruction has variable itineraries - record it.
+      // This instruction has variable itineraries — record its operand RC
+      // requirements from the original physreg match.
       VarItinInstrInfo &Info = VarItinInstrs[MI];
-
-      // Get the matching operand RC requirements for the physreg match.
       Info.OrigOperandRCs = TII->getMatchingOperandRCs(
           MI->getDesc(), MI->operands(), MF->getRegInfo());
-
-      // Record which operands belong to which live ranges.
-      for (unsigned OpIdx = 0; OpIdx < MI->getNumOperands(); ++OpIdx) {
-        MachineOperand &MO = MI->getOperand(OpIdx);
-        if (!MO.isReg() || !MO.getReg())
-          continue;
-
-        auto It = OperandToLRIdx.find(&MO);
-        if (It != OperandToLRIdx.end()) {
-          Info.OperandToLRIdx[OpIdx] = It->second;
-        }
-      }
     }
   }
 
@@ -1426,9 +1391,14 @@ void RegLiveRangeTracker::refineRegisterClassesForSchedClass() {
                          "refinement\n");
   }
 
-  // Remove live ranges rejected during the fixpoint loop (RC set to null).
+  // Remove live ranges rejected during the fixpoint loop (RC set to null),
+  // but always keep non-virtualizable ranges regardless of RC.
   SmallVector<RegLiveRange, 16> KeptRanges;
   for (RegLiveRange &LR : LiveRanges) {
+    if (!LR.isVirtualizable()) {
+      KeptRanges.push_back(std::move(LR));
+      continue;
+    }
     if (!LR.getRegisterClass()) {
       LLVM_DEBUG({
         dbgs() << "Reject: schedule class mismatch unresolvable by RC"
@@ -1448,6 +1418,10 @@ void RegLiveRangeTracker::finalizeAvailabilityAndScarcity(
   // This happens AFTER register class filtering.
   pruneByFullCoverage();
 
+  // Assign compact indices now that all filtering is finalized.
+  for (unsigned I = 0; I < LiveRanges.size(); ++I)
+    LiveRanges[I].setIndex(I);
+
   // Compute and cache available physical registers.
   const DenseSet<MCRegister> ReservedRegs = collectReservedBaseRegs();
   computeAvailablePhysRegs(ReservedRegs);
@@ -1462,9 +1436,11 @@ void RegLiveRangeTracker::finalizeAvailabilityAndScarcity(
 
 void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
                                   ArrayRef<MachineInstr *> SemanticOrder) {
+  assert(!AnalysisDone &&
+         "analyze() may only be called once per tracker instance.");
+  AnalysisDone = true;
   assert(!SemanticOrder.empty() && "SemanticOrder must be provided - MBB order "
                                    "is unreliable after scheduling");
-  clear();
 
   // Initialize state for liveness scan.
   LivenessScanState State;
@@ -1487,10 +1463,37 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
   // Apply first-stage safety filtering.
   applySafetyFiltering(MBB, State, LocalLiveLaneMasks);
 
+  // Classify ranges with any implicit operand as non-virtualizable early,
+  // before RC computation.  Implicit operands encode the physical register in
+  // the instruction opcode; the register cannot be substituted.  RC
+  // computation is skipped for non-virtualizable ranges in the next step.
+  // AdmissibleRegs is set to {BaseReg} so the allocator's uniform candidate
+  // computation (getCandidatePhysRegs) works without special-casing.
+  for (RegLiveRange &LR : LiveRanges)
+    if (llvm::any_of(LR.operands(), [](const RegOperandInfo &OpInfo) {
+          return OpInfo.getOperand()->isImplicit();
+        })) {
+      LR.setIsVirtualizable(false);
+      LR.setAdmissibleRegsToBaseReg();
+    }
+
   // Compute register classes and apply filtering.
+  // Non-virtualizable ranges bypass RC computation and are kept as-is.
   computeRegisterClassesAndFilter();
 
-  // Finalize availability and scarcity.
+  // When simplification is not enabled, discard non-virtualizable ranges
+  // entirely so they neither appear in the live range list nor inflate
+  // AvailablePhysRegs in the subsequent finalization step.
+  if (!TrackImplicitRanges) {
+    SmallVector<RegLiveRange, 16> Filtered;
+    for (RegLiveRange &LR : LiveRanges)
+      if (LR.isVirtualizable())
+        Filtered.push_back(std::move(LR));
+    LiveRanges = std::move(Filtered);
+  }
+
+  // Finalize availability and scarcity.  Must run after any filtering so that
+  // discarded ranges do not inflate AvailablePhysRegs.
   finalizeAvailabilityAndScarcity(MBB, State);
 }
 
@@ -1506,28 +1509,6 @@ void RegLiveRange::setRegisterClass(const TargetRegisterClass *RC) {
       AdmissibleRegs.insert(Reg);
     }
   }
-}
-
-bool RegLiveRangeTracker::hasAllInstructionsWithFixedItinerary(
-    const RegLiveRange &LR) const {
-  // Check if all instructions connected by this live range have fixed
-  // itineraries (single schedule class variant). An instruction has a fixed
-  // itinerary if getNumSchedClassVariants returns 0 or 1.
-  for (const auto &OpInfo : LR.operands()) {
-    MachineInstr *MI = OpInfo.getOperand()->getParent();
-    if (!MI)
-      continue;
-
-    const unsigned NumVariants = TII->getNumSchedClassVariants(MI->getDesc());
-    if (NumVariants > 1) {
-      // This instruction has multiple schedule class variants, meaning
-      // its itinerary depends on operand register classes.
-      return false;
-    }
-  }
-
-  // All instructions have fixed itineraries.
-  return true;
 }
 
 void RegLiveRangeTracker::computeRegisterClass(RegLiveRange &LR) const {
@@ -1675,6 +1656,10 @@ void RegLiveRangeTracker::virtualizeFilteredPhysRegs(OverlapPolicy Policy) {
   // Create and rewrite virtual registers. Live ranges are created in reverse,
   // so we run this loop in reverse order to make the dumps more intuitive.
   for (RegLiveRange &LR : reverse(LiveRanges)) {
+    // Non-virtualizable ranges keep their physical operands unchanged.
+    if (!LR.isVirtualizable())
+      continue;
+
     // The analysis should have filtered out any live ranges without a valid
     // register class.
     assert(LR.getRegisterClass() &&
@@ -1794,20 +1779,15 @@ bool RegLiveRangeTracker::areRegistersVirtualized() const {
   return RegistersVirtualized;
 }
 
-void RegLiveRangeTracker::clear() {
-  // Clear all containers.
-  LiveRanges.clear();
-  AllPhysRegOperands.clear();
-  InstrOrder.clear();
-
-  // Reset the virtualization flag.
-  RegistersVirtualized = false;
-
-  // Reset the ID counter.
-  NextLiveRangeID = 0;
-
-  // Note: MF, TRI, and TII are not cleared as they are set in the constructor
-  // and represent the context in which this tracker operates.
+std::optional<unsigned>
+RegLiveRangeTracker::getIndexForOperand(const MachineOperand *MO) const {
+  for (const RegLiveRange &LR : LiveRanges) {
+    for (const auto &OpInfo : LR.operands()) {
+      if (OpInfo.getOperand() == MO)
+        return LR.getIndex();
+    }
+  }
+  return std::nullopt;
 }
 
 void RegLiveRangeTracker::dump(const char *Header,

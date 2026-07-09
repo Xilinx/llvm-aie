@@ -14,7 +14,6 @@
 #include "AIEScheduleInterpreter.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -144,37 +143,29 @@ unsigned computeMinimalSchedule(const RegLiveRange &LR, const ScheduleDAG &DAG,
     assert(MadeProgress && "Failed to make scheduling progress");
   }
 
-  // Generate events for all scheduled instructions.
-  EventSchedule Schedule;
-  for (const MachineInstr *MI : Instructions) {
-    int IssueCycle = IssueCycles[MI];
-    Interp.addInstructionEvents(*MI, IssueCycle, Schedule);
-  }
-
-  // Compute the minimal live length from the event schedule.
-  // Find the earliest def event and latest use event for this live range.
+  // Compute the minimal live length directly from the live range's operands.
+  // This avoids building an event schedule for all instructions and correctly
+  // accounts for per-operand timing rather than instruction-level timing.
   int MinDefCycle = INT_MAX;
   int MaxUseCycle = INT_MIN;
 
-  // Check whether an event's operand is part of this live range.
-  // LR.operands() is typically very small (~2 elements), so a linear
-  // search is sufficient.
-  auto IsLROperand = [&LR](const MachineOperand *MO) {
-    return llvm::any_of(LR.operands(), [MO](const RegOperandInfo &Oper) {
-      return Oper.getOperand() == MO;
-    });
-  };
-
-  for (size_t Cycle = 0; Cycle < Schedule.size(); ++Cycle) {
-    for (const auto &Event : Schedule[Cycle]) {
-      const MachineOperand *MO = &Event.MI->getOperand(Event.OpIdx);
-      if (!IsLROperand(MO))
-        continue;
-      if (Event.Type == EventType::Write)
-        MinDefCycle = std::min(MinDefCycle, static_cast<int>(Cycle));
-      else if (Event.Type == EventType::Read)
-        MaxUseCycle = std::max(MaxUseCycle, static_cast<int>(Cycle));
-    }
+  for (const auto &DefInfo : LR.defs()) {
+    const MachineInstr *MI = DefInfo.getOperand()->getParent();
+    auto It = IssueCycles.find(MI);
+    if (It == IssueCycles.end())
+      continue;
+    const int Cycle = Interp.getOperandAccessCycle(
+        *MI, It->second, DefInfo.getOperand()->getOperandNo());
+    MinDefCycle = std::min(MinDefCycle, Cycle);
+  }
+  for (const auto &UseInfo : LR.uses()) {
+    const MachineInstr *MI = UseInfo.getOperand()->getParent();
+    auto It = IssueCycles.find(MI);
+    if (It == IssueCycles.end())
+      continue;
+    const int Cycle = Interp.getOperandAccessCycle(
+        *MI, It->second, UseInfo.getOperand()->getOperandNo());
+    MaxUseCycle = std::max(MaxUseCycle, Cycle);
   }
 
   // The minimal live length is the distance from first def event to the cycle

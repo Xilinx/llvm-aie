@@ -978,8 +978,9 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     // Info[N].Cycle and Info[N].Scheduled are valid inside selected().
     Strategy.selected(SU);
 
-    // Populate event schedule for this representative instruction
-    Interpreter.addInstructionEvents(*SU.getInstr(), Actual, EventSched);
+    // Populate event schedule for this representative instruction.
+    Interpreter.addInstructionEvents(*SU.getInstr(), Actual, EventSched,
+                                     RegTracker);
 
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
@@ -1057,10 +1058,10 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
 
     // All iterations following the first one should fit exactly
     if (Earliest > Insert) {
-      LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
-                        << Insert << " (Earliest=" << Earliest
-                        << " ModuloNode=SU" << N - NInstr << ")\n";
-                 dumpEarliestChain(Info, N));
+      DEBUG_SUMMARY(dbgs() << "Latency not met for SU" << N << " in cycle "
+                           << Insert << " (Earliest=" << Earliest
+                           << " ModuloNode=SU" << N - NInstr << ")\n";
+                    dumpEarliestChain(Info, N));
       // Check whether the modulo node can be delayed to resolve the
       // violation. HasScheduleSlack means the current schedule still
       // has room. CanPlaceLaterInOriginalInterval means scheduling
@@ -1748,36 +1749,34 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 }
 
 bool PostPipeliner::tryAllocateRegisters() {
-  // In physical mode, registers are not virtualized and no allocation is needed
-  // This is a trivial allocation that always succeeds
+  // In physical mode, registers are not virtualized and no allocation is
+  // needed.
   if (!RegTracker.areRegistersVirtualized()) {
     LLVM_DEBUG(
         dbgs() << "PostPipeliner: Physical mode - no allocation needed\n");
     return true;
   }
 
-  auto &MF = *DAG->getBB()->getParent();
-  auto &MRI = MF.getRegInfo();
-  const auto &ST = MF.getSubtarget();
-  const auto *TRI = ST.getRegisterInfo();
+  const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
 
   // Compute modulo live lanes from the event schedule populated during
-  // scheduling
-  auto LiveLanesByVirtReg = Interpreter.buildLiveLanes(EventSched, II);
+  // scheduling, keyed by RegLiveRange::getIndex().
+  auto LiveLanesByLRIndex =
+      Interpreter.buildLiveLanes(EventSched, II, RegTracker);
 
   // Debug dump if requested.
   DEBUG_WITH_TYPE("aie-postregalloc", {
     dbgs() << "\n=== Live Intervals ===\n";
-    Interpreter.dumpEventSchedule(EventSched, dbgs());
+    Interpreter.dumpEventSchedule(EventSched, RegTracker, dbgs());
     dbgs() << "\n";
-    Interpreter.dumpLiveLanes(LiveLanesByVirtReg, II, dbgs());
+    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs());
     dbgs() << "=================================\n\n";
   });
 
   // Perform register allocation.
   DenseMap<Register, MCRegister> VRegToPhysReg;
   const bool Success = AIEPostRegAlloc::allocate(
-      LiveLanesByVirtReg, II, RegTracker, MF, *TRI, MRI, VRegToPhysReg);
+      LiveLanesByLRIndex, II, RegTracker, *TRI, VRegToPhysReg);
 
   if (!Success) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
@@ -1787,9 +1786,7 @@ bool PostPipeliner::tryAllocateRegisters() {
   LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
                     << VRegToPhysReg.size() << " assignments\n");
 
-  // Apply the register assignments through RegTracker
-  // This properly handles the virtualization state and updates the
-  // MachineFunction
+  // Apply the register assignments through RegTracker.
   RegTracker.rewriteToPhysRegs(VRegToPhysReg);
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "

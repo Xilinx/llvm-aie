@@ -17,6 +17,7 @@
 #include "AIEScheduleInterpreter.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIELivenessVector.h"
+#include "AIERegDefUseTracker.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -50,35 +51,35 @@ AIEScheduleInterpreter::AIEScheduleInterpreter(const MachineFunction &MF)
 
 int AIEScheduleInterpreter::getOperandCycle(unsigned SchedClass,
                                             unsigned OpIdx) const {
-  // Get operand cycle from itinerary.
-  // This tells us when the operand is accessed relative to instruction issue.
-  const std::optional<unsigned> OperandCycle =
-      Itin->getOperandCycle(SchedClass, OpIdx);
-
-  // Ensure we have timing information for this operand.
-  assert(OperandCycle.has_value() &&
-         "Itinerary must provide operand cycle information for all operands");
-
-  return *OperandCycle;
+  // Any operand index derived from an actual instruction is admissible within
+  // the AIE family.  On older AIE architectures, implicit operand indices may
+  // fall outside the itinerary table; return 0 (issue cycle) as the
+  // established fallback, consistent with AIERegMemEventTracker.
+  return static_cast<int>(Itin->getOperandCycle(SchedClass, OpIdx).value_or(0));
 }
 
-// Helper to add an event to the schedule, resizing if necessary
+int AIEScheduleInterpreter::getOperandAccessCycle(const MachineInstr &MI,
+                                                  int IssueCycle,
+                                                  unsigned OpIdx) const {
+  const MCInstrDesc &Desc = MI.getDesc();
+  const unsigned SchedClass = TII.getSchedClass(Desc, MI.operands(), MRI);
+  return IssueCycle + getOperandCycle(SchedClass, OpIdx);
+}
+
+// Helper to add an event to the schedule, resizing if necessary.
 static void addEvent(EventSchedule &Schedule, int Cycle, EventType Type,
-                     Register VReg, unsigned SubRegIdx,
+                     unsigned LRIndex, unsigned SubRegIdx,
                      unsigned ForwardingClass, const MachineInstr *MI,
                      unsigned OpIdx) {
-  // Ensure the schedule is large enough
-  if (Cycle >= static_cast<int>(Schedule.size())) {
+  if (Cycle >= static_cast<int>(Schedule.size()))
     Schedule.resize(Cycle + 1);
-  }
-
-  // Add the event
-  Schedule[Cycle].emplace_back(Type, VReg, SubRegIdx, ForwardingClass, MI,
+  Schedule[Cycle].emplace_back(Type, LRIndex, SubRegIdx, ForwardingClass, MI,
                                OpIdx);
 }
 
 void AIEScheduleInterpreter::addInstructionEvents(
-    const MachineInstr &MI, int IssueCycle, EventSchedule &Schedule) const {
+    const MachineInstr &MI, int IssueCycle, EventSchedule &Schedule,
+    const RegLiveRangeTracker &Tracker) const {
 
   LLVM_DEBUG(dbgs() << "Adding events for instruction at cycle " << IssueCycle
                     << ": " << MI);
@@ -89,23 +90,21 @@ void AIEScheduleInterpreter::addInstructionEvents(
   const MCInstrDesc &Desc = MI.getDesc();
   const unsigned SchedClass = TII.getSchedClass(Desc, MI.operands(), MRI);
 
-  // Process all operands
+  // Process all operands.
   for (unsigned OpIdx = 0; OpIdx < MI.getNumOperands(); ++OpIdx) {
     const MachineOperand &MO = MI.getOperand(OpIdx);
 
-    // Skip non-register operands
+    // Skip non-register operands.
     if (!MO.isReg() || !MO.getReg())
       continue;
 
-    // Skip physical registers for now
-    if (!Register::isVirtualRegister(MO.getReg()))
+    // Look up the LRIndex for this operand.  Handles both explicit and
+    // implicit operands that belong to a tracked live range; unregistered
+    // operands (the vast majority of implicit operands) are skipped here.
+    const auto Idx = Tracker.getIndexForOperand(&MO);
+    if (!Idx)
       continue;
-
-    // Skip implicit operands
-    if (MO.isImplicit())
-      continue;
-
-    const Register VReg = MO.getReg();
+    const unsigned LRIndex = *Idx;
     const unsigned SubRegIdx = MO.getSubReg();
     const unsigned ForwardingClass =
         Itin->getForwardingClass(SchedClass, OpIdx);
@@ -116,17 +115,16 @@ void AIEScheduleInterpreter::addInstructionEvents(
     const int CycleOffset = getOperandCycle(SchedClass, OpIdx);
     const int Cycle = IssueCycle + CycleOffset;
 
-    addEvent(Schedule, Cycle, EType, VReg, SubRegIdx, ForwardingClass, &MI,
+    addEvent(Schedule, Cycle, EType, LRIndex, SubRegIdx, ForwardingClass, &MI,
              OpIdx);
 
-    LLVM_DEBUG(dbgs() << "  " << (MO.isDef() ? "Write" : "Read") << " %vreg"
-                      << VReg.virtRegIndex();
-               if (SubRegIdx) dbgs()
-               << ":" << TRI.getSubRegIndexName(SubRegIdx);
-               dbgs() << " at cycle " << Cycle;
-               if (ForwardingClass) dbgs()
-               << " (forwarding class " << ForwardingClass << ")";
-               dbgs() << "\n");
+    LLVM_DEBUG(
+        dbgs() << "  " << (MO.isDef() ? "Write" : "Read") << " LR#" << LRIndex;
+        if (SubRegIdx) dbgs() << ":" << TRI.getSubRegIndexName(SubRegIdx);
+        dbgs() << " at cycle " << Cycle;
+        if (ForwardingClass) dbgs()
+        << " (forwarding class " << ForwardingClass << ")";
+        dbgs() << "\n");
   }
 }
 
@@ -145,44 +143,39 @@ std::string RFEvent::toString() const {
   return ActionStr;
 }
 
-void AIEScheduleInterpreter::dumpEventSchedule(const EventSchedule &Schedule,
-                                               raw_ostream &OS) const {
+void AIEScheduleInterpreter::dumpEventSchedule(
+    const EventSchedule &Schedule, const RegLiveRangeTracker &Tracker,
+    raw_ostream &OS) const {
 
-  // Collect all unique virtual registers, sorted by vreg index for stable
-  // output.
-  DenseSet<Register> AllVRegsSet;
+  // Collect all unique LR indices, sorted for stable output.
+  DenseSet<unsigned> AllLRIndexSet;
   for (const auto &CycleEvents : Schedule)
     for (const auto &Event : CycleEvents)
-      AllVRegsSet.insert(Event.VReg);
-  SmallVector<Register> AllVRegs(AllVRegsSet.begin(), AllVRegsSet.end());
-  llvm::sort(AllVRegs, [](Register A, Register B) {
-    return A.virtRegIndex() < B.virtRegIndex();
-  });
+      AllLRIndexSet.insert(Event.LRIndex);
+  SmallVector<unsigned> AllLRIndices(AllLRIndexSet.begin(),
+                                     AllLRIndexSet.end());
+  llvm::sort(AllLRIndices);
 
-  // Build separate maps for register and bypass events per VReg.
+  // Build separate maps for register and bypass events per LRIndex.
   // Bypass events are derived from ForwardingClass:
-  // - Reads with ForwardingClass != 0 also read bypass at same cycle
-  // - Writes with ForwardingClass != 0 also write bypass one cycle earlier
-  DenseMap<Register, std::map<unsigned, std::string>> RegEventsByVReg;
-  DenseMap<Register, std::map<unsigned, std::string>> BypassEventsByVReg;
+  // - Reads with ForwardingClass != 0 also read bypass at same cycle.
+  // - Writes with ForwardingClass != 0 also write bypass one cycle earlier.
+  DenseMap<unsigned, std::map<unsigned, std::string>> RegEventsByLRIndex;
+  DenseMap<unsigned, std::map<unsigned, std::string>> BypassEventsByLRIndex;
   for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle) {
     const auto &CycleEvents = Schedule[Cycle];
     for (const auto &Event : CycleEvents) {
-      // Add space if there's already an event in this cycle
-      if (!RegEventsByVReg[Event.VReg][Cycle].empty()) {
-        RegEventsByVReg[Event.VReg][Cycle] += " ";
-      }
-      RegEventsByVReg[Event.VReg][Cycle] += Event.toString();
+      if (!RegEventsByLRIndex[Event.LRIndex][Cycle].empty())
+        RegEventsByLRIndex[Event.LRIndex][Cycle] += " ";
+      RegEventsByLRIndex[Event.LRIndex][Cycle] += Event.toString();
 
-      // If this event uses a bypass, add bypass event
       if (Event.ForwardingClass != 0) {
         const int BypassCycle =
             (Event.Type == EventType::Write) ? Cycle - 1 : Cycle;
         if (BypassCycle >= 0) {
-          if (!BypassEventsByVReg[Event.VReg][BypassCycle].empty()) {
-            BypassEventsByVReg[Event.VReg][BypassCycle] += " ";
-          }
-          BypassEventsByVReg[Event.VReg][BypassCycle] += Event.toString();
+          if (!BypassEventsByLRIndex[Event.LRIndex][BypassCycle].empty())
+            BypassEventsByLRIndex[Event.LRIndex][BypassCycle] += " ";
+          BypassEventsByLRIndex[Event.LRIndex][BypassCycle] += Event.toString();
         }
       }
     }
@@ -190,20 +183,18 @@ void AIEScheduleInterpreter::dumpEventSchedule(const EventSchedule &Schedule,
 
   // Print header with cycle numbers.
   // Reserve 12 characters for register class names to handle long names.
-  OS << " RegClass    VReg  |";
-  for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle) {
+  OS << " RegClass    LRIdx |";
+  for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle)
     OS << format(" %4d |", Cycle);
-  }
   OS << "\n";
 
   // Print separator.
   OS << "-------------------+";
-  for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle) {
+  for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle)
     OS << "------+";
-  }
   OS << "\n";
 
-  // Helper lambda to print a row of events
+  // Helper lambda to print a row of events.
   auto PrintEventRow = [&](const std::map<unsigned, std::string> &Events) {
     for (unsigned Cycle = 0; Cycle < Schedule.size(); ++Cycle) {
       auto It = Events.find(Cycle);
@@ -212,18 +203,19 @@ void AIEScheduleInterpreter::dumpEventSchedule(const EventSchedule &Schedule,
     OS << "\n";
   };
 
-  // Print each VReg with register events and bypass events on separate lines.
-  for (Register VReg : AllVRegs) {
-    const auto Reg = VReg.virtRegIndex();
-    const char *RCName = TRI.getRegClassName(MRI.getRegClass(VReg));
+  // Print each LRIndex with register events and bypass events on separate
+  // lines.
+  for (unsigned LRIndex : AllLRIndices) {
+    const RegLiveRange *LR = &Tracker[LRIndex];
+    const char *RCName = (LR->getRegisterClass())
+                             ? TRI.getRegClassName(LR->getRegisterClass())
+                             : "unknown";
 
-    // Print register events.
     // Use %-12.12s to left-align, pad to 12 chars, and truncate at 12 chars.
-    OS << format(" %-12.12s%5d |", RCName, Reg);
-    PrintEventRow(RegEventsByVReg[VReg]);
+    OS << format(" %-12.12s%5u |", RCName, LRIndex);
+    PrintEventRow(RegEventsByLRIndex[LRIndex]);
 
-    // Print bypass events if any exist for this VReg.
-    const auto &BypassEvents = BypassEventsByVReg[VReg];
+    const auto &BypassEvents = BypassEventsByLRIndex[LRIndex];
     if (!BypassEvents.empty()) {
       OS << "         bypass    |";
       PrintEventRow(BypassEvents);
@@ -231,75 +223,74 @@ void AIEScheduleInterpreter::dumpEventSchedule(const EventSchedule &Schedule,
   }
 }
 
-// Helper function to get lane mask for a register operand
+// Helper function to get lane mask for a register operand.
+// Uses the live range's register class to determine the full lane mask,
+// falling back to LaneBitmask::getAll() when the RC is unavailable.
 static LaneBitmask getLaneMaskFor(const TargetRegisterInfo &TRI,
-                                  const MachineRegisterInfo &MRI,
-                                  unsigned SubRegIdx, Register VReg) {
+                                  const RegLiveRangeTracker &Tracker,
+                                  unsigned SubRegIdx, unsigned LRIndex) {
   if (SubRegIdx == 0) {
-    // Full/composite register - get the actual lane mask from register class
-    const TargetRegisterClass *RC = MRI.getRegClass(VReg);
-    return RC->getLaneMask();
+    // Full/composite register - get the lane mask from the live range's RC.
+    const TargetRegisterClass *RC = Tracker[LRIndex].getRegisterClass();
+    if (RC)
+      return RC->getLaneMask();
+    return LaneBitmask::getAll();
   }
-  // Specific subregister
   return TRI.getSubRegIndexLaneMask(SubRegIdx);
 }
 
-DenseMap<Register, AIE::LivenessVector>
-AIEScheduleInterpreter::buildLiveLanes(const EventSchedule &Schedule,
-                                       int II) const {
+DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
+    const EventSchedule &Schedule, int II,
+    const RegLiveRangeTracker &Tracker) const {
 
   assert(II > 0 && "Initiation interval must be positive");
 
-  DenseMap<Register, AIE::LivenessVector> LiveLanesByVirtReg;
+  DenseMap<unsigned, AIE::LivenessVector> LiveLanesByLRIndex;
 
   if (Schedule.empty())
-    return LiveLanesByVirtReg;
+    return LiveLanesByLRIndex;
 
-  // State: tracks which lanes are currently live when scanning backward
-  DenseMap<Register, LaneBitmask> ActiveMask;
+  // State: tracks which lanes are currently live when scanning backward.
+  DenseMap<unsigned, LaneBitmask> ActiveMask;
 
-  // Process cycles backward
+  // Process cycles backward.
   int MaxCycle = Schedule.size() - 1;
   for (int C = MaxCycle; C >= 0; --C) {
     const auto &Events = Schedule[C];
     int ModuloCycle = C % II;
 
-    // First, record what's live ENTERING this cycle (before any events)
-    // This is what was active from processing later cycles
-    for (const auto &[VReg, Mask] : ActiveMask) {
+    // Record what's live ENTERING this cycle (before any events).
+    for (const auto &[LRIndex, Mask] : ActiveMask) {
       if (Mask.any()) {
-        // Ensure the output vector is sized for this VReg
-        if (!LiveLanesByVirtReg.count(VReg)) {
-          LiveLanesByVirtReg[VReg] = AIE::LivenessVector(II);
-        }
-        LiveLanesByVirtReg[VReg][ModuloCycle] |= Mask;
+        if (!LiveLanesByLRIndex.count(LRIndex))
+          LiveLanesByLRIndex[LRIndex] = AIE::LivenessVector(II);
+        LiveLanesByLRIndex[LRIndex][ModuloCycle] |= Mask;
 
-        LLVM_DEBUG(dbgs() << "    Lanes " << PrintLaneMask(Mask) << " for %vreg"
-                          << VReg.virtRegIndex() << " live entering cycle " << C
+        LLVM_DEBUG(dbgs() << "    Lanes " << PrintLaneMask(Mask) << " for LR#"
+                          << LRIndex << " live entering cycle " << C
                           << " (offset " << ModuloCycle << ")\n");
       }
     }
 
     // Step 1: Process defs (writes) - they occupy the register and kill lanes
-    // going backward
+    // going backward.
     for (const auto &Event : Events) {
       if (Event.Type == EventType::Write) {
-        LaneBitmask M = getLaneMaskFor(TRI, MRI, Event.SubRegIdx, Event.VReg);
+        LaneBitmask M =
+            getLaneMaskFor(TRI, Tracker, Event.SubRegIdx, Event.LRIndex);
 
-        // Ensure the output vector exists for this VReg
-        if (!LiveLanesByVirtReg.count(Event.VReg)) {
-          LiveLanesByVirtReg[Event.VReg] = AIE::LivenessVector(II);
-        }
+        if (!LiveLanesByLRIndex.count(Event.LRIndex))
+          LiveLanesByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
 
-        // RF write occupies register file at ModuloCycle
-        LiveLanesByVirtReg[Event.VReg][ModuloCycle] |= M;
+        // RF write occupies register file at ModuloCycle.
+        LiveLanesByLRIndex[Event.LRIndex][ModuloCycle] |= M;
 
-        // If this write uses a bypass, mark bypass write one cycle earlier
+        // If this write uses a bypass, mark bypass write one cycle earlier.
         if (Event.ForwardingClass != 0) {
           const int BypassWriteCycle = C - 1;
           if (BypassWriteCycle >= 0) {
             const int BypassModuloCycle = BypassWriteCycle % II;
-            LiveLanesByVirtReg[Event.VReg][BypassModuloCycle].addBypassWrite(
+            LiveLanesByLRIndex[Event.LRIndex][BypassModuloCycle].addBypassWrite(
                 Event.ForwardingClass);
 
             LLVM_DEBUG(dbgs()
@@ -309,35 +300,33 @@ AIEScheduleInterpreter::buildLiveLanes(const EventSchedule &Schedule,
           }
         }
 
-        // Kill those lanes going backward
-        ActiveMask[Event.VReg] &= ~M;
+        // Kill those lanes going backward.
+        ActiveMask[Event.LRIndex] &= ~M;
 
         LLVM_DEBUG(dbgs() << "  Cycle " << C << " (" << ModuloCycle
-                          << "): Write %vreg" << Event.VReg.virtRegIndex();
+                          << "): Write LR#" << Event.LRIndex;
                    if (Event.SubRegIdx) dbgs()
                    << ":" << TRI.getSubRegIndexName(Event.SubRegIdx);
                    dbgs() << " occupies lanes " << PrintLaneMask(M)
                           << " and kills them going backward\n");
 
-        // If no lanes remain active, remove from map
-        if (ActiveMask[Event.VReg].none()) {
-          ActiveMask.erase(Event.VReg);
-        }
+        if (ActiveMask[Event.LRIndex].none())
+          ActiveMask.erase(Event.LRIndex);
       }
     }
 
     // Step 2: Process uses (reads) - they make the register live going
-    // backward. Writes were already processed in Step 1, so it is safe to
-    // update ActiveMask directly here without an intermediate collection.
+    // backward.
     for (const auto &Event : Events) {
       if (Event.Type == EventType::Read) {
-        LaneBitmask M = getLaneMaskFor(TRI, MRI, Event.SubRegIdx, Event.VReg);
+        LaneBitmask M =
+            getLaneMaskFor(TRI, Tracker, Event.SubRegIdx, Event.LRIndex);
 
         // Reads make the register live going backward from this cycle.
-        ActiveMask[Event.VReg] |= M;
+        ActiveMask[Event.LRIndex] |= M;
 
         LLVM_DEBUG(dbgs() << "  Cycle " << C << " (" << ModuloCycle
-                          << "): Read %vreg" << Event.VReg.virtRegIndex();
+                          << "): Read LR#" << Event.LRIndex;
                    if (Event.SubRegIdx) dbgs()
                    << ":" << TRI.getSubRegIndexName(Event.SubRegIdx);
                    dbgs() << " lanes " << PrintLaneMask(M)
@@ -345,10 +334,9 @@ AIEScheduleInterpreter::buildLiveLanes(const EventSchedule &Schedule,
 
         // If this read uses a bypass, mark bypass read at same cycle.
         if (Event.ForwardingClass != 0) {
-          if (!LiveLanesByVirtReg.count(Event.VReg)) {
-            LiveLanesByVirtReg[Event.VReg] = AIE::LivenessVector(II);
-          }
-          LiveLanesByVirtReg[Event.VReg][ModuloCycle].addBypassRead(
+          if (!LiveLanesByLRIndex.count(Event.LRIndex))
+            LiveLanesByLRIndex[Event.LRIndex] = AIE::LivenessVector(II);
+          LiveLanesByLRIndex[Event.LRIndex][ModuloCycle].addBypassRead(
               Event.ForwardingClass);
 
           LLVM_DEBUG(dbgs() << "    Bypass read of class "
@@ -361,51 +349,46 @@ AIEScheduleInterpreter::buildLiveLanes(const EventSchedule &Schedule,
 
   // At the end, ActiveMask represents the live-in set. Currently
   // we only report it.
-  for (const auto &[VReg, Mask] : ActiveMask) {
+  for (const auto &[LRIndex, Mask] : ActiveMask) {
     if (Mask.any()) {
-      LLVM_DEBUG(dbgs() << "VR" << VReg.virtRegIndex() << " has lanes "
+      LLVM_DEBUG(dbgs() << "LR#" << LRIndex << " has lanes "
                         << PrintLaneMask(Mask) << " live at beginning\n");
     }
   }
 
-  return LiveLanesByVirtReg;
+  return LiveLanesByLRIndex;
 }
 
 void AIEScheduleInterpreter::dumpLiveLanes(
-    const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVirtReg, int II,
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
     raw_ostream &OS) const {
 
-  if (LiveLanesByVirtReg.empty()) {
+  if (LiveLanesByLRIndex.empty()) {
     OS << "No live lanes data\n";
     return;
   }
 
-  // Collect and sort VRegs for consistent output.
-  SmallVector<Register, 16> VRegs;
-  for (const auto &[VReg, _] : LiveLanesByVirtReg) {
-    VRegs.push_back(VReg);
-  }
-  llvm::sort(VRegs, [](Register A, Register B) {
-    return A.virtRegIndex() < B.virtRegIndex();
-  });
+  // Collect and sort LR indices for consistent output.
+  SmallVector<unsigned, 16> LRIndices;
+  for (const auto &[LRIndex, _] : LiveLanesByLRIndex)
+    LRIndices.push_back(LRIndex);
+  llvm::sort(LRIndices);
 
   OS << "Live Lanes (II=" << II << "):\n";
-  OS << "VReg   | ";
-  for (int T = 0; T < II; ++T) {
+  OS << "LRIdx  | ";
+  for (int T = 0; T < II; ++T)
     OS << format("t%-6d ", T);
-  }
   OS << "\n";
 
   OS << "-------+";
-  for (int T = 0; T < II; ++T) {
+  for (int T = 0; T < II; ++T)
     OS << "--------";
-  }
   OS << "\n";
 
-  for (Register VReg : VRegs) {
-    OS << format("%-6d | ", VReg.virtRegIndex());
+  for (unsigned LRIndex : LRIndices) {
+    OS << format("%-6u | ", LRIndex);
 
-    const auto &LanesByOffset = LiveLanesByVirtReg.lookup(VReg);
+    const auto &LanesByOffset = LiveLanesByLRIndex.lookup(LRIndex);
     for (int T = 0; T < II; ++T) {
       const AIE::Liveness &L = LanesByOffset[T];
       if (L.any()) {
@@ -417,30 +400,26 @@ void AIEScheduleInterpreter::dumpLiveLanes(
         //   "R1W2  " = bypass read class 1 + bypass write class 2
         //   "#R1W2 " = lanes + bypass read class 1 + bypass write class 2
         std::string Indicator;
-        if (L.getLanes().any()) {
+        if (L.getLanes().any())
           Indicator = "#";
-        }
 
         // Add bypass read classes.
         if (!L.getBypassReads().empty()) {
           Indicator += "R";
-          for (unsigned FC : L.getBypassReads()) {
+          for (unsigned FC : L.getBypassReads())
             Indicator += std::to_string(FC);
-          }
         }
 
         // Add bypass write classes.
         if (!L.getBypassWrites().empty()) {
           Indicator += "W";
-          for (unsigned FC : L.getBypassWrites()) {
+          for (unsigned FC : L.getBypassWrites())
             Indicator += std::to_string(FC);
-          }
         }
 
         // Pad to 6 characters for alignment.
-        while (Indicator.size() < 6) {
+        while (Indicator.size() < 6)
           Indicator += " ";
-        }
         OS << " " << Indicator << " ";
       } else {
         OS << " ..     ";
