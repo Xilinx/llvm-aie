@@ -19,22 +19,22 @@
 # derived from GEMM_Bfp16_opt_0
 
 # CHECK: Live Lanes (II=7):
-# CHECK: VReg   | t0      t1      t2      t3      t4      t5      t6      
-# CHECK: -------+--------------------------------------------------------
-# CHECK: 0      |  ..      #       #       #R1     R1      ..      ..     
-# CHECK: 1      |  #       #       #       #R1     R1      ..      ..     
-# CHECK: 2      |  #       ..      #       #       #       #       #      
-# CHECK: 3      |  ..      ..      ..      W1      #W1     #       ..     
-# CHECK: 4      |  ..      ..      ..      #       #       #R1     R1     
-# CHECK: 5      |  ..      ..      #       #       #       #R1     R1     
-# CHECK: 6      |  ..      ..      ..      ..      #       ..      ..     
-# CHECK: 7      |  #       ..      ..      ..      ..      W1      #W1    
-# CHECK: 8      |  ..      ..      ..      ..      ..      ..      #      
-# CHECK: 9      |  #       #       ..      ..      ..      #       #      
-# CHECK: 10     |  #       #       #       #       #       #       #      
-# CHECK: 11     |  ..      #       #       ..      ..      ..      ..     
-# CHECK: 12     |  ..      ..      ..      #       #       ..      ..     
-# CHECK: 13     |  #       #       #       #       #       #       #      
+# CHECK-NEXT: LRIdx  | t0      t1      t2      t3      t4      t5      t6
+# CHECK-NEXT: -------+--------------------------------------------------------
+# CHECK-NEXT: 0      |  #       ..      ..      ..      #       #       #
+# CHECK-NEXT: 1      |  #       ..      ..      ..      ..      #       #
+# CHECK-NEXT: 2      |  #       #       #       #       #       #       ..
+# CHECK-NEXT: 3      |  ..      ..      #       #       #       #       #
+# CHECK-NEXT: 4      |  #       ..      ..      ..      ..      ..      #
+# CHECK-NEXT: 5      |  ..      #       ..      ..      ..      ..      ..
+# CHECK-NEXT: 6      |  #       #       #       ..      ..      W1      #W1
+# CHECK-NEXT: 7      |  ..      ..      ..      #       ..      ..      ..
+# CHECK-NEXT: 8      |  ..      ..      #       #       #       #R1     R1
+# CHECK-NEXT: 9      |  ..      ..      ..      #       #       #R1     R1
+# CHECK-NEXT: 10     |  ..      ..      W1      #W1     #       ..      ..
+# CHECK-NEXT: 11     |  ..      ..      ..      ..      #       #       ..
+# CHECK-NEXT: 12     |  #       #       #R1     R1      ..      ..      ..
+# CHECK-NEXT: 13     |  ..      #       #R1     R1      ..      ..      ..
 
 --- |
   define dso_local void @gemm(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr {

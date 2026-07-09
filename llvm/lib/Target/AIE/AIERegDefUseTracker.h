@@ -22,9 +22,11 @@
 #define LLVM_LIB_TARGET_AIE_AIEREGDEFUSETRACKER_H
 
 #include "AIEBaseInstrInfo.h"
+#include "AIEBaseRegisterInfo.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/Register.h"
@@ -88,6 +90,12 @@ private:
   // Virtual register assigned to this live range (if virtualized)
   Register VReg;
 
+  // Whether this live range can be virtualized (physical register operands
+  // replaced with virtual registers).  Non-virtualizable ranges are tracked
+  // for liveness and interference purposes but their operands remain physical
+  // throughout scheduling and register allocation.
+  bool IsVirtualizable = true;
+
   // Whether this live range is scarce (has exactly 1 available register)
   bool IsScarce = false;
 
@@ -102,6 +110,10 @@ private:
   // Unique ID for this live range (for debugging/tracking)
   // Use -1 as sentinel for invalid/cleared ranges
   int ID = -1;
+
+  // Index: position of this live range in the final LiveRanges vector
+  // after all filtering.  Set once at the end of analyze().
+  unsigned Index = 0;
 
 public:
   RegLiveRange() = default;
@@ -156,6 +168,20 @@ public:
   /// Set the virtual register for this live range
   void setVReg(Register R) { VReg = R; }
 
+  /// Return the index: position of this live range in the
+  /// RegLiveRangeTracker::LiveRanges vector after all filtering.
+  /// Used as the key in event schedules and liveness maps.
+  unsigned getIndex() const { return Index; }
+
+  /// Set the index.  Called once by RegLiveRangeTracker::analyze().
+  void setIndex(unsigned I) { Index = I; }
+
+  /// Check if this live range can be virtualized.
+  bool isVirtualizable() const { return IsVirtualizable; }
+
+  /// Set whether this live range can be virtualized.
+  void setIsVirtualizable(bool V) { IsVirtualizable = V; }
+
   /// Check if this live range is scarce (has exactly 1 available register)
   bool isScarce() const { return IsScarce; }
 
@@ -174,6 +200,14 @@ public:
   /// Set the register class and populate AdmissibleRegs.
   /// AdmissibleRegs is initially populated from the register class membership.
   void setRegisterClass(const TargetRegisterClass *RC);
+
+  /// Set AdmissibleRegs to {BaseReg} for non-virtualizable ranges that bypass
+  /// register class computation.
+  void setAdmissibleRegsToBaseReg() {
+    AdmissibleRegs.clear();
+    if (BaseReg.isValid())
+      AdmissibleRegs.insert(BaseReg);
+  }
 
   /// Merge another live range into this one.
   /// Copies all defs and uses from Other into this range.
@@ -214,7 +248,7 @@ public:
 /// Tracker for register live ranges in a MachineBasicBlock
 class RegLiveRangeTracker {
   MachineFunction *MF;
-  const TargetRegisterInfo *TRI;
+  const AIEBaseRegisterInfo *TRI;
   const AIEBaseInstrInfo *TII;
 
   // List of all live ranges found in the block
@@ -238,6 +272,15 @@ class RegLiveRangeTracker {
   // Counter for assigning unique IDs to live ranges
   int NextLiveRangeID = 0;
 
+  // Set to true once analyze() has been called; guards the once-only
+  // invariant enforced by the assert at the top of analyze().
+  bool AnalysisDone = false;
+
+  // When true, implicit operands are included in the backward liveness scan
+  // and the IsVirtualizable flag is derived from the collected operands.
+  // Enabled when --aie-simplify-reserved-regs is active.
+  bool TrackImplicitRanges = false;
+
   /// Get the sub-register index if AccessReg is a sub-register of BaseReg
   /// Returns 0 if AccessReg is not a sub-register of BaseReg
   unsigned getSubRegIndex(MCRegister AccessReg, MCRegister BaseReg) const;
@@ -245,12 +288,6 @@ class RegLiveRangeTracker {
   /// Check if a register overlaps with any register in a set
   bool overlapsAnyInSet(MCRegister Reg,
                         const DenseSet<MCRegister> &RegSet) const;
-
-  /// Check if all instructions in a live range have fixed itineraries.
-  /// An instruction has a fixed itinerary if it has at most one schedule class
-  /// variant, meaning the schedule class doesn't depend on operand register
-  /// classes.
-  bool hasAllInstructionsWithFixedItinerary(const RegLiveRange &LR) const;
 
   /// Compute the register class for a live range based on all its operands
   void computeRegisterClass(RegLiveRange &LR) const;
@@ -368,9 +405,6 @@ class RegLiveRangeTracker {
   struct VarItinInstrInfo {
     /// The RC requirements for each operand from the original physreg match.
     ArrayRef<OperandRCRequirement> OrigOperandRCs;
-
-    /// Map from operand index to live range index.
-    DenseMap<unsigned, unsigned> OperandToLRIdx;
   };
 
   /// Map from instruction to its variable itinerary info.
@@ -397,21 +431,31 @@ class RegLiveRangeTracker {
   void finalizeAvailabilityAndScarcity(MachineBasicBlock &MBB,
                                        const LivenessScanState &State);
 
-  /// Clear all state and bring the tracker back to its default constructed
-  /// state.
-  void clear();
-
 public:
   RegLiveRangeTracker(MachineFunction &MF);
 
-  /// Process a MachineBasicBlock to find all register live ranges
-  /// @param MBB The machine basic block to analyze
+  /// Process a MachineBasicBlock to find all register live ranges.
+  ///
+  /// May only be called once per tracker instance: each tracker is
+  /// constructed for a single loop block and analyzed exactly once.
+  ///
+  /// @param MBB The machine basic block to analyze.
   /// @param SemanticOrder The semantic instruction order (required - must be
-  ///                      non-empty)
+  ///                      non-empty).
   void analyze(MachineBasicBlock &MBB, ArrayRef<MachineInstr *> SemanticOrder);
 
   /// Get all live ranges
   ArrayRef<RegLiveRange> getLiveRanges() const { return LiveRanges; }
+
+  /// Return the live range at index \p Index.
+  /// Equivalent to getLiveRanges()[Index].
+  const RegLiveRange &operator[](unsigned Index) const {
+    return LiveRanges[Index];
+  }
+
+  /// Return the index of the live range that owns operand \p MO as a def
+  /// or use, or std::nullopt if not found.
+  std::optional<unsigned> getIndexForOperand(const MachineOperand *MO) const;
 
   /// Dump the live range information for debugging.
   /// @param Header Optional header string to print before the dump.
@@ -432,7 +476,7 @@ public:
 
   /// Replace filtered physical registers with virtual registers.
   /// This modifies the MachineBasicBlock and updates LiveRanges with VReg info.
-  /// RESERVED ranges themselves are never virtualized.
+  /// RESERVED and non-virtualizable ranges are never virtualized.
   /// Other ranges may be filtered based on the policy.
   /// This is a non-destructive operation that supports partial virtualization.
   void virtualizeFilteredPhysRegs(
@@ -465,6 +509,12 @@ public:
   getMostPromisingScarceRanges() const {
     return MostPromisingScarceRanges;
   }
+
+  /// Configure whether the backward scan should include implicit operands and
+  /// compute IsVirtualizable from the collected ranges.  Must be called before
+  /// analyze().  When false (default), implicit operands are skipped and the
+  /// behavior matches the pre-simplification baseline.
+  void setTrackImplicitRanges(bool Track) { TrackImplicitRanges = Track; }
 };
 
 } // end namespace llvm

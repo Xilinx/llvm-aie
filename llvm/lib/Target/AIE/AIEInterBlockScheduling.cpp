@@ -94,6 +94,11 @@ static cl::opt<bool> TestRegDefUseTracker(
     cl::desc("[AIE] TEST MODE: Run RegDefUseTracker analysis on all loops "
              "(for testing only)"));
 
+cl::opt<bool> SimplifyReservedRegs(
+    "aie-simplify-reserved-regs", cl::init(false),
+    cl::desc("Remove anti and output dependencies on simplifiable reserved "
+             "registers to give the scheduler maximum freedom"));
+
 // Option for enabling virtual register mode in the postpipeliner
 static cl::opt<bool> PostPipelinerVRegMode(
     "aie-postpipeliner-vreg-mode", cl::Hidden, cl::init(true),
@@ -1738,7 +1743,9 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
       // Analyze once using the invariant semantic order. The semantic order
       // and physical register state are invariant across all pipelining
       // attempts.
+      RegTracker->setTrackImplicitRanges(SimplifyReservedRegs);
       RegTracker->analyze(*TheBlock, getTop().getFreeInstructions());
+
       DEBUG_REGALLOC(RegTracker->dump("FINAL LIVE RANGES\n"));
 
       // Find and dump the most promising scarce range set.

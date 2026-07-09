@@ -19,7 +19,6 @@
 
 #include "AIELivenessVector.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/CodeGen/Register.h"
 #include <string>
 #include <vector>
 
@@ -29,6 +28,7 @@ struct AIEBaseInstrInfo;
 class MachineFunction;
 class MachineInstr;
 class MachineRegisterInfo;
+class RegLiveRangeTracker;
 class TargetRegisterInfo;
 class InstrItineraryData;
 
@@ -39,15 +39,16 @@ enum class EventType { Read, Write };
 class RFEvent {
 public:
   EventType Type;           // Read or Write
-  Register VReg;            // Virtual register
+  unsigned LRIndex;         // Live range index (RegLiveRange::getIndex())
   unsigned SubRegIdx;       // Subregister index (0 for full register)
   unsigned ForwardingClass; // Forwarding/bypass class (0 = no bypass)
   const MachineInstr *MI;   // Source instruction
   unsigned OpIdx;           // Operand index
 
-  RFEvent(EventType T, Register V, unsigned S, unsigned F,
+  RFEvent(EventType T, unsigned LRI, unsigned S, unsigned F,
           const MachineInstr *M, unsigned O)
-      : Type(T), VReg(V), SubRegIdx(S), ForwardingClass(F), MI(M), OpIdx(O) {}
+      : Type(T), LRIndex(LRI), SubRegIdx(S), ForwardingClass(F), MI(M),
+        OpIdx(O) {}
 
   /// Format the event action as a short string suitable for tabular display.
   ///
@@ -74,47 +75,59 @@ class AIEScheduleInterpreter {
 public:
   explicit AIEScheduleInterpreter(const MachineFunction &MF);
 
-  /// Add events for a single instruction to the event schedule
+  /// Return the absolute cycle at which operand \p OpIdx of \p MI is
+  /// accessed when the instruction is issued at \p IssueCycle.
+  int getOperandAccessCycle(const MachineInstr &MI, int IssueCycle,
+                            unsigned OpIdx) const;
+
+  /// Add events for a single instruction to the event schedule.
   ///
-  /// Processes all register operands of the instruction and adds their
-  /// read/write events to the schedule based on the issue cycle and
-  /// itinerary timing information.
+  /// Processes all tracked register operands and maps them to their compact
+  /// live range index via \p Tracker.getIndexForOperand().  Operands with no
+  /// matching live range are skipped.
   ///
   /// \param MI The machine instruction to process
   /// \param IssueCycle The cycle when the instruction is issued
   /// \param Schedule The event schedule to update (will be resized if needed)
+  /// \param Tracker The live range tracker providing the operand → LRIndex map.
   void addInstructionEvents(const MachineInstr &MI, int IssueCycle,
-                            EventSchedule &Schedule) const;
+                            EventSchedule &Schedule,
+                            const RegLiveRangeTracker &Tracker) const;
 
   /// Dump the event schedule in a tabular format
   ///
-  /// Displays cycles in rows and virtual registers in aligned columns,
+  /// Displays cycles in rows and live range indices in aligned columns,
   /// showing 'R' for reads and 'W' for writes.
   ///
   /// \param Schedule The event schedule to dump
+  /// \param Tracker The live range tracker used to look up register class names
   /// \param OS Output stream to write to
-  void dumpEventSchedule(const EventSchedule &Schedule, raw_ostream &OS) const;
+  void dumpEventSchedule(const EventSchedule &Schedule,
+                         const RegLiveRangeTracker &Tracker,
+                         raw_ostream &OS) const;
 
   /// Build per-lane modulo-II live range masks from an event schedule
   ///
-  /// Uses a backward scan to compute which lanes of each virtual register
-  /// are live at each modulo-II offset. The result is a map from VReg to
-  /// a LaneMaskVector, where LiveLanesByVirtReg[VReg][t] indicates
-  /// which lanes are live at offset t (0 <= t < II).
+  /// Uses a backward scan to compute which lanes of each live range are live
+  /// at each modulo-II offset. The result is a map from LRIndex to a
+  /// LivenessVector, where LiveLanesByLRIndex[LRIndex][t] indicates which
+  /// lanes are live at offset t (0 <= t < II).
   ///
   /// \param Schedule The event schedule to analyze
   /// \param II The initiation interval for modulo scheduling
-  /// \return Map of VReg to per-offset lane masks
-  DenseMap<Register, AIE::LivenessVector>
-  buildLiveLanes(const EventSchedule &Schedule, int II) const;
+  /// \param Tracker The live range tracker used to look up register classes
+  /// \return Map of LRIndex to per-offset lane masks
+  DenseMap<unsigned, AIE::LivenessVector>
+  buildLiveLanes(const EventSchedule &Schedule, int II,
+                 const RegLiveRangeTracker &Tracker) const;
 
   /// Dump the live lanes in a readable format
   ///
-  /// \param LiveLanesByVirtReg The live lanes data to dump
+  /// \param LiveLanesByLRIndex The live lanes data to dump
   /// \param II The initiation interval
   /// \param OS Output stream to write to
   void dumpLiveLanes(
-      const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVirtReg, int II,
+      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
       raw_ostream &OS) const;
 };
 
