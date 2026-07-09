@@ -15,8 +15,6 @@
 #include "AIEPostRegAlloc.h"
 #include "AIELivenessVector.h"
 #include "AIERegDefUseTracker.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
@@ -32,8 +30,8 @@ using namespace llvm::AIE;
 // Initialize allocation state and compute interference graphs.
 void AIEPostRegAlloc::AllocState::init(
     const TargetRegisterInfo *InTRI,
-    const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVReg,
-    const RegLiveRangeTracker *RegTracker, const MachineRegisterInfo &MRI) {
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const RegLiveRangeTracker *RegTracker) {
   this->RegUnitOccupancy.clear();
   this->PhysOccupancy.clear();
   this->TRI = InTRI;
@@ -41,7 +39,6 @@ void AIEPostRegAlloc::AllocState::init(
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
   // Build register class interference graph once.
-  // Iterate over LiveRanges to get register class IDs.
   DenseSet<unsigned> UsedRCIds;
   for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
     if (const TargetRegisterClass *RC = LR.getRegisterClass())
@@ -50,28 +47,31 @@ void AIEPostRegAlloc::AllocState::init(
   this->RCInterferenceGraph =
       AIEPostRegAlloc::buildRCInterferenceGraph(UsedRCIds, *InTRI);
 
-  // Build virtual register interference graph once.
+  // Build live range interference graph once.
   this->VRegInterferenceGraph = AIEPostRegAlloc::buildVRegInterferenceGraph(
-      LiveLanesByVReg, MRI, RCInterferenceGraph);
+      LiveLanesByLRIndex, *RegTracker, RCInterferenceGraph);
 
-  // Pre-compute metrics for all LiveRanges.
+  // Pre-compute metrics for all live ranges that have been virtualized.
+  // Non-virtualized ranges (RESERVED or policy-excluded) have no VReg and
+  // are skipped.
   this->AllMetrics.clear();
   for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
-    const Register VReg = LR.getVReg();
-    auto It = LiveLanesByVReg.find(VReg);
-    if (It == LiveLanesByVReg.end())
+    if (!LR.getVReg().isValid())
+      continue;
+    const unsigned LRIndex = LR.getIndex();
+    auto It = LiveLanesByLRIndex.find(LRIndex);
+    if (It == LiveLanesByLRIndex.end())
       continue;
     const AIE::LivenessVector &Masks = It->second;
-    AllMetrics[VReg] = AIEPostRegAlloc::computeMetrics(
-        LR, Masks, VRegInterferenceGraph, LiveLanesByVReg, RCInterferenceGraph,
-        AvailableRegs, MRI, *InTRI);
+    AllMetrics[LRIndex] = AIEPostRegAlloc::computeMetrics(
+        LR, Masks, VRegInterferenceGraph, LiveLanesByLRIndex,
+        RCInterferenceGraph, AvailableRegs, *RegTracker, *InTRI);
   }
 }
 
-// Check if VReg can be placed in PhysReg without conflicts.
+// Check if PhysReg can accommodate VRegMasks without conflicts.
 bool AIEPostRegAlloc::AllocState::canPlace(
-    Register VReg, Register PhysReg, const AIE::LivenessVector &VRegMasks,
-    const TargetRegisterClass *RC) const {
+    Register PhysReg, const AIE::LivenessVector &VRegMasks) const {
 
   // Check RegUnit conflicts - this handles aliasing automatically.
   // Two registers interfere if they share any RegUnits.
@@ -80,15 +80,8 @@ bool AIEPostRegAlloc::AllocState::canPlace(
     unsigned Unit = *Units;
     auto It = RegUnitOccupancy.find(Unit);
     if (It != RegUnitOccupancy.end()) {
-      // This RegUnit is occupied. Check if it conflicts with our VRegMasks.
-      const auto &UnitOcc = It->second;
-      if (VRegMasks.overlaps(UnitOcc)) {
-        LLVM_DEBUG(dbgs() << "  RegUnit conflict detected for "
-                          << printReg(VReg, TRI) << " in "
-                          << printReg(PhysReg, TRI) << " (unit " << Unit
-                          << ")\n");
+      if (VRegMasks.overlaps(It->second))
         return false;
-      }
     }
   }
 
@@ -170,41 +163,45 @@ AIEPostRegAlloc::buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
   return Graph;
 }
 
-// Build virtual register interference graph (symmetric).
+// Build live range interference graph (symmetric).
 AIEPostRegAlloc::WeightedSymmetricGraph
 AIEPostRegAlloc::buildVRegInterferenceGraph(
-    const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVReg,
-    const MachineRegisterInfo &MRI,
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+    const RegLiveRangeTracker &RegTracker,
     const WeightedAsymmetricGraph &RCInterferenceGraph) {
 
   WeightedSymmetricGraph Graph;
 
-  // Build a vector of VRegs for iteration (to ensure consistent ordering).
-  std::vector<Register> VRegs;
-  for (const auto &[VReg, _] : LiveLanesByVReg) {
-    VRegs.push_back(VReg);
-  }
+  // Build a vector of LRIndices for iteration (for consistent ordering).
+  std::vector<unsigned> LRIndices;
+  for (const auto &[LRIndex, _] : LiveLanesByLRIndex)
+    LRIndices.push_back(LRIndex);
 
-  // Check all pairs of virtual registers.
+  // Check all pairs of live ranges.
   // Use symmetry: only check pairs where I < J.
-  for (size_t I = 0; I < VRegs.size(); ++I) {
-    const Register VReg1 = VRegs[I];
-    const auto &Masks1 = LiveLanesByVReg.find(VReg1)->second;
-    const unsigned RCId1 = MRI.getRegClass(VReg1)->getID();
+  for (size_t I = 0; I < LRIndices.size(); ++I) {
+    const unsigned LRIndex1 = LRIndices[I];
+    const RegLiveRange &LR1 = RegTracker[LRIndex1];
+    if (!LR1.getRegisterClass())
+      continue;
+    const auto &Masks1 = LiveLanesByLRIndex.find(LRIndex1)->second;
+    const unsigned RCId1 = LR1.getRegisterClass()->getID();
 
-    for (size_t J = I + 1; J < VRegs.size(); ++J) {
-      const Register VReg2 = VRegs[J];
-      const auto &Masks2 = LiveLanesByVReg.find(VReg2)->second;
-      const unsigned RCId2 = MRI.getRegClass(VReg2)->getID();
+    for (size_t J = I + 1; J < LRIndices.size(); ++J) {
+      const unsigned LRIndex2 = LRIndices[J];
+      const RegLiveRange &LR2 = RegTracker[LRIndex2];
+      if (!LR2.getRegisterClass())
+        continue;
+      const auto &Masks2 = LiveLanesByLRIndex.find(LRIndex2)->second;
+      const unsigned RCId2 = LR2.getRegisterClass()->getID();
 
       // First check if their register classes can interfere.
       if (!RCInterferenceGraph.interferes(RCId1, RCId2))
         continue;
 
       // Then check if their live ranges overlap temporally.
-      if (Masks1.overlaps(Masks2)) {
-        Graph.addInterference(VReg1, VReg2);
-      }
+      if (Masks1.overlaps(Masks2))
+        Graph.addInterference(LRIndex1, LRIndex2);
     }
   }
 
@@ -215,18 +212,18 @@ AIEPostRegAlloc::buildVRegInterferenceGraph(
 AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
     const RegLiveRange &LR, const AIE::LivenessVector &Masks,
     const WeightedSymmetricGraph &VRegInterferenceGraph,
-    const DenseMap<Register, AIE::LivenessVector> &AllVRegs,
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const WeightedAsymmetricGraph &RCInterferenceGraph,
-    const DenseSet<MCRegister> &AvailableRegs, const MachineRegisterInfo &MRI,
-    const TargetRegisterInfo &TRI) {
+    const DenseSet<MCRegister> &AvailableRegs,
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
   VRegMetrics Metrics = {0, 0, 0, 0, 0, 0};
 
-  const Register VReg = LR.getVReg();
+  const unsigned LRIndex = LR.getIndex();
 
   // Compute basic metrics.
   for (const auto &Mask : Masks.getElements()) {
     if (Mask.any()) {
-      unsigned LanesInCycle = Mask.getNumLanes();
+      const unsigned LanesInCycle = Mask.getNumLanes();
       Metrics.TotalLanes += LanesInCycle;
       Metrics.MaxWidth = std::max(Metrics.MaxWidth, LanesInCycle);
       Metrics.Duration++;
@@ -234,35 +231,33 @@ AIEPostRegAlloc::VRegMetrics AIEPostRegAlloc::computeMetrics(
   }
 
   // Compute pure and aliasing interference degrees.
-  // Use the register class from the LiveRange.
   const TargetRegisterClass *RC = LR.getRegisterClass();
-  unsigned RCId = RC->getID();
+  const unsigned RCId = RC->getID();
 
-  for (const auto &[OtherVReg, _] : AllVRegs) {
-    if (OtherVReg != VReg &&
-        VRegInterferenceGraph.interferes(VReg, OtherVReg)) {
-      // For interference with other VRegs, we still need MRI to look up
-      // their register class. A future optimization could pass a map
-      // from VReg to LiveRange to avoid this MRI dependency.
-      const TargetRegisterClass *OtherRC = MRI.getRegClass(OtherVReg);
-      const unsigned OtherRCId = OtherRC->getID();
+  for (const auto &[OtherLRIndex, _] : LiveLanesByLRIndex) {
+    if (OtherLRIndex == LRIndex)
+      continue;
+    if (!VRegInterferenceGraph.interferes(LRIndex, OtherLRIndex))
+      continue;
 
-      if (RCId == OtherRCId) {
-        // Same register class - pure interference.
-        Metrics.PureInterferenceDegree++;
-      } else if (RCInterferenceGraph.interferes(RCId, OtherRCId)) {
-        // Different but overlapping register classes - aliasing interference.
-        // Use asymmetric weight: how much does OtherVReg's class affect
-        // VReg's class?
-        unsigned Weight =
-            RCInterferenceGraph.getInterferenceWeight(RCId, OtherRCId);
-        Metrics.AliasingInterferenceDegree += Weight;
-      }
+    const RegLiveRange &OtherLR = RegTracker[OtherLRIndex];
+    if (!OtherLR.getRegisterClass())
+      continue;
+    const unsigned OtherRCId = OtherLR.getRegisterClass()->getID();
+
+    if (RCId == OtherRCId) {
+      // Same register class - pure interference.
+      Metrics.PureInterferenceDegree++;
+    } else if (RCInterferenceGraph.interferes(RCId, OtherRCId)) {
+      // Different but overlapping register classes - aliasing interference.
+      const unsigned Weight =
+          RCInterferenceGraph.getInterferenceWeight(RCId, OtherRCId);
+      Metrics.AliasingInterferenceDegree += Weight;
     }
   }
 
   // Count available registers using per-LR AdmissibleRegs.
-  std::vector<Register> Candidates =
+  const std::vector<Register> Candidates =
       getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
   Metrics.NumAvailableRegs = Candidates.size();
 
@@ -293,9 +288,9 @@ std::vector<Register> AIEPostRegAlloc::getCandidatePhysRegs(
 
 // Try to allocate using a specific scoring function for ordering.
 AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
-    const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVReg,
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker, const TargetRegisterInfo &TRI,
-    const MachineRegisterInfo &MRI, AllocState &State, ScoringFunction ScoreFn,
+    AllocState &State, ScoringFunction ScoreFn,
     DenseMap<Register, MCRegister> &OutAssign) {
 
   // Clear per-attempt state.
@@ -305,48 +300,88 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
 
+  // Pre-place all live ranges that have exactly one candidate physical
+  // register.  Because non-virtualizable ranges now contribute their base
+  // register to AvailablePhysRegs (analogous to RESERVED ranges), the
+  // getCandidatePhysRegs intersection works uniformly for all live ranges:
+  // a non-virtualizable range's one-element AdmissibleRegs ∩ AvailableRegs
+  // equals {BaseReg}, and a scarce virtualizable range similarly resolves to
+  // its single admissible+available register.
+  //
+  // Establishing single-candidate occupancy first ensures that
+  // multi-candidate ranges cannot land on conflicting slots.  Two
+  // single-candidate ranges on the same register with overlapping live
+  // lanes signal an infeasible schedule.
+  for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
+    const std::vector<Register> Cands =
+        getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
+    if (Cands.size() != 1)
+      continue;
+    const auto It = LiveLanesByLRIndex.find(LR.getIndex());
+    if (It == LiveLanesByLRIndex.end())
+      continue;
+    const AIE::LivenessVector &Masks = It->second;
+    if (!State.canPlace(Cands[0], Masks)) {
+      LLVM_DEBUG(dbgs() << "  Single-candidate conflict on "
+                        << printReg(Cands[0], State.TRI)
+                        << " - infeasible schedule\n");
+      return AllocResult(/*InfeasibleSchedule=*/true);
+    }
+    State.place(LR.getVReg(), Cands[0], Masks, LR.getRegisterClass());
+    if (LR.getVReg().isValid())
+      OutAssign[LR.getVReg()] = Cands[0].asMCReg();
+  }
+
   // Build sorted list of LiveRanges by difficulty.
   struct LRInfo {
     const RegLiveRange *LR;
-    Register VReg;
+    unsigned LRIndex;
     unsigned Score;
     const AIE::LivenessVector *Masks;
   };
 
-  // Score and collect LiveRanges using pre-computed metrics from State.
+  // Score and collect virtualized live ranges using pre-computed metrics.
   std::vector<LRInfo> LRInfos;
   for (const RegLiveRange &LR : RegTracker->getLiveRanges()) {
-    const Register VReg = LR.getVReg();
-    auto It = LiveLanesByVReg.find(VReg);
-    if (It == LiveLanesByVReg.end())
+    if (!LR.getVReg().isValid())
+      continue;
+    const unsigned LRIndex = LR.getIndex();
+    auto It = LiveLanesByLRIndex.find(LRIndex);
+    if (It == LiveLanesByLRIndex.end())
       continue;
 
     LRInfo Info;
     Info.LR = &LR;
-    Info.VReg = VReg;
-    Info.Score = ScoreFn(State.AllMetrics[VReg]);
+    Info.LRIndex = LRIndex;
+    Info.Score = ScoreFn(State.AllMetrics[LRIndex]);
     Info.Masks = &It->second;
     LRInfos.push_back(Info);
   }
 
   // Sort by descending score (hardest first).
   // Use VReg index as tiebreaker for deterministic ordering when scores are
-  // equal.
+  // equal: this matches the original ordering and avoids allocation changes.
   llvm::sort(LRInfos, [](const LRInfo &A, const LRInfo &B) {
     if (A.Score != B.Score)
       return A.Score > B.Score;
-    return A.VReg.virtRegIndex() < B.VReg.virtRegIndex();
+    return A.LR->getVReg().virtRegIndex() < B.LR->getVReg().virtRegIndex();
   });
 
-  // Try to allocate each LiveRange.
+  // Try to allocate each LiveRange, skipping those pre-placed above.
   for (const auto &Info : LRInfos) {
     const RegLiveRange &LR = *Info.LR;
-    const Register VReg = Info.VReg;
+    const unsigned LRIndex = Info.LRIndex;
+    const Register VReg = LR.getVReg();
+
+    // Skip ranges already placed in the single-candidate pass.
+    if (OutAssign.count(VReg))
+      continue;
+
     const auto &VRegMasks = *Info.Masks;
     const TargetRegisterClass *RC = LR.getRegisterClass();
-    const auto &Metrics = State.AllMetrics[VReg];
+    const auto &Metrics = State.AllMetrics[LRIndex];
 
-    LLVM_DEBUG(dbgs() << "Allocating " << printReg(VReg, &TRI) << " class="
+    LLVM_DEBUG(dbgs() << "Allocating LR#" << LRIndex << " class="
                       << TRI.getRegClassName(RC) << " (score=" << Info.Score
                       << ", available=" << Metrics.NumAvailableRegs
                       << ", pure_int=" << Metrics.PureInterferenceDegree
@@ -364,7 +399,7 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     }
 
     // Get candidate physical registers using AdmissibleRegs from LiveRange.
-    std::vector<Register> Candidates =
+    const std::vector<Register> Candidates =
         getCandidatePhysRegs(LR.getAdmissibleRegs(), AvailableRegs);
 
     if (Candidates.empty()) {
@@ -376,11 +411,13 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
     Register ChosenPhys = Register();
 
     for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << "\n");
-      if (State.canPlace(VReg, PhysReg, VRegMasks, RC)) {
+      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI));
+      if (State.canPlace(PhysReg, VRegMasks)) {
+        LLVM_DEBUG(dbgs() << "\n");
         ChosenPhys = PhysReg;
         break;
       }
+      LLVM_DEBUG(dbgs() << " Reject\n");
     }
 
     if (!ChosenPhys.isValid()) {
@@ -388,7 +425,7 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
       return AllocResult(/*InfeasibleSchedule=*/false);
     }
 
-    // Place the VReg and record in output.
+    // Place the VReg and record the assignment using the VReg as output key.
     State.place(VReg, ChosenPhys, VRegMasks, RC);
     OutAssign[VReg] = ChosenPhys.asMCReg();
   }
@@ -400,36 +437,34 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
 // Dump virtual register metrics for debugging.
 void AIEPostRegAlloc::dumpVRegMetrics(
-    const DenseMap<Register, VRegMetrics> &AllMetrics,
-    const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI) {
+    const DenseMap<unsigned, VRegMetrics> &AllMetrics,
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI) {
 
   dbgs() << "=== Virtual Register Metrics Dump ===\n";
   dbgs() << "Total Virtual Registers: " << AllMetrics.size() << "\n\n";
 
-  // Collect and sort VRegs for consistent output.
-  std::vector<std::pair<Register, VRegMetrics>> VRegMetricsList;
-  for (const auto &[VReg, Metrics] : AllMetrics) {
-    VRegMetricsList.push_back({VReg, Metrics});
-  }
-
-  // Sort by VReg number for consistent output.
-  llvm::sort(VRegMetricsList, [](const auto &A, const auto &B) {
-    return A.first.virtRegIndex() < B.first.virtRegIndex();
-  });
+  // Collect and sort LRIndices for consistent output.
+  std::vector<std::pair<unsigned, VRegMetrics>> MetricsList;
+  for (const auto &[LRIndex, Metrics] : AllMetrics)
+    MetricsList.push_back({LRIndex, Metrics});
+  llvm::sort(MetricsList,
+             [](const auto &A, const auto &B) { return A.first < B.first; });
 
   // Print header.
-  dbgs() << "VReg      RegClass                 Avail  Pure  Alias  "
+  dbgs() << "LRIdx     RegClass                 Avail  Pure  Alias  "
             "TotalLanes  MaxWidth  Duration\n";
   dbgs() << "--------  -----------------------  -----  ----  -----  "
             "----------  --------  --------\n";
 
-  // Print metrics for each VReg.
-  for (const auto &[VReg, Metrics] : VRegMetricsList) {
-    const TargetRegisterClass *RC = MRI.getRegClass(VReg);
-
-    dbgs() << format("%%vreg%-4u  %-23s  %5u  %4u  %5u  %10u  %8u  %8u\n",
-                     VReg.virtRegIndex(), TRI.getRegClassName(RC),
-                     Metrics.NumAvailableRegs, Metrics.PureInterferenceDegree,
+  // Print metrics for each LRIndex.
+  for (const auto &[LRIndex, Metrics] : MetricsList) {
+    const char *RCName =
+        RegTracker[LRIndex].getRegisterClass()
+            ? TRI.getRegClassName(RegTracker[LRIndex].getRegisterClass())
+            : "unknown";
+    dbgs() << format("LR#%-5u   %-23s  %5u  %4u  %5u  %10u  %8u  %8u\n",
+                     LRIndex, RCName, Metrics.NumAvailableRegs,
+                     Metrics.PureInterferenceDegree,
                      Metrics.AliasingInterferenceDegree, Metrics.TotalLanes,
                      Metrics.MaxWidth, Metrics.Duration);
   }
@@ -437,7 +472,6 @@ void AIEPostRegAlloc::dumpVRegMetrics(
   // Print summary statistics.
   dbgs() << "\n=== Summary Statistics ===\n";
 
-  // Compute aggregate statistics.
   unsigned TotalLanesSum = 0;
   unsigned MaxWidthMax = 0;
   unsigned MaxDuration = 0;
@@ -446,7 +480,7 @@ void AIEPostRegAlloc::dumpVRegMetrics(
   double AvgPureInterferenceDegree = 0.0;
   double AvgAliasingInterferenceDegree = 0.0;
 
-  for (const auto &[_, Metrics] : VRegMetricsList) {
+  for (const auto &[_, Metrics] : MetricsList) {
     TotalLanesSum += Metrics.TotalLanes;
     MaxWidthMax = std::max(MaxWidthMax, Metrics.MaxWidth);
     MaxDuration = std::max(MaxDuration, Metrics.Duration);
@@ -458,9 +492,9 @@ void AIEPostRegAlloc::dumpVRegMetrics(
     AvgAliasingInterferenceDegree += Metrics.AliasingInterferenceDegree;
   }
 
-  if (!VRegMetricsList.empty()) {
-    AvgPureInterferenceDegree /= VRegMetricsList.size();
-    AvgAliasingInterferenceDegree /= VRegMetricsList.size();
+  if (!MetricsList.empty()) {
+    AvgPureInterferenceDegree /= MetricsList.size();
+    AvgAliasingInterferenceDegree /= MetricsList.size();
   }
 
   dbgs() << "Total Lanes (sum):              " << TotalLanesSum << "\n";
@@ -477,39 +511,36 @@ void AIEPostRegAlloc::dumpVRegMetrics(
 
   // Count register classes used.
   DenseMap<const TargetRegisterClass *, unsigned> RCCounts;
-  for (const auto &[VReg, _] : VRegMetricsList) {
-    RCCounts[MRI.getRegClass(VReg)]++;
+  for (const auto &[LRIndex, _] : MetricsList) {
+    if (const TargetRegisterClass *RC = RegTracker[LRIndex].getRegisterClass())
+      RCCounts[RC]++;
   }
 
   dbgs() << "\n=== Register Class Distribution ===\n";
   std::vector<std::pair<const TargetRegisterClass *, unsigned>> RCCountVec;
-  for (const auto &[RC, Count] : RCCounts) {
+  for (const auto &[RC, Count] : RCCounts)
     RCCountVec.push_back({RC, Count});
-  }
-  llvm::sort(RCCountVec, [](const auto &A, const auto &B) {
-    // Sort by count descending.
-    return A.second > B.second;
-  });
+  llvm::sort(RCCountVec,
+             [](const auto &A, const auto &B) { return A.second > B.second; });
 
-  for (const auto &[RC, Count] : RCCountVec) {
+  for (const auto &[RC, Count] : RCCountVec)
     dbgs() << format("  %-25s: %u\n", TRI.getRegClassName(RC), Count);
-  }
 
   dbgs() << "\n=== End Virtual Register Metrics ===\n\n";
 }
 
 // Main allocation entry point.
 bool AIEPostRegAlloc::allocate(
-    const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVReg, int II,
-    const RegLiveRangeTracker &RegTracker, const MachineFunction &MF,
-    const TargetRegisterInfo &TRI, const MachineRegisterInfo &MRI,
+    const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
+    const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
     DenseMap<Register, MCRegister> &OutAssign) {
 
   LLVM_DEBUG(dbgs() << "AIEPostRegAlloc::allocate for "
-                    << LiveLanesByVReg.size() << " vregs, II=" << II << "\n");
+                    << LiveLanesByLRIndex.size() << " live ranges, II=" << II
+                    << "\n");
 
-  if (LiveLanesByVReg.empty()) {
-    LLVM_DEBUG(dbgs() << "No vregs to allocate\n");
+  if (LiveLanesByLRIndex.empty()) {
+    LLVM_DEBUG(dbgs() << "No live ranges to allocate\n");
     return true;
   }
 
@@ -518,10 +549,10 @@ bool AIEPostRegAlloc::allocate(
 
   // Initialize allocation state with interference graphs computed once.
   AllocState State;
-  State.init(&TRI, LiveLanesByVReg, &RegTracker, MRI);
+  State.init(&TRI, LiveLanesByLRIndex, &RegTracker);
 
   // Dump virtual register metrics when debug output is enabled.
-  LLVM_DEBUG(dumpVRegMetrics(State.AllMetrics, MRI, TRI));
+  LLVM_DEBUG(dumpVRegMetrics(State.AllMetrics, RegTracker, TRI));
 
   // Define the allocation strategies to try.
   struct AllocationStrategy {
@@ -554,7 +585,7 @@ bool AIEPostRegAlloc::allocate(
   for (const auto &Strategy : Strategies) {
     LLVM_DEBUG(dbgs() << "Trying allocation with " << Strategy.Name << "\n");
 
-    AllocResult Result = tryAllocate(LiveLanesByVReg, &RegTracker, TRI, MRI,
+    AllocResult Result = tryAllocate(LiveLanesByLRIndex, &RegTracker, TRI,
                                      State, Strategy.ScoreFn, OutAssign);
 
     if (Result) {

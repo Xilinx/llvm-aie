@@ -25,8 +25,8 @@
 # - Interference degrees ranging from 0 to 9
 # - Different lane widths and durations
 
-# NOTE: Status quo - II=7 (was II=6)
-# METRICS: AIEPostRegAlloc::allocate for 14 vregs, II=7
+# NOTE: Status quo - II=6
+# METRICS: AIEPostRegAlloc::allocate for 14 live ranges, II=6
 # METRICS-NEXT: Available 54 physical registers
 # METRICS-NEXT: RC interference: VEC512 -> VEC1024 weight=200 (avg 12/6)
 # METRICS-NEXT: RC interference: VEC512 -> VEC576 weight=100 (avg 12/12)
@@ -37,31 +37,31 @@
 # METRICS-NEXT: === Virtual Register Metrics Dump ===
 # METRICS-NEXT: Total Virtual Registers: 14
 # METRICS-EMPTY:
-# METRICS-NEXT: VReg      RegClass                 Avail  Pure  Alias  TotalLanes  MaxWidth  Duration
+# METRICS-NEXT: LRIdx     RegClass                 Avail  Pure  Alias  TotalLanes  MaxWidth  Duration
 # METRICS-NEXT: --------  -----------------------  -----  ----  -----  ----------  --------  --------
-# METRICS-NEXT: %vreg0     VEC512                       7     2    600           4         2         3
-# METRICS-NEXT: %vreg1     VEC512                       7     2    800           6         2         4
-# METRICS-NEXT: %vreg2     ACC2048                      1     0      0           6         4         2
-# METRICS-NEXT: %vreg3     VEC1024                      2     1    600           6         4         3
-# METRICS-NEXT: %vreg4     VEC512                       7     1    800           4         2         3
-# METRICS-NEXT: %vreg5     VEC512                       7     3    800           6         2         4
-# METRICS-NEXT: %vreg6     ACC2048                      1     0      0           4         4         1
-# METRICS-NEXT: %vreg7     VEC1024                      2     1    800          18         4         6
-# METRICS-NEXT: %vreg8     ACC2048                      1     0      0           4         4         1
-# METRICS-NEXT: %vreg9     ACC2048                      1     0      0           6         4         2
-# METRICS-NEXT: %vreg10    VEC576                       4     3    800          20         4         5
-# METRICS-NEXT: %vreg11    VEC576                       4     3    800          24         4         6
-# METRICS-NEXT: %vreg12    VEC576                       4     3    500           8         4         2
-# METRICS-NEXT: %vreg13    VEC576                       4     3    500          12         4         3
+# METRICS-NEXT: LR#0       VEC576                       4     3    800          20         4         5
+# METRICS-NEXT: LR#1       VEC576                       4     3    800          24         4         6
+# METRICS-NEXT: LR#2       VEC576                       4     3    800          24         4         6
+# METRICS-NEXT: LR#3       VEC576                       4     3    800          20         4         5
+# METRICS-NEXT: LR#4       ACC2048                      1     1      0          10         4         3
+# METRICS-NEXT: LR#5       ACC2048                      1     1      0           4         4         1
+# METRICS-NEXT: LR#6       VEC1024                      2     1    700           6         4         3
+# METRICS-NEXT: LR#7       ACC2048                      1     0      0           4         4         1
+# METRICS-NEXT: LR#8       VEC512                       7     3    800           6         2         4
+# METRICS-NEXT: LR#9       VEC512                       7     3    800           4         2         3
+# METRICS-NEXT: LR#10      VEC1024                      2     1    800           6         4         3
+# METRICS-NEXT: LR#11      ACC2048                      1     0      0           6         4         2
+# METRICS-NEXT: LR#12      VEC512                       7     3    800           6         2         4
+# METRICS-NEXT: LR#13      VEC512                       7     3    600           4         2         3
 # METRICS-EMPTY:
 # METRICS-NEXT: === Summary Statistics ===
-# METRICS-NEXT: Total Lanes (sum):              128
+# METRICS-NEXT: Total Lanes (sum):              144
 # METRICS-NEXT: Max Width (max):                4
 # METRICS-NEXT: Max Duration:                   6
 # METRICS-NEXT: Max Pure Interference Degree:   3
 # METRICS-NEXT: Max Aliasing Interference Deg:  800
-# METRICS-NEXT: Avg Pure Interference Degree:   1.57
-# METRICS-NEXT: Avg Aliasing Interference Deg:  500.00
+# METRICS-NEXT: Avg Pure Interference Degree:   2.00
+# METRICS-NEXT: Avg Aliasing Interference Deg:  550.00
 
 --- |
   define dso_local void @gemm(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr {

@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTPIPELINER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIERegDefUseTracker.h"
 #include "AIEScheduleInterpreter.h"
 #include "AIESchedulingTypes.h"
 #include "AIESlotCounts.h"
