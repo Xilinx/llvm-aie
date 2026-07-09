@@ -36,13 +36,13 @@
 # CHECK-NEXT:   Uses (1):
 # CHECK-NEXT:     [0] Register: cml4 VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0
 # CHECK-EMPTY:
-# CHECK-NEXT: Live Range #4 for dm4:
+# CHECK-NEXT: Live Range #7 for dm4:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: cml4 (SubRegIdx: 10) $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 0
 # CHECK-NEXT:   Uses (1):
 # CHECK-NEXT:     [0] Register: dm4 $ex2 = VCONV_bfp16ebs8_fp32 $dm4
 # CHECK-EMPTY:
-# CHECK-NEXT: Live Range #3 for ex2:
+# CHECK-NEXT: Live Range #6 for ex2:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: ex2 $ex2 = VCONV_bfp16ebs8_fp32 $dm4
 # CHECK-NEXT:   Uses (0):

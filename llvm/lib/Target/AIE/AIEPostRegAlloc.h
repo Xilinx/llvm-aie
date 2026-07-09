@@ -29,8 +29,6 @@
 
 namespace llvm {
 
-class MachineFunction;
-class MachineRegisterInfo;
 class TargetRegisterInfo;
 class TargetRegisterClass;
 class RegLiveRangeTracker;
@@ -163,26 +161,23 @@ private:
     WeightedSymmetricGraph VRegInterferenceGraph;
 
     /// Pre-computed metrics for all LiveRanges (reused across scoring
-    /// attempts). Keyed by VReg since there is a 1:1 mapping.
-    DenseMap<Register, VRegMetrics> AllMetrics;
+    /// attempts). Keyed by LRIndex (RegLiveRange::getIndex()).
+    DenseMap<unsigned, VRegMetrics> AllMetrics;
 
     /// Target register info for RegUnit computation.
     const TargetRegisterInfo *TRI = nullptr;
 
     /// Initialize occupancy and compute interference graphs.
     /// The RegTracker provides the problem description (LiveRanges,
-    /// AvailableRegs, AdmissibleRegs per LR). LiveLanesByVReg provides the
+    /// AvailableRegs, AdmissibleRegs per LR). LiveLanesByLRIndex provides the
     /// temporal liveness data computed during scheduling.
     void init(const TargetRegisterInfo *TRI,
-              const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVReg,
-              const RegLiveRangeTracker *RegTracker,
-              const MachineRegisterInfo &MRI);
+              const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+              const RegLiveRangeTracker *RegTracker);
 
-    /// Check if VReg can be placed in PhysReg without conflicts.
+    /// Check if PhysReg can accommodate VRegMasks without conflicts.
     /// This checks RegUnit conflicts to handle aliasing properly.
-    bool canPlace(Register VReg, Register PhysReg,
-                  const AIE::LivenessVector &VRegMasks,
-                  const TargetRegisterClass *RC) const;
+    bool canPlace(Register PhysReg, const AIE::LivenessVector &VRegMasks) const;
 
     /// Place VReg in PhysReg (updates RegUnit occupancy).
     void place(Register VReg, Register PhysReg,
@@ -194,23 +189,20 @@ private:
   using ScoringFunction = std::function<unsigned(const VRegMetrics &)>;
 
 public:
-  /// Allocate physical registers for virtual registers.
+  /// Allocate physical registers for live ranges.
   ///
-  /// \param LiveLanesByVReg Map from virtual register to per-cycle lane masks.
+  /// \param LiveLanesByLRIndex Map from live range index to per-cycle lane
+  ///        masks. Keys are RegLiveRange::getIndex() values.
   /// \param II Initiation interval for pipelined loops (>= 1).
-  ///        For non-pipelined blocks, use 0 or the schedule length.
   /// \param RegTracker RegLiveRangeTracker providing register information.
-  /// \param MF Machine function being processed.
   /// \param TRI Target register info.
-  /// \param MRI Machine register info (not modified).
   /// \param OutAssign Output map from virtual to physical registers.
   /// \return True if allocation succeeded, false if no solution found.
   static bool
-  allocate(const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVirtReg,
+  allocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
            int II, const RegLiveRangeTracker &RegTracker,
-           const MachineFunction &MF, const TargetRegisterInfo &TRI,
-           const MachineRegisterInfo &MRI,
-           DenseMap<Register /*VReg*/, MCRegister /*Phys*/> &OutAssign);
+           const TargetRegisterInfo &TRI,
+           DenseMap<Register, MCRegister> &OutAssign);
 
 private:
   /// Try to allocate using a specific scoring function for ordering.
@@ -219,40 +211,39 @@ private:
   /// The RegTracker provides the problem description (LiveRanges,
   /// AvailableRegs, AdmissibleRegs per LR).
   static AllocResult
-  tryAllocate(const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVReg,
+  tryAllocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
               const RegLiveRangeTracker *RegTracker,
-              const TargetRegisterInfo &TRI, const MachineRegisterInfo &MRI,
-              AllocState &State, ScoringFunction ScoreFn,
+              const TargetRegisterInfo &TRI, AllocState &State,
+              ScoringFunction ScoreFn,
               DenseMap<Register, MCRegister> &OutAssign);
 
   /// Compute metrics for a live range.
   /// \param LR The live range to compute metrics for.
   /// \param Masks The lane masks for this live range.
-  /// \param VRegInterferenceGraph Pre-computed virtual register interference
-  ///                               graph.
-  /// \param AllVRegs All virtual registers to compute degree against.
+  /// \param VRegInterferenceGraph Pre-computed live range interference graph.
+  /// \param LiveLanesByLRIndex All live ranges' liveness data.
   /// \param RCInterferenceGraph Register class interference graph with
   ///                            weights.
   /// \param AvailableRegs Available physical registers.
-  /// \param MRI Machine register info (for looking up other VRegs' RCs).
+  /// \param RegTracker Tracker for looking up live range register classes.
   /// \param TRI Target register info.
-  static VRegMetrics
-  computeMetrics(const RegLiveRange &LR, const AIE::LivenessVector &Masks,
-                 const WeightedSymmetricGraph &VRegInterferenceGraph,
-                 const DenseMap<Register, AIE::LivenessVector> &AllVRegs,
-                 const WeightedAsymmetricGraph &RCInterferenceGraph,
-                 const DenseSet<MCRegister> &AvailableRegs,
-                 const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI);
+  static VRegMetrics computeMetrics(
+      const RegLiveRange &LR, const AIE::LivenessVector &Masks,
+      const WeightedSymmetricGraph &VRegInterferenceGraph,
+      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const WeightedAsymmetricGraph &RCInterferenceGraph,
+      const DenseSet<MCRegister> &AvailableRegs,
+      const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI);
 
   /// Build register class interference graph with asymmetric weights.
   static WeightedAsymmetricGraph
   buildRCInterferenceGraph(const DenseSet<unsigned> &UsedRCIds,
                            const TargetRegisterInfo &TRI);
 
-  /// Build virtual register interference graph (symmetric).
+  /// Build live range interference graph (symmetric).
   static WeightedSymmetricGraph buildVRegInterferenceGraph(
-      const DenseMap<Register, AIE::LivenessVector> &LiveLanesByVirtReg,
-      const MachineRegisterInfo &MRI,
+      const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
+      const RegLiveRangeTracker &RegTracker,
       const WeightedAsymmetricGraph &RCInterferenceGraph);
 
   /// Predefined scoring functions.
@@ -290,9 +281,9 @@ private:
   getCandidatePhysRegs(const DenseSet<MCRegister> &AdmissibleRegs,
                        const DenseSet<MCRegister> &AvailableRegs);
 
-  /// Dump virtual register metrics for debugging.
-  static void dumpVRegMetrics(const DenseMap<Register, VRegMetrics> &AllMetrics,
-                              const MachineRegisterInfo &MRI,
+  /// Dump live range metrics for debugging.
+  static void dumpVRegMetrics(const DenseMap<unsigned, VRegMetrics> &AllMetrics,
+                              const RegLiveRangeTracker &RegTracker,
                               const TargetRegisterInfo &TRI);
 };
 
