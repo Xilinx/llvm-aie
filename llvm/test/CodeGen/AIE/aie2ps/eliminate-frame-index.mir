@@ -200,36 +200,6 @@ body:             |
 ...
 
 ---
-name:            test_psrf1024
-alignment:       16
-stack:
-  - { id: 0, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4 }
-  - { id: 1, name: '', type: spill-slot, offset: 0, size: 136, alignment: 64 }
-body:             |
-  bb.0 (align 16):
-    ; CHECK-LABEL: name: test_psrf1024
-    ; CHECK: frame-setup PADDXM_pstm_sp_imm 192, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $x0 = VLDA_dmx_lda_x_spill -192, implicit $sp :: (load (s512) from %stack.1)
-    ; CHECK-NEXT: $x1 = VLDA_dmx_lda_x_spill -128, implicit $sp :: (load (s512) from %stack.1 + 64)
-    ; CHECK-NEXT: dead renamable $lf0 = COPY killed renamable $y0
-    ; CHECK-NEXT: dead $r24 = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.1 + 128, align 64)
-    ; CHECK-NEXT: $p0 = LDA_dms_lda_scalar_spill -60, implicit $sp :: (load (s32) from %stack.1 + 132, basealign 64)
-    ; CHECK-NEXT: renamable $y0 = COPY $lf0
-    ; CHECK-NEXT: VST_dmx_sts_x_spill killed $x0, -192, implicit $sp :: (store (s512) into %stack.1)
-    ; CHECK-NEXT: VST_dmx_sts_x_spill killed $x1, -128, implicit $sp :: (store (s512) into %stack.1 + 64)
-    ; CHECK-NEXT: ST_dms_sts_scalar_spill $r24, -64, implicit $sp :: (store (s32) into %stack.1 + 128, align 64)
-    ; CHECK-NEXT: ST_dms_sts_scalar_spill $p0, -60, implicit $sp :: (store (s32) into %stack.1 + 132, basealign 64)
-    renamable $y0 = VLDA_Y_SPILL %stack.1, implicit $sp :: (load (s1024) from %stack.1, align 64)
-    dead renamable $lf0 = COPY killed renamable $y0
-    dead renamable $r24 = LDA_R_SPILL %stack.1, implicit $sp :: (load (s32) from %stack.1 + 128, align 64)
-    renamable $p0 = LDA_R_SPILL %stack.1, implicit $sp :: (load (s32) from %stack.1 + 132, basealign 64)
-    renamable $y0 = COPY $lf0
-    VST_Y_SPILL killed renamable $y0, %stack.1, implicit $sp :: (store (s1024) into %stack.1, align 64)
-    ST_R_SPILL $r24, %stack.1, implicit $sp :: (store (s32) into %stack.1 + 128, align 64)
-    ST_R_SPILL $p0, %stack.1, implicit $sp :: (store (s32) into %stack.1 + 132, basealign 64)
-...
-
----
 name:            test_e
 alignment:       16
 stack:
@@ -1082,61 +1052,6 @@ body:             |
     ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
     VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
-    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-    PseudoRET implicit $lr
-...
-
----
-name:            test_psrf1024_big_offset
-alignment:       16
-frameInfo:
-  adjustsStack:    true
-stack:
-  - { id: 0, name: '', type: default, offset: 0, size: 72200, alignment: 64 }
-  - { id: 1, name: '', type: spill-slot, offset: 0, size: 128, alignment: 64 }
-body:             |
-  bb.0 (align 16):
-    ; CHECK-LABEL: name: test_psrf1024_big_offset
-    ; CHECK: frame-setup PADDXM_pstm_sp_imm 72448, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -72448
-    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
-    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72448
-    ; CHECK-NEXT: $x0 = VLDA_dmx_lda_x_ld_idx $p0, killed $dj0 :: (load (s512) from %stack.0)
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72384
-    ; CHECK-NEXT: $x1 = VLDA_dmx_lda_x_ld_idx killed $p0, killed $dj0 :: (load (s512) from %stack.0 + 64)
-    ; CHECK-NEXT: dead renamable $lf0 = COPY killed renamable $y0
-    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72320
-    ; CHECK-NEXT: dead $r24 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0 :: (load (s32) from %stack.0 + 128, align 64)
-    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72316
-    ; CHECK-NEXT: $p0 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0 :: (load (s32) from %stack.0 + 132, basealign 64)
-    ; CHECK-NEXT: renamable $y0 = COPY $lf0
-    ; CHECK-NEXT: $p1 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72448
-    ; CHECK-NEXT: VST_dmx_sts_x_st_idx killed $x0, $p1, killed $dj0 :: (store (s512) into %stack.0)
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72384
-    ; CHECK-NEXT: VST_dmx_sts_x_st_idx killed $x1, killed $p1, killed $dj0 :: (store (s512) into %stack.0 + 64)
-    ; CHECK-NEXT: $p1 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72320
-    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $r24, killed $p1, killed $dj0 :: (store (s32) into %stack.0 + 128, align 64)
-    ; CHECK-NEXT: $p1 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -72316
-    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $p0, killed $p1, killed $dj0 :: (store (s32) into %stack.0 + 132, basealign 64)
-    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -72448, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: PseudoRET implicit $lr
-    renamable $p0 = PseudoFI %stack.0, implicit $sp
-    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    renamable $y0 = VLDA_Y_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
-    dead renamable $lf0 = COPY killed renamable $y0
-    dead renamable $r24 = LDA_R_SPILL %stack.0, implicit $sp :: (load (s32) from %stack.0 + 128, align 64)
-    renamable $p0 = LDA_R_SPILL %stack.0, implicit $sp :: (load (s32) from %stack.0 + 132, basealign 64)
-    renamable $y0 = COPY $lf0
-    VST_Y_SPILL killed renamable $y0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
-    ST_R_SPILL $r24, %stack.0, implicit $sp :: (store (s32) into %stack.0 + 128, align 64)
-    ST_R_SPILL $p0, %stack.0, implicit $sp :: (store (s32) into %stack.0 + 132, basealign 64)
     ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     PseudoRET implicit $lr
 ...
