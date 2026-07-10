@@ -661,44 +661,50 @@ int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
                    BottomUpDelta.getValue()});
 }
 
-/// Returns the number of emitted instructions in the Top or Bot zone.
-unsigned getNumEmittedInstrs(ScheduleDAGMI *DAG, bool IsTop) {
-  if (IsTop)
-    return DAG->top().isValid() ? std::distance(DAG->begin(), DAG->top()) : 0;
-  return DAG->bottom().isValid() ? std::distance(DAG->bottom(), DAG->end()) : 0;
-}
-
-SUnit *AIEPostRASchedStrategy::getNextUnscheduledFixedInstr(
+SUnit *AIEPostRASchedStrategy::getLowestUnscheduledFixedSU(
     const SchedBoundary &Zone) const {
-  const Region &CurRegion = InterBlock.getBlockState(CurMBB).getCurrentRegion();
-  const unsigned NumEmitted = getNumEmittedInstrs(DAG, Zone.isTop());
-  // If the zone still has unscheduled fixed instructions, the next one to
-  // pick is (DAG->bottom() - 1) for bottom-up, or DAG->top() for top-down.
-  if (Zone.isTop()) {
-    if (NumEmitted < CurRegion.getTopFixedBundles().size()) {
-      MachineInstr &NextMI =
-          *(DAG->top().isValid() ? DAG->top() : DAG->begin());
-      SUnit *NextSU = DAG->getSUnit(&NextMI);
-      assert(NextSU);
-      assert(NextSU->TopReadyCycle == NextSU->getDepth() &&
-             "Fixed instruction won't be placed at the correct cycle");
-      assert(Zone.getCurrCycle() <= NextSU->TopReadyCycle);
-      return NextSU;
-    }
-  } else {
-    if (NumEmitted < CurRegion.getBotFixedBundles().size()) {
-      MachineInstr &NextMI =
-          *std::prev(DAG->bottom().isValid() ? DAG->bottom() : DAG->end());
-      SUnit *NextSU = DAG->getSUnit(&NextMI);
-      assert(NextSU);
-      assert(NextSU->BotReadyCycle == NextSU->getHeight() &&
-             "Fixed instruction won't be placed at the correct cycle");
-      assert(Zone.getCurrCycle() <= NextSU->BotReadyCycle);
-      return NextSU;
-    }
-  }
+  // Fixed SUs occupy one contiguous NodeNum range at the end of the DAG (see
+  // addFixedSUnit); scan only that range instead of every SUnit in the region.
+  const bool IsTop = Zone.isTop();
+  const std::optional<unsigned> RangeBegin =
+      IsTop ? FirstTopFixedSU : FirstBotFixedSU;
+  const std::optional<unsigned> RangeEnd =
+      IsTop ? (FirstBotFixedSU ? std::optional<unsigned>(*FirstBotFixedSU - 1)
+                               : LastBotFixedSU)
+            : LastBotFixedSU;
+  if (!RangeBegin || !RangeEnd)
+    return nullptr;
 
-  return nullptr;
+  // Pick the fixed SU pinned nearest this zone's edge among the ready ones: by
+  // depth for the top zone, by height for the bottom zone. Free instructions
+  // co-issue into the bands, so identify by pinned cycle, not physical order.
+  SUnit *NextSU = nullptr;
+  for (unsigned N = *RangeBegin; N <= *RangeEnd; ++N) {
+    SUnit &SU = DAG->SUnits[N];
+    if (SU.isScheduled)
+      continue;
+    if (IsTop ? !SU.isTopReady() : !SU.isBottomReady())
+      continue;
+    const unsigned Pin = IsTop ? SU.getDepth() : SU.getHeight();
+    const unsigned BestPin =
+        NextSU ? (IsTop ? NextSU->getDepth() : NextSU->getHeight()) : 0;
+    if (!NextSU || Pin < BestPin)
+      NextSU = &SU;
+  }
+#ifndef NDEBUG
+  // The lowest unscheduled fixed SU must be placeable at its pinned cycle: its
+  // ready cycle equals its pinned depth/height and is not already behind the
+  // zone's current cycle.
+  if (NextSU) {
+    const unsigned Pin = IsTop ? NextSU->getDepth() : NextSU->getHeight();
+    const unsigned ReadyCycle =
+        IsTop ? NextSU->TopReadyCycle : NextSU->BotReadyCycle;
+    assert(ReadyCycle == Pin &&
+           "Fixed instruction won't be placed at the correct cycle");
+    assert(Zone.getCurrCycle() <= ReadyCycle);
+  }
+#endif
+  return NextSU;
 }
 
 bool AIEPostRASchedStrategy::isFixedSU(const SUnit &SU, bool IsTop) const {
@@ -724,9 +730,13 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
   const int TopReadyCycle = SU.TopReadyCycle;
   const int CurrCycle = Zone.getCurrCycle();
 
-  // If the Zone has remaining fixed instructions, only one SU is available.
-  if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
-    if (FixedSU != &SU)
+  // While the Zone still has unscheduled fixed instructions, only fixed SUs
+  // are available, and only those pinned at the current cycle. Admitting every
+  // fixed SU pinned at CurrCycle (not just one) lets co-issued band members
+  // share a cycle: pickOnlyChoice only advances the cycle once Available
+  // drains, i.e. once all fixed SUs at this cycle have been placed.
+  if (getLowestUnscheduledFixedSU(Zone)) {
+    if (!isFixedSU(SU, Zone.isTop()))
       return false;
     if (Zone.isTop()) {
       return CurrCycle == TopReadyCycle;
@@ -1113,6 +1123,22 @@ bool AIEPostRASchedStrategy::isFixedBandPlacementValid(
   const bool BotBandPlaced =
       bandPlacedAt(Committed, BotRef, Total - int(BotRef.size()));
 
+  if (getenv("PINDBG") && FirstTopFixedSU) {
+    const unsigned End = FirstBotFixedSU.value_or(DAG->SUnits.size());
+    for (unsigned N = *FirstTopFixedSU; N < End; ++N) {
+      const SUnit &SU = DAG->SUnits[N];
+      dbgs() << "[SCHED] SU" << N << " depth=" << SU.getDepth()
+             << " top=" << SU.TopReadyCycle << " preds:";
+      for (const SDep &P : SU.Preds)
+        dbgs() << " " << (P.getSUnit() == &DAG->EntrySU ? "Entry" : "SU")
+               << (P.getSUnit() == &DAG->EntrySU
+                       ? std::string()
+                       : std::to_string(P.getSUnit()->NodeNum))
+               << "(l" << P.getLatency() << (P.isArtificial() ? "a" : "r")
+               << ")";
+      dbgs() << "\n";
+    }
+  }
   return TopBandPlaced && BotBandPlaced;
 }
 
@@ -1296,9 +1322,12 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
   }
 
   SchedBoundary &Zone = getSchedZone();
-  assert(!getNextUnscheduledFixedInstr(Zone) &&
-         "More than one available SUnit while not all fixed instructions have "
-         "been emitted.");
+  // While fixed instructions remain, co-issued band members pinned at the same
+  // cycle can be compared here; only free SUs must stay out of the fixed phase.
+  assert((!getLowestUnscheduledFixedSU(Zone) ||
+          (isFixedSU(*TryCand.SU, Zone.isTop()) &&
+           isFixedSU(*Cand.SU, Zone.isTop()))) &&
+         "Free SUnit compared while fixed instructions remain unscheduled.");
 
   // Instructions with delay slots are critical and should be scheduled
   // as soon as they are ready.

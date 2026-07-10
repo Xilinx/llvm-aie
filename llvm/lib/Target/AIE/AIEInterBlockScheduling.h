@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include <memory>
+#include <optional>
 
 namespace llvm::AIE {
 
@@ -79,6 +80,20 @@ public:
   int NumIters = 0;
 };
 
+/// Single source of truth for fixed-band cycle geometry: consumers (DAG pin,
+/// placement verifier) share one walk so they cannot drift.
+struct FixedInstrs {
+  /// Cycle index (0 = top bundle) of each real instruction; empty NOP bundles
+  /// advance the counter without an entry.
+  DenseMap<MachineInstr *, unsigned> MIToCycle;
+  /// Number of cycles the band spans = number of bundles, empties included.
+  unsigned NumCycles = 0;
+};
+
+/// Walk \p Band once, recording each real instruction's cycle (one per bundle,
+/// empty NOP bundles included).
+FixedInstrs computeFixedInstrs(ArrayRef<MachineBundle> Band);
+
 // For interblock scheduling we need the original code (SemanticOrder) to
 // compute inter-block dependences and the scheduled code (Bundles) to check
 // interblock contraints
@@ -96,10 +111,21 @@ class Region {
   /// Instructions that are already scheduled at the top, e.g. an swp epilogue.
   /// Those should not be re-ordered by the scheduler.
   ArrayRef<MachineBundle> TopFixedBundles;
+  /// Count of standalone top-fixed instructions (kept un-bundled, so this
+  /// counts instructions, not bundles).
+  unsigned TopFixedInstrCount = 0;
 
   /// Instructions that are already scheduled at the bottom, e.g. an swp
   /// prologue. Those should not be re-ordered by the scheduler.
   ArrayRef<MachineBundle> BotFixedBundles;
+  /// Count of standalone bot-fixed instructions (kept un-bundled, so this
+  /// counts instructions, not bundles).
+  unsigned BotFixedInstrCount = 0;
+
+  /// Cycle geometry of TopFixedBundles/BotFixedBundles, memoized on first
+  /// access; never stale since both bundle sets are written exactly once.
+  mutable std::optional<FixedInstrs> TopGeometry;
+  mutable std::optional<FixedInstrs> BotGeometry;
 
 public:
   Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
@@ -113,18 +139,18 @@ public:
     return SemanticOrder;
   }
 
-  /// Iterate over the instructions that are fixed at the top. Typically those
-  /// represent a SWP epilogue.
+  /// Iterate over the instructions fixed at the top (typically a SWP epilogue).
+  /// Spans the standalone top-fixed instructions, not their reference bundles.
   inline iterator_range<fixed_iterator> top_fixed_instrs() const {
-    fixed_iterator FixedEnd = std::next(BB->begin(), TopFixedBundles.size());
+    fixed_iterator FixedEnd = std::next(BB->begin(), TopFixedInstrCount);
     return make_range(BB->begin(), FixedEnd);
   }
   ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
 
-  /// Iterate over the instructions that are fixed at the bottom. Typically
-  /// those represent a SWP prologue.
+  /// Iterate over the instructions fixed at the bottom (typically a SWP
+  /// prologue). Spans the standalone bot-fixed instructions, not their bundles.
   inline iterator_range<fixed_iterator> bot_fixed_instrs() const {
-    fixed_iterator FixedBegin = std::prev(BB->end(), BotFixedBundles.size());
+    fixed_iterator FixedBegin = std::prev(BB->end(), BotFixedInstrCount);
     return make_range(FixedBegin, BB->end());
   }
   ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
@@ -144,6 +170,19 @@ public:
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
+
+  /// Cached geometry of TopFixedBundles, computed on first access.
+  const FixedInstrs &getTopFixedInstrs() const {
+    if (!TopGeometry)
+      TopGeometry = computeFixedInstrs(TopFixedBundles);
+    return *TopGeometry;
+  }
+  /// Cached geometry of BotFixedBundles, computed on first access.
+  const FixedInstrs &getBotFixedInstrs() const {
+    if (!BotGeometry)
+      BotGeometry = computeFixedInstrs(BotFixedBundles);
+    return *BotGeometry;
+  }
 };
 
 // Struct used do give a preceding execution context to an epilogue
@@ -393,9 +432,11 @@ public:
   /// \param Move Whether the instructions are assumed to be in the block
   ///        already, and need to be moved, not inserted
   /// \param EmitNops Whether to emit a NOP instead of an empty BUNDLE.
+  /// \param ApplyBundling When false, insert instructions standalone and skip
+  ///        empty bundles (fixed bands are reserved un-bundled during search).
   void emitBundles(const std::vector<MachineBundle> &TimedRegion,
                    MachineBasicBlock *BB, MachineBasicBlock::iterator Before,
-                   bool Move, bool EmitNops) const;
+                   bool Move, bool EmitNops, bool ApplyBundling = true) const;
 
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues

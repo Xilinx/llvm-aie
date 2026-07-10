@@ -131,8 +131,11 @@ protected:
   /// cycle of instructions to be scheduled.
   int getMaxDeltaCycles(const SchedBoundary &Zone) const;
 
-  /// Return the next "fixed" instruction to place down.
-  SUnit *getNextUnscheduledFixedInstr(const SchedBoundary &Zone) const;
+  /// Lowest-pinned unscheduled ready fixed SU for \p Zone (by depth for the top
+  /// zone, by height for the bottom zone), or null. Co-issue-safe: identifies
+  /// fixed instructions by pinned cycle, not physical position. Also serves as
+  /// the "fixed instructions still remain" predicate for the current zone.
+  SUnit *getLowestUnscheduledFixedSU(const SchedBoundary &Zone) const;
 
   /// SU numbers for fixed instructions.
   /// "top" fixed SUnits belong in [FirstTopFixedSU,FirstBotFixedSU)

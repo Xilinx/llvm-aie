@@ -475,33 +475,76 @@ class EmitFixedSUnits : public ScheduleDAGMutation {
   AAResults *AA;
 
 private:
+  // Pin top-fixed instructions by depth: EntrySU -> each top-fixed SU at a
+  // latency equal to its reference bundle cycle. Instructions sharing a
+  // reference bundle pin to the same cycle (co-issue); dropped NOP bundles
+  // become depth gaps. The Top zone is scheduled top-down, so a single anchor
+  // from EntrySU fixes each instruction's cycle.
+  void pinTopFixedByDepth(ScheduleDAGInstrs *DAG, ArrayRef<SUnit *> TopFixedSUs,
+                          const AIE::FixedInstrs &TopGeo) {
+    const DenseMap<MachineInstr *, unsigned> &MIToCycle = TopGeo.MIToCycle;
+    for (SUnit *FixedSU : TopFixedSUs) {
+      SDep Dep(&DAG->EntrySU, SDep::Artificial);
+      Dep.setLatency(MIToCycle.at(FixedSU->getInstr()));
+      FixedSU->addPred(Dep);
+    }
+  }
+
+  // Pin bot-fixed instructions by height: chain bottom-up from ExitSU, spacing
+  // consecutive instructions by their reference bundle-cycle gap so dropped NOP
+  // bundles still consume a cycle and co-issued instructions share a cycle.
+  void chainBotFixedSUsToExitSU(ScheduleDAGInstrs *DAG,
+                                ArrayRef<SUnit *> BotFixedSUs,
+                                const AIE::FixedInstrs &BotGeo) {
+    const DenseMap<MachineInstr *, unsigned> &BotMIToCycle = BotGeo.MIToCycle;
+    SUnit *Succ = &DAG->ExitSU;
+    unsigned PrevBotBundle = ~0u;
+    for (SUnit *FixedSU : reverse(BotFixedSUs)) {
+      const unsigned CurBundle = BotMIToCycle.at(FixedSU->getInstr());
+      const unsigned Latency = (Succ == &DAG->ExitSU)
+                                   ? (BotGeo.NumCycles - 1 - CurBundle)
+                                   : (PrevBotBundle - CurBundle);
+      SDep Dep(FixedSU, SDep::Artificial);
+      Dep.setLatency(Latency);
+      Succ->addPred(Dep);
+      Succ = FixedSU;
+      PrevBotBundle = CurBundle;
+    }
+  }
+
   void createFixedSUDAGNodes(ScheduleDAGInstrs *DAG,
                              AIEPostRASchedStrategy *Scheduler,
                              const Region &CurRegion) {
-    // First, create SUnits for all "fixed" instructions
-    // Those will be chained from/to the EntrySU/ExitSU to ensure they are
-    // placed in the correct cycle. The scheduler will enforce that these fixed
-    // SUnits get placed exactly at their depth (for the Top zone) or height
-    // (for the Bot zone).
-    SUnit *Pred = &DAG->EntrySU;
-    // We iterate over BUNDLEs or standalone instructions.
-    for (MachineInstr &MI : CurRegion.top_fixed_instrs()) {
-      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/true);
-      SDep Dep(Pred, SDep::Artificial);
-      Dep.setLatency(Pred == &DAG->EntrySU ? 0 : 1);
-      FixedSU.addPred(Dep);
-      Pred = &FixedSU;
-    }
+    // Create SUnits for all "fixed" instructions, pinned to their reference
+    // cycle: top-fixed by depth from EntrySU (top-down Top zone), bot-fixed by
+    // height from ExitSU (bottom-up Bot zone). Fixed bands are reserved as
+    // standalone instructions (NOP bundles dropped), so cycle distances are
+    // encoded as DAG edge latencies from the band geometry.
+    SmallVector<SUnit *, 8> TopFixedSUs;
+    for (MachineInstr &MI : CurRegion.top_fixed_instrs())
+      TopFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/true));
 
-    SUnit *Succ = &DAG->ExitSU;
-    for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
-      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/false);
-      SDep Dep(&FixedSU, SDep::Artificial);
-      Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
-      Succ->addPred(Dep);
-      Succ = &FixedSU;
-    }
+    SmallVector<SUnit *, 8> BotFixedSUs;
+    for (MachineInstr &MI : CurRegion.bot_fixed_instrs())
+      BotFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/false));
+
+    pinTopFixedByDepth(DAG, TopFixedSUs, CurRegion.getTopFixedInstrs());
+    chainBotFixedSUsToExitSU(DAG, BotFixedSUs, CurRegion.getBotFixedInstrs());
     DAG->makeMaps();
+    if (getenv("PINDBG"))
+      for (SUnit *FixedSU : TopFixedSUs) {
+        dbgs() << "[CREATE] SU" << FixedSU->NodeNum
+               << " depth=" << FixedSU->getDepth() << " preds:";
+        for (const SDep &P : FixedSU->Preds) {
+          const unsigned N = P.getSUnit()->NodeNum;
+          dbgs() << " " << (P.getSUnit() == &DAG->EntrySU ? "Entry" : "SU")
+                 << (P.getSUnit() == &DAG->EntrySU ? std::string()
+                                                   : std::to_string(N))
+                 << "(l" << P.getLatency() << (P.isArtificial() ? "a" : "r")
+                 << ")";
+        }
+        dbgs() << "\n";
+      }
   }
 
   void establishSafeFreeSUToPrologueDistances(

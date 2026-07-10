@@ -1189,9 +1189,15 @@ int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
 
 void InterBlockScheduling::emitBundles(
     const std::vector<MachineBundle> &Bundles, MachineBasicBlock *BB,
-    MachineBasicBlock::iterator Before, bool Move, bool EmitNops) const {
+    MachineBasicBlock::iterator Before, bool Move, bool EmitNops,
+    bool ApplyBundling) const {
   for (auto &Bundle : Bundles) {
     if (Bundle.empty()) {
+      // Without bundling the band is reserved as standalone instructions and
+      // empty (NOP) bundles are dropped: their cycles become gaps, re-encoded
+      // as DAG edge latencies from the band geometry.
+      if (!ApplyBundling)
+        continue;
       if (EmitNops)
         TII->insertNoop(*BB, Before);
       else {
@@ -1207,7 +1213,8 @@ void InterBlockScheduling::emitBundles(
       BB->insert(Before, MI);
     }
   }
-  AIEHazardRecognizer::applyBundles(Bundles, BB);
+  if (ApplyBundling)
+    AIEHazardRecognizer::applyBundles(Bundles, BB);
 }
 
 std::optional<std::pair<MachineBasicBlock *, MachineBasicBlock *>>
@@ -1276,9 +1283,10 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
       }
     }
 
-    // If we are in the same BB, just emit.
+    // Reserve the epilogue standalone (NOP bundles dropped);
+    // commitBlockSchedule re-bundles it after scheduling.
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
-                /*Move=*/false, /*EmitNops=*/false);
+                /*Move=*/false, /*EmitNops=*/false, /*ApplyBundling=*/false);
   } else {
     // If not, transfer the timed region to the new block state created
     // by makeDedicatedLoopExit. The Kind of both blocks was already updated
@@ -1304,8 +1312,10 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
     if (MI->getParent() == PreHeader)
       PreHeader->remove_instr(MI);
   }
+  // Reserve the prologue standalone (NOP bundles dropped); commitBlockSchedule
+  // re-bundles it after scheduling.
   emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
-              /*EmitNops=*/false);
+              /*EmitNops=*/false, /*ApplyBundling=*/false);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
@@ -1446,27 +1456,70 @@ Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
   }
 }
 
+FixedInstrs computeFixedInstrs(ArrayRef<MachineBundle> Band) {
+  FixedInstrs G;
+  for (const MachineBundle &B : Band) {
+    for (MachineInstr *MI : B.getInstrs())
+      G.MIToCycle[MI] = G.NumCycles;
+    // Advance the cycle even for an empty (NOP) bundle: every bundle, real or
+    // NOP, occupies exactly one cycle.
+    ++G.NumCycles;
+  }
+  return G;
+}
+
+static unsigned countBandInstrs(ArrayRef<MachineBundle> Bundles) {
+  unsigned Count = 0;
+  for (const MachineBundle &B : Bundles)
+    Count += B.getInstrs().size();
+  return Count;
+}
+
 void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
-  // Verify the fixed instructions are physically at the top of the block.
-  const auto FreeBegin = std::next(BB->begin(), Bundles.size());
-  assert(all_of(Bundles.back().Instrs, [FreeBegin](const MachineInstr *MI) {
-    return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
-  }));
   TopFixedBundles = Bundles;
+  TopFixedInstrCount = countBandInstrs(Bundles);
+#ifndef NDEBUG
+  // The top-fixed instructions are reserved as the first TopFixedInstrCount
+  // standalone MIs of the block (NOP bundles dropped); verify the last real
+  // band instruction sits exactly at that offset, matching what
+  // top_fixed_instrs() assumes.
+  if (TopFixedInstrCount > 0) {
+    const MachineInstr *LastBandMI = nullptr;
+    for (const MachineBundle &B : reverse(Bundles))
+      if (!B.getInstrs().empty()) {
+        LastBandMI = B.getInstrs().back();
+        break;
+      }
+    assert(&*std::next(BB->begin(), TopFixedInstrCount - 1) == LastBandMI &&
+           "Top-fixed instructions are not at the block start.");
+  }
+#endif
   // SemanticOrder was captured during the gathering phase before the fixed
-  // bundles were inserted into the block, so it already contains only the
+  // instructions were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
 }
 
 void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(BotFixedBundles.empty() && "BotFixedBundles already set.");
-  // Verify the fixed instructions are physically at the bottom of the block.
-  const auto FreeEnd = std::prev(BB->end(), Bundles.size());
-  assert(all_of(Bundles.front().Instrs, [FreeEnd](const MachineInstr *MI) {
-    return getBundleStart(MI->getIterator()) == FreeEnd;
-  }));
   BotFixedBundles = Bundles;
+  BotFixedInstrCount = countBandInstrs(Bundles);
+#ifndef NDEBUG
+  // The bot-fixed instructions are reserved as the last BotFixedInstrCount
+  // standalone MIs of the block (NOP bundles dropped); verify the first real
+  // band instruction sits exactly at that offset, matching what
+  // bot_fixed_instrs() assumes.
+  if (BotFixedInstrCount > 0) {
+    const MachineInstr *FirstBandMI = nullptr;
+    for (const MachineBundle &B : Bundles)
+      if (!B.getInstrs().empty()) {
+        FirstBandMI = B.getInstrs().front();
+        break;
+      }
+    assert(&*std::prev(BB->end(), BotFixedInstrCount) == FirstBandMI &&
+           "Bot-fixed instructions are not at the block bottom.");
+  }
+#endif
   // SemanticOrder was captured during the gathering phase before the fixed
   // bundles were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
