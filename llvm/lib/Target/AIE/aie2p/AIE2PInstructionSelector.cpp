@@ -2626,7 +2626,7 @@ AIE2PInstructionSelector::getCombinedOpcodeCONVStore(
        CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16 ||
        CombOpID == Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16) &&
       MemOp.getOpcode() != AIE2P::G_INTRINSIC_W_SIDE_EFFECTS)
-    return {};
+    return std::nullopt;
 
   assert(((CombOpID == Intrinsic::aie2p_v16accfloat_to_v16bf16 &&
            getLoadStoreSize(MemOp) == 256) ||
