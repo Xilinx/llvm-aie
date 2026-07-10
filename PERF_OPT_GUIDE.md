@@ -809,6 +809,38 @@ for (int i = 0; i < count * 8; i++) {
 Multiply the trip count by the former unroll factor and set
 `AIE_LOOP_RANGE` to guarantee the compiler the new minimum.
 
+### Avoid manually peeling the first iteration
+
+A related anti-pattern is **hand-peeling the first loop iteration** --
+pre-loading inputs and issuing the first computation *before* the loop, then
+starting the loop at the second iteration. This steals iterations from the
+pipeliner, which is the toolchain's expert at loop peeling: it already
+constructs an optimal prologue and decides how many iterations to peel.
+Hand-peeling cannot lower the achieved II and only takes that decision away
+from the component best equipped to make it.
+
+Prefer a single loop from `i = 0` with pre-zeroed accumulators. Seeding an
+accumulator with `zero + first_product` is numerically identical to the
+peeled version, so no correctness is lost:
+
+```cpp
+// BAD: first iteration peeled before the loop, which starts at i = 1.
+acc = first_product(...);                       // duplicated body
+for (unsigned i = 1; i < n; ++i) acc = mac(acc, ...);
+
+// GOOD: single body from i = 0, accumulator pre-zeroed.
+acc = aie::zeros<...>();
+for (unsigned i = 0; i < n; ++i) acc = mac(acc, ...);
+```
+
+**Exception -- deliberate peeling in nested loops.** When an inner
+software-pipelined loop's prologue/epilogue is too short to hide a
+long-latency instruction in the *outer* loop, peeling a few inner iterations
+up into the outer loop lets them run in parallel with that outer-loop latency.
+This is a deliberate scheduling trade, not accidental duplication -- justify it
+with a measured II/latency improvement (Section 14), since the default guidance
+above still holds for the common single-loop case.
+
 ### AIE_LOOP_UNROLL for controlled unrolling
 When the loop body is too small for the pipeliner to fill all VLIW
 slots, controlled unrolling can help by giving the pipeliner a larger
