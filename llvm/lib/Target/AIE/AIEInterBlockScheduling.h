@@ -67,7 +67,7 @@ enum class SchedulingStage {
 
 /// Convergence state for loop-aware scheduling and SWP pipelining. Owned
 /// directly by BlockState: it only ever applies to (single-region) Loop blocks.
-class LoopPipeliningState {
+class BlockConvergenceState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
   // Parameters of the loop-aware convergence
@@ -88,7 +88,7 @@ public:
 
 /// Convergence state for fitting a region's free instructions around its
 /// pinned top-fixed band. Owned by Region: applies per-region, to any block.
-class RegionSchedulingState {
+class RegionConvergenceState {
 public:
   // Pinned height of the top-fixed band; 0 means no top-fixed pinning.
   int SchedulingLength = 0;
@@ -198,7 +198,7 @@ public:
 
   /// Per-region convergence state for fitting free instructions around this
   /// region's top-fixed band: each region of a block converges independently.
-  RegionSchedulingState Sched;
+  RegionConvergenceState Conv;
 
   /// Cached geometry of TopFixedBundles, computed on first access.
   const BandGeometry &getTopBandGeometry() const {
@@ -272,7 +272,7 @@ public:
 
   /// Loop-aware scheduling and SWP pipelining convergence state; only
   /// meaningful for Kind == Loop (always single-region).
-  LoopPipeliningState LoopState;
+  BlockConvergenceState Conv;
 
   void initInterBlock(const MachineSchedContext &Context,
                       const AIEHazardRecognizer &HR);
@@ -338,14 +338,14 @@ public:
 
   void setPipelined();
   bool isScheduled() const {
-    return LoopState.Stage == SchedulingStage::SchedulingDone ||
-           isPipelined() || pipeliningFailed();
+    return Conv.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
+           pipeliningFailed();
   }
   bool isPipelined() const {
-    return LoopState.Stage == SchedulingStage::PipeliningDone;
+    return Conv.Stage == SchedulingStage::PipeliningDone;
   }
   bool pipeliningFailed() const {
-    return LoopState.Stage == SchedulingStage::PipeliningFailed;
+    return Conv.Stage == SchedulingStage::PipeliningFailed;
   }
 
   /// return the safety margin that the epilogue of this loop should provide

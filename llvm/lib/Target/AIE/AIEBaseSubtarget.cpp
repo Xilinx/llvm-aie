@@ -278,10 +278,10 @@ class BiasDepth : public ScheduleDAGMutation {
 
     // It's important to iterate in topological order over SUnits, because
     // all its successors will be marked as having a "dirty" depth.
-    const AIE::LoopPipeliningState &FP = BS.LoopState;
+    const AIE::BlockConvergenceState &Conv = BS.Conv;
     for (SUnit &SU : DAG->SUnits) {
-      if (auto *It = FP.PerMIExtraDepth.find(SU.getInstr());
-          It != FP.PerMIExtraDepth.end()) {
+      if (auto *It = Conv.PerMIExtraDepth.find(SU.getInstr());
+          It != Conv.PerMIExtraDepth.end()) {
         unsigned NewDepth = std::max(0, int(SU.getDepth()) + It->second);
         SU.setDepthToAtLeast(NewDepth);
       }
@@ -528,7 +528,7 @@ private:
   // it from here on).
   void seedSchedulingLength(ScheduleDAGInstrs *DAG,
                             AIEPostRASchedStrategy *Scheduler,
-                            AIE::RegionSchedulingState &RS,
+                            AIE::RegionConvergenceState &RS,
                             const AIE::BandGeometry &TopGeo,
                             const AIE::BandGeometry &BotGeo,
                             size_t NumTopFixedInstrs) {
@@ -557,7 +557,7 @@ private:
   // EntrySU -> each top-fixed SU at its reference bundle index.
   void pinTopFixedBand(ScheduleDAGInstrs *DAG, ArrayRef<SUnit *> TopFixedSUs,
                        const AIE::BandGeometry &TopGeo,
-                       const AIE::RegionSchedulingState &RS) {
+                       const AIE::RegionConvergenceState &RS) {
     // Pin standalone top-fixed instructions by their original SWP-epilogue
     // bundle cycle, so co-issued instructions share a cycle.
     const DenseMap<MachineInstr *, unsigned> &MIToBundle = TopGeo.MIToCycle;
@@ -654,7 +654,7 @@ private:
 
     if (!TopFixedSUs.empty()) {
       DAG->ExitSU.setDepthDirty();
-      AIE::RegionSchedulingState &RS = CurRegion.Sched;
+      AIE::RegionConvergenceState &RS = CurRegion.Conv;
       // Shared geometry so seed and pin cannot drift apart; BotGeo is reused
       // from the bot-fixed chain above.
       const AIE::BandGeometry &TopGeo = CurRegion.getTopBandGeometry();

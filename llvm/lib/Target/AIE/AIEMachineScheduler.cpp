@@ -698,7 +698,7 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
   Region &CurReg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
   const bool HasTopFixed = !CurReg.getTopFixedBundles().empty();
   (void)HasTopFixed;
-  bool &DidNotFit = CurReg.Sched.TopFixedDidNotFit;
+  bool &DidNotFit = CurReg.Conv.TopFixedDidNotFit;
   if (IsTopNode) {
     // A violation here means the top-fixed band didn't fit; flag it for
     // reschedule and clamp so this doomed pass completes consistently.
@@ -1291,7 +1291,7 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
 
   auto &BS = InterBlock.getBlockState(CurMBB);
   if (InterBlock.isGatheringPhase() ||
-      BS.LoopState.Stage != SchedulingStage::Scheduling) {
+      BS.Conv.Stage != SchedulingStage::Scheduling) {
     return;
   }
   materializeMultiOpcodeInstrs();
@@ -1339,12 +1339,12 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   // Free instrs overrunning (isAvailableNode) or colliding with (Conflict
   // below) the top-fixed band both discard this pass for a larger length.
   const bool HasTopFixed = !BS.getCurrentRegion().getTopFixedBundles().empty();
-  const bool DidNotFit = BS.getCurrentRegion().Sched.TopFixedDidNotFit;
+  const bool DidNotFit = BS.getCurrentRegion().Conv.TopFixedDidNotFit;
 
   // Bottom-up emission stops at the tallest instr, dropping leading NOP band
   // bundles; bump the Bot zone to the full band height to materialize them.
   if (HasTopFixed && !DidNotFit) {
-    const unsigned BandHeight = BS.getCurrentRegion().Sched.SchedulingLength;
+    const unsigned BandHeight = BS.getCurrentRegion().Conv.SchedulingLength;
     if (Bot.getCurrCycle() < BandHeight)
       Bot.bumpCycle(BandHeight);
   }
@@ -1369,13 +1369,13 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
                           : Conflict ? "free/top-fixed slot conflict"
                                      : "band needs headroom (inter-zone)")
                       << " (SchedulingLength="
-                      << BS.getCurrentRegion().Sched.SchedulingLength
+                      << BS.getCurrentRegion().Conv.SchedulingLength
                       << ", TopFixedBundles="
                       << BS.getCurrentRegion().getTopFixedBundles().size()
                       << ", FreeInstrs="
                       << BS.getCurrentRegion().getFreeInstructions().size()
                       << ")\n");
-    BS.getCurrentRegion().Sched.TopFixedDidNotFit = true;
+    BS.getCurrentRegion().Conv.TopFixedDidNotFit = true;
     finishRegion();
     return;
   }
@@ -1387,7 +1387,7 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   BS.addBundles(BotBundles);
 
 #ifndef NDEBUG
-  const bool ScheduleCompleted = !BS.getCurrentRegion().Sched.TopFixedDidNotFit;
+  const bool ScheduleCompleted = !BS.getCurrentRegion().Conv.TopFixedDidNotFit;
   if (ScheduleCompleted)
     verifyFixedBandPlacement(TopBundles, BotBundles);
 #endif
@@ -1569,7 +1569,7 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     // loop-aware scheduler knows how to reassign those.
     const BlockState &BS = getInterBlock().getBlockState(CurMBB);
     if (UseLoopHeuristics && BS.Kind == AIE::BlockType::Loop &&
-        BS.getRegions().size() == 1 && BS.LoopState.NumIters > 0) {
+        BS.getRegions().size() == 1 && BS.Conv.NumIters > 0) {
       if (const InterBlockEdges *LoopEdgesPtr = BS.getLoopSelfEdge()) {
         const InterBlockEdges &LoopEdges = *LoopEdgesPtr;
         // For instructions with equal dependence chains, prioritize scheduling
@@ -2053,7 +2053,7 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   auto &BS = InterBlock.getBlockState(CurMBB);
   const auto &Region = BS.getCurrentRegion();
   int NCopies = 1;
-  if (BS.LoopState.Stage == SchedulingStage::Pipelining) {
+  if (BS.Conv.Stage == SchedulingStage::Pipelining) {
     assert(BS.Kind == BlockType::Loop);
     assert(BS.getRegions().size() == 1);
     assert(Region.getBotFixedBundles().empty());
@@ -2118,7 +2118,7 @@ bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
   if (BS.isSafeToIgnoreMemDeps())
     return false;
 
-  if (BS.LoopState.Stage == SchedulingStage::Pipelining) {
+  if (BS.Conv.Stage == SchedulingStage::Pipelining) {
     int NInstr = BS.getCurrentRegion().getFreeInstructions().size();
     int IterA = SUa->NodeNum / NInstr;
     int IterB = SUb->NodeNum / NInstr;
@@ -2138,7 +2138,7 @@ void AIEScheduleDAGMI::schedule() {
     // We are only gathering regions in the MBB, no scheduling to do.
     return;
   }
-  switch (BS.LoopState.Stage) {
+  switch (BS.Conv.Stage) {
   case SchedulingStage::Pipelining: {
     // We've gone past regular scheduling. Try to find a valid modulo schedule
     // If it succeeds, we need to implement it, if we fail we fall back on the
@@ -2148,7 +2148,7 @@ void AIEScheduleDAGMI::schedule() {
 
     auto &PostSWP = BS.getPostSWP();
 
-    if (PostSWP.schedule(*this, BS.LoopState.II)) {
+    if (PostSWP.schedule(*this, BS.Conv.II)) {
       BS.setPipelined();
       LLVM_DEBUG(PostSWP.dump());
     }
