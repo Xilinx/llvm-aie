@@ -425,14 +425,13 @@ void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   }
 
   // Emit the pipeliner's prologue/epilogue fragments once at the block start;
-  // on reschedule iterations restore the already-emitted ones to the start/end.
+  // on reschedule iterations they are identified by owned MI pointer
+  // (Region::top_fixed_mis()/bot_fixed_mis()), not by physical position, so no
+  // restore is needed.
   if (!CurrentBlockState->InterBlockEmitted) {
     emitInterBlockTop(*CurrentBlockState);
     emitInterBlockBottom(*CurrentBlockState);
     CurrentBlockState->InterBlockEmitted = true;
-  } else {
-    CurrentBlockState->restoreTopFixedToBlockStart();
-    CurrentBlockState->restoreBotFixedToBlockEnd();
   }
 }
 namespace {
@@ -1522,22 +1521,15 @@ void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
   TopFixedBundles = Bundles;
   TopFixedInstrCount = countBandInstrs(Bundles);
-#ifndef NDEBUG
-  // The top-fixed instructions are reserved as the first TopFixedInstrCount
-  // standalone MIs of the block (NOP bundles dropped); verify the last real
-  // band instruction sits exactly at that offset, matching what
-  // top_fixed_instrs() assumes.
-  if (TopFixedInstrCount > 0) {
-    const MachineInstr *LastBandMI = nullptr;
-    for (const MachineBundle &B : reverse(Bundles))
-      if (!B.getInstrs().empty()) {
-        LastBandMI = B.getInstrs().back();
-        break;
-      }
-    assert(&*std::next(BB->begin(), TopFixedInstrCount - 1) == LastBandMI &&
-           "Top-fixed instructions are not at the block start.");
-  }
-#endif
+  // Record the band's MIs by pointer, in band order, so the band can be
+  // identified even after co-issued free instructions get interleaved with it
+  // by the scheduler on later reschedule iterations. Only FixPoint mode reads
+  // TopFixedMIs; legacy identifies the band positionally via
+  // top_fixed_instrs().
+  if (isFixPointScheduling())
+    for (const MachineBundle &B : Bundles)
+      for (MachineInstr *MI : B.getInstrs())
+        TopFixedMIs.push_back(MI);
   // SemanticOrder was captured during the gathering phase before the fixed
   // instructions were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
@@ -1547,22 +1539,11 @@ void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(BotFixedBundles.empty() && "BotFixedBundles already set.");
   BotFixedBundles = Bundles;
   BotFixedInstrCount = countBandInstrs(Bundles);
-#ifndef NDEBUG
-  // The bot-fixed instructions are reserved as the last BotFixedInstrCount
-  // standalone MIs of the block (NOP bundles dropped); verify the first real
-  // band instruction sits exactly at that offset, matching what
-  // bot_fixed_instrs() assumes.
-  if (BotFixedInstrCount > 0) {
-    const MachineInstr *FirstBandMI = nullptr;
+  // Record the band's MIs by pointer, in band order; see setTopFixedBundles.
+  if (isFixPointScheduling())
     for (const MachineBundle &B : Bundles)
-      if (!B.getInstrs().empty()) {
-        FirstBandMI = B.getInstrs().front();
-        break;
-      }
-    assert(&*std::prev(BB->end(), BotFixedInstrCount) == FirstBandMI &&
-           "Bot-fixed instructions are not at the block bottom.");
-  }
-#endif
+      for (MachineInstr *MI : B.getInstrs())
+        BotFixedMIs.push_back(MI);
   // SemanticOrder was captured during the gathering phase before the fixed
   // bundles were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
@@ -1601,41 +1582,6 @@ void BlockState::clearSchedule() {
     R.Bundles.clear();
   }
   CurrentRegion = 0;
-}
-
-void BlockState::restoreTopFixedToBlockStart() {
-  // top_fixed_instrs() references them by position, so undo the previous
-  // pass's physical placement before the next pass re-reads them.
-  for (Region &R : Regions) {
-    if (R.getTopFixedBundles().empty())
-      continue;
-    SmallVector<MachineInstr *, 16> TopFixed;
-    for (const MachineBundle &Bundle : R.getTopFixedBundles())
-      for (MachineInstr *MI : Bundle.getInstrs())
-        TopFixed.push_back(MI);
-    for (MachineInstr *MI : TopFixed)
-      TheBlock->remove(MI);
-    MachineBasicBlock::iterator Begin = TheBlock->begin();
-    for (MachineInstr *MI : TopFixed)
-      TheBlock->insert(Begin, MI);
-  }
-}
-
-void BlockState::restoreBotFixedToBlockEnd() {
-  // bot_fixed_instrs() references them by position, so undo the previous
-  // pass's physical placement before the next pass re-reads them.
-  for (Region &R : Regions) {
-    if (R.getBotFixedBundles().empty())
-      continue;
-    SmallVector<MachineInstr *, 16> BotFixed;
-    for (const MachineBundle &Bundle : R.getBotFixedBundles())
-      for (MachineInstr *MI : Bundle.getInstrs())
-        BotFixed.push_back(MI);
-    for (MachineInstr *MI : BotFixed)
-      TheBlock->remove(MI);
-    for (MachineInstr *MI : BotFixed)
-      TheBlock->insert(TheBlock->end(), MI);
-  }
 }
 
 void BlockState::setBlockProperties() {

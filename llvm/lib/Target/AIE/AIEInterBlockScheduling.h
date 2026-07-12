@@ -134,6 +134,12 @@ class Region {
   /// Count of standalone top-fixed instructions (FixPoint mode keeps them
   /// un-bundled, so this counts instructions, not bundles).
   unsigned TopFixedInstrCount = 0;
+  /// The same top-fixed instructions as TopFixedBundles, flattened in band
+  /// order and identified by MI pointer (FixPoint mode only). Unlike
+  /// top_fixed_instrs(), this identifies the band by ownership rather than by
+  /// physical block position, so it stays valid even after co-issued free
+  /// instructions get interleaved with the band during scheduling.
+  SmallVector<MachineInstr *, 8> TopFixedMIs;
 
   /// Instructions that are already scheduled at the bottom, e.g. an swp
   /// prologue. Those should not be re-ordered by the scheduler.
@@ -141,6 +147,9 @@ class Region {
   /// Count of standalone bot-fixed instructions (FixPoint mode keeps them
   /// un-bundled, so this counts instructions, not bundles).
   unsigned BotFixedInstrCount = 0;
+  /// The same bot-fixed instructions as BotFixedBundles, flattened in band
+  /// order and identified by MI pointer (FixPoint mode only). See TopFixedMIs.
+  SmallVector<MachineInstr *, 8> BotFixedMIs;
 
   /// Cycle geometry of TopFixedBundles/BotFixedBundles, memoized on first
   /// access; never stale since both bundle sets are written exactly once.
@@ -169,6 +178,12 @@ public:
   }
   ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
 
+  /// Owned top-fixed instructions in band order (FixPoint mode). Identifies
+  /// the band by MI pointer rather than physical block position; unlike
+  /// top_fixed_instrs(), this stays valid regardless of where co-issued free
+  /// instructions get interleaved with the band during scheduling.
+  ArrayRef<MachineInstr *> top_fixed_mis() const { return TopFixedMIs; }
+
   /// Iterate over the instructions that are fixed at the bottom (typically a
   /// SWP prologue). FixPoint spans BotFixedInstrCount standalone instructions;
   /// legacy spans one entry per bot-fixed bundle.
@@ -179,6 +194,10 @@ public:
     return make_range(FixedBegin, BB->end());
   }
   ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
+
+  /// Owned bot-fixed instructions in band order (FixPoint mode). See
+  /// top_fixed_mis().
+  ArrayRef<MachineInstr *> bot_fixed_mis() const { return BotFixedMIs; }
 
   /// Set the fixed bundles at the top of the region (e.g. a SWP epilogue).
   /// The instructions must already be physically present at the start of the
@@ -327,14 +346,6 @@ public:
   /// intact, but the actual schedule is cleared.
   /// It rewinds to the first region.
   void clearSchedule();
-
-  /// Undo the previous pass's physical placement of the top-fixed (SWP
-  /// epilogue) instructions, restoring them per Region::top_fixed_instrs().
-  void restoreTopFixedToBlockStart();
-
-  /// Undo the previous pass's physical placement of the bot-fixed (SWP
-  /// prologue) instructions, restoring them per Region::bot_fixed_instrs().
-  void restoreBotFixedToBlockEnd();
 
   void setPipelined();
   bool isScheduled() const {

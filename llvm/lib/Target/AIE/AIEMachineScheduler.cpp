@@ -1268,11 +1268,90 @@ bool AIEPostRASchedStrategy::isFixedBandPlacementValid(
   return TopBandPlaced && BotBandPlaced;
 }
 
+// Aggressively verify that every MI owned by a fixed band (top_fixed_mis()/
+// bot_fixed_mis(), FixPoint mode only) was committed at exactly the cycle its
+// frozen band geometry dictates: appears exactly once across Committed, at
+// cycle Offset + Geometry.MIToCycle[MI], and in band order. Unlike
+// bandPlacedAt (containment only), this cross-checks against the independent
+// ground truth captured by computeBandGeometry() over the original
+// TopFixedBundles/BotFixedBundles (before scheduling interleaved co-issued
+// free instructions with the band), so it can't degenerate into a tautology
+// against the same owned vector it is validating.
+static void verifyFixedBandGeometry(ArrayRef<MachineInstr *> BandMIs,
+                                    const BandGeometry &Geometry, int Offset,
+                                    ArrayRef<MachineBundle> Committed,
+                                    const MachineBasicBlock *BB) {
+  SmallPtrSet<const MachineInstr *, 16> BandSet(BandMIs.begin(), BandMIs.end());
+  DenseMap<const MachineInstr *, int> OccurrenceCount;
+  DenseMap<const MachineInstr *, int> ActualCycle;
+  for (int I = 0, E = int(Committed.size()); I < E; ++I)
+    for (MachineInstr *MI : Committed[I].getInstrs())
+      if (BandSet.contains(MI)) {
+        ++OccurrenceCount[MI];
+        ActualCycle[MI] = I;
+      }
+
+  int PrevCycle = -1;
+  for (MachineInstr *MI : BandMIs) {
+    // Non-dangling / ownership: the MI must still live in the region's block.
+    assert(MI->getParent() == BB &&
+           "fixed-band MI no longer belongs to its region's block");
+
+    // Correct cycle, cross-checked against the frozen ground-truth geometry.
+    auto GeomIt = Geometry.MIToCycle.find(MI);
+    assert(GeomIt != Geometry.MIToCycle.end() &&
+           "fixed-band MI absent from its own frozen band geometry");
+    const int Expected = Offset + int(GeomIt->second);
+    const int Occurrences = OccurrenceCount.lookup(MI);
+    const int Actual = ActualCycle.lookup(MI);
+
+    if (Occurrences != 1 || Actual != Expected) {
+      dbgs() << "fixed-band placement mismatch: " << *MI << "  expected cycle "
+             << Expected << " (Offset=" << Offset << " + geometry cycle "
+             << GeomIt->second << "), found " << Occurrences
+             << " occurrence(s) in committed bundles"
+             << (Occurrences ? (" at cycle " + Twine(Actual)).str() : "")
+             << "\n";
+      // Completeness & uniqueness: exactly one committed occurrence.
+      assert(Occurrences == 1 &&
+             "fixed-band MI missing or duplicated in committed bundles");
+      // Contiguity/exclusivity: the MI must land inside its band's run, at
+      // precisely the cycle its frozen geometry dictates.
+      llvm_unreachable("fixed-band MI committed at the wrong cycle");
+    }
+
+    // Ordering: band MIs must appear in non-decreasing cycle order matching
+    // band order (co-issued MIs sharing a cycle are fine).
+    assert(Actual >= PrevCycle &&
+           "fixed-band MIs out of order relative to band order");
+    PrevCycle = Actual;
+  }
+}
+
 void AIEPostRASchedStrategy::verifyFixedBandPlacement(
     const std::vector<AIE::MachineBundle> &TopBundles,
     const std::vector<AIE::MachineBundle> &BotBundles) const {
   assert(isFixedBandPlacementValid(TopBundles, BotBundles) &&
          "fixed band not committed at its pinned cycles");
+
+  // top_fixed_mis()/bot_fixed_mis() are only populated in FixPoint mode (see
+  // Region::setTopFixedBundles/setBotFixedBundles); legacy identifies the band
+  // positionally instead, and the coarse check above already covers it.
+  if (!isFixPointScheduling())
+    return;
+
+  const Region &R = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  SmallVector<MachineBundle> Committed;
+  Committed.reserve(TopBundles.size() + BotBundles.size());
+  Committed.append(TopBundles.begin(), TopBundles.end());
+  Committed.append(BotBundles.begin(), BotBundles.end());
+  const int Total = int(Committed.size());
+
+  verifyFixedBandGeometry(R.top_fixed_mis(), R.getTopBandGeometry(),
+                          /*Offset=*/0, Committed, CurMBB);
+  verifyFixedBandGeometry(R.bot_fixed_mis(), R.getBotBandGeometry(),
+                          Total - int(R.getBotFixedBundles().size()), Committed,
+                          CurMBB);
 }
 #endif
 

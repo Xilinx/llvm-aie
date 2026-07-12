@@ -641,13 +641,17 @@ private:
 
     // Place both bands bottom-up by height in the Bot zone. Create top-fixed
     // SUnits before bot-fixed to keep the NodeNum ordering isFixedSU() needs.
+    // Identify the band by owned MI pointer (top_fixed_mis()/bot_fixed_mis()),
+    // not by physical block position: the band's instructions stay loose in
+    // the block and get interleaved with co-issued free instructions as
+    // scheduling proceeds.
     SmallVector<SUnit *, 8> TopFixedSUs;
-    for (MachineInstr &MI : CurRegion.top_fixed_instrs())
-      TopFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/true));
+    for (MachineInstr *MI : CurRegion.top_fixed_mis())
+      TopFixedSUs.push_back(&Scheduler->addFixedSUnit(*MI, /*IsTop=*/true));
 
     SmallVector<SUnit *, 8> BotFixedSUs;
-    for (MachineInstr &MI : CurRegion.bot_fixed_instrs())
-      BotFixedSUs.push_back(&Scheduler->addFixedSUnit(MI, /*IsTop=*/false));
+    for (MachineInstr *MI : CurRegion.bot_fixed_mis())
+      BotFixedSUs.push_back(&Scheduler->addFixedSUnit(*MI, /*IsTop=*/false));
 
     const AIE::BandGeometry &BotGeo = CurRegion.getBotBandGeometry();
     chainBotFixedSUsToExitSU(DAG, BotFixedSUs, BotGeo);
