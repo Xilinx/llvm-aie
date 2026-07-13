@@ -25,6 +25,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1235,9 +1236,14 @@ void InterBlockScheduling::emitBundles(
       // is materialized later at commit; skip it now.
       if (!ApplyBundling)
         continue;
-      if (EmitNops)
+      if (EmitNops) {
         TII->insertNoop(*BB, Before);
-      else {
+      } else if (!isFixPointScheduling()) {
+        // Legacy materializes a placeholder so top_fixed_instrs()/
+        // bot_fixed_instrs() can walk the band positionally. FixPoint keeps
+        // the band standalone: stall cycles become Artificial-edge latency
+        // instead of a physical placeholder (see EmitFixedSUnits), so the
+        // fixed-band SUnits stay one-per-real-bundle.
         DebugLoc DL;
         BuildMI(*BB, Before, DL, TII->get(TargetOpcode::BUNDLE));
       }
@@ -1320,11 +1326,10 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
       }
     }
 
-    // FixPoint mode reserves them standalone until commitBlockSchedule bundles
-    // them; legacy mode emits them bundled up front.
-    const bool ApplyBundling = !isFixPointScheduling();
+    // Emit the band as real bundles, one SUnit per bundle downstream (see
+    // createFixedSUDAGNodes), matching legacy emission.
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
-                /*Move=*/false, /*EmitNops=*/false, ApplyBundling);
+                /*Move=*/false, /*EmitNops=*/false, /*ApplyBundling=*/true);
   } else {
     // If not, transfer the timed region to the new block state created
     // by makeDedicatedLoopExit. The Kind of both blocks was already updated
@@ -1350,11 +1355,10 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
     if (MI->getParent() == PreHeader)
       PreHeader->remove_instr(MI);
   }
-  // FixPoint reserves bot-fixed instrs standalone (NOP bundles dropped, cycles
-  // re-encoded as DAG latencies), mirroring the top band; legacy emits bundled.
-  const bool ApplyBundling = !isFixPointScheduling();
+  // Emit the band as real bundles, one SUnit per bundle downstream (see
+  // createFixedSUDAGNodes), matching legacy emission.
   emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
-              /*EmitNops=*/false, ApplyBundling);
+              /*EmitNops=*/false, /*ApplyBundling=*/true);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
@@ -1495,41 +1499,30 @@ Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
   }
 }
 
-BandGeometry computeBandGeometry(ArrayRef<MachineBundle> Band) {
-  BandGeometry G;
-  for (const MachineBundle &B : Band) {
-    for (MachineInstr *MI : B.getInstrs())
-      G.MIToCycle[MI] = G.NumCycles;
-    // Advance the cycle even for an empty (NOP) bundle: every bundle, real or
-    // NOP, occupies exactly one cycle.
-    ++G.NumCycles;
+// Record one MI (the bundle header) per non-empty bundle of Bundles, along
+// with its index (original cycle) within Bundles, so gaps from empty (NOP)
+// bundles are preserved as spacing between consecutive fixed SUnits without
+// reserving a SUnit of their own. Bundling was already applied by
+// emitInterBlockTop/Bottom, so getBundleStart() correctly finds a real
+// bundle's header whether it holds one or several co-issued instructions.
+static void recordFixedMIs(ArrayRef<MachineBundle> Bundles,
+                           SmallVectorImpl<MachineInstr *> &MIs,
+                           SmallVectorImpl<unsigned> &Cycles) {
+  for (auto [Cycle, B] : llvm::enumerate(Bundles)) {
+    if (B.empty())
+      continue;
+    MIs.push_back(&*getBundleStart(B.getInstrs().front()->getIterator()));
+    Cycles.push_back(Cycle);
   }
-  return G;
-}
-
-// Count the real (non-NOP-bundle) instructions across a fixed band. In
-// FixPoint mode the band is reserved standalone, so its range is measured in
-// instructions, not bundles.
-static unsigned countBandInstrs(ArrayRef<MachineBundle> Bundles) {
-  unsigned Count = 0;
-  for (const MachineBundle &B : Bundles)
-    Count += B.getInstrs().size();
-  return Count;
 }
 
 void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(TopFixedBundles.empty() && "TopFixedBundles already set.");
   TopFixedBundles = Bundles;
-  TopFixedInstrCount = countBandInstrs(Bundles);
-  // Record the band's MIs by pointer, in band order, so the band can be
-  // identified even after co-issued free instructions get interleaved with it
-  // by the scheduler on later reschedule iterations. Only FixPoint mode reads
-  // TopFixedMIs; legacy identifies the band positionally via
-  // top_fixed_instrs().
+  // Only FixPoint mode reads TopFixedMIs; legacy identifies the band
+  // positionally via top_fixed_instrs().
   if (isFixPointScheduling())
-    for (const MachineBundle &B : Bundles)
-      for (MachineInstr *MI : B.getInstrs())
-        TopFixedMIs.push_back(MI);
+    recordFixedMIs(Bundles, TopFixedMIs, TopFixedCycles);
   // SemanticOrder was captured during the gathering phase before the fixed
   // instructions were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.
@@ -1538,12 +1531,9 @@ void Region::setTopFixedBundles(ArrayRef<MachineBundle> Bundles) {
 void Region::setBotFixedBundles(ArrayRef<MachineBundle> Bundles) {
   assert(BotFixedBundles.empty() && "BotFixedBundles already set.");
   BotFixedBundles = Bundles;
-  BotFixedInstrCount = countBandInstrs(Bundles);
-  // Record the band's MIs by pointer, in band order; see setTopFixedBundles.
+  // Only FixPoint mode reads BotFixedMIs; see setTopFixedBundles.
   if (isFixPointScheduling())
-    for (const MachineBundle &B : Bundles)
-      for (MachineInstr *MI : B.getInstrs())
-        BotFixedMIs.push_back(MI);
+    recordFixedMIs(Bundles, BotFixedMIs, BotFixedCycles);
   // SemanticOrder was captured during the gathering phase before the fixed
   // bundles were inserted into the block, so it already contains only the
   // free instructions. No adjustment is needed.

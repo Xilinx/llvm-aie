@@ -100,20 +100,6 @@ public:
   int RescheduleIters = 0;
 };
 
-/// Single source of truth for fixed-band cycle geometry: all consumers (seed,
-/// height pinning, placement verifier) share one walk so they cannot drift.
-struct BandGeometry {
-  /// Cycle index (0 = top bundle) of each real instruction; empty NOP bundles
-  /// advance the counter without an entry.
-  DenseMap<MachineInstr *, unsigned> MIToCycle;
-  /// Number of cycles the band spans = number of bundles, empties included.
-  unsigned NumCycles = 0;
-};
-
-/// Walk \p Band once, recording each real instruction's cycle (one per bundle,
-/// empty NOP bundles included).
-BandGeometry computeBandGeometry(ArrayRef<MachineBundle> Band);
-
 // For interblock scheduling we need the original code (SemanticOrder) to
 // compute inter-block dependences and the scheduled code (Bundles) to check
 // interblock contraints
@@ -129,32 +115,30 @@ class Region {
   MachineBasicBlock *BB = nullptr;
 
   /// Instructions that are already scheduled at the top, e.g. an swp epilogue.
-  /// Those should not be re-ordered by the scheduler.
+  /// Those should not be re-ordered by the scheduler. One bundle per cycle;
+  /// empty (NOP) bundles are gaps, not reserved standalone (FixPoint mode).
   ArrayRef<MachineBundle> TopFixedBundles;
-  /// Count of standalone top-fixed instructions (FixPoint mode keeps them
-  /// un-bundled, so this counts instructions, not bundles).
-  unsigned TopFixedInstrCount = 0;
-  /// The same top-fixed instructions as TopFixedBundles, flattened in band
-  /// order and identified by MI pointer (FixPoint mode only). Unlike
+  /// The header MI of each non-empty bundle of TopFixedBundles, in band
+  /// order, identified by MI pointer (FixPoint mode only). Unlike
   /// top_fixed_instrs(), this identifies the band by ownership rather than by
   /// physical block position, so it stays valid even after co-issued free
   /// instructions get interleaved with the band during scheduling.
   SmallVector<MachineInstr *, 8> TopFixedMIs;
+  /// TopFixedMIs[i]'s index within TopFixedBundles (i.e. its original cycle),
+  /// so gaps from empty (NOP) bundles are preserved as spacing between
+  /// consecutive fixed SUnits.
+  SmallVector<unsigned, 8> TopFixedCycles;
 
   /// Instructions that are already scheduled at the bottom, e.g. an swp
-  /// prologue. Those should not be re-ordered by the scheduler.
+  /// prologue. Those should not be re-ordered by the scheduler. One bundle
+  /// per cycle; empty (NOP) bundles are gaps, not reserved standalone
+  /// (FixPoint mode).
   ArrayRef<MachineBundle> BotFixedBundles;
-  /// Count of standalone bot-fixed instructions (FixPoint mode keeps them
-  /// un-bundled, so this counts instructions, not bundles).
-  unsigned BotFixedInstrCount = 0;
-  /// The same bot-fixed instructions as BotFixedBundles, flattened in band
-  /// order and identified by MI pointer (FixPoint mode only). See TopFixedMIs.
+  /// The header MI of each non-empty bundle of BotFixedBundles, in band
+  /// order, identified by MI pointer (FixPoint mode only). See TopFixedMIs.
   SmallVector<MachineInstr *, 8> BotFixedMIs;
-
-  /// Cycle geometry of TopFixedBundles/BotFixedBundles, memoized on first
-  /// access; never stale since both bundle sets are written exactly once.
-  mutable std::optional<BandGeometry> TopGeometry;
-  mutable std::optional<BandGeometry> BotGeometry;
+  /// BotFixedMIs[i]'s index within BotFixedBundles. See TopFixedCycles.
+  SmallVector<unsigned, 8> BotFixedCycles;
 
 public:
   Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
@@ -169,35 +153,40 @@ public:
   }
 
   /// Iterate over the instructions fixed at the top (typically a SWP
-  /// epilogue): TopFixedInstrCount in FixPoint, one per bundle in legacy.
+  /// epilogue), one per bundle of TopFixedBundles (empty bundles included).
   inline iterator_range<fixed_iterator> top_fixed_instrs() const {
-    const size_t Count =
-        isFixPointScheduling() ? TopFixedInstrCount : TopFixedBundles.size();
-    fixed_iterator FixedEnd = std::next(BB->begin(), Count);
+    fixed_iterator FixedEnd = std::next(BB->begin(), TopFixedBundles.size());
     return make_range(BB->begin(), FixedEnd);
   }
   ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
 
-  /// Owned top-fixed instructions in band order (FixPoint mode). Identifies
-  /// the band by MI pointer rather than physical block position; unlike
-  /// top_fixed_instrs(), this stays valid regardless of where co-issued free
-  /// instructions get interleaved with the band during scheduling.
+  /// Owned top-fixed bundle header MIs, one per non-empty bundle, in band
+  /// order (FixPoint mode). Identifies the band by MI pointer rather than
+  /// physical block position; unlike top_fixed_instrs(), this stays valid
+  /// regardless of where co-issued free instructions get interleaved with the
+  /// band during scheduling.
   ArrayRef<MachineInstr *> top_fixed_mis() const { return TopFixedMIs; }
 
+  /// top_fixed_mis()[i]'s original cycle (index within TopFixedBundles), so
+  /// gaps from empty (NOP) bundles can be preserved as inter-SUnit spacing.
+  ArrayRef<unsigned> top_fixed_cycles() const { return TopFixedCycles; }
+
   /// Iterate over the instructions that are fixed at the bottom (typically a
-  /// SWP prologue). FixPoint spans BotFixedInstrCount standalone instructions;
-  /// legacy spans one entry per bot-fixed bundle.
+  /// SWP prologue), one per bundle of BotFixedBundles (empty bundles
+  /// included).
   inline iterator_range<fixed_iterator> bot_fixed_instrs() const {
-    const size_t Count =
-        isFixPointScheduling() ? BotFixedInstrCount : BotFixedBundles.size();
-    fixed_iterator FixedBegin = std::prev(BB->end(), Count);
+    fixed_iterator FixedBegin = std::prev(BB->end(), BotFixedBundles.size());
     return make_range(FixedBegin, BB->end());
   }
   ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
 
-  /// Owned bot-fixed instructions in band order (FixPoint mode). See
-  /// top_fixed_mis().
+  /// Owned bot-fixed bundle header MIs, one per non-empty bundle, in band
+  /// order (FixPoint mode). See top_fixed_mis().
   ArrayRef<MachineInstr *> bot_fixed_mis() const { return BotFixedMIs; }
+
+  /// bot_fixed_mis()[i]'s original cycle (index within BotFixedBundles). See
+  /// top_fixed_cycles().
+  ArrayRef<unsigned> bot_fixed_cycles() const { return BotFixedCycles; }
 
   /// Set the fixed bundles at the top of the region (e.g. a SWP epilogue).
   /// The instructions must already be physically present at the start of the
@@ -218,19 +207,6 @@ public:
   /// Per-region convergence state for fitting free instructions around this
   /// region's top-fixed band: each region of a block converges independently.
   RegionConvergenceState Conv;
-
-  /// Cached geometry of TopFixedBundles, computed on first access.
-  const BandGeometry &getTopBandGeometry() const {
-    if (!TopGeometry)
-      TopGeometry = computeBandGeometry(TopFixedBundles);
-    return *TopGeometry;
-  }
-  /// Cached geometry of BotFixedBundles, computed on first access.
-  const BandGeometry &getBotBandGeometry() const {
-    if (!BotGeometry)
-      BotGeometry = computeBandGeometry(BotFixedBundles);
-    return *BotGeometry;
-  }
 };
 
 // Struct used do give a preceding execution context to an epilogue

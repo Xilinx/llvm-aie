@@ -18,6 +18,7 @@
 #include "AIEPostPipeliner.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -1270,15 +1271,15 @@ bool AIEPostRASchedStrategy::isFixedBandPlacementValid(
 
 // Aggressively verify that every MI owned by a fixed band (top_fixed_mis()/
 // bot_fixed_mis(), FixPoint mode only) was committed at exactly the cycle its
-// frozen band geometry dictates: appears exactly once across Committed, at
-// cycle Offset + Geometry.MIToCycle[MI], and in band order. Unlike
-// bandPlacedAt (containment only), this cross-checks against the independent
-// ground truth captured by computeBandGeometry() over the original
-// TopFixedBundles/BotFixedBundles (before scheduling interleaved co-issued
-// free instructions with the band), so it can't degenerate into a tautology
-// against the same owned vector it is validating.
+// frozen reference cycle (top_fixed_cycles()/bot_fixed_cycles()) dictates:
+// appears exactly once across Committed, at cycle Offset + Cycles[I], and in
+// band order. Unlike bandPlacedAt (containment only), this cross-checks
+// against the independent ground truth captured when the band's bundles were
+// set (before scheduling interleaved co-issued free instructions with it), so
+// it can't degenerate into a tautology against the same owned vector it is
+// validating.
 static void verifyFixedBandGeometry(ArrayRef<MachineInstr *> BandMIs,
-                                    const BandGeometry &Geometry, int Offset,
+                                    ArrayRef<unsigned> Cycles, int Offset,
                                     ArrayRef<MachineBundle> Committed,
                                     const MachineBasicBlock *BB) {
   SmallPtrSet<const MachineInstr *, 16> BandSet(BandMIs.begin(), BandMIs.end());
@@ -1292,23 +1293,27 @@ static void verifyFixedBandGeometry(ArrayRef<MachineInstr *> BandMIs,
       }
 
   int PrevCycle = -1;
-  for (MachineInstr *MI : BandMIs) {
+  for (auto [MI, RefCycle] : zip_equal(BandMIs, Cycles)) {
     // Non-dangling / ownership: the MI must still live in the region's block.
     assert(MI->getParent() == BB &&
            "fixed-band MI no longer belongs to its region's block");
 
-    // Correct cycle, cross-checked against the frozen ground-truth geometry.
-    auto GeomIt = Geometry.MIToCycle.find(MI);
-    assert(GeomIt != Geometry.MIToCycle.end() &&
-           "fixed-band MI absent from its own frozen band geometry");
-    const int Expected = Offset + int(GeomIt->second);
+    // A multi-instruction bundle's header is a synthetic BUNDLE instruction
+    // (see llvm::finalizeBundle()); it is tracked as its MachineBundle's
+    // BundleRoot, not one of its getInstrs(), so it never shows up as content
+    // (see AIE::Bundle::add()). Its cycle is instead verified structurally by
+    // isFixedBandPlacementValid(), which checks the real content.
+    if (MI->isBundle())
+      continue;
+
+    const int Expected = Offset + int(RefCycle);
     const int Occurrences = OccurrenceCount.lookup(MI);
     const int Actual = ActualCycle.lookup(MI);
 
     if (Occurrences != 1 || Actual != Expected) {
       dbgs() << "fixed-band placement mismatch: " << *MI << "  expected cycle "
-             << Expected << " (Offset=" << Offset << " + geometry cycle "
-             << GeomIt->second << "), found " << Occurrences
+             << Expected << " (Offset=" << Offset << " + reference cycle "
+             << RefCycle << "), found " << Occurrences
              << " occurrence(s) in committed bundles"
              << (Occurrences ? (" at cycle " + Twine(Actual)).str() : "")
              << "\n";
@@ -1316,7 +1321,7 @@ static void verifyFixedBandGeometry(ArrayRef<MachineInstr *> BandMIs,
       assert(Occurrences == 1 &&
              "fixed-band MI missing or duplicated in committed bundles");
       // Contiguity/exclusivity: the MI must land inside its band's run, at
-      // precisely the cycle its frozen geometry dictates.
+      // precisely the cycle its frozen reference cycle dictates.
       llvm_unreachable("fixed-band MI committed at the wrong cycle");
     }
 
@@ -1347,9 +1352,9 @@ void AIEPostRASchedStrategy::verifyFixedBandPlacement(
   Committed.append(BotBundles.begin(), BotBundles.end());
   const int Total = int(Committed.size());
 
-  verifyFixedBandGeometry(R.top_fixed_mis(), R.getTopBandGeometry(),
+  verifyFixedBandGeometry(R.top_fixed_mis(), R.top_fixed_cycles(),
                           /*Offset=*/0, Committed, CurMBB);
-  verifyFixedBandGeometry(R.bot_fixed_mis(), R.getBotBandGeometry(),
+  verifyFixedBandGeometry(R.bot_fixed_mis(), R.bot_fixed_cycles(),
                           Total - int(R.getBotFixedBundles().size()), Committed,
                           CurMBB);
 }

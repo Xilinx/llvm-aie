@@ -195,10 +195,9 @@ protected:
       const std::vector<AIE::MachineBundle> &BotBundles) const;
 
   /// Debug-only assert wrapper around isFixedBandPlacementValid(). In FixPoint
-  /// mode also cross-checks every top_fixed_mis()/bot_fixed_mis() entry
-  /// against the frozen band geometry (BandGeometry::MIToCycle), asserting it
-  /// was committed at exactly its expected cycle, exactly once, and in band
-  /// order.
+  /// mode also cross-checks every top_fixed_mis()/bot_fixed_mis() entry,
+  /// asserting it was committed at exactly its expected cycle (its index in
+  /// the band) and exactly once.
   void verifyFixedBandPlacement(
       const std::vector<AIE::MachineBundle> &TopBundles,
       const std::vector<AIE::MachineBundle> &BotBundles) const;
