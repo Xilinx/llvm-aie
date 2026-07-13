@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This classes used by the implementation details of Op types.
@@ -1763,8 +1766,7 @@ public:
 
   /// Hooks for getting an alias identifier alias for a given symbol, that is
   /// not necessarily a part of this dialect. The identifier is used in place of
-  /// the symbol when printing textual IR. These aliases must not contain `.` or
-  /// end with a numeric digit([0-9]+).
+  /// the symbol when printing textual IR. These aliases must not contain `.`.
   virtual AliasResult getAlias(Attribute attr, raw_ostream &os) const {
     return AliasResult::NoAlias;
   }

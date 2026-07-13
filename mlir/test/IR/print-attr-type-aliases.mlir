@@ -1,3 +1,5 @@
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
 // RUN: mlir-opt %s -split-input-file -mlir-print-debuginfo | FileCheck %s
 // Verify printer of type & attr aliases.
 // RUN: mlir-opt %s -split-input-file -mlir-print-debuginfo | mlir-opt -split-input-file -mlir-print-debuginfo | FileCheck %s
@@ -5,7 +7,7 @@
 // CHECK-DAG: #test2Ealias = "alias_test:dot_in_name"
 "test.op"() {alias_test = "alias_test:dot_in_name"} : () -> ()
 
-// CHECK-DAG: #test_alias0_ = "alias_test:trailing_digit"
+// CHECK-DAG: #test_alias0 = "alias_test:trailing_digit"
 "test.op"() {alias_test = "alias_test:trailing_digit"} : () -> ()
 
 // CHECK-DAG: #_0_test_alias = "alias_test:prefixed_digit"
@@ -14,9 +16,21 @@
 // CHECK-DAG: #_25test = "alias_test:prefixed_symbol"
 "test.op"() {alias_test = "alias_test:prefixed_symbol"} : () -> ()
 
-// CHECK-DAG: #test_alias_conflict0_ = "alias_test:sanitize_conflict_a"
-// CHECK-DAG: #test_alias_conflict0_1 = "alias_test:sanitize_conflict_b"
+// CHECK-DAG: #test_alias_conflict0 = "alias_test:sanitize_conflict_a"
+// CHECK-DAG: #test_alias_conflict0_ = "alias_test:sanitize_conflict_b"
 "test.op"() {alias_test = ["alias_test:sanitize_conflict_a", "alias_test:sanitize_conflict_b"]} : () -> ()
+
+// CHECK-DAG: #collide = "alias_test:suffix_collision_a"
+// CHECK-DAG: #collide2 = "alias_test:suffix_collision_b"
+// CHECK-DAG: #collide1 = "alias_test:suffix_collision_c"
+"test.op"() {alias_test = ["alias_test:suffix_collision_a", "alias_test:suffix_collision_b", "alias_test:suffix_collision_c"]} : () -> ()
+
+// CHECK-DAG: #cross = "alias_test:cross_collision_a"
+// CHECK-DAG: #cross2 = "alias_test:cross_collision_b"
+// CHECK-DAG: #cross3 = "alias_test:cross_collision_c"
+// CHECK-DAG: #cross1 = "alias_test:cross_collision_d"
+// CHECK-DAG: #cross11 = "alias_test:cross_collision_e"
+"test.op"() {alias_test = ["alias_test:cross_collision_a", "alias_test:cross_collision_b", "alias_test:cross_collision_c", "alias_test:cross_collision_d", "alias_test:cross_collision_e"]} : () -> ()
 
 // CHECK-DAG: !tuple = tuple<i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32>
 "test.op"() {alias_test = "alias_test:large_tuple"} : () -> (tuple<i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32>)
@@ -28,8 +42,8 @@
 // CHECK-DAG: tensor<32xf32, #test_encoding>
 "test.op"() : () -> tensor<32xf32, "alias_test:tensor_encoding">
 
-// CHECK-DAG: !test_ui8_ = !test.int<unsigned, 8>
-// CHECK-DAG: tensor<32x!test_ui8_>
+// CHECK-DAG: !test_ui8 = !test.int<unsigned, 8>
+// CHECK-DAG: tensor<32x!test_ui8>
 "test.op"() : () -> tensor<32x!test.int<unsigned, 8>>
 
 // CHECK-DAG: #[[LOC_NESTED:.+]] = loc("nested")
@@ -47,8 +61,8 @@
 // -----
 
 // Ensure self type parameters get considered for aliases.
-// CHECK: !test_ui8_ = !test.int<unsigned, 8>
-// CHECK: #test.attr_with_self_type_param : !test_ui8_
+// CHECK: !test_ui8 = !test.int<unsigned, 8>
+// CHECK: #test.attr_with_self_type_param : !test_ui8
 "test.op"() {alias_test = #test.attr_with_self_type_param : !test.int<unsigned, 8> } : () -> ()
 
 // -----

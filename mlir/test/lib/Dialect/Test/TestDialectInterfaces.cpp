@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "TestDialect.h"
@@ -194,6 +197,14 @@ struct TestOpAsmInterface : public OpAsmDialectInterface {
             .Case("alias_test:sanitize_conflict_b",
                   StringRef("test_alias_conflict0_"))
             .Case("alias_test:tensor_encoding", StringRef("test_encoding"))
+            .Case("alias_test:suffix_collision_a", StringRef("collide"))
+            .Case("alias_test:suffix_collision_b", StringRef("collide"))
+            .Case("alias_test:suffix_collision_c", StringRef("collide1"))
+            .Case("alias_test:cross_collision_a", StringRef("cross"))
+            .Case("alias_test:cross_collision_b", StringRef("cross"))
+            .Case("alias_test:cross_collision_c", StringRef("cross"))
+            .Case("alias_test:cross_collision_d", StringRef("cross1"))
+            .Case("alias_test:cross_collision_e", StringRef("cross1"))
             .Default(std::nullopt);
     if (!aliasName)
       return AliasResult::NoAlias;

@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -13,6 +13,7 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/Location.h"
+#include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/Types.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/Format.h"
@@ -708,3 +709,29 @@ void QuantDialect::printType(Type type, DialectAsmPrinter &os) const {
   else
     llvm_unreachable("Unhandled quantized type");
 }
+
+namespace {
+struct QuantOpAsmDialectInterface : public OpAsmDialectInterface {
+  using OpAsmDialectInterface::OpAsmDialectInterface;
+
+  AliasResult getAlias(Type type, raw_ostream &os) const final {
+    const auto blockType = dyn_cast<BlockFloatQuantizedType>(type);
+    if (!blockType)
+      return AliasResult::NoAlias;
+    if (blockType.getAxis() != 1)
+      return AliasResult::NoAlias;
+    const StringRef alias =
+        BlockFloatQuantizedType::getBlockModeAlias(blockType.getBlockMode());
+    if (alias.empty())
+      return AliasResult::NoAlias;
+    os << alias;
+    return AliasResult::OverridableAlias;
+  }
+};
+} // namespace
+
+namespace mlir::quant::detail {
+void addAsmInterface(QuantDialect *dialect) {
+  dialect->addInterfaces<QuantOpAsmDialectInterface>();
+}
+} // namespace mlir::quant::detail
