@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -12,12 +12,25 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Transforms/InstCombine/InstCombiner.h"
 #include "llvm/Transforms/Utils/Local.h"
 
 namespace llvm::AIEIRUtils {
+
+bool isHardwareLoopSetup(const Instruction *I) {
+  const auto *Call = dyn_cast<CallInst>(I);
+  if (!Call)
+    return false;
+  const auto *Fn = Call->getCalledFunction();
+  if (!Fn)
+    return false;
+  Intrinsic::ID IID = Fn->getIntrinsicID();
+  return IID == Intrinsic::set_loop_iterations ||
+         IID == Intrinsic::start_loop_iterations;
+}
 
 std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,
                                                      IntrinsicInst &II,
