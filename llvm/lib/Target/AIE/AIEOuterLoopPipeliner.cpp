@@ -291,19 +291,19 @@ private:
                            const ValueToValueMapTy &EpiVMap);
 
   // Create the cool-down region (peeled epilogue for last iteration):
-  //   cooldown.entry: set.loop.iterations (cloned) + Part2Insts clones
-  //   inner loop clone: uses last epilogue load values + Part2 results
+  //   cooldown.entry: set.loop.iterations (cloned) + PartTwoInsts clones
+  //   inner loop clone: uses last epilogue load values + PartTwo results
   //   cooldown.exit: epilogue stores only (no loads, no prologue clones)
   // Redirects the outer latch's false branch to cooldown.entry.
   // OrigEpiInsts: the set of instructions that were in the epilogue block
   // BEFORE clonePrologueIntoEpilogue inserted the prologue load clones.
-  // Part2Insts: 2048-bit producing intrinsics and their descendants that must
+  // PartTwoInsts: 2048-bit producing intrinsics and their descendants that must
   // be cloned into cooldown.entry so the cloned inner loop has correct initial
   // accumulator values. Empty when not in split-prologue mode.
   void
   peelLastIterationEpilogue(const LoopStructure &LS,
                             const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
-                            const SmallVectorImpl<Instruction *> &Part2Insts);
+                            const SmallVectorImpl<Instruction *> &PartTwoInsts);
 
   // Validates the latch exit condition, computes the induction step, and
   // caches all discovered components in LS.LatchBound for later use by
@@ -363,9 +363,10 @@ private:
   // plus all their forward-reachable descendants within the prologue.
   // These instructions stay in outer.header and are also cloned into
   // cooldown.entry so the cloned inner loop has correct initial values.
-  void collectPart2Instructions(const LoopStructure &LS,
-                                const SmallPtrSetImpl<Instruction *> &Part1Set,
-                                SmallVectorImpl<Instruction *> &Out) const;
+  void
+  collectPartTwoInstructions(const LoopStructure &LS,
+                             const SmallPtrSetImpl<Instruction *> &PartOneSet,
+                             SmallVectorImpl<Instruction *> &Out) const;
 };
 
 } // end anonymous namespace
@@ -774,7 +775,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(
 //   etc.
 void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
     const LoopStructure &LS, const SmallPtrSetImpl<Instruction *> &OrigEpiInsts,
-    const SmallVectorImpl<Instruction *> &Part2Insts) {
+    const SmallVectorImpl<Instruction *> &PartTwoInsts) {
   Function *F = LS.OuterHeader->getParent();
   LLVMContext &Ctx = F->getContext();
 
@@ -854,21 +855,21 @@ void AIEOuterLoopPipeliner::peelLastIterationEpilogue(
   // outer.header and must also appear in cooldown.entry so the cloned inner
   // loop has correct initial accumulator values.
   // IMPORTANT: This must happen BEFORE cloning inner loop instructions and
-  // remapping, so that CoolVMap[Part2_inst] is set when the cloned inner loop
+  // remapping, so that CoolVMap[PartTwo_inst] is set when the cloned inner loop
   // PHIs (which reference Part 2 results from outer.header) are remapped.
   // CoolVMap already maps Part 1 PHI nodes → their latch values (= epilogue
   // clones), so remapping Part 2 clones automatically uses the last epilogue
   // values for Part 1 operands.
-  SmallVector<Instruction *, 16> Part2Clones;
-  for (Instruction *I : Part2Insts) {
+  SmallVector<Instruction *, 16> PartTwoClones;
+  for (Instruction *I : PartTwoInsts) {
     Instruction *Clone = I->clone();
     if (!Clone->getType()->isVoidTy())
       Clone->setName(I->getName() + ".cd");
     Clone->insertInto(CoolEntry, CoolEntry->end());
     CoolVMap[I] = Clone;
-    Part2Clones.push_back(Clone);
+    PartTwoClones.push_back(Clone);
   }
-  for (Instruction *Clone : Part2Clones)
+  for (Instruction *Clone : PartTwoClones)
     RemapInstruction(Clone, CoolVMap,
                      RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
 
@@ -1133,8 +1134,8 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
     return false;
 
   // Find all descendants of anchors within the prologue (Part 2 set).
-  SmallPtrSet<Instruction *, 32> Part2Set;
-  Part2Set.insert(Anchors.begin(), Anchors.end());
+  SmallPtrSet<Instruction *, 32> PartTwoSet;
+  PartTwoSet.insert(Anchors.begin(), Anchors.end());
   SmallVector<Instruction *, 16> DescWorklist(Anchors.begin(), Anchors.end());
   while (!DescWorklist.empty()) {
     Instruction *I = DescWorklist.pop_back_val();
@@ -1142,7 +1143,7 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
       auto *UI = dyn_cast<Instruction>(U);
       if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
         continue;
-      if (Part2Set.insert(UI).second)
+      if (PartTwoSet.insert(UI).second)
         DescWorklist.push_back(UI);
     }
   }
@@ -1155,7 +1156,7 @@ bool AIEOuterLoopPipeliner::collectPrologueInstructionsForSplit(
   for (Instruction &I : *LS.OuterHeader) {
     if (isa<PHINode>(&I) || I.isTerminator())
       continue;
-    if (Part2Set.count(&I))
+    if (PartTwoSet.count(&I))
       continue;
     // Exclude set.loop.iterations / start.loop.iterations — they stay in
     // outer.header and are cloned separately into cooldown.entry.
@@ -1295,23 +1296,23 @@ bool AIEOuterLoopPipeliner::liftEpiloguePointerUpdatesToPrologue(
   return true;
 }
 
-void AIEOuterLoopPipeliner::collectPart2Instructions(
-    const LoopStructure &LS, const SmallPtrSetImpl<Instruction *> &Part1Set,
+void AIEOuterLoopPipeliner::collectPartTwoInstructions(
+    const LoopStructure &LS, const SmallPtrSetImpl<Instruction *> &PartOneSet,
     SmallVectorImpl<Instruction *> &Out) const {
   // Find anchors: instructions matching any split strategy that are direct
   // users of Part 1 instructions (or transitively reachable from Part 1 within
   // the prologue).
-  SmallPtrSet<Instruction *, 32> Part2Set;
+  SmallPtrSet<Instruction *, 32> PartTwoSet;
   SmallVector<Instruction *, 16> Worklist;
 
   // Seed: forward-track from Part 1 instructions to find anchor instructions.
-  for (Instruction *P1 : Part1Set) {
+  for (Instruction *P1 : PartOneSet) {
     for (User *U : P1->users()) {
       auto *UI = dyn_cast<Instruction>(U);
       if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
         continue;
-      if (!Part1Set.count(UI) && isAnchorInstruction(UI)) {
-        if (Part2Set.insert(UI).second)
+      if (!PartOneSet.count(UI) && isAnchorInstruction(UI)) {
+        if (PartTwoSet.insert(UI).second)
           Worklist.push_back(UI);
       }
     }
@@ -1324,14 +1325,14 @@ void AIEOuterLoopPipeliner::collectPart2Instructions(
       auto *UI = dyn_cast<Instruction>(U);
       if (!UI || isa<PHINode>(UI) || !LS.isInPrologue(UI))
         continue;
-      if (!Part1Set.count(UI) && Part2Set.insert(UI).second)
+      if (!PartOneSet.count(UI) && PartTwoSet.insert(UI).second)
         Worklist.push_back(UI);
     }
   }
 
-  // Emit Part2Set in program order.
+  // Emit PartTwoSet in program order.
   for (Instruction &I : *LS.OuterHeader)
-    if (Part2Set.count(&I))
+    if (PartTwoSet.count(&I))
       Out.push_back(&I);
 
   LLVM_DEBUG(dbgs() << "    Split-prologue: " << Out.size()
@@ -1394,11 +1395,11 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // Part 2 = matched producing intrinsics + descendants that stay in
   // outer.header and must also be cloned into cooldown.entry.
   // Must be done while Part 1 instructions still exist for forward-tracking.
-  SmallVector<Instruction *, 16> Part2Insts;
+  SmallVector<Instruction *, 16> PartTwoInsts;
   if (Overrides.get(SplitPrologue) && !PInsts.empty()) {
-    SmallPtrSet<Instruction *, 32> Part1Set;
-    Part1Set.insert(PInsts.begin(), PInsts.end());
-    collectPart2Instructions(LS, Part1Set, Part2Insts);
+    SmallPtrSet<Instruction *, 32> PartOneSet;
+    PartOneSet.insert(PInsts.begin(), PInsts.end());
+    collectPartTwoInstructions(LS, PartOneSet, PartTwoInsts);
   }
 
   // Create pipelined PHI nodes in the outer header for each data-load
@@ -1429,11 +1430,12 @@ bool AIEOuterLoopPipeliner::performTransformation(
       convertOuterLoopToHardwareLoop(LS, WarmUp, AdjustedTripCount, *Info);
 
   // Create the cool-down region (peeled last iteration):
-  //   set.loop.iterations + Part2 clones + inner loop clone + epilogue stores.
+  //   set.loop.iterations + PartTwo clones + inner loop clone + epilogue
+  //   stores.
   // OrigEpiInsts ensures only original epilogue instructions are copied into
   // cooldown.exit (not the prologue clones inserted earlier).
   // Redirects outer latch false branch to cooldown.entry.
-  peelLastIterationEpilogue(LS, OrigEpiInsts, Part2Insts);
+  peelLastIterationEpilogue(LS, OrigEpiInsts, PartTwoInsts);
 
   // Adjust itercount metadata to reflect the reduced trip count.
   updateLoopMetadata(LS);
