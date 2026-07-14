@@ -52,10 +52,10 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '2'
 ; REMARKS-NEXT:   - NS:              '7'
-; REMARKS-NEXT:   - Loop:            bb.7.steady.for.body55.i82
-; REMARKS-NEXT:   - Prologue:        bb.6.steady.header
+; REMARKS-NEXT:   - Loop:            bb.7.steady.stage1.inner.for.body55.i82
+; REMARKS-NEXT:   - Prologue:        bb.6.steady.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.8.steady.latch
+; REMARKS-NEXT:   - Epilogue:        bb.8.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
@@ -67,10 +67,10 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '2'
 ; REMARKS-NEXT:   - NS:              '7'
-; REMARKS-NEXT:   - Loop:            bb.10.steady.for.body55.i82.lastiter
-; REMARKS-NEXT:   - Prologue:        bb.9.lastiter.prologue
+; REMARKS-NEXT:   - Loop:            bb.10.lastiter.stage1.inner.for.body55.i82
+; REMARKS-NEXT:   - Prologue:        bb.9.lastiter.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.epilogue
+; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '23'
 ; REMARKS-NEXT: ...
     ptr noalias %ifm, ptr noalias %wts, ptr noalias %ofm,

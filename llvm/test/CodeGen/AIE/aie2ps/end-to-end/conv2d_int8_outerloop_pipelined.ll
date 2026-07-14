@@ -96,9 +96,9 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; REMARKS-NEXT:   - II:              '2'
 ; REMARKS-NEXT:   - NS:              '6'
 ; REMARKS-NEXT:   - Loop:            bb.5.for.body159.i.lastiter
-; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.prologue
+; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '10'
-; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.epilogue
+; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '21'
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d:
@@ -187,7 +187,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    nop // Delay Slot 2
 ; ASM-NEXT:    nop // Delay Slot 1
-; ASM-NEXT:  // %bb.4: // %lastiter.prologue
+; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
 ; ASM-NEXT:    padds.3d [p0], d2
 ; ASM-NEXT:    vlda x4, [p6], #64; vldb.popx x6, [p0, lf0, r24]; add.nc lc, r2, #-5
@@ -203,7 +203,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    vlda x4, [p6], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    vlda x2, [p6], #64; nopb ; padds.3d [p0], d2; nopxm ; vmac dm0, dm0, x0, x2, r8
-; ASM-NEXT:  // %bb.6: // %lastiter.epilogue
+; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
 ; ASM-NEXT:    vlda x4, [p6], #64; nopb ; movs dj0, r20; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    vlda x2, [p6], #64; nopb ; nops ; movx crsrsmode, #0; mov s0, r3; vmac dm0, dm0, x0, x2, r8
 ; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8 // 4-byte Folded Reload
@@ -267,25 +267,25 @@ for.body.i:                                       ; preds = %for.body.i.peel.pro
   %iterator_psum_cnt0.0414.i = phi i32 [ 0, %for.body.i.peel.pro ], [ %45, %for.cond.cleanup158.i ]
   %iterator_psum_cnt1.0413.i = phi i32 [ 0, %for.body.i.peel.pro ], [ %47, %for.cond.cleanup158.i ]
   %iterator_pout_cnt0.0412.i = phi i32 [ 0, %for.body.i.peel.pro ], [ %56, %for.cond.cleanup158.i ]
-  %.phi = phi <32 x i16> [ %.peel, %for.body.i.peel.pro ], [ %.epi, %for.cond.cleanup158.i ]
+  %.phi = phi <32 x i16> [ %.peel, %for.body.i.peel.pro ], [ %.bottom, %for.cond.cleanup158.i ]
   %.phi27 = phi <32 x i32> [ %.peel1, %for.body.i.peel.pro ], [ %.epi14, %for.cond.cleanup158.i ]
   %.phi28 = phi <16 x i64> [ %.peel2, %for.body.i.peel.pro ], [ %.epi15, %for.cond.cleanup158.i ]
-  %add.ptr.i.i.phi = phi ptr [ %add.ptr.i.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i.i.epi, %for.cond.cleanup158.i ]
+  %add.ptr.i.i.phi = phi ptr [ %add.ptr.i.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i.i.bottom, %for.cond.cleanup158.i ]
   %.phi29 = phi <32 x i16> [ %.peel3, %for.body.i.peel.pro ], [ %.epi16, %for.cond.cleanup158.i ]
   %.phi30 = phi <32 x i32> [ %.peel4, %for.body.i.peel.pro ], [ %.epi17, %for.cond.cleanup158.i ]
   %.phi31 = phi <16 x i64> [ %.peel5, %for.body.i.peel.pro ], [ %.epi18, %for.cond.cleanup158.i ]
-  %add.ptr.i331.i.phi = phi ptr [ %add.ptr.i331.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i331.i.epi, %for.cond.cleanup158.i ]
-  %add.ptr.i333.i.phi = phi ptr [ %add.ptr.i333.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i333.i.epi, %for.cond.cleanup158.i ]
-  %add.ptr.i335.i.phi = phi ptr [ %add.ptr.i335.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i335.i.epi, %for.cond.cleanup158.i ]
+  %add.ptr.i331.i.phi = phi ptr [ %add.ptr.i331.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i331.i.bottom, %for.cond.cleanup158.i ]
+  %add.ptr.i333.i.phi = phi ptr [ %add.ptr.i333.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i333.i.bottom, %for.cond.cleanup158.i ]
+  %add.ptr.i335.i.phi = phi ptr [ %add.ptr.i335.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i335.i.bottom, %for.cond.cleanup158.i ]
   %.phi32 = phi <32 x i16> [ %.peel6, %for.body.i.peel.pro ], [ %.epi19, %for.cond.cleanup158.i ]
   %.phi33 = phi <32 x i32> [ %.peel7, %for.body.i.peel.pro ], [ %.epi20, %for.cond.cleanup158.i ]
   %.phi34 = phi <16 x i64> [ %.peel8, %for.body.i.peel.pro ], [ %.epi21, %for.cond.cleanup158.i ]
-  %add.ptr.i337.i.phi = phi ptr [ %add.ptr.i337.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i337.i.epi, %for.cond.cleanup158.i ]
+  %add.ptr.i337.i.phi = phi ptr [ %add.ptr.i337.i.peel, %for.body.i.peel.pro ], [ %add.ptr.i337.i.bottom, %for.cond.cleanup158.i ]
   %.phi35 = phi <32 x i16> [ %.peel9, %for.body.i.peel.pro ], [ %.epi22, %for.cond.cleanup158.i ]
   %.phi36 = phi <32 x i32> [ %.peel10, %for.body.i.peel.pro ], [ %.epi23, %for.cond.cleanup158.i ]
   %.phi37 = phi <16 x i64> [ %.peel11, %for.body.i.peel.pro ], [ %.epi24, %for.cond.cleanup158.i ]
-  %shuffle.i.i.i.i.i.i.i.i.phi = phi <32 x i64> [ %shuffle.i.i.i.i.i.i.i.i.peel, %for.body.i.peel.pro ], [ %shuffle.i.i.i.i.i.i.i.i.epi, %for.cond.cleanup158.i ]
-  %shuffle.i.i.i.i.i.i.i340.i.phi = phi <32 x i64> [ %shuffle.i.i.i.i.i.i.i340.i.peel, %for.body.i.peel.pro ], [ %shuffle.i.i.i.i.i.i.i340.i.epi, %for.cond.cleanup158.i ]
+  %shuffle.i.i.i.i.i.i.i.i.phi = phi <32 x i64> [ %shuffle.i.i.i.i.i.i.i.i.peel, %for.body.i.peel.pro ], [ %shuffle.i.i.i.i.i.i.i.i.bottom, %for.cond.cleanup158.i ]
+  %shuffle.i.i.i.i.i.i.i340.i.phi = phi <32 x i64> [ %shuffle.i.i.i.i.i.i.i340.i.peel, %for.body.i.peel.pro ], [ %shuffle.i.i.i.i.i.i.i340.i.bottom, %for.cond.cleanup158.i ]
   %.phi38 = phi <64 x i32> [ %.peel12, %for.body.i.peel.pro ], [ %.epi25, %for.cond.cleanup158.i ]
   %.phi39 = phi <64 x i32> [ %.peel13, %for.body.i.peel.pro ], [ %.epi26, %for.cond.cleanup158.i ]
   call void @llvm.set.loop.iterations.i32(i32 %1)
@@ -340,28 +340,28 @@ for.cond.cleanup158.i:                            ; preds = %for.body159.i
   %57 = extractvalue { ptr, i20 } %54, 0
   %lsr.iv.next201 = add i32 %lsr.iv200, -1
   %exitcond430.not.i = icmp eq i32 %lsr.iv.next201, 1
-  %.epi = load <32 x i16>, ptr %48, align 64, !tbaa !4, !noalias !7
-  %.epi14 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.epi, i32 %cond88.i, i32 range(i32 0, 2) 1)
+  %.bottom = load <32 x i16>, ptr %48, align 64, !tbaa !4, !noalias !7
+  %.epi14 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.bottom, i32 %cond88.i, i32 range(i32 0, 2) 1)
   %.epi15 = bitcast <32 x i32> %.epi14 to <16 x i64>
-  %add.ptr.i.i.epi = getelementptr inbounds nuw i8, ptr %48, i20 %idx.ext.i.i
-  %.epi16 = load <32 x i16>, ptr %add.ptr.i.i.epi, align 64, !tbaa !4, !noalias !14
+  %add.ptr.i.i.bottom = getelementptr inbounds nuw i8, ptr %48, i20 %idx.ext.i.i
+  %.epi16 = load <32 x i16>, ptr %add.ptr.i.i.bottom, align 64, !tbaa !4, !noalias !14
   %.epi17 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.epi16, i32 %cond88.i, i32 range(i32 0, 2) 1)
   %.epi18 = bitcast <32 x i32> %.epi17 to <16 x i64>
-  %add.ptr.i331.i.epi = getelementptr inbounds i8, ptr %add.ptr.i.i.epi, i20 %idx.ext.i330.i
-  %add.ptr.i333.i.epi = getelementptr inbounds nuw i8, ptr %add.ptr.i331.i.epi, i20 %idx.ext.i.i
-  %add.ptr.i335.i.epi = getelementptr inbounds i8, ptr %add.ptr.i333.i.epi, i20 %idx.ext.i334.i
-  %.epi19 = load <32 x i16>, ptr %add.ptr.i335.i.epi, align 64, !tbaa !4, !noalias !21
+  %add.ptr.i331.i.bottom = getelementptr inbounds i8, ptr %add.ptr.i.i.bottom, i20 %idx.ext.i330.i
+  %add.ptr.i333.i.bottom = getelementptr inbounds nuw i8, ptr %add.ptr.i331.i.bottom, i20 %idx.ext.i.i
+  %add.ptr.i335.i.bottom = getelementptr inbounds i8, ptr %add.ptr.i333.i.bottom, i20 %idx.ext.i334.i
+  %.epi19 = load <32 x i16>, ptr %add.ptr.i335.i.bottom, align 64, !tbaa !4, !noalias !21
   %.epi20 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.epi19, i32 %cond88.i, i32 range(i32 0, 2) 1)
   %.epi21 = bitcast <32 x i32> %.epi20 to <16 x i64>
-  %add.ptr.i337.i.epi = getelementptr inbounds nuw i8, ptr %add.ptr.i335.i.epi, i20 %idx.ext.i.i
-  %.epi22 = load <32 x i16>, ptr %add.ptr.i337.i.epi, align 64, !tbaa !4, !noalias !28
+  %add.ptr.i337.i.bottom = getelementptr inbounds nuw i8, ptr %add.ptr.i335.i.bottom, i20 %idx.ext.i.i
+  %.epi22 = load <32 x i16>, ptr %add.ptr.i337.i.bottom, align 64, !tbaa !4, !noalias !28
   %.epi23 = tail call noundef <32 x i32> @llvm.aie2ps.acc32.v32.I512.ups(<32 x i16> %.epi22, i32 %cond88.i, i32 range(i32 0, 2) 1)
   %.epi24 = bitcast <32 x i32> %.epi23 to <16 x i64>
-  %shuffle.i.i.i.i.i.i.i.i.epi = shufflevector <16 x i64> %.epi15, <16 x i64> %.epi18, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-  %shuffle.i.i.i.i.i.i.i340.i.epi = shufflevector <16 x i64> %.epi21, <16 x i64> %.epi24, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-  %.epi25 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i.epi to <64 x i32>
-  %.epi26 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i340.i.epi to <64 x i32>
-  br i1 %exitcond430.not.i, label %lastiter.prologue, label %for.body.i, !llvm.loop !42
+  %shuffle.i.i.i.i.i.i.i.i.bottom = shufflevector <16 x i64> %.epi15, <16 x i64> %.epi18, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  %shuffle.i.i.i.i.i.i.i340.i.bottom = shufflevector <16 x i64> %.epi21, <16 x i64> %.epi24, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  %.epi25 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i.i.bottom to <64 x i32>
+  %.epi26 = bitcast <32 x i64> %shuffle.i.i.i.i.i.i.i340.i.bottom to <64 x i32>
+  br i1 %exitcond430.not.i, label %lastiter.stage1.top, label %for.body.i, !llvm.loop !42
 
 for.body159.i:                                    ; preds = %for.body159.i, %for.body.i
   %p_w.1.in410.i = phi ptr [ %p_w.0.in425.i, %for.body.i ], [ %add.ptr.i352.i, %for.body159.i ]
@@ -407,20 +407,20 @@ for.body159.i:                                    ; preds = %for.body159.i, %for
   %84 = call i1 @llvm.loop.decrement.i32(i32 1)
   br i1 %84, label %for.body159.i, label %for.cond.cleanup158.i, !llvm.loop !60
 
-lastiter.prologue:                                   ; preds = %for.cond.cleanup158.i
+lastiter.stage1.top:                                   ; preds = %for.cond.cleanup158.i
   call void @llvm.set.loop.iterations.i32(i32 %1)
   br label %for.body159.i.lastiter
 
-for.body159.i.lastiter:                                 ; preds = %lastiter.prologue, %for.body159.i.lastiter
-  %p_w.1.in410.i.lastiter = phi ptr [ %40, %lastiter.prologue ], [ %add.ptr.i352.i.lastiter, %for.body159.i.lastiter ]
-  %p_in.1.in408.i.lastiter = phi ptr [ %32, %lastiter.prologue ], [ %.cd59, %for.body159.i.lastiter ]
-  %iterator_inner_cnt0.1407.i.lastiter = phi i32 [ %75, %lastiter.prologue ], [ %.cd56, %for.body159.i.lastiter ]
-  %iterator_inner_cnt1.1406.i.lastiter = phi i32 [ %77, %lastiter.prologue ], [ %.cd58, %for.body159.i.lastiter ]
-  %Cbuff0.sroa.0.0405.i.lastiter = phi <64 x i32> [ %.epi25, %lastiter.prologue ], [ %.cd63, %for.body159.i.lastiter ]
-  %Cbuff2.sroa.0.0404.i.lastiter = phi <64 x i32> [ %.epi26, %lastiter.prologue ], [ %.cd64, %for.body159.i.lastiter ]
-  %fA.sroa.6389.0403.i.lastiter = phi <16 x i32> [ poison, %lastiter.prologue ], [ %.cd46, %for.body159.i.lastiter ]
-  %fA.sroa.4.0402.i.lastiter = phi i32 [ poison, %lastiter.prologue ], [ %.cd45, %for.body159.i.lastiter ]
-  %fA.sroa.0.0401.i.lastiter = phi <32 x i32> [ poison, %lastiter.prologue ], [ %.cd44, %for.body159.i.lastiter ]
+for.body159.i.lastiter:                                 ; preds = %lastiter.stage1.top, %for.body159.i.lastiter
+  %p_w.1.in410.i.lastiter = phi ptr [ %40, %lastiter.stage1.top ], [ %add.ptr.i352.i.lastiter, %for.body159.i.lastiter ]
+  %p_in.1.in408.i.lastiter = phi ptr [ %32, %lastiter.stage1.top ], [ %.cd59, %for.body159.i.lastiter ]
+  %iterator_inner_cnt0.1407.i.lastiter = phi i32 [ %75, %lastiter.stage1.top ], [ %.cd56, %for.body159.i.lastiter ]
+  %iterator_inner_cnt1.1406.i.lastiter = phi i32 [ %77, %lastiter.stage1.top ], [ %.cd58, %for.body159.i.lastiter ]
+  %Cbuff0.sroa.0.0405.i.lastiter = phi <64 x i32> [ %.epi25, %lastiter.stage1.top ], [ %.cd63, %for.body159.i.lastiter ]
+  %Cbuff2.sroa.0.0404.i.lastiter = phi <64 x i32> [ %.epi26, %lastiter.stage1.top ], [ %.cd64, %for.body159.i.lastiter ]
+  %fA.sroa.6389.0403.i.lastiter = phi <16 x i32> [ poison, %lastiter.stage1.top ], [ %.cd46, %for.body159.i.lastiter ]
+  %fA.sroa.4.0402.i.lastiter = phi i32 [ poison, %lastiter.stage1.top ], [ %.cd45, %for.body159.i.lastiter ]
+  %fA.sroa.0.0401.i.lastiter = phi <32 x i32> [ poison, %lastiter.stage1.top ], [ %.cd44, %for.body159.i.lastiter ]
   %p_w.1411.i.lastiter = addrspacecast ptr %p_w.1.in410.i.lastiter to ptr addrspace(6)
   %p_in.1.i.lastiter = addrspacecast ptr %p_in.1.in408.i.lastiter to ptr addrspace(5)
   %.lastiter = ptrtoint ptr addrspace(5) %p_in.1.i.lastiter to i20
@@ -453,10 +453,10 @@ for.body159.i.lastiter:                                 ; preds = %lastiter.prol
   %.cd63 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd62, <32 x i16> %.cd60, <64 x i32> %Cbuff0.sroa.0.0405.i.lastiter, i32 %or22.i.i.i.i.i)
   %.cd64 = tail call noundef <64 x i32> @llvm.aie2ps.I512.I512.ACC2048.mac.conf(<32 x i16> %.cd62, <32 x i16> %.cd61, <64 x i32> %Cbuff2.sroa.0.0404.i.lastiter, i32 %or22.i.i.i.i.i)
   %.cd65 = call i1 @llvm.loop.decrement.i32(i32 1)
-  br i1 %.cd65, label %for.body159.i.lastiter, label %lastiter.epilogue, !llvm.loop !60
+  br i1 %.cd65, label %for.body159.i.lastiter, label %lastiter.stage1.bottom, !llvm.loop !60
 
-lastiter.epilogue:                                    ; preds = %for.body159.i.lastiter
-  %add.ptr.i339.i.lastiter = getelementptr inbounds i8, ptr %add.ptr.i337.i.epi, i20 %idx.ext.i338.i
+lastiter.stage1.bottom:                                    ; preds = %for.body159.i.lastiter
+  %add.ptr.i339.i.lastiter = getelementptr inbounds i8, ptr %add.ptr.i337.i.bottom, i20 %idx.ext.i338.i
   %scevgep.i.lastiter = getelementptr i8, ptr %40, i20 %2
   %.cd66 = trunc nuw i32 %29 to i20
   %.cd67 = trunc nuw i32 %31 to i20
@@ -506,7 +506,7 @@ lastiter.epilogue:                                    ; preds = %for.body159.i.l
   %exitcond430.not.i.lastiter = icmp eq i32 %lsr.iv.next201.lastiter, 0
   br label %sw.epilog.exitStub
 
-sw.epilog.exitStub:                               ; preds = %lastiter.epilogue
+sw.epilog.exitStub:                               ; preds = %lastiter.stage1.bottom
   ret void
 }
 
