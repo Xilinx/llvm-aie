@@ -17,7 +17,7 @@
 ;
 ; This tests that address computation instructions (GEPs) between PHI pointers
 ; and loads are correctly identified as part of the data-load chain and are
-; included in the warm-up and epilogue clones.
+; included in the stage-0 top and epilogue clones.
 ;
 ; Input structure:
 ;   %a.ptr = phi ptr [...]
@@ -35,39 +35,39 @@
 ; CHECK-LABEL: define void @nested_loop_with_gep
 
 ; Warm-up block: GEPs + loads cloned with initial values (using %a, %b)
-; CHECK: outer.header.peel.pro:
-; CHECK:   %a.gep.peel = getelementptr inbounds i32, ptr %a, i32 %offset
-; CHECK:   %b.gep.peel = getelementptr inbounds i32, ptr %b, i32 %offset
-; CHECK:   %v0.peel = load i32, ptr %a.gep.peel, align 4
-; CHECK:   %v1.peel = load i32, ptr %b.gep.peel, align 4
+; CHECK: stage0.top:
+; CHECK:   %a.gep.steady.top = getelementptr inbounds i32, ptr %a, i32 %offset
+; CHECK:   %b.gep.steady.top = getelementptr inbounds i32, ptr %b, i32 %offset
+; CHECK:   %v0.steady.top = load i32, ptr %a.gep.steady.top, align 4
+; CHECK:   %v1.steady.top = load i32, ptr %b.gep.steady.top, align 4
 ; CHECK-NOT:  call void @llvm.set.loop.iterations
-; CHECK:      br label %outer.header
+; CHECK:      br label %steady.stage1.top
 
 ; Outer header: pipelined PHIs for GEPs and loads
-; CHECK: outer.header:
-; CHECK-DAG:   %a.gep.phi = phi ptr [ %a.gep.peel, %outer.header.peel.pro ], [ %a.gep.epi, %outer.latch ]
-; CHECK-DAG:   %b.gep.phi = phi ptr [ %b.gep.peel, %outer.header.peel.pro ], [ %b.gep.epi, %outer.latch ]
-; CHECK-DAG:   %v0.phi = phi i32 [ %v0.peel, %outer.header.peel.pro ], [ %v0.epi, %outer.latch ]
-; CHECK-DAG:   %v1.phi = phi i32 [ %v1.peel, %outer.header.peel.pro ], [ %v1.epi, %outer.latch ]
+; CHECK: steady.stage1.top:
+; CHECK-DAG:   %a.gep.steady.phi = phi ptr [ %a.gep.steady.top, %stage0.top ], [ %a.gep.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-DAG:   %b.gep.steady.phi = phi ptr [ %b.gep.steady.top, %stage0.top ], [ %b.gep.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-DAG:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-DAG:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %inner.header
+; CHECK:   br label %steady.stage1.inner.inner.header
 
 ; Outer latch: stores + GEPs + loads for NEXT iteration (uses a.ptr.next, b.ptr.next)
-; CHECK: outer.latch:
+; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
-; CHECK:   %a.gep.epi = getelementptr inbounds i32, ptr %a.ptr.next, i32 %offset
-; CHECK:   %b.gep.epi = getelementptr inbounds i32, ptr %b.ptr.next, i32 %offset
-; CHECK:   %v0.epi = load i32, ptr %a.gep.epi, align 4
-; CHECK:   %v1.epi = load i32, ptr %b.gep.epi, align 4
-; CHECK:   br i1 %outer.cond, label %outer.header, label %cooldown.entry
+; CHECK:   %a.gep.steady.bottom = getelementptr inbounds i32, ptr %a.ptr.next.steady, i32 %offset
+; CHECK:   %b.gep.steady.bottom = getelementptr inbounds i32, ptr %b.ptr.next.steady, i32 %offset
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.gep.steady.bottom, align 4
+; CHECK:   %v1.steady.bottom = load i32, ptr %b.gep.steady.bottom, align 4
+; CHECK:   br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
 ; Cool-down entry: set.loop.iterations for last iteration
-; CHECK: cooldown.entry:
+; CHECK: lastiter.stage1.top:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %inner.header.cd
+; CHECK:   br label %lastiter.stage1.inner.inner.header
 
 ; Cool-down exit: stores only (no prologue GEPs, no prologue loads)
-; CHECK: cooldown.exit:
+; CHECK: lastiter.stage1.bottom:
 ; CHECK:   store i32
 ; CHECK:   br label %exit
 
