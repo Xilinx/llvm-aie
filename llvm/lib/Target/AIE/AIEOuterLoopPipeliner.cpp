@@ -64,6 +64,7 @@
 #include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -255,6 +256,10 @@ class LoopStructure {
   Loop *InnerLoop = nullptr;
   bool IsOrigLS = false;
 
+  // True once the constructor's analyzeLoopStructure has validated the loop as
+  // a supported pipelining candidate. Always false on cloned structures.
+  bool Valid = false;
+
   // Generic Attributes
   BasicBlock *InnerPreheader = nullptr;
   BasicBlock *InnerHeader = nullptr;
@@ -285,26 +290,40 @@ class LoopStructure {
   SmallVector<Instruction *, 16> PeeledInsts;
   SmallVector<Instruction *, 16> KeptInsts;
 
-  // Snapshot of the epilogue (outer latch) contents taken before
-  // clonePrologueIntoEpilogue inserts prefetch clones, so the last-iteration
-  // epilogue can be filtered back to the original stores only.
-  SmallPtrSet<Instruction *, 32> EpilogueSnapshot;
-
 public:
-  explicit LoopStructure(Loop *L)
-      : OuterLoop(L), InnerLoop(L->getSubLoops()[0]), IsOrigLS(true),
-        InnerPreheader(InnerLoop->getLoopPreheader()),
-        InnerHeader(InnerLoop->getHeader()),
-        InnerLatch(InnerLoop->getLoopLatch()),
-        InnerExit(InnerLoop->getExitBlock()),
-        OuterPreheader(L->getLoopPreheader()),
-        InnerLoopBlocks(InnerLoop->block_begin(), InnerLoop->block_end()),
-        OuterLoopID(L->getLoopID()) {
-    assert(L->getSubLoops().size() == 1 && "Requires exactly one subloop");
-    assert(L->getLoopLatch() && "Requires single outer latch");
-    PrologueRegion.assign({L->getHeader()});
-    EpilogueRegion.assign({L->getLoopLatch()});
+  explicit LoopStructure(Loop *L) : OuterLoop(L), IsOrigLS(true) {
+    Valid = analyzeLoopStructure();
   }
+
+  // Populate the inner-loop fields and prologue/epilogue regions from
+  // OuterLoop, validating that the loop is a supported pipelining candidate.
+  // Called once by the LoopStructure(Loop *) constructor; the result is cached
+  // in Valid.
+  bool analyzeLoopStructure();
+
+  // Validate that the prologue is the linear single-block case (the outer
+  // header is the inner preheader) and populate prologueRegion(). Returns false
+  // for any other shape (a separate inner preheader block between the outer
+  // header and the inner loop), which is not handled.
+  bool discoverPrologueRegion();
+
+  // True if the inner loop is a hardware loop (its latch branches on a
+  // @llvm.loop.decrement).
+  bool isInnerLoopHardwareLoop() const;
+
+  // Collect the loads in the prologue (outer header) / stores in the epilogue
+  // (outer latch).
+  SmallVector<LoadInst *, 8> collectPrologueLoads() const;
+  SmallVector<StoreInst *, 8> collectEpilogueStores() const;
+
+  // Returns true if this LS is profitable to rotate: the inner loop is a
+  // hardware loop, the outer trip count meets MinTripCount, and the epilogue
+  // has stores. SE supplies the outer-loop minimum trip count.
+  bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
+
+  // Returns true if it is safe to reorder the prologue loads ahead of the
+  // epilogue stores (currently: no volatile/atomic memory ops).
+  bool isSafeToReorderMemoryOps() const;
 
   // Constructor for Copied LoopStructures that do not provide valid LoopInfo
   LoopStructure(BasicBlock *OuterPreheader, BasicBlock *OuterHeader,
@@ -346,6 +365,13 @@ public:
 
   bool isOrigLS() const { return IsOrigLS; }
 
+  // True if the loop was validated as a supported pipelining candidate by the
+  // LoopStructure(Loop *) constructor. Always false on cloned structures.
+  bool isValid() const {
+    assert(isOrigLS() && "Only valid on the original LoopStructure");
+    return Valid;
+  }
+
   // The peeled / kept lists live only on the original nest. Clones obtain
   // steady-resident instructions by remapping the original's lists, so reaching
   // for these on a clone is a bug.
@@ -364,12 +390,6 @@ public:
   const SmallVectorImpl<Instruction *> &keptInsts() const {
     assert(IsOrigLS && "peeled/kept lists exist only on the original nest");
     return KeptInsts;
-  }
-  SmallPtrSetImpl<Instruction *> &epilogueSnapshot() {
-    return EpilogueSnapshot;
-  }
-  const SmallPtrSetImpl<Instruction *> &epilogueSnapshot() const {
-    return EpilogueSnapshot;
   }
 
   // Only clones store the preheader; the original derives it from LoopInfo.
@@ -490,20 +510,10 @@ private:
   ScalarEvolution *SE = nullptr;
 
   bool runOnLoop(Loop *L);
-  std::optional<LoopStructure> analyzeLoopStructure(Loop *L);
-  // Validate that the prologue is the linear single-block case (the outer
-  // header is the inner preheader) and populate OrigLS.prologueRegion().
-  // Returns false for any other shape (a separate inner preheader block between
-  // the outer header and the inner loop), which is not handled.
-  bool discoverPrologueRegion(LoopStructure &OrigLS) const;
-  bool isInnerLoopHardwareLoop(const LoopStructure &OrigLS) const;
-  bool isProfitableToRotate(const LoopStructure &OrigLS,
-                            const AIE::LoopOptionOverrides &Overrides);
-  bool isSafeToReorderMemoryOps(const LoopStructure &OrigLS);
-  void collectPrologueLoads(const LoopStructure &OrigLS,
-                            SmallVectorImpl<LoadInst *> &Loads) const;
-  void collectEpilogueStores(const LoopStructure &OrigLS,
-                             SmallVectorImpl<StoreInst *> &Stores) const;
+  // Build the LoopStructure for L and run every pipelining precondition as a
+  // flat early-return guard; performs the transform iff all pass. Returns true
+  // if L was pipelined.
+  bool tryPipelineLoop(Loop *L, const AIE::LoopOptionOverrides &Overrides);
   // Populate VMap with the incoming values of outer header PHIs from FromBlock.
   void populateVMapFromPHIs(ValueToValueMapTy &VMap, const LoopStructure &LS,
                             BasicBlock *FromBlock) const;
@@ -624,12 +634,15 @@ private:
                                   const LoopStructure &LastIterLS,
                                   ValueToValueMapTy &LastIterVMap) const;
 
-  // Populate the last-iteration epilogue with the original epilogue stores only
-  // — no prefetch loads, and none of the prologue clones inserted into the
-  // epilogue earlier. The original stores are recovered from
-  // SteadyLS.epilogueSnapshot().
-  void populateLastIterEpilogue(const LoopStructure &LastIterLS,
+  // Populate the last-iteration epilogue with the original epilogue stores and
+  // pointer updates only — no prefetch loads. The instructions are read from
+  // the pristine OrigLS latch (never touched by the prefetch-cloning steps),
+  // translated Orig -> Steady via SteadyVMap, then cloned into the
+  // last-iteration epilogue.
+  void populateLastIterEpilogue(const LoopStructure &OrigLS,
                                 const LoopStructure &SteadyLS,
+                                const LoopStructure &LastIterLS,
+                                const ValueToValueMapTy &SteadyVMap,
                                 ValueToValueMapTy &LastIterVMap) const;
 
   // Splice the last-iteration into the CFG: last-iteration epilogue -> original
@@ -724,17 +737,8 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   // Build per-loop option overrides from !llvm.loop.hint.* metadata.
   AIE::LoopOptionOverrides Overrides(L->getLoopID());
 
-  // Try to transform this loop if enabled (globally or via metadata).
-  if (Overrides.get(EnableOuterLoopPipelining)) {
-    std::optional<LoopStructure> MaybeLS = analyzeLoopStructure(L);
-    if (MaybeLS) {
-      LoopStructure &LS = *MaybeLS;
-      if (isProfitableToRotate(LS, Overrides) && isSafeToReorderMemoryOps(LS)) {
-        LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining\n");
-        return performTransformation(LS, Overrides);
-      }
-    }
-  }
+  if (tryPipelineLoop(L, Overrides))
+    return true;
 
   // If this loop was not transformed, recursively try its subloops.
   // This handles nested structures like: outermost { middle { innermost } }
@@ -745,97 +749,133 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   return Changed;
 }
 
-std::optional<LoopStructure>
-AIEOuterLoopPipeliner::analyzeLoopStructure(Loop *L) {
-  // Early validation before constructing LoopStructure.
-  if (L->getSubLoops().size() != 1) {
-    LLVM_DEBUG(dbgs() << "    Not exactly one subloop\n");
-    return std::nullopt;
-  }
-  if (!L->getLoopLatch()) {
-    LLVM_DEBUG(dbgs() << "    No single outer latch\n");
-    return std::nullopt;
+bool AIEOuterLoopPipeliner::tryPipelineLoop(
+    Loop *L, const AIE::LoopOptionOverrides &Overrides) {
+  if (!Overrides.get(EnableOuterLoopPipelining)) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
+    return false;
   }
 
-  // Construct the LoopStructure (constructor asserts preconditions).
-  LoopStructure OrigLS(L);
+  LoopStructure LS(L);
+  if (!LS.isValid()) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: unsupported loop structure\n");
+    return false;
+  }
+
+  if (!LS.isProfitableToRotate(
+          *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
+    return false;
+  }
+
+  if (!LS.isSafeToReorderMemoryOps()) {
+    LLVM_DEBUG(dbgs() << "    Not pipelining: unsafe to reorder memory ops\n");
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining on ";
+             LS.getOuterHeader()->printAsOperand(dbgs(), false);
+             dbgs() << "\n");
+  return performTransformation(LS, Overrides);
+}
+
+bool LoopStructure::analyzeLoopStructure() {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
+  // Early validation before populating the inner-loop fields.
+  if (OuterLoop->getSubLoops().size() != 1) {
+    LLVM_DEBUG(dbgs() << "    Not exactly one subloop\n");
+    return false;
+  }
+  if (!OuterLoop->getLoopLatch()) {
+    LLVM_DEBUG(dbgs() << "    No single outer latch\n");
+    return false;
+  }
+
+  // Populate the inner-loop fields and prologue/epilogue regions.
+  InnerLoop = OuterLoop->getSubLoops()[0];
+  InnerPreheader = InnerLoop->getLoopPreheader();
+  InnerHeader = InnerLoop->getHeader();
+  InnerLatch = InnerLoop->getLoopLatch();
+  InnerExit = InnerLoop->getExitBlock();
+  OuterPreheader = OuterLoop->getLoopPreheader();
+  InnerLoopBlocks.assign(InnerLoop->block_begin(), InnerLoop->block_end());
+  OuterLoopID = OuterLoop->getLoopID();
+  PrologueRegion.assign({OuterLoop->getHeader()});
+  EpilogueRegion.assign({OuterLoop->getLoopLatch()});
 
   // Validate inner loop components.
-  if (!OrigLS.getInnerPreheader() || !OrigLS.getInnerExit() ||
-      !OrigLS.getInnerLatch()) {
+  if (!getInnerPreheader() || !getInnerExit() || !getInnerLatch()) {
     LLVM_DEBUG(dbgs() << "    Inner loop missing preheader/exit/latch\n");
-    return std::nullopt;
+    return false;
   }
 
   // Epilogue must be a single block: inner exit == outer latch.
-  if (OrigLS.getInnerExit() != OrigLS.getOuterLatch()) {
+  if (getInnerExit() != getOuterLatch()) {
     LLVM_DEBUG(dbgs() << "    Inner exit != outer latch\n");
-    return std::nullopt;
+    return false;
   }
 
-  if (!discoverPrologueRegion(OrigLS))
-    return std::nullopt;
+  if (!discoverPrologueRegion())
+    return false;
 
   // Every outer-loop block must belong to the prologue region, the inner loop,
   // or the single-block epilogue (latch); anything else is an unknown shape.
-  for (BasicBlock *BB : L->blocks()) {
-    if (OrigLS.getInnerLoop()->contains(BB) || BB == OrigLS.getOuterLatch() ||
-        OrigLS.prologueRegion().contains(BB))
+  for (BasicBlock *BB : OuterLoop->blocks()) {
+    if (getInnerLoop()->contains(BB) || BB == getOuterLatch() ||
+        prologueRegion().contains(BB))
       continue;
     LLVM_DEBUG(dbgs() << "    Unexpected outer-loop block: " << BB->getName()
                       << "\n");
-    return std::nullopt;
-  }
-
-  LLVM_DEBUG(dbgs() << "    Prologue region: " << OrigLS.prologueRegion().size()
-                    << " block(s); epilogue in outer.latch\n");
-
-  if (!OrigLS.tryAdjustLoopBound()) {
-    LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound\n");
-    return std::nullopt;
-  }
-  return OrigLS;
-}
-
-bool AIEOuterLoopPipeliner::discoverPrologueRegion(
-    LoopStructure &OrigLS) const {
-  if (OrigLS.getInnerPreheader() != OrigLS.getOuterHeader()) {
-    LLVM_DEBUG(dbgs() << "    Inner preheader != outer header\n");
     return false;
   }
-  OrigLS.prologueRegion().assign({OrigLS.getOuterHeader()});
+
+  LLVM_DEBUG(dbgs() << "    Prologue region: " << prologueRegion().size()
+                    << " block(s); epilogue in outer.latch\n");
+
+  if (!tryAdjustLoopBound()) {
+    LLVM_DEBUG(dbgs() << "    Cannot adjust loop bound\n");
+    return false;
+  }
   return true;
 }
 
-bool AIEOuterLoopPipeliner::isInnerLoopHardwareLoop(
-    const LoopStructure &OrigLS) const {
-  auto *BI = dyn_cast<BranchInst>(OrigLS.getInnerLatch()->getTerminator());
+bool LoopStructure::discoverPrologueRegion() {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
+  if (getInnerPreheader() != getOuterHeader()) {
+    LLVM_DEBUG(dbgs() << "    Inner preheader != outer header\n");
+    return false;
+  }
+  prologueRegion().assign({getOuterHeader()});
+  return true;
+}
+
+bool LoopStructure::isInnerLoopHardwareLoop() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
+  auto *BI = dyn_cast<BranchInst>(getInnerLatch()->getTerminator());
   if (!BI || !BI->isConditional())
     return false;
-  auto *Call = dyn_cast<CallInst>(BI->getCondition());
-  if (!Call)
-    return false;
-  auto *Fn = Call->getCalledFunction();
-  if (!Fn)
-    return false;
-  Intrinsic::ID IID = Fn->getIntrinsicID();
-  return IID == Intrinsic::loop_decrement;
+  auto *Cond = dyn_cast<Instruction>(BI->getCondition());
+  return Cond && AIEIRUtils::isHardwareLoopDecrement(Cond);
 }
 
-void AIEOuterLoopPipeliner::collectPrologueLoads(
-    const LoopStructure &OrigLS, SmallVectorImpl<LoadInst *> &Loads) const {
+SmallVector<LoadInst *, 8> LoopStructure::collectPrologueLoads() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // The prologue is the single outer header block.
-  for (Instruction &I : *OrigLS.getOuterHeader())
+  SmallVector<LoadInst *, 8> Loads;
+  for (Instruction &I : *getOuterHeader())
     if (auto *L = dyn_cast<LoadInst>(&I))
       Loads.push_back(L);
+  return Loads;
 }
 
-void AIEOuterLoopPipeliner::collectEpilogueStores(
-    const LoopStructure &OrigLS, SmallVectorImpl<StoreInst *> &Stores) const {
+SmallVector<StoreInst *, 8> LoopStructure::collectEpilogueStores() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // The epilogue is the single outer latch block.
-  for (Instruction &I : *OrigLS.getOuterLatch())
+  SmallVector<StoreInst *, 8> Stores;
+  for (Instruction &I : *getOuterLatch())
     if (auto *S = dyn_cast<StoreInst>(&I))
       Stores.push_back(S);
+  return Stores;
 }
 
 // Populate VMap with the incoming values of outer header PHIs from FromBlock.
@@ -849,44 +889,36 @@ void AIEOuterLoopPipeliner::populateVMapFromPHIs(ValueToValueMapTy &VMap,
   }
 }
 
-bool AIEOuterLoopPipeliner::isProfitableToRotate(
-    const LoopStructure &OrigLS, const AIE::LoopOptionOverrides &Overrides) {
-  if (!isInnerLoopHardwareLoop(OrigLS)) {
+bool LoopStructure::isProfitableToRotate(ScalarEvolution &SE,
+                                         unsigned MinTripCount) const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
+  if (!isInnerLoopHardwareLoop()) {
     LLVM_DEBUG(dbgs() << "    Inner loop is not a hardware loop\n");
     return false;
   }
-  std::optional<int64_t> MinTC =
-      llvm::getMinTripCount(OrigLS.getOuterLoop(), SE);
-  if (!MinTC ||
-      *MinTC < (int64_t)Overrides.get(OuterLoopPipeliningMinTripCount)) {
+  std::optional<int64_t> MinTC = llvm::getMinTripCount(getOuterLoop(), &SE);
+  if (!MinTC || *MinTC < (int64_t)MinTripCount) {
     LLVM_DEBUG(dbgs() << "    Trip count too low\n");
     return false;
   }
 
-  SmallVector<LoadInst *, 8> PrologueLoads;
-  collectPrologueLoads(OrigLS, PrologueLoads);
-
-  SmallVector<StoreInst *, 8> EpilogueStores;
-  collectEpilogueStores(OrigLS, EpilogueStores);
+  SmallVector<StoreInst *, 8> EpilogueStores = collectEpilogueStores();
   // TODO: Do we actually need this? Do we have cases without
   // stores?
   if (EpilogueStores.empty()) {
     LLVM_DEBUG(dbgs() << "    No stores in epilogue\n");
     return false;
   }
-  // Loop bound adjustability was verified in analyzeLoopStructure().
   return true;
 }
 
-bool AIEOuterLoopPipeliner::isSafeToReorderMemoryOps(
-    const LoopStructure &OrigLS) {
+bool LoopStructure::isSafeToReorderMemoryOps() const {
+  assert(isOrigLS() && "Only valid on the original LoopStructure");
   // TODO: Add alias/dependence analysis to verify that moving prologue loads
   // before epilogue stores is safe. For now, only reject volatile/atomic
   // operations which can never be reordered.
-  SmallVector<LoadInst *, 8> PrologueLoads;
-  SmallVector<StoreInst *, 8> EpilogueStores;
-  collectPrologueLoads(OrigLS, PrologueLoads);
-  collectEpilogueStores(OrigLS, EpilogueStores);
+  SmallVector<LoadInst *, 8> PrologueLoads = collectPrologueLoads();
+  SmallVector<StoreInst *, 8> EpilogueStores = collectEpilogueStores();
   for (LoadInst *L : PrologueLoads)
     if (L->isVolatile() || L->isAtomic()) {
       LLVM_DEBUG(dbgs() << "    Unsafe: volatile/atomic prologue load\n");
@@ -1237,7 +1269,8 @@ void AIEOuterLoopPipeliner::peelLastIteration(
                      LastIterLS.getOuterHeader()->end(), LastIterVMap,
                      ".lastiter");
   cloneInnerLoopIntoLastIter(SteadyLS, LastIterLS, LastIterVMap);
-  populateLastIterEpilogue(LastIterLS, SteadyLS, LastIterVMap);
+  populateLastIterEpilogue(OrigLS, SteadyLS, LastIterLS, SteadyVMap,
+                           LastIterVMap);
   wireLastIterIntoCFG(SteadyLS, LastIterLS);
 
   LLVM_DEBUG(dbgs() << "    Created last-iteration: "
@@ -1324,24 +1357,38 @@ void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
 }
 
 void AIEOuterLoopPipeliner::populateLastIterEpilogue(
-    const LoopStructure &LastIterLS, const LoopStructure &SteadyLS,
+    const LoopStructure &OrigLS, const LoopStructure &SteadyLS,
+    const LoopStructure &LastIterLS, const ValueToValueMapTy &SteadyVMap,
     ValueToValueMapTy &LastIterVMap) const {
-  const SmallPtrSetImpl<Instruction *> &EpiSnapshot =
-      SteadyLS.epilogueSnapshot();
-  SmallVector<Instruction *, 16> EpiInsts;
-  for (Instruction &I : *SteadyLS.getOuterLatch()) {
+  // Read the pristine original epilogue: OrigLS is never mutated by the
+  // prefetch-cloning steps, so its latch holds the full last-iteration work
+  // (stores and any latch-resident accumulation) with no prefetch loads to
+  // drop. Cloning the whole latch is required for correctness: a value the
+  // outer loop accumulates in the latch is read after the loop, so a
+  // last-iteration that omits it would compute a wrong result.
+  //
+  // The outer back-edge control (the counting add and the exit icmp) is the
+  // sole exception — it is dead in a non-looping last iteration, and its steady
+  // clone may already be erased by convertOuterLoopToHardwareLoop, so mapping
+  // it through SteadyVMap would dereference freed IR.
+  const LatchConditionInfo &Bound = OrigLS.bound();
+  SmallVector<Instruction *, 16> OrigEpiInsts;
+  for (Instruction &I : *OrigLS.getOuterLatch()) {
     if (I.isTerminator())
       break;
     // No prefetch in the last-iteration.
     if (isa<LoadInst>(&I))
       continue;
-    // Skip the prologue clones inserted into the epilogue earlier.
-    if (!EpiSnapshot.count(&I))
+    // Skip the outer loop's back-edge control (dead without a back-edge).
+    if (&I == Bound.Counter || &I == Bound.Cmp)
       continue;
-    EpiInsts.push_back(&I);
+    OrigEpiInsts.push_back(&I);
   }
+  // Translate Orig -> Steady, then clone Steady -> last-iteration.
+  SmallVector<Instruction *, 16> SteadyEpiInsts =
+      remapToClone(OrigEpiInsts, SteadyVMap);
   BasicBlock *LastIterEpilogue = LastIterLS.getOuterLatch();
-  cloneAndRemapInsts(EpiInsts, *LastIterEpilogue, LastIterEpilogue->end(),
+  cloneAndRemapInsts(SteadyEpiInsts, *LastIterEpilogue, LastIterEpilogue->end(),
                      LastIterVMap, ".lastiter");
 }
 
@@ -1782,12 +1829,6 @@ bool AIEOuterLoopPipeliner::performTransformation(
   LoopStructure SteadyLS = cloneLoopNest(OrigLS, "steady", SteadyVMap);
   swapInClonedNest(OrigLS, SteadyLS, SteadyVMap);
   remapBoundToClone(SteadyLS, SteadyVMap);
-
-  // Snapshot the steady epilogue (latch) contents now, before any prefetch
-  // clones are inserted into it, so the last-iteration epilogue can later be
-  // filtered back to the original stores.
-  for (Instruction &I : *SteadyLS.getOuterLatch())
-    SteadyLS.epilogueSnapshot().insert(&I);
 
   // Peel the peeled chain before the steady header (entry pointer values); this
   // also adopts the peel as the steady preheader.
