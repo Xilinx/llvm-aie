@@ -148,7 +148,9 @@ class Tosa_TensorOfOrNone<list<Type> allowedTypes, string description = ""> :
 // Tensor types with constrained ranks.
 //===----------------------------------------------------------------------===//
 
-def Tosa_ScalarTensor : TosaTensorRankOf<[Tosa_AnyNumber], [0]>;
+def Tosa_Rank0Tensor : TosaTensorRankOf<[Tosa_AnyNumber], [0]>;
+
+def Tosa_ScalarTensor : TosaScalarTensorOf<[Tosa_AnyNumber], [1]>;
 def Tosa_ScalarInt8Tensor : TosaScalarTensorOf<[Tosa_Int8], [1]>;
 
 // We include unranked tensors as a supported type for all possible tosa
