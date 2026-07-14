@@ -60,10 +60,10 @@ define dso_local void @gemm_int8_psum(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
-; REMARKS-NEXT:   - Loop:            bb.2.for.body144
-; REMARKS-NEXT:   - Prologue:        bb.1.for.body
+; REMARKS-NEXT:   - Loop:            bb.2.steady.for.body144
+; REMARKS-NEXT:   - Prologue:        bb.1.steady.header
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup143
+; REMARKS-NEXT:   - Epilogue:        bb.3.steady.latch
 ; REMARKS-NEXT:   - EpilogueBundles: '22'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
@@ -75,10 +75,10 @@ define dso_local void @gemm_int8_psum(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
-; REMARKS-NEXT:   - Loop:            bb.5.for.body144.cd
-; REMARKS-NEXT:   - Prologue:        bb.4.cooldown.entry
+; REMARKS-NEXT:   - Loop:            bb.5.steady.for.body144.lastiter
+; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.prologue
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.6.cooldown.exit
+; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.epilogue
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT: ...
 entry:
