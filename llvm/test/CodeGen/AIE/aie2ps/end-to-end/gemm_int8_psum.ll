@@ -60,10 +60,10 @@ define dso_local void @gemm_int8_psum(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
-; REMARKS-NEXT:   - Loop:            bb.2.steady.for.body144
-; REMARKS-NEXT:   - Prologue:        bb.1.steady.header
+; REMARKS-NEXT:   - Loop:            bb.2.steady.stage1.inner.for.body144
+; REMARKS-NEXT:   - Prologue:        bb.1.steady.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.3.steady.latch
+; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '22'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
@@ -75,10 +75,10 @@ define dso_local void @gemm_int8_psum(
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '4'
-; REMARKS-NEXT:   - Loop:            bb.5.steady.for.body144.lastiter
-; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.prologue
+; REMARKS-NEXT:   - Loop:            bb.5.lastiter.stage1.inner.for.body144
+; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.stage1.top
 ; REMARKS-NEXT:   - PrologueBundles: '12'
-; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.epilogue
+; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
 ; REMARKS-NEXT: ...
 entry:
