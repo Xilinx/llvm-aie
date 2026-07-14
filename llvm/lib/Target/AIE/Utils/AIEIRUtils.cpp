@@ -20,16 +20,22 @@
 
 namespace llvm::AIEIRUtils {
 
-bool isHardwareLoopSetup(const Instruction *I) {
+static Intrinsic::ID getIntrinsicID(const Instruction *I) {
   const auto *Call = dyn_cast<CallInst>(I);
   if (!Call)
-    return false;
+    return Intrinsic::not_intrinsic;
   const auto *Fn = Call->getCalledFunction();
-  if (!Fn)
-    return false;
-  Intrinsic::ID IID = Fn->getIntrinsicID();
+  return Fn ? Fn->getIntrinsicID() : Intrinsic::not_intrinsic;
+}
+
+bool isHardwareLoopSetup(const Instruction *I) {
+  Intrinsic::ID IID = getIntrinsicID(I);
   return IID == Intrinsic::set_loop_iterations ||
          IID == Intrinsic::start_loop_iterations;
+}
+
+bool isHardwareLoopDecrement(const Instruction *I) {
+  return getIntrinsicID(I) == Intrinsic::loop_decrement;
 }
 
 std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,

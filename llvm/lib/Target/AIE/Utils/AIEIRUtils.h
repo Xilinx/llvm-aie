@@ -27,6 +27,10 @@ namespace llvm::AIEIRUtils {
 /// trip count.
 bool isHardwareLoopSetup(const Instruction *I);
 
+/// True if I is a call to @llvm.loop.decrement, the intrinsic that controls a
+/// hardware-loop latch branch.
+bool isHardwareLoopDecrement(const Instruction *I);
+
 /// Helper function to recursively check if a user (and all its users if it's a
 /// bitcast) access lanes higher than HighestLane.
 bool checkIfUsersDontAccessLanesHigherThan(Instruction *User, Type *CurrentType,
