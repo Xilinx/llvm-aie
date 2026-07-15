@@ -8,7 +8,7 @@ on:
   pull_request:
   # Only builds on push populate the ccache that can be used by PRs
   push:
-    branches: [ main, feature/fused-ops, aie-public ]
+    branches: [ main, feature/fused-ops, aie-public, 'bump_to_*' ]
 
 concurrency:
   # Skip intermediate builds: always.
