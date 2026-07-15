@@ -138,7 +138,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    mova m0, #4; add r0, r0, #-1; mov p4, p2
 ; ASM-NEXT:    padda [p4], m0; movx r4, #0; mov r3, #0
-; ASM-NEXT:  .LBB0_2: // %outer.header
+; ASM-NEXT:  .LBB0_2: // %steady.header
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_3 Depth 2
 ; ASM-NEXT:    nopx ; add.nc lc, r1, #0; vmul dm0, x0, x2,r2
@@ -150,12 +150,12 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vmov x0, bmll0; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.64 r7:r6, x0, #0, vaddsign1; nopv
 ; ASM-NEXT:    mova r5, #0; nopb ; nops ; nopx ; mov p3, p4; nopv
-; ASM-NEXT:  .LBB0_3: // %inner.header
+; ASM-NEXT:  .LBB0_3: // %steady.inner.header
 ; ASM-NEXT:    // Parent Loop BB0_2 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
 ; ASM-NEXT:  .L_LEnd1:
 ; ASM-NEXT:    nopa ; nopb ; nops ; add r5, r5, r6; nopm ; nopv
-; ASM-NEXT:  // %bb.4: // %outer.latch
+; ASM-NEXT:  // %bb.4: // %steady.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_2 Depth=1
 ; ASM-NEXT:    nopa ; nopb ; nops ; add r4, r4, #1; nopm ; nopv
 ; ASM-NEXT:    vlda x0, [p0], #64; vldb x2, [p1], #64; lt r6, r4, r0
@@ -165,7 +165,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    mov p4, p3 // Delay Slot 2
 ; ASM-NEXT:    padda [p4], m0; st r5, [p2, #0]; mov p2, p3 // Delay Slot 1
-; ASM-NEXT:  // %bb.5: // %cooldown.entry
+; ASM-NEXT:  // %bb.5: // %lastiter.prologue
 ; ASM-NEXT:    add.nc lc, r1, #0; vmul dm0, x0, x2,r2
 ; ASM-NEXT:    movxm ls, #.LBB0_6
 ; ASM-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
@@ -175,11 +175,11 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vmov x0, bmll0; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.64 r5:r4, x0, #0, vaddsign1; nopv
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; ASM-NEXT:  .LBB0_6: // %inner.header.cd
+; ASM-NEXT:  .LBB0_6: // %steady.inner.header.lastiter
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; nopb ; nops ; add r3, r3, r4; nopm ; nopv
-; ASM-NEXT:  // %bb.7: // %cooldown.exit
+; ASM-NEXT:  // %bb.7: // %lastiter.epilogue
 ; ASM-NEXT:    nopa ; nopb ; st r3, [p3, #0]; nopxm ; nopv
 ; ASM-NEXT:  .LBB0_8: // %exit
 ; ASM-NEXT:    nopa ; ret lr
