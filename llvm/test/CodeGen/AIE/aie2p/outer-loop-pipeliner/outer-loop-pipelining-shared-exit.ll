@@ -13,8 +13,8 @@
 ; (entry -> exit) and the loop back-edge, so the live-out is an LCSSA phi with
 ; an incoming value from entry and one from outer.latch, and there is no
 ; dedicated exit.loopexit block. The pipeliner peels the last outer iteration
-; into cooldown.exit and retargets the exit phi's incoming block to it, so the
-; incoming value must also be remapped to the cooldown-block clone (the last
+; into lastiter.stage1.bottom and retargets the exit phi's incoming block to it, so the
+; incoming value must also be remapped to the last-iteration-block clone (the last
 ; iteration's accumulator) rather than the original outer.latch value (the
 ; second-to-last iteration) -- otherwise the returned value is off by one
 ; iteration. Guards the phi exit live-out remap path on a shared exit block.

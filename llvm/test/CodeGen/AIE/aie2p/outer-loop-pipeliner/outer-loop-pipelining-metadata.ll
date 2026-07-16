@@ -41,13 +41,13 @@
 
 ; CHECK-LABEL: define void @metadata_opt_in
 
-; Warm-up block must be created (metadata opt-in triggered pipelining).
+; Stage-0 top block must be created (metadata opt-in triggered pipelining).
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
 ; CHECK:   %v1.steady.top = load i32, ptr %b, align 4
 ; CHECK:   br label %steady.stage1.top
 
-; Outer header must have pipelined PHIs.
+; Steady-state header must have pipelined PHIs.
 ; CHECK: steady.stage1.top:
 ; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
