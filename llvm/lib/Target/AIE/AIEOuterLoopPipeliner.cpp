@@ -507,8 +507,7 @@ private:
   // Create the last-iteration region (top + inner-loop clone + stores-only
   // bottom) and redirect the steady latch exit into it.
   void peelLastIteration(const OrigLoopStructure &OrigLS,
-                         const CloneLoopStructure &SteadyLS,
-                         bool OuterIsHardwareLoop);
+                         const CloneLoopStructure &SteadyLS);
 
   // Clone I into Dest before InsertPt, record orig->clone in VMap, and return
   // the clone. A non-empty Suffix renames non-void clones to "<orig><Suffix>".
@@ -537,8 +536,7 @@ private:
   // resolves to the value SteadyLS carries into the last iteration (its
   // prefetch / next-iteration value).
   void seedLastIterInputs(RemapTable &Map, const OrigLoopStructure &OrigLS,
-                          const CloneLoopStructure &SteadyLS,
-                          bool OuterIsHardwareLoop) const;
+                          const CloneLoopStructure &SteadyLS) const;
 
   // Clone the hardware-loop setup (set.loop.iterations) from Src's top into the
   // last-iteration top.
@@ -553,9 +551,7 @@ private:
   // Fill the last-iteration bottom with the pristine original stores and
   // pointer updates only (no prefetch loads), cloned directly from OrigLS.
   void populateLastIterBottom(const OrigLoopStructure &OrigLS,
-                              const CloneLoopStructure &SteadyLS,
-                              CloneLoopStructure &LastIterLS,
-                              bool OuterIsHardwareLoop) const;
+                              CloneLoopStructure &LastIterLS) const;
 
   // Splice the last-iteration into the CFG: last-iteration bottom -> original
   // exit, repoint the exit's bottom-predecessor PHIs to it, redirect the
@@ -1206,8 +1202,7 @@ void AIEOuterLoopPipeliner::createPipelinedPHIs(const OrigLoopStructure &OrigLS,
 }
 
 void AIEOuterLoopPipeliner::peelLastIteration(
-    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS,
-    bool OuterIsHardwareLoop) {
+    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS) {
   // Build the empty last-iteration LS as a structural clone of OrigLS; it owns
   // its orig->lastiter clone map.
   CloneLoopStructure LastIterLS(OrigLS);
@@ -1215,7 +1210,7 @@ void AIEOuterLoopPipeliner::peelLastIteration(
 
   // Seed the live-ins: stage-0 slots and loop-carried PHIs enter the last
   // iteration as the values SteadyLS prefetched / carried on its back edge.
-  seedLastIterInputs(LastIterMap, OrigLS, SteadyLS, OuterIsHardwareLoop);
+  seedLastIterInputs(LastIterMap, OrigLS, SteadyLS);
 
   // Fill the top (hardware-loop setup + stage-1) before the inner loop, so its
   // PHIs referencing stage-1 results resolve.
@@ -1223,7 +1218,7 @@ void AIEOuterLoopPipeliner::peelLastIteration(
   cloneAndRemapInsts(OrigLS.stage1Insts(), *LastIterLS.getTop(),
                      LastIterLS.getTop()->end(), LastIterMap, ".lastiter");
   cloneInnerLoopIntoLastIter(OrigLS, LastIterLS);
-  populateLastIterBottom(OrigLS, SteadyLS, LastIterLS, OuterIsHardwareLoop);
+  populateLastIterBottom(OrigLS, LastIterLS);
   wireLastIterIntoCFG(OrigLS, SteadyLS, LastIterLS);
 
   LLVM_DEBUG(dbgs() << "    Created last-iteration: "
@@ -1233,30 +1228,19 @@ void AIEOuterLoopPipeliner::peelLastIteration(
 
 void AIEOuterLoopPipeliner::seedLastIterInputs(
     RemapTable &Map, const OrigLoopStructure &OrigLS,
-    const CloneLoopStructure &SteadyLS, bool OuterIsHardwareLoop) const {
+    const CloneLoopStructure &SteadyLS) const {
   // Each stage-0 slot enters as its steady prefetch value.
   for (Instruction *I : OrigLS.stage0Insts())
     if (!I->getType()->isVoidTy())
       Map[I] = SteadyLS.lastIterInputFor(I);
 
   // Each loop-carried header PHI enters as its steady next-iteration value.
-  //
-  // The outer IV is the correct exception: it is dead in the
-  // single last iteration, and for a JNZD hardware loop its steady clone has
-  // been erased (eraseOldCounterCycle), so seeding it would dereference freed
-  // IR. Correct behavior is to always skip it.
-  //
-  // NFC-SCAFFOLD [branch olp-4-fix-emit-remap-and-crash] -- REVERT after
-  // review: The `|| !OuterIsHardwareLoop` below force-seeds IV for
-  // non-hardware-loop outer loops. This exists ONLY so the dead back-edge
-  // control that populateLastIterBottom re-emits (also NFC-SCAFFOLD) reads real
-  // steady values instead of poison, matching the pre-refactor checklines. It
-  // has no effect on correct code. TO REVERT: restore the unconditional skip
-  //     if (&PHI != IV)
-  // (see the full revert checklist in populateLastIterBottom).
+  // The outer IV is dead in the single last iteration, and for a JNZD hardware
+  // loop its steady clone has been erased (eraseOldCounterCycle), so always
+  // skip it.
   const PHINode *IV = OrigLS.latchCondition().IV;
   for (PHINode &PHI : OrigLS.getTop()->phis())
-    if (&PHI != IV || !OuterIsHardwareLoop)
+    if (&PHI != IV)
       Map[&PHI] = SteadyLS.lastIterInputFor(&PHI);
 }
 
@@ -1292,8 +1276,7 @@ void AIEOuterLoopPipeliner::cloneInnerLoopIntoLastIter(
 }
 
 void AIEOuterLoopPipeliner::populateLastIterBottom(
-    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS,
-    CloneLoopStructure &LastIterLS, bool OuterIsHardwareLoop) const {
+    const OrigLoopStructure &OrigLS, CloneLoopStructure &LastIterLS) const {
   // Clone the pristine original latch. Accumulated values are read after the
   // loop and must be cloned.
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
@@ -1302,34 +1285,6 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
   // non-looping last iteration; correct behavior is to always elide it. (For a
   // JNZD hardware loop the steady counter/limit are also already erased, so it
   // MUST be elided.)
-  //
-  // NFC-SCAFFOLD [branch olp-4-fix-emit-remap-and-crash] -- REVERT after
-  // review: For non-hardware-loop outer loops we instead RE-EMIT the dead
-  // control, purely to reproduce the pre-refactor checklines (modulo
-  // block/vreg-name drift). This is throwaway and produces dead instructions
-  // only.
-  //
-  // FULL REVERT CHECKLIST for all the dead-back-edge NFC scaffolding (this is
-  // the primary site; seedLastIterInputs cross-references here):
-  //   1. Delete the `if (!OuterIsHardwareLoop) { ...limit remap... }` block
-  //   below.
-  //   2. Make the skip in the loop unconditional:
-  //        if (&I == Bound.Counter || &I == Bound.Cmp) continue;
-  //   3. In seedLastIterInputs, restore the unconditional IV skip
-  //        if (&PHI != IV)
-  //   4. Drop the now-unused `OuterIsHardwareLoop` parameter (here,
-  //      seedLastIterInputs, peelLastIteration) and the `SteadyLS` parameter
-  //      added to this function, plus the `OuterIsHardwareLoop` computation and
-  //      argument passing in performTransformation.
-  //   5. Regenerate exit-no-phi, latch-accumulate, shared-exit.
-  if (!OuterIsHardwareLoop) {
-    // Remap the original limit (%N) to the adjusted steady limit (SUB = N-1) so
-    // the re-emitted dead compare matches the steady bound. Seeded here, after
-    // the top/inner clones, so only the bottom compare picks it up.
-    const LatchConditionInfo &SteadyBound = SteadyLS.latchCondition();
-    LastIterLS.cloneMap()[Bound.Limit] =
-        SteadyBound.Cmp->getOperand(SteadyBound.LimitIdx);
-  }
 
   SmallVector<Instruction *, 16> OrigBottomInsts;
   for (Instruction &I : *OrigLS.getBottom()) {
@@ -1338,10 +1293,7 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
     // No prefetch in the last-iteration.
     if (isa<LoadInst>(&I))
       continue;
-    // Elide the dead back-edge control. NFC-SCAFFOLD: guarded by
-    // OuterIsHardwareLoop so non-hardware loops re-emit it (see revert
-    // checklist above); correct behavior is to elide unconditionally.
-    if (OuterIsHardwareLoop && (&I == Bound.Counter || &I == Bound.Cmp))
+    if (&I == Bound.Counter || &I == Bound.Cmp)
       continue;
     OrigBottomInsts.push_back(&I);
   }
@@ -1369,19 +1321,6 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   // PHI and an inner-loop def). removeFromCFG deletes those originals, which
   // would leave the exit reading poison. Remap each such operand to a live
   // clone so the exit reads a defined value.
-  //
-  // KEEP: this remap loop IS the emit-remap fix (branch
-  // olp-4-fix-emit-remap-and-crash) -- do not revert it.
-  //
-  // NFC-SCAFFOLD [branch olp-4-fix-emit-remap-and-crash] -- forward-fix, not a
-  // plain revert: the mapping VALUE uses SteadyLS.cloneOf, which reproduces the
-  // pre-refactor live-out. That value is off by the peeled last iteration (a
-  // latent baseline bug, NOT introduced here) but keeps this branch NFC. The
-  // correct value is the last-iteration clone. TO CORRECT (do this, don't
-  // remove the loop): change SteadyLS.cloneOf(V) to LastIterLS.cloneOf(V) so
-  // the exit reads the last-iteration value (e.g. %sum.next.lastiter, already
-  // materialized in the lastiter bottom block), then regenerate the affected
-  // tests. See outer-loop-pipelining-exit-no-phi.ll.
   for (Instruction &I : *OrigExit) {
     if (isa<PHINode>(&I))
       continue;
@@ -1788,7 +1727,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
     convertOuterLoopToHardwareLoop(SteadyLS);
 
   // Create the last-iteration region from the steady loop.
-  peelLastIteration(OrigLS, SteadyLS, OuterIsHardwareLoop);
+  peelLastIteration(OrigLS, SteadyLS);
 
   // Adjust itercount metadata to reflect the reduced trip count.
   SteadyLS.updateLoopMetadata();
