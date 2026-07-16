@@ -25,8 +25,8 @@ class TargetRegisterInfo;
 
 namespace AIERegUnitUtils {
 
-/// Add the reg-units of \p Phys to \p Out. \p Out is expected to be sized
-/// TRI.getNumRegUnits(); bits are added, never cleared.
+/// Adds \p Phys's reg-units to \p Out (sized TRI.getNumRegUnits()); callers
+/// resolve vregs via VRM first, unlike llvm::LiveRegUnits::accumulate.
 void addRegUnits(const TargetRegisterInfo &TRI, MCRegister Phys,
                  BitVector &Out);
 

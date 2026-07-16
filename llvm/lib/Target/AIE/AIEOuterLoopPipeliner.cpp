@@ -1072,9 +1072,9 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src) {
   // and stores resolve their exits to it. It carries no stage-0 prefetch.
   BasicBlock *LastIterBottom =
       BasicBlock::Create(Ctx, "lastiter.stage1.bottom", F, Exit);
+  assert(Src.getInnerExit() == Src.getBottom() &&
+         "LoopStructure invariant: inner exit is the bottom block");
   CloneMap[Src.getBottom()] = LastIterBottom;
-  if (Src.getInnerExit() == Src.getBottom())
-    CloneMap[Src.getInnerExit()] = LastIterBottom;
 
   InnerExit = LastIterBottom;
   TopRegion.assign({LastIterTop});

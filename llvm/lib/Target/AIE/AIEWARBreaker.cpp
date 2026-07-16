@@ -8,21 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Breaks write-after-read hazards introduced by AIEOuterLoopPipeliner in
-// the steady-state epilog. A rotated def can land on a (sub-)register
-// that the surrounding epilog code (or a back-edge consumer) also reads,
-// forming a WAR that pushes the rotated write several bundles late.
-//
-// Detection (`WARScanner`) is a single intra-MBB walk over reg-units. The
-// scanner seeds a "blocked" reg-unit set with everything live-in to the
-// block and folds use operands in as it goes. A conflicting def is recorded
-// only when its vreg appeared as a prior use in the block; candidates are
-// coalesced per def-vreg via a DenseMap index.
-//
-// A candidate whose vreg was used earlier in the block is resolved by
-// splitting it at the touched defs and pinning the fresh vreg to a
-// non-blocked physreg. Glue COPYs restore the original vreg before the
-// terminator.
+// Breaks write-after-read hazards that AIEOuterLoopPipeliner's epilog
+// rotation can introduce, by splitting the rotated def into a fresh vreg.
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,6 +37,8 @@
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Support/Debug.h"
 
+#include <optional>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-war-breaker"
@@ -61,8 +50,8 @@ static cl::opt<bool> RestrictToOuterLoopEpilog(
 
 namespace {
 
-/// Per-pass cache of COPY costs keyed on (DstPhys, SrcPhys) -- there is no
-/// TargetInstrInfo::estimateCopyCost hook, so cost is measured empirically.
+/// Per-pass cache of COPY costs keyed on (DstPhys, SrcPhys): copyPhysReg's
+/// own emission is the only source of truth, so cost is measured by emitting.
 class CopyCostCache {
   DenseMap<std::pair<MCRegister, MCRegister>, int> Cache;
 
@@ -96,19 +85,22 @@ struct WARCandidate {
   bool IsRejected = false;
 };
 
-/// The glue-COPY emission plan for a same-LI split: either one
-/// full-class COPY (CoversFull=true, SubRegs empty) or one COPY per
-/// listed touched sub-reg index, in first-seen program order.
+/// Whether \p Touched already covers every lane of \p Full.
+static bool coversFullRegister(LaneBitmask Touched, LaneBitmask Full) {
+  return (Touched & Full) == Full;
+}
+
+/// Glue-COPY emission plan for a same-LI split: full-class or per-lane.
 struct GlueCopyPlan {
   bool CoversFull = false;
-  SmallVector<unsigned, 4> SubRegs;
+  SmallVector<unsigned, 4> SubRegsInProgramOrder;
 };
 
 static GlueCopyPlan planGlueCopies(const MachineRegisterInfo &MRI,
                                    const WARCandidate &C) {
   GlueCopyPlan Plan;
   const LaneBitmask FullMask = MRI.getMaxLaneMaskForVReg(C.DefVReg);
-  if ((C.TouchedLanes & FullMask) == FullMask) {
+  if (coversFullRegister(C.TouchedLanes, FullMask)) {
     Plan.CoversFull = true;
     return Plan;
   }
@@ -117,7 +109,7 @@ static GlueCopyPlan planGlueCopies(const MachineRegisterInfo &MRI,
     const unsigned SubIdx = DefMO->getSubReg();
     if (!SubIdx || !Seen.insert(SubIdx).second)
       continue;
-    Plan.SubRegs.push_back(SubIdx);
+    Plan.SubRegsInProgramOrder.push_back(SubIdx);
   }
   return Plan;
 }
@@ -131,9 +123,7 @@ static void addLiveInUnits(const MachineBasicBlock &MBB,
     addRegUnits(TRI, LI.PhysReg, Out);
 }
 
-/// Resolve \p MO to its concrete (sub-)physreg via VRM. Returns 0 if the
-/// operand has no register, the register is not VRM-assigned, or the
-/// sub-register index does not exist.
+/// Resolves \p MO to its concrete (sub-)physreg via VRM; null if unresolved.
 static MCRegister resolveOperandToPhys(const MachineOperand &MO,
                                        const TargetRegisterInfo &TRI,
                                        const VirtRegMap &VRM) {
@@ -161,11 +151,8 @@ static LaneBitmask laneMaskOf(const MachineOperand &MO,
   return LaneBitmask::getAll();
 }
 
-/// Recompute the "blocked" reg-unit set for a candidate whose chain
-/// head is \p HeadMI: block everything live-in to the block plus every
-/// physreg read by an instruction strictly before the head. Resolved
-/// against live VRM so it reflects any splits applied to earlier
-/// candidates -- there is no stored snapshot to fall out of sync.
+/// Blocked reg-units before \p HeadMI: live-ins plus every physreg read
+/// earlier, re-resolved against live VRM so earlier splits are reflected.
 static BitVector computeBlockedUnits(const MachineBasicBlock &MBB,
                                      const MachineInstr *HeadMI,
                                      const TargetRegisterInfo &TRI,
@@ -187,107 +174,115 @@ static BitVector computeBlockedUnits(const MachineBasicBlock &MBB,
 /// Single-pass scanner over an MBB. Produces candidates that need an SSA
 /// split, coalesced per def-vreg. The outer-loop-epilog filter lives in caller.
 class WARScanner {
+  MachineBasicBlock &MBB;
   const MachineRegisterInfo &MRI;
   const TargetRegisterInfo &TRI;
   const VirtRegMap &VRM;
 
   BitVector BlockedUnits;
+  BitVector DefUnitsScratch;
   DenseSet<Register> UsedVRegs;
 
   SmallVector<WARCandidate, 4> Candidates;
   DenseMap<Register, size_t> CandidateIndex;
 
-  /// Reject partial-lane candidates whose value is read on an untouched
-  /// lane after the chain (see comment at the call site).
-  void rejectUntouchedLaneReads(MachineBasicBlock &MBB);
+  void recordCandidateDef(MachineOperand &DefMO);
+  void foldUse(const MachineOperand &UseMO, const MachineInstr &MI);
+
+  /// Rejects partial-lane candidates whose value is read on an untouched lane.
+  void rejectUntouchedLaneReads();
 
 public:
-  WARScanner(const MachineBasicBlock &MBB, const MachineRegisterInfo &MRI,
+  WARScanner(MachineBasicBlock &MBB, const MachineRegisterInfo &MRI,
              const TargetRegisterInfo &TRI, const VirtRegMap &VRM)
-      : MRI(MRI), TRI(TRI), VRM(VRM), BlockedUnits(TRI.getNumRegUnits()) {
+      : MBB(MBB), MRI(MRI), TRI(TRI), VRM(VRM),
+        BlockedUnits(TRI.getNumRegUnits()),
+        DefUnitsScratch(TRI.getNumRegUnits()) {
     addLiveInUnits(MBB, TRI, BlockedUnits);
   }
 
-  void scan(MachineBasicBlock &MBB);
+  void scan();
   ArrayRef<WARCandidate> candidates() const { return Candidates; }
 };
 
-void WARScanner::scan(MachineBasicBlock &MBB) {
-  BitVector DefUnits(TRI.getNumRegUnits());
+void WARScanner::scan() {
   for (MachineInstr &MI : MBB) {
     if (MI.isDebugInstr())
       continue;
 
-    // Check non-tied renameable defs against the running blocked set.
-    for (MachineOperand &DefMO : MI.all_defs()) {
-      if (DefMO.isTied())
-        continue;
-      const Register DefReg = DefMO.getReg();
-      const bool IsRenameableVReg = DefReg.isVirtual() && VRM.hasPhys(DefReg) &&
-                                    !VRM.hasRequiredPhys(DefReg);
-      if (!IsRenameableVReg)
-        continue;
-      const MCRegister Phys = resolveOperandToPhys(DefMO, TRI, VRM);
-      if (!Phys)
-        continue;
-      DefUnits.reset();
-      addRegUnits(TRI, Phys, DefUnits);
-      if (!DefUnits.anyCommon(BlockedUnits))
-        continue;
-      if (!UsedVRegs.contains(DefReg))
-        continue;
-
-      // Inline coalesce into per-vreg candidate.
-      auto [It, Inserted] =
-          CandidateIndex.try_emplace(DefReg, Candidates.size());
-      if (Inserted) {
-        WARCandidate New;
-        New.DefVReg = DefReg;
-        New.TouchedDefOps.push_back(&DefMO);
-        New.TouchedLanes = laneMaskOf(DefMO, TRI);
-        Candidates.push_back(std::move(New));
-      } else {
-        WARCandidate &Existing = Candidates[It->second];
-        if (Existing.HasInterveningUse) {
-          Existing.IsRejected = true;
-          continue;
-        }
-        if (Existing.IsRejected)
-          continue;
-        Existing.TouchedDefOps.push_back(&DefMO);
-        Existing.TouchedLanes |= laneMaskOf(DefMO, TRI);
-      }
-    }
+    for (MachineOperand &DefMO : MI.all_defs())
+      if (!DefMO.isTied())
+        recordCandidateDef(DefMO);
 
     // Fold uses (after def-check, so same-instr uses are not "prior").
-    for (const MachineOperand &UseMO : MI.uses()) {
-      const MCRegister Phys = resolveOperandToPhys(UseMO, TRI, VRM);
-      if (Phys)
-        addRegUnits(TRI, Phys, BlockedUnits);
-      if (!UseMO.isReg() || !UseMO.getReg().isVirtual())
-        continue;
-      const Register UsedVReg = UseMO.getReg();
-      UsedVRegs.insert(UsedVReg);
-      auto It = CandidateIndex.find(UsedVReg);
-      if (It == CandidateIndex.end())
-        continue;
-      WARCandidate &Existing = Candidates[It->second];
-      if (Existing.TouchedDefOps.back()->getParent() != &MI)
-        Existing.HasInterveningUse = true;
-    }
+    for (const MachineOperand &UseMO : MI.uses())
+      foldUse(UseMO, MI);
   }
 
-  rejectUntouchedLaneReads(MBB);
+  rejectUntouchedLaneReads();
 }
 
-void WARScanner::rejectUntouchedLaneReads(MachineBasicBlock &MBB) {
+void WARScanner::recordCandidateDef(MachineOperand &DefMO) {
+  const Register DefReg = DefMO.getReg();
+  const bool IsRenameableVReg =
+      DefReg.isVirtual() && VRM.hasPhys(DefReg) && !VRM.hasRequiredPhys(DefReg);
+  if (!IsRenameableVReg)
+    return;
+  const MCRegister Phys = resolveOperandToPhys(DefMO, TRI, VRM);
+  if (!Phys)
+    return;
+  DefUnitsScratch.reset();
+  addRegUnits(TRI, Phys, DefUnitsScratch);
+  if (!DefUnitsScratch.anyCommon(BlockedUnits))
+    return;
+  if (!UsedVRegs.contains(DefReg))
+    return;
+
+  // Inline coalesce into per-vreg candidate.
+  auto [It, Inserted] = CandidateIndex.try_emplace(DefReg, Candidates.size());
+  if (Inserted) {
+    WARCandidate New;
+    New.DefVReg = DefReg;
+    New.TouchedDefOps.push_back(&DefMO);
+    New.TouchedLanes = laneMaskOf(DefMO, TRI);
+    Candidates.push_back(std::move(New));
+    return;
+  }
+  WARCandidate &Existing = Candidates[It->second];
+  if (Existing.HasInterveningUse) {
+    Existing.IsRejected = true;
+    return;
+  }
+  if (Existing.IsRejected)
+    return;
+  Existing.TouchedDefOps.push_back(&DefMO);
+  Existing.TouchedLanes |= laneMaskOf(DefMO, TRI);
+}
+
+void WARScanner::foldUse(const MachineOperand &UseMO, const MachineInstr &MI) {
+  const MCRegister Phys = resolveOperandToPhys(UseMO, TRI, VRM);
+  if (Phys)
+    addRegUnits(TRI, Phys, BlockedUnits);
+  if (!UseMO.isReg() || !UseMO.getReg().isVirtual())
+    return;
+  const Register UsedVReg = UseMO.getReg();
+  UsedVRegs.insert(UsedVReg);
+  auto It = CandidateIndex.find(UsedVReg);
+  if (It == CandidateIndex.end())
+    return;
+  WARCandidate &Existing = Candidates[It->second];
+  if (Existing.TouchedDefOps.back()->getParent() != &MI)
+    Existing.HasInterveningUse = true;
+}
+
+void WARScanner::rejectUntouchedLaneReads() {
   // The fresh vreg only defines the touched lanes, so a downstream read of
   // an untouched lane would become undefined. Drop such candidates.
   for (WARCandidate &C : Candidates) {
     if (C.IsRejected)
       continue;
     const LaneBitmask FullMask = MRI.getMaxLaneMaskForVReg(C.DefVReg);
-    if ((C.TouchedLanes & FullMask) == FullMask)
+    if (coversFullRegister(C.TouchedLanes, FullMask))
       continue;
     const LaneBitmask UntouchedLanes = ~C.TouchedLanes & FullMask;
     const MachineInstr *LastDef = C.TouchedDefOps.back()->getParent();
@@ -316,54 +311,59 @@ class AIEWARBreaker : public MachineFunctionPass {
   CopyCostCache CostCache;
   BitVector CSRRegs;
 
-  /// Pick a non-CSR physreg in \p RC whose reg-units do not overlap
-  /// \p BlockedUnits and that is free over [Start, End). Returns
-  /// NoRegister if none survives.
+  /// The rename physreg chosen for a candidate and its glue-COPY cost.
+  struct RenamePlan {
+    MCPhysReg Phys;
+    int Cost;
+  };
+
+  /// Picks a non-CSR physreg in \p RC free of \p BlockedUnits and free
+  /// over [Start, End); NoRegister if none qualifies.
   MCPhysReg pickRenamePhysReg(const TargetRegisterClass &RC,
                               const BitVector &BlockedUnits, SlotIndex Start,
                               SlotIndex End) const;
 
-  /// SSA-level split for a same-LI candidate. Allocates a
-  /// fresh vreg, rewrites the touched defs (and any uses strictly
-  /// after the last touched def) to the new vreg, emits glue COPYs
-  /// before the terminator to restore the original vreg's name, and
-  /// pins the fresh vreg via LRM.
+  /// Picks candidate \p C's rename physreg and its cost under \p Plan, or
+  /// nullopt if no physreg survives blocking and interference.
+  std::optional<RenamePlan> planRename(MachineBasicBlock &MBB,
+                                       const WARCandidate &C,
+                                       const GlueCopyPlan &Plan,
+                                       SlotIndex MBBEnd) const;
+
+  /// Splits \p C's def-vreg into a fresh vreg pinned to \p RenamePhys,
+  /// with glue COPYs restoring the original name before the terminator.
   void splitAndRenameVReg(MachineBasicBlock &MBB, const WARCandidate &C,
-                          MCPhysReg RenamePhys);
+                          const GlueCopyPlan &Plan, MCPhysReg RenamePhys);
 
-  /// Rewrite the touched def operands of \p OldVReg to \p NewVReg,
-  /// plus any operands of \p OldVReg in instructions strictly after
-  /// the last touched def. Uses on the same instructions as a
-  /// rewritten def are left on OldVReg (they read the pre-rename
-  /// value).
-  void rewriteTouchedDefs(MachineBasicBlock &MBB, const WARCandidate &C,
-                          Register NewVReg) const;
+  /// Rewrites \p C's touched defs to \p NewVReg and anchors the first
+  /// partial-lane def as undef.
+  void rewriteTouchedDefs(const WARCandidate &C, Register NewVReg) const;
 
-  /// Emit one COPY per touched sub-reg index of \p OldVReg from
-  /// \p NewVReg before \p InsertPt. When the touched lanes cover the
-  /// full register class, emit a single full-class COPY instead.
+  /// Renames operands of \p OldVReg strictly after \p LastDef to \p NewVReg;
+  /// same-instruction uses are left on OldVReg (pre-rename value).
+  void renameOperandsAfter(MachineBasicBlock &MBB, MachineInstr *LastDef,
+                           Register OldVReg, Register NewVReg) const;
+
+  /// Emits full-class or per-sub-reg glue COPYs from \p NewVReg back to
+  /// \p OldVReg before \p InsertPt, per \p Plan.
   void insertGlueCopies(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator InsertPt,
-                        const WARCandidate &C, Register OldVReg,
+                        const GlueCopyPlan &Plan, Register OldVReg,
                         Register NewVReg) const;
 
   /// Recompute live intervals for OldVReg and NewVReg after the split.
   void refreshIntervals(Register OldVReg, Register NewVReg, MCPhysReg OldPhys);
 
-  /// Clear stale `dead` flags on OldVReg's and NewVReg's defs so
-  /// createAndComputeVirtRegInterval re-derives range and dead-ness from
-  /// the current operand graph, instead of truncating at the old flags.
+  /// Clears stale `dead` flags so recomputed live ranges aren't
+  /// truncated at defs that now feed the glue COPY.
   void clearStaleDeadFlags(Register OldVReg, Register NewVReg) const;
 
-  /// Drop OldVReg's LiveRegMatrix assignment, recompute its interval (the
-  /// glue COPYs extended its range past what LRM's union still records),
-  /// and re-pin it to \p OldPhys so the follow-up greedy allocator sees
-  /// accurate occupancy for OldPhys.
+  /// Re-derives OldVReg's live interval and LiveRegMatrix assignment
+  /// after glue COPYs extended its range past OldPhys's recorded union.
   void reassignOldVRegInterval(Register OldVReg, MCPhysReg OldPhys);
 
-  /// Peel any disconnected components out of \p VReg's live interval into
-  /// fresh vregs grown into VRM, so the verifier sees one vreg per
-  /// component.
+  /// Peels any disconnected components of \p VReg's interval into
+  /// fresh vregs grown into VRM (one per component, for the verifier).
   void splitDisconnectedComponents(Register VReg);
 
   bool tryBreakWARsInMBB(MachineBasicBlock &MBB);
@@ -413,31 +413,70 @@ MCPhysReg AIEWARBreaker::pickRenamePhysReg(const TargetRegisterClass &RC,
   return MCRegister::NoRegister;
 }
 
-void AIEWARBreaker::rewriteTouchedDefs(MachineBasicBlock &MBB,
-                                       const WARCandidate &C,
-                                       Register NewVReg) const {
-  const Register OldVReg = C.DefVReg;
+/// COPY cost for candidate \p C given the shared \p Plan and physreg pair;
+/// the same \p Plan insertGlueCopies uses, so cost and emission agree.
+static int costOfFullRename(CopyCostCache &Cache, MachineFunction &MF,
+                            const TargetInstrInfo &TII,
+                            const TargetRegisterInfo &TRI,
+                            const GlueCopyPlan &Plan, MCRegister OldPhys,
+                            MCRegister NewPhys) {
+  if (Plan.CoversFull)
+    return Cache.costOf(MF, TII, OldPhys, NewPhys);
+  int Sum = 0;
+  for (unsigned SubIdx : Plan.SubRegsInProgramOrder) {
+    const MCRegister OldSub = TRI.getSubReg(OldPhys, SubIdx);
+    const MCRegister NewSub = TRI.getSubReg(NewPhys, SubIdx);
+    Sum += Cache.costOf(MF, TII, OldSub, NewSub);
+  }
+  return Sum;
+}
 
-  // Rewrite the touched def operands themselves. The first sub-reg def's
-  // IsUndef flag is set so the recomputed LI knows there is no prior value
-  // of NewVReg's other lanes to preserve. Without this anchor, partial-lane
-  // defs leave NewVReg's main range underdefined and the verifier rejects
-  // subsequent sub-reg reads.
-  bool NeedsUndefAnchor = true;
-  for (MachineOperand *DefMO : C.TouchedDefOps) {
+std::optional<AIEWARBreaker::RenamePlan>
+AIEWARBreaker::planRename(MachineBasicBlock &MBB, const WARCandidate &C,
+                          const GlueCopyPlan &Plan, SlotIndex MBBEnd) const {
+  const MCRegister OldPhys = VRM->getPhys(C.DefVReg);
+
+  // Re-derived from scratch (not the scanner's own BlockedUnits): VRM may
+  // have moved since an earlier candidate in this block was split.
+  BitVector Blocked = computeBlockedUnits(
+      MBB, C.TouchedDefOps.front()->getParent(), *TRI, *VRM);
+  addRegUnits(*TRI, OldPhys, Blocked);
+
+  const TargetRegisterClass *RC = MRI->getRegClass(C.DefVReg);
+  const SlotIndex Start =
+      LIS->getInstructionIndex(*C.TouchedDefOps.front()->getParent());
+  const SlotIndex End =
+      MBB.getFirstTerminator() == MBB.end()
+          ? MBBEnd
+          : LIS->getInstructionIndex(*MBB.getFirstTerminator());
+  const MCPhysReg Phys = pickRenamePhysReg(*RC, Blocked, Start, End);
+  if (!Phys)
+    return std::nullopt;
+
+  MachineFunction &MF = *MBB.getParent();
+  const int Cost =
+      costOfFullRename(CostCache, MF, *TII, *TRI, Plan, OldPhys, Phys);
+  return RenamePlan{Phys, Cost};
+}
+
+void AIEWARBreaker::rewriteTouchedDefs(const WARCandidate &C,
+                                       Register NewVReg) const {
+  for (MachineOperand *DefMO : C.TouchedDefOps)
     DefMO->setReg(NewVReg);
-    if (NeedsUndefAnchor && DefMO->getSubReg()) {
+
+  // The first partial-lane def is anchored undef so the recomputed LI
+  // knows there is no prior value of NewVReg's other lanes to preserve.
+  for (MachineOperand *DefMO : C.TouchedDefOps) {
+    if (DefMO->getSubReg()) {
       DefMO->setIsUndef(true);
-      NeedsUndefAnchor = false;
+      break;
     }
   }
+}
 
-  // Find the last touched def's MI, then rewrite any operands of
-  // OldVReg in strictly later instructions. Operands on the touched-
-  // def MIs themselves (including uses of OldVReg there) are left
-  // alone -- those uses read the pre-rename value.
-  MachineInstr *LastDef = C.TouchedDefOps.back()->getParent();
-
+void AIEWARBreaker::renameOperandsAfter(MachineBasicBlock &MBB,
+                                        MachineInstr *LastDef, Register OldVReg,
+                                        Register NewVReg) const {
   for (MachineBasicBlock::iterator It = std::next(LastDef->getIterator()),
                                    E = MBB.end();
        It != E; ++It)
@@ -448,14 +487,10 @@ void AIEWARBreaker::rewriteTouchedDefs(MachineBasicBlock &MBB,
 
 void AIEWARBreaker::insertGlueCopies(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator InsertPt,
-                                     const WARCandidate &C, Register OldVReg,
+                                     const GlueCopyPlan &Plan, Register OldVReg,
                                      Register NewVReg) const {
-  const GlueCopyPlan Plan = planGlueCopies(*MRI, C);
-
   if (Plan.CoversFull) {
-    // Touched lanes cover the full register: one full-class COPY is
-    // both simpler and gives the same-bank coalescer the best shot
-    // at folding it away.
+    // Full-class COPY: simpler and gives the coalescer its best shot.
     MachineInstr *Glue = BuildMI(MBB, InsertPt, DebugLoc(),
                                  TII->get(TargetOpcode::COPY), OldVReg)
                              .addReg(NewVReg)
@@ -464,13 +499,9 @@ void AIEWARBreaker::insertGlueCopies(MachineBasicBlock &MBB,
     return;
   }
 
-  // Partial-lane case: emit one sub-reg COPY per touched sub-reg
-  // index, in program order from the touched defs. The def-side of
-  // each COPY is a partial def of OldVReg's sub-reg, leaving the
-  // un-rewritten lanes intact on OldVReg's original physreg. The
-  // use-side reads only the named sub-reg lane of NewVReg, so
-  // NewVReg's un-touched lanes are never read.
-  for (unsigned SubIdx : Plan.SubRegs) {
+  // Partial lanes: one sub-reg COPY per touched index; untouched
+  // lanes of NewVReg are never read by these COPYs.
+  for (unsigned SubIdx : Plan.SubRegsInProgramOrder) {
     MachineInstrBuilder MIB =
         BuildMI(MBB, InsertPt, DebugLoc(), TII->get(TargetOpcode::COPY));
     MIB.addReg(OldVReg, RegState::Define, SubIdx);
@@ -490,8 +521,6 @@ void AIEWARBreaker::refreshIntervals(Register OldVReg, Register NewVReg,
 
 void AIEWARBreaker::clearStaleDeadFlags(Register OldVReg,
                                         Register NewVReg) const {
-  // Stale `dead` flags on defs that now feed the glue COPY would truncate
-  // the recomputed range short of the COPY's use.
   for (MachineOperand &Def : MRI->def_operands(OldVReg))
     Def.setIsDead(false);
   for (MachineOperand &Def : MRI->def_operands(NewVReg))
@@ -500,9 +529,6 @@ void AIEWARBreaker::clearStaleDeadFlags(Register OldVReg,
 
 void AIEWARBreaker::reassignOldVRegInterval(Register OldVReg,
                                             MCPhysReg OldPhys) {
-  // The glue COPYs extend OldVReg's live range up to the terminator, so
-  // LiveRegMatrix's union for OldPhys still records the pre-split
-  // (shorter) range and a soon-to-be-freed LiveInterval*.
   LRM->unassign(LIS->getInterval(OldVReg));
   LIS->removeInterval(OldVReg);
   LIS->createAndComputeVirtRegInterval(OldVReg);
@@ -510,59 +536,31 @@ void AIEWARBreaker::reassignOldVRegInterval(Register OldVReg,
 }
 
 void AIEWARBreaker::splitDisconnectedComponents(Register VReg) {
-  // OldVReg may end up disconnected if the chain head's use killed it and
-  // the glue COPY restarted it; NewVReg may if multiple touched defs feed
-  // disjoint use regions. Each peeled-off component needs a fresh vreg
-  // grown into VRM.
+  // OldVReg can split if the head's use killed it before the glue COPY
+  // restarted it; NewVReg can split across disjoint use regions.
   SmallVector<LiveInterval *, 2> SplitLIs;
   LIS->splitSeparateComponents(LIS->getInterval(VReg), SplitLIs);
-  for (LiveInterval *NewLI : SplitLIs) {
-    (void)NewLI;
+  for (size_t I = 0, E = SplitLIs.size(); I != E; ++I)
     VRM->grow();
-  }
-}
-
-/// Compute the COPY cost that splitAndRenameVReg + insertGlueCopies
-/// would incur for candidate \p C with the given physreg pair. The
-/// computation mirrors insertGlueCopies's emission: a single
-/// full-class COPY when touched lanes cover the full register, else
-/// the sum of per-touched-sub-reg COPY costs.
-static int costOfFullRename(CopyCostCache &Cache, MachineFunction &MF,
-                            const TargetInstrInfo &TII,
-                            const TargetRegisterInfo &TRI,
-                            const MachineRegisterInfo &MRI,
-                            const WARCandidate &C, MCRegister OldPhys,
-                            MCRegister NewPhys) {
-  const GlueCopyPlan Plan = planGlueCopies(MRI, C);
-  if (Plan.CoversFull)
-    return Cache.costOf(MF, TII, OldPhys, NewPhys);
-  int Sum = 0;
-  for (unsigned SubIdx : Plan.SubRegs) {
-    const MCRegister OldSub = TRI.getSubReg(OldPhys, SubIdx);
-    const MCRegister NewSub = TRI.getSubReg(NewPhys, SubIdx);
-    Sum += Cache.costOf(MF, TII, OldSub, NewSub);
-  }
-  return Sum;
 }
 
 void AIEWARBreaker::splitAndRenameVReg(MachineBasicBlock &MBB,
                                        const WARCandidate &C,
+                                       const GlueCopyPlan &Plan,
                                        MCPhysReg RenamePhys) {
   const Register OldVReg = C.DefVReg;
   assert(OldVReg.isVirtual() && VRM->hasPhys(OldVReg) &&
          "DefVReg must be a VRM-assigned virtual register");
   const MCPhysReg OrigPhys = VRM->getPhys(OldVReg);
   const TargetRegisterClass *RC = MRI->getRegClass(OldVReg);
-
-  // The rename target was already chosen by the caller against the same
-  // blocked set used for cost estimation; reuse the terminator iterator
-  // for the glue-COPY insertion point.
   const MachineBasicBlock::iterator GlueInsertPt = MBB.getFirstTerminator();
 
   const Register NewVReg = MRI->createVirtualRegister(RC);
   VRM->grow();
-  rewriteTouchedDefs(MBB, C, NewVReg);
-  insertGlueCopies(MBB, GlueInsertPt, C, OldVReg, NewVReg);
+  rewriteTouchedDefs(C, NewVReg);
+  renameOperandsAfter(MBB, C.TouchedDefOps.back()->getParent(), OldVReg,
+                      NewVReg);
+  insertGlueCopies(MBB, GlueInsertPt, Plan, OldVReg, NewVReg);
   refreshIntervals(OldVReg, NewVReg, OrigPhys);
   LRM->assign(LIS->getInterval(NewVReg), RenamePhys);
   LLVM_DEBUG(dbgs() << "  split " << printReg(OldVReg, TRI) << " -> "
@@ -574,13 +572,12 @@ bool AIEWARBreaker::tryBreakWARsInMBB(MachineBasicBlock &MBB) {
   LLVM_DEBUG(dbgs() << "Try WAR break on " << MBB.getFullName() << "\n");
 
   WARScanner Scanner(MBB, *MRI, *TRI, *VRM);
-  Scanner.scan(MBB);
+  Scanner.scan();
 
   // Resolve candidates against a shared fixed slack budget; each
   // accepted split debits its glue-COPY cost from Budget.
   bool Changed = false;
   int Budget = TII->getOuterLoopEpilogCopySlack();
-  MachineFunction &MF = *MBB.getParent();
   const SlotIndex MBBEnd = LIS->getMBBEndIdx(&MBB);
   for (const WARCandidate &C : Scanner.candidates()) {
     if (C.IsRejected) {
@@ -589,36 +586,21 @@ bool AIEWARBreaker::tryBreakWARsInMBB(MachineBasicBlock &MBB) {
       continue;
     }
 
-    // Pick the rename physreg for cost estimation. If it fits the
-    // budget the same physreg is passed to splitAndRenameVReg, so the
-    // estimated COPY pair is exactly the one emitted.
-    const MCRegister OldPhys = VRM->getPhys(C.DefVReg);
-    BitVector Blocked = computeBlockedUnits(
-        MBB, C.TouchedDefOps.front()->getParent(), *TRI, *VRM);
-    addRegUnits(*TRI, OldPhys, Blocked);
-    const TargetRegisterClass *RC = MRI->getRegClass(C.DefVReg);
-    const SlotIndex Start =
-        LIS->getInstructionIndex(*C.TouchedDefOps.front()->getParent());
-    const SlotIndex End =
-        MBB.getFirstTerminator() == MBB.end()
-            ? MBBEnd
-            : LIS->getInstructionIndex(*MBB.getFirstTerminator());
-    const MCPhysReg TentativePhys = pickRenamePhysReg(*RC, Blocked, Start, End);
-    if (!TentativePhys) {
+    const GlueCopyPlan Plan = planGlueCopies(*MRI, C);
+    const std::optional<RenamePlan> Rename = planRename(MBB, C, Plan, MBBEnd);
+    if (!Rename) {
       LLVM_DEBUG(dbgs() << "  cost gate: no rename target for "
                         << printReg(C.DefVReg, TRI) << "\n");
       continue;
     }
-    const int Cost = costOfFullRename(CostCache, MF, *TII, *TRI, *MRI, C,
-                                      OldPhys, TentativePhys);
-    if (Cost > Budget) {
+    if (Rename->Cost > Budget) {
       LLVM_DEBUG(dbgs() << "  cost gate: skipping " << printReg(C.DefVReg, TRI)
-                        << " (cost=" << Cost << " > budget=" << Budget
+                        << " (cost=" << Rename->Cost << " > budget=" << Budget
                         << ")\n");
       continue;
     }
-    splitAndRenameVReg(MBB, C, TentativePhys);
-    Budget -= Cost;
+    splitAndRenameVReg(MBB, C, Plan, Rename->Phys);
+    Budget -= Rename->Cost;
     Changed = true;
   }
   return Changed;
