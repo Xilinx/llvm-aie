@@ -93,16 +93,14 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD3]](s32), %16(p0) :: (store (s32) into %ir.c.ptr.next.steady)
   ; CHECK-NEXT:   [[ADD4:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
-  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[ADD2]], [[C]]
-  ; CHECK-NEXT:   [[ICMP2:%[0-9]+]]:_(s1) = G_ICMP intpred(slt), [[ADD5]](s32), [[SUB]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.10.exit.loopexit:
   ; CHECK-NEXT:   successors: %bb.11(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[ADD6:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
+  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.11.exit:
-  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD6]](s32), %bb.10
+  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD5]](s32), %bb.10
   ; CHECK-NEXT:   $r0 = COPY [[PHI7]](s32)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
 entry:
