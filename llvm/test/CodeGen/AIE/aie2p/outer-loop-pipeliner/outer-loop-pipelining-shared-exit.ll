@@ -13,10 +13,11 @@
 ; (entry -> exit) and the loop back-edge, so the live-out is an LCSSA phi with
 ; an incoming value from entry and one from outer.latch, and there is no
 ; dedicated exit.loopexit block. The pipeliner peels the last outer iteration
-; into cooldown.exit and retargets the exit phi's incoming block to it, but
-; keeps the original incoming value (%acc.next, the second-to-last iteration).
-; The last iteration's accumulator (%acc.next.cd) is computed in cooldown.exit
-; and dropped, so the returned value is off by one iteration.
+; into cooldown.exit and retargets the exit phi's incoming block to it, so the
+; incoming value must also be remapped to the cooldown-block clone (the last
+; iteration's accumulator) rather than the original outer.latch value (the
+; second-to-last iteration) -- otherwise the returned value is off by one
+; iteration. Guards the phi exit live-out remap path on a shared exit block.
 
 define i32 @shared_exit(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
   ; CHECK-LABEL: name: shared_exit
@@ -94,7 +95,7 @@ define i32 @shared_exit(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
   ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %15(p0) :: (store (s32) into %ir.c.ptr.next.steady)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.10.exit:
-  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD]](s32), %bb.9
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD2]](s32), %bb.9
   ; CHECK-NEXT:   $r0 = COPY [[PHI6]](s32)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
 entry:
