@@ -199,7 +199,7 @@ bool AIE2AsmParser::parseIdentifier(OperandVector &Operands) {
   MCRegister RegNo;
   SMLoc Begin;
   SMLoc End;
-  if (parseRegister(RegNo, Begin, End) == MatchOperand_Success) {
+  if (!parseRegister(RegNo, Begin, End)) {
 
     // FIXME: Some of the registers in eD and eDS have the same names.
     // Here, we backpatch the string-matched eD registers into their eDS
@@ -222,7 +222,7 @@ bool AIE2AsmParser::parseIdentifier(OperandVector &Operands) {
     Lex();
   } else
     return Error(Begin, "operand is not a register, nor a known identifier");
-  return MatchOperand_Success;
+  return false;
 }
 
 void LLVMInitializeAIE2AsmParser() {
