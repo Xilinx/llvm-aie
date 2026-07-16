@@ -29,6 +29,7 @@
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIERegUnitUtils.h"
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -60,12 +61,8 @@ static cl::opt<bool> RestrictToOuterLoopEpilog(
 
 namespace {
 
-/// Per-pass cache of COPY costs keyed on (DstPhys, SrcPhys). Each
-/// miss scratch-emits TII->copyPhysReg into a throwaway MBB and
-/// counts the emitted instructions. This is the only architecture-
-/// agnostic way to estimate COPY cost: LLVM upstream has no
-/// TargetInstrInfo::estimateCopyCost hook, and walking the register
-/// class manually would duplicate the target's decomposition rules.
+/// Per-pass cache of COPY costs keyed on (DstPhys, SrcPhys) -- there is no
+/// TargetInstrInfo::estimateCopyCost hook, so cost is measured empirically.
 class CopyCostCache {
   DenseMap<std::pair<MCRegister, MCRegister>, int> Cache;
 
@@ -125,13 +122,7 @@ static GlueCopyPlan planGlueCopies(const MachineRegisterInfo &MRI,
   return Plan;
 }
 
-/// Add the reg-units of \p Phys to \p Out. \p Out is expected to be sized
-/// TRI.getNumRegUnits(); bits are added, never cleared.
-static void addRegUnits(const TargetRegisterInfo &TRI, MCRegister Phys,
-                        BitVector &Out) {
-  for (MCRegUnit RU : TRI.regunits(Phys))
-    Out.set(RU);
-}
+using AIERegUnitUtils::addRegUnits;
 
 /// Seed \p Out with the reg-units of every physreg live-in to \p MBB.
 static void addLiveInUnits(const MachineBasicBlock &MBB,
@@ -290,13 +281,8 @@ void WARScanner::scan(MachineBasicBlock &MBB) {
 }
 
 void WARScanner::rejectUntouchedLaneReads(MachineBasicBlock &MBB) {
-  // splitAndRenameVReg rewrites *every* post-chain operand of the vreg
-  // to the fresh vreg, which only defines the touched lanes. A read of
-  // an untouched lane after the last touched def would therefore become
-  // an undefined read of the fresh vreg's un-defined lanes. Full-coverage
-  // chains (TouchedLanes == the vreg's full mask) can never trip this,
-  // so the common case is unaffected; only partial-lane chains with a
-  // downstream read outside the touched lanes are dropped.
+  // The fresh vreg only defines the touched lanes, so a downstream read of
+  // an untouched lane would become undefined. Drop such candidates.
   for (WARCandidate &C : Candidates) {
     if (C.IsRejected)
       continue;
@@ -362,12 +348,23 @@ class AIEWARBreaker : public MachineFunctionPass {
                         Register NewVReg) const;
 
   /// Recompute live intervals for OldVReg and NewVReg after the split.
-  /// Clears stale `dead` flags, removes + recomputes both intervals,
-  /// re-pins OldVReg to \p OldPhys in LiveRegMatrix (the glue COPYs
-  /// extend OldVReg's range, so its LRM assignment must be dropped and
-  /// redone against the recomputed interval), and splits disconnected
-  /// components of OldVReg into fresh vregs.
   void refreshIntervals(Register OldVReg, Register NewVReg, MCPhysReg OldPhys);
+
+  /// Clear stale `dead` flags on OldVReg's and NewVReg's defs so
+  /// createAndComputeVirtRegInterval re-derives range and dead-ness from
+  /// the current operand graph, instead of truncating at the old flags.
+  void clearStaleDeadFlags(Register OldVReg, Register NewVReg) const;
+
+  /// Drop OldVReg's LiveRegMatrix assignment, recompute its interval (the
+  /// glue COPYs extended its range past what LRM's union still records),
+  /// and re-pin it to \p OldPhys so the follow-up greedy allocator sees
+  /// accurate occupancy for OldPhys.
+  void reassignOldVRegInterval(Register OldVReg, MCPhysReg OldPhys);
+
+  /// Peel any disconnected components out of \p VReg's live interval into
+  /// fresh vregs grown into VRM, so the verifier sees one vreg per
+  /// component.
+  void splitDisconnectedComponents(Register VReg);
 
   bool tryBreakWARsInMBB(MachineBasicBlock &MBB);
 
@@ -421,17 +418,17 @@ void AIEWARBreaker::rewriteTouchedDefs(MachineBasicBlock &MBB,
                                        Register NewVReg) const {
   const Register OldVReg = C.DefVReg;
 
-  // Rewrite the touched def operands themselves. The first touched
-  // def's IsUndefinied flag is set so the recomputed LI knows there is no
-  // prior value of NewVReg's other lanes to preserve. Without this
-  // anchor, partial-lane defs leave NewVReg's main range
-  // underdefined and the verifier rejects subsequent sub-reg reads.
-  bool First = true;
+  // Rewrite the touched def operands themselves. The first sub-reg def's
+  // IsUndef flag is set so the recomputed LI knows there is no prior value
+  // of NewVReg's other lanes to preserve. Without this anchor, partial-lane
+  // defs leave NewVReg's main range underdefined and the verifier rejects
+  // subsequent sub-reg reads.
+  bool NeedsUndefAnchor = true;
   for (MachineOperand *DefMO : C.TouchedDefOps) {
     DefMO->setReg(NewVReg);
-    if (First && DefMO->getSubReg()) {
+    if (NeedsUndefAnchor && DefMO->getSubReg()) {
       DefMO->setIsUndef(true);
-      First = false;
+      NeedsUndefAnchor = false;
     }
   }
 
@@ -484,43 +481,45 @@ void AIEWARBreaker::insertGlueCopies(MachineBasicBlock &MBB,
 
 void AIEWARBreaker::refreshIntervals(Register OldVReg, Register NewVReg,
                                      MCPhysReg OldPhys) {
-  // Stale `dead` flags on defs that now feed the glue COPY would
-  // truncate the recomputed range short of the COPY's use. Clear
-  // them; createAndComputeVirtRegInterval will re-derive both range
-  // and dead-ness from the current operand graph.
+  clearStaleDeadFlags(OldVReg, NewVReg);
+  reassignOldVRegInterval(OldVReg, OldPhys);
+  LIS->createAndComputeVirtRegInterval(NewVReg);
+  splitDisconnectedComponents(OldVReg);
+  splitDisconnectedComponents(NewVReg);
+}
+
+void AIEWARBreaker::clearStaleDeadFlags(Register OldVReg,
+                                        Register NewVReg) const {
+  // Stale `dead` flags on defs that now feed the glue COPY would truncate
+  // the recomputed range short of the COPY's use.
   for (MachineOperand &Def : MRI->def_operands(OldVReg))
     Def.setIsDead(false);
   for (MachineOperand &Def : MRI->def_operands(NewVReg))
     Def.setIsDead(false);
+}
 
-  // The glue COPYs extend OldVReg's live range up to the terminator,
-  // so LiveRegMatrix's union for OldPhys still records the pre-split
-  // (shorter) range and a soon-to-be-freed LiveInterval*. Drop the
-  // LRM assignment before removing the interval, then re-pin OldVReg
-  // to OldPhys against the recomputed interval so the follow-up
-  // greedy allocator sees an accurate occupancy for OldPhys.
+void AIEWARBreaker::reassignOldVRegInterval(Register OldVReg,
+                                            MCPhysReg OldPhys) {
+  // The glue COPYs extend OldVReg's live range up to the terminator, so
+  // LiveRegMatrix's union for OldPhys still records the pre-split
+  // (shorter) range and a soon-to-be-freed LiveInterval*.
   LRM->unassign(LIS->getInterval(OldVReg));
   LIS->removeInterval(OldVReg);
   LIS->createAndComputeVirtRegInterval(OldVReg);
   LRM->assign(LIS->getInterval(OldVReg), OldPhys);
-  LIS->createAndComputeVirtRegInterval(NewVReg);
+}
 
-  // After the split, either vreg may end up with disconnected
-  // components in its recomputed LI: OldVReg if the chain head's use
-  // killed it and the glue COPY restarted it; NewVReg if multiple
-  // touched defs feed disjoint use regions. Peel both into separate
-  // vregs so the verifier (and follow-up greedy) see one vreg per
-  // component. Each cloned vreg must be grown into VRM.
-  auto SplitComponents = [&](Register V) {
-    SmallVector<LiveInterval *, 2> SplitLIs;
-    LIS->splitSeparateComponents(LIS->getInterval(V), SplitLIs);
-    for (LiveInterval *NewLI : SplitLIs) {
-      (void)NewLI;
-      VRM->grow();
-    }
-  };
-  SplitComponents(OldVReg);
-  SplitComponents(NewVReg);
+void AIEWARBreaker::splitDisconnectedComponents(Register VReg) {
+  // OldVReg may end up disconnected if the chain head's use killed it and
+  // the glue COPY restarted it; NewVReg may if multiple touched defs feed
+  // disjoint use regions. Each peeled-off component needs a fresh vreg
+  // grown into VRM.
+  SmallVector<LiveInterval *, 2> SplitLIs;
+  LIS->splitSeparateComponents(LIS->getInterval(VReg), SplitLIs);
+  for (LiveInterval *NewLI : SplitLIs) {
+    (void)NewLI;
+    VRM->grow();
+  }
 }
 
 /// Compute the COPY cost that splitAndRenameVReg + insertGlueCopies
@@ -633,9 +632,7 @@ bool AIEWARBreaker::runOnMachineFunction(MachineFunction &MF) {
   VRM = &getAnalysis<VirtRegMapWrapperLegacy>().getVRM();
   LRM = &getAnalysis<LiveRegMatrixWrapperLegacy>().getLRM();
   LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
-  CSRRegs = BitVector(TRI->getNumRegs());
-  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
-    CSRRegs.set(*CSR);
+  CSRRegs = AIERegUnitUtils::computeCalleeSavedRegSet(*TRI, *MRI);
 
   LLVM_DEBUG(dbgs() << "*** AIE WAR Breaker: " << MF.getName() << " ***\n");
 

@@ -10,8 +10,8 @@
 # operand-tied (a post-increment address VLDA writing the same pointer
 # operand it reads). The scanner must skip tied defs because they
 # encode an atomic read-modify-write rather than a WAR that a rename
-# can break: there is nothing for the SSA split / cheap reassign to
-# move. Pass must leave MIR unchanged.
+# can break: there is nothing an SSA split could break. Pass must leave
+# MIR unchanged.
 
 # RUN: llc -mtriple=aie2ps -verify-machineinstrs --aie-reg-rewrite-mode=basic \
 # RUN:   --start-before=greedy --stop-after=virtregrewriter \

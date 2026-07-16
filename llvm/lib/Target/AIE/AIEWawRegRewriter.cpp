@@ -21,6 +21,7 @@
 #include "AIESlotStatistics.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIERegUnitUtils.h"
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -406,8 +407,7 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
   // Helper: Get RegUnits for a physical register as a BitVector.
   auto GetRegUnits = [&](MCPhysReg Reg) {
     BitVector Units(NumRegUnits);
-    for (MCRegUnit Unit : TRI->regunits(Reg))
-      Units.set(Unit);
+    AIERegUnitUtils::addRegUnits(*TRI, Reg, Units);
     return Units;
   };
 
@@ -502,10 +502,8 @@ AIEWawRegRewriter::computeLRURegisters(const OriginalAllocation &Candidates) {
 
   // ExcludedPhysregs makes sure that each register is only added once to the
   // LRU queue. Additionally, it excludes the callee saved registers
-  BitVector ExcludedPhysRegs{TRI->getNumRegs()};
-
-  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
-    ExcludedPhysRegs[*CSR] = true;
+  BitVector ExcludedPhysRegs =
+      AIERegUnitUtils::computeCalleeSavedRegSet(*TRI, *MRI);
 
   // For each reg class, allocate the candidates in round-robin fashion.
   // If we fail, we fall back to the original allocation

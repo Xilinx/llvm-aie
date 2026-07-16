@@ -1602,6 +1602,13 @@ void CloneLoopStructure::adjustLoopBound() const {
                     << ")\n");
 }
 
+// !{!"Key", i64 1}
+static MDNode *makeBoolLoopHint(LLVMContext &Ctx, StringRef Key) {
+  return MDNode::get(Ctx, {MDString::get(Ctx, Key),
+                           ConstantAsMetadata::get(
+                               ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
+}
+
 // Copy Source's hint entries dropping the consumed enable hint, append the
 // pipeliner success marker and the steady-state epilog marker, and
 // self-reference operand 0 as a loop ID requires.
@@ -1620,19 +1627,8 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
     MDs.push_back(Entry);
   }
 
-  // Append the success marker: !{!"<OuterLoopPipelinedKey>", i64 1}
-  MDNode *SuccessEntry = MDNode::get(
-      Ctx,
-      {MDString::get(Ctx, AIELoopUtils::OuterLoopPipelinedKey),
-       ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
-  MDs.push_back(SuccessEntry);
-
-  // Append the steady-state epilog marker: !{!"<OuterLoopEpilogKey>", i64 1}
-  MDNode *EpilogEntry = MDNode::get(
-      Ctx,
-      {MDString::get(Ctx, AIELoopUtils::OuterLoopEpilogKey),
-       ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
-  MDs.push_back(EpilogEntry);
+  MDs.push_back(makeBoolLoopHint(Ctx, AIELoopUtils::OuterLoopPipelinedKey));
+  MDs.push_back(makeBoolLoopHint(Ctx, AIELoopUtils::OuterLoopEpilogKey));
 
   MDNode *FinalLoopID = MDNode::get(Ctx, MDs);
   FinalLoopID->replaceOperandWith(0, FinalLoopID);

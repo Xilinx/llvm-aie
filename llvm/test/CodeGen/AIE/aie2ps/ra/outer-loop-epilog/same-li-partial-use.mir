@@ -6,13 +6,10 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# Outer-loop pipeliner epilog shape -- same-LI WAR.
-#
-# The epilog reads the livein accumulator (vreg %6), then a rotated-in
-# vmac whose tied-operand chain redefines the SAME vreg in place. The
-# use and the def share both the virtual register and the physical
-# register, so the cheap reassign-the-def path cannot break the WAR;
-# the SSA-level split + glue COPY is the only correct fix.
+# Outer-loop pipeliner epilog shape -- same-LI WAR where the read is
+# on a sub-register of the livein accumulator and the same-vreg redef
+# writes the full register. Exercises the matcher's sub-register
+# overlap handling on the same-LI branch.
 
 # RUN: llc -mtriple=aie2ps -verify-machineinstrs --aie-reg-rewrite-mode=basic \
 # RUN:   --start-before=greedy --stop-after=virtregrewriter \
@@ -21,7 +18,7 @@
 --- |
   target triple = "aie2ps"
 
-  define void @tied_same_li_epilog(ptr addrspace(5) %p_in, ptr %p_chain, ptr addrspace(6) %p_out) {
+  define void @same_li_partial_use(ptr addrspace(5) %p_in, ptr %p_chain, ptr addrspace(6) %p_out) {
   entry:
     br label %inner.loop
 
@@ -43,12 +40,12 @@
   !2 = !{!"llvm.loop.hint.aie-outer-loop-epilog", i64 1}
 ...
 ---
-name:            tied_same_li_epilog
+name:            same_li_partial_use
 alignment:       16
 legalized:       true
 tracksRegLiveness: true
 body:             |
-  ; CHECK-LABEL: name: tied_same_li_epilog
+  ; CHECK-LABEL: name: same_li_partial_use
   ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p1, $p2, $r0, $r8, $x0
@@ -57,7 +54,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.inner.loop:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
-  ; CHECK-NEXT:   liveins: $dm1, $p1, $r0, $r8, $x0
+  ; CHECK-NEXT:   liveins: $dm1:0x000000030000000C, $p1, $r0, $r8, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = nsw ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:   PseudoJNZ renamable $r0, %bb.1
@@ -65,10 +62,10 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.outer.epilog:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
-  ; CHECK-NEXT:   liveins: $dm1, $p1, $r8, $x0
+  ; CHECK-NEXT:   liveins: $dm1:0x000000030000000C, $p1, $r8, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   dead renamable $p1 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 renamable $dm1, undef renamable $s0, killed renamable $p1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign0 renamable $cml1, undef renamable $s0, killed renamable $p1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
   ; CHECK-NEXT:   dead renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X renamable $dm1, renamable $x0, renamable $x0, renamable $r8
   ; CHECK-NEXT:   renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $x0, renamable $x0, killed renamable $r8
   ; CHECK-NEXT:   dead renamable $dm0 = COPY killed renamable $dm1
@@ -97,7 +94,7 @@ body:             |
     successors: %bb.3
 
     $srssign0 = MOVX_mvx_cr_imm 0
-    %1:ep_as_32bit = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 %6, undef %20:es, %1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign0 %6.sub_1024_acc_lo, undef %20:es, %1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
 
     %6:acc2048 = VMAC_vmac_vmul_cm_core_X_X %6, %4, %4, %5
     %6:acc2048 = VMAC_vmac_vmul_cm_core_X_X %6, %4, %4, %5

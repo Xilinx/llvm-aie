@@ -6,11 +6,13 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# Outer-loop pipeliner epilog shape -- same-LI WAR where the epilog
-# reads the full livein accumulator, then partial sub-register defs
-# of the SAME virtual register redefine slices of it via a chained
-# vlda sequence. The use and the partial def share the virtual
-# register, so the split + glue COPY path is required.
+# Outer-loop pipeliner epilog shape -- same-LI WAR.
+#
+# The epilog reads the livein accumulator (vreg %6), then a rotated-in
+# vmac whose accumulate chain redefines the SAME vreg in place. The
+# use and the def share both the virtual register and the physical
+# register, so the SSA-level split + glue COPY is the only way to
+# break the WAR.
 
 # RUN: llc -mtriple=aie2ps -verify-machineinstrs --aie-reg-rewrite-mode=basic \
 # RUN:   --start-before=greedy --stop-after=virtregrewriter \
@@ -19,7 +21,7 @@
 --- |
   target triple = "aie2ps"
 
-  define void @tied_same_li_partial_def(ptr addrspace(5) %p_in, ptr %p_chain, ptr addrspace(6) %p_out) {
+  define void @same_li_vlda_chain(ptr addrspace(5) %p_in, ptr %p_chain, ptr addrspace(6) %p_out) {
   entry:
     br label %inner.loop
 
@@ -41,21 +43,21 @@
   !2 = !{!"llvm.loop.hint.aie-outer-loop-epilog", i64 1}
 ...
 ---
-name:            tied_same_li_partial_def
+name:            same_li_vlda_chain
 alignment:       16
 legalized:       true
 tracksRegLiveness: true
 body:             |
-  ; CHECK-LABEL: name: tied_same_li_partial_def
+  ; CHECK-LABEL: name: same_li_vlda_chain
   ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p1, $p2, $r0, $r8, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = IMPLICIT_DEF
+  ; CHECK-NEXT:   renamable $dm1 = IMPLICIT_DEF
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.inner.loop:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
-  ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $p1, $p2, $r0
+  ; CHECK-NEXT:   liveins: $dm1, $p1, $r0, $r8, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = nsw ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:   PseudoJNZ renamable $r0, %bb.1
@@ -63,14 +65,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.outer.epilog:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
-  ; CHECK-NEXT:   liveins: $dm0:0x000000030000000C, $p1, $p2
+  ; CHECK-NEXT:   liveins: $dm1, $p1, $r8, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $srssign0 = MOVX_mvx_cr_imm 0
-  ; CHECK-NEXT:   dead renamable $p1 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 renamable $dm0, undef renamable $s0, killed renamable $p1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
-  ; CHECK-NEXT:   renamable $bmll1, renamable $p2 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p2, 64
-  ; CHECK-NEXT:   renamable $bmlh1, dead renamable $p2 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p2, 64
-  ; CHECK-NEXT:   renamable $bmll0 = COPY renamable $bmll1
-  ; CHECK-NEXT:   dead renamable $bmlh0 = COPY killed renamable $bmlh1
+  ; CHECK-NEXT:   dead renamable $p1 = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 renamable $dm1, undef renamable $s0, killed renamable $p1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+  ; CHECK-NEXT:   dead renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X renamable $dm1, renamable $x0, renamable $x0, renamable $r8
+  ; CHECK-NEXT:   renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, killed renamable $x0, renamable $x0, killed renamable $r8
+  ; CHECK-NEXT:   dead renamable $dm0 = COPY killed renamable $dm1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.exit:
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -98,8 +99,8 @@ body:             |
     $srssign0 = MOVX_mvx_cr_imm 0
     %1:ep_as_32bit = VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 %6, undef %20:es, %1, 64, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
 
-    %6.sub_512_acc_lo:acc2048, %2:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm %2, 64
-    %6.sub_512_acc_hi:acc2048, %2:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm %2, 64
+    %6:acc2048 = VMAC_vmac_vmul_cm_core_X_X %6, %4, %4, %5
+    %6:acc2048 = VMAC_vmac_vmul_cm_core_X_X %6, %4, %4, %5
 
   bb.3.exit:
     PseudoRET implicit $lr
