@@ -1122,16 +1122,6 @@ void CloneLoopStructure::remapBoundThroughCloneMap() {
 void OrigLoopStructure::removeFromCFG() const {
   SmallVector<BasicBlock *, 8> Dead = blocksInProgramOrder();
 
-  // todo: In the shared-exit topology the exit block's
-  // LCSSA PHIs are rerouted onto the steady-state latch (see swapInClonedLS)
-  // while the now-dead original latch still branches to the exit. Plain
-  // DeleteDeadBlocks would then call exit->removePredecessor(origLatch) and
-  // assert in PHINode::removeIncomingValue, because the PHI no longer lists the
-  // original latch as an incoming block. Detach the dead blocks by hand first
-  // (assert-safe: only remove PHI entries that actually exist) so deletion
-  // cannot hit that assert. This only prevents the crash; the shared-exit
-  // live-out is still miscompiled and needs a proper remap fix -- see
-  // outer-loop-pipelining-shared-exit.ll.
   SmallPtrSet<BasicBlock *, 8> DeadSet(Dead.begin(), Dead.end());
   for (BasicBlock *BB : Dead) {
     for (BasicBlock *Succ : successors(BB)) {
@@ -1239,21 +1229,6 @@ void AIEOuterLoopPipeliner::seedLastIterInputs(
     if (!I->getType()->isVoidTy())
       Map[I] = SteadyLS.lastIterInputFor(I);
 
-  // Each loop-carried header PHI enters as its steady next-iteration value.
-  //
-  // The outer IV is the correct exception: it is dead in the
-  // single last iteration, and for a JNZD hardware loop its steady clone has
-  // been erased (eraseOldCounterCycle), so seeding it would dereference freed
-  // IR. Correct behavior is to always skip it.
-  //
-  // NFC-SCAFFOLD [branch olp-4-fix-emit-remap-and-crash] -- REVERT after
-  // review: The `|| !OuterIsHardwareLoop` below force-seeds IV for
-  // non-hardware-loop outer loops. This exists ONLY so the dead back-edge
-  // control that populateLastIterBottom re-emits (also NFC-SCAFFOLD) reads real
-  // steady values instead of poison, matching the pre-refactor checklines. It
-  // has no effect on correct code. TO REVERT: restore the unconditional skip
-  //     if (&PHI != IV)
-  // (see the full revert checklist in populateLastIterBottom).
   const PHINode *IV = OrigLS.latchCondition().IV;
   for (PHINode &PHI : OrigLS.getTop()->phis())
     if (&PHI != IV || !OuterIsHardwareLoop)
@@ -1298,34 +1273,7 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
   // loop and must be cloned.
   const LatchConditionInfo &Bound = OrigLS.latchCondition();
 
-  // The outer back-edge control (counter add + exit icmp) is dead in the
-  // non-looping last iteration; correct behavior is to always elide it. (For a
-  // JNZD hardware loop the steady counter/limit are also already erased, so it
-  // MUST be elided.)
-  //
-  // NFC-SCAFFOLD [branch olp-4-fix-emit-remap-and-crash] -- REVERT after
-  // review: For non-hardware-loop outer loops we instead RE-EMIT the dead
-  // control, purely to reproduce the pre-refactor checklines (modulo
-  // block/vreg-name drift). This is throwaway and produces dead instructions
-  // only.
-  //
-  // FULL REVERT CHECKLIST for all the dead-back-edge NFC scaffolding (this is
-  // the primary site; seedLastIterInputs cross-references here):
-  //   1. Delete the `if (!OuterIsHardwareLoop) { ...limit remap... }` block
-  //   below.
-  //   2. Make the skip in the loop unconditional:
-  //        if (&I == Bound.Counter || &I == Bound.Cmp) continue;
-  //   3. In seedLastIterInputs, restore the unconditional IV skip
-  //        if (&PHI != IV)
-  //   4. Drop the now-unused `OuterIsHardwareLoop` parameter (here,
-  //      seedLastIterInputs, peelLastIteration) and the `SteadyLS` parameter
-  //      added to this function, plus the `OuterIsHardwareLoop` computation and
-  //      argument passing in performTransformation.
-  //   5. Regenerate exit-no-phi, latch-accumulate, shared-exit.
   if (!OuterIsHardwareLoop) {
-    // Remap the original limit (%N) to the adjusted steady limit (SUB = N-1) so
-    // the re-emitted dead compare matches the steady bound. Seeded here, after
-    // the top/inner clones, so only the bottom compare picks it up.
     const LatchConditionInfo &SteadyBound = SteadyLS.latchCondition();
     LastIterLS.cloneMap()[Bound.Limit] =
         SteadyBound.Cmp->getOperand(SteadyBound.LimitIdx);
@@ -1338,9 +1286,6 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
     // No prefetch in the last-iteration.
     if (isa<LoadInst>(&I))
       continue;
-    // Elide the dead back-edge control. NFC-SCAFFOLD: guarded by
-    // OuterIsHardwareLoop so non-hardware loops re-emit it (see revert
-    // checklist above); correct behavior is to elide unconditionally.
     if (OuterIsHardwareLoop && (&I == Bound.Counter || &I == Bound.Cmp))
       continue;
     OrigBottomInsts.push_back(&I);
@@ -1363,25 +1308,6 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
     PHI.setIncomingBlock(SteadyIdx, LastIterBottom);
   }
 
-  // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
-  // phi, so LCSSA rematerializes the live-out as a plain instruction in the
-  // exit whose operands reference loop-internal values (e.g. the outer-header
-  // PHI and an inner-loop def). removeFromCFG deletes those originals, which
-  // would leave the exit reading poison. Remap each such operand to a live
-  // clone so the exit reads a defined value.
-  //
-  // KEEP: this remap loop IS the emit-remap fix (branch
-  // olp-4-fix-emit-remap-and-crash) -- do not revert it.
-  //
-  // NFC-SCAFFOLD [branch olp-4-fix-emit-remap-and-crash] -- forward-fix, not a
-  // plain revert: the mapping VALUE uses SteadyLS.cloneOf, which reproduces the
-  // pre-refactor live-out. That value is off by the peeled last iteration (a
-  // latent baseline bug, NOT introduced here) but keeps this branch NFC. The
-  // correct value is the last-iteration clone. TO CORRECT (do this, don't
-  // remove the loop): change SteadyLS.cloneOf(V) to LastIterLS.cloneOf(V) so
-  // the exit reads the last-iteration value (e.g. %sum.next.lastiter, already
-  // materialized in the lastiter bottom block), then regenerate the affected
-  // tests. See outer-loop-pipelining-exit-no-phi.ll.
   for (Instruction &I : *OrigExit) {
     if (isa<PHINode>(&I))
       continue;
