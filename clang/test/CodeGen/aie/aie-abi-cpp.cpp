@@ -19,8 +19,8 @@ public:
     C2I(const C2I &other);
 };
 // CHECK-LABEL: define {{[^@]*}}void @_Z8pass_C2I3C2I
-// CHECK-SAME: (ptr noundef [[TMP0:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-SAME: (ptr noundef byval([[CLASS_C2I:%.*]]) align 4 [[TMP0:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_C2I(C2I) {}
 // CHECK-LABEL: define {{[^@]*}}void @_Z7ret_C2Iv
-// CHECK-SAME: (ptr dead_on_unwind noalias writable sret([[CLASS_C2I:%.*]]) align 4 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-SAME: (ptr dead_on_unwind noalias writable sret([[CLASS_C2I]]) align 4 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
 C2I ret_C2I() {}

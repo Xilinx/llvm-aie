@@ -59,7 +59,7 @@ ABIArgInfo AIEABIInfo::classifyReturnType(QualType RetTy) const {
   if (isAggregateTypeForABI(RetTy) &&
       (getContext().getTypeSize(RetTy) > MaxAggregateReturnSize &&
        !RetTy->getAsRecordDecl()->hasAttr<AIE2ReturnInRegistersAttr>()))
-    return getNaturalAlignIndirect(RetTy);
+    return getNaturalAlignIndirect(RetTy, getDataLayout().getAllocaAddrSpace());
 
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
@@ -67,7 +67,7 @@ ABIArgInfo AIEABIInfo::classifyReturnType(QualType RetTy) const {
 
   if (const auto *EIT = RetTy->getAs<BitIntType>())
     if (EIT->getNumBits() > MaxAggregateReturnSize)
-      return getNaturalAlignIndirect(RetTy);
+      return getNaturalAlignIndirect(RetTy, getDataLayout().getAllocaAddrSpace());
 
   auto ArgInfo = ABIArgInfo::getDirect();
   const auto *VT = RetTy->getAs<VectorType>();
