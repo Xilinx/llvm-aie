@@ -147,6 +147,9 @@ Improvements to Coverage Mapping
 Bug Fixes in This Version
 -------------------------
 
+- Clang now outputs correct values when #embed data contains bytes with negative
+  signed char values (#GH102798).
+
 Bug Fixes to Compiler Builtins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -254,9 +257,6 @@ clang-format
 libclang
 --------
 
-- Fixed a buffer overflow in ``CXString`` implementation. The fix may result in
-  increased memory allocation.
-
 Code Completion
 ---------------
 
@@ -296,6 +296,7 @@ Python Binding Changes
 OpenMP Support
 --------------
 - Added support 'no_openmp_constructs' assumption clause.
+- Added support for 'omp stripe' directive.
 
 Improvements
 ^^^^^^^^^^^^
