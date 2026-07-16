@@ -142,14 +142,24 @@ public:
   void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
             MemoryBankBits MemoryBanks = 0, MemoryObjectsBits ObjectsBits = 0,
             SmallVector<int, 2> MemoryAccessCycles = {}) {
+    // Convert to MemoryObjectPair: assign same bits to both Load and Store
+    // to preserve test semantics (tests don't distinguish load vs store).
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = ObjectsBits;
+    ObjPair.Store = ObjectsBits;
     enterResources(MockScoreboard, &Itins, SchedClass, SlotSet, MemoryBanks,
-                   ObjectsBits, MemoryAccessCycles, Delta, std::nullopt);
+                   ObjPair, MemoryAccessCycles, Delta, std::nullopt);
   }
   bool hazard(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
               MemoryBankBits MemoryBanks = 0, MemoryObjectsBits ObjectsBits = 0,
               SmallVector<int, 2> MemoryAccessCycles = {}) {
+    // Convert to MemoryObjectPair: assign same bits to both Load and Store
+    // to preserve test semantics (tests don't distinguish load vs store).
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = ObjectsBits;
+    ObjPair.Store = ObjectsBits;
     return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet, SlotSet,
-                         MemoryBanks, ObjectsBits, MemoryAccessCycles, Delta,
+                         MemoryBanks, ObjPair, MemoryAccessCycles, Delta,
                          std::nullopt);
   }
   void AdvanceCycle() override { MockScoreboard.advance(); }
@@ -163,6 +173,52 @@ public:
   }
   void blockResources(int DeltaCycles) {
     AIEHazardRecognizer::blockCycleInScoreboard(DeltaCycles);
+  }
+
+  // Load-only methods: only set LoadMemObjectsBits
+  void emitLoad(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
+                MemoryBankBits MemoryBanks = 0,
+                MemoryObjectsBits LoadObjectsBits = 0,
+                SmallVector<int, 2> MemoryAccessCycles = {}) {
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = LoadObjectsBits;
+    ObjPair.Store = 0;
+    enterResources(MockScoreboard, &Itins, SchedClass, SlotSet, MemoryBanks,
+                   ObjPair, MemoryAccessCycles, Delta, std::nullopt);
+  }
+  bool hazardLoad(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
+                  MemoryBankBits MemoryBanks = 0,
+                  MemoryObjectsBits LoadObjectsBits = 0,
+                  SmallVector<int, 2> MemoryAccessCycles = {}) {
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = LoadObjectsBits;
+    ObjPair.Store = 0;
+    return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet, SlotSet,
+                         MemoryBanks, ObjPair, MemoryAccessCycles, Delta,
+                         std::nullopt);
+  }
+
+  // Store-only methods: only set StoreMemObjectsBits
+  void emitStore(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
+                 MemoryBankBits MemoryBanks = 0,
+                 MemoryObjectsBits StoreObjectsBits = 0,
+                 SmallVector<int, 2> MemoryAccessCycles = {}) {
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = 0;
+    ObjPair.Store = StoreObjectsBits;
+    enterResources(MockScoreboard, &Itins, SchedClass, SlotSet, MemoryBanks,
+                   ObjPair, MemoryAccessCycles, Delta, std::nullopt);
+  }
+  bool hazardStore(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
+                   MemoryBankBits MemoryBanks = 0,
+                   MemoryObjectsBits StoreObjectsBits = 0,
+                   SmallVector<int, 2> MemoryAccessCycles = {}) {
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = 0;
+    ObjPair.Store = StoreObjectsBits;
+    return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet, SlotSet,
+                         MemoryBanks, ObjPair, MemoryAccessCycles, Delta,
+                         std::nullopt);
   }
 };
 
@@ -680,4 +736,110 @@ TEST(HazardRecognizer, storeStoreDifferentMemoryCycleSerializes) {
   // Same cycle without slot, resources don't overlap -> no hazard.
   EXPECT_FALSE(HR.hazard(14, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
                          /*ObjectsBits=*/0, /*MemoryAccessCycle=*/{6}));
+}
+
+/// Check that two loads accessing the same object at the same cycle conflict.
+TEST(HazardRecognizer, loadLoadObjectConflictHazard) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  // Emit a load with object bits 0b101 at memory cycle 5
+  HR.emitLoad(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+              /*LoadObjectsBits=*/0b101, /*MemoryAccessCycle=*/{5});
+
+  // Another load with overlapping objects at the same cycle should conflict
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/0b001,
+                            /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/0b100,
+                            /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/0b101,
+                            /*MemoryAccessCycle=*/{5}));
+
+  // Non-overlapping objects should not conflict
+  EXPECT_FALSE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*LoadObjectsBits=*/0b010,
+                             /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*LoadObjectsBits=*/0b1000,
+                             /*MemoryAccessCycle=*/{5}));
+
+  // Same objects but different memory cycle should not conflict
+  EXPECT_FALSE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*LoadObjectsBits=*/0b101,
+                             /*MemoryAccessCycle=*/{6}));
+}
+
+/// Check that two stores accessing the same object at the same cycle conflict.
+TEST(HazardRecognizer, storeStoreObjectConflictHazard) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  // Emit a store with object bits 0b101 at memory cycle 5
+  HR.emitStore(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+               /*StoreObjectsBits=*/0b101, /*MemoryAccessCycle=*/{5});
+
+  // Another store with overlapping objects at the same cycle should conflict
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/0b001,
+                             /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/0b100,
+                             /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/0b101,
+                             /*MemoryAccessCycle=*/{5}));
+
+  // Non-overlapping objects should not conflict
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b010,
+                              /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b1000,
+                              /*MemoryAccessCycle=*/{5}));
+
+  // Same objects but different memory cycle should not conflict
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b101,
+                              /*MemoryAccessCycle=*/{6}));
+}
+
+/// Check that a load and a store accessing the same object at the same cycle
+/// do NOT conflict. AIE has separate HW ports for loads and stores.
+TEST(HazardRecognizer, loadStoreObjectNoConflict) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  // Emit a load with object bits 0b101 at memory cycle 5
+  HR.emitLoad(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+              /*LoadObjectsBits=*/0b101, /*MemoryAccessCycle=*/{5});
+
+  // A store with the same objects at the same cycle should NOT conflict
+  // because loads and stores use separate HW ports on AIE.
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b101,
+                              /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b001,
+                              /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b100,
+                              /*MemoryAccessCycle=*/{5}));
+
+  // Similarly, emit a store and check that a load does NOT conflict
+  MockHR HR2(InstrInfo);
+  HR2.emitStore(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                /*StoreObjectsBits=*/0b101, /*MemoryAccessCycle=*/{5});
+
+  EXPECT_FALSE(HR2.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*LoadObjectsBits=*/0b101,
+                              /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR2.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*LoadObjectsBits=*/0b001,
+                              /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR2.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*LoadObjectsBits=*/0b100,
+                              /*MemoryAccessCycle=*/{5}));
 }
