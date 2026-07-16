@@ -1042,8 +1042,10 @@ int AIEBaseInstrInfo::getCoreResumeCycleAfterReleaseLoad() const {
 std::optional<int>
 AIEBaseInstrInfo::getLockResumeDelay(const MachineInstr &Lock,
                                      const MachineInstr &MemMI) const {
+  const bool IsLoad = MemMI.mayLoad();
+  const bool IsStore = MemMI.mayStore();
   // The resume window only constrains memory operations.
-  if (!MemMI.mayLoadOrStore())
+  if (!IsLoad && !IsStore)
     return std::nullopt;
 
   const unsigned SchedClass = getSchedClass(MemMI.getDesc(), MemMI.operands(),
@@ -1061,9 +1063,8 @@ AIEBaseInstrInfo::getLockResumeDelay(const MachineInstr &Lock,
   if (!OptFirstMemCycle)
     return std::nullopt;
 
-  const bool IsLoad = MemMI.mayLoad();
   // Handle partword stores, that load and store
-  const bool IsLoadOnly = !MemMI.mayStore();
+  const bool IsLoadOnly = IsLoad && !IsStore;
   const int AcquireResumeCycle = IsLoad ? getCoreResumeCycleAfterAcquireLoad()
                                         : getCoreResumeCycleAfterAcquireStore();
   const int ReleaseResumeCycle = IsLoadOnly
@@ -1074,7 +1075,12 @@ AIEBaseInstrInfo::getLockResumeDelay(const MachineInstr &Lock,
                                   ? ReleaseResumeCycle
                                   : getCoreResumeCycleAfterLock();
 
-  return CoreResumeCycle - *OptFirstMemCycle + 1;
+  const bool IsStoreOnly = IsStore && !IsLoad;
+  const int FirstIssueMemCycle =
+      isRelease(Lock.getOpcode()) && IsStoreOnly
+          ? std::min(*OptFirstMemCycle, ReleaseResumeCycle)
+          : *OptFirstMemCycle;
+  return CoreResumeCycle - FirstIssueMemCycle + 1;
 }
 
 std::optional<int>
