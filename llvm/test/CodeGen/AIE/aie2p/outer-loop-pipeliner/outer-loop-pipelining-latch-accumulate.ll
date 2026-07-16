@@ -97,7 +97,7 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT: bb.10.exit.loopexit:
   ; CHECK-NEXT:   successors: %bb.11(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
+  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.11.exit:
   ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD5]](s32), %bb.10

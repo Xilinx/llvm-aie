@@ -92,7 +92,7 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT:   [[ADD4:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.9.exit:
-  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
+  ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
   ; CHECK-NEXT:   [[ADD6:%[0-9]+]]:_(s32) = G_ADD [[ADD5]], [[C]]
   ; CHECK-NEXT:   $r0 = COPY [[ADD6]](s32)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0

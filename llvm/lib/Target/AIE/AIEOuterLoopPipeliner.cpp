@@ -1328,7 +1328,7 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
       Value *V = Op.get();
       if (!isa<Instruction>(V) && !isa<Argument>(V))
         continue;
-      if (Value *Mapped = SteadyLS.cloneOf(V); Mapped != V)
+      if (Value *Mapped = LastIterLS.cloneOf(V); Mapped != V)
         Op.set(Mapped);
     }
   }
