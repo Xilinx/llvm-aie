@@ -479,8 +479,8 @@ private:
   bool performTransformation(OrigLoopStructure &OrigLS,
                              const AIE::LoopOptionOverrides &Overrides);
 
-  // Swap a freshly cloned steady-state LS in for the original (rewire preheader
-  // and exit PHIs), leaving the original unreachable and ready for deletion.
+  // Swap a freshly cloned steady-state LS in for the original by rewiring its
+  // preheader, leaving the original unreachable and ready for deletion.
   void swapInClonedLS(const OrigLoopStructure &OrigLS,
                       CloneLoopStructure &SteadyLS) const;
 
@@ -1080,7 +1080,6 @@ CloneLoopStructure::CloneLoopStructure(const LoopStructure &Src) {
 void AIEOuterLoopPipeliner::swapInClonedLS(const OrigLoopStructure &OrigLS,
                                            CloneLoopStructure &SteadyLS) const {
   BasicBlock *Preheader = OrigLS.getPreheader();
-  BasicBlock *OrigExit = OrigLS.getExitBlock();
 
   // Redirecting leaves the original LS unreachable, so capture the preheader on
   // the clone now — LoopInfo can no longer recover it afterwards.
@@ -1088,13 +1087,8 @@ void AIEOuterLoopPipeliner::swapInClonedLS(const OrigLoopStructure &OrigLS,
                                                    SteadyLS.getTop());
   SteadyLS.recordExistingPreheader(Preheader);
 
-  // The clone's latch exit edge still points at OrigExit (left external by
-  // cloneLS); that is correct. Repoint the exit's loop-carried PHIs from
-  // the original latch to the clone's latch, mapping each incoming value
-  // through the clone VMap so the exit sees the clone's definitions.
-  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), SteadyLS.getBottom(),
-                      PhiEdge::Repoint,
-                      [&](Value *V) { return SteadyLS.cloneOf(V); });
+  // The steady latch remains connected to the exit until the last iteration
+  // takes ownership of the exit-PHI incoming edge.
 }
 
 Value *CloneLoopStructure::lastIterInputFor(Value *Src) const {
@@ -1118,16 +1112,7 @@ void CloneLoopStructure::remapBoundThroughCloneMap() {
 void OrigLoopStructure::removeFromCFG() const {
   SmallVector<BasicBlock *, 8> Dead = blocksInProgramOrder();
 
-  // todo: In the shared-exit topology the exit block's
-  // LCSSA PHIs are rerouted onto the steady-state latch (see swapInClonedLS)
-  // while the now-dead original latch still branches to the exit. Plain
-  // DeleteDeadBlocks would then call exit->removePredecessor(origLatch) and
-  // assert in PHINode::removeIncomingValue, because the PHI no longer lists the
-  // original latch as an incoming block. Detach the dead blocks by hand first
-  // (assert-safe: only remove PHI entries that actually exist) so deletion
-  // cannot hit that assert. This only prevents the crash; the shared-exit
-  // live-out is still miscompiled and needs a proper remap fix -- see
-  // outer-loop-pipelining-shared-exit.ll.
+  // Remove external PHI incoming edges before deleting unreachable blocks.
   SmallPtrSet<BasicBlock *, 8> DeadSet(Dead.begin(), Dead.end());
   for (BasicBlock *BB : Dead) {
     for (BasicBlock *Succ : successors(BB)) {
@@ -1309,11 +1294,9 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   BasicBlock *LastIterBottom = LastIterLS.getBottom();
   BranchInst::Create(OrigExit, LastIterBottom);
 
-  for (PHINode &PHI : OrigExit->phis()) {
-    const int SteadyIdx = PHI.getBasicBlockIndex(SteadyLS.getBottom());
-    assert(SteadyIdx >= 0);
-    PHI.setIncomingBlock(SteadyIdx, LastIterBottom);
-  }
+  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), LastIterBottom,
+                      PhiEdge::Repoint,
+                      [&](Value *V) { return LastIterLS.cloneOf(V); });
 
   // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
   // phi, so LCSSA rematerializes the live-out as a plain instruction in the
