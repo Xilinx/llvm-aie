@@ -347,12 +347,10 @@ class OrigLoopStructure : public LoopStructure {
   // Returns the bottom-block stores.
   SmallVector<StoreInst *, 16> collectBottomStores() const;
 
-  // Worklist closure over pipelineable neighbours (forward via users, backward
-  // via operands), each added to Set once; Set must already hold the seeds.
-  void forwardClosure(SmallVectorImpl<Instruction *> &Worklist,
-                      SmallPtrSetImpl<Instruction *> &Set) const;
-  void backwardClosure(SmallVectorImpl<Instruction *> &Worklist,
-                       SmallPtrSetImpl<Instruction *> &Set) const;
+  // Returns the pipelineable closure of Seeds: users if TraverseUsers,
+  // otherwise operands.
+  SmallPtrSet<Instruction *, 32> collectClosure(ArrayRef<Instruction *> Seeds,
+                                                bool TraverseUsers) const;
 
   // The stage-1 set: the split points (IsSplitPoint, reachable from the
   // top-block loads) and their top-block descendants. Empty if none is found.
@@ -827,59 +825,55 @@ bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
   return true;
 }
 
-void OrigLoopStructure::forwardClosure(
-    SmallVectorImpl<Instruction *> &Worklist,
-    SmallPtrSetImpl<Instruction *> &Set) const {
-  while (!Worklist.empty()) {
-    Instruction *I = Worklist.pop_back_val();
-    for (User *U : I->users()) {
-      auto *UI = dyn_cast<Instruction>(U);
-      if (!UI || !isPipelineableValue(UI))
-        continue;
-      if (Set.insert(UI).second)
-        Worklist.push_back(UI);
-    }
-  }
-}
+SmallPtrSet<Instruction *, 32>
+OrigLoopStructure::collectClosure(ArrayRef<Instruction *> Seeds,
+                                  bool TraverseUsers) const {
+  SmallPtrSet<Instruction *, 32> Closure;
+  SmallVector<Instruction *, 32> Worklist;
+  auto Enqueue = [&](Instruction *I) {
+    if (!I)
+      return;
+    if (!isPipelineableValue(I))
+      return;
+    if (Closure.insert(I).second)
+      Worklist.push_back(I);
+  };
+  for (Instruction *I : Seeds)
+    Enqueue(I);
 
-void OrigLoopStructure::backwardClosure(
-    SmallVectorImpl<Instruction *> &Worklist,
-    SmallPtrSetImpl<Instruction *> &Set) const {
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
-    for (Value *Op : I->operands()) {
-      auto *OpI = dyn_cast<Instruction>(Op);
-      if (!OpI || !isPipelineableValue(OpI))
-        continue;
-      if (Set.insert(OpI).second)
-        Worklist.push_back(OpI);
+    if (TraverseUsers) {
+      for (User *U : I->users())
+        Enqueue(dyn_cast<Instruction>(U));
+      continue;
     }
+
+    for (Value *Op : I->operands())
+      Enqueue(dyn_cast<Instruction>(Op));
   }
+  return Closure;
 }
 
 SmallPtrSet<Instruction *, 32> OrigLoopStructure::collectStage1Cone(
     function_ref<bool(const Instruction *)> IsSplitPoint) const {
   // Forward closure from the top-block loads: the candidates a stage-1 split
   // point (e.g. a wide-vector producer; see isStage1SplitPoint) is found among.
-  SmallPtrSet<Instruction *, 32> ReachableFromLoad;
-  SmallVector<Instruction *, 32> Worklist;
+  SmallVector<Instruction *, 16> TopLoads;
   topRegion().forEachInstruction([&](Instruction *I) {
-    if (isa<LoadInst>(I)) {
-      ReachableFromLoad.insert(I);
-      Worklist.push_back(I);
-    }
+    if (isa<LoadInst>(I))
+      TopLoads.push_back(I);
   });
-  forwardClosure(Worklist, ReachableFromLoad);
+  const SmallPtrSet<Instruction *, 32> ReachableFromLoad =
+      collectClosure(TopLoads, /*TraverseUsers=*/true);
 
   // Seed the cone with those split points, then take their forward closure (all
   // descendants within the top).
-  SmallPtrSet<Instruction *, 32> Cone;
-  SmallVector<Instruction *, 16> ConeWorklist;
+  SmallVector<Instruction *, 16> SplitPoints;
   for (Instruction *I : ReachableFromLoad)
-    if (IsSplitPoint(I) && Cone.insert(I).second)
-      ConeWorklist.push_back(I);
-  forwardClosure(ConeWorklist, Cone);
-  return Cone;
+    if (IsSplitPoint(I))
+      SplitPoints.push_back(I);
+  return collectClosure(SplitPoints, /*TraverseUsers=*/true);
 }
 
 void OrigLoopStructure::collectStages(
@@ -905,14 +899,10 @@ void OrigLoopStructure::collectStages(
 }
 
 void OrigLoopStructure::collectStage0FromInnerLoop() {
-  SmallPtrSet<Instruction *, 32> Visited;
-  SmallVector<Instruction *, 16> Worklist;
+  SmallVector<Instruction *, 16> Seeds;
   auto Seed = [&](Value *V) {
-    auto *I = dyn_cast<Instruction>(V);
-    if (!I || !isPipelineableValue(I))
-      return;
-    if (Visited.insert(I).second)
-      Worklist.push_back(I);
+    if (auto *I = dyn_cast<Instruction>(V))
+      Seeds.push_back(I);
   };
   // Seed from values used inside the inner loop.
   for (BasicBlock *BB : getInnerLoop()->blocks())
@@ -925,7 +915,8 @@ void OrigLoopStructure::collectStage0FromInnerLoop() {
       if (PHI.getIncomingBlock(I) == getTop())
         Seed(PHI.getIncomingValue(I));
 
-  backwardClosure(Worklist, Visited);
+  const SmallPtrSet<Instruction *, 32> Visited =
+      collectClosure(Seeds, /*TraverseUsers=*/false);
 
   // Emit the reached candidates in region program order.
   topRegion().forEachInstruction([&](Instruction *I) {
