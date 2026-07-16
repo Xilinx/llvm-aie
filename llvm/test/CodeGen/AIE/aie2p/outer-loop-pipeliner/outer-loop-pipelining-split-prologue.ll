@@ -18,29 +18,30 @@
 ; The prologue contains a 2048-bit-producing call (the "anchor") fed by two
 ; loads. The pass splits the prologue into Part 1 (the loads, which are
 ; pipelined) and Part 2 (the anchor + its descendants, which stay in
-; outer.header and are cloned into cooldown.entry for the last iteration).
+; steady.stage1.top and are cloned into lastiter.stage1.top for the last iteration).
 ;
 ; Expected structure after transformation:
 ;
-;   [outer.header.peel.pro]  <- warm-up: Part-1 loads only, no anchor call
-;   [outer.header]           <- PHIs for pipelined loads + anchor call remains
-;   [outer.latch]            <- Part-1 epilogue loads for next iteration
-;   [cooldown.entry]         <- anchor call cloned (uses epilogue loads)
-;   [inner.header.cd / cooldown.exit]  <- cloned inner loop + final store
+;   [stage0.top]                          <- stage-0 top: Part-1 loads only, no anchor call
+;   [steady.stage1.top]                   <- PHIs for pipelined loads + anchor call remains
+;   [steady.stage1.bottom.and.stage0.top] <- Part-1 loads for next iteration
+;   [lastiter.stage1.top]                 <- anchor call cloned (uses next-iteration loads)
+;   [lastiter.stage1.inner.inner.header]  <- cloned inner loop
+;   [lastiter.stage1.bottom]              <- final store
 
 
-; Peel: Part-1 loads only -- anchor call and set.loop.iterations absent
+; Stage-0 top: Part-1 loads only -- anchor call and set.loop.iterations absent
 
-; Outer header: pipelined PHIs for the loads, anchor call stays, set.loop.iter stays
+; Steady-state header: pipelined PHIs for the loads, anchor call stays, set.loop.iter stays
 
-; Outer latch: epilogue loads for next iteration, no anchor call
+; Steady-state bottom: next-iteration loads, no anchor call
 
-; Cool-down (last iteration) blocks follow the steady loop.
-; Last-iteration entry: anchor cloned using epilogue loads + set.loop.iterations
+; Last-iteration blocks follow the steady loop.
+; Last-iteration top: anchor cloned using next-iteration loads + set.loop.iterations
 
-; Cloned inner loop: uses last-iteration accumulator
+; Last-iteration inner loop: uses last-iteration accumulator
 
-; Last-iteration exit: store only, no loads
+; Last-iteration bottom: store only, no loads
 
 declare <32 x i64> @llvm.aie2p.I512.I512.ACC2048.mul.conf(<16 x i32>, <32 x i16>, i32) #0
 declare void @llvm.set.loop.iterations.i32(i32)

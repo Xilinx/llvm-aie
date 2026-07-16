@@ -34,7 +34,7 @@
 ; CHECK: outermost.header:
 ; CHECK:   br label %stage0.top
 
-; The middle loop should be pipelined: check for the stage-0 (warm-up) block
+; The middle loop should be pipelined: check for the stage-0 top block
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
 ; CHECK:   %v1.steady.top = load i32, ptr %b, align 4
@@ -55,12 +55,12 @@
 ; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
 ; CHECK:   br i1 %middle.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
-; Last-iteration prologue should have set.loop.iterations cloned
+; Last-iteration top should have set.loop.iterations cloned
 ; CHECK: lastiter.stage1.top:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %lastiter.stage1.inner.innermost.header
 
-; Cloned inner loop
+; Last-iteration inner loop
 ; CHECK: lastiter.stage1.inner.innermost.header:
 ; CHECK:   br i1 %innermost.cond.lastiter, label %lastiter.stage1.inner.innermost.header, label %lastiter.stage1.bottom
 

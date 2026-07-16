@@ -36,7 +36,7 @@
 
 ; CHECK-LABEL: define void @ptr_lifting_basic
 
-; Warm-up block: loads only, plus hardware loop setup
+; Stage-0 top block: loads only, plus hardware loop setup
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
@@ -116,7 +116,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 
 ; CHECK-LABEL: define void @ptr_lifting_inner_dep
 
-; Warm-up: load only, plus hardware loop setup
+; Stage-0 top: load only, plus hardware loop setup
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1

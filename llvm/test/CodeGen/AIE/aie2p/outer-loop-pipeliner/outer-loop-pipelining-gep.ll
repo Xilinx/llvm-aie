@@ -17,7 +17,7 @@
 ;
 ; This tests that address computation instructions (GEPs) between PHI pointers
 ; and loads are correctly identified as part of the data-load chain and are
-; included in the stage-0 top and epilogue clones.
+; included in the stage-0 top and steady-state bottom clones.
 ;
 ; Input structure:
 ;   %a.ptr = phi ptr [...]
@@ -25,16 +25,16 @@
 ;   %v0 = load i32, ptr %a.gep
 ;
 ; Expected after transformation:
-;   - Warm-up: GEP cloned with initial PHI values, load uses cloned GEP
-;   - Outer header: pipelined PHIs for both GEPs and loads
-;   - Epilogue: GEP cloned with next-iteration pointers, load uses cloned GEP
+;   - Stage-0 top: GEP cloned with initial PHI values, load uses cloned GEP
+;   - Steady-state header: pipelined PHIs for both GEPs and loads
+;   - Steady-state bottom: GEP cloned with next-iteration pointers, load uses cloned GEP
 ;
 ; Note: The -O2 optimization level runs LSR which transforms the inner loop,
 ; but the key transformation (GEPs being pipelined) is still verified.
 
 ; CHECK-LABEL: define void @nested_loop_with_gep
 
-; Warm-up block: GEPs + loads cloned with initial values (using %a, %b)
+; Stage-0 top block: GEPs + loads cloned with initial values (using %a, %b)
 ; CHECK: stage0.top:
 ; CHECK:   %a.gep.steady.top = getelementptr inbounds i32, ptr %a, i32 %offset
 ; CHECK:   %b.gep.steady.top = getelementptr inbounds i32, ptr %b, i32 %offset
@@ -43,7 +43,7 @@
 ; CHECK-NOT:  call void @llvm.set.loop.iterations
 ; CHECK:      br label %steady.stage1.top
 
-; Outer header: pipelined PHIs for GEPs and loads
+; Steady-state header: pipelined PHIs for GEPs and loads
 ; CHECK: steady.stage1.top:
 ; CHECK-DAG:   %a.gep.steady.phi = phi ptr [ %a.gep.steady.top, %stage0.top ], [ %a.gep.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK-DAG:   %b.gep.steady.phi = phi ptr [ %b.gep.steady.top, %stage0.top ], [ %b.gep.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
@@ -52,7 +52,7 @@
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %steady.stage1.inner.inner.header
 
-; Outer latch: stores + GEPs + loads for NEXT iteration (uses a.ptr.next, b.ptr.next)
+; Steady-state bottom: stores + GEPs + loads for NEXT iteration (uses a.ptr.next, b.ptr.next)
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
 ; CHECK:   %a.gep.steady.bottom = getelementptr inbounds i32, ptr %a.ptr.next.steady, i32 %offset
@@ -61,12 +61,12 @@
 ; CHECK:   %v1.steady.bottom = load i32, ptr %b.gep.steady.bottom, align 4
 ; CHECK:   br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
-; Cool-down entry: set.loop.iterations for last iteration
+; Last-iteration top: set.loop.iterations for last iteration
 ; CHECK: lastiter.stage1.top:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %lastiter.stage1.inner.inner.header
 
-; Cool-down exit: stores only (no prologue GEPs, no prologue loads)
+; Last-iteration bottom: stores only (no stage-0 GEPs, no stage-0 loads)
 ; CHECK: lastiter.stage1.bottom:
 ; CHECK:   store i32
 ; CHECK:   br label %exit
