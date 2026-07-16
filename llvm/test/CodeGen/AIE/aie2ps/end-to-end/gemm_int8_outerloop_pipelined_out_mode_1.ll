@@ -62,7 +62,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; REMARKS-NEXT:   - Prologue:        bb.1.for.body
 ; REMARKS-NEXT:   - PrologueBundles: '12'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup99
-; REMARKS-NEXT:   - EpilogueBundles: '22'
+; REMARKS-NEXT:   - EpilogueBundles: '21'
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -153,7 +153,7 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; ASM-NEXT:  // %bb.3: // %for.cond.cleanup99
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    nopa ; paddb.2d [p3], d2; movs p7, p5; add r1, r30, #-1; vshuffle x10, x1, x0, r4; vmac dm1, dm1, x5, x6, r8
-; ASM-NEXT:    vldb.128 wl1, [p3, #16]; or r30, r1, r1; vshuffle x8, x7, x0, r6; vmac dm0, dm0, x3, x6, r8
+; ASM-NEXT:    nopa ; vldb.128 wl1, [p3, #16]; or r30, r1, r1; vshuffle x8, x7, x0, r6; vmac dm0, dm0, x3, x6, r8
 ; ASM-NEXT:    vldb.128 wl10, [p3, #0]; vshuffle x6, x8, x0, r16; vmac dm3, dm3, x5, x10, r8
 ; ASM-NEXT:    vshuffle x1, x9, x0, r2; vmac dm2, dm2, x3, x10, r8
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x3, [p1], m3; vshuffle x10, x1, x0, r4; vmac dm1, dm1, x5, x6, r8
@@ -167,13 +167,12 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p2], #64; vst.srs.2x cml3, s0, srssign1, [p7], #64; vshuffle x1, x5, x0, r22
 ; ASM-NEXT:    vst.srs.2x cmh3, s0, srssign1, [p7], #64; vshuffle x10, x10, x0, r20
 ; ASM-NEXT:    vst.srs.2x cml2, s0, srssign1, [p7], #64; vshuffle x1, x1, x0, r24
-; ASM-NEXT:    vst.srs.2x cmh2, s0, srssign1, [p7], #64
-; ASM-NEXT:    vst.srs.2x cml1, s0, srssign1, [p7], #64; jnzd r3, r30, p6
-; ASM-NEXT:    vst.srs.2x cmh1, s0, srssign1, [p7], #64 // Delay Slot 5
-; ASM-NEXT:    vst.srs.2x cml0, s0, srssign1, [p7], #64 // Delay Slot 4
-; ASM-NEXT:    mov p4, p7 // Delay Slot 3
-; ASM-NEXT:    vst.srs.2x cmh0, s0, srssign1, [p4], #64 // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    vst.srs.2x cmh2, s0, srssign1, [p7], #64; jnzd r3, r30, p6
+; ASM-NEXT:    vst.srs.2x cml1, s0, srssign1, [p7], #64 // Delay Slot 5
+; ASM-NEXT:    vst.srs.2x cmh1, s0, srssign1, [p7], #64 // Delay Slot 4
+; ASM-NEXT:    vst.srs.2x cml0, s0, srssign1, [p7], #64 // Delay Slot 3
+; ASM-NEXT:    mov p4, p7 // Delay Slot 2
+; ASM-NEXT:    vst.srs.2x cmh0, s0, srssign1, [p4], #64 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %cooldown.entry
 ; ASM-NEXT:    vldb x3, [p1], m3; vmul dm4, x4, x2, r12
 ; ASM-NEXT:    vlda.3d x1, [p1], d1
