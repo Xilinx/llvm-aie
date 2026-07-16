@@ -68,8 +68,7 @@ bool isOuterLoopEpilog(const MachineBasicBlock &MBB) {
   // LoopID by AIEOuterLoopPipeliner::updateLoopMetadata, so it is
   // observed on whichever machine block carries that LoopID (via its
   // terminator's !llvm.loop metadata; see getLoopID).
-  return getLoopMetadata(getLoopID(MBB), "llvm.loop.hint.aie-outer-loop-epilog")
-      .has_value();
+  return getLoopMetadata(getLoopID(MBB), OuterLoopEpilogKey).has_value();
 }
 
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
