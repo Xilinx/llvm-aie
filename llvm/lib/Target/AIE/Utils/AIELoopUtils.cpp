@@ -64,10 +64,8 @@ bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch) {
 }
 
 bool isOuterLoopEpilog(const MachineBasicBlock &MBB) {
-  // The "aie-outer-loop-epilog" marker is appended to the outer loop's
-  // LoopID by AIEOuterLoopPipeliner::updateLoopMetadata, so it is
-  // observed on whichever machine block carries that LoopID (via its
-  // terminator's !llvm.loop metadata; see getLoopID).
+  // Set by AIEOuterLoopPipeliner::updateLoopMetadata; observed on whichever
+  // block carries the outer loop's LoopID (see getLoopID).
   return getLoopMetadata(getLoopID(MBB), OuterLoopEpilogKey).has_value();
 }
 
