@@ -3371,6 +3371,7 @@ void GenericSchedulerBase::setPolicy(CandPolicy &Policy, bool IsPostRA,
 #ifndef NDEBUG
 const char *GenericSchedulerBase::getReasonStr(
   GenericSchedulerBase::CandReason Reason) {
+  // clang-format off
   switch (Reason) {
   case NoCand:         return "NOCAND    ";
   case Only1:          return "ONLY1     ";
@@ -3387,9 +3388,9 @@ const char *GenericSchedulerBase::getReasonStr(
   case TopPathReduce:  return "TOP-PATH  ";
   case BotHeightReduce:return "BOT-HEIGHT";
   case BotPathReduce:  return "BOT-PATH  ";
-  case NextDefUse:     return "DEF-USE   ";
   case NodeOrder:      return "ORDER     ";
   };
+  // clang-format on
   llvm_unreachable("Unknown reason!");
 }
 

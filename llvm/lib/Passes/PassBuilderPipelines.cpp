@@ -56,6 +56,7 @@
 #include "llvm/Transforms/IPO/ElimAvailExtern.h"
 #include "llvm/Transforms/IPO/EmbedBitcodePass.h"
 #include "llvm/Transforms/IPO/ExpandVariadics.h"
+#include "llvm/Transforms/IPO/FatLTOCleanup.h"
 #include "llvm/Transforms/IPO/ForceFunctionAttrs.h"
 #include "llvm/Transforms/IPO/FunctionAttrs.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
@@ -422,6 +423,19 @@ static void addAnnotationRemarksPass(ModulePassManager &MPM) {
 static bool isLTOPreLink(ThinOrFullLTOPhase Phase) {
   return Phase == ThinOrFullLTOPhase::ThinLTOPreLink ||
          Phase == ThinOrFullLTOPhase::FullLTOPreLink;
+}
+
+// Helper to wrap conditionally Coro passes.
+static CoroConditionalWrapper buildCoroWrapper(ThinOrFullLTOPhase Phase) {
+  // TODO: Skip passes according to Phase.
+  ModulePassManager CoroPM;
+  CoroPM.addPass(CoroEarlyPass());
+  CGSCCPassManager CGPM;
+  CGPM.addPass(CoroSplitPass());
+  CoroPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM)));
+  CoroPM.addPass(CoroCleanupPass());
+  CoroPM.addPass(GlobalDCEPass());
+  return CoroConditionalWrapper(std::move(CoroPM));
 }
 
 // TODO: Investigate the cost/benefit of tail call elimination on debugging.
@@ -1678,6 +1692,12 @@ PassBuilder::buildFatLTODefaultPipeline(OptimizationLevel Level, bool ThinLTO,
     MPM.addPass(buildLTOPreLinkDefaultPipeline(Level));
   MPM.addPass(EmbedBitcodePass(ThinLTO, EmitSummary));
 
+  // Perform any cleanups to the IR that aren't suitable for per TU compilation,
+  // like removing CFI/WPD related instructions. Note, we reuse
+  // LowerTypeTestsPass to clean up type tests rather than duplicate that logic
+  // in FatLtoCleanup.
+  MPM.addPass(FatLtoCleanup());
+
   // If we're doing FatLTO w/ CFI enabled, we don't want the type tests in the
   // object code, only in the bitcode section, so drop it before we run
   // module optimization and generate machine code. If llvm.type.test() isn't in
@@ -1848,6 +1868,8 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
     MPM.addPass(LowerTypeTestsPass(nullptr, nullptr,
                                    lowertypetests::DropTestKind::Assume));
 
+    MPM.addPass(buildCoroWrapper(ThinOrFullLTOPhase::FullLTOPostLink));
+
     invokeFullLinkTimeOptimizationLastEPCallbacks(MPM, Level);
 
     // Emit annotation remarks.
@@ -1932,6 +1954,8 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
     MPM.addPass(LowerTypeTestsPass(nullptr, nullptr,
                                    lowertypetests::DropTestKind::Assume));
 
+    MPM.addPass(buildCoroWrapper(ThinOrFullLTOPhase::FullLTOPostLink));
+
     invokeFullLinkTimeOptimizationLastEPCallbacks(MPM, Level);
 
     // Emit annotation remarks.
@@ -1939,6 +1963,9 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
 
     return MPM;
   }
+
+  // TODO: Skip to match buildCoroWrapper.
+  MPM.addPass(CoroEarlyPass());
 
   // Optimize globals to try and fold them into constants.
   MPM.addPass(GlobalOptPass());
@@ -2005,7 +2032,11 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
 
   // If we didn't decide to inline a function, check to see if we can
   // transform it to pass arguments by value instead of by reference.
-  MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(ArgumentPromotionPass()));
+  CGSCCPassManager CGPM;
+  CGPM.addPass(ArgumentPromotionPass());
+  CGPM.addPass(CoroSplitPass(Level != OptimizationLevel::O0));
+  CGPM.addPass(CoroAnnotationElidePass());
+  MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM)));
 
   FunctionPassManager FPM;
   // The IPO Passes may leave cruft around. Clean up after them.
@@ -2157,6 +2188,8 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
   if (PTO.CallGraphProfile)
     MPM.addPass(CGProfilePass(/*InLTOPostLink=*/true));
 
+  MPM.addPass(CoroCleanupPass());
+
   invokeFullLinkTimeOptimizationLastEPCallbacks(MPM, Level);
 
   // Emit annotation remarks.
@@ -2271,14 +2304,7 @@ PassBuilder::buildO0DefaultPipeline(OptimizationLevel Level,
       MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
   }
 
-  ModulePassManager CoroPM;
-  CoroPM.addPass(CoroEarlyPass());
-  CGSCCPassManager CGPM;
-  CGPM.addPass(CoroSplitPass());
-  CoroPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM)));
-  CoroPM.addPass(CoroCleanupPass());
-  CoroPM.addPass(GlobalDCEPass());
-  MPM.addPass(CoroConditionalWrapper(std::move(CoroPM)));
+  MPM.addPass(buildCoroWrapper(Phase));
 
   invokeOptimizerLastEPCallbacks(MPM, Level, Phase);
 
