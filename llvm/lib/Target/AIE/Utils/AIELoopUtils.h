@@ -43,7 +43,7 @@ bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch);
 /// Loop-hint key the outer-loop pipeliner stamps on its steady-state epilog,
 /// and that isOuterLoopEpilog() tests for. Single source for both sides.
 constexpr StringLiteral OuterLoopEpilogKey{
-    "llvm.loop.hint.aie-outer-loop-epilog"};
+    "llvm.loop.hint.aie_outerloop_epilog"};
 
 /// Returns true if MBB is the steady-state epilog block produced by the
 /// outer-loop pipeliner.

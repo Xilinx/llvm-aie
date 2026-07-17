@@ -37,7 +37,7 @@
 
   !0 = distinct !{!0, !1, !2}
   !1 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
-  !2 = !{!"llvm.loop.hint.aie-outer-loop-epilog", i64 1}
+  !2 = !{!"llvm.loop.hint.aie_outerloop_epilog", i64 1}
 ...
 ---
 name:            same_li_partial_use
