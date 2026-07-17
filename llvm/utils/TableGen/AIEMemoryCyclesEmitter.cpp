@@ -180,7 +180,7 @@ void AIEMemoryCyclesEmitter::emitAllMemoryCyclesInfo(raw_ostream &OS) {
 void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
   TGTimer &Timer = Records.getTimer();
   Timer.startTimer("Process definitions");
-  for (const CodeGenSchedClass &SchedClass : SchedModels.explicit_classes())
+  for (const CodeGenSchedClass &SchedClass : SchedModels.explicitSchedClasses())
     evaluateSchedClass(SchedClass);
 
   // Generate code to access scheduling information for memory instructions.
