@@ -54,3 +54,76 @@ body:             |
     %2:ep = VST_dmx_sts_x_st_pstm_nrm_imm %11, %2, 64
     PseudoRET implicit $lr
 ...
+
+# Make sure the four bfp16 VSHUFFLEs get four different EX registers.
+# This is modeled on the innermost loop of GEMM mx9 and exercises the bfp16
+# vector (mexa/640, mewm/320 via the sub_bfp320 halves) and accumulator
+# (acc2048) register classes.
+---
+name:            bfp16
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: bfp16
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm0, $dm2, $ex0, $ex2, $ex4, $ex6, $ey0, $ey1, $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $ex8 = COPY $ex0
+  ; CHECK-NEXT:   renamable $ex10 = COPY $ex2
+  ; CHECK-NEXT:   renamable $r2 = MOV_RLC_imm11_pseudo 106
+  ; CHECK-NEXT:   renamable $r8 = MOV_RLC_imm11_pseudo 972
+  ; CHECK-NEXT:   renamable $dm3 = COPY $dm0
+  ; CHECK-NEXT:   renamable $dm1 = COPY $dm0
+  ; CHECK-NEXT:   renamable $dm0 = COPY $dm2
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dm0, $dm1, $dm2, $dm3, $ex4, $ex6, $ex8, $ex10, $ey0, $ey1, $r2, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex8, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm3 = VMAC_f_vmac_bfp16 killed $dm3, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex10, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bfp16 killed $dm2, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex4, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm1 = VMAC_f_vmac_bfp16 killed $dm1, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex6, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bfp16 killed $dm0, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $dm0, $dm1, $dm2, $dm3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $dm3, implicit killed renamable $dm2, implicit killed renamable $dm1, implicit killed renamable $dm0
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $ex0, $ex2, $ex4, $ex6, $ey0, $ey1, $dm0, $dm2
+    %20:mexa = COPY $ex0
+    %21:mexa = COPY $ex2
+    %22:mexa = COPY $ex4
+    %23:mexa = COPY $ex6
+    %30:eeys = COPY $ey0
+    %31:eeys = COPY $ey1
+    %40:mlockid_reg = MOV_RLC_imm11_pseudo 106
+    %41:mrv8 = MOV_RLC_imm11_pseudo 972
+    %6:acc2048 = COPY $dm0
+    %7:acc2048 = COPY $dm2
+    %8:acc2048 = COPY $dm0
+    %9:acc2048 = COPY $dm2
+    LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    %50:mexa = VSHUFFLE_vec_shuffle_egx %20, undef %60:mexa, %40
+    %6:acc2048 = VMAC_f_vmac_bfp16 %6, %50.sub_bfp320_lo, %30, %31, %50.sub_bfp320_hi, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    %51:mexa = VSHUFFLE_vec_shuffle_egx %21, undef %60:mexa, %40
+    %7:acc2048 = VMAC_f_vmac_bfp16 %7, %51.sub_bfp320_lo, %30, %31, %51.sub_bfp320_hi, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    %52:mexa = VSHUFFLE_vec_shuffle_egx %22, undef %60:mexa, %40
+    %8:acc2048 = VMAC_f_vmac_bfp16 %8, %52.sub_bfp320_lo, %30, %31, %52.sub_bfp320_hi, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    %53:mexa = VSHUFFLE_vec_shuffle_egx %23, undef %60:mexa, %40
+    %9:acc2048 = VMAC_f_vmac_bfp16 %9, %53.sub_bfp320_lo, %30, %31, %53.sub_bfp320_hi, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr, implicit %6, implicit %7, implicit %8, implicit %9
+...
