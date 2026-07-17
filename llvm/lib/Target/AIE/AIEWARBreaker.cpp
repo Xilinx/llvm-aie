@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
+#include "llvm/CodeGen/LiveRegUnits.h"
 #include "llvm/CodeGen/LiveStacks.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -119,8 +120,9 @@ using AIERegUnitUtils::addRegUnits;
 /// Seed \p Out with the reg-units of every physreg live-in to \p MBB.
 static void addLiveInUnits(const MachineBasicBlock &MBB,
                            const TargetRegisterInfo &TRI, BitVector &Out) {
-  for (const auto &LI : MBB.liveins())
-    addRegUnits(TRI, LI.PhysReg, Out);
+  LiveRegUnits LiveIns(TRI);
+  LiveIns.addLiveIns(MBB);
+  Out |= LiveIns.getBitVector();
 }
 
 /// Resolves \p MO to its concrete (sub-)physreg via VRM; null if unresolved.
