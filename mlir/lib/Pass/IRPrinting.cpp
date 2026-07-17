@@ -347,7 +347,7 @@ struct FileTreeIRPrinterConfig : public PassManager::IRPrinterConfig {
 /// from a list of scopes and the pass.
 template <typename RangeT>
 void printAsPassPipeline(RangeT scopes, Pass *pass, raw_ostream &os) {
-  // Add pass scopes like 'builtin.module(emitc.tu('
+  // Add pass scopes like 'builtin.module(emitc.file('
   for (OperationName scope : scopes)
     os << scope << "(";
   pass->printAsTextualPipeline(os);

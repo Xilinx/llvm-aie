@@ -57,23 +57,21 @@ def IntegerIndexOrOpaqueType : Type<CPred<"emitc::isIntegerIndexOrOpaqueType($_s
 "integer, index or opaque type supported by EmitC">;
 def FloatIntegerIndexOrOpaqueType : AnyTypeOf<[EmitCFloatType, IntegerIndexOrOpaqueType]>;
 
-def EmitC_TranslationUnitOp : EmitC_Op<"tu",
-    [IsolatedFromAbove, NoRegionArguments, SymbolTable,
-    OpAsmOpInterface
-  ] # GraphRegionNoTerminator.traits> {
-  let summary = "A translation unit container operation";
+def EmitC_FileOp
+    : EmitC_Op<"file", [IsolatedFromAbove, NoRegionArguments, SymbolTable,
+                        OpAsmOpInterface]#GraphRegionNoTerminator.traits> {
+  let summary = "A file container operation";
   let description = [{
-    A `tu` represents a translation unit that can be emitted
-    into a single C++ file.
+    A `file` represents a single C/C++ file.
 
-    `mlir-translate` emits only the translation unit selected via
-    the `-translation-unit-id=id` flag. By default, no translation units are
-    emitted.
+    `mlir-translate` ignores the body of all `emitc.file` ops
+    unless the `-file-id=id` flag is used. With that flag, all `emitc.file` ops
+    with matching id are emitted.
 
     Example:
 
     ```mlir
-    emitc.tu "main" {
+    emitc.file "main" {
       emitc.func @func_one() {
         emitc.return
       }
@@ -87,15 +85,14 @@ def EmitC_TranslationUnitOp : EmitC_Op<"tu",
   let assemblyFormat = "$id attr-dict-with-keyword $bodyRegion";
   let builders = [OpBuilder<(ins CArg<"StringRef">:$id)>];
   let extraClassDeclaration = [{
-    /// Construct a module from the given location with an optional name.
-    static TranslationUnitOp create(Location loc, StringRef name);
+    /// Construct a file op from the given location with a name.
+    static FileOp create(Location loc, StringRef name);
 
     //===------------------------------------------------------------------===//
     // OpAsmOpInterface Methods
     //===------------------------------------------------------------------===//
 
-    /// EmitC ops in the body of the translation_unit can omit their 'emitc.'
-    /// prefix in the assembly.
+    /// EmitC ops in the body can omit their 'emitc.' prefix in the assembly.
     static ::llvm::StringRef getDefaultDialect() {
       return "emitc";
     }

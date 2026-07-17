@@ -1,7 +1,7 @@
 // RUN: mlir-translate -mlir-to-cpp %s | FileCheck %s --check-prefix NO-FILTER --allow-empty
 // RUN: mlir-translate -mlir-to-cpp -file-id=non-existing %s | FileCheck %s --check-prefix NON-EXISTING --allow-empty
-// RUN: mlir-translate -mlir-to-cpp -file-id=tu_one %s | FileCheck %s --check-prefix TU-ONE
-// RUN: mlir-translate -mlir-to-cpp -file-id=tu_two %s | FileCheck %s --check-prefix TU-TWO
+// RUN: mlir-translate -mlir-to-cpp -file-id=file_one %s | FileCheck %s --check-prefix FILE-ONE
+// RUN: mlir-translate -mlir-to-cpp -file-id=file_two %s | FileCheck %s --check-prefix FILE-TWO
 
 
 // NO-FILTER-NOT: func_one
@@ -10,19 +10,19 @@
 // NON-EXISTING-NOT: func_one
 // NON-EXISTING-NOT: func_two
 
-// TU-ONE: func_one
-// TU-ONE-NOT: func_two
+// FILE-ONE: func_one
+// FILE-ONE-NOT: func_two
 
-// TU-TWO-NOT: func_one
-// TU-TWO: func_two
+// FILE-TWO-NOT: func_one
+// FILE-TWO: func_two
 
-emitc.file "tu_one" {
+emitc.file "file_one" {
   emitc.func @func_one(%arg: f32) {
     emitc.return
   }
 }
 
-emitc.file "tu_two" {
+emitc.file "file_two" {
   emitc.func @func_two(%arg: f32) {
     emitc.return
   }

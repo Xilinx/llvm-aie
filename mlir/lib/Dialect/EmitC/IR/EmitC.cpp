@@ -1479,10 +1479,9 @@ void SwitchOp::getRegionInvocationBounds(
 }
 
 //===----------------------------------------------------------------------===//
-// TranslationUnitOp
+// FileOp
 //===----------------------------------------------------------------------===//
-void TranslationUnitOp::build(OpBuilder &builder, OperationState &state,
-                              StringRef id) {
+void FileOp::build(OpBuilder &builder, OperationState &state, StringRef id) {
   state.addRegion()->emplaceBlock();
   state.attributes.push_back(
       builder.getNamedAttr("id", builder.getStringAttr(id)));
