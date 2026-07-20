@@ -11,12 +11,18 @@
 #include "AIE2InstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "MCTargetDesc/AIEFormat.h"
+#include "llvm/CodeGen/MIRParser/MIRParser.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Target/TargetMachine.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -219,6 +225,20 @@ public:
     return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet, SlotSet,
                          MemoryBanks, ObjPair, MemoryAccessCycles, Delta,
                          std::nullopt);
+  }
+
+  // Methods that set both Load and Store bitmaps independently (for testing
+  // mixed operations like part-word stores, or testing bitmap coexistence).
+  void emitLoadAndStore(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
+                        MemoryBankBits MemoryBanks = 0,
+                        MemoryObjectsBits LoadObjectsBits = 0,
+                        MemoryObjectsBits StoreObjectsBits = 0,
+                        SmallVector<int, 2> MemoryAccessCycles = {}) {
+    MemoryObjectPair ObjPair;
+    ObjPair.Load = LoadObjectsBits;
+    ObjPair.Store = StoreObjectsBits;
+    enterResources(MockScoreboard, &Itins, SchedClass, SlotSet, MemoryBanks,
+                   ObjPair, MemoryAccessCycles, Delta, std::nullopt);
   }
 };
 
@@ -843,3 +863,314 @@ TEST(HazardRecognizer, loadStoreObjectNoConflict) {
                               /*LoadObjectsBits=*/0b100,
                               /*MemoryAccessCycle=*/{5}));
 }
+
+/// Prove that Load and Store bitmaps coexist independently within one cycle.
+/// Emit a load to object A and a store to object B, then verify all four
+/// probe combinations match only their respective bitmaps.
+TEST(HazardRecognizer, loadStoreBitmapsCoexistIndependently) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  // Use different objects for Load vs Store:
+  //   Load to object A (0b01), Store to object B (0b10)
+  const MemoryObjectsBits ObjA = 0b01;
+  const MemoryObjectsBits ObjB = 0b10;
+
+  HR.emitLoadAndStore(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                      /*LoadObjectsBits=*/ObjA, /*StoreObjectsBits=*/ObjB,
+                      /*MemoryAccessCycle=*/{5});
+
+  // Load probe on A → conflict (Load bitmap matches)
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/ObjA,
+                            /*MemoryAccessCycle=*/{5}));
+
+  // Store probe on B → conflict (Store bitmap matches)
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/ObjB,
+                             /*MemoryAccessCycle=*/{5}));
+
+  // Load probe on B → NO conflict (Load bitmap has A, not B)
+  EXPECT_FALSE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*LoadObjectsBits=*/ObjB,
+                             /*MemoryAccessCycle=*/{5}));
+
+  // Store probe on A → NO conflict (Store bitmap has B, not A)
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/ObjA,
+                              /*MemoryAccessCycle=*/{5}));
+}
+
+/// Verify that an instruction filling both Load and Store bitmaps (e.g.,
+/// part-word stores which may have mayLoad() && mayStore()) conflicts
+/// with both a later load and a later store to the same object.
+TEST(HazardRecognizer, bothBitmapsFilledConflictsBoth) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  // Simulate part-word store: both Load and Store set to same object bits.
+  const MemoryObjectsBits SharedObj = 0b101;
+
+  HR.emitLoadAndStore(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                      /*LoadObjectsBits=*/SharedObj,
+                      /*StoreObjectsBits=*/SharedObj,
+                      /*MemoryAccessCycle=*/{5});
+
+  // A later load-only probe to the same object should conflict.
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/SharedObj,
+                            /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/0b001,
+                            /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                            /*LoadObjectsBits=*/0b100,
+                            /*MemoryAccessCycle=*/{5}));
+
+  // A later store-only probe to the same object should also conflict.
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/SharedObj,
+                             /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/0b001,
+                             /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*StoreObjectsBits=*/0b100,
+                             /*MemoryAccessCycle=*/{5}));
+
+  // Non-overlapping objects should not conflict for either load or store.
+  EXPECT_FALSE(HR.hazardLoad(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                             /*LoadObjectsBits=*/0b010,
+                             /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazardStore(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                              /*StoreObjectsBits=*/0b010,
+                              /*MemoryAccessCycle=*/{5}));
+}
+
+//===----------------------------------------------------------------------===//
+// Tests for getMemoryObjectsBits() classification using real MachineInstrs
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+std::unique_ptr<TargetMachine> createAIE2TargetMachine() {
+  auto TT(Triple::normalize("aie2--"));
+  std::string Error;
+  const Target *TheTarget = TargetRegistry::lookupTarget(TT, Error);
+  if (!TheTarget)
+    return nullptr;
+  return std::unique_ptr<TargetMachine>(static_cast<TargetMachine *>(
+      TheTarget->createTargetMachine(TT, "", "", TargetOptions(), std::nullopt,
+                                     std::nullopt, CodeGenOptLevel::Default)));
+}
+
+class GetMemoryObjectsBitsTest : public testing::Test {
+protected:
+  static const char *MIRString;
+  LLVMContext Context;
+  std::unique_ptr<TargetMachine> TM;
+  std::unique_ptr<MachineModuleInfo> MMI;
+  std::unique_ptr<MIRParser> Parser;
+  std::unique_ptr<Module> M;
+
+  static void SetUpTestCase() {
+    LLVMInitializeAIETargetInfo();
+    LLVMInitializeAIETarget();
+    LLVMInitializeAIETargetMC();
+  }
+
+  void SetUp() override {
+    TM = createAIE2TargetMachine();
+    if (!TM)
+      GTEST_SKIP() << "AIE2 target not available";
+    std::unique_ptr<MemoryBuffer> MBuffer =
+        MemoryBuffer::getMemBuffer(MIRString);
+    Parser = createMIRParser(std::move(MBuffer), Context);
+    if (!Parser)
+      report_fatal_error("null MIRParser");
+    M = Parser->parseIRModule();
+    if (!M)
+      report_fatal_error("parseIRModule failed");
+    M->setTargetTriple(TM->getTargetTriple().getTriple());
+    M->setDataLayout(TM->createDataLayout());
+    MMI = std::make_unique<MachineModuleInfo>(TM.get());
+    if (Parser->parseMachineFunctions(*M, *MMI.get()))
+      report_fatal_error("parseMachineFunctions failed");
+  }
+
+  MachineFunction *getMachineFunction(Module *M, StringRef Name) {
+    auto F = M->getFunction(Name);
+    if (!F)
+      report_fatal_error("null Function");
+    auto &MF = MMI->getOrCreateMachineFunction(*F);
+    return &MF;
+  }
+};
+
+// MIR with:
+// - a pure load (LDA_S8_ag_idx_imm from %ir.a)
+// - a part-word RMW store (ST_S8_ag_idx_imm to %ir.b) - has mayLoad && mayStore
+// - a full-word pure store (ST_ag_idx_imm to %ir.c) - only mayStore
+const char *GetMemoryObjectsBitsTest::MIRString = R"MIR(
+--- |
+  define void @test_load_store(ptr %a, ptr %b, ptr %c, i8 %val8, i32 %val32) {
+  entry:
+    %load_val = load i8, ptr %a, align 1
+    store i8 %val8, ptr %b, align 1
+    store i32 %val32, ptr %c, align 4
+    ret void
+  }
+
+...
+---
+name:            test_load_store
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry (align 16):
+    liveins: $p0, $p1, $p2, $r0, $r1
+
+    renamable $r2 = LDA_S8_ag_idx_imm renamable $p0, 0 :: (load (s8) from %ir.a)
+    ST_S8_ag_idx_imm renamable $r0, renamable $p1, 0 :: (store (s8) into %ir.b)
+    ST_dms_sts_idx_imm renamable $r1, renamable $p2, 0 :: (store (s32) into %ir.c)
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r2
+
+...
+)MIR";
+
+/// Test that getMemoryObjectsBits() correctly classifies a load instruction:
+/// - Load fills only Result.Load (non-zero)
+/// - Store remains zero
+TEST_F(GetMemoryObjectsBitsTest, LoadInstructionPopulatesOnlyLoadBits) {
+  MachineFunction *MF = getMachineFunction(M.get(), "test_load_store");
+  const MachineBasicBlock &MBB = MF->front();
+
+  // Find the load instruction (LDA_S8_ag_idx_imm)
+  const MachineInstr *LoadMI = nullptr;
+  for (const MachineInstr &MI : MBB) {
+    if (MI.mayLoad() && !MI.mayStore()) {
+      LoadMI = &MI;
+      break;
+    }
+  }
+  ASSERT_NE(LoadMI, nullptr) << "Could not find load instruction";
+  ASSERT_TRUE(LoadMI->mayLoad());
+  ASSERT_FALSE(LoadMI->mayStore());
+
+  // Create a HazardRecognizer with IsPreRA=false (so getMemoryObjectsBits
+  // works)
+  const auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());
+  AIEAlternateDescriptors AltDescs;
+  AIEHazardRecognizer HR(TII, MF->getSubtarget().getInstrItineraryData(),
+                         AltDescs, /*IsPreRA=*/false);
+
+  MemoryObjectPair Result = HR.getMemoryObjectsBits(LoadMI);
+
+  // Load instruction should populate only the Load bitmap.
+  EXPECT_NE(Result.Load, 0u) << "Load instruction should set Load bits";
+  EXPECT_EQ(Result.Store, 0u) << "Load instruction should NOT set Store bits";
+}
+
+/// Test that a part-word RMW store (ST_S8) populates BOTH Load and Store bits.
+TEST_F(GetMemoryObjectsBitsTest, PartWordStorePopulatesBothLoadAndStoreBits) {
+  MachineFunction *MF = getMachineFunction(M.get(), "test_load_store");
+  const MachineBasicBlock &MBB = MF->front();
+
+  // The part-word store is the only op that both loads and stores (RMW).
+  const MachineInstr *RMWStoreMI = nullptr;
+  for (const MachineInstr &MI : MBB) {
+    if (MI.mayLoad() && MI.mayStore()) {
+      RMWStoreMI = &MI;
+      break;
+    }
+  }
+  ASSERT_NE(RMWStoreMI, nullptr) << "Could not find part-word RMW store";
+
+  const auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());
+  AIEAlternateDescriptors AltDescs;
+  AIEHazardRecognizer HR(TII, MF->getSubtarget().getInstrItineraryData(),
+                         AltDescs, /*IsPreRA=*/false);
+
+  MemoryObjectPair Result = HR.getMemoryObjectsBits(RMWStoreMI);
+
+  // A RMW store must populate BOTH bitmaps with the same object.
+  EXPECT_NE(Result.Load, 0u) << "RMW store should set Load bits";
+  EXPECT_NE(Result.Store, 0u) << "RMW store should set Store bits";
+  EXPECT_EQ(Result.Load, Result.Store)
+      << "RMW store should use the same object in both bitmaps";
+}
+
+/// Test that a full-word pure store (ST_ag_idx_imm) populates only Store bits.
+TEST_F(GetMemoryObjectsBitsTest, PureStorePopulatesOnlyStoreBits) {
+  MachineFunction *MF = getMachineFunction(M.get(), "test_load_store");
+  const MachineBasicBlock &MBB = MF->front();
+
+  // The full-word store is a pure store (stores but does not load).
+  const MachineInstr *PureStoreMI = nullptr;
+  for (const MachineInstr &MI : MBB) {
+    if (MI.mayStore() && !MI.mayLoad()) {
+      PureStoreMI = &MI;
+      break;
+    }
+  }
+  ASSERT_NE(PureStoreMI, nullptr) << "Could not find pure store instruction";
+
+  const auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());
+  AIEAlternateDescriptors AltDescs;
+  AIEHazardRecognizer HR(TII, MF->getSubtarget().getInstrItineraryData(),
+                         AltDescs, /*IsPreRA=*/false);
+
+  MemoryObjectPair Result = HR.getMemoryObjectsBits(PureStoreMI);
+
+  // Pure store should populate only the Store bitmap.
+  EXPECT_NE(Result.Store, 0u) << "Pure store should set Store bits";
+  EXPECT_EQ(Result.Load, 0u) << "Pure store should NOT set Load bits";
+}
+
+/// Test that two instructions accessing different objects get different bits.
+/// The LDA_S8 loads from %ir.a, the ST_S8 (which is RMW) loads from %ir.b.
+/// Both should have non-zero Load bits, and those bits should differ.
+TEST_F(GetMemoryObjectsBitsTest, TwoObjectsGetDifferentLoadBits) {
+  MachineFunction *MF = getMachineFunction(M.get(), "test_load_store");
+  const MachineBasicBlock &MBB = MF->front();
+
+  // Find the pure load (LDA_S8 from %ir.a) and the RMW store (ST_S8 to %ir.b)
+  const MachineInstr *LoadMI = nullptr;
+  const MachineInstr *StoreMI = nullptr;
+  for (const MachineInstr &MI : MBB) {
+    if (MI.mayLoad() && !MI.mayStore() && !LoadMI)
+      LoadMI = &MI;
+    if (MI.mayStore() && !StoreMI)
+      StoreMI = &MI;
+  }
+  ASSERT_NE(LoadMI, nullptr) << "Could not find load instruction";
+  ASSERT_NE(StoreMI, nullptr) << "Could not find store instruction";
+
+  // Create a HazardRecognizer with IsPreRA=false
+  const auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());
+  AIEAlternateDescriptors AltDescs;
+  AIEHazardRecognizer HR(TII, MF->getSubtarget().getInstrItineraryData(),
+                         AltDescs, /*IsPreRA=*/false);
+
+  MemoryObjectPair LoadResult = HR.getMemoryObjectsBits(LoadMI);
+  MemoryObjectPair StoreResult = HR.getMemoryObjectsBits(StoreMI);
+
+  // Both should have Load bits set (LDA is pure load, ST_S8 is RMW).
+  EXPECT_NE(LoadResult.Load, 0u) << "LDA should have non-zero Load bits";
+  EXPECT_NE(StoreResult.Load, 0u)
+      << "ST_S8 (RMW) should have non-zero Load bits";
+
+  // Since they access different objects (%ir.a vs %ir.b), bits should differ.
+  EXPECT_NE(LoadResult.Load, StoreResult.Load)
+      << "Different objects (%ir.a vs %ir.b) should get different Load bits";
+}
+
+} // anonymous namespace
