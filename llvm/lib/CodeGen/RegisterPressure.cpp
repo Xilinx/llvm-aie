@@ -245,7 +245,7 @@ void LiveRegSet::clear() {
 }
 
 static const LiveRange *getLiveRange(const LiveIntervals &LIS, unsigned Reg) {
-  if (Register::isVirtualRegister(Reg))
+  if (Register(Reg).isVirtual())
     return &LIS.getInterval(Reg);
   return LIS.getCachedRegUnit(Reg);
 }
