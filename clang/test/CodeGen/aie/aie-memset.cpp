@@ -14,7 +14,7 @@
 
 
 // DEFAULT-LABEL: define dso_local ptr @_Z10aie_memsetPvii(
-// DEFAULT-SAME: ptr returned writeonly [[PTR:%.*]], i32 noundef [[C:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
+// DEFAULT-SAME: ptr returned writeonly captures(ret: address, provenance) [[PTR:%.*]], i32 noundef [[C:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // DEFAULT-NEXT:  entry:
 // DEFAULT-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
 // DEFAULT-NEXT:    br i1 [[CMP4]], label [[WHILE_BODY_LR_PH:%.*]], label [[WHILE_END:%.*]]
@@ -33,7 +33,7 @@
 // DEFAULT-NEXT:    ret ptr [[PTR]]
 //
 // FBUILTIN-LABEL: define dso_local ptr @_Z10aie_memsetPvii(
-// FBUILTIN-SAME: ptr returned writeonly [[PTR:%.*]], i32 noundef [[C:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
+// FBUILTIN-SAME: ptr returned writeonly captures(ret: address, provenance) [[PTR:%.*]], i32 noundef [[C:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // FBUILTIN-NEXT:  entry:
 // FBUILTIN-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
 // FBUILTIN-NEXT:    br i1 [[CMP4]], label [[WHILE_BODY_LR_PH:%.*]], label [[WHILE_END:%.*]]
@@ -46,7 +46,7 @@
 // FBUILTIN-NEXT:    ret ptr [[PTR]]
 //
 // FNO-BUILTIN-LABEL: define dso_local ptr @_Z10aie_memsetPvii(
-// FNO-BUILTIN-SAME: ptr returned writeonly [[PTR:%.*]], i32 noundef [[C:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
+// FNO-BUILTIN-SAME: ptr returned writeonly captures(ret: address, provenance) [[PTR:%.*]], i32 noundef [[C:%.*]], i32 noundef [[N:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // FNO-BUILTIN-NEXT:  entry:
 // FNO-BUILTIN-NEXT:    [[CMP4:%.*]] = icmp sgt i32 [[N]], 0
 // FNO-BUILTIN-NEXT:    br i1 [[CMP4]], label [[WHILE_BODY_LR_PH:%.*]], label [[WHILE_END:%.*]]
