@@ -48,6 +48,11 @@ func.func @cast_array(%arg : !emitc.array<4xf32>) {
     return
 }
 
+func.func @cast_array_to_pointer(%arg0: !emitc.array<3xi32>) {
+  %1 = emitc.cast %arg0: !emitc.array<3xi32> to !emitc.ptr<i32>
+  return
+}
+
 func.func @c() {
   %1 = "emitc.constant"(){value = 42 : i32} : () -> i32
   %2 = "emitc.constant"(){value = 42 : index} : () -> !emitc.size_t
