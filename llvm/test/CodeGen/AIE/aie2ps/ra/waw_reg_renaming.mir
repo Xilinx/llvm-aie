@@ -85,12 +85,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex8, undef renamable $ex0, renamable $r2
   ; CHECK-NEXT:   $dm3 = VMAC_f_vmac_bfp16 killed $dm3, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex10, undef renamable $ex0, renamable $r2
-  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bfp16 killed $dm2, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex4, undef renamable $ex0, renamable $r2
-  ; CHECK-NEXT:   $dm1 = VMAC_f_vmac_bfp16 killed $dm1, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $ex5 = VSHUFFLE_vec_shuffle_egx renamable $ex6, undef renamable $ex0, renamable $r2
-  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bfp16 killed $dm0, killed $ewl5, $ey0, $ey1, $ewh5, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $ex7 = VSHUFFLE_vec_shuffle_egx renamable $ex10, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bfp16 killed $dm2, killed $ewl7, $ey0, $ey1, $ewh7, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $ex9 = VSHUFFLE_vec_shuffle_egx renamable $ex4, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm1 = VMAC_f_vmac_bfp16 killed $dm1, killed $ewl9, $ey0, $ey1, $ewh9, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $ex11 = VSHUFFLE_vec_shuffle_egx renamable $ex6, undef renamable $ex0, renamable $r2
+  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bfp16 killed $dm0, killed $ewl11, $ey0, $ey1, $ewh11, $r8, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
