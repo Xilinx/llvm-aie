@@ -24,9 +24,11 @@ namespace emitc {
 /// the region of 'op' need almost all be in EmitC dialect. The parameter
 /// 'declareVariablesAtTop' enforces that all variables for op results and block
 /// arguments are declared at the beginning of the function.
+/// If parameter 'fileId' is non-empty, then body of `emitc.file` ops
+/// with matching id are emitted.
 LogicalResult translateToCpp(Operation *op, raw_ostream &os,
                              bool declareVariablesAtTop = false,
-                             StringRef onlyTu = "",
+                             StringRef fileId = {},
                              bool constantsAsVariables = true);
 } // namespace emitc
 } // namespace mlir
