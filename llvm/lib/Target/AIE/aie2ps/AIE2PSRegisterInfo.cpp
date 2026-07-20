@@ -792,10 +792,17 @@ bool AIE2PSRegisterInfo::isVecOrAccRegClass(
   if (AIE2PS::VEC1024RegClass.hasSubClassEq(&RC))
     return true;
 
-  if (AIE2PS::eEY_sRegClass.hasSubClassEq(&RC))
+  // ******** BFP16 vectors ********
+  if (AIE2PS::mEWmRegClass.hasSubClassEq(&RC)) // 320-bit
     return true;
 
-  // ******** Accumulator classes ********
+  if (AIE2PS::mEXaRegClass.hasSubClassEq(&RC)) // 640-bit
+    return true;
+
+  if (AIE2PS::eEY_sRegClass.hasSubClassEq(&RC)) // 1280-bit
+    return true;
+
+  // ******** Accumulator classes (BM/CM/DM) ********
   if (AIE2PS::ACC512RegClass.hasSubClassEq(&RC))
     return true;
 
