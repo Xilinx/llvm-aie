@@ -20,7 +20,7 @@
 #include "mlir/Transforms/DialectConversion.h"
 
 namespace mlir {
-#define GEN_PASS_DEF_CONVERTMATHTOLIBM
+#define GEN_PASS_DEF_CONVERTMATHTOLIBMPASS
 #include "mlir/Conversion/Passes.h.inc"
 } // namespace mlir
 
@@ -163,7 +163,7 @@ ScalarOpToLibmCall<Op>::matchAndRewrite(Op op,
 }
 
 void mlir::populateMathToLibmConversionPatterns(
-    RewritePatternSet &patterns, const ConvertMathToLibmOptions &options,
+    RewritePatternSet &patterns, const ConvertMathToLibmPassOptions &options,
     PatternBenefit benefit) {
   MLIRContext *ctx = patterns.getContext();
 
@@ -222,7 +222,7 @@ void mlir::populateMathToLibmConversionPatterns(
 
 namespace {
 struct ConvertMathToLibmPass
-    : public impl::ConvertMathToLibmBase<ConvertMathToLibmPass> {
+    : public impl::ConvertMathToLibmPassBase<ConvertMathToLibmPass> {
   using Base::Base;
   void runOnOperation() override;
 };
@@ -242,13 +242,4 @@ void ConvertMathToLibmPass::runOnOperation() {
   target.addIllegalDialect<math::MathDialect>();
   if (failed(applyPartialConversion(module, target, std::move(patterns))))
     signalPassFailure();
-}
-
-std::unique_ptr<OperationPass<ModuleOp>> mlir::createConvertMathToLibmPass() {
-  return std::make_unique<ConvertMathToLibmPass>();
-}
-
-std::unique_ptr<OperationPass<ModuleOp>>
-mlir::createConvertMathToLibmPass(const ConvertMathToLibmOptions &options) {
-  return std::make_unique<ConvertMathToLibmPass>(options);
 }
