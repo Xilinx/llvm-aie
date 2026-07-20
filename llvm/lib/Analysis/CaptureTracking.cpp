@@ -183,7 +183,7 @@ struct EarliestCaptures : public CaptureTracker {
 
     // Continue analysis, as we need to see all potential captures. However,
     // we do not need to follow the instruction result, as this use will
-    // dominate any captures made through the instruction result..
+    // dominate any captures made through the instruction result.
     return ContinueIgnoringReturn;
   }
 
@@ -291,7 +291,6 @@ UseCaptureInfo llvm::DetermineUseCaptureKind(
   switch (I->getOpcode()) {
   case Instruction::Call:
   case Instruction::Invoke: {
-    // TODO(captures): Make this more precise.
     auto *Call = cast<CallBase>(I);
     // Not captured if the callee is readonly, doesn't return a copy through
     // its return value and doesn't unwind (a readonly function can leak bits
