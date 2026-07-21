@@ -530,6 +530,9 @@ protected:
   /// multiple different callee target functions.
   void handleCallsitesWithMultipleTargets();
 
+  /// Mark backedges via the standard DFS based backedge algorithm.
+  void markBackedges();
+
   // Try to partition calls on the given node (already placed into the AllCalls
   // array) by callee function, creating new copies of Node as needed to hold
   // calls with different callees, and moving the callee edges appropriately.
@@ -740,6 +743,7 @@ private:
   void moveCalleeEdgeToNewCaller(const std::shared_ptr<ContextEdge> &Edge,
                                  ContextNode *NewCaller);
 
+  /// Recursive helper for marking backedges via DFS.
   void markBackedges(ContextNode *Node, DenseSet<const ContextNode *> &Visited,
                      DenseSet<const ContextNode *> &CurrentStack);
 
@@ -2108,6 +2112,8 @@ ModuleCallsiteContextGraph::ModuleCallsiteContextGraph(
 
   handleCallsitesWithMultipleTargets();
 
+  markBackedges();
+
   // Strip off remaining callsite metadata, no longer needed.
   for (auto &FuncEntry : FuncToCallsWithMetadata)
     for (auto &Call : FuncEntry.second)
@@ -2204,6 +2210,8 @@ IndexCallsiteContextGraph::IndexCallsiteContextGraph(
   updateStackNodes();
 
   handleCallsitesWithMultipleTargets();
+
+  markBackedges();
 }
 
 template <typename DerivedCCG, typename FuncTy, typename CallTy>
@@ -3059,11 +3067,15 @@ struct DOTGraphTraits<const CallsiteContextGraph<DerivedCCG, FuncTy, CallTy> *>
                                        GraphType) {
     auto &Edge = *(ChildIter.getCurrent());
     auto Color = getColor(Edge->AllocTypes);
-    return (Twine("tooltip=\"") + getContextIds(Edge->ContextIds) + "\"" +
-            // fillcolor is the arrow head and color is the line
-            Twine(",fillcolor=\"") + Color + "\"" + Twine(",color=\"") + Color +
-            "\"")
-        .str();
+    std::string AttributeString =
+        (Twine("tooltip=\"") + getContextIds(Edge->ContextIds) + "\"" +
+         // fillcolor is the arrow head and color is the line
+         Twine(",fillcolor=\"") + Color + "\"" + Twine(",color=\"") + Color +
+         "\"")
+            .str();
+    if (Edge->IsBackedge)
+      AttributeString += ",style=\"dotted\"";
+    return AttributeString;
   }
 
   // Since the NodeOwners list includes nodes that are no longer connected to
@@ -3405,6 +3417,27 @@ void CallsiteContextGraph<DerivedCCG, FuncTy, CallTy>::
 
 // This is the standard DFS based backedge discovery algorithm.
 template <typename DerivedCCG, typename FuncTy, typename CallTy>
+void CallsiteContextGraph<DerivedCCG, FuncTy, CallTy>::markBackedges() {
+  // If we are cloning recursive contexts, find and mark backedges from all root
+  // callers, using the typical DFS based backedge analysis.
+  if (!CloneRecursiveContexts)
+    return;
+  DenseSet<const ContextNode *> Visited;
+  DenseSet<const ContextNode *> CurrentStack;
+  for (auto &Entry : NonAllocationCallToContextNodeMap) {
+    auto *Node = Entry.second;
+    if (Node->isRemoved())
+      continue;
+    // It is a root if it doesn't have callers.
+    if (!Node->CallerEdges.empty())
+      continue;
+    markBackedges(Node, Visited, CurrentStack);
+    assert(CurrentStack.empty());
+  }
+}
+
+// Recursive helper for above markBackedges method.
+template <typename DerivedCCG, typename FuncTy, typename CallTy>
 void CallsiteContextGraph<DerivedCCG, FuncTy, CallTy>::markBackedges(
     ContextNode *Node, DenseSet<const ContextNode *> &Visited,
     DenseSet<const ContextNode *> &CurrentStack) {
@@ -3429,22 +3462,7 @@ void CallsiteContextGraph<DerivedCCG, FuncTy, CallTy>::markBackedges(
 
 template <typename DerivedCCG, typename FuncTy, typename CallTy>
 void CallsiteContextGraph<DerivedCCG, FuncTy, CallTy>::identifyClones() {
-  // If we are cloning recursive contexts, find and mark backedges from all root
-  // callers, using the typical DFS based backedge analysis.
   DenseSet<const ContextNode *> Visited;
-  if (CloneRecursiveContexts) {
-    DenseSet<const ContextNode *> CurrentStack;
-    for (auto &Entry : NonAllocationCallToContextNodeMap) {
-      auto *Node = Entry.second;
-      if (Node->isRemoved())
-        continue;
-      // It is a root if it doesn't have callers.
-      if (!Node->CallerEdges.empty())
-        continue;
-      markBackedges(Node, Visited, CurrentStack);
-      assert(CurrentStack.empty());
-    }
-  }
   for (auto &Entry : AllocationCallToContextNodeMap) {
     Visited.clear();
     identifyClones(Entry.second, Visited, Entry.second->getContextIds());
