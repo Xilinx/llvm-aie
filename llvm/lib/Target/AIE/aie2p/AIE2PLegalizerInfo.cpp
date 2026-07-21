@@ -771,6 +771,14 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
       // Legacy legalization for bitcasts
       .legalFor({{V2S32, S32}})
+      // 64-bit vectors (e.g. the <8 x s8> bfp16 block-exponent) are register
+      // types but have no native build-vector; custom-lower them by packing the
+      // elements into a same-sized scalar and bitcasting. Handle this before the
+      // general validity check below rejects 64-bit vectors.
+      .customIf([=](const LegalityQuery &Query) {
+        return Query.Types[0].isVector() &&
+               Query.Types[0].getSizeInBits() == 64;
+      })
       .unsupportedIf(IsNotValidDestinationVector)
       // We clamp the high values and not the low ones, sice the former
       // splits the values but the latter keeps the same G_BUILD_VECTOR in
