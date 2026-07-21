@@ -196,6 +196,36 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
 
   assert((EltSize == 8 || EltSize == 16 || EltSize == 32 || EltSize == 64) &&
          "non-existent integer size");
+
+  // 64-bit vectors (e.g. the <8 x s8> bfp16 block-exponent) have no native
+  // build-vector instruction. Pack the elements into a same-sized scalar and
+  // bitcast to the vector: the scalar-to-vector register move (for the exponent
+  // vector, GPR -> EXPVEC64) is a legal copy, so this selects without a native
+  // build.
+  if (DstVecSize == 64) {
+    const LLT S64 = LLT::scalar(64);
+    Register Acc = MIRBuilder.buildConstant(S64, 0).getReg(0);
+    unsigned Idx = 0;
+    for (const MachineOperand &Op : drop_begin(MI.operands(), 1)) {
+      // Zero-extend sub-64-bit elements to the 64-bit accumulator. A 64-bit
+      // element (a 1-element vector) is used as-is; zext to its own size is
+      // invalid. The target is little-endian, so element i occupies bits
+      // [i*EltSize, (i+1)*EltSize) and bitcasts back to lane i.
+      Register Elt = Op.getReg();
+      if (EltSize < 64)
+        Elt = MIRBuilder.buildZExt(S64, Elt).getReg(0);
+      if (Idx) {
+        Register Sh = MIRBuilder.buildConstant(S64, Idx * EltSize).getReg(0);
+        Elt = MIRBuilder.buildShl(S64, Elt, Sh).getReg(0);
+      }
+      Acc = MIRBuilder.buildOr(S64, Acc, Elt).getReg(0);
+      ++Idx;
+    }
+    MIRBuilder.buildBitcast(DstReg, Acc);
+    MI.eraseFromParent();
+    return true;
+  }
+
   assert(DstVecSize == 32 || (DstVecSize > 64 && DstVecSize <= 1024 &&
                               "non-native vectors are not supported"));
   assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
