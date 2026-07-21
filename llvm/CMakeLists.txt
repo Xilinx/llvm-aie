@@ -67,7 +67,7 @@ set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name 
 include(GNUInstallDirs)
 
 # This C++ standard is required to build LLVM.
-set(LLVM_REQUIRED_CXX_STANDARD 17)
+set(LLVM_REQUIRED_CXX_STANDARD 20)
 
 # If we find that the cache contains CMAKE_CXX_STANDARD it means that it's a old CMakeCache.txt
 # and we can just inform the user and then reset it.
