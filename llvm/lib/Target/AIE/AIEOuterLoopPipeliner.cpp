@@ -790,12 +790,6 @@ bool OrigLoopStructure::isProfitableToRotate(ScalarEvolution &SE,
     return false;
   }
 
-  SmallVector<StoreInst *, 16> BottomStores = collectBottomStores();
-  // TODO: Confirm whether a store-free bottom can ever be profitable.
-  if (BottomStores.empty()) {
-    LLVM_DEBUG(dbgs() << "    No stores in bottom\n");
-    return false;
-  }
   return true;
 }
 
