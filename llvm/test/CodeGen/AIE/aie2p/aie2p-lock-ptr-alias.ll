@@ -7,8 +7,8 @@
 ; RUN: llc -O2 -mtriple=aie2p %s --verify-machineinstrs -o - | FileCheck %s
 
 ; Pointer-coupled lock intrinsics carry a synthetic MMO on the lock instruction.
-; CHECK expectations document pre-alias-aware conservative scheduling.
-; Id-only locks remain conservative.
+; When the lock buffer does not alias subsequent/preceding memory, stall/resume
+; spacing is elided. Id-only locks remain conservative.
 
 declare void @llvm.aie2p.acquire.ptr(ptr, i32, i32)
 declare void @llvm.aie2p.acquire.cond.ptr(ptr, i32, i32, i32)
@@ -34,10 +34,9 @@ define void @acq_ptr_before_store_same(ptr %p, i32 %id, i32 %val) {
 define void @acq_ptr_before_store_disjoint(ptr noalias %lock_buf, ptr noalias %store_buf, i32 %id, i32 %val) {
 ; CHECK-LABEL: acq_ptr_before_store_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r1; nopm ; nopv
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    acq r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r1, [p1, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -51,12 +50,8 @@ define void @acq_ptr_before_store_disjoint(ptr noalias %lock_buf, ptr noalias %s
 define i8 @acq_ptr_before_part_word_load_disjoint(ptr noalias %lock_buf, ptr noalias %load_buf, i32 %id, i32 %val) {
 ; CHECK-LABEL: acq_ptr_before_part_word_load_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; nopb ; acq r1, r2
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s8 r0, [p1, #0]
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    lda.s8 r0, [p1, #0]; nopb ; nops ; acq r1, r2; nopm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -71,11 +66,9 @@ define i8 @acq_ptr_before_part_word_load_disjoint(ptr noalias %lock_buf, ptr noa
 define void @store_before_acq_ptr_disjoint(ptr noalias %store_buf, ptr noalias %lock_buf, i32 %id, i32 %val) {
 ; CHECK-LABEL: store_before_acq_ptr_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; nopb ; nopxm ; st r1, [p0, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    acq r0, r1 // Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    st r1, [p0, #0]; acq r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -121,11 +114,9 @@ define void @acq_cond_ptr_before_store_same(ptr %p, i32 %id, i32 %val, i32 %cond
 define void @acq_cond_ptr_before_store_disjoint(ptr noalias %lock_buf, ptr noalias %store_buf, i32 %id, i32 %val, i32 %cond) {
 ; CHECK-LABEL: acq_cond_ptr_before_store_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r26, r2
-; CHECK-NEXT:    acq.cond r0, r1, r26
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; CHECK-NEXT:    mov r26, r2 // Delay Slot 5
+; CHECK-NEXT:    acq.cond r0, r1, r26 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r1, [p1, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -139,12 +130,8 @@ define void @acq_cond_ptr_before_store_disjoint(ptr noalias %lock_buf, ptr noali
 define i8 @acq_cond_ptr_before_part_word_load_disjoint(ptr noalias %lock_buf, ptr noalias %load_buf, i32 %id, i32 %val, i32 %cond) {
 ; CHECK-LABEL: acq_cond_ptr_before_part_word_load_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mov r26, r3
-; CHECK-NEXT:    acq.cond r1, r2, r26
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s8 r0, [p1, #0]
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r26, r3
+; CHECK-NEXT:    lda.s8 r0, [p1, #0]; acq.cond r1, r2, r26
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -160,11 +147,9 @@ define i8 @acq_cond_ptr_before_part_word_load_disjoint(ptr noalias %lock_buf, pt
 define void @store_before_acq_cond_ptr_disjoint(ptr noalias %store_buf, ptr noalias %lock_buf, i32 %id, i32 %val, i32 %cond) {
 ; CHECK-LABEL: store_before_acq_cond_ptr_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; nopb ; nopx ; st r1, [p0, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    mov r26, r2 // Delay Slot 5
-; CHECK-NEXT:    acq.cond r0, r1, r26 // Delay Slot 4
+; CHECK-NEXT:    st r1, [p0, #0]; acq.cond r0, r1, r26 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -174,8 +159,9 @@ define void @store_before_acq_cond_ptr_disjoint(ptr noalias %store_buf, ptr noal
 }
 
 ; --- Part-word store lock alias tests ---
-; Part-word stores perform read-modify-write on a full word. Conservative spacing
-; should be kept for disjoint buffers (1-byte store MMO understates RMW width).
+; Part-word stores are word RMWs in hardware. Lock stall/resume elision vs a
+; part-word store uses source-level noalias on both pointers only — alias
+; analysis is not run on this path. Without that annotation, stay conservative.
 
 ; Forward: acquire_ptr on bufA, part-word store to same bufA — keep gap.
 define void @acq_ptr_before_part_word_store_same(ptr %p, i32 %id, i32 %val, i8 %bval) {
@@ -198,16 +184,12 @@ define void @acq_ptr_before_part_word_store_same(ptr %p, i32 %id, i32 %val, i8 %
   ret void
 }
 
-; Forward: acquire_ptr on bufA, part-word store to disjoint bufB.
-; Expected: conservative spacing (part-word stores have RMW semantics).
+; Forward: acquire_ptr on bufA, part-word store to disjoint bufB with noalias.
+; Lock delays vs the store are elided when both ptrs carry source noalias.
 define void @acq_ptr_before_part_word_store_disjoint(ptr noalias %lock_buf, ptr noalias %store_buf, i32 %id, i32 %val, i8 %bval) {
 ; CHECK-LABEL: acq_ptr_before_part_word_store_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; acq r0, r1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r2, [p1, #0]
+; CHECK-NEXT:    st.s8 r2, [p1, #0]; nopb ; nops ; acq r0, r1; nopm ; nopv
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -220,8 +202,7 @@ define void @acq_ptr_before_part_word_store_disjoint(ptr noalias %lock_buf, ptr 
   ret void
 }
 
-; Same as above but without noalias: AA cannot prove disjointness, so spacing
-; is kept even though callers may pass disjoint buffers.
+; Same as above but without noalias: no user contract — keep spacing.
 define void @acq_ptr_before_part_word_store_disjoint_unknown_alias(ptr %lock_buf, ptr %store_buf, i32 %id, i32 %val, i8 %bval) {
 ; CHECK-LABEL: acq_ptr_before_part_word_store_disjoint_unknown_alias:
 ; CHECK:       // %bb.0:
@@ -265,18 +246,11 @@ define void @part_word_store_before_acq_ptr_same(ptr %p, i32 %id, i32 %val, i8 %
   ret void
 }
 
-; Backward: st.s8 to bufB, acquire_ptr on disjoint bufA.
-; Expected: conservative stall spacing (part-word stores have RMW semantics).
+; Backward: st.s8 to bufB, acquire_ptr on disjoint bufA with noalias on both.
 define void @part_word_store_before_acq_ptr_disjoint(ptr noalias %store_buf, ptr noalias %lock_buf, i32 %id, i32 %val, i8 %bval) {
 ; CHECK-LABEL: part_word_store_before_acq_ptr_disjoint:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    st.s8 r2, [p0, #0]; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopx
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r2, [p0, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
