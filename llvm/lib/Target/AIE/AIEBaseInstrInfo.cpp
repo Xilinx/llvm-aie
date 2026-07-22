@@ -1443,6 +1443,10 @@ bool AIEBaseInstrInfo::verifyControlFlowConstraints(const MachineInstr &MI,
   return true;
 }
 
+bool AIEBaseInstrInfo::hasAnnotativeMemOperands(const MachineInstr &MI) const {
+  return isLock(MI.getOpcode()) && !MI.memoperands_empty();
+}
+
 bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
                                          StringRef &ErrInfo) const {
   const Triple &TT = MI.getMF()->getSubtarget().getTargetTriple();

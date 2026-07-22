@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -148,6 +148,21 @@ bool AIE2PTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(0);
     Info.align = Align(4); // Can we somehow recover the original alignment?
     Info.flags = MachineMemOperand::MOStore;
+    return true;
+
+  // Pointer-coupled locks are not memory accesses; the ptr arg only tags which
+  // buffer the lock orders against (see mayLockOrderWithMemOp). MONone would
+  // match that semantics, but IRTranslator builds the MMO via
+  // MachineMemOperand(..., Flags, LLT), which asserts isLoad() || isStore().
+  // MOLoad here is GISel plumbing only — ACQ/REL still have no mayLoad, and
+  // hasAnnotativeMemOperands() tells MachineVerifier the MMO is annotative.
+  case Intrinsic::aie2p_acquire_ptr:
+  case Intrinsic::aie2p_acquire_cond_ptr:
+  case Intrinsic::aie2p_release_ptr:
+  case Intrinsic::aie2p_release_cond_ptr:
+    Info.ptrVal = I.getArgOperand(0);
+    Info.memVT = MVT::Other;
+    Info.flags = MachineMemOperand::MOLoad;
     return true;
   }
   return false;
