@@ -63,7 +63,8 @@ protected:
   }
 };
 
-TEST_F(AIEOuterLoopPipelinerTest, CollectLeanStage0) {
+TEST_F(AIEOuterLoopPipelinerTest,
+       CollectLeanStage0SpeculatesWithSideEffectingIntrinsics) {
   LLVMContext Context;
   SMDiagnostic Error;
   std::unique_ptr<Module> M = parseAssemblyString(R"IR(
@@ -135,14 +136,18 @@ TEST_F(AIEOuterLoopPipelinerTest, CollectLeanStage0) {
 
   BasicBlock *Stage0 = nullptr;
   BasicBlock *Stage1 = nullptr;
+  BasicBlock *LastIteration = nullptr;
   for (BasicBlock &BB : *M->getFunction("test")) {
     if (BB.getName() == "stage0.top")
       Stage0 = &BB;
     else if (BB.getName() == "steady.stage1.top")
       Stage1 = &BB;
+    else if (BB.getName() == "lastiter.stage1.top")
+      LastIteration = &BB;
   }
   ASSERT_NE(Stage0, nullptr);
   ASSERT_NE(Stage1, nullptr);
+  EXPECT_EQ(LastIteration, nullptr);
 
   const auto HasInstructionNamed = [](const BasicBlock &BB, StringRef Name) {
     return any_of(BB, [Name](const Instruction &I) {
