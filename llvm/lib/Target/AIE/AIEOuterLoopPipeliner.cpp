@@ -113,6 +113,13 @@ static cl::opt<bool> SplitStages(
              "different strategies to reach more compact schedules"),
     cl::init(true), cl::Hidden);
 
+static cl::opt<bool> SpeculativeLastIteration(
+    "aie-outer-loop-pipelining-speculative",
+    cl::desc("Use speculative loads on the last iteration instead of creating "
+             "a last iteration region. Avoids code duplication and register "
+             "pressure at the cost of unused loads on the final iteration."),
+    cl::init(false), cl::Hidden);
+
 static cl::opt<bool> LeanStage0Mode(
     "aie-outer-loop-pipelining-lean-stage0",
     cl::desc("Limit stage 0 to loads, address computations, and target "
@@ -572,6 +579,11 @@ private:
   void wireLastIterIntoCFG(const OrigLoopStructure &OrigLS,
                            const CloneLoopStructure &SteadyLS,
                            const CloneLoopStructure &LastIterLS) const;
+
+  // The speculative path exits directly from the steady loop. Repoint exit
+  // PHIs and remap exit live-outs away from the soon-to-be-deleted original.
+  void wireSteadyIntoExit(const OrigLoopStructure &OrigLS,
+                          const CloneLoopStructure &SteadyLS) const;
 
   // The bottom instructions forming PHI's next-iteration pointer-update
   // chain, or nullopt if it cannot be safely lifted.
@@ -1374,6 +1386,29 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
                                                   LastIterLS.getTop());
 }
 
+void AIEOuterLoopPipeliner::wireSteadyIntoExit(
+    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS) const {
+  BasicBlock *OrigExit = OrigLS.getExitBlock();
+  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), SteadyLS.getBottom(),
+                      PhiEdge::Repoint,
+                      [&](Value *V) { return SteadyLS.cloneOf(V); });
+
+  // See wireLastIterIntoCFG: exit instructions may directly reference values
+  // defined in the original loop and must instead use their steady clones
+  // before the original is deleted.
+  for (Instruction &I : *OrigExit) {
+    if (isa<PHINode>(&I))
+      continue;
+    for (Use &Op : I.operands()) {
+      Value *V = Op.get();
+      if (!isa<Instruction>(V) && !isa<Argument>(V))
+        continue;
+      if (Value *Mapped = SteadyLS.cloneOf(V); Mapped != V)
+        Op.set(Mapped);
+    }
+  }
+}
+
 bool BlockRegion::isSingleEntrySingleExit() const {
   for (BasicBlock *BB : Blocks) {
     if (BB != Blocks.front())
@@ -1732,7 +1767,8 @@ bool AIEOuterLoopPipeliner::performTransformation(
     return SplitMode && isStage1SplitPoint(I);
   };
 
-  if (Overrides.get(LeanStage0Mode))
+  const bool LeanStage0 = Overrides.get(LeanStage0Mode);
+  if (LeanStage0)
     OrigLS.collectLeanStage0(*TTI);
   else
     OrigLS.collectStages(IsSplitPoint);
@@ -1740,6 +1776,20 @@ bool AIEOuterLoopPipeliner::performTransformation(
     LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");
     return false;
   }
+
+  // Lean stage-0 defaults to speculation, regardless of side effects in that
+  // stage. Explicit speculative overrides take precedence; non-lean
+  // speculation still requires a side-effect-free stage-0 chain.
+  const bool Stage0IsSideEffectFree =
+      llvm::none_of(OrigLS.stage0Insts(), [](const Instruction *I) {
+        return I->mayHaveSideEffects();
+      });
+  const bool SpeculationEnabled =
+      Overrides.hasOverride(SpeculativeLastIteration)
+          ? Overrides.get(SpeculativeLastIteration)
+          : LeanStage0;
+  const bool UseSpeculativeLastIteration =
+      SpeculationEnabled && (LeanStage0 || Stage0IsSideEffectFree);
 
   // Clone the LS into a steady-state copy and swap it into the original's CFG
   // slot; transform steps below run on the clone, leaving OrigLS pristine.
@@ -1760,22 +1810,28 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // Merge the preheader and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
-  // Adjust the outer loop trip count from N to N-1. Must happen before the peel
-  // so the hardware-loop conversion can find the right icmp to replace.
-  SteadyLS.adjustLoopBound();
+  if (!UseSpeculativeLastIteration) {
+    // Adjust the outer loop trip count from N to N-1. Must happen before the
+    // peel so the hardware-loop conversion can find the right icmp to replace.
+    SteadyLS.adjustLoopBound();
 
-  // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
-  // counting add/icmp are erased from the latch before the peel clones it.
-  const bool OuterIsHardwareLoop =
-      EnableOuterLoopHardwareLoop && SteadyLS.latchCondition().isDowncounting();
-  if (OuterIsHardwareLoop)
-    convertOuterLoopToHardwareLoop(SteadyLS);
+    // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
+    // counting add/icmp are erased from the latch before the peel clones it.
+    const bool OuterIsHardwareLoop = EnableOuterLoopHardwareLoop &&
+                                     SteadyLS.latchCondition().isDowncounting();
+    if (OuterIsHardwareLoop)
+      convertOuterLoopToHardwareLoop(SteadyLS);
 
-  // Create the last-iteration region from the steady loop.
-  peelLastIteration(OrigLS, SteadyLS);
+    // Create the last-iteration region from the steady loop.
+    peelLastIteration(OrigLS, SteadyLS);
 
-  // Adjust itercount metadata to reflect the reduced trip count.
-  SteadyLS.updateLoopMetadata();
+    // Adjust itercount metadata to reflect the reduced trip count.
+    SteadyLS.updateLoopMetadata();
+  } else {
+    wireSteadyIntoExit(OrigLS, SteadyLS);
+    LLVM_DEBUG(dbgs() << "    Speculative last iteration: no last-iteration "
+                         "region\n");
+  }
 
   OrigLS.removeFromCFG();
 
