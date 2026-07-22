@@ -271,6 +271,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getAddrIntrinsic3D() const {
     llvm_unreachable("Target didn't implement getAddrIntrinsic3D");
   }
+  /// Return the id-only lock intrinsic for \p PtrIntrinsicID, or
+  /// Intrinsic::not_intrinsic if \p PtrIntrinsicID is not a ptr-coupled lock.
+  virtual unsigned getIdOnlyLockIntrinsic(unsigned PtrIntrinsicID) const {
+    llvm_unreachable("Target didn't implement getIdOnlyLockIntrinsic");
+  }
   virtual unsigned getPtrAdd2DOpcode() const {
     llvm_unreachable("Target didn't implement getPtrAdd2DOpcode");
   }
@@ -888,6 +893,7 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool verifyTiedRegisters(const MachineInstr &MI, StringRef &ErrInfo) const;
   static bool verifySameLaneTypes(const MachineInstr &MI, StringRef &ErrInfo);
   bool verifyImplicitOpsOrder(const MachineInstr &MI, StringRef &ErrInfo) const;
+  bool hasAnnotativeMemOperands(const MachineInstr &MI) const override;
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
   bool verifyControlFlowConstraints(const MachineInstr &MI,

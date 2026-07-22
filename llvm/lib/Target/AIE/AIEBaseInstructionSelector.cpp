@@ -14,9 +14,10 @@
 
 #include "AIEBaseInstructionSelector.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/MC/MCContext.h"
-#include <optional>
 
 using namespace llvm;
 
@@ -1627,4 +1628,56 @@ bool AIEBaseInstructionSelector::selectVST_FIFO_Flush3D(
   MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::prepareLockPtrIntrinsic(
+    MachineInstr &I, MachineMemOperand *&SavedMMO) {
+  if (I.memoperands_empty())
+    return false;
+
+  const MachineMemOperand &OrigMMO = *I.memoperands()[0];
+  SavedMMO = MF->getMachineMemOperand(&OrigMMO, OrigMMO.getOffset(),
+                                      OrigMMO.getSize());
+
+  unsigned IdOnlyIntrinsic =
+      TII.getIdOnlyLockIntrinsic(cast<GIntrinsic>(I).getIntrinsicID());
+  if (IdOnlyIntrinsic == Intrinsic::not_intrinsic)
+    return false;
+
+  const unsigned IntrOpIdx = I.getNumExplicitDefs();
+  I.removeOperand(IntrOpIdx + 1);
+  I.getOperand(IntrOpIdx).setIntrinsicID(IdOnlyIntrinsic);
+  I.dropMemRefs(*MF);
+  return true;
+}
+
+bool AIEBaseInstructionSelector::attachLockPtrMemOperand(
+    MachineBasicBlock &MBB, MachineMemOperand *SavedMMO) {
+  for (MachineInstr &MI : MBB) {
+    if (TII.isLock(MI.getOpcode()) && MI.memoperands_empty()) {
+      MI.addMemOperand(*MF, SavedMMO);
+      return true;
+    }
+  }
+  llvm_unreachable(
+      "lock ptr intrinsic selected but no lock MI with empty memoperands");
+}
+
+// Ptr-coupled locks cannot be handled by a single TableGen Pat<> on *_ptr:
+// - eP:$ptr in the input but not on ACQ/REL is rejected ("dead named input").
+// - PatInaccessibleMem skips the mayLoad mismatch but not the dead-operand
+// check.
+// - ACQ/REL have mayLoad=false, so GISel patterns cannot merge the annotative
+// MMO.
+// Save the MMO, rewrite to the id-only intrinsic for existing Pat<> rules,
+// select, then attach the saved MMO to the lock MI in C++.
+bool AIEBaseInstructionSelector::selectLockPtrIntrinsic(MachineInstr &I) {
+  MachineMemOperand *SavedMMO = nullptr;
+  MachineBasicBlock *MBB = I.getParent();
+  if (!prepareLockPtrIntrinsic(I, SavedMMO))
+    return false;
+  assert(SavedMMO && "expected memoperand saved from lock ptr intrinsic");
+  if (!selectImpl(I, *CoverageInfo))
+    return false;
+  return attachLockPtrMemOperand(*MBB, SavedMMO);
 }
