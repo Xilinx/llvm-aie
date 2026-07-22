@@ -1810,6 +1810,9 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // Merge the preheader and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
+  const bool OuterIsHardwareLoop =
+      EnableOuterLoopHardwareLoop && SteadyLS.latchCondition().isDowncounting();
+
   if (!UseSpeculativeLastIteration) {
     // Adjust the outer loop trip count from N to N-1. Must happen before the
     // peel so the hardware-loop conversion can find the right icmp to replace.
@@ -1817,8 +1820,6 @@ bool AIEOuterLoopPipeliner::performTransformation(
 
     // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
     // counting add/icmp are erased from the latch before the peel clones it.
-    const bool OuterIsHardwareLoop = EnableOuterLoopHardwareLoop &&
-                                     SteadyLS.latchCondition().isDowncounting();
     if (OuterIsHardwareLoop)
       convertOuterLoopToHardwareLoop(SteadyLS);
 
@@ -1828,7 +1829,13 @@ bool AIEOuterLoopPipeliner::performTransformation(
     // Adjust itercount metadata to reflect the reduced trip count.
     SteadyLS.updateLoopMetadata();
   } else {
+    // Exit live-outs must keep the original IV cycle alive when it is observed
+    // outside the loop, before JNZD removes the latch condition.
     wireSteadyIntoExit(OrigLS, SteadyLS);
+    const bool OuterIsHardwareLoop = EnableOuterLoopHardwareLoop &&
+                                     SteadyLS.latchCondition().isDowncounting();
+    if (OuterIsHardwareLoop)
+      convertOuterLoopToHardwareLoop(SteadyLS);
     LLVM_DEBUG(dbgs() << "    Speculative last iteration: no last-iteration "
                          "region\n");
   }
@@ -1838,15 +1845,18 @@ bool AIEOuterLoopPipeliner::performTransformation(
   return true;
 }
 
-// The i32 JNZD trip count materialized in the preheader: peeling one iteration
-// from a decrement loop starting at N leaves N-1 to run (NOT the adjusted
-// threshold).
-static Value *computeJNZDTripCount(BasicBlock *Preheader, PHINode &IV,
+// The i32 JNZD trip count is the distance from the preheader IV value to the
+// live latch limit. The non-speculative path updates that limit to peel one
+// iteration, producing N-1; speculative mode leaves the original limit,
+// producing N.
+static Value *computeJNZDTripCount(const CloneLoopStructure &SteadyLS,
                                    Type *I32Ty) {
+  const LatchConditionInfo &Info = SteadyLS.latchCondition();
+  BasicBlock *Preheader = SteadyLS.getPreheader();
   IRBuilder<> PreBuilder(Preheader->getTerminator());
-  Value *InitN = IV.getIncomingValueForBlock(Preheader);
-  Value *TripCount = PreBuilder.CreateSub(
-      InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
+  Value *InitN = Info.IV->getIncomingValueForBlock(Preheader);
+  Value *Limit = Info.Cmp->getOperand(Info.LimitIdx);
+  Value *TripCount = PreBuilder.CreateSub(InitN, Limit, "outer.jnzd.tc");
   if (TripCount->getType() != I32Ty)
     TripCount =
         PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
@@ -1913,8 +1923,7 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
          "JNZD conversion needs a fully validated downcounting latch");
   Type *I32Ty = Type::getInt32Ty(SteadyLS.getTop()->getContext());
 
-  Value *TripCount =
-      computeJNZDTripCount(SteadyLS.getPreheader(), *Info.IV, I32Ty);
+  Value *TripCount = computeJNZDTripCount(SteadyLS, I32Ty);
   PHINode *CtrPHI = createOuterCounterPHI(SteadyLS, TripCount, I32Ty);
   rewriteLatchToDecrement(SteadyLS, CtrPHI, I32Ty);
   eraseOldCounterCycle(SteadyLS, Info);
