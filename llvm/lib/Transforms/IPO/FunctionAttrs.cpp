@@ -1379,7 +1379,7 @@ static void addArgumentAttrs(const SCCNodeSet &SCCNodes,
     // TODO(captures): Ignore address-only captures.
     if (capturesAnything(CC)) {
       // As the pointer may be captured, determine the pointer attributes
-      // looking at each argument invidivually.
+      // looking at each argument individually.
       for (ArgumentGraphNode *N : ArgumentSCC) {
         if (DetermineAccessAttrsForSingleton(N->Definition))
           Changed.insert(N->Definition->getParent());
