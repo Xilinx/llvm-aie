@@ -110,15 +110,26 @@ private:
 
   int getMaxAliasingMemCycle(const MachineInstr &MI, bool IsStore) const;
 
-  // Among aliasing mem ops keyed by LAST mem stage (backward coords: max Cycle
-  // = earliest in program). Used for ACQ stall (mem must finish before lock).
-  int getMaxAliasingLastMemCycleForLock(const MachineInstr &Lock, bool IsStore,
-                                        AAResults *AA) const;
+  // Max first-mem cycle (bot-fixed) and which aliasing mem kinds exist, for
+  // lock resume (REL/ACQ) latency after the lock.
+  struct LockFirstMemAliasingInfo {
+    int MaxFirstMemCycle = INT_MIN;
+    bool HasAliasingStore = false;
+    bool HasAliasingLoad = false;
+  };
 
   // Among aliasing mem ops keyed by FIRST mem stage (backward coords: max Cycle
   // = earliest in program). Used for lock resume (mem must start after resume).
   int getMaxAliasingFirstMemCycleForLock(const MachineInstr &Lock,
                                          AAResults *AA) const;
+
+  LockFirstMemAliasingInfo getLockFirstMemAliasing(const MachineInstr &Lock,
+                                                   AAResults *AA) const;
+
+  // Among aliasing mem ops keyed by LAST mem stage (forward coords). Used for
+  // ACQ stall (mem must finish before lock).
+  int getMaxAliasingLastMemCycleForLock(const MachineInstr &Lock,
+                                        AAResults *AA) const;
 
   // Record a load-only mem op at its write-back completion cycle (LockOrdCycle)
   // in MemoryCycleToLoadLockOrdInstrs. Consumed by
