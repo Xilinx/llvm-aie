@@ -21,6 +21,7 @@
 #include "AIEMaxLatencyFinder.h"
 #include "AIERegMemEventTracker.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -201,6 +202,11 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
 // The initial graph will have ordering edges induced by hasSideEffects of the
 // locks/DONE.
 class LockDelays : public ScheduleDAGMutation {
+  AAResults *AARes = nullptr;
+
+public:
+  explicit LockDelays(AAResults *AA = nullptr) : AARes(AA) {}
+
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
 
@@ -216,11 +222,19 @@ class LockDelays : public ScheduleDAGMutation {
                    TII->getDoneLatency(MI->getOpcode()))) {
         continue;
       }
+      auto OrdersWithMemOp = [&](const MachineInstr &LockOrDone,
+                                 const MachineInstr &Mem) {
+        if (!TII->isLock(LockOrDone.getOpcode()))
+          return true;
+        return TII->mayLockOrderWithMemOp(LockOrDone, Mem, AARes);
+      };
       for (auto &PredEdge : SU.Preds) {
         MachineInstr *LdSt = PredEdge.getSUnit()->getInstr();
         if (PredEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
+        if (!OrdersWithMemOp(*MI, *LdSt))
+          continue;
 
         // Ensure the memory operation retires before the core stalls. The same
         // per-(memop, lock) delay backs the cross-block exit edge in
@@ -254,6 +268,8 @@ class LockDelays : public ScheduleDAGMutation {
         // resume edge: the DONE -> region-end spacing is already provided by
         // the region-end exit edge, and the resume window is lock-only.
         if (TII->getDoneLatency(MI->getOpcode()))
+          continue;
+        if (!OrdersWithMemOp(*MI, *LdSt))
           continue;
         // Ensure the memory operation happens after the core resumes. The same
         // per-(lock, memop) delay backs the cross-block exit edge in
@@ -1009,7 +1025,7 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>());
+  Mutations.emplace_back(std::make_unique<LockDelays>(AA));
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
@@ -1025,9 +1041,10 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
 
 // List the Mutations that apply to the interblock DAG construction.
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
-AIEBaseSubtarget::getDDGMutationsImpl(const Triple &TT, bool ExactLatencies) {
+AIEBaseSubtarget::getDDGMutationsImpl(const Triple &TT, bool ExactLatencies,
+                                      AAResults *AA) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>());
+  Mutations.emplace_back(std::make_unique<LockDelays>(AA));
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(ExactLatencies));

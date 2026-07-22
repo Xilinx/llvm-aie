@@ -67,8 +67,15 @@ private:
   int FirstStoreCycle = INT_MIN;
   int LastStoreCycle = INT_MIN;
   int LastLoadCycle = INT_MIN;
+  // For load-only instructions (mayLoad && !mayStore), the lock-ordering cycle
+  // extends to the register write-back stage rather than just the
+  // memory-access stage.
+  int LastLoadWriteBackCycle = INT_MIN;
   std::map<int, std::vector<MachineInstr *>> MemoryCycleToStoreInstrs;
   std::map<int, std::vector<MachineInstr *>> MemoryCycleToLoadInstrs;
+  // Load-only lock-ordering cycles (write-back stage) keyed by completion
+  // cycle.
+  std::map<int, std::vector<MachineInstr *>> MemoryCycleToLoadLockOrdInstrs;
 
   unsigned BotFixedRegionSize = 0;
   unsigned TopFixedRegionSize = 0;
@@ -87,6 +94,10 @@ private:
 
   void updateLastLoadCycle(int LastLoadCycle);
 
+  void updateLastLoadWriteBackCycle(int Cycle);
+
+  int getLastMemoryAccessCycleForLockOrdering() const;
+
   void updateFirstMemCycle(int Cycle, bool IsStore);
 
   int getFirstMemoryAccessCycle() const;
@@ -98,6 +109,22 @@ private:
   void addPerInstructionFirstMemCycle(int FirstMemCycle, MachineInstr *MI);
 
   int getMaxAliasingMemCycle(const MachineInstr &MI, bool IsStore) const;
+
+  // Among aliasing mem ops keyed by LAST mem stage (backward coords: max Cycle
+  // = earliest in program). Used for ACQ stall (mem must finish before lock).
+  int getMaxAliasingLastMemCycleForLock(const MachineInstr &Lock, bool IsStore,
+                                        AAResults *AA) const;
+
+  // Among aliasing mem ops keyed by FIRST mem stage (backward coords: max Cycle
+  // = earliest in program). Used for lock resume (mem must start after resume).
+  int getMaxAliasingFirstMemCycleForLock(const MachineInstr &Lock,
+                                         AAResults *AA) const;
+
+  // Record a load-only mem op at its write-back completion cycle (LockOrdCycle)
+  // in MemoryCycleToLoadLockOrdInstrs. Consumed by
+  // getMaxAliasingLastMemCycleForLock for ACQ stall; distinct from
+  // addPerInstructionLastMemCycle (memory-access cycle).
+  void addPerInstructionLockOrdMemCycle(int LockOrdCycle, MachineInstr *MI);
 
   int checkMemoryDependency(int CurrentMax, int MemoryCycle, int MIMemoryCycle,
                             bool IsBackward) const;

@@ -7,9 +7,9 @@
 
 # RUN: llc --mtriple=aie2ps -O2 --run-pass=postmisched --aie-loop-min-tripcount=16 %s -o - | FileCheck %s
 
-# Exercises lock spacing in AIERegMemEventTracker via EmitFixedSUnits for pipelined
-# prologue/epilogue scheduling. CHECK expectations document pre-alias-aware
-# conservative scheduling.
+# Exercises alias-aware lock spacing in AIERegMemEventTracker via EmitFixedSUnits
+# for pipelined prologue/epilogue scheduling (distinct from same-block LockDelays
+# coverage in aie2ps-lock-ptr-alias.ll).
 
 --- |
   target triple = "aie2ps"
@@ -36,6 +36,34 @@
   }
 
   define void @prologue_acquire_ptr_disjoint_buffer() {
+  entry:
+    %store_buf = alloca i32, align 4
+    %lock_buf = alloca i32, align 4
+    unreachable
+  }
+
+  define void @prologue_release_ptr_same_buffer() {
+  entry:
+    %store_buf = alloca i32, align 4
+    %lock_buf = alloca i32, align 4
+    unreachable
+  }
+
+  define void @prologue_release_ptr_disjoint_buffer() {
+  entry:
+    %store_buf = alloca i32, align 4
+    %lock_buf = alloca i32, align 4
+    unreachable
+  }
+
+  define void @epilogue_acquire_ptr_same_buffer() {
+  entry:
+    %store_buf = alloca i32, align 4
+    %lock_buf = alloca i32, align 4
+    unreachable
+  }
+
+  define void @epilogue_acquire_ptr_disjoint_buffer() {
   entry:
     %store_buf = alloca i32, align 4
     %lock_buf = alloca i32, align 4
@@ -151,13 +179,9 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $p1, $r18, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   REL_mLockId_imm 49, killed renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   REL_mLockId_imm 49, killed renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
   ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
   ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm killed $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
   ; CHECK-NEXT:   NOP
@@ -199,28 +223,36 @@ body:             |
   ; CHECK-LABEL: name: prologue_acquire_ptr_same_buffer
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p1, $r0
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
   ; CHECK-NEXT:   $lc = ADD_NC_add_lc_ri $r0, -2
   ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
   ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
-  ; CHECK-NEXT:   ACQ_mLockId_imm 0, $r0 :: (load unknown-size from %ir.lock_buf, align 1)
+  ; CHECK-NEXT:   ACQ_mLockId_imm 0, killed renamable $r18 :: (load unknown-size from %ir.store_buf, align 1)
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
-  ; CHECK-NEXT:   liveins: $p1, $r0
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $r6 = LDA_dms_lda_scalar_ld_idx_imm $p1, 4 :: (load (s32) from %ir.lock_buf)
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $r6
+  ; CHECK-NEXT:   liveins: $p0, $p1, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
@@ -231,22 +263,26 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p1, $r0
+    liveins: $p0, $p1, $r0, $r18, $m0
 
-    ACQ_mLockId_imm 0, $r0 :: (load unknown-size from %ir.lock_buf, align 1)
     $lc = ADD_NC_add_lc_ri $r0, -2
     MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
     MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    ACQ_mLockId_imm 0, renamable $r18 :: (load unknown-size from %ir.store_buf, align 1)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
 
   bb.1:
     successors: %bb.1(0x7c000000), %bb.2(0x04000000)
-    liveins: $p1, $r0
+    liveins: $p0, $p1, $r0, $m0, $x0
 
-    $r6 = LDA_dms_lda_scalar_ld_idx_imm $p1, 4 :: (load (s32) from %ir.lock_buf)
+    $x0 = VADD_16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
     PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
 
   bb.2:
-    liveins: $r6
+    liveins: $p0, $p1, $x0
     RET implicit $lr
     DelayedSchedBarrier
 ...
@@ -262,28 +298,32 @@ body:             |
   ; CHECK-LABEL: name: prologue_acquire_ptr_disjoint_buffer
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $p1, $r0
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $lc = ADD_NC_add_lc_ri $r0, -2
   ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
   ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
-  ; CHECK-NEXT:   ACQ_mLockId_imm 0, $r0 :: (load unknown-size from %ir.lock_buf, align 1)
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit $x0, implicit killed $p1, implicit killed $r18 {
+  ; CHECK-NEXT:     $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:     ACQ_mLockId_imm 0, killed renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
-  ; CHECK-NEXT:   liveins: $p1, $r0
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $r6 = LDA_dms_lda_scalar_ld_idx_imm $p1, 4 :: (load (s32) from %ir.store_buf)
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $r6
+  ; CHECK-NEXT:   liveins: $p0, $p1, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
@@ -294,22 +334,318 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0:
     successors: %bb.1(0x80000000)
-    liveins: $p1, $r0
+    liveins: $p0, $p1, $r0, $r18, $m0
 
-    ACQ_mLockId_imm 0, $r0 :: (load unknown-size from %ir.lock_buf, align 1)
     $lc = ADD_NC_add_lc_ri $r0, -2
     MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
     MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    ACQ_mLockId_imm 0, renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
 
   bb.1:
     successors: %bb.1(0x7c000000), %bb.2(0x04000000)
-    liveins: $p1, $r0
+    liveins: $p0, $p1, $r0, $m0, $x0
 
-    $r6 = LDA_dms_lda_scalar_ld_idx_imm $p1, 4 :: (load (s32) from %ir.store_buf)
+    $x0 = VADD_16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
     PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
 
   bb.2:
-    liveins: $r6
+    liveins: $p0, $p1, $x0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            prologue_release_ptr_same_buffer
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: store_buf, offset: -8, size: 4, alignment: 4 }
+  - { id: 1, name: lock_buf, offset: -4, size: 4, alignment: 4 }
+body:             |
+  ; CHECK-LABEL: name: prologue_release_ptr_same_buffer
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   $lc = ADD_NC_add_lc_ri $r0, -2
+  ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+  ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+  ; CHECK-NEXT:   REL_mLockId_imm 49, killed renamable $r18 :: (load unknown-size from %ir.store_buf, align 1)
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $p0, $p1, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $r0, $r18, $m0
+
+    $lc = ADD_NC_add_lc_ri $r0, -2
+    MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    REL_mLockId_imm 49, renamable $r18 :: (load unknown-size from %ir.store_buf, align 1)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+
+  bb.1:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1, $r0, $m0, $x0
+
+    $x0 = VADD_16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2:
+    liveins: $p0, $p1, $x0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            prologue_release_ptr_disjoint_buffer
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: store_buf, offset: -8, size: 4, alignment: 4 }
+  - { id: 1, name: lock_buf, offset: -4, size: 4, alignment: 4 }
+body:             |
+  ; CHECK-LABEL: name: prologue_release_ptr_disjoint_buffer
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $lc = ADD_NC_add_lc_ri $r0, -2
+  ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+  ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit $x0, implicit killed $p1, implicit killed $r18 {
+  ; CHECK-NEXT:     $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:     REL_mLockId_imm 49, killed renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $p0, $p1, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $r0, $r18, $m0
+
+    $lc = ADD_NC_add_lc_ri $r0, -2
+    MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    REL_mLockId_imm 49, renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+
+  bb.1:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1, $r0, $m0, $x0
+
+    $x0 = VADD_16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2:
+    liveins: $p0, $p1, $x0
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            epilogue_acquire_ptr_same_buffer
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: store_buf, offset: -8, size: 4, alignment: 4 }
+  - { id: 1, name: lock_buf, offset: -4, size: 4, alignment: 4 }
+body:             |
+  ; CHECK-LABEL: name: epilogue_acquire_ptr_same_buffer
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
+  ; CHECK-NEXT:     $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
+  ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri $r0, -2
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+  ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r18, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   ACQ_mLockId_imm 0, killed renamable $r18 :: (load unknown-size from %ir.store_buf, align 1)
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm killed $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $r0, $r18, $m0
+
+    $lc = ADD_NC_add_lc_ri $r0, -2
+    MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64
+
+  bb.1:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1, $r0, $m0, $x0
+
+    $x0 = VADD_16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2:
+    liveins: $p0, $p1, $r18, $x0
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    ACQ_mLockId_imm 0, renamable $r18 :: (load unknown-size from %ir.store_buf, align 1)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            epilogue_acquire_ptr_disjoint_buffer
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: store_buf, offset: -8, size: 4, alignment: 4 }
+  - { id: 1, name: lock_buf, offset: -4, size: 4, alignment: 4 }
+body:             |
+  ; CHECK-LABEL: name: epilogue_acquire_ptr_disjoint_buffer
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
+  ; CHECK-NEXT:     $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
+  ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri $r0, -2
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+  ; CHECK-NEXT:   MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r18, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit $x0, implicit killed $p1, implicit killed $r18 {
+  ; CHECK-NEXT:     $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:     ACQ_mLockId_imm 0, killed renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = VST_dmx_sts_x_st_pstm_nrm_imm killed $x0, killed $p1, 64 :: (store (s32) into %ir.store_buf)
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $r0, $r18, $m0
+
+    $lc = ADD_NC_add_lc_ri $r0, -2
+    MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+    $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm $p0, 64
+
+  bb.1:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1, $r0, $m0, $x0
+
+    $x0 = VADD_16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2:
+    liveins: $p0, $p1, $r18, $x0
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
+    ACQ_mLockId_imm 0, renamable $r18 :: (load unknown-size from %ir.lock_buf, align 1)
+    $p1 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p1, 64 :: (store (s32) into %ir.store_buf)
     RET implicit $lr
     DelayedSchedBarrier
 ...

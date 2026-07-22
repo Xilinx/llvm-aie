@@ -25,12 +25,15 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CommandLine.h"
@@ -1105,6 +1108,148 @@ AIEBaseInstrInfo::getLockStallDelay(const MachineInstr &MemMI) const {
     return std::nullopt;
 
   return *OptLastMemCycle - getCoreStallCycleAfterLock() + 1;
+}
+
+/// Walk pointer casts / inbounds GEPs to an identified object (alloca, global,
+/// noalias argument, noalias call, ...).
+static const Value *getIdentifiedObject(const Value *V) {
+  if (!V)
+    return nullptr;
+
+  V = V->stripPointerCasts();
+  while (const auto *GEP = dyn_cast<GEPOperator>(V)) {
+    if (!GEP->isInBounds())
+      return nullptr;
+    V = GEP->getPointerOperand()->stripPointerCasts();
+  }
+
+  return isIdentifiedObject(V) ? V : nullptr;
+}
+
+/// Part-word stores may elide lock delays only when lock and store pointers
+/// trace to distinct IR objects that carry source-level noalias (restrict).
+static bool
+partWordStoreLockMayUseAliasAnalysis(const MachineMemOperand *LockMMO,
+                                     const MachineMemOperand *MemMMO) {
+  const Value *LockObj = getIdentifiedObject(LockMMO->getValue());
+  const Value *MemObj = getIdentifiedObject(MemMMO->getValue());
+  if (!LockObj || !MemObj || LockObj == MemObj)
+    return false;
+
+  auto HasSourceNoAlias = [](const Value *Identified) {
+    if (const auto *A = dyn_cast<Argument>(Identified))
+      return A->hasNoAliasAttr();
+    return isNoAliasCall(Identified);
+  };
+  return HasSourceNoAlias(LockObj) && HasSourceNoAlias(MemObj);
+}
+
+// Derived from MachineInstr::mayAlias MMO-pair logic.
+static bool memOperandsMayAlias(const MachineFrameInfo &MFI, AAResults *AA,
+                                bool UseTBAA, const MachineMemOperand *MMOa,
+                                const MachineMemOperand *MMOb) {
+  int64_t OffsetA = MMOa->getOffset();
+  int64_t OffsetB = MMOb->getOffset();
+  int64_t MinOffset = std::min(OffsetA, OffsetB);
+
+  LocationSize WidthA = MMOa->getSize();
+  LocationSize WidthB = MMOb->getSize();
+  bool KnownWidthA = WidthA.hasValue();
+  bool KnownWidthB = WidthB.hasValue();
+  bool BothMMONonScalable = !WidthA.isScalable() && !WidthB.isScalable();
+
+  const Value *ValA = MMOa->getValue();
+  const Value *ValB = MMOb->getValue();
+  bool SameVal = (ValA && ValB && (ValA == ValB));
+  if (!SameVal) {
+    const PseudoSourceValue *PSVa = MMOa->getPseudoValue();
+    const PseudoSourceValue *PSVb = MMOb->getPseudoValue();
+    if (PSVa && ValB && !PSVa->mayAlias(&MFI))
+      return false;
+    if (PSVb && ValA && !PSVb->mayAlias(&MFI))
+      return false;
+    if (PSVa && PSVb && (PSVa == PSVb))
+      SameVal = true;
+  }
+
+  if (SameVal && BothMMONonScalable) {
+    if (!KnownWidthA || !KnownWidthB)
+      return true;
+    int64_t MaxOffset = std::max(OffsetA, OffsetB);
+    int64_t LowWidth = (MinOffset == OffsetA)
+                           ? WidthA.getValue().getKnownMinValue()
+                           : WidthB.getValue().getKnownMinValue();
+    return (MinOffset + LowWidth > MaxOffset);
+  }
+
+  if (!AA)
+    return true;
+
+  if (!ValA || !ValB)
+    return true;
+
+  assert((OffsetA >= 0) && "Negative MachineMemOperand offset");
+  assert((OffsetB >= 0) && "Negative MachineMemOperand offset");
+
+  if ((WidthA.isScalable() && OffsetA > 0) ||
+      (WidthB.isScalable() && OffsetB > 0))
+    return true;
+
+  int64_t OverlapA =
+      KnownWidthA ? WidthA.getValue().getKnownMinValue() + OffsetA - MinOffset
+                  : MemoryLocation::UnknownSize;
+  int64_t OverlapB =
+      KnownWidthB ? WidthB.getValue().getKnownMinValue() + OffsetB - MinOffset
+                  : MemoryLocation::UnknownSize;
+
+  LocationSize LocA = (WidthA.isScalable() || !KnownWidthA)
+                          ? WidthA
+                          : LocationSize::precise(OverlapA);
+  LocationSize LocB = (WidthB.isScalable() || !KnownWidthB)
+                          ? WidthB
+                          : LocationSize::precise(OverlapB);
+
+  return !AA->isNoAlias(
+      MemoryLocation(ValA, LocA, UseTBAA ? MMOa->getAAInfo() : AAMDNodes()),
+      MemoryLocation(ValB, LocB, UseTBAA ? MMOb->getAAInfo() : AAMDNodes()));
+}
+
+bool AIEBaseInstrInfo::mayLockOrderWithMemOp(const MachineInstr &Lock,
+                                             const MachineInstr &Mem,
+                                             AAResults *AA,
+                                             bool UseTBAA) const {
+  assert(isLock(Lock.getOpcode()) &&
+         "mayLockOrderWithMemOp expects a lock instruction");
+  assert(Mem.mayLoadOrStore() &&
+         "mayLockOrderWithMemOp expects a mayLoadOrStore instruction");
+  if (Lock.memoperands_empty() || Mem.memoperands_empty())
+    return true;
+
+  const MachineFrameInfo &MFI = Lock.getMF()->getFrameInfo();
+  const MachineMemOperand *LockMMO = *Lock.memoperands_begin();
+
+  // Part-word stores: elide lock delays only on source noalias (restrict), not
+  // on AA-inferred NoAlias. No AA on this path — user annotation is the
+  // contract.
+  const bool PartWordStore = Mem.mayStore() && isPartWordMemoryInst(Mem);
+
+  // Cannot use MachineInstr::mayAlias(Lock, Mem): it requires both
+  // instructions to be mayLoadOrStore, but ACQ/REL have no mayLoad/mayStore
+  // (locks are not DM accesses). The ptr-coupled MMO is annotative — it carries
+  // MOLoad only for GISel MMO construction, not because acq/rel loads memory.
+  // mayAlias would return false immediately and skip all lock delays. Compare
+  // MMO pairs directly via memOperandsMayAlias instead.
+  for (const MachineMemOperand *MemMMO : Mem.memoperands()) {
+    if (PartWordStore) {
+      if (!partWordStoreLockMayUseAliasAnalysis(LockMMO, MemMMO))
+        return true;
+      continue;
+    }
+    if (memOperandsMayAlias(MFI, AA, UseTBAA, LockMMO, MemMMO))
+      return true;
+  }
+
+  return false;
 }
 
 // Helper function to find instruction variant info by opcode using binary
