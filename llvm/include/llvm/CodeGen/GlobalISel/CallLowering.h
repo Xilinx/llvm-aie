@@ -617,7 +617,7 @@ public:
                  ArrayRef<Register> ResRegs,
                  ArrayRef<ArrayRef<Register>> ArgRegs, Register SwiftErrorVReg,
                  std::optional<PtrAuthInfo> PAI, Register ConvergenceCtrlToken,
-                 std::function<unsigned()> GetCalleeReg) const;
+                 std::function<Register()> GetCalleeReg) const;
 
   /// For targets which want to use big-endian can enable it with
   /// enableBigEndian() hook
