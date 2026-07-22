@@ -895,6 +895,19 @@ void OrigLoopStructure::collectStages(
 }
 
 void OrigLoopStructure::collectStage0FromInnerLoop() {
+  // The fallback only follows SSA def-use edges from the inner loop. Do not
+  // pipeline when the top contains an effectful candidate: its consumer may be
+  // connected through target state rather than SSA, so moving its operands
+  // without moving the operation would be incorrect.
+  // TODO: We might wanna fix this fallback collection later to not only follow
+  // SSA edges, if it turns out beneficial in practice. For now, we bail.
+  bool HasTopSideEffects = false;
+  topRegion().forEachInstruction([&](Instruction *I) {
+    HasTopSideEffects |= isPipelineCandidate(I) && I->mayHaveSideEffects();
+  });
+  if (HasTopSideEffects)
+    return;
+
   SmallVector<Instruction *, 16> Seeds;
   auto Seed = [&](Value *V) {
     if (auto *I = dyn_cast<Instruction>(V))
