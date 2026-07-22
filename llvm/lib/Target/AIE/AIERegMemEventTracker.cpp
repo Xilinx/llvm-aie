@@ -119,34 +119,46 @@ void AIERegMemEventTracker::addPerInstructionLockOrdMemCycle(int LockOrdCycle,
 }
 
 int AIERegMemEventTracker::getMaxAliasingLastMemCycleForLock(
-    const MachineInstr &Lock, bool IsStore, AAResults *AA) const {
-  const auto &MemMap =
-      IsStore ? MemoryCycleToStoreInstrs : MemoryCycleToLoadLockOrdInstrs;
-  int MaxCycle = INT_MIN;
-
-  for (const auto &[Cycle, MemOps] : MemMap) {
-    for (const MachineInstr *MemOp : MemOps) {
-      if (TII->mayLockOrderWithMemOp(Lock, *MemOp, AA))
-        MaxCycle = std::max(MaxCycle, Cycle);
+    const MachineInstr &Lock, AAResults *AA) const {
+  auto MaxAliasingInMap = [&](const auto &MemMap) {
+    int MaxCycle = INT_MIN;
+    for (const auto &[Cycle, MemOps] : MemMap) {
+      for (const MachineInstr *MemOp : MemOps) {
+        if (TII->mayLockOrderWithMemOp(Lock, *MemOp, AA))
+          MaxCycle = std::max(MaxCycle, Cycle);
+      }
     }
-  }
-  return MaxCycle;
+    return MaxCycle;
+  };
+  return std::max(MaxAliasingInMap(MemoryCycleToStoreInstrs),
+                  MaxAliasingInMap(MemoryCycleToLoadLockOrdInstrs));
+}
+
+AIERegMemEventTracker::LockFirstMemAliasingInfo
+AIERegMemEventTracker::getLockFirstMemAliasing(const MachineInstr &Lock,
+                                               AAResults *AA) const {
+  LockFirstMemAliasingInfo Result;
+  auto ScanMap = [&](const auto &MemMap, bool IsStoreMap) {
+    for (const auto &[Cycle, MemOps] : MemMap) {
+      for (const MachineInstr *MemOp : MemOps) {
+        if (!TII->mayLockOrderWithMemOp(Lock, *MemOp, AA))
+          continue;
+        if (IsStoreMap)
+          Result.HasAliasingStore = true;
+        else
+          Result.HasAliasingLoad = true;
+        Result.MaxFirstMemCycle = std::max(Result.MaxFirstMemCycle, Cycle);
+      }
+    }
+  };
+  ScanMap(MemoryCycleToStoreInstrs, /*IsStoreMap=*/true);
+  ScanMap(MemoryCycleToLoadInstrs, /*IsStoreMap=*/false);
+  return Result;
 }
 
 int AIERegMemEventTracker::getMaxAliasingFirstMemCycleForLock(
     const MachineInstr &Lock, AAResults *AA) const {
-  int MaxAliasingFirstMemCycle = INT_MIN;
-
-  for (const auto &MemMap :
-       {MemoryCycleToStoreInstrs, MemoryCycleToLoadInstrs}) {
-    for (const auto &[Cycle, MemOps] : MemMap) {
-      for (const MachineInstr *MemOp : MemOps) {
-        if (TII->mayLockOrderWithMemOp(Lock, *MemOp, AA))
-          MaxAliasingFirstMemCycle = std::max(MaxAliasingFirstMemCycle, Cycle);
-      }
-    }
-  }
-  return MaxAliasingFirstMemCycle;
+  return getLockFirstMemAliasing(Lock, AA).MaxFirstMemCycle;
 }
 
 int AIERegMemEventTracker::getMaxAliasingMemCycle(const MachineInstr &MI,
@@ -419,16 +431,10 @@ unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromTop(
   // complete before the core stalls.
   if (TII->isLock(MI.getOpcode())) {
     int AliasingMemCycle = INT_MIN;
-    if (AA) {
-      const int StoreCycle =
-          getMaxAliasingLastMemCycleForLock(MI, /*IsStore=*/true, AA);
-      const int LoadCycle =
-          getMaxAliasingLastMemCycleForLock(MI, /*IsStore=*/false, AA);
-      if (StoreCycle > INT_MIN || LoadCycle > INT_MIN)
-        AliasingMemCycle = std::max(StoreCycle, LoadCycle);
-    } else {
+    if (AA)
+      AliasingMemCycle = getMaxAliasingLastMemCycleForLock(MI, AA);
+    else
       AliasingMemCycle = getLastMemoryAccessCycleForLockOrdering();
-    }
     if (AliasingMemCycle > INT_MIN) {
       const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
       const int MIStallCycle = CoreStallCycle - 1;
@@ -488,17 +494,9 @@ unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromBottom(
       bool HasAliasingStore = false;
       bool HasAliasingLoad = false;
       if (AA) {
-        auto HasAliasingMem = [&](const auto &MemMap) {
-          for (const auto &[_, MemOps] : MemMap) {
-            for (const MachineInstr *MemOp : MemOps) {
-              if (TII->mayLockOrderWithMemOp(MI, *MemOp, AA))
-                return true;
-            }
-          }
-          return false;
-        };
-        HasAliasingStore = HasAliasingMem(MemoryCycleToStoreInstrs);
-        HasAliasingLoad = HasAliasingMem(MemoryCycleToLoadInstrs);
+        auto Aliasing = getLockFirstMemAliasing(MI, AA);
+        HasAliasingStore = Aliasing.HasAliasingStore;
+        HasAliasingLoad = Aliasing.HasAliasingLoad;
       } else {
         HasAliasingStore = getFirstMemCycle(/*IsStore=*/true) > INT_MIN;
         HasAliasingLoad = getFirstMemCycle(/*IsStore=*/false) > INT_MIN;
