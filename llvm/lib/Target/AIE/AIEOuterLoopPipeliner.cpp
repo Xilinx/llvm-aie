@@ -1626,7 +1626,11 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
        ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
   MDs.push_back(SuccessEntry);
 
-  MDNode *FinalLoopID = MDNode::get(Ctx, MDs);
+  // Loop IDs require operand 0 to refer to the node itself; reserve that slot
+  // before uniquing so replaceOperandWith does not clobber the first hint
+  // entry.
+  MDs.insert(MDs.begin(), nullptr);
+  MDNode *FinalLoopID = MDNode::getDistinct(Ctx, MDs);
   FinalLoopID->replaceOperandWith(0, FinalLoopID);
   return FinalLoopID;
 }

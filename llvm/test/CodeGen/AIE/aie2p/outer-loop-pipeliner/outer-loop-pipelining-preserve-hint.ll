@@ -11,9 +11,10 @@
 ; CHECK-LABEL: define void @preserve_first_loop_hint
 
 ; Epilogue outer loop ID: self-ref + two surviving entries.
-; CHECK:   !2 = distinct !{!2, !3, !4}
-; CHECK-NEXT:  !3 = !{!"llvm.loop.itercount.range", i32 1}
-; CHECK-NEXT:  !4 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
+; CHECK:   !2 = distinct !{!2, !3, !4, !5}
+; CHECK-NEXT:  !3 = !{!"llvm.loop.hint.aie-test-extra-loop-hint", i64 42}
+; CHECK-NEXT:  !4 = !{!"llvm.loop.itercount.range", i32 1}
+; CHECK-NEXT:  !5 = !{!"llvm.loop.hint.aie_outerloop_pipeliner_success", i64 1}
 
 ; Consumed enable hint must be dropped.
 ; CHECK-NOT: "llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 1
