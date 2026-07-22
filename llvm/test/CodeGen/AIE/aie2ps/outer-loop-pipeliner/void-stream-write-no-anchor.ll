@@ -41,20 +41,6 @@ define void @void_stream_write_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
 ; REMARKS-NEXT: Name:            canPipelineLoop
 ; REMARKS-NEXT: Function:        void_stream_write_no_anchor
 ; REMARKS-NEXT: Args:
-; REMARKS-NEXT:   - String:          The loop structure is not supported
-; REMARKS-NEXT: ...
-; REMARKS: --- !Missed
-; REMARKS-NEXT: Pass:            pipeliner
-; REMARKS-NEXT: Name:            canPipelineLoop
-; REMARKS-NEXT: Function:        void_stream_write_no_anchor
-; REMARKS-NEXT: Args:
-; REMARKS-NEXT:   - String:          Failed to pipeline loop
-; REMARKS-NEXT: ...
-; REMARKS: --- !Analysis
-; REMARKS-NEXT: Pass:            pipeliner
-; REMARKS-NEXT: Name:            canPipelineLoop
-; REMARKS-NEXT: Function:        void_stream_write_no_anchor
-; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - String:          'Not a single basic block: '
 ; REMARKS-NEXT:   - NumBlocks:       '3'
 ; REMARKS-NEXT: ...
@@ -74,36 +60,19 @@ define void @void_stream_write_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
 ; REMARKS-NEXT:   - Pipeliner:       ''
 ; REMARKS-NEXT:   - II:              '4'
 ; REMARKS-NEXT:   - NS:              '1'
-; REMARKS-NEXT:   - Loop:            bb.3.steady.stage1.inner.inner.header
-; REMARKS-NEXT:   - Prologue:        bb.2.steady.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '6'
-; REMARKS-NEXT:   - Epilogue:        bb.4.steady.stage1.bottom.and.stage0.top
-; REMARKS-NEXT:   - EpilogueBundles: '6'
-; REMARKS-NEXT: ...
-; REMARKS: --- !Passed
-; REMARKS-NEXT: Pass:            pipeliner
-; REMARKS-NEXT: Name:            schedule
-; REMARKS-NEXT: Function:        void_stream_write_no_anchor
-; REMARKS-NEXT: Args:
-; REMARKS-NEXT:   - String:          Schedule found
-; REMARKS-NEXT:   - Pipeliner:       ''
-; REMARKS-NEXT:   - II:              '4'
-; REMARKS-NEXT:   - NS:              '1'
-; REMARKS-NEXT:   - Loop:            bb.6.lastiter.stage1.inner.inner.header
-; REMARKS-NEXT:   - Prologue:        bb.5.lastiter.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '6'
-; REMARKS-NEXT:   - Epilogue:        bb.7.lastiter.stage1.bottom
-; REMARKS-NEXT:   - EpilogueBundles: '2'
+; REMARKS-NEXT:   - Loop:            bb.3.inner.header
+; REMARKS-NEXT:   - Prologue:        bb.2.outer.header
+; REMARKS-NEXT:   - PrologueBundles: '8'
+; REMARKS-NEXT:   - Epilogue:        bb.4.outer.latch
+; REMARKS-NEXT:   - EpilogueBundles: '7'
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: define void @void_stream_write_no_anchor(
-; CHECK:       stage0.top:
-; CHECK:       %loaded.steady.top = load i32
-; CHECK:       br label %steady.stage1.top
-; CHECK:       steady.stage1.top:
+; CHECK:       outer.header:
 ; CHECK:       call void @llvm.aie2ps.put.ms
-; CHECK:       lastiter.stage1.top:
-; CHECK-NOT:   @llvm.aie2ps.put.ms
-; CHECK:       br label %lastiter.stage1.inner.inner.header
+; CHECK:       inner.header:
+; CHECK:       call { i32, i32 } @llvm.aie2ps.get.ss()
+; CHECK-NOT:   stage0.top
+; CHECK:       ret void
 entry:
   %has.work = icmp ugt i32 %n, 1
   br i1 %has.work, label %outer.header, label %exit
