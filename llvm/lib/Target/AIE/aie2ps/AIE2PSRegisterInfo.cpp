@@ -802,6 +802,23 @@ bool AIE2PSRegisterInfo::isVecOrAccRegClass(
   if (AIE2PS::eEY_sRegClass.hasSubClassEq(&RC)) // 1280-bit
     return true;
 
+  // ******** BFP13 vectors ********
+  if (AIE2PS::mFEGaRegClass.hasSubClassEq(&RC)) // 128-bit
+    return true;
+
+  if (AIE2PS::mFEG2aRegClass.hasSubClassEq(&RC)) // 256-bit
+    return true;
+
+  if (AIE2PS::mFEWaRegClass.hasSubClassEq(&RC)) // 384-bit
+    return true;
+
+  if (AIE2PS::mFEXmRegClass.hasSubClassEq(&RC)) // 768-bit
+    return true;
+
+  // In practice only fey spill reloads reach this rung; see the fey test.
+  if (AIE2PS::mFEYwRegClass.hasSubClassEq(&RC)) // 1536-bit
+    return true;
+
   // ******** Accumulator classes (BM/CM/DM) ********
   if (AIE2PS::ACC512RegClass.hasSubClassEq(&RC))
     return true;
