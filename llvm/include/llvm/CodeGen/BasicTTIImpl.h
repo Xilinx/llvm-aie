@@ -3052,7 +3052,7 @@ public:
 
   InstructionCost getExtendedReductionCost(unsigned Opcode, bool IsUnsigned,
                                            Type *ResTy, VectorType *Ty,
-                                           FastMathFlags FMF,
+                                           std::optional<FastMathFlags> FMF,
                                            TTI::TargetCostKind CostKind) {
     if (auto *FTy = dyn_cast<FixedVectorType>(Ty);
         FTy && IsUnsigned && Opcode == Instruction::Add &&
@@ -3061,7 +3061,8 @@ public:
       // ZExtOrTrunc(ctpop(bitcast <n x i1> to in)).
       auto *IntTy =
           IntegerType::get(ResTy->getContext(), FTy->getNumElements());
-      IntrinsicCostAttributes ICA(Intrinsic::ctpop, IntTy, {IntTy}, FMF);
+      IntrinsicCostAttributes ICA(Intrinsic::ctpop, IntTy, {IntTy},
+                                  FMF ? *FMF : FastMathFlags());
       return thisT()->getCastInstrCost(Instruction::BitCast, IntTy, FTy,
                                        TTI::CastContextHint::None, CostKind) +
              thisT()->getIntrinsicInstrCost(ICA, CostKind);

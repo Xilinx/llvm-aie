@@ -44,12 +44,11 @@ void AIEMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
 
 
 bool AIEMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
-                                            const MCAssembler *Layout,
-                                            const MCFixup *Fixup) const {
+                                            const MCAssembler *Layout) const {
   // if (Kind == VK_AIE_PCREL_LO && evaluatePCRelLo(Res, Layout, Fixup))
   //   return true;
 
-  if (!getSubExpr()->evaluateAsRelocatable(Res, Layout, Fixup))
+  if (!getSubExpr()->evaluateAsRelocatable(Res, Layout))
     return false;
 
   // // Some custom fixup types are not valid with symbol difference expressions
@@ -97,7 +96,7 @@ bool AIEMCExpr::evaluateAsConstant(int64_t &Res) const {
   if (Kind == VK_AIE_CALL)
     return false;
 
-  if (!getSubExpr()->evaluateAsRelocatable(Value, nullptr, nullptr))
+  if (!getSubExpr()->evaluateAsRelocatable(Value, nullptr))
     return false;
 
   if (!Value.isAbsolute())

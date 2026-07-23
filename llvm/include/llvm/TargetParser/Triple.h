@@ -895,9 +895,7 @@ public:
   /// Tests whether the target is AMDGCN
   bool isAMDGCN() const { return getArch() == Triple::amdgcn; }
 
-  bool isAMDGPU() const {
-    return getArch() == Triple::r600 || getArch() == Triple::amdgcn;
-  }
+  bool isAMDGPU() const { return getArch() == Triple::r600 || isAMDGCN(); }
 
   //TODO aie1 is currently named as aie, perhaps we should change the
   //triple name to aie1?

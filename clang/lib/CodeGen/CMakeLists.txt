@@ -121,6 +121,17 @@ add_clang_library(clangCodeGen
   PatternInit.cpp
   SanitizerMetadata.cpp
   SwiftCallingConv.cpp
+  TargetBuiltins/AIE.cpp
+  TargetBuiltins/ARM.cpp
+  TargetBuiltins/AMDGPU.cpp
+  TargetBuiltins/Hexagon.cpp
+  TargetBuiltins/NVPTX.cpp
+  TargetBuiltins/PPC.cpp
+  TargetBuiltins/RISCV.cpp
+  TargetBuiltins/SPIR.cpp
+  TargetBuiltins/SystemZ.cpp
+  TargetBuiltins/WebAssembly.cpp
+  TargetBuiltins/X86.cpp
   TargetInfo.cpp
   Targets/AArch64.cpp
   Targets/AIE.cpp

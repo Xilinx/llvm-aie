@@ -176,7 +176,7 @@ func.func @multiple_chained_ops(
   %4 = mesh.shard %3 to %s4  annotate_for_users : tensor<2xi8>
   // CHECK: %[[ABS2:.*]] = tosa.abs %[[RESHARD2]] : (tensor<2xi8>) -> tensor<2xi8>
   %5 = tosa.abs %4 : (tensor<2xi8>) -> tensor<2xi8>
-  // CHECK: %[[RESHARD3:.*]] = mesh.all_slice %[[ABS2]] on @mesh_1d mesh_axes = [0] slice_axis = 0 : 
+  // CHECK: %[[RESHARD3:.*]] = mesh.all_slice %[[ABS2]] on @mesh_1d mesh_axes = [0] slice_axis = 0 :
   // CHECK-SAME: tensor<2xi8> -> tensor<1xi8>
   %s6 = mesh.sharding @mesh_1d split_axes = [[]] : !mesh.sharding
   %6 = mesh.shard %5 to %s6  : tensor<2xi8>
