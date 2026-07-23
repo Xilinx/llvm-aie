@@ -157,12 +157,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex0, undef renamable $fex0, renamable $r2
   ; CHECK-NEXT:   $dm3 = VMAC_f_vmac_bfp13 killed $dm3, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex2, undef renamable $fex0, renamable $r2
-  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bfp13 killed $dm2, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex4, undef renamable $fex0, renamable $r2
-  ; CHECK-NEXT:   $dm1 = VMAC_f_vmac_bfp13 killed $dm1, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex6, undef renamable $fex0, renamable $r2
-  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bfp13 killed $dm0, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $fex1 = VSHUFFLE_vec_shuffle_fex renamable $fex2, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bfp13 killed $dm2, killed $fex1, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $fex3 = VSHUFFLE_vec_shuffle_fex renamable $fex4, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm1 = VMAC_f_vmac_bfp13 killed $dm1, killed $fex3, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $fex5 = VSHUFFLE_vec_shuffle_fex renamable $fex6, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bfp13 killed $dm0, killed $fex5, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -221,12 +221,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
   ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
-  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
-  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
-  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
-  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
-  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
-  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $fegl2 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl2, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $fegl4 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl4, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $fegl6 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl6, renamable $p1, renamable $dj0
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -273,12 +273,12 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT:   liveins: $dj0, $p0, $p1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
-  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
-  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
-  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
-  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
-  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $feg6 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg6, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $feg4 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg4, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $feg2 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg2, renamable $p1, renamable $dj0
   ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
   ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
@@ -330,12 +330,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm0, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
   ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
-  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm1, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
-  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
-  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm2, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
-  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
-  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm3, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
-  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   renamable $fewl2 = VCONV_mx6_fp32 renamable $dm1, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl2, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   renamable $fewl4 = VCONV_mx6_fp32 renamable $dm2, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl4, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   renamable $fewl6 = VCONV_mx6_fp32 renamable $dm3, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl6, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -389,12 +389,12 @@ body:             |
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.0, implicit $sp
-  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.0, implicit $sp
-  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.1, implicit $sp
-  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.1, implicit $sp
-  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.2, implicit $sp
-  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.2, implicit $sp
+  ; CHECK-NEXT:   renamable $fey3 = VLDA_FEY_SPILL %stack.0, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey3, %stack.0, implicit $sp
+  ; CHECK-NEXT:   renamable $fey2 = VLDA_FEY_SPILL %stack.1, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey2, %stack.1, implicit $sp
+  ; CHECK-NEXT:   renamable $fey1 = VLDA_FEY_SPILL %stack.2, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey1, %stack.2, implicit $sp
   ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.3, implicit $sp
   ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.3, implicit $sp
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
