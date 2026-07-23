@@ -2076,8 +2076,8 @@ public:
   virtual bool shouldMergeCongruentIVs(const PHINode *IV1,
                                        const PHINode *IV2) const = 0;
   virtual bool useAA() = 0;
-  virtual bool isTypeLegal(Type *Ty) = 0;
-  virtual unsigned getRegUsageForType(Type *Ty) = 0;
+  virtual bool isTypeLegal(Type *Ty) const = 0;
+  virtual unsigned getRegUsageForType(Type *Ty) const = 0;
   virtual bool shouldBuildLookupTables() = 0;
   virtual bool shouldBuildLookupTablesForConstant(Constant *C) = 0;
   virtual bool shouldBuildRelLookupTables() = 0;
@@ -2676,8 +2676,8 @@ public:
     return Impl.shouldMergeCongruentIVs(IV1, IV2);
   }
   bool useAA() override { return Impl.useAA(); }
-  bool isTypeLegal(Type *Ty) override { return Impl.isTypeLegal(Ty); }
-  unsigned getRegUsageForType(Type *Ty) override {
+  bool isTypeLegal(Type *Ty) const override { return Impl.isTypeLegal(Ty); }
+  unsigned getRegUsageForType(Type *Ty) const override {
     return Impl.getRegUsageForType(Ty);
   }
   bool shouldBuildLookupTables() override {
