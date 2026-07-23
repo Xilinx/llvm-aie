@@ -648,7 +648,7 @@ std::string edgeAttributes(const SDep &Dep, const TargetRegisterInfo *TRI) {
       Label += TRI->getName(Reg);
     } else if (Reg.isVirtual()) {
       Label += " VR";
-      Label += std::to_string(Register::virtReg2Index(Reg));
+      Label += std::to_string(Reg.virtRegIndex());
     }
     break;
   }
