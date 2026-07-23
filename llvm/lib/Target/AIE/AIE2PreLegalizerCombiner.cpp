@@ -24,7 +24,7 @@
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
 #include "llvm/CodeGen/GlobalISel/CombinerInfo.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
-#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
+#include "llvm/CodeGen/GlobalISel/GISelValueTracking.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/InitializePasses.h"
@@ -59,7 +59,7 @@ protected:
 public:
   AIE2PreLegalizerCombinerImpl(
       MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-      GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+      GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
       const AIE2PreLegalizerCombinerImplRuleConfig &RuleConfig,
       const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
       const LegalizerInfo *LI);
@@ -92,11 +92,11 @@ private:
 
 AIE2PreLegalizerCombinerImpl::AIE2PreLegalizerCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
     const AIE2PreLegalizerCombinerImplRuleConfig &RuleConfig,
     const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
-    : AIECombinerBase(MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI,
+    : AIECombinerBase(MF, CInfo, TPC, VT, CSEInfo, RuleConfig, STI, MDT, LI,
                       /*IsPreLegalize=*/true),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
 #include "AIE2GenPreLegalizerGICombiner.inc"
@@ -447,7 +447,7 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
 
 std::unique_ptr<Combiner> createAIE2PreLegalizerCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI) {
   static AIE2PreLegalizerCombinerImplRuleConfig RuleConfig;
   static bool Parsed = [] {
@@ -457,5 +457,5 @@ std::unique_ptr<Combiner> createAIE2PreLegalizerCombinerImpl(
   }();
   (void)Parsed;
   return std::make_unique<AIE2PreLegalizerCombinerImpl>(
-      MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI);
+      MF, CInfo, TPC, VT, CSEInfo, RuleConfig, STI, MDT, LI);
 }

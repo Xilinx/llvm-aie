@@ -1005,7 +1005,7 @@ const TemplateArgument *DeductionFailureInfo::getSecondArg() {
   return nullptr;
 }
 
-std::optional<unsigned> DeductionFailureInfo::getCallArgIndex() {
+UnsignedOrNone DeductionFailureInfo::getCallArgIndex() {
   switch (static_cast<TemplateDeductionResult>(Result)) {
   case TemplateDeductionResult::DeducedMismatch:
   case TemplateDeductionResult::DeducedMismatchNested:
@@ -1554,12 +1554,15 @@ static bool IsOverloadOrOverrideImpl(Sema &SemaRef, FunctionDecl *New,
 
   if (!UseOverrideRules &&
       New->getTemplateSpecializationKind() != TSK_ExplicitSpecialization) {
-    Expr *NewRC = New->getTrailingRequiresClause(),
-         *OldRC = Old->getTrailingRequiresClause();
-    if ((NewRC != nullptr) != (OldRC != nullptr))
+    AssociatedConstraint NewRC = New->getTrailingRequiresClause(),
+                         OldRC = Old->getTrailingRequiresClause();
+    if (!NewRC != !OldRC)
+      return true;
+    if (NewRC.ArgPackSubstIndex != OldRC.ArgPackSubstIndex)
       return true;
     if (NewRC &&
-        !SemaRef.AreConstraintExpressionsEqual(OldDecl, OldRC, NewDecl, NewRC))
+        !SemaRef.AreConstraintExpressionsEqual(OldDecl, OldRC.ConstraintExpr,
+                                               NewDecl, NewRC.ConstraintExpr))
       return true;
   }
 
@@ -6206,7 +6209,7 @@ static ExprResult BuildConvertedConstantExpression(Sema &S, Expr *From,
                                                    Sema::CCEKind CCE,
                                                    NamedDecl *Dest,
                                                    APValue &PreNarrowingValue) {
-  assert((S.getLangOpts().CPlusPlus11 || CCE == Sema::CCEK_InjectedTTP) &&
+  assert((S.getLangOpts().CPlusPlus11 || CCE == Sema::CCEK_TempArgStrict) &&
          "converted constant expression outside C++11 or TTP matching");
 
   if (checkPlaceholderForOverload(S, From))
@@ -6277,7 +6280,7 @@ static ExprResult BuildConvertedConstantExpression(Sema &S, Expr *From,
   // class type.
   ExprResult Result;
   bool IsTemplateArgument =
-      CCE == Sema::CCEK_TemplateArg || CCE == Sema::CCEK_InjectedTTP;
+      CCE == Sema::CCEK_TemplateArg || CCE == Sema::CCEK_TempArgStrict;
   if (T->isRecordType()) {
     assert(IsTemplateArgument &&
            "unexpected class type converted constant expr");
@@ -6330,7 +6333,7 @@ static ExprResult BuildConvertedConstantExpression(Sema &S, Expr *From,
     // value-dependent so we can't tell whether it's actually narrowing.
     // For matching the parameters of a TTP, the conversion is ill-formed
     // if it may narrow.
-    if (CCE != Sema::CCEK_InjectedTTP)
+    if (CCE != Sema::CCEK_TempArgStrict)
       break;
     [[fallthrough]];
   case NK_Type_Narrowing:
@@ -6405,7 +6408,7 @@ Sema::EvaluateConvertedConstantExpression(Expr *E, QualType T, APValue &Value,
   Expr::EvalResult Eval;
   Eval.Diag = &Notes;
 
-  assert(CCE != Sema::CCEK_InjectedTTP && "unnexpected CCE Kind");
+  assert(CCE != Sema::CCEK_TempArgStrict && "unnexpected CCE Kind");
 
   ConstantExprKind Kind;
   if (CCE == Sema::CCEK_TemplateArg && T->isRecordType())
@@ -11288,12 +11291,12 @@ MaybeDiagnoseAmbiguousConstraints(Sema &S, ArrayRef<OverloadCandidate> Cands) {
   // source-level construct. This behavior is quite confusing and we should try
   // to help the user figure out what happened.
 
-  SmallVector<const Expr *, 3> FirstAC, SecondAC;
+  SmallVector<AssociatedConstraint, 3> FirstAC, SecondAC;
   FunctionDecl *FirstCand = nullptr, *SecondCand = nullptr;
   for (auto I = Cands.begin(), E = Cands.end(); I != E; ++I) {
     if (!I->Function)
       continue;
-    SmallVector<const Expr *, 3> AC;
+    SmallVector<AssociatedConstraint, 3> AC;
     if (auto *Template = I->Function->getPrimaryTemplate())
       Template->getAssociatedConstraints(AC);
     else

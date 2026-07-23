@@ -941,6 +941,7 @@ LogicalResult Parser::convertTupleExpressionTo(
 
 //===----------------------------------------------------------------------===//
 // Directives
+//===----------------------------------------------------------------------===//
 
 LogicalResult Parser::parseDirective(SmallVectorImpl<ast::Decl *> &decls) {
   StringRef directive = curToken.getSpelling();
@@ -1243,6 +1244,7 @@ Parser::createODSNativePDLLConstraintDecl(const tblgen::Constraint &constraint,
 
 //===----------------------------------------------------------------------===//
 // Decls
+//===----------------------------------------------------------------------===//
 
 FailureOr<ast::Decl *> Parser::parseTopLevelDecl() {
   FailureOr<ast::Decl *> decl;
@@ -2008,6 +2010,7 @@ FailureOr<ast::ConstraintRef> Parser::parseArgOrResultConstraint() {
 
 //===----------------------------------------------------------------------===//
 // Exprs
+//===----------------------------------------------------------------------===//
 
 // Operator precedence follows C++:
 // When parsing an expression, an operator which is listed on some rows below
@@ -2902,6 +2905,7 @@ FailureOr<ast::Expr *> Parser::parseUnderscoreExpr() {
 
 //===----------------------------------------------------------------------===//
 // Stmts
+//===----------------------------------------------------------------------===//
 
 FailureOr<ast::Stmt *> Parser::parseStmt(bool expectTerminalSemicolon) {
   FailureOr<ast::Stmt *> stmt;
@@ -3139,6 +3143,7 @@ FailureOr<ast::RewriteStmt *> Parser::parseRewriteStmt() {
 
 //===----------------------------------------------------------------------===//
 // Decls
+//===----------------------------------------------------------------------===//
 
 ast::CallableDecl *Parser::tryExtractCallableDecl(ast::Node *node) {
   // Unwrap reference expressions.
@@ -3338,6 +3343,7 @@ Parser::validateTypeRangeConstraintExpr(const ast::Expr *typeExpr) {
 
 //===----------------------------------------------------------------------===//
 // Exprs
+//===----------------------------------------------------------------------===//
 
 FailureOr<ast::CallExpr *>
 Parser::createCallExpr(SMRange loc, ast::Expr *parentExpr,
@@ -3730,6 +3736,7 @@ Parser::createTupleExpr(SMRange loc, ArrayRef<ast::Expr *> elements,
 
 //===----------------------------------------------------------------------===//
 // Stmts
+//===----------------------------------------------------------------------===//
 
 FailureOr<ast::EraseStmt *> Parser::createEraseStmt(SMRange loc,
                                                     ast::Expr *rootOp) {

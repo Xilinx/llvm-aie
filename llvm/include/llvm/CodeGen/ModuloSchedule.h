@@ -191,9 +191,6 @@ private:
   /// Instructions to change when emitting the final schedule.
   InstrChangesTy InstrChanges;
 
-  /// Record the registers that need to compute live intervals.
-  SmallVector<Register> NoIntervalRegs;
-
   void generatePipelinedLoop();
   void generateProlog(unsigned LastStage, MachineBasicBlock *KernelBB,
                       ValueMapTy *VRMap, MBBVectorTy &PrologBBs);
@@ -217,7 +214,6 @@ private:
   void addBranches(MachineBasicBlock &PreheaderBB, MBBVectorTy &PrologBBs,
                    MachineBasicBlock *KernelBB, MBBVectorTy &EpilogBBs,
                    ValueMapTy *VRMap);
-  void calculateIntervals();
   bool computeDelta(MachineInstr &MI, unsigned &Delta);
   void updateMemOperands(MachineInstr &NewMI, MachineInstr &OldMI,
                          unsigned Num);

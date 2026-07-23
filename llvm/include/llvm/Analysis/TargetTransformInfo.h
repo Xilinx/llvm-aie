@@ -26,6 +26,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Analysis/IVDescriptors.h"
 #include "llvm/IR/FMF.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/PassManager.h"
@@ -803,9 +804,11 @@ public:
                                                 ScalarEvolution *SE) const;
 
   /// Return true if the target supports masked store.
-  bool isLegalMaskedStore(Type *DataType, Align Alignment) const;
+  bool isLegalMaskedStore(Type *DataType, Align Alignment,
+                          unsigned AddressSpace) const;
   /// Return true if the target supports masked load.
-  bool isLegalMaskedLoad(Type *DataType, Align Alignment) const;
+  bool isLegalMaskedLoad(Type *DataType, Align Alignment,
+                         unsigned AddressSpace) const;
 
   /// Return true if the target supports nontemporal store.
   bool isLegalNTStore(Type *DataType, Align Alignment) const;
@@ -1787,8 +1790,9 @@ public:
   /// vectorization, false - otherwise.
   bool preferAlternateOpcodeVectorization() const;
 
-  /// \returns True if the target prefers reductions in loop.
-  bool preferInLoopReduction(unsigned Opcode, Type *Ty) const;
+  /// \returns True if the target prefers reductions of \p Kind to be performed
+  /// in the loop.
+  bool preferInLoopReduction(RecurKind Kind, Type *Ty) const;
 
   /// \returns True if the target prefers reductions select kept in the loop
   /// when tail folding. i.e.
@@ -2034,8 +2038,10 @@ public:
                           TargetLibraryInfo *LibInfo) = 0;
   virtual AddressingModeKind
     getPreferredAddressingMode(const Loop *L, ScalarEvolution *SE) const = 0;
-  virtual bool isLegalMaskedStore(Type *DataType, Align Alignment) = 0;
-  virtual bool isLegalMaskedLoad(Type *DataType, Align Alignment) = 0;
+  virtual bool isLegalMaskedStore(Type *DataType, Align Alignment,
+                                  unsigned AddressSpace) = 0;
+  virtual bool isLegalMaskedLoad(Type *DataType, Align Alignment,
+                                 unsigned AddressSpace) = 0;
   virtual bool isLegalNTStore(Type *DataType, Align Alignment) = 0;
   virtual bool isLegalNTLoad(Type *DataType, Align Alignment) = 0;
   virtual bool isLegalBroadcastLoad(Type *ElementTy,
@@ -2347,7 +2353,7 @@ public:
                                         unsigned ChainSizeInBytes,
                                         VectorType *VecTy) const = 0;
   virtual bool preferFixedOverScalableIfEqualCost() const = 0;
-  virtual bool preferInLoopReduction(unsigned Opcode, Type *Ty) const = 0;
+  virtual bool preferInLoopReduction(RecurKind Kind, Type *Ty) const = 0;
   virtual bool preferPredicatedReductionSelect(unsigned Opcode,
                                                Type *Ty) const = 0;
   virtual bool preferAlternateOpcodeVectorization() const = 0;
@@ -2589,11 +2595,13 @@ public:
                                ScalarEvolution *SE) const override {
     return Impl.getPreferredAddressingMode(L, SE);
   }
-  bool isLegalMaskedStore(Type *DataType, Align Alignment) override {
-    return Impl.isLegalMaskedStore(DataType, Alignment);
+  bool isLegalMaskedStore(Type *DataType, Align Alignment,
+                          unsigned AddressSpace) override {
+    return Impl.isLegalMaskedStore(DataType, Alignment, AddressSpace);
   }
-  bool isLegalMaskedLoad(Type *DataType, Align Alignment) override {
-    return Impl.isLegalMaskedLoad(DataType, Alignment);
+  bool isLegalMaskedLoad(Type *DataType, Align Alignment,
+                         unsigned AddressSpace) override {
+    return Impl.isLegalMaskedLoad(DataType, Alignment, AddressSpace);
   }
   bool isLegalNTStore(Type *DataType, Align Alignment) override {
     return Impl.isLegalNTStore(DataType, Alignment);
@@ -3168,8 +3176,8 @@ public:
   bool preferFixedOverScalableIfEqualCost() const override {
     return Impl.preferFixedOverScalableIfEqualCost();
   }
-  bool preferInLoopReduction(unsigned Opcode, Type *Ty) const override {
-    return Impl.preferInLoopReduction(Opcode, Ty);
+  bool preferInLoopReduction(RecurKind Kind, Type *Ty) const override {
+    return Impl.preferInLoopReduction(Kind, Ty);
   }
   bool preferAlternateOpcodeVectorization() const override {
     return Impl.preferAlternateOpcodeVectorization();

@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
 #include "llvm/CodeGen/GlobalISel/CombinerInfo.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
-#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
+#include "llvm/CodeGen/GlobalISel/GISelValueTracking.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/InitializePasses.h"
 
@@ -45,7 +45,7 @@ class AIEPreISelCombinerImpl
     : public AIECombinerBase<AIEPreISelCombinerImplRuleConfig> {
 public:
   AIEPreISelCombinerImpl(MachineFunction &MF, CombinerInfo &CInfo,
-                         const TargetPassConfig *TPC, GISelKnownBits &KB,
+                         const TargetPassConfig *TPC, GISelValueTracking &VT,
                          GISelCSEInfo *CSEInfo,
                          const AIEPreISelCombinerImplRuleConfig &RuleConfig,
                          const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
@@ -67,11 +67,11 @@ private:
 
 AIEPreISelCombinerImpl::AIEPreISelCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
     const AIEPreISelCombinerImplRuleConfig &RuleConfig,
     const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
-    : AIECombinerBase(MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI,
+    : AIECombinerBase(MF, CInfo, TPC, VT, CSEInfo, RuleConfig, STI, MDT, LI,
                       /*IsPreLegalize*/ false),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
 #include "AIEGenPreISelGICombiner.inc"
@@ -92,8 +92,8 @@ public:
     AU.addRequired<TargetPassConfig>();
     AU.setPreservesCFG();
     getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelKnownBitsAnalysis>();
-    AU.addPreserved<GISelKnownBitsAnalysis>();
+    AU.addRequired<GISelValueTrackingAnalysis>();
+    AU.addPreserved<GISelValueTrackingAnalysis>();
     AU.addRequired<MachineDominatorTreeWrapperPass>();
     AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
@@ -130,14 +130,14 @@ bool AIEPreISelCombiner::runOnMachineFunction(MachineFunction &MF) {
   const auto &ST = MF.getSubtarget<AIEBaseSubtarget>();
   const auto *LI = ST.getLegalizerInfo();
 
-  GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
+  GISelValueTracking *VT = &getAnalysis<GISelValueTrackingAnalysis>().get(MF);
   MachineDominatorTree *MDT =
       &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
                      /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),
                      F.hasMinSize());
-  AIEPreISelCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo, RuleConfig, ST, MDT,
+  AIEPreISelCombinerImpl Impl(MF, CInfo, TPC, *VT, CSEInfo, RuleConfig, ST, MDT,
                               LI);
   return Impl.combineMachineInstrs();
 }
@@ -146,7 +146,7 @@ char AIEPreISelCombiner::ID = 0;
 INITIALIZE_PASS_BEGIN(AIEPreISelCombiner, DEBUG_TYPE, "AIE Pre-ISel Combiner",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelKnownBitsAnalysis)
+INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysis)
 INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
 INITIALIZE_PASS_END(AIEPreISelCombiner, DEBUG_TYPE, "AIE Pre-ISel Combiner",
                     false, false)

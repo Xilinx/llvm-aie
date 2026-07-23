@@ -584,6 +584,7 @@ bool mlir::eliminateTriviallyDeadOps(RewriterBase &rewriter, Region &region,
 
 //===----------------------------------------------------------------------===//
 // BlockEquivalenceData
+//===----------------------------------------------------------------------===//
 
 namespace {
 /// This class contains the information for comparing the equivalencies of two
@@ -652,6 +653,7 @@ unsigned BlockEquivalenceData::getOrderOf(Value value) const {
 
 //===----------------------------------------------------------------------===//
 // BlockMergeCluster
+//===----------------------------------------------------------------------===//
 
 namespace {
 /// This class represents a cluster of blocks to be merged together.
