@@ -127,3 +127,295 @@ body:             |
   bb.2:
     PseudoRET implicit $lr, implicit %6, implicit %7, implicit %8, implicit %9
 ...
+
+# Make sure the four bfp13 VSHUFFLEs get four different FEX registers.
+# This is modeled on the biased_conv mx6 inner loop and exercises the bfp13
+# vector (mFEXm/768) and accumulator (eDM/2048) register classes. The
+# loop-carried WAR on the FIFO-popped fex reg is what the WAW rewriter breaks.
+---
+name:            bfp13
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: bfp13
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $dm0, $dm2, $fex0, $fex2, $fex4, $fex6, $fey0, $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $fey4 = COPY $fey0
+  ; CHECK-NEXT:   renamable $r2 = MOV_RLC_imm11_pseudo 106
+  ; CHECK-NEXT:   renamable $r8 = MOV_RLC_imm11_pseudo 972
+  ; CHECK-NEXT:   renamable $dm3 = COPY $dm0
+  ; CHECK-NEXT:   renamable $dm1 = COPY $dm0
+  ; CHECK-NEXT:   renamable $dm0 = COPY $dm2
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dm0, $dm1, $dm2, $dm3, $fex0, $fex2, $fex4, $fex6, $fey4, $r2, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex0, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm3 = VMAC_f_vmac_bfp13 killed $dm3, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex2, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm2 = VMAC_f_vmac_bfp13 killed $dm2, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex4, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm1 = VMAC_f_vmac_bfp13 killed $dm1, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $fex10 = VSHUFFLE_vec_shuffle_fex renamable $fex6, undef renamable $fex0, renamable $r2
+  ; CHECK-NEXT:   $dm0 = VMAC_f_vmac_bfp13 killed $dm0, killed $fex10, $fey4, $r8, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $dm0, $dm1, $dm2, $dm3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $dm3, implicit killed renamable $dm2, implicit killed renamable $dm1, implicit killed renamable $dm0
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $fex0, $fex2, $fex4, $fex6, $fey0, $dm0, $dm2
+    %20:mfexm = COPY $fex0
+    %21:mfexm = COPY $fex2
+    %22:mfexm = COPY $fex4
+    %23:mfexm = COPY $fex6
+    %30:efey = COPY $fey0
+    %40:mlockid_reg = MOV_RLC_imm11_pseudo 106
+    %41:mrv8 = MOV_RLC_imm11_pseudo 972
+    %6:edm = COPY $dm0
+    %7:edm = COPY $dm2
+    %8:edm = COPY $dm0
+    %9:edm = COPY $dm2
+    LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    %50:mfexm = VSHUFFLE_vec_shuffle_fex %20, undef %60:mfexn, %40
+    %6:edm = VMAC_f_vmac_bfp13 %6, %50, %30, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    %51:mfexm = VSHUFFLE_vec_shuffle_fex %21, undef %60:mfexn, %40
+    %7:edm = VMAC_f_vmac_bfp13 %7, %51, %30, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    %52:mfexm = VSHUFFLE_vec_shuffle_fex %22, undef %60:mfexn, %40
+    %8:edm = VMAC_f_vmac_bfp13 %8, %52, %30, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    %53:mfexm = VSHUFFLE_vec_shuffle_fex %23, undef %60:mfexn, %40
+    %9:edm = VMAC_f_vmac_bfp13 %9, %53, %30, %41, implicit-def dead $srfpflags, implicit $crfpmask
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr, implicit %6, implicit %7, implicit %8, implicit %9
+...
+
+# Make sure the four bfp13 feg loads get four different FEG registers.
+# Exercises the bfp13 feg vector class (mFEGa/128). Without renaming the four
+# loads collapse to one FEG register, serializing them through a WAW chain.
+---
+name:            bfp13_feg
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: bfp13_feg
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $dj0, $p0, $p1, $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dj0, $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $fegl0 = LDA_dmv_lda_feg_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_128_dmv_sts_feg_st_idx killed renamable $fegl0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $p1, $dj0
+    %10:ep = COPY $p0
+    %11:ep = COPY $p1
+    %12:edj = COPY $dj0
+    LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    %50:mfega = LDA_dmv_lda_feg_ld_idx %10, %12
+    VST_128_dmv_sts_feg_st_idx %50, %11, %12
+    %51:mfega = LDA_dmv_lda_feg_ld_idx %10, %12
+    VST_128_dmv_sts_feg_st_idx %51, %11, %12
+    %52:mfega = LDA_dmv_lda_feg_ld_idx %10, %12
+    VST_128_dmv_sts_feg_st_idx %52, %11, %12
+    %53:mfega = LDA_dmv_lda_feg_ld_idx %10, %12
+    VST_128_dmv_sts_feg_st_idx %53, %11, %12
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
+
+# Make sure the four bfp13 feg2 loads get four different FEG registers.
+# Exercises the bfp13 feg2 vector class (mFEG2a/256). Without renaming the four
+# loads collapse to one FEG register, serializing them through a WAW chain.
+---
+name:            bfp13_feg2
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: bfp13_feg2
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $dj0, $p0, $p1, $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dj0, $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   renamable $feg0 = VLDA_dmw_lda_feg2_ld_idx renamable $p0, renamable $dj0
+  ; CHECK-NEXT:   VST_dmw_sts_feg2_st_idx killed renamable $feg0, renamable $p1, renamable $dj0
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $p1, $dj0
+    %10:ep = COPY $p0
+    %11:ep = COPY $p1
+    %12:edj = COPY $dj0
+    LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    %50:mfeg2a = VLDA_dmw_lda_feg2_ld_idx %10, %12
+    VST_dmw_sts_feg2_st_idx %50, %11, %12
+    %51:mfeg2a = VLDA_dmw_lda_feg2_ld_idx %10, %12
+    VST_dmw_sts_feg2_st_idx %51, %11, %12
+    %52:mfeg2a = VLDA_dmw_lda_feg2_ld_idx %10, %12
+    VST_dmw_sts_feg2_st_idx %52, %11, %12
+    %53:mfeg2a = VLDA_dmw_lda_feg2_ld_idx %10, %12
+    VST_dmw_sts_feg2_st_idx %53, %11, %12
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
+
+# Make sure the four bfp13 few conversions get four different FEW registers.
+# Exercises the bfp13 few vector class (mFEWa/384) and the eDM accumulators.
+# Without renaming the four VCONVs collapse to one FEW register, serializing
+# them through a WAW chain.
+---
+name:            bfp13_few
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: bfp13_few
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $sf, $dm0, $dm1, $dm2, $dm3, $p2, $r0, $r26
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $sf, $dm0, $dm1, $dm2, $dm3, $p2, $r26
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm0, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm1, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm2, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   renamable $fewl0 = VCONV_mx6_fp32 renamable $dm3, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+  ; CHECK-NEXT:   renamable $sf, renamable $p2, renamable $r26 = VST_PUSH_384 killed renamable $sf, killed renamable $fewl0, killed renamable $p2, killed renamable $r26, implicit-def dead $srfifo_of
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $dm0, $dm1, $dm2, $dm3, $sf, $p2, $r26
+    %6:edm = COPY $dm0
+    %7:edm = COPY $dm1
+    %8:edm = COPY $dm2
+    %9:edm = COPY $dm3
+    %20:mstfifo = COPY $sf
+    %21:mpfs = COPY $p2
+    %22:mr26_fifo_st = COPY $r26
+    LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    %50:mfewa = VCONV_mx6_fp32 %6, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    %20:mstfifo, %21:mpfs, %22:mr26_fifo_st = VST_PUSH_384 %20, %50, %21, %22, implicit-def dead $srfifo_of
+    %51:mfewa = VCONV_mx6_fp32 %7, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    %20:mstfifo, %21:mpfs, %22:mr26_fifo_st = VST_PUSH_384 %20, %51, %21, %22, implicit-def dead $srfifo_of
+    %52:mfewa = VCONV_mx6_fp32 %8, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    %20:mstfifo, %21:mpfs, %22:mr26_fifo_st = VST_PUSH_384 %20, %52, %21, %22, implicit-def dead $srfifo_of
+    %53:mfewa = VCONV_mx6_fp32 %9, implicit-def dead $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    %20:mstfifo, %21:mpfs, %22:mr26_fifo_st = VST_PUSH_384 %20, %53, %21, %22, implicit-def dead $srfifo_of
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
+
+# Make sure the four fey spill reloads get four different FEY registers.
+# Covers the mFEYw (bfp13 1536-bit) rung.
+---
+name:            fey
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+stack:
+  - { id: 0, type: spill-slot, size: 192, alignment: 32 }
+  - { id: 1, type: spill-slot, size: 192, alignment: 32 }
+  - { id: 2, type: spill-slot, size: 192, alignment: 32 }
+  - { id: 3, type: spill-slot, size: 192, alignment: 32 }
+body:             |
+  ; CHECK-LABEL: name: fey
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.0, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.0, implicit $sp
+  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.1, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.1, implicit $sp
+  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.2, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.2, implicit $sp
+  ; CHECK-NEXT:   renamable $fey0 = VLDA_FEY_SPILL %stack.3, implicit $sp
+  ; CHECK-NEXT:   VST_FEY_SPILL killed renamable $fey0, %stack.3, implicit $sp
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0
+    LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    %50:mfeyw = VLDA_FEY_SPILL %stack.0, implicit $sp
+    VST_FEY_SPILL %50, %stack.0, implicit $sp
+    %51:mfeyw = VLDA_FEY_SPILL %stack.1, implicit $sp
+    VST_FEY_SPILL %51, %stack.1, implicit $sp
+    %52:mfeyw = VLDA_FEY_SPILL %stack.2, implicit $sp
+    VST_FEY_SPILL %52, %stack.2, implicit $sp
+    %53:mfeyw = VLDA_FEY_SPILL %stack.3, implicit $sp
+    VST_FEY_SPILL %53, %stack.3, implicit $sp
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
