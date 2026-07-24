@@ -9,10 +9,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Reproduce the crash: dependent integer-valued generic loop hints (incl.
-// nested templates) stay dependent without the fix and the evaluator asserts.
+// Dependent integer-valued generic loop hints are instantiated and preserved
+// verbatim (no unroll 0/1 rewrite), including across nested templates.
 
-// RUN: not --crash %clang_cc1 -triple aie2ps -std=c++20 -emit-llvm -o - %s 2>&1 | FileCheck %s --check-prefix=CRASH
+// RUN: %clang_cc1 -triple aie2ps -std=c++20 -emit-llvm -o - %s | FileCheck %s
 
 template <int N> void scaled(int *p) {
 #pragma clang loop hint(swp_ii, ((N) * 2))
@@ -31,4 +31,5 @@ template <int N> struct Outer {
 template void scaled<4>(int *);
 template void Outer<3>::inner<6>(int *);
 
-// CRASH: Expression evaluator can't be called on a dependent expression.
+// CHECK-DAG: !{!"llvm.loop.hint.swp_ii", i64 8}
+// CHECK-DAG: !{!"llvm.loop.hint.swp_ii", i64 9}
