@@ -158,6 +158,31 @@ body:             |
 ...
 
 ---
+name:            pop_640_sparse
+tracksRegLiveness: true
+legalized: true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins:
+    ; CHECK-LABEL: name: pop_640_sparse
+    ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[VLD_POP_640_normal_pop_pseudo:%[0-9]+]]:mqxsa, [[VLD_POP_640_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_640_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_640_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_640_normal_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_640_normal_pop_pseudo]].sub_sparse_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec128 = COPY [[VLD_POP_640_normal_pop_pseudo]].sub_sparse_q
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_640_normal_pop_pseudo1]], implicit [[VLD_POP_640_normal_pop_pseudo2]], implicit [[VLD_POP_640_normal_pop_pseudo3]], implicit [[COPY]], implicit [[COPY1]]
+    %14:vregbank(<64 x s8>) = G_IMPLICIT_DEF
+    %15:vregbank(<16 x s8>) = G_IMPLICIT_DEF
+    %6:ptrregbank(p0) = G_IMPLICIT_DEF
+    %7:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
+    %8:gprregbank(s32) = G_IMPLICIT_DEF
+    %9:ptrregbank(p0), %10:fiforegbank(<32 x s32>), %11:gprregbank(s32), %12:vregbank(<64 x s8>), %13:vregbank(<16 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.640.unaligned.sparse), %6:ptrregbank(p0), %7:fiforegbank(<32 x s32>), %8:gprregbank(s32), %14:vregbank(<64 x s8>), %15:vregbank(<16 x s8>)
+    PseudoRET implicit $lr, implicit %9, implicit %10, implicit %11, implicit %12, implicit %13
+...
+
+---
 name:            pop_unaligned_1d
 tracksRegLiveness: true
 legalized: true

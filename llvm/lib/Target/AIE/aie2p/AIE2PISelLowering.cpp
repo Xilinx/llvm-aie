@@ -119,6 +119,7 @@ bool AIE2PTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16:
   case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
   case Intrinsic::aie2p_fifo_ld_pop_576_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse:
     // The HW does a 512-bit load from somewhere between addr-63 and addr+128
     // depending on the FIFO availability and the input alignment.
     // A conservative access range would be [addr-64, addr+192)

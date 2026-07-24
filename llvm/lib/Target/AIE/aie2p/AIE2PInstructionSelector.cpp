@@ -79,6 +79,10 @@ public:
                                        Register MantissaDst,
                                        Register ExponentDst,
                                        MachineRegisterInfo &MRI);
+  bool buildAndConstrainSparseFifoLoadCopies(Register SparseVecDst,
+                                             Register DataDst,
+                                             Register MaskDst,
+                                             MachineRegisterInfo &MRI);
   Register createDSRegSequence(Register ModifierReg, Register Incr1Reg,
                                Register Incr2Reg, Register Size1Reg,
                                Register Count1Reg, Register Size2Reg,
@@ -104,6 +108,8 @@ public:
   bool selectVLD_FIFO_POP_BFP16_1D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_POP_BFP16_2D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_POP_BFP16_3D(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVLD_FIFO_POP_640_SPARSE(MachineInstr &I,
+                                     MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_FILLX(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_POPX(MachineInstr &I, MachineRegisterInfo &MRI);
 
@@ -422,6 +428,8 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
     case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
       return selectVLD_FIFO_POP_BFP16_3D(I, MRI);
+    case Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse:
+      return selectVLD_FIFO_POP_640_SPARSE(I, MRI);
     case Intrinsic::set_loop_iterations:
       return selectSetLoopIterations(I, MRI, MIB);
     case Intrinsic::start_loop_iterations:
@@ -787,6 +795,26 @@ bool AIE2PInstructionSelector::buildAndConstrainFifoLoadCopies(
          constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI1,
                                   AIE2P::VEC512RegClass,
                                   CopyMI1->getOperand(0));
+}
+
+// Split the 640-bit sparse-load destination into the 512-bit data half
+// (sub_sparse_x) and the 128-bit sparsity-mask half (sub_sparse_q).
+// Mirrors buildAndConstrainFifoLoadCopies (BFP16 path).
+bool AIE2PInstructionSelector::buildAndConstrainSparseFifoLoadCopies(
+    Register SparseVecDest, Register DataDst, Register MaskDst,
+    MachineRegisterInfo &MRI) {
+
+  auto CopyDataMI = MIB.buildInstr(TargetOpcode::COPY, {DataDst}, {})
+                        .addReg(SparseVecDest, 0, AIE2P::sub_sparse_x);
+  auto CopyMaskMI = MIB.buildInstr(TargetOpcode::COPY, {MaskDst}, {})
+                        .addReg(SparseVecDest, 0, AIE2P::sub_sparse_q);
+
+  return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyDataMI,
+                                  AIE2P::VEC512RegClass,
+                                  CopyDataMI->getOperand(0)) &&
+         constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMaskMI,
+                                  AIE2P::VEC128RegClass,
+                                  CopyMaskMI->getOperand(0));
 }
 
 Register AIE2PInstructionSelector::createDSRegSequence(
@@ -1884,6 +1912,8 @@ unsigned getLoadFifoOpcode(MachineInstr &I) {
     return AIE2P::VLDB_FILLX_512;
   case Intrinsic::aie2p_fifo_ld_popx:
     return AIE2P::VLDB_POPX_512;
+  case Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse:
+    return AIE2P::VLD_POP_640_normal_pop_pseudo;
   }
   llvm_unreachable("unreachable: Failed to get sparse load opcode");
   return AIE2P::INSTRUCTION_LIST_END;
@@ -2080,6 +2110,36 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16(
       {PtrIn, FifoIn, AvailIn});
   bool CopiesConstrained =
       buildAndConstrainFifoLoadCopies(Vec576Out, MantVecOut, ExpVecOut, MRI);
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
+         CopiesConstrained;
+}
+
+// Lower the sparse-load intrinsic to the existing 640-bit silicon pseudo
+// VLD_POP_640_normal_pop_pseudo. The pseudo destination is mQXsa (640 bits),
+// which we then split via sub_sparse_x / sub_sparse_q copies into the
+// data + mask outputs the builtin exposes by reference.
+bool AIE2PInstructionSelector::selectVLD_FIFO_POP_640_SPARSE(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_640_unaligned_sparse);
+  // GIntrinsic returns are: ptr, fifo, pos, data, mask (5 defs).
+  Register PtrOut = I.getOperand(0).getReg();
+  Register FifoOut = I.getOperand(1).getReg();
+  Register AvailOut = I.getOperand(2).getReg();
+  Register DataOut = I.getOperand(3).getReg();
+  Register MaskOut = I.getOperand(4).getReg();
+  // Then intrinsic-id, then ptr, fifo, pos inputs.
+  Register PtrIn = I.getOperand(6).getReg();
+  Register FifoIn = I.getOperand(7).getReg();
+  Register AvailIn = I.getOperand(8).getReg();
+  Register Vec640Out = MRI.createVirtualRegister(&AIE2P::mQXsaRegClass);
+  MachineInstrBuilder MI = MIB.buildInstr(
+      getLoadFifoOpcode(I), {Vec640Out, PtrOut, FifoOut, AvailOut},
+      {PtrIn, FifoIn, AvailIn});
+  bool CopiesConstrained =
+      buildAndConstrainSparseFifoLoadCopies(Vec640Out, DataOut, MaskOut, MRI);
   MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&

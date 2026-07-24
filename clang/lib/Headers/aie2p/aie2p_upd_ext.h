@@ -2083,4 +2083,265 @@ INTRINSIC(v64bfp16ebs8) extract_v64bfp16ebs8(v128bfp16ebs8 m, int idx) {
   return {m.mantissaX1, m.exponentE1};
 }
 
+// ---------------------------------------------------------------------------
+// Sparse vector data/sparsity extraction (Followup H — G-T3.6-003 Tier 1)
+//
+// Pattern mirrors the dense BFP `extract_v64bfp16ebs16` above: both operate on
+// a packed struct, returning either a sub-vector or composing a smaller
+// sparse from larger sparse halves. No custom builtin is needed — the
+// underlying sparse register classes (mQXsa/mQXsb in
+// AIE2PRegisterInfo.td:727+) are already targeted by the dense load builtin
+// chain when the data field is an aligned `v64int8`.
+//
+// AIEv2 implements the same surface via __builtin_aiev2_ext_qx (see
+// aiev2/aiev2_upd_ext.h:2602-2622), but that builtin is not defined in
+// upstream Peano — it is supplied by Vitis Chess. By implementing as
+// struct-field access, we avoid that builtin dependency and keep the AIE2P
+// path self-contained.
+// ---------------------------------------------------------------------------
+
+// extract_sparse_data — pull the dense data field out of a sparse vector.
+// Mirrors the AIEv2 `extract_sparse_data` family (aiev2_upd_ext.h:2602-2622).
+INTRINSIC(v128uint4) extract_sparse_data(v256uint4_sparse v) {
+  return v.data;
+}
+INTRINSIC(v64uint8) extract_sparse_data(v128uint8_sparse v) {
+  return v.data;
+}
+INTRINSIC(v32uint16) extract_sparse_data(v64uint16_sparse v) {
+  return v.data;
+}
+INTRINSIC(v128int4) extract_sparse_data(v256int4_sparse v) {
+  return v.data;
+}
+INTRINSIC(v64int8) extract_sparse_data(v128int8_sparse v) {
+  return v.data;
+}
+INTRINSIC(v32int16) extract_sparse_data(v64int16_sparse v) {
+  return v.data;
+}
+
+// extract_v* synonym for extract_sparse_data — the aie_api compat layer
+// uses both names depending on the call site.
+INTRINSIC(v128uint4) extract_v128uint4(v256uint4_sparse v) {
+  return v.data;
+}
+INTRINSIC(v64uint8) extract_v64uint8(v128uint8_sparse v) {
+  return v.data;
+}
+INTRINSIC(v32uint16) extract_v32uint16(v64uint16_sparse v) {
+  return v.data;
+}
+INTRINSIC(v128int4) extract_v128int4(v256int4_sparse v) {
+  return v.data;
+}
+INTRINSIC(v64int8) extract_v64int8(v128int8_sparse v) {
+  return v.data;
+}
+INTRINSIC(v32int16) extract_v32int16(v64int16_sparse v) {
+  return v.data;
+}
+
+// extract_sparsity — pull the sparsity_t mask out of a sparse vector.
+INTRINSIC(sparsity_t) extract_sparsity(v256uint4_sparse v) {
+  return v.mask;
+}
+INTRINSIC(sparsity_t) extract_sparsity(v128uint8_sparse v) {
+  return v.mask;
+}
+INTRINSIC(sparsity_t) extract_sparsity(v64uint16_sparse v) {
+  return v.mask;
+}
+INTRINSIC(sparsity_t) extract_sparsity(v256int4_sparse v) {
+  return v.mask;
+}
+INTRINSIC(sparsity_t) extract_sparsity(v128int8_sparse v) {
+  return v.mask;
+}
+INTRINSIC(sparsity_t) extract_sparsity(v64int16_sparse v) {
+  return v.mask;
+}
+
+// ---------------------------------------------------------------------------
+// AIE2P-larger sparse <-> smaller sparse conversion (Followup H Tier 2)
+//
+// Mirrors the bfp16 pattern at extract_v64bfp16ebs16 (line ~2073 above):
+// the larger composite struct holds two halves of the smaller type, and
+// extract/concat is a struct-field operation. v256int8_sparse,
+// v512int4_sparse, v128int16_sparse, v256uint8_sparse, v512uint4_sparse,
+// v128uint16_sparse are now real composite structs (see
+// aie2p_aie_api_compat.h:53-93 for the new struct definitions); the empty-
+// struct stubs they previously held made these implementations impossible.
+// ---------------------------------------------------------------------------
+
+// extract_v*_sparse: larger -> smaller via lo/hi field access.
+INTRINSIC(v256uint4_sparse)
+extract_v256uint4_sparse(v512uint4_sparse v, int idx) {
+  if (idx == 0)
+    return v.lo;
+  return v.hi;
+}
+INTRINSIC(v128uint8_sparse)
+extract_v128uint8_sparse(v256uint8_sparse v, int idx) {
+  if (idx == 0)
+    return v.lo;
+  return v.hi;
+}
+INTRINSIC(v64uint16_sparse)
+extract_v64uint16_sparse(v128uint16_sparse v, int idx) {
+  if (idx == 0)
+    return v.lo;
+  return v.hi;
+}
+INTRINSIC(v256int4_sparse)
+extract_v256int4_sparse(v512int4_sparse v, int idx) {
+  if (idx == 0)
+    return v.lo;
+  return v.hi;
+}
+INTRINSIC(v128int8_sparse)
+extract_v128int8_sparse(v256int8_sparse v, int idx) {
+  if (idx == 0)
+    return v.lo;
+  return v.hi;
+}
+INTRINSIC(v64int16_sparse)
+extract_v64int16_sparse(v128int16_sparse v, int idx) {
+  if (idx == 0)
+    return v.lo;
+  return v.hi;
+}
+
+// concat: smaller pair -> larger.
+INTRINSIC(v512uint4_sparse)
+concat(v256uint4_sparse a, v256uint4_sparse b) {
+  return v512uint4_sparse{a, b};
+}
+INTRINSIC(v256uint8_sparse)
+concat(v128uint8_sparse a, v128uint8_sparse b) {
+  return v256uint8_sparse{a, b};
+}
+INTRINSIC(v128uint16_sparse)
+concat(v64uint16_sparse a, v64uint16_sparse b) {
+  return v128uint16_sparse{a, b};
+}
+INTRINSIC(v512int4_sparse)
+concat(v256int4_sparse a, v256int4_sparse b) {
+  return v512int4_sparse{a, b};
+}
+INTRINSIC(v256int8_sparse)
+concat(v128int8_sparse a, v128int8_sparse b) {
+  return v256int8_sparse{a, b};
+}
+INTRINSIC(v128int16_sparse)
+concat(v64int16_sparse a, v64int16_sparse b) {
+  return v128int16_sparse{a, b};
+}
+
+// set_v*_sparse — set lane idx (always lo) and zero the rest.
+INTRINSIC(v512uint4_sparse)
+set_v512uint4_sparse(int idx, v256uint4_sparse v) {
+  v512uint4_sparse r{};
+  if (idx == 0)
+    r.lo = v;
+  else
+    r.hi = v;
+  return r;
+}
+INTRINSIC(v256uint8_sparse)
+set_v256uint8_sparse(int idx, v128uint8_sparse v) {
+  v256uint8_sparse r{};
+  if (idx == 0)
+    r.lo = v;
+  else
+    r.hi = v;
+  return r;
+}
+INTRINSIC(v128uint16_sparse)
+set_v128uint16_sparse(int idx, v64uint16_sparse v) {
+  v128uint16_sparse r{};
+  if (idx == 0)
+    r.lo = v;
+  else
+    r.hi = v;
+  return r;
+}
+INTRINSIC(v512int4_sparse)
+set_v512int4_sparse(int idx, v256int4_sparse v) {
+  v512int4_sparse r{};
+  if (idx == 0)
+    r.lo = v;
+  else
+    r.hi = v;
+  return r;
+}
+INTRINSIC(v256int8_sparse)
+set_v256int8_sparse(int idx, v128int8_sparse v) {
+  v256int8_sparse r{};
+  if (idx == 0)
+    r.lo = v;
+  else
+    r.hi = v;
+  return r;
+}
+INTRINSIC(v128int16_sparse)
+set_v128int16_sparse(int idx, v64int16_sparse v) {
+  v128int16_sparse r{};
+  if (idx == 0)
+    r.lo = v;
+  else
+    r.hi = v;
+  return r;
+}
+
+// insert / update: replace a lane with a new value.
+INTRINSIC(v512uint4_sparse)
+insert(v512uint4_sparse m, int idx, v256uint4_sparse v) {
+  if (idx == 0)
+    m.lo = v;
+  else
+    m.hi = v;
+  return m;
+}
+INTRINSIC(v256uint8_sparse)
+insert(v256uint8_sparse m, int idx, v128uint8_sparse v) {
+  if (idx == 0)
+    m.lo = v;
+  else
+    m.hi = v;
+  return m;
+}
+INTRINSIC(v128uint16_sparse)
+insert(v128uint16_sparse m, int idx, v64uint16_sparse v) {
+  if (idx == 0)
+    m.lo = v;
+  else
+    m.hi = v;
+  return m;
+}
+INTRINSIC(v512int4_sparse)
+insert(v512int4_sparse m, int idx, v256int4_sparse v) {
+  if (idx == 0)
+    m.lo = v;
+  else
+    m.hi = v;
+  return m;
+}
+INTRINSIC(v256int8_sparse)
+insert(v256int8_sparse m, int idx, v128int8_sparse v) {
+  if (idx == 0)
+    m.lo = v;
+  else
+    m.hi = v;
+  return m;
+}
+INTRINSIC(v128int16_sparse)
+insert(v128int16_sparse m, int idx, v64int16_sparse v) {
+  if (idx == 0)
+    m.lo = v;
+  else
+    m.hi = v;
+  return m;
+}
+
 #endif // __AIE2P_UPD_EXT_H__

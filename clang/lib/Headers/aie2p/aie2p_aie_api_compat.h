@@ -46,13 +46,11 @@ struct v8cfloat {
 };
 struct v16cfloat {};
 
-struct v128uint16_sparse {};
-struct v256uint8_sparse {};
-struct v512uint4_sparse {};
-
-struct v128int16_sparse {};
-struct v256int8_sparse {};
-struct v512int4_sparse {};
+// AIE2P-larger (1280-bit) sparse vector types are now defined in
+// aiebase_typedefs.h (Followup H — G-T3.6-003 Tier 2) so that they are
+// visible to aie2p_upd_ext.h, which is included before this compat header.
+// The previous empty-stub definitions here (`struct v256int8_sparse {};`)
+// shadowed those real types and were removed.
 
 struct v256bfp16ebs16_sparse {};
 struct v256bfp16ebs8_sparse {};

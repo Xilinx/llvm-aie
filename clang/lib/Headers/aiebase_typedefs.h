@@ -211,6 +211,7 @@ typedef int32_t v4int32 __attribute__((__vector_size__(16)))
 __attribute__((aligned(__MIN_ALIGNMENT_16)));
 typedef int16_t v8int16 __attribute__((__vector_size__(16)))
 __attribute__((aligned(__MIN_ALIGNMENT_16)));
+typedef char v16char __attribute__((__vector_size__(16)));
 typedef int8_t v16int8 __attribute__((__vector_size__(16)))
 __attribute__((aligned(__MIN_ALIGNMENT_16)));
 typedef uint32_t v4uint32 __attribute__((__vector_size__(16)))
@@ -574,6 +575,53 @@ struct v128bfp16ebs8 {
   v8int8 exponentE1;
 } __attribute__((packed)) __attribute__((return_in_regs))
 __attribute__((aligned(8)));
+
+// AIE2P-larger (1280-bit) sparse vector types — Followup H, G-T3.6-003.
+//
+// These are the AIE-API-style "wide sparse" types: each holds a pair of the
+// AIEv2-sized (640-bit) sparse vectors. They were previously declared as
+// empty-stub structs in aie2p_aie_api_compat.h:53-66 (now removed), which
+// blocked any non-trivial implementation of the forward-decls in that file.
+//
+// Defining them as composite structs (mirroring the v128bfp16ebs16 pattern
+// at lines 563-576 above) makes:
+//   - extract_v128int8_sparse(v256int8_sparse, int)  -> field access
+//   - concat(v128int8_sparse, v128int8_sparse)        -> brace-init
+//   - set_v256int8_sparse / insert(v256int8_sparse, ...) -> field write
+// all implementable as pure header functions in aie2p_upd_ext.h.
+//
+// Bodies live at aie2p_upd_ext.h (tail), in the
+// "AIE2P-larger sparse <-> smaller sparse conversion" block.
+struct v512uint4_sparse {
+  v256uint4_sparse lo;
+  v256uint4_sparse hi;
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs)) __attribute__((is_sparse));
+struct v256uint8_sparse {
+  v128uint8_sparse lo;
+  v128uint8_sparse hi;
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs)) __attribute__((is_sparse));
+struct v128uint16_sparse {
+  v64uint16_sparse lo;
+  v64uint16_sparse hi;
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs)) __attribute__((is_sparse));
+struct v512int4_sparse {
+  v256int4_sparse lo;
+  v256int4_sparse hi;
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs)) __attribute__((is_sparse));
+struct v256int8_sparse {
+  v128int8_sparse lo;
+  v128int8_sparse hi;
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs)) __attribute__((is_sparse));
+struct v128int16_sparse {
+  v64int16_sparse lo;
+  v64int16_sparse hi;
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs)) __attribute__((is_sparse));
 
 #endif // __AIEARCH__ == 21
 
