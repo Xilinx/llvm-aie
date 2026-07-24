@@ -250,3 +250,47 @@ func.func @no_fold_i13_to_f16_to_i16(%arg0: tensor<4xi13>) -> tensor<4xi16> {
 // CHECK-NEXT:  tosa.cast %[[ARG0]] : (tensor<4xi13>) -> tensor<4xf16>
 // CHECK-NEXT:  tosa.cast {{.*}} : (tensor<4xf16>) -> tensor<4xi16>
 // CHECK-NEXT:  return {{.*}} : tensor<4xi16>
+
+
+// -----
+
+// f8E5M2 -> tf32 -> bf16 is folded because tf32 can represent every f8E5M2 value
+// (prec 3<=11, minExp -14>=-126, maxExp 15<=127).
+// CHECK-LABEL: @fold_f8E5M2_via_tf32
+func.func @fold_f8E5M2_via_tf32(%arg0: tensor<4xf8E5M2>) -> tensor<4xbf16> {
+  %0 = tosa.cast %arg0 : (tensor<4xf8E5M2>) -> tensor<4xtf32>
+  %1 = tosa.cast %0 : (tensor<4xtf32>) -> tensor<4xbf16>
+  return %1 : tensor<4xbf16>
+}
+// CHECK-SAME:  (%[[ARG0:.*]]: tensor<4xf8E5M2>) -> tensor<4xbf16>
+// CHECK-NEXT:  tosa.cast %[[ARG0]] : (tensor<4xf8E5M2>) -> tensor<4xbf16>
+// CHECK-NEXT:  return {{.*}} : tensor<4xbf16>
+
+
+// -----
+
+// tf32 -> f16 -> f32 is not folded because f16 cannot represent all tf32 values.
+// CHECK-LABEL: @no_fold_tf32_via_f16
+func.func @no_fold_tf32_via_f16(%arg0: tensor<4xtf32>) -> tensor<4xf32> {
+  %0 = tosa.cast %arg0 : (tensor<4xtf32>) -> tensor<4xf16>
+  %1 = tosa.cast %0 : (tensor<4xf16>) -> tensor<4xf32>
+  return %1 : tensor<4xf32>
+}
+// CHECK-SAME:  (%[[ARG0:.*]]: tensor<4xtf32>) -> tensor<4xf32>
+// CHECK-NEXT:  tosa.cast %[[ARG0]] : (tensor<4xtf32>) -> tensor<4xf16>
+// CHECK-NEXT:  tosa.cast {{.*}} : (tensor<4xf16>) -> tensor<4xf32>
+// CHECK-NEXT:  return {{.*}} : tensor<4xf32>
+
+
+// -----
+
+// i32 -> i16 -> i8: a case of trivial cast chain that is folded.
+// CHECK-LABEL: @fold_i32_to_i16_to_i8
+func.func @fold_i32_to_i16_to_i8(%arg0: tensor<4xi32>) -> tensor<4xi8> {
+  %0 = tosa.cast %arg0 : (tensor<4xi32>) -> tensor<4xi16>
+  %1 = tosa.cast %0 : (tensor<4xi16>) -> tensor<4xi8>
+  return %1 : tensor<4xi8>
+}
+// CHECK-SAME:  (%[[ARG0:.*]]: tensor<4xi32>) -> tensor<4xi8>
+// CHECK-NEXT:  tosa.cast %[[ARG0]] : (tensor<4xi32>) -> tensor<4xi8>
+// CHECK-NEXT:  return {{.*}} : tensor<4xi8>

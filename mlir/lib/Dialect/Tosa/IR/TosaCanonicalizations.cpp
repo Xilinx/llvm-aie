@@ -1764,8 +1764,12 @@ struct FoldConsecutiveCastPattern : public OpRewritePattern<tosa::CastOp> {
       if (midIntTy.getWidth() <= srcIntTy.getWidth())
         return failure();
     } else if (bothFloat) {
-      // float -> float: require strict widening (by total bit width).
-      if (midFloatTy.getWidth() <= srcFloatTy.getWidth())
+      // float -> float: the intermediate type must be able to represent every
+      // value of the source type. Examples: bf16 and f16 are both 16-bit but
+      // neither can represent the other; tf32 is 19-bit yet covers all of bf16).
+      const auto &srcSem = srcFloatTy.getFloatSemantics();
+      const auto &midSem = midFloatTy.getFloatSemantics();
+      if (!llvm::APFloatBase::isRepresentableBy(srcSem, midSem))
         return failure();
     } else if (intToFloat) {
       // int -> float: safe when the float precision (significand bits
