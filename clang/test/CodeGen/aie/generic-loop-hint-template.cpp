@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// RUN: not --crash %clang_cc1 -triple aie2ps -std=c++20 -emit-llvm -o - %s 2>&1 | FileCheck %s --check-prefix=CRASH
+// RUN: %clang_cc1 -triple aie2ps -std=c++20 -emit-llvm -o - %s | FileCheck %s
 
 enum out_mode_t { FULL, PARTIAL };
 
@@ -25,4 +25,17 @@ template void gemm_like<FULL, true>(int *);
 template void gemm_like<PARTIAL, false>(int *);
 template void gemm_like<PARTIAL, true>(int *);
 
-// CRASH: Expression evaluator can't be called on a dependent expression.
+// CHECK-LABEL: define weak_odr void @_Z9gemm_likeIL10out_mode_t0ELb0EEvPi(
+// CHECK: br label %for.cond, !llvm.loop [[FULL_FALSE_LOOP:![0-9]+]]
+// CHECK-LABEL: define weak_odr void @_Z9gemm_likeIL10out_mode_t0ELb1EEvPi(
+// CHECK: br label %for.cond, !llvm.loop [[FULL_TRUE_LOOP:![0-9]+]]
+// CHECK-LABEL: define weak_odr void @_Z9gemm_likeIL10out_mode_t1ELb0EEvPi(
+// CHECK: br label %for.cond, !llvm.loop [[PARTIAL_FALSE_LOOP:![0-9]+]]
+// CHECK-LABEL: define weak_odr void @_Z9gemm_likeIL10out_mode_t1ELb1EEvPi(
+// CHECK: br label %for.cond, !llvm.loop [[PARTIAL_TRUE_LOOP:![0-9]+]]
+// CHECK: [[FULL_FALSE_LOOP]] = distinct !{[[FULL_FALSE_LOOP]], !{{[0-9]+}}, [[ZERO_HINT:![0-9]+]]}
+// CHECK: [[ZERO_HINT]] = !{!"llvm.loop.hint.aie-olp-war-rename", i64 0}
+// CHECK: [[FULL_TRUE_LOOP]] = distinct !{[[FULL_TRUE_LOOP]], !{{[0-9]+}}, [[ONE_HINT:![0-9]+]]}
+// CHECK: [[ONE_HINT]] = !{!"llvm.loop.hint.aie-olp-war-rename", i64 1}
+// CHECK: [[PARTIAL_FALSE_LOOP]] = distinct !{[[PARTIAL_FALSE_LOOP]], !{{[0-9]+}}, [[ZERO_HINT]]}
+// CHECK: [[PARTIAL_TRUE_LOOP]] = distinct !{[[PARTIAL_TRUE_LOOP]], !{{[0-9]+}}, [[ZERO_HINT]]}
