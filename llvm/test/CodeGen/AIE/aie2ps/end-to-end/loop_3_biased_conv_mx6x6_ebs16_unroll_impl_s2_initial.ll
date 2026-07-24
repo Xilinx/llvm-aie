@@ -420,4 +420,5 @@ attributes #4 = { mustprogress noinline "no-builtin-memcpy" "no-builtin-memmove"
 !22 = !{!11, !12, !8, !14}
 !23 = !{!14}
 !24 = !{!11, !12, !8, !13}
-!25 = distinct !{!25, !18}
+!25 = distinct !{!25, !18, !26}
+!26 = !{!"llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 1}

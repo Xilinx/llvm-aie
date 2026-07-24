@@ -35,6 +35,20 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; REMARKS-NEXT: Name:            canPipelineLoop
 ; REMARKS-NEXT: Function:        loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial
 ; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Disabled by Pragma.
+; REMARKS-NEXT: ...
+; REMARKS: --- !Missed
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            canPipelineLoop
+; REMARKS-NEXT: Function:        loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Failed to pipeline loop
+; REMARKS-NEXT: ...
+; REMARKS: --- !Analysis
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            canPipelineLoop
+; REMARKS-NEXT: Function:        loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial
+; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - String:          'Not a single basic block: '
 ; REMARKS-NEXT:   - NumBlocks:       '3'
 ; REMARKS-NEXT: ...
@@ -54,11 +68,26 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; REMARKS-NEXT:   - Pipeliner:       postpipeliner
 ; REMARKS-NEXT:   - II:              '7'
 ; REMARKS-NEXT:   - NS:              '3'
-; REMARKS-NEXT:   - Loop:            bb.2.for.body15.i
-; REMARKS-NEXT:   - Prologue:        bb.1.for.body.i71
-; REMARKS-NEXT:   - PrologueBundles: '19'
-; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup14.i
-; REMARKS-NEXT:   - EpilogueBundles: '22'
+; REMARKS-NEXT:   - Loop:            bb.2.steady.stage1.inner.for.body15.i
+; REMARKS-NEXT:   - Prologue:        bb.1.steady.stage1.top
+; REMARKS-NEXT:   - PrologueBundles: '16'
+; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
+; REMARKS-NEXT:   - EpilogueBundles: '27'
+; REMARKS-NEXT: ...
+; REMARKS: --- !Passed
+; REMARKS-NEXT: Pass:            pipeliner
+; REMARKS-NEXT: Name:            schedule
+; REMARKS-NEXT: Function:        loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - String:          Schedule found
+; REMARKS-NEXT:   - Pipeliner:       postpipeliner
+; REMARKS-NEXT:   - II:              '7'
+; REMARKS-NEXT:   - NS:              '3'
+; REMARKS-NEXT:   - Loop:            bb.5.lastiter.stage1.inner.for.body15.i
+; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.stage1.top
+; REMARKS-NEXT:   - PrologueBundles: '15'
+; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
+; REMARKS-NEXT:   - EpilogueBundles: '24'
 ; REMARKS-NEXT: ...
 newFuncRoot:
   br label %for.body.i71
@@ -309,5 +338,6 @@ attributes #4 = { mustprogress noinline "no-builtin-memcpy" "no-builtin-memmove"
 !24 = !{!11, !12, !8, !14}
 !25 = !{!14}
 !26 = !{!11, !12, !8, !13}
-!27 = distinct !{!27, !20, !28}
+!27 = distinct !{!27, !20, !28, !29}
 !28 = !{!"llvm.loop.itercount.range", i64 3}
+!29 = !{!"llvm.loop.hint.aie-enable-outer-loop-pipelining", i64 1}
