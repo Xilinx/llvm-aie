@@ -680,8 +680,8 @@ static std::optional<EstimatedUnrollCost> analyzeLoopUnrollCost(
   LLVM_DEBUG(dbgs() << "Analysis finished:\n"
                     << "UnrolledCost: " << UnrolledCost << ", "
                     << "RolledDynamicCost: " << RolledDynamicCost << "\n");
-  return {{unsigned(*UnrolledCost.getValue()),
-           unsigned(*RolledDynamicCost.getValue())}};
+  return {{unsigned(UnrolledCost.getValue()),
+           unsigned(RolledDynamicCost.getValue())}};
 }
 
 UnrollCostEstimator::UnrollCostEstimator(
@@ -732,7 +732,7 @@ bool UnrollCostEstimator::canUnroll() const {
 uint64_t UnrollCostEstimator::getUnrolledLoopSize(
     const TargetTransformInfo::UnrollingPreferences &UP,
     unsigned CountOverwrite) const {
-  unsigned LS = *LoopSize.getValue();
+  unsigned LS = LoopSize.getValue();
   assert(LS >= UP.BEInsns && "LoopSize should not be less than BEInsns!");
   if (CountOverwrite)
     return static_cast<uint64_t>(LS - UP.BEInsns) * CountOverwrite + UP.BEInsns;

@@ -136,6 +136,14 @@ class ReadNone<ArgIndex idx> : IntrinsicProperty {
   int ArgNo = idx.Value;
 }
 
+// The return value or argument is in the range [lower, upper),
+// where lower and upper are interpreted as signed integers.
+class Range<AttrIndex idx, int lower, int upper> : IntrinsicProperty {
+  int ArgNo = idx.Value;
+  int Lower = lower;
+  int Upper = upper;
+}
+
 def IntrNoReturn : IntrinsicProperty;
 
 // Applied by default.
@@ -1622,10 +1630,10 @@ def int_umin : DefaultAttrsIntrinsic<
     [IntrNoMem, IntrSpeculatable, IntrWillReturn]>;
 def int_scmp : DefaultAttrsIntrinsic<
     [llvm_anyint_ty], [llvm_anyint_ty, LLVMMatchType<1>],
-    [IntrNoMem, IntrSpeculatable, IntrWillReturn]>;
+    [IntrNoMem, IntrSpeculatable, IntrWillReturn, Range<RetIndex, -1, 2>]>;
 def int_ucmp : DefaultAttrsIntrinsic<
     [llvm_anyint_ty], [llvm_anyint_ty, LLVMMatchType<1>],
-    [IntrNoMem, IntrSpeculatable, IntrWillReturn]>;
+    [IntrNoMem, IntrSpeculatable, IntrWillReturn, Range<RetIndex, -1, 2>]>;
 
 //===------------------------- Memory Use Markers -------------------------===//
 //

@@ -1422,16 +1422,16 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
       static_cast<PragmaLoopHintInfo *>(Tok.getAnnotationValue());
 
   IdentifierInfo *PragmaNameInfo = Info->PragmaName.getIdentifierInfo();
-  Hint.PragmaNameLoc = IdentifierLoc::create(
-      Actions.Context, Info->PragmaName.getLocation(), PragmaNameInfo);
+  Hint.PragmaNameLoc = new (Actions.Context)
+      IdentifierLoc(Info->PragmaName.getLocation(), PragmaNameInfo);
 
   // It is possible that the loop hint has no option identifier, such as
   // #pragma unroll(4).
   IdentifierInfo *OptionInfo = Info->Option.is(tok::identifier)
                                    ? Info->Option.getIdentifierInfo()
                                    : nullptr;
-  Hint.OptionLoc = IdentifierLoc::create(
-      Actions.Context, Info->Option.getLocation(), OptionInfo);
+  Hint.OptionLoc = new (Actions.Context)
+      IdentifierLoc(Info->Option.getLocation(), OptionInfo);
 
   llvm::ArrayRef<Token> Toks = Info->Toks;
 
@@ -1514,7 +1514,7 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
     if (Toks.size() > 2)
       Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
           << PragmaLoopHintString(Info->PragmaName, Info->Option);
-    Hint.StateLoc = IdentifierLoc::create(Actions.Context, StateLoc, StateInfo);
+    Hint.StateLoc = new (Actions.Context) IdentifierLoc(StateLoc, StateInfo);
   } else if (OptionInfo && OptionInfo->getName() == "vectorize_width") {
     PP.EnterTokenStream(Toks, /*DisableMacroExpansion=*/false,
                         /*IsReinject=*/false);
@@ -1535,8 +1535,7 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
           ConsumeAnyToken();
       }
 
-      Hint.StateLoc =
-          IdentifierLoc::create(Actions.Context, StateLoc, StateInfo);
+      Hint.StateLoc = new (Actions.Context) IdentifierLoc(StateLoc, StateInfo);
 
       ConsumeToken(); // Consume the constant expression eof terminator.
     } else {
@@ -1560,7 +1559,7 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
           Arg2Error = true;
         } else
           Hint.StateLoc =
-              IdentifierLoc::create(Actions.Context, StateLoc, StateInfo);
+              new (Actions.Context) IdentifierLoc(StateLoc, StateInfo);
 
         PP.Lex(Tok); // Identifier
       }
@@ -1616,7 +1615,7 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
         break;
     }
     IdentifierInfo &MergedKey = PP.getIdentifierTable().get(HintKey);
-    Hint.StateLoc = IdentifierLoc::create(Actions.Context, KeyLoc, &MergedKey);
+    Hint.StateLoc = new (Actions.Context) IdentifierLoc(KeyLoc, &MergedKey);
 
     // Optionally parse a comma followed by a value.
     if (Tok.is(tok::comma)) {
@@ -1638,7 +1637,7 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
       } else if (ValIdent) {
         // Identifier value (e.g. hint(key, pre)).
         Hint.ValueIdentLoc =
-            IdentifierLoc::create(Actions.Context, Tok.getLocation(), ValIdent);
+            new (Actions.Context) IdentifierLoc(Tok.getLocation(), ValIdent);
         PP.Lex(Tok);
       } else if (Tok.is(tok::string_literal)) {
         // String literal value (e.g. hint(config, "pipelinesolve(...)")).

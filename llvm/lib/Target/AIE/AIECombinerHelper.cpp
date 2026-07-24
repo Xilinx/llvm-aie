@@ -5743,7 +5743,7 @@ bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
             B.buildConstant(LLT::scalar(16), (Initializer << 8) | Initializer)
                 .getReg(0);
         B.buildStore(DataRegAdjustedToS16, BuildPADD(PeelOffset),
-                     *BuildMMO(2, Align(2)));
+                     *BuildMMO(LocationSize::precise(2), Align(2)));
         PeelOffset += 2;
       }
     }

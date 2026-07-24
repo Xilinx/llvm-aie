@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc %s -debug -mtriple=aie --start-before=livedebugvalues --filetype=obj -show-mc-encoding -o %t 2> %t.out
+# RUN: llc %s -debug-only=mc-dump -mtriple=aie --start-before=livedebugvalues --filetype=obj -show-mc-encoding -o %t 2> %t.out
 # RUN: cat %t.out | FileCheck %s --check-prefix=FIXUP
 # RUN: llvm-readelf -r %t | FileCheck %s --check-prefix=RELOC
 
@@ -34,28 +34,28 @@ body:             |
     BUNDLE {
       NOP_LDA
       J @target_function
-      ; FIXUP: MCFixup Offset:0 {{.*}} Kind:131
+      ; FIXUP: MCFixup Offset:0 {{.*}} Kind:4017
       ; RELOC: {{.*}} R_AIE_3
     }
 
     BUNDLE {
       NOP_ST
       J @target_function
-      ; FIXUP: MCFixup Offset:8 {{.*}} Kind:130
+      ; FIXUP: MCFixup Offset:8 {{.*}} Kind:4016
       ; RELOC: {{.*}} R_AIE_2
     }
 
     BUNDLE {
       NOP_ALU
       J @target_function
-      ; FIXUP: MCFixup Offset:16 {{.*}} Kind:130
+      ; FIXUP: MCFixup Offset:16 {{.*}} Kind:4016
       ; RELOC: {{.*}} R_AIE_2
     }
 
     BUNDLE {
       NOP_LDA
       J @target_function
-      ; FIXUP: MCFixup Offset:24 {{.*}} Kind:133
+      ; FIXUP: MCFixup Offset:24 {{.*}} Kind:4019
       ; RELOC: {{.*}} R_AIE_5
       NOP_VECA
     }
@@ -65,7 +65,7 @@ body:             |
       NOP_LDB
       NOP_ST
       J @target_function
-      ; FIXUP: MCFixup Offset:36 {{.*}} Kind:132
+      ; FIXUP: MCFixup Offset:36 {{.*}} Kind:4018
       ; RELOC: {{.*}} R_AIE_4
     }
 
@@ -74,14 +74,14 @@ body:             |
       NOP_LDB
       NOP_ALU
       J @target_function
-      ; FIXUP: MCFixup Offset:48 {{.*}} Kind:132
+      ; FIXUP: MCFixup Offset:48 {{.*}} Kind:4018
       ; RELOC: {{.*}} R_AIE_4
     }
 
     BUNDLE {
       NOP_LDA
       J @target_function
-      ; FIXUP: MCFixup Offset:60 {{.*}} Kind:133
+      ; FIXUP: MCFixup Offset:60 {{.*}} Kind:4019
       ; RELOC: {{.*}} R_AIE_5
       NOP_VECM
     }
@@ -91,7 +91,7 @@ body:             |
       NOP_LDB
       NOP_ST
       J @target_function
-      ; FIXUP: MCFixup Offset:72 {{.*}} Kind:128
+      ; FIXUP: MCFixup Offset:72 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECA
     }
@@ -101,7 +101,7 @@ body:             |
       NOP_LDB
       NOP_ALU
       J @target_function
-      ; FIXUP: MCFixup Offset:88 {{.*}} Kind:128
+      ; FIXUP: MCFixup Offset:88 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECA
     }
@@ -111,7 +111,7 @@ body:             |
       NOP_LDB
       NOP_ST
       J @target_function
-      ; FIXUP: MCFixup Offset:104 {{.*}} Kind:128
+      ; FIXUP: MCFixup Offset:104 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECM
     }
@@ -121,7 +121,7 @@ body:             |
       NOP_LDB
       NOP_ALU
       J @target_function
-      ; FIXUP: MCFixup Offset:120 {{.*}} Kind:128
+      ; FIXUP: MCFixup Offset:120 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECM
     }

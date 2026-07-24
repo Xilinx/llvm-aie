@@ -92,18 +92,18 @@ def Inst4 : Arch1TestInstruction {
 //   then Inst4 if the latter fails. If both fails we try Inst1. If it fails we skip to OPC_FAIL.
 
 // CHECK:      /* 0 */       MCD::OPC_ExtractField, 0, 10,  // Inst{9-0} ...
-// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValue, 9, 58, 0, 0, // Skip to: 66
-// CHECK-NEXT: /* 8 */       MCD::OPC_ExtractField, 22, 10,  // Inst{31-22} ...
-// CHECK-NEXT: /* 11 */      MCD::OPC_FilterValue, 0, 50, 0, 0, // Skip to: 66
-// CHECK-NEXT: /* 16 */      MCD::OPC_CheckField, 18, 4, 14, 7, 0, 0, // Skip to: 30
-// CHECK-NEXT: /* 23 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0, 0, 0, 0, // Opcode: Inst1, skip to: 30
-// CHECK-NEXT: /* 30 */      MCD::OPC_ExtractField, 16, 2,  // Inst{17-16} ...
-// CHECK-NEXT: /* 33 */      MCD::OPC_FilterValue, 3, 21, 0, 0, // Skip to: 59
-// CHECK-NEXT: /* 38 */      MCD::OPC_CheckField, 20, 2, 3, 7, 0, 0, // Skip to: 52
-// CHECK-NEXT: /* 45 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 1, 0, 0, 0, // Opcode: Inst3, skip to: 52
-// CHECK-NEXT: /* 52 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 2, 0, 0, 0, // Opcode: Inst4, skip to: 59
-// CHECK-NEXT: /* 59 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 3, 0, 0, 0, // Opcode: Inst2, skip to: 66
-// CHECK-NEXT: /* 66 */      MCD::OPC_Fail,
+// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValue, 9, 50, 0, // Skip to: 57
+// CHECK-NEXT: /* 7 */       MCD::OPC_ExtractField, 22, 10,  // Inst{31-22} ...
+// CHECK-NEXT: /* 10 */      MCD::OPC_FilterValue, 0, 43, 0, // Skip to: 57
+// CHECK-NEXT: /* 14 */      MCD::OPC_CheckField, 18, 4, 14, 6, 0, // Skip to: 26
+// CHECK-NEXT: /* 20 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 0, 0, 0, // Opcode: Inst1, skip to: 26
+// CHECK-NEXT: /* 26 */      MCD::OPC_ExtractField, 16, 2,  // Inst{17-16} ...
+// CHECK-NEXT: /* 29 */      MCD::OPC_FilterValue, 3, 18, 0, // Skip to: 51
+// CHECK-NEXT: /* 33 */      MCD::OPC_CheckField, 20, 2, 3, 6, 0, // Skip to: 45
+// CHECK-NEXT: /* 39 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 1, 0, 0, // Opcode: Inst3, skip to: 45
+// CHECK-NEXT: /* 45 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 2, 0, 0, // Opcode: Inst4, skip to: 51
+// CHECK-NEXT: /* 51 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 3, 0, 0, // Opcode: Inst2, skip to: 57
+// CHECK-NEXT: /* 57 */      MCD::OPC_Fail,
 
 // CHECK: if (!Check(S, DecodeAIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
 // CHECK: if (!Check(S, DecodeDIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
