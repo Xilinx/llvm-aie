@@ -1766,7 +1766,8 @@ struct FoldConsecutiveCastPattern : public OpRewritePattern<tosa::CastOp> {
     } else if (bothFloat) {
       // float -> float: the intermediate type must be able to represent every
       // value of the source type. Examples: bf16 and f16 are both 16-bit but
-      // neither can represent the other; tf32 is 19-bit yet covers all of bf16).
+      // neither can represent the other; tf32 is 19-bit yet covers all of
+      // bf16).
       const auto &srcSem = srcFloatTy.getFloatSemantics();
       const auto &midSem = midFloatTy.getFloatSemantics();
       if (!llvm::APFloatBase::isRepresentableBy(srcSem, midSem))
