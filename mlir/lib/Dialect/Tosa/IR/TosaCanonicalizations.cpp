@@ -1720,6 +1720,86 @@ OpFoldResult EqualOp::fold(FoldAdaptor adaptor) {
                                                               resultTy);
 }
 
+/// Matches a tosa.cast whose input is produced by another tosa.cast with a
+/// single use, and replaces the chain with a single tosa.cast from the
+/// original source type to the final destination type.
+struct FoldConsecutiveCastPattern : public OpRewritePattern<tosa::CastOp> {
+  using OpRewritePattern<tosa::CastOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::CastOp outerCast,
+                                PatternRewriter &rewriter) const override {
+    auto innerCast = outerCast.getInput().getDefiningOp<tosa::CastOp>();
+    if (!innerCast)
+      return failure();
+
+    // Only fold when the intermediate result has exactly one user.
+    if (!innerCast.getResult().hasOneUse())
+      return failure();
+
+    auto srcElemTy =
+        cast<ShapedType>(innerCast.getInput().getType()).getElementType();
+    auto midElemTy =
+        cast<ShapedType>(innerCast.getResult().getType()).getElementType();
+
+    // Bail out on quant types which are neither IntegerType nor FloatType.
+    auto srcIntTy = dyn_cast<IntegerType>(srcElemTy);
+    auto midIntTy = dyn_cast<IntegerType>(midElemTy);
+    auto srcFloatTy = dyn_cast<FloatType>(srcElemTy);
+    auto midFloatTy = dyn_cast<FloatType>(midElemTy);
+
+    if (!srcIntTy && !srcFloatTy)
+      return failure();
+    if (!midIntTy && !midFloatTy)
+      return failure();
+
+    // Check that the inner cast (src -> mid) is information-preserving.
+    bool bothInt = srcIntTy && midIntTy;
+    bool bothFloat = srcFloatTy && midFloatTy;
+    bool intToFloat = srcIntTy && midFloatTy;
+
+    if (bothInt) {
+      // int -> int: require same signedness and strict widening.
+      if (srcIntTy.getSignedness() != midIntTy.getSignedness())
+        return failure();
+      if (midIntTy.getWidth() <= srcIntTy.getWidth())
+        return failure();
+    } else if (bothFloat) {
+      // float -> float: require strict widening (by total bit width).
+      if (midFloatTy.getWidth() <= srcFloatTy.getWidth())
+        return failure();
+    } else if (intToFloat) {
+      // int -> float: safe when the float precision (significand bits
+      // including the integer bit) can represent all integer values.
+      // For unsigned: intBitWidth <= precision
+      // For signed:   intBitWidth - 1 <= precision
+      unsigned intBits = srcIntTy.getWidth();
+      unsigned floatPrec = midFloatTy.getFPMantissaWidth();
+      // Signless integers are treated as signed (conservative).
+      bool isUnsigned = srcIntTy.isUnsigned();
+      if (isUnsigned) {
+        if (intBits > floatPrec)
+          return failure();
+      } else {
+        // Signed or signless: need intBits - 1 <= precision.
+        if (intBits <= 1 ? false : (intBits - 1) > floatPrec)
+          return failure();
+      }
+    } else {
+      // float -> int or any other cross-category: not safe.
+      return failure();
+    }
+
+    rewriter.replaceOpWithNewOp<tosa::CastOp>(outerCast, outerCast.getType(),
+                                              innerCast.getInput());
+    return success();
+  }
+};
+
+void CastOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                         MLIRContext *context) {
+  results.add<FoldConsecutiveCastPattern>(context);
+}
+
 OpFoldResult CastOp::fold(FoldAdaptor adaptor) {
   if (getInput().getType() == getType())
     return getInput();
