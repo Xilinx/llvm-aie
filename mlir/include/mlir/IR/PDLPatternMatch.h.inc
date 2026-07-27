@@ -463,7 +463,7 @@ struct ProcessDerivedPDLValue : public ProcessPDLValueBasedOn<T, BaseT> {
   using ProcessPDLValueBasedOn<T, BaseT>::verifyAsArg;
 
   static T processAsArg(BaseT baseValue) {
-    return baseValue.template cast<T>();
+    return mlir::cast<T>(baseValue);
   }
   using ProcessPDLValueBasedOn<T, BaseT>::processAsArg;
 
