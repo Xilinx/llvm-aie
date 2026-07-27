@@ -51,7 +51,7 @@ TEST(AnOpRewritePatternTest, PatternFuncAttributes) {
 }
 
 ShapedType rewriteShapedType(PatternRewriter & /*rewriter*/, ShapedType type,
-                            IntegerAttr /*rank*/) {
+                             IntegerAttr /*rank*/) {
   return type;
 }
 
