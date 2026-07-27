@@ -210,6 +210,14 @@ def split_pipeline(run_line):
     return stages
 
 
+def has_asm_run_lines(run_lines):
+    """True if any RUN line is a non-remark run the sibling asm/MIR update
+    script can regenerate. A test whose RUN lines are all remark runs has no
+    assembly to update, so the sibling script must not be invoked on it (after
+    the remark runs are stripped it would see a file with no RUN lines)."""
+    return any(not PASS_REMARKS_OUTPUT_RE.search(rl) for rl in run_lines)
+
+
 def parse_remark_runs(run_lines, test_path):
     """Identify RUN lines that produce remark YAML output.
 
@@ -311,16 +319,21 @@ def invoke_asm_update_script(test_path, llc_binary, asm_flag):
                 remark_line_indices.add(j)
         i += 1
 
-    # Save remark RUN lines for later restoration.
-    remark_run_lines = [raw_lines[j] for j in sorted(remark_line_indices)]
-
+    # Strip our NOTE and remark RUN lines for the sibling, recording for each
+    # remark line how many surviving lines precede it: the sibling preserves
+    # surviving lines in order, so this is its reinsertion offset.
+    remark_sorted = sorted(remark_line_indices)
+    kept_before = {}
+    kept_count = 0
     with open(test_path, "w") as f:
         for idx, line in enumerate(raw_lines):
+            if idx in remark_line_indices:
+                kept_before[idx] = kept_count
+                continue
             if SCRIPT_NAME in line:
                 continue
-            if idx in remark_line_indices:
-                continue
             f.write(line + "\n")
+            kept_count += 1
 
     cmd = [sys.executable, script_path, "--force-update"]
     if llc_binary:
@@ -337,19 +350,18 @@ def invoke_asm_update_script(test_path, llc_binary, asm_flag):
             print(result.stderr, file=sys.stderr)
         sys.exit(1)
 
-    # Restore remark RUN lines after the last RUN line in the file.
+    # Reinsert each remark line at its original offset among the surviving
+    # lines, past the sibling's leading NOTE line(s).
     with open(test_path) as f:
         updated_lines = [l.rstrip() for l in f]
 
-    last_run_idx = -1
-    for idx, line in enumerate(updated_lines):
-        if run_re.match(line):
-            last_run_idx = idx
+    leading = 0
+    while leading < len(updated_lines) and UTC_ADVERT in updated_lines[leading]:
+        leading += 1
 
-    insert_at = last_run_idx + 1 if last_run_idx >= 0 else 0
-    for rl in remark_run_lines:
-        updated_lines.insert(insert_at, rl)
-        insert_at += 1
+    for offset, j in enumerate(remark_sorted):
+        insert_at = min(leading + kept_before[j] + offset, len(updated_lines))
+        updated_lines.insert(insert_at, raw_lines[j])
 
     with open(test_path, "w") as f:
         for line in updated_lines:
@@ -522,15 +534,19 @@ def main():
         else:
             asm_flag = parse_utc_args(first_line)
 
-        # Optionally regenerate assembly CHECK lines first.
-        if asm_flag:
+        run_lines = common.find_run_lines(test_path, input_lines)
+
+        # Regenerate assembly CHECK lines first, but only when there is a
+        # non-remark RUN line to regenerate. Delegating for a remark-only test
+        # would hand the sibling script a file with no RUN lines.
+        if asm_flag and has_asm_run_lines(run_lines):
             invoke_asm_update_script(test_path, args.llc_binary, asm_flag)
 
-            # Re-read the file after the asm script rewrote it.
+            # Re-read the file (and its RUN lines) after the asm script rewrote it.
             with open(test_path) as f:
                 input_lines = [l.rstrip() for l in f]
+            run_lines = common.find_run_lines(test_path, input_lines)
 
-        run_lines = common.find_run_lines(test_path, input_lines)
         remark_runs = parse_remark_runs(run_lines, test_path)
 
         if not remark_runs:

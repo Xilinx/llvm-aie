@@ -11,6 +11,7 @@ on:
   pull_request:
     branches:
       - 'aie-public'
+      - 'bump_to_*'
 
 concurrency:
   # A PR number if a pull request and otherwise the commit hash. This cancels

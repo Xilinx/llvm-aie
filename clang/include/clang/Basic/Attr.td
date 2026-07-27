@@ -3713,6 +3713,14 @@ def AIE2IsSparse : InheritableAttr,
   let Documentation = [Undocumented];
 }
 
+def AIEPropagateRestrict : InheritableAttr,
+                                   TargetSpecificAttr<TargetAIE2> {
+  let Spellings = [Clang<"aie_propagate_restrict">];
+  let Subjects = SubjectList<[Function], ErrorDiag>;
+  let Documentation = [AIEPropagateRestrictDocs];
+  let SimpleHandler = 1;
+}
+
 def AnyX86NoCfCheck : DeclOrTypeAttr, TargetSpecificAttr<TargetAnyX86>{
   let Spellings = [GCC<"nocf_check">];
   let Subjects = SubjectList<[FunctionLike]>;

@@ -211,6 +211,15 @@ class AIE2PLockCondIntr
      : DefaultAttrsIntrinsic<[],
                  [llvm_i32_ty /* unsigned */, llvm_i32_ty /* (un)signed */, llvm_i32_ty /* (un)signed */],
                  [IntrHasSideEffects, IntrNoMem]>;
+class AIE2PLockPtrIntr
+     : DefaultAttrsIntrinsic<[],
+                 [llvm_ptr_ty, llvm_i32_ty /* unsigned */, llvm_i32_ty /* (un)signed */],
+                 [IntrHasSideEffects, IntrArgMemOnly]>;
+class AIE2PLockCondPtrIntr
+     : DefaultAttrsIntrinsic<[],
+                 [llvm_ptr_ty, llvm_i32_ty /* unsigned */, llvm_i32_ty /* (un)signed */,
+                  llvm_i32_ty /* (un)signed */],
+                 [IntrHasSideEffects, IntrArgMemOnly]>;
 class AIE2PDoneIntr
      : DefaultAttrsIntrinsic<[], [], [IntrHasSideEffects, IntrNoMem]>;
 // Scheduling barrier
@@ -468,6 +477,14 @@ def int_aie2p_release :
      ClangBuiltin<"__builtin_aie2p_release">, AIE2PLockIntr;
 def int_aie2p_release_cond :
      ClangBuiltin<"__builtin_aie2p_release_cond">, AIE2PLockCondIntr;
+def int_aie2p_acquire_ptr :
+     ClangBuiltin<"__builtin_aie2p_acquire_ptr">, AIE2PLockPtrIntr;
+def int_aie2p_acquire_cond_ptr :
+     ClangBuiltin<"__builtin_aie2p_acquire_cond_ptr">, AIE2PLockCondPtrIntr;
+def int_aie2p_release_ptr :
+     ClangBuiltin<"__builtin_aie2p_release_ptr">, AIE2PLockPtrIntr;
+def int_aie2p_release_cond_ptr :
+     ClangBuiltin<"__builtin_aie2p_release_cond_ptr">, AIE2PLockCondPtrIntr;
 def int_aie2p_done :
     ClangBuiltin<"__builtin_aie2p_done">, AIE2PDoneIntr;
 

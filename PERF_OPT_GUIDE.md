@@ -326,7 +326,13 @@ warning plus an `-Rpass-missed=aie-multi-slot-pseudo` remark. See
 Section 14 for how to read these hints.
 
 
-## 4. Sub-32-Bit Store Limitations
+## 4. Store Width and Layout
+
+How a hot loop writes its results out can have a large effect on
+throughput. The following sections cover three independent techniques for
+making stores cheaper.
+
+### Sub-32-bit stores
 
 Stores narrower than 32 bits (e.g., `int8`, `int16`, `bfloat16`
 scalars) are very expensive on AIE. Part-word loads are no worse than
@@ -377,6 +383,60 @@ packed[2] = c;
 packed[3] = d;
 aie::store_v(ofm_ptr, packed);  // single 32-bit store
 ```
+
+### Consider storing to the destination layout directly instead of shuffling
+
+When results are computed in one register layout but memory needs another,
+the natural code shuffles/interleaves into the target layout and stores
+contiguously. If the shuffle exists *only* to feed a contiguous store, it
+may be redundant: the store's addressing can often encode the layout for
+free, letting you drop the shuffle and store each sub-vector directly to
+its destination offset.
+
+This is a **tradeoff, not a rule** -- it swaps shuffle work for store work.
+Dropping the shuffle wins when the write-out path is shuffle-bound; keeping
+it wins when stores are the bottleneck, since direct storing issues *more,
+narrower* stores in place of *fewer, wider* ones. There is no layout-
+independent answer -- measure both versions' `BundleCount` (Section 14) and
+achieved II on the actual target and memory layout.
+
+Two constraints gate whether the direct-store form is worth measuring:
+
+- **Each sub-vector store must stay >=32 bits wide** (the rule above). If a
+  sub-vector would be narrower than 32 bits, the read-modify-write penalty
+  almost always outweighs the saved shuffles -- keep the shuffle.
+- **Extract indices must be compile-time constants.** A runtime `extract<>`
+  index may generate a branchy dynamic extract. Hand-unroll the stores over
+  the statically known count and guard with a `static_assert` so a layout
+  change fails loudly instead of silently regressing.
+
+### Fold a power-of-two output scale into the conversion shift
+
+When results are scaled by a power of two on the way out, apply the scale
+as the shift of the accumulator->vector conversion (SRS) rather than as a
+separate multiply. `to_vector<T_out>(shift)` already performs a
+shift-round-saturate; passing `SCALE_SHIFT` there is equivalent to a
+trailing multiply by `1 << SCALE_SHIFT`, and removes the multiply
+entirely. On `int32` output each `aie::mul` otherwise expands to a
+`vmul`+`vmac` sequence per accumulator tile.
+
+```cpp
+// BAD: convert, then multiply by the scale
+auto v = C.to_vector<int32_t>();
+v = aie::mul(v, scale).to_vector<int32_t>();   // scale == 1 << SCALE_SHIFT
+
+// GOOD: fold the power-of-two scale into the SRS shift, no multiply
+auto v = C.to_vector<int32_t>(SCALE_SHIFT);
+```
+
+**Constraint:** valid only when the scale is exactly a power of two
+(`scale == 1 << SCALE_SHIFT`); an arbitrary runtime scale still needs the
+multiply.
+
+Both techniques compose in the same write-out path. On a shuffle-bound
+kernel, folding the scale and dropping the shuffle each removed bundles from
+the write-out block with II unchanged; on a store-bound path the shuffle-drop
+may not help -- measure both.
 
 ## 5. Loop Pragmas Reference
 
@@ -808,6 +868,38 @@ for (int i = 0; i < count * 8; i++) {
 
 Multiply the trip count by the former unroll factor and set
 `AIE_LOOP_RANGE` to guarantee the compiler the new minimum.
+
+### Avoid manually peeling the first iteration
+
+A related anti-pattern is **hand-peeling the first loop iteration** --
+pre-loading inputs and issuing the first computation *before* the loop, then
+starting the loop at the second iteration. This steals iterations from the
+pipeliner, which is the toolchain's expert at loop peeling: it already
+constructs an optimal prologue and decides how many iterations to peel.
+Hand-peeling cannot lower the achieved II and only takes that decision away
+from the component best equipped to make it.
+
+Prefer a single loop from `i = 0` with pre-zeroed accumulators. Seeding an
+accumulator with `zero + first_product` is numerically identical to the
+peeled version, so no correctness is lost:
+
+```cpp
+// BAD: first iteration peeled before the loop, which starts at i = 1.
+acc = first_product(...);                       // duplicated body
+for (unsigned i = 1; i < n; ++i) acc = mac(acc, ...);
+
+// GOOD: single body from i = 0, accumulator pre-zeroed.
+acc = aie::zeros<...>();
+for (unsigned i = 0; i < n; ++i) acc = mac(acc, ...);
+```
+
+**Exception -- deliberate peeling in nested loops.** When an inner
+software-pipelined loop's prologue/epilogue is too short to hide a
+long-latency instruction in the *outer* loop, peeling a few inner iterations
+up into the outer loop lets them run in parallel with that outer-loop latency.
+This is a deliberate scheduling trade, not accidental duplication -- justify it
+with a measured II/latency improvement (Section 14), since the default guidance
+above still holds for the common single-loop case.
 
 ### AIE_LOOP_UNROLL for controlled unrolling
 When the loop body is too small for the pipeliner to fill all VLIW

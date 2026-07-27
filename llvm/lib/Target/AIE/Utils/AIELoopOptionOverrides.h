@@ -46,9 +46,6 @@ namespace llvm::AIE {
 ///   bool Aggressive = Overrides.get(AggressiveReAlloc);
 ///   RewriteMode Mode = Overrides.get(RegRewriteMode);
 class LoopOptionOverrides {
-  /// Prefix stripped from metadata keys to derive the cl::opt ArgStr.
-  static constexpr StringLiteral Prefix{"llvm.loop.hint."};
-
   /// Integer-valued overrides (covers bool, int, unsigned, and enum types).
   StringMap<int64_t> IntVals;
 
@@ -56,6 +53,10 @@ class LoopOptionOverrides {
   StringMap<std::string> StrVals;
 
 public:
+  /// Prefix joining a cl::opt ArgStr to its llvm.loop.hint metadata key; the
+  /// single source for both reading overrides and writing hint keys.
+  static constexpr StringLiteral Prefix{"llvm.loop.hint."};
+
   LoopOptionOverrides() = default;
 
   /// Build overrides from the given loop metadata node. If LoopID is

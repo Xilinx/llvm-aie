@@ -925,6 +925,10 @@ public:
 
   bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const;
 
+  /// Returns true when \p I should be included in a target's lean stage-0
+  /// prefetch chain.
+  bool isLeanStage0Intrinsic(const Instruction &I) const;
+
   /// Identifies if the vector form of the intrinsic has a scalar operand.
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                           unsigned ScalarOpdIdx) const;
@@ -2074,6 +2078,7 @@ public:
   virtual bool shouldBuildRelLookupTables() = 0;
   virtual bool useColdCCForColdCall(Function &F) = 0;
   virtual bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) = 0;
+  virtual bool isLeanStage0Intrinsic(const Instruction &I) = 0;
   virtual bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                                   unsigned ScalarOpdIdx) = 0;
   virtual bool isTargetIntrinsicWithOverloadTypeAtArg(Intrinsic::ID ID,
@@ -2684,6 +2689,10 @@ public:
   }
   bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) override {
     return Impl.isTargetIntrinsicTriviallyScalarizable(ID);
+  }
+
+  bool isLeanStage0Intrinsic(const Instruction &I) override {
+    return Impl.isLeanStage0Intrinsic(I);
   }
 
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
