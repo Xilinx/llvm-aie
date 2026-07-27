@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -411,8 +411,10 @@ MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
 
   // Create the updated metadata.
   MDs.push_back(createMetadata(Context, IterCountName, IterCounts));
-  // Replace current metadata node with new one.
-  MDNode *NewLoopID = MDNode::get(Context, MDs);
+  // Reserve operand 0 for the self-reference so replaceOperandWith does not
+  // clobber the first surviving hint entry.
+  MDs.insert(MDs.begin(), nullptr);
+  MDNode *NewLoopID = MDNode::getDistinct(Context, MDs);
   // Set operand 0 to refer to the loop id itself.
   NewLoopID->replaceOperandWith(0, NewLoopID);
   return NewLoopID;
@@ -1107,6 +1109,7 @@ constexpr Intrinsic::ID llvm::getReductionIntrinsicID(RecurKind RK) {
   }
 }
 
+// This is the inverse to getReductionForBinop
 unsigned llvm::getArithmeticReductionInstruction(Intrinsic::ID RdxID) {
   switch (RdxID) {
   case Intrinsic::vector_reduce_fadd:
@@ -1134,6 +1137,25 @@ unsigned llvm::getArithmeticReductionInstruction(Intrinsic::ID RdxID) {
   default:
     llvm_unreachable("Unexpected ID");
   }
+}
+
+// This is the inverse to getArithmeticReductionInstruction
+Intrinsic::ID llvm::getReductionForBinop(Instruction::BinaryOps Opc) {
+  switch (Opc) {
+  default:
+    break;
+  case Instruction::Add:
+    return Intrinsic::vector_reduce_add;
+  case Instruction::Mul:
+    return Intrinsic::vector_reduce_mul;
+  case Instruction::And:
+    return Intrinsic::vector_reduce_and;
+  case Instruction::Or:
+    return Intrinsic::vector_reduce_or;
+  case Instruction::Xor:
+    return Intrinsic::vector_reduce_xor;
+  }
+  return Intrinsic::not_intrinsic;
 }
 
 Intrinsic::ID llvm::getMinMaxReductionIntrinsicOp(Intrinsic::ID RdxID) {

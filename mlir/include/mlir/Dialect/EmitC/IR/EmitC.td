@@ -57,23 +57,21 @@ def IntegerIndexOrOpaqueType : Type<CPred<"emitc::isIntegerIndexOrOpaqueType($_s
 "integer, index or opaque type supported by EmitC">;
 def FloatIntegerIndexOrOpaqueType : AnyTypeOf<[EmitCFloatType, IntegerIndexOrOpaqueType]>;
 
-def EmitC_TranslationUnitOp : EmitC_Op<"tu",
-    [IsolatedFromAbove, NoRegionArguments, SymbolTable,
-    OpAsmOpInterface
-  ] # GraphRegionNoTerminator.traits> {
-  let summary = "A translation unit container operation";
+def EmitC_FileOp
+    : EmitC_Op<"file", [IsolatedFromAbove, NoRegionArguments, SymbolTable,
+                        OpAsmOpInterface]#GraphRegionNoTerminator.traits> {
+  let summary = "A file container operation";
   let description = [{
-    A `tu` represents a translation unit that can be emitted
-    into a single C++ file.
+    A `file` represents a single C/C++ file.
 
-    `mlir-translate` emits only the translation unit selected via
-    the `-translation-unit-id=id` flag. By default, no translation units are
-    emitted.
+    `mlir-translate` ignores the body of all `emitc.file` ops
+    unless the `-file-id=id` flag is used. With that flag, all `emitc.file` ops
+    with matching id are emitted.
 
     Example:
 
     ```mlir
-    emitc.tu "main" {
+    emitc.file "main" {
       emitc.func @func_one() {
         emitc.return
       }
@@ -87,15 +85,14 @@ def EmitC_TranslationUnitOp : EmitC_Op<"tu",
   let assemblyFormat = "$id attr-dict-with-keyword $bodyRegion";
   let builders = [OpBuilder<(ins CArg<"StringRef">:$id)>];
   let extraClassDeclaration = [{
-    /// Construct a module from the given location with an optional name.
-    static TranslationUnitOp create(Location loc, StringRef name);
+    /// Construct a file op from the given location with a name.
+    static FileOp create(Location loc, StringRef name);
 
     //===------------------------------------------------------------------===//
     // OpAsmOpInterface Methods
     //===------------------------------------------------------------------===//
 
-    /// EmitC ops in the body of the translation_unit can omit their 'emitc.'
-    /// prefix in the assembly.
+    /// EmitC ops in the body can omit their 'emitc.' prefix in the assembly.
     static ::llvm::StringRef getDefaultDialect() {
       return "emitc";
     }
@@ -856,6 +853,17 @@ def EmitC_LiteralOp : EmitC_Op<"literal", [Pure]> {
   let description = [{
     The `emitc.literal` operation produces an SSA value equal to some constant
     specified by an attribute.
+
+    Example:
+
+    ```mlir
+    %p0 = emitc.literal "M_PI" : f32
+    %1 = "emitc.add" (%arg0, %p0) : (f32, f32) -> f32
+    ```
+    ```c++
+    // Code emitted for the operation above.
+    float v2 = v1 + M_PI;
+    ```
   }];
 
   let arguments = (ins StrAttr:$value);
@@ -1184,8 +1192,8 @@ def EmitC_GlobalOp : EmitC_Op<"global", [Symbol]> {
   let summary = "A global variable";
   let description = [{
     The `emitc.global` operation declares or defines a named global variable.
-    The backing memory for the variable is allocated statically and is
-    described by the type of the variable.
+    The backing memory for the variable is allocated statically and described by
+    the variable's type, which must be an EmitC type.
     Optionally, an `initial_value` can be provided.
     Internal linkage can be specified using the `static_specifier` unit attribute
     and external linkage can be specified using the `extern_specifier` unit attribute.
@@ -1205,6 +1213,8 @@ def EmitC_GlobalOp : EmitC_Op<"global", [Symbol]> {
     emitc.global @x : !emitc.array<2xf32> = dense<0.0>
     // Global variable with an initial values.
     emitc.global @x : !emitc.array<3xi32> = dense<[0, 1, 2]>
+    // Global variable with an opaque initial value.
+    emitc.global @x : !emitc.opaque<"char"> = #emitc.opaque<"CHAR_MIN">
     // External global variable
     emitc.global extern @x : !emitc.array<2xf32>
     // Constant global variable with internal linkage
@@ -1290,19 +1300,33 @@ def EmitC_VerbatimOp : EmitC_Op<"verbatim"> {
     `%dest` became `b` in the C code.
     `{{` in the format string is interpreted as a single `{` and doesn't introduce
     a placeholder.
+
+    Example:
+
+    ```mlir
+    emitc.verbatim "typedef float f32;"
+    emitc.verbatim "#pragma my var={} property" args %arg : f32
+    ```
+    ```c++
+    // Code emitted for the operation above.
+    typedef float f32;
+    #pragma my var=v1 property
+    ```
   }];
 
   let extraClassDeclaration = [{
     FailureOr<SmallVector<::mlir::emitc::ReplacementItem>> parseFormatString();
   }];
 
-  let arguments = (ins StrAttr:$value,
-                   Variadic<EmitCType>:$fmtArgs);
+  let arguments = (ins StrAttr:$value, Variadic<EmitCType>:$fmtArgs);
 
-  let builders = [OpBuilder<(ins "::mlir::StringAttr":$value), [{ build($_builder, $_state, value, {}); }] >];
-  let builders = [OpBuilder<(ins "::llvm::StringRef":$value), [{ build($_builder, $_state, value, {}); }] >];
+  let builders = [OpBuilder<(ins "::mlir::StringAttr":$value),
+                            [{ build($_builder, $_state, value, {}); }]>];
+  let builders = [OpBuilder<(ins "::llvm::StringRef":$value),
+                            [{ build($_builder, $_state, value, {}); }]>];
   let hasVerifier = 1;
-  let assemblyFormat = "$value (`args` $fmtArgs^ `:` type($fmtArgs))? attr-dict";
+  let assemblyFormat =
+      "$value (`args` $fmtArgs^ `:` type($fmtArgs))? attr-dict";
 }
 
 def EmitC_AssignOp : EmitC_Op<"assign", []> {

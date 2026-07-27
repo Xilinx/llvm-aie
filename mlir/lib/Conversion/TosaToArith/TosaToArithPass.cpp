@@ -31,7 +31,7 @@ using namespace tosa;
 
 namespace {
 struct TosaToArith : public impl::TosaToArithPassBase<TosaToArith> {
-  using TosaToArithPassBase::TosaToArithPassBase;
+  using Base::Base;
 
   void runOnOperation() override {
     TypeConverter converter;

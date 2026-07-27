@@ -750,6 +750,22 @@ public:
     return composeSubRegIndicesImpl(a, b);
   }
 
+  /// Return a subregister index that will compose to give you the subregister
+  /// index.
+  ///
+  /// Finds a subregister index x such that composeSubRegIndices(a, x) ==
+  /// b. Note that this relationship does not hold if
+  /// reverseComposeSubRegIndices returns the null subregister.
+  ///
+  /// The special null sub-register index composes as the identity.
+  unsigned reverseComposeSubRegIndices(unsigned a, unsigned b) const {
+    if (!a)
+      return b;
+    if (!b)
+      return a;
+    return reverseComposeSubRegIndicesImpl(a, b);
+  }
+
   /// Transforms a LaneMask computed for one subregister to the lanemask that
   /// would have been computed when composing the subsubregisters with IdxA
   /// first. @sa composeSubRegIndices()
@@ -789,6 +805,11 @@ public:
 protected:
   /// Overridden by TableGen in targets that have sub-registers.
   virtual unsigned composeSubRegIndicesImpl(unsigned, unsigned) const {
+    llvm_unreachable("Target has no sub-registers");
+  }
+
+  /// Overridden by TableGen in targets that have sub-registers.
+  virtual unsigned reverseComposeSubRegIndicesImpl(unsigned, unsigned) const {
     llvm_unreachable("Target has no sub-registers");
   }
 
@@ -1231,13 +1252,6 @@ public:
   getConstrainedRegClassForOperand(const MachineOperand &MO,
                                    const MachineRegisterInfo &MRI) const {
     return nullptr;
-  }
-
-  /// Returns the physical register number of sub-register "Index"
-  /// for physical register RegNo. Return zero if the sub-register does not
-  /// exist.
-  inline MCRegister getSubReg(MCRegister Reg, unsigned Idx) const {
-    return static_cast<const MCRegisterInfo *>(this)->getSubReg(Reg, Idx);
   }
 
   /// Some targets have non-allocatable registers that aren't technically part

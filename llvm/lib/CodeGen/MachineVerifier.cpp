@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //===----------------------------------------------------------------------===//
 //
@@ -2331,9 +2331,9 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
 
   // Check the MachineMemOperands for basic consistency.
   for (MachineMemOperand *Op : MI->memoperands()) {
-    if (Op->isLoad() && !MI->mayLoad())
+    if (Op->isLoad() && !MI->mayLoad() && !TII->hasAnnotativeMemOperands(*MI))
       report("Missing mayLoad flag", MI);
-    if (Op->isStore() && !MI->mayStore())
+    if (Op->isStore() && !MI->mayStore() && !TII->hasAnnotativeMemOperands(*MI))
       report("Missing mayStore flag", MI);
   }
 
@@ -3230,7 +3230,7 @@ private:
   // worst-case memory usage within 2x of figures determined empirically for
   // "all Dense" scenario in such worst-by-execution-time cases.
   BitVector Sparse;
-  DenseSet<unsigned> Dense;
+  DenseSet<Register> Dense;
 };
 
 // Implements both a transfer function and a (binary, in-place) join operator

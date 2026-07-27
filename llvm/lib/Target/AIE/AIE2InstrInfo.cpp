@@ -486,8 +486,8 @@ Register AIE2InstrInfo::getUPSSignControlRegister() const {
 // Implement CopyToReg/CopyFromReg
 void AIE2InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MBBI,
-                                const DebugLoc &DL, MCRegister DstReg,
-                                MCRegister SrcReg, bool KillSrc,
+                                const DebugLoc &DL, Register DstReg,
+                                Register SrcReg, bool KillSrc,
                                 bool RenamableDest, bool RenamableSrc) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();

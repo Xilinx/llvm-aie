@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1060,7 +1060,7 @@ public:
   /// marked renamable.
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, const DebugLoc &DL,
-                           MCRegister DestReg, MCRegister SrcReg, bool KillSrc,
+                           Register DestReg, Register SrcReg, bool KillSrc,
                            bool RenamableDest = false,
                            bool RenamableSrc = false) const {
     llvm_unreachable("Target didn't implement TargetInstrInfo::copyPhysReg!");
@@ -1864,6 +1864,12 @@ public:
   virtual bool hasLowDefLatency(const TargetSchedModel &SchedModel,
                                 const MachineInstr &DefMI,
                                 unsigned DefIdx) const;
+
+  /// Return true when \p MI may carry synthetic memory operands used only for
+  /// alias analysis rather than to describe a real load or store by \p MI.
+  virtual bool hasAnnotativeMemOperands(const MachineInstr &MI) const {
+    return false;
+  }
 
   /// Perform target-specific instruction verification.
   virtual bool verifyInstruction(const MachineInstr &MI,

@@ -426,6 +426,11 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
       return selectSetLoopIterations(I, MRI, MIB);
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
+    case Intrinsic::aie2p_acquire_ptr:
+    case Intrinsic::aie2p_acquire_cond_ptr:
+    case Intrinsic::aie2p_release_ptr:
+    case Intrinsic::aie2p_release_cond_ptr:
+      return selectLockPtrIntrinsic(I);
     default:
       return selectImpl(I, *CoverageInfo);
     }

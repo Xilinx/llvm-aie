@@ -922,6 +922,10 @@ public:
 
   bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const;
 
+  /// Returns true when \p I should be included in a target's lean stage-0
+  /// prefetch chain.
+  bool isLeanStage0Intrinsic(const Instruction &I) const;
+
   /// Identifies if the vector form of the intrinsic has a scalar operand.
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                           unsigned ScalarOpdIdx) const;
@@ -2076,13 +2080,14 @@ public:
   virtual bool shouldMergeCongruentIVs(const PHINode *IV1,
                                        const PHINode *IV2) const = 0;
   virtual bool useAA() = 0;
-  virtual bool isTypeLegal(Type *Ty) = 0;
-  virtual unsigned getRegUsageForType(Type *Ty) = 0;
+  virtual bool isTypeLegal(Type *Ty) const = 0;
+  virtual unsigned getRegUsageForType(Type *Ty) const = 0;
   virtual bool shouldBuildLookupTables() = 0;
   virtual bool shouldBuildLookupTablesForConstant(Constant *C) = 0;
   virtual bool shouldBuildRelLookupTables() = 0;
   virtual bool useColdCCForColdCall(Function &F) = 0;
   virtual bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) = 0;
+  virtual bool isLeanStage0Intrinsic(const Instruction &I) = 0;
   virtual bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                                   unsigned ScalarOpdIdx) = 0;
   virtual bool isTargetIntrinsicWithOverloadTypeAtArg(Intrinsic::ID ID,
@@ -2676,8 +2681,8 @@ public:
     return Impl.shouldMergeCongruentIVs(IV1, IV2);
   }
   bool useAA() override { return Impl.useAA(); }
-  bool isTypeLegal(Type *Ty) override { return Impl.isTypeLegal(Ty); }
-  unsigned getRegUsageForType(Type *Ty) override {
+  bool isTypeLegal(Type *Ty) const override { return Impl.isTypeLegal(Ty); }
+  unsigned getRegUsageForType(Type *Ty) const override {
     return Impl.getRegUsageForType(Ty);
   }
   bool shouldBuildLookupTables() override {
@@ -2694,6 +2699,10 @@ public:
   }
   bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) override {
     return Impl.isTargetIntrinsicTriviallyScalarizable(ID);
+  }
+
+  bool isLeanStage0Intrinsic(const Instruction &I) override {
+    return Impl.isLeanStage0Intrinsic(I);
   }
 
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,

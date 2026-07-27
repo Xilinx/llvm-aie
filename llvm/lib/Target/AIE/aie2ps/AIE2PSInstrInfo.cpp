@@ -120,6 +120,21 @@ unsigned AIE2PSInstrInfo::getAddrIntrinsic3D() const {
   return Intrinsic::aie2ps_add_3d;
 }
 
+unsigned AIE2PSInstrInfo::getIdOnlyLockIntrinsic(unsigned PtrID) const {
+  switch (PtrID) {
+  case Intrinsic::aie2ps_acquire_ptr:
+    return Intrinsic::aie2ps_acquire;
+  case Intrinsic::aie2ps_acquire_cond_ptr:
+    return Intrinsic::aie2ps_acquire_cond;
+  case Intrinsic::aie2ps_release_ptr:
+    return Intrinsic::aie2ps_release;
+  case Intrinsic::aie2ps_release_cond_ptr:
+    return Intrinsic::aie2ps_release_cond;
+  default:
+    return Intrinsic::not_intrinsic;
+  }
+}
+
 unsigned AIE2PSInstrInfo::getPtrAdd2DOpcode() const {
   return AIE2PS::PADD_2D_pseudo;
 }
@@ -305,8 +320,8 @@ unsigned AIE2PSInstrInfo::getOpCode(MachineInstr &I) const {
 // Implement CopyToReg/CopyFromReg
 void AIE2PSInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MBBI,
-                                  const DebugLoc &DL, MCRegister DstReg,
-                                  MCRegister SrcReg, bool KillSrc,
+                                  const DebugLoc &DL, Register DstReg,
+                                  Register SrcReg, bool KillSrc,
                                   bool RenamableDest, bool RenamableSrc) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();

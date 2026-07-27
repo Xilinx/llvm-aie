@@ -321,13 +321,17 @@ bool CastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
   if (isa<emitc::OpaqueType>(input) || isa<emitc::OpaqueType>(output))
     return true;
 
-  // Cast to array is only possible from an array
-  if (isa<emitc::ArrayType>(input) != isa<emitc::ArrayType>(output))
-    return false;
+  if (auto arrayType = dyn_cast<emitc::ArrayType>(input)) {
+    // Arrays can be casted to arrays by reference.
+    if (isa<emitc::ArrayType>(output))
+      return true;
 
-  // Arrays can be casted to arrays by reference.
-  if (isa<emitc::ArrayType>(input) && isa<emitc::ArrayType>(output))
-    return true;
+    if (auto pointerType = dyn_cast<emitc::PointerType>(output)) {
+      return (arrayType.getElementType() == pointerType.getPointee()) &&
+             arrayType.getShape().size() == 1 && arrayType.getShape()[0] >= 1;
+    }
+    return false;
+  }
 
   // Scalars
   return (
@@ -809,9 +813,9 @@ void IfOp::print(OpAsmPrinter &p) {
 
 /// Given the region at `index`, or the parent operation if `index` is None,
 /// return the successor regions. These are the regions that may be selected
-/// during the flow of control. `operands` is a set of optional attributes that
-/// correspond to a constant value for each operand, or null if that operand is
-/// not a constant.
+/// during the flow of control. `operands` is a set of optional attributes
+/// that correspond to a constant value for each operand, or null if that
+/// operand is not a constant.
 void IfOp::getSuccessorRegions(RegionBranchPoint point,
                                SmallVectorImpl<RegionSuccessor> &regions) {
   // The `then` and the `else` region branch back to the parent operation.
@@ -1043,8 +1047,8 @@ LogicalResult emitc::VerbatimOp::verify() {
   return success();
 }
 
-static ParseResult parseVariadicTypeFmtArgs(AsmParser &p,
-                                            SmallVector<Type> &params) {
+[[maybe_unused]] static ParseResult
+parseVariadicTypeFmtArgs(AsmParser &p, SmallVector<Type> &params) {
   Type type;
   if (p.parseType(type))
     return failure();
@@ -1059,7 +1063,8 @@ static ParseResult parseVariadicTypeFmtArgs(AsmParser &p,
   return success();
 }
 
-static void printVariadicTypeFmtArgs(AsmPrinter &p, ArrayRef<Type> params) {
+[[maybe_unused]] static void printVariadicTypeFmtArgs(AsmPrinter &p,
+                                                      ArrayRef<Type> params) {
   llvm::interleaveComma(params, p, [&](Type type) { p.printType(type); });
 }
 
@@ -1160,8 +1165,8 @@ emitc::ArrayType::cloneWith(std::optional<ArrayRef<int64_t>> shape,
 LogicalResult mlir::emitc::LValueType::verify(
     llvm::function_ref<mlir::InFlightDiagnostic()> emitError,
     mlir::Type value) {
-  // Check that the wrapped type is valid. This especially forbids nested lvalue
-  // types.
+  // Check that the wrapped type is valid. This especially forbids nested
+  // lvalue types.
   if (!isSupportedEmitCType(value))
     return emitError()
            << "!emitc.lvalue must wrap supported emitc type, but got " << value;
@@ -1479,10 +1484,9 @@ void SwitchOp::getRegionInvocationBounds(
 }
 
 //===----------------------------------------------------------------------===//
-// TranslationUnitOp
+// FileOp
 //===----------------------------------------------------------------------===//
-void TranslationUnitOp::build(OpBuilder &builder, OperationState &state,
-                              StringRef id) {
+void FileOp::build(OpBuilder &builder, OperationState &state, StringRef id) {
   state.addRegion()->emplaceBlock();
   state.attributes.push_back(
       builder.getNamedAttr("id", builder.getStringAttr(id)));

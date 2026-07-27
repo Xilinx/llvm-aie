@@ -648,7 +648,7 @@ std::string edgeAttributes(const SDep &Dep, const TargetRegisterInfo *TRI) {
       Label += TRI->getName(Reg);
     } else if (Reg.isVirtual()) {
       Label += " VR";
-      Label += std::to_string(Register::virtReg2Index(Reg));
+      Label += std::to_string(Reg.virtRegIndex());
     }
     break;
   }
@@ -871,7 +871,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     Strategy.selected(SU);
     const int ModCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
-    const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
+    const MemoryObjectPair ObjectBits = HR.getMemoryObjectsBits(MI);
     int Cycle = ModCycle;
     // We are scheduling the first iteration, checking for conflicts with other
     // instructions that were scheduled earlier.

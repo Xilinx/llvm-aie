@@ -36,6 +36,7 @@ public:
   unsigned getMvSclOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;
   unsigned getAddrIntrinsic3D() const override;
+  unsigned getIdOnlyLockIntrinsic(unsigned PtrIntrinsicID) const override;
   unsigned getPtrAdd2DOpcode() const override;
   unsigned getPtrAdd3DOpcode() const override;
   unsigned getMvSclMultiSlotPseudoOpcode() const override;
@@ -157,7 +158,7 @@ public:
                                  const ScheduleDAGMI *DAG) const override;
 
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                   const DebugLoc &DL, MCRegister DstReg, MCRegister SrcReg,
+                   const DebugLoc &DL, Register DstReg, Register SrcReg,
                    bool KillSrc, bool RenamableDest = false,
                    bool RenamableSrc = false) const override;
 

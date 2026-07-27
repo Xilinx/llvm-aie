@@ -67,6 +67,7 @@
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
@@ -111,6 +112,12 @@ static cl::opt<bool> SplitStages(
     cl::desc("Split the top block into stage-0 and stage-1 using "
              "different strategies to reach more compact schedules"),
     cl::init(true), cl::Hidden);
+
+static cl::opt<bool> LeanStage0Mode(
+    "aie-outer-loop-pipelining-lean-stage0",
+    cl::desc("Limit stage 0 to loads, address computations, and target "
+             "intrinsics selected for lean stage 0"),
+    cl::init(false), cl::Hidden);
 
 static cl::opt<bool> EnableOuterLoopHardwareLoop(
     "aie-outer-loop-hw-loop",
@@ -386,6 +393,11 @@ public:
   // and the stage-0 remainder (the load/address chain).
   void collectStages(function_ref<bool(const Instruction *)> IsSplitPoint);
 
+  // Stage 0 contains each top-block load, its backward address-computation
+  // chain, and its sole direct target-selected intrinsic user with the user's
+  // required operand chains. All other pipeline candidates form stage 1.
+  void collectLeanStage0(const TargetTransformInfo &TTI);
+
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
 };
@@ -466,6 +478,7 @@ private:
   LoopInfo *LI = nullptr;
   DominatorTree *DT = nullptr;
   ScalarEvolution *SE = nullptr;
+  const TargetTransformInfo *TTI = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
 
   bool runOnLoop(Loop *L);
@@ -599,6 +612,7 @@ void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
   AU.addRequired<TargetPassConfig>();
   FunctionPass::getAnalysisUsage(AU);
 }
@@ -610,6 +624,7 @@ bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   const TargetMachine &TM =
       getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
   TII = static_cast<const AIEBaseInstrInfo *>(
@@ -790,12 +805,6 @@ bool OrigLoopStructure::isProfitableToRotate(ScalarEvolution &SE,
     return false;
   }
 
-  SmallVector<StoreInst *, 16> BottomStores = collectBottomStores();
-  // TODO: Confirm whether a store-free bottom can ever be profitable.
-  if (BottomStores.empty()) {
-    LLVM_DEBUG(dbgs() << "    No stores in bottom\n");
-    return false;
-  }
   return true;
 }
 
@@ -895,6 +904,19 @@ void OrigLoopStructure::collectStages(
 }
 
 void OrigLoopStructure::collectStage0FromInnerLoop() {
+  // The fallback only follows SSA def-use edges from the inner loop. Do not
+  // pipeline when the top contains an effectful candidate: its consumer may be
+  // connected through target state rather than SSA, so moving its operands
+  // without moving the operation would be incorrect.
+  // TODO: We might wanna fix this fallback collection later to not only follow
+  // SSA edges, if it turns out beneficial in practice. For now, we bail.
+  bool HasTopSideEffects = false;
+  topRegion().forEachInstruction([&](Instruction *I) {
+    HasTopSideEffects |= isPipelineCandidate(I) && I->mayHaveSideEffects();
+  });
+  if (HasTopSideEffects)
+    return;
+
   SmallVector<Instruction *, 16> Seeds;
   auto Seed = [&](Value *V) {
     if (auto *I = dyn_cast<Instruction>(V))
@@ -919,6 +941,38 @@ void OrigLoopStructure::collectStage0FromInnerLoop() {
     if (isPipelineCandidate(I) && Visited.count(I))
       Stage0Insts.push_back(I);
   });
+}
+
+void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
+  SmallVector<Instruction *, 16> TopLoads;
+  SmallVector<Instruction *, 16> TopSingleUserLoads;
+  topRegion().forEachInstruction([&](Instruction *I) {
+    if (!isa<LoadInst>(I))
+      return;
+    TopLoads.push_back(I);
+    if (I->hasOneUser())
+      TopSingleUserLoads.push_back(I);
+  });
+
+  SmallPtrSet<Instruction *, 32> Stage0Set =
+      collectClosure(TopLoads, /*TraverseUsers=*/false);
+  for (Instruction *Load : TopSingleUserLoads) {
+    auto *User = cast<Instruction>(*Load->user_begin());
+    if (!TTI.isLeanStage0Intrinsic(*User))
+      continue;
+    const SmallPtrSet<Instruction *, 32> IntrinsicClosure =
+        collectClosure({User}, /*TraverseUsers=*/false);
+    Stage0Set.insert(IntrinsicClosure.begin(), IntrinsicClosure.end());
+  }
+
+  topRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I))
+      return;
+    (Stage0Set.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
+  });
+
+  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
 }
 
 SmallVector<Instruction *, 16>
@@ -1548,7 +1602,11 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
        ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
   MDs.push_back(SuccessEntry);
 
-  MDNode *FinalLoopID = MDNode::get(Ctx, MDs);
+  // Loop IDs require operand 0 to refer to the node itself; reserve that slot
+  // before uniquing so replaceOperandWith does not clobber the first hint
+  // entry.
+  MDs.insert(MDs.begin(), nullptr);
+  MDNode *FinalLoopID = MDNode::getDistinct(Ctx, MDs);
   FinalLoopID->replaceOperandWith(0, FinalLoopID);
   return FinalLoopID;
 }
@@ -1673,7 +1731,11 @@ bool AIEOuterLoopPipeliner::performTransformation(
   const auto IsSplitPoint = [SplitMode](const Instruction *I) {
     return SplitMode && isStage1SplitPoint(I);
   };
-  OrigLS.collectStages(IsSplitPoint);
+
+  if (Overrides.get(LeanStage0Mode))
+    OrigLS.collectLeanStage0(*TTI);
+  else
+    OrigLS.collectStages(IsSplitPoint);
   if (OrigLS.stage0Insts().empty()) {
     LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");
     return false;
