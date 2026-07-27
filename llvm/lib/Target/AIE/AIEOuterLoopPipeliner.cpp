@@ -471,6 +471,10 @@ public:
   // Repair loop metadata (trip count changed): decrement itercount.range, drop
   // the consumed enable hint, and append the success marker.
   void updateLoopMetadata() const;
+
+  // Mark this loop as speculatively outer-loop pipelined without adjusting its
+  // iteration-count metadata.
+  void markSpeculativePipelining() const;
 };
 
 class AIEOuterLoopPipeliner : public FunctionPass {
@@ -1598,8 +1602,10 @@ void CloneLoopStructure::adjustLoopBound() const {
 }
 
 // Copy Source's hint entries dropping the consumed enable hint, append the
-// pipeliner success marker, and self-reference operand 0 as a loop ID requires.
-static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
+// pipeliner success marker and, optionally, the speculative marker, and
+// self-reference operand 0 as a loop ID requires.
+static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
+                                      bool IsSpeculative = false) {
   const std::string EnableHintKey =
       (AIE::LoopOptionOverrides::Prefix + EnableOuterLoopPipelining.ArgStr)
           .str();
@@ -1620,6 +1626,14 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
       {MDString::get(Ctx, AIELoopUtils::OuterLoopPipelinedKey),
        ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
   MDs.push_back(SuccessEntry);
+
+  if (IsSpeculative) {
+    MDNode *SpeculativeEntry = MDNode::get(
+        Ctx,
+        {MDString::get(Ctx, AIELoopUtils::OuterLoopSpeculativeKey),
+         ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
+    MDs.push_back(SpeculativeEntry);
+  }
 
   // Loop IDs require operand 0 to refer to the node itself; reserve that slot
   // before uniquing so replaceOperandWith does not clobber the first hint
@@ -1647,6 +1661,17 @@ void CloneLoopStructure::updateLoopMetadata() const {
 
   // Write onto the latch terminator (what Loop::setLoopID does internally) so
   // this works on a clone with no LoopInfo Loop.
+  getBottom()->getTerminator()->setMetadata(LLVMContext::MD_loop, FinalLoopID);
+}
+
+void CloneLoopStructure::markSpeculativePipelining() const {
+  MDNode *LoopID = getOuterLoopID();
+  if (!LoopID)
+    return;
+
+  LLVMContext &Ctx = getTop()->getContext();
+  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, LoopID,
+                                               /*IsSpeculative=*/true);
   getBottom()->getTerminator()->setMetadata(LLVMContext::MD_loop, FinalLoopID);
 }
 
@@ -1820,6 +1845,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
                                      SteadyLS.latchCondition().isDowncounting();
     if (OuterIsHardwareLoop)
       convertOuterLoopToHardwareLoop(SteadyLS);
+    SteadyLS.markSpeculativePipelining();
     LLVM_DEBUG(dbgs() << "    Speculative last iteration: no last-iteration "
                          "region\n");
   }
