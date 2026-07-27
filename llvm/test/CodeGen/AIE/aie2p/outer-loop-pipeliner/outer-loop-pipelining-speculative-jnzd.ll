@@ -27,6 +27,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK:       %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
 ; CHECK:       br i1 %outer.loop.cond, label %steady.stage1.top, label %exit
 ; CHECK-NOT:   lastiter.stage1.top
+; CHECK:       "llvm.loop.hint.aie_outerloop_pipeliner_speculative", i64 1
 define void @speculative_jnzd(ptr %a, ptr %c, i32 %n, i32 %m) {
 entry:
   %has.work = icmp ugt i32 %n, 1
