@@ -580,10 +580,10 @@ private:
                            const CloneLoopStructure &SteadyLS,
                            const CloneLoopStructure &LastIterLS) const;
 
-  // The speculative path exits directly from the steady loop. Repoint exit
-  // PHIs and remap exit live-outs away from the soon-to-be-deleted original.
-  void wireSteadyIntoExit(const OrigLoopStructure &OrigLS,
-                          const CloneLoopStructure &SteadyLS) const;
+  // Repoint exit PHIs and remap exit live-outs away from the soon-to-be-deleted
+  // original loop to its replacement clone.
+  void remapExitForReplacement(const OrigLoopStructure &OrigLS,
+                               const CloneLoopStructure &ReplacementLS) const;
 
   // The bottom instructions forming PHI's next-iteration pointer-update
   // chain, or nullopt if it cannot be safely lifted.
@@ -1360,9 +1360,19 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   BasicBlock *LastIterBottom = LastIterLS.getBottom();
   BranchInst::Create(OrigExit, LastIterBottom);
 
-  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), LastIterBottom,
+  remapExitForReplacement(OrigLS, LastIterLS);
+
+  SteadyLS.getLatchBranch()->replaceSuccessorWith(OrigExit,
+                                                  LastIterLS.getTop());
+}
+
+void AIEOuterLoopPipeliner::remapExitForReplacement(
+    const OrigLoopStructure &OrigLS,
+    const CloneLoopStructure &ReplacementLS) const {
+  BasicBlock *OrigExit = OrigLS.getExitBlock();
+  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), ReplacementLS.getBottom(),
                       PhiEdge::Repoint,
-                      [&](Value *V) { return LastIterLS.cloneOf(V); });
+                      [&](Value *V) { return ReplacementLS.cloneOf(V); });
 
   // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
   // phi, so LCSSA rematerializes the live-out as a plain instruction in the
@@ -1377,33 +1387,7 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
       Value *V = Op.get();
       if (!isa<Instruction>(V) && !isa<Argument>(V))
         continue;
-      if (Value *Mapped = LastIterLS.cloneOf(V); Mapped != V)
-        Op.set(Mapped);
-    }
-  }
-
-  SteadyLS.getLatchBranch()->replaceSuccessorWith(OrigExit,
-                                                  LastIterLS.getTop());
-}
-
-void AIEOuterLoopPipeliner::wireSteadyIntoExit(
-    const OrigLoopStructure &OrigLS, const CloneLoopStructure &SteadyLS) const {
-  BasicBlock *OrigExit = OrigLS.getExitBlock();
-  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), SteadyLS.getBottom(),
-                      PhiEdge::Repoint,
-                      [&](Value *V) { return SteadyLS.cloneOf(V); });
-
-  // See wireLastIterIntoCFG: exit instructions may directly reference values
-  // defined in the original loop and must instead use their steady clones
-  // before the original is deleted.
-  for (Instruction &I : *OrigExit) {
-    if (isa<PHINode>(&I))
-      continue;
-    for (Use &Op : I.operands()) {
-      Value *V = Op.get();
-      if (!isa<Instruction>(V) && !isa<Argument>(V))
-        continue;
-      if (Value *Mapped = SteadyLS.cloneOf(V); Mapped != V)
+      if (Value *Mapped = ReplacementLS.cloneOf(V); Mapped != V)
         Op.set(Mapped);
     }
   }
@@ -1831,7 +1815,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
   } else {
     // Exit live-outs must keep the original IV cycle alive when it is observed
     // outside the loop, before JNZD removes the latch condition.
-    wireSteadyIntoExit(OrigLS, SteadyLS);
+    remapExitForReplacement(OrigLS, SteadyLS);
     const bool OuterIsHardwareLoop = EnableOuterLoopHardwareLoop &&
                                      SteadyLS.latchCondition().isDowncounting();
     if (OuterIsHardwareLoop)
