@@ -35,20 +35,17 @@
 ; CHECK-NOT: getelementptr
 ; CHECK:   %loaded.steady.bottom = load i32, ptr %ptr.next.steady, align 4
 
-; FIXME: The peeled last iteration should recreate the lifted GEP here so that
-; the exit has a definition for the final pointer.
+; The peeled last iteration recreates the lifted GEP so the live-out is defined.
 ; CHECK: lastiter.stage1.top:
-; CHECK-NOT: getelementptr
-; CHECK: lastiter.stage1.inner.inner.header:
+; CHECK:   %ptr.next.lastiter = getelementptr inbounds i32, ptr %ptr.next.steady, i32 1
 
 ; The last iteration stores through the pointer of its own iteration.
 ; CHECK: lastiter.stage1.bottom:
 ; CHECK:   store i32 %result.next.lastiter, ptr %ptr.next.steady, align 4
 
-; FIXME: The exit should store the final pointer %a + N*4. The live-out has no
-; definition in the peeled iteration, so it degrades to poison instead.
+; The exit stores the recreated pointer, not poison and not the steady-state one.
 ; CHECK: exit:
-; CHECK:   store ptr poison, ptr %out, align 4
+; CHECK:   store ptr %ptr.next.lastiter, ptr %out, align 4
 
 ; The early exit is untouched.
 ; CHECK: exit.early:
