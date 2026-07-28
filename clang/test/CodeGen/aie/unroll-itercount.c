@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 // --------------------------------------------------------------------------///
 
 // RUN: %clang --target=aie2 -O2 -S -emit-llvm %s -o - | FileCheck %s
@@ -14,27 +14,28 @@
 // CHECK: !llvm.loop !6
 // CHECK: !llvm.loop !8
 // CHECK-LABEL: @after
-// CHECK: !llvm.loop !10
 // CHECK: !llvm.loop !11
-// CHECK-LABEL: @single_before
 // CHECK: !llvm.loop !12
+// CHECK-LABEL: @single_before
 // CHECK: !llvm.loop !13
+// CHECK: !llvm.loop !14
 // CHECK-LABEL: @single_after
-// CHECK: !llvm.loop !15
 // CHECK: !llvm.loop !16
+// CHECK: !llvm.loop !17
 
 // CHECK: !6 = distinct !{!6, !7}
 // CHECK: !7 = !{!"llvm.loop.unroll.disable"}
-// CHECK: !8 = distinct !{!8, !9, !7}
-// CHECK: !9 = !{!"llvm.loop.itercount.range", i32 7, i32 9}
-// CHECK: !10 = distinct !{!10, !7}
-// CHECK: !11 = distinct !{!11, !9, !7}
-// CHECK: !12 = distinct !{!12, !7}
-// CHECK: !13 = distinct !{!13, !14, !7}
-// CHECK: !14 = !{!"llvm.loop.itercount.range", i32 7}
-// CHECK: !15 = distinct !{!15, !7}
-// CHECK: !16 = distinct !{!16, !17, !7}
-// CHECK: !17 = !{!"llvm.loop.itercount.range", i32 5}
+// CHECK: !8 = distinct !{!8, !9, !10, !7}
+// CHECK: !9 = !{!"llvm.loop.mustprogress"}
+// CHECK: !10 = !{!"llvm.loop.itercount.range", i32 7, i32 9}
+// CHECK: !11 = distinct !{!11, !7}
+// CHECK: !12 = distinct !{!12, !9, !10, !7}
+// CHECK: !13 = distinct !{!13, !7}
+// CHECK: !14 = distinct !{!14, !9, !15, !7}
+// CHECK: !15 = !{!"llvm.loop.itercount.range", i32 7}
+// CHECK: !16 = distinct !{!16, !7}
+// CHECK: !17 = distinct !{!17, !9, !18, !7}
+// CHECK: !18 = !{!"llvm.loop.itercount.range", i32 5}
 
 
 int before(int n, int *p) {

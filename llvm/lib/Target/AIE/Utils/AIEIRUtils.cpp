@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -12,12 +12,31 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Transforms/InstCombine/InstCombiner.h"
 #include "llvm/Transforms/Utils/Local.h"
 
 namespace llvm::AIEIRUtils {
+
+static Intrinsic::ID getIntrinsicID(const Instruction *I) {
+  const auto *Call = dyn_cast<CallInst>(I);
+  if (!Call)
+    return Intrinsic::not_intrinsic;
+  const auto *Fn = Call->getCalledFunction();
+  return Fn ? Fn->getIntrinsicID() : Intrinsic::not_intrinsic;
+}
+
+bool isHardwareLoopSetup(const Instruction *I) {
+  Intrinsic::ID IID = getIntrinsicID(I);
+  return IID == Intrinsic::set_loop_iterations ||
+         IID == Intrinsic::start_loop_iterations;
+}
+
+bool isHardwareLoopDecrement(const Instruction *I) {
+  return getIntrinsicID(I) == Intrinsic::loop_decrement;
+}
 
 std::optional<Instruction *> instCombineDemandedBits(InstCombiner &IC,
                                                      IntrinsicInst &II,

@@ -68,7 +68,7 @@ int bool_hint_peel(int n, int *p) {
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP11:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
 //
 int int_hint_peel(int n, int *p) {
   int s = 0;
@@ -102,7 +102,7 @@ int int_hint_peel(int n, int *p) {
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP14:![0-9]+]]
 //
 int multi_hint_peel(int n, int *p) {
   int s = 0;
@@ -137,7 +137,7 @@ int multi_hint_peel(int n, int *p) {
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP15:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP16:![0-9]+]]
 //
 int string_hint_peel(int n, int *p) {
   int s = 0;
@@ -159,15 +159,16 @@ int string_hint_peel(int n, int *p) {
 // CHECK: [[META3]] = !{!"int", [[META4:![0-9]+]], i64 0}
 // CHECK: [[META4]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
 // CHECK: [[META5]] = !{!"Simple C/C++ TBAA"}
-// CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META9:![0-9]+]], [[META10:![0-9]+]]}
-// CHECK: [[META7]] = !{!"llvm.loop.hint.no_predication", i64 1}
-// CHECK: [[META8]] = !{!"llvm.loop.peeled.count", i32 2}
-// CHECK: [[META9]] = !{!"llvm.loop.itercount.range", i32 26, i32 35}
-// CHECK: [[META10]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META12:![0-9]+]], [[META8]], [[META9]], [[META10]]}
-// CHECK: [[META12]] = !{!"llvm.loop.hint.swp_ii", i64 3}
-// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META7]], [[META14:![0-9]+]], [[META8]], [[META9]], [[META10]]}
-// CHECK: [[META14]] = !{!"llvm.loop.hint.target_ii", i64 5}
-// CHECK: [[LOOP15]] = distinct !{[[LOOP15]], [[META16:![0-9]+]], [[META8]], [[META9]], [[META10]]}
-// CHECK: [[META16]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
+// CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META9:![0-9]+]], [[META10:![0-9]+]], [[META11:![0-9]+]]}
+// CHECK: [[META7]] = !{!"llvm.loop.mustprogress"}
+// CHECK: [[META8]] = !{!"llvm.loop.hint.no_predication", i64 1}
+// CHECK: [[META9]] = !{!"llvm.loop.peeled.count", i32 2}
+// CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i32 26, i32 35}
+// CHECK: [[META11]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META7]], [[META13:![0-9]+]], [[META9]], [[META10]], [[META11]]}
+// CHECK: [[META13]] = !{!"llvm.loop.hint.swp_ii", i64 3}
+// CHECK: [[LOOP14]] = distinct !{[[LOOP14]], [[META7]], [[META8]], [[META15:![0-9]+]], [[META9]], [[META10]], [[META11]]}
+// CHECK: [[META15]] = !{!"llvm.loop.hint.target_ii", i64 5}
+// CHECK: [[LOOP16]] = distinct !{[[LOOP16]], [[META7]], [[META17:![0-9]+]], [[META9]], [[META10]], [[META11]]}
+// CHECK: [[META17]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
 //.

@@ -32,40 +32,40 @@
 
 ; The outermost loop remains unchanged
 ; CHECK: outermost.header:
-; CHECK:   br label %middle.header.peel.pro
+; CHECK:   br label %stage0.top
 
-; The middle loop should be pipelined: check for the warm-up block
-; CHECK: middle.header.peel.pro:
-; CHECK:   %v0.peel = load i32, ptr %a, align 4
-; CHECK:   %v1.peel = load i32, ptr %b, align 4
+; The middle loop should be pipelined: check for the stage-0 top block
+; CHECK: stage0.top:
+; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
+; CHECK:   %v1.steady.top = load i32, ptr %b, align 4
 ; CHECK-NOT:  call void @llvm.set.loop.iterations
-; CHECK:   br label %middle.header
+; CHECK:   br label %steady.stage1.top
 
-; Middle header should have PHI nodes for pipelined values
-; CHECK: middle.header:
-; CHECK-DAG:   %v0.phi = phi i32 [ %v0.peel, %middle.header.peel.pro ], [ %v0.epi, %middle.latch ]
-; CHECK-DAG:   %v1.phi = phi i32 [ %v1.peel, %middle.header.peel.pro ], [ %v1.epi, %middle.latch ]
+; Steady-state header should have PHI nodes for pipelined values
+; CHECK: steady.stage1.top:
+; CHECK-DAG:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK-DAG:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %innermost.header
+; CHECK:   br label %steady.stage1.inner.innermost.header
 
-; Middle latch should have stores + loads for NEXT iteration
-; CHECK: middle.latch:
+; Steady-state bottom should have stores + loads for NEXT iteration
+; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
-; CHECK:   %v0.epi = load i32, ptr %a.ptr.next, align 4
-; CHECK:   %v1.epi = load i32, ptr %b.ptr.next, align 4
-; CHECK:   br i1 %middle.cond, label %middle.header, label %cooldown.entry
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
+; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+; CHECK:   br i1 %middle.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
-; Cool-down entry should have set.loop.iterations cloned
-; CHECK: cooldown.entry:
+; Last-iteration top should have set.loop.iterations cloned
+; CHECK: lastiter.stage1.top:
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
-; CHECK:   br label %innermost.header.cd
+; CHECK:   br label %lastiter.stage1.inner.innermost.header
 
-; Cloned inner loop
-; CHECK: innermost.header.cd:
-; CHECK:   br i1 %innermost.cond.cd, label %innermost.header.cd, label %cooldown.exit
+; Last-iteration inner loop
+; CHECK: lastiter.stage1.inner.innermost.header:
+; CHECK:   br i1 %innermost.cond.lastiter, label %lastiter.stage1.inner.innermost.header, label %lastiter.stage1.bottom
 
-; Cool-down exit should have stores only (no loads), branches to outermost.latch
-; CHECK: cooldown.exit:
+; Last-iteration bottom should have stores only (no loads), branches to outermost.latch
+; CHECK: lastiter.stage1.bottom:
 ; CHECK:   store i32
 ; CHECK:   br label %outermost.latch
 

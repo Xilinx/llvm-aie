@@ -36,32 +36,32 @@
 
 ; CHECK-LABEL: define void @ptr_lifting_basic
 
-; Warm-up block: loads only, plus hardware loop setup
-; CHECK: outer.header.peel.pro:
-; CHECK:   %v0.peel = load i32, ptr %a, align 4
+; Stage-0 top block: loads only, plus hardware loop setup
+; CHECK: stage0.top:
+; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
 ; CHECK:   %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
-; CHECK:   br label %outer.header
+; CHECK:   br label %steady.stage1.top
 
-; Outer header: GEPs are lifted here (no epilogue uses)
-; CHECK: outer.header:
-; CHECK:   %a.ptr = phi ptr
-; CHECK:   %c.ptr = phi ptr
-; CHECK:   %v0.phi = phi i32 [ %v0.peel, %outer.header.peel.pro ], [ %v0.epi, %outer.latch ]
+; Steady-state header: GEPs are lifted here (no epilogue uses)
+; CHECK: steady.stage1.top:
+; CHECK:   %a.ptr.steady = phi ptr
+; CHECK:   %c.ptr.steady = phi ptr
+; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; Hardware loop counter PHI (replaces software %iv)
 ; CHECK:   %outer.ctr = phi i32
 ; GEPs lifted from epilogue (no epilogue uses - stores use c.ptr, not c.ptr.next)
-; CHECK:   %a.ptr.next = getelementptr inbounds i8, ptr %a.ptr, i64 128
-; CHECK:   %c.ptr.next = getelementptr inbounds i8, ptr %c.ptr, i64 128
-; CHECK:   br label %inner.header
+; CHECK:   %a.ptr.next.steady = getelementptr inbounds i8, ptr %a.ptr.steady, i64 128
+; CHECK:   %c.ptr.next.steady = getelementptr inbounds i8, ptr %c.ptr.steady, i64 128
+; CHECK:   br label %steady.stage1.inner.inner.header
 
-; Outer latch: GEPs are NOT here (lifted), hardware loop counter replaces software iv
-; CHECK: outer.latch:
+; Steady-state bottom: GEPs are NOT here (lifted), hardware loop counter replaces software iv
+; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
 ; GEPs are NOT here (they were lifted)
 ; CHECK-NOT: getelementptr{{.*}}128
 ; Hardware loop counter update (replaces software %iv.next and icmp eq)
-; CHECK:   %v0.epi = load i32, ptr %a.ptr.next, align 4
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
 ; CHECK:   %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32
 ; CHECK:   %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
 
@@ -116,24 +116,24 @@ declare i1 @llvm.loop.decrement.i32(i32)
 
 ; CHECK-LABEL: define void @ptr_lifting_inner_dep
 
-; Warm-up: load only, plus hardware loop setup
-; CHECK: outer.header.peel.pro:
-; CHECK:   %v0.peel = load i32, ptr %a, align 4
+; Stage-0 top: load only, plus hardware loop setup
+; CHECK: stage0.top:
+; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
 ; CHECK:   %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
-; CHECK:   br label %outer.header
+; CHECK:   br label %steady.stage1.top
 
-; Outer header: c.ptr.next is lifted (no inner loop dependency, no epilogue uses)
-; CHECK: outer.header:
+; Steady-state header: c.ptr.next is lifted (no inner loop dependency, no epilogue uses)
+; CHECK: steady.stage1.top:
 ; The a.ptr update has inner loop dependency, so NOT lifted
-; CHECK:   %a.ptr = phi ptr [ %a.ptr.next, %outer.latch ], [ %a, %outer.header.peel.pro ]
-; CHECK:   %c.ptr.next = getelementptr inbounds i8, ptr %c.ptr, i64 64
-; CHECK:   br label %inner.header
+; CHECK:   %a.ptr.steady = phi ptr [ %a.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
+; CHECK:   %c.ptr.next.steady = getelementptr inbounds i8, ptr %c.ptr.steady, i64 64
+; CHECK:   br label %steady.stage1.inner.inner.header
 
-; Outer latch: a.ptr.next stays here (inner loop dependency)
-; CHECK: outer.latch:
-; CHECK:   %offset = sext i32 %acc.next to i64
-; CHECK:   %a.ptr.next = getelementptr inbounds i8, ptr %a.ptr, i64 %offset
+; Steady-state bottom: a.ptr.next stays here (inner loop dependency)
+; CHECK: steady.stage1.bottom.and.stage0.top:
+; CHECK:   %offset.steady = sext i32 %acc.next.steady to i64
+; CHECK:   %a.ptr.next.steady = getelementptr inbounds i8, ptr %a.ptr.steady, i64 %offset.steady
 
 define void @ptr_lifting_inner_dep(ptr noalias %a, ptr noalias %b, ptr noalias %c,
                                     i32 %N, i32 %M) {

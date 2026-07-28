@@ -62,6 +62,14 @@ def int_aie2ps_release :
      ClangBuiltin<"__builtin_aie2ps_release">, AIE2PLockIntr;
 def int_aie2ps_release_cond :
      ClangBuiltin<"__builtin_aie2ps_release_cond">, AIE2PLockCondIntr;
+def int_aie2ps_acquire_ptr :
+     ClangBuiltin<"__builtin_aie2ps_acquire_ptr">, AIE2PLockPtrIntr;
+def int_aie2ps_acquire_cond_ptr :
+     ClangBuiltin<"__builtin_aie2ps_acquire_cond_ptr">, AIE2PLockCondPtrIntr;
+def int_aie2ps_release_ptr :
+     ClangBuiltin<"__builtin_aie2ps_release_ptr">, AIE2PLockPtrIntr;
+def int_aie2ps_release_cond_ptr :
+     ClangBuiltin<"__builtin_aie2ps_release_cond_ptr">, AIE2PLockCondPtrIntr;
 def int_aie2ps_done :
     ClangBuiltin<"__builtin_aie2ps_done">, AIE2PDoneIntr;
 

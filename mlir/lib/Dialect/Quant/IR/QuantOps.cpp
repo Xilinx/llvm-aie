@@ -256,17 +256,6 @@ LogicalResult DequantizeCastOp::verify() {
                               getInput().getType());
 }
 
-OpFoldResult DequantizeCastOp::fold(FoldAdaptor adaptor) {
-  // Matches x -> quant.qcast -> quant.dcast -> y, replacing the quant.dcast op
-  // with the value of x. Values x and y are guaranteed to be of the same type
-  // in this pattern.
-  auto srcQcastOp = getInput().getDefiningOp<QuantizeCastOp>();
-  if (!srcQcastOp)
-    return {};
-  assert(srcQcastOp.getInput().getType() == getType());
-  return srcQcastOp.getInput();
-}
-
 FloatType DequantizeCastOp::getFloatType() {
   return cast<FloatType>(getElementTypeOrSelf(getResult().getType()));
 }
@@ -286,10 +275,9 @@ LogicalResult QuantizeCastOp::verify() {
 
 OpFoldResult QuantizeCastOp::fold(FoldAdaptor adaptor) {
   // Matches x -> quant.dcast -> quant.qcast -> y, replacing the quant.qcast op
-  // with the value of x if the casts invert each other. Contrary to the folding
-  // pattern in quant.dcast (i.e., x -> quant.qcast -> quant.dcast -> y), values
-  // x and y are not guaranteed to be of the same type here, as they may use
-  // different quantization parameters.
+  // with the value of x if the casts invert each other. Values x and y are not
+  // guaranteed to be of the same type here, as they may use different
+  // quantization parameters.
   auto srcDcastOp = getInput().getDefiningOp<DequantizeCastOp>();
   if (!srcDcastOp || srcDcastOp.getInput().getType() != getType())
     return {};
