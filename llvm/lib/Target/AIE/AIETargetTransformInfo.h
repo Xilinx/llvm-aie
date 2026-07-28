@@ -39,8 +39,8 @@ public:
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 
-  int getIntImmCost(const APInt &Imm, Type *Ty,
-                    TTI::TargetCostKind CostKind) const {
+  InstructionCost getIntImmCost(const APInt &Imm, Type *Ty,
+                    TTI::TargetCostKind CostKind) const override {
     // Constants that can be materialized with one slot.
     if (Imm.getBitWidth() <= 64 && isInt<20>(Imm.getSExtValue()))
       return TTI::TCC_Free;
@@ -50,14 +50,14 @@ public:
   }
   InstructionCost getMaskedMemoryOpCost(
       unsigned Opcode, Type *Src, Align Alignment, unsigned AddressSpace,
-      TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) const {
+      TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) const override {
     // Default cost is 32.  We can do better than that, but what is the real
     // cost?
     return TTI::TCC_Basic;
   }
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE) const {
+                               OptimizationRemarkEmitter *ORE) const override {
     UP.Partial = UP.Runtime = true;
     UP.AllowExpensiveTripCount = true;
     UP.Threshold = 200;

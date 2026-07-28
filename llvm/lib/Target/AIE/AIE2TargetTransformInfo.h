@@ -42,7 +42,7 @@ public:
               (const AIESubtarget *)TM->getSubtargetImpl(F)) {}
 
   std::optional<Instruction *> instCombineIntrinsic(InstCombiner &IC,
-                                                    IntrinsicInst &II) const;
+                                                    IntrinsicInst &II) const override;
 
   // By returning false here, we will prevent the following type
   // of code from reaching the backend when GEPs are used as incoming values:
@@ -51,20 +51,20 @@ public:
   //   %phi1 = phi ptr [ %phi0, %for.body ], [ %out1, %for.preheader ]
   // This type of code can lead to additional pointer arithmetics and
   // and pointer moves (especially due to the pre-pipeliner).
-  bool isProfitableFoldGEPIntoPHI() const { return false; }
+  bool isProfitableFoldGEPIntoPHI() const override { return false; }
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE) const;
+                               OptimizationRemarkEmitter *ORE) const override;
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo) const;
-  bool isProfitableOuterLSR(const Loop &L) const;
+                                HardwareLoopInfo &HWLoopInfo) const override;
+  bool isProfitableOuterLSR(const Loop &L) const override;
 
   InstructionCost getMemoryOpCost(
       unsigned Opcode, Type *Src, Align Alignment, unsigned AddressSpace,
       TTI::TargetCostKind CostKind,
       TTI::OperandValueInfo OpInfo = {TTI::OK_AnyValue, TTI::OP_None},
-      const Instruction *I = nullptr) const;
+      const Instruction *I = nullptr) const override;
 };
 
 } // end namespace llvm

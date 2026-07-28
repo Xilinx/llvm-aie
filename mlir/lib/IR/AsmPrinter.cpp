@@ -3578,6 +3578,10 @@ void OperationPrinter::printResourceFileMetadata(
       std::optional<uint64_t> charLimit =
           printerFlags.getLargeResourceStringLimit();
       if (charLimit.has_value()) {
+        // Don't compute resourceStr when charLimit is 0.
+        if (charLimit.value() == 0)
+          return;
+
         llvm::raw_string_ostream ss(resourceStr);
         valueFn(ss);
 

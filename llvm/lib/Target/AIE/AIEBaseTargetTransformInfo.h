@@ -85,15 +85,15 @@ protected:
   virtual ~AIEBaseTTIImpl() = default;
 
 public:
-  int getIntImmCost(const APInt &Imm, Type *Ty,
-                    TTI::TargetCostKind CostKind) const {
+  InstructionCost getIntImmCost(const APInt &Imm, Type *Ty,
+                    TTI::TargetCostKind CostKind) const override {
     // TODO Handle Target Specific constant cost
     //  Larger constants require an add.
     return TTI::TCC_Basic;
   }
   InstructionCost getMaskedMemoryOpCost(
       unsigned Opcode, Type *Src, Align Alignment, unsigned AddressSpace,
-      TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) const {
+      TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) const override {
     // Default cost is 32.  We can do better than that, but what is the real
     // cost?
     return TTI::TCC_Basic;
@@ -103,7 +103,7 @@ public:
                                   OptimizationRemarkEmitter *ORE) const;
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo) const;
+                                HardwareLoopInfo &HWLoopInfo) const override;
 
   // AIE vector arithmetic operates on 512-bit registers. The default
   // getRegisterBitWidth returns 32 (scalar width), which causes the loop
@@ -117,7 +117,7 @@ public:
   // G_ADD/G_SUB/G_XOR rules; AIE1 has no legal vector arithmetic). If a
   // future target legalizes additional widths, the three TTI overrides
   // below must be revisited.
-  TypeSize getRegisterBitWidth(TargetTransformInfo::RegisterKind K) const {
+  TypeSize getRegisterBitWidth(TargetTransformInfo::RegisterKind K) const override {
     switch (K) {
     case TargetTransformInfo::RGK_Scalar:
       return TypeSize::getFixed(32);
@@ -132,7 +132,7 @@ public:
 
   // Minimum vector width for the SLP vectorizer and VectorCombine.
   // Must match the Legalizer's supported vector arithmetic widths (512-bit).
-  unsigned getMinVectorRegisterBitWidth() const { return 512; }
+  unsigned getMinVectorRegisterBitWidth() const override { return 512; }
 
   // AIE vector arithmetic only supports 512-bit operations (V64S8, V32S16,
   // V16S32). Sub-512-bit vector ops like <8 x i8> are illegal in the
@@ -152,7 +152,7 @@ public:
       TTI::OperandValueInfo Opd1Info = {TTI::OK_AnyValue, TTI::OP_None},
       TTI::OperandValueInfo Opd2Info = {TTI::OK_AnyValue, TTI::OP_None},
       ArrayRef<const Value *> Args = {},
-      const Instruction *CxtI = nullptr) const {
+      const Instruction *CxtI = nullptr) const override {
     if (auto *VTy = dyn_cast<FixedVectorType>(Ty)) {
       if (VTy->getPrimitiveSizeInBits() < 512)
         return InstructionCost::getInvalid();
@@ -168,7 +168,7 @@ public:
   // clear of other memory instructions.
   unsigned getStoreVectorFactor(unsigned VF, unsigned StoreSizeInBits,
                                 unsigned ChainSizeInBytes,
-                                VectorType *VecTy) const {
+                                VectorType *VecTy) const override {
     // The cases of interest are 8 and 16-bit only.
     return (StoreSizeInBits == 8) ? 4 : (StoreSizeInBits == 16) ? 2 : 1;
   }
@@ -180,13 +180,13 @@ public:
   // sign extension.
   unsigned getLoadVectorFactor(unsigned VF, unsigned LoadSizeInBits,
                                unsigned ChainSizeInBytes,
-                               VectorType *VecTy) const {
+                               VectorType *VecTy) const override {
     // Block load vectorization, it is costly to extract elements from vectors.
     return 1;
   }
 
   bool isLegalToVectorizeStoreChain(unsigned ChainSizeInBytes, Align Alignment,
-                                    unsigned AddrSpace) const {
+                                    unsigned AddrSpace) const override {
     // Start from 4 byte sequences, to reach word stores. Alignment is
     // considered by default by the pass.
     // Default return of allowsMisalignedMemoryAccesses is false.
@@ -201,7 +201,8 @@ public:
   /// AIE prefers to keep separate pointer IVs when one is used for loads
   /// and the other for stores, as this enables better instruction scheduling
   /// and utilization of independent address generation units.
-  bool shouldMergeCongruentIVs(const PHINode *IV1, const PHINode *IV2) const {
+  bool shouldMergeCongruentIVs(const PHINode *IV1,
+                               const PHINode *IV2) const override {
     return shouldMergeCongruentIVsImpl(IV1, IV2);
   }
 };
