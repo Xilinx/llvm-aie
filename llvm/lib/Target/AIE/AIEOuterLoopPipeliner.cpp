@@ -847,6 +847,11 @@ static bool anyVolatileOrAtomic(ArrayRef<MemInstT *> MemOps) {
   });
 }
 
+static bool hasSideEffects(ArrayRef<Instruction *> Insts) {
+  return llvm::any_of(
+      Insts, [](const Instruction *I) { return I->mayHaveSideEffects(); });
+}
+
 bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
   // TODO(outer-loop-pipeliner): add alias/dependence analysis for load/store
   // reordering; for now only reject never-reorderable volatile/atomic ops.
@@ -1802,10 +1807,7 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   // Lean stage-0 defaults to speculation, regardless of side effects in that
   // stage. Non-lean speculation still requires a side-effect-free stage-0
   // chain.
-  const bool Stage0IsSideEffectFree =
-      llvm::none_of(OrigLS.stage0Insts(), [](const Instruction *I) {
-        return I->mayHaveSideEffects();
-      });
+  const bool Stage0IsSideEffectFree = !hasSideEffects(OrigLS.stage0Insts());
   const bool UseSpeculativeLastIteration =
       Opts.EnableSpeculativeLastIteration &&
       (Opts.UseLeanStage0 || Stage0IsSideEffectFree);
