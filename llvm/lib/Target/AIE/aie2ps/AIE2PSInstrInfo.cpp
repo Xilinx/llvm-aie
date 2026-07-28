@@ -436,10 +436,8 @@ void AIE2PSInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                 getHiSubReg(TRI, SrcReg), KillSrc);
   } else if ((AIE2PS::ACC2048RegClass.contains(SrcReg)) &&
              (AIE2PS::ACC2048RegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
+    BuildMI(MBB, MBBI, DL, get(AIE2PS::VMOV_D_vmov), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if ((AIE2PS::ePSRFLdFRegClass.contains(SrcReg)) &&
              (AIE2PS::ePSRFLdFRegClass.contains(DstReg))) {
     copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
