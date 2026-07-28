@@ -130,12 +130,13 @@ class IntrinsicCostAttributes {
   // If ScalarizationCost is UINT_MAX, the cost of scalarizing the
   // arguments and the return value will be computed based on types.
   InstructionCost ScalarizationCost = InstructionCost::getInvalid();
+  TargetLibraryInfo const *LibInfo = nullptr;
 
 public:
   IntrinsicCostAttributes(
       Intrinsic::ID Id, const CallBase &CI,
       InstructionCost ScalarCost = InstructionCost::getInvalid(),
-      bool TypeBasedOnly = false);
+      bool TypeBasedOnly = false, TargetLibraryInfo const *LibInfo = nullptr);
 
   IntrinsicCostAttributes(
       Intrinsic::ID Id, Type *RTy, ArrayRef<Type *> Tys,
@@ -149,7 +150,8 @@ public:
       Intrinsic::ID Id, Type *RTy, ArrayRef<const Value *> Args,
       ArrayRef<Type *> Tys, FastMathFlags Flags = FastMathFlags(),
       const IntrinsicInst *I = nullptr,
-      InstructionCost ScalarCost = InstructionCost::getInvalid());
+      InstructionCost ScalarCost = InstructionCost::getInvalid(),
+      TargetLibraryInfo const *LibInfo = nullptr);
 
   Intrinsic::ID getID() const { return IID; }
   const IntrinsicInst *getInst() const { return II; }
@@ -158,6 +160,7 @@ public:
   InstructionCost getScalarizationCost() const { return ScalarizationCost; }
   const SmallVectorImpl<const Value *> &getArgs() const { return Arguments; }
   const SmallVectorImpl<Type *> &getArgTypes() const { return ParamTys; }
+  const TargetLibraryInfo *getLibInfo() const { return LibInfo; }
 
   bool isTypeBasedOnly() const {
     return Arguments.empty();
@@ -1779,24 +1782,13 @@ public:
                                 unsigned ChainSizeInBytes,
                                 VectorType *VecTy) const;
 
-  /// Flags describing the kind of vector reduction.
-  struct ReductionFlags {
-    ReductionFlags() = default;
-    bool IsMaxOp =
-        false; ///< If the op a min/max kind, true if it's a max operation.
-    bool IsSigned = false; ///< Whether the operation is a signed int reduction.
-    bool NoNaN =
-        false; ///< If op is an fp min/max, whether NaNs may be present.
-  };
-
   /// \returns True if the targets prefers fixed width vectorization if the
   /// loop vectorizer's cost-model assigns an equal cost to the fixed and
   /// scalable version of the vectorized loop.
   bool preferFixedOverScalableIfEqualCost() const;
 
   /// \returns True if the target prefers reductions in loop.
-  bool preferInLoopReduction(unsigned Opcode, Type *Ty,
-                             ReductionFlags Flags) const;
+  bool preferInLoopReduction(unsigned Opcode, Type *Ty) const;
 
   /// \returns True if the target prefers reductions select kept in the loop
   /// when tail folding. i.e.
@@ -1809,8 +1801,7 @@ public:
   /// As opposed to the normal scheme of p = phi (0, a) which allows the select
   /// to be pulled out of the loop. If the select(.., add, ..) can be predicated
   /// by the target, this can lead to cleaner code generation.
-  bool preferPredicatedReductionSelect(unsigned Opcode, Type *Ty,
-                                       ReductionFlags Flags) const;
+  bool preferPredicatedReductionSelect(unsigned Opcode, Type *Ty) const;
 
   /// Return true if the loop vectorizer should consider vectorizing an
   /// otherwise scalar epilogue loop.
@@ -2357,10 +2348,9 @@ public:
                                         unsigned ChainSizeInBytes,
                                         VectorType *VecTy) const = 0;
   virtual bool preferFixedOverScalableIfEqualCost() const = 0;
-  virtual bool preferInLoopReduction(unsigned Opcode, Type *Ty,
-                                     ReductionFlags) const = 0;
-  virtual bool preferPredicatedReductionSelect(unsigned Opcode, Type *Ty,
-                                               ReductionFlags) const = 0;
+  virtual bool preferInLoopReduction(unsigned Opcode, Type *Ty) const = 0;
+  virtual bool preferPredicatedReductionSelect(unsigned Opcode,
+                                               Type *Ty) const = 0;
   virtual bool preferEpilogueVectorization() const = 0;
 
   virtual bool shouldExpandReduction(const IntrinsicInst *II) const = 0;
@@ -3182,13 +3172,12 @@ public:
   bool preferFixedOverScalableIfEqualCost() const override {
     return Impl.preferFixedOverScalableIfEqualCost();
   }
-  bool preferInLoopReduction(unsigned Opcode, Type *Ty,
-                             ReductionFlags Flags) const override {
-    return Impl.preferInLoopReduction(Opcode, Ty, Flags);
+  bool preferInLoopReduction(unsigned Opcode, Type *Ty) const override {
+    return Impl.preferInLoopReduction(Opcode, Ty);
   }
-  bool preferPredicatedReductionSelect(unsigned Opcode, Type *Ty,
-                                       ReductionFlags Flags) const override {
-    return Impl.preferPredicatedReductionSelect(Opcode, Ty, Flags);
+  bool preferPredicatedReductionSelect(unsigned Opcode,
+                                       Type *Ty) const override {
+    return Impl.preferPredicatedReductionSelect(Opcode, Ty);
   }
   bool preferEpilogueVectorization() const override {
     return Impl.preferEpilogueVectorization();

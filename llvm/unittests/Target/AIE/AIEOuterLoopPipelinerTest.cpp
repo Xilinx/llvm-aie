@@ -119,7 +119,7 @@ TEST_F(AIEOuterLoopPipelinerTest, CollectLeanStage0) {
 
   std::unique_ptr<TargetMachine> TM = createAIE2PTargetMachine();
   ASSERT_TRUE(TM);
-  M->setTargetTriple(TM->getTargetTriple().getTriple());
+  M->setTargetTriple(TM->getTargetTriple());
   M->setDataLayout(TM->createDataLayout());
 
   legacy::PassManager PM;

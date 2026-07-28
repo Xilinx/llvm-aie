@@ -59,7 +59,7 @@ protected:
     M = Parser->parseIRModule();
     if (!M)
       report_fatal_error("parseIRModule failed");
-    M->setTargetTriple(TM->getTargetTriple().getTriple());
+    M->setTargetTriple(TM->getTargetTriple());
     M->setDataLayout(TM->createDataLayout());
     MMI = std::make_unique<MachineModuleInfo>(TM.get());
     if (Parser->parseMachineFunctions(*M, *MMI.get()))

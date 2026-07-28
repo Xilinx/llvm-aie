@@ -334,13 +334,19 @@ def i64x8     : ValueType<512,  231>;  // 8 Consecutive GPRs (AArch64)
 def aarch64svcount
               : ValueType<16,  232>;  // AArch64 predicate-as-counter
 def spirvbuiltin : ValueType<0, 233>; // SPIR-V's builtin type
+// AMDGPU buffer fat pointer, buffer rsrc + offset, rewritten before MIR translation.
+// FIXME: Remove this and the getPointerType() override if MVT::i160 is added.
+def amdgpuBufferFatPointer : ValueType<160, 234>;
+// AMDGPU buffer strided pointer, buffer rsrc + index + offset, doesn't reach MIR.
+// FIXME: Remove this and the getPointerType() override if MVT::i82 is added.
+def amdgpuBufferStridedPointer : ValueType<192, 235>;
 
 /* AIE */
 let isAIE = true in {
-  def i48    : VTInt<48, 234>;      // 48-bit acc type
-  def i20    : VTInt<20, 235>;      // 20 bit pointers
-  def v8i48  : VTVec<8, i48, 236>;  // 8 x i48 vector value
-  def v16i48 : VTVec<16, i48, 237>; // 16 x i48 vector value
+  def i48    : VTInt<48, 236>;      // 48-bit acc type
+  def i20    : VTInt<20, 237>;      // 20 bit pointers
+  def v8i48  : VTVec<8, i48, 238>;  // 8 x i48 vector value
+  def v16i48 : VTVec<16, i48, 239>; // 16 x i48 vector value
 }
 /* End AIE */
 

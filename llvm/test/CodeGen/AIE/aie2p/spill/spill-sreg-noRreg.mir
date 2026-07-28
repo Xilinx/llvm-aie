@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: not --crash llc -mtriple=aie2p --verify-machineinstrs --aie-reserved-gprs=32 -run-pass=greedy -run-pass=virtregrewriter %s -o - 2>&1 | FileCheck %s
+# RUN: not llc -mtriple=aie2p --verify-machineinstrs --aie-reserved-gprs=32 -run-pass=greedy -run-pass=virtregrewriter %s -o - 2>&1 | FileCheck %s
 
 # Only $s0 is available to allocate %0, but the former is used by VUPS.
 # It then needs to be spilled and reloaded to/from memory. But this will fail if

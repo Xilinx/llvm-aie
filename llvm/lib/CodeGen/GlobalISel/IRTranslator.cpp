@@ -268,8 +268,8 @@ ArrayRef<Register> IRTranslator::getOrCreateReturnVRegs(const Value *RetVal) {
 }
 
 int IRTranslator::getOrCreateFrameIndex(const AllocaInst &AI) {
-  auto MapEntry = FrameIndices.find(&AI);
-  if (MapEntry != FrameIndices.end())
+  auto [MapEntry, Inserted] = FrameIndices.try_emplace(&AI);
+  if (!Inserted)
     return MapEntry->second;
 
   uint64_t ElementSize = DL->getTypeAllocSize(AI.getAllocatedType());
@@ -279,7 +279,7 @@ int IRTranslator::getOrCreateFrameIndex(const AllocaInst &AI) {
   // Always allocate at least one byte.
   Size = std::max<uint64_t>(Size, 1u);
 
-  int &FI = FrameIndices[&AI];
+  int &FI = MapEntry->second;
   FI = MF->getFrameInfo().CreateStackObject(Size, AI.getAlign(), false, &AI);
   return FI;
 }

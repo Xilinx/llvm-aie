@@ -2831,7 +2831,7 @@ bool MIParser::parseCustomRegisterMaskOperand(MachineOperand &Dest) {
       if (parseNamedRegister(Reg))
         return true;
       lex();
-      Mask[Reg / 32] |= 1U << (Reg % 32);
+      Mask[Reg.id() / 32] |= 1U << (Reg.id() % 32);
     }
 
     // TODO: Report an error if the same register is used more than once.
@@ -2856,7 +2856,7 @@ bool MIParser::parseLiveoutRegisterMaskOperand(MachineOperand &Dest) {
     if (parseNamedRegister(Reg))
       return true;
     lex();
-    Mask[Reg / 32] |= 1U << (Reg % 32);
+    Mask[Reg.id() / 32] |= 1U << (Reg.id() % 32);
     // TODO: Report an error if the same register is used more than once.
     if (Token.isNot(MIToken::comma))
       break;
