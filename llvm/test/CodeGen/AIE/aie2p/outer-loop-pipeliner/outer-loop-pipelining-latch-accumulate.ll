@@ -78,11 +78,14 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   %25:_(p0) = nuw nusw G_PTR_ADD %15, [[C3]](s20)
+  ; CHECK-NEXT:   %26:_(p0) = nuw nusw G_PTR_ADD %16, [[C3]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.7, %25(s32), %bb.8
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.7, %28(s32), %bb.8
   ; CHECK-NEXT:   [[ADD3:%[0-9]+]]:_(s32) = G_ADD [[PHI6]], [[LOAD1]]
   ; CHECK-NEXT:   [[INT1:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8

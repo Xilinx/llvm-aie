@@ -989,11 +989,17 @@ void OrigLoopStructure::collectStage0FromInnerLoop() {
   const SmallPtrSet<Instruction *, 32> Visited =
       collectClosure(Seeds, /*TraverseUsers=*/false);
 
-  // Emit the reached candidates in region program order.
+  // Emit every candidate in region program order. Candidates outside the
+  // backward-reachable stage-0 closure still execute in the peeled final
+  // iteration, so they belong to stage 1.
   topRegion().forEachInstruction([&](Instruction *I) {
-    if (isPipelineCandidate(I) && Visited.count(I))
-      Stage0Insts.push_back(I);
+    if (!isPipelineCandidate(I))
+      return;
+    (Visited.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
   });
+
+  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
 }
 
 void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
