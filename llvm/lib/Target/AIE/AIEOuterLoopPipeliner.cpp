@@ -86,7 +86,6 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -132,7 +131,29 @@ static cl::opt<bool> EnableOuterLoopHardwareLoop(
              "outer loop pipelining"),
     cl::init(true), cl::Hidden);
 
-using SplitStrategy = std::function<bool(const Instruction *)>;
+/// Effective outer-loop-pipelining configuration for one loop. Command-line
+/// options and !llvm.loop.hint metadata are resolved once when this is built.
+struct OLPOpts {
+  bool Enabled;
+  unsigned MinTripCount;
+  bool SplitStagesEnabled;
+  bool UseLeanStage0;
+  bool EnableSpeculativeLastIteration;
+  bool UseHardwareLoop;
+
+  explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
+      : Enabled(Overrides.get(EnableOuterLoopPipelining)),
+        MinTripCount(Overrides.get(OuterLoopPipeliningMinTripCount)),
+        SplitStagesEnabled(Overrides.get(SplitStages)),
+        UseLeanStage0(Overrides.get(LeanStage0Mode)),
+        EnableSpeculativeLastIteration(
+            Overrides.hasOverride(SpeculativeLastIteration)
+                ? Overrides.get(SpeculativeLastIteration)
+                : UseLeanStage0),
+        UseHardwareLoop(Overrides.get(EnableOuterLoopHardwareLoop)) {}
+};
+
+using SplitStrategy = bool (*)(const Instruction *);
 
 static bool produces2048BitVector(const Instruction *I) {
   if (!isa<CallInst>(I))
@@ -141,17 +162,13 @@ static bool produces2048BitVector(const Instruction *I) {
   return VT && VT->getPrimitiveSizeInBits() == 2048;
 }
 
-static SmallVector<SplitStrategy, 4> getSplitStrategies() {
-  // TODO: add more split strategies.
-  return {
-      produces2048BitVector,
-  };
-}
+// TODO: add more split strategies.
+static constexpr SplitStrategy SplitStrategies[] = {produces2048BitVector};
 
 // Returns true if any split strategy marks this instruction as the point where
 // stage 1 begins (e.g. a wide-vector producer; see produces2048BitVector).
 static bool isStage1SplitPoint(const Instruction *I) {
-  for (const auto &Strategy : getSplitStrategies()) {
+  for (SplitStrategy Strategy : SplitStrategies) {
     if (Strategy(I))
       return true;
   }
@@ -495,13 +512,12 @@ private:
   bool runOnLoop(Loop *L);
   // Run every pipelining precondition as a flat early-return guard and
   // transform L iff all pass. True if L was pipelined.
-  bool tryPipelineLoop(Loop *L, const AIE::LoopOptionOverrides &Overrides);
+  bool tryPipelineLoop(Loop *L, const OLPOpts &Opts);
   // Seed Map with each outer-header PHI's incoming value on the FromEdge edge,
   // collapsing loop-carried PHIs to the values seen entering via that edge.
   void seedHeaderPhiEdge(RemapTable &Map, const LoopStructure &LS,
                          BasicBlock *FromEdge) const;
-  bool performTransformation(OrigLoopStructure &OrigLS,
-                             const AIE::LoopOptionOverrides &Overrides);
+  bool performTransformation(OrigLoopStructure &OrigLS, const OLPOpts &Opts);
 
   // Swap a freshly cloned steady-state LS in for the original by rewiring its
   // preheader, leaving the original unreachable and ready for deletion.
@@ -659,8 +675,9 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
              L->getHeader()->printAsOperand(dbgs(), false); dbgs() << "\n");
   // Build per-loop option overrides from !llvm.loop.hint.* metadata.
   AIE::LoopOptionOverrides Overrides(L->getLoopID());
+  OLPOpts Opts(Overrides);
 
-  if (tryPipelineLoop(L, Overrides))
+  if (tryPipelineLoop(L, Opts))
     return true;
 
   // Untransformed: recurse into subloops, e.g. a nested middle loop is the only
@@ -671,9 +688,8 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   return Changed;
 }
 
-bool AIEOuterLoopPipeliner::tryPipelineLoop(
-    Loop *L, const AIE::LoopOptionOverrides &Overrides) {
-  if (!Overrides.get(EnableOuterLoopPipelining)) {
+bool AIEOuterLoopPipeliner::tryPipelineLoop(Loop *L, const OLPOpts &Opts) {
+  if (!Opts.Enabled) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
     return false;
   }
@@ -684,8 +700,7 @@ bool AIEOuterLoopPipeliner::tryPipelineLoop(
     return false;
   }
 
-  if (!LS->isProfitableToRotate(
-          *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
+  if (!LS->isProfitableToRotate(*SE, Opts.MinTripCount)) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
     return false;
   }
@@ -697,7 +712,7 @@ bool AIEOuterLoopPipeliner::tryPipelineLoop(
 
   LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining on ";
              LS->getTop()->printAsOperand(dbgs(), false); dbgs() << "\n");
-  return performTransformation(*LS, Overrides);
+  return performTransformation(*LS, Opts);
 }
 
 bool OrigLoopStructure::analyzeLoopStructure() {
@@ -1767,17 +1782,15 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
   return true;
 }
 
-bool AIEOuterLoopPipeliner::performTransformation(
-    OrigLoopStructure &OrigLS, const AIE::LoopOptionOverrides &Overrides) {
+bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
+                                                  const OLPOpts &Opts) {
   liftBottomPointerUpdatesToTop(OrigLS);
 
-  const bool SplitMode = Overrides.get(SplitStages);
-  const auto IsSplitPoint = [SplitMode](const Instruction *I) {
-    return SplitMode && isStage1SplitPoint(I);
+  const auto IsSplitPoint = [&Opts](const Instruction *I) {
+    return Opts.SplitStagesEnabled && isStage1SplitPoint(I);
   };
 
-  const bool LeanStage0 = Overrides.get(LeanStage0Mode);
-  if (LeanStage0)
+  if (Opts.UseLeanStage0)
     OrigLS.collectLeanStage0(*TTI);
   else
     OrigLS.collectStages(IsSplitPoint);
@@ -1787,18 +1800,15 @@ bool AIEOuterLoopPipeliner::performTransformation(
   }
 
   // Lean stage-0 defaults to speculation, regardless of side effects in that
-  // stage. Explicit speculative overrides take precedence; non-lean
-  // speculation still requires a side-effect-free stage-0 chain.
+  // stage. Non-lean speculation still requires a side-effect-free stage-0
+  // chain.
   const bool Stage0IsSideEffectFree =
       llvm::none_of(OrigLS.stage0Insts(), [](const Instruction *I) {
         return I->mayHaveSideEffects();
       });
-  const bool SpeculationEnabled =
-      Overrides.hasOverride(SpeculativeLastIteration)
-          ? Overrides.get(SpeculativeLastIteration)
-          : LeanStage0;
   const bool UseSpeculativeLastIteration =
-      SpeculationEnabled && (LeanStage0 || Stage0IsSideEffectFree);
+      Opts.EnableSpeculativeLastIteration &&
+      (Opts.UseLeanStage0 || Stage0IsSideEffectFree);
 
   // Clone the LS into a steady-state copy and swap it into the original's CFG
   // slot; transform steps below run on the clone, leaving OrigLS pristine.
@@ -1820,7 +1830,7 @@ bool AIEOuterLoopPipeliner::performTransformation(
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
   const bool OuterIsHardwareLoop =
-      EnableOuterLoopHardwareLoop && SteadyLS.latchCondition().isDowncounting();
+      Opts.UseHardwareLoop && SteadyLS.latchCondition().isDowncounting();
 
   if (!UseSpeculativeLastIteration) {
     // Adjust the outer loop trip count from N to N-1. Must happen before the
@@ -1841,8 +1851,6 @@ bool AIEOuterLoopPipeliner::performTransformation(
     // Exit live-outs must keep the original IV cycle alive when it is observed
     // outside the loop, before JNZD removes the latch condition.
     remapExitForReplacement(OrigLS, SteadyLS);
-    const bool OuterIsHardwareLoop = EnableOuterLoopHardwareLoop &&
-                                     SteadyLS.latchCondition().isDowncounting();
     if (OuterIsHardwareLoop)
       convertOuterLoopToHardwareLoop(SteadyLS);
     SteadyLS.markSpeculativePipelining();
