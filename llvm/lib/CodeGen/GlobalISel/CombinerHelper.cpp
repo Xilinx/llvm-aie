@@ -2575,7 +2575,8 @@ bool CombinerHelper::matchCombineAnyExtTrunc(MachineInstr &MI,
     SrcReg = OriginalSrcReg;
   LLT DstTy = MRI.getType(DstReg);
   return mi_match(SrcReg, MRI,
-                  m_GTrunc(m_all_of(m_Reg(Reg), m_SpecificType(DstTy))));
+                  m_GTrunc(m_all_of(m_Reg(Reg), m_SpecificType(DstTy)))) &&
+         canReplaceReg(DstReg, Reg, MRI);
 }
 
 bool CombinerHelper::matchCombineZextTrunc(MachineInstr &MI,
@@ -2585,7 +2586,8 @@ bool CombinerHelper::matchCombineZextTrunc(MachineInstr &MI,
   Register SrcReg = MI.getOperand(1).getReg();
   LLT DstTy = MRI.getType(DstReg);
   if (mi_match(SrcReg, MRI,
-               m_GTrunc(m_all_of(m_Reg(Reg), m_SpecificType(DstTy))))) {
+               m_GTrunc(m_all_of(m_Reg(Reg), m_SpecificType(DstTy)))) &&
+      canReplaceReg(DstReg, Reg, MRI)) {
     unsigned DstSize = DstTy.getScalarSizeInBits();
     unsigned SrcSize = MRI.getType(SrcReg).getScalarSizeInBits();
     return KB->getKnownBits(Reg).countMinLeadingZeros() >= DstSize - SrcSize;

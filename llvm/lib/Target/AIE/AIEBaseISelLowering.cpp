@@ -903,8 +903,9 @@ void AIEBaseTargetLowering::alignFirstVASlot(CCState &CCInfo) {
   CCInfo.AllocateStack(NextVAOffset - NextOffset, Align(4));
 }
 
-MVT AIEBaseTargetLowering::getVectorIdxTy(const DataLayout &DL) const {
-  return MVT::i32;
+unsigned AIEBaseTargetLowering::getVectorIdxWidth(
+    const DataLayout &DL) const {
+  return 32;
 }
 
 unsigned AIEBaseTargetLowering::getNumRegistersForCallingConv(

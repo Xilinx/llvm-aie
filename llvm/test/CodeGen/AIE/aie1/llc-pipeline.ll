@@ -45,7 +45,7 @@
 ; AIE-O0123-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O0123-NEXT:    FunctionPass Manager
 ; AIE-O0123-NEXT:      Expand large div/rem
-; AIE-O0123-NEXT:      Expand large fp convert
+; AIE-O0123-NEXT:      Expand fp
 ; AIE-O0123-NEXT:      Expand Atomic instructions
 ; AIE-O123-NEXT:      Infer address spaces
 ; AIE-O123-NEXT:      Dominator Tree Construction

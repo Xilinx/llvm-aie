@@ -28,7 +28,7 @@
 ; AIE-O0-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O0-NEXT:    FunctionPass Manager
 ; AIE-O0-NEXT:      Expand large div/rem
-; AIE-O0-NEXT:      Expand large fp convert
+; AIE-O0-NEXT:      Expand fp
 ; AIE-O0-NEXT:      Expand Atomic instructions
 ; AIE-O0-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O0-NEXT:      Shadow Stack GC Lowering
@@ -111,7 +111,7 @@
 ; AIE-O1-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O1-NEXT:    FunctionPass Manager
 ; AIE-O1-NEXT:      Expand large div/rem
-; AIE-O1-NEXT:      Expand large fp convert
+; AIE-O1-NEXT:      Expand fp
 ; AIE-O1-NEXT:      Expand Atomic instructions
 ; AIE-O1-NEXT:      Infer address spaces
 ; AIE-O1-NEXT:      Dominator Tree Construction
@@ -332,7 +332,7 @@
 ; AIE-O23-NEXT:    Pre-ISel Intrinsic Lowering
 ; AIE-O23-NEXT:    FunctionPass Manager
 ; AIE-O23-NEXT:      Expand large div/rem
-; AIE-O23-NEXT:      Expand large fp convert
+; AIE-O23-NEXT:      Expand fp
 ; AIE-O23-NEXT:      Expand Atomic instructions
 ; AIE-O23-NEXT:      Infer address spaces
 ; AIE-O23-NEXT:      Dominator Tree Construction

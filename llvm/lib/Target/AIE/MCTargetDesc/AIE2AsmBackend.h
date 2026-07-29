@@ -26,10 +26,6 @@ public:
       : AIEBaseAsmBackend(STI, OSABI, Options) {}
   ~AIE2AsmBackend() {}
 
-  unsigned getNumFixupKinds() const override {
-    return AIE2::NumTargetFixupKinds;
-  }
-
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
 };
