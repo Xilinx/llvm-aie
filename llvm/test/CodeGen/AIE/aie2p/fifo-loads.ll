@@ -709,8 +709,8 @@ define dso_local void @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0; movx r24, #0; mov dj0, #128
-; CHECK-NEXT:    st r24, [p1, dj0]
+; CHECK-NEXT:    mova dj0, #128; movx r24, #0; mov p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; st r24, [p1, dj0]
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

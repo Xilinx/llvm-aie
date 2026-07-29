@@ -185,3 +185,153 @@ body:             |
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.release.cond), %2:gprregbank(s32), %0:gprregbank(s32), %1:gprregbank(s32)
     PseudoRET implicit $lr
 ...
+
+---
+name:            ACQ_ptr_mLockId_reg
+alignment:       16
+legalized:       true
+regBankSelected: true
+stack:
+  - { id: 0, name: "", offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.1.entry:
+    liveins: $r0, $r1
+    ; CHECK-LABEL: name: ACQ_ptr_mLockId_reg
+    ; CHECK: liveins: $r0, $r1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r1
+    ; CHECK-NEXT: ACQ_mLockId_reg [[COPY]], [[COPY1]] :: (load unknown-size from %stack.0, align 1)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %ptr:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = COPY $r1
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.acquire.ptr), %ptr:ptrregbank(p0), %0:gprregbank(s32), %1:gprregbank(s32) :: (load unknown-size from %stack.0)
+    PseudoRET implicit $lr
+...
+
+---
+name:            REL_ptr_mLockId_reg
+alignment:       16
+legalized:       true
+regBankSelected: true
+stack:
+  - { id: 0, name: "", offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.1.entry:
+    liveins: $r0, $r1
+    ; CHECK-LABEL: name: REL_ptr_mLockId_reg
+    ; CHECK: liveins: $r0, $r1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r1
+    ; CHECK-NEXT: REL_mLockId_reg [[COPY]], [[COPY1]] :: (load unknown-size from %stack.0, align 1)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %ptr:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = COPY $r1
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.release.ptr), %ptr:ptrregbank(p0), %0:gprregbank(s32), %1:gprregbank(s32) :: (load unknown-size from %stack.0)
+    PseudoRET implicit $lr
+...
+
+---
+name:            ACQ_COND_ptr_mLockId_reg
+alignment:       16
+legalized:       true
+regBankSelected: true
+stack:
+  - { id: 0, name: "", offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.1.entry:
+    liveins: $r0, $r1, $r2
+    ; CHECK-LABEL: name: ACQ_COND_ptr_mLockId_reg
+    ; CHECK: liveins: $r0, $r1, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mr23_lock = COPY $r2
+    ; CHECK-NEXT: ACQ_COND_mLockId_reg [[COPY]], [[COPY1]], [[COPY2]] :: (load unknown-size from %stack.0, align 1)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %ptr:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = COPY $r1
+    %2:gprregbank(s32) = COPY $r2
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.acquire.cond.ptr), %ptr:ptrregbank(p0), %0:gprregbank(s32), %1:gprregbank(s32), %2:gprregbank(s32) :: (load unknown-size from %stack.0)
+    PseudoRET implicit $lr
+...
+
+---
+name:            ACQ_COND_ptr_mLockId_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+stack:
+  - { id: 0, name: "", offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.1.entry:
+    liveins: $r0, $r1
+    ; CHECK-LABEL: name: ACQ_COND_ptr_mLockId_imm
+    ; CHECK: liveins: $r0, $r1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mr23_lock = COPY $r1
+    ; CHECK-NEXT: ACQ_COND_mLockId_imm 2, [[COPY]], [[COPY1]] :: (load unknown-size from %stack.0, align 1)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %ptr:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = COPY $r1
+    %2:gprregbank(s32) = G_CONSTANT i32 2
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.acquire.cond.ptr), %ptr:ptrregbank(p0), %2:gprregbank(s32), %0:gprregbank(s32), %1:gprregbank(s32) :: (load unknown-size from %stack.0)
+    PseudoRET implicit $lr
+...
+
+---
+name:            REL_COND_ptr_mLockId_reg
+alignment:       16
+legalized:       true
+regBankSelected: true
+stack:
+  - { id: 0, name: "", offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.1.entry:
+    liveins: $r0, $r1, $r2
+    ; CHECK-LABEL: name: REL_COND_ptr_mLockId_reg
+    ; CHECK: liveins: $r0, $r1, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mr23_lock = COPY $r2
+    ; CHECK-NEXT: REL_COND_mLockId_reg [[COPY]], [[COPY1]], [[COPY2]] :: (load unknown-size from %stack.0, align 1)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %ptr:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = COPY $r1
+    %2:gprregbank(s32) = COPY $r2
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.release.cond.ptr), %ptr:ptrregbank(p0), %0:gprregbank(s32), %1:gprregbank(s32), %2:gprregbank(s32) :: (load unknown-size from %stack.0)
+    PseudoRET implicit $lr
+...
+
+---
+name:            REL_COND_ptr_mLockId_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+stack:
+  - { id: 0, name: "", offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.1.entry:
+    liveins: $r0, $r1
+    ; CHECK-LABEL: name: REL_COND_ptr_mLockId_imm
+    ; CHECK: liveins: $r0, $r1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mr23_lock = COPY $r1
+    ; CHECK-NEXT: REL_COND_mLockId_imm 61, [[COPY]], [[COPY1]] :: (load unknown-size from %stack.0, align 1)
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %ptr:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = COPY $r1
+    %2:gprregbank(s32) = G_CONSTANT i32 61
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.release.cond.ptr), %ptr:ptrregbank(p0), %2:gprregbank(s32), %0:gprregbank(s32), %1:gprregbank(s32) :: (load unknown-size from %stack.0)
+    PseudoRET implicit $lr
+...

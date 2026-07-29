@@ -1,12 +1,14 @@
 // RUN: mlir-opt %s -split-input-file -pass-pipeline='builtin.module(func.func(canonicalize{test-convergence}))' | FileCheck %s
 
-// CHECK-LABEL: @dcast_fold
+// CHECK-LABEL: @dcast_no_fold
 // CHECK-SAME: %[[ARG_0:.*]]: tensor
 
-// CHECK: return %[[ARG_0]]
+// CHECK: %[[VAL_0:.*]] = quant.qcast %[[ARG_0]]
+// CHECK: %[[VAL_1:.*]] = quant.dcast %[[VAL_0]]
+// CHECK: return %[[VAL_1]]
 
 !qalias = !quant.uniform<u8:f32, 2.0:128>
-func.func @dcast_fold(%arg0: tensor<4xf32>) -> tensor<4xf32> {
+func.func @dcast_no_fold(%arg0: tensor<4xf32>) -> tensor<4xf32> {
   %0 = quant.qcast %arg0 : tensor<4xf32> to tensor<4x!qalias>
   %1 = quant.dcast %0 : tensor<4x!qalias> to tensor<4xf32>
   return %1 : tensor<4xf32>
@@ -121,4 +123,3 @@ func.func @scast_no_fold_type(%arg0: tensor<4x!qalias>) -> tensor<4x!qalias1> {
   %1 = quant.scast %0 : tensor<4xui8> to tensor<4x!qalias1>
   return %1 : tensor<4x!qalias1>
 }
-

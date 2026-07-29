@@ -52,8 +52,12 @@ BUILTIN(__builtin_aie2ps_clb, "UiUi", "nc")
 //semaphores
 BUILTIN(__builtin_aie2ps_acquire, "vUiUi", "nc")
 BUILTIN(__builtin_aie2ps_acquire_cond, "vUiUii", "nc")
+BUILTIN(__builtin_aie2ps_acquire_ptr, "vvC*UiUi", "nc")
+BUILTIN(__builtin_aie2ps_acquire_cond_ptr, "vvC*UiUii", "nc")
 BUILTIN(__builtin_aie2ps_release, "vUii", "nc")
 BUILTIN(__builtin_aie2ps_release_cond, "vUiii", "nc")
+BUILTIN(__builtin_aie2ps_release_ptr, "vv*Uii", "nc")
+BUILTIN(__builtin_aie2ps_release_cond_ptr, "vv*Uiii", "nc")
 BUILTIN(__builtin_aie2ps_done, "v", "n")
 // Scheduling barrier
 BUILTIN(__builtin_aie2ps_sched_barrier, "v", "n")

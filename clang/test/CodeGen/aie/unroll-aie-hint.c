@@ -100,7 +100,7 @@ int bool_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_EPIL]] = add nuw nsw i32 [[I_05_EPIL]], 1
 // CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
 // CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
-// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP11:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP12:![0-9]+]]
 // CHECK:       [[FOR_COND_CLEANUP]]:
 // CHECK-NEXT:    [[ADD_LCSSA:%.*]] = phi i32 [ [[ADD_3]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ], [ [[ADD_EPIL]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    ret i32 [[ADD_LCSSA]]
@@ -130,7 +130,7 @@ int bool_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_3]] = add nuw nsw i32 [[I_05]], 4
 // CHECK-NEXT:    [[NITER_NEXT_3]] = add nuw nsw i32 [[NITER]], 4
 // CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
-// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
 //
 int int_hint_unroll(int n, int *p) {
   int s = 0;
@@ -165,7 +165,7 @@ int int_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_EPIL]] = add nuw nsw i32 [[I_05_EPIL]], 1
 // CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
 // CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
-// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP14:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP15:![0-9]+]]
 // CHECK:       [[FOR_COND_CLEANUP]]:
 // CHECK-NEXT:    [[ADD_LCSSA:%.*]] = phi i32 [ [[ADD_3]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ], [ [[ADD_EPIL]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    ret i32 [[ADD_LCSSA]]
@@ -195,7 +195,7 @@ int int_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_3]] = add nuw nsw i32 [[I_05]], 4
 // CHECK-NEXT:    [[NITER_NEXT_3]] = add nuw nsw i32 [[NITER]], 4
 // CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
-// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP15:![0-9]+]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP16:![0-9]+]]
 //
 int multi_hint_unroll(int n, int *p) {
   int s = 0;
@@ -231,7 +231,7 @@ int multi_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_EPIL]] = add nuw nsw i32 [[I_05_EPIL]], 1
 // CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
 // CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
-// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP17:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP18:![0-9]+]]
 // CHECK:       [[FOR_COND_CLEANUP]]:
 // CHECK-NEXT:    [[ADD_LCSSA:%.*]] = phi i32 [ [[ADD_3]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ], [ [[ADD_EPIL]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    ret i32 [[ADD_LCSSA]]
@@ -261,7 +261,7 @@ int multi_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_3]] = add nuw nsw i32 [[I_05]], 4
 // CHECK-NEXT:    [[NITER_NEXT_3]] = add nuw nsw i32 [[NITER]], 4
 // CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
-// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP18:![0-9]+]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP19:![0-9]+]]
 //
 int string_hint_unroll(int n, int *p) {
   int s = 0;
@@ -285,16 +285,17 @@ int string_hint_unroll(int n, int *p) {
 // CHECK: [[META5]] = !{!"Simple C/C++ TBAA"}
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]]}
 // CHECK: [[META7]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: [[LOOP8]] = distinct !{[[LOOP8]], [[META9:![0-9]+]], [[META10:![0-9]+]], [[META7]]}
-// CHECK: [[META9]] = !{!"llvm.loop.hint.no_predication", i64 1}
-// CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i32 7}
-// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]]}
-// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META13:![0-9]+]], [[META10]], [[META7]]}
-// CHECK: [[META13]] = !{!"llvm.loop.hint.swp_ii", i64 3}
-// CHECK: [[LOOP14]] = distinct !{[[LOOP14]], [[META7]]}
-// CHECK: [[LOOP15]] = distinct !{[[LOOP15]], [[META9]], [[META16:![0-9]+]], [[META10]], [[META7]]}
-// CHECK: [[META16]] = !{!"llvm.loop.hint.target_ii", i64 5}
-// CHECK: [[LOOP17]] = distinct !{[[LOOP17]], [[META7]]}
-// CHECK: [[LOOP18]] = distinct !{[[LOOP18]], [[META19:![0-9]+]], [[META10]], [[META7]]}
-// CHECK: [[META19]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
+// CHECK: [[LOOP8]] = distinct !{[[LOOP8]], [[META9:![0-9]+]], [[META10:![0-9]+]], [[META11:![0-9]+]], [[META7]]}
+// CHECK: [[META9]] = !{!"llvm.loop.mustprogress"}
+// CHECK: [[META10]] = !{!"llvm.loop.hint.no_predication", i64 1}
+// CHECK: [[META11]] = !{!"llvm.loop.itercount.range", i32 7}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META7]]}
+// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META9]], [[META14:![0-9]+]], [[META11]], [[META7]]}
+// CHECK: [[META14]] = !{!"llvm.loop.hint.swp_ii", i64 3}
+// CHECK: [[LOOP15]] = distinct !{[[LOOP15]], [[META7]]}
+// CHECK: [[LOOP16]] = distinct !{[[LOOP16]], [[META9]], [[META10]], [[META17:![0-9]+]], [[META11]], [[META7]]}
+// CHECK: [[META17]] = !{!"llvm.loop.hint.target_ii", i64 5}
+// CHECK: [[LOOP18]] = distinct !{[[LOOP18]], [[META7]]}
+// CHECK: [[LOOP19]] = distinct !{[[LOOP19]], [[META9]], [[META20:![0-9]+]], [[META11]], [[META7]]}
+// CHECK: [[META20]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
 //.

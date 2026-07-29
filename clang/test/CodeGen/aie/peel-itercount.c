@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 // --------------------------------------------------------------------------///
 
 // RUN: %clang --target=aie2 -O2 -mllvm --unroll-force-peel-count=2 -S -emit-llvm %s -o - | FileCheck %s
@@ -18,10 +18,11 @@
 // CHECK: for.cond.cleanup:
 // CHECK: for.body:
 // CHECK: !llvm.loop !6
-// CHECK: !6 = distinct !{!6, !7, !8, !9}
-// CHECK: !7 = !{!"llvm.loop.peeled.count", i32 2}
-// CHECK: !8 = !{!"llvm.loop.itercount.range", i32 26, i32 35}
-// CHECK: !9 = !{!"llvm.loop.unroll.disable"}
+// CHECK: !6 = distinct !{!6, !7, !8, !9, !10}
+// CHECK: !7 = !{!"llvm.loop.mustprogress"}
+// CHECK: !8 = !{!"llvm.loop.peeled.count", i32 2}
+// CHECK: !9 = !{!"llvm.loop.itercount.range", i32 26, i32 35}
+// CHECK: !10 = !{!"llvm.loop.unroll.disable"}
 
 int loop28_37(int n, int *p) {
   int s = 0;
