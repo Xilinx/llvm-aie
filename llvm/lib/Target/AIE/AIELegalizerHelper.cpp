@@ -73,55 +73,78 @@ static Register emitPadUndefVector(MachineRegisterInfo &MRI,
   return NewSrcReg;
 }
 
-bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
-                                         MachineInstr &MI,
-                                         Register SourceReg) const {
+// Pack 32 bit or 64 bit vectors
+bool AIELegalizerHelper::packVector(LegalizerHelper &Helper, MachineInstr &MI,
+                                    Register SourceReg) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
   const LLT SourceRegTy = MRI.getType(SourceReg);
+  const unsigned SourceRegSize = SourceRegTy.getSizeInBits();
   const Register DstReg = MI.getOperand(0).getReg();
-  assert(SourceRegTy.getSizeInBits() == 32 &&
-         "cannot pack vectors larger or smaller than 32-bit");
-
-  unsigned Offset = 0;
-  Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+  assert((SourceRegSize == 32 || SourceRegSize == 64) &&
+         "cannot pack vectors other than 32-bit or 64-bit");
 
   // Skip the destination operand since that is where we are writing to.
   MachineOperand *Operand = MI.operands_begin() + 1,
                  *OperandEnd = MI.operands_end();
-  MIRBuilder.buildConstant(DstCastReg, 0);
 
   const LLT RegTy = MRI.getType(DstReg);
-  while (Operand != OperandEnd) {
-    Register DestinationOperand = Operand->getReg();
-    const LLT DstOpTy = MRI.getType(DestinationOperand);
+  const unsigned EltSize = RegTy.getScalarSizeInBits();
 
-    if (DstOpTy.getSizeInBits() != 32) {
-      const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
-      MIRBuilder.buildZExt({TmpReg32}, {DestinationOperand});
-      DestinationOperand = TmpReg32;
-    }
-
-    // Avoid a useless shift for the first element, since it doesn't get
-    // optimized out in O0.
-    const Register AccumulatorReg = MRI.createGenericVirtualRegister(S32);
-    if (Offset != 0) {
-      const MachineInstrBuilder ShiftConstant =
-          MIRBuilder.buildConstant(S32, Offset);
-      const MachineInstrBuilder Masked =
-          MIRBuilder.buildShl(S32, DestinationOperand, ShiftConstant);
-      MIRBuilder.buildOr(AccumulatorReg, DstCastReg, Masked);
-    } else {
-      MIRBuilder.buildOr(AccumulatorReg, DstCastReg, DestinationOperand);
-    }
-
-    DstCastReg = AccumulatorReg;
-    Offset += RegTy.getScalarSizeInBits();
-    ++Operand;
+  // A single 64-bit element is already in packed form.
+  if (EltSize == 64) {
+    MIRBuilder.buildBitcast(DstReg, Operand->getReg());
+    MI.eraseFromParent();
+    return true;
   }
 
-  MIRBuilder.buildBitcast(DstReg, DstCastReg);
+  // Pack 32 bits at a time and merge the halves. S32 shifts and ors are legal,
+  // while S64 ones would be narrowed back into this same sequence plus a funnel
+  // shift per element.
+  SmallVector<Register, 2> Chunks;
+  while (Operand != OperandEnd) {
+    unsigned Offset = 0;
+    Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildConstant(DstCastReg, 0);
+
+    while (Offset != 32) {
+      Register DestinationOperand = Operand->getReg();
+      const LLT DstOpTy = MRI.getType(DestinationOperand);
+
+      if (DstOpTy.getSizeInBits() != 32) {
+        const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
+        MIRBuilder.buildZExt({TmpReg32}, {DestinationOperand});
+        DestinationOperand = TmpReg32;
+      }
+
+      // Avoid a useless shift for the first element, since it doesn't get
+      // optimized out in O0.
+      const Register AccumulatorReg = MRI.createGenericVirtualRegister(S32);
+      if (Offset != 0) {
+        const MachineInstrBuilder ShiftConstant =
+            MIRBuilder.buildConstant(S32, Offset);
+        const MachineInstrBuilder Masked =
+            MIRBuilder.buildShl(S32, DestinationOperand, ShiftConstant);
+        MIRBuilder.buildOr(AccumulatorReg, DstCastReg, Masked);
+      } else {
+        MIRBuilder.buildOr(AccumulatorReg, DstCastReg, DestinationOperand);
+      }
+
+      DstCastReg = AccumulatorReg;
+      Offset += EltSize;
+      ++Operand;
+    }
+
+    Chunks.push_back(DstCastReg);
+  }
+
+  // The target is little-endian, so the first chunk holds the low lanes.
+  const Register PackedReg =
+      Chunks.size() == 1
+          ? Chunks[0]
+          : MIRBuilder.buildMergeLikeInstr(S64, Chunks).getReg(0);
+  MIRBuilder.buildBitcast(DstReg, PackedReg);
   MI.eraseFromParent();
   return true;
 }
@@ -196,43 +219,14 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
 
   assert((EltSize == 8 || EltSize == 16 || EltSize == 32 || EltSize == 64) &&
          "non-existent integer size");
-
-  // 64-bit vectors (e.g. the <8 x s8> bfp16 block-exponent) have no native
-  // build-vector instruction. Pack the elements into a same-sized scalar and
-  // bitcast to the vector: the scalar-to-vector register move (for the exponent
-  // vector, GPR -> EXPVEC64) is a legal copy, so this selects without a native
-  // build.
-  if (DstVecSize == 64) {
-    const LLT S64 = LLT::scalar(64);
-    Register Acc = MIRBuilder.buildConstant(S64, 0).getReg(0);
-    unsigned Idx = 0;
-    for (const MachineOperand &Op : drop_begin(MI.operands(), 1)) {
-      // Zero-extend sub-64-bit elements to the 64-bit accumulator. A 64-bit
-      // element (a 1-element vector) is used as-is; zext to its own size is
-      // invalid. The target is little-endian, so element i occupies bits
-      // [i*EltSize, (i+1)*EltSize) and bitcasts back to lane i.
-      Register Elt = Op.getReg();
-      if (EltSize < 64)
-        Elt = MIRBuilder.buildZExt(S64, Elt).getReg(0);
-      if (Idx) {
-        Register Sh = MIRBuilder.buildConstant(S64, Idx * EltSize).getReg(0);
-        Elt = MIRBuilder.buildShl(S64, Elt, Sh).getReg(0);
-      }
-      Acc = MIRBuilder.buildOr(S64, Acc, Elt).getReg(0);
-      ++Idx;
-    }
-    MIRBuilder.buildBitcast(DstReg, Acc);
-    MI.eraseFromParent();
-    return true;
-  }
-
-  assert(DstVecSize == 32 || (DstVecSize > 64 && DstVecSize <= 1024 &&
-                              "non-native vectors are not supported"));
+  assert(DstVecSize >= 32 && DstVecSize <= 1024 &&
+         "non-native vectors are not supported");
   assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
 
-  // If our vector is 32-bit we can store it as packed integer vector
-  if (DstVecSize == 32)
-    return pack32BitVector(Helper, MI, DstReg);
+  // 32-bit and 64-bit vectors have no native build instruction, but they live
+  // in a scalar register, so we can store them as a packed integer.
+  if (DstVecSize <= 64)
+    return packVector(Helper, MI, DstReg);
 
   // We are using an undef since we are building over multiple instructions
   const TypeSize VecEltTySize = DstVecEltTy.getSizeInBits();
