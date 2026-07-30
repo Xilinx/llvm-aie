@@ -25,12 +25,12 @@ protected:
   const AIEBaseSubtarget &STI;
 
   AIECombinerBase(MachineFunction &MF, CombinerInfo &CInfo,
-                  const TargetPassConfig *TPC, GISelKnownBits &KB,
+                  const TargetPassConfig *TPC, GISelValueTracking &VT,
                   GISelCSEInfo *CSEInfo, const RuleConfigT &RC,
                   const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
                   const LegalizerInfo *LI, bool IsPreLegalize)
-      : Combiner(MF, CInfo, TPC, &KB, CSEInfo),
-        Helper(Observer, B, IsPreLegalize, &KB, MDT, LI), RuleConfig(RC),
+      : Combiner(MF, CInfo, TPC, &VT, CSEInfo),
+        Helper(Observer, B, IsPreLegalize, &VT, MDT, LI), RuleConfig(RC),
         STI(STI) {}
 };
 

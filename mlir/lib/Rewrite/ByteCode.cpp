@@ -187,6 +187,7 @@ static constexpr ByteCodeField kInferTypesMarker =
 
 //===----------------------------------------------------------------------===//
 // Generator
+//===----------------------------------------------------------------------===//
 
 namespace {
 struct ByteCodeLiveRange;
@@ -1110,6 +1111,7 @@ void PDLByteCode::initializeMutableState(PDLByteCodeMutableState &state) const {
 
 //===----------------------------------------------------------------------===//
 // ByteCode Execution
+//===----------------------------------------------------------------------===//
 
 namespace {
 /// This class is an instantiation of the PDLResultList that provides access to

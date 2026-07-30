@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
 #include "llvm/CodeGen/GlobalISel/CombinerInfo.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
-#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
+#include "llvm/CodeGen/GlobalISel/GISelValueTracking.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/InitializePasses.h"
 
@@ -51,7 +51,7 @@ protected:
 public:
   AIE2PostLegalizerCustomCombinerImpl(
       MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-      GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+      GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
       AIE::FoundCombiners *GlobalCombiner,
       const AIE2PostLegalizerCustomCombinerImplRuleConfig &RuleConfig,
       const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
@@ -73,12 +73,12 @@ private:
 
 AIE2PostLegalizerCustomCombinerImpl::AIE2PostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
     AIE::FoundCombiners *GlobalCombiner,
     const AIE2PostLegalizerCustomCombinerImplRuleConfig &RuleConfig,
     const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
-    : AIECombinerBase(MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI,
+    : AIECombinerBase(MF, CInfo, TPC, VT, CSEInfo, RuleConfig, STI, MDT, LI,
                       /*IsPreLegalize=*/false),
       GlobalCombiners(GlobalCombiner),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
@@ -92,7 +92,7 @@ AIE2PostLegalizerCustomCombinerImpl::AIE2PostLegalizerCustomCombinerImpl(
 
 std::unique_ptr<Combiner> createAIE2PostLegalizerCustomCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo,
     AIE::FoundCombiners *GlobalCombiners, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI) {
   static AIE2PostLegalizerCustomCombinerImplRuleConfig RuleConfig;
@@ -103,5 +103,5 @@ std::unique_ptr<Combiner> createAIE2PostLegalizerCustomCombinerImpl(
   }();
   (void)Parsed;
   return std::make_unique<AIE2PostLegalizerCustomCombinerImpl>(
-      MF, CInfo, TPC, KB, CSEInfo, GlobalCombiners, RuleConfig, STI, MDT, LI);
+      MF, CInfo, TPC, VT, CSEInfo, GlobalCombiners, RuleConfig, STI, MDT, LI);
 }

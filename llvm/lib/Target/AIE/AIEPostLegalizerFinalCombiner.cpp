@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerInfo.h"
-#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
+#include "llvm/CodeGen/GlobalISel/GISelValueTracking.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/InitializePasses.h"
@@ -30,7 +30,7 @@ using namespace llvm;
 // Factory function defined in arch-specific file.
 std::unique_ptr<Combiner> createAIE2PSPostLegalizerFinalCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 
 namespace {
@@ -53,8 +53,8 @@ public:
     AU.addRequired<TargetPassConfig>();
     AU.setPreservesCFG();
     getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelKnownBitsAnalysis>();
-    AU.addPreserved<GISelKnownBitsAnalysis>();
+    AU.addRequired<GISelValueTrackingAnalysis>();
+    AU.addPreserved<GISelValueTrackingAnalysis>();
     AU.addRequired<MachineDominatorTreeWrapperPass>();
     AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
@@ -77,7 +77,7 @@ bool AIEPostLegalizerFinalCombiner::runOnMachineFunction(MachineFunction &MF) {
       MF.getTarget().getOptLevel() != CodeGenOptLevel::None && !skipFunction(F);
   const auto &ST = MF.getSubtarget<AIEBaseSubtarget>();
   const auto *LI = ST.getLegalizerInfo();
-  auto *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
+  auto *VT = &getAnalysis<GISelValueTrackingAnalysis>().get(MF);
   auto *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
@@ -89,7 +89,7 @@ bool AIEPostLegalizerFinalCombiner::runOnMachineFunction(MachineFunction &MF) {
 
   // Only AIE2PS has a final combiner for now
   if (TT.isAIE2PS())
-    Impl = createAIE2PSPostLegalizerFinalCombinerImpl(MF, CInfo, TPC, *KB,
+    Impl = createAIE2PSPostLegalizerFinalCombinerImpl(MF, CInfo, TPC, *VT,
                                                       CSEInfo, ST, MDT, LI);
   else
     return false; // No final combiner for other architectures
@@ -101,7 +101,7 @@ char AIEPostLegalizerFinalCombiner::ID = 0;
 INITIALIZE_PASS_BEGIN(AIEPostLegalizerFinalCombiner, DEBUG_TYPE,
                       "AIE Post Legalizer Final Combiner", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelKnownBitsAnalysis)
+INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysis)
 INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
 INITIALIZE_PASS_END(AIEPostLegalizerFinalCombiner, DEBUG_TYPE,
                     "AIE Post Legalizer Final Combiner", false, false)

@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerInfo.h"
-#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
+#include "llvm/CodeGen/GlobalISel/GISelValueTracking.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/InitializePasses.h"
@@ -30,15 +30,15 @@ using namespace llvm;
 // Factory functions defined in arch-specific files.
 std::unique_ptr<Combiner> createAIE2PostLegalizerGenericCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 std::unique_ptr<Combiner> createAIE2PPostLegalizerGenericCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 std::unique_ptr<Combiner> createAIE2PSPostLegalizerGenericCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
-    GISelKnownBits &KB, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
+    GISelValueTracking &VT, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
     MachineDominatorTree *MDT, const LegalizerInfo *LI);
 
 namespace {
@@ -61,8 +61,8 @@ public:
     AU.addRequired<TargetPassConfig>();
     AU.setPreservesCFG();
     getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelKnownBitsAnalysis>();
-    AU.addPreserved<GISelKnownBitsAnalysis>();
+    AU.addRequired<GISelValueTrackingAnalysis>();
+    AU.addPreserved<GISelValueTrackingAnalysis>();
     AU.addRequired<MachineDominatorTreeWrapperPass>();
     AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
@@ -86,7 +86,7 @@ bool AIEPostLegalizerGenericCombiner::runOnMachineFunction(
       MF.getTarget().getOptLevel() != CodeGenOptLevel::None && !skipFunction(F);
   const auto &ST = MF.getSubtarget<AIEBaseSubtarget>();
   const auto *LI = ST.getLegalizerInfo();
-  auto *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
+  auto *VT = &getAnalysis<GISelValueTrackingAnalysis>().get(MF);
   auto *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
@@ -96,13 +96,13 @@ bool AIEPostLegalizerGenericCombiner::runOnMachineFunction(
   const Triple &TT = ST.getTargetTriple();
   std::unique_ptr<Combiner> Impl;
   if (TT.isAIE2P())
-    Impl = createAIE2PPostLegalizerGenericCombinerImpl(MF, CInfo, TPC, *KB,
+    Impl = createAIE2PPostLegalizerGenericCombinerImpl(MF, CInfo, TPC, *VT,
                                                        CSEInfo, ST, MDT, LI);
   else if (TT.isAIE2PS())
-    Impl = createAIE2PSPostLegalizerGenericCombinerImpl(MF, CInfo, TPC, *KB,
+    Impl = createAIE2PSPostLegalizerGenericCombinerImpl(MF, CInfo, TPC, *VT,
                                                         CSEInfo, ST, MDT, LI);
   else
-    Impl = createAIE2PostLegalizerGenericCombinerImpl(MF, CInfo, TPC, *KB,
+    Impl = createAIE2PostLegalizerGenericCombinerImpl(MF, CInfo, TPC, *VT,
                                                       CSEInfo, ST, MDT, LI);
 
   return Impl->combineMachineInstrs();
@@ -112,7 +112,7 @@ char AIEPostLegalizerGenericCombiner::ID = 0;
 INITIALIZE_PASS_BEGIN(AIEPostLegalizerGenericCombiner, DEBUG_TYPE,
                       "AIE Post Legalizer Generic Combiner", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelKnownBitsAnalysis)
+INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysis)
 INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
 INITIALIZE_PASS_END(AIEPostLegalizerGenericCombiner, DEBUG_TYPE,
                     "AIE Post Legalizer Generic Combiner", false, false)

@@ -72,6 +72,7 @@ void registerCommutativityUtils();
 void registerConvertCallOpPass();
 void registerConvertFuncOpPass();
 void registerInliner();
+void registerInlinerCallback();
 void registerMemRefBoundCheck();
 void registerPatternsTestPass();
 void registerSimpleParametricTilingPass();
@@ -214,6 +215,7 @@ void registerTestPasses() {
   mlir::test::registerConvertCallOpPass();
   mlir::test::registerConvertFuncOpPass();
   mlir::test::registerInliner();
+  mlir::test::registerInlinerCallback();
   mlir::test::registerMemRefBoundCheck();
   mlir::test::registerPatternsTestPass();
   mlir::test::registerSimpleParametricTilingPass();

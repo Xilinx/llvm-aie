@@ -41,7 +41,7 @@ class MachineInstrBuilder;
 class MachineRegisterInfo;
 class MachineInstr;
 class MachineOperand;
-class GISelKnownBits;
+class GISelValueTracking;
 class MachineDominatorTree;
 class LegalizerInfo;
 struct LegalityQuery;
@@ -109,7 +109,7 @@ protected:
   MachineIRBuilder &Builder;
   MachineRegisterInfo &MRI;
   GISelChangeObserver &Observer;
-  GISelKnownBits *KB;
+  GISelValueTracking *VT;
   MachineDominatorTree *MDT;
   bool IsPreLegalize;
   const LegalizerInfo *LI;
@@ -118,14 +118,11 @@ protected:
 
 public:
   CombinerHelper(GISelChangeObserver &Observer, MachineIRBuilder &B,
-                 bool IsPreLegalize,
-                 GISelKnownBits *KB = nullptr,
+                 bool IsPreLegalize, GISelValueTracking *VT = nullptr,
                  MachineDominatorTree *MDT = nullptr,
                  const LegalizerInfo *LI = nullptr);
 
-  GISelKnownBits *getKnownBits() const {
-    return KB;
-  }
+  GISelValueTracking *getValueTracking() const { return VT; }
 
   MachineIRBuilder &getBuilder() const {
     return Builder;

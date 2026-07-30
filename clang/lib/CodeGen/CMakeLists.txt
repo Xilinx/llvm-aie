@@ -87,6 +87,7 @@ add_clang_library(clangCodeGen
   CGExprScalar.cpp
   CGGPUBuiltin.cpp
   CGHLSLRuntime.cpp
+  CGHLSLBuiltins.cpp
   CGLoopInfo.cpp
   CGNonTrivialStruct.cpp
   CGObjC.cpp
@@ -124,6 +125,7 @@ add_clang_library(clangCodeGen
   TargetBuiltins/AIE.cpp
   TargetBuiltins/ARM.cpp
   TargetBuiltins/AMDGPU.cpp
+  TargetBuiltins/DirectX.cpp
   TargetBuiltins/Hexagon.cpp
   TargetBuiltins/NVPTX.cpp
   TargetBuiltins/PPC.cpp
