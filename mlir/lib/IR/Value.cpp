@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir/IR/Value.h"
@@ -177,6 +180,9 @@ OpResultImpl *OpResultImpl::getNextResultAtOffset(intptr_t offset) {
 
   // If we land here, the current result is an out-of-line result and we can
   // offset directly.
+  // codeql[cpp/suspicious-pointer-scaling] Intentional: out-of-line results are
+  // co-allocated and addressed by index; scaling by OutOfLineOpResult is
+  // deliberate.
   return reinterpret_cast<OutOfLineOpResult *>(result) - offset;
 }
 
