@@ -37,7 +37,7 @@ public:
   LLT getOptimalMemOpLLT(const MemOp &Op,
                          const AttributeList &FuncAttributes) const override;
 
-  MVT getVectorIdxTy(const DataLayout &DL) const override;
+  unsigned getVectorIdxWidth(const DataLayout &DL) const override;
 
   /// Returns if it's reasonable to merge stores to MemVT size.
   bool canMergeStoresTo(unsigned AS, EVT MemVT,

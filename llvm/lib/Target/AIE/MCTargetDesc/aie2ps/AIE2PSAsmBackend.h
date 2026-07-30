@@ -27,10 +27,6 @@ public:
       : AIEBaseAsmBackend(STI, OSABI, Options) {}
   ~AIE2PSAsmBackend() {}
 
-  unsigned getNumFixupKinds() const override {
-    return AIE2PS::NumTargetFixupKinds;
-  }
-
   void relaxInstruction(MCInst &Inst,
                         const MCSubtargetInfo &STI) const override;
 

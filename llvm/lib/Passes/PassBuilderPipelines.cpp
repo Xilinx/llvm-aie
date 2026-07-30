@@ -79,7 +79,6 @@
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Instrumentation/CGProfile.h"
 #include "llvm/Transforms/Instrumentation/ControlHeightReduction.h"
-#include "llvm/Transforms/Instrumentation/InstrOrderFile.h"
 #include "llvm/Transforms/Instrumentation/InstrProfiling.h"
 #include "llvm/Transforms/Instrumentation/MemProfiler.h"
 #include "llvm/Transforms/Instrumentation/PGOCtxProfFlattening.h"
@@ -275,10 +274,6 @@ static cl::opt<bool> FlattenedProfileUsed(
     "flattened-profile-used", cl::init(false), cl::Hidden,
     cl::desc("Indicate the sample profile being used is flattened, i.e., "
              "no inline hierarchy exists in the profile"));
-
-static cl::opt<bool> EnableOrderFileInstrumentation(
-    "enable-order-file-instrumentation", cl::init(false), cl::Hidden,
-    cl::desc("Enable order file instrumentation (default = off)"));
 
 static cl::opt<bool>
     EnableMatrix("enable-matrix", cl::init(false), cl::Hidden,
@@ -1073,7 +1068,7 @@ PassBuilder::buildModuleInlinerPipeline(OptimizationLevel Level,
   if (!UseCtxProfile.empty() && Phase == ThinOrFullLTOPhase::ThinLTOPostLink) {
     MPM.addPass(GlobalOptPass());
     MPM.addPass(GlobalDCEPass());
-    MPM.addPass(PGOCtxProfFlatteningPass());
+    MPM.addPass(PGOCtxProfFlatteningPass(/*IsPreThinlink=*/false));
   }
 
   MPM.addPass(createModuleToFunctionPassAdaptor(
@@ -1267,8 +1262,10 @@ PassBuilder::buildModuleSimplificationPipeline(OptimizationLevel Level,
     // FIXME(mtrofin): move AssignGUIDPass if there is agreement to use this
     // mechanism for GUIDs.
     MPM.addPass(AssignGUIDPass());
-    if (IsCtxProfUse)
+    if (IsCtxProfUse) {
+      MPM.addPass(PGOCtxProfFlatteningPass(/*IsPreThinlink=*/true));
       return MPM;
+    }
     // Block further inlining in the instrumented ctxprof case. This avoids
     // confusingly collecting profiles for the same GUID corresponding to
     // different variants of the function. We could do like PGO and identify
@@ -1486,9 +1483,6 @@ PassBuilder::buildModuleOptimizationPipeline(OptimizationLevel Level,
   // preserved during prelinking for link-time inlining decisions.
   if (!LTOPreLink)
     MPM.addPass(EliminateAvailableExternallyPass());
-
-  if (EnableOrderFileInstrumentation)
-    MPM.addPass(InstrOrderFilePass());
 
   // Do RPO function attribute inference across the module to forward-propagate
   // attributes where applicable.
@@ -1721,6 +1715,19 @@ PassBuilder::buildFatLTODefaultPipeline(OptimizationLevel Level, bool ThinLTO,
   if (ThinLTO && PGOOpt && PGOOpt->Action == PGOOptions::SampleUse)
     MPM.addPass(buildThinLTODefaultPipeline(Level, /*ImportSummary=*/nullptr));
   else {
+    // ModuleSimplification does not run the coroutine passes for
+    // ThinLTOPreLink, so we need the coroutine passes to run for ThinLTO
+    // builds, otherwise they will miscompile.
+    if (ThinLTO) {
+      // TODO: replace w/ buildCoroWrapper() when it takes phase and level into
+      // consideration.
+      CGSCCPassManager CGPM;
+      CGPM.addPass(CoroSplitPass(Level != OptimizationLevel::O0));
+      CGPM.addPass(CoroAnnotationElidePass());
+      MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM)));
+      MPM.addPass(CoroCleanupPass());
+    }
+
     // otherwise, just use module optimization
     MPM.addPass(
         buildModuleOptimizationPipeline(Level, ThinOrFullLTOPhase::None));

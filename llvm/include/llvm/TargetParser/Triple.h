@@ -895,9 +895,7 @@ public:
   /// Tests whether the target is AMDGCN
   bool isAMDGCN() const { return getArch() == Triple::amdgcn; }
 
-  bool isAMDGPU() const {
-    return getArch() == Triple::r600 || getArch() == Triple::amdgcn;
-  }
+  bool isAMDGPU() const { return getArch() == Triple::r600 || isAMDGCN(); }
 
   //TODO aie1 is currently named as aie, perhaps we should change the
   //triple name to aie1?
@@ -1248,6 +1246,9 @@ public:
 
   /// Test whether target triples are compatible.
   bool isCompatibleWith(const Triple &Other) const;
+
+  /// Test whether the target triple is for a GPU.
+  bool isGPU() const { return isSPIRV() || isNVPTX() || isAMDGPU(); }
 
   /// Merge target triples.
   std::string merge(const Triple &Other) const;

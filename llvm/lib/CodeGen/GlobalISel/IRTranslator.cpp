@@ -1492,8 +1492,7 @@ static uint64_t getOffsetFromIndices(const User &U, const DataLayout &DL) {
     for (auto Idx : IVI->indices())
       Indices.push_back(ConstantInt::get(Int32Ty, Idx));
   } else {
-    for (Value *Op : drop_begin(U.operands()))
-      Indices.push_back(Op);
+    llvm::append_range(Indices, drop_begin(U.operands()));
   }
 
   return 8 * static_cast<uint64_t>(
@@ -2227,8 +2226,7 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID,
   case Intrinsic::fake_use: {
     SmallVector<llvm::SrcOp, 4> VRegs;
     for (const auto &Arg : CI.args())
-      for (auto VReg : getOrCreateVRegs(*Arg))
-        VRegs.push_back(VReg);
+      llvm::append_range(VRegs, getOrCreateVRegs(*Arg));
     MIRBuilder.buildInstr(TargetOpcode::FAKE_USE, {}, VRegs);
     MF->setHasFakeUses(true);
     return true;
@@ -3161,21 +3159,12 @@ bool IRTranslator::translateVAArg(const User &U, MachineIRBuilder &MIRBuilder) {
   return true;
 }
 
-bool IRTranslator::translateUnreachable(const User &U, MachineIRBuilder &MIRBuilder) {
-  if (!MF->getTarget().Options.TrapUnreachable)
-    return true;
-
+bool IRTranslator::translateUnreachable(const User &U,
+                                        MachineIRBuilder &MIRBuilder) {
   auto &UI = cast<UnreachableInst>(U);
-
-  // We may be able to ignore unreachable behind a noreturn call.
-  if (const CallInst *Call = dyn_cast_or_null<CallInst>(UI.getPrevNode());
-      Call && Call->doesNotReturn()) {
-    if (MF->getTarget().Options.NoTrapAfterNoreturn)
-      return true;
-    // Do not emit an additional trap instruction.
-    if (Call->isNonContinuableTrap())
-      return true;
-  }
+  if (!UI.shouldLowerToTrap(MF->getTarget().Options.TrapUnreachable,
+                            MF->getTarget().Options.NoTrapAfterNoreturn))
+    return true;
 
   MIRBuilder.buildTrap();
   return true;
@@ -3192,7 +3181,7 @@ bool IRTranslator::translateInsertElement(const User &U,
   Register Res = getOrCreateVReg(U);
   Register Val = getOrCreateVReg(*U.getOperand(0));
   Register Elt = getOrCreateVReg(*U.getOperand(1));
-  unsigned PreferredVecIdxWidth = TLI->getVectorIdxTy(*DL).getSizeInBits();
+  unsigned PreferredVecIdxWidth = TLI->getVectorIdxWidth(*DL);
   Register Idx;
   if (auto *CI = dyn_cast<ConstantInt>(U.getOperand(2))) {
     if (CI->getBitWidth() != PreferredVecIdxWidth) {
@@ -3218,7 +3207,7 @@ bool IRTranslator::translateInsertVector(const User &U,
   Register Elt = getOrCreateVReg(*U.getOperand(1));
 
   ConstantInt *CI = cast<ConstantInt>(U.getOperand(2));
-  unsigned PreferredVecIdxWidth = TLI->getVectorIdxTy(*DL).getSizeInBits();
+  unsigned PreferredVecIdxWidth = TLI->getVectorIdxWidth(*DL);
 
   // Resize Index to preferred index width.
   if (CI->getBitWidth() != PreferredVecIdxWidth) {
@@ -3273,7 +3262,7 @@ bool IRTranslator::translateExtractElement(const User &U,
 
   Register Res = getOrCreateVReg(U);
   Register Val = getOrCreateVReg(*U.getOperand(0));
-  unsigned PreferredVecIdxWidth = TLI->getVectorIdxTy(*DL).getSizeInBits();
+  unsigned PreferredVecIdxWidth = TLI->getVectorIdxWidth(*DL);
   Register Idx;
   if (auto *CI = dyn_cast<ConstantInt>(U.getOperand(1))) {
     if (CI->getBitWidth() != PreferredVecIdxWidth) {
@@ -3297,7 +3286,7 @@ bool IRTranslator::translateExtractVector(const User &U,
   Register Res = getOrCreateVReg(U);
   Register Vec = getOrCreateVReg(*U.getOperand(0));
   ConstantInt *CI = cast<ConstantInt>(U.getOperand(1));
-  unsigned PreferredVecIdxWidth = TLI->getVectorIdxTy(*DL).getSizeInBits();
+  unsigned PreferredVecIdxWidth = TLI->getVectorIdxWidth(*DL);
 
   // Resize Index to preferred index width.
   if (CI->getBitWidth() != PreferredVecIdxWidth) {

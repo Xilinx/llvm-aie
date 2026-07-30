@@ -32,8 +32,7 @@ body: |
     ; GCN: liveins: $vgpr0
     ; GCN-NEXT: {{  $}}
     ; GCN-NEXT: %var:_(s32) = COPY $vgpr0
-    ; GCN-NEXT: %trunc:_(s16) = G_TRUNC %var(s32)
-    ; GCN-NEXT: %sext:_(s32) = G_SEXT %trunc(s16)
+    ; GCN-NEXT: %sext:_(s32) = G_SEXT_INREG %var, 16
     ; GCN-NEXT: $vgpr0 = COPY %sext(s32)
     %var:_(s32) = COPY $vgpr0
     %trunc:_(s16) = G_TRUNC %var(s32)
@@ -116,8 +115,7 @@ body: |
     ; GCN: liveins: $vgpr0_vgpr1
     ; GCN-NEXT: {{  $}}
     ; GCN-NEXT: %var:_(<2 x s32>) = COPY $vgpr0_vgpr1
-    ; GCN-NEXT: %trunc:_(<2 x s16>) = G_TRUNC %var(<2 x s32>)
-    ; GCN-NEXT: %sext:_(<2 x s32>) = G_SEXT %trunc(<2 x s16>)
+    ; GCN-NEXT: %sext:_(<2 x s32>) = G_SEXT_INREG %var, 16
     ; GCN-NEXT: $vgpr0_vgpr1 = COPY %sext(<2 x s32>)
     %var:_(<2 x s32>) = COPY $vgpr0_vgpr1
     %trunc:_(<2 x s16>) = G_TRUNC %var(<2 x s32>)
