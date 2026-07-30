@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Analysis/Presburger/Matrix.h"
@@ -23,8 +26,9 @@ Matrix<T>::Matrix(unsigned rows, unsigned columns, unsigned reservedRows,
                   unsigned reservedColumns)
     : nRows(rows), nColumns(columns),
       nReservedColumns(std::max(nColumns, reservedColumns)),
-      data(nRows * nReservedColumns) {
-  data.reserve(std::max(nRows, reservedRows) * nReservedColumns);
+      data(static_cast<size_t>(nRows) * nReservedColumns) {
+  data.reserve(static_cast<size_t>(std::max(nRows, reservedRows)) *
+               nReservedColumns);
 }
 
 /// We cannot use the default implementation of operator== as it compares
@@ -128,12 +132,12 @@ void Matrix<T>::swapColumns(unsigned column, unsigned otherColumn) {
 
 template <typename T>
 MutableArrayRef<T> Matrix<T>::getRow(unsigned row) {
-  return {&data[row * nReservedColumns], nColumns};
+  return {&data[static_cast<size_t>(row) * nReservedColumns], nColumns};
 }
 
 template <typename T>
 ArrayRef<T> Matrix<T>::getRow(unsigned row) const {
-  return {&data[row * nReservedColumns], nColumns};
+  return {&data[static_cast<size_t>(row) * nReservedColumns], nColumns};
 }
 
 template <typename T>

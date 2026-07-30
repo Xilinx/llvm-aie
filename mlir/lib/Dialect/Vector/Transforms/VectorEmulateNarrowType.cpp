@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements target-independent rewrites and utilities to emulate
@@ -170,7 +173,8 @@ static FailureOr<Operation *> getCompressedMaskOp(OpBuilder &rewriter,
             SmallVector<bool> paddedMaskValues(numFrontPadElems, false);
             paddedMaskValues.append(originalMask.template value_begin<bool>(),
                                     originalMask.template value_end<bool>());
-            paddedMaskValues.resize(numDestElems * numSrcElemsPerDest, false);
+            paddedMaskValues.resize(
+                static_cast<size_t>(numDestElems) * numSrcElemsPerDest, false);
 
             // Compressing by combining every `numSrcElemsPerDest` elements:
             SmallVector<bool> compressedMaskValues;

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Implements gradual lowering of `gpu.subgroup_reduce` ops.
@@ -83,7 +86,7 @@ struct BreakDownSubgroupReduce final : OpRewritePattern<gpu::SubgroupReduceOp> {
         rewriter.create<arith::ConstantOp>(loc, rewriter.getZeroAttr(vecTy));
 
     for (unsigned i = 0; i != numNewReductions; ++i) {
-      int64_t startIdx = i * elementsPerShuffle;
+      int64_t startIdx = static_cast<int64_t>(i) * elementsPerShuffle;
       int64_t endIdx =
           std::min(startIdx + elementsPerShuffle, vecTy.getNumElements());
       int64_t numElems = endIdx - startIdx;

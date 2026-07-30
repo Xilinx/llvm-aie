@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Affine/Utils.h"
@@ -278,12 +281,12 @@ rewriteInIm2Col(RewriterBase &rewriter,
       cast<RankedTensorType>(filterT.getType()).getShape();
   ArrayRef<int64_t> outputShape = outputType.getShape();
 
-  int n = outputShape[0];
-  int oh = outputShape[1];
-  int ow = outputShape[2];
-  int c = outputShape[3];
-  int fh = filterTShape[1];
-  int fw = filterTShape[2];
+  int64_t n = outputShape[0];
+  int64_t oh = outputShape[1];
+  int64_t ow = outputShape[2];
+  int64_t c = outputShape[3];
+  int64_t fh = filterTShape[1];
+  int64_t fw = filterTShape[2];
 
   SmallVector<int64_t> colTensorShape = {n, c, oh, ow, fh, fw};
   Value transposedOutputTensor = transposeOperand(output, {0, 3, 1, 2});
