@@ -94,8 +94,8 @@ public:
   bool legalizeBinOp(LegalizerHelper &Helper, MachineInstr &MI) const;
 
   // Helper functions for legalization
-  bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
-                       Register SourceReg) const;
+  bool packVector(LegalizerHelper &Helper, MachineInstr &MI,
+                  Register SourceReg) const;
   bool unpackVector(LegalizerHelper &Helper, MachineInstr &MI,
                     Register SourceReg) const;
   bool legalizeG_UNMERGE_VALUES_128bit(LegalizerHelper &Helper,
