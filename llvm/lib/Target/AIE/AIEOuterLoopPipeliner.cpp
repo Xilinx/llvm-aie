@@ -1404,12 +1404,12 @@ void AIEOuterLoopPipeliner::remapExitForReplacement(
   // PHI and an inner-loop def). removeFromCFG deletes those originals, which
   // would leave the exit reading poison. Remap each such operand to a live
   // clone so the exit reads a defined value.
-  for (Instruction &I : *OrigExit) {
-    if (isa<PHINode>(&I))
-      continue;
+  for (Instruction &I :
+       make_range(OrigExit->getFirstNonPHI()->getIterator(), OrigExit->end())) {
     for (Use &Op : I.operands()) {
       Value *V = Op.get();
-      if (!isa<Instruction>(V) && !isa<Argument>(V))
+      // CFG successors are basic-block operands; only remap data values.
+      if (isa<BasicBlock>(V))
         continue;
       if (Value *Mapped = ReplacementLS.cloneOf(V); Mapped != V)
         Op.set(Mapped);
@@ -1834,27 +1834,28 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   const bool OuterIsHardwareLoop =
       Opts.UseHardwareLoop && SteadyLS.latchCondition().isDowncounting();
 
-  if (!UseSpeculativeLastIteration) {
-    // Adjust the outer loop trip count from N to N-1. Must happen before the
-    // peel so the hardware-loop conversion can find the right icmp to replace.
+  // Preparation: set up the latch condition for JNZD and/or peeling.
+  // - Non-speculative: adjust the loop bound from N to N-1 (peel one iteration)
+  // - Speculative: remap exit live-outs to SteadyLS before JNZD erases the IV
+  if (!UseSpeculativeLastIteration)
     SteadyLS.adjustLoopBound();
+  else
+    remapExitForReplacement(OrigLS, SteadyLS);
 
-    // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
-    // counting add/icmp are erased from the latch before the peel clones it.
-    if (OuterIsHardwareLoop)
-      convertOuterLoopToHardwareLoop(SteadyLS);
+  // Convert to a JNZD hardware loop if applicable. Must run after bound
+  // adjustment (non-speculative) or exit remapping (speculative), and before
+  // peeling so the counting add/icmp are erased before the peel clones them.
+  if (OuterIsHardwareLoop)
+    convertOuterLoopToHardwareLoop(SteadyLS);
 
-    // Create the last-iteration region from the steady loop.
+  // Finalization: complete the transformation and update metadata.
+  if (!UseSpeculativeLastIteration) {
+    // Peel the last iteration into a separate region (no prefetch loads).
     peelLastIteration(OrigLS, SteadyLS);
-
-    // Adjust itercount metadata to reflect the reduced trip count.
+    // Adjust itercount metadata to reflect the reduced trip count (N-1).
     SteadyLS.updateLoopMetadata();
   } else {
-    // Exit live-outs must keep the original IV cycle alive when it is observed
-    // outside the loop, before JNZD removes the latch condition.
-    remapExitForReplacement(OrigLS, SteadyLS);
-    if (OuterIsHardwareLoop)
-      convertOuterLoopToHardwareLoop(SteadyLS);
+    // Mark the loop as speculatively pipelined (no iteration peeled).
     SteadyLS.markSpeculativePipelining();
     LLVM_DEBUG(dbgs() << "    Speculative last iteration: no last-iteration "
                          "region\n");
