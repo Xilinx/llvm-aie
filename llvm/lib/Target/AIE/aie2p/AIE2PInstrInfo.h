@@ -36,6 +36,7 @@ public:
   unsigned getMvSclOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;
   unsigned getAddrIntrinsic3D() const override;
+  unsigned getIdOnlyLockIntrinsic(unsigned PtrIntrinsicID) const override;
   unsigned getPtrAdd2DOpcode() const override;
   unsigned getPtrAdd3DOpcode() const override;
   unsigned getMvSclMultiSlotPseudoOpcode() const override;

@@ -79,6 +79,21 @@ unsigned AIE2PInstrInfo::getAddrIntrinsic3D() const {
   return Intrinsic::aie2p_add_3d;
 }
 
+unsigned AIE2PInstrInfo::getIdOnlyLockIntrinsic(unsigned PtrID) const {
+  switch (PtrID) {
+  case Intrinsic::aie2p_acquire_ptr:
+    return Intrinsic::aie2p_acquire;
+  case Intrinsic::aie2p_acquire_cond_ptr:
+    return Intrinsic::aie2p_acquire_cond;
+  case Intrinsic::aie2p_release_ptr:
+    return Intrinsic::aie2p_release;
+  case Intrinsic::aie2p_release_cond_ptr:
+    return Intrinsic::aie2p_release_cond;
+  default:
+    return Intrinsic::not_intrinsic;
+  }
+}
+
 unsigned AIE2PInstrInfo::getPtrAdd2DOpcode() const {
   return AIE2P::PADD_2D_pseudo;
 }

@@ -33,6 +33,14 @@ class MachineInstr;
 
 using MemoryObjectsBits = uint64_t;
 
+/// Pair of memory object bitmaps for loads and stores.
+/// Loads and stores are tracked separately because AIE has separate HW ports
+/// for loads and stores, so they don't conflict with each other.
+struct MemoryObjectPair {
+  MemoryObjectsBits Load = 0;
+  MemoryObjectsBits Store = 0;
+};
+
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
                          MachineBasicBlock::iterator InsertPoint);
@@ -83,8 +91,13 @@ class FuncUnitWrapper {
   /// conflicts already captures the conflict.
   MemoryBankBits MemoryBanks = 0;
 
-  /// The occupied pointer objects
-  MemoryObjectsBits MemObjectsBits = 0;
+  /// The occupied pointer objects for loads.
+  /// Tracked separately from stores since loads and stores use separate HW
+  /// ports.
+  MemoryObjectsBits LoadMemObjectsBits = 0;
+
+  /// The occupied pointer objects for stores.
+  MemoryObjectsBits StoreMemObjectsBits = 0;
 
 public:
   /// IssueCount - Count instructions issued in this cycle.
@@ -92,15 +105,17 @@ public:
 
   FuncUnitWrapper(const InstrStage &IS, SlotBits Slots = 0,
                   MemoryBankBits MemoryBanks = 0,
-                  MemoryObjectsBits MemObjectsBits = 0)
+                  MemoryObjectsBits LoadMemObjectsBits = 0,
+                  MemoryObjectsBits StoreMemObjectsBits = 0)
       : Required(IS.getReservationKind() == InstrStage::Required
                      ? ResourceSet(IS.getUnits())
                      : ResourceSet()),
         Reserved(IS.getReservationKind() == InstrStage::Reserved
                      ? ResourceSet(IS.getUnits())
                      : ResourceSet()),
-        Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
-  }
+        Slots(Slots), MemoryBanks(MemoryBanks),
+        LoadMemObjectsBits(LoadMemObjectsBits),
+        StoreMemObjectsBits(StoreMemObjectsBits) {}
 
   static void setFormatInterface(const AIEBaseMCFormats *Formats);
 
@@ -114,9 +129,11 @@ public:
   FuncUnitWrapper() = default;
   FuncUnitWrapper(SlotBits Slots, SlotBits Conflicts,
                   MemoryBankBits MemoryBanks = 0,
-                  MemoryObjectsBits MemObjectsBits = 0)
+                  MemoryObjectsBits LoadMemObjectsBits = 0,
+                  MemoryObjectsBits StoreMemObjectsBits = 0)
       : Slots(Slots), Conflicts(Conflicts), MemoryBanks(MemoryBanks),
-        MemObjectsBits(MemObjectsBits) {}
+        LoadMemObjectsBits(LoadMemObjectsBits),
+        StoreMemObjectsBits(StoreMemObjectsBits) {}
 
   /// Compare two FuncUnitWrappers for equality. This is only used for
   /// dumping purposes, quite literally saying "this looks the same"
@@ -196,12 +213,12 @@ public:
   ///        doesn't pay off.
   void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                         const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-                        MemoryObjectsBits MemObjectsBits,
+                        MemoryObjectPair MemObjectsBits,
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles) const;
   // Apply the above function to the local scoreboard.
   void emitInScoreboard(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-                        MemoryObjectsBits MemObjectsBits,
+                        MemoryObjectPair MemObjectsBits,
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles);
   // Apply supplying the remaining info.
@@ -224,9 +241,9 @@ public:
   MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;
 
   /// For instructions using memory operands, return
-  /// a bit map representing the used base objects. This is not
-  /// for correctness, but for wait cycles avoidance.
-  MemoryObjectsBits getMemoryObjectsBits(const MachineInstr *MI) const;
+  /// a pair of bit maps representing the used base objects for loads and
+  /// stores. This is not for correctness, but for wait cycles avoidance.
+  MemoryObjectPair getMemoryObjectsBits(const MachineInstr *MI) const;
 
   /// The pipeline depth is the depth of the deepest instruction.
   /// We compute that once from the itineraries.
@@ -262,7 +279,7 @@ public:
   ScheduleHazardRecognizer::HazardType
   getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-                uint64_t MemObjectsBits,
+                MemoryObjectPair MemObjectsBits,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
 
@@ -278,7 +295,7 @@ protected:
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
                 SlotBits SlotSet, SlotBits Conflicts,
-                MemoryBankBits MemoryBanks, uint64_t MemObjectsBits,
+                MemoryBankBits MemoryBanks, MemoryObjectPair MemObjectsBits,
                 SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
 
@@ -286,7 +303,7 @@ protected:
                              const InstrItineraryData *ItinData,
                              unsigned SchedClass, SlotBits SlotSet,
                              MemoryBankBits MemoryBanks,
-                             uint64_t MemObjectsBits,
+                             MemoryObjectPair MemObjectsBits,
                              SmallVector<int, 2> MemoryAccessCycles,
                              int DeltaCycles, std::optional<int> FUDepthLimit);
 

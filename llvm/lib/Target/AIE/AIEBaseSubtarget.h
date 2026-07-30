@@ -74,7 +74,8 @@ public:
 
   /// Required DAG mutations for InterBlock dependence analysis
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
-  getDDGMutationsImpl(const Triple &TT, bool ExactLatencies);
+  getDDGMutationsImpl(const Triple &TT, bool ExactLatencies,
+                      AAResults *AA = nullptr);
 
   /// Required DAG mutations during Pre-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>

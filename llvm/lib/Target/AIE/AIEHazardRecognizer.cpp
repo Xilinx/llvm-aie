@@ -63,7 +63,8 @@ bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
   return Required == Other.Required && Reserved == Other.Reserved &&
          Slots == Other.Slots && Conflicts == Other.Conflicts &&
          MemoryBanks == Other.MemoryBanks &&
-         MemObjectsBits == Other.MemObjectsBits;
+         LoadMemObjectsBits == Other.LoadMemObjectsBits &&
+         StoreMemObjectsBits == Other.StoreMemObjectsBits;
 }
 
 void FuncUnitWrapper::dump() const {
@@ -85,7 +86,8 @@ void FuncUnitWrapper::dump() const {
   PrintFU("Req     : ", Required);
   PrintResource(" Slots : ", Slots);
   PrintResource(" Memorybanks : ", MemoryBanks);
-  PrintResource(" MemObjectsBits : ", MemObjectsBits);
+  PrintResource(" LoadMemObjBits : ", LoadMemObjectsBits);
+  PrintResource(" StoreMemObjBits : ", StoreMemObjectsBits);
   if (Reserved.empty())
     return;
   PrintFU("\n\t   Rsrv : ", Reserved);
@@ -98,12 +100,14 @@ void FuncUnitWrapper::clearResources() {
   Slots = 0;
   Conflicts = 0;
   MemoryBanks = 0;
-  MemObjectsBits = 0;
+  LoadMemObjectsBits = 0;
+  StoreMemObjectsBits = 0;
 }
 
 bool FuncUnitWrapper::isEmpty() const {
   return Required.empty() && Reserved.empty() && Slots == 0 &&
-         MemoryBanks == 0 && MemObjectsBits == 0;
+         MemoryBanks == 0 && LoadMemObjectsBits == 0 &&
+         StoreMemObjectsBits == 0;
 }
 
 void FuncUnitWrapper::blockResources() {
@@ -121,13 +125,17 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   Slots |= Other.Slots;
   Conflicts |= Other.Conflicts;
   MemoryBanks |= Other.MemoryBanks;
-  MemObjectsBits |= Other.MemObjectsBits;
+  LoadMemObjectsBits |= Other.LoadMemObjectsBits;
+  StoreMemObjectsBits |= Other.StoreMemObjectsBits;
   return *this;
 }
 
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
+  // Load-Load and Store-Store conflicts are checked independently.
+  // Loads and stores don't conflict with each other on AIE (separate HW ports).
   if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
-      (MemObjectsBits & Other.MemObjectsBits) != 0 ||
+      (LoadMemObjectsBits & Other.LoadMemObjectsBits) != 0 ||
+      (StoreMemObjectsBits & Other.StoreMemObjectsBits) != 0 ||
       (Conflicts & Other.Slots) != 0 || (Slots & Other.Conflicts) != 0 ||
       Required.overlap(Other.Required) || Reserved.overlap(Other.Required) ||
       Required.overlap(Other.Reserved)) {
@@ -525,7 +533,7 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
 ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
     const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
     const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-    MemoryObjectsBits MemObjectsBits,
+    MemoryObjectPair MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
@@ -550,7 +558,7 @@ bool AIEHazardRecognizer::checkConflict(
   const unsigned SchedClass =
       TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
   const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);
-  const MemoryObjectsBits MemObjectsBits = getMemoryObjectsBits(&MI);
+  const MemoryObjectPair MemObjectsBits = getMemoryObjectsBits(&MI);
   return checkConflict(
       Scoreboard, ItinData, SchedClass,
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
@@ -568,7 +576,7 @@ bool AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
     SlotBits ConflictSet, MemoryBankBits MemoryBanks,
-    MemoryObjectsBits MemObjectsBits, SmallVector<int, 2> MemoryAccessCycles,
+    MemoryObjectPair MemObjectsBits, SmallVector<int, 2> MemoryAccessCycles,
     int DeltaCycles, std::optional<int> FUDepthLimit) {
 
   // Verify format hazards
@@ -581,7 +589,8 @@ bool AIEHazardRecognizer::checkConflict(
     const SlotBits Slots = 0;
     const SlotBits Conflicts = 0;
     FuncUnitWrapper MemoryAccessCycle(Slots, Conflicts, MemoryBanks,
-                                      MemObjectsBits);
+                                      MemObjectsBits.Load,
+                                      MemObjectsBits.Store);
 
     for (auto Cycles : MemoryAccessCycles) {
       // MemoryAccessCycles starts counting from 1, so we need to subtract 1
@@ -618,7 +627,7 @@ bool AIEHazardRecognizer::checkConflict(
 
 void AIEHazardRecognizer::emitInScoreboard(
     const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-    MemoryObjectsBits MemObjectsBits,
+    MemoryObjectPair MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) {
   emitInScoreboard(Scoreboard, Desc, MemoryBanks, MemObjectsBits, MIOperands,
@@ -641,7 +650,7 @@ void AIEHazardRecognizer::emitInScoreboard(const MachineInstr &MI,
 
 void AIEHazardRecognizer::emitInScoreboard(
     ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
-    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
+    MemoryBankBits MemoryBanks, MemoryObjectPair MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
@@ -661,7 +670,7 @@ void AIEHazardRecognizer::emitInScoreboard(
 void AIEHazardRecognizer::enterResources(
     ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
-    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
+    MemoryBankBits MemoryBanks, MemoryObjectPair MemObjectsBits,
     SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
     std::optional<int> FUDepthLimit) {
 
@@ -675,7 +684,8 @@ void AIEHazardRecognizer::enterResources(
     const SlotBits Slots = 0;
     const SlotBits Conflicts = 0;
     FuncUnitWrapper MemoryBankAndObjectsAccessCycle(
-        Slots, Conflicts, MemoryBanks, MemObjectsBits);
+        Slots, Conflicts, MemoryBanks, MemObjectsBits.Load,
+        MemObjectsBits.Store);
     for (auto Cycles : MemoryAccessCycles) {
       assert(Scoreboard.isInRange(DeltaCycles + Cycles - 1));
       Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAndObjectsAccessCycle;
@@ -813,20 +823,22 @@ MemoryObjectEnumerator::getObjectNumber(const Value *Object) {
 }
 
 /// For instructions using memory operands, return
-/// a bit map representing the used base objects. This is not
-/// for correctness, but for wait cycles avoidance.
-MemoryObjectsBits
+/// a pair of bit maps representing the used base objects for loads and stores.
+/// This is not for correctness, but for wait cycles avoidance.
+MemoryObjectPair
 AIEHazardRecognizer::getMemoryObjectsBits(const MachineInstr *MI) const {
+  MemoryObjectPair Result;
 
   // If in PreRA, don't constrain the scheduler even more.
   if (IsPreRA || !PointerHazardRecognition)
-    return 0;
+    return Result;
 
-  if (!(MI->mayLoad() || MI->mayStore()))
-    return 0;
+  // Only track loads and stores for pointer hazard tracking.
+  if (!MI->mayLoad() && !MI->mayStore())
+    return Result;
 
   if (MI->memoperands_empty())
-    return 0; // optimistic: we will assume no conflict.
+    return Result; // optimistic: we will assume no conflict.
 
   MemoryObjectsBits ObjectsToBitMap = 0;
   for (auto &MMO : MI->memoperands()) {
@@ -840,5 +852,12 @@ AIEHazardRecognizer::getMemoryObjectsBits(const MachineInstr *MI) const {
     if (auto ObjectNumber = ObjectEnumerator.getObjectNumber(BaseObject))
       ObjectsToBitMap |= One << *ObjectNumber;
   }
-  return ObjectsToBitMap;
+
+  // Assign to the appropriate field based on instruction type.
+  if (MI->mayLoad())
+    Result.Load = ObjectsToBitMap;
+  if (MI->mayStore())
+    Result.Store = ObjectsToBitMap;
+
+  return Result;
 }

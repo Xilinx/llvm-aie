@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -148,8 +148,12 @@ BUILTIN(__builtin_aie2p_clb, "UiUi", "nc")
 //semaphores
 BUILTIN(__builtin_aie2p_acquire, "vUiUi", "nc")
 BUILTIN(__builtin_aie2p_acquire_cond, "vUiUii", "nc")
+BUILTIN(__builtin_aie2p_acquire_ptr, "vvC*UiUi", "nc")
+BUILTIN(__builtin_aie2p_acquire_cond_ptr, "vvC*UiUii", "nc")
 BUILTIN(__builtin_aie2p_release, "vUii", "nc")
 BUILTIN(__builtin_aie2p_release_cond, "vUiii", "nc")
+BUILTIN(__builtin_aie2p_release_ptr, "vv*Uii", "nc")
+BUILTIN(__builtin_aie2p_release_cond_ptr, "vv*Uiii", "nc")
 BUILTIN(__builtin_aie2p_done, "v", "n")
 // Scheduling barrier
 BUILTIN(__builtin_aie2p_sched_barrier, "v", "n")

@@ -1,0 +1,17 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# REQUIRES: aie-registered-target
+## Regression test: when a remark RUN line precedes another RUN line, the
+## chained --update-llc-checks must keep it in place rather than moving it
+## past the following RUN line.
+
+# RUN: cp -f %S/Inputs/aie-ore-remark-first.ll %t.ll && %update_ore_test_checks --update-llc-checks %t.ll
+# RUN: diff -u %S/Inputs/aie-ore-remark-first.ll.expected %t.ll
+
+## Verify idempotency via UTC_ARGS (no --update-llc-checks on the command line):
+# RUN: %update_ore_test_checks %t.ll
+# RUN: diff -u %S/Inputs/aie-ore-remark-first.ll.expected %t.ll

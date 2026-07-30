@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===---------------------------------------------------------------------===//
 
 // To test that the documentation builds cleanly, you must run clang-tblgen to
@@ -9281,5 +9284,23 @@ def AllocatingDocs : Documentation {
   let Content = [{
 Declares that a function potentially allocates heap memory, and prevents any potential inference
 of ``nonallocating`` by the compiler.
+  }];
+}
+
+def AIEPropagateRestrictDocs : Documentation {
+  let Category = DocCatFunction;
+  let Heading = "aie_propagate_restrict";
+  let Content = [{
+The ``aie_propagate_restrict`` attribute is an AIE-specific opt-in that enables
+the AIE alias analysis (``AIEBaseAliasAnalysis``) noalias-arg-root
+disambiguation for a single function. When applied, pointers that can be traced
+back (through GEP/cast/phi/select/load) to distinct ``noalias`` function
+arguments are treated as not aliasing within that function.
+
+The attribute is emitted by Clang as the ``"aie-propagate-restrict"`` string
+function attribute, which is queried by the backend alias analysis. It provides
+per-function control equivalent to the module-wide
+``-aie-alias-analysis-noalias-arg-roots`` option, without requiring the option
+to be set for the whole module.
   }];
 }

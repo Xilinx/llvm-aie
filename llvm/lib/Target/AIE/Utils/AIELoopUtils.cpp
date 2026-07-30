@@ -59,8 +59,7 @@ bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch) {
   // This metadata should be inserted by outerloop pipeliner.
   // We just check the availability. No other pass is expected
   // to insert this metadata.
-  return getLoopMetadata(getLoopID(LoopLatch),
-                         "llvm.loop.hint.aie_outerloop_pipeliner_success")
+  return getLoopMetadata(getLoopID(LoopLatch), OuterLoopPipelinedKey)
       .has_value();
 }
 

@@ -2078,6 +2078,11 @@ bool AIE2PSInstructionSelector::select(MachineInstr &I) {
       return selectPutMSB(I, MRI, MIB);
     case Intrinsic::aie2ps_put_ms_nb:
       return selectPutMSNB(I, MRI, MIB);
+    case Intrinsic::aie2ps_acquire_ptr:
+    case Intrinsic::aie2ps_acquire_cond_ptr:
+    case Intrinsic::aie2ps_release_ptr:
+    case Intrinsic::aie2ps_release_cond_ptr:
+      return selectLockPtrIntrinsic(I);
     default:
       return selectImpl(I, *CoverageInfo);
     }

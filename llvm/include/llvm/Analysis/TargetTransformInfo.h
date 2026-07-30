@@ -163,9 +163,7 @@ public:
   const SmallVectorImpl<Type *> &getArgTypes() const { return ParamTys; }
   const TargetLibraryInfo *getLibInfo() const { return LibInfo; }
 
-  bool isTypeBasedOnly() const {
-    return Arguments.empty();
-  }
+  bool isTypeBasedOnly() const { return Arguments.empty(); }
 
   bool skipScalarizationCost() const { return ScalarizationCost.isValid(); }
 };
@@ -928,6 +926,10 @@ public:
 
   bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const;
 
+  /// Returns true when \p I should be included in a target's lean stage-0
+  /// prefetch chain.
+  bool isLeanStage0Intrinsic(const Instruction &I) const;
+
   /// Identifies if the vector form of the intrinsic has a scalar operand.
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                           unsigned ScalarOpdIdx) const;
@@ -1127,9 +1129,9 @@ public:
     SK_PermuteSingleSrc, ///< Shuffle elements of single source vector with any
                          ///< shuffle mask.
     SK_Splice            ///< Concatenates elements from the first input vector
-                         ///< with elements of the second input vector. Returning
-                         ///< a vector of the same type as the input vectors.
-                         ///< Index indicates start offset in first input vector.
+              ///< with elements of the second input vector. Returning
+              ///< a vector of the same type as the input vectors.
+              ///< Index indicates start offset in first input vector.
   };
 
   /// Additional information about an operand's possible values.
@@ -2038,7 +2040,7 @@ public:
                           LoopInfo *LI, DominatorTree *DT, AssumptionCache *AC,
                           TargetLibraryInfo *LibInfo) const = 0;
   virtual AddressingModeKind
-    getPreferredAddressingMode(const Loop *L, ScalarEvolution *SE) const = 0;
+  getPreferredAddressingMode(const Loop *L, ScalarEvolution *SE) const = 0;
   virtual bool isLegalMaskedStore(Type *DataType, Align Alignment,
                                   unsigned AddressSpace) const = 0;
   virtual bool isLegalMaskedLoad(Type *DataType, Align Alignment,
@@ -2090,6 +2092,7 @@ public:
   virtual bool useColdCCForColdCall(Function &F) const = 0;
   virtual bool
   isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const = 0;
+  virtual bool isLeanStage0Intrinsic(const Instruction &I) const = 0;
   virtual bool
   isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                      unsigned ScalarOpdIdx) const = 0;
@@ -2164,8 +2167,8 @@ public:
       const Instruction &I, bool &AllowPromotionWithoutCommonHeader) const = 0;
   virtual unsigned getCacheLineSize() const = 0;
   virtual std::optional<unsigned> getCacheSize(CacheLevel Level) const = 0;
-  virtual std::optional<unsigned> getCacheAssociativity(CacheLevel Level)
-      const = 0;
+  virtual std::optional<unsigned>
+  getCacheAssociativity(CacheLevel Level) const = 0;
   virtual std::optional<unsigned> getMinPageSize() const = 0;
 
   /// \return How much before a load we should place the prefetch
@@ -2612,8 +2615,8 @@ public:
     return Impl.canSaveCmp(L, BI, SE, LI, DT, AC, LibInfo);
   }
   AddressingModeKind
-    getPreferredAddressingMode(const Loop *L,
-                               ScalarEvolution *SE) const override {
+  getPreferredAddressingMode(const Loop *L,
+                             ScalarEvolution *SE) const override {
     return Impl.getPreferredAddressingMode(L, SE);
   }
   bool isLegalMaskedStore(Type *DataType, Align Alignment,
@@ -2728,6 +2731,10 @@ public:
   isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                      unsigned ScalarOpdIdx) const override {
     return Impl.isTargetIntrinsicWithScalarOpAtArg(ID, ScalarOpdIdx);
+  }
+
+  bool isLeanStage0Intrinsic(const Instruction &I) const override {
+    return Impl.isLeanStage0Intrinsic(I);
   }
 
   bool isTargetIntrinsicWithOverloadTypeAtArg(Intrinsic::ID ID,

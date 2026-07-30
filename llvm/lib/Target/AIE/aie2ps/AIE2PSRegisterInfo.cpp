@@ -149,9 +149,6 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Select the base pointer (BP) and calculate the actual offset from BP
   // to the beginning of the object at index FI.
   int Offset = TFI->getFrameIndexReference(MF, FrameIndex, FrameReg).getFixed();
-  int64_t BaseOffset = 0;
-  if (!MI.memoperands_empty())
-    BaseOffset = (*MI.memoperands_begin())->getOffset();
   int ObjSize = MF.getFrameInfo().getObjectSize(FrameIndex);
   int ObjectOffset = MF.getFrameInfo().getObjectOffset(FrameIndex);
   int StackSize = MF.getFrameInfo().getStackSize();
@@ -167,12 +164,10 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   LLVM_DEBUG(dbgs() << "FrameIndex         : " << FrameIndex << "\n");
   LLVM_DEBUG(dbgs() << "ObjSize            : " << ObjSize << "\n");
   LLVM_DEBUG(dbgs() << "FrameOffset        : " << Offset << "\n");
-  LLVM_DEBUG(dbgs() << "BaseOffset         : " << BaseOffset << "\n");
   LLVM_DEBUG(dbgs() << "ObjectOffset       : " << ObjectOffset << "\n");
   LLVM_DEBUG(dbgs() << "OffsetAdj          : " << OffsetAdjustment << "\n");
   LLVM_DEBUG(dbgs() << "StackSize          : " << StackSize << "\n");
   LLVM_DEBUG(dbgs() << "LocalFrameSize     : " << LocalFrameSize << "\n");
-  Offset += BaseOffset;
   unsigned Opc = MI.getOpcode();
   switch (Opc) {
     // Instructions named *_spill implicitly a stack spill instruction, so
@@ -797,10 +792,34 @@ bool AIE2PSRegisterInfo::isVecOrAccRegClass(
   if (AIE2PS::VEC1024RegClass.hasSubClassEq(&RC))
     return true;
 
-  if (AIE2PS::eEY_sRegClass.hasSubClassEq(&RC))
+  // ******** BFP16 vectors ********
+  if (AIE2PS::mEWmRegClass.hasSubClassEq(&RC)) // 320-bit
     return true;
 
-  // ******** Accumulator classes ********
+  if (AIE2PS::mEXaRegClass.hasSubClassEq(&RC)) // 640-bit
+    return true;
+
+  if (AIE2PS::eEY_sRegClass.hasSubClassEq(&RC)) // 1280-bit
+    return true;
+
+  // ******** BFP13 vectors ********
+  if (AIE2PS::mFEGaRegClass.hasSubClassEq(&RC)) // 128-bit
+    return true;
+
+  if (AIE2PS::mFEG2aRegClass.hasSubClassEq(&RC)) // 256-bit
+    return true;
+
+  if (AIE2PS::mFEWaRegClass.hasSubClassEq(&RC)) // 384-bit
+    return true;
+
+  if (AIE2PS::mFEXmRegClass.hasSubClassEq(&RC)) // 768-bit
+    return true;
+
+  // In practice only fey spill reloads reach this rung; see the fey test.
+  if (AIE2PS::mFEYwRegClass.hasSubClassEq(&RC)) // 1536-bit
+    return true;
+
+  // ******** Accumulator classes (BM/CM/DM) ********
   if (AIE2PS::ACC512RegClass.hasSubClassEq(&RC))
     return true;
 
