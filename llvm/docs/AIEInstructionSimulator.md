@@ -1,0 +1,165 @@
+# An AIE instruction simulator in llvm-aie
+
+Status: RFC / design. No implementation yet.
+Scope: AIE2 and AIE2P. AIE1 and AIE2PS are out of scope for a first version.
+
+## 1. Why this belongs here
+
+llvm-aie can compile AIE code and cannot run any. `llvm/test/CodeGen/AIE` compiles and FileChecks;
+nothing in `llvm/test` executes. Backend correctness is validated by inspecting generated assembly and
+by running on hardware, and nothing in between.
+
+That gap costs twice.
+
+* **For this backend.** A wrong-codegen bug is found either by eye or on silicon. An in-tree executor
+  turns "does this schedule compute the right thing" into an ordinary lit test, and it is the natural
+  home for regression tests of the miscompiles this backend has actually shipped.
+* **For everything downstream.** The Vitis AIE simulator is the only hardware-free way to run an
+  mlir-aie design, it needs a licence, and `aiecc --get-aiesim` forces `--xbridge`, so it can only run
+  Chess-compiled cores. There is currently no way to functionally test Peano's own output without an
+  NPU. mlir-aie has a companion proposal for an open array model; it needs exactly one thing from here,
+  an object that executes instructions.
+
+Instruction semantics are a property of the backend that defines the ISA, so they belong in llvm-aie
+whether or not anything else consumes them.
+
+## 2. What already exists, and what does not
+
+Verified against this tree, not assumed.
+
+**Decode is done and trustworthy.** `AIE2PDisassembler.cpp` and `AIE2Disassembler.cpp` already handle
+the VLIW encoding end to end:
+
+* Instruction length comes from a size table keyed on the low four bits of byte 0, giving one of
+  2, 4, 6, 8, 10, 12, 14 or 16 bytes (`Disassembler/AIE2PDisassembler.cpp:146-178`).
+* `getInstruction` returns **one composite `MCInst` per bundle**, not per slot. Slot sub-decoders
+  (`decodeLdaSlot`, `decodeLdbSlot`, `decodeAluSlot`, `decodeMvSlot`, `decodeStSlot`, `decodeVecSlot`,
+  `decodeLngSlot`, `decodeNopSlot`, `AIE2PDisassembler.cpp:56-143`) build nested `MCInst`s and attach
+  them with `MCOperand::createInst`, matching the seven issue slots in `aie2p/AIE2PSlots.td:15-42`.
+* `AIECommonInstPrinter::printInstr:39-60` already walks that tree, and `llvm/test/MC/AIE/bundles.s`
+  round-trips multi-slot bundles through assemble, object, disassemble.
+
+So an executor should consume the nested `MCInst` directly and must not re-derive slot boundaries.
+Note that `llvm/test/CodeGen/AIE/disassembler.ll` runs with `--issue-limit=1` and therefore does not
+exercise multi-slot decode; `bundles.s` is the test to trust.
+
+**Semantics do not exist, and cannot be generated.** This is the load-bearing finding, and it kills the
+attractive idea of a TableGen backend that emits an interpreter.
+
+* AIE2P defines **1198 real machine instructions** (`INSTRUCTION_LIST_END = 1536` in the generated
+  `AIE2PGenInstrInfo.inc`, minus 50 target-independent and 288 GlobalISel generic opcodes). AIE2 has
+  1192, AIE1 797, AIE2PS 1885.
+* By name prefix, the ISA is dominated by data movement and multiply-accumulate: `VST` 184, `VLDA` 163,
+  `VLDB` 95, `VLD` 55, so 497 vector load/store instructions, 41% of the total; plus 112 in the
+  `VMAC`/`VMSC`/`VADDMAC`/`VADDMSC` family.
+* Declarative `Pat<>` records in `aie2p/AIE2PInstrPatterns.td` cover roughly **48 distinct
+  instructions**, about 4%, and they are the scalar ALU, compare, select and branch core. The vector and
+  MAC bulk is selected by 5547 lines of hand-written C++ across `AIE2PInstructionSelector.cpp` and
+  `AIEBaseInstructionSelector.cpp`, which carries no reusable declarative semantics.
+
+There is also no execution skeleton to inherit. `llvm-mca` looks like the obvious donor and is not:
+`mca::Instruction::execute` (`lib/MCA/Instruction.cpp:173-186`) sets `CyclesLeft` and flips a pipeline
+stage and computes no value, and `mca::MCAOperand` stores only a register number or an immediate. AIE
+has no `llvm-mca` integration at all. `ExecutionEngine/Interpreter` is an LLVM IR interpreter, one
+abstraction level too high.
+
+Budget accordingly: this is roughly 1150 instructions of hand-written semantics, not a code-generation
+project. The 48 patterned instructions are useful as an oracle for the scalar core, nothing more.
+
+## 3. Architectural state an executor must model
+
+Three things that are easy to discover late and expensive to retrofit.
+
+**Five branch delay slots.** `AIEBaseInstrInfo.cpp:70` fixes `NumDelaySlots = 5`, confirmed by
+`AIEBaseTargetMachine.cpp:212-214`. It is a static property of the opcode (`hasDelaySlot` on `J`,
+`J_IND`, `RET`, `JNZD`, `JNZ`, `JZ` in `AIE2GenInstrInfo.td:436-464`), so the executor needs a pending
+branch buffer, not a decode-time bit.
+
+**Zero-overhead loops.** `lc`, `ls` and `le` are real 20-bit architectural registers
+(`aie2p/AIE2PRegisterInfo.td:255-264`). Inside a ZOL body there is no branch instruction to decode: the
+loop-back is hardware behaviour keyed off `le`. The alternative JNZD form decrements a GPR and branches,
+and compares before decrementing (`AIEBaseHardwareLoops.cpp:15-23`). Both must be modelled.
+
+**A wide, heavily aliased register file.** AIE2P has 32 scalar GPRs, 16 64-bit pairs, 8 pointer and 8
+modifier registers, addressing-dimension registers, 4 128-bit masks, 256/512/1024-bit vectors,
+512/1024/2048-bit accumulators, and bfp exponent registers up to 1408 bits. Most physical registers have
+several `AIEBaseRegisterOperand` aliases used only for encoding. The model must key on physical storage
+and treat the `m`-prefixed operand classes as encoding aliases, or it will multiply its state by five.
+
+Multi-slot pseudo instructions (`aie2p/AIE2PMultiSlotPseudoInstrInfo.td`) are resolved during scheduling
+by `AIEMultiSlotInstrMaterializer.cpp` and never reach a final ELF, so an executor of machine code will
+not see them.
+
+## 4. Shape of the implementation
+
+```
+llvm/lib/Target/AIE/Sim/
+  AIECoreState.h/.cpp     register file keyed on physical storage, plus lc/ls/le and the
+                          pending-branch buffer
+  AIEExecutor.h/.cpp      fetch a bundle through MCDisassembler, walk the slot tree, dispatch
+                          each slot, retire
+  AIESemantics*.cpp       one file per family: scalar ALU, memory, control, vector move,
+                          vector MAC, format conversion
+  AIEHostInterface.h      the abstract memory/lock/stream/cascade port the embedder provides
+llvm/tools/llvm-aie-run/  standalone: load an ELF, run it, dump registers or a memory range
+llvm/lib/Target/AIE/Sim/AIEISSCAbi.cpp
+                          the dlopen'd C ABI, built as libaie-iss.so
+```
+
+Two interfaces out, and they matter more than the internals.
+
+**Everything outside the datapath is a callback.** The executor holds architectural registers and
+nothing else. Instruction fetch, loads, stores, lock acquire and release, stream and cascade access, and
+the debug character channel all go out through `AIEHostInterface`. `llvm-aie-run` satisfies it with a
+flat memory and stub ports; mlir-aie's array model satisfies it with tiles, DMAs and a stream switch.
+The executor cannot tell the difference, and neither embedder can be surprised by hidden state.
+
+**The C ABI is forced, not stylistic.** A Peano distribution ships `lib/libLLVM.so` and no LLVM headers,
+and mlir-aie and Peano are separately versioned and separately built. So the consumable artifact is
+`libaie-iss.so` exporting a single symbol, `aie_iss_get_api`, returning a versioned vtable. The header
+is small enough for a consumer to vendor, and the version check is explicit.
+
+**Stall rather than block.** `step()` returns retired, stalled, done or fault. A lock or stream that is
+not ready produces `stalled` with no architectural change and the instruction is re-issued later. The
+executor never blocks and never spins, so the embedder owns all scheduling and the whole thing stays
+single-threaded and reproducible.
+
+## 5. The fault contract
+
+An instruction the executor does not model must produce a hard, named failure carrying the opcode.
+Never a skip, never a guess, never a zero.
+
+This is the difference between a simulator that is incomplete and one that is wrong, and with 1198
+opcodes the model will be incomplete for a long time. The same rule applies to an unmapped memory
+access. Coverage should be reportable, so that "which instructions can we execute" is a number rather
+than a feeling.
+
+## 6. Phasing
+
+1. **Skeleton and scalar core.** `AIEHostInterface`, the bundle fetch and dispatch loop, the register
+   file, delay slots, hardware loops, and the roughly 48 instructions that have declarative patterns to
+   check against. Test: lit tests that assemble a `.s` file, run it under `llvm-aie-run`, and check
+   registers. First execution tests this backend has ever had.
+2. **Scalar completion.** The rest of the scalar ALU, memory and control instructions, enough to run
+   compiled C.
+3. **The C ABI and `libaie-iss.so`**, which is what unblocks mlir-aie's array model.
+4. **Vector load and store**, 497 instructions and the largest single group.
+5. **Vector MAC and format conversion**, including bfp16, which is where this backend's own bug history
+   is concentrated.
+6. **Timing.** Bundle-per-cycle is not cycle-approximate and should not be described as such. The
+   per-instruction data already exists: `aie2p/AIE2PGenSchedule.td` carries roughly 4000
+   `InstrItinData` entries, against 276 hand-written ones for AIE2.
+
+Phase 1 is worth landing on its own even if nothing downstream ever consumes it.
+
+## 7. Risks
+
+* **Semantics volume.** 1150 instructions is the project. Everything else here is small. The mitigations
+  are the fault contract, the coverage report, and sequencing by what real code actually executes rather
+  than by opcode number.
+* **Correctness of the semantics themselves.** An executor that is confidently wrong is worse than no
+  executor. The scalar core has a pattern-derived oracle; the vector bulk does not, and will need
+  differential testing against hardware on a machine that has an NPU.
+* **Build cost is not a risk.** `LLVM_TARGETS_TO_BUILD=AIE` with the AIE libraries already archived
+  makes this an incremental build measured in tens of seconds per translation unit, not a rebuild of
+  LLVM.
