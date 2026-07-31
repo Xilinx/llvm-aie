@@ -46,9 +46,13 @@ exercise multi-slot decode; `bundles.s` is the test to trust.
 **Semantics do not exist, and cannot be generated.** This is the load-bearing finding, and it kills the
 attractive idea of a TableGen backend that emits an interpreter.
 
-* AIE2P defines **1198 real machine instructions** (`INSTRUCTION_LIST_END = 1536` in the generated
-  `AIE2PGenInstrInfo.inc`, minus 50 target-independent and 288 GlobalISel generic opcodes). AIE2 has
-  1192, AIE1 797, AIE2PS 1885.
+* AIE2P's generated `AIE2PGenInstrInfo.inc` has `INSTRUCTION_LIST_END = 1536`. Subtracting the 50
+  target-independent and ~288 GlobalISel generic opcodes leaves ~1198, but that still counts
+  backend-internal pseudos (`ADJCALLSTACKDOWN/UP`, `CYCLE_SEPARATOR`, `Pseudo*`, `*_SPILL`, the
+  `*_split` multi-slot forms) which, as noted below, never reach a final ELF. The real
+  semantics budget is order 900 to 1000. Treat these as magnitudes, not as exact figures: the
+  raw `INSTRUCTION_LIST_END` for the other targets (AIE2 1192, AIE1 797, AIE2PS 1885) is NOT
+  comparable to the adjusted number and should not be quoted alongside it.
 * By name prefix, the ISA is dominated by data movement and multiply-accumulate: `VST` 184, `VLDA` 163,
   `VLDB` 95, `VLD` 55, so 497 vector load/store instructions, 41% of the total; plus 112 in the
   `VMAC`/`VMSC`/`VADDMAC`/`VADDMSC` family.
@@ -63,14 +67,14 @@ stage and computes no value, and `mca::MCAOperand` stores only a register number
 has no `llvm-mca` integration at all. `ExecutionEngine/Interpreter` is an LLVM IR interpreter, one
 abstraction level too high.
 
-Budget accordingly: this is roughly 1150 instructions of hand-written semantics, not a code-generation
-project. The 48 patterned instructions are useful as an oracle for the scalar core, nothing more.
+Budget accordingly: this is order 1000 instructions of hand-written semantics, not a code-generation
+project. The patterned instructions are useful as an oracle for the scalar core, nothing more.
 
 ## 3. Architectural state an executor must model
 
 Three things that are easy to discover late and expensive to retrofit.
 
-**Five branch delay slots.** `AIEBaseInstrInfo.cpp:70` fixes `NumDelaySlots = 5`, confirmed by
+**Five branch delay slots.** `AIEBaseInstrInfo.cpp:73` fixes `NumDelaySlots = 5`, confirmed by
 `AIEBaseTargetMachine.cpp:212-214`. It is a static property of the opcode (`hasDelaySlot` on `J`,
 `J_IND`, `RET`, `JNZD`, `JNZ`, `JZ` in `AIE2GenInstrInfo.td:436-464`), so the executor needs a pending
 branch buffer, not a decode-time bit.
