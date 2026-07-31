@@ -1405,7 +1405,7 @@ void AIEOuterLoopPipeliner::remapExitForReplacement(
   // would leave the exit reading poison. Remap each such operand to a live
   // clone so the exit reads a defined value.
   for (Instruction &I :
-       make_range(OrigExit->getFirstNonPHI()->getIterator(), OrigExit->end())) {
+       make_range(OrigExit->getFirstNonPHIIt(), OrigExit->end())) {
     for (Use &Op : I.operands()) {
       Value *V = Op.get();
       // CFG successors are basic-block operands; only remap data values.
