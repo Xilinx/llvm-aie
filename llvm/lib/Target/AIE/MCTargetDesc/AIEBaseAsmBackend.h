@@ -54,7 +54,7 @@ public:
     return false;
   }
 
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
+  MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override {
     // If the kind is a base LLVM Fixup
     if (!AIEMCFixupKinds::isTargetFixup(Kind))
       return MCAsmBackend::getFixupKindInfo(Kind);

@@ -25,4 +25,4 @@ jobs:
       projects: mlir
       cache-key: amd-mlir
       extra_cmake_args: -DMLIR_ENABLE_BINDINGS_PYTHON=ON
-      os_list: '["ubuntu-22.04"]'
+      os_list: '["ubuntu-24.04"]'

@@ -28,7 +28,7 @@ bool AIE2PTTICommon::isGetSSIntrinsicID(Intrinsic::ID ID) const {
 
 void AIE2PTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                            TTI::UnrollingPreferences &UP,
-                                           OptimizationRemarkEmitter *ORE) {
+                                           OptimizationRemarkEmitter *ORE) const {
   BaseT::getUnrollingPreferences(L, SE, UP, ORE);
   Common.adjustUnrollingPreferences(L, SE, UP, ORE);
   Common.applyLoopIdiomUnrolling(L, UP);
@@ -37,7 +37,7 @@ void AIE2PTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
 bool AIE2PTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                             AssumptionCache &AC,
                                             TargetLibraryInfo *LibInfo,
-                                            HardwareLoopInfo &HWLoopInfo) {
+                                            HardwareLoopInfo &HWLoopInfo) const {
   return Common.isHardwareLoopProfitable(L, SE, AC, LibInfo, HWLoopInfo);
 }
 
@@ -50,7 +50,7 @@ InstructionCost AIE2PTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                               unsigned AddressSpace,
                                               TTI::TargetCostKind CostKind,
                                               TTI::OperandValueInfo OpInfo,
-                                              const Instruction *I) {
+                                              const Instruction *I) const {
   // Try AIE-specific cost model first
   InstructionCost Cost =
       Common.getMemoryOpCost(Opcode, Src, Alignment, AddressSpace, DL);

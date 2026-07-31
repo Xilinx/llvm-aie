@@ -38,8 +38,8 @@ bool shouldMergeCongruentIVsImpl(const PHINode *IV1, const PHINode *IV2);
 class AIETTICommon {
 public:
   virtual ~AIETTICommon() = default;
-  virtual bool isLoweredToCall(const Function *F);
-  virtual bool isAllowedInZOL(llvm::Instruction &Instr);
+  virtual bool isLoweredToCall(const Function *F) const;
+  virtual bool isAllowedInZOL(llvm::Instruction &Instr) const;
 
   virtual bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const {
     return false;
@@ -53,11 +53,11 @@ public:
 
   void adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                   TTI::UnrollingPreferences &UP,
-                                  OptimizationRemarkEmitter *ORE);
+                                  OptimizationRemarkEmitter *ORE) const;
   void applyLoopIdiomUnrolling(Loop *L, TTI::UnrollingPreferences &UP) const;
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo);
+                                HardwareLoopInfo &HWLoopInfo) const;
   bool isProfitableOuterLSR(const Loop &L) const;
 
   InstructionCost getMemoryOpCost(unsigned Opcode, Type *Src, Align Alignment,
@@ -85,7 +85,8 @@ protected:
   virtual ~AIEBaseTTIImpl() = default;
 
 public:
-  int getIntImmCost(const APInt &Imm, Type *Ty, TTI::TargetCostKind CostKind) {
+  int getIntImmCost(const APInt &Imm, Type *Ty,
+                    TTI::TargetCostKind CostKind) const {
     // TODO Handle Target Specific constant cost
     //  Larger constants require an add.
     return TTI::TCC_Basic;
@@ -99,10 +100,10 @@ public:
   }
   void adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                   TTI::UnrollingPreferences &UP,
-                                  OptimizationRemarkEmitter *ORE);
+                                  OptimizationRemarkEmitter *ORE) const;
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo);
+                                HardwareLoopInfo &HWLoopInfo) const;
 
   // AIE vector arithmetic operates on 512-bit registers. The default
   // getRegisterBitWidth returns 32 (scalar width), which causes the loop
@@ -150,7 +151,8 @@ public:
       unsigned Opcode, Type *Ty, TTI::TargetCostKind CostKind,
       TTI::OperandValueInfo Opd1Info = {TTI::OK_AnyValue, TTI::OP_None},
       TTI::OperandValueInfo Opd2Info = {TTI::OK_AnyValue, TTI::OP_None},
-      ArrayRef<const Value *> Args = {}, const Instruction *CxtI = nullptr) {
+      ArrayRef<const Value *> Args = {},
+      const Instruction *CxtI = nullptr) const {
     if (auto *VTy = dyn_cast<FixedVectorType>(Ty)) {
       if (VTy->getPrimitiveSizeInBits() < 512)
         return InstructionCost::getInvalid();

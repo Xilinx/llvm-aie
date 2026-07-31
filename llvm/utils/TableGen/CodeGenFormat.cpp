@@ -411,9 +411,9 @@ TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
 
   // Find the super Class where the definition of "Inst" begin
   // This "Level" in the hierarchy will be stored in the HierarchyLevel
-  for (auto &SuperClass : BaseRecord->getSuperClasses()) {
-    if (SuperClass.first->getValue(InstrAttribute)) {
-      BI = SuperClass.first->getValueAsBitsInit(InstrAttribute);
+  for (const Record *SuperClass : BaseRecord->getSuperClasses()) {
+    if (SuperClass->getValue(InstrAttribute)) {
+      BI = SuperClass->getValueAsBitsInit(InstrAttribute);
       break;
     }
     ++HierarchyLevel;
@@ -894,8 +894,7 @@ void TGFieldLayout::resolveFieldsDefInHierarchy(
     const TGFieldLayoutPtr &BaseFieldPtr) {
   const Record *const BaseRecord = CGI->TheDef;
 
-  ArrayRef<std::pair<const Record *, SMRange>> Hierarchy =
-      BaseRecord->getSuperClasses();
+  std::vector<const Record *> Hierarchy = BaseRecord->getSuperClasses();
   const BitsInit *BI = nullptr;
 
   // if we are out of range in the Hierarchy, stop recursion...
@@ -915,7 +914,7 @@ void TGFieldLayout::resolveFieldsDefInHierarchy(
     resolveFieldsDefInBaseRecord(LabelToFind, BaseFieldPtr);
     return;
   }
-  const Record *CurrentLevelRecord = Hierarchy[HierarchyLevel].first;
+  const Record *CurrentLevelRecord = Hierarchy[HierarchyLevel];
   // if the label we are looking for isn't defined at this HierarchyLevel
   if (!CurrentLevelRecord->getValue(LabelToFind)) {
     // let's try on the upper level (if it is not defined there, the recursion

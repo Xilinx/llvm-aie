@@ -27,7 +27,7 @@ namespace llvm {
 
 class AIE2TTICommon : public AIETTICommon {
 private:
-  bool isAllowedInZOL(llvm::Instruction &Instr) override;
+  bool isAllowedInZOL(llvm::Instruction &Instr) const override;
 };
 
 class AIE2TTIImpl : public AIEBaseTTIImpl<AIE2TTIImpl> {
@@ -54,17 +54,17 @@ public:
   bool isProfitableFoldGEPIntoPHI() const { return false; }
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE);
+                               OptimizationRemarkEmitter *ORE) const;
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo);
+                                HardwareLoopInfo &HWLoopInfo) const;
   bool isProfitableOuterLSR(const Loop &L) const;
 
   InstructionCost getMemoryOpCost(
       unsigned Opcode, Type *Src, Align Alignment, unsigned AddressSpace,
       TTI::TargetCostKind CostKind,
       TTI::OperandValueInfo OpInfo = {TTI::OK_AnyValue, TTI::OP_None},
-      const Instruction *I = nullptr);
+      const Instruction *I = nullptr) const;
 };
 
 } // end namespace llvm

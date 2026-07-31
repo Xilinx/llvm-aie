@@ -21,7 +21,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie2tti"
 
-bool AIE2TTICommon::isAllowedInZOL(Instruction &I) {
+bool AIE2TTICommon::isAllowedInZOL(Instruction &I) const {
   // FMul is legalized to a VMUL for bfloat16 in other targets
   if (I.getOpcode() == Instruction::FMul) {
     return false;
@@ -43,9 +43,9 @@ AIE2TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
   return std::nullopt;
 }
 
-void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
-                                          TTI::UnrollingPreferences &UP,
-                                          OptimizationRemarkEmitter *ORE) {
+void AIE2TTIImpl::getUnrollingPreferences(
+    Loop *L, ScalarEvolution &SE, TTI::UnrollingPreferences &UP,
+    OptimizationRemarkEmitter *ORE) const {
   UP.Partial = UP.Runtime = true;
   BaseT::getUnrollingPreferences(L, SE, UP, ORE);
   Common.adjustUnrollingPreferences(L, SE, UP, ORE);
@@ -54,7 +54,7 @@ void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
 bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                            AssumptionCache &AC,
                                            TargetLibraryInfo *LibInfo,
-                                           HardwareLoopInfo &HWLoopInfo) {
+                                           HardwareLoopInfo &HWLoopInfo) const {
   return Common.isHardwareLoopProfitable(L, SE, AC, LibInfo, HWLoopInfo);
 }
 
@@ -67,7 +67,7 @@ InstructionCost AIE2TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                              unsigned AddressSpace,
                                              TTI::TargetCostKind CostKind,
                                              TTI::OperandValueInfo OpInfo,
-                                             const Instruction *I) {
+                                             const Instruction *I) const {
   // Try AIE-specific cost model first
   InstructionCost Cost =
       Common.getMemoryOpCost(Opcode, Src, Alignment, AddressSpace, DL);

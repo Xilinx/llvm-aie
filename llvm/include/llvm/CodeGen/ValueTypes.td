@@ -341,12 +341,14 @@ def amdgpuBufferFatPointer : ValueType<160, 234>;
 // FIXME: Remove this and the getPointerType() override if MVT::i82 is added.
 def amdgpuBufferStridedPointer : ValueType<192, 235>;
 
+def aarch64mfp8 : ValueType<8,  236>;  // 8-bit value in FPR (AArch64)
+
 /* AIE */
 let isAIE = true in {
-  def i48    : VTInt<48, 236>;      // 48-bit acc type
-  def i20    : VTInt<20, 237>;      // 20 bit pointers
-  def v8i48  : VTVec<8, i48, 238>;  // 8 x i48 vector value
-  def v16i48 : VTVec<16, i48, 239>; // 16 x i48 vector value
+  def i48    : VTInt<48, 237>;      // 48-bit acc type
+  def i20    : VTInt<20, 238>;      // 20 bit pointers
+  def v8i48  : VTVec<8, i48, 239>;  // 8 x i48 vector value
+  def v16i48 : VTVec<16, i48, 240>; // 16 x i48 vector value
 }
 /* End AIE */
 

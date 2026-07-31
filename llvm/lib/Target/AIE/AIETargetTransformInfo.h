@@ -39,7 +39,8 @@ public:
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 
-  int getIntImmCost(const APInt &Imm, Type *Ty, TTI::TargetCostKind CostKind) {
+  int getIntImmCost(const APInt &Imm, Type *Ty,
+                    TTI::TargetCostKind CostKind) const {
     // Constants that can be materialized with one slot.
     if (Imm.getBitWidth() <= 64 && isInt<20>(Imm.getSExtValue()))
       return TTI::TCC_Free;
@@ -56,7 +57,7 @@ public:
   }
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE) {
+                               OptimizationRemarkEmitter *ORE) const {
     UP.Partial = UP.Runtime = true;
     UP.AllowExpensiveTripCount = true;
     UP.Threshold = 200;

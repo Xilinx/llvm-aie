@@ -282,6 +282,13 @@ class SwingSchedulerDAG : public ScheduleDAGInstrs {
   /// Ordered list of DAG postprocessing steps.
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
 
+  /// Used to compute single-iteration dependencies (i.e., buildSchedGraph).
+  AliasAnalysis *AA;
+
+  /// Used to compute loop-carried dependencies (i.e.,
+  /// addLoopCarriedDependences).
+  BatchAAResults BAA;
+
   /// Helper class to implement Johnson's circuit finding algorithm.
   class Circuits {
     std::vector<SUnit> &SUnits;
@@ -327,13 +334,14 @@ class SwingSchedulerDAG : public ScheduleDAGInstrs {
 public:
   SwingSchedulerDAG(MachinePipeliner &P, MachineLoop &L, LiveIntervals &lis,
                     const RegisterClassInfo &rci, unsigned II,
-                    TargetInstrInfo::PipelinerLoopInfo *PLI)
+                    TargetInstrInfo::PipelinerLoopInfo *PLI, AliasAnalysis *AA)
       : ScheduleDAGInstrs(*P.MF, P.MLI, false), Pass(P), Loop(L), LIS(lis),
         RegClassInfo(rci), II_setByPragma(II), LoopPipelinerInfo(PLI),
-        Topo(SUnits, &ExitSU) {
+        Topo(SUnits, &ExitSU), AA(AA), BAA(*AA) {
     P.MF->getSubtarget().getSMSMutations(Mutations);
     if (SwpEnableCopyToPhi)
       Mutations.push_back(std::make_unique<CopyToPhiMutation>());
+    BAA.enableCrossIterationMode();
   }
 
   void schedule() override;
@@ -398,7 +406,7 @@ public:
                              const MachineInstr *OtherMI) const;
 
 private:
-  void addLoopCarriedDependences(AAResults *AA);
+  void addLoopCarriedDependences();
   void updatePhiDependences();
   void changeDependences();
   unsigned calculateResMII();
