@@ -38,6 +38,11 @@ bool hasIIPragma(const MachineBasicBlock &LoopBlock);
 constexpr StringLiteral OuterLoopPipelinedKey{
     "llvm.loop.hint.aie_outerloop_pipeliner_success"};
 
+/// Loop-hint key the outer-loop pipeliner additionally stamps when its final
+/// stage-0 prefetch is speculative.
+constexpr StringLiteral OuterLoopSpeculativeKey{
+    "llvm.loop.hint.aie_outerloop_pipeliner_speculative"};
+
 bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch);
 
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,

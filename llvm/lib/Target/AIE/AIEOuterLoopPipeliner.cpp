@@ -86,7 +86,6 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -113,6 +112,13 @@ static cl::opt<bool> SplitStages(
              "different strategies to reach more compact schedules"),
     cl::init(true), cl::Hidden);
 
+static cl::opt<bool> SpeculativeLastIteration(
+    "aie-outer-loop-pipelining-speculative",
+    cl::desc("Use speculative loads on the last iteration instead of creating "
+             "a last iteration region. Avoids code duplication and register "
+             "pressure at the cost of unused loads on the final iteration."),
+    cl::init(false), cl::Hidden);
+
 static cl::opt<bool> LeanStage0Mode(
     "aie-outer-loop-pipelining-lean-stage0",
     cl::desc("Limit stage 0 to loads, address computations, and target "
@@ -125,7 +131,29 @@ static cl::opt<bool> EnableOuterLoopHardwareLoop(
              "outer loop pipelining"),
     cl::init(true), cl::Hidden);
 
-using SplitStrategy = std::function<bool(const Instruction *)>;
+/// Effective outer-loop-pipelining configuration for one loop. Command-line
+/// options and !llvm.loop.hint metadata are resolved once when this is built.
+struct OLPOpts {
+  bool Enabled;
+  unsigned MinTripCount;
+  bool SplitStagesEnabled;
+  bool UseLeanStage0;
+  bool EnableSpeculativeLastIteration;
+  bool UseHardwareLoop;
+
+  explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
+      : Enabled(Overrides.get(EnableOuterLoopPipelining)),
+        MinTripCount(Overrides.get(OuterLoopPipeliningMinTripCount)),
+        SplitStagesEnabled(Overrides.get(SplitStages)),
+        UseLeanStage0(Overrides.get(LeanStage0Mode)),
+        EnableSpeculativeLastIteration(
+            Overrides.hasOverride(SpeculativeLastIteration)
+                ? Overrides.get(SpeculativeLastIteration)
+                : UseLeanStage0),
+        UseHardwareLoop(Overrides.get(EnableOuterLoopHardwareLoop)) {}
+};
+
+using SplitStrategy = bool (*)(const Instruction *);
 
 static bool produces2048BitVector(const Instruction *I) {
   if (!isa<CallInst>(I))
@@ -134,17 +162,13 @@ static bool produces2048BitVector(const Instruction *I) {
   return VT && VT->getPrimitiveSizeInBits() == 2048;
 }
 
-static SmallVector<SplitStrategy, 4> getSplitStrategies() {
-  // TODO: add more split strategies.
-  return {
-      produces2048BitVector,
-  };
-}
+// TODO: add more split strategies.
+static constexpr SplitStrategy SplitStrategies[] = {produces2048BitVector};
 
 // Returns true if any split strategy marks this instruction as the point where
 // stage 1 begins (e.g. a wide-vector producer; see produces2048BitVector).
 static bool isStage1SplitPoint(const Instruction *I) {
-  for (const auto &Strategy : getSplitStrategies()) {
+  for (SplitStrategy Strategy : SplitStrategies) {
     if (Strategy(I))
       return true;
   }
@@ -464,6 +488,10 @@ public:
   // Repair loop metadata (trip count changed): decrement itercount.range, drop
   // the consumed enable hint, and append the success marker.
   void updateLoopMetadata() const;
+
+  // Mark this loop as speculatively outer-loop pipelined without adjusting its
+  // iteration-count metadata.
+  void markSpeculativePipelining() const;
 };
 
 class AIEOuterLoopPipeliner : public FunctionPass {
@@ -484,13 +512,12 @@ private:
   bool runOnLoop(Loop *L);
   // Run every pipelining precondition as a flat early-return guard and
   // transform L iff all pass. True if L was pipelined.
-  bool tryPipelineLoop(Loop *L, const AIE::LoopOptionOverrides &Overrides);
+  bool tryPipelineLoop(Loop *L, const OLPOpts &Opts);
   // Seed Map with each outer-header PHI's incoming value on the FromEdge edge,
   // collapsing loop-carried PHIs to the values seen entering via that edge.
   void seedHeaderPhiEdge(RemapTable &Map, const LoopStructure &LS,
                          BasicBlock *FromEdge) const;
-  bool performTransformation(OrigLoopStructure &OrigLS,
-                             const AIE::LoopOptionOverrides &Overrides);
+  bool performTransformation(OrigLoopStructure &OrigLS, const OLPOpts &Opts);
 
   // Swap a freshly cloned steady-state LS in for the original by rewiring its
   // preheader, leaving the original unreachable and ready for deletion.
@@ -573,6 +600,11 @@ private:
                            const CloneLoopStructure &SteadyLS,
                            const CloneLoopStructure &LastIterLS) const;
 
+  // Repoint exit PHIs and remap exit live-outs away from the soon-to-be-deleted
+  // original loop to its replacement clone.
+  void remapExitForReplacement(const OrigLoopStructure &OrigLS,
+                               const CloneLoopStructure &ReplacementLS) const;
+
   // The bottom instructions forming PHI's next-iteration pointer-update
   // chain, or nullopt if it cannot be safely lifted.
   std::optional<SmallPtrSet<Instruction *, 16>>
@@ -643,8 +675,9 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
              L->getHeader()->printAsOperand(dbgs(), false); dbgs() << "\n");
   // Build per-loop option overrides from !llvm.loop.hint.* metadata.
   AIE::LoopOptionOverrides Overrides(L->getLoopID());
+  OLPOpts Opts(Overrides);
 
-  if (tryPipelineLoop(L, Overrides))
+  if (tryPipelineLoop(L, Opts))
     return true;
 
   // Untransformed: recurse into subloops, e.g. a nested middle loop is the only
@@ -655,9 +688,8 @@ bool AIEOuterLoopPipeliner::runOnLoop(Loop *L) {
   return Changed;
 }
 
-bool AIEOuterLoopPipeliner::tryPipelineLoop(
-    Loop *L, const AIE::LoopOptionOverrides &Overrides) {
-  if (!Overrides.get(EnableOuterLoopPipelining)) {
+bool AIEOuterLoopPipeliner::tryPipelineLoop(Loop *L, const OLPOpts &Opts) {
+  if (!Opts.Enabled) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not enabled (flag/metadata)\n");
     return false;
   }
@@ -668,8 +700,7 @@ bool AIEOuterLoopPipeliner::tryPipelineLoop(
     return false;
   }
 
-  if (!LS->isProfitableToRotate(
-          *SE, Overrides.get(OuterLoopPipeliningMinTripCount))) {
+  if (!LS->isProfitableToRotate(*SE, Opts.MinTripCount)) {
     LLVM_DEBUG(dbgs() << "    Not pipelining: not profitable to rotate\n");
     return false;
   }
@@ -681,7 +712,7 @@ bool AIEOuterLoopPipeliner::tryPipelineLoop(
 
   LLVM_DEBUG(dbgs() << "  Applying outer loop pipelining on ";
              LS->getTop()->printAsOperand(dbgs(), false); dbgs() << "\n");
-  return performTransformation(*LS, Overrides);
+  return performTransformation(*LS, Opts);
 }
 
 bool OrigLoopStructure::analyzeLoopStructure() {
@@ -814,6 +845,11 @@ static bool anyVolatileOrAtomic(ArrayRef<MemInstT *> MemOps) {
   return llvm::any_of(MemOps, [](const MemInstT *M) {
     return M->isVolatile() || M->isAtomic();
   });
+}
+
+static bool hasSideEffects(ArrayRef<Instruction *> Insts) {
+  return llvm::any_of(
+      Insts, [](const Instruction *I) { return I->mayHaveSideEffects(); });
 }
 
 bool OrigLoopStructure::isSafeToReorderMemoryOps() const {
@@ -1348,9 +1384,19 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   BasicBlock *LastIterBottom = LastIterLS.getBottom();
   BranchInst::Create(OrigExit, LastIterBottom);
 
-  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), LastIterBottom,
+  remapExitForReplacement(OrigLS, LastIterLS);
+
+  SteadyLS.getLatchBranch()->replaceSuccessorWith(OrigExit,
+                                                  LastIterLS.getTop());
+}
+
+void AIEOuterLoopPipeliner::remapExitForReplacement(
+    const OrigLoopStructure &OrigLS,
+    const CloneLoopStructure &ReplacementLS) const {
+  BasicBlock *OrigExit = OrigLS.getExitBlock();
+  reroutePhiIncomings(OrigExit, OrigLS.getBottom(), ReplacementLS.getBottom(),
                       PhiEdge::Repoint,
-                      [&](Value *V) { return LastIterLS.cloneOf(V); });
+                      [&](Value *V) { return ReplacementLS.cloneOf(V); });
 
   // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
   // phi, so LCSSA rematerializes the live-out as a plain instruction in the
@@ -1358,20 +1404,17 @@ void AIEOuterLoopPipeliner::wireLastIterIntoCFG(
   // PHI and an inner-loop def). removeFromCFG deletes those originals, which
   // would leave the exit reading poison. Remap each such operand to a live
   // clone so the exit reads a defined value.
-  for (Instruction &I : *OrigExit) {
-    if (isa<PHINode>(&I))
-      continue;
+  for (Instruction &I :
+       make_range(OrigExit->getFirstNonPHI()->getIterator(), OrigExit->end())) {
     for (Use &Op : I.operands()) {
       Value *V = Op.get();
-      if (!isa<Instruction>(V) && !isa<Argument>(V))
+      // CFG successors are basic-block operands; only remap data values.
+      if (isa<BasicBlock>(V))
         continue;
-      if (Value *Mapped = LastIterLS.cloneOf(V); Mapped != V)
+      if (Value *Mapped = ReplacementLS.cloneOf(V); Mapped != V)
         Op.set(Mapped);
     }
   }
-
-  SteadyLS.getLatchBranch()->replaceSuccessorWith(OrigExit,
-                                                  LastIterLS.getTop());
 }
 
 bool BlockRegion::isSingleEntrySingleExit() const {
@@ -1579,8 +1622,10 @@ void CloneLoopStructure::adjustLoopBound() const {
 }
 
 // Copy Source's hint entries dropping the consumed enable hint, append the
-// pipeliner success marker, and self-reference operand 0 as a loop ID requires.
-static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
+// pipeliner success marker and, optionally, the speculative marker, and
+// self-reference operand 0 as a loop ID requires.
+static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source,
+                                      bool IsSpeculative = false) {
   const std::string EnableHintKey =
       (AIE::LoopOptionOverrides::Prefix + EnableOuterLoopPipelining.ArgStr)
           .str();
@@ -1601,6 +1646,14 @@ static MDNode *rebuildPipelinedLoopID(LLVMContext &Ctx, MDNode *Source) {
       {MDString::get(Ctx, AIELoopUtils::OuterLoopPipelinedKey),
        ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
   MDs.push_back(SuccessEntry);
+
+  if (IsSpeculative) {
+    MDNode *SpeculativeEntry = MDNode::get(
+        Ctx,
+        {MDString::get(Ctx, AIELoopUtils::OuterLoopSpeculativeKey),
+         ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(Ctx), 1))});
+    MDs.push_back(SpeculativeEntry);
+  }
 
   // Loop IDs require operand 0 to refer to the node itself; reserve that slot
   // before uniquing so replaceOperandWith does not clobber the first hint
@@ -1628,6 +1681,17 @@ void CloneLoopStructure::updateLoopMetadata() const {
 
   // Write onto the latch terminator (what Loop::setLoopID does internally) so
   // this works on a clone with no LoopInfo Loop.
+  getBottom()->getTerminator()->setMetadata(LLVMContext::MD_loop, FinalLoopID);
+}
+
+void CloneLoopStructure::markSpeculativePipelining() const {
+  MDNode *LoopID = getOuterLoopID();
+  if (!LoopID)
+    return;
+
+  LLVMContext &Ctx = getTop()->getContext();
+  MDNode *FinalLoopID = rebuildPipelinedLoopID(Ctx, LoopID,
+                                               /*IsSpeculative=*/true);
   getBottom()->getTerminator()->setMetadata(LLVMContext::MD_loop, FinalLoopID);
 }
 
@@ -1723,16 +1787,15 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
   return true;
 }
 
-bool AIEOuterLoopPipeliner::performTransformation(
-    OrigLoopStructure &OrigLS, const AIE::LoopOptionOverrides &Overrides) {
+bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
+                                                  const OLPOpts &Opts) {
   liftBottomPointerUpdatesToTop(OrigLS);
 
-  const bool SplitMode = Overrides.get(SplitStages);
-  const auto IsSplitPoint = [SplitMode](const Instruction *I) {
-    return SplitMode && isStage1SplitPoint(I);
+  const auto IsSplitPoint = [&Opts](const Instruction *I) {
+    return Opts.SplitStagesEnabled && isStage1SplitPoint(I);
   };
 
-  if (Overrides.get(LeanStage0Mode))
+  if (Opts.UseLeanStage0)
     OrigLS.collectLeanStage0(*TTI);
   else
     OrigLS.collectStages(IsSplitPoint);
@@ -1740,6 +1803,14 @@ bool AIEOuterLoopPipeliner::performTransformation(
     LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");
     return false;
   }
+
+  // Lean stage-0 defaults to speculation, regardless of side effects in that
+  // stage. Non-lean speculation still requires a side-effect-free stage-0
+  // chain.
+  const bool Stage0IsSideEffectFree = !hasSideEffects(OrigLS.stage0Insts());
+  const bool UseSpeculativeLastIteration =
+      Opts.EnableSpeculativeLastIteration &&
+      (Opts.UseLeanStage0 || Stage0IsSideEffectFree);
 
   // Clone the LS into a steady-state copy and swap it into the original's CFG
   // slot; transform steps below run on the clone, leaving OrigLS pristine.
@@ -1760,37 +1831,53 @@ bool AIEOuterLoopPipeliner::performTransformation(
   // Merge the preheader and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
-  // Adjust the outer loop trip count from N to N-1. Must happen before the peel
-  // so the hardware-loop conversion can find the right icmp to replace.
-  SteadyLS.adjustLoopBound();
-
-  // Convert to a JNZD hardware loop. MUST run before peelLastIteration so the
-  // counting add/icmp are erased from the latch before the peel clones it.
   const bool OuterIsHardwareLoop =
-      EnableOuterLoopHardwareLoop && SteadyLS.latchCondition().isDowncounting();
+      Opts.UseHardwareLoop && SteadyLS.latchCondition().isDowncounting();
+
+  // Preparation: set up the latch condition for JNZD and/or peeling.
+  // - Non-speculative: adjust the loop bound from N to N-1 (peel one iteration)
+  // - Speculative: remap exit live-outs to SteadyLS before JNZD erases the IV
+  if (!UseSpeculativeLastIteration)
+    SteadyLS.adjustLoopBound();
+  else
+    remapExitForReplacement(OrigLS, SteadyLS);
+
+  // Convert to a JNZD hardware loop if applicable. Must run after bound
+  // adjustment (non-speculative) or exit remapping (speculative), and before
+  // peeling so the counting add/icmp are erased before the peel clones them.
   if (OuterIsHardwareLoop)
     convertOuterLoopToHardwareLoop(SteadyLS);
 
-  // Create the last-iteration region from the steady loop.
-  peelLastIteration(OrigLS, SteadyLS);
-
-  // Adjust itercount metadata to reflect the reduced trip count.
-  SteadyLS.updateLoopMetadata();
+  // Finalization: complete the transformation and update metadata.
+  if (!UseSpeculativeLastIteration) {
+    // Peel the last iteration into a separate region (no prefetch loads).
+    peelLastIteration(OrigLS, SteadyLS);
+    // Adjust itercount metadata to reflect the reduced trip count (N-1).
+    SteadyLS.updateLoopMetadata();
+  } else {
+    // Mark the loop as speculatively pipelined (no iteration peeled).
+    SteadyLS.markSpeculativePipelining();
+    LLVM_DEBUG(dbgs() << "    Speculative last iteration: no last-iteration "
+                         "region\n");
+  }
 
   OrigLS.removeFromCFG();
 
   return true;
 }
 
-// The i32 JNZD trip count materialized in the preheader: peeling one iteration
-// from a decrement loop starting at N leaves N-1 to run (NOT the adjusted
-// threshold).
-static Value *computeJNZDTripCount(BasicBlock *Preheader, PHINode &IV,
+// The i32 JNZD trip count is the distance from the preheader IV value to the
+// live latch limit. The non-speculative path updates that limit to peel one
+// iteration, producing N-1; speculative mode leaves the original limit,
+// producing N.
+static Value *computeJNZDTripCount(const CloneLoopStructure &SteadyLS,
                                    Type *I32Ty) {
+  const LatchConditionInfo &Info = SteadyLS.latchCondition();
+  BasicBlock *Preheader = SteadyLS.getPreheader();
   IRBuilder<> PreBuilder(Preheader->getTerminator());
-  Value *InitN = IV.getIncomingValueForBlock(Preheader);
-  Value *TripCount = PreBuilder.CreateSub(
-      InitN, ConstantInt::get(InitN->getType(), 1), "outer.jnzd.tc");
+  Value *InitN = Info.IV->getIncomingValueForBlock(Preheader);
+  Value *Limit = Info.Cmp->getOperand(Info.LimitIdx);
+  Value *TripCount = PreBuilder.CreateSub(InitN, Limit, "outer.jnzd.tc");
   if (TripCount->getType() != I32Ty)
     TripCount =
         PreBuilder.CreateZExtOrTrunc(TripCount, I32Ty, "outer.jnzd.tc.i32");
@@ -1857,8 +1944,7 @@ void AIEOuterLoopPipeliner::convertOuterLoopToHardwareLoop(
          "JNZD conversion needs a fully validated downcounting latch");
   Type *I32Ty = Type::getInt32Ty(SteadyLS.getTop()->getContext());
 
-  Value *TripCount =
-      computeJNZDTripCount(SteadyLS.getPreheader(), *Info.IV, I32Ty);
+  Value *TripCount = computeJNZDTripCount(SteadyLS, I32Ty);
   PHINode *CtrPHI = createOuterCounterPHI(SteadyLS, TripCount, I32Ty);
   rewriteLatchToDecrement(SteadyLS, CtrPHI, I32Ty);
   eraseOldCounterCycle(SteadyLS, Info);

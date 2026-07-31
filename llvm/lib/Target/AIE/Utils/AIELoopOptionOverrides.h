@@ -92,6 +92,18 @@ public:
     return Opt;
   }
 
+  /// Return whether an option has an explicit command-line or loop-metadata
+  /// override, regardless of the override's value.
+  template <typename T> bool hasOverride(const cl::opt<T> &Opt) const {
+    if (Opt.getNumOccurrences() > 0)
+      return true;
+
+    if constexpr (std::is_same_v<T, std::string>)
+      return StrVals.contains(Opt.ArgStr);
+    else
+      return IntVals.contains(Opt.ArgStr);
+  }
+
   bool hasOverrides() const { return !IntVals.empty() || !StrVals.empty(); }
 };
 
