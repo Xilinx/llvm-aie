@@ -2,7 +2,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 
 // RUN: clang-tblgen -gen-clang-test-pragma-attribute-supported-attributes -I%src_include_dir %src_include_dir/clang/Basic/Attr.td -o - | FileCheck %s
@@ -12,6 +12,7 @@
 // CHECK: #pragma clang attribute supports the following attributes:
 // CHECK-NEXT: AIE2IsSparse (SubjectMatchRule_record)
 // CHECK-NEXT: AIE2ReturnInRegisters (SubjectMatchRule_record)
+// CHECK-NEXT: AIEPropagateRestrict (SubjectMatchRule_function)
 // CHECK-NEXT: AMDGPUFlatWorkGroupSize (SubjectMatchRule_function)
 // CHECK-NEXT: AMDGPUMaxNumWorkGroups (SubjectMatchRule_function)
 // CHECK-NEXT: AMDGPUNumSGPR (SubjectMatchRule_function)

@@ -925,6 +925,10 @@ public:
 
   bool isTargetIntrinsicTriviallyScalarizable(Intrinsic::ID ID) const;
 
+  /// Returns true when \p I should be included in a target's lean stage-0
+  /// prefetch chain.
+  bool isLeanStage0Intrinsic(const Instruction &I) const;
+
   /// Identifies if the vector form of the intrinsic has a scalar operand.
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                           unsigned ScalarOpdIdx) const;

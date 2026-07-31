@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 include_directories(
   ${LLVM_MAIN_SRC_DIR}/lib/Target/AIE
   ${LLVM_MAIN_SRC_DIR}/unittests/CodeGen
@@ -29,6 +29,7 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_target_unittest(AIETests
   ${LLVM_MAIN_SRC_DIR}/unittests/CodeGen/ScheduleDAGMITestUtils.cpp
   AIEScheduleDAGMITest.cpp
+  AIEOuterLoopPipelinerTest.cpp
   AIETestTarget.cpp
   BundleTest.cpp
   HazardRecognizerTest.cpp

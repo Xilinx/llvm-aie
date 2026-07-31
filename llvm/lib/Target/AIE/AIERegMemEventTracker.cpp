@@ -63,6 +63,14 @@ void AIERegMemEventTracker::updateLastLoadCycle(int LoadCycle) {
   LastLoadCycle = std::max(LastLoadCycle, LoadCycle);
 }
 
+void AIERegMemEventTracker::updateLastLoadWriteBackCycle(int Cycle) {
+  LastLoadWriteBackCycle = std::max(LastLoadWriteBackCycle, Cycle);
+}
+
+int AIERegMemEventTracker::getLastMemoryAccessCycleForLockOrdering() const {
+  return std::max(LastStoreCycle, LastLoadWriteBackCycle);
+}
+
 int AIERegMemEventTracker::getFirstMemCycle(bool IsStore) const {
   return IsStore ? FirstStoreCycle : FirstLoadCycle;
 }
@@ -103,6 +111,54 @@ void AIERegMemEventTracker::addPerInstructionFirstMemCycle(int FirstMemCycle,
   } else {
     MemoryCycleToLoadInstrs[FirstMemCycle].push_back(MI);
   }
+}
+
+void AIERegMemEventTracker::addPerInstructionLockOrdMemCycle(int LockOrdCycle,
+                                                             MachineInstr *MI) {
+  MemoryCycleToLoadLockOrdInstrs[LockOrdCycle].push_back(MI);
+}
+
+int AIERegMemEventTracker::getMaxAliasingLastMemCycleForLock(
+    const MachineInstr &Lock, AAResults *AA) const {
+  auto MaxAliasingInMap = [&](const auto &MemMap) {
+    int MaxCycle = INT_MIN;
+    for (const auto &[Cycle, MemOps] : MemMap) {
+      for (const MachineInstr *MemOp : MemOps) {
+        if (TII->mayLockOrderWithMemOp(Lock, *MemOp, AA))
+          MaxCycle = std::max(MaxCycle, Cycle);
+      }
+    }
+    return MaxCycle;
+  };
+  return std::max(MaxAliasingInMap(MemoryCycleToStoreInstrs),
+                  MaxAliasingInMap(MemoryCycleToLoadLockOrdInstrs));
+}
+
+AIERegMemEventTracker::LockFirstMemAliasingInfo
+AIERegMemEventTracker::getLockFirstMemAliasing(const MachineInstr &Lock,
+                                               AAResults *AA) const {
+  LockFirstMemAliasingInfo Result;
+  auto ScanMap = [&](const auto &MemMap, bool IsStoreMap) {
+    for (const auto &[Cycle, MemOps] : MemMap) {
+      for (const MachineInstr *MemOp : MemOps) {
+        if (!TII->mayLockOrderWithMemOp(Lock, *MemOp, AA))
+          continue;
+        if (IsStoreMap)
+          Result.HasAliasingStore = true;
+        else
+          Result.HasAliasingLoad = true;
+        Result.MaxFirstMemCycle = std::max(Result.MaxFirstMemCycle, Cycle);
+      }
+    }
+  };
+  ScanMap(MemoryCycleToStoreInstrs, /*IsStoreMap=*/true);
+  ScanMap(MemoryCycleToLoadInstrs, /*IsStoreMap=*/false);
+  return Result;
+}
+
+int AIERegMemEventTracker::getMaxAliasingFirstMemCycleForLock(
+    const MachineInstr &Lock, AAResults *AA) const {
+  return getLockFirstMemAliasing(Lock, AA).MaxFirstMemCycle;
 }
 
 int AIERegMemEventTracker::getMaxAliasingMemCycle(const MachineInstr &MI,
@@ -221,6 +277,21 @@ void AIERegMemEventTracker::computeUseDefForward(
           updateLastLoadCycle(LastMemCycle);
         if (BundledMI->mayStore())
           updateLastStoreCycle(LastMemCycle);
+
+        // For load-only instructions, also track the lock-ordering cycle
+        // (write-back stage), which may be later than the memory-access stage.
+        if (BundledMI->mayLoad() && !BundledMI->mayStore()) {
+          auto OptLockOrdCycle = TII->getLastMemoryCycleForLockOrdering(
+              SchedClass, /*IsLoadOnly=*/true);
+          if (OptLockOrdCycle) {
+            // skip if no lock-ordering constraint (e.g. VMOVX ss)
+            int LockOrdCycle = Cycle + *OptLockOrdCycle - 1;
+            if (InSeparateRegion)
+              LockOrdCycle = LockOrdCycle - TotalCycles;
+            updateLastLoadWriteBackCycle(LockOrdCycle);
+            addPerInstructionLockOrdMemCycle(LockOrdCycle, BundledMI);
+          }
+        }
 
         // Track memory instructions by their completion cycle for AA
         addPerInstructionLastMemCycle(LastMemCycle, BundledMI);
@@ -359,10 +430,15 @@ unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromTop(
   // Lock instructions stall the core. All preceding memory operations must
   // complete before the core stalls.
   if (TII->isLock(MI.getOpcode())) {
-    if (getLastMemoryAccessCycle() > INT_MIN) {
+    int AliasingMemCycle = INT_MIN;
+    if (AA)
+      AliasingMemCycle = getMaxAliasingLastMemCycleForLock(MI, AA);
+    else
+      AliasingMemCycle = getLastMemoryAccessCycleForLockOrdering();
+    if (AliasingMemCycle > INT_MIN) {
       const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
       const int MIStallCycle = CoreStallCycle - 1;
-      const int MemDep = getLastMemoryAccessCycle() - MIStallCycle + 1;
+      const int MemDep = AliasingMemCycle - MIStallCycle + 1;
       MaxLatency = std::max(MaxLatency, std::max(0, MemDep));
     }
   }
@@ -405,9 +481,38 @@ unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromBottom(
   }
   // Lock instructions: all subsequent memory operations must wait
   if (TII->isLock(MI.getOpcode())) {
-    if (getFirstMemoryAccessCycle() > INT_MIN) {
-      const int CoreResumeCycle = TII->getCoreResumeCycleAfterLock();
-      const int MemCycle = getFirstMemoryAccessCycle();
+    int AliasingFirstMemCycle = AA ? getMaxAliasingFirstMemCycleForLock(MI, AA)
+                                   : getFirstMemoryAccessCycle();
+
+    if (AliasingFirstMemCycle > INT_MIN) {
+      // For release locks, pick the resume cycle by whether the region is
+      // load-only or contains stores (RMW counts as store). Conservative when
+      // the region mixes an early load with a later store: we pair the larger
+      // store-side resume with the earliest cycle (the load's), over-estimating
+      // the load's constraint by up to (ResumeAfterReleaseStore -
+      // ResumeAfterReleaseLoad) cycles.
+      bool HasAliasingStore = false;
+      bool HasAliasingLoad = false;
+      if (AA) {
+        auto Aliasing = getLockFirstMemAliasing(MI, AA);
+        HasAliasingStore = Aliasing.HasAliasingStore;
+        HasAliasingLoad = Aliasing.HasAliasingLoad;
+      } else {
+        HasAliasingStore = getFirstMemCycle(/*IsStore=*/true) > INT_MIN;
+        HasAliasingLoad = getFirstMemCycle(/*IsStore=*/false) > INT_MIN;
+      }
+      const bool IsLoadOnlyRegion = HasAliasingLoad && !HasAliasingStore;
+      const bool IsLoadSide = HasAliasingLoad;
+      const int CoreResumeCycle =
+          TII->isAcquire(MI.getOpcode())
+              ? (IsLoadSide ? TII->getCoreResumeCycleAfterAcquireLoad()
+                            : TII->getCoreResumeCycleAfterAcquireStore())
+              : (TII->isRelease(MI.getOpcode())
+                     ? (IsLoadOnlyRegion
+                            ? TII->getCoreResumeCycleAfterReleaseLoad()
+                            : TII->getCoreResumeCycleAfterReleaseStore())
+                     : TII->getCoreResumeCycleAfterLock());
+      const int MemCycle = AliasingFirstMemCycle;
       MaxLatency =
           std::max(MaxLatency, std::max(0, MemCycle + CoreResumeCycle + 1));
     }

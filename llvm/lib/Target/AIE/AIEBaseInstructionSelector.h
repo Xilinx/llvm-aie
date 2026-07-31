@@ -213,6 +213,7 @@ protected:
   bool selectG_AIE_LOAD_CONV(MachineInstr &CONVI, MachineRegisterInfo &MRI);
   bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectLockPtrIntrinsic(MachineInstr &I);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -281,6 +282,10 @@ protected:
   bool selectVST_FIFO_Flush1D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVST_FIFO_Flush2D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVST_FIFO_Flush3D(MachineInstr &I, MachineRegisterInfo &MRI);
+
+  bool prepareLockPtrIntrinsic(MachineInstr &I, MachineMemOperand *&SavedMMO);
+  bool attachLockPtrMemOperand(MachineBasicBlock &MBB,
+                               MachineMemOperand *SavedMMO);
 
 protected:
   MachineIRBuilder MIB;

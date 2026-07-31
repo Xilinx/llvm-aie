@@ -29,7 +29,8 @@ DataDependenceHelper::DataDependenceHelper(const MachineSchedContext &Context,
 
   auto &Subtarget = Context.MF->getSubtarget();
   auto TT = Subtarget.getTargetTriple();
-  for (auto &M : AIEBaseSubtarget::getDDGMutationsImpl(TT, ExactLatencies)) {
+  for (auto &M :
+       AIEBaseSubtarget::getDDGMutationsImpl(TT, ExactLatencies, Context.AA)) {
     Mutations.emplace_back(std::move(M));
   }
 }

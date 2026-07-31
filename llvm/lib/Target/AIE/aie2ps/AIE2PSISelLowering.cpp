@@ -181,6 +181,21 @@ bool AIE2PSTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.align = Align(4); // Can we somehow recover the original alignment?
     Info.flags = MachineMemOperand::MOStore;
     return true;
+
+  // Pointer-coupled locks are not memory accesses; the ptr arg only tags which
+  // buffer the lock orders against (see mayLockOrderWithMemOp). MONone would
+  // match that semantics, but IRTranslator builds the MMO via
+  // MachineMemOperand(..., Flags, LLT), which asserts isLoad() || isStore().
+  // MOLoad here is GISel plumbing only — ACQ/REL still have no mayLoad, and
+  // hasAnnotativeMemOperands() tells MachineVerifier the MMO is annotative.
+  case Intrinsic::aie2ps_acquire_ptr:
+  case Intrinsic::aie2ps_acquire_cond_ptr:
+  case Intrinsic::aie2ps_release_ptr:
+  case Intrinsic::aie2ps_release_cond_ptr:
+    Info.ptrVal = I.getArgOperand(0);
+    Info.memVT = MVT::Other;
+    Info.flags = MachineMemOperand::MOLoad;
+    return true;
   }
   return false;
 }

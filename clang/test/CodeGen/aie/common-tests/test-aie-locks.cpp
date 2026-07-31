@@ -125,21 +125,19 @@ test_release(unsigned id, int val, int cond) {
   return release(id, val, cond);
 }
 // Acquire and release instructions considering a memory pointer
-// The below definitions with ptr arg is not officially used anywhere.
-// The ptr arg is intentionally not used.
 void
 // CHECK-LABEL: @_Z18test_acquire_equalPKvjji(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    tail call void @llvm.aie2p.acquire.cond(i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.acquire.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
 // CHECK-NEXT:    ret void
 // CHECK-AIE2P-LABEL: @_Z18test_acquire_equalPKvjji(
 // CHECK-AIE2P-NEXT:  entry:
-// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.acquire.cond(i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
+// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.acquire.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
 //
 // CHECK-AIE2PS-LABEL: @_Z18test_acquire_equalPKvjji(
 // CHECK-AIE2PS-NEXT:  entry:
-// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.acquire.cond(i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.acquire.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
 // CHECK-AIE2PS-NEXT:    ret void
 //
 test_acquire_equal(const void *a, unsigned id, unsigned val, int cond) {
@@ -149,18 +147,18 @@ void
 // CHECK-LABEL: @_Z26test_acquire_greater_equalPKvjj(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SUB_I_I:%.*]] = sub i32 0, [[VAL:%.*]]
-// CHECK-NEXT:    tail call void @llvm.aie2p.acquire(i32 [[ID:%.*]], i32 [[SUB_I_I]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.acquire.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[SUB_I_I]])
 // CHECK-NEXT:    ret void
 // CHECK-AIE2P-LABEL: @_Z26test_acquire_greater_equalPKvjj(
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[SUB_I_I:%.*]] = sub i32 0, [[VAL:%.*]]
-// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.acquire(i32 [[ID:%.*]], i32 [[SUB_I_I]])
+// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.acquire.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[SUB_I_I]])
 // CHECK-AIE2P-NEXT:    ret void
 //
 // CHECK-AIE2PS-LABEL: @_Z26test_acquire_greater_equalPKvjj(
 // CHECK-AIE2PS-NEXT:  entry:
 // CHECK-AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub i32 0, [[VAL:%.*]]
-// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.acquire(i32 [[ID:%.*]], i32 [[SUB_I_I]])
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.acquire.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[SUB_I_I]])
 // CHECK-AIE2PS-NEXT:    ret void
 //
 test_acquire_greater_equal(const void *a, unsigned id, unsigned val) {
@@ -170,18 +168,18 @@ void
 // CHECK-LABEL: @_Z26test_acquire_greater_equalPKvjjj(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SUB_I_I:%.*]] = sub i32 0, [[VAL:%.*]]
-// CHECK-NEXT:    tail call void @llvm.aie2p.acquire.cond(i32 [[ID:%.*]], i32 [[SUB_I_I]], i32 [[COND:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.acquire.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[SUB_I_I]], i32 [[COND:%.*]])
 // CHECK-NEXT:    ret void
 // CHECK-AIE2P-LABEL: @_Z26test_acquire_greater_equalPKvjjj(
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[SUB_I_I:%.*]] = sub i32 0, [[VAL:%.*]]
-// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.acquire.cond(i32 [[ID:%.*]], i32 [[SUB_I_I]], i32 [[COND:%.*]])
+// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.acquire.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[SUB_I_I]], i32 [[COND:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
 //
 // CHECK-AIE2PS-LABEL: @_Z26test_acquire_greater_equalPKvjjj(
 // CHECK-AIE2PS-NEXT:  entry:
 // CHECK-AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub i32 0, [[VAL:%.*]]
-// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.acquire.cond(i32 [[ID:%.*]], i32 [[SUB_I_I]], i32 [[COND:%.*]])
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.acquire.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[SUB_I_I]], i32 [[COND:%.*]])
 // CHECK-AIE2PS-NEXT:    ret void
 //
 test_acquire_greater_equal(const void *a, unsigned id, unsigned val, unsigned cond) {
@@ -190,32 +188,32 @@ test_acquire_greater_equal(const void *a, unsigned id, unsigned val, unsigned co
 void
 // CHECK-LABEL: @_Z12test_releasePvji(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    tail call void @llvm.aie2p.release(i32 [[ID:%.*]], i32 [[VAL:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.release.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]])
 // CHECK-NEXT:    ret void
 // CHECK-AIE2P-LABEL: @_Z12test_releasePvji(
 // CHECK-AIE2P-NEXT:  entry:
-// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.release(i32 [[ID:%.*]], i32 [[VAL:%.*]])
+// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.release.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
 //
 // CHECK-AIE2PS-LABEL: @_Z12test_releasePvji(
 // CHECK-AIE2PS-NEXT:  entry:
-// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.release(i32 [[ID:%.*]], i32 [[VAL:%.*]])
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.release.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]])
 // CHECK-AIE2PS-NEXT:    ret void
 //
 test_release(void *a, unsigned id, int val) { return release(a, id, val); }
 void
 // CHECK-LABEL: @_Z12test_releasePvjii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    tail call void @llvm.aie2p.release.cond(i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.release.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
 // CHECK-NEXT:    ret void
 // CHECK-AIE2P-LABEL: @_Z12test_releasePvjii(
 // CHECK-AIE2P-NEXT:  entry:
-// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.release.cond(i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
+// CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.release.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
 //
 // CHECK-AIE2PS-LABEL: @_Z12test_releasePvjii(
 // CHECK-AIE2PS-NEXT:  entry:
-// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.release.cond(i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.release.cond.ptr(ptr [[A:%.*]], i32 [[ID:%.*]], i32 [[VAL:%.*]], i32 [[COND:%.*]])
 // CHECK-AIE2PS-NEXT:    ret void
 //
 test_release(void *a, unsigned id, int val, int cond) {

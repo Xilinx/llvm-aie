@@ -3396,7 +3396,9 @@ void llvm::applyCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI,
   const RegisterBank *DstRB = MRI.getRegBankOrNull(DstReg);
   const RegisterBank *SrcRB = MRI.getRegBankOrNull(SrcReg);
   if (DstRB == SrcRB) {
+    Observer.changingAllUsesOfReg(MRI, DstReg);
     MRI.replaceRegWith(DstReg, SrcReg);
+    Observer.finishedChangingAllUsesOfReg();
   } else {
     const LLT DstTy = MRI.getType(DstReg);
     const Register NewReg = MRI.createGenericVirtualRegister(DstTy);
@@ -3404,7 +3406,9 @@ void llvm::applyCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI,
       MRI.setRegBank(NewReg, *DstRB);
     B.setInsertPt(*MI.getParent(), MI.getIterator());
     B.buildInstr(TargetOpcode::G_IMPLICIT_DEF, {NewReg}, {});
+    Observer.changingAllUsesOfReg(MRI, DstReg);
     MRI.replaceRegWith(DstReg, NewReg);
+    Observer.finishedChangingAllUsesOfReg();
   }
   Observer.erasingInstr(MI);
   MI.eraseFromParent();

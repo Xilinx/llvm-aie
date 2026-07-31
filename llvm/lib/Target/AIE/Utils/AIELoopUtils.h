@@ -33,6 +33,16 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
 
 bool hasIIPragma(const MachineBasicBlock &LoopBlock);
 
+/// Loop-hint key the outer-loop pipeliner stamps on a loop it pipelined, and
+/// that isOuterLoopPipelined() tests for. Single source for both sides.
+constexpr StringLiteral OuterLoopPipelinedKey{
+    "llvm.loop.hint.aie_outerloop_pipeliner_success"};
+
+/// Loop-hint key the outer-loop pipeliner additionally stamps when its final
+/// stage-0 prefetch is speculative.
+constexpr StringLiteral OuterLoopSpeculativeKey{
+    "llvm.loop.hint.aie_outerloop_pipeliner_speculative"};
+
 bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch);
 
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,

@@ -444,6 +444,10 @@ public:
     return false;
   }
 
+  virtual bool isLeanStage0Intrinsic(const Instruction &I) const {
+    return false;
+  }
+
   virtual bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                                   unsigned ScalarOpdIdx) const {
     return false;

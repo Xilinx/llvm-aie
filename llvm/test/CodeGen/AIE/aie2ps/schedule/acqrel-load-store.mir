@@ -62,3 +62,51 @@ body:             |
     ST_dms_sts_scalar_st_idx_imm $r6, $p0, 0
     ST_dms_sts_scalar_st_idx_imm killed $r6, killed $p0, 4
 ...
+
+# Forward: release -> VST must not co-issue (>=1 bundle apart).
+---
+name:            rel_vs_E5_vst
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: rel_vs_E5_vst
+    ; CHECK: $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p0, 0
+    ; CHECK-NEXT: $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p0, 64
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, killed $p0, 128
+    ; CHECK-NEXT: $p0 = VST_dmx_sts_x_st_pstm_nrm_imm killed $x0, killed $p0, 192
+    ; CHECK-NEXT: NOP
+    $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p0, 0
+    $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p0, 64
+    REL_mLockId_imm 0, $r0
+    $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p0, 128
+    $p0 = VST_dmx_sts_x_st_pstm_nrm_imm $x0, $p0, 192
+...
+
+---
+name:            rel_vs_E6_vst_flush
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: rel_vs_E6_vst_flush
+    ; CHECK: $sf, $p2, $r26 = VST_FLUSH_normal_flush killed $sf, killed $p2, killed $r26, implicit-def $srfifo_of
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $sf, $p2, $r26 = VST_FLUSH_normal_flush killed $sf, killed $p2, killed $r26, implicit-def $srfifo_of
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $sf, $p2, $r26 = VST_FLUSH_normal_flush $sf, $p2, $r26, implicit-def $srfifo_of
+    REL_mLockId_imm 0, $r0
+    $sf, $p2, $r26 = VST_FLUSH_normal_flush $sf, $p2, $r26, implicit-def $srfifo_of
+...
