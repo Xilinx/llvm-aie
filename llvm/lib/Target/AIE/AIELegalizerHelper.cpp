@@ -91,13 +91,9 @@ bool AIELegalizerHelper::packVector(LegalizerHelper &Helper, MachineInstr &MI,
 
   const LLT RegTy = MRI.getType(DstReg);
   const unsigned EltSize = RegTy.getScalarSizeInBits();
-
-  // A single 64-bit element is already in packed form.
-  if (EltSize == 64) {
-    MIRBuilder.buildBitcast(DstReg, Operand->getReg());
-    MI.eraseFromParent();
-    return true;
-  }
+  // A 64-bit element here would mean a one-element vector, which LLT does not
+  // have: LLT::vector rejects it and getLLTForType maps <1 x i64> to s64.
+  assert(EltSize <= 32 && "one-element vectors do not exist");
 
   // Pack 32 bits at a time and merge the halves. S32 shifts and ors are legal,
   // while S64 ones would be narrowed back into this same sequence plus a funnel
