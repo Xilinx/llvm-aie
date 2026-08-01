@@ -13,8 +13,10 @@
 
 #include "AIECoreState.h"
 #include "AIESemantics.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCInst.h"
 #include <string>
 
 namespace llvm {
@@ -47,6 +49,13 @@ public:
   const DenseSet<unsigned> &getUnmodelledOpcodes() const { return Unmodelled; }
 
 private:
+  struct Bundle {
+    MCInst Inst;
+    uint64_t Size;
+  };
+
+  /// \returns nullptr and sets FaultMsg when \p Addr does not decode.
+  const Bundle *decode(uint64_t Addr);
   StepResult executeSlot(const MCInst &MI, SlotEffects &Eff);
   void commit(const SlotEffects &Eff);
   /// Advance PC past \p BundleSize, honouring a retiring branch and the
@@ -61,6 +70,11 @@ private:
   AIECoreState State;
 
   MCRegister LCReg, LSReg, LEReg;
+  /// Each address decodes once. The slot sub-instructions live in the
+  /// disassembler's MCContext, which never reclaims them, so re-decoding a loop
+  /// body costs memory proportional to bundles executed rather than to program
+  /// size. Assumes program memory does not change while the core runs.
+  DenseMap<uint64_t, Bundle> Decoded;
   std::string FaultMsg;
   DenseSet<unsigned> Executed;
   DenseSet<unsigned> Unmodelled;
