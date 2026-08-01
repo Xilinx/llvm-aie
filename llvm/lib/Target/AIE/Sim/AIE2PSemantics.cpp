@@ -73,6 +73,20 @@ struct Operands {
     // widen by zero or by sign extension.
     return V.zextOrTrunc(32).getZExtValue();
   }
+
+  // Same as val(), for a register that is architecturally implicit rather
+  // than an MI operand -- sp in a *_spill opcode, which encodes only an
+  // offset (aie2p/AIE2PInstrInfo.td's spill pseudos all expand to a fixed
+  // "[sp, #$imm]" real opcode with no pointer-register bits at all).
+  uint32_t valReg(MCRegister R) {
+    APInt V;
+    if (!State.Regs.read(R, V)) {
+      Ok = false;
+      BadReg = R;
+      return 0;
+    }
+    return V.zextOrTrunc(32).getZExtValue();
+  }
 };
 
 class AIE2PSemantics : public AIESemantics {
@@ -134,6 +148,12 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // pointer register.
   auto access = [&](unsigned PtrIdx, int64_t Offset) {
     return uint32_t((Op.val(PtrIdx) + Offset) &
+                    maskTrailingOnes<uint32_t>(DataAddrBits));
+  };
+
+  // *_spill's base is sp, architecturally fixed rather than an operand.
+  auto spAccess = [&](int64_t Offset) {
+    return uint32_t((Op.valReg(AIE2P::sp) + Offset) &
                     maskTrailingOnes<uint32_t>(DataAddrBits));
   };
 
@@ -355,6 +375,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::LDA_dms_lda_idx_imm:
     R = scalarLoad(0, access(1, Op.imm(2)), 4, /*Signed=*/false);
     break;
+  // (dst)(imm): sp-relative spill restore. What ST_R_SPILL/LDA_R_SPILL
+  // (aie2p/AIE2PInstrInfo.td's Pseudo spill forms) actually expand to
+  // (AIE2PInstrInfo.cpp's getSpillPseudoExpandInfoByOpcode) -- sp is fixed
+  // in the encoding, not a $ptr operand, unlike the general idx_imm forms.
+  case AIE2P::LDA_dms_lda_spill:
+    R = scalarLoad(0, spAccess(Op.imm(1)), 4, /*Signed=*/false);
+    break;
   case AIE2P::LDA_s8_idx_imm:
     R = scalarLoad(0, access(1, Op.imm(2)), 1, /*Signed=*/true);
     break;
@@ -377,6 +404,10 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // ()(src, ptr, imm)
   case AIE2P::ST_dms_sts_idx_imm:
     scalarStore(0, access(1, Op.imm(2)), 4);
+    break;
+  // ()(src, imm): sp-relative spill, same fixed-sp shape as the LDA form.
+  case AIE2P::ST_dms_sts_spill:
+    scalarStore(0, spAccess(Op.imm(1)), 4);
     break;
   case AIE2P::ST_s8_idx_imm:
     scalarStore(0, access(1, Op.imm(2)), 1);
