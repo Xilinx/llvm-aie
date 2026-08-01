@@ -115,21 +115,33 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
     State.PC = LS.getZExtValue();
 }
 
-StepResult AIEExecutor::step() {
-  const uint64_t BundleAddr = State.PC;
-  ArrayRef<uint8_t> Bytes = Host.fetch(BundleAddr);
+const AIEExecutor::Bundle *AIEExecutor::decode(uint64_t Addr) {
+  auto It = Decoded.find(Addr);
+  if (It != Decoded.end())
+    return &It->second;
+
+  ArrayRef<uint8_t> Bytes = Host.fetch(Addr);
   if (Bytes.empty()) {
-    FaultMsg = ("no program memory at " + Twine::utohexstr(BundleAddr)).str();
-    return StepResult::Fault;
+    FaultMsg = ("no program memory at " + Twine::utohexstr(Addr)).str();
+    return nullptr;
   }
 
-  MCInst Bundle;
-  uint64_t Size = 0;
-  if (DisAsm.getInstruction(Bundle, Size, Bytes, BundleAddr, nulls()) !=
+  Bundle B;
+  if (DisAsm.getInstruction(B.Inst, B.Size, Bytes, Addr, nulls()) !=
       MCDisassembler::Success) {
-    FaultMsg = ("undecodable bundle at " + Twine::utohexstr(BundleAddr)).str();
-    return StepResult::Fault;
+    FaultMsg = ("undecodable bundle at " + Twine::utohexstr(Addr)).str();
+    return nullptr;
   }
+  return &Decoded.try_emplace(Addr, std::move(B)).first->second;
+}
+
+StepResult AIEExecutor::step() {
+  const uint64_t BundleAddr = State.PC;
+  const Bundle *B = decode(BundleAddr);
+  if (!B)
+    return StepResult::Fault;
+  const MCInst &Bundle = B->Inst;
+  const uint64_t Size = B->Size;
 
   const bool IsComposite =
       any_of(Bundle, [](const MCOperand &Op) { return Op.isInst(); });
