@@ -208,3 +208,14 @@ than buried because a wrong one is invisible until it produces a wrong number.
 * **A back edge and a retiring branch in the same bundle.** The branch wins.
 * **Status flags are not computed.** `add` defines `srCarry` and the model does not know the carry out,
   so it marks the register unknown and faults on a later read rather than answering zero.
+* **jl's return address is written when its delay slots retire, not when it issues.** The value itself
+  is settled: it must be the byte address right after the five real, individually-sized delay-slot
+  bundles (`JL_lng` alone is 6 bytes against a 2-byte `nop`, so no fixed per-slot distance would work),
+  and the executor already walks that address one bundle at a time as each delay slot retires
+  (`AIEExecutor::advancePC`), so `lr` is committed from that running total at the moment the branch
+  resolves rather than computed by peeking ahead. Verified end to end, `aie2p-call-return.s`. What is
+  NOT settled: whether real hardware makes `lr` visible to a delay-slot instruction that reads it
+  immediately after `jl` issues. The model does not (it is unwritten, not merely stale, until the
+  branch resolves), and no source says which way real hardware goes -- the same shape of gap as
+  write-back latency above, and for the same reason: nothing in `jl`'s own delay slots would sensibly
+  read the address it is about to jump to.

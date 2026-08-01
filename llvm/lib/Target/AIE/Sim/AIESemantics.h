@@ -54,6 +54,13 @@ struct SlotEffects {
   SmallVector<MCRegister, 2> RegPoisons;
   /// Target of a taken control transfer, entering the delay-slot pipeline.
   std::optional<uint64_t> Branch;
+  /// jl: the link register gets the return address once the delay slots
+  /// retire, not here -- see AIEExecutor::advancePC. The value is not yet
+  /// known at issue time (it depends on the byte size of bundles that have
+  /// not been fetched), so it is not a RegWrites entry; this flag tells the
+  /// executor to compute and commit it when the branch resolves instead of
+  /// poisoning the link register the way an ordinary unwritten Def would.
+  bool Link = false;
 };
 
 /// The behaviour of one subtarget's instructions.
@@ -73,6 +80,10 @@ public:
 
   /// The zero-overhead loop registers: count, start, end.
   virtual std::array<MCRegister, 3> getLoopRegisters() const = 0;
+
+  /// jl/ret's link register, written with the return address by the
+  /// executor (see SlotEffects::Link) rather than by semantics directly.
+  virtual MCRegister getLinkRegister() const = 0;
 };
 
 /// \returns nullptr when \p STI names a subtarget with no semantics yet.

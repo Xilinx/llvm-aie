@@ -79,6 +79,10 @@ public:
   struct PendingBranch {
     uint64_t Target;
     unsigned BundlesLeft;
+    /// jl: write the link register with the fallthrough address (PC as of
+    /// the last delay-slot bundle, i.e. before Target overwrites it) when
+    /// this resolves.
+    bool Link = false;
   };
   std::optional<PendingBranch> Branch;
 };
