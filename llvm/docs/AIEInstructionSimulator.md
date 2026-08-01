@@ -1,6 +1,8 @@
 # An AIE instruction simulator in llvm-aie
 
-Status: RFC / design. No implementation yet.
+Status: the scalar core of AIE2p runs. `llvm/lib/Target/AIE/Sim` and
+`llvm-aie-run` execute 63 opcodes; `llvm/test/tools/llvm-aie-run` is the first
+suite in this tree that executes rather than FileChecks generated assembly.
 Scope: AIE2 and AIE2P. AIE1 and AIE2PS are out of scope for a first version.
 
 ## 1. Why this belongs here
@@ -90,10 +92,19 @@ Three things that are easy to discover late and expensive to retrofit.
 `J_IND`, `RET`, `JNZD`, `JNZ`, `JZ` in `AIE2GenInstrInfo.td:436-464`), so the executor needs a pending
 branch buffer, not a decode-time bit.
 
-**Zero-overhead loops.** `lc`, `ls` and `le` are real 20-bit architectural registers
-(`aie2p/AIE2PRegisterInfo.td:255-264`). Inside a ZOL body there is no branch instruction to decode: the
-loop-back is hardware behaviour keyed off `le`. The alternative JNZD form decrements a GPR and branches,
-and compares before decrementing (`AIEBaseHardwareLoops.cpp:15-23`). Both must be modelled.
+**Zero-overhead loops.** Inside a ZOL body there is no branch instruction to decode: the loop-back is
+hardware behaviour keyed off `le`. `le` names the **last bundle** of the body, not the bundle after it
+-- `AIEBaseAsmPrinter.cpp:85` attaches the loop-end symbol with `setPreInstrSymbol` on the preceding
+bundle. `lc` is the iteration count rather than the backedge count: the ZOL lowering emits
+`add.nc lc, rN, #adjustment` and the adjustment is 0 for every loop the pipeliner did not touch
+(8 occurrences of `add.nc lc, rN, #0` in `llvm/test/CodeGen/AIE`). The alternative JNZD form decrements
+a GPR and branches, and compares before decrementing (`AIEBaseHardwareLoops.cpp:15-23`), so its counter
+*is* a backedge count. Both must be modelled.
+
+`ls`, `le`, `sp`, `lr` and `CORE_ID` are 20 bits wide; `lc` is not. It is absent from `eSpecial20` and
+reachable only through 32-bit scalar classes, in AIE2 as well as AIE2P. Register widths in general have
+no home in the MC layer other than the register classes, so the model takes the narrowest class holding
+a register as its width.
 
 **A wide, heavily aliased register file.** AIE2P has 32 scalar GPRs, 16 64-bit pairs, 8 pointer and 8
 modifier registers, addressing-dimension registers, 4 128-bit masks, 256/512/1024-bit vectors,
@@ -151,10 +162,10 @@ than a feeling.
 
 ## 6. Phasing
 
-1. **Skeleton and scalar core.** `AIEHostInterface`, the bundle fetch and dispatch loop, the register
-   file, delay slots, hardware loops, and the roughly 48 instructions that have declarative patterns to
-   check against. Test: lit tests that assemble a `.s` file, run it under `llvm-aie-run`, and check
-   registers. First execution tests this backend has ever had.
+1. **Skeleton and scalar core.** DONE. `AIEHostInterface`, the bundle fetch and dispatch loop, the
+   register file, delay slots, hardware loops, and 63 opcodes: the scalar ALU, compares, shifts, moves,
+   scalar load/store with post-increment, pointer arithmetic, and `j`/`jz`/`jnz`/`jnzd`. Five lit tests
+   assemble a `.s` file, run it under `llvm-aie-run`, and check registers, memory and bundle counts.
 2. **Scalar completion.** The rest of the scalar ALU, memory and control instructions, enough to run
    compiled C.
 3. **The C ABI and `libaie-iss.so`**, which is what unblocks mlir-aie's array model.
@@ -178,3 +189,22 @@ Phase 1 is worth landing on its own even if nothing downstream ever consumes it.
 * **Build cost is not a risk.** `LLVM_TARGETS_TO_BUILD=AIE` with the AIE libraries already archived
   makes this an incremental build measured in tens of seconds per translation unit, not a rebuild of
   LLVM.
+
+## 8. What the model assumes without a source
+
+Each of these is a decision the code had to make and the tree could not answer. They are listed rather
+than buried because a wrong one is invisible until it produces a wrong number.
+
+* **Bundle-internal writes.** Slots read the state at the top of the bundle and their writes land
+  together at the end. This makes a stalled slot leave no trace of the slots beside it, which the stall
+  contract requires, but the architecture spec has not been checked for whether a later slot can see an
+  earlier one's result.
+* **20-bit registers in a 32-bit datapath.** `mov r0, p0` is modelled as a zero extension.
+* **Write-back latency.** A register written by one bundle is readable by the next. Real hardware has
+  latency here that the scheduler is obliged to respect, so hand-written assembly can distinguish the
+  two even though compiler output cannot.
+* **The loop-setup distance.** `AIE2InstrInfo.cpp` records that a ZOL needs 7 bundles between the setup
+  and the loop end. The model does not enforce it, so it will happily run a loop hardware would not.
+* **A back edge and a retiring branch in the same bundle.** The branch wins.
+* **Status flags are not computed.** `add` defines `srCarry` and the model does not know the carry out,
+  so it marks the register unknown and faults on a later read rather than answering zero.
