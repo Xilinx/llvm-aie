@@ -69,7 +69,7 @@ private:
   AIEHostInterface &Host;
   AIECoreState State;
 
-  MCRegister LCReg, LSReg, LEReg;
+  MCRegister LCReg, LSReg, LEReg, LRReg;
   /// Each address decodes once. The slot sub-instructions live in the
   /// disassembler's MCContext, which never reclaims them, so re-decoding a loop
   /// body costs memory proportional to bundles executed rather than to program

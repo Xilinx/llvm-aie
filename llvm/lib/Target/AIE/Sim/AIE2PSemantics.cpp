@@ -88,6 +88,8 @@ public:
     return {AIE2P::lc, AIE2P::ls, AIE2P::le};
   }
 
+  MCRegister getLinkRegister() const override { return AIE2P::lr; }
+
   StepResult execute(const MCInst &MI, const AIECoreState &State,
                      AIEHostInterface &Host, SlotEffects &Eff,
                      std::string &FaultMsg) override;
@@ -295,6 +297,30 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::J_alumv_or:
     Eff.Branch = Op.val(0);
     break;
+  // jl: same addressing as j, plus Eff.Link so the executor writes lr with
+  // the return address once the delay slots retire (AIEExecutor::advancePC)
+  // -- not here, since that address depends on the byte size of bundles
+  // this instruction has not fetched yet.
+  case AIE2P::JL_lng:
+    Eff.Branch = uint64_t(Op.imm(0));
+    Eff.Link = true;
+    break;
+  case AIE2P::JL_alumv_or:
+    Eff.Branch = Op.val(0);
+    Eff.Link = true;
+    break;
+  // ret lr: lr is an implicit use (asm string hardcodes "lr", no operand),
+  // so it is read directly rather than through Op.val(), which indexes
+  // MI's operand list.
+  case AIE2P::RET: {
+    APInt V;
+    if (!State.Regs.read(AIE2P::lr, V)) {
+      FaultMsg = (Name + ": lr has no value to return to").str();
+      return StepResult::Fault;
+    }
+    Eff.Branch = V.zextOrTrunc(64).getZExtValue();
+    break;
+  }
   case AIE2P::JZ:
     if (Op.val(0) == 0)
       Eff.Branch = uint64_t(Op.imm(1));

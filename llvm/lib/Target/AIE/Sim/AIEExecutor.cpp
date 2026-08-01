@@ -31,6 +31,7 @@ AIEExecutor::AIEExecutor(const MCDisassembler &DisAsm, const MCInstrInfo &MII,
   LCReg = Loop[0];
   LSReg = Loop[1];
   LEReg = Loop[2];
+  LRReg = Sem.getLinkRegister();
 }
 
 static std::string describe(const MCInstrInfo &MII, const MCInst &MI) {
@@ -63,9 +64,14 @@ StepResult AIEExecutor::executeSlot(const MCInst &MI, SlotEffects &Eff) {
     return R;
 
   // Anything the description says this instruction defines but the semantics
-  // left alone holds an unknown value from here on.
+  // left alone holds an unknown value from here on. jl's link register is the
+  // one exception: Eff.Link means the executor will compute and commit it
+  // itself once the delay slots retire (advancePC), so it is scheduled, not
+  // abandoned, and must not be poisoned here.
   const MCInstrDesc &Desc = MII.get(MI.getOpcode());
   auto PoisonUnwritten = [&](MCRegister Reg) {
+    if (Eff.Link && Reg == LRReg)
+      return;
     if (!any_of(ArrayRef(Eff.RegWrites).drop_front(FirstWrite),
                 [&](const auto &W) { return W.first == Reg; }))
       Eff.RegPoisons.push_back(Reg);
@@ -92,6 +98,15 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
   ++State.RetiredBundles;
 
   if (State.Branch && --State.Branch->BundlesLeft == 0) {
+    // State.PC is currently the address right after the delay-slot bundle
+    // that just retired -- the natural fallthrough point, reached by
+    // accumulating the real encoded size of each delay-slot bundle one
+    // step at a time. That is exactly jl's return address, so link is
+    // written from it here, before Target overwrites it, rather than
+    // computed by peeking ahead at issue time (which bundle sizes had not
+    // been fetched yet).
+    if (State.Branch->Link && LRReg)
+      State.Regs.write(LRReg, APInt(64, State.PC));
     State.PC = State.Branch->Target;
     State.Branch.reset();
     return;
@@ -190,6 +205,6 @@ StepResult AIEExecutor::step() {
   }
   advancePC(BundleAddr, Size);
   if (Eff.Branch)
-    State.Branch = {*Eff.Branch, NumDelaySlots};
+    State.Branch = {*Eff.Branch, NumDelaySlots, Eff.Link};
   return StepResult::Retired;
 }
