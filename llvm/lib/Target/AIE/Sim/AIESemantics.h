@@ -14,12 +14,14 @@
 #include "AIECoreState.h"
 #include "AIEHostInterface.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include <array>
 #include <memory>
 #include <optional>
 #include <string>
 
 namespace llvm {
+class Triple;
 class MCInst;
 class MCInstrInfo;
 class MCRegisterInfo;
@@ -90,6 +92,14 @@ public:
 std::unique_ptr<AIESemantics> createSemantics(const MCSubtargetInfo &STI,
                                               const MCInstrInfo &MII,
                                               const MCRegisterInfo &MRI);
+
+/// The processor name to build MCSubtargetInfo with, for \p TT.
+///
+/// Not optional and not cosmetic: with an empty CPU the subtarget carries no
+/// scheduling model, so every operand latency reads as "none" and a machine
+/// with no interlocks cannot be executed correctly. AIE names each processor
+/// exactly after its architecture, so the triple already holds the answer.
+StringRef cpuForTriple(const Triple &TT);
 
 } // namespace AIESim
 } // namespace llvm
