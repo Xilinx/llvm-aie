@@ -48,6 +48,9 @@ func:
 // never reaches advancePC, so it is not counted (matches aie2p-delay-slots.s).
 // CHECK: bundles: 15
 
+// The comment above says r1 proves ret landed at the return point. It only
+// proves it if something checks it, so: r1 is written after the return and
+// r0 is the callee's, which together mean the call went in and came back.
 // CHECK-DAG: r0 = 0x2A
 // CHECK-DAG: r1 = 0x63
 // CHECK-DAG: lr = 0x14

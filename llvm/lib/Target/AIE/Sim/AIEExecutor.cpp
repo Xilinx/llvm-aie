@@ -127,10 +127,13 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
     // written from it here, before Target overwrites it, rather than
     // computed by peeking ahead at issue time (which bundle sizes had not
     // been fetched yet).
-    // The link register is computed here rather than by semantics, so it has
-    // no operand cycle; +1 matches the implicit-register convention.
+    // Visible AS the branch resolves, not a cycle later: the callee's first
+    // bundle is the very next one and reads lr at its own issue + 1, so a
+    // later stamp would hide the return address from the instruction the
+    // branch just jumped to. (Which is exactly what it did -- `ret` returned
+    // to 0 until this was stamped at the resolving bundle.)
     if (State.Branch->Link && LRReg)
-      State.Regs.write(LRReg, APInt(64, State.PC), State.RetiredBundles + 1);
+      State.Regs.write(LRReg, APInt(64, State.PC), State.RetiredBundles);
     State.PC = State.Branch->Target;
     State.Branch.reset();
     return;
