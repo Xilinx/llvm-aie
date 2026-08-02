@@ -301,7 +301,9 @@ int readRegister(const aie_iss_core *Core, const char *Name, void *Data,
   if (It == Core->RegsByName.end())
     return 0;
   APInt Value;
-  if (!Core->Exec->getState().Regs.read(It->second, Value))
+  // An embedder reading a register is an observer outside the pipeline, so it
+  // sees the newest value rather than one bundle's view of it.
+  if (!Core->Exec->getState().Regs.read(It->second, Value, UINT64_MAX))
     return 0;
   copyOut(Value, Data, Size);
   return 1;
@@ -321,7 +323,10 @@ int writeRegister(aie_iss_core *Core, const char *Name, const void *Data,
   APInt Value(Width, 0);
   for (uint32_t I = 0; I != Size && I * 8 < Width; ++I)
     Value |= APInt(Width, In[I]) << (8 * I);
-  return Core->Exec->getState().Regs.write(It->second, Value);
+  // Likewise a host write lands at once: it is not scheduled against the
+  // core's pipeline.
+  Core->Exec->getState().Regs.write(It->second, Value, 0);
+  return true;
 }
 
 uint32_t opcodeCoverage(const aie_iss_core *Core, void *Ctx,

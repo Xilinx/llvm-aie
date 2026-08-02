@@ -45,13 +45,31 @@ enum class StepResult {
 /// slot's writes, and a stalled slot must leave no trace of the slots that
 /// already ran beside it.
 struct SlotEffects {
+  /// A store, whose SOURCE is sampled later than the store issues.
+  ///
+  /// The address is computed at issue (a store reads its pointer and index at
+  /// cycle 1) but the data is read at the source operand's own cycle, which is
+  /// 7 on the narrow forms. That is not a detail: measured on silicon, an
+  /// aievec kernel's store commits the result of a multiply that issues FOUR
+  /// bundles after the store does. So the register is named here and read when
+  /// the pipeline reaches SampleAt, rather than resolved now.
   struct MemWrite {
     uint64_t Addr;
     unsigned NumBytes;
-    APInt Value;
+    MCRegister SrcReg;
+    uint64_t SampleAt;
   };
 
-  SmallVector<std::pair<MCRegister, APInt>, 4> RegWrites;
+  /// A register write and the cycle it becomes readable. The cycle is the
+  /// issuing instruction's own def cycle, so a consumer scheduled inside the
+  /// window sees the OLD value -- which is what an exposed pipeline does and
+  /// what silicon was measured doing.
+  struct RegWrite {
+    MCRegister Reg;
+    APInt Value;
+    uint64_t VisibleAt;
+  };
+  SmallVector<RegWrite, 4> RegWrites;
   SmallVector<MemWrite, 2> MemWrites;
   SmallVector<MCRegister, 2> RegPoisons;
   /// Target of a taken control transfer, entering the delay-slot pipeline.

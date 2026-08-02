@@ -19,6 +19,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/MathExtras.h"
@@ -41,8 +42,27 @@ constexpr unsigned DataAddrBits = 20;
 struct Operands {
   const MCInst &MI;
   const AIECoreState &State;
+  /// The bundle this instruction issues in, and the per-operand read/write
+  /// cycles relative to it. Both come from the same itinerary entry: AIE
+  /// records a cycle for EVERY operand, uses included, and a store's source
+  /// is read late (cycle 7 on ST_s16_idx) where its pointer is read at 1.
+  uint64_t IssueCycle = 0;
+  const InstrItineraryData *Itin = nullptr;
+  unsigned SchedClass = 0;
   bool Ok = true;
   MCRegister BadReg;
+
+  /// Cycle at which operand \p I is read or written, absolute.
+  ///
+  /// 1 when the model does not describe it. The compiler schedules against
+  /// these same numbers, so an operand it does not describe cannot be one the
+  /// schedule relied on, and 1 is the tightest assumption -- it makes the
+  /// fewest reads see a value early.
+  uint64_t cycleOf(unsigned I) const {
+    std::optional<unsigned> C =
+        Itin ? Itin->getOperandCycle(SchedClass, I) : std::nullopt;
+    return IssueCycle + (C && *C >= 1 ? *C : 1);
+  }
 
   MCRegister reg(unsigned I) {
     if (!MI.getOperand(I).isReg()) {
@@ -63,7 +83,7 @@ struct Operands {
   uint32_t val(unsigned I) {
     APInt V;
     MCRegister R = reg(I);
-    if (!State.Regs.read(R, V)) {
+    if (!State.Regs.read(R, V, cycleOf(I))) {
       Ok = false;
       BadReg = R;
       return 0;
@@ -80,7 +100,10 @@ struct Operands {
   // "[sp, #$imm]" real opcode with no pointer-register bits at all).
   uint32_t valReg(MCRegister R) {
     APInt V;
-    if (!State.Regs.read(R, V)) {
+    // Implicit operands have no itinerary entry, so this reads at issue + 1:
+    // the earliest a value can be needed, which is the assumption that never
+    // hands back a result before its producer could have made it.
+    if (!State.Regs.read(R, V, IssueCycle + 1)) {
       Ok = false;
       BadReg = R;
       return 0;
@@ -91,8 +114,9 @@ struct Operands {
 
 class AIE2PSemantics : public AIESemantics {
 public:
-  AIE2PSemantics(const MCInstrInfo &MII, const MCRegisterInfo &MRI)
-      : MII(MII), MRI(MRI) {}
+  AIE2PSemantics(const MCInstrInfo &MII, const MCRegisterInfo &MRI,
+                 InstrItineraryData Itin)
+      : MII(MII), MRI(MRI), Itin(std::move(Itin)) {}
 
   bool isEndOfProgram(const MCInst &MI) const override {
     return MI.getOpcode() == AIE2P::DONE;
@@ -111,6 +135,7 @@ public:
 private:
   const MCInstrInfo &MII;
   const MCRegisterInfo &MRI;
+  InstrItineraryData Itin;
 };
 
 /// Count leading sign bits, which is what "clb" reports.
@@ -136,12 +161,14 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Fault;
   }
 
-  Operands Op{MI, State};
+  Operands Op{MI, State, State.RetiredBundles,
+              Itin.isEmpty() ? nullptr : &Itin, Desc.getSchedClass()};
   auto Def32 = [&](unsigned Idx, uint32_t V) {
-    Eff.RegWrites.emplace_back(Op.reg(Idx), APInt(32, V));
+    Eff.RegWrites.push_back({Op.reg(Idx), APInt(32, V), Op.cycleOf(Idx)});
   };
   auto DefAddr = [&](unsigned Idx, uint32_t V) {
-    Eff.RegWrites.emplace_back(Op.reg(Idx), APInt(DataAddrBits, V));
+    Eff.RegWrites.push_back(
+        {Op.reg(Idx), APInt(DataAddrBits, V), Op.cycleOf(Idx)});
   };
 
   // Address of a scalar access, and the post-increment written back to the
@@ -169,19 +196,18 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     case PortStatus::Ok:
       break;
     }
-    Eff.RegWrites.emplace_back(Op.reg(DstIdx),
-                               Signed ? V.sext(32) : V.zext(32));
+    Eff.RegWrites.push_back({Op.reg(DstIdx), Signed ? V.sext(32) : V.zext(32),
+                             Op.cycleOf(DstIdx)});
     return StepResult::Retired;
   };
 
-  // A sub-word store takes the low bytes of a 32-bit register, so the source
-  // has to be narrowed explicitly: APInt's constructor asserts on a value
-  // wider than the type it is given.
+  // The source register is NAMED here, not read: a store samples its data at
+  // its own operand cycle, which on the narrow forms is 7 cycles after issue,
+  // by which time an instruction scheduled after the store may have produced
+  // it. The executor reads it when the pipeline gets there.
   auto scalarStore = [&](unsigned SrcIdx, uint32_t Addr, unsigned NumBytes) {
-    const unsigned Bits = NumBytes * 8;
     Eff.MemWrites.push_back(
-        {Addr, NumBytes,
-         APInt(Bits, Op.val(SrcIdx) & maskTrailingOnes<uint32_t>(Bits))});
+        {Addr, NumBytes, Op.reg(SrcIdx), Op.cycleOf(SrcIdx)});
   };
 
   StepResult R = StepResult::Retired;
@@ -345,7 +371,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // MI's operand list.
   case AIE2P::RET: {
     APInt V;
-    if (!State.Regs.read(AIE2P::lr, V)) {
+    if (!State.Regs.read(AIE2P::lr, V, State.RetiredBundles + 1)) {
       FaultMsg = (Name + ": lr has no value to return to").str();
       return StepResult::Fault;
     }
@@ -390,8 +416,10 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // (Defs/Uses in the def, absent from the asm operands), so it is read and
   // written by name rather than through Op.
   case AIE2P::PADDXM_pstm_sp_imm:
-    Eff.RegWrites.emplace_back(
-        AIE2P::sp, APInt(DataAddrBits, spAccess(Op.imm(0))));
+    // sp is implicit here, so it has no operand cycle of its own; +1 matches
+    // the read side's assumption for implicit registers.
+    Eff.RegWrites.push_back({AIE2P::sp, APInt(DataAddrBits, spAccess(Op.imm(0))),
+                             State.RetiredBundles + 1});
     break;
 
   // (dst)(imm): sp-relative spill restore. What ST_R_SPILL/LDA_R_SPILL
@@ -502,6 +530,7 @@ llvm::AIESim::createSemantics(const MCSubtargetInfo &STI,
                               const MCInstrInfo &MII,
                               const MCRegisterInfo &MRI) {
   if (STI.getTargetTriple().getArch() == Triple::aie2p)
-    return std::make_unique<AIE2PSemantics>(MII, MRI);
+    return std::make_unique<AIE2PSemantics>(
+        MII, MRI, STI.getInstrItineraryForCPU(cpuForTriple(STI.getTargetTriple())));
   return nullptr;
 }

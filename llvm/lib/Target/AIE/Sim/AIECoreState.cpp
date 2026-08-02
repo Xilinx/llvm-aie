@@ -40,9 +40,11 @@ AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI) : MRI(MRI) {
     if (!MRI.subregs(Reg).empty())
       Widths[Reg] = 0;
 
-  Storage.reserve(NumRegs);
+  // Every register starts with one entry visible from cycle 0, so a read
+  // before any write sees the reset value rather than an empty history.
+  Storage.resize(NumRegs);
   for (unsigned Reg = 0; Reg != NumRegs; ++Reg)
-    Storage.emplace_back(std::max(Widths[Reg], 1u), 0);
+    Storage[Reg].push_back({0, APInt(std::max(Widths[Reg], 1u), 0)});
   Poisoned.assign(NumRegs, false);
 }
 
@@ -50,20 +52,49 @@ unsigned AIERegisterFile::getWidth(MCRegister Reg) const {
   return Reg.id() < Widths.size() ? Widths[Reg.id()] : 0;
 }
 
-bool AIERegisterFile::read(MCRegister Reg, APInt &Out) const {
+bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
   if (!getWidth(Reg) || Poisoned[Reg.id()])
     return false;
-  Out = Storage[Reg.id()];
-  return true;
+  // Newest entry that has landed by Cycle. `<=` because a schedule where the
+  // consumer's use cycle equals the producer's def cycle is legal.
+  const SmallVectorImpl<Timed> &H = Storage[Reg.id()];
+  for (auto It = H.rbegin(), E = H.rend(); It != E; ++It)
+    if (It->visibleAt < Cycle) {
+      Out = It->value;
+      return true;
+    }
+  // Every entry is still in flight, which means the reset value was already
+  // superseded and this read is inside a producer's latency window with
+  // nothing older to see. Refusing beats inventing one.
+  return false;
 }
 
-bool AIERegisterFile::write(MCRegister Reg, const APInt &Value) {
+void AIERegisterFile::write(MCRegister Reg, const APInt &Value,
+                            uint64_t VisibleAt) {
   const unsigned W = getWidth(Reg);
   if (!W)
-    return false;
-  Storage[Reg.id()] = Value.zextOrTrunc(W);
+    return;
+  SmallVectorImpl<Timed> &H = Storage[Reg.id()];
+  // Keep newest-last by visibleAt. Two writes can land out of issue order when
+  // their latencies differ, and program order is what decides the winner, so a
+  // later-issued write replaces any entry that would land at or after it.
+  while (!H.empty() && H.back().visibleAt > VisibleAt)
+    H.pop_back();
+  H.push_back({VisibleAt, Value.zextOrTrunc(W)});
   Poisoned[Reg.id()] = false;
-  return true;
+}
+
+void AIERegisterFile::forgetBefore(uint64_t Horizon) {
+  for (SmallVectorImpl<Timed> &H : Storage) {
+    // Keep the newest entry that is already visible at Horizon: a later read
+    // still resolves to it. Everything strictly older is unreachable.
+    size_t KeepFrom = 0;
+    for (size_t I = 0; I != H.size(); ++I)
+      if (H[I].visibleAt <= Horizon)
+        KeepFrom = I;
+    if (KeepFrom)
+      H.erase(H.begin(), H.begin() + KeepFrom);
+  }
 }
 
 void AIERegisterFile::poison(MCRegister Reg) {
@@ -77,10 +108,10 @@ bool AIERegisterFile::isPoisoned(MCRegister Reg) const {
 
 void AIERegisterFile::print(raw_ostream &OS) const {
   for (unsigned Reg = 1, E = Widths.size(); Reg != E; ++Reg) {
-    if (!Widths[Reg] || Storage[Reg].isZero())
+    if (!Widths[Reg] || Storage[Reg].back().value.isZero())
       continue;
     SmallString<64> Hex;
-    Storage[Reg].toString(Hex, 16, /*Signed=*/false);
+    Storage[Reg].back().value.toString(Hex, 16, /*Signed=*/false);
     OS << MRI.getName(Reg) << " = 0x" << Hex << '\n';
   }
 }

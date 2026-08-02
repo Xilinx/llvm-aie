@@ -12,6 +12,7 @@
 #define LLVM_LIB_TARGET_AIE_SIM_AIECORESTATE_H
 
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCRegister.h"
 #include <optional>
 #include <vector>
@@ -46,8 +47,24 @@ public:
 
   /// \returns false when \p Reg has no storage, or holds a value this model
   /// declined to compute.
-  bool read(MCRegister Reg, APInt &Out) const;
-  bool write(MCRegister Reg, const APInt &Value);
+  ///
+  /// Reads the value visible at \p Cycle. AIE has no interlocks, so a register
+  /// legitimately holds different values to instructions issued a few bundles
+  /// apart: a producer's result appears at its own def cycle, and a consumer
+  /// samples at its own use cycle. Measured on silicon -- an aievec kernel
+  /// stores a multiply's result through a store that ISSUED four bundles
+  /// earlier, because the store samples late.
+  ///
+  /// A write is visible to a read at the SAME cycle: the compiler's legality
+  /// rule is `consumerIssue + useCycle >= producerIssue + defCycle`, so
+  /// equality is a legal schedule and must see the new value.
+  bool read(MCRegister Reg, APInt &Out, uint64_t Cycle) const;
+  void write(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
+
+  /// Drop history that no read can reach any more. \p Horizon is the earliest
+  /// cycle a future read could name; entries fully superseded before it are
+  /// removed, so a long run does not accumulate one entry per write.
+  void forgetBefore(uint64_t Horizon);
 
   /// Record that hardware would have changed \p Reg in a way the model does not
   /// compute, so that a later read faults instead of returning a stale value.
@@ -59,9 +76,17 @@ public:
   void print(raw_ostream &OS) const;
 
 private:
+  /// One value and the cycle it becomes readable. Kept newest-last.
+  struct Timed {
+    uint64_t visibleAt;
+    APInt value;
+  };
+
   const MCRegisterInfo &MRI;
   std::vector<unsigned> Widths;
-  std::vector<APInt> Storage;
+  /// Per register, the values in flight and the last one that landed. Short by
+  /// construction: only writes still inside their latency window can add to it.
+  std::vector<SmallVector<Timed, 2>> Storage;
   std::vector<bool> Poisoned;
 };
 

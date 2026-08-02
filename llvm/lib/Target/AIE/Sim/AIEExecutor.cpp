@@ -73,7 +73,7 @@ StepResult AIEExecutor::executeSlot(const MCInst &MI, SlotEffects &Eff) {
     if (Eff.Link && Reg == LRReg)
       return;
     if (!any_of(ArrayRef(Eff.RegWrites).drop_front(FirstWrite),
-                [&](const auto &W) { return W.first == Reg; }))
+                [&](const auto &W) { return W.Reg == Reg; }))
       Eff.RegPoisons.push_back(Reg);
   };
   for (MCPhysReg Reg : Desc.implicit_defs())
@@ -87,10 +87,32 @@ StepResult AIEExecutor::executeSlot(const MCInst &MI, SlotEffects &Eff) {
 void AIEExecutor::commit(const SlotEffects &Eff) {
   for (MCRegister Reg : Eff.RegPoisons)
     State.Regs.poison(Reg);
-  for (const auto &[Reg, Value] : Eff.RegWrites)
-    State.Regs.write(Reg, Value);
-  for (const auto &W : Eff.MemWrites)
-    Host.store(W.Addr, W.NumBytes, W.Value);
+  for (const SlotEffects::RegWrite &W : Eff.RegWrites)
+    State.Regs.write(W.Reg, W.Value, W.VisibleAt);
+  llvm::append_range(PendingStores, Eff.MemWrites);
+}
+
+void AIEExecutor::drainStores(bool Final) {
+  auto Ready = [&](const SlotEffects::MemWrite &W) {
+    return Final || W.SampleAt <= State.RetiredBundles;
+  };
+  for (const SlotEffects::MemWrite &W : PendingStores) {
+    if (!Ready(W))
+      continue;
+    APInt V;
+    // Read the source at the cycle the store samples it, which is what lets a
+    // producer scheduled AFTER the store still supply its data.
+    if (!State.Regs.read(W.SrcReg, V, W.SampleAt)) {
+      FaultMsg = ("store source " + Twine(MRI.getName(W.SrcReg)) +
+                  " holds no value this model has computed")
+                     .str();
+      continue;
+    }
+    const unsigned Bits = W.NumBytes * 8;
+    Host.store(W.Addr, W.NumBytes,
+               V.zextOrTrunc(32).trunc(Bits <= 32 ? Bits : 32));
+  }
+  llvm::erase_if(PendingStores, Ready);
 }
 
 void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
@@ -105,8 +127,10 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
     // written from it here, before Target overwrites it, rather than
     // computed by peeking ahead at issue time (which bundle sizes had not
     // been fetched yet).
+    // The link register is computed here rather than by semantics, so it has
+    // no operand cycle; +1 matches the implicit-register convention.
     if (State.Branch->Link && LRReg)
-      State.Regs.write(LRReg, APInt(64, State.PC));
+      State.Regs.write(LRReg, APInt(64, State.PC), State.RetiredBundles + 1);
     State.PC = State.Branch->Target;
     State.Branch.reset();
     return;
@@ -119,13 +143,17 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
   if (!LEReg || !LCReg || !LSReg)
     return;
   APInt LE, LC, LS;
-  if (!State.Regs.read(LEReg, LE) || !State.Regs.read(LCReg, LC) ||
-      !State.Regs.read(LSReg, LS))
+  // The zero-overhead loop is hardware reading its own registers as the last
+  // body bundle retires, not an instruction operand, so it sees whatever has
+  // landed by now.
+  if (!State.Regs.read(LEReg, LE, State.RetiredBundles) ||
+      !State.Regs.read(LCReg, LC, State.RetiredBundles) ||
+      !State.Regs.read(LSReg, LS, State.RetiredBundles))
     return;
   if (LC.isZero() || LE.getZExtValue() != BundleAddr)
     return;
   LC -= 1;
-  State.Regs.write(LCReg, LC);
+  State.Regs.write(LCReg, LC, State.RetiredBundles);
   if (!LC.isZero())
     State.PC = LS.getZExtValue();
 }
@@ -151,6 +179,9 @@ const AIEExecutor::Bundle *AIEExecutor::decode(uint64_t Addr) {
 }
 
 StepResult AIEExecutor::step() {
+  // Stores whose source cycle has arrived commit before this bundle runs.
+  drainStores();
+
   const uint64_t BundleAddr = State.PC;
   const Bundle *B = decode(BundleAddr);
   if (!B)
@@ -196,8 +227,12 @@ StepResult AIEExecutor::step() {
   }
 
   commit(Eff);
-  if (Done)
+  if (Done) {
+    // The program is over; stores still waiting on their source do land, and
+    // the values they want were produced by instructions that already ran.
+    drainStores(/*Final=*/true);
     return StepResult::Done;
+  }
 
   if (Eff.Branch && State.Branch) {
     FaultMsg = "control transfer issued inside another one's delay slots";
