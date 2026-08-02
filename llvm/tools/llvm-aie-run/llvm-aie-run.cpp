@@ -185,6 +185,30 @@ int main(int argc, char **argv) {
     fail(toString(ObjOrErr.takeError()));
   object::ObjectFile &Obj = **ObjOrErr;
 
+  // Sections are loaded where they say they live, so an object still carrying
+  // relocations is not runnable: every allocatable section sits at 0, on top
+  // of the others, and the branch and loop-bound fields the relocations would
+  // have filled hold zero. That runs -- straight to the bundle cap, or into a
+  // decoded field of zeros -- and looks like a hang rather than a load error.
+  // Hand-written straight-line tests relocate nothing and are unaffected;
+  // compiler output for anything with a loop always does, because AIE spells
+  // branch targets and loop bounds as absolute addresses.
+  for (const object::SectionRef &Sec : Obj.sections()) {
+    if (Sec.relocations().empty())
+      continue;
+    Expected<object::section_iterator> Relocated = Sec.getRelocatedSection();
+    if (!Relocated)
+      fail(toString(Relocated.takeError()));
+    object::SectionRef Target =
+        *Relocated == Obj.section_end() ? Sec : **Relocated;
+    if (!Target.isText() && !Target.isData())
+      continue;
+    Expected<StringRef> Name = Target.getName();
+    fail("unapplied relocations in " +
+         (Name ? *Name : StringRef("a loaded section")) +
+         ": link this object before running it");
+  }
+
   FlatMemory Mem;
   for (const object::SectionRef &Sec : Obj.sections()) {
     Expected<StringRef> Contents = Sec.getContents();
