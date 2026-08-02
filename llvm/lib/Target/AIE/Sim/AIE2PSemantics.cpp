@@ -306,11 +306,17 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     Def32(0, Op.val(3) != 0 ? Op.val(1) : Op.val(2));
     break;
 
+  // The four spellings AIE2PMultiSlotPseudoInstrInfo.td groups under
+  // mov_rlc_imm11_pseudo: one immediate move, four encodings and issue slots.
   case AIE2P::MOVA:
+  case AIE2P::MOVX_alu_cg:
   case AIE2P::MOVXM:
   case AIE2P::MOV_alu_mv_mv_mv_cg:
     Def32(0, uint32_t(Op.imm(1)));
     break;
+  // movs is the same copy across the address-generation register classes,
+  // which is how a loop index reaches dj before an indexed access uses it.
+  case AIE2P::MOVS:
   case AIE2P::MOV_alu_mv_mv_mv_scl:
     Def32(0, Op.val(1));
     break;
@@ -380,6 +386,14 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::LDA_dms_lda_idx_imm:
     R = scalarLoad(0, access(1, Op.imm(2)), 4, /*Signed=*/false);
     break;
+  // ()(imm): the frame adjust the prologue and epilogue emit. sp is implicit
+  // (Defs/Uses in the def, absent from the asm operands), so it is read and
+  // written by name rather than through Op.
+  case AIE2P::PADDXM_pstm_sp_imm:
+    Eff.RegWrites.emplace_back(
+        AIE2P::sp, APInt(DataAddrBits, spAccess(Op.imm(0))));
+    break;
+
   // (dst)(imm): sp-relative spill restore. What ST_R_SPILL/LDA_R_SPILL
   // (aie2p/AIE2PInstrInfo.td's Pseudo spill forms) actually expand to
   // (AIE2PInstrInfo.cpp's getSpillPseudoExpandInfoByOpcode) -- sp is fixed
@@ -398,6 +412,25 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   case AIE2P::LDA_u16_idx_imm:
     R = scalarLoad(0, access(1, Op.imm(2)), 2, /*Signed=*/false);
+    break;
+
+  // (dst)(ptr, dj): same loads with the offset in a register instead of the
+  // encoding. No pstm in the name and no ptr_out in the outs list, so the
+  // pointer is unchanged here too. dj is a byte offset, not an element index.
+  case AIE2P::LDA_dms_lda_idx:
+    R = scalarLoad(0, access(1, int32_t(Op.val(2))), 4, /*Signed=*/false);
+    break;
+  case AIE2P::LDA_s8_idx:
+    R = scalarLoad(0, access(1, int32_t(Op.val(2))), 1, /*Signed=*/true);
+    break;
+  case AIE2P::LDA_u8_idx:
+    R = scalarLoad(0, access(1, int32_t(Op.val(2))), 1, /*Signed=*/false);
+    break;
+  case AIE2P::LDA_s16_idx:
+    R = scalarLoad(0, access(1, int32_t(Op.val(2))), 2, /*Signed=*/true);
+    break;
+  case AIE2P::LDA_u16_idx:
+    R = scalarLoad(0, access(1, int32_t(Op.val(2))), 2, /*Signed=*/false);
     break;
 
   // (dst, ptr_out)(ptr, imm): load from ptr, then advance the pointer.
@@ -419,6 +452,17 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   case AIE2P::ST_s16_idx_imm:
     scalarStore(0, access(1, Op.imm(2)), 2);
+    break;
+
+  // ()(src, ptr, dj): the register-offset stores, matching the loads above.
+  case AIE2P::ST_dms_sts_idx:
+    scalarStore(0, access(1, int32_t(Op.val(2))), 4);
+    break;
+  case AIE2P::ST_s8_idx:
+    scalarStore(0, access(1, int32_t(Op.val(2))), 1);
+    break;
+  case AIE2P::ST_s16_idx:
+    scalarStore(0, access(1, int32_t(Op.val(2))), 2);
     break;
 
   // (ptr_out)(src, ptr, imm)
