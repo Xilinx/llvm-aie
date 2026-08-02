@@ -16,7 +16,9 @@
 using namespace llvm;
 using namespace llvm::AIESim;
 
-AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI) : MRI(MRI) {
+AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI,
+                                 ArrayRef<AIESubRegRange> SubRegRanges)
+    : MRI(MRI), Ranges(SubRegRanges) {
   const unsigned NumRegs = MRI.getNumRegs();
   Widths.assign(NumRegs, 0);
 
@@ -33,12 +35,47 @@ AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI) : MRI(MRI) {
     }
   }
 
-  // Registers built out of others are left without storage, so that reaching
-  // one faults instead of silently reading an independent copy that aliasing
-  // would never keep in step.
+  // Registers built out of others get no storage of their own: an independent
+  // copy would never stay in step with the parts. They are composed on demand
+  // from the parts instead, which needs the class width kept here.
+  ClassWidths = Widths;
   for (unsigned Reg = 1; Reg < NumRegs; ++Reg)
     if (!MRI.subregs(Reg).empty())
       Widths[Reg] = 0;
+
+  // The table must describe the same layout as the MC layer it is paired with.
+  // Checked rather than trusted: every index that names a sub-register with
+  // storage must agree on that register's width. A transcription slip or a
+  // .td change shows up here instead of as a wrong value later.
+  if (!Ranges.empty())
+    for (unsigned Reg = 1; Reg < NumRegs; ++Reg)
+      for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
+        MCRegister Sub = MRI.getSubReg(Reg, Idx);
+        if (!Sub || Idx >= Ranges.size())
+          continue;
+        assert((!Widths[Sub.id()] || Ranges[Idx].sizeBits == Widths[Sub.id()]) &&
+               "sub-register range table disagrees with the MC layer");
+        // Transitivity, which is the check that actually pins the LAYOUT: if
+        // R contains Sub at offset A and Sub contains Leaf at offset B, then R
+        // must contain Leaf at A + B. Sizes alone cannot catch a high/low pair
+        // transcribed the wrong way round -- both halves are the same size --
+        // and this can, because the sum only works out for one assignment.
+        for (unsigned J = 1; J < MRI.getNumSubRegIndices(); ++J) {
+          MCRegister Leaf = MRI.getSubReg(Sub, J);
+          if (!Leaf || J >= Ranges.size())
+            continue;
+          unsigned K = MRI.getSubRegIndex(Reg, Leaf);
+          if (!K || K >= Ranges.size())
+            continue;
+          if (Ranges[Idx].offsetBits == kNoContiguousRange ||
+              Ranges[J].offsetBits == kNoContiguousRange ||
+              Ranges[K].offsetBits == kNoContiguousRange)
+            continue;
+          assert(Ranges[K].offsetBits ==
+                     Ranges[Idx].offsetBits + Ranges[J].offsetBits &&
+                 "sub-register offsets are not transitively consistent");
+        }
+      }
 
   // Every register starts with one entry visible from cycle 0, so a read
   // before any write sees the reset value rather than an empty history.
@@ -52,8 +89,70 @@ unsigned AIERegisterFile::getWidth(MCRegister Reg) const {
   return Reg.id() < Widths.size() ? Widths[Reg.id()] : 0;
 }
 
+bool AIERegisterFile::readComposed(MCRegister Reg, APInt &Out,
+                                  uint64_t Cycle) const {
+  const unsigned W = Reg.id() < ClassWidths.size() ? ClassWidths[Reg.id()] : 0;
+  if (Ranges.empty() || !W)
+    return false;
+  // Only sub-registers that HAVE storage are read: they are the leaves, and
+  // leaves tile the parent. Intermediate levels (y0 lists x0 as well as x0's
+  // own halves) would otherwise be counted twice.
+  APInt Acc(W, 0);
+  unsigned Covered = 0;
+  for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
+    MCRegister Sub = MRI.getSubReg(Reg, Idx);
+    if (!Sub || !Widths[Sub.id()] || Idx >= Ranges.size())
+      continue;
+    const AIESubRegRange &R = Ranges[Idx];
+    if (R.offsetBits == kNoContiguousRange ||
+        R.offsetBits + R.sizeBits > W)
+      return false; // Not one contiguous run, or not inside the parent.
+    APInt V;
+    if (!read(Sub, V, Cycle))
+      return false;
+    Acc.insertBits(V.zextOrTrunc(R.sizeBits), R.offsetBits);
+    Covered += R.sizeBits;
+  }
+  // Refuse a partial composition: a value assembled out of some of the parts
+  // is worse than none, because it looks like a number.
+  if (Covered != W)
+    return false;
+  Out = Acc;
+  return true;
+}
+
+bool AIERegisterFile::writeComposed(MCRegister Reg, const APInt &Value,
+                                    uint64_t VisibleAt) {
+  const unsigned W = Reg.id() < ClassWidths.size() ? ClassWidths[Reg.id()] : 0;
+  if (Ranges.empty() || !W)
+    return false;
+  unsigned Covered = 0;
+  for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
+    MCRegister Sub = MRI.getSubReg(Reg, Idx);
+    if (!Sub || !Widths[Sub.id()] || Idx >= Ranges.size())
+      continue;
+    const AIESubRegRange &R = Ranges[Idx];
+    if (R.offsetBits == kNoContiguousRange || R.offsetBits + R.sizeBits > W)
+      return false;
+    Covered += R.sizeBits;
+  }
+  if (Covered != W)
+    return false;
+  const APInt V = Value.zextOrTrunc(W);
+  for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
+    MCRegister Sub = MRI.getSubReg(Reg, Idx);
+    if (!Sub || !Widths[Sub.id()] || Idx >= Ranges.size())
+      continue;
+    const AIESubRegRange &R = Ranges[Idx];
+    write(Sub, V.extractBits(R.sizeBits, R.offsetBits), VisibleAt);
+  }
+  return true;
+}
+
 bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
-  if (!getWidth(Reg) || Poisoned[Reg.id()])
+  if (!getWidth(Reg))
+    return readComposed(Reg, Out, Cycle);
+  if (Poisoned[Reg.id()])
     return false;
   // Newest entry that has landed by Cycle. `<=` because a schedule where the
   // consumer's use cycle equals the producer's def cycle is legal.
@@ -72,8 +171,10 @@ bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
 void AIERegisterFile::write(MCRegister Reg, const APInt &Value,
                             uint64_t VisibleAt) {
   const unsigned W = getWidth(Reg);
-  if (!W)
+  if (!W) {
+    writeComposed(Reg, Value, VisibleAt);
     return;
+  }
   SmallVectorImpl<Timed> &H = Storage[Reg.id()];
   // Keep newest-last by visibleAt. Two writes can land out of issue order when
   // their latencies differ, and program order is what decides the winner, so a

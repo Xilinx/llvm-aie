@@ -12,6 +12,7 @@
 #define LLVM_LIB_TARGET_AIE_SIM_AIECORESTATE_H
 
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCRegister.h"
 #include <optional>
@@ -38,9 +39,22 @@ constexpr unsigned NumDelaySlots = 5;
 /// of others (l0 = r1:r0, and the vector and accumulator hierarchy) has no
 /// storage here, because composing it needs sub-register bit offsets that the
 /// MC layer does not carry; accessing one is a fault rather than a guess.
+/// Where one sub-register index sits inside its parent. Target data, passed in
+/// rather than known here, so this file stays generic.
+struct AIESubRegRange {
+  uint32_t offsetBits;
+  uint32_t sizeBits;
+};
+/// An index that does not name one contiguous run of bits.
+inline constexpr uint32_t kNoContiguousRange = 65535;
+
 class AIERegisterFile {
 public:
-  explicit AIERegisterFile(const MCRegisterInfo &MRI);
+  /// \p SubRegRanges is indexed by sub-register index number and may be empty,
+  /// in which case a composed register stays unreadable rather than being
+  /// composed from a layout nobody supplied.
+  AIERegisterFile(const MCRegisterInfo &MRI,
+                  ArrayRef<AIESubRegRange> SubRegRanges = {});
 
   /// Width in bits, or 0 when the register has no storage in this model.
   unsigned getWidth(MCRegister Reg) const;
@@ -82,8 +96,17 @@ private:
     APInt value;
   };
 
+  /// Compose \p Reg out of the sub-registers that do have storage.
+  bool readComposed(MCRegister Reg, APInt &Out, uint64_t Cycle) const;
+  /// Split \p Value across them. \returns false if they do not tile \p Reg.
+  bool writeComposed(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
+
   const MCRegisterInfo &MRI;
+  ArrayRef<AIESubRegRange> Ranges;
   std::vector<unsigned> Widths;
+  /// Width from the register classes, kept even where Widths is zeroed because
+  /// the register is composed -- that is exactly where composition needs it.
+  std::vector<unsigned> ClassWidths;
   /// Per register, the values in flight and the last one that landed. Short by
   /// construction: only writes still inside their latency window can add to it.
   std::vector<SmallVector<Timed, 2>> Storage;
@@ -93,8 +116,9 @@ private:
 /// The whole architectural state of one core.
 class AIECoreState {
 public:
-  AIECoreState(const MCRegisterInfo &MRI, uint64_t EntryPoint)
-      : Regs(MRI), PC(EntryPoint) {}
+  AIECoreState(const MCRegisterInfo &MRI, uint64_t EntryPoint,
+               ArrayRef<AIESubRegRange> SubRegRanges = {})
+      : Regs(MRI, SubRegRanges), PC(EntryPoint) {}
 
   AIERegisterFile Regs;
   uint64_t PC;

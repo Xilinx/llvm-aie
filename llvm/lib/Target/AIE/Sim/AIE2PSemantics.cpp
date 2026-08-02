@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIESemantics.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCInst.h"
@@ -508,6 +509,16 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Fault;
   }
   return R;
+}
+
+namespace {
+#include "AIE2PSubRegRanges.inc"
+} // namespace
+
+ArrayRef<AIESubRegRange> llvm::AIESim::subRegRangesForTriple(const Triple &TT) {
+  if (TT.getArch() == Triple::aie2p)
+    return ArrayRef(AIE2PSubRegRanges);
+  return {};
 }
 
 StringRef llvm::AIESim::cpuForTriple(const Triple &TT) {

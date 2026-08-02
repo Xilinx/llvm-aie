@@ -111,6 +111,11 @@ std::unique_ptr<AIESemantics> createSemantics(const MCSubtargetInfo &STI,
                                               const MCInstrInfo &MII,
                                               const MCRegisterInfo &MRI);
 
+/// Where each sub-register index sits inside its parent, for \p TT, or empty
+/// when this build has no table for it -- in which case composed registers stay
+/// unreadable rather than being composed from a guessed layout.
+ArrayRef<AIESubRegRange> subRegRangesForTriple(const Triple &TT);
+
 /// The processor name to build MCSubtargetInfo with, for \p TT.
 ///
 /// Not optional and not cosmetic: with an empty CPU the subtarget carries no
