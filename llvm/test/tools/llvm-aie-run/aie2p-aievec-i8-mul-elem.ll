@@ -28,12 +28,18 @@
 ; reference. The output spot-check is there so an @out left untouched cannot
 ; pass as agreement.
 
+; Nothing initialises sp, so llc's prologue spills lr near address 0. `.text`
+; therefore starts at 0x1000 with the low page mapped as scratch: at 0x0 the
+; spill lands ON the code, and because 0x0000 is the AIE2P NOP encoding the
+; clobbered bundle decodes as nops and the program falls through it instead of
+; failing. The answer stays right and the reason stops being one.
+
 ; REQUIRES: ld_lld
 ; RUN: llc -mtriple=aie2p -O2 -filetype=obj %s -o %t.o
-; RUN: ld.lld -e _start --section-start=.text=0x0 \
-; RUN:   --section-start=.bss=0x20000 -o %t.elf %t.o
-; RUN: llvm-aie-run %t.elf --dump-mem=0x21800:4 --dump-mem=0x20800:32 \
-; RUN:   | FileCheck %s
+; RUN: ld.lld -e _start --section-start=.text=0x1000 \
+; RUN:   --section-start=.bss=0x30000 -o %t.elf %t.o
+; RUN: llvm-aie-run %t.elf --scratch=0x0:0x1000 --dump-mem=0x31800:4 \
+; RUN:   --dump-mem=0x30800:32 --dump-mem=0x1000:8 | FileCheck %s
 
 @in0 = global [1024 x i8] zeroinitializer, align 32
 @in1 = global [1024 x i8] zeroinitializer, align 32
@@ -118,8 +124,17 @@ declare void @llvm.aie2p.done()
 ; The run reached `done` rather than the bundle cap.
 ; CHECK: bundles: {{[0-9]+}}
 
-; Zero mismatches over all 1024 elements.
-; CHECK: mem[0x21800] = 00 00 00 00
+; Zero mismatches over all 1024 elements. On its own this is weak -- LLVM can
+; see the kernel and the reference in one module and fold the comparison -- so
+; the output bytes below are the real evidence.
+; CHECK: mem[0x31800] = 00 00 00 00
 
 ; out[0..7] = 0, 3, 12, 27, 48, 75, 108, 147.
-; CHECK: mem[0x20800] = 00 00 00 00 03 00 00 00 0c 00 00 00 1b 00 00 00 30 00 00 00 4b 00 00 00 6c 00 00 00 93 00 00 00
+; CHECK: mem[0x30800] = 00 00 00 00 03 00 00 00 0c 00 00 00 1b 00 00 00 30 00 00 00 4b 00 00 00 6c 00 00 00 93 00 00 00
+
+; The first bundle of @dut, still the code the linker wrote. A stack that
+; overlapped `.text` would leave zeros here, and because 0x0000 is the AIE2P
+; NOP encoding the run would fall through the hole instead of failing. Matching
+; "some byte is non-zero" rather than the bundle itself keeps this from
+; breaking every time the kernel is scheduled differently.
+; CHECK: mem[0x1000] = {{[0-9a-f ]*[1-9a-f][0-9a-f ]*$}}
