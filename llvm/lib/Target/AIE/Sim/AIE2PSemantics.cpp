@@ -174,9 +174,14 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // A sub-word store takes the low bytes of a 32-bit register, so the source
+  // has to be narrowed explicitly: APInt's constructor asserts on a value
+  // wider than the type it is given.
   auto scalarStore = [&](unsigned SrcIdx, uint32_t Addr, unsigned NumBytes) {
+    const unsigned Bits = NumBytes * 8;
     Eff.MemWrites.push_back(
-        {Addr, NumBytes, APInt(NumBytes * 8, Op.val(SrcIdx))});
+        {Addr, NumBytes,
+         APInt(Bits, Op.val(SrcIdx) & maskTrailingOnes<uint32_t>(Bits))});
   };
 
   StepResult R = StepResult::Retired;
