@@ -9,6 +9,8 @@ add_llvm_component_library(LLVMAIESim
   AIEExecutor.cpp
   AIE2PSemantics.cpp
 
+  PARTIAL_SOURCES_INTENDED
+
   LINK_COMPONENTS
   MCDisassembler
   AIEDesc
@@ -19,4 +21,23 @@ add_llvm_component_library(LLVMAIESim
 
   ADD_TO_COMPONENT
   AIE
+  )
+
+# The loadable engine an embedder without LLVM headers dlopens. Kept out of
+# LLVMAIESim so that linking the executor statically does not also drag in the
+# C ABI's process-wide target registration.
+add_llvm_library(aie-iss SHARED
+  AIEISSCAbi.cpp
+
+  PARTIAL_SOURCES_INTENDED
+
+  LINK_COMPONENTS
+  AIEDesc
+  AIEDisassembler
+  AIEInfo
+  AIESim
+  MC
+  MCDisassembler
+  Support
+  TargetParser
   )
