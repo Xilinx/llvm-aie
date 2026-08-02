@@ -15,6 +15,7 @@
 #include "AIESemantics.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInst.h"
 #include <string>
@@ -54,6 +55,10 @@ private:
     uint64_t Size;
   };
 
+  /// Perform every store whose source has been sampled by now, and drop it.
+  /// \p Final drains the rest regardless, for the end of the program.
+  void drainStores(bool Final = false);
+
   /// \returns nullptr and sets FaultMsg when \p Addr does not decode.
   const Bundle *decode(uint64_t Addr);
   StepResult executeSlot(const MCInst &MI, SlotEffects &Eff);
@@ -78,6 +83,9 @@ private:
   std::string FaultMsg;
   DenseSet<unsigned> Executed;
   DenseSet<unsigned> Unmodelled;
+  /// Stores waiting for their source operand's cycle. Short: a store is
+  /// outstanding only for its own use-cycle worth of bundles.
+  SmallVector<SlotEffects::MemWrite, 4> PendingStores;
 };
 
 } // namespace AIESim

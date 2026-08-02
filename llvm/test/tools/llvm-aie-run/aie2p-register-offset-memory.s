@@ -48,6 +48,16 @@ _start:
 	st	r0, [p0, dj0]
 	st.s8	r3, [p0, dj1]
 	st.s16	r10, [p0, dj2]
+	// A narrow store samples its source at operand cycle 7 and commits then,
+	// so a load of the same address has to be scheduled after that. The
+	// compiler does this from the itineraries; hand-written assembly has to
+	// say it, and this padding is that.
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
 	nop
 	nop
 
