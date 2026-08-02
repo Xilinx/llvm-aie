@@ -237,7 +237,8 @@ aie_iss_core *createCore(int Isa, const aie_iss_host_callbacks *Callbacks) {
 
   Core->MRI.reset(TheTarget->createMCRegInfo(TripleStr));
   Core->MII.reset(TheTarget->createMCInstrInfo());
-  Core->STI.reset(TheTarget->createMCSubtargetInfo(TripleStr, "", ""));
+  Core->STI.reset(
+      TheTarget->createMCSubtargetInfo(TripleStr, cpuForTriple(TT), ""));
   if (!Core->MRI || !Core->MII || !Core->STI)
     return nullptr;
 

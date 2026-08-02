@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
       TheTarget->createMCRegInfo(TripleStr));
   std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
   std::unique_ptr<const MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(TripleStr, "", ""));
+      TheTarget->createMCSubtargetInfo(TripleStr, cpuForTriple(TT), ""));
   if (!MRI || !MII || !STI)
     fail("no MC layer for " + TT.str());
 

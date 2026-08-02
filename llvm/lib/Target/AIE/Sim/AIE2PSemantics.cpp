@@ -482,6 +482,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   return R;
 }
 
+StringRef llvm::AIESim::cpuForTriple(const Triple &TT) {
+  switch (TT.getArch()) {
+  case Triple::aie:
+    return "aie";
+  case Triple::aie2:
+    return "aie2";
+  case Triple::aie2p:
+    return "aie2p";
+  case Triple::aie2ps:
+    return "aie2ps";
+  default:
+    return "";
+  }
+}
+
 std::unique_ptr<AIESemantics>
 llvm::AIESim::createSemantics(const MCSubtargetInfo &STI,
                               const MCInstrInfo &MII,
