@@ -323,6 +323,22 @@ int writeRegister(aie_iss_core *Core, const char *Name, const void *Data,
   return Core->Exec->getState().Regs.write(It->second, Value);
 }
 
+uint32_t opcodeCoverage(const aie_iss_core *Core, void *Ctx,
+                        void (*Sink)(void *, const char *, int)) {
+  if (!Core || !Core->Exec || !Sink)
+    return 0;
+  // Reported in opcode order rather than DenseSet iteration order: the caller
+  // puts this in a record that has to be byte-stable across runs.
+  const auto &Executed = Core->Exec->getExecutedOpcodes();
+  const auto &Unmodelled = Core->Exec->getUnmodelledOpcodes();
+  SmallVector<unsigned, 64> Opcodes(Executed.begin(), Executed.end());
+  llvm::sort(Opcodes);
+  for (unsigned Opcode : Opcodes)
+    Sink(Ctx, Core->MII->getName(Opcode).data(),
+         Unmodelled.contains(Opcode) ? 0 : 1);
+  return Opcodes.size();
+}
+
 const aie_iss_api Api = {
     sizeof(aie_iss_api),
     AIE_ISS_ABI_VERSION,
@@ -337,6 +353,7 @@ const aie_iss_api Api = {
     coreError,
     readRegister,
     writeRegister,
+    opcodeCoverage,
 };
 
 } // namespace
