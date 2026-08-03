@@ -60,6 +60,11 @@ public:
   void reserve(const InstrItineraryData &Itin, ArrayRef<unsigned> SchedClasses,
                uint64_t At);
 
+  /// Unit indices holding up a bundle offered at \p At, for diagnostics.
+  SmallVector<uint16_t, 4> blame(const InstrItineraryData &Itin,
+                                 ArrayRef<unsigned> SchedClasses,
+                                 uint64_t At) const;
+
   /// The longest stage span across every class an instruction names, which is
   /// the depth a scoreboard over \p Itin needs.
   static unsigned depthFor(const InstrItineraryData &Itin,
