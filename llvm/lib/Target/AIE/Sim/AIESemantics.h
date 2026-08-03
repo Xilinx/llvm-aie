@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <array>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -58,6 +59,17 @@ struct SlotEffects {
     unsigned NumBytes;
     MCRegister SrcReg;
     uint64_t SampleAt;
+    /// What to write, given the source register's value at SampleAt. Empty for
+    /// an ordinary store, which writes those bits unchanged.
+    ///
+    /// The fused stores need this because they do arithmetic on the way out:
+    /// vst.srs shifts, rounds, saturates and narrows an accumulator. Doing it
+    /// at issue instead would defeat the deferral above -- the source may be
+    /// written by an instruction issued AFTER the store, which is the measured
+    /// behaviour this whole struct exists to model. A callable rather than a
+    /// description of the arithmetic, so that subtarget semantics stay out of
+    /// the executor.
+    std::function<APInt(const APInt &)> Narrow;
   };
 
   /// A register write and the cycle it becomes readable. The cycle is the
