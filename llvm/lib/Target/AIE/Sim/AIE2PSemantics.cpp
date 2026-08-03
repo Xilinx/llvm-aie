@@ -95,6 +95,19 @@ struct Operands {
     return V.zextOrTrunc(32).getZExtValue();
   }
 
+  /// The low \p Bits of operand \p I, for a source the 32-bit datapath
+  /// assumption in val() does not fit: vbcst.64 reads an eL register pair.
+  APInt valN(unsigned I, unsigned Bits) {
+    APInt V;
+    MCRegister R = reg(I);
+    if (!State.Regs.read(R, V, cycleOf(I))) {
+      Ok = false;
+      BadReg = R;
+      return APInt(Bits, 0);
+    }
+    return V.zextOrTrunc(Bits);
+  }
+
   // Same as val(), for a register that is architecturally implicit rather
   // than an MI operand -- sp in a *_spill opcode, which encodes only an
   // offset (aie2p/AIE2PInstrInfo.td's spill pseudos all expand to a fixed
@@ -215,6 +228,25 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   auto scalarStore = [&](unsigned SrcIdx, uint32_t Addr, unsigned NumBytes) {
     Eff.MemWrites.push_back(
         {Addr, NumBytes, Op.reg(SrcIdx), Op.cycleOf(SrcIdx)});
+  };
+
+  // vbcst.N (mXm)(src): the low N bits of the source repeated across the
+  // destination vector. The destination is a composed register, so these are
+  // the writes that have to split across leaves to land at all.
+  auto broadcast = [&](unsigned LaneBits) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    // From the register class; a literal 512 would be a second, unchecked
+    // copy of the class width.
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % LaneBits) {
+      FaultMsg = (Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                  " bits, not a whole number of " + Twine(LaneBits) + "-bit lanes")
+                     .str();
+      return StepResult::Fault;
+    }
+    Eff.RegWrites.push_back(
+        {Dst, APInt::getSplat(W, Op.valN(1, LaneBits)), Op.cycleOf(0)});
+    return StepResult::Retired;
   };
 
   StepResult R = StepResult::Retired;
@@ -505,26 +537,22 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     scalarStore(1, access(2, 0), 4);
     DefAddr(0, access(2, Op.imm(3)));
     break;
-  // vbcst.16 (mXm)(eR): the low half-word of a scalar register repeated across
-  // the destination vector. The first vector instruction, and chosen as the
-  // cheapest driver for sub-register composition -- x0 has no storage of its
-  // own, so this is the first write that has to be split across leaves.
-  case AIE2P::VBCST_16: {
-    const MCRegister Dst = Op.reg(0);
-    // From the register classes; a literal 512 would be a second, unchecked
-    // copy of the class width.
-    const unsigned W = State.Regs.getClassWidth(Dst);
-    if (!W || W % 16) {
-      FaultMsg = (Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
-                  " bits, not a whole number of 16-bit lanes")
-                     .str();
-      return StepResult::Fault;
-    }
-    Eff.RegWrites.push_back(
-        {Dst, APInt::getSplat(W, APInt(16, uint16_t(Op.val(1)))),
-         Op.cycleOf(0)});
+  // The vector broadcasts, the first vector instructions modelled. 8/16/32
+  // take a 32-bit eR; 64 takes an eL pair, which is itself composed, so it is
+  // also the first instruction to READ through composition rather than write
+  // through it.
+  case AIE2P::VBCST_8:
+    R = broadcast(8);
     break;
-  }
+  case AIE2P::VBCST_16:
+    R = broadcast(16);
+    break;
+  case AIE2P::VBCST_32:
+    R = broadcast(32);
+    break;
+  case AIE2P::VBCST_64:
+    R = broadcast(64);
+    break;
   }
 
   if (!Op.Ok) {
