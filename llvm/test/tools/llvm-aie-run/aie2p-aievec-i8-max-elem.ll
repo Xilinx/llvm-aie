@@ -20,19 +20,14 @@
 ; semantics. Here the inputs are filled in-module first, so the stored bytes
 ; are a real answer.
 ;
-; XFAIL, and the reason is NOT this kernel's semantics -- each opcode it uses is
-; verified in isolation, and a hand-spaced vpush/vextract round trip is exact.
-; It fails because the model has no BYPASS network. The itineraries carry one
-; per operand: the MV-class vector ops here are [d MV_Bypass, s1 MV_Bypass, ...]
-; while the memory ops are MemInstrItinData with no bypass column at all. The
-; compiler schedules this chain back-to-back because the bypass forwards each
-; result, and the register file alone -- read strictly, which is correct for the
-; unbypassed memory ops that were measured -- hands back the stale value. Insert
-; seven nops between the same ops and the answer is right.
-;
-; So the two rules are different per operand class and the model implements one
-; of them. This flips to XPASS when the bypass network lands, which is the
-; signal wanted.
+; This test is what found the missing BYPASS network. It failed with 1008
+; mismatches in 1024 while every opcode it uses verified in isolation, because
+; the itineraries carry a per-operand forwarding class the model ignored: the
+; MV-class vector ops here are [d MV_Bypass, s1 MV_Bypass, ...] where the memory
+; ops are MemInstrItinData with no bypass column at all. The compiler schedules
+; this chain back-to-back because the bypass forwards each result. It passes now
+; that a matching (def, use) pair reads one cycle early, and it is the regression
+; test for that: a model that drops the bypass again returns to 1008.
 ;
 ; The inputs are chosen so a WRONG SIGNEDNESS survives neither check. in1 wraps
 ; past 127 at i = 41, and from there the two readings disagree on every element:
@@ -42,7 +37,6 @@
 ;
 ;===---------------------------------------------------------------------===;
 
-; XFAIL: *
 ; REQUIRES: ld_lld
 ; RUN: llc -mtriple=aie2p -O2 -filetype=obj %s -o %t.o
 ; RUN: ld.lld -e _start --section-start=.text=0x1000 \
@@ -156,7 +150,7 @@ declare { <64 x i8>, <2 x i32> } @llvm.aie2p.vmax.lt8(<64 x i8>, <64 x i8>, i32)
 ; Zero mismatches over all 1024 elements. Weak alone -- the kernel and the
 ; reference are in one module and the comparison could fold -- so the bytes
 ; below carry the evidence.
-; CHECK: mem[0x30C00] = 00 00 00 00
+; CHECK: mem[0x30c00] = 00 00 00 00
 
 ; out[0..7], where in1 is still positive and larger: 3i+7 = 7, 10, 13 ...
 ; CHECK: mem[0x30800] = 07 0a 0d 10 13 16 19 1c

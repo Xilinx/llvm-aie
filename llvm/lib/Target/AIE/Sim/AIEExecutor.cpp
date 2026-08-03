@@ -192,7 +192,7 @@ void AIEExecutor::commit(const SlotEffects &Eff) {
   for (MCRegister Reg : Eff.RegPoisons)
     State.Regs.poison(Reg);
   for (const SlotEffects::RegWrite &W : Eff.RegWrites)
-    State.Regs.write(W.Reg, W.Value, W.VisibleAt);
+    State.Regs.write(W.Reg, W.Value, W.VisibleAt, W.Fwd);
   llvm::append_range(PendingStores, Eff.MemWrites);
 }
 
@@ -207,7 +207,7 @@ bool AIEExecutor::drainStores(bool Final) {
     APInt V;
     // Read the source at the cycle the store samples it, which is what lets a
     // producer scheduled AFTER the store still supply its data.
-    if (!State.Regs.read(W.SrcReg, V, W.SampleAt)) {
+    if (!State.Regs.read(W.SrcReg, V, W.SampleAt, W.Fwd)) {
       // A fault, not a skip. This used to set the message and carry on, so a
       // store that could not be performed simply did not happen: memory kept
       // whatever was there, a later load read it back, and nothing said so.

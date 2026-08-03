@@ -60,6 +60,9 @@ struct SlotEffects {
     unsigned NumBytes;
     MCRegister SrcReg;
     uint64_t SampleAt;
+    /// Forwarding class of the store's SOURCE operand, matched against the
+    /// producer's the same way a register read is.
+    unsigned Fwd;
     /// What to write, given the source register's value at SampleAt. Empty for
     /// an ordinary store, which writes those bits unchanged.
     ///
@@ -77,10 +80,17 @@ struct SlotEffects {
   /// issuing instruction's own def cycle, so a consumer scheduled inside the
   /// window sees the OLD value -- which is what an exposed pipeline does and
   /// what silicon was measured doing.
+  ///
+  /// \p Fwd is the itinerary's pipeline-forwarding class for the operand that
+  /// produced this write, 0 for none. A consumer whose own use operand carries
+  /// the SAME class reads the result off the bypass instead of the register
+  /// file, one cycle before it lands. Carried per write because it is a
+  /// property of the (def operand, use operand) pair, not of the register.
   struct RegWrite {
     MCRegister Reg;
     APInt Value;
     uint64_t VisibleAt;
+    unsigned Fwd = 0;
   };
   SmallVector<RegWrite, 4> RegWrites;
   SmallVector<MemWrite, 2> MemWrites;
