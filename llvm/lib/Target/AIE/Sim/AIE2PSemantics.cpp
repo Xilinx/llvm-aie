@@ -66,6 +66,13 @@ struct Operands {
     return IssueCycle + (C && *C >= 1 ? *C : 1);
   }
 
+  /// Pipeline-forwarding class of operand \p I, 0 when the itinerary gives
+  /// none. Compared against the class a value was written with, which is what
+  /// InstrItineraryData::hasPipelineForwarding does with the same two numbers.
+  unsigned fwdOf(unsigned I) const {
+    return Itin ? Itin->getForwardingClass(SchedClass, I) : 0;
+  }
+
   MCRegister reg(unsigned I) {
     if (!MI.getOperand(I).isReg()) {
       Ok = false;
@@ -85,7 +92,7 @@ struct Operands {
   uint32_t val(unsigned I) {
     APInt V;
     MCRegister R = reg(I);
-    if (!State.Regs.read(R, V, cycleOf(I))) {
+    if (!State.Regs.read(R, V, cycleOf(I), fwdOf(I))) {
       Ok = false;
       BadReg = R;
       return 0;
@@ -101,7 +108,7 @@ struct Operands {
   APInt valN(unsigned I, unsigned Bits) {
     APInt V;
     MCRegister R = reg(I);
-    if (!State.Regs.read(R, V, cycleOf(I))) {
+    if (!State.Regs.read(R, V, cycleOf(I), fwdOf(I))) {
       Ok = false;
       BadReg = R;
       return APInt(Bits, 0);
@@ -193,11 +200,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Fault;
   };
   auto Def32 = [&](unsigned Idx, uint32_t V) {
-    Eff.RegWrites.push_back({Op.reg(Idx), APInt(32, V), Op.cycleOf(Idx)});
+    Eff.RegWrites.push_back({Op.reg(Idx), APInt(32, V), Op.cycleOf(Idx), Op.fwdOf(Idx)});
   };
   auto DefAddr = [&](unsigned Idx, uint32_t V) {
     Eff.RegWrites.push_back(
-        {Op.reg(Idx), APInt(DataAddrBits, V), Op.cycleOf(Idx)});
+        {Op.reg(Idx), APInt(DataAddrBits, V), Op.cycleOf(Idx), Op.fwdOf(Idx)});
   };
 
   // Address of a scalar access, and the post-increment written back to the
@@ -226,7 +233,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       break;
     }
     Eff.RegWrites.push_back({Op.reg(DstIdx), Signed ? V.sext(32) : V.zext(32),
-                             Op.cycleOf(DstIdx)});
+                             Op.cycleOf(DstIdx), Op.fwdOf(DstIdx)});
     return StepResult::Retired;
   };
 
@@ -273,7 +280,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   };
   auto defCount = [&](unsigned Idx, uint32_t V) {
     Eff.RegWrites.push_back(
-        {Op.reg(Idx), APInt(DataAddrBits, V), Op.cycleOf(Idx)});
+        {Op.reg(Idx), APInt(DataAddrBits, V), Op.cycleOf(Idx), Op.fwdOf(Idx)});
   };
 
   // \returns the new pointer; writes the counter through \p Eff.
@@ -355,7 +362,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     case PortStatus::Ok:
       break;
     }
-    Eff.RegWrites.push_back({Dst, V, Op.cycleOf(DstIdx)});
+    Eff.RegWrites.push_back({Dst, V, Op.cycleOf(DstIdx), Op.fwdOf(DstIdx)});
     return StepResult::Retired;
   };
 
@@ -365,7 +372,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // it. The executor reads it when the pipeline gets there.
   auto scalarStore = [&](unsigned SrcIdx, uint32_t Addr, unsigned NumBytes) {
     Eff.MemWrites.push_back(
-        {Addr, NumBytes, Op.reg(SrcIdx), Op.cycleOf(SrcIdx)});
+        {Addr, NumBytes, Op.reg(SrcIdx), Op.cycleOf(SrcIdx), Op.fwdOf(SrcIdx)});
   };
 
   // vups.Nx: widen each lane of a vector into an accumulator lane, shifting
@@ -408,7 +415,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       APInt Wide = Signed ? Lane.sext(AccLaneBits) : Lane.zext(AccLaneBits);
       Acc.insertBits(Wide << Shift, I * AccLaneBits);
     }
-    Eff.RegWrites.push_back({Dst, Acc, Op.cycleOf(DstIdx)});
+    Eff.RegWrites.push_back({Dst, Acc, Op.cycleOf(DstIdx), Op.fwdOf(DstIdx)});
     return StepResult::Retired;
   };
 
@@ -574,7 +581,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
          srsNarrow(Op.valN(1, SrcBits), DstBits, AccLaneBits,
                    Op.val(2) & (AccLaneBits - 1), Rnd, Op.valReg(AIE2P::crSat),
                    Signed),
-         Op.cycleOf(0)});
+         Op.cycleOf(0), Op.fwdOf(0)});
     return StepResult::Retired;
   };
 
@@ -605,6 +612,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                    ", which is not a rounding mode this model knows");
     Eff.MemWrites.push_back(
         {Addr, DstBits / 8, Op.reg(SrcIdx), Op.cycleOf(SrcIdx),
+         Op.fwdOf(SrcIdx),
          [=](const APInt &V) {
            return srsNarrow(V, DstBits, AccLaneBits, Shift, Rnd, Sat, Signed);
          }});
@@ -730,7 +738,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
           Out.insertBits(Sum, (I * N + J) * AccLaneBits);
         }
     }
-    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
     return StepResult::Retired;
   };
 
@@ -747,7 +755,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                      .str();
       return StepResult::Fault;
     }
-    Eff.MemWrites.push_back({Addr, W / 8, Src, Op.cycleOf(SrcIdx)});
+    Eff.MemWrites.push_back({Addr, W / 8, Src, Op.cycleOf(SrcIdx), Op.fwdOf(SrcIdx)});
     return StepResult::Retired;
   };
 
@@ -781,7 +789,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       Out.insertBits(Src.extractBits(ElemBits, (I + 1) * ElemBits),
                      I * ElemBits);
     Out.insertBits(Top, (Lanes - 1) * ElemBits);
-    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
     return StepResult::Retired;
   };
 
@@ -860,8 +868,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       Out.insertBits(TakeB ? B : A, I * ElemBits);
       Mask.setBitVal(I, TakeB);
     }
-    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
-    Eff.RegWrites.push_back({Cmp, Mask, Op.cycleOf(1)});
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    Eff.RegWrites.push_back({Cmp, Mask, Op.cycleOf(1), Op.fwdOf(1)});
     return StepResult::Retired;
   };
 
@@ -900,7 +908,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                    Twine(Lanes) + " this source holds");
     const APInt E = V.extractBits(ElemBits, unsigned(I) * ElemBits);
     Eff.RegWrites.push_back(
-        {Dst, Signed ? E.sext(DstBits) : E.zext(DstBits), Op.cycleOf(0)});
+        {Dst, Signed ? E.sext(DstBits) : E.zext(DstBits), Op.cycleOf(0), Op.fwdOf(0)});
     return StepResult::Retired;
   };
 
@@ -934,7 +942,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                    Twine(2 * Bytes) + "-byte concatenation");
     const APInt Cat = Lo.zext(2 * W) | Hi.zext(2 * W).shl(W);
     Eff.RegWrites.push_back(
-        {Dst, Cat.lshr(Shift * 8).trunc(W), Op.cycleOf(0)});
+        {Dst, Cat.lshr(Shift * 8).trunc(W), Op.cycleOf(0), Op.fwdOf(0)});
     return StepResult::Retired;
   };
 
@@ -953,7 +961,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       return StepResult::Fault;
     }
     Eff.RegWrites.push_back(
-        {Dst, APInt::getSplat(W, Op.valN(1, LaneBits)), Op.cycleOf(0)});
+        {Dst, APInt::getSplat(W, Op.valN(1, LaneBits)), Op.cycleOf(0), Op.fwdOf(0)});
     return StepResult::Retired;
   };
 
@@ -1892,7 +1900,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       R = fault(Name + ": " + MRI.getName(Dst) + " has no class width");
       break;
     }
-    Eff.RegWrites.push_back({Dst, Op.valN(1, W), Op.cycleOf(0)});
+    Eff.RegWrites.push_back({Dst, Op.valN(1, W), Op.cycleOf(0), Op.fwdOf(0)});
     break;
   }
 
@@ -2007,7 +2015,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const APInt A = Op.valN(1, W);
     const APInt B = Op.valN(2, W);
     Eff.RegWrites.push_back(
-        {Dst, Opc == AIE2P::VBAND ? (A & B) : (A | B), Op.cycleOf(0)});
+        {Dst, Opc == AIE2P::VBAND ? (A & B) : (A | B), Op.cycleOf(0), Op.fwdOf(0)});
     break;
   }
 

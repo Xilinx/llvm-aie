@@ -77,7 +77,8 @@ AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI,
   // before any write sees the reset value rather than an empty history.
   Storage.resize(NumRegs);
   for (unsigned Reg = 0; Reg != NumRegs; ++Reg)
-    Storage[Reg].push_back({0, APInt(std::max(Widths[Reg], 1u), 0)});
+    // The reset value forwards from nothing, so it carries no bypass class.
+    Storage[Reg].push_back({0, APInt(std::max(Widths[Reg], 1u), 0), /*fwd=*/0});
   Poisoned.assign(NumRegs, false);
 }
 
@@ -146,15 +147,15 @@ bool AIERegisterFile::computePlacements(
   return At == Width;
 }
 
-bool AIERegisterFile::readComposed(MCRegister Reg, APInt &Out,
-                                  uint64_t Cycle) const {
+bool AIERegisterFile::readComposed(MCRegister Reg, APInt &Out, uint64_t Cycle,
+                                   unsigned Fwd) const {
   const unsigned W = getClassWidth(Reg);
   if (!W || Reg.id() >= Composition.size() || Composition[Reg.id()].empty())
     return false;
   APInt Acc(W, 0);
   for (const Placement &P : Composition[Reg.id()]) {
     APInt V;
-    if (!read(P.Leaf, V, Cycle))
+    if (!read(P.Leaf, V, Cycle, Fwd))
       return false;
     Acc.insertBits(V.zextOrTrunc(P.sizeBits), P.offsetBits);
   }
@@ -163,31 +164,39 @@ bool AIERegisterFile::readComposed(MCRegister Reg, APInt &Out,
 }
 
 bool AIERegisterFile::writeComposed(MCRegister Reg, const APInt &Value,
-                                    uint64_t VisibleAt) {
+                                    uint64_t VisibleAt, unsigned Fwd) {
   const unsigned W = getClassWidth(Reg);
   if (!W || Reg.id() >= Composition.size() || Composition[Reg.id()].empty())
     return false;
   const APInt V = Value.zextOrTrunc(W);
   for (const Placement &P : Composition[Reg.id()])
-    write(P.Leaf, V.extractBits(P.sizeBits, P.offsetBits), VisibleAt);
+    write(P.Leaf, V.extractBits(P.sizeBits, P.offsetBits), VisibleAt, Fwd);
   return true;
 }
 
-bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
+bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle,
+                           unsigned Fwd) const {
   if (!getWidth(Reg))
-    return readComposed(Reg, Out, Cycle);
+    return readComposed(Reg, Out, Cycle, Fwd);
   if (Poisoned[Reg.id()])
     return false;
   // Newest entry that has landed STRICTLY before Cycle: a write becoming
   // visible at N is not seen by a read at N. Measured, not reasoned -- the
   // discriminator is `or r17, r7, r2` landing exactly on a load's cycle and
   // needing the value from before it.
+  //
+  // ... unless the reading operand shares a pipeline-forwarding class with the
+  // one that produced the value, in which case it comes off the bypass and a
+  // write landing ON this cycle IS seen. Worth exactly one cycle, matching
+  // AIEBaseInstrInfo::getNumBypassedCycles, which is what the schedule assumed.
   const SmallVectorImpl<Timed> &H = Storage[Reg.id()];
-  for (auto It = H.rbegin(), E = H.rend(); It != E; ++It)
-    if (It->visibleAt < Cycle) {
+  for (auto It = H.rbegin(), E = H.rend(); It != E; ++It) {
+    const bool Bypassed = Fwd && It->fwd == Fwd;
+    if (It->visibleAt < Cycle || (Bypassed && It->visibleAt <= Cycle)) {
       Out = It->value;
       return true;
     }
+  }
   // Every entry is still in flight, which means the reset value was already
   // superseded and this read is inside a producer's latency window with
   // nothing older to see. Refusing beats inventing one.
@@ -195,17 +204,17 @@ bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
 }
 
 bool AIERegisterFile::write(MCRegister Reg, const APInt &Value,
-                            uint64_t VisibleAt) {
+                            uint64_t VisibleAt, unsigned Fwd) {
   const unsigned W = getWidth(Reg);
   if (!W)
-    return writeComposed(Reg, Value, VisibleAt);
+    return writeComposed(Reg, Value, VisibleAt, Fwd);
   SmallVectorImpl<Timed> &H = Storage[Reg.id()];
   // Keep newest-last by visibleAt. Two writes can land out of issue order when
   // their latencies differ, and program order is what decides the winner, so a
   // later-issued write replaces any entry that would land at or after it.
   while (!H.empty() && H.back().visibleAt > VisibleAt)
     H.pop_back();
-  H.push_back({VisibleAt, Value.zextOrTrunc(W)});
+  H.push_back({VisibleAt, Value.zextOrTrunc(W), Fwd});
   Poisoned[Reg.id()] = false;
   return true;
 }

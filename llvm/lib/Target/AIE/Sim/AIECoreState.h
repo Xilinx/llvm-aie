@@ -77,16 +77,27 @@ public:
   /// stores a multiply's result through a store that ISSUED four bundles
   /// earlier, because the store samples late.
   ///
-  /// A write landing AT the read's cycle is not yet visible. The itineraries
-  /// do not answer this -- the backend excludes the same-cycle case from its
-  /// own worst-case arithmetic -- so it was measured on a device-verified
-  /// object instead: strict gives 1024 of 1024 lanes, `<=` gives 4 of 8.
-  bool read(MCRegister Reg, APInt &Out, uint64_t Cycle) const;
+  /// A write landing AT the read's cycle is not yet visible THROUGH THE
+  /// REGISTER FILE. The itineraries do not answer this -- the backend excludes
+  /// the same-cycle case from its own worst-case arithmetic -- so it was
+  /// measured on a device-verified object instead: strict gives 1024 of 1024
+  /// lanes, `<=` gives 4 of 8.
+  ///
+  /// \p Fwd is the reading operand's pipeline-forwarding class, 0 for none.
+  /// When it matches the class the value was WRITTEN with, the read takes the
+  /// bypass and sees a write landing on its own cycle -- worth exactly one
+  /// cycle, which is what the backend schedules against
+  /// (AIEBaseInstrInfo::getNumBypassedCycles returns 1 for a matching pair).
+  /// That is a second rule, not a relaxation of the first: the object the
+  /// strict rule was measured on exercises unbypassed memory operands, whose
+  /// itineraries carry no forwarding column at all, so both hold at once.
+  bool read(MCRegister Reg, APInt &Out, uint64_t Cycle, unsigned Fwd = 0) const;
 
   /// \returns false when \p Reg is composed and its parts do not tile it, in
   /// which case nothing was written. A composed write is all-or-nothing: half
   /// a vector is a number that looks like a result.
-  bool write(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
+  bool write(MCRegister Reg, const APInt &Value, uint64_t VisibleAt,
+             unsigned Fwd = 0);
 
   /// Drop history that no read can reach any more. \p Horizon is the earliest
   /// cycle a future read could name; entries fully superseded before it are
@@ -107,6 +118,8 @@ private:
   struct Timed {
     uint64_t visibleAt;
     APInt value;
+    /// Forwarding class the producer wrote this with, 0 for none.
+    unsigned fwd;
   };
 
   /// One leaf of a composed register and where it sits inside it.
@@ -134,9 +147,11 @@ private:
                          SmallVectorImpl<Placement> &Out) const;
 
   /// Compose \p Reg out of the leaves that tile it.
-  bool readComposed(MCRegister Reg, APInt &Out, uint64_t Cycle) const;
+  bool readComposed(MCRegister Reg, APInt &Out, uint64_t Cycle,
+                    unsigned Fwd) const;
   /// Split \p Value across them. \returns false if they do not tile \p Reg.
-  bool writeComposed(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
+  bool writeComposed(MCRegister Reg, const APInt &Value, uint64_t VisibleAt,
+                     unsigned Fwd);
 
   const MCRegisterInfo &MRI;
   ArrayRef<AIESubRegRange> Ranges;
