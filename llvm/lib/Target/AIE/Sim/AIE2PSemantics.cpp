@@ -646,12 +646,16 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     // Elementwise is NOT a matrix product with K = N = 1: C[i] = A[i]*B[i]
     // takes a full-length B, where a matmul with N = 1 would take one column.
     // It gets its own arm rather than a contrived parameterisation.
-    unsigned M = 0, K = 0, N = 0, ElemBits = 0;
+    // Operand element widths differ per side on the mixed shapes, so they are
+    // tracked separately rather than shared.
+    unsigned M = 0, K = 0, N = 0, ABits = 0, BBits = 0;
     bool Hadamard = false;
     if (AMode == 0 && BMode == 1 && Variant == 1)
-      Hadamard = true, M = 64, ElemBits = 8; // elem_64
+      Hadamard = true, M = 64, ABits = 8, BBits = 8; // elem_64
     else if (AMode == 0 && BMode == 1 && Variant == 0)
-      M = 8, K = 8, N = 8, ElemBits = 8; // 8x8_8x8
+      M = 8, K = 8, N = 8, ABits = 8, BBits = 8; // 8x8_8x8
+    else if (AMode == 1 && BMode == 2 && Variant == 0)
+      M = 4, K = 8, N = 8, ABits = 16, BBits = 8; // 4x8_8x8
     else
       return fault(Name + ": MAC shape amode=" + Twine(AMode) + " bmode=" +
                    Twine(BMode) + " variant=" + Twine(Variant) +
@@ -661,12 +665,14 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const unsigned DstBits = State.Regs.getClassWidth(Dst);
     const unsigned S1Bits = State.Regs.getClassWidth(Op.reg(S1Idx));
     const unsigned S2Bits = State.Regs.getClassWidth(Op.reg(S2Idx));
-    // Operand sizes are part of the shape, not free: a 32-lane operand where
-    // the shape wants 64 is a DIFFERENT feeding rule, which the header does
-    // spell (mul_elem_64 also has a v32int16 x v64int16 form) but does not
-    // explain. Refusing is the honest answer for those.
-    const unsigned WantA = Hadamard ? M * ElemBits : M * K * ElemBits;
-    const unsigned WantB = Hadamard ? M * ElemBits : K * N * ElemBits;
+    // Operand sizes are part of the shape, not free. Only shapes whose
+    // operands exactly FILL their registers are modelled, because for the
+    // others -- 8x4_4x8 wants 256 bits of B in a 512-bit class, 8x2_2x8 wants
+    // 256 of A -- nothing in the headers says which half is read. aie_api
+    // pins M, K and N (its mmul_* templates instantiate each intrinsic with
+    // explicit vector lengths) but not that. Refusing beats guessing.
+    const unsigned WantA = Hadamard ? M * ABits : M * K * ABits;
+    const unsigned WantB = Hadamard ? M * BBits : K * N * BBits;
     if (S1Bits != WantA || S2Bits != WantB)
       return fault(Name + ": shape wants " + Twine(WantA) + " and " +
                    Twine(WantB) + " source bits, got " + Twine(S1Bits) +
@@ -683,8 +689,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     if (AccIdx >= 0 && !ZeroAcc)
       Prev = Op.valN(unsigned(AccIdx), DstBits);
 
-    auto elem = [&](const APInt &V, unsigned Idx, bool Signed) {
-      const APInt E = V.extractBits(ElemBits, Idx * ElemBits);
+    auto elem = [&](const APInt &V, unsigned Idx, unsigned Bits, bool Signed) {
+      const APInt E = V.extractBits(Bits, Idx * Bits);
       return Signed ? E.sext(AccLaneBits) : E.zext(AccLaneBits);
     };
 
@@ -694,7 +700,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     if (Hadamard) {
       for (unsigned I = 0; I != M; ++I) {
         APInt Sum = Prev.extractBits(AccLaneBits, I * AccLaneBits);
-        Sum += elem(A, I, SgnX) * elem(B, I, SgnY);
+        Sum += elem(A, I, ABits, SgnX) * elem(B, I, BBits, SgnY);
         Out.insertBits(Sum, I * AccLaneBits);
       }
     } else {
@@ -704,7 +710,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
         for (unsigned J = 0; J != N; ++J) {
           APInt Sum = Prev.extractBits(AccLaneBits, (I * N + J) * AccLaneBits);
           for (unsigned Kk = 0; Kk != K; ++Kk)
-            Sum += elem(A, I * K + Kk, SgnX) * elem(B, Kk * N + J, SgnY);
+            Sum += elem(A, I * K + Kk, ABits, SgnX) *
+                 elem(B, Kk * N + J, BBits, SgnY);
           Out.insertBits(Sum, (I * N + J) * AccLaneBits);
         }
     }
