@@ -108,9 +108,10 @@ void AIEExecutor::drainStores(bool Final) {
                      .str();
       continue;
     }
-    const unsigned Bits = W.NumBytes * 8;
-    Host.store(W.Addr, W.NumBytes,
-               V.zextOrTrunc(32).trunc(Bits <= 32 ? Bits : 32));
+    // To the width the store writes, whatever that is. This used to go via
+    // 32 bits, which was the scalar datapath showing through: a vector store
+    // names a 512-bit source and would have committed only its low word.
+    Host.store(W.Addr, W.NumBytes, V.zextOrTrunc(W.NumBytes * 8));
   }
   llvm::erase_if(PendingStores, Ready);
 }

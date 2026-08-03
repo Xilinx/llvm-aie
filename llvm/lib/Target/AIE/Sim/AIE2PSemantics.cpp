@@ -256,6 +256,23 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
         {Addr, NumBytes, Op.reg(SrcIdx), Op.cycleOf(SrcIdx)});
   };
 
+  // A vector store. Its width comes from the source register class, where the
+  // scalar forms carry it in the opcode. Same late sampling as those: the
+  // register is named, not read, and a composed source composes when the
+  // pipeline reaches SampleAt.
+  auto vectorStore = [&](unsigned SrcIdx, uint32_t Addr) -> StepResult {
+    const MCRegister Src = Op.reg(SrcIdx);
+    const unsigned W = State.Regs.getClassWidth(Src);
+    if (!W || W % 8) {
+      FaultMsg = (Name + ": " + MRI.getName(Src) + " is " + Twine(W) +
+                  " bits, not a whole number of bytes")
+                     .str();
+      return StepResult::Fault;
+    }
+    Eff.MemWrites.push_back({Addr, W / 8, Src, Op.cycleOf(SrcIdx)});
+    return StepResult::Retired;
+  };
+
   // vbcst.N (mXm)(src): the low N bits of the source repeated across the
   // destination vector. The destination is a composed register, so these are
   // the writes that have to split across leaves to land at all.
@@ -570,6 +587,12 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VLDA_dmx_lda_x_idx_imm:
   case AIE2P::VLDA_dmw_lda_w_idx_imm:
     R = vectorLoad(0, access(1, Op.imm(2)));
+    break;
+
+  // ()(src, ptr, imm): the matching vector stores.
+  case AIE2P::VST_dmx_sts_x_idx_imm:
+  case AIE2P::VST_dmw_sts_w_idx_imm:
+    R = vectorStore(0, access(1, Op.imm(2)));
     break;
 
   // The vector broadcasts, the first vector instructions modelled. 8/16/32
