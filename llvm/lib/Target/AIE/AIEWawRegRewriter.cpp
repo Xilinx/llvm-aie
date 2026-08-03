@@ -650,14 +650,17 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates\n");
 
   // If requested, unassign MBB's liveins as well to get even more freedom
+  SmallVector<std::pair<Register, MCPhysReg>> FreedLiveIns;
   if (Overrides.get(AggressiveReAlloc)) {
     for (unsigned I = 0, E = MRI->getNumVirtRegs(); I != E; ++I) {
       Register Reg = Register::index2VirtReg(I);
       if (!LIS->hasInterval(Reg))
         continue;
       LiveInterval &LI = LIS->getInterval(Reg);
-      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg))
+      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg)) {
+        FreedLiveIns.emplace_back(Reg, VRM->getPhys(Reg));
         unassignReg(Reg);
+      }
     }
   }
 
@@ -675,6 +678,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   }
 
   if (!reAllocate(Candidates, LRURegisters)) {
+    llvm::append_range(Candidates, FreedLiveIns);
     revertAllocation(Candidates);
     return false;
   }
