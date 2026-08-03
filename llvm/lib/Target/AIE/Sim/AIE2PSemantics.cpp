@@ -620,9 +620,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   //
   // (amode, bmode, variant) jointly name the shape -- 21 combinations across
   // that header's 6210 wrappers, each spelled out in the wrapper's own name.
-  // Only the elementwise one is modelled here; every other triple faults with
-  // its numbers, so an unimplemented shape says which shape it was rather than
-  // producing a plausible product.
+  // An unmodelled triple faults with its numbers, so it says which shape it
+  // was rather than producing a plausible product.
   //
   // Note bmode is NOT the element width on its own: measured over all the
   // wrappers it is 8-bit only for bmode 1 and 16-bit only for bmode 3, but
@@ -654,8 +653,16 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       Hadamard = true, M = 64, ABits = 8, BBits = 8; // elem_64
     else if (AMode == 0 && BMode == 1 && Variant == 0)
       M = 8, K = 8, N = 8, ABits = 8, BBits = 8; // 8x8_8x8
+    else if (AMode == 0 && BMode == 2 && Variant == 0)
+      M = 8, K = 4, N = 8, ABits = 16, BBits = 8; // 8x4_4x8
+    else if (AMode == 0 && BMode == 3 && Variant == 0)
+      M = 8, K = 2, N = 8, ABits = 16, BBits = 16; // 8x2_2x8
+    else if (AMode == 1 && BMode == 0 && Variant == 0)
+      M = 4, K = 2, N = 8, ABits = 32, BBits = 16; // 4x2_2x8
     else if (AMode == 1 && BMode == 2 && Variant == 0)
       M = 4, K = 8, N = 8, ABits = 16, BBits = 8; // 4x8_8x8
+    else if (AMode == 1 && BMode == 3 && Variant == 0)
+      M = 4, K = 4, N = 8, ABits = 16, BBits = 16; // 4x4_4x8
     else
       return fault(Name + ": MAC shape amode=" + Twine(AMode) + " bmode=" +
                    Twine(BMode) + " variant=" + Twine(Variant) +
@@ -665,15 +672,18 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const unsigned DstBits = State.Regs.getClassWidth(Dst);
     const unsigned S1Bits = State.Regs.getClassWidth(Op.reg(S1Idx));
     const unsigned S2Bits = State.Regs.getClassWidth(Op.reg(S2Idx));
-    // Operand sizes are part of the shape, not free. Only shapes whose
-    // operands exactly FILL their registers are modelled, because for the
-    // others -- 8x4_4x8 wants 256 bits of B in a 512-bit class, 8x2_2x8 wants
-    // 256 of A -- nothing in the headers says which half is read. aie_api
-    // pins M, K and N (its mmul_* templates instantiate each intrinsic with
-    // explicit vector lengths) but not that. Refusing beats guessing.
+    // Most shapes read LESS than the register they are handed -- 8x4_4x8 wants
+    // 256 bits of B in a 512-bit class, 4x2_2x8 wants 256 of both -- and the
+    // read window is the LOW end. aie_api settles that: it feeds every such
+    // operand through vector::grow<N>(idx = 0), which places the source at
+    // subvector 0 and leaves the rest undef(), and an instruction cannot read
+    // bits its caller declares undefined. The positional cross-check is
+    // mmul_16_8<8,4,8>, which issues two mac_4x4_4x8 and moves rows 4-7 DOWN
+    // (shuffle_down by 16 elements, ret[i] = v[i+n]) to have them read at all.
+    // So the operand register only has to be BIG ENOUGH.
     const unsigned WantA = Hadamard ? M * ABits : M * K * ABits;
     const unsigned WantB = Hadamard ? M * BBits : K * N * BBits;
-    if (S1Bits != WantA || S2Bits != WantB)
+    if (S1Bits < WantA || S2Bits < WantB)
       return fault(Name + ": shape wants " + Twine(WantA) + " and " +
                    Twine(WantB) + " source bits, got " + Twine(S1Bits) +
                    " and " + Twine(S2Bits));
