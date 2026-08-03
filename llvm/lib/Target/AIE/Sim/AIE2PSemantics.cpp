@@ -381,10 +381,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // the totals, and the lane count falls out of them. The sign is in the
   // opcode: 0x0 selects upsSign0 and 0x1 upsSign1 in the ISel patterns, and
   // aie_api passes its `v_sign` there, true meaning signed.
-  auto ups = [&](bool Signed) -> StepResult {
-    const MCRegister Dst = Op.reg(0);
+  auto upsInto = [&](unsigned DstIdx, const APInt &Src, unsigned ShiftIdx,
+                     bool Signed) -> StepResult {
+    const MCRegister Dst = Op.reg(DstIdx);
     const unsigned DstBits = State.Regs.getClassWidth(Dst);
-    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    const unsigned SrcBits = Src.getBitWidth();
     const unsigned AccLaneBits = (Op.valReg(AIE2P::crUPSMode) & 1) ? 64 : 32;
     if (!DstBits || !SrcBits || DstBits % AccLaneBits)
       return fault(Name + ": " + MRI.getName(Dst) + " is not a whole number of " +
@@ -395,16 +396,39 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                    "into " + Twine(Lanes) + " lanes");
     const unsigned SrcLaneBits = SrcBits / Lanes;
 
-    const APInt Src = Op.valN(1, SrcBits);
-    const uint32_t Shift = Op.val(2);
+    const uint32_t Shift = Op.val(ShiftIdx);
     APInt Acc(DstBits, 0);
     for (unsigned I = 0; I != Lanes; ++I) {
       const APInt Lane = Src.extractBits(SrcLaneBits, I * SrcLaneBits);
       APInt Wide = Signed ? Lane.sext(AccLaneBits) : Lane.zext(AccLaneBits);
       Acc.insertBits(Wide << Shift, I * AccLaneBits);
     }
-    Eff.RegWrites.push_back({Dst, Acc, Op.cycleOf(0)});
+    Eff.RegWrites.push_back({Dst, Acc, Op.cycleOf(DstIdx)});
     return StepResult::Retired;
+  };
+
+  // The register form: source is a vector register, shift at operand 2.
+  auto ups = [&](bool Signed) {
+    return upsInto(0, Op.valN(1, State.Regs.getClassWidth(Op.reg(1))), 2,
+                   Signed);
+  };
+
+  // The memory-fused form, vlda.ups: the same widening, over bits just loaded
+  // rather than bits in a register. \p SrcBits is the ACCESS width, which the
+  // opcode carries as dmw (256) or dmx (512) -- there is no source register to
+  // read it from.
+  auto fusedUps = [&](unsigned SrcBits, unsigned DstIdx, unsigned ShiftIdx,
+                      uint32_t Addr, bool Signed) -> StepResult {
+    APInt V;
+    switch (Host.load(Addr, SrcBits / 8, V)) {
+    case PortStatus::Stall:
+      return StepResult::Stalled;
+    case PortStatus::Fault:
+      return fault(Name + ": no data memory at " + Twine::utohexstr(Addr));
+    case PortStatus::Ok:
+      break;
+    }
+    return upsInto(DstIdx, V, ShiftIdx, Signed);
   };
 
   // vsrs.Nx: narrow each accumulator lane back to a vector lane -- shift
@@ -1013,6 +1037,174 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VUPS_4x_mv_ups_w2c_upsSign1:
   case AIE2P::VUPS_4x_mv_ups_x2d_upsSign1:
     R = ups(/*Signed=*/true);
+    break;
+
+  // vlda.ups -- load and widen in one instruction. Same widening as vups, and
+  // the same addressing modes as vlda; the access width is the dmw/dmx in the
+  // opcode, since a fused form has no source register to read it from.
+  //
+  // The operand indices are read off each outs list rather than shared: a
+  // form with a ptr_out shifts su and ptr by one, and the dimensioned ones
+  // shift them again for their counter outputs.
+
+  // (dst)(su, ptr, dj), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0:
+    R = fusedUps(256, 0, 1, access(2, int32_t(Op.val(3))), false);
+    break;
+
+  // (dst)(su, ptr, dj), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0:
+    R = fusedUps(512, 0, 1, access(2, int32_t(Op.val(3))), false);
+    break;
+
+  // (dst)(su, ptr, imm), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0:
+    R = fusedUps(256, 0, 1, access(2, Op.imm(3)), false);
+    break;
+
+  // (dst)(su, ptr, imm), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0:
+    R = fusedUps(512, 0, 1, access(2, Op.imm(3)), false);
+    break;
+
+  // (dst, ptr_out)(su, ptr, m), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0:
+    R = fusedUps(256, 0, 2, access(3, 0), false);
+    DefAddr(1, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (dst, ptr_out)(su, ptr, m), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0:
+    R = fusedUps(512, 0, 2, access(3, 0), false);
+    DefAddr(1, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (dst, ptr_out)(su, ptr, imm), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign0:
+    R = fusedUps(256, 0, 2, access(3, 0), false);
+    DefAddr(1, access(3, Op.imm(4)));
+    break;
+
+  // (dst, ptr_out)(su, ptr, imm), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign0:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign0:
+    R = fusedUps(512, 0, 2, access(3, 0), false);
+    DefAddr(1, access(3, Op.imm(4)));
+    break;
+
+  // (dst)(su, ptr, dj), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1:
+    R = fusedUps(256, 0, 1, access(2, int32_t(Op.val(3))), true);
+    break;
+
+  // (dst)(su, ptr, dj), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1:
+    R = fusedUps(512, 0, 1, access(2, int32_t(Op.val(3))), true);
+    break;
+
+  // (dst)(su, ptr, imm), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1:
+    R = fusedUps(256, 0, 1, access(2, Op.imm(3)), true);
+    break;
+
+  // (dst)(su, ptr, imm), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1:
+    R = fusedUps(512, 0, 1, access(2, Op.imm(3)), true);
+    break;
+
+  // (dst, ptr_out)(su, ptr, m), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1:
+    R = fusedUps(256, 0, 2, access(3, 0), true);
+    DefAddr(1, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (dst, ptr_out)(su, ptr, m), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1:
+    R = fusedUps(512, 0, 2, access(3, 0), true);
+    DefAddr(1, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (dst, ptr_out)(su, ptr, imm), 256-bit access
+  case AIE2P::VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign1:
+    R = fusedUps(256, 0, 2, access(3, 0), true);
+    DefAddr(1, access(3, Op.imm(4)));
+    break;
+
+  // (dst, ptr_out)(su, ptr, imm), 512-bit access
+  case AIE2P::VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1:
+  case AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign1:
+    R = fusedUps(512, 0, 2, access(3, 0), true);
+    DefAddr(1, access(3, Op.imm(4)));
+    break;
+
+  // 2D walk, 256-bit access
+  case AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0:
+  case AIE2P::VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0:
+    R = fusedUps(256, 0, 3, access(4, 0), false);
+    DefAddr(1, step2D(Op.val(4), Op.reg(5), 2));
+    break;
+
+  // 2D walk, 512-bit access
+  case AIE2P::VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0:
+  case AIE2P::VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0:
+    R = fusedUps(512, 0, 3, access(4, 0), false);
+    DefAddr(1, step2D(Op.val(4), Op.reg(5), 2));
+    break;
+
+  // 3D walk, 256-bit access
+  case AIE2P::VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0:
+  case AIE2P::VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign0:
+    R = fusedUps(256, 0, 4, access(5, 0), false);
+    DefAddr(1, step3D(Op.val(5), Op.reg(6), 2, 3));
+    break;
+
+  // 3D walk, 512-bit access
+  case AIE2P::VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign0:
+  case AIE2P::VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0:
+    R = fusedUps(512, 0, 4, access(5, 0), false);
+    DefAddr(1, step3D(Op.val(5), Op.reg(6), 2, 3));
+    break;
+
+  // 2D walk, 256-bit access
+  case AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1:
+  case AIE2P::VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1:
+    R = fusedUps(256, 0, 3, access(4, 0), true);
+    DefAddr(1, step2D(Op.val(4), Op.reg(5), 2));
+    break;
+
+  // 2D walk, 512-bit access
+  case AIE2P::VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1:
+  case AIE2P::VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1:
+    R = fusedUps(512, 0, 3, access(4, 0), true);
+    DefAddr(1, step2D(Op.val(4), Op.reg(5), 2));
+    break;
+
+  // 3D walk, 256-bit access
+  case AIE2P::VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign1:
+  case AIE2P::VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign1:
+    R = fusedUps(256, 0, 4, access(5, 0), true);
+    DefAddr(1, step3D(Op.val(5), Op.reg(6), 2, 3));
+    break;
+
+  // 3D walk, 512-bit access
+  case AIE2P::VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign1:
+  case AIE2P::VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign1:
+    R = fusedUps(512, 0, 4, access(5, 0), true);
+    DefAddr(1, step3D(Op.val(5), Op.reg(6), 2, 3));
     break;
 
   // (vec)(acc, su): the way back down.
