@@ -407,6 +407,119 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vsrs.Nx: narrow each accumulator lane back to a vector lane -- shift
+  // right, round, saturate. The inverse of vups, and it reads crSRSMode for
+  // the accumulator lane width exactly as vups reads crUPSMode.
+  //
+  // Two more control registers matter here, and their encodings are llvm-aie's
+  // own, from clang/lib/Headers/aie2p/aie2p_defines.h:
+  //
+  //   crRnd  0 floor  1 ceil  2 sym_floor  3 sym_ceil          -- directional
+  //          8 neg_inf  9 pos_inf  10 sym_zero  11 sym_inf
+  //          12 conv_even  13 conv_odd                         -- nearest
+  //   crSat  0 none (wrap)  1 saturate  3 symmetric
+  //
+  // The split is the useful part: 0-3 never look at the discarded bits, they
+  // just pick a direction. 8-13 round to NEAREST and differ only in how they
+  // break an exact half. The saturation values are aie_api's saturation_mode.
+  auto srs = [&](bool Signed) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    const unsigned AccLaneBits = (Op.valReg(AIE2P::crSRSMode) & 1) ? 64 : 32;
+    if (!SrcBits || SrcBits % AccLaneBits)
+      return fault(Name + ": " + Twine(SrcBits) + " source bits are not a " +
+                   "whole number of " + Twine(AccLaneBits) + "-bit lanes");
+    const unsigned Lanes = SrcBits / AccLaneBits;
+    if (!Lanes || !DstBits || DstBits % Lanes)
+      return fault(Name + ": " + Twine(DstBits) + " destination bits do not " +
+                   "divide into " + Twine(Lanes) + " lanes");
+    const unsigned DstLaneBits = DstBits / Lanes;
+
+    const APInt Src = Op.valN(1, SrcBits);
+    const unsigned Shift = Op.val(2) & (AccLaneBits - 1);
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    const uint32_t Sat = Op.valReg(AIE2P::crSat);
+
+    APInt Out(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      APInt V = Src.extractBits(AccLaneBits, I * AccLaneBits);
+      // Arithmetic shift, so Q is the floor quotient and Rem the bits it
+      // dropped, taken as a non-negative value below 2^Shift.
+      APInt Q = V.ashr(Shift);
+      const bool Neg = V.isNegative();
+      APInt Rem = Shift ? V - (Q << Shift) : APInt(AccLaneBits, 0);
+      const APInt Half = Shift ? APInt(AccLaneBits, 1) << (Shift - 1)
+                               : APInt(AccLaneBits, 0);
+
+      bool Up = false;
+      if (Shift && !Rem.isZero()) {
+        switch (Rnd) {
+        case 1: // ceil: always toward +inf
+          Up = true;
+          break;
+        case 2: // sym_floor: always toward zero
+          Up = Neg;
+          break;
+        case 3: // sym_ceil: always away from zero
+          Up = !Neg;
+          break;
+        case 0: // floor: Q already is it
+          break;
+        default: {
+          // Nearest, tie-broken by the mode. Q is the floor result, so Q + 1
+          // is the other candidate and Rem against Half decides between them.
+          if (Rem.ugt(Half))
+            Up = true;
+          else if (Rem.ult(Half))
+            Up = false;
+          else
+            switch (Rnd) {
+            case 8: Up = false; break;                 // neg_inf
+            case 9: Up = true; break;                  // pos_inf
+            case 10: Up = Neg; break;                  // sym_zero
+            case 11: Up = !Neg; break;                 // sym_inf
+            case 12: Up = Q[0]; break;                 // conv_even
+            case 13: Up = !Q[0]; break;                // conv_odd
+            default:
+              return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                           ", which is not a rounding mode this model knows");
+            }
+          break;
+        }
+        }
+      }
+      if (Up)
+        ++Q;
+
+      // Saturate to the destination lane, then take its low bits.
+      if (Sat != 0) {
+        const APInt Max = Signed ? APInt::getSignedMaxValue(DstLaneBits)
+                                                 .sext(AccLaneBits)
+                                 : APInt::getMaxValue(DstLaneBits)
+                                                 .zext(AccLaneBits);
+        // Symmetric clamps the low end to -Max, so the limits have the same
+        // magnitude; ordinary saturation keeps the extra negative value.
+        const APInt Min = !Signed ? APInt(AccLaneBits, 0)
+                          : Sat == 3
+                              ? -Max
+                              : APInt::getSignedMinValue(DstLaneBits)
+                                    .sext(AccLaneBits);
+        // Both comparisons are SIGNED whatever the destination is: the
+        // accumulator holds a signed sum, and only the output's
+        // interpretation changes. Comparing unsigned here reads a negative
+        // lane as enormous and clamps it to the maximum instead of to zero.
+        if (Q.sgt(Max))
+          Q = Max;
+        else if (Q.slt(Min))
+          Q = Min;
+      }
+      Out.insertBits(Q.trunc(DstLaneBits), I * DstLaneBits);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
   // A vector store. Its width comes from the source register class, where the
   // scalar forms carry it in the opcode. Same late sampling as those: the
   // register is named, not read, and a composed source composes when the
@@ -900,6 +1013,20 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VUPS_4x_mv_ups_w2c_upsSign1:
   case AIE2P::VUPS_4x_mv_ups_x2d_upsSign1:
     R = ups(/*Signed=*/true);
+    break;
+
+  // (vec)(acc, su): the way back down.
+  case AIE2P::VSRS_2x_mv_w_srs_bm_srsSign0:
+  case AIE2P::VSRS_2x_mv_x_srs_cm_srsSign0:
+  case AIE2P::VSRS_4x_mv_w_srs_cm_srsSign0:
+  case AIE2P::VSRS_4x_mv_x_srs_dm_srsSign0:
+    R = srs(/*Signed=*/false);
+    break;
+  case AIE2P::VSRS_2x_mv_w_srs_bm_srsSign1:
+  case AIE2P::VSRS_2x_mv_x_srs_cm_srsSign1:
+  case AIE2P::VSRS_4x_mv_w_srs_cm_srsSign1:
+  case AIE2P::VSRS_4x_mv_x_srs_dm_srsSign1:
+    R = srs(/*Signed=*/true);
     break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
