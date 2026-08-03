@@ -37,6 +37,13 @@
 // SubRegIdxRangeTable in AIE2PGenRegisterInfo.inc, which is where it came
 // from and which it currently matches row for row.
 //
+// One such pair is pinned at RUN time instead: sub_l_even/sub_l_odd, by
+// vbcst.64 in test/tools/llvm-aie-run/aie2p-vector-broadcast.s, which reads
+// an eL pair holding two different words and was checked to produce the
+// halves the other way round when those two rows are transposed. The 256-bit
+// pair has no such test, because no modelled instruction yet produces a
+// result that differs across the 256-bit boundary.
+//
 // An offset of kNoContiguousRange means the index does not name one contiguous
 // run of bits (the composed vecmask indices do this). Those are refused rather
 // than approximated.
