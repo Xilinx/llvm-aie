@@ -1579,10 +1579,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
 
   // (acc)(acc_in, s1, s2, conf) and (acc)(s1, s2, conf). One opcode per
   // register pairing; the shape is in the conf.
+  // The four DENSE pairings share one operand shape and one behaviour: the
+  // pairing names only how wide each source register class is, and a shape
+  // reads the low M*K / K*N of whatever it is handed. The Q* pairings are
+  // absent deliberately -- their $s2 is a sparse class (eQYs / OP_mQXsw, with
+  // Defs = [srSparse_of]), which is a different instruction, not a wider one.
   case AIE2P::VMAC_vmul_cm_core_X_X:
+  case AIE2P::VMAC_vmul_cm_core_X_Y:
+  case AIE2P::VMAC_vmul_cm_core_Y_X:
+  case AIE2P::VMAC_vmul_cm_core_Y_Y:
     R = mac(2, 3, 4, /*AccIdx=*/1);
     break;
   case AIE2P::VMUL_vmul_cm_core_X_X:
+  case AIE2P::VMUL_vmul_cm_core_X_Y:
+  case AIE2P::VMUL_vmul_cm_core_Y_X:
+  case AIE2P::VMUL_vmul_cm_core_Y_Y:
     R = mac(1, 2, 3, /*AccIdx=*/-1);
     break;
 
