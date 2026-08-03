@@ -595,6 +595,26 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     R = vectorStore(0, access(1, Op.imm(2)));
     break;
 
+  // (d)(s1, s2) across the whole register. These two are the only elementwise
+  // vector ALU ops AIE2P spells without the MAC datapath -- an elementwise add
+  // goes through vaddmac and an accumulator -- so they are what a vector
+  // datapath can be checked with before accumulators are modelled. There is no
+  // vbxor on this subtarget.
+  case AIE2P::VBAND:
+  case AIE2P::VBOR: {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W) {
+      FaultMsg = (Name + ": " + MRI.getName(Dst) + " has no width").str();
+      return StepResult::Fault;
+    }
+    const APInt A = Op.valN(1, W);
+    const APInt B = Op.valN(2, W);
+    Eff.RegWrites.push_back(
+        {Dst, Opc == AIE2P::VBAND ? (A & B) : (A | B), Op.cycleOf(0)});
+    break;
+  }
+
   // The vector broadcasts, the first vector instructions modelled. 8/16/32
   // take a 32-bit eR; 64 takes an eL pair, which is itself composed, so it is
   // also the first instruction to READ through composition rather than write
