@@ -606,6 +606,76 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vmul/vmac: multiply two vectors into an accumulator, optionally adding an
+  // accumulator in.
+  //
+  // The lane-feeding layout is NOT in the opcode -- one opcode serves every
+  // shape -- and it is not hidden either. It is in the $acc operand, a
+  // configuration word whose bit layout is llvm-aie's own, from
+  // aie2p_compute_control in clang/lib/Headers/aie2p/aie2p_vmult.h:
+  //
+  //   zero_acc<<0  amode<<1  bmode<<3  variant<<5
+  //   sgn_y<<8  sgn_x<<9  shift16<<10  sub0<<11  sub1<<12  sub2<<13
+  //   sub_mask<<16
+  //
+  // (amode, bmode, variant) jointly name the shape -- 21 combinations across
+  // that header's 6210 wrappers, each spelled out in the wrapper's own name.
+  // Only the elementwise one is modelled here; every other triple faults with
+  // its numbers, so an unimplemented shape says which shape it was rather than
+  // producing a plausible product.
+  //
+  // Note bmode is NOT the element width on its own: measured over all the
+  // wrappers it is 8-bit only for bmode 1 and 16-bit only for bmode 3, but
+  // spans two widths for 0 and 2. The width comes from the shape plus the
+  // operand register class.
+  auto mac = [&](unsigned S1Idx, unsigned S2Idx, unsigned ConfIdx,
+                 int AccIdx) -> StepResult {
+    const uint32_t Conf = Op.val(ConfIdx);
+    const unsigned AMode = (Conf >> 1) & 3;
+    const unsigned BMode = (Conf >> 3) & 3;
+    const unsigned Variant = (Conf >> 5) & 7;
+    const bool ZeroAcc = Conf & 1;
+    const bool SgnY = (Conf >> 8) & 1;
+    const bool SgnX = (Conf >> 9) & 1;
+
+    // elem_64 over 8-bit lanes. The one shape whose feeding needs no table:
+    // lane i of each source multiplies into lane i of the accumulator.
+    if (!(AMode == 0 && BMode == 1 && Variant == 1))
+      return fault(Name + ": MAC shape amode=" + Twine(AMode) + " bmode=" +
+                   Twine(BMode) + " variant=" + Twine(Variant) +
+                   " is not modelled");
+
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned S1Bits = State.Regs.getClassWidth(Op.reg(S1Idx));
+    const unsigned S2Bits = State.Regs.getClassWidth(Op.reg(S2Idx));
+    constexpr unsigned ElemBits = 8;
+    const unsigned Lanes = S1Bits / ElemBits;
+    if (!Lanes || S2Bits != S1Bits || !DstBits || DstBits % Lanes)
+      return fault(Name + ": elementwise needs equal sources and a whole "
+                          "number of accumulator lanes");
+    const unsigned AccLaneBits = DstBits / Lanes;
+
+    const APInt A = Op.valN(S1Idx, S1Bits);
+    const APInt B = Op.valN(S2Idx, S2Bits);
+    APInt Prev(DstBits, 0);
+    if (AccIdx >= 0 && !ZeroAcc)
+      Prev = Op.valN(unsigned(AccIdx), DstBits);
+
+    APInt Out(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      const APInt LA = A.extractBits(ElemBits, I * ElemBits);
+      const APInt LB = B.extractBits(ElemBits, I * ElemBits);
+      const APInt WA = SgnX ? LA.sext(AccLaneBits) : LA.zext(AccLaneBits);
+      const APInt WB = SgnY ? LB.sext(AccLaneBits) : LB.zext(AccLaneBits);
+      APInt Sum = WA * WB;
+      Sum += Prev.extractBits(AccLaneBits, I * AccLaneBits);
+      Out.insertBits(Sum, I * AccLaneBits);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
   // A vector store. Its width comes from the source register class, where the
   // scalar forms carry it in the opcode. Same late sampling as those: the
   // register is named, not read, and a composed source composes when the
@@ -1448,6 +1518,15 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1:
     R = fusedSrs(4, 3, 4, access(5, 0), true);
     DefAddr(0, step3D(Op.val(5), Op.reg(6), 1, 2));
+    break;
+
+  // (acc)(acc_in, s1, s2, conf) and (acc)(s1, s2, conf). One opcode per
+  // register pairing; the shape is in the conf.
+  case AIE2P::VMAC_vmul_cm_core_X_X:
+    R = mac(2, 3, 4, /*AccIdx=*/1);
+    break;
+  case AIE2P::VMUL_vmul_cm_core_X_X:
+    R = mac(1, 2, 3, /*AccIdx=*/-1);
     break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
