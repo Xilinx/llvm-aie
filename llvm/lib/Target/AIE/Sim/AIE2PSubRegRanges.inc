@@ -24,9 +24,18 @@
 // it is an upstream proposal rather than a drive-by, and this stands until that
 // is decided.
 //
-// Regenerate with the extractor in the sub-register composition commit; the
-// self-check in AIERegisterFile fails loudly if this drifts from the MC layer
-// it is paired with, which is what makes checked-in generated data safe here.
+// Regenerate with the extractor in the sub-register composition commit.
+//
+// What guards this copy, stated exactly, because two of the three are weaker
+// than they sound. AIERegisterFile asserts every index's SIZE against the MC
+// layer, which catches a dropped or misaligned row. It then requires each
+// composed register's leaves to tile it exactly, which catches a wrong
+// OFFSET -- but only one that breaks the tiling. It does not catch a
+// high/low pair swapped between two same-sized siblings: sub_256_hi and
+// sub_256_lo transposed still tile 512 bits. That case rests on this file
+// being generated rather than typed, so verify it by diffing against
+// SubRegIdxRangeTable in AIE2PGenRegisterInfo.inc, which is where it came
+// from and which it currently matches row for row.
 //
 // An offset of kNoContiguousRange means the index does not name one contiguous
 // run of bits (the composed vecmask indices do this). Those are refused rather
