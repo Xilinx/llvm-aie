@@ -1597,6 +1597,43 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     R = mac(1, 2, 3, /*AccIdx=*/-1);
     break;
 
+  // acq/rel: the blocking lock ports, which are not in the memory map. The
+  // acquire VALUE is signed and its sign picks the mode -- negative means
+  // AcquireGreaterEqual on its magnitude -- but that is the fabric's rule and
+  // the value passes through untouched, so it is not restated here.
+  //
+  // An acquire that cannot succeed STALLS: nothing architectural changed and
+  // the bundle re-issues, which is what the blocking port does. Release never
+  // blocks on this subtarget.
+  //
+  // The .cond forms take r26 as a predicate and are NOT modelled -- nothing
+  // read so far says what the predicate is, and a lock taken on a guessed
+  // condition deadlocks or corrupts silently.
+  case AIE2P::ACQ_mLockId_imm:
+  case AIE2P::ACQ_mLockId_reg:
+  case AIE2P::REL_mLockId_imm:
+  case AIE2P::REL_mLockId_reg: {
+    const bool IsImm = Opc == AIE2P::ACQ_mLockId_imm ||
+                       Opc == AIE2P::REL_mLockId_imm;
+    const unsigned Id = IsImm ? unsigned(Op.imm(0)) : Op.val(0);
+    const int32_t Value = int32_t(Op.val(1));
+    if (!Op.Ok)
+      break;
+    const bool IsAcquire =
+        Opc == AIE2P::ACQ_mLockId_imm || Opc == AIE2P::ACQ_mLockId_reg;
+    switch (IsAcquire ? Host.acquireLock(Id, Value)
+                      : Host.releaseLock(Id, Value)) {
+    case PortStatus::Ok:
+      break;
+    case PortStatus::Stall:
+      return StepResult::Stalled;
+    case PortStatus::Fault:
+      return fault(Name + ": lock " + Twine(Id) +
+                   " is not provided by this embedder");
+    }
+    break;
+  }
+
   // (d)(s1, s2) across the whole register. These two are the only elementwise
   // vector ALU ops AIE2P spells without the MAC datapath -- an elementwise add
   // goes through vaddmac and an accumulator -- so they are what a vector
