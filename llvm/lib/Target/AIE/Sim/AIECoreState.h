@@ -52,12 +52,20 @@ class AIERegisterFile {
 public:
   /// \p SubRegRanges is indexed by sub-register index number and may be empty,
   /// in which case a composed register stays unreadable rather than being
-  /// composed from a layout nobody supplied.
+  /// composed from a layout nobody supplied. Not defaulted: empty is a real
+  /// choice with a silent consequence -- every vector register unreadable and
+  /// every vector write dropped -- so a caller states it rather than inherits
+  /// it. Both callers had inherited it, which is how composition shipped with
+  /// no way to reach it.
   AIERegisterFile(const MCRegisterInfo &MRI,
-                  ArrayRef<AIESubRegRange> SubRegRanges = {});
+                  ArrayRef<AIESubRegRange> SubRegRanges);
 
   /// Width in bits, or 0 when the register has no storage in this model.
   unsigned getWidth(MCRegister Reg) const;
+
+  /// Width in bits from the register classes, which is defined for a composed
+  /// register too -- that is exactly where it cannot be read off storage.
+  unsigned getClassWidth(MCRegister Reg) const;
 
   /// \returns false when \p Reg has no storage, or holds a value this model
   /// declined to compute.
@@ -69,11 +77,16 @@ public:
   /// stores a multiply's result through a store that ISSUED four bundles
   /// earlier, because the store samples late.
   ///
-  /// A write is visible to a read at the SAME cycle: the compiler's legality
-  /// rule is `consumerIssue + useCycle >= producerIssue + defCycle`, so
-  /// equality is a legal schedule and must see the new value.
+  /// A write landing AT the read's cycle is not yet visible. The itineraries
+  /// do not answer this -- the backend excludes the same-cycle case from its
+  /// own worst-case arithmetic -- so it was measured on a device-verified
+  /// object instead: strict gives 1024 of 1024 lanes, `<=` gives 4 of 8.
   bool read(MCRegister Reg, APInt &Out, uint64_t Cycle) const;
-  void write(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
+
+  /// \returns false when \p Reg is composed and its parts do not tile it, in
+  /// which case nothing was written. A composed write is all-or-nothing: half
+  /// a vector is a number that looks like a result.
+  bool write(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
 
   /// Drop history that no read can reach any more. \p Horizon is the earliest
   /// cycle a future read could name; entries fully superseded before it are
@@ -96,7 +109,31 @@ private:
     APInt value;
   };
 
-  /// Compose \p Reg out of the sub-registers that do have storage.
+  /// One leaf of a composed register and where it sits inside it.
+  struct Placement {
+    MCRegister Leaf;
+    uint32_t offsetBits;
+    uint32_t sizeBits;
+  };
+
+  /// Locate the leaves of \p Reg by descending one level at a time.
+  ///
+  /// A sub-register index's offset is only meaningful at the level it was
+  /// declared for, so it cannot be used to place a leaf inside an arbitrary
+  /// ancestor. AIE2P declares `sub_hi_exp : SubRegIndex<32, 32>` for the
+  /// 64-bit exponent registers and reuses it further up: ex0 is
+  /// [x0 @0, e0 @512] and e0 is [el0 @0, eh0 @32], so eh0 sits at 544 in ex0
+  /// while `getSubRegIndex(ex0, eh0)` still answers sub_hi_exp, offset 32.
+  /// Descending accumulates 512 + 32 and gets it right.
+  ///
+  /// \returns false unless the leaves tile [0, width) exactly. Overlaps are
+  /// the reason this is checked rather than counted: the 18 bfp16 registers
+  /// have leaves whose SIZES sum to the parent's width while their ranges
+  /// overlap, so a total alone accepts a layout that is wrong.
+  bool computePlacements(MCRegister Reg, unsigned Width,
+                         SmallVectorImpl<Placement> &Out) const;
+
+  /// Compose \p Reg out of the leaves that tile it.
   bool readComposed(MCRegister Reg, APInt &Out, uint64_t Cycle) const;
   /// Split \p Value across them. \returns false if they do not tile \p Reg.
   bool writeComposed(MCRegister Reg, const APInt &Value, uint64_t VisibleAt);
@@ -104,6 +141,10 @@ private:
   const MCRegisterInfo &MRI;
   ArrayRef<AIESubRegRange> Ranges;
   std::vector<unsigned> Widths;
+  /// Per composed register, the leaves tiling it, or empty when they do not --
+  /// in which case it stays unreadable rather than being assembled wrongly.
+  /// Computed once: it depends only on the target description.
+  std::vector<SmallVector<Placement, 4>> Composition;
   /// Width from the register classes, kept even where Widths is zeroed because
   /// the register is composed -- that is exactly where composition needs it.
   std::vector<unsigned> ClassWidths;
@@ -117,7 +158,7 @@ private:
 class AIECoreState {
 public:
   AIECoreState(const MCRegisterInfo &MRI, uint64_t EntryPoint,
-               ArrayRef<AIESubRegRange> SubRegRanges = {})
+               ArrayRef<AIESubRegRange> SubRegRanges)
       : Regs(MRI, SubRegRanges), PC(EntryPoint) {}
 
   AIERegisterFile Regs;

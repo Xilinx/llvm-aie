@@ -26,7 +26,7 @@ AIEExecutor::AIEExecutor(const MCDisassembler &DisAsm, const MCInstrInfo &MII,
                          const MCRegisterInfo &MRI, AIESemantics &Sem,
                          AIEHostInterface &Host, uint64_t EntryPoint)
     : DisAsm(DisAsm), MII(MII), MRI(MRI), Sem(Sem), Host(Host),
-      State(MRI, EntryPoint) {
+      State(MRI, EntryPoint, Sem.getSubRegRanges()) {
   const std::array<MCRegister, 3> Loop = Sem.getLoopRegisters();
   LCReg = Loop[0];
   LSReg = Loop[1];

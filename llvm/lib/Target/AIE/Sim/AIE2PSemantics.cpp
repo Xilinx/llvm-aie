@@ -116,8 +116,9 @@ struct Operands {
 class AIE2PSemantics : public AIESemantics {
 public:
   AIE2PSemantics(const MCInstrInfo &MII, const MCRegisterInfo &MRI,
-                 InstrItineraryData Itin)
-      : MII(MII), MRI(MRI), Itin(std::move(Itin)) {}
+                 InstrItineraryData Itin, ArrayRef<AIESubRegRange> SubRegRanges)
+      : MII(MII), MRI(MRI), Itin(std::move(Itin)),
+        SubRegRanges(SubRegRanges) {}
 
   bool isEndOfProgram(const MCInst &MI) const override {
     return MI.getOpcode() == AIE2P::DONE;
@@ -129,6 +130,10 @@ public:
 
   MCRegister getLinkRegister() const override { return AIE2P::lr; }
 
+  ArrayRef<AIESubRegRange> getSubRegRanges() const override {
+    return SubRegRanges;
+  }
+
   StepResult execute(const MCInst &MI, const AIECoreState &State,
                      AIEHostInterface &Host, SlotEffects &Eff,
                      std::string &FaultMsg) override;
@@ -137,6 +142,7 @@ private:
   const MCInstrInfo &MII;
   const MCRegisterInfo &MRI;
   InstrItineraryData Itin;
+  ArrayRef<AIESubRegRange> SubRegRanges;
 };
 
 /// Count leading sign bits, which is what "clb" reports.
@@ -499,6 +505,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     scalarStore(1, access(2, 0), 4);
     DefAddr(0, access(2, Op.imm(3)));
     break;
+
   }
 
   if (!Op.Ok) {
@@ -540,8 +547,10 @@ std::unique_ptr<AIESemantics>
 llvm::AIESim::createSemantics(const MCSubtargetInfo &STI,
                               const MCInstrInfo &MII,
                               const MCRegisterInfo &MRI) {
-  if (STI.getTargetTriple().getArch() == Triple::aie2p)
+  const Triple &TT = STI.getTargetTriple();
+  if (TT.getArch() == Triple::aie2p)
     return std::make_unique<AIE2PSemantics>(
-        MII, MRI, STI.getInstrItineraryForCPU(cpuForTriple(STI.getTargetTriple())));
+        MII, MRI, STI.getInstrItineraryForCPU(cpuForTriple(TT)),
+        subRegRangesForTriple(TT));
   return nullptr;
 }
