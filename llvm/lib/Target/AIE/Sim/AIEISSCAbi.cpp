@@ -316,7 +316,10 @@ int writeRegister(aie_iss_core *Core, const char *Name, const void *Data,
   auto It = Core->RegsByName.find(Name);
   if (It == Core->RegsByName.end())
     return 0;
-  unsigned Width = Core->Exec->getState().Regs.getWidth(It->second);
+  // Class width, not storage width: a composed register (x0 = wh0:wl0) has no
+  // storage of its own, and refusing it here would leave the ABI able to READ
+  // every vector register and write none of them.
+  unsigned Width = Core->Exec->getState().Regs.getClassWidth(It->second);
   if (Width == 0)
     return 0;
   const auto *In = static_cast<const uint8_t *>(Data);
@@ -324,9 +327,9 @@ int writeRegister(aie_iss_core *Core, const char *Name, const void *Data,
   for (uint32_t I = 0; I != Size && I * 8 < Width; ++I)
     Value |= APInt(Width, In[I]) << (8 * I);
   // Likewise a host write lands at once: it is not scheduled against the
-  // core's pipeline.
-  Core->Exec->getState().Regs.write(It->second, Value, 0);
-  return true;
+  // core's pipeline. A composed register whose parts do not tile it writes
+  // nothing, and says so rather than reporting a write that vanished.
+  return Core->Exec->getState().Regs.write(It->second, Value, 0);
 }
 
 uint32_t opcodeCoverage(const aie_iss_core *Core, void *Ctx,

@@ -47,6 +47,12 @@ AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI,
   // Checked rather than trusted: every index that names a sub-register with
   // storage must agree on that register's width. A transcription slip or a
   // .td change shows up here instead of as a wrong value later.
+  //
+  // Only SIZES are cross-checked here. Offsets cannot be: a sub-register
+  // index's offset is declared once for the level it belongs to and reused at
+  // others, so `getSubRegIndex(Reg, Leaf)` does not compose transitively.
+  // computePlacements descends the hierarchy instead, and the tiling it
+  // insists on is the real layout check.
   if (!Ranges.empty())
     for (unsigned Reg = 1; Reg < NumRegs; ++Reg)
       for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
@@ -55,27 +61,17 @@ AIERegisterFile::AIERegisterFile(const MCRegisterInfo &MRI,
           continue;
         assert((!Widths[Sub.id()] || Ranges[Idx].sizeBits == Widths[Sub.id()]) &&
                "sub-register range table disagrees with the MC layer");
-        // Transitivity, which is the check that actually pins the LAYOUT: if
-        // R contains Sub at offset A and Sub contains Leaf at offset B, then R
-        // must contain Leaf at A + B. Sizes alone cannot catch a high/low pair
-        // transcribed the wrong way round -- both halves are the same size --
-        // and this can, because the sum only works out for one assignment.
-        for (unsigned J = 1; J < MRI.getNumSubRegIndices(); ++J) {
-          MCRegister Leaf = MRI.getSubReg(Sub, J);
-          if (!Leaf || J >= Ranges.size())
-            continue;
-          unsigned K = MRI.getSubRegIndex(Reg, Leaf);
-          if (!K || K >= Ranges.size())
-            continue;
-          if (Ranges[Idx].offsetBits == kNoContiguousRange ||
-              Ranges[J].offsetBits == kNoContiguousRange ||
-              Ranges[K].offsetBits == kNoContiguousRange)
-            continue;
-          assert(Ranges[K].offsetBits ==
-                     Ranges[Idx].offsetBits + Ranges[J].offsetBits &&
-                 "sub-register offsets are not transitively consistent");
-        }
       }
+
+  // Where every composed register's leaves sit, worked out once.
+  Composition.resize(NumRegs);
+  if (!Ranges.empty())
+    for (unsigned Reg = 1; Reg < NumRegs; ++Reg) {
+      if (Widths[Reg] || !ClassWidths[Reg])
+        continue;
+      if (!computePlacements(Reg, ClassWidths[Reg], Composition[Reg]))
+        Composition[Reg].clear();
+    }
 
   // Every register starts with one entry visible from cycle 0, so a read
   // before any write sees the reset value rather than an empty history.
@@ -89,63 +85,91 @@ unsigned AIERegisterFile::getWidth(MCRegister Reg) const {
   return Reg.id() < Widths.size() ? Widths[Reg.id()] : 0;
 }
 
-bool AIERegisterFile::readComposed(MCRegister Reg, APInt &Out,
-                                  uint64_t Cycle) const {
-  const unsigned W = Reg.id() < ClassWidths.size() ? ClassWidths[Reg.id()] : 0;
-  if (Ranges.empty() || !W)
-    return false;
-  // Only sub-registers that HAVE storage are read: they are the leaves, and
-  // leaves tile the parent. Intermediate levels (y0 lists x0 as well as x0's
-  // own halves) would otherwise be counted twice.
-  APInt Acc(W, 0);
-  unsigned Covered = 0;
-  for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
-    MCRegister Sub = MRI.getSubReg(Reg, Idx);
-    if (!Sub || !Widths[Sub.id()] || Idx >= Ranges.size())
+unsigned AIERegisterFile::getClassWidth(MCRegister Reg) const {
+  return Reg.id() < ClassWidths.size() ? ClassWidths[Reg.id()] : 0;
+}
+
+bool AIERegisterFile::computePlacements(
+    MCRegister Reg, unsigned Width, SmallVectorImpl<Placement> &Out) const {
+  // Immediate children only: those not reachable through another child. The
+  // MC layer flattens the hierarchy, so ex0 lists eh0 alongside e0, and taking
+  // the flattened list at face value is what puts eh0 at its within-e0 offset.
+  for (MCPhysReg Sub : MRI.subregs(Reg)) {
+    bool Indirect = false;
+    for (MCPhysReg Other : MRI.subregs(Reg))
+      if (Other != Sub && MRI.isSubRegister(Other, Sub)) {
+        Indirect = true;
+        break;
+      }
+    if (Indirect)
       continue;
+
+    unsigned Idx = MRI.getSubRegIndex(Reg, Sub);
+    if (!Idx || Idx >= Ranges.size())
+      return false;
     const AIESubRegRange &R = Ranges[Idx];
     if (R.offsetBits == kNoContiguousRange ||
-        R.offsetBits + R.sizeBits > W)
-      return false; // Not one contiguous run, or not inside the parent.
-    APInt V;
-    if (!read(Sub, V, Cycle))
+        uint64_t(R.offsetBits) + R.sizeBits > Width)
       return false;
-    Acc.insertBits(V.zextOrTrunc(R.sizeBits), R.offsetBits);
-    Covered += R.sizeBits;
+
+    if (Widths[Sub]) {
+      Out.push_back({MCRegister(Sub), R.offsetBits, R.sizeBits});
+      continue;
+    }
+    // A composed child: place its own leaves, shifted by where it sits here.
+    SmallVector<Placement, 4> Inner;
+    if (!computePlacements(MCRegister(Sub), R.sizeBits, Inner))
+      return false;
+    for (Placement &P : Inner)
+      Out.push_back({P.Leaf, P.offsetBits + R.offsetBits, P.sizeBits});
   }
-  // Refuse a partial composition: a value assembled out of some of the parts
-  // is worse than none, because it looks like a number.
-  if (Covered != W)
+
+  // An exact tiling of [0, Width), which is what makes composing sound. Sizes
+  // summing to Width is not enough -- the bfp16 registers pass that with
+  // overlapping ranges.
+  //
+  // KNOWN GAP, and a refusal rather than a wrong answer: the 12 ex and 6 ey
+  // registers carry TWO decompositions -- ex0 is [x0, e0] as declared, and the
+  // MC layer also lists the inferred [ewl0, ewh0] regrouping -- so their
+  // immediate children overlap and no tiling comes out. Picking the declared
+  // partition needs a rule this cannot see, and nothing executes a bfp16
+  // vector register yet, so it stays unbuilt until a test needs one.
+  llvm::sort(Out, [](const Placement &A, const Placement &B) {
+    return A.offsetBits < B.offsetBits;
+  });
+  unsigned At = 0;
+  for (const Placement &P : Out) {
+    if (P.offsetBits != At)
+      return false;
+    At += P.sizeBits;
+  }
+  return At == Width;
+}
+
+bool AIERegisterFile::readComposed(MCRegister Reg, APInt &Out,
+                                  uint64_t Cycle) const {
+  const unsigned W = getClassWidth(Reg);
+  if (!W || Reg.id() >= Composition.size() || Composition[Reg.id()].empty())
     return false;
+  APInt Acc(W, 0);
+  for (const Placement &P : Composition[Reg.id()]) {
+    APInt V;
+    if (!read(P.Leaf, V, Cycle))
+      return false;
+    Acc.insertBits(V.zextOrTrunc(P.sizeBits), P.offsetBits);
+  }
   Out = Acc;
   return true;
 }
 
 bool AIERegisterFile::writeComposed(MCRegister Reg, const APInt &Value,
                                     uint64_t VisibleAt) {
-  const unsigned W = Reg.id() < ClassWidths.size() ? ClassWidths[Reg.id()] : 0;
-  if (Ranges.empty() || !W)
-    return false;
-  unsigned Covered = 0;
-  for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
-    MCRegister Sub = MRI.getSubReg(Reg, Idx);
-    if (!Sub || !Widths[Sub.id()] || Idx >= Ranges.size())
-      continue;
-    const AIESubRegRange &R = Ranges[Idx];
-    if (R.offsetBits == kNoContiguousRange || R.offsetBits + R.sizeBits > W)
-      return false;
-    Covered += R.sizeBits;
-  }
-  if (Covered != W)
+  const unsigned W = getClassWidth(Reg);
+  if (!W || Reg.id() >= Composition.size() || Composition[Reg.id()].empty())
     return false;
   const APInt V = Value.zextOrTrunc(W);
-  for (unsigned Idx = 1; Idx < MRI.getNumSubRegIndices(); ++Idx) {
-    MCRegister Sub = MRI.getSubReg(Reg, Idx);
-    if (!Sub || !Widths[Sub.id()] || Idx >= Ranges.size())
-      continue;
-    const AIESubRegRange &R = Ranges[Idx];
-    write(Sub, V.extractBits(R.sizeBits, R.offsetBits), VisibleAt);
-  }
+  for (const Placement &P : Composition[Reg.id()])
+    write(P.Leaf, V.extractBits(P.sizeBits, P.offsetBits), VisibleAt);
   return true;
 }
 
@@ -154,8 +178,10 @@ bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
     return readComposed(Reg, Out, Cycle);
   if (Poisoned[Reg.id()])
     return false;
-  // Newest entry that has landed by Cycle. `<=` because a schedule where the
-  // consumer's use cycle equals the producer's def cycle is legal.
+  // Newest entry that has landed STRICTLY before Cycle: a write becoming
+  // visible at N is not seen by a read at N. Measured, not reasoned -- the
+  // discriminator is `or r17, r7, r2` landing exactly on a load's cycle and
+  // needing the value from before it.
   const SmallVectorImpl<Timed> &H = Storage[Reg.id()];
   for (auto It = H.rbegin(), E = H.rend(); It != E; ++It)
     if (It->visibleAt < Cycle) {
@@ -168,13 +194,11 @@ bool AIERegisterFile::read(MCRegister Reg, APInt &Out, uint64_t Cycle) const {
   return false;
 }
 
-void AIERegisterFile::write(MCRegister Reg, const APInt &Value,
+bool AIERegisterFile::write(MCRegister Reg, const APInt &Value,
                             uint64_t VisibleAt) {
   const unsigned W = getWidth(Reg);
-  if (!W) {
-    writeComposed(Reg, Value, VisibleAt);
-    return;
-  }
+  if (!W)
+    return writeComposed(Reg, Value, VisibleAt);
   SmallVectorImpl<Timed> &H = Storage[Reg.id()];
   // Keep newest-last by visibleAt. Two writes can land out of issue order when
   // their latencies differ, and program order is what decides the winner, so a
@@ -183,6 +207,7 @@ void AIERegisterFile::write(MCRegister Reg, const APInt &Value,
     H.pop_back();
   H.push_back({VisibleAt, Value.zextOrTrunc(W)});
   Poisoned[Reg.id()] = false;
+  return true;
 }
 
 void AIERegisterFile::forgetBefore(uint64_t Horizon) {

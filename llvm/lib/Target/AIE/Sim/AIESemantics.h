@@ -104,6 +104,13 @@ public:
   /// jl/ret's link register, written with the return address by the
   /// executor (see SlotEffects::Link) rather than by semantics directly.
   virtual MCRegister getLinkRegister() const = 0;
+
+  /// Where each sub-register index sits inside its parent, for this subtarget.
+  /// Carried on the semantics object rather than looked up by whoever builds a
+  /// register file: it is per-subtarget data, the semantics object is the
+  /// per-subtarget object, and a caller that forgets it gets no diagnostic --
+  /// only vector registers that silently refuse to hold a value.
+  virtual ArrayRef<AIESubRegRange> getSubRegRanges() const = 0;
 };
 
 /// \returns nullptr when \p STI names a subtarget with no semantics yet.
