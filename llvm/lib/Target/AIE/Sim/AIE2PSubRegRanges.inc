@@ -26,23 +26,29 @@
 //
 // Regenerate with the extractor in the sub-register composition commit.
 //
-// What guards this copy, stated exactly, because two of the three are weaker
-// than they sound. AIERegisterFile asserts every index's SIZE against the MC
-// layer, which catches a dropped or misaligned row. It then requires each
-// composed register's leaves to tile it exactly, which catches a wrong
-// OFFSET -- but only one that breaks the tiling. It does not catch a
-// high/low pair swapped between two same-sized siblings: sub_256_hi and
-// sub_256_lo transposed still tile 512 bits. That case rests on this file
-// being generated rather than typed, so verify it by diffing against
-// SubRegIdxRangeTable in AIE2PGenRegisterInfo.inc, which is where it came
-// from and which it currently matches row for row.
+// What guards this copy, stated exactly, because the construction-time checks
+// are weaker than they sound. AIERegisterFile asserts every index's SIZE
+// against the MC layer, which catches a dropped or misaligned row. It then
+// requires each composed register's leaves to tile it exactly, which catches a
+// wrong OFFSET -- but only one that breaks the tiling. Neither catches a
+// high/low pair swapped between two same-sized siblings, because a transposed
+// pair still tiles.
 //
-// One such pair is pinned at RUN time instead: sub_l_even/sub_l_odd, by
-// vbcst.64 in test/tools/llvm-aie-run/aie2p-vector-broadcast.s, which reads
-// an eL pair holding two different words and was checked to produce the
-// halves the other way round when those two rows are transposed. The 256-bit
-// pair has no such test, because no modelled instruction yet produces a
-// result that differs across the 256-bit boundary.
+// Both such pairs are pinned at RUN time instead, by tests that were each
+// verified to fail when their two rows are transposed:
+//
+//   sub_l_even / sub_l_odd    vbcst.64, reading an eL pair of two different
+//                             words (aie2p-vector-broadcast.s)
+//   sub_256_hi / sub_256_lo   vlda of 512 bits whose two halves differ
+//                             (aie2p-vector-load.s)
+//
+// A broadcast alone could not pin the second: it repeats every 64 bits at
+// most, so both 256-bit halves always match. It took an instruction whose
+// result differs across that boundary.
+//
+// The rest of the table rests on being generated rather than typed. Verify by
+// diffing against SubRegIdxRangeTable in AIE2PGenRegisterInfo.inc, which is
+// where it came from and which it currently matches row for row.
 //
 // An offset of kNoContiguousRange means the index does not name one contiguous
 // run of bits (the composed vecmask indices do this). Those are refused rather

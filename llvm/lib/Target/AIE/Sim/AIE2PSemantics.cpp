@@ -221,6 +221,32 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // A vector load. Its width is the destination register class's, where
+  // scalarLoad's is the 32-bit datapath, and the value is not extended: it
+  // arrives already the width of the register it lands in.
+  auto vectorLoad = [&](unsigned DstIdx, uint32_t Addr) -> StepResult {
+    const MCRegister Dst = Op.reg(DstIdx);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % 8) {
+      FaultMsg = (Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                  " bits, not a whole number of bytes")
+                     .str();
+      return StepResult::Fault;
+    }
+    APInt V;
+    switch (Host.load(Addr, W / 8, V)) {
+    case PortStatus::Stall:
+      return StepResult::Stalled;
+    case PortStatus::Fault:
+      FaultMsg = (Name + ": no data memory at " + Twine::utohexstr(Addr)).str();
+      return StepResult::Fault;
+    case PortStatus::Ok:
+      break;
+    }
+    Eff.RegWrites.push_back({Dst, V, Op.cycleOf(DstIdx)});
+    return StepResult::Retired;
+  };
+
   // The source register is NAMED here, not read: a store samples its data at
   // its own operand cycle, which on the narrow forms is 7 cycles after issue,
   // by which time an instruction scheduled after the store may have produced
@@ -537,6 +563,15 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     scalarStore(1, access(2, 0), 4);
     DefAddr(0, access(2, Op.imm(3)));
     break;
+  // (dst)(ptr, imm): vector loads, same addressing as the scalar idx_imm
+  // forms. The x form is 512 bits into a composed register, the w form 256
+  // into one that has its own storage, so between them they cover both paths
+  // a vector destination can take.
+  case AIE2P::VLDA_dmx_lda_x_idx_imm:
+  case AIE2P::VLDA_dmw_lda_w_idx_imm:
+    R = vectorLoad(0, access(1, Op.imm(2)));
+    break;
+
   // The vector broadcasts, the first vector instructions modelled. 8/16/32
   // take a 32-bit eR; 64 takes an eL pair, which is itself composed, so it is
   // also the first instruction to READ through composition rather than write
