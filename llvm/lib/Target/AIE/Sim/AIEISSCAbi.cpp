@@ -348,6 +348,19 @@ uint32_t opcodeCoverage(const aie_iss_core *Core, void *Ctx,
   return Opcodes.size();
 }
 
+void cycleCounts(const aie_iss_core *Core, uint64_t *Cycles,
+                 uint64_t *RetiredBundles, uint64_t *StallCycles) {
+  if (!Core || !Core->Exec)
+    return;
+  const AIECoreState &State = Core->Exec->getState();
+  if (Cycles)
+    *Cycles = State.Cycle;
+  if (RetiredBundles)
+    *RetiredBundles = State.RetiredBundles;
+  if (StallCycles)
+    *StallCycles = State.StallCycles;
+}
+
 const aie_iss_api Api = {
     sizeof(aie_iss_api),
     AIE_ISS_ABI_VERSION,
@@ -363,6 +376,7 @@ const aie_iss_api Api = {
     readRegister,
     writeRegister,
     opcodeCoverage,
+    cycleCounts,
 };
 
 } // namespace
