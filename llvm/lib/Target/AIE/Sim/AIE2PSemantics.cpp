@@ -484,6 +484,26 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::PADDS_pstm_nrm_imm:
     DefAddr(0, access(1, Op.imm(2)));
     break;
+
+  // Same, with the increment in an m register. What an m register holds in
+  // this mode is a plain signed BYTE COUNT, which is worth citing rather than
+  // assuming: "modifier" is also the name of a field inside the 2D descriptor
+  // (AIE2InstructionSelector::createDRegSequence builds a d register as
+  // sub_mod + sub_dim_size + sub_dim_stride + sub_dim_count), so the name on
+  // its own suggests something structured. It is not. In
+  // test/CodeGen/AIE/dyn-stackalloc.ll the compiler lowers `alloca i32, %n` to
+  //
+  //     lshl r0, r0, r1 ; add r0, r0, #63 ; and r0, r0, r1   (r1 = -64)
+  //     mov m0, r0
+  //     padda [p1], m0
+  //
+  // -- m0 is n*4 rounded up to 64, a byte count with fully traceable
+  // provenance -- and `padda [p7], #-64` in the same block does the identical
+  // job with an immediate. The imm and register forms are one operation.
+  //
+  // A negative increment survives the 20-bit register: -64 is stored as
+  // 0xFFFC0 and access() masks the sum back to DataAddrBits, so modular
+  // arithmetic gives p - 64 without sign-extending anything.
   case AIE2P::PADDA_pstm_nrm:
   case AIE2P::PADDB_pstm_nrm:
   case AIE2P::PADDS_pstm_nrm:
@@ -548,6 +568,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     R = scalarLoad(0, access(2, 0), 4, /*Signed=*/false);
     DefAddr(1, access(2, Op.imm(3)));
     break;
+  // (dst, ptr_out)(ptr, m): the same, incremented from a register.
+  case AIE2P::LDA_dms_lda_pstm_nrm:
+    R = scalarLoad(0, access(2, 0), 4, /*Signed=*/false);
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
 
   // ()(src, ptr, imm)
   case AIE2P::ST_dms_sts_idx_imm:
@@ -579,6 +604,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::ST_dms_sts_pstm_nrm_imm:
     scalarStore(1, access(2, 0), 4);
     DefAddr(0, access(2, Op.imm(3)));
+    break;
+  // (ptr_out)(src, ptr, m)
+  case AIE2P::ST_dms_sts_pstm_nrm:
+    scalarStore(1, access(2, 0), 4);
+    DefAddr(0, access(2, int32_t(Op.val(3))));
     break;
   // (dst)(ptr, imm): vector loads, same addressing as the scalar idx_imm
   // forms. The x form is 512 bits into a composed register, the w form 256
@@ -635,12 +665,19 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     R = vectorStore(0, spAccess(Op.imm(1)));
     break;
 
-  // The remaining addressing mode, `[$ptr], $mod` with an eM register, is
-  // deliberately absent. Its increment lives in an m register, and what an m
-  // register means in the normal post-increment mode is not something this
-  // file has established -- the pointer ops above it assume "plain signed
-  // offset" without saying why, which is an assumption to settle rather than
-  // to spread. Faulting by name is the honest answer until it is checked.
+  // (dst, ptr_out)(ptr, m) and (ptr_out)(src, ptr, m): incremented from an m
+  // register, whose meaning in this mode is established at the PADDA cases
+  // above.
+  case AIE2P::VLDA_dmx_lda_x_pstm_nrm:
+  case AIE2P::VLDA_dmw_lda_w_pstm_nrm:
+    R = vectorLoad(0, access(2, 0));
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+  case AIE2P::VST_dmx_sts_x_pstm_nrm:
+  case AIE2P::VST_dmw_sts_w_pstm_nrm:
+    R = vectorStore(1, access(2, 0));
+    DefAddr(0, access(2, int32_t(Op.val(3))));
+    break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
   // vector ALU ops AIE2P spells without the MAC datapath -- an elementwise add
