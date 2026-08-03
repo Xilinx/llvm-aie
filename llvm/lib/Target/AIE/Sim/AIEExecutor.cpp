@@ -119,7 +119,11 @@ bool AIEExecutor::drainStores(bool Final) {
     // To the width the store writes, whatever that is. This used to go via
     // 32 bits, which was the scalar datapath showing through: a vector store
     // names a 512-bit source and would have committed only its low word.
-    Host.store(W.Addr, W.NumBytes, V.zextOrTrunc(W.NumBytes * 8));
+    // A fused store narrows on the way out; an ordinary one writes the
+    // register's bits. Either way the source was read at SampleAt, so the
+    // arithmetic sees the value the pipeline actually presents.
+    Host.store(W.Addr, W.NumBytes,
+               (W.Narrow ? W.Narrow(V) : V).zextOrTrunc(W.NumBytes * 8));
   }
   llvm::erase_if(PendingStores, Ready);
   return Ok;

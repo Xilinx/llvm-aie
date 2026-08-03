@@ -446,25 +446,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // The split is the useful part: 0-3 never look at the discarded bits, they
   // just pick a direction. 8-13 round to NEAREST and differ only in how they
   // break an exact half. The saturation values are aie_api's saturation_mode.
-  auto srs = [&](bool Signed) -> StepResult {
-    const MCRegister Dst = Op.reg(0);
-    const unsigned DstBits = State.Regs.getClassWidth(Dst);
-    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
-    const unsigned AccLaneBits = (Op.valReg(AIE2P::crSRSMode) & 1) ? 64 : 32;
-    if (!SrcBits || SrcBits % AccLaneBits)
-      return fault(Name + ": " + Twine(SrcBits) + " source bits are not a " +
-                   "whole number of " + Twine(AccLaneBits) + "-bit lanes");
-    const unsigned Lanes = SrcBits / AccLaneBits;
-    if (!Lanes || !DstBits || DstBits % Lanes)
-      return fault(Name + ": " + Twine(DstBits) + " destination bits do not " +
-                   "divide into " + Twine(Lanes) + " lanes");
+  // crRnd values this model implements, checked before any narrowing is set
+  // up so the arithmetic itself cannot fail. 0-3 are directional, 8-13 round
+  // to nearest; 4-7 are not assigned by aie2p_defines.h.
+  auto isKnownRounding = [](uint32_t Rnd) {
+    return Rnd <= 3 || (Rnd >= 8 && Rnd <= 13);
+  };
+
+  // The narrowing itself, as a plain function of the accumulator bits. Split
+  // out from the instruction so the fused stores can hand it to the executor
+  // and have it applied when the pipeline reaches their sample cycle.
+  auto srsNarrow = [](const APInt &Src, unsigned DstBits, unsigned AccLaneBits,
+                      unsigned Shift, uint32_t Rnd, uint32_t Sat,
+                      bool Signed) -> APInt {
+    const unsigned Lanes = Src.getBitWidth() / AccLaneBits;
     const unsigned DstLaneBits = DstBits / Lanes;
-
-    const APInt Src = Op.valN(1, SrcBits);
-    const unsigned Shift = Op.val(2) & (AccLaneBits - 1);
-    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
-    const uint32_t Sat = Op.valReg(AIE2P::crSat);
-
     APInt Out(DstBits, 0);
     for (unsigned I = 0; I != Lanes; ++I) {
       APInt V = Src.extractBits(AccLaneBits, I * AccLaneBits);
@@ -506,8 +502,9 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
             case 12: Up = Q[0]; break;                 // conv_even
             case 13: Up = !Q[0]; break;                // conv_odd
             default:
-              return fault(Name + ": crRnd holds " + Twine(Rnd) +
-                           ", which is not a rounding mode this model knows");
+              // Rejected before the closure is built, so this cannot be
+              // reached; see isKnownRounding.
+              llvm_unreachable("unvalidated rounding mode");
             }
           break;
         }
@@ -540,7 +537,72 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       }
       Out.insertBits(Q.trunc(DstLaneBits), I * DstLaneBits);
     }
-    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    return Out;
+  };
+
+  // The geometry checks, shared by the register and fused forms. \p SrcBits is
+  // the accumulator width and \p DstBits the vector one.
+  auto srsGeometry = [&](unsigned SrcBits, unsigned DstBits,
+                         unsigned &AccLaneBits) -> bool {
+    AccLaneBits = (Op.valReg(AIE2P::crSRSMode) & 1) ? 64 : 32;
+    if (!SrcBits || SrcBits % AccLaneBits)
+      return false;
+    const unsigned Lanes = SrcBits / AccLaneBits;
+    return Lanes && DstBits && DstBits % Lanes == 0;
+  };
+
+  // (vec)(acc, su): narrow into a register.
+  auto srs = [&](bool Signed) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    unsigned AccLaneBits = 0;
+    if (!srsGeometry(SrcBits, DstBits, AccLaneBits))
+      return fault(Name + ": " + Twine(SrcBits) + " accumulator bits and " +
+                   Twine(DstBits) + " result bits do not agree on a lane count");
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    if (!isKnownRounding(Rnd))
+      return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                   ", which is not a rounding mode this model knows");
+    Eff.RegWrites.push_back(
+        {Dst,
+         srsNarrow(Op.valN(1, SrcBits), DstBits, AccLaneBits,
+                   Op.val(2) & (AccLaneBits - 1), Rnd, Op.valReg(AIE2P::crSat),
+                   Signed),
+         Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
+  // vst.srs: the same narrowing, but the result goes to memory. The source is
+  // NAMED and the arithmetic deferred, exactly as an ordinary store defers --
+  // \p SrcIdx's register may be written by an instruction issued after this
+  // one, and reading it at issue would quietly take the wrong value.
+  // \p Narrowing is the 2x or 4x in the mnemonic. The stored width follows
+  // from it and the accumulator's class -- the dm/dmw/dmx prefix does NOT
+  // give it away, since `dm` names both a 512-bit store (2x from cm) and a
+  // 256-bit one (4x from cm).
+  auto fusedSrs = [&](unsigned Narrowing, unsigned SrcIdx, unsigned ShiftIdx,
+                      uint32_t Addr, bool Signed) -> StepResult {
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(SrcIdx));
+    const unsigned DstBits = SrcBits / Narrowing;
+    unsigned AccLaneBits = 0;
+    if (!srsGeometry(SrcBits, DstBits, AccLaneBits))
+      return fault(Name + ": " + Twine(SrcBits) + " accumulator bits and " +
+                   Twine(DstBits) + " stored bits do not agree on a lane count");
+    // The control registers and the shift are read HERE, at issue, which is
+    // right: they are set before the instruction that reads them, and the
+    // compiler emits those writes immediately ahead of it.
+    const unsigned Shift = Op.val(ShiftIdx) & (AccLaneBits - 1);
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    const uint32_t Sat = Op.valReg(AIE2P::crSat);
+    if (!isKnownRounding(Rnd))
+      return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                   ", which is not a rounding mode this model knows");
+    Eff.MemWrites.push_back(
+        {Addr, DstBits / 8, Op.reg(SrcIdx), Op.cycleOf(SrcIdx),
+         [=](const APInt &V) {
+           return srsNarrow(V, DstBits, AccLaneBits, Shift, Rnd, Sat, Signed);
+         }});
     return StepResult::Retired;
   };
 
@@ -1219,6 +1281,173 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VSRS_4x_mv_w_srs_cm_srsSign1:
   case AIE2P::VSRS_4x_mv_x_srs_dm_srsSign1:
     R = srs(/*Signed=*/true);
+    break;
+
+  // vst.srs -- narrow and store in one instruction. The narrowing is deferred
+  // into the MemWrite, so it runs on the accumulator's value at the store's
+  // sample cycle rather than at issue.
+  //
+  // Operand indices again read off each outs list: a ptr_out shifts src and
+  // su by one, and the dimensioned forms shift them again per counter.
+
+  // ()(src, su, ptr, dj), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_idx_srsSign0:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_idx_srsSign0:
+    R = fusedSrs(2, 0, 1, access(2, int32_t(Op.val(3))), false);
+    break;
+
+  // ()(src, su, ptr, dj), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_idx_srsSign0:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign0:
+    R = fusedSrs(4, 0, 1, access(2, int32_t(Op.val(3))), false);
+    break;
+
+  // ()(src, su, ptr, imm), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign0:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign0:
+    R = fusedSrs(2, 0, 1, access(2, Op.imm(3)), false);
+    break;
+
+  // ()(src, su, ptr, imm), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_idx_imm_srsSign0:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0:
+    R = fusedSrs(4, 0, 1, access(2, Op.imm(3)), false);
+    break;
+
+  // (ptr_out)(src, su, ptr, m), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_srsSign0:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_srsSign0:
+    R = fusedSrs(2, 1, 2, access(3, 0), false);
+    DefAddr(0, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (ptr_out)(src, su, ptr, m), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_srsSign0:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0:
+    R = fusedSrs(4, 1, 2, access(3, 0), false);
+    DefAddr(0, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (ptr_out)(src, su, ptr, imm), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_imm_srsSign0:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign0:
+    R = fusedSrs(2, 1, 2, access(3, 0), false);
+    DefAddr(0, access(3, Op.imm(4)));
+    break;
+
+  // (ptr_out)(src, su, ptr, imm), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_imm_srsSign0:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0:
+    R = fusedSrs(4, 1, 2, access(3, 0), false);
+    DefAddr(0, access(3, Op.imm(4)));
+    break;
+
+  // ()(src, su, ptr, dj), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_idx_srsSign1:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_idx_srsSign1:
+    R = fusedSrs(2, 0, 1, access(2, int32_t(Op.val(3))), true);
+    break;
+
+  // ()(src, su, ptr, dj), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_idx_srsSign1:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign1:
+    R = fusedSrs(4, 0, 1, access(2, int32_t(Op.val(3))), true);
+    break;
+
+  // ()(src, su, ptr, imm), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign1:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign1:
+    R = fusedSrs(2, 0, 1, access(2, Op.imm(3)), true);
+    break;
+
+  // ()(src, su, ptr, imm), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_idx_imm_srsSign1:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign1:
+    R = fusedSrs(4, 0, 1, access(2, Op.imm(3)), true);
+    break;
+
+  // (ptr_out)(src, su, ptr, m), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_srsSign1:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_srsSign1:
+    R = fusedSrs(2, 1, 2, access(3, 0), true);
+    DefAddr(0, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (ptr_out)(src, su, ptr, m), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_srsSign1:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign1:
+    R = fusedSrs(4, 1, 2, access(3, 0), true);
+    DefAddr(0, access(3, int32_t(Op.val(4))));
+    break;
+
+  // (ptr_out)(src, su, ptr, imm), 2x
+  case AIE2P::VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_imm_srsSign1:
+  case AIE2P::VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1:
+    R = fusedSrs(2, 1, 2, access(3, 0), true);
+    DefAddr(0, access(3, Op.imm(4)));
+    break;
+
+  // (ptr_out)(src, su, ptr, imm), 4x
+  case AIE2P::VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1:
+  case AIE2P::VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign1:
+    R = fusedSrs(4, 1, 2, access(3, 0), true);
+    DefAddr(0, access(3, Op.imm(4)));
+    break;
+
+  // 2D walk, 2x
+  case AIE2P::VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0:
+  case AIE2P::VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0:
+    R = fusedSrs(2, 2, 3, access(4, 0), false);
+    DefAddr(0, step2D(Op.val(4), Op.reg(5), 1));
+    break;
+
+  // 2D walk, 4x
+  case AIE2P::VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0:
+  case AIE2P::VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0:
+    R = fusedSrs(4, 2, 3, access(4, 0), false);
+    DefAddr(0, step2D(Op.val(4), Op.reg(5), 1));
+    break;
+
+  // 3D walk, 2x
+  case AIE2P::VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign0:
+  case AIE2P::VST_3D_SRS_2x_dm_sts_srs_cm_srsSign0:
+    R = fusedSrs(2, 3, 4, access(5, 0), false);
+    DefAddr(0, step3D(Op.val(5), Op.reg(6), 1, 2));
+    break;
+
+  // 3D walk, 4x
+  case AIE2P::VST_3D_SRS_4x_dm_sts_srs_cm_srsSign0:
+  case AIE2P::VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign0:
+    R = fusedSrs(4, 3, 4, access(5, 0), false);
+    DefAddr(0, step3D(Op.val(5), Op.reg(6), 1, 2));
+    break;
+
+  // 2D walk, 2x
+  case AIE2P::VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1:
+  case AIE2P::VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1:
+    R = fusedSrs(2, 2, 3, access(4, 0), true);
+    DefAddr(0, step2D(Op.val(4), Op.reg(5), 1));
+    break;
+
+  // 2D walk, 4x
+  case AIE2P::VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1:
+  case AIE2P::VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1:
+    R = fusedSrs(4, 2, 3, access(4, 0), true);
+    DefAddr(0, step2D(Op.val(4), Op.reg(5), 1));
+    break;
+
+  // 3D walk, 2x
+  case AIE2P::VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign1:
+  case AIE2P::VST_3D_SRS_2x_dm_sts_srs_cm_srsSign1:
+    R = fusedSrs(2, 3, 4, access(5, 0), true);
+    DefAddr(0, step3D(Op.val(5), Op.reg(6), 1, 2));
+    break;
+
+  // 3D walk, 4x
+  case AIE2P::VST_3D_SRS_4x_dm_sts_srs_cm_srsSign1:
+  case AIE2P::VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1:
+    R = fusedSrs(4, 3, 4, access(5, 0), true);
+    DefAddr(0, step3D(Op.val(5), Op.reg(6), 1, 2));
     break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
