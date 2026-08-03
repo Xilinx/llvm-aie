@@ -261,6 +261,10 @@ int main(int argc, char **argv) {
   }
 
   outs() << "bundles: " << State.RetiredBundles << '\n';
+  // Cycles exceed bundles by exactly what structural hazards cost, which is the
+  // per-op occupancy a bundle count cannot show.
+  outs() << "cycles: " << State.Cycle << '\n';
+  outs() << "stall-cycles: " << State.StallCycles << '\n';
   if (PrintRegs)
     State.Regs.print(outs());
   for (StringRef Spec : DumpMem) {

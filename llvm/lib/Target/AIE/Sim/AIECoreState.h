@@ -165,6 +165,15 @@ public:
   uint64_t PC;
   uint64_t RetiredBundles = 0;
 
+  /// The core's clock, which every operand cycle and store sample is
+  /// denominated in. It runs ahead of RetiredBundles by StallCycles: a bundle
+  /// issues one per cycle unless a structural hazard holds it, and AIE has no
+  /// interlocks, so a held bundle costs time without retiring anything.
+  uint64_t Cycle = 0;
+  /// Cycles lost to structural hazards, which is per-op occupancy the bundle
+  /// count cannot show.
+  uint64_t StallCycles = 0;
+
   /// A taken control transfer, held until its delay slots have retired.
   struct PendingBranch {
     uint64_t Target;

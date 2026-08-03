@@ -147,6 +147,10 @@ public:
     return SubRegRanges;
   }
 
+  const InstrItineraryData *getItineraries() const override {
+    return Itin.isEmpty() ? nullptr : &Itin;
+  }
+
   StepResult execute(const MCInst &MI, const AIECoreState &State,
                      AIEHostInterface &Host, SlotEffects &Eff,
                      std::string &FaultMsg) override;
@@ -181,8 +185,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Fault;
   }
 
-  Operands Op{MI, State, State.RetiredBundles,
-              Itin.isEmpty() ? nullptr : &Itin, Desc.getSchedClass()};
+  Operands Op{MI, State, State.Cycle, Itin.isEmpty() ? nullptr : &Itin,
+              Desc.getSchedClass()};
   auto fault = [&](const Twine &Msg) {
     FaultMsg = Msg.str();
     return StepResult::Fault;
@@ -926,7 +930,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // MI's operand list.
   case AIE2P::RET: {
     APInt V;
-    if (!State.Regs.read(AIE2P::lr, V, State.RetiredBundles + 1)) {
+    if (!State.Regs.read(AIE2P::lr, V, State.Cycle + 1)) {
       FaultMsg = (Name + ": lr has no value to return to").str();
       return StepResult::Fault;
     }
@@ -1009,7 +1013,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     // sp is implicit here, so it has no operand cycle of its own; +1 matches
     // the read side's assumption for implicit registers.
     Eff.RegWrites.push_back({AIE2P::sp, APInt(DataAddrBits, spAccess(Op.imm(0))),
-                             State.RetiredBundles + 1});
+                             State.Cycle + 1});
     break;
 
   // (dst)(imm): sp-relative spill restore. What ST_R_SPILL/LDA_R_SPILL

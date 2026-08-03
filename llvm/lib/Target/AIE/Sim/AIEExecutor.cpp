@@ -12,6 +12,7 @@
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -22,11 +23,95 @@ using namespace llvm::AIESim;
 AIEHostInterface::~AIEHostInterface() = default;
 AIESemantics::~AIESemantics() = default;
 
+/// Walks one class's stage list, calling \p Fn once per occupied cycle with the
+/// cycle relative to issue. Mirrors AIEHazardRecognizer's anyStage: a stage
+/// occupies its units for getCycles() cycles, then the cursor moves on by
+/// getNextCycles(), which is zero for a stage that runs alongside the next one.
+template <typename FnT>
+static void forEachStageCycle(const InstrItineraryData &Itin, unsigned SchedClass,
+                              FnT Fn) {
+  if (Itin.isEmpty() || Itin.isEndMarker(SchedClass))
+    return;
+  unsigned Cycle = 0;
+  for (const InstrStage &IS : Itin.getStages(SchedClass)) {
+    for (unsigned C = 0; C != IS.getCycles(); ++C)
+      Fn(Cycle + C, IS.getUnits(), IS.getReservationKind());
+    Cycle += IS.getNextCycles();
+  }
+}
+
+unsigned ResourceScoreboard::depthFor(const InstrItineraryData &Itin,
+                                      const MCInstrInfo &MII) {
+  // Over the classes instructions actually name, rather than a class count the
+  // itinerary does not expose.
+  unsigned Max = 1;
+  for (unsigned Opc = 0, E = MII.getNumOpcodes(); Opc != E; ++Opc)
+    forEachStageCycle(Itin, MII.get(Opc).getSchedClass(),
+                      [&](unsigned C, uint64_t, unsigned) {
+                        Max = std::max(Max, C + 1);
+                      });
+  return Max;
+}
+
+const ResourceScoreboard::Slot *ResourceScoreboard::peek(uint64_t C) const {
+  const Slot &S = Ring[C % Ring.size()];
+  return S.At == C ? &S : nullptr;
+}
+
+ResourceScoreboard::Slot &ResourceScoreboard::open(uint64_t C) {
+  Slot &S = Ring[C % Ring.size()];
+  if (S.At != C) {
+    S.At = C;
+    S.Required.clear();
+    S.Reserved.clear();
+  }
+  return S;
+}
+
+unsigned ResourceScoreboard::delay(const InstrItineraryData &Itin,
+                                   ArrayRef<unsigned> SchedClasses,
+                                   uint64_t At) const {
+  auto Holds = [](ArrayRef<uint16_t> Units, uint64_t U) {
+    return llvm::is_contained(Units, uint16_t(U));
+  };
+  for (unsigned D = 0, E = Ring.size(); D != E; ++D) {
+    bool Fits = true;
+    for (unsigned SC : SchedClasses)
+      forEachStageCycle(Itin, SC, [&](unsigned C, uint64_t Unit, unsigned Kind) {
+        const Slot *S = peek(At + D + C);
+        if (!S)
+          return;
+        // Required conflicts with either kind; Reserved only with Required,
+        // which is what lets any number of ordinary accesses coexist while a
+        // part-word store's Required window excludes them all.
+        if (Holds(S->Required, Unit) ||
+            (Kind == InstrStage::Required && Holds(S->Reserved, Unit)))
+          Fits = false;
+      });
+    if (Fits)
+      return D;
+  }
+  // Past the ring every reservation has expired, so this cannot loop forever.
+  return Ring.size();
+}
+
+void ResourceScoreboard::reserve(const InstrItineraryData &Itin,
+                                 ArrayRef<unsigned> SchedClasses, uint64_t At) {
+  for (unsigned SC : SchedClasses)
+    forEachStageCycle(Itin, SC, [&](unsigned C, uint64_t Unit, unsigned Kind) {
+      Slot &S = open(At + C);
+      auto &Into = Kind == InstrStage::Required ? S.Required : S.Reserved;
+      if (!llvm::is_contained(Into, uint16_t(Unit)))
+        Into.push_back(uint16_t(Unit));
+    });
+}
+
 AIEExecutor::AIEExecutor(const MCDisassembler &DisAsm, const MCInstrInfo &MII,
                          const MCRegisterInfo &MRI, AIESemantics &Sem,
                          AIEHostInterface &Host, uint64_t EntryPoint)
     : DisAsm(DisAsm), MII(MII), MRI(MRI), Sem(Sem), Host(Host),
-      State(MRI, EntryPoint, Sem.getSubRegRanges()) {
+      State(MRI, EntryPoint, Sem.getSubRegRanges()), Itin(Sem.getItineraries()),
+      Hazards(Itin ? ResourceScoreboard::depthFor(*Itin, MII) : 1) {
   const std::array<MCRegister, 3> Loop = Sem.getLoopRegisters();
   LCReg = Loop[0];
   LSReg = Loop[1];
@@ -94,7 +179,7 @@ void AIEExecutor::commit(const SlotEffects &Eff) {
 
 bool AIEExecutor::drainStores(bool Final) {
   auto Ready = [&](const SlotEffects::MemWrite &W) {
-    return Final || W.SampleAt <= State.RetiredBundles;
+    return Final || W.SampleAt <= State.Cycle;
   };
   bool Ok = true;
   for (const SlotEffects::MemWrite &W : PendingStores) {
@@ -132,6 +217,7 @@ bool AIEExecutor::drainStores(bool Final) {
 void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
   State.PC = BundleAddr + BundleSize;
   ++State.RetiredBundles;
+  ++State.Cycle;
 
   if (State.Branch && --State.Branch->BundlesLeft == 0) {
     // State.PC is currently the address right after the delay-slot bundle
@@ -147,7 +233,7 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
     // branch just jumped to. (Which is exactly what it did -- `ret` returned
     // to 0 until this was stamped at the resolving bundle.)
     if (State.Branch->Link && LRReg)
-      State.Regs.write(LRReg, APInt(64, State.PC), State.RetiredBundles);
+      State.Regs.write(LRReg, APInt(64, State.PC), State.Cycle);
     State.PC = State.Branch->Target;
     State.Branch.reset();
     return;
@@ -163,14 +249,14 @@ void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
   // The zero-overhead loop is hardware reading its own registers as the last
   // body bundle retires, not an instruction operand, so it sees whatever has
   // landed by now.
-  if (!State.Regs.read(LEReg, LE, State.RetiredBundles) ||
-      !State.Regs.read(LCReg, LC, State.RetiredBundles) ||
-      !State.Regs.read(LSReg, LS, State.RetiredBundles))
+  if (!State.Regs.read(LEReg, LE, State.Cycle) ||
+      !State.Regs.read(LCReg, LC, State.Cycle) ||
+      !State.Regs.read(LSReg, LS, State.Cycle))
     return;
   if (LC.isZero() || LE.getZExtValue() != BundleAddr)
     return;
   LC -= 1;
-  State.Regs.write(LCReg, LC, State.RetiredBundles);
+  State.Regs.write(LCReg, LC, State.Cycle);
   if (!LC.isZero())
     State.PC = LS.getZExtValue();
 }
@@ -195,17 +281,41 @@ const AIEExecutor::Bundle *AIEExecutor::decode(uint64_t Addr) {
   return &Decoded.try_emplace(Addr, std::move(B)).first->second;
 }
 
-StepResult AIEExecutor::step() {
-  // Stores whose source cycle has arrived commit before this bundle runs.
-  if (!drainStores())
-    return StepResult::Fault;
+void AIEExecutor::schedClassesOf(const MCInst &Bundle,
+                                 SmallVectorImpl<unsigned> &Out) const {
+  Out.clear();
+  if (any_of(Bundle, [](const MCOperand &Op) { return Op.isInst(); })) {
+    for (const MCOperand &Op : Bundle)
+      if (Op.isInst())
+        Out.push_back(MII.get(Op.getInst()->getOpcode()).getSchedClass());
+    return;
+  }
+  Out.push_back(MII.get(Bundle.getOpcode()).getSchedClass());
+}
 
+StepResult AIEExecutor::step() {
   const uint64_t BundleAddr = State.PC;
   const Bundle *B = decode(BundleAddr);
   if (!B)
     return StepResult::Fault;
   const MCInst &Bundle = B->Inst;
   const uint64_t Size = B->Size;
+
+  // A structural hazard is the core holding itself back, so time passes here
+  // rather than being reported to the embedder: nothing external can resolve
+  // it, unlike the port stall StepResult::Stalled means. The clock moves before
+  // anything reads it, so the bundle's operand cycles and any store it defers
+  // are all denominated in the cycle it really issued.
+  if (Itin) {
+    schedClassesOf(Bundle, SchedClasses);
+    const unsigned Wait = Hazards.delay(*Itin, SchedClasses, State.Cycle);
+    State.Cycle += Wait;
+    State.StallCycles += Wait;
+  }
+
+  // Stores whose source cycle has arrived commit before this bundle runs.
+  if (!drainStores())
+    return StepResult::Fault;
 
   const bool IsComposite =
       any_of(Bundle, [](const MCOperand &Op) { return Op.isInst(); });
@@ -245,6 +355,8 @@ StepResult AIEExecutor::step() {
   }
 
   commit(Eff);
+  if (Itin)
+    Hazards.reserve(*Itin, SchedClasses, State.Cycle);
   if (Done) {
     // The program is over; stores still waiting on their source do land, and
     // the values they want were produced by instructions that already ran.
