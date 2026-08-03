@@ -2035,7 +2035,7 @@ transform::MergeHandlesOp::apply(transform::TransformRewriter &rewriter,
       return DiagnosedSilenceableFailure::success();
     }
 
-    SetVector<Operation *> uniqued(operations.begin(), operations.end());
+    SetVector<Operation *> uniqued(llvm::from_range, operations);
     results.set(llvm::cast<OpResult>(getResult()), uniqued.getArrayRef());
     return DiagnosedSilenceableFailure::success();
   }
@@ -2049,7 +2049,7 @@ transform::MergeHandlesOp::apply(transform::TransformRewriter &rewriter,
       return DiagnosedSilenceableFailure::success();
     }
 
-    SetVector<Attribute> uniqued(attrs.begin(), attrs.end());
+    SetVector<Attribute> uniqued(llvm::from_range, attrs);
     results.setParams(cast<OpResult>(getResult()), uniqued.getArrayRef());
     return DiagnosedSilenceableFailure::success();
   }
@@ -2065,7 +2065,7 @@ transform::MergeHandlesOp::apply(transform::TransformRewriter &rewriter,
     return DiagnosedSilenceableFailure::success();
   }
 
-  SetVector<Value> uniqued(payloadValues.begin(), payloadValues.end());
+  SetVector<Value> uniqued(llvm::from_range, payloadValues);
   results.setValues(cast<OpResult>(getResult()), uniqued.getArrayRef());
   return DiagnosedSilenceableFailure::success();
 }

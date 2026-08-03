@@ -254,7 +254,7 @@ void AIE2PassConfig::addBlockPlacement() {
 
 TargetTransformInfo
 AIE2TargetMachine::getTargetTransformInfo(const Function &F) const {
-  return TargetTransformInfo(AIE2TTIImpl(this, F));
+  return TargetTransformInfo(std::make_unique<AIE2TTIImpl>(this, F));
 }
 
 unsigned

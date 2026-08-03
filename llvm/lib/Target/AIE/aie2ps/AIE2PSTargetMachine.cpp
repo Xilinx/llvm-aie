@@ -149,5 +149,5 @@ TargetPassConfig *AIE2PSTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 TargetTransformInfo
 AIE2PSTargetMachine::getTargetTransformInfo(const Function &F) const {
-  return TargetTransformInfo(AIE2PSTTIImpl(this, F));
+  return TargetTransformInfo(std::make_unique<AIE2PSTTIImpl>(this, F));
 }

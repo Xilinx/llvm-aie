@@ -2323,8 +2323,7 @@ static void writeArchiveStats(Ctx &ctx) {
 
   os << "members\textracted\tarchive\n";
 
-  SmallVector<StringRef, 0> archives;
-  DenseMap<CachedHashStringRef, unsigned> all, extracted;
+  DenseMap<CachedHashStringRef, unsigned> extracted;
   for (ELFFileBase *file : ctx.objectFiles)
     if (file->archiveName.size())
       ++extracted[CachedHashStringRef(file->archiveName)];

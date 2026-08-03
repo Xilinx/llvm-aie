@@ -120,8 +120,8 @@ public:
   /// CalleeSavedAliases.
   MCRegister getLastCalleeSavedAlias(MCRegister PhysReg) const {
     MCRegister CSR;
-    for (MCRegUnitIterator UI(PhysReg, TRI); UI.isValid(); ++UI) {
-      CSR = CalleeSavedAliases[*UI];
+    for (MCRegUnit Unit : TRI->regunits(PhysReg)) {
+      CSR = CalleeSavedAliases[Unit];
       if (CSR)
         break;
     }

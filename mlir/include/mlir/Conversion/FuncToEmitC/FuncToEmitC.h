@@ -11,10 +11,14 @@
 
 #include "mlir/Transforms/DialectConversion.h"
 namespace mlir {
+class DialectRegistry;
 class RewritePatternSet;
+class TypeConverter;
 
-void populateFuncToEmitCPatterns(RewritePatternSet &patterns,
-                                 TypeConverter &typeConverter);
+void populateFuncToEmitCPatterns(const TypeConverter &typeConverter,
+                                 RewritePatternSet &patterns);
+
+void registerConvertFuncToEmitCInterface(DialectRegistry &registry);
 } // namespace mlir
 
 #endif // MLIR_CONVERSION_FUNCTOEMITC_FUNCTOEMITC_H

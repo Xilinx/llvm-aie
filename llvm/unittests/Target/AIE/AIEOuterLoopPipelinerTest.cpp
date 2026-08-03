@@ -127,7 +127,8 @@ TEST_F(AIEOuterLoopPipelinerTest,
   PM.add(TM->createPassConfig(PM));
   PM.add(createTargetTransformInfoWrapperPass(
       TargetIRAnalysis([](const Function &F) {
-        return TargetTransformInfo(TestTTIImpl(F.getDataLayout()));
+        return TargetTransformInfo(
+            std::make_unique<TestTTIImpl>(F.getDataLayout()));
       })));
   PM.add(createLoopSimplifyPass());
   PM.add(createHardwareLoopsLegacyPass());
