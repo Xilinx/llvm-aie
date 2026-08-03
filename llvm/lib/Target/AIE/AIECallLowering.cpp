@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Register.h"
+#include "llvm/CodeGen/RegisterBankInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -352,6 +353,39 @@ struct AIEIncomingValueHandler : public CallLowering::IncomingValueHandler {
   void assignValueToReg(Register ValVReg, Register PhysReg,
                         const CCValAssign &VA) override {
     markPhysRegUsed(PhysReg);
+
+    const MachineFunction &MF = MIRBuilder.getMF();
+
+    // For AIE2 and later: Check if PhysReg is a pointer register and ValVReg
+    // is a scalar integer. This can happen when i20 values are passed via
+    // pointer registers (p0-p7). In this case, we should generate G_PTRTOINT
+    // instead of a plain COPY to properly model the pointer-to-integer
+    // conversion.
+    // For AIE1, we keep the original behavior (plain COPY).
+    if (!MF.getTarget().getTargetTriple().isAIE1()) {
+      const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+      const LLT ValTy = MRI.getType(ValVReg);
+
+      if (ValTy.isScalar() && !ValTy.isPointer()) {
+        const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(PhysReg);
+        const AIEBaseRegisterInfo *AIETRI =
+            static_cast<const AIEBaseRegisterInfo *>(TRI);
+        // Get the register bank for this register class
+        const RegisterBankInfo *RBI = MF.getSubtarget().getRegBankInfo();
+        const RegisterBank &RB = RBI->getRegBankFromRegClass(*RC, LLT());
+        // Check if the register bank is PTR
+        if (RB.getID() == AIETRI->getPTRRegBankID()) {
+          // Generate:
+          //   %tmp:_(p0) = COPY $pN
+          //   %val:_(sXX) = G_PTRTOINT %tmp
+          const LLT PtrTy = LLT::pointer(0, ValTy.getSizeInBits());
+          auto PtrCopy = MIRBuilder.buildCopy(PtrTy, PhysReg);
+          MIRBuilder.buildPtrToInt(ValVReg, PtrCopy);
+          return;
+        }
+      }
+    }
+
     IncomingValueHandler::assignValueToReg(ValVReg, PhysReg, VA);
   }
 

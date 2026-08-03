@@ -22,27 +22,30 @@ define void @test_i20_arg(i20 %a) {
   ; AIE2: bb.1 (%ir-block.0):
   ; AIE2-NEXT:   liveins: $p0
   ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; AIE2-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY]](p0)
   ; AIE2-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g_ptr_20
-  ; AIE2-NEXT:   G_STORE [[COPY]](s20), [[GV]](p0) :: (store (s20) into @g_ptr_20, align 4)
+  ; AIE2-NEXT:   G_STORE [[PTRTOINT]](s20), [[GV]](p0) :: (store (s20) into @g_ptr_20, align 4)
   ; AIE2-NEXT:   PseudoRET implicit $lr
   ;
   ; AIE2P-LABEL: name: test_i20_arg
   ; AIE2P: bb.1 (%ir-block.0):
   ; AIE2P-NEXT:   liveins: $p0
   ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; AIE2P-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY]](p0)
   ; AIE2P-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g_ptr_20
-  ; AIE2P-NEXT:   G_STORE [[COPY]](s20), [[GV]](p0) :: (store (s20) into @g_ptr_20, align 4)
+  ; AIE2P-NEXT:   G_STORE [[PTRTOINT]](s20), [[GV]](p0) :: (store (s20) into @g_ptr_20, align 4)
   ; AIE2P-NEXT:   PseudoRET implicit $lr
   ;
   ; AIE2PS-LABEL: name: test_i20_arg
   ; AIE2PS: bb.1 (%ir-block.0):
   ; AIE2PS-NEXT:   liveins: $p0
   ; AIE2PS-NEXT: {{  $}}
-  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; AIE2PS-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY]](p0)
   ; AIE2PS-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g_ptr_20
-  ; AIE2PS-NEXT:   G_STORE [[COPY]](s20), [[GV]](p0) :: (store (s20) into @g_ptr_20, align 4)
+  ; AIE2PS-NEXT:   G_STORE [[PTRTOINT]](s20), [[GV]](p0) :: (store (s20) into @g_ptr_20, align 4)
   ; AIE2PS-NEXT:   PseudoRET implicit $lr
   store i20 %a, i20* @g_ptr_20
   ret void
@@ -54,27 +57,36 @@ define void @test_multiple_i20_args(i20 %a, i20 %b, i20 %c) {
   ; AIE2: bb.1 (%ir-block.0):
   ; AIE2-NEXT:   liveins: $p0, $p1, $p2
   ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
-  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(s20) = COPY $p1
-  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:_(s20) = COPY $p2
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; AIE2-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY]](p0)
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+  ; AIE2-NEXT:   [[PTRTOINT1:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY1]](p0)
+  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:_(p0) = COPY $p2
+  ; AIE2-NEXT:   [[PTRTOINT2:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY2]](p0)
   ; AIE2-NEXT:   PseudoRET implicit $lr
   ;
   ; AIE2P-LABEL: name: test_multiple_i20_args
   ; AIE2P: bb.1 (%ir-block.0):
   ; AIE2P-NEXT:   liveins: $p0, $p1, $p2
   ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
-  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:_(s20) = COPY $p1
-  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:_(s20) = COPY $p2
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; AIE2P-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY]](p0)
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+  ; AIE2P-NEXT:   [[PTRTOINT1:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY1]](p0)
+  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:_(p0) = COPY $p2
+  ; AIE2P-NEXT:   [[PTRTOINT2:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY2]](p0)
   ; AIE2P-NEXT:   PseudoRET implicit $lr
   ;
   ; AIE2PS-LABEL: name: test_multiple_i20_args
   ; AIE2PS: bb.1 (%ir-block.0):
   ; AIE2PS-NEXT:   liveins: $p0, $p1, $p2
   ; AIE2PS-NEXT: {{  $}}
-  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
-  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:_(s20) = COPY $p1
-  ; AIE2PS-NEXT:   [[COPY2:%[0-9]+]]:_(s20) = COPY $p2
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; AIE2PS-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY]](p0)
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+  ; AIE2PS-NEXT:   [[PTRTOINT1:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY1]](p0)
+  ; AIE2PS-NEXT:   [[COPY2:%[0-9]+]]:_(p0) = COPY $p2
+  ; AIE2PS-NEXT:   [[PTRTOINT2:%[0-9]+]]:_(s20) = G_PTRTOINT [[COPY2]](p0)
   ; AIE2PS-NEXT:   PseudoRET implicit $lr
   ret void
 }
