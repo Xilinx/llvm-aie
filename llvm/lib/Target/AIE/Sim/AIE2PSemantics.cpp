@@ -221,6 +221,58 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // 2D post-increment: advance the pointer by one step of a nested walk, and
+  // update the iteration counter that says where in the walk we are.
+  //
+  //     if (count == size) { ptr += mod;  count = 0; }
+  //     else               { ptr += incr; count += 1; }
+  //
+  // The d register is [mod, size, incr, count] -- the field order
+  // AIE2InstructionSelector::createDRegSequence builds, laying ModifierReg at
+  // sub_mod, SizeReg at sub_dim_size, IncrReg at sub_dim_stride and CountReg
+  // at sub_dim_count.
+  //
+  // The rule itself is read off aie_api, which drives this from C and so
+  // fixes what the fields must mean. Its circular_iterator::operator++ is
+  //
+  //     add_2d_ptr(ptr, -(elems - stride), elems/stride - 1, index, stride)
+  //
+  // -- step by `stride` for elems/stride - 1 iterations, then jump back by
+  // -(elems - stride), which lands exactly on the base. A second, independent
+  // use pins it further: fft_dit_radix3 calls add_2d_ptr(p, 1, r/8-1, cnt, 0),
+  // an increment of ZERO with a modifier of one, i.e. hold this pointer for
+  // r/8 iterations and then step it. Both only work under the rule above.
+  //
+  // \returns the new pointer; writes the counter through \p Eff.
+  auto step2D = [&](uint32_t Ptr, MCRegister D, unsigned CountIdx) -> uint32_t {
+    auto field = [&](unsigned SubIdx) -> uint32_t {
+      MCRegister Sub = MRI.getSubReg(D, SubIdx);
+      APInt V;
+      if (!Sub || !State.Regs.read(Sub, V, Op.IssueCycle + 1)) {
+        Op.Ok = false;
+        Op.BadReg = Sub;
+        return 0;
+      }
+      return V.zextOrTrunc(32).getZExtValue();
+    };
+    const uint32_t Mod = field(AIE2P::sub_mod);
+    const uint32_t Size = field(AIE2P::sub_dim_size);
+    const uint32_t Incr = field(AIE2P::sub_dim_stride);
+    const uint32_t Count = field(AIE2P::sub_dim_count);
+
+    const bool Wrap = Count == Size;
+    // Both offsets are 20-bit and may be negative, which is how a wrap jumps
+    // backwards; access() masks the sum, so modular arithmetic handles the
+    // sign without anything being extended.
+    const uint32_t Next =
+        uint32_t((Ptr + (Wrap ? Mod : Incr)) &
+                 maskTrailingOnes<uint32_t>(DataAddrBits));
+    Eff.RegWrites.push_back({Op.reg(CountIdx),
+                             APInt(DataAddrBits, Wrap ? 0 : Count + 1),
+                             Op.cycleOf(CountIdx)});
+    return Next;
+  };
+
   // A vector load. Its width is the destination register class's, where
   // scalarLoad's is the 32-bit datapath, and the value is not extended: it
   // arrives already the width of the register it lands in.
@@ -510,6 +562,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     DefAddr(0, access(1, int32_t(Op.val(2))));
     break;
 
+  // (ptr_out, dc)(ptr, d): one step of a 2D walk.
+  case AIE2P::PADDA_2D:
+  case AIE2P::PADDB_2D:
+  case AIE2P::PADDS_2D:
+    DefAddr(0, step2D(Op.val(2), Op.reg(3), 1));
+    break;
+
   // (dst)(ptr, imm): load from ptr + imm, pointer unchanged.
   case AIE2P::LDA_dms_lda_idx_imm:
     R = scalarLoad(0, access(1, Op.imm(2)), 4, /*Signed=*/false);
@@ -677,6 +736,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VST_dmw_sts_w_pstm_nrm:
     R = vectorStore(1, access(2, 0));
     DefAddr(0, access(2, int32_t(Op.val(3))));
+    break;
+
+  // (dst, ptr_out, dc)(ptr, d) and (ptr_out, dc)(src, ptr, d): the same
+  // access, stepped by a 2D walk instead of a flat increment.
+  case AIE2P::VLDA_2D_dmx_lda_x:
+  case AIE2P::VLDA_2D_dmw_lda_w:
+    R = vectorLoad(0, access(3, 0));
+    DefAddr(1, step2D(Op.val(3), Op.reg(4), 2));
+    break;
+  // The 2D store carries a dc output the flat forms do not, so src and ptr
+  // sit one later than in the pstm_nrm shape: (ptr_out, dc)(src, ptr, d).
+  case AIE2P::VST_2D_dmx_sts_x:
+  case AIE2P::VST_2D_dmw_sts_w:
+    R = vectorStore(2, access(3, 0));
+    DefAddr(0, step2D(Op.val(3), Op.reg(4), 1));
     break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
