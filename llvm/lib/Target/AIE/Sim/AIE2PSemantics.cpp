@@ -734,6 +734,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // a vector destination can take.
   case AIE2P::VLDA_dmx_lda_x_idx_imm:
   case AIE2P::VLDA_dmw_lda_w_idx_imm:
+  case AIE2P::VLDA_dmx_lda_bm_idx_imm:
     R = vectorLoad(0, access(1, Op.imm(2)));
     break;
 
@@ -742,12 +743,14 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // ptr_out in the outs list.
   case AIE2P::VLDA_dmx_lda_x_idx:
   case AIE2P::VLDA_dmw_lda_w_idx:
+  case AIE2P::VLDA_dmx_lda_bm_idx:
     R = vectorLoad(0, access(1, int32_t(Op.val(2))));
     break;
 
   // (dst, ptr_out)(ptr, imm): load from ptr, then advance the pointer.
   case AIE2P::VLDA_dmx_lda_x_pstm_nrm_imm:
   case AIE2P::VLDA_dmw_lda_w_pstm_nrm_imm:
+  case AIE2P::VLDA_dmx_lda_bm_pstm_nrm_imm:
     R = vectorLoad(0, access(2, 0));
     DefAddr(1, access(2, Op.imm(3)));
     break;
@@ -755,24 +758,28 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // (dst)(imm): sp-relative, sp fixed in the encoding rather than an operand.
   case AIE2P::VLDA_dmx_lda_x_spill:
   case AIE2P::VLDA_dmw_lda_w_spill:
+  case AIE2P::VLDA_dmx_lda_bm_spill:
     R = vectorLoad(0, spAccess(Op.imm(1)));
     break;
 
   // ()(src, ptr, imm): the matching vector stores.
   case AIE2P::VST_dmx_sts_x_idx_imm:
   case AIE2P::VST_dmw_sts_w_idx_imm:
+  case AIE2P::VST_dmx_sts_bm_idx_imm:
     R = vectorStore(0, access(1, Op.imm(2)));
     break;
 
   // ()(src, ptr, dj)
   case AIE2P::VST_dmx_sts_x_idx:
   case AIE2P::VST_dmw_sts_w_idx:
+  case AIE2P::VST_dmx_sts_bm_idx:
     R = vectorStore(0, access(1, int32_t(Op.val(2))));
     break;
 
   // (ptr_out)(src, ptr, imm)
   case AIE2P::VST_dmx_sts_x_pstm_nrm_imm:
   case AIE2P::VST_dmw_sts_w_pstm_nrm_imm:
+  case AIE2P::VST_dmx_sts_bm_pstm_nrm_imm:
     R = vectorStore(1, access(2, 0));
     DefAddr(0, access(2, Op.imm(3)));
     break;
@@ -780,6 +787,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // ()(src, imm)
   case AIE2P::VST_dmx_sts_x_spill:
   case AIE2P::VST_dmw_sts_w_spill:
+  case AIE2P::VST_dmx_sts_bm_spill:
     R = vectorStore(0, spAccess(Op.imm(1)));
     break;
 
@@ -788,11 +796,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // above.
   case AIE2P::VLDA_dmx_lda_x_pstm_nrm:
   case AIE2P::VLDA_dmw_lda_w_pstm_nrm:
+  case AIE2P::VLDA_dmx_lda_bm_pstm_nrm:
     R = vectorLoad(0, access(2, 0));
     DefAddr(1, access(2, int32_t(Op.val(3))));
     break;
   case AIE2P::VST_dmx_sts_x_pstm_nrm:
   case AIE2P::VST_dmw_sts_w_pstm_nrm:
+  case AIE2P::VST_dmx_sts_bm_pstm_nrm:
     R = vectorStore(1, access(2, 0));
     DefAddr(0, access(2, int32_t(Op.val(3))));
     break;
@@ -801,6 +811,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // access, stepped by a 2D walk instead of a flat increment.
   case AIE2P::VLDA_2D_dmx_lda_x:
   case AIE2P::VLDA_2D_dmw_lda_w:
+  case AIE2P::VLDA_2D_dmx_lda_bm:
     R = vectorLoad(0, access(3, 0));
     DefAddr(1, step2D(Op.val(3), Op.reg(4), 2));
     break;
@@ -808,6 +819,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // sit one later than in the pstm_nrm shape: (ptr_out, dc)(src, ptr, d).
   case AIE2P::VST_2D_dmx_sts_x:
   case AIE2P::VST_2D_dmw_sts_w:
+  case AIE2P::VST_2D_dmx_sts_bm:
     R = vectorStore(2, access(3, 0));
     DefAddr(0, step2D(Op.val(3), Op.reg(4), 1));
     break;
@@ -816,11 +828,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // (ptr_out, dcl, dch)(src, ptr, ds).
   case AIE2P::VLDA_3D_dmx_lda_x:
   case AIE2P::VLDA_3D_dmw_lda_w:
+  case AIE2P::VLDA_3D_dmx_lda_bm:
     R = vectorLoad(0, access(4, 0));
     DefAddr(1, step3D(Op.val(4), Op.reg(5), 2, 3));
     break;
   case AIE2P::VST_3D_dmx_sts_x:
   case AIE2P::VST_3D_dmw_sts_w:
+  case AIE2P::VST_3D_dmx_sts_bm:
     R = vectorStore(3, access(4, 0));
     DefAddr(0, step3D(Op.val(4), Op.reg(5), 1, 2));
     break;
