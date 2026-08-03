@@ -589,11 +589,58 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     R = vectorLoad(0, access(1, Op.imm(2)));
     break;
 
+  // (dst)(ptr, dj): the offset in a register instead of the encoding. dj is a
+  // byte offset, and the pointer is unchanged -- no pstm in the name and no
+  // ptr_out in the outs list.
+  case AIE2P::VLDA_dmx_lda_x_idx:
+  case AIE2P::VLDA_dmw_lda_w_idx:
+    R = vectorLoad(0, access(1, int32_t(Op.val(2))));
+    break;
+
+  // (dst, ptr_out)(ptr, imm): load from ptr, then advance the pointer.
+  case AIE2P::VLDA_dmx_lda_x_pstm_nrm_imm:
+  case AIE2P::VLDA_dmw_lda_w_pstm_nrm_imm:
+    R = vectorLoad(0, access(2, 0));
+    DefAddr(1, access(2, Op.imm(3)));
+    break;
+
+  // (dst)(imm): sp-relative, sp fixed in the encoding rather than an operand.
+  case AIE2P::VLDA_dmx_lda_x_spill:
+  case AIE2P::VLDA_dmw_lda_w_spill:
+    R = vectorLoad(0, spAccess(Op.imm(1)));
+    break;
+
   // ()(src, ptr, imm): the matching vector stores.
   case AIE2P::VST_dmx_sts_x_idx_imm:
   case AIE2P::VST_dmw_sts_w_idx_imm:
     R = vectorStore(0, access(1, Op.imm(2)));
     break;
+
+  // ()(src, ptr, dj)
+  case AIE2P::VST_dmx_sts_x_idx:
+  case AIE2P::VST_dmw_sts_w_idx:
+    R = vectorStore(0, access(1, int32_t(Op.val(2))));
+    break;
+
+  // (ptr_out)(src, ptr, imm)
+  case AIE2P::VST_dmx_sts_x_pstm_nrm_imm:
+  case AIE2P::VST_dmw_sts_w_pstm_nrm_imm:
+    R = vectorStore(1, access(2, 0));
+    DefAddr(0, access(2, Op.imm(3)));
+    break;
+
+  // ()(src, imm)
+  case AIE2P::VST_dmx_sts_x_spill:
+  case AIE2P::VST_dmw_sts_w_spill:
+    R = vectorStore(0, spAccess(Op.imm(1)));
+    break;
+
+  // The remaining addressing mode, `[$ptr], $mod` with an eM register, is
+  // deliberately absent. Its increment lives in an m register, and what an m
+  // register means in the normal post-increment mode is not something this
+  // file has established -- the pointer ops above it assume "plain signed
+  // offset" without saying why, which is an assumption to settle rather than
+  // to spread. Faulting by name is the honest answer until it is checked.
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
   // vector ALU ops AIE2P spells without the MAC datapath -- an elementwise add
