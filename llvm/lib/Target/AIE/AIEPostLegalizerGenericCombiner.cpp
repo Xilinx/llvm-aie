@@ -61,8 +61,8 @@ public:
     AU.addRequired<TargetPassConfig>();
     AU.setPreservesCFG();
     getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelValueTrackingAnalysis>();
-    AU.addPreserved<GISelValueTrackingAnalysis>();
+    AU.addRequired<GISelValueTrackingAnalysisLegacy>();
+    AU.addPreserved<GISelValueTrackingAnalysisLegacy>();
     AU.addRequired<MachineDominatorTreeWrapperPass>();
     AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
@@ -86,7 +86,7 @@ bool AIEPostLegalizerGenericCombiner::runOnMachineFunction(
       MF.getTarget().getOptLevel() != CodeGenOptLevel::None && !skipFunction(F);
   const auto &ST = MF.getSubtarget<AIEBaseSubtarget>();
   const auto *LI = ST.getLegalizerInfo();
-  auto *VT = &getAnalysis<GISelValueTrackingAnalysis>().get(MF);
+  auto *VT = &getAnalysis<GISelValueTrackingAnalysisLegacy>().get(MF);
   auto *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
@@ -112,7 +112,7 @@ char AIEPostLegalizerGenericCombiner::ID = 0;
 INITIALIZE_PASS_BEGIN(AIEPostLegalizerGenericCombiner, DEBUG_TYPE,
                       "AIE Post Legalizer Generic Combiner", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysis)
+INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysisLegacy)
 INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
 INITIALIZE_PASS_END(AIEPostLegalizerGenericCombiner, DEBUG_TYPE,
                     "AIE Post Legalizer Generic Combiner", false, false)

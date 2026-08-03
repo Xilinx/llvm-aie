@@ -185,10 +185,10 @@ public:
 
   /// Return the children of this compound statement.
   MutableArrayRef<Stmt *> getChildren() {
-    return {getTrailingObjects<Stmt *>(), numChildren};
+    return getTrailingObjects(numChildren);
   }
   ArrayRef<Stmt *> getChildren() const {
-    return const_cast<CompoundStmt *>(this)->getChildren();
+    return getTrailingObjects(numChildren);
   }
   ArrayRef<Stmt *>::iterator begin() const { return getChildren().begin(); }
   ArrayRef<Stmt *>::iterator end() const { return getChildren().end(); }
@@ -277,10 +277,10 @@ public:
 
   /// Return the replacement values of this statement.
   MutableArrayRef<Expr *> getReplExprs() {
-    return {getTrailingObjects<Expr *>(), numReplExprs};
+    return getTrailingObjects(numReplExprs);
   }
   ArrayRef<Expr *> getReplExprs() const {
-    return const_cast<ReplaceStmt *>(this)->getReplExprs();
+    return getTrailingObjects(numReplExprs);
   }
 
 private:
@@ -402,12 +402,8 @@ public:
   Expr *getCallableExpr() const { return callable; }
 
   /// Return the arguments of this call.
-  MutableArrayRef<Expr *> getArguments() {
-    return {getTrailingObjects<Expr *>(), numArgs};
-  }
-  ArrayRef<Expr *> getArguments() const {
-    return const_cast<CallExpr *>(this)->getArguments();
-  }
+  MutableArrayRef<Expr *> getArguments() { return getTrailingObjects(numArgs); }
+  ArrayRef<Expr *> getArguments() const { return getTrailingObjects(numArgs); }
 
   /// Returns whether the result of this call is to be negated.
   bool getIsNegated() const { return isNegated; }
@@ -535,10 +531,10 @@ public:
 
   /// Return the operands of this operation.
   MutableArrayRef<Expr *> getOperands() {
-    return {getTrailingObjects<Expr *>(), numOperands};
+    return getTrailingObjects<Expr *>(numOperands);
   }
   ArrayRef<Expr *> getOperands() const {
-    return const_cast<OperationExpr *>(this)->getOperands();
+    return getTrailingObjects<Expr *>(numOperands);
   }
 
   /// Return the result types of this operation.
@@ -551,10 +547,10 @@ public:
 
   /// Return the attributes of this operation.
   MutableArrayRef<NamedAttributeDecl *> getAttributes() {
-    return {getTrailingObjects<NamedAttributeDecl *>(), numAttributes};
+    return getTrailingObjects<NamedAttributeDecl *>(numAttributes);
   }
-  MutableArrayRef<NamedAttributeDecl *> getAttributes() const {
-    return const_cast<OperationExpr *>(this)->getAttributes();
+  ArrayRef<NamedAttributeDecl *> getAttributes() const {
+    return getTrailingObjects<NamedAttributeDecl *>(numAttributes);
   }
 
   unsigned getNumRegions() const { return numRegions; }
@@ -598,10 +594,10 @@ public:
 
   /// Return the element expressions of this range.
   MutableArrayRef<Expr *> getElements() {
-    return {getTrailingObjects<Expr *>(), numElements};
+    return getTrailingObjects(numElements);
   }
   ArrayRef<Expr *> getElements() const {
-    return const_cast<RangeExpr *>(this)->getElements();
+    return getTrailingObjects(numElements);
   }
 
   /// Return the range result type of this expression.
@@ -631,10 +627,10 @@ public:
 
   /// Return the element expressions of this tuple.
   MutableArrayRef<Expr *> getElements() {
-    return {getTrailingObjects<Expr *>(), getType().size()};
+    return getTrailingObjects(getType().size());
   }
   ArrayRef<Expr *> getElements() const {
-    return const_cast<TupleExpr *>(this)->getElements();
+    return getTrailingObjects(getType().size());
   }
 
   /// Return the tuple result type of this expression.
@@ -920,10 +916,10 @@ public:
 
   /// Return the input arguments of this constraint.
   MutableArrayRef<VariableDecl *> getInputs() {
-    return {getTrailingObjects<VariableDecl *>(), numInputs};
+    return getTrailingObjects<VariableDecl *>(numInputs);
   }
   ArrayRef<VariableDecl *> getInputs() const {
-    return const_cast<UserConstraintDecl *>(this)->getInputs();
+    return getTrailingObjects<VariableDecl *>(numInputs);
   }
 
   /// Return the explicit native type to use for the given input. Returns
@@ -1130,16 +1126,16 @@ public:
 
   /// Return the input arguments of this rewrite.
   MutableArrayRef<VariableDecl *> getInputs() {
-    return {getTrailingObjects<VariableDecl *>(), numInputs};
+    return getTrailingObjects(numInputs);
   }
   ArrayRef<VariableDecl *> getInputs() const {
-    return const_cast<UserRewriteDecl *>(this)->getInputs();
+    return getTrailingObjects(numInputs);
   }
 
   /// Return the explicit results of the rewrite declaration. May be empty,
   /// even if the rewrite has results (e.g. in the case of inferred results).
   MutableArrayRef<VariableDecl *> getResults() {
-    return {getTrailingObjects<VariableDecl *>() + numInputs, numResults};
+    return {getTrailingObjects() + numInputs, numResults};
   }
   ArrayRef<VariableDecl *> getResults() const {
     return const_cast<UserRewriteDecl *>(this)->getResults();
@@ -1261,10 +1257,10 @@ public:
 
   /// Return the constraints of this variable.
   MutableArrayRef<ConstraintRef> getConstraints() {
-    return {getTrailingObjects<ConstraintRef>(), numConstraints};
+    return getTrailingObjects(numConstraints);
   }
   ArrayRef<ConstraintRef> getConstraints() const {
-    return const_cast<VariableDecl *>(this)->getConstraints();
+    return getTrailingObjects(numConstraints);
   }
 
   /// Return the initializer expression of this statement, or nullptr if there
@@ -1308,10 +1304,10 @@ public:
 
   /// Return the children of this module.
   MutableArrayRef<Decl *> getChildren() {
-    return {getTrailingObjects<Decl *>(), numChildren};
+    return getTrailingObjects(numChildren);
   }
   ArrayRef<Decl *> getChildren() const {
-    return const_cast<Module *>(this)->getChildren();
+    return getTrailingObjects(numChildren);
   }
 
 private:

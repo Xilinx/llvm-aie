@@ -288,8 +288,7 @@ public:
 
   MachineFunctionProperties getSetProperties() const override {
     if (ClearVirtRegs) {
-      return MachineFunctionProperties().set(
-        MachineFunctionProperties::Property::NoVRegs);
+      return MachineFunctionProperties().setNoVRegs();
     }
 
     return MachineFunctionProperties();

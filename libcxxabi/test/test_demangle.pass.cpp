@@ -30248,6 +30248,8 @@ const char* cases[][2] = {
 
     {"_Z3fooPU9__ptrauthILj3ELb1ELj234EEPi", "foo(int* __ptrauth<3u, true, 234u>*)"},
     {"_Z3fooIPU9__ptrauthILj1ELb0ELj64EEPiEvT_", "void foo<int* __ptrauth<1u, false, 64u>*>(int* __ptrauth<1u, false, 64u>*)"},
+
+    {"_ZN1CpmEi", "C::operator->*(int)"},
     // clang-format on
 };
 
@@ -30293,7 +30295,7 @@ const unsigned NF = sizeof(fp_literal_cases) / sizeof(fp_literal_cases[0]);
 const unsigned NEF = sizeof(fp_literal_cases[0].expecting) /
                      sizeof(fp_literal_cases[0].expecting[0]);
 
-const char *invalid_cases[] = {
+const char* invalid_cases[] = {
     // clang-format off
     "_ZIPPreEncode",
     "Agentt",
@@ -30351,6 +30353,8 @@ const char *invalid_cases[] = {
     "_ZGI3Foo",
     "_ZGIW3Foov",
     "W1x",
+    "_ZN1CdtEi",
+    "_ZN1CdsEi",
     // clang-format on
 };
 

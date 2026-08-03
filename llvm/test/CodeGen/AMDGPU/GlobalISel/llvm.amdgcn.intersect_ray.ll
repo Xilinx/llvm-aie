@@ -629,7 +629,7 @@ define amdgpu_ps <4 x float> @image_bvh64_intersect_ray_a16_vgpr_descr(i64 %node
   ret <4 x float> %r
 }
 
-define amdgpu_kernel void @image_bvh_intersect_ray_nsa_reassign(ptr %p_node_ptr, ptr %p_ray, <4 x i32> inreg %tdescr) {
+define amdgpu_kernel void @image_bvh_intersect_ray_nsa_reassign(ptr %p_node_ptr, ptr %p_ray, <4 x i32> %tdescr) {
 ; GFX1030-LABEL: image_bvh_intersect_ray_nsa_reassign:
 ; GFX1030:       ; %bb.0:
 ; GFX1030-NEXT:    s_load_dwordx8 s[0:7], s[4:5], 0x24
@@ -744,7 +744,7 @@ define amdgpu_kernel void @image_bvh_intersect_ray_nsa_reassign(ptr %p_node_ptr,
   ret void
 }
 
-define amdgpu_kernel void @image_bvh_intersect_ray_a16_nsa_reassign(ptr %p_node_ptr, ptr %p_ray, <4 x i32> inreg %tdescr) {
+define amdgpu_kernel void @image_bvh_intersect_ray_a16_nsa_reassign(ptr %p_node_ptr, ptr %p_ray, <4 x i32> %tdescr) {
 ; GFX1030-LABEL: image_bvh_intersect_ray_a16_nsa_reassign:
 ; GFX1030:       ; %bb.0:
 ; GFX1030-NEXT:    s_load_dwordx8 s[0:7], s[4:5], 0x24
@@ -849,7 +849,7 @@ define amdgpu_kernel void @image_bvh_intersect_ray_a16_nsa_reassign(ptr %p_node_
   ret void
 }
 
-define amdgpu_kernel void @image_bvh64_intersect_ray_nsa_reassign(ptr %p_ray, <4 x i32> inreg %tdescr) {
+define amdgpu_kernel void @image_bvh64_intersect_ray_nsa_reassign(ptr %p_ray, <4 x i32> %tdescr) {
 ; GFX1030-LABEL: image_bvh64_intersect_ray_nsa_reassign:
 ; GFX1030:       ; %bb.0:
 ; GFX1030-NEXT:    s_clause 0x1
@@ -960,7 +960,7 @@ define amdgpu_kernel void @image_bvh64_intersect_ray_nsa_reassign(ptr %p_ray, <4
   ret void
 }
 
-define amdgpu_kernel void @image_bvh64_intersect_ray_a16_nsa_reassign(ptr %p_ray, <4 x i32> inreg %tdescr) {
+define amdgpu_kernel void @image_bvh64_intersect_ray_a16_nsa_reassign(ptr %p_ray, <4 x i32> %tdescr) {
 ; GFX1030-LABEL: image_bvh64_intersect_ray_a16_nsa_reassign:
 ; GFX1030:       ; %bb.0:
 ; GFX1030-NEXT:    s_clause 0x1

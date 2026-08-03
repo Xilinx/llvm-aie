@@ -682,8 +682,7 @@ public:
     if (numRegions == 0)
       return MutableArrayRef<Region>();
 
-    auto *regions = getTrailingObjects<Region>();
-    return {regions, numRegions};
+    return getTrailingObjects<Region>(numRegions);
   }
 
   /// Returns the region held by this operation at position 'index'.
@@ -697,7 +696,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   MutableArrayRef<BlockOperand> getBlockOperands() {
-    return {getTrailingObjects<BlockOperand>(), numSuccs};
+    return getTrailingObjects<BlockOperand>(numSuccs);
   }
 
   // Successor iteration.

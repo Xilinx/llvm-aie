@@ -61,7 +61,6 @@
 #include "clang/Sema/SemaWasm.h"
 #include "clang/Sema/SemaX86.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/STLForwardCompat.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -3649,7 +3648,9 @@ static void handleCleanupAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
     return;
   }
 
-  D->addAttr(::new (S.Context) CleanupAttr(S.Context, AL, FD));
+  auto *attr = ::new (S.Context) CleanupAttr(S.Context, AL, FD);
+  attr->setArgLoc(E->getExprLoc());
+  D->addAttr(attr);
 }
 
 static void handleEnumExtensibilityAttr(Sema &S, Decl *D,
@@ -4011,7 +4012,6 @@ static void handleFormatMatchesAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
 
   S.Diag(AL.getLoc(), diag::err_format_nonliteral)
       << FormatStrExpr->getSourceRange();
-  return;
 }
 
 /// Handle __attribute__((callback(CalleeIdx, PayloadIdx0, ...))) attributes.
@@ -6272,6 +6272,21 @@ static void handleCapabilityAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   D->addAttr(::new (S.Context) CapabilityAttr(S.Context, AL, N));
 }
 
+static void handleReentrantCapabilityAttr(Sema &S, Decl *D,
+                                          const ParsedAttr &AL) {
+  // Do not permit 'reentrant_capability' without 'capability(..)'. Note that
+  // the check here requires 'capability' to be before 'reentrant_capability'.
+  // This helps enforce a canonical style. Also avoids placing an additional
+  // branch into ProcessDeclAttributeList().
+  if (!D->hasAttr<CapabilityAttr>()) {
+    S.Diag(AL.getLoc(), diag::warn_thread_attribute_requires_preceded)
+        << AL << cast<NamedDecl>(D) << "'capability'";
+    return;
+  }
+
+  D->addAttr(::new (S.Context) ReentrantCapabilityAttr(S.Context, AL));
+}
+
 static void handleAssertCapabilityAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   SmallVector<Expr*, 1> Args;
   if (!checkLockFunAttrCommon(S, D, AL, Args))
@@ -6897,9 +6912,7 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
                               : diag::warn_unhandled_ms_attribute_ignored)
           << AL.getAttrName() << AL.getRange();
     } else {
-      S.Diag(AL.getNormalizedRange().getBegin(),
-             diag::warn_unknown_attribute_ignored)
-          << "'" + AL.getNormalizedFullName() + "'" << AL.getNormalizedRange();
+      S.DiagnoseUnknownAttribute(AL);
     }
     return;
   }
@@ -7516,6 +7529,9 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
     break;
 
   // HLSL attributes:
+  case ParsedAttr::AT_RootSignature:
+    S.HLSL().handleRootSignatureAttr(D, AL);
+    break;
   case ParsedAttr::AT_HLSLNumThreads:
     S.HLSL().handleNumThreadsAttr(D, AL);
     break;
@@ -7590,6 +7606,9 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
   case ParsedAttr::AT_Capability:
   case ParsedAttr::AT_Lockable:
     handleCapabilityAttr(S, D, AL);
+    break;
+  case ParsedAttr::AT_ReentrantCapability:
+    handleReentrantCapabilityAttr(S, D, AL);
     break;
   case ParsedAttr::AT_RequiresCapability:
     handleRequiresCapabilityAttr(S, D, AL);
@@ -7896,6 +7915,20 @@ void Sema::checkUnusedDeclAttributes(Declarator &D) {
   ::checkUnusedDeclAttributes(*this, D.getAttributes());
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i)
     ::checkUnusedDeclAttributes(*this, D.getTypeObject(i).getAttrs());
+}
+
+void Sema::DiagnoseUnknownAttribute(const ParsedAttr &AL) {
+  std::string NormalizedFullName = '\'' + AL.getNormalizedFullName() + '\'';
+  if (auto CorrectedFullName =
+          AL.getCorrectedFullName(Context.getTargetInfo(), getLangOpts())) {
+    Diag(AL.getNormalizedRange().getBegin(),
+         diag::warn_unknown_attribute_ignored_suggestion)
+        << NormalizedFullName << *CorrectedFullName << AL.getNormalizedRange();
+  } else {
+    Diag(AL.getNormalizedRange().getBegin(),
+         diag::warn_unknown_attribute_ignored)
+        << NormalizedFullName << AL.getNormalizedRange();
+  }
 }
 
 NamedDecl *Sema::DeclClonePragmaWeak(NamedDecl *ND, const IdentifierInfo *II,
