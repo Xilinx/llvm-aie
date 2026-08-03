@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements target-independent rewrites and utilities to lower the
@@ -188,7 +191,7 @@ static Value create4x128BitSuffle(ImplicitLocOpBuilder &b, Value v1, Value v2,
 /// 1-D vector and have `m`x`n` elements.
 static Value transposeToShuffle1D(OpBuilder &b, Value source, int m, int n) {
   SmallVector<int64_t> mask;
-  mask.reserve(m * n);
+  mask.reserve(static_cast<size_t>(m) * n);
   for (int64_t j = 0; j < n; ++j)
     for (int64_t i = 0; i < m; ++i)
       mask.push_back(i * n + j);

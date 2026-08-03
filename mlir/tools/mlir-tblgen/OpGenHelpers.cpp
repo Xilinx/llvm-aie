@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines helpers used in the op generators.
@@ -95,7 +98,8 @@ void mlir::tblgen::shardOpDefinitions(
   }
 
   unsigned minShardSize = defs.size() / opShardCount;
-  unsigned numMissing = defs.size() - minShardSize * opShardCount;
+  unsigned numMissing =
+      defs.size() - static_cast<size_t>(minShardSize) * opShardCount;
   shardedDefs.reserve(opShardCount);
   for (unsigned i = 0, start = 0; i < opShardCount; ++i) {
     unsigned size = minShardSize + (i < numMissing);

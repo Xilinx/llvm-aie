@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the Operation class.
@@ -993,6 +996,9 @@ private:
   detail::OutOfLineOpResult *getOutOfLineOpResult(unsigned resultNumber) {
     // Out-of-line results are stored in reverse order after (before in memory)
     // the inline results.
+    // codeql[cpp/suspicious-pointer-scaling] Intentional: out-of-line results
+    // are co-allocated and addressed in reverse; scaling by OutOfLineOpResult
+    // is deliberate.
     return reinterpret_cast<detail::OutOfLineOpResult *>(getInlineOpResult(
                detail::OpResultImpl::getMaxInlineResults() - 1)) -
            ++resultNumber;
@@ -1002,6 +1008,9 @@ private:
   detail::InlineOpResult *getInlineOpResult(unsigned resultNumber) {
     // Inline results are stored in reverse order before the operation in
     // memory.
+    // codeql[cpp/suspicious-pointer-scaling] Intentional: inline results are
+    // co-allocated before the Operation; scaling by InlineOpResult is
+    // deliberate.
     return reinterpret_cast<detail::InlineOpResult *>(this) - ++resultNumber;
   }
 
