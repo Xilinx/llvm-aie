@@ -92,10 +92,11 @@ void AIEExecutor::commit(const SlotEffects &Eff) {
   llvm::append_range(PendingStores, Eff.MemWrites);
 }
 
-void AIEExecutor::drainStores(bool Final) {
+bool AIEExecutor::drainStores(bool Final) {
   auto Ready = [&](const SlotEffects::MemWrite &W) {
     return Final || W.SampleAt <= State.RetiredBundles;
   };
+  bool Ok = true;
   for (const SlotEffects::MemWrite &W : PendingStores) {
     if (!Ready(W))
       continue;
@@ -103,9 +104,16 @@ void AIEExecutor::drainStores(bool Final) {
     // Read the source at the cycle the store samples it, which is what lets a
     // producer scheduled AFTER the store still supply its data.
     if (!State.Regs.read(W.SrcReg, V, W.SampleAt)) {
+      // A fault, not a skip. This used to set the message and carry on, so a
+      // store that could not be performed simply did not happen: memory kept
+      // whatever was there, a later load read it back, and nothing said so.
+      // It means the schedule sampled the source inside its producer's
+      // latency window, which a compiler covers and hand-written assembly
+      // can get wrong -- so it is exactly the case that needs naming.
       FaultMsg = ("store source " + Twine(MRI.getName(W.SrcReg)) +
                   " holds no value this model has computed")
                      .str();
+      Ok = false;
       continue;
     }
     // To the width the store writes, whatever that is. This used to go via
@@ -114,6 +122,7 @@ void AIEExecutor::drainStores(bool Final) {
     Host.store(W.Addr, W.NumBytes, V.zextOrTrunc(W.NumBytes * 8));
   }
   llvm::erase_if(PendingStores, Ready);
+  return Ok;
 }
 
 void AIEExecutor::advancePC(uint64_t BundleAddr, uint64_t BundleSize) {
@@ -184,7 +193,8 @@ const AIEExecutor::Bundle *AIEExecutor::decode(uint64_t Addr) {
 
 StepResult AIEExecutor::step() {
   // Stores whose source cycle has arrived commit before this bundle runs.
-  drainStores();
+  if (!drainStores())
+    return StepResult::Fault;
 
   const uint64_t BundleAddr = State.PC;
   const Bundle *B = decode(BundleAddr);
@@ -234,7 +244,8 @@ StepResult AIEExecutor::step() {
   if (Done) {
     // The program is over; stores still waiting on their source do land, and
     // the values they want were produced by instructions that already ran.
-    drainStores(/*Final=*/true);
+    if (!drainStores(/*Final=*/true))
+      return StepResult::Fault;
     return StepResult::Done;
   }
 

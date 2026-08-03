@@ -57,7 +57,12 @@ private:
 
   /// Perform every store whose source has been sampled by now, and drop it.
   /// \p Final drains the rest regardless, for the end of the program.
-  void drainStores(bool Final = false);
+  ///
+  /// \returns false when a store's source could not be read, which means the
+  /// schedule sampled it inside its producer's latency window. The store did
+  /// not happen, so the caller must fault rather than continue past memory
+  /// that silently kept its old contents.
+  bool drainStores(bool Final = false);
 
   /// \returns nullptr and sets FaultMsg when \p Addr does not decode.
   const Bundle *decode(uint64_t Addr);
