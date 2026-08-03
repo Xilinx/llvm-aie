@@ -742,6 +742,73 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vmul.f (dst)(s1, s2, conf): elementwise bf16 x bf16 into f32 accumulator
+  // lanes. The third operand is an eR but is NOT an accumulator -- the
+  // patterns pass mulbf16_vecconf.ConfBits, so it is the same configuration
+  // word the integer MAC forms take, decoded the same way.
+  //
+  // NO ROUNDING MODE IS NEEDED HERE, and that is a property of the shape
+  // rather than an assumption. A bf16 significand is 8 bits, so a product of
+  // two needs at most 16, and an f32 significand holds 24 -- the result is
+  // exactly representable. The instruction carries Uses = [crFPMask], but a
+  // mask selects which exceptions are REPORTED, and the flags it reports into
+  // (Defs = [srFPFlags]) are not computed here; the executor poisons any def
+  // the semantics leave alone, so reading a flag later faults rather than
+  // returning a stale one.
+  //
+  // The exactness claim is CHECKED rather than trusted: if the multiply ever
+  // rounds, the unknown mode would start to matter, so that faults.
+  auto mulBf16 = [&](unsigned S1Idx, unsigned S2Idx,
+                     unsigned ConfIdx) -> StepResult {
+    const uint32_t Conf = Op.val(ConfIdx);
+    const unsigned AMode = (Conf >> 1) & 3;
+    const unsigned BMode = (Conf >> 3) & 3;
+    const unsigned CMode = (Conf >> 5) & 7;
+    if (!Op.Ok)
+      return fault(Name + ": conf is not readable");
+    // AMODE_FP32, BMODE_16x16, CMODE_BF16xBF16_1_elem_1 -- the only shape the
+    // bf16 multiply patterns emit. Anything else is a different instruction
+    // wearing the same opcode and is not guessed at.
+    if (AMode != 2 || BMode != 3 || CMode != 1)
+      return fault(Name + ": conf amode=" + Twine(AMode) + " bmode=" +
+                   Twine(BMode) + " cmode=" + Twine(CMode) +
+                   " is not the elementwise bf16 shape this models");
+
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned S1Bits = State.Regs.getClassWidth(Op.reg(S1Idx));
+    const unsigned Lanes = S1Bits / 16;
+    if (!Lanes || S1Bits % 16 || DstBits < Lanes * 32)
+      return fault(Name + ": " + Twine(S1Bits) + " source bits and " +
+                   Twine(DstBits) + " accumulator bits are not " +
+                   Twine(Lanes) + " bf16 lanes widening to f32");
+    const APInt A = Op.valN(S1Idx, S1Bits);
+    const APInt B = Op.valN(S2Idx, S1Bits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    // Lanes past the source fill the rest of the 2048-bit class with zeros.
+    // X_X produces 32 lanes into a register that holds 64, and the patterns
+    // read back only sub_1024_acc_lo, so nothing observes the top half; zero
+    // is the value that cannot pass off a stale result as a new one.
+    APInt Out(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      APFloat FA(APFloat::BFloat(), A.extractBits(16, I * 16));
+      const APFloat FB(APFloat::BFloat(), B.extractBits(16, I * 16));
+      bool Lost = false;
+      FA.convert(APFloat::IEEEsingle(), APFloat::rmNearestTiesToEven, &Lost);
+      APFloat W = FB;
+      W.convert(APFloat::IEEEsingle(), APFloat::rmNearestTiesToEven, &Lost);
+      if (FA.multiply(W, APFloat::rmNearestTiesToEven) & APFloat::opInexact)
+        return fault(Name + ": lane " + Twine(I) +
+                     " rounds, and the rounding mode this uses is not "
+                     "established");
+      Out.insertBits(FA.bitcastToAPInt(), I * 32);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // A vector store. Its width comes from the source register class, where the
   // scalar forms carry it in the opcode. Same late sampling as those: the
   // register is named, not read, and a composed source composes when the
@@ -1842,6 +1909,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VMAC_vmul_cm_core_Y_Y:
     R = mac(2, 3, 4, /*AccIdx=*/1);
     break;
+  // Only two bf pairings exist, and they differ solely in source width, which
+  // the lane count is derived from rather than named per arm.
+  case AIE2P::VMUL_f_vmul_bf_vmul_bf_core_X_X:
+  case AIE2P::VMUL_f_vmul_bf_vmul_bf_core_Y_Y:
+    R = mulBf16(1, 2, 3);
+    break;
+
   case AIE2P::VMUL_vmul_cm_core_X_X:
   case AIE2P::VMUL_vmul_cm_core_X_Y:
   case AIE2P::VMUL_vmul_cm_core_Y_X:
