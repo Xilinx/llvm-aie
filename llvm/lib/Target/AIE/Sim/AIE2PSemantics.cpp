@@ -505,7 +505,26 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     scalarStore(1, access(2, 0), 4);
     DefAddr(0, access(2, Op.imm(3)));
     break;
-
+  // vbcst.16 (mXm)(eR): the low half-word of a scalar register repeated across
+  // the destination vector. The first vector instruction, and chosen as the
+  // cheapest driver for sub-register composition -- x0 has no storage of its
+  // own, so this is the first write that has to be split across leaves.
+  case AIE2P::VBCST_16: {
+    const MCRegister Dst = Op.reg(0);
+    // From the register classes; a literal 512 would be a second, unchecked
+    // copy of the class width.
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % 16) {
+      FaultMsg = (Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                  " bits, not a whole number of 16-bit lanes")
+                     .str();
+      return StepResult::Fault;
+    }
+    Eff.RegWrites.push_back(
+        {Dst, APInt::getSplat(W, APInt(16, uint16_t(Op.val(1)))),
+         Op.cycleOf(0)});
+    break;
+  }
   }
 
   if (!Op.Ok) {
