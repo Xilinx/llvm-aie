@@ -40,8 +40,8 @@ _start:
 	movxm	r4, #808
 	movxm	r5, #40
 .ifdef BADSHAPE
-	// amode 0, bmode 1, variant 0 -- the 8x8_8x8 matrix shape, not modelled.
-	movxm	r6, #8
+	// amode 0, bmode 1, variant 2 -- conv_8x8_8ch, not modelled.
+	movxm	r6, #72
 .endif
 	nop
 	nop
@@ -81,4 +81,4 @@ _start:
 // CHECK-DAG: bmll2 = 0x{{12000000020000000000000008(00000012000000020000000000000008){3}$}}
 
 // An unmodelled shape names itself rather than inventing a product.
-// BADSHAPE: MAC shape amode=0 bmode=1 variant=0 is not modelled
+// BADSHAPE: MAC shape amode=0 bmode=1 variant=2 is not modelled

@@ -638,9 +638,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const bool SgnY = (Conf >> 8) & 1;
     const bool SgnX = (Conf >> 9) & 1;
 
-    // elem_64 over 8-bit lanes. The one shape whose feeding needs no table:
-    // lane i of each source multiplies into lane i of the accumulator.
-    if (!(AMode == 0 && BMode == 1 && Variant == 1))
+    // Every shape is a matrix product C[MxN] = A[MxK] * B[KxN]; elementwise is
+    // just K = 1. The name states M, K and N -- `8x8_8x8` is M=8 K=8 N=8 --
+    // and aie_api's mmul templates confirm it, instantiating that shape as
+    // mmul_8_4<8, 8, 8, TypeA, TypeB, 32> over 64-element operands, which is
+    // <M, K, N, ..., accumulator bits>.
+    // Elementwise is NOT a matrix product with K = N = 1: C[i] = A[i]*B[i]
+    // takes a full-length B, where a matmul with N = 1 would take one column.
+    // It gets its own arm rather than a contrived parameterisation.
+    unsigned M = 0, K = 0, N = 0, ElemBits = 0;
+    bool Hadamard = false;
+    if (AMode == 0 && BMode == 1 && Variant == 1)
+      Hadamard = true, M = 64, ElemBits = 8; // elem_64
+    else if (AMode == 0 && BMode == 1 && Variant == 0)
+      M = 8, K = 8, N = 8, ElemBits = 8; // 8x8_8x8
+    else
       return fault(Name + ": MAC shape amode=" + Twine(AMode) + " bmode=" +
                    Twine(BMode) + " variant=" + Twine(Variant) +
                    " is not modelled");
@@ -649,11 +661,20 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const unsigned DstBits = State.Regs.getClassWidth(Dst);
     const unsigned S1Bits = State.Regs.getClassWidth(Op.reg(S1Idx));
     const unsigned S2Bits = State.Regs.getClassWidth(Op.reg(S2Idx));
-    constexpr unsigned ElemBits = 8;
-    const unsigned Lanes = S1Bits / ElemBits;
-    if (!Lanes || S2Bits != S1Bits || !DstBits || DstBits % Lanes)
-      return fault(Name + ": elementwise needs equal sources and a whole "
-                          "number of accumulator lanes");
+    // Operand sizes are part of the shape, not free: a 32-lane operand where
+    // the shape wants 64 is a DIFFERENT feeding rule, which the header does
+    // spell (mul_elem_64 also has a v32int16 x v64int16 form) but does not
+    // explain. Refusing is the honest answer for those.
+    const unsigned WantA = Hadamard ? M * ElemBits : M * K * ElemBits;
+    const unsigned WantB = Hadamard ? M * ElemBits : K * N * ElemBits;
+    if (S1Bits != WantA || S2Bits != WantB)
+      return fault(Name + ": shape wants " + Twine(WantA) + " and " +
+                   Twine(WantB) + " source bits, got " + Twine(S1Bits) +
+                   " and " + Twine(S2Bits));
+    const unsigned Lanes = Hadamard ? M : M * N;
+    if (!DstBits || DstBits % Lanes)
+      return fault(Name + ": " + Twine(DstBits) + " accumulator bits do not " +
+                   "divide into " + Twine(Lanes) + " lanes");
     const unsigned AccLaneBits = DstBits / Lanes;
 
     const APInt A = Op.valN(S1Idx, S1Bits);
@@ -662,15 +683,30 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     if (AccIdx >= 0 && !ZeroAcc)
       Prev = Op.valN(unsigned(AccIdx), DstBits);
 
+    auto elem = [&](const APInt &V, unsigned Idx, bool Signed) {
+      const APInt E = V.extractBits(ElemBits, Idx * ElemBits);
+      return Signed ? E.sext(AccLaneBits) : E.zext(AccLaneBits);
+    };
+
+    // Row-major throughout: A[i][k] at i*K+k, B[k][j] at k*N+j, C[i][j] at
+    // lane i*N+j.
     APInt Out(DstBits, 0);
-    for (unsigned I = 0; I != Lanes; ++I) {
-      const APInt LA = A.extractBits(ElemBits, I * ElemBits);
-      const APInt LB = B.extractBits(ElemBits, I * ElemBits);
-      const APInt WA = SgnX ? LA.sext(AccLaneBits) : LA.zext(AccLaneBits);
-      const APInt WB = SgnY ? LB.sext(AccLaneBits) : LB.zext(AccLaneBits);
-      APInt Sum = WA * WB;
-      Sum += Prev.extractBits(AccLaneBits, I * AccLaneBits);
-      Out.insertBits(Sum, I * AccLaneBits);
+    if (Hadamard) {
+      for (unsigned I = 0; I != M; ++I) {
+        APInt Sum = Prev.extractBits(AccLaneBits, I * AccLaneBits);
+        Sum += elem(A, I, SgnX) * elem(B, I, SgnY);
+        Out.insertBits(Sum, I * AccLaneBits);
+      }
+    } else {
+      // Row-major throughout: A[i][k] at i*K+k, B[k][j] at k*N+j, C[i][j] at
+      // lane i*N+j.
+      for (unsigned I = 0; I != M; ++I)
+        for (unsigned J = 0; J != N; ++J) {
+          APInt Sum = Prev.extractBits(AccLaneBits, (I * N + J) * AccLaneBits);
+          for (unsigned Kk = 0; Kk != K; ++Kk)
+            Sum += elem(A, I * K + Kk, SgnX) * elem(B, Kk * N + J, SgnY);
+          Out.insertBits(Sum, (I * N + J) * AccLaneBits);
+        }
     }
     Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
     return StepResult::Retired;
