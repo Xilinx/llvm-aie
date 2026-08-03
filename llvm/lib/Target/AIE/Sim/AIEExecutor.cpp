@@ -95,6 +95,25 @@ unsigned ResourceScoreboard::delay(const InstrItineraryData &Itin,
   return Ring.size();
 }
 
+SmallVector<uint16_t, 4>
+ResourceScoreboard::blame(const InstrItineraryData &Itin,
+                          ArrayRef<unsigned> SchedClasses, uint64_t At) const {
+  SmallVector<uint16_t, 4> Out;
+  for (unsigned SC : SchedClasses)
+    forEachStageCycle(Itin, SC, [&](unsigned C, uint64_t Unit, unsigned Kind) {
+      const Slot *S = peek(At + C);
+      if (!S)
+        return;
+      const bool Hit =
+          llvm::is_contained(S->Required, uint16_t(Unit)) ||
+          (Kind == InstrStage::Required &&
+           llvm::is_contained(S->Reserved, uint16_t(Unit)));
+      if (Hit && !llvm::is_contained(Out, uint16_t(Unit)))
+        Out.push_back(uint16_t(Unit));
+    });
+  return Out;
+}
+
 void ResourceScoreboard::reserve(const InstrItineraryData &Itin,
                                  ArrayRef<unsigned> SchedClasses, uint64_t At) {
   for (unsigned SC : SchedClasses)
@@ -309,6 +328,17 @@ StepResult AIEExecutor::step() {
   if (Itin) {
     schedClassesOf(Bundle, SchedClasses);
     const unsigned Wait = Hazards.delay(*Itin, SchedClasses, State.Cycle);
+    // A stall count on its own does not say WHICH resource, and that is the
+    // question every use of it starts with -- the first measurement over
+    // compiled aievec kernels came back as one unit family and would have read
+    // as noise without this.
+    if (Wait && getenv("AIE_SIM_DEBUG_HAZARD")) {
+      errs() << "HAZARD wait=" << Wait << " pc=0x"
+             << Twine::utohexstr(BundleAddr) << " units";
+      for (uint16_t U : Hazards.blame(*Itin, SchedClasses, State.Cycle))
+        errs() << " " << U;
+      errs() << "\n";
+    }
     State.Cycle += Wait;
     State.StallCycles += Wait;
   }
