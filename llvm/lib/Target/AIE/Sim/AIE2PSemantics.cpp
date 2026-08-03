@@ -243,34 +243,85 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // an increment of ZERO with a modifier of one, i.e. hold this pointer for
   // r/8 iterations and then step it. Both only work under the rule above.
   //
+  // A field of an addressing descriptor, read at the issue cycle since these
+  // are not MI operands of their own.
+  auto dfield = [&](MCRegister D, unsigned SubIdx) -> uint32_t {
+    MCRegister Sub = MRI.getSubReg(D, SubIdx);
+    APInt V;
+    if (!Sub || !State.Regs.read(Sub, V, Op.IssueCycle + 1)) {
+      Op.Ok = false;
+      Op.BadReg = Sub;
+      return 0;
+    }
+    return V.zextOrTrunc(32).getZExtValue();
+  };
+
+  // Offsets are 20-bit and may be negative, which is how a wrap jumps
+  // backwards; masking the sum lets modular arithmetic carry the sign without
+  // anything being extended.
+  auto advance = [&](uint32_t Ptr, uint32_t Delta) {
+    return uint32_t((Ptr + Delta) & maskTrailingOnes<uint32_t>(DataAddrBits));
+  };
+  auto defCount = [&](unsigned Idx, uint32_t V) {
+    Eff.RegWrites.push_back(
+        {Op.reg(Idx), APInt(DataAddrBits, V), Op.cycleOf(Idx)});
+  };
+
   // \returns the new pointer; writes the counter through \p Eff.
   auto step2D = [&](uint32_t Ptr, MCRegister D, unsigned CountIdx) -> uint32_t {
-    auto field = [&](unsigned SubIdx) -> uint32_t {
-      MCRegister Sub = MRI.getSubReg(D, SubIdx);
-      APInt V;
-      if (!Sub || !State.Regs.read(Sub, V, Op.IssueCycle + 1)) {
-        Op.Ok = false;
-        Op.BadReg = Sub;
-        return 0;
-      }
-      return V.zextOrTrunc(32).getZExtValue();
-    };
-    const uint32_t Mod = field(AIE2P::sub_mod);
-    const uint32_t Size = field(AIE2P::sub_dim_size);
-    const uint32_t Incr = field(AIE2P::sub_dim_stride);
-    const uint32_t Count = field(AIE2P::sub_dim_count);
+    const uint32_t Mod = dfield(D, AIE2P::sub_mod);
+    const uint32_t Size = dfield(D, AIE2P::sub_dim_size);
+    const uint32_t Incr = dfield(D, AIE2P::sub_dim_stride);
+    const uint32_t Count = dfield(D, AIE2P::sub_dim_count);
 
     const bool Wrap = Count == Size;
-    // Both offsets are 20-bit and may be negative, which is how a wrap jumps
-    // backwards; access() masks the sum, so modular arithmetic handles the
-    // sign without anything being extended.
-    const uint32_t Next =
-        uint32_t((Ptr + (Wrap ? Mod : Incr)) &
-                 maskTrailingOnes<uint32_t>(DataAddrBits));
-    Eff.RegWrites.push_back({Op.reg(CountIdx),
-                             APInt(DataAddrBits, Wrap ? 0 : Count + 1),
-                             Op.cycleOf(CountIdx)});
-    return Next;
+    defCount(CountIdx, Wrap ? 0 : Count + 1);
+    return advance(Ptr, Wrap ? Mod : Incr);
+  };
+
+  // 3D: the same walk with one more level around it.
+  //
+  //     if      (c1 != size1) { ptr += incr1; c1 += 1; }
+  //     else if (c2 != size2) { ptr += incr2; c1 = 0; c2 += 1; }
+  //     else                  { ptr += mod;   c1 = 0; c2 = 0; }
+  //
+  // The descriptor is two 80-bit dims, and createDSRegSequence fills SEVEN of
+  // the eight fields: the hi dim's own mod slot is unused, so the single
+  // sub_mod is the outermost wrap shared by the whole walk.
+  //
+  // aie_api again supplies the rule, and this time side by side with the 2D
+  // one, which is what makes the nesting unambiguous:
+  //
+  //     add_2d_byte(p, inc.inc2, inc.num1, c1, inc.inc1)
+  //     add_3d_byte(p, inc.inc3, inc.num1, c1, inc.inc1, inc.num2, c2, inc.inc2)
+  //
+  // -- the extra level is appended and the wrap moves out to inc3. That an
+  // outer increment REPLACES the inner rather than adding to it is visible in
+  // aie_api's own sliding_window_dim_3d, which builds inc2 as `step + inc2`
+  // and inc3 as `step + inc3`: the inner step is folded in by the caller
+  // precisely because the hardware does not apply it on those iterations.
+  auto step3D = [&](uint32_t Ptr, MCRegister D, unsigned C1Idx,
+                    unsigned C2Idx) -> uint32_t {
+    const uint32_t Mod = dfield(D, AIE2P::sub_mod);
+    const uint32_t Size1 = dfield(D, AIE2P::sub_dim_size);
+    const uint32_t Incr1 = dfield(D, AIE2P::sub_dim_stride);
+    const uint32_t Count1 = dfield(D, AIE2P::sub_dim_count);
+    const uint32_t Size2 = dfield(D, AIE2P::sub_hi_dim_then_sub_dim_size);
+    const uint32_t Incr2 = dfield(D, AIE2P::sub_hi_dim_then_sub_dim_stride);
+    const uint32_t Count2 = dfield(D, AIE2P::sub_hi_dim_then_sub_dim_count);
+
+    if (Count1 != Size1) {
+      defCount(C1Idx, Count1 + 1);
+      defCount(C2Idx, Count2);
+      return advance(Ptr, Incr1);
+    }
+    defCount(C1Idx, 0);
+    if (Count2 != Size2) {
+      defCount(C2Idx, Count2 + 1);
+      return advance(Ptr, Incr2);
+    }
+    defCount(C2Idx, 0);
+    return advance(Ptr, Mod);
   };
 
   // A vector load. Its width is the destination register class's, where
@@ -569,6 +620,14 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     DefAddr(0, step2D(Op.val(2), Op.reg(3), 1));
     break;
 
+  // (ptr_out, dcl, dch)(ptr, ds): 3D carries a SECOND counter output, so ptr
+  // and the descriptor sit one later again.
+  case AIE2P::PADDA_3D:
+  case AIE2P::PADDB_3D:
+  case AIE2P::PADDS_3D:
+    DefAddr(0, step3D(Op.val(3), Op.reg(4), 1, 2));
+    break;
+
   // (dst)(ptr, imm): load from ptr + imm, pointer unchanged.
   case AIE2P::LDA_dms_lda_idx_imm:
     R = scalarLoad(0, access(1, Op.imm(2)), 4, /*Signed=*/false);
@@ -751,6 +810,19 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VST_2D_dmw_sts_w:
     R = vectorStore(2, access(3, 0));
     DefAddr(0, step2D(Op.val(3), Op.reg(4), 1));
+    break;
+
+  // 3D, one output further along again: (dst, ptr_out, dcl, dch)(ptr, ds) and
+  // (ptr_out, dcl, dch)(src, ptr, ds).
+  case AIE2P::VLDA_3D_dmx_lda_x:
+  case AIE2P::VLDA_3D_dmw_lda_w:
+    R = vectorLoad(0, access(4, 0));
+    DefAddr(1, step3D(Op.val(4), Op.reg(5), 2, 3));
+    break;
+  case AIE2P::VST_3D_dmx_sts_x:
+  case AIE2P::VST_3D_dmw_sts_w:
+    R = vectorStore(3, access(4, 0));
+    DefAddr(0, step3D(Op.val(4), Op.reg(5), 1, 2));
     break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
