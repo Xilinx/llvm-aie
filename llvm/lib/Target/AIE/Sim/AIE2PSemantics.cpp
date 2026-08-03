@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIESemantics.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/ADT/Twine.h"
@@ -781,6 +782,86 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                      I * ElemBits);
     Out.insertBits(Top, (Lanes - 1) * ElemBits);
     Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
+  // vmax_lt.N / vmin_ge.N (d, cmp)(s1, s2): the elementwise min or max, AND
+  // the comparison that chose it. Two defs, which is why the operand list is
+  // (d, cmp, s1, s2) -- confirmed against the itinerary, whose operand-cycle
+  // list is [d, cmp, s1, s2] plus the implicit sign register.
+  //
+  // The suffix is the SIGNEDNESS, and it is a 1-bit register rather than an
+  // operand: AIE2PRegisterInfo.td defines vaddSign0/vaddSign1 as AIE2P1BitReg
+  // 0b0/0b1, and each form carries Uses = [vaddSign0] or [vaddSign1]. Which
+  // one means signed is pinned by the standalone compares in
+  // aie2p/AIE2PInstrPatterns.td: aie_setlt (SETLT) selects VLT_*_vaddSign1
+  // where aie_setult (SETULT) selects VLT_*_vaddSign0. The bf16 forms carry no
+  // sign register at all, and the same file says why -- "bf16 is always
+  // signed".
+  //
+  // The mask polarity is the sibling's too, not a reading of the mnemonic:
+  // VGE_16 alone is what (aie_setge $rs1, $rs2) selects, so `ge` in an AIE2P
+  // mnemonic is s1 >= s2 with the operands in that order, and `lt` is s1 < s2.
+  //
+  // That makes the select fall out rather than be assumed: vmax_lt's mask is
+  // s1 < s2, and the max is s2 exactly when s1 < s2; vmin_ge's mask is
+  // s1 >= s2, and the min is s2 exactly when s1 >= s2. Both are the same
+  // predicate -- "this lane's result came from s2" -- which is why LT pairs
+  // with MAX and GE with MIN instead of arbitrarily, and why one subtract in
+  // the vec_sub_min_max datapath yields both results.
+  //
+  // One mask bit per lane. The instruction ids say so: the .8 form is
+  // vec_cmp_out_single64 into mL8m (the 64-bit l8), .16 is out_single32 and
+  // .32 is out_single16, both into mR16_vcompare (the 32-bit r16).
+  // \p Signed is meaningless when \p IsFloat: bf16 has no unsigned reading,
+  // which is why those forms carry no sign register.
+  auto minMax = [&](unsigned ElemBits, bool IsMax, bool Signed,
+                    bool IsFloat = false) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const MCRegister Cmp = Op.reg(1);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const unsigned Lanes = W / ElemBits;
+    const unsigned CmpBits = State.Regs.getClassWidth(Cmp);
+    if (CmpBits < Lanes)
+      return fault(Name + ": " + MRI.getName(Cmp) + " holds " +
+                   Twine(CmpBits) + " bits, too few for " + Twine(Lanes) +
+                   " lanes");
+    const APInt S1 = Op.valN(2, W);
+    const APInt S2 = Op.valN(3, W);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    APInt Out(W, 0);
+    // Bits above the lane count are zeroed. Only the .32 form has any -- 16
+    // lanes in a 32-bit r16 -- and nothing read so far says whether the
+    // hardware drives them or holds them. Zeroing is the choice that cannot
+    // pass off a stale value as a result.
+    APInt Mask(CmpBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      const APInt A = S1.extractBits(ElemBits, I * ElemBits);
+      const APInt B = S2.extractBits(ElemBits, I * ElemBits);
+      bool TakeB;
+      if (IsFloat) {
+        const APFloat FA(APFloat::BFloat(), A);
+        const APFloat FB(APFloat::BFloat(), B);
+        if (FA.isNaN() || FB.isNaN())
+          return fault(Name + ": lane " + Twine(I) +
+                       " compares a NaN, and what this instruction does with "
+                       "one is not established");
+        TakeB = IsMax ? FA < FB : !(FA < FB);
+      } else {
+        TakeB = IsMax ? (Signed ? A.slt(B) : A.ult(B))
+                      : (Signed ? A.sge(B) : A.uge(B));
+      }
+      Out.insertBits(TakeB ? B : A, I * ElemBits);
+      Mask.setBitVal(I, TakeB);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    Eff.RegWrites.push_back({Cmp, Mask, Op.cycleOf(1)});
     return StepResult::Retired;
   };
 
@@ -1741,6 +1822,52 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     Eff.RegWrites.push_back({Dst, Op.valN(1, W), Op.cycleOf(0)});
     break;
   }
+
+  // The whole family goes in together: the eight integer forms differ only in
+  // the two flags, so splitting them by which one a sweep happened to reach
+  // leaves the rest to fault a round later.
+  case AIE2P::VMAX_LT_8_vaddSign0:
+    R = minMax(8, /*IsMax=*/true, /*Signed=*/false);
+    break;
+  case AIE2P::VMAX_LT_8_vaddSign1:
+    R = minMax(8, /*IsMax=*/true, /*Signed=*/true);
+    break;
+  case AIE2P::VMAX_LT_16_vaddSign0:
+    R = minMax(16, /*IsMax=*/true, /*Signed=*/false);
+    break;
+  case AIE2P::VMAX_LT_16_vaddSign1:
+    R = minMax(16, /*IsMax=*/true, /*Signed=*/true);
+    break;
+  case AIE2P::VMAX_LT_32_vaddSign0:
+    R = minMax(32, /*IsMax=*/true, /*Signed=*/false);
+    break;
+  case AIE2P::VMAX_LT_32_vaddSign1:
+    R = minMax(32, /*IsMax=*/true, /*Signed=*/true);
+    break;
+  case AIE2P::VMAX_LT_bf16:
+    R = minMax(16, /*IsMax=*/true, /*Signed=*/true, /*IsFloat=*/true);
+    break;
+  case AIE2P::VMIN_GE_8_vaddSign0:
+    R = minMax(8, /*IsMax=*/false, /*Signed=*/false);
+    break;
+  case AIE2P::VMIN_GE_8_vaddSign1:
+    R = minMax(8, /*IsMax=*/false, /*Signed=*/true);
+    break;
+  case AIE2P::VMIN_GE_16_vaddSign0:
+    R = minMax(16, /*IsMax=*/false, /*Signed=*/false);
+    break;
+  case AIE2P::VMIN_GE_16_vaddSign1:
+    R = minMax(16, /*IsMax=*/false, /*Signed=*/true);
+    break;
+  case AIE2P::VMIN_GE_32_vaddSign0:
+    R = minMax(32, /*IsMax=*/false, /*Signed=*/false);
+    break;
+  case AIE2P::VMIN_GE_32_vaddSign1:
+    R = minMax(32, /*IsMax=*/false, /*Signed=*/true);
+    break;
+  case AIE2P::VMIN_GE_bf16:
+    R = minMax(16, /*IsMax=*/false, /*Signed=*/true, /*IsFloat=*/true);
+    break;
 
   case AIE2P::VPUSH_hi_8:
     R = vpushHi(8);
