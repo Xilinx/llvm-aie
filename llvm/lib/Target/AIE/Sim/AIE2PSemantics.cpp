@@ -750,6 +750,40 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vpush.hi.N (d)(s1, s2): s1 shifted down one element, with s2 as the new
+  // TOP element.
+  //
+  // The mnemonic says "push" but not toward which end, and the operand list
+  // does not either. llvm-aie's own patterns settle it twice over
+  // (aie2p/AIE2PInstrPatterns.td): the generic these select from is
+  // G_AIE_ADD_VECTOR_ELT_HI, and VPUSH_hi_64 is the combine of
+  // vshift(s0, broadcast(s1), 0, 8) -- a shift of exactly one 64-bit element
+  // into the concatenation, whose 512-bit window is s0's elements 1.. followed
+  // by s1. So the arriving element lands at the high end.
+  //
+  // The scalar is wider than the element on the 8- and 16-bit forms (an eR
+  // holds 32 bits), and the pattern feeds an i32 into a v64i8, so it truncates.
+  auto vpushHi = [&](unsigned ElemBits) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit elements");
+    const unsigned Lanes = W / ElemBits;
+    const APInt Src = Op.valN(1, W);
+    const APInt Top = Op.valN(2, ElemBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    APInt Out(W, 0);
+    for (unsigned I = 0; I + 1 != Lanes; ++I)
+      Out.insertBits(Src.extractBits(ElemBits, (I + 1) * ElemBits),
+                     I * ElemBits);
+    Out.insertBits(Top, (Lanes - 1) * ElemBits);
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
   // vbcst.N (mXm)(src): the low N bits of the source repeated across the
   // destination vector. The destination is a composed register, so these are
   // the writes that have to split across leaves to land at all.
@@ -1066,6 +1100,43 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     DefAddr(1, access(2, int32_t(Op.val(3))));
     break;
 
+  // The narrow post-increment loads. Same operand shape as the 32-bit pair
+  // above -- checked per form rather than assumed from the naming -- so only
+  // the access width and signedness differ. The increment is a byte count on
+  // all of them, including the c5s_step2 forms whose encoding is scaled.
+  case AIE2P::LDA_s8_pstm_nrm_imm:
+    R = scalarLoad(0, access(2, 0), 1, /*Signed=*/true);
+    DefAddr(1, access(2, Op.imm(3)));
+    break;
+  case AIE2P::LDA_u8_pstm_nrm_imm:
+    R = scalarLoad(0, access(2, 0), 1, /*Signed=*/false);
+    DefAddr(1, access(2, Op.imm(3)));
+    break;
+  case AIE2P::LDA_s16_pstm_nrm_imm:
+    R = scalarLoad(0, access(2, 0), 2, /*Signed=*/true);
+    DefAddr(1, access(2, Op.imm(3)));
+    break;
+  case AIE2P::LDA_u16_pstm_nrm_imm:
+    R = scalarLoad(0, access(2, 0), 2, /*Signed=*/false);
+    DefAddr(1, access(2, Op.imm(3)));
+    break;
+  case AIE2P::LDA_s8_pstm_nrm:
+    R = scalarLoad(0, access(2, 0), 1, /*Signed=*/true);
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+  case AIE2P::LDA_u8_pstm_nrm:
+    R = scalarLoad(0, access(2, 0), 1, /*Signed=*/false);
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+  case AIE2P::LDA_s16_pstm_nrm:
+    R = scalarLoad(0, access(2, 0), 2, /*Signed=*/true);
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+  case AIE2P::LDA_u16_pstm_nrm:
+    R = scalarLoad(0, access(2, 0), 2, /*Signed=*/false);
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+
   // ()(src, ptr, imm)
   case AIE2P::ST_dms_sts_idx_imm:
     scalarStore(0, access(1, Op.imm(2)), 4);
@@ -1100,6 +1171,25 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // (ptr_out)(src, ptr, m)
   case AIE2P::ST_dms_sts_pstm_nrm:
     scalarStore(1, access(2, 0), 4);
+    DefAddr(0, access(2, int32_t(Op.val(3))));
+    break;
+
+  // The narrow post-increment stores, matching the loads. No unsigned forms
+  // here -- a store does not care -- so the family is half the size.
+  case AIE2P::ST_s8_pstm_nrm_imm:
+    scalarStore(1, access(2, 0), 1);
+    DefAddr(0, access(2, Op.imm(3)));
+    break;
+  case AIE2P::ST_s16_pstm_nrm_imm:
+    scalarStore(1, access(2, 0), 2);
+    DefAddr(0, access(2, Op.imm(3)));
+    break;
+  case AIE2P::ST_s8_pstm_nrm:
+    scalarStore(1, access(2, 0), 1);
+    DefAddr(0, access(2, int32_t(Op.val(3))));
+    break;
+  case AIE2P::ST_s16_pstm_nrm:
+    scalarStore(1, access(2, 0), 2);
     DefAddr(0, access(2, int32_t(Op.val(3))));
     break;
   // (dst)(ptr, imm): vector loads, same addressing as the scalar idx_imm
@@ -1639,6 +1729,32 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // goes through vaddmac and an accumulator -- so they are what a vector
   // datapath can be checked with before accumulators are modelled. There is no
   // vbxor on this subtarget.
+  // (dst)(src): a whole-register vector move. Width from the class, so the
+  // w form's 256 bits and any wider sibling need no separate arm.
+  case AIE2P::VMOV_alu_mv_mv_w: {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W) {
+      R = fault(Name + ": " + MRI.getName(Dst) + " has no class width");
+      break;
+    }
+    Eff.RegWrites.push_back({Dst, Op.valN(1, W), Op.cycleOf(0)});
+    break;
+  }
+
+  case AIE2P::VPUSH_hi_8:
+    R = vpushHi(8);
+    break;
+  case AIE2P::VPUSH_hi_16:
+    R = vpushHi(16);
+    break;
+  case AIE2P::VPUSH_hi_32:
+    R = vpushHi(32);
+    break;
+  case AIE2P::VPUSH_hi_64:
+    R = vpushHi(64);
+    break;
+
   case AIE2P::VBAND:
   case AIE2P::VBOR: {
     const MCRegister Dst = Op.reg(0);
