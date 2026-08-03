@@ -865,6 +865,79 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vextract.N (dst)(s1, idx): one lane into a scalar register, widened.
+  //
+  // The vaddSign suffix means here what it means on the min/max family, and
+  // this is where it is stated outright rather than inferred: the
+  // target-generic Extract_512 multiclass in AIEBaseInstrPatterns.td takes
+  // (UnsignedOpc, SignedOpc) and binds vextract_zext to the first and
+  // vextract_sext to the second, and aie2p passes vaddSign0 then vaddSign1.
+  // AIE2 instantiates the same multiclass with VEXTRACT_D8 then VEXTRACT_S8,
+  // so a second target's naming lands on the same two slots.
+  //
+  // The index is a lane, not a byte -- it is c6u on the imm forms, six bits,
+  // which is exactly the 64 lanes of the .8 form and more than the others need.
+  auto vextract = [&](unsigned ElemBits, bool Signed) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const MCRegister Src = Op.reg(1);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned W = State.Regs.getClassWidth(Src);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Src) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const unsigned Lanes = W / ElemBits;
+    const MCOperand &Idx = MI.getOperand(2);
+    const uint64_t I = Idx.isImm() ? uint64_t(Idx.getImm()) : Op.val(2);
+    const APInt V = Op.valN(1, W);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    // The register forms take a whole eR, so an out-of-range lane is
+    // reachable at runtime rather than only by a malformed encoding. What the
+    // hardware does with one is not established, so it faults.
+    if (I >= Lanes)
+      return fault(Name + ": lane " + Twine(I) + " is outside the " +
+                   Twine(Lanes) + " this source holds");
+    const APInt E = V.extractBits(ElemBits, unsigned(I) * ElemBits);
+    Eff.RegWrites.push_back(
+        {Dst, Signed ? E.sext(DstBits) : E.zext(DstBits), Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
+  // vshift (d)(s1, s2, shift): the 512-bit window of the 1024-bit
+  // concatenation {s2 : s1} starting at BYTE offset shift, s1 low.
+  //
+  // Neither the width of the shift unit nor which operand is the low half is
+  // in the operand list, and both are settled without guessing by an opcode
+  // this model already executes and tests. AIE2PInstrPatterns.td combines
+  // vshift(s0, bcst(s1), 0x0, 0x8) into VPUSH_hi_64, whose behaviour is
+  // s0's elements 1.. followed by s1. That is only true of this reading: 8
+  // means eight BYTES, which is one 64-bit element, and s1 has to be the LOW
+  // half for the discarded element to come off its bottom.
+  auto vshift = [&]() -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % 8)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of bytes");
+    const APInt Lo = Op.valN(1, W);
+    const APInt Hi = Op.valN(2, W);
+    const uint32_t Shift = Op.val(3);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    const unsigned Bytes = W / 8;
+    // A shift of exactly Bytes is the whole of s2 and still a window; past
+    // that the window leaves the concatenation, and what the hardware masks
+    // the count to is not established.
+    if (Shift > Bytes)
+      return fault(Name + ": shift of " + Twine(Shift) + " bytes leaves the " +
+                   Twine(2 * Bytes) + "-byte concatenation");
+    const APInt Cat = Lo.zext(2 * W) | Hi.zext(2 * W).shl(W);
+    Eff.RegWrites.push_back(
+        {Dst, Cat.lshr(Shift * 8).trunc(W), Op.cycleOf(0)});
+    return StepResult::Retired;
+  };
+
   // vbcst.N (mXm)(src): the low N bits of the source repeated across the
   // destination vector. The destination is a composed register, so these are
   // the writes that have to split across leaves to land at all.
@@ -1867,6 +1940,47 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   case AIE2P::VMIN_GE_bf16:
     R = minMax(16, /*IsMax=*/false, /*Signed=*/true, /*IsFloat=*/true);
+    break;
+
+  // Both index forms per width and both signs: the imm and register forms
+  // differ only in where the lane number comes from.
+  case AIE2P::VEXTRACT_8_vec_extract_imm_vaddSign0:
+  case AIE2P::VEXTRACT_8_vec_extract_r_vaddSign0:
+    R = vextract(8, /*Signed=*/false);
+    break;
+  case AIE2P::VEXTRACT_8_vec_extract_imm_vaddSign1:
+  case AIE2P::VEXTRACT_8_vec_extract_r_vaddSign1:
+    R = vextract(8, /*Signed=*/true);
+    break;
+  case AIE2P::VEXTRACT_16_vec_extract_imm_vaddSign0:
+  case AIE2P::VEXTRACT_16_vec_extract_r_vaddSign0:
+    R = vextract(16, /*Signed=*/false);
+    break;
+  case AIE2P::VEXTRACT_16_vec_extract_imm_vaddSign1:
+  case AIE2P::VEXTRACT_16_vec_extract_r_vaddSign1:
+    R = vextract(16, /*Signed=*/true);
+    break;
+  case AIE2P::VEXTRACT_32_vec_extract_imm_vaddSign0:
+  case AIE2P::VEXTRACT_32_vec_extract_r_vaddSign0:
+    R = vextract(32, /*Signed=*/false);
+    break;
+  case AIE2P::VEXTRACT_32_vec_extract_imm_vaddSign1:
+  case AIE2P::VEXTRACT_32_vec_extract_r_vaddSign1:
+    R = vextract(32, /*Signed=*/true);
+    break;
+  // The 64-bit forms write an eL pair, so the widening is a no-op and the
+  // sign only names which opcode the compiler picked.
+  case AIE2P::VEXTRACT_64_vec_extract_imm_vaddSign0:
+  case AIE2P::VEXTRACT_64_vec_extract_r_vaddSign0:
+    R = vextract(64, /*Signed=*/false);
+    break;
+  case AIE2P::VEXTRACT_64_vec_extract_imm_vaddSign1:
+  case AIE2P::VEXTRACT_64_vec_extract_r_vaddSign1:
+    R = vextract(64, /*Signed=*/true);
+    break;
+
+  case AIE2P::VSHIFT:
+    R = vshift();
     break;
 
   case AIE2P::VPUSH_hi_8:
