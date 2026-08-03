@@ -809,6 +809,103 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vconv.bf16.fp32 (dst)(src): narrow each f32 accumulator lane to bf16.
+  //
+  // This is the FIRST op here whose rounding mode is load-bearing. vmul.f
+  // needed none because a bf16 product is exact in f32; this direction throws
+  // away 16 bits of every lane. The mode is not guessed: the instruction
+  // carries Uses = [crF2FMask, crRnd], and crRnd is the same control register
+  // the integer SRS path already reads, with the same encoding.
+  //
+  // bf16 is EXACTLY the top 16 bits of an f32 -- same exponent width, same
+  // bias -- so this is a bit-pattern truncation plus, at most, an increment.
+  // Working on the pattern rather than through a float conversion is what
+  // makes all ten crRnd modes reachable (APFloat offers five) and keeps the
+  // tie-breaks identical to srsNarrow's. It also gets subnormals and the
+  // normal boundary right for free, since incrementing an IEEE pattern steps
+  // to the next representable value across both.
+  //
+  // The one reinterpretation: srsNarrow works in two's complement, where "up"
+  // means toward +inf. A float is sign-magnitude, where truncation always
+  // moves toward ZERO and an increment always moves AWAY from it. So each
+  // mode is expressed as "increase the magnitude?" instead, which flips the
+  // sense on negative lanes.
+  auto convBf16 = [&]() -> StepResult {
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    if (!Op.Ok)
+      return fault(Name + ": crRnd is not readable");
+    if (!isKnownRounding(Rnd))
+      return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                   ", which is not a rounding mode this model knows");
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    const unsigned Lanes = SrcBits / 32;
+    if (!Lanes || SrcBits % 32 || DstBits < Lanes * 16)
+      return fault(Name + ": " + Twine(SrcBits) + " accumulator bits and " +
+                   Twine(DstBits) + " destination bits are not " +
+                   Twine(Lanes) + " f32 lanes narrowing to bf16");
+    const APInt Src = Op.valN(1, SrcBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    APInt Out(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      const uint32_t V = uint32_t(Src.extractBits(32, I * 32).getZExtValue());
+      // A NaN whose payload lives only in the discarded low bits would
+      // truncate to an infinity, and what the hardware does instead is not
+      // established. Infinities need no arm: their low bits are zero, so
+      // nothing rounds.
+      if ((V >> 23 & 0xFF) == 0xFF && (V & 0x7FFFFF) != 0)
+        return fault(Name + ": lane " + Twine(I) +
+                     " is a NaN, and what this instruction does with one is "
+                     "not established");
+      APInt T(16, V >> 16);
+      const uint32_t Rem = V & 0xFFFF;
+      const bool Neg = V >> 31;
+      constexpr uint32_t Half = 0x8000;
+
+      bool Away = false;
+      if (Rem) {
+        switch (Rnd) {
+        case 0: // floor: toward -inf, so away from zero only when negative
+          Away = Neg;
+          break;
+        case 1: // ceil: toward +inf
+          Away = !Neg;
+          break;
+        case 2: // sym_floor: toward zero, which truncation already is
+          break;
+        case 3: // sym_ceil: away from zero
+          Away = true;
+          break;
+        default:
+          if (Rem > Half)
+            Away = true;
+          else if (Rem < Half)
+            Away = false;
+          else
+            switch (Rnd) {
+            case 8: Away = Neg; break;                  // neg_inf
+            case 9: Away = !Neg; break;                 // pos_inf
+            case 10: break;                             // sym_zero
+            case 11: Away = true; break;                // sym_inf
+            case 12: Away = T[0]; break;                // conv_even
+            case 13: Away = !T[0]; break;               // conv_odd
+            default:
+              llvm_unreachable("unvalidated rounding mode");
+            }
+          break;
+        }
+      }
+      if (Away)
+        ++T;
+      Out.insertBits(T, I * 16);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // A vector store. Its width comes from the source register class, where the
   // scalar forms carry it in the opcode. Same late sampling as those: the
   // register is named, not read, and a composed source composes when the
@@ -1909,6 +2006,12 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VMAC_vmul_cm_core_Y_Y:
     R = mac(2, 3, 4, /*AccIdx=*/1);
     break;
+  // Both widths; the lane count comes from the accumulator, not the arm.
+  case AIE2P::VCONV_bf16_fp32_mv_w_srs_bf:
+  case AIE2P::VCONV_bf16_fp32_mv_x_srs_bf:
+    R = convBf16();
+    break;
+
   // Only two bf pairings exist, and they differ solely in source width, which
   // the lane count is derived from rather than named per arm.
   case AIE2P::VMUL_f_vmul_bf_vmul_bf_core_X_X:
