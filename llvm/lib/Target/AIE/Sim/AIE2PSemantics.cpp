@@ -183,6 +183,10 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
 
   Operands Op{MI, State, State.RetiredBundles,
               Itin.isEmpty() ? nullptr : &Itin, Desc.getSchedClass()};
+  auto fault = [&](const Twine &Msg) {
+    FaultMsg = Msg.str();
+    return StepResult::Fault;
+  };
   auto Def32 = [&](unsigned Idx, uint32_t V) {
     Eff.RegWrites.push_back({Op.reg(Idx), APInt(32, V), Op.cycleOf(Idx)});
   };
@@ -357,6 +361,50 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   auto scalarStore = [&](unsigned SrcIdx, uint32_t Addr, unsigned NumBytes) {
     Eff.MemWrites.push_back(
         {Addr, NumBytes, Op.reg(SrcIdx), Op.cycleOf(SrcIdx)});
+  };
+
+  // vups.Nx: widen each lane of a vector into an accumulator lane, shifting
+  // left by \p su on the way in.
+  //
+  // The lane WIDTH is not in the instruction. One opcode serves two
+  // conversions -- VUPS_2x_mv_ups_w2b_upsSign0 is the selection target for
+  // both acc32_v16_I256_ups (16 lanes, i16 -> i32) and acc64_v8_I256_ups
+  // (8 lanes, i32 -> i64) -- and those produce different bits from the same
+  // input. What separates them is the crUPSMode control register, which
+  // AIE2PInstructionSelector sets per intrinsic: 0 for every acc32 form, 1 for
+  // every acc64 form (AIE2PInstructionSelector.cpp, selectVUPS(I, MRI, 0) and
+  // (I, MRI, 1)). The compiler emits the write right before the use, e.g.
+  // `$crupsmode = MOV_scalar_imm11_pseudo 0` in
+  // test/CodeGen/AIE/aie2p/GlobalIsel/inst-select-postinc-vlda_ups.mir.
+  //
+  // So mode gives the accumulator lane width, the two register classes give
+  // the totals, and the lane count falls out of them. The sign is in the
+  // opcode: 0x0 selects upsSign0 and 0x1 upsSign1 in the ISel patterns, and
+  // aie_api passes its `v_sign` there, true meaning signed.
+  auto ups = [&](bool Signed) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    const unsigned AccLaneBits = (Op.valReg(AIE2P::crUPSMode) & 1) ? 64 : 32;
+    if (!DstBits || !SrcBits || DstBits % AccLaneBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is not a whole number of " +
+                   Twine(AccLaneBits) + "-bit accumulator lanes");
+    const unsigned Lanes = DstBits / AccLaneBits;
+    if (!Lanes || SrcBits % Lanes)
+      return fault(Name + ": " + Twine(SrcBits) + " source bits do not divide " +
+                   "into " + Twine(Lanes) + " lanes");
+    const unsigned SrcLaneBits = SrcBits / Lanes;
+
+    const APInt Src = Op.valN(1, SrcBits);
+    const uint32_t Shift = Op.val(2);
+    APInt Acc(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      const APInt Lane = Src.extractBits(SrcLaneBits, I * SrcLaneBits);
+      APInt Wide = Signed ? Lane.sext(AccLaneBits) : Lane.zext(AccLaneBits);
+      Acc.insertBits(Wide << Shift, I * AccLaneBits);
+    }
+    Eff.RegWrites.push_back({Dst, Acc, Op.cycleOf(0)});
+    return StepResult::Retired;
   };
 
   // A vector store. Its width comes from the source register class, where the
@@ -837,6 +885,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VST_3D_dmx_sts_bm:
     R = vectorStore(3, access(4, 0));
     DefAddr(0, step3D(Op.val(4), Op.reg(5), 1, 2));
+    break;
+
+  // (acc)(vec, su): widen into an accumulator. All four conversions share the
+  // one body -- the widths come from the register classes.
+  case AIE2P::VUPS_2x_mv_ups_w2b_upsSign0:
+  case AIE2P::VUPS_2x_mv_ups_x2c_upsSign0:
+  case AIE2P::VUPS_4x_mv_ups_w2c_upsSign0:
+  case AIE2P::VUPS_4x_mv_ups_x2d_upsSign0:
+    R = ups(/*Signed=*/false);
+    break;
+  case AIE2P::VUPS_2x_mv_ups_w2b_upsSign1:
+  case AIE2P::VUPS_2x_mv_ups_x2c_upsSign1:
+  case AIE2P::VUPS_4x_mv_ups_w2c_upsSign1:
+  case AIE2P::VUPS_4x_mv_ups_x2d_upsSign1:
+    R = ups(/*Signed=*/true);
     break;
 
   // (d)(s1, s2) across the whole register. These two are the only elementwise
