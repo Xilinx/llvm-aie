@@ -21,11 +21,66 @@
 #include <string>
 
 namespace llvm {
+class InstrItineraryData;
 class MCDisassembler;
 class MCInstrInfo;
 class MCRegisterInfo;
 
 namespace AIESim {
+
+/// Structural hazards, taken from the itinerary stage lists.
+///
+/// LLVM's two reservation kinds carry the rule: a Required use of a unit
+/// conflicts with any other use of it, while two Reserved uses do not conflict
+/// with each other. AIE2P's part-word-store hazard is written in exactly that
+/// asymmetry -- the sub-word stores take PART_WORD_STORE as Required for 7
+/// cycles and the other memory forms take it as Reserved for 1, so one
+/// sub-word store blocks them all while no two ordinary accesses block each
+/// other.
+///
+/// InstrStage::getUnits() is a unit INDEX here, not a bitmask. AIE predefines
+/// FUNCUNIT_REPRESENTATION(x) as (x) (AIEMCTargetDesc.cpp, and StaticBitSet's
+/// int constructor on the CodeGen side), overriding the shift the subtarget
+/// emitter would otherwise supply -- AIE2P has 73 units, which no 64-bit mask
+/// holds. Reading the field as a mask yields conflicts that look plausible.
+class ResourceScoreboard {
+public:
+  /// \p Depth must be at least the longest stage span in the itineraries, so a
+  /// live reservation can never be overwritten by one a full ring later.
+  explicit ResourceScoreboard(unsigned Depth) : Ring(Depth ? Depth : 1) {}
+
+  /// How many cycles a bundle offered at \p At must wait for its stages to
+  /// fit. Zero when it fits now; never more than the ring depth, past which
+  /// every reservation has expired.
+  unsigned delay(const InstrItineraryData &Itin, ArrayRef<unsigned> SchedClasses,
+                 uint64_t At) const;
+
+  /// Record \p SchedClasses as issuing at \p At. Call only after delay()
+  /// returned zero for the same arguments.
+  void reserve(const InstrItineraryData &Itin, ArrayRef<unsigned> SchedClasses,
+               uint64_t At);
+
+  /// The longest stage span across every class an instruction names, which is
+  /// the depth a scoreboard over \p Itin needs.
+  static unsigned depthFor(const InstrItineraryData &Itin,
+                           const MCInstrInfo &MII);
+
+private:
+  /// A cycle's occupancy, as unit indices. `At` makes the ring self-clearing:
+  /// a slot whose stamp does not match the cycle being asked about holds an
+  /// expired reservation and reads as empty.
+  struct Slot {
+    uint64_t At = ~0ULL;
+    SmallVector<uint16_t, 8> Required;
+    SmallVector<uint16_t, 8> Reserved;
+  };
+
+  /// Null when nothing is recorded for \p C.
+  const Slot *peek(uint64_t C) const;
+  Slot &open(uint64_t C);
+
+  SmallVector<Slot, 16> Ring;
+};
 
 /// Executes machine code one bundle at a time.
 ///
@@ -72,6 +127,10 @@ private:
   /// hardware loop.
   void advancePC(uint64_t BundleAddr, uint64_t BundleSize);
 
+  /// The scheduling classes of every slot in \p Bundle, in issue order.
+  void schedClassesOf(const MCInst &Bundle,
+                      SmallVectorImpl<unsigned> &Out) const;
+
   const MCDisassembler &DisAsm;
   const MCInstrInfo &MII;
   const MCRegisterInfo &MRI;
@@ -91,6 +150,11 @@ private:
   /// Stores waiting for their source operand's cycle. Short: a store is
   /// outstanding only for its own use-cycle worth of bundles.
   SmallVector<SlotEffects::MemWrite, 4> PendingStores;
+  /// Null when the build has no itineraries, in which case every bundle
+  /// issues the cycle it is offered.
+  const InstrItineraryData *Itin = nullptr;
+  ResourceScoreboard Hazards;
+  SmallVector<unsigned, 4> SchedClasses;
 };
 
 } // namespace AIESim

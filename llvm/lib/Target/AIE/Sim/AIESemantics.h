@@ -22,6 +22,7 @@
 #include <string>
 
 namespace llvm {
+class InstrItineraryData;
 class Triple;
 class MCInst;
 class MCInstrInfo;
@@ -123,6 +124,11 @@ public:
   /// per-subtarget object, and a caller that forgets it gets no diagnostic --
   /// only vector registers that silently refuse to hold a value.
   virtual ArrayRef<AIESubRegRange> getSubRegRanges() const = 0;
+
+  /// The subtarget's itineraries, or null when this build has none. Semantics
+  /// read the operand cycles themselves; the executor needs the stage lists,
+  /// which are where the structural hazards live.
+  virtual const InstrItineraryData *getItineraries() const { return nullptr; }
 };
 
 /// \returns nullptr when \p STI names a subtarget with no semantics yet.
