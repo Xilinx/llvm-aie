@@ -742,28 +742,38 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
-  // vmul.f (dst)(s1, s2, conf): elementwise bf16 x bf16 into f32 accumulator
-  // lanes. The third operand is an eR but is NOT an accumulator -- the
-  // patterns pass mulbf16_vecconf.ConfBits, so it is the same configuration
-  // word the integer MAC forms take, decoded the same way.
+  // vmul.f (dst)(s1, s2, conf) / vmac.f (dst)(acc1, s1, s2, conf): elementwise
+  // bf16 x bf16 into f32 accumulator lanes, optionally adding a prior
+  // accumulator in. The conf operand is an eR but is NOT an accumulator --
+  // the patterns pass mulbf16_vecconf.ConfBits, so it is the same
+  // configuration word the integer MAC forms take, decoded the same way, and
+  // AccIdx < 0 selects the vmul.f (no-accumulate) case exactly as it does in
+  // mac() above.
   //
-  // NO ROUNDING MODE IS NEEDED HERE, and that is a property of the shape
-  // rather than an assumption. A bf16 significand is 8 bits, so a product of
-  // two needs at most 16, and an f32 significand holds 24 -- the result is
-  // exactly representable. The instruction carries Uses = [crFPMask], but a
-  // mask selects which exceptions are REPORTED, and the flags it reports into
-  // (Defs = [srFPFlags]) are not computed here; the executor poisons any def
-  // the semantics leave alone, so reading a flag later faults rather than
-  // returning a stale one.
+  // NO ROUNDING MODE IS NEEDED FOR THE MULTIPLY, and that is a property of
+  // the shape rather than an assumption. A bf16 significand is 8 bits, so a
+  // product of two needs at most 16, and an f32 significand holds 24 -- the
+  // result is exactly representable. The instruction carries
+  // Uses = [crFPMask], but a mask selects which exceptions are REPORTED, and
+  // the flags it reports into (Defs = [srFPFlags]) are not computed here; the
+  // executor poisons any def the semantics leave alone, so reading a flag
+  // later faults rather than returning a stale one.
   //
   // The exactness claim is CHECKED rather than trusted: if the multiply ever
   // rounds, the unknown mode would start to matter, so that faults.
-  auto mulBf16 = [&](unsigned S1Idx, unsigned S2Idx,
-                     unsigned ConfIdx) -> StepResult {
+  //
+  // The accumulate ADD carries no such guarantee and is not checked for it --
+  // summing two arbitrary f32 lanes is ordinarily inexact. Unlike vconv, the
+  // vmac.f forms declare no Uses = [crRnd], so the rounding mode is not
+  // selectable and round-to-nearest-even is the only one hardware could be
+  // applying silently.
+  auto mulBf16 = [&](unsigned S1Idx, unsigned S2Idx, unsigned ConfIdx,
+                     int AccIdx) -> StepResult {
     const uint32_t Conf = Op.val(ConfIdx);
     const unsigned AMode = (Conf >> 1) & 3;
     const unsigned BMode = (Conf >> 3) & 3;
     const unsigned CMode = (Conf >> 5) & 7;
+    const bool ZeroAcc = Conf & 1;
     if (!Op.Ok)
       return fault(Name + ": conf is not readable");
     // AMODE_FP32, BMODE_16x16, CMODE_BF16xBF16_1_elem_1 -- the only shape the
@@ -784,6 +794,9 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
                    Twine(Lanes) + " bf16 lanes widening to f32");
     const APInt A = Op.valN(S1Idx, S1Bits);
     const APInt B = Op.valN(S2Idx, S1Bits);
+    APInt Prev(DstBits, 0);
+    if (AccIdx >= 0 && !ZeroAcc)
+      Prev = Op.valN(unsigned(AccIdx), DstBits);
     if (!Op.Ok)
       return fault(Name + ": source is not readable");
 
@@ -803,6 +816,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
         return fault(Name + ": lane " + Twine(I) +
                      " rounds, and the rounding mode this uses is not "
                      "established");
+      if (AccIdx >= 0) {
+        const APFloat FAcc(APFloat::IEEEsingle(),
+                            Prev.extractBits(32, I * 32));
+        FA.add(FAcc, APFloat::rmNearestTiesToEven);
+      }
       Out.insertBits(FA.bitcastToAPInt(), I * 32);
     }
     Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
@@ -2016,7 +2034,15 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // the lane count is derived from rather than named per arm.
   case AIE2P::VMUL_f_vmul_bf_vmul_bf_core_X_X:
   case AIE2P::VMUL_f_vmul_bf_vmul_bf_core_Y_Y:
-    R = mulBf16(1, 2, 3);
+    R = mulBf16(1, 2, 3, /*AccIdx=*/-1);
+    break;
+
+  // vmac.f, the accumulating form: same two bf pairings, with $acc1 added in.
+  // The other four variants of this opcode (vmac_bfp_*, EX/EY/QEX/QEY) are
+  // bfp16 and NOT modelled -- their eEY/eQEYs composition is open, PARKED.
+  case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_X_X:
+  case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_Y_Y:
+    R = mulBf16(2, 3, 4, /*AccIdx=*/1);
     break;
 
   case AIE2P::VMUL_vmul_cm_core_X_X:
