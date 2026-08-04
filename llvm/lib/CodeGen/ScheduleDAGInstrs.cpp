@@ -921,8 +921,8 @@ void ScheduleDAGInstrs::buildEdges(AAResults *AA, RegPressureTracker *RPTracker,
 
   assert(Defs.empty() && Uses.empty() &&
          "Only BuildGraph should update Defs/Uses");
-  Defs.setUniverse(TRI->getNumRegs());
-  Uses.setUniverse(TRI->getNumRegs());
+  Defs.setUniverse(TRI->getNumRegUnits());
+  Uses.setUniverse(TRI->getNumRegUnits());
 
   assert(CurrentVRegDefs.empty() && "nobody else should use CurrentVRegDefs");
   assert(CurrentVRegUses.empty() && "nobody else should use CurrentVRegUses");
