@@ -25,11 +25,15 @@
   ; CHECK-NEXT:    nopb ; st.s8 r2, [p0, dj0]; nops ; add r0, r0, #4; mov dj0, r1; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nopx
+  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    st.s8 r2, [p0, dj0]
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup

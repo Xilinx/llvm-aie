@@ -59,11 +59,12 @@ define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov r1, p0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    st.s8 r0, [p1, #0]; nopx
+; CHECK-NEXT:    st.s8 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r0, x2, #0, vaddsign1
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.exit

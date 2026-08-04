@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEMaxLatencyFinder.h"
+#include "Utils/AIEMachineInstrPrint.h"
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "sched-blocks"
@@ -151,7 +152,7 @@ int MaxLatencyFinder::computeEffectiveLatency(MachineInstr &MI) {
 }
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
-  LLVM_DEBUG(dbgs() << MI << "\n");
+  LLVM_DEBUG(dbgs() << NoDebug(MI) << "\n");
   // If we don't use interblock information, include the 'StageLatency'
   // in maxLatency. This influences the height parameters, telling the
   // scheduler to prefer deep-pipeline instructions over shorter ones.
