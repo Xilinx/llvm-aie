@@ -36,6 +36,7 @@ class LitConfig(object):
         params,
         config_prefix=None,
         maxIndividualTestTime=0,
+        maxRetriesPerTest=None,
         parallelism_groups={},
         per_test_coverage=False,
         gtest_sharding=True,
@@ -93,6 +94,7 @@ class LitConfig(object):
             self.valgrindArgs.extend(self.valgrindUserArgs)
 
         self.maxIndividualTestTime = maxIndividualTestTime
+        self.maxRetriesPerTest = maxRetriesPerTest
         self.parallelism_groups = parallelism_groups
         self.per_test_coverage = per_test_coverage
         self.gtest_sharding = bool(gtest_sharding)

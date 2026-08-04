@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/TileShapeInfo.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Compiler.h"
 #include <cassert>
 
 namespace llvm {
@@ -80,7 +81,7 @@ public:
   VirtRegMap &operator=(const VirtRegMap &) = delete;
   VirtRegMap(VirtRegMap &&) = default;
 
-  void init(MachineFunction &MF);
+  LLVM_ABI void init(MachineFunction &MF);
 
   MachineFunction &getMachineFunction() const {
     assert(MF && "getMachineFunction called before runOnMachineFunction");
@@ -90,7 +91,7 @@ public:
   MachineRegisterInfo &getRegInfo() const { return *MRI; }
   const TargetRegisterInfo &getTargetRegInfo() const { return *TRI; }
 
-  void grow();
+  LLVM_ABI void grow();
 
   /// returns true if the specified virtual register is
   /// mapped to a physical register
@@ -105,7 +106,7 @@ public:
 
   /// creates a mapping for the specified virtual register to
   /// the specified physical register
-  void assignVirt2Phys(Register virtReg, MCRegister physReg);
+  LLVM_ABI void assignVirt2Phys(Register virtReg, MCRegister physReg);
 
   /// returns true if the specified virtual register is
   /// required to be assigned to a specific physical register
@@ -158,12 +159,12 @@ public:
   }
 
   /// returns true if VirtReg is assigned to its preferred physreg.
-  bool hasPreferredPhys(Register VirtReg) const;
+  LLVM_ABI bool hasPreferredPhys(Register VirtReg) const;
 
   /// returns true if VirtReg has a known preferred register.
   /// This returns false if VirtReg has a preference that is a virtual
   /// register that hasn't been assigned yet.
-  bool hasKnownPreference(Register VirtReg) const;
+  LLVM_ABI bool hasKnownPreference(Register VirtReg) const;
 
   /// records virtReg is a split live interval from SReg.
   void setIsSplitFromReg(Register virtReg, Register SReg) {
@@ -217,14 +218,14 @@ public:
 
   /// create a mapping for the specifed virtual register to
   /// the next available stack slot
-  int assignVirt2StackSlot(Register virtReg);
+  LLVM_ABI int assignVirt2StackSlot(Register virtReg);
 
   /// create a mapping for the specified virtual register to
   /// the specified stack slot
-  void assignVirt2StackSlot(Register virtReg, int SS);
+  LLVM_ABI void assignVirt2StackSlot(Register virtReg, int SS);
 
-  void print(raw_ostream &OS, const Module *M = nullptr) const;
-  void dump() const;
+  LLVM_ABI void print(raw_ostream &OS, const Module *M = nullptr) const;
+  LLVM_ABI void dump() const;
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const VirtRegMap &VRM) {
@@ -236,7 +237,7 @@ class VirtRegMapWrapperLegacy : public MachineFunctionPass {
   VirtRegMap VRM;
 
 public:
-  static char ID;
+  LLVM_ABI static char ID;
 
   VirtRegMapWrapperLegacy() : MachineFunctionPass(ID) {}
 
@@ -260,12 +261,13 @@ public:
 
 class VirtRegMapAnalysis : public AnalysisInfoMixin<VirtRegMapAnalysis> {
   friend AnalysisInfoMixin<VirtRegMapAnalysis>;
-  static AnalysisKey Key;
+  LLVM_ABI static AnalysisKey Key;
 
 public:
   using Result = VirtRegMap;
 
-  VirtRegMap run(MachineFunction &MF, MachineFunctionAnalysisManager &MAM);
+  LLVM_ABI VirtRegMap run(MachineFunction &MF,
+                          MachineFunctionAnalysisManager &MAM);
 };
 
 class VirtRegMapPrinterPass : public PassInfoMixin<VirtRegMapPrinterPass> {
@@ -273,8 +275,8 @@ class VirtRegMapPrinterPass : public PassInfoMixin<VirtRegMapPrinterPass> {
 
 public:
   explicit VirtRegMapPrinterPass(raw_ostream &OS) : OS(OS) {}
-  PreservedAnalyses run(MachineFunction &MF,
-                        MachineFunctionAnalysisManager &MFAM);
+  LLVM_ABI PreservedAnalyses run(MachineFunction &MF,
+                                 MachineFunctionAnalysisManager &MFAM);
   static bool isRequired() { return true; }
 };
 
@@ -284,12 +286,13 @@ class VirtRegRewriterPass : public PassInfoMixin<VirtRegRewriterPass> {
 public:
   VirtRegRewriterPass(bool ClearVirtRegs = true)
       : ClearVirtRegs(ClearVirtRegs) {}
-  PreservedAnalyses run(MachineFunction &MF,
-                        MachineFunctionAnalysisManager &MFAM);
+  LLVM_ABI PreservedAnalyses run(MachineFunction &MF,
+                                 MachineFunctionAnalysisManager &MFAM);
 
   static bool isRequired() { return true; }
 
-  void printPipeline(raw_ostream &OS, function_ref<StringRef(StringRef)>) const;
+  LLVM_ABI void printPipeline(raw_ostream &OS,
+                              function_ref<StringRef(StringRef)>) const;
 };
 
 } // end llvm namespace

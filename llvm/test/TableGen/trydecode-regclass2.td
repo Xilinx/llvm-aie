@@ -38,12 +38,12 @@ def InstB : TestInstruction {
 }
 
 // CHECK:      /* 0 */       MCD::OPC_ExtractField, 0, 5,  // Inst{4-0} ...
-// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValue, 8, 22, 0, // Skip to: 29
-// CHECK-NEXT: /* 7 */       MCD::OPC_CheckField, 5, 1, 0, 4, 0, // Skip to: 17
-// CHECK-NEXT: /* 13 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 0, // Opcode: InstA
-// CHECK-NEXT: /* 17 */      MCD::OPC_CheckField, 7, 1, 0, 6, 0, // Skip to: 29
-// CHECK-NEXT: /* 23 */      MCD::OPC_TryDecode, {{[0-9]+}}, {{[0-9]+}}, 1, 0, 0, // Opcode: InstB, skip to: 29
-// CHECK-NEXT: /* 29 */      MCD::OPC_Fail,
+// CHECK-NEXT: /* 3 */       MCD::OPC_FilterValueOrFail, 8,
+// CHECK-NEXT: /* 5 */       MCD::OPC_CheckField, 5, 1, 0, 4, 0, // Skip to: 15
+// CHECK-NEXT: /* 11 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 0, // Opcode: InstA, DecodeIdx: 0
+// CHECK-NEXT: /* 15 */      MCD::OPC_CheckFieldOrFail, 7, 1, 0,
+// CHECK-NEXT: /* 19 */      MCD::OPC_TryDecodeOrFail, {{[0-9]+}}, {{[0-9]+}}, 1,
+// CHECK-NEXT: /* 23 */      MCD::OPC_Fail,
 
 // CHECK: if (!Check(S, DecodeRCCompleteRegisterClass(MI, tmp, Address, Decoder))) { return MCDisassembler::Fail; }
 // CHECK: if (!Check(S, DecodeRCIncompleteRegisterClass(MI, tmp, Address, Decoder))) { DecodeComplete = false; return MCDisassembler::Fail; }
