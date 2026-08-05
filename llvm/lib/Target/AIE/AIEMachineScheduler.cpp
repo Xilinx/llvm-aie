@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include <memory>
 
@@ -1772,6 +1773,8 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
     // dependences appear as forward dependences between the first and the
     // second iteration.
     NCopies = 2;
+    // Initialize pipelining.
+    BS.initPipelining();
   }
   DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
   for (int S = 0; S < NCopies; S++) {
@@ -1852,9 +1855,12 @@ void AIEScheduleDAGMI::schedule() {
 
     auto &PostSWP = BS.getPostSWP();
 
-    if (PostSWP.schedule(*this, BS.FixPoint.II)) {
+    if (PostSWP.schedule(*this, BS.FixPoint.II, BS.FixPoint.PipelinerMode)) {
       BS.setPipelined();
       LLVM_DEBUG(PostSWP.dump());
+    } else {
+      // Pipelining failed, restore original physical registers.
+      BS.restorePipelining();
     }
     return;
   }

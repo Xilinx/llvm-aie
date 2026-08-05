@@ -15,6 +15,8 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTPIPELINER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIEScheduleInterpreter.h"
+#include "AIESchedulingTypes.h"
 #include "AIESlotCounts.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
@@ -26,7 +28,12 @@ class MachineInstr;
 class AIEHazardRecognizer;
 } // namespace llvm
 
+namespace llvm {
+class RegLiveRangeTracker; // Forward declaration
+}
+
 namespace llvm::AIE {
+
 namespace Solver {
 class SolverData;
 class SWPSolver;
@@ -225,8 +232,15 @@ public:
 
 class PostPipeliner {
   const AIEHazardRecognizer &HR;
+  RegLiveRangeTracker &RegTracker;
   ScheduleDAGMI *DAG = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
+
+  // Schedule interpreter for computing modulo live ranges
+  AIEScheduleInterpreter Interpreter;
+
+  // Event schedule populated during scheduling
+  EventSchedule EventSched;
 
   int FirstUnscheduled = 0;
   int LastUnscheduled = -1;
@@ -269,6 +283,9 @@ class PostPipeliner {
   int NStages = 0;
   int NPrologueStages = 0;
 
+  /// The pipeliner mode passed from InterBlockScheduling.
+  PostPipelinerMode Mode = PostPipelinerMode::None;
+
   /// Place SU in cycle Cycle; update Earliest of successors and Latest
   /// of predecessors.
   void scheduleNode(SUnit &SU, int Cycle, PostPipelinerStrategy &Strategy);
@@ -299,6 +316,7 @@ class PostPipeliner {
   bool computeBackward();
   void computeRecMII();
   void computeEffectiveHeight();
+  int computeScarceRegMII();
 
   /// Given Earliest and Latest of each node in the first iteration,
   /// compute the smallest length of the linear schedule that is feasible.
@@ -334,13 +352,24 @@ class PostPipeliner {
   /// Top level strategy scheduler
   bool scheduleWithStrategy(PostPipelinerStrategy &Strategy);
 
+  /// Try to schedule scarce ranges by enumerating orders and using
+  /// BurstMostUrgentStrategy.
+  /// Checks applicability, finds scarce ranges, and attempts scheduling.
+  /// Returns true if scheduling succeeded, false otherwise.
+  bool tryScarceRangePacking();
+
   /// Reset dynamic scheduling data.
   /// If FullReset is set, also reset information collected from earlier
   /// data mining scheduling rounds.
   void resetSchedule(bool FullReset);
 
+  /// Try to allocate registers for the current schedule
+  /// Returns true if register allocation succeeds
+  bool tryAllocateRegisters();
+
 public:
-  PostPipeliner(const AIEHazardRecognizer &HR, int NInstr);
+  PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
+                RegLiveRangeTracker &RegTracker, const MachineFunction &MF);
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
   /// leaves some useful information.
@@ -350,9 +379,11 @@ public:
   /// \pre isPostPipelineCandidate has returned true
   int getResMII(MachineBasicBlock &LoopBlock);
 
-  // Schedule using the given InitiationInterval. Return true when successful.
-  // In that case calls to the query methods below are legitimate.
-  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval);
+  /// Schedule using the given InitiationInterval. Return true when successful.
+  /// In that case calls to the query methods below are legitimate.
+  /// \param PipelinerMode The mode the postpipeliner is operating in.
+  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval,
+                PostPipelinerMode PipelinerMode);
 
   // Quick query for the stage count.
   int getStageCount() const { return NStages; }

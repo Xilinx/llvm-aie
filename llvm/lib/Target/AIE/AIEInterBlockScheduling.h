@@ -22,6 +22,8 @@
 #include "AIEDataDependenceHelper.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEPostPipeliner.h"
+#include "AIERegDefUseTracker.h"
+#include "AIESchedulingTypes.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -31,39 +33,12 @@
 
 namespace llvm::AIE {
 
-// BlockType determines scheduling priority, direction and safety margin
-// handling.
-enum class BlockType { Regular, Loop, Epilogue };
-
-// These are states in the state machine that drives scheduling
-enum class SchedulingStage {
-  // We are scheduling, which includes iterating during loop-aware scheduling
-  Scheduling,
-
-  // This is a fatal error state, when we didn't converge in loop-aware
-  // scheduling. It may not be observable.
-  SchedulingNotConverged,
-
-  // We have found a schedule. This is the final state for regular blocks. SWP
-  // candidates proceed from here into Pipelining with II=1
-  SchedulingDone,
-
-  // We are busy pipelining the loop. Each round will try a larger II
-  Pipelining,
-
-  // We found a SWP schedule. This is a final state.
-  PipeliningDone,
-
-  // We tried pipelining, but didn't find a SWP schedule. This is a final
-  // state equivalent to SchedulingDone, except that it doesn't proceed to
-  // Pipelining anymore.
-  PipeliningFailed
-};
-
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
 public:
   SchedulingStage Stage = SchedulingStage::Scheduling;
+  // PostPipeliner mode - physical or virtual register mode
+  PostPipelinerMode PipelinerMode = PostPipelinerMode::None;
   // Parameters of the loop-aware convergence
   int LatencyMargin = 0;
   SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
@@ -171,6 +146,9 @@ class BlockState {
   // will be loaded in a further iteration.
   bool IsSafeToIgnoreMemDeps = false;
 
+  // This holds an instance of the RegLiveRangeTracker for loops.
+  std::unique_ptr<llvm::RegLiveRangeTracker> RegTracker;
+
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
@@ -244,6 +222,14 @@ public:
   void clearSchedule();
 
   void setPipelined();
+
+  /// Initialize for pipelining - virtualizes physical registers if in test mode
+  void initPipelining();
+
+  /// Restore after failed pipelining - restores physical registers if
+  /// virtualized
+  void restorePipelining();
+
   bool isScheduled() const {
     return FixPoint.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
            pipeliningFailed();

@@ -56,13 +56,13 @@ body:             |
   ; CHECK-NEXT: Args:
   ; CHECK-NEXT:   - String:          Schedule found
   ; CHECK-NEXT:   - Pipeliner:       postpipeliner
-  ; CHECK-NEXT:   - II:              '18'
+  ; CHECK-NEXT:   - II:              '14'
   ; CHECK-NEXT:   - NS:              '2'
   ; CHECK-NEXT:   - Loop:            bb.1.for.body
   ; CHECK-NEXT:   - Prologue:        bb.0.entry
-  ; CHECK-NEXT:   - PrologueBundles: '18'
+  ; CHECK-NEXT:   - PrologueBundles: '14'
   ; CHECK-NEXT:   - Epilogue:        bb.2
-  ; CHECK-NEXT:   - EpilogueBundles: '15'
+  ; CHECK-NEXT:   - EpilogueBundles: '20'
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.2
