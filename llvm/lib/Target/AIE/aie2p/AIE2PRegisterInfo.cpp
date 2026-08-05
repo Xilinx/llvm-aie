@@ -200,14 +200,40 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_EX_SPILL:
   case AIE2P::VST_E_SPILL:
   case AIE2P::VLDA_E_SPILL:
-  case AIE2P::VLDA_EX_SPILL:
-  case AIE2P::VLDA_PLFR_SPILL:
-  case AIE2P::VST_PLFR_SPILL: {
+  case AIE2P::VLDA_EX_SPILL: {
     // When a pseudo instruction expands to multiple instructions, this case
     // looks for the smallest encodable offset that can be used.
     // The stack grows upward so if Offset is in range, the offsets of its
     // sub-register spills should also be fine.
     if (isEncodableAsNegativeInt<9, 4>(Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    } else {
+      Register SPReg =
+          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
+      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+          .addReg(getStackPointerRegister());
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                             Offset);
+    }
+    return true;
+  }
+  case AIE2P::VLDA_PLFR_SPILL:
+  case AIE2P::VST_PLFR_SPILL: {
+    // The ePSRFLdF composite spills as three sub-spills laid out in the slot as
+    //   [sub_fifo (128B)] [sub_avail (4B)] [sub_ptr (4B)].
+    // sub_fifo is stored/reloaded through the FIFO (dmx fifohl) path, whose SP
+    // offset must be a multiple of 64 (c16n_step64); the two scalar halves use
+    // the step-4 scalar path. isEncodableAsNegativeInt only validates the
+    // immediate *range*; it assumes the slot is 64-byte aligned so that the FIFO
+    // offset is a multiple of 64. When the composite is spilled into an
+    // under-aligned (e.g. 4-byte) slot, the FIFO offset is a multiple of 4 but
+    // not of 64, and the immediate path would emit an unencodable
+    // `vst/vlda lfl, [sp, #imm]` (issue #1090). Only take the immediate path when
+    // the offset is actually a multiple of 64; otherwise fall back to indexed
+    // (register-offset) addressing, which expandSpillPseudo applies to every
+    // sub-spill and encodes any offset.
+    if (isEncodableAsNegativeInt<9, 4>(Offset) && (Offset % 64 == 0)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     } else {
