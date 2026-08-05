@@ -17,6 +17,7 @@
 #include "AIE2AsmBackend.h"
 #include "AIE2MCTargetDesc.h"
 #include "AIEMCAsmInfo.h"
+#include "AIEMCELFStreamer.h"
 #include "AIETargetAsmStreamer.h"
 #include "AIETargetELFStreamer.h"
 #include "InstPrinter/AIE2InstPrinter.h"
@@ -27,6 +28,7 @@
 #include "aie2p/AIE2PMCTargetDesc.h"
 #include "aie2ps/AIE2PSAsmBackend.h"
 #include "aie2ps/AIE2PSMCTargetDesc.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -184,6 +186,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
 
     TargetRegistry::RegisterObjectTargetStreamer(*T,
                                                  createAIEObjectTargetStreamer);
+    // Registers symbols referenced from a bundle's slots; see AIEMCELFStreamer.
+    TargetRegistry::RegisterELFStreamer(*T, createAIEELFStreamer);
     // Support for ASM output files
     TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
   }
