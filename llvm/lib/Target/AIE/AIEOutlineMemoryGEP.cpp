@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 using namespace llvm;

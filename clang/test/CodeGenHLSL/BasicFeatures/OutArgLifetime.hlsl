@@ -5,7 +5,7 @@
 // *before* the copy-in store, so that the store is within the lifetime
 // and is not treated as undefined behavior.
 
-// CHECK-LABEL: define void @_Z9incrementRi(
+// CHECK-LABEL: define hidden void @_Z9incrementRi(
 // CHECK-SAME: ptr noalias noundef nonnull align 4 dereferenceable(4) [[I:%.*]]) #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[I_ADDR:%.*]] = alloca ptr, align 4
@@ -18,7 +18,7 @@
 //
 void increment(inout int I) { I += 1; }
 
-// CHECK-LABEL: define void @_Z5resetRi(
+// CHECK-LABEL: define hidden void @_Z5resetRi(
 // CHECK-SAME: ptr noalias noundef nonnull align 4 dereferenceable(4) [[I:%.*]]) #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[I_ADDR:%.*]] = alloca ptr, align 4

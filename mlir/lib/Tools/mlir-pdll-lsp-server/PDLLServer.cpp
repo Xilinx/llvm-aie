@@ -1048,7 +1048,8 @@ public:
     const ods::Operation *odsOp =
         opName ? odsContext.lookupOperation(*opName) : nullptr;
     codeCompleteOperationOperandOrResultSignature(
-        opName, odsOp, odsOp ? odsOp->getOperands() : std::nullopt,
+        opName, odsOp,
+        odsOp ? odsOp->getOperands() : ArrayRef<ods::OperandOrResult>(),
         currentNumOperands, "operand", "Value");
   }
 
@@ -1057,7 +1058,8 @@ public:
     const ods::Operation *odsOp =
         opName ? odsContext.lookupOperation(*opName) : nullptr;
     codeCompleteOperationOperandOrResultSignature(
-        opName, odsOp, odsOp ? odsOp->getResults() : std::nullopt,
+        opName, odsOp,
+        odsOp ? odsOp->getResults() : ArrayRef<ods::OperandOrResult>(),
         currentNumResults, "result", "Type");
   }
 

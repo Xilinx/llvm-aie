@@ -47,7 +47,7 @@ constexpr unsigned MaxAnalysisRecursionDepth = 6;
 
 /// The max limit of the search depth in DecomposeGEPExpression() and
 /// getUnderlyingObject().
-constexpr unsigned MaxLookupSearchDepth = 6;
+constexpr unsigned MaxLookupSearchDepth = 10;
 
 /// Determine which bits of V are known to be either zero or one and return
 /// them in the KnownZero/KnownOne bit sets.
@@ -311,11 +311,11 @@ LLVM_ABI std::optional<bool> computeKnownFPSignBit(const Value *V,
 
 /// Return true if the sign bit of the FP value can be ignored by the user when
 /// the value is zero.
-bool canIgnoreSignBitOfZero(const Use &U);
+LLVM_ABI bool canIgnoreSignBitOfZero(const Use &U);
 
 /// Return true if the sign bit of the FP value can be ignored by the user when
 /// the value is NaN.
-bool canIgnoreSignBitOfNaN(const Use &U);
+LLVM_ABI bool canIgnoreSignBitOfNaN(const Use &U);
 
 /// If the specified value can be set by repeating the same byte in memory,
 /// return the i8 value that it is represented with. This is true for all i8
@@ -998,6 +998,11 @@ isImpliedByDomCondition(CmpPredicate Pred, const Value *LHS, const Value *RHS,
 LLVM_ABI void
 findValuesAffectedByCondition(Value *Cond, bool IsAssume,
                               function_ref<void(Value *)> InsertAffected);
+
+/// Returns the inner value X if the expression has the form f(X)
+/// where f(X) == 0 if and only if X == 0, otherwise returns nullptr.
+LLVM_ABI Value *stripNullTest(Value *V);
+LLVM_ABI const Value *stripNullTest(const Value *V);
 
 } // end namespace llvm
 

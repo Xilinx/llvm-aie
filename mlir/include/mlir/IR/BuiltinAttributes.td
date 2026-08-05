@@ -553,9 +553,8 @@ def Builtin_DictionaryAttr : Builtin_Attr<"Dictionary", "dictionary"> {
     ```
   }];
   let parameters = (ins ArrayRefParameter<"NamedAttribute", "">:$value);
-  let builders = [
-    AttrBuilder<(ins CArg<"ArrayRef<NamedAttribute>", "std::nullopt">:$value)>
-  ];
+  let builders = [AttrBuilder<(
+      ins CArg<"ArrayRef<NamedAttribute>", "{}">:$value)>];
   let extraClassDeclaration = [{
     using ValueType = ArrayRef<NamedAttribute>;
 
