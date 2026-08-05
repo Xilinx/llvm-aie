@@ -14,40 +14,42 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-LABEL: heavy_3d_user:
 ; FINE-GRAINED:       // %bb.0: // %entry
 ; FINE-GRAINED-NEXT:    paddxm [sp], #192
-; FINE-GRAINED-NEXT:    st r13, [sp, #-24] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r14, [sp, #-20] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r15, [sp, #-16] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r9, [sp, #-40] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r10, [sp, #-36] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    mova m0, #-196; st r11, [sp, #-32]; mov p1, sp // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    padda [p1], m0; st p6, [sp, #-12] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st lr, [sp, #-48] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st r8, [sp, #-44] // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda r12, [p1, #0]; st r12, [sp, #-28]; movx r16, #0; mov p3, #0 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r0, [sp, #-56]; vbcst.32 x0, r16 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    st r1, [sp, #-52]; jl p3 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r15, [sp, #-12] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r10, [sp, #-32] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r11, [sp, #-28] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r12, [sp, #-24] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r13, [sp, #-20] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    mova m0, #-196; st r9, [sp, #-36]; mov p1, sp // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    padda [p1], m0; st lr, [sp, #-44] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st r8, [sp, #-40] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda dj0, [p1], #-4; st r14, [sp, #-16] // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda r14, [p1, #0]; st r0, [sp, #-56]; movx r16, #0; mov p4, #0 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r1, [sp, #-52]; vbcst.32 x0, r16 // 4-byte Folded Spill
+; FINE-GRAINED-NEXT:    st r2, [sp, #-48]; jl p4 // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    vst x0, [sp, #-192] // 64-byte Folded Spill Delay Slot 5
-; FINE-GRAINED-NEXT:    vst x0, [sp, #-128]; mov p6, p0 // 64-byte Folded Spill Delay Slot 4
-; FINE-GRAINED-NEXT:    mova p2, #0; st dj0, [sp, #-64]; or r13, r2, r2; mov r14, r3 // 4-byte Folded Spill Delay Slot 3
-; FINE-GRAINED-NEXT:    mova p0, #0; st dj0, [sp, #-60]; or r15, r4, r4; mov r9, r5 // 4-byte Folded Spill Delay Slot 2
-; FINE-GRAINED-NEXT:    mova p1, #0; or r10, r6, r6; mov r11, r7 // Delay Slot 1
-; FINE-GRAINED-NEXT:    mova dc0, #0; nopb ; movs dn3, r10; nopx ; mov dj3, r15; nopv
-; FINE-GRAINED-NEXT:    mova dn1, #0; nopb ; movs m3, r14; nopx ; mov dj7, r9; nopv
-; FINE-GRAINED-NEXT:    vlda x2, [sp, #-192]; movs dn7, r11; nopx ; mov dj1, #1 // 64-byte Folded Reload
+; FINE-GRAINED-NEXT:    vst x0, [sp, #-128]; mov p3, p0 // 64-byte Folded Spill Delay Slot 4
+; FINE-GRAINED-NEXT:    mova p0, #0; st dj0, [sp, #-64]; or r15, r3, r3; mov r10, r4 // 4-byte Folded Spill Delay Slot 3
+; FINE-GRAINED-NEXT:    mova p2, #0; st dj0, [sp, #-60]; or r11, r5, r5; mov r12, r6 // 4-byte Folded Spill Delay Slot 2
+; FINE-GRAINED-NEXT:    mova p1, #0; or r13, r7, r7; mov r9, p3 // Delay Slot 1
+; FINE-GRAINED-NEXT:    lda r19, [sp, #-64]; nopb ; nopxm ; nops // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    mova dc0, #0; movs dn3, r12; mov dj3, r10
+; FINE-GRAINED-NEXT:    mova dn1, #0; movs m3, r15; mov dj7, r11
+; FINE-GRAINED-NEXT:    vlda x2, [sp, #-192]; movs dn7, r13; mov dj1, #1 // 64-byte Folded Reload
 ; FINE-GRAINED-NEXT:    vlda x3, [sp, #-128]; movs m4, dj1; mov dc2, dn1 // 64-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r19, [sp, #-64]; movs dc7, dn1; mov dc3, dn1 // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r20, [sp, #-60]; movs dc6, dn1; mov r3, dn1 // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r20, [sp, #-60]; movs dc7, dn1; mov dc3, dn1 // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r0, [sp, #-56]; movs dc6, dn1; mov r3, dn1 // 4-byte Folded Reload
 ; FINE-GRAINED-NEXT:    mova m5, #0; movs dc5, dn1; mov r4, dn1
 ; FINE-GRAINED-NEXT:    mova dj4, #1; movs m0, m5; mov r22, dj1
-; FINE-GRAINED-NEXT:    lda r0, [sp, #-56]; movs dj0, m5; mov r5, dn1 // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r1, [sp, #-52]; movs dj0, m5; mov r5, dn1 // 4-byte Folded Reload
 ; FINE-GRAINED-NEXT:    mova r7, #1; movs dn0, m5; movx r18, #0; vmov lfl0, x2
-; FINE-GRAINED-NEXT:    lda r1, [sp, #-52]; movs dn4, m5; and r16, r12, r7; vmov lfh0, x3 // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r2, [sp, #-48]; movs dn4, m5; and r16, r14, r7; vmov lfh0, x3 // 4-byte Folded Reload
 ; FINE-GRAINED-NEXT:  .LBB0_1: // %for.body.i
 ; FINE-GRAINED-NEXT:    // =>This Loop Header: Depth=1
 ; FINE-GRAINED-NEXT:    // Child Loop BB0_2 Depth 2
-; FINE-GRAINED-NEXT:    nopa ; nopb ; movs dj2, p6; nopx ; mov dn2, r3; nopv
-; FINE-GRAINED-NEXT:    nopa ; movs dn6, r3; nopx ; mov r17, dc6
-; FINE-GRAINED-NEXT:    movs dj6, p6; or r6, r5, r5; mov r5, dj4
+; FINE-GRAINED-NEXT:    nopa ; nopb ; nops ; nopx ; mov dn2, r3; nopv
+; FINE-GRAINED-NEXT:    mov dn6, r3
+; FINE-GRAINED-NEXT:    movs dj6, r9; mov r17, dc6
+; FINE-GRAINED-NEXT:    movs dj2, r9; or r6, r5, r5; mov r5, dj4
 ; FINE-GRAINED-NEXT:    movs m2, m4; vmov lfl1, lfl0
 ; FINE-GRAINED-NEXT:    movs m1, m5; mov dn1, r3
 ; FINE-GRAINED-NEXT:    movs dc1, dc0; mov dj1, m5
@@ -60,21 +62,21 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:    nopa ; nopb ; nopx ; mov dc6, dc0
 ; FINE-GRAINED-NEXT:    mov dn2, r3
 ; FINE-GRAINED-NEXT:    movs dc2, dc0; mov dj2, r0
-; FINE-GRAINED-NEXT:    movs m2, r8; mov dj6, r13
+; FINE-GRAINED-NEXT:    movs m2, r8; mov dj6, r2
 ; FINE-GRAINED-NEXT:    movs dn6, r1; mov r25, r18
 ; FINE-GRAINED-NEXT:    movs p1, p0; vmov lfl1, x2
 ; FINE-GRAINED-NEXT:  .L_LEnd0:
 ; FINE-GRAINED-NEXT:    nopa ; vldb.pop.576.3d ex4, [p1, lf1, r25, d2]; nops ; nopx ; vmov lfh1, x3; nopv
 ; FINE-GRAINED-NEXT:  // %bb.3: // %for.cond.cleanup124.i
 ; FINE-GRAINED-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; FINE-GRAINED-NEXT:    nopa ; nopb ; nops ; nopx ; mov m1, m3; nopv
-; FINE-GRAINED-NEXT:    movs dn1, dn3; nopx ; mov dj1, dj3
+; FINE-GRAINED-NEXT:    nopx ; mov m1, m3
+; FINE-GRAINED-NEXT:    movs dn1, dn3; mov dj1, dj3
 ; FINE-GRAINED-NEXT:    movs dn5, dn7; mov dj5, dj7
 ; FINE-GRAINED-NEXT:    mova p0, #0; movs dc0, r6; mov dj4, r5
 ; FINE-GRAINED-NEXT:    movs dc4, m5; paddb.3d [p0], d3; mov dj3, r19
 ; FINE-GRAINED-NEXT:    movs dj7, r20; mov m3, m5
 ; FINE-GRAINED-NEXT:    movs dn3, m5; mov dc5, dc7
-; FINE-GRAINED-NEXT:    movs dc1, dc3; xor r17, r12, r7; mov dc3, r17
+; FINE-GRAINED-NEXT:    movs dc1, dc3; xor r17, r14, r7; mov dc3, r17
 ; FINE-GRAINED-NEXT:    movs dc7, r22; and r6, r17, r7; mov r22, m5
 ; FINE-GRAINED-NEXT:    mova p1, #0; movs dn7, m5; jnz r6, #.LBB0_1
 ; FINE-GRAINED-NEXT:    movs m3, m1; paddb.3d [p1], d3; mov dn3, dn1 // Delay Slot 5
@@ -83,16 +85,15 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:    movs dc3, dc1; paddb.3d [p0], d0; mov dc7, dc5 // Delay Slot 2
 ; FINE-GRAINED-NEXT:    mova dc0, #0; movs dc5, r21; mov r5, dc0 // Delay Slot 1
 ; FINE-GRAINED-NEXT:  // %bb.4: // %ret.exit
-; FINE-GRAINED-NEXT:    lda p6, [sp, #-12] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r15, [sp, #-16] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r14, [sp, #-20] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda lr, [sp, #-48] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r13, [sp, #-24] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r12, [sp, #-28] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r11, [sp, #-32] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r10, [sp, #-36] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r9, [sp, #-40] // 4-byte Folded Reload
-; FINE-GRAINED-NEXT:    lda r8, [sp, #-44] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r15, [sp, #-12] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r14, [sp, #-16] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda lr, [sp, #-44] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r13, [sp, #-20] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r12, [sp, #-24] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r11, [sp, #-28] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r10, [sp, #-32] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r9, [sp, #-36] // 4-byte Folded Reload
+; FINE-GRAINED-NEXT:    lda r8, [sp, #-40] // 4-byte Folded Reload
 ; FINE-GRAINED-NEXT:    ret lr
 ; FINE-GRAINED-NEXT:    nop // Delay Slot 5
 ; FINE-GRAINED-NEXT:    nop // Delay Slot 4
