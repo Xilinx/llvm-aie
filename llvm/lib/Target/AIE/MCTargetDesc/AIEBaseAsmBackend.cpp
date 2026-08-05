@@ -29,15 +29,14 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   }
 }
 
-void AIEBaseAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+void AIEBaseAsmBackend::applyFixup(const MCFragment &, const MCFixup &Fixup,
                                    const MCValue &Target,
                                    MutableArrayRef<char> Data, uint64_t Value,
-                                   bool IsResolved,
-                                   const MCSubtargetInfo *STI) const {
+                                   bool IsResolved) {
   if (!Value)
     return; // Doesn't change encoding.
 
-  MCContext &Ctx = Asm.getContext();
+  MCContext &Ctx = getContext();
 
   // Apply any target-specific value adjustments.
   Value = adjustFixupValue(Fixup, Value, Ctx);

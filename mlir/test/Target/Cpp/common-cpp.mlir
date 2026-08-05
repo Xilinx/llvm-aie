@@ -119,3 +119,11 @@ func.func @arg_references(%arg0: !emitc.array<3xi32> {emitc.reference}, %arg1: !
 emitc.func @emitc_arg_references(%arg0: !emitc.array<3xi32> ref, %arg1: !emitc.array<10x20xf32> ref, %arg2: i32 ref) {
   emitc.return
 }
+
+// CHECK: call_opaque_with_template_arg
+func.func @call_opaque_with_template_arg() {
+  emitc.call_opaque "init_tile"() {template_args = [512 : index]} : () -> ()
+  // CHECK-NEXT: init_tile<512>();
+  // CHECK-NEXT: return
+  return
+}

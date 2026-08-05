@@ -19,7 +19,6 @@ def DuplicateFunctionEliminationPass : Pass<"duplicate-function-elimination",
     name. The pass chooses one representative per equivalence class, erases
     the remainder, and updates function calls accordingly.
   }];
-  let constructor = "mlir::func::createDuplicateFunctionEliminationPass()";
 }
 
 def AnnotateFunctionType: Pass<"annotate-function-type", "func::FuncOp"> {

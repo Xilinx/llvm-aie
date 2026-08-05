@@ -92,8 +92,8 @@ public:
     AU.addRequired<TargetPassConfig>();
     AU.setPreservesCFG();
     getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelValueTrackingAnalysis>();
-    AU.addPreserved<GISelValueTrackingAnalysis>();
+    AU.addRequired<GISelValueTrackingAnalysisLegacy>();
+    AU.addPreserved<GISelValueTrackingAnalysisLegacy>();
     AU.addRequired<MachineDominatorTreeWrapperPass>();
     AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
@@ -130,7 +130,8 @@ bool AIEPreISelCombiner::runOnMachineFunction(MachineFunction &MF) {
   const auto &ST = MF.getSubtarget<AIEBaseSubtarget>();
   const auto *LI = ST.getLegalizerInfo();
 
-  GISelValueTracking *VT = &getAnalysis<GISelValueTrackingAnalysis>().get(MF);
+  GISelValueTracking *VT =
+      &getAnalysis<GISelValueTrackingAnalysisLegacy>().get(MF);
   MachineDominatorTree *MDT =
       &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
@@ -146,7 +147,7 @@ char AIEPreISelCombiner::ID = 0;
 INITIALIZE_PASS_BEGIN(AIEPreISelCombiner, DEBUG_TYPE, "AIE Pre-ISel Combiner",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysis)
+INITIALIZE_PASS_DEPENDENCY(GISelValueTrackingAnalysisLegacy)
 INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
 INITIALIZE_PASS_END(AIEPreISelCombiner, DEBUG_TYPE, "AIE Pre-ISel Combiner",
                     false, false)

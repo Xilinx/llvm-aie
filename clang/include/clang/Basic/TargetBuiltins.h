@@ -210,6 +210,9 @@ namespace clang {
     FirstSiFiveBuiltin,
     LastRVVBuiltin = FirstSiFiveBuiltin - 1,
 #include "clang/Basic/riscv_sifive_vector_builtins.inc"
+    FirstAndesBuiltin,
+    LastSiFiveBuiltin = FirstAndesBuiltin - 1,
+#include "clang/Basic/riscv_andes_vector_builtins.inc"
 #undef GET_RISCVV_BUILTIN_ENUMERATORS
     FirstTSBuiltin,
   };

@@ -171,12 +171,6 @@ def call_symbol : Operand<i32> {
 include "aie1/AIE1InstrFormats.td"
 include "aie1/AIE1CompositeFormats.td"
 
-// Patterns for Vector registers with different types.
-def V16I8:   PatLeaf<(v16i8 VEC128:$R)>;
-def V8I16:   PatLeaf<(v8i16 VEC128:$R)>;
-def V4I32:   PatLeaf<(v4i32 VEC128:$R)>;
-def V4F32:   PatLeaf<(v4f32 VEC128:$R)>;
-
 /////////////////////////////////////////////////////////////////
 // Basic operations
 

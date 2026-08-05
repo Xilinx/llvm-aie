@@ -779,6 +779,41 @@ static LogicalResult printOperation(CppEmitter &emitter,
     return failure();
   os << callOpaqueOp.getCallee();
 
+  // Template arguments can't refer to SSA values and as such the template
+  // arguments which are supplied in form of attributes can be emitted as is. We
+  // don't need to handle integer attributes specially like we do for arguments
+  // - see below.
+  auto emitTemplateArgs = [&](Attribute attr) -> LogicalResult {
+    return emitter.emitAttribute(op.getLoc(), attr);
+  };
+
+  auto emitNamedTemplateArgs =
+      [&](std::tuple<const Attribute &, const Attribute &> tuple)
+      -> LogicalResult {
+    Attribute attr = std::get<0>(tuple);
+    StringAttr argName = cast<StringAttr>(std::get<1>(tuple));
+
+    os << "/*" << argName.str() << "=*/";
+    return emitTemplateArgs(attr);
+  };
+
+  if (callOpaqueOp.getTemplateArgs()) {
+    os << "<";
+    if (callOpaqueOp.getTemplateArgNames() &&
+        !callOpaqueOp.getTemplateArgNames()->empty()) {
+      if (failed(interleaveCommaWithError(
+              llvm::zip_equal(*callOpaqueOp.getTemplateArgs(),
+                              *callOpaqueOp.getTemplateArgNames()),
+              os, emitNamedTemplateArgs)))
+        return failure();
+    } else {
+      if (failed(interleaveCommaWithError(*callOpaqueOp.getTemplateArgs(), os,
+                                          emitTemplateArgs)))
+        return failure();
+    }
+    os << ">";
+  }
+
   auto emitArgs = [&](Attribute attr) -> LogicalResult {
     if (auto t = dyn_cast<IntegerAttr>(attr)) {
       // Index attributes are treated specially as operand index.
@@ -797,34 +832,6 @@ static LogicalResult printOperation(CppEmitter &emitter,
 
     return success();
   };
-
-  auto emitNamedArgs =
-      [&](std::tuple<const Attribute &, const Attribute &> tuple)
-      -> LogicalResult {
-    Attribute attr = std::get<0>(tuple);
-    StringAttr argName = cast<StringAttr>(std::get<1>(tuple));
-
-    os << "/*" << argName.str() << "=*/";
-    return emitArgs(attr);
-  };
-
-  if (callOpaqueOp.getTemplateArgs()) {
-    os << "<";
-    if (callOpaqueOp.getTemplateArgNames() &&
-        !callOpaqueOp.getTemplateArgNames()->empty()) {
-      if (failed(interleaveCommaWithError(
-              llvm::zip_equal(*callOpaqueOp.getTemplateArgs(),
-                              *callOpaqueOp.getTemplateArgNames()),
-              os, emitNamedArgs))) {
-        return failure();
-      }
-    } else {
-      if (failed(interleaveCommaWithError(*callOpaqueOp.getTemplateArgs(), os,
-                                          emitArgs)))
-        return failure();
-    }
-    os << ">";
-  }
 
   os << "(";
 
