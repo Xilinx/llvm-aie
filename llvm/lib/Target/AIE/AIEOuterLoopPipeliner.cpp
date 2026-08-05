@@ -409,6 +409,10 @@ public:
   // meets MinTripCount, and the bottom has stores.
   bool isProfitableToRotate(ScalarEvolution &SE, unsigned MinTripCount) const;
 
+  // Count the number of base pointer PHI nodes in the outer loop header.
+  // These represent distinct pointer streams that evolve across iterations.
+  unsigned countBasePointerPHIs() const;
+
   // Returns true if it is safe to reorder the top-block loads before the
   // bottom-block stores (rejects volatile/atomic memory ops).
   bool isSafeToReorderMemoryOps() const;
@@ -821,6 +825,15 @@ void AIEOuterLoopPipeliner::seedHeaderPhiEdge(RemapTable &Map,
     if (Idx >= 0)
       Map[&PHI] = PHI.getIncomingValue(Idx);
   }
+}
+
+unsigned OrigLoopStructure::countBasePointerPHIs() const {
+  unsigned Count = 0;
+  for (const PHINode &PHI : getTop()->phis()) {
+    if (PHI.getType()->isPointerTy())
+      ++Count;
+  }
+  return Count;
 }
 
 bool OrigLoopStructure::isProfitableToRotate(ScalarEvolution &SE,
