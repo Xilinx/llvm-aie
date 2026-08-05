@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p --aie-reg-rewrite-mode=latencyaware %s -o - | FileCheck %s
 
 ; Test postSWP capabilities related to conv2d_dw_bf16.
@@ -40,24 +40,23 @@ declare <16 x i32> @llvm.aie2p.vshuffle(<16 x i32>, <16 x i32>, i32) #0
 define dso_local void @conv2d_dw_bf16(i32 %0, ptr %output, ptr %input, ptr addrspace(6) %1, ptr %bias, i32 %2, i20 %3, i20 %4, i20 %5, i20 %6, i20 %7, i20 %8, i20 %9, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i20 %17, i20 %18, <32 x bfloat> %splat.splat.i.i.i.i.i.i.i.i.i, i20 %idx.ext.i, i32 %19, i20 %20, i20 %21, i20 %22, i20 %23, i20 %24) {
 ; CHECK-LABEL: conv2d_dw_bf16:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-64]; nopx // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #-68; mov p6, sp
-; CHECK-NEXT:    padda [p6], m0
-; CHECK-NEXT:    lda dj4, [p6], #-4
-; CHECK-NEXT:    lda dn0, [p6], #-4
-; CHECK-NEXT:    lda dn4, [p6], #-4
-; CHECK-NEXT:    lda m1, [p6], #-4
-; CHECK-NEXT:    lda dj1, [p6, #0]
-; CHECK-NEXT:    lda dn1, [p6, #-4]
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov m0, p4; nopv
+; CHECK-NEXT:    mova m1, #-4; mov p4, sp
+; CHECK-NEXT:    padda [p4], m1
+; CHECK-NEXT:    lda dj4, [p4], #-4
+; CHECK-NEXT:    lda dn0, [p4], #-4
+; CHECK-NEXT:    lda dn4, [p4], #-4
+; CHECK-NEXT:    lda m1, [p4], #-4
+; CHECK-NEXT:    lda dj1, [p4, #0]
+; CHECK-NEXT:    lda dn1, [p4, #-4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dc0, #0
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p3, #0]; mov dc1, dc0
-; CHECK-NEXT:    vlda x7, [p1], #64; vldb.2d x9, [p2], d1; mov dj0, p5
-; CHECK-NEXT:    vlda x5, [p1], #64; movs dc4, dc0; mov m0, p4
+; CHECK-NEXT:    vlda x7, [p1], #64; vldb.2d x9, [p2], d1
+; CHECK-NEXT:    vlda x5, [p1], #64; movs dj0, p5; mov dc4, dc0
 ; CHECK-NEXT:    vlda.3d x3, [p1], d0
 ; CHECK-NEXT:    add.nc lc, r1, #-1
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
@@ -84,12 +83,12 @@ define dso_local void @conv2d_dw_bf16(i32 %0, ptr %output, ptr %input, ptr addrs
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x8, x7, x5, r3; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup27
-; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vextbcst.128 x11, x9, #2; vmac.f dm3, dm0, x2, x4, r5 // 4-byte Folded Reload
-; CHECK-NEXT:    nopx ; vshift x2, x5, x3, r3; vmac.f dm2, dm4, x6, x4, r5
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vextbcst.128 x11, x9, #2; vmac.f dm3, dm0, x2, x4, r5
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vshift x2, x5, x3, r3; vmac.f dm2, dm4, x6, x4, r5
 ; CHECK-NEXT:    vshift x1, x7, x5, r4
 ; CHECK-NEXT:    vextbcst.128 x10, x9, #3; vmac.f dm1, dm3, x8, x11, r5
 ; CHECK-NEXT:    vshift x8, x5, x3, r4; vmac.f dm0, dm2, x2, x11, r5
-; CHECK-NEXT:    paddxm [sp], #-64
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmac.f dm4, dm1, x1, x10, r5
 ; CHECK-NEXT:    vmac.f dm3, dm0, x8, x10, r5
 ; CHECK-NEXT:    nop

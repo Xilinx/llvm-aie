@@ -1611,6 +1611,8 @@ namespace {
 
     const AnnotateAttr *TransformAnnotateAttr(const AnnotateAttr *AA);
     const CXXAssumeAttr *TransformCXXAssumeAttr(const CXXAssumeAttr *AA);
+    const GenericLoopHintAttr *
+    TransformGenericLoopHintAttr(const GenericLoopHintAttr *Hint);
     const LoopHintAttr *TransformLoopHintAttr(const LoopHintAttr *LH);
     const NoInlineAttr *TransformStmtNoInlineAttr(const Stmt *OrigS,
                                                   const Stmt *InstS,
@@ -2284,6 +2286,32 @@ TemplateInstantiator::TransformCXXAssumeAttr(const CXXAssumeAttr *AA) {
 
   return CXXAssumeAttr::CreateImplicit(getSema().Context, Res.get(),
                                        AA->getRange());
+}
+
+const GenericLoopHintAttr *TemplateInstantiator::TransformGenericLoopHintAttr(
+    const GenericLoopHintAttr *Hint) {
+  Expr *ValueExpr = Hint->getValueExpr();
+  // Valueless (key-only or string-valued) hints have nothing to instantiate.
+  if (!ValueExpr)
+    return Hint;
+
+  ExprResult TransformedExpr = getDerived().TransformExpr(ValueExpr);
+  // Substitution failed; the error is already diagnosed elsewhere.
+  if (!TransformedExpr.isUsable())
+    return Hint;
+
+  // Non-dependent value: nothing was substituted, keep the original attribute.
+  if (TransformedExpr.get() == ValueExpr)
+    return Hint;
+
+  // The substituted value is invalid (wrong type, non-positive, out of range).
+  if (getSema().CheckLoopHintExpr(TransformedExpr.get(), Hint->getLocation(),
+                                  /*AllowZero=*/true))
+    return Hint;
+
+  return GenericLoopHintAttr::CreateImplicit(getSema().Context, Hint->getHint(),
+                                             TransformedExpr.get(),
+                                             Hint->getValueStr(), *Hint);
 }
 
 const LoopHintAttr *

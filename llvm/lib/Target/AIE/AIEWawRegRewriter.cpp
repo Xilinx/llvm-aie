@@ -99,8 +99,7 @@ namespace {
 using RoundRobin = std::list<MCPhysReg>;
 
 // Record the candidates and their original allocation.
-using OriginalAllocation =
-    std::vector<std::pair<const MachineOperand *, Register>>;
+using OriginalAllocation = std::vector<std::pair<Register, MCPhysReg>>;
 
 RewriteMode selectMode(RewriteMode Mode, int LoopClass) {
   if (Mode != RewriteMode::Automatic) {
@@ -194,7 +193,9 @@ private:
 
   /// Sort the candidates to mimic interleaving the pipeline stages
   void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB,
-                    const llvm::AIE::SlotStatistics &Statistics, int LoopClass);
+                    const llvm::AIE::SlotStatistics &Statistics, int Bias,
+                    const IndexedMap<const MachineInstr *, VirtReg2IndexFunctor>
+                        &LastVRegDef);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
   /// this is to prime the LRURegisters, so that the end of the loop is
@@ -209,7 +210,7 @@ private:
 
   /// If reallocation fails, revert all reallocations to their original
   /// assignments.
-  void revertAllocation(OriginalAllocation &Candidates);
+  void revertAllocation(ArrayRef<std::pair<Register, MCPhysReg>> Entries);
 
   /// Get all the defined physical registers that the MachineBasicBlock already
   /// uses. These physical registers should not be used for replacement
@@ -359,8 +360,7 @@ void AIEWawRegRewriter::preAllocate(OriginalAllocation &Candidates,
                                     RoundRobin &LRURegisters) {
   // This is tracking any used register unit across the entire loop.
   BitVector UsedUnits(TRI->getNumRegUnits());
-  for (auto &[MO, Org] : Candidates) {
-    auto VReg = MO->getReg();
+  for (auto &[VReg, Org] : Candidates) {
     assert(VReg.isVirtual());
     (void)getReplacementPhysReg(VReg, LRURegisters, UsedUnits);
   }
@@ -371,21 +371,20 @@ bool AIEWawRegRewriter::reAllocate(OriginalAllocation &Candidates,
   bool Success = true;
   // This is tracking any used register unit across the entire loop.
   BitVector UsedUnits(TRI->getNumRegUnits());
-  for (auto &[MO, Org] : Candidates) {
-    auto VReg = MO->getReg();
-    if (replaceReg(VReg, Registers, UsedUnits))
-      continue;
-
-    LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
-                      << " failed\n");
-    Success = false;
+  for (auto &[VReg, Org] : Candidates) {
+    if (!replaceReg(VReg, Registers, UsedUnits)) {
+      LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
+                        << " failed\n");
+      Success = false;
+    }
   }
   return Success;
 }
 
-void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
-  LLVM_DEBUG(dbgs() << "=== revertAllocation: Processing " << Candidates.size()
-                    << " candidates ===\n");
+void AIEWawRegRewriter::revertAllocation(
+    ArrayRef<std::pair<Register, MCPhysReg>> Entries) {
+  LLVM_DEBUG(dbgs() << "=== revertAllocation: Processing " << Entries.size()
+                    << " entries ===\n");
 
   // When reallocation fails, some candidates may not have been assigned a
   // physical register. We must revert those to their original assignments.
@@ -412,13 +411,12 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
   };
 
   // Phase 1: Seed BlockedUnits with originals from unassigned candidates.
-  // Candidates without a physical assignment must revert to their originals.
+  // Entries without a physical assignment must revert to their originals.
   // Remaining holds candidates with valid new assignments to check for
   // conflicts.
   LLVM_DEBUG(dbgs() << "Phase 1: Identifying failed/unassigned candidates\n");
-  std::queue<std::pair<MachineOperand *, MCRegister>> Remaining;
-  for (const auto &[MO, Org] : Candidates) {
-    const Register VReg = MO->getReg();
+  std::queue<std::pair<Register, MCPhysReg>> Remaining;
+  for (const auto &[VReg, Org] : Entries) {
     const bool HasPhys = VRM->hasPhys(VReg);
 
     if (!HasPhys) {
@@ -427,7 +425,7 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
       LLVM_DEBUG(dbgs() << "  " << printReg(VReg, TRI) << " -> must revert to "
                         << printReg(Org, TRI) << " (no phys)\n");
     } else {
-      Remaining.emplace(const_cast<MachineOperand *>(MO), Org);
+      Remaining.emplace(VReg, Org);
       LLVM_DEBUG(dbgs() << "  " << printReg(VReg, TRI) << " -> remaining (new="
                         << printReg(VRM->getPhys(VReg), TRI)
                         << ", orig=" << printReg(Org, TRI) << ")\n");
@@ -447,13 +445,12 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
 
   unsigned Iteration = 0;
   unsigned SkipCounter = 0;
-  // If we add VReg to ToRevert and then we reach the same MO again without
+  // If we add VReg to ToRevert and then we reach the same entry again without
   // adding anything to ToRevert, we converged.
   while (!Remaining.empty() && SkipCounter <= Remaining.size()) {
-    auto MORegPair = Remaining.front();
+    auto Entry = Remaining.front();
     Remaining.pop();
-    const auto &[MO, Org] = MORegPair;
-    const Register VReg = MO->getReg();
+    const auto &[VReg, Org] = Entry;
     const BitVector NewUnits = GetRegUnits(VRM->getPhys(VReg));
     if (NewUnits.anyCommon(BlockedUnits)) {
       // NEW assignment conflicts with a reverted original - must revert.
@@ -465,7 +462,7 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
                         << "), reverting to " << printReg(Org, TRI) << "\n");
       SkipCounter = 0;
     } else {
-      Remaining.push(MORegPair);
+      Remaining.push(Entry);
       SkipCounter++;
     }
     Iteration = (SkipCounter == Remaining.size()) ? Iteration + 1 : Iteration;
@@ -479,14 +476,12 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
   // Phase 3: Apply reversions.
   // First unassign all to avoid conflicts, then reassign to originals.
   LLVM_DEBUG(dbgs() << "Phase 3: Applying reversions\n");
-  for (const auto &[MO, Org] : Candidates) {
-    const Register VReg = MO->getReg();
+  for (const auto &[VReg, Org] : Entries) {
     if (ToRevert.test(VReg.virtRegIndex()) && VRM->hasPhys(VReg))
       unassignReg(VReg);
   }
 
-  for (const auto &[MO, Org] : Candidates) {
-    const Register VReg = MO->getReg();
+  for (const auto &[VReg, Org] : Entries) {
     if (ToRevert.test(VReg.virtRegIndex())) {
       LLVM_DEBUG(dbgs() << "  Reverting " << printReg(VReg, TRI) << " to "
                         << printReg(Org, TRI) << "\n");
@@ -509,8 +504,8 @@ AIEWawRegRewriter::computeLRURegisters(const OriginalAllocation &Candidates) {
 
   // For each reg class, allocate the candidates in round-robin fashion.
   // If we fail, we fall back to the original allocation
-  for (const auto &[MO, Org] : Candidates) {
-    const auto *RC = MRI->getRegClass(MO->getReg());
+  for (const auto &[VReg, Org] : Candidates) {
+    const auto *RC = MRI->getRegClass(VReg);
     LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
                       << ":");
     for (MCPhysReg PhysReg : RC->getRegisters()) {
@@ -527,7 +522,8 @@ AIEWawRegRewriter::computeLRURegisters(const OriginalAllocation &Candidates) {
 
 void AIEWawRegRewriter::sortSWPAware(
     OriginalAllocation &Candidates, MachineBasicBlock &MBB,
-    const llvm::AIE::SlotStatistics &Statistics, int Bias) {
+    const llvm::AIE::SlotStatistics &Statistics, int Bias,
+    const IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> &LastVRegDef) {
   // We estimate the length of the schedule based on latencies and the
   // minimum II based on slots. We then estimate the modulo cycle of each
   // instruction based on its depth and apply LRU in the order of the modulo
@@ -560,11 +556,11 @@ void AIEWawRegRewriter::sortSWPAware(
   LLVM_DEBUG(dbgs() << format("MinII = %d\n", MinII));
 
   // Now sort the candidates to simulate the parallelism
-  using Element = std::pair<const MachineOperand *, Register>;
-  auto ModuloCycleLess = [&ModuloCycle](const Element &A, const Element &B) {
-    const MachineInstr *IA = A.first->getParent();
-    const MachineInstr *IB = B.first->getParent();
-
+  using Element = std::pair<Register, MCPhysReg>;
+  auto ModuloCycleLess = [&ModuloCycle, &LastVRegDef](const Element &A,
+                                                      const Element &B) {
+    const MachineInstr *IA = LastVRegDef[A.first];
+    const MachineInstr *IB = LastVRegDef[B.first];
     return ModuloCycle[IA] < ModuloCycle[IB];
   };
   llvm::sort(Candidates, ModuloCycleLess);
@@ -637,7 +633,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
         const auto InsertPoint = HighLatencyRegs.count(AssignedPhysReg)
                                      ? Candidates.begin()
                                      : Candidates.end();
-        Candidates.emplace(InsertPoint, &MO, AssignedPhysReg);
+        Candidates.emplace(InsertPoint, Reg, AssignedPhysReg);
 
         LLVM_DEBUG(dbgs() << "Candidate " << printReg(Reg, TRI, 0, MRI) << ":"
                           << TRI->getRegClassName(MRI->getRegClass(Reg)) << " ("
@@ -647,27 +643,29 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   }
 
   // Free physregs of all candidates
-  for (auto &[MO, Org] : Candidates) {
-    auto VReg = MO->getReg();
+  for (auto &[VReg, Org] : Candidates) {
     if (VRM->hasPhys(VReg))
       unassignReg(VReg);
   }
   LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates\n");
 
   // If requested, unassign MBB's liveins as well to get even more freedom
+  SmallVector<std::pair<Register, MCPhysReg>> FreedLiveIns;
   if (Overrides.get(AggressiveReAlloc)) {
     for (unsigned I = 0, E = MRI->getNumVirtRegs(); I != E; ++I) {
       Register Reg = Register::index2VirtReg(I);
       if (!LIS->hasInterval(Reg))
         continue;
       LiveInterval &LI = LIS->getInterval(Reg);
-      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg))
+      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg)) {
+        FreedLiveIns.emplace_back(Reg, VRM->getPhys(Reg));
         unassignReg(Reg);
+      }
     }
   }
 
   if (auto Bias = getMinIIBias(Mode, LoopClass)) {
-    sortSWPAware(Candidates, NonConstMBB, Statistics, *Bias);
+    sortSWPAware(Candidates, NonConstMBB, Statistics, *Bias, LastVRegDef);
   }
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
@@ -680,6 +678,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   }
 
   if (!reAllocate(Candidates, LRURegisters)) {
+    llvm::append_range(Candidates, FreedLiveIns);
     revertAllocation(Candidates);
     return false;
   }

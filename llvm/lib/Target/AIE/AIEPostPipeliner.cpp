@@ -1043,9 +1043,12 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
   // Make a final check on the resources. We bring a pristine scoreboard
   // to steady state by checking and inserting NStages. Since the steady
   // state is the busiest, we can shift the scoreboard by II after each stage.
+  // We repeat the resource schedule often enough to make the final one land
+  // after the conflict horizon of the first one.
+  const int PipelineDepth = HR.getPipelineDepth();
   ResourceScoreboard<FuncUnitWrapper> Resources;
-  Resources.config(0, II + HR.getPipelineDepth());
-  for (int S = 0; S < NStages; S++) {
+  Resources.config(0, 2 * II + PipelineDepth);
+  for (int Start = 0; Start < II + PipelineDepth; Start += II) {
     for (int I = 0; I < NInstr; I++) {
       SUnit &SU = DAG->SUnits[I];
       MachineInstr &MI = *SU.getInstr();
