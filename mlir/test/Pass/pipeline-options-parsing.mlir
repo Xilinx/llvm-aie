@@ -1,3 +1,5 @@
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+//
 // RUN: not mlir-opt %s -pass-pipeline='builtin.module(builtin.module(test-module-pass{))' 2>&1 | FileCheck --check-prefix=CHECK_ERROR_1 %s
 // RUN: not mlir-opt %s -pass-pipeline='builtin.module(builtin.module(test-module-pass{test-option=3}))' 2>&1 | FileCheck --check-prefix=CHECK_ERROR_2 %s
 // RUN: not mlir-opt %s -pass-pipeline='builtin.module(builtin.module(func.func(test-options-pass{list=3}), test-module-pass{invalid-option=3}))' 2>&1 | FileCheck --check-prefix=CHECK_ERROR_3 %s
@@ -29,6 +31,9 @@
 // RUN: mlir-opt %s -verify-each=false '--pass-pipeline=builtin.module(func.func(test-options-pass{string-list={,}}))' -dump-pass-pipeline 2>&1 | FileCheck --check-prefix=CHECK_10 %s
 // RUN: mlir-opt %s -verify-each=false '--pass-pipeline=builtin.module(func.func(test-options-pass{string-list={"",}}))' -dump-pass-pipeline 2>&1 | FileCheck --check-prefix=CHECK_10 %s
 
+// This test checks that a string option whose value starts with '{' (e.g. a JSON object) round-trips.
+// RUN: mlir-opt %s -verify-each=false '--pass-pipeline=builtin.module(func.func(test-options-pass{string={{"k":1}}}))' -dump-pass-pipeline 2>&1 | FileCheck --check-prefix=CHECK_11 %s
+
 
 // CHECK_ERROR_1: missing closing '}' while processing pass options
 // CHECK_ERROR_2: no such option test-option
@@ -46,3 +51,4 @@
 // CHECK_8{LITERAL}: builtin.module(func.func(test-options-super-pass{list={{enum=zero list={1} string=foo },{enum=one string=bar }}}))
 // CHECK_9: builtin.module(func.func(test-options-pass{enum=zero  string= string-list={}}))
 // CHECK_10: builtin.module(func.func(test-options-pass{enum=zero  string= string-list={,}}))
+// CHECK_11{LITERAL}: builtin.module(func.func(test-options-pass{enum=zero  string={{"k":1}} }))

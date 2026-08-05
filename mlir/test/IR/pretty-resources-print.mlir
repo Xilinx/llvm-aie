@@ -1,3 +1,5 @@
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+//
 // Check printing with --mlir-elide-resource-strings-if-larger elides printing large resources
 
 // RUN: mlir-opt %s --mlir-elide-resource-strings-if-larger=20| FileCheck %s
@@ -18,7 +20,7 @@
 // CHECK-NEXT:   external_resources: {
 // CHECK-NEXT:     external: {
 // CHECK-NEXT:       "backslash\\tab\09": true,
-// CHECK-NEXT:       string: "\22string\22"
+// CHECK-NEXT:       string: "\"string\""
 // CHECK-NEXT:     },
 // CHECK-NEXT:     other_stuff: {
 // CHECK-NEXT:       bool: true

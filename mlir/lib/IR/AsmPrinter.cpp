@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the MLIR AsmPrinter class, which is used to implement
@@ -3483,9 +3486,23 @@ private:
     }
 
     void buildString(StringRef key, StringRef data) final {
+      // Wrapper around llvm::printEscapedString
+      // llvm::printEscapedString would print \" as \22 which is parsed back
+      // fine but not human readable so add this wrapper to print it as \".
+      auto printEscapedStringButLeaveQuote = [](StringRef str,
+                                                raw_ostream &os) {
+        while (true) {
+          size_t quotePos = str.find('"');
+          llvm::printEscapedString(str.take_front(quotePos), os);
+          if (quotePos == StringRef::npos)
+            break;
+          os << '\\' << '"';
+          str = str.drop_front(quotePos + 1);
+        }
+      };
       printFn(key, [&](raw_ostream &os) {
         os << "\"";
-        llvm::printEscapedString(data, os);
+        printEscapedStringButLeaveQuote(data, os);
         os << "\"";
       });
     }
