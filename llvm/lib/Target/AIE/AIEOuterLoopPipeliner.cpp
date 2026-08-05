@@ -125,11 +125,26 @@ static cl::opt<bool> LeanStage0Mode(
              "intrinsics selected for lean stage 0"),
     cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EnableOuterLoopHardwareLoop(
-    "aie-outer-loop-hw-loop",
-    cl::desc("Convert downcounting outer loops to JNZD hardware loops after "
-             "outer loop pipelining"),
-    cl::init(true), cl::Hidden);
+/// Outer loop type selection after pipelining.
+enum class OuterLoopType { Soft, HW, Auto };
+
+static cl::opt<OuterLoopType> OuterLoopTypeOpt(
+    "aie-outer-loop-type",
+    cl::desc("Outer loop type selection after pipelining"),
+    cl::values(clEnumValN(OuterLoopType::Soft, "soft",
+                          "Use software loop (no JNZD conversion)"),
+               clEnumValN(OuterLoopType::HW, "hw",
+                          "Use hardware loop (JNZD conversion)"),
+               clEnumValN(OuterLoopType::Auto, "auto",
+                          "Auto-select based on pointer pressure")),
+    cl::init(OuterLoopType::Auto), cl::Hidden);
+
+static cl::opt<unsigned> OuterLoopPointerThreshold(
+    "aie-outer-loop-pointer-threshold",
+    cl::desc("Pointer pressure threshold for auto mode: if the estimated "
+             "pointer pressure "
+             ">= threshold, use soft loop; otherwise use hw loop"),
+    cl::init(6), cl::Hidden);
 
 /// Effective outer-loop-pipelining configuration for one loop. Command-line
 /// options and !llvm.loop.hint metadata are resolved once when this is built.
@@ -139,7 +154,7 @@ struct OLPOpts {
   bool SplitStagesEnabled;
   bool UseLeanStage0;
   bool EnableSpeculativeLastIteration;
-  bool UseHardwareLoop;
+  OuterLoopType LoopType;
 
   explicit OLPOpts(const AIE::LoopOptionOverrides &Overrides)
       : Enabled(Overrides.get(EnableOuterLoopPipelining)),
@@ -150,7 +165,21 @@ struct OLPOpts {
             Overrides.hasOverride(SpeculativeLastIteration)
                 ? Overrides.get(SpeculativeLastIteration)
                 : UseLeanStage0),
-        UseHardwareLoop(Overrides.get(EnableOuterLoopHardwareLoop)) {}
+        LoopType(Overrides.get(OuterLoopTypeOpt)) {}
+
+  /// Determine whether to use hardware loop based on loop type and pointer
+  /// pressure. In auto mode, use hw loop if pointers < threshold.
+  bool shouldUseHardwareLoop(unsigned NumPointerPHIs) const {
+    switch (LoopType) {
+    case OuterLoopType::Soft:
+      return false;
+    case OuterLoopType::HW:
+      return true;
+    case OuterLoopType::Auto:
+      return NumPointerPHIs < OuterLoopPointerThreshold;
+    }
+    llvm_unreachable("Unknown OuterLoopType");
+  }
 };
 
 using SplitStrategy = bool (*)(const Instruction *);
@@ -1844,8 +1873,13 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
   // Merge the preheader and bottom copies into the steady header via PHIs.
   createPipelinedPHIs(OrigLS, SteadyLS, PreheaderVMap, BottomVMap);
 
-  const bool OuterIsHardwareLoop =
-      Opts.UseHardwareLoop && SteadyLS.latchCondition().isDowncounting();
+  // Determine whether to use hardware loop based on pointer pressure.
+  const unsigned NumPointerPHIs = OrigLS.countBasePointerPHIs();
+  const bool OuterIsHardwareLoop = Opts.shouldUseHardwareLoop(NumPointerPHIs) &&
+                                   SteadyLS.latchCondition().isDowncounting();
+  LLVM_DEBUG(dbgs() << "    Pointer PHIs: " << NumPointerPHIs << ", threshold: "
+                    << OuterLoopPointerThreshold << ", using "
+                    << (OuterIsHardwareLoop ? "hw" : "soft") << " loop\n");
 
   // Preparation: set up the latch condition for JNZD and/or peeling.
   // - Non-speculative: adjust the loop bound from N to N-1 (peel one iteration)

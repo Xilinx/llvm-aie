@@ -7,7 +7,7 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2ps %s -o - | FileCheck %s --check-prefix=ASM
 ; RUN: llc -mtriple=aie2ps -aie-outer-loop-pipelining-split-prologue=false %s -o - | FileCheck --check-prefix=NO-PROLOGUE-SPLIT %s
-; RUN: llc -mtriple=aie2ps -aie-outer-loop-hw-loop=false %s -o - | FileCheck --check-prefix=NO-JNZD %s
+; RUN: llc -mtriple=aie2ps -aie-outer-loop-type=soft %s -o - | FileCheck --check-prefix=NO-JNZD %s
 ; RUN: llc -mtriple=aie2ps --aie-enable-outer-loop-pipelining -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter='pipeliner' %s -o /dev/null | FileCheck %s --check-prefix=REMARKS
 
