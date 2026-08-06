@@ -68,6 +68,7 @@ CIRGenModule::CIRGenModule(mlir::MLIRContext &mlirContext,
 
   // Initialize cached types
   VoidTy = cir::VoidType::get(&getMLIRContext());
+  VoidPtrTy = cir::PointerType::get(VoidTy);
   SInt8Ty = cir::IntType::get(&getMLIRContext(), 8, /*isSigned=*/true);
   SInt16Ty = cir::IntType::get(&getMLIRContext(), 16, /*isSigned=*/true);
   SInt32Ty = cir::IntType::get(&getMLIRContext(), 32, /*isSigned=*/true);
@@ -94,6 +95,9 @@ CIRGenModule::CIRGenModule(mlir::MLIRContext &mlirContext,
   // TODO(CIR): Should be updated once TypeSizeInfoAttr is upstreamed
   const unsigned sizeTypeSize =
       astContext.getTypeSize(astContext.getSignedSizeType());
+  // In CIRGenTypeCache, UIntPtrTy and SizeType are fields of the same union
+  UIntPtrTy =
+      cir::IntType::get(&getMLIRContext(), sizeTypeSize, /*isSigned=*/false);
   PtrDiffTy =
       cir::IntType::get(&getMLIRContext(), sizeTypeSize, /*isSigned=*/true);
 
@@ -226,11 +230,9 @@ mlir::Operation *
 CIRGenModule::getAddrOfGlobal(GlobalDecl gd, ForDefinition_t isForDefinition) {
   const Decl *d = gd.getDecl();
 
-  if (isa<CXXConstructorDecl>(d) || isa<CXXDestructorDecl>(d)) {
-    errorNYI(d->getSourceRange(),
-             "getAddrOfGlobal: C++ constructor/destructor");
-    return nullptr;
-  }
+  if (isa<CXXConstructorDecl>(d) || isa<CXXDestructorDecl>(d))
+    return getAddrOfCXXStructor(gd, /*FnInfo=*/nullptr, /*FnType=*/nullptr,
+                                /*DontDefer=*/false, isForDefinition);
 
   if (isa<CXXMethodDecl>(d)) {
     const CIRGenFunctionInfo &fi =
@@ -404,6 +406,16 @@ void CIRGenModule::emitGlobalFunctionDefinition(clang::GlobalDecl gd,
                                /*DontDefer=*/true, ForDefinition);
   }
 
+  // Already emitted.
+  if (!funcOp.isDeclaration())
+    return;
+
+  setFunctionLinkage(gd, funcOp);
+  setGVProperties(funcOp, funcDecl);
+  assert(!cir::MissingFeatures::opFuncMaybeHandleStaticInExternC());
+  maybeSetTrivialComdat(*funcDecl, funcOp);
+  assert(!cir::MissingFeatures::setLLVMFunctionFEnvAttributes());
+
   CIRGenFunction cgf(*this, builder);
   curCGF = &cgf;
   {
@@ -411,6 +423,17 @@ void CIRGenModule::emitGlobalFunctionDefinition(clang::GlobalDecl gd,
     cgf.generateCode(gd, funcOp, funcType);
   }
   curCGF = nullptr;
+
+  setNonAliasAttributes(gd, funcOp);
+  assert(!cir::MissingFeatures::opFuncAttributesForDefinition());
+
+  if (funcDecl->getAttr<ConstructorAttr>())
+    errorNYI(funcDecl->getSourceRange(), "constructor attribute");
+  if (funcDecl->getAttr<DestructorAttr>())
+    errorNYI(funcDecl->getSourceRange(), "destructor attribute");
+
+  if (funcDecl->getAttr<AnnotateAttr>())
+    errorNYI(funcDecl->getSourceRange(), "deferredAnnotations");
 }
 
 mlir::Operation *CIRGenModule::getGlobalValue(StringRef name) {
@@ -771,7 +794,7 @@ void CIRGenModule::emitGlobalDefinition(clang::GlobalDecl gd,
       // Make sure to emit the definition(s) before we emit the thunks. This is
       // necessary for the generation of certain thunks.
       if (isa<CXXConstructorDecl>(method) || isa<CXXDestructorDecl>(method))
-        errorNYI(method->getSourceRange(), "C++ ctor/dtor");
+        abi->emitCXXStructor(gd);
       else if (fd->isMultiVersion())
         errorNYI(method->getSourceRange(), "multiversion functions");
       else
@@ -852,10 +875,12 @@ static bool shouldBeInCOMDAT(CIRGenModule &cgm, const Decl &d) {
 void CIRGenModule::maybeSetTrivialComdat(const Decl &d, mlir::Operation *op) {
   if (!shouldBeInCOMDAT(*this, d))
     return;
-  if (auto globalOp = dyn_cast_or_null<cir::GlobalOp>(op))
+  if (auto globalOp = dyn_cast_or_null<cir::GlobalOp>(op)) {
     globalOp.setComdat(true);
-
-  assert(!cir::MissingFeatures::opFuncSetComdat());
+  } else {
+    auto funcOp = cast<cir::FuncOp>(op);
+    funcOp.setComdat(true);
+  }
 }
 
 void CIRGenModule::updateCompletedType(const TagDecl *td) {
@@ -1025,6 +1050,17 @@ CIRGenModule::getCIRLinkageVarDefinition(const VarDecl *vd, bool isConstant) {
   return getCIRLinkageForDeclarator(vd, linkage, isConstant);
 }
 
+cir::GlobalLinkageKind CIRGenModule::getFunctionLinkage(GlobalDecl gd) {
+  const auto *fd = cast<FunctionDecl>(gd.getDecl());
+
+  GVALinkage linkage = astContext.GetGVALinkageForFunction(fd);
+
+  if (isa<CXXDestructorDecl>(fd))
+    errorNYI(fd->getSourceRange(), "getFunctionLinkage: CXXDestructorDecl");
+
+  return getCIRLinkageForDeclarator(fd, linkage, /*IsConstantVariable=*/false);
+}
+
 static cir::GlobalOp
 generateStringLiteral(mlir::Location loc, mlir::TypedAttr c,
                       cir::GlobalLinkageKind lt, CIRGenModule &cgm,
@@ -1171,6 +1207,10 @@ void CIRGenModule::emitTopLevelDecl(Decl *decl) {
   // No code generation needed.
   case Decl::UsingShadow:
   case Decl::Empty:
+    break;
+
+  case Decl::CXXConstructor:
+    getCXXABI().emitCXXConstructors(cast<CXXConstructorDecl>(decl));
     break;
 
   // C++ Decls
@@ -1527,6 +1567,27 @@ void CIRGenModule::setGVPropertiesAux(mlir::Operation *op,
   assert(!cir::MissingFeatures::opGlobalPartition());
 }
 
+void CIRGenModule::setFunctionAttributes(GlobalDecl globalDecl,
+                                         cir::FuncOp func,
+                                         bool isIncompleteFunction,
+                                         bool isThunk) {
+  // NOTE(cir): Original CodeGen checks if this is an intrinsic. In CIR we
+  // represent them in dedicated ops. The correct attributes are ensured during
+  // translation to LLVM. Thus, we don't need to check for them here.
+
+  assert(!cir::MissingFeatures::setFunctionAttributes());
+  assert(!cir::MissingFeatures::setTargetAttributes());
+
+  // TODO(cir): This needs a lot of work to better match CodeGen. That
+  // ultimately ends up in setGlobalVisibility, which already has the linkage of
+  // the LLVM GV (corresponding to our FuncOp) computed, so it doesn't have to
+  // recompute it here. This is a minimal fix for now.
+  if (!isLocalLinkage(getFunctionLinkage(globalDecl))) {
+    const Decl *decl = globalDecl.getDecl();
+    func.setGlobalVisibilityAttr(getGlobalVisibilityAttrFromDecl(decl));
+  }
+}
+
 cir::FuncOp CIRGenModule::getOrCreateCIRFunction(
     StringRef mangledName, mlir::Type funcType, GlobalDecl gd, bool forVTable,
     bool dontDefer, bool isThunk, ForDefinition_t isForDefinition,
@@ -1569,8 +1630,9 @@ cir::FuncOp CIRGenModule::getOrCreateCIRFunction(
     // If there are two attempts to define the same mangled name, issue an
     // error.
     auto fn = cast<cir::FuncOp>(entry);
-    assert((!isForDefinition || !fn || !fn.isDeclaration()) &&
-           "Duplicate function definition");
+    if (isForDefinition && fn && !fn.isDeclaration()) {
+      errorNYI(d->getSourceRange(), "Duplicate function definition");
+    }
     if (fn && fn.getFunctionType() == funcType) {
       return fn;
     }
@@ -1590,6 +1652,9 @@ cir::FuncOp CIRGenModule::getOrCreateCIRFunction(
   cir::FuncOp funcOp = createCIRFunction(
       invalidLoc ? theModule->getLoc() : getLoc(funcDecl->getSourceRange()),
       mangledName, mlir::cast<cir::FuncType>(funcType), funcDecl);
+
+  if (d)
+    setFunctionAttributes(gd, funcOp, /*isIncompleteFunction=*/false, isThunk);
 
   // 'dontDefer' actually means don't move this to the deferredDeclsToEmit list.
   if (dontDefer) {
@@ -1660,6 +1725,20 @@ CIRGenModule::createCIRFunction(mlir::Location loc, StringRef name,
       builder.setInsertionPoint(cgf->curFn);
 
     func = builder.create<cir::FuncOp>(loc, name, funcType);
+
+    assert(!cir::MissingFeatures::opFuncAstDeclAttr());
+    assert(!cir::MissingFeatures::opFuncNoProto());
+
+    assert(func.isDeclaration() && "expected empty body");
+
+    // A declaration gets private visibility by default, but external linkage
+    // as the default linkage.
+    func.setLinkageAttr(cir::GlobalLinkageKindAttr::get(
+        &getMLIRContext(), cir::GlobalLinkageKind::ExternalLinkage));
+    mlir::SymbolTable::setSymbolVisibility(
+        func, mlir::SymbolTable::Visibility::Private);
+
+    assert(!cir::MissingFeatures::opFuncExtraAttrs());
 
     if (!cgf)
       theModule.push_back(func);

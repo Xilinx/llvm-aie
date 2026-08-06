@@ -508,15 +508,14 @@ void TGInstrLayout::resolveIsSlot() {
       if (Field->isFixedBits())
         continue;
 
-      unsigned OpIdx;
-      if (CGI->Operands.hasOperandNamed(Field->Label, OpIdx)) {
+      if (auto OpIdx = CGI->Operands.findOperandNamed(Field->Label)) {
         // find by Record
         TGTargetSlots::const_iterator SlotIt =
-            SlotsRegistry.find(CGI->Operands[OpIdx].Rec);
+            SlotsRegistry.find(CGI->Operands[*OpIdx].Rec);
         if (SlotIt != SlotsRegistry.end())
           Field->setSlot(SlotIt->second);
         else {
-          dbgs() << "Operand " << CGI->Operands[OpIdx].Rec->getName()
+          dbgs() << "Operand " << CGI->Operands[*OpIdx].Rec->getName()
                  << " skipped when resolving Slot information for the "
                     "composite record "
                  << CGI->TheDef->getName() << "\n";
@@ -592,13 +591,12 @@ void TGInstrLayout::resolveMCOperandNumber() {
     // If the operand matches by name, reference according to that
     // operand number. Non-matching operands are assumed to be in
     // order.
-    unsigned OpIdx;
-    if (CGI->Operands.hasOperandNamed(Field->Label, OpIdx)) {
+    if (auto OpIdx = CGI->Operands.findOperandNamed(Field->Label)) {
       // Get the machine operand number for the indicated operand.
-      OpIdx = CGI->Operands[OpIdx].MIOperandNo;
-      assert(!CGI->Operands.isFlatOperandNotEmitted(OpIdx) &&
+      unsigned MIOpIdx = CGI->Operands[*OpIdx].MIOperandNo;
+      assert(!CGI->Operands.isFlatOperandNotEmitted(MIOpIdx) &&
              "Explicitly used operand also marked as not emitted!");
-      Field->setMCOperandIndex(OpIdx);
+      Field->setMCOperandIndex(MIOpIdx);
     }
   }
 }

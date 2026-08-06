@@ -2608,9 +2608,22 @@ SDValue DAGTypeLegalizer::PromoteIntOp_STRICT_UINT_TO_FP(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntOp_ZERO_EXTEND(SDNode *N) {
   SDLoc dl(N);
-  SDValue Op = GetPromotedInteger(N->getOperand(0));
-  Op = DAG.getAnyExtOrTrunc(Op, dl, N->getValueType(0));
-  return DAG.getZeroExtendInReg(Op, dl, N->getOperand(0).getValueType());
+  SDValue Src = N->getOperand(0);
+  SDValue Op = GetPromotedInteger(Src);
+  EVT VT = N->getValueType(0);
+
+  // If this zext has the nneg flag and the target prefers sext, see if the
+  // promoted input is already sign extended.
+  // TODO: Should we have some way to set nneg on ISD::AND instead?
+  if (N->getFlags().hasNonNeg() && Op.getValueType() == VT &&
+      TLI.isSExtCheaperThanZExt(Src.getValueType(), VT)) {
+    unsigned OpEffectiveBits = DAG.ComputeMaxSignificantBits(Op);
+    if (OpEffectiveBits <= Src.getScalarValueSizeInBits())
+      return Op;
+  }
+
+  Op = DAG.getAnyExtOrTrunc(Op, dl, VT);
+  return DAG.getZeroExtendInReg(Op, dl, Src.getValueType());
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_VP_ZERO_EXTEND(SDNode *N) {
