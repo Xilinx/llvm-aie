@@ -1888,7 +1888,7 @@ v256mx6 test_update (v256mx6 s, int idx, v32uint4 m) { return update(s, idx, m);
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 11
 // CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPO_INT7V256MX6I_EXIT]]
 // CHECK:       _ZL16extract_expo_int7v256mx6i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB6_I]] ]
 // CHECK-NEXT:    ret i32 [[RETVAL_0_I]]
 //
 int test_extract_expo_int (v256mx6 m, int idx) { return extract_expo_int(m, idx); }
@@ -1959,14 +1959,14 @@ v8int8 test_extract_expo_v8int8 (v256mx6 m, int idx) { return extract_expo_v8int
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6II_EXIT]]
 // CHECK:       _ZL6update7v256mx6ii.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[M]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[M]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[TMP5]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2003,14 +2003,14 @@ v256mx6 test_update (v256mx6 s, int idx, int m) { return update(s, idx, m); }
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX6IDV8_A_EXIT]]
 // CHECK:       _ZL6update7v256mx6iDv8_a.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2738,7 +2738,7 @@ v256mx4 test_update (v256mx4 s, int idx, v32uint4 m) { return update(s, idx, m);
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 11
 // CHECK-NEXT:    br label [[_ZL16EXTRACT_EXPO_INT7V256MX4I_EXIT]]
 // CHECK:       _ZL16extract_expo_int7v256mx4i.exit:
-// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB_I]] ]
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB6_I]] ]
 // CHECK-NEXT:    ret i32 [[RETVAL_0_I]]
 //
 int test_extract_expo_int (v256mx4 m, int idx) { return extract_expo_int(m, idx); }
@@ -2809,14 +2809,14 @@ v8int8 test_extract_expo_v8int8 (v256mx4 m, int idx) { return extract_expo_v8int
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4II_EXIT]]
 // CHECK:       _ZL6update7v256mx4ii.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[M]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB1_I]] ], [ [[TMP0]], [[SW_BB2_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[M:%.*]], [[SW_BB4_I]] ], [ [[TMP0]], [[SW_BB5_I]] ], [ [[TMP0]], [[SW_BB6_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB1_I]] ], [ [[TMP1]], [[SW_BB2_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[SW_BB4_I]] ], [ [[M]], [[SW_BB5_I]] ], [ [[TMP1]], [[SW_BB6_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[TMP2]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB1_I]] ], [ [[TMP2]], [[SW_BB2_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB4_I]] ], [ [[TMP2]], [[SW_BB5_I]] ], [ [[M]], [[SW_BB6_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[M]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB1_I]] ], [ [[TMP3]], [[SW_BB2_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB4_I]] ], [ [[TMP3]], [[SW_BB5_I]] ], [ [[TMP3]], [[SW_BB6_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB1_I]] ], [ [[TMP4]], [[SW_BB2_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB4_I]] ], [ [[TMP4]], [[SW_BB5_I]] ], [ [[TMP4]], [[SW_BB6_I]] ], [ [[M]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[M]], [[SW_BB1_I]] ], [ [[TMP5]], [[SW_BB2_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB4_I]] ], [ [[TMP5]], [[SW_BB5_I]] ], [ [[TMP5]], [[SW_BB6_I]] ], [ [[TMP5]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB1_I]] ], [ [[M]], [[SW_BB2_I]] ], [ [[TMP6]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB4_I]] ], [ [[TMP6]], [[SW_BB5_I]] ], [ [[TMP6]], [[SW_BB6_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB1_I]] ], [ [[TMP7]], [[SW_BB2_I]] ], [ [[M]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB4_I]] ], [ [[TMP7]], [[SW_BB5_I]] ], [ [[TMP7]], [[SW_BB6_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10
@@ -2853,14 +2853,14 @@ v256mx4 test_update (v256mx4 s, int idx, int m) { return update(s, idx, m); }
 // CHECK:       sw.default.i:
 // CHECK-NEXT:    br label [[_ZL6UPDATE7V256MX4IDV8_A_EXIT]]
 // CHECK:       _ZL6update7v256mx4iDv8_a.exit:
-// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
-// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[TMP1]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[ENTRY]] ]
-// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_9_0_I:%.*]] = phi i32 [ [[TMP0]], [[SW_DEFAULT_I]] ], [ [[TMP0]], [[SW_BB3_I]] ], [ [[VECEXT14_I]], [[SW_BB8_I]] ], [ [[TMP0]], [[ENTRY:%.*]] ]
+// CHECK-NEXT:    [[S_SROA_11_0_I:%.*]] = phi i32 [ [[TMP1]], [[SW_DEFAULT_I]] ], [ [[TMP1]], [[SW_BB3_I]] ], [ [[VECEXT16_I]], [[SW_BB8_I]] ], [ [[TMP1]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_13_0_I:%.*]] = phi i32 [ [[VECEXT14_I]], [[SW_DEFAULT_I]] ], [ [[TMP2]], [[SW_BB3_I]] ], [ [[TMP2]], [[SW_BB8_I]] ], [ [[TMP2]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_15_0_I:%.*]] = phi i32 [ [[VECEXT16_I]], [[SW_DEFAULT_I]] ], [ [[TMP3]], [[SW_BB3_I]] ], [ [[TMP3]], [[SW_BB8_I]] ], [ [[TMP3]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_17_0_I:%.*]] = phi i32 [ [[TMP4]], [[SW_DEFAULT_I]] ], [ [[TMP4]], [[SW_BB3_I]] ], [ [[TMP4]], [[SW_BB8_I]] ], [ [[VECEXT14_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_19_0_I:%.*]] = phi i32 [ [[TMP5]], [[SW_DEFAULT_I]] ], [ [[TMP5]], [[SW_BB3_I]] ], [ [[TMP5]], [[SW_BB8_I]] ], [ [[VECEXT16_I]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_21_0_I:%.*]] = phi i32 [ [[TMP6]], [[SW_DEFAULT_I]] ], [ [[VECEXT14_I]], [[SW_BB3_I]] ], [ [[TMP6]], [[SW_BB8_I]] ], [ [[TMP6]], [[ENTRY]] ]
+// CHECK-NEXT:    [[S_SROA_23_0_I:%.*]] = phi i32 [ [[TMP7]], [[SW_DEFAULT_I]] ], [ [[VECEXT16_I]], [[SW_BB3_I]] ], [ [[TMP7]], [[SW_BB8_I]] ], [ [[TMP7]], [[ENTRY]] ]
 // CHECK-NEXT:    [[DOTFCA_8_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[S_COERCE]], i32 [[S_SROA_9_0_I]], 8
 // CHECK-NEXT:    [[DOTFCA_9_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_8_INSERT_I]], i32 [[S_SROA_11_0_I]], 9
 // CHECK-NEXT:    [[DOTFCA_10_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_9_INSERT_I]], i32 [[S_SROA_13_0_I]], 10

@@ -458,7 +458,8 @@ public:
   void mangleSeqID(unsigned SeqID);
   void mangleName(GlobalDecl GD);
   void mangleType(QualType T);
-  void mangleCXXRecordDecl(const CXXRecordDecl *Record);
+  void mangleCXXRecordDecl(const CXXRecordDecl *Record,
+                           bool SuppressSubstitution = false);
   void mangleLambdaSig(const CXXRecordDecl *Lambda);
   void mangleModuleNamePrefix(StringRef Name, bool IsPartition = false);
   void mangleVendorQualifier(StringRef Name);
@@ -1559,7 +1560,8 @@ void CXXNameMangler::mangleUnqualifiedName(
           FD && FD->hasAttr<CUDAGlobalAttr>() &&
           GD.getKernelReferenceKind() == KernelReferenceKind::Stub;
       bool IsOCLDeviceStub =
-          FD && FD->hasAttr<OpenCLKernelAttr>() &&
+          FD &&
+          DeviceKernelAttr::isOpenCLSpelling(FD->getAttr<DeviceKernelAttr>()) &&
           GD.getKernelReferenceKind() == KernelReferenceKind::Stub;
       if (IsDeviceStub)
         mangleDeviceStubName(II);
@@ -2464,6 +2466,7 @@ bool CXXNameMangler::mangleUnresolvedTypeOrSimpleId(QualType Ty,
   case Type::Attributed:
   case Type::BTFTagAttributed:
   case Type::HLSLAttributedResource:
+  case Type::HLSLInlineSpirv:
   case Type::Auto:
   case Type::DeducedTemplateSpecialization:
   case Type::PackExpansion:
@@ -3121,11 +3124,12 @@ void CXXNameMangler::mangleType(QualType T) {
     addSubstitution(T);
 }
 
-void CXXNameMangler::mangleCXXRecordDecl(const CXXRecordDecl *Record) {
+void CXXNameMangler::mangleCXXRecordDecl(const CXXRecordDecl *Record,
+                                         bool SuppressSubstitution) {
   if (mangleSubstitution(Record))
     return;
   mangleName(Record);
-  if (isCompatibleWith(LangOptions::ClangABI::Ver19))
+  if (SuppressSubstitution)
     return;
   addSubstitution(Record);
 }
@@ -3513,7 +3517,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
     type_name = #MangledName;                                                  \
     Out << (type_name == #Name ? "u" : "") << type_name.size() << type_name;   \
     break;
-#include "clang/Basic/AArch64SVEACLETypes.def"
+#include "clang/Basic/AArch64ACLETypes.def"
 #define PPC_VECTOR_TYPE(Name, Id, Size)                                        \
   case BuiltinType::Id:                                                        \
     mangleVendorType(#Name);                                                   \
@@ -3561,10 +3565,9 @@ StringRef CXXNameMangler::getCallingConvQualifierName(CallingConv CC) {
   case CC_AAPCS_VFP:
   case CC_AArch64VectorCall:
   case CC_AArch64SVEPCS:
-  case CC_AMDGPUKernelCall:
   case CC_IntelOclBicc:
   case CC_SpirFunction:
-  case CC_OpenCLKernel:
+  case CC_DeviceKernel:
   case CC_PreserveMost:
   case CC_PreserveAll:
   case CC_M68kRTD:
@@ -4724,6 +4727,44 @@ void CXXNameMangler::mangleType(const HLSLAttributedResourceType *T) {
   mangleType(T->getWrappedType());
 }
 
+void CXXNameMangler::mangleType(const HLSLInlineSpirvType *T) {
+  SmallString<20> TypeNameStr;
+  llvm::raw_svector_ostream TypeNameOS(TypeNameStr);
+
+  TypeNameOS << "spirv_type";
+
+  TypeNameOS << "_" << T->getOpcode();
+  TypeNameOS << "_" << T->getSize();
+  TypeNameOS << "_" << T->getAlignment();
+
+  mangleVendorType(TypeNameStr);
+
+  for (auto &Operand : T->getOperands()) {
+    using SpirvOperandKind = SpirvOperand::SpirvOperandKind;
+
+    switch (Operand.getKind()) {
+    case SpirvOperandKind::ConstantId:
+      mangleVendorQualifier("_Const");
+      mangleIntegerLiteral(Operand.getResultType(),
+                           llvm::APSInt(Operand.getValue()));
+      break;
+    case SpirvOperandKind::Literal:
+      mangleVendorQualifier("_Lit");
+      mangleIntegerLiteral(Context.getASTContext().IntTy,
+                           llvm::APSInt(Operand.getValue()));
+      break;
+    case SpirvOperandKind::TypeId:
+      mangleVendorQualifier("_Type");
+      mangleType(Operand.getResultType());
+      break;
+    default:
+      llvm_unreachable("Invalid SpirvOperand kind");
+      break;
+    }
+    TypeNameOS << Operand.getKind();
+  }
+}
+
 void CXXNameMangler::mangleIntegerLiteral(QualType T,
                                           const llvm::APSInt &Value) {
   //  <expr-primary> ::= L <type> <value number> E # integer literal
@@ -4737,7 +4778,6 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
     mangleNumber(Value);
   }
   Out << 'E';
-
 }
 
 void CXXNameMangler::mangleMemberExprBase(const Expr *Base, bool IsArrow) {
@@ -7551,7 +7591,12 @@ void ItaniumMangleContextImpl::mangleCXXCtorVTable(const CXXRecordDecl *RD,
   // <special-name> ::= TC <type> <offset number> _ <base type>
   CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTC";
-  Mangler.mangleCXXRecordDecl(RD);
+  // Older versions of clang did not add the record as a substitution candidate
+  // here.
+  bool SuppressSubstitution =
+      getASTContext().getLangOpts().getClangABICompat() <=
+      LangOptions::ClangABI::Ver19;
+  Mangler.mangleCXXRecordDecl(RD, SuppressSubstitution);
   Mangler.getStream() << Offset;
   Mangler.getStream() << '_';
   Mangler.mangleCXXRecordDecl(Type);

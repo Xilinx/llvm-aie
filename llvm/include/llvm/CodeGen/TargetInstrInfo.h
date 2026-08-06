@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/BranchProbability.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TypeSize.h"
 #include <array>
@@ -114,7 +115,7 @@ struct ExtAddrMode {
 ///
 /// TargetInstrInfo - Interface to description of machine instruction set
 ///
-class TargetInstrInfo : public MCInstrInfo {
+class LLVM_ABI TargetInstrInfo : public MCInstrInfo {
 public:
   TargetInstrInfo(unsigned CFSetupOpcode = ~0u, unsigned CFDestroyOpcode = ~0u,
                   unsigned CatchRetOpcode = ~0u, unsigned ReturnOpcode = ~0u)
@@ -767,7 +768,7 @@ public:
   /// Object returned by analyzeLoopForPipelining. Allows software pipelining
   /// implementations to query attributes of the loop being pipelined and to
   /// apply target-specific updates to the loop once pipelining is complete.
-  class PipelinerLoopInfo {
+  class LLVM_ABI PipelinerLoopInfo {
   public:
     /// Return the different node orders to try when looking for a valid
     /// schedule at a given II.

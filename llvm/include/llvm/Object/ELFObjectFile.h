@@ -29,6 +29,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ELFAttributeParser.h"
 #include "llvm/Support/ELFAttributes.h"
 #include "llvm/Support/Error.h"
@@ -48,7 +49,8 @@ template <typename T> class SmallVectorImpl;
 namespace object {
 
 constexpr int NumElfSymbolTypes = 16;
-extern const llvm::EnumEntry<unsigned> ElfSymbolTypes[NumElfSymbolTypes];
+LLVM_ABI extern const llvm::EnumEntry<unsigned>
+    ElfSymbolTypes[NumElfSymbolTypes];
 
 class elf_symbol_iterator;
 
@@ -58,7 +60,7 @@ struct ELFPltEntry {
   uint64_t Address;
 };
 
-class ELFObjectFileBase : public ObjectFile {
+class LLVM_ABI ELFObjectFileBase : public ObjectFile {
   friend class ELFRelocationRef;
   friend class ELFSectionRef;
   friend class ELFSymbolRef;

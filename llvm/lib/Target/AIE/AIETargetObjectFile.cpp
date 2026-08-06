@@ -11,6 +11,7 @@
 #include "AIETargetObjectFile.h"
 #include "aie1/AIE1TargetMachine.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 
@@ -34,14 +35,16 @@ void AIEELFTargetObjectFile::Initialize(MCContext &Ctx,
 
 static MCSection *getDataSectionWithAlign(const GlobalObject &GO,
                                           MCContext &Ctx) {
-  auto Align = std::to_string(GO.getAlignment());
+  MaybeAlign Alignment = cast<GlobalVariable>(GO).getAlign();
+  auto Align = std::to_string(Alignment ? Alignment->value() : 0);
   return Ctx.getELFSection(".data.align." + Align, ELF::SHT_PROGBITS,
                            ELF::SHF_WRITE | ELF::SHF_ALLOC);
 }
 
 static MCSection *getBssSectionWithAlign(const GlobalObject &GO,
                                          MCContext &Ctx) {
-  auto Align = std::to_string(GO.getAlignment());
+  MaybeAlign Alignment = cast<GlobalVariable>(GO).getAlign();
+  auto Align = std::to_string(Alignment ? Alignment->value() : 0);
   return Ctx.getELFSection(".bss.align." + Align, ELF::SHT_NOBITS,
                            ELF::SHF_ALLOC | ELF::SHF_WRITE);
 }

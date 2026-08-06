@@ -515,8 +515,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   case BuiltinType::Id:
 #define SVE_PREDICATE_TYPE(Name, MangledName, Id, SingletonId)                 \
   case BuiltinType::Id:
-#define SVE_TYPE(Name, Id, SingletonId)
-#include "clang/Basic/AArch64SVEACLETypes.def"
+#include "clang/Basic/AArch64ACLETypes.def"
       {
         ASTContext::BuiltinVectorTypeInfo Info =
             Context.getBuiltinVectorTypeInfo(cast<BuiltinType>(Ty));
@@ -764,7 +763,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     auto *MPTy = cast<MemberPointerType>(Ty);
     if (!getCXXABI().isMemberPointerConvertible(MPTy)) {
       auto *C = MPTy->getMostRecentCXXRecordDecl()->getTypeForDecl();
-      auto Insertion = RecordsWithOpaqueMemberPointers.insert({C, nullptr});
+      auto Insertion = RecordsWithOpaqueMemberPointers.try_emplace(C);
       if (Insertion.second)
         Insertion.first->second = llvm::StructType::create(getLLVMContext());
       ResultType = Insertion.first->second;
@@ -802,6 +801,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     break;
   }
   case Type::HLSLAttributedResource:
+  case Type::HLSLInlineSpirv:
     ResultType = CGM.getHLSLRuntime().convertHLSLSpecificType(Ty);
     break;
   }
@@ -913,6 +913,10 @@ bool CodeGenTypes::isZeroInitializable(QualType T) {
   // We have to ask the ABI about member pointers.
   if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
     return getCXXABI().isZeroInitializable(MPT);
+
+  // HLSL Inline SPIR-V types are non-zero-initializable.
+  if (T->getAs<HLSLInlineSpirvType>())
+    return false;
 
   // Everything else is okay.
   return true;

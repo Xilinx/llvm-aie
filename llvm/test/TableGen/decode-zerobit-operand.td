@@ -51,10 +51,10 @@ def InstB : TestInstruction {
 // CHECK:      static const uint8_t DecoderTable8[] = {
 // CHECK-NEXT: /* 0 */       MCD::OPC_ExtractField, 0, 4,  // Inst{3-0} ...
 // CHECK-NEXT: /* 3 */       MCD::OPC_FilterValue, 8, 4, 0, // Skip to: 11
-// CHECK-NEXT: /* 7 */       MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 0, // Opcode: InstA
-// CHECK-NEXT: /* 11 */      MCD::OPC_FilterValue, 12, 4, 0, // Skip to: 19
-// CHECK-NEXT: /* 15 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 1, // Opcode: InstB
-// CHECK-NEXT: /* 19 */      MCD::OPC_Fail,
+// CHECK-NEXT: /* 7 */       MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 0, // Opcode: InstA, DecodeIdx: 0
+// CHECK-NEXT: /* 11 */      MCD::OPC_FilterValueOrFail, 12,
+// CHECK-NEXT: /* 13 */      MCD::OPC_Decode, {{[0-9]+}}, {{[0-9]+}}, 1, // Opcode: InstB, DecodeIdx: 1
+// CHECK-NEXT: /* 17 */      MCD::OPC_Fail,
 
 // CHECK-LABEL: static DecodeStatus decodeToMCInst
 // CHECK:       case 0:

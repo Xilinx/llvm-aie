@@ -62,7 +62,7 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-format') }}
         uses: aminya/setup-cpp@17c11551771948abc5752bbf3183482567c7caf0 # v1.1.1
         with:
-          clangformat: 19.1.6
+          clangformat: 20.1.5
 
       - name: Setup Python env
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-format') }}
