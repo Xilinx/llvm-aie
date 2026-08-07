@@ -4,11 +4,11 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
 ; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
 
