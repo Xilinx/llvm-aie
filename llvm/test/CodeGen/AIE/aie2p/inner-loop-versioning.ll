@@ -28,8 +28,8 @@
 ; CHECK: br i1 %{{.*}}, !llvm.loop [[LOWMD:![0-9]+]]
 ; Cloning leaves both copies branching to the same exit block, so each gets its
 ; own dedicated exit again and stays in loop-simplify form for later passes.
-; CHECK: exit.loopexit{{[0-9]*}}: ; preds = %loop.lver.high
-; CHECK: exit.loopexit{{[0-9]*}}: ; preds = %loop{{$}}
+; CHECK: exit.lver.high.loopexit: ; preds = %loop.lver.high
+; CHECK: exit.lver.low.loopexit: ; preds = %loop{{$}}
 
 define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 entry:

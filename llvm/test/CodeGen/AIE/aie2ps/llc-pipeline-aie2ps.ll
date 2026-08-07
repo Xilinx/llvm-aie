@@ -164,7 +164,7 @@
 ; AIE-O1-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O1-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O1-NEXT:      Optimization Remark Emitter
-; AIE-O1-NEXT:      AIE Inner Loop Versioning
+; AIE-O1-NEXT:      AIE Inner Loop Versioner
 ; AIE-O1-NEXT:      Dominator Tree Construction
 ; AIE-O1-NEXT:      Natural Loop Information
 ; AIE-O1-NEXT:      Scalar Evolution Analysis
@@ -398,7 +398,7 @@
 ; AIE-O23-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O23-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O23-NEXT:      Optimization Remark Emitter
-; AIE-O23-NEXT:      AIE Inner Loop Versioning
+; AIE-O23-NEXT:      AIE Inner Loop Versioner
 ; AIE-O23-NEXT:      Dominator Tree Construction
 ; AIE-O23-NEXT:      Natural Loop Information
 ; AIE-O23-NEXT:      Scalar Evolution Analysis

@@ -14,7 +14,7 @@
 // copies guarded by a runtime trip-count check. Large trip counts run a
 // specialized copy the postpipeliner may pipeline aggressively, while small
 // trip counts stay correct on the original loop. The block structure below is
-// what the postpipeliner's guard finder (AIELoopUtils::getVersionGuardBlock)
+// what the postpipeliner's guard finder (AIELoopUtils::getGuardBlock)
 // relies on: a guard block with two successors, each a dedicated fallthrough
 // preheader of its copy. (The block names are for humans; the guard finder
 // matches on structure, not names.)
@@ -24,10 +24,11 @@
 //   [<hdr>.ph]  [<hdr>.ph.lver.high]
 //       |               |
 //    [<hdr>]        [<hdr>.lver.high]   the high-trip-count copy is the clone;
-//       \               /               it keeps the hint and gets pipelined.
-//        \             /                the low-trip-count copy is the original
-//         \           /                 loop, kept verbatim as the fallback.
-//          [exit]
+//       |               |               it keeps the hint and gets pipelined.
+//   [lo.exit]       [hi.exit]           the low-trip-count copy is the original
+//        \             /                loop, kept verbatim as the fallback.
+//         \           /                 each copy keeps a dedicated exit block,
+//          [exit]                       <exit>.lver.{low,high}.loopexit.
 //
 // The threshold is produced by a thin per-subtarget intrinsic that lowers to a
 // non-CSE-able pseudo, giving the postpipeliner a stable handle to patch. After
@@ -123,7 +124,7 @@ public:
     FunctionPass::getAnalysisUsage(AU);
   }
 
-  StringRef getPassName() const override { return "AIE Inner Loop Versioning"; }
+  StringRef getPassName() const override { return "AIE Inner Loop Versioner"; }
 };
 
 /// Versions a single loop: clone it into a high-trip-count copy, route a
@@ -132,17 +133,14 @@ public:
 /// transform.
 class AIELoopVersioner {
 public:
-  /// What tryVersionLoop() did to the loop. Canonicalized and Versioned both
-  /// mean the IR changed; only Unchanged lets the caller keep its analyses.
-  enum class Result { Unchanged, Canonicalized, Versioned };
-
   AIELoopVersioner(Loop &L, DominatorTree &DT, LoopInfo &LI,
                    ScalarEvolution &SE, OptimizationRemarkEmitter &ORE)
       : L(L), DT(DT), LI(LI), SE(SE), ORE(ORE) {}
 
-  /// Version the loop. Bailing out after canonicalization leaves the loop in
-  /// simplify + LCSSA form.
-  Result tryVersionLoop();
+  /// Version the loop, returning whether the IR changed. Bailing out after
+  /// canonicalization leaves the loop in simplify + LCSSA form, which counts
+  /// as a change.
+  bool tryVersionLoop();
 
 private:
   Loop &L;
@@ -153,7 +151,7 @@ private:
 
   /// Set when canonicalizeAndCheckStructure() actually rewrote the loop, so a
   /// later bail can still report the IR as changed.
-  bool Canonicalized = false;
+  bool IsCanonicalized = false;
 
   /// Whether the trip count can be computed and held by the runtime guard.
   /// Read-only: decided solely from the trip-count SCEV.
@@ -173,12 +171,13 @@ private:
   /// giving every exit PHI its incoming value from \p ClonedLoop.
   void addExitPHIs(Loop *ClonedLoop, BasicBlock *ExitBlock,
                    ValueToValueMapTy &VMap) const;
+  /// Name the dedicated exit block of each copy after the copy it belongs to,
+  /// deriving both from \p ExitBlock, the block they merge into.
+  void nameDedicatedExits(const BasicBlock &ExitBlock, Loop &HighLoop) const;
   /// Consume the request hint on \p LowLoop and \p HighLoop and mark
   /// \p HighLoop as the versioned one, so the postpipeliner can tell the
   /// copies apart.
   void updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop);
-  /// Remove the versioning request hint from \p Loop.
-  void stripVersioningHint(Loop &Loop) const;
 };
 
 /// True when \p L carries the iteration-count versioning request hint.
@@ -277,8 +276,7 @@ bool AIEInnerLoopVersioning::runOnFunction(Function &F) {
 
   bool Changed = false;
   for (Loop *L : Candidates)
-    Changed |= AIELoopVersioner(*L, DT, LI, SE, ORE).tryVersionLoop() !=
-               AIELoopVersioner::Result::Unchanged;
+    Changed |= AIELoopVersioner(*L, DT, LI, SE, ORE).tryVersionLoop();
   return Changed;
 }
 
@@ -310,9 +308,9 @@ BasicBlock *AIELoopVersioner::canonicalizeAndCheckStructure() {
   // the two copies' results. Rather than force global LoopSimplify/LCSSA (which
   // would perturb non-hinted loops seen by later passes), canonicalize just
   // this hinted candidate on demand.
-  Canonicalized = simplifyLoop(&L, &DT, &LI, &SE, /*AC=*/nullptr,
-                               /*MSSAU=*/nullptr, /*PreserveLCSSA=*/false);
-  Canonicalized |= formLCSSARecursively(L, DT, &LI, &SE);
+  IsCanonicalized = simplifyLoop(&L, &DT, &LI, &SE, /*AC=*/nullptr,
+                                 /*MSSAU=*/nullptr, /*PreserveLCSSA=*/false);
+  IsCanonicalized |= formLCSSARecursively(L, DT, &LI, &SE);
   if (!L.isLoopSimplifyForm()) {
     LLVM_DEBUG(dbgs() << "  Not in simplify form\n");
     return nullptr;
@@ -327,7 +325,7 @@ BasicBlock *AIELoopVersioner::canonicalizeAndCheckStructure() {
   return ExitBlock;
 }
 
-AIELoopVersioner::Result AIELoopVersioner::tryVersionLoop() {
+bool AIELoopVersioner::tryVersionLoop() {
   // Read-only gate first, so an unsuitable loop is rejected without any IR
   // mutation.
   if (!hasVersionableTripCount()) {
@@ -335,28 +333,28 @@ AIELoopVersioner::Result AIELoopVersioner::tryVersionLoop() {
                L.getHeader()->printAsOperand(dbgs()); dbgs() << "\n");
     remarkNotVersioned(ORE, L, "NoVersionableTripCount",
                        "its trip count is unknown or does not fit 32 bits");
-    return Result::Unchanged;
+    return false;
   }
 
   BasicBlock *ExitBlock = canonicalizeAndCheckStructure();
   if (!ExitBlock) {
     remarkNotVersioned(ORE, L, "UnsupportedStructure",
                        "it has no unique exit or resists canonicalization");
-    return Canonicalized ? Result::Canonicalized : Result::Unchanged;
+    return IsCanonicalized;
   }
 
   BasicBlock *GuardBB = L.getLoopPreheader();
-  BasicBlock *Header = L.getHeader();
+  BasicBlock *HeaderBB = L.getHeader();
 
   Value *TripCount = expandTripCount(GuardBB->getTerminator());
   if (!TripCount) {
     LLVM_DEBUG(dbgs() << "  Trip count not expandable\n");
     remarkNotVersioned(ORE, L, "TripCountNotExpandable",
                        "its trip count cannot be computed before the loop");
-    return Canonicalized ? Result::Canonicalized : Result::Unchanged;
+    return IsCanonicalized;
   }
 
-  LLVM_DEBUG(dbgs() << "  Versioning loop "; Header->printAsOperand(dbgs());
+  LLVM_DEBUG(dbgs() << "  Versioning loop "; HeaderBB->printAsOperand(dbgs());
              dbgs() << "\n");
 
   Value *TakeLow = emitGuardCondition(*GuardBB, TripCount);
@@ -364,7 +362,7 @@ AIELoopVersioner::Result AIELoopVersioner::tryVersionLoop() {
   // Split off an empty preheader for the original (low-trip-count) copy, then
   // clone the loop into the high-trip-count copy dominated by the guard block.
   BasicBlock *LowPH = SplitBlock(GuardBB, GuardBB->getTerminator(), &DT, &LI,
-                                 nullptr, Header->getName() + ".ph");
+                                 nullptr, HeaderBB->getName() + ".ph");
   ValueToValueMapTy VMap;
   SmallVector<BasicBlock *, 8> HighBlocks;
   Loop *HighLoop = cloneLoopWithPreheader(LowPH, GuardBB, &L, VMap,
@@ -384,6 +382,7 @@ AIELoopVersioner::Result AIELoopVersioner::tryVersionLoop() {
   // dedicated exit of either loop. Restore that for later loop passes.
   formDedicatedExitBlocks(HighLoop, &DT, &LI, nullptr, /*PreserveLCSSA=*/true);
   formDedicatedExitBlocks(&L, &DT, &LI, nullptr, /*PreserveLCSSA=*/true);
+  nameDedicatedExits(*ExitBlock, *HighLoop);
 
   updateLoopsMetadata(L, *HighLoop);
   ORE.emit([&] {
@@ -392,7 +391,7 @@ AIELoopVersioner::Result AIELoopVersioner::tryVersionLoop() {
            << "loop versioned: a runtime trip-count guard selects a copy the "
               "post-pipeliner may pipeline";
   });
-  return Result::Versioned;
+  return true;
 }
 
 Value *AIELoopVersioner::emitGuardCondition(BasicBlock &GuardBB,
@@ -434,6 +433,19 @@ void AIELoopVersioner::addExitPHIs(Loop *ClonedLoop, BasicBlock *ExitBlock,
   }
 }
 
+void AIELoopVersioner::nameDedicatedExits(const BasicBlock &ExitBlock,
+                                          Loop &HighLoop) const {
+  // formDedicatedExitBlocks derives both new names from ExitBlock, which for a
+  // loop canonicalization already renamed reads <exit>.loopexit.loopexit. Drop
+  // that suffix so each name says which copy exits there.
+  StringRef Base = ExitBlock.getName();
+  Base.consume_back(".loopexit");
+  if (BasicBlock *HighExit = HighLoop.getUniqueExitBlock())
+    HighExit->setName(Base + ".lver.high.loopexit");
+  if (BasicBlock *LowExit = L.getUniqueExitBlock())
+    LowExit->setName(Base + ".lver.low.loopexit");
+}
+
 void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
   // Consume the request hint on both copies so a second run of the pass does
   // not re-version either. Mark the high-trip-count copy as versioned (carrying
@@ -445,8 +457,9 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
       AIELoopUtils::getLoopHintInt(LowLoop.getLoopID(),
                                    AIELoopUtils::LoopVersioningHintKey)
           .value_or(1);
-  stripVersioningHint(LowLoop);
-  stripVersioningHint(HighLoop);
+  const StringRef RequestHint = AIELoopUtils::LoopVersioningHintKey;
+  AIEIRUtils::dropLoopMetadata(LowLoop, RequestHint);
+  AIEIRUtils::dropLoopMetadata(HighLoop, RequestHint);
   addStringMetadataToLoop(&HighLoop, AIELoopUtils::LoopVersionedHintKey.data(),
                           HintValue);
 
@@ -456,9 +469,4 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
   // the postpipeliner needs.
   AIEIRUtils::dropLoopMetadata(HighLoop,
                                StringRef("llvm.loop.itercount.range"));
-}
-
-void AIELoopVersioner::stripVersioningHint(Loop &Loop) const {
-  AIEIRUtils::dropLoopMetadata(Loop,
-                               StringRef(AIELoopUtils::LoopVersioningHintKey));
 }

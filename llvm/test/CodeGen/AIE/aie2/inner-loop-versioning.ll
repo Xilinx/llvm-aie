@@ -28,8 +28,8 @@
 ; CHECK: br i1 %{{.*}}, !llvm.loop [[LOWMD:![0-9]+]]
 ; Cloning leaves both copies branching to the same exit block, so each gets its
 ; own dedicated exit again and stays in loop-simplify form for later passes.
-; CHECK: exit.loopexit{{[0-9]*}}: ; preds = %loop.lver.high
-; CHECK: exit.loopexit{{[0-9]*}}: ; preds = %loop{{$}}
+; CHECK: exit.lver.high.loopexit: ; preds = %loop.lver.high
+; CHECK: exit.lver.low.loopexit: ; preds = %loop{{$}}
 
 define void @versioned(ptr noalias %a, ptr noalias %b, i32 %n) {
 entry:
@@ -190,7 +190,7 @@ exit:
 ; CHECK: br i1 %{{.*}}, label %loop.ph, label %loop.ph.lver.high
 ; Each copy exits through its own dedicated block; the loop-defined value is
 ; merged there, and the bypass PHI keeps selecting -1 on the entry edge.
-; CHECK: %[[LCSSA:.*]] = phi i32 [ %{{.*}}, %exit.loopexit.loopexit ], [ %{{.*}}, %exit.loopexit.loopexit1 ]
+; CHECK: %[[LCSSA:.*]] = phi i32 [ %{{.*}}, %exit.lver.high.loopexit ], [ %{{.*}}, %exit.lver.low.loopexit ]
 ; CHECK: %result = phi i32 [ -1, %entry ], [ %[[LCSSA]], %exit.loopexit ]
 define i32 @conditional_entry(ptr %a, i32 %n, i1 %enter) {
 entry:
