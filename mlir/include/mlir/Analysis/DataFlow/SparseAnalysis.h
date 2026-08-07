@@ -220,6 +220,11 @@ protected:
       Operation *op, const RegionSuccessor &successor,
       ArrayRef<AbstractSparseLattice *> argLattices, unsigned firstIndex) = 0;
 
+  /// Return whether to analyze a nested region of `op`. Analyses can override
+  /// this to treat selected regions as opaque. By default all nested regions
+  /// are analyzed.
+  virtual bool shouldAnalyzeNestedRegion(Operation *, Region &) { return true; }
+
   /// Get the lattice element of a value.
   virtual AbstractSparseLattice *getLatticeElement(Value value) = 0;
 
@@ -436,6 +441,11 @@ protected:
 
   // Visit operands on call instructions that are not forwarded.
   virtual void visitCallOperand(OpOperand &operand) = 0;
+
+  /// Return whether to analyze a nested region of `op`. Analyses can override
+  /// this to treat selected regions as opaque. By default all nested regions
+  /// are analyzed.
+  virtual bool shouldAnalyzeNestedRegion(Operation *, Region &) { return true; }
 
   /// Set the given lattice element(s) at control flow exit point(s) and
   /// propagate the update if it chaned.

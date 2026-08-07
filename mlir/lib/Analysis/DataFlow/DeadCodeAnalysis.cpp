@@ -130,6 +130,8 @@ LogicalResult DeadCodeAnalysis::initialize(Operation *top) {
   LDBG("Initializing DeadCodeAnalysis for top-level op: " << top->getName());
   // Mark the top-level blocks as executable.
   for (Region &region : top->getRegions()) {
+    if (!shouldAnalyzeNestedRegion(top, region))
+      continue;
     if (region.empty())
       continue;
     auto *state =
@@ -246,6 +248,8 @@ LogicalResult DeadCodeAnalysis::initializeRecursively(Operation *op) {
   }
   // Recurse on nested operations.
   for (Region &region : op->getRegions()) {
+    if (!shouldAnalyzeNestedRegion(op, region))
+      continue;
     LDBG("[init] Recursing into region of op: " << op->getName());
     for (Operation &nestedOp : region.getOps()) {
       LDBG("[init] Recursing into nested op: " << nestedOp.getName() << " at "
@@ -271,6 +275,8 @@ void DeadCodeAnalysis::markEdgeLive(Block *from, Block *to) {
 void DeadCodeAnalysis::markEntryBlocksLive(Operation *op) {
   LDBG("Marking entry blocks live for op: " << op->getName());
   for (Region &region : op->getRegions()) {
+    if (!shouldAnalyzeNestedRegion(op, region))
+      continue;
     if (region.empty())
       continue;
     auto *state =
@@ -449,6 +455,9 @@ void DeadCodeAnalysis::visitRegionBranchOperation(
   SmallVector<RegionSuccessor> successors;
   branch.getEntrySuccessorRegions(*operands, successors);
   for (const RegionSuccessor &successor : successors) {
+    if (Region *region = successor.getSuccessor();
+        region && !shouldAnalyzeNestedRegion(branch.getOperation(), *region))
+      continue;
     // The successor can be either an entry block or the parent operation.
     ProgramPoint *point =
         successor.getSuccessor()
@@ -485,6 +494,8 @@ void DeadCodeAnalysis::visitRegionTerminator(Operation *op,
   for (const RegionSuccessor &successor : successors) {
     PredecessorState *predecessors;
     if (Region *region = successor.getSuccessor()) {
+      if (!shouldAnalyzeNestedRegion(region->getParentOp(), *region))
+        continue;
       auto *state =
           getOrCreate<Executable>(getProgramPointBefore(&region->front()));
       propagateIfChanged(state, state->setToLive());

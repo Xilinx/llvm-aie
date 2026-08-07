@@ -19,7 +19,6 @@
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
 #include "mlir/Support/LLVM.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Casting.h"
 #include <cassert>
 #include <optional>
 
@@ -54,6 +53,8 @@ AbstractSparseForwardDataFlowAnalysis::initialize(Operation *top) {
   // Mark the entry block arguments as having reached their pessimistic
   // fixpoints.
   for (Region &region : top->getRegions()) {
+    if (!shouldAnalyzeNestedRegion(top, region))
+      continue;
     if (region.empty())
       continue;
     for (Value argument : region.front().getArguments())
@@ -71,6 +72,8 @@ AbstractSparseForwardDataFlowAnalysis::initializeRecursively(Operation *op) {
     return failure();
 
   for (Region &region : op->getRegions()) {
+    if (!shouldAnalyzeNestedRegion(op, region))
+      continue;
     for (Block &block : region) {
       getOrCreate<Executable>(getProgramPointBefore(&block))
           ->blockContentSubscribe(this);
@@ -276,6 +279,9 @@ void AbstractSparseForwardDataFlowAnalysis::visitRegionSuccessors(
       // Otherwise, try to deduce the operands from a region return-like op.
     } else if (auto regionTerminator =
                    dyn_cast<RegionBranchTerminatorOpInterface>(op)) {
+      Region *region = regionTerminator->getParentRegion();
+      if (!shouldAnalyzeNestedRegion(branch.getOperation(), *region))
+        continue;
       operands = regionTerminator.getSuccessorOperands(successor);
     }
 
@@ -355,6 +361,8 @@ AbstractSparseBackwardDataFlowAnalysis::initializeRecursively(Operation *op) {
     return failure();
 
   for (Region &region : op->getRegions()) {
+    if (!shouldAnalyzeNestedRegion(op, region))
+      continue;
     for (Block &block : region) {
       getOrCreate<Executable>(getProgramPointBefore(&block))
           ->blockContentSubscribe(this);
@@ -564,6 +572,9 @@ void AbstractSparseBackwardDataFlowAnalysis::visitRegionSuccessors(
   BitVector unaccounted(op->getNumOperands(), true);
 
   for (RegionSuccessor &successor : successors) {
+    if (Region *region = successor.getSuccessor();
+        region && !shouldAnalyzeNestedRegion(op, *region))
+      continue;
     OperandRange operands = branch.getEntrySuccessorOperands(successor);
     MutableArrayRef<OpOperand> opoperands = operandsToOpOperands(operands);
     ValueRange inputs = successor.getSuccessorInputs();
@@ -598,6 +609,9 @@ void AbstractSparseBackwardDataFlowAnalysis::
   BitVector unaccounted(terminator->getNumOperands(), true);
 
   for (const RegionSuccessor &successor : successors) {
+    if (Region *region = successor.getSuccessor();
+        region && !shouldAnalyzeNestedRegion(branch.getOperation(), *region))
+      continue;
     ValueRange inputs = successor.getSuccessorInputs();
     OperandRange operands = terminator.getSuccessorOperands(successor);
     MutableArrayRef<OpOperand> opOperands = operandsToOpOperands(operands);
