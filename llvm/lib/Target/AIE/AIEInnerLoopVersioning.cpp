@@ -74,6 +74,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/InitializePasses.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/TargetParser/Triple.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -86,6 +87,19 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-inner-loop-versioning"
+
+namespace llvm {
+cl::opt<bool> DisableInnerLoopVersioning(
+    "aie-disable-inner-loop-versioning", cl::Hidden, cl::init(false),
+    cl::desc("Do not run inner-loop versioning, overriding any loop pragma "
+             "(the pass is left out of the pipeline entirely)"));
+} // namespace llvm
+
+static cl::opt<int> VersioningMinIterCount(
+    "aie-inner-loop-versioning-min-itercount", cl::Hidden, cl::init(-1),
+    cl::desc("Version every innermost loop whose known minimum iteration count "
+             "is at most this value, ignoring the loop pragma (-1 disables). "
+             "Loops without an iteration-count range are not affected"));
 
 namespace {
 
@@ -174,6 +188,24 @@ bool isIterCountVersioningEnabled(const Loop *L) {
   return Hint && *Hint > 0;
 }
 
+/// True when the command line requests \p L to be versioned without a pragma,
+/// i.e. its known minimum iteration count is at most the requested bound.
+bool isIterCountVersioningRequestedByOption(const Loop *L) {
+  if (VersioningMinIterCount < 0)
+    return false;
+  const std::optional<int64_t> MinIterCount = getMinTripCount(L->getLoopID());
+  return MinIterCount && *MinIterCount <= VersioningMinIterCount;
+}
+
+/// True when \p L is a copy an earlier run of the pass already produced.
+/// Versioning consumes the request hint, so this only matters for loops picked
+/// up by VersioningMinIterCount, which ignores hints.
+bool isAlreadyVersioned(const Loop *L) {
+  return AIELoopUtils::getLoopHintInt(L->getLoopID(),
+                                      AIELoopUtils::LoopVersionedHintKey)
+      .has_value();
+}
+
 /// Report that \p Reason kept \p L un-versioned, so a user who set the pragma
 /// learns it had no effect. Shared by the candidate filter and the versioner
 /// so every rejection reads the same and carries the same Reason field.
@@ -224,8 +256,15 @@ bool AIEInnerLoopVersioning::runOnFunction(Function &F) {
   // iteration.
   SmallVector<Loop *, 4> Candidates;
   for (Loop *L : LI.getLoopsInPreorder()) {
-    if (!isIterCountVersioningEnabled(L))
+    if (!isIterCountVersioningEnabled(L) &&
+        !isIterCountVersioningRequestedByOption(L))
       continue;
+
+    if (isAlreadyVersioned(L)) {
+      LLVM_DEBUG(dbgs() << "  Skipping already versioned loop ";
+                 L->getHeader()->printAsOperand(dbgs()); dbgs() << "\n");
+      continue;
+    }
 
     if (!L->isInnermost()) {
       LLVM_DEBUG(dbgs() << "  Skipping non-innermost loop ";
@@ -400,8 +439,12 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
   // not re-version either. Mark the high-trip-count copy as versioned (carrying
   // the request's value) so the postpipeliner recognizes it as the pipelined
   // copy; the low copy stays the verbatim un-pipelined fallback.
-  const int64_t HintValue = *AIELoopUtils::getLoopHintInt(
-      LowLoop.getLoopID(), AIELoopUtils::LoopVersioningHintKey);
+  // A loop picked up by VersioningMinIterCount carries no request hint, so the
+  // marker gets the value the hint would have had when simply enabled.
+  const int64_t HintValue =
+      AIELoopUtils::getLoopHintInt(LowLoop.getLoopID(),
+                                   AIELoopUtils::LoopVersioningHintKey)
+          .value_or(1);
   stripVersioningHint(LowLoop);
   stripVersioningHint(HighLoop);
   addStringMetadataToLoop(&HighLoop, AIELoopUtils::LoopVersionedHintKey.data(),
