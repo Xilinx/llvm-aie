@@ -1094,6 +1094,47 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vextbcst.N (mXm)(s1, idx): the lane at idx repeated across the whole
+  // destination -- vextract's lane select feeding vbcst's splat, in one
+  // instruction and without the trip through a scalar register.
+  //
+  // It reuses vextract's index convention rather than assuming one: idx is
+  // c6u on the imm forms here too, and six bits is a lane number for every
+  // width in the family (the .16 form has 32 lanes) but not a byte offset for
+  // any of them. Unlike vextract there is no vaddSign pair, which follows --
+  // the destination lane is the same width as the source lane, so there is
+  // nothing to widen and no sign to choose.
+  auto vextractBroadcast = [&](unsigned ElemBits) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const MCRegister Src = Op.reg(1);
+    const unsigned DstW = State.Regs.getClassWidth(Dst);
+    const unsigned W = State.Regs.getClassWidth(Src);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Src) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    if (!DstW || DstW % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(DstW) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const unsigned Lanes = W / ElemBits;
+    const MCOperand &Idx = MI.getOperand(2);
+    const uint64_t I = Idx.isImm() ? uint64_t(Idx.getImm()) : Op.val(2);
+    const APInt V = Op.valN(1, W);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    // Same stance as vextract: the register forms take a whole eR, so an
+    // out-of-range lane is reachable at runtime and what the hardware does
+    // with one is not established.
+    if (I >= Lanes)
+      return fault(Name + ": lane " + Twine(I) + " is outside the " +
+                   Twine(Lanes) + " this source holds");
+    const APInt E = V.extractBits(ElemBits, unsigned(I) * ElemBits);
+    Eff.RegWrites.push_back(
+        {Dst, APInt::getSplat(DstW, E), Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vshift (d)(s1, s2, shift): the 512-bit window of the 1024-bit
   // concatenation {s2 : s1} starting at BYTE offset shift, s1 low.
   //
@@ -2188,6 +2229,24 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VEXTRACT_64_vec_extract_imm_vaddSign1:
   case AIE2P::VEXTRACT_64_vec_extract_r_vaddSign1:
     R = vextract(64, /*Signed=*/true);
+    break;
+
+  // Both index forms per width, as on vextract.
+  case AIE2P::VEXTBCST_16_vec_extract_broadcast_imm:
+  case AIE2P::VEXTBCST_16_vec_extract_broadcast_r:
+    R = vextractBroadcast(16);
+    break;
+  case AIE2P::VEXTBCST_32_vec_extract_broadcast_imm:
+  case AIE2P::VEXTBCST_32_vec_extract_broadcast_r:
+    R = vextractBroadcast(32);
+    break;
+  case AIE2P::VEXTBCST_64_vec_extract_broadcast_imm:
+  case AIE2P::VEXTBCST_64_vec_extract_broadcast_r:
+    R = vextractBroadcast(64);
+    break;
+  case AIE2P::VEXTBCST_128_vec_extract_broadcast_imm:
+  case AIE2P::VEXTBCST_128_vec_extract_broadcast_r:
+    R = vextractBroadcast(128);
     break;
 
   case AIE2P::VSHIFT:
