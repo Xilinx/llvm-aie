@@ -53,7 +53,7 @@ tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEB
 list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2")
 
 #aie2p
-set(LLVM_TARGET_DEFINITIONS AIE2P.td)
+set(LLVM_TARGET_DEFINITIONS aie2p/AIE2P.td)
 list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 tablegen(LLVM AIE2PGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
