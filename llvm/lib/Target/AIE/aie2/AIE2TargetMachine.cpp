@@ -82,6 +82,7 @@ bool AIE2PassConfig::addPreISel() {
     if (!DisableInnerLoopVersioning)
       addPass(createAIEInnerLoopVersioningPass());
     addPass(createHardwareLoopsLegacyPass());
+    addPass(createAIEOuterLoopPointerOptimizerPass());
     addPass(createAIEOuterLoopPipelinerPass());
   }
   return false;

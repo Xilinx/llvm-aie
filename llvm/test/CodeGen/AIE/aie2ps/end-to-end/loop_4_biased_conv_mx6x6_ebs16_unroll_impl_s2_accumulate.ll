@@ -102,9 +102,9 @@ define dso_local void @loop_4_biased_conv_mx6x6_ebs16_unroll_impl_s2_accumulate(
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop fex0, [p1, lf1, r25]; vldb.pop fex10, [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop fex1, [p1, lf1, r25]; vldb.pop.3d fex8, [p0, lf0, r24, d0]
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh4, [p7, #0]
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh4, [p7], #64
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p4, #0]; vldb.fill [p0, lf0, r24]
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p4], #64; vldb.fill [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop fex2, [p1, lf1, r25]; vldb.pop fex7, [p0, lf0, r24]; movxm ls, #.LBB0_2
 ; ASM-NEXT:    vlda.pop fex3, [p1, lf1, r25]; vldb.pop fex5, [p0, lf0, r24]; vshuffle fex6, fex7, fex5, r2
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vmov fewl9, fewh6
@@ -125,8 +125,8 @@ define dso_local void @loop_4_biased_conv_mx6x6_ebs16_unroll_impl_s2_accumulate(
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; vmov fewl11, fewh4; vmac.f dm3, dm3, fex6, fey0, r8
 ; ASM-NEXT:  // %bb.3: // %for.cond.cleanup81.i
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    padda [p7], #64; paddb.3d [p5], d2; padds [p4], #64; add r0, r0, #-1; mov r25, #0; vmac.f dm5, dm5, fex4, fey1, r8
-; ASM-NEXT:    nopa ; paddb.3d [p3], d1; movs p1, p5; nopxm ; vmac.f dm4, dm4, fex11, fey1, r8
+; ASM-NEXT:    mova r25, #0; paddb.3d [p5], d2; padds.3d [p3], d1; add r0, r0, #-1; nopm ; vmac.f dm5, dm5, fex4, fey1, r8
+; ASM-NEXT:    nopa ; nopb ; movs p1, p5; nopxm ; vmac.f dm4, dm4, fex11, fey1, r8
 ; ASM-NEXT:    vldb.fill [p1, lf1, r25]; vmac.f dm2, dm2, fex9, fey0, r8
 ; ASM-NEXT:    vshuffle fex6, fex7, fex5, r2; vmac.f dm1, dm1, fex4, fey0, r8
 ; ASM-NEXT:    vmov fewl9, fewh6; vmac.f dm0, dm0, fex11, fey0, r8
