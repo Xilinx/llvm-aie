@@ -7,20 +7,19 @@
 # RUN: llc -mtriple=aie2 -run-pass=postmisched -verify-machineinstrs %s -o - | FileCheck %s
 #
 # Same versioned loop as postpipeliner-version-guard.mir, but the guard block
-# holds a second PseudoLoopVersionThreshold. The post-pipeliner identifies the
-# placeholder as the unique threshold def of the guard block, so an ambiguous
-# block must leave both untouched rather than guess. Both keep the -1
-# placeholder, which selects the un-pipelined low-trip-count copy at runtime.
+# holds no PseudoLoopVersionThreshold: the compare reads a plain immediate
+# move, as if an earlier pass had folded the placeholder away. The
+# post-pipeliner patches the threshold only through the pseudo, so it must
+# leave the guard alone rather than rewrite whichever move it finds. The guard
+# keeps its -1, which selects the un-pipelined low-trip-count copy at runtime.
 #
 # The guard logic is target independent, so aie2 alone covers it.
 #
 # CHECK-LABEL: name: versioned
 # CHECK-LABEL: bb.0.loop.lver.guard:
-# Both placeholders still hold -1 rather than the stage count: the one feeding
-# the compare, and the spare one after the branch.
+# The compare still reads -1 rather than the stage count.
 # CHECK: MOVA_lda_cg -1
 # CHECK: LTU
-# CHECK: MOV_mv_cg -1
 # CHECK-LABEL: bb.1.loop.ph:
 
 --- |
@@ -122,8 +121,7 @@ body:             |
     renamable $r1 = MOV_RLC_imm10_pseudo 1
     renamable $r27 = LT renamable $r1, renamable $r0
     renamable $r1 = SELNEZ killed renamable $r0, killed renamable $r1, killed renamable $r27
-    renamable $r0 = PseudoLoopVersionThreshold -1
-    dead renamable $r3 = PseudoLoopVersionThreshold -1
+    renamable $r0 = MOV_RLC_imm10_pseudo -1
     renamable $r2 = LTU renamable $r1, killed renamable $r0
     renamable $r0 = MOV_RLC_imm10_pseudo 0
     JZ killed renamable $r2, %bb.1
