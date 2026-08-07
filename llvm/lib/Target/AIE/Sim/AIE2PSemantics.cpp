@@ -1581,9 +1581,17 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // forms. The x form is 512 bits into a composed register, the w form 256
   // into one that has its own storage, so between them they cover both paths
   // a vector destination can take.
+  //
+  // vldb is the same load on the other port, and the port is not architectural
+  // state: mWa and mWb are declared over the same four registers, mXa and mXb
+  // over the same mXm. Operands match vlda position for position, immediate
+  // types included, so the scaling here is vlda's and not a fresh assumption.
+  // Spills are port A only, so the family has no spill form.
   case AIE2P::VLDA_dmx_lda_x_idx_imm:
   case AIE2P::VLDA_dmw_lda_w_idx_imm:
   case AIE2P::VLDA_dmx_lda_bm_idx_imm:
+  case AIE2P::VLDB_dmx_ldb_x_idx_imm:
+  case AIE2P::VLDB_dmw_ldb_idx_imm:
     R = vectorLoad(0, access(1, Op.imm(2)));
     break;
 
@@ -1593,6 +1601,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VLDA_dmx_lda_x_idx:
   case AIE2P::VLDA_dmw_lda_w_idx:
   case AIE2P::VLDA_dmx_lda_bm_idx:
+  case AIE2P::VLDB_dmx_ldb_x_idx:
+  case AIE2P::VLDB_dmw_ldb_idx:
     R = vectorLoad(0, access(1, int32_t(Op.val(2))));
     break;
 
@@ -1600,6 +1610,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VLDA_dmx_lda_x_pstm_nrm_imm:
   case AIE2P::VLDA_dmw_lda_w_pstm_nrm_imm:
   case AIE2P::VLDA_dmx_lda_bm_pstm_nrm_imm:
+  case AIE2P::VLDB_dmx_ldb_x_pstm_nrm_imm:
+  case AIE2P::VLDB_dmw_ldb_pstm_nrm_imm:
     R = vectorLoad(0, access(2, 0));
     DefAddr(1, access(2, Op.imm(3)));
     break;
@@ -1646,6 +1658,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VLDA_dmx_lda_x_pstm_nrm:
   case AIE2P::VLDA_dmw_lda_w_pstm_nrm:
   case AIE2P::VLDA_dmx_lda_bm_pstm_nrm:
+  case AIE2P::VLDB_dmx_ldb_x_pstm_nrm:
+  case AIE2P::VLDB_dmw_ldb_pstm_nrm:
     R = vectorLoad(0, access(2, 0));
     DefAddr(1, access(2, int32_t(Op.val(3))));
     break;
