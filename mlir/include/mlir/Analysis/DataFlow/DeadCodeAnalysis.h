@@ -16,6 +16,7 @@
 #define MLIR_ANALYSIS_DATAFLOW_DEADCODEANALYSIS_H
 
 #include "mlir/Analysis/DataFlowFramework.h"
+#include "mlir/IR/Region.h"
 #include "mlir/IR/SymbolTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <optional>
@@ -183,6 +184,12 @@ public:
   /// Visit an operation with control-flow semantics and deduce which of its
   /// successors are live.
   LogicalResult visit(ProgramPoint *point) override;
+
+protected:
+  /// Return whether to analyze a nested region of `op`. Analyses can override
+  /// this to treat selected regions as opaque. By default all nested regions
+  /// are analyzed.
+  virtual bool shouldAnalyzeNestedRegion(Operation *, Region &) { return true; }
 
 private:
   /// Find and mark symbol callables with potentially unknown callsites as

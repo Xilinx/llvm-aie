@@ -8,6 +8,8 @@
 // RUN: mlir-opt -split-input-file \
 // RUN:       -test-written-to='interprocedural=false assume-func-writes=true' \
 // RUN:       %s 2>&1 | FileCheck %s --check-prefixes=CHECK,LC_AW
+// RUN: mlir-opt -split-input-file -test-written-to='opaque-regions=true' %s \
+// RUN:          2>&1 | FileCheck %s --check-prefix=OPAQUE
 
 // Check prefixes are as follows:
 // 'check': common for all runs;
@@ -16,6 +18,8 @@
 //          all arguments;
 // 'local': local (non-interprocedural) analysis not assuming calls writing;
 // 'lc_aw': local analysis assuming external calls writing to all arguments.
+// 'opaque': runs the sparse and dead-code analyses with nested regions
+// excluded, except for module and function bodies.
 
 // Note that despite the name of the test analysis being "written to", it is set
 // up in a peculiar way where passing a value through a block or region argument
@@ -34,6 +38,29 @@ func.func @test_two_writes(%m0: memref<i32>, %m1: memref<i32>) -> (memref<i32>, 
   memref.store %c0, %m0[] {tag_name = "a"} : memref<i32>
   memref.store %c1, %m1[] {tag_name = "b"} : memref<i32>
   return %m0, %m1 : memref<i32>, memref<i32>
+}
+
+// -----
+
+// The outer region remains analyzable, but values defined in the body
+// must not acquire sparse lattices through recursive initialization or region
+// control-flow propagation.
+// OPAQUE-LABEL: test_tag: nested
+// OPAQUE: executable: dead
+// OPAQUE: result #0: <not analyzed>
+// OPAQUE-LABEL: test_tag: outer
+// OPAQUE: executable: live
+// OPAQUE: result #0: [store]
+func.func @test_opaque_regions(%condition: i1, %mem: memref<i32>) {
+  %0 = "scf.if"(%condition) ({
+    %1 = arith.constant {tag = "nested"} 1 : i32
+    scf.yield %1 : i32
+  }, {
+    %1 = arith.constant 2 : i32
+    scf.yield %1 : i32
+  }) {tag = "outer"} : (i1) -> i32
+  memref.store %0, %mem[] {tag_name = "store"} : memref<i32>
+  return
 }
 
 // -----

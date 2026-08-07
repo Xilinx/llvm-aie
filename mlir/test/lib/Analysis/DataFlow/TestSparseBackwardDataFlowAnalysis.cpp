@@ -8,7 +8,9 @@
 
 #include "mlir/Analysis/DataFlow/SparseAnalysis.h"
 #include "mlir/Analysis/DataFlow/Utils.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/IR/BuiltinOps.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Pass/Pass.h"
 
@@ -93,6 +95,31 @@ private:
   bool assumeFuncWrites;
 };
 
+/// A sparse analysis variant that treats all region owners other than modules
+/// and functions as opaque. This exercises the region-filtering hook without
+/// relying on a dialect-specific analysis.
+class OpaqueRegionWrittenToAnalysis : public WrittenToAnalysis {
+public:
+  using WrittenToAnalysis::WrittenToAnalysis;
+
+protected:
+  bool shouldAnalyzeNestedRegion(Operation *op, Region &) override {
+    return isa<ModuleOp, func::FuncOp>(op);
+  }
+};
+
+/// Match the region policy of OpaqueRegionWrittenToAnalysis for the
+/// executable states that sparse analyses depend on.
+class OpaqueRegionDeadCodeAnalysis : public DeadCodeAnalysis {
+public:
+  using DeadCodeAnalysis::DeadCodeAnalysis;
+
+protected:
+  bool shouldAnalyzeNestedRegion(Operation *op, Region &) override {
+    return isa<ModuleOp, func::FuncOp>(op);
+  }
+};
+
 LogicalResult
 WrittenToAnalysis::visitOperation(Operation *op, ArrayRef<WrittenTo *> operands,
                                   ArrayRef<const WrittenTo *> results) {
@@ -163,6 +190,7 @@ struct TestWrittenToPass
   TestWrittenToPass(const TestWrittenToPass &other) : PassWrapper(other) {
     interprocedural = other.interprocedural;
     assumeFuncWrites = other.assumeFuncWrites;
+    opaqueRegions = other.opaqueRegions;
   }
 
   StringRef getArgument() const override { return "test-written-to"; }
@@ -174,6 +202,10 @@ struct TestWrittenToPass
       *this, "assume-func-writes", llvm::cl::init(false),
       llvm::cl::desc(
           "assume external functions have write effect on all arguments")};
+  Option<bool> opaqueRegions{
+      *this, "opaque-regions", llvm::cl::init(false),
+      llvm::cl::desc(
+          "do not analyze nested regions other than function bodies")};
 
   void runOnOperation() override {
     Operation *op = getOperation();
@@ -181,8 +213,15 @@ struct TestWrittenToPass
     SymbolTableCollection symbolTable;
 
     DataFlowSolver solver(DataFlowConfig().setInterprocedural(interprocedural));
-    loadBaselineAnalyses(solver);
-    solver.load<WrittenToAnalysis>(symbolTable, assumeFuncWrites);
+    if (opaqueRegions)
+      solver.load<OpaqueRegionDeadCodeAnalysis>();
+    else
+      solver.load<DeadCodeAnalysis>();
+    solver.load<SparseConstantPropagation>();
+    if (opaqueRegions)
+      solver.load<OpaqueRegionWrittenToAnalysis>(symbolTable, assumeFuncWrites);
+    else
+      solver.load<WrittenToAnalysis>(symbolTable, assumeFuncWrites);
     if (failed(solver.initializeAndRun(op)))
       return signalPassFailure();
 
@@ -192,17 +231,31 @@ struct TestWrittenToPass
       if (!tag)
         return;
       os << "test_tag: " << tag.getValue() << ":\n";
+      if (opaqueRegions && op->getBlock()) {
+        const auto *executable = solver.lookupState<Executable>(
+            solver.getProgramPointBefore(op->getBlock()));
+        os << " executable: "
+           << (executable && executable->isLive() ? "live" : "dead") << "\n";
+      }
       for (auto [index, operand] : llvm::enumerate(op->getOperands())) {
         const WrittenTo *writtenTo = solver.lookupState<WrittenTo>(operand);
-        assert(writtenTo && "expected a sparse lattice");
         os << " operand #" << index << ": ";
+        if (!writtenTo) {
+          assert(opaqueRegions && "expected a sparse lattice");
+          os << "<not analyzed>\n";
+          continue;
+        }
         writtenTo->print(os);
         os << "\n";
       }
       for (auto [index, operand] : llvm::enumerate(op->getResults())) {
         const WrittenTo *writtenTo = solver.lookupState<WrittenTo>(operand);
-        assert(writtenTo && "expected a sparse lattice");
         os << " result #" << index << ": ";
+        if (!writtenTo) {
+          assert(opaqueRegions && "expected a sparse lattice");
+          os << "<not analyzed>\n";
+          continue;
+        }
         writtenTo->print(os);
         os << "\n";
       }
