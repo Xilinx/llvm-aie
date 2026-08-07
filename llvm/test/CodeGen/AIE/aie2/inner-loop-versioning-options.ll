@@ -90,9 +90,35 @@ exit:
   ret void
 }
 
+; The fallback copy of an earlier run keeps the iteration-count range that made
+; it a candidate, so without its own marker the option would version it again
+; and nest a second guard.
+; DEFAULT-LABEL: define void @version_fallback
+; DEFAULT-NOT: lver
+; FORCE-LABEL: define void @version_fallback
+; FORCE-NOT: lver
+define void @version_fallback(ptr noalias %a, ptr noalias %b, i32 %n) {
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
+  %pa = getelementptr i32, ptr %a, i32 %i
+  %x = load i32, ptr %pa, align 4
+  %y = mul i32 %x, 1234
+  %pb = getelementptr i32, ptr %b, i32 %i
+  store i32 %y, ptr %pb, align 4
+  %i.next = add i32 %i, 1
+  %c = icmp slt i32 %i.next, %n
+  br i1 %c, label %loop, label %exit, !llvm.loop !6
+exit:
+  ret void
+}
+
 !0 = distinct !{!0, !1}
 !1 = !{!"llvm.loop.hint.aie-loop-versioning", i64 1}
 !2 = distinct !{!2, !3}
 !3 = !{!"llvm.loop.itercount.range", i32 1, i32 100}
 !4 = distinct !{!4, !3, !5}
 !5 = !{!"llvm.loop.hint.aie-loop-versioned", i32 1}
+!6 = distinct !{!6, !3, !7}
+!7 = !{!"llvm.loop.hint.aie-loop-version-fallback", i32 1}
