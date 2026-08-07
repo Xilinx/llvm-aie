@@ -101,7 +101,7 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
   return Candidate;
 }
 
-MachineBasicBlock *getVersionGuardBlock(const MachineBasicBlock &Preheader) {
+MachineBasicBlock *getGuardBlock(const MachineBasicBlock &Preheader) {
   if (Preheader.pred_size() != 1)
     return nullptr;
   MachineBasicBlock *Guard = *Preheader.pred_begin();

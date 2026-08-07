@@ -73,11 +73,11 @@ std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
 MachineBasicBlock *
 getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
 
-/// Find the guard block of a versioned loop: the single predecessor of
-/// \p Preheader, conditionally branching to the low- and high-trip-count
-/// copies. Returns nullptr if that shape does not hold, so callers fail closed
-/// instead of acting on an unrelated block.
-MachineBasicBlock *getVersionGuardBlock(const MachineBasicBlock &Preheader);
+/// Find the block guarding \p Preheader: its single predecessor, which must
+/// branch two ways. Returns nullptr if that shape does not hold, so callers
+/// fail closed instead of acting on an unrelated block. For a versioned loop
+/// this is the block holding the trip-count guard.
+MachineBasicBlock *getGuardBlock(const MachineBasicBlock &Preheader);
 
 // get all the Machine Basic Blocks (MBBs) that contain a Single Block Loop,
 // which is defined by having 2 Successors, where one of the succesors, is the

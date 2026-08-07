@@ -249,7 +249,7 @@ class PostPipeliner {
   /// Set when the loop is a runtime-guarded ("versioned") loop, in which case
   /// the minimum trip-count requirement is lifted and the guard threshold is
   /// patched with the required minimum after a schedule is found.
-  bool IsVersionedGuarded = false;
+  bool IsVersionGuarded = false;
 
   /// The II requested by a pragma. This will trigger expensive algorithms
   /// like solvers or exhaustive searches to be run if the heuristic methods
