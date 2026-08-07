@@ -58,8 +58,9 @@
 // Postconditions, per versioned loop:
 //  - the guard shape drawn above, both copies in simplify + LCSSA form with
 //    their own dedicated exit block;
-//  - the request hint is gone from both copies, and only the high-trip-count
-//    copy carries the versioned marker;
+//  - the request hint is gone from both copies; the high-trip-count copy
+//    carries the versioned marker and the low-trip-count copy the fallback
+//    marker, so a later run of the pass versions neither;
 //  - the high-trip-count copy has no llvm.loop.itercount.range.
 //
 //===----------------------------------------------------------------------===//
@@ -196,13 +197,18 @@ bool isIterCountVersioningRequestedByOption(const Loop *L) {
   return MinIterCount && *MinIterCount <= VersioningMinIterCount;
 }
 
-/// True when \p L is a copy an earlier run of the pass already produced.
+/// True when \p L is either copy an earlier run of the pass produced.
 /// Versioning consumes the request hint, so this only matters for loops picked
-/// up by VersioningMinIterCount, which ignores hints.
+/// up by VersioningMinIterCount, which ignores hints: the fallback copy keeps
+/// the iteration-count range that made it a candidate in the first place.
 bool isAlreadyVersioned(const Loop *L) {
-  return AIELoopUtils::getLoopHintInt(L->getLoopID(),
+  const MDNode *LoopID = L->getLoopID();
+  return AIELoopUtils::getLoopHintInt(LoopID,
                                       AIELoopUtils::LoopVersionedHintKey)
-      .has_value();
+             .has_value() ||
+         AIELoopUtils::getLoopHintInt(LoopID,
+                                      AIELoopUtils::LoopVersionFallbackHintKey)
+             .has_value();
 }
 
 /// Report that \p Reason kept \p L un-versioned, so a user who set the pragma
@@ -447,10 +453,11 @@ void AIELoopVersioner::nameDedicatedExits(const BasicBlock &ExitBlock,
 }
 
 void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
-  // Consume the request hint on both copies so a second run of the pass does
-  // not re-version either. Mark the high-trip-count copy as versioned (carrying
-  // the request's value) so the postpipeliner recognizes it as the pipelined
-  // copy; the low copy stays the verbatim un-pipelined fallback.
+  // Consume the request hint on both copies and mark each one, so a second run
+  // of the pass re-versions neither. Only the high-trip-count copy gets the
+  // versioned marker, which is what tells the postpipeliner it may ignore the
+  // minimum trip count; the low copy gets the fallback marker, which no other
+  // pass reads.
   // A loop picked up by VersioningMinIterCount carries no request hint, so the
   // marker gets the value the hint would have had when simply enabled.
   const int64_t HintValue =
@@ -462,6 +469,8 @@ void AIELoopVersioner::updateLoopsMetadata(Loop &LowLoop, Loop &HighLoop) {
   AIEIRUtils::dropLoopMetadata(HighLoop, RequestHint);
   addStringMetadataToLoop(&HighLoop, AIELoopUtils::LoopVersionedHintKey.data(),
                           HintValue);
+  addStringMetadataToLoop(&LowLoop,
+                          AIELoopUtils::LoopVersionFallbackHintKey.data(), 1);
 
   // The runtime guard already guarantees the high copy's trip count, making its
   // llvm.loop.itercount.range redundant. Drop it: a small minimum (e.g. 1)

@@ -54,6 +54,14 @@ constexpr StringLiteral LoopVersioningHintKey =
 constexpr StringLiteral LoopVersionedHintKey =
     "llvm.loop.hint.aie-loop-versioned";
 
+/// Loop-hint key that marks the verbatim (low-trip-count) copy of a versioned
+/// loop. Only the IR versioning pass reads it, so that a later run leaves the
+/// fallback alone. Deliberately distinct from LoopVersionedHintKey: that one
+/// lifts the post-pipeliner's minimum trip-count requirement, which is only
+/// safe for the copy the runtime guard protects.
+constexpr StringLiteral LoopVersionFallbackHintKey =
+    "llvm.loop.hint.aie-loop-version-fallback";
+
 /// True when \p LoopBlock carries LoopVersionedHintKey, marking it as the
 /// pipelined (high-trip-count) copy of a versioned loop. Note this is the
 /// marker, not the LoopVersioningHintKey request the IR pass consumes.

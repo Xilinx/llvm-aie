@@ -24,7 +24,8 @@
 ; with the aie-loop-versioned hint.
 ; CHECK: loop.lver.high:
 ; CHECK: br i1 %{{.*}}, !llvm.loop [[HIGHMD:![0-9]+]]
-; The original low-trip-count copy's loop id is rebuilt without the hint.
+; The original low-trip-count copy's loop id is rebuilt with the request hint
+; replaced by the fallback marker, so a later run leaves this copy alone.
 ; CHECK: br i1 %{{.*}}, !llvm.loop [[LOWMD:![0-9]+]]
 ; Cloning leaves both copies branching to the same exit block, so each gets its
 ; own dedicated exit again and stays in loop-simplify form for later passes.
@@ -207,9 +208,11 @@ exit:
 }
 
 ; Metadata defs live at the module end, past every CHECK-LABEL barrier: the
-; high-trip-count copy's loop id references the aie-loop-versioned marker.
+; copies' loop ids reference their respective markers.
 ; CHECK-DAG: [[HIGHMD]] = distinct !{[[HIGHMD]], [[MARK:![0-9]+]]}
 ; CHECK-DAG: [[MARK]] = !{!"llvm.loop.hint.aie-loop-versioned", i32 1}
+; CHECK-DAG: [[LOWMD]] = distinct !{[[LOWMD]], [[FALLBACK:![0-9]+]]}
+; CHECK-DAG: [[FALLBACK]] = !{!"llvm.loop.hint.aie-loop-version-fallback", i32 1}
 
 ; One loop id per loop; they share the hint entry node.
 !0 = distinct !{!0, !1}
