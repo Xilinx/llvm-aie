@@ -15,7 +15,6 @@
 
 #include "AIEBaseTargetMachine.h"
 #include "AIE.h"
-#include "AIE2TargetMachine.h"
 #include "AIEBaseAliasAnalysis.h"
 #include "AIECombiners.h"
 #include "AIEMachineFunctionInfo.h"
@@ -23,6 +22,7 @@
 #include "AIETargetObjectFile.h"
 #include "TargetInfo/AIETargetInfo.h"
 #include "aie1/AIE1TargetMachine.h"
+#include "aie2/AIE2TargetMachine.h"
 #include "aie2p/AIE2PTargetMachine.h"
 #include "aie2ps/AIE2PSTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"

@@ -164,24 +164,24 @@ add_llvm_target(AIECodeGen
    AIESuperRegRewriter.cpp
    AIESuperRegUtils.cpp
    AIETargetObjectFile.cpp
-   AIE2AsmPrinter.cpp
-   AIE2FrameLowering.cpp
-   AIE2InstrInfo.cpp
-   AIE2InstructionSelector.cpp
-   AIE2ISelLowering.cpp
-   AIE2LegalizerInfo.cpp
-   AIE2PostLegalizerCustomCombiner.cpp
-   AIE2PostLegalizerGenericCombiner.cpp
-   AIE2PreLegalizerCombiner.cpp
+   aie2/AIE2AsmPrinter.cpp
+   aie2/AIE2FrameLowering.cpp
+   aie2/AIE2InstrInfo.cpp
+   aie2/AIE2InstructionSelector.cpp
+   aie2/AIE2ISelLowering.cpp
+   aie2/AIE2LegalizerInfo.cpp
+   aie2/AIE2PostLegalizerCustomCombiner.cpp
+   aie2/AIE2PostLegalizerGenericCombiner.cpp
+   aie2/AIE2PreLegalizerCombiner.cpp
    AIEPostLegalizerCustomCombiner.cpp
    AIEPostLegalizerGenericCombiner.cpp
    AIEPostLegalizerFinalCombiner.cpp
    AIEPreLegalizerCombiner.cpp
-   AIE2RegisterBankInfo.cpp
-   AIE2RegisterInfo.cpp
-   AIE2Subtarget.cpp
-   AIE2TargetMachine.cpp
-   AIE2TargetTransformInfo.cpp
+   aie2/AIE2RegisterBankInfo.cpp
+   aie2/AIE2RegisterInfo.cpp
+   aie2/AIE2Subtarget.cpp
+   aie2/AIE2TargetMachine.cpp
+   aie2/AIE2TargetTransformInfo.cpp
    AIETiedRegOperands.cpp
    AIEUnallocatedSuperRegRewriter.cpp
    ReservedRegsLICM.cpp
