@@ -970,9 +970,12 @@ def int_aie2_set_I512_I128 : ClangBuiltin<"__builtin_aiev2_set_I512_I128">, AIEV
 // Loop-versioning trip-count guard threshold used to pick the pipelined or
 // original copy of a versioned loop. The immediate is a placeholder, patched
 // by the post-pipeliner once the required minimum trip count is known.
-def int_aie2_loop_version_threshold
+// Every subtarget needs its own definition, so the shape lives in a class the
+// AIE2P and AIE2PS intrinsic files reuse.
+class AIELoopVersionThreshold
     : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty],
                             [IntrNoMem, IntrHasSideEffects, IntrNoDuplicate,
                              ImmArg<ArgIndex<0>>]>;
+def int_aie2_loop_version_threshold : AIELoopVersionThreshold;
 
 } // TargetPrefix = "aie2"
