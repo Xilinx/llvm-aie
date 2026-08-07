@@ -25,6 +25,7 @@ tablegen(LLVM AIEGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class A
 #tablegen(LLVM AIEGenSystemOperands.inc -gen-searchable-tables)
 #aie2
 set(LLVM_TARGET_DEFINITIONS AIE2.td)
+list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2")
 tablegen(LLVM AIE2GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2GenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2GenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
@@ -49,6 +50,7 @@ tablegen(LLVM AIE2GenRegisterBank.inc -gen-register-bank -base-register-bank-cla
 tablegen(LLVM AIE2GenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2GenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget --warn-on-skipped-patterns)
+list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2")
 
 #aie2p
 set(LLVM_TARGET_DEFINITIONS AIE2P.td)
@@ -77,7 +79,7 @@ tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitte
 list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 
 # aie2ps
-set(LLVM_TARGET_DEFINITIONS AIE2PS.td)
+set(LLVM_TARGET_DEFINITIONS aie2ps/AIE2PS.td)
 # Add aie2ps/ to the tablegen include search path (see aie2p comment above).
 list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2ps")
 tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
