@@ -72,6 +72,10 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_CMAKE_CXX_FLAGS "-mno-vitis-headers" CACHE STRING "")
   set(RUNTIMES_${target}_CMAKE_ASM_FLAGS "-mno-vitis-headers" CACHE STRING "")
 
+  # libc's null checks expand to __builtin_trap(), which no AIE subtarget can
+  # select. Passing NULL to these entrypoints is UB anyway, so drop the checks
+  # rather than trap.
+  set(RUNTIMES_${target}_LIBC_ADD_NULL_CHECKS OFF CACHE BOOL "")
   set(RUNTIMES_${target}_LIBC_ENABLE_USE_BY_CLANG ON CACHE STRING "")
   # LIBC includes C++ sources which by default trigger inclusion of standard libc++ headers
   # However these are not available while building libc, thus disable the include explicitly
