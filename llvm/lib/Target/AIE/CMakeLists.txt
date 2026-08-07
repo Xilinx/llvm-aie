@@ -24,7 +24,7 @@ tablegen(LLVM AIEGenRegisterInfo.inc -gen-register-info -base-registerinfo-class
 tablegen(LLVM AIEGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 #tablegen(LLVM AIEGenSystemOperands.inc -gen-searchable-tables)
 #aie2
-set(LLVM_TARGET_DEFINITIONS AIE2.td)
+set(LLVM_TARGET_DEFINITIONS aie2/AIE2.td)
 list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2")
 tablegen(LLVM AIE2GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2GenAsmWriter.inc -gen-asm-writer)
