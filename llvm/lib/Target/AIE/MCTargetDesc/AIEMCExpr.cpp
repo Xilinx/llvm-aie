@@ -16,6 +16,7 @@
 #include "AIEMCExpr.h"
 #include "AIE.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbolELF.h"
@@ -37,7 +38,7 @@ void AIEMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   bool isSymRefExpr = Expr->getKind() == ExprKind::SymbolRef;
   if (!isSymRefExpr)
     OS << '(';
-  Expr->print(OS, MAI);
+  MAI->printExpr(OS, *Expr);
   if (!isSymRefExpr)
     OS << ')';
 }

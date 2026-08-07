@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: not --crash llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1 | FileCheck %s
+# RUN: not llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1 | FileCheck %s
 
 # FIXME: implement support for lowering G_SADDE in the generic legalizer helper
 ---

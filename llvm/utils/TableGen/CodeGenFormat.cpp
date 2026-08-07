@@ -78,7 +78,7 @@ void CodeGenFormat::run(raw_ostream &o) {
   // Instructions are going to be ordered as they are in
   // CodeGenEmitter
   ArrayRef<const CodeGenInstruction *> NumberedInstructions =
-      Target.getInstructionsByEnumValue();
+      Target.getInstructions();
 
   // Our main container of Formats
   std::vector<TGInstrLayout> InstFormats;

@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseOperand.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 using namespace llvm;
 
@@ -42,10 +43,10 @@ llvm::AIEBaseOperand::CreateToken(MCContext &Context, StringRef Str, SMLoc S) {
   return Op;
 }
 
-void llvm::AIEBaseOperand::print(raw_ostream &OS) const {
+void llvm::AIEBaseOperand::print(raw_ostream &OS, const MCAsmInfo &MAI) const {
   switch (Kind) {
   case Immediate:
-    OS << *getImm();
+    MAI.printExpr(OS, *getImm());
     break;
   case Register:
     OS << "<register x" << getReg() << ">";

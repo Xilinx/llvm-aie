@@ -113,7 +113,7 @@ void AIEBaseMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     MCFixupKind FixupKind =
         MCFixupKinds->findFixupfromFixupFields(MI, FormatSize, FixupFields);
 
-    Fixups.push_back(MCFixup::create(0, Expr, FixupKind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, Expr, FixupKind));
     ++MCNumFixups;
 
     // These bits will be relocated lately, the intermediate immediate encoding
@@ -228,8 +228,8 @@ SmallVector<MCFixup> AIEBaseMCCodeEmitter::translateFixupsInComposite(
     MCFixupKind TranslatedFixup = MCFixupKinds->findFixupfromFixupFields(
         SubInst, FormatSize, TranslatedFields);
     // Create a new MCFixup and push it into the saving container
-    TranslatedFixups.push_back(MCFixup::create(
-        0, Fixup.getValue(), MCFixupKind(TranslatedFixup), Fixup.getLoc()));
+    TranslatedFixups.push_back(
+        MCFixup::create(0, Fixup.getValue(), MCFixupKind(TranslatedFixup)));
   }
   BaseFixups.clear();
   return TranslatedFixups;

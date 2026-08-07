@@ -84,5 +84,5 @@ void AIECommonInstPrinter::printOperand(const MCOperand &MO,
     // Print Immediates with a preceding hash sign.
     if (TT.isAIE1() || TT.isAIE2())
       O << "#";
-  MO.getExpr()->print(O, &MAI);
+  MAI.printExpr(O, *MO.getExpr());
 }

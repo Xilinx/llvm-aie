@@ -36,7 +36,6 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/TypeSwitch.h"
@@ -471,6 +470,9 @@ public:
                           AttrTypeElision typeElision = AttrTypeElision::Never,
                           SmallString<16> separator = StringRef(", "));
 
+  void printNamedAttribute(NamedAttribute attr,
+                           SmallString<16> separator = StringRef(", "));
+
   /// Print the alias for the given attribute, return failure if no alias could
   /// be printed.
   LogicalResult printAlias(Attribute attr);
@@ -510,8 +512,6 @@ protected:
                              ArrayRef<StringRef> elidedAttrs = {},
                              unsigned currentIndent = 0,
                              bool withKeyword = false);
-  void printNamedAttribute(NamedAttribute attr,
-                           SmallString<16> separator = StringRef(", "));
   void printTrailingLocation(Location loc, bool allowAlias = true);
   void printLocationInternal(LocationAttr loc, bool pretty = false,
                              bool isTopLevel = false);
@@ -832,6 +832,10 @@ private:
   void printAttributeWithoutType(Attribute attr) override {
     printAttribute(attr);
   }
+  void printNamedAttribute(NamedAttribute attr) override {
+    printAttribute(attr.getValue());
+  }
+
   LogicalResult printAlias(Attribute attr) override {
     initializer.visit(attr);
     return success();
@@ -1006,6 +1010,10 @@ private:
     recordAliasResult(
         initializer.visit(attr, canBeDeferred, /*elideType=*/true));
   }
+  void printNamedAttribute(NamedAttribute attr) override {
+    printAttribute(attr.getValue());
+  }
+
   LogicalResult printAlias(Attribute attr) override {
     printAttribute(attr);
     return success();
@@ -2413,7 +2421,6 @@ void AsmPrinter::Impl::printAttribute(Attribute attr,
     return;
   return printAttributeImpl(attr, typeElision, separator);
 }
-
 void AsmPrinter::Impl::printAttributeImpl(Attribute attr,
                                           AttrTypeElision typeElision,
                                           SmallString<16> separator) {
@@ -3085,6 +3092,11 @@ void AsmPrinter::printAttributeWithoutType(Attribute attr) {
   assert(impl &&
          "expected AsmPrinter::printAttributeWithoutType to be overriden");
   impl->printAttribute(attr, Impl::AttrTypeElision::Must);
+}
+
+void AsmPrinter::printNamedAttribute(NamedAttribute attr) {
+  assert(impl && "expected AsmPrinter::printNamedAttribute to be overriden");
+  impl->printNamedAttribute(attr);
 }
 
 void AsmPrinter::printKeywordOrString(StringRef keyword) {
