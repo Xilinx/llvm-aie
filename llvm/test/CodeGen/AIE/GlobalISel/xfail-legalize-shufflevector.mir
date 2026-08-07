@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: not --crash llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1
-# RUN: not --crash llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1
+# RUN: not llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1
+# RUN: not llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1
 
 ---
 name:            f_1x16

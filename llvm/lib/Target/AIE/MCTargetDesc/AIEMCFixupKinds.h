@@ -15,7 +15,7 @@
 #include "AIEMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Transforms/Utils/ASanStackFrameLayout.h"

@@ -936,7 +936,7 @@ Expected<typename ELFT::ShdrRange> ELFFile<ELFT>::sections() const {
   const uintX_t SectionTableOffset = getHeader().e_shoff;
   if (SectionTableOffset == 0) {
     if (!FakeSections.empty())
-      return ArrayRef(FakeSections.data(), FakeSections.size());
+      return ArrayRef(FakeSections);
     return ArrayRef<Elf_Shdr>();
   }
 

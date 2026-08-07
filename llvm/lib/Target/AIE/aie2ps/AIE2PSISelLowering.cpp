@@ -30,22 +30,22 @@ AIE2PSTargetLowering::AIE2PSTargetLowering(const TargetMachine &TM,
     : AIEBaseTargetLowering(TM, STI) {
 
   if (VecCCLibcalls) {
-    setLibcallCallingConv(RTLIB::SINTTOFP_I32_F32,
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SINTTOFP_I32_F32),
                           CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SINTTOFP_I32_F64,
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SINTTOFP_I32_F64),
                           CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SINTTOFP_I64_F32,
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SINTTOFP_I64_F32),
                           CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SINTTOFP_I64_F64,
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SINTTOFP_I64_F64),
                           CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SDIV_I32, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SREM_I32, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::SREM_I64, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::UREM_I32, CallingConv::AIE_PreserveAll_Vec);
-    setLibcallCallingConv(RTLIB::UREM_I64, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SDIV_I32), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SDIV_I64), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::UDIV_I32), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::UDIV_I64), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SREM_I32), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::SREM_I64), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::UREM_I32), CallingConv::AIE_PreserveAll_Vec);
+    setLibcallImplCallingConv(getLibcallImpl(RTLIB::UREM_I64), CallingConv::AIE_PreserveAll_Vec);
   }
 
   const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();

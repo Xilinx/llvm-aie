@@ -35,30 +35,30 @@ name:            test_call_external
 body:             |
   bb.0:
     renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
-    ; FIXUP: MCFixup Offset:0 Value:#myint Kind:4068
+    ; FIXUP: Fixup @0 Value:#myint Kind:4064
     ; RELOC: 00000000 {{.*}} R_AIE_54
 
     BUNDLE {
       renamable $r0 = MOV_S12 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:4 Value:#myint Kind:4029
+      ; FIXUP: Fixup @4 Value:#myint Kind:4025
       ; RELOC: 00000004 {{.*}} R_AIE_15
 
       renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:4 Value:#myint Kind:4069
+      ; FIXUP: Fixup @4 Value:#myint Kind:4065
       ; RELOC: 00000004 {{.*}} R_AIE_55
     }
 
     BUNDLE {
       NOP_LDA
       renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:12 Value:#myint Kind:4070
+      ; FIXUP: Fixup @12 Value:#myint Kind:4066
       ; RELOC: 0000000c {{.*}} R_AIE_56
     }
 
     BUNDLE {
       NOP_ST
       renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:20 Value:#myint Kind:4069
+      ; FIXUP: Fixup @20 Value:#myint Kind:4065
       ; RELOC: 00000014 {{.*}} R_AIE_55
     }
 
@@ -67,11 +67,11 @@ body:             |
       NOP_LDB
 
       renamable $r0 = MOV_S12 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:28 Value:#myint Kind:4035
+      ; FIXUP: Fixup @28 Value:#myint Kind:4031
       ; RELOC: 0000001c {{.*}} R_AIE_21
 
       renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:28 Value:#myint Kind:4053
+      ; FIXUP: Fixup @28 Value:#myint Kind:4049
       ; RELOC: 0000001c {{.*}} R_AIE_39
 
       NOP_VECA
@@ -79,11 +79,11 @@ body:             |
 
     BUNDLE {
       renamable $r0 = MOV_S12 target-flags(aie-global) @myint
-      ; FIXUP: MCFixup Offset:44 Value:#myint Kind:4029
+      ; FIXUP: Fixup @44 Value:#myint Kind:4025
       ; RELOC: 0000002c {{.*}} R_AIE_15
 
       JAL @target_function, implicit-def dead $lr, implicit-def $sp, implicit-def $r0
-      ; FIXUP: MCFixup Offset:44 Value:target_function Kind:4016
+      ; FIXUP: Fixup @44 Value:target_function Kind:4012
       ; RELOC: 0000002c {{.*}} R_AIE_2
     }
 

@@ -5,6 +5,7 @@
 #
 # Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
+include(TableGen)
 include(GNUInstallDirs)
 include(LLVMDistributionSupport)
 

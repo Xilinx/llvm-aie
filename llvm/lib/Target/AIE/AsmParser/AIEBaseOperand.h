@@ -92,7 +92,7 @@ public:
 
   void addImmOperands(MCInst &Inst, unsigned N) const;
 
-  void print(raw_ostream &OS) const override;
+  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override;
 
   static std::unique_ptr<AIEBaseOperand> CreateToken(MCContext &Context,
                                                      StringRef Str, SMLoc S);

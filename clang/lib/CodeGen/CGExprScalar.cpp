@@ -2120,8 +2120,10 @@ static int getAsInt32(llvm::ConstantInt *C, llvm::Type *I32Ty) {
 Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
   bool Ignore = TestAndClearIgnoreResultAssign();
   (void)Ignore;
-  assert (Ignore == false && "init list ignored");
   unsigned NumInitElements = E->getNumInits();
+  assert(Ignore == false ||
+         (NumInitElements == 0 && E->getType()->isVoidType()) &&
+             "init list ignored");
 
   // HLSL initialization lists in the AST are an expansion which can contain
   // side-effecting expressions wrapped in opaque value expressions. To properly
@@ -2446,7 +2448,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_BlockPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
   case CK_BitCast: {
-    Value *Src = Visit(const_cast<Expr*>(E));
+    Value *Src = Visit(E);
     llvm::Type *SrcTy = Src->getType();
     llvm::Type *DstTy = ConvertType(DestTy);
 
@@ -2612,11 +2614,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_AtomicToNonAtomic:
   case CK_NonAtomicToAtomic:
   case CK_UserDefinedConversion:
-    return Visit(const_cast<Expr*>(E));
+    return Visit(E);
 
   case CK_NoOp: {
-    return CE->changesVolatileQualification() ? EmitLoadOfLValue(CE)
-                                              : Visit(const_cast<Expr *>(E));
+    return CE->changesVolatileQualification() ? EmitLoadOfLValue(CE) : Visit(E);
   }
 
   case CK_BaseToDerived: {
@@ -2718,10 +2719,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_LValueToRValue:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
     assert(E->isGLValue() && "lvalue-to-rvalue applied to r-value!");
-    return Visit(const_cast<Expr*>(E));
+    return Visit(E);
 
   case CK_IntegralToPointer: {
-    Value *Src = Visit(const_cast<Expr*>(E));
+    Value *Src = Visit(E);
 
     // First, convert to the correct width so that we control the kind of
     // extension.
@@ -2774,7 +2775,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_HLSLAggregateSplatCast:
   case CK_VectorSplat: {
     llvm::Type *DstTy = ConvertType(DestTy);
-    Value *Elt = Visit(const_cast<Expr *>(E));
+    Value *Elt = Visit(E);
     // Splat the element across to all elements
     llvm::ElementCount NumElements =
         cast<llvm::VectorType>(DstTy)->getElementCount();
@@ -2912,7 +2913,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_HLSLVectorTruncation: {
     assert((DestTy->isVectorType() || DestTy->isBuiltinType()) &&
            "Destination type must be a vector or builtin type.");
-    Value *Vec = Visit(const_cast<Expr *>(E));
+    Value *Vec = Visit(E);
     if (auto *VecTy = DestTy->getAs<VectorType>()) {
       SmallVector<int> Mask;
       unsigned NumElts = VecTy->getNumElements();
