@@ -158,17 +158,17 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   auto ParsedMinTripCount = getMinTripCount(LoopBlock);
   MinTripCount = ParsedMinTripCount.value_or(0);
 
-  IsVersionedGuarded = isLoopVersioned(LoopBlock);
-  LLVM_DEBUG(if (IsVersionedGuarded) dbgs()
+  IsVersionGuarded = isLoopVersioned(LoopBlock);
+  LLVM_DEBUG(if (IsVersionGuarded) dbgs()
              << " PostPipeliner: " << printMBBReference(LoopBlock)
              << " is loop versioned; its runtime guard supplies the minimum "
                 "trip count, so the static gate below is skipped and the "
                 "guard threshold is patched in updateVersionGuard\n");
-  if (!IsVersionedGuarded && !ParsedMinTripCount) {
+  if (!IsVersionGuarded && !ParsedMinTripCount) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
     return false;
   }
-  if (!IsVersionedGuarded && MinTripCount < 2) {
+  if (!IsVersionGuarded && MinTripCount < 2) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
     return false;
   }
@@ -1622,7 +1622,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 bool PostPipeliner::hasSufficientMinTripCount(int NS) const {
   // A versioned loop's runtime guard makes any stage count safe (see
   // updateVersionGuard).
-  if (IsVersionedGuarded)
+  if (IsVersionGuarded)
     return true;
   return MinTripCount - (NS - 1) > 0;
 }
@@ -1775,30 +1775,30 @@ void PostPipeliner::updateTripCount() const {
   TII->adjustTripCount(*TripCountDef, -Delta);
 }
 
-// The threshold placeholder of \p Guard, or nullptr if the block does not hold
-// exactly one. A guard block holds a single placeholder: the IR pass emits one
-// per versioned loop and the pseudo is isNotDuplicable, so several of them mean
-// an earlier pass merged two guards. See PseudoLoopVersionThreshold for why
-// scanning the guard block alone is sufficient.
-static MachineInstr *findVersionThreshold(MachineBasicBlock &Guard,
+// The threshold placeholder of \p GuardMBB, or nullptr if the block does not
+// hold exactly one. A guard block holds a single placeholder: the IR pass emits
+// one per versioned loop and the pseudo is isNotDuplicable, so several of them
+// mean an earlier pass merged two guards. See PseudoLoopVersionThreshold for
+// why scanning the guard block alone is sufficient.
+static MachineInstr *findVersionThreshold(MachineBasicBlock &GuardMBB,
                                           const AIEBaseInstrInfo &TII) {
-  MachineInstr *Threshold = nullptr;
-  for (MachineInstr &MI : Guard.instrs()) {
+  MachineInstr *ThresholdMI = nullptr;
+  for (MachineInstr &MI : GuardMBB.instrs()) {
     if (!TII.isLoopVersionThresholdDef(MI))
       continue;
-    if (Threshold) {
+    if (ThresholdMI) {
       LLVM_DEBUG(dbgs() << "AIE loop versioning: multiple threshold pseudos in "
-                        << printMBBReference(Guard) << "\n");
+                        << printMBBReference(GuardMBB) << "\n");
       assert(false && "at most one threshold pseudo per guard block");
       return nullptr;
     }
-    Threshold = &MI;
+    ThresholdMI = &MI;
   }
-  return Threshold;
+  return ThresholdMI;
 }
 
 void PostPipeliner::updateVersionGuard() const {
-  if (!IsVersionedGuarded)
+  if (!IsVersionGuarded)
     return;
 
   // If the guard is no longer recognizable (e.g. a later MIR pass reshaped the
@@ -1828,21 +1828,21 @@ void PostPipeliner::updateVersionGuard() const {
     });
   };
 
-  MachineBasicBlock *Guard = AIELoopUtils::getVersionGuardBlock(*Preheader);
-  if (!Guard) {
+  MachineBasicBlock *GuardMBB = AIELoopUtils::getGuardBlock(*Preheader);
+  if (!GuardMBB) {
     BailWithMsg("guard block not found");
     return;
   }
 
-  MachineInstr *Threshold = findVersionThreshold(*Guard, *TII);
-  if (!Threshold) {
+  MachineInstr *ThresholdMI = findVersionThreshold(*GuardMBB, *TII);
+  if (!ThresholdMI) {
     BailWithMsg("guard threshold pseudo not found");
     return;
   }
 
   // Patch the minimum trip count required by this schedule: peeling NStages-1
   // stages needs at least NStages iterations for the pipelined loop to be safe.
-  TII->setLoopVersionThreshold(*Threshold, NStages);
+  TII->setLoopVersionThreshold(*ThresholdMI, NStages);
 }
 
 void PostPipeliner::materializePipeline(PipelineScheduleVisitor &Visitor) {
