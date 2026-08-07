@@ -959,9 +959,9 @@ std::unique_ptr<TargetMachine> createAIE2TargetMachine() {
   const Target *TheTarget = TargetRegistry::lookupTarget(TT, Error);
   if (!TheTarget)
     return nullptr;
-  return std::unique_ptr<TargetMachine>(static_cast<TargetMachine *>(
-      TheTarget->createTargetMachine(TT, "", "", TargetOptions(), std::nullopt,
-                                     std::nullopt, CodeGenOptLevel::Default)));
+  return std::unique_ptr<TargetMachine>(TheTarget->createTargetMachine(
+      Triple(TT), "", "", TargetOptions(), std::nullopt, std::nullopt,
+      CodeGenOptLevel::Default));
 }
 
 class GetMemoryObjectsBitsTest : public testing::Test {
