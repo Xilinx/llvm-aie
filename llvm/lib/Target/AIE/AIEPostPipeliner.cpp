@@ -1776,10 +1776,10 @@ void PostPipeliner::updateTripCount() const {
 }
 
 // The threshold placeholder of \p Guard, or nullptr if the block does not hold
-// exactly one: with several placeholders there is no way to tell which one
-// feeds the compare, so bail rather than patch an arbitrary copy. See
-// PseudoLoopVersionThreshold for why scanning the guard block alone is
-// sufficient.
+// exactly one. A guard block holds a single placeholder: the IR pass emits one
+// per versioned loop and the pseudo is isNotDuplicable, so several of them mean
+// an earlier pass merged two guards. See PseudoLoopVersionThreshold for why
+// scanning the guard block alone is sufficient.
 static MachineInstr *findVersionThreshold(MachineBasicBlock &Guard,
                                           const AIEBaseInstrInfo &TII) {
   MachineInstr *Threshold = nullptr;
@@ -1789,6 +1789,7 @@ static MachineInstr *findVersionThreshold(MachineBasicBlock &Guard,
     if (Threshold) {
       LLVM_DEBUG(dbgs() << "AIE loop versioning: multiple threshold pseudos in "
                         << printMBBReference(Guard) << "\n");
+      assert(false && "at most one threshold pseudo per guard block");
       return nullptr;
     }
     Threshold = &MI;
