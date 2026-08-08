@@ -240,6 +240,7 @@ bool AIE2PSAsmParser::parseImmediate(OperandVector &Operands) {
   return AIEBaseAsmParser::parseImmediate(Operands);
 }
 
-void LLVMInitializeAIE2PSAsmParser() {
+// Register the AIE2PS asm parser; called from LLVMInitializeAIEAsmParser.
+void initializeAIE2PSAsmParser() {
   RegisterMCAsmParser<AIE2PSAsmParser> X(getTheAIE2PSTarget());
 }

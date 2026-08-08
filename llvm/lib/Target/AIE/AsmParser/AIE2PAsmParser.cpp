@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -212,6 +212,7 @@ bool AIE2PAsmParser::parseImmediate(OperandVector &Operands) {
   return AIEBaseAsmParser::parseImmediate(Operands);
 }
 
-void LLVMInitializeAIE2PAsmParser() {
+// Register the AIE2P asm parser; called from LLVMInitializeAIEAsmParser.
+void initializeAIE2PAsmParser() {
   RegisterMCAsmParser<AIE2PAsmParser> X(getTheAIE2PTarget());
 }

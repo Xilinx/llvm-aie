@@ -286,3 +286,12 @@ void AIEBaseAsmPrinter::emitXXStructorList(const DataLayout &DL,
     emitXXStructor(DL, S.Func);
   }
 }
+
+void initializeAIE1AsmPrinter();
+void initializeAIE2AsmPrinters();
+
+// Force static initialization of all AIE sub-target asm printers.
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmPrinter() {
+  initializeAIE1AsmPrinter();
+  initializeAIE2AsmPrinters();
+}

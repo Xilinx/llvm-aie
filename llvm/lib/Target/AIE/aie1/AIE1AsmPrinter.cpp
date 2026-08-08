@@ -15,7 +15,6 @@
 
 #include "AIE.h"
 #include "AIE1TargetMachine.h"
-#include "AIE2AsmPrinter.h"
 #include "AIEBaseAsmPrinter.h"
 #include "InstPrinter/AIEInstPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -99,11 +98,7 @@ bool AIEAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return AsmPrinter::PrintAsmMemoryOperand(MI, OpNo, ExtraCode, OS);
 }
 
-// Force static initialization.
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmPrinter() {
+// Register the AIE (AIE1) asm printer; called from LLVMInitializeAIEAsmPrinter.
+void initializeAIE1AsmPrinter() {
   RegisterAsmPrinter<AIEAsmPrinter> X(getTheAIETarget());
-  RegisterAsmPrinter<AIE2AsmPrinter> Y(getTheAIE2Target());
-  // FIXME using AIE2AsmPrinter for AIE2P and AIE2PS target
-  RegisterAsmPrinter<AIE2AsmPrinter> A(getTheAIE2PTarget());
-  RegisterAsmPrinter<AIE2AsmPrinter> B(getTheAIE2PSTarget());
 }

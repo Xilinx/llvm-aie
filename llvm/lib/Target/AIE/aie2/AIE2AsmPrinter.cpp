@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -191,4 +192,13 @@ AsmPrinter *
 llvm::createAIE2AsmPrinterPass(TargetMachine &TM,
                                std::unique_ptr<MCStreamer> &&Streamer) {
   return new AIE2AsmPrinter(TM, std::move(Streamer));
+}
+
+// Register the AIE2, AIE2P, and AIE2PS asm printers; called from
+// LLVMInitializeAIEAsmPrinter.
+void initializeAIE2AsmPrinters() {
+  RegisterAsmPrinter<AIE2AsmPrinter> AP2(getTheAIE2Target());
+  // FIXME using AIE2AsmPrinter for AIE2P and AIE2PS target
+  RegisterAsmPrinter<AIE2AsmPrinter> AP2P(getTheAIE2PTarget());
+  RegisterAsmPrinter<AIE2AsmPrinter> AP2PS(getTheAIE2PSTarget());
 }
