@@ -225,6 +225,7 @@ bool AIE2AsmParser::parseIdentifier(OperandVector &Operands) {
   return false;
 }
 
-void LLVMInitializeAIE2AsmParser() {
+// Register the AIE2 asm parser; called from LLVMInitializeAIEAsmParser.
+void initializeAIE2AsmParser() {
   RegisterMCAsmParser<AIE2AsmParser> X(getTheAIE2Target());
 }
