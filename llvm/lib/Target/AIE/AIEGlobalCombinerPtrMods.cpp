@@ -306,6 +306,21 @@ OffsetCombiner::getPtrInstrs(MachineInstr *MemI) const {
   if (!getOpCode(PtrInc, MemI))
     return {};
 
+  // Skip if the G_PTR_ADD is inside a loop and the memory instruction is
+  // outside that loop. This avoids creating offset combines that would depend
+  // on intermediate pointer values from the loop body.
+  assert(MLI && "MachineLoopInfo must be provided");
+  const MachineBasicBlock *PtrIncMBB = PtrInc->getParent();
+  const MachineBasicBlock *MemIMBB = MemI->getParent();
+  if (PtrIncMBB != MemIMBB) {
+    const MachineLoop *PtrIncLoop = MLI->getLoopFor(PtrIncMBB);
+    if (PtrIncLoop && !PtrIncLoop->contains(MemIMBB)) {
+      LLVM_DEBUG(dbgs() << "  [OffsetCombiner] Skipping: G_PTR_ADD is in loop, "
+                           "MemI is outside\n");
+      return {};
+    }
+  }
+
   return {PtrInc};
 }
 

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
@@ -53,6 +54,8 @@ bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
       static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  const MachineLoopInfo *MLI =
+      &getAnalysis<MachineLoopInfoWrapperPass>().getLI();
 
   MachineSchedContext Context;
   Context.MF = &MF;
@@ -66,9 +69,9 @@ bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
   // Fixme: these combiners should be provided by tablegen
   std::vector<const AIE::GenericCombiner *> Combiners;
-  auto OffsetCombiner = std::make_unique<AIE::OffsetCombiner>(&MRI, TII);
+  auto OffsetCombiner = std::make_unique<AIE::OffsetCombiner>(&MRI, TII, MLI);
   Combiners.push_back(OffsetCombiner.get());
-  auto PostInc = std::make_unique<AIE::PostIncCombiner>(&MRI, TII);
+  auto PostInc = std::make_unique<AIE::PostIncCombiner>(&MRI, TII, MLI);
   Combiners.push_back(PostInc.get());
   AIE::AIEGlobalCombiner GlobalCombinerHelper(Combiners, *MDT, DAG, &MRI, TII);
 
@@ -105,6 +108,8 @@ void AIEPtrModOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetPassConfig>();
   AU.addRequired<MachineDominatorTreeWrapperPass>();
   AU.addPreserved<MachineDominatorTreeWrapperPass>();
+  AU.addRequired<MachineLoopInfoWrapperPass>();
+  AU.addPreserved<MachineLoopInfoWrapperPass>();
   AU.addRequired<AAResultsWrapperPass>();
   AU.setPreservesAll();
 }
