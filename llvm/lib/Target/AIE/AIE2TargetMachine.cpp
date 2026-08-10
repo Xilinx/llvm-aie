@@ -79,6 +79,8 @@ TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool AIE2PassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
+    if (!DisableInnerLoopVersioning)
+      addPass(createAIEInnerLoopVersioningPass());
     addPass(createHardwareLoopsLegacyPass());
     addPass(createAIEOuterLoopPipelinerPass());
   }

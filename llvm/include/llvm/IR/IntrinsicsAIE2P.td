@@ -748,4 +748,7 @@ def int_aie2p_fifo_ld_pop_3d_unaligned: AIE2PFIFO_LD_POPUnaligned3D;
 def int_aie2p_fifo_ld_pop_576_3d_bfp16: AIE2PFIFO_LD_POP_576_BFP163D;
 def int_aie2p_fifo_ld_pop_544_3d_bfp16: AIE2PFIFO_LD_POP_576_BFP163D;
 
+// Loop-versioning trip-count guard threshold. See IntrinsicsAIE2.td.
+def int_aie2p_loop_version_threshold : AIELoopVersionThreshold;
+
 } // TargetPrefix = "aie2p"

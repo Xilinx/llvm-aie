@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===---------------------------------------------------------------------===//
 
@@ -55,6 +55,14 @@ let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1, Itinerary = II_
   def MOV_scalar_imm11_pseudo : MultiSlot_Pseudo< (outs mMvSclDst:$dst) , (ins c11s:$i),
       "mov_scalar_imm11_pseudo ", "$dst, $i", [MOV_alu_mv_mv_mv_cg, MOVXM]>;
 }
+
+// Loop-versioning trip-count guard threshold. See AIE2MultiSlotPseudoInstrInfo.td.
+let isMoveImm = 1, Itinerary = II_MOVX_mvx_cr_r, hasSideEffects = 1,
+    isNotDuplicable = 1, mayLoad = 0, mayStore = 0 in
+  def PseudoLoopVersionThreshold
+      : MultiSlot_Pseudo<(outs eR:$dst), (ins c11s:$i),
+                         "pseudo_loop_version_threshold", "$dst, $i",
+                         [MOVA, MOV_alu_mv_mv_mv_cg, MOVXM]>;
 
 // Pseudo Scalar MOV. The MOVS register set is a strict subset
 let Itinerary = II_MOVS, hasSideEffects = false, mayLoad = false, mayStore = false in {

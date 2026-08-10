@@ -17,6 +17,7 @@
 #define LLVM_LIB_TARGET_AIE_AIE_H
 
 #include "Utils/AIEBaseInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -120,6 +121,14 @@ llvm::FunctionPass *createReservedRegsLICMPass();
 extern char &AIEOuterLoopPipelinerID;
 void initializeAIEOuterLoopPipelinerPass(PassRegistry &);
 llvm::FunctionPass *createAIEOuterLoopPipelinerPass();
+
+// Inner Loop Versioning (IR-level). Emits a runtime trip-count guard around a
+// pipelined copy of a single-block inner loop whose minimum trip count is too
+// small for the software pipeliner. See AIEInnerLoopVersioning.cpp.
+extern char &AIEInnerLoopVersioningID;
+extern llvm::cl::opt<bool> DisableInnerLoopVersioning;
+void initializeAIEInnerLoopVersioningPass(PassRegistry &);
+llvm::FunctionPass *createAIEInnerLoopVersioningPass();
 } // namespace llvm
 
 #endif

@@ -106,6 +106,7 @@ public:
 
   virtual std::optional<ZOLSupport> getZOLSupport() const override;
   virtual std::optional<JNZDSupport> getJNZDSupport() const override;
+  std::optional<unsigned> getLoopVersionThresholdOpcode() const override;
   virtual std::optional<IfConvSupport> getIfConvSupport() const override;
 
   virtual bool

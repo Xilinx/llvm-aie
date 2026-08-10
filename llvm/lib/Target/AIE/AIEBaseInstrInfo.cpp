@@ -39,6 +39,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include <limits>
 
 #define DEBUG_TYPE "aie-codegen"
@@ -422,6 +423,26 @@ void AIEBaseInstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
   assert(isZOLTripCountDef(MI));
   auto &Imm = MI.getOperand(2);
   Imm.setImm(Imm.getImm() + Adjustment);
+}
+
+bool AIEBaseInstrInfo::isLoopVersionThresholdDef(const MachineInstr &MI) const {
+  const auto Opcode = getLoopVersionThresholdOpcode();
+  return Opcode && MI.getOpcode() == *Opcode;
+}
+
+void AIEBaseInstrInfo::setLoopVersionThreshold(MachineInstr &MI,
+                                               int MinTripCount) const {
+  assert(isLoopVersionThresholdDef(MI));
+  // The threshold materializes into a narrow scalar-move immediate; enforce the
+  // narrowest field width (AIE2's simm10) across subtargets. A stage count is
+  // tiny in practice, so this only trips on a pathological schedule. Checked
+  // unconditionally, not just under assert: a truncated threshold would select
+  // the high-trip-count copy for trip counts too small for the schedule, a
+  // miscompile.
+  if (!isInt<10>(MinTripCount))
+    report_fatal_error("PseudoLoopVersionThreshold: minimum trip count does "
+                       "not fit the scalar-move immediate");
+  MI.getOperand(1).setImm(MinTripCount);
 }
 
 bool AIEBaseInstrInfo::isHardwareLoopStart(unsigned Opcode) const {

@@ -2032,6 +2032,8 @@ bool AIE2PSInstructionSelector::select(MachineInstr &I) {
                                    /*Has3DDimension=*/true);
     case Intrinsic::set_loop_iterations:
       return selectSetLoopIterations(I, MRI, MIB);
+    case Intrinsic::aie2ps_loop_version_threshold:
+      return selectLoopVersionThreshold(I, MRI, MIB);
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
     case Intrinsic::aie2ps_BFP768_BFP1536_ACC2048_bf_mul_conf:

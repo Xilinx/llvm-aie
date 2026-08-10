@@ -414,9 +414,9 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   if (!IsFirstRegion)
     return;
 
-  auto EpilogueContextOpt = InterBlock.getSWPEpilogueContext(CurMBB);
+  auto LoopBundlesOpt = InterBlock.getSWPLoopBundlesForEpilogue(CurMBB);
 
-  if (!EpilogueContextOpt)
+  if (!LoopBundlesOpt)
     return;
 
   AIEHazardRecognizer *TopHazardRec = getAIEHazardRecognizer(Top);
@@ -425,7 +425,7 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
   };
 
   const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
-  ArrayRef<MachineBundle> LoopBundles = EpilogueContextOpt->Loop;
+  ArrayRef<MachineBundle> LoopBundles = *LoopBundlesOpt;
   const unsigned LoopSize = LoopBundles.size();
 
   // ceil(LoopSize / ConflictHorizon)

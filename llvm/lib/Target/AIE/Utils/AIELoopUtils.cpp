@@ -63,6 +63,14 @@ bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch) {
       .has_value();
 }
 
+bool isLoopVersioned(const MachineBasicBlock &LoopBlock) {
+  // Positive value required, matching the IR side's reading of the request
+  // hint it is derived from.
+  std::optional<int64_t> Marker =
+      getLoopHintInt(LoopBlock, LoopVersionedHintKey);
+  return Marker && *Marker > 0;
+}
+
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   if (getLoopMetadata(getLoopID(LoopBlock), "llvm.loop.pipeline.disable"))
     return true;
@@ -91,6 +99,13 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
   }
 
   return Candidate;
+}
+
+MachineBasicBlock *getGuardBlock(const MachineBasicBlock &Preheader) {
+  if (Preheader.pred_size() != 1)
+    return nullptr;
+  MachineBasicBlock *Guard = *Preheader.pred_begin();
+  return Guard->succ_size() == 2 ? Guard : nullptr;
 }
 
 SmallVector<const MachineBasicBlock *, 4>

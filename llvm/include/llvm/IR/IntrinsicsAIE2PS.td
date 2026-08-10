@@ -37,6 +37,11 @@ class AIE2PSV32AccFloatToV32Float16 : DefaultAttrsIntrinsic<[llvm_v32f16_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIE2PSV32Float16ToV32AccFloat : DefaultAttrsIntrinsic<[llvm_v32f32_ty], [llvm_v32f16_ty], [IntrNoMem]>;
 
+// v16bfloat16 to v16accfloat (AIE2PS-specific with DefaultAttrsIntrinsic)
+class AIE2PSV16BfToV16AccFloat : DefaultAttrsIntrinsic<[llvm_v16f32_ty], [llvm_v16bf16_ty], [IntrNoMem]>;
+// v32bfloat16 to v32accfloat (AIE2PS-specific with DefaultAttrsIntrinsic)
+class AIE2PSV32BfToV32AccFloat : DefaultAttrsIntrinsic<[llvm_v32f32_ty], [llvm_v32bf16_ty], [IntrNoMem]>;
+
 // SRS
 class AIE2PSV32AccFloatToV32Float8 : DefaultAttrsIntrinsic<[llvm_v32i8_ty],
                                           [llvm_v32f32_ty, llvm_i32_ty],
@@ -841,11 +846,11 @@ class AIE2PSV32FP16I32V32FP16V32FP16I32 : DefaultAttrsIntrinsic<[llvm_v32f16_ty,
 
 // v16bfloat16 to v16accfloat and vice-versa
 def int_aie2ps_v16accfloat_to_v16bf16 : ClangBuiltin<"__builtin_aie2ps_v16accfloat_to_v16bf16">, AIE2PV16AccFloatToV16Bf;
-def int_aie2ps_v16bf16_to_v16accfloat : ClangBuiltin<"__builtin_aie2ps_v16bf16_to_v16accfloat">, AIE2PV16BfToV16AccFloat;
+def int_aie2ps_v16bf16_to_v16accfloat : ClangBuiltin<"__builtin_aie2ps_v16bf16_to_v16accfloat">, AIE2PSV16BfToV16AccFloat;
 
 // v32bfloat16 to v32accfloat and vice-versa
 def int_aie2ps_v32accfloat_to_v32bf16 : ClangBuiltin<"__builtin_aie2ps_v32accfloat_to_v32bf16">, AIE2PV32AccFloatToV32Bf;
-def int_aie2ps_v32bf16_to_v32accfloat : ClangBuiltin<"__builtin_aie2ps_v32bf16_to_v32accfloat">, AIE2PV32BfToV32AccFloat;
+def int_aie2ps_v32bf16_to_v32accfloat : ClangBuiltin<"__builtin_aie2ps_v32bf16_to_v32accfloat">, AIE2PSV32BfToV32AccFloat;
 
 // v16float16 to v16accfloat and vice-versa
 def int_aie2ps_v16accfloat_to_v16float16 : ClangBuiltin<"__builtin_aie2ps_v16accfloat_to_v16float16">, AIE2PSV16AccFloatToV16Float16;
@@ -1042,5 +1047,8 @@ def int_aie2ps_fifo_st_flush_2d_conv: AIE2PFIFO_ST_FLUSH_2D;
 
 def int_aie2ps_fifo_st_flush_3d: AIE2PFIFO_ST_FLUSH_3D;
 def int_aie2ps_fifo_st_flush_3d_conv: AIE2PFIFO_ST_FLUSH_3D;
+
+// Loop-versioning trip-count guard threshold. See IntrinsicsAIE2.td.
+def int_aie2ps_loop_version_threshold : AIELoopVersionThreshold;
 
 } // TargetPrefix = "aie2ps"

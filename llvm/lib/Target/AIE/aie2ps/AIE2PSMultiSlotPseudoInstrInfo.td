@@ -56,6 +56,14 @@ let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1, Itinerary = II_
       "mov_scalar_imm11_pseudo ", "$dst, $i", [MOV_alu_mv_mv_mv_cg_or, MOVXM_lng_cg]>;
 }
 
+// Loop-versioning trip-count guard threshold. See AIE2MultiSlotPseudoInstrInfo.td.
+let isMoveImm = 1, Itinerary = II_MOVX_mvx_cr_r, hasSideEffects = 1,
+    isNotDuplicable = 1, mayLoad = 0, mayStore = 0 in
+  def PseudoLoopVersionThreshold
+      : MultiSlot_Pseudo<(outs eR:$dst), (ins c11s:$i),
+                         "pseudo_loop_version_threshold", "$dst, $i",
+                         [MOVA, MOV_alu_mv_mv_mv_cg_or, MOVXM_lng_cg]>;
+
 // Pseudo Scalar MOV. The MOVS register set is a strict subset
 let Itinerary = II_MOVS, hasSideEffects = false, mayLoad = false, mayStore = false in {
   def MOV_scalar_pseudo : MultiSlot_Pseudo< (outs OP_mAguDst:$dst), (ins OP_mAguSrc:$src),

@@ -45,6 +45,33 @@ constexpr StringLiteral OuterLoopSpeculativeKey{
 
 bool isOuterLoopPipelined(const MachineBasicBlock &LoopLatch);
 
+/// Loop-hint key that requests AIE loop versioning. It is the user-facing hint
+/// (set via pragma) and is consumed by the IR versioning pass, which strips it
+/// from both copies of a loop it versions. A loop the pass declines to version
+/// keeps the hint.
+constexpr StringLiteral LoopVersioningHintKey =
+    "llvm.loop.hint.aie-loop-versioning";
+
+/// Loop-hint key that marks an already-versioned loop. It is set by the IR
+/// versioning pass on the pipelined (high-trip-count) copy and consumed by the
+/// post-pipeliner. Kept separate from LoopVersioningHintKey so a second run of
+/// the versioning pass does not re-version an already-versioned loop.
+constexpr StringLiteral LoopVersionedHintKey =
+    "llvm.loop.hint.aie-loop-versioned";
+
+/// Loop-hint key that marks the verbatim (low-trip-count) copy of a versioned
+/// loop. Only the IR versioning pass reads it, so that a later run leaves the
+/// fallback alone. Deliberately distinct from LoopVersionedHintKey: that one
+/// lifts the post-pipeliner's minimum trip-count requirement, which is only
+/// safe for the copy the runtime guard protects.
+constexpr StringLiteral LoopVersionFallbackHintKey =
+    "llvm.loop.hint.aie-loop-version-fallback";
+
+/// True when \p LoopBlock carries LoopVersionedHintKey, marking it as the
+/// pipelined (high-trip-count) copy of a versioned loop. Note this is the
+/// marker, not the LoopVersioningHintKey request the IR pass consumes.
+bool isLoopVersioned(const MachineBasicBlock &LoopBlock);
+
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,
 /// none otherwise.
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
@@ -53,6 +80,12 @@ std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
 /// preheader. Return the preheader if true, nullptr otherwise
 MachineBasicBlock *
 getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
+
+/// Find the block guarding \p Preheader: its single predecessor, which must
+/// branch two ways. Returns nullptr if that shape does not hold, so callers
+/// fail closed instead of acting on an unrelated block. For a versioned loop
+/// this is the block holding the trip-count guard.
+MachineBasicBlock *getGuardBlock(const MachineBasicBlock &Preheader);
 
 // get all the Machine Basic Blocks (MBBs) that contain a Single Block Loop,
 // which is defined by having 2 Successors, where one of the succesors, is the
