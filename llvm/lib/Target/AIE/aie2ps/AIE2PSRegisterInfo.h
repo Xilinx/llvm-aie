@@ -73,6 +73,8 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
   unsigned matchControlRegisterBitwidth(Register CtrlReg,
                                         unsigned SrcConstVal) const override;
 
+  Register getUnpackSignCtrlReg() const override;
+
   void getTargetSubRegs(std::vector<unsigned> &, unsigned Size,
                         const RegisterBank &RB) const override;
 
