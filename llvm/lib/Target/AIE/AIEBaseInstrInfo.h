@@ -458,6 +458,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   virtual bool isGenericOffsetMemOpcode(unsigned Opcode) const { return false; }
 
+  /// Check whether \p Opcode is a generic memory opcode.
+  virtual bool isGenericMemOpcode(unsigned Opcode) const { return false; }
+
   // Used for Load/Store combiners
   virtual unsigned getOffsetMemOpcode(unsigned BaseMemOpcode) const {
     llvm_unreachable("Target didn't implement getOffsetMemOpcode");

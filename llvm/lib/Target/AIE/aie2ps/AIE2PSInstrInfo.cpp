@@ -1296,6 +1296,32 @@ bool AIE2PSInstrInfo::isGenericOffsetMemOpcode(unsigned Opcode) const {
           (Opcode == AIE2PS::G_AIE_OFFSET_ZEXTLOAD));
 }
 
+bool AIE2PSInstrInfo::isGenericMemOpcode(unsigned Opcode) const {
+  if (isGenericOffsetMemOpcode(Opcode))
+    return true;
+  switch (Opcode) {
+  case TargetOpcode::G_LOAD:
+  case TargetOpcode::G_SEXTLOAD:
+  case TargetOpcode::G_ZEXTLOAD:
+  case TargetOpcode::G_STORE:
+  case AIE2PS::G_AIE_POSTINC_LOAD:
+  case AIE2PS::G_AIE_POSTINC_SEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_STORE:
+  case AIE2PS::G_AIE_POSTINC_2D_LOAD:
+  case AIE2PS::G_AIE_POSTINC_2D_SEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_2D_ZEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_2D_STORE:
+  case AIE2PS::G_AIE_POSTINC_3D_LOAD:
+  case AIE2PS::G_AIE_POSTINC_3D_SEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_3D_ZEXTLOAD:
+  case AIE2PS::G_AIE_POSTINC_3D_STORE:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool AIE2PSInstrInfo::isFifoStoreConvOpcode(unsigned Opcode) const {
   return ((Opcode == AIE2PS::VST_PUSH_256_CONV_mx4_fp32) ||
           (Opcode == AIE2PS::VST_PUSH_384_CONV_mx6_fp32) ||

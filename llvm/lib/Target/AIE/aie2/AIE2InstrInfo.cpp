@@ -266,6 +266,32 @@ bool AIE2InstrInfo::isGenericOffsetMemOpcode(unsigned Opcode) const {
           (Opcode == AIE2::G_AIE_OFFSET_ZEXTLOAD));
 }
 
+bool AIE2InstrInfo::isGenericMemOpcode(unsigned Opcode) const {
+  if (isGenericOffsetMemOpcode(Opcode))
+    return true;
+  switch (Opcode) {
+  case TargetOpcode::G_LOAD:
+  case TargetOpcode::G_SEXTLOAD:
+  case TargetOpcode::G_ZEXTLOAD:
+  case TargetOpcode::G_STORE:
+  case AIE2::G_AIE_POSTINC_LOAD:
+  case AIE2::G_AIE_POSTINC_SEXTLOAD:
+  case AIE2::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE2::G_AIE_POSTINC_STORE:
+  case AIE2::G_AIE_POSTINC_2D_LOAD:
+  case AIE2::G_AIE_POSTINC_2D_SEXTLOAD:
+  case AIE2::G_AIE_POSTINC_2D_ZEXTLOAD:
+  case AIE2::G_AIE_POSTINC_2D_STORE:
+  case AIE2::G_AIE_POSTINC_3D_LOAD:
+  case AIE2::G_AIE_POSTINC_3D_SEXTLOAD:
+  case AIE2::G_AIE_POSTINC_3D_ZEXTLOAD:
+  case AIE2::G_AIE_POSTINC_3D_STORE:
+    return true;
+  default:
+    return false;
+  }
+}
+
 std::optional<unsigned> AIE2InstrInfo::getCombinedPostIncOpcode(
     MachineInstr &BaseMemI, MachineInstr &PostIncI, TypeSize Size) const {
   switch (PostIncI.getOpcode()) {

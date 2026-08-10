@@ -90,6 +90,7 @@ public:
   bool isBooleanNot(unsigned Opc) const override;
   bool isConstStep(const MachineInstr &MI, int64_t &Step) const override;
   bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
+  bool isGenericMemOpcode(unsigned Opcode) const override;
 
   bool verifyGenericInstruction(const MachineInstr &MI,
                                 StringRef &ErrInfo) const override;
