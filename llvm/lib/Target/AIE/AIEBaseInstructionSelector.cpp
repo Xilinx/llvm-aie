@@ -855,6 +855,14 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
   if (!LoadOp)
     return false;
 
+  // The instruction defining the unpack source is not necessarily a load: the
+  // source can be produced by any vector-defining instruction. Generic AIE
+  // intrinsic pseudos (e.g. the SRS intrinsics) are conservatively marked
+  // mayLoad but carry no memory operand. Bail out unless LoadOp is a generic
+  // memory opcode.
+  if (!TII.isGenericMemOpcode(LoadOp->getOpcode()))
+    return false;
+
   // Should we build the instruction at load's position?
   bool ShouldAdvanceOp = false;
 
