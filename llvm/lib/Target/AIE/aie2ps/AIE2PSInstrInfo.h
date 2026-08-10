@@ -49,6 +49,7 @@ public:
   bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
                                 std::optional<APInt> Immediate) const override;
   bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
+  bool isGenericMemOpcode(unsigned Opcode) const override;
 
   bool isFifoStoreConvOpcode(unsigned Opcode) const override;
   std::optional<unsigned>
