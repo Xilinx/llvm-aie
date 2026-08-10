@@ -100,8 +100,7 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml3, [p5, #0]; movxm p3, #475200
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh3, [p3, #0]; paddb [p4], m0; st p6, [sp, #-64] // 4-byte Folded Spill
 ; ASM-NEXT:    lda r0, [p4], #-4; mov p6, p1
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml7, [p6], #64; st p7, [sp, #-60]; movxm p7, #475584 // 4-byte Folded Spill
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p7, #0]; movxm p3, #475264
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml7, [p6], #64; movxm p3, #475264
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml2, [p3, #0]
 ; ASM-NEXT:    lda r1, [p4], #24
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh7, [p6], #64; movxm p3, #475328
@@ -113,25 +112,24 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh6, [p6], #64; movxm p3, #475456
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh1, [p3, #0]
 ; ASM-NEXT:    lda dj0, [p4], #4
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml5, [p6], #64
-; ASM-NEXT:    lda dn4, [p4], #4
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh5, [p6], #64; movxm p3, #475520
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml5, [p6], #64; movxm p3, #475520
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml0, [p3, #0]
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml4, [p6, #0]
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh4, [p6, #64]; mov m1, #104
+; ASM-NEXT:    lda dn4, [p4], #4
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh5, [p6], #64; mov m1, #104
 ; ASM-NEXT:    lda dj4, [p4], m1
-; ASM-NEXT:    mova m1, #-72
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml4, [p6], #64; movxm p3, #475584
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p3, #0]; mov m1, #-72
 ; ASM-NEXT:    lda m3, [p4], m1
 ; ASM-NEXT:    lda m1, [p4], #-16
 ; ASM-NEXT:    lda dn1, [p4], #4
-; ASM-NEXT:    lda dj1, [p4], #4
-; ASM-NEXT:    lda dn5, [p4], #4; movx r8, #772; mov r2, r8
-; ASM-NEXT:    lda dj5, [p4], #-20; movx r5, #0; mov r19, p1
-; ASM-NEXT:    lda dc0, [p4], #4; movxm p2, #491520
-; ASM-NEXT:    lda dc4, [p4], #24; movxm r21, #475136
+; ASM-NEXT:    lda dj1, [p4], #4; movx r8, #772; mov r2, r8
+; ASM-NEXT:    lda dn5, [p4], #4; movx r5, #0; mov r19, p1
+; ASM-NEXT:    lda dj5, [p4], #-20; movxm p2, #491520
+; ASM-NEXT:    lda dc0, [p4], #4; movxm r21, #475136
+; ASM-NEXT:    lda dc4, [p4], #24; st p7, [sp, #-60]; movxm p7, #475648 // 4-byte Folded Spill
 ; ASM-NEXT:    lda dc1, [p4], #4; add r0, r0, #-1; mov m4, #-32
 ; ASM-NEXT:    lda dc5, [p4, #0]; or r25, r5, r5; addm.nc r3, r0, #-1
-; ASM-NEXT:    padda [p6], #64; movs p1, p2; or r24, r5, r5; mov r17, p4
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh4, [p6], #64; movs p1, p2; or r24, r5, r5; mov r17, p4
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
@@ -165,24 +163,24 @@ define dso_local void @gemm.if.else(ptr %add.ptr, ptr %tdm1) #5 {
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac.f dm2, dm2, fex0, fey3, r8
 ; ASM-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    nopa ; nopb ; movs p4, p3; nopx ; mov p5, p2; vmac.f dm0, dm0, fex0, fey3, r8
-; ASM-NEXT:    nopx ; vmov fewl4, fewh4; vmac.f dm1, dm1, fex8, fey3, r8
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml7, [p6, #64]; paddb [p6], #128; mov r5, p2; vmac.f dm7, dm7, fex4, fey0, r8
+; ASM-NEXT:    movs p4, p3; mov p5, p2; vmac.f dm0, dm0, fex0, fey3, r8
+; ASM-NEXT:    vmov fewl4, fewh4; vmac.f dm1, dm1, fex8, fey3, r8
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml7, [p6], #64; mov r5, p2; vmac.f dm7, dm7, fex4, fey0, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh7, [p6], #64; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml6, [p6], #64; vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh6, [p6], #64; mov r7, p3; vmac.f dm4, dm4, fex2, fey0, r8
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml3, [p7, #64]; paddb [p7], #128; vmov fewl0, fewh8; vmac.f dm3, dm3, fex10, fey3, r8
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml3, [p7], #64; vmov fewl0, fewh8; vmac.f dm3, dm3, fex10, fey3, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh3, [p7], #64; vmac.f dm2, dm2, fex0, fey3, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml2, [p7], #64; vst.conv.bf16.fp32 cml7, [p4], #64; vmac.f dm0, dm0, fex0, fey3, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh2, [p7], #64; vst.conv.bf16.fp32 cmh7, [p4], #64; vmac.f dm1, dm1, fex8, fey3, r8
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml1, [p7], #64; vst.conv.bf16.fp32 cml6, [p4], #64
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh1, [p7], #64; vst.conv.bf16.fp32 cmh6, [p4], #64
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cml5, [p6], #64; vst.conv.bf16.fp32 cml3, [p5], #64
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml0, [p7, #0]; vst.conv.bf16.fp32 cmh3, [p5], #64
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml0, [p7], #64; vst.conv.bf16.fp32 cmh3, [p5], #64
 ; ASM-NEXT:    vlda.conv.fp32.bf16 cmh5, [p6], #64; vst.conv.bf16.fp32 cml2, [p5], #64
-; ASM-NEXT:    vlda.conv.fp32.bf16 cml4, [p6, #0]; vst.conv.bf16.fp32 cmh2, [p5], #64
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p7, #64]; paddb [p7], #64; vst.conv.bf16.fp32 cml1, [p5], #64
-; ASM-NEXT:    vlda.conv.fp32.bf16 cmh4, [p6, #64]; paddb [p6], #64; vst.conv.bf16.fp32 cmh1, [p5], #64
+; ASM-NEXT:    vlda.conv.fp32.bf16 cml4, [p6], #64; vst.conv.bf16.fp32 cmh2, [p5], #64
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh0, [p7], #64; vst.conv.bf16.fp32 cml1, [p5], #64
+; ASM-NEXT:    vlda.conv.fp32.bf16 cmh4, [p6], #64; vst.conv.bf16.fp32 cmh1, [p5], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml5, [p4], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml0, [p5], #64
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh5, [p4], #64; mov p2, p5

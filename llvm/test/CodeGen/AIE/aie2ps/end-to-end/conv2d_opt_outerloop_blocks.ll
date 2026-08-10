@@ -190,19 +190,19 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    lda m3, [p6], #-4
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dj3, [p6, #0]; movx r30, #63; mov dc7, #0
 ; NO-PROLOGUE-SPLIT-NEXT:    lda dn3, [p6, #-4]; movs p6, p1; movx r25, #0; mov p1, p4
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2, #0]; vldb.popx x4, [p1, lf1, r25]; movs dc0, dc7; mov dc4, dc7
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2, #64]; vldb.pop.3d x6, [p1, lf1, r25, d0]
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x10, [p0, #0]; vldb.popx x4, [p1, lf1, r25]; movs dc0, dc7; mov dc4, dc7
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vldb.pop.3d x6, [p1, lf1, r25, d0]
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl2, [p5, #0]
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb.128 wl8, [p5, #16]
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x10, [p0, #0]
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3, #0]; vldb x1, [p0, #64]; movx crupsmode, #0; mov s0, r1
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #64]; or r19, r8, r8; mov r8, r7
-; NO-PROLOGUE-SPLIT-NEXT:    or r21, r10, r10; mov s1, r5
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vldb x1, [p0, #64]
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; or r19, r8, r8; mov r8, r7
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; or r21, r10, r10; mov s0, r1
+; NO-PROLOGUE-SPLIT-NEXT:    movx crupsmode, #0; mov s1, r5
 ; NO-PROLOGUE-SPLIT-NEXT:    mova r12, #264; movs dc3, dc7; or r22, r12, r12; mov dc6, dc7
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc2, dc7; add r0, r0, #-1; vshuffle x2, x4, x6, r2; vmul dm2, x0, x2, r12
 ; NO-PROLOGUE-SPLIT-NEXT:    movs dc5, dc7; or r10, r3, r3; addm.nc r1, r0, #-1; vmul dm3, x0, x8, r12
-; NO-PROLOGUE-SPLIT-NEXT:    mova r16, #5; paddb [p2], #64; movs dc1, dc7; movxm p4, #.LBB0_1; vaddmac dm1, dm1, dm2, x2, x10, r10
-; NO-PROLOGUE-SPLIT-NEXT:    mova r18, #16; paddb [p3], #64; st p7, [sp, #-60]; movx crsrsmode, #0; mov m5, r17; vaddmac dm0, dm0, dm3, x2, x1, r10 // 4-byte Folded Spill
+; NO-PROLOGUE-SPLIT-NEXT:    mova r16, #5; nopb ; movs dc1, dc7; movxm p4, #.LBB0_1; vaddmac dm1, dm1, dm2, x2, x10, r10
+; NO-PROLOGUE-SPLIT-NEXT:    mova r18, #16; nopb ; st p7, [sp, #-60]; movx crsrsmode, #0; mov m5, r17; vaddmac dm0, dm0, dm3, x2, x1, r10 // 4-byte Folded Spill
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %steady.stage1.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    // Child Loop BB0_2 Depth 2
@@ -226,20 +226,20 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %ofm, ptr %psum_0_tdm, 
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; NO-PROLOGUE-SPLIT-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7, #192]; paddb [p0], m4; padds [p7], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7, #192]; paddb [p0], m4; padds [p7], #128; vmac dm0, dm0, x2, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda x6, [p7, #128]; paddb.3d [p0], d2; padds.3d [p1], d1; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7, #192]; nopb ; padds [p7], #128; nopx ; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x10, [p0, #0]; movs dc4, dc7; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p0, #64]; vldb.popx x4, [p1, lf1, r25]; nops ; or r20, r0, r18; mov dj7, r0; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl2, [p5, dj7]; vldb.pop.3d x6, [p1, lf1, r25, d0]; movs dj7, r20; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl8, [p5, dj7]; nopx ; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2, #64]; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2, #128]; paddb [p2], #128; vmac dm0, dm0, x2, x4, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3, #64]; vmac dm1, dm1, x2, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3, #128]; paddb [p3], #128; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x4, [p7, #192]; padds [p7], #128; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    movs dc4, dc7; vldb x10, [p0, #0]; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p0, #64]; vldb.popx x2, [p1, lf1, r25]; or r20, r0, r18; mov dj7, r0; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl6, [p5, dj7]; vldb.pop.3d x4, [p1, lf1, r25, d0]; movs dj7, r20; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.128 wl8, [p5, dj7]; mov srssign0, r6; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p2], #64; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p2], #64; vmac dm0, dm0, x2, x4, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p3], #64; vmac dm1, dm1, x2, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p3], #64; vmac dm0, dm0, x2, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    jnzd r1, r1, p4
-; NO-PROLOGUE-SPLIT-NEXT:    vmul dm2, x0, x2, r12 // Delay Slot 5
-; NO-PROLOGUE-SPLIT-NEXT:    vshuffle x2, x4, x6, r2; vmul dm3, x0, x8, r12 // Delay Slot 4
+; NO-PROLOGUE-SPLIT-NEXT:    vmul dm2, x0, x6, r12 // Delay Slot 5
+; NO-PROLOGUE-SPLIT-NEXT:    vshuffle x2, x2, x4, r2; vmul dm3, x0, x8, r12 // Delay Slot 4
 ; NO-PROLOGUE-SPLIT-NEXT:    nop // Delay Slot 3
 ; NO-PROLOGUE-SPLIT-NEXT:    vst.srs.4x dm1, s1, srssign0, [p6], m5; vaddmac dm1, dm1, dm2, x2, x10, r10 // Delay Slot 2
 ; NO-PROLOGUE-SPLIT-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p6], d3; movx srssign0, #0; vaddmac dm0, dm0, dm3, x2, x1, r10 // Delay Slot 1

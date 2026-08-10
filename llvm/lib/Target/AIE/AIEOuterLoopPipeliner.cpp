@@ -422,6 +422,12 @@ public:
   // required operand chains. All other pipeline candidates form stage 1.
   void collectLeanStage0(const TargetTransformInfo &TTI);
 
+  // Extend stage-0 with pointer update instructions (GEPs and add.2d/add.3d
+  // intrinsics) in the top block that derive from stage-0 values and feed
+  // outer loop PHI backedges. These should be pipelined along with the loads
+  // they enable.
+  void collectDerivedPointerUpdates(const AIEBaseInstrInfo &TII);
+
   // Delete this (now unreachable) LS's blocks.
   void removeFromCFG() const;
 };
@@ -1031,6 +1037,114 @@ void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
   });
 
   LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void OrigLoopStructure::collectDerivedPointerUpdates(
+    const AIEBaseInstrInfo &TII) {
+  // Build a set of current stage-0 instructions for fast lookup.
+  SmallPtrSet<Instruction *, 32> Stage0Set(Stage0Insts.begin(),
+                                           Stage0Insts.end());
+
+  // Track instructions to move from stage-1 to stage-0.
+  SmallPtrSet<Instruction *, 8> ToPromote;
+
+  // Helper to extract the base pointer from a pointer update instruction.
+  // Returns the pointer operand for GEPs and add.2d/add.3d intrinsics,
+  // or nullptr if the instruction is not a recognized pointer update.
+  auto GetPointerBase = [&](Instruction *I) -> Value * {
+    if (auto *GEP = dyn_cast<GetElementPtrInst>(I))
+      return GEP->getPointerOperand();
+    if (auto *II = dyn_cast<IntrinsicInst>(I)) {
+      if (isSafePointerIncrementIntrinsic(TII, II->getIntrinsicID()))
+        return II->getArgOperand(0); // First argument is the input pointer
+    }
+    return nullptr;
+  };
+
+  // Helper to check if an instruction is a pointer update (GEP or add.2d/3d).
+  auto IsPointerUpdate = [&](Instruction *I) -> bool {
+    return GetPointerBase(I) != nullptr;
+  };
+
+  // Iterate over outer loop header PHIs to find pointer update instructions.
+  for (PHINode &PHI : getTop()->phis()) {
+    // Get the backedge value (incoming from bottom block).
+    int BottomIdx = PHI.getBasicBlockIndex(getBottom());
+    if (BottomIdx < 0)
+      continue;
+
+    Value *BackedgeVal = PHI.getIncomingValue(BottomIdx);
+
+    // Check if the backedge value is a pointer update instruction in top block.
+    auto *PtrUpdateInst = dyn_cast<Instruction>(BackedgeVal);
+    if (!PtrUpdateInst || !isInTop(PtrUpdateInst) ||
+        !IsPointerUpdate(PtrUpdateInst))
+      continue;
+
+    // Check if this instruction is already in stage-0.
+    if (Stage0Set.count(PtrUpdateInst))
+      continue;
+
+    // Check if the instruction's base pointer (or its transitive base) is in
+    // stage-0. Walk the chain to find if any base is in stage-0.
+    SmallVector<Instruction *, 4> PtrUpdateChain;
+    Instruction *Current = PtrUpdateInst;
+    bool BasedOnStage0 = false;
+
+    while (Current) {
+      PtrUpdateChain.push_back(Current);
+      Value *Base = GetPointerBase(Current);
+
+      // If the base is a stage-0 instruction, we found a connection.
+      if (auto *BaseInst = dyn_cast<Instruction>(Base)) {
+        if (Stage0Set.count(BaseInst)) {
+          BasedOnStage0 = true;
+          break;
+        }
+        // Continue walking if the base is also a pointer update in top block.
+        if (isInTop(BaseInst) && IsPointerUpdate(BaseInst)) {
+          Current = BaseInst;
+        } else {
+          Current = nullptr;
+        }
+      } else {
+        Current = nullptr;
+      }
+    }
+
+    if (BasedOnStage0) {
+      // Add all instructions in the chain to be promoted.
+      for (Instruction *I : PtrUpdateChain) {
+        if (!Stage0Set.count(I))
+          ToPromote.insert(I);
+      }
+    }
+  }
+
+  if (ToPromote.empty())
+    return;
+
+  // Move promoted instructions from Stage1Insts to Stage0Insts, preserving
+  // program order.
+  std::vector<Instruction *> NewStage0Insts;
+  std::vector<Instruction *> NewStage1Insts;
+
+  // We need to rebuild both lists in program order.
+  topRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I))
+      return;
+    if (Stage0Set.count(I) || ToPromote.count(I))
+      NewStage0Insts.push_back(I);
+    else
+      NewStage1Insts.push_back(I);
+  });
+
+  Stage0Insts = std::move(NewStage0Insts);
+  Stage1Insts = std::move(NewStage1Insts);
+
+  LLVM_DEBUG(dbgs() << "    After collectDerivedPointerUpdates: "
+                    << stage0Insts().size() << " stage-0, "
                     << stage1Insts().size() << " stage-1 instructions\n");
 }
 
@@ -1808,6 +1922,12 @@ bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
     OrigLS.collectLeanStage0(*TTI);
   else
     OrigLS.collectStages(IsSplitPoint);
+
+  // Extend stage-0 with pointer update instructions (GEPs and add.2d/add.3d)
+  // that derive from stage-0 values and feed outer loop PHI backedges. These
+  // should be pipelined along with the loads they enable.
+  OrigLS.collectDerivedPointerUpdates(*TII);
+
   if (OrigLS.stage0Insts().empty()) {
     LLVM_DEBUG(dbgs() << "    Could not extract Stage 0\n");
     return false;
