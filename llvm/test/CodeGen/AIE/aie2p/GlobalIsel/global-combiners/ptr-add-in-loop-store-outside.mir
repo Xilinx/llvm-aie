@@ -45,7 +45,7 @@ body:             |
   ; CHECK-NEXT:   G_BRCOND [[ICMP]](s32), %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   G_AIE_OFFSET_STORE [[ADD]](s32), [[COPY]](p0), [[C]](s20) :: (store (s32))
+  ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[AIE_POSTINC_STORE]](p0) :: (store (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     liveins: $p0

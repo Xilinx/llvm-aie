@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -16,6 +16,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEGLOBALCOMBINERPTRMODS_H
 #define LLVM_LIB_TARGET_AIE_AIEGLOBALCOMBINERPTRMODS_H
 #include "AIEGlobalCombiner.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 namespace llvm::AIE {
 
 struct UsageCount {
@@ -69,13 +70,15 @@ public:
   const MachineRegisterInfo *MRI = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
   const AIE::DataDependenceHelper *DAG = nullptr;
+  const MachineLoopInfo *MLI = nullptr;
   bool RemovePtrMod = false;
   bool ReplacePtrModInstr = false;
 
   PointerModifierCombiner(bool RemoveInstr, bool ReplaceInputPtr,
                           const MachineRegisterInfo *MRI,
-                          const AIEBaseInstrInfo *TII, StringRef Name)
-      : GenericCombiner(Name), Gain({1, 1, 1}), MRI(MRI), TII(TII),
+                          const AIEBaseInstrInfo *TII,
+                          const MachineLoopInfo *MLI, StringRef Name)
+      : GenericCombiner(Name), Gain({1, 1, 1}), MRI(MRI), TII(TII), MLI(MLI),
         RemovePtrMod(RemoveInstr), ReplacePtrModInstr(ReplaceInputPtr) {}
 
   ~PointerModifierCombiner() = default;
@@ -129,8 +132,9 @@ protected:
 
 public:
   using PointerModifierCombiner::PointerModifierCombiner;
-  OffsetCombiner(const MachineRegisterInfo *MRI, const AIEBaseInstrInfo *TII)
-      : PointerModifierCombiner(false, false, MRI, TII, "Offset") {}
+  OffsetCombiner(const MachineRegisterInfo *MRI, const AIEBaseInstrInfo *TII,
+                 const MachineLoopInfo *MLI)
+      : PointerModifierCombiner(false, false, MRI, TII, MLI, "Offset") {}
 
   bool isCombineCandidate(MachineInstr &CombineRoot,
                           MachineInstr &Candidate) const override;
@@ -165,13 +169,17 @@ protected:
 public:
   using PointerModifierCombiner::PointerModifierCombiner;
 
-  PostIncCombiner(const MachineRegisterInfo *MRI, const AIEBaseInstrInfo *TII)
-      : PointerModifierCombiner(true, true, MRI, TII, /*Name=*/"PostInc") {}
+  PostIncCombiner(const MachineRegisterInfo *MRI, const AIEBaseInstrInfo *TII,
+                  const MachineLoopInfo *MLI)
+      : PointerModifierCombiner(true, true, MRI, TII, MLI, /*Name=*/"PostInc") {
+  }
 
   // Constructor for derived Classes
   PostIncCombiner(bool ReplaceInstr, const MachineRegisterInfo *MRI,
-                  const AIEBaseInstrInfo *TII, StringRef Name)
-      : PointerModifierCombiner(ReplaceInstr, ReplaceInstr, MRI, TII, Name) {}
+                  const AIEBaseInstrInfo *TII, const MachineLoopInfo *MLI,
+                  StringRef Name)
+      : PointerModifierCombiner(ReplaceInstr, ReplaceInstr, MRI, TII, MLI,
+                                Name) {}
 
   bool isCombineCandidate(MachineInstr &CombineRoot,
                           MachineInstr &Candidate) const override;
