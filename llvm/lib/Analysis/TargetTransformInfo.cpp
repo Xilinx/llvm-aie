@@ -58,7 +58,9 @@ struct NoTTIImpl : TargetTransformInfoImplCRTPBase<NoTTIImpl> {
   explicit NoTTIImpl(const DataLayout &DL)
       : TargetTransformInfoImplCRTPBase<NoTTIImpl>(DL) {}
 
-  bool isLeanStage0Intrinsic(const Instruction &I) const { return false; }
+  bool isLeanStage0Intrinsic(const Instruction &I) const override {
+    return false;
+  }
 };
 } // namespace
 
