@@ -885,6 +885,10 @@ Register AIE2PSRegisterInfo::getControlRegister(unsigned Idx) const {
   llvm_unreachable("Unexpected key for control register.");
 }
 
+Register AIE2PSRegisterInfo::getUnpackSignCtrlReg() const {
+  return AIE2PS::unpackSign0;
+}
+
 unsigned
 AIE2PSRegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
                                                  unsigned SrcConstVal) const {
