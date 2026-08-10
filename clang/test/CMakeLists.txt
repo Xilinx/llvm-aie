@@ -235,6 +235,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/debuginfo-tests)
   endif()
 endif()
 
+add_subdirectory(Analysis/LifetimeSafety)
 
 add_custom_target(check-clang-aie)
 add_dependencies(check-clang-aie 

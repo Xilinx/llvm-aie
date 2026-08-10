@@ -284,8 +284,11 @@ namespace CallingConv {
     RISCV_VLSCall_32768 = 122,
     RISCV_VLSCall_65536 = 123,
 
+    // Calling convention for AMDGPU whole wave functions.
+    AMDGPU_Gfx_WholeWave = 124,
+
     /// Preserve vector registers.
-    AIE_PreserveAll_Vec = 124,
+    AIE_PreserveAll_Vec = 125,
 
     /// The highest possible ID. Must be some 2^k - 1.
     MaxID = 1023
@@ -297,8 +300,13 @@ namespace CallingConv {
 /// directly or indirectly via a call-like instruction.
 constexpr bool isCallableCC(CallingConv::ID CC) {
   switch (CC) {
+  // Called with special intrinsics:
+  // llvm.amdgcn.cs.chain
   case CallingConv::AMDGPU_CS_Chain:
   case CallingConv::AMDGPU_CS_ChainPreserve:
+  // llvm.amdgcn.call.whole.wave
+  case CallingConv::AMDGPU_Gfx_WholeWave:
+  // Hardware entry points:
   case CallingConv::AMDGPU_CS:
   case CallingConv::AMDGPU_ES:
   case CallingConv::AMDGPU_GS:
