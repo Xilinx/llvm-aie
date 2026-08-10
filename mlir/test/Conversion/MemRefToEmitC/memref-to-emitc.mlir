@@ -47,6 +47,8 @@ func.func @memref_load(%buff : memref<4x8xf32>, %i: index, %j: index) -> f32 {
 module @globals {
   memref.global "private" constant @internal_global : memref<3x7xf32> = dense<4.0>
   // COMMON-NEXT: emitc.global static const @internal_global : !emitc.array<3x7xf32> = dense<4.000000e+00>
+  memref.global "private" constant @__constant_xi32 : memref<i32> = dense<-1>
+  // COMMON-NEXT: emitc.global static const @__constant_xi32 : i32 = -1
   memref.global @public_global : memref<3x7xf32>
   // COMMON-NEXT: emitc.global extern @public_global : !emitc.array<3x7xf32>
   memref.global @uninitialized_global : memref<3x7xf32> = uninitialized
@@ -56,6 +58,9 @@ module @globals {
   func.func @use_global() {
     // COMMON-NEXT: emitc.get_global @public_global : !emitc.array<3x7xf32>
     %0 = memref.get_global @public_global : memref<3x7xf32>
+    // COMMON-NEXT: emitc.get_global @__constant_xi32 : !emitc.lvalue<i32>
+    // COMMON-NEXT: emitc.apply "&"(%1) : (!emitc.lvalue<i32>) -> !emitc.ptr<i32>
+    %1 = memref.get_global @__constant_xi32 : memref<i32>
     return
   }
 }

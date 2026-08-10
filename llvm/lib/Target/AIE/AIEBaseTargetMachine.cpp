@@ -33,6 +33,8 @@
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/CodeGen/GlobalISel/Legalizer.h"
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MIRParser/MIParser.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
@@ -61,6 +63,25 @@ extern cl::opt<bool> ForcePreciseRotationCost;
 extern cl::opt<bool> EnableFullPHIAnalysis;
 extern cl::opt<unsigned> MaxLookupSearchDepth;
 extern cl::opt<bool> SwpPragmaAsMaxII;
+
+namespace {
+class AIEFinalizeExistingBundles final : public MachineFunctionPass {
+public:
+  static char ID;
+
+  AIEFinalizeExistingBundles() : MachineFunctionPass(ID) {}
+
+  StringRef getPassName() const override {
+    return "Finalize machine instruction bundles";
+  }
+
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    return finalizeBundles(MF);
+  }
+};
+
+char AIEFinalizeExistingBundles::ID = 0;
+} // namespace
 
 static cl::opt<bool>
     EnableCustomAliasAnalysisOpt("aie-enable-alias-analysis",
@@ -396,7 +417,7 @@ void AIEBasePassConfig::addPreSched2() {
   // We always run it, independently of the Opt level.
   addPass(&PostRASchedulerID);
   // After scheduling, create the bundles from the BundleWithPred flags
-  addPass(&FinalizeMachineBundlesID);
+  addPass(new AIEFinalizeExistingBundles());
 }
 
 ScheduleDAGInstrs *

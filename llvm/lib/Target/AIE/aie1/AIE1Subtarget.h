@@ -63,7 +63,7 @@ public:
   bool enableMachineScheduler() const override { return false; }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
-                           unsigned NumRegionInstrs) const override {}
+                           const SchedRegion &Region) const override {}
   unsigned getCriticalPathLimit() const override {
     return getSchedModel().MispredictPenalty / 2;
   }
