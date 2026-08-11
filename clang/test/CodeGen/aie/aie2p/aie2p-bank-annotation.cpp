@@ -25,7 +25,7 @@
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p5.p5(ptr addrspace(5) [[P]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP2]], i32 [[TMP3]])
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 1
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    ret void
 //
@@ -47,7 +47,7 @@ void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP3]], 2
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP3]], 3
 // CHECK-NEXT:    store <16 x i32> [[TMP6]], ptr [[EXTRA3_I_I]], align 64
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.popx.p6.p6(ptr addrspace(6) [[P]], <32 x i32> [[TMP4]], i32 [[TMP5]], <16 x i32> [[TMP6]], i32 2015)
 // CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 0
@@ -55,7 +55,7 @@ void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a
 // CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 3
 // CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 4
 // CHECK-NEXT:    store <16 x i32> [[TMP11]], ptr [[EXTRA3_I_I]], align 64
-// CHECK-NEXT:    store <32 x i32> [[TMP9]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP9]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP10]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    ret <64 x i8> [[TMP8]]
 //
@@ -73,13 +73,13 @@ v128uint4 test_intrinsic_annotated_pointer_fillx_popx(v64bfp16ebs8_unaligned __a
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p5.p5(ptr addrspace(5) [[P_UNALIGNED]], <32 x i32> [[TMP0]], i32 [[TMP1]])
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 1
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP3]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP3]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP4]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned.p6.p6(ptr addrspace(6) [[P]], <32 x i32> [[TMP3]], i32 [[TMP4]])
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } [[TMP5]], 0
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } [[TMP5]], 2
 // CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } [[TMP5]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    ret <64 x i8> [[TMP6]]
 //
@@ -101,7 +101,7 @@ v128uint4 test_intrinsic_annotated_pointer_fill_pop(v64bfp16ebs8_unaligned __aie
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP5]], 0
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP5]], 1
 // CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP5]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    store ptr addrspace(5) [[TMP6]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
@@ -128,7 +128,7 @@ void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP4]], 2
 // CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP4]], 3
 // CHECK-NEXT:    store <16 x i32> [[TMP8]], ptr [[EXTRA3_I_I]], align 64
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr addrspace(5) [[TMP5]], ptr [[P_UNALIGNED]], align 4
 // CHECK-NEXT:    [[TMP9:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
@@ -142,7 +142,7 @@ void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_
 // CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 3
 // CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 4
 // CHECK-NEXT:    store <16 x i32> [[TMP18]], ptr [[EXTRA3_I_I]], align 64
-// CHECK-NEXT:    store <32 x i32> [[TMP16]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP16]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP17]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr addrspace(6) [[TMP15]], ptr [[P]], align 4
 // CHECK-NEXT:    ret <64 x i8> [[TMP14]]
@@ -163,7 +163,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fillx_popx(v64bfp16ebs8_una
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 0
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    store ptr addrspace(5) [[TMP4]], ptr [[P_UNALIGNED]], align 4
 // CHECK-NEXT:    [[TMP7:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
@@ -174,7 +174,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fillx_popx(v64bfp16ebs8_una
 // CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } [[TMP10]], 1
 // CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } [[TMP10]], 2
 // CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } [[TMP10]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP13]], ptr [[S]], align 128
+// CHECK-NEXT:    store <32 x i32> [[TMP13]], ptr [[S]], align 64
 // CHECK-NEXT:    store i32 [[TMP14]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    store ptr addrspace(6) [[TMP12]], ptr [[P]], align 4
 // CHECK-NEXT:    ret <64 x i8> [[TMP11]]

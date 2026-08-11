@@ -23,7 +23,7 @@ body:             |
     ; CHECK-NEXT: renamable $wl0 = VLDA_dmw_lda_w_ld_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: BUNDLE implicit-def $dm0, implicit-def $cml0, implicit-def $bmll0, implicit-def $bmlh0, implicit-def $cmh0, implicit-def $bmhl0, implicit-def $bmhh0, implicit $lr, implicit killed $dm0, implicit $x0, implicit killed $x1, implicit killed $r8 {
+    ; CHECK-NEXT: BUNDLE implicit-def $dm0, implicit $lr, implicit killed $dm0, implicit $x0, implicit killed $x1, implicit killed $r8 {
     ; CHECK-NEXT:   RET implicit $lr
     ; CHECK-NEXT:   renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, renamable $x0, killed renamable $x1, killed renamable $r8
     ; CHECK-NEXT: }

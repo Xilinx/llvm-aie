@@ -22,7 +22,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_RAW
-    ; CHECK: BUNDLE implicit-def $wl0, implicit-def $x0, implicit-def $wh0, implicit killed $wh0, implicit killed $p0, implicit killed $wl2 {
+    ; CHECK: BUNDLE implicit-def $wl0, implicit-def $x0, implicit killed $wh0, implicit killed $p0, implicit killed $wl2 {
     ; CHECK-NEXT:   VST_dmw_sts_w_ag_idx_imm killed $wh0, killed $p0, 0
     ; CHECK-NEXT:   $wl0 = VMOV_mv_w killed $wl2, implicit-def $x0
     ; CHECK-NEXT: }
@@ -39,7 +39,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_WAR
-    ; CHECK: BUNDLE implicit-def $wh2, implicit-def $x2, implicit-def $wl2, implicit killed $wl2, implicit killed $p0, implicit killed $wh0 {
+    ; CHECK: BUNDLE implicit-def $wh2, implicit-def $x2, implicit killed $wl2, implicit killed $p0, implicit killed $wh0 {
     ; CHECK-NEXT:   VST_dmw_sts_w_ag_idx_imm killed $wl2, killed $p0, 0
     ; CHECK-NEXT:   $wh2 = VMOV_mv_w killed $wh0, implicit-def $x2
     ; CHECK-NEXT: }

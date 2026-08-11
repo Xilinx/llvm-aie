@@ -150,14 +150,14 @@ body:             |
     ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
     ; CHECK-NEXT: G_STORE [[AIE_UNPAD_VECTOR]](<8 x s32>), [[FRAME_INDEX]](p0) :: (store (<8 x s32>) into %stack.0.object0)
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C1]](s20)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C1]](s20)
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[C2]](s32)
     ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR1]](<16 x s32>)
     ; CHECK-NEXT: G_STORE [[AIE_UNPAD_VECTOR1]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>) into %stack.0.object0 + 32, align 32)
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
     ; CHECK-NEXT: G_STORE [[C3]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %stack.0.object0 + 48, align 16, basealign 32)
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $p0 = COPY [[FRAME_INDEX]](p0)
@@ -172,14 +172,14 @@ body:             |
     ; LEGALIZED-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
     ; LEGALIZED-NEXT: G_STORE [[AIE_UNPAD_VECTOR]](<8 x s32>), [[FRAME_INDEX]](p0) :: (store (<8 x s32>) into %stack.0.object0)
     ; LEGALIZED-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C1]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C1]](s20)
     ; LEGALIZED-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[C2]](s32)
     ; LEGALIZED-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR1]](<16 x s32>)
     ; LEGALIZED-NEXT: G_STORE [[AIE_UNPAD_VECTOR1]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>) into %stack.0.object0 + 32, align 32)
     ; LEGALIZED-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %stack.0.object0 + 48, align 16, basealign 32)
     ; LEGALIZED-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; LEGALIZED-NEXT: $p0 = COPY [[FRAME_INDEX]](p0)
@@ -214,18 +214,18 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: G_STORE [[C]](s32), [[FRAME_INDEX]](p0) :: (store (s32) into %ir.object0, align 1)
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C1]](s20)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C1]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s32), [[PTR_ADD]](p0) :: (store (s32) into %ir.object0 + 4, align 1)
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C2]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C2]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %ir.object0 + 8, align 1)
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s16) = G_CONSTANT i16 0
     ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
     ; CHECK-NEXT: G_STORE [[C3]](s16), [[PTR_ADD2]](p0) :: (store (s16) into %ir.object0 + 12, align 1)
     ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
     ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 14
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C6]](s20)
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C6]](s20)
     ; CHECK-NEXT: G_STORE [[C5]](s8), [[PTR_ADD3]](p0) :: (store (s8) into %ir.object0 + 14)
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $p0 = COPY [[FRAME_INDEX]](p0)
@@ -240,61 +240,61 @@ body:             |
     ; LEGALIZED-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
     ; LEGALIZED-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C1]](s32)
     ; LEGALIZED-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C2]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C2]](s20)
     ; LEGALIZED-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[C3]](s32)
     ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[COPY]](s32), [[FRAME_INDEX]](p0) :: (store (s8) into %ir.object0)
     ; LEGALIZED-NEXT: G_STORE [[LSHR1]](s32), [[PTR_ADD1]](p0) :: (store (s8) into %ir.object0 + 1)
     ; LEGALIZED-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[LSHR]], [[C5]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[LSHR]](s32), [[PTR_ADD]](p0) :: (store (s8) into %ir.object0 + 2)
     ; LEGALIZED-NEXT: G_STORE [[LSHR2]](s32), [[PTR_ADD2]](p0) :: (store (s8) into %ir.object0 + 3)
     ; LEGALIZED-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C6]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C6]](s20)
     ; LEGALIZED-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY [[C]](s32)
     ; LEGALIZED-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[COPY1]], [[C1]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C2]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD3]], [[C2]](s20)
     ; LEGALIZED-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[LSHR4:%[0-9]+]]:_(s32) = G_LSHR [[COPY1]], [[C7]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD3]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[COPY1]](s32), [[PTR_ADD3]](p0) :: (store (s8) into %ir.object0 + 4)
     ; LEGALIZED-NEXT: G_STORE [[LSHR4]](s32), [[PTR_ADD5]](p0) :: (store (s8) into %ir.object0 + 5)
     ; LEGALIZED-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[LSHR5:%[0-9]+]]:_(s32) = G_LSHR [[LSHR3]], [[C8]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD4]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD4]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[LSHR3]](s32), [[PTR_ADD4]](p0) :: (store (s8) into %ir.object0 + 6)
     ; LEGALIZED-NEXT: G_STORE [[LSHR5]](s32), [[PTR_ADD6]](p0) :: (store (s8) into %ir.object0 + 7)
     ; LEGALIZED-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; LEGALIZED-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C9]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C9]](s20)
     ; LEGALIZED-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY [[C]](s32)
     ; LEGALIZED-NEXT: [[LSHR6:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C1]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C2]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD7]], [[C2]](s20)
     ; LEGALIZED-NEXT: [[C10:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[LSHR7:%[0-9]+]]:_(s32) = G_LSHR [[COPY2]], [[C10]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD7]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[COPY2]](s32), [[PTR_ADD7]](p0) :: (store (s8) into %ir.object0 + 8)
     ; LEGALIZED-NEXT: G_STORE [[LSHR7]](s32), [[PTR_ADD9]](p0) :: (store (s8) into %ir.object0 + 9)
     ; LEGALIZED-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[LSHR8:%[0-9]+]]:_(s32) = G_LSHR [[LSHR6]], [[C11]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD8]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD8]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[LSHR6]](s32), [[PTR_ADD8]](p0) :: (store (s8) into %ir.object0 + 10)
     ; LEGALIZED-NEXT: G_STORE [[LSHR8]](s32), [[PTR_ADD10]](p0) :: (store (s8) into %ir.object0 + 11)
     ; LEGALIZED-NEXT: [[C12:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; LEGALIZED-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C13]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C13]](s20)
     ; LEGALIZED-NEXT: [[C14:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; LEGALIZED-NEXT: [[C15:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
     ; LEGALIZED-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C12]], [[C15]]
     ; LEGALIZED-NEXT: [[LSHR9:%[0-9]+]]:_(s32) = G_LSHR [[AND]], [[C14]](s32)
-    ; LEGALIZED-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[PTR_ADD11]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C12]](s32), [[PTR_ADD11]](p0) :: (store (s8) into %ir.object0 + 12)
     ; LEGALIZED-NEXT: G_STORE [[LSHR9]](s32), [[PTR_ADD12]](p0) :: (store (s8) into %ir.object0 + 13)
     ; LEGALIZED-NEXT: [[C16:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 14
-    ; LEGALIZED-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C17]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[FRAME_INDEX]], [[C17]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C16]](s32), [[PTR_ADD13]](p0) :: (store (s8) into %ir.object0 + 14)
     ; LEGALIZED-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; LEGALIZED-NEXT: $p0 = COPY [[FRAME_INDEX]](p0)

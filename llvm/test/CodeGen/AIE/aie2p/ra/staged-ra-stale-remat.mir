@@ -40,8 +40,8 @@ frameInfo:
   hasTailCall:     false
   isCalleeSavedInfoValid: false
   localFrameSize:  0
-  savePoint:       ''
-  restorePoint:    ''
+  savePoint:       []
+  restorePoint:    []
 body:             |
   ; CHECK-LABEL: name: stale_remat_test
   ; CHECK: bb.0:
