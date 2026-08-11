@@ -88,14 +88,36 @@ private:
     return GEP && U.getOperandNo() != 0 ? GEP : nullptr;
   }
 
+  static bool isConstantIndexShift(const Use &U, Type *IndexTy) {
+    const auto *Shl = dyn_cast<BinaryOperator>(U.getUser());
+    if (!Shl || Shl->getOpcode() != Instruction::Shl || U.getOperandNo() != 0 ||
+        Shl->getType() != IndexTy)
+      return false;
+
+    const auto *ShiftAmount = dyn_cast<ConstantInt>(Shl->getOperand(1));
+    return ShiftAmount &&
+           ShiftAmount->getValue().ult(IndexTy->getIntegerBitWidth());
+  }
+
   static SmallVector<GetElementPtrInst *>
   collectGEPIndicesThroughTrunc(const TruncInst *Trunc) {
     SmallVector<GetElementPtrInst *> GEPs;
     for (const Use &U : Trunc->uses()) {
-      GetElementPtrInst *GEP = getGEPIndexUser(U);
-      if (!GEP)
+      if (GetElementPtrInst *GEP = getGEPIndexUser(U)) {
+        GEPs.push_back(GEP);
+        continue;
+      }
+
+      if (!isConstantIndexShift(U, Trunc->getType()))
         return {};
-      GEPs.push_back(GEP);
+
+      const auto *Shl = cast<Instruction>(U.getUser());
+      for (const Use &ShlUse : Shl->uses()) {
+        GetElementPtrInst *GEP = getGEPIndexUser(ShlUse);
+        if (!GEP)
+          return {};
+        GEPs.push_back(GEP);
+      }
     }
     return GEPs;
   }

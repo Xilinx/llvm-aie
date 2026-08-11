@@ -15,12 +15,11 @@ define void @trunc_shl_gep(ptr %base, i32 %n) {
 ; CHECK-NEXT:  [[ENTRY:.*]]:
 ; CHECK-NEXT:    br label %[[LOOP:.*]]
 ; CHECK:       [[LOOP]]:
-; CHECK-NEXT:    [[LSR_IV2:%.*]] = phi i20 [ [[LSR_IV_NEXT2:%.*]], %[[LOOP]] ], [ 0, %[[ENTRY]] ]
+; CHECK-NEXT:    [[LSR_IV1:%.*]] = phi ptr [ [[SCEVGEP:%.*]], %[[LOOP]] ], [ [[BASE]], %[[ENTRY]] ]
 ; CHECK-NEXT:    [[LSR_IV:%.*]] = phi i32 [ [[LSR_IV_NEXT:%.*]], %[[LOOP]] ], [ [[N]], %[[ENTRY]] ]
-; CHECK-NEXT:    [[LSR_IV1:%.*]] = getelementptr inbounds i8, ptr [[BASE]], i20 [[LSR_IV2]]
 ; CHECK-NEXT:    store i8 0, ptr [[LSR_IV1]], align 1
 ; CHECK-NEXT:    [[LSR_IV_NEXT]] = add i32 [[LSR_IV]], -1
-; CHECK-NEXT:    [[LSR_IV_NEXT2]] = add i20 [[LSR_IV2]], 2
+; CHECK-NEXT:    [[SCEVGEP]] = getelementptr i8, ptr [[LSR_IV1]], i20 2
 ; CHECK-NEXT:    [[DONE:%.*]] = icmp eq i32 [[LSR_IV_NEXT]], 0
 ; CHECK-NEXT:    br i1 [[DONE]], label %[[EXIT:.*]], label %[[LOOP]]
 ; CHECK:       [[EXIT]]:
