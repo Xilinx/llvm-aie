@@ -17,8 +17,8 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2-LABEL: simple_loop:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopb ; mova r1, #0; nops ; nopxm ; nopv
-; AIE2-NEXT:    nopa ; ge r2, r1, r0
-; AIE2-NEXT:    jnz r2, #.LBB0_3
+; AIE2-NEXT:    nopa ; ge r1, r1, r0
+; AIE2-NEXT:    jnz r1, #.LBB0_3
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
@@ -27,7 +27,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2-NEXT:  // %bb.1: // %for.body.preheader
 ; AIE2-NEXT:    add.nc lc, r0, #0
 ; AIE2-NEXT:    movxm ls, #.LBB0_2
-; AIE2-NEXT:    nopb ; nopa ; nops ; movxm le, #.L_LEnd0; nopv
+; AIE2-NEXT:    nopb ; mova r1, #1; nops ; movxm le, #.L_LEnd0; nopv
 ; AIE2-NEXT:  .LBB0_2: // %for.body
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2-NEXT:    nopb ; lda r0, [p0, #0]; nops ; nopxm ; nopv
@@ -35,10 +35,9 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
 ; AIE2-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
 ; AIE2-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-; AIE2-NEXT:    nopa ; nopx
+; AIE2-NEXT:    nopa ; nopxm
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    add r0, r1, r0
-; AIE2-NEXT:    add r0, r0, #1
 ; AIE2-NEXT:  .L_LEnd0:
 ; AIE2-NEXT:    nopb ; nopa ; st r0, [p1], #4; add r1, r1, #-1; nopm ; nopv
 ; AIE2-NEXT:  .LBB0_3: // %for.cond.cleanup
@@ -52,8 +51,8 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2P-LABEL: simple_loop:
 ; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    mova r1, #0; nopb ; nops ; nopxm ; nopv
-; AIE2P-NEXT:    nopa ; ge r2, r1, r0
-; AIE2P-NEXT:    jnz r2, #.LBB0_3
+; AIE2P-NEXT:    nopa ; ge r1, r1, r0
+; AIE2P-NEXT:    jnz r1, #.LBB0_3
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
@@ -62,7 +61,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2P-NEXT:  // %bb.1: // %for.body.preheader
 ; AIE2P-NEXT:    add.nc lc, r0, #0
 ; AIE2P-NEXT:    movxm ls, #.LBB0_2
-; AIE2P-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
+; AIE2P-NEXT:    mova r1, #1; nopb ; nops ; movxm le, #.L_LEnd0; nopv
 ; AIE2P-NEXT:  .LBB0_2: // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    lda r0, [p0, #0]; nopb ; nops ; nopxm ; nopv
@@ -70,10 +69,9 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; AIE2P-NEXT:    nopa ; nopx
+; AIE2P-NEXT:    nopa ; nopxm
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    add r0, r1, r0
-; AIE2P-NEXT:    add r0, r0, #1
 ; AIE2P-NEXT:  .L_LEnd0:
 ; AIE2P-NEXT:    nopa ; nopb ; st r0, [p1], #4; add r1, r1, #-1; nopm ; nopv
 ; AIE2P-NEXT:  .LBB0_3: // %for.cond.cleanup
@@ -87,8 +85,8 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2PS-LABEL: simple_loop:
 ; AIE2PS:       // %bb.0: // %entry
 ; AIE2PS-NEXT:    mova r2, #0; nopb ; nops ; nopxm ; nopv
-; AIE2PS-NEXT:    nopa ; ge r4, r2, r0
-; AIE2PS-NEXT:    jnz r4, #.LBB0_3
+; AIE2PS-NEXT:    nopa ; ge r2, r2, r0
+; AIE2PS-NEXT:    jnz r2, #.LBB0_3
 ; AIE2PS-NEXT:    nop // Delay Slot 5
 ; AIE2PS-NEXT:    nop // Delay Slot 4
 ; AIE2PS-NEXT:    nop // Delay Slot 3
@@ -97,7 +95,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2PS-NEXT:  // %bb.1: // %for.body.preheader
 ; AIE2PS-NEXT:    add.nc lc, r0, #0
 ; AIE2PS-NEXT:    movxm ls, #.LBB0_2
-; AIE2PS-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
+; AIE2PS-NEXT:    mova r2, #1; nopb ; nops ; movxm le, #.L_LEnd0; nopv
 ; AIE2PS-NEXT:  .LBB0_2: // %for.body
 ; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2PS-NEXT:    lda r0, [p0, #0]; nopb ; nops ; nopxm ; nopv
@@ -105,10 +103,9 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; AIE2PS-NEXT:    nopa ; nopx
+; AIE2PS-NEXT:    nopa ; nopxm
 ; AIE2PS-NEXT:    nop
 ; AIE2PS-NEXT:    add r0, r2, r0
-; AIE2PS-NEXT:    add r0, r0, #1
 ; AIE2PS-NEXT:  .L_LEnd0:
 ; AIE2PS-NEXT:    nopa ; nopb ; st r0, [p1], #4; add r2, r2, #-1; nopm ; nopv
 ; AIE2PS-NEXT:  .LBB0_3: // %for.cond.cleanup
