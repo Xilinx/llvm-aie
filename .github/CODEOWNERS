@@ -11,7 +11,7 @@
 # See https://llvm.org/docs/DeveloperPolicy.html#maintainers as well as the
 # Maintainers.* files in the the respective subproject directories.
 
-* @abhinay-anubola @abnikant @andcarminati @F-Stuckmann @katerynamuts @khallouh @konstantinschwarz @mludevid @martien-de-jong @niwinanto @SagarMaheshwari99 @stephenneuendorffer
+* @abhinay-anubola @abnikant @andcarminati @F-Stuckmann @katerynamuts @khallouh @konstantinschwarz @mludevid @martien-de-jong @niwinanto @SagarMaheshwari99 @stephenneuendorffer @jorickert
 /.github/ @konstantinschwarz @philippjh
 
 /mlir/ @ehsan-toosi @ttjost @jorickert @ljfitz @mathmer-amd @gerion-amd
