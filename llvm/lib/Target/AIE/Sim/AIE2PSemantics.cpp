@@ -2719,6 +2719,26 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   }
 
+  // aie2p spells as four opcodes what AIE2 spelled as one over a 2-bit operand,
+  // so the event number lives in the opcode. Two independent sources fix which
+  // is which: the ISel patterns select these from (i32 0)..(i32 3), and the
+  // encodings differ only in the top two bits of alu, 0b00..0b11, in the same
+  // order.
+  //
+  // The intrinsic is IntrHasSideEffects + IntrNoMem, which is the whole of the
+  // semantics: nothing to write, nothing to read, and no way to fail.
+  case AIE2P::EVENT_event0:
+  case AIE2P::EVENT_event1:
+  case AIE2P::EVENT_WARNING:
+  case AIE2P::EVENT_ERROR: {
+    const unsigned Id = Opc == AIE2P::EVENT_event0    ? 0
+                        : Opc == AIE2P::EVENT_event1  ? 1
+                        : Opc == AIE2P::EVENT_WARNING ? 2
+                                                      : 3;
+    Host.raiseEvent(Id);
+    break;
+  }
+
   // (dst)(src): a whole-register move. Width from the class, which is what
   // lets one body serve every arm -- the w form moves 256 bits, the cm form
   // 1024 and vmov.d 2048, and none of them is a special case of another.

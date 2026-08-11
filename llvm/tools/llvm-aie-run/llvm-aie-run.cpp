@@ -110,6 +110,8 @@ public:
 
   void putChar(char C) override { outs() << C; }
 
+  void raiseEvent(unsigned Id) override { outs() << "event " << Id << "\n"; }
+
   ArrayRef<uint8_t> range(uint64_t Addr, uint64_t Size) const {
     if (Addr + Size > Bytes.size())
       return {};
