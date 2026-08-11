@@ -1289,6 +1289,45 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vinsert.N (dst)(s1, [idx,] src): s1 with the lane at idx replaced, which
+  // makes it vextract's inverse and gives each one an oracle for the other.
+  //
+  // Which operand is the index and which the value is not readable off the asm
+  // string -- it spells them in the same order either way -- so it comes from
+  // the pattern. AIEBaseInstrPatterns.td's Insert512Pat rewrites the generic
+  // (vinsert $src1, Val, Idx) to (Inst $src1, Idx, Val), so the LAST operand
+  // is the value and the middle one the index. That vinsert node is declared
+  // SDTCisSameAs<0,1> against $src1, which is the other half of the semantics:
+  // every lane the index does not name is s1's, unchanged.
+  //
+  // \p IdxIdx is -1 on the mIdxImm0 form, whose lane is 0 by construction and
+  // not by default -- Insert512Imm0Pat matches a literal 0 and drops the index
+  // operand, so the encoding has nowhere to put another lane.
+  auto vinsert = [&](unsigned ElemBits, int IdxIdx,
+                     unsigned SrcIdx) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const unsigned Lanes = W / ElemBits;
+    const uint64_t I = IdxIdx < 0 ? 0 : Op.val(unsigned(IdxIdx));
+    const APInt V = Op.valN(1, W);
+    const APInt E = Op.valN(SrcIdx, ElemBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    // Out of range faults rather than wrapping, the same stance vextract takes
+    // and for the same reason: r29 holds a whole word here too.
+    if (I >= Lanes)
+      return fault(Name + ": lane " + Twine(I) + " is outside the " +
+                   Twine(Lanes) + " this destination holds");
+    APInt Out = V;
+    Out.insertBits(E, unsigned(I) * ElemBits);
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vextbcst.N (mXm)(s1, idx): the lane at idx repeated across the whole
   // destination -- vextract's lane select feeding vbcst's splat, in one
   // instruction and without the trip through a scalar register.
@@ -2556,6 +2595,17 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VEXTRACT_64_vec_extract_imm_vaddSign1:
   case AIE2P::VEXTRACT_64_vec_extract_r_vaddSign1:
     R = vextract(64, /*Signed=*/true);
+    break;
+
+  // Only the .32 pair: the corpus issues both of its forms and none of the
+  // other widths, and unlike a lane-count change the .64 form takes its value
+  // from an eL PAIR, which is a different operand shape rather than the same
+  // one at another size.
+  case AIE2P::VINSERT_32_mIdxImm0:
+    R = vinsert(32, /*IdxIdx=*/-1, /*SrcIdx=*/2);
+    break;
+  case AIE2P::VINSERT_32_mR29_insert:
+    R = vinsert(32, /*IdxIdx=*/2, /*SrcIdx=*/3);
     break;
 
   // Both index forms per width, as on vextract.
