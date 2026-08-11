@@ -88,14 +88,32 @@ private:
     return GEP && U.getOperandNo() != 0 ? GEP : nullptr;
   }
 
+  static bool isConstantIndexShift(const Use &U, Type *IndexTy) {
+    const auto *Shl = dyn_cast<BinaryOperator>(U.getUser());
+    if (!Shl || Shl->getOpcode() != Instruction::Shl || U.getOperandNo() != 0 ||
+        Shl->getType() != IndexTy)
+      return false;
+
+    const auto *ShiftAmount = dyn_cast<ConstantInt>(Shl->getOperand(1));
+    return ShiftAmount &&
+           ShiftAmount->getValue().ult(IndexTy->getIntegerBitWidth());
+  }
+
   static SmallVector<GetElementPtrInst *>
   collectGEPIndicesThroughTrunc(const TruncInst *Trunc) {
     SmallVector<GetElementPtrInst *> GEPs;
-    for (const Use &U : Trunc->uses()) {
-      GetElementPtrInst *GEP = getGEPIndexUser(U);
-      if (!GEP)
+    SmallVector<const Use *> Worklist(make_pointer_range(Trunc->uses()));
+    // Indexed, so shifted uses are appended and visited in discovery order.
+    for (unsigned I = 0; I != Worklist.size(); ++I) {
+      const Use &U = *Worklist[I];
+      if (GetElementPtrInst *GEP = getGEPIndexUser(U)) {
+        GEPs.push_back(GEP);
+        continue;
+      }
+      if (!isConstantIndexShift(U, Trunc->getType()))
         return {};
-      GEPs.push_back(GEP);
+      append_range(Worklist,
+                   make_pointer_range(cast<Instruction>(U.getUser())->uses()));
     }
     return GEPs;
   }
