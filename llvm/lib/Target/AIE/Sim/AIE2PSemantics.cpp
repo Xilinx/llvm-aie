@@ -2464,13 +2464,20 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   }
 
-  // (d)(s1, s2) across the whole register. These two are the only elementwise
-  // vector ALU ops AIE2P spells without the MAC datapath -- an elementwise add
-  // goes through vaddmac and an accumulator -- so they are what a vector
-  // datapath can be checked with before accumulators are modelled. There is no
-  // vbxor on this subtarget.
-  // (dst)(src): a whole-register vector move. Width from the class, so the
-  // w form's 256 bits and any wider sibling need no separate arm.
+  // (dst)(src): a whole-register move. Width from the class, which is what
+  // lets one body serve every arm -- the w form moves 256 bits, the cm form
+  // 1024 and vmov.d 2048, and none of them is a special case of another.
+  //
+  // The class width is also the whole of the accumulator semantics here. cm
+  // and dm are not separate files: dm0 IS [cml0, cmh0], so a vmov naming cml0
+  // has to leave cmh0 alone, and it does because it writes exactly the 1024
+  // bits its class declares. Getting that wrong is invisible until something
+  // reads the other half.
+  //
+  // The mcd and scd forms are deliberately absent: they move a register to or
+  // from the cascade stream, and this model has no stream to move it to.
+  case AIE2P::VMOV_D:
+  case AIE2P::VMOV_alu_mv_mv_cm:
   case AIE2P::VMOV_alu_mv_mv_w: {
     const MCRegister Dst = Op.reg(0);
     const unsigned W = State.Regs.getClassWidth(Dst);
@@ -2643,6 +2650,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     R = vpushHi(64);
     break;
 
+  // (d)(s1, s2) across the whole register. These two are the only elementwise
+  // vector ALU ops AIE2P spells without the MAC datapath -- an elementwise add
+  // goes through vaddmac and an accumulator -- so they are what a vector
+  // datapath can be checked with before accumulators are modelled. There is no
+  // vbxor on this subtarget.
   case AIE2P::VBAND:
   case AIE2P::VBOR: {
     const MCRegister Dst = Op.reg(0);
