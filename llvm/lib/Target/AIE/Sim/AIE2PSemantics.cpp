@@ -1170,6 +1170,86 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vadd.N / vsub.N (d)(s1, s2): lane-wise, wrapping, and sign-agnostic.
+  //
+  // Both of those are read off the defs rather than assumed. These carry no
+  // Uses, where vsub_lt/vsub_ge two entries below them in the same file take
+  // crVaddSign and vpack above them takes crSat -- so there is no register
+  // whose state could make them saturate or split by sign. And
+  // AIE2InstrPatterns.td selects them for plain ISD::ADD/ISD::SUB on v64i8,
+  // v32i16 and v16i32, which are modular two's complement; a saturating
+  // datapath could not be the pattern for those nodes.
+  //
+  // Sign-agnostic is what makes one arm per width enough: wrapping add and
+  // subtract are the same bit pattern signed or unsigned, which is why this
+  // family has no vaddSign pair where the min/max family above it does.
+  auto addSub = [&](unsigned ElemBits, bool IsSub) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const unsigned Lanes = W / ElemBits;
+    const APInt S1 = Op.valN(1, W);
+    const APInt S2 = Op.valN(2, W);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    APInt Out(W, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      const APInt A = S1.extractBits(ElemBits, I * ElemBits);
+      const APInt B = S2.extractBits(ElemBits, I * ElemBits);
+      Out.insertBits(IsSub ? A - B : A + B, I * ElemBits);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
+  // vsel.N (d)(s1, s2, sel): one bit of \p sel per lane picks that lane's
+  // source. Set takes s2, clear takes s1.
+  //
+  // That polarity is the compiler's, not a reading of the mnemonic.
+  // AIE2InstrPatterns.td lowers a vector (select cond, $rs2, $rs3) to
+  // VSEL_32($rs2, $rs3, cond - 1) with cond zero-extended from one bit: a true
+  // cond makes sel 0 and must yield $rs2, the FIRST source, and a false cond
+  // makes sel all ones and must yield $rs3.
+  //
+  // Bit I is lane I, which the min/max family above already writes -- the
+  // compare masks it produces land in the same eL / eRS8 classes vsel consumes
+  // here, at the same lane counts, and mean the same thing: this lane came
+  // from s2. So a vmax_lt mask fed straight back into vsel reproduces the max.
+  auto vsel = [&](unsigned ElemBits) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const MCRegister Sel = Op.reg(3);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const unsigned Lanes = W / ElemBits;
+    const unsigned SelBits = State.Regs.getClassWidth(Sel);
+    if (SelBits < Lanes)
+      return fault(Name + ": " + MRI.getName(Sel) + " holds " + Twine(SelBits) +
+                   " bits, too few for " + Twine(Lanes) + " lanes");
+    const APInt S1 = Op.valN(1, W);
+    const APInt S2 = Op.valN(2, W);
+    const APInt M = Op.valN(3, SelBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    // Bits of sel above the lane count are ignored rather than faulted on: the
+    // .32 form has 16 of them in a 32-bit r16, and its natural producer --
+    // vmax_lt.32 -- leaves exactly those zeroed, so a fault there would reject
+    // the pairing the two instructions exist for.
+    APInt Out(W, 0);
+    for (unsigned I = 0; I != Lanes; ++I)
+      Out.insertBits((M[I] ? S2 : S1).extractBits(ElemBits, I * ElemBits),
+                     I * ElemBits);
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vextract.N (dst)(s1, idx): one lane into a scalar register, widened.
   //
   // The vaddSign suffix means here what it means on the min/max family, and
@@ -2407,6 +2487,38 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   case AIE2P::VMIN_GE_bf16:
     R = minMax(16, /*IsMax=*/false, /*Signed=*/true, /*IsFloat=*/true);
+    break;
+
+  // The three widths go in together for the same reason the min/max family
+  // does; the corpus issues vadd.32, vsub.16 and vsub.32, and the rest differ
+  // only in the lane count.
+  case AIE2P::VADD_8:
+    R = addSub(8, /*IsSub=*/false);
+    break;
+  case AIE2P::VADD_16:
+    R = addSub(16, /*IsSub=*/false);
+    break;
+  case AIE2P::VADD_32:
+    R = addSub(32, /*IsSub=*/false);
+    break;
+  case AIE2P::VSUB_8:
+    R = addSub(8, /*IsSub=*/true);
+    break;
+  case AIE2P::VSUB_16:
+    R = addSub(16, /*IsSub=*/true);
+    break;
+  case AIE2P::VSUB_32:
+    R = addSub(32, /*IsSub=*/true);
+    break;
+
+  case AIE2P::VSEL_8:
+    R = vsel(8);
+    break;
+  case AIE2P::VSEL_16:
+    R = vsel(16);
+    break;
+  case AIE2P::VSEL_32:
+    R = vsel(32);
     break;
 
   // Both index forms per width and both signs: the imm and register forms
