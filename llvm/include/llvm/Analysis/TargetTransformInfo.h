@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This pass exposes codegen information to IR-level passes. Every
@@ -65,6 +68,7 @@ class SmallBitVector;
 class StoreInst;
 class SwitchInst;
 class TargetLibraryInfo;
+class GetElementPtrInst;
 class Type;
 class VPIntrinsic;
 struct KnownBits;
@@ -807,6 +811,17 @@ public:
   /// Return the preferred addressing mode LSR should make efforts to generate.
   LLVM_ABI AddressingModeKind
   getPreferredAddressingMode(const Loop *L, ScalarEvolution *SE) const;
+
+  /// Return the GEP users that IVUsers should collect instead of \p I, e.g.
+  /// when \p I is a truncation to index size feeding GEP indices in \p L. An
+  /// empty result means \p I is processed normally.
+  SmallVector<GetElementPtrInst *>
+  getIVUsersLookThroughCandidates(Instruction *I, const Loop *L) const;
+
+  /// Return true if \p Ty is a valid type for an IV user. LSR is not APInt
+  /// clean and avoids non-native IV types; targets can widen the valid set,
+  /// e.g. to pointer index widths that are not legal integer widths.
+  bool isValidIVUserType(Type *Ty) const;
 
   /// Return true if the target supports masked store.
   LLVM_ABI bool isLegalMaskedStore(Type *DataType, Align Alignment,
