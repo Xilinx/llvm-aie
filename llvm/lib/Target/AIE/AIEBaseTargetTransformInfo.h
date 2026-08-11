@@ -118,6 +118,11 @@ private:
     return GEPs;
   }
 
+  bool isLegalPostIncIndex(TTI::MemIndexedMode Mode, Type *Ty) const {
+    return Mode == TTI::MIM_PostInc &&
+           isIndexSizedInteger(Ty, BaseT::getDataLayout());
+  }
+
 protected:
   explicit AIEBaseTTIImpl(const TargetMachine *TM, const DataLayout &DL,
                           const AIESubtarget *Subtarget)
@@ -256,6 +261,28 @@ public:
     if (!Trunc)
       return {};
     return collectGEPIndicesThroughTrunc(Trunc);
+  }
+
+  TTI::AddressingModeKind
+  getPreferredAddressingMode(const Loop *L,
+                             ScalarEvolution *SE) const override {
+    return TTI::AMK_PostIndexed;
+  }
+
+  bool isIndexedLoadLegal(TTI::MemIndexedMode Mode, Type *Ty) const override {
+    return isLegalPostIncIndex(Mode, Ty);
+  }
+
+  bool isIndexedStoreLegal(TTI::MemIndexedMode Mode, Type *Ty) const override {
+    return isLegalPostIncIndex(Mode, Ty);
+  }
+
+  bool isLSRCostLess(const TTI::LSRCost &C1,
+                     const TTI::LSRCost &C2) const override {
+    return std::tie(C1.NumRegs, C1.Insns, C1.NumBaseAdds, C1.AddRecCost,
+                    C1.NumIVMuls, C1.ScaleCost, C1.ImmCost, C1.SetupCost) <
+           std::tie(C2.NumRegs, C2.Insns, C2.NumBaseAdds, C2.AddRecCost,
+                    C2.NumIVMuls, C2.ScaleCost, C2.ImmCost, C2.SetupCost);
   }
 };
 
