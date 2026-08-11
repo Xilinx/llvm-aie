@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE2InstrInfo.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "AIECombiners.h"
 #include "AIELegalizerHelper.h"

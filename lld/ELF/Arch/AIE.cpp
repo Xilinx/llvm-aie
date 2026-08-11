@@ -55,6 +55,8 @@ AIE::AIE(Ctx &ctx) : TargetInfo(ctx) {
   // FIXME: How do we represent this?
   // noneRel = R_AIE_NONE;
 
+  // AIE link scripts and linker tests use address zero by default.
+  defaultImageBase = 0;
   symbolicRel = -1;
   nopInstrs = nopInstructions;
 }

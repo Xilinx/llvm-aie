@@ -24,7 +24,8 @@ tablegen(LLVM AIEGenRegisterInfo.inc -gen-register-info -base-registerinfo-class
 tablegen(LLVM AIEGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 #tablegen(LLVM AIEGenSystemOperands.inc -gen-searchable-tables)
 #aie2
-set(LLVM_TARGET_DEFINITIONS AIE2.td)
+set(LLVM_TARGET_DEFINITIONS aie2/AIE2.td)
+list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2")
 tablegen(LLVM AIE2GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2GenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2GenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
@@ -49,9 +50,10 @@ tablegen(LLVM AIE2GenRegisterBank.inc -gen-register-bank -base-register-bank-cla
 tablegen(LLVM AIE2GenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2GenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget --warn-on-skipped-patterns)
+list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2")
 
 #aie2p
-set(LLVM_TARGET_DEFINITIONS AIE2P.td)
+set(LLVM_TARGET_DEFINITIONS aie2p/AIE2P.td)
 list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 tablegen(LLVM AIE2PGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
@@ -77,7 +79,7 @@ tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitte
 list(REMOVE_ITEM LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2p")
 
 # aie2ps
-set(LLVM_TARGET_DEFINITIONS AIE2PS.td)
+set(LLVM_TARGET_DEFINITIONS aie2ps/AIE2PS.td)
 # Add aie2ps/ to the tablegen include search path (see aie2p comment above).
 list(APPEND LLVM_TABLEGEN_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/aie2ps")
 tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
@@ -162,24 +164,24 @@ add_llvm_target(AIECodeGen
    AIESuperRegRewriter.cpp
    AIESuperRegUtils.cpp
    AIETargetObjectFile.cpp
-   AIE2AsmPrinter.cpp
-   AIE2FrameLowering.cpp
-   AIE2InstrInfo.cpp
-   AIE2InstructionSelector.cpp
-   AIE2ISelLowering.cpp
-   AIE2LegalizerInfo.cpp
-   AIE2PostLegalizerCustomCombiner.cpp
-   AIE2PostLegalizerGenericCombiner.cpp
-   AIE2PreLegalizerCombiner.cpp
+   aie2/AIE2AsmPrinter.cpp
+   aie2/AIE2FrameLowering.cpp
+   aie2/AIE2InstrInfo.cpp
+   aie2/AIE2InstructionSelector.cpp
+   aie2/AIE2ISelLowering.cpp
+   aie2/AIE2LegalizerInfo.cpp
+   aie2/AIE2PostLegalizerCustomCombiner.cpp
+   aie2/AIE2PostLegalizerGenericCombiner.cpp
+   aie2/AIE2PreLegalizerCombiner.cpp
    AIEPostLegalizerCustomCombiner.cpp
    AIEPostLegalizerGenericCombiner.cpp
    AIEPostLegalizerFinalCombiner.cpp
    AIEPreLegalizerCombiner.cpp
-   AIE2RegisterBankInfo.cpp
-   AIE2RegisterInfo.cpp
-   AIE2Subtarget.cpp
-   AIE2TargetMachine.cpp
-   AIE2TargetTransformInfo.cpp
+   aie2/AIE2RegisterBankInfo.cpp
+   aie2/AIE2RegisterInfo.cpp
+   aie2/AIE2Subtarget.cpp
+   aie2/AIE2TargetMachine.cpp
+   aie2/AIE2TargetTransformInfo.cpp
    AIETiedRegOperands.cpp
    AIEUnallocatedSuperRegRewriter.cpp
    ReservedRegsLICM.cpp

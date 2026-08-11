@@ -148,18 +148,7 @@ bool AIEAsmParser::parseIdentifier(OperandVector &Operands) {
   return false;
 }
 
-void LLVMInitializeAIE1AsmParser() {
+// Register the AIE (AIE1) asm parser; called from LLVMInitializeAIEAsmParser.
+void initializeAIE1AsmParser() {
   RegisterMCAsmParser<AIEAsmParser> X(getTheAIETarget());
-}
-
-void LLVMInitializeAIE2AsmParser();
-void LLVMInitializeAIE2PAsmParser();
-void LLVMInitializeAIE2PSAsmParser();
-
-// Register hook for all the AIE AsmParsers
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmParser() {
-  LLVMInitializeAIE1AsmParser();
-  LLVMInitializeAIE2AsmParser();
-  LLVMInitializeAIE2PAsmParser();
-  LLVMInitializeAIE2PSAsmParser();
 }

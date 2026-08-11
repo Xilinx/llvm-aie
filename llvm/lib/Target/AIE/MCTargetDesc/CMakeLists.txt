@@ -20,6 +20,7 @@ add_llvm_component_library(LLVMAIEDesc
   AIEMCInstrInfo.cpp
   AIEMCTargetDesc.cpp
   AIETargetAsmStreamer.cpp
+  AIEMCELFStreamer.cpp
   AIETargetELFStreamer.cpp
   AIE2MCFixupKinds.cpp
   AIE2MCFormats.cpp

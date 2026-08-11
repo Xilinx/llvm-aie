@@ -19,7 +19,7 @@
 #include "AIE2PSISelLowering.h"
 #include "AIE2PSInstrInfo.h"
 #include "AIE2PSRegisterInfo.h"
-#include "AIE2Subtarget.h"
+#include "aie2/AIE2Subtarget.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"

@@ -247,8 +247,8 @@ endif()
 add_subdirectory(cmake/modules)
 
 add_custom_target(check-lld-aie)
-if(EXISTS check-lld-elf-aie)
-  add_dependencies(check-lld-aie 
+if(TARGET check-lld-elf-aie)
+  add_dependencies(check-lld-aie
     check-lld-elf-aie
   )
 endif()

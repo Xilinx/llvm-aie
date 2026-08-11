@@ -7,10 +7,10 @@
 // (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-#include "AIE2.h"
-#include "AIE2InstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "MCTargetDesc/AIEFormat.h"
+#include "aie2/AIE2.h"
+#include "aie2/AIE2InstrInfo.h"
 #include "llvm/CodeGen/MIRParser/MIRParser.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -959,9 +959,9 @@ std::unique_ptr<TargetMachine> createAIE2TargetMachine() {
   const Target *TheTarget = TargetRegistry::lookupTarget(TT, Error);
   if (!TheTarget)
     return nullptr;
-  return std::unique_ptr<TargetMachine>(static_cast<TargetMachine *>(
-      TheTarget->createTargetMachine(TT, "", "", TargetOptions(), std::nullopt,
-                                     std::nullopt, CodeGenOptLevel::Default)));
+  return std::unique_ptr<TargetMachine>(TheTarget->createTargetMachine(
+      Triple(TT), "", "", TargetOptions(), std::nullopt, std::nullopt,
+      CodeGenOptLevel::Default));
 }
 
 class GetMemoryObjectsBitsTest : public testing::Test {

@@ -37,22 +37,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
-void AIEBaseAsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
-  // This searches for SymbolRefs in sub-instruction operands to register them
-  // as used symbols. This mimics the base MCStreamer::emitInstruction
-  for (const auto &MO : Inst) {
-    if (MO.isInst()) {
-      const MCInst &SI = *MO.getInst();
-      for (const auto &SMO : SI) {
-        if (SMO.isExpr()) {
-          S.visitUsedExpr(*SMO.getExpr());
-        }
-      }
-    }
-  }
-  AsmPrinter::EmitToStreamer(S, Inst);
-}
-
 void AIEBaseAsmPrinter::emitFunctionBodyStart() {
   // AIEBaseAsmPrinter lives for the whole Module, clear out data from the
   // previous function.
@@ -301,4 +285,13 @@ void AIEBaseAsmPrinter::emitXXStructorList(const DataLayout &DL,
   for (Structor &S : Structors) {
     emitXXStructor(DL, S.Func);
   }
+}
+
+void initializeAIE1AsmPrinter();
+void initializeAIE2AsmPrinters();
+
+// Force static initialization of all AIE sub-target asm printers.
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmPrinter() {
+  initializeAIE1AsmPrinter();
+  initializeAIE2AsmPrinters();
 }
