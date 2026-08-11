@@ -1206,6 +1206,85 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vadd/vsub (dst)(acc1, acc2, conf) over a whole accumulator, and the .f
+  // arms of the same. No multiply happens, so the conf's amode is the only
+  // field that shapes the result: it names the accumulator lane width.
+  //
+  // bmode and cmode are deliberately NOT gated on. AIE2PInstrPatterns.td sets
+  // cmode on accfp32_vecconf saying it "should be irrelevant for an
+  // addition/substraction" and is there only "to silence our tools (e.g.
+  // simulator)" -- which makes accfp32_vecconf and mulbf16_vecconf the same
+  // 0x3c word. Demanding a multiply shape here would be reading padding as
+  // meaning.
+  //
+  // The integer arms carry no Uses at all, where the vsub_lt neighbour takes
+  // crVaddSign and vpack takes crSat, so they wrap and no lane sign reaches
+  // them. The .f arms carry Uses = [crFPMask] and no crRnd, the vmac.f
+  // situation: the mode is not selectable, and an f32 sum is ordinarily inexact
+  // so this does not check for exactness the way the bf16 multiply does.
+  //
+  // dynZeroAccum is not merely unmodelled but unresolvable from the record:
+  // "the first accumulator input to the post-adder" does not say whether that
+  // is acc1 or acc2, and for a subtract the two answers differ in sign.
+  auto accAddSub = [&](bool IsSub, bool IsFloat) -> StepResult {
+    const uint32_t Conf = Op.val(3);
+    if (!Op.Ok)
+      return fault(Name + ": conf is not readable");
+    // dynZeroAccum, accShift, dynMulNeg, dynAcc0Neg, dynAcc1Neg.
+    const uint32_t Rewrites =
+        (1u << 0) | (1u << 10) | (1u << 11) | (1u << 12) | (1u << 13);
+    if (Conf & Rewrites)
+      return fault(Name + ": conf " + Twine::utohexstr(Conf) +
+                   " asks for a zero-accumulate, an accumulator shift or a "
+                   "negation, and none of those is modelled");
+
+    const unsigned AMode = (Conf >> 1) & 3;
+    unsigned ElemBits = 0;
+    if (IsFloat) {
+      if (AMode != 2)
+        return fault(Name + ": conf amode=" + Twine(AMode) +
+                     " is not AMODE_FP32 on a float accumulator add");
+      ElemBits = 32;
+    } else if (AMode == 0) {
+      ElemBits = 32;
+    } else if (AMode == 1) {
+      ElemBits = 64;
+    } else {
+      return fault(Name + ": conf amode=" + Twine(AMode) +
+                   " is not an integer accumulator width");
+    }
+
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W || W % ElemBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(W) +
+                   " bits, not a whole number of " + Twine(ElemBits) +
+                   "-bit lanes");
+    const APInt S1 = Op.valN(1, W);
+    const APInt S2 = Op.valN(2, W);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    APInt Out(W, 0);
+    for (unsigned I = 0; I != W / ElemBits; ++I) {
+      const APInt A = S1.extractBits(ElemBits, I * ElemBits);
+      const APInt B = S2.extractBits(ElemBits, I * ElemBits);
+      if (!IsFloat) {
+        Out.insertBits(IsSub ? A - B : A + B, I * ElemBits);
+        continue;
+      }
+      APFloat FA(APFloat::IEEEsingle(), A);
+      APFloat FB(APFloat::IEEEsingle(), B);
+      if (IsSub)
+        FA.subtract(FB, APFloat::rmNearestTiesToEven);
+      else
+        FA.add(FB, APFloat::rmNearestTiesToEven);
+      Out.insertBits(FA.bitcastToAPInt(), I * ElemBits);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vsel.N (d)(s1, s2, sel): one bit of \p sel per lane picks that lane's
   // source. Set takes s2, clear takes s1.
   //
@@ -2555,6 +2634,19 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   case AIE2P::VSUB_32:
     R = addSub(32, /*IsSub=*/true);
+    break;
+
+  case AIE2P::VADD_vmac_cm2_add_reg:
+    R = accAddSub(/*IsSub=*/false, /*IsFloat=*/false);
+    break;
+  case AIE2P::VSUB_vmac_cm2_add_reg:
+    R = accAddSub(/*IsSub=*/true, /*IsFloat=*/false);
+    break;
+  case AIE2P::VADD_f_vmac_cm2_add_reg:
+    R = accAddSub(/*IsSub=*/false, /*IsFloat=*/true);
+    break;
+  case AIE2P::VSUB_f_vmac_cm2_add_reg:
+    R = accAddSub(/*IsSub=*/true, /*IsFloat=*/true);
     break;
 
   case AIE2P::VSEL_8:
