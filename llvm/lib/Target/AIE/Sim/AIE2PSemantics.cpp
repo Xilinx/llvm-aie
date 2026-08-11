@@ -1329,6 +1329,67 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vshuffle (dst)(s1, s2, mod): read the 1024-bit pair (s1 low, s2 high) as a
+  // row-major R x C matrix of W-bit elements, transpose it, and write one
+  // 512-bit half. The mode NAMES the shape -- aie2p_enums.h spells all three
+  // parts as T<W>_<R>x<C>_<lo|hi> -- and for the twelve _lo/_hi pairs below
+  // R * C is exactly 1024 / W, so the matrix tiles the pair with nothing over.
+  //
+  // Element order is pinned by two statements rather than chosen. AIELegalizer-
+  // Helper says mode 8 "maps first 128-bits of src1 vector to lsb positions of
+  // output" and mode 9 the second: with row-major indices read out
+  // column-major, T128_4x2_lo does put element 0 lowest and _hi element 1.
+  // Independently, T512_1x2 is aie_api's bypass mode, which forces lo == s1 and
+  // hi == s2, and it does. Across all twelve pairs lo and hi together are a
+  // permutation of the pair, so no element is dropped or doubled.
+  //
+  // Modes 24..55 -- the NL, FFT/sparsity and permute-reduction shapes -- are
+  // NOT extrapolated from this. Their names carry an R x C that does not tile
+  // the pair (T16_4x4 is 16 elements where the pair holds 64), so they are a
+  // different construction, and they fault carrying the mode number.
+  auto vshuffle = [&]() -> StepResult {
+    struct Shape {
+      unsigned W, R, C;
+    };
+    static const Shape Shapes[] = {
+        {8, 64, 2},  {16, 32, 2}, {32, 16, 2}, {64, 8, 2},
+        {128, 4, 2}, {256, 2, 2}, {128, 2, 4}, {64, 2, 8},
+        {32, 2, 16}, {16, 2, 32}, {8, 2, 64},  {512, 1, 2},
+    };
+    const uint32_t Mode = Op.val(3);
+    if (!Op.Ok)
+      return fault(Name + ": mode is not readable");
+    if (Mode >= 2 * std::size(Shapes))
+      return fault(Name + ": mode " + Twine(Mode) +
+                   " is not one of the transpose shapes this models (0..23)");
+    const Shape &S = Shapes[Mode / 2];
+    const bool Hi = Mode & 1;
+
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    if (DstBits != 512 || SrcBits != 512)
+      return fault(Name + ": " + Twine(SrcBits) + " source bits into " +
+                   Twine(DstBits) + " is not the 512-bit shuffle this models");
+    const APInt A = Op.valN(1, 512);
+    const APInt B = Op.valN(2, 512);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    APInt Pair(1024, 0);
+    Pair.insertBits(A, 0);
+    Pair.insertBits(B, 512);
+
+    const unsigned N = S.R * S.C;
+    APInt Out(512, 0);
+    for (unsigned J = 0; J != N / 2; ++J) {
+      const unsigned Pos = Hi ? J + N / 2 : J;
+      const unsigned Src = (Pos % S.R) * S.C + Pos / S.R;
+      Out.insertBits(Pair.extractBits(S.W, Src * S.W), J * S.W);
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vextract.N (dst)(s1, idx): one lane into a scalar register, widened.
   //
   // The vaddSign suffix means here what it means on the min/max family, and
@@ -2647,6 +2708,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   case AIE2P::VSUB_f_vmac_cm2_add_reg:
     R = accAddSub(/*IsSub=*/true, /*IsFloat=*/true);
+    break;
+
+  case AIE2P::VSHUFFLE_vec_shuffle_x:
+  case AIE2P::VSHUFFLE_vec_shuffle_bm:
+    R = vshuffle();
     break;
 
   case AIE2P::VSEL_8:
