@@ -71,7 +71,14 @@ public:
     return PortStatus::Fault;
   }
 
+  /// Observation side-channels. These default to a no-op rather than a fault
+  /// because nothing in the datapath can read them back: a design that reaches
+  /// one with no sink attached still computes the same result.
   virtual void putChar(char C) {}
+
+  /// Raise trace event \p Id, 0..3. The core cannot block on this and cannot
+  /// observe whether anything was listening.
+  virtual void raiseEvent(unsigned Id) {}
 };
 
 } // namespace AIESim
