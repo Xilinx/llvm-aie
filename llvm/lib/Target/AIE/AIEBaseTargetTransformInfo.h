@@ -83,6 +83,23 @@ private:
            Ty->getIntegerBitWidth() == DL.getIndexSizeInBits(0);
   }
 
+  static GetElementPtrInst *getGEPIndexUser(const Use &U) {
+    auto *GEP = dyn_cast<GetElementPtrInst>(U.getUser());
+    return GEP && U.getOperandNo() != 0 ? GEP : nullptr;
+  }
+
+  static SmallVector<GetElementPtrInst *>
+  collectGEPIndicesThroughTrunc(const TruncInst *Trunc) {
+    SmallVector<GetElementPtrInst *> GEPs;
+    for (const Use &U : Trunc->uses()) {
+      GetElementPtrInst *GEP = getGEPIndexUser(U);
+      if (!GEP)
+        return {};
+      GEPs.push_back(GEP);
+    }
+    return GEPs;
+  }
+
 protected:
   explicit AIEBaseTTIImpl(const TargetMachine *TM, const DataLayout &DL,
                           const AIESubtarget *Subtarget)
@@ -212,6 +229,15 @@ public:
   bool isValidIVUserType(Type *Ty) const override {
     return BaseT::isValidIVUserType(Ty) ||
            isIndexSizedInteger(Ty, BaseT::getDataLayout());
+  }
+
+  SmallVector<GetElementPtrInst *>
+  getIVUsersLookThroughCandidates(Instruction *I,
+                                  const Loop *L) const override {
+    auto *Trunc = dyn_cast<TruncInst>(I);
+    if (!Trunc)
+      return {};
+    return collectGEPIndicesThroughTrunc(Trunc);
   }
 };
 
