@@ -642,6 +642,19 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // wrappers it is 8-bit only for bmode 1 and 16-bit only for bmode 3, but
   // spans two widths for 0 and 2. The width comes from the shape plus the
   // operand register class.
+  //
+  // sub0/sub1 are two more negations, orthogonal to the opcode's own. aie_api
+  // establishes both, in the same expression that derives the already-modelled
+  // zero_acc (aie.hpp, the Acc_Add arm): zero_acc, sub_acc and sub_mul are set
+  // from Operation::Zero and Operation::Neg carried by the accumulator and by
+  // the source operands respectively. So sub0 negates the PRODUCT
+  // (aie::mul(-v1, v2)) and sub1 negates the ACCUMULATOR INPUT
+  // (aie::mac(-acc, v1, v2)) -- per term, not around the sum.
+  //
+  // eval_sub_mul cross-checks sub0 independently: with BOTH operands negated it
+  // returns their XOR, which is only correct if the bit negates the product
+  // exactly once. And negating each of the K products is the same value as
+  // negating their sum, so the matmul arm has no ordering question either.
   auto mac = [&](unsigned S1Idx, unsigned S2Idx, unsigned ConfIdx,
                  int AccIdx) -> StepResult {
     const uint32_t Conf = Op.val(ConfIdx);
@@ -651,6 +664,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const bool ZeroAcc = Conf & 1;
     const bool SgnY = (Conf >> 8) & 1;
     const bool SgnX = (Conf >> 9) & 1;
+    const bool SubMul = (Conf >> 11) & 1;
+    const bool SubAcc = (Conf >> 12) & 1;
+    if (!Op.Ok)
+      return fault(Name + ": conf is not readable");
+    // The three bits left over each change the arithmetic and NONE of them is
+    // established by a source in this tree. shift16 (bit 10) is exposed by 2058
+    // wrappers and aie_api hardcodes it to 0 on every path, so nothing says
+    // what it shifts. sub2 (bit 13) is only exposed by the wrappers taking a
+    // SECOND accumulator, which this lambda does not model. sub_mask (bit 16)
+    // appears in aie2p_compute_control's signature and in no caller at all.
+    // A name is not a specification -- fault rather than infer one.
+    if (const uint32_t Unmodelled = Conf & 0x12400)
+      return fault(Name + ": conf carries shift16/sub2/sub_mask bits " +
+                   Twine::utohexstr(Unmodelled) +
+                   " which change the arithmetic and are not modelled");
 
     // Every shape is a matrix product C[MxN] = A[MxK] * B[KxN]; elementwise is
     // just K = 1. The name states M, K and N -- `8x8_8x8` is M=8 K=8 N=8 --
@@ -725,7 +753,10 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     if (Hadamard) {
       for (unsigned I = 0; I != M; ++I) {
         APInt Sum = Prev.extractBits(AccLaneBits, I * AccLaneBits);
-        Sum += elem(A, I, ABits, SgnX) * elem(B, I, BBits, SgnY);
+        if (SubAcc)
+          Sum = -Sum;
+        APInt Prod = elem(A, I, ABits, SgnX) * elem(B, I, BBits, SgnY);
+        Sum += SubMul ? -Prod : Prod;
         Out.insertBits(Sum, I * AccLaneBits);
       }
     } else {
@@ -734,9 +765,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       for (unsigned I = 0; I != M; ++I)
         for (unsigned J = 0; J != N; ++J) {
           APInt Sum = Prev.extractBits(AccLaneBits, (I * N + J) * AccLaneBits);
+          if (SubAcc)
+            Sum = -Sum;
+          APInt Prod(AccLaneBits, 0);
           for (unsigned Kk = 0; Kk != K; ++Kk)
-            Sum += elem(A, I * K + Kk, ABits, SgnX) *
-                 elem(B, Kk * N + J, BBits, SgnY);
+            Prod += elem(A, I * K + Kk, ABits, SgnX) *
+                    elem(B, Kk * N + J, BBits, SgnY);
+          Sum += SubMul ? -Prod : Prod;
           Out.insertBits(Sum, (I * N + J) * AccLaneBits);
         }
     }
@@ -794,8 +829,9 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     // aie2p_vmult.h ever sets one (they are hardcoded 0 on every bf arm, and
     // unlike the integer shapes there is no _conf overload exposing them), so
     // a set bit here means the instruction is outside the range the header
-    // establishes. Fault rather than silently drop the modifier.
-    if (const uint32_t Unmodelled = Conf & 0x3c00)
+    // establishes. Fault rather than silently drop the modifier. sub_mask
+    // (bit 16) is in the same class and no wrapper sets it either.
+    if (const uint32_t Unmodelled = Conf & 0x13c00)
       return fault(Name + ": conf carries shift16/sub bits " +
                    Twine::utohexstr(Unmodelled) +
                    " which change the arithmetic and are not modelled");
