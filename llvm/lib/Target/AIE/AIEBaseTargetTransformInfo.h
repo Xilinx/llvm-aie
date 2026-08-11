@@ -78,6 +78,11 @@ private:
   /// Helper function to access this as a T.
   T *thisT() { return static_cast<T *>(this); }
 
+  static bool isIndexSizedInteger(Type *Ty, const DataLayout &DL) {
+    return Ty->isIntegerTy() &&
+           Ty->getIntegerBitWidth() == DL.getIndexSizeInBits(0);
+  }
+
 protected:
   explicit AIEBaseTTIImpl(const TargetMachine *TM, const DataLayout &DL,
                           const AIESubtarget *Subtarget)
@@ -198,6 +203,15 @@ public:
   bool shouldMergeCongruentIVs(const PHINode *IV1,
                                const PHINode *IV2) const override {
     return shouldMergeCongruentIVsImpl(IV1, IV2);
+  }
+
+  /// Any index-sized recurrence is valid, not just GEP indices: that width is
+  /// the AIE address register width, for which getIndexSizeInBits() is only a
+  /// proxy. Narrowing this to pointer-arithmetic users would reject the
+  /// non-GEP i20 IV in llvm/test/CodeGen/AIE/opt/lsr-i20-mixed-use.ll.
+  bool isValidIVUserType(Type *Ty) const override {
+    return BaseT::isValidIVUserType(Ty) ||
+           isIndexSizedInteger(Ty, BaseT::getDataLayout());
   }
 };
 
