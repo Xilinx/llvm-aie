@@ -1043,12 +1043,27 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // scalar forms carry it in the opcode. Same late sampling as those: the
   // register is named, not read, and a composed source composes when the
   // pipeline reaches SampleAt.
-  auto vectorStore = [&](unsigned SrcIdx, uint32_t Addr) -> StepResult {
+  //
+  // \p Bits overrides that width where the opcode stores LESS than its source
+  // holds -- vst.128 names a 256-bit W. The bits that go out are the LOW ones,
+  // which is not a guess: the ABI passes a 128-bit vector in a W
+  // (AIE2PCallingConv.td, "128-bits vectors go in W regs") and the selector
+  // takes one back out with a COPY carrying no sub-register index
+  // (selectExtractI128, getNoSubRegIdx() for a 256-bit source).
+  auto vectorStore = [&](unsigned SrcIdx, uint32_t Addr,
+                         unsigned Bits = 0) -> StepResult {
     const MCRegister Src = Op.reg(SrcIdx);
-    const unsigned W = State.Regs.getClassWidth(Src);
-    if (!W || W % 8) {
-      FaultMsg = (Name + ": " + MRI.getName(Src) + " is " + Twine(W) +
+    const unsigned ClassW = State.Regs.getClassWidth(Src);
+    if (!ClassW || ClassW % 8) {
+      FaultMsg = (Name + ": " + MRI.getName(Src) + " is " + Twine(ClassW) +
                   " bits, not a whole number of bytes")
+                     .str();
+      return StepResult::Fault;
+    }
+    const unsigned W = Bits ? Bits : ClassW;
+    if (W > ClassW) {
+      FaultMsg = (Name + ": stores " + Twine(W) + " bits from " +
+                  MRI.getName(Src) + ", which holds " + Twine(ClassW))
                      .str();
       return StepResult::Fault;
     }
@@ -2017,6 +2032,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VST_dmw_sts_w_idx_imm:
   case AIE2P::VST_dmx_sts_bm_idx_imm:
     R = vectorStore(0, access(1, Op.imm(2)));
+    break;
+
+  // Same operands, but 16 bytes out of the 256-bit source. The immediate is
+  // c8s_step16 where the full-width form is c9s_step32; both reach here as a
+  // byte offset, because decodeSImmOperandXStep applies the step.
+  case AIE2P::VST_128_dmv_sts_w_idx_imm:
+    R = vectorStore(0, access(1, Op.imm(2)), 128);
     break;
 
   // ()(src, ptr, dj)
