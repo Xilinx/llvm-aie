@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This pass exposes codegen information to IR-level passes. Every
@@ -64,6 +67,7 @@ class SmallBitVector;
 class StoreInst;
 class SwitchInst;
 class TargetLibraryInfo;
+class GetElementPtrInst;
 class Type;
 class VPIntrinsic;
 struct KnownBits;
@@ -796,6 +800,11 @@ public:
   /// Return the preferred addressing mode LSR should make efforts to generate.
   AddressingModeKind getPreferredAddressingMode(const Loop *L,
                                                 ScalarEvolution *SE) const;
+
+  SmallVector<GetElementPtrInst *>
+  getIVUsersLookThroughCandidates(Instruction *I, const Loop *L) const;
+
+  bool isValidIVUserType(Type *Ty) const;
 
   /// Return true if the target supports masked store.
   bool isLegalMaskedStore(Type *DataType, Align Alignment,
