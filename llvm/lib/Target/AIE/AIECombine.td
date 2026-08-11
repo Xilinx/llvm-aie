@@ -9,6 +9,17 @@
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
 
+// AIE-specific reassociation of G_PTR_ADD chains with constant offsets.
+// Unlike the upstream reassoc_ptradd, this variant only triggers when the
+// intermediate pointer (LHS of the root PTR_ADD) has exactly one use.
+// This prevents breaking addressing mode opportunities for loops where the
+// intermediate pointer feeds both memory operations and subsequent PTR_ADDs.
+def aie_reassoc_ptradd : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PTR_ADD):$root,
+         [{ return matchAIEReassocPtrAdd(*${root}, MRI, Helper, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // Explicitly listing each generic combine here ensures direct visibility and
 // control over all functionalities.
 def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
@@ -16,7 +27,7 @@ def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines
   combine_extracted_vector_load,
   undef_combines, identity_combines, phi_combines,
   simplify_add_to_sub, hoist_logic_op_with_same_opcode_hands, shifts_too_big,
-  reassocs, ptr_add_immed_chain,
+  reassoc_comm_binops, aie_reassoc_ptradd,
   shl_ashr_to_sext_inreg, sext_inreg_of_load,
   width_reduction_combines, select_combines,
   known_bits_simplifications, cast_combines,
