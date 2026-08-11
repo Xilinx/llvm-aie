@@ -109,8 +109,16 @@ bool AIERegisterFile::computePlacements(
     if (!Idx || Idx >= Ranges.size())
       return false;
     const AIESubRegRange &R = Ranges[Idx];
-    if (R.offsetBits == kNoContiguousRange ||
-        uint64_t(R.offsetBits) + R.sizeBits > Width)
+    // A register can carry more than one decomposition. ex0 is [x0, e0] as
+    // declared, and the MC layer also lists the [ewl0, ewh0] regrouping, which
+    // interleaves the same four leaves in a different order. At most one of the
+    // two can sit in contiguous ranges, and the range table already states
+    // which: the regrouping's indices carry kNoContiguousRange. Skipping those
+    // leaves the declared partition, and the tiling below remains the guard --
+    // a skip that drops a leaf the parent needs leaves a hole and still fails.
+    if (R.offsetBits == kNoContiguousRange)
+      continue;
+    if (uint64_t(R.offsetBits) + R.sizeBits > Width)
       return false;
 
     if (Widths[Sub]) {
@@ -128,13 +136,6 @@ bool AIERegisterFile::computePlacements(
   // An exact tiling of [0, Width), which is what makes composing sound. Sizes
   // summing to Width is not enough -- the bfp16 registers pass that with
   // overlapping ranges.
-  //
-  // KNOWN GAP, and a refusal rather than a wrong answer: the 12 ex and 6 ey
-  // registers carry TWO decompositions -- ex0 is [x0, e0] as declared, and the
-  // MC layer also lists the inferred [ewl0, ewh0] regrouping -- so their
-  // immediate children overlap and no tiling comes out. Picking the declared
-  // partition needs a rule this cannot see, and nothing executes a bfp16
-  // vector register yet, so it stays unbuilt until a test needs one.
   llvm::sort(Out, [](const Placement &A, const Placement &B) {
     return A.offsetBits < B.offsetBits;
   });
