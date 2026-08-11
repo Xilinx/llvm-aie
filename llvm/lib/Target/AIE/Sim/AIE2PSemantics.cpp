@@ -769,8 +769,18 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // vmac.f forms declare no Uses = [crRnd], so the rounding mode is not
   // selectable and round-to-nearest-even is the only one hardware could be
   // applying silently.
+  //
+  // \p NegateProduct is what separates vnegmul.f from vmul.f and vmsc.f from
+  // vmac.f. It is borne by the OPCODE, not by the conf word: aie2p_vmult.h
+  // builds a bit-identical conf for all four (amode=2, bmode=3, variant=1,
+  // everything else 0) and picks between them purely by which builtin it
+  // calls. The def names carry the same split -- VMSC is a `vmac_bf` core and
+  // takes $acc1, VNEGMUL is a `vmul_bf` core and does not -- so the four are a
+  // 2x2 grid over {accumulate} x {negate product}, and negating the product
+  // before the accumulate add is the one reading that makes vmsc.f the
+  // accumulating form of vnegmul.f.
   auto mulBf16 = [&](unsigned S1Idx, unsigned S2Idx, unsigned ConfIdx,
-                     int AccIdx) -> StepResult {
+                     int AccIdx, bool NegateProduct = false) -> StepResult {
     const uint32_t Conf = Op.val(ConfIdx);
     const unsigned AMode = (Conf >> 1) & 3;
     const unsigned BMode = (Conf >> 3) & 3;
@@ -778,6 +788,17 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     const bool ZeroAcc = Conf & 1;
     if (!Op.Ok)
       return fault(Name + ": conf is not readable");
+    // shift16 (bit 10) and sub_mul/sub_acc1/sub_acc2 (bits 11-13) each change
+    // the arithmetic -- sub_mul negates the product a second time, which would
+    // cancel NegateProduct rather than compose with it. No bf16 wrapper in
+    // aie2p_vmult.h ever sets one (they are hardcoded 0 on every bf arm, and
+    // unlike the integer shapes there is no _conf overload exposing them), so
+    // a set bit here means the instruction is outside the range the header
+    // establishes. Fault rather than silently drop the modifier.
+    if (const uint32_t Unmodelled = Conf & 0x3c00)
+      return fault(Name + ": conf carries shift16/sub bits " +
+                   Twine::utohexstr(Unmodelled) +
+                   " which change the arithmetic and are not modelled");
     // AMODE_FP32, BMODE_16x16, CMODE_BF16xBF16_1_elem_1 -- the only shape the
     // bf16 multiply patterns emit. Anything else is a different instruction
     // wearing the same opcode and is not guessed at.
@@ -818,6 +839,11 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
         return fault(Name + ": lane " + Twine(I) +
                      " rounds, and the rounding mode this uses is not "
                      "established");
+      // Sign flip before the accumulate, so vmsc.f is acc - a*b. changeSign is
+      // exact for every input including zero, infinity and NaN, so it cannot
+      // reintroduce the rounding the multiply just ruled out.
+      if (NegateProduct)
+        FA.changeSign();
       if (AccIdx >= 0) {
         const APFloat FAcc(APFloat::IEEEsingle(),
                             Prev.extractBits(32, I * 32));
@@ -2595,6 +2621,22 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_X_X:
   case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_Y_Y:
     R = mulBf16(2, 3, 4, /*AccIdx=*/1);
+    break;
+
+  // vnegmul.f / vmsc.f: the negated-product halves of the same 2x2 grid, with
+  // operand lists byte-identical to the vmul.f / vmac.f arms above. Only the
+  // X_X arms of vmsc.f and vnegmul.f plus vnegmul.f Y_Y are issued by the
+  // shipped corpus; vmsc.f Y_Y is modelled anyway because it is the same
+  // lambda at the same widths, and leaving it out would fault on an
+  // instruction the other three already establish.
+  case AIE2P::VNEGMUL_f_vmul_bf_vmul_bf_core_X_X:
+  case AIE2P::VNEGMUL_f_vmul_bf_vmul_bf_core_Y_Y:
+    R = mulBf16(1, 2, 3, /*AccIdx=*/-1, /*NegateProduct=*/true);
+    break;
+
+  case AIE2P::VMSC_f_vmac_bf_vmul_bf_core_X_X:
+  case AIE2P::VMSC_f_vmac_bf_vmul_bf_core_Y_Y:
+    R = mulBf16(2, 3, 4, /*AccIdx=*/1, /*NegateProduct=*/true);
     break;
 
   case AIE2P::VMUL_vmul_cm_core_X_X:
