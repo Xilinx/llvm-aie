@@ -443,6 +443,55 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return upsInto(DstIdx, V, ShiftIdx, Signed);
   };
 
+  // vunpack: widen every lane of a packed vector to twice its width.
+  //
+  // The source lane width is not in the opcode. crUnpackSize carries it, and
+  // the mapping is the selector's own: selectVUNPACK ends with
+  // setCtrlRegister(crUnpackSize, Is8Bit), where Is8Bit is true for the
+  // _I16_I8 intrinsics and false for the _I8_I4 ones -- 0 is a 4-bit source,
+  // 1 an 8-bit one (AIE2PInstructionSelector.cpp).
+  //
+  // The destination lane is always twice the source lane, so the two register
+  // classes and that one bit fix the lane count between them, and every form
+  // satisfies dst = 2 * src bits: W(256)->X(512) and X(512)->eY(1024). That
+  // invariant is checked rather than assumed, because it is what makes one
+  // body serve all four.
+  //
+  // The sign is in the opcode, as it is for vups. unpackSign0/unpackSign1 are
+  // not state this reads: AIE2PRegisterInfo.td says the eUnpackSign class
+  // exists only for the generated encoders because "those enum will be
+  // expanded resulting in 2 instructions for each control register", so the
+  // two names are the mode bit's two VALUES -- HWEncoding 0b0 and 0b1 -- and
+  // the variant already says which. getOpCode picks the unpackSign1 form when
+  // the intrinsic's sign operand is a constant 1 (AIE2PInstrInfo.cpp), which
+  // is the path aie_api takes: every wrapper in aie2p_ldst.h passes a literal
+  // __SIGN_SIGNED or __SIGN_UNSIGNED.
+  auto unpack = [&](bool Signed) -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const APInt Src = Op.valN(1, State.Regs.getClassWidth(Op.reg(1)));
+    const unsigned SrcBits = Src.getBitWidth();
+    const unsigned SrcLaneBits = (Op.valReg(AIE2P::crUnpackSize) & 1) ? 8 : 4;
+
+    if (!SrcBits || DstBits != 2 * SrcBits)
+      return fault(Name + ": " + MRI.getName(Dst) + " is " + Twine(DstBits) +
+                   " bits, not twice the " + Twine(SrcBits) + "-bit source");
+    if (SrcBits % SrcLaneBits)
+      return fault(Name + ": " + Twine(SrcBits) + " source bits do not " +
+                   "divide into " + Twine(SrcLaneBits) + "-bit lanes");
+
+    const unsigned Lanes = SrcBits / SrcLaneBits;
+    const unsigned DstLaneBits = 2 * SrcLaneBits;
+    APInt Acc(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I) {
+      const APInt Lane = Src.extractBits(SrcLaneBits, I * SrcLaneBits);
+      Acc.insertBits(Signed ? Lane.sext(DstLaneBits) : Lane.zext(DstLaneBits),
+                     I * DstLaneBits);
+    }
+    Eff.RegWrites.push_back({Dst, Acc, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vsrs.Nx: narrow each accumulator lane back to a vector lane -- shift
   // right, round, saturate. The inverse of vups, and it reads crSRSMode for
   // the accumulator lane width exactly as vups reads crUPSMode.
@@ -2455,6 +2504,18 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VUPS_4x_mv_ups_w2c_upsSign1:
   case AIE2P::VUPS_4x_mv_ups_x2d_upsSign1:
     R = ups(/*Signed=*/true);
+    break;
+
+  // (vec)(vec): unpack to twice the lane width. Both widths share one body;
+  // only _w_unpackSign0 is issued by the corpus, the other three are the same
+  // instruction over the other register pair or the other extension.
+  case AIE2P::VUNPACK_mv_unpack_w_unpackSign0:
+  case AIE2P::VUNPACK_mv_unpack_x_unpackSign0:
+    R = unpack(/*Signed=*/false);
+    break;
+  case AIE2P::VUNPACK_mv_unpack_w_unpackSign1:
+  case AIE2P::VUNPACK_mv_unpack_x_unpackSign1:
+    R = unpack(/*Signed=*/true);
     break;
 
   // vlda.ups -- load and widen in one instruction. Same widening as vups, and
