@@ -1030,6 +1030,117 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vconv.bfp16ebs8.fp32 (dst)(src): quantise f32 accumulator lanes into
+  // block floating point -- blocks of eight, each one shared exponent and
+  // eight two's-complement mantissas.
+  //
+  // The format is not inferred. aie_api's aie_doc.hpp block_vector_params
+  // table gives bfp16ebs8 as block size 8, 8 mantissa bits, 8 exponent bits
+  // and no sub-tile shifts, and mlir-aie's ml/block_datatypes/helper.h
+  // carries a working reference BOTH ways, decoding as
+  // value = mantissa * 2^(sharedExp - 127) / 64.
+  //
+  // Neither is the register layout, and this is the one op that can pin it.
+  // The intrinsic is declared returning a PAIR, [llvm_v64i8_ty, llvm_v8i8_ty],
+  // and the REG_SEQUENCE in AIE2PInstructionSelector puts the first in
+  // sub_bfp16_x and the second in sub_bfp16_e -- so the mantissas are the low
+  // 512 bits in lane order and the exponents the top 64, which is the same
+  // {0,512} / {512,64} partition the register composition declares. A copy
+  // could not have established that: it reads and writes through one
+  // placement map, so any self-consistent map round-trips. Here the two
+  // halves are named separately at the IR level.
+  //
+  // ROUNDING, where the two sources look like they disagree and do not. The
+  // instruction carries Uses = [crRnd]; helper.h says twice that the mantissa
+  // rounding "in AIE2p is always truncation", and ignores its own rounding
+  // parameter. They agree at crRnd 0, because the reference truncates with an
+  // ARITHMETIC shift of a two's-complement mantissa, which floors -- it moves
+  // a negative lane AWAY from zero where a sign-magnitude truncation would
+  // move it toward zero. Floor IS crRnd 0. Away from that the two genuinely
+  // conflict and nothing here settles which wins, so it faults instead.
+  //
+  // crF2BMask and srF2BFlags need no modelling, for the crFPMask reason given
+  // above: a mask selects which exceptions are REPORTED, and the flags it
+  // reports into are not computed here.
+  //
+  // Returns nullopt for a block this model will not quantise.
+  auto bfp16Quantize = [](const APInt &Src, unsigned Lanes,
+                          unsigned BlockSize) -> std::optional<APInt> {
+    const unsigned Blocks = Lanes / BlockSize;
+    APInt Out(Lanes * 8 + Blocks * 8, 0);
+    for (unsigned B = 0; B != Blocks; ++B) {
+      // The shared exponent is the block's LARGEST raw exponent field, read
+      // off the bits, so a zero lane contributes 0 rather than a bias.
+      unsigned MaxExp = 0;
+      for (unsigned I = 0; I != BlockSize; ++I) {
+        const uint32_t V = uint32_t(
+            Src.extractBits(32, (B * BlockSize + I) * 32).getZExtValue());
+        const unsigned E = V >> 23 & 0xFF;
+        // The reference skips an infinity or NaN with a `continue` that also
+        // skips its index increment, which shifts every later mantissa in the
+        // block -- so it is not an oracle here, and a guess is not one either.
+        if (E == 0xFF)
+          return std::nullopt;
+        if (E > MaxExp)
+          MaxExp = E;
+      }
+      for (unsigned I = 0; I != BlockSize; ++I) {
+        const unsigned Lane = B * BlockSize + I;
+        const uint32_t V =
+            uint32_t(Src.extractBits(32, Lane * 32).getZExtValue());
+        const unsigned E = V >> 23 & 0xFF;
+        // The magnitude carries the implicit bit, which a subnormal has not.
+        APInt M(32, (V & 0x7FFFFF) | (E ? 0x800000 : 0));
+        if (V >> 31)
+          M.negate();
+        // 24 magnitude bits down to 7 plus a sign: the table's "8 mantissa
+        // bits" counts the sign, which two's complement carries in place.
+        APInt T = M.ashr(17).trunc(8);
+        // Align to the block's exponent. The shift stops at 7 because an
+        // 8-bit arithmetic shift cannot go past all-sign-bits, which is the
+        // saturation the reference spells out as 0x00 / 0xff.
+        const unsigned Align = MaxExp - E;
+        T.ashrInPlace(Align > 7 ? 7 : Align);
+        Out.insertBits(T, Lane * 8);
+      }
+      Out.insertBits(APInt(8, MaxExp), Lanes * 8 + B * 8);
+    }
+    return Out;
+  };
+
+  // The register form. The lane count comes from the accumulator class and
+  // the geometry has to close exactly: mantissas plus exponents fill the
+  // destination, 576 bits for 64 lanes at block 8.
+  auto convBfp16 = [&](unsigned BlockSize) -> StepResult {
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    if (!Op.Ok)
+      return fault(Name + ": crRnd is not readable");
+    if (Rnd != 0)
+      return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                   ", and the reference states truncation where the "
+                   "instruction reads crRnd -- which one wins away from "
+                   "floor is not established");
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    const unsigned Lanes = SrcBits / 32;
+    if (!Lanes || SrcBits % 32 || Lanes % BlockSize ||
+        DstBits != Lanes * 8 + Lanes / BlockSize * 8)
+      return fault(Name + ": " + Twine(SrcBits) + " accumulator bits and " +
+                   Twine(DstBits) + " destination bits are not " +
+                   Twine(Lanes) + " f32 lanes quantising to bfp16ebs" +
+                   Twine(BlockSize));
+    const APInt Src = Op.valN(1, SrcBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    const std::optional<APInt> Out = bfp16Quantize(Src, Lanes, BlockSize);
+    if (!Out)
+      return fault(Name + ": a lane is an infinity or a NaN, and what this "
+                          "instruction does with one is not established");
+    Eff.RegWrites.push_back({Dst, *Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vconv.fp32.bf16 (dst)(src): widen each bf16 lane to an f32 accumulator
   // lane -- convBf16's inverse.
   //
@@ -2556,6 +2667,13 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VCONV_bf16_fp32_mv_w_srs_bf:
   case AIE2P::VCONV_bf16_fp32_mv_x_srs_bf:
     R = convBf16();
+    break;
+
+  // The block-floating-point narrowing. Only the ebs8 arm: ebs16 shares this
+  // destination class but packs four exponents into the same field, and where
+  // they sit in it is not established.
+  case AIE2P::VCONV_bfp16ebs8_fp32:
+    R = convBfp16(8);
     break;
 
   // The widening direction, both widths. Same shape: the lane count follows
