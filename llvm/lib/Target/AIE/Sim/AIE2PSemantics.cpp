@@ -2844,6 +2844,31 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VBCST_64:
     R = broadcast(64);
     break;
+
+  // vclr (dst)(): the accumulator's broadcast of zero, and the same family as
+  // the four above -- AIE2PRegisterBankInfo splits one G_AIE_BROADCAST_VECTOR
+  // by width with "512-bit size is supported using VBCST and 2048-bit using
+  // VCLR".
+  //
+  // The def takes no source operand, so the only value it can write is a
+  // constant, and three independent places name that constant zero: AIE2's def
+  // sits under the spec's "9.8 VCLR - Clears accumulator word", AIE2PS selects
+  // it from int_aie2ps_clr_ACC2048_conf, and AIECombinerHelper only rewrites a
+  // broadcast into one once IsConstantZeroReg has proved the source is zero.
+  //
+  // Width comes from the class rather than the 2048 the selector asserts: eDM
+  // is what the def declares, and reading it from the class is what keeps a
+  // narrower dst from having the top of a wider one zeroed under it.
+  case AIE2P::VCLR: {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W) {
+      R = fault(Name + ": " + MRI.getName(Dst) + " has no class width");
+      break;
+    }
+    Eff.RegWrites.push_back({Dst, APInt(W, 0), Op.cycleOf(0), Op.fwdOf(0)});
+    break;
+  }
   }
 
   if (!Op.Ok) {
