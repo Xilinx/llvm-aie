@@ -891,6 +891,162 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vmac.f EX_EX: the bfp16 matrix multiply-accumulate, C[8x8] += A * B^T --
+  // 512 MACs in one instruction, and the shape the shipped GEMM runs on.
+  //
+  // SHAPE. Every bfp wrapper in aie2p_vmult.h builds its conf with
+  // aie2p_compute_control(1, 1, 2, 1, 0, ...) -- amode 2, bmode 1, variant 0
+  // -- and aie_api instantiates the shape as mmul<8, 8, 8, bfp16ebs8,
+  // bfp16ebs8, 32>, the same <M, K, N, ..., accumulator bits> reading the
+  // integer mac() above takes from mmul_8_4. The shape bits are IDENTICAL to
+  // the int8 8x8_8x8 that lambda models; only amode, the element format,
+  // separates them.
+  //
+  // Which makes the TRANSPOSE the whole difference, and one call establishes
+  // it. aie_api reaches this instruction twice. mmul_bf16_bf16, emulating a
+  // bf16 mmul, holds B in the [K][N] every mmul uses and feeds
+  // transpose<TypeB, 64>::run(b, 8, 8) -- B^T -- to mac_8x8_8x8T; the int8
+  // mmul_8_8 passes its B straight to the non-T mac_8x8_8x8. Read the second
+  // operand as [k][j] here and that transpose would make the emulated product
+  // wrong, so it is [j][k]: C[i][j] = sum_k A[i][k] * B[j][k].
+  // (mmul_bfp16_bfp16 also passes b through raw, which makes ITS caller
+  // contract the pre-transposed one. That is an aie_api contract, not a
+  // second reading of the instruction.)
+  //
+  // THE ELEMENT is a two's-complement 8-bit mantissa, eight of which share
+  // one 8-bit exponent, mantissas in the low 512 bits and exponents in the
+  // top 64 -- the {0,512} / {512,64} partition the register composition
+  // declares and convBfp16 writes. helper.h gives the value as
+  // mantissa * 2^(sharedExp - 127) / 64, which is exactly the inverse of what
+  // bfp16Quantize produces, so the two directions round trip rather than each
+  // carrying its own reading of the format.
+  //
+  // ACCUMULATION ORDER looks like the open question here and is not one, for
+  // a reason worth stating: for a fixed output lane every one of the eight
+  // terms shares ONE scale. The exponent is per BLOCK, block i of A and block
+  // j of B are fixed across k, so the whole dot product is
+  // (sum_k ma*mb) * 2^(ea + eb - 266) -- an integer sum times a common power
+  // of two. Two 8-bit mantissas make at most 2^14 and eight of those at most
+  // 2^17, so every partial sum is an exact f32 whatever order they are taken
+  // in. The products are summed in integers here because that is what the
+  // arithmetic IS, not to impose an order the hardware might not use.
+  //
+  // Which leaves ONE rounding, the accumulator add, and it needs no mode
+  // guess for the reason the bf16 arms already record: VMAC_f carries no
+  // Uses = [crRnd], so round-to-nearest is the only mode hardware could apply
+  // silently. Unlike the multiply it is NOT checked for exactness -- adding
+  // an arbitrary f32 accumulator is normally inexact and that is expected.
+  auto macBfp16 = [&](unsigned S1Idx, unsigned S2Idx, unsigned ConfIdx,
+                      int AccIdx) -> StepResult {
+    constexpr unsigned M = 8, K = 8, N = 8, BlockSize = 8;
+    // A mantissa is 8 bits and its value is scaled by 2^(exp - 127) / 64, so
+    // the 64 divides out as another 6 exponent bits: value = m * 2^(e - 133).
+    constexpr int Bias = 133;
+    const uint32_t Conf = Op.val(ConfIdx);
+    const unsigned AMode = (Conf >> 1) & 3;
+    const unsigned BMode = (Conf >> 3) & 3;
+    const unsigned Variant = (Conf >> 5) & 7;
+    const bool ZeroAcc = Conf & 1;
+    const bool SgnY = (Conf >> 8) & 1;
+    const bool SgnX = (Conf >> 9) & 1;
+    const bool SubMul = (Conf >> 11) & 1;
+    const bool SubAcc = (Conf >> 12) & 1;
+    if (!Op.Ok)
+      return fault(Name + ": conf is not readable");
+    // Same three unestablished modifiers the integer MAC faults on, for the
+    // same reason: no source in this tree says what they do.
+    if (const uint32_t Unmodelled = Conf & 0x12400)
+      return fault(Name + ": conf carries shift16/sub2/sub_mask bits " +
+                   Twine::utohexstr(Unmodelled) +
+                   " which change the arithmetic and are not modelled");
+    if (AMode != 2 || BMode != 1 || Variant != 0)
+      return fault(Name + ": conf amode=" + Twine(AMode) + " bmode=" +
+                   Twine(BMode) + " variant=" + Twine(Variant) +
+                   " is not the 8x8_8x8T bfp16 shape this models");
+    // A bfp16 mantissa is two's complement and every bfp wrapper passes both
+    // signs as 1. What the unsigned reading of one would mean is not stated
+    // anywhere, so it is a different instruction rather than a wider case.
+    if (!SgnX || !SgnY)
+      return fault(Name + ": conf clears sgn_x/sgn_y, and an unsigned reading "
+                          "of a two's-complement bfp16 mantissa is not "
+                          "established");
+
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned S1Bits = State.Regs.getClassWidth(Op.reg(S1Idx));
+    const unsigned S2Bits = State.Regs.getClassWidth(Op.reg(S2Idx));
+    // The geometry has to close exactly on both sides: 64 mantissas plus 8
+    // shared exponents is 576 bits per source, and 64 f32 lanes is 2048.
+    constexpr unsigned WantSrc = M * K * 8 + M * K / BlockSize * 8;
+    constexpr unsigned Lanes = M * N;
+    if (S1Bits != WantSrc || S2Bits != WantSrc || DstBits != Lanes * 32)
+      return fault(Name + ": " + Twine(S1Bits) + " and " + Twine(S2Bits) +
+                   " source bits with " + Twine(DstBits) +
+                   " accumulator bits are not two bfp16ebs8 " + Twine(M) + "x" +
+                   Twine(K) + " operands and " + Twine(Lanes) + " f32 lanes");
+
+    const APInt A = Op.valN(S1Idx, S1Bits);
+    const APInt B = Op.valN(S2Idx, S2Bits);
+    APInt Prev(DstBits, 0);
+    if (AccIdx >= 0 && !ZeroAcc)
+      Prev = Op.valN(unsigned(AccIdx), DstBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+
+    // One bfp16 element, as the exact f32 it denotes. The mantissa product is
+    // formed in integers so nothing rounds before the scale is applied.
+    auto Mantissa = [&](const APInt &V, unsigned Idx) {
+      return V.extractBits(8, Idx * 8).getSExtValue();
+    };
+    auto Exponent = [&](const APInt &V, unsigned Idx) {
+      return int(V.extractBits(8, M * K * 8 + Idx / BlockSize * 8)
+                     .getZExtValue());
+    };
+
+    APInt Out(DstBits, 0);
+    for (unsigned I = 0; I != M; ++I) {
+      for (unsigned J = 0; J != N; ++J) {
+        int64_t Dot = 0;
+        for (unsigned Kk = 0; Kk != K; ++Kk)
+          // A is [i][k] and B is [j][k]: the transpose lives here.
+          Dot += Mantissa(A, I * K + Kk) * Mantissa(B, J * K + Kk);
+        const int Scale =
+            Exponent(A, I * K) + Exponent(B, J * K) - 2 * Bias;
+
+        APFloat P(APFloat::IEEEsingle());
+        // At most 2^17, so the conversion cannot round.
+        P.convertFromAPInt(APInt(64, uint64_t(Dot), /*isSigned=*/true),
+                           /*IsSigned=*/true, APFloat::rmNearestTiesToEven);
+        P = scalbn(P, Scale, APFloat::rmNearestTiesToEven);
+        // Applying a power of two is exact until it leaves the normal range.
+        // There it either saturates or flushes, and which one this does --
+        // and what it reports in srFPFlags -- is not established.
+        if (Dot && !P.isNormal())
+          return fault(Name + ": lane " + Twine(I * N + J) + " scales to 2^" +
+                       Twine(Scale) +
+                       ", which leaves the normal f32 range, and what this "
+                       "instruction does there is not established");
+        // sub_acc1 negates the accumulator input and sub_mul the product --
+        // the reading the integer MAC conf negations established from
+        // aie_api's Acc_Add arm. Negating the sum is negating every term,
+        // since they share the one sign.
+        if (SubMul)
+          P.changeSign();
+        APFloat Sum = APFloat::getZero(APFloat::IEEEsingle());
+        if (AccIdx >= 0 && !ZeroAcc) {
+          Sum = APFloat(APFloat::IEEEsingle(),
+                        Prev.extractBits(32, (I * N + J) * 32));
+          if (SubAcc)
+            Sum.changeSign();
+        }
+        Sum.add(P, APFloat::rmNearestTiesToEven);
+        Out.insertBits(Sum.bitcastToAPInt(), (I * N + J) * 32);
+      }
+    }
+    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
   // vconv.bf16.fp32 (dst)(src): narrow each f32 accumulator lane to bf16.
   //
   // This is the FIRST op here whose rounding mode is load-bearing. vmul.f
@@ -2770,11 +2926,18 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
 
   // vmac.f, the accumulating form: same two bf pairings, with $acc1 added in.
-  // The other four variants of this opcode (vmac_bfp_*, EX/EY/QEX/QEY) are
-  // bfp16 and NOT modelled -- their eEY/eQEYs composition is open, PARKED.
   case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_X_X:
   case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_Y_Y:
     R = mulBf16(2, 3, 4, /*AccIdx=*/1);
+    break;
+
+  // The bfp16 arm of the same opcode. EX_EX is the one of the four whose
+  // sources are both 576-bit ex registers, which the composition already
+  // covers; EX_EY, EX_QEY and EY_QEX read the 1152-bit eEY and 1408-bit
+  // eQEYs, whose internal layout no instruction here views two ways. They
+  // stay PARKED for that reason, not because they are merely unwritten.
+  case AIE2P::VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX:
+    R = macBfp16(2, 3, 4, /*AccIdx=*/1);
     break;
 
   // vnegmul.f / vmsc.f: the negated-product halves of the same 2x2 grid, with
