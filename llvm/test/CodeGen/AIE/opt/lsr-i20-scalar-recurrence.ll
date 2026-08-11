@@ -25,37 +25,36 @@ define void @post_process_pattern(ptr nocapture %src, i32 noundef %len) {
 ; LSR-NEXT:    [[DIV:%.*]] = lshr i32 [[LEN]], 7
 ; LSR-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[LEN]], 511
 ; LSR-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; LSR-NEXT:    [[SCEVGEP:%.*]] = getelementptr i8, ptr [[SRC]], i20 128
+; LSR-NEXT:    [[SCEVGEP6:%.*]] = getelementptr i8, ptr [[SRC]], i20 256
 ; LSR-NEXT:    br label %[[FOR_BODY:.*]]
 ; LSR:       [[FOR_COND_CLEANUP:.*]]:
 ; LSR-NEXT:    ret void
 ; LSR:       [[FOR_BODY]]:
-; LSR-NEXT:    [[LSR_IV2:%.*]] = phi i20 [ [[LSR_IV_NEXT2:%.*]], %[[FOR_BODY]] ], [ 3, %[[ENTRY]] ]
+; LSR-NEXT:    [[LSR_IV7:%.*]] = phi ptr [ [[SCEVGEP8:%.*]], %[[FOR_BODY]] ], [ [[SCEVGEP6]], %[[ENTRY]] ]
+; LSR-NEXT:    [[LSR_IV1:%.*]] = phi ptr [ [[SCEVGEP2:%.*]], %[[FOR_BODY]] ], [ [[SCEVGEP]], %[[ENTRY]] ]
 ; LSR-NEXT:    [[LSR_IV:%.*]] = phi i32 [ [[LSR_IV_NEXT:%.*]], %[[FOR_BODY]] ], [ [[DIV]], %[[ENTRY]] ]
-; LSR-NEXT:    [[TMP0:%.*]] = add i20 [[LSR_IV2]], -3
-; LSR-NEXT:    [[SCEVGEP10:%.*]] = getelementptr inbounds <32 x float>, ptr [[SRC]], i20 [[TMP0]]
+; LSR-NEXT:    [[SCEVGEP10:%.*]] = getelementptr i8, ptr [[LSR_IV7]], i20 -256
 ; LSR-NEXT:    [[V0:%.*]] = load <32 x float>, ptr [[SCEVGEP10]], align 64
 ; LSR-NEXT:    [[R0:%.*]] = tail call <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float> [[V0]])
-; LSR-NEXT:    [[SCEVGEP3:%.*]] = getelementptr inbounds <32 x bfloat>, ptr [[SRC]], i20 [[TMP0]]
+; LSR-NEXT:    [[SCEVGEP3:%.*]] = getelementptr i8, ptr [[LSR_IV1]], i20 -128
 ; LSR-NEXT:    store <32 x bfloat> [[R0]], ptr [[SCEVGEP3]], align 64
-; LSR-NEXT:    [[TMP1:%.*]] = add i20 [[LSR_IV2]], -2
-; LSR-NEXT:    [[SCEVGEP11:%.*]] = getelementptr inbounds <32 x float>, ptr [[SRC]], i20 [[TMP1]]
+; LSR-NEXT:    [[SCEVGEP11:%.*]] = getelementptr i8, ptr [[LSR_IV7]], i20 -128
 ; LSR-NEXT:    [[V1:%.*]] = load <32 x float>, ptr [[SCEVGEP11]], align 64
 ; LSR-NEXT:    [[R1:%.*]] = tail call <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float> [[V1]])
-; LSR-NEXT:    [[SCEVGEP5:%.*]] = getelementptr inbounds <32 x bfloat>, ptr [[SRC]], i20 [[TMP1]]
+; LSR-NEXT:    [[SCEVGEP5:%.*]] = getelementptr i8, ptr [[LSR_IV1]], i20 -64
 ; LSR-NEXT:    store <32 x bfloat> [[R1]], ptr [[SCEVGEP5]], align 64
-; LSR-NEXT:    [[TMP2:%.*]] = add i20 [[LSR_IV2]], -1
-; LSR-NEXT:    [[LSR_IV7:%.*]] = getelementptr inbounds <32 x float>, ptr [[SRC]], i20 [[TMP2]]
 ; LSR-NEXT:    [[V2:%.*]] = load <32 x float>, ptr [[LSR_IV7]], align 64
 ; LSR-NEXT:    [[R2:%.*]] = tail call <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float> [[V2]])
-; LSR-NEXT:    [[LSR_IV1:%.*]] = getelementptr inbounds <32 x bfloat>, ptr [[SRC]], i20 [[TMP2]]
 ; LSR-NEXT:    store <32 x bfloat> [[R2]], ptr [[LSR_IV1]], align 64
-; LSR-NEXT:    [[SCEVGEP9:%.*]] = getelementptr inbounds <32 x float>, ptr [[SRC]], i20 [[LSR_IV2]]
+; LSR-NEXT:    [[SCEVGEP9:%.*]] = getelementptr i8, ptr [[LSR_IV7]], i20 128
 ; LSR-NEXT:    [[V3:%.*]] = load <32 x float>, ptr [[SCEVGEP9]], align 64
 ; LSR-NEXT:    [[R3:%.*]] = tail call <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float> [[V3]])
-; LSR-NEXT:    [[SCEVGEP4:%.*]] = getelementptr inbounds <32 x bfloat>, ptr [[SRC]], i20 [[LSR_IV2]]
+; LSR-NEXT:    [[SCEVGEP4:%.*]] = getelementptr i8, ptr [[LSR_IV1]], i20 64
 ; LSR-NEXT:    store <32 x bfloat> [[R3]], ptr [[SCEVGEP4]], align 64
 ; LSR-NEXT:    [[LSR_IV_NEXT]] = add nsw i32 [[LSR_IV]], -1
-; LSR-NEXT:    [[LSR_IV_NEXT2]] = add i20 [[LSR_IV2]], 4
+; LSR-NEXT:    [[SCEVGEP2]] = getelementptr i8, ptr [[LSR_IV1]], i20 256
+; LSR-NEXT:    [[SCEVGEP8]] = getelementptr i8, ptr [[LSR_IV7]], i20 512
 ; LSR-NEXT:    [[EXITCOND:%.*]] = icmp eq i32 [[LSR_IV_NEXT]], 0
 ; LSR-NEXT:    br i1 [[EXITCOND]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP0:![0-9]+]]
 ;
