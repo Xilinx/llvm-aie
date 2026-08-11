@@ -1589,6 +1589,21 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::MUL:
     Def32(0, Op.val(1) * Op.val(2));
     break;
+  // The scalar multiply-accumulate. AIE2PInstrPatterns selects mac from
+  // (add $rd, (mul $rs1, $rs2)) and msc from the sub of the same, both at i32
+  // and both through plain DAG nodes, which are modular two's complement -- so
+  // this wraps for the reason MUL above it does, and needs no lane sign: at a
+  // truncated 32 bits the signed and unsigned products share their low half.
+  //
+  // Four operands where the encoding carries three registers. $a0 is tied to
+  // $d0, and the decoder materialises it rather than dropping it: msc r3, r3,
+  // r4, r5 decodes to four MCOperands with the first two both r3.
+  case AIE2P::MAC:
+    Def32(0, Op.val(1) + Op.val(2) * Op.val(3));
+    break;
+  case AIE2P::MSC:
+    Def32(0, Op.val(1) - Op.val(2) * Op.val(3));
+    break;
   case AIE2P::AND:
     Def32(0, Op.val(1) & Op.val(2));
     break;
