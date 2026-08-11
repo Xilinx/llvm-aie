@@ -500,6 +500,14 @@ bool matchPostIncLoadStorePtrAddWithTrunc(MachineInstr &MI,
                                           GISelChangeObserver &Observer,
                                           BuildFnTy &MatchInfo);
 
+/// AIE-specific reassociation of G_PTR_ADD chains with constant offsets.
+/// Unlike the upstream reassoc_ptradd, this variant only triggers when the
+/// intermediate pointer (LHS of the root PTR_ADD) has exactly one use.
+/// This prevents breaking addressing mode opportunities for loops where the
+/// intermediate pointer feeds both memory operations and subsequent PTR_ADDs.
+bool matchAIEReassocPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           CombinerHelper &Helper, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

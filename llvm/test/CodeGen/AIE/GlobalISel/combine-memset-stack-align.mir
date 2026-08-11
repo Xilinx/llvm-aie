@@ -156,8 +156,8 @@ body:             |
     ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR1]](<16 x s32>)
     ; CHECK-NEXT: G_STORE [[AIE_UNPAD_VECTOR1]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>) into %stack.0.object0 + 32, align 32)
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C4]](s20)
     ; CHECK-NEXT: G_STORE [[C3]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %stack.0.object0 + 48, align 16, basealign 32)
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $p0 = COPY [[FRAME_INDEX]](p0)
@@ -178,8 +178,8 @@ body:             |
     ; LEGALIZED-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR1]](<16 x s32>)
     ; LEGALIZED-NEXT: G_STORE [[AIE_UNPAD_VECTOR1]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>) into %stack.0.object0 + 32, align 32)
     ; LEGALIZED-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[FRAME_INDEX]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %stack.0.object0 + 48, align 16, basealign 32)
     ; LEGALIZED-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; LEGALIZED-NEXT: $p0 = COPY [[FRAME_INDEX]](p0)

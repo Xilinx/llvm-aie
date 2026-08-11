@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
 %struct.Data = type { i32, i32, i32 }
 
@@ -65,16 +65,16 @@ entry:
 define dso_local noundef i32 @bar() {
 ; CHECK-LABEL: bar:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; movxm p0, #(Y+4)
-; CHECK-NEXT:    lda.s16 r0, [p0, #-2]
-; CHECK-NEXT:    lda.s16 r1, [p0, #-4]
+; CHECK-NEXT:    nopb ; mova m0, #-2; nops ; movxm p0, #(Y+4); nopv
+; CHECK-NEXT:    lda.s16 r0, [p0, #-4]; paddb [p0], m0; nopxm ; nops
+; CHECK-NEXT:    lda.s16 r1, [p0], #2
 ; CHECK-NEXT:    lda.s8 r2, [p0, #0]
 ; CHECK-NEXT:    lda r3, [p0, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 3
+; CHECK-NEXT:    add r0, r1, r0 // Delay Slot 3
 ; CHECK-NEXT:    add r0, r0, r2 // Delay Slot 2
 ; CHECK-NEXT:    add r0, r0, r3 // Delay Slot 1
 entry:

@@ -6550,6 +6550,34 @@ bool llvm::matchAlternatingBuildVector(
   return true;
 }
 
+/// AIE-specific reassociation of G_PTR_ADD chains with constant offsets.
+/// Unlike the upstream reassoc_ptradd, this variant only triggers when the
+/// intermediate pointer (LHS of the root PTR_ADD) has exactly one use.
+/// This prevents breaking addressing mode opportunities for loops where the
+/// intermediate pointer feeds both memory operations and subsequent PTR_ADDs.
+bool llvm::matchAIEReassocPtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 CombinerHelper &Helper, BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD && "Expected G_PTR_ADD");
+
+  // Get the LHS (base pointer) of this PTR_ADD
+  Register LHS = MI.getOperand(1).getReg();
+  // GUARD: Only allow reassociation when the intermediate pointer (LHS)
+  // has exactly one use. This prevents breaking addressing mode opportunities
+  // in loops where the intermediate pointer feeds both memory operations
+  // (loads/stores) and subsequent PTR_ADDs.
+  if (!MRI.hasOneNonDBGUse(LHS))
+    return false;
+
+  MachineInstr *LHSDef = MRI.getVRegDef(LHS);
+
+  // LHS must be defined by another G_PTR_ADD for reassociation
+  if (!LHSDef || LHSDef->getOpcode() != TargetOpcode::G_PTR_ADD)
+    return false;
+
+  // Delegate to the upstream helper for the actual constant folding logic
+  return Helper.matchReassocPtrAdd(MI, MatchInfo);
+}
+
 void llvm::applyAlternatingBuildVector(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
     AIEAlternatingBuildVectorMatchData &MatchInfo,
