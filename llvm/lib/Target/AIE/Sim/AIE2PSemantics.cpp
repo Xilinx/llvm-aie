@@ -2741,7 +2741,8 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
 
   // (dst)(src): a whole-register move. Width from the class, which is what
   // lets one body serve every arm -- the w form moves 256 bits, the cm form
-  // 1024 and vmov.d 2048, and none of them is a special case of another.
+  // 1024, vmov.d 2048 and the ex form 576, and none of them is a special case
+  // of another.
   //
   // The class width is also the whole of the accumulator semantics here. cm
   // and dm are not separate files: dm0 IS [cml0, cmh0], so a vmov naming cml0
@@ -2749,10 +2750,24 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // bits its class declares. Getting that wrong is invisible until something
   // reads the other half.
   //
+  // ex is the one arm with no storage of its own: ex0 is [x0, e0], so both the
+  // read and the write go through the four leaves that tile it.
+  //
   // The mcd and scd forms are deliberately absent: they move a register to or
   // from the cascade stream, and this model has no stream to move it to.
+  // The exponent file moves the same way. Its eight forms are every pairing of
+  // {el, eh, r} except r to r, which the scalar mov already covers.
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_eh:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_el:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_r:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_eh:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_el:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_r:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_r_to_eh:
+  case AIE2P::MOV_alu_mv_mv_mv_e_mv_r_to_el:
   case AIE2P::VMOV_D:
   case AIE2P::VMOV_alu_mv_mv_cm:
+  case AIE2P::VMOV_alu_mv_mv_ex:
   case AIE2P::VMOV_alu_mv_mv_w: {
     const MCRegister Dst = Op.reg(0);
     const unsigned W = State.Regs.getClassWidth(Dst);
