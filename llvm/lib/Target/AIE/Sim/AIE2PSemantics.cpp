@@ -924,6 +924,77 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     return StepResult::Retired;
   };
 
+  // vconv.fp32.bf16 (dst)(src): widen each bf16 lane to an f32 accumulator
+  // lane -- convBf16's inverse.
+  //
+  // This direction is EXACT and total, and the opcode says so: it carries no
+  // Uses at all, where the narrowing one carries [crF2FMask, crRnd]. bf16 is
+  // the top 16 bits of an f32, so widening is those bits with 16 zeros under
+  // them. Nothing rounds, nothing saturates, and no lane can be unrepresent-
+  // able -- which is why the NaN arm convBf16 needs has no counterpart here.
+  // A NaN widens to the same NaN, its payload intact in the high bits.
+  //
+  // Deliberately NOT routed through upsInto: that widens INTEGER lanes with
+  // sext/zext and a shift operand, and it takes its lane width from
+  // crUPSMode. These forms have no shift operand and do not read crUPSMode,
+  // so borrowing it would make an exact conversion depend on a control
+  // register the instruction never mentions.
+  auto bf16Widen = [](const APInt &Src, unsigned DstBits) {
+    const unsigned Lanes = DstBits / 32;
+    APInt Acc(DstBits, 0);
+    for (unsigned I = 0; I != Lanes; ++I)
+      Acc.insertBits(Src.extractBits(16, I * 16).zext(32) << 16, I * 32);
+    return Acc;
+  };
+
+  // The geometry both widening forms check: \p SrcBits of bf16 becoming
+  // \p DstBits of f32 lanes, 2x either way.
+  auto widenGeometry = [&](unsigned SrcBits, unsigned DstBits) {
+    return SrcBits && DstBits == 2 * SrcBits && DstBits % 32 == 0;
+  };
+
+  // The register form: source width comes from its class.
+  auto convUpsBf16 = [&]() -> StepResult {
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    if (!widenGeometry(SrcBits, DstBits))
+      return fault(Name + ": " + Twine(SrcBits) + " source bits and " +
+                   Twine(DstBits) + " accumulator bits are not bf16 lanes "
+                   "widening to f32");
+    const APInt Src = Op.valN(1, SrcBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    Eff.RegWrites.push_back(
+        {Dst, bf16Widen(Src, DstBits), Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
+  // vlda.conv.fp32.bf16 -- load bf16 and widen in one instruction. \p SrcBits
+  // is the ACCESS width, which the opcode carries as dmw (256) or dmx (512);
+  // a fused form has no source register to read it from, exactly as fusedUps.
+  auto fusedConvUpsBf16 = [&](unsigned SrcBits, unsigned DstIdx,
+                              uint32_t Addr) -> StepResult {
+    const MCRegister Dst = Op.reg(DstIdx);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    if (!widenGeometry(SrcBits, DstBits))
+      return fault(Name + ": a " + Twine(SrcBits) + "-bit access and " +
+                   Twine(DstBits) + " accumulator bits are not bf16 lanes "
+                   "widening to f32");
+    APInt V;
+    switch (Host.load(Addr, SrcBits / 8, V)) {
+    case PortStatus::Stall:
+      return StepResult::Stalled;
+    case PortStatus::Fault:
+      return fault(Name + ": no data memory at " + Twine::utohexstr(Addr));
+    case PortStatus::Ok:
+      break;
+    }
+    Eff.RegWrites.push_back({Dst, bf16Widen(V, DstBits), Op.cycleOf(DstIdx),
+                             Op.fwdOf(DstIdx)});
+    return StepResult::Retired;
+  };
+
   // A vector store. Its width comes from the source register class, where the
   // scalar forms carry it in the opcode. Same late sampling as those: the
   // register is named, not read, and a composed source composes when the
@@ -2083,6 +2154,62 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VCONV_bf16_fp32_mv_w_srs_bf:
   case AIE2P::VCONV_bf16_fp32_mv_x_srs_bf:
     R = convBf16();
+    break;
+
+  // The widening direction, both widths. Same shape: the lane count follows
+  // from the register classes, so one body serves the w (256->512) and
+  // x (512->1024) arms.
+  case AIE2P::VCONV_fp32_bf16_mv_ups_wbf:
+  case AIE2P::VCONV_fp32_bf16_mv_ups_xbf:
+    R = convUpsBf16();
+    break;
+
+  // vlda.conv.fp32.bf16 -- the same widening over bits just loaded. Addressing
+  // is vlda's, so the operand indices come off each outs list the way the
+  // vlda.ups forms do: a ptr_out shifts ptr and its modifier by one.
+
+  // (dst)(ptr, dj), 256-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx:
+    R = fusedConvUpsBf16(256, 0, access(1, int32_t(Op.val(2))));
+    break;
+
+  // (dst)(ptr, imm), 256-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx_imm:
+    R = fusedConvUpsBf16(256, 0, access(1, Op.imm(2)));
+    break;
+
+  // (dst)(ptr, dj), 512-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx:
+    R = fusedConvUpsBf16(512, 0, access(1, int32_t(Op.val(2))));
+    break;
+
+  // (dst)(ptr, imm), 512-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm:
+    R = fusedConvUpsBf16(512, 0, access(1, Op.imm(2)));
+    break;
+
+  // (dst, ptr_out)(ptr, m), 256-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_pstm_nrm:
+    R = fusedConvUpsBf16(256, 0, access(2, 0));
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+
+  // (dst, ptr_out)(ptr, imm), 256-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_pstm_nrm_imm:
+    R = fusedConvUpsBf16(256, 0, access(2, 0));
+    DefAddr(1, access(2, Op.imm(3)));
+    break;
+
+  // (dst, ptr_out)(ptr, m), 512-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm:
+    R = fusedConvUpsBf16(512, 0, access(2, 0));
+    DefAddr(1, access(2, int32_t(Op.val(3))));
+    break;
+
+  // (dst, ptr_out)(ptr, imm), 512-bit access
+  case AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm:
+    R = fusedConvUpsBf16(512, 0, access(2, 0));
+    DefAddr(1, access(2, Op.imm(3)));
     break;
 
   // Only two bf pairings exist, and they differ solely in source width, which
