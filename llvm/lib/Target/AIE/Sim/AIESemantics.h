@@ -73,7 +73,14 @@ struct SlotEffects {
     /// behaviour this whole struct exists to model. A callable rather than a
     /// description of the arithmetic, so that subtarget semantics stay out of
     /// the executor.
-    std::function<APInt(const APInt &)> Narrow;
+    ///
+    /// Returns nullopt when the value sampled is one the model will not
+    /// convert, which the executor turns into a fault. The integer narrowing
+    /// is total and never declines; the bf16 one does, for a NaN whose payload
+    /// lives only in the bits it would discard -- that truncates to an
+    /// infinity and the hardware's behaviour is not established. Checking at
+    /// issue instead is not open to us: the value is not known until SampleAt.
+    std::function<std::optional<APInt>(const APInt &)> Narrow;
   };
 
   /// A register write and the cycle it becomes readable. The cycle is the

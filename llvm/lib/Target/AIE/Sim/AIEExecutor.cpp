@@ -226,8 +226,19 @@ bool AIEExecutor::drainStores(bool Final) {
     // A fused store narrows on the way out; an ordinary one writes the
     // register's bits. Either way the source was read at SampleAt, so the
     // arithmetic sees the value the pipeline actually presents.
-    Host.store(W.Addr, W.NumBytes,
-               (W.Narrow ? W.Narrow(V) : V).zextOrTrunc(W.NumBytes * 8));
+    std::optional<APInt> Narrowed = W.Narrow ? W.Narrow(V) : std::optional(V);
+    if (!Narrowed) {
+      // The conversion declined the value it was handed. Faulting here rather
+      // than storing something is the same call the read above makes: a store
+      // that cannot be performed must say so, not leave memory holding what
+      // was there for a later load to read back as if it were the answer.
+      FaultMsg = ("fused store of " + Twine(MRI.getName(W.SrcReg)) +
+                  " holds a value this model does not convert")
+                     .str();
+      Ok = false;
+      continue;
+    }
+    Host.store(W.Addr, W.NumBytes, Narrowed->zextOrTrunc(W.NumBytes * 8));
   }
   llvm::erase_if(PendingStores, Ready);
   return Ok;
