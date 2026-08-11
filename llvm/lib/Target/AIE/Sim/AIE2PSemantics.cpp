@@ -613,7 +613,9 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     Eff.MemWrites.push_back(
         {Addr, DstBits / 8, Op.reg(SrcIdx), Op.cycleOf(SrcIdx),
          Op.fwdOf(SrcIdx),
-         [=](const APInt &V) {
+         // Always a value: the integer narrowing is total, so this arm never
+         // declines and the optional is pure signature.
+         [=](const APInt &V) -> std::optional<APInt> {
            return srsNarrow(V, DstBits, AccLaneBits, Shift, Rnd, Sat, Signed);
          }});
     return StepResult::Retired;
@@ -848,26 +850,15 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // moves toward ZERO and an increment always moves AWAY from it. So each
   // mode is expressed as "increase the magnitude?" instead, which flips the
   // sense on negative lanes.
-  auto convBf16 = [&]() -> StepResult {
-    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
-    if (!Op.Ok)
-      return fault(Name + ": crRnd is not readable");
-    if (!isKnownRounding(Rnd))
-      return fault(Name + ": crRnd holds " + Twine(Rnd) +
-                   ", which is not a rounding mode this model knows");
-    const MCRegister Dst = Op.reg(0);
-    const unsigned DstBits = State.Regs.getClassWidth(Dst);
-    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
-    const unsigned Lanes = SrcBits / 32;
-    if (!Lanes || SrcBits % 32 || DstBits < Lanes * 16)
-      return fault(Name + ": " + Twine(SrcBits) + " accumulator bits and " +
-                   Twine(DstBits) + " destination bits are not " +
-                   Twine(Lanes) + " f32 lanes narrowing to bf16");
-    const APInt Src = Op.valN(1, SrcBits);
-    if (!Op.Ok)
-      return fault(Name + ": source is not readable");
-
-    APInt Out(DstBits, 0);
+  // The narrowing itself, as a plain function of the accumulator bits, so the
+  // register form and the fused store share one body -- the same split
+  // srsNarrow makes for the integer path.
+  //
+  // Returns nullopt for a lane this model will not narrow, which the register
+  // form turns into a fault at issue and the store into one at SampleAt.
+  auto bf16Narrow = [](const APInt &Src, unsigned Lanes,
+                       uint32_t Rnd) -> std::optional<APInt> {
+    APInt Out(Lanes * 16, 0);
     for (unsigned I = 0; I != Lanes; ++I) {
       const uint32_t V = uint32_t(Src.extractBits(32, I * 32).getZExtValue());
       // A NaN whose payload lives only in the discarded low bits would
@@ -875,9 +866,7 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
       // established. Infinities need no arm: their low bits are zero, so
       // nothing rounds.
       if ((V >> 23 & 0xFF) == 0xFF && (V & 0x7FFFFF) != 0)
-        return fault(Name + ": lane " + Twine(I) +
-                     " is a NaN, and what this instruction does with one is "
-                     "not established");
+        return std::nullopt;
       APInt T(16, V >> 16);
       const uint32_t Rem = V & 0xFFFF;
       const bool Neg = V >> 31;
@@ -920,7 +909,62 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
         ++T;
       Out.insertBits(T, I * 16);
     }
-    Eff.RegWrites.push_back({Dst, Out, Op.cycleOf(0), Op.fwdOf(0)});
+    return Out;
+  };
+
+  // vconv.bf16.fp32 (dst)(src): the register form.
+  auto convBf16 = [&]() -> StepResult {
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    if (!Op.Ok)
+      return fault(Name + ": crRnd is not readable");
+    if (!isKnownRounding(Rnd))
+      return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                   ", which is not a rounding mode this model knows");
+    const MCRegister Dst = Op.reg(0);
+    const unsigned DstBits = State.Regs.getClassWidth(Dst);
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(1));
+    const unsigned Lanes = SrcBits / 32;
+    if (!Lanes || SrcBits % 32 || DstBits < Lanes * 16)
+      return fault(Name + ": " + Twine(SrcBits) + " accumulator bits and " +
+                   Twine(DstBits) + " destination bits are not " +
+                   Twine(Lanes) + " f32 lanes narrowing to bf16");
+    const APInt Src = Op.valN(1, SrcBits);
+    if (!Op.Ok)
+      return fault(Name + ": source is not readable");
+    const std::optional<APInt> Out = bf16Narrow(Src, Lanes, Rnd);
+    if (!Out)
+      return fault(Name + ": a lane is a NaN, and what this instruction does "
+                          "with one is not established");
+    Eff.RegWrites.push_back(
+        {Dst, Out->zext(DstBits), Op.cycleOf(0), Op.fwdOf(0)});
+    return StepResult::Retired;
+  };
+
+  // vst.conv.bf16.fp32: the same narrowing, with the result going to memory.
+  // The source is NAMED and the arithmetic deferred, exactly as fusedSrs does
+  // and for the same reason -- \p SrcIdx's register may be written by an
+  // instruction issued after this one.
+  //
+  // The stored width is the accumulator's lane count times 16; the dm/dmw/dmx
+  // prefix does not give it away, so it comes from the source class.
+  auto fusedConvSrsBf16 = [&](unsigned SrcIdx, uint32_t Addr) -> StepResult {
+    const unsigned SrcBits = State.Regs.getClassWidth(Op.reg(SrcIdx));
+    const unsigned Lanes = SrcBits / 32;
+    if (!Lanes || SrcBits % 32)
+      return fault(Name + ": " + Twine(SrcBits) +
+                   " accumulator bits are not whole f32 lanes");
+    // crRnd is read HERE, at issue, which is right: it is set before the
+    // instruction that reads it. Only the SOURCE is deferred.
+    const uint32_t Rnd = Op.valReg(AIE2P::crRnd);
+    if (!Op.Ok)
+      return fault(Name + ": crRnd is not readable");
+    if (!isKnownRounding(Rnd))
+      return fault(Name + ": crRnd holds " + Twine(Rnd) +
+                   ", which is not a rounding mode this model knows");
+    Eff.MemWrites.push_back(
+        {Addr, Lanes * 16 / 8, Op.reg(SrcIdx), Op.cycleOf(SrcIdx),
+         Op.fwdOf(SrcIdx),
+         [=](const APInt &V) { return bf16Narrow(V, Lanes, Rnd); }});
     return StepResult::Retired;
   };
 
@@ -2210,6 +2254,36 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   case AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm:
     R = fusedConvUpsBf16(512, 0, access(2, 0));
     DefAddr(1, access(2, Op.imm(3)));
+    break;
+
+  // vst.conv.bf16.fp32 -- the narrowing direction, out to memory. Addressing
+  // is vst's. These forms have no dst, so src sits at operand 0, and the
+  // pstm ones add a ptr_out to the outs list which shifts src by one.
+
+  // (src, ptr, dj)
+  case AIE2P::VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx:
+  case AIE2P::VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx:
+    R = fusedConvSrsBf16(0, access(1, int32_t(Op.val(2))));
+    break;
+
+  // (src, ptr, imm)
+  case AIE2P::VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx_imm:
+  case AIE2P::VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm:
+    R = fusedConvSrsBf16(0, access(1, Op.imm(2)));
+    break;
+
+  // (ptr_out)(src, ptr, m)
+  case AIE2P::VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm:
+  case AIE2P::VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm:
+    R = fusedConvSrsBf16(1, access(2, 0));
+    DefAddr(0, access(2, int32_t(Op.val(3))));
+    break;
+
+  // (ptr_out)(src, ptr, imm)
+  case AIE2P::VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm:
+  case AIE2P::VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm_imm:
+    R = fusedConvSrsBf16(1, access(2, 0));
+    DefAddr(0, access(2, Op.imm(3)));
     break;
 
   // Only two bf pairings exist, and they differ solely in source width, which
