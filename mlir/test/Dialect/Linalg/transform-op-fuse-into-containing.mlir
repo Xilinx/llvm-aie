@@ -656,12 +656,11 @@ module {
       // CHECK: linalg.generic
       // CHECK: %[[T1:.*]] = linalg.generic {{.*}}
       // CHECK: %[[T2:.*]] = linalg.generic {{.*}}
-      // CHECK: %[[T3:.*]] = linalg.generic {{.*}}
       %7 = tensor.extract_slice %1[%4] [%5] [1] : tensor<?xf32> to tensor<?xf32>
 
       %8 = linalg.exp ins(%7 : tensor<?xf32>) outs(%6 : tensor<?xf32>) -> tensor<?xf32>
       scf.forall.in_parallel {
-        // CHECK: tensor.parallel_insert_slice %[[T3]] into %[[ARG7]][%[[I0]]] [%[[I1]]] [1] : tensor<?xf32> into tensor<?xf32>
+        // CHECK: tensor.parallel_insert_slice %[[T2]] into %[[ARG7]][%[[I0]]] [%[[I1]]] [1] : tensor<?xf32> into tensor<?xf32>
         tensor.parallel_insert_slice %8 into %o[%2] [%5] [1] : tensor<?xf32> into tensor<?xf32>
       }
     }
@@ -750,46 +749,6 @@ module {
         : (!transform.op<"linalg.generic">, !transform.op<"scf.forall">) -> (!transform.any_op, !transform.any_op)
         transform.yield
     }
-  }
-}
-
-// -----
-
-// This test checks that upon tiling and fusion, Linalg ops that have been tiled
-// through fusion and are not used elsewhere are indeed dead code and get
-// dropped.
-
-// CHECK-LABEL: func @tile_fuse_drop_dead_producer(
-// CHECK-SAME:    %[[TA:[0-9a-z]+]]: tensor<10x10xf32>) -> tensor<10x10xf32> {
-func.func @tile_fuse_drop_dead_producer(%arg0: tensor<10x10xf32>) -> tensor<10x10xf32> {
-  %c2f = arith.constant 2.0 : f32
-
-  // CHECK-NOT: linalg.generic {{{[^\}]*}}} ins(%[[TA]] : tensor<10x10xf32>) outs(%{{.*}} : tensor<10x10xf32>) {
-  %empty = tensor.empty() : tensor<10x10xf32>
-  %0 = linalg.generic {indexing_maps = [affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)>], iterator_types = ["parallel", "parallel"]}
-       ins(%arg0: tensor<10x10xf32>) outs(%empty: tensor<10x10xf32>) {
-  ^bb0(%a: f32, %b: f32):
-    %res = arith.addf %a, %c2f : f32
-    linalg.yield %res : f32
-  } -> tensor<10x10xf32>
-
-  %empty2 = tensor.empty() : tensor<10x10xf32>
-  // CHECK: scf.for {{.*}} {
-  // CHECK: scf.for {{.*}} {
-  // CHECK: linalg.generic
-  // CHECK: linalg.negf
-  // CHECK: }
-  // CHECK: }
-  %1 = linalg.negf ins(%0 : tensor<10x10xf32>) outs(%empty2 : tensor<10x10xf32>) -> tensor<10x10xf32>
-
-  return %1 : tensor<10x10xf32>
-}
-
-module attributes {transform.with_named_sequence} {
-  transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
-    %0 = transform.structured.match ops{["linalg.negf"]} in %arg1 : (!transform.any_op) -> !transform.any_op
-    %tiled_low, %loop1, %loop2 = transform.structured.fuse %0 [5, 2] : (!transform.any_op) -> (!transform.any_op, !transform.any_op, !transform.any_op)
-    transform.yield
   }
 }
 

@@ -2255,13 +2255,11 @@ void mlir::linalg::populateFoldReshapeOpsByCollapsingPatterns(
 
 void mlir::linalg::populateElementwiseOpsFusionPatterns(
     RewritePatternSet &patterns,
-    const ControlFusionFn &controlElementwiseOpsFusion,
-    bool removeOutsDependency) {
+    const ControlFusionFn &controlElementwiseOpsFusion) {
   auto *context = patterns.getContext();
   patterns.add<FuseElementwiseOps>(context, controlElementwiseOpsFusion);
-  patterns.add<FoldFillWithGenericOp, FoldScalarOrSplatConstant>(context);
-  if (removeOutsDependency)
-    patterns.add<RemoveOutsDependency>(context);
+  patterns.add<FoldFillWithGenericOp, FoldScalarOrSplatConstant,
+               RemoveOutsDependency>(context);
   // Add the patterns that clean up dead operands and results.
   populateEraseUnusedOperandsAndResultsPatterns(patterns);
 }
@@ -2303,8 +2301,7 @@ struct LinalgElementwiseOpFusionPass
     };
 
     // Add elementwise op fusion patterns.
-    populateElementwiseOpsFusionPatterns(patterns, defaultControlFn,
-                                         removeOutsDependency);
+    populateElementwiseOpsFusionPatterns(patterns, defaultControlFn);
     populateFoldReshapeOpsByExpansionPatterns(patterns, defaultControlFn);
     tensor::populateBubbleUpExpandShapePatterns(patterns);
 

@@ -8,7 +8,6 @@
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/IR/AffineValueMap.h"
-#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/UB/IR/UBOps.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
@@ -328,10 +327,6 @@ bool mlir::affine::isValidDim(Value value, Region *region) {
     return isAffineInductionVar(value);
   }
 
-  // Remove me: linalg.index ops are valid affine dim identifiers
-  if (op->hasTrait<OpTrait::AffineDim>())
-    return true;
-
   // Affine apply operation is ok if all of its operands are ok.
   if (auto applyOp = dyn_cast<AffineApplyOp>(op))
     return applyOp.isValidDim(region);
@@ -464,10 +459,6 @@ bool mlir::affine::isValidSymbol(Value value, Region *region) {
     return false;
   }
 
-  // Remove me: linalg.index ops are not valid affine symbols
-  if (defOp->hasTrait<OpTrait::AffineDim>())
-    return false;
-
   // Constant operation is ok.
   Attribute operandCst;
   if (matchPattern(defOp, m_Constant(&operandCst)))
@@ -534,13 +525,11 @@ ParseResult mlir::affine::parseDimAndSymbolList(
 template <typename OpTy>
 static LogicalResult
 verifyDimAndSymbolIdentifiers(OpTy &op, Operation::operand_range operands,
-                              unsigned numDims,
-                              bool allowNonAffineDimOperands = false) {
+                              unsigned numDims) {
   unsigned opIt = 0;
   for (auto operand : operands) {
     if (opIt++ < numDims) {
-      if (!isValidDim(operand, getAffineScope(op)) &&
-          !(allowNonAffineDimOperands && operand.getType().isIndex()))
+      if (!isValidDim(operand, getAffineScope(op)))
         return op.emitOpError("operand cannot be used as a dimension id");
     } else if (!isValidSymbol(operand, getAffineScope(op))) {
       return op.emitOpError("operand cannot be used as a symbol");
@@ -3010,13 +2999,6 @@ struct AlwaysTrueOrFalseIf : public OpRewritePattern<AffineIfOp> {
 };
 } // namespace
 
-void AffineIfOp::getRegionInvocationBounds(
-    ArrayRef<Attribute> operands,
-    SmallVectorImpl<InvocationBounds> &invocationBounds) {
-  // Non-constant condition. Each region may be executed 0 or 1 times.
-  invocationBounds.assign(getNumRegions(), {0, 1});
-}
-
 /// AffineIfOp has two regions -- `then` and `else`. The flow of data should be
 /// as follows: AffineIfOp -> `then`/`else` -> AffineIfOp
 void AffineIfOp::getSuccessorRegions(
@@ -3058,8 +3040,7 @@ LogicalResult AffineIfOp::verify() {
 
   // Verify that the operands are valid dimension/symbols.
   if (failed(verifyDimAndSymbolIdentifiers(*this, getOperands(),
-                                           condition.getNumDims(),
-                                           /*allowNonAffineDimOperands=*/true)))
+                                           condition.getNumDims())))
     return failure();
 
   return success();

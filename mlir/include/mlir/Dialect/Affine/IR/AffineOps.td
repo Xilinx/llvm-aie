@@ -13,7 +13,6 @@
 #ifndef AFFINE_OPS
 #define AFFINE_OPS
 
-include "mlir/Dialect/Affine/IR/AffineTraits.td"
 include "mlir/Dialect/Arith/IR/ArithBase.td"
 include "mlir/Dialect/Affine/IR/AffineMemoryOpInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
@@ -340,8 +339,7 @@ def AffineForOp : Affine_Op<"for",
 def AffineIfOp : Affine_Op<"if",
                            [ImplicitAffineTerminator, RecursivelySpeculatable,
                             RecursiveMemoryEffects, NoRegionArguments,
-                            DeclareOpInterfaceMethods<RegionBranchOpInterface,
-                            ["getRegionInvocationBounds"]>
+                            DeclareOpInterfaceMethods<RegionBranchOpInterface>
                            ]> {
   let summary = "if-then-else operation";
   let description = [{

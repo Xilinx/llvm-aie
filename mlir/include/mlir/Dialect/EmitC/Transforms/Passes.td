@@ -20,16 +20,6 @@ def FormExpressionsPass : Pass<"form-expressions"> {
   let dependentDialects = ["emitc::EmitCDialect"];
 }
 
-def EliminateLibm : Pass<"eliminate-libm", "ModuleOp"> {
-  let summary = "Replace Libm function declarations by a math.h inclusion";
-  let description = [{
-    This pass removes of the Libm function declarations (marked by the
-    `libm` attribute) and replaces them by a `<math.h>` inclusion.
-    Calls to these functions are replaced by `emitc.opaque` calls.
-  }];
-  let dependentDialects = ["emitc::EmitCDialect"];
-}
-
 def WrapFuncInClassPass : Pass<"wrap-emitc-func-in-class"> {
   let summary = "Wrap functions in classes, using arguments as fields.";
   let description = [{

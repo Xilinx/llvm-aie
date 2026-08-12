@@ -2815,54 +2815,37 @@ SmallVector<utils::IteratorType> SoftmaxOp::getLoopIteratorTypes() {
   return iteratorTypes;
 }
 
-static FailureOr<TilingResult>
-implementTiledSoftMax(SoftmaxOp &op, OpBuilder &builder,
-                      ArrayRef<OpFoldResult> offsets,
-                      ArrayRef<OpFoldResult> sizes) {
-  int64_t rank = op.getInputOperandRank();
+FailureOr<TilingResult>
+SoftmaxOp::getTiledImplementation(OpBuilder &builder,
+                                  ArrayRef<OpFoldResult> offsets,
+                                  ArrayRef<OpFoldResult> sizes) {
+  int64_t rank = getInputOperandRank();
   auto oneAttr = builder.getI64IntegerAttr(1);
   SmallVector<OpFoldResult> strides(rank, oneAttr);
   SmallVector<Value> tiledOperands;
   Operation *inputSlice =
-      getSlice(builder, op.getLoc(), op.getInput(), offsets, sizes, strides);
+      getSlice(builder, getLoc(), getInput(), offsets, sizes, strides);
   if (!inputSlice) {
-    return op.emitOpError("failed to compute input slice");
+    return emitOpError("failed to compute input slice");
   }
   tiledOperands.emplace_back(inputSlice->getResult(0));
   Operation *outputSlice =
-      getSlice(builder, op.getLoc(), op.getOutput(), offsets, sizes, strides);
+      getSlice(builder, getLoc(), getOutput(), offsets, sizes, strides);
   if (!outputSlice) {
-    return op.emitOpError("failed to compute output slice");
+    return emitOpError("failed to compute output slice");
   }
   tiledOperands.emplace_back(outputSlice->getResult(0));
 
   SmallVector<Type, 4> resultTypes;
-  if (op.hasPureTensorSemantics())
+  if (hasPureTensorSemantics())
     resultTypes.push_back(tiledOperands[1].getType());
   Operation *tiledOp =
-      mlir::clone(builder, op.getOperation(), resultTypes, tiledOperands);
+      mlir::clone(builder, getOperation(), resultTypes, tiledOperands);
 
   return TilingResult{
       {tiledOp},
       SmallVector<Value>(tiledOp->getResults()),
       llvm::to_vector(ArrayRef<Operation *>{inputSlice, outputSlice})};
-}
-
-FailureOr<TilingResult>
-SoftmaxOp::getTiledImplementation(OpBuilder &builder,
-                                  ArrayRef<OpFoldResult> offsets,
-                                  ArrayRef<OpFoldResult> sizes) {
-  return implementTiledSoftMax(*this, builder, offsets, sizes);
-}
-
-FailureOr<TilingResult>
-SoftmaxOp::generateResultTileValue(OpBuilder &builder, unsigned resultNumber,
-                                   ArrayRef<OpFoldResult> offsets,
-                                   ArrayRef<OpFoldResult> sizes) {
-  if (resultNumber != 0)
-    return failure();
-
-  return implementTiledSoftMax(*this, builder, offsets, sizes);
 }
 
 LogicalResult SoftmaxOp::getResultTilePosition(
