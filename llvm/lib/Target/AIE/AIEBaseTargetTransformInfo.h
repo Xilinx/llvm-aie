@@ -126,6 +126,7 @@ private:
     return Mode == TTI::MIM_PostInc &&
            isIndexSizedInteger(Ty, BaseT::getDataLayout());
   }
+
 protected:
   explicit AIEBaseTTIImpl(const TargetMachine *TM, const DataLayout &DL,
                           const AIESubtarget *Subtarget)
