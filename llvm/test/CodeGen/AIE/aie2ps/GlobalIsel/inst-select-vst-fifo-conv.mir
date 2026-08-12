@@ -34,3 +34,178 @@ body: |
     %9:ptrregbank(p0), %10:fiforegbank(<32 x s32>), %11:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.st.push.BFP384), %0:ptrregbank(p0), %7:fiforegbank(<32 x s32>), %8:gprregbank(s32), %3:vregbank(<8 x s32>), %4:gprregbank(<2 x s32>), %5:gprregbank(s32), %6:gprregbank(s32)
     PseudoRET implicit $lr
 ...
+
+---
+name:            VST_FIFO_CONV_mx9_fp32
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $dm0, $sf, $r26
+    ; CHECK-LABEL: name: VST_FIFO_CONV_mx9_fp32
+    ; CHECK: liveins: $p0, $dm0, $sf, $r26
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mpfs = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mstfifo = COPY $sf
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mr26_fifo_st = COPY $r26
+    ; CHECK-NEXT: [[VCONV_mx9_fp32_:%[0-9]+]]:mexa = VCONV_mx9_fp32 [[COPY1]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mewlv_bis = COPY [[VCONV_mx9_fp32_]].sub_bfp320_lo
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:vec256 = COPY [[COPY4]].sub_bfp_v256
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mgs = COPY [[COPY4]].sub_bfp_g32
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mes = COPY [[COPY4]].sub_bfp_e32
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mewhv = COPY [[VCONV_mx9_fp32_]].sub_bfp320_hi
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:vec256 = COPY [[COPY8]].sub_bfp_v256
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:mgs = COPY [[COPY8]].sub_bfp_g32
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:mes = COPY [[COPY8]].sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY5]], %subreg.sub_256_lo, [[COPY9]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:mggs = REG_SEQUENCE [[COPY6]], %subreg.sub_lo_exp, [[COPY10]], %subreg.sub_hi_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:mees = REG_SEQUENCE [[COPY7]], %subreg.sub_lo_exp, [[COPY11]], %subreg.sub_hi_exp
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_lo
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mgs = COPY [[REG_SEQUENCE1]].sub_lo_exp
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mes = COPY [[REG_SEQUENCE2]].sub_lo_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:mewlv_bis = REG_SEQUENCE killed [[COPY12]], %subreg.sub_bfp_v256, killed [[COPY13]], %subreg.sub_bfp_g32, killed [[COPY14]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_hi
+    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:mgs = COPY [[REG_SEQUENCE1]].sub_hi_exp
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:mes = COPY [[REG_SEQUENCE2]].sub_hi_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:mewhv = REG_SEQUENCE killed [[COPY15]], %subreg.sub_bfp_v256, killed [[COPY16]], %subreg.sub_bfp_g32, killed [[COPY17]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:mexs = REG_SEQUENCE [[REG_SEQUENCE3]], %subreg.sub_bfp320_lo, [[REG_SEQUENCE4]], %subreg.sub_bfp320_hi
+    ; CHECK-NEXT: [[VST_PUSH_576_:%[0-9]+]]:mstfifo, [[VST_PUSH_576_1:%[0-9]+]]:mpfs, [[VST_PUSH_576_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_576 [[COPY2]], [[REG_SEQUENCE5]], [[COPY]], [[COPY3]], implicit-def $srfifo_of
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ptrregbank(p0) = COPY $p0
+    %1:accregbank(<64 x s32>) = COPY $dm0
+    %2:fiforegbank(<32 x s32>) = COPY $sf
+    %3:gprregbank(s32) = COPY $r26
+    %4:vregbank(<16 x s32>), %5:gprregbank(<2 x s32>), %6:gprregbank(<2 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v64accfloat.to.v64mx9), %1:accregbank(<64 x s32>)
+    %7:ptrregbank(p0), %8:fiforegbank(<32 x s32>), %9:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.st.push.BFP640), %0:ptrregbank(p0), %2:fiforegbank(<32 x s32>), %3:gprregbank(s32), %4:vregbank(<16 x s32>), %5:gprregbank(<2 x s32>), %6:gprregbank(<2 x s32>)
+    PseudoRET implicit $lr
+...
+
+---
+name:            VST_FIFO_CONV_mx9_fp32_multi_use
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $dm0, $sf, $r26
+    ; CHECK-LABEL: name: VST_FIFO_CONV_mx9_fp32_multi_use
+    ; CHECK: liveins: $p0, $dm0, $sf, $r26
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mpfs = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mstfifo = COPY $sf
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mr26_fifo_st = COPY $r26
+    ; CHECK-NEXT: [[VCONV_mx9_fp32_:%[0-9]+]]:mexa = VCONV_mx9_fp32 [[COPY1]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mewlv_bis = COPY [[VCONV_mx9_fp32_]].sub_bfp320_lo
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:vec256 = COPY [[COPY4]].sub_bfp_v256
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mgs = COPY [[COPY4]].sub_bfp_g32
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mes = COPY [[COPY4]].sub_bfp_e32
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mewhv = COPY [[VCONV_mx9_fp32_]].sub_bfp320_hi
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:vec256 = COPY [[COPY8]].sub_bfp_v256
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:mgs = COPY [[COPY8]].sub_bfp_g32
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:mes = COPY [[COPY8]].sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY5]], %subreg.sub_256_lo, [[COPY9]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:mggs = REG_SEQUENCE [[COPY6]], %subreg.sub_lo_exp, [[COPY10]], %subreg.sub_hi_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:mees = REG_SEQUENCE [[COPY7]], %subreg.sub_lo_exp, [[COPY11]], %subreg.sub_hi_exp
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_lo
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mgs = COPY [[REG_SEQUENCE1]].sub_lo_exp
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mes = COPY [[REG_SEQUENCE2]].sub_lo_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:mewlv_bis = REG_SEQUENCE killed [[COPY12]], %subreg.sub_bfp_v256, killed [[COPY13]], %subreg.sub_bfp_g32, killed [[COPY14]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_hi
+    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:mgs = COPY [[REG_SEQUENCE1]].sub_hi_exp
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:mes = COPY [[REG_SEQUENCE2]].sub_hi_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:mewhv = REG_SEQUENCE killed [[COPY15]], %subreg.sub_bfp_v256, killed [[COPY16]], %subreg.sub_bfp_g32, killed [[COPY17]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:mexs = REG_SEQUENCE [[REG_SEQUENCE3]], %subreg.sub_bfp320_lo, [[REG_SEQUENCE4]], %subreg.sub_bfp320_hi
+    ; CHECK-NEXT: [[VST_PUSH_576_:%[0-9]+]]:mstfifo, [[VST_PUSH_576_1:%[0-9]+]]:mpfs, [[VST_PUSH_576_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_576 [[COPY2]], [[REG_SEQUENCE5]], [[COPY]], [[COPY3]], implicit-def $srfifo_of
+    ; CHECK-NEXT: [[COPY18:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_lo
+    ; CHECK-NEXT: [[COPY19:%[0-9]+]]:mgs = COPY [[REG_SEQUENCE1]].sub_lo_exp
+    ; CHECK-NEXT: [[COPY20:%[0-9]+]]:mes = COPY [[REG_SEQUENCE2]].sub_lo_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE6:%[0-9]+]]:mewlv_bis = REG_SEQUENCE killed [[COPY18]], %subreg.sub_bfp_v256, killed [[COPY19]], %subreg.sub_bfp_g32, killed [[COPY20]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[COPY21:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_hi
+    ; CHECK-NEXT: [[COPY22:%[0-9]+]]:mgs = COPY [[REG_SEQUENCE1]].sub_hi_exp
+    ; CHECK-NEXT: [[COPY23:%[0-9]+]]:mes = COPY [[REG_SEQUENCE2]].sub_hi_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE7:%[0-9]+]]:mewhv = REG_SEQUENCE killed [[COPY21]], %subreg.sub_bfp_v256, killed [[COPY22]], %subreg.sub_bfp_g32, killed [[COPY23]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE8:%[0-9]+]]:mexs = REG_SEQUENCE [[REG_SEQUENCE6]], %subreg.sub_bfp320_lo, [[REG_SEQUENCE7]], %subreg.sub_bfp320_hi
+    ; CHECK-NEXT: [[VST_PUSH_576_3:%[0-9]+]]:mstfifo, [[VST_PUSH_576_4:%[0-9]+]]:mpfs, [[VST_PUSH_576_5:%[0-9]+]]:mr26_fifo_st = VST_PUSH_576 [[VST_PUSH_576_]], [[REG_SEQUENCE8]], [[VST_PUSH_576_1]], [[VST_PUSH_576_2]], implicit-def $srfifo_of
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ptrregbank(p0) = COPY $p0
+    %1:accregbank(<64 x s32>) = COPY $dm0
+    %2:fiforegbank(<32 x s32>) = COPY $sf
+    %3:gprregbank(s32) = COPY $r26
+    %4:vregbank(<16 x s32>), %5:gprregbank(<2 x s32>), %6:gprregbank(<2 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v64accfloat.to.v64mx9), %1:accregbank(<64 x s32>)
+    %7:ptrregbank(p0), %8:fiforegbank(<32 x s32>), %9:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.st.push.BFP640), %0:ptrregbank(p0), %2:fiforegbank(<32 x s32>), %3:gprregbank(s32), %4:vregbank(<16 x s32>), %5:gprregbank(<2 x s32>), %6:gprregbank(<2 x s32>)
+    %10:ptrregbank(p0), %11:fiforegbank(<32 x s32>), %12:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.st.push.BFP640), %7:ptrregbank(p0), %8:fiforegbank(<32 x s32>), %9:gprregbank(s32), %4:vregbank(<16 x s32>), %5:gprregbank(<2 x s32>), %6:gprregbank(<2 x s32>)
+    PseudoRET implicit $lr
+...
+
+---
+name:            VST_FIFO_mx6_no_conv
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $sf, $r26
+    ; CHECK-LABEL: name: VST_FIFO_mx6_no_conv
+    ; CHECK: liveins: $p0, $sf, $r26
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mpfs = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mstfifo = COPY $sf
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mr26_fifo_st = COPY $r26
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:el = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:er = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:er = IMPLICIT_DEF
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:mfewa = REG_SEQUENCE [[DEF]], %subreg.sub_few_bfp_w, [[DEF1]], %subreg.sub_few_bfp_f64, [[DEF2]], %subreg.sub_few_bfp_g32, [[DEF3]], %subreg.sub_few_bfp_e32
+    ; CHECK-NEXT: [[VST_PUSH_384_:%[0-9]+]]:mstfifo, [[VST_PUSH_384_1:%[0-9]+]]:mpfs, [[VST_PUSH_384_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_384 [[COPY1]], [[REG_SEQUENCE]], [[COPY]], [[COPY2]], implicit-def $srfifo_of
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ptrregbank(p0) = COPY $p0
+    %1:fiforegbank(<32 x s32>) = COPY $sf
+    %2:gprregbank(s32) = COPY $r26
+    %3:vregbank(<8 x s32>) = G_IMPLICIT_DEF
+    %4:gprregbank(<2 x s32>) = G_IMPLICIT_DEF
+    %5:gprregbank(s32) = G_IMPLICIT_DEF
+    %6:gprregbank(s32) = G_IMPLICIT_DEF
+    %7:ptrregbank(p0), %8:fiforegbank(<32 x s32>), %9:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.st.push.BFP384), %0:ptrregbank(p0), %1:fiforegbank(<32 x s32>), %2:gprregbank(s32), %3:vregbank(<8 x s32>), %4:gprregbank(<2 x s32>), %5:gprregbank(s32), %6:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            VST_FIFO_mx9_no_conv
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $sf, $r26
+    ; CHECK-LABEL: name: VST_FIFO_mx9_no_conv
+    ; CHECK: liveins: $p0, $sf, $r26
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mpfs = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mstfifo = COPY $sf
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mr26_fifo_st = COPY $r26
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:mggs = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:mees = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY [[DEF]].sub_256_lo
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mgs = COPY [[DEF1]].sub_lo_exp
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mes = COPY [[DEF2]].sub_lo_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:mewlv_bis = REG_SEQUENCE killed [[COPY3]], %subreg.sub_bfp_v256, killed [[COPY4]], %subreg.sub_bfp_g32, killed [[COPY5]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:vec256 = COPY [[DEF]].sub_256_hi
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mgs = COPY [[DEF1]].sub_hi_exp
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mes = COPY [[DEF2]].sub_hi_exp
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:mewhv = REG_SEQUENCE killed [[COPY6]], %subreg.sub_bfp_v256, killed [[COPY7]], %subreg.sub_bfp_g32, killed [[COPY8]], %subreg.sub_bfp_e32
+    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:mexs = REG_SEQUENCE [[REG_SEQUENCE]], %subreg.sub_bfp320_lo, [[REG_SEQUENCE1]], %subreg.sub_bfp320_hi
+    ; CHECK-NEXT: [[VST_PUSH_576_:%[0-9]+]]:mstfifo, [[VST_PUSH_576_1:%[0-9]+]]:mpfs, [[VST_PUSH_576_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_576 [[COPY1]], [[REG_SEQUENCE2]], [[COPY]], [[COPY2]], implicit-def $srfifo_of
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ptrregbank(p0) = COPY $p0
+    %1:fiforegbank(<32 x s32>) = COPY $sf
+    %2:gprregbank(s32) = COPY $r26
+    %3:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %4:gprregbank(<2 x s32>) = G_IMPLICIT_DEF
+    %5:gprregbank(<2 x s32>) = G_IMPLICIT_DEF
+    %6:ptrregbank(p0), %7:fiforegbank(<32 x s32>), %8:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.fifo.st.push.BFP640), %0:ptrregbank(p0), %1:fiforegbank(<32 x s32>), %2:gprregbank(s32), %3:vregbank(<16 x s32>), %4:gprregbank(<2 x s32>), %5:gprregbank(<2 x s32>)
+    PseudoRET implicit $lr
+...
