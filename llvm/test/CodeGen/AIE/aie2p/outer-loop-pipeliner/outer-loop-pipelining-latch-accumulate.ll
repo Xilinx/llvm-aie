@@ -51,8 +51,8 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.3, %23(s32), %bb.6
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   %15:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
-  ; CHECK-NEXT:   %16:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI1]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
@@ -70,7 +70,7 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
   ; CHECK-NEXT:   [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[PHI]], [[C]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s1) = G_ICMP intpred(slt), [[ADD2]](s32), [[SUB]]
-  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD %15(p0) :: (load (s32) from %ir.a.ptr.next.steady)
+  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32) from %ir.a.ptr.next.steady)
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
@@ -91,7 +91,7 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   G_STORE [[ADD3]](s32), %16(p0) :: (store (s32) into %ir.c.ptr.next.steady)
+  ; CHECK-NEXT:   G_STORE [[ADD3]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %ir.c.ptr.next.steady)
   ; CHECK-NEXT:   [[ADD4:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.10.exit.loopexit:

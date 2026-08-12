@@ -57,7 +57,7 @@ define dso_local void @_Z5test2PPv(ptr nocapture readonly %args) local_unnamed_a
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(p0) = G_LOAD [[COPY]](p0) :: (load (p0) from %ir.args, align 4)
   ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[LOAD]](p0) :: (load (s32) from %ir.0)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[COPY]], [[C]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[COPY]], [[C]](s20)
   ; CHECK-NEXT:   [[LOAD2:%[0-9]+]]:_(p0) = G_LOAD [[PTR_ADD]](p0) :: (load (p0) from %ir.arrayidx1, align 4)
   ; CHECK-NEXT:   [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[LOAD2]](p0) :: (load (s32) from %ir.2)
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp

@@ -611,16 +611,18 @@ void AIE1TargetLowering::analyzeCallOperands(
   unsigned NumOps = Outs.size();
   bool UsesVarargCC = false; // Whether the vararg CC was used
   for (unsigned i = 0; i != NumOps; ++i) {
-    if (!Outs[i].IsFixed && !UsesVarargCC) {
+    bool IsVarArg = Outs[i].Flags.isVarArg();
+    if (IsVarArg && !UsesVarargCC) {
       alignFirstVASlot(CCInfo);
     }
-    UsesVarargCC |= !Outs[i].IsFixed;
-    assert((!UsesVarargCC || !Outs[i].IsFixed) &&
+    UsesVarargCC |= IsVarArg;
+    assert((!UsesVarargCC || IsVarArg) &&
            "Got a fixed argument after varargs");
     MVT ArgVT = Outs[i].VT;
     ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
     CCAssignFn *AssignFn = CCAssignFnForCall(UsesVarargCC);
-    if (AssignFn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) {
+    if (AssignFn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags,
+                 Outs[i].OrigTy, CCInfo)) {
 #ifndef NDEBUG
       dbgs() << "Call operand #" << i << " has unhandled type "
              << EVT(ArgVT).getEVTString() << '\n';

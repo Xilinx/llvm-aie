@@ -40,7 +40,7 @@ public:
   virtual ~AIEBaseAsmBackend() override {}
 
   void applyFixup(const MCFragment &, const MCFixup &Fixup,
-                  const MCValue &Target, MutableArrayRef<char> Data,
+                  const MCValue &Target, uint8_t *Data,
                   uint64_t Value, bool IsResolved) override;
 
   std::unique_ptr<MCObjectTargetWriter>

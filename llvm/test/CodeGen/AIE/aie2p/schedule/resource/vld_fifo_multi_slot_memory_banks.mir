@@ -33,7 +33,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_FILL_512_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
     ; CHECK-NEXT:   $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $p1, $lf1, $r25 = VLDB_FILL_512 killed $p1, killed $lf1, killed $r25 :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -72,7 +72,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_512_normal_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+    ; CHECK: BUNDLE implicit-def $x2, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $x6, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
     ; CHECK-NEXT:   $x2, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $x6, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop killed $p1, killed $lf1, killed $r25, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -112,7 +112,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_544_normal_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex9, implicit-def $x9, implicit-def $wl9, implicit-def $wh9, implicit-def $e9, implicit-def $el9, implicit-def $eh9, implicit-def $ewh9, implicit-def $ewl9, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex7, implicit-def $x7, implicit-def $wl7, implicit-def $wh7, implicit-def $e7, implicit-def $el7, implicit-def $eh7, implicit-def $ewh7, implicit-def $ewl7, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+    ; CHECK: BUNDLE implicit-def $ex9, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex7, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
     ; CHECK-NEXT:   $ex9, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex7, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop killed $p1, killed $lf1, killed $r25, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -152,7 +152,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_576_normal_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex3, implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $e3, implicit-def $el3, implicit-def $eh3, implicit-def $ewh3, implicit-def $ewl3, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $srfifo_uf, implicit-def $ex8, implicit-def $x8, implicit-def $wl8, implicit-def $wh8, implicit-def $e8, implicit-def $el8, implicit-def $eh8, implicit-def $ewh8, implicit-def $ewl8, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24 {
+    ; CHECK: BUNDLE implicit-def $ex3, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $srfifo_uf, implicit-def $ex8, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24 {
     ; CHECK-NEXT:   $ex3, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop killed $p1, killed $lf1, killed $r25, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex8, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -192,7 +192,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_640_normal_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qx0, implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $q0, implicit-def $ql0, implicit-def $qh0, implicit-def $qwh0, implicit-def $qwl0, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $srfifo_uf, implicit-def $qx3, implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $q3, implicit-def $ql3, implicit-def $qh3, implicit-def $qwh3, implicit-def $qwl3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24 {
+    ; CHECK: BUNDLE implicit-def $qx0, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $srfifo_uf, implicit-def $qx3, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24 {
     ; CHECK-NEXT:   $qx0, $p1, $lf1, $r25 = VLDA_POP_640_normal_pop killed $p1, killed $lf1, killed $r25, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qx3, $p0, $lf0, $r24 = VLDB_POP_640_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -232,7 +232,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_704_normal_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qex2, implicit-def $qewl2, implicit-def $ql2, implicit-def $el2, implicit-def $wl2, implicit-def $ewl2, implicit-def $qwl2, implicit-def $qewh2, implicit-def $qh2, implicit-def $eh2, implicit-def $wh2, implicit-def $ewh2, implicit-def $qwh2, implicit-def $e2, implicit-def $q2, implicit-def $x2, implicit-def $ex2, implicit-def $qx2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $srfifo_uf, implicit-def $qex3, implicit-def $qewl3, implicit-def $ql3, implicit-def $el3, implicit-def $wl3, implicit-def $ewl3, implicit-def $qwl3, implicit-def $qewh3, implicit-def $qh3, implicit-def $eh3, implicit-def $wh3, implicit-def $ewh3, implicit-def $qwh3, implicit-def $e3, implicit-def $q3, implicit-def $x3, implicit-def $ex3, implicit-def $qx3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24 {
+    ; CHECK: BUNDLE implicit-def $qex2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $srfifo_uf, implicit-def $qex3, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24 {
     ; CHECK-NEXT:   $qex2, $p1, $lf1, $r25 = VLDA_POP_704_normal_pop killed $p1, killed $lf1, killed $r25, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qex3, $p0, $lf0, $r24 = VLDB_POP_704_normal_pop killed $p0, killed $lf0, killed $r24, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -272,7 +272,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_512_fifo_1d_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
+    ; CHECK: BUNDLE implicit-def $x5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $x2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
     ; CHECK-NEXT:   $x5, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m3, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $x2, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop killed $p1, killed $lf1, killed $r25, killed $m2, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -313,7 +313,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_544_fifo_1d_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $e5, implicit-def $el5, implicit-def $eh5, implicit-def $ewh5, implicit-def $ewl5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $e2, implicit-def $el2, implicit-def $eh2, implicit-def $ewh2, implicit-def $ewl2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
+    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
     ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m3, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex2, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop killed $p1, killed $lf1, killed $r25, killed $m2, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -353,7 +353,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_576_fifo_1d_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $e5, implicit-def $el5, implicit-def $eh5, implicit-def $ewh5, implicit-def $ewl5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $e2, implicit-def $el2, implicit-def $eh2, implicit-def $ewh2, implicit-def $ewl2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
+    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
     ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m3, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex2, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop killed $p1, killed $lf1, killed $r25, killed $m2, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -393,7 +393,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_640_fifo_1d_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qx2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $q2, implicit-def $ql2, implicit-def $qh2, implicit-def $qwh2, implicit-def $qwl2, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $qx3, implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $q3, implicit-def $ql3, implicit-def $qh3, implicit-def $qwh3, implicit-def $qwl3, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
+    ; CHECK: BUNDLE implicit-def $qx2, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $qx3, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
     ; CHECK-NEXT:   $qx2, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m3, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qx3, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop killed $p1, killed $lf1, killed $r25, killed $m2, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -433,7 +433,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_704_fifo_1d_pop_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qex0, implicit-def $qewl0, implicit-def $ql0, implicit-def $el0, implicit-def $wl0, implicit-def $ewl0, implicit-def $qwl0, implicit-def $qewh0, implicit-def $qh0, implicit-def $eh0, implicit-def $wh0, implicit-def $ewh0, implicit-def $qwh0, implicit-def $e0, implicit-def $q0, implicit-def $x0, implicit-def $ex0, implicit-def $qx0, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $qex1, implicit-def $qewl1, implicit-def $ql1, implicit-def $el1, implicit-def $wl1, implicit-def $ewl1, implicit-def $qwl1, implicit-def $qewh1, implicit-def $qh1, implicit-def $eh1, implicit-def $wh1, implicit-def $ewh1, implicit-def $qwh1, implicit-def $e1, implicit-def $q1, implicit-def $x1, implicit-def $ex1, implicit-def $qx1, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
+    ; CHECK: BUNDLE implicit-def $qex0, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $srfifo_uf, implicit-def $qex1, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $m3, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $m2 {
     ; CHECK-NEXT:   $qex0, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop killed $p0, killed $lf0, killed $r24, killed $m3, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qex1, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop killed $p1, killed $lf1, killed $r25, killed $m2, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -473,7 +473,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_512_2D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x11, implicit-def $wl11, implicit-def $wh11, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $x10, implicit-def $wl10, implicit-def $wh10, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
+    ; CHECK: BUNDLE implicit-def $x11, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $x10, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
     ; CHECK-NEXT:   $x11, $p1, $lf1, $r25, $dc1 = VLDA_POP_512_2D killed $p1, killed $lf1, killed $r25, killed $d1, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $x10, $p0, $lf0, $r24, $dc6 = VLDB_POP_512_2D killed $p0, killed $lf0, killed $r24, killed $d6, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -513,7 +513,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_544_2D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex11, implicit-def $x11, implicit-def $wl11, implicit-def $wh11, implicit-def $e11, implicit-def $el11, implicit-def $eh11, implicit-def $ewh11, implicit-def $ewl11, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $ex10, implicit-def $x10, implicit-def $wl10, implicit-def $wh10, implicit-def $e10, implicit-def $el10, implicit-def $eh10, implicit-def $ewh10, implicit-def $ewl10, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
+    ; CHECK: BUNDLE implicit-def $ex11, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $ex10, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
     ; CHECK-NEXT:   $ex11, $p1, $lf1, $r25, $dc1 = VLDA_POP_544_2D killed $p1, killed $lf1, killed $r25, killed $d1, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex10, $p0, $lf0, $r24, $dc6 = VLDB_POP_544_2D killed $p0, killed $lf0, killed $r24, killed $d6, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -553,7 +553,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_576_2D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex11, implicit-def $x11, implicit-def $wl11, implicit-def $wh11, implicit-def $e11, implicit-def $el11, implicit-def $eh11, implicit-def $ewh11, implicit-def $ewl11, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $ex10, implicit-def $x10, implicit-def $wl10, implicit-def $wh10, implicit-def $e10, implicit-def $el10, implicit-def $eh10, implicit-def $ewh10, implicit-def $ewl10, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
+    ; CHECK: BUNDLE implicit-def $ex11, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $ex10, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
     ; CHECK-NEXT:   $ex11, $p1, $lf1, $r25, $dc1 = VLDA_POP_576_2D killed $p1, killed $lf1, killed $r25, killed $d1, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex10, $p0, $lf0, $r24, $dc6 = VLDB_POP_576_2D killed $p0, killed $lf0, killed $r24, killed $d6, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -593,7 +593,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_640_2D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qx2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $q2, implicit-def $ql2, implicit-def $qh2, implicit-def $qwh2, implicit-def $qwl2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $qx3, implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $q3, implicit-def $ql3, implicit-def $qh3, implicit-def $qwh3, implicit-def $qwl3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
+    ; CHECK: BUNDLE implicit-def $qx2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $qx3, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
     ; CHECK-NEXT:   $qx2, $p1, $lf1, $r25, $dc1 = VLDA_POP_640_2D killed $p1, killed $lf1, killed $r25, killed $d1, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qx3, $p0, $lf0, $r24, $dc6 = VLDB_POP_640_2D killed $p0, killed $lf0, killed $r24, killed $d6, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -633,7 +633,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_704_2D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qex0, implicit-def $qewl0, implicit-def $ql0, implicit-def $el0, implicit-def $wl0, implicit-def $ewl0, implicit-def $qwl0, implicit-def $qewh0, implicit-def $qh0, implicit-def $eh0, implicit-def $wh0, implicit-def $ewh0, implicit-def $qwh0, implicit-def $e0, implicit-def $q0, implicit-def $x0, implicit-def $ex0, implicit-def $qx0, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $qex1, implicit-def $qewl1, implicit-def $ql1, implicit-def $el1, implicit-def $wl1, implicit-def $ewl1, implicit-def $qwl1, implicit-def $qewh1, implicit-def $qh1, implicit-def $eh1, implicit-def $wh1, implicit-def $ewh1, implicit-def $qwh1, implicit-def $e1, implicit-def $q1, implicit-def $x1, implicit-def $ex1, implicit-def $qx1, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
+    ; CHECK: BUNDLE implicit-def $qex0, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc1, implicit-def $srfifo_uf, implicit-def $qex1, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc6, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d6 {
     ; CHECK-NEXT:   $qex0, $p1, $lf1, $r25, $dc1 = VLDA_POP_704_2D killed $p1, killed $lf1, killed $r25, killed $d1, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qex1, $p0, $lf0, $r24, $dc6 = VLDB_POP_704_2D killed $p0, killed $lf0, killed $r24, killed $d6, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -673,7 +673,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_512_3D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
+    ; CHECK: BUNDLE implicit-def $x5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $x2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
     ; CHECK-NEXT:   $x5, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $x2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D killed $p1, killed $lf1, killed $r25, killed $d2_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -713,7 +713,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_544_3D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $e5, implicit-def $el5, implicit-def $eh5, implicit-def $ewh5, implicit-def $ewl5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $e2, implicit-def $el2, implicit-def $eh2, implicit-def $ewh2, implicit-def $ewl2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
+    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
     ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_544_3D killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_544_3D killed $p1, killed $lf1, killed $r25, killed $d2_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -753,7 +753,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_576_3D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $e5, implicit-def $el5, implicit-def $eh5, implicit-def $ewh5, implicit-def $ewl5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $e2, implicit-def $el2, implicit-def $eh2, implicit-def $ewh2, implicit-def $ewl2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
+    ; CHECK: BUNDLE implicit-def $ex5, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $ex2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
     ; CHECK-NEXT:   $ex5, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $ex2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_576_3D killed $p1, killed $lf1, killed $r25, killed $d2_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -794,7 +794,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_640_3D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qx3, implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $q3, implicit-def $ql3, implicit-def $qh3, implicit-def $qwh3, implicit-def $qwl3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $qx2, implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $q2, implicit-def $ql2, implicit-def $qh2, implicit-def $qwh2, implicit-def $qwl2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
+    ; CHECK: BUNDLE implicit-def $qx3, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $qx2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
     ; CHECK-NEXT:   $qx3, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_640_3D killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qx2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_640_3D killed $p1, killed $lf1, killed $r25, killed $d2_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }
@@ -835,7 +835,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_POP_704_3D_pseudo_diff_bank
-    ; CHECK: BUNDLE implicit-def $qex3, implicit-def $qewl3, implicit-def $ql3, implicit-def $el3, implicit-def $wl3, implicit-def $ewl3, implicit-def $qwl3, implicit-def $qewh3, implicit-def $qh3, implicit-def $eh3, implicit-def $wh3, implicit-def $ewh3, implicit-def $qwh3, implicit-def $e3, implicit-def $q3, implicit-def $x3, implicit-def $ex3, implicit-def $qx3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $qex2, implicit-def $qewl2, implicit-def $ql2, implicit-def $el2, implicit-def $wl2, implicit-def $ewl2, implicit-def $qwl2, implicit-def $qewh2, implicit-def $qh2, implicit-def $eh2, implicit-def $wh2, implicit-def $ewh2, implicit-def $qwh2, implicit-def $e2, implicit-def $q2, implicit-def $x2, implicit-def $ex2, implicit-def $qx2, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
+    ; CHECK: BUNDLE implicit-def $qex3, implicit-def $p0, implicit-def $lf0, implicit-def $r24, implicit-def $dc1, implicit-def $dc5, implicit-def $srfifo_uf, implicit-def $qex2, implicit-def $p1, implicit-def $lf1, implicit-def $r25, implicit-def $dc2, implicit-def $dc6, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $d1_3d, implicit killed $p1, implicit killed $lf1, implicit killed $r25, implicit killed $d2_3d {
     ; CHECK-NEXT:   $qex3, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_704_3D killed $p0, killed $lf0, killed $r24, killed $d1_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 14)
     ; CHECK-NEXT:   $qex2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_704_3D killed $p1, killed $lf1, killed $r25, killed $d2_3d, implicit-def $srfifo_uf :: (load (s512), addrspace 9)
     ; CHECK-NEXT: }

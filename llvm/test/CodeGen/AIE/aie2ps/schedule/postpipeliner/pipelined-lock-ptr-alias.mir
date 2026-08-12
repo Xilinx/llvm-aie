@@ -83,7 +83,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
   ; CHECK-NEXT:     $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
   ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri $r0, -2
   ; CHECK-NEXT:   }
@@ -156,7 +156,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
   ; CHECK-NEXT:     $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
   ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri $r0, -2
   ; CHECK-NEXT:   }
@@ -517,7 +517,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
   ; CHECK-NEXT:     $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
   ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri $r0, -2
   ; CHECK-NEXT:   }
@@ -591,7 +591,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18, $m0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $r0 {
   ; CHECK-NEXT:     $x0, $p0 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed $p0, 64
   ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri $r0, -2
   ; CHECK-NEXT:   }

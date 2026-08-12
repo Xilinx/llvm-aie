@@ -14,7 +14,7 @@ define <8 x i32> @test_infer_addrspace(ptr %input , <2 x i32> %b) {
   ; AIE-O0-NEXT:   [[ADDRSPACE_CAST:%[0-9]+]]:_(p5) = G_ADDRSPACE_CAST [[COPY]](p0)
   ; AIE-O0-NEXT:   [[ADDRSPACE_CAST1:%[0-9]+]]:_(p0) = G_ADDRSPACE_CAST [[ADDRSPACE_CAST]](p5)
   ; AIE-O0-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 10
-  ; AIE-O0-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[ADDRSPACE_CAST1]], [[C]](s20)
+  ; AIE-O0-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[ADDRSPACE_CAST1]], [[C]](s20)
   ; AIE-O0-NEXT:   [[ADDRSPACE_CAST2:%[0-9]+]]:_(p5) = G_ADDRSPACE_CAST [[PTR_ADD]](p0)
   ; AIE-O0-NEXT:   [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[ADDRSPACE_CAST2]](p5) :: (load (<8 x s32>) from %ir.add.ptr.ascast.i, addrspace 5)
   ; AIE-O0-NEXT:   $wl0 = COPY [[LOAD]](<8 x s32>)
@@ -29,7 +29,7 @@ define <8 x i32> @test_infer_addrspace(ptr %input , <2 x i32> %b) {
   ; AIE-O1-NEXT:   [[ADDRSPACE_CAST:%[0-9]+]]:_(p5) = G_ADDRSPACE_CAST [[COPY]](p0)
   ; AIE-O1-NEXT:   [[ADDRSPACE_CAST1:%[0-9]+]]:_(p0) = G_ADDRSPACE_CAST [[ADDRSPACE_CAST]](p5)
   ; AIE-O1-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 10
-  ; AIE-O1-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[ADDRSPACE_CAST1]], [[C]](s20)
+  ; AIE-O1-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[ADDRSPACE_CAST1]], [[C]](s20)
   ; AIE-O1-NEXT:   [[ADDRSPACE_CAST2:%[0-9]+]]:_(p5) = G_ADDRSPACE_CAST [[PTR_ADD]](p0)
   ; AIE-O1-NEXT:   [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[ADDRSPACE_CAST2]](p5) :: (load (<8 x s32>) from %ir.add.ptr.ascast.i, addrspace 5)
   ; AIE-O1-NEXT:   $wl0 = COPY [[LOAD]](<8 x s32>)
@@ -44,7 +44,7 @@ define <8 x i32> @test_infer_addrspace(ptr %input , <2 x i32> %b) {
   ; AIE-O2-NEXT:   [[ADDRSPACE_CAST:%[0-9]+]]:_(p5) = G_ADDRSPACE_CAST [[COPY]](p0)
   ; AIE-O2-NEXT:   [[ADDRSPACE_CAST1:%[0-9]+]]:_(p0) = G_ADDRSPACE_CAST [[ADDRSPACE_CAST]](p5)
   ; AIE-O2-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 10
-  ; AIE-O2-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[ADDRSPACE_CAST1]], [[C]](s20)
+  ; AIE-O2-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[ADDRSPACE_CAST1]], [[C]](s20)
   ; AIE-O2-NEXT:   [[ADDRSPACE_CAST2:%[0-9]+]]:_(p5) = G_ADDRSPACE_CAST [[PTR_ADD]](p0)
   ; AIE-O2-NEXT:   [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[ADDRSPACE_CAST2]](p5) :: (load (<8 x s32>) from %ir.add.ptr.ascast.i, addrspace 5)
   ; AIE-O2-NEXT:   $wl0 = COPY [[LOAD]](<8 x s32>)

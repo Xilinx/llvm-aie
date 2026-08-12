@@ -28,7 +28,7 @@
 // CHECK:       [[FOR_BODY]]:
 // CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ 2, %[[FOR_BODY_PEEL_NEXT6]] ], [ [[INC:%.*]], %[[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_04:%.*]] = phi i32 [ [[ADD_PEEL9]], %[[FOR_BODY_PEEL_NEXT6]] ], [ [[ADD]], %[[FOR_BODY]] ]
-// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[I_05]] to i20
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc nsw i32 [[I_05]] to i20
 // CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
 // CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
@@ -62,7 +62,7 @@ int bool_hint_peel(int n, int *p) {
 // CHECK:       [[FOR_BODY]]:
 // CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ 2, %[[FOR_BODY_PEEL_NEXT6]] ], [ [[INC:%.*]], %[[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_04:%.*]] = phi i32 [ [[ADD_PEEL9]], %[[FOR_BODY_PEEL_NEXT6]] ], [ [[ADD]], %[[FOR_BODY]] ]
-// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[I_05]] to i20
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc nsw i32 [[I_05]] to i20
 // CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
 // CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
@@ -96,7 +96,7 @@ int int_hint_peel(int n, int *p) {
 // CHECK:       [[FOR_BODY]]:
 // CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ 2, %[[FOR_BODY_PEEL_NEXT6]] ], [ [[INC:%.*]], %[[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_04:%.*]] = phi i32 [ [[ADD_PEEL9]], %[[FOR_BODY_PEEL_NEXT6]] ], [ [[ADD]], %[[FOR_BODY]] ]
-// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[I_05]] to i20
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc nsw i32 [[I_05]] to i20
 // CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
 // CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
@@ -131,7 +131,7 @@ int multi_hint_peel(int n, int *p) {
 // CHECK:       [[FOR_BODY]]:
 // CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ 2, %[[FOR_BODY_PEEL_NEXT6]] ], [ [[INC:%.*]], %[[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_04:%.*]] = phi i32 [ [[ADD_PEEL9]], %[[FOR_BODY_PEEL_NEXT6]] ], [ [[ADD]], %[[FOR_BODY]] ]
-// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[I_05]] to i20
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc nsw i32 [[I_05]] to i20
 // CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
 // CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]

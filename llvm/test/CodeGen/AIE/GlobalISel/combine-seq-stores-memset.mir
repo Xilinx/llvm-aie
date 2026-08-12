@@ -164,7 +164,7 @@ body:             |
     ; CHECK-NEXT: G_STORE [[AIE_UNPAD_VECTOR]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>))
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s16) = G_CONSTANT i16 0
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[COPY]], [[C3]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s16), [[PTR_ADD1]](p0) :: (store (s16) into unknown-address + 16, align 16)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %84:_(p0) = COPY $p0

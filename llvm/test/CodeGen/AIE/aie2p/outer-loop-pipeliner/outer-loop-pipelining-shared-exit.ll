@@ -53,8 +53,8 @@ define i32 @shared_exit(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
   ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.3, %21(s32), %bb.6
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   %14:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
-  ; CHECK-NEXT:   %15:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI1]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI2]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
@@ -71,7 +71,7 @@ define i32 @shared_exit(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI2]](p0) :: (store (s32) into %ir.c.ptr.steady)
   ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[PHI]], [[C]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s1) = G_ICMP intpred(slt), [[ADD1]](s32), [[SUB]]
-  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD %14(p0) :: (load (s32) from %ir.a.ptr.next.steady)
+  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32) from %ir.a.ptr.next.steady)
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
@@ -92,7 +92,7 @@ define i32 @shared_exit(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
   ; CHECK-NEXT: bb.9.lastiter.stage1.bottom:
   ; CHECK-NEXT:   successors: %bb.10(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   G_STORE [[ADD2]](s32), %15(p0) :: (store (s32) into %ir.c.ptr.next.steady)
+  ; CHECK-NEXT:   G_STORE [[ADD2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %ir.c.ptr.next.steady)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.10.exit:
   ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD2]](s32), %bb.9
