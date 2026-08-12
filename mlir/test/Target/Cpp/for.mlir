@@ -1,18 +1,18 @@
 // RUN: mlir-translate -mlir-to-cpp %s | FileCheck --match-full-lines %s -check-prefix=CPP-DEFAULT
 // RUN: mlir-translate -mlir-to-cpp -declare-variables-at-top %s | FileCheck --match-full-lines %s -check-prefix=CPP-DECLTOP
 
-func.func @test_for(%arg0 : !emitc.size_t, %arg1 : !emitc.size_t, %arg2 : !emitc.size_t) {
-  %lb = emitc.expression : !emitc.size_t {
-    %a = emitc.add %arg0, %arg1 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t
-    emitc.yield %a : !emitc.size_t
+func.func @test_for(%arg0 : index, %arg1 : index, %arg2 : index) {
+  %lb = emitc.expression : index {
+    %a = emitc.add %arg0, %arg1 : (index, index) -> index
+    emitc.yield %a : index
   }
-  %ub = emitc.expression : !emitc.size_t {
-    %a = emitc.mul %arg1, %arg2 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t
-    emitc.yield %a : !emitc.size_t
+  %ub = emitc.expression : index {
+    %a = emitc.mul %arg1, %arg2 : (index, index) -> index
+    emitc.yield %a : index
   }
-  %step = emitc.expression : !emitc.size_t {
-    %a = emitc.div %arg0, %arg2 : (!emitc.size_t, !emitc.size_t) -> !emitc.size_t
-    emitc.yield %a : !emitc.size_t
+  %step = emitc.expression : index {
+    %a = emitc.div %arg0, %arg2 : (index, index) -> index
+    emitc.yield %a : index
   }
   emitc.for %i0 = %lb to %ub step %step {
     %0 = emitc.call_opaque "f"() : () -> i32
@@ -33,9 +33,9 @@ func.func @test_for(%arg0 : !emitc.size_t, %arg1 : !emitc.size_t, %arg2 : !emitc
 // CPP-DECLTOP-NEXT: return;
 
 func.func @test_for_yield() {
-  %start = "emitc.constant"() <{value = 0 : index}> : () -> !emitc.size_t
-  %stop = "emitc.constant"() <{value = 10 : index}> : () -> !emitc.size_t
-  %step = "emitc.constant"() <{value = 1 : index}> : () -> !emitc.size_t
+  %start = "emitc.constant"() <{value = 0 : index}> : () -> index
+  %stop = "emitc.constant"() <{value = 10 : index}> : () -> index
+  %step = "emitc.constant"() <{value = 1 : index}> : () -> index
 
   %s0 = "emitc.constant"() <{value = 0 : i32}> : () -> i32
   %p0 = "emitc.constant"() <{value = 1.0 : f32}> : () -> f32
@@ -48,9 +48,9 @@ func.func @test_for_yield() {
   emitc.assign %p0 : f32 to %3 : !emitc.lvalue<f32>
   emitc.for %iter = %start to %stop step %step {
     %4 = emitc.load %2 : !emitc.lvalue<i32>
-    %sn = emitc.call_opaque "add"(%4, %iter) : (i32, !emitc.size_t) -> i32
+    %sn = emitc.call_opaque "add"(%4, %iter) : (i32, index) -> i32
     %5 = emitc.load %3 : !emitc.lvalue<f32>
-    %pn = emitc.call_opaque "mul"(%5, %iter) : (f32, !emitc.size_t) -> f32
+    %pn = emitc.call_opaque "mul"(%5, %iter) : (f32, index) -> f32
     emitc.assign %sn : i32 to %2 : !emitc.lvalue<i32>
     emitc.assign %pn : f32 to %3 : !emitc.lvalue<f32>
     emitc.yield
@@ -130,9 +130,9 @@ func.func @test_for_yield() {
 // CPP-DECLTOP-NEXT: return;
 
 func.func @test_for_yield_2() {
-  %start = emitc.literal "0" : !emitc.size_t
-  %stop = emitc.literal "10" : !emitc.size_t
-  %step = emitc.literal "1" : !emitc.size_t
+  %start = emitc.literal "0" : index
+  %stop = emitc.literal "10" : index
+  %step = emitc.literal "1" : index
 
   %s0 = emitc.literal "0" : i32
   %p0 = emitc.literal "M_PI" : f32
@@ -145,9 +145,9 @@ func.func @test_for_yield_2() {
   emitc.assign %p0 : f32 to %3 : !emitc.lvalue<f32>
   emitc.for %iter = %start to %stop step %step {
     %4 = emitc.load %2 : !emitc.lvalue<i32>
-    %sn = emitc.call_opaque "add"(%4, %iter) : (i32, !emitc.size_t) -> i32
+    %sn = emitc.call_opaque "add"(%4, %iter) : (i32, index) -> i32
     %5 = emitc.load %3 : !emitc.lvalue<f32>
-    %pn = emitc.call_opaque "mul"(%5, %iter) : (f32, !emitc.size_t) -> f32
+    %pn = emitc.call_opaque "mul"(%5, %iter) : (f32, index) -> f32
     emitc.assign %sn : i32 to %2 : !emitc.lvalue<i32>
     emitc.assign %pn : f32 to %3 : !emitc.lvalue<f32>
     emitc.yield

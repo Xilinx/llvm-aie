@@ -130,14 +130,6 @@ func.func @cast_tensor(%arg : tensor<f32>) {
 
 // -----
 
-func.func @cast_array(%arg : !emitc.array<4xf32>) {
-    // expected-error @+1 {{'emitc.cast' op cast of array must bear a reference}}
-    %1 = emitc.cast %arg: !emitc.array<4xf32> to !emitc.array<4xf32>
-    return
-}
-
-// -----
-
 func.func @cast_to_array(%arg : f32) {
     // expected-error @+1 {{'emitc.cast' op operand type 'f32' and result type '!emitc.array<4xf32>' are cast incompatible}}
     %1 = emitc.cast %arg: f32 to !emitc.array<4xf32>
@@ -376,7 +368,7 @@ emitc.func @test_expression_op_outside_expression() {
 
 // -----
 
-// expected-error @+1 {{expected ')'}}
+// expected-error @+1 {{'emitc.func' op requires zero or exactly one result, but has 2}}
 emitc.func @multiple_results(%0: i32) -> (i32, i32) {
   emitc.return %0 : i32
 }
@@ -631,19 +623,17 @@ func.func @emitc_switch() {
 
 // -----
 
-// expected-error @+1 {{'emitc.global' op global reference initial value must be an opaque attribute, got dense<128>}}
-emitc.global const @myref : !emitc.array<2xi16> = dense<128> ref
-
-// -----
-
-// expected-error @+1 {{'emitc.global' op global reference must be initialized}}
-emitc.global const @myref : !emitc.array<2xi16> ref
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op requires operands for each placeholder in the format string}}
+  emitc.verbatim "" args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
 
 // -----
 
 func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
-  // expected-error @+1 {{'emitc.verbatim' op requires operands for each placeholder in the format string}}
-  emitc.verbatim "" args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  // expected-error @+1 {{'emitc.verbatim' op expected '}' after unescaped '{' at end of string}}
+  emitc.verbatim "{} + {} {" args %arg0, %arg1 : !emitc.ptr<i32>, i32
   return
 }
 
@@ -689,14 +679,6 @@ func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
 
 // -----
 
-func.func @template_args_with_names(%arg0: i32) {
-  // expected-error @+1 {{'emitc.call_opaque' op number of template argument names must be equal to number of template arguments}}
-  emitc.call_opaque "kernel1"(%arg0)  {template_arg_names = ["N", "P"], template_args = [42 : i32]} : (i32) -> ()
-  return
-}
-
-// -----
-
 // expected-error @+1 {{'emitc.field' op field must be nested within an emitc.class operation}}
 emitc.field @testField : !emitc.array<1xf32>
 
@@ -712,22 +694,6 @@ emitc.func @testMethod() {
   // expected-error @+1 {{'emitc.get_field' op  must be nested within an emitc.class operation}}
   %1 = get_field @testField : !emitc.array<1xf32>
   %2 = subscript %1[%0] : (!emitc.array<1xf32>, !emitc.size_t) -> !emitc.lvalue<f32>
-  return
-}
-
-// -----
-
-func.func @template_args_with_names(%arg0: i32) {
-  // expected-error @+1 {{'emitc.call_opaque' op number of template argument names must be equal to number of template arguments}}
-  emitc.call_opaque "kernel1"(%arg0)  {template_arg_names = ["N"], template_args = [42 : i32, 56 : i32]} : (i32) -> ()
-  return
-}
-
-// -----
-
-func.func @template_args_with_names(%arg0: i32) {
-  // expected-error @+1 {{'emitc.call_opaque' op should not have names for template arguments if it does not have template arguments}}
-  emitc.call_opaque "kernel1"(%arg0)  {template_arg_names = ["N"]} : (i32) -> ()
   return
 }
 

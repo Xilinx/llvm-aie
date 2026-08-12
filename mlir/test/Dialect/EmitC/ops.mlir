@@ -36,16 +36,7 @@ emitc.func private @extern(i32) attributes {specifiers = ["extern"]}
 
 func.func @cast(%arg0: i32) {
   %1 = emitc.cast %arg0: i32 to f32
-  %2 = emitc.cast %1: f32 to !emitc.opaque<"some type">
-  %3 = emitc.cast %2: !emitc.opaque<"some type"> to !emitc.size_t
   return
-}
-
-func.func @cast_array(%arg : !emitc.array<4xf32>) {
-    %1 = emitc.cast %arg: !emitc.array<4xf32> to !emitc.array<4xf32> ref
-    %2 = emitc.cast %arg: !emitc.array<4xf32> to !emitc.opaque<"some type">
-    %3 = emitc.cast %2: !emitc.opaque<"some type"> to !emitc.array<4xf32> ref
-    return
 }
 
 func.func @cast_array_to_pointer(%arg0: !emitc.array<3xi32>) {
@@ -212,16 +203,16 @@ func.func @test_expression(%arg0: i32, %arg1: i32, %arg2: i32, %arg3: f32, %arg4
   return %r : i32
 }
 
-func.func @test_for(%arg0 : !emitc.size_t, %arg1 : !emitc.size_t, %arg2 : !emitc.size_t) {
+func.func @test_for(%arg0 : index, %arg1 : index, %arg2 : index) {
   emitc.for %i0 = %arg0 to %arg1 step %arg2 {
-    %0 = emitc.call_opaque "func_const"(%i0) : (!emitc.size_t) -> i32
+    %0 = emitc.call_opaque "func_const"(%i0) : (index) -> i32
   }
   return
 }
 
-func.func @test_for_explicit_yield(%arg0 : !emitc.size_t, %arg1 : !emitc.size_t, %arg2 : !emitc.size_t) {
+func.func @test_for_explicit_yield(%arg0 : index, %arg1 : index, %arg2 : index) {
   emitc.for %i0 = %arg0 to %arg1 step %arg2 {
-    %0 = emitc.call_opaque "func_const"(%i0) : (!emitc.size_t) -> i32
+    %0 = emitc.call_opaque "func_const"(%i0) : (index) -> i32
     emitc.yield
   }
   return
@@ -266,9 +257,6 @@ func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32, %arg2: !emitc.arr
 
   emitc.verbatim "{} + {};" args %arg0, %arg1 : !emitc.ptr<i32>, i32
 
-  // Trailing '{' are ok and don't start a placeholder.
-  emitc.verbatim "{} + {} {" args %arg0, %arg1 : !emitc.ptr<i32>, i32
-
   // Check there is no ambiguity whether %b is the argument to the emitc.verbatim op.
   emitc.verbatim "b"
   %b = "emitc.constant"(){value = 42 : i32} : () -> i32
@@ -282,7 +270,6 @@ emitc.global extern @external_linkage : i32
 emitc.global static @internal_linkage : i32
 emitc.global @myglobal : !emitc.array<2xf32> = dense<4.000000e+00>
 emitc.global const @myconstant : !emitc.array<2xi16> = dense<2>
-emitc.global const @myref : !emitc.array<2xi16> = #emitc.opaque<"myconstant"> ref
 
 func.func @use_global(%i: index) -> f32 {
   %0 = emitc.get_global @myglobal : !emitc.array<2xf32>
@@ -322,13 +309,6 @@ func.func @switch() {
   }
 
   return 
-}
-
-func.func @template_args_with_names(%arg0: i32, %arg1: f32) {
-  emitc.call_opaque "kernel1"(%arg0, %arg1)  {template_arg_names = ["N", "P"], template_args = [42 : i32, 56]} : (i32, f32) -> ()
-  emitc.call_opaque "kernel2"(%arg0, %arg1)  {template_arg_names = ["N"], template_args = [42 : i32]} : (i32, f32) -> ()
-  emitc.call_opaque "kernel3"(%arg0, %arg1)  {template_arg_names = [], template_args = [#emitc.opaque<"42">]} : (i32, f32) -> ()
-  return
 }
 
 emitc.class final @finalClass {

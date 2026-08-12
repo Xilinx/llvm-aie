@@ -53,28 +53,10 @@ namespace {
 //   `d0 + 2 * d1 + d3` is tiled by [0, 0, 0, 2] but not by [0, 0, 2, 0]
 //
 struct TileCheck : public AffineExprVisitor<TileCheck> {
-  TileCheck(ArrayRef<OpFoldResult> tileSizes, ArrayRef<OpFoldResult> sizeBounds,
-            bool isMonotonicallyIncreasing)
-      : tileSizes(tileSizes), sizeBounds(sizeBounds),
-        isMonotonicallyIncreasing(isMonotonicallyIncreasing) {}
+  TileCheck(ArrayRef<OpFoldResult> tileSizes) : tileSizes(tileSizes) {}
 
   void visitDimExpr(AffineDimExpr expr) {
-    unsigned pos = expr.getPosition();
-
-    // If the expression is non monotonic, this dimension is tiled if the tile
-    // size is larger than zero and not equal to its domain size (if statically
-    // known).
-    if (!isMonotonicallyIncreasing) {
-      std::optional<int64_t> tileSize = getConstantIntValue(tileSizes[pos]);
-      if (tileSize && !sizeBounds.empty()) {
-        std::optional<int64_t> sizeBound = getConstantIntValue(sizeBounds[pos]);
-        if (sizeBound && *sizeBound == *tileSize) {
-          return;
-        }
-      }
-    }
-
-    isTiled |= !isZeroInteger(tileSizes[pos]);
+    isTiled |= !isZeroInteger(tileSizes[expr.getPosition()]);
   }
   void visitAffineBinaryOpExpr(AffineBinaryOpExpr expr) {
     visit(expr.getLHS());
@@ -85,28 +67,24 @@ struct TileCheck : public AffineExprVisitor<TileCheck> {
   }
   bool isTiled = false;
   ArrayRef<OpFoldResult> tileSizes;
-  ArrayRef<OpFoldResult> sizeBounds;
-  bool isMonotonicallyIncreasing;
 };
 
 } // namespace
 
-static bool isTiled(AffineExpr expr, ArrayRef<OpFoldResult> tileSizes,
-                    ArrayRef<OpFoldResult> sizeBounds) {
+static bool isTiled(AffineExpr expr, ArrayRef<OpFoldResult> tileSizes) {
   if (!expr)
     return false;
-  TileCheck t(tileSizes, sizeBounds, expr.isMonotonicallyIncreasing());
+  TileCheck t(tileSizes);
   t.visit(expr);
   return t.isTiled;
 }
 
 // Checks whether the `map  varies with respect to a non-zero `tileSize`.
-static bool isTiled(AffineMap map, ArrayRef<OpFoldResult> tileSizes,
-                    ArrayRef<OpFoldResult> sizeBounds) {
+static bool isTiled(AffineMap map, ArrayRef<OpFoldResult> tileSizes) {
   if (!map)
     return false;
   for (unsigned r = 0; r < map.getNumResults(); ++r)
-    if (isTiled(map.getResult(r), tileSizes, sizeBounds))
+    if (isTiled(map.getResult(r), tileSizes))
       return true;
   return false;
 }
@@ -662,11 +640,7 @@ computeSliceParameters(OpBuilder &builder, Location loc, Value valueToTile,
   sliceParams.strides.reserve(rank);
   for (unsigned r = 0; r < rank; ++r) {
     LLVM_DEBUG(llvm::dbgs() << "computeSliceParameters: for dim#" << r);
-    auto m = map.getSubMap({r});
-    // The offset & size computation below only handles the case when
-    // the map is monotonically increasing, i.e. the min and max values are
-    // attained at the lower and upper bounds of the iteration domain.
-    if (!isTiled(m, tileSizes, ubs)) {
+    if (!isTiled(map.getSubMap({r}), tileSizes)) {
       sliceParams.offsets.push_back(builder.getIndexAttr(0));
       OpFoldResult dim = createFoldedDimOp(builder, loc, valueToTile, r);
       sliceParams.sizes.push_back(dim);
@@ -678,6 +652,7 @@ computeSliceParameters(OpBuilder &builder, Location loc, Value valueToTile,
 
     // Tiling creates a new slice at the proper index, the slice step is 1
     // (i.e. the op does not subsample, stepping occurs in the loop).
+    auto m = map.getSubMap({r});
     LLVM_DEBUG(llvm::dbgs() << "computeSliceParameters: submap: " << m << "\n");
     IRRewriter rewriter(builder);
     // The offset of the slice is m(lbs) - m(0).
@@ -865,9 +840,10 @@ computeAllSliceParameters(OpBuilder &builder, Location loc, LinalgOp linalgOp,
     // transformations such as padding and bufferization since the
     // extract/insert slice pairs make the accessed iteration argument
     // subdomains explicit.
+
     Type operandType = opOperand.get().getType();
-    if (!isTiled(map, tileSizes, {}) && !(isa<RankedTensorType>(operandType) &&
-                                          linalgOp.isDpsInit(&opOperand))) {
+    if (!isTiled(map, tileSizes) && !(isa<RankedTensorType>(operandType) &&
+                                      linalgOp.isDpsInit(&opOperand))) {
       allSliceParams.push_back(std::nullopt);
       LLVM_DEBUG(llvm::dbgs()
                  << ": not tiled: use shape: " << operandType << "\n");

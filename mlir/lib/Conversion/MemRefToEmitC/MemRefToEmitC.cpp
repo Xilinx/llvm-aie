@@ -16,8 +16,6 @@
 #include "mlir/Dialect/EmitC/IR/EmitC.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/Builders.h"
-#include "mlir/IR/BuiltinAttributes.h"
-#include "mlir/IR/BuiltinTypeInterfaces.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/PatternMatch.h"
@@ -292,14 +290,9 @@ struct ConvertGlobal final : public OpConversionPattern<memref::GlobalOp> {
     if (isa_and_present<UnitAttr>(initialValue))
       initialValue = {};
 
-    auto convertedInitialValue =
-        getTypeConverter()->convertTypeAttribute(resultTy, initialValue);
-
     rewriter.replaceOpWithNewOp<emitc::GlobalOp>(
-        op, operands.getSymName(), resultTy,
-        convertedInitialValue.has_value() ? convertedInitialValue.value()
-                                          : initialValue,
-        externSpecifier, staticSpecifier, operands.getConstant());
+        op, operands.getSymName(), resultTy, initialValue, externSpecifier,
+        staticSpecifier, operands.getConstant());
     return success();
   }
 };
@@ -380,68 +373,6 @@ struct ConvertStore final : public OpConversionPattern<memref::StoreOp> {
     return success();
   }
 };
-
-struct ConvertCollapseShape final
-    : public OpConversionPattern<memref::CollapseShapeOp> {
-  using OpConversionPattern::OpConversionPattern;
-
-  LogicalResult
-  matchAndRewrite(memref::CollapseShapeOp op, OpAdaptor operands,
-                  ConversionPatternRewriter &rewriter) const override {
-    auto arrayValue = dyn_cast<TypedValue<emitc::ArrayType>>(operands.getSrc());
-    if (!arrayValue) {
-      return rewriter.notifyMatchFailure(op.getLoc(), "expected array type");
-    }
-
-    auto resultTy = getTypeConverter()->convertType(op.getType());
-    if (!resultTy) {
-      return rewriter.notifyMatchFailure(op.getLoc(),
-                                         "cannot convert result type");
-    }
-
-    // Do not generate casts between arrays with dynamic shapes
-    if (!arrayValue.getType().hasStaticShape())
-      return rewriter.notifyMatchFailure(op.getLoc(),
-                                         "dynamic shapes not supported");
-    auto newCastOp = rewriter.create<emitc::CastOp>(op->getLoc(), resultTy,
-                                                    operands.getSrc());
-    newCastOp.setReference(true);
-    rewriter.replaceOp(op, newCastOp);
-    return success();
-  }
-};
-
-struct ConvertExpandShape final
-    : public OpConversionPattern<memref::ExpandShapeOp> {
-  using OpConversionPattern::OpConversionPattern;
-
-  LogicalResult
-  matchAndRewrite(memref::ExpandShapeOp op, OpAdaptor operands,
-                  ConversionPatternRewriter &rewriter) const override {
-    auto arrayValue = dyn_cast<TypedValue<emitc::ArrayType>>(operands.getSrc());
-    if (!arrayValue) {
-      return rewriter.notifyMatchFailure(op.getLoc(), "expected array type");
-    }
-
-    auto resultTy = getTypeConverter()->convertType(op.getType());
-    if (!resultTy) {
-      return rewriter.notifyMatchFailure(op.getLoc(),
-                                         "cannot convert result type");
-    }
-
-    // Do not generate casts between arrays with dynamic shapes
-    if (!arrayValue.getType().hasStaticShape())
-      return rewriter.notifyMatchFailure(op.getLoc(),
-                                         "dynamic shapes not supported");
-
-    auto newCastOp = rewriter.create<emitc::CastOp>(op->getLoc(), resultTy,
-                                                    operands.getSrc());
-    newCastOp.setReference(true);
-    rewriter.replaceOp(op, newCastOp);
-    return success();
-  }
-};
-
 } // namespace
 
 void mlir::populateMemRefToEmitCTypeConversion(TypeConverter &typeConverter) {
@@ -475,7 +406,6 @@ void mlir::populateMemRefToEmitCTypeConversion(TypeConverter &typeConverter) {
 void mlir::populateMemRefToEmitCConversionPatterns(
     RewritePatternSet &patterns, const TypeConverter &converter) {
   patterns.add<ConvertAlloca, ConvertAlloc, ConvertCopy, ConvertGlobal,
-               ConvertGetGlobal, ConvertLoad, ConvertStore, ConvertCollapseShape,
-               ConvertExpandShape>(
+               ConvertGetGlobal, ConvertLoad, ConvertStore>(
       converter, patterns.getContext());
 }

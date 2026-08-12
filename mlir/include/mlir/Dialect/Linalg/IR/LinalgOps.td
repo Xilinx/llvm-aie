@@ -13,7 +13,6 @@
 #ifndef LINALG_OPS
 #define LINALG_OPS
 
-include "mlir/Dialect/Affine/IR/AffineTraits.td"
 include "mlir/Dialect/Linalg/IR/LinalgBase.td"
 include "mlir/Dialect/Linalg/IR/LinalgInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
@@ -47,7 +46,7 @@ def Linalg_YieldOp : Linalg_Op<"yield", [Pure, ReturnLike, Terminator]>,
   let hasVerifier = 1;
 }
 
-def Linalg_IndexOp : Linalg_Op<"index", [Pure, AffineDim]>,
+def Linalg_IndexOp : Linalg_Op<"index", [Pure]>,
     Arguments<(ins ConfinedAttr<I64Attr, [IntMinValue<0>]>:$dim)>,
     Results<(outs Index:$result)> {
   let summary = "linalg index operation";
@@ -102,8 +101,7 @@ def Linalg_SoftmaxOp : Linalg_Op<"softmax",
       ["getIterationDomain",
        "getLoopIteratorTypes",
        "getResultTilePosition",
-       "getTiledImplementation",
-       "generateResultTileValue"]>]> {
+       "getTiledImplementation"]>]> {
   let summary = "Softmax operator";
   let description = [{
     linalg.softmax computes a numerically stable version of softmax.
