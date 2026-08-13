@@ -194,22 +194,22 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
     ; CHECK-NEXT: G_STORE [[C]](s8), [[COPY]](p0) :: (store (s8))
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s8), [[PTR_ADD]](p0) :: (store (s8) into unknown-address + 1)
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s8), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 2)
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C3]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s8), [[PTR_ADD2]](p0) :: (store (s8) into unknown-address + 3)
     ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s8), [[PTR_ADD3]](p0) :: (store (s8) into unknown-address + 4)
     ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C5]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s8), [[PTR_ADD4]](p0) :: (store (s8) into unknown-address + 5)
     ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 6
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C6]](s20)
     ; CHECK-NEXT: G_STORE [[C]](s8), [[PTR_ADD5]](p0) :: (store (s8) into unknown-address + 6)
     ; CHECK-NEXT: PseudoRET implicit $lr
     ;
@@ -220,22 +220,22 @@ body:             |
     ; LEGALIZED-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[COPY]](p0) :: (store (s8))
     ; LEGALIZED-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C1]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[PTR_ADD]](p0) :: (store (s8) into unknown-address + 1)
     ; LEGALIZED-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 2)
     ; LEGALIZED-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
-    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C3]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[PTR_ADD2]](p0) :: (store (s8) into unknown-address + 3)
     ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[PTR_ADD3]](p0) :: (store (s8) into unknown-address + 4)
     ; LEGALIZED-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C5]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[PTR_ADD4]](p0) :: (store (s8) into unknown-address + 5)
     ; LEGALIZED-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 6
-    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C6]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C]](s32), [[PTR_ADD5]](p0) :: (store (s8) into unknown-address + 6)
     ; LEGALIZED-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
@@ -264,22 +264,22 @@ body:             |
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[COPY]](p0) :: (store (s8))
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C3]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 1)
     ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[PTR_ADD2]](p0) :: (store (s8) into unknown-address + 2)
     ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C5]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[PTR_ADD3]](p0) :: (store (s8) into unknown-address + 3)
     ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C6]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[PTR_ADD4]](p0) :: (store (s8) into unknown-address + 4)
     ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
+    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C7]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[PTR_ADD5]](p0) :: (store (s8) into unknown-address + 5)
     ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 6
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C8]](s20)
     ; CHECK-NEXT: G_STORE [[C2]](s8), [[PTR_ADD6]](p0) :: (store (s8) into unknown-address + 6)
     ; CHECK-NEXT: PseudoRET implicit $lr
     ;
@@ -294,22 +294,22 @@ body:             |
     ; LEGALIZED-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[COPY]](p0) :: (store (s8))
     ; LEGALIZED-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C3]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 1)
     ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[PTR_ADD2]](p0) :: (store (s8) into unknown-address + 2)
     ; LEGALIZED-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
-    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C5]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[PTR_ADD3]](p0) :: (store (s8) into unknown-address + 3)
     ; LEGALIZED-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C6]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[PTR_ADD4]](p0) :: (store (s8) into unknown-address + 4)
     ; LEGALIZED-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C7]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[PTR_ADD5]](p0) :: (store (s8) into unknown-address + 5)
     ; LEGALIZED-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 6
-    ; LEGALIZED-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C8]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C2]](s32), [[PTR_ADD6]](p0) :: (store (s8) into unknown-address + 6)
     ; LEGALIZED-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
@@ -340,22 +340,22 @@ body:             |
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[COPY]](p0) :: (store (s8))
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[PTR_ADD]](p0) :: (store (s8) into unknown-address + 1)
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C3]](s20)
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 2)
     ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[PTR_ADD2]](p0) :: (store (s8) into unknown-address + 3)
     ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C5]](s20)
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[PTR_ADD3]](p0) :: (store (s8) into unknown-address + 4)
     ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C6]](s20)
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[PTR_ADD4]](p0) :: (store (s8) into unknown-address + 5)
     ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 6
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
+    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C7]](s20)
     ; CHECK-NEXT: G_STORE [[C1]](s8), [[PTR_ADD5]](p0) :: (store (s8) into unknown-address + 6)
     ; CHECK-NEXT: PseudoRET implicit $lr
     ;
@@ -368,26 +368,26 @@ body:             |
     ; LEGALIZED-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
     ; LEGALIZED-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY1]], [[C1]](s32)
     ; LEGALIZED-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C2]](s20)
     ; LEGALIZED-NEXT: G_STORE [[COPY1]](s32), [[COPY]](p0) :: (store (s16))
     ; LEGALIZED-NEXT: G_STORE [[LSHR]](s32), [[PTR_ADD]](p0) :: (store (s16) into unknown-address + 2)
     ; LEGALIZED-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[COPY]](p0) :: (store (s8))
     ; LEGALIZED-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C4]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 1)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD]](p0) :: (store (s8) into unknown-address + 2)
     ; LEGALIZED-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 3
-    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C5]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD2]](p0) :: (store (s8) into unknown-address + 3)
     ; LEGALIZED-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C6]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD3]](p0) :: (store (s8) into unknown-address + 4)
     ; LEGALIZED-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C7]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD4]](p0) :: (store (s8) into unknown-address + 5)
     ; LEGALIZED-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 6
-    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; LEGALIZED-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = nuw inbounds G_PTR_ADD [[COPY]], [[C8]](s20)
     ; LEGALIZED-NEXT: G_STORE [[C3]](s32), [[PTR_ADD5]](p0) :: (store (s8) into unknown-address + 6)
     ; LEGALIZED-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0

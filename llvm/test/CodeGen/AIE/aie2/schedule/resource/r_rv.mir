@@ -15,7 +15,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E7_STHB_E1_VMUL
-    ; CHECK: BUNDLE implicit-def $cm0, implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit killed $r13, implicit killed $p0, implicit $x0, implicit $x1, implicit killed $r0 {
+    ; CHECK: BUNDLE implicit-def $cm0, implicit killed $r13, implicit killed $p0, implicit $x0, implicit $x1, implicit killed $r0 {
     ; CHECK-NEXT:   ST_S8_ag_idx_imm killed $r13, killed $p0, 0
     ; CHECK-NEXT:   $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, killed $r0
     ; CHECK-NEXT: }
@@ -48,7 +48,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E7_STHB_2D_E1_VMUL
-    ; CHECK: BUNDLE implicit-def $p0, implicit-def $dc0, implicit-def $cm0, implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit killed $r13, implicit killed $p0, implicit killed $d0, implicit $x0, implicit $x1, implicit killed $r0 {
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $dc0, implicit-def $cm0, implicit killed $r13, implicit killed $p0, implicit killed $d0, implicit $x0, implicit $x1, implicit killed $r0 {
     ; CHECK-NEXT:   $p0, $dc0 = ST_2D_S8 killed $r13, killed $p0, killed $d0
     ; CHECK-NEXT:   $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, killed $r0
     ; CHECK-NEXT: }
@@ -81,7 +81,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E7_STHB_3D_E1_VMUL
-    ; CHECK: BUNDLE implicit-def $p0, implicit-def $dc0, implicit-def $dc4, implicit-def $cm0, implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit killed $r13, implicit killed $p0, implicit killed $d0_3d, implicit $x0, implicit $x1, implicit killed $r0 {
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $dc0, implicit-def $dc4, implicit-def $cm0, implicit killed $r13, implicit killed $p0, implicit killed $d0_3d, implicit $x0, implicit $x1, implicit killed $r0 {
     ; CHECK-NEXT:   $p0, $dc0, $dc4 = ST_3D_S8 killed $r13, killed $p0, killed $d0_3d
     ; CHECK-NEXT:   $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, killed $r0
     ; CHECK-NEXT: }
@@ -161,7 +161,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E7_STHB_E1_VADDMACf
-    ; CHECK: BUNDLE implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $srfpflags, implicit killed $r13, implicit killed $p0, implicit killed $bml0, implicit $bmh2, implicit $x3, implicit $x4, implicit killed $r0, implicit $crfpmask {
+    ; CHECK: BUNDLE implicit-def $bml0, implicit-def $srfpflags, implicit killed $r13, implicit killed $p0, implicit killed $bml0, implicit $bmh2, implicit $x3, implicit $x4, implicit killed $r0, implicit $crfpmask {
     ; CHECK-NEXT:   ST_S8_ag_idx_imm killed $r13, killed $p0, 0
     ; CHECK-NEXT:   $bml0 = VADDMAC_F_vmac_bm_core_dense killed $bml0, $bmh2, $x3, $x4, killed $r0, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: }
@@ -195,7 +195,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E7_STHB_E1_VNEGf
-    ; CHECK: BUNDLE implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $srfpflags, implicit killed $r13, implicit killed $p0, implicit killed $bml0, implicit killed $r0, implicit $crfpmask {
+    ; CHECK: BUNDLE implicit-def $bml0, implicit-def $srfpflags, implicit killed $r13, implicit killed $p0, implicit killed $bml0, implicit killed $r0, implicit $crfpmask {
     ; CHECK-NEXT:   ST_S8_ag_idx_imm killed $r13, killed $p0, 0
     ; CHECK-NEXT:   $bml0 = VNEG_F killed $bml0, killed $r0, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: }
@@ -229,7 +229,7 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E7_STHB_E1_VNEG
-    ; CHECK: BUNDLE implicit-def $cm0, implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit killed $r13, implicit killed $p0, implicit killed $cm0, implicit $r0 {
+    ; CHECK: BUNDLE implicit-def $cm0, implicit killed $r13, implicit killed $p0, implicit killed $cm0, implicit $r0 {
     ; CHECK-NEXT:   ST_S8_ag_idx_imm killed $r13, killed $p0, 0
     ; CHECK-NEXT:   $cm0 = VNEG killed $cm0, $r0
     ; CHECK-NEXT: }

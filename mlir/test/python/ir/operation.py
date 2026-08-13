@@ -1022,6 +1022,8 @@ def testDetachFromParent():
     with Context():
         m1 = Module.parse("func.func private @foo()")
         func = m1.body.operations[0].detach_from_parent()
+        # CHECK: func.attached=False
+        print(f"{func.attached=}")
 
         try:
             func.detach_from_parent()

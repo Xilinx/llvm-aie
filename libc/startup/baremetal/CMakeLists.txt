@@ -4,24 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-add_entrypoint_object(
-  init
-  SRCS
-    init.cpp
-  DEPENDS
-    libc.hdr.stdint_proxy
-    libc.src.__support.common
-)
 
-add_entrypoint_object(
-  fini
-  SRCS
-    fini.cpp
-  DEPENDS
-    libc.hdr.stdint_proxy
-    libc.src.__support.common
-)
-
+# TODO: Use generic "add_startup_object" https://github.com/llvm/llvm-project/issues/133156
 function(add_startup_object name)
   cmake_parse_arguments(
     "ADD_STARTUP_OBJECT"
@@ -41,8 +25,9 @@ function(add_startup_object name)
   add_object_library(
     ${name}
     SRCS ${ADD_STARTUP_OBJECT_SRC}
-    DEPENDS ${ADD_STARTUP_OBJECT_DEPENDS}
     COMPILE_OPTIONS ${ADD_STARTUP_OBJECT_COMPILE_OPTIONS}
+    ${ADD_STARTUP_OBJECT_UNPARSED_ARGUMENTS}
+    DEPENDS ${ADD_STARTUP_OBJECT_DEPENDS}
   )
   set_target_properties(
     ${fq_target_name}
@@ -51,7 +36,29 @@ function(add_startup_object name)
   )
 endfunction()
 
-if(NOT (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_ARCHITECTURE}))
+add_entrypoint_object(
+  init
+  SRCS
+    init.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.common
+  HDRS
+    init.h
+)
+
+add_entrypoint_object(
+  fini
+  SRCS
+    fini.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.common
+  HDRS
+    fini.h
+)
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_ARCHITECTURE}")
   message(STATUS "Skipping startup for target architecture ${LIBC_TARGET_ARCHITECTURE}")
   return()
 endif()
@@ -71,15 +78,6 @@ add_startup_object(
   DEPENDS
     .${LIBC_TARGET_ARCHITECTURE}.crt1
 )
-
-if(LIBC_TARGET_TRIPLE)
-  set(LIBC_INSTALL_LIBRARY_DIR lib${LLVM_LIBDIR_SUFFIX}/${LIBC_TARGET_TRIPLE})
-elseif(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR AND NOT LIBC_GPU_BUILD)
-  set(LIBC_INSTALL_LIBRARY_DIR
-      lib${LLVM_LIBDIR_SUFFIX}/${LLVM_DEFAULT_TARGET_TRIPLE})
-else()
-  set(LIBC_INSTALL_LIBRARY_DIR lib${LLVM_LIBDIR_SUFFIX})
-endif()
 
 add_custom_target(libc-startup)
 set(startup_components crt0 crt1)

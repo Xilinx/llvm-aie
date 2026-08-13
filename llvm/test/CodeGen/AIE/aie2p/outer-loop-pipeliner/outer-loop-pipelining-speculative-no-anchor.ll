@@ -51,8 +51,8 @@ define void @speculative_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
   ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s32) = G_PHI [[INT]](s32), %bb.3, %21(s32), %bb.6
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   %15:_(p0) = nuw nusw G_PTR_ADD [[PHI]], [[C2]](s20)
-  ; CHECK-NEXT:   %16:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI]], [[C2]](s20)
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw inbounds G_PTR_ADD [[PHI1]], [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
@@ -67,7 +67,7 @@ define void @speculative_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.7(0x04000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_STORE [[ADD]](s32), [[PHI1]](p0) :: (store (s32) into %ir.c.ptr.steady)
-  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD %15(p0) :: (load (s32) from %ir.a.ptr.next.steady)
+  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32) from %ir.a.ptr.next.steady)
   ; CHECK-NEXT:   [[INT2:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement.reg), [[PHI3]](s32), [[C]](s32)
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s1) = G_ICMP intpred(ne), [[INT2]](s32), [[C1]]
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4

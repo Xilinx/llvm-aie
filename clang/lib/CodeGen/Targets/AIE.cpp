@@ -63,7 +63,7 @@ ABIArgInfo AIEABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
-    RetTy = EnumTy->getDecl()->getIntegerType();
+    RetTy = EnumTy->getOriginalDecl()->getIntegerType();
 
   if (const auto *EIT = RetTy->getAs<BitIntType>())
     if (EIT->getNumBits() > MaxAggregateReturnSize)
@@ -101,7 +101,7 @@ ABIArgInfo AIEABIInfo::classifyArgumentType(QualType Ty) const {
 
   // Treat an enum type as its underlying type.
   if (const auto *EnumTy = Ty->getAs<EnumType>())
-    Ty = EnumTy->getDecl()->getIntegerType();
+    Ty = EnumTy->getOriginalDecl()->getIntegerType();
 
   if (getContext().isPromotableIntegerType(Ty)) {
     return ABIArgInfo::getExtend(Ty);
