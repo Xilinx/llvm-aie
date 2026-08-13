@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir/IR/Diagnostics.h"
@@ -929,7 +932,8 @@ void SourceMgrDiagnosticVerifierHandler::process(LocationAttr loc,
 
 namespace mlir {
 namespace detail {
-struct ParallelDiagnosticHandlerImpl : public llvm::PrettyStackTraceEntry {
+struct LLVM_LIBRARY_VISIBILITY ParallelDiagnosticHandlerImpl
+    : public llvm::PrettyStackTraceEntry {
   struct ThreadDiagnostic {
     ThreadDiagnostic(size_t id, Diagnostic diag)
         : id(id), diag(std::move(diag)) {}
