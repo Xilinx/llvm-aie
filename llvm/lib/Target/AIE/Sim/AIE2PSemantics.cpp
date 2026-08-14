@@ -3121,6 +3121,34 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
     break;
   }
 
+  // The x form's operand class, OP_mMvBMXDst/Src, is mBMs + mXm + mFifoHLReg
+  // (AIE2PRegisterInfo.td:942) -- the same encoding that moves x8 <- x4 in
+  // every matmul kernel this model has decoded (measured zero fifo operands
+  // across the disassembled GEMV/MHA corpus) can also name sfh/sfl/lfh0/
+  // lfh1/lfl0/lfl1/lfe, the store/load FIFO ports. Those are a stream, the
+  // same category the mcd/scd forms above are deliberately absent for: this
+  // model has no queue behind them, so a plain copy would be a guess at
+  // push/pop semantics no header states. Decline those, execute the rest with
+  // the identical whole-register-move body.
+  case AIE2P::VMOV_alu_mv_mv_x: {
+    const MCRegister Dst = Op.reg(0);
+    const MCRegister Src = Op.reg(1);
+    const MCRegisterClass &Fifo = MRI.getRegClass(AIE2P::FIFO512RegClassID);
+    if (Fifo.contains(Dst) || Fifo.contains(Src)) {
+      R = fault(Name + ": " + MRI.getName(Fifo.contains(Dst) ? Dst : Src) +
+                " is a load/store FIFO port; this model has no queue to "
+                "move it through");
+      break;
+    }
+    const unsigned W = State.Regs.getClassWidth(Dst);
+    if (!W) {
+      R = fault(Name + ": " + MRI.getName(Dst) + " has no class width");
+      break;
+    }
+    Eff.RegWrites.push_back({Dst, Op.valN(1, W), Op.cycleOf(0), Op.fwdOf(0)});
+    break;
+  }
+
   // The whole family goes in together: the eight integer forms differ only in
   // the two flags, so splitting them by which one a sweep happened to reach
   // leaves the rest to fault a round later.
