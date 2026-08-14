@@ -1397,24 +1397,6 @@ void AIEOuterLoopPipeliner::remapExitForReplacement(
   reroutePhiIncomings(OrigExit, OrigLS.getBottom(), ReplacementLS.getBottom(),
                       PhiEdge::Repoint,
                       [&](Value *V) { return ReplacementLS.cloneOf(V); });
-
-  // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
-  // phi, so LCSSA rematerializes the live-out as a plain instruction in the
-  // exit whose operands reference loop-internal values (e.g. the outer-header
-  // PHI and an inner-loop def). removeFromCFG deletes those originals, which
-  // would leave the exit reading poison. Remap each such operand to a live
-  // clone so the exit reads a defined value.
-  for (Instruction &I :
-       make_range(OrigExit->getFirstNonPHIIt(), OrigExit->end())) {
-    for (Use &Op : I.operands()) {
-      Value *V = Op.get();
-      // CFG successors are basic-block operands; only remap data values.
-      if (isa<BasicBlock>(V))
-        continue;
-      if (Value *Mapped = ReplacementLS.cloneOf(V); Mapped != V)
-        Op.set(Mapped);
-    }
-  }
 }
 
 bool BlockRegion::isSingleEntrySingleExit() const {
