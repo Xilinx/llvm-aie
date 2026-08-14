@@ -336,8 +336,6 @@ class OrigLoopStructure : public LoopStructure {
 
   explicit OrigLoopStructure(Loop *L) : OuterLoop(L) {}
 
-  Loop *getOuterLoop() const { return OuterLoop; }
-
   // Populate the inner-loop fields and top/bottom regions from
   // OuterLoop; returns false unless the loop is a supported pipelining
   // candidate.
@@ -395,6 +393,8 @@ class OrigLoopStructure : public LoopStructure {
 public:
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
   static std::unique_ptr<OrigLoopStructure> tryBuildFrom(Loop *L);
+
+  Loop *getOuterLoop() const { return OuterLoop; }
 
   Loop *getInnerLoop() const { return InnerLoop; }
 
@@ -1789,6 +1789,10 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
 
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
+
+  /// Restore LCSSA if this property was invalidated.
+  formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
+
   liftBottomPointerUpdatesToTop(OrigLS);
 
   const auto IsSplitPoint = [&Opts](const Instruction *I) {
