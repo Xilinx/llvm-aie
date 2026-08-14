@@ -1595,6 +1595,25 @@ inline v16accfloat addmsc_elem_16_accuracy_low(v16float v1, v16float v2,
   return sub(add(acc1, acc2), mul_elem_16_accuracy_low(v1, v2));
 }
 
+inline v16accfloat mul_elem_16_conf(v16float v1, v16float v2, int sub_mul) {
+  v16accfloat p = mul_elem_16_accuracy_safe(v1, v2);
+  return sub_mul ? neg(p) : p;
+}
+inline v16accfloat mac_elem_16_conf(v16float v1, v16float v2, v16accfloat acc,
+                                    int zero_acc, int sub_mul, int sub_acc) {
+  v16accfloat p = mul_elem_16_conf(v1, v2, sub_mul);
+  if (zero_acc)
+    return p;
+  return sub_acc ? sub(p, acc) : add(acc, p);
+}
+inline v16accfloat msc_elem_16_conf(v16float v1, v16float v2, v16accfloat acc,
+                                    int zero_acc, int sub_mul, int sub_acc) {
+  v16accfloat p = mul_elem_16_conf(v1, v2, sub_mul);
+  if (zero_acc)
+    return neg(p);
+  return sub_acc ? neg(add(acc, p)) : sub(acc, p);
+}
+
 inline v16accfloat negmul_4x8_8x4_accuracy_safe(v32float v1, v32float v2) {
   return neg(mul_4x8_8x4_accuracy_safe(v1, v2));
 }
