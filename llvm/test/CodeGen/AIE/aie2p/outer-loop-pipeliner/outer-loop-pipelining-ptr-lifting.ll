@@ -132,7 +132,8 @@ declare i1 @llvm.loop.decrement.i32(i32)
 
 ; Steady-state bottom: a.ptr.next stays here (inner loop dependency)
 ; CHECK: steady.stage1.bottom.and.stage0.top:
-; CHECK:   %offset.steady = sext i32 %acc.next.steady to i64
+; An LCSSA phi may be inserted for acc.next before the sext
+; CHECK:   %offset.steady = sext i32 %{{[a-z0-9.]+}} to i64
 ; CHECK:   %a.ptr.next.steady = getelementptr inbounds i8, ptr %a.ptr.steady, i64 %offset.steady
 
 define void @ptr_lifting_inner_dep(ptr noalias %a, ptr noalias %b, ptr noalias %c,

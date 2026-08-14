@@ -122,7 +122,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    lda dc0, [p1], #4; vmov bmlh0, bmll0
 ; ASM-NEXT:    lda dc4, [p1], #24; or r16, r10, r10; vmov cmh1, cml1
 ; ASM-NEXT:    lda dc1, [p1], #4; movs m7, dj3; movx r5, #0; vmov cmh0, cml0
-; ASM-NEXT:    lda dn0, [p2, #0]; movs m6, dj3; or r25, r5, r5; mov r7, p1
+; ASM-NEXT:    lda dn0, [p2, #0]; movs m6, dj3; or r25, r5, r5; mov r17, p1
 ; ASM-NEXT:    lda dc5, [p1, #0]; movs p1, p0; or r24, r5, r5; mov p0, p3
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
@@ -164,7 +164,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    mov r5, p3; vmac.f dm7, dm7, fex4, fey0, r10
 ; ASM-NEXT:    vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r10
 ; ASM-NEXT:    vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r10
-; ASM-NEXT:    mov r17, p2; vmac.f dm1, dm1, fex2, fey0, r10
+; ASM-NEXT:    mov r7, p2; vmac.f dm1, dm1, fex2, fey0, r10
 ; ASM-NEXT:    vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r10
 ; ASM-NEXT:    movxm p2, #.LBB0_1; vmac.f dm3, dm3, fex0, fey3, r10
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml7, [p5], #64; vmac.f dm0, dm0, fex0, fey3, r10
@@ -202,7 +202,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.fill [p1, lf1, r25]; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r8
 ; ASM-NEXT:    vlda.pop fex6, [p0, lf0, r24]; vldb.pop fex10, [p1, lf1, r25]; vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r8
 ; ASM-NEXT:    vlda.pop.3d fex7, [p0, lf0, r24, d1]; vldb.pop.3d fex8, [p1, lf1, r25, d0]; vmov cmh4, cmh0; vmac.f dm1, dm1, fex2, fey0, r8
-; ASM-NEXT:    movs p2, r17; vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r8
+; ASM-NEXT:    movs p2, r7; vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r8
 ; ASM-NEXT:    nopa ; nopb ; movs p4, r5; add.nc lc, r1, #-2; vmov cmh3, cmh0; vmac.f dm3, dm3, fex0, fey3, r8
 ; ASM-NEXT:  .LBB0_5: // %lastiter.stage1.inner.for.body18.i
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -216,14 +216,14 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:  .L_LEnd0:
 ; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac.f dm3, dm3, fex0, fey3, r8
 ; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
-; ASM-NEXT:    padda [p5], #128; paddb [p3], #128; movs p0, r7; nopx ; mov m0, #-32; vmac.f dm0, dm0, fex0, fey3, r8
-; ASM-NEXT:    lda p7, [sp, #-60]; paddb [p0], m0; nops ; movx r8, #772; vmov fewl4, fewh4; vmac.f dm2, dm2, fex8, fey3, r8 // 4-byte Folded Reload
-; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; st dc0, [p0], #4; nopx ; mov r10, r16; vmac.f dm7, dm7, fex4, fey0, r8 // 4-byte Folded Reload
-; ASM-NEXT:    paddxm [sp], #-64; st dc4, [p0], #24; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r8
-; ASM-NEXT:    st dc1, [p0, #0]; vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r8
-; ASM-NEXT:    st dc5, [p0, #4]; vmac.f dm1, dm1, fex2, fey0, r8
-; ASM-NEXT:    vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r8
-; ASM-NEXT:    vmac.f dm3, dm3, fex0, fey3, r8
+; ASM-NEXT:    padda [p5], #128; paddb [p3], #128; movs p0, r17; nopx ; mov m0, #32; vmac.f dm0, dm0, fex0, fey3, r8
+; ASM-NEXT:    lda p7, [sp, #-60]; paddb [p0], m0; movx r8, #772; vmov fewl4, fewh4; vmac.f dm2, dm2, fex8, fey3, r8 // 4-byte Folded Reload
+; ASM-NEXT:    lda p6, [sp, #-64]; or r10, r16, r16; mov m0, #-64; vmac.f dm7, dm7, fex4, fey0, r8 // 4-byte Folded Reload
+; ASM-NEXT:    paddxm [sp], #-64; st r1, [p0], m0; vmov fewl2, fewh2; vmac.f dm6, dm6, fex4, fey0, r8
+; ASM-NEXT:    st dc0, [p0], #4; vmov fewl0, fewh10; vmac.f dm5, dm5, fex2, fey0, r8
+; ASM-NEXT:    st dc4, [p0], #24; vmac.f dm1, dm1, fex2, fey0, r8
+; ASM-NEXT:    st dc1, [p0, #0]; vmov fewl0, fewh8; vmac.f dm4, dm4, fex10, fey3, r8
+; ASM-NEXT:    st dc5, [p0, #4]; vmac.f dm3, dm3, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh7, [p5], #64; vmac.f dm0, dm0, fex0, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cml6, [p5], #64; movx r8, #772; vmac.f dm2, dm2, fex8, fey3, r8
 ; ASM-NEXT:    vst.conv.bf16.fp32 cmh6, [p5], #64; mov r8, r6

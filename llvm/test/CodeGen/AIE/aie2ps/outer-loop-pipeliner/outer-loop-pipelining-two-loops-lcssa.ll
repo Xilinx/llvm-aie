@@ -10,19 +10,14 @@
 
 ; Test: Two mutually exclusive pipelined outer loops with a common exit block.
 ;
-; This test documents a BUG in the Outer Loop Pipeliner where LCSSA form is
-; not properly maintained when a function has two independent outer loops
-; (selected by a condition) that both branch to a common exit block with phi nodes.
+; This test verifies that LCSSA form is properly maintained when pipelining
+; loops that exit through intermediate blocks to a common exit with phi nodes.
 ;
-; Bug scenario:
+; Structure:
 ;   - Function has two mutually exclusive outer loops (loop1 when cond, loop2 when !cond)
 ;   - Both loops compute values that flow to a common exit block via phi nodes
-;   - After pipelining loop1, the exit phi nodes should use values from loop1's
-;     transformed blocks, but the pipeliner fails to update them
-;   - Result: phi nodes get poison values from loop1's exit edge
-;
-; This test verifies the current (buggy) behavior. When the bug is fixed,
-; the CHECK-POISON lines should be changed to CHECK-NOT: poison.
+;   - Each loop exits through an intermediate block (loop1.exit, loop2.exit)
+;   - After pipelining, the exit phi nodes must use the correct LCSSA phi values
 
 ; CHECK-LABEL: define void @two_loops_shared_exit
 
@@ -34,11 +29,10 @@
 ; CHECK: stage0.top{{[0-9]+}}:
 ; CHECK:   load i32
 
-; BUG: The exit phi has poison values because the outer loop pipeliner doesn't
-; update LCSSA phis when the loop exits through an intermediate block.
-; The phi should have the last-iteration accumulator values, but instead gets poison.
+; The exit phi must have correct LCSSA values (not poison) after pipelining.
 ; CHECK: exit:
-; CHECK:   %final.acc = phi i32 [ 0, %entry ], [ poison, %loop1.exit ], [ poison, %loop2.exit ]
+; CHECK:   %final.acc = phi i32 [ 0, %entry ], [ %{{[a-z0-9.]+}}, %loop1.exit ], [ %{{[a-z0-9.]+}}, %loop2.exit ]
+; CHECK-NOT: poison
 
 define void @two_loops_shared_exit(ptr noalias %a, ptr noalias %b, ptr noalias %c,
                                     i32 %N, i32 %M, i1 %cond) {
@@ -136,11 +130,8 @@ loop2.exit:
 
 ; ========== Common exit ==========
 exit:
-  ; This phi must have valid values from BOTH loops after pipelining
-  ; BUG: After pipelining, this phi gets poison from one loop's exit edge
-  ; because the pipeliner doesn't update LCSSA phis for values defined
-  ; in the loop latch when the exit block is shared with another loop via
-  ; an intermediate exit block.
+  ; This phi must have valid LCSSA values from BOTH loops after pipelining.
+  ; The formLCSSARecursively call ensures proper LCSSA phis are created.
   %final.acc = phi i32 [ 0, %entry ], [ %acc1.next, %loop1.exit ], [ %acc2.next, %loop2.exit ]
   store i32 %final.acc, ptr %c, align 4
   ret void
