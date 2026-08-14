@@ -21,10 +21,15 @@
 # sub-spill offset is a multiple of 64/4 and encodable, so the immediate path is
 # used.
 #
-# test_epsrfldf_prologepilog_unaligned spills the composite into a 4-byte
-# aligned slot (as happens for a folded spill, issue #1090), so the FIFO offset
-# is a multiple of 4 but not of 64 and cannot be encoded as an immediate. Every
-# sub-spill must fall back to the move-SP-into-scratch + indexed-addressing path.
+# test_epsrfldf_prologepilog_bigstack pushes the composite below a large filler
+# object so that its offset is still a multiple of 64 (ePSRFLdF's spill
+# alignment, AIE2PRegisterInfo.td's AIE2PVector1076FifoRegisterClass) but falls
+# outside isEncodableAsNegativeInt<9,4>, the tightest of the three sub-spill
+# ranges. This is the only real fallback case: an under-aligned composite slot
+# is not producible by the register allocator (same TableGen alignment), and
+# routing a genuinely misaligned offset through indexed addressing would not
+# fix it anyway, since the FIFO store's 512-bit hardware access truncates a
+# misaligned address instead of faulting.
 
 ---
 name:            test_epsrfldf_prologepilog
@@ -67,7 +72,7 @@ body:             |
 ...
 
 ---
-name:            test_epsrfldf_prologepilog_unaligned
+name:            test_epsrfldf_prologepilog_bigstack
 alignment:       16
 legalized:       true
 regBankSelected: true
@@ -76,43 +81,43 @@ tracksRegLiveness: true
 noPhis:          true
 isSSA:           false
 noVRegs:         true
-fixedStack:
-  # A 4-byte aligned slot for the 136-byte composite. Because the slot is not
-  # 64-byte aligned, prologepilog resolves the FIFO half to an SP offset that is
-  # a multiple of 4 but not of 64 (issue #1090). This models a folded spill.
-  - { id: 0, type: spill-slot, offset: -56, size: 136, alignment: 4 }
+frameInfo:
+  maxAlignment:    64
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 136, alignment: 64 }
+  - { id: 1, name: '', type: default, offset: 0, size: 40000, alignment: 4 }
 body:             |
   bb.0.entry:
     liveins: $plfr0
-    ; CHECK-LABEL: name: test_epsrfldf_prologepilog_unaligned
+    ; CHECK-LABEL: name: test_epsrfldf_prologepilog_bigstack
     ; CHECK: liveins: $plfr0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: ST_dms_sts_spill killed $lr, -48, implicit $sp :: (store (s32) into %stack.0)
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 40192, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill killed $lr, -56, implicit $sp :: (store (s32) into %stack.2)
     ; CHECK-NEXT: $p1 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM -184
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx $lfl0, $p1, killed $dj0 :: (store (s512) into %fixed-stack.0, align 4)
-    ; CHECK-NEXT: $dj0 = MOVXM -120
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx $lfh0, $p1, killed $dj0 :: (store (s512) into %fixed-stack.0 + 64, align 4)
-    ; CHECK-NEXT: $dj0 = MOVXM -56
-    ; CHECK-NEXT: ST_dms_sts_idx $r24, $p1, killed $dj0 :: (store (s32) into %fixed-stack.0 + 128)
-    ; CHECK-NEXT: $dj0 = MOVXM -52
-    ; CHECK-NEXT: ST_dms_sts_idx $p0, killed $p1, killed $dj0 :: (store (s32) into %fixed-stack.0 + 132)
+    ; CHECK-NEXT: $dj0 = MOVXM -40192
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx $lfl0, $p1, killed $dj0 :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: $dj0 = MOVXM -40128
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx $lfh0, $p1, killed $dj0 :: (store (s512) into %stack.0 + 64)
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: ST_dms_sts_idx $r24, $p1, killed $dj0 :: (store (s32) into %stack.0 + 128, align 64)
+    ; CHECK-NEXT: $dj0 = MOVXM -40060
+    ; CHECK-NEXT: ST_dms_sts_idx $p0, killed $p1, killed $dj0 :: (store (s32) into %stack.0 + 132, basealign 64)
     ; CHECK-NEXT: PseudoJL 32, csr_aie2p, implicit-def $lr
     ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
-    ; CHECK-NEXT: $dj0 = MOVXM -184
-    ; CHECK-NEXT: $lfl0 = VLDA_dmx_lda_fifohl_idx $p0, killed $dj0 :: (load (s512) from %fixed-stack.0, align 4)
-    ; CHECK-NEXT: $dj0 = MOVXM -120
-    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_idx $p0, killed $dj0 :: (load (s512) from %fixed-stack.0 + 64, align 4)
-    ; CHECK-NEXT: $dj0 = MOVXM -56
-    ; CHECK-NEXT: $r24 = LDA_dms_lda_idx $p0, killed $dj0 :: (load (s32) from %fixed-stack.0 + 128)
-    ; CHECK-NEXT: $dj0 = MOVXM -52
-    ; CHECK-NEXT: $p0 = LDA_dms_lda_idx killed $p0, killed $dj0 :: (load (s32) from %fixed-stack.0 + 132)
-    ; CHECK-NEXT: $lr = LDA_dms_lda_spill -48, implicit $sp :: (load (s32) from %stack.0)
-    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -128, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40192
+    ; CHECK-NEXT: $lfl0 = VLDA_dmx_lda_fifohl_idx $p0, killed $dj0 :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $dj0 = MOVXM -40128
+    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_idx $p0, killed $dj0 :: (load (s512) from %stack.0 + 64)
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: $r24 = LDA_dms_lda_idx $p0, killed $dj0 :: (load (s32) from %stack.0 + 128, align 64)
+    ; CHECK-NEXT: $dj0 = MOVXM -40060
+    ; CHECK-NEXT: $p0 = LDA_dms_lda_idx killed $p0, killed $dj0 :: (load (s32) from %stack.0 + 132, basealign 64)
+    ; CHECK-NEXT: $lr = LDA_dms_lda_spill -56, implicit $sp :: (load (s32) from %stack.2)
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -40192, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $plfr0
-    VST_PLFR_SPILL $plfr0, %fixed-stack.0, implicit $sp :: (store (s1088) into %fixed-stack.0, align 4)
+    VST_PLFR_SPILL $plfr0, %stack.0, implicit $sp :: (store (s1088) into %stack.0, align 64)
     PseudoJL 32, csr_aie2p, implicit-def $lr
-    renamable $plfr0 = VLDA_PLFR_SPILL %fixed-stack.0, implicit $sp :: (load (s1088) from %fixed-stack.0, align 4)
+    renamable $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp :: (load (s1088) from %stack.0, align 64)
     PseudoRET implicit $lr, implicit killed renamable $plfr0
 ...
