@@ -1725,37 +1725,54 @@ StepResult AIE2PSemantics::execute(const MCInst &MI, const AIECoreState &State,
   // vshuffle (dst)(s1, s2, mod): read the 1024-bit pair (s1 low, s2 high) as a
   // row-major R x C matrix of W-bit elements, transpose it, and write one
   // 512-bit half. The mode NAMES the shape -- aie2p_enums.h spells all three
-  // parts as T<W>_<R>x<C>_<lo|hi> -- and for the twelve _lo/_hi pairs below
-  // R * C is exactly 1024 / W, so the matrix tiles the pair with nothing over.
+  // parts as T<W>_<R>x<C>_<lo|hi> -- and the criterion for modelling one is
+  // that R * C is exactly 1024 / W, so the matrix tiles the pair with nothing
+  // over. lo is the even mode and hi the odd one, which aie_api states rather
+  // than implies: shuffle_mode::high() is low() + 1, detail/aie2/shuffle_mode.h.
   //
-  // Element order is pinned by two statements rather than chosen. AIELegalizer-
-  // Helper says mode 8 "maps first 128-bits of src1 vector to lsb positions of
-  // output" and mode 9 the second: with row-major indices read out
-  // column-major, T128_4x2_lo does put element 0 lowest and _hi element 1.
-  // Independently, T512_1x2 is aie_api's bypass mode, which forces lo == s1 and
-  // hi == s2, and it does. Across all twelve pairs lo and hi together are a
-  // permutation of the pair, so no element is dropped or doubled.
+  // Element order is pinned by four statements rather than chosen, two of them
+  // landing on the wider R x C shapes specifically:
+  //  - AIELegalizerHelper says mode 8 "maps first 128-bits of src1 vector to
+  //    lsb positions of output" and mode 9 the second: with row-major indices
+  //    read out column-major, T128_4x2_lo does put element 0 lowest.
+  //  - T512_1x2 is aie_api's bypass mode, which forces lo == s1 and hi == s2.
+  //  - linear_approx.hpp shuffles a load_lut_2x_int8 result with T16_16x4_lo to
+  //    "discard unused 48b gaps". This transpose gathers every 4th 16-bit lane,
+  //    landing the 16 useful coefficients contiguously in the low 256 bits --
+  //    which is exactly what the T256_2x2_lo on its next line ("combines the
+  //    two v16int16") consumes, so an already-pinned mode corroborates this one.
+  //  - fft_dit_radix4.hpp shuffles a butterfly pair with T32_8x4_lo/_hi, and
+  //    the transpose yields the stride-4 deinterleave radix-4 DIT requires.
+  // Across every pair modelled, lo and hi together are a permutation of the
+  // pair, so no element is dropped or doubled.
   //
-  // Modes 24..55 -- the NL, FFT/sparsity and permute-reduction shapes -- are
-  // NOT extrapolated from this. Their names carry an R x C that does not tile
-  // the pair (T16_4x4 is 16 elements where the pair holds 64), so they are a
-  // different construction, and they fault carrying the mode number.
+  // The modes left out do not tile the pair -- T16_4x4 is 16 elements where the
+  // pair holds 64, and the three _flip shapes carry no second index at all --
+  // so they are a different construction and fault carrying the mode number.
   auto vshuffle = [&]() -> StepResult {
     struct Shape {
-      unsigned W, R, C;
+      unsigned Lo, W, R, C;
     };
+    // Keyed by the lo mode, because the tiling shapes are not contiguous: the
+    // half-pair and _flip shapes sit between them and are not modelled.
     static const Shape Shapes[] = {
-        {8, 64, 2},  {16, 32, 2}, {32, 16, 2}, {64, 8, 2},
-        {128, 4, 2}, {256, 2, 2}, {128, 2, 4}, {64, 2, 8},
-        {32, 2, 16}, {16, 2, 32}, {8, 2, 64},  {512, 1, 2},
+        {0, 8, 64, 2},   {2, 16, 32, 2},  {4, 32, 16, 2},  {6, 64, 8, 2},
+        {8, 128, 4, 2},  {10, 256, 2, 2}, {12, 128, 2, 4}, {14, 64, 2, 8},
+        {16, 32, 2, 16}, {18, 16, 2, 32}, {20, 8, 2, 64},  {22, 512, 1, 2},
+        {24, 16, 16, 4}, {26, 16, 4, 16}, {30, 32, 8, 4},  {32, 32, 4, 8},
+        {52, 16, 8, 8},
     };
     const uint32_t Mode = Op.val(3);
     if (!Op.Ok)
       return fault(Name + ": mode is not readable");
-    if (Mode >= 2 * std::size(Shapes))
+    const Shape *Found = nullptr;
+    for (const Shape &Cand : Shapes)
+      if (Cand.Lo == (Mode & ~1u))
+        Found = &Cand;
+    if (!Found)
       return fault(Name + ": mode " + Twine(Mode) +
-                   " is not one of the transpose shapes this models (0..23)");
-    const Shape &S = Shapes[Mode / 2];
+                   " is not one of the transpose shapes this models");
+    const Shape &S = *Found;
     const bool Hi = Mode & 1;
 
     const MCRegister Dst = Op.reg(0);

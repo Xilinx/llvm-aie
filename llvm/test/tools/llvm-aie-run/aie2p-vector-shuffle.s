@@ -40,9 +40,11 @@
 // RUN: llvm-mc -triple aie2p -filetype=obj %s -o %t.o
 // RUN: llvm-aie-run %t.o --print-regs --coverage | FileCheck %s
 
-// Mode 24 is T16_16x4_lo, the first of the NL/FFT/permute-reduction shapes,
-// whose R x C does not tile the pair. It is not extrapolated from the
-// transposes, so it says which mode it wanted and stops.
+// Mode 39 is T16_4x4: 16 elements where the pair holds 64, so it tiles only a
+// quarter of it and is a different construction, not a transpose of the pair.
+// It is not extrapolated from these, so it says which mode it wanted and stops.
+// The shapes that DO tile but are not 2-wide are in
+// aie2p-vector-shuffle-wide-shapes.s.
 // RUN: llvm-mc -triple aie2p -filetype=obj --defsym BADMODE=1 %s -o %t.bad.o
 // RUN: not llvm-aie-run %t.bad.o 2>&1 | FileCheck %s --check-prefix=BADMODE
 
@@ -71,7 +73,7 @@ _start:
 	nop
 	nop
 .ifdef BADMODE
-	movxm	r0, #24
+	movxm	r0, #39
 	nop
 	nop
 	nop
@@ -128,4 +130,4 @@ _start:
 // CHECK-DAG: wh6 = 0x{{(F7F6F5F4){8}$}}
 // CHECK-DAG: bmll0 = 0x{{(F3F2F1F0){16}$}}
 
-// BADMODE: mode 24 is not one of the transpose shapes this models
+// BADMODE: mode 39 is not one of the transpose shapes this models
