@@ -239,10 +239,14 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // of the three sub-spill ranges (sub_avail/sub_ptr sit at Offset+128/+132
     // on the scalar step-4 path), so a frame that pushes the composite out of
     // that range still needs the register-offset fallback.
-    const bool IsAligned = Offset % 64 == 0;
-    assert(IsAligned &&
+    // Deliberately not a condition: gating the immediate path on alignment
+    // would send a misaligned offset down the indexed path in a -DNDEBUG
+    // build, which is the silent wrong-address write this comment rules out.
+    // The emitter rejects it instead ("immediate operand value is not a
+    // multiple of 64").
+    assert(Offset % 64 == 0 &&
            "ePSRFLdF composite spill needs a 64-byte aligned frame offset");
-    if (IsAligned && isEncodableAsNegativeInt<9, 4>(Offset)) {
+    if (isEncodableAsNegativeInt<9, 4>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     } else {
