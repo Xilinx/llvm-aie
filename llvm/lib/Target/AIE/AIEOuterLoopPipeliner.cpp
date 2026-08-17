@@ -649,6 +649,18 @@ void AIEOuterLoopPipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
 }
 
+/// Simplify trivial PHI nodes in all blocks of a function.
+static void simplifyTrivialPHIsInFunction(Function &F) {
+  for (BasicBlock &BB : F) {
+    for (PHINode &PN : make_early_inc_range(BB.phis())) {
+      if (Value *V = PN.hasConstantValue()) {
+        PN.replaceAllUsesWith(V);
+        PN.eraseFromParent();
+      }
+    }
+  }
+}
+
 bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   if (skipFunction(F))
     return false;
@@ -667,6 +679,11 @@ bool AIEOuterLoopPipeliner::runOnFunction(Function &F) {
   SmallVector<Loop *, 4> TopLevelLoops(LI->begin(), LI->end());
   for (Loop *L : TopLevelLoops)
     Changed |= runOnLoop(L);
+
+  // Simplify all trivial PHIs in the function
+  if (Changed)
+    simplifyTrivialPHIsInFunction(F);
+
   return Changed;
 }
 
