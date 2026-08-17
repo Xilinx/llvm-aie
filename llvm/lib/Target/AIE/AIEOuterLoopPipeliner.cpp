@@ -1397,6 +1397,24 @@ void AIEOuterLoopPipeliner::remapExitForReplacement(
   reroutePhiIncomings(OrigExit, OrigLS.getBottom(), ReplacementLS.getBottom(),
                       PhiEdge::Repoint,
                       [&](Value *V) { return ReplacementLS.cloneOf(V); });
+
+  // Non-phi exit live-outs: when the latch dominates the exit there is no LCSSA
+  // phi, so LCSSA rematerializes the live-out as a plain instruction in the
+  // exit whose operands reference loop-internal values (e.g. the outer-header
+  // PHI and an inner-loop def). removeFromCFG deletes those originals, which
+  // would leave the exit reading poison. Remap each such operand to a live
+  // clone so the exit reads a defined value.
+  for (Instruction &I :
+       make_range(OrigExit->getFirstNonPHIIt(), OrigExit->end())) {
+    for (Use &Op : I.operands()) {
+      Value *V = Op.get();
+      // CFG successors are basic-block operands; only remap data values.
+      if (isa<BasicBlock>(V))
+        continue;
+      if (Value *Mapped = ReplacementLS.cloneOf(V); Mapped != V)
+        Op.set(Mapped);
+    }
+  }
 }
 
 bool BlockRegion::isSingleEntrySingleExit() const {
@@ -1769,11 +1787,30 @@ bool AIEOuterLoopPipeliner::liftBottomPointerUpdatesToTop(
   return true;
 }
 
+// Returns true if some value defined inside L is used outside L in a block
+// other than its immediate exit block. Uses in the immediate exit block (an
+// exit PHI, or a plain instruction handled by remapExitForReplacement) are
+// repaired by the clone/reroute logic; escapes to a downstream block are not,
+// and require LCSSA form to be (re-)established first.
+static bool needsLCSSAForExit(const Loop &L, const BasicBlock *ExitBlock) {
+  for (const BasicBlock *BB : L.blocks())
+    for (const Instruction &I : *BB)
+      for (const User *U : I.users()) {
+        const auto *UI = cast<Instruction>(U);
+        const BasicBlock *UseBB = UI->getParent();
+        if (L.contains(UseBB))
+          continue;
+        if (UseBB != ExitBlock)
+          return true;
+      }
+  return false;
+}
+
 bool AIEOuterLoopPipeliner::performTransformation(OrigLoopStructure &OrigLS,
                                                   const OLPOpts &Opts) {
 
-  /// Restore LCSSA if this property was invalidated.
-  formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
+  if (needsLCSSAForExit(*OrigLS.getOuterLoop(), OrigLS.getExitBlock()))
+    formLCSSARecursively(*OrigLS.getOuterLoop(), *DT, LI, SE);
 
   liftBottomPointerUpdatesToTop(OrigLS);
 
