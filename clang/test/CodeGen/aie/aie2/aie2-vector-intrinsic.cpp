@@ -414,7 +414,7 @@ v16accfloat test_mul_elem_16_conf(v16float v1, v16float v2, int sub_mul) {
 // CHECK-NEXT:    [[TMP30:%.*]] = tail call noundef <8 x i64> @llvm.aie2.sub.accfloat(<8 x i64> [[COND_I_I]], <8 x i64> [[ACC:%.*]], i32 28)
 // CHECK-NEXT:    br label %[[EXIT2]]
 // CHECK:       [[COND_FALSE_I]]:
-// CHECK-NEXT:    [[TMP31:%.*]] = tail call noundef <8 x i64> @llvm.aie2.add.accfloat(<8 x i64> [[ACC]], <8 x i64> [[COND_I_I]], i32 28)
+// CHECK-NEXT:    [[TMP31:%.*]] = tail call noundef <8 x i64> @llvm.aie2.add.accfloat(<8 x i64> [[COND_I_I]], <8 x i64> [[ACC]], i32 28)
 // CHECK-NEXT:    br label %[[EXIT2]]
 // CHECK:       [[EXIT2]]:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[COND_I_I]], %[[EXIT1]] ], [ [[TMP30]], %[[COND_TRUE_I2]] ], [ [[TMP31]], %[[COND_FALSE_I]] ]
@@ -456,30 +456,32 @@ v16accfloat test_mac_elem_16_conf(v16float v1, v16float v2, v16accfloat acc,
 // CHECK-NEXT:    [[TMP26:%.*]] = tail call noundef <8 x i64> @llvm.aie2.bf.mac16.conf(<32 x bfloat> [[TMP7]], <32 x bfloat> [[TMP13]], <8 x i64> [[TMP25]], i32 60)
 // CHECK-NEXT:    [[TMP27:%.*]] = tail call noundef <8 x i64> @llvm.aie2.bf.mac16.conf(<32 x bfloat> [[TMP4]], <32 x bfloat> [[TMP16]], <8 x i64> [[TMP26]], i32 60)
 // CHECK-NEXT:    [[TMP28:%.*]] = tail call noundef <8 x i64> @llvm.aie2.bf.mac16.conf(<32 x bfloat> [[TMP4]], <32 x bfloat> [[TMP13]], <8 x i64> [[TMP27]], i32 60)
-// CHECK-NEXT:    [[TOBOOL_NOT_I_I:%.*]] = icmp eq i32 [[SUB_MUL:%.*]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL_NOT_I_I]], label %[[EXIT1:.*]], label %[[COND_TRUE_I_I:.*]]
-// CHECK:       [[COND_TRUE_I_I]]:
-// CHECK-NEXT:    [[TMP29:%.*]] = tail call noundef <8 x i64> @llvm.aie2.ACC512.accfloat.neg.conf(<8 x i64> [[TMP28]], i32 28)
-// CHECK-NEXT:    br label %[[EXIT1]]
-// CHECK:       [[EXIT1]]:
-// CHECK-NEXT:    [[COND_I_I:%.*]] = phi <8 x i64> [ [[TMP29]], %[[COND_TRUE_I_I]] ], [ [[TMP28]], %entry ]
 // CHECK-NEXT:    [[TOBOOL_NOT_I:%.*]] = icmp eq i32 [[ZERO_ACC:%.*]], 0
+// CHECK-NEXT:    [[TOBOOL3_NOT_I:%.*]] = icmp eq i32 [[SUB_MUL:%.*]], 0
 // CHECK-NEXT:    br i1 [[TOBOOL_NOT_I]], label %[[IF_END_I:.*]], label %[[IF_THEN_I:.*]]
 // CHECK:       [[IF_THEN_I]]:
-// CHECK-NEXT:    [[TMP30:%.*]] = tail call noundef <8 x i64> @llvm.aie2.ACC512.accfloat.neg.conf(<8 x i64> [[COND_I_I]], i32 28)
-// CHECK-NEXT:    br label %[[EXIT2:.*]]
-// CHECK:       [[IF_END_I]]:
-// CHECK-NEXT:    [[TOBOOL2_NOT_I:%.*]] = icmp eq i32 [[SUB_ACC:%.*]], 0
-// CHECK-NEXT:    br i1 [[TOBOOL2_NOT_I]], label %[[COND_FALSE_I:.*]], label %[[COND_TRUE_I2:.*]]
-// CHECK:       [[COND_TRUE_I2]]:
-// CHECK-NEXT:    [[TMP31:%.*]] = tail call noundef <8 x i64> @llvm.aie2.add.accfloat(<8 x i64> [[ACC:%.*]], <8 x i64> [[COND_I_I]], i32 28)
-// CHECK-NEXT:    [[TMP32:%.*]] = tail call noundef <8 x i64> @llvm.aie2.ACC512.accfloat.neg.conf(<8 x i64> [[TMP31]], i32 28)
-// CHECK-NEXT:    br label %[[EXIT2]]
+// CHECK-NEXT:    br i1 [[TOBOOL3_NOT_I]], label %[[COND_FALSE_I:.*]], label %[[EXIT:.*]]
 // CHECK:       [[COND_FALSE_I]]:
-// CHECK-NEXT:    [[TMP33:%.*]] = tail call noundef <8 x i64> @llvm.aie2.sub.accfloat(<8 x i64> [[ACC]], <8 x i64> [[COND_I_I]], i32 28)
-// CHECK-NEXT:    br label %[[EXIT2]]
-// CHECK:       [[EXIT2]]:
-// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP30]], %[[IF_THEN_I]] ], [ [[TMP32]], %[[COND_TRUE_I2]] ], [ [[TMP33]], %[[COND_FALSE_I]] ]
+// CHECK-NEXT:    [[TMP29:%.*]] = tail call noundef <8 x i64> @llvm.aie2.ACC512.accfloat.neg.conf(<8 x i64> [[TMP28]], i32 28)
+// CHECK-NEXT:    br label %[[EXIT]]
+// CHECK:       [[IF_END_I]]:
+// CHECK-NEXT:    br i1 [[TOBOOL3_NOT_I]], label %[[COND_END7_I:.*]], label %[[COND_TRUE4_I:.*]]
+// CHECK:       [[COND_TRUE4_I]]:
+// CHECK-NEXT:    [[TMP30:%.*]] = tail call noundef <8 x i64> @llvm.aie2.ACC512.accfloat.neg.conf(<8 x i64> [[TMP28]], i32 28)
+// CHECK-NEXT:    br label %[[COND_END7_I]]
+// CHECK:       [[COND_END7_I]]:
+// CHECK-NEXT:    [[COND8_I:%.*]] = phi <8 x i64> [ [[TMP30]], %[[COND_TRUE4_I]] ], [ [[TMP28]], %[[IF_END_I]] ]
+// CHECK-NEXT:    [[TOBOOL9_NOT_I:%.*]] = icmp eq i32 [[SUB_ACC:%.*]], 0
+// CHECK-NEXT:    br i1 [[TOBOOL9_NOT_I]], label %[[COND_FALSE13_I:.*]], label %[[COND_TRUE10_I:.*]]
+// CHECK:       [[COND_TRUE10_I]]:
+// CHECK-NEXT:    [[TMP31:%.*]] = tail call noundef <8 x i64> @llvm.aie2.add.accfloat(<8 x i64> [[ACC:%.*]], <8 x i64> [[COND8_I]], i32 28)
+// CHECK-NEXT:    [[TMP32:%.*]] = tail call noundef <8 x i64> @llvm.aie2.ACC512.accfloat.neg.conf(<8 x i64> [[TMP31]], i32 28)
+// CHECK-NEXT:    br label %[[EXIT]]
+// CHECK:       [[COND_FALSE13_I]]:
+// CHECK-NEXT:    [[TMP33:%.*]] = tail call noundef <8 x i64> @llvm.aie2.sub.accfloat(<8 x i64> [[ACC]], <8 x i64> [[COND8_I]], i32 28)
+// CHECK-NEXT:    br label %[[EXIT]]
+// CHECK:       [[EXIT]]:
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP29]], %[[COND_FALSE_I]] ], [ [[TMP28]], %[[IF_THEN_I]] ], [ [[TMP32]], %[[COND_TRUE10_I]] ], [ [[TMP33]], %[[COND_FALSE13_I]] ]
 // CHECK-NEXT:    ret <8 x i64> [[RETVAL_0_I]]
 //
 v16accfloat test_msc_elem_16_conf(v16float v1, v16float v2, v16accfloat acc,
