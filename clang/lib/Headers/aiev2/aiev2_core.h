@@ -1604,13 +1604,14 @@ inline v16accfloat mac_elem_16_conf(v16float v1, v16float v2, v16accfloat acc,
   v16accfloat p = mul_elem_16_conf(v1, v2, sub_mul);
   if (zero_acc)
     return p;
-  return sub_acc ? sub(p, acc) : add(acc, p);
+  return sub_acc ? sub(p, acc) : add(p, acc);
 }
 inline v16accfloat msc_elem_16_conf(v16float v1, v16float v2, v16accfloat acc,
                                     int zero_acc, int sub_mul, int sub_acc) {
-  v16accfloat p = mul_elem_16_conf(v1, v2, sub_mul);
+  v16accfloat raw = mul_elem_16_accuracy_safe(v1, v2);
   if (zero_acc)
-    return neg(p);
+    return sub_mul ? raw : neg(raw);
+  v16accfloat p = sub_mul ? neg(raw) : raw;
   return sub_acc ? neg(add(acc, p)) : sub(acc, p);
 }
 
