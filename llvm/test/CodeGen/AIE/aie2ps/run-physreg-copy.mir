@@ -344,10 +344,8 @@ name:             test_copy_dm
 body: |
   bb.0:
     ; CHECK-LABEL: name: test_copy_dm
-    ; CHECK: $cml1 = VMOV_alu_mv_mv_mv_cm $cml2
-    ; CHECK-NEXT: $cmh1 = VMOV_alu_mv_mv_mv_cm $cmh2
-    ; CHECK-NEXT: $cml2 = VMOV_alu_mv_mv_mv_cm $cml3
-    ; CHECK-NEXT: $cmh2 = VMOV_alu_mv_mv_mv_cm $cmh3
+    ; CHECK: $dm1 = VMOV_D_vmov $dm2
+    ; CHECK-NEXT: $dm2 = VMOV_D_vmov $dm3
   $dm1 = COPY $dm2
   $dm2 = COPY $dm3
 ...
