@@ -45,6 +45,11 @@ static cl::opt<int>
     HeuristicRuns("aie-postpipeliner-heuristic-runs",
                   cl::desc("Number of runs for heuristics that converge"),
                   cl::init(20), cl::Hidden);
+static cl::opt<std::string>
+    DisabledStrategyPrefix("aie-postpipeliner-disable-strategy",
+                           cl::desc("Disable all post-pipeliner strategies"
+                                    " whose name starts with this prefix"),
+                           cl::init(""), cl::Hidden);
 
 static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
                              cl::desc("II for which to allow the solver"),
@@ -1449,6 +1454,11 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
+bool PostPipelinerStrategy::isEnabled() {
+  return DisabledStrategyPrefix.empty() ||
+         !StringRef(name()).starts_with(DisabledStrategyPrefix);
+}
+
 bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
   int HeuristicIndex = 0;
@@ -1459,6 +1469,9 @@ bool PostPipeliner::tryApproaches() {
     const int StrategyLength = MinLength + Config.ExtraStages * II;
     ConfigStrategy S(*DAG, Info, StrategyLength, Config.TopDown,
                      Config.Alternate, Config.Components, Config.Modifiers);
+    if (!S.isEnabled()) {
+      continue;
+    }
     resetSchedule(/*FullReset=*/true);
     for (int Run = 0; Run < Config.Runs && Run < HeuristicRuns; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
@@ -1478,9 +1491,11 @@ bool PostPipeliner::tryApproaches() {
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
   IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
-  resetSchedule(/*FullReset=*/true);
-  if (scheduleWithStrategy(Relaxed)) {
-    return true;
+  if (Relaxed.isEnabled()) {
+    resetSchedule(/*FullReset=*/true);
+    if (scheduleWithStrategy(Relaxed)) {
+      return true;
+    }
   }
 
   // TargetII is the OK from the user to spend some time reaching this II.

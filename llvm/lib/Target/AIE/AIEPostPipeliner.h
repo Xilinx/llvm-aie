@@ -186,6 +186,8 @@ public:
   virtual ~PostPipelinerStrategy() {};
   // Provide a name for logging purposes
   virtual std::string name() { return "PostPipelinerStrategy"; }
+  // Returns false if the strategy is disabled by a command line option.
+  bool isEnabled();
   // Choose among available alternatives
   virtual bool better(const SUnit &A, const SUnit &B) { return false; }
   // Define the earliest cycle in which to insert \p N
