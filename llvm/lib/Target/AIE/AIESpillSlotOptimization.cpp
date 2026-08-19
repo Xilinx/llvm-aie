@@ -196,6 +196,7 @@ private:
   // Phase 1: Analysis
   void analyzeFunction(MachineFunction &MF);
   bool isValidSpillSlot(int FI, MachineInstr &MI) const;
+  DenseSet<int> collectUntrackableAccesses(MachineFunction &MF) const;
 
   // Phase 2: Rewrite
   bool rewriteInstructions(MachineFunction &MF);
@@ -381,10 +382,48 @@ bool AIESpillSlotOptimization::isValidSpillSlot(int FI,
          !MFI->isDeadObjectIndex(FI) && MFI->isSpillSlotObjectIndex(FI);
 }
 
+/// Collect the slots accessed by an instruction this pass cannot rewrite. Only
+/// the spill/reload pseudos that isStoreToStackSlot()/isLoadFromStackSlot()
+/// recognize can be redirected to a replacement slot; any other frame index
+/// operand - e.g. the multi-register VST_PLFR_SPILL / VLDA_PLFR_SPILL pseudos,
+/// whose non-standard operand layout those hooks do not recognize - is
+/// untrackable. Debug instructions are ignored so the result does not depend on
+/// -g.
+DenseSet<int> AIESpillSlotOptimization::collectUntrackableAccesses(
+    MachineFunction &MF) const {
+  DenseSet<int> SlotsWithUntrackableAccesses;
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : MBB) {
+      if (MI.isDebugInstr())
+        continue;
+      int SpillFI = -1;
+      if (TII->isLoadFromStackSlot(MI, SpillFI) ||
+          TII->isStoreToStackSlot(MI, SpillFI))
+        continue;
+      for (const MachineOperand &MO : MI.operands()) {
+        if (!MO.isFI())
+          continue;
+        LLVM_DEBUG(dbgs() << "  Untrackable access to FI=" << MO.getIndex()
+                          << ": " << MI);
+        SlotsWithUntrackableAccesses.insert(MO.getIndex());
+      }
+    }
+  }
+  return SlotsWithUntrackableAccesses;
+}
+
 void AIESpillSlotOptimization::analyzeFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "=== Phase 1: Analysis ===\n");
 
   OrigSlotDecompositions.clear();
+
+  // Leave slots with an untrackable access intact: decomposing them would
+  // remove the original stack object while that access keeps pointing at it,
+  // which makes prologepilog fail in eliminateFrameIndex(). StackSlotColoring
+  // can coalesce such an access onto a slot that is otherwise decomposable, so
+  // this has to be checked per slot rather than per spill point.
+  const DenseSet<int> SlotsWithUntrackableAccesses =
+      collectUntrackableAccesses(MF);
 
   for (MachineBasicBlock &MBB : MF) {
     // Pass 1 (Backward): Collect reloads with post-MI liveness.
@@ -393,7 +432,8 @@ void AIESpillSlotOptimization::analyzeFunction(MachineFunction &MF) {
 
     for (MachineInstr &MI : reverse(MBB)) {
       int FI = -1;
-      if (TII->isLoadFromStackSlot(MI, FI) && isValidSpillSlot(FI, MI)) {
+      if (TII->isLoadFromStackSlot(MI, FI) && isValidSpillSlot(FI, MI) &&
+          !SlotsWithUntrackableAccesses.contains(FI)) {
         auto SP = std::make_unique<SpillPoint>(MI, FI, MFI->getObjectSize(FI),
                                                LiveRegs, *TII, *MRI);
         LLVM_DEBUG(dbgs() << "  " << *SP << ": " << MI);
@@ -409,7 +449,8 @@ void AIESpillSlotOptimization::analyzeFunction(MachineFunction &MF) {
 
     for (MachineInstr &MI : MBB) {
       int FI = -1;
-      if (TII->isStoreToStackSlot(MI, FI) && isValidSpillSlot(FI, MI)) {
+      if (TII->isStoreToStackSlot(MI, FI) && isValidSpillSlot(FI, MI) &&
+          !SlotsWithUntrackableAccesses.contains(FI)) {
         auto Spill = std::make_unique<SpillPoint>(
             MI, FI, MFI->getObjectSize(FI), LiveRegs, *TII, *MRI);
         LLVM_DEBUG(dbgs() << "  " << *Spill << ": " << MI);
