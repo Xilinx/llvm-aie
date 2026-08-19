@@ -266,7 +266,6 @@ class PostPipeliner {
 
   /// Basic modulo scheduling parameters.
   int NInstr;
-  int ScoreboardSize;
   int II = 1;
   int NStages = 0;
   int NPrologueStages = 0;

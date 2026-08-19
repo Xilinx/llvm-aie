@@ -239,6 +239,13 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
     Counts += getSlotCounts(MI.getOpcode(), TII);
   }
   int MII = Counts.max();
+
+  // A single instruction whose pipeline stages alias at a given II causes a
+  // resource conflict with itself in the next iteration.
+  for (auto &MI : LoopBlock) {
+    MII = std::max(MII, HR.computeInstrSelfMII(MI));
+  }
+
   LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
   return MII;
 }
@@ -857,8 +864,6 @@ void PostPipeliner::resetSchedule(bool FullReset) {
 }
 
 bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
-  // Set up the basic schedule from the original instructions
-  const int PipelineDepth = HR.getPipelineDepth();
   for (int K = 0; K < NInstr; K++) {
     const int N = mostUrgent(Strategy);
     SUnit &SU = DAG->SUnits[N];
@@ -866,7 +871,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     const int Earliest = Strategy.earliest(SU);
     const int Latest = Strategy.latest(SU);
     LLVM_DEBUG(
-        dbgs() << format("  Trying %d in [%d, %d]\n", N, Earliest, Latest));
+        dbgs() << format("  Trying SU%d in [%d, %d]\n", N, Earliest, Latest));
     if (Earliest > Latest) {
       LLVM_DEBUG(dbgs() << "  Latency violation.\n");
       return false;
@@ -888,27 +893,12 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     const int ModCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     const MemoryObjectPair ObjectBits = HR.getMemoryObjectsBits(MI);
-    int Cycle = ModCycle;
-    // We are scheduling the first iteration, checking for conflicts with other
-    // instructions that were scheduled earlier.
-    // Newly scheduled instruction have ModCycle < II,
-    // and have no conflict beyond
-    // ModCycle + PipelineDepth
-    const int Horizon =
-        std::min(II + PipelineDepth, ScoreboardSize - PipelineDepth);
-    LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    int Iter = 0;
-    while (Cycle < Horizon) {
-      if (HR.checkConflict(Scoreboard, *MI, Cycle)) {
-        LLVM_DEBUG(dbgs() << "Conflict in iteration N=" << Iter << "\n");
-        return false;
-      }
-
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
-                          MI->operands(), MI->getMF()->getRegInfo(), Cycle);
-      Cycle += II;
-      Iter++;
+    if (HR.checkConflict(Scoreboard, *MI, ModCycle)) {
+      LLVM_DEBUG(dbgs() << "Conflict at modulo cycle " << ModCycle << "\n");
+      return false;
     }
+    HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
+                        MI->operands(), MI->getMF()->getRegInfo(), ModCycle);
 
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
@@ -1054,29 +1044,6 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
     }
 
     scheduleNode(SU, Insert, Strategy);
-  }
-
-  // Make a final check on the resources. We bring a pristine scoreboard
-  // to steady state by checking and inserting NStages. Since the steady
-  // state is the busiest, we can shift the scoreboard by II after each stage.
-  // We repeat the resource schedule often enough to make the final one land
-  // after the conflict horizon of the first one.
-  const int PipelineDepth = HR.getPipelineDepth();
-  ResourceScoreboard<FuncUnitWrapper> Resources;
-  Resources.config(0, 2 * II + PipelineDepth);
-  for (int Start = 0; Start < II + PipelineDepth; Start += II) {
-    for (int I = 0; I < NInstr; I++) {
-      SUnit &SU = DAG->SUnits[I];
-      MachineInstr &MI = *SU.getInstr();
-      int ModCycle = Info[I].ModuloCycle;
-      if (HR.checkConflict(Resources, MI, ModCycle)) {
-        return false;
-      }
-      HR.emitInScoreboard(Resources, MI, MI.getDesc(), ModCycle);
-    }
-    for (int I = 0; I < II; I++) {
-      Resources.advance();
-    }
   }
 
   return true;
@@ -1602,15 +1569,10 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   II = InitiationInterval;
   DAG = &TheDAG;
 
-  // We need to set up a scoreboard that gives us some look-ahead.
-  // The look-ahead is used heuristically, to see conflicts with future
-  // iterations of nodes scheduled earlier.
-  // We will check conflicts in cycle [0, II) and we want to insert the future
-  // iterations that can conflict with it.
-  const int InsertRange = std::max(II, int(HR.getPipelineDepth()));
-
-  ScoreboardSize = InsertRange + HR.getPipelineDepth();
-  Scoreboard.config(0, ScoreboardSize - 1);
+  // Configure a modulo scoreboard of size II. Pipeline residuals that cross
+  // the stage boundary wrap around automatically via modulo indexing, so no
+  // extra slack for pipeline depth is needed.
+  Scoreboard.configModulo(II);
 
   Info.init(NInstr);
 
