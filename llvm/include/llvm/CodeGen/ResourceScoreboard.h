@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,8 +18,10 @@
 #define LLVM_CODEGEN_RESOURCESCOREBOARD_H
 
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <climits>
 #include <vector>
 
 namespace llvm {
@@ -36,8 +38,14 @@ template <typename RC> class ResourceScoreboard {
   std::vector<RC> Cycles;
 
   /// The maximum number of cycles monitored by the Scoreboard.
-  /// For efficiency, it is rounded up to a power of two.
+  /// For the sliding-window mode, it is rounded up to a power of two.
   int Size = 0;
+
+  /// When non-zero, the scoreboard operates in modulo mode: operator[]
+  /// maps any cycle to ((Cycle + Period) % Period). There is no sliding
+  /// window; calling advance() or recede() is a contract violation.
+  /// Valid cycle indices are in [-Period, INT_MAX - Period].
+  int Period = 0;
 
   /// The scoreboard extends from Head - Lowest to Head + Highest
   /// When querying for conflicts, we have more liberty, with out-of-range
@@ -51,12 +59,20 @@ template <typename RC> class ResourceScoreboard {
 public:
   int getSize() const { return Size; }
 
-  /// Index operators. Size is checked to be a power of two. Masking it
-  /// will properly wrap around in the allocated space.
+  /// Index operators.
+  /// Sliding-window mode: Size is a power of two and masking wraps.
+  /// Modulo mode: Cycle must be in [-Period, INT_MAX - Period] so that
+  /// adding Period yields a non-negative value before the final reduction.
   const RC &operator[](int Cycle) const {
+    if (Period > 0)
+      return Cycles[(Cycle + Period) % Period];
     return Cycles[(Head + Cycle) & (Size - 1)];
   }
-  RC &operator[](int Cycle) { return Cycles[(Head + Cycle) & (Size - 1)]; }
+  RC &operator[](int Cycle) {
+    if (Period > 0)
+      return Cycles[(Cycle + Period) % Period];
+    return Cycles[(Head + Cycle) & (Size - 1)];
+  }
 
   void clear() {
     assert(Size);
@@ -86,15 +102,39 @@ public:
   }
 
   bool isInRange(int Index) const {
+    // In modulo mode the valid range is [-Period, INT_MAX - Period], which
+    // ensures that (Index + Period) neither underflows nor overflows before
+    // the final modulo reduction.
+    if (Period > 0)
+      return Index >= -Period && Index <= INT_MAX - Period;
     return Index >= LowestCycle && Index <= HighestCycle;
   }
 
+  // Configure a modulo scoreboard of size P.
+  // operator[] maps any cycle to (cycle % P), so pipeline residuals that
+  // cross the stage boundary wrap around automatically.
+  // Calling advance() or recede() on a modulo scoreboard is a contract
+  // violation and will trigger llvm_unreachable.
+  void configModulo(int P) {
+    assert(P > 0 && "Modulo period must be positive.");
+    Period = P;
+    Size = P;
+    LowestCycle = 0;
+    HighestCycle = P - 1;
+    Head = 0;
+    Cycles.assign(P, RC{});
+  }
+
   void advance() {
+    if (Period > 0)
+      llvm_unreachable("advance() is not valid in modulo mode.");
     (*this)[LowestCycle].clearResources();
     Head = (Head + 1) & (Size - 1);
   }
 
   void recede() {
+    if (Period > 0)
+      llvm_unreachable("recede() is not valid in modulo mode.");
     (*this)[HighestCycle].clearResources();
     Head = (Head - 1) & (Size - 1);
   }
