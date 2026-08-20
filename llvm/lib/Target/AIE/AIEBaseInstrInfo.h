@@ -87,8 +87,31 @@ struct VarItinInterface {
   bool hasVariants() const { return !InstrVariants.empty(); }
 };
 
+struct CopyTuple {
+  unsigned DstSubRegIdx;
+  unsigned SrcSubRegIdx;
+  unsigned MoveOpcode;
+};
+
+struct CopyRecipe {
+  const TargetRegisterClass *DstRC;
+  const TargetRegisterClass *SrcRC;
+  unsigned FirstCopy;
+  unsigned NumCopies;
+};
+
+struct CopyTableView {
+  ArrayRef<CopyRecipe> Recipes;
+  ArrayRef<CopyTuple> Tuples;
+};
+
 struct AIEBaseInstrInfo : public TargetInstrInfo {
-  using TargetInstrInfo::TargetInstrInfo;
+  AIEBaseInstrInfo() = default;
+  /// Initializes TargetInstrInfo with the target's control-flow pseudo opcodes.
+  AIEBaseInstrInfo(unsigned CFSetupOpcode, unsigned CFDestroyOpcode,
+                   unsigned CatchRetOpcode, unsigned ReturnOpcode)
+      : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode,
+                        ReturnOpcode) {}
   // This codifies the model of ZeroOverheadLoops
   class ZOLSupport {
   public:
@@ -258,10 +281,6 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                                                        unsigned int Reg,
                                                        APInt &Val) const {
     return std::nullopt;
-  }
-  /// Return Multi-Slot Pseudo opcode based on Reg type
-  virtual unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const {
-    llvm_unreachable("Target didn't implement getScalarMovOpcode");
   }
   /// Return the MOV opcode
   virtual unsigned getMvSclOpcode() const {
@@ -1042,6 +1061,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
 
 public:
+  /// Return the number of instructions materialized for an exact physical
+  /// register copy, or std::nullopt if the copy is unsupported.
+  std::optional<unsigned> getCopyCost(MCRegister DstReg,
+                                      MCRegister SrcReg) const;
+
+  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                   const DebugLoc &DL, Register DstReg, Register SrcReg,
+                   bool KillSrc, bool RenamableDest = false,
+                   bool RenamableSrc = false) const override;
+
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,
   /// until there is an actual instruction that can handle them.
@@ -1095,6 +1124,14 @@ public:
     return {};
   };
 
+private:
+  virtual const CopyTableView &getCopyTable() const;
+
+  bool materializeCopyFromTable(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MBBI,
+                                const DebugLoc &DL, MCRegister DstReg,
+                                MCRegister SrcReg, bool KillSrc) const;
+
 protected:
   struct AIERegOffsetSpillInstrInfo {
     /// Opcode for spill using register offset.
@@ -1116,12 +1153,6 @@ protected:
   getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const {
     return {};
   }
-
-  // Copy SrcReg to DstReg through their sub-registers.
-  void copyThroughSubRegs(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator MBBI, const DebugLoc &DL,
-                          MCRegister DstReg, MCRegister SrcReg,
-                          bool KillSrc) const;
 
 #if 0
   // TODO. I guess this should wait for Davy's PR to land

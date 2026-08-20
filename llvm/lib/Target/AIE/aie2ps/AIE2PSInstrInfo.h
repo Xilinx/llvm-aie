@@ -72,11 +72,10 @@ public:
   CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
                                  const ScheduleDAGMI *DAG) const override;
 
-  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                   const DebugLoc &DL, Register DstReg, Register SrcReg,
-                   bool KillSrc, bool RenamableDest = false,
-                   bool RenamableSrc = false) const override;
+protected:
+  const CopyTableView &getCopyTable() const override;
 
+public:
   Register isLoadFromStackSlot(const MachineInstr &MI,
                                int &FrameIndex) const override;
   Register isStoreToStackSlot(const MachineInstr &MI,
@@ -104,7 +103,6 @@ public:
   std::optional<unsigned> getConstantMovOpcode(MachineRegisterInfo &MRI,
                                                unsigned int Reg,
                                                APInt &Val) const override;
-  unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
 
   bool isLock(unsigned Opc) const override;
   std::optional<unsigned> getDoneLatency(unsigned) const override;
