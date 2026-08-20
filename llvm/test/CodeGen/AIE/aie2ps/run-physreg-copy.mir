@@ -108,6 +108,19 @@ body: |
 ...
 
 ---
+name:            test_copy_l_to_g
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_l_to_g
+    ; CHECK: $gl0 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r2
+    ; CHECK-NEXT: $gh0 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r3
+    ; CHECK-NEXT: $r0 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl1
+    ; CHECK-NEXT: $r1 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh1
+  $g0 = COPY $l1
+  $l0 = COPY $g1
+...
+
+---
 name:            test_copy_exp_to_exp
 body: |
   bb.0:
