@@ -36,6 +36,9 @@
 
 using namespace llvm;
 
+#define GET_COPY_MATERIALIZATION_IMPL
+#include "AIE2PSGenCopyMaterialization.inc"
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "AIE2PSGenInstrInfo.inc"
 
@@ -64,52 +67,6 @@ unsigned AIE2PSInstrInfo::getMvSclOpcode() const {
 
 unsigned AIE2PSInstrInfo::getMvSclMultiSlotPseudoOpcode() const {
   return AIE2PS::MOVX_mvx_cr_imm;
-}
-
-static MCRegister getLoSubReg(const TargetRegisterInfo &TRI, MCRegister Reg) {
-  if (AIE2PS::eLRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_l_even);
-  if (AIE2PS::EXPVEC64RegClass.contains(Reg) ||
-      AIE2PS::mGGaRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_lo_exp);
-  if (AIE2PS::mEYwRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_bfp640_lo);
-  if (AIE2PS::mFEYwRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_bfp768_lo);
-  if (AIE2PS::VEC512RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_256_lo);
-  if (AIE2PS::VEC1024RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_512_lo);
-  if (AIE2PS::ACC1024RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_512_acc_lo);
-  if (AIE2PS::ACC2048RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_1024_acc_lo);
-  if (AIE2PS::FIFO1024RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_lo_fifo);
-  llvm_unreachable("unhandled case in getLoSubReg");
-}
-
-static MCRegister getHiSubReg(const TargetRegisterInfo &TRI, MCRegister Reg) {
-  if (AIE2PS::eLRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_l_odd);
-  if (AIE2PS::EXPVEC64RegClass.contains(Reg) ||
-      AIE2PS::mGGaRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_hi_exp);
-  if (AIE2PS::mEYwRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_bfp640_hi);
-  if (AIE2PS::mFEYwRegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_bfp768_hi);
-  if (AIE2PS::VEC512RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_256_hi);
-  if (AIE2PS::VEC1024RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_512_hi);
-  if (AIE2PS::ACC1024RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_512_acc_hi);
-  if (AIE2PS::ACC2048RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_1024_acc_hi);
-  if (AIE2PS::FIFO1024RegClass.contains(Reg))
-    return TRI.getSubReg(Reg, AIE2PS::sub_hi_fifo);
-  llvm_unreachable("unhandled case in getHiSubReg");
 }
 
 unsigned AIE2PSInstrInfo::getAddrIntrinsic2D() const {
@@ -314,137 +271,6 @@ unsigned AIE2PSInstrInfo::getOpCode(MachineInstr &I) const {
     return AIE2PS::MOV_nb_st_mMStream_tlast_reg;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
-  }
-}
-
-// Implement CopyToReg/CopyFromReg
-void AIE2PSInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator MBBI,
-                                  const DebugLoc &DL, Register DstReg,
-                                  Register SrcReg, bool KillSrc,
-                                  bool RenamableDest, bool RenamableSrc) const {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
-
-  if (AIE2PS::mMvSclSrcRegClass.contains(SrcReg) &&
-      AIE2PS::mMvSclDstRegClass.contains(DstReg)) {
-    // Build MultiSlotPseudo in preference
-    const unsigned MOVSclOpcode = getScalarMovOpcode(DstReg, SrcReg);
-    BuildMI(MBB, MBBI, DL, get(MOVSclOpcode), DstReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-    // clang-format off
-#define HANDLE_MOV_CASE(SRC_CLASS, DST_CLASS, OPCODE)                          \
-  } else if ((AIE2PS::SRC_CLASS##RegClass.contains(SrcReg)) &&                 \
-             (AIE2PS::DST_CLASS##RegClass.contains(DstReg))) {                 \
-    BuildMI(MBB, MBBI, DL, get(AIE2PS::MOV_alu_mv_mv_mv_##OPCODE), DstReg)     \
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  HANDLE_MOV_CASE(eR, mSCm, sc_r)
-  HANDLE_MOV_CASE(mSCm, eR, r_sc)
-  HANDLE_MOV_CASE(mElm, mElm, e_mv_el_to_el)
-  HANDLE_MOV_CASE(mEhm, mEhm, e_mv_eh_to_eh)
-  HANDLE_MOV_CASE(mElm, mEhm, e_mv_el_to_eh)
-  HANDLE_MOV_CASE(mEhm, mElm, e_mv_eh_to_el)
-  HANDLE_MOV_CASE(eR, mEhm, e_mv_r_to_eh)
-  HANDLE_MOV_CASE(eR, mElm, e_mv_r_to_el)
-  HANDLE_MOV_CASE(mEhm, eR, e_mv_eh_to_r)
-  HANDLE_MOV_CASE(mElm, eR, e_mv_el_to_r)
-  HANDLE_MOV_CASE(mGlm, mGlm, g_mv_gl_to_gl)
-  HANDLE_MOV_CASE(mGhm, mGhm, g_mv_gh_to_gh)
-  HANDLE_MOV_CASE(mGlm, mGhm, g_mv_gl_to_gh)
-  HANDLE_MOV_CASE(mGhm, mGlm, g_mv_gh_to_gl)
-  HANDLE_MOV_CASE(eR, mGhm, g_mv_r_to_gh)
-  HANDLE_MOV_CASE(eR, mGlm, g_mv_r_to_gl)
-  HANDLE_MOV_CASE(mGhm, eR, g_mv_gh_to_r)
-  HANDLE_MOV_CASE(mGlm, eR, g_mv_gl_to_r)
-#undef HANDLE_MOV_CASE
-    // clang-format on
-  } else if ((AIE2PS::eLRegClass.contains(SrcReg)) &&
-             (AIE2PS::eLRegClass.contains(DstReg))) {
-    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
-  } else if ((AIE2PS::eDRegClass.contains(SrcReg)) &&
-             (AIE2PS::eDRegClass.contains(DstReg))) {
-    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
-  } else if ((AIE2PS::eDSRegClass.contains(SrcReg)) &&
-             (AIE2PS::eDSRegClass.contains(DstReg))) {
-    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
-    // clang-format off
-#define HANDLE_VMOV_CASE(SRC_CLASS, DST_CLASS, OPCODE)                         \
-  } else if ((AIE2PS::SRC_CLASS##RegClass.contains(SrcReg)) &&                 \
-             (AIE2PS::DST_CLASS##RegClass.contains(DstReg))) {                 \
-    BuildMI(MBB, MBBI, DL, get(AIE2PS::VMOV_alu_mv_mv_mv_##OPCODE), DstReg)    \
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  HANDLE_VMOV_CASE(mFm, mFm, f)
-  HANDLE_VMOV_CASE(mWm, mWm, w)
-  HANDLE_VMOV_CASE(mCMm, mCMm, cm)
-  HANDLE_VMOV_CASE(mEEm, mEEm, ee)
-  HANDLE_VMOV_CASE(mEGm, mEGm, eg)
-  HANDLE_VMOV_CASE(mFFm, mFFm, ff)
-  HANDLE_VMOV_CASE(mGGm, mGGm, gg)
-  HANDLE_VMOV_CASE(mEWm, mEWm, egw)
-  HANDLE_VMOV_CASE(mEXm, mEXm, egx)
-  HANDLE_VMOV_CASE(mEG2m, mEG2m, eg2)
-  HANDLE_VMOV_CASE(mFEWm, mFEWm, few)
-  HANDLE_VMOV_CASE(mFEXm, mFEXm, fex)
-  HANDLE_VMOV_CASE(mFm, mLm, f_to_l)
-  HANDLE_VMOV_CASE(mLm, mFm, l_to_f)
-  HANDLE_VMOV_CASE(mWm, mEG2m, w_to_eg2)
-  HANDLE_VMOV_CASE(mEG2m, mWm, eg2_to_w)
-  HANDLE_VMOV_CASE(mMvBMXSrc, mMvBMXDst, x)
-#undef HANDLE_VMOV_CASE
-    // clang-format on
-  } else if ((AIE2PS::eLRegClass.contains(SrcReg)) &&
-             (AIE2PS::EXPVEC64RegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
-  } else if ((AIE2PS::EXPVEC64RegClass.contains(SrcReg)) &&
-             (AIE2PS::eLRegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
-  } else if ((AIE2PS::eLRegClass.contains(SrcReg) &&
-              AIE2PS::mGGaRegClass.contains(DstReg)) ||
-             (AIE2PS::mGGaRegClass.contains(SrcReg) &&
-              AIE2PS::eLRegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
-  } else if ((AIE2PS::mEYwRegClass.contains(SrcReg)) &&
-             (AIE2PS::mEYwRegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
-  } else if ((AIE2PS::mFEYwRegClass.contains(SrcReg)) &&
-             (AIE2PS::mFEYwRegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
-  } else if ((AIE2PS::ACC1024RegClass.contains(SrcReg) ||
-              AIE2PS::VEC1024RegClass.contains(SrcReg) ||
-              AIE2PS::FIFO1024RegClass.contains(SrcReg)) &&
-             (AIE2PS::ACC1024RegClass.contains(DstReg) ||
-              AIE2PS::VEC1024RegClass.contains(DstReg) ||
-              AIE2PS::FIFO1024RegClass.contains(DstReg))) {
-    copyPhysReg(MBB, MBBI, DL, getLoSubReg(TRI, DstReg),
-                getLoSubReg(TRI, SrcReg), KillSrc);
-    copyPhysReg(MBB, MBBI, DL, getHiSubReg(TRI, DstReg),
-                getHiSubReg(TRI, SrcReg), KillSrc);
-  } else if ((AIE2PS::ACC2048RegClass.contains(SrcReg)) &&
-             (AIE2PS::ACC2048RegClass.contains(DstReg))) {
-    BuildMI(MBB, MBBI, DL, get(AIE2PS::VMOV_D_vmov), DstReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  } else if ((AIE2PS::ePSRFLdFRegClass.contains(SrcReg)) &&
-             (AIE2PS::ePSRFLdFRegClass.contains(DstReg))) {
-    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
-  } else {
-    errs() << "copyPhysReg: cannot copy " << TRI.getName(SrcReg) << " -> "
-           << TRI.getName(DstReg) << '\n';
-    llvm_unreachable("unhandled case in copyPhysReg");
   }
 }
 
@@ -1122,17 +948,6 @@ AIE2PSInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
   return std::nullopt;
 }
 
-unsigned AIE2PSInstrInfo::getScalarMovOpcode(Register DstReg,
-                                             Register SrcReg) const {
-  return (AIE2PS::eRRegClass.contains(SrcReg) &&
-          AIE2PS::eRRegClass.contains(DstReg))
-             ? AIE2PS::MOV_OR_pseudo
-         : (AIE2PS::mAguSrcRegClass.contains(SrcReg) &&
-            AIE2PS::mAguDstRegClass.contains(DstReg))
-             ? AIE2PS::MOV_scalar_pseudo
-             : AIE2PS::MOV_alu_mv_mv_mv_scl;
-}
-
 bool AIE2PSInstrInfo::jumpsToUnknown(unsigned Opc) const {
   return Opc == AIE2PS::RET || Opc == AIE2PS::JL_lng ||
          Opc == AIE2PS::JL_alumv_or;
@@ -1534,11 +1349,10 @@ bool AIE2PSInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   MachineBasicBlock &MBB = *MI.getParent();
   switch (MI.getOpcode()) {
   case AIE2PS::PseudoMove: {
-    Register Dst = MI.getOperand(0).getReg();
-    Register Src = MI.getOperand(1).getReg();
-    const unsigned MOVSclOpcode = getScalarMovOpcode(Dst, Src);
-    BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
-        .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
+    const Register Dst = MI.getOperand(0).getReg();
+    const Register Src = MI.getOperand(1).getReg();
+    const bool IsKill = MI.getOperand(1).isKill();
+    copyPhysReg(MBB, MI, DL, Dst, Src, IsKill);
     MI.eraseFromParent();
     return true;
   }

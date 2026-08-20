@@ -41,7 +41,6 @@ public:
   std::optional<unsigned> getConstantMovOpcode(MachineRegisterInfo &MRI,
                                                unsigned int Reg,
                                                APInt &Val) const override;
-  unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
   unsigned getMvSclOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;
   unsigned getAddrIntrinsic3D() const override;
@@ -157,11 +156,10 @@ public:
   void insertNoop(MachineBasicBlock &MBB,
                   MachineBasicBlock::iterator MI) const override;
 
-  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                   const DebugLoc &DL, Register DstReg, Register SrcReg,
-                   bool KillSrc, bool RenamableDest = false,
-                   bool RenamableSrc = false) const override;
+protected:
+  const CopyTableView &getCopyTable() const override;
 
+public:
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,

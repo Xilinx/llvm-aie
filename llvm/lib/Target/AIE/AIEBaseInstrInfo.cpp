@@ -40,6 +40,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <limits>
 
 #define DEBUG_TYPE "aie-codegen"
@@ -817,37 +818,70 @@ void AIEBaseInstrInfo::expandSpillPseudo(
     expandSpillPseudo(*ExpandedMI, TRI, SubRegOffsetAlign, SPReg);
 }
 
-/// Collect all the "atomic" sub-registers that make up \ref Reg.
-/// Atomic means that the registers inserted in \ref SubRegs won't have any
-/// sub-registers according to \ref TRI.
-/// Note that based on how sub-registers are defined, there might be aliasing
-/// registers in \ref SubRegs.
-static void collectSubRegs(MCRegister Reg, SmallSet<MCRegister, 8> &SubRegs,
-                           const TargetRegisterInfo &TRI) {
-  if (TRI.subregs(Reg).empty()) {
-    SubRegs.insert(Reg);
-  } else {
-    for (MCRegister SubReg : TRI.subregs(Reg))
-      collectSubRegs(SubReg, SubRegs, TRI);
+static bool matchesCopyRecipe(const CopyRecipe &Recipe, MCRegister DstReg,
+                              MCRegister SrcReg) {
+  return Recipe.DstRC->contains(DstReg) && Recipe.SrcRC->contains(SrcReg);
+}
+
+static const CopyRecipe *findCopyRecipe(const CopyTableView &CopyTable,
+                                        MCRegister DstReg, MCRegister SrcReg) {
+  for (const CopyRecipe &Recipe : CopyTable.Recipes)
+    if (matchesCopyRecipe(Recipe, DstReg, SrcReg))
+      return &Recipe;
+  return nullptr;
+}
+
+const CopyTableView &AIEBaseInstrInfo::getCopyTable() const {
+  static constexpr CopyTableView Empty{};
+  return Empty;
+}
+
+void AIEBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI,
+                                   const DebugLoc &DL, Register DstReg,
+                                   Register SrcReg, bool KillSrc,
+                                   bool /* RenamableDest */,
+                                   bool /* RenamableSrc */) const {
+  const TargetRegisterInfo &TRI =
+      *MBB.getParent()->getRegInfo().getTargetRegisterInfo();
+  if (!materializeCopyFromTable(MBB, MBBI, DL, DstReg, SrcReg, KillSrc)) {
+    errs() << "copyPhysReg: cannot copy " << TRI.getName(SrcReg) << " -> "
+           << TRI.getName(DstReg) << '\n';
+    llvm_unreachable("unhandled case in copyPhysReg");
   }
 }
 
-void AIEBaseInstrInfo::copyThroughSubRegs(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator MBBI,
-                                          const DebugLoc &DL, MCRegister DstReg,
-                                          MCRegister SrcReg,
-                                          bool KillSrc) const {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+bool AIEBaseInstrInfo::materializeCopyFromTable(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+    const DebugLoc &DL, MCRegister DstReg, MCRegister SrcReg,
+    bool KillSrc) const {
+  const CopyTableView &CopyTable = getCopyTable();
+  const CopyRecipe *MatchedRecipe = findCopyRecipe(CopyTable, DstReg, SrcReg);
+  if (!MatchedRecipe)
+    return false;
 
-  SmallSet<MCRegister, 8> SrcSubRegs;
-  collectSubRegs(SrcReg, SrcSubRegs, TRI);
-
-  for (MCRegister SrcSubReg : SrcSubRegs) {
-    unsigned SubRegIdx = TRI.getSubRegIndex(SrcReg, SrcSubReg);
-    MCRegister DstSubReg = TRI.getSubReg(DstReg, SubRegIdx);
-    copyPhysReg(MBB, MBBI, DL, DstSubReg, SrcSubReg, KillSrc);
+  assert(MatchedRecipe->FirstCopy + MatchedRecipe->NumCopies <=
+             CopyTable.Tuples.size() &&
+         "copy recipe exceeds tuple table");
+  const TargetRegisterInfo &TRI =
+      *MBB.getParent()->getRegInfo().getTargetRegisterInfo();
+  const CopyTuple *Tuples = CopyTable.Tuples.data() + MatchedRecipe->FirstCopy;
+  for (const CopyTuple &Tuple : ArrayRef(Tuples, MatchedRecipe->NumCopies)) {
+    Register CopyDst =
+        Tuple.DstSubRegIdx ? TRI.getSubReg(DstReg, Tuple.DstSubRegIdx) : DstReg;
+    Register CopySrc =
+        Tuple.SrcSubRegIdx ? TRI.getSubReg(SrcReg, Tuple.SrcSubRegIdx) : SrcReg;
+    assert(CopyDst && CopySrc && "copy tuple names an invalid subregister");
+    BuildMI(MBB, MBBI, DL, get(Tuple.MoveOpcode), CopyDst)
+        .addReg(CopySrc, getKillRegState(KillSrc));
   }
+  return true;
+}
+
+std::optional<unsigned> AIEBaseInstrInfo::getCopyCost(MCRegister DstReg,
+                                                      MCRegister SrcReg) const {
+  const CopyRecipe *Recipe = findCopyRecipe(getCopyTable(), DstReg, SrcReg);
+  return Recipe ? std::optional(Recipe->NumCopies) : std::nullopt;
 }
 
 static bool isPreRA(const MachineFunction &MF) {
