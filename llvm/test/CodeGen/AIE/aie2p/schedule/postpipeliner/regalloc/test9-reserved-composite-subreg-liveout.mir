@@ -1,0 +1,100 @@
+# NOTE: Test for AIERegDefUseTracker - reserved composite ranges with subreg live-out
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 9: Verify reserved range handling for composite registers with subreg live-out
+# 
+# This test exercises reserved ranges with composite base registers:
+# 1. A composite def (dm4) with multiple subreg uses (cml4, cmh4) that feeds
+#    into a subreg live-out (cml4) should create a RESERVED range
+# 2. An additional disjoint live range on the same composite register should
+#    NOT make that register available for reallocation
+#
+# Program order (backward analysis processes in reverse):
+# - dm4: def → use cml4, use cmh4 (disjoint, early) - analyzed LAST → normal
+# - dm4: def → use cml4, use cmh4 (late, cml4 feeds live-out) - analyzed FIRST → RESERVED
+#
+# Expected behavior:
+# - dm4's late range (feeding subreg live-out) should be marked RESERVED
+# - dm4's early disjoint range should be normal (not reserved)
+# - dm4 (and its subregs) should NOT appear in available physical registers
+
+# CHECK-DAG: Live Range #{{[0-9]+}} for dm4 [RESERVED]:
+# CHECK-DAG: Live Range #{{[0-9]+}} for dm4:
+
+# Verify dm4 and its subregs are NOT in available registers (due to reserved range)
+# CHECK: Available Physical Registers for Reallocation:
+# CHECK-NEXT: ==============================================
+# CHECK-NOT: dm4
+# CHECK-NOT: cml4
+# CHECK-NOT: cmh4
+# CHECK: Total: 0 registers
+
+--- |
+  define void @test_reserved_composite_subreg_liveout() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_reserved_composite_subreg_liveout
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $p1, $y5, $y0, $r2, $r3
+    
+    $lc = ADD_NC_mv_add_ri $r3, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p1, $y5, $y0, $r2
+    
+    ; EARLY in program order (analyzed LAST in backward pass):
+    ; dm4 composite def → subreg uses (cml4, cmh4), disjoint from later range
+    ; This is a normal range
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y5, $y0, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0, 0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cmh4, $p1, 64, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    
+    ; LATE in program order (analyzed FIRST in backward pass):
+    ; dm4 composite def → subreg uses (cml4, cmh4) where cml4 feeds live-out
+    ; This should be marked as RESERVED because cml4 is live-out to bb.2
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y5, $y0, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0, 128, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cmh4, $p1, 192, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    liveins: $cml4, $p0
+    
+    ; Use cml4 (subreg of dm4) from the loop - this makes cml4 live-out from bb.1
+    ; Backward analysis starts here, sees cml4 is live-in to bb.2
+    ; Then traces back and finds the LATE dm4 def with cml4 use (closest to block end)
+    ; feeds into this, so that range becomes RESERVED
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0, 256, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

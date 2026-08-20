@@ -1,0 +1,108 @@
+# NOTE: Test for AIERegDefUseTracker - reserved ranges for live-out defs
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 8: Verify reserved range handling for defs feeding live-out
+# 
+# This test exercises the recent work on relaxing live-in/live-out restrictions:
+# 1. A def that feeds into a live-out use should create a RESERVED range
+# 2. An additional disjoint live range on the same register should NOT make
+#    that register available for reallocation
+#
+# Program order (backward analysis processes in reverse):
+# - r0: def -> use (disjoint, early) - analyzed LAST -> normal
+# - r1: def -> use (not live-out) - normal
+# - r0: def -> use (late, feeds live-out) - analyzed FIRST -> RESERVED
+#
+# Expected behavior:
+# - r0's late range (feeding live-out) should be marked RESERVED
+# - r0's early disjoint range should be normal (not reserved)
+# - r0 should NOT appear in available physical registers (due to reserved range)
+# - r1 should appear in available physical registers
+
+# CHECK-DAG: Live Range #{{[0-9]+}} for r0 [RESERVED]:
+# CHECK-DAG: Live Range #{{[0-9]+}} for r0:
+# CHECK-DAG: Live Range #{{[0-9]+}} for r1:
+
+# Verify r0 is NOT in available registers (due to reserved range)
+# CHECK: Available Physical Registers for Reallocation:
+# CHECK-NEXT: ==============================================
+# CHECK-DAG:   l2
+# CHECK-DAG:   r1
+# CHECK-DAG:   r4
+# CHECK-DAG:   r5
+# CHECK-DAG:   r6
+# CHECK: Total: 5 registers
+
+--- |
+  define void @test_reserved_liveout() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_reserved_liveout
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $p6, $r2, $r3
+    
+    $lc = ADD_NC_mv_add_ri $r3, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p6, $r2, $r3
+    
+    ; EARLY in program order (analyzed LAST in backward pass):
+    ; r0 def -> use chain, disjoint from the later r0 range
+    ; This is a normal range
+    $r0 = MOV_alu_mv_mv_mv_scl $p6
+    $r5 = ADD_NC_mv_add_rr $r0, $r3
+    
+    ; r1 live range: def -> use (not live-out)
+    ; This should be a normal, non-reserved range
+    $r1 = MOV_alu_mv_mv_mv_scl $p6
+    $r6 = ADD_NC_mv_add_rr $r1, $r2
+    
+    ; LATE in program order (analyzed FIRST in backward pass):
+    ; r0 def -> use that feeds live-out to bb.2
+    ; This should be marked as RESERVED because r0 is live-out to bb.2
+    ; and this is the last def-use of r0 before the block end
+    $r0 = MOV_alu_mv_mv_mv_scl $p6
+    $r4 = ADD_NC_mv_add_rr $r0, $r2
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    liveins: $r0, $r2
+    
+    ; Use r0 from the loop - this makes r0 live-out from bb.1
+    ; Backward analysis starts here, sees r0 is live-in to bb.2
+    ; Then traces back and finds the LATE r0 def-use (closest to block end)
+    ; feeds into this, so that range becomes RESERVED
+    $r7 = ADD_NC_mv_add_rr $r0, $r2
+    
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

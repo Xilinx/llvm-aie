@@ -1,0 +1,60 @@
+# NOTE: Test for AIERegDefUseTracker - def-only live range (garbage bin register)
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false --aie-postpipeliner-filter-no-choice=false -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test: Def-only live range should be kept (garbage bin register)
+# r0 has def only - valid live range (garbage bin)
+# CHECK: FINAL LIVE RANGES
+# CHECK: Total live ranges: 1
+# CHECK: Live Range #0 for r0:
+# CHECK:   Definitions (1):
+# CHECK:     Register: r0
+# CHECK:   Uses (0):
+
+--- |
+  define void @test_def_only_garbage_bin() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_def_only_garbage_bin
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r4
+    
+    $lc = ADD_NC_mv_add_ri $r4, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    
+    ; r0: def-only (garbage bin register) - from immediate
+    dead $r0 = MOVA 100
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

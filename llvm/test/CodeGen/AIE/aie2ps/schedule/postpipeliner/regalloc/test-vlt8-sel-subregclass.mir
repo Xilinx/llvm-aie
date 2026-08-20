@@ -1,0 +1,86 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test: VLT_8 + SEL_EQZ sub-register constraint correctness
+#
+# Pattern:
+#   l13 = VLT_8_vaddSign0 x0, x1    ; defines l13 (= r26:r27 GPR pair, eL class)
+#   r2 = SEL_EQZ r0, r0, r27        ; condition constrained to mR27_select = {r27}
+#
+# r27 is the sub_l_odd sub-register of l13 (r27:r26).
+# The live range spans l13 (from VLT_8 def) and r27 (from SEL_EQZ condition use).
+#
+# In computeRegisterClass for this LR (base = r27:r26):
+#   - SEL_EQZ r27 at SubRegIdx=sub_l_odd, constraint = mR27_select = {r27}
+#       Old (wrong): getSubClassWithSubReg(mR27_select, sub_l_odd) -> null -> dropped
+#       New (fixed): getMatchingSuperRegClass(BaseRC, mR27_select, sub_l_odd)
+#                    -> eL_with_sub_l_even_in_mR26_fifo_st (singleton {l13})
+#   - VLT_8 output at SubRegIdx=0, constraint = eL
+#       Intersect(eL_with_sub_l_even_in_mR26_fifo_st, eL) = eL_with_sub_l_even_in_mR26_fifo_st
+#   => Final RC = eL_with_sub_l_even_in_mR26_fifo_st = {l13}  (singleton, correctly constrained)
+#
+# The fix correctly narrows the RC from eL (16 pairs, wrong) to {l13} (singleton,
+# correct), ensuring the allocator can only pick l13 and SEL_EQZ always gets r27.
+# Without the fix, the mR27_select constraint was silently dropped, leaving RC = eL
+# and allowing any pair to be chosen (e.g. l10 = r20:r21 → wrong condition register).
+#
+# CHECK: computeRegisterClass for LR{{.*}}base=l13
+# CHECK: getMatchingSuperRegClass{{.*}}mR27_select{{.*}}-> eL_with_sub_l_even_in_mR26_fifo_st
+# CHECK: Final RC = eL_with_sub_l_even_in_mR26_fifo_st
+
+--- |
+  define void @test_vlt_sel_subregclass() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_vlt_sel_subregclass
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r1, $x0, $x1, $r0, $vaddsign0, $crbf8conf, $crfp8conf
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $x0, $x1, $r0, $vaddsign0, $crbf8conf, $crfp8conf
+
+    ; VLT_8 produces a 64-bit boolean comparison result in l13 (= r26:r27).
+    ; r27 = sub_l_odd of l13, r26 = sub_l_even of l13.
+    $l13 = VLT_8_vaddSign0 $x0, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; SEL_EQZ takes its condition from mR27_select = {r27} specifically.
+    ; This creates a sub-register constraint: r27 (sub_l_odd of l13) must be
+    ; in mR27_select.
+    $r2 = SEL_EQZ $r0, $r0, $r27
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

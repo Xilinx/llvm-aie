@@ -1,0 +1,94 @@
+# NOTE: Test for AIERegDefUseTracker - aliasing with managed composite register
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 2d: Similar to test2c but without cmh4 as live-in
+#
+# Pattern:
+#   cml4 = VLDA...      ; first def of cml4
+#   ex2 = VCONV dm4     ; uses dm4 (cml4 + undefined cmh4)
+#   cml4 = VLDA...      ; second def of cml4 (standalone)
+#   VST cml4            ; uses cml4
+#
+# Since cmh4 is NOT live-in, it's considered undefined/garbage.
+# With lane-mask based tracking:
+# - The first cml4 def → dm4 use is a separate live range (base: dm4)
+# - The second cml4 def → VST use is a separate live range (base: cml4)
+# - ex2 is a separate live range
+#
+# CHECK: FINAL LIVE RANGES
+# CHECK: Total live ranges: 3
+#
+# CHECK: Live Range #0 for cml4:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: cml4 $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 32
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: cml4 VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #4 for dm4:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: cml4 (SubRegIdx: 10) $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 0
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: dm4 $ex2 = VCONV_bfp16ebs8_fp32 $dm4
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #3 for ex2:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: ex2 $ex2 = VCONV_bfp16ebs8_fp32 $dm4
+# CHECK-NEXT:   Uses (0):
+# CHECK-EMPTY:
+
+--- |
+  define void @test_aliasing_with_managed_composite() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_aliasing_with_managed_composite
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $p7, $r0
+    
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p7
+    
+    ; Define only low half of dm4 (cmh4 is NOT live-in, so undefined/garbage)
+    $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 0 :: (load (<32 x s16>))
+    
+    ; Use composite register dm4 (cmh4 is undefined, but still consumed)
+    $ex2 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    
+    ; Second def/use of cml4 - this is a separate live range with lane-mask tracking
+    $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 32 :: (load (<32 x s16>))
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0, 0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
