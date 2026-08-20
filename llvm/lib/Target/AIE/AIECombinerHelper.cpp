@@ -4324,6 +4324,16 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
 
   const bool IsShrinking = NumSrcElems > NumDstElems;
 
+  // Shrinking shuffles are implemented below with a G_AIE_UNPAD_VECTOR of
+  // Src1Reg. That is only valid when the source vector is a legal type to
+  // unpad.
+  if (IsShrinking) {
+    const AIEBaseInstrInfo &TII = *static_cast<const AIEBaseInstrInfo *>(
+        MI.getMF()->getSubtarget().getInstrInfo());
+    if (!TII.isLegalTypeToUnpad(Src1Ty))
+      return false;
+  }
+
   const LLT ElemTy = Src1Ty.getElementType();
 
   unsigned MaxNumInsertions;
