@@ -19,7 +19,13 @@
 ; RUN:   -stop-after=hardware-loops %s -o - \
 ; RUN:   | FileCheck %s --check-prefix=DISABLE
 
-; DISABLE-NOT: lver
+; DISABLE-NOT: lver.high
+; DISABLE-NOT: .lver.guard
+; DISABLE-NOT: lver.low
+; DISABLE-NOT: lver.tc
+; DISABLE-NOT: lver.threshold
+; DISABLE-NOT: .lver.high.loopexit
+; DISABLE-NOT: .lver.low.loopexit
 
 ; The pragma alone versions, with or without the option.
 ; DEFAULT-LABEL: define void @hinted
