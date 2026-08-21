@@ -53,6 +53,7 @@ extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableWAWRegRewrite;
+extern cl::opt<bool> EnableEpilogueRegRewrite;
 extern cl::opt<bool> EnableAIEIfConversion;
 
 extern bool AIEDumpArtifacts;
@@ -196,10 +197,12 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
-  if (EnableWAWRegRewrite) {
+  if (EnableWAWRegRewrite)
     addPass(createAIEWawRegRewriter());
+  if (EnableEpilogueRegRewrite)
+    addPass(createAIEEpilogueRegRewriter());
+  if (EnableWAWRegRewrite || EnableEpilogueRegRewrite)
     addPass(createGreedyRegisterAllocator());
-  }
   addPass(createVirtRegRewriter());
 
   return true;

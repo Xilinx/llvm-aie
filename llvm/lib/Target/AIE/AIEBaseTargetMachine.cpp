@@ -132,6 +132,11 @@ cl::opt<bool>
                         cl::desc("Enable the WAW Register Renaming in loops"),
                         cl::init(true), cl::Hidden);
 
+cl::opt<bool> EnableEpilogueRegRewrite(
+    "aie-enable-epilogue-reg-rewrite",
+    cl::desc("Enable epilogue register renaming after allocation"),
+    cl::init(true), cl::Hidden);
+
 cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
@@ -186,6 +191,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIESuperRegRewriterPass(*PR);
   initializeAIEUnallocatedSuperRegRewriterPass(*PR);
   initializeAIEWawRegRewriterPass(*PR);
+  initializeAIEEpilogueRegRewriterPass(*PR);
   initializeAIEOutlineMemoryGEPPass(*PR);
   initializeAIEFinalizeBundlePass(*PR);
   initializeAIEMachineAlignmentPass(*PR);

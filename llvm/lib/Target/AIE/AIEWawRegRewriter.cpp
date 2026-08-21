@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass rewrites physical register assignments in critical parts of the
-// code (like loops) to break WAW and WAR dependencies.
+// This pass rewrites loop assignments to break WAW dependencies; epilogue WAR
+// repairs are performed by AIEEpilogueRegRewriter.
 //
 //===----------------------------------------------------------------------===//
 
@@ -138,10 +138,8 @@ std::optional<int> getMinIIBias(RewriteMode Mode, int LoopClass) {
 }
 
 ///
-/// This pass rewrites physical register assignments in critical parts of the
-/// code (like loops) to break WAW and WAR dependencies.
-/// The pass will update the \p VirtRegMap so that the new vregs have fixed
-/// assignments, guaranteeing that the reg renaming does not cause conflicts.
+/// Rewrites physical register assignments in critical loop regions to break
+/// WAW dependencies; epilogue WAR repairs belong to the separate epilogue pass.
 class AIEWawRegRewriter : public MachineFunctionPass {
 
 public:

@@ -241,6 +241,7 @@
 ; AIE-O123-NEXT:      AIE super-reg rewrite
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      AIE waw-reg rewrite
+; AIE-O123-NEXT:      AIE epilogue register rewrite
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      Virtual Register Rewriter
 ; AIE-O123-NEXT:      Stack Slot Coloring

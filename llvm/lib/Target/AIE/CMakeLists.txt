@@ -134,6 +134,7 @@ add_llvm_target(AIECodeGen
    AIEDataDependenceHelper.cpp
    AIEDumpArtifacts.cpp
    AIEEliminateDuplicatePHI.cpp
+   AIEEpilogueRegRewriter.cpp
    AIEFinalizeBundle.cpp
    AIEGlobalCombiner.cpp
    AIEGlobalCombinerPtrMods.cpp
