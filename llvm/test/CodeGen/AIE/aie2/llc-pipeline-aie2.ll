@@ -209,6 +209,7 @@
 
 ; AIE-O0123-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O0123-NEXT:      AIE sub-reg constrainer
+; AIE-O0123-NEXT:      AIE sibling loop pre-RA register alignment
 ; AIE-O0123-NEXT:      Two-Address instruction pass
 
 ; AIE-O0-NEXT:      Fast Register Allocator
