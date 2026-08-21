@@ -6,9 +6,9 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-; RUN: llc -mtriple=aie2ps %s -o - | FileCheck %s --check-prefix=ASM
+; RUN: llc -verify-machineinstrs -mtriple=aie2ps %s -o - | FileCheck %s --check-prefix=ASM
 
-; RUN: llc -mtriple=aie2ps -pass-remarks-output=- \
+; RUN: llc -verify-machineinstrs -mtriple=aie2ps -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter='pipeliner' %s -o /dev/null | FileCheck %s --check-prefix=REMARKS
 ; Function Attrs: mustprogress
 define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %arg1, ptr noalias %arg2, ptr noalias %arg3, ptr noalias %arg4, ptr nonnull align 32 dereferenceable(200) %arg5) local_unnamed_addr #0 {
