@@ -341,4 +341,121 @@ std::optional<unsigned> getSWPStageCount(const MachineBasicBlock &LoopBB,
   return Result;
 }
 
+bool isOuterLoopSpeculative(const MachineBasicBlock &LoopLatch) {
+  return getLoopMetadata(getLoopID(LoopLatch), OuterLoopSpeculativeKey)
+      .has_value();
+}
+
+std::optional<OuterLoopStructure>
+OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
+  // Verify this is an OLP latch
+  if (!isOuterLoopPipelined(OuterLatch))
+    return std::nullopt;
+
+  // Helper to find the first predecessor/successor that isn't the excluded one.
+  auto FindOther = [](auto &&Range,
+                      MachineBasicBlock *Exclude) -> MachineBasicBlock * {
+    for (MachineBasicBlock *MBB : Range) {
+      if (MBB != Exclude)
+        return MBB;
+    }
+    return nullptr;
+  };
+
+  OuterLoopStructure OLS;
+  OLS.SteadyBottom = &OuterLatch;
+  OLS.Speculative = isOuterLoopSpeculative(OuterLatch);
+
+  // SteadyInner is the single predecessor of the latch - always a single-block
+  // loop in valid OLP output.
+  OLS.SteadyInner = *OuterLatch.pred_begin();
+  assert(isSingleMBBLoop(OLS.SteadyInner) &&
+         "OLP latch predecessor must be a single-block inner loop");
+
+  // Find SteadyTop: predecessor of SteadyInner (not the loop back-edge)
+  OLS.SteadyTop = FindOther(OLS.SteadyInner->predecessors(), OLS.SteadyInner);
+  if (!OLS.SteadyTop)
+    return std::nullopt;
+  assert(OLS.SteadyTop->isPredecessor(&OuterLatch) &&
+         "SteadyTop must have OuterLatch as back-edge predecessor");
+
+  // Find OuterPreheader: predecessor of SteadyTop that is not SteadyBottom
+  // (the back-edge). This is the entry block to the outer loop.
+  OLS.OuterPreheader =
+      FindOther(OLS.SteadyTop->predecessors(), OLS.SteadyBottom);
+  // OuterPreheader is optional - don't fail if not found
+
+  // For speculative loops, we're done - no peeled iteration region exists
+  if (OLS.Speculative) {
+    LLVM_DEBUG(dbgs() << "Built speculative OLP structure: SteadyInner="
+                      << OLS.SteadyInner->getName() << "\n");
+    return OLS;
+  }
+
+  // Find PeeledIterTop: non-looping successor of the outer latch
+  OLS.PeeledIterTop = FindOther(OuterLatch.successors(), OLS.SteadyTop);
+  if (!OLS.PeeledIterTop)
+    return std::nullopt;
+
+  // Find PeeledIterInner: successor of PeeledIterTop that is a single-block
+  // loop
+  for (MachineBasicBlock *Succ : OLS.PeeledIterTop->successors()) {
+    if (isSingleMBBLoop(Succ)) {
+      OLS.PeeledIterInner = Succ;
+      break;
+    }
+  }
+  if (!OLS.PeeledIterInner)
+    return std::nullopt;
+
+  // Find PeeledIterBottom: exit successor of PeeledIterInner
+  OLS.PeeledIterBottom =
+      FindOther(OLS.PeeledIterInner->successors(), OLS.PeeledIterInner);
+  if (!OLS.PeeledIterBottom)
+    return std::nullopt;
+
+  LLVM_DEBUG(dbgs() << "Built OLP structure: SteadyInner="
+                    << OLS.SteadyInner->getName() << " PeeledIterInner="
+                    << OLS.PeeledIterInner->getName() << "\n");
+  return OLS;
+}
+
+bool OuterLoopStructure::hasMatchingInnerLoops() const {
+  if (!SteadyInner || !PeeledIterInner)
+    return false;
+
+  // Check same number of instructions
+  if (SteadyInner->size() != PeeledIterInner->size()) {
+    LLVM_DEBUG(dbgs() << "Inner loop size mismatch: steady="
+                      << SteadyInner->size()
+                      << " peeled=" << PeeledIterInner->size() << "\n");
+    return false;
+  }
+
+  // Check matching opcodes in order
+  auto SI = SteadyInner->begin();
+  auto PI = PeeledIterInner->begin();
+  unsigned InstIdx = 0;
+
+  for (; SI != SteadyInner->end(); ++SI, ++PI, ++InstIdx) {
+    if (SI->getOpcode() != PI->getOpcode()) {
+      LLVM_DEBUG(dbgs() << "Opcode mismatch at instruction " << InstIdx
+                        << ": steady=" << SI->getOpcode()
+                        << " peeled=" << PI->getOpcode() << "\n");
+      return false;
+    }
+
+    // Also verify same number of operands for consistency
+    if (SI->getNumOperands() != PI->getNumOperands()) {
+      LLVM_DEBUG(dbgs() << "Operand count mismatch at instruction " << InstIdx
+                        << "\n");
+      return false;
+    }
+  }
+
+  LLVM_DEBUG(dbgs() << "Inner loops match: " << SteadyInner->size()
+                    << " instructions\n");
+  return true;
+}
+
 } // namespace llvm::AIELoopUtils
