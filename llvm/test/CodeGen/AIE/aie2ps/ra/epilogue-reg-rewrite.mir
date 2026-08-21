@@ -11,26 +11,22 @@
 # RUN:   FileCheck %s --check-prefix=DEFAULT
 # RUN: llc -mtriple=aie2ps --aie-olp-war-rename \
 # RUN:   --aie-enable-epilogue-reg-rewrite \
-# RUN:   --aie-epilogue-reg-rewrite-copy-budget=3 --start-before=greedy \
+# RUN:   --aie-epilog-copy-budget=3 --start-before=greedy \
 # RUN:   --stop-after=aie-epilogue-reg-rewriter %s -o - | \
 # RUN:   FileCheck %s --check-prefix=BUDGET3
 # RUN: llc -mtriple=aie2ps --aie-olp-war-rename \
 # RUN:   --aie-enable-epilogue-reg-rewrite \
-# RUN:   --aie-epilogue-reg-rewrite-copy-budget=8 --start-before=greedy \
+# RUN:   --aie-epilog-copy-budget=8 --start-before=greedy \
 # RUN:   --stop-after=aie-epilogue-reg-rewriter %s -o - | \
 # RUN:   FileCheck %s --check-prefix=BUDGET8
 # RUN: llc -mtriple=aie2ps --aie-olp-war-rename \
 # RUN:   --aie-enable-epilogue-reg-rewrite \
-# RUN:   --aie-epilogue-reg-rewrite-copy-budget=8 --start-before=greedy \
+# RUN:   --aie-epilog-copy-budget=8 --start-before=greedy \
 # RUN:   --stop-after=virtregrewriter %s -o - | \
 # RUN:   FileCheck %s --check-prefix=PHYS
 
-# A register read then rewritten in a block carrying the aie-olp-war-rename hint
-# is a WAR candidate: its defs are renamed and a repair copy restores the old
-# name at the block end. The copy budget bounds how many candidates are taken;
-# acc2048 costs four sub-register copies, so the default budget of four renames
-# one candidate, budget three renames none, and budget eight renames two. Both
-# VLDA- and COPY-defined accumulators are handled.
+# Checks VLDA- and COPY-defined WAR candidates under three copy budgets.
+# A 2048-bit accumulator requires four sub-register copies.
 ---
 name:            rename_war_vlda_and_copy
 alignment:       16
@@ -68,18 +64,21 @@ body:             |
   ; DEFAULT-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF9]], [[DEF]], [[DEF1]], [[DEF2]]
   ; DEFAULT-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X1:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF10]], [[DEF]], [[DEF1]], [[DEF2]]
   ; DEFAULT-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X2:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF11]], [[DEF]], [[DEF1]], [[DEF2]]
-  ; DEFAULT-NEXT:   undef [[DEF9:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   [[DEF9:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   [[DEF9:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   [[DEF9:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   undef [[DEF10:%[0-9]+]].sub_512_acc_lo:acc2048 = COPY [[DEF5]]
-  ; DEFAULT-NEXT:   [[DEF10:%[0-9]+]].sub_512_acc_hi:acc2048 = COPY [[DEF6]]
-  ; DEFAULT-NEXT:   [[DEF10:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048 = COPY [[DEF7]]
-  ; DEFAULT-NEXT:   [[DEF10:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048 = COPY [[DEF8]]
-  ; DEFAULT-NEXT:   undef [[DEF11:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   [[DEF11:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   [[DEF11:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; DEFAULT-NEXT:   [[DEF11:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, dead [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   undef [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   undef [[COPY:%[0-9]+]].sub_512_acc_lo:acc2048 = COPY [[DEF5]]
+  ; DEFAULT-NEXT:   [[COPY:%[0-9]+]].sub_512_acc_hi:acc2048 = COPY [[DEF6]]
+  ; DEFAULT-NEXT:   [[COPY:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048 = COPY [[DEF7]]
+  ; DEFAULT-NEXT:   [[COPY:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048 = COPY [[DEF8]]
+  ; DEFAULT-NEXT:   undef [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, dead [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; DEFAULT-NEXT:   [[DEF9:%[0-9]+]]:acc2048 = COPY [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm]]
+  ; DEFAULT-NEXT:   [[DEF10:%[0-9]+]]:acc2048 = COPY [[COPY]]
+  ; DEFAULT-NEXT:   [[DEF11:%[0-9]+]]:acc2048 = COPY [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1]]
   ; DEFAULT-NEXT:   PseudoJ_jump_imm %bb.3
   ; DEFAULT-NEXT: {{  $}}
   ; DEFAULT-NEXT: bb.3:
@@ -118,18 +117,21 @@ body:             |
   ; BUDGET3-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF9]], [[DEF]], [[DEF1]], [[DEF2]]
   ; BUDGET3-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X1:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF10]], [[DEF]], [[DEF1]], [[DEF2]]
   ; BUDGET3-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X2:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF11]], [[DEF]], [[DEF1]], [[DEF2]]
-  ; BUDGET3-NEXT:   undef [[DEF9:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   [[DEF9:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   [[DEF9:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   [[DEF9:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   undef [[DEF10:%[0-9]+]].sub_512_acc_lo:acc2048 = COPY [[DEF5]]
-  ; BUDGET3-NEXT:   [[DEF10:%[0-9]+]].sub_512_acc_hi:acc2048 = COPY [[DEF6]]
-  ; BUDGET3-NEXT:   [[DEF10:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048 = COPY [[DEF7]]
-  ; BUDGET3-NEXT:   [[DEF10:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048 = COPY [[DEF8]]
-  ; BUDGET3-NEXT:   undef [[DEF11:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   [[DEF11:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   [[DEF11:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET3-NEXT:   [[DEF11:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, dead [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   undef [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   undef [[COPY:%[0-9]+]].sub_512_acc_lo:acc2048 = COPY [[DEF5]]
+  ; BUDGET3-NEXT:   [[COPY:%[0-9]+]].sub_512_acc_hi:acc2048 = COPY [[DEF6]]
+  ; BUDGET3-NEXT:   [[COPY:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048 = COPY [[DEF7]]
+  ; BUDGET3-NEXT:   [[COPY:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048 = COPY [[DEF8]]
+  ; BUDGET3-NEXT:   undef [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, dead [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET3-NEXT:   [[DEF9:%[0-9]+]]:acc2048 = COPY [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm]]
+  ; BUDGET3-NEXT:   [[DEF10:%[0-9]+]]:acc2048 = COPY [[COPY]]
+  ; BUDGET3-NEXT:   [[DEF11:%[0-9]+]]:acc2048 = COPY [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1]]
   ; BUDGET3-NEXT:   PseudoJ_jump_imm %bb.3
   ; BUDGET3-NEXT: {{  $}}
   ; BUDGET3-NEXT: bb.3:
@@ -168,18 +170,21 @@ body:             |
   ; BUDGET8-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF9]], [[DEF]], [[DEF1]], [[DEF2]]
   ; BUDGET8-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X1:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF10]], [[DEF]], [[DEF1]], [[DEF2]]
   ; BUDGET8-NEXT:   dead [[VMAC_vmac_vmul_cm_core_X_X2:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[DEF11]], [[DEF]], [[DEF1]], [[DEF2]]
-  ; BUDGET8-NEXT:   undef [[DEF9:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   [[DEF9:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   [[DEF9:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   [[DEF9:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   undef [[DEF10:%[0-9]+]].sub_512_acc_lo:acc2048 = COPY [[DEF5]]
-  ; BUDGET8-NEXT:   [[DEF10:%[0-9]+]].sub_512_acc_hi:acc2048 = COPY [[DEF6]]
-  ; BUDGET8-NEXT:   [[DEF10:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048 = COPY [[DEF7]]
-  ; BUDGET8-NEXT:   [[DEF10:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048 = COPY [[DEF8]]
-  ; BUDGET8-NEXT:   undef [[DEF11:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   [[DEF11:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   [[DEF11:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
-  ; BUDGET8-NEXT:   [[DEF11:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, dead [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   undef [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   undef [[COPY:%[0-9]+]].sub_512_acc_lo:acc2048 = COPY [[DEF5]]
+  ; BUDGET8-NEXT:   [[COPY:%[0-9]+]].sub_512_acc_hi:acc2048 = COPY [[DEF6]]
+  ; BUDGET8-NEXT:   [[COPY:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048 = COPY [[DEF7]]
+  ; BUDGET8-NEXT:   [[COPY:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048 = COPY [[DEF8]]
+  ; BUDGET8-NEXT:   undef [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_512_acc_hi:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_lo:acc2048, [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1:%[0-9]+]].sub_1024_acc_hi_then_sub_512_acc_hi:acc2048, dead [[DEF3:%[0-9]+]]:ep_as_32bit = VLDA_dmx_lda_bm_ld_pstm_nrm_imm [[DEF3]], 64
+  ; BUDGET8-NEXT:   [[DEF9:%[0-9]+]]:acc2048 = COPY [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm]]
+  ; BUDGET8-NEXT:   [[DEF10:%[0-9]+]]:acc2048 = COPY [[COPY]]
+  ; BUDGET8-NEXT:   [[DEF11:%[0-9]+]]:acc2048 = COPY [[VLDA_dmx_lda_bm_ld_pstm_nrm_imm1]]
   ; BUDGET8-NEXT:   PseudoJ_jump_imm %bb.3
   ; BUDGET8-NEXT: {{  $}}
   ; BUDGET8-NEXT: bb.3:
@@ -215,27 +220,29 @@ body:             |
   ; PHYS-NEXT: {{  $}}
   ; PHYS-NEXT: bb.2:
   ; PHYS-NEXT:   successors: %bb.3(0x80000000)
-  ; PHYS-NEXT:   liveins: $bmll1, $bmll2, $bmll3, $bmll4, $dm0:0x000000030000000C, $dm5:0x000000030000000C, $dm6:0x000000030000000C, $p0, $r8, $x0, $x2
+  ; PHYS-NEXT:   liveins: $bmll1, $bmll2, $bmll3, $bmll4, $dm0, $dm5, $dm6, $p0, $r8, $x0, $x2
   ; PHYS-NEXT: {{  $}}
   ; PHYS-NEXT:   dead renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, renamable $x0, renamable $x2, renamable $r8
   ; PHYS-NEXT:   dead renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm5, renamable $x0, renamable $x2, renamable $r8
   ; PHYS-NEXT:   dead renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm6, renamable $x0, renamable $x2, renamable $r8
-  ; PHYS-NEXT:   renamable $bmll0, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmlh0, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmhl0, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmhh0, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmll5 = COPY killed renamable $bmll1
-  ; PHYS-NEXT:   renamable $bmlh5 = COPY killed renamable $bmll2
-  ; PHYS-NEXT:   renamable $bmhl5 = COPY killed renamable $bmll3
-  ; PHYS-NEXT:   renamable $bmhh5 = COPY killed renamable $bmll4
-  ; PHYS-NEXT:   renamable $bmll6, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmlh6, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmhl6, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
-  ; PHYS-NEXT:   renamable $bmhh6, dead renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmll7, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmlh7, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmhl7, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmhh7, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmlh1 = COPY killed renamable $bmll2
+  ; PHYS-NEXT:   renamable $bmhl1 = COPY killed renamable $bmll3
+  ; PHYS-NEXT:   renamable $bmhh1 = COPY killed renamable $bmll4
+  ; PHYS-NEXT:   renamable $bmll2, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmlh2, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmhl2, renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $bmhh2, dead renamable $p0 = VLDA_dmx_lda_bm_ld_pstm_nrm_imm killed renamable $p0, 64
+  ; PHYS-NEXT:   renamable $dm0 = COPY killed renamable $dm7
+  ; PHYS-NEXT:   renamable $dm5 = COPY killed renamable $dm1
+  ; PHYS-NEXT:   renamable $dm6 = COPY killed renamable $dm2
   ; PHYS-NEXT:   PseudoJ_jump_imm %bb.3
   ; PHYS-NEXT: {{  $}}
   ; PHYS-NEXT: bb.3:
-  ; PHYS-NEXT:   liveins: $dm0:0x000000030000000C, $dm5:0x000000030000000C, $dm6:0x000000030000000C, $r8, $x0, $x2
+  ; PHYS-NEXT:   liveins: $dm0, $dm5, $dm6, $r8, $x0, $x2
   ; PHYS-NEXT: {{  $}}
   ; PHYS-NEXT:   renamable $dm0 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm0, renamable $x0, renamable $x2, renamable $r8
   ; PHYS-NEXT:   renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm5, renamable $x0, renamable $x2, renamable $r8
@@ -621,9 +628,7 @@ body:             |
     PseudoRET implicit $lr, implicit %40
 ...
 
-# The candidate is valid, but every other accumulator register is live across
-# the rewrite, so no free non-overlapping physical register exists and the
-# rename is skipped.
+# No rename when every other accumulator register overlaps the candidate.
 ---
 name:            reject_without_free_dm
 alignment:       16

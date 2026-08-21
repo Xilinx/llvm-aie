@@ -52,7 +52,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $dm0, $dm1, $dm2, $r1, $r3, $r5, $r7, $r8, $x0, $x2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   dead renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm1, renamable $x0, renamable $x2, renamable $r8
-  ; CHECK-NEXT:   renamable $dm1 = VMAC_vmac_vmul_cm_core_X_X renamable $dm0, renamable $x0, renamable $x2, renamable $r8
+  ; CHECK-NEXT:   renamable $dm3 = VMAC_vmac_vmul_cm_core_X_X renamable $dm0, renamable $x0, renamable $x2, renamable $r8
+  ; CHECK-NEXT:   renamable $dm1 = COPY killed renamable $dm3
   ; CHECK-NEXT:   PseudoJNZ renamable $r7, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
@@ -74,7 +75,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $dm0, $dm1, $dm2, $r1, $r3, $r8, $x0, $x2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   dead renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X killed renamable $dm2, renamable $x0, renamable $x2, renamable $r8
-  ; CHECK-NEXT:   renamable $dm2 = VMAC_vmac_vmul_cm_core_X_X renamable $dm0, renamable $x0, renamable $x2, renamable $r8
+  ; CHECK-NEXT:   renamable $dm3 = VMAC_vmac_vmul_cm_core_X_X renamable $dm0, renamable $x0, renamable $x2, renamable $r8
+  ; CHECK-NEXT:   renamable $dm2 = COPY killed renamable $dm3
   ; CHECK-NEXT:   PseudoJNZ renamable $r3, %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.7
   ; CHECK-NEXT: {{  $}}
