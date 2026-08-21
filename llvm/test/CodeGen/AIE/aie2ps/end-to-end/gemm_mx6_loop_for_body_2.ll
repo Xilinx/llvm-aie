@@ -6,8 +6,8 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps %s -o - | FileCheck %s --check-prefix=ASM
-; RUN: llc -mtriple=aie2ps -pass-remarks-output=- \
+; RUN: llc -verify-machineinstrs -mtriple=aie2ps %s -o - | FileCheck %s --check-prefix=ASM
+; RUN: llc -verify-machineinstrs -mtriple=aie2ps -pass-remarks-output=- \
 ; RUN:   -pass-remarks-filter='pipeliner' %s -o /dev/null | FileCheck %s --check-prefix=REMARKS
 ; This test contains the for.body.i44 loop path extracted from gemm_mx6 function
 

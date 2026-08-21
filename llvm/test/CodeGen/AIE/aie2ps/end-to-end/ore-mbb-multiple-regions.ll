@@ -5,7 +5,7 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2ps %s -o /dev/null -pass-remarks-output=- -pass-remarks-filter='aie-asm-printer' | FileCheck %s --check-prefix REMARKS
+; RUN: llc -verify-machineinstrs -mtriple=aie2ps %s -o /dev/null -pass-remarks-output=- -pass-remarks-filter='aie-asm-printer' | FileCheck %s --check-prefix REMARKS
 
 ; This structure can happen if MachineBlockPlacement moves 
 ; unconditional fallthrough MBBs apart.
