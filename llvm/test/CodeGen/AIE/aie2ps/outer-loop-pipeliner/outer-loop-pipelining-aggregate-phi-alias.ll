@@ -27,8 +27,8 @@ declare i1 @llvm.loop.decrement.i32(i32)
 define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i32 %m, i32 %k) {
 ; OLP-LABEL: drain_after_olp:
 ; OLP:       // %bb.0: // %entry
-; OLP-NEXT:    mova r4, #1; nopb ; nops ; nopxm ; nopv
-; OLP-NEXT:    nopa ; geu r4, r4, r0
+; OLP-NEXT:    mova r4, #1; nopx
+; OLP-NEXT:    geu r4, r4, r0
 ; OLP-NEXT:    jnz r4, #.LBB0_10
 ; OLP-NEXT:    nop // Delay Slot 5
 ; OLP-NEXT:    nop // Delay Slot 4
@@ -36,10 +36,9 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nop // Delay Slot 2
 ; OLP-NEXT:    nop // Delay Slot 1
 ; OLP-NEXT:  // %bb.1: // %outer.header.preheader
-; OLP-NEXT:    mova r4, #0
-; OLP-NEXT:    mov r24, r4
-; OLP-NEXT:    vldb.pop x2, [p0, lf0, r24]
-; OLP-NEXT:    vbcst.32 x0, r4
+; OLP-NEXT:    mova r24, #0
+; OLP-NEXT:    vldb.pop x2, [p0, lf0, r24]; vbcst.32 x0, r24
+; OLP-NEXT:    nop
 ; OLP-NEXT:    vmov x1, x0
 ; OLP-NEXT:    vmov lfl0, x0
 ; OLP-NEXT:    add r0, r0, #-1; vmov lfh0, x1
@@ -85,16 +84,16 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.8 r0, x2, #0, vaddsign0; nopv
-; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; OLP-NEXT:    mova r25, #0; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:  .LBB0_6: // %lastiter.stage1.inner.inner.header
 ; OLP-NEXT:    // =>This Inner Loop Header: Depth=1
 ; OLP-NEXT:  .L_LEnd1:
-; OLP-NEXT:    nopa ; nopb ; nops ; add r4, r4, r0; nopm ; nopv
+; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r0; nopm ; nopv
 ; OLP-NEXT:  // %bb.7: // %lastiter.stage1.bottom
 ; OLP-NEXT:    vldb x0, [p4], #64; nopxm
 ; OLP-NEXT:    vldb x0, [p4], #64; add.nc lc, r2, #-9
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_8; nopv
-; OLP-NEXT:    nopa ; vldb x0, [p4], #64; st r4, [p3, #0]; nopxm ; nopv
+; OLP-NEXT:    nopa ; vldb x0, [p4], #64; st r25, [p3, #0]; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; vldb x0, [p4], #64; nops ; nopxm ; nopv
