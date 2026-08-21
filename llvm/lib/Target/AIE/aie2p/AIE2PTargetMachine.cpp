@@ -27,6 +27,7 @@ extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableAddressChaining;
 extern cl::opt<bool> EnableGlobalPtrModOptimizer;
 extern cl::opt<bool> EnableWAWRegRewrite;
+extern cl::opt<bool> EnableSiblingLoopRegAlign;
 extern cl::opt<bool> EnableAIEIfConversion;
 extern cl::opt<bool> EnableFineGrainedStagedRA;
 
@@ -123,6 +124,8 @@ bool AIE2PPassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIEWawRegRewriter());
     addPass(createGreedyRegisterAllocator());
   }
+  if (EnableSiblingLoopRegAlign)
+    addPass(createAIESiblingLoopRegAligner());
   addPass(createVirtRegRewriter());
 
   return true;

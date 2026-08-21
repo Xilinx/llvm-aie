@@ -190,36 +190,36 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    nop // Delay Slot 2
 ; ASM-NEXT:    nop // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
-; ASM-NEXT:    vldb x3, [p1], m4
-; ASM-NEXT:    vlda.3d x1, [p1], d1
-; ASM-NEXT:    vldb x10, [p0], #64
-; ASM-NEXT:    vlda.3d x8, [p0], d0
-; ASM-NEXT:    vldb x3, [p1], m4
-; ASM-NEXT:    vlda.3d x1, [p1], d1; movxm ls, #.LBB0_5
-; ASM-NEXT:    vldb x10, [p0], #64; movxm le, #.L_LEnd0
-; ASM-NEXT:    vlda.3d x8, [p0], d0; vshuffle x6, x3, x0, r7
-; ASM-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x4, x6, x0, r16; nopv
-; ASM-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
-; ASM-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
-; ASM-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
+; ASM-NEXT:    vldb x9, [p1], m4
+; ASM-NEXT:    vlda.3d x7, [p1], d1
+; ASM-NEXT:    vldb x5, [p0], #64
+; ASM-NEXT:    vlda.3d x3, [p0], d0
+; ASM-NEXT:    vldb x9, [p1], m4
+; ASM-NEXT:    vlda.3d x7, [p1], d1; movxm ls, #.LBB0_5
+; ASM-NEXT:    vldb x5, [p0], #64; movxm le, #.L_LEnd0
+; ASM-NEXT:    vlda.3d x3, [p0], d0; vshuffle x1, x9, x0, r7
+; ASM-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x10, x1, x0, r16; nopv
+; ASM-NEXT:    vlda.3d x7, [p1], d1; nopb ; nops ; nopx ; vshuffle x8, x7, x0, r18; nopv
+; ASM-NEXT:    nopa ; vldb x5, [p0], #64; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; ASM-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; ASM-NEXT:  .LBB0_5: // %for.body100.lastiter
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
-; ASM-NEXT:    nopa ; vldb x3, [p1], m4; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8
-; ASM-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
-; ASM-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
+; ASM-NEXT:    nopa ; vldb x9, [p1], m4; nops ; nopx ; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
+; ASM-NEXT:    vlda.3d x7, [p1], d1; nopb ; nops ; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; ASM-NEXT:    nopa ; vldb x5, [p0], #64; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; ASM-NEXT:  .L_LEnd0:
-; ASM-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
+; ASM-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; ASM-NEXT:  // %bb.6: // %lastiter.stage1.bottom
-; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8 // 4-byte Folded Reload
-; ASM-NEXT:    paddxm [sp], #-64; nopb ; nops ; movx crsrsmode, #0; vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
-; ASM-NEXT:    or r12, r24, r24; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
-; ASM-NEXT:    or r10, r23, r23; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
-; ASM-NEXT:    vshuffle x4, x6, x0, r16; vmac dm1, dm1, x10, x0, r8
-; ASM-NEXT:    vshuffle x2, x1, x0, r18; vmac dm0, dm0, x8, x0, r8
-; ASM-NEXT:    vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
-; ASM-NEXT:    mov s0, r17; vmac dm2, dm2, x8, x4, r8
-; ASM-NEXT:    mov srssign0, r19; vmac dm1, dm1, x10, x0, r8
-; ASM-NEXT:    vmac dm0, dm0, x8, x0, r8
+; ASM-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8 // 4-byte Folded Reload
+; ASM-NEXT:    paddxm [sp], #-64; nopb ; nops ; movx crsrsmode, #0; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; ASM-NEXT:    or r12, r24, r24; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; ASM-NEXT:    or r10, r23, r23; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
+; ASM-NEXT:    vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
+; ASM-NEXT:    vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; ASM-NEXT:    vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; ASM-NEXT:    mov s0, r17; vmac dm2, dm2, x3, x10, r8
+; ASM-NEXT:    mov srssign0, r19; vmac dm1, dm1, x5, x6, r8
+; ASM-NEXT:    vmac dm0, dm0, x3, x6, r8
 ; ASM-NEXT:    mov r8, r21
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.4x dm3, s0, srssign0, [p3], #64
