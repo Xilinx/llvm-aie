@@ -7,7 +7,7 @@
 ;
 ; RUN: llc -mtriple=aie2ps %s -o /dev/null -pass-remarks-output=- -pass-remarks-filter='aie-asm-printer' | FileCheck %s --check-prefix REMARKS
 
-; This structure can happen if MachineBlockPlacement moves 
+; This structure can happen if MachineBlockPlacement moves
 ; unconditional fallthrough MBBs apart.
 ;
 ;     %loop <--+
