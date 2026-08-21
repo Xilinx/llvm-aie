@@ -55,6 +55,7 @@ extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableWAWRegRewrite;
 extern cl::opt<bool> EnableEpilogueRegRewrite;
+extern cl::opt<bool> EnableSiblingLoopPreRAAlign;
 extern cl::opt<bool> EnableAIEIfConversion;
 
 extern bool AIEDumpArtifacts;
@@ -159,6 +160,8 @@ void AIE2PassConfig::addPreRegAlloc() {
     addPass(&DeadMachineInstructionElimID);
   }
   insertPass(&PHIEliminationID, &AIESubRegConstrainerID);
+  if (EnableSiblingLoopPreRAAlign)
+    insertPass(&AIESubRegConstrainerID, createAIESiblingLoopPreRAAligner());
   if (AIEDumpArtifacts) {
     addPass(createDumpModulePass(/*Suffix=*/"before-ra"));
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"before-ra"));
