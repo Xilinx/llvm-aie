@@ -177,6 +177,12 @@ public:
 
   bool expandPostRAPseudo(MachineInstr &MI) const override;
 
+  /// Concrete opcode a 512-bit composed spill pseudo takes, selected from the
+  /// register class of its data operand \p Reg. expandPostRAPseudo retags the
+  /// pseudo with it; eliminateFrameIndex needs the same answer earlier, to know
+  /// which immediate field the frame offset will be encoded in.
+  unsigned getComposed512SpillOpcode(unsigned PseudoOpc, Register Reg) const;
+
   // Implement MIR serialization of target flags
   std::pair<unsigned, unsigned>
   decomposeMachineOperandsTargetFlags(unsigned TF) const override;
@@ -189,15 +195,17 @@ public:
   std::optional<const AbstractOp>
   parseAbstractOp(const MachineInstr &MI) const override;
 
+  // Public because eliminateFrameIndex also needs the register-offset form, to
+  // fall back to it when a frame offset does not fit the spill's immediate.
+  AIERegOffsetSpillInstrInfo
+  getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                            MachineInstr &MI) const override;
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const override;
-
-  AIERegOffsetSpillInstrInfo
-  getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;
 };
 } // namespace llvm
 #endif

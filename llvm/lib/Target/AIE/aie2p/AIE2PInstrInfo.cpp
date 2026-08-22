@@ -970,6 +970,22 @@ AIE2PInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
     return {AIE2P::VLDA_dmx_lda_x_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
   case AIE2P::VST_dmx_sts_x_spill:
     return {AIE2P::VST_dmx_sts_x_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::LDA_dmv_lda_q_spill:
+    return {AIE2P::LDA_dmv_lda_q_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::ST_dmv_sts_q_spill:
+    return {AIE2P::ST_dmv_sts_q_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VLDA_128_dmv_lda_w_spill:
+    return {AIE2P::VLDA_128_dmv_lda_w_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VST_128_dmv_sts_w_spill:
+    return {AIE2P::VST_128_dmv_sts_w_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VLDA_dmw_lda_w_spill:
+    return {AIE2P::VLDA_dmw_lda_w_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VST_dmw_sts_w_spill:
+    return {AIE2P::VST_dmw_sts_w_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VLDA_dmx_lda_bm_spill:
+    return {AIE2P::VLDA_dmx_lda_bm_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VST_dmx_sts_bm_spill:
+    return {AIE2P::VST_dmx_sts_bm_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
   default:
     llvm_unreachable("Offset register spill instruction info un-implemented");
   }
@@ -1026,38 +1042,29 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     MI.eraseFromParent();
     return true;
   }
-  case AIE2P::VLDA_512_COMPOSED_REG_SPILL: {
-    unsigned int Opcode;
-    const Register Dst = MI.getOperand(0).getReg();
-    if (AIE2P::VEC512RegClass.contains(Dst)) {
-      Opcode = AIE2P::VLDA_dmx_lda_x_spill;
-    } else if (AIE2P::FIFO512RegClass.contains(Dst)) {
-      Opcode = AIE2P::VLDA_dmx_lda_fifohl_spill;
-    } else if (AIE2P::ACC512RegClass.contains(Dst)) {
-      Opcode = AIE2P::VLDA_dmx_lda_bm_spill;
-    } else {
-      llvm_unreachable("Not a valid register for VLDA_512_COMPOSED_REG_SPILL");
-    }
-    MI.setDesc(get(Opcode));
-    return false;
-  }
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
   case AIE2P::VST_512_COMPOSED_REG_SPILL: {
-    unsigned int Opcode;
-    const Register Src = MI.getOperand(0).getReg();
-    if (AIE2P::VEC512RegClass.contains(Src)) {
-      Opcode = AIE2P::VST_dmx_sts_x_spill;
-    } else if (AIE2P::FIFO512RegClass.contains(Src)) {
-      Opcode = AIE2P::VST_dmx_sts_fifohl_spill;
-    } else if (AIE2P::ACC512RegClass.contains(Src)) {
-      Opcode = AIE2P::VST_dmx_sts_bm_spill;
-    } else {
-      llvm_unreachable("Not a valid register for VST_512_COMPOSED_REG_SPILL");
-    }
-    MI.setDesc(get(Opcode));
+    MI.setDesc(get(getComposed512SpillOpcode(MI.getOpcode(),
+                                             MI.getOperand(0).getReg())));
     return false;
   }
   }
   return false;
+}
+
+unsigned AIE2PInstrInfo::getComposed512SpillOpcode(unsigned PseudoOpc,
+                                                   Register Reg) const {
+  const bool IsLoad = PseudoOpc == AIE2P::VLDA_512_COMPOSED_REG_SPILL;
+  assert((IsLoad || PseudoOpc == AIE2P::VST_512_COMPOSED_REG_SPILL) &&
+         "Not a 512-bit composed spill pseudo");
+  if (AIE2P::VEC512RegClass.contains(Reg))
+    return IsLoad ? AIE2P::VLDA_dmx_lda_x_spill : AIE2P::VST_dmx_sts_x_spill;
+  if (AIE2P::FIFO512RegClass.contains(Reg))
+    return IsLoad ? AIE2P::VLDA_dmx_lda_fifohl_spill
+                  : AIE2P::VST_dmx_sts_fifohl_spill;
+  if (AIE2P::ACC512RegClass.contains(Reg))
+    return IsLoad ? AIE2P::VLDA_dmx_lda_bm_spill : AIE2P::VST_dmx_sts_bm_spill;
+  llvm_unreachable("Not a valid register for a 512-bit composed spill");
 }
 
 ScheduleHazardRecognizer *AIE2PInstrInfo::CreateTargetPostRAHazardRecognizer(
