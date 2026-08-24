@@ -21,8 +21,10 @@
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "AIERegDefUseTracker.h"
+#include "AIESiblingLoopOptimizer.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIEMachineBundleUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -131,6 +133,10 @@ static cl::opt<bool> PostPipelinerVRegReservedMode(
     "aie-postpipeliner-vreg-reserved-mode", cl::Hidden, cl::init(false),
     cl::desc("[AIE] Enable reserved virtual register mode for the "
              "postpipeliner (virtualizes ranges overlapping RESERVED bases)"));
+static cl::opt<bool> OptimizeSiblingLoops(
+    "aie-optimize-sibling-loops", cl::init(true),
+    cl::desc("[AIE] Optimize sibling loops by merging matching prologue "
+             "bundles into epilogue"));
 
 namespace llvm::AIE {
 
@@ -283,6 +289,10 @@ MachineInstr *checkResourceConflictsTopDown(
 
   return ConflictMI;
 }
+
+/// Calculate how many cycles of slack exist between Epilogue and Prologue.
+/// Builds an inter-block DAG and computes min(Distance - Latency) for all
+/// cross-boundary edges. Returns the maximum safe overlap (0 if none).
 
 InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
                                            bool InterBlock)
@@ -489,6 +499,8 @@ void InterBlockScheduling::emitLoopRemarks() {
 
 void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
+  if (OptimizeSiblingLoops)
+    SiblingLoopOptimizer(*this, *HR, *TII, SelectedAltDescs, *Context).run();
   emitLoopRemarks();
   Blocks.clear();
   MatTracker.clear();

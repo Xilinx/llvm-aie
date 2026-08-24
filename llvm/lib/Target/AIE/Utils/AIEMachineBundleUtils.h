@@ -88,6 +88,30 @@ mergeBundlesIntoMBB(MachineBasicBlock &DstMBB,
                     ArrayRef<AIE::MachineBundle> SrcBundles,
                     unsigned NumBundlesToMerge, const AIEBaseInstrInfo &TII);
 
+/// Merge source bundles into destination MBB and append any non-merged
+/// source bundles after the merged portion. This extends mergeBundlesIntoMBB
+/// by also cloning SrcBundles[NumBundlesToMerge:] and appending them,
+/// then replacing the MBB content with the complete bundle set.
+///
+/// Example with NumBundlesToMerge=1:
+///   DstBundles: [D0, D1, D2]     (e.g. preheader)
+///   SrcBundles: [S0, S1, S2]     (e.g. transferred prologue)
+///   Result:     [D0, D1, D2+S0, S1, S2]
+///
+/// \param DstMBB The MBB to modify (its non-terminator instructions are
+///        replaced)
+/// \param DstBundles The original bundles for DstMBB
+/// \param SrcBundles The bundles to merge/append from
+/// \param NumBundlesToMerge How many leading SrcBundles merge into trailing
+///        DstBundles (remaining SrcBundles are appended)
+/// \param TII Target instruction info
+/// \returns The complete bundle set (merged + appended) with cloned
+///          instructions.
+std::vector<AIE::MachineBundle> mergeAndAppendBundlesIntoMBB(
+    MachineBasicBlock &DstMBB, ArrayRef<AIE::MachineBundle> DstBundles,
+    ArrayRef<AIE::MachineBundle> SrcBundles, unsigned NumBundlesToMerge,
+    const AIEBaseInstrInfo &TII);
+
 /// Type for instruction filter - returns true if instruction should stop
 /// matching.
 using InstrStopFilter = std::function<bool(const MachineInstr &)>;
