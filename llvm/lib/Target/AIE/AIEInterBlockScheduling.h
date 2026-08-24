@@ -165,6 +165,10 @@ class BlockState {
   // optimized by the outer-loop pipeliner.
   bool IsEpilogueOfOuterPipelinedLoop = false;
 
+  // This holds the outer loop structure if this block is an outer-loop
+  // pipelined loop latch.
+  std::optional<AIELoopUtils::OuterLoopStructure> OuterLoopContext;
+
   // This holds the information whether it is safe to drop memory dependencies,
   // for example, a load -> process -> store using the same pointer, where
   // we know that the store will never overwrite a memory position that
