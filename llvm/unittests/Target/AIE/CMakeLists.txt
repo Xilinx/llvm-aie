@@ -29,6 +29,7 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_target_unittest(AIETests
   ${LLVM_MAIN_SRC_DIR}/unittests/CodeGen/ScheduleDAGMITestUtils.cpp
   AIELoopUtilsTest.cpp
+  AIEMachineBundleUtilsTest.cpp
   AIEScheduleDAGMITest.cpp
   AIEOuterLoopPipelinerTest.cpp
   AIETestTarget.cpp
