@@ -126,6 +126,11 @@ public:
     return OriginalDescs.empty() && CloneToOriginal.empty();
   }
 };
+/// Build a top-down resource scoreboard from the given bundles.
+ResourceScoreboard<FuncUnitWrapper>
+createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
+                        const AIEHazardRecognizer &HR,
+                        const AIEAlternateDescriptors &SelectedDescriptors);
 
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
@@ -409,6 +414,13 @@ public:
 
   bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
 
+  /// Return the outer loop context if this block is an outer-loop pipelined
+  /// loop latch.
+  const std::optional<AIELoopUtils::OuterLoopStructure> &
+  getOuterLoopContext() const {
+    return OuterLoopContext;
+  }
+
 protected:
   void setBlockProperties();
 };
@@ -607,6 +619,10 @@ public:
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
   getSWPLoopBundlesForEpilogue(BlockState &Epilogue);
+
+  /// Provide access to the Blocks map for external optimizers
+  /// (e.g. SiblingLoopOptimizer).
+  auto &getBlocks() { return Blocks; }
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB

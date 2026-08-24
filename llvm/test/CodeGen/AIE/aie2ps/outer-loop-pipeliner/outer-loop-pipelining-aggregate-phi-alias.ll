@@ -27,7 +27,7 @@ declare i1 @llvm.loop.decrement.i32(i32)
 define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i32 %m, i32 %k) {
 ; OLP-LABEL: drain_after_olp:
 ; OLP:       // %bb.0: // %entry
-; OLP-NEXT:    mova r4, #1; nopx
+; OLP-NEXT:    mova r4, #1; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    geu r4, r4, r0
 ; OLP-NEXT:    jnz r4, #.LBB0_10
 ; OLP-NEXT:    nop // Delay Slot 5
@@ -46,11 +46,10 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    addm.nc r3, r0, #-1
 ; OLP-NEXT:    vmov x4, lfl0
 ; OLP-NEXT:    vmov x5, lfh0
-; OLP-NEXT:    mova m0, #4; movs p3, p1; vadd.8 x2, x2, x2
+; OLP-NEXT:    mova m0, #4; nopb ; movs p3, p1; add.nc lc, r1, #0; vadd.8 x2, x2, x2; nopv
 ; OLP-NEXT:  .LBB0_2: // %steady.stage1.top
 ; OLP-NEXT:    // =>This Loop Header: Depth=1
 ; OLP-NEXT:    // Child Loop BB0_3 Depth 2
-; OLP-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; nopm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_3; addm.nc le, pc, #.L_LEnd2; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
@@ -65,8 +64,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nopa ; nopb ; nops ; add r25, r25, r0; nopm ; nopv
 ; OLP-NEXT:  // %bb.4: // %steady.stage1.bottom.and.stage0.top
 ; OLP-NEXT:    // in Loop: Header=BB0_2 Depth=1
-; OLP-NEXT:    nopa ; nopb ; movs p0, p4; nopxm ; nopv
-; OLP-NEXT:    vldb.pop x2, [p0, lf0, r24]; nopx
+; OLP-NEXT:    nopa ; nopb ; nopxm ; movs p0, p4
+; OLP-NEXT:    vldb.pop x2, [p0, lf0, r24]
 ; OLP-NEXT:    nop
 ; OLP-NEXT:    nop
 ; OLP-NEXT:    vmov lfl0, x4
@@ -75,9 +74,8 @@ define void @drain_after_olp(ptr noalias %a, ptr noalias %c, ptr %out, i32 %n, i
 ; OLP-NEXT:    nop // Delay Slot 4
 ; OLP-NEXT:    vmov x4, lfl0 // Delay Slot 3
 ; OLP-NEXT:    st r25, [p1, #0]; vmov x5, lfh0 // Delay Slot 2
-; OLP-NEXT:    movs p1, p3; vadd.8 x2, x2, x2 // Delay Slot 1
+; OLP-NEXT:    nopa ; nopb ; movs p1, p3; add.nc lc, r1, #0; vadd.8 x2, x2, x2; nopv // Delay Slot 1
 ; OLP-NEXT:  // %bb.5: // %lastiter.stage1.top
-; OLP-NEXT:    add.nc lc, r1, #0
 ; OLP-NEXT:    nopa ; nopb ; nops ; add.nc ls, pc, #.LBB0_6; addm.nc le, pc, #.L_LEnd1; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; OLP-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
