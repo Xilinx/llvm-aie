@@ -444,6 +444,36 @@ OuterLoopStructure::tryBuildFrom(MachineBasicBlock &OuterLatch) {
   return OLS;
 }
 
+bool OuterLoopStructure::isSafeForSiblingMerge() const {
+  // Sibling merge requires a peeled iteration region.
+  if (!hasPeeledIterRegion())
+    return false;
+
+  // P must exist and have exactly one successor (ST).
+  if (!OuterPreheader || OuterPreheader->succ_size() != 1)
+    return false;
+
+  // ST's predecessors must be exactly {P, SB}.
+  if (SteadyTop->pred_size() != 2 ||
+      !SteadyTop->isPredecessor(OuterPreheader) ||
+      !SteadyTop->isPredecessor(SteadyBottom))
+    return false;
+
+  // PT's only predecessor must be SB.
+  if (PeeledIterTop->pred_size() != 1 ||
+      *PeeledIterTop->pred_begin() != SteadyBottom)
+    return false;
+
+  // All block pointers are guaranteed non-null at this point.
+  // Check that each consecutive pair is a layout successor.
+  return OuterPreheader->isLayoutSuccessor(SteadyTop) &&
+         SteadyTop->isLayoutSuccessor(SteadyInner) &&
+         SteadyInner->isLayoutSuccessor(SteadyBottom) &&
+         SteadyBottom->isLayoutSuccessor(PeeledIterTop) &&
+         PeeledIterTop->isLayoutSuccessor(PeeledIterInner) &&
+         PeeledIterInner->isLayoutSuccessor(PeeledIterBottom);
+}
+
 bool OuterLoopStructure::hasMatchingInnerLoops() const {
   if (!SteadyInner || !PeeledIterInner)
     return false;
