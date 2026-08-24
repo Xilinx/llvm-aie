@@ -82,7 +82,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; REMARKS-NEXT:   - NS:              '6'
 ; REMARKS-NEXT:   - Loop:            bb.2.for.body159.i
 ; REMARKS-NEXT:   - Prologue:        bb.1.for.body.i
-; REMARKS-NEXT:   - PrologueBundles: '10'
+; REMARKS-NEXT:   - PrologueBundles: '9'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup158.i
 ; REMARKS-NEXT:   - EpilogueBundles: '26'
 ; REMARKS-NEXT: ...
@@ -97,14 +97,14 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; REMARKS-NEXT:   - NS:              '6'
 ; REMARKS-NEXT:   - Loop:            bb.5.for.body159.i.lastiter
 ; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '10'
+; REMARKS-NEXT:   - PrologueBundles: '9'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '21'
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddxm [sp], #64; nopb ; nops ; nopx ; mov m7, p4; nopv
-; ASM-NEXT:    mova m0, #-68; nopb ; st p6, [sp, #-60] // 4-byte Folded Spill
+; ASM-NEXT:    paddxm [sp], #64; nopb ; nopx ; mov m7, p4; nops
+; ASM-NEXT:    mova m0, #-68; st p6, [sp, #-60] // 4-byte Folded Spill
 ; ASM-NEXT:    vlda.ups.2x cml1, s0, upssign1, [p1], m7; movs m5, p5; mov p6, sp
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p1], m5; paddb [p6], m0
 ; ASM-NEXT:    lda m2, [p6], #-4
@@ -139,11 +139,11 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; movs dc3, dj4; or r30, r5, r5; mov r5, dj4
 ; ASM-NEXT:    padda [p1], m7; movs dc7, dj4; or r8, r7, r7; mov r7, dj4
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p1, #0]; movs m1, r27; movx crsrsmode, #0; mov dj7, r20
+; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
 ; ASM-NEXT:  .LBB0_1: // %for.body.i
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
-; ASM-NEXT:    padds.3d [p0], d2; mov p3, p4
+; ASM-NEXT:    nopa ; padds.3d [p0], d2; nopx ; mov p3, p4
 ; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; add.nc lc, r2, #-5
 ; ASM-NEXT:    vlda x2, [p3], #64; padds.3d [p0], d2; movxm ls, #.LBB0_2
 ; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; movxm le, #.L_LEnd1; nopv
@@ -164,7 +164,7 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    vlda x2, [p3], #64; nopb ; movs dj0, r22; nopx ; mov srssign0, r4; vmac dm0, dm0, x0, x2, r8
 ; ASM-NEXT:    nopa ; nopb ; movs p3, p2; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    padda [p3], m0; nopb ; movs dc4, r7; nopx ; mov m6, r22; vmac dm0, dm0, x0, x2, r8
-; ASM-NEXT:    movs dn4, r26; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
+; ASM-NEXT:    nopa ; movs dn4, r26; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    movs dj4, r28; vmac dm0, dm0, x0, x2, r8
 ; ASM-NEXT:    movs m0, r21; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    vmac dm0, dm0, x0, x2, r8
@@ -185,9 +185,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    padda [p1], m6; mov m6, r19 // Delay Slot 4
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; paddb [p1], m7; padds [p4], m6 // Delay Slot 3
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p1, #0]; paddb.3d [p4], d1 // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24] // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
-; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
 ; ASM-NEXT:    padds.3d [p0], d2
 ; ASM-NEXT:    vlda x4, [p4], #64; vldb.popx x6, [p0, lf0, r24]; add.nc lc, r2, #-5
 ; ASM-NEXT:    vlda x2, [p4], #64; padds.3d [p0], d2; movxm ls, #.LBB0_5
