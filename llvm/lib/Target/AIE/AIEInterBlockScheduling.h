@@ -271,6 +271,13 @@ public:
 
   bool isSafeToIgnoreMemDeps() const { return IsSafeToIgnoreMemDeps; }
 
+  /// Return the outer loop context if this block is an outer-loop pipelined
+  /// loop latch.
+  const std::optional<AIELoopUtils::OuterLoopStructure> &
+  getOuterLoopContext() const {
+    return OuterLoopContext;
+  }
+
 protected:
   void setBlockProperties();
 };
@@ -426,6 +433,29 @@ public:
   // pipelined loop.
   std::optional<ArrayRef<MachineBundle>>
   getSWPLoopBundlesForEpilogue(MachineBasicBlock *Epilogue);
+
+  /// Compute how many leading bundles can be merged from prologues into
+  /// epilogue. Returns 0 if merging is not possible.
+  unsigned getNumberOfMergeableBundles(const BlockState &EpilogueBS,
+                                       const BlockState &SteadyTopBS,
+                                       const BlockState &LastIterTopBS);
+
+  /// Merge N leading bundles from prologues into epilogue and transfer to
+  /// entry.
+  void mergeBundles(BlockState &EntryBS, BlockState &SteadyTopBS,
+                    BlockState &EpilogueBS, BlockState &LastIterTopBS,
+                    unsigned NumBundles);
+
+  /// Try to merge matching prologue bundles into the epilogue and transfer
+  /// them to the entry block.
+  void tryMergePrologues(BlockState &EntryBS, BlockState &SteadyTopBS,
+                         BlockState &EpilogueBS, BlockState &LastIterTopBS);
+
+  /// Optimize sibling loops created by the outer-loop pipeliner.
+  /// For blocks with a valid OuterLoopContext (non-speculative), this merges
+  /// matching leading prologue bundles into the epilogue and transfers them
+  /// to the entry block to reduce cycles per outer iteration.
+  void optimizeSiblingLoops();
 
   /// If \p LoopMBB is not the only Predecessor of \p CurrentMBB, create a
   /// dedicated Exit MBB by splitting the edge between LoopMBB and CurrentBB
