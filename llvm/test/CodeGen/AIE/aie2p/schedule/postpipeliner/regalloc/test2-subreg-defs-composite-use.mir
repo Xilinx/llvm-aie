@@ -1,0 +1,66 @@
+# NOTE: Test for AIERegDefUseTracker - sub-register defs with composite use
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false --aie-postpipeliner-filter-no-choice=false -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 2: def(cml4) def(cmh4) use(dm4) leads to one live range with two defs and one use
+# CHECK: Live Range {{.*}} for dm4:
+# CHECK:   Definitions (2):
+# CHECK-DAG:     Register: cml4 (SubRegIdx: 10)
+# CHECK-DAG:     Register: cmh4 (SubRegIdx: 9)
+# CHECK:   Uses (1):
+# CHECK:     Register: dm4
+
+--- |
+  define void @test_subreg_defs_composite_use() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_subreg_defs_composite_use
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $p7, $r0
+    
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p7
+    
+    ; Define low half of dm4
+    $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 0 :: (load (<32 x s16>))
+    
+    ; Define high half of dm4
+    $cmh4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 64 :: (load (<32 x s16>))
+    
+    ; Use composite register dm4
+    $ex2 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

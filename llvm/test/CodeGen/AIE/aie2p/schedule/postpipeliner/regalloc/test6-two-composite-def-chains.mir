@@ -1,0 +1,72 @@
+# NOTE: Test for AIERegDefUseTracker - two separate composite def chains
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false --aie-postpipeliner-filter-no-choice=false -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 6: Two separate chains with composite def and subreg uses (like test1 but with test3 pattern)
+# First chain: def(dm4) use(cml4) use(cmh4)
+# Second chain: def(dm4) use(cml4) use(cmh4)
+# Should create two separate live ranges for dm4
+# CHECK-DAG: Live Range {{.*}} for dm4:
+# CHECK-DAG: Live Range {{.*}} for dm4:
+
+--- |
+  define void @test_two_composite_def_chains() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_two_composite_def_chains
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $y5, $y0, $r2, $r0
+    
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $y5, $y0, $r2
+    
+    ; First chain: composite def -> subreg uses
+    ; Define composite register dm4
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y5, $y0, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    ; Use low half cml4
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0, 0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    ; Use high half cmh4
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cmh4, $p0, 64, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    
+    ; Second chain: composite def -> subreg uses (separate from first)
+    ; Define composite register dm4 again
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y5, $y0, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    ; Use low half cml4 again
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0, 128, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    ; Use high half cmh4 again
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cmh4, $p0, 192, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

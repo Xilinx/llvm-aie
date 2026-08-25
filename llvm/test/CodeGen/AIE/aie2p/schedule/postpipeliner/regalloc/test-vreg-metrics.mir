@@ -1,0 +1,143 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+
+# Test virtual register metrics dumping in AIEPostRegAlloc
+# This test verifies that the metrics are properly computed and displayed
+# REQUIRES: asserts
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --aie-postpipeliner-filter-no-choice=false \
+# RUN:   --aie-wawreg-rewrite=0 \
+# RUN:   --aie-preassign-multi-slot-instr=1 \
+# RUN:   --aie-materialize-pipeline=0 \
+# RUN:   --aie-postpipeliner-maxii=7 \
+# RUN:   --debug-only=aie-postregalloc \
+# RUN:   -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=METRICS
+
+# Based on the actual output from gemm-bfp16-ii7.mir, we expect:
+# - 14 virtual registers total
+# - Various register classes (ex, x, y, dm)
+# - Interference degrees ranging from 0 to 9
+# - Different lane widths and durations
+
+# NOTE: Status quo - II=7 (was II=6)
+# METRICS: AIEPostRegAlloc::allocate for 14 vregs, II=7
+# METRICS: === Virtual Register Metrics Dump ===
+# METRICS: Total Virtual Registers: 14
+# METRICS-EMPTY:
+# METRICS: VReg      RegClass                 Avail  Pure  Alias  TotalLanes  MaxWidth  Duration
+# METRICS-NEXT: --------  -----------------------  -----  ----  -----  ----------  --------  --------
+# METRICS-NEXT: %vreg0     VEC512                       7     3    600           4         2         3
+# METRICS-NEXT: %vreg1     VEC512                       7     3    600           6         2         4
+# METRICS-NEXT: %vreg2     ACC2048                      1     1      0          10         4         3 FAIL
+# METRICS-NEXT: %vreg3     VEC1024                      2     1    800          18         4         6
+# METRICS-NEXT: %vreg4     VEC512                       7     3    800           4         2         3
+# METRICS-NEXT: %vreg5     VEC512                       7     3    800           6         2         4
+# METRICS-NEXT: %vreg6     ACC2048                      1     1      0           4         4         1 FAIL
+# METRICS-NEXT: %vreg7     VEC1024                      2     1    500           6         4         3
+# METRICS-NEXT: %vreg8     ACC2048                      1     0      0           4         4         1
+# METRICS-NEXT: %vreg9     ACC2048                      1     0      0           6         4         2
+# METRICS-NEXT: %vreg10    VEC576                       4     3    800          28         4         7
+# METRICS-NEXT: %vreg11    VEC576                       4     3    800          12         4         3
+# METRICS-NEXT: %vreg12    VEC576                       4     3    600           8         4         2
+# METRICS-NEXT: %vreg13    VEC576                       4     3    800          20         4         5
+# METRICS-EMPTY:
+# METRICS: === Summary Statistics ===
+# METRICS: Total Lanes (sum):              136
+# METRICS: Max Width (max):                4
+# METRICS: Max Duration:                   7
+# METRICS: Max Pure Interference Degree:   3
+# METRICS: Max Aliasing Interference Deg:  800
+# METRICS: Avg Pure Interference Degree:   2.00
+# METRICS: Avg Aliasing Interference Deg:  507.14
+
+--- |
+  define dso_local void @gemm(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr {
+  entry:
+    %cmp5 = icmp sgt i32 %n, 0
+    br i1 %cmp5, label %for.body.preheader, label %for.cond.cleanup
+
+  for.body.preheader:
+    call void @llvm.set.loop.iterations.i32(i32 %n)
+    br label %for.body
+
+  for.body:
+    %d.addr.07 = phi ptr addrspace(5) [ %incdec.ptr, %for.body ], [ %d, %for.body.preheader ]
+    %s.addr.06 = phi ptr addrspace(6) [ %incdec.ptr1, %for.body ], [ %s, %for.body.preheader ]
+    %0 = load i32, ptr addrspace(6) %s.addr.06, align 4
+    %add = add nsw i32 %0, 1
+    store i32 %add, ptr addrspace(5) %d.addr.07, align 4
+    %incdec.ptr = getelementptr inbounds i32, ptr addrspace(5) %d.addr.07, i20 1
+    %incdec.ptr1 = getelementptr inbounds i32, ptr addrspace(6) %s.addr.06, i20 1
+    %1 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %1, label %for.body, label %for.cond.cleanup, !llvm.loop !0
+
+  for.cond.cleanup:
+    ret void
+  }
+
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+  !0 = distinct !{!0, !1, !2}
+  !1 = !{!"llvm.loop.mustprogress"}
+  !2 = !{!"llvm.loop.itercount.range", i64 10}
+
+...
+---
+name:            gemm
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry (align 16):
+    successors: %bb.2
+    liveins: $p0, $p1, $r0
+
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.2
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.2.for.body (align 16):
+    successors: %bb.2, %bb.3
+    liveins: $dc0, $dc1, $dc2, $dc3, $dc4, $dc5, $dj0, $dj1, $dj2, $dj3, $dj4, $dj5, $dj7, $dm0:0x000000001800000C, $dm1:0x000000001800000C, $dm2:0x000000001800000C, $dm3:0x000000001800000C, $dn0, $dn1, $dn2, $dn4, $dn5, $m0, $m1, $m2, $m3, $m4, $m5, $p0, $p1, $p2, $p4, $p6, $p7, $r0, $r1, $r2, $r3, $r4, $r8, $y0:0x0000000000000033, $d0_3d:0x0003C00000200E00, $d1_3d:0x0003C00000200E00, $dn3
+
+    $p5 = MOV_alu_mv_mv_mv_scl $p6
+    $x2, $p6, $dc0, $dc4 = VLD_3D_x_pseudo $p6, $d0_3d :: (load (<16 x s32>))
+    $x4 = VLD_x_idx_imm_pseudo $p5, 64 :: (load (<16 x s32>))
+    $p3 = MOV_alu_mv_mv_mv_scl $p7
+    $cml4, $p7, $dc1, $dc5 = VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf $p7, $d1_3d :: (load (<32 x s16>))
+    $cmh4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p3, 64 :: (load (<32 x s16>))
+    $p5 = PADD_mod_pseudo $p5, $m4
+    $x6, $p5 = VLD_x_pstm_nrm_imm_pseudo $p5, 64 :: (load (<16 x s32>))
+    $x8 = VLD_x_idx_imm_pseudo $p5, 0 :: (load (<16 x s32>))
+    $x10 = VSHUFFLE_vec_shuffle_x $x2, $x4, $r0
+    $x11 = VSHUFFLE_vec_shuffle_x $x2, $x4, $r1
+    $ex2 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y5, $y0, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    $x4 = VSHUFFLE_vec_shuffle_x $x6, $x8, $r0
+    $x5 = VSHUFFLE_vec_shuffle_x $x6, $x8, $r1
+    $ex6 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y2, $y0, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    $p3 = PADD_mod_pseudo $p3, $m5
+    $ex4 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $cml4, $p3 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm $p3, 64 :: (load (<32 x s16>))
+    $cmh4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p3, 0 :: (load (<32 x s16>))
+    $ex8 = VCONV_bfp16ebs8_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $dm3 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex2, $ex6, $r3, implicit-def dead $srfpflags, implicit $crfpmask
+    $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex2, $ex4, $r3, implicit-def dead $srfpflags, implicit $crfpmask
+    $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex8, $ex6, $r3, implicit-def dead $srfpflags, implicit $crfpmask,
+    $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex8, $ex4, $r3, implicit-def dead $srfpflags, implicit $crfpmask
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3 (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

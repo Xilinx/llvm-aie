@@ -1,0 +1,87 @@
+# NOTE: Test for AIERegDefUseTracker - read-modify-write pattern
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 13: Read-modify-write pattern
+#
+# This tests the backward scan handling of an instruction that both reads and writes
+# the same register:
+#   x0 = VLDA... p0          ; def x0 (first def)
+#   x0 = VSHUFFLE x0, x0, r0 ; use x0, use x0, def x0 (read-modify-write)
+#   VST x0                   ; use x0 (final use)
+#
+# In the backward scan with correct def-before-use processing:
+# 1. VST makes x0 live (uses x0) - creates Live Range #0
+# 2. VSHUFFLE def KILLS x0's liveness (terminates Range #0)
+# 3. VSHUFFLE uses create a NEW live range #1 for x0
+# 4. VLDA def terminates Live Range #1
+#
+# The expected result is TWO separate live ranges for x0:
+# - Live Range 1: VLDA def -> VSHUFFLE uses (1 def, 2 uses)
+# - Live Range 2: VSHUFFLE def -> VST use (1 def, 1 use)
+#
+# CHECK: FINAL LIVE RANGES
+# CHECK: Live Range #{{[0-9]+}} for x0:
+# CHECK:   Definitions (1):
+# CHECK:   Uses (2):
+# CHECK: Live Range #{{[0-9]+}} for x0:
+# CHECK:   Definitions (1):
+# CHECK:   Uses (1):
+
+--- |
+  define void @test_read_modify_write() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_read_modify_write
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $r0, $r1, $r2
+    
+    $lc = ADD_NC_mv_add_ri $r1, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $r0
+    
+    ; Def x0 (first def)
+    $x0, $p0 = VLD_x_pstm_nrm_imm_pseudo $p0, 0 :: (load (<16 x s32>))
+    
+    ; Read-modify-write: use x0 twice, def x0
+    ; This instruction reads x0 and writes x0
+    $x0 = VSHUFFLE_vec_shuffle_x $x0, $x0, $r0
+    
+    ; Final use of x0 - store consumes the result
+    VST_dmx_sts_x_idx_imm $x0, $p0, 64 :: (store (<16 x s32>))
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

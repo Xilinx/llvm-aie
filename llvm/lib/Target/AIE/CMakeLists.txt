@@ -138,7 +138,9 @@ add_llvm_target(AIECodeGen
    AIEPreISelCombiner.cpp
    AIEInterBlockScheduling.cpp
    AIEISelDAGToDAG.cpp
+   AIELivenessVector.cpp
    AIELegalizerHelper.cpp
+   AIELiveRangeUtils.cpp
    AIELiveRegs.cpp
    AIELoopClass.cpp
    AIEMachineAlignment.cpp
@@ -149,11 +151,15 @@ add_llvm_target(AIECodeGen
    AIEMIRFormatter.cpp
    AIEMultiSlotInstrMaterializer.cpp
    AIEPostPipeliner.cpp
+   AIEPostRegAlloc.cpp
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIEPtrModOptimizer.cpp
    AIERegClassConstrainer.cpp
+   AIERegDefUseTracker.cpp
    AIERegMemEventTracker.cpp
+   AIEScarceRegScheduling.cpp
+   AIEScheduleInterpreter.cpp
    AIESlotCounts.cpp
    AIESpillSlotOptimization.cpp
    AIESlotStatistics.cpp

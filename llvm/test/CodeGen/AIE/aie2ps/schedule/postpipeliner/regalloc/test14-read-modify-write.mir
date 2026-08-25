@@ -1,0 +1,96 @@
+# NOTE: Test for AIERegDefUseTracker - composite register pattern with AIE2PS VMUL
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 14: Composite register pattern with VMUL using Y registers
+#
+# Pattern:
+#   x10 = VLDB_UNPACK...     ; first def of x10
+#   x0 = (some op)...        ; local def of x0
+#   x10 = VMAX...            ; second def of x10 (read-modify-write)
+#   dm1 = VMUL y0, y5, r9    ; uses y0 (x0 + x1) and y5 (x10 + x11)
+#
+# y0 is composed of: locally-defined x0 + live-in x1
+# y5 is composed of: locally-defined x10 + undefined x11 (not live-in)
+#
+# The goal is to have two separate live ranges for x10:
+# - Live Range 1: VLDB_UNPACK def -> VMIN use (base register: x10)
+# - Live Range 2: VMAX def -> VMUL use via y5 (base register: y5)
+#
+# This tests that lane-mask-based overlap checking correctly separates
+# live ranges when a subreg is redefined within a super-register range.
+#
+# CHECK: FINAL LIVE RANGES
+# CHECK: Live Range #7 for x10:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: x10 $x10, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: x10 $x0, dead $r16 = VMIN_GE_16_vaddSign1 $x10, $x4
+# CHECK-EMPTY:
+# CHECK-NEXT: Live Range #2 for y5:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: x10 (SubRegIdx: 8) $x10, dead $r16 = VMAX_LT_16_vaddSign1 $x0, $x4
+# CHECK-NEXT:   Uses (1):
+# CHECK-NEXT:     [0] Register: y5 $dm1 = VMUL_vmul_vmul_cm_core_Y_Y $y0, $y5, $r9
+
+--- |
+  define void @test_vmul_composite_regs() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_vmul_composite_regs
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $r1, $r9, $x1, $x4
+    
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $r9, $x1, $x4
+    
+    ; First def of x10 (from load with unpack)
+    $x10, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, 32, implicit $crunpacksize, implicit $unpacksign1
+    
+    ; Local def of x0 (via min operation using x10 and x4)
+    $x0, dead $r16 = VMIN_GE_16_vaddSign1 $x10, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    
+    ; Second def of x10 (read-modify-write: uses x0, defines x10)
+    $x10, dead $r16 = VMAX_LT_16_vaddSign1 $x0, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    
+    ; VMUL uses y0 (x0 + x1) and y5 (x10 + x11)
+    ; y0 = locally-defined x0 + live-in x1
+    ; y5 = locally-defined x10 + undefined x11
+    $dm1 = VMUL_vmul_vmul_cm_core_Y_Y $y0, $y5, $r9
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

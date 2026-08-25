@@ -1,0 +1,82 @@
+# NOTE: Test for AIERegDefUseTracker - tied register pairs
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false --aie-postpipeliner-filter-no-choice=false -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 7: Instructions with tied operands should have their live ranges filtered out
+# Tied operands cannot be independently allocated, so they should be rejected
+# The LDA_2D_dms_lda instruction has tied operands where the output count
+# is tied to the input mod.sub_dim_count (dc0 tied to d0.sub_dim_count)
+# and p3 is tied as well (tied-def 1)
+# p3's live range is filtered because it's used in a tied operand
+# Only r1 should remain as it's not tied
+# CHECK: FINAL LIVE RANGES
+# CHECK-NEXT: ================================
+# CHECK-NEXT: Total live ranges: 1
+# CHECK-EMPTY:
+# CHECK: Live Range #{{[0-9]+}} for r1:
+# CHECK-NEXT:   Definitions (1):
+# CHECK-NEXT:     [0] Register: r1 dead $r1, $p3, $dc0 = LDA_2D_dms_lda
+# CHECK-NEXT:   Uses (0):
+
+--- |
+  define void @test_tied_operands() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_tied_operands
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $r0
+    
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0
+    
+    ; Define p3 (not live-in) to use in the tied instruction
+    $p3 = MOV_alu_mv_mv_mv_scl $p0
+    
+    ; Define d0 through its four subregs
+    ; d0 consists of: m0 (sub_mod), dn0 (sub_dim_size), dj0 (sub_dim_stride), dc0 (sub_dim_count)
+    $m0 = MOV_scalar_imm11_pseudo 0
+    $dn0 = MOV_scalar_imm11_pseudo 16
+    $dj0 = MOV_scalar_imm11_pseudo 1
+    $dc0 = MOV_scalar_imm11_pseudo 256
+    
+    ; LDA_2D_dms_lda has tied operands: $count_out=$mod.sub_dim_count
+    ; The output $dc0 (count_out) is tied to the input $d0.sub_dim_count
+    ; p3 is also tied (tied-def 1)
+    ; This creates a tied register constraint that should be filtered
+    ; Both the d0 live range and the tied operands (p3, dc0) should be filtered
+    dead $r1, $p3, $dc0 = LDA_2D_dms_lda $p3, $d0 :: (load (s32))
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...

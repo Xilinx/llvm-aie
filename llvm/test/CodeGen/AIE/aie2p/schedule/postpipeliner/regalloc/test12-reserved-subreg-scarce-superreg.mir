@@ -1,0 +1,130 @@
+# NOTE: Test for AIERegDefUseTracker - reserved subreg with scarce superreg from separate subreg liveranges
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker --aie-postpipeliner-filter-no-choice=false \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 12: Verify scarce register creation from separate subreg liveranges
+#
+# This test exercises a complex scenario:
+# 1. We have a RESERVED live range on x0 (subreg of y0 = [x0, x1])
+# 2. We have two normal live ranges on y0 (superregister containing x0)
+# 3. We have two separate normal liveranges: one on x2, one on x3 (subregs of y1 = [x2, x3])
+# 4. The result should be y1 identified as a scarce register with two live ranges (from x2 and x3)
+#
+# Register structure:
+# - y0 = [x0, x1] where x0 = [wl0, wh0], x1 = [wl1, wh1]
+# - y1 = [x2, x3] where x2 = [wl2, wh2], x3 = [wl3, wh3]
+#
+# Program order (backward analysis processes in reverse):
+# - y0: def x0, def x1 → use y0 in VMUL (early, normal, disjoint)
+# - x2: def → use (normal, makes x2 available)
+# - x3: def → use (normal, makes x3 available)
+# - y0: def x0, def x1 → use y0 in VMUL (middle, normal, disjoint)
+# - x0: def → use (LATE, RESERVED, feeds live-out, NOT killed)
+#
+# Expected behavior:
+# - x0's late range (feeding live-out) should be marked RESERVED
+# - y0's ranges should be normal (not reserved)
+# - x0 should NOT appear in available physical registers (due to reserved range)
+# - x2 and x3 SHOULD appear in available registers
+# - y1 (composed of x2, x3) should be identified as a scarce register with 2 ranges
+
+# Verify final analysis results
+# CHECK: FINAL LIVE RANGES
+# CHECK: Total live ranges: 7
+# CHECK-DAG: Live Range #{{[0-9]+}} for x0 [RESERVED]:
+# CHECK-DAG: Live Range #{{[0-9]+}} for x2:
+# CHECK-DAG: Live Range #{{[0-9]+}} for x3:
+# CHECK-DAG: Live Range #{{[0-9]+}} for y0:
+
+# Verify available registers - x2, x3, y1 should be available, but not x0/y0
+# CHECK: Available Physical Registers for Reallocation:
+# CHECK-NEXT: ==============================================
+# CHECK-DAG:   wh2
+# CHECK-DAG:   wh3
+# CHECK-DAG:   wl2
+# CHECK-DAG:   wl3
+# CHECK-DAG:   x2
+# CHECK-DAG:   x3
+# CHECK-DAG:   y1
+# CHECK-NOT:   x0
+# CHECK-NOT:   wl0
+# CHECK-NOT:   wh0
+# CHECK-NOT:   x1
+# CHECK-NOT:   y0
+
+# Verify scarce range set - y0 should be identified with 2 ranges
+# CHECK: Most promising scarce range set: 2 ranges
+# CHECK-NEXT: Register class: VEC1024
+# CHECK-NEXT:   [0] BaseReg=y0 Defs=2 Uses=1
+# CHECK-NEXT:   [1] BaseReg=y0 Defs=2 Uses=1
+
+--- |
+  define void @test_reserved_subreg_scarce_superreg() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_reserved_subreg_scarce_superreg
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $p7, $y4, $r2, $r3
+    
+    $lc = ADD_NC_mv_add_ri $r3, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p7, $y4, $r2, $r3
+    
+    ; EARLY in program order (analyzed LAST in backward pass):
+    ; First y0 range: normal, disjoint from reserved x0
+    $x0, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 0 :: (load (<16 x s32>))
+    $x1, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 64 :: (load (<16 x s32>))
+    $dm3 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y0, $y4, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    
+    ; x2 range: normal, makes x2 available for reallocation
+    $x2, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 128 :: (load (<16 x s32>))
+    
+    ; x3 range: normal, makes x3 available for reallocation
+    $x3, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 192 :: (load (<16 x s32>))
+    
+    ; Second y0 range: normal, disjoint from reserved x0 range
+    $x0, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 256 :: (load (<16 x s32>))
+    $x1, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 320 :: (load (<16 x s32>))
+    $dm4 = VMUL_f_vmul_bf_vmul_bf_core_Y_Y $y0, $y4, $r2, implicit-def dead $srfpflags, implicit $crfpmask
+    
+    ; LATE in program order (analyzed FIRST in backward pass):
+    ; RESERVED range: x0 load that feeds into live-out
+    $x0, $p7 = VLD_x_pstm_nrm_imm_pseudo $p7, 384 :: (load (<16 x s32>))
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    ; We make x0 live to force a reserved range
+    liveins: $x0
+    
+    
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
