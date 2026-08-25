@@ -386,9 +386,16 @@ class OrigLoopStructure : public LoopStructure {
   SmallPtrSet<Instruction *, 32>
   collectStage1Cone(function_ref<bool(const Instruction *)> IsSplitPoint) const;
 
-  // The fallback stage-0 collection (no split point): pipeline candidates
-  // backward-reachable from inner-loop uses, in program order.
-  void collectStage0FromInnerLoop();
+  // Seed helpers for different collection modes (backward closure seeding).
+  void seedFromInnerLoop(SmallVectorImpl<Instruction *> &Seeds);
+  void seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
+                     const TargetTransformInfo &TTI);
+
+  // Unified stage-0 collection via backward closure from seeds.
+  // PopulateStage1 controls whether remaining candidates go to Stage1Insts.
+  void collectStage0(
+      function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
+      bool PopulateStage1);
 
 public:
   // Build and validate the LS for L; nullptr if L is not a supported candidate.
@@ -934,43 +941,8 @@ SmallPtrSet<Instruction *, 32> OrigLoopStructure::collectStage1Cone(
   return collectClosure(SplitPoints, /*TraverseUsers=*/true);
 }
 
-void OrigLoopStructure::collectStages(
-    function_ref<bool(const Instruction *)> IsSplitPoint) {
-  // Stage 1 is the split-point cone. With no split point every candidate
-  // backward-reachable from the inner loop is stage 0.
-  const SmallPtrSet<Instruction *, 32> Stage1Set =
-      collectStage1Cone(IsSplitPoint);
-  if (Stage1Set.empty()) {
-    collectStage0FromInnerLoop();
-    return;
-  }
-
-  // Stage 0 is every other pipeline candidate (the load/address chain).
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (!isPipelineCandidate(I))
-      return;
-    (Stage1Set.count(I) ? Stage1Insts : Stage0Insts).push_back(I);
-  });
-
-  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
-                    << stage1Insts().size() << " stage-1 instructions\n");
-}
-
-void OrigLoopStructure::collectStage0FromInnerLoop() {
-  // The fallback only follows SSA def-use edges from the inner loop. Do not
-  // pipeline when the top contains an effectful candidate: its consumer may be
-  // connected through target state rather than SSA, so moving its operands
-  // without moving the operation would be incorrect.
-  // TODO: We might wanna fix this fallback collection later to not only follow
-  // SSA edges, if it turns out beneficial in practice. For now, we bail.
-  bool HasTopSideEffects = false;
-  topRegion().forEachInstruction([&](Instruction *I) {
-    HasTopSideEffects |= isPipelineCandidate(I) && I->mayHaveSideEffects();
-  });
-  if (HasTopSideEffects)
-    return;
-
-  SmallVector<Instruction *, 16> Seeds;
+void OrigLoopStructure::seedFromInnerLoop(
+    SmallVectorImpl<Instruction *> &Seeds) {
   auto Seed = [&](Value *V) {
     if (auto *I = dyn_cast<Instruction>(V))
       Seeds.push_back(I);
@@ -985,47 +957,81 @@ void OrigLoopStructure::collectStage0FromInnerLoop() {
     for (unsigned I = 0; I < PHI.getNumIncomingValues(); ++I)
       if (PHI.getIncomingBlock(I) == getTop())
         Seed(PHI.getIncomingValue(I));
-
-  const SmallPtrSet<Instruction *, 32> Visited =
-      collectClosure(Seeds, /*TraverseUsers=*/false);
-
-  // Emit the reached candidates in region program order.
-  topRegion().forEachInstruction([&](Instruction *I) {
-    if (isPipelineCandidate(I) && Visited.count(I))
-      Stage0Insts.push_back(I);
-  });
 }
 
-void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
-  SmallVector<Instruction *, 16> TopLoads;
-  SmallVector<Instruction *, 16> TopSingleUserLoads;
+void OrigLoopStructure::seedFromLoads(SmallVectorImpl<Instruction *> &Seeds,
+                                      const TargetTransformInfo &TTI) {
   topRegion().forEachInstruction([&](Instruction *I) {
     if (!isa<LoadInst>(I))
       return;
-    TopLoads.push_back(I);
-    if (I->hasOneUser())
-      TopSingleUserLoads.push_back(I);
+    Seeds.push_back(I);
+    // Also include single-user loads' lean-stage0 intrinsic users.
+    if (I->hasOneUser()) {
+      auto *User = cast<Instruction>(*I->user_begin());
+      if (TTI.isLeanStage0Intrinsic(*User))
+        Seeds.push_back(User);
+    }
   });
+}
 
-  SmallPtrSet<Instruction *, 32> Stage0Set =
-      collectClosure(TopLoads, /*TraverseUsers=*/false);
-  for (Instruction *Load : TopSingleUserLoads) {
-    auto *User = cast<Instruction>(*Load->user_begin());
-    if (!TTI.isLeanStage0Intrinsic(*User))
-      continue;
-    const SmallPtrSet<Instruction *, 32> IntrinsicClosure =
-        collectClosure({User}, /*TraverseUsers=*/false);
-    Stage0Set.insert(IntrinsicClosure.begin(), IntrinsicClosure.end());
-  }
+void OrigLoopStructure::collectStage0(
+    function_ref<void(SmallVectorImpl<Instruction *> &)> SeedCollector,
+    bool PopulateStage1) {
+  SmallVector<Instruction *, 16> Seeds;
+  SeedCollector(Seeds);
 
+  const SmallPtrSet<Instruction *, 32> Stage0Set =
+      collectClosure(Seeds, /*TraverseUsers=*/false);
+
+  // Emit stage-0 and (optionally) stage-1 candidates in region program order.
   topRegion().forEachInstruction([&](Instruction *I) {
     if (!isPipelineCandidate(I))
       return;
-    (Stage0Set.count(I) ? Stage0Insts : Stage1Insts).push_back(I);
+    if (Stage0Set.count(I))
+      Stage0Insts.push_back(I);
+    else if (PopulateStage1)
+      Stage1Insts.push_back(I);
   });
 
   LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
                     << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void OrigLoopStructure::collectStages(
+    function_ref<bool(const Instruction *)> IsSplitPoint) {
+  // Stage 1 is the split-point cone. With no split point every candidate
+  // backward-reachable from the inner loop is stage 0.
+  const SmallPtrSet<Instruction *, 32> Stage1Set =
+      collectStage1Cone(IsSplitPoint);
+  if (Stage1Set.empty()) {
+    // Fallback: the fallback only follows SSA def-use edges from the inner
+    // loop. Do not pipeline when the top contains an effectful candidate: its
+    // consumer may be connected through target state rather than SSA, so moving
+    // its operands without moving the operation would be incorrect.
+    if (llvm::any_of(*getTop(), [this](Instruction &I) {
+          return isPipelineCandidate(&I) && I.mayHaveSideEffects();
+        }))
+      return;
+
+    collectStage0([this](auto &S) { seedFromInnerLoop(S); },
+                  /*PopulateStage1=*/false);
+    return;
+  }
+
+  // Stage 0 is every other pipeline candidate (the load/address chain).
+  topRegion().forEachInstruction([&](Instruction *I) {
+    if (!isPipelineCandidate(I))
+      return;
+    (Stage1Set.count(I) ? Stage1Insts : Stage0Insts).push_back(I);
+  });
+
+  LLVM_DEBUG(dbgs() << "    Stages: " << stage0Insts().size() << " stage-0, "
+                    << stage1Insts().size() << " stage-1 instructions\n");
+}
+
+void OrigLoopStructure::collectLeanStage0(const TargetTransformInfo &TTI) {
+  collectStage0([this, &TTI](auto &S) { seedFromLoads(S, TTI); },
+                /*PopulateStage1=*/true);
 }
 
 SmallVector<Instruction *, 16>
