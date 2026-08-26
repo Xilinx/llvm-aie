@@ -97,7 +97,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT: Function:        split_prologue_basic
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - String:          Schedule found
-; CHECK-NEXT:   - Pipeliner:       ''
+; CHECK-NEXT:   - Pipeliner:       postpipeliner
 ; CHECK-NEXT:   - II:              '1'
 ; CHECK-NEXT:   - NS:              '1'
 ; CHECK-NEXT:   - Loop:            bb.3.steady.stage1.inner.inner.header
@@ -112,7 +112,7 @@ define void @split_prologue_basic(ptr noalias %a_ptr_init,
 ; CHECK-NEXT: Function:        split_prologue_basic
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - String:          Schedule found
-; CHECK-NEXT:   - Pipeliner:       ''
+; CHECK-NEXT:   - Pipeliner:       postpipeliner
 ; CHECK-NEXT:   - II:              '1'
 ; CHECK-NEXT:   - NS:              '1'
 ; CHECK-NEXT:   - Loop:            bb.6.lastiter.stage1.inner.inner.header
