@@ -16,7 +16,6 @@
 #include <cassert>
 #include <deque>
 #include <flat_set>
-#include <functional>
 #include <string>
 #include <utility>
 
@@ -97,15 +96,6 @@ void test() {
     auto it = m.upper_bound(Transparent<int>{2});
     assert(it != m.end());
     assert(transparent_used);
-  }
-  {
-    // LWG4239 std::string and C string literal
-    using M = std::flat_set<std::string, std::less<>>;
-    M m{"alpha", "beta", "epsilon", "eta", "gamma"};
-    auto it = m.upper_bound("beta");
-    assert(it == m.begin() + 2);
-    auto it2 = m.upper_bound("beta2");
-    assert(it2 == m.begin() + 2);
   }
 }
 

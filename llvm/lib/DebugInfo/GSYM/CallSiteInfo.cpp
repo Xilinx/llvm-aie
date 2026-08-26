@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/GSYM/CallSiteInfo.h"
+#include "llvm/ADT/CachedHashString.h"
 #include "llvm/DebugInfo/GSYM/FileWriter.h"
 #include "llvm/DebugInfo/GSYM/FunctionInfo.h"
 #include "llvm/DebugInfo/GSYM/GsymCreator.h"
@@ -15,7 +16,9 @@
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
+#include <fstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 using namespace llvm;

@@ -1090,6 +1090,22 @@ bool AMDGPUCallLowering::areCalleeOutgoingArgsTailCallable(
   return parametersInCSRMatch(MRI, CallerPreservedMask, OutLocs, OutArgs);
 }
 
+/// Return true if the calling convention is one that we can guarantee TCO for.
+static bool canGuaranteeTCO(CallingConv::ID CC) {
+  return CC == CallingConv::Fast;
+}
+
+/// Return true if we might ever do TCO for calls with this calling convention.
+static bool mayTailCallThisCC(CallingConv::ID CC) {
+  switch (CC) {
+  case CallingConv::C:
+  case CallingConv::AMDGPU_Gfx:
+    return true;
+  default:
+    return canGuaranteeTCO(CC);
+  }
+}
+
 bool AMDGPUCallLowering::isEligibleForTailCallOptimization(
     MachineIRBuilder &B, CallLoweringInfo &Info,
     SmallVectorImpl<ArgInfo> &InArgs, SmallVectorImpl<ArgInfo> &OutArgs) const {
@@ -1114,7 +1130,7 @@ bool AMDGPUCallLowering::isEligibleForTailCallOptimization(
   if (!CallerPreserved)
     return false;
 
-  if (!AMDGPU::mayTailCallThisCC(CalleeCC)) {
+  if (!mayTailCallThisCC(CalleeCC)) {
     LLVM_DEBUG(dbgs() << "... Calling convention cannot be tail called.\n");
     return false;
   }
@@ -1128,10 +1144,8 @@ bool AMDGPUCallLowering::isEligibleForTailCallOptimization(
   }
 
   // If we have -tailcallopt, then we're done.
-  if (MF.getTarget().Options.GuaranteedTailCallOpt) {
-    return AMDGPU::canGuaranteeTCO(CalleeCC) &&
-           CalleeCC == CallerF.getCallingConv();
-  }
+  if (MF.getTarget().Options.GuaranteedTailCallOpt)
+    return canGuaranteeTCO(CalleeCC) && CalleeCC == CallerF.getCallingConv();
 
   // Verify that the incoming and outgoing arguments from the callee are
   // safe to tail call.

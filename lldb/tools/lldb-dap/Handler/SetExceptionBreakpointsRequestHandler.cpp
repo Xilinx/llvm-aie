@@ -76,7 +76,7 @@ void SetExceptionBreakpointsRequestHandler::operator()(
 
   for (const auto &value : *filters) {
     const auto filter = GetAsString(value);
-    auto *exc_bp = dap.GetExceptionBreakpoint(filter);
+    auto *exc_bp = dap.GetExceptionBreakpoint(std::string(filter));
     if (exc_bp) {
       exc_bp->SetBreakpoint();
       unset_filters.erase(std::string(filter));

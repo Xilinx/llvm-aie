@@ -245,7 +245,6 @@ void SymbolTable::reportUndefinedSymbol(const UndefinedDiag &undefDiag) {
 }
 
 void SymbolTable::loadMinGWSymbols() {
-  std::vector<Symbol *> undefs;
   for (auto &i : symMap) {
     Symbol *sym = i.second;
     auto *undef = dyn_cast<Undefined>(sym);
@@ -253,15 +252,7 @@ void SymbolTable::loadMinGWSymbols() {
       continue;
     if (undef->getWeakAlias())
       continue;
-    undefs.push_back(sym);
-  }
 
-  for (auto sym : undefs) {
-    auto *undef = dyn_cast<Undefined>(sym);
-    if (!undef)
-      continue;
-    if (undef->getWeakAlias())
-      continue;
     StringRef name = undef->getName();
 
     if (machine == I386 && ctx.config.stdcallFixup) {
@@ -780,7 +771,7 @@ void SymbolTable::addLazyDLLSymbol(DLLFile *f, DLLFile::Symbol *sym,
     return;
   }
   auto *u = dyn_cast<Undefined>(s);
-  if (!u || (u->weakAlias && !u->isECAlias(machine)) || s->pendingArchiveLoad)
+  if (!u || u->weakAlias || s->pendingArchiveLoad)
     return;
   s->pendingArchiveLoad = true;
   f->makeImport(sym);

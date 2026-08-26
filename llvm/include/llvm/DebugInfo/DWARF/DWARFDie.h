@@ -18,7 +18,6 @@
 #include "llvm/DebugInfo/DWARF/DWARFAttribute.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
 #include "llvm/DebugInfo/DWARF/DWARFLocationExpression.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstdint>
 #include <iterator>
@@ -86,50 +85,50 @@ public:
   bool isNULL() const { return getAbbreviationDeclarationPtr() == nullptr; }
 
   /// Returns true if DIE represents a subprogram (not inlined).
-  LLVM_ABI bool isSubprogramDIE() const;
+  bool isSubprogramDIE() const;
 
   /// Returns true if DIE represents a subprogram or an inlined subroutine.
-  LLVM_ABI bool isSubroutineDIE() const;
+  bool isSubroutineDIE() const;
 
   /// Get the parent of this DIE object.
   ///
   /// \returns a valid DWARFDie instance if this object has a parent or an
   /// invalid DWARFDie instance if it doesn't.
-  LLVM_ABI DWARFDie getParent() const;
+  DWARFDie getParent() const;
 
   /// Get the sibling of this DIE object.
   ///
   /// \returns a valid DWARFDie instance if this object has a sibling or an
   /// invalid DWARFDie instance if it doesn't.
-  LLVM_ABI DWARFDie getSibling() const;
+  DWARFDie getSibling() const;
 
   /// Get the previous sibling of this DIE object.
   ///
   /// \returns a valid DWARFDie instance if this object has a sibling or an
   /// invalid DWARFDie instance if it doesn't.
-  LLVM_ABI DWARFDie getPreviousSibling() const;
+  DWARFDie getPreviousSibling() const;
 
   /// Get the first child of this DIE object.
   ///
   /// \returns a valid DWARFDie instance if this object has children or an
   /// invalid DWARFDie instance if it doesn't.
-  LLVM_ABI DWARFDie getFirstChild() const;
+  DWARFDie getFirstChild() const;
 
   /// Get the last child of this DIE object.
   ///
   /// \returns a valid null DWARFDie instance if this object has children or an
   /// invalid DWARFDie instance if it doesn't.
-  LLVM_ABI DWARFDie getLastChild() const;
+  DWARFDie getLastChild() const;
 
   /// Dump the DIE and all of its attributes to the supplied stream.
   ///
   /// \param OS the stream to use for output.
   /// \param indent the number of characters to indent each line that is output.
-  LLVM_ABI void dump(raw_ostream &OS, unsigned indent = 0,
-                     DIDumpOptions DumpOpts = DIDumpOptions()) const;
+  void dump(raw_ostream &OS, unsigned indent = 0,
+            DIDumpOptions DumpOpts = DIDumpOptions()) const;
 
   /// Convenience zero-argument overload for debugging.
-  LLVM_ABI LLVM_DUMP_METHOD void dump() const;
+  LLVM_DUMP_METHOD void dump() const;
 
   /// Extract the specified attribute from this DIE.
   ///
@@ -140,7 +139,7 @@ public:
   /// \param Attr the attribute to extract.
   /// \returns an optional DWARFFormValue that will have the form value if the
   /// attribute was successfully extracted.
-  LLVM_ABI std::optional<DWARFFormValue> find(dwarf::Attribute Attr) const;
+  std::optional<DWARFFormValue> find(dwarf::Attribute Attr) const;
 
   /// Extract the first value of any attribute in Attrs from this DIE.
   ///
@@ -153,8 +152,7 @@ public:
   /// \returns an optional that has a valid DWARFFormValue for the first
   /// matching attribute in Attrs, or std::nullopt if none of the attributes in
   /// Attrs exist in this DIE.
-  LLVM_ABI std::optional<DWARFFormValue>
-  find(ArrayRef<dwarf::Attribute> Attrs) const;
+  std::optional<DWARFFormValue> find(ArrayRef<dwarf::Attribute> Attrs) const;
 
   /// Extract the first value of any attribute in Attrs from this DIE and
   /// recurse into any DW_AT_specification or DW_AT_abstract_origin referenced
@@ -165,7 +163,7 @@ public:
   /// matching attribute in Attrs, or std::nullopt if none of the attributes in
   /// Attrs exist in this DIE or in any DW_AT_specification or
   /// DW_AT_abstract_origin DIEs.
-  LLVM_ABI std::optional<DWARFFormValue>
+  std::optional<DWARFFormValue>
   findRecursively(ArrayRef<dwarf::Attribute> Attrs) const;
 
   /// Extract the specified attribute from this DIE as the referenced DIE.
@@ -181,23 +179,21 @@ public:
   /// \param Attr the attribute to extract.
   /// \returns a valid DWARFDie instance if the attribute exists, or an invalid
   /// DWARFDie object if it doesn't.
-  LLVM_ABI DWARFDie
-  getAttributeValueAsReferencedDie(dwarf::Attribute Attr) const;
-  LLVM_ABI DWARFDie
-  getAttributeValueAsReferencedDie(const DWARFFormValue &V) const;
+  DWARFDie getAttributeValueAsReferencedDie(dwarf::Attribute Attr) const;
+  DWARFDie getAttributeValueAsReferencedDie(const DWARFFormValue &V) const;
 
-  LLVM_ABI DWARFDie resolveTypeUnitReference() const;
+  DWARFDie resolveTypeUnitReference() const;
 
-  LLVM_ABI DWARFDie resolveReferencedType(dwarf::Attribute Attr) const;
-  LLVM_ABI DWARFDie resolveReferencedType(const DWARFFormValue &V) const;
+  DWARFDie resolveReferencedType(dwarf::Attribute Attr) const;
+  DWARFDie resolveReferencedType(const DWARFFormValue &V) const;
   /// Extract the range base attribute from this DIE as absolute section offset.
   ///
   /// This is a utility function that checks for either the DW_AT_rnglists_base
   /// or DW_AT_GNU_ranges_base attribute.
   ///
   /// \returns anm optional absolute section offset value for the attribute.
-  LLVM_ABI std::optional<uint64_t> getRangesBaseAttribute() const;
-  LLVM_ABI std::optional<uint64_t> getLocBaseAttribute() const;
+  std::optional<uint64_t> getRangesBaseAttribute() const;
+  std::optional<uint64_t> getLocBaseAttribute() const;
 
   /// Get the DW_AT_high_pc attribute value as an address.
   ///
@@ -209,12 +205,12 @@ public:
   ///
   /// \param LowPC the low PC that might be needed to calculate the high PC.
   /// \returns an optional address value for the attribute.
-  LLVM_ABI std::optional<uint64_t> getHighPC(uint64_t LowPC) const;
+  std::optional<uint64_t> getHighPC(uint64_t LowPC) const;
 
   /// Retrieves DW_AT_low_pc and DW_AT_high_pc from CU.
   /// Returns true if both attributes are present.
-  LLVM_ABI bool getLowAndHighPC(uint64_t &LowPC, uint64_t &HighPC,
-                                uint64_t &SectionIndex) const;
+  bool getLowAndHighPC(uint64_t &LowPC, uint64_t &HighPC,
+                       uint64_t &SectionIndex) const;
 
   /// Get the address ranges for this DIE.
   ///
@@ -226,46 +222,45 @@ public:
   ///
   /// \returns a address range vector that might be empty if no address range
   /// information is available.
-  LLVM_ABI Expected<DWARFAddressRangesVector> getAddressRanges() const;
+  Expected<DWARFAddressRangesVector> getAddressRanges() const;
 
-  LLVM_ABI bool addressRangeContainsAddress(const uint64_t Address) const;
+  bool addressRangeContainsAddress(const uint64_t Address) const;
 
-  LLVM_ABI std::optional<uint64_t> getLanguage() const;
+  std::optional<uint64_t> getLanguage() const;
 
-  LLVM_ABI Expected<DWARFLocationExpressionsVector>
+  Expected<DWARFLocationExpressionsVector>
   getLocations(dwarf::Attribute Attr) const;
 
   /// If a DIE represents a subprogram (or inlined subroutine), returns its
   /// mangled name (or short name, if mangled is missing). This name may be
   /// fetched from specification or abstract origin for this subprogram.
   /// Returns null if no name is found.
-  LLVM_ABI const char *getSubroutineName(DINameKind Kind) const;
+  const char *getSubroutineName(DINameKind Kind) const;
 
   /// Return the DIE name resolving DW_AT_specification or DW_AT_abstract_origin
   /// references if necessary. For the LinkageName case it additionaly searches
   /// for ShortName if LinkageName is not found.
   /// Returns null if no name is found.
-  LLVM_ABI const char *getName(DINameKind Kind) const;
-  LLVM_ABI void getFullName(raw_string_ostream &,
-                            std::string *OriginalFullName = nullptr) const;
+  const char *getName(DINameKind Kind) const;
+  void getFullName(raw_string_ostream &,
+                   std::string *OriginalFullName = nullptr) const;
 
   /// Return the DIE short name resolving DW_AT_specification or
   /// DW_AT_abstract_origin references if necessary. Returns null if no name
   /// is found.
-  LLVM_ABI const char *getShortName() const;
+  const char *getShortName() const;
 
   /// Return the DIE linkage name resolving DW_AT_specification or
   /// DW_AT_abstract_origin references if necessary. Returns null if no name
   /// is found.
-  LLVM_ABI const char *getLinkageName() const;
+  const char *getLinkageName() const;
 
   /// Returns the declaration line (start line) for a DIE, assuming it specifies
   /// a subprogram. This may be fetched from specification or abstract origin
   /// for this subprogram by resolving DW_AT_sepcification or
   /// DW_AT_abstract_origin references if necessary.
-  LLVM_ABI uint64_t getDeclLine() const;
-  LLVM_ABI std::string
-  getDeclFile(DILineInfoSpecifier::FileLineInfoKind Kind) const;
+  uint64_t getDeclLine() const;
+  std::string getDeclFile(DILineInfoSpecifier::FileLineInfoKind Kind) const;
 
   /// Retrieves values of DW_AT_call_file, DW_AT_call_line and DW_AT_call_column
   /// from DIE (or zeroes if they are missing). This function looks for
@@ -279,23 +274,22 @@ public:
   /// no DW_AT_call_column attribute in this DIE.
   /// \param CallDiscriminator filled in with non-zero if successful, zero if
   /// there is no DW_AT_GNU_discriminator attribute in this DIE.
-  LLVM_ABI void getCallerFrame(uint32_t &CallFile, uint32_t &CallLine,
-                               uint32_t &CallColumn,
-                               uint32_t &CallDiscriminator) const;
+  void getCallerFrame(uint32_t &CallFile, uint32_t &CallLine,
+                      uint32_t &CallColumn, uint32_t &CallDiscriminator) const;
 
   class attribute_iterator;
 
   /// Get an iterator range to all attributes in the current DIE only.
   ///
   /// \returns an iterator range for the attributes of the current DIE.
-  LLVM_ABI iterator_range<attribute_iterator> attributes() const;
+  iterator_range<attribute_iterator> attributes() const;
 
   /// Gets the type size (in bytes) for this DIE.
   ///
   /// \param PointerSize the pointer size of the containing CU.
   /// \returns if this is a type DIE, or this DIE contains a DW_AT_type, returns
   /// the size of the type.
-  LLVM_ABI std::optional<uint64_t> getTypeSize(uint64_t PointerSize);
+  std::optional<uint64_t> getTypeSize(uint64_t PointerSize);
 
   class iterator;
 
@@ -330,10 +324,10 @@ class DWARFDie::attribute_iterator
 
 public:
   attribute_iterator() = delete;
-  LLVM_ABI explicit attribute_iterator(DWARFDie D, bool End);
+  explicit attribute_iterator(DWARFDie D, bool End);
 
-  LLVM_ABI attribute_iterator &operator++();
-  LLVM_ABI attribute_iterator &operator--();
+  attribute_iterator &operator++();
+  attribute_iterator &operator--();
   explicit operator bool() const { return AttrValue.isValid(); }
   const DWARFAttribute &operator*() const { return AttrValue; }
 };
@@ -487,9 +481,9 @@ inline std::reverse_iterator<DWARFDie::iterator> DWARFDie::rend() const {
   return std::make_reverse_iterator(begin());
 }
 
-LLVM_ABI void dumpTypeQualifiedName(const DWARFDie &DIE, raw_ostream &OS);
-LLVM_ABI void dumpTypeUnqualifiedName(const DWARFDie &DIE, raw_ostream &OS,
-                                      std::string *OriginalFullName = nullptr);
+void dumpTypeQualifiedName(const DWARFDie &DIE, raw_ostream &OS);
+void dumpTypeUnqualifiedName(const DWARFDie &DIE, raw_ostream &OS,
+                             std::string *OriginalFullName = nullptr);
 
 } // end namespace llvm
 

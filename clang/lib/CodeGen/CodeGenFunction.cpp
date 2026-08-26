@@ -36,7 +36,6 @@
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/Frontend/OpenMP/OMPIRBuilder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
@@ -80,8 +79,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
       Builder(cgm, cgm.getModule().getContext(), llvm::ConstantFolder(),
               CGBuilderInserterTy(this)),
       SanOpts(CGM.getLangOpts().Sanitize), CurFPFeatures(CGM.getLangOpts()),
-      DebugInfo(CGM.getModuleDebugInfo()),
-      PGO(std::make_unique<CodeGenPGO>(cgm)),
+      DebugInfo(CGM.getModuleDebugInfo()), PGO(cgm),
       ShouldEmitLifetimeMarkers(
           shouldEmitLifetimeMarkers(CGM.getCodeGenOpts(), CGM.getLangOpts())) {
   if (!suppressNewContext)
@@ -285,7 +283,6 @@ TypeEvaluationKind CodeGenFunction::getEvaluationKind(QualType type) {
     case Type::Pipe:
     case Type::BitInt:
     case Type::HLSLAttributedResource:
-    case Type::HLSLInlineSpirv:
       return TEK_Scalar;
 
     // Complexes.
@@ -444,10 +441,8 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 
   // Reset the debug location to that of the simple 'return' expression, if any
   // rather than that of the end of the function's scope '}'.
-  uint64_t RetKeyInstructionsAtomGroup = Loc ? Loc->getAtomGroup() : 0;
   ApplyDebugLocation AL(*this, Loc);
-  EmitFunctionEpilog(*CurFnInfo, EmitRetDbgLoc, EndLoc,
-                     RetKeyInstructionsAtomGroup);
+  EmitFunctionEpilog(*CurFnInfo, EmitRetDbgLoc, EndLoc);
   EmitEndEHSpec(CurCodeDecl);
 
   assert(EHStack.empty() &&
@@ -626,7 +621,7 @@ CodeGenFunction::getUBSanFunctionTypeHash(QualType Ty) const {
 
 void CodeGenFunction::EmitKernelMetadata(const FunctionDecl *FD,
                                          llvm::Function *Fn) {
-  if (!FD->hasAttr<DeviceKernelAttr>() && !FD->hasAttr<CUDAGlobalAttr>())
+  if (!FD->hasAttr<OpenCLKernelAttr>() && !FD->hasAttr<CUDAGlobalAttr>())
     return;
 
   llvm::LLVMContext &Context = getLLVMContext();
@@ -1511,11 +1506,6 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     // Disable debug info indefinitely for this function
     DebugInfo = nullptr;
   }
-  // Finalize function debug info on exit.
-  auto Cleanup = llvm::make_scope_exit([this] {
-    if (CGDebugInfo *DI = getDebugInfo())
-      DI->completeFunction();
-  });
 
   // The function might not have a body if we're generating thunks for a
   // function declaration.
@@ -1567,7 +1557,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     CurFn->addFnAttr(llvm::Attribute::MustProgress);
 
   // Generate the body of the function.
-  PGO->assignRegionCounters(GD, CurFn);
+  PGO.assignRegionCounters(GD, CurFn);
   if (isa<CXXDestructorDecl>(FD))
     EmitDestructorBody(Args);
   else if (isa<CXXConstructorDecl>(FD))
@@ -1598,8 +1588,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     // Implicit copy-assignment gets the same special treatment as implicit
     // copy-constructors.
     emitImplicitAssignmentOperatorBody(Args);
-  } else if (DeviceKernelAttr::isOpenCLSpelling(
-                 FD->getAttr<DeviceKernelAttr>()) &&
+  } else if (FD->hasAttr<OpenCLKernelAttr>() &&
              GD.getKernelReferenceKind() == KernelReferenceKind::Kernel) {
     CallArgList CallArgs;
     for (unsigned i = 0; i < Args.size(); ++i) {
@@ -1636,11 +1625,10 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
         CGM.getCodeGenOpts().StrictReturn ||
         !CGM.MayDropFunctionReturn(FD->getASTContext(), FD->getReturnType());
     if (SanOpts.has(SanitizerKind::Return)) {
-      auto CheckOrdinal = SanitizerKind::SO_Return;
-      auto CheckHandler = SanitizerHandler::MissingReturn;
-      SanitizerDebugLocation SanScope(this, {CheckOrdinal}, CheckHandler);
+      SanitizerScope SanScope(this);
       llvm::Value *IsFalse = Builder.getFalse();
-      EmitCheck(std::make_pair(IsFalse, CheckOrdinal), CheckHandler,
+      EmitCheck(std::make_pair(IsFalse, SanitizerKind::SO_Return),
+                SanitizerHandler::MissingReturn,
                 EmitCheckSourceLocation(FD->getLocation()), {});
     } else if (ShouldEmitUnreachable) {
       if (CGM.getCodeGenOpts().OptimizationLevel == 0)
@@ -1655,7 +1643,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   // Emit the standard function epilogue.
   FinishFunction(BodyRange.getEnd());
 
-  PGO->verifyCounterMap();
+  PGO.verifyCounterMap();
 
   // If we haven't marked the function nothrow through other means, do
   // a quick pass now to see if we can.
@@ -1779,7 +1767,7 @@ bool CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond,
   if (!AllowLabels && CodeGenFunction::ContainsLabel(Cond))
     return false;  // Contains a label.
 
-  PGO->markStmtMaybeUsed(Cond);
+  PGO.markStmtMaybeUsed(Cond);
   ResultInt = Int;
   return true;
 }
@@ -2485,7 +2473,6 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
     case Type::ObjCInterface:
     case Type::ObjCObjectPointer:
     case Type::BitInt:
-    case Type::HLSLInlineSpirv:
       llvm_unreachable("type class is never variably-modified!");
 
     case Type::Elaborated:
@@ -2542,9 +2529,7 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
           //   expression [...] each time it is evaluated it shall have a value
           //   greater than zero.
           if (SanOpts.has(SanitizerKind::VLABound)) {
-            auto CheckOrdinal = SanitizerKind::SO_VLABound;
-            auto CheckHandler = SanitizerHandler::VLABoundNotPositive;
-            SanitizerDebugLocation SanScope(this, {CheckOrdinal}, CheckHandler);
+            SanitizerScope SanScope(this);
             llvm::Value *Zero = llvm::Constant::getNullValue(size->getType());
             clang::QualType SEType = sizeExpr->getType();
             llvm::Value *CheckCondition =
@@ -2554,8 +2539,9 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
             llvm::Constant *StaticArgs[] = {
                 EmitCheckSourceLocation(sizeExpr->getBeginLoc()),
                 EmitCheckTypeDescriptor(SEType)};
-            EmitCheck(std::make_pair(CheckCondition, CheckOrdinal),
-                      CheckHandler, StaticArgs, size);
+            EmitCheck(
+                std::make_pair(CheckCondition, SanitizerKind::SO_VLABound),
+                SanitizerHandler::VLABoundNotPositive, StaticArgs, size);
           }
 
           // Always zexting here would be wrong if it weren't
@@ -3198,9 +3184,7 @@ void CodeGenFunction::emitAlignmentAssumptionCheck(
   Assumption->removeFromParent();
 
   {
-    auto CheckOrdinal = SanitizerKind::SO_Alignment;
-    auto CheckHandler = SanitizerHandler::AlignmentAssumption;
-    SanitizerDebugLocation SanScope(this, {CheckOrdinal}, CheckHandler);
+    SanitizerScope SanScope(this);
 
     if (!OffsetValue)
       OffsetValue = Builder.getInt1(false); // no offset.
@@ -3209,8 +3193,8 @@ void CodeGenFunction::emitAlignmentAssumptionCheck(
                                     EmitCheckSourceLocation(SecondaryLoc),
                                     EmitCheckTypeDescriptor(Ty)};
     llvm::Value *DynamicData[] = {Ptr, Alignment, OffsetValue};
-    EmitCheck({std::make_pair(TheCheck, CheckOrdinal)}, CheckHandler,
-              StaticData, DynamicData);
+    EmitCheck({std::make_pair(TheCheck, SanitizerKind::SO_Alignment)},
+              SanitizerHandler::AlignmentAssumption, StaticData, DynamicData);
   }
 
   // We are now in the (new, empty) "cont" basic block.

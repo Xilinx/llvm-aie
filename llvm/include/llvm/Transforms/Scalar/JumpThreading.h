@@ -22,7 +22,6 @@
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <optional>
 #include <utility>
@@ -103,38 +102,36 @@ class JumpThreadingPass : public PassInfoMixin<JumpThreadingPass> {
   unsigned DefaultBBDupThreshold;
 
 public:
-  LLVM_ABI JumpThreadingPass(int T = -1);
+  JumpThreadingPass(int T = -1);
 
   // Glue for old PM.
-  LLVM_ABI bool runImpl(Function &F, FunctionAnalysisManager *FAM,
-                        TargetLibraryInfo *TLI, TargetTransformInfo *TTI,
-                        LazyValueInfo *LVI, AAResults *AA,
-                        std::unique_ptr<DomTreeUpdater> DTU,
-                        std::optional<BlockFrequencyInfo *> BFI,
-                        std::optional<BranchProbabilityInfo *> BPI);
+  bool runImpl(Function &F, FunctionAnalysisManager *FAM,
+               TargetLibraryInfo *TLI, TargetTransformInfo *TTI,
+               LazyValueInfo *LVI, AAResults *AA,
+               std::unique_ptr<DomTreeUpdater> DTU,
+               std::optional<BlockFrequencyInfo *> BFI,
+               std::optional<BranchProbabilityInfo *> BPI);
 
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 
   DomTreeUpdater *getDomTreeUpdater() const { return DTU.get(); }
-  LLVM_ABI void findLoopHeaders(Function &F);
-  LLVM_ABI bool processBlock(BasicBlock *BB);
-  LLVM_ABI bool maybeMergeBasicBlockIntoOnlyPred(BasicBlock *BB);
-  LLVM_ABI void updateSSA(BasicBlock *BB, BasicBlock *NewBB,
-                          ValueToValueMapTy &ValueMapping);
-  LLVM_ABI void cloneInstructions(ValueToValueMapTy &ValueMapping,
-                                  BasicBlock::iterator BI,
-                                  BasicBlock::iterator BE, BasicBlock *NewBB,
-                                  BasicBlock *PredBB);
-  LLVM_ABI bool tryThreadEdge(BasicBlock *BB,
-                              const SmallVectorImpl<BasicBlock *> &PredBBs,
-                              BasicBlock *SuccBB);
-  LLVM_ABI void threadEdge(BasicBlock *BB,
-                           const SmallVectorImpl<BasicBlock *> &PredBBs,
-                           BasicBlock *SuccBB);
-  LLVM_ABI bool duplicateCondBranchOnPHIIntoPred(
+  void findLoopHeaders(Function &F);
+  bool processBlock(BasicBlock *BB);
+  bool maybeMergeBasicBlockIntoOnlyPred(BasicBlock *BB);
+  void updateSSA(BasicBlock *BB, BasicBlock *NewBB,
+                 ValueToValueMapTy &ValueMapping);
+  void cloneInstructions(ValueToValueMapTy &ValueMapping,
+                         BasicBlock::iterator BI, BasicBlock::iterator BE,
+                         BasicBlock *NewBB, BasicBlock *PredBB);
+  bool tryThreadEdge(BasicBlock *BB,
+                     const SmallVectorImpl<BasicBlock *> &PredBBs,
+                     BasicBlock *SuccBB);
+  void threadEdge(BasicBlock *BB, const SmallVectorImpl<BasicBlock *> &PredBBs,
+                  BasicBlock *SuccBB);
+  bool duplicateCondBranchOnPHIIntoPred(
       BasicBlock *BB, const SmallVectorImpl<BasicBlock *> &PredBBs);
 
-  LLVM_ABI bool computeValueKnownInPredecessorsImpl(
+  bool computeValueKnownInPredecessorsImpl(
       Value *V, BasicBlock *BB, jumpthreading::PredValueInfo &Result,
       jumpthreading::ConstantPreference Preference,
       SmallPtrSet<Value *, 4> &RecursionSet, Instruction *CxtI = nullptr);
@@ -148,34 +145,29 @@ public:
                                                RecursionSet, CxtI);
   }
 
-  LLVM_ABI Constant *evaluateOnPredecessorEdge(BasicBlock *BB,
-                                               BasicBlock *PredPredBB,
-                                               Value *cond,
-                                               const DataLayout &DL);
-  LLVM_ABI bool maybethreadThroughTwoBasicBlocks(BasicBlock *BB, Value *Cond);
-  LLVM_ABI void threadThroughTwoBasicBlocks(BasicBlock *PredPredBB,
-                                            BasicBlock *PredBB, BasicBlock *BB,
-                                            BasicBlock *SuccBB);
-  LLVM_ABI bool
-  processThreadableEdges(Value *Cond, BasicBlock *BB,
-                         jumpthreading::ConstantPreference Preference,
-                         Instruction *CxtI = nullptr);
+  Constant *evaluateOnPredecessorEdge(BasicBlock *BB, BasicBlock *PredPredBB,
+                                      Value *cond, const DataLayout &DL);
+  bool maybethreadThroughTwoBasicBlocks(BasicBlock *BB, Value *Cond);
+  void threadThroughTwoBasicBlocks(BasicBlock *PredPredBB, BasicBlock *PredBB,
+                                   BasicBlock *BB, BasicBlock *SuccBB);
+  bool processThreadableEdges(Value *Cond, BasicBlock *BB,
+                              jumpthreading::ConstantPreference Preference,
+                              Instruction *CxtI = nullptr);
 
-  LLVM_ABI bool processBranchOnPHI(PHINode *PN);
-  LLVM_ABI bool processBranchOnXOR(BinaryOperator *BO);
-  LLVM_ABI bool processImpliedCondition(BasicBlock *BB);
+  bool processBranchOnPHI(PHINode *PN);
+  bool processBranchOnXOR(BinaryOperator *BO);
+  bool processImpliedCondition(BasicBlock *BB);
 
-  LLVM_ABI bool simplifyPartiallyRedundantLoad(LoadInst *LI);
-  LLVM_ABI void unfoldSelectInstr(BasicBlock *Pred, BasicBlock *BB,
-                                  SelectInst *SI, PHINode *SIUse, unsigned Idx);
+  bool simplifyPartiallyRedundantLoad(LoadInst *LI);
+  void unfoldSelectInstr(BasicBlock *Pred, BasicBlock *BB, SelectInst *SI,
+                         PHINode *SIUse, unsigned Idx);
 
-  LLVM_ABI bool tryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
-  LLVM_ABI bool tryToUnfoldSelect(SwitchInst *SI, BasicBlock *BB);
-  LLVM_ABI bool tryToUnfoldSelectInCurrBB(BasicBlock *BB);
+  bool tryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
+  bool tryToUnfoldSelect(SwitchInst *SI, BasicBlock *BB);
+  bool tryToUnfoldSelectInCurrBB(BasicBlock *BB);
 
-  LLVM_ABI bool processGuards(BasicBlock *BB);
-  LLVM_ABI bool threadGuard(BasicBlock *BB, IntrinsicInst *Guard,
-                            BranchInst *BI);
+  bool processGuards(BasicBlock *BB);
+  bool threadGuard(BasicBlock *BB, IntrinsicInst *Guard, BranchInst *BI);
 
 private:
   BasicBlock *splitBlockPreds(BasicBlock *BB, ArrayRef<BasicBlock *> Preds,

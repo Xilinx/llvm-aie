@@ -78,10 +78,14 @@ MCSymbol *AArch64MCInstLower::GetGlobalValueSymbol(const GlobalValue *GV,
         Printer.OutStreamer->emitSymbolAttribute(Printer.getSymbol(GV),
                                                  MCSA_WeakAntiDep);
         Printer.OutStreamer->emitAssignment(
-            Printer.getSymbol(GV), MCSymbolRefExpr::create(MangledSym, Ctx));
+            Printer.getSymbol(GV),
+            MCSymbolRefExpr::create(MangledSym, MCSymbolRefExpr::VK_WEAKREF,
+                                    Ctx));
         Printer.OutStreamer->emitSymbolAttribute(MangledSym, MCSA_WeakAntiDep);
         Printer.OutStreamer->emitAssignment(
-            MangledSym, MCSymbolRefExpr::create(Printer.getSymbol(GV), Ctx));
+            MangledSym,
+            MCSymbolRefExpr::create(Printer.getSymbol(GV),
+                                    MCSymbolRefExpr::VK_WEAKREF, Ctx));
       }
 
       if (TargetFlags & AArch64II::MO_ARM64EC_CALLMANGLE)

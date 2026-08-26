@@ -430,11 +430,11 @@ template <typename CHAR> void FormatValidator<CHAR>::NextToken() {
       }
     }
     SetLength();
-    if (token_.kind() != TokenKind::String) {
-      ReportError("Unterminated string");
-    } else if (stmt_ == IoStmtKind::Read &&
+    if (stmt_ == IoStmtKind::Read &&
         previousToken_.kind() != TokenKind::DT) { // 13.3.2p6
-      ReportWarning("String edit descriptor in READ format expression");
+      ReportError("String edit descriptor in READ format expression");
+    } else if (token_.kind() != TokenKind::String) {
+      ReportError("Unterminated string");
     }
     break;
   default:

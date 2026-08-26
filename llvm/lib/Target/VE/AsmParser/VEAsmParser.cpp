@@ -1048,13 +1048,11 @@ const MCExpr *VEAsmParser::extractSpecifier(const MCExpr *E,
   case MCExpr::Target:
   case MCExpr::Constant:
     return nullptr;
-  case MCExpr::Specifier:
-    llvm_unreachable("unused by this backend");
 
   case MCExpr::SymbolRef: {
     const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
 
-    switch (SRE->getSpecifier()) {
+    switch (getSpecifier(SRE)) {
     case VEMCExpr::VK_None:
       // Use VK_REFLONG to a symbol without modifiers.
       Variant = VEMCExpr::VK_REFLONG;

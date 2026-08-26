@@ -32,7 +32,6 @@
 #include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/SymbolTableListTraits.h"
 #include "llvm/IR/Value.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -792,9 +791,8 @@ public:
 
 private:
   // These need access to the underlying BB list.
-  LLVM_ABI_FRIEND friend void BasicBlock::removeFromParent();
-  LLVM_ABI_FRIEND friend iplist<BasicBlock>::iterator
-  BasicBlock::eraseFromParent();
+  friend void BasicBlock::removeFromParent();
+  friend iplist<BasicBlock>::iterator BasicBlock::eraseFromParent();
   template <class BB_t, class BB_i_t, class BI_t, class II_t>
   friend class InstIterator;
   friend class llvm::SymbolTableListTraits<llvm::BasicBlock>;
@@ -1038,25 +1036,6 @@ public:
   /// Return value: true =>  null pointer dereference is not undefined.
   bool nullPointerIsDefined() const;
 
-  /// Returns the alignment of the given function.
-  ///
-  /// Note that this is the alignment of the code, not the alignment of a
-  /// function pointer.
-  MaybeAlign getAlign() const { return GlobalObject::getAlign(); }
-
-  /// Sets the alignment attribute of the Function.
-  void setAlignment(Align Align) { GlobalObject::setAlignment(Align); }
-
-  /// Sets the alignment attribute of the Function.
-  ///
-  /// This method will be deprecated as the alignment property should always be
-  /// defined.
-  void setAlignment(MaybeAlign Align) { GlobalObject::setAlignment(Align); }
-
-  /// Return the value for vscale based on the vscale_range attribute or 0 when
-  /// unknown.
-  unsigned getVScaleValue() const;
-
 private:
   void allocHungoffUselist();
   template<int Idx> void setHungoffOperand(Constant *C);
@@ -1073,7 +1052,8 @@ namespace CallingConv {
 
 // TODO: Need similar function for support of argument in position. General
 // version on FunctionType + Attributes + CallingConv::ID?
-LLVM_ABI LLVM_READNONE bool supportsNonVoidReturnType(CallingConv::ID CC);
+LLVM_READNONE
+bool supportsNonVoidReturnType(CallingConv::ID CC);
 } // namespace CallingConv
 
 /// Check whether null pointer dereferencing is considered undefined behavior
@@ -1081,7 +1061,7 @@ LLVM_ABI LLVM_READNONE bool supportsNonVoidReturnType(CallingConv::ID CC);
 /// Null pointer access in non-zero address space is not considered undefined.
 /// Return value: false => null pointer dereference is undefined.
 /// Return value: true =>  null pointer dereference is not undefined.
-LLVM_ABI bool NullPointerIsDefined(const Function *F, unsigned AS = 0);
+bool NullPointerIsDefined(const Function *F, unsigned AS = 0);
 
 template <> struct OperandTraits<Function> : public HungoffOperandTraits {};
 

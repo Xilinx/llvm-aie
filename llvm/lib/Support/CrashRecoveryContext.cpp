@@ -10,6 +10,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ExitCodes.h"
+#include "llvm/Support/ProgramStack.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/thread.h"
 #include <cassert>

@@ -17,7 +17,6 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include <list>
 
 namespace llvm {
@@ -57,7 +56,7 @@ class GlobalsAAResult : public AAResultBase {
   DenseMap<const Function *, unsigned> FunctionToSCCMap;
 
   /// Handle to clear this analysis on deletion of values.
-  struct LLVM_ABI DeletionCallbackHandle final : CallbackVH {
+  struct DeletionCallbackHandle final : CallbackVH {
     GlobalsAAResult *GAR;
     std::list<DeletionCallbackHandle>::iterator I;
 
@@ -80,13 +79,13 @@ class GlobalsAAResult : public AAResultBase {
   friend struct RecomputeGlobalsAAPass;
 
 public:
-  LLVM_ABI GlobalsAAResult(GlobalsAAResult &&Arg);
-  LLVM_ABI ~GlobalsAAResult();
+  GlobalsAAResult(GlobalsAAResult &&Arg);
+  ~GlobalsAAResult();
 
-  LLVM_ABI bool invalidate(Module &M, const PreservedAnalyses &PA,
-                           ModuleAnalysisManager::Invalidator &);
+  bool invalidate(Module &M, const PreservedAnalyses &PA,
+                  ModuleAnalysisManager::Invalidator &);
 
-  LLVM_ABI static GlobalsAAResult
+  static GlobalsAAResult
   analyzeModule(Module &M,
                 std::function<const TargetLibraryInfo &(Function &F)> GetTLI,
                 CallGraph &CG);
@@ -94,20 +93,18 @@ public:
   //------------------------------------------------
   // Implement the AliasAnalysis API
   //
-  LLVM_ABI AliasResult alias(const MemoryLocation &LocA,
-                             const MemoryLocation &LocB, AAQueryInfo &AAQI,
-                             const Instruction *CtxI);
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB,
+                    AAQueryInfo &AAQI, const Instruction *CtxI);
 
   using AAResultBase::getModRefInfo;
-  LLVM_ABI ModRefInfo getModRefInfo(const CallBase *Call,
-                                    const MemoryLocation &Loc,
-                                    AAQueryInfo &AAQI);
+  ModRefInfo getModRefInfo(const CallBase *Call, const MemoryLocation &Loc,
+                           AAQueryInfo &AAQI);
 
   using AAResultBase::getMemoryEffects;
   /// getMemoryEffects - Return the behavior of the specified function if
   /// called from the specified call site.  The call site may be null in which
   /// case the most generic behavior of this function should be returned.
-  LLVM_ABI MemoryEffects getMemoryEffects(const Function *F);
+  MemoryEffects getMemoryEffects(const Function *F);
 
 private:
   FunctionInfo *getFunctionInfo(const Function *F);
@@ -130,20 +127,20 @@ private:
 /// Analysis pass providing a never-invalidated alias analysis result.
 class GlobalsAA : public AnalysisInfoMixin<GlobalsAA> {
   friend AnalysisInfoMixin<GlobalsAA>;
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   typedef GlobalsAAResult Result;
 
-  LLVM_ABI GlobalsAAResult run(Module &M, ModuleAnalysisManager &AM);
+  GlobalsAAResult run(Module &M, ModuleAnalysisManager &AM);
 };
 
 struct RecomputeGlobalsAAPass : PassInfoMixin<RecomputeGlobalsAAPass> {
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 /// Legacy wrapper pass to provide the GlobalsAAResult object.
-class LLVM_ABI GlobalsAAWrapperPass : public ModulePass {
+class GlobalsAAWrapperPass : public ModulePass {
   std::unique_ptr<GlobalsAAResult> Result;
 
 public:
@@ -164,7 +161,7 @@ public:
 // createGlobalsAAWrapperPass - This pass provides alias and mod/ref info for
 // global values that do not have their addresses taken.
 //
-LLVM_ABI ModulePass *createGlobalsAAWrapperPass();
+ModulePass *createGlobalsAAWrapperPass();
 }
 
 #endif

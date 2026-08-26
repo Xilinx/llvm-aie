@@ -58,10 +58,12 @@ bool NVPTXProxyRegErasure::runOnMachineFunction(MachineFunction &MF) {
   for (auto &BB : MF) {
     for (auto &MI : BB) {
       switch (MI.getOpcode()) {
-      case NVPTX::ProxyRegB1:
-      case NVPTX::ProxyRegB16:
-      case NVPTX::ProxyRegB32:
-      case NVPTX::ProxyRegB64: {
+      case NVPTX::ProxyRegI1:
+      case NVPTX::ProxyRegI16:
+      case NVPTX::ProxyRegI32:
+      case NVPTX::ProxyRegI64:
+      case NVPTX::ProxyRegF32:
+      case NVPTX::ProxyRegF64: {
         auto &InOp = *MI.uses().begin();
         auto &OutOp = *MI.defs().begin();
         assert(InOp.isReg() && "ProxyReg input should be a register.");

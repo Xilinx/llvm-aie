@@ -573,14 +573,10 @@ public:
   /// child as well.
   void SetName(ConstString name) { m_name = name; }
 
-  struct AddrAndType {
-    lldb::addr_t address = LLDB_INVALID_ADDRESS;
-    AddressType type = eAddressTypeInvalid;
-  };
+  virtual lldb::addr_t GetAddressOf(bool scalar_is_load_address = true,
+                                    AddressType *address_type = nullptr);
 
-  virtual AddrAndType GetAddressOf(bool scalar_is_load_address = true);
-
-  AddrAndType GetPointerValue();
+  lldb::addr_t GetPointerValue(AddressType *address_type = nullptr);
 
   lldb::ValueObjectSP GetSyntheticChild(ConstString key) const;
 

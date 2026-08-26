@@ -10,7 +10,6 @@
 #define LLVM_MC_MCWINEH_H
 
 #include "llvm/ADT/MapVector.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SMLoc.h"
 #include <vector>
 
@@ -104,7 +103,7 @@ struct FrameInfo {
   }
 };
 
-class LLVM_ABI UnwindEmitter {
+class UnwindEmitter {
 public:
   virtual ~UnwindEmitter();
 

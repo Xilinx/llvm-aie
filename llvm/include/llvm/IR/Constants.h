@@ -103,16 +103,16 @@ class ConstantInt final : public ConstantData {
 public:
   ConstantInt(const ConstantInt &) = delete;
 
-  LLVM_ABI static ConstantInt *getTrue(LLVMContext &Context);
-  LLVM_ABI static ConstantInt *getFalse(LLVMContext &Context);
-  LLVM_ABI static ConstantInt *getBool(LLVMContext &Context, bool V);
-  LLVM_ABI static Constant *getTrue(Type *Ty);
-  LLVM_ABI static Constant *getFalse(Type *Ty);
-  LLVM_ABI static Constant *getBool(Type *Ty, bool V);
+  static ConstantInt *getTrue(LLVMContext &Context);
+  static ConstantInt *getFalse(LLVMContext &Context);
+  static ConstantInt *getBool(LLVMContext &Context, bool V);
+  static Constant *getTrue(Type *Ty);
+  static Constant *getFalse(Type *Ty);
+  static Constant *getBool(Type *Ty, bool V);
 
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
-  LLVM_ABI static Constant *get(Type *Ty, uint64_t V, bool IsSigned = false);
+  static Constant *get(Type *Ty, uint64_t V, bool IsSigned = false);
 
   /// Return a ConstantInt with the specified integer value for the specified
   /// type. If the type is wider than 64 bits, the value will be zero-extended
@@ -120,8 +120,7 @@ public:
   /// be interpreted as a 64-bit signed integer and sign-extended to fit
   /// the type.
   /// Get a ConstantInt for a specific value.
-  LLVM_ABI static ConstantInt *get(IntegerType *Ty, uint64_t V,
-                                   bool IsSigned = false);
+  static ConstantInt *get(IntegerType *Ty, uint64_t V, bool IsSigned = false);
 
   /// Return a ConstantInt with the specified value for the specified type. The
   /// value V will be canonicalized to a an unsigned APInt. Accessing it with
@@ -137,16 +136,15 @@ public:
 
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
-  LLVM_ABI static ConstantInt *get(LLVMContext &Context, const APInt &V);
+  static ConstantInt *get(LLVMContext &Context, const APInt &V);
 
   /// Return a ConstantInt constructed from the string strStart with the given
   /// radix.
-  LLVM_ABI static ConstantInt *get(IntegerType *Ty, StringRef Str,
-                                   uint8_t Radix);
+  static ConstantInt *get(IntegerType *Ty, StringRef Str, uint8_t Radix);
 
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
-  LLVM_ABI static Constant *get(Type *Ty, const APInt &V);
+  static Constant *get(Type *Ty, const APInt &V);
 
   /// Return the constant as an APInt value reference. This allows clients to
   /// obtain a full-precision copy of the value.
@@ -203,8 +201,8 @@ public:
   /// to the appropriate unsigned type before calling the method.
   /// @returns true if V is a valid value for type Ty
   /// Determine if the value is in range for the given type.
-  LLVM_ABI static bool isValueValidForType(Type *Ty, uint64_t V);
-  LLVM_ABI static bool isValueValidForType(Type *Ty, int64_t V);
+  static bool isValueValidForType(Type *Ty, uint64_t V);
+  static bool isValueValidForType(Type *Ty, int64_t V);
 
   bool isNegative() const { return Val.isNegative(); }
 
@@ -297,26 +295,26 @@ public:
   /// for the specified value in the specified type. This should only be used
   /// for simple constant values like 2.0/1.0 etc, that are known-valid both as
   /// host double and as the target format.
-  LLVM_ABI static Constant *get(Type *Ty, double V);
+  static Constant *get(Type *Ty, double V);
 
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantFP for the given value.
-  LLVM_ABI static Constant *get(Type *Ty, const APFloat &V);
+  static Constant *get(Type *Ty, const APFloat &V);
 
-  LLVM_ABI static Constant *get(Type *Ty, StringRef Str);
-  LLVM_ABI static ConstantFP *get(LLVMContext &Context, const APFloat &V);
-  LLVM_ABI static Constant *getNaN(Type *Ty, bool Negative = false,
-                                   uint64_t Payload = 0);
-  LLVM_ABI static Constant *getQNaN(Type *Ty, bool Negative = false,
-                                    APInt *Payload = nullptr);
-  LLVM_ABI static Constant *getSNaN(Type *Ty, bool Negative = false,
-                                    APInt *Payload = nullptr);
-  LLVM_ABI static Constant *getZero(Type *Ty, bool Negative = false);
+  static Constant *get(Type *Ty, StringRef Str);
+  static ConstantFP *get(LLVMContext &Context, const APFloat &V);
+  static Constant *getNaN(Type *Ty, bool Negative = false,
+                          uint64_t Payload = 0);
+  static Constant *getQNaN(Type *Ty, bool Negative = false,
+                           APInt *Payload = nullptr);
+  static Constant *getSNaN(Type *Ty, bool Negative = false,
+                           APInt *Payload = nullptr);
+  static Constant *getZero(Type *Ty, bool Negative = false);
   static Constant *getNegativeZero(Type *Ty) { return getZero(Ty, true); }
-  LLVM_ABI static Constant *getInfinity(Type *Ty, bool Negative = false);
+  static Constant *getInfinity(Type *Ty, bool Negative = false);
 
   /// Return true if Ty is big enough to represent V.
-  LLVM_ABI static bool isValueValidForType(Type *Ty, const APFloat &V);
+  static bool isValueValidForType(Type *Ty, const APFloat &V);
   inline const APFloat &getValueAPF() const { return Val; }
   inline const APFloat &getValue() const { return Val; }
 
@@ -338,7 +336,7 @@ public:
   /// two floating point values.  The version with a double operand is retained
   /// because it's so convenient to write isExactlyValue(2.0), but please use
   /// it only for simple constants.
-  LLVM_ABI bool isExactlyValue(const APFloat &V) const;
+  bool isExactlyValue(const APFloat &V) const;
 
   bool isExactlyValue(double V) const {
     bool ignored;
@@ -367,25 +365,25 @@ class ConstantAggregateZero final : public ConstantData {
 public:
   ConstantAggregateZero(const ConstantAggregateZero &) = delete;
 
-  LLVM_ABI static ConstantAggregateZero *get(Type *Ty);
+  static ConstantAggregateZero *get(Type *Ty);
 
   /// If this CAZ has array or vector type, return a zero with the right element
   /// type.
-  LLVM_ABI Constant *getSequentialElement() const;
+  Constant *getSequentialElement() const;
 
   /// If this CAZ has struct type, return a zero with the right element type for
   /// the specified element.
-  LLVM_ABI Constant *getStructElement(unsigned Elt) const;
+  Constant *getStructElement(unsigned Elt) const;
 
   /// Return a zero of the right value for the specified GEP index if we can,
   /// otherwise return null (e.g. if C is a ConstantExpr).
-  LLVM_ABI Constant *getElementValue(Constant *C) const;
+  Constant *getElementValue(Constant *C) const;
 
   /// Return a zero of the right value for the specified GEP index.
-  LLVM_ABI Constant *getElementValue(unsigned Idx) const;
+  Constant *getElementValue(unsigned Idx) const;
 
   /// Return the number of elements in the array, vector, or struct.
-  LLVM_ABI ElementCount getElementCount() const;
+  ElementCount getElementCount() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -407,8 +405,8 @@ public:
 /// use operands.
 class ConstantAggregate : public Constant {
 protected:
-  LLVM_ABI ConstantAggregate(Type *T, ValueTy VT, ArrayRef<Constant *> V,
-                             AllocInfo AllocInfo);
+  ConstantAggregate(Type *T, ValueTy VT, ArrayRef<Constant *> V,
+                    AllocInfo AllocInfo);
 
 public:
   /// Transparently provide more efficient getOperand methods.
@@ -441,7 +439,7 @@ class ConstantArray final : public ConstantAggregate {
 
 public:
   // ConstantArray accessors
-  LLVM_ABI static Constant *get(ArrayType *T, ArrayRef<Constant *> V);
+  static Constant *get(ArrayType *T, ArrayRef<Constant *> V);
 
 private:
   static Constant *getImpl(ArrayType *T, ArrayRef<Constant *> V);
@@ -473,7 +471,7 @@ class ConstantStruct final : public ConstantAggregate {
 
 public:
   // ConstantStruct accessors
-  LLVM_ABI static Constant *get(StructType *T, ArrayRef<Constant *> V);
+  static Constant *get(StructType *T, ArrayRef<Constant *> V);
 
   template <typename... Csts>
   static std::enable_if_t<are_base_of<Constant, Csts...>::value, Constant *>
@@ -493,12 +491,12 @@ public:
 
   /// Return an anonymous struct type to use for a constant with the specified
   /// set of elements. The list must not be empty.
-  LLVM_ABI static StructType *getTypeForElements(ArrayRef<Constant *> V,
-                                                 bool Packed = false);
+  static StructType *getTypeForElements(ArrayRef<Constant *> V,
+                                        bool Packed = false);
   /// This version of the method allows an empty list.
-  LLVM_ABI static StructType *getTypeForElements(LLVMContext &Ctx,
-                                                 ArrayRef<Constant *> V,
-                                                 bool Packed = false);
+  static StructType *getTypeForElements(LLVMContext &Ctx,
+                                        ArrayRef<Constant *> V,
+                                        bool Packed = false);
 
   /// Specialization - reduce amount of casting.
   inline StructType *getType() const {
@@ -525,7 +523,7 @@ class ConstantVector final : public ConstantAggregate {
 
 public:
   // ConstantVector accessors
-  LLVM_ABI static Constant *get(ArrayRef<Constant *> V);
+  static Constant *get(ArrayRef<Constant *> V);
 
 private:
   static Constant *getImpl(ArrayRef<Constant *> V);
@@ -533,7 +531,7 @@ private:
 public:
   /// Return a ConstantVector with the specified constant in each element.
   /// Note that this might not return an instance of ConstantVector
-  LLVM_ABI static Constant *getSplat(ElementCount EC, Constant *Elt);
+  static Constant *getSplat(ElementCount EC, Constant *Elt);
 
   /// Specialize the getType() method to always return a FixedVectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -544,7 +542,7 @@ public:
   /// If all elements of the vector constant have the same value, return that
   /// value. Otherwise, return nullptr. Ignore poison elements by setting
   /// AllowPoison to true.
-  LLVM_ABI Constant *getSplatValue(bool AllowPoison = false) const;
+  Constant *getSplatValue(bool AllowPoison = false) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -567,7 +565,7 @@ public:
   ConstantPointerNull(const ConstantPointerNull &) = delete;
 
   /// Static factory methods - Return objects of the specified value
-  LLVM_ABI static ConstantPointerNull *get(PointerType *T);
+  static ConstantPointerNull *get(PointerType *T);
 
   /// Specialize the getType() method to always return an PointerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -610,7 +608,7 @@ protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
       : ConstantData(ty, VT), DataElements(Data) {}
 
-  LLVM_ABI static Constant *getImpl(StringRef Bytes, Type *Ty);
+  static Constant *getImpl(StringRef Bytes, Type *Ty);
 
 public:
   ConstantDataSequential(const ConstantDataSequential &) = delete;
@@ -619,49 +617,49 @@ public:
   /// array of the specified element type.
   /// ConstantDataArray only works with normal float and int types that are
   /// stored densely in memory, not with things like i42 or x86_f80.
-  LLVM_ABI static bool isElementTypeCompatible(Type *Ty);
+  static bool isElementTypeCompatible(Type *Ty);
 
   /// If this is a sequential container of integers (of any size), return the
   /// specified element in the low bits of a uint64_t.
-  LLVM_ABI uint64_t getElementAsInteger(uint64_t i) const;
+  uint64_t getElementAsInteger(uint64_t i) const;
 
   /// If this is a sequential container of integers (of any size), return the
   /// specified element as an APInt.
-  LLVM_ABI APInt getElementAsAPInt(uint64_t i) const;
+  APInt getElementAsAPInt(uint64_t i) const;
 
   /// If this is a sequential container of floating point type, return the
   /// specified element as an APFloat.
-  LLVM_ABI APFloat getElementAsAPFloat(uint64_t i) const;
+  APFloat getElementAsAPFloat(uint64_t i) const;
 
   /// If this is an sequential container of floats, return the specified element
   /// as a float.
-  LLVM_ABI float getElementAsFloat(uint64_t i) const;
+  float getElementAsFloat(uint64_t i) const;
 
   /// If this is an sequential container of doubles, return the specified
   /// element as a double.
-  LLVM_ABI double getElementAsDouble(uint64_t i) const;
+  double getElementAsDouble(uint64_t i) const;
 
   /// Return a Constant for a specified index's element.
   /// Note that this has to compute a new constant to return, so it isn't as
   /// efficient as getElementAsInteger/Float/Double.
-  LLVM_ABI Constant *getElementAsConstant(uint64_t i) const;
+  Constant *getElementAsConstant(uint64_t i) const;
 
   /// Return the element type of the array/vector.
-  LLVM_ABI Type *getElementType() const;
+  Type *getElementType() const;
 
   /// Return the number of elements in the array or vector.
-  LLVM_ABI uint64_t getNumElements() const;
+  uint64_t getNumElements() const;
 
   /// Return the size (in bytes) of each element in the array/vector.
   /// The size of the elements is known to be a multiple of one byte.
-  LLVM_ABI uint64_t getElementByteSize() const;
+  uint64_t getElementByteSize() const;
 
   /// This method returns true if this is an array of \p CharSize integers.
-  LLVM_ABI bool isString(unsigned CharSize = 8) const;
+  bool isString(unsigned CharSize = 8) const;
 
   /// This method returns true if the array "isString", ends with a null byte,
   /// and does not contains any other null bytes.
-  LLVM_ABI bool isCString() const;
+  bool isCString() const;
 
   /// If this array is isString(), then this method returns the array as a
   /// StringRef. Otherwise, it asserts out.
@@ -681,7 +679,7 @@ public:
   /// Return the raw, underlying, bytes of this data. Note that this is an
   /// extremely tricky thing to work with, as it exposes the host endianness of
   /// the data elements.
-  LLVM_ABI StringRef getRawDataValues() const;
+  StringRef getRawDataValues() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -743,17 +741,17 @@ public:
   /// number of bits of the type contained in the passed in ArrayRef.
   /// (i.e. half or bfloat for 16bits, float for 32bits, double for 64bits) Note
   /// that this can return a ConstantAggregateZero object.
-  LLVM_ABI static Constant *getFP(Type *ElementType, ArrayRef<uint16_t> Elts);
-  LLVM_ABI static Constant *getFP(Type *ElementType, ArrayRef<uint32_t> Elts);
-  LLVM_ABI static Constant *getFP(Type *ElementType, ArrayRef<uint64_t> Elts);
+  static Constant *getFP(Type *ElementType, ArrayRef<uint16_t> Elts);
+  static Constant *getFP(Type *ElementType, ArrayRef<uint32_t> Elts);
+  static Constant *getFP(Type *ElementType, ArrayRef<uint64_t> Elts);
 
   /// This method constructs a CDS and initializes it with a text string.
   /// The default behavior (AddNull==true) causes a null terminator to
   /// be placed at the end of the array (increasing the length of the string by
   /// one more than the StringRef would normally indicate.  Pass AddNull=false
   /// to disable this behavior.
-  LLVM_ABI static Constant *
-  getString(LLVMContext &Context, StringRef Initializer, bool AddNull = true);
+  static Constant *getString(LLVMContext &Context, StringRef Initializer,
+                             bool AddNull = true);
 
   /// Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -790,12 +788,12 @@ public:
   /// get() constructors - Return a constant with vector type with an element
   /// count and element type matching the ArrayRef passed in.  Note that this
   /// can return a ConstantAggregateZero object.
-  LLVM_ABI static Constant *get(LLVMContext &Context, ArrayRef<uint8_t> Elts);
-  LLVM_ABI static Constant *get(LLVMContext &Context, ArrayRef<uint16_t> Elts);
-  LLVM_ABI static Constant *get(LLVMContext &Context, ArrayRef<uint32_t> Elts);
-  LLVM_ABI static Constant *get(LLVMContext &Context, ArrayRef<uint64_t> Elts);
-  LLVM_ABI static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
-  LLVM_ABI static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint8_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint16_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint32_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint64_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
 
   /// getRaw() constructor - Return a constant with vector type with an element
   /// count and element type matching the NumElements and ElementTy parameters
@@ -815,22 +813,22 @@ public:
   /// number of bits of the type contained in the passed in ArrayRef.
   /// (i.e. half or bfloat for 16bits, float for 32bits, double for 64bits) Note
   /// that this can return a ConstantAggregateZero object.
-  LLVM_ABI static Constant *getFP(Type *ElementType, ArrayRef<uint16_t> Elts);
-  LLVM_ABI static Constant *getFP(Type *ElementType, ArrayRef<uint32_t> Elts);
-  LLVM_ABI static Constant *getFP(Type *ElementType, ArrayRef<uint64_t> Elts);
+  static Constant *getFP(Type *ElementType, ArrayRef<uint16_t> Elts);
+  static Constant *getFP(Type *ElementType, ArrayRef<uint32_t> Elts);
+  static Constant *getFP(Type *ElementType, ArrayRef<uint64_t> Elts);
 
   /// Return a ConstantVector with the specified constant in each element.
   /// The specified constant has to be a of a compatible type (i8/i16/
   /// i32/i64/half/bfloat/float/double) and must be a ConstantFP or ConstantInt.
-  LLVM_ABI static Constant *getSplat(unsigned NumElts, Constant *Elt);
+  static Constant *getSplat(unsigned NumElts, Constant *Elt);
 
   /// Returns true if this is a splat constant, meaning that all elements have
   /// the same value.
-  LLVM_ABI bool isSplat() const;
+  bool isSplat() const;
 
   /// If this is a splat constant, meaning that all of the elements have the
   /// same value, return that value. Otherwise return NULL.
-  LLVM_ABI Constant *getSplatValue() const;
+  Constant *getSplatValue() const;
 
   /// Specialize the getType() method to always return a FixedVectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -859,7 +857,7 @@ public:
   ConstantTokenNone(const ConstantTokenNone &) = delete;
 
   /// Return the ConstantTokenNone.
-  LLVM_ABI static ConstantTokenNone *get(LLVMContext &Context);
+  static ConstantTokenNone *get(LLVMContext &Context);
 
   /// Methods to support type inquiry through isa, cast, and dyn_cast.
   static bool classof(const Value *V) {
@@ -880,7 +878,7 @@ public:
   ConstantTargetNone(const ConstantTargetNone &) = delete;
 
   /// Static factory methods - Return objects of the specified value.
-  LLVM_ABI static ConstantTargetNone *get(TargetExtType *T);
+  static ConstantTargetNone *get(TargetExtType *T);
 
   /// Specialize the getType() method to always return an TargetExtType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -912,21 +910,21 @@ public:
   void operator delete(void *Ptr) { User::operator delete(Ptr); }
 
   /// Return a BlockAddress for the specified function and basic block.
-  LLVM_ABI static BlockAddress *get(Function *F, BasicBlock *BB);
+  static BlockAddress *get(Function *F, BasicBlock *BB);
 
   /// Return a BlockAddress for the specified basic block.  The basic
   /// block must be embedded into a function.
-  LLVM_ABI static BlockAddress *get(BasicBlock *BB);
+  static BlockAddress *get(BasicBlock *BB);
 
   /// Return a BlockAddress for the specified basic block, which may not be
   /// part of a function. The specified type must match the type of the function
   /// the block will be inserted into.
-  LLVM_ABI static BlockAddress *get(Type *Ty, BasicBlock *BB);
+  static BlockAddress *get(Type *Ty, BasicBlock *BB);
 
   /// Lookup an existing \c BlockAddress constant for the given BasicBlock.
   ///
   /// \returns 0 if \c !BB->hasAddressTaken(), otherwise the \c BlockAddress.
-  LLVM_ABI static BlockAddress *lookup(const BasicBlock *BB);
+  static BlockAddress *lookup(const BasicBlock *BB);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -965,7 +963,7 @@ public:
   void operator delete(void *Ptr) { User::operator delete(Ptr); }
 
   /// Return a DSOLocalEquivalent for the specified global value.
-  LLVM_ABI static DSOLocalEquivalent *get(GlobalValue *GV);
+  static DSOLocalEquivalent *get(GlobalValue *GV);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1002,7 +1000,7 @@ class NoCFIValue final : public Constant {
 
 public:
   /// Return a NoCFIValue for the specified function.
-  LLVM_ABI static NoCFIValue *get(GlobalValue *GV);
+  static NoCFIValue *get(GlobalValue *GV);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1045,12 +1043,12 @@ class ConstantPtrAuth final : public Constant {
 
 public:
   /// Return a pointer signed with the specified parameters.
-  LLVM_ABI static ConstantPtrAuth *get(Constant *Ptr, ConstantInt *Key,
-                                       ConstantInt *Disc, Constant *AddrDisc);
+  static ConstantPtrAuth *get(Constant *Ptr, ConstantInt *Key,
+                              ConstantInt *Disc, Constant *AddrDisc);
 
   /// Produce a new ptrauth expression signing the given value using
   /// the same schema as is stored in one.
-  LLVM_ABI ConstantPtrAuth *getWithSameSchema(Constant *Pointer) const;
+  ConstantPtrAuth *getWithSameSchema(Constant *Pointer) const;
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
@@ -1089,14 +1087,13 @@ public:
   /// These discriminators can't be used in real pointer-auth values; they
   /// can only be used in "prototype" values that indicate how some real
   /// schema is supposed to be produced.
-  LLVM_ABI bool hasSpecialAddressDiscriminator(uint64_t Value) const;
+  bool hasSpecialAddressDiscriminator(uint64_t Value) const;
 
   /// Check whether an authentication operation with key \p Key and (possibly
   /// blended) discriminator \p Discriminator is known to be compatible with
   /// this ptrauth signed pointer.
-  LLVM_ABI bool isKnownCompatibleWith(const Value *Key,
-                                      const Value *Discriminator,
-                                      const DataLayout &DL) const;
+  bool isKnownCompatibleWith(const Value *Key, const Value *Discriminator,
+                             const DataLayout &DL) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -1141,31 +1138,30 @@ public:
 
   /// getAlignOf constant expr - computes the alignment of a type in a target
   /// independent way (Note: the return type is an i64).
-  LLVM_ABI static Constant *getAlignOf(Type *Ty);
+  static Constant *getAlignOf(Type *Ty);
 
   /// getSizeOf constant expr - computes the (alloc) size of a type (in
   /// address-units, not bits) in a target independent way (Note: the return
   /// type is an i64).
   ///
-  LLVM_ABI static Constant *getSizeOf(Type *Ty);
+  static Constant *getSizeOf(Type *Ty);
 
-  LLVM_ABI static Constant *getNeg(Constant *C, bool HasNSW = false);
-  LLVM_ABI static Constant *getNot(Constant *C);
-  LLVM_ABI static Constant *getAdd(Constant *C1, Constant *C2,
-                                   bool HasNUW = false, bool HasNSW = false);
-  LLVM_ABI static Constant *getSub(Constant *C1, Constant *C2,
-                                   bool HasNUW = false, bool HasNSW = false);
-  LLVM_ABI static Constant *getXor(Constant *C1, Constant *C2);
-  LLVM_ABI static Constant *getTrunc(Constant *C, Type *Ty,
-                                     bool OnlyIfReduced = false);
-  LLVM_ABI static Constant *getPtrToInt(Constant *C, Type *Ty,
-                                        bool OnlyIfReduced = false);
-  LLVM_ABI static Constant *getIntToPtr(Constant *C, Type *Ty,
-                                        bool OnlyIfReduced = false);
-  LLVM_ABI static Constant *getBitCast(Constant *C, Type *Ty,
-                                       bool OnlyIfReduced = false);
-  LLVM_ABI static Constant *getAddrSpaceCast(Constant *C, Type *Ty,
-                                             bool OnlyIfReduced = false);
+  static Constant *getNeg(Constant *C, bool HasNSW = false);
+  static Constant *getNot(Constant *C);
+  static Constant *getAdd(Constant *C1, Constant *C2, bool HasNUW = false,
+                          bool HasNSW = false);
+  static Constant *getSub(Constant *C1, Constant *C2, bool HasNUW = false,
+                          bool HasNSW = false);
+  static Constant *getXor(Constant *C1, Constant *C2);
+  static Constant *getTrunc(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getPtrToInt(Constant *C, Type *Ty,
+                               bool OnlyIfReduced = false);
+  static Constant *getIntToPtr(Constant *C, Type *Ty,
+                               bool OnlyIfReduced = false);
+  static Constant *getBitCast(Constant *C, Type *Ty,
+                              bool OnlyIfReduced = false);
+  static Constant *getAddrSpaceCast(Constant *C, Type *Ty,
+                                    bool OnlyIfReduced = false);
 
   static Constant *getNSWNeg(Constant *C) { return getNeg(C, /*HasNSW=*/true); }
 
@@ -1189,7 +1185,7 @@ public:
   /// function returns a new scalar/fixed width vector obtained from logBase2
   /// of C. Undef vector elements are set to zero.
   /// Return a null pointer otherwise.
-  LLVM_ABI static Constant *getExactLogBase2(Constant *C);
+  static Constant *getExactLogBase2(Constant *C);
 
   /// Return the identity constant for a binary opcode.
   /// If the binop is not commutative, callers can acquire the operand 1
@@ -1198,18 +1194,17 @@ public:
   /// is a fadd/fsub operation and we don't care about signed zeros, then
   /// setting NSZ to true returns the identity +0.0 instead of -0.0. Return
   /// nullptr if the operator does not have an identity constant.
-  LLVM_ABI static Constant *getBinOpIdentity(unsigned Opcode, Type *Ty,
-                                             bool AllowRHSConstant = false,
-                                             bool NSZ = false);
+  static Constant *getBinOpIdentity(unsigned Opcode, Type *Ty,
+                                    bool AllowRHSConstant = false,
+                                    bool NSZ = false);
 
-  LLVM_ABI static Constant *getIntrinsicIdentity(Intrinsic::ID, Type *Ty);
+  static Constant *getIntrinsicIdentity(Intrinsic::ID, Type *Ty);
 
   /// Return the identity constant for a binary or intrinsic Instruction.
   /// The identity constant C is defined as X op C = X and C op X = X where C
   /// and X are the first two operands, and the operation is commutative.
-  LLVM_ABI static Constant *getIdentity(Instruction *I, Type *Ty,
-                                        bool AllowRHSConstant = false,
-                                        bool NSZ = false);
+  static Constant *getIdentity(Instruction *I, Type *Ty,
+                               bool AllowRHSConstant = false, bool NSZ = false);
 
   /// Return the absorbing element for the given binary
   /// operation, i.e. a constant C such that X op C = C and C op X = C for
@@ -1217,8 +1212,8 @@ public:
   /// If AllowLHSConstant is true, the LHS operand is a constant C that must be
   /// defined as C op X = C. It returns null if the operator doesn't have
   /// an absorbing element.
-  LLVM_ABI static Constant *getBinOpAbsorber(unsigned Opcode, Type *Ty,
-                                             bool AllowLHSConstant = false);
+  static Constant *getBinOpAbsorber(unsigned Opcode, Type *Ty,
+                                    bool AllowLHSConstant = false);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
@@ -1229,39 +1224,38 @@ public:
   /// \param C  The constant to be converted
   /// \param Ty The type to which the constant is converted
   /// \param OnlyIfReduced see \a getWithOperands() docs.
-  LLVM_ABI static Constant *getCast(unsigned ops, Constant *C, Type *Ty,
-                                    bool OnlyIfReduced = false);
+  static Constant *getCast(unsigned ops, Constant *C, Type *Ty,
+                           bool OnlyIfReduced = false);
 
   // Create a Trunc or BitCast cast constant expression
-  LLVM_ABI static Constant *
+  static Constant *
   getTruncOrBitCast(Constant *C, ///< The constant to trunc or bitcast
                     Type *Ty     ///< The type to trunc or bitcast C to
   );
 
   /// Create a BitCast, AddrSpaceCast, or a PtrToInt cast constant
   /// expression.
-  LLVM_ABI static Constant *
+  static Constant *
   getPointerCast(Constant *C, ///< The pointer value to be casted (operand 0)
                  Type *Ty     ///< The type to which cast should be made
   );
 
   /// Create a BitCast or AddrSpaceCast for a pointer type depending on
   /// the address space.
-  LLVM_ABI static Constant *getPointerBitCastOrAddrSpaceCast(
+  static Constant *getPointerBitCastOrAddrSpaceCast(
       Constant *C, ///< The constant to addrspacecast or bitcast
       Type *Ty     ///< The type to bitcast or addrspacecast C to
   );
 
   /// Return true if this is a convert constant expression
-  LLVM_ABI bool isCast() const;
+  bool isCast() const;
 
   /// get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
   /// \param OnlyIfReducedTy see \a getWithOperands() docs.
-  LLVM_ABI static Constant *get(unsigned Opcode, Constant *C1, Constant *C2,
-                                unsigned Flags = 0,
-                                Type *OnlyIfReducedTy = nullptr);
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2,
+                       unsigned Flags = 0, Type *OnlyIfReducedTy = nullptr);
 
   /// Getelementptr form.  Value* is only accepted for convenience;
   /// all elements must be Constants.
@@ -1288,7 +1282,7 @@ public:
     return getGetElementPtr(Ty, C, cast<Value>(Idx), NW, InRange,
                             OnlyIfReducedTy);
   }
-  LLVM_ABI static Constant *
+  static Constant *
   getGetElementPtr(Type *Ty, Constant *C, ArrayRef<Value *> IdxList,
                    GEPNoWrapFlags NW = GEPNoWrapFlags::none(),
                    std::optional<ConstantRange> InRange = std::nullopt,
@@ -1312,30 +1306,29 @@ public:
     return getGetElementPtr(Ty, C, IdxList, GEPNoWrapFlags::inBounds());
   }
 
-  LLVM_ABI static Constant *getExtractElement(Constant *Vec, Constant *Idx,
-                                              Type *OnlyIfReducedTy = nullptr);
-  LLVM_ABI static Constant *getInsertElement(Constant *Vec, Constant *Elt,
-                                             Constant *Idx,
-                                             Type *OnlyIfReducedTy = nullptr);
-  LLVM_ABI static Constant *getShuffleVector(Constant *V1, Constant *V2,
-                                             ArrayRef<int> Mask,
-                                             Type *OnlyIfReducedTy = nullptr);
+  static Constant *getExtractElement(Constant *Vec, Constant *Idx,
+                                     Type *OnlyIfReducedTy = nullptr);
+  static Constant *getInsertElement(Constant *Vec, Constant *Elt, Constant *Idx,
+                                    Type *OnlyIfReducedTy = nullptr);
+  static Constant *getShuffleVector(Constant *V1, Constant *V2,
+                                    ArrayRef<int> Mask,
+                                    Type *OnlyIfReducedTy = nullptr);
 
   /// Return the opcode at the root of this constant expression
   unsigned getOpcode() const { return getSubclassDataFromValue(); }
 
   /// Assert that this is a shufflevector and return the mask. See class
   /// ShuffleVectorInst for a description of the mask representation.
-  LLVM_ABI ArrayRef<int> getShuffleMask() const;
+  ArrayRef<int> getShuffleMask() const;
 
   /// Assert that this is a shufflevector and return the mask.
   ///
   /// TODO: This is a temporary hack until we update the bitcode format for
   /// shufflevector.
-  LLVM_ABI Constant *getShuffleMaskForBitcode() const;
+  Constant *getShuffleMaskForBitcode() const;
 
   /// Return a string representation for an opcode.
-  LLVM_ABI const char *getOpcodeName() const;
+  const char *getOpcodeName() const;
 
   /// This returns the current constant expression with the operands replaced
   /// with the specified values. The specified array must have the same number
@@ -1353,9 +1346,9 @@ public:
   /// If \c OnlyIfReduced is \c true, nullptr will be returned unless something
   /// gets constant-folded, the type changes, or the expression is otherwise
   /// canonicalized.  This parameter should almost always be \c false.
-  LLVM_ABI Constant *getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
-                                     bool OnlyIfReduced = false,
-                                     Type *SrcTy = nullptr) const;
+  Constant *getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
+                            bool OnlyIfReduced = false,
+                            Type *SrcTy = nullptr) const;
 
   /// Returns an Instruction which implements the same operation as this
   /// ConstantExpr. It is not inserted into any basic block.
@@ -1364,21 +1357,21 @@ public:
   /// which would take a ConstantExpr parameter, but that would have spread
   /// implementation details of ConstantExpr outside of Constants.cpp, which
   /// would make it harder to remove ConstantExprs altogether.
-  LLVM_ABI Instruction *getAsInstruction() const;
+  Instruction *getAsInstruction() const;
 
   /// Whether creating a constant expression for this binary operator is
   /// desirable.
-  LLVM_ABI static bool isDesirableBinOp(unsigned Opcode);
+  static bool isDesirableBinOp(unsigned Opcode);
 
   /// Whether creating a constant expression for this binary operator is
   /// supported.
-  LLVM_ABI static bool isSupportedBinOp(unsigned Opcode);
+  static bool isSupportedBinOp(unsigned Opcode);
 
   /// Whether creating a constant expression for this cast is desirable.
-  LLVM_ABI static bool isDesirableCastOp(unsigned Opcode);
+  static bool isDesirableCastOp(unsigned Opcode);
 
   /// Whether creating a constant expression for this cast is supported.
-  LLVM_ABI static bool isSupportedCastOp(unsigned Opcode);
+  static bool isSupportedCastOp(unsigned Opcode);
 
   /// Whether creating a constant expression for this getelementptr type is
   /// supported.
@@ -1429,25 +1422,25 @@ public:
   UndefValue(const UndefValue &) = delete;
 
   /// Static factory methods - Return an 'undef' object of the specified type.
-  LLVM_ABI static UndefValue *get(Type *T);
+  static UndefValue *get(Type *T);
 
   /// If this Undef has array or vector type, return a undef with the right
   /// element type.
-  LLVM_ABI UndefValue *getSequentialElement() const;
+  UndefValue *getSequentialElement() const;
 
   /// If this undef has struct type, return a undef with the right element type
   /// for the specified element.
-  LLVM_ABI UndefValue *getStructElement(unsigned Elt) const;
+  UndefValue *getStructElement(unsigned Elt) const;
 
   /// Return an undef of the right value for the specified GEP index if we can,
   /// otherwise return null (e.g. if C is a ConstantExpr).
-  LLVM_ABI UndefValue *getElementValue(Constant *C) const;
+  UndefValue *getElementValue(Constant *C) const;
 
   /// Return an undef of the right value for the specified GEP index.
-  LLVM_ABI UndefValue *getElementValue(unsigned Idx) const;
+  UndefValue *getElementValue(unsigned Idx) const;
 
   /// Return the number of elements in the array, vector, or struct.
-  LLVM_ABI unsigned getNumElements() const;
+  unsigned getNumElements() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -1474,22 +1467,22 @@ public:
   PoisonValue(const PoisonValue &) = delete;
 
   /// Static factory methods - Return an 'poison' object of the specified type.
-  LLVM_ABI static PoisonValue *get(Type *T);
+  static PoisonValue *get(Type *T);
 
   /// If this poison has array or vector type, return a poison with the right
   /// element type.
-  LLVM_ABI PoisonValue *getSequentialElement() const;
+  PoisonValue *getSequentialElement() const;
 
   /// If this poison has struct type, return a poison with the right element
   /// type for the specified element.
-  LLVM_ABI PoisonValue *getStructElement(unsigned Elt) const;
+  PoisonValue *getStructElement(unsigned Elt) const;
 
   /// Return an poison of the right value for the specified GEP index if we can,
   /// otherwise return null (e.g. if C is a ConstantExpr).
-  LLVM_ABI PoisonValue *getElementValue(Constant *C) const;
+  PoisonValue *getElementValue(Constant *C) const;
 
   /// Return an poison of the right value for the specified GEP index.
-  LLVM_ABI PoisonValue *getElementValue(unsigned Idx) const;
+  PoisonValue *getElementValue(unsigned Idx) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {

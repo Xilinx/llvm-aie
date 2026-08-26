@@ -9,7 +9,6 @@
 #ifndef LLVM_DEBUGINFO_MSF_MSFERROR_H
 #define LLVM_DEBUGINFO_MSF_MSFERROR_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -37,7 +36,7 @@ struct is_error_code_enum<llvm::msf::msf_error_code> : std::true_type {};
 
 namespace llvm {
 namespace msf {
-LLVM_ABI const std::error_category &MSFErrCategory();
+const std::error_category &MSFErrCategory();
 
 inline std::error_code make_error_code(msf_error_code E) {
   return std::error_code(static_cast<int>(E), MSFErrCategory());
@@ -68,7 +67,7 @@ public:
     llvm_unreachable("msf error code not implemented");
   }
 
-  LLVM_ABI static char ID;
+  static char ID;
 };
 } // namespace msf
 } // namespace llvm

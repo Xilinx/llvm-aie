@@ -20,7 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Common/ErrorHandler.h"
-#include "lld/Common/Utils.h"
 #include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
@@ -148,6 +147,19 @@ static SmallVector<std::pair<unsigned, UtilityNodes>> getUnsForCompression(
   return sectionUns;
 }
 
+/// Symbols can be appended with "(.__uniq.xxxx)?(.llvm.yyyy)?(.Tgm)?" where
+/// "xxxx" and "yyyy" are numbers that could change between builds, and .Tgm is
+/// the global merge functions suffix
+/// (see GlobalMergeFunc::MergingInstanceSuffix). We need to use the root symbol
+/// name before this suffix so these symbols can be matched with profiles which
+/// may have different suffixes.
+inline StringRef getRootSymbol(StringRef name) {
+  name.consume_back(".Tgm");
+  auto [P0, S0] = name.rsplit(".llvm.");
+  auto [P1, S1] = P0.rsplit(".__uniq.");
+  return P1;
+}
+
 template <class D>
 auto BPOrderer<D>::computeOrder(
     StringRef profilePath, bool forFunctionCompression, bool forDataCompression,
@@ -185,7 +197,7 @@ auto BPOrderer<D>::computeOrder(
       for (size_t timestamp = 0; timestamp < trace.size(); timestamp++) {
         auto [_, parsedFuncName] = getParsedIRPGOName(
             reader->getSymtab().getFuncOrVarName(trace[timestamp]));
-        parsedFuncName = lld::utils::getRootSymbol(parsedFuncName);
+        parsedFuncName = getRootSymbol(parsedFuncName);
 
         auto sectionIdxsIt =
             rootSymbolToSectionIdxs.find(CachedHashStringRef(parsedFuncName));
@@ -363,7 +375,7 @@ auto BPOrderer<D>::computeOrder(
           // 4?
           uint64_t lastPage = endAddress / pageSize;
           StringRef rootSymbol = D::getSymName(*sym);
-          rootSymbol = lld::utils::getRootSymbol(rootSymbol);
+          rootSymbol = getRootSymbol(rootSymbol);
           symbolToPageNumbers.try_emplace(rootSymbol, firstPage, lastPage);
           if (auto resolvedLinkageName = D::getResolvedLinkageName(rootSymbol))
             symbolToPageNumbers.try_emplace(resolvedLinkageName.value(),
@@ -381,7 +393,7 @@ auto BPOrderer<D>::computeOrder(
           auto traceId = trace.FunctionNameRefs[step];
           auto [Filename, ParsedFuncName] =
               getParsedIRPGOName(reader->getSymtab().getFuncOrVarName(traceId));
-          ParsedFuncName = lld::utils::getRootSymbol(ParsedFuncName);
+          ParsedFuncName = getRootSymbol(ParsedFuncName);
           auto it = symbolToPageNumbers.find(ParsedFuncName);
           if (it != symbolToPageNumbers.end()) {
             auto &[firstPage, lastPage] = it->getValue();

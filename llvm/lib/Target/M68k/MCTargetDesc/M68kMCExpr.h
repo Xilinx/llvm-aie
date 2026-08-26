@@ -18,7 +18,7 @@
 
 namespace llvm {
 
-class M68kMCExpr : public MCSpecifierExpr {
+class M68kMCExpr : public MCTargetExpr {
 public:
   enum Specifier {
     VK_None,
@@ -34,14 +34,27 @@ public:
     VK_TPOFF,
   };
 
+private:
+  const MCExpr *Expr;
+  const Specifier specifier;
+
 protected:
   explicit M68kMCExpr(const MCExpr *Expr, Specifier S)
-      : MCSpecifierExpr(Expr, S) {}
+      : Expr(Expr), specifier(S) {}
 
 public:
   static const M68kMCExpr *create(const MCExpr *, Specifier, MCContext &);
 
+  Specifier getSpecifier() const { return specifier; }
+  const MCExpr *getSubExpr() const { return Expr; }
+
   void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
+  bool evaluateAsRelocatableImpl(MCValue &Res,
+                                 const MCAssembler *Asm) const override;
+  void visitUsedExpr(MCStreamer &Streamer) const override;
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
+  }
 };
 } // namespace llvm
 

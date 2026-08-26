@@ -90,8 +90,6 @@ MCAssembler::MCAssembler(MCContext &Context,
 }
 
 void MCAssembler::reset() {
-  HasLayout = false;
-  HasFinalLayout = false;
   RelaxAll = false;
   Sections.clear();
   Symbols.clear();
@@ -219,12 +217,12 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
     auto &FF = cast<MCFillFragment>(F);
     int64_t NumValues = 0;
     if (!FF.getNumValues().evaluateKnownAbsolute(NumValues, *this)) {
-      recordError(FF.getLoc(), "expected assembly-time absolute expression");
+      reportError(FF.getLoc(), "expected assembly-time absolute expression");
       return 0;
     }
     int64_t Size = NumValues * FF.getValueSize();
     if (Size < 0) {
-      recordError(FF.getLoc(), "invalid number of bytes");
+      reportError(FF.getLoc(), "invalid number of bytes");
       return 0;
     }
     return Size;
@@ -268,7 +266,7 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
     const MCOrgFragment &OF = cast<MCOrgFragment>(F);
     MCValue Value;
     if (!OF.getOffset().evaluateAsValue(Value, *this)) {
-      recordError(OF.getLoc(), "expected assembly-time absolute expression");
+      reportError(OF.getLoc(), "expected assembly-time absolute expression");
       return 0;
     }
 
@@ -277,14 +275,14 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
     if (const auto *SA = Value.getAddSym()) {
       uint64_t Val;
       if (!getSymbolOffset(*SA, Val)) {
-        recordError(OF.getLoc(), "expected absolute expression");
+        reportError(OF.getLoc(), "expected absolute expression");
         return 0;
       }
       TargetLocation += Val;
     }
     int64_t Size = TargetLocation - FragmentOffset;
     if (Size < 0 || Size >= 0x40000000) {
-      recordError(OF.getLoc(), "invalid .org offset '" + Twine(TargetLocation) +
+      reportError(OF.getLoc(), "invalid .org offset '" + Twine(TargetLocation) +
                                    "' (at offset '" + Twine(FragmentOffset) +
                                    "')");
       return 0;
@@ -302,6 +300,8 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
     return cast<MCCVDefRangeFragment>(F).getContents().size();
   case MCFragment::FT_PseudoProbe:
     return cast<MCPseudoProbeAddrFragment>(F).getContents().size();
+  case MCFragment::FT_Dummy:
+    llvm_unreachable("Should not have been added");
   }
 
   llvm_unreachable("invalid fragment kind");
@@ -386,6 +386,28 @@ void MCAssembler::layoutBundle(MCFragment *Prev, MCFragment *F) const {
   if (auto *DF = dyn_cast_or_null<MCDataFragment>(Prev))
     if (DF->getContents().empty())
       DF->Offset = EF->Offset;
+}
+
+void MCAssembler::ensureValid(MCSection &Sec) const {
+  if (Sec.hasLayout())
+    return;
+  Sec.setHasLayout(true);
+  MCFragment *Prev = nullptr;
+  uint64_t Offset = 0;
+  for (MCFragment &F : Sec) {
+    F.Offset = Offset;
+    if (isBundlingEnabled() && F.hasInstructions()) {
+      layoutBundle(Prev, &F);
+      Offset = F.Offset;
+    }
+    Offset += computeFragmentSize(F);
+    Prev = &F;
+  }
+}
+
+uint64_t MCAssembler::getFragmentOffset(const MCFragment &F) const {
+  ensureValid(*F.getParent());
+  return F.Offset;
 }
 
 // Simple getSymbolOffset helper for the non-variable case.
@@ -745,6 +767,8 @@ static void writeFragment(raw_ostream &OS, const MCAssembler &Asm,
     OS << PF.getContents();
     break;
   }
+  case MCFragment::FT_Dummy:
+    llvm_unreachable("Should not have been added");
   }
 
   assert(OS.tell() - Start == FragmentSize &&
@@ -805,7 +829,6 @@ void MCAssembler::writeSectionData(raw_ostream &OS,
   for (const MCFragment &F : *Sec)
     writeFragment(OS, *this, F);
 
-  flushPendingErrors();
   assert(getContext().hadError() ||
          OS.tell() - Start == getSectionAddressSize(*Sec));
 }
@@ -823,7 +846,7 @@ void MCAssembler::layout() {
 
     // Chain together fragments from all subsections.
     if (Sec.Subsections.size() > 1) {
-      MCDataFragment Dummy;
+      MCDummyFragment Dummy;
       MCFragment *Tail = &Dummy;
       for (auto &[_, List] : Sec.Subsections) {
         assert(List.Head);
@@ -842,23 +865,22 @@ void MCAssembler::layout() {
 
   // Layout until everything fits.
   this->HasLayout = true;
-  for (MCSection &Sec : *this)
-    layoutSection(Sec);
-  while (relaxOnce())
+  while (layoutOnce()) {
     if (getContext().hadError())
       return;
+    // Size of fragments in one section can depend on the size of fragments in
+    // another. If any fragment has changed size, we have to re-layout (and
+    // as a result possibly further relax) all.
+    for (MCSection &Sec : *this)
+      Sec.setHasLayout(false);
+  }
 
   DEBUG_WITH_TYPE("mc-dump", {
       errs() << "assembler backend - post-relaxation\n--\n";
       dump(); });
 
-  // Some targets might want to adjust fragment offsets. If so, perform another
-  // layout iteration.
-  if (getBackend().finishLayout(*this))
-    for (MCSection &Sec : *this)
-      layoutSection(Sec);
-
-  flushPendingErrors();
+  // Finalize the layout, including fragment lowering.
+  getBackend().finishLayout(*this);
 
   DEBUG_WITH_TYPE("mc-dump", {
       errs() << "assembler backend - final-layout\n--\n";
@@ -950,7 +972,6 @@ void MCAssembler::Finish() {
   stats::ObjectBytes += getWriter().writeObject();
 
   HasLayout = false;
-  assert(PendingErrors.empty());
 }
 
 bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
@@ -1162,14 +1183,6 @@ bool MCAssembler::relaxCVDefRange(MCCVDefRangeFragment &F) {
   return OldSize != F.getContents().size();
 }
 
-bool MCAssembler::relaxFill(MCFillFragment &F) {
-  uint64_t Size = computeFragmentSize(F);
-  if (F.getSize() == Size)
-    return false;
-  F.setSize(Size);
-  return true;
-}
-
 bool MCAssembler::relaxPseudoProbeAddr(MCPseudoProbeAddrFragment &PF) {
   uint64_t OldSize = PF.getContents().size();
   int64_t AddrDelta;
@@ -1206,68 +1219,24 @@ bool MCAssembler::relaxFragment(MCFragment &F) {
     return relaxCVInlineLineTable(cast<MCCVInlineLineTableFragment>(F));
   case MCFragment::FT_CVDefRange:
     return relaxCVDefRange(cast<MCCVDefRangeFragment>(F));
-  case MCFragment::FT_Fill:
-    return relaxFill(cast<MCFillFragment>(F));
   case MCFragment::FT_PseudoProbe:
     return relaxPseudoProbeAddr(cast<MCPseudoProbeAddrFragment>(F));
   }
 }
 
-void MCAssembler::layoutSection(MCSection &Sec) {
-  MCFragment *Prev = nullptr;
-  uint64_t Offset = 0;
-  for (MCFragment &F : Sec) {
-    F.Offset = Offset;
-    if (LLVM_UNLIKELY(isBundlingEnabled())) {
-      if (F.hasInstructions()) {
-        layoutBundle(Prev, &F);
-        Offset = F.Offset;
-      }
-      Prev = &F;
-    }
-    Offset += computeFragmentSize(F);
-  }
-}
-
-bool MCAssembler::relaxOnce() {
+bool MCAssembler::layoutOnce() {
   ++stats::RelaxationSteps;
-  PendingErrors.clear();
 
-  // Size of fragments in one section can depend on the size of fragments in
-  // another. If any fragment has changed size, we have to re-layout (and
-  // as a result possibly further relax) all sections.
-  bool ChangedAny = false;
-  for (MCSection &Sec : *this) {
-    // Assume each iteration finalizes at least one extra fragment. If the
-    // layout does not converge after N+1 iterations, bail out.
-    auto MaxIter = Sec.curFragList()->Tail->getLayoutOrder() + 1;
-    for (;;) {
-      bool Changed = false;
-      for (MCFragment &F : Sec)
-        if (relaxFragment(F))
-          Changed = true;
-
-      ChangedAny |= Changed;
-      if (!Changed || --MaxIter == 0)
-        break;
-      layoutSection(Sec);
-    }
-  }
-  return ChangedAny;
+  bool Changed = false;
+  for (MCSection &Sec : *this)
+    for (MCFragment &Frag : Sec)
+      if (relaxFragment(Frag))
+        Changed = true;
+  return Changed;
 }
 
 void MCAssembler::reportError(SMLoc L, const Twine &Msg) const {
   getContext().reportError(L, Msg);
-}
-
-void MCAssembler::recordError(SMLoc Loc, const Twine &Msg) const {
-  PendingErrors.emplace_back(Loc, Msg.str());
-}
-
-void MCAssembler::flushPendingErrors() const {
-  for (auto &Err : PendingErrors)
-    reportError(Err.first, Err.second);
-  PendingErrors.clear();
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)

@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -33,7 +32,7 @@ class ProfileSummaryInfo;
 /// reverse order.
 ///
 /// \post for all inst in MF: not isPreISelGenericOpcode(inst.opcode)
-class LLVM_ABI InstructionSelect : public MachineFunctionPass {
+class InstructionSelect : public MachineFunctionPass {
 public:
   static char ID;
   StringRef getPassName() const override { return "InstructionSelect"; }

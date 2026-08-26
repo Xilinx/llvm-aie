@@ -14,7 +14,6 @@
 
 #include <cassert>
 #include <flat_set>
-#include <functional>
 #include <string>
 #include <utility>
 #include <deque>
@@ -74,13 +73,6 @@ void test() {
     auto b = m.contains(Transparent<int>{3});
     assert(b);
     assert(transparent_used);
-  }
-  {
-    // LWG4239 std::string and C string literal
-    using M = std::flat_set<std::string, std::less<>>;
-    M m{"alpha", "beta", "epsilon", "eta", "gamma"};
-    assert(m.contains("beta"));
-    assert(!m.contains("eta2"));
   }
 }
 

@@ -15,7 +15,6 @@
 
 #include "llvm/BinaryFormat/Swift.h"
 #include "llvm/MC/MCSection.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/VersionTuple.h"
 #include "llvm/TargetParser/Triple.h"
 
@@ -26,7 +25,7 @@ namespace llvm {
 class MCContext;
 class MCSection;
 
-class LLVM_ABI MCObjectFileInfo {
+class MCObjectFileInfo {
 protected:
   /// True if target object file supports a weak_definition of constant 0 for an
   /// omitted EH frame.

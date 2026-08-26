@@ -7,13 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "src/stdio/fgets.h"
-
 #include "file.h"
+#include "src/__support/macros/config.h"
+#include "src/stdio/feof.h"
+#include "src/stdio/ferror.h"
+
 #include "hdr/stdio_macros.h" // for EOF.
 #include "hdr/types/FILE.h"
-#include "src/__support/common.h"
-
-#include <stdint.h>
+#include <stddef.h>
 
 namespace LIBC_NAMESPACE_DECL {
 

@@ -130,6 +130,9 @@ class ParsedAttr final
   size_t numTrailingObjects(OverloadToken<ParsedType>) const {
     return HasParsedType;
   }
+  size_t numTrailingObjects(OverloadToken<detail::PropertyData>) const {
+    return IsProperty;
+  }
 
 private:
   IdentifierInfo *MacroII = nullptr;

@@ -10,11 +10,11 @@
 
 // template <class T, class Allocator>
 //     bool operator==(const forward_list<T, Allocator>& x,
-//                     const forward_list<T, Allocator>& y); // constexpr since C++26
+//                     const forward_list<T, Allocator>& y);
 //
 // template <class T, class Allocator>
 //     bool operator!=(const forward_list<T, Allocator>& x,
-//                     const forward_list<T, Allocator>& y); // constexpr since C++26
+//                     const forward_list<T, Allocator>& y);
 
 #include <forward_list>
 #include <iterator>
@@ -25,7 +25,7 @@
 #include "min_allocator.h"
 
 template <class C>
-TEST_CONSTEXPR_CXX26 void test(int N, int M) {
+void test(int N, int M) {
   C c1;
   for (int i = 0; i < N; ++i)
     c1.push_front(i);
@@ -44,7 +44,7 @@ TEST_CONSTEXPR_CXX26 void test(int N, int M) {
   }
 }
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
       test<std::forward_list<int> >(i, j);
@@ -52,15 +52,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
       test<std::forward_list<int, min_allocator<int>> >(i, j);
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

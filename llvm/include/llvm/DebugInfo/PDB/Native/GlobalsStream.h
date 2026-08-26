@@ -13,7 +13,6 @@
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/PDB/Native/RawTypes.h"
 #include "llvm/Support/BinaryStreamArray.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 
@@ -56,7 +55,7 @@ public:
   FixedStreamArray<support::ulittle32_t> HashBuckets;
   std::array<int32_t, IPHR_HASH + 1> BucketMap;
 
-  LLVM_ABI Error read(BinaryStreamReader &Reader);
+  Error read(BinaryStreamReader &Reader);
 
   uint32_t getVerSignature() const { return HashHdr->VerSignature; }
   uint32_t getVerHeader() const { return HashHdr->VerHdr; }
@@ -70,13 +69,12 @@ public:
 
 class GlobalsStream {
 public:
-  LLVM_ABI explicit GlobalsStream(
-      std::unique_ptr<msf::MappedBlockStream> Stream);
-  LLVM_ABI ~GlobalsStream();
+  explicit GlobalsStream(std::unique_ptr<msf::MappedBlockStream> Stream);
+  ~GlobalsStream();
   const GSIHashTable &getGlobalsTable() const { return GlobalsTable; }
-  LLVM_ABI Error reload();
+  Error reload();
 
-  LLVM_ABI std::vector<std::pair<uint32_t, codeview::CVSymbol>>
+  std::vector<std::pair<uint32_t, codeview::CVSymbol>>
   findRecordsByName(StringRef Name, const SymbolStream &Symbols) const;
 
 private:

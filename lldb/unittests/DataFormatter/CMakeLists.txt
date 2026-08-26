@@ -4,12 +4,13 @@ add_lldb_unittest(LLDBFormatterTests
   FormatterBytecodeTest.cpp
   StringPrinterTests.cpp
 
-  LINK_COMPONENTS
-    Support
   LINK_LIBS
     lldbCore
     lldbInterpreter
     lldbSymbol
     lldbTarget
     lldbUtility
+
+  LINK_COMPONENTS
+    Support
   )

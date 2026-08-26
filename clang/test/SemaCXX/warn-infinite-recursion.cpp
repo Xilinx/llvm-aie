@@ -75,8 +75,6 @@ void m() {
   while (true) {}
 }
 
-void n() { ::n(); } // expected-warning{{call itself}}
-
 class S {
   static void a();
   void b();

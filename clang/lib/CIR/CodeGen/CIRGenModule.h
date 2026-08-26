@@ -111,8 +111,6 @@ public:
   /// Handling globals
   /// -------
 
-  mlir::Operation *lastGlobalOp = nullptr;
-
   mlir::Operation *getGlobalValue(llvm::StringRef ref);
 
   /// If the specified mangled name is not in the module, create and return an
@@ -141,10 +139,6 @@ public:
   getAddrOfGlobalVar(const VarDecl *d, mlir::Type ty = {},
                      ForDefinition_t isForDefinition = NotForDefinition);
 
-  CharUnits computeNonVirtualBaseClassOffset(
-      const CXXRecordDecl *derivedClass,
-      llvm::iterator_range<CastExpr::path_const_iterator> path);
-
   /// Return a constant array for the given string.
   mlir::Attribute getConstantArrayFromStringLiteral(const StringLiteral *e);
 
@@ -153,12 +147,6 @@ public:
   cir::GlobalOp getGlobalForStringLiteral(const StringLiteral *s,
                                           llvm::StringRef name = ".str");
 
-  /// Set attributes which are common to any form of a global definition (alias,
-  /// Objective-C method, function, global variable).
-  ///
-  /// NOTE: This should only be called for definitions.
-  void setCommonAttributes(GlobalDecl gd, mlir::Operation *op);
-
   const TargetCIRGenInfo &getTargetCIRGenInfo();
 
   /// Helpers to convert the presumed location of Clang's SourceLocation to an
@@ -166,54 +154,12 @@ public:
   mlir::Location getLoc(clang::SourceLocation cLoc);
   mlir::Location getLoc(clang::SourceRange cRange);
 
-  /// Return the best known alignment for an unknown pointer to a
-  /// particular class.
-  clang::CharUnits getClassPointerAlignment(const clang::CXXRecordDecl *rd);
-
   /// FIXME: this could likely be a common helper and not necessarily related
   /// with codegen.
   clang::CharUnits getNaturalTypeAlignment(clang::QualType t,
                                            LValueBaseInfo *baseInfo);
 
-  cir::FuncOp
-  getAddrOfCXXStructor(clang::GlobalDecl gd,
-                       const CIRGenFunctionInfo *fnInfo = nullptr,
-                       cir::FuncType fnType = nullptr, bool dontDefer = false,
-                       ForDefinition_t isForDefinition = NotForDefinition) {
-    return getAddrAndTypeOfCXXStructor(gd, fnInfo, fnType, dontDefer,
-                                       isForDefinition)
-        .second;
-  }
-
-  std::pair<cir::FuncType, cir::FuncOp> getAddrAndTypeOfCXXStructor(
-      clang::GlobalDecl gd, const CIRGenFunctionInfo *fnInfo = nullptr,
-      cir::FuncType fnType = nullptr, bool dontDefer = false,
-      ForDefinition_t isForDefinition = NotForDefinition);
-
-  /// This contains all the decls which have definitions but which are deferred
-  /// for emission and therefore should only be output if they are actually
-  /// used. If a decl is in this, then it is known to have not been referenced
-  /// yet.
-  std::map<llvm::StringRef, clang::GlobalDecl> deferredDecls;
-
-  // This is a list of deferred decls which we have seen that *are* actually
-  // referenced. These get code generated when the module is done.
-  std::vector<clang::GlobalDecl> deferredDeclsToEmit;
-  void addDeferredDeclToEmit(clang::GlobalDecl GD) {
-    deferredDeclsToEmit.emplace_back(GD);
-  }
-
   void emitTopLevelDecl(clang::Decl *decl);
-
-  /// Determine whether the definition must be emitted; if this returns \c
-  /// false, the definition can be emitted lazily if it's used.
-  bool mustBeEmitted(const clang::ValueDecl *d);
-
-  /// Determine whether the definition can be emitted eagerly, or should be
-  /// delayed until the end of the translation unit. This is relevant for
-  /// definitions whose linkage can change, e.g. implicit function
-  /// instantiations which may later be explicitly instantiated.
-  bool mayBeEmittedEagerly(const clang::ValueDecl *d);
 
   bool verifyModule() const;
 
@@ -225,25 +171,11 @@ public:
                     bool forVTable = false, bool dontDefer = false,
                     ForDefinition_t isForDefinition = NotForDefinition);
 
-  mlir::Operation *
-  getAddrOfGlobal(clang::GlobalDecl gd,
-                  ForDefinition_t isForDefinition = NotForDefinition);
-
   /// Emit code for a single global function or variable declaration. Forward
   /// declarations are emitted lazily.
   void emitGlobal(clang::GlobalDecl gd);
 
   mlir::Type convertType(clang::QualType type);
-
-  /// Set the visibility for the given global.
-  void setGlobalVisibility(mlir::Operation *op, const NamedDecl *d) const;
-  void setDSOLocal(mlir::Operation *op) const;
-  void setDSOLocal(cir::CIRGlobalValueInterface gv) const;
-
-  /// Set visibility, dllimport/dllexport and dso_local.
-  /// This must be called after dllimport/dllexport is set.
-  void setGVProperties(mlir::Operation *op, const NamedDecl *d) const;
-  void setGVPropertiesAux(mlir::Operation *op, const NamedDecl *d) const;
 
   void emitGlobalDefinition(clang::GlobalDecl gd,
                             mlir::Operation *op = nullptr);
@@ -262,14 +194,6 @@ public:
 
   llvm::StringRef getMangledName(clang::GlobalDecl gd);
 
-  void emitTentativeDefinition(const VarDecl *d);
-
-  // Make sure that this type is translated.
-  void updateCompletedType(const clang::TagDecl *td);
-
-  bool supportsCOMDAT() const;
-  void maybeSetTrivialComdat(const clang::Decl &d, mlir::Operation *op);
-
   static void setInitializer(cir::GlobalOp &op, mlir::Attribute value);
 
   cir::FuncOp
@@ -284,30 +208,10 @@ public:
                                 const clang::FunctionDecl *funcDecl);
 
   mlir::IntegerAttr getSize(CharUnits size) {
-    return builder.getSizeFromCharUnits(size);
+    return builder.getSizeFromCharUnits(&getMLIRContext(), size);
   }
 
-  /// Emit any needed decls for which code generation was deferred.
-  void emitDeferred();
-
-  /// Helper for `emitDeferred` to apply actual codegen.
-  void emitGlobalDecl(const clang::GlobalDecl &d);
-
   const llvm::Triple &getTriple() const { return target.getTriple(); }
-
-  // Finalize CIR code generation.
-  void release();
-
-  /// -------
-  /// Visibility and Linkage
-  /// -------
-
-  static mlir::SymbolTable::Visibility
-  getMLIRVisibilityFromCIRLinkage(cir::GlobalLinkageKind GLK);
-  static cir::VisibilityKind getGlobalVisibilityKindFromClangVisibility(
-      clang::VisibilityAttr::VisibilityType visibility);
-  cir::VisibilityAttr getGlobalVisibilityAttrFromDecl(const Decl *decl);
-  static mlir::SymbolTable::Visibility getMLIRVisibility(cir::GlobalOp op);
 
   cir::GlobalLinkageKind getCIRLinkageForDeclarator(const DeclaratorDecl *dd,
                                                     GVALinkage linkage,
@@ -335,7 +239,7 @@ public:
     return diags.Report(diagID) << feature;
   }
 
-  DiagnosticBuilder errorNYI(llvm::StringRef feature) const {
+  DiagnosticBuilder errorNYI(llvm::StringRef feature) {
     // TODO: Make a default location? currSrcLoc?
     unsigned diagID = diags.getCustomDiagID(
         DiagnosticsEngine::Error, "ClangIR code gen Not Yet Implemented: %0");
@@ -354,8 +258,6 @@ private:
   // An ordered map of canonical GlobalDecls to their mangled names.
   llvm::MapVector<clang::GlobalDecl, llvm::StringRef> mangledDeclNames;
   llvm::StringMap<clang::GlobalDecl, llvm::BumpPtrAllocator> manglings;
-
-  void setNonAliasAttributes(GlobalDecl gd, mlir::Operation *op);
 };
 } // namespace CIRGen
 

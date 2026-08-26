@@ -166,9 +166,8 @@ namespace {
 /// program have a corresponding de-allocation.
 class BufferDeallocation {
 public:
-  BufferDeallocation(Operation *op, DeallocationOptions options,
-                     SymbolTableCollection &symbolTables)
-      : state(op, symbolTables), options(options) {}
+  BufferDeallocation(Operation *op, DeallocationOptions options)
+      : state(op), options(options) {}
 
   /// Performs the actual placement/creation of all dealloc operations.
   LogicalResult deallocate(FunctionOpInterface op);
@@ -1028,13 +1027,11 @@ struct OwnershipBasedBufferDeallocationPass
     DeallocationOptions options;
     options.privateFuncDynamicOwnership = privateFuncDynamicOwnership;
 
-    mlir::SymbolTableCollection symbolTables;
-
     auto status = getOperation()->walk([&](func::FuncOp func) {
       if (func.isExternal())
         return WalkResult::skip();
 
-      if (failed(deallocateBuffersOwnershipBased(func, options, symbolTables)))
+      if (failed(deallocateBuffersOwnershipBased(func, options)))
         return WalkResult::interrupt();
 
       return WalkResult::advance();
@@ -1050,11 +1047,11 @@ struct OwnershipBasedBufferDeallocationPass
 // Implement bufferization API
 //===----------------------------------------------------------------------===//
 
-LogicalResult bufferization::deallocateBuffersOwnershipBased(
-    FunctionOpInterface op, DeallocationOptions options,
-    SymbolTableCollection &symbolTables) {
+LogicalResult
+bufferization::deallocateBuffersOwnershipBased(FunctionOpInterface op,
+                                               DeallocationOptions options) {
   // Gather all required allocation nodes and prepare the deallocation phase.
-  BufferDeallocation deallocation(op, options, symbolTables);
+  BufferDeallocation deallocation(op, options);
 
   // Place all required temporary clone and dealloc nodes.
   return deallocation.deallocate(op);

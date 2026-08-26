@@ -8,7 +8,7 @@
 
 // <forward_list>
 
-// void resize(size_type n); // constexpr since C++26
+// void resize(size_type n);
 
 #include <forward_list>
 #include <cassert>
@@ -18,8 +18,8 @@
 #include "DefaultOnly.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+int main(int, char**) {
+  {
     typedef DefaultOnly T;
     typedef std::forward_list<T> C;
     C c;
@@ -65,7 +65,7 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(*std::next(c.begin(), 5) == 0);
   }
 #if TEST_STD_VER >= 11
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+  {
     typedef DefaultOnly T;
     typedef std::forward_list<T, min_allocator<T>> C;
     C c;
@@ -110,15 +110,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(*std::next(c.begin(), 4) == 0);
     assert(*std::next(c.begin(), 5) == 0);
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

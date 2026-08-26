@@ -20,13 +20,11 @@
 
 #include "llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace orc {
 
-class LLVM_ABI EPCGenericJITLinkMemoryManager
-    : public jitlink::JITLinkMemoryManager {
+class EPCGenericJITLinkMemoryManager : public jitlink::JITLinkMemoryManager {
 public:
   /// Function addresses for memory access.
   struct SymbolAddrs {

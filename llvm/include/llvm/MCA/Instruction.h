@@ -19,7 +19,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCRegister.h" // definition of MCPhysReg.
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 
 #ifndef NDEBUG
@@ -272,11 +271,11 @@ public:
   // instruction identifier associated with this write. ReadAdvance is the
   // number of cycles to subtract from the latency of this data dependency.
   // Use is in a RAW dependency with this write.
-  LLVM_ABI void addUser(unsigned IID, ReadState *Use, int ReadAdvance);
+  void addUser(unsigned IID, ReadState *Use, int ReadAdvance);
 
   // Use is a younger register write that is in a false dependency with this
   // write. IID is the instruction identifier associated with this write.
-  LLVM_ABI void addUser(unsigned IID, WriteState *Use);
+  void addUser(unsigned IID, WriteState *Use);
 
   unsigned getNumUsers() const {
     unsigned NumUsers = Users.size();
@@ -301,7 +300,7 @@ public:
   }
 
   void setDependentWrite(const WriteState *Other) { DependentWrite = Other; }
-  LLVM_ABI void writeStartEvent(unsigned IID, MCPhysReg RegID, unsigned Cycles);
+  void writeStartEvent(unsigned IID, MCPhysReg RegID, unsigned Cycles);
   void setWriteZero() { WritesZero = true; }
   void setEliminated() {
     assert(Users.empty() && "Write is in an inconsistent state.");
@@ -312,8 +311,8 @@ public:
   void setPRF(unsigned PRF) { PRFID = PRF; }
 
   // On every cycle, update CyclesLeft and notify dependent users.
-  LLVM_ABI void cycleEvent();
-  LLVM_ABI void onInstructionIssued(unsigned IID);
+  void cycleEvent();
+  void onInstructionIssued(unsigned IID);
 
 #ifndef NDEBUG
   void dump() const;
@@ -372,8 +371,8 @@ public:
   bool isIndependentFromDef() const { return IndependentFromDef; }
   void setIndependentFromDef() { IndependentFromDef = true; }
 
-  LLVM_ABI void cycleEvent();
-  LLVM_ABI void writeStartEvent(unsigned IID, MCPhysReg RegID, unsigned Cycles);
+  void cycleEvent();
+  void writeStartEvent(unsigned IID, MCPhysReg RegID, unsigned Cycles);
   void setDependentWrites(unsigned Writes) {
     DependentWrites = Writes;
     IsReady = !Writes;
@@ -651,7 +650,7 @@ public:
         UsedBuffers(D.UsedBuffers), CriticalRegDep(), CriticalMemDep(),
         CriticalResourceMask(0), IsEliminated(false) {}
 
-  LLVM_ABI void reset();
+  void reset();
 
   unsigned getRCUTokenID() const { return RCUTokenID; }
   unsigned getLSUTokenID() const { return LSUTokenID; }
@@ -666,11 +665,11 @@ public:
   // Transition to the dispatch stage, and assign a RCUToken to this
   // instruction. The RCUToken is used to track the completion of every
   // register write performed by this instruction.
-  LLVM_ABI void dispatch(unsigned RCUTokenID);
+  void dispatch(unsigned RCUTokenID);
 
   // Instruction issued. Transition to the IS_EXECUTING state, and update
   // all the register definitions.
-  LLVM_ABI void execute(unsigned IID);
+  void execute(unsigned IID);
 
   // Force a transition from the IS_DISPATCHED state to the IS_READY or
   // IS_PENDING state. State transitions normally occur either at the beginning
@@ -678,9 +677,9 @@ public:
   // event. This method is called every time the instruction might have changed
   // in state. It internally delegates to method updateDispatched() and
   // updateWaiting().
-  LLVM_ABI void update();
-  LLVM_ABI bool updateDispatched();
-  LLVM_ABI bool updatePending();
+  void update();
+  bool updateDispatched();
+  bool updatePending();
 
   bool isInvalid() const { return Stage == IS_INVALID; }
   bool isDispatched() const { return Stage == IS_DISPATCHED; }
@@ -692,7 +691,7 @@ public:
   bool isEliminated() const { return IsEliminated; }
 
   // Forces a transition from state IS_DISPATCHED to state IS_EXECUTED.
-  LLVM_ABI void forceExecuted();
+  void forceExecuted();
   void setEliminated() { IsEliminated = true; }
 
   void retire() {
@@ -702,7 +701,7 @@ public:
 
   const CriticalDependency &getCriticalRegDep() const { return CriticalRegDep; }
   const CriticalDependency &getCriticalMemDep() const { return CriticalMemDep; }
-  LLVM_ABI const CriticalDependency &computeCriticalRegDep();
+  const CriticalDependency &computeCriticalRegDep();
   void setCriticalMemDep(const CriticalDependency &MemDep) {
     CriticalMemDep = MemDep;
   }
@@ -712,7 +711,7 @@ public:
     CriticalResourceMask = ResourceMask;
   }
 
-  LLVM_ABI void cycleEvent();
+  void cycleEvent();
 };
 
 /// An InstRef contains both a SourceMgr index and Instruction pair.  The index

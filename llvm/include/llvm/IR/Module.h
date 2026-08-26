@@ -31,7 +31,6 @@
 #include "llvm/IR/SymbolTableListTraits.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cstddef>
 #include <cstdint>
@@ -472,14 +471,15 @@ public:
 
   /// Look up the specified global in the module symbol table.
   /// If it does not exist, invoke a callback to create a declaration of the
-  /// global and return it.
-  GlobalVariable *
+  /// global and return it. The global is constantexpr casted to the expected
+  /// type if necessary.
+  Constant *
   getOrInsertGlobal(StringRef Name, Type *Ty,
                     function_ref<GlobalVariable *()> CreateGlobalCallback);
 
   /// Look up the specified global in the module symbol table. If required, this
   /// overload constructs the global variable using its constructor's defaults.
-  GlobalVariable *getOrInsertGlobal(StringRef Name, Type *Ty);
+  Constant *getOrInsertGlobal(StringRef Name, Type *Ty);
 
 /// @}
 /// @name Global Alias Accessors
@@ -818,7 +818,7 @@ public:
     NamedMDNode *CUs;
     unsigned Idx;
 
-    LLVM_ABI void SkipNoDebugCUs();
+    void SkipNoDebugCUs();
 
   public:
     using iterator_category = std::input_iterator_tag;
@@ -852,8 +852,8 @@ public:
       return Idx != I.Idx;
     }
 
-    LLVM_ABI DICompileUnit *operator*() const;
-    LLVM_ABI DICompileUnit *operator->() const;
+    DICompileUnit *operator*() const;
+    DICompileUnit *operator->() const;
   };
 
   debug_compile_units_iterator debug_compile_units_begin() const {
@@ -1066,9 +1066,9 @@ public:
 /// Given "llvm.used" or "llvm.compiler.used" as a global name, collect the
 /// initializer elements of that global in a SmallVector and return the global
 /// itself.
-LLVM_ABI GlobalVariable *
-collectUsedGlobalVariables(const Module &M, SmallVectorImpl<GlobalValue *> &Vec,
-                           bool CompilerUsed);
+GlobalVariable *collectUsedGlobalVariables(const Module &M,
+                                           SmallVectorImpl<GlobalValue *> &Vec,
+                                           bool CompilerUsed);
 
 /// An raw_ostream inserter for modules.
 inline raw_ostream &operator<<(raw_ostream &O, const Module &M) {

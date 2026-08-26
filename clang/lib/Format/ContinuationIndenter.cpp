@@ -2248,6 +2248,7 @@ unsigned ContinuationIndenter::reformatRawStringLiteral(
       /*Status=*/nullptr);
 
   auto NewCode = applyAllReplacements(RawText, Fixes.first);
+  tooling::Replacements NoFixes;
   if (!NewCode)
     return addMultilineToken(Current, State);
   if (!DryRun) {

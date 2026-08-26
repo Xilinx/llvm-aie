@@ -786,8 +786,8 @@ public:
       return InitialPreheader;
     }
     BranchInst *BI = It->first;
-    assert(std::none_of(std::next(It), HoistableBranches.end(),
-                        HasBBAsSuccessor) &&
+    assert(std::find_if(++It, HoistableBranches.end(), HasBBAsSuccessor) ==
+               HoistableBranches.end() &&
            "BB is expected to be the target of at most one branch");
 
     LLVMContext &C = BB->getContext();
@@ -1928,9 +1928,8 @@ bool isNotCapturedBeforeOrInLoop(const Value *V, const Loop *L,
   // loop header, as the loop header is reachable from any instruction inside
   // the loop.
   // TODO: ReturnCaptures=true shouldn't be necessary here.
-  return capturesNothing(PointerMayBeCapturedBefore(
-      V, /*ReturnCaptures=*/true, L->getHeader()->getTerminator(), DT,
-      /*IncludeI=*/false, CaptureComponents::Provenance));
+  return !PointerMayBeCapturedBefore(V, /* ReturnCaptures */ true,
+                                     L->getHeader()->getTerminator(), DT);
 }
 
 /// Return true if we can prove that a caller cannot inspect the object if an
@@ -2248,7 +2247,7 @@ bool llvm::promoteLoopAccessesToScalars(
     if (SawUnorderedAtomic)
       PreheaderLoad->setOrdering(AtomicOrdering::Unordered);
     PreheaderLoad->setAlignment(Alignment);
-    PreheaderLoad->setDebugLoc(DebugLoc::getDropped());
+    PreheaderLoad->setDebugLoc(DebugLoc());
     if (AATags && LoadIsGuaranteedToExecute)
       PreheaderLoad->setAAMetadata(AATags);
 
@@ -2808,7 +2807,6 @@ static bool hoistMulAddAssociation(Instruction &I, Loop &L,
     auto *NewBO =
         BinaryOperator::Create(Ins->getOpcode(), LHS, RHS,
                                Ins->getName() + ".reass", Ins->getIterator());
-    NewBO->setDebugLoc(DebugLoc::getDropped());
     NewBO->copyIRFlags(Ins);
     if (VariantOp == Ins)
       VariantOp = NewBO;
@@ -2865,7 +2863,6 @@ static bool hoistBOAssociation(Instruction &I, Loop &L,
 
   auto *NewBO = BinaryOperator::Create(
       Opcode, LV, Inv, BO->getName() + ".reass", BO->getIterator());
-  NewBO->setDebugLoc(DebugLoc::getDropped());
 
   if (Opcode == Instruction::FAdd || Opcode == Instruction::FMul) {
     // Intersect FMF flags for FADD and FMUL.

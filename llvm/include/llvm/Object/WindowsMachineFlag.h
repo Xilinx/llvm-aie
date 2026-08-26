@@ -14,7 +14,6 @@
 #define LLVM_OBJECT_WINDOWSMACHINEFLAG_H
 
 #include "llvm/BinaryFormat/COFF.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/Triple.h"
 
 namespace llvm {
@@ -26,11 +25,11 @@ enum MachineTypes : unsigned;
 
 // Returns a user-readable string for ARMNT, ARM64, AMD64, I386.
 // Other MachineTypes values must not be passed in.
-LLVM_ABI StringRef machineToStr(COFF::MachineTypes MT);
+StringRef machineToStr(COFF::MachineTypes MT);
 
 // Maps /machine: arguments to a MachineTypes value.
 // Only returns ARMNT, ARM64, AMD64, I386, or IMAGE_FILE_MACHINE_UNKNOWN.
-LLVM_ABI COFF::MachineTypes getMachineType(StringRef S);
+COFF::MachineTypes getMachineType(StringRef S);
 
 template <typename T> Triple::ArchType getMachineArchType(T machine) {
   switch (machine) {

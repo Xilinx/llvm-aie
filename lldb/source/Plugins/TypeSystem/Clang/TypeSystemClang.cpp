@@ -10,7 +10,6 @@
 
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/Frontend/ASTConsumers.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/FormatAdapters.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -83,6 +82,7 @@
 
 #include <cstdio>
 
+#include <mutex>
 #include <optional>
 
 using namespace lldb;
@@ -2181,22 +2181,25 @@ FunctionDecl *TypeSystemClang::CreateFunctionDeclaration(
 }
 
 CompilerType TypeSystemClang::CreateFunctionType(
-    const CompilerType &result_type, llvm::ArrayRef<CompilerType> args,
-    bool is_variadic, unsigned type_quals, clang::CallingConv cc,
-    clang::RefQualifierKind ref_qual) {
+    const CompilerType &result_type, const CompilerType *args,
+    unsigned num_args, bool is_variadic, unsigned type_quals,
+    clang::CallingConv cc, clang::RefQualifierKind ref_qual) {
   if (!result_type || !ClangUtil::IsClangType(result_type))
     return CompilerType(); // invalid return type
 
   std::vector<QualType> qual_type_args;
+  if (num_args > 0 && args == nullptr)
+    return CompilerType(); // invalid argument array passed in
+
   // Verify that all arguments are valid and the right type
-  for (const auto &arg : args) {
-    if (arg) {
+  for (unsigned i = 0; i < num_args; ++i) {
+    if (args[i]) {
       // Make sure we have a clang type in args[i] and not a type from another
       // language whose name might match
-      const bool is_clang_type = ClangUtil::IsClangType(arg);
+      const bool is_clang_type = ClangUtil::IsClangType(args[i]);
       lldbassert(is_clang_type);
       if (is_clang_type)
-        qual_type_args.push_back(ClangUtil::GetQualType(arg));
+        qual_type_args.push_back(ClangUtil::GetQualType(args[i]));
       else
         return CompilerType(); //  invalid argument type (must be a clang type)
     } else
@@ -4259,8 +4262,6 @@ TypeSystemClang::GetTypeClass(lldb::opaque_compiler_type_t type) {
 
   case clang::Type::HLSLAttributedResource:
     break;
-  case clang::Type::HLSLInlineSpirv:
-    break;
   }
   // We don't know hot to display this type...
   return lldb::eTypeClassOther;
@@ -5028,7 +5029,7 @@ lldb::Encoding TypeSystemClang::GetEncoding(lldb::opaque_compiler_type_t type,
 
     // ARM -- Scalable Vector Extension
 #define SVE_TYPE(Name, Id, SingletonId) case clang::BuiltinType::Id:
-#include "clang/Basic/AArch64ACLETypes.def"
+#include "clang/Basic/AArch64SVEACLETypes.def"
       break;
 
     // RISC-V V builtin types.
@@ -5126,8 +5127,6 @@ lldb::Encoding TypeSystemClang::GetEncoding(lldb::opaque_compiler_type_t type,
     break;
 
   case clang::Type::HLSLAttributedResource:
-    break;
-  case clang::Type::HLSLInlineSpirv:
     break;
   }
   count = 0;
@@ -5293,19 +5292,21 @@ lldb::Format TypeSystemClang::GetFormat(lldb::opaque_compiler_type_t type) {
 
   case clang::Type::HLSLAttributedResource:
     break;
-  case clang::Type::HLSLInlineSpirv:
-    break;
   }
   // We don't know hot to display this type...
   return lldb::eFormatBytes;
 }
 
-static bool ObjCDeclHasIVars(clang::ObjCInterfaceDecl *class_interface_decl) {
+static bool ObjCDeclHasIVars(clang::ObjCInterfaceDecl *class_interface_decl,
+                             bool check_superclass) {
   while (class_interface_decl) {
     if (class_interface_decl->ivar_size() > 0)
       return true;
 
-    class_interface_decl = class_interface_decl->getSuperClass();
+    if (check_superclass)
+      class_interface_decl = class_interface_decl->getSuperClass();
+    else
+      break;
   }
   return false;
 }
@@ -5380,7 +5381,7 @@ TypeSystemClang::GetNumChildren(lldb::opaque_compiler_type_t type,
               class_interface_decl->getSuperClass();
           if (superclass_interface_decl) {
             if (omit_empty_base_classes) {
-              if (ObjCDeclHasIVars(superclass_interface_decl))
+              if (ObjCDeclHasIVars(superclass_interface_decl, true))
                 ++num_children;
             } else
               ++num_children;
@@ -6834,7 +6835,7 @@ size_t TypeSystemClang::GetIndexOfChildMemberWithName(
               if (ivar_decl->getName() == name_sref) {
                 if ((!omit_empty_base_classes && superclass_interface_decl) ||
                     (omit_empty_base_classes &&
-                     ObjCDeclHasIVars(superclass_interface_decl)))
+                     ObjCDeclHasIVars(superclass_interface_decl, true)))
                   ++child_idx;
 
                 child_indexes.push_back(child_idx);
@@ -6990,7 +6991,7 @@ TypeSystemClang::GetIndexOfChildWithName(lldb::opaque_compiler_type_t type,
               if (ivar_decl->getName() == name) {
                 if ((!omit_empty_base_classes && superclass_interface_decl) ||
                     (omit_empty_base_classes &&
-                     ObjCDeclHasIVars(superclass_interface_decl)))
+                     ObjCDeclHasIVars(superclass_interface_decl, true)))
                   ++child_idx;
 
                 return child_idx;
@@ -8111,6 +8112,14 @@ bool TypeSystemClang::AddObjCClassProperty(
   return true;
 }
 
+bool TypeSystemClang::IsObjCClassTypeAndHasIVars(const CompilerType &type,
+                                                 bool check_superclass) {
+  clang::ObjCInterfaceDecl *class_interface_decl = GetAsObjCInterfaceDecl(type);
+  if (class_interface_decl)
+    return ObjCDeclHasIVars(class_interface_decl, check_superclass);
+  return false;
+}
+
 clang::ObjCMethodDecl *TypeSystemClang::AddMethodToObjCObjectType(
     const CompilerType &type,
     const char *name, // the full symbol name as seen in the symbol table
@@ -8497,16 +8506,8 @@ TypeSystemClang::dump(lldb::opaque_compiler_type_t type) const {
 }
 #endif
 
-void TypeSystemClang::Dump(llvm::raw_ostream &output, llvm::StringRef filter) {
-  auto consumer =
-      clang::CreateASTDumper(output, filter,
-                             /*DumpDecls=*/true,
-                             /*Deserialize=*/false,
-                             /*DumpLookups=*/false,
-                             /*DumpDeclTypes=*/false, clang::ADOF_Default);
-  assert(consumer);
-  assert(m_ast_up);
-  consumer->HandleTranslationUnit(*m_ast_up);
+void TypeSystemClang::Dump(llvm::raw_ostream &output) {
+  GetTranslationUnitDecl()->dump(output);
 }
 
 void TypeSystemClang::DumpFromSymbolFile(Stream &s,
@@ -9631,11 +9632,10 @@ GetNameForIsolatedASTKind(ScratchTypeSystemClang::IsolatedASTKind kind) {
   llvm_unreachable("Unimplemented IsolatedASTKind?");
 }
 
-void ScratchTypeSystemClang::Dump(llvm::raw_ostream &output,
-                                  llvm::StringRef filter) {
+void ScratchTypeSystemClang::Dump(llvm::raw_ostream &output) {
   // First dump the main scratch AST.
   output << "State of scratch Clang type system:\n";
-  TypeSystemClang::Dump(output, filter);
+  TypeSystemClang::Dump(output);
 
   // Now sort the isolated sub-ASTs.
   typedef std::pair<IsolatedASTKey, TypeSystem *> KeyAndTS;
@@ -9650,7 +9650,7 @@ void ScratchTypeSystemClang::Dump(llvm::raw_ostream &output,
         static_cast<ScratchTypeSystemClang::IsolatedASTKind>(a.first);
     output << "State of scratch Clang type subsystem "
            << GetNameForIsolatedASTKind(kind) << ":\n";
-    a.second->Dump(output, filter);
+    a.second->Dump(output);
   }
 }
 

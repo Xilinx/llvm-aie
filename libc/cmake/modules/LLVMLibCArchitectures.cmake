@@ -52,10 +52,8 @@ function(get_arch_and_system_from_triple triple arch_var sys_var)
     # TODO(lntue): Shall we separate `arm64`?  It is currently recognized as
     # `arm` here.
     set(target_arch "arm")
-  elseif(target_arch MATCHES "^aarch64|^arm64")
+  elseif(target_arch MATCHES "^aarch64")
     set(target_arch "aarch64")
-  elseif(target_arch MATCHES "^arm")
-    set(target_arch "arm")
   elseif(target_arch MATCHES "(x86_64)|(AMD64|amd64)")
     set(target_arch "x86_64")
   elseif(target_arch MATCHES "(^i.86$)")

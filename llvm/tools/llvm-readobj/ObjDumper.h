@@ -157,10 +157,8 @@ public:
                      llvm::codeview::GlobalTypeTableBuilder &GlobalCVTypes,
                      bool GHash) {}
 
-  // Only implemented for XCOFF/COFF.
-  virtual void printStringTable() {}
-
   // Only implemented for XCOFF.
+  virtual void printStringTable() {}
   virtual void printAuxiliaryHeader() {}
   virtual void printExceptionSection() {}
   virtual void printLoaderSection(bool PrintHeader, bool PrintSymbols,

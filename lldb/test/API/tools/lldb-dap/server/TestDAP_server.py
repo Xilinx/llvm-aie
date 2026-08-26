@@ -102,7 +102,7 @@ class TestDAP_server(lldbdap_testcase.DAPTestCaseBase):
         process.send_signal(signal.SIGINT)
 
         self.dap_server.wait_for_terminated()
-        self.assertIsNotNone(
+        self.assertIsNone(
             self.dap_server.exit_status,
             "Process exited before interrupting lldb-dap server",
         )

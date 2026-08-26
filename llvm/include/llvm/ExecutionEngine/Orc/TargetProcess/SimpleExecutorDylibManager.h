@@ -23,7 +23,6 @@
 #include "llvm/ExecutionEngine/Orc/Shared/TargetProcessControlTypes.h"
 #include "llvm/ExecutionEngine/Orc/Shared/WrapperFunctionUtils.h"
 #include "llvm/ExecutionEngine/Orc/TargetProcess/ExecutorBootstrapService.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Error.h"
 
@@ -34,7 +33,7 @@ namespace orc {
 namespace rt_bootstrap {
 
 /// Simple page-based allocator.
-class LLVM_ABI SimpleExecutorDylibManager : public ExecutorBootstrapService {
+class SimpleExecutorDylibManager : public ExecutorBootstrapService {
 public:
   virtual ~SimpleExecutorDylibManager();
 

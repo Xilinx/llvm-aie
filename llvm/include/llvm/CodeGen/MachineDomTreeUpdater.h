@@ -16,25 +16,24 @@
 
 #include "llvm/Analysis/GenericDomTreeUpdater.h"
 #include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
 class MachinePostDominatorTree;
 class MachineDomTreeUpdater;
 
-extern template class LLVM_TEMPLATE_ABI GenericDomTreeUpdater<
+extern template class GenericDomTreeUpdater<
     MachineDomTreeUpdater, MachineDominatorTree, MachinePostDominatorTree>;
 
-extern template LLVM_TEMPLATE_ABI void
+extern template void
 GenericDomTreeUpdater<MachineDomTreeUpdater, MachineDominatorTree,
                       MachinePostDominatorTree>::recalculate(MachineFunction
                                                                  &MF);
 
-extern template LLVM_TEMPLATE_ABI void GenericDomTreeUpdater<
+extern template void GenericDomTreeUpdater<
     MachineDomTreeUpdater, MachineDominatorTree,
     MachinePostDominatorTree>::applyUpdatesImpl</*IsForward=*/true>();
-extern template LLVM_TEMPLATE_ABI void GenericDomTreeUpdater<
+extern template void GenericDomTreeUpdater<
     MachineDomTreeUpdater, MachineDominatorTree,
     MachinePostDominatorTree>::applyUpdatesImpl</*IsForward=*/false>();
 
@@ -63,7 +62,7 @@ public:
   /// all available trees are up-to-date. Assert if any instruction of DelBB is
   /// modified while awaiting deletion. When both DT and PDT are nullptrs, DelBB
   /// will be queued until flush() is called.
-  LLVM_ABI void deleteBB(MachineBasicBlock *DelBB);
+  void deleteBB(MachineBasicBlock *DelBB);
 
   ///@}
 

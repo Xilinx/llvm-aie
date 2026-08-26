@@ -26,7 +26,6 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ProfDataUtils.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 InsertPosition::InsertPosition(Instruction *InsertBefore)
@@ -130,6 +129,8 @@ BasicBlock::iterator Instruction::insertInto(BasicBlock *ParentBB,
   return getIterator();
 }
 
+extern cl::opt<bool> UseNewDbgInfoFormat;
+
 void Instruction::insertBefore(BasicBlock &BB,
                                InstListType::iterator InsertPos) {
   assert(!DebugMarker);
@@ -189,22 +190,15 @@ void Instruction::moveBeforePreserving(BasicBlock::iterator MovePos) {
 
 void Instruction::moveAfter(Instruction *MovePos) {
   auto NextIt = std::next(MovePos->getIterator());
-  // We want this instruction to be moved to after NextIt in the instruction
+  // We want this instruction to be moved to before NextIt in the instruction
   // list, but before NextIt's debug value range.
   NextIt.setHeadBit(true);
   moveBeforeImpl(*MovePos->getParent(), NextIt, false);
 }
 
-void Instruction::moveAfter(InstListType::iterator MovePos) {
-  // We want this instruction to be moved to after NextIt in the instruction
-  // list, but before NextIt's debug value range.
-  MovePos.setHeadBit(true);
-  moveBeforeImpl(*MovePos->getParent(), MovePos, false);
-}
-
 void Instruction::moveAfterPreserving(Instruction *MovePos) {
   auto NextIt = std::next(MovePos->getIterator());
-  // We want this instruction and its debug range to be moved to after NextIt
+  // We want this instruction and its debug range to be moved to before NextIt
   // in the instruction list, but before NextIt's debug value range.
   NextIt.setHeadBit(true);
   moveBeforeImpl(*MovePos->getParent(), NextIt, true);

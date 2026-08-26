@@ -409,7 +409,7 @@ def tblockaddress: SDNode<"ISD::TargetBlockAddress",  SDTPtrLeaf, [],
 
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
-def ptradd     : SDNode<"ISD::PTRADD"    , SDTPtrAddOp, []>;
+def ptradd     : SDNode<"ISD::ADD"       , SDTPtrAddOp, []>;
 def sub        : SDNode<"ISD::SUB"       , SDTIntBinOp>;
 def mul        : SDNode<"ISD::MUL"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
@@ -522,8 +522,6 @@ def vecreduce_fmaximum : SDNode<"ISD::VECREDUCE_FMAXIMUM", SDTFPVecReduce>;
 def partial_reduce_umla : SDNode<"ISD::PARTIAL_REDUCE_UMLA",
                                  SDTPartialReduceMLA>;
 def partial_reduce_smla : SDNode<"ISD::PARTIAL_REDUCE_SMLA",
-                                 SDTPartialReduceMLA>;
-def partial_reduce_sumla : SDNode<"ISD::PARTIAL_REDUCE_SUMLA",
                                  SDTPartialReduceMLA>;
 
 def fadd       : SDNode<"ISD::FADD"       , SDTFPBinOp, [SDNPCommutative]>;
@@ -1065,9 +1063,7 @@ class OutPatFrag<dag ops, dag frag>
 // PatLeaf's are pattern fragments that have no operands.  This is just a helper
 // to define immediates and other common things concisely.
 class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
- : PatFrag<(ops), frag, pred, xform> {
-  code GISelLeafPredicateCode = ?;
-}
+ : PatFrag<(ops), frag, pred, xform>;
 
 
 // ImmLeaf is a pattern fragment with a constraint on the immediate.  The

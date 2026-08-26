@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/posix/Support.h"
-#include "lldb/Host/aix/Support.h"
 #include "llvm/Support/Threading.h"
 #include "gtest/gtest.h"
 
@@ -20,11 +19,3 @@ TEST(Support, getProcFile_Pid) {
   ASSERT_TRUE(*BufferOrError);
 }
 #endif // #ifndef __APPLE__
-
-#if defined(_AIX) && defined(LLVM_ENABLE_THREADING)
-TEST(Support, getProcFile_Tid) {
-  auto BufferOrError = getProcFile(getpid(), llvm::get_threadid(), "lwpstatus");
-  ASSERT_TRUE(BufferOrError);
-  ASSERT_TRUE(*BufferOrError);
-}
-#endif // #ifdef _AIX && LLVM_ENABLE_THREADING

@@ -653,7 +653,11 @@ let HasOneUse = 1 in {
                                                node:$E),
                                           (riscv_or_vl node:$A, node:$B, node:$C,
                                                        node:$D, node:$E), [{
-    return orIsAdd(N);
+    if (N->getFlags().hasDisjoint())
+      return true;
+    KnownBits Known0 = CurDAG->computeKnownBits(N->getOperand(0), 0);
+    KnownBits Known1 = CurDAG->computeKnownBits(N->getOperand(1), 0);
+    return KnownBits::haveNoCommonBitsSet(Known0, Known1);
   }]>;
   def riscv_sub_vl_oneuse : PatFrag<(ops node:$A, node:$B, node:$C, node:$D,
                                          node:$E),

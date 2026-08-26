@@ -78,13 +78,6 @@ public:
   static bool checkPerfDataMagic(StringRef FileName);
 
 private:
-  struct LBREntry {
-    uint64_t From;
-    uint64_t To;
-    bool Mispred;
-  };
-  friend raw_ostream &operator<<(raw_ostream &OS, const LBREntry &);
-
   struct PerfBranchSample {
     SmallVector<LBREntry, 32> LBR;
   };
@@ -377,46 +370,33 @@ private:
   /// memory.
   ///
   /// File format syntax:
-  /// E <event>
-  /// S <start> <count>
-  /// T <start> <end> <ft_end> <count>
-  /// B <start> <end> <count> <mispred_count>
-  /// [Ff] <start> <end> <count>
+  /// {B|F|f|T} [<start_id>:]<start_offset> [<end_id>:]<end_offset> [<ft_end>]
+  ///       <count> [<mispred_count>]
   ///
-  /// where <start>, <end>, <ft_end> have the format [<id>:]<offset>
-  ///
-  /// E - name of the sampling event used for subsequent entries
-  /// S - indicates an aggregated basic sample at <start>
-  /// B - indicates an aggregated branch from <start> to <end>
-  /// F - an aggregated fall-through from <start> to <end>
+  /// B - indicates an aggregated branch
+  /// F - an aggregated fall-through
   /// f - an aggregated fall-through with external origin - used to disambiguate
   ///       between a return hitting a basic block head and a regular internal
   ///       jump to the block
-  /// T - an aggregated trace: branch from <start> to <end> with a fall-through
-  ///       to <ft_end>
+  /// T - an aggregated trace: branch with a fall-through (from, to, ft_end)
   ///
-  /// <id> - build id of the object containing the address. We can skip it for
-  /// the main binary and use "X" for an unknown object. This will save some
-  /// space and facilitate human parsing.
+  /// <start_id> - build id of the object containing the start address. We can
+  /// skip it for the main binary and use "X" for an unknown object. This will
+  /// save some space and facilitate human parsing.
   ///
-  /// <offset> - hex offset from the object base load address (0 for the
-  /// main executable unless it's PIE) to the address.
+  /// <start_offset> - hex offset from the object base load address (0 for the
+  /// main executable unless it's PIE) to the start address.
   ///
-  /// <count> - total aggregated count.
+  /// <end_id>, <end_offset> - same for the end address.
+  ///
+  /// <ft_end> - same for the fallthrough_end address.
+  ///
+  /// <count> - total aggregated count of the branch or a fall-through.
   ///
   /// <mispred_count> - the number of times the branch was mispredicted.
+  /// Omitted for fall-throughs.
   ///
   /// Example:
-  /// Basic samples profile:
-  /// E cycles
-  /// S 41be50 3
-  /// E br_inst_retired.near_taken
-  /// S 41be60 6
-  ///
-  /// Trace profile combining branches and fall-throughs:
-  /// T 4b196f 4b19e0 4b19ef 2
-  ///
-  /// Legacy branch profile with separate branches and fall-throughs:
   /// F 41be50 41be50 3
   /// F 41be90 41be90 4
   /// B 4b1942 39b57f0 3 0
@@ -483,6 +463,7 @@ private:
 
   /// Debugging dump methods
   void dump() const;
+  void dump(const LBREntry &LBR) const;
   void dump(const PerfBranchSample &Sample) const;
   void dump(const PerfMemSample &Sample) const;
 
@@ -510,12 +491,6 @@ public:
 
   friend class YAMLProfileWriter;
 };
-
-inline raw_ostream &operator<<(raw_ostream &OS,
-                               const DataAggregator::LBREntry &L) {
-  OS << formatv("{0:x} -> {1:x}/{2}", L.From, L.To, L.Mispred ? 'M' : 'P');
-  return OS;
-}
 } // namespace bolt
 } // namespace llvm
 

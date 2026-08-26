@@ -394,8 +394,7 @@ hash_value(const StructType::MemberDecorationInfo &memberDecorationInfo);
 // SPIR-V KHR cooperative matrix type
 class CooperativeMatrixType
     : public Type::TypeBase<CooperativeMatrixType, CompositeType,
-                            detail::CooperativeMatrixTypeStorage,
-                            ShapedType::Trait> {
+                            detail::CooperativeMatrixTypeStorage> {
 public:
   using Base::Base;
 
@@ -419,22 +418,6 @@ public:
                      std::optional<StorageClass> storage = std::nullopt);
   void getCapabilities(SPIRVType::CapabilityArrayRefVector &capabilities,
                        std::optional<StorageClass> storage = std::nullopt);
-
-  operator ShapedType() const { return llvm::cast<ShapedType>(*this); }
-
-  ArrayRef<int64_t> getShape() const;
-
-  bool hasRank() const { return true; }
-
-  CooperativeMatrixType cloneWith(std::optional<ArrayRef<int64_t>> shape,
-                                  Type elementType) const {
-    if (!shape)
-      return get(elementType, getRows(), getColumns(), getScope(), getUse());
-
-    assert(shape.value().size() == 2);
-    return get(elementType, shape.value()[0], shape.value()[1], getScope(),
-               getUse());
-  }
 };
 
 // SPIR-V matrix type

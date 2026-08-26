@@ -1211,7 +1211,7 @@ public:
                           ValueToValueMapTy &UnderlyingMap)
       : TypeMap(TypeMap),
         InternalMapper(UnderlyingMap, RF_None, TypeMap, this) {}
-  ~FatPtrConstMaterializer() = default;
+  virtual ~FatPtrConstMaterializer() = default;
 
   Value *materialize(Value *V) override;
 };
@@ -2430,26 +2430,17 @@ bool AMDGPULowerBufferFatPointers::run(Module &M, const TargetMachine &TM) {
   // its arguments or return types adjusted.
   SmallVector<std::pair<Function *, bool>> NeedsRemap;
 
-  LLVMContext &Ctx = M.getContext();
-
   BufferFatPtrToStructTypeMap StructTM(DL);
   BufferFatPtrToIntTypeMap IntTM(DL);
   for (const GlobalVariable &GV : M.globals()) {
-    if (GV.getAddressSpace() == AMDGPUAS::BUFFER_FAT_POINTER) {
-      // FIXME: Use DiagnosticInfo unsupported but it requires a Function
-      Ctx.emitError("global variables with a buffer fat pointer address "
-                    "space (7) are not supported");
-      continue;
-    }
-
+    if (GV.getAddressSpace() == AMDGPUAS::BUFFER_FAT_POINTER)
+      report_fatal_error("Global variables with a buffer fat pointer address "
+                         "space (7) are not supported");
     Type *VT = GV.getValueType();
-    if (VT != StructTM.remapType(VT)) {
-      // FIXME: Use DiagnosticInfo unsupported but it requires a Function
-      Ctx.emitError("global variables that contain buffer fat pointers "
-                    "(address space 7 pointers) are unsupported. Use "
-                    "buffer resource pointers (address space 8) instead");
-      continue;
-    }
+    if (VT != StructTM.remapType(VT))
+      report_fatal_error("Global variables that contain buffer fat pointers "
+                         "(address space 7 pointers) are unsupported. Use "
+                         "buffer resource pointers (address space 8) instead.");
   }
 
   {

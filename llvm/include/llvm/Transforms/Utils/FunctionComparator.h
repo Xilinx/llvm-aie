@@ -21,7 +21,6 @@
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <tuple>
 
@@ -98,7 +97,7 @@ public:
       : FnL(F1), FnR(F2), GlobalNumbers(GN) {}
 
   /// Test whether the two functions have equivalent behaviour.
-  LLVM_ABI int compare();
+  int compare();
 
 protected:
   /// Start the comparison.
@@ -108,11 +107,10 @@ protected:
   }
 
   /// Compares the signature and other general attributes of the two functions.
-  LLVM_ABI int compareSignature() const;
+  int compareSignature() const;
 
   /// Test whether two basic blocks have equivalent behaviour.
-  LLVM_ABI int cmpBasicBlocks(const BasicBlock *BBL,
-                              const BasicBlock *BBR) const;
+  int cmpBasicBlocks(const BasicBlock *BBL, const BasicBlock *BBR) const;
 
   /// Constants comparison.
   /// Its analog to lexicographical comparison between hypothetical numbers
@@ -216,11 +214,11 @@ protected:
   /// look at their particular properties (bit-width for vectors, and
   /// address space for pointers).
   /// If these properties are equal - compare their contents.
-  LLVM_ABI int cmpConstants(const Constant *L, const Constant *R) const;
+  int cmpConstants(const Constant *L, const Constant *R) const;
 
   /// Compares two global values by number. Uses the GlobalNumbersState to
   /// identify the same gobals across function calls.
-  LLVM_ABI int cmpGlobalValues(GlobalValue *L, GlobalValue *R) const;
+  int cmpGlobalValues(GlobalValue *L, GlobalValue *R) const;
 
   /// Assign or look up previously assigned numbers for the two values, and
   /// return whether the numbers are equal. Numbers are assigned in the order
@@ -240,7 +238,7 @@ protected:
   ///          then left value is greater.
   ///          In another words, we compare serial numbers, for more details
   ///          see comments for sn_mapL and sn_mapR.
-  LLVM_ABI int cmpValues(const Value *L, const Value *R) const;
+  int cmpValues(const Value *L, const Value *R) const;
 
   /// Compare two Instructions for equivalence, similar to
   /// Instruction::isSameOperationAs.
@@ -271,8 +269,8 @@ protected:
   /// Sets \p needToCmpOperands to true if the operands of the instructions
   /// still must be compared afterwards. In this case it's already guaranteed
   /// that both instructions have the same number of operands.
-  LLVM_ABI int cmpOperations(const Instruction *L, const Instruction *R,
-                             bool &needToCmpOperands) const;
+  int cmpOperations(const Instruction *L, const Instruction *R,
+                    bool &needToCmpOperands) const;
 
   /// cmpType - compares two types,
   /// defines total ordering among the types set.
@@ -314,15 +312,14 @@ protected:
   /// be checked with the same way. If we get Res != 0 on some stage, return it.
   /// Otherwise return 0.
   /// 6. For all other cases put llvm_unreachable.
-  LLVM_ABI int cmpTypes(Type *TyL, Type *TyR) const;
+  int cmpTypes(Type *TyL, Type *TyR) const;
 
-  LLVM_ABI int cmpNumbers(uint64_t L, uint64_t R) const;
-  LLVM_ABI int cmpAligns(Align L, Align R) const;
-  LLVM_ABI int cmpAPInts(const APInt &L, const APInt &R) const;
-  LLVM_ABI int cmpConstantRanges(const ConstantRange &L,
-                                 const ConstantRange &R) const;
-  LLVM_ABI int cmpAPFloats(const APFloat &L, const APFloat &R) const;
-  LLVM_ABI int cmpMem(StringRef L, StringRef R) const;
+  int cmpNumbers(uint64_t L, uint64_t R) const;
+  int cmpAligns(Align L, Align R) const;
+  int cmpAPInts(const APInt &L, const APInt &R) const;
+  int cmpConstantRanges(const ConstantRange &L, const ConstantRange &R) const;
+  int cmpAPFloats(const APFloat &L, const APFloat &R) const;
+  int cmpMem(StringRef L, StringRef R) const;
 
   // The two functions undergoing comparison.
   const Function *FnL, *FnR;
@@ -344,7 +341,7 @@ private:
   /// 3. Pointer operand type (using cmpType method).
   /// 4. Number of operands.
   /// 5. Compare operands, using cmpValues method.
-  LLVM_ABI int cmpGEPs(const GEPOperator *GEPL, const GEPOperator *GEPR) const;
+  int cmpGEPs(const GEPOperator *GEPL, const GEPOperator *GEPR) const;
   int cmpGEPs(const GetElementPtrInst *GEPL,
               const GetElementPtrInst *GEPR) const {
     return cmpGEPs(cast<GEPOperator>(GEPL), cast<GEPOperator>(GEPR));

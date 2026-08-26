@@ -39,7 +39,6 @@ void LVOptions::resolveDependencies() {
     setAttributeFilename();
     setAttributeFiles();
     setAttributeFormat();
-    setAttributeLanguage();
     setAttributeLevel();
     setAttributeProducer();
     setAttributePublics();

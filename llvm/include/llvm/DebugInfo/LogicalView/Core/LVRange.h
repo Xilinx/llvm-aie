@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/IntervalTree.h"
 #include "llvm/DebugInfo/LogicalView/Core/LVObject.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace logicalview {
@@ -47,7 +46,7 @@ public:
 // scope; the addresses are stored in ascending order and can overlap.
 using LVRangeEntries = std::vector<LVRangeEntry>;
 
-class LLVM_ABI LVRange final : public LVObject {
+class LVRange final : public LVObject {
   /// Map of where a user value is live, and its location.
   using LVRangesTree = IntervalTree<LVAddress, LVScope *>;
   using LVAllocator = LVRangesTree::Allocator;

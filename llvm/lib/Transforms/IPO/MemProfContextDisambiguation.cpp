@@ -2183,9 +2183,6 @@ ModuleCallsiteContextGraph::ModuleCallsiteContextGraph(
 
   updateStackNodes();
 
-  if (ExportToDot)
-    exportToDot("poststackupdate");
-
   handleCallsitesWithMultipleTargets();
 
   markBackedges();
@@ -2235,8 +2232,9 @@ IndexCallsiteContextGraph::IndexCallsiteContextGraph(
           CallStack<MIBInfo, SmallVector<unsigned>::const_iterator>
               EmptyContext;
           unsigned I = 0;
-          assert(!metadataMayIncludeContextSizeInfo() ||
-                 AN.ContextSizeInfos.size() == AN.MIBs.size());
+          assert(
+              (!MemProfReportHintedSizes && MinClonedColdBytePercent >= 100) ||
+              AN.ContextSizeInfos.size() == AN.MIBs.size());
           // Now add all of the MIBs and their stack nodes.
           for (auto &MIB : AN.MIBs) {
             CallStack<MIBInfo, SmallVector<unsigned>::const_iterator>
@@ -2287,9 +2285,6 @@ IndexCallsiteContextGraph::IndexCallsiteContextGraph(
     exportToDot("prestackupdate");
 
   updateStackNodes();
-
-  if (ExportToDot)
-    exportToDot("poststackupdate");
 
   handleCallsitesWithMultipleTargets();
 

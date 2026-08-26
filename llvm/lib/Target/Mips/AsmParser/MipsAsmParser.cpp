@@ -1305,7 +1305,7 @@ public:
       return false;
     if (!getMemBase()->isGPRAsmReg())
       return false;
-    if (isa<MCSpecifierExpr>(getMemOff()) ||
+    if (isa<MCTargetExpr>(getMemOff()) ||
         (isConstantMemOff() &&
          isShiftedInt<Bits, ShiftAmount>(getConstantMemOff())))
       return true;
@@ -1320,7 +1320,7 @@ public:
     if (!getMemBase()->isGPRAsmReg())
       return false;
     const unsigned PtrBits = AsmParser.getABI().ArePtrs64bit() ? 64 : 32;
-    if (isa<MCSpecifierExpr>(getMemOff()) ||
+    if (isa<MCTargetExpr>(getMemOff()) ||
         (isConstantMemOff() && isIntN(PtrBits, getConstantMemOff())))
       return true;
     MCValue Res;
@@ -1783,10 +1783,8 @@ static bool isEvaluated(const MCExpr *Expr) {
   }
   case MCExpr::Unary:
     return isEvaluated(cast<MCUnaryExpr>(Expr)->getSubExpr());
-  case MCExpr::Specifier:
-    return true;
   case MCExpr::Target:
-    llvm_unreachable("unused by this backend");
+    return true;
   }
   return false;
 }

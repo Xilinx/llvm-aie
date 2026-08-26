@@ -81,7 +81,8 @@ TEST_F(BasicAATest, AliasInstWithObjectOfImpreciseSize) {
 
   Value *IncomingI32Ptr = F->arg_begin();
 
-  auto *GlobalPtr = M.getOrInsertGlobal("some_global", B.getInt8Ty());
+  auto *GlobalPtr =
+      cast<GlobalVariable>(M.getOrInsertGlobal("some_global", B.getInt8Ty()));
 
   // Without sufficiently restricted linkage/an init, some of the object size
   // checking bits get more conservative.

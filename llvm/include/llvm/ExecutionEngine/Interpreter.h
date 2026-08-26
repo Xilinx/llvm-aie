@@ -15,9 +15,8 @@
 #define LLVM_EXECUTIONENGINE_INTERPRETER_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/Support/Compiler.h"
 
-extern "C" LLVM_ABI void LLVMLinkInInterpreter();
+extern "C" void LLVMLinkInInterpreter();
 
 namespace {
   struct ForceInterpreterLinking {

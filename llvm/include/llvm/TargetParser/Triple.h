@@ -13,7 +13,6 @@
 #define LLVM_TARGETPARSER_TRIPLE_H
 
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/VersionTuple.h"
 
 // Some system headers or GCC predefined macros conflict with identifiers in
@@ -356,11 +355,10 @@ public:
   /// triple fields unknown.
   Triple() = default;
 
-  LLVM_ABI explicit Triple(const Twine &Str);
-  LLVM_ABI Triple(const Twine &ArchStr, const Twine &VendorStr,
-                  const Twine &OSStr);
-  LLVM_ABI Triple(const Twine &ArchStr, const Twine &VendorStr,
-                  const Twine &OSStr, const Twine &EnvironmentStr);
+  explicit Triple(const Twine &Str);
+  Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr);
+  Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
+         const Twine &EnvironmentStr);
 
   bool operator==(const Triple &Other) const {
     return Arch == Other.Arch && SubArch == Other.SubArch &&
@@ -390,8 +388,8 @@ public:
   /// reasonably be done).  In particular, it handles the common case in which
   /// otherwise valid components are in the wrong order. \p Form is used to
   /// specify the output canonical form.
-  LLVM_ABI static std::string
-  normalize(StringRef Str, CanonicalForm Form = CanonicalForm::ANY);
+  static std::string normalize(StringRef Str,
+                               CanonicalForm Form = CanonicalForm::ANY);
 
   /// Return the normalized form of this triple's string.
   std::string normalize(CanonicalForm Form = CanonicalForm::ANY) const {
@@ -426,7 +424,7 @@ public:
   /// triple, if present.
   ///
   /// For example, "fooos1.2.3" would return (1, 2, 3).
-  LLVM_ABI VersionTuple getEnvironmentVersion() const;
+  VersionTuple getEnvironmentVersion() const;
 
   /// Get the object format for this triple.
   ObjectFormatType getObjectFormat() const { return ObjectFormat; }
@@ -435,7 +433,7 @@ public:
   /// present.
   ///
   /// For example, "fooos1.2.3" would return (1, 2, 3).
-  LLVM_ABI VersionTuple getOSVersion() const;
+  VersionTuple getOSVersion() const;
 
   /// Return just the major version number, this is specialized because it is a
   /// common query.
@@ -445,26 +443,26 @@ public:
   /// "darwin" versions to the corresponding OS X versions.  This may also be
   /// called with IOS triples but the OS X version number is just set to a
   /// constant 10.4.0 in that case.  Returns true if successful.
-  LLVM_ABI bool getMacOSXVersion(VersionTuple &Version) const;
+  bool getMacOSXVersion(VersionTuple &Version) const;
 
   /// Parse the version number as with getOSVersion.  This should only be called
   /// with IOS or generic triples.
-  LLVM_ABI VersionTuple getiOSVersion() const;
+  VersionTuple getiOSVersion() const;
 
   /// Parse the version number as with getOSVersion.  This should only be called
   /// with WatchOS or generic triples.
-  LLVM_ABI VersionTuple getWatchOSVersion() const;
+  VersionTuple getWatchOSVersion() const;
 
   /// Parse the version number as with getOSVersion.
-  LLVM_ABI VersionTuple getDriverKitVersion() const;
+  VersionTuple getDriverKitVersion() const;
 
   /// Parse the Vulkan version number from the OSVersion and SPIR-V version
   /// (SubArch).  This should only be called with Vulkan SPIR-V triples.
-  LLVM_ABI VersionTuple getVulkanVersion() const;
+  VersionTuple getVulkanVersion() const;
 
   /// Parse the DXIL version number from the OSVersion and DXIL version
   /// (SubArch).  This should only be called with DXIL triples.
-  LLVM_ABI VersionTuple getDXILVersion() const;
+  VersionTuple getDXILVersion() const;
 
   /// @}
   /// @name Direct Component Access
@@ -478,34 +476,34 @@ public:
   bool empty() const { return Data.empty(); }
 
   /// Get the architecture (first) component of the triple.
-  LLVM_ABI StringRef getArchName() const;
+  StringRef getArchName() const;
 
   /// Get the vendor (second) component of the triple.
-  LLVM_ABI StringRef getVendorName() const;
+  StringRef getVendorName() const;
 
   /// Get the operating system (third) component of the triple.
-  LLVM_ABI StringRef getOSName() const;
+  StringRef getOSName() const;
 
   /// Get the optional environment (fourth) component of the triple, or "" if
   /// empty.
-  LLVM_ABI StringRef getEnvironmentName() const;
+  StringRef getEnvironmentName() const;
 
   /// Get the operating system and optional environment components as a single
   /// string (separated by a '-' if the environment component is present).
-  LLVM_ABI StringRef getOSAndEnvironmentName() const;
+  StringRef getOSAndEnvironmentName() const;
 
   /// Get the version component of the environment component as a single
   /// string (the version after the environment).
   ///
   /// For example, "fooos1.2.3" would return "1.2.3".
-  LLVM_ABI StringRef getEnvironmentVersionString() const;
+  StringRef getEnvironmentVersionString() const;
 
   /// @}
   /// @name Convenience Predicates
   /// @{
 
   /// Returns the pointer width of this architecture.
-  LLVM_ABI static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch);
+  static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch);
 
   /// Returns the pointer width of this architecture.
   unsigned getArchPointerBitWidth() const {
@@ -513,7 +511,7 @@ public:
   }
 
   /// Returns the trampoline size in bytes for this configuration.
-  LLVM_ABI unsigned getTrampolineSize() const;
+  unsigned getTrampolineSize() const;
 
   /// Test whether the architecture is 64-bit
   ///
@@ -522,17 +520,17 @@ public:
   /// 16-bit. The inner details of pointer width for particular architectures
   /// is not summed up in the triple, and so only a coarse grained predicate
   /// system is provided.
-  LLVM_ABI bool isArch64Bit() const;
+  bool isArch64Bit() const;
 
   /// Test whether the architecture is 32-bit
   ///
   /// Note that this tests for 32-bit pointer width, and nothing else.
-  LLVM_ABI bool isArch32Bit() const;
+  bool isArch32Bit() const;
 
   /// Test whether the architecture is 16-bit
   ///
   /// Note that this tests for 16-bit pointer width, and nothing else.
-  LLVM_ABI bool isArch16Bit() const;
+  bool isArch16Bit() const;
 
   /// Helper function for doing comparisons against version numbers included in
   /// the target triple.
@@ -553,8 +551,8 @@ public:
 
   /// Comparison function for checking OS X version compatibility, which handles
   /// supporting skewed version numbering schemes used by the "darwin" triples.
-  LLVM_ABI bool isMacOSXVersionLT(unsigned Major, unsigned Minor = 0,
-                                  unsigned Micro = 0) const;
+  bool isMacOSXVersionLT(unsigned Major, unsigned Minor = 0,
+                         unsigned Micro = 0) const;
 
   /// Is this a Mac OS X triple. For legacy reasons, we support both "darwin"
   /// and "osx" as OS X triples.
@@ -947,34 +945,6 @@ public:
            isOSBinFormatELF();
   }
 
-  // ARM EABI is the bare-metal EABI described in ARM ABI documents and
-  // can be accessed via -target arm-none-eabi. This is NOT GNUEABI.
-  // FIXME: Add a flag for bare-metal for that target and set Triple::EABI
-  // even for GNUEABI, so we can make a distinction here and still conform to
-  // the EABI on GNU (and Android) mode. This requires change in Clang, too.
-  // FIXME: The Darwin exception is temporary, while we move users to
-  // "*-*-*-macho" triples as quickly as possible.
-  bool isTargetAEABI() const {
-    return (getEnvironment() == Triple::EABI ||
-            getEnvironment() == Triple::EABIHF) &&
-           !isOSDarwin() && !isOSWindows();
-  }
-
-  bool isTargetGNUAEABI() const {
-    return (getEnvironment() == Triple::GNUEABI ||
-            getEnvironment() == Triple::GNUEABIT64 ||
-            getEnvironment() == Triple::GNUEABIHF ||
-            getEnvironment() == Triple::GNUEABIHFT64) &&
-           !isOSDarwin() && !isOSWindows();
-  }
-
-  bool isTargetMuslAEABI() const {
-    return (getEnvironment() == Triple::MuslEABI ||
-            getEnvironment() == Triple::MuslEABIHF ||
-            getEnvironment() == Triple::OpenHOS) &&
-           !isOSDarwin() && !isOSWindows();
-  }
-
   /// Tests whether the target is T32.
   bool isArmT32() const {
     switch (getSubArch()) {
@@ -1201,38 +1171,38 @@ public:
   /// @{
 
   /// Set the architecture (first) component of the triple to a known type.
-  LLVM_ABI void setArch(ArchType Kind, SubArchType SubArch = NoSubArch);
+  void setArch(ArchType Kind, SubArchType SubArch = NoSubArch);
 
   /// Set the vendor (second) component of the triple to a known type.
-  LLVM_ABI void setVendor(VendorType Kind);
+  void setVendor(VendorType Kind);
 
   /// Set the operating system (third) component of the triple to a known type.
-  LLVM_ABI void setOS(OSType Kind);
+  void setOS(OSType Kind);
 
   /// Set the environment (fourth) component of the triple to a known type.
-  LLVM_ABI void setEnvironment(EnvironmentType Kind);
+  void setEnvironment(EnvironmentType Kind);
 
   /// Set the object file format.
-  LLVM_ABI void setObjectFormat(ObjectFormatType Kind);
+  void setObjectFormat(ObjectFormatType Kind);
 
   /// Set all components to the new triple \p Str.
-  LLVM_ABI void setTriple(const Twine &Str);
+  void setTriple(const Twine &Str);
 
   /// Set the architecture (first) component of the triple by name.
-  LLVM_ABI void setArchName(StringRef Str);
+  void setArchName(StringRef Str);
 
   /// Set the vendor (second) component of the triple by name.
-  LLVM_ABI void setVendorName(StringRef Str);
+  void setVendorName(StringRef Str);
 
   /// Set the operating system (third) component of the triple by name.
-  LLVM_ABI void setOSName(StringRef Str);
+  void setOSName(StringRef Str);
 
   /// Set the optional environment (fourth) component of the triple by name.
-  LLVM_ABI void setEnvironmentName(StringRef Str);
+  void setEnvironmentName(StringRef Str);
 
   /// Set the operating system and optional environment components with a single
   /// string.
-  LLVM_ABI void setOSAndEnvironmentName(StringRef Str);
+  void setOSAndEnvironmentName(StringRef Str);
 
   /// @}
   /// @name Helpers to build variants of a particular triple.
@@ -1244,7 +1214,7 @@ public:
   ///
   /// \returns A new triple with a 32-bit architecture or an unknown
   ///          architecture if no such variant can be found.
-  LLVM_ABI llvm::Triple get32BitArchVariant() const;
+  llvm::Triple get32BitArchVariant() const;
 
   /// Form a triple with a 64-bit variant of the current architecture.
   ///
@@ -1252,7 +1222,7 @@ public:
   ///
   /// \returns A new triple with a 64-bit architecture or an unknown
   ///          architecture if no such variant can be found.
-  LLVM_ABI llvm::Triple get64BitArchVariant() const;
+  llvm::Triple get64BitArchVariant() const;
 
   /// Form a triple with a big endian variant of the current architecture.
   ///
@@ -1260,7 +1230,7 @@ public:
   ///
   /// \returns A new triple with a big endian architecture or an unknown
   ///          architecture if no such variant can be found.
-  LLVM_ABI llvm::Triple getBigEndianArchVariant() const;
+  llvm::Triple getBigEndianArchVariant() const;
 
   /// Form a triple with a little endian variant of the current architecture.
   ///
@@ -1268,76 +1238,69 @@ public:
   ///
   /// \returns A new triple with a little endian architecture or an unknown
   ///          architecture if no such variant can be found.
-  LLVM_ABI llvm::Triple getLittleEndianArchVariant() const;
+  llvm::Triple getLittleEndianArchVariant() const;
 
   /// Tests whether the target triple is little endian.
   ///
   /// \returns true if the triple is little endian, false otherwise.
-  LLVM_ABI bool isLittleEndian() const;
+  bool isLittleEndian() const;
 
   /// Test whether target triples are compatible.
-  LLVM_ABI bool isCompatibleWith(const Triple &Other) const;
+  bool isCompatibleWith(const Triple &Other) const;
 
   /// Test whether the target triple is for a GPU.
   bool isGPU() const { return isSPIRV() || isNVPTX() || isAMDGPU(); }
 
   /// Merge target triples.
-  LLVM_ABI std::string merge(const Triple &Other) const;
+  std::string merge(const Triple &Other) const;
 
   /// Some platforms have different minimum supported OS versions that
   /// varies by the architecture specified in the triple. This function
   /// returns the minimum supported OS version for this triple if one an exists,
   /// or an invalid version tuple if this triple doesn't have one.
-  LLVM_ABI VersionTuple getMinimumSupportedOSVersion() const;
+  VersionTuple getMinimumSupportedOSVersion() const;
 
   /// @}
   /// @name Static helpers for IDs.
   /// @{
 
   /// Get the canonical name for the \p Kind architecture.
-  LLVM_ABI static StringRef getArchTypeName(ArchType Kind);
+  static StringRef getArchTypeName(ArchType Kind);
 
   /// Get the architecture name based on \p Kind and \p SubArch.
-  LLVM_ABI static StringRef getArchName(ArchType Kind,
-                                        SubArchType SubArch = NoSubArch);
+  static StringRef getArchName(ArchType Kind, SubArchType SubArch = NoSubArch);
 
   /// Get the "prefix" canonical name for the \p Kind architecture. This is the
   /// prefix used by the architecture specific builtins, and is suitable for
   /// passing to \see Intrinsic::getIntrinsicForClangBuiltin().
   ///
   /// \return - The architecture prefix, or 0 if none is defined.
-  LLVM_ABI static StringRef getArchTypePrefix(ArchType Kind);
+  static StringRef getArchTypePrefix(ArchType Kind);
 
   /// Get the canonical name for the \p Kind vendor.
-  LLVM_ABI static StringRef getVendorTypeName(VendorType Kind);
+  static StringRef getVendorTypeName(VendorType Kind);
 
   /// Get the canonical name for the \p Kind operating system.
-  LLVM_ABI static StringRef getOSTypeName(OSType Kind);
+  static StringRef getOSTypeName(OSType Kind);
 
   /// Get the canonical name for the \p Kind environment.
-  LLVM_ABI static StringRef getEnvironmentTypeName(EnvironmentType Kind);
+  static StringRef getEnvironmentTypeName(EnvironmentType Kind);
 
   /// Get the name for the \p Object format.
-  LLVM_ABI static StringRef
-  getObjectFormatTypeName(ObjectFormatType ObjectFormat);
+  static StringRef getObjectFormatTypeName(ObjectFormatType ObjectFormat);
 
   /// @}
   /// @name Static helpers for converting alternate architecture names.
   /// @{
 
   /// The canonical type for the given LLVM architecture name (e.g., "x86").
-  LLVM_ABI static ArchType getArchTypeForLLVMName(StringRef Str);
+  static ArchType getArchTypeForLLVMName(StringRef Str);
 
   /// @}
 
   /// Returns a canonicalized OS version number for the specified OS.
-  LLVM_ABI static VersionTuple
-  getCanonicalVersionForOS(OSType OSKind, const VersionTuple &Version,
-                           bool IsInValidRange);
-
-  /// Returns whether an OS version is invalid and would not map to an Apple OS.
-  LLVM_ABI static bool isValidVersionForOS(OSType OSKind,
-                                           const VersionTuple &Version);
+  static VersionTuple getCanonicalVersionForOS(OSType OSKind,
+                                               const VersionTuple &Version);
 };
 
 } // End llvm namespace

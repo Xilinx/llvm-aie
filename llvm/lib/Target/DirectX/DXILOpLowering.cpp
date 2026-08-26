@@ -57,9 +57,9 @@ public:
 
       if (Error E = ReplaceCall(CI)) {
         std::string Message(toString(std::move(E)));
-        M.getContext().diagnose(DiagnosticInfoUnsupported(
-            *CI->getFunction(), Message, CI->getDebugLoc()));
-
+        DiagnosticInfoUnsupported Diag(*CI->getFunction(), Message,
+                                       CI->getDebugLoc());
+        M.getContext().diagnose(Diag);
         return true;
       }
     }
@@ -211,21 +211,6 @@ public:
     }
   }
 
-  void replaceHandleFromBindingCall(CallInst *CI, Value *Replacement) {
-    assert(CI->getCalledFunction()->getIntrinsicID() ==
-           Intrinsic::dx_resource_handlefrombinding);
-
-    removeResourceGlobals(CI);
-
-    auto *NameGlobal = dyn_cast<llvm::GlobalVariable>(CI->getArgOperand(5));
-
-    CI->replaceAllUsesWith(Replacement);
-    CI->eraseFromParent();
-
-    if (NameGlobal && NameGlobal->use_empty())
-      NameGlobal->removeFromParent();
-  }
-
   [[nodiscard]] bool lowerToCreateHandle(Function &F) {
     IRBuilder<> &IRB = OpBuilder.getIRB();
     Type *Int8Ty = IRB.getInt8Ty();
@@ -256,7 +241,11 @@ public:
         return E;
 
       Value *Cast = createTmpHandleCast(*OpCall, CI->getType());
-      replaceHandleFromBindingCall(CI, Cast);
+
+      removeResourceGlobals(CI);
+
+      CI->replaceAllUsesWith(Cast);
+      CI->eraseFromParent();
       return Error::success();
     });
   }
@@ -307,7 +296,12 @@ public:
         return E;
 
       Value *Cast = createTmpHandleCast(*OpAnnotate, CI->getType());
-      replaceHandleFromBindingCall(CI, Cast);
+
+      removeResourceGlobals(CI);
+
+      CI->replaceAllUsesWith(Cast);
+      CI->eraseFromParent();
+
       return Error::success();
     });
   }

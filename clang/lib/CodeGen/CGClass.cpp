@@ -2817,8 +2817,7 @@ void CodeGenFunction::EmitVTablePtrCheckForCall(const CXXRecordDecl *RD,
     RD = LeastDerivedClassWithSameLayout(RD);
 
   auto [Ordinal, _] = SanitizerInfoFromCFICheckKind(TCK);
-  SanitizerDebugLocation SanScope(this, {Ordinal},
-                                  SanitizerHandler::CFICheckFail);
+  ApplyDebugLocation ApplyTrapDI(*this, SanitizerAnnotateDebugInfo(Ordinal));
 
   EmitVTablePtrCheck(RD, VTable, TCK, Loc);
 }
@@ -2843,8 +2842,7 @@ void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T, Address Derived,
     ClassDecl = LeastDerivedClassWithSameLayout(ClassDecl);
 
   auto [Ordinal, _] = SanitizerInfoFromCFICheckKind(TCK);
-  SanitizerDebugLocation SanScope(this, {Ordinal},
-                                  SanitizerHandler::CFICheckFail);
+  ApplyDebugLocation ApplyTrapDI(*this, SanitizerAnnotateDebugInfo(Ordinal));
 
   llvm::BasicBlock *ContBlock = nullptr;
 
@@ -2876,8 +2874,6 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
                                          llvm::Value *VTable,
                                          CFITypeCheckKind TCK,
                                          SourceLocation Loc) {
-  assert(IsSanitizerScope);
-
   if (!CGM.getCodeGenOpts().SanitizeCfiCrossDso &&
       !CGM.HasHiddenLTOVisibility(RD))
     return;
@@ -2889,6 +2885,7 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
           SanitizerMask::bitPosToMask(M), TypeName))
     return;
 
+  SanitizerScope SanScope(this);
   EmitSanitizerStatReport(SSK);
 
   llvm::Metadata *MD =
@@ -2945,11 +2942,11 @@ bool CodeGenFunction::ShouldEmitVTableTypeCheckedLoad(const CXXRecordDecl *RD) {
 llvm::Value *CodeGenFunction::EmitVTableTypeCheckedLoad(
     const CXXRecordDecl *RD, llvm::Value *VTable, llvm::Type *VTableTy,
     uint64_t VTableByteOffset) {
-  auto CheckOrdinal = SanitizerKind::SO_CFIVCall;
-  auto CheckHandler = SanitizerHandler::CFICheckFail;
-  SanitizerDebugLocation SanScope(this, {CheckOrdinal}, CheckHandler);
+  SanitizerScope SanScope(this);
 
   EmitSanitizerStatReport(llvm::SanStat_CFI_VCall);
+  ApplyDebugLocation ApplyTrapDI(
+      *this, SanitizerAnnotateDebugInfo(SanitizerKind::SO_CFIVCall));
 
   llvm::Metadata *MD =
       CGM.CreateMetadataIdentifierForType(QualType(RD->getTypeForDecl(), 0));
@@ -2968,7 +2965,8 @@ llvm::Value *CodeGenFunction::EmitVTableTypeCheckedLoad(
   if (SanOpts.has(SanitizerKind::CFIVCall) &&
       !getContext().getNoSanitizeList().containsType(SanitizerKind::CFIVCall,
                                                      TypeName)) {
-    EmitCheck(std::make_pair(CheckResult, CheckOrdinal), CheckHandler, {}, {});
+    EmitCheck(std::make_pair(CheckResult, SanitizerKind::SO_CFIVCall),
+              SanitizerHandler::CFICheckFail, {}, {});
   }
 
   return Builder.CreateBitCast(Builder.CreateExtractValue(CheckedLoad, 0),

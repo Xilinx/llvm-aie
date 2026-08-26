@@ -398,9 +398,8 @@ static bool isOpItselfPotentialAutomaticAllocation(Operation *op) {
 /// and is only followed by a terminator. This prevents
 /// extending the lifetime of allocations.
 static bool lastNonTerminatorInRegion(Operation *op) {
-  return op->getBlock()->mightHaveTerminator() &&
-         op->getNextNode() == op->getBlock()->getTerminator() &&
-         op->getParentRegion()->hasOneBlock();
+  return op->getNextNode() == op->getBlock()->getTerminator() &&
+         llvm::hasSingleElement(op->getParentRegion()->getBlocks());
 }
 
 /// Inline an AllocaScopeOp if either the direct parent is an allocation scope
@@ -531,15 +530,6 @@ LogicalResult AssumeAlignmentOp::verify() {
 void AssumeAlignmentOp::getAsmResultNames(
     function_ref<void(Value, StringRef)> setNameFn) {
   setNameFn(getResult(), "assume_align");
-}
-
-OpFoldResult AssumeAlignmentOp::fold(FoldAdaptor adaptor) {
-  auto source = getMemref().getDefiningOp<AssumeAlignmentOp>();
-  if (!source)
-    return {};
-  if (source.getAlignment() != getAlignment())
-    return {};
-  return getMemref();
 }
 
 //===----------------------------------------------------------------------===//
@@ -2021,7 +2011,7 @@ public:
       // Second, check the sizes.
       if (!llvm::equal(extractStridedMetadata.getConstifiedMixedSizes(),
                        op.getConstifiedMixedSizes()))
-        return false;
+          return false;
 
       // Finally, check the offset.
       assert(op.getMixedOffsets().size() == 1 &&

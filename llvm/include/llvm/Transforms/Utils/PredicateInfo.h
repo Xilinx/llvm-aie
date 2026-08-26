@@ -57,7 +57,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -103,7 +102,7 @@ public:
   }
 
   /// Fetch condition in the form of PredicateConstraint, if possible.
-  LLVM_ABI std::optional<PredicateConstraint> getConstraint() const;
+  std::optional<PredicateConstraint> getConstraint() const;
 
 protected:
   PredicateBase(PredicateType PT, Value *Op, Value *Condition)
@@ -177,13 +176,13 @@ public:
 /// accesses.
 class PredicateInfo {
 public:
-  LLVM_ABI PredicateInfo(Function &, DominatorTree &, AssumptionCache &);
-  LLVM_ABI ~PredicateInfo();
+  PredicateInfo(Function &, DominatorTree &, AssumptionCache &);
+  ~PredicateInfo();
 
-  LLVM_ABI void verifyPredicateInfo() const;
+  void verifyPredicateInfo() const;
 
-  LLVM_ABI void dump() const;
-  LLVM_ABI void print(raw_ostream &) const;
+  void dump() const;
+  void print(raw_ostream &) const;
 
   const PredicateBase *getPredicateInfoFor(const Value *V) const {
     return PredicateMap.lookup(V);
@@ -215,13 +214,13 @@ class PredicateInfoPrinterPass
 
 public:
   explicit PredicateInfoPrinterPass(raw_ostream &OS) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 
 /// Verifier pass for \c PredicateInfo.
 struct PredicateInfoVerifierPass : PassInfoMixin<PredicateInfoVerifierPass> {
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 

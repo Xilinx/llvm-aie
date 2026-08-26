@@ -73,6 +73,7 @@ void MPIChecker::checkUnmatchedWaits(const CallEvent &PreCallEvent,
     return;
 
   ProgramStateRef State = Ctx.getState();
+  static CheckerProgramPointTag Tag("MPI-Checker", "UnmatchedWait");
   ExplodedNode *ErrorNode{nullptr};
 
   // Check all request regions used by the wait function.
@@ -81,7 +82,7 @@ void MPIChecker::checkUnmatchedWaits(const CallEvent &PreCallEvent,
     State = State->set<RequestMap>(ReqRegion, Request::State::Wait);
     if (!Req) {
       if (!ErrorNode) {
-        ErrorNode = Ctx.generateNonFatalErrorNode(State);
+        ErrorNode = Ctx.generateNonFatalErrorNode(State, &Tag);
         State = ErrorNode->getState();
       }
       // A wait has no matching nonblocking call.
@@ -104,6 +105,7 @@ void MPIChecker::checkMissingWaits(SymbolReaper &SymReaper,
   if (Requests.isEmpty())
     return;
 
+  static CheckerProgramPointTag Tag("MPI-Checker", "MissingWait");
   ExplodedNode *ErrorNode{nullptr};
 
   auto ReqMap = State->get<RequestMap>();
@@ -112,7 +114,7 @@ void MPIChecker::checkMissingWaits(SymbolReaper &SymReaper,
       if (Req.second.CurrentState == Request::State::Nonblocking) {
 
         if (!ErrorNode) {
-          ErrorNode = Ctx.generateNonFatalErrorNode(State);
+          ErrorNode = Ctx.generateNonFatalErrorNode(State, &Tag);
           State = ErrorNode->getState();
         }
         BReporter.reportMissingWait(Req.second, Req.first, ErrorNode,

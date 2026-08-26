@@ -86,7 +86,6 @@
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/InstVisitor.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Scalar/SCCP.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/SCCPSolver.h"
@@ -180,11 +179,11 @@ public:
     return Solver.isBlockExecutable(BB) && !DeadBlocks.contains(BB);
   }
 
-  LLVM_ABI Cost getCodeSizeSavingsForArg(Argument *A, Constant *C);
+  Cost getCodeSizeSavingsForArg(Argument *A, Constant *C);
 
-  LLVM_ABI Cost getCodeSizeSavingsFromPendingPHIs();
+  Cost getCodeSizeSavingsFromPendingPHIs();
 
-  LLVM_ABI Cost getLatencySavingsForKnownConstants();
+  Cost getLatencySavingsForKnownConstants();
 
 private:
   friend class InstVisitor<InstCostVisitor, Constant *>;
@@ -261,9 +260,9 @@ public:
       : Solver(Solver), M(M), FAM(FAM), GetBFI(GetBFI), GetTLI(GetTLI),
         GetTTI(GetTTI), GetAC(GetAC) {}
 
-  LLVM_ABI ~FunctionSpecializer();
+  ~FunctionSpecializer();
 
-  LLVM_ABI bool run();
+  bool run();
 
   InstCostVisitor getInstCostVisitorFor(Function *F) {
     auto &TTI = GetTTI(*F);

@@ -12,7 +12,6 @@
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumpDelegate.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 #include <memory>
@@ -39,11 +38,11 @@ public:
   /// and true otherwise.  This should be called in order, since the dumper
   /// maintains state about previous records which are necessary for cross
   /// type references.
-  LLVM_ABI Error dump(CVRecord<SymbolKind> &Record);
+  Error dump(CVRecord<SymbolKind> &Record);
 
   /// Dumps the type records in Data. Returns false if there was a type stream
   /// parse error, and true otherwise.
-  LLVM_ABI Error dump(const CVSymbolArray &Symbols);
+  Error dump(const CVSymbolArray &Symbols);
 
   CPUType getCompilationCPUType() const { return CompilationCPUType; }
 

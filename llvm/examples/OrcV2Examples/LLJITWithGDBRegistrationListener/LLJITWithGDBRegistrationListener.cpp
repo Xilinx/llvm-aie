@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
       ExitOnErr(LLJITBuilder()
                     .setJITTargetMachineBuilder(std::move(JTMB))
                     .setObjectLinkingLayerCreator([&](ExecutionSession &ES) {
-                      auto GetMemMgr = [](const MemoryBuffer &) {
+                      auto GetMemMgr = []() {
                         return std::make_unique<SectionMemoryManager>();
                       };
                       auto ObjLinkingLayer =

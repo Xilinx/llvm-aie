@@ -18,7 +18,6 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFragment.h"
 #include "llvm/MC/MCSymbolTableEntry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
@@ -64,7 +63,7 @@ protected:
   };
 
   // Special sentinel value for the absolute pseudo fragment.
-  LLVM_ABI static MCFragment *AbsolutePseudoFragment;
+  static MCFragment *AbsolutePseudoFragment;
 
   /// If a symbol has a Fragment, the section is implied, so we only need
   /// one pointer.
@@ -178,8 +177,7 @@ protected:
 
   // Provide custom new/delete as we will only allocate space for a name
   // if we need one.
-  LLVM_ABI void *operator new(size_t s, const MCSymbolTableEntry *Name,
-                              MCContext &Ctx);
+  void *operator new(size_t s, const MCSymbolTableEntry *Name, MCContext &Ctx);
 
 private:
   void operator delete(void *);
@@ -303,12 +301,12 @@ public:
   }
 
   /// Get the expression of the variable symbol.
-  const MCExpr *getVariableValue() const {
+  const MCExpr *getVariableValue(bool SetUsed = true) const {
     assert(isVariable() && "Invalid accessor!");
     return Value;
   }
 
-  LLVM_ABI void setVariableValue(const MCExpr *Value);
+  void setVariableValue(const MCExpr *Value);
 
   /// @}
 
@@ -411,10 +409,10 @@ public:
   bool isWeakExternal() const { return IsWeakExternal; }
 
   /// print - Print the value to the stream \p OS.
-  LLVM_ABI void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
 
   /// dump - Print the value to stderr.
-  LLVM_ABI void dump() const;
+  void dump() const;
 
 protected:
   /// Get the (implementation defined) symbol flags.

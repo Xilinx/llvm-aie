@@ -433,39 +433,36 @@ public:
   /// methods should return the value returned by this function.
   virtual Instruction *eraseInstFromFunction(Instruction &I) = 0;
 
-  void computeKnownBits(const Value *V, KnownBits &Known,
-                        const Instruction *CxtI, unsigned Depth = 0) const {
-    llvm::computeKnownBits(V, Known, SQ.getWithInstruction(CxtI), Depth);
+  void computeKnownBits(const Value *V, KnownBits &Known, unsigned Depth,
+                        const Instruction *CxtI) const {
+    llvm::computeKnownBits(V, Known, Depth, SQ.getWithInstruction(CxtI));
   }
 
-  KnownBits computeKnownBits(const Value *V, const Instruction *CxtI,
-                             unsigned Depth = 0) const {
-    return llvm::computeKnownBits(V, SQ.getWithInstruction(CxtI), Depth);
+  KnownBits computeKnownBits(const Value *V, unsigned Depth,
+                             const Instruction *CxtI) const {
+    return llvm::computeKnownBits(V, Depth, SQ.getWithInstruction(CxtI));
   }
 
   bool isKnownToBeAPowerOfTwo(const Value *V, bool OrZero = false,
-                              const Instruction *CxtI = nullptr,
-                              unsigned Depth = 0) {
-    return llvm::isKnownToBeAPowerOfTwo(V, OrZero, SQ.getWithInstruction(CxtI),
-                                        Depth);
+                              unsigned Depth = 0,
+                              const Instruction *CxtI = nullptr) {
+    return llvm::isKnownToBeAPowerOfTwo(V, OrZero, Depth,
+                                        SQ.getWithInstruction(CxtI));
   }
 
-  bool MaskedValueIsZero(const Value *V, const APInt &Mask,
-                         const Instruction *CxtI = nullptr,
-                         unsigned Depth = 0) const {
+  bool MaskedValueIsZero(const Value *V, const APInt &Mask, unsigned Depth = 0,
+                         const Instruction *CxtI = nullptr) const {
     return llvm::MaskedValueIsZero(V, Mask, SQ.getWithInstruction(CxtI), Depth);
   }
 
-  unsigned ComputeNumSignBits(const Value *Op,
-                              const Instruction *CxtI = nullptr,
-                              unsigned Depth = 0) const {
-    return llvm::ComputeNumSignBits(Op, DL, &AC, CxtI, &DT, Depth);
+  unsigned ComputeNumSignBits(const Value *Op, unsigned Depth = 0,
+                              const Instruction *CxtI = nullptr) const {
+    return llvm::ComputeNumSignBits(Op, DL, Depth, &AC, CxtI, &DT);
   }
 
-  unsigned ComputeMaxSignificantBits(const Value *Op,
-                                     const Instruction *CxtI = nullptr,
-                                     unsigned Depth = 0) const {
-    return llvm::ComputeMaxSignificantBits(Op, DL, &AC, CxtI, &DT, Depth);
+  unsigned ComputeMaxSignificantBits(const Value *Op, unsigned Depth = 0,
+                                     const Instruction *CxtI = nullptr) const {
+    return llvm::ComputeMaxSignificantBits(Op, DL, Depth, &AC, CxtI, &DT);
   }
 
   OverflowResult computeOverflowForUnsignedMul(const Value *LHS,
@@ -513,13 +510,12 @@ public:
 
   virtual bool SimplifyDemandedBits(Instruction *I, unsigned OpNo,
                                     const APInt &DemandedMask, KnownBits &Known,
-                                    const SimplifyQuery &Q,
-                                    unsigned Depth = 0) = 0;
+                                    unsigned Depth, const SimplifyQuery &Q) = 0;
 
   bool SimplifyDemandedBits(Instruction *I, unsigned OpNo,
                             const APInt &DemandedMask, KnownBits &Known) {
     return SimplifyDemandedBits(I, OpNo, DemandedMask, Known,
-                                SQ.getWithInstruction(I));
+                                /*Depth=*/0, SQ.getWithInstruction(I));
   }
 
   virtual Value *

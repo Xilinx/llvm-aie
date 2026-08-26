@@ -18,19 +18,18 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
 
 class Module;
 
-LLVM_ABI extern cl::opt<int> SampleHotCallSiteThreshold;
-LLVM_ABI extern cl::opt<int> SampleColdCallSiteThreshold;
-LLVM_ABI extern cl::opt<int> ProfileInlineGrowthLimit;
-LLVM_ABI extern cl::opt<int> ProfileInlineLimitMin;
-LLVM_ABI extern cl::opt<int> ProfileInlineLimitMax;
-LLVM_ABI extern cl::opt<bool> SortProfiledSCC;
+extern cl::opt<int> SampleHotCallSiteThreshold;
+extern cl::opt<int> SampleColdCallSiteThreshold;
+extern cl::opt<int> ProfileInlineGrowthLimit;
+extern cl::opt<int> ProfileInlineLimitMin;
+extern cl::opt<int> ProfileInlineLimitMax;
+extern cl::opt<bool> SortProfiledSCC;
 
 namespace vfs {
 class FileSystem;
@@ -39,14 +38,14 @@ class FileSystem;
 /// The sample profiler data loader pass.
 class SampleProfileLoaderPass : public PassInfoMixin<SampleProfileLoaderPass> {
 public:
-  LLVM_ABI SampleProfileLoaderPass(
+  SampleProfileLoaderPass(
       std::string File = "", std::string RemappingFile = "",
       ThinOrFullLTOPhase LTOPhase = ThinOrFullLTOPhase::None,
       IntrusiveRefCntPtr<vfs::FileSystem> FS = nullptr,
       bool DisableSampleProfileInlining = false,
       bool UseFlattenedProfile = false);
 
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 
 private:
   std::string ProfileFileName;

@@ -571,36 +571,6 @@ bool InterleavedAccessImpl::lowerInterleavedStore(
   return true;
 }
 
-static bool isInterleaveIntrinsic(Intrinsic::ID IID) {
-  switch (IID) {
-  case Intrinsic::vector_interleave2:
-  case Intrinsic::vector_interleave3:
-  case Intrinsic::vector_interleave4:
-  case Intrinsic::vector_interleave5:
-  case Intrinsic::vector_interleave6:
-  case Intrinsic::vector_interleave7:
-  case Intrinsic::vector_interleave8:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool isDeinterleaveIntrinsic(Intrinsic::ID IID) {
-  switch (IID) {
-  case Intrinsic::vector_deinterleave2:
-  case Intrinsic::vector_deinterleave3:
-  case Intrinsic::vector_deinterleave4:
-  case Intrinsic::vector_deinterleave5:
-  case Intrinsic::vector_deinterleave6:
-  case Intrinsic::vector_deinterleave7:
-  case Intrinsic::vector_deinterleave8:
-    return true;
-  default:
-    return false;
-  }
-}
-
 static unsigned getIntrinsicFactor(const IntrinsicInst *II) {
   switch (II->getIntrinsicID()) {
   case Intrinsic::vector_deinterleave2:
@@ -609,21 +579,12 @@ static unsigned getIntrinsicFactor(const IntrinsicInst *II) {
   case Intrinsic::vector_deinterleave3:
   case Intrinsic::vector_interleave3:
     return 3;
-  case Intrinsic::vector_deinterleave4:
-  case Intrinsic::vector_interleave4:
-    return 4;
   case Intrinsic::vector_deinterleave5:
   case Intrinsic::vector_interleave5:
     return 5;
-  case Intrinsic::vector_deinterleave6:
-  case Intrinsic::vector_interleave6:
-    return 6;
   case Intrinsic::vector_deinterleave7:
   case Intrinsic::vector_interleave7:
     return 7;
-  case Intrinsic::vector_deinterleave8:
-  case Intrinsic::vector_interleave8:
-    return 8;
   default:
     llvm_unreachable("Unexpected intrinsic");
   }
@@ -644,9 +605,10 @@ static unsigned getIntrinsicFactor(const IntrinsicInst *II) {
 //  to reorder them by interleaving these values.
 static void interleaveLeafValues(MutableArrayRef<Value *> SubLeaves) {
   unsigned NumLeaves = SubLeaves.size();
-  assert(isPowerOf2_32(NumLeaves) && NumLeaves > 1);
-  if (NumLeaves == 2)
+  if (NumLeaves == 2 || !isPowerOf2_64(NumLeaves))
     return;
+
+  assert(isPowerOf2_32(NumLeaves) && NumLeaves > 1);
 
   const unsigned HalfLeaves = NumLeaves / 2;
   // Visit the sub-trees.
@@ -665,7 +627,10 @@ static void interleaveLeafValues(MutableArrayRef<Value *> SubLeaves) {
 static bool
 getVectorInterleaveFactor(IntrinsicInst *II, SmallVectorImpl<Value *> &Operands,
                           SmallVectorImpl<Instruction *> &DeadInsts) {
-  assert(isInterleaveIntrinsic(II->getIntrinsicID()));
+  assert(II->getIntrinsicID() == Intrinsic::vector_interleave2 ||
+         II->getIntrinsicID() == Intrinsic::vector_interleave3 ||
+         II->getIntrinsicID() == Intrinsic::vector_interleave5 ||
+         II->getIntrinsicID() == Intrinsic::vector_interleave7);
 
   // Visit with BFS
   SmallVector<IntrinsicInst *, 8> Queue;
@@ -695,17 +660,13 @@ getVectorInterleaveFactor(IntrinsicInst *II, SmallVectorImpl<Value *> &Operands,
   }
 
   const unsigned Factor = Operands.size();
-  // Currently we only recognize factors 2...8 and other powers of 2.
+  // Currently we only recognize factors of 3, 5, 7, and powers of 2.
   // FIXME: should we assert here instead?
   if (Factor <= 1 ||
       (!isPowerOf2_32(Factor) && Factor != getIntrinsicFactor(II)))
     return false;
 
-  // Recursively interleaved factors need to have their values reordered
-  // TODO: Remove once the loop vectorizer no longer recursively interleaves
-  // factors 4 + 8
-  if (isPowerOf2_32(Factor) && getIntrinsicFactor(II) == 2)
-    interleaveLeafValues(Operands);
+  interleaveLeafValues(Operands);
   return true;
 }
 
@@ -713,7 +674,10 @@ static bool
 getVectorDeinterleaveFactor(IntrinsicInst *II,
                             SmallVectorImpl<Value *> &Results,
                             SmallVectorImpl<Instruction *> &DeadInsts) {
-  assert(isDeinterleaveIntrinsic(II->getIntrinsicID()));
+  assert(II->getIntrinsicID() == Intrinsic::vector_deinterleave2 ||
+         II->getIntrinsicID() == Intrinsic::vector_deinterleave3 ||
+         II->getIntrinsicID() == Intrinsic::vector_deinterleave5 ||
+         II->getIntrinsicID() == Intrinsic::vector_deinterleave7);
   using namespace PatternMatch;
   if (!II->hasNUses(getIntrinsicFactor(II)))
     return false;
@@ -773,17 +737,13 @@ getVectorDeinterleaveFactor(IntrinsicInst *II,
   }
 
   const unsigned Factor = Results.size();
-  // Currently we only recognize factors of 2...8 and other powers of 2.
+  // Currently we only recognize factors of 3, 5, 7, and powers of 2.
   // FIXME: should we assert here instead?
   if (Factor <= 1 ||
       (!isPowerOf2_32(Factor) && Factor != getIntrinsicFactor(II)))
     return 0;
 
-  // Recursively interleaved factors need to have their values reordered
-  // TODO: Remove once the loop vectorizer no longer recursively interleaves
-  // factors 4 + 8
-  if (isPowerOf2_32(Factor) && getIntrinsicFactor(II) == 2)
-    interleaveLeafValues(Results);
+  interleaveLeafValues(Results);
   return true;
 }
 
@@ -942,10 +902,24 @@ bool InterleavedAccessImpl::runOnFunction(Function &F) {
       Changed |= lowerInterleavedStore(&I, DeadInsts);
 
     if (auto *II = dyn_cast<IntrinsicInst>(&I)) {
-      if (isDeinterleaveIntrinsic(II->getIntrinsicID()))
+      // At present, we only have intrinsics to represent (de)interleaving
+      // with a factor of 2,3,5 and 7.
+      switch (II->getIntrinsicID()) {
+      case Intrinsic::vector_deinterleave2:
+      case Intrinsic::vector_deinterleave3:
+      case Intrinsic::vector_deinterleave5:
+      case Intrinsic::vector_deinterleave7:
         Changed |= lowerDeinterleaveIntrinsic(II, DeadInsts);
-      else if (isInterleaveIntrinsic(II->getIntrinsicID()))
+        break;
+      case Intrinsic::vector_interleave2:
+      case Intrinsic::vector_interleave3:
+      case Intrinsic::vector_interleave5:
+      case Intrinsic::vector_interleave7:
         Changed |= lowerInterleaveIntrinsic(II, DeadInsts);
+        break;
+      default:
+        break;
+      }
     }
   }
 

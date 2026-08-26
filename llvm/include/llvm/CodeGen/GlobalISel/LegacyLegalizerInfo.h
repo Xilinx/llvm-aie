@@ -18,7 +18,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGenTypes/LowLevelType.h"
-#include "llvm/Support/Compiler.h"
 #include <unordered_map>
 #include <vector>
 
@@ -76,8 +75,8 @@ enum LegacyLegalizeAction : std::uint8_t {
   NotFound,
 };
 } // end namespace LegacyLegalizeActions
-LLVM_ABI raw_ostream &
-operator<<(raw_ostream &OS, LegacyLegalizeActions::LegacyLegalizeAction Action);
+raw_ostream &operator<<(raw_ostream &OS,
+                        LegacyLegalizeActions::LegacyLegalizeAction Action);
 
 /// Legalization is decided based on an instruction's opcode, which type slot
 /// we're considering, and what the existing type is. These aspects are gathered
@@ -126,7 +125,7 @@ public:
   using SizeChangeStrategy =
       std::function<SizeAndActionsVec(const SizeAndActionsVec &v)>;
 
-  LLVM_ABI LegacyLegalizerInfo();
+  LegacyLegalizerInfo();
 
   static bool needsLegalizingToDifferentSize(
       const LegacyLegalizeActions::LegacyLegalizeAction Action) {
@@ -146,7 +145,7 @@ public:
   /// Compute any ancillary tables needed to quickly decide how an operation
   /// should be handled. This must be called after all "set*Action"methods but
   /// before any query is made or incorrect results may be returned.
-  LLVM_ABI void computeTables();
+  void computeTables();
 
   /// More friendly way to set an action for common types that have an LLT
   /// representation.
@@ -268,19 +267,19 @@ public:
   }
 
   /// Helper function to implement many typical SizeChangeStrategy functions.
-  LLVM_ABI static SizeAndActionsVec increaseToLargerTypesAndDecreaseToLargest(
+  static SizeAndActionsVec increaseToLargerTypesAndDecreaseToLargest(
       const SizeAndActionsVec &v,
       LegacyLegalizeActions::LegacyLegalizeAction IncreaseAction,
       LegacyLegalizeActions::LegacyLegalizeAction DecreaseAction);
   /// Helper function to implement many typical SizeChangeStrategy functions.
-  LLVM_ABI static SizeAndActionsVec decreaseToSmallerTypesAndIncreaseToSmallest(
+  static SizeAndActionsVec decreaseToSmallerTypesAndIncreaseToSmallest(
       const SizeAndActionsVec &v,
       LegacyLegalizeActions::LegacyLegalizeAction DecreaseAction,
       LegacyLegalizeActions::LegacyLegalizeAction IncreaseAction);
 
-  LLVM_ABI LegacyLegalizeActionStep getAction(const LegalityQuery &Query) const;
+  LegacyLegalizeActionStep getAction(const LegalityQuery &Query) const;
 
-  LLVM_ABI unsigned getOpcodeIdxForOpcode(unsigned Opcode) const;
+  unsigned getOpcodeIdxForOpcode(unsigned Opcode) const;
 
 private:
   /// Determine what action should be taken to legalize the given generic

@@ -594,3 +594,5 @@ struct D2 : B {
     operator double();
 };
 
+auto l1 = [](int arg) {};
+auto l2 = [](int arg) -> double { return 0; };

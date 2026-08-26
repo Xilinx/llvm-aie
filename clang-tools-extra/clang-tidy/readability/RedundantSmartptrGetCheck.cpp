@@ -49,41 +49,29 @@ internal::Matcher<Decl> knownSmartptr() {
 
 void registerMatchersForGetArrowStart(MatchFinder *Finder,
                                       MatchFinder::MatchCallback *Callback) {
-  const auto MatchesOpArrow =
-      allOf(hasName("operator->"),
-            returns(qualType(pointsTo(type().bind("op->Type")))));
-  const auto MatchesOpStar =
-      allOf(hasName("operator*"),
-            returns(qualType(references(type().bind("op*Type")))));
-  const auto HasRelevantOps =
-      allOf(anyOf(hasMethod(MatchesOpArrow),
-                  has(functionTemplateDecl(has(functionDecl(MatchesOpArrow))))),
-            anyOf(hasMethod(MatchesOpStar),
-                  has(functionTemplateDecl(has(functionDecl(MatchesOpStar))))));
-
-  const auto QuacksLikeASmartptr =
-      cxxRecordDecl(cxxRecordDecl().bind("duck_typing"), HasRelevantOps);
+  const auto QuacksLikeASmartptr = recordDecl(
+      recordDecl().bind("duck_typing"),
+      has(cxxMethodDecl(hasName("operator->"),
+                        returns(qualType(pointsTo(type().bind("op->Type")))))),
+      has(cxxMethodDecl(hasName("operator*"), returns(qualType(references(
+                                                  type().bind("op*Type")))))));
 
   // Make sure we are not missing the known standard types.
-  const auto SmartptrAny = anyOf(knownSmartptr(), QuacksLikeASmartptr);
-  const auto SmartptrWithDeref = anyOf(
-      cxxRecordDecl(knownSmartptr(), HasRelevantOps), QuacksLikeASmartptr);
+  const auto Smartptr = anyOf(knownSmartptr(), QuacksLikeASmartptr);
 
   // Catch 'ptr.get()->Foo()'
-  Finder->addMatcher(
-      memberExpr(expr().bind("memberExpr"), isArrow(),
-                 hasObjectExpression(callToGet(SmartptrWithDeref))),
-      Callback);
+  Finder->addMatcher(memberExpr(expr().bind("memberExpr"), isArrow(),
+                                hasObjectExpression(callToGet(Smartptr))),
+                     Callback);
 
   // Catch '*ptr.get()' or '*ptr->get()'
   Finder->addMatcher(
-      unaryOperator(hasOperatorName("*"),
-                    hasUnaryOperand(callToGet(SmartptrWithDeref))),
+      unaryOperator(hasOperatorName("*"), hasUnaryOperand(callToGet(Smartptr))),
       Callback);
 
   // Catch '!ptr.get()'
   const auto CallToGetAsBool = callToGet(
-      recordDecl(SmartptrAny, has(cxxConversionDecl(returns(booleanType())))));
+      recordDecl(Smartptr, has(cxxConversionDecl(returns(booleanType())))));
   Finder->addMatcher(
       unaryOperator(hasOperatorName("!"), hasUnaryOperand(CallToGetAsBool)),
       Callback);
@@ -96,7 +84,7 @@ void registerMatchersForGetArrowStart(MatchFinder *Finder,
                      Callback);
 
   Finder->addMatcher(cxxDependentScopeMemberExpr(hasObjectExpression(
-                         callExpr(has(callToGet(SmartptrAny))))),
+                         callExpr(has(callToGet(Smartptr))).bind("obj"))),
                      Callback);
 }
 

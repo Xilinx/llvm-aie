@@ -23,7 +23,7 @@ class SPIRV_ArithmeticBinaryOp<string mnemonic, Type type,
       // Operands type same as result type.
       SPIRV_BinaryOp<mnemonic, type, type,
                    !listconcat(traits,
-                               [Pure, AllTypesMatch<["operand1", "operand2", "result"]>])> {
+                               [Pure, SameOperandsAndResultType])> {
   // In addition to normal types arithmetic instructions can support cooperative
   // matrix.
   let arguments = (ins
@@ -42,7 +42,7 @@ class SPIRV_ArithmeticUnaryOp<string mnemonic, Type type,
       // Operand type same as result type.
       SPIRV_UnaryOp<mnemonic, type, type,
                    !listconcat(traits,
-                               [Pure, AllTypesMatch<["operand", "result"]>])> {
+                               [Pure, SameOperandsAndResultType])> {
   // In addition to normal types arithmetic instructions can support cooperative
   // matrix.
   let arguments = (ins

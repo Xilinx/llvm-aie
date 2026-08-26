@@ -16,7 +16,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/Instrumentation.h"
 
 namespace llvm {
@@ -51,10 +50,10 @@ inline constexpr char kSanitizerBinaryMetadataAtomicsSection[] =
 class SanitizerBinaryMetadataPass
     : public PassInfoMixin<SanitizerBinaryMetadataPass> {
 public:
-  LLVM_ABI explicit SanitizerBinaryMetadataPass(
+  explicit SanitizerBinaryMetadataPass(
       SanitizerBinaryMetadataOptions Opts = {},
       ArrayRef<std::string> IgnorelistFiles = {});
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 
 private:

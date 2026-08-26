@@ -15,7 +15,6 @@
 
 #include "llvm/ExecutionEngine/JITLink/JITLink.h"
 #include "llvm/ExecutionEngine/JITLink/TableManager.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 
 namespace llvm::jitlink::ppc64 {
@@ -74,11 +73,11 @@ enum PLTCallStubKind {
   LongBranchNoTOC,
 };
 
-LLVM_ABI extern const char NullPointerContent[8];
-LLVM_ABI extern const char PointerJumpStubContent_big[20];
-LLVM_ABI extern const char PointerJumpStubContent_little[20];
-LLVM_ABI extern const char PointerJumpStubNoTOCContent_big[32];
-LLVM_ABI extern const char PointerJumpStubNoTOCContent_little[32];
+extern const char NullPointerContent[8];
+extern const char PointerJumpStubContent_big[20];
+extern const char PointerJumpStubContent_little[20];
+extern const char PointerJumpStubNoTOCContent_big[32];
+extern const char PointerJumpStubNoTOCContent_little[32];
 
 struct PLTCallStubReloc {
   Edge::Kind K;
@@ -260,7 +259,7 @@ private:
 
 /// Returns a string name for the given ppc64 edge. For debugging purposes
 /// only.
-LLVM_ABI const char *getEdgeKindName(Edge::Kind K);
+const char *getEdgeKindName(Edge::Kind K);
 
 inline static uint16_t ha(uint64_t x) { return (x + 0x8000) >> 16; }
 inline static uint64_t lo(uint64_t x) { return x & 0xffff; }

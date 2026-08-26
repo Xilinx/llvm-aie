@@ -324,8 +324,11 @@ bool R600VectorRegMerger::runOnMachineFunction(MachineFunction &Fn) {
       if (MI.getOpcode() != R600::REG_SEQUENCE) {
         if (TII->get(MI.getOpcode()).TSFlags & R600_InstFlag::TEX_INST) {
           Register Reg = MI.getOperand(1).getReg();
-          for (MachineInstr &DefMI : MRI->def_instructions(Reg))
-            RemoveMI(&DefMI);
+          for (MachineRegisterInfo::def_instr_iterator
+               It = MRI->def_instr_begin(Reg), E = MRI->def_instr_end();
+               It != E; ++It) {
+            RemoveMI(&(*It));
+          }
         }
         continue;
       }

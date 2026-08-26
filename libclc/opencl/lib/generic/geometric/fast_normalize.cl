@@ -6,12 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/geometric/clc_fast_normalize.h>
 #include <clc/opencl/clc.h>
 
-#define FUNCTION fast_normalize
-#define __FLOAT_ONLY
-#define __CLC_GEOMETRIC_RET_GENTYPE
-#define __CLC_BODY <clc/geometric/unary_def.inc>
+_CLC_OVERLOAD _CLC_DEF float fast_normalize(float p) { return normalize(p); }
 
+#define __CLC_BODY <fast_normalize.inc>
+#define __FLOAT_ONLY
 #include <clc/math/gentype.inc>
+#undef __FLOAT_ONLY

@@ -8,7 +8,6 @@ set(LLVM_LINK_COMPONENTS
   AArch64Desc
   AArch64Info
   AArch64Utils
-  Analysis
   AsmParser
   CodeGen
   CodeGenTypes
@@ -31,6 +30,5 @@ add_llvm_target_unittest(AArch64Tests
   SMEAttributesTest.cpp
   AArch64RegisterInfoTest.cpp
   AArch64SVESchedPseudoTest.cpp
-  AArch64SelectionDAGTest.cpp
   Immediates.cpp
   )

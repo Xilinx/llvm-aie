@@ -27,7 +27,6 @@
 #include "llvm/CodeGen/MachineFunctionAnalysisManager.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/PassManagerInternal.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -105,7 +104,7 @@ using MachineFunctionAnalysisManagerModuleProxy =
     InnerAnalysisManagerProxy<MachineFunctionAnalysisManager, Module>;
 
 template <>
-LLVM_ABI bool MachineFunctionAnalysisManagerModuleProxy::Result::invalidate(
+bool MachineFunctionAnalysisManagerModuleProxy::Result::invalidate(
     Module &M, const PreservedAnalyses &PA,
     ModuleAnalysisManager::Invalidator &Inv);
 extern template class InnerAnalysisManagerProxy<MachineFunctionAnalysisManager,
@@ -114,14 +113,14 @@ using MachineFunctionAnalysisManagerFunctionProxy =
     InnerAnalysisManagerProxy<MachineFunctionAnalysisManager, Function>;
 
 template <>
-LLVM_ABI bool MachineFunctionAnalysisManagerFunctionProxy::Result::invalidate(
+bool MachineFunctionAnalysisManagerFunctionProxy::Result::invalidate(
     Function &F, const PreservedAnalyses &PA,
     FunctionAnalysisManager::Invalidator &Inv);
 extern template class InnerAnalysisManagerProxy<MachineFunctionAnalysisManager,
                                                 Function>;
 
-extern template class LLVM_TEMPLATE_ABI
-    OuterAnalysisManagerProxy<ModuleAnalysisManager, MachineFunction>;
+extern template class OuterAnalysisManagerProxy<ModuleAnalysisManager,
+                                                MachineFunction>;
 /// Provide the \c ModuleAnalysisManager to \c Function proxy.
 using ModuleAnalysisManagerMachineFunctionProxy =
     OuterAnalysisManagerProxy<ModuleAnalysisManager, MachineFunction>;
@@ -162,8 +161,8 @@ public:
     /// Regardless of whether the proxy analysis is marked as preserved, all of
     /// the analyses in the inner analysis manager are potentially invalidated
     /// based on the set of preserved analyses.
-    LLVM_ABI bool invalidate(MachineFunction &IR, const PreservedAnalyses &PA,
-                             MachineFunctionAnalysisManager::Invalidator &Inv);
+    bool invalidate(MachineFunction &IR, const PreservedAnalyses &PA,
+                    MachineFunctionAnalysisManager::Invalidator &Inv);
 
   private:
     FunctionAnalysisManager *FAM;
@@ -182,7 +181,7 @@ public:
     return Result(*FAM);
   }
 
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 private:
   FunctionAnalysisManager *FAM;
@@ -199,10 +198,9 @@ public:
       : Pass(std::move(Pass)) {}
 
   /// Runs the function pass across every function in the function.
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
-  LLVM_ABI void
-  printPipeline(raw_ostream &OS,
-                function_ref<StringRef(StringRef)> MapClassName2PassName);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
+  void printPipeline(raw_ostream &OS,
+                     function_ref<StringRef(StringRef)> MapClassName2PassName);
 
   static bool isRequired() { return true; }
 
@@ -223,8 +221,9 @@ createFunctionToMachineFunctionPassAdaptor(MachineFunctionPassT &&Pass) {
 }
 
 template <>
-LLVM_ABI PreservedAnalyses PassManager<MachineFunction>::run(
-    MachineFunction &, AnalysisManager<MachineFunction> &);
+PreservedAnalyses
+PassManager<MachineFunction>::run(MachineFunction &,
+                                  AnalysisManager<MachineFunction> &);
 extern template class PassManager<MachineFunction>;
 
 /// Convenience typedef for a pass manager over functions.
@@ -232,7 +231,7 @@ using MachineFunctionPassManager = PassManager<MachineFunction>;
 
 /// Returns the minimum set of Analyses that all machine function passes must
 /// preserve.
-LLVM_ABI PreservedAnalyses getMachineFunctionPassPreservedAnalyses();
+PreservedAnalyses getMachineFunctionPassPreservedAnalyses();
 
 } // end namespace llvm
 

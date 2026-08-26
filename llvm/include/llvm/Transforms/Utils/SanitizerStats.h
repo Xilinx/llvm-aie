@@ -14,7 +14,6 @@
 #define LLVM_TRANSFORMS_UTILS_SANITIZERSTATS_H
 
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -31,14 +30,14 @@ enum SanitizerStatKind {
 };
 
 struct SanitizerStatReport {
-  LLVM_ABI SanitizerStatReport(Module *M);
+  SanitizerStatReport(Module *M);
 
   /// Generates code into B that increments a location-specific counter tagged
   /// with the given sanitizer kind SK.
-  LLVM_ABI void create(IRBuilder<> &B, SanitizerStatKind SK);
+  void create(IRBuilder<> &B, SanitizerStatKind SK);
 
   /// Finalize module stats array and add global constructor to register it.
-  LLVM_ABI void finish();
+  void finish();
 
 private:
   Module *M;

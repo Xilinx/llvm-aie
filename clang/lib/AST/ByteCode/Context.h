@@ -138,10 +138,8 @@ private:
   /// ID identifying an evaluation.
   unsigned EvalID = 0;
   /// Cached widths (in bits) of common types, for a faster classify().
-  unsigned ShortWidth;
   unsigned IntWidth;
   unsigned LongWidth;
-  unsigned LongLongWidth;
 };
 
 } // namespace interp

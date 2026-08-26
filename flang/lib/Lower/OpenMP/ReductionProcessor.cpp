@@ -12,9 +12,9 @@
 
 #include "ReductionProcessor.h"
 
+#include "PrivateReductionUtils.h"
 #include "flang/Lower/AbstractConverter.h"
 #include "flang/Lower/ConvertType.h"
-#include "flang/Lower/Support/PrivateReductionUtils.h"
 #include "flang/Lower/SymbolMap.h"
 #include "flang/Optimizer/Builder/Complex.h"
 #include "flang/Optimizer/Builder/HLFIRTools.h"
@@ -389,8 +389,7 @@ static void genBoxCombiner(fir::FirOpBuilder &builder, mlir::Location loc,
   hlfir::LoopNest nest = hlfir::genLoopNest(
       loc, builder, shapeShift.getExtents(), /*isUnordered=*/true);
   builder.setInsertionPointToStart(nest.body);
-  const bool seqIsVolatile = fir::isa_volatile_type(seqTy.getEleTy());
-  mlir::Type refTy = fir::ReferenceType::get(seqTy.getEleTy(), seqIsVolatile);
+  mlir::Type refTy = fir::ReferenceType::get(seqTy.getEleTy());
   auto lhsEleAddr = builder.create<fir::ArrayCoorOp>(
       loc, refTy, lhs, shapeShift, /*slice=*/mlir::Value{},
       nest.oneBasedIndices, /*typeparms=*/mlir::ValueRange{});
@@ -660,8 +659,7 @@ void ReductionProcessor::processReductionArguments(
     assert(fir::isa_ref_type(symVal.getType()) &&
            "reduction input var is passed by reference");
     mlir::Type elementType = fir::dyn_cast_ptrEleTy(symVal.getType());
-    const bool symIsVolatile = fir::isa_volatile_type(symVal.getType());
-    mlir::Type refTy = fir::ReferenceType::get(elementType, symIsVolatile);
+    mlir::Type refTy = fir::ReferenceType::get(elementType);
 
     reductionVars.push_back(
         builder.createConvert(currentLocation, refTy, symVal));

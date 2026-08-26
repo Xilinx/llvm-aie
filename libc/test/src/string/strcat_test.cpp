@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "hdr/signal_macros.h"
 #include "src/string/strcat.h"
 #include "test/UnitTest/Test.h"
 
@@ -36,12 +35,3 @@ TEST(LlvmLibcStrCatTest, NonEmptyDest) {
   ASSERT_STREQ(dest, result);
   ASSERT_STREQ(dest, "xyzabc");
 }
-
-#if defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
-
-TEST(LlvmLibcStrCatTest, CrashOnNullPtr) {
-  ASSERT_DEATH([]() { LIBC_NAMESPACE::strcat(nullptr, nullptr); },
-               WITH_SIGNAL(-1));
-}
-
-#endif // defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)

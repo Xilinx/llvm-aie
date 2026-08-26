@@ -15,7 +15,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class AssumptionCache;
@@ -71,13 +70,13 @@ public:
   /// isPotentiallyPHITranslatable - If this needs PHI translation, return true
   /// if we have some hope of doing it.  This should be used as a filter to
   /// avoid calling PHITranslateValue in hopeless situations.
-  LLVM_ABI bool isPotentiallyPHITranslatable() const;
+  bool isPotentiallyPHITranslatable() const;
 
   /// translateValue - PHI translate the current address up the CFG from
   /// CurBB to Pred, updating our state to reflect any needed changes.  If
   /// 'MustDominate' is true, the translated value must dominate PredBB.
-  LLVM_ABI Value *translateValue(BasicBlock *CurBB, BasicBlock *PredBB,
-                                 const DominatorTree *DT, bool MustDominate);
+  Value *translateValue(BasicBlock *CurBB, BasicBlock *PredBB,
+                        const DominatorTree *DT, bool MustDominate);
 
   /// translateWithInsertion - PHI translate this value into the specified
   /// predecessor block, inserting a computation of the value if it is
@@ -86,17 +85,16 @@ public:
   /// All newly created instructions are added to the NewInsts list.  This
   /// returns null on failure.
   ///
-  LLVM_ABI Value *
-  translateWithInsertion(BasicBlock *CurBB, BasicBlock *PredBB,
-                         const DominatorTree &DT,
-                         SmallVectorImpl<Instruction *> &NewInsts);
+  Value *translateWithInsertion(BasicBlock *CurBB, BasicBlock *PredBB,
+                                const DominatorTree &DT,
+                                SmallVectorImpl<Instruction *> &NewInsts);
 
-  LLVM_ABI void dump() const;
+  void dump() const;
 
   /// verify - Check internal consistency of this data structure.  If the
   /// structure is valid, it returns true.  If invalid, it prints errors and
   /// returns false.
-  LLVM_ABI bool verify() const;
+  bool verify() const;
 
 private:
   Value *translateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB,

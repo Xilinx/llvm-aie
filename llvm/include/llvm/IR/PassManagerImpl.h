@@ -19,8 +19,9 @@
 #include "llvm/IR/PassInstrumentation.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/PrettyStackTrace.h"
+
+extern llvm::cl::opt<bool> UseNewDbgInfoFormat;
 
 namespace llvm {
 
@@ -62,6 +63,10 @@ PreservedAnalyses PassManager<IRUnitT, AnalysisManagerT, ExtraArgTs...>::run(
   PassInstrumentation PI =
       detail::getAnalysisResult<PassInstrumentationAnalysis>(
           AM, IR, std::tuple<ExtraArgTs...>(ExtraArgs...));
+
+  // RemoveDIs: if requested, convert debug-info to DbgRecord representation
+  // for duration of these passes.
+  ScopedDbgInfoFormatSetter FormatSetter(IR, UseNewDbgInfoFormat);
 
   StackTraceEntry Entry(PI, IR);
   for (auto &Pass : Passes) {

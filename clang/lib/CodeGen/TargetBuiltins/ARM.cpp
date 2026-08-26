@@ -4792,7 +4792,12 @@ Value *CodeGenFunction::EmitAArch64SVEBuiltinExpr(unsigned BuiltinID,
   case SVE::BI__builtin_sve_svlen_u32:
   case SVE::BI__builtin_sve_svlen_u64: {
     SVETypeFlags TF(Builtin->TypeModifier);
-    return Builder.CreateElementCount(Ty, getSVEType(TF)->getElementCount());
+    auto VTy = cast<llvm::VectorType>(getSVEType(TF));
+    auto *NumEls =
+        llvm::ConstantInt::get(Ty, VTy->getElementCount().getKnownMinValue());
+
+    Function *F = CGM.getIntrinsic(Intrinsic::vscale, Ty);
+    return Builder.CreateMul(NumEls, Builder.CreateCall(F));
   }
 
   case SVE::BI__builtin_sve_svtbl2_u8:
@@ -4808,7 +4813,8 @@ Value *CodeGenFunction::EmitAArch64SVEBuiltinExpr(unsigned BuiltinID,
   case SVE::BI__builtin_sve_svtbl2_f32:
   case SVE::BI__builtin_sve_svtbl2_f64: {
     SVETypeFlags TF(Builtin->TypeModifier);
-    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_sve_tbl2, getSVEType(TF));
+    auto VTy = cast<llvm::ScalableVectorType>(getSVEType(TF));
+    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_sve_tbl2, VTy);
     return Builder.CreateCall(F, Ops);
   }
 

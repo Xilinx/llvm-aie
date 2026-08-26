@@ -39,7 +39,7 @@ void TCETargetCodeGenInfo::setTargetAttributes(
   llvm::Function *F = cast<llvm::Function>(GV);
 
   if (M.getLangOpts().OpenCL) {
-    if (FD->hasAttr<DeviceKernelAttr>()) {
+    if (FD->hasAttr<OpenCLKernelAttr>()) {
       // OpenCL C Kernel functions are not subject to inlining
       F->addFnAttr(llvm::Attribute::NoInline);
       const ReqdWorkGroupSizeAttr *Attr = FD->getAttr<ReqdWorkGroupSizeAttr>();

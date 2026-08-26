@@ -63,23 +63,18 @@ FailureOr<uint64_t> DataLayoutImporter::tryToParseInt(StringRef &token) const {
   return parameter;
 }
 
-template <class T>
-static FailureOr<SmallVector<T>> tryToParseIntListImpl(StringRef token) {
+FailureOr<SmallVector<uint64_t>>
+DataLayoutImporter::tryToParseIntList(StringRef token) const {
   SmallVector<StringRef> tokens;
   token.consume_front(":");
   token.split(tokens, ':');
 
   // Parse an integer list.
-  SmallVector<T> results(tokens.size());
+  SmallVector<uint64_t> results(tokens.size());
   for (auto [result, token] : llvm::zip(results, tokens))
     if (token.getAsInteger(/*Radix=*/10, result))
       return failure();
   return results;
-}
-
-FailureOr<SmallVector<uint64_t>>
-DataLayoutImporter::tryToParseIntList(StringRef token) const {
-  return tryToParseIntListImpl<uint64_t>(token);
 }
 
 FailureOr<DenseIntElementsAttr>
@@ -256,25 +251,6 @@ LogicalResult DataLayoutImporter::tryToEmplaceFunctionPointerAlignmentEntry(
   return success();
 }
 
-LogicalResult
-DataLayoutImporter::tryToEmplaceLegalIntWidthsEntry(StringRef token) {
-  auto key =
-      StringAttr::get(context, DLTIDialect::kDataLayoutLegalIntWidthsKey);
-  if (keyEntries.count(key))
-    return success();
-
-  FailureOr<SmallVector<int32_t>> intWidths =
-      tryToParseIntListImpl<int32_t>(token);
-  if (failed(intWidths) || intWidths->empty())
-    return failure();
-
-  OpBuilder builder(context);
-  keyEntries.try_emplace(
-      key,
-      DataLayoutEntryAttr::get(key, builder.getDenseI32ArrayAttr(*intWidths)));
-  return success();
-}
-
 void DataLayoutImporter::translateDataLayout(
     const llvm::DataLayout &llvmDataLayout) {
   dataLayout = {};
@@ -381,12 +357,6 @@ void DataLayoutImporter::translateDataLayout(
 
       auto type = LLVMPointerType::get(context, *space);
       if (failed(tryToEmplacePointerAlignmentEntry(type, token)))
-        return;
-      continue;
-    }
-    // Parse native integer widths specifications.
-    if (*prefix == "n") {
-      if (failed(tryToEmplaceLegalIntWidthsEntry(token)))
         return;
       continue;
     }

@@ -15,7 +15,7 @@
 #include "src/__support/macros/properties/architectures.h"
 
 #ifdef LIBC_TARGET_ARCH_IS_ANY_ARM
-#include "aarch64/syscall.h"
+#include "arm/syscall.h"
 #else
 #error "Unsupported architecture"
 #endif

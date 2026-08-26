@@ -283,9 +283,7 @@ public:
   /// For example, if this instance refers to a nested-name-specifier
   /// \c \::std::vector<int>::, the returned source range would cover
   /// from the initial '::' to the last '::'.
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getBeginLoc(), getEndLoc());
-  }
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   /// Retrieve the source range covering just the last part of
   /// this nested-name-specifier, not including the prefix.
@@ -298,18 +296,14 @@ public:
   /// Retrieve the location of the beginning of this
   /// nested-name-specifier.
   SourceLocation getBeginLoc() const {
-    if (!Qualifier)
-      return SourceLocation();
-
-    NestedNameSpecifierLoc First = *this;
-    while (NestedNameSpecifierLoc Prefix = First.getPrefix())
-      First = Prefix;
-    return First.getLocalSourceRange().getBegin();
+    return getSourceRange().getBegin();
   }
 
   /// Retrieve the location of the end of this
   /// nested-name-specifier.
-  SourceLocation getEndLoc() const { return getLocalSourceRange().getEnd(); }
+  SourceLocation getEndLoc() const {
+    return getSourceRange().getEnd();
+  }
 
   /// Retrieve the location of the beginning of this
   /// component of the nested-name-specifier.

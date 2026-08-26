@@ -17,7 +17,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstdint>
 #include <map>
@@ -113,13 +112,13 @@ struct TypeMemberInfo {
   uint64_t Offset;
 
   bool operator<(const TypeMemberInfo &other) const {
-    return std::tie(Bits, Offset) < std::tie(other.Bits, other.Offset);
+    return Bits < other.Bits || (Bits == other.Bits && Offset < other.Offset);
   }
 };
 
 // A virtual call target, i.e. an entry in a particular vtable.
 struct VirtualCallTarget {
-  LLVM_ABI VirtualCallTarget(GlobalValue *Fn, const TypeMemberInfo *TM);
+  VirtualCallTarget(GlobalValue *Fn, const TypeMemberInfo *TM);
 
   // For testing only.
   VirtualCallTarget(const TypeMemberInfo *TM, bool IsBigEndian)
@@ -203,22 +202,22 @@ struct VirtualCallTarget {
 // Find the minimum offset that we may store a value of size Size bits at. If
 // IsAfter is set, look for an offset before the object, otherwise look for an
 // offset after the object.
-LLVM_ABI uint64_t findLowestOffset(ArrayRef<VirtualCallTarget> Targets,
-                                   bool IsAfter, uint64_t Size);
+uint64_t findLowestOffset(ArrayRef<VirtualCallTarget> Targets, bool IsAfter,
+                          uint64_t Size);
 
 // Set the stored value in each of Targets to VirtualCallTarget::RetVal at the
 // given allocation offset before the vtable address. Stores the computed
 // byte/bit offset to OffsetByte/OffsetBit.
-LLVM_ABI void setBeforeReturnValues(MutableArrayRef<VirtualCallTarget> Targets,
-                                    uint64_t AllocBefore, unsigned BitWidth,
-                                    int64_t &OffsetByte, uint64_t &OffsetBit);
+void setBeforeReturnValues(MutableArrayRef<VirtualCallTarget> Targets,
+                           uint64_t AllocBefore, unsigned BitWidth,
+                           int64_t &OffsetByte, uint64_t &OffsetBit);
 
 // Set the stored value in each of Targets to VirtualCallTarget::RetVal at the
 // given allocation offset after the vtable address. Stores the computed
 // byte/bit offset to OffsetByte/OffsetBit.
-LLVM_ABI void setAfterReturnValues(MutableArrayRef<VirtualCallTarget> Targets,
-                                   uint64_t AllocAfter, unsigned BitWidth,
-                                   int64_t &OffsetByte, uint64_t &OffsetBit);
+void setAfterReturnValues(MutableArrayRef<VirtualCallTarget> Targets,
+                          uint64_t AllocAfter, unsigned BitWidth,
+                          int64_t &OffsetByte, uint64_t &OffsetBit);
 
 } // end namespace wholeprogramdevirt
 
@@ -233,28 +232,27 @@ struct WholeProgramDevirtPass : public PassInfoMixin<WholeProgramDevirtPass> {
       : ExportSummary(ExportSummary), ImportSummary(ImportSummary) {
     assert(!(ExportSummary && ImportSummary));
   }
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &);
 };
 
 struct VTableSlotSummary {
   StringRef TypeID;
   uint64_t ByteOffset;
 };
-LLVM_ABI bool
-hasWholeProgramVisibility(bool WholeProgramVisibilityEnabledInLTO);
-LLVM_ABI void
-updatePublicTypeTestCalls(Module &M, bool WholeProgramVisibilityEnabledInLTO);
-LLVM_ABI void updateVCallVisibilityInModule(
+bool hasWholeProgramVisibility(bool WholeProgramVisibilityEnabledInLTO);
+void updatePublicTypeTestCalls(Module &M,
+                               bool WholeProgramVisibilityEnabledInLTO);
+void updateVCallVisibilityInModule(
     Module &M, bool WholeProgramVisibilityEnabledInLTO,
     const DenseSet<GlobalValue::GUID> &DynamicExportSymbols,
     bool ValidateAllVtablesHaveTypeInfos,
     function_ref<bool(StringRef)> IsVisibleToRegularObj);
-LLVM_ABI void updateVCallVisibilityInIndex(
+void updateVCallVisibilityInIndex(
     ModuleSummaryIndex &Index, bool WholeProgramVisibilityEnabledInLTO,
     const DenseSet<GlobalValue::GUID> &DynamicExportSymbols,
     const DenseSet<GlobalValue::GUID> &VisibleToRegularObjSymbols);
 
-LLVM_ABI void getVisibleToRegularObjVtableGUIDs(
+void getVisibleToRegularObjVtableGUIDs(
     ModuleSummaryIndex &Index,
     DenseSet<GlobalValue::GUID> &VisibleToRegularObjSymbols,
     function_ref<bool(StringRef)> IsVisibleToRegularObj);
@@ -266,13 +264,13 @@ LLVM_ABI void getVisibleToRegularObjVtableGUIDs(
 /// locating the corresponding WPD resolution is recorded for the ValueInfo
 /// in case it is exported by cross module importing (in which case the
 /// devirtualized target name will need adjustment).
-LLVM_ABI void runWholeProgramDevirtOnIndex(
+void runWholeProgramDevirtOnIndex(
     ModuleSummaryIndex &Summary, std::set<GlobalValue::GUID> &ExportedGUIDs,
     std::map<ValueInfo, std::vector<VTableSlotSummary>> &LocalWPDTargetsMap);
 
 /// Call after cross-module importing to update the recorded single impl
 /// devirt target names for any locals that were exported.
-LLVM_ABI void updateIndexWPDForExports(
+void updateIndexWPDForExports(
     ModuleSummaryIndex &Summary,
     function_ref<bool(StringRef, ValueInfo)> isExported,
     std::map<ValueInfo, std::vector<VTableSlotSummary>> &LocalWPDTargetsMap);

@@ -28,29 +28,28 @@ using namespace mlir::bufferization;
 
 LogicalResult mlir::bufferization::insertTensorCopies(
     Operation *op, const OneShotBufferizationOptions &options,
-    const BufferizationState &bufferizationState,
     BufferizationStatistics *statistics) {
-  OneShotAnalysisState analysisState(op, options);
+  OneShotAnalysisState state(op, options);
   // Run normal One-Shot Bufferize analysis or One-Shot Module Bufferize
   // analysis depending on whether function boundary bufferization is enabled or
   // not.
   if (options.bufferizeFunctionBoundaries) {
-    if (failed(analyzeModuleOp(cast<ModuleOp>(op), analysisState, statistics)))
+    if (failed(analyzeModuleOp(cast<ModuleOp>(op), state, statistics)))
       return failure();
   } else {
-    if (failed(analyzeOp(op, analysisState, statistics)))
+    if (failed(analyzeOp(op, state, statistics)))
       return failure();
   }
 
   if (options.testAnalysisOnly)
     return success();
 
-  return insertTensorCopies(op, analysisState, bufferizationState);
+  return insertTensorCopies(op, state);
 }
 
-LogicalResult mlir::bufferization::insertTensorCopies(
-    Operation *op, const AnalysisState &analysisState,
-    const BufferizationState &bufferizationState) {
+LogicalResult
+mlir::bufferization::insertTensorCopies(Operation *op,
+                                        const AnalysisState &state) {
   IRRewriter rewriter(op->getContext());
 
   // It may be more efficient to walk in pre-order here, but the current
@@ -63,16 +62,14 @@ LogicalResult mlir::bufferization::insertTensorCopies(
         nestedOp->getParentWithTrait<OpTrait::SymbolTable>() != op)
       return WalkResult::skip();
 
-    auto bufferizableOp =
-        analysisState.getOptions().dynCastBufferizableOp(nestedOp);
+    auto bufferizableOp = state.getOptions().dynCastBufferizableOp(nestedOp);
     if (!bufferizableOp)
       return WalkResult::skip();
 
     // Find inplacability conflicts and resolve them. (Typically with explicit
     // tensor copies in the form of AllocTensorOps.)
     rewriter.setInsertionPoint(nestedOp);
-    if (failed(bufferizableOp.resolveConflicts(rewriter, analysisState,
-                                               bufferizationState)))
+    if (failed(bufferizableOp.resolveConflicts(rewriter, state)))
       return WalkResult::interrupt();
 
     return WalkResult::advance();

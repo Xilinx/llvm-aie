@@ -711,10 +711,9 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
   }
 
   ExplodedNode *N = Pred;
-  while (!N->getLocation().getAs<BlockEdge>()) {
+  while (!N->getLocation().getAs<BlockEntrance>()) {
     ProgramPoint P = N->getLocation();
-    assert(P.getAs<PreStmt>() || P.getAs<PreStmtPurgeDeadSymbols>() ||
-           P.getAs<BlockEntrance>());
+    assert(P.getAs<PreStmt>()|| P.getAs<PreStmtPurgeDeadSymbols>());
     (void) P;
     if (N->pred_size() != 1) {
       // We failed to track back where we came from.
@@ -730,6 +729,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     return;
   }
 
+  N = *N->pred_begin();
   BlockEdge BE = N->getLocation().castAs<BlockEdge>();
   SVal X;
 

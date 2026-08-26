@@ -253,7 +253,7 @@ namespace {
       bool operator!=(Register R) const { return !operator==(R); }
       bool operator<(Register R) const {
         // For std::map.
-        return std::tie(Reg, Sub) < std::tie(R.Reg, R.Sub);
+        return Reg < R.Reg || (Reg == R.Reg && Sub < R.Sub);
       }
       llvm::Register Reg;
       unsigned Sub = 0;
@@ -298,7 +298,11 @@ namespace {
         return !operator==(Ex);
       }
       bool operator<(const ExtExpr &Ex) const {
-        return std::tie(Rs, S, Neg) < std::tie(Ex.Rs, Ex.S, Ex.Neg);
+        if (Rs != Ex.Rs)
+          return Rs < Ex.Rs;
+        if (S != Ex.S)
+          return S < Ex.S;
+        return !Neg && Ex.Neg;
       }
     };
 

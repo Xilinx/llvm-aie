@@ -9,7 +9,6 @@
 #ifndef LLVM_DEBUGINFO_GSYM_HEADER_H
 #define LLVM_DEBUGINFO_GSYM_HEADER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 #include <cstddef>
@@ -99,7 +98,7 @@ struct Header {
   ///
   /// \returns An error if anything is wrong in the header, or Error::success()
   /// if there are no errors.
-  LLVM_ABI llvm::Error checkForError() const;
+  llvm::Error checkForError() const;
 
   /// Decode an object from a binary data stream.
   ///
@@ -109,7 +108,7 @@ struct Header {
   ///
   /// \returns A Header or an error describing the issue that was
   /// encountered during decoding.
-  LLVM_ABI static llvm::Expected<Header> decode(DataExtractor &Data);
+  static llvm::Expected<Header> decode(DataExtractor &Data);
 
   /// Encode this object into FileWriter stream.
   ///
@@ -118,11 +117,11 @@ struct Header {
   ///
   /// \returns An error object that indicates success or failure of the
   /// encoding process.
-  LLVM_ABI llvm::Error encode(FileWriter &O) const;
+  llvm::Error encode(FileWriter &O) const;
 };
 
-LLVM_ABI bool operator==(const Header &LHS, const Header &RHS);
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const llvm::gsym::Header &H);
+bool operator==(const Header &LHS, const Header &RHS);
+raw_ostream &operator<<(raw_ostream &OS, const llvm::gsym::Header &H);
 
 } // namespace gsym
 } // namespace llvm

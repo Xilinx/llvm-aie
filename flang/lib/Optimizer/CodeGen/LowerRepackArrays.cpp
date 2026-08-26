@@ -190,10 +190,12 @@ mlir::Value PackArrayConversion::allocateTempBuffer(
   if (useStack && canAllocateTempOnStack(origBox))
     assert(!isHeapAllocation && "temp must have been allocated on the stack");
 
-  mlir::Type ptrType = base.getType();
-  if (llvm::isa<fir::BaseBoxType>(ptrType))
-    return base;
+  if (isHeapAllocation)
+    if (auto baseType = mlir::dyn_cast<fir::ReferenceType>(base.getType()))
+      if (mlir::isa<fir::BaseBoxType>(baseType.getEleTy()))
+        return builder.create<fir::LoadOp>(loc, base);
 
+  mlir::Type ptrType = base.getType();
   mlir::Type tempBoxType = fir::BoxType::get(mlir::isa<fir::HeapType>(ptrType)
                                                  ? ptrType
                                                  : fir::unwrapRefType(ptrType));

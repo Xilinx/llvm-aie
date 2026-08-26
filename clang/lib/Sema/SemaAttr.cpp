@@ -290,7 +290,7 @@ void Sema::inferLifetimeCaptureByAttribute(FunctionDecl *FD) {
       // pointer-like reference types (`const T&`, `T&&`).
       if (PVD->getType()->isReferenceType() &&
           sema::isGLSPointerType(PVD->getType().getNonReferenceType())) {
-        int CaptureByThis[] = {LifetimeCaptureByAttr::This};
+        int CaptureByThis[] = {LifetimeCaptureByAttr::THIS};
         PVD->addAttr(
             LifetimeCaptureByAttr::CreateImplicit(Context, CaptureByThis, 1));
       }

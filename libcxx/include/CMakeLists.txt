@@ -800,7 +800,6 @@ set(files
   __type_traits/extent.h
   __type_traits/has_unique_object_representation.h
   __type_traits/has_virtual_destructor.h
-  __type_traits/integer_traits.h
   __type_traits/integral_constant.h
   __type_traits/invoke.h
   __type_traits/is_abstract.h
@@ -851,6 +850,7 @@ set(files
   __type_traits/is_same.h
   __type_traits/is_scalar.h
   __type_traits/is_signed.h
+  __type_traits/is_signed_integer.h
   __type_traits/is_specialization.h
   __type_traits/is_standard_layout.h
   __type_traits/is_swappable.h
@@ -864,6 +864,7 @@ set(files
   __type_traits/is_unbounded_array.h
   __type_traits/is_union.h
   __type_traits/is_unsigned.h
+  __type_traits/is_unsigned_integer.h
   __type_traits/is_valid_expansion.h
   __type_traits/is_void.h
   __type_traits/is_volatile.h
@@ -1706,10 +1707,6 @@ target_include_directories(cxx-headers INTERFACE ${LIBCXX_GENERATED_INCLUDE_TARG
                                                  ${LIBCXX_GENERATED_INCLUDE_DIR})
 
 option(LIBCXX_INSTALL_CXX03_HEADERS "Install C++03 frozen headers" ON)
-# Make sure to map the generated include directory back to libc++'s actual source directory when generating
-# debug information. Otherwise, the debug information will refer to generated headers which are created during
-# the build and generally not persistent.
-target_add_compile_flags_if_supported(cxx-headers INTERFACE "-fdebug-prefix-map=${LIBCXX_GENERATED_INCLUDE_DIR}=${LIBCXX_SOURCE_DIR}/include")
 
 if (LIBCXX_INSTALL_HEADERS)
   set(_install_files ${files})

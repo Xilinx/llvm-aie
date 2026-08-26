@@ -217,10 +217,12 @@ public:
   SourceRange getSourceRange() const LLVM_READONLY { return Range; }
 
   /// Retrieve elements of array of literals.
-  Expr **getElements() { return getTrailingObjects(); }
+  Expr **getElements() { return getTrailingObjects<Expr *>(); }
 
   /// Retrieve elements of array of literals.
-  const Expr *const *getElements() const { return getTrailingObjects(); }
+  const Expr * const *getElements() const {
+    return getTrailingObjects<Expr *>();
+  }
 
   /// getNumElements - Return number of elements of objective-c array literal.
   unsigned getNumElements() const { return NumElements; }

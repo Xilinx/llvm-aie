@@ -32,6 +32,6 @@ static ClangTidyModuleRegistry::Add<ZirconModule>
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the ZirconModule.
-volatile int ZirconModuleAnchorSource = 0; // NOLINT(misc-use-internal-linkage)
+volatile int ZirconModuleAnchorSource = 0;
 
 } // namespace clang::tidy

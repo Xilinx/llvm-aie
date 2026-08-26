@@ -16,15 +16,13 @@ using namespace clang::ast_matchers;
 namespace clang::tidy::readability {
 
 void MathMissingParenthesesCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(
-      binaryOperator(
-          unless(hasParent(binaryOperator(unless(isAssignmentOperator()),
-                                          unless(isComparisonOperator())))),
-          unless(isAssignmentOperator()), unless(isComparisonOperator()),
-          unless(hasAnyOperatorName("&&", "||")),
-          hasDescendant(binaryOperator()))
-          .bind("binOp"),
-      this);
+  Finder->addMatcher(binaryOperator(unless(hasParent(binaryOperator())),
+                                    unless(isAssignmentOperator()),
+                                    unless(isComparisonOperator()),
+                                    unless(hasAnyOperatorName("&&", "||")),
+                                    hasDescendant(binaryOperator()))
+                         .bind("binOp"),
+                     this);
 }
 
 static int getPrecedence(const BinaryOperator *BinOp) {
@@ -90,6 +88,10 @@ static void addParantheses(const BinaryOperator *BinOp,
 void MathMissingParenthesesCheck::check(
     const MatchFinder::MatchResult &Result) {
   const auto *BinOp = Result.Nodes.getNodeAs<BinaryOperator>("binOp");
+  std::vector<
+      std::pair<clang::SourceRange, std::pair<const clang::BinaryOperator *,
+                                              const clang::BinaryOperator *>>>
+      Insertions;
   const SourceManager &SM = *Result.SourceManager;
   const clang::LangOptions &LO = Result.Context->getLangOpts();
   addParantheses(BinOp, nullptr, this, SM, LO);

@@ -352,7 +352,8 @@ Listener::StartListeningForEventSpec(const BroadcasterManagerSP &manager_sp,
       this->shared_from_this(), event_spec);
   if (bits_acquired) {
     BroadcasterManagerWP manager_wp(manager_sp);
-    if (llvm::none_of(m_broadcaster_managers, manager_matcher))
+    auto iter = llvm::find_if(m_broadcaster_managers, manager_matcher);
+    if (iter == m_broadcaster_managers.end())
       m_broadcaster_managers.push_back(manager_wp);
   }
 

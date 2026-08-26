@@ -65,9 +65,7 @@ void TemplateArgumentHasher::AddTemplateArgument(TemplateArgument TA) {
 
   switch (Kind) {
   case TemplateArgument::Null:
-    // These can occur in incomplete substitutions performed with code
-    // completion (see PartialOverloading).
-    break;
+    llvm_unreachable("Expected valid TemplateArgument");
   case TemplateArgument::Type:
     AddQualType(TA.getAsType());
     break;

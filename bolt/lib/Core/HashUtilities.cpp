@@ -67,7 +67,6 @@ std::string hashExpr(BinaryContext &BC, const MCExpr &Expr) {
         .append(hashInteger(BinaryExpr.getOpcode()))
         .append(hashExpr(BC, *BinaryExpr.getRHS()));
   }
-  case MCExpr::Specifier:
   case MCExpr::Target:
     return std::string();
   }

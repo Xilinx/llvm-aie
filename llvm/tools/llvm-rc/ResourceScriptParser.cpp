@@ -132,13 +132,12 @@ void RCParser::consume() {
 //
 // The following grammar is used to parse the expressions Exp1:
 //   Exp1 ::= Exp2 || Exp1 + Exp2 || Exp1 - Exp2 || Exp1 | Exp2 || Exp1 & Exp2
-//   Exp2 ::= Exp3 || Exp3 * Exp3 || Exp3 / Exp3
-//   Exp3 ::= -Exp3 || ~Exp3 || not Expr3 || Int || (Exp1)
-// (More conveniently, Exp1 and Exp2 are non-empty sequences of Exp3
-// expressions, separated by binary operators.)
+//   Exp2 ::= -Exp2 || ~Exp2 || not Expr2 || Int || (Exp1).
+// (More conveniently, Exp1 is a non-empty sequence of Exp2 expressions,
+// separated by binary operators.)
 //
-// Expressions of type Exp1 are read by parseIntExpr1(Inner) method, Exp2
-// is read by parseIntExpr2() and Exp3 is read by parseIntExpr3().
+// Expressions of type Exp1 are read by parseIntExpr1(Inner) method, while Exp2
+// is read by parseIntExpr2().
 //
 // The original Microsoft tool handles multiple unary operators incorrectly.
 // For example, in 16-bit little-endian integers:
@@ -159,7 +158,7 @@ Expected<IntWithNotMask> RCParser::parseIntExpr1() {
   ASSIGN_OR_RETURN(FirstResult, parseIntExpr2());
   IntWithNotMask Result = *FirstResult;
 
-  while (!isEof() && look().isLowPrecedenceBinaryOp()) {
+  while (!isEof() && look().isBinaryOp()) {
     auto OpToken = read();
     ASSIGN_OR_RETURN(NextResult, parseIntExpr2());
 
@@ -181,7 +180,7 @@ Expected<IntWithNotMask> RCParser::parseIntExpr1() {
       break;
 
     default:
-      llvm_unreachable("Already processed all low precedence binary ops.");
+      llvm_unreachable("Already processed all binary ops.");
     }
   }
 
@@ -189,33 +188,7 @@ Expected<IntWithNotMask> RCParser::parseIntExpr1() {
 }
 
 Expected<IntWithNotMask> RCParser::parseIntExpr2() {
-  // Exp2 ::= Exp3 || Exp3 * Exp3 || Exp3 / Exp3.
-  ASSIGN_OR_RETURN(FirstResult, parseIntExpr3());
-  IntWithNotMask Result = *FirstResult;
-
-  while (!isEof() && look().isHighPrecedenceBinaryOp()) {
-    auto OpToken = read();
-    ASSIGN_OR_RETURN(NextResult, parseIntExpr3());
-
-    switch (OpToken.kind()) {
-    case Kind::Asterisk:
-      Result *= *NextResult;
-      break;
-
-    case Kind::Slash:
-      Result /= *NextResult;
-      break;
-
-    default:
-      llvm_unreachable("Already processed all high precedence binary ops.");
-    }
-  }
-
-  return Result;
-}
-
-Expected<IntWithNotMask> RCParser::parseIntExpr3() {
-  // Exp3 ::= -Exp3 || ~Exp3 || not Expr3 || Int || (Exp1).
+  // Exp2 ::= -Exp2 || ~Exp2 || not Expr2 || Int || (Exp1).
   static const char ErrorMsg[] = "'-', '~', integer or '('";
 
   if (isEof())
@@ -224,13 +197,13 @@ Expected<IntWithNotMask> RCParser::parseIntExpr3() {
   switch (look().kind()) {
   case Kind::Minus: {
     consume();
-    ASSIGN_OR_RETURN(Result, parseIntExpr3());
+    ASSIGN_OR_RETURN(Result, parseIntExpr2());
     return -(*Result);
   }
 
   case Kind::Tilde: {
     consume();
-    ASSIGN_OR_RETURN(Result, parseIntExpr3());
+    ASSIGN_OR_RETURN(Result, parseIntExpr2());
     return ~(*Result);
   }
 
@@ -247,7 +220,7 @@ Expected<IntWithNotMask> RCParser::parseIntExpr3() {
   case Kind::Identifier: {
     if (!read().value().equals_insensitive("not"))
       return getExpectedError(ErrorMsg, true);
-    ASSIGN_OR_RETURN(Result, parseIntExpr3());
+    ASSIGN_OR_RETURN(Result, parseIntExpr2());
     return IntWithNotMask(0, (*Result).getValue());
   }
 

@@ -483,8 +483,7 @@ void ProcessDebugger::OnExitProcess(uint32_t exit_code) {
   // of the error otherwise WaitForDebuggerConnection() will be blocked.
   // An example of this issue is when a process fails to load a dependent DLL.
   if (m_session_data && !m_session_data->m_initial_stop_received) {
-    Status error = Status::FromErrorStringWithFormatv(
-        "Process prematurely exited with {0:x}", exit_code);
+    Status error(exit_code, eErrorTypeWin32);
     OnDebuggerError(error, 0);
   }
 }

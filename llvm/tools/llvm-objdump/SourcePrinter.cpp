@@ -45,7 +45,7 @@ void LiveVariable::print(raw_ostream &OS, const MCRegisterInfo &MRI) const {
     return {};
   };
 
-  DWARFExpressionPrinter::printCompact(&Expression, OS, GetRegName);
+  Expression.printCompact(OS, GetRegName);
 }
 
 void LiveVariablePrinter::addVariable(DWARFDie FuncDie, DWARFDie VarDie) {

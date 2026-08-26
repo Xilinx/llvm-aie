@@ -11,7 +11,6 @@ from lldbsuite.test import lldbutil
 class TestCase(TestBase):
     @add_test_categories(["libc++"])
     @skipIf(compiler=no_match("clang"))
-    @skipUnlessDarwin
     def test(self):
         """
         This test is creating ValueObjects with both C++ module and debug

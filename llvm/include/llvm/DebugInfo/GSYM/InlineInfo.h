@@ -12,7 +12,6 @@
 #include "llvm/DebugInfo/GSYM/ExtractRanges.h"
 #include "llvm/DebugInfo/GSYM/LineEntry.h"
 #include "llvm/DebugInfo/GSYM/LookupResult.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <stdint.h>
 #include <vector>
@@ -118,9 +117,9 @@ struct InlineInfo {
   /// \returns An error if the inline information is corrupt, or
   ///          Error::success() for all other cases, even when no information
   ///          is added to \a SrcLocs.
-  LLVM_ABI static llvm::Error lookup(const GsymReader &GR, DataExtractor &Data,
-                                     uint64_t BaseAddr, uint64_t Addr,
-                                     SourceLocations &SrcLocs);
+  static llvm::Error lookup(const GsymReader &GR, DataExtractor &Data,
+                            uint64_t BaseAddr, uint64_t Addr,
+                            SourceLocations &SrcLocs);
 
   /// Lookup an address in the InlineInfo object
   ///
@@ -133,7 +132,7 @@ struct InlineInfo {
   ///
   /// \returns optional vector of InlineInfo objects that describe the
   /// inline call stack for a given address, false otherwise.
-  LLVM_ABI std::optional<InlineArray> getInlineStack(uint64_t Addr) const;
+  std::optional<InlineArray> getInlineStack(uint64_t Addr) const;
 
   /// Decode an InlineInfo object from a binary data stream.
   ///
@@ -148,8 +147,8 @@ struct InlineInfo {
   /// another InlineInfo object.
   /// \returns An InlineInfo or an error describing the issue that was
   /// encountered during decoding.
-  LLVM_ABI static llvm::Expected<InlineInfo> decode(DataExtractor &Data,
-                                                    uint64_t BaseAddr);
+  static llvm::Expected<InlineInfo> decode(DataExtractor &Data,
+                                           uint64_t BaseAddr);
 
   /// Encode this InlineInfo object into FileWriter stream.
   ///
@@ -164,7 +163,7 @@ struct InlineInfo {
   ///
   /// \returns An error object that indicates success or failure or the
   /// encoding process.
-  LLVM_ABI llvm::Error encode(FileWriter &O, uint64_t BaseAddr) const;
+  llvm::Error encode(FileWriter &O, uint64_t BaseAddr) const;
 
   /// Compare InlineInfo objects.
   ///
@@ -175,7 +174,7 @@ struct InlineInfo {
   /// to the GSYM file. We have seen cases where LTO messes up the inline
   /// function information for the same address range, so this helps ensure we
   /// get the most descriptive information we can for an address range.
-  LLVM_ABI bool operator<(const InlineInfo &RHS) const;
+  bool operator<(const InlineInfo &RHS) const;
 };
 
 inline bool operator==(const InlineInfo &LHS, const InlineInfo &RHS) {
@@ -184,7 +183,7 @@ inline bool operator==(const InlineInfo &LHS, const InlineInfo &RHS) {
          LHS.Children == RHS.Children;
 }
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const InlineInfo &FI);
+raw_ostream &operator<<(raw_ostream &OS, const InlineInfo &FI);
 
 } // namespace gsym
 } // namespace llvm

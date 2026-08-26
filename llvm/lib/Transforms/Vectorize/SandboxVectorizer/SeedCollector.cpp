@@ -12,7 +12,6 @@
 #include "llvm/IR/Type.h"
 #include "llvm/SandboxIR/Instruction.h"
 #include "llvm/SandboxIR/Utils.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -120,9 +119,8 @@ template <typename LoadOrStoreT> void SeedContainer::insert(LoadOrStoreT *LSI) {
 }
 
 // Explicit instantiations
-template LLVM_EXPORT_TEMPLATE void SeedContainer::insert<LoadInst>(LoadInst *);
-template LLVM_EXPORT_TEMPLATE void
-SeedContainer::insert<StoreInst>(StoreInst *);
+template void SeedContainer::insert<LoadInst>(LoadInst *);
+template void SeedContainer::insert<StoreInst>(StoreInst *);
 
 #ifndef NDEBUG
 void SeedContainer::print(raw_ostream &OS) const {

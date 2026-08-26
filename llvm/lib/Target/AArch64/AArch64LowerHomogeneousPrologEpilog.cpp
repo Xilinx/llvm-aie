@@ -402,7 +402,7 @@ static bool shouldUseFrameHelper(MachineBasicBlock &MBB,
     InstCount--;
     break;
   case FrameHelperType::PrologFrame: {
-    // Effectively no change in InstCount since FpAdjustment is included.
+    // Effecitvely no change in InstCount since FpAdjusment is included.
     break;
   }
   case FrameHelperType::Epilog:

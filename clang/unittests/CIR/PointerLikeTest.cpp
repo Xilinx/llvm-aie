@@ -47,10 +47,12 @@ protected:
   llvm::StringMap<unsigned> recordNames;
 
   mlir::IntegerAttr getAlignOne(mlir::MLIRContext *ctx) {
-    // Note that mlir::IntegerType is used instead of cir::IntType here because
-    // we don't need sign information for this to be useful, so keep it simple.
+    // Note that mlir::IntegerType is used instead of cir::IntType here
+    // because we don't need sign information for this to be useful, so keep
+    // it simple.
     clang::CharUnits align = clang::CharUnits::One();
-    return b.getI64IntegerAttr(align.getQuantity());
+    return mlir::IntegerAttr::get(mlir::IntegerType::get(ctx, 64),
+                                  align.getQuantity());
   }
 
   mlir::StringAttr getUniqueRecordName(const std::string &baseName) {

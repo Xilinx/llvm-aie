@@ -5536,7 +5536,7 @@ private:
   parseConfiguration(llvm::MemoryBufferRef Config, FormatStyle *Style,
                      bool AllowUnknownOptions,
                      llvm::SourceMgr::DiagHandlerTy DiagHandler,
-                     void *DiagHandlerCtxt, bool IsDotHFile);
+                     void *DiagHandlerCtxt);
 };
 
 /// Returns a format style complying with the LLVM coding standards:
@@ -5602,15 +5602,13 @@ std::error_code
 parseConfiguration(llvm::MemoryBufferRef Config, FormatStyle *Style,
                    bool AllowUnknownOptions = false,
                    llvm::SourceMgr::DiagHandlerTy DiagHandler = nullptr,
-                   void *DiagHandlerCtx = nullptr, bool IsDotHFile = false);
+                   void *DiagHandlerCtx = nullptr);
 
 /// Like above but accepts an unnamed buffer.
 inline std::error_code parseConfiguration(StringRef Config, FormatStyle *Style,
-                                          bool AllowUnknownOptions = false,
-                                          bool IsDotHFile = false) {
+                                          bool AllowUnknownOptions = false) {
   return parseConfiguration(llvm::MemoryBufferRef(Config, "YAML"), Style,
-                            AllowUnknownOptions, /*DiagHandler=*/nullptr,
-                            /*DiagHandlerCtx=*/nullptr, IsDotHFile);
+                            AllowUnknownOptions);
 }
 
 /// Gets configuration in a YAML string.

@@ -191,7 +191,7 @@ llvm::Value *TargetCodeGenInfo::createEnqueuedBlockKernel(
   auto *F = llvm::Function::Create(FT, llvm::GlobalValue::ExternalLinkage, Name,
                                    &CGF.CGM.getModule());
   llvm::CallingConv::ID KernelCC =
-      CGF.getTypes().ClangCallConvToLLVMCallConv(CallingConv::CC_DeviceKernel);
+      CGF.getTypes().ClangCallConvToLLVMCallConv(CallingConv::CC_OpenCLKernel);
   F->setCallingConv(KernelCC);
 
   llvm::AttrBuilder KernelAttrs(C);

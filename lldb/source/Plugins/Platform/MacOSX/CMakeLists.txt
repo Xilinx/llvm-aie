@@ -37,9 +37,6 @@ endif()
 add_lldb_library(lldbPluginPlatformMacOSX PLUGIN
   ${PLUGIN_PLATFORM_MACOSX_SOURCES}
 
-  LINK_COMPONENTS
-    Support
-    TargetParser
   LINK_LIBS
     lldbBreakpoint
     lldbCore
@@ -54,6 +51,9 @@ add_lldb_library(lldbPluginPlatformMacOSX PLUGIN
     ${OBJC_LIBS}
   CLANG_LIBS
     clangBasic
+  LINK_COMPONENTS
+    Support
+    TargetParser
     )
 
 add_dependencies(lldbPluginPlatformMacOSX

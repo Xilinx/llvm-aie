@@ -37,6 +37,7 @@
 #include <set>
 #include <sstream>
 
+using namespace llvm;
 using namespace clang;
 
 #ifndef NDEBUG
@@ -473,7 +474,7 @@ static bool isSafeSpanTwoParamConstruct(const CXXConstructExpr &Node,
   auto HaveEqualConstantValues = [&Ctx](const Expr *E0, const Expr *E1) {
     if (auto E0CV = E0->getIntegerConstantExpr(Ctx))
       if (auto E1CV = E1->getIntegerConstantExpr(Ctx)) {
-        return llvm::APSInt::compareValues(*E0CV, *E1CV) == 0;
+        return APSInt::compareValues(*E0CV, *E1CV) == 0;
       }
     return false;
   };
@@ -484,7 +485,7 @@ static bool isSafeSpanTwoParamConstruct(const CXXConstructExpr &Node,
       }
     return false;
   };
-  std::optional<llvm::APSInt> Arg1CV = Arg1->getIntegerConstantExpr(Ctx);
+  std::optional<APSInt> Arg1CV = Arg1->getIntegerConstantExpr(Ctx);
 
   if (Arg1CV && Arg1CV->isZero())
     // Check form 5:
@@ -527,10 +528,10 @@ static bool isSafeSpanTwoParamConstruct(const CXXConstructExpr &Node,
   QualType Arg0Ty = Arg0->IgnoreImplicit()->getType();
 
   if (auto *ConstArrTy = Ctx.getAsConstantArrayType(Arg0Ty)) {
-    const llvm::APSInt ConstArrSize = llvm::APSInt(ConstArrTy->getSize());
+    const APSInt ConstArrSize = APSInt(ConstArrTy->getSize());
 
     // Check form 4:
-    return Arg1CV && llvm::APSInt::compareValues(ConstArrSize, *Arg1CV) == 0;
+    return Arg1CV && APSInt::compareValues(ConstArrSize, *Arg1CV) == 0;
   }
   // Check form 6:
   if (auto CCast = dyn_cast<CStyleCastExpr>(Arg0)) {
@@ -1098,10 +1099,9 @@ static bool hasUnsafeSnprintfBuffer(const CallExpr &Node,
       // explicit cast will be needed, which will make this check unreachable.
       // Therefore, the array extent is same as its' bytewise size.
       if (Size->EvaluateAsInt(ER, Ctx)) {
-        llvm::APSInt EVal = ER.Val.getInt(); // Size must have integer type
+        APSInt EVal = ER.Val.getInt(); // Size must have integer type
 
-        return llvm::APSInt::compareValues(
-                   EVal, llvm::APSInt(CAT->getSize(), true)) != 0;
+        return APSInt::compareValues(EVal, APSInt(CAT->getSize(), true)) != 0;
       }
     }
   }
@@ -2148,8 +2148,8 @@ namespace {
 // declarations to its uses and make sure we've covered all uses with our
 // analysis before we try to fix the declaration.
 class DeclUseTracker {
-  using UseSetTy = llvm::SmallSet<const DeclRefExpr *, 16>;
-  using DefMapTy = llvm::DenseMap<const VarDecl *, const DeclStmt *>;
+  using UseSetTy = SmallSet<const DeclRefExpr *, 16>;
+  using DefMapTy = DenseMap<const VarDecl *, const DeclStmt *>;
 
   // Allocate on the heap for easier move.
   std::unique_ptr<UseSetTy> Uses{std::make_unique<UseSetTy>()};
@@ -3640,7 +3640,7 @@ static FixItList fixVarDeclWithArray(const VarDecl *D, const ASTContext &Ctx,
     }
 
     SmallString<32> Replacement;
-    llvm::raw_svector_ostream OS(Replacement);
+    raw_svector_ostream OS(Replacement);
     OS << "std::array<" << ElemTypeTxt << ", " << ArraySizeTxt << "> "
        << IdentText->str();
 
@@ -4064,8 +4064,7 @@ static void applyGadgets(const Decl *D, FixableGadgetList FixableGadgets,
 #endif
 
   // Fixpoint iteration for pointer assignments
-  using DepMapTy =
-      llvm::DenseMap<const VarDecl *, llvm::SetVector<const VarDecl *>>;
+  using DepMapTy = DenseMap<const VarDecl *, llvm::SetVector<const VarDecl *>>;
   DepMapTy DependenciesMap{};
   DepMapTy PtrAssignmentGraph{};
 

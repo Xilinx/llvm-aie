@@ -176,7 +176,7 @@ void IncrementalParser::CleanUpPTU(TranslationUnitDecl *MostRecentTU) {
   // FIXME: We should de-allocate MostRecentTU
   for (Decl *D : MostRecentTU->decls()) {
     auto *ND = dyn_cast<NamedDecl>(D);
-    if (!ND || ND->getDeclName().isEmpty())
+    if (!ND)
       continue;
     // Check if we need to clean up the IdResolver chain.
     if (ND->getDeclName().getFETokenInfo() && !D->getLangOpts().ObjC &&

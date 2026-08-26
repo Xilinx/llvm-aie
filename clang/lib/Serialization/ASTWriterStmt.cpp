@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprOpenMP.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/Token.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/ASTRecordWriter.h"
 #include "llvm/Bitstream/BitstreamWriter.h"
@@ -958,8 +959,6 @@ void ASTStmtWriter::VisitCallExpr(CallExpr *E) {
   CurrentPackingBits.updateBits();
   CurrentPackingBits.addBit(static_cast<bool>(E->getADLCallKind()));
   CurrentPackingBits.addBit(E->hasStoredFPFeatures());
-  CurrentPackingBits.addBit(E->isCoroElideSafe());
-  CurrentPackingBits.addBit(E->usesMemberSyntax());
 
   Record.AddSourceLocation(E->getRParenLoc());
   Record.AddStmt(E->getCallee());
@@ -2212,8 +2211,8 @@ void ASTStmtWriter::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
 
 void ASTStmtWriter::VisitPackIndexingExpr(PackIndexingExpr *E) {
   VisitExpr(E);
-  Record.push_back(E->PackIndexingExprBits.TransformedExpressions);
-  Record.push_back(E->PackIndexingExprBits.FullySubstituted);
+  Record.push_back(E->TransformedExpressions);
+  Record.push_back(E->FullySubstituted);
   Record.AddSourceLocation(E->getEllipsisLoc());
   Record.AddSourceLocation(E->getRSquareLoc());
   Record.AddStmt(E->getPackIdExpression());
@@ -2278,7 +2277,7 @@ void ASTStmtWriter::VisitCXXFoldExpr(CXXFoldExpr *E) {
   Record.AddStmt(E->SubExprs[0]);
   Record.AddStmt(E->SubExprs[1]);
   Record.AddStmt(E->SubExprs[2]);
-  Record.push_back(E->CXXFoldExprBits.Opcode);
+  Record.push_back(E->Opcode);
   Code = serialization::EXPR_CXX_FOLD;
 }
 

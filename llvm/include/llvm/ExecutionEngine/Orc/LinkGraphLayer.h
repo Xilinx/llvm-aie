@@ -15,7 +15,6 @@
 
 #include "llvm/ExecutionEngine/JITLink/JITLink.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -24,7 +23,7 @@
 
 namespace llvm::orc {
 
-class LLVM_ABI LinkGraphLayer {
+class LinkGraphLayer {
 public:
   LinkGraphLayer(ExecutionSession &ES) : ES(ES) {}
 
@@ -71,7 +70,7 @@ private:
 };
 
 /// MaterializationUnit for wrapping LinkGraphs.
-class LLVM_ABI LinkGraphMaterializationUnit : public MaterializationUnit {
+class LinkGraphMaterializationUnit : public MaterializationUnit {
 public:
   LinkGraphMaterializationUnit(LinkGraphLayer &LGLayer,
                                std::unique_ptr<jitlink::LinkGraph> G,

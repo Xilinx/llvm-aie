@@ -580,8 +580,12 @@ std::error_code SampleProfileWriterText::writeSample(const FunctionSamples &S) {
     LineLocation Loc = I->first;
     const SampleRecord &Sample = I->second;
     OS.indent(Indent + 1);
-    Loc.print(OS);
-    OS << ": " << Sample.getSamples();
+    if (Loc.Discriminator == 0)
+      OS << Loc.LineOffset << ": ";
+    else
+      OS << Loc.LineOffset << "." << Loc.Discriminator << ": ";
+
+    OS << Sample.getSamples();
 
     for (const auto &J : Sample.getSortedCallTargets())
       OS << " " << J.first << ":" << J.second;
@@ -597,8 +601,10 @@ std::error_code SampleProfileWriterText::writeSample(const FunctionSamples &S) {
       LineLocation Loc = I->first;
       const FunctionSamples &CalleeSamples = FS.second;
       OS.indent(Indent);
-      Loc.print(OS);
-      OS << ": ";
+      if (Loc.Discriminator == 0)
+        OS << Loc.LineOffset << ": ";
+      else
+        OS << Loc.LineOffset << "." << Loc.Discriminator << ": ";
       if (std::error_code EC = writeSample(CalleeSamples))
         return EC;
     }
@@ -827,8 +833,17 @@ std::error_code SampleProfileWriterBinary::writeBody(const FunctionSamples &S) {
   for (const auto &I : S.getBodySamples()) {
     LineLocation Loc = I.first;
     const SampleRecord &Sample = I.second;
-    Loc.serialize(OS);
-    Sample.serialize(OS, getNameTable());
+    encodeULEB128(Loc.LineOffset, OS);
+    encodeULEB128(Loc.Discriminator, OS);
+    encodeULEB128(Sample.getSamples(), OS);
+    encodeULEB128(Sample.getCallTargets().size(), OS);
+    for (const auto &J : Sample.getSortedCallTargets()) {
+      FunctionId Callee = J.first;
+      uint64_t CalleeSamples = J.second;
+      if (std::error_code EC = writeNameIdx(Callee))
+        return EC;
+      encodeULEB128(CalleeSamples, OS);
+    }
   }
 
   // Recursively emit all the callsite samples.
@@ -840,7 +855,8 @@ std::error_code SampleProfileWriterBinary::writeBody(const FunctionSamples &S) {
     for (const auto &FS : J.second) {
       LineLocation Loc = J.first;
       const FunctionSamples &CalleeSamples = FS.second;
-      Loc.serialize(OS);
+      encodeULEB128(Loc.LineOffset, OS);
+      encodeULEB128(Loc.Discriminator, OS);
       if (std::error_code EC = writeBody(CalleeSamples))
         return EC;
     }

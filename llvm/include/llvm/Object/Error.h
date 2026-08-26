@@ -13,7 +13,6 @@
 #ifndef LLVM_OBJECT_ERROR_H
 #define LLVM_OBJECT_ERROR_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <system_error>
 
@@ -23,7 +22,7 @@ class Twine;
 
 namespace object {
 
-LLVM_ABI const std::error_category &object_category();
+const std::error_category &object_category();
 
 enum class object_error {
   // Error code 0 is absent. Use std::error_code() instead.
@@ -50,7 +49,7 @@ inline std::error_code make_error_code(object_error e) {
 ///
 /// Currently inherits from ECError for easy interoperability with
 /// std::error_code, but this will be removed in the future.
-class LLVM_ABI BinaryError : public ErrorInfo<BinaryError, ECError> {
+class BinaryError : public ErrorInfo<BinaryError, ECError> {
   void anchor() override;
 public:
   static char ID;
@@ -64,8 +63,7 @@ public:
 ///
 /// For errors that don't require their own specific sub-error (most errors)
 /// this class can be used to describe the error via a string message.
-class LLVM_ABI GenericBinaryError
-    : public ErrorInfo<GenericBinaryError, BinaryError> {
+class GenericBinaryError : public ErrorInfo<GenericBinaryError, BinaryError> {
 public:
   static char ID;
   GenericBinaryError(const Twine &Msg);
@@ -81,7 +79,7 @@ private:
 /// llvm::Error.  In the cases we want to loop through the children and ignore the
 /// non-objects in the archive this is used to test the error to see if an
 /// error() function needs to called on the llvm::Error.
-LLVM_ABI Error isNotObjectErrorInvalidFileType(llvm::Error Err);
+Error isNotObjectErrorInvalidFileType(llvm::Error Err);
 
 inline Error createError(const Twine &Err) {
   return make_error<StringError>(Err, object_error::parse_failed);

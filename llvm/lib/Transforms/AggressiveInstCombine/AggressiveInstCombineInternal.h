@@ -107,14 +107,15 @@ private:
   Type *getBestTruncatedType();
 
   KnownBits computeKnownBits(const Value *V) const {
-    return llvm::computeKnownBits(V, DL, &AC,
+    return llvm::computeKnownBits(V, DL, /*Depth=*/0, &AC,
                                   /*CtxI=*/cast<Instruction>(CurrentTruncInst),
                                   &DT);
   }
 
   unsigned ComputeNumSignBits(const Value *V) const {
     return llvm::ComputeNumSignBits(
-        V, DL, &AC, /*CtxI=*/cast<Instruction>(CurrentTruncInst), &DT);
+        V, DL, /*Depth=*/0, &AC, /*CtxI=*/cast<Instruction>(CurrentTruncInst),
+        &DT);
   }
 
   /// Given a \p V value and a \p SclTy scalar type return the generated reduced

@@ -82,14 +82,6 @@ SPIRVSubtarget::SPIRVSubtarget(const Triple &TT, const std::string &CPU,
   }
   OpenCLVersion = VersionTuple(2, 2);
 
-  // Set the environment based on the target triple.
-  if (TargetTriple.getOS() == Triple::Vulkan)
-    Env = Shader;
-  else if (TargetTriple.getEnvironment() == Triple::OpenCL)
-    Env = Kernel;
-  else
-    Env = Unknown;
-
   // The order of initialization is important.
   initAvailableExtensions(Extensions);
   initAvailableExtInstSets();
@@ -119,10 +111,10 @@ bool SPIRVSubtarget::canUseExtInstSet(
 
 SPIRV::InstructionSet::InstructionSet
 SPIRVSubtarget::getPreferredInstructionSet() const {
-  if (isShader())
-    return SPIRV::InstructionSet::GLSL_std_450;
-  else
+  if (isOpenCLEnv())
     return SPIRV::InstructionSet::OpenCL_std;
+  else
+    return SPIRV::InstructionSet::GLSL_std_450;
 }
 
 bool SPIRVSubtarget::isAtLeastSPIRVVer(VersionTuple VerToCompareTo) const {
@@ -130,7 +122,7 @@ bool SPIRVSubtarget::isAtLeastSPIRVVer(VersionTuple VerToCompareTo) const {
 }
 
 bool SPIRVSubtarget::isAtLeastOpenCLVer(VersionTuple VerToCompareTo) const {
-  if (isShader())
+  if (!isOpenCLEnv())
     return false;
   return isAtLeastVer(OpenCLVersion, VerToCompareTo);
 }
@@ -153,7 +145,7 @@ void SPIRVSubtarget::accountForAMDShaderTrinaryMinmax() {
 // Must have called initAvailableExtensions first.
 void SPIRVSubtarget::initAvailableExtInstSets() {
   AvailableExtInstSets.clear();
-  if (isShader())
+  if (!isOpenCLEnv())
     AvailableExtInstSets.insert(SPIRV::InstructionSet::GLSL_std_450);
   else
     AvailableExtInstSets.insert(SPIRV::InstructionSet::OpenCL_std);

@@ -18,7 +18,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -30,7 +29,7 @@ constexpr StringRef AssumptionAttrKey = "llvm.assume";
 
 /// A set of known assumption strings that are accepted without warning and
 /// which can be recommended as typo correction.
-LLVM_ABI extern StringSet<> KnownAssumptionStrings;
+extern StringSet<> KnownAssumptionStrings;
 
 /// Helper that allows to insert a new assumption string in the known assumption
 /// set by creating a (static) object.
@@ -50,27 +49,25 @@ private:
 };
 
 /// Return true if \p F has the assumption \p AssumptionStr attached.
-LLVM_ABI bool hasAssumption(const Function &F,
-                            const KnownAssumptionString &AssumptionStr);
+bool hasAssumption(const Function &F,
+                   const KnownAssumptionString &AssumptionStr);
 
 /// Return true if \p CB or the callee has the assumption \p AssumptionStr
 /// attached.
-LLVM_ABI bool hasAssumption(const CallBase &CB,
-                            const KnownAssumptionString &AssumptionStr);
+bool hasAssumption(const CallBase &CB,
+                   const KnownAssumptionString &AssumptionStr);
 
 /// Return the set of all assumptions for the function \p F.
-LLVM_ABI DenseSet<StringRef> getAssumptions(const Function &F);
+DenseSet<StringRef> getAssumptions(const Function &F);
 
 /// Return the set of all assumptions for the call \p CB.
-LLVM_ABI DenseSet<StringRef> getAssumptions(const CallBase &CB);
+DenseSet<StringRef> getAssumptions(const CallBase &CB);
 
 /// Appends the set of assumptions \p Assumptions to \F.
-LLVM_ABI bool addAssumptions(Function &F,
-                             const DenseSet<StringRef> &Assumptions);
+bool addAssumptions(Function &F, const DenseSet<StringRef> &Assumptions);
 
 /// Appends the set of assumptions \p Assumptions to \CB.
-LLVM_ABI bool addAssumptions(CallBase &CB,
-                             const DenseSet<StringRef> &Assumptions);
+bool addAssumptions(CallBase &CB, const DenseSet<StringRef> &Assumptions);
 
 } // namespace llvm
 

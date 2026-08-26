@@ -138,8 +138,7 @@ struct GlobalStoreOpInterface
     auto targetMemref = rewriter.create<memref::GetGlobalOp>(
         loc, memrefType, globalStoreOp.getGlobalAttr().getLeafReference());
 
-    auto sourceMemref =
-        getBuffer(rewriter, globalStoreOp.getValue(), options, state);
+    auto sourceMemref = getBuffer(rewriter, globalStoreOp.getValue(), options);
     if (failed(sourceMemref)) {
       return failure();
     }

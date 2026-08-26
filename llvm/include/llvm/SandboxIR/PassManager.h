@@ -18,7 +18,6 @@
 #ifndef LLVM_SANDBOXIR_PASSMANAGER_H
 #define LLVM_SANDBOXIR_PASSMANAGER_H
 
-#include "llvm/Support/Compiler.h"
 #include <memory>
 
 #include "llvm/ADT/DenseMap.h"
@@ -202,7 +201,7 @@ public:
   }
 };
 
-class LLVM_ABI FunctionPassManager final
+class FunctionPassManager final
     : public PassManager<FunctionPass, FunctionPass> {
 public:
   FunctionPassManager(StringRef Name) : PassManager(Name) {}
@@ -212,8 +211,7 @@ public:
   bool runOnFunction(Function &F, const Analyses &A) final;
 };
 
-class LLVM_ABI RegionPassManager final
-    : public PassManager<RegionPass, RegionPass> {
+class RegionPassManager final : public PassManager<RegionPass, RegionPass> {
 public:
   RegionPassManager(StringRef Name) : PassManager(Name) {}
   RegionPassManager(StringRef Name, StringRef Pipeline,

@@ -14,7 +14,6 @@
 #define LLVM_EXECUTIONENGINE_ORC_TASKDISPATCH_H
 
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ExtensibleRTTI.h"
 #include "llvm/Support/raw_ostream.h"
@@ -33,7 +32,7 @@ namespace llvm {
 namespace orc {
 
 /// Represents an abstract task for ORC to run.
-class LLVM_ABI Task : public RTTIExtends<Task, RTTIRoot> {
+class Task : public RTTIExtends<Task, RTTIRoot> {
 public:
   static char ID;
 
@@ -52,8 +51,8 @@ private:
 /// Base class for generic tasks.
 class GenericNamedTask : public RTTIExtends<GenericNamedTask, Task> {
 public:
-  LLVM_ABI static char ID;
-  LLVM_ABI static const char *DefaultDescription;
+  static char ID;
+  static const char *DefaultDescription;
 };
 
 /// Generic task implementation.
@@ -95,7 +94,7 @@ makeGenericNamedTask(FnT &&Fn, const char *Desc = nullptr) {
 
 /// IdleTask can be used as the basis for low-priority tasks, e.g. speculative
 /// lookup.
-class LLVM_ABI IdleTask : public RTTIExtends<IdleTask, Task> {
+class IdleTask : public RTTIExtends<IdleTask, Task> {
 public:
   static char ID;
 
@@ -104,7 +103,7 @@ private:
 };
 
 /// Abstract base for classes that dispatch ORC Tasks.
-class LLVM_ABI TaskDispatcher {
+class TaskDispatcher {
 public:
   virtual ~TaskDispatcher();
 
@@ -116,7 +115,7 @@ public:
 };
 
 /// Runs all tasks on the current thread.
-class LLVM_ABI InPlaceTaskDispatcher : public TaskDispatcher {
+class InPlaceTaskDispatcher : public TaskDispatcher {
 public:
   void dispatch(std::unique_ptr<Task> T) override;
   void shutdown() override;
@@ -124,7 +123,7 @@ public:
 
 #if LLVM_ENABLE_THREADS
 
-class LLVM_ABI DynamicThreadPoolTaskDispatcher : public TaskDispatcher {
+class DynamicThreadPoolTaskDispatcher : public TaskDispatcher {
 public:
   DynamicThreadPoolTaskDispatcher(
       std::optional<size_t> MaxMaterializationThreads)

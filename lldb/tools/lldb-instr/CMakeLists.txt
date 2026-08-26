@@ -1,8 +1,6 @@
 add_lldb_tool(lldb-instr
   Instrument.cpp
 
-  LINK_COMPONENTS
-    Support
   CLANG_LIBS
     clangAST
     clangBasic
@@ -12,4 +10,7 @@ add_lldb_tool(lldb-instr
     clangRewrite
     clangSerialization
     clangTooling
+
+  LINK_COMPONENTS
+    Support
   )

@@ -18,7 +18,6 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Alignment.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -46,7 +45,7 @@ protected:
       : GlobalValue(Ty, VTy, AllocInfo, Linkage, Name, AddressSpace) {
     setGlobalValueSubClassData(0);
   }
-  LLVM_ABI ~GlobalObject();
+  ~GlobalObject();
 
   Comdat *ObjComdat = nullptr;
   enum {
@@ -67,7 +66,12 @@ private:
 public:
   GlobalObject(const GlobalObject &) = delete;
 
-protected:
+  /// FIXME: Remove this function once transition to Align is over.
+  uint64_t getAlignment() const {
+    MaybeAlign Align = getAlign();
+    return Align ? Align->value() : 0;
+  }
+
   /// Returns the alignment of the given variable or function.
   ///
   /// Note that for functions this is the alignment of the code, not the
@@ -79,12 +83,12 @@ protected:
   }
 
   /// Sets the alignment attribute of the GlobalObject.
-  LLVM_ABI void setAlignment(Align Align);
+  void setAlignment(Align Align);
 
   /// Sets the alignment attribute of the GlobalObject.
   /// This method will be deprecated as the alignment property should always be
   /// defined.
-  LLVM_ABI void setAlignment(MaybeAlign Align);
+  void setAlignment(MaybeAlign Align);
 
   unsigned getGlobalObjectSubClassData() const {
     unsigned ValueData = getGlobalValueSubClassData();
@@ -98,7 +102,6 @@ protected:
     assert(getGlobalObjectSubClassData() == Val && "representation error");
   }
 
-public:
   /// Check if this global has a custom object file section.
   ///
   /// This is more efficient than calling getSection() and checking for an empty
@@ -119,18 +122,18 @@ public:
   ///
   /// Setting the section to the empty string tells LLVM to choose an
   /// appropriate default object file section.
-  LLVM_ABI void setSection(StringRef S);
+  void setSection(StringRef S);
 
   /// Set the section prefix for this global object.
-  LLVM_ABI void setSectionPrefix(StringRef Prefix);
+  void setSectionPrefix(StringRef Prefix);
 
   /// Get the section prefix for this global object.
-  LLVM_ABI std::optional<StringRef> getSectionPrefix() const;
+  std::optional<StringRef> getSectionPrefix() const;
 
   bool hasComdat() const { return getComdat() != nullptr; }
   const Comdat *getComdat() const { return ObjComdat; }
   Comdat *getComdat() { return ObjComdat; }
-  LLVM_ABI void setComdat(Comdat *C);
+  void setComdat(Comdat *C);
 
   using Value::addMetadata;
   using Value::clearMetadata;
@@ -142,21 +145,21 @@ public:
   using Value::setMetadata;
 
   /// Copy metadata from Src, adjusting offsets by Offset.
-  LLVM_ABI void copyMetadata(const GlobalObject *Src, unsigned Offset);
+  void copyMetadata(const GlobalObject *Src, unsigned Offset);
 
-  LLVM_ABI void addTypeMetadata(unsigned Offset, Metadata *TypeID);
-  LLVM_ABI void setVCallVisibilityMetadata(VCallVisibility Visibility);
-  LLVM_ABI VCallVisibility getVCallVisibility() const;
+  void addTypeMetadata(unsigned Offset, Metadata *TypeID);
+  void setVCallVisibilityMetadata(VCallVisibility Visibility);
+  VCallVisibility getVCallVisibility() const;
 
   /// Returns true if the alignment of the value can be unilaterally
   /// increased.
   ///
   /// Note that for functions this is the alignment of the code, not the
   /// alignment of a function pointer.
-  LLVM_ABI bool canIncreaseAlignment() const;
+  bool canIncreaseAlignment() const;
 
 protected:
-  LLVM_ABI void copyAttributesFrom(const GlobalObject *Src);
+  void copyAttributesFrom(const GlobalObject *Src);
 
 public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -173,7 +176,7 @@ private:
                                (Val ? Mask : 0u));
   }
 
-  LLVM_ABI StringRef getSectionImpl() const;
+  StringRef getSectionImpl() const;
 };
 
 } // end namespace llvm

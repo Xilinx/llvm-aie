@@ -15,7 +15,6 @@
 #define LLVM_DEBUGINFO_LOGICALVIEW_CORE_LVSYMBOL_H
 
 #include "llvm/DebugInfo/LogicalView/Core/LVElement.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace logicalview {
@@ -34,7 +33,7 @@ using LVSymbolKindSet = std::set<LVSymbolKind>;
 using LVSymbolDispatch = std::map<LVSymbolKind, LVSymbolGetFunction>;
 using LVSymbolRequest = std::vector<LVSymbolGetFunction>;
 
-class LLVM_ABI LVSymbol final : public LVElement {
+class LVSymbol final : public LVElement {
   enum class Property { HasLocation, FillGaps, LastEntry };
 
   // Typed bitvector with kinds and properties for this symbol.

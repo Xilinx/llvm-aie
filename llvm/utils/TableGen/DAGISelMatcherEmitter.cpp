@@ -151,7 +151,7 @@ public:
         Uses += PredicateUsage[TP];
 
       // We only add the first predicate here since they are with the same code.
-      PredicateList.emplace_back(TPs[0], Uses);
+      PredicateList.push_back({TPs[0], Uses});
     }
 
     stable_sort(PredicateList, [](const auto &A, const auto &B) {

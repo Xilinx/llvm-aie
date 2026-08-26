@@ -10,7 +10,6 @@
 #define LLVM_ANALYSIS_INLINEORDER_H
 
 #include "llvm/Analysis/InlineCost.h"
-#include "llvm/Support/Compiler.h"
 #include <utility>
 
 namespace llvm {
@@ -32,11 +31,11 @@ public:
   bool empty() { return !size(); }
 };
 
-LLVM_ABI std::unique_ptr<InlineOrder<std::pair<CallBase *, int>>>
+std::unique_ptr<InlineOrder<std::pair<CallBase *, int>>>
 getDefaultInlineOrder(FunctionAnalysisManager &FAM, const InlineParams &Params,
                       ModuleAnalysisManager &MAM, Module &M);
 
-LLVM_ABI std::unique_ptr<InlineOrder<std::pair<CallBase *, int>>>
+std::unique_ptr<InlineOrder<std::pair<CallBase *, int>>>
 getInlineOrder(FunctionAnalysisManager &FAM, const InlineParams &Params,
                ModuleAnalysisManager &MAM, Module &M);
 
@@ -52,7 +51,7 @@ getInlineOrder(FunctionAnalysisManager &FAM, const InlineParams &Params,
 class PluginInlineOrderAnalysis
     : public AnalysisInfoMixin<PluginInlineOrderAnalysis> {
 public:
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
   typedef std::unique_ptr<InlineOrder<std::pair<CallBase *, int>>> (
       *InlineOrderFactory)(FunctionAnalysisManager &FAM,

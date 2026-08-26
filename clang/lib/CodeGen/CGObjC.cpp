@@ -14,7 +14,6 @@
 #include "CGObjCRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "CodeGenPGO.h"
 #include "ConstantEmitter.h"
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
@@ -806,7 +805,7 @@ static llvm::Value *emitARCRetainLoadOfScalar(CodeGenFunction &CGF,
 /// its pointer, name, and types registered in the class structure.
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   StartObjCMethod(OMD, OMD->getClassInterface());
-  PGO->assignRegionCounters(GlobalDecl(OMD), CurFn);
+  PGO.assignRegionCounters(GlobalDecl(OMD), CurFn);
   assert(isa<CompoundStmt>(OMD->getBody()));
   incrementProfileCounter(OMD->getBody());
   EmitCompoundStmtWithoutScope(*cast<CompoundStmt>(OMD->getBody()));
@@ -1968,9 +1967,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     const ObjCInterfaceType *InterfaceTy =
         ObjPtrTy ? ObjPtrTy->getInterfaceType() : nullptr;
     if (InterfaceTy) {
-      auto CheckOrdinal = SanitizerKind::SO_ObjCCast;
-      auto CheckHandler = SanitizerHandler::InvalidObjCCast;
-      SanitizerDebugLocation SanScope(this, {CheckOrdinal}, CheckHandler);
+      SanitizerScope SanScope(this);
       auto &C = CGM.getContext();
       assert(InterfaceTy->getDecl() && "No decl for ObjC interface type");
       Selector IsKindOfClassSel = GetUnarySelector("isKindOfClass", C);
@@ -1987,7 +1984,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
       llvm::Constant *StaticData[] = {
           EmitCheckSourceLocation(S.getBeginLoc()),
           EmitCheckTypeDescriptor(QualType(InterfaceTy, 0))};
-      EmitCheck({{IsClass, CheckOrdinal}}, CheckHandler,
+      EmitCheck({{IsClass, SanitizerKind::SO_ObjCCast}},
+                SanitizerHandler::InvalidObjCCast,
                 ArrayRef<llvm::Constant *>(StaticData), CurrentItem);
     }
   }

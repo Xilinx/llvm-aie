@@ -18,14 +18,13 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
-LLVM_ABI extern llvm::cl::opt<bool> ScalePartialSampleProfileWorkingSetSize;
+extern llvm::cl::opt<bool> ScalePartialSampleProfileWorkingSetSize;
 
 namespace llvm {
 namespace {

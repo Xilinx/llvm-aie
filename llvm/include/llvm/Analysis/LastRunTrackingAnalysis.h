@@ -32,7 +32,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <functional>
 
 namespace llvm {
@@ -81,9 +80,8 @@ public:
   }
 
 private:
-  LLVM_ABI bool shouldSkipImpl(PassID ID, OptionPtr Ptr) const;
-  LLVM_ABI void updateImpl(PassID ID, bool Changed,
-                           CompatibilityCheckFn CheckFn);
+  bool shouldSkipImpl(PassID ID, OptionPtr Ptr) const;
+  void updateImpl(PassID ID, bool Changed, CompatibilityCheckFn CheckFn);
 
   DenseMap<PassID, CompatibilityCheckFn> TrackedPasses;
 };
@@ -92,7 +90,7 @@ private:
 class LastRunTrackingAnalysis final
     : public AnalysisInfoMixin<LastRunTrackingAnalysis> {
   friend AnalysisInfoMixin<LastRunTrackingAnalysis>;
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   using Result = LastRunTrackingInfo;

@@ -69,31 +69,48 @@ struct ErrPtrHash {
 using ErrSetT = std::unordered_set<ErrPtrT, ErrPtrHash, ErrPtrEqual>;
 ErrSetT &errors();
 
-namespace {
-ol_errc_t GetErrorCode(std::error_code Code) {
-  if (Code.category() ==
-      error::make_error_code(error::ErrorCode::SUCCESS).category())
-    return static_cast<ol_errc_t>(Code.value());
-
-  return OL_ERRC_UNKNOWN;
-}
-} // namespace
-
-inline ol_result_t llvmErrorToOffloadError(llvm::Error &&Err) {
-  if (!Err) {
-    // No error
-    return nullptr;
+struct ol_impl_result_t {
+  ol_impl_result_t(std::nullptr_t) : Result(OL_SUCCESS) {}
+  ol_impl_result_t(ol_errc_t Code) {
+    if (Code == OL_ERRC_SUCCESS) {
+      Result = nullptr;
+    } else {
+      auto Err = std::unique_ptr<ol_error_struct_t>(
+          new ol_error_struct_t{Code, nullptr});
+      Result = errors().emplace(std::move(Err)).first->get();
+    }
   }
 
-  ol_errc_t ErrCode;
-  llvm::StringRef Details;
+  ol_impl_result_t(ol_errc_t Code, llvm::StringRef Details) {
+    assert(Code != OL_ERRC_SUCCESS);
+    Result = nullptr;
+    auto DetailsStr = errorStrs().insert(Details).first->getKeyData();
+    auto Err = std::unique_ptr<ol_error_struct_t>(
+        new ol_error_struct_t{Code, DetailsStr});
+    Result = errors().emplace(std::move(Err)).first->get();
+  }
 
-  llvm::handleAllErrors(std::move(Err), [&](llvm::StringError &Err) {
-    ErrCode = GetErrorCode(Err.convertToErrorCode());
-    Details = errorStrs().insert(Err.getMessage()).first->getKeyData();
-  });
+  static ol_impl_result_t fromError(llvm::Error &&Error) {
+    ol_errc_t ErrCode;
+    llvm::StringRef Details;
+    llvm::handleAllErrors(std::move(Error), [&](llvm::StringError &Err) {
+      ErrCode = GetErrorCode(Err.convertToErrorCode());
+      Details = errorStrs().insert(Err.getMessage()).first->getKeyData();
+    });
 
-  auto NewErr = std::unique_ptr<ol_error_struct_t>(
-      new ol_error_struct_t{ErrCode, Details.data()});
-  return errors().emplace(std::move(NewErr)).first->get();
-}
+    return ol_impl_result_t{ErrCode, Details};
+  }
+
+  operator ol_result_t() { return Result; }
+
+private:
+  static ol_errc_t GetErrorCode(std::error_code Code) {
+    if (Code.category() ==
+        error::make_error_code(error::ErrorCode::SUCCESS).category()) {
+      return static_cast<ol_errc_t>(Code.value());
+    }
+    return OL_ERRC_UNKNOWN;
+  }
+
+  ol_result_t Result;
+};

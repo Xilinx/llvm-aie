@@ -204,9 +204,7 @@ class FileOptionsBaseProvider : public DefaultOptionsProvider {
 protected:
   // A pair of configuration file base name and a function parsing
   // configuration from text in the corresponding format.
-  using ConfigFileHandler =
-      std::pair<std::string, std::function<llvm::ErrorOr<ClangTidyOptions>(
-                                 llvm::MemoryBufferRef)>>;
+  using ConfigFileHandler = std::pair<std::string, std::function<llvm::ErrorOr<ClangTidyOptions> (llvm::MemoryBufferRef)>>;
 
   /// Configuration file handlers listed in the order of priority.
   ///

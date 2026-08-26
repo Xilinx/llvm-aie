@@ -33,7 +33,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/ADT/identity.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -376,11 +375,7 @@ static FunctionProtoTypeLoc getPrototypeLoc(Expr *Fn) {
   }
 
   if (auto F = Target.getAs<FunctionProtoTypeLoc>()) {
-    // In some edge cases the AST can contain a "trivial" FunctionProtoTypeLoc
-    // which has null parameters. Avoid these as they don't contain useful
-    // information.
-    if (llvm::all_of(F.getParams(), llvm::identity<ParmVarDecl *>()))
-      return F;
+    return F;
   }
 
   return {};

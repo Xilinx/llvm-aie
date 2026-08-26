@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CODEGEN_CODEGENTARGETMACHINEIMPL_H
 #define LLVM_CODEGEN_CODEGENTARGETMACHINEIMPL_H
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -21,7 +20,7 @@ namespace llvm {
 /// for targets that make use of the independent code generator (CodeGen)
 /// library. Must not be used directly in code unless to inherit its
 /// implementation.
-class LLVM_ABI CodeGenTargetMachineImpl : public TargetMachine {
+class CodeGenTargetMachineImpl : public TargetMachine {
 protected: // Can only create subclasses.
   CodeGenTargetMachineImpl(const Target &T, StringRef DataLayoutString,
                            const Triple &TT, StringRef CPU, StringRef FS,

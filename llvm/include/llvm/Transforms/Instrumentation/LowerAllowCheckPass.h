@@ -17,7 +17,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -31,12 +30,11 @@ public:
 
   explicit LowerAllowCheckPass(LowerAllowCheckPass::Options Opts)
       : Opts(std::move(Opts)) {};
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 
-  LLVM_ABI static bool IsRequested();
-  LLVM_ABI void
-  printPipeline(raw_ostream &OS,
-                function_ref<StringRef(StringRef)> MapClassName2PassName);
+  static bool IsRequested();
+  void printPipeline(raw_ostream &OS,
+                     function_ref<StringRef(StringRef)> MapClassName2PassName);
 
 private:
   LowerAllowCheckPass::Options Opts;

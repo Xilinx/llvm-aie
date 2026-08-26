@@ -13,7 +13,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/CodeView/GUID.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/FormatAdapters.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,7 +26,7 @@ struct GUID;
 
 namespace detail {
 
-class LLVM_ABI GuidAdapter final : public FormatAdapter<ArrayRef<uint8_t>> {
+class GuidAdapter final : public FormatAdapter<ArrayRef<uint8_t>> {
   ArrayRef<uint8_t> Guid;
 
 public:

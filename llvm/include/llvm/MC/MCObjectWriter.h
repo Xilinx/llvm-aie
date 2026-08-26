@@ -10,7 +10,6 @@
 #define LLVM_MC_MCOBJECTWRITER_H
 
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cstdint>
 
@@ -31,7 +30,7 @@ class MCValue;
 /// points. Once assembly is complete, the object writer is given the
 /// MCAssembler instance, which contains all the symbol and section data which
 /// should be emitted as part of writeObject().
-class LLVM_ABI MCObjectWriter {
+class MCObjectWriter {
 protected:
   MCAssembler *Asm = nullptr;
   /// List of declared file names
@@ -140,8 +139,8 @@ public:
   virtual Triple::ObjectFormatType getFormat() const = 0;
 
 protected:
-  LLVM_ABI MCContext &getContext() const;
-  LLVM_ABI void reportError(SMLoc L, const Twine &Msg) const;
+  MCContext &getContext() const;
+  void reportError(SMLoc L, const Twine &Msg) const;
 
   MCAssembler *Asm = nullptr;
 };

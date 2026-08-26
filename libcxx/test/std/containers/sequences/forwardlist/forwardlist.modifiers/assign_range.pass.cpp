@@ -9,7 +9,7 @@
 // UNSUPPORTED: c++03, c++11, c++14, c++17, c++20
 
 // template<container-compatible-range<T> R>
-//   constexpr void prepend_range(R&& rg); // C++23; constexpr since C++26
+//   constexpr void prepend_range(R&& rg); // C++23
 
 #include <forward_list>
 
@@ -21,7 +21,7 @@
 //   {empty/one-element/full} container);
 // - prepending move-only elements;
 // - an exception is thrown when copying the elements or when allocating new elements.
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   static_assert(test_constraints_assign_range<std::forward_list, int, double>());
 
   for_all_iterators_and_allocators<int, const int*>([]<class Iter, class Sent, class Alloc>() {
@@ -31,19 +31,8 @@ TEST_CONSTEXPR_CXX26 bool test() {
   });
   test_sequence_prepend_range_move_only<std::forward_list>();
 
-  if (!TEST_IS_CONSTANT_EVALUATED) {
-    test_prepend_range_exception_safety_throwing_copy<std::forward_list>();
-    test_prepend_range_exception_safety_throwing_allocator<std::forward_list, int>();
-  }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
+  test_prepend_range_exception_safety_throwing_copy<std::forward_list>();
+  test_prepend_range_exception_safety_throwing_allocator<std::forward_list, int>();
 
   return 0;
 }

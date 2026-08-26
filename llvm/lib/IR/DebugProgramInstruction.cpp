@@ -6,11 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugProgramInstruction.h"
 #include "llvm/IR/DIBuilder.h"
-#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -25,9 +24,9 @@ template <typename T> T *DbgRecordParamRef<T>::get() const {
   return cast<T>(Ref);
 }
 
-template class LLVM_EXPORT_TEMPLATE DbgRecordParamRef<DIExpression>;
-template class LLVM_EXPORT_TEMPLATE DbgRecordParamRef<DILabel>;
-template class LLVM_EXPORT_TEMPLATE DbgRecordParamRef<DILocalVariable>;
+template class DbgRecordParamRef<DIExpression>;
+template class DbgRecordParamRef<DILabel>;
+template class DbgRecordParamRef<DILocalVariable>;
 
 DbgVariableRecord::DbgVariableRecord(const DbgVariableIntrinsic *DVI)
     : DbgRecord(ValueKind, DVI->getDebugLoc()),

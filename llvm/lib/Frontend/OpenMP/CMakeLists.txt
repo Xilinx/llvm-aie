@@ -23,5 +23,4 @@ add_llvm_component_library(LLVMFrontendOpenMP
   BitReader
   FrontendOffloading
   FrontendAtomic
-  FrontendDirective
   )

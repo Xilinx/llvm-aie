@@ -58,7 +58,6 @@ extern volatile int YAMLGeneratorAnchorSource;
 extern volatile int MDGeneratorAnchorSource;
 extern volatile int HTMLGeneratorAnchorSource;
 extern volatile int MHTMLGeneratorAnchorSource;
-extern volatile int JSONGeneratorAnchorSource;
 
 } // namespace doc
 } // namespace clang

@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Coroutines/SuspendCrossingInfo.h"
 
 #ifndef LLVM_TRANSFORMS_COROUTINES_MATERIALIZATIONUTILS_H
@@ -17,12 +16,11 @@ namespace llvm {
 namespace coro {
 
 // True if I is trivially rematerialzable, e.g. InsertElementInst
-LLVM_ABI bool isTriviallyMaterializable(Instruction &I);
+bool isTriviallyMaterializable(Instruction &I);
 
 // Performs rematerialization, invoked from buildCoroutineFrame.
-LLVM_ABI void
-doRematerializations(Function &F, SuspendCrossingInfo &Checker,
-                     std::function<bool(Instruction &)> IsMaterializable);
+void doRematerializations(Function &F, SuspendCrossingInfo &Checker,
+                          std::function<bool(Instruction &)> IsMaterializable);
 
 } // namespace coro
 

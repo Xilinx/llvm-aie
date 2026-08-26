@@ -22,10 +22,8 @@ using namespace clang;
 using namespace clang::interp;
 
 Context::Context(ASTContext &Ctx) : Ctx(Ctx), P(new Program(*this)) {
-  this->ShortWidth = Ctx.getTargetInfo().getShortWidth();
   this->IntWidth = Ctx.getTargetInfo().getIntWidth();
   this->LongWidth = Ctx.getTargetInfo().getLongWidth();
-  this->LongLongWidth = Ctx.getTargetInfo().getLongLongWidth();
   assert(Ctx.getTargetInfo().getCharWidth() == 8 &&
          "We're assuming 8 bit chars");
 }
@@ -49,7 +47,7 @@ bool Context::isPotentialConstantExpr(State &Parent, const FunctionDecl *FD) {
   if (!Run(Parent, Func))
     return false;
 
-  return Func->isValid();
+  return Func->isConstexpr();
 }
 
 bool Context::evaluateAsRValue(State &Parent, const Expr *E, APValue &Result) {
@@ -267,11 +265,6 @@ std::optional<PrimType> Context::classify(QualType T) const {
       return PT_MemberPtr;
 
     // Just trying to avoid the ASTContext::getIntWidth call below.
-    if (Kind == BuiltinType::Short)
-      return integralTypeToPrimTypeS(this->ShortWidth);
-    if (Kind == BuiltinType::UShort)
-      return integralTypeToPrimTypeU(this->ShortWidth);
-
     if (Kind == BuiltinType::Int)
       return integralTypeToPrimTypeS(this->IntWidth);
     if (Kind == BuiltinType::UInt)
@@ -280,11 +273,6 @@ std::optional<PrimType> Context::classify(QualType T) const {
       return integralTypeToPrimTypeS(this->LongWidth);
     if (Kind == BuiltinType::ULong)
       return integralTypeToPrimTypeU(this->LongWidth);
-    if (Kind == BuiltinType::LongLong)
-      return integralTypeToPrimTypeS(this->LongLongWidth);
-    if (Kind == BuiltinType::ULongLong)
-      return integralTypeToPrimTypeU(this->LongLongWidth);
-
     if (Kind == BuiltinType::SChar || Kind == BuiltinType::Char_S)
       return integralTypeToPrimTypeS(8);
     if (Kind == BuiltinType::UChar || Kind == BuiltinType::Char_U ||

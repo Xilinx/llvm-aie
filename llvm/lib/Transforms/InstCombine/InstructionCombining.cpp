@@ -1729,8 +1729,7 @@ Instruction *InstCombinerImpl::FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
   if (auto *CI = dyn_cast<FCmpInst>(SI->getCondition())) {
     if (CI->hasOneUse()) {
       Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
-      if (((TV == Op0 && FV == Op1) || (FV == Op0 && TV == Op1)) &&
-          !CI->isCommutative())
+      if ((TV == Op0 && FV == Op1) || (FV == Op0 && TV == Op1))
         return nullptr;
     }
   }
@@ -2101,8 +2100,8 @@ static bool shouldMergeGEPs(GEPOperator &GEP, GEPOperator &Src) {
 ///
 /// A 1-to-1 mapping is not required. Example:
 /// ShMask = <1,1,2,2> and C = <5,5,6,6> --> NewC = <poison,5,6,poison>
-Constant *InstCombinerImpl::unshuffleConstant(ArrayRef<int> ShMask, Constant *C,
-                                              VectorType *NewCTy) {
+static Constant *unshuffleConstant(ArrayRef<int> ShMask, Constant *C,
+                                   VectorType *NewCTy) {
   if (isa<ScalableVectorType>(NewCTy)) {
     Constant *Splat = C->getSplatValue();
     if (!Splat)
@@ -3621,7 +3620,7 @@ Instruction *InstCombinerImpl::visitReturnInst(ReturnInst &RI) {
 
   KnownFPClass KnownClass;
   Value *Simplified =
-      SimplifyDemandedUseFPClass(RetVal, ~ReturnClass, KnownClass, &RI);
+      SimplifyDemandedUseFPClass(RetVal, ~ReturnClass, KnownClass, 0, &RI);
   if (!Simplified)
     return nullptr;
 
@@ -3958,7 +3957,7 @@ Instruction *InstCombinerImpl::visitSwitchInst(SwitchInst &SI) {
       return replaceOperand(SI, 0, V);
   }
 
-  KnownBits Known = computeKnownBits(Cond, &SI);
+  KnownBits Known = computeKnownBits(Cond, 0, &SI);
   unsigned LeadingKnownZeros = Known.countMinLeadingZeros();
   unsigned LeadingKnownOnes = Known.countMinLeadingOnes();
 

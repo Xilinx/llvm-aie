@@ -24,7 +24,9 @@ module;
 #include <cfloat>
 #include <cinttypes>
 #include <climits>
-#include <clocale>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <clocale>
+#endif
 #include <cmath>
 #include <csetjmp>
 #include <csignal>

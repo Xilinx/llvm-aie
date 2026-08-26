@@ -64,8 +64,7 @@ private:
 
 constexpr uint64_t MemFlags = SIInstrFlags::MTBUF | SIInstrFlags::MUBUF |
                               SIInstrFlags::SMRD | SIInstrFlags::DS |
-                              SIInstrFlags::FLAT | SIInstrFlags::MIMG |
-                              SIInstrFlags::VIMAGE | SIInstrFlags::VSAMPLE;
+                              SIInstrFlags::FLAT | SIInstrFlags::MIMG;
 
 } // End anonymous namespace.
 

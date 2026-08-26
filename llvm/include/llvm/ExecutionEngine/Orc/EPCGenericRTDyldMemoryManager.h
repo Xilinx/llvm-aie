@@ -16,7 +16,6 @@
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
-#include "llvm/Support/Compiler.h"
 
 #define DEBUG_TYPE "orc"
 
@@ -24,8 +23,7 @@ namespace llvm {
 namespace orc {
 
 /// Remote-mapped RuntimeDyld-compatible memory manager.
-class LLVM_ABI EPCGenericRTDyldMemoryManager
-    : public RuntimeDyld::MemoryManager {
+class EPCGenericRTDyldMemoryManager : public RuntimeDyld::MemoryManager {
 public:
   /// Symbol addresses for memory access.
   struct SymbolAddrs {

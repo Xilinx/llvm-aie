@@ -18,7 +18,6 @@
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/BinaryFormat/GOFF.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConvertEBCDIC.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,7 +28,7 @@ namespace llvm {
 
 namespace object {
 
-class LLVM_ABI GOFFObjectFile : public ObjectFile {
+class GOFFObjectFile : public ObjectFile {
   friend class GOFFSymbolRef;
 
   IndexedMap<const uint8_t *> EsdPtrs; // Indexed by EsdId.

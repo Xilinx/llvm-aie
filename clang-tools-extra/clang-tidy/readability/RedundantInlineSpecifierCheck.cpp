@@ -38,8 +38,8 @@ AST_POLYMORPHIC_MATCHER(isInlineSpecified,
 AST_POLYMORPHIC_MATCHER_P(isInternalLinkage,
                           AST_POLYMORPHIC_SUPPORTED_TYPES(FunctionDecl,
                                                           VarDecl),
-                          bool, StrictMode) {
-  if (!StrictMode)
+                          bool, strictMode) {
+  if (!strictMode)
     return false;
   if (const auto *FD = dyn_cast<FunctionDecl>(&Node))
     return FD->getStorageClass() == SC_Static || FD->isInAnonymousNamespace();

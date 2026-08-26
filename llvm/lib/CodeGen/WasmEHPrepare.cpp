@@ -247,7 +247,8 @@ bool WasmEHPrepareImpl::prepareEHPads(Function &F) {
   // we depend on CoalesceFeaturesAndStripAtomics to downgrade it to
   // non-thread-local ones, in which case we don't allow this object to be
   // linked with other objects using shared memory.
-  LPadContextGV = M.getOrInsertGlobal("__wasm_lpad_context", LPadContextTy);
+  LPadContextGV = cast<GlobalVariable>(
+      M.getOrInsertGlobal("__wasm_lpad_context", LPadContextTy));
   LPadContextGV->setThreadLocalMode(GlobalValue::GeneralDynamicTLSModel);
 
   LPadIndexField = LPadContextGV;

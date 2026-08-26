@@ -136,10 +136,6 @@ static void diagnoseNonConstVariable(InterpState &S, CodePtr OpPC,
                                      const ValueDecl *VD);
 static bool diagnoseUnknownDecl(InterpState &S, CodePtr OpPC,
                                 const ValueDecl *D) {
-  // This function tries pretty hard to produce a good diagnostic. Just skip
-  // tha if nobody will see it anyway.
-  if (!S.diagnosing())
-    return false;
 
   if (isa<ParmVarDecl>(D)) {
     if (D->getType()->isReferenceType())
@@ -172,9 +168,6 @@ static bool diagnoseUnknownDecl(InterpState &S, CodePtr OpPC,
 
 static void diagnoseNonConstVariable(InterpState &S, CodePtr OpPC,
                                      const ValueDecl *VD) {
-  if (!S.diagnosing())
-    return;
-
   const SourceInfo &Loc = S.Current->getSource(OpPC);
   if (!S.getLangOpts().CPlusPlus) {
     S.FFDiag(Loc);
@@ -857,21 +850,22 @@ bool CheckCallable(InterpState &S, CodePtr OpPC, const Function *F) {
     return false;
   }
 
-  if (S.checkingPotentialConstantExpression() && S.Current->getDepth() != 0)
-    return false;
-
-  if (F->isValid() && F->hasBody() && F->isConstexpr())
-    return true;
-
-  // Implicitly constexpr.
-  if (F->isLambdaStaticInvoker())
-    return true;
-
   // Bail out if the function declaration itself is invalid.  We will
   // have produced a relevant diagnostic while parsing it, so just
   // note the problematic sub-expression.
   if (F->getDecl()->isInvalidDecl())
     return Invalid(S, OpPC);
+
+  if (S.checkingPotentialConstantExpression() && S.Current->getDepth() != 0)
+    return false;
+
+  if (F->isConstexpr() && F->hasBody() &&
+      (F->getDecl()->isConstexpr() || F->getDecl()->hasAttr<MSConstexprAttr>()))
+    return true;
+
+  // Implicitly constexpr.
+  if (F->isLambdaStaticInvoker())
+    return true;
 
   // Diagnose failed assertions specially.
   if (S.Current->getLocation(OpPC).isMacroID() &&
@@ -922,8 +916,7 @@ bool CheckCallable(InterpState &S, CodePtr OpPC, const Function *F) {
       // for a constant expression. It might be defined at the point we're
       // actually calling it.
       bool IsExtern = DiagDecl->getStorageClass() == SC_Extern;
-      bool IsDefined = F->isDefined();
-      if (!IsDefined && !IsExtern && DiagDecl->isConstexpr() &&
+      if (!DiagDecl->isDefined() && !IsExtern && DiagDecl->isConstexpr() &&
           S.checkingPotentialConstantExpression())
         return false;
 
@@ -966,15 +959,16 @@ bool CheckThis(InterpState &S, CodePtr OpPC, const Pointer &This) {
   if (!This.isZero())
     return true;
 
-  const Expr *E = S.Current->getExpr(OpPC);
-  if (S.getLangOpts().CPlusPlus11) {
-    bool IsImplicit = false;
-    if (const auto *TE = dyn_cast<CXXThisExpr>(E))
-      IsImplicit = TE->isImplicit();
-    S.FFDiag(E, diag::note_constexpr_this) << IsImplicit;
-  } else {
-    S.FFDiag(E);
-  }
+  const SourceInfo &Loc = S.Current->getSource(OpPC);
+
+  bool IsImplicit = false;
+  if (const auto *E = dyn_cast_if_present<CXXThisExpr>(Loc.asExpr()))
+    IsImplicit = E->isImplicit();
+
+  if (S.getLangOpts().CPlusPlus11)
+    S.FFDiag(Loc, diag::note_constexpr_this) << IsImplicit;
+  else
+    S.FFDiag(Loc);
 
   return false;
 }
@@ -1705,38 +1699,20 @@ bool CallPtr(InterpState &S, CodePtr OpPC, uint32_t ArgSize,
   return Call(S, OpPC, F, VarArgSize);
 }
 
-static void startLifetimeRecurse(const Pointer &Ptr) {
-  if (const Record *R = Ptr.getRecord()) {
-    Ptr.startLifetime();
-    for (const Record::Field &Fi : R->fields())
-      startLifetimeRecurse(Ptr.atField(Fi.Offset));
-    return;
-  }
-
-  if (const Descriptor *FieldDesc = Ptr.getFieldDesc();
-      FieldDesc->isCompositeArray()) {
-    assert(Ptr.getLifetime() == Lifetime::Started);
-    for (unsigned I = 0; I != FieldDesc->getNumElems(); ++I)
-      startLifetimeRecurse(Ptr.atIndex(I).narrow());
-    return;
-  }
-
-  Ptr.startLifetime();
-}
-
 bool StartLifetime(InterpState &S, CodePtr OpPC) {
   const auto &Ptr = S.Stk.peek<Pointer>();
   if (!CheckDummy(S, OpPC, Ptr, AK_Destroy))
     return false;
-  startLifetimeRecurse(Ptr.narrow());
+
+  Ptr.startLifetime();
   return true;
 }
 
 // FIXME: It might be better to the recursing as part of the generated code for
 // a destructor?
 static void endLifetimeRecurse(const Pointer &Ptr) {
+  Ptr.endLifetime();
   if (const Record *R = Ptr.getRecord()) {
-    Ptr.endLifetime();
     for (const Record::Field &Fi : R->fields())
       endLifetimeRecurse(Ptr.atField(Fi.Offset));
     return;
@@ -1744,14 +1720,9 @@ static void endLifetimeRecurse(const Pointer &Ptr) {
 
   if (const Descriptor *FieldDesc = Ptr.getFieldDesc();
       FieldDesc->isCompositeArray()) {
-    // No endLifetime() for array roots.
-    assert(Ptr.getLifetime() == Lifetime::Started);
     for (unsigned I = 0; I != FieldDesc->getNumElems(); ++I)
       endLifetimeRecurse(Ptr.atIndex(I).narrow());
-    return;
   }
-
-  Ptr.endLifetime();
 }
 
 /// Ends the lifetime of the peek'd pointer.
@@ -1759,7 +1730,7 @@ bool EndLifetime(InterpState &S, CodePtr OpPC) {
   const auto &Ptr = S.Stk.peek<Pointer>();
   if (!CheckDummy(S, OpPC, Ptr, AK_Destroy))
     return false;
-  endLifetimeRecurse(Ptr.narrow());
+  endLifetimeRecurse(Ptr);
   return true;
 }
 
@@ -1768,7 +1739,7 @@ bool EndLifetimePop(InterpState &S, CodePtr OpPC) {
   const auto &Ptr = S.Stk.pop<Pointer>();
   if (!CheckDummy(S, OpPC, Ptr, AK_Destroy))
     return false;
-  endLifetimeRecurse(Ptr.narrow());
+  endLifetimeRecurse(Ptr);
   return true;
 }
 
@@ -1787,9 +1758,9 @@ bool CheckNewTypeMismatch(InterpState &S, CodePtr OpPC, const Expr *E,
 
   // CheckLifetime for this and all base pointers.
   for (Pointer P = Ptr;;) {
-    if (!CheckLifetime(S, OpPC, P, AK_Construct))
+    if (!CheckLifetime(S, OpPC, P, AK_Construct)) {
       return false;
-
+    }
     if (P.isRoot())
       break;
     P = P.getBase();
@@ -2006,51 +1977,6 @@ bool DiagTypeid(InterpState &S, CodePtr OpPC) {
       << E->getExprOperand()->getType()
       << E->getExprOperand()->getSourceRange();
   return false;
-}
-
-bool arePotentiallyOverlappingStringLiterals(const Pointer &LHS,
-                                             const Pointer &RHS) {
-  unsigned LHSOffset = LHS.getIndex();
-  unsigned RHSOffset = RHS.getIndex();
-  unsigned LHSLength = (LHS.getNumElems() - 1) * LHS.elemSize();
-  unsigned RHSLength = (RHS.getNumElems() - 1) * RHS.elemSize();
-
-  StringRef LHSStr((const char *)LHS.atIndex(0).getRawAddress(), LHSLength);
-  StringRef RHSStr((const char *)RHS.atIndex(0).getRawAddress(), RHSLength);
-  int32_t IndexDiff = RHSOffset - LHSOffset;
-  if (IndexDiff < 0) {
-    if (static_cast<int32_t>(LHSLength) < -IndexDiff)
-      return false;
-    LHSStr = LHSStr.drop_front(-IndexDiff);
-  } else {
-    if (static_cast<int32_t>(RHSLength) < IndexDiff)
-      return false;
-    RHSStr = RHSStr.drop_front(IndexDiff);
-  }
-
-  unsigned ShorterCharWidth;
-  StringRef Shorter;
-  StringRef Longer;
-  if (LHSLength < RHSLength) {
-    ShorterCharWidth = LHS.elemSize();
-    Shorter = LHSStr;
-    Longer = RHSStr;
-  } else {
-    ShorterCharWidth = RHS.elemSize();
-    Shorter = RHSStr;
-    Longer = LHSStr;
-  }
-
-  // The null terminator isn't included in the string data, so check for it
-  // manually. If the longer string doesn't have a null terminator where the
-  // shorter string ends, they aren't potentially overlapping.
-  for (unsigned NullByte : llvm::seq(ShorterCharWidth)) {
-    if (Shorter.size() + NullByte >= Longer.size())
-      break;
-    if (Longer[Shorter.size() + NullByte])
-      return false;
-  }
-  return Shorter == Longer.take_front(Shorter.size());
 }
 
 // https://github.com/llvm/llvm-project/issues/102513

@@ -23,6 +23,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <span> // dynamic_extent
 
 #include "test_macros.h"
 

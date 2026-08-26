@@ -17,7 +17,6 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 #include <utility>
 
@@ -66,19 +65,17 @@ public:
         AC(Arg.AC), DT_(Arg.DT_) {}
 
   /// Handle invalidation events in the new pass manager.
-  LLVM_ABI bool invalidate(Function &Fn, const PreservedAnalyses &PA,
-                           FunctionAnalysisManager::Invalidator &Inv);
+  bool invalidate(Function &Fn, const PreservedAnalyses &PA,
+                  FunctionAnalysisManager::Invalidator &Inv);
 
-  LLVM_ABI AliasResult alias(const MemoryLocation &LocA,
-                             const MemoryLocation &LocB, AAQueryInfo &AAQI,
-                             const Instruction *CtxI);
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB,
+                    AAQueryInfo &AAQI, const Instruction *CtxI);
 
-  LLVM_ABI ModRefInfo getModRefInfo(const CallBase *Call,
-                                    const MemoryLocation &Loc,
-                                    AAQueryInfo &AAQI);
+  ModRefInfo getModRefInfo(const CallBase *Call, const MemoryLocation &Loc,
+                           AAQueryInfo &AAQI);
 
-  LLVM_ABI ModRefInfo getModRefInfo(const CallBase *Call1,
-                                    const CallBase *Call2, AAQueryInfo &AAQI);
+  ModRefInfo getModRefInfo(const CallBase *Call1, const CallBase *Call2,
+                           AAQueryInfo &AAQI);
 
   /// Returns a bitmask that should be unconditionally applied to the ModRef
   /// info of a memory location. This allows us to eliminate Mod and/or Ref
@@ -87,20 +84,18 @@ public:
   ///
   /// If IgnoreLocals is true, then this method returns NoModRef for memory
   /// that points to a local alloca.
-  LLVM_ABI ModRefInfo getModRefInfoMask(const MemoryLocation &Loc,
-                                        AAQueryInfo &AAQI,
-                                        bool IgnoreLocals = false);
+  ModRefInfo getModRefInfoMask(const MemoryLocation &Loc, AAQueryInfo &AAQI,
+                               bool IgnoreLocals = false);
 
   /// Get the location associated with a pointer argument of a callsite.
-  LLVM_ABI ModRefInfo getArgModRefInfo(const CallBase *Call, unsigned ArgIdx);
+  ModRefInfo getArgModRefInfo(const CallBase *Call, unsigned ArgIdx);
 
   /// Returns the behavior when calling the given call site.
-  LLVM_ABI MemoryEffects getMemoryEffects(const CallBase *Call,
-                                          AAQueryInfo &AAQI);
+  MemoryEffects getMemoryEffects(const CallBase *Call, AAQueryInfo &AAQI);
 
   /// Returns the behavior when calling the given function. For use when the
   /// call site is not known.
-  LLVM_ABI MemoryEffects getMemoryEffects(const Function *Fn);
+  MemoryEffects getMemoryEffects(const Function *Fn);
 
 private:
   struct DecomposedGEP;
@@ -157,16 +152,16 @@ private:
 class BasicAA : public AnalysisInfoMixin<BasicAA> {
   friend AnalysisInfoMixin<BasicAA>;
 
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   using Result = BasicAAResult;
 
-  LLVM_ABI BasicAAResult run(Function &F, FunctionAnalysisManager &AM);
+  BasicAAResult run(Function &F, FunctionAnalysisManager &AM);
 };
 
 /// Legacy wrapper pass to provide the BasicAAResult object.
-class LLVM_ABI BasicAAWrapperPass : public FunctionPass {
+class BasicAAWrapperPass : public FunctionPass {
   std::unique_ptr<BasicAAResult> Result;
 
   virtual void anchor();
@@ -183,7 +178,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
-LLVM_ABI FunctionPass *createBasicAAWrapperPass();
+FunctionPass *createBasicAAWrapperPass();
 
 } // end namespace llvm
 

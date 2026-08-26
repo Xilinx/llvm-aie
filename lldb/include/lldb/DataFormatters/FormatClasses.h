@@ -76,10 +76,9 @@ public:
 
   FormattersMatchCandidate(ConstString name,
                            ScriptInterpreter *script_interpreter, TypeImpl type,
-                           Flags flags, uint32_t ptr_stripped_depth = 0)
+                           Flags flags)
       : m_type_name(name), m_script_interpreter(script_interpreter),
-        m_type(type), m_flags(flags), m_ptr_stripped_depth(ptr_stripped_depth) {
-  }
+        m_type(type), m_flags(flags) {}
 
   ~FormattersMatchCandidate() = default;
 
@@ -97,8 +96,6 @@ public:
 
   bool DidStripTypedef() const { return m_flags.stripped_typedef; }
 
-  uint32_t GetPtrStrippedDepth() const { return m_ptr_stripped_depth; }
-
   template <class Formatter>
   bool IsMatch(const std::shared_ptr<Formatter> &formatter_sp) const {
     if (!formatter_sp)
@@ -106,8 +103,6 @@ public:
     if (formatter_sp->Cascades() == false && DidStripTypedef())
       return false;
     if (formatter_sp->SkipsPointers() && DidStripPointer())
-      return false;
-    if (formatter_sp->GetPtrMatchDepth() < GetPtrStrippedDepth())
       return false;
     if (formatter_sp->SkipsReferences() && DidStripReference())
       return false;
@@ -121,7 +116,6 @@ private:
   ScriptInterpreter *m_script_interpreter;
   TypeImpl m_type;
   Flags m_flags;
-  uint32_t m_ptr_stripped_depth;
 };
 
 typedef std::vector<FormattersMatchCandidate> FormattersMatchVector;

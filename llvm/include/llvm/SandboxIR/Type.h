@@ -16,7 +16,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -265,18 +264,18 @@ public:
 
   /// If this is a vector type, return the element type, otherwise return
   /// 'this'.
-  LLVM_ABI Type *getScalarType() const;
+  Type *getScalarType() const;
 
   // TODO: ADD MISSING
 
-  LLVM_ABI static Type *getInt64Ty(Context &Ctx);
-  LLVM_ABI static Type *getInt32Ty(Context &Ctx);
-  LLVM_ABI static Type *getInt16Ty(Context &Ctx);
-  LLVM_ABI static Type *getInt8Ty(Context &Ctx);
-  LLVM_ABI static Type *getInt1Ty(Context &Ctx);
-  LLVM_ABI static Type *getDoubleTy(Context &Ctx);
-  LLVM_ABI static Type *getFloatTy(Context &Ctx);
-  LLVM_ABI static Type *getHalfTy(Context &Ctx);
+  static Type *getInt64Ty(Context &Ctx);
+  static Type *getInt32Ty(Context &Ctx);
+  static Type *getInt16Ty(Context &Ctx);
+  static Type *getInt8Ty(Context &Ctx);
+  static Type *getInt1Ty(Context &Ctx);
+  static Type *getDoubleTy(Context &Ctx);
+  static Type *getFloatTy(Context &Ctx);
+  static Type *getHalfTy(Context &Ctx);
   // TODO: missing get*
 
   /// Get the address space of this pointer or pointer vector type.
@@ -294,7 +293,7 @@ class PointerType : public Type {
 public:
   // TODO: add missing functions
 
-  LLVM_ABI static PointerType *get(Context &Ctx, unsigned AddressSpace);
+  static PointerType *get(Context &Ctx, unsigned AddressSpace);
 
   static bool classof(const Type *From) {
     return isa<llvm::PointerType>(From->LLVMTy);
@@ -303,7 +302,7 @@ public:
 
 class ArrayType : public Type {
 public:
-  LLVM_ABI static ArrayType *get(Type *ElementType, uint64_t NumElements);
+  static ArrayType *get(Type *ElementType, uint64_t NumElements);
   // TODO: add missing functions
   static bool classof(const Type *From) {
     return isa<llvm::ArrayType>(From->LLVMTy);
@@ -313,8 +312,8 @@ public:
 class StructType : public Type {
 public:
   /// This static method is the primary way to create a literal StructType.
-  LLVM_ABI static StructType *get(Context &Ctx, ArrayRef<Type *> Elements,
-                                  bool IsPacked = false);
+  static StructType *get(Context &Ctx, ArrayRef<Type *> Elements,
+                         bool IsPacked = false);
 
   bool isPacked() const { return cast<llvm::StructType>(LLVMTy)->isPacked(); }
 
@@ -326,13 +325,13 @@ public:
 
 class VectorType : public Type {
 public:
-  LLVM_ABI static VectorType *get(Type *ElementType, ElementCount EC);
+  static VectorType *get(Type *ElementType, ElementCount EC);
   static VectorType *get(Type *ElementType, unsigned NumElements,
                          bool Scalable) {
     return VectorType::get(ElementType,
                            ElementCount::get(NumElements, Scalable));
   }
-  LLVM_ABI Type *getElementType() const;
+  Type *getElementType() const;
 
   static VectorType *get(Type *ElementType, const VectorType *Other) {
     return VectorType::get(ElementType, Other->getElementCount());
@@ -341,14 +340,13 @@ public:
   inline ElementCount getElementCount() const {
     return cast<llvm::VectorType>(LLVMTy)->getElementCount();
   }
-  LLVM_ABI static VectorType *getInteger(VectorType *VTy);
-  LLVM_ABI static VectorType *getExtendedElementVectorType(VectorType *VTy);
-  LLVM_ABI static VectorType *getTruncatedElementVectorType(VectorType *VTy);
-  LLVM_ABI static VectorType *getSubdividedVectorType(VectorType *VTy,
-                                                      int NumSubdivs);
-  LLVM_ABI static VectorType *getHalfElementsVectorType(VectorType *VTy);
-  LLVM_ABI static VectorType *getDoubleElementsVectorType(VectorType *VTy);
-  LLVM_ABI static bool isValidElementType(Type *ElemTy);
+  static VectorType *getInteger(VectorType *VTy);
+  static VectorType *getExtendedElementVectorType(VectorType *VTy);
+  static VectorType *getTruncatedElementVectorType(VectorType *VTy);
+  static VectorType *getSubdividedVectorType(VectorType *VTy, int NumSubdivs);
+  static VectorType *getHalfElementsVectorType(VectorType *VTy);
+  static VectorType *getDoubleElementsVectorType(VectorType *VTy);
+  static bool isValidElementType(Type *ElemTy);
 
   static bool classof(const Type *From) {
     return isa<llvm::VectorType>(From->LLVMTy);
@@ -357,7 +355,7 @@ public:
 
 class FixedVectorType : public VectorType {
 public:
-  LLVM_ABI static FixedVectorType *get(Type *ElementType, unsigned NumElts);
+  static FixedVectorType *get(Type *ElementType, unsigned NumElts);
 
   static FixedVectorType *get(Type *ElementType, const FixedVectorType *FVTy) {
     return get(ElementType, FVTy->getNumElements());
@@ -401,8 +399,7 @@ public:
 
 class ScalableVectorType : public VectorType {
 public:
-  LLVM_ABI static ScalableVectorType *get(Type *ElementType,
-                                          unsigned MinNumElts);
+  static ScalableVectorType *get(Type *ElementType, unsigned MinNumElts);
 
   static ScalableVectorType *get(Type *ElementType,
                                  const ScalableVectorType *SVTy) {
@@ -465,7 +462,7 @@ public:
 /// Integer representation type
 class IntegerType : public Type {
 public:
-  LLVM_ABI static IntegerType *get(Context &C, unsigned NumBits);
+  static IntegerType *get(Context &C, unsigned NumBits);
   // TODO: add missing functions
   static bool classof(const Type *From) {
     return isa<llvm::IntegerType>(From->LLVMTy);

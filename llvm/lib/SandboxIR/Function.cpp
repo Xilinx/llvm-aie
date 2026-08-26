@@ -17,13 +17,6 @@ FunctionType *Function::getFunctionType() const {
       Ctx.getType(cast<llvm::Function>(Val)->getFunctionType()));
 }
 
-void Function::setAlignment(MaybeAlign Align) {
-  Ctx.getTracker()
-      .emplaceIfTracking<
-          GenericSetter<&Function::getAlign, &Function::setAlignment>>(this);
-  cast<llvm::Function>(Val)->setAlignment(Align);
-}
-
 #ifndef NDEBUG
 void Function::dumpNameAndArgs(raw_ostream &OS) const {
   auto *F = cast<llvm::Function>(Val);

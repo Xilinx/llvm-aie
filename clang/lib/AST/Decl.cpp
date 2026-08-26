@@ -3541,7 +3541,7 @@ bool FunctionDecl::isExternC() const {
 }
 
 bool FunctionDecl::isInExternCContext() const {
-  if (DeviceKernelAttr::isOpenCLSpelling(getAttr<DeviceKernelAttr>()))
+  if (hasAttr<OpenCLKernelAttr>())
     return true;
   return getLexicalDeclContext()->isExternCContext();
 }
@@ -5510,8 +5510,7 @@ FunctionDecl *FunctionDecl::CreateDeserialized(ASTContext &C, GlobalDeclID ID) {
 }
 
 bool FunctionDecl::isReferenceableKernel() const {
-  return hasAttr<CUDAGlobalAttr>() ||
-         DeviceKernelAttr::isOpenCLSpelling(getAttr<DeviceKernelAttr>());
+  return hasAttr<CUDAGlobalAttr>() || hasAttr<OpenCLKernelAttr>();
 }
 
 BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
@@ -5713,7 +5712,8 @@ SourceRange TypeAliasDecl::getSourceRange() const {
 void FileScopeAsmDecl::anchor() {}
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
-                                           Expr *Str, SourceLocation AsmLoc,
+                                           StringLiteral *Str,
+                                           SourceLocation AsmLoc,
                                            SourceLocation RParenLoc) {
   return new (C, DC) FileScopeAsmDecl(DC, Str, AsmLoc, RParenLoc);
 }
@@ -5722,10 +5722,6 @@ FileScopeAsmDecl *FileScopeAsmDecl::CreateDeserialized(ASTContext &C,
                                                        GlobalDeclID ID) {
   return new (C, ID) FileScopeAsmDecl(nullptr, nullptr, SourceLocation(),
                                       SourceLocation());
-}
-
-std::string FileScopeAsmDecl::getAsmString() const {
-  return GCCAsmStmt::ExtractStringFromGCCAsmStmtComponent(getAsmStringExpr());
 }
 
 void TopLevelStmtDecl::anchor() {}

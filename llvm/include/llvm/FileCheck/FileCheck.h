@@ -14,7 +14,6 @@
 #define LLVM_FILECHECK_FILECHECK_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/SMLoc.h"
 #include <bitset>
@@ -92,7 +91,7 @@ public:
   operator FileCheckKind() const { return Kind; }
 
   int getCount() const { return Count; }
-  LLVM_ABI FileCheckType &setCount(int C);
+  FileCheckType &setCount(int C);
 
   bool isLiteralMatch() const {
     return Modifiers[FileCheckKindModifier::ModifierLiteral];
@@ -103,10 +102,10 @@ public:
   }
 
   // \returns a description of \p Prefix.
-  LLVM_ABI std::string getDescription(StringRef Prefix) const;
+  std::string getDescription(StringRef Prefix) const;
 
   // \returns a description of \p Modifiers.
-  LLVM_ABI std::string getModifiersDescription() const;
+  std::string getModifiersDescription() const;
 };
 } // namespace Check
 
@@ -168,10 +167,9 @@ struct FileCheckDiag {
   /// A note to replace the one normally indicated by MatchTy, or the empty
   /// string if none.
   std::string Note;
-  LLVM_ABI FileCheckDiag(const SourceMgr &SM,
-                         const Check::FileCheckType &CheckTy, SMLoc CheckLoc,
-                         MatchType MatchTy, SMRange InputRange,
-                         StringRef Note = "");
+  FileCheckDiag(const SourceMgr &SM, const Check::FileCheckType &CheckTy,
+                SMLoc CheckLoc, MatchType MatchTy, SMRange InputRange,
+                StringRef Note = "");
 };
 
 class FileCheckPatternContext;
@@ -185,8 +183,8 @@ class FileCheck {
   std::vector<FileCheckString> CheckStrings;
 
 public:
-  LLVM_ABI explicit FileCheck(FileCheckRequest Req);
-  LLVM_ABI ~FileCheck();
+  explicit FileCheck(FileCheckRequest Req);
+  ~FileCheck();
 
   /// Reads the check file from \p Buffer and records the expected strings it
   /// contains. Errors are reported against \p SM.
@@ -194,24 +192,24 @@ public:
   /// If \p ImpPatBufferIDRange, then the range (inclusive start, exclusive end)
   /// of IDs for source buffers added to \p SM for implicit patterns are
   /// recorded in it.  The range is empty if there are none.
-  LLVM_ABI bool
+  bool
   readCheckFile(SourceMgr &SM, StringRef Buffer,
                 std::pair<unsigned, unsigned> *ImpPatBufferIDRange = nullptr);
 
-  LLVM_ABI bool ValidateCheckPrefixes();
+  bool ValidateCheckPrefixes();
 
   /// Canonicalizes whitespaces in the file. Line endings are replaced with
   /// UNIX-style '\n'.
-  LLVM_ABI StringRef CanonicalizeFile(MemoryBuffer &MB,
-                                      SmallVectorImpl<char> &OutputBuffer);
+  StringRef CanonicalizeFile(MemoryBuffer &MB,
+                             SmallVectorImpl<char> &OutputBuffer);
 
   /// Checks the input to FileCheck provided in the \p Buffer against the
   /// expected strings read from the check file and record diagnostics emitted
   /// in \p Diags. Errors are recorded against \p SM.
   ///
   /// \returns false if the input fails to satisfy the checks.
-  LLVM_ABI bool checkInput(SourceMgr &SM, StringRef Buffer,
-                           std::vector<FileCheckDiag> *Diags = nullptr);
+  bool checkInput(SourceMgr &SM, StringRef Buffer,
+                  std::vector<FileCheckDiag> *Diags = nullptr);
 };
 
 } // namespace llvm

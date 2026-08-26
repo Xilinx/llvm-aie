@@ -1278,9 +1278,8 @@ LogicalResult GenericOp::verify() { return success(); }
 
 namespace {
 
-/// Remove linalg operations that are just copying the values from inputs to
-/// results. In the memref case, the operation must be copying to and from the
-/// same value. Requirements are:
+/// Remove any linalg operation (on tensors) that are just copying
+/// the values from inputs to the results. Requirements are
 /// 1) All iterator types are parallel
 /// 2) The body contains just a yield operation with the yielded values being
 ///    the arguments corresponding to the operands.
@@ -1305,27 +1304,18 @@ struct EraseIdentityLinalgOp : public OpRewritePattern<OpTy> {
 
     // In the buffer case, we need to check exact buffer equality.
     if (linalgOp.hasPureBufferSemantics()) {
-      if (linalgOp.getNumDpsInputs() != 1 || linalgOp.getNumDpsInits() != 1 ||
-          linalgOp.getDpsInputOperand(0)->get() !=
+      if (linalgOp.getNumDpsInputs() == 1 && linalgOp.getNumDpsInits() == 1 &&
+          linalgOp.getDpsInputOperand(0)->get() ==
               linalgOp.getDpsInitOperand(0)->get()) {
-        return rewriter.notifyMatchFailure(
-            linalgOp, "expected single input and output to be the same value");
+        rewriter.eraseOp(linalgOp);
+        return success();
       }
-
-      auto yieldArg = dyn_cast<BlockArgument>(yieldOp.getOperand(0));
-      if (!yieldArg || yieldArg.getOwner() != &body) {
-        return rewriter.notifyMatchFailure(linalgOp,
-                                           "cannot fold fill-like op");
-      }
-
-      rewriter.eraseOp(linalgOp);
-      return success();
+      return failure();
     }
 
-    if (!linalgOp.hasPureTensorSemantics()) {
-      return rewriter.notifyMatchFailure(
-          linalgOp, "mixed semantics is not supported yet");
-    }
+    // Mixed semantics is not supported yet.
+    if (!linalgOp.hasPureTensorSemantics())
+      return failure();
 
     // Get the argument number of the returned values. That is the operand
     // number to use for replacing uses of this operation.

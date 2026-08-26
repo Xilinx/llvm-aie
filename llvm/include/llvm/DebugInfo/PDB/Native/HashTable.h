@@ -14,7 +14,6 @@
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/BinaryStreamWriter.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
@@ -26,10 +25,8 @@ namespace llvm {
 
 namespace pdb {
 
-LLVM_ABI Error readSparseBitVector(BinaryStreamReader &Stream,
-                                   SparseBitVector<> &V);
-LLVM_ABI Error writeSparseBitVector(BinaryStreamWriter &Writer,
-                                    SparseBitVector<> &Vec);
+Error readSparseBitVector(BinaryStreamReader &Stream, SparseBitVector<> &V);
+Error writeSparseBitVector(BinaryStreamWriter &Writer, SparseBitVector<> &Vec);
 
 template <typename ValueT> class HashTable;
 

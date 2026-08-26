@@ -9,7 +9,7 @@
 // <forward_list>
 
 // template <class T, class Allocator>
-//     void swap(forward_list<T, Allocator>& x, forward_list<T, Allocator>& y); // constexpr since C++26
+//     void swap(forward_list<T, Allocator>& x, forward_list<T, Allocator>& y);
 
 #include <forward_list>
 #include <cassert>
@@ -19,7 +19,7 @@
 #include "test_allocator.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef int T;
     typedef test_allocator<T> A;
@@ -256,15 +256,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(std::distance(c2.begin(), c2.end()) == 0);
     assert(c2.get_allocator() == A());
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

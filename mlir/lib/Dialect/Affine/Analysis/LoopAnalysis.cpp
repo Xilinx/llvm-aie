@@ -402,7 +402,9 @@ isVectorizableLoopBodyWithOpCond(AffineForOp loop,
           return !VectorType::isValidElementType(type);
         }))
       return true;
-    return !llvm::all_of(op.getResultTypes(), VectorType::isValidElementType);
+    return llvm::any_of(op.getResultTypes(), [](Type type) {
+      return !VectorType::isValidElementType(type);
+    });
   });
   SmallVector<NestedMatch, 8> opsMatched;
   types.match(forOp, &opsMatched);

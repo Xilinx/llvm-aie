@@ -57,17 +57,6 @@ AST_MATCHER(QualType, isPointerType) {
 
 } // namespace
 
-MultiLevelImplicitPointerConversionCheck::
-    MultiLevelImplicitPointerConversionCheck(StringRef Name,
-                                             ClangTidyContext *Context)
-    : ClangTidyCheck(Name, Context), EnableInC(Options.get("EnableInC", true)) {
-}
-
-void MultiLevelImplicitPointerConversionCheck::storeOptions(
-    ClangTidyOptions::OptionMap &Opts) {
-  Options.store(Opts, "EnableInC", EnableInC);
-}
-
 void MultiLevelImplicitPointerConversionCheck::registerMatchers(
     MatchFinder *Finder) {
   Finder->addMatcher(

@@ -81,8 +81,7 @@ DenseMap<const InputSectionBase *, int> elf::runBalancedPartitioning(
     if (!sec || sec->size == 0 || !sec->isLive() || sec->repl != sec ||
         !orderer.secToSym.try_emplace(sec, d).second)
       return;
-    rootSymbolToSectionIdxs[CachedHashStringRef(
-                                lld::utils::getRootSymbol(sym.getName()))]
+    rootSymbolToSectionIdxs[CachedHashStringRef(getRootSymbol(sym.getName()))]
         .insert(sections.size());
     sections.emplace_back(sec);
   };

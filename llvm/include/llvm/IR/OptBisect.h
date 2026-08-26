@@ -15,7 +15,6 @@
 #define LLVM_IR_OPTBISECT_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include <limits>
 
 namespace llvm {
@@ -41,7 +40,7 @@ public:
 /// optimizations at compile time based on a command line option
 /// (-opt-bisect-limit) in order to perform a bisecting search for
 /// optimization-related problems.
-class LLVM_ABI OptBisect : public OptPassGate {
+class OptBisect : public OptPassGate {
 public:
   /// Default constructor. Initializes the state to "disabled". The bisection
   /// will be enabled by the cl::opt call-back when the command line option
@@ -84,7 +83,7 @@ private:
 
 /// Singleton instance of the OptBisect class, so multiple pass managers don't
 /// need to coordinate their uses of OptBisect.
-LLVM_ABI OptPassGate &getGlobalPassGate();
+OptPassGate &getGlobalPassGate();
 
 } // end namespace llvm
 

@@ -152,7 +152,7 @@ private:
   /// Check whether a schedule after a  transformation is legal. Return the old
   /// schedule without the transformation.
   isl::schedule
-  checkDependencyViolation(llvm::MDNode *LoopMD, llvm::BasicBlock *CodeRegion,
+  checkDependencyViolation(llvm::MDNode *LoopMD, llvm::Value *CodeRegion,
                            const isl::schedule_node &OrigBand,
                            StringRef DebugLocAttr, StringRef TransPrefix,
                            StringRef RemarkName, StringRef TransformationName) {
@@ -235,7 +235,7 @@ public:
     // TODO: Works only for original loop; for transformed loops, should track
     // where the loop's body code comes from.
     Loop *Loop = Attr->OriginalLoop;
-    BasicBlock *CodeRegion = nullptr;
+    Value *CodeRegion = nullptr;
     if (Loop)
       CodeRegion = Loop->getHeader();
 

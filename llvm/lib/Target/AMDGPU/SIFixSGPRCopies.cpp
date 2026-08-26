@@ -634,7 +634,11 @@ bool SIFixSGPRCopies::run(MachineFunction &MF) {
       switch (MI.getOpcode()) {
       default:
         continue;
-      case AMDGPU::COPY: {
+      case AMDGPU::COPY:
+      case AMDGPU::WQM:
+      case AMDGPU::STRICT_WQM:
+      case AMDGPU::SOFT_WQM:
+      case AMDGPU::STRICT_WWM: {
         const TargetRegisterClass *SrcRC, *DstRC;
         std::tie(SrcRC, DstRC) = getCopyRegClasses(MI, *TRI, *MRI);
 
@@ -658,10 +662,6 @@ bool SIFixSGPRCopies::run(MachineFunction &MF) {
 
         break;
       }
-      case AMDGPU::WQM:
-      case AMDGPU::STRICT_WQM:
-      case AMDGPU::SOFT_WQM:
-      case AMDGPU::STRICT_WWM:
       case AMDGPU::INSERT_SUBREG:
       case AMDGPU::PHI:
       case AMDGPU::REG_SEQUENCE: {

@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "hdr/signal_macros.h"
 #include "src/string/strcpy.h"
 #include "test/UnitTest/Test.h"
 
@@ -43,12 +42,3 @@ TEST(LlvmLibcStrCpyTest, OffsetDest) {
   ASSERT_STREQ(dest + 3, result);
   ASSERT_STREQ(dest, "xyzabc");
 }
-
-#if defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
-
-TEST(LlvmLibcStrCpyTest, CrashOnNullPtr) {
-  ASSERT_DEATH([]() { LIBC_NAMESPACE::strcpy(nullptr, nullptr); },
-               WITH_SIGNAL(-1));
-}
-
-#endif // defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)

@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MCA/View.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
 namespace mca {

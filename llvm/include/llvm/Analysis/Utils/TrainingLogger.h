@@ -54,7 +54,6 @@
 #define LLVM_ANALYSIS_UTILS_TRAININGLOGGER_H
 
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/Compiler.h"
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Analysis/TensorSpec.h"
@@ -101,7 +100,7 @@ class Logger final {
   void writeTensor(const TensorSpec &Spec, const char *RawData) {
     OS->write(RawData, Spec.getTotalTensorBufferSize());
   }
-  LLVM_ABI void logRewardImpl(const char *RawData);
+  void logRewardImpl(const char *RawData);
 
 public:
   /// Construct a Logger. If IncludeReward is false, then logReward or
@@ -110,14 +109,14 @@ public:
   /// NOTE: the FeatureSpecs are expected to be in the same order (i.e. have
   /// corresponding indices) with any MLModelRunner implementations
   /// corresponding to the model being trained/logged.
-  LLVM_ABI Logger(std::unique_ptr<raw_ostream> OS,
-                  const std::vector<TensorSpec> &FeatureSpecs,
-                  const TensorSpec &RewardSpec, bool IncludeReward,
-                  std::optional<TensorSpec> AdviceSpec = std::nullopt);
+  Logger(std::unique_ptr<raw_ostream> OS,
+         const std::vector<TensorSpec> &FeatureSpecs,
+         const TensorSpec &RewardSpec, bool IncludeReward,
+         std::optional<TensorSpec> AdviceSpec = std::nullopt);
 
-  LLVM_ABI void switchContext(StringRef Name);
-  LLVM_ABI void startObservation();
-  LLVM_ABI void endObservation();
+  void switchContext(StringRef Name);
+  void startObservation();
+  void endObservation();
   void flush() { OS->flush(); }
 
   const std::string &currentContext() const { return CurrentContext; }

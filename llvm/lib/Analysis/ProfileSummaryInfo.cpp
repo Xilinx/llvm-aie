@@ -20,7 +20,6 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/ProfileData/ProfileCommon.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 using namespace llvm;
 
@@ -28,7 +27,7 @@ static cl::opt<bool> PartialProfile(
     "partial-profile", cl::Hidden, cl::init(false),
     cl::desc("Specify the current profile is used as a partial profile."));
 
-LLVM_ABI cl::opt<bool> ScalePartialSampleProfileWorkingSetSize(
+cl::opt<bool> ScalePartialSampleProfileWorkingSetSize(
     "scale-partial-sample-profile-working-set-size", cl::Hidden, cl::init(true),
     cl::desc(
         "If true, scale the working set size of the partial sample profile "

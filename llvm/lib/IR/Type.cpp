@@ -795,12 +795,8 @@ VectorType *VectorType::get(Type *ElementType, ElementCount EC) {
 }
 
 bool VectorType::isValidElementType(Type *ElemTy) {
-  if (ElemTy->isIntegerTy() || ElemTy->isFloatingPointTy() ||
-      ElemTy->isPointerTy() || ElemTy->getTypeID() == TypedPointerTyID)
-    return true;
-  if (auto *TTy = dyn_cast<TargetExtType>(ElemTy))
-    return TTy->hasProperty(TargetExtType::CanBeVectorElement);
-  return false;
+  return ElemTy->isIntegerTy() || ElemTy->isFloatingPointTy() ||
+         ElemTy->isPointerTy() || ElemTy->getTypeID() == TypedPointerTyID;
 }
 
 //===----------------------------------------------------------------------===//
@@ -810,9 +806,8 @@ bool VectorType::isValidElementType(Type *ElemTy) {
 FixedVectorType *FixedVectorType::get(Type *ElementType, unsigned NumElts) {
   assert(NumElts > 0 && "#Elements of a VectorType must be greater than 0");
   assert(isValidElementType(ElementType) && "Element type of a VectorType must "
-                                            "be an integer, floating point, "
-                                            "pointer type, or a valid target "
-                                            "extension type.");
+                                            "be an integer, floating point, or "
+                                            "pointer type.");
 
   auto EC = ElementCount::getFixed(NumElts);
 
@@ -978,11 +973,7 @@ struct TargetTypeInfo {
 
   template <typename... ArgTys>
   TargetTypeInfo(Type *LayoutType, ArgTys... Properties)
-      : LayoutType(LayoutType), Properties((0 | ... | Properties)) {
-    assert((!(this->Properties & TargetExtType::CanBeVectorElement) ||
-            LayoutType->isSized()) &&
-           "Vector element type must be sized");
-  }
+      : LayoutType(LayoutType), Properties((0 | ... | Properties)) {}
 };
 } // anonymous namespace
 
@@ -1049,13 +1040,6 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
   if (Name == "amdgcn.named.barrier") {
     return TargetTypeInfo(FixedVectorType::get(Type::getInt32Ty(C), 4),
                           TargetExtType::CanBeGlobal);
-  }
-
-  // Type used to test vector element target extension property.
-  // Can be removed once a public target extension type uses CanBeVectorElement.
-  if (Name == "llvm.test.vectorelement") {
-    return TargetTypeInfo(Type::getInt32Ty(C), TargetExtType::CanBeLocal,
-                          TargetExtType::CanBeVectorElement);
   }
 
   return TargetTypeInfo(Type::getVoidTy(C));

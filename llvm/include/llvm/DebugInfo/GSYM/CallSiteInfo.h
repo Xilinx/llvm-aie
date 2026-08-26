@@ -12,7 +12,6 @@
 #include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <vector>
 
@@ -64,14 +63,14 @@ struct CallSiteInfo {
   /// \param Data The binary stream to read the data from.
   /// \param Offset The current offset within the data stream.
   /// \returns A CallSiteInfo or an error describing the issue.
-  LLVM_ABI static llvm::Expected<CallSiteInfo> decode(DataExtractor &Data,
-                                                      uint64_t &Offset);
+  static llvm::Expected<CallSiteInfo> decode(DataExtractor &Data,
+                                             uint64_t &Offset);
 
   /// Encode this CallSiteInfo object into a FileWriter stream.
   ///
   /// \param O The binary stream to write the data to.
   /// \returns An error object that indicates success or failure.
-  LLVM_ABI llvm::Error encode(FileWriter &O) const;
+  llvm::Error encode(FileWriter &O) const;
 };
 
 struct CallSiteInfoCollection {
@@ -81,14 +80,13 @@ struct CallSiteInfoCollection {
   ///
   /// \param Data The binary stream to read the data from.
   /// \returns A CallSiteInfoCollection or an error describing the issue.
-  LLVM_ABI static llvm::Expected<CallSiteInfoCollection>
-  decode(DataExtractor &Data);
+  static llvm::Expected<CallSiteInfoCollection> decode(DataExtractor &Data);
 
   /// Encode this CallSiteInfoCollection object into a FileWriter stream.
   ///
   /// \param O The binary stream to write the data to.
   /// \returns An error object that indicates success or failure.
-  LLVM_ABI llvm::Error encode(FileWriter &O) const;
+  llvm::Error encode(FileWriter &O) const;
 };
 
 class CallSiteInfoLoader {
@@ -109,7 +107,7 @@ public:
   /// file to be loaded.
   /// \returns An `llvm::Error` indicating success or describing any issues
   /// encountered during the loading process.
-  LLVM_ABI llvm::Error loadYAML(StringRef YAMLFile);
+  llvm::Error loadYAML(StringRef YAMLFile);
 
 private:
   /// Builds a map from function names to FunctionInfo pointers based on the
@@ -138,9 +136,8 @@ private:
   std::vector<FunctionInfo> &Funcs;
 };
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const CallSiteInfo &CSI);
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS,
-                                 const CallSiteInfoCollection &CSIC);
+raw_ostream &operator<<(raw_ostream &OS, const CallSiteInfo &CSI);
+raw_ostream &operator<<(raw_ostream &OS, const CallSiteInfoCollection &CSIC);
 
 } // namespace gsym
 } // namespace llvm

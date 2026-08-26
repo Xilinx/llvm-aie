@@ -17,7 +17,6 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/BinaryStreamWriter.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <array>
@@ -26,7 +25,7 @@
 namespace llvm {
 namespace codeview {
 
-class LLVM_ABI SymbolSerializer : public SymbolVisitorCallbacks {
+class SymbolSerializer : public SymbolVisitorCallbacks {
   BumpPtrAllocator &Storage;
   // Since this is a fixed size buffer, use a stack allocated buffer.  This
   // yields measurable performance increase over the repeated heap allocations

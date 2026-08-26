@@ -150,7 +150,7 @@ bool TypeSetByHwMode::constrain(const TypeSetByHwMode &VTS) {
       unsigned M = I.first;
       if (M == DefaultMode || hasMode(M))
         continue;
-      Map.try_emplace(M, Map.at(DefaultMode));
+      Map.insert({M, Map.at(DefaultMode)});
       Changed = true;
     }
   }
@@ -733,8 +733,8 @@ bool TypeInfer::EnforceSameNumElts(TypeSetByHwMode &V, TypeSetByHwMode &W) {
   // processed identically.
   auto NoLength = [](const SmallDenseSet<ElementCount> &Lengths,
                      MVT T) -> bool {
-    return !Lengths.contains(T.isVector() ? T.getVectorElementCount()
-                                          : ElementCount());
+    return !Lengths.count(T.isVector() ? T.getVectorElementCount()
+                                       : ElementCount());
   };
 
   SmallVector<unsigned, 4> Modes;
@@ -781,7 +781,7 @@ bool TypeInfer::EnforceSameSize(TypeSetByHwMode &A, TypeSetByHwMode &B) {
   typedef SmallSet<TypeSize, 2, TypeSizeComparator> TypeSizeSet;
 
   auto NoSize = [](const TypeSizeSet &Sizes, MVT T) -> bool {
-    return !Sizes.contains(T.getSizeInBits());
+    return !Sizes.count(T.getSizeInBits());
   };
 
   SmallVector<unsigned, 4> Modes;
@@ -905,11 +905,6 @@ TreePredicateFn::TreePredicateFn(TreePattern *N) : PatFragRec(N) {
   assert(
       (!hasPredCode() || !hasImmCode()) &&
       ".td file corrupt: can't have a node predicate *and* an imm predicate");
-
-  if (hasGISelPredicateCode() && hasGISelLeafPredicateCode())
-    PrintFatalError(getOrigPatFragRecord()->getRecord()->getLoc(),
-                    ".td file corrupt: can't have GISelPredicateCode *and* "
-                    "GISelLeafPredicateCode");
 }
 
 bool TreePredicateFn::hasPredCode() const {
@@ -1304,20 +1299,8 @@ bool TreePredicateFn::hasGISelPredicateCode() const {
 }
 
 std::string TreePredicateFn::getGISelPredicateCode() const {
-  return PatFragRec->getRecord()->getValueAsString("GISelPredicateCode").str();
-}
-
-bool TreePredicateFn::hasGISelLeafPredicateCode() const {
-  return PatFragRec->getRecord()
-      ->getValueAsOptionalString("GISelLeafPredicateCode")
-      .has_value();
-}
-
-std::string TreePredicateFn::getGISelLeafPredicateCode() const {
-  return PatFragRec->getRecord()
-      ->getValueAsOptionalString("GISelLeafPredicateCode")
-      .value_or(StringRef())
-      .str();
+  return std::string(
+      PatFragRec->getRecord()->getValueAsString("GISelPredicateCode"));
 }
 
 StringRef TreePredicateFn::getImmType() const {
@@ -3320,14 +3303,14 @@ void CodeGenDAGPatterns::ParseNodeTransforms() {
        reverse(Records.getAllDerivedDefinitions("SDNodeXForm"))) {
     const Record *SDNode = XFormNode->getValueAsDef("Opcode");
     StringRef Code = XFormNode->getValueAsString("XFormFunction");
-    SDNodeXForms.try_emplace(XFormNode, NodeXForm(SDNode, Code.str()));
+    SDNodeXForms.insert({XFormNode, NodeXForm(SDNode, Code.str())});
   }
 }
 
 void CodeGenDAGPatterns::ParseComplexPatterns() {
   for (const Record *R :
        reverse(Records.getAllDerivedDefinitions("ComplexPattern")))
-    ComplexPatterns.try_emplace(R, R);
+    ComplexPatterns.insert({R, R});
 }
 
 /// ParsePatternFragments - Parse all of the PatFrag definitions in the .td
@@ -3354,7 +3337,7 @@ void CodeGenDAGPatterns::ParsePatternFragments(bool OutFrags) {
     auto ArgsCopy = Args;
     SmallDenseSet<StringRef, 4> OperandsSet(llvm::from_range, ArgsCopy);
 
-    if (OperandsSet.contains(""))
+    if (OperandsSet.count(""))
       P->error("Cannot have unnamed 'node' values in pattern fragment!");
 
     // Parse the operands list.

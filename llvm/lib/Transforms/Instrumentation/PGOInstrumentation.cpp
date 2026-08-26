@@ -100,7 +100,6 @@
 #include "llvm/Support/CRC.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Error.h"
@@ -360,8 +359,7 @@ extern cl::opt<std::string> ViewBlockFreqFuncName;
 // ProfileData/InstrProf.cpp: -enable-vtable-value-profiling=
 extern cl::opt<bool> EnableVTableValueProfiling;
 extern cl::opt<bool> EnableVTableProfileUse;
-LLVM_ABI extern cl::opt<InstrProfCorrelator::ProfCorrelatorKind>
-    ProfileCorrelate;
+extern cl::opt<InstrProfCorrelator::ProfCorrelatorKind> ProfileCorrelate;
 } // namespace llvm
 
 namespace {
@@ -857,7 +855,7 @@ BasicBlock *FuncPGOInstrumentation<Edge, BBInfo>::getInstrBB(Edge *E) {
   auto canInstrument = [](BasicBlock *BB) -> BasicBlock * {
     // There are basic blocks (such as catchswitch) cannot be instrumented.
     // If the returned first insertion point is the end of BB, skip this BB.
-    if (BB->getFirstNonPHIOrDbgOrAlloca() == BB->end())
+    if (BB->getFirstInsertionPt() == BB->end())
       return nullptr;
     return BB;
   };
@@ -954,7 +952,7 @@ void FunctionInstrumenter::instrument() {
       Name, PointerType::get(M.getContext(), 0));
   if (PGOFunctionEntryCoverage) {
     auto &EntryBB = F.getEntryBlock();
-    IRBuilder<> Builder(&EntryBB, EntryBB.getFirstNonPHIOrDbgOrAlloca());
+    IRBuilder<> Builder(&EntryBB, EntryBB.getFirstInsertionPt());
     // llvm.instrprof.cover(i8* <name>, i64 <hash>, i32 <num-counters>,
     //                      i32 <index>)
     Builder.CreateIntrinsic(
@@ -1012,7 +1010,7 @@ void FunctionInstrumenter::instrument() {
   if (PGOTemporalInstrumentation) {
     NumCounters += PGOBlockCoverage ? 8 : 1;
     auto &EntryBB = F.getEntryBlock();
-    IRBuilder<> Builder(&EntryBB, EntryBB.getFirstNonPHIOrDbgOrAlloca());
+    IRBuilder<> Builder(&EntryBB, EntryBB.getFirstInsertionPt());
     // llvm.instrprof.timestamp(i8* <name>, i64 <hash>, i32 <num-counters>,
     //                          i32 <index>)
     Builder.CreateIntrinsic(Intrinsic::instrprof_timestamp,
@@ -1023,7 +1021,7 @@ void FunctionInstrumenter::instrument() {
   }
 
   for (auto *InstrBB : InstrumentBBs) {
-    IRBuilder<> Builder(InstrBB, InstrBB->getFirstNonPHIOrDbgOrAlloca());
+    IRBuilder<> Builder(InstrBB, InstrBB->getFirstInsertionPt());
     assert(Builder.GetInsertPoint() != InstrBB->end() &&
            "Cannot get the Instrumentation point");
     // llvm.instrprof.increment(i8* <name>, i64 <hash>, i32 <num-counters>,
@@ -2088,12 +2086,10 @@ static void verifyFuncBFI(PGOUseFunc &Func, LoopInfo &LI,
 
   unsigned BBNum = 0, BBMisMatchNum = 0, NonZeroBBNum = 0;
   for (auto &BBI : F) {
-    PGOUseBBInfo *BBInfo = Func.findBBInfo(&BBI);
-    if (!BBInfo)
-      continue;
-
-    uint64_t CountValue = BBInfo->Count.value_or(CountValue);
+    uint64_t CountValue = 0;
     uint64_t BFICountValue = 0;
+
+    CountValue = Func.getBBInfo(&BBI).Count.value_or(CountValue);
 
     BBNum++;
     if (CountValue)

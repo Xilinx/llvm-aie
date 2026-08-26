@@ -14,7 +14,6 @@
 #define LLVM_OBJECT_ARCHIVEWRITER_H
 
 #include "llvm/Object/Archive.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -25,22 +24,21 @@ struct NewArchiveMember {
   unsigned UID = 0, GID = 0, Perms = 0644;
 
   NewArchiveMember() = default;
-  LLVM_ABI NewArchiveMember(MemoryBufferRef BufRef);
+  NewArchiveMember(MemoryBufferRef BufRef);
 
   // Detect the archive format from the object or bitcode file. This helps
   // assume the archive format when creating or editing archives in the case
   // one isn't explicitly set.
-  LLVM_ABI object::Archive::Kind detectKindFromObject() const;
+  object::Archive::Kind detectKindFromObject() const;
 
-  LLVM_ABI static Expected<NewArchiveMember>
+  static Expected<NewArchiveMember>
   getOldMember(const object::Archive::Child &OldMember, bool Deterministic);
 
-  LLVM_ABI static Expected<NewArchiveMember> getFile(StringRef FileName,
-                                                     bool Deterministic);
+  static Expected<NewArchiveMember> getFile(StringRef FileName,
+                                            bool Deterministic);
 };
 
-LLVM_ABI Expected<std::string> computeArchiveRelativePath(StringRef From,
-                                                          StringRef To);
+Expected<std::string> computeArchiveRelativePath(StringRef From, StringRef To);
 
 enum class SymtabWritingMode {
   NoSymtab,     // Do not write symbol table.
@@ -50,26 +48,26 @@ enum class SymtabWritingMode {
   BigArchive64  // Only write the 64-bit symbol table.
 };
 
-LLVM_ABI void warnToStderr(Error Err);
+void warnToStderr(Error Err);
 
 // Write an archive directly to an output stream.
-LLVM_ABI Error writeArchiveToStream(
-    raw_ostream &Out, ArrayRef<NewArchiveMember> NewMembers,
-    SymtabWritingMode WriteSymtab, object::Archive::Kind Kind,
-    bool Deterministic, bool Thin, std::optional<bool> IsEC = std::nullopt,
-    function_ref<void(Error)> Warn = warnToStderr);
+Error writeArchiveToStream(raw_ostream &Out,
+                           ArrayRef<NewArchiveMember> NewMembers,
+                           SymtabWritingMode WriteSymtab,
+                           object::Archive::Kind Kind, bool Deterministic,
+                           bool Thin, std::optional<bool> IsEC = std::nullopt,
+                           function_ref<void(Error)> Warn = warnToStderr);
 
-LLVM_ABI Error
-writeArchive(StringRef ArcName, ArrayRef<NewArchiveMember> NewMembers,
-             SymtabWritingMode WriteSymtab, object::Archive::Kind Kind,
-             bool Deterministic, bool Thin,
-             std::unique_ptr<MemoryBuffer> OldArchiveBuf = nullptr,
-             std::optional<bool> IsEC = std::nullopt,
-             function_ref<void(Error)> Warn = warnToStderr);
+Error writeArchive(StringRef ArcName, ArrayRef<NewArchiveMember> NewMembers,
+                   SymtabWritingMode WriteSymtab, object::Archive::Kind Kind,
+                   bool Deterministic, bool Thin,
+                   std::unique_ptr<MemoryBuffer> OldArchiveBuf = nullptr,
+                   std::optional<bool> IsEC = std::nullopt,
+                   function_ref<void(Error)> Warn = warnToStderr);
 
 // writeArchiveToBuffer is similar to writeArchive but returns the Archive in a
 // buffer instead of writing it out to a file.
-LLVM_ABI Expected<std::unique_ptr<MemoryBuffer>>
+Expected<std::unique_ptr<MemoryBuffer>>
 writeArchiveToBuffer(ArrayRef<NewArchiveMember> NewMembers,
                      SymtabWritingMode WriteSymtab, object::Archive::Kind Kind,
                      bool Deterministic, bool Thin,

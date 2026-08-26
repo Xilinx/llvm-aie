@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple dxil-pc-shadermodel6.0-compute -x hlsl -ast-dump -o - %s | FileCheck %s
+
 // CHECK: NamespaceDecl {{.*}} implicit hlsl
-// CHECK: TypeAliasTemplateDecl {{.*}} implicit vector
+// CHECK-NEXT: TypeAliasTemplateDecl {{.*}} implicit vector
 // CHECK-NEXT: TemplateTypeParmDecl {{.*}} class depth 0 index 0 element
 // CHECK-NEXT: TemplateArgument type 'float'
 // CHECK-NEXT: BuiltinType {{.*}} 'float'

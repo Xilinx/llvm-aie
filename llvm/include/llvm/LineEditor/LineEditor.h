@@ -10,7 +10,6 @@
 #define LLVM_LINEEDITOR_LINEEDITOR_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdio>
 #include <memory>
 #include <optional>
@@ -31,20 +30,20 @@ public:
   /// \param In The input stream used by the editor.
   /// \param Out The output stream used by the editor.
   /// \param Err The error stream used by the editor.
-  LLVM_ABI LineEditor(StringRef ProgName, StringRef HistoryPath = "",
-                      FILE *In = stdin, FILE *Out = stdout, FILE *Err = stderr);
-  LLVM_ABI ~LineEditor();
+  LineEditor(StringRef ProgName, StringRef HistoryPath = "", FILE *In = stdin,
+             FILE *Out = stdout, FILE *Err = stderr);
+  ~LineEditor();
 
   /// Reads a line.
   ///
   /// \return The line, or std::optional<std::string>() on EOF.
-  LLVM_ABI std::optional<std::string> readLine() const;
+  std::optional<std::string> readLine() const;
 
-  LLVM_ABI void saveHistory();
-  LLVM_ABI void loadHistory();
-  LLVM_ABI void setHistorySize(int size);
+  void saveHistory();
+  void loadHistory();
+  void setHistorySize(int size);
 
-  LLVM_ABI static std::string getDefaultHistoryPath(StringRef ProgName);
+  static std::string getDefaultHistoryPath(StringRef ProgName);
 
   /// The action to perform upon a completion request.
   struct CompletionAction {
@@ -102,8 +101,7 @@ public:
   ///
   /// \param Buffer The string to complete
   /// \param Pos The zero-based cursor position in the StringRef
-  LLVM_ABI CompletionAction getCompletionAction(StringRef Buffer,
-                                                size_t Pos) const;
+  CompletionAction getCompletionAction(StringRef Buffer, size_t Pos) const;
 
   const std::string &getPrompt() const { return Prompt; }
   void setPrompt(const std::string &P) { Prompt = P; }
@@ -116,12 +114,12 @@ private:
   std::string HistoryPath;
   std::unique_ptr<InternalData> Data;
 
-  struct LLVM_ABI CompleterConcept {
+  struct CompleterConcept {
     virtual ~CompleterConcept();
     virtual CompletionAction complete(StringRef Buffer, size_t Pos) const = 0;
   };
 
-  struct LLVM_ABI ListCompleterConcept : CompleterConcept {
+  struct ListCompleterConcept : CompleterConcept {
     ~ListCompleterConcept() override;
     CompletionAction complete(StringRef Buffer, size_t Pos) const override;
     static std::string getCommonPrefix(const std::vector<Completion> &Comps);

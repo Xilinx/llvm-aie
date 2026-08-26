@@ -38,6 +38,7 @@
 #include <mdspan>
 #include <cassert>
 #include <limits>
+#include <span> // dynamic_extent
 #include <type_traits>
 
 #include "test_macros.h"

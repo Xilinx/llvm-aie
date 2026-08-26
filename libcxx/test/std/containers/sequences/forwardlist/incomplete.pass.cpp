@@ -8,9 +8,9 @@
 
 // <forward_list>
 
-// forward_list()                 // constexpr since C++26
-// forward_list::iterator()       // constexpr since C++26
-// forward_list::const_iterator() // constexpr since C++26
+// forward_list()
+// forward_list::iterator()
+// forward_list::const_iterator()
 
 #include <forward_list>
 #include <cassert>
@@ -33,7 +33,7 @@ struct B {
 };
 #endif
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     A a;
     assert(a.d.empty());
@@ -47,15 +47,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     b.it  = b.d.begin();
     b.it2 = b.d.cbefore_begin();
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

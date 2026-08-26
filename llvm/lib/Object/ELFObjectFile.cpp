@@ -736,7 +736,8 @@ void ELFObjectFileBase::setARMSubArch(Triple &TheTriple) const {
     case ARMBuildAttrs::v7: {
       std::optional<unsigned> ArchProfileAttr =
           Attributes.getAttributeValue(ARMBuildAttrs::CPU_arch_profile);
-      if (ArchProfileAttr == ARMBuildAttrs::MicroControllerProfile)
+      if (ArchProfileAttr &&
+          *ArchProfileAttr == ARMBuildAttrs::MicroControllerProfile)
         Triple += "v7m";
       else
         Triple += "v7";

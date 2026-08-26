@@ -11,7 +11,6 @@
 #include "PdbYaml.h"
 #include "llvm-pdbutil.h"
 
-#include "llvm/BinaryFormat/COFF.h"
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugUnknownSubsection.h"
@@ -74,15 +73,7 @@ Error YAMLOutputStyle::dump() {
   if (auto EC = dumpPublics())
     return EC;
 
-  // Fake Coff header for dumping register enumerations.
-  COFF::header Header;
-  auto MachineType =
-      Obj.DbiStream ? Obj.DbiStream->MachineType : PDB_Machine::Unknown;
-  Header.Machine = static_cast<uint16_t>(MachineType);
-  Out.setContext(&Header);
   flush();
-  Out.setContext(nullptr);
-
   return Error::success();
 }
 

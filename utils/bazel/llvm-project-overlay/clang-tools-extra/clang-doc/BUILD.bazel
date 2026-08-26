@@ -77,7 +77,6 @@ cc_binary(
     srcs = ["tool/ClangDocMain.cpp"],
     stamp = 0,
     deps = [
-        ":clang-doc-support",
         ":generators",
         ":lib",
         "//clang:ast",

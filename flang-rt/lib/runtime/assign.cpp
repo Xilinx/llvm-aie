@@ -330,7 +330,6 @@ RT_API_ATTRS void Assign(Descriptor &to, const Descriptor &from,
       }
       flags &= ~NeedFinalization;
       toElementBytes = to.ElementBytes(); // may have changed
-      toDerived = toAddendum ? toAddendum->derivedType() : nullptr;
     }
   }
   if (toDerived && (flags & CanBeDefinedAssignment)) {

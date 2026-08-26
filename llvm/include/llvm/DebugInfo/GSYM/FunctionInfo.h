@@ -17,7 +17,6 @@
 #include "llvm/DebugInfo/GSYM/LookupResult.h"
 #include "llvm/DebugInfo/GSYM/MergedFunctionsInfo.h"
 #include "llvm/DebugInfo/GSYM/StringTable.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 
 namespace llvm {
@@ -139,8 +138,8 @@ struct FunctionInfo {
   ///
   /// \returns An FunctionInfo or an error describing the issue that was
   /// encountered during decoding.
-  LLVM_ABI static llvm::Expected<FunctionInfo> decode(DataExtractor &Data,
-                                                      uint64_t BaseAddr);
+  static llvm::Expected<FunctionInfo> decode(DataExtractor &Data,
+                                             uint64_t BaseAddr);
 
   /// Encode this object into FileWriter stream.
   ///
@@ -156,8 +155,7 @@ struct FunctionInfo {
   ///
   /// \returns An error object that indicates failure or the offset of the
   /// function info that was successfully written into the stream.
-  LLVM_ABI llvm::Expected<uint64_t> encode(FileWriter &O,
-                                           bool NoPadding = false) const;
+  llvm::Expected<uint64_t> encode(FileWriter &O, bool NoPadding = false) const;
 
   /// Encode this function info into the internal byte cache and return the size
   /// in bytes.
@@ -169,7 +167,7 @@ struct FunctionInfo {
   ///
   /// \returns The size in bytes of the FunctionInfo if it were to be encoded
   /// into a byte stream.
-  LLVM_ABI uint64_t cacheEncoding();
+  uint64_t cacheEncoding();
 
   /// Lookup an address within a FunctionInfo object's data stream.
   ///
@@ -196,7 +194,7 @@ struct FunctionInfo {
   /// \returns An LookupResult or an error describing the issue that was
   /// encountered during decoding. An error should only be returned if the
   /// address is not contained in the FunctionInfo or if the data is corrupted.
-  LLVM_ABI static llvm::Expected<LookupResult>
+  static llvm::Expected<LookupResult>
   lookup(DataExtractor &Data, const GsymReader &GR, uint64_t FuncAddr,
          uint64_t Addr,
          std::optional<DataExtractor> *MergedFuncsData = nullptr);
@@ -240,7 +238,7 @@ inline bool operator<(const FunctionInfo &LHS, const FunctionInfo &RHS) {
          std::tie(RHS.Range, RHS.Inline, RHS.OptLineTable);
 }
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const FunctionInfo &R);
+raw_ostream &operator<<(raw_ostream &OS, const FunctionInfo &R);
 
 } // namespace gsym
 } // namespace llvm

@@ -37,11 +37,11 @@ let HasPassthruOp = true, HasMaskOp = true in {
 multiclass VPseudoVQDOT_VV_VX {
   foreach m = MxSet<32>.m in {
     defm "" : VPseudoBinaryV_VV<m>,
-              SchedBinary<"WriteVIMulAddV", "ReadVIMulAddV", "ReadVIMulAddV", m.MX,
-                          forcePassthruRead=true>;
+            SchedBinary<"WriteVIALUV", "ReadVIALUV", "ReadVIALUV", m.MX,
+                        forcePassthruRead=true>;
     defm "" : VPseudoBinaryV_VX<m>,
-              SchedBinary<"WriteVIMulAddX", "ReadVIMulAddV", "ReadVIMulAddX", m.MX,
-                          forcePassthruRead=true>;
+            SchedBinary<"WriteVIALUX", "ReadVIALUV", "ReadVIALUX", m.MX,
+                        forcePassthruRead=true>;
   }
 }
 

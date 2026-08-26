@@ -134,13 +134,12 @@ toolchain name, binary file format, etc.
  The following attributes describe the most common information for a
  logical element. They help to identify the lexical scope level; the
  element visibility across modules (global, local); the toolchain name
- and source language that produced the binary file.
+ that produced the binary file.
 
  .. code-block:: text
 
    =global: Element referenced across Compile Units.
    =format: Object file format name.
-   =language: Source language name.
    =level: Lexical scope level (File=0, Compile Unit=1).
    =local: Element referenced only in the Compile Unit.
    =producer: Toolchain identification name.
@@ -232,7 +231,6 @@ toolchain name, binary file format, etc.
    =filename
    =files
    =format
-   =language
    =level
    =producer
    =publics

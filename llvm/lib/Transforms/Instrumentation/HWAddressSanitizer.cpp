@@ -419,8 +419,7 @@ private:
     }
 
   public:
-    void init(Triple &TargetTriple, bool InstrumentWithCalls,
-              bool CompileKernel);
+    void init(Triple &TargetTriple, bool InstrumentWithCalls);
     Align getObjectAlignment() const { return Align(1ULL << Scale); }
     bool isInGlobal() const { return Kind == OffsetKind::kGlobal; }
     bool isInIfunc() const { return Kind == OffsetKind::kIfunc; }
@@ -643,7 +642,7 @@ void HWAddressSanitizer::initializeModule() {
   PointerTagShift = IsX86_64 ? 57 : 56;
   TagMaskByte = IsX86_64 ? 0x3F : 0xFF;
 
-  Mapping.init(TargetTriple, InstrumentWithCalls, CompileKernel);
+  Mapping.init(TargetTriple, InstrumentWithCalls);
 
   C = &(M.getContext());
   IRBuilder<> IRB(*C);
@@ -693,7 +692,7 @@ void HWAddressSanitizer::initializeModule() {
   }
 
   if (!TargetTriple.isAndroid()) {
-    ThreadPtrGlobal = M.getOrInsertGlobal("__hwasan_tls", IntptrTy, [&] {
+    Constant *C = M.getOrInsertGlobal("__hwasan_tls", IntptrTy, [&] {
       auto *GV = new GlobalVariable(M, IntptrTy, /*isConstant=*/false,
                                     GlobalValue::ExternalLinkage, nullptr,
                                     "__hwasan_tls", nullptr,
@@ -701,6 +700,7 @@ void HWAddressSanitizer::initializeModule() {
       appendToCompilerUsed(M, GV);
       return GV;
     });
+    ThreadPtrGlobal = cast<GlobalVariable>(C);
   }
 }
 
@@ -1875,8 +1875,7 @@ void HWAddressSanitizer::instrumentPersonalityFunctions() {
 }
 
 void HWAddressSanitizer::ShadowMapping::init(Triple &TargetTriple,
-                                             bool InstrumentWithCalls,
-                                             bool CompileKernel) {
+                                             bool InstrumentWithCalls) {
   // Start with defaults.
   Scale = kDefaultShadowScale;
   Kind = OffsetKind::kTls;
@@ -1887,7 +1886,7 @@ void HWAddressSanitizer::ShadowMapping::init(Triple &TargetTriple,
     // Fuchsia is always PIE, which means that the beginning of the address
     // space is always available.
     SetFixed(0);
-  } else if (CompileKernel || InstrumentWithCalls) {
+  } else if (ClEnableKhwasan || InstrumentWithCalls) {
     SetFixed(0);
     WithFrameRecord = false;
   }

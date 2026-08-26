@@ -82,8 +82,6 @@ when ``-fexperimental-library`` is passed:
       version has shipped. The full policy is explained :ref:`here <experimental features>`.
 
 
-.. _libcxx-configuration-macros:
-
 Libc++ Configuration Macros
 ===========================
 

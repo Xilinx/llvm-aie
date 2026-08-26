@@ -15,29 +15,28 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/Shared/MachOObjectFormat.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace orc {
 
 // ELF section names.
-LLVM_ABI extern StringRef ELFEHFrameSectionName;
+extern StringRef ELFEHFrameSectionName;
 
-LLVM_ABI extern StringRef ELFInitArrayFuncSectionName;
-LLVM_ABI extern StringRef ELFInitFuncSectionName;
-LLVM_ABI extern StringRef ELFFiniArrayFuncSectionName;
-LLVM_ABI extern StringRef ELFFiniFuncSectionName;
-LLVM_ABI extern StringRef ELFCtorArrayFuncSectionName;
-LLVM_ABI extern StringRef ELFDtorArrayFuncSectionName;
+extern StringRef ELFInitArrayFuncSectionName;
+extern StringRef ELFInitFuncSectionName;
+extern StringRef ELFFiniArrayFuncSectionName;
+extern StringRef ELFFiniFuncSectionName;
+extern StringRef ELFCtorArrayFuncSectionName;
+extern StringRef ELFDtorArrayFuncSectionName;
 
-LLVM_ABI extern StringRef ELFInitSectionNames[3];
+extern StringRef ELFInitSectionNames[3];
 
-LLVM_ABI extern StringRef ELFThreadBSSSectionName;
-LLVM_ABI extern StringRef ELFThreadDataSectionName;
+extern StringRef ELFThreadBSSSectionName;
+extern StringRef ELFThreadDataSectionName;
 
-LLVM_ABI bool isELFInitializerSection(StringRef SecName);
+bool isELFInitializerSection(StringRef SecName);
 
-LLVM_ABI bool isCOFFInitializerSection(StringRef Name);
+bool isCOFFInitializerSection(StringRef Name);
 
 } // end namespace orc
 } // end namespace llvm

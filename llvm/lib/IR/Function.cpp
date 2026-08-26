@@ -62,11 +62,13 @@ using ProfileCount = Function::ProfileCount;
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template class LLVM_EXPORT_TEMPLATE llvm::SymbolTableListTraits<BasicBlock>;
+template class llvm::SymbolTableListTraits<BasicBlock>;
 
 static cl::opt<int> NonGlobalValueMaxNameSize(
     "non-global-value-max-name-size", cl::Hidden, cl::init(1024),
     cl::desc("Maximum size for the name of non-global values."));
+
+extern cl::opt<bool> UseNewDbgInfoFormat;
 
 void Function::renumberBlocks() {
   validateBlockNumbers();
@@ -493,7 +495,7 @@ Function::Function(FunctionType *Ty, LinkageTypes Linkage, unsigned AddrSpace,
                    const Twine &name, Module *ParentModule)
     : GlobalObject(Ty, Value::FunctionVal, AllocMarker, Linkage, name,
                    computeAddrSpace(AddrSpace, ParentModule)),
-      NumArgs(Ty->getNumParams()), IsNewDbgInfoFormat(true) {
+      NumArgs(Ty->getNumParams()), IsNewDbgInfoFormat(UseNewDbgInfoFormat) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
          "invalid return type");
   setGlobalObjectSubClassData(0);
@@ -1166,18 +1168,6 @@ DenseSet<GlobalValue::GUID> Function::getImportGUIDs() const {
 
 bool Function::nullPointerIsDefined() const {
   return hasFnAttribute(Attribute::NullPointerIsValid);
-}
-
-unsigned Function::getVScaleValue() const {
-  Attribute Attr = getFnAttribute(Attribute::VScaleRange);
-  if (!Attr.isValid())
-    return 0;
-
-  unsigned VScale = Attr.getVScaleRangeMin();
-  if (VScale && VScale == Attr.getVScaleRangeMax())
-    return VScale;
-
-  return 0;
 }
 
 bool llvm::NullPointerIsDefined(const Function *F, unsigned AS) {

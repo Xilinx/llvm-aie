@@ -34,7 +34,6 @@ add_lld_library(lldCommon
   Strings.cpp
   TargetOptionsCommandFlags.cpp
   Timer.cpp
-  Utils.cpp
   VCSVersion.inc
   Version.cpp
 

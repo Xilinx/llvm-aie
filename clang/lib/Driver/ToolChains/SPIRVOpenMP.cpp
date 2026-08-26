@@ -6,7 +6,7 @@
 //
 //==------------------------------------------------------------------------==//
 #include "SPIRVOpenMP.h"
-#include "clang/Driver/CommonArgs.h"
+#include "CommonArgs.h"
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;

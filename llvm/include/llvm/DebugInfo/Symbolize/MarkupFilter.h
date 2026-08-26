@@ -18,7 +18,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DebugInfo/Symbolize/Markup.h"
 #include "llvm/Object/BuildID.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
@@ -32,18 +31,18 @@ class LLVMSymbolizer;
 /// text.
 class MarkupFilter {
 public:
-  LLVM_ABI MarkupFilter(raw_ostream &OS, LLVMSymbolizer &Symbolizer,
-                        std::optional<bool> ColorsEnabled = std::nullopt);
+  MarkupFilter(raw_ostream &OS, LLVMSymbolizer &Symbolizer,
+               std::optional<bool> ColorsEnabled = std::nullopt);
 
   /// Filters a line containing symbolizer markup and writes the human-readable
   /// results to the output stream.
   ///
   /// Invalid or unimplemented markup elements are removed. Some output may be
   /// deferred until future filter() or finish() call.
-  LLVM_ABI void filter(std::string &&InputLine);
+  void filter(std::string &&InputLine);
 
   /// Records that the input stream has ended and writes any deferred output.
-  LLVM_ABI void finish();
+  void finish();
 
 private:
   struct Module {
@@ -59,8 +58,8 @@ private:
     std::string Mode; // Lowercase
     uint64_t ModuleRelativeAddr;
 
-    LLVM_ABI bool contains(uint64_t Addr) const;
-    LLVM_ABI uint64_t getModuleRelativeAddr(uint64_t Addr) const;
+    bool contains(uint64_t Addr) const;
+    uint64_t getModuleRelativeAddr(uint64_t Addr) const;
   };
 
   // An informational module line currently being constructed. As many mmap

@@ -308,7 +308,7 @@ void IRNumberingState::computeGlobalNumberingState(Operation *rootOp) {
 }
 
 void IRNumberingState::number(Attribute attr) {
-  auto it = attrs.try_emplace(attr);
+  auto it = attrs.insert({attr, nullptr});
   if (!it.second) {
     ++it.first->second->refCount;
     return;
@@ -475,7 +475,7 @@ void IRNumberingState::number(OperationName opName) {
 }
 
 void IRNumberingState::number(Type type) {
-  auto it = types.try_emplace(type);
+  auto it = types.insert({type, nullptr});
   if (!it.second) {
     ++it.first->second->refCount;
     return;

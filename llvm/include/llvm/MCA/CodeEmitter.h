@@ -23,7 +23,6 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace mca {
@@ -47,7 +46,7 @@ class CodeEmitter {
   // A cache of encodings.
   SmallVector<EncodingInfo, 16> Encodings;
 
-  LLVM_ABI EncodingInfo getOrCreateEncodingInfo(unsigned MCID);
+  EncodingInfo getOrCreateEncodingInfo(unsigned MCID);
 
 public:
   CodeEmitter(const MCSubtargetInfo &ST, const MCAsmBackend &AB,

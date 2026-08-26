@@ -13,7 +13,6 @@
 #ifndef LLVM_CLANG_CIR_DIALECT_IR_CIRATTRS_H
 #define LLVM_CLANG_CIR_DIALECT_IR_CIRATTRS_H
 
-#include "clang/CIR/Dialect/IR/CIROpsEnums.h"
 #include "clang/CIR/Dialect/IR/CIRTypes.h"
 
 #include "mlir/IR/Attributes.h"

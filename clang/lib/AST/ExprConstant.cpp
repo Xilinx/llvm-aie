@@ -3553,12 +3553,7 @@ static bool evaluateVarDeclInit(EvalInfo &Info, const Expr *E,
   // should begin within the evaluation of E
   // Used to be C++20 [expr.const]p5.12.2:
   // ... its lifetime began within the evaluation of E;
-  if (isa<ParmVarDecl>(VD)) {
-    if (AllowConstexprUnknown) {
-      Result = &Info.CurrentCall->createConstexprUnknownAPValues(VD, Base);
-      return true;
-    }
-
+  if (isa<ParmVarDecl>(VD) && !AllowConstexprUnknown) {
     // Assume parameters of a potential constant expression are usable in
     // constant expressions.
     if (!Info.checkingPotentialConstantExpression() ||
@@ -5764,12 +5759,8 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
       if (FS->getCond() && !EvaluateCond(Info, FS->getConditionVariable(),
                                          FS->getCond(), Continue))
         return ESR_Failed;
-
-      if (!Continue) {
-        if (!IterScope.destroy())
-          return ESR_Failed;
+      if (!Continue)
         break;
-      }
 
       EvalStmtResult ESR = EvaluateLoopBody(Result, Info, FS->getBody());
       if (ESR != ESR_Continue) {
@@ -6556,8 +6547,8 @@ static bool MaybeHandleUnionActiveMemberChange(EvalInfo &Info,
 }
 
 static bool EvaluateCallArg(const ParmVarDecl *PVD, const Expr *Arg,
-                            CallRef Call, EvalInfo &Info, bool NonNull = false,
-                            APValue **EvaluatedArg = nullptr) {
+                            CallRef Call, EvalInfo &Info,
+                            bool NonNull = false) {
   LValue LV;
   // Create the parameter slot and register its destruction. For a vararg
   // argument, create a temporary.
@@ -6577,17 +6568,13 @@ static bool EvaluateCallArg(const ParmVarDecl *PVD, const Expr *Arg,
     return false;
   }
 
-  if (EvaluatedArg)
-    *EvaluatedArg = &V;
-
   return true;
 }
 
 /// Evaluate the arguments to a function call.
 static bool EvaluateArgs(ArrayRef<const Expr *> Args, CallRef Call,
                          EvalInfo &Info, const FunctionDecl *Callee,
-                         bool RightToLeft = false,
-                         LValue *ObjectArg = nullptr) {
+                         bool RightToLeft = false) {
   bool Success = true;
   llvm::SmallBitVector ForbiddenNullArgs;
   if (Callee->hasAttr<NonNullAttr>()) {
@@ -6610,16 +6597,13 @@ static bool EvaluateArgs(ArrayRef<const Expr *> Args, CallRef Call,
     const ParmVarDecl *PVD =
         Idx < Callee->getNumParams() ? Callee->getParamDecl(Idx) : nullptr;
     bool NonNull = !ForbiddenNullArgs.empty() && ForbiddenNullArgs[Idx];
-    APValue *That = nullptr;
-    if (!EvaluateCallArg(PVD, Args[Idx], Call, Info, NonNull, &That)) {
+    if (!EvaluateCallArg(PVD, Args[Idx], Call, Info, NonNull)) {
       // If we're checking for a potential constant expression, evaluate all
       // initializers even if some of them fail.
       if (!Info.noteFailure())
         return false;
       Success = false;
     }
-    if (PVD && PVD->isExplicitObjectParameter() && That && That->isLValue())
-      ObjectArg->setFrom(Info.Ctx, *That);
   }
   return Success;
 }
@@ -6647,15 +6631,14 @@ static bool handleTrivialCopy(EvalInfo &Info, const ParmVarDecl *Param,
 
 /// Evaluate a function call.
 static bool HandleFunctionCall(SourceLocation CallLoc,
-                               const FunctionDecl *Callee,
-                               const LValue *ObjectArg, const Expr *E,
-                               ArrayRef<const Expr *> Args, CallRef Call,
-                               const Stmt *Body, EvalInfo &Info,
+                               const FunctionDecl *Callee, const LValue *This,
+                               const Expr *E, ArrayRef<const Expr *> Args,
+                               CallRef Call, const Stmt *Body, EvalInfo &Info,
                                APValue &Result, const LValue *ResultSlot) {
   if (!Info.CheckCallLimit(CallLoc))
     return false;
 
-  CallStackFrame Frame(Info, E->getSourceRange(), Callee, ObjectArg, E, Call);
+  CallStackFrame Frame(Info, E->getSourceRange(), Callee, This, E, Call);
 
   // For a trivial copy or move assignment, perform an APValue copy. This is
   // essential for unions, where the operations performed by the assignment
@@ -6668,20 +6651,16 @@ static bool HandleFunctionCall(SourceLocation CallLoc,
       (MD->getParent()->isUnion() ||
        (MD->isTrivial() &&
         isReadByLvalueToRvalueConversion(MD->getParent())))) {
-    unsigned ExplicitOffset = MD->isExplicitObjectMemberFunction() ? 1 : 0;
-    assert(ObjectArg &&
+    assert(This &&
            (MD->isCopyAssignmentOperator() || MD->isMoveAssignmentOperator()));
     APValue RHSValue;
     if (!handleTrivialCopy(Info, MD->getParamDecl(0), Args[0], RHSValue,
                            MD->getParent()->isUnion()))
       return false;
-
-    LValue Obj;
-    if (!handleAssignment(Info, Args[ExplicitOffset], *ObjectArg,
-                          MD->getFunctionObjectParameterReferenceType(),
+    if (!handleAssignment(Info, Args[0], *This, MD->getThisType(),
                           RHSValue))
       return false;
-    ObjectArg->moveInto(Result);
+    This->moveInto(Result);
     return true;
   } else if (MD && isLambdaCallOperator(MD)) {
     // We're in a lambda; determine the lambda capture field maps unless we're
@@ -6847,8 +6826,7 @@ static bool HandleConstructorCall(const Expr *E, const LValue &This,
         // FIXME: In this case, the values of the other subobjects are
         // specified, since zero-initialization sets all padding bits to zero.
         if (!Value->hasValue() ||
-            (Value->isUnion() &&
-             !declaresSameEntity(Value->getUnionField(), FD))) {
+            (Value->isUnion() && Value->getUnionField() != FD)) {
           if (CD->isUnion())
             *Value = APValue(FD);
           else
@@ -8309,7 +8287,7 @@ public:
     QualType CalleeType = Callee->getType();
 
     const FunctionDecl *FD = nullptr;
-    LValue *This = nullptr, ObjectArg;
+    LValue *This = nullptr, ThisVal;
     auto Args = llvm::ArrayRef(E->getArgs(), E->getNumArgs());
     bool HasQualifier = false;
 
@@ -8320,28 +8298,28 @@ public:
       const CXXMethodDecl *Member = nullptr;
       if (const MemberExpr *ME = dyn_cast<MemberExpr>(Callee)) {
         // Explicit bound member calls, such as x.f() or p->g();
-        if (!EvaluateObjectArgument(Info, ME->getBase(), ObjectArg))
+        if (!EvaluateObjectArgument(Info, ME->getBase(), ThisVal))
           return false;
         Member = dyn_cast<CXXMethodDecl>(ME->getMemberDecl());
         if (!Member)
           return Error(Callee);
-        This = &ObjectArg;
+        This = &ThisVal;
         HasQualifier = ME->hasQualifier();
       } else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(Callee)) {
         // Indirect bound member calls ('.*' or '->*').
         const ValueDecl *D =
-            HandleMemberPointerAccess(Info, BE, ObjectArg, false);
+            HandleMemberPointerAccess(Info, BE, ThisVal, false);
         if (!D)
           return false;
         Member = dyn_cast<CXXMethodDecl>(D);
         if (!Member)
           return Error(Callee);
-        This = &ObjectArg;
+        This = &ThisVal;
       } else if (const auto *PDE = dyn_cast<CXXPseudoDestructorExpr>(Callee)) {
         if (!Info.getLangOpts().CPlusPlus20)
           Info.CCEDiag(PDE, diag::note_constexpr_pseudo_destructor);
-        return EvaluateObjectArgument(Info, PDE->getBase(), ObjectArg) &&
-               HandleDestruction(Info, PDE, ObjectArg, PDE->getDestroyedType());
+        return EvaluateObjectArgument(Info, PDE->getBase(), ThisVal) &&
+               HandleDestruction(Info, PDE, ThisVal, PDE->getDestroyedType());
       } else
         return Error(Callee);
       FD = Member;
@@ -8378,7 +8356,7 @@ public:
         if (const auto *MD = dyn_cast<CXXMethodDecl>(FD))
           HasThis = MD->isImplicitObjectMemberFunction();
         if (!EvaluateArgs(HasThis ? Args.slice(1) : Args, Call, Info, FD,
-                          /*RightToLeft=*/true, &ObjectArg))
+                          /*RightToLeft=*/true))
           return false;
       }
 
@@ -8393,20 +8371,20 @@ public:
         if (Args.empty())
           return Error(E);
 
-        if (!EvaluateObjectArgument(Info, Args[0], ObjectArg))
+        if (!EvaluateObjectArgument(Info, Args[0], ThisVal))
           return false;
 
         // If we are calling a static operator, the 'this' argument needs to be
         // ignored after being evaluated.
         if (MD->isInstance())
-          This = &ObjectArg;
+          This = &ThisVal;
 
         // If this is syntactically a simple assignment using a trivial
         // assignment operator, start the lifetimes of union members as needed,
         // per C++20 [class.union]5.
         if (Info.getLangOpts().CPlusPlus20 && OCE &&
             OCE->getOperator() == OO_Equal && MD->isTrivial() &&
-            !MaybeHandleUnionActiveMemberChange(Info, Args[0], ObjectArg))
+            !MaybeHandleUnionActiveMemberChange(Info, Args[0], ThisVal))
           return false;
 
         Args = Args.slice(1);
@@ -8461,8 +8439,7 @@ public:
     // Evaluate the arguments now if we've not already done so.
     if (!Call) {
       Call = Info.CurrentCall->createCall(FD);
-      if (!EvaluateArgs(Args, Call, Info, FD, /*RightToLeft*/ false,
-                        &ObjectArg))
+      if (!EvaluateArgs(Args, Call, Info, FD))
         return false;
     }
 
@@ -8495,11 +8472,6 @@ public:
     const FunctionDecl *Definition = nullptr;
     Stmt *Body = FD->getBody(Definition);
     SourceLocation Loc = E->getExprLoc();
-
-    // Treat the object argument as `this` when evaluating defaulted
-    // special menmber functions
-    if (FD->hasCXXExplicitFunctionObjectParameter())
-      This = &ObjectArg;
 
     if (!CheckConstexprFunction(Info, Loc, FD, Definition, Body) ||
         !HandleFunctionCall(Loc, Definition, This, E, Args, Call, Body, Info,
@@ -12424,7 +12396,7 @@ GCCTypeClass EvaluateBuiltinClassifyType(QualType T,
     case BuiltinType::OCLReserveID:
 #define SVE_TYPE(Name, Id, SingletonId) \
     case BuiltinType::Id:
-#include "clang/Basic/AArch64ACLETypes.def"
+#include "clang/Basic/AArch64SVEACLETypes.def"
 #define PPC_VECTOR_TYPE(Name, Id, Size) \
     case BuiltinType::Id:
 #include "clang/Basic/PPCTypes.def"
@@ -12485,7 +12457,6 @@ GCCTypeClass EvaluateBuiltinClassifyType(QualType T,
   case Type::ObjCObjectPointer:
   case Type::Pipe:
   case Type::HLSLAttributedResource:
-  case Type::HLSLInlineSpirv:
     // Classify all other types that don't fit into the regular
     // classification the same way.
     return GCCTypeClass::None;
@@ -15251,7 +15222,21 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
       return Info.Ctx.getTypeSize(DestType) == Info.Ctx.getTypeSize(SrcType);
     }
 
-    if (Info.Ctx.getLangOpts().CPlusPlus && DestType->isEnumeralType()) {
+    if (Info.Ctx.getLangOpts().CPlusPlus && Info.InConstantContext &&
+        Info.EvalMode == EvalInfo::EM_ConstantExpression &&
+        DestType->isEnumeralType()) {
+
+      bool ConstexprVar = true;
+
+      // We know if we are here that we are in a context that we might require
+      // a constant expression or a context that requires a constant
+      // value. But if we are initializing a value we don't know if it is a
+      // constexpr variable or not. We can check the EvaluatingDecl to determine
+      // if it constexpr or not. If not then we don't want to emit a diagnostic.
+      if (const auto *VD = dyn_cast_or_null<VarDecl>(
+              Info.EvaluatingDecl.dyn_cast<const ValueDecl *>()))
+        ConstexprVar = VD->isConstexpr();
+
       const EnumType *ET = dyn_cast<EnumType>(DestType.getCanonicalType());
       const EnumDecl *ED = ET->getDecl();
       // Check that the value is within the range of the enumeration values.
@@ -15271,13 +15256,13 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
         ED->getValueRange(Max, Min);
         --Max;
 
-        if (ED->getNumNegativeBits() &&
+        if (ED->getNumNegativeBits() && ConstexprVar &&
             (Max.slt(Result.getInt().getSExtValue()) ||
              Min.sgt(Result.getInt().getSExtValue())))
           Info.CCEDiag(E, diag::note_constexpr_unscoped_enum_out_of_range)
               << llvm::toString(Result.getInt(), 10) << Min.getSExtValue()
               << Max.getSExtValue() << ED;
-        else if (!ED->getNumNegativeBits() &&
+        else if (!ED->getNumNegativeBits() && ConstexprVar &&
                  Max.ult(Result.getInt().getZExtValue()))
           Info.CCEDiag(E, diag::note_constexpr_unscoped_enum_out_of_range)
               << llvm::toString(Result.getInt(), 10) << Min.getZExtValue()

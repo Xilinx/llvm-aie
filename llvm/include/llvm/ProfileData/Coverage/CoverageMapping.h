@@ -71,13 +71,13 @@ enum class coveragemap_error {
   invalid_or_missing_arch_specifier
 };
 
-LLVM_ABI const std::error_category &coveragemap_category();
+const std::error_category &coveragemap_category();
 
 inline std::error_code make_error_code(coveragemap_error E) {
   return std::error_code(static_cast<int>(E), coveragemap_category());
 }
 
-class LLVM_ABI CoverageMapError : public ErrorInfo<CoverageMapError> {
+class CoverageMapError : public ErrorInfo<CoverageMapError> {
 public:
   CoverageMapError(coveragemap_error Err, const Twine &ErrStr = Twine())
       : Err(Err), Msg(ErrStr.str()) {
@@ -210,11 +210,11 @@ public:
   ArrayRef<CounterExpression> getExpressions() const { return Expressions; }
 
   /// Return a counter that represents the expression that adds LHS and RHS.
-  LLVM_ABI Counter add(Counter LHS, Counter RHS, bool Simplify = true);
+  Counter add(Counter LHS, Counter RHS, bool Simplify = true);
 
   /// Return a counter that represents the expression that subtracts RHS from
   /// LHS.
-  LLVM_ABI Counter subtract(Counter LHS, Counter RHS, bool Simplify = true);
+  Counter subtract(Counter LHS, Counter RHS, bool Simplify = true);
 
   /// K to V map. K will be Counter in most cases. V may be Counter or
   /// Expression.
@@ -222,7 +222,7 @@ public:
 
   /// \return A counter equivalent to \C, with each term in its
   /// expression replaced with term from \p Map.
-  LLVM_ABI Counter subst(Counter C, const SubstMap &Map);
+  Counter subst(Counter C, const SubstMap &Map);
 };
 
 using LineColPair = std::pair<unsigned, unsigned>;
@@ -473,7 +473,7 @@ public:
 
   // Compare executed test vectors against each other to find an independence
   // pairs for each condition.  This processing takes the most time.
-  LLVM_ABI void findIndependencePairs();
+  void findIndependencePairs();
 
   const CounterMappingRegion &getDecisionRegion() const { return Region; }
   unsigned getNumConditions() const {
@@ -665,8 +665,7 @@ public:
   /// \param NextIDs The list of {FalseID, TrueID} indexed by ID
   ///        The first element [0] should be the root node.
   /// \param Offset Offset of index to final decisions.
-  LLVM_ABI TVIdxBuilder(const SmallVectorImpl<ConditionIDs> &NextIDs,
-                        int Offset = 0);
+  TVIdxBuilder(const SmallVectorImpl<ConditionIDs> &NextIDs, int Offset = 0);
 };
 } // namespace mcdc
 
@@ -685,21 +684,21 @@ public:
   void setCounts(ArrayRef<uint64_t> Counts) { CounterValues = Counts; }
   void setBitmap(BitVector &&Bitmap_) { Bitmap = std::move(Bitmap_); }
 
-  LLVM_ABI void dump(const Counter &C, raw_ostream &OS) const;
+  void dump(const Counter &C, raw_ostream &OS) const;
   void dump(const Counter &C) const { dump(C, dbgs()); }
 
   /// Return the number of times that a region of code associated with this
   /// counter was executed.
-  LLVM_ABI Expected<int64_t> evaluate(const Counter &C) const;
+  Expected<int64_t> evaluate(const Counter &C) const;
 
   /// Return an MCDC record that indicates executed test vectors and condition
   /// pairs.
-  LLVM_ABI Expected<MCDCRecord>
+  Expected<MCDCRecord>
   evaluateMCDCRegion(const CounterMappingRegion &Region,
                      ArrayRef<const CounterMappingRegion *> Branches,
                      bool IsVersion11);
 
-  LLVM_ABI unsigned getMaxCounterID(const Counter &C) const;
+  unsigned getMaxCounterID(const Counter &C) const;
 };
 
 /// Code coverage information for a single function.
@@ -762,7 +761,7 @@ class FunctionRecordIterator
   StringRef Filename;
 
   /// Skip records whose primary file is not \c Filename.
-  LLVM_ABI void skipOtherFiles();
+  void skipOtherFiles();
 
 public:
   FunctionRecordIterator(ArrayRef<FunctionRecord> Records_,
@@ -1008,7 +1007,7 @@ class CoverageMapping {
   /// defined in the specified file. This is guaranteed to return a superset of
   /// such records: extra records not in the file may be included if there is
   /// a hash collision on the filename. Clients must be robust to collisions.
-  LLVM_ABI ArrayRef<unsigned>
+  ArrayRef<unsigned>
   getImpreciseRecordIndicesForFilename(StringRef Filename) const;
 
 public:
@@ -1016,14 +1015,14 @@ public:
   CoverageMapping &operator=(const CoverageMapping &) = delete;
 
   /// Load the coverage mapping using the given readers.
-  LLVM_ABI static Expected<std::unique_ptr<CoverageMapping>>
+  static Expected<std::unique_ptr<CoverageMapping>>
   load(ArrayRef<std::unique_ptr<CoverageMappingReader>> CoverageReaders,
        IndexedInstrProfReader &ProfileReader);
 
   /// Load the coverage mapping from the given object files and profile. If
   /// \p Arches is non-empty, it must specify an architecture for each object.
   /// Ignores non-instrumented object files unless all are not instrumented.
-  LLVM_ABI static Expected<std::unique_ptr<CoverageMapping>>
+  static Expected<std::unique_ptr<CoverageMapping>>
   load(ArrayRef<StringRef> ObjectFilenames, StringRef ProfileFilename,
        vfs::FileSystem &FS, ArrayRef<StringRef> Arches = {},
        StringRef CompilationDir = "",
@@ -1046,22 +1045,20 @@ public:
 
   /// Returns a lexicographically sorted, unique list of files that are
   /// covered.
-  LLVM_ABI std::vector<StringRef> getUniqueSourceFiles() const;
+  std::vector<StringRef> getUniqueSourceFiles() const;
 
   /// Get the coverage for a particular file.
   ///
   /// The given filename must be the name as recorded in the coverage
   /// information. That is, only names returned from getUniqueSourceFiles will
   /// yield a result.
-  LLVM_ABI CoverageData getCoverageForFile(StringRef Filename) const;
+  CoverageData getCoverageForFile(StringRef Filename) const;
 
   /// Get the coverage for a particular function.
-  LLVM_ABI CoverageData
-  getCoverageForFunction(const FunctionRecord &Function) const;
+  CoverageData getCoverageForFunction(const FunctionRecord &Function) const;
 
   /// Get the coverage for an expansion within a coverage set.
-  LLVM_ABI CoverageData
-  getCoverageForExpansion(const ExpansionRecord &Expansion) const;
+  CoverageData getCoverageForExpansion(const ExpansionRecord &Expansion) const;
 
   /// Gets all of the functions covered by this profile.
   iterator_range<FunctionRecordIterator> getCoveredFunctions() const {
@@ -1082,7 +1079,7 @@ public:
   ///
   /// Every instantiation group in a program is attributed to exactly one file:
   /// the file in which the definition for the common function begins.
-  LLVM_ABI std::vector<InstantiationGroup>
+  std::vector<InstantiationGroup>
   getInstantiationGroups(StringRef Filename) const;
 };
 
@@ -1099,9 +1096,8 @@ class LineCoverageStats {
   LineCoverageStats() = default;
 
 public:
-  LLVM_ABI LineCoverageStats(ArrayRef<const CoverageSegment *> LineSegments,
-                             const CoverageSegment *WrappedSegment,
-                             unsigned Line);
+  LineCoverageStats(ArrayRef<const CoverageSegment *> LineSegments,
+                    const CoverageSegment *WrappedSegment, unsigned Line);
 
   uint64_t getExecutionCount() const { return ExecutionCount; }
 
@@ -1140,7 +1136,7 @@ public:
 
   const LineCoverageStats &operator*() const { return Stats; }
 
-  LLVM_ABI LineCoverageIterator &operator++();
+  LineCoverageIterator &operator++();
 
   LineCoverageIterator getEnd() const {
     auto EndIt = *this;

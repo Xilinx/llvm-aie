@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/ExpressionTraits.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 using namespace clang;
 

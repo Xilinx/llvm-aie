@@ -11,7 +11,6 @@
 
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/Support/Compiler.h"
 
 //===----------------------------------------------------------------------===//
 //                               ValueLatticeElement
@@ -468,9 +467,9 @@ public:
   // Compares this symbolic value with Other using Pred and returns either
   /// true, false or undef constants, or nullptr if the comparison cannot be
   /// evaluated.
-  LLVM_ABI Constant *getCompare(CmpInst::Predicate Pred, Type *Ty,
-                                const ValueLatticeElement &Other,
-                                const DataLayout &DL) const;
+  Constant *getCompare(CmpInst::Predicate Pred, Type *Ty,
+                       const ValueLatticeElement &Other,
+                       const DataLayout &DL) const;
 
   /// Combine two sets of facts about the same value into a single set of
   /// facts.  Note that this method is not suitable for merging facts along
@@ -487,8 +486,7 @@ public:
   ///   as not confuse the rest of LVI.  Ideally, we'd always return Undefined,
   ///   but we do not make this guarantee.  TODO: This would be a useful
   ///   enhancement.
-  LLVM_ABI ValueLatticeElement
-  intersect(const ValueLatticeElement &Other) const;
+  ValueLatticeElement intersect(const ValueLatticeElement &Other) const;
 
   unsigned getNumRangeExtensions() const { return NumRangeExtensions; }
   void setNumRangeExtensions(unsigned N) { NumRangeExtensions = N; }
@@ -497,7 +495,6 @@ public:
 static_assert(sizeof(ValueLatticeElement) <= 40,
               "size of ValueLatticeElement changed unexpectedly");
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS,
-                                 const ValueLatticeElement &Val);
+raw_ostream &operator<<(raw_ostream &OS, const ValueLatticeElement &Val);
 } // end namespace llvm
 #endif

@@ -1303,7 +1303,7 @@ public:
         llvm_unreachable("Unimplemented option");
       }
 
-      return error;
+      return {};
     }
 
     void OptionParsingStarting(ExecutionContext *execution_context) override {

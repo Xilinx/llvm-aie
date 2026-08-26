@@ -10,7 +10,6 @@
 #define LLVM_DEBUGINFO_GSYM_MERGEDFUNCTIONSINFO_H
 
 #include "llvm/DebugInfo/GSYM/ExtractRanges.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <stdint.h>
 #include <vector>
@@ -25,7 +24,7 @@ struct FunctionInfo;
 struct MergedFunctionsInfo {
   std::vector<FunctionInfo> MergedFunctions;
 
-  LLVM_ABI void clear();
+  void clear();
 
   /// Query if a MergedFunctionsInfo object is valid.
   ///
@@ -41,7 +40,7 @@ struct MergedFunctionsInfo {
   ///
   /// \returns An llvm::Expected containing a vector of DataExtractor objects on
   /// success, or an error object if parsing fails.
-  LLVM_ABI static llvm::Expected<std::vector<DataExtractor>>
+  static llvm::Expected<std::vector<DataExtractor>>
   getFuncsDataExtractors(DataExtractor &Data);
 
   /// Decode an MergedFunctionsInfo object from a binary data stream.
@@ -54,8 +53,8 @@ struct MergedFunctionsInfo {
   ///
   /// \returns An MergedFunctionsInfo or an error describing the issue that was
   /// encountered during decoding.
-  LLVM_ABI static llvm::Expected<MergedFunctionsInfo>
-  decode(DataExtractor &Data, uint64_t BaseAddr);
+  static llvm::Expected<MergedFunctionsInfo> decode(DataExtractor &Data,
+                                                    uint64_t BaseAddr);
 
   /// Encode this MergedFunctionsInfo object into FileWriter stream.
   ///
@@ -63,11 +62,10 @@ struct MergedFunctionsInfo {
   /// position.
   /// \returns An error object that indicates success or failure for the
   /// encoding process.
-  LLVM_ABI llvm::Error encode(FileWriter &O) const;
+  llvm::Error encode(FileWriter &O) const;
 };
 
-LLVM_ABI bool operator==(const MergedFunctionsInfo &LHS,
-                         const MergedFunctionsInfo &RHS);
+bool operator==(const MergedFunctionsInfo &LHS, const MergedFunctionsInfo &RHS);
 
 } // namespace gsym
 } // namespace llvm

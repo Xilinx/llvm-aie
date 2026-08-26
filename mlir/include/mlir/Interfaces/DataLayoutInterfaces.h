@@ -105,10 +105,6 @@ uint64_t getDefaultStackAlignment(DataLayoutEntryInterface entry);
 /// the DataLayoutInterface if specified, otherwise returns the default.
 Attribute getDefaultFunctionPointerAlignment(DataLayoutEntryInterface entry);
 
-/// Default handler for the legal int widths request. Dispatches to the
-/// DataLayoutInterface if specified, otherwise returns the default.
-Attribute getDefaultLegalIntWidths(DataLayoutEntryInterface entry);
-
 /// Returns the value of the property from the specified DataLayoutEntry. If the
 /// property is missing from the entry, returns std::nullopt.
 std::optional<Attribute> getDevicePropertyValue(DataLayoutEntryInterface entry);
@@ -270,9 +266,6 @@ public:
   /// Returns function pointer alignment.
   Attribute getFunctionPointerAlignment() const;
 
-  /// Returns the legal int widths.
-  Attribute getLegalIntWidths() const;
-
   /// Returns the value of the specified property if the property is defined for
   /// the given device ID, otherwise returns std::nullopt.
   std::optional<Attribute>
@@ -319,8 +312,6 @@ private:
   mutable std::optional<uint64_t> stackAlignment;
   /// Cache for function pointer alignment.
   mutable std::optional<Attribute> functionPointerAlignment;
-  /// Cache for legal int widths.
-  mutable std::optional<Attribute> legalIntWidths;
 };
 
 } // namespace mlir

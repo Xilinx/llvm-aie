@@ -37,7 +37,6 @@
 
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -53,22 +52,19 @@ typedef function_ref<bool(const SCEVAddRecExpr *)> NormalizePredTy;
 /// Normalize \p S to be post-increment for all loops present in \p
 /// Loops. Returns nullptr if the result is not invertible and \p
 /// CheckInvertible is true.
-LLVM_ABI const SCEV *normalizeForPostIncUse(const SCEV *S,
-                                            const PostIncLoopSet &Loops,
-                                            ScalarEvolution &SE,
-                                            bool CheckInvertible = true);
+const SCEV *normalizeForPostIncUse(const SCEV *S, const PostIncLoopSet &Loops,
+                                   ScalarEvolution &SE,
+                                   bool CheckInvertible = true);
 
 /// Normalize \p S for all add recurrence sub-expressions for which \p
 /// Pred returns true.
-LLVM_ABI const SCEV *normalizeForPostIncUseIf(const SCEV *S,
-                                              NormalizePredTy Pred,
-                                              ScalarEvolution &SE);
+const SCEV *normalizeForPostIncUseIf(const SCEV *S, NormalizePredTy Pred,
+                                     ScalarEvolution &SE);
 
 /// Denormalize \p S to be post-increment for all loops present in \p
 /// Loops.
-LLVM_ABI const SCEV *denormalizeForPostIncUse(const SCEV *S,
-                                              const PostIncLoopSet &Loops,
-                                              ScalarEvolution &SE);
+const SCEV *denormalizeForPostIncUse(const SCEV *S, const PostIncLoopSet &Loops,
+                                     ScalarEvolution &SE);
 } // namespace llvm
 
 #endif

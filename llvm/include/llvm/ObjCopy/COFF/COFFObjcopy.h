@@ -9,8 +9,6 @@
 #ifndef LLVM_OBJCOPY_COFF_COFFOBJCOPY_H
 #define LLVM_OBJCOPY_COFF_COFFOBJCOPY_H
 
-#include "llvm/Support/Compiler.h"
-
 namespace llvm {
 class Error;
 class raw_ostream;
@@ -28,10 +26,8 @@ namespace coff {
 /// Apply the transformations described by \p Config and \p COFFConfig
 /// to \p In and writes the result into \p Out.
 /// \returns any Error encountered whilst performing the operation.
-LLVM_ABI Error executeObjcopyOnBinary(const CommonConfig &Config,
-                                      const COFFConfig &,
-                                      object::COFFObjectFile &In,
-                                      raw_ostream &Out);
+Error executeObjcopyOnBinary(const CommonConfig &Config, const COFFConfig &,
+                             object::COFFObjectFile &In, raw_ostream &Out);
 
 } // end namespace coff
 } // end namespace objcopy

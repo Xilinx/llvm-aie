@@ -18,7 +18,6 @@
 #include "llvm/DebugInfo/PDB/Native/ModuleDebugStream.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -58,57 +57,57 @@ public:
   InputFile(PDBFile *Pdb) { PdbOrObj = Pdb; }
   InputFile(object::COFFObjectFile *Obj) { PdbOrObj = Obj; }
   InputFile(MemoryBuffer *Buffer) { PdbOrObj = Buffer; }
-  LLVM_ABI ~InputFile();
+  ~InputFile();
   InputFile(InputFile &&Other) = default;
 
-  LLVM_ABI static Expected<InputFile> open(StringRef Path,
-                                           bool AllowUnknownFile = false);
+  static Expected<InputFile> open(StringRef Path,
+                                  bool AllowUnknownFile = false);
 
-  LLVM_ABI PDBFile &pdb();
-  LLVM_ABI const PDBFile &pdb() const;
-  LLVM_ABI object::COFFObjectFile &obj();
-  LLVM_ABI const object::COFFObjectFile &obj() const;
-  LLVM_ABI MemoryBuffer &unknown();
-  LLVM_ABI const MemoryBuffer &unknown() const;
+  PDBFile &pdb();
+  const PDBFile &pdb() const;
+  object::COFFObjectFile &obj();
+  const object::COFFObjectFile &obj() const;
+  MemoryBuffer &unknown();
+  const MemoryBuffer &unknown() const;
 
-  LLVM_ABI StringRef getFilePath() const;
+  StringRef getFilePath() const;
 
-  LLVM_ABI bool hasTypes() const;
-  LLVM_ABI bool hasIds() const;
+  bool hasTypes() const;
+  bool hasIds() const;
 
-  LLVM_ABI codeview::LazyRandomTypeCollection &types();
-  LLVM_ABI codeview::LazyRandomTypeCollection &ids();
+  codeview::LazyRandomTypeCollection &types();
+  codeview::LazyRandomTypeCollection &ids();
 
-  LLVM_ABI iterator_range<SymbolGroupIterator> symbol_groups();
-  LLVM_ABI SymbolGroupIterator symbol_groups_begin();
-  LLVM_ABI SymbolGroupIterator symbol_groups_end();
+  iterator_range<SymbolGroupIterator> symbol_groups();
+  SymbolGroupIterator symbol_groups_begin();
+  SymbolGroupIterator symbol_groups_end();
 
-  LLVM_ABI bool isPdb() const;
-  LLVM_ABI bool isObj() const;
-  LLVM_ABI bool isUnknown() const;
+  bool isPdb() const;
+  bool isObj() const;
+  bool isUnknown() const;
 };
 
 class SymbolGroup {
   friend class SymbolGroupIterator;
 
 public:
-  LLVM_ABI explicit SymbolGroup(InputFile *File, uint32_t GroupIndex = 0);
+  explicit SymbolGroup(InputFile *File, uint32_t GroupIndex = 0);
 
-  LLVM_ABI Expected<StringRef> getNameFromStringTable(uint32_t Offset) const;
-  LLVM_ABI Expected<StringRef> getNameFromChecksums(uint32_t Offset) const;
+  Expected<StringRef> getNameFromStringTable(uint32_t Offset) const;
+  Expected<StringRef> getNameFromChecksums(uint32_t Offset) const;
 
-  LLVM_ABI void formatFromFileName(LinePrinter &Printer, StringRef File,
-                                   bool Append = false) const;
+  void formatFromFileName(LinePrinter &Printer, StringRef File,
+                          bool Append = false) const;
 
-  LLVM_ABI void formatFromChecksumsOffset(LinePrinter &Printer, uint32_t Offset,
-                                          bool Append = false) const;
+  void formatFromChecksumsOffset(LinePrinter &Printer, uint32_t Offset,
+                                 bool Append = false) const;
 
-  LLVM_ABI StringRef name() const;
+  StringRef name() const;
 
   codeview::DebugSubsectionArray getDebugSubsections() const {
     return Subsections;
   }
-  LLVM_ABI const ModuleDebugStreamRef &getPdbModuleStream() const;
+  const ModuleDebugStreamRef &getPdbModuleStream() const;
 
   const InputFile &getFile() const { return *File; }
   InputFile &getFile() { return *File; }
@@ -133,16 +132,16 @@ class SymbolGroupIterator
     : public iterator_facade_base<SymbolGroupIterator,
                                   std::forward_iterator_tag, SymbolGroup> {
 public:
-  LLVM_ABI SymbolGroupIterator();
-  LLVM_ABI explicit SymbolGroupIterator(InputFile &File);
+  SymbolGroupIterator();
+  explicit SymbolGroupIterator(InputFile &File);
   SymbolGroupIterator(const SymbolGroupIterator &Other) = default;
   SymbolGroupIterator &operator=(const SymbolGroupIterator &R) = default;
 
-  LLVM_ABI const SymbolGroup &operator*() const;
-  LLVM_ABI SymbolGroup &operator*();
+  const SymbolGroup &operator*() const;
+  SymbolGroup &operator*();
 
-  LLVM_ABI bool operator==(const SymbolGroupIterator &R) const;
-  LLVM_ABI SymbolGroupIterator &operator++();
+  bool operator==(const SymbolGroupIterator &R) const;
+  SymbolGroupIterator &operator++();
 
 private:
   void scanToNextDebugS();
@@ -153,13 +152,13 @@ private:
   SymbolGroup Value;
 };
 
-LLVM_ABI Expected<ModuleDebugStreamRef>
+Expected<ModuleDebugStreamRef>
 getModuleDebugStream(PDBFile &File, StringRef &ModuleName, uint32_t Index);
-LLVM_ABI Expected<ModuleDebugStreamRef> getModuleDebugStream(PDBFile &File,
-                                                             uint32_t Index);
+Expected<ModuleDebugStreamRef> getModuleDebugStream(PDBFile &File,
+                                                    uint32_t Index);
 
-LLVM_ABI bool shouldDumpSymbolGroup(uint32_t Idx, const SymbolGroup &Group,
-                                    const FilterOptions &Filters);
+bool shouldDumpSymbolGroup(uint32_t Idx, const SymbolGroup &Group,
+                           const FilterOptions &Filters);
 
 // TODO: Change these callbacks to be function_refs (de-templatify them).
 template <typename CallbackT>

@@ -1570,12 +1570,12 @@ bool AtomicExpandImpl::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 }
 
 bool AtomicExpandImpl::isIdempotentRMW(AtomicRMWInst *RMWI) {
-  // TODO: Add floating point support.
   auto C = dyn_cast<ConstantInt>(RMWI->getValOperand());
   if (!C)
     return false;
 
-  switch (RMWI->getOperation()) {
+  AtomicRMWInst::BinOp Op = RMWI->getOperation();
+  switch (Op) {
   case AtomicRMWInst::Add:
   case AtomicRMWInst::Sub:
   case AtomicRMWInst::Or:
@@ -1583,14 +1583,7 @@ bool AtomicExpandImpl::isIdempotentRMW(AtomicRMWInst *RMWI) {
     return C->isZero();
   case AtomicRMWInst::And:
     return C->isMinusOne();
-  case AtomicRMWInst::Min:
-    return C->isMaxValue(true);
-  case AtomicRMWInst::Max:
-    return C->isMinValue(true);
-  case AtomicRMWInst::UMin:
-    return C->isMaxValue(false);
-  case AtomicRMWInst::UMax:
-    return C->isMinValue(false);
+  // FIXME: we could also treat Min/Max/UMin/UMax by the INT_MIN/INT_MAX/...
   default:
     return false;
   }

@@ -14,7 +14,6 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_H
 #define LLVM_TRANSFORMS_SCALAR_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/SimplifyCFGOptions.h"
 #include <functional>
 
@@ -31,26 +30,26 @@ class Pass;
 // their other instructions become dead, to eliminate chains of dead
 // computations.
 //
-LLVM_ABI FunctionPass *createDeadCodeEliminationPass();
+FunctionPass *createDeadCodeEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
 // SROA - Replace aggregates or pieces of aggregates with scalar SSA values.
 //
-LLVM_ABI FunctionPass *createSROAPass(bool PreserveCFG = true);
+FunctionPass *createSROAPass(bool PreserveCFG = true);
 
 //===----------------------------------------------------------------------===//
 //
 // LICM - This pass is a loop invariant code motion and memory promotion pass.
 //
-LLVM_ABI Pass *createLICMPass();
+Pass *createLICMPass();
 
 //===----------------------------------------------------------------------===//
 //
 // LoopStrengthReduce - This pass is strength reduces GEP instructions that use
 // a loop's canonical induction variable as one of their indices.
 //
-LLVM_ABI Pass *createLoopStrengthReducePass();
+Pass *createLoopStrengthReducePass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -58,18 +57,17 @@ LLVM_ABI Pass *createLoopStrengthReducePass();
 // a loop terminator instruction by rewriting it in terms of another IV.
 // Expected to be run immediately after LSR.
 //
-LLVM_ABI Pass *createLoopTermFoldPass();
+Pass *createLoopTermFoldPass();
 
 //===----------------------------------------------------------------------===//
 //
 // LoopUnroll - This pass is a simple loop unrolling pass.
 //
-LLVM_ABI Pass *createLoopUnrollPass(int OptLevel = 2,
-                                    bool OnlyWhenForced = false,
-                                    bool ForgetAllSCEV = false,
-                                    int Threshold = -1, int Count = -1,
-                                    int AllowPartial = -1, int Runtime = -1,
-                                    int UpperBound = -1, int AllowPeeling = -1);
+Pass *createLoopUnrollPass(int OptLevel = 2, bool OnlyWhenForced = false,
+                           bool ForgetAllSCEV = false, int Threshold = -1,
+                           int Count = -1, int AllowPartial = -1,
+                           int Runtime = -1, int UpperBound = -1,
+                           int AllowPeeling = -1);
 
 //===----------------------------------------------------------------------===//
 //
@@ -78,14 +76,14 @@ LLVM_ABI Pass *createLoopUnrollPass(int OptLevel = 2,
 //
 // For example:  4 + (x + 5)  ->  x + (4 + 5)
 //
-LLVM_ABI FunctionPass *createReassociatePass();
+FunctionPass *createReassociatePass();
 
 //===----------------------------------------------------------------------===//
 //
 // CFGSimplification - Merge basic blocks, eliminate unreachable blocks,
 // simplify terminator instructions, convert switches to lookup tables, etc.
 //
-LLVM_ABI FunctionPass *createCFGSimplificationPass(
+FunctionPass *createCFGSimplificationPass(
     SimplifyCFGOptions Options = SimplifyCFGOptions(),
     std::function<bool(const Function &)> Ftor = nullptr);
 
@@ -94,7 +92,7 @@ LLVM_ABI FunctionPass *createCFGSimplificationPass(
 // FlattenCFG - flatten CFG, reduce number of conditional branches by using
 // parallel-and and parallel-or mode, etc...
 //
-LLVM_ABI FunctionPass *createFlattenCFGPass();
+FunctionPass *createFlattenCFGPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -103,45 +101,45 @@ LLVM_ABI FunctionPass *createFlattenCFGPass();
 ///
 /// When \p SkipUniformRegions is true the structizer will not structurize
 /// regions that only contain uniform branches.
-LLVM_ABI Pass *createStructurizeCFGPass(bool SkipUniformRegions = false);
+Pass *createStructurizeCFGPass(bool SkipUniformRegions = false);
 
 //===----------------------------------------------------------------------===//
 //
 // TailCallElimination - This pass eliminates call instructions to the current
 // function which occur immediately before return instructions.
 //
-LLVM_ABI FunctionPass *createTailCallEliminationPass();
+FunctionPass *createTailCallEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
 // EarlyCSE - This pass performs a simple and fast CSE pass over the dominator
 // tree.
 //
-LLVM_ABI FunctionPass *createEarlyCSEPass(bool UseMemorySSA = false);
+FunctionPass *createEarlyCSEPass(bool UseMemorySSA = false);
 
 //===----------------------------------------------------------------------===//
 //
 // ConstantHoisting - This pass prepares a function for expensive constants.
 //
-LLVM_ABI FunctionPass *createConstantHoistingPass();
+FunctionPass *createConstantHoistingPass();
 
 //===----------------------------------------------------------------------===//
 //
 // Sink - Code Sinking
 //
-LLVM_ABI FunctionPass *createSinkingPass();
+FunctionPass *createSinkingPass();
 
 //===----------------------------------------------------------------------===//
 //
 // LowerAtomic - Lower atomic intrinsics to non-atomic form
 //
-LLVM_ABI Pass *createLowerAtomicPass();
+Pass *createLowerAtomicPass();
 
 //===----------------------------------------------------------------------===//
 //
 // MergeICmps - Merge integer comparison chains into a memcmp
 //
-LLVM_ABI Pass *createMergeICmpsLegacyPass();
+Pass *createMergeICmpsLegacyPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -150,67 +148,66 @@ LLVM_ABI Pass *createMergeICmpsLegacyPass();
 // on the target. If AddressSpace is left to its default value, it will be
 // obtained from the TargetTransformInfo.
 //
-LLVM_ABI FunctionPass *
-createInferAddressSpacesPass(unsigned AddressSpace = ~0u);
-LLVM_ABI extern char &InferAddressSpacesID;
+FunctionPass *createInferAddressSpacesPass(unsigned AddressSpace = ~0u);
+extern char &InferAddressSpacesID;
 
 //===----------------------------------------------------------------------===//
 //
 // PartiallyInlineLibCalls - Tries to inline the fast path of library
 // calls such as sqrt.
 //
-LLVM_ABI FunctionPass *createPartiallyInlineLibCallsPass();
+FunctionPass *createPartiallyInlineLibCallsPass();
 
 //===----------------------------------------------------------------------===//
 //
 // SeparateConstOffsetFromGEP - Split GEPs for better CSE
 //
-LLVM_ABI FunctionPass *
-createSeparateConstOffsetFromGEPPass(bool LowerGEP = false);
+FunctionPass *createSeparateConstOffsetFromGEPPass(bool LowerGEP = false);
 
 //===----------------------------------------------------------------------===//
 //
 // SpeculativeExecution - Aggressively hoist instructions to enable
 // speculative execution on targets where branches are expensive.
 //
-LLVM_ABI FunctionPass *createSpeculativeExecutionPass();
+FunctionPass *createSpeculativeExecutionPass();
 
 // Same as createSpeculativeExecutionPass, but does nothing unless
 // TargetTransformInfo::hasBranchDivergence() is true.
-LLVM_ABI FunctionPass *createSpeculativeExecutionIfHasBranchDivergencePass();
+FunctionPass *createSpeculativeExecutionIfHasBranchDivergencePass();
 
 //===----------------------------------------------------------------------===//
 //
 // StraightLineStrengthReduce - This pass strength-reduces some certain
 // instruction patterns in straight-line code.
 //
-LLVM_ABI FunctionPass *createStraightLineStrengthReducePass();
+FunctionPass *createStraightLineStrengthReducePass();
 
 //===----------------------------------------------------------------------===//
 //
 // NaryReassociate - Simplify n-ary operations by reassociation.
 //
-LLVM_ABI FunctionPass *createNaryReassociatePass();
+FunctionPass *createNaryReassociatePass();
 
 //===----------------------------------------------------------------------===//
 //
 // LoopDataPrefetch - Perform data prefetching in loops.
 //
-LLVM_ABI FunctionPass *createLoopDataPrefetchPass();
+FunctionPass *createLoopDataPrefetchPass();
 
 //===----------------------------------------------------------------------===//
 //
 // This pass does instruction simplification on each
 // instruction in a function.
 //
-LLVM_ABI FunctionPass *createInstSimplifyLegacyPass();
+FunctionPass *createInstSimplifyLegacyPass();
+
 
 //===----------------------------------------------------------------------===//
 //
 // createScalarizeMaskedMemIntrinPass - Replace masked load, store, gather
 // and scatter intrinsics with scalar code when target doesn't support them.
 //
-LLVM_ABI FunctionPass *createScalarizeMaskedMemIntrinLegacyPass();
+FunctionPass *createScalarizeMaskedMemIntrinLegacyPass();
 } // End llvm namespace
 
 #endif

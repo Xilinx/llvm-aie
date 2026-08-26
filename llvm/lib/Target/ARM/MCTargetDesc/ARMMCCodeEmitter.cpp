@@ -1191,7 +1191,7 @@ uint32_t ARMMCCodeEmitter::getHiLoImmOpValue(const MCInst &MI, unsigned OpIdx,
   // :lower0_7: assembly prefixes.
   const MCExpr *E = MO.getExpr();
   MCFixupKind Kind;
-  if (E->getKind() == MCExpr::Specifier) {
+  if (E->getKind() == MCExpr::Target) {
     const ARMMCExpr *ARM16Expr = cast<ARMMCExpr>(E);
     E = ARM16Expr->getSubExpr();
 

@@ -8,7 +8,6 @@
 
 #include "DAP.h"
 #include "EventHelper.h"
-#include "LLDBUtils.h"
 #include "Protocol/ProtocolRequests.h"
 #include "RequestHandler.h"
 #include "llvm/Support/Error.h"
@@ -33,17 +32,12 @@ Error StepOutRequestHandler::Run(const StepOutArguments &arguments) const {
   if (!thread.IsValid())
     return make_error<DAPError>("invalid thread");
 
-  if (!lldb::SBDebugger::StateIsStoppedState(
-          dap.target.GetProcess().GetState()))
-    return make_error<NotStoppedError>();
-
   // Remember the thread ID that caused the resume so we can set the
   // "threadCausedFocus" boolean value in the "stopped" events.
   dap.focus_tid = thread.GetThreadID();
-  lldb::SBError error;
-  thread.StepOut(error);
+  thread.StepOut();
 
-  return ToError(error);
+  return Error::success();
 }
 
 } // namespace lldb_dap

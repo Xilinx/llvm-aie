@@ -674,16 +674,9 @@ void DynamicTypePropagation::checkPostStmt(const CastExpr *CE,
   if (TrackedType &&
       !ASTCtxt.canAssignObjCInterfaces(DestObjectPtrType, *TrackedType) &&
       !ASTCtxt.canAssignObjCInterfaces(*TrackedType, DestObjectPtrType)) {
-    // This distinct program point tag is needed because `State` can be
-    // identical to the state of the node `AfterTypeProp`, and in that case
-    // `generateNonFatalErrorNode` would "cache out" and return nullptr
-    // (instead of re-creating an already existing node).
-    static SimpleProgramPointTag IllegalConv("DynamicTypePropagation",
-                                             "IllegalConversion");
-    ExplodedNode *N =
-        C.generateNonFatalErrorNode(State, AfterTypeProp, &IllegalConv);
-    if (N)
-      reportGenericsBug(*TrackedType, DestObjectPtrType, N, Sym, C);
+    static CheckerProgramPointTag IllegalConv(this, "IllegalConversion");
+    ExplodedNode *N = C.addTransition(State, AfterTypeProp, &IllegalConv);
+    reportGenericsBug(*TrackedType, DestObjectPtrType, N, Sym, C);
     return;
   }
 
@@ -892,7 +885,8 @@ void DynamicTypePropagation::checkPreObjCMessage(const ObjCMethodCall &M,
     // Warn when argument is incompatible with the parameter.
     if (!ASTCtxt.canAssignObjCInterfaces(ParamObjectPtrType,
                                          ArgObjectPtrType)) {
-      ExplodedNode *N = C.generateNonFatalErrorNode(State);
+      static CheckerProgramPointTag Tag(this, "ArgTypeMismatch");
+      ExplodedNode *N = C.addTransition(State, &Tag);
       reportGenericsBug(ArgObjectPtrType, ParamObjectPtrType, N, Sym, C, Arg);
       return;
     }

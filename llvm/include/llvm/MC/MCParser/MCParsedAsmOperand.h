@@ -10,7 +10,6 @@
 #define LLVM_MC_MCPARSER_MCPARSEDASMOPERAND_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SMLoc.h"
 #include <string>
 
@@ -23,7 +22,7 @@ class raw_ostream;
 /// instruction operand.  It should be subclassed by target-specific code.  This
 /// base class is used by target-independent clients and is the interface
 /// between parsing an asm instruction and recognizing it.
-class LLVM_ABI MCParsedAsmOperand {
+class MCParsedAsmOperand {
   /// MCOperandNum - The corresponding MCInst operand number.  Only valid when
   /// parsing MS-style inline assembly.
   unsigned MCOperandNum = ~0u;

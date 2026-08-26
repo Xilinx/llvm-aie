@@ -642,8 +642,7 @@ enum class OpenACCModifierKind : uint8_t {
   AlwaysOut = 1 << 2,
   Readonly = 1 << 3,
   Zero = 1 << 4,
-  Capture = 1 << 5,
-  LLVM_MARK_AS_BITMASK_ENUM(Capture)
+  LLVM_MARK_AS_BITMASK_ENUM(Zero)
 };
 
 inline bool isOpenACCModifierBitSet(OpenACCModifierKind List,
@@ -689,13 +688,6 @@ inline StreamTy &printOpenACCModifierKind(StreamTy &Out,
     if (!First)
       Out << ", ";
     Out << "zero";
-    First = false;
-  }
-
-  if (isOpenACCModifierBitSet(Mods, OpenACCModifierKind::Capture)) {
-    if (!First)
-      Out << ", ";
-    Out << "capture";
     First = false;
   }
   return Out;

@@ -1648,7 +1648,7 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
     // Transition should not contain processor indices already assigned to
     // InstRWs in this scheduling class.
     const CodeGenSchedClass &FromSC = SchedModels.getSchedClass(FromClassIdx);
-    if (FromSC.InstRWProcIndices.contains(LastTransition.ProcIndex))
+    if (FromSC.InstRWProcIndices.count(LastTransition.ProcIndex))
       continue;
     SCTrans.ProcIndex = LastTransition.ProcIndex;
     SCTrans.ToClassIdx =
@@ -2187,7 +2187,7 @@ bool CodeGenProcModel::isUnsupported(const CodeGenInstruction &Inst) const {
 }
 
 bool CodeGenProcModel::hasReadOfWrite(const Record *WriteDef) const {
-  return ReadOfWriteSet.contains(WriteDef);
+  return ReadOfWriteSet.count(WriteDef);
 }
 
 #ifndef NDEBUG

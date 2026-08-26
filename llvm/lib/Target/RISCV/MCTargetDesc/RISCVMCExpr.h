@@ -21,7 +21,7 @@ namespace llvm {
 
 class StringRef;
 
-class RISCVMCExpr : public MCSpecifierExpr {
+class RISCVMCExpr : public MCTargetExpr {
 public:
   using Specifier = uint16_t;
   // Specifiers mapping to relocation types below FirstTargetFixupKind are
@@ -38,12 +38,19 @@ public:
   };
 
 private:
+  const MCExpr *Expr;
+  const Specifier specifier;
+
   explicit RISCVMCExpr(const MCExpr *Expr, Specifier S)
-      : MCSpecifierExpr(Expr, S) {}
+      : Expr(Expr), specifier(S) {}
 
 public:
   static const RISCVMCExpr *create(const MCExpr *Expr, Specifier S,
                                    MCContext &Ctx);
+
+  Specifier getSpecifier() const { return specifier; }
+
+  const MCExpr *getSubExpr() const { return Expr; }
 
   /// Get the corresponding PC-relative HI fixup that a VK_PCREL_LO
   /// points to, and optionally the fragment containing it.
@@ -53,6 +60,16 @@ public:
   const MCFixup *getPCRelHiFixup(const MCFragment **DFOut) const;
 
   void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
+  bool evaluateAsRelocatableImpl(MCValue &Res,
+                                 const MCAssembler *Asm) const override;
+  void visitUsedExpr(MCStreamer &Streamer) const override;
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
+  }
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Target;
+  }
 
   static std::optional<Specifier> getSpecifierForName(StringRef name);
   static StringRef getSpecifierName(Specifier Kind);

@@ -22,14 +22,13 @@ endif()
 if (disas_srcs)
   add_lldb_unittest(DisassemblerTests
     ${disas_srcs}
-    LINK_COMPONENTS
-      Support
-      ${LLVM_TARGETS_TO_BUILD}
     LINK_LIBS
       lldbCore
       lldbSymbol
       lldbTarget
       lldbPluginDisassemblerLLVMC
       lldbPluginProcessUtility
-    )
+    LINK_COMPONENTS
+      Support
+      ${LLVM_TARGETS_TO_BUILD})
 endif()

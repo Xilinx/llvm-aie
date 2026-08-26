@@ -72,6 +72,9 @@ void MCFragment::destroy() {
     case FT_PseudoProbe:
       cast<MCPseudoProbeAddrFragment>(this)->~MCPseudoProbeAddrFragment();
       return;
+    case FT_Dummy:
+      cast<MCDummyFragment>(this)->~MCDummyFragment();
+      return;
   }
 }
 
@@ -116,6 +119,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
   case MCFragment::FT_PseudoProbe:
     OS << "MCPseudoProbe";
     break;
+  case MCFragment::FT_Dummy: OS << "MCDummyFragment"; break;
   }
 
   OS << "<MCFragment " << (const void *)this << " LayoutOrder:" << LayoutOrder
@@ -237,6 +241,8 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
     OS << " AddrDelta:" << OF->getAddrDelta();
     break;
   }
+  case MCFragment::FT_Dummy:
+    break;
   }
   OS << ">";
 }

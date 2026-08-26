@@ -20,7 +20,6 @@
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -28,7 +27,7 @@ namespace llvm {
 /// allow convenient creation of passes that operate on the MachineFunction
 /// representation. Instead of overriding runOnFunction, subclasses
 /// override runOnMachineFunction.
-class LLVM_ABI MachineFunctionPass : public FunctionPass {
+class MachineFunctionPass : public FunctionPass {
 public:
   bool doInitialization(Module&) override {
     // Cache the properties info at module-init time so we don't have to

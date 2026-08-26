@@ -29,7 +29,6 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/MC/LaneBitmask.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstdint>
 #include <list>
@@ -116,7 +115,7 @@ namespace llvm {
   using UnderlyingObjectsVector = SmallVector<UnderlyingObject, 4>;
 
   /// A ScheduleDAG for scheduling lists of MachineInstr.
-  class LLVM_ABI ScheduleDAGInstrs : public ScheduleDAG {
+  class ScheduleDAGInstrs : public ScheduleDAG {
   protected:
     const MachineLoopInfo *MLI = nullptr;
     const MachineFrameInfo &MFI;
@@ -189,8 +188,6 @@ namespace llvm {
     /// No other SU ever gets scheduled around it (except in the special
     /// case of a huge region that gets reduced).
     SUnit *BarrierChain = nullptr;
-
-    SmallVector<ClusterInfo> Clusters;
 
   public:
     /// A list of SUnits, used in Value2SUsMap, during DAG construction.
@@ -441,14 +438,6 @@ namespace llvm {
     /// This method is meant to be used from a backward traversal of the
     /// instructions.
     bool handleRegEvents(SUnit *SU);
-    
-    /// Returns the array of the clusters.
-    SmallVector<ClusterInfo> &getClusters() { return Clusters; }
-
-    /// Get the specific cluster, return nullptr for InvalidClusterId.
-    ClusterInfo *getCluster(unsigned Idx) {
-      return Idx != InvalidClusterId ? &Clusters[Idx] : nullptr;
-    }
 
   protected:
     // Modify Dep and add it as predecessor

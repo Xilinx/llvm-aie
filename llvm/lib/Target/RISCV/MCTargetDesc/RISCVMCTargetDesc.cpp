@@ -212,23 +212,23 @@ public:
       return true;
     }
 
-    switch (Inst.getOpcode()) {
-    case RISCV::C_J:
-    case RISCV::C_JAL:
-    case RISCV::QC_E_J:
-    case RISCV::QC_E_JAL:
+    if (Inst.getOpcode() == RISCV::C_JAL || Inst.getOpcode() == RISCV::C_J) {
       Target = Addr + Inst.getOperand(0).getImm();
       return true;
-    case RISCV::JAL:
+    }
+
+    if (Inst.getOpcode() == RISCV::JAL) {
       Target = Addr + Inst.getOperand(1).getImm();
       return true;
-    case RISCV::JALR: {
+    }
+
+    if (Inst.getOpcode() == RISCV::JALR) {
       if (auto TargetRegState = getGPRState(Inst.getOperand(1).getReg())) {
         Target = *TargetRegState + Inst.getOperand(2).getImm();
         return true;
       }
+
       return false;
-    }
     }
 
     return false;

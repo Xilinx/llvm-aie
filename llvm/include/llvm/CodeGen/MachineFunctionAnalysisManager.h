@@ -14,13 +14,12 @@
 #define LLVM_CODEGEN_MACHINEFUNCTIONANALYSISMANAGER
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
 class MachineFunction;
 
-extern template class LLVM_TEMPLATE_ABI AnalysisManager<MachineFunction>;
+extern template class AnalysisManager<MachineFunction>;
 using MachineFunctionAnalysisManager = AnalysisManager<MachineFunction>;
 
 } // namespace llvm

@@ -19,7 +19,6 @@
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <vector>
 
@@ -28,7 +27,7 @@ namespace llvm {
 class MCRegisterInfo;
 class Triple;
 
-class LLVM_ABI MCInstrAnalysis {
+class MCInstrAnalysis {
 protected:
   friend class Target;
 

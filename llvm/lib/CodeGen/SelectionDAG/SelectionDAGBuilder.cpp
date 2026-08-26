@@ -3290,13 +3290,12 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
 
   // Deopt and ptrauth bundles are lowered in helper functions, and we don't
   // have to do anything here to lower funclet bundles.
-  if (I.hasOperandBundlesOtherThan(
-          {LLVMContext::OB_deopt, LLVMContext::OB_gc_transition,
-           LLVMContext::OB_gc_live, LLVMContext::OB_funclet,
-           LLVMContext::OB_cfguardtarget, LLVMContext::OB_ptrauth,
-           LLVMContext::OB_clang_arc_attachedcall}))
-    reportFatalUsageError(
-        "cannot lower invokes with arbitrary operand bundles!");
+  assert(!I.hasOperandBundlesOtherThan(
+             {LLVMContext::OB_deopt, LLVMContext::OB_gc_transition,
+              LLVMContext::OB_gc_live, LLVMContext::OB_funclet,
+              LLVMContext::OB_cfguardtarget, LLVMContext::OB_ptrauth,
+              LLVMContext::OB_clang_arc_attachedcall}) &&
+         "Cannot lower invokes with arbitrary operand bundles yet!");
 
   const Value *Callee(I.getCalledOperand());
   const Function *Fn = dyn_cast<Function>(Callee);
@@ -3396,10 +3395,9 @@ void SelectionDAGBuilder::visitCallBr(const CallBrInst &I) {
 
   // Deopt bundles are lowered in LowerCallSiteWithDeoptBundle, and we don't
   // have to do anything here to lower funclet bundles.
-  if (I.hasOperandBundlesOtherThan(
-          {LLVMContext::OB_deopt, LLVMContext::OB_funclet}))
-    reportFatalUsageError(
-        "cannot lower callbrs with arbitrary operand bundles!");
+  assert(!I.hasOperandBundlesOtherThan(
+             {LLVMContext::OB_deopt, LLVMContext::OB_funclet}) &&
+         "Cannot lower callbrs with arbitrary operand bundles yet!");
 
   assert(I.isInlineAsm() && "Only know how to handle inlineasm callbr");
   visitInlineAsm(I);
@@ -3416,11 +3414,7 @@ void SelectionDAGBuilder::visitCallBr(const CallBrInst &I) {
     BasicBlock *Dest = I.getIndirectDest(i);
     MachineBasicBlock *Target = FuncInfo.getMBB(Dest);
     Target->setIsInlineAsmBrIndirectTarget();
-    // If we introduce a type of asm goto statement that is permitted to use an
-    // indirect call instruction to jump to its labels, then we should add a
-    // call to Target->setMachineBlockAddressTaken() here, to mark the target
-    // block as requiring a BTI.
-
+    Target->setMachineBlockAddressTaken();
     Target->setLabelMustBeEmitted();
     // Don't add duplicate machine successors.
     if (Dests.insert(Dest).second)
@@ -4305,8 +4299,8 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
             (int64_t(Offset) >= 0 && NW.hasNoUnsignedSignedWrap()))
           Flags |= SDNodeFlags::NoUnsignedWrap;
 
-        N = DAG.getMemBasePlusOffset(
-            N, DAG.getConstant(Offset, dl, N.getValueType()), dl, Flags);
+        N = DAG.getNode(ISD::ADD, dl, N.getValueType(), N,
+                        DAG.getConstant(Offset, dl, N.getValueType()), Flags);
       }
     } else {
       // IdxSize is the width of the arithmetic according to IR semantics.
@@ -4350,7 +4344,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
 
         OffsVal = DAG.getSExtOrTrunc(OffsVal, dl, N.getValueType());
 
-        N = DAG.getMemBasePlusOffset(N, OffsVal, dl, Flags);
+        N = DAG.getNode(ISD::ADD, dl, N.getValueType(), N, OffsVal, Flags);
         continue;
       }
 
@@ -4410,7 +4404,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       SDNodeFlags AddFlags;
       AddFlags.setNoUnsignedWrap(NW.hasNoUnsignedWrap());
 
-      N = DAG.getMemBasePlusOffset(N, IdxN, dl, AddFlags);
+      N = DAG.getNode(ISD::ADD, dl, N.getValueType(), N, IdxN, AddFlags);
     }
   }
 
@@ -4489,13 +4483,23 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
 }
 
 static const MDNode *getRangeMetadata(const Instruction &I) {
+  // If !noundef is not present, then !range violation results in a poison
+  // value rather than immediate undefined behavior. In theory, transferring
+  // these annotations to SDAG is fine, but in practice there are key SDAG
+  // transforms that are known not to be poison-safe, such as folding logical
+  // and/or to bitwise and/or. For now, only transfer !range if !noundef is
+  // also present.
+  if (!I.hasMetadata(LLVMContext::MD_noundef))
+    return nullptr;
   return I.getMetadata(LLVMContext::MD_range);
 }
 
 static std::optional<ConstantRange> getRange(const Instruction &I) {
-  if (const auto *CB = dyn_cast<CallBase>(&I))
-    if (std::optional<ConstantRange> CR = CB->getRange())
-      return CR;
+  if (const auto *CB = dyn_cast<CallBase>(&I)) {
+    // see comment in getRangeMetadata about this check
+    if (CB->hasRetAttr(Attribute::NoUndef))
+      return CB->getRange();
+  }
   if (const MDNode *Range = getRangeMetadata(I))
     return getConstantRangeFromMetadata(*Range);
   return std::nullopt;
@@ -7399,11 +7403,6 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     setValue(&I, getValue(I.getOperand(0)));
     return;
 
-  case Intrinsic::type_test:
-  case Intrinsic::public_type_test:
-    setValue(&I, getValue(ConstantInt::getTrue(I.getType())));
-    return;
-
   case Intrinsic::assume:
   case Intrinsic::experimental_noalias_scope_decl:
   case Intrinsic::var_annotation:
@@ -9189,7 +9188,8 @@ bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
   Size = DAG.getSExtOrTrunc(Size, sdl, Dst.getValueType());
 
   // Adjust return pointer to point just past the last dst byte.
-  SDValue DstPlusSize = DAG.getMemBasePlusOffset(Dst, Size, sdl);
+  SDValue DstPlusSize = DAG.getNode(ISD::ADD, sdl, Dst.getValueType(),
+                                    Dst, Size);
   setValue(&I, DstPlusSize);
   return true;
 }
@@ -9571,12 +9571,12 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
   // Deopt bundles are lowered in LowerCallSiteWithDeoptBundle, and we don't
   // have to do anything here to lower funclet bundles.
   // CFGuardTarget bundles are lowered in LowerCallTo.
-  if (I.hasOperandBundlesOtherThan(
-          {LLVMContext::OB_deopt, LLVMContext::OB_funclet,
-           LLVMContext::OB_cfguardtarget, LLVMContext::OB_preallocated,
-           LLVMContext::OB_clang_arc_attachedcall, LLVMContext::OB_kcfi,
-           LLVMContext::OB_convergencectrl}))
-    reportFatalUsageError("cannot lower calls with arbitrary operand bundles!");
+  assert(!I.hasOperandBundlesOtherThan(
+             {LLVMContext::OB_deopt, LLVMContext::OB_funclet,
+              LLVMContext::OB_cfguardtarget, LLVMContext::OB_preallocated,
+              LLVMContext::OB_clang_arc_attachedcall, LLVMContext::OB_kcfi,
+              LLVMContext::OB_convergencectrl}) &&
+         "Cannot lower calls with arbitrary operand bundles!");
 
   SDValue Callee = getValue(I.getCalledOperand());
 
@@ -11284,9 +11284,10 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
     MachineFunction &MF = CLI.DAG.getMachineFunction();
     Align HiddenSRetAlign = MF.getFrameInfo().getObjectAlign(DemoteStackIdx);
     for (unsigned i = 0; i < NumValues; ++i) {
-      SDValue Add = CLI.DAG.getMemBasePlusOffset(
-          DemoteStackSlot, CLI.DAG.getConstant(Offsets[i], CLI.DL, PtrVT),
-          CLI.DL, SDNodeFlags::NoUnsignedWrap);
+      SDValue Add =
+          CLI.DAG.getNode(ISD::ADD, CLI.DL, PtrVT, DemoteStackSlot,
+                          CLI.DAG.getConstant(Offsets[i], CLI.DL, PtrVT),
+                          SDNodeFlags::NoUnsignedWrap);
       SDValue L = CLI.DAG.getLoad(
           RetTys[i], CLI.DL, CLI.Chain, Add,
           MachinePointerInfo::getFixedStack(CLI.DAG.getMachineFunction(),

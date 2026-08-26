@@ -9,14 +9,11 @@
 #include "DAP.h"
 #include "EventHelper.h"
 #include "JSONUtils.h"
-#include "LLDBUtils.h"
 #include "Protocol/ProtocolRequests.h"
 #include "Protocol/ProtocolTypes.h"
-#include "ProtocolUtils.h"
 #include "RequestHandler.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBInstruction.h"
-#include "lldb/API/SBLineEntry.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/lldb-types.h"
 #include "llvm/ADT/StringExtras.h"
@@ -30,7 +27,6 @@ namespace lldb_dap {
 
 static protocol::DisassembledInstruction GetInvalidInstruction() {
   DisassembledInstruction invalid_inst;
-  invalid_inst.address = LLDB_INVALID_ADDRESS;
   invalid_inst.presentationHint =
       DisassembledInstruction::eDisassembledInstructionPresentationHintInvalid;
   return invalid_inst;
@@ -142,16 +138,15 @@ static DisassembledInstruction ConvertSBInstructionToDisassembledInstruction(
 
   disassembled_inst.instruction = std::move(instruction);
 
-  protocol::Source source = CreateSource(addr, target);
-  lldb::SBLineEntry line_entry = GetLineEntryForAddress(target, addr);
-
+  auto line_entry = addr.GetLineEntry();
   // If the line number is 0 then the entry represents a compiler generated
   // location.
-  if (!IsAssemblySource(source) && line_entry.GetStartAddress() == addr &&
-      line_entry.IsValid() && line_entry.GetFileSpec().IsValid() &&
-      line_entry.GetLine() != 0) {
 
+  if (line_entry.GetStartAddress() == addr && line_entry.IsValid() &&
+      line_entry.GetFileSpec().IsValid() && line_entry.GetLine() != 0) {
+    auto source = CreateSource(line_entry);
     disassembled_inst.location = std::move(source);
+
     const auto line = line_entry.GetLine();
     if (line != 0 && line != LLDB_INVALID_LINE_NUMBER)
       disassembled_inst.line = line;
@@ -160,8 +155,7 @@ static DisassembledInstruction ConvertSBInstructionToDisassembledInstruction(
     if (column != 0 && column != LLDB_INVALID_COLUMN_NUMBER)
       disassembled_inst.column = column;
 
-    lldb::SBAddress end_addr = line_entry.GetEndAddress();
-    auto end_line_entry = GetLineEntryForAddress(target, end_addr);
+    auto end_line_entry = line_entry.GetEndAddress().GetLineEntry();
     if (end_line_entry.IsValid() &&
         end_line_entry.GetFileSpec() == line_entry.GetFileSpec()) {
       const auto end_line = end_line_entry.GetLine();
@@ -198,6 +192,21 @@ DisassembleRequestHandler::Run(const DisassembleArguments &args) const {
     return llvm::make_error<DAPError>(
         "Memory reference not found in the current binary.");
 
+  std::string flavor_string;
+  const auto target_triple = llvm::StringRef(dap.target.GetTriple());
+  // This handles both 32 and 64bit x86 architecture. The logic is duplicated in
+  // `CommandObjectDisassemble::CommandOptions::OptionParsingStarting`
+  if (target_triple.starts_with("x86")) {
+    const lldb::SBStructuredData flavor =
+        dap.debugger.GetSetting("target.x86-disassembly-flavor");
+
+    const size_t str_length = flavor.GetStringValue(nullptr, 0);
+    if (str_length != 0) {
+      flavor_string.resize(str_length + 1);
+      flavor.GetStringValue(flavor_string.data(), flavor_string.length());
+    }
+  }
+
   // Offset (in instructions) to be applied after the byte offset (if any)
   // before disassembling. Can be negative.
   int64_t instruction_offset = args.instructionOffset.value_or(0);
@@ -210,7 +219,7 @@ DisassembleRequestHandler::Run(const DisassembleArguments &args) const {
         "Unexpected error while disassembling instructions.");
 
   lldb::SBInstructionList insts = dap.target.ReadInstructions(
-      disassemble_start_addr, args.instructionCount);
+      disassemble_start_addr, args.instructionCount, flavor_string.c_str());
   if (!insts.IsValid())
     return llvm::make_error<DAPError>(
         "Unexpected error while disassembling instructions.");

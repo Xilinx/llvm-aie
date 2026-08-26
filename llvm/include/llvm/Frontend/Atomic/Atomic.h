@@ -11,7 +11,6 @@
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class AtomicInfo {
@@ -56,13 +55,13 @@ public:
 
   LLVMContext &getLLVMContext() const { return Builder->getContext(); }
 
-  LLVM_ABI bool shouldCastToInt(Type *ValTy, bool CmpXchg);
+  bool shouldCastToInt(Type *ValTy, bool CmpXchg);
 
-  LLVM_ABI Value *EmitAtomicLoadOp(AtomicOrdering AO, bool IsVolatile,
-                                   bool CmpXchg = false);
+  Value *EmitAtomicLoadOp(AtomicOrdering AO, bool IsVolatile,
+                          bool CmpXchg = false);
 
-  LLVM_ABI CallInst *EmitAtomicLibcall(StringRef fnName, Type *ResultType,
-                                       ArrayRef<Value *> Args);
+  CallInst *EmitAtomicLibcall(StringRef fnName, Type *ResultType,
+                              ArrayRef<Value *> Args);
 
   Value *getAtomicSizeValue() const {
     LLVMContext &ctx = getLLVMContext();
@@ -74,7 +73,7 @@ public:
                             AtomicSizeInBits / BitsPerByte);
   }
 
-  LLVM_ABI std::pair<Value *, Value *>
+  std::pair<Value *, Value *>
   EmitAtomicCompareExchangeLibcall(Value *ExpectedVal, Value *DesiredVal,
                                    AtomicOrdering Success,
                                    AtomicOrdering Failure);
@@ -87,20 +86,19 @@ public:
     return castToAtomicIntPointer(getAtomicPointer());
   }
 
-  LLVM_ABI std::pair<Value *, Value *>
+  std::pair<Value *, Value *>
   EmitAtomicCompareExchangeOp(Value *ExpectedVal, Value *DesiredVal,
                               AtomicOrdering Success, AtomicOrdering Failure,
                               bool IsVolatile = false, bool IsWeak = false);
 
-  LLVM_ABI std::pair<Value *, Value *>
+  std::pair<Value *, Value *>
   EmitAtomicCompareExchange(Value *ExpectedVal, Value *DesiredVal,
                             AtomicOrdering Success, AtomicOrdering Failure,
                             bool IsVolatile, bool IsWeak);
 
-  LLVM_ABI std::pair<LoadInst *, AllocaInst *>
-  EmitAtomicLoadLibcall(AtomicOrdering AO);
+  std::pair<LoadInst *, AllocaInst *> EmitAtomicLoadLibcall(AtomicOrdering AO);
 
-  LLVM_ABI void EmitAtomicStoreLibcall(AtomicOrdering AO, Value *Source);
+  void EmitAtomicStoreLibcall(AtomicOrdering AO, Value *Source);
 };
 } // end namespace llvm
 

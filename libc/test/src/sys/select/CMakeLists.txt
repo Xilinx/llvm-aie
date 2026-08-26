@@ -12,8 +12,6 @@ add_libc_unittest(
     libc.src.errno.errno
     libc.src.sys.select.select
     libc.src.unistd.read
-    libc.test.UnitTest.ErrnoCheckingTest
-    libc.test.UnitTest.ErrnoSetterMatcher
 )
 
 add_libc_unittest(
@@ -27,7 +25,6 @@ add_libc_unittest(
     libc.src.errno.errno
     libc.src.sys.select.select
     libc.src.unistd.read
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 

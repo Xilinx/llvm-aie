@@ -17,7 +17,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmMacro.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
 #include <string>
@@ -73,7 +72,7 @@ class AsmLexer {
   bool LexHLASMStrings = false;
   AsmCommentConsumer *CommentConsumer = nullptr;
 
-  LLVM_ABI AsmToken LexToken();
+  AsmToken LexToken();
 
   void SetError(SMLoc errLoc, const std::string &err) {
     ErrLoc = errLoc;
@@ -81,7 +80,7 @@ class AsmLexer {
   }
 
 public:
-  LLVM_ABI AsmLexer(const MCAsmInfo &MAI);
+  AsmLexer(const MCAsmInfo &MAI);
   AsmLexer(const AsmLexer &) = delete;
   AsmLexer &operator=(const AsmLexer &) = delete;
 
@@ -109,7 +108,7 @@ public:
 
   bool justConsumedEOL() { return JustConsumedEOL; }
 
-  LLVM_ABI StringRef LexUntilEndOfStatement();
+  StringRef LexUntilEndOfStatement();
 
   /// Get the current source location.
   SMLoc getLoc() const { return SMLoc::getFromPointer(TokStart); }
@@ -131,8 +130,7 @@ public:
   }
 
   /// Look ahead an arbitrary number of tokens.
-  LLVM_ABI size_t peekTokens(MutableArrayRef<AsmToken> Buf,
-                             bool ShouldSkipSpace = true);
+  size_t peekTokens(MutableArrayRef<AsmToken> Buf, bool ShouldSkipSpace = true);
 
   /// Get the current error location
   SMLoc getErrLoc() { return ErrLoc; }
@@ -191,8 +189,8 @@ public:
   /// literals.
   void setLexHLASMStrings(bool V) { LexHLASMStrings = V; }
 
-  LLVM_ABI void setBuffer(StringRef Buf, const char *ptr = nullptr,
-                          bool EndStatementAtEOF = true);
+  void setBuffer(StringRef Buf, const char *ptr = nullptr,
+                 bool EndStatementAtEOF = true);
 
   const MCAsmInfo &getMAI() const { return MAI; }
 

@@ -19,5 +19,4 @@ define internal void @f() {
 !0 = !{i32 0, !"typeid"}
 
 !llvm.module.flags = !{!1}
-!1 = !{i32 5, !"Unique Source File Identifier", !2}
-!2 = !{!"unique-source-file-names.c"}
+!1 = !{i32 1, !"Unique Source File Names", i32 1}

@@ -9,13 +9,15 @@
 #include "src/math/lgamma_r.h"
 #include "src/__support/common.h"
 
+#include "declarations.h"
 #include "src/__support/macros/config.h"
 
 namespace LIBC_NAMESPACE_DECL {
 
-LLVM_LIBC_FUNCTION(double, lgamma_r, (double, int *signp)) {
-  *signp = 0.0;
-  return 0.0;
+LLVM_LIBC_FUNCTION(double, lgamma_r, (double x, int *signp)) {
+  double result = __nv_lgamma(x);
+  *signp = (result < 0.0) ? -1 : 1;
+  return result;
 }
 
 } // namespace LIBC_NAMESPACE_DECL

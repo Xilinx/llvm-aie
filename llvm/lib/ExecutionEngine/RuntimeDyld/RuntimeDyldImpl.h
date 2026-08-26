@@ -202,9 +202,15 @@ public:
            IsStubThumb == Other.IsStubThumb;
   }
   inline bool operator<(const RelocationValueRef &Other) const {
-    return std::tie(SectionID, Offset, Addend, IsStubThumb, SymbolName) <
-           std::tie(Other.SectionID, Other.Offset, Other.Addend,
-                    Other.IsStubThumb, Other.SymbolName);
+    if (SectionID != Other.SectionID)
+      return SectionID < Other.SectionID;
+    if (Offset != Other.Offset)
+      return Offset < Other.Offset;
+    if (Addend != Other.Addend)
+      return Addend < Other.Addend;
+    if (IsStubThumb != Other.IsStubThumb)
+      return IsStubThumb < Other.IsStubThumb;
+    return SymbolName < Other.SymbolName;
   }
 };
 

@@ -23,7 +23,6 @@
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstdint>
 #include <tuple>
@@ -31,7 +30,7 @@
 
 namespace llvm {
 
-LLVM_ABI extern cl::opt<bool> DisableGISelLegalityCheck;
+extern cl::opt<bool> DisableGISelLegalityCheck;
 
 class MachineFunction;
 class raw_ostream;
@@ -99,8 +98,7 @@ enum LegalizeAction : std::uint8_t {
   UseLegacyRules,
 };
 } // end namespace LegalizeActions
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS,
-                                 LegalizeActions::LegalizeAction Action);
+raw_ostream &operator<<(raw_ostream &OS, LegalizeActions::LegalizeAction Action);
 
 using LegalizeActions::LegalizeAction;
 
@@ -133,7 +131,7 @@ struct LegalityQuery {
                           ArrayRef<MemDesc> MMODescrs = {})
       : Opcode(Opcode), Types(Types), MMODescrs(MMODescrs) {}
 
-  LLVM_ABI raw_ostream &print(raw_ostream &OS) const;
+  raw_ostream &print(raw_ostream &OS) const;
 };
 
 /// The result of a query. It either indicates a final answer of Legal or
@@ -255,10 +253,10 @@ Predicate any(Predicate P0, Predicate P1, Args... args) {
 }
 
 /// True iff the given type index is the specified type.
-LLVM_ABI LegalityPredicate typeIs(unsigned TypeIdx, LLT TypesInit);
+LegalityPredicate typeIs(unsigned TypeIdx, LLT TypesInit);
 /// True iff the given type index is one of the specified types.
-LLVM_ABI LegalityPredicate typeInSet(unsigned TypeIdx,
-                                     std::initializer_list<LLT> TypesInit);
+LegalityPredicate typeInSet(unsigned TypeIdx,
+                            std::initializer_list<LLT> TypesInit);
 
 /// True iff the given type index is not the specified type.
 inline LegalityPredicate typeIsNot(unsigned TypeIdx, LLT Type) {
@@ -269,141 +267,134 @@ inline LegalityPredicate typeIsNot(unsigned TypeIdx, LLT Type) {
 
 /// True iff the given types for the given pair of type indexes is one of the
 /// specified type pairs.
-LLVM_ABI LegalityPredicate
+LegalityPredicate
 typePairInSet(unsigned TypeIdx0, unsigned TypeIdx1,
               std::initializer_list<std::pair<LLT, LLT>> TypesInit);
 /// True iff the given types for the given tuple of type indexes is one of the
 /// specified type tuple.
-LLVM_ABI LegalityPredicate
+LegalityPredicate
 typeTupleInSet(unsigned TypeIdx0, unsigned TypeIdx1, unsigned Type2,
                std::initializer_list<std::tuple<LLT, LLT, LLT>> TypesInit);
 /// True iff the given types for the given pair of type indexes is one of the
 /// specified type pairs.
-LLVM_ABI LegalityPredicate typePairAndMemDescInSet(
+LegalityPredicate typePairAndMemDescInSet(
     unsigned TypeIdx0, unsigned TypeIdx1, unsigned MMOIdx,
     std::initializer_list<TypePairAndMemDesc> TypesAndMemDescInit);
 /// True iff the specified type index is a scalar.
-LLVM_ABI LegalityPredicate isScalar(unsigned TypeIdx);
+LegalityPredicate isScalar(unsigned TypeIdx);
 /// True iff the specified type index is a vector.
-LLVM_ABI LegalityPredicate isVector(unsigned TypeIdx);
+LegalityPredicate isVector(unsigned TypeIdx);
 /// True iff the specified type index is a pointer (with any address space).
-LLVM_ABI LegalityPredicate isPointer(unsigned TypeIdx);
+LegalityPredicate isPointer(unsigned TypeIdx);
 /// True iff the specified type index is a pointer with the specified address
 /// space.
-LLVM_ABI LegalityPredicate isPointer(unsigned TypeIdx, unsigned AddrSpace);
+LegalityPredicate isPointer(unsigned TypeIdx, unsigned AddrSpace);
 /// True iff the specified type index is a vector of pointers (with any address
 /// space).
-LLVM_ABI LegalityPredicate isPointerVector(unsigned TypeIdx);
+LegalityPredicate isPointerVector(unsigned TypeIdx);
 
 /// True if the type index is a vector with element type \p EltTy
-LLVM_ABI LegalityPredicate elementTypeIs(unsigned TypeIdx, LLT EltTy);
+LegalityPredicate elementTypeIs(unsigned TypeIdx, LLT EltTy);
 
 /// True iff the specified type index is a scalar that's narrower than the given
 /// size.
-LLVM_ABI LegalityPredicate scalarNarrowerThan(unsigned TypeIdx, unsigned Size);
+LegalityPredicate scalarNarrowerThan(unsigned TypeIdx, unsigned Size);
 
 /// True iff the specified type index is a scalar that's wider than the given
 /// size.
-LLVM_ABI LegalityPredicate scalarWiderThan(unsigned TypeIdx, unsigned Size);
+LegalityPredicate scalarWiderThan(unsigned TypeIdx, unsigned Size);
 
 /// True iff the specified type index is a scalar or vector with an element type
 /// that's narrower than the given size.
-LLVM_ABI LegalityPredicate scalarOrEltNarrowerThan(unsigned TypeIdx,
-                                                   unsigned Size);
+LegalityPredicate scalarOrEltNarrowerThan(unsigned TypeIdx, unsigned Size);
 
 /// True iff the specified type index is a scalar or a vector with an element
 /// type that's wider than the given size.
-LLVM_ABI LegalityPredicate scalarOrEltWiderThan(unsigned TypeIdx,
-                                                unsigned Size);
+LegalityPredicate scalarOrEltWiderThan(unsigned TypeIdx, unsigned Size);
 
 /// True iff the specified type index is a scalar whose size is not a multiple
 /// of Size.
-LLVM_ABI LegalityPredicate sizeNotMultipleOf(unsigned TypeIdx, unsigned Size);
+LegalityPredicate sizeNotMultipleOf(unsigned TypeIdx, unsigned Size);
 
 /// True iff the specified type index is a scalar whose size is not a power of
 /// 2.
-LLVM_ABI LegalityPredicate sizeNotPow2(unsigned TypeIdx);
+LegalityPredicate sizeNotPow2(unsigned TypeIdx);
 
 /// True iff the specified type index is a scalar or vector whose element size
 /// is not a power of 2.
-LLVM_ABI LegalityPredicate scalarOrEltSizeNotPow2(unsigned TypeIdx);
+LegalityPredicate scalarOrEltSizeNotPow2(unsigned TypeIdx);
 
 /// True if the total bitwidth of the specified type index is \p Size bits.
-LLVM_ABI LegalityPredicate sizeIs(unsigned TypeIdx, unsigned Size);
+LegalityPredicate sizeIs(unsigned TypeIdx, unsigned Size);
 
 /// True iff the specified type indices are both the same bit size.
-LLVM_ABI LegalityPredicate sameSize(unsigned TypeIdx0, unsigned TypeIdx1);
+LegalityPredicate sameSize(unsigned TypeIdx0, unsigned TypeIdx1);
 
 /// True iff the first type index has a larger total bit size than second type
 /// index.
-LLVM_ABI LegalityPredicate largerThan(unsigned TypeIdx0, unsigned TypeIdx1);
+LegalityPredicate largerThan(unsigned TypeIdx0, unsigned TypeIdx1);
 
 /// True iff the first type index has a smaller total bit size than second type
 /// index.
-LLVM_ABI LegalityPredicate smallerThan(unsigned TypeIdx0, unsigned TypeIdx1);
+LegalityPredicate smallerThan(unsigned TypeIdx0, unsigned TypeIdx1);
 
 /// True iff the specified MMO index has a size (rounded to bytes) that is not a
 /// power of 2.
-LLVM_ABI LegalityPredicate memSizeInBytesNotPow2(unsigned MMOIdx);
+LegalityPredicate memSizeInBytesNotPow2(unsigned MMOIdx);
 
 /// True iff the specified MMO index has a size that is not an even byte size,
 /// or that even byte size is not a power of 2.
-LLVM_ABI LegalityPredicate memSizeNotByteSizePow2(unsigned MMOIdx);
+LegalityPredicate memSizeNotByteSizePow2(unsigned MMOIdx);
 
 /// True iff the specified type index is a vector whose element count is not a
 /// power of 2.
-LLVM_ABI LegalityPredicate numElementsNotPow2(unsigned TypeIdx);
+LegalityPredicate numElementsNotPow2(unsigned TypeIdx);
 /// True iff the specified MMO index has at an atomic ordering of at Ordering or
 /// stronger.
-LLVM_ABI LegalityPredicate
-atomicOrderingAtLeastOrStrongerThan(unsigned MMOIdx, AtomicOrdering Ordering);
+LegalityPredicate atomicOrderingAtLeastOrStrongerThan(unsigned MMOIdx,
+                                                      AtomicOrdering Ordering);
 } // end namespace LegalityPredicates
 
 namespace LegalizeMutations {
 /// Select this specific type for the given type index.
-LLVM_ABI LegalizeMutation changeTo(unsigned TypeIdx, LLT Ty);
+LegalizeMutation changeTo(unsigned TypeIdx, LLT Ty);
 
 /// Keep the same type as the given type index.
-LLVM_ABI LegalizeMutation changeTo(unsigned TypeIdx, unsigned FromTypeIdx);
+LegalizeMutation changeTo(unsigned TypeIdx, unsigned FromTypeIdx);
 
 /// Keep the same scalar or element type as the given type index.
-LLVM_ABI LegalizeMutation changeElementTo(unsigned TypeIdx,
-                                          unsigned FromTypeIdx);
+LegalizeMutation changeElementTo(unsigned TypeIdx, unsigned FromTypeIdx);
 
 /// Keep the same scalar or element type as the given type.
-LLVM_ABI LegalizeMutation changeElementTo(unsigned TypeIdx, LLT Ty);
+LegalizeMutation changeElementTo(unsigned TypeIdx, LLT Ty);
 
 /// Keep the same scalar or element type as \p TypeIdx, but take the number of
 /// elements from \p FromTypeIdx.
-LLVM_ABI LegalizeMutation changeElementCountTo(unsigned TypeIdx,
-                                               unsigned FromTypeIdx);
+LegalizeMutation changeElementCountTo(unsigned TypeIdx, unsigned FromTypeIdx);
 
 /// Keep the same scalar or element type as \p TypeIdx, but take the number of
 /// elements from \p Ty.
-LLVM_ABI LegalizeMutation changeElementCountTo(unsigned TypeIdx, LLT Ty);
+LegalizeMutation changeElementCountTo(unsigned TypeIdx, LLT Ty);
 
 /// Change the scalar size or element size to have the same scalar size as type
 /// index \p FromIndex. Unlike changeElementTo, this discards pointer types and
 /// only changes the size.
-LLVM_ABI LegalizeMutation changeElementSizeTo(unsigned TypeIdx,
-                                              unsigned FromTypeIdx);
+LegalizeMutation changeElementSizeTo(unsigned TypeIdx, unsigned FromTypeIdx);
 
 /// Widen the scalar type or vector element type for the given type index to the
 /// next power of 2.
-LLVM_ABI LegalizeMutation widenScalarOrEltToNextPow2(unsigned TypeIdx,
-                                                     unsigned Min = 0);
+LegalizeMutation widenScalarOrEltToNextPow2(unsigned TypeIdx, unsigned Min = 0);
 
 /// Widen the scalar type or vector element type for the given type index to
 /// next multiple of \p Size.
-LLVM_ABI LegalizeMutation widenScalarOrEltToNextMultipleOf(unsigned TypeIdx,
-                                                           unsigned Size);
+LegalizeMutation widenScalarOrEltToNextMultipleOf(unsigned TypeIdx,
+                                                  unsigned Size);
 
 /// Add more elements to the type for the given type index to the next power of
 /// 2.
-LLVM_ABI LegalizeMutation moreElementsToNextPow2(unsigned TypeIdx,
-                                                 unsigned Min = 0);
+LegalizeMutation moreElementsToNextPow2(unsigned TypeIdx, unsigned Min = 0);
 /// Break up the vector type for the given type index into the element type.
-LLVM_ABI LegalizeMutation scalarize(unsigned TypeIdx);
+LegalizeMutation scalarize(unsigned TypeIdx);
 } // end namespace LegalizeMutations
 
 /// A single rule in a legalizer info ruleset.
@@ -935,16 +926,6 @@ public:
                                      Types2);
   }
 
-  /// The instruction is custom when the predicate is true and type indexes 0
-  /// and 1 are all in their respective lists.
-  LegalizeRuleSet &
-  customForCartesianProduct(bool Pred, std::initializer_list<LLT> Types0,
-                            std::initializer_list<LLT> Types1) {
-    if (!Pred)
-      return *this;
-    return actionForCartesianProduct(LegalizeAction::Custom, Types0, Types1);
-  }
-
   /// Unconditionally custom lower.
   LegalizeRuleSet &custom() {
     return customIf(always);
@@ -1314,17 +1295,17 @@ public:
   /// Check if there is no type index which is obviously not handled by the
   /// LegalizeRuleSet in any way at all.
   /// \pre Type indices of the opcode form a dense [0, \p NumTypeIdxs) set.
-  LLVM_ABI bool verifyTypeIdxsCoverage(unsigned NumTypeIdxs) const;
+  bool verifyTypeIdxsCoverage(unsigned NumTypeIdxs) const;
   /// Check if there is no imm index which is obviously not handled by the
   /// LegalizeRuleSet in any way at all.
   /// \pre Type indices of the opcode form a dense [0, \p NumTypeIdxs) set.
-  LLVM_ABI bool verifyImmIdxsCoverage(unsigned NumImmIdxs) const;
+  bool verifyImmIdxsCoverage(unsigned NumImmIdxs) const;
 
   /// Apply the ruleset to the given LegalityQuery.
-  LLVM_ABI LegalizeActionStep apply(const LegalityQuery &Query) const;
+  LegalizeActionStep apply(const LegalityQuery &Query) const;
 };
 
-class LLVM_ABI LegalizerInfo {
+class LegalizerInfo {
 public:
   virtual ~LegalizerInfo() = default;
 

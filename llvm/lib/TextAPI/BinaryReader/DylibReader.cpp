@@ -22,6 +22,7 @@
 #include "llvm/TextAPI/RecordsSlice.h"
 #include "llvm/TextAPI/TextAPIError.h"
 #include <iomanip>
+#include <set>
 #include <sstream>
 #include <string>
 #include <tuple>

@@ -102,8 +102,6 @@ struct MLIRToLLVMPassPipelineConfig : public FlangEPCallBacks {
     UnsafeFPMath = mathOpts.getAssociativeMath() &&
         mathOpts.getReciprocalMath() && NoSignedZerosFPMath &&
         ApproxFuncFPMath && mathOpts.getFPContractEnabled();
-    Reciprocals = opts.Reciprocals;
-    PreferVectorWidth = opts.PreferVectorWidth;
     if (opts.InstrumentFunctions) {
       InstrumentFunctionEntry = "__cyg_profile_func_enter";
       InstrumentFunctionExit = "__cyg_profile_func_exit";
@@ -128,10 +126,6 @@ struct MLIRToLLVMPassPipelineConfig : public FlangEPCallBacks {
   bool NoSignedZerosFPMath =
       false; ///< Set no-signed-zeros-fp-math attribute for functions.
   bool UnsafeFPMath = false; ///< Set unsafe-fp-math attribute for functions.
-  std::string Reciprocals = ""; ///< Set reciprocal-estimate attribute for
-                                ///< functions.
-  std::string PreferVectorWidth = ""; ///< Set prefer-vector-width attribute for
-                                      ///< functions.
   bool NSWOnLoopVarInc = true; ///< Add nsw flag to loop variable increments.
   bool EnableOpenMP = false; ///< Enable OpenMP lowering.
   std::string InstrumentFunctionEntry =

@@ -12,7 +12,6 @@
 #include "mlir/Dialect/Complex/IR/Complex.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.h"
-#include "mlir/Interfaces/RuntimeVerifiableOpInterface.h"
 #include "mlir/Interfaces/SubsetOpInterface.h"
 #include "mlir/Transforms/InliningUtils.h"
 
@@ -59,8 +58,6 @@ void TensorDialect::initialize() {
                             InsertSliceOp, ReshapeOp>();
   declarePromisedInterfaces<ReifyRankedShapedTypeOpInterface, ExpandShapeOp,
                             CollapseShapeOp, PadOp>();
-  declarePromisedInterfaces<RuntimeVerifiableOpInterface, CastOp, DimOp,
-                            ExtractOp, InsertOp, ExtractSliceOp>();
   declarePromisedInterfaces<SubsetOpInterface, ExtractSliceOp, InsertSliceOp,
                             ParallelInsertSliceOp>();
   declarePromisedInterfaces<SubsetInsertionOpInterface, InsertSliceOp,

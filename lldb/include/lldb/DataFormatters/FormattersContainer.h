@@ -193,10 +193,12 @@ public:
   bool Get(const FormattersMatchVector &candidates, ValueSP &entry) {
     for (const FormattersMatchCandidate &candidate : candidates) {
       if (Get(candidate, entry)) {
-        if (candidate.IsMatch(entry))
+        if (candidate.IsMatch(entry) == false) {
+          entry.reset();
+          continue;
+        } else {
           return true;
-        entry.reset();
-        continue;
+        }
       }
     }
     return false;

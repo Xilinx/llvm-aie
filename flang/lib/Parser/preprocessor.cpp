@@ -22,7 +22,6 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -300,7 +299,6 @@ void Preprocessor::DefineStandardMacros() {
   Define("__FILE__"s, "__FILE__"s);
   Define("__LINE__"s, "__LINE__"s);
   Define("__TIMESTAMP__"s, "__TIMESTAMP__"s);
-  Define("__COUNTER__"s, "__COUNTER__"s);
 }
 
 static const std::string idChars{
@@ -497,8 +495,6 @@ std::optional<TokenSequence> Preprocessor::MacroReplacement(
               repl = "\""s + time + '"';
             }
           }
-        } else if (name == "__COUNTER__") {
-          repl = std::to_string(counterVal_++);
         }
         if (!repl.empty()) {
           ProvenanceRange insert{allSources_.AddCompilerInsertion(repl)};

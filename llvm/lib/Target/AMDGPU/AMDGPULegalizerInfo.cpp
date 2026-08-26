@@ -1061,12 +1061,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   }
 
   auto &FPTruncActions = getActionDefinitionsBuilder(G_FPTRUNC);
-  if (ST.hasCvtPkF16F32Inst()) {
-    FPTruncActions.legalFor({{S32, S64}, {S16, S32}, {V2S16, V2S32}})
-        .clampMaxNumElements(0, S16, 2);
-  } else {
+  if (ST.hasCvtPkF16F32Inst())
+    FPTruncActions.legalFor({{S32, S64}, {S16, S32}, {V2S16, V2S32}});
+  else
     FPTruncActions.legalFor({{S32, S64}, {S16, S32}});
-  }
   FPTruncActions.scalarize(0).lower();
 
   getActionDefinitionsBuilder(G_FPEXT)
@@ -3016,9 +3014,10 @@ bool AMDGPULegalizerInfo::legalizeGlobalValue(
         GV->getName() != "llvm.amdgcn.module.lds" &&
         !AMDGPU::isNamedBarrier(*cast<GlobalVariable>(GV))) {
       const Function &Fn = MF.getFunction();
-      Fn.getContext().diagnose(DiagnosticInfoUnsupported(
-          Fn, "local memory global used by non-kernel function",
-          MI.getDebugLoc(), DS_Warning));
+      DiagnosticInfoUnsupported BadLDSDecl(
+        Fn, "local memory global used by non-kernel function", MI.getDebugLoc(),
+        DS_Warning);
+      Fn.getContext().diagnose(BadLDSDecl);
 
       // We currently don't have a way to correctly allocate LDS objects that
       // aren't directly associated with a kernel. We do force inlining of
@@ -4263,7 +4262,7 @@ static bool isNot(const MachineRegisterInfo &MRI, const MachineInstr &MI) {
   if (MI.getOpcode() != TargetOpcode::G_XOR)
     return false;
   auto ConstVal = getIConstantVRegSExtVal(MI.getOperand(2).getReg(), MRI);
-  return ConstVal == -1;
+  return ConstVal && *ConstVal == -1;
 }
 
 // Return the use branch instruction, otherwise null if the usage is invalid.
@@ -7047,9 +7046,11 @@ bool AMDGPULegalizerInfo::legalizeDebugTrap(MachineInstr &MI,
   // accordingly
   if (!ST.isTrapHandlerEnabled() ||
       ST.getTrapHandlerAbi() != GCNSubtarget::TrapHandlerAbi::AMDHSA) {
-    Function &Fn = B.getMF().getFunction();
-    Fn.getContext().diagnose(DiagnosticInfoUnsupported(
-        Fn, "debugtrap handler not supported", MI.getDebugLoc(), DS_Warning));
+    DiagnosticInfoUnsupported NoTrap(B.getMF().getFunction(),
+                                     "debugtrap handler not supported",
+                                     MI.getDebugLoc(), DS_Warning);
+    LLVMContext &Ctx = B.getMF().getFunction().getContext();
+    Ctx.diagnose(NoTrap);
   } else {
     // Insert debug-trap instruction
     B.buildInstr(AMDGPU::S_TRAP)
@@ -7077,9 +7078,10 @@ bool AMDGPULegalizerInfo::legalizeBVHIntersectRayIntrinsic(
   Register TDescr = MI.getOperand(7).getReg();
 
   if (!ST.hasGFX10_AEncoding()) {
-    Function &Fn = B.getMF().getFunction();
-    Fn.getContext().diagnose(DiagnosticInfoUnsupported(
-        Fn, "intrinsic not supported on subtarget", MI.getDebugLoc()));
+    DiagnosticInfoUnsupported BadIntrin(B.getMF().getFunction(),
+                                        "intrinsic not supported on subtarget",
+                                        MI.getDebugLoc());
+    B.getMF().getFunction().getContext().diagnose(BadIntrin);
     return false;
   }
 
@@ -7229,9 +7231,10 @@ bool AMDGPULegalizerInfo::legalizeBVHDualOrBVH8IntersectRayIntrinsic(
   Register TDescr = MI.getOperand(10).getReg();
 
   if (!ST.hasBVHDualAndBVH8Insts()) {
-    Function &Fn = B.getMF().getFunction();
-    Fn.getContext().diagnose(DiagnosticInfoUnsupported(
-        Fn, "intrinsic not supported on subtarget", MI.getDebugLoc()));
+    DiagnosticInfoUnsupported BadIntrin(B.getMF().getFunction(),
+                                        "intrinsic not supported on subtarget",
+                                        MI.getDebugLoc());
+    B.getMF().getFunction().getContext().diagnose(BadIntrin);
     return false;
   }
 

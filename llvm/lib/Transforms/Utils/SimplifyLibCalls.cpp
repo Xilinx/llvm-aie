@@ -1001,7 +1001,7 @@ Value *LibCallSimplifier::optimizeStringLength(CallInst *CI, IRBuilderBase &B,
       }
 
       Value *Offset = GEP->getOperand(2);
-      KnownBits Known = computeKnownBits(Offset, DL, nullptr, CI, nullptr);
+      KnownBits Known = computeKnownBits(Offset, DL, 0, nullptr, CI, nullptr);
       uint64_t ArrSize =
              cast<ArrayType>(GEP->getSourceElementType())->getNumElements();
 
@@ -2262,7 +2262,7 @@ Value *LibCallSimplifier::replacePowWithSqrt(CallInst *Pow, IRBuilderBase &B) {
   // errno), but sqrt(-Inf) is required by various standards to set errno.
   if (!Pow->doesNotAccessMemory() && !Pow->hasNoInfs() &&
       !isKnownNeverInfinity(
-          Base, SimplifyQuery(DL, TLI, DT, AC, Pow, true, true, DC)))
+          Base, 0, SimplifyQuery(DL, TLI, DT, AC, Pow, true, true, DC)))
     return nullptr;
 
   Sqrt = getSqrtCall(Base, AttributeList(), Pow->doesNotAccessMemory(), Mod, B,
@@ -2574,7 +2574,8 @@ Value *LibCallSimplifier::optimizeLog(CallInst *Log, IRBuilderBase &B) {
       SimplifyQuery SQ(DL, TLI, DT, AC, Log, true, true, DC);
       KnownFPClass Known = computeKnownFPClass(
           Log->getOperand(0),
-          KnownFPClass::OrderedLessThanZeroMask | fcSubnormal, SQ);
+          KnownFPClass::OrderedLessThanZeroMask | fcSubnormal,
+          /*Depth=*/0, SQ);
       Function *F = Log->getParent()->getParent();
       const fltSemantics &FltSem = Ty->getScalarType()->getFltSemantics();
       IsKnownNoErrno =
@@ -2802,10 +2803,12 @@ Value *LibCallSimplifier::optimizeFMod(CallInst *CI, IRBuilderBase &B) {
   bool IsNoNan = CI->hasNoNaNs();
   if (!IsNoNan) {
     SimplifyQuery SQ(DL, TLI, DT, AC, CI, true, true, DC);
-    KnownFPClass Known0 = computeKnownFPClass(CI->getOperand(0), fcInf, SQ);
+    KnownFPClass Known0 = computeKnownFPClass(CI->getOperand(0), fcInf,
+                                              /*Depth=*/0, SQ);
     if (Known0.isKnownNeverInfinity()) {
       KnownFPClass Known1 =
-          computeKnownFPClass(CI->getOperand(1), fcZero | fcSubnormal, SQ);
+          computeKnownFPClass(CI->getOperand(1), fcZero | fcSubnormal,
+                              /*Depth=*/0, SQ);
       Function *F = CI->getParent()->getParent();
       const fltSemantics &FltSem =
           CI->getType()->getScalarType()->getFltSemantics();

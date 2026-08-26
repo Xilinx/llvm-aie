@@ -94,7 +94,6 @@ def ElaboratedType : TypeNode<Type>, NeverCanonical;
 def AttributedType : TypeNode<Type>, NeverCanonical;
 def BTFTagAttributedType : TypeNode<Type>, NeverCanonical;
 def HLSLAttributedResourceType : TypeNode<Type>;
-def HLSLInlineSpirvType : TypeNode<Type>;
 def TemplateTypeParmType : TypeNode<Type>, AlwaysDependent, LeafType;
 def SubstTemplateTypeParmType : TypeNode<Type>, NeverCanonical;
 def SubstTemplateTypeParmPackType : TypeNode<Type>, AlwaysDependent;

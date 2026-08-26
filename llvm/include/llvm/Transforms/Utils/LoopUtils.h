@@ -20,7 +20,6 @@
 #include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/VectorBuilder.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
 namespace llvm {
@@ -56,19 +55,16 @@ typedef std::pair<const RuntimeCheckingPtrGroup *,
 template <typename T, unsigned N> class SmallSetVector;
 template <typename T, unsigned N> class SmallPriorityWorklist;
 
-LLVM_ABI BasicBlock *InsertPreheaderForLoop(Loop *L, DominatorTree *DT,
-                                            LoopInfo *LI,
-                                            MemorySSAUpdater *MSSAU,
-                                            bool PreserveLCSSA);
+BasicBlock *InsertPreheaderForLoop(Loop *L, DominatorTree *DT, LoopInfo *LI,
+                                   MemorySSAUpdater *MSSAU, bool PreserveLCSSA);
 
 /// Ensure that all exit blocks of the loop are dedicated exits.
 ///
 /// For any loop exit block with non-loop predecessors, we split the loop
 /// predecessors to use a dedicated loop exit block. We update the dominator
 /// tree and loop info if provided, and will preserve LCSSA if requested.
-LLVM_ABI bool formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
-                                      MemorySSAUpdater *MSSAU,
-                                      bool PreserveLCSSA);
+bool formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
+                             MemorySSAUpdater *MSSAU, bool PreserveLCSSA);
 
 /// Ensures LCSSA form for every instruction from the Worklist in the scope of
 /// innermost containing loop.
@@ -88,12 +84,11 @@ LLVM_ABI bool formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
 ///
 /// If \p InsertedPHIs is not nullptr, inserted phis will be added to this
 /// vector.
-LLVM_ABI bool
-formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
-                         const DominatorTree &DT, const LoopInfo &LI,
-                         ScalarEvolution *SE,
-                         SmallVectorImpl<PHINode *> *PHIsToRemove = nullptr,
-                         SmallVectorImpl<PHINode *> *InsertedPHIs = nullptr);
+bool formLCSSAForInstructions(
+    SmallVectorImpl<Instruction *> &Worklist, const DominatorTree &DT,
+    const LoopInfo &LI, ScalarEvolution *SE,
+    SmallVectorImpl<PHINode *> *PHIsToRemove = nullptr,
+    SmallVectorImpl<PHINode *> *InsertedPHIs = nullptr);
 
 /// Put loop into LCSSA form.
 ///
@@ -107,8 +102,8 @@ formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
 /// If ScalarEvolution is passed in, it will be preserved.
 ///
 /// Returns true if any modifications are made to the loop.
-LLVM_ABI bool formLCSSA(Loop &L, const DominatorTree &DT, const LoopInfo *LI,
-                        ScalarEvolution *SE);
+bool formLCSSA(Loop &L, const DominatorTree &DT, const LoopInfo *LI,
+               ScalarEvolution *SE);
 
 /// Put a loop nest into LCSSA form.
 ///
@@ -119,8 +114,8 @@ LLVM_ABI bool formLCSSA(Loop &L, const DominatorTree &DT, const LoopInfo *LI,
 /// If ScalarEvolution is passed in, it will be preserved.
 ///
 /// Returns true if any modifications are made to the loop.
-LLVM_ABI bool formLCSSARecursively(Loop &L, const DominatorTree &DT,
-                                   const LoopInfo *LI, ScalarEvolution *SE);
+bool formLCSSARecursively(Loop &L, const DominatorTree &DT, const LoopInfo *LI,
+                          ScalarEvolution *SE);
 
 /// Flags controlling how much is checked when sinking or hoisting
 /// instructions.  The number of memory access in the loop (and whether there
@@ -128,11 +123,11 @@ LLVM_ABI bool formLCSSARecursively(Loop &L, const DominatorTree &DT,
 class SinkAndHoistLICMFlags {
 public:
   // Explicitly set limits.
-  LLVM_ABI SinkAndHoistLICMFlags(unsigned LicmMssaOptCap,
-                                 unsigned LicmMssaNoAccForPromotionCap,
-                                 bool IsSink, Loop &L, MemorySSA &MSSA);
+  SinkAndHoistLICMFlags(unsigned LicmMssaOptCap,
+                        unsigned LicmMssaNoAccForPromotionCap, bool IsSink,
+                        Loop &L, MemorySSA &MSSA);
   // Use default limits.
-  LLVM_ABI SinkAndHoistLICMFlags(bool IsSink, Loop &L, MemorySSA &MSSA);
+  SinkAndHoistLICMFlags(bool IsSink, Loop &L, MemorySSA &MSSA);
 
   void setIsSink(bool B) { IsSink = B; }
   bool getIsSink() { return IsSink; }
@@ -158,21 +153,19 @@ protected:
 /// arguments. Diagnostics is emitted via \p ORE. It returns changed status.
 /// \p CurLoop is a loop to do sinking on. \p OutermostLoop is used only when
 /// this function is called by \p sinkRegionForLoopNest.
-LLVM_ABI bool sinkRegion(DomTreeNode *, AAResults *, LoopInfo *,
-                         DominatorTree *, TargetLibraryInfo *,
-                         TargetTransformInfo *, Loop *CurLoop,
-                         MemorySSAUpdater &, ICFLoopSafetyInfo *,
-                         SinkAndHoistLICMFlags &, OptimizationRemarkEmitter *,
-                         Loop *OutermostLoop = nullptr);
+bool sinkRegion(DomTreeNode *, AAResults *, LoopInfo *, DominatorTree *,
+                TargetLibraryInfo *, TargetTransformInfo *, Loop *CurLoop,
+                MemorySSAUpdater &, ICFLoopSafetyInfo *,
+                SinkAndHoistLICMFlags &, OptimizationRemarkEmitter *,
+                Loop *OutermostLoop = nullptr);
 
 /// Call sinkRegion on loops contained within the specified loop
 /// in order from innermost to outermost.
-LLVM_ABI bool sinkRegionForLoopNest(DomTreeNode *, AAResults *, LoopInfo *,
-                                    DominatorTree *, TargetLibraryInfo *,
-                                    TargetTransformInfo *, Loop *,
-                                    MemorySSAUpdater &, ICFLoopSafetyInfo *,
-                                    SinkAndHoistLICMFlags &,
-                                    OptimizationRemarkEmitter *);
+bool sinkRegionForLoopNest(DomTreeNode *, AAResults *, LoopInfo *,
+                           DominatorTree *, TargetLibraryInfo *,
+                           TargetTransformInfo *, Loop *, MemorySSAUpdater &,
+                           ICFLoopSafetyInfo *, SinkAndHoistLICMFlags &,
+                           OptimizationRemarkEmitter *);
 
 /// Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
@@ -184,17 +177,16 @@ LLVM_ABI bool sinkRegionForLoopNest(DomTreeNode *, AAResults *, LoopInfo *,
 /// Diagnostics is emitted via \p ORE. It returns changed status.
 /// \p AllowSpeculation is whether values should be hoisted even if they are not
 /// guaranteed to execute in the loop, but are safe to speculatively execute.
-LLVM_ABI bool hoistRegion(DomTreeNode *, AAResults *, LoopInfo *,
-                          DominatorTree *, AssumptionCache *,
-                          TargetLibraryInfo *, Loop *, MemorySSAUpdater &,
-                          ScalarEvolution *, ICFLoopSafetyInfo *,
-                          SinkAndHoistLICMFlags &, OptimizationRemarkEmitter *,
-                          bool, bool AllowSpeculation);
+bool hoistRegion(DomTreeNode *, AAResults *, LoopInfo *, DominatorTree *,
+                 AssumptionCache *, TargetLibraryInfo *, Loop *,
+                 MemorySSAUpdater &, ScalarEvolution *, ICFLoopSafetyInfo *,
+                 SinkAndHoistLICMFlags &, OptimizationRemarkEmitter *, bool,
+                 bool AllowSpeculation);
 
 /// Return true if the induction variable \p IV in a Loop whose latch is
 /// \p LatchBlock would become dead if the exit test \p Cond were removed.
 /// Conservatively returns false if analysis is insufficient.
-LLVM_ABI bool isAlmostDeadIV(PHINode *IV, BasicBlock *LatchBlock, Value *Cond);
+bool isAlmostDeadIV(PHINode *IV, BasicBlock *LatchBlock, Value *Cond);
 
 /// This function deletes dead loops. The caller of this function needs to
 /// guarantee that the loop is infact dead.
@@ -207,14 +199,14 @@ LLVM_ABI bool isAlmostDeadIV(PHINode *IV, BasicBlock *LatchBlock, Value *Cond);
 /// and \p MSSA if pointers to those are provided.
 /// It also updates the loop PM if an updater struct is provided.
 
-LLVM_ABI void deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
-                             LoopInfo *LI, MemorySSA *MSSA = nullptr);
+void deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
+                    LoopInfo *LI, MemorySSA *MSSA = nullptr);
 
 /// Remove the backedge of the specified loop.  Handles loop nests and general
 /// loop structures subject to the precondition that the loop has no parent
 /// loop and has a single latch block.  Preserves all listed analyses.
-LLVM_ABI void breakLoopBackedge(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
-                                LoopInfo &LI, MemorySSA *MSSA);
+void breakLoopBackedge(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
+                       LoopInfo &LI, MemorySSA *MSSA);
 
 /// Try to promote memory values to scalars by sinking stores out of
 /// the loop and moving loads to before the loop.  We do this by looping over
@@ -226,7 +218,7 @@ LLVM_ABI void breakLoopBackedge(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 /// Diagnostics is emitted via \p ORE. It returns changed status.
 /// \p AllowSpeculation is whether values should be hoisted even if they are not
 /// guaranteed to execute in the loop, but are safe to speculatively execute.
-LLVM_ABI bool promoteLoopAccessesToScalars(
+bool promoteLoopAccessesToScalars(
     const SmallSetVector<Value *, 8> &, SmallVectorImpl<BasicBlock *> &,
     SmallVectorImpl<BasicBlock::iterator> &, SmallVectorImpl<MemoryAccess *> &,
     PredIteratorCache &, LoopInfo *, DominatorTree *, AssumptionCache *AC,
@@ -236,17 +228,17 @@ LLVM_ABI bool promoteLoopAccessesToScalars(
 
 /// Does a BFS from a given node to all of its children inside a given loop.
 /// The returned vector of basic blocks includes the starting point.
-LLVM_ABI SmallVector<BasicBlock *, 16>
+SmallVector<BasicBlock *, 16>
 collectChildrenInLoop(DominatorTree *DT, DomTreeNode *N, const Loop *CurLoop);
 
 /// Returns the instructions that use values defined in the loop.
-LLVM_ABI SmallVector<Instruction *, 8> findDefsUsedOutsideOfLoop(Loop *L);
+SmallVector<Instruction *, 8> findDefsUsedOutsideOfLoop(Loop *L);
 
 /// Find a combination of metadata ("llvm.loop.vectorize.width" and
 /// "llvm.loop.vectorize.scalable.enable") for a loop and use it to construct a
 /// ElementCount. If the metadata "llvm.loop.vectorize.width" cannot be found
 /// then std::nullopt is returned.
-LLVM_ABI std::optional<ElementCount>
+std::optional<ElementCount>
 getOptionalElementCountLoopAttribute(const Loop *TheLoop);
 
 /// Create a new loop identifier for a loop created from a loop transformation.
@@ -273,7 +265,7 @@ getOptionalElementCountLoopAttribute(const Loop *TheLoop);
 ///         @p OrigLoopID: The original identifier can be reused.
 ///         nullptr      : The new loop has no attributes.
 ///         MDNode*      : A new unique loop identifier.
-LLVM_ABI std::optional<MDNode *>
+std::optional<MDNode *>
 makeFollowupLoopID(MDNode *OrigLoopID, ArrayRef<StringRef> FollowupAttrs,
                    const char *InheritOptionsAttrsPrefix = "",
                    bool AlwaysNew = false);
@@ -303,10 +295,10 @@ std::optional<int64_t> getMinTripCount(Loop *L, ScalarEvolution *SE = nullptr);
 std::optional<int64_t> getInitiationInterval(const MDNode *LoopID);
 
 /// Look for the loop attribute that disables all transformation heuristic.
-LLVM_ABI bool hasDisableAllTransformsHint(const Loop *L);
+bool hasDisableAllTransformsHint(const Loop *L);
 
 /// Look for the loop attribute that disables the LICM transformation heuristics.
-LLVM_ABI bool hasDisableLICMTransformsHint(const Loop *L);
+bool hasDisableLICMTransformsHint(const Loop *L);
 
 /// The mode sets how eager a transformation should be applied.
 enum TransformationMode {
@@ -337,25 +329,25 @@ enum TransformationMode {
 
 /// @{
 /// Get the mode for LLVM's supported loop transformations.
-LLVM_ABI TransformationMode hasUnrollTransformation(const Loop *L);
-LLVM_ABI TransformationMode hasUnrollAndJamTransformation(const Loop *L);
-LLVM_ABI TransformationMode hasVectorizeTransformation(const Loop *L);
-LLVM_ABI TransformationMode hasDistributeTransformation(const Loop *L);
-LLVM_ABI TransformationMode hasLICMVersioningTransformation(const Loop *L);
+TransformationMode hasUnrollTransformation(const Loop *L);
+TransformationMode hasUnrollAndJamTransformation(const Loop *L);
+TransformationMode hasVectorizeTransformation(const Loop *L);
+TransformationMode hasDistributeTransformation(const Loop *L);
+TransformationMode hasLICMVersioningTransformation(const Loop *L);
 /// @}
 
 /// Set input string into loop metadata by keeping other values intact.
 /// If the string is already in loop metadata update value if it is
 /// different.
-LLVM_ABI void addStringMetadataToLoop(Loop *TheLoop, const char *MDString,
-                                      unsigned V = 0);
+void addStringMetadataToLoop(Loop *TheLoop, const char *MDString,
+                             unsigned V = 0);
 
 /// Returns a loop's estimated trip count based on branch weight metadata.
 /// In addition if \p EstimatedLoopInvocationWeight is not null it is
 /// initialized with weight of loop's latch leading to the exit.
 /// Returns a valid positive trip count, saturated at UINT_MAX, or std::nullopt
 /// when a meaningful estimate cannot be made.
-LLVM_ABI std::optional<unsigned>
+std::optional<unsigned>
 getLoopEstimatedTripCount(Loop *L,
                           unsigned *EstimatedLoopInvocationWeight = nullptr);
 
@@ -364,20 +356,20 @@ getLoopEstimatedTripCount(Loop *L,
 /// through latch. Returns true if metadata is successfully updated, false
 /// otherwise. Note that loop must have a latch block which controls loop exit
 /// in order to succeed.
-LLVM_ABI bool setLoopEstimatedTripCount(Loop *L, unsigned EstimatedTripCount,
-                                        unsigned EstimatedLoopInvocationWeight);
+bool setLoopEstimatedTripCount(Loop *L, unsigned EstimatedTripCount,
+                               unsigned EstimatedLoopInvocationWeight);
 
 /// Check inner loop (L) backedge count is known to be invariant on all
 /// iterations of its outer loop. If the loop has no parent, this is trivially
 /// true.
-LLVM_ABI bool hasIterationCountInvariantInParent(Loop *L, ScalarEvolution &SE);
+bool hasIterationCountInvariantInParent(Loop *L, ScalarEvolution &SE);
 
 /// Helper to consistently add the set of standard passes to a loop pass's \c
 /// AnalysisUsage.
 ///
 /// All loop passes should call this as part of implementing their \c
 /// getAnalysisUsage.
-LLVM_ABI void getLoopAnalysisUsage(AnalysisUsage &AU);
+void getLoopAnalysisUsage(AnalysisUsage &AU);
 
 /// Returns true if is legal to hoist or sink this instruction disregarding the
 /// possible introduction of faults.  Reasoning about potential faulting
@@ -388,89 +380,87 @@ LLVM_ABI void getLoopAnalysisUsage(AnalysisUsage &AU);
 /// to assess the legality of duplicating atomic loads.  Generally, this is
 /// true when moving out of loop and not true when moving into loops.
 /// If \p ORE is set use it to emit optimization remarks.
-LLVM_ABI bool canSinkOrHoistInst(Instruction &I, AAResults *AA,
-                                 DominatorTree *DT, Loop *CurLoop,
-                                 MemorySSAUpdater &MSSAU,
-                                 bool TargetExecutesOncePerLoop,
-                                 SinkAndHoistLICMFlags &LICMFlags,
-                                 OptimizationRemarkEmitter *ORE = nullptr);
+bool canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
+                        Loop *CurLoop, MemorySSAUpdater &MSSAU,
+                        bool TargetExecutesOncePerLoop,
+                        SinkAndHoistLICMFlags &LICMFlags,
+                        OptimizationRemarkEmitter *ORE = nullptr);
 
 /// Returns the llvm.vector.reduce intrinsic that corresponds to the recurrence
 /// kind.
-LLVM_ABI constexpr Intrinsic::ID getReductionIntrinsicID(RecurKind RK);
+constexpr Intrinsic::ID getReductionIntrinsicID(RecurKind RK);
 
 /// Returns the arithmetic instruction opcode used when expanding a reduction.
-LLVM_ABI unsigned getArithmeticReductionInstruction(Intrinsic::ID RdxID);
+unsigned getArithmeticReductionInstruction(Intrinsic::ID RdxID);
 /// Returns the reduction intrinsic id corresponding to the binary operation.
-LLVM_ABI Intrinsic::ID getReductionForBinop(Instruction::BinaryOps Opc);
+Intrinsic::ID getReductionForBinop(Instruction::BinaryOps Opc);
 
 /// Returns the min/max intrinsic used when expanding a min/max reduction.
-LLVM_ABI Intrinsic::ID getMinMaxReductionIntrinsicOp(Intrinsic::ID RdxID);
+Intrinsic::ID getMinMaxReductionIntrinsicOp(Intrinsic::ID RdxID);
 
 /// Returns the min/max intrinsic used when expanding a min/max reduction.
-LLVM_ABI Intrinsic::ID getMinMaxReductionIntrinsicOp(RecurKind RK);
+Intrinsic::ID getMinMaxReductionIntrinsicOp(RecurKind RK);
 
 /// Returns the recurence kind used when expanding a min/max reduction.
-LLVM_ABI RecurKind getMinMaxReductionRecurKind(Intrinsic::ID RdxID);
+RecurKind getMinMaxReductionRecurKind(Intrinsic::ID RdxID);
 
 /// Returns the comparison predicate used when expanding a min/max reduction.
-LLVM_ABI CmpInst::Predicate getMinMaxReductionPredicate(RecurKind RK);
+CmpInst::Predicate getMinMaxReductionPredicate(RecurKind RK);
 
 /// Given information about an @llvm.vector.reduce.* intrinsic, return
 /// the identity value for the reduction.
-LLVM_ABI Value *getReductionIdentity(Intrinsic::ID RdxID, Type *Ty,
-                                     FastMathFlags FMF);
+Value *getReductionIdentity(Intrinsic::ID RdxID, Type *Ty, FastMathFlags FMF);
 
 /// Given information about an recurrence kind, return the identity
 /// for the @llvm.vector.reduce.* used to generate it.
-LLVM_ABI Value *getRecurrenceIdentity(RecurKind K, Type *Tp, FastMathFlags FMF);
+Value *getRecurrenceIdentity(RecurKind K, Type *Tp, FastMathFlags FMF);
 
 /// Returns a Min/Max operation corresponding to MinMaxRecurrenceKind.
 /// The Builder's fast-math-flags must be set to propagate the expected values.
-LLVM_ABI Value *createMinMaxOp(IRBuilderBase &Builder, RecurKind RK,
-                               Value *Left, Value *Right);
+Value *createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
+                      Value *Right);
 
 /// Generates an ordered vector reduction using extracts to reduce the value.
-LLVM_ABI Value *getOrderedReduction(IRBuilderBase &Builder, Value *Acc,
-                                    Value *Src, unsigned Op,
-                                    RecurKind MinMaxKind = RecurKind::None);
+Value *getOrderedReduction(IRBuilderBase &Builder, Value *Acc, Value *Src,
+                           unsigned Op, RecurKind MinMaxKind = RecurKind::None);
 
 /// Generates a vector reduction using shufflevectors to reduce the value.
 /// Fast-math-flags are propagated using the IRBuilder's setting.
-LLVM_ABI Value *getShuffleReduction(IRBuilderBase &Builder, Value *Src,
-                                    unsigned Op,
-                                    TargetTransformInfo::ReductionShuffle RS,
-                                    RecurKind MinMaxKind = RecurKind::None);
+Value *getShuffleReduction(IRBuilderBase &Builder, Value *Src, unsigned Op,
+                           TargetTransformInfo::ReductionShuffle RS,
+                           RecurKind MinMaxKind = RecurKind::None);
 
 /// Create a reduction of the given vector. The reduction operation
 /// is described by the \p Opcode parameter. min/max reductions require
 /// additional information supplied in \p RdxKind.
 /// Fast-math-flags are propagated using the IRBuilder's setting.
-LLVM_ABI Value *createSimpleReduction(IRBuilderBase &B, Value *Src,
-                                      RecurKind RdxKind);
+Value *createSimpleReduction(IRBuilderBase &B, Value *Src,
+                             RecurKind RdxKind);
 /// Overloaded function to generate vector-predication intrinsics for
 /// reduction.
-LLVM_ABI Value *createSimpleReduction(VectorBuilder &VB, Value *Src,
-                                      RecurKind RdxKind);
-
-/// Create a reduction of the given vector \p Src for a reduction of kind
-/// RecurKind::AnyOf. The start value of the reduction is \p InitVal.
-LLVM_ABI Value *createAnyOfReduction(IRBuilderBase &B, Value *Src,
-                                     Value *InitVal, PHINode *OrigPhi);
+Value *createSimpleReduction(VectorBuilder &VB, Value *Src, RecurKind RdxKind);
 
 /// Create a reduction of the given vector \p Src for a reduction of the
-/// kind RecurKind::FindLastIV.
-LLVM_ABI Value *createFindLastIVReduction(IRBuilderBase &B, Value *Src,
-                                          Value *Start, Value *Sentinel);
+/// kind RecurKind::IAnyOf or RecurKind::FAnyOf. The reduction operation is
+/// described by \p Desc.
+Value *createAnyOfReduction(IRBuilderBase &B, Value *Src,
+                            const RecurrenceDescriptor &Desc,
+                            PHINode *OrigPhi);
+
+/// Create a reduction of the given vector \p Src for a reduction of the
+/// kind RecurKind::IFindLastIV or RecurKind::FFindLastIV. The reduction
+/// operation is described by \p Desc.
+Value *createFindLastIVReduction(IRBuilderBase &B, Value *Src, Value *Start,
+                                 const RecurrenceDescriptor &Desc);
 
 /// Create an ordered reduction intrinsic using the given recurrence
 /// kind \p RdxKind.
-LLVM_ABI Value *createOrderedReduction(IRBuilderBase &B, RecurKind RdxKind,
-                                       Value *Src, Value *Start);
+Value *createOrderedReduction(IRBuilderBase &B, RecurKind RdxKind, Value *Src,
+                              Value *Start);
 /// Overloaded function to generate vector-predication intrinsics for ordered
 /// reduction.
-LLVM_ABI Value *createOrderedReduction(VectorBuilder &VB, RecurKind RdxKind,
-                                       Value *Src, Value *Start);
+Value *createOrderedReduction(VectorBuilder &VB, RecurKind RdxKind, Value *Src,
+                              Value *Start);
 
 /// Get the intersection (logical and) of all of the potential IR flags
 /// of each scalar operation (VL) that will be converted into a vector (I).
@@ -478,36 +468,33 @@ LLVM_ABI Value *createOrderedReduction(VectorBuilder &VB, RecurKind RdxKind,
 /// when intersecting.
 /// Flag set: NSW, NUW (if IncludeWrapFlags is true), exact, and all of
 /// fast-math.
-LLVM_ABI void propagateIRFlags(Value *I, ArrayRef<Value *> VL,
-                               Value *OpValue = nullptr,
-                               bool IncludeWrapFlags = true);
+void propagateIRFlags(Value *I, ArrayRef<Value *> VL, Value *OpValue = nullptr,
+                      bool IncludeWrapFlags = true);
 
 /// Returns true if we can prove that \p S is defined and always negative in
 /// loop \p L.
-LLVM_ABI bool isKnownNegativeInLoop(const SCEV *S, const Loop *L,
-                                    ScalarEvolution &SE);
+bool isKnownNegativeInLoop(const SCEV *S, const Loop *L, ScalarEvolution &SE);
 
 /// Returns true if we can prove that \p S is defined and always non-negative in
 /// loop \p L.
-LLVM_ABI bool isKnownNonNegativeInLoop(const SCEV *S, const Loop *L,
-                                       ScalarEvolution &SE);
+bool isKnownNonNegativeInLoop(const SCEV *S, const Loop *L,
+                              ScalarEvolution &SE);
 /// Returns true if we can prove that \p S is defined and always positive in
 /// loop \p L.
-LLVM_ABI bool isKnownPositiveInLoop(const SCEV *S, const Loop *L,
-                                    ScalarEvolution &SE);
+bool isKnownPositiveInLoop(const SCEV *S, const Loop *L, ScalarEvolution &SE);
 
 /// Returns true if we can prove that \p S is defined and always non-positive in
 /// loop \p L.
-LLVM_ABI bool isKnownNonPositiveInLoop(const SCEV *S, const Loop *L,
-                                       ScalarEvolution &SE);
+bool isKnownNonPositiveInLoop(const SCEV *S, const Loop *L,
+                              ScalarEvolution &SE);
 
 /// Returns true if \p S is defined and never is equal to signed/unsigned max.
-LLVM_ABI bool cannotBeMaxInLoop(const SCEV *S, const Loop *L,
-                                ScalarEvolution &SE, bool Signed);
+bool cannotBeMaxInLoop(const SCEV *S, const Loop *L, ScalarEvolution &SE,
+                       bool Signed);
 
 /// Returns true if \p S is defined and never is equal to signed/unsigned min.
-LLVM_ABI bool cannotBeMinInLoop(const SCEV *S, const Loop *L,
-                                ScalarEvolution &SE, bool Signed);
+bool cannotBeMinInLoop(const SCEV *S, const Loop *L, ScalarEvolution &SE,
+                       bool Signed);
 
 enum ReplaceExitVal {
   NeverRepl,
@@ -522,12 +509,11 @@ enum ReplaceExitVal {
 /// outside of the loop that use the final values of the current expressions.
 /// Return the number of loop exit values that have been replaced, and the
 /// corresponding phi node will be added to DeadInsts.
-LLVM_ABI int rewriteLoopExitValues(Loop *L, LoopInfo *LI,
-                                   TargetLibraryInfo *TLI, ScalarEvolution *SE,
-                                   const TargetTransformInfo *TTI,
-                                   SCEVExpander &Rewriter, DominatorTree *DT,
-                                   ReplaceExitVal ReplaceExitValue,
-                                   SmallVector<WeakTrackingVH, 16> &DeadInsts);
+int rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
+                          ScalarEvolution *SE, const TargetTransformInfo *TTI,
+                          SCEVExpander &Rewriter, DominatorTree *DT,
+                          ReplaceExitVal ReplaceExitValue,
+                          SmallVector<WeakTrackingVH, 16> &DeadInsts);
 
 /// Set weights for \p UnrolledLoop and \p RemainderLoop based on weights for
 /// \p OrigLoop and the following distribution of \p OrigLoop iteration among \p
@@ -543,8 +529,8 @@ LLVM_ABI int rewriteLoopExitValues(Loop *L, LoopInfo *LI,
 ///
 /// This utility may be useful for such optimizations as unroller and
 /// vectorizer as it's typical transformation for them.
-LLVM_ABI void setProfileInfoAfterUnrolling(Loop *OrigLoop, Loop *UnrolledLoop,
-                                           Loop *RemainderLoop, uint64_t UF);
+void setProfileInfoAfterUnrolling(Loop *OrigLoop, Loop *UnrolledLoop,
+                                  Loop *RemainderLoop, uint64_t UF);
 
 /// Utility that implements appending of loops onto a worklist given a range.
 /// We want to process loops in postorder, but the worklist is a LIFO data
@@ -552,22 +538,13 @@ LLVM_ABI void setProfileInfoAfterUnrolling(Loop *OrigLoop, Loop *UnrolledLoop,
 /// For trees, a preorder traversal is a viable reverse postorder, so we
 /// actually append using a preorder walk algorithm.
 template <typename RangeT>
-LLVM_TEMPLATE_ABI void
-appendLoopsToWorklist(RangeT &&, SmallPriorityWorklist<Loop *, 4> &);
+void appendLoopsToWorklist(RangeT &&, SmallPriorityWorklist<Loop *, 4> &);
 /// Utility that implements appending of loops onto a worklist given a range.
 /// It has the same behavior as appendLoopsToWorklist, but assumes the range of
 /// loops has already been reversed, so it processes loops in the given order.
 template <typename RangeT>
 void appendReversedLoopsToWorklist(RangeT &&,
                                    SmallPriorityWorklist<Loop *, 4> &);
-
-extern template LLVM_TEMPLATE_ABI void
-appendLoopsToWorklist<ArrayRef<Loop *> &>(
-    ArrayRef<Loop *> &Loops, SmallPriorityWorklist<Loop *, 4> &Worklist);
-
-extern template LLVM_TEMPLATE_ABI void
-appendLoopsToWorklist<Loop &>(Loop &L,
-                              SmallPriorityWorklist<Loop *, 4> &Worklist);
 
 /// Utility that implements appending of loops onto a worklist given LoopInfo.
 /// Calls the templated utility taking a Range of loops, handing it the Loops
@@ -578,22 +555,21 @@ appendLoopsToWorklist<Loop &>(Loop &L,
 /// loop nest into the next. Calls appendReversedLoopsToWorklist with the
 /// already reversed loops in LI.
 /// FIXME: Consider changing the order in LoopInfo.
-LLVM_ABI void appendLoopsToWorklist(LoopInfo &,
-                                    SmallPriorityWorklist<Loop *, 4> &);
+void appendLoopsToWorklist(LoopInfo &, SmallPriorityWorklist<Loop *, 4> &);
 
 /// Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
-LLVM_ABI Loop *cloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM, LoopInfo *LI,
-                         LPPassManager *LPM);
+Loop *cloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
+                LoopInfo *LI, LPPassManager *LPM);
 
 /// Add code that checks at runtime if the accessed arrays in \p PointerChecks
 /// overlap. Returns the final comparator value or NULL if no check is needed.
-LLVM_ABI Value *
+Value *
 addRuntimeChecks(Instruction *Loc, Loop *TheLoop,
                  const SmallVectorImpl<RuntimePointerCheck> &PointerChecks,
                  SCEVExpander &Expander, bool HoistRuntimeChecks = false);
 
-LLVM_ABI Value *addDiffRuntimeChecks(
+Value *addDiffRuntimeChecks(
     Instruction *Loc, ArrayRef<PointerDiffInfo> Checks, SCEVExpander &Expander,
     function_ref<Value *(IRBuilderBase &, unsigned)> GetVF, unsigned IC);
 
@@ -626,9 +602,10 @@ struct IVConditionInfo {
 /// If the branch condition of the header is partially invariant, return a pair
 /// containing the instructions to duplicate and a boolean Constant to update
 /// the condition in the loops created for the true or false successors.
-LLVM_ABI std::optional<IVConditionInfo>
-hasPartialIVCondition(const Loop &L, unsigned MSSAThreshold,
-                      const MemorySSA &MSSA, AAResults &AA);
+std::optional<IVConditionInfo> hasPartialIVCondition(const Loop &L,
+                                                     unsigned MSSAThreshold,
+                                                     const MemorySSA &MSSA,
+                                                     AAResults &AA);
 
 } // end namespace llvm
 

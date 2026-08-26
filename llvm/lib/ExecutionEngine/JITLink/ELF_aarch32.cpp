@@ -17,7 +17,6 @@
 #include "llvm/ExecutionEngine/JITLink/aarch32.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ELFObjectFile.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TargetParser/ARMTargetParser.h"
 
@@ -32,7 +31,7 @@ namespace llvm {
 namespace jitlink {
 
 /// Translate from ELF relocation type to JITLink-internal edge kind.
-LLVM_ABI Expected<aarch32::EdgeKind_aarch32>
+Expected<aarch32::EdgeKind_aarch32>
 getJITLinkEdgeKind(uint32_t ELFType, const aarch32::ArmConfig &ArmCfg) {
   switch (ELFType) {
   case ELF::R_ARM_ABS32:
@@ -76,7 +75,7 @@ getJITLinkEdgeKind(uint32_t ELFType, const aarch32::ArmConfig &ArmCfg) {
 }
 
 /// Translate from JITLink-internal edge kind back to ELF relocation type.
-LLVM_ABI Expected<uint32_t> getELFRelocationType(Edge::Kind Kind) {
+Expected<uint32_t> getELFRelocationType(Edge::Kind Kind) {
   switch (static_cast<aarch32::EdgeKind_aarch32>(Kind)) {
   case aarch32::Data_Delta32:
     return ELF::R_ARM_REL32;

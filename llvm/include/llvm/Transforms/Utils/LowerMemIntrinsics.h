@@ -14,7 +14,6 @@
 #ifndef LLVM_TRANSFORMS_UTILS_LOWERMEMINTRINSICS_H
 #define LLVM_TRANSFORMS_UTILS_LOWERMEMINTRINSICS_H
 
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <optional>
 
@@ -34,7 +33,7 @@ struct Align;
 
 /// Emit a loop implementing the semantics of llvm.memcpy where the size is not
 /// a compile-time constant. Loop will be insterted at \p InsertBefore.
-LLVM_ABI void createMemCpyLoopUnknownSize(
+void createMemCpyLoopUnknownSize(
     Instruction *InsertBefore, Value *SrcAddr, Value *DstAddr, Value *CopyLen,
     Align SrcAlign, Align DestAlign, bool SrcIsVolatile, bool DstIsVolatile,
     bool CanOverlap, const TargetTransformInfo &TTI,
@@ -42,32 +41,30 @@ LLVM_ABI void createMemCpyLoopUnknownSize(
 
 /// Emit a loop implementing the semantics of an llvm.memcpy whose size is a
 /// compile time constant. Loop is inserted at \p InsertBefore.
-LLVM_ABI void createMemCpyLoopKnownSize(
+void createMemCpyLoopKnownSize(
     Instruction *InsertBefore, Value *SrcAddr, Value *DstAddr,
     ConstantInt *CopyLen, Align SrcAlign, Align DestAlign, bool SrcIsVolatile,
     bool DstIsVolatile, bool CanOverlap, const TargetTransformInfo &TTI,
     std::optional<uint32_t> AtomicCpySize = std::nullopt);
 
 /// Expand \p MemCpy as a loop. \p MemCpy is not deleted.
-LLVM_ABI void expandMemCpyAsLoop(MemCpyInst *MemCpy,
-                                 const TargetTransformInfo &TTI,
-                                 ScalarEvolution *SE = nullptr);
+void expandMemCpyAsLoop(MemCpyInst *MemCpy, const TargetTransformInfo &TTI,
+                        ScalarEvolution *SE = nullptr);
 
 /// Expand \p MemMove as a loop. \p MemMove is not deleted. Returns true if the
 /// memmove was lowered.
-LLVM_ABI bool expandMemMoveAsLoop(MemMoveInst *MemMove,
-                                  const TargetTransformInfo &TTI);
+bool expandMemMoveAsLoop(MemMoveInst *MemMove, const TargetTransformInfo &TTI);
 
 /// Expand \p MemSet as a loop. \p MemSet is not deleted.
-LLVM_ABI void expandMemSetAsLoop(MemSetInst *MemSet);
+void expandMemSetAsLoop(MemSetInst *MemSet);
 
 /// Expand \p MemSetPattern as a loop. \p MemSet is not deleted.
-LLVM_ABI void expandMemSetPatternAsLoop(MemSetPatternInst *MemSet);
+void expandMemSetPatternAsLoop(MemSetPatternInst *MemSet);
 
 /// Expand \p AtomicMemCpy as a loop. \p AtomicMemCpy is not deleted.
-LLVM_ABI void expandAtomicMemCpyAsLoop(AnyMemCpyInst *AtomicMemCpy,
-                                       const TargetTransformInfo &TTI,
-                                       ScalarEvolution *SE);
+void expandAtomicMemCpyAsLoop(AnyMemCpyInst *AtomicMemCpy,
+                              const TargetTransformInfo &TTI,
+                              ScalarEvolution *SE);
 
 } // namespace llvm
 

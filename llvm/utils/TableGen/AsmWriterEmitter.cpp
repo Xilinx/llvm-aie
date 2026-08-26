@@ -1138,10 +1138,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       uint32_t UnescapedSize = 0;
       std::string EncodedAsmString = IAP->formatAliasString(UnescapedSize);
       auto Insertion =
-          AsmStringOffsets.try_emplace(EncodedAsmString, AsmStringsSize);
+          AsmStringOffsets.insert({EncodedAsmString, AsmStringsSize});
       if (Insertion.second) {
         // If the string is new, add it to the vector.
-        AsmStrings.emplace_back(AsmStringsSize, EncodedAsmString);
+        AsmStrings.push_back({AsmStringsSize, EncodedAsmString});
         AsmStringsSize += UnescapedSize + 1;
       }
       unsigned AsmStrOffset = Insertion.first->second;

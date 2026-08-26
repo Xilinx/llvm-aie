@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/MCSchedule.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/SubtargetFeature.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cassert>
@@ -74,7 +73,7 @@ struct SubtargetSubTypeKV {
 ///
 /// Generic base class for all target subtargets.
 ///
-class LLVM_ABI MCSubtargetInfo {
+class MCSubtargetInfo {
   Triple TargetTriple;
   std::string CPU; // CPU being targeted.
   std::string TuneCPU; // CPU being tuned for.

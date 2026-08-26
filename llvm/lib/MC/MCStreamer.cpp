@@ -1186,10 +1186,6 @@ void MCStreamer::visitUsedExpr(const MCExpr &Expr) {
   case MCExpr::Unary:
     visitUsedExpr(*cast<MCUnaryExpr>(Expr).getSubExpr());
     break;
-
-  case MCExpr::Specifier:
-    visitUsedExpr(*cast<MCSpecifierExpr>(Expr).getSubExpr());
-    break;
   }
 }
 

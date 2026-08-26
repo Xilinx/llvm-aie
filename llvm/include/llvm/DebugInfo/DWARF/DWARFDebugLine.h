@@ -14,7 +14,6 @@
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/Path.h"
 #include <cstdint>
@@ -54,11 +53,11 @@ public:
     bool HasSource = false;
 
     /// Update tracked content types with \p ContentType.
-    LLVM_ABI void trackContentType(dwarf::LineNumberEntryFormat ContentType);
+    void trackContentType(dwarf::LineNumberEntryFormat ContentType);
   };
 
   struct Prologue {
-    LLVM_ABI Prologue();
+    Prologue();
 
     /// The size in bytes of the statement information for this compilation unit
     /// (not including the total_length field itself).
@@ -102,43 +101,43 @@ public:
 
     uint32_t sizeofPrologueLength() const { return isDWARF64() ? 8 : 4; }
 
-    LLVM_ABI bool totalLengthIsValid() const;
+    bool totalLengthIsValid() const;
 
     /// Length of the prologue in bytes.
-    LLVM_ABI uint64_t getLength() const;
+    uint64_t getLength() const;
 
     /// Get DWARF-version aware access to the file name entry at the provided
     /// index.
-    LLVM_ABI const llvm::DWARFDebugLine::FileNameEntry &
+    const llvm::DWARFDebugLine::FileNameEntry &
     getFileNameEntry(uint64_t Index) const;
 
-    LLVM_ABI bool hasFileAtIndex(uint64_t FileIndex) const;
+    bool hasFileAtIndex(uint64_t FileIndex) const;
 
-    LLVM_ABI std::optional<uint64_t> getLastValidFileIndex() const;
+    std::optional<uint64_t> getLastValidFileIndex() const;
 
-    LLVM_ABI bool
+    bool
     getFileNameByIndex(uint64_t FileIndex, StringRef CompDir,
                        DILineInfoSpecifier::FileLineInfoKind Kind,
                        std::string &Result,
                        sys::path::Style Style = sys::path::Style::native) const;
 
-    LLVM_ABI void clear();
-    LLVM_ABI void dump(raw_ostream &OS, DIDumpOptions DumpOptions) const;
-    LLVM_ABI Error parse(DWARFDataExtractor Data, uint64_t *OffsetPtr,
-                         function_ref<void(Error)> RecoverableErrorHandler,
-                         const DWARFContext &Ctx, const DWARFUnit *U = nullptr);
+    void clear();
+    void dump(raw_ostream &OS, DIDumpOptions DumpOptions) const;
+    Error parse(DWARFDataExtractor Data, uint64_t *OffsetPtr,
+                function_ref<void(Error)> RecoverableErrorHandler,
+                const DWARFContext &Ctx, const DWARFUnit *U = nullptr);
   };
 
   /// Standard .debug_line state machine structure.
   struct Row {
-    LLVM_ABI explicit Row(bool DefaultIsStmt = false);
+    explicit Row(bool DefaultIsStmt = false);
 
     /// Called after a row is appended to the matrix.
-    LLVM_ABI void postAppend();
-    LLVM_ABI void reset(bool DefaultIsStmt);
-    LLVM_ABI void dump(raw_ostream &OS) const;
+    void postAppend();
+    void reset(bool DefaultIsStmt);
+    void dump(raw_ostream &OS) const;
 
-    LLVM_ABI static void dumpTableHeader(raw_ostream &OS, unsigned Indent);
+    static void dumpTableHeader(raw_ostream &OS, unsigned Indent);
 
     static bool orderByAddress(const Row &LHS, const Row &RHS) {
       return std::tie(LHS.Address.SectionIndex, LHS.Address.Address) <
@@ -196,7 +195,7 @@ public:
   /// each compilation unit may consist of multiple sequences, which are not
   /// guaranteed to be in the order of ascending instruction address.
   struct Sequence {
-    LLVM_ABI Sequence();
+    Sequence();
 
     /// Sequence describes instructions at address range [LowPC, HighPC)
     /// and is described by line table rows [FirstRowIndex, LastRowIndex).
@@ -213,7 +212,7 @@ public:
     /// The offset into the line table where this sequence begins
     uint64_t StmtSeqOffset = UINT64_MAX;
 
-    LLVM_ABI void reset();
+    void reset();
 
     static bool orderByHighPC(const Sequence &LHS, const Sequence &RHS) {
       return std::tie(LHS.SectionIndex, LHS.HighPC) <
@@ -231,7 +230,7 @@ public:
   };
 
   struct LineTable {
-    LLVM_ABI LineTable();
+    LineTable();
 
     /// Represents an invalid row
     const uint32_t UnknownRowIndex = UINT32_MAX;
@@ -244,8 +243,8 @@ public:
 
     /// Returns the index of the row with file/line info for a given address,
     /// or UnknownRowIndex if there is no such row.
-    LLVM_ABI uint32_t lookupAddress(object::SectionedAddress Address,
-                                    bool *IsApproximateLine = nullptr) const;
+    uint32_t lookupAddress(object::SectionedAddress Address,
+                           bool *IsApproximateLine = nullptr) const;
 
     /// Fills the Result argument with the indices of the rows that correspond
     /// to the address range specified by \p Address and \p Size.
@@ -257,7 +256,7 @@ public:
     /// starting at the matching offset will be added to the result.
     ///
     /// Returns true if any rows were found.
-    LLVM_ABI bool lookupAddressRange(
+    bool lookupAddressRange(
         object::SectionedAddress Address, uint64_t Size,
         std::vector<uint32_t> &Result,
         std::optional<uint64_t> StmtSequenceOffset = std::nullopt) const;
@@ -283,23 +282,24 @@ public:
 
     /// Fills the Result argument with the file and line information
     /// corresponding to Address. Returns true on success.
-    LLVM_ABI bool getFileLineInfoForAddress(
-        object::SectionedAddress Address, bool Approximate, const char *CompDir,
-        DILineInfoSpecifier::FileLineInfoKind Kind, DILineInfo &Result) const;
+    bool getFileLineInfoForAddress(object::SectionedAddress Address,
+                                   bool Approximate, const char *CompDir,
+                                   DILineInfoSpecifier::FileLineInfoKind Kind,
+                                   DILineInfo &Result) const;
 
     /// Extracts directory name by its Entry in include directories table
     /// in prologue. Returns true on success.
-    LLVM_ABI bool getDirectoryForEntry(const FileNameEntry &Entry,
-                                       std::string &Directory) const;
+    bool getDirectoryForEntry(const FileNameEntry &Entry,
+                              std::string &Directory) const;
 
-    LLVM_ABI void dump(raw_ostream &OS, DIDumpOptions DumpOptions) const;
-    LLVM_ABI void clear();
+    void dump(raw_ostream &OS, DIDumpOptions DumpOptions) const;
+    void clear();
 
     /// Parse prologue and all rows.
-    LLVM_ABI Error parse(DWARFDataExtractor &DebugLineData, uint64_t *OffsetPtr,
-                         const DWARFContext &Ctx, const DWARFUnit *U,
-                         function_ref<void(Error)> RecoverableErrorHandler,
-                         raw_ostream *OS = nullptr, bool Verbose = false);
+    Error parse(DWARFDataExtractor &DebugLineData, uint64_t *OffsetPtr,
+                const DWARFContext &Ctx, const DWARFUnit *U,
+                function_ref<void(Error)> RecoverableErrorHandler,
+                raw_ostream *OS = nullptr, bool Verbose = false);
 
     using RowVector = std::vector<Row>;
     using RowIter = RowVector::const_iterator;
@@ -336,20 +336,20 @@ public:
                            std::optional<uint64_t> StmtSequenceOffset) const;
   };
 
-  LLVM_ABI const LineTable *getLineTable(uint64_t Offset) const;
-  LLVM_ABI Expected<const LineTable *>
+  const LineTable *getLineTable(uint64_t Offset) const;
+  Expected<const LineTable *>
   getOrParseLineTable(DWARFDataExtractor &DebugLineData, uint64_t Offset,
                       const DWARFContext &Ctx, const DWARFUnit *U,
                       function_ref<void(Error)> RecoverableErrorHandler);
-  LLVM_ABI void clearLineTable(uint64_t Offset);
+  void clearLineTable(uint64_t Offset);
 
   /// Helper to allow for parsing of an entire .debug_line section in sequence.
   class SectionParser {
   public:
     using LineToUnitMap = std::map<uint64_t, DWARFUnit *>;
 
-    LLVM_ABI SectionParser(DWARFDataExtractor &Data, const DWARFContext &C,
-                           DWARFUnitVector::iterator_range Units);
+    SectionParser(DWARFDataExtractor &Data, const DWARFContext &C,
+                  DWARFUnitVector::iterator_range Units);
 
     /// Get the next line table from the section. Report any issues via the
     /// handlers.
@@ -362,10 +362,9 @@ public:
     /// table as it parses it.
     /// \param Verbose - if true, the parser will print verbose information when
     /// printing to the output.
-    LLVM_ABI LineTable
-    parseNext(function_ref<void(Error)> RecoverableErrorHandler,
-              function_ref<void(Error)> UnrecoverableErrorHandler,
-              raw_ostream *OS = nullptr, bool Verbose = false);
+    LineTable parseNext(function_ref<void(Error)> RecoverableErrorHandler,
+                        function_ref<void(Error)> UnrecoverableErrorHandler,
+                        raw_ostream *OS = nullptr, bool Verbose = false);
 
     /// Skip the current line table and go to the following line table (if
     /// present) immediately.
@@ -374,8 +373,8 @@ public:
     /// parsing issues via this handler.
     /// \param UnrecoverableErrorHandler - report any unrecoverable prologue
     /// parsing issues via this handler.
-    LLVM_ABI void skip(function_ref<void(Error)> RecoverableErrorHandler,
-                       function_ref<void(Error)> UnrecoverableErrorHandler);
+    void skip(function_ref<void(Error)> RecoverableErrorHandler,
+              function_ref<void(Error)> UnrecoverableErrorHandler);
 
     /// Indicates if the parser has parsed as much as possible.
     ///
@@ -401,11 +400,11 @@ public:
 
 private:
   struct ParsingState {
-    LLVM_ABI ParsingState(struct LineTable *LT, uint64_t TableOffset,
-                          function_ref<void(Error)> ErrorHandler);
+    ParsingState(struct LineTable *LT, uint64_t TableOffset,
+                 function_ref<void(Error)> ErrorHandler);
 
-    LLVM_ABI void resetRowAndSequence(uint64_t Offset);
-    LLVM_ABI void appendRowToMatrix();
+    void resetRowAndSequence(uint64_t Offset);
+    void appendRowToMatrix();
 
     struct AddrOpIndexDelta {
       uint64_t AddrOffset;
@@ -414,9 +413,8 @@ private:
 
     /// Advance the address and op-index by the \p OperationAdvance value.
     /// \returns the amount advanced by.
-    LLVM_ABI AddrOpIndexDelta advanceAddrOpIndex(uint64_t OperationAdvance,
-                                                 uint8_t Opcode,
-                                                 uint64_t OpcodeOffset);
+    AddrOpIndexDelta advanceAddrOpIndex(uint64_t OperationAdvance,
+                                        uint8_t Opcode, uint64_t OpcodeOffset);
 
     struct OpcodeAdvanceResults {
       uint64_t AddrDelta;
@@ -426,8 +424,8 @@ private:
 
     /// Advance the address and op-index as required by the specified \p Opcode.
     /// \returns the amount advanced by and the calculated adjusted opcode.
-    LLVM_ABI OpcodeAdvanceResults advanceForOpcode(uint8_t Opcode,
-                                                   uint64_t OpcodeOffset);
+    OpcodeAdvanceResults advanceForOpcode(uint8_t Opcode,
+                                          uint64_t OpcodeOffset);
 
     struct SpecialOpcodeDelta {
       uint64_t Address;
@@ -437,8 +435,8 @@ private:
 
     /// Advance the line, address and op-index as required by the specified
     /// special \p Opcode. \returns the address, op-index and line delta.
-    LLVM_ABI SpecialOpcodeDelta handleSpecialOpcode(uint8_t Opcode,
-                                                    uint64_t OpcodeOffset);
+    SpecialOpcodeDelta handleSpecialOpcode(uint8_t Opcode,
+                                           uint64_t OpcodeOffset);
 
     /// Line table we're currently parsing.
     struct LineTable *LineTable;

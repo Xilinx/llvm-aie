@@ -27,8 +27,7 @@ void NoInternalDependenciesCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void NoInternalDependenciesCheck::check(
-    const MatchFinder::MatchResult &Result) {
+void NoInternalDependenciesCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *InternalDependency =
       Result.Nodes.getNodeAs<NestedNameSpecifierLoc>("InternalDep");
 

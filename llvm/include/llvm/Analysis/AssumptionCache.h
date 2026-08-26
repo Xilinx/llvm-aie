@@ -22,7 +22,6 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 
 namespace llvm {
@@ -67,7 +66,7 @@ private:
   /// intrinsic.
   SmallVector<ResultElem, 4> AssumeHandles;
 
-  class LLVM_ABI AffectedValueCallbackVH final : public CallbackVH {
+  class AffectedValueCallbackVH final : public CallbackVH {
     AssumptionCache *AC;
 
     void deleted() override;
@@ -102,7 +101,7 @@ private:
   bool Scanned = false;
 
   /// Scan the function for assumptions and add them to the cache.
-  LLVM_ABI void scanFunction();
+  void scanFunction();
 
 public:
   /// Construct an AssumptionCache from a function by scanning all of
@@ -121,15 +120,15 @@ public:
   ///
   /// The call passed in must be an instruction within this function and must
   /// not already be in the cache.
-  LLVM_ABI void registerAssumption(AssumeInst *CI);
+  void registerAssumption(AssumeInst *CI);
 
   /// Remove an \@llvm.assume intrinsic from this function's cache if it has
   /// been added to the cache earlier.
-  LLVM_ABI void unregisterAssumption(AssumeInst *CI);
+  void unregisterAssumption(AssumeInst *CI);
 
   /// Update the cache of values being affected by this assumption (i.e.
   /// the values about which this assumption provides information).
-  LLVM_ABI void updateAffectedValues(AssumeInst *CI);
+  void updateAffectedValues(AssumeInst *CI);
 
   /// Clear the cache of \@llvm.assume intrinsics for a function.
   ///
@@ -174,12 +173,12 @@ public:
 class AssumptionAnalysis : public AnalysisInfoMixin<AssumptionAnalysis> {
   friend AnalysisInfoMixin<AssumptionAnalysis>;
 
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   using Result = AssumptionCache;
 
-  LLVM_ABI AssumptionCache run(Function &F, FunctionAnalysisManager &);
+  AssumptionCache run(Function &F, FunctionAnalysisManager &);
 };
 
 /// Printer pass for the \c AssumptionAnalysis results.
@@ -189,7 +188,7 @@ class AssumptionPrinterPass : public PassInfoMixin<AssumptionPrinterPass> {
 public:
   explicit AssumptionPrinterPass(raw_ostream &OS) : OS(OS) {}
 
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 
   static bool isRequired() { return true; }
 };
@@ -202,10 +201,10 @@ public:
 /// function is deleted. The nature of the AssumptionCache is that it is not
 /// invalidated by any changes to the function body and so this is sufficient
 /// to be conservatively correct.
-class LLVM_ABI AssumptionCacheTracker : public ImmutablePass {
+class AssumptionCacheTracker : public ImmutablePass {
   /// A callback value handle applied to function objects, which we use to
   /// delete our cache of intrinsics for a function when it is deleted.
-  class LLVM_ABI FunctionCallbackVH final : public CallbackVH {
+  class FunctionCallbackVH final : public CallbackVH {
     AssumptionCacheTracker *ACT;
 
     void deleted() override;

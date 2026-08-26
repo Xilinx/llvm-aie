@@ -21,7 +21,6 @@ namespace mlir {
 
 class Location;
 class WalkResult;
-class UnknownLoc;
 
 //===----------------------------------------------------------------------===//
 // LocationAttr
@@ -52,15 +51,6 @@ public:
       return WalkResult::advance();
     });
     return result;
-  }
-
-  /// Return an instance of the given location type if one is nested under the
-  /// current location else return unknown location.
-  template <typename T, typename UnknownT = UnknownLoc>
-  LocationAttr findInstanceOfOrUnknown() {
-    if (T result = findInstanceOf<T>())
-      return result;
-    return UnknownT::get(getContext());
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast.

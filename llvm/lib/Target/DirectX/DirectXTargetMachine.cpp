@@ -103,6 +103,7 @@ public:
   FunctionPass *createTargetRegisterAllocator(bool) override { return nullptr; }
   void addCodeGenPrepare() override {
     addPass(createDXILFinalizeLinkageLegacyPass());
+    addPass(createDXILResourceImplicitBindingLegacyPass());
     addPass(createDXILResourceAccessLegacyPass());
     addPass(createDXILIntrinsicExpansionLegacyPass());
     addPass(createDXILCBufferAccessLegacyPass());
@@ -113,7 +114,6 @@ public:
     addPass(createScalarizerPass(DxilScalarOptions));
     addPass(createDXILForwardHandleAccessesLegacyPass());
     addPass(createDXILLegalizeLegacyPass());
-    addPass(createDXILResourceImplicitBindingLegacyPass());
     addPass(createDXILTranslateMetadataLegacyPass());
     addPass(createDXILPostOptimizationValidationLegacyPass());
     addPass(createDXILOpLoweringLegacyPass());

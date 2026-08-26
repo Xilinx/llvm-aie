@@ -19,7 +19,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Regex.h"
 
 namespace llvm {
@@ -51,7 +50,7 @@ struct MarkupNode {
 /// Parses a log containing symbolizer markup into a sequence of nodes.
 class MarkupParser {
 public:
-  LLVM_ABI MarkupParser(StringSet<> MultilineTags = {});
+  MarkupParser(StringSet<> MultilineTags = {});
 
   /// Parses an individual \p Line of input.
   ///
@@ -65,14 +64,14 @@ public:
   /// either the end or something that cannot be part of an element is
   /// encountered. This may only occur after multiple calls to parseLine(),
   /// corresponding to the lines of the multi-line element.
-  LLVM_ABI void parseLine(StringRef Line);
+  void parseLine(StringRef Line);
 
   /// Inform the parser of that the input stream has ended.
   ///
   /// This allows the parser to finish any deferred processing (e.g., an
   /// in-progress multi-line element) and may cause nextNode() to return
   /// additional nodes.
-  LLVM_ABI void flush();
+  void flush();
 
   /// Returns the next node in the input sequence.
   ///
@@ -80,7 +79,7 @@ public:
   /// previous call.
   ///
   /// \returns the next markup node or std::nullopt if none remain.
-  LLVM_ABI std::optional<MarkupNode> nextNode();
+  std::optional<MarkupNode> nextNode();
 
   bool isSGR(const MarkupNode &Node) const {
     return SGRSyntax.match(Node.Text);

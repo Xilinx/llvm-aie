@@ -120,10 +120,8 @@ func::FuncOp buildDeallocationLibraryFunction(OpBuilder &builder, Location loc,
                                               SymbolTable &symbolTable);
 
 /// Run the ownership-based buffer deallocation.
-LogicalResult
-deallocateBuffersOwnershipBased(FunctionOpInterface op,
-                                DeallocationOptions options,
-                                SymbolTableCollection &symbolTables);
+LogicalResult deallocateBuffersOwnershipBased(FunctionOpInterface op,
+                                              DeallocationOptions options);
 
 // Options struct for BufferResultsToOutParams pass.
 // Note: defined only here, not in tablegen.

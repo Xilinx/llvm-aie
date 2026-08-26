@@ -17,7 +17,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ProfileData/Coverage/CoverageMapping.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -31,11 +30,11 @@ class CoverageFilenamesSectionWriter {
   ArrayRef<std::string> Filenames;
 
 public:
-  LLVM_ABI CoverageFilenamesSectionWriter(ArrayRef<std::string> Filenames);
+  CoverageFilenamesSectionWriter(ArrayRef<std::string> Filenames);
 
   /// Write encoded filenames to the given output stream. If \p Compress is
   /// true, attempt to compress the filenames.
-  LLVM_ABI void write(raw_ostream &OS, bool Compress = true);
+  void write(raw_ostream &OS, bool Compress = true);
 };
 
 /// Writer for instrumentation based coverage mapping data.
@@ -52,7 +51,7 @@ public:
         MappingRegions(MappingRegions) {}
 
   /// Write encoded coverage mapping data to the given output stream.
-  LLVM_ABI void write(raw_ostream &OS);
+  void write(raw_ostream &OS);
 };
 
 /// Writer for the coverage mapping testing format.
@@ -71,7 +70,7 @@ public:
         CoverageRecordsData(CoverageRecordsData) {}
 
   /// Encode to the given output stream.
-  LLVM_ABI void
+  void
   write(raw_ostream &OS,
         TestingFormatVersion Version = TestingFormatVersion::CurrentVersion);
 };

@@ -27,7 +27,6 @@
 
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -238,7 +237,7 @@ class AnyCoroIdRetconInst : public AnyCoroIdInst {
   enum { SizeArg, AlignArg, StorageArg, PrototypeArg, AllocArg, DeallocArg };
 
 public:
-  LLVM_ABI void checkWellFormed() const;
+  void checkWellFormed() const;
 
   uint64_t getStorageSize() const {
     return cast<ConstantInt>(getArgOperand(SizeArg))->getZExtValue();
@@ -307,7 +306,7 @@ class CoroIdAsyncInst : public AnyCoroIdInst {
   enum { SizeArg, AlignArg, StorageArg, AsyncFuncPtrArg };
 
 public:
-  LLVM_ABI void checkWellFormed() const;
+  void checkWellFormed() const;
 
   /// The initial async function context size. The fields of which are reserved
   /// for use by the frontend. The frame will be allocated as a tail of this
@@ -569,7 +568,7 @@ public:
     MustTailCallFuncArg
   };
 
-  LLVM_ABI void checkWellFormed() const;
+  void checkWellFormed() const;
 
   unsigned getStorageArgumentIndex() const {
     auto *Arg = cast<ConstantInt>(getArgOperand(StorageArgNoArg));
@@ -723,7 +722,7 @@ class CoroAsyncEndInst : public AnyCoroEndInst {
   enum { FrameArg, UnwindArg, MustTailCallFuncArg };
 
 public:
-  LLVM_ABI void checkWellFormed() const;
+  void checkWellFormed() const;
 
   Function *getMustTailCallFunction() const {
     if (arg_size() < 3)

@@ -8,7 +8,8 @@ define void @small_trip_count_min_vlen_128(ptr nocapture %a) nounwind vscale_ran
 ; CHECK:       vector.ph:
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       vector.body:
-; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i32, ptr [[TMP0:%.*]], i32 0
+; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr inbounds i32, ptr [[TMP4:%.*]], i32 0
+; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i32, ptr [[TMP0]], i32 0
 ; CHECK-NEXT:    [[WIDE_LOAD:%.*]] = load <4 x i32>, ptr [[TMP1]], align 4
 ; CHECK-NEXT:    [[TMP2:%.*]] = add nsw <4 x i32> [[WIDE_LOAD]], splat (i32 1)
 ; CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds i32, ptr [[TMP0]], i32 0
@@ -21,7 +22,7 @@ define void @small_trip_count_min_vlen_128(ptr nocapture %a) nounwind vscale_ran
 ; CHECK-NEXT:    br label [[LOOP1:%.*]]
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[IV:%.*]] = phi i32 [ [[IV_NEXT:%.*]], [[LOOP1]] ], [ [[BC_RESUME_VAL]], [[SCALAR_PH]] ]
-; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds i32, ptr [[TMP0]], i32 [[IV]]
+; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds i32, ptr [[TMP4]], i32 [[IV]]
 ; CHECK-NEXT:    [[V:%.*]] = load i32, ptr [[GEP]], align 4
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[V]], 1
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[GEP]], align 4
@@ -55,7 +56,8 @@ define void @small_trip_count_min_vlen_32(ptr nocapture %a) nounwind vscale_rang
 ; CHECK:       vector.ph:
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       vector.body:
-; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i32, ptr [[TMP0:%.*]], i32 0
+; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr inbounds i32, ptr [[TMP6:%.*]], i32 0
+; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i32, ptr [[TMP0]], i32 0
 ; CHECK-NEXT:    [[WIDE_LOAD:%.*]] = load <4 x i32>, ptr [[TMP1]], align 4
 ; CHECK-NEXT:    [[TMP2:%.*]] = add nsw <4 x i32> [[WIDE_LOAD]], splat (i32 1)
 ; CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds i32, ptr [[TMP0]], i32 0
@@ -68,7 +70,7 @@ define void @small_trip_count_min_vlen_32(ptr nocapture %a) nounwind vscale_rang
 ; CHECK-NEXT:    br label [[LOOP1:%.*]]
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[IV:%.*]] = phi i32 [ [[IV_NEXT:%.*]], [[LOOP1]] ], [ [[BC_RESUME_VAL]], [[SCALAR_PH]] ]
-; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds i32, ptr [[TMP0]], i32 [[IV]]
+; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds i32, ptr [[TMP6]], i32 [[IV]]
 ; CHECK-NEXT:    [[V:%.*]] = load i32, ptr [[GEP]], align 4
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[V]], 1
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[GEP]], align 4

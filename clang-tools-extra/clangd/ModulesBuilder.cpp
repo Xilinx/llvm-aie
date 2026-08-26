@@ -430,10 +430,10 @@ private:
 /// Collect the directly and indirectly required module names for \param
 /// ModuleName in topological order. The \param ModuleName is guaranteed to
 /// be the last element in \param ModuleNames.
-llvm::SmallVector<std::string> getAllRequiredModules(PathRef RequiredSource,
-                                                     CachingProjectModules &MDB,
-                                                     StringRef ModuleName) {
-  llvm::SmallVector<std::string> ModuleNames;
+llvm::SmallVector<StringRef> getAllRequiredModules(PathRef RequiredSource,
+                                                   CachingProjectModules &MDB,
+                                                   StringRef ModuleName) {
+  llvm::SmallVector<llvm::StringRef> ModuleNames;
   llvm::StringSet<> ModuleNamesSet;
 
   auto VisitDeps = [&](StringRef ModuleName, auto Visitor) -> void {
@@ -444,7 +444,7 @@ llvm::SmallVector<std::string> getAllRequiredModules(PathRef RequiredSource,
       if (ModuleNamesSet.insert(RequiredModuleName).second)
         Visitor(RequiredModuleName, Visitor);
 
-    ModuleNames.push_back(ModuleName.str());
+    ModuleNames.push_back(ModuleName);
   };
   VisitDeps(ModuleName, VisitDeps);
 
@@ -494,13 +494,13 @@ llvm::Error ModulesBuilder::ModulesBuilderImpl::getOrBuildModuleFile(
   // Get Required modules in topological order.
   auto ReqModuleNames = getAllRequiredModules(RequiredSource, MDB, ModuleName);
   for (llvm::StringRef ReqModuleName : ReqModuleNames) {
-    if (BuiltModuleFiles.isModuleUnitBuilt(ReqModuleName))
+    if (BuiltModuleFiles.isModuleUnitBuilt(ModuleName))
       continue;
 
     if (auto Cached = Cache.getModule(ReqModuleName)) {
       if (IsModuleFileUpToDate(Cached->getModuleFilePath(), BuiltModuleFiles,
                                TFS.view(std::nullopt))) {
-        log("Reusing module {0} from {1}", ReqModuleName,
+        log("Reusing module {0} from {1}", ModuleName,
             Cached->getModuleFilePath());
         BuiltModuleFiles.addModuleFile(std::move(Cached));
         continue;
@@ -508,16 +508,14 @@ llvm::Error ModulesBuilder::ModulesBuilderImpl::getOrBuildModuleFile(
       Cache.remove(ReqModuleName);
     }
 
-    std::string ReqFileName =
-        MDB.getSourceForModuleName(ReqModuleName, RequiredSource);
     llvm::Expected<ModuleFile> MF = buildModuleFile(
-        ReqModuleName, ReqFileName, getCDB(), TFS, BuiltModuleFiles);
+        ModuleName, ModuleUnitFileName, getCDB(), TFS, BuiltModuleFiles);
     if (llvm::Error Err = MF.takeError())
       return Err;
 
-    log("Built module {0} to {1}", ReqModuleName, MF->getModuleFilePath());
+    log("Built module {0} to {1}", ModuleName, MF->getModuleFilePath());
     auto BuiltModuleFile = std::make_shared<const ModuleFile>(std::move(*MF));
-    Cache.add(ReqModuleName, BuiltModuleFile);
+    Cache.add(ModuleName, BuiltModuleFile);
     BuiltModuleFiles.addModuleFile(std::move(BuiltModuleFile));
   }
 

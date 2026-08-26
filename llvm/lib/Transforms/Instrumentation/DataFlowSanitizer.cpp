@@ -1506,10 +1506,12 @@ bool DataFlowSanitizer::runImpl(
 
   auto GetOrInsertGlobal = [this, &Changed](StringRef Name,
                                             Type *Ty) -> Constant * {
-    GlobalVariable *G = Mod->getOrInsertGlobal(Name, Ty);
-    Changed |= G->getThreadLocalMode() != GlobalVariable::InitialExecTLSModel;
-    G->setThreadLocalMode(GlobalVariable::InitialExecTLSModel);
-    return G;
+    Constant *C = Mod->getOrInsertGlobal(Name, Ty);
+    if (GlobalVariable *G = dyn_cast<GlobalVariable>(C)) {
+      Changed |= G->getThreadLocalMode() != GlobalVariable::InitialExecTLSModel;
+      G->setThreadLocalMode(GlobalVariable::InitialExecTLSModel);
+    }
+    return C;
   };
 
   // These globals must be kept in sync with the ones in dfsan.cpp.

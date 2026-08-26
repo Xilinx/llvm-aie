@@ -452,8 +452,8 @@ static bool isFixitSupported(const CallableInfo &Callee,
   return true;
 }
 
-static const FunctionDecl *getCallOperator(const CXXRecordDecl *Callable,
-                                           size_t NumArgs) {
+const FunctionDecl *getCallOperator(const CXXRecordDecl *Callable,
+                                    size_t NumArgs) {
   std::vector<const FunctionDecl *> Candidates =
       findCandidateCallOperators(Callable, NumArgs);
   if (Candidates.size() != 1)
@@ -462,7 +462,7 @@ static const FunctionDecl *getCallOperator(const CXXRecordDecl *Callable,
   return Candidates.front();
 }
 
-static const FunctionDecl *
+const FunctionDecl *
 getCallMethodDecl(const MatchFinder::MatchResult &Result, CallableType Type,
                   CallableMaterializationKind Materialization) {
 

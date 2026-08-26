@@ -13,7 +13,6 @@
 #ifndef LLVM_TEXTAPI_RECORDVISITOR_H
 #define LLVM_TEXTAPI_RECORDVISITOR_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/TextAPI/Record.h"
 #include "llvm/TextAPI/SymbolSet.h"
 
@@ -21,7 +20,7 @@ namespace llvm {
 namespace MachO {
 
 /// Base class for any usage of traversing over collected Records.
-class LLVM_ABI RecordVisitor {
+class RecordVisitor {
 public:
   virtual ~RecordVisitor();
 
@@ -33,7 +32,7 @@ public:
 /// Specialized RecordVisitor for collecting exported symbols
 /// and undefined symbols if RecordSlice being visited represents a
 /// flat-namespaced library.
-class LLVM_ABI SymbolConverter : public RecordVisitor {
+class SymbolConverter : public RecordVisitor {
 public:
   SymbolConverter(SymbolSet *Symbols, const Target &T,
                   const bool RecordUndefs = false)

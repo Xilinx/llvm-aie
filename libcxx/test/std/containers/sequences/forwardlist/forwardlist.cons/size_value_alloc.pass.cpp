@@ -8,7 +8,7 @@
 
 // <forward_list>
 
-// forward_list(size_type n, const value_type& v, const allocator_type& a); // constexpr since C++26
+// forward_list(size_type n, const value_type& v, const allocator_type& a);
 
 #include <forward_list>
 #include <cassert>
@@ -17,7 +17,7 @@
 #include "test_allocator.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef test_allocator<int> A;
     typedef A::value_type T;
@@ -45,15 +45,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(n == N);
     assert(c.get_allocator() == A());
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

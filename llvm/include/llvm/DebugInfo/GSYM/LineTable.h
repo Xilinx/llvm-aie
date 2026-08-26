@@ -10,7 +10,6 @@
 #define LLVM_DEBUGINFO_GSYM_LINETABLE_H
 
 #include "llvm/DebugInfo/GSYM/LineEntry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
 #include <vector>
@@ -137,8 +136,8 @@ public:
   /// initialize the line table row prior to parsing any opcodes.
   ///
   /// \returns An LineEntry object if a match is found, error otherwise.
-  LLVM_ABI static Expected<LineEntry> lookup(DataExtractor &Data,
-                                             uint64_t BaseAddr, uint64_t Addr);
+  static Expected<LineEntry> lookup(DataExtractor &Data, uint64_t BaseAddr,
+                                    uint64_t Addr);
 
   /// Decode an LineTable object from a binary data stream.
   ///
@@ -152,8 +151,8 @@ public:
   ///
   /// \returns An LineTable or an error describing the issue that was
   /// encountered during decoding.
-  LLVM_ABI static llvm::Expected<LineTable> decode(DataExtractor &Data,
-                                                   uint64_t BaseAddr);
+  static llvm::Expected<LineTable> decode(DataExtractor &Data,
+                                          uint64_t BaseAddr);
   /// Encode this LineTable object into FileWriter stream.
   ///
   /// \param O The binary stream to write the data to at the current file
@@ -164,7 +163,7 @@ public:
   ///
   /// \returns An error object that indicates success or failure or the
   /// encoding process.
-  LLVM_ABI llvm::Error encode(FileWriter &O, uint64_t BaseAddr) const;
+  llvm::Error encode(FileWriter &O, uint64_t BaseAddr) const;
   bool empty() const { return Lines.empty(); }
   void clear() { Lines.clear(); }
   /// Return the first line entry if the line table isn't empty.
@@ -226,7 +225,7 @@ public:
 
 };
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const gsym::LineTable &LT);
+raw_ostream &operator<<(raw_ostream &OS, const gsym::LineTable &LT);
 
 } // namespace gsym
 } // namespace llvm

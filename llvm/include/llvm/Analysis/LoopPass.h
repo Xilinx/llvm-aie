@@ -16,7 +16,6 @@
 
 #include "llvm/IR/LegacyPassManagers.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include <deque>
 
 namespace llvm {
@@ -26,7 +25,7 @@ class LoopInfo;
 class LPPassManager;
 class Function;
 
-class LLVM_ABI LoopPass : public Pass {
+class LoopPass : public Pass {
 public:
   explicit LoopPass(char &pid) : Pass(PT_Loop, pid) {}
 
@@ -74,7 +73,7 @@ protected:
   bool skipLoop(const Loop *L) const;
 };
 
-class LLVM_ABI LPPassManager : public FunctionPass, public PMDataManager {
+class LPPassManager : public FunctionPass, public PMDataManager {
 public:
   static char ID;
   explicit LPPassManager();
@@ -123,8 +122,8 @@ private:
 // LPPassManager to check if current pass preserves LCSSA form, and if it does
 // pass manager calls lcssa verification for the current loop.
 struct LCSSAVerificationPass : public FunctionPass {
-  LLVM_ABI static char ID;
-  LLVM_ABI LCSSAVerificationPass();
+  static char ID;
+  LCSSAVerificationPass();
 
   bool runOnFunction(Function &F) override { return false; }
 

@@ -1118,7 +1118,6 @@ void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
 
   // Create the branch.
   llvm::BranchInst *BI = Builder.CreateBr(Dest.getBlock());
-  addInstToCurrentSourceAtom(BI, nullptr);
 
   // Calculate the innermost active normal cleanup.
   EHScopeStack::stable_iterator

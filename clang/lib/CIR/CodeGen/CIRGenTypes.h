@@ -19,7 +19,6 @@
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
-#include "clang/Basic/ABI.h"
 #include "clang/CIR/Dialect/IR/CIRTypes.h"
 
 #include "llvm/ADT/SmallPtrSet.h"
@@ -152,10 +151,6 @@ public:
 
   const CIRGenFunctionInfo &arrangeGlobalDeclaration(GlobalDecl gd);
 
-  /// UpdateCompletedType - when we find the full definition for a TagDecl,
-  /// replace the 'opaque' type we previously made for it if applicable.
-  void updateCompletedType(const clang::TagDecl *td);
-
   /// Free functions are functions that are compatible with an ordinary C
   /// function pointer type.
   const CIRGenFunctionInfo &
@@ -166,10 +161,6 @@ public:
   bool isZeroInitializable(clang::QualType ty);
   bool isZeroInitializable(const RecordDecl *rd);
 
-  const CIRGenFunctionInfo &arrangeCXXConstructorCall(
-      const CallArgList &args, const clang::CXXConstructorDecl *d,
-      clang::CXXCtorType ctorKind, bool passProtoArgs = true);
-
   const CIRGenFunctionInfo &
   arrangeCXXMethodCall(const CallArgList &args,
                        const clang::FunctionProtoType *type,
@@ -178,7 +169,6 @@ public:
   /// C++ methods have some special rules and also have implicit parameters.
   const CIRGenFunctionInfo &
   arrangeCXXMethodDeclaration(const clang::CXXMethodDecl *md);
-  const CIRGenFunctionInfo &arrangeCXXStructorDeclaration(clang::GlobalDecl gd);
 
   const CIRGenFunctionInfo &
   arrangeCXXMethodType(const clang::CXXRecordDecl *rd,

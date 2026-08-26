@@ -8,14 +8,13 @@ add_lldb_library(lldbHostMacOSXObjCXX NO_PLUGIN_DEPENDENCIES
   HostThreadMacOSX.mm
   MemoryMonitorMacOSX.mm
 
-  ADDITIONAL_HEADER_DIRS
-    ${LLDB_INCLUDE_DIR}/lldb/Host/macosx/objcxx
-  LINK_COMPONENTS
-    Support
-    TargetParser
   LINK_LIBS
     lldbUtility
     ${EXTRA_LIBS}
+
+  LINK_COMPONENTS
+    Support
+    TargetParser
   )
 
 target_compile_options(lldbHostMacOSXObjCXX PRIVATE

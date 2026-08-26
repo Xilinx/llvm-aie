@@ -30,9 +30,8 @@
 //
 // Effects: Direct-non-list-initializes extents_ with e, and for all d in the range [0, rank_), direct-non-list-initializes strides_[d] with as_const(s[d]).
 
-#include <cassert>
 #include <mdspan>
-#include <span>
+#include <cassert>
 
 #include "check_assertion.h"
 

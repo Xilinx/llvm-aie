@@ -34,6 +34,6 @@ static ClangTidyModuleRegistry::Add<OpenMPModule>
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the OpenMPModule.
-volatile int OpenMPModuleAnchorSource = 0; // NOLINT(misc-use-internal-linkage)
+volatile int OpenMPModuleAnchorSource = 0;
 
 } // namespace clang::tidy

@@ -87,28 +87,6 @@ SourceLocation Sema::getLocForEndOfToken(SourceLocation Loc, unsigned Offset) {
   return Lexer::getLocForEndOfToken(Loc, Offset, SourceMgr, LangOpts);
 }
 
-SourceRange
-Sema::getRangeForNextToken(SourceLocation Loc, bool IncludeMacros,
-                           bool IncludeComments,
-                           std::optional<tok::TokenKind> ExpectedToken) {
-  if (!Loc.isValid())
-    return SourceRange();
-  std::optional<Token> NextToken =
-      Lexer::findNextToken(Loc, SourceMgr, LangOpts, IncludeComments);
-  if (!NextToken)
-    return SourceRange();
-  if (ExpectedToken && NextToken->getKind() != *ExpectedToken)
-    return SourceRange();
-  SourceLocation TokenStart = NextToken->getLocation();
-  SourceLocation TokenEnd = NextToken->getLastLoc();
-  if (!TokenStart.isValid() || !TokenEnd.isValid())
-    return SourceRange();
-  if (!IncludeMacros && (TokenStart.isMacroID() || TokenEnd.isMacroID()))
-    return SourceRange();
-
-  return SourceRange(TokenStart, TokenEnd);
-}
-
 ModuleLoader &Sema::getModuleLoader() const { return PP.getModuleLoader(); }
 
 DarwinSDKInfo *
@@ -540,15 +518,12 @@ void Sema::Initialize() {
 #include "clang/Basic/OpenCLExtensionTypes.def"
   }
 
-  if (Context.getTargetInfo().hasAArch64ACLETypes() ||
+  if (Context.getTargetInfo().hasAArch64SVETypes() ||
       (Context.getAuxTargetInfo() &&
-       Context.getAuxTargetInfo()->hasAArch64ACLETypes())) {
+       Context.getAuxTargetInfo()->hasAArch64SVETypes())) {
 #define SVE_TYPE(Name, Id, SingletonId)                                        \
   addImplicitTypedef(#Name, Context.SingletonId);
-#define NEON_VECTOR_TYPE(Name, BaseType, ElBits, NumEls, VectorKind)           \
-  addImplicitTypedef(                                                          \
-      #Name, Context.getVectorType(Context.BaseType, NumEls, VectorKind));
-#include "clang/Basic/AArch64ACLETypes.def"
+#include "clang/Basic/AArch64SVEACLETypes.def"
   }
 
   if (Context.getTargetInfo().getTriple().isPPC64()) {
@@ -1384,7 +1359,8 @@ void Sema::ActOnEndOfTranslationUnit() {
 
     CurrentModule->NamedModuleHasInit =
         DoesModNeedInit(CurrentModule) ||
-        llvm::any_of(CurrentModule->submodules(), DoesModNeedInit);
+        llvm::any_of(CurrentModule->submodules(),
+                     [&](auto *SubM) { return DoesModNeedInit(SubM); });
   }
 
   if (TUKind == TU_ClangModule) {
@@ -2095,14 +2071,11 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
   if (ImmediateDiag) {
     // Emit our diagnostic and, if it was a warning or error, output a callstack
     // if Fn isn't a priori known-emitted.
+    bool IsWarningOrError = S.getDiagnostics().getDiagnosticLevel(
+                                DiagID, Loc) >= DiagnosticsEngine::Warning;
     ImmediateDiag.reset(); // Emit the immediate diag.
-
-    if (ShowCallStack) {
-      bool IsWarningOrError = S.getDiagnostics().getDiagnosticLevel(
-                                  DiagID, Loc) >= DiagnosticsEngine::Warning;
-      if (IsWarningOrError)
-        emitCallStackNotes(S, Fn);
-    }
+    if (IsWarningOrError && ShowCallStack)
+      emitCallStackNotes(S, Fn);
   } else {
     assert((!PartialDiagId || ShowCallStack) &&
            "Must always show call stack for deferred diags.");

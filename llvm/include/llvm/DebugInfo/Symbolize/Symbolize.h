@@ -19,7 +19,6 @@
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/BuildID.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <algorithm>
 #include <cstdint>
@@ -72,59 +71,57 @@ public:
             : static_cast<size_t>(4ULL * 1024 * 1024 * 1024) /* 4 GiB */;
   };
 
-  LLVM_ABI LLVMSymbolizer();
-  LLVM_ABI LLVMSymbolizer(const Options &Opts);
+  LLVMSymbolizer();
+  LLVMSymbolizer(const Options &Opts);
 
-  LLVM_ABI ~LLVMSymbolizer();
+  ~LLVMSymbolizer();
 
   // Overloads accepting ObjectFile does not support COFF currently
-  LLVM_ABI Expected<DILineInfo>
-  symbolizeCode(const ObjectFile &Obj, object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DILineInfo>
-  symbolizeCode(StringRef ModuleName, object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DILineInfo>
-  symbolizeCode(ArrayRef<uint8_t> BuildID,
-                object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DIInliningInfo>
+  Expected<DILineInfo> symbolizeCode(const ObjectFile &Obj,
+                                     object::SectionedAddress ModuleOffset);
+  Expected<DILineInfo> symbolizeCode(StringRef ModuleName,
+                                     object::SectionedAddress ModuleOffset);
+  Expected<DILineInfo> symbolizeCode(ArrayRef<uint8_t> BuildID,
+                                     object::SectionedAddress ModuleOffset);
+  Expected<DIInliningInfo>
   symbolizeInlinedCode(const ObjectFile &Obj,
                        object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DIInliningInfo>
+  Expected<DIInliningInfo>
   symbolizeInlinedCode(StringRef ModuleName,
                        object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DIInliningInfo>
+  Expected<DIInliningInfo>
   symbolizeInlinedCode(ArrayRef<uint8_t> BuildID,
                        object::SectionedAddress ModuleOffset);
 
-  LLVM_ABI Expected<DIGlobal>
-  symbolizeData(const ObjectFile &Obj, object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DIGlobal>
-  symbolizeData(StringRef ModuleName, object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<DIGlobal>
-  symbolizeData(ArrayRef<uint8_t> BuildID,
-                object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<std::vector<DILocal>>
+  Expected<DIGlobal> symbolizeData(const ObjectFile &Obj,
+                                   object::SectionedAddress ModuleOffset);
+  Expected<DIGlobal> symbolizeData(StringRef ModuleName,
+                                   object::SectionedAddress ModuleOffset);
+  Expected<DIGlobal> symbolizeData(ArrayRef<uint8_t> BuildID,
+                                   object::SectionedAddress ModuleOffset);
+  Expected<std::vector<DILocal>>
   symbolizeFrame(const ObjectFile &Obj, object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<std::vector<DILocal>>
+  Expected<std::vector<DILocal>>
   symbolizeFrame(StringRef ModuleName, object::SectionedAddress ModuleOffset);
-  LLVM_ABI Expected<std::vector<DILocal>>
+  Expected<std::vector<DILocal>>
   symbolizeFrame(ArrayRef<uint8_t> BuildID,
                  object::SectionedAddress ModuleOffset);
 
-  LLVM_ABI Expected<std::vector<DILineInfo>>
+  Expected<std::vector<DILineInfo>>
   findSymbol(const ObjectFile &Obj, StringRef Symbol, uint64_t Offset);
-  LLVM_ABI Expected<std::vector<DILineInfo>>
+  Expected<std::vector<DILineInfo>>
   findSymbol(StringRef ModuleName, StringRef Symbol, uint64_t Offset);
-  LLVM_ABI Expected<std::vector<DILineInfo>>
+  Expected<std::vector<DILineInfo>>
   findSymbol(ArrayRef<uint8_t> BuildID, StringRef Symbol, uint64_t Offset);
 
-  LLVM_ABI void flush();
+  void flush();
 
   // Evict entries from the binary cache until it is under the maximum size
   // given in the options. Calling this invalidates references in the DI...
   // objects returned by the methods above.
-  LLVM_ABI void pruneCache();
+  void pruneCache();
 
-  LLVM_ABI static std::string
+  static std::string
   DemangleName(StringRef Name, const SymbolizableModule *DbiModuleDescriptor);
 
   void setBuildIDFetcher(std::unique_ptr<BuildIDFetcher> Fetcher) {
@@ -135,8 +132,7 @@ public:
   /// Only one attempt is made to load a module, and errors during loading are
   /// only reported once. Subsequent calls to get module info for a module that
   /// failed to load will return nullptr.
-  LLVM_ABI Expected<SymbolizableModule *>
-  getOrCreateModuleInfo(StringRef ModuleName);
+  Expected<SymbolizableModule *> getOrCreateModuleInfo(StringRef ModuleName);
 
 private:
   // Bundles together object file with code/data and object file with
@@ -244,7 +240,7 @@ public:
 
   // Add an action to be performed when the binary is evicted, before all
   // previously registered evictors.
-  LLVM_ABI void pushEvictor(std::function<void()> Evictor);
+  void pushEvictor(std::function<void()> Evictor);
 
   // Run all registered evictors in the reverse of the order in which they were
   // added.

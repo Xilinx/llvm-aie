@@ -369,11 +369,7 @@ Align AsmPrinter::getGVAlignment(const GlobalObject *GV, const DataLayout &DL,
     Alignment = InAlign;
 
   // If the GV has a specified alignment, take it into account.
-  MaybeAlign GVAlign;
-  if (auto *GVar = dyn_cast<GlobalVariable>(GV))
-    GVAlign = GVar->getAlign();
-  else if (auto *F = dyn_cast<Function>(GV))
-    GVAlign = F->getAlign();
+  const MaybeAlign GVAlign(GV->getAlign());
   if (!GVAlign)
     return Alignment;
 
@@ -2326,7 +2322,7 @@ void AsmPrinter::emitGlobalIFunc(Module &M, const GlobalIFunc &GI) {
   }
 
   if (!TM.getTargetTriple().isOSBinFormatMachO() || !getIFuncMCSubtargetInfo())
-    reportFatalUsageError("IFuncs are not supported on this platform");
+    llvm::report_fatal_error("IFuncs are not supported on this platform");
 
   // On Darwin platforms, emit a manually-constructed .symbol_resolver that
   // implements the symbol resolution duties of the IFunc.
@@ -4334,8 +4330,6 @@ void AsmPrinter::emitBasicBlockStart(const MachineBasicBlock &MBB) {
       OutStreamer->emitLabel(Sym);
   } else if (isVerbose() && MBB.isMachineBlockAddressTaken()) {
     OutStreamer->AddComment("Block address taken");
-  } else if (isVerbose() && MBB.isInlineAsmBrIndirectTarget()) {
-    OutStreamer->AddComment("Inline asm indirect target");
   }
 
   // Print some verbose block comments.

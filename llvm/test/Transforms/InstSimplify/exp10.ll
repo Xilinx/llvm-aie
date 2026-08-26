@@ -109,7 +109,8 @@ define <2 x float> @exp10_zero_vector() {
 
 define <vscale x 2 x float> @exp10_zero_scalable_vector() {
 ; CHECK-LABEL: define <vscale x 2 x float> @exp10_zero_scalable_vector() {
-; CHECK-NEXT:    ret <vscale x 2 x float> splat (float 1.000000e+00)
+; CHECK-NEXT:    [[RET:%.*]] = call <vscale x 2 x float> @llvm.exp10.nxv2f32(<vscale x 2 x float> zeroinitializer)
+; CHECK-NEXT:    ret <vscale x 2 x float> [[RET]]
 ;
   %ret = call <vscale x 2 x float> @llvm.exp10.nxv2f32(<vscale x 2 x float> zeroinitializer)
   ret <vscale x 2 x float> %ret

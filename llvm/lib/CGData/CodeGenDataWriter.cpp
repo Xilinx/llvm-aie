@@ -19,46 +19,29 @@ using namespace llvm;
 void CGDataOStream::patch(ArrayRef<CGDataPatchItem> P) {
   using namespace support;
 
-  switch (Kind) {
-  case OStreamKind::fd: {
+  if (IsFDOStream) {
     raw_fd_ostream &FDOStream = static_cast<raw_fd_ostream &>(OS);
     const uint64_t LastPos = FDOStream.tell();
     for (const auto &K : P) {
       FDOStream.seek(K.Pos);
-      for (size_t I = 0; I < K.D.size(); ++I)
+      for (int I = 0; I < K.N; I++)
         write(K.D[I]);
     }
     // Reset the stream to the last position after patching so that users
     // don't accidentally overwrite data. This makes it consistent with
     // the string stream below which replaces the data directly.
     FDOStream.seek(LastPos);
-    break;
-  }
-  case OStreamKind::string: {
+  } else {
     raw_string_ostream &SOStream = static_cast<raw_string_ostream &>(OS);
     std::string &Data = SOStream.str(); // with flush
     for (const auto &K : P) {
-      for (size_t I = 0; I < K.D.size(); ++I) {
+      for (int I = 0; I < K.N; I++) {
         uint64_t Bytes =
             endian::byte_swap<uint64_t, llvm::endianness::little>(K.D[I]);
         Data.replace(K.Pos + I * sizeof(uint64_t), sizeof(uint64_t),
                      reinterpret_cast<const char *>(&Bytes), sizeof(uint64_t));
       }
     }
-    break;
-  }
-  case OStreamKind::svector: {
-    raw_svector_ostream &VOStream = static_cast<raw_svector_ostream &>(OS);
-    for (const auto &K : P) {
-      for (size_t I = 0; I < K.D.size(); ++I) {
-        uint64_t Bytes =
-            endian::byte_swap<uint64_t, llvm::endianness::little>(K.D[I]);
-        VOStream.pwrite(reinterpret_cast<const char *>(&Bytes),
-                        sizeof(uint64_t), K.Pos + I * sizeof(uint64_t));
-      }
-    }
-    break;
-  }
   }
 }
 
@@ -123,20 +106,17 @@ Error CodeGenDataWriter::writeImpl(CGDataOStream &COS) {
   if (Error E = writeHeader(COS))
     return E;
 
-  std::vector<CGDataPatchItem> PatchItems;
-
   uint64_t OutlinedHashTreeFieldStart = COS.tell();
   if (hasOutlinedHashTree())
     HashTreeRecord.serialize(COS.OS);
   uint64_t StableFunctionMapFieldStart = COS.tell();
   if (hasStableFunctionMap())
-    FunctionMapRecord.serialize(COS.OS, PatchItems);
+    FunctionMapRecord.serialize(COS.OS);
 
   // Back patch the offsets.
-  PatchItems.emplace_back(OutlinedHashTreeOffset, &OutlinedHashTreeFieldStart,
-                          1);
-  PatchItems.emplace_back(StableFunctionMapOffset, &StableFunctionMapFieldStart,
-                          1);
+  CGDataPatchItem PatchItems[] = {
+      {OutlinedHashTreeOffset, &OutlinedHashTreeFieldStart, 1},
+      {StableFunctionMapOffset, &StableFunctionMapFieldStart, 1}};
   COS.patch(PatchItems);
 
   return Error::success();

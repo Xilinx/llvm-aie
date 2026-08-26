@@ -23,7 +23,6 @@
 #define LLVM_BINARYFORMAT_ELF_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cstdint>
 #include <cstring>
@@ -2069,20 +2068,20 @@ enum {
 constexpr unsigned CREL_HDR_ADDEND = 4;
 
 /// Convert an architecture name into ELF's e_machine value.
-LLVM_ABI uint16_t convertArchNameToEMachine(StringRef Arch);
+uint16_t convertArchNameToEMachine(StringRef Arch);
 
 /// Convert an ELF's e_machine value into an architecture name.
-LLVM_ABI StringRef convertEMachineToArchName(uint16_t EMachine);
+StringRef convertEMachineToArchName(uint16_t EMachine);
 
 // Convert a triple's architecture to ELF's e_machine value.
-LLVM_ABI uint16_t convertTripleArchTypeToEMachine(Triple::ArchType ArchType);
+uint16_t convertTripleArchTypeToEMachine(Triple::ArchType ArchType);
 
 // Convert a lowercase string identifier into an OSABI value.
-LLVM_ABI uint8_t convertNameToOSABI(StringRef Name);
+uint8_t convertNameToOSABI(StringRef Name);
 
 // Convert an OSABI value into a string that identifies the OS- or ABI-
 // specific ELF extension.
-LLVM_ABI StringRef convertOSABIToName(uint8_t OSABI);
+StringRef convertOSABIToName(uint8_t OSABI);
 
 } // end namespace ELF
 } // end namespace llvm

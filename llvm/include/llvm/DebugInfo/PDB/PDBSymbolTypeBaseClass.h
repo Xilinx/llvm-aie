@@ -11,7 +11,6 @@
 
 #include "PDBSymbol.h"
 #include "PDBTypes.h"
-#include "llvm/Support/Compiler.h"
 
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
 
@@ -21,7 +20,7 @@ namespace pdb {
 
 class PDBSymDumper;
 
-class LLVM_ABI PDBSymbolTypeBaseClass : public PDBSymbol {
+class PDBSymbolTypeBaseClass : public PDBSymbol {
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::BaseClass)
 public:
   void dump(PDBSymDumper &Dumper) const override;

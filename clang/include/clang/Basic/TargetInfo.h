@@ -273,7 +273,7 @@ protected:
   unsigned HasBuiltinMSVaList : 1;
 
   LLVM_PREFERRED_TYPE(bool)
-  unsigned HasAArch64ACLETypes : 1;
+  unsigned HasAArch64SVETypes : 1;
 
   LLVM_PREFERRED_TYPE(bool)
   unsigned HasRISCVVTypes : 1;
@@ -1069,9 +1069,9 @@ public:
   /// available on this target.
   bool hasBuiltinMSVaList() const { return HasBuiltinMSVaList; }
 
-  /// Returns whether or not the AArch64 ACLE built-in types are
+  /// Returns whether or not the AArch64 SVE built-in types are
   /// available on this target.
-  bool hasAArch64ACLETypes() const { return HasAArch64ACLETypes; }
+  bool hasAArch64SVETypes() const { return HasAArch64SVETypes; }
 
   /// Returns whether or not the RISC-V V built-in types are
   /// available on this target.

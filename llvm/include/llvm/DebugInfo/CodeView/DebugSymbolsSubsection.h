@@ -11,7 +11,6 @@
 
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsection.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -25,7 +24,7 @@ public:
     return S->kind() == DebugSubsectionKind::Symbols;
   }
 
-  LLVM_ABI Error initialize(BinaryStreamReader Reader);
+  Error initialize(BinaryStreamReader Reader);
 
   CVSymbolArray::Iterator begin() const { return Records.begin(); }
   CVSymbolArray::Iterator end() const { return Records.end(); }
@@ -34,7 +33,7 @@ private:
   CVSymbolArray Records;
 };
 
-class LLVM_ABI DebugSymbolsSubsection final : public DebugSubsection {
+class DebugSymbolsSubsection final : public DebugSubsection {
 public:
   DebugSymbolsSubsection() : DebugSubsection(DebugSubsectionKind::Symbols) {}
   static bool classof(const DebugSubsection *S) {

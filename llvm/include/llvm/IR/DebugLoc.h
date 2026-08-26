@@ -16,7 +16,6 @@
 
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/TrackingMDRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -67,7 +66,7 @@ namespace llvm {
     DILocAndCoverageTracking(const MDNode *Loc)
         : TrackingMDNodeRef(const_cast<MDNode *>(Loc)),
           Kind(DebugLocKind::Normal) {}
-    LLVM_ABI DILocAndCoverageTracking(const DILocation *Loc);
+    DILocAndCoverageTracking(const DILocation *Loc);
     // Explicit DebugLocKind, which always means a nullptr MDNode*.
     DILocAndCoverageTracking(DebugLocKind Kind)
         : TrackingMDNodeRef(nullptr), Kind(Kind) {}
@@ -107,7 +106,7 @@ namespace llvm {
     DebugLoc() = default;
 
     /// Construct from an \a DILocation.
-    LLVM_ABI DebugLoc(const DILocation *L);
+    DebugLoc(const DILocation *L);
 
     /// Construct from an \a MDNode.
     ///
@@ -115,7 +114,7 @@ namespace llvm {
     /// accessors will crash.  However, construction from other nodes is
     /// supported in order to handle forward references when reading textual
     /// IR.
-    LLVM_ABI explicit DebugLoc(const MDNode *N);
+    explicit DebugLoc(const MDNode *N);
 
 #if LLVM_ENABLE_DEBUGLOC_COVERAGE_TRACKING
     DebugLoc(DebugLocKind Kind) : Loc(Kind) {}
@@ -146,7 +145,7 @@ namespace llvm {
     ///
     /// \pre !*this or \c isa<DILocation>(getAsMDNode()).
     /// @{
-    LLVM_ABI DILocation *get() const;
+    DILocation *get() const;
     operator DILocation *() const { return get(); }
     DILocation *operator->() const { return get(); }
     DILocation &operator*() const { return *get(); }
@@ -167,9 +166,9 @@ namespace llvm {
     /// Rebuild the entire inlined-at chain for this instruction so that the top of
     /// the chain now is inlined-at the new call site.
     /// \param   InlinedAt    The new outermost inlined-at in the chain.
-    LLVM_ABI static DebugLoc
-    appendInlinedAt(const DebugLoc &DL, DILocation *InlinedAt, LLVMContext &Ctx,
-                    DenseMap<const MDNode *, MDNode *> &Cache);
+    static DebugLoc appendInlinedAt(const DebugLoc &DL, DILocation *InlinedAt,
+                                    LLVMContext &Ctx,
+                                    DenseMap<const MDNode *, MDNode *> &Cache);
 
     /// Return true if the source locations match, ignoring isImplicitCode and
     /// source atom info.
@@ -181,19 +180,19 @@ namespace llvm {
              getInlinedAt() == Other.getInlinedAt();
     }
 
-    LLVM_ABI unsigned getLine() const;
-    LLVM_ABI unsigned getCol() const;
-    LLVM_ABI MDNode *getScope() const;
-    LLVM_ABI DILocation *getInlinedAt() const;
+    unsigned getLine() const;
+    unsigned getCol() const;
+    MDNode *getScope() const;
+    DILocation *getInlinedAt() const;
 
     /// Get the fully inlined-at scope for a DebugLoc.
     ///
     /// Gets the inlined-at scope for a DebugLoc.
-    LLVM_ABI MDNode *getInlinedAtScope() const;
+    MDNode *getInlinedAtScope() const;
 
     /// Rebuild the entire inline-at chain by replacing the subprogram at the
     /// end of the chain with NewSP.
-    LLVM_ABI static DebugLoc
+    static DebugLoc
     replaceInlinedAtSubprogram(const DebugLoc &DL, DISubprogram &NewSP,
                                LLVMContext &Ctx,
                                DenseMap<const MDNode *, MDNode *> &Cache);
@@ -205,22 +204,22 @@ namespace llvm {
     ///
     /// FIXME: Remove this.  Users should use DILocation/DILocalScope API to
     /// find the subprogram, and then DILocation::get().
-    LLVM_ABI DebugLoc getFnDebugLoc() const;
+    DebugLoc getFnDebugLoc() const;
 
     /// Return \c this as a bar \a MDNode.
     MDNode *getAsMDNode() const { return Loc; }
 
     /// Check if the DebugLoc corresponds to an implicit code.
-    LLVM_ABI bool isImplicitCode() const;
-    LLVM_ABI void setImplicitCode(bool ImplicitCode);
+    bool isImplicitCode() const;
+    void setImplicitCode(bool ImplicitCode);
 
     bool operator==(const DebugLoc &DL) const { return Loc == DL.Loc; }
     bool operator!=(const DebugLoc &DL) const { return Loc != DL.Loc; }
 
-    LLVM_ABI void dump() const;
+    void dump() const;
 
     /// prints source location /path/to/file.exe:line:col @[inlined at]
-    LLVM_ABI void print(raw_ostream &OS) const;
+    void print(raw_ostream &OS) const;
   };
 
 } // end namespace llvm

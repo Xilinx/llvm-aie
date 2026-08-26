@@ -259,7 +259,7 @@ ObjCInterfaceRecord::getObjCCategories() const {
 
 ObjCIVarRecord *ObjCContainerRecord::addObjCIVar(StringRef IVar,
                                                  RecordLinkage Linkage) {
-  auto Result = IVars.try_emplace(IVar);
+  auto Result = IVars.insert({IVar, nullptr});
   if (Result.second)
     Result.first->second = std::make_unique<ObjCIVarRecord>(IVar, Linkage);
   return Result.first->second.get();

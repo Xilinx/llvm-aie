@@ -16,9 +16,6 @@ add_lldb_unittest(LLDBCoreTests
   TelemetryTest.cpp
   UniqueCStringMapTest.cpp
 
-  LINK_COMPONENTS
-    Support
-    Telemetry
   LINK_LIBS
     lldbCore
     lldbHost
@@ -32,4 +29,7 @@ add_lldb_unittest(LLDBCoreTests
     lldbUtilityHelpers
     lldbHostHelpers
     LLVMTestingSupport
+  LINK_COMPONENTS
+    Support
+    Telemetry
   )

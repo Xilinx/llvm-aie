@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/DwarfStringPoolEntry.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -71,7 +70,7 @@ public:
   /// @}
 
   /// Used to gather unique data for the abbreviation folding set.
-  LLVM_ABI void Profile(FoldingSetNodeID &ID) const;
+  void Profile(FoldingSetNodeID &ID) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -122,13 +121,13 @@ public:
   }
 
   /// Used to gather unique data for the abbreviation folding set.
-  LLVM_ABI void Profile(FoldingSetNodeID &ID) const;
+  void Profile(FoldingSetNodeID &ID) const;
 
   /// Print the abbreviation using the specified asm printer.
-  LLVM_ABI void Emit(const AsmPrinter *AP) const;
+  void Emit(const AsmPrinter *AP) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
-  LLVM_ABI void dump() const;
+  void print(raw_ostream &O) const;
+  void dump() const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -149,7 +148,7 @@ class DIEAbbrevSet {
 
 public:
   DIEAbbrevSet(BumpPtrAllocator &A) : Alloc(A) {}
-  LLVM_ABI ~DIEAbbrevSet();
+  ~DIEAbbrevSet();
 
   /// Generate the abbreviation declaration for a DIE and return a pointer to
   /// the generated abbreviation.
@@ -157,10 +156,10 @@ public:
   /// \param Die the debug info entry to generate the abbreviation for.
   /// \returns A reference to the uniqued abbreviation declaration that is
   /// owned by this class.
-  LLVM_ABI DIEAbbrev &uniqueAbbreviation(DIE &Die);
+  DIEAbbrev &uniqueAbbreviation(DIE &Die);
 
   /// Print all abbreviations using the specified asm printer.
-  LLVM_ABI void Emit(const AsmPrinter *AP, MCSection *Section) const;
+  void Emit(const AsmPrinter *AP, MCSection *Section) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -196,11 +195,10 @@ public:
   uint64_t getValue() const { return Integer; }
   void setValue(uint64_t Val) { Integer = Val; }
 
-  LLVM_ABI void emitValue(const AsmPrinter *Asm, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *Asm, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -214,11 +212,10 @@ public:
   /// Get MCExpr.
   const MCExpr *getValue() const { return Expr; }
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -232,11 +229,10 @@ public:
   /// Get MCSymbol.
   const MCSymbol *getValue() const { return Label; }
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -251,11 +247,11 @@ public:
     : CU(TheCU), Index(Idx) {}
 
   /// EmitValue - Emit base type reference.
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
   /// sizeOf - Determine size of the base type reference in bytes.
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &, dwarf::Form) const;
+  unsigned sizeOf(const dwarf::FormParams &, dwarf::Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
   uint64_t getIndex() const { return Index; }
 };
 
@@ -269,11 +265,10 @@ class DIEDelta {
 public:
   DIEDelta(const MCSymbol *Hi, const MCSymbol *Lo) : LabelHi(Hi), LabelLo(Lo) {}
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -289,11 +284,10 @@ public:
   /// Grab the string out of the object.
   StringRef getString() const { return S.getString(); }
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -312,10 +306,10 @@ public:
   /// Grab the string out of the object.
   StringRef getString() const { return S; }
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &, dwarf::Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &, dwarf::Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -331,11 +325,10 @@ public:
 
   DIE &getEntry() const { return *Entry; }
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -351,11 +344,10 @@ public:
   /// Grab the current index out.
   size_t getValue() const { return Index; }
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -368,11 +360,10 @@ public:
   explicit DIEAddrOffset(uint64_t Idx, const MCSymbol *Hi, const MCSymbol *Lo)
       : Addr(Idx), Offset(Hi, Lo) {}
 
-  LLVM_ABI void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams,
-                           dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -519,13 +510,13 @@ public:
 #include "llvm/CodeGen/DIEValue.def"
 
   /// Emit value via the Dwarf writer.
-  LLVM_ABI void emitValue(const AsmPrinter *AP) const;
+  void emitValue(const AsmPrinter *AP) const;
 
   /// Return the size of a value in bytes.
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &FormParams) const;
+  unsigned sizeOf(const dwarf::FormParams &FormParams) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
-  LLVM_ABI void dump() const;
+  void print(raw_ostream &O) const;
+  void dump() const;
 };
 
 struct IntrusiveBackListNode {
@@ -888,20 +879,20 @@ public:
     return make_range(Children.begin(), Children.end());
   }
 
-  LLVM_ABI DIE *getParent() const;
+  DIE *getParent() const;
 
   /// Generate the abbreviation for this DIE.
   ///
   /// Calculate the abbreviation for this, which should be uniqued and
   /// eventually used to call \a setAbbrevNumber().
-  LLVM_ABI DIEAbbrev generateAbbrev() const;
+  DIEAbbrev generateAbbrev() const;
 
   /// Set the abbreviation number for this DIE.
   void setAbbrevNumber(unsigned I) { AbbrevNumber = I; }
 
   /// Get the absolute offset within the .debug_info or .debug_types section
   /// for this DIE.
-  LLVM_ABI uint64_t getDebugSectionOffset() const;
+  uint64_t getDebugSectionOffset() const;
 
   /// Compute the offset of this DIE and all its children.
   ///
@@ -919,23 +910,22 @@ public:
   /// \param CUOffset the compile/type unit relative offset in bytes.
   /// \returns the offset for the DIE that follows this DIE within the
   /// current compile/type unit.
-  LLVM_ABI unsigned
-  computeOffsetsAndAbbrevs(const dwarf::FormParams &FormParams,
-                           DIEAbbrevSet &AbbrevSet, unsigned CUOffset);
+  unsigned computeOffsetsAndAbbrevs(const dwarf::FormParams &FormParams,
+                                    DIEAbbrevSet &AbbrevSet, unsigned CUOffset);
 
   /// Climb up the parent chain to get the compile unit or type unit DIE that
   /// this DIE belongs to.
   ///
   /// \returns the compile or type unit DIE that owns this DIE, or NULL if
   /// this DIE hasn't been added to a unit DIE.
-  LLVM_ABI const DIE *getUnitDie() const;
+  const DIE *getUnitDie() const;
 
   /// Climb up the parent chain to get the compile unit or type unit that this
   /// DIE belongs to.
   ///
   /// \returns the DIEUnit that represents the compile or type unit that owns
   /// this DIE, or NULL if this DIE hasn't been added to a unit DIE.
-  LLVM_ABI DIEUnit *getUnit() const;
+  DIEUnit *getUnit() const;
 
   void setOffset(unsigned O) { Offset = O; }
   void setSize(unsigned S) { Size = S; }
@@ -959,10 +949,10 @@ public:
   ///
   /// Returns a default-constructed DIEValue (where \a DIEValue::getType()
   /// gives \a DIEValue::isNone) if no such attribute exists.
-  LLVM_ABI DIEValue findAttribute(dwarf::Attribute Attribute) const;
+  DIEValue findAttribute(dwarf::Attribute Attribute) const;
 
-  LLVM_ABI void print(raw_ostream &O, unsigned IndentCount = 0) const;
-  LLVM_ABI void dump() const;
+  void print(raw_ostream &O, unsigned IndentCount = 0) const;
+  void dump() const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -982,7 +972,7 @@ protected:
   virtual ~DIEUnit() = default;
 
 public:
-  LLVM_ABI explicit DIEUnit(dwarf::Tag UnitTag);
+  explicit DIEUnit(dwarf::Tag UnitTag);
   DIEUnit(const DIEUnit &RHS) = delete;
   DIEUnit(DIEUnit &&RHS) = delete;
   void operator=(const DIEUnit &RHS) = delete;
@@ -1024,7 +1014,7 @@ public:
   DIELoc() = default;
 
   /// Calculate the size of the location expression.
-  LLVM_ABI unsigned computeSize(const dwarf::FormParams &FormParams) const;
+  unsigned computeSize(const dwarf::FormParams &FormParams) const;
 
   // TODO: move setSize() and Size to DIEValueList.
   void setSize(unsigned size) { Size = size; }
@@ -1044,10 +1034,10 @@ public:
     return dwarf::DW_FORM_block;
   }
 
-  LLVM_ABI void emitValue(const AsmPrinter *Asm, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &, dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *Asm, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 //===--------------------------------------------------------------------===//
@@ -1060,7 +1050,7 @@ public:
   DIEBlock() = default;
 
   /// Calculate the size of the location expression.
-  LLVM_ABI unsigned computeSize(const dwarf::FormParams &FormParams) const;
+  unsigned computeSize(const dwarf::FormParams &FormParams) const;
 
   // TODO: move setSize() and Size to DIEValueList.
   void setSize(unsigned size) { Size = size; }
@@ -1077,10 +1067,10 @@ public:
     return dwarf::DW_FORM_block;
   }
 
-  LLVM_ABI void emitValue(const AsmPrinter *Asm, dwarf::Form Form) const;
-  LLVM_ABI unsigned sizeOf(const dwarf::FormParams &, dwarf::Form Form) const;
+  void emitValue(const AsmPrinter *Asm, dwarf::Form Form) const;
+  unsigned sizeOf(const dwarf::FormParams &, dwarf::Form Form) const;
 
-  LLVM_ABI void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 };
 
 } // end namespace llvm

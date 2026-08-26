@@ -542,7 +542,8 @@ bool ValueObjectPrinter::ShouldPrintChildren(
   if (is_ptr || is_ref) {
     // We have a pointer or reference whose value is an address. Make sure
     // that address is not NULL
-    if (valobj.GetPointerValue().address == 0)
+    AddressType ptr_address_type;
+    if (valobj.GetPointerValue(&ptr_address_type) == 0)
       return false;
 
     const bool is_root_level = m_curr_depth == 0;

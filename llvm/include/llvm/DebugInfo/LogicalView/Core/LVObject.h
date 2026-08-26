@@ -18,7 +18,6 @@
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/LogicalView/Core/LVSupport.h"
-#include "llvm/Support/Compiler.h"
 #include <limits>
 #include <list>
 #include <string>
@@ -55,11 +54,11 @@ class LVType;
 class LVOptions;
 class LVPatterns;
 
-LLVM_ABI StringRef typeNone();
-LLVM_ABI StringRef typeVoid();
-LLVM_ABI StringRef typeInt();
-LLVM_ABI StringRef typeUnknown();
-LLVM_ABI StringRef emptyString();
+StringRef typeNone();
+StringRef typeVoid();
+StringRef typeInt();
+StringRef typeUnknown();
+StringRef emptyString();
 
 using LVElementSetFunction = void (LVElement::*)();
 using LVElementGetFunction = bool (LVElement::*)() const;
@@ -106,7 +105,7 @@ struct LVCounter {
   }
 };
 
-class LLVM_ABI LVObject {
+class LVObject {
   enum class Property {
     IsLocation,          // Location.
     IsGlobalReference,   // This object is being referenced from another CU.

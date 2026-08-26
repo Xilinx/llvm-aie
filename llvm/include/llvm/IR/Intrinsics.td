@@ -563,7 +563,6 @@ def llvm_v64i32_ty     : LLVMType<v64i32>;    //   64 x i32
 def llvm_v128i32_ty    : LLVMType<v128i32>;   //  128 x i32
 def llvm_v256i32_ty    : LLVMType<v256i32>;   //  256 x i32
 def llvm_v2048i32_ty   : LLVMType<v2048i32>;  // 2048 x i32
-def llvm_v4096i32_ty   : LLVMType<v4096i32>;  // 4096 x i32
 
 def llvm_v1i64_ty      : LLVMType<v1i64>;    //  1 x i64
 def llvm_v2i64_ty      : LLVMType<v2i64>;    //  2 x i64
@@ -1967,24 +1966,6 @@ def int_experimental_vp_strided_load  : DefaultAttrsIntrinsic<[llvm_anyvector_ty
 def int_experimental_vector_histogram_add : DefaultAttrsIntrinsic<[],
                              [ llvm_anyvector_ty, // Vector of pointers
                                llvm_anyint_ty,    // Increment
-                               LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>], // Mask
-                             [ IntrArgMemOnly ]>;
-
-def int_experimental_vector_histogram_uadd_sat : DefaultAttrsIntrinsic<[],
-                             [ llvm_anyvector_ty, // Vector of pointers
-                               llvm_anyint_ty,    // Increment
-                               LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>], // Mask
-                             [ IntrArgMemOnly ]>;
-
-def int_experimental_vector_histogram_umin : DefaultAttrsIntrinsic<[],
-                             [ llvm_anyvector_ty, // Vector of pointers
-                               llvm_anyint_ty,    // Update value
-                               LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>], // Mask
-                             [ IntrArgMemOnly ]>;
-
-def int_experimental_vector_histogram_umax : DefaultAttrsIntrinsic<[],
-                             [ llvm_anyvector_ty, // Vector of pointers
-                               llvm_anyint_ty,    // Update value
                                LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>], // Mask
                              [ IntrArgMemOnly ]>;
 

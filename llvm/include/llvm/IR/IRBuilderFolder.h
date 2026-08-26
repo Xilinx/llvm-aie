@@ -18,12 +18,11 @@
 #include "llvm/IR/GEPNoWrapFlags.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
 /// IRBuilderFolder - Interface for constant folding in IRBuilder.
-class LLVM_ABI IRBuilderFolder {
+class IRBuilderFolder {
 public:
   virtual ~IRBuilderFolder();
 

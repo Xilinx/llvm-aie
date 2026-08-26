@@ -18,7 +18,6 @@ def : Enum {
     Etor<"ALL", "Devices of all types">,
     Etor<"GPU", "GPU device type">,
     Etor<"CPU", "CPU device type">,
-    Etor<"Host", "Host device type">,
   ];
 }
 

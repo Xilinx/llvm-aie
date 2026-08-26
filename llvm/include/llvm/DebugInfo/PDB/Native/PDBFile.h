@@ -13,7 +13,6 @@
 #include "llvm/DebugInfo/MSF/MSFCommon.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/BinaryStreamRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 
@@ -38,7 +37,7 @@ class PublicsStream;
 class SymbolStream;
 class TpiStream;
 
-class LLVM_ABI PDBFile : public msf::IMSFFile {
+class PDBFile : public msf::IMSFFile {
   friend PDBFileBuilder;
 
 public:

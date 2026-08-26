@@ -676,8 +676,7 @@ void Parser::ParseGNUAttributeArgs(
                          Form);
     return;
   } else if (AttrKind == ParsedAttr::AT_CXXAssume) {
-    ParseCXXAssumeAttributeArg(Attrs, AttrName, AttrNameLoc, ScopeName,
-                               ScopeLoc, EndLoc, Form);
+    ParseCXXAssumeAttributeArg(Attrs, AttrName, AttrNameLoc, EndLoc, Form);
     return;
   }
 
@@ -735,8 +734,7 @@ unsigned Parser::ParseClangAttributeArgs(
     break;
 
   case ParsedAttr::AT_CXXAssume:
-    ParseCXXAssumeAttributeArg(Attrs, AttrName, AttrNameLoc, ScopeName,
-                               ScopeLoc, EndLoc, Form);
+    ParseCXXAssumeAttributeArg(Attrs, AttrName, AttrNameLoc, EndLoc, Form);
     break;
   }
   return !Attrs.empty() ? Attrs.begin()->getNumArgs() : 0;
@@ -6124,7 +6122,8 @@ bool Parser::isConstructorDeclarator(bool IsUnqualified, bool DeductionGuide,
 
 void Parser::ParseTypeQualifierListOpt(
     DeclSpec &DS, unsigned AttrReqs, bool AtomicOrPtrauthAllowed,
-    bool IdentifierRequired, llvm::function_ref<void()> CodeCompletionHandler) {
+    bool IdentifierRequired,
+    std::optional<llvm::function_ref<void()>> CodeCompletionHandler) {
   if ((AttrReqs & AR_CXX11AttributesParsed) &&
       isAllowedCXX11AttributeSpecifier()) {
     ParsedAttributes Attrs(AttrFactory);
@@ -6144,7 +6143,7 @@ void Parser::ParseTypeQualifierListOpt(
     case tok::code_completion:
       cutOffParsing();
       if (CodeCompletionHandler)
-        CodeCompletionHandler();
+        (*CodeCompletionHandler)();
       else
         Actions.CodeCompletion().CodeCompleteTypeQualifiers(DS);
       return;
@@ -7235,9 +7234,9 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       ParseTypeQualifierListOpt(
           DS, AR_NoAttributesParsed,
           /*AtomicOrPtrauthAllowed=*/false,
-          /*IdentifierRequired=*/false, [&]() {
+          /*IdentifierRequired=*/false, llvm::function_ref<void()>([&]() {
             Actions.CodeCompletion().CodeCompleteFunctionQualifiers(DS, D);
-          });
+          }));
       if (!DS.getSourceRange().getEnd().isInvalid()) {
         EndLoc = DS.getSourceRange().getEnd();
       }

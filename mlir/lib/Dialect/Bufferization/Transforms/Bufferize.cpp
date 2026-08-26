@@ -280,8 +280,8 @@ LogicalResult bufferization::bufferizeOp(Operation *op,
                                          BufferizationState &bufferizationState,
                                          BufferizationStatistics *statistics) {
   if (options.copyBeforeWrite) {
-    AnalysisState analysisState(options);
-    if (failed(insertTensorCopies(op, analysisState, bufferizationState)))
+    AnalysisState state(options);
+    if (failed(insertTensorCopies(op, state)))
       return failure();
   }
 
@@ -396,8 +396,7 @@ LogicalResult bufferization::bufferizeOp(Operation *op,
 
 LogicalResult
 bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
-                                       const BufferizationOptions &options,
-                                       BufferizationState &state) {
+                                       const BufferizationOptions &options) {
   OpBuilder::InsertionGuard g(rewriter);
   auto bufferizableOp = options.dynCastBufferizableOp(block->getParentOp());
   if (!bufferizableOp)
@@ -413,7 +412,7 @@ bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
     }
 
     FailureOr<BaseMemRefType> memrefType =
-        bufferization::getBufferType(bbArg, options, state);
+        bufferization::getBufferType(bbArg, options);
     if (failed(memrefType))
       return failure();
     newTypes.push_back(*memrefType);
@@ -464,7 +463,7 @@ bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
         continue;
       }
       FailureOr<BaseMemRefType> operandBufferType =
-          bufferization::getBufferType(operand, options, state);
+          bufferization::getBufferType(operand, options);
       if (failed(operandBufferType))
         return failure();
       rewriter.setInsertionPointAfterValue(operand);

@@ -18,7 +18,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/Chrono.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -62,11 +61,10 @@ public:
   virtual Expected<const char *> getNextChildLoc() const = 0;
   virtual Expected<bool> isThin() const = 0;
 
-  LLVM_ABI Expected<sys::fs::perms> getAccessMode() const;
-  LLVM_ABI Expected<sys::TimePoint<std::chrono::seconds>>
-  getLastModified() const;
-  LLVM_ABI Expected<unsigned> getUID() const;
-  LLVM_ABI Expected<unsigned> getGID() const;
+  Expected<sys::fs::perms> getAccessMode() const;
+  Expected<sys::TimePoint<std::chrono::seconds>> getLastModified() const;
+  Expected<unsigned> getUID() const;
+  Expected<unsigned> getGID() const;
 
   /// Returns the size in bytes of the format-defined member header of the
   /// concrete archive type.
@@ -76,7 +74,7 @@ public:
 };
 
 template <typename T>
-class LLVM_ABI CommonArchiveMemberHeader : public AbstractArchiveMemberHeader {
+class CommonArchiveMemberHeader : public AbstractArchiveMemberHeader {
 public:
   CommonArchiveMemberHeader(const Archive *Parent, const T *RawHeaderPtr)
       : AbstractArchiveMemberHeader(Parent), ArMemHdr(RawHeaderPtr){};
@@ -101,8 +99,7 @@ struct UnixArMemHdrType {
   char Terminator[2];
 };
 
-class LLVM_ABI ArchiveMemberHeader
-    : public CommonArchiveMemberHeader<UnixArMemHdrType> {
+class ArchiveMemberHeader : public CommonArchiveMemberHeader<UnixArMemHdrType> {
 public:
   ArchiveMemberHeader(const Archive *Parent, const char *RawHeaderPtr,
                       uint64_t Size, Error *Err);
@@ -136,7 +133,7 @@ struct BigArMemHdrType {
 };
 
 // Define file member header of AIX big archive.
-class LLVM_ABI BigArchiveMemberHeader
+class BigArchiveMemberHeader
     : public CommonArchiveMemberHeader<BigArMemHdrType> {
 
 public:
@@ -156,7 +153,7 @@ public:
   Expected<bool> isThin() const override { return false; }
 };
 
-class LLVM_ABI Archive : public Binary {
+class Archive : public Binary {
   virtual void anchor();
 
 public:
@@ -174,8 +171,8 @@ public:
     Expected<bool> isThinMember() const;
 
   public:
-    LLVM_ABI Child(const Archive *Parent, const char *Start, Error *Err);
-    LLVM_ABI Child(const Archive *Parent, StringRef Data, uint16_t StartOfFile);
+    Child(const Archive *Parent, const char *Start, Error *Err);
+    Child(const Archive *Parent, StringRef Data, uint16_t StartOfFile);
 
     Child(const Child &C)
         : Parent(C.Parent), Data(C.Data), StartOfFile(C.StartOfFile) {
@@ -221,10 +218,10 @@ public:
     }
 
     const Archive *getParent() const { return Parent; }
-    LLVM_ABI Expected<Child> getNext() const;
+    Expected<Child> getNext() const;
 
-    LLVM_ABI Expected<StringRef> getName() const;
-    LLVM_ABI Expected<std::string> getFullName() const;
+    Expected<StringRef> getName() const;
+    Expected<std::string> getFullName() const;
     Expected<StringRef> getRawName() const { return Header->getRawName(); }
 
     Expected<sys::TimePoint<std::chrono::seconds>> getLastModified() const {
@@ -243,17 +240,17 @@ public:
     }
 
     /// \return the size of the archive member without the header or padding.
-    LLVM_ABI Expected<uint64_t> getSize() const;
+    Expected<uint64_t> getSize() const;
     /// \return the size in the archive header for this member.
-    LLVM_ABI Expected<uint64_t> getRawSize() const;
+    Expected<uint64_t> getRawSize() const;
 
-    LLVM_ABI Expected<StringRef> getBuffer() const;
-    LLVM_ABI uint64_t getChildOffset() const;
+    Expected<StringRef> getBuffer() const;
+    uint64_t getChildOffset() const;
     uint64_t getDataOffset() const { return getChildOffset() + StartOfFile; }
 
-    LLVM_ABI Expected<MemoryBufferRef> getMemoryBufferRef() const;
+    Expected<MemoryBufferRef> getMemoryBufferRef() const;
 
-    LLVM_ABI Expected<std::unique_ptr<Binary>>
+    Expected<std::unique_ptr<Binary>>
     getAsBinary(LLVMContext *Context = nullptr) const;
   };
 
@@ -302,10 +299,10 @@ public:
       return (Parent == other.Parent) && (SymbolIndex == other.SymbolIndex);
     }
 
-    LLVM_ABI StringRef getName() const;
-    LLVM_ABI Expected<Child> getMember() const;
-    LLVM_ABI Symbol getNext() const;
-    LLVM_ABI bool isECSymbol() const;
+    StringRef getName() const;
+    Expected<Child> getMember() const;
+    Symbol getNext() const;
+    bool isECSymbol() const;
   };
 
   class symbol_iterator {
@@ -333,10 +330,6 @@ public:
 
   Archive(MemoryBufferRef Source, Error &Err);
   static Expected<std::unique_ptr<Archive>> create(MemoryBufferRef Source);
-
-  // Explicitly non-copyable.
-  Archive(Archive const &) = delete;
-  Archive &operator=(Archive const &) = delete;
 
   /// Size field is 10 decimal digits long
   static const uint64_t MaxMemberSize = 9999999999;
@@ -423,7 +416,7 @@ public:
   bool Has64BitGlobalSymtab = false;
 
 public:
-  LLVM_ABI BigArchive(MemoryBufferRef Source, Error &Err);
+  BigArchive(MemoryBufferRef Source, Error &Err);
   uint64_t getFirstChildOffset() const override { return FirstChildOffset; }
   uint64_t getLastChildOffset() const { return LastChildOffset; }
   bool isEmpty() const override { return getFirstChildOffset() == 0; }

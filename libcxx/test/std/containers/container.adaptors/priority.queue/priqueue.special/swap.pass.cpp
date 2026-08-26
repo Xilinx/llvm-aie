@@ -19,7 +19,7 @@
 
 #include "test_macros.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   std::priority_queue<int> q1;
   std::priority_queue<int> q2;
   q1.push(1);
@@ -29,15 +29,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
   assert(q1.empty());
   assert(q2.size() == 3);
   assert(q2.top() == 3);
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

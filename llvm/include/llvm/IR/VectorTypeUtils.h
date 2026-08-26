@@ -10,7 +10,6 @@
 #define LLVM_IR_VECTORTYPEUTILS_H
 
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -31,19 +30,19 @@ inline Type *toVectorTy(Type *Scalar, unsigned VF) {
 /// Note:
 ///   - If \p EC is scalar, \p StructTy is returned unchanged
 ///   - Only unpacked literal struct types are supported
-LLVM_ABI Type *toVectorizedStructTy(StructType *StructTy, ElementCount EC);
+Type *toVectorizedStructTy(StructType *StructTy, ElementCount EC);
 
 /// A helper for converting structs of vector types to structs of scalar types.
 /// Note: Only unpacked literal struct types are supported.
-LLVM_ABI Type *toScalarizedStructTy(StructType *StructTy);
+Type *toScalarizedStructTy(StructType *StructTy);
 
 /// Returns true if `StructTy` is an unpacked literal struct where all elements
 /// are vectors of matching element count. This does not include empty structs.
-LLVM_ABI bool isVectorizedStructTy(StructType *StructTy);
+bool isVectorizedStructTy(StructType *StructTy);
 
 /// Returns true if `StructTy` is an unpacked literal struct where all elements
 /// are scalars that can be used as vector element types.
-LLVM_ABI bool canVectorizeStructTy(StructType *StructTy);
+bool canVectorizeStructTy(StructType *StructTy);
 
 /// A helper for converting to vectorized types. For scalar types, this is
 /// equivalent to calling `toVectorTy`. For struct types, this returns a new

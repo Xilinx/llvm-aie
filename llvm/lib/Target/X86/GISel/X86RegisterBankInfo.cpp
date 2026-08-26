@@ -111,7 +111,6 @@ bool X86RegisterBankInfo::onlyUsesFP(const MachineInstr &MI,
   case TargetOpcode::G_FPTOSI:
   case TargetOpcode::G_FPTOUI:
   case TargetOpcode::G_FCMP:
-  case X86::G_FIST:
   case TargetOpcode::G_LROUND:
   case TargetOpcode::G_LLROUND:
   case TargetOpcode::G_INTRINSIC_TRUNC:
@@ -130,7 +129,6 @@ bool X86RegisterBankInfo::onlyDefinesFP(const MachineInstr &MI,
   switch (MI.getOpcode()) {
   case TargetOpcode::G_SITOFP:
   case TargetOpcode::G_UITOFP:
-  case X86::G_FILD:
     return true;
   default:
     break;
@@ -298,16 +296,6 @@ X86RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // VECRReg)
     getInstrPartialMappingIdxs(MI, MRI, /* isFP= */ true, OpRegBankIdx);
     break;
-  case X86::G_FIST:
-  case X86::G_FILD: {
-    auto &Op0 = MI.getOperand(0);
-    auto &Op1 = MI.getOperand(1);
-    const LLT Ty0 = MRI.getType(Op0.getReg());
-    const LLT Ty1 = MRI.getType(Op1.getReg());
-    OpRegBankIdx[0] = getPartialMappingIdx(MI, Ty0, /* isFP= */ true);
-    OpRegBankIdx[1] = getPartialMappingIdx(MI, Ty1, /* isFP= */ false);
-    break;
-  }
   case TargetOpcode::G_SITOFP:
   case TargetOpcode::G_FPTOSI:
   case TargetOpcode::G_UITOFP:

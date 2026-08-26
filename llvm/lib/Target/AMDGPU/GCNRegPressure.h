@@ -29,26 +29,34 @@ class raw_ostream;
 class SlotIndex;
 
 struct GCNRegPressure {
-  enum RegKind { SGPR, VGPR, AGPR, TOTAL_KINDS };
+  enum RegKind {
+    SGPR32,
+    SGPR_TUPLE,
+    VGPR32,
+    VGPR_TUPLE,
+    AGPR32,
+    AGPR_TUPLE,
+    TOTAL_KINDS
+  };
 
   GCNRegPressure() {
     clear();
   }
 
-  bool empty() const { return !Value[SGPR] && !Value[VGPR] && !Value[AGPR]; }
+  bool empty() const { return getSGPRNum() == 0 && getVGPRNum(false) == 0; }
 
-  void clear() { std::fill(&Value[0], &Value[ValueArraySize], 0); }
+  void clear() { std::fill(&Value[0], &Value[TOTAL_KINDS], 0); }
 
   /// \returns the SGPR32 pressure
-  unsigned getSGPRNum() const { return Value[SGPR]; }
+  unsigned getSGPRNum() const { return Value[SGPR32]; }
   /// \returns the aggregated ArchVGPR32, AccVGPR32 pressure dependent upon \p
   /// UnifiedVGPRFile
   unsigned getVGPRNum(bool UnifiedVGPRFile) const {
     if (UnifiedVGPRFile) {
-      return Value[AGPR] ? getUnifiedVGPRNum(Value[VGPR], Value[AGPR])
-                         : Value[VGPR];
+      return Value[AGPR32] ? getUnifiedVGPRNum(Value[VGPR32], Value[AGPR32])
+                           : Value[VGPR32] + Value[AGPR32];
     }
-    return std::max(Value[VGPR], Value[AGPR]);
+    return std::max(Value[VGPR32], Value[AGPR32]);
   }
 
   /// Returns the aggregated VGPR pressure, assuming \p NumArchVGPRs ArchVGPRs
@@ -60,14 +68,13 @@ struct GCNRegPressure {
   }
 
   /// \returns the ArchVGPR32 pressure
-  unsigned getArchVGPRNum() const { return Value[VGPR]; }
+  unsigned getArchVGPRNum() const { return Value[VGPR32]; }
   /// \returns the AccVGPR32 pressure
-  unsigned getAGPRNum() const { return Value[AGPR]; }
+  unsigned getAGPRNum() const { return Value[AGPR32]; }
 
-  unsigned getVGPRTuplesWeight() const {
-    return std::max(Value[TOTAL_KINDS + VGPR], Value[TOTAL_KINDS + AGPR]);
-  }
-  unsigned getSGPRTuplesWeight() const { return Value[TOTAL_KINDS + SGPR]; }
+  unsigned getVGPRTuplesWeight() const { return std::max(Value[VGPR_TUPLE],
+                                                         Value[AGPR_TUPLE]); }
+  unsigned getSGPRTuplesWeight() const { return Value[SGPR_TUPLE]; }
 
   unsigned getOccupancy(const GCNSubtarget &ST) const {
     return std::min(ST.getOccupancyWithNumSGPRs(getSGPRNum()),
@@ -99,7 +106,7 @@ struct GCNRegPressure {
             unsigned MaxOccupancy = std::numeric_limits<unsigned>::max()) const;
 
   bool operator==(const GCNRegPressure &O) const {
-    return std::equal(&Value[0], &Value[ValueArraySize], O.Value);
+    return std::equal(&Value[0], &Value[TOTAL_KINDS], O.Value);
   }
 
   bool operator!=(const GCNRegPressure &O) const {
@@ -107,13 +114,13 @@ struct GCNRegPressure {
   }
 
   GCNRegPressure &operator+=(const GCNRegPressure &RHS) {
-    for (unsigned I = 0; I < ValueArraySize; ++I)
+    for (unsigned I = 0; I < TOTAL_KINDS; ++I)
       Value[I] += RHS.Value[I];
     return *this;
   }
 
   GCNRegPressure &operator-=(const GCNRegPressure &RHS) {
-    for (unsigned I = 0; I < ValueArraySize; ++I)
+    for (unsigned I = 0; I < TOTAL_KINDS; ++I)
       Value[I] -= RHS.Value[I];
     return *this;
   }
@@ -121,14 +128,9 @@ struct GCNRegPressure {
   void dump() const;
 
 private:
-  static constexpr unsigned ValueArraySize = TOTAL_KINDS * 2;
+  unsigned Value[TOTAL_KINDS];
 
-  /// Pressure for all register kinds (first all regular registers kinds, then
-  /// all tuple register kinds).
-  unsigned Value[ValueArraySize];
-
-  static unsigned getRegKind(const TargetRegisterClass *RC,
-                             const SIRegisterInfo *STI);
+  static unsigned getRegKind(Register Reg, const MachineRegisterInfo &MRI);
 
   friend GCNRegPressure max(const GCNRegPressure &P1,
                             const GCNRegPressure &P2);
@@ -138,7 +140,7 @@ private:
 
 inline GCNRegPressure max(const GCNRegPressure &P1, const GCNRegPressure &P2) {
   GCNRegPressure Res;
-  for (unsigned I = 0; I < GCNRegPressure::ValueArraySize; ++I)
+  for (unsigned I = 0; I < GCNRegPressure::TOTAL_KINDS; ++I)
     Res.Value[I] = std::max(P1.Value[I], P2.Value[I]);
   return Res;
 }

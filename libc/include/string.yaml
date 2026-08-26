@@ -1,8 +1,6 @@
 header: string.h
 header_template: string.h.def
-macros:
-  - macro_name: NULL
-    macro_header: null-macro.h
+macros: []
 types:
   - type_name: locale_t
   - type_name: size_t

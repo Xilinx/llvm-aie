@@ -22,8 +22,6 @@ void registerOpenACCExtensions(mlir::DialectRegistry &registry) {
     fir::SequenceType::attachInterface<OpenACCMappableModel<fir::SequenceType>>(
         *ctx);
     fir::BoxType::attachInterface<OpenACCMappableModel<fir::BaseBoxType>>(*ctx);
-    fir::ClassType::attachInterface<OpenACCMappableModel<fir::BaseBoxType>>(
-        *ctx);
 
     fir::ReferenceType::attachInterface<
         OpenACCPointerLikeModel<fir::ReferenceType>>(*ctx);

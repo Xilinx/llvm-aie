@@ -763,6 +763,7 @@ getInterfaceFile(const StringRef Filename) {
     return errorCodeToError(std::move(Err));
 
   auto Buffer = std::move(*BufferOrErr);
+  std::unique_ptr<InterfaceFile> IF;
   switch (identify_magic(Buffer->getBuffer())) {
   case file_magic::macho_dynamically_linked_shared_lib:
   case file_magic::macho_dynamically_linked_shared_lib_stub:
@@ -1083,10 +1084,10 @@ void Options::addConditionalCC1Args(std::vector<std::string> &ArgStrings,
   // Add specific to platform arguments.
   PathSeq PlatformSearchPaths =
       getPathsForPlatform(FEOpts.SystemFwkPaths, mapToPlatformType(Targ));
-  for (StringRef Path : PlatformSearchPaths) {
+  llvm::for_each(PlatformSearchPaths, [&ArgStrings](const StringRef Path) {
     ArgStrings.push_back("-iframework");
     ArgStrings.push_back(Path.str());
-  }
+  });
 
   // Add specific to header type arguments.
   if (Type == HeaderType::Project)

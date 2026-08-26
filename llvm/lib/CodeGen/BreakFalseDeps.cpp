@@ -285,7 +285,7 @@ bool BreakFalseDeps::runOnMachineFunction(MachineFunction &mf) {
   TRI = MF->getSubtarget().getRegisterInfo();
   RDA = &getAnalysis<ReachingDefAnalysis>();
 
-  RegClassInfo.runOnMachineFunction(mf, /*Rev=*/true);
+  RegClassInfo.runOnMachineFunction(mf);
 
   LLVM_DEBUG(dbgs() << "********** BREAK FALSE DEPENDENCIES **********\n");
 

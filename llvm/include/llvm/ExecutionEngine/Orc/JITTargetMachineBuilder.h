@@ -14,7 +14,6 @@
 #define LLVM_EXECUTIONENGINE_ORC_JITTARGETMACHINEBUILDER_H
 
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -42,14 +41,14 @@ public:
   /// Note: TargetOptions is default-constructed, then EmulatedTLS is set to
   /// true. If EmulatedTLS is not required, these values should be reset before
   /// calling createTargetMachine.
-  LLVM_ABI JITTargetMachineBuilder(Triple TT);
+  JITTargetMachineBuilder(Triple TT);
 
   /// Create a JITTargetMachineBuilder for the host system.
   ///
   /// Note: TargetOptions is default-constructed, then EmulatedTLS is set to
   /// true. If EmulatedTLS is not required, these values should be reset before
   /// calling createTargetMachine.
-  LLVM_ABI static Expected<JITTargetMachineBuilder> detectHost();
+  static Expected<JITTargetMachineBuilder> detectHost();
 
   /// Create a TargetMachine.
   ///
@@ -58,7 +57,7 @@ public:
   /// the target's AsmPrinter must both be registered. To JIT assembly
   /// (including inline and module level assembly) the target's AsmParser must
   /// also be registered.
-  LLVM_ABI Expected<std::unique_ptr<TargetMachine>> createTargetMachine();
+  Expected<std::unique_ptr<TargetMachine>> createTargetMachine();
 
   /// Get the default DataLayout for the target.
   ///
@@ -112,7 +111,7 @@ public:
   }
 
   /// Add subtarget features.
-  LLVM_ABI JITTargetMachineBuilder &
+  JITTargetMachineBuilder &
   addFeatures(const std::vector<std::string> &FeatureVec);
 
   /// Access subtarget features.

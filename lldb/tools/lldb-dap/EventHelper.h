@@ -10,19 +10,15 @@
 #define LLDB_TOOLS_LLDB_DAP_EVENTHELPER_H
 
 #include "DAPForward.h"
-#include "llvm/Support/Error.h"
 
 namespace lldb_dap {
 struct DAP;
 
 enum LaunchMethod { Launch, Attach, AttachForSuspendedLaunch };
 
-/// Update capabilities based on the configured target.
-void SendTargetBasedCapabilities(DAP &dap);
-
 void SendProcessEvent(DAP &dap, LaunchMethod launch_method);
 
-llvm::Error SendThreadStoppedEvent(DAP &dap, bool on_entry = false);
+void SendThreadStoppedEvent(DAP &dap);
 
 void SendTerminatedEvent(DAP &dap);
 

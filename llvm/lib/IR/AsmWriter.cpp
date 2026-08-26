@@ -1204,23 +1204,17 @@ void SlotTracker::processFunctionMetadata(const Function &F) {
 }
 
 void SlotTracker::processDbgRecordMetadata(const DbgRecord &DR) {
-  // Tolerate null metadata pointers: it's a completely illegal debug record,
-  // but we can have faulty metadata from debug-intrinsic days being
-  // autoupgraded into debug records. This gets caught by the verifier, which
-  // then will print the faulty IR, hitting this code path.
   if (const DbgVariableRecord *DVR = dyn_cast<const DbgVariableRecord>(&DR)) {
     // Process metadata used by DbgRecords; we only specifically care about the
     // DILocalVariable, DILocation, and DIAssignID fields, as the Value and
     // Expression fields should only be printed inline and so do not use a slot.
     // Note: The above doesn't apply for empty-metadata operands.
-    if (auto *Empty = dyn_cast_if_present<MDNode>(DVR->getRawLocation()))
+    if (auto *Empty = dyn_cast<MDNode>(DVR->getRawLocation()))
       CreateMetadataSlot(Empty);
-    if (DVR->getRawVariable())
-      CreateMetadataSlot(DVR->getRawVariable());
+    CreateMetadataSlot(DVR->getRawVariable());
     if (DVR->isDbgAssign()) {
-      if (auto *AssignID = DVR->getRawAssignID())
-        CreateMetadataSlot(cast<MDNode>(AssignID));
-      if (auto *Empty = dyn_cast_if_present<MDNode>(DVR->getRawAddress()))
+      CreateMetadataSlot(cast<MDNode>(DVR->getRawAssignID()));
+      if (auto *Empty = dyn_cast<MDNode>(DVR->getRawAddress()))
         CreateMetadataSlot(Empty);
     }
   } else if (const DbgLabelRecord *DLR = dyn_cast<const DbgLabelRecord>(&DR)) {
@@ -1228,8 +1222,7 @@ void SlotTracker::processDbgRecordMetadata(const DbgRecord &DR) {
   } else {
     llvm_unreachable("unsupported DbgRecord kind");
   }
-  if (DR.getDebugLoc())
-    CreateMetadataSlot(DR.getDebugLoc().getAsMDNode());
+  CreateMetadataSlot(DR.getDebugLoc().getAsMDNode());
 }
 
 void SlotTracker::processInstructionMetadata(const Instruction &I) {
@@ -4874,30 +4867,22 @@ void AssemblyWriter::printDbgVariableRecord(const DbgVariableRecord &DVR) {
     llvm_unreachable(
         "Tried to print a DbgVariableRecord with an invalid LocationType!");
   }
-
-  auto PrintOrNull = [&](Metadata *M) {
-    if (!M)
-      Out << "(null)";
-    else
-      WriteAsOperandInternal(Out, M, WriterCtx, true);
-  };
-
   Out << "(";
-  PrintOrNull(DVR.getRawLocation());
+  WriteAsOperandInternal(Out, DVR.getRawLocation(), WriterCtx, true);
   Out << ", ";
-  PrintOrNull(DVR.getRawVariable());
+  WriteAsOperandInternal(Out, DVR.getRawVariable(), WriterCtx, true);
   Out << ", ";
-  PrintOrNull(DVR.getRawExpression());
+  WriteAsOperandInternal(Out, DVR.getRawExpression(), WriterCtx, true);
   Out << ", ";
   if (DVR.isDbgAssign()) {
-    PrintOrNull(DVR.getRawAssignID());
+    WriteAsOperandInternal(Out, DVR.getRawAssignID(), WriterCtx, true);
     Out << ", ";
-    PrintOrNull(DVR.getRawAddress());
+    WriteAsOperandInternal(Out, DVR.getRawAddress(), WriterCtx, true);
     Out << ", ";
-    PrintOrNull(DVR.getRawAddressExpression());
+    WriteAsOperandInternal(Out, DVR.getRawAddressExpression(), WriterCtx, true);
     Out << ", ";
   }
-  PrintOrNull(DVR.getDebugLoc().getAsMDNode());
+  WriteAsOperandInternal(Out, DVR.getDebugLoc().getAsMDNode(), WriterCtx, true);
   Out << ")";
 }
 

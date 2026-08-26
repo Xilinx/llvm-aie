@@ -7,25 +7,23 @@
 //===----------------------------------------------------------------------===//
 
 #include "hdr/fcntl_macros.h"
-#include "src/__support/libc_errno.h"
 #include "src/__support/macros/config.h"
+#include "src/errno/libc_errno.h"
 #include "src/sys/stat/mkdirat.h"
 #include "src/sys/statvfs/statvfs.h"
 #include "src/unistd/rmdir.h"
-#include "test/UnitTest/ErrnoCheckingTest.h"
 #include "test/UnitTest/ErrnoSetterMatcher.h"
 #include "test/UnitTest/Test.h"
 
 using namespace LIBC_NAMESPACE::testing::ErrnoSetterMatcher;
-using LlvmLibcSysStatvfsTest = LIBC_NAMESPACE::testing::ErrnoCheckingTest;
 
-TEST_F(LlvmLibcSysStatvfsTest, StatvfsBasic) {
+TEST(LlvmLibcSysStatvfsTest, StatvfsBasic) {
   struct statvfs buf;
   // The root of the file directory must always exist
   ASSERT_THAT(LIBC_NAMESPACE::statvfs("/", &buf), Succeeds());
 }
 
-TEST_F(LlvmLibcSysStatvfsTest, StatvfsInvalidPath) {
+TEST(LlvmLibcSysStatvfsTest, StatvfsInvalidPath) {
   struct statvfs buf;
 
   ASSERT_THAT(LIBC_NAMESPACE::statvfs("", &buf), Fails(ENOENT));
@@ -37,7 +35,7 @@ TEST_F(LlvmLibcSysStatvfsTest, StatvfsInvalidPath) {
 
   // Always delete the folder so that we start in a consistent state.
   LIBC_NAMESPACE::rmdir(TEST_DIR);
-  libc_errno = 0; // Reset errno
+  LIBC_NAMESPACE::libc_errno = 0; // Reset errno
 
   ASSERT_THAT(LIBC_NAMESPACE::mkdirat(AT_FDCWD, TEST_DIR, S_IRWXU),
               Succeeds(0));

@@ -15,7 +15,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInstrDesc.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 
 namespace llvm {
@@ -75,8 +74,8 @@ public:
 
   /// Returns true if a certain instruction is deprecated and if so
   /// returns the reason in \p Info.
-  LLVM_ABI bool getDeprecatedInfo(MCInst &MI, const MCSubtargetInfo &STI,
-                                  std::string &Info) const;
+  bool getDeprecatedInfo(MCInst &MI, const MCSubtargetInfo &STI,
+                         std::string &Info) const;
 };
 
 } // End llvm namespace

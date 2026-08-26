@@ -24,9 +24,10 @@ using namespace mlir::bufferization;
 namespace {
 
 /// Generic conversion for any DestinationStyleOpInterface on tensors.
-static LogicalResult bufferizeDestinationStyleOpInterface(
-    RewriterBase &rewriter, DestinationStyleOpInterface op,
-    const BufferizationOptions &options, const BufferizationState &state) {
+static LogicalResult
+bufferizeDestinationStyleOpInterface(RewriterBase &rewriter,
+                                     DestinationStyleOpInterface op,
+                                     const BufferizationOptions &options) {
   // Take a guard before anything else.
   OpBuilder::InsertionGuard g(rewriter);
   rewriter.setInsertionPoint(op);
@@ -48,8 +49,7 @@ static LogicalResult bufferizeDestinationStyleOpInterface(
       newInputBuffers.push_back(opOperand->get());
       continue;
     }
-    FailureOr<Value> buffer =
-        getBuffer(rewriter, opOperand->get(), options, state);
+    FailureOr<Value> buffer = getBuffer(rewriter, opOperand->get(), options);
     if (failed(buffer))
       return failure();
     newInputBuffers.push_back(*buffer);
@@ -60,7 +60,7 @@ static LogicalResult bufferizeDestinationStyleOpInterface(
   for (OpResult opResult : op->getOpResults()) {
     OpOperand *opOperand = op.getDpsInitOperand(opResult.getResultNumber());
     FailureOr<Value> resultBuffer =
-        getBuffer(rewriter, opOperand->get(), options, state);
+        getBuffer(rewriter, opOperand->get(), options);
     if (failed(resultBuffer))
       return failure();
     newOutputBuffers.push_back(*resultBuffer);
@@ -76,10 +76,10 @@ static LogicalResult bufferizeDestinationStyleOpInterface(
   // new op. Since the new op does not have any tensor results, it does not
   // return anything.
   assert(op->getNumRegions() == 1 && "expected that op has 1 region");
-  OperationState opState(op->getLoc(), op->getName(), newOperands, TypeRange{},
-                         op->getAttrs());
-  opState.addRegion();
-  Operation *newOp = Operation::create(opState);
+  OperationState state(op->getLoc(), op->getName(), newOperands, TypeRange{},
+                       op->getAttrs());
+  state.addRegion();
+  Operation *newOp = Operation::create(state);
   newOp->getRegion(0).getBlocks().splice(newOp->getRegion(0).begin(),
                                          op->getRegion(0).getBlocks());
 
@@ -151,7 +151,7 @@ struct LinalgOpInterface
                           const BufferizationOptions &options,
                           BufferizationState &state) const {
     return bufferizeDestinationStyleOpInterface(
-        rewriter, cast<DestinationStyleOpInterface>(op), options, state);
+        rewriter, cast<DestinationStyleOpInterface>(op), options);
   }
 };
 
@@ -179,11 +179,11 @@ struct SoftmaxOpInterface
                           BufferizationState &state) const {
     auto softmaxOp = cast<linalg::SoftmaxOp>(op);
     FailureOr<Value> inputBuffer =
-        getBuffer(rewriter, softmaxOp.getInput(), options, state);
+        getBuffer(rewriter, softmaxOp.getInput(), options);
     if (failed(inputBuffer))
       return failure();
     FailureOr<Value> outputBuffer =
-        getBuffer(rewriter, softmaxOp.getOutput(), options, state);
+        getBuffer(rewriter, softmaxOp.getOutput(), options);
     if (failed(outputBuffer))
       return failure();
     rewriter.create<linalg::SoftmaxOp>(softmaxOp.getLoc(),

@@ -20,17 +20,32 @@
 namespace llvm {
 
 class StringRef;
-class SparcMCExpr : public MCSpecifierExpr {
+class SparcMCExpr : public MCTargetExpr {
 private:
+  const uint16_t specifier;
+  const MCExpr *Expr;
+
   explicit SparcMCExpr(uint16_t S, const MCExpr *Expr)
-      : MCSpecifierExpr(Expr, S) {}
+      : specifier(S), Expr(Expr) {}
 
 public:
   static const SparcMCExpr *create(uint16_t S, const MCExpr *Expr,
                                    MCContext &Ctx);
+  uint16_t getSpecifier() const { return specifier; }
+  const MCExpr *getSubExpr() const { return Expr; }
   uint16_t getFixupKind() const;
 
   void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
+  bool evaluateAsRelocatableImpl(MCValue &Res,
+                                 const MCAssembler *Asm) const override;
+  void visitUsedExpr(MCStreamer &Streamer) const override;
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
+  }
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Target;
+  }
 
   static uint16_t parseSpecifier(StringRef name);
   static StringRef getSpecifierName(uint16_t S);

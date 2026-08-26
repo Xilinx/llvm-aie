@@ -49,7 +49,9 @@ public:
     bool Templated = false;    // Whether the declaration is templated.
   };
 
-  ArrayRef<Declaration> getDeclarationList() const { return DeclarationList; }
+  const std::vector<Declaration> getDeclarationList() const {
+    return DeclarationList;
+  }
 
 private:
   std::vector<Declaration> DeclarationList;

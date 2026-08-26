@@ -23,28 +23,27 @@
 #define LLVM_TRANSFORMS_IPO_STRIPSYMBOLS_H
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
 struct StripSymbolsPass : PassInfoMixin<StripSymbolsPass> {
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 struct StripNonDebugSymbolsPass : PassInfoMixin<StripNonDebugSymbolsPass> {
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 struct StripDebugDeclarePass : PassInfoMixin<StripDebugDeclarePass> {
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 struct StripDeadDebugInfoPass : PassInfoMixin<StripDeadDebugInfoPass> {
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 struct StripDeadCGProfilePass : PassInfoMixin<StripDeadCGProfilePass> {
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 } // end namespace llvm

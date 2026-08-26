@@ -3,7 +3,6 @@ add_clang_library(MLIRCIR
   CIRDialect.cpp
   CIRMemorySlot.cpp
   CIRTypes.cpp
-  CIRDataLayout.cpp
 
   DEPENDS
   MLIRCIROpsIncGen

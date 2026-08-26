@@ -33,7 +33,6 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <cstdint>
@@ -127,7 +126,7 @@ public:
 
   /// Check if the intrinsic might lower into a regular function call in the
   /// course of IR transformations
-  LLVM_ABI static bool mayLowerToFunctionCall(Intrinsic::ID IID);
+  static bool mayLowerToFunctionCall(Intrinsic::ID IID);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const CallInst *I) {
@@ -258,8 +257,8 @@ public:
   /// Get the locations corresponding to the variable referenced by the debug
   /// info intrinsic.  Depending on the intrinsic, this could be the
   /// variable's value or its address.
-  LLVM_ABI iterator_range<location_op_iterator> location_ops() const;
-  LLVM_ABI Value *getVariableLocationOp(unsigned OpIdx) const;
+  iterator_range<location_op_iterator> location_ops() const;
+  Value *getVariableLocationOp(unsigned OpIdx) const;
   unsigned getNumVariableLocationOps() const {
     if (hasArgList())
       return cast<DIArgList>(getRawLocation())->getArgs().size();
@@ -311,18 +310,18 @@ public:
   /// Get the locations corresponding to the variable referenced by the debug
   /// info intrinsic.  Depending on the intrinsic, this could be the
   /// variable's value or its address.
-  LLVM_ABI iterator_range<location_op_iterator> location_ops() const;
+  iterator_range<location_op_iterator> location_ops() const;
 
-  LLVM_ABI Value *getVariableLocationOp(unsigned OpIdx) const;
+  Value *getVariableLocationOp(unsigned OpIdx) const;
 
-  LLVM_ABI void replaceVariableLocationOp(Value *OldValue, Value *NewValue,
-                                          bool AllowEmpty = false);
-  LLVM_ABI void replaceVariableLocationOp(unsigned OpIdx, Value *NewValue);
+  void replaceVariableLocationOp(Value *OldValue, Value *NewValue,
+                                 bool AllowEmpty = false);
+  void replaceVariableLocationOp(unsigned OpIdx, Value *NewValue);
   /// Adding a new location operand will always result in this intrinsic using
   /// an ArgList, and must always be accompanied by a new expression that uses
   /// the new operand.
-  LLVM_ABI void addVariableLocationOps(ArrayRef<Value *> NewValues,
-                                       DIExpression *NewExpr);
+  void addVariableLocationOps(ArrayRef<Value *> NewValues,
+                              DIExpression *NewExpr);
 
   void setVariable(DILocalVariable *NewVar) {
     setArgOperand(1, MetadataAsValue::get(NewVar->getContext(), NewVar));
@@ -402,7 +401,7 @@ public:
 
   /// Get the size (in bits) of the variable, or fragment of the variable that
   /// is described.
-  LLVM_ABI std::optional<uint64_t> getFragmentSizeInBits() const;
+  std::optional<uint64_t> getFragmentSizeInBits() const;
 
   /// Get the FragmentInfo for the variable.
   std::optional<DIExpression::FragmentInfo> getFragment() const {
@@ -501,7 +500,7 @@ class DbgAssignIntrinsic : public DbgValueInst {
   };
 
 public:
-  LLVM_ABI Value *getAddress() const;
+  Value *getAddress() const;
   Metadata *getRawAddress() const {
     return cast<MetadataAsValue>(getArgOperand(OpAddress))->getMetadata();
   }
@@ -519,16 +518,16 @@ public:
     setArgOperand(OpAddressExpr,
                   MetadataAsValue::get(NewExpr->getContext(), NewExpr));
   }
-  LLVM_ABI void setAssignId(DIAssignID *New);
-  LLVM_ABI void setAddress(Value *V);
+  void setAssignId(DIAssignID *New);
+  void setAddress(Value *V);
   /// Kill the address component.
-  LLVM_ABI void setKillAddress();
+  void setKillAddress();
   /// Check whether this kills the address component. This doesn't take into
   /// account the position of the intrinsic, therefore a returned value of false
   /// does not guarentee the address is a valid location for the variable at the
   /// intrinsic's position in IR.
-  LLVM_ABI bool isKillAddress() const;
-  LLVM_ABI void setValue(Value *V);
+  bool isKillAddress() const;
+  void setValue(Value *V);
   /// \name Casting methods
   /// @{
   static bool classof(const IntrinsicInst *I) {
@@ -569,53 +568,51 @@ public:
   /// \brief Declares a llvm.vp.* intrinsic in \p M that matches the parameters
   /// \p Params. Additionally, the load and gather intrinsics require
   /// \p ReturnType to be specified.
-  LLVM_ABI static Function *
-  getOrInsertDeclarationForParams(Module *M, Intrinsic::ID, Type *ReturnType,
-                                  ArrayRef<Value *> Params);
+  static Function *getOrInsertDeclarationForParams(Module *M, Intrinsic::ID,
+                                                   Type *ReturnType,
+                                                   ArrayRef<Value *> Params);
 
-  LLVM_ABI static std::optional<unsigned>
-  getMaskParamPos(Intrinsic::ID IntrinsicID);
-  LLVM_ABI static std::optional<unsigned>
-  getVectorLengthParamPos(Intrinsic::ID IntrinsicID);
+  static std::optional<unsigned> getMaskParamPos(Intrinsic::ID IntrinsicID);
+  static std::optional<unsigned> getVectorLengthParamPos(
+      Intrinsic::ID IntrinsicID);
 
   /// The llvm.vp.* intrinsics for this instruction Opcode
-  LLVM_ABI static Intrinsic::ID getForOpcode(unsigned OC);
+  static Intrinsic::ID getForOpcode(unsigned OC);
 
   /// The llvm.vp.* intrinsics for this intrinsic ID \p Id. Return \p Id if it
   /// is already a VP intrinsic.
-  LLVM_ABI static Intrinsic::ID getForIntrinsic(Intrinsic::ID Id);
+  static Intrinsic::ID getForIntrinsic(Intrinsic::ID Id);
 
   // Whether \p ID is a VP intrinsic ID.
-  LLVM_ABI static bool isVPIntrinsic(Intrinsic::ID);
+  static bool isVPIntrinsic(Intrinsic::ID);
 
   /// \return The mask parameter or nullptr.
-  LLVM_ABI Value *getMaskParam() const;
-  LLVM_ABI void setMaskParam(Value *);
+  Value *getMaskParam() const;
+  void setMaskParam(Value *);
 
   /// \return The vector length parameter or nullptr.
-  LLVM_ABI Value *getVectorLengthParam() const;
-  LLVM_ABI void setVectorLengthParam(Value *);
+  Value *getVectorLengthParam() const;
+  void setVectorLengthParam(Value *);
 
   /// \return Whether the vector length param can be ignored.
-  LLVM_ABI bool canIgnoreVectorLengthParam() const;
+  bool canIgnoreVectorLengthParam() const;
 
   /// \return The static element count (vector number of elements) the vector
   /// length parameter applies to.
-  LLVM_ABI ElementCount getStaticVectorLength() const;
+  ElementCount getStaticVectorLength() const;
 
   /// \return The alignment of the pointer used by this load/store/gather or
   /// scatter.
-  LLVM_ABI MaybeAlign getPointerAlignment() const;
+  MaybeAlign getPointerAlignment() const;
   // MaybeAlign setPointerAlignment(Align NewAlign); // TODO
 
   /// \return The pointer operand of this load,store, gather or scatter.
-  LLVM_ABI Value *getMemoryPointerParam() const;
-  LLVM_ABI static std::optional<unsigned>
-      getMemoryPointerParamPos(Intrinsic::ID);
+  Value *getMemoryPointerParam() const;
+  static std::optional<unsigned> getMemoryPointerParamPos(Intrinsic::ID);
 
   /// \return The data (payload) operand of this store or scatter.
-  LLVM_ABI Value *getMemoryDataParam() const;
-  LLVM_ABI static std::optional<unsigned> getMemoryDataParamPos(Intrinsic::ID);
+  Value *getMemoryDataParam() const;
+  static std::optional<unsigned> getMemoryDataParamPos(Intrinsic::ID);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const IntrinsicInst *I) {
@@ -641,28 +638,27 @@ public:
   }
 
   // Equivalent non-predicated opcode
-  LLVM_ABI static std::optional<unsigned>
-  getFunctionalOpcodeForVP(Intrinsic::ID ID);
+  static std::optional<unsigned> getFunctionalOpcodeForVP(Intrinsic::ID ID);
 
   // Equivalent non-predicated intrinsic ID
-  LLVM_ABI static std::optional<Intrinsic::ID>
+  static std::optional<Intrinsic::ID>
   getFunctionalIntrinsicIDForVP(Intrinsic::ID ID);
 
   // Equivalent non-predicated constrained ID
-  LLVM_ABI static std::optional<Intrinsic::ID>
+  static std::optional<Intrinsic::ID>
   getConstrainedIntrinsicIDForVP(Intrinsic::ID ID);
 };
 
 /// This represents vector predication reduction intrinsics.
 class VPReductionIntrinsic : public VPIntrinsic {
 public:
-  LLVM_ABI static bool isVPReduction(Intrinsic::ID ID);
+  static bool isVPReduction(Intrinsic::ID ID);
 
-  LLVM_ABI unsigned getStartParamPos() const;
-  LLVM_ABI unsigned getVectorParamPos() const;
+  unsigned getStartParamPos() const;
+  unsigned getVectorParamPos() const;
 
-  LLVM_ABI static std::optional<unsigned> getStartParamPos(Intrinsic::ID ID);
-  LLVM_ABI static std::optional<unsigned> getVectorParamPos(Intrinsic::ID ID);
+  static std::optional<unsigned> getStartParamPos(Intrinsic::ID ID);
+  static std::optional<unsigned> getVectorParamPos(Intrinsic::ID ID);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   /// @{
@@ -677,7 +673,7 @@ public:
 
 class VPCastIntrinsic : public VPIntrinsic {
 public:
-  LLVM_ABI static bool isVPCast(Intrinsic::ID ID);
+  static bool isVPCast(Intrinsic::ID ID);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   /// @{
@@ -692,9 +688,9 @@ public:
 
 class VPCmpIntrinsic : public VPIntrinsic {
 public:
-  LLVM_ABI static bool isVPCmp(Intrinsic::ID ID);
+  static bool isVPCmp(Intrinsic::ID ID);
 
-  LLVM_ABI CmpInst::Predicate getPredicate() const;
+  CmpInst::Predicate getPredicate() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   /// @{
@@ -709,7 +705,7 @@ public:
 
 class VPBinOpIntrinsic : public VPIntrinsic {
 public:
-  LLVM_ABI static bool isVPBinOp(Intrinsic::ID ID);
+  static bool isVPBinOp(Intrinsic::ID ID);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   /// @{
@@ -726,13 +722,13 @@ public:
 /// This is the common base class for constrained floating point intrinsics.
 class ConstrainedFPIntrinsic : public IntrinsicInst {
 public:
-  LLVM_ABI unsigned getNonMetadataArgCount() const;
-  LLVM_ABI std::optional<RoundingMode> getRoundingMode() const;
-  LLVM_ABI std::optional<fp::ExceptionBehavior> getExceptionBehavior() const;
-  LLVM_ABI bool isDefaultFPEnvironment() const;
+  unsigned getNonMetadataArgCount() const;
+  std::optional<RoundingMode> getRoundingMode() const;
+  std::optional<fp::ExceptionBehavior> getExceptionBehavior() const;
+  bool isDefaultFPEnvironment() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  LLVM_ABI static bool classof(const IntrinsicInst *I);
+  static bool classof(const IntrinsicInst *I);
   static bool classof(const Value *V) {
     return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
   }
@@ -741,7 +737,7 @@ public:
 /// Constrained floating point compare intrinsics.
 class ConstrainedFPCmpIntrinsic : public ConstrainedFPIntrinsic {
 public:
-  LLVM_ABI FCmpInst::Predicate getPredicate() const;
+  FCmpInst::Predicate getPredicate() const;
   bool isSignaling() const {
     return getIntrinsicID() == Intrinsic::experimental_constrained_fcmps;
   }
@@ -918,13 +914,13 @@ public:
   Value *getRHS() const { return const_cast<Value *>(getArgOperand(1)); }
 
   /// Returns the binary operation underlying the intrinsic.
-  LLVM_ABI Instruction::BinaryOps getBinaryOp() const;
+  Instruction::BinaryOps getBinaryOp() const;
 
   /// Whether the intrinsic is signed or unsigned.
-  LLVM_ABI bool isSigned() const;
+  bool isSigned() const;
 
   /// Returns one of OBO::NoSignedWrap or OBO::NoUnsignedWrap.
-  LLVM_ABI unsigned getNoWrapKind() const;
+  unsigned getNoWrapKind() const;
 };
 
 /// Represents an op.with.overflow intrinsic.
@@ -1479,10 +1475,10 @@ public:
   }
 
   // The number of counters for the instrumented function.
-  LLVM_ABI ConstantInt *getNumCounters() const;
+  ConstantInt *getNumCounters() const;
   // The index of the counter that this instruction acts on.
-  LLVM_ABI ConstantInt *getIndex() const;
-  LLVM_ABI void setIndex(uint32_t Idx);
+  ConstantInt *getIndex() const;
+  void setIndex(uint32_t Idx);
 };
 
 /// This represents the llvm.instrprof.cover intrinsic.
@@ -1506,7 +1502,7 @@ public:
   static bool classof(const Value *V) {
     return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
   }
-  LLVM_ABI Value *getStep() const;
+  Value *getStep() const;
 };
 
 /// This represents the llvm.instrprof.increment.step intrinsic.
@@ -1536,10 +1532,10 @@ public:
   static bool canInstrumentCallsite(const CallBase &CB) {
     return !CB.isInlineAsm() &&
            (CB.isIndirectCall() ||
-            (CB.getIntrinsicID() == Intrinsic::not_intrinsic));
+            (CB.getCalledFunction() && !CB.getCalledFunction()->isIntrinsic()));
   }
-  LLVM_ABI Value *getCallee() const;
-  LLVM_ABI void setCallee(Value *Callee);
+  Value *getCallee() const;
+  void setCallee(Value *Callee);
 };
 
 /// This represents the llvm.instrprof.timestamp intrinsic.
@@ -1705,7 +1701,7 @@ public:
   }
 
   /// The statepoint with which this gc.relocate is associated.
-  LLVM_ABI const Value *getStatepoint() const;
+  const Value *getStatepoint() const;
 };
 
 /// Represents calls to the gc.relocate intrinsic.
@@ -1732,8 +1728,8 @@ public:
     return cast<ConstantInt>(getArgOperand(2))->getZExtValue();
   }
 
-  LLVM_ABI Value *getBasePtr() const;
-  LLVM_ABI Value *getDerivedPtr() const;
+  Value *getBasePtr() const;
+  Value *getDerivedPtr() const;
 };
 
 /// Represents calls to the gc.result intrinsic.
@@ -1793,10 +1789,10 @@ public:
     return getIntrinsicID() == Intrinsic::experimental_convergence_loop;
   }
 
-  LLVM_ABI static ConvergenceControlInst *CreateAnchor(BasicBlock &BB);
-  LLVM_ABI static ConvergenceControlInst *CreateEntry(BasicBlock &BB);
-  LLVM_ABI static ConvergenceControlInst *
-  CreateLoop(BasicBlock &BB, ConvergenceControlInst *Parent);
+  static ConvergenceControlInst *CreateAnchor(BasicBlock &BB);
+  static ConvergenceControlInst *CreateEntry(BasicBlock &BB);
+  static ConvergenceControlInst *CreateLoop(BasicBlock &BB,
+                                            ConvergenceControlInst *Parent);
 };
 
 } // end namespace llvm

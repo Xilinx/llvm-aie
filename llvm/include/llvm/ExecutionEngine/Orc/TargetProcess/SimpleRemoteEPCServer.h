@@ -21,7 +21,6 @@
 #include "llvm/ExecutionEngine/Orc/Shared/WrapperFunctionUtils.h"
 #include "llvm/ExecutionEngine/Orc/TargetProcess/ExecutorBootstrapService.h"
 #include "llvm/ExecutionEngine/Orc/TargetProcess/SimpleExecutorDylibManager.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Error.h"
 
@@ -34,12 +33,12 @@ namespace llvm {
 namespace orc {
 
 /// A simple EPC server implementation.
-class LLVM_ABI SimpleRemoteEPCServer : public SimpleRemoteEPCTransportClient {
+class SimpleRemoteEPCServer : public SimpleRemoteEPCTransportClient {
 public:
   using ReportErrorFunction = unique_function<void(Error)>;
 
   /// Dispatches calls to runWrapper.
-  class LLVM_ABI Dispatcher {
+  class Dispatcher {
   public:
     virtual ~Dispatcher();
     virtual void dispatch(unique_function<void()> Work) = 0;
@@ -47,7 +46,7 @@ public:
   };
 
 #if LLVM_ENABLE_THREADS
-  class LLVM_ABI ThreadDispatcher : public Dispatcher {
+  class ThreadDispatcher : public Dispatcher {
   public:
     void dispatch(unique_function<void()> Work) override;
     void shutdown() override;

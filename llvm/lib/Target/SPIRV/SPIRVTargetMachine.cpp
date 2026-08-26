@@ -188,7 +188,7 @@ TargetPassConfig *SPIRVTargetMachine::createPassConfig(PassManagerBase &PM) {
 void SPIRVPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
 
-  if (TM.getSubtargetImpl()->isShader()) {
+  if (TM.getSubtargetImpl()->isVulkanEnv()) {
     // Vulkan does not allow address space casts. This pass is run to remove
     // address space casts that can be removed.
     // If an address space cast is not removed while targeting Vulkan, lowering
@@ -226,7 +226,7 @@ void SPIRVPassConfig::addIRPasses() {
 
 void SPIRVPassConfig::addISelPrepare() {
   addPass(createSPIRVEmitIntrinsicsPass(&getTM<SPIRVTargetMachine>()));
-  if (TM.getSubtargetImpl()->isLogicalSPIRV())
+  if (TM.getSubtargetImpl()->isVulkanEnv())
     addPass(createSPIRVLegalizePointerCastPass(&getTM<SPIRVTargetMachine>()));
   TargetPassConfig::addISelPrepare();
 }

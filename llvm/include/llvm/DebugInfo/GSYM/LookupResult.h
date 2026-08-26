@@ -11,7 +11,6 @@
 
 #include "llvm/ADT/AddressRanges.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include <inttypes.h>
 #include <vector>
 
@@ -32,7 +31,7 @@ inline bool operator==(const SourceLocation &LHS, const SourceLocation &RHS) {
          LHS.Line == RHS.Line && LHS.Offset == RHS.Offset;
 }
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const SourceLocation &R);
+raw_ostream &operator<<(raw_ostream &OS, const SourceLocation &R);
 
 using SourceLocations = std::vector<SourceLocation>;
 
@@ -77,7 +76,7 @@ struct LookupResult {
   /// - Call site info was not included when creating the GSYM file
   std::vector<StringRef> CallSiteFuncRegex;
 
-  LLVM_ABI std::string getSourceFile(uint32_t Index) const;
+  std::string getSourceFile(uint32_t Index) const;
 };
 
 inline bool operator==(const LookupResult &LHS, const LookupResult &RHS) {
@@ -92,7 +91,7 @@ inline bool operator==(const LookupResult &LHS, const LookupResult &RHS) {
   return LHS.Locations == RHS.Locations;
 }
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const LookupResult &R);
+raw_ostream &operator<<(raw_ostream &OS, const LookupResult &R);
 
 } // namespace gsym
 } // namespace llvm

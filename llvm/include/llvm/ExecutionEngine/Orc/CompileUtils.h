@@ -16,7 +16,6 @@
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 #include "llvm/ExecutionEngine/Orc/Layer.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 
 namespace llvm {
@@ -28,13 +27,13 @@ class TargetMachine;
 
 namespace orc {
 
-LLVM_ABI IRSymbolMapper::ManglingOptions
+IRSymbolMapper::ManglingOptions
 irManglingOptionsFromTargetOptions(const TargetOptions &Opts);
 
 /// Simple compile functor: Takes a single IR module and returns an ObjectFile.
 /// This compiler supports a single compilation thread and LLVMContext only.
 /// For multithreaded compilation, use ConcurrentIRCompiler below.
-class LLVM_ABI SimpleCompiler : public IRCompileLayer::IRCompiler {
+class SimpleCompiler : public IRCompileLayer::IRCompiler {
 public:
   using CompileResult = std::unique_ptr<MemoryBuffer>;
 
@@ -80,7 +79,7 @@ private:
 ///
 /// This class creates a new TargetMachine and SimpleCompiler instance for each
 /// compile.
-class LLVM_ABI ConcurrentIRCompiler : public IRCompileLayer::IRCompiler {
+class ConcurrentIRCompiler : public IRCompileLayer::IRCompiler {
 public:
   ConcurrentIRCompiler(JITTargetMachineBuilder JTMB,
                        ObjectCache *ObjCache = nullptr);

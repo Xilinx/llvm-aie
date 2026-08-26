@@ -15,10 +15,9 @@
 
 namespace llvm {
 
-class SystemZMCExpr : public MCSpecifierExpr {
+class SystemZMCExpr : public MCTargetExpr {
 public:
-  using Specifier = Spec;
-  enum {
+  enum Specifier : uint8_t {
     VK_None,
 
     VK_DTPOFF = MCSymbolRefExpr::FirstTargetSpecifier,
@@ -38,19 +37,40 @@ public:
   };
 
 private:
-  explicit SystemZMCExpr(const MCExpr *Expr, Spec S)
-      : MCSpecifierExpr(Expr, S) {}
+  const Specifier specifier;
+  const MCExpr *Expr;
+
+  explicit SystemZMCExpr(Specifier S, const MCExpr *Expr)
+      : specifier(S), Expr(Expr) {}
 
 public:
-  static const SystemZMCExpr *create(Spec Kind, const MCExpr *Expr,
+  static const SystemZMCExpr *create(Specifier Kind, const MCExpr *Expr,
                                      MCContext &Ctx);
+
+  Specifier getSpecifier() const { return specifier; }
+  const MCExpr *getSubExpr() const { return Expr; }
 
   StringRef getVariantKindName() const;
 
   void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
   bool evaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAssembler *Asm) const override;
+  void visitUsedExpr(MCStreamer &Streamer) const override {
+    Streamer.visitUsedExpr(*getSubExpr());
+  }
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
+  }
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Target;
+  }
 };
+
+static inline SystemZMCExpr::Specifier
+getSpecifier(const MCSymbolRefExpr *SRE) {
+  return SystemZMCExpr::Specifier(SRE->getKind());
+}
 } // end namespace llvm
 
 #endif

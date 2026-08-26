@@ -21,7 +21,6 @@
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorSymbolDef.h"
 #include "llvm/ExecutionEngine/Orc/Shared/SimpleRemoteEPCUtils.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace orc {
@@ -39,7 +38,7 @@ public:
 
   /// Create an EPCGenericMemoryAccess instance from a given set of
   /// function addrs.
-  LLVM_ABI static Expected<EPCGenericDylibManager>
+  static Expected<EPCGenericDylibManager>
   CreateWithDefaultBootstrapSymbols(ExecutorProcessControl &EPC);
 
   /// Create an EPCGenericMemoryAccess instance from a given set of
@@ -48,7 +47,7 @@ public:
       : EPC(EPC), SAs(SAs) {}
 
   /// Loads the dylib with the given name.
-  LLVM_ABI Expected<tpctypes::DylibHandle> open(StringRef Path, uint64_t Mode);
+  Expected<tpctypes::DylibHandle> open(StringRef Path, uint64_t Mode);
 
   /// Looks up symbols within the given dylib.
   Expected<std::vector<ExecutorSymbolDef>>
@@ -72,14 +71,12 @@ public:
       unique_function<void(Expected<std::vector<ExecutorSymbolDef>>)>;
 
   /// Looks up symbols within the given dylib.
-  LLVM_ABI void lookupAsync(tpctypes::DylibHandle H,
-                            const SymbolLookupSet &Lookup,
-                            SymbolLookupCompleteFn Complete);
+  void lookupAsync(tpctypes::DylibHandle H, const SymbolLookupSet &Lookup,
+                   SymbolLookupCompleteFn Complete);
 
   /// Looks up symbols within the given dylib.
-  LLVM_ABI void lookupAsync(tpctypes::DylibHandle H,
-                            const RemoteSymbolLookupSet &Lookup,
-                            SymbolLookupCompleteFn Complete);
+  void lookupAsync(tpctypes::DylibHandle H, const RemoteSymbolLookupSet &Lookup,
+                   SymbolLookupCompleteFn Complete);
 
 private:
   ExecutorProcessControl &EPC;

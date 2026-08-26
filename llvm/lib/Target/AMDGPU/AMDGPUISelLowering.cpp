@@ -1389,8 +1389,9 @@ SDValue AMDGPUTargetLowering::lowerUnhandledCall(CallLoweringInfo &CLI,
   else if (const GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     FuncName = G->getGlobal()->getName();
 
-  DAG.getContext()->diagnose(
-      DiagnosticInfoUnsupported(Fn, Reason + FuncName, CLI.DL.getDebugLoc()));
+  DiagnosticInfoUnsupported NoCalls(
+    Fn, Reason + FuncName, CLI.DL.getDebugLoc());
+  DAG.getContext()->diagnose(NoCalls);
 
   if (!CLI.IsTailCall) {
     for (ISD::InputArg &Arg : CLI.Ins)
@@ -1409,8 +1410,9 @@ SDValue AMDGPUTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                                       SelectionDAG &DAG) const {
   const Function &Fn = DAG.getMachineFunction().getFunction();
 
-  DAG.getContext()->diagnose(DiagnosticInfoUnsupported(
-      Fn, "unsupported dynamic alloca", SDLoc(Op).getDebugLoc()));
+  DiagnosticInfoUnsupported NoDynamicAlloca(Fn, "unsupported dynamic alloca",
+                                            SDLoc(Op).getDebugLoc());
+  DAG.getContext()->diagnose(NoDynamicAlloca);
   auto Ops = {DAG.getConstant(0, SDLoc(), Op.getValueType()), Op.getOperand(0)};
   return DAG.getMergeValues(Ops, SDLoc());
 }
@@ -1525,9 +1527,10 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
         !AMDGPU::isNamedBarrier(*cast<GlobalVariable>(GV))) {
       SDLoc DL(Op);
       const Function &Fn = DAG.getMachineFunction().getFunction();
-      DAG.getContext()->diagnose(DiagnosticInfoUnsupported(
-          Fn, "local memory global used by non-kernel function",
-          DL.getDebugLoc(), DS_Warning));
+      DiagnosticInfoUnsupported BadLDSDecl(
+        Fn, "local memory global used by non-kernel function",
+        DL.getDebugLoc(), DS_Warning);
+      DAG.getContext()->diagnose(BadLDSDecl);
 
       // We currently don't have a way to correctly allocate LDS objects that
       // aren't directly associated with a kernel. We do force inlining of
@@ -4162,17 +4165,22 @@ SDValue AMDGPUTargetLowering::performSraCombine(SDNode *N,
   SDLoc SL(N);
   unsigned RHSVal = RHS->getZExtValue();
 
-  // For C >= 32
-  // (sra i64:x, C) -> build_pair (sra hi_32(x), C - 32), (sra hi_32(x), 31)
-  if (RHSVal >= 32) {
+  // (sra i64:x, 32) -> build_pair x, (sra hi_32(x), 31)
+  if (RHSVal == 32) {
     SDValue Hi = getHiHalf64(N->getOperand(0), DAG);
-    Hi = DAG.getFreeze(Hi);
-    SDValue HiShift = DAG.getNode(ISD::SRA, SL, MVT::i32, Hi,
-                                  DAG.getConstant(31, SL, MVT::i32));
-    SDValue LoShift = DAG.getNode(ISD::SRA, SL, MVT::i32, Hi,
-                                  DAG.getConstant(RHSVal - 32, SL, MVT::i32));
+    SDValue NewShift = DAG.getNode(ISD::SRA, SL, MVT::i32, Hi,
+                                   DAG.getConstant(31, SL, MVT::i32));
 
-    SDValue BuildVec = DAG.getBuildVector(MVT::v2i32, SL, {LoShift, HiShift});
+    SDValue BuildVec = DAG.getBuildVector(MVT::v2i32, SL, {Hi, NewShift});
+    return DAG.getNode(ISD::BITCAST, SL, MVT::i64, BuildVec);
+  }
+
+  // (sra i64:x, 63) -> build_pair (sra hi_32(x), 31), (sra hi_32(x), 31)
+  if (RHSVal == 63) {
+    SDValue Hi = getHiHalf64(N->getOperand(0), DAG);
+    SDValue NewShift = DAG.getNode(ISD::SRA, SL, MVT::i32, Hi,
+                                   DAG.getConstant(31, SL, MVT::i32));
+    SDValue BuildVec = DAG.getBuildVector(MVT::v2i32, SL, {NewShift, NewShift});
     return DAG.getNode(ISD::BITCAST, SL, MVT::i64, BuildVec);
   }
 

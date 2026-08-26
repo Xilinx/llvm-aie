@@ -23,7 +23,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilderFolder.h"
 #include "llvm/IR/Operator.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -32,7 +31,7 @@ class DataLayout;
 class Type;
 
 /// TargetFolder - Create constants with target dependent folding.
-class LLVM_ABI TargetFolder final : public IRBuilderFolder {
+class TargetFolder final : public IRBuilderFolder {
   const DataLayout &DL;
 
   /// Fold - Fold the constant using target specific information.
@@ -40,7 +39,7 @@ class LLVM_ABI TargetFolder final : public IRBuilderFolder {
     return ConstantFoldConstant(C, DL);
   }
 
-  LLVM_DECLARE_VIRTUAL_ANCHOR_FUNCTION();
+  virtual void anchor();
 
 public:
   explicit TargetFolder(const DataLayout &DL) : DL(DL) {}
@@ -215,6 +214,7 @@ public:
     return Fold(ConstantExpr::getPointerBitCastOrAddrSpaceCast(C, DestTy));
   }
 };
+
 }
 
 #endif

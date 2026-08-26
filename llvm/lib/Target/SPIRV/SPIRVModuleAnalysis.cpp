@@ -68,7 +68,7 @@ getSymbolicOperandRequirements(SPIRV::OperandCategory::OperandCategory Category,
                                SPIRV::RequirementHandler &Reqs) {
   // A set of capabilities to avoid if there is another option.
   AvoidCapabilitiesSet AvoidCaps;
-  if (!ST.isShader())
+  if (ST.isOpenCLEnv())
     AvoidCaps.S.insert(SPIRV::Capability::Shader);
 
   VersionTuple ReqMinVer = getSymbolicOperandMinVersion(Category, i);
@@ -144,8 +144,8 @@ void SPIRVModuleAnalysis::setBaseInfo(const Module &M) {
         static_cast<SPIRV::MemoryModel::MemoryModel>(getMetadataUInt(MemMD, 1));
   } else {
     // TODO: Add support for VulkanMemoryModel.
-    MAI.Mem = ST->isShader() ? SPIRV::MemoryModel::GLSL450
-                             : SPIRV::MemoryModel::OpenCL;
+    MAI.Mem = ST->isOpenCLEnv() ? SPIRV::MemoryModel::OpenCL
+                                : SPIRV::MemoryModel::GLSL450;
     if (MAI.Mem == SPIRV::MemoryModel::OpenCL) {
       unsigned PtrSize = ST->getPointerSize();
       MAI.Addr = PtrSize == 32   ? SPIRV::AddressingModel::Physical32
@@ -175,7 +175,7 @@ void SPIRVModuleAnalysis::setBaseInfo(const Module &M) {
     // OpenCL 1.0 by default for the OpenCL environment to avoid puzzling
     // run-times with Unknown/0.0 version output. For a reference, LLVM-SPIRV
     // Translator avoids potential issues with run-times in a similar manner.
-    if (!ST->isShader()) {
+    if (ST->isOpenCLEnv()) {
       MAI.SrcLang = SPIRV::SourceLanguage::OpenCL_CPP;
       MAI.SrcLangVersion = 100000;
     } else {
@@ -203,7 +203,7 @@ void SPIRVModuleAnalysis::setBaseInfo(const Module &M) {
   MAI.Reqs.getAndAddRequirements(SPIRV::OperandCategory::AddressingModelOperand,
                                  MAI.Addr, *ST);
 
-  if (!ST->isShader()) {
+  if (ST->isOpenCLEnv()) {
     // TODO: check if it's required by default.
     MAI.ExtInstSetMap[static_cast<unsigned>(
         SPIRV::InstructionSet::OpenCL_std)] = MAI.getNextIDRegister();
@@ -595,8 +595,6 @@ void SPIRVModuleAnalysis::processOtherInstrs(const Module &M) {
           collectOtherInstr(MI, MAI, SPIRV::MB_DebugNames, IS);
         } else if (OpCode == SPIRV::OpEntryPoint) {
           collectOtherInstr(MI, MAI, SPIRV::MB_EntryPoints, IS);
-        } else if (OpCode == SPIRV::OpExecutionMode) {
-          collectOtherInstr(MI, MAI, SPIRV::MB_EntryPoints, IS);
         } else if (TII->isAliasingInstr(MI)) {
           collectOtherInstr(MI, MAI, SPIRV::MB_AliasingInsts, IS);
         } else if (TII->isDecorationInstr(MI)) {
@@ -806,12 +804,12 @@ void RequirementHandler::initAvailableCapabilities(const SPIRVSubtarget &ST) {
     addAvailableCaps(EnabledCapabilities);
   }
 
-  if (!ST.isShader()) {
+  if (ST.isOpenCLEnv()) {
     initAvailableCapabilitiesForOpenCL(ST);
     return;
   }
 
-  if (ST.isShader()) {
+  if (ST.isVulkanEnv()) {
     initAvailableCapabilitiesForVulkan(ST);
     return;
   }
@@ -971,7 +969,7 @@ static void addOpTypeImageReqs(const MachineInstr &MI,
   }
 
   // Has optional access qualifier.
-  if (!ST.isShader()) {
+  if (ST.isOpenCLEnv()) {
     if (MI.getNumOperands() > 8 &&
         MI.getOperand(8).getImm() == SPIRV::AccessQualifier::ReadWrite)
       Reqs.addRequirements(SPIRV::Capability::ImageReadWrite);
@@ -1269,7 +1267,7 @@ void addInstrRequirements(const MachineInstr &MI,
                                ST);
     // If it's a type of pointer to float16 targeting OpenCL, add Float16Buffer
     // capability.
-    if (ST.isShader())
+    if (!ST.isOpenCLEnv())
       break;
     assert(MI.getOperand(2).isReg());
     const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
@@ -1344,7 +1342,7 @@ void addInstrRequirements(const MachineInstr &MI,
     addOpTypeImageReqs(MI, Reqs, ST);
     break;
   case SPIRV::OpTypeSampler:
-    if (!ST.isShader()) {
+    if (!ST.isVulkanEnv()) {
       Reqs.addCapability(SPIRV::Capability::ImageBasic);
     }
     break;
@@ -1795,8 +1793,7 @@ void addInstrRequirements(const MachineInstr &MI,
     // not allowed to produce
     // StorageImageReadWithoutFormat/StorageImageWriteWithoutFormat, see
     // https://github.com/KhronosGroup/SPIRV-Headers/issues/487
-
-    if (isImageTypeWithUnknownFormat(TypeDef) && ST.isShader())
+    if (isImageTypeWithUnknownFormat(TypeDef) && !ST.isOpenCLEnv())
       Reqs.addCapability(SPIRV::Capability::StorageImageReadWithoutFormat);
     break;
   }
@@ -1809,8 +1806,7 @@ void addInstrRequirements(const MachineInstr &MI,
     // not allowed to produce
     // StorageImageReadWithoutFormat/StorageImageWriteWithoutFormat, see
     // https://github.com/KhronosGroup/SPIRV-Headers/issues/487
-
-    if (isImageTypeWithUnknownFormat(TypeDef) && ST.isShader())
+    if (isImageTypeWithUnknownFormat(TypeDef) && !ST.isOpenCLEnv())
       Reqs.addCapability(SPIRV::Capability::StorageImageWriteWithoutFormat);
     break;
   }

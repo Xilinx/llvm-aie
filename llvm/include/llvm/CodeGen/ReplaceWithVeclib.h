@@ -18,16 +18,15 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/PassRegistry.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class Function;
 struct ReplaceWithVeclib : public PassInfoMixin<ReplaceWithVeclib> {
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
 // Legacy pass
-struct LLVM_ABI ReplaceWithVeclibLegacy : public FunctionPass {
+struct ReplaceWithVeclibLegacy : public FunctionPass {
   static char ID;
   ReplaceWithVeclibLegacy() : FunctionPass(ID) {
     initializeReplaceWithVeclibLegacyPass(*PassRegistry::getPassRegistry());

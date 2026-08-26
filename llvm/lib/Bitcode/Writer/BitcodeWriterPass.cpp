@@ -19,7 +19,9 @@
 using namespace llvm;
 
 PreservedAnalyses BitcodeWriterPass::run(Module &M, ModuleAnalysisManager &AM) {
-  M.removeDebugIntrinsicDeclarations();
+  ScopedDbgInfoFormatSetter FormatSetter(M, M.IsNewDbgInfoFormat);
+  if (M.IsNewDbgInfoFormat)
+    M.removeDebugIntrinsicDeclarations();
 
   const ModuleSummaryIndex *Index =
       EmitSummaryIndex ? &(AM.getResult<ModuleSummaryIndexAnalysis>(M))
@@ -49,7 +51,9 @@ namespace {
     StringRef getPassName() const override { return "Bitcode Writer"; }
 
     bool runOnModule(Module &M) override {
-      M.removeDebugIntrinsicDeclarations();
+      ScopedDbgInfoFormatSetter FormatSetter(M, M.IsNewDbgInfoFormat);
+      if (M.IsNewDbgInfoFormat)
+        M.removeDebugIntrinsicDeclarations();
 
       WriteBitcodeToFile(M, OS, ShouldPreserveUseListOrder, /*Index=*/nullptr,
                          /*EmitModuleHash=*/false);

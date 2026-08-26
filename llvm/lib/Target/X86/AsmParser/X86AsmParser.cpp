@@ -3005,7 +3005,7 @@ bool X86AsmParser::ParseMemOperand(MCRegister SegReg, const MCExpr *Disp,
     if (!Id.empty()) {
       MCSymbol *Sym = this->getContext().getOrCreateSymbol(Id);
       if (Sym->isVariable()) {
-        auto V = Sym->getVariableValue();
+        auto V = Sym->getVariableValue(/*SetUsed*/ false);
         return isa<X86MCExpr>(V);
       }
     }

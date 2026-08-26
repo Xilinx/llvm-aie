@@ -18,7 +18,6 @@
 #include "llvm/DebugInfo/CodeView/TypeHashing.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstdint>
 
@@ -27,7 +26,7 @@ namespace codeview {
 
 class ContinuationRecordBuilder;
 
-class LLVM_ABI GlobalTypeTableBuilder : public TypeCollection {
+class GlobalTypeTableBuilder : public TypeCollection {
   /// Storage for records.  These need to outlive the TypeTableBuilder.
   BumpPtrAllocator &RecordStorage;
 

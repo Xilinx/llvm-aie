@@ -14,12 +14,11 @@
 #define LLVM_CODEGEN_GLOBALISEL_INSTRUCTIONSELECTOR_H
 
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutor.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class GISelObserverWrapper;
 
-class LLVM_ABI InstructionSelector : public GIMatchTableExecutor {
+class InstructionSelector : public GIMatchTableExecutor {
 public:
   virtual ~InstructionSelector();
 

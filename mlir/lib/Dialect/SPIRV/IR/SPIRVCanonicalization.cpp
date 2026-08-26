@@ -326,6 +326,7 @@ void spirv::UMulExtendedOp::getCanonicalizationPatterns(
 
 // The transformation is only applied if one divisor is a multiple of the other.
 
+// TODO(https://github.com/llvm/llvm-project/issues/63174): Add support for vector constants
 struct UModSimplification final : OpRewritePattern<spirv::UModOp> {
   using OpRewritePattern::OpRewritePattern;
 
@@ -335,29 +336,19 @@ struct UModSimplification final : OpRewritePattern<spirv::UModOp> {
     if (!prevUMod)
       return failure();
 
-    TypedAttr prevValue;
-    TypedAttr currValue;
+    IntegerAttr prevValue;
+    IntegerAttr currValue;
     if (!matchPattern(prevUMod.getOperand(1), m_Constant(&prevValue)) ||
         !matchPattern(umodOp.getOperand(1), m_Constant(&currValue)))
       return failure();
 
-    // Ensure that previous divisor is a multiple of the current divisor. If
-    // not, fail the transformation.
-    bool isApplicable = false;
-    if (auto prevInt = dyn_cast<IntegerAttr>(prevValue)) {
-      auto currInt = cast<IntegerAttr>(currValue);
-      isApplicable = prevInt.getValue().urem(currInt.getValue()) == 0;
-    } else if (auto prevVec = dyn_cast<DenseElementsAttr>(prevValue)) {
-      auto currVec = cast<DenseElementsAttr>(currValue);
-      isApplicable = llvm::all_of(llvm::zip_equal(prevVec.getValues<APInt>(),
-                                                  currVec.getValues<APInt>()),
-                                  [](const auto &pair) {
-                                    auto &[prev, curr] = pair;
-                                    return prev.urem(curr) == 0;
-                                  });
-    }
+    APInt prevConstValue = prevValue.getValue();
+    APInt currConstValue = currValue.getValue();
 
-    if (!isApplicable)
+    // Ensure that one divisor is a multiple of the other. If not, fail the
+    // transformation.
+    if (prevConstValue.urem(currConstValue) != 0 &&
+        currConstValue.urem(prevConstValue) != 0)
       return failure();
 
     // The transformation is safe. Replace the existing UMod operation with a

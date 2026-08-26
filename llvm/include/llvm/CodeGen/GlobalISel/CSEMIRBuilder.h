@@ -13,7 +13,6 @@
 #define LLVM_CODEGEN_GLOBALISEL_CSEMIRBUILDER_H
 
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -36,7 +35,7 @@ class GISelInstProfileBuilder;
 ///
 /// Explicitly passing in a register would materialize a copy if possible.
 /// CSEMIRBuilder also does trivial constant folding for binary ops.
-class LLVM_ABI CSEMIRBuilder : public MachineIRBuilder {
+class CSEMIRBuilder : public MachineIRBuilder {
 
   /// Returns true if A dominates B (within the same basic block).
   /// Both iterators must be in the same basic block.

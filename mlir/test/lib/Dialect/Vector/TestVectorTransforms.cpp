@@ -157,14 +157,12 @@ struct TestVectorUnrollingPatterns
     MLIRContext *ctx = &getContext();
     RewritePatternSet patterns(ctx);
     populateVectorUnrollPatterns(
-        patterns,
-        UnrollVectorOptions()
-            .setNativeShape(ArrayRef<int64_t>{2, 2})
-            .setFilterConstraint([](Operation *op) {
-              return success(
-                  isa<arith::AddFOp, vector::FMAOp, vector::MultiDimReductionOp,
-                      vector::BroadcastOp>(op));
-            }));
+        patterns, UnrollVectorOptions()
+                      .setNativeShape(ArrayRef<int64_t>{2, 2})
+                      .setFilterConstraint([](Operation *op) {
+                        return success(isa<arith::AddFOp, vector::FMAOp,
+                                           vector::MultiDimReductionOp>(op));
+                      }));
     populateVectorUnrollPatterns(
         patterns, UnrollVectorOptions()
                       .setNativeShape(ArrayRef<int64_t>{2})

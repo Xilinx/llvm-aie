@@ -14,7 +14,6 @@
 #define LLVM_EXECUTIONENGINE_JITLINK_MACHO_X86_64_H
 
 #include "llvm/ExecutionEngine/JITLink/JITLink.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace jitlink {
@@ -24,8 +23,7 @@ namespace jitlink {
 /// Note: The graph does not take ownership of the underlying buffer, nor copy
 /// its contents. The caller is responsible for ensuring that the object buffer
 /// outlives the graph.
-LLVM_ABI Expected<std::unique_ptr<LinkGraph>>
-createLinkGraphFromMachOObject_x86_64(
+Expected<std::unique_ptr<LinkGraph>> createLinkGraphFromMachOObject_x86_64(
     MemoryBufferRef ObjectBuffer, std::shared_ptr<orc::SymbolStringPool> SSP);
 
 /// jit-link the given LinkGraph.
@@ -37,16 +35,16 @@ createLinkGraphFromMachOObject_x86_64(
 /// If PostPrunePasses is empty then a default GOT-and-stubs insertion pass will
 /// be inserted. If PostPrunePasses is not empty then the caller is responsible
 /// for including a pass to insert GOT and stub edges.
-LLVM_ABI void link_MachO_x86_64(std::unique_ptr<LinkGraph> G,
-                                std::unique_ptr<JITLinkContext> Ctx);
+void link_MachO_x86_64(std::unique_ptr<LinkGraph> G,
+                       std::unique_ptr<JITLinkContext> Ctx);
 
 /// Returns a pass suitable for splitting __eh_frame sections in MachO/x86-64
 /// objects.
-LLVM_ABI LinkGraphPassFunction createEHFrameSplitterPass_MachO_x86_64();
+LinkGraphPassFunction createEHFrameSplitterPass_MachO_x86_64();
 
 /// Returns a pass suitable for fixing missing edges in an __eh_frame section
 /// in a MachO/x86-64 object.
-LLVM_ABI LinkGraphPassFunction createEHFrameEdgeFixerPass_MachO_x86_64();
+LinkGraphPassFunction createEHFrameEdgeFixerPass_MachO_x86_64();
 
 } // end namespace jitlink
 } // end namespace llvm

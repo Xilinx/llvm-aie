@@ -635,8 +635,7 @@ genHTML(const Index &Index, StringRef InfoPath, bool IsOutermostList) {
 }
 
 static std::unique_ptr<HTMLNode> genHTML(const CommentInfo &I) {
-  switch (I.Kind) {
-  case CommentKind::CK_FullComment: {
+  if (I.Kind == "FullComment") {
     auto FullComment = std::make_unique<TagNode>(HTMLTag::TAG_DIV);
     for (const auto &Child : I.Children) {
       std::unique_ptr<HTMLNode> Node = genHTML(*Child);
@@ -646,7 +645,7 @@ static std::unique_ptr<HTMLNode> genHTML(const CommentInfo &I) {
     return std::move(FullComment);
   }
 
-  case CommentKind::CK_ParagraphComment: {
+  if (I.Kind == "ParagraphComment") {
     auto ParagraphComment = std::make_unique<TagNode>(HTMLTag::TAG_P);
     for (const auto &Child : I.Children) {
       std::unique_ptr<HTMLNode> Node = genHTML(*Child);
@@ -658,7 +657,7 @@ static std::unique_ptr<HTMLNode> genHTML(const CommentInfo &I) {
     return std::move(ParagraphComment);
   }
 
-  case CommentKind::CK_BlockCommandComment: {
+  if (I.Kind == "BlockCommandComment") {
     auto BlockComment = std::make_unique<TagNode>(HTMLTag::TAG_DIV);
     BlockComment->Children.emplace_back(
         std::make_unique<TagNode>(HTMLTag::TAG_DIV, I.Name));
@@ -671,26 +670,12 @@ static std::unique_ptr<HTMLNode> genHTML(const CommentInfo &I) {
       return nullptr;
     return std::move(BlockComment);
   }
-
-  case CommentKind::CK_TextComment: {
-    if (I.Text.empty())
+  if (I.Kind == "TextComment") {
+    if (I.Text == "")
       return nullptr;
     return std::make_unique<TextNode>(I.Text);
   }
-
-  // For now, return nullptr for unsupported comment kinds
-  case CommentKind::CK_InlineCommandComment:
-  case CommentKind::CK_HTMLStartTagComment:
-  case CommentKind::CK_HTMLEndTagComment:
-  case CommentKind::CK_ParamCommandComment:
-  case CommentKind::CK_TParamCommandComment:
-  case CommentKind::CK_VerbatimBlockComment:
-  case CommentKind::CK_VerbatimBlockLineComment:
-  case CommentKind::CK_VerbatimLineComment:
-  case CommentKind::CK_Unknown:
-    return nullptr;
-  }
-  llvm_unreachable("Unhandled CommentKind");
+  return nullptr;
 }
 
 static std::unique_ptr<TagNode> genHTML(const std::vector<CommentInfo> &C) {

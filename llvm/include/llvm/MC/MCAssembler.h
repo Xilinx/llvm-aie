@@ -17,7 +17,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SMLoc.h"
 #include <algorithm>
 #include <cassert>
@@ -72,8 +71,6 @@ private:
 
   SmallVector<const MCSymbol *, 0> Symbols;
 
-  mutable SmallVector<std::pair<SMLoc, std::string>, 0> PendingErrors;
-
   MCDwarfLineTableParams LTParams;
 
   /// The set of function symbols for which a .thumb_func directive has
@@ -112,12 +109,12 @@ private:
   /// Check whether the given fragment needs relaxation.
   bool fragmentNeedsRelaxation(const MCRelaxableFragment *IF) const;
 
-  void layoutSection(MCSection &Sec);
   /// Perform one layout iteration and return true if any offsets
   /// were adjusted.
-  bool relaxOnce();
+  bool layoutOnce();
 
-  /// Perform relaxation on a single fragment.
+  /// Perform relaxation on a single fragment - returns true if the fragment
+  /// changes as a result of relaxation.
   bool relaxFragment(MCFragment &F);
   bool relaxInstruction(MCRelaxableFragment &IF);
   bool relaxLEB(MCLEBFragment &IF);
@@ -126,7 +123,6 @@ private:
   bool relaxDwarfCallFrameFragment(MCDwarfCallFrameFragment &DF);
   bool relaxCVInlineLineTable(MCCVInlineLineTableFragment &DF);
   bool relaxCVDefRange(MCCVDefRangeFragment &DF);
-  bool relaxFill(MCFillFragment &F);
   bool relaxPseudoProbeAddr(MCPseudoProbeAddrFragment &DF);
 
 public:
@@ -136,48 +132,47 @@ public:
   // concrete and require clients to pass in a target like object. The other
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
-  LLVM_ABI MCAssembler(MCContext &Context,
-                       std::unique_ptr<MCAsmBackend> Backend,
-                       std::unique_ptr<MCCodeEmitter> Emitter,
-                       std::unique_ptr<MCObjectWriter> Writer);
+  MCAssembler(MCContext &Context, std::unique_ptr<MCAsmBackend> Backend,
+              std::unique_ptr<MCCodeEmitter> Emitter,
+              std::unique_ptr<MCObjectWriter> Writer);
   MCAssembler(const MCAssembler &) = delete;
   MCAssembler &operator=(const MCAssembler &) = delete;
 
   /// Compute the effective fragment size.
-  LLVM_ABI uint64_t computeFragmentSize(const MCFragment &F) const;
+  uint64_t computeFragmentSize(const MCFragment &F) const;
 
-  LLVM_ABI void layoutBundle(MCFragment *Prev, MCFragment *F) const;
+  void layoutBundle(MCFragment *Prev, MCFragment *F) const;
+  void ensureValid(MCSection &Sec) const;
 
   // Get the offset of the given fragment inside its containing section.
-  uint64_t getFragmentOffset(const MCFragment &F) const { return F.Offset; }
+  uint64_t getFragmentOffset(const MCFragment &F) const;
 
-  LLVM_ABI uint64_t getSectionAddressSize(const MCSection &Sec) const;
-  LLVM_ABI uint64_t getSectionFileSize(const MCSection &Sec) const;
+  uint64_t getSectionAddressSize(const MCSection &Sec) const;
+  uint64_t getSectionFileSize(const MCSection &Sec) const;
 
   // Get the offset of the given symbol, as computed in the current
   // layout.
   // \return True on success.
-  LLVM_ABI bool getSymbolOffset(const MCSymbol &S, uint64_t &Val) const;
+  bool getSymbolOffset(const MCSymbol &S, uint64_t &Val) const;
 
   // Variant that reports a fatal error if the offset is not computable.
-  LLVM_ABI uint64_t getSymbolOffset(const MCSymbol &S) const;
+  uint64_t getSymbolOffset(const MCSymbol &S) const;
 
   // If this symbol is equivalent to A + Constant, return A.
-  LLVM_ABI const MCSymbol *getBaseSymbol(const MCSymbol &Symbol) const;
+  const MCSymbol *getBaseSymbol(const MCSymbol &Symbol) const;
 
   /// Emit the section contents to \p OS.
-  LLVM_ABI void writeSectionData(raw_ostream &OS,
-                                 const MCSection *Section) const;
+  void writeSectionData(raw_ostream &OS, const MCSection *Section) const;
 
   /// Check whether a given symbol has been flagged with .thumb_func.
-  LLVM_ABI bool isThumbFunc(const MCSymbol *Func) const;
+  bool isThumbFunc(const MCSymbol *Func) const;
 
   /// Flag a function symbol as the target of a .thumb_func directive.
   void setIsThumbFunc(const MCSymbol *Func) { ThumbFuncs.insert(Func); }
 
   /// Reuse an assembler instance
   ///
-  LLVM_ABI void reset();
+  void reset();
 
   MCContext &getContext() const { return Context; }
 
@@ -196,10 +191,10 @@ public:
   /// Finish - Do final processing and write the object to the output stream.
   /// \p Writer is used for custom object writer (as the MCJIT does),
   /// if not specified it is automatically created from backend.
-  LLVM_ABI void Finish();
+  void Finish();
 
   // Layout all section and prepare them for emission.
-  LLVM_ABI void layout();
+  void layout();
 
   bool hasLayout() const { return HasLayout; }
   bool hasFinalLayout() const { return HasFinalLayout; }
@@ -226,22 +221,17 @@ public:
     return make_pointee_range(Symbols);
   }
 
-  LLVM_ABI bool registerSection(MCSection &Section);
-  LLVM_ABI bool registerSymbol(const MCSymbol &Symbol);
+  bool registerSection(MCSection &Section);
+  bool registerSymbol(const MCSymbol &Symbol);
 
   /// Write the necessary bundle padding to \p OS.
   /// Expects a fragment \p F containing instructions and its size \p FSize.
-  LLVM_ABI void writeFragmentPadding(raw_ostream &OS,
-                                     const MCEncodedFragment &F,
-                                     uint64_t FSize) const;
+  void writeFragmentPadding(raw_ostream &OS, const MCEncodedFragment &F,
+                            uint64_t FSize) const;
 
-  LLVM_ABI void reportError(SMLoc L, const Twine &Msg) const;
-  // Record pending errors during layout iteration, as they may go away once the
-  // layout is finalized.
-  LLVM_ABI void recordError(SMLoc L, const Twine &Msg) const;
-  LLVM_ABI void flushPendingErrors() const;
+  void reportError(SMLoc L, const Twine &Msg) const;
 
-  LLVM_ABI void dump() const;
+  void dump() const;
 };
 
 } // end namespace llvm

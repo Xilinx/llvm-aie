@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/PredicateInfo.h"
 #include <vector>
 
@@ -67,155 +66,149 @@ class SCCPSolver {
   std::unique_ptr<SCCPInstVisitor> Visitor;
 
 public:
-  LLVM_ABI
   SCCPSolver(const DataLayout &DL,
              std::function<const TargetLibraryInfo &(Function &)> GetTLI,
              LLVMContext &Ctx);
 
-  LLVM_ABI ~SCCPSolver();
+  ~SCCPSolver();
 
-  LLVM_ABI void addPredicateInfo(Function &F, DominatorTree &DT,
-                                 AssumptionCache &AC);
+  void addPredicateInfo(Function &F, DominatorTree &DT, AssumptionCache &AC);
 
   /// markBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
   /// This returns true if the block was not considered live before.
-  LLVM_ABI bool markBlockExecutable(BasicBlock *BB);
+  bool markBlockExecutable(BasicBlock *BB);
 
-  LLVM_ABI const PredicateBase *getPredicateInfoFor(Instruction *I);
+  const PredicateBase *getPredicateInfoFor(Instruction *I);
 
   /// trackValueOfGlobalVariable - Clients can use this method to
   /// inform the SCCPSolver that it should track loads and stores to the
   /// specified global variable if it can.  This is only legal to call if
   /// performing Interprocedural SCCP.
-  LLVM_ABI void trackValueOfGlobalVariable(GlobalVariable *GV);
+  void trackValueOfGlobalVariable(GlobalVariable *GV);
 
   /// addTrackedFunction - If the SCCP solver is supposed to track calls into
   /// and out of the specified function (which cannot have its address taken),
   /// this method must be called.
-  LLVM_ABI void addTrackedFunction(Function *F);
+  void addTrackedFunction(Function *F);
 
   /// Add function to the list of functions whose return cannot be modified.
-  LLVM_ABI void addToMustPreserveReturnsInFunctions(Function *F);
+  void addToMustPreserveReturnsInFunctions(Function *F);
 
   /// Returns true if the return of the given function cannot be modified.
-  LLVM_ABI bool mustPreserveReturn(Function *F);
+  bool mustPreserveReturn(Function *F);
 
-  LLVM_ABI void addArgumentTrackedFunction(Function *F);
+  void addArgumentTrackedFunction(Function *F);
 
   /// Returns true if the given function is in the solver's set of
   /// argument-tracked functions.
-  LLVM_ABI bool isArgumentTrackedFunction(Function *F);
+  bool isArgumentTrackedFunction(Function *F);
 
-  LLVM_ABI const SmallPtrSetImpl<Function *> &
-  getArgumentTrackedFunctions() const;
+  const SmallPtrSetImpl<Function *> &getArgumentTrackedFunctions() const;
 
   /// Solve - Solve for constants and executable blocks.
-  LLVM_ABI void solve();
+  void solve();
 
   /// resolvedUndefsIn - While solving the dataflow for a function, we assume
   /// that branches on undef values cannot reach any of their successors.
   /// However, this is not a safe assumption.  After we solve dataflow, this
   /// method should be use to handle this.  If this returns true, the solver
   /// should be rerun.
-  LLVM_ABI bool resolvedUndefsIn(Function &F);
+  bool resolvedUndefsIn(Function &F);
 
-  LLVM_ABI void solveWhileResolvedUndefsIn(Module &M);
+  void solveWhileResolvedUndefsIn(Module &M);
 
-  LLVM_ABI void
-  solveWhileResolvedUndefsIn(SmallVectorImpl<Function *> &WorkList);
+  void solveWhileResolvedUndefsIn(SmallVectorImpl<Function *> &WorkList);
 
-  LLVM_ABI void solveWhileResolvedUndefs();
+  void solveWhileResolvedUndefs();
 
-  LLVM_ABI bool isBlockExecutable(BasicBlock *BB) const;
+  bool isBlockExecutable(BasicBlock *BB) const;
 
   // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
   // block to the 'To' basic block is currently feasible.
-  LLVM_ABI bool isEdgeFeasible(BasicBlock *From, BasicBlock *To) const;
+  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To) const;
 
-  LLVM_ABI std::vector<ValueLatticeElement>
-  getStructLatticeValueFor(Value *V) const;
+  std::vector<ValueLatticeElement> getStructLatticeValueFor(Value *V) const;
 
-  LLVM_ABI void removeLatticeValueFor(Value *V);
+  void removeLatticeValueFor(Value *V);
 
   /// Invalidate the Lattice Value of \p Call and its users after specializing
   /// the call. Then recompute it.
-  LLVM_ABI void resetLatticeValueFor(CallBase *Call);
+  void resetLatticeValueFor(CallBase *Call);
 
-  LLVM_ABI const ValueLatticeElement &getLatticeValueFor(Value *V) const;
+  const ValueLatticeElement &getLatticeValueFor(Value *V) const;
 
   /// getTrackedRetVals - Get the inferred return value map.
-  LLVM_ABI const MapVector<Function *, ValueLatticeElement> &
-  getTrackedRetVals() const;
+  const MapVector<Function *, ValueLatticeElement> &getTrackedRetVals() const;
 
   /// getTrackedGlobals - Get and return the set of inferred initializers for
   /// global variables.
-  LLVM_ABI const DenseMap<GlobalVariable *, ValueLatticeElement> &
+  const DenseMap<GlobalVariable *, ValueLatticeElement> &
   getTrackedGlobals() const;
 
   /// getMRVFunctionsTracked - Get the set of functions which return multiple
   /// values tracked by the pass.
-  LLVM_ABI const SmallPtrSet<Function *, 16> &getMRVFunctionsTracked() const;
+  const SmallPtrSet<Function *, 16> &getMRVFunctionsTracked() const;
 
   /// markOverdefined - Mark the specified value overdefined.  This
   /// works with both scalars and structs.
-  LLVM_ABI void markOverdefined(Value *V);
+  void markOverdefined(Value *V);
 
   /// trackValueOfArgument - Mark the specified argument overdefined unless it
   /// have range attribute.  This works with both scalars and structs.
-  LLVM_ABI void trackValueOfArgument(Argument *V);
+  void trackValueOfArgument(Argument *V);
 
   // isStructLatticeConstant - Return true if all the lattice values
   // corresponding to elements of the structure are constants,
   // false otherwise.
-  LLVM_ABI bool isStructLatticeConstant(Function *F, StructType *STy);
+  bool isStructLatticeConstant(Function *F, StructType *STy);
 
   /// Helper to return a Constant if \p LV is either a constant or a constant
   /// range with a single element.
-  LLVM_ABI Constant *getConstant(const ValueLatticeElement &LV, Type *Ty) const;
+  Constant *getConstant(const ValueLatticeElement &LV, Type *Ty) const;
 
   /// Return either a Constant or nullptr for a given Value.
-  LLVM_ABI Constant *getConstantOrNull(Value *V) const;
+  Constant *getConstantOrNull(Value *V) const;
 
   /// Set the Lattice Value for the arguments of a specialization \p F.
   /// If an argument is Constant then its lattice value is marked with the
   /// corresponding actual argument in \p Args. Otherwise, its lattice value
   /// is inherited (copied) from the corresponding formal argument in \p Args.
-  LLVM_ABI void setLatticeValueForSpecializationArguments(
-      Function *F, const SmallVectorImpl<ArgInfo> &Args);
+  void setLatticeValueForSpecializationArguments(Function *F,
+                                       const SmallVectorImpl<ArgInfo> &Args);
 
   /// Mark all of the blocks in function \p F non-executable. Clients can used
   /// this method to erase a function from the module (e.g., if it has been
   /// completely specialized and is no longer needed).
-  LLVM_ABI void markFunctionUnreachable(Function *F);
+  void markFunctionUnreachable(Function *F);
 
-  LLVM_ABI void visit(Instruction *I);
-  LLVM_ABI void visitCall(CallInst &I);
+  void visit(Instruction *I);
+  void visitCall(CallInst &I);
 
-  LLVM_ABI bool simplifyInstsInBlock(BasicBlock &BB,
-                                     SmallPtrSetImpl<Value *> &InsertedValues,
-                                     Statistic &InstRemovedStat,
-                                     Statistic &InstReplacedStat);
+  bool simplifyInstsInBlock(BasicBlock &BB,
+                            SmallPtrSetImpl<Value *> &InsertedValues,
+                            Statistic &InstRemovedStat,
+                            Statistic &InstReplacedStat);
 
-  LLVM_ABI bool removeNonFeasibleEdges(BasicBlock *BB, DomTreeUpdater &DTU,
-                                       BasicBlock *&NewUnreachableBB) const;
+  bool removeNonFeasibleEdges(BasicBlock *BB, DomTreeUpdater &DTU,
+                              BasicBlock *&NewUnreachableBB) const;
 
-  LLVM_ABI void inferReturnAttributes() const;
-  LLVM_ABI void inferArgAttributes() const;
+  void inferReturnAttributes() const;
+  void inferArgAttributes() const;
 
-  LLVM_ABI bool tryToReplaceWithConstant(Value *V);
+  bool tryToReplaceWithConstant(Value *V);
 
   // Helper to check if \p LV is either a constant or a constant
   // range with a single element. This should cover exactly the same cases as
   // the old ValueLatticeElement::isConstant() and is intended to be used in the
   // transition to ValueLatticeElement.
-  LLVM_ABI static bool isConstant(const ValueLatticeElement &LV);
+  static bool isConstant(const ValueLatticeElement &LV);
 
   // Helper to check if \p LV is either overdefined or a constant range with
   // more than a single element. This should cover exactly the same cases as the
   // old ValueLatticeElement::isOverdefined() and is intended to be used in the
   // transition to ValueLatticeElement.
-  LLVM_ABI static bool isOverdefined(const ValueLatticeElement &LV);
+  static bool isOverdefined(const ValueLatticeElement &LV);
 };
 } // namespace llvm
 

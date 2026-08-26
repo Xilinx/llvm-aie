@@ -15,7 +15,6 @@
 #define LLVM_DEBUGINFO_LOGICALVIEW_CORE_LVLINE_H
 
 #include "llvm/DebugInfo/LogicalView/Core/LVElement.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace logicalview {
@@ -38,7 +37,7 @@ using LVLineDispatch = std::map<LVLineKind, LVLineGetFunction>;
 using LVLineRequest = std::vector<LVLineGetFunction>;
 
 // Class to represent a logical line.
-class LLVM_ABI LVLine : public LVElement {
+class LVLine : public LVElement {
   // Typed bitvector with kinds for this line.
   LVProperties<LVLineKind> Kinds;
   static LVLineDispatch Dispatch;
@@ -112,7 +111,7 @@ public:
 };
 
 // Class to represent a DWARF line record object.
-class LLVM_ABI LVLineDebug final : public LVLine {
+class LVLineDebug final : public LVLine {
   // Discriminator value (DW_LNE_set_discriminator). The DWARF standard
   // defines the discriminator as an unsigned LEB128 integer.
   uint32_t Discriminator = 0;
@@ -141,7 +140,7 @@ public:
 };
 
 // Class to represent an assembler line extracted from the text section.
-class LLVM_ABI LVLineAssembler final : public LVLine {
+class LVLineAssembler final : public LVLine {
 public:
   LVLineAssembler() : LVLine() { setIsLineAssembler(); }
   LVLineAssembler(const LVLineAssembler &) = delete;

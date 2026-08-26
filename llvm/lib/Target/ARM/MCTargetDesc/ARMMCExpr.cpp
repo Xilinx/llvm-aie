@@ -48,3 +48,7 @@ void ARMMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   if (Expr->getKind() != MCExpr::SymbolRef)
     OS << ')';
 }
+
+void ARMMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
+  Streamer.visitUsedExpr(*getSubExpr());
+}

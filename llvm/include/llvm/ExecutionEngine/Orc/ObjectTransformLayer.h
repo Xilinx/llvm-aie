@@ -15,14 +15,13 @@
 
 #include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/Layer.h"
-#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <memory>
 
 namespace llvm {
 namespace orc {
 
-class LLVM_ABI ObjectTransformLayer
+class ObjectTransformLayer
     : public RTTIExtends<ObjectTransformLayer, ObjectLayer> {
 public:
   static char ID;

@@ -13,7 +13,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/DIE.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -143,9 +142,9 @@ public:
 
   bool hasODR() const { return HasODR; }
   bool isClangModule() const { return !ClangModuleName.empty(); }
-  LLVM_ABI uint16_t getLanguage();
+  uint16_t getLanguage();
   /// Return the DW_AT_LLVM_sysroot of the compile unit or an empty StringRef.
-  LLVM_ABI StringRef getSysRoot();
+  StringRef getSysRoot();
 
   const std::string &getClangModuleName() const { return ClangModuleName; }
 
@@ -186,62 +185,60 @@ public:
   /// Mark every DIE in this unit as kept. This function also
   /// marks variables as InDebugMap so that they appear in the
   /// reconstructed accelerator tables.
-  LLVM_ABI void markEverythingAsKept();
+  void markEverythingAsKept();
 
   /// Compute the end offset for this unit. Must be called after the CU's DIEs
   /// have been cloned.  \returns the next unit offset (which is also the
   /// current debug_info section size).
-  LLVM_ABI uint64_t computeNextUnitOffset(uint16_t DwarfVersion);
+  uint64_t computeNextUnitOffset(uint16_t DwarfVersion);
 
   /// Keep track of a forward reference to DIE \p Die in \p RefUnit by \p
   /// Attr. The attribute should be fixed up later to point to the absolute
   /// offset of \p Die in the debug_info section or to the canonical offset of
   /// \p Ctxt if it is non-null.
-  LLVM_ABI void noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
-                                     DeclContext *Ctxt, PatchLocation Attr);
+  void noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
+                            DeclContext *Ctxt, PatchLocation Attr);
 
   /// Apply all fixups recorded by noteForwardReference().
-  LLVM_ABI void fixupForwardReferences();
+  void fixupForwardReferences();
 
   /// Add the low_pc of a label that is relocated by applying
   /// offset \p PCOffset.
-  LLVM_ABI void addLabelLowPc(uint64_t LabelLowPc, int64_t PcOffset);
+  void addLabelLowPc(uint64_t LabelLowPc, int64_t PcOffset);
 
   /// Add a function range [\p LowPC, \p HighPC) that is relocated by applying
   /// offset \p PCOffset.
-  LLVM_ABI void addFunctionRange(uint64_t LowPC, uint64_t HighPC,
-                                 int64_t PCOffset);
+  void addFunctionRange(uint64_t LowPC, uint64_t HighPC, int64_t PCOffset);
 
   /// Keep track of a DW_AT_range attribute that we will need to patch up later.
-  LLVM_ABI void noteRangeAttribute(const DIE &Die, PatchLocation Attr);
+  void noteRangeAttribute(const DIE &Die, PatchLocation Attr);
 
   /// Keep track of a location attribute pointing to a location list in the
   /// debug_loc section.
-  LLVM_ABI void noteLocationAttribute(PatchLocation Attr);
+  void noteLocationAttribute(PatchLocation Attr);
 
   // Record that the given DW_AT_LLVM_stmt_sequence attribute may need to be
   // patched later.
-  LLVM_ABI void noteStmtSeqListAttribute(PatchLocation Attr);
+  void noteStmtSeqListAttribute(PatchLocation Attr);
 
   /// Add a name accelerator entry for \a Die with \a Name.
-  LLVM_ABI void addNamespaceAccelerator(const DIE *Die,
-                                        DwarfStringPoolEntryRef Name);
+  void addNamespaceAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name);
 
   /// Add a name accelerator entry for \a Die with \a Name.
-  LLVM_ABI void addNameAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name,
-                                   bool SkipPubnamesSection = false);
+  void addNameAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name,
+                          bool SkipPubnamesSection = false);
 
   /// Add various accelerator entries for \p Die with \p Name which is stored
   /// in the string table at \p Offset. \p Name must be an Objective-C
   /// selector.
-  LLVM_ABI void addObjCAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name,
-                                   bool SkipPubnamesSection = false);
+  void addObjCAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name,
+                          bool SkipPubnamesSection = false);
 
   /// Add a type accelerator entry for \p Die with \p Name which is stored in
   /// the string table at \p Offset.
-  LLVM_ABI void addTypeAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name,
-                                   bool ObjcClassImplementation,
-                                   uint32_t QualifiedNameHash);
+  void addTypeAccelerator(const DIE *Die, DwarfStringPoolEntryRef Name,
+                          bool ObjcClassImplementation,
+                          uint32_t QualifiedNameHash);
 
   struct AccelInfo {
     /// Name of the entry.

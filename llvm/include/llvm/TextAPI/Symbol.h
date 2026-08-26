@@ -11,7 +11,6 @@
 
 #include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TextAPI/ArchitectureSet.h"
 #include "llvm/TextAPI/Target.h"
@@ -153,15 +152,14 @@ public:
                             std::function<bool(const Target &)>>;
   using const_filtered_target_range =
       llvm::iterator_range<const_filtered_target_iterator>;
-  LLVM_ABI const_filtered_target_range
-  targets(ArchitectureSet architectures) const;
+  const_filtered_target_range targets(ArchitectureSet architectures) const;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump(raw_ostream &OS) const;
   void dump() const { dump(llvm::errs()); }
 #endif
 
-  LLVM_ABI bool operator==(const Symbol &O) const;
+  bool operator==(const Symbol &O) const;
 
   bool operator!=(const Symbol &O) const { return !(*this == O); }
 
@@ -191,7 +189,7 @@ struct SimpleSymbol {
 /// Get symbol classification by parsing the name of a symbol.
 ///
 /// \param SymName The name of symbol.
-LLVM_ABI SimpleSymbol parseSymbol(StringRef SymName);
+SimpleSymbol parseSymbol(StringRef SymName);
 
 } // end namespace MachO.
 } // end namespace llvm.

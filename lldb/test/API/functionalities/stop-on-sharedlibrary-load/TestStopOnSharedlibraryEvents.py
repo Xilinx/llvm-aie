@@ -17,7 +17,7 @@ class TestStopOnSharedlibraryEvents(TestBase):
     @no_debug_info_test
     def test_auto_continue(self):
         def auto_continue(bkpt):
-            bkpt.auto_continue = True
+            bkpt.SetAutoContinue(True)
 
         self.do_test(auto_continue)
 
@@ -26,7 +26,7 @@ class TestStopOnSharedlibraryEvents(TestBase):
     @no_debug_info_test
     def test_failing_condition(self):
         def condition(bkpt):
-            bkpt.condition = "1 == 2"
+            bkpt.SetCondition("1 == 2")
 
         self.do_test(condition)
 

@@ -496,7 +496,7 @@ public:
   void addCriticalWithHint(const OMPCriticalDirective *D, llvm::APSInt Hint) {
     Criticals.try_emplace(D->getDirectiveName().getAsString(), D, Hint);
   }
-  std::pair<const OMPCriticalDirective *, llvm::APSInt>
+  const std::pair<const OMPCriticalDirective *, llvm::APSInt>
   getCriticalWithHint(const DeclarationNameInfo &Name) const {
     auto I = Criticals.find(Name.getAsString());
     if (I != Criticals.end())
@@ -11763,61 +11763,51 @@ bool OpenMPAtomicCompareChecker::checkCondUpdateStmt(IfStmt *S,
   X = BO->getLHS();
 
   auto *Cond = dyn_cast<BinaryOperator>(S->getCond());
-  auto *Call = dyn_cast<CXXOperatorCallExpr>(S->getCond());
-  Expr *LHS = nullptr;
-  Expr *RHS = nullptr;
-  if (Cond) {
-    LHS = Cond->getLHS();
-    RHS = Cond->getRHS();
-  } else if (Call) {
-    LHS = Call->getArg(0);
-    RHS = Call->getArg(1);
-  } else {
+  if (!Cond) {
     ErrorInfo.Error = ErrorTy::NotABinaryOp;
     ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
     ErrorInfo.ErrorRange = ErrorInfo.NoteRange = S->getCond()->getSourceRange();
     return false;
   }
 
-  if ((Cond && Cond->getOpcode() == BO_EQ) ||
-      (Call && Call->getOperator() == OverloadedOperatorKind::OO_EqualEqual)) {
-    C = S->getCond();
+  switch (Cond->getOpcode()) {
+  case BO_EQ: {
+    C = Cond;
     D = BO->getRHS();
-    if (checkIfTwoExprsAreSame(ContextRef, X, LHS)) {
-      E = RHS;
-    } else if (checkIfTwoExprsAreSame(ContextRef, X, RHS)) {
-      E = LHS;
+    if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getLHS())) {
+      E = Cond->getRHS();
+    } else if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getRHS())) {
+      E = Cond->getLHS();
     } else {
       ErrorInfo.Error = ErrorTy::InvalidComparison;
-      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
-      ErrorInfo.ErrorRange = ErrorInfo.NoteRange =
-          S->getCond()->getSourceRange();
+      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+      ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
       return false;
     }
-  } else if ((Cond &&
-              (Cond->getOpcode() == BO_LT || Cond->getOpcode() == BO_GT)) ||
-             (Call &&
-              (Call->getOperator() == OverloadedOperatorKind::OO_Less ||
-               Call->getOperator() == OverloadedOperatorKind::OO_Greater))) {
+    break;
+  }
+  case BO_LT:
+  case BO_GT: {
     E = BO->getRHS();
-    if (checkIfTwoExprsAreSame(ContextRef, X, LHS) &&
-        checkIfTwoExprsAreSame(ContextRef, E, RHS)) {
-      C = S->getCond();
-    } else if (checkIfTwoExprsAreSame(ContextRef, E, LHS) &&
-               checkIfTwoExprsAreSame(ContextRef, X, RHS)) {
-      C = S->getCond();
+    if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getLHS()) &&
+        checkIfTwoExprsAreSame(ContextRef, E, Cond->getRHS())) {
+      C = Cond;
+    } else if (checkIfTwoExprsAreSame(ContextRef, E, Cond->getLHS()) &&
+               checkIfTwoExprsAreSame(ContextRef, X, Cond->getRHS())) {
+      C = Cond;
       IsXBinopExpr = false;
     } else {
       ErrorInfo.Error = ErrorTy::InvalidComparison;
-      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
-      ErrorInfo.ErrorRange = ErrorInfo.NoteRange =
-          S->getCond()->getSourceRange();
+      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+      ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
       return false;
     }
-  } else {
+    break;
+  }
+  default:
     ErrorInfo.Error = ErrorTy::InvalidBinaryOp;
-    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
-    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = S->getCond()->getSourceRange();
+    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
     return false;
   }
 
@@ -11867,16 +11857,7 @@ bool OpenMPAtomicCompareChecker::checkCondExprStmt(Stmt *S,
   }
 
   auto *Cond = dyn_cast<BinaryOperator>(CO->getCond());
-  auto *Call = dyn_cast<CXXOperatorCallExpr>(CO->getCond());
-  Expr *LHS = nullptr;
-  Expr *RHS = nullptr;
-  if (Cond) {
-    LHS = Cond->getLHS();
-    RHS = Cond->getRHS();
-  } else if (Call) {
-    LHS = Call->getArg(0);
-    RHS = Call->getArg(1);
-  } else {
+  if (!Cond) {
     ErrorInfo.Error = ErrorTy::NotABinaryOp;
     ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = CO->getCond()->getExprLoc();
     ErrorInfo.ErrorRange = ErrorInfo.NoteRange =
@@ -11884,47 +11865,44 @@ bool OpenMPAtomicCompareChecker::checkCondExprStmt(Stmt *S,
     return false;
   }
 
-  if ((Cond && Cond->getOpcode() == BO_EQ) ||
-      (Call && Call->getOperator() == OverloadedOperatorKind::OO_EqualEqual)) {
-    C = CO->getCond();
+  switch (Cond->getOpcode()) {
+  case BO_EQ: {
+    C = Cond;
     D = CO->getTrueExpr();
-    if (checkIfTwoExprsAreSame(ContextRef, X, LHS)) {
-      E = RHS;
-    } else if (checkIfTwoExprsAreSame(ContextRef, X, RHS)) {
-      E = LHS;
+    if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getLHS())) {
+      E = Cond->getRHS();
+    } else if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getRHS())) {
+      E = Cond->getLHS();
     } else {
       ErrorInfo.Error = ErrorTy::InvalidComparison;
-      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = CO->getCond()->getExprLoc();
-      ErrorInfo.ErrorRange = ErrorInfo.NoteRange =
-          CO->getCond()->getSourceRange();
+      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+      ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
       return false;
     }
-  } else if ((Cond &&
-              (Cond->getOpcode() == BO_LT || Cond->getOpcode() == BO_GT)) ||
-             (Call &&
-              (Call->getOperator() == OverloadedOperatorKind::OO_Less ||
-               Call->getOperator() == OverloadedOperatorKind::OO_Greater))) {
-
+    break;
+  }
+  case BO_LT:
+  case BO_GT: {
     E = CO->getTrueExpr();
-    if (checkIfTwoExprsAreSame(ContextRef, X, LHS) &&
-        checkIfTwoExprsAreSame(ContextRef, E, RHS)) {
-      C = CO->getCond();
-    } else if (checkIfTwoExprsAreSame(ContextRef, E, LHS) &&
-               checkIfTwoExprsAreSame(ContextRef, X, RHS)) {
-      C = CO->getCond();
+    if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getLHS()) &&
+        checkIfTwoExprsAreSame(ContextRef, E, Cond->getRHS())) {
+      C = Cond;
+    } else if (checkIfTwoExprsAreSame(ContextRef, E, Cond->getLHS()) &&
+               checkIfTwoExprsAreSame(ContextRef, X, Cond->getRHS())) {
+      C = Cond;
       IsXBinopExpr = false;
     } else {
       ErrorInfo.Error = ErrorTy::InvalidComparison;
-      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = CO->getCond()->getExprLoc();
-      ErrorInfo.ErrorRange = ErrorInfo.NoteRange =
-          CO->getCond()->getSourceRange();
+      ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+      ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
       return false;
     }
-  } else {
+    break;
+  }
+  default:
     ErrorInfo.Error = ErrorTy::InvalidBinaryOp;
-    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = CO->getCond()->getExprLoc();
-    ErrorInfo.ErrorRange = ErrorInfo.NoteRange =
-        CO->getCond()->getSourceRange();
+    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
     return false;
   }
 
@@ -12085,41 +12063,31 @@ bool OpenMPAtomicCompareCaptureChecker::checkForm3(IfStmt *S,
   D = BO->getRHS();
 
   auto *Cond = dyn_cast<BinaryOperator>(S->getCond());
-  auto *Call = dyn_cast<CXXOperatorCallExpr>(S->getCond());
-  Expr *LHS = nullptr;
-  Expr *RHS = nullptr;
-  if (Cond) {
-    LHS = Cond->getLHS();
-    RHS = Cond->getRHS();
-  } else if (Call) {
-    LHS = Call->getArg(0);
-    RHS = Call->getArg(1);
-  } else {
+  if (!Cond) {
     ErrorInfo.Error = ErrorTy::NotABinaryOp;
     ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
     ErrorInfo.ErrorRange = ErrorInfo.NoteRange = S->getCond()->getSourceRange();
     return false;
   }
-  if ((Cond && Cond->getOpcode() != BO_EQ) ||
-      (Call && Call->getOperator() != OverloadedOperatorKind::OO_EqualEqual)) {
+  if (Cond->getOpcode() != BO_EQ) {
     ErrorInfo.Error = ErrorTy::NotEQ;
-    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
-    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = S->getCond()->getSourceRange();
+    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
     return false;
   }
 
-  if (checkIfTwoExprsAreSame(ContextRef, X, LHS)) {
-    E = RHS;
-  } else if (checkIfTwoExprsAreSame(ContextRef, X, RHS)) {
-    E = LHS;
+  if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getLHS())) {
+    E = Cond->getRHS();
+  } else if (checkIfTwoExprsAreSame(ContextRef, X, Cond->getRHS())) {
+    E = Cond->getLHS();
   } else {
     ErrorInfo.Error = ErrorTy::InvalidComparison;
-    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = S->getCond()->getExprLoc();
-    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = S->getCond()->getSourceRange();
+    ErrorInfo.ErrorLoc = ErrorInfo.NoteLoc = Cond->getExprLoc();
+    ErrorInfo.ErrorRange = ErrorInfo.NoteRange = Cond->getSourceRange();
     return false;
   }
 
-  C = S->getCond();
+  C = Cond;
 
   if (!S->getElse()) {
     ErrorInfo.Error = ErrorTy::NoElse;
@@ -19047,14 +19015,34 @@ static bool actOnOMPReductionKindClause(
         reportOriginalDsa(S, Stack, D, DVar);
         continue;
       }
+      // OpenMP 6.0 [ 7.6.10 ]
+      // Support Reduction over private variables with reduction clause.
+      // A list item in a reduction clause can now be private in the enclosing
+      // context. For orphaned constructs it is assumed to be shared unless the
+      // original(private) modifier appears in the clause.
+      DVar = Stack->getImplicitDSA(D, true);
+      bool IsOrphaned = false;
+      OpenMPDirectiveKind CurrDir = Stack->getCurrentDirective();
+      OpenMPDirectiveKind ParentDir = Stack->getParentDirective();
+      // Check if the construct is orphaned (has no enclosing OpenMP context)
+      IsOrphaned = ParentDir == OMPD_unknown;
+      // OpenMP 6.0: Private DSA check
+      IsPrivate =
+          (S.getLangOpts().OpenMP > 52) &&
+          ((isOpenMPPrivate(DVar.CKind) && DVar.CKind != OMPC_reduction &&
+            isOpenMPWorksharingDirective(CurrDir) &&
+            !isOpenMPParallelDirective(CurrDir) &&
+            !isOpenMPTeamsDirective(CurrDir) &&
+            !isOpenMPSimdDirective(ParentDir)) ||
+           (IsOrphaned && DVar.CKind == OMPC_unknown) ||
+           RD.OrigSharingModifier != OMPC_ORIGINAL_SHARING_shared);
 
       // OpenMP [2.14.3.6, Restrictions, p.1]
       //  A list item that appears in a reduction clause of a worksharing
       //  construct must be shared in the parallel regions to which any of the
       //  worksharing regions arising from the worksharing construct bind.
 
-      if (S.getLangOpts().OpenMP <= 52 &&
-          isOpenMPWorksharingDirective(CurrDir) &&
+      if (!IsPrivate && isOpenMPWorksharingDirective(CurrDir) &&
           !isOpenMPParallelDirective(CurrDir) &&
           !isOpenMPTeamsDirective(CurrDir)) {
         DVar = Stack->getImplicitDSA(D, true);
@@ -19065,23 +19053,6 @@ static bool actOnOMPReductionKindClause(
           reportOriginalDsa(S, Stack, D, DVar);
           continue;
         }
-      } else if (isOpenMPWorksharingDirective(CurrDir) &&
-                 !isOpenMPParallelDirective(CurrDir) &&
-                 !isOpenMPTeamsDirective(CurrDir)) {
-        // OpenMP 6.0 [ 7.6.10 ]
-        // Support Reduction over private variables with reduction clause.
-        // A list item in a reduction clause can now be private in the enclosing
-        // context. For orphaned constructs it is assumed to be shared unless
-        // the original(private) modifier appears in the clause.
-        DVar = Stack->getImplicitDSA(D, true);
-        // Determine if the variable should be considered private
-        IsPrivate = DVar.CKind != OMPC_shared;
-        bool IsOrphaned = false;
-        OpenMPDirectiveKind ParentDir = Stack->getParentDirective();
-        IsOrphaned = ParentDir == OMPD_unknown;
-        if ((IsOrphaned &&
-             RD.OrigSharingModifier == OMPC_ORIGINAL_SHARING_private))
-          IsPrivate = true;
       }
     } else {
       // Threadprivates cannot be shared between threads, so dignose if the base
@@ -22057,34 +22028,20 @@ static void checkMappableExpressionList(
         Type.getCanonicalType(), UnresolvedMapper);
     if (ER.isInvalid())
       continue;
-
-    // If no user-defined mapper is found, we need to create an implicit one for
-    // arrays/array-sections on structs that have members that have
-    // user-defined mappers. This is needed to ensure that the mapper for the
-    // member is invoked when mapping each element of the array/array-section.
-    if (!ER.get()) {
-      QualType BaseType;
-
-      if (isa<ArraySectionExpr>(VE)) {
-        BaseType = VE->getType().getCanonicalType();
-        if (BaseType->isSpecificBuiltinType(BuiltinType::ArraySection)) {
-          const auto *OASE = cast<ArraySectionExpr>(VE->IgnoreParenImpCasts());
-          QualType BType =
-              ArraySectionExpr::getBaseOriginalType(OASE->getBase());
-          QualType ElemType;
-          if (const auto *ATy = BType->getAsArrayTypeUnsafe())
-            ElemType = ATy->getElementType();
-          else
-            ElemType = BType->getPointeeType();
-          BaseType = ElemType.getCanonicalType();
-        }
-      } else if (VE->getType()->isArrayType()) {
-        const ArrayType *AT = VE->getType()->getAsArrayTypeUnsafe();
-        const QualType ElemType = AT->getElementType();
+    if (!ER.get() && isa<ArraySectionExpr>(VE)) {
+      // Create implicit mapper as needed.
+      QualType BaseType = VE->getType().getCanonicalType();
+      if (BaseType->isSpecificBuiltinType(BuiltinType::ArraySection)) {
+        const auto *OASE = cast<ArraySectionExpr>(VE->IgnoreParenImpCasts());
+        QualType BType = ArraySectionExpr::getBaseOriginalType(OASE->getBase());
+        QualType ElemType;
+        if (const auto *ATy = BType->getAsArrayTypeUnsafe())
+          ElemType = ATy->getElementType();
+        else
+          ElemType = BType->getPointeeType();
         BaseType = ElemType.getCanonicalType();
       }
-
-      if (!BaseType.isNull() && BaseType->getAsRecordDecl() &&
+      if (BaseType->getAsRecordDecl() &&
           isImplicitMapperNeeded(SemaRef, DSAS, BaseType, VE)) {
         ER = buildImplicitMapper(SemaRef, BaseType, DSAS);
       }

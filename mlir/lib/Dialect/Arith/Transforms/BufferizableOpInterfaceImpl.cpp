@@ -90,8 +90,7 @@ struct IndexCastOpInterface
     auto castOp = cast<arith::IndexCastOp>(op);
     auto resultTensorType = cast<TensorType>(castOp.getType());
 
-    FailureOr<Value> source =
-        getBuffer(rewriter, castOp.getIn(), options, state);
+    FailureOr<Value> source = getBuffer(rewriter, castOp.getIn(), options);
     if (failed(source))
       return failure();
     auto sourceType = cast<BaseMemRefType>(source->getType());
@@ -152,9 +151,9 @@ struct SelectOpInterface
     // the moment (one for each tensor). When copying the op result, only one
     // copy would be needed.
     FailureOr<Value> maybeTrueBuffer =
-        getBuffer(rewriter, selectOp.getTrueValue(), options, state);
+        getBuffer(rewriter, selectOp.getTrueValue(), options);
     FailureOr<Value> maybeFalseBuffer =
-        getBuffer(rewriter, selectOp.getFalseValue(), options, state);
+        getBuffer(rewriter, selectOp.getFalseValue(), options);
     if (failed(maybeTrueBuffer) || failed(maybeFalseBuffer))
       return failure();
     Value trueBuffer = *maybeTrueBuffer;
@@ -165,7 +164,7 @@ struct SelectOpInterface
     // both of them to the most dynamic MemRef type.
     if (trueBuffer.getType() != falseBuffer.getType()) {
       auto targetType =
-          bufferization::getBufferType(selectOp.getResult(), options, state);
+          bufferization::getBufferType(selectOp.getResult(), options);
       if (failed(targetType))
         return failure();
       if (trueBuffer.getType() != *targetType)
@@ -183,14 +182,13 @@ struct SelectOpInterface
 
   FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
-                const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
     auto selectOp = cast<arith::SelectOp>(op);
     assert(value == selectOp.getResult() && "invalid value");
-    auto trueType = bufferization::getBufferType(
-        selectOp.getTrueValue(), options, state, invocationStack);
-    auto falseType = bufferization::getBufferType(
-        selectOp.getFalseValue(), options, state, invocationStack);
+    auto trueType = bufferization::getBufferType(selectOp.getTrueValue(),
+                                                 options, invocationStack);
+    auto falseType = bufferization::getBufferType(selectOp.getFalseValue(),
+                                                  options, invocationStack);
     if (failed(trueType) || failed(falseType))
       return failure();
     if (*trueType == *falseType)

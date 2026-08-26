@@ -704,7 +704,7 @@ public:
 
   /// Retrieve the template arguments
   const TemplateArgumentLoc *getTemplateArgs() const {
-    return getTrailingObjects();
+    return getTrailingObjects<TemplateArgumentLoc>();
   }
   unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
 

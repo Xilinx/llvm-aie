@@ -19,7 +19,6 @@
 #include "llvm/DebugInfo/LogicalView/Core/LVScope.h"
 #include "llvm/DebugInfo/LogicalView/Core/LVSymbol.h"
 #include "llvm/DebugInfo/LogicalView/Core/LVType.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Regex.h"
 #include <set>
 #include <string>
@@ -107,7 +106,6 @@ enum class LVAttributeKind {
   Generated,     // --attribute=generated
   Global,        // --attribute=global
   Inserted,      // --attribute=inserted
-  Language,      // --attribute=language
   Level,         // --attribute=level
   Linkage,       // --attribute=linkage
   Local,         // --attribute=local
@@ -295,8 +293,8 @@ public:
   }
 
   // Access to command line options, pattern and printing information.
-  LLVM_ABI static LVOptions *getOptions();
-  LLVM_ABI static void setOptions(LVOptions *Options);
+  static LVOptions *getOptions();
+  static void setOptions(LVOptions *Options);
 
   LVOptions() = default;
   LVOptions(const LVOptions &) = default;
@@ -309,7 +307,7 @@ public:
   // In the case of logical view comparison, some options related to
   // attributes must be set or reset for a proper comparison.
   // Resolve any dependencies between command line options.
-  LLVM_ABI void resolveDependencies();
+  void resolveDependencies();
   size_t indentationSize() const { return IndentationSize; }
 
   LVAttribute Attribute;
@@ -339,7 +337,6 @@ public:
   ATTRIBUTE_OPTION(Generated);
   ATTRIBUTE_OPTION(Global);
   ATTRIBUTE_OPTION(Inserted);
-  ATTRIBUTE_OPTION(Language);
   ATTRIBUTE_OPTION(Level);
   ATTRIBUTE_OPTION(Linkage);
   ATTRIBUTE_OPTION(Location);
@@ -438,7 +435,7 @@ public:
   // General shortcuts to some combinations.
   BOOL_FUNCTION(General, CollectRanges);
 
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump() const { print(dbgs()); }
@@ -508,7 +505,7 @@ class LVPatterns final {
     }
   }
 
-  LLVM_ABI void addElement(LVElement *Element);
+  void addElement(LVElement *Element);
 
   template <typename T, typename U>
   void resolveGenericPatternMatch(T *Element, const U &Requests) {
@@ -551,7 +548,7 @@ class LVPatterns final {
                          bool IgnoreCase, bool UseRegex);
 
 public:
-  LLVM_ABI static LVPatterns *getPatterns();
+  static LVPatterns *getPatterns();
 
   LVPatterns() {
     ElementDispatch = LVElement::getDispatch();
@@ -595,9 +592,9 @@ public:
     addRequest(Selection, TypeDispatch, TypeRequest);
   }
 
-  LLVM_ABI void updateReportOptions();
+  void updateReportOptions();
 
-  LLVM_ABI bool matchPattern(StringRef Input, const LVMatchInfo &MatchInfo);
+  bool matchPattern(StringRef Input, const LVMatchInfo &MatchInfo);
   // Match a pattern (--select='pattern').
   bool matchGenericPattern(StringRef Input) {
     return matchPattern(Input, GenericMatchInfo);
@@ -622,20 +619,20 @@ public:
     resolveGenericPatternMatch(Type, TypeRequest);
   }
 
-  LLVM_ABI void addPatterns(StringSet<> &Patterns, LVMatchInfo &Filters);
+  void addPatterns(StringSet<> &Patterns, LVMatchInfo &Filters);
 
   // Add generic and offset patterns info.
-  LLVM_ABI void addGenericPatterns(StringSet<> &Patterns);
-  LLVM_ABI void addOffsetPatterns(const LVOffsetSet &Patterns);
+  void addGenericPatterns(StringSet<> &Patterns);
+  void addOffsetPatterns(const LVOffsetSet &Patterns);
 
   // Conditions to print an object.
-  LLVM_ABI bool printElement(const LVLine *Line) const;
-  LLVM_ABI bool printObject(const LVLocation *Location) const;
-  LLVM_ABI bool printElement(const LVScope *Scope) const;
-  LLVM_ABI bool printElement(const LVSymbol *Symbol) const;
-  LLVM_ABI bool printElement(const LVType *Type) const;
+  bool printElement(const LVLine *Line) const;
+  bool printObject(const LVLocation *Location) const;
+  bool printElement(const LVScope *Scope) const;
+  bool printElement(const LVSymbol *Symbol) const;
+  bool printElement(const LVType *Type) const;
 
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump() const { print(dbgs()); }

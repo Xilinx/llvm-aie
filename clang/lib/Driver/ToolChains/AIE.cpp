@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
-#include "clang/Driver/CommonArgs.h"
+#include "CommonArgs.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "llvm/Option/ArgList.h"

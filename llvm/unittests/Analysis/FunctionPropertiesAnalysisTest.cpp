@@ -17,7 +17,6 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "gtest/gtest.h"
@@ -26,9 +25,9 @@
 using namespace llvm;
 
 namespace llvm {
-LLVM_ABI extern cl::opt<bool> EnableDetailedFunctionProperties;
-LLVM_ABI extern cl::opt<bool> BigBasicBlockInstructionThreshold;
-LLVM_ABI extern cl::opt<bool> MediumBasicBlockInstrutionThreshold;
+extern cl::opt<bool> EnableDetailedFunctionProperties;
+extern cl::opt<bool> BigBasicBlockInstructionThreshold;
+extern cl::opt<bool> MediumBasicBlockInstrutionThreshold;
 } // namespace llvm
 
 namespace {

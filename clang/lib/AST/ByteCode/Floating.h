@@ -87,6 +87,7 @@ public:
 
   bool isSigned() const { return true; }
   bool isNegative() const { return F.isNegative(); }
+  bool isPositive() const { return !F.isNegative(); }
   bool isZero() const { return F.isZero(); }
   bool isNonZero() const { return F.isNonZero(); }
   bool isMin() const { return F.isSmallest(); }

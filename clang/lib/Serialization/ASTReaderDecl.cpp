@@ -49,6 +49,7 @@
 #include "clang/Basic/PragmaKinds.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Basic/Stack.h"
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ASTRecordReader.h"
@@ -56,10 +57,12 @@
 #include "clang/Serialization/ModuleFile.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Bitstream/BitstreamReader.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include <algorithm>
@@ -4631,10 +4634,11 @@ namespace {
 
       // Perform a binary search to find the local redeclarations for this
       // declaration (if any).
-      const ObjCCategoriesInfo Compare = {LocalID, 0};
-      const ObjCCategoriesInfo *Result = std::lower_bound(
-          M.ObjCCategoriesMap,
-          M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap, Compare);
+      const ObjCCategoriesInfo Compare = { LocalID, 0 };
+      const ObjCCategoriesInfo *Result
+        = std::lower_bound(M.ObjCCategoriesMap,
+                           M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap,
+                           Compare);
       if (Result == M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap ||
           LocalID != Result->getDefinitionID()) {
         // We didn't find anything. If the class definition is in this module

@@ -22,8 +22,7 @@ public:
                               SymbolDependenceMap &Deps)
       : MR(MR), Deps(Deps) {}
 
-  void lookup(const LookupSet &Symbols,
-              OnResolvedFunction OnResolved) override {
+  void lookup(const LookupSet &Symbols, OnResolvedFunction OnResolved) override {
     auto &ES = MR.getTargetJITDylib().getExecutionSession();
     SymbolLookupSet InternedSymbols;
 
@@ -182,7 +181,7 @@ void RTDyldObjectLinkingLayer::emit(
     }
   }
 
-  auto MemMgr = GetMemoryManager(*O);
+  auto MemMgr = GetMemoryManager();
   auto &MemMgrRef = *MemMgr;
 
   // Switch to shared ownership of MR so that it can be captured by both

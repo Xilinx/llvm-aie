@@ -1,6 +1,7 @@
 ; RUN: llvm-as -disable-output <%s 2>&1 | FileCheck %s
-; CHECK: invalid #dbg record expression
-; CHECK-NEXT: #dbg_value({{.*}})
+; CHECK: invalid llvm.dbg.value intrinsic expression
+; CHECK-NEXT: call void @llvm.dbg.value({{.*}})
+; CHECK-NEXT: !""
 ; CHECK: warning: ignoring invalid debug info
 
 define void @foo(i32 %a) {

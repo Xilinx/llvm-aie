@@ -26,7 +26,6 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 #include <optional>
 #include <vector>
@@ -66,7 +65,7 @@ class Triple;
 /// Target-specific options that control code generation and printing should
 /// be exposed through a TargetSubtargetInfo-derived class.
 ///
-class LLVM_ABI TargetSubtargetInfo : public MCSubtargetInfo {
+class TargetSubtargetInfo : public MCSubtargetInfo {
 protected: // Can only create subclasses...
   TargetSubtargetInfo(const Triple &TT, StringRef CPU, StringRef TuneCPU,
                       StringRef FS, ArrayRef<StringRef> PN,

@@ -1021,10 +1021,8 @@ LLVMOrcObjectLayerRef
 LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(
     LLVMOrcExecutionSessionRef ES) {
   assert(ES && "ES must not be null");
-  return wrap(
-      new RTDyldObjectLinkingLayer(*unwrap(ES), [](const MemoryBuffer &) {
-        return std::make_unique<SectionMemoryManager>();
-      }));
+  return wrap(new RTDyldObjectLinkingLayer(
+      *unwrap(ES), [] { return std::make_unique<SectionMemoryManager>(); }));
 }
 
 LLVMOrcObjectLayerRef
@@ -1130,10 +1128,9 @@ LLVMOrcCreateRTDyldObjectLinkingLayerWithMCJITMemoryManagerLikeCallbacks(
       CreateContextCtx, CreateContext, NotifyTerminating, AllocateCodeSection,
       AllocateDataSection, FinalizeMemory, Destroy);
 
-  return wrap(new RTDyldObjectLinkingLayer(
-      *unwrap(ES), [CBs = std::move(CBs)](const MemoryBuffer &) {
-        return std::make_unique<MCJITMemoryManagerLikeCallbacksMemMgr>(CBs);
-      }));
+  return wrap(new RTDyldObjectLinkingLayer(*unwrap(ES), [CBs = std::move(CBs)] {
+    return std::make_unique<MCJITMemoryManagerLikeCallbacksMemMgr>(CBs);
+  }));
 
   return nullptr;
 }

@@ -18,7 +18,6 @@
 #include "llvm/SandboxIR/Instruction.h"
 #include "llvm/SandboxIR/Utils.h"
 #include "llvm/SandboxIR/Value.h"
-#include "llvm/Support/Compiler.h"
 #include <iterator>
 #include <memory>
 
@@ -68,7 +67,7 @@ public:
   /// the seeds in a bundle. This allows constant time evaluation
   /// and "removal" from the list.
   void setUsed(Instruction *I) {
-    auto It = llvm::find(*this, I);
+    auto It = std::find(begin(), end(), I);
     assert(It != end() && "Instruction not in the bundle!");
     auto Idx = It - begin();
     setUsed(Idx, 1, /*VerifyUnused=*/false);
@@ -96,8 +95,8 @@ public:
   /// with a total size <= \p MaxVecRegBits, or an empty slice if the
   /// requirements cannot be met . If \p ForcePowOf2 is true, then the returned
   /// slice will have a total number of bits that is a power of 2.
-  LLVM_ABI ArrayRef<Instruction *>
-  getSlice(unsigned StartIdx, unsigned MaxVecRegBits, bool ForcePowOf2);
+  ArrayRef<Instruction *> getSlice(unsigned StartIdx, unsigned MaxVecRegBits,
+                                   bool ForcePowOf2);
 
   /// \Returns the number of seed elements in the bundle.
   std::size_t size() const { return Seeds.size(); }
@@ -270,7 +269,7 @@ public:
   template <typename LoadOrStoreT> void insert(LoadOrStoreT *LSI);
   // To support constant-time erase, these just mark the element used, rather
   // than actually removing them from the bundle.
-  LLVM_ABI bool erase(Instruction *I);
+  bool erase(Instruction *I);
   bool erase(const KeyT &Key) { return Bundles.erase(Key); }
   iterator begin() {
     if (Bundles.empty())
@@ -289,12 +288,6 @@ public:
 #endif // NDEBUG
 };
 
-// Explicit instantiations
-extern template LLVM_TEMPLATE_ABI void
-SeedContainer::insert<LoadInst>(LoadInst *);
-extern template LLVM_TEMPLATE_ABI void
-SeedContainer::insert<StoreInst>(StoreInst *);
-
 class SeedCollector {
   SeedContainer StoreSeeds;
   SeedContainer LoadSeeds;
@@ -307,8 +300,8 @@ class SeedCollector {
   }
 
 public:
-  LLVM_ABI SeedCollector(BasicBlock *BB, ScalarEvolution &SE);
-  LLVM_ABI ~SeedCollector();
+  SeedCollector(BasicBlock *BB, ScalarEvolution &SE);
+  ~SeedCollector();
 
   iterator_range<SeedContainer::iterator> getStoreSeeds() {
     return {StoreSeeds.begin(), StoreSeeds.end()};

@@ -26,9 +26,8 @@ class LoongArchDAGToDAGISel : public SelectionDAGISel {
 public:
   LoongArchDAGToDAGISel() = delete;
 
-  explicit LoongArchDAGToDAGISel(LoongArchTargetMachine &TM,
-                                 CodeGenOptLevel OptLevel)
-      : SelectionDAGISel(TM, OptLevel) {}
+  explicit LoongArchDAGToDAGISel(LoongArchTargetMachine &TM)
+      : SelectionDAGISel(TM) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     Subtarget = &MF.getSubtarget<LoongArchSubtarget>();
@@ -94,8 +93,7 @@ public:
 class LoongArchDAGToDAGISelLegacy : public SelectionDAGISelLegacy {
 public:
   static char ID;
-  explicit LoongArchDAGToDAGISelLegacy(LoongArchTargetMachine &TM,
-                                       CodeGenOptLevel OptLevel);
+  explicit LoongArchDAGToDAGISelLegacy(LoongArchTargetMachine &TM);
 };
 
 } // end namespace llvm

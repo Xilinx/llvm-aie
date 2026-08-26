@@ -9,7 +9,6 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBFRAMEDATA_H
 #define LLVM_DEBUGINFO_PDB_IPDBFRAMEDATA_H
 
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <string>
 
@@ -18,7 +17,7 @@ namespace pdb {
 
 /// IPDBFrameData defines an interface used to represent a frame data of some
 /// code block.
-class LLVM_ABI IPDBFrameData {
+class IPDBFrameData {
 public:
   virtual ~IPDBFrameData();
 

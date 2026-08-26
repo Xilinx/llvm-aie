@@ -119,7 +119,7 @@ struct AssumingYieldOpInterface
     SmallVector<Value> newResults;
     for (Value value : yieldOp.getOperands()) {
       if (isa<TensorType>(value.getType())) {
-        FailureOr<Value> buffer = getBuffer(rewriter, value, options, state);
+        FailureOr<Value> buffer = getBuffer(rewriter, value, options);
         if (failed(buffer))
           return failure();
         newResults.push_back(*buffer);

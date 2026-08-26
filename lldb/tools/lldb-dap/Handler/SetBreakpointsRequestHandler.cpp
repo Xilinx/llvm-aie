@@ -7,6 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DAP.h"
+#include "EventHelper.h"
+#include "JSONUtils.h"
 #include "Protocol/ProtocolRequests.h"
 #include "RequestHandler.h"
 #include <vector>
@@ -20,7 +22,7 @@ namespace lldb_dap {
 llvm::Expected<protocol::SetBreakpointsResponseBody>
 SetBreakpointsRequestHandler::Run(
     const protocol::SetBreakpointsArguments &args) const {
-  std::vector<protocol::Breakpoint> response_breakpoints =
+  const auto response_breakpoints =
       dap.SetSourceBreakpoints(args.source, args.breakpoints);
   return protocol::SetBreakpointsResponseBody{std::move(response_breakpoints)};
 }

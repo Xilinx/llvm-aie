@@ -14,7 +14,6 @@
 #define LLVM_TEXTAPI_DYLIBREADER_H
 
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/TextAPI/ArchitectureSet.h"
@@ -38,21 +37,20 @@ struct ParseOption {
 /// \param Buffer Data that points to dylib.
 /// \param Options Determines which attributes to extract.
 /// \return List of record slices.
-LLVM_ABI Expected<Records> readFile(MemoryBufferRef Buffer,
-                                    const ParseOption &Opt);
+Expected<Records> readFile(MemoryBufferRef Buffer, const ParseOption &Opt);
 
 /// Get TAPI file representation of binary dylib.
 ///
 /// \param Buffer Data that points to dylib.
-LLVM_ABI Expected<std::unique_ptr<InterfaceFile>> get(MemoryBufferRef Buffer);
+Expected<std::unique_ptr<InterfaceFile>> get(MemoryBufferRef Buffer);
 
 using SymbolToSourceLocMap = llvm::StringMap<RecordLoc>;
 /// Get the source location for each symbol from dylib.
 ///
 /// \param DSYM Path to DSYM file.
 /// \param T Requested target slice for dylib.
-LLVM_ABI SymbolToSourceLocMap accumulateSourceLocFromDSYM(const StringRef DSYM,
-                                                          const Target &T);
+SymbolToSourceLocMap accumulateSourceLocFromDSYM(const StringRef DSYM,
+                                                 const Target &T);
 
 } // namespace llvm::MachO::DylibReader
 

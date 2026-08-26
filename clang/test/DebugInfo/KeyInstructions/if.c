@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -triple x86_64-linux-gnu -gkey-instructions -x c++ -std=c++17 %s -debug-info-kind=line-tables-only -emit-llvm -o - \
+// RUN: %clang_cc1 -gkey-instructions -x c++ -std=c++17 %s -debug-info-kind=line-tables-only -emit-llvm -o - \
 // RUN: | FileCheck %s --implicit-check-not atomGroup --implicit-check-not atomRank --check-prefixes=CHECK,CHECK-CXX
 
-// RUN: %clang_cc1 -triple x86_64-linux-gnu -gkey-instructions -x c %s -debug-info-kind=line-tables-only -emit-llvm -o - \
-// RUN: | FileCheck %s --implicit-check-not atomGroup --implicit-check-not atomRank --check-prefixes=CHECK,CHECK-C
+// RUN: %clang_cc1 -gkey-instructions -x c %s -debug-info-kind=line-tables-only -emit-llvm -o - \
+// RUN: | FileCheck %s --implicit-check-not atomGroup --implicit-check-not atomRank
 
 int g;
 void a(int A) {
@@ -32,8 +32,6 @@ void a(int A) {
     if (int B = A; B)
         ;
 #endif
-
-// CHECK: ret{{.*}}, !dbg [[RET:!.*]]
 }
 
 // CHECK: [[G1R2]] = !DILocation({{.*}}, atomGroup: 1, atomRank: 2)
@@ -46,5 +44,3 @@ void a(int A) {
 // CHECK-CXX: [[G4R1]] = !DILocation({{.*}}, atomGroup: 4, atomRank: 1)
 // CHECK-CXX: [[G5R2]] = !DILocation({{.*}}, atomGroup: 5, atomRank: 2)
 // CHECK-CXX: [[G5R1]] = !DILocation({{.*}}, atomGroup: 5, atomRank: 1)
-// CHECK-CXX: [[RET]] = !DILocation({{.*}}, atomGroup: 6, atomRank: 1)
-// CHECK-C: [[RET]] = !DILocation({{.*}}, atomGroup: 4, atomRank: 1)

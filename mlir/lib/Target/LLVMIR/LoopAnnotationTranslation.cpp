@@ -280,7 +280,7 @@ LoopAnnotationTranslation::translateLoopAnnotation(LoopAnnotationAttr attr,
 llvm::MDNode *
 LoopAnnotationTranslation::getAccessGroup(AccessGroupAttr accessGroupAttr) {
   auto [result, inserted] =
-      accessGroupMetadataMapping.try_emplace(accessGroupAttr);
+      accessGroupMetadataMapping.insert({accessGroupAttr, nullptr});
   if (inserted)
     result->second = llvm::MDNode::getDistinct(llvmModule.getContext(), {});
   return result->second;

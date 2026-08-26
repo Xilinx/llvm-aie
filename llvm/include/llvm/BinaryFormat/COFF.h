@@ -22,7 +22,6 @@
 #ifndef LLVM_BINARYFORMAT_COFF_H
 #define LLVM_BINARYFORMAT_COFF_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -852,7 +851,7 @@ inline bool isReservedSectionNumber(int32_t SectionNumber) {
 
 /// Encode section name based on string table offset.
 /// The size of Out must be at least COFF::NameSize.
-LLVM_ABI bool encodeSectionName(char *Out, uint64_t Offset);
+bool encodeSectionName(char *Out, uint64_t Offset);
 
 } // End namespace COFF.
 } // End namespace llvm.

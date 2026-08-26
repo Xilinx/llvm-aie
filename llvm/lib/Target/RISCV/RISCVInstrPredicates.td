@@ -70,7 +70,6 @@ def isVectorConfigInstr
                      CheckOpcode<[
                        PseudoVSETVLI,
                        PseudoVSETVLIX0,
-                       PseudoVSETVLIX0X0,
                        PseudoVSETIVLI
                      ]>>>;
 
@@ -78,7 +77,11 @@ def isVectorConfigInstr
 // VL and only sets VTYPE.
 def isVLPreservingConfig
     : TIIPredicate<"isVLPreservingConfig",
-                   MCReturnStatement<CheckOpcode<[PseudoVSETVLIX0X0]>>>;
+                   MCReturnStatement<
+                     CheckAll<[
+                       CheckOpcode<[PseudoVSETVLIX0]>,
+                       CheckRegOperand<0, X0>
+                     ]>>>;
 
 def isFloatScalarMoveOrScalarSplatInstr
     : TIIPredicate<"isFloatScalarMoveOrScalarSplatInstr",

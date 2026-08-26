@@ -62,7 +62,6 @@ static bool isFallthroughSwitchBranch(const SwitchBranch &Branch) {
       return true; // Ignore sub-switches
     }
 
-    // NOLINTNEXTLINE(readability-identifier-naming) - FIXME
     bool TraverseSwitchCase(SwitchCase *, DataRecursionQueue * = nullptr) {
       return true; // Ignore cases
     }

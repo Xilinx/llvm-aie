@@ -11,7 +11,6 @@
 #define LLVM_OBJECT_SYMBOLSIZE_H
 
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace object {
@@ -23,10 +22,11 @@ struct SymEntry {
   unsigned SectionID;
 };
 
-LLVM_ABI int compareAddress(const SymEntry *A, const SymEntry *B);
+int compareAddress(const SymEntry *A, const SymEntry *B);
 
-LLVM_ABI std::vector<std::pair<SymbolRef, uint64_t>>
+std::vector<std::pair<SymbolRef, uint64_t>>
 computeSymbolSizes(const ObjectFile &O);
+
 }
 } // namespace llvm
 

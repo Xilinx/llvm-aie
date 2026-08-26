@@ -69,8 +69,7 @@
 #include "llvm/Transforms/Instrumentation/InstrProfiling.h"
 #include "llvm/Transforms/Instrumentation/KCFI.h"
 #include "llvm/Transforms/Instrumentation/LowerAllowCheckPass.h"
-#include "llvm/Transforms/Instrumentation/MemProfInstrumentation.h"
-#include "llvm/Transforms/Instrumentation/MemProfUse.h"
+#include "llvm/Transforms/Instrumentation/MemProfiler.h"
 #include "llvm/Transforms/Instrumentation/MemorySanitizer.h"
 #include "llvm/Transforms/Instrumentation/NumericalStabilitySanitizer.h"
 #include "llvm/Transforms/Instrumentation/PGOInstrumentation.h"
@@ -1352,7 +1351,7 @@ runThinLTOBackend(CompilerInstance &CI, ModuleSummaryIndex *CombinedIndex,
   // Context sensitive profile.
   if (CGOpts.hasProfileCSIRInstr()) {
     Conf.RunCSIRInstr = true;
-    Conf.CSIRProfile = getProfileGenName(CGOpts);
+    Conf.CSIRProfile = std::move(CGOpts.InstrProfileOutput);
   } else if (CGOpts.hasProfileCSIRUse()) {
     Conf.RunCSIRInstr = false;
     Conf.CSIRProfile = std::move(CGOpts.ProfileInstrumentUsePath);

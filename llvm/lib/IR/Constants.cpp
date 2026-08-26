@@ -1507,9 +1507,7 @@ Constant *ConstantVector::getSplat(ElementCount EC, Constant *V) {
 
   if (V->isNullValue())
     return ConstantAggregateZero::get(VTy);
-  if (isa<PoisonValue>(V))
-    return PoisonValue::get(VTy);
-  if (isa<UndefValue>(V))
+  else if (isa<UndefValue>(V))
     return UndefValue::get(VTy);
 
   Type *IdxTy = Type::getInt64Ty(VTy->getContext());
@@ -1711,8 +1709,6 @@ void ConstantVector::destroyConstantImpl() {
 
 Constant *Constant::getSplatValue(bool AllowPoison) const {
   assert(this->getType()->isVectorTy() && "Only valid for vectors!");
-  if (isa<PoisonValue>(this))
-    return PoisonValue::get(cast<VectorType>(getType())->getElementType());
   if (isa<ConstantAggregateZero>(this))
     return getNullValue(cast<VectorType>(getType())->getElementType());
   if (auto *CI = dyn_cast<ConstantInt>(this))

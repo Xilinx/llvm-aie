@@ -13,10 +13,9 @@
 
 namespace llvm {
 
-class ARMMCExpr : public MCSpecifierExpr {
+class ARMMCExpr : public MCTargetExpr {
 public:
-  using Specifier = uint16_t;
-  enum {
+  enum Specifier {
     VK_None,
     VK_HI16 =
         MCSymbolRefExpr::FirstTargetSpecifier, // The R_ARM_MOVT_ABS relocation
@@ -58,10 +57,16 @@ public:
   };
 
 private:
+  const Specifier specifier;
+  const MCExpr *Expr;
+
   explicit ARMMCExpr(Specifier S, const MCExpr *Expr)
-      : MCSpecifierExpr(Expr, S) {}
+      : specifier(S), Expr(Expr) {}
 
 public:
+  /// @name Construction
+  /// @{
+
   static const ARMMCExpr *create(Specifier S, const MCExpr *Expr,
                                  MCContext &Ctx);
 
@@ -89,12 +94,33 @@ public:
     return create(VK_LO_0_7, Expr, Ctx);
   }
 
+  /// @}
+  /// @name Accessors
+  /// @{
+
+  Specifier getSpecifier() const { return specifier; }
+  const MCExpr *getSubExpr() const { return Expr; }
+
+  /// @}
+
   void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
   bool evaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAssembler *Asm) const override {
     return false;
   }
+  void visitUsedExpr(MCStreamer &Streamer) const override;
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
+  }
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Target;
+  }
 };
+
+static inline ARMMCExpr::Specifier getSpecifier(const MCSymbolRefExpr *SRE) {
+  return ARMMCExpr::Specifier(SRE->getKind());
+}
 } // end namespace llvm
 
 #endif

@@ -54,8 +54,6 @@
 
 namespace __tsan {
 
-extern bool ready_to_symbolize;
-
 #if !SANITIZER_GO
 struct MapUnmapCallback;
 #  if defined(__mips64) || defined(__aarch64__) || defined(__loongarch__) || \

@@ -35,9 +35,13 @@ module;
 #include <chrono>
 #include <cinttypes>
 #include <climits>
-#include <clocale>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <clocale>
+#endif
 #include <cmath>
-#include <codecvt>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <codecvt>
+#endif
 #include <compare>
 #include <complex>
 #include <concepts>
@@ -64,20 +68,32 @@ module;
 #include <flat_set>
 #include <format>
 #include <forward_list>
-#include <fstream>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <fstream>
+#endif
 #include <functional>
 #include <future>
 #include <initializer_list>
-#include <iomanip>
-#include <ios>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <iomanip>
+#endif
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <ios>
+#endif
 #include <iosfwd>
-#include <iostream>
-#include <istream>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <iostream>
+#endif
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <istream>
+#endif
 #include <iterator>
 #include <latch>
 #include <limits>
 #include <list>
-#include <locale>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <locale>
+#endif
 #include <map>
 #include <mdspan>
 #include <memory>
@@ -87,28 +103,40 @@ module;
 #include <numbers>
 #include <numeric>
 #include <optional>
-#include <ostream>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <ostream>
+#endif
 #include <print>
 #include <queue>
 #include <random>
 #include <ranges>
 #include <ratio>
-#include <regex>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <regex>
+#endif
 #include <scoped_allocator>
 #include <semaphore>
 #include <set>
 #include <shared_mutex>
 #include <source_location>
 #include <span>
-#include <sstream>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <sstream>
+#endif
 #include <stack>
 #include <stdexcept>
 #include <stop_token>
-#include <streambuf>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <streambuf>
+#endif
 #include <string>
 #include <string_view>
-#include <strstream>
-#include <syncstream>
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <strstream>
+#endif
+#if _LIBCPP_HAS_LOCALIZATION
+#  include <syncstream>
+#endif
 #include <system_error>
 #include <thread>
 #include <tuple>

@@ -21,7 +21,6 @@
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBufferRef.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -34,7 +33,7 @@ constexpr std::string_view NullImportDescriptorSymbolName =
 constexpr std::string_view NullThunkDataPrefix = "\x7f";
 constexpr std::string_view NullThunkDataSuffix = "_NULL_THUNK_DATA";
 
-class LLVM_ABI COFFImportFile : public SymbolicFile {
+class COFFImportFile : public SymbolicFile {
 private:
   enum SymbolIndex { ImpSymbol, ThunkSymbol, ECAuxSymbol, ECThunkSymbol };
 
@@ -136,10 +135,10 @@ struct COFFShortExport {
 /// linking both ARM64EC and pure ARM64 objects, and the linker will pick only
 /// the exports relevant to the target platform. For non-hybrid targets,
 /// the NativeExports parameter should not be used.
-LLVM_ABI Error writeImportLibrary(StringRef ImportName, StringRef Path,
-                                  ArrayRef<COFFShortExport> Exports,
-                                  COFF::MachineTypes Machine, bool MinGW,
-                                  ArrayRef<COFFShortExport> NativeExports = {});
+Error writeImportLibrary(StringRef ImportName, StringRef Path,
+                         ArrayRef<COFFShortExport> Exports,
+                         COFF::MachineTypes Machine, bool MinGW,
+                         ArrayRef<COFFShortExport> NativeExports = {});
 
 } // namespace object
 } // namespace llvm

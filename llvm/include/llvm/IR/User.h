@@ -101,20 +101,18 @@ protected:
   ///
   /// This is used for subclasses which need to allocate a variable number
   /// of operands, ie, 'hung off uses'.
-  LLVM_ABI void *operator new(size_t Size, HungOffOperandsAllocMarker);
+  void *operator new(size_t Size, HungOffOperandsAllocMarker);
 
   /// Allocate a User with the operands co-allocated.
   ///
   /// This is used for subclasses which have a fixed number of operands.
-  LLVM_ABI void *operator new(size_t Size,
-                              IntrusiveOperandsAllocMarker allocTrait);
+  void *operator new(size_t Size, IntrusiveOperandsAllocMarker allocTrait);
 
   /// Allocate a User with the operands co-allocated.  If DescBytes is non-zero
   /// then allocate an additional DescBytes bytes before the operands. These
   /// bytes can be accessed by calling getDescriptor.
-  LLVM_ABI void *
-  operator new(size_t Size,
-               IntrusiveOperandsAndDescriptorAllocMarker allocTrait);
+  void *operator new(size_t Size,
+                     IntrusiveOperandsAndDescriptorAllocMarker allocTrait);
 
   User(Type *ty, unsigned vty, AllocInfo AllocInfo) : Value(ty, vty) {
     assert(AllocInfo.NumOps < (1u << NumUserOperandsBits) &&
@@ -134,11 +132,11 @@ protected:
   /// (with bottom bit set) to the User.
   /// \param IsPhi identifies callers which are phi nodes and which need
   /// N BasicBlock* allocated along with N
-  LLVM_ABI void allocHungoffUses(unsigned N, bool IsPhi = false);
+  void allocHungoffUses(unsigned N, bool IsPhi = false);
 
   /// Grow the number of hung off uses.  Note that allocHungoffUses
   /// should be called if there are no uses.
-  LLVM_ABI void growHungoffUses(unsigned N, bool IsPhi = false);
+  void growHungoffUses(unsigned N, bool IsPhi = false);
 
 protected:
   ~User() = default; // Use deleteValue() to delete a generic Instruction.
@@ -147,7 +145,7 @@ public:
   User(const User &) = delete;
 
   /// Free memory allocated for User and Use objects.
-  LLVM_ABI void operator delete(void *Usr);
+  void operator delete(void *Usr);
   /// Placement delete - required by std, called if the ctor throws.
   void operator delete(void *Usr, HungOffOperandsAllocMarker) {
     // Note: If a subclass manipulates the information which is required to
@@ -254,10 +252,10 @@ public:
   unsigned getNumOperands() const { return NumUserOperands; }
 
   /// Returns the descriptor co-allocated with this User instance.
-  LLVM_ABI ArrayRef<const uint8_t> getDescriptor() const;
+  ArrayRef<const uint8_t> getDescriptor() const;
 
   /// Returns the descriptor co-allocated with this User instance.
-  LLVM_ABI MutableArrayRef<uint8_t> getDescriptor();
+  MutableArrayRef<uint8_t> getDescriptor();
 
   /// Subclasses with hung off uses need to manage the operand count
   /// themselves.  In these instances, the operand count isn't used to find the
@@ -271,7 +269,7 @@ public:
   /// A droppable user is a user for which uses can be dropped without affecting
   /// correctness and should be dropped rather than preventing a transformation
   /// from happening.
-  LLVM_ABI bool isDroppable() const;
+  bool isDroppable() const;
 
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
@@ -355,7 +353,7 @@ public:
   ///
   /// Replaces all references to the "From" definition with references to the
   /// "To" definition. Returns whether any uses were replaced.
-  LLVM_ABI bool replaceUsesOfWith(Value *From, Value *To);
+  bool replaceUsesOfWith(Value *From, Value *To);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {

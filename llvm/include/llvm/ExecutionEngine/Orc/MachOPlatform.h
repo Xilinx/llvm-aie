@@ -18,7 +18,6 @@
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
-#include "llvm/Support/Compiler.h"
 
 #include <future>
 #include <thread>
@@ -28,7 +27,7 @@ namespace llvm {
 namespace orc {
 
 /// Mediates between MachO initialization and ExecutionSession state.
-class LLVM_ABI MachOPlatform : public Platform {
+class MachOPlatform : public Platform {
 public:
   // Used internally by MachOPlatform, but made public to enable serialization.
   struct MachOJITDylibDepInfo {
@@ -69,7 +68,7 @@ public:
     struct BuildVersionOpts {
 
       // Derive platform from triple if possible.
-      LLVM_ABI static std::optional<BuildVersionOpts>
+      static std::optional<BuildVersionOpts>
       fromTriple(const Triple &TT, uint32_t MinOS, uint32_t SDK);
 
       uint32_t Platform; // Platform.
@@ -195,6 +194,7 @@ private:
 
   // Data needed for bootstrap only.
   struct BootstrapInfo {
+    std::mutex Mutex;
     std::condition_variable CV;
     size_t ActiveGraphs = 0;
     shared::AllocActions DeferredAAs;
@@ -205,7 +205,7 @@ private:
   // The MachOPlatformPlugin scans/modifies LinkGraphs to support MachO
   // platform features including initializers, exceptions, TLV, and language
   // runtime registration.
-  class LLVM_ABI MachOPlatformPlugin : public ObjectLinkingLayer::Plugin {
+  class MachOPlatformPlugin : public ObjectLinkingLayer::Plugin {
   public:
     MachOPlatformPlugin(MachOPlatform &MP) : MP(MP) {}
 
@@ -383,7 +383,7 @@ private:
 };
 
 // Generates a MachO header.
-class LLVM_ABI SimpleMachOHeaderMU : public MaterializationUnit {
+class SimpleMachOHeaderMU : public MaterializationUnit {
 public:
   SimpleMachOHeaderMU(MachOPlatform &MOP, SymbolStringPtr HeaderStartSymbol,
                       MachOPlatform::HeaderOptions Opts);
@@ -427,7 +427,7 @@ struct MachOHeaderInfo {
   uint32_t CPUType = 0;
   uint32_t CPUSubType = 0;
 };
-LLVM_ABI MachOHeaderInfo getMachOHeaderInfoFromTriple(const Triple &TT);
+MachOHeaderInfo getMachOHeaderInfoFromTriple(const Triple &TT);
 
 } // end namespace orc
 } // end namespace llvm

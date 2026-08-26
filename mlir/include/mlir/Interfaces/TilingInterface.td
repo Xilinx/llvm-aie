@@ -363,8 +363,7 @@ def TilingInterface : OpInterface<"TilingInterface"> {
   ];
 }
 
-def PartialReductionOpInterface :
-    OpInterface<"PartialReductionOpInterface", [TilingInterface]> {
+def PartialReductionOpInterface : OpInterface<"PartialReductionOpInterface"> {
   let description = [{
     Interface for allowing operations to expose information needed to
     tile reductions using partial reduction followed by merge. This is

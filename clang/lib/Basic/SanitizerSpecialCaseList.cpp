@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Basic/SanitizerSpecialCaseList.h"
-#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 
@@ -50,27 +49,17 @@ void SanitizerSpecialCaseList::createSanitizerSections() {
 #undef SANITIZER
 #undef SANITIZER_GROUP
 
-    SanitizerSections.emplace_back(Mask, S.Entries, S.FileIdx);
+    SanitizerSections.emplace_back(Mask, S.Entries);
   }
 }
 
 bool SanitizerSpecialCaseList::inSection(SanitizerMask Mask, StringRef Prefix,
                                          StringRef Query,
                                          StringRef Category) const {
-  return inSectionBlame(Mask, Prefix, Query, Category) != NotFound;
-}
+  for (auto &S : SanitizerSections)
+    if ((S.Mask & Mask) &&
+        SpecialCaseList::inSectionBlame(S.Entries, Prefix, Query, Category))
+      return true;
 
-std::pair<unsigned, unsigned>
-SanitizerSpecialCaseList::inSectionBlame(SanitizerMask Mask, StringRef Prefix,
-                                         StringRef Query,
-                                         StringRef Category) const {
-  for (const auto &S : llvm::reverse(SanitizerSections)) {
-    if (S.Mask & Mask) {
-      unsigned LineNum =
-          SpecialCaseList::inSectionBlame(S.Entries, Prefix, Query, Category);
-      if (LineNum > 0)
-        return {S.FileIdx, LineNum};
-    }
-  }
-  return NotFound;
+  return false;
 }

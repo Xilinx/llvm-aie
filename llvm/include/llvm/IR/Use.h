@@ -38,7 +38,7 @@ public:
 
   /// Provide a fast substitute to std::swap<Use>
   /// that also works with less standard-compliant compilers
-  LLVM_ABI void swap(Use &RHS);
+  void swap(Use &RHS);
 
 private:
   /// Destructor - Only for zap()
@@ -60,10 +60,10 @@ public:
   /// instruction.
   User *getUser() const { return Parent; };
 
-  LLVM_ABI inline void set(Value *Val);
+  inline void set(Value *Val);
 
-  LLVM_ABI inline Value *operator=(Value *RHS);
-  LLVM_ABI inline const Use &operator=(const Use &RHS);
+  inline Value *operator=(Value *RHS);
+  inline const Use &operator=(const Use &RHS);
 
   Value *operator->() { return Val; }
   const Value *operator->() const { return Val; }
@@ -71,11 +71,11 @@ public:
   Use *getNext() const { return Next; }
 
   /// Return the operand # of this use in its User.
-  LLVM_ABI unsigned getOperandNo() const;
+  unsigned getOperandNo() const;
 
   /// Destroys Use operands when the number of operands of
   /// a User changes.
-  LLVM_ABI static void zap(Use *Start, const Use *Stop, bool del = false);
+  static void zap(Use *Start, const Use *Stop, bool del = false);
 
 private:
 

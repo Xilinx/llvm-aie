@@ -104,8 +104,7 @@ their semantics via a special [TableGen backend][TableGenBackend]:
 *   The `Property` class hierarchy: They are used to specify non-attribute-backed
     properties that are inherent to operations. These properties can have
     constraints imposed on them using the `predicate` field or the
-    `ConfinedProp` class. The `PropConstraint` superclass of `Property` is used
-    to describe constraints on properties in rewrite patterns.
+    `ConfinedProp` class.
 
 An operation is defined by specializing the `Op` class with concrete contents
 for all the fields it requires. For example, `tf.AvgPool` is defined as
@@ -214,7 +213,7 @@ hierarchy. Similarly, `<attr-constraint>` is a TableGen `def` from the
 of `Property` (constraints can be imposed onto it using its `predicate` field
 or the `ConfinedProp` subclass).
 
-There are no requirements on the relative order of operands and attributes; they
+There is no requirements on the relative order of operands and attributes; they
 can mix freely. The relative order of operands themselves matters. From each
 named argument a named getter will be generated that returns the argument with
 the return type (in the case of attributes the return type will be constructed

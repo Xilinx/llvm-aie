@@ -239,7 +239,6 @@ void ObjectFileXCOFF::CreateSectionsWithBitness(
                          .Case(".dwinfo", eSectionTypeDWARFDebugInfo)
                          .Case(".dwline", eSectionTypeDWARFDebugLine)
                          .Case(".dwabrev", eSectionTypeDWARFDebugAbbrev)
-                         .Case(".dwrnges", eSectionTypeDWARFDebugRanges)
                          .Default(eSectionTypeInvalid);
     }
 

@@ -16,7 +16,6 @@
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 namespace llvm {
@@ -26,8 +25,8 @@ namespace orc {
 /// ExecutionSession.
 class MangleAndInterner {
 public:
-  LLVM_ABI MangleAndInterner(ExecutionSession &ES, const DataLayout &DL);
-  LLVM_ABI SymbolStringPtr operator()(StringRef Name);
+  MangleAndInterner(ExecutionSession &ES, const DataLayout &DL);
+  SymbolStringPtr operator()(StringRef Name);
 
 private:
   ExecutionSession &ES;
@@ -51,10 +50,9 @@ public:
   /// necessarily one-to-one: thread-local GlobalValues, for example, may
   /// produce more than one symbol, in which case the map will contain duplicate
   /// values.
-  LLVM_ABI static void
-  add(ExecutionSession &ES, const ManglingOptions &MO,
-      ArrayRef<GlobalValue *> GVs, SymbolFlagsMap &SymbolFlags,
-      SymbolNameToDefinitionMap *SymbolToDefinition = nullptr);
+  static void add(ExecutionSession &ES, const ManglingOptions &MO,
+                  ArrayRef<GlobalValue *> GVs, SymbolFlagsMap &SymbolFlags,
+                  SymbolNameToDefinitionMap *SymbolToDefinition = nullptr);
 };
 
 } // End namespace orc

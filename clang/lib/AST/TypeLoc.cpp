@@ -423,7 +423,7 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
   case BuiltinType::OCLReserveID:
 #define SVE_TYPE(Name, Id, SingletonId) \
   case BuiltinType::Id:
-#include "clang/Basic/AArch64ACLETypes.def"
+#include "clang/Basic/AArch64SVEACLETypes.def"
 #define PPC_VECTOR_TYPE(Name, Id, Size) \
   case BuiltinType::Id:
 #include "clang/Basic/PPCTypes.def"

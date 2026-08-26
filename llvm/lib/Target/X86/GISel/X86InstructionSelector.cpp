@@ -364,7 +364,7 @@ bool X86InstructionSelector::select(MachineInstr &I) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
   unsigned Opcode = I.getOpcode();
-  if (!isPreISelGenericOpcode(Opcode) && !I.isPreISelOpcode()) {
+  if (!isPreISelGenericOpcode(Opcode)) {
     // Certain non-generic instructions also need some special handling.
 
     if (Opcode == TargetOpcode::LOAD_STACK_GUARD)

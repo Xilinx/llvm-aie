@@ -177,12 +177,13 @@ public:
       if (ND->isFromASTFile())
         return true;
       // FIXME: Can we get rid of this loop completely?
-      return llvm::any_of(Decls, [ND](NamedDecl *D) {
+      for (NamedDecl *D : Decls)
         // Only replace the local declaration if the external declaration has
-        // higher visiblities.
-        return D->getModuleOwnershipKind() <= ND->getModuleOwnershipKind() &&
-               D->declarationReplaces(ND, /*IsKnownNewer=*/false);
-      });
+        // higher visibilities.
+        if (D->getModuleOwnershipKind() <= ND->getModuleOwnershipKind() &&
+            D->declarationReplaces(ND, /*IsKnownNewer=*/false))
+          return true;
+      return false;
     });
 
     // Don't have any pending external decls any more.

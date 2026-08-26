@@ -75,6 +75,7 @@
 #include <pthread_np.h>
 #endif
 #elif KMP_OS_SOLARIS
+#include <libproc.h>
 #include <procfs.h>
 #include <thread.h>
 #include <sys/loadavg.h>
@@ -2231,34 +2232,43 @@ int __kmp_is_address_mapped(void *addr) {
 
   kvm_close(fd);
 #elif KMP_OS_SOLARIS
-  prxmap_t *cur, *map;
+  prmap_t *cur, *map;
   void *buf;
   uintptr_t uaddr;
   ssize_t rd;
-  int fd;
+  int err;
+  int file;
+
   pid_t pid = getpid();
-  char *name = __kmp_str_format("/proc/%d/xmap", pid);
-  fd = open(name, O_RDONLY);
-  if (fd == -1) {
+  struct ps_prochandle *fd = Pgrab(pid, PGRAB_RDONLY, &err);
+  ;
+
+  if (!fd) {
+    return 0;
+  }
+
+  char *name = __kmp_str_format("/proc/%d/map", pid);
+  size_t sz = (1 << 20);
+  file = open(name, O_RDONLY);
+  if (file == -1) {
     KMP_INTERNAL_FREE(name);
     return 0;
   }
 
-  size_t sz = (1 << 20);
   buf = KMP_INTERNAL_MALLOC(sz);
 
-  while (sz > 0 && (rd = pread(fd, buf, sz, 0)) == sz) {
+  while (sz > 0 && (rd = pread(file, buf, sz, 0)) == sz) {
     void *newbuf;
     sz <<= 1;
     newbuf = KMP_INTERNAL_REALLOC(buf, sz);
     buf = newbuf;
   }
 
-  map = reinterpret_cast<prxmap_t *>(buf);
+  map = reinterpret_cast<prmap_t *>(buf);
   uaddr = reinterpret_cast<uintptr_t>(addr);
 
   for (cur = map; rd > 0; cur++, rd = -sizeof(*map)) {
-    if (uaddr >= cur->pr_vaddr && uaddr < cur->pr_vaddr) {
+    if ((uaddr >= cur->pr_vaddr) && (uaddr < cur->pr_vaddr)) {
       if ((cur->pr_mflags & MA_READ) != 0 && (cur->pr_mflags & MA_WRITE) != 0) {
         found = 1;
         break;
@@ -2267,7 +2277,7 @@ int __kmp_is_address_mapped(void *addr) {
   }
 
   KMP_INTERNAL_FREE(map);
-  close(fd);
+  close(file);
   KMP_INTERNAL_FREE(name);
 #elif KMP_OS_DARWIN
 

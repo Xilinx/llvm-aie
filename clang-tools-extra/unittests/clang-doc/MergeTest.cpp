@@ -166,11 +166,11 @@ TEST(MergeTest, mergeFunctionInfos) {
 
   One.Description.emplace_back();
   auto *OneFullComment = &One.Description.back();
-  OneFullComment->Kind = CommentKind::CK_FullComment;
+  OneFullComment->Kind = "FullComment";
   auto OneParagraphComment = std::make_unique<CommentInfo>();
-  OneParagraphComment->Kind = CommentKind::CK_ParagraphComment;
+  OneParagraphComment->Kind = "ParagraphComment";
   auto OneTextComment = std::make_unique<CommentInfo>();
-  OneTextComment->Kind = CommentKind::CK_TextComment;
+  OneTextComment->Kind = "TextComment";
   OneTextComment->Text = "This is a text comment.";
   OneParagraphComment->Children.push_back(std::move(OneTextComment));
   OneFullComment->Children.push_back(std::move(OneParagraphComment));
@@ -186,11 +186,11 @@ TEST(MergeTest, mergeFunctionInfos) {
 
   Two.Description.emplace_back();
   auto *TwoFullComment = &Two.Description.back();
-  TwoFullComment->Kind = CommentKind::CK_FullComment;
+  TwoFullComment->Kind = "FullComment";
   auto TwoParagraphComment = std::make_unique<CommentInfo>();
-  TwoParagraphComment->Kind = CommentKind::CK_ParagraphComment;
+  TwoParagraphComment->Kind = "ParagraphComment";
   auto TwoTextComment = std::make_unique<CommentInfo>();
-  TwoTextComment->Kind = CommentKind::CK_TextComment;
+  TwoTextComment->Kind = "TextComment";
   TwoTextComment->Text = "This is a text comment.";
   TwoParagraphComment->Children.push_back(std::move(TwoTextComment));
   TwoFullComment->Children.push_back(std::move(TwoParagraphComment));
@@ -213,11 +213,11 @@ TEST(MergeTest, mergeFunctionInfos) {
 
   Expected->Description.emplace_back();
   auto *ExpectedFullComment = &Expected->Description.back();
-  ExpectedFullComment->Kind = CommentKind::CK_FullComment;
+  ExpectedFullComment->Kind = "FullComment";
   auto ExpectedParagraphComment = std::make_unique<CommentInfo>();
-  ExpectedParagraphComment->Kind = CommentKind::CK_ParagraphComment;
+  ExpectedParagraphComment->Kind = "ParagraphComment";
   auto ExpectedTextComment = std::make_unique<CommentInfo>();
-  ExpectedTextComment->Kind = CommentKind::CK_TextComment;
+  ExpectedTextComment->Kind = "TextComment";
   ExpectedTextComment->Text = "This is a text comment.";
   ExpectedParagraphComment->Children.push_back(std::move(ExpectedTextComment));
   ExpectedFullComment->Children.push_back(std::move(ExpectedParagraphComment));

@@ -204,7 +204,7 @@ size_t StringTableBuilder::add(CachedHashStringRef S) {
     assert(S.size() > COFF::NameSize && "Short string in COFF string table!");
 
   assert(!isFinalized());
-  auto P = StringIndexMap.try_emplace(S);
+  auto P = StringIndexMap.insert(std::make_pair(S, 0));
   if (P.second) {
     size_t Start = alignTo(Size, Alignment);
     P.first->second = Start;

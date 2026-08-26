@@ -20,13 +20,12 @@
 #include "llvm/MC/MCSchedule.h"
 #include "llvm/MCA/HardwareUnits/HardwareUnit.h"
 #include "llvm/MCA/Instruction.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace mca {
 
 /// Abstract base interface for LS (load/store) units in llvm-mca.
-class LLVM_ABI LSUnitBase : public HardwareUnit {
+class LSUnitBase : public HardwareUnit {
   /// Load queue size.
   ///
   /// A value of zero for this field means that the load queue is unbounded.
@@ -193,7 +192,7 @@ public:
 /// A load/store barrier is "executed" when it becomes the oldest entry in
 /// the load/store queue(s). That also means, all the older loads/stores have
 /// already been executed.
-class LLVM_ABI LSUnit : public LSUnitBase {
+class LSUnit : public LSUnitBase {
 
   // This class doesn't know about the latency of a load instruction. So, it
   // conservatively/pessimistically assumes that the latency of a load opcode

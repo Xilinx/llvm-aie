@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -233,7 +232,7 @@ private:
 /// It keeps internally the insertion point and debug location for all
 /// the new instructions we want to create.
 /// This information can be modified via the related setters.
-class LLVM_ABI MachineIRBuilder {
+class MachineIRBuilder {
 
   MachineIRBuilderState State;
 

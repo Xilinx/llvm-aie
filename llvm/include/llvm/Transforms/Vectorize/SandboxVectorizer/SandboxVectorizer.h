@@ -8,7 +8,6 @@
 #ifndef LLVM_TRANSFORMS_VECTORIZE_SANDBOXVECTORIZER_SANDBOXVECTORIZER_H
 #define LLVM_TRANSFORMS_VECTORIZE_SANDBOXVECTORIZER_SANDBOXVECTORIZER_H
 
-#include "llvm/Support/Compiler.h"
 #include <memory>
 
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -50,11 +49,11 @@ public:
   // Vectorizer component can't find the vtable for classes like
   // sandboxir::Pass. This way we don't have to make LLVMPasses add a direct
   // dependency on SandboxIR.
-  LLVM_ABI SandboxVectorizerPass();
-  LLVM_ABI SandboxVectorizerPass(SandboxVectorizerPass &&);
-  LLVM_ABI ~SandboxVectorizerPass();
+  SandboxVectorizerPass();
+  SandboxVectorizerPass(SandboxVectorizerPass &&);
+  ~SandboxVectorizerPass();
 
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
 } // namespace llvm

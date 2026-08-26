@@ -2339,17 +2339,6 @@ add_fp_unittest(
 )
 
 add_fp_unittest(
-  atanf16_test
-  NEED_MPFR
-  SUITE
-    libc-math-unittests
-  SRCS
-    atanf16_test.cpp
-  DEPENDS
-    libc.src.math.atanf16
-)
-
-add_fp_unittest(
   scalbn_test
   NEED_MPFR
   SUITE

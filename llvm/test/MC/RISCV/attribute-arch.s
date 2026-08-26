@@ -309,9 +309,6 @@
 .attribute arch, "rv32i_shvsatpa1p0"
 # CHECK: attribute      5, "rv32i2p1_shvsatpa1p0"
 
-.attribute arch, "rv32i_shlcofideleg1p0"
-# CHECK: attribute      5, "rv32i2p1_shlcofideleg1p0"
-
 .attribute arch, "rv32i_shtvala1p0"
 # CHECK: attribute      5, "rv32i2p1_shtvala1p0"
 

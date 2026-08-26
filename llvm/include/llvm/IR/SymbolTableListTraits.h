@@ -26,7 +26,6 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/simple_ilist.h"
-#include "llvm/Support/Compiler.h"
 #include <cstddef>
 
 namespace llvm {
@@ -110,11 +109,11 @@ public:
 // The SymbolTableListTraits template is explicitly instantiated for the
 // following data types, so add extern template statements to prevent implicit
 // instantiation.
-extern template class LLVM_TEMPLATE_ABI SymbolTableListTraits<BasicBlock>;
-extern template class LLVM_TEMPLATE_ABI SymbolTableListTraits<Function>;
-extern template class LLVM_TEMPLATE_ABI SymbolTableListTraits<GlobalAlias>;
-extern template class LLVM_TEMPLATE_ABI SymbolTableListTraits<GlobalIFunc>;
-extern template class LLVM_TEMPLATE_ABI SymbolTableListTraits<GlobalVariable>;
+extern template class SymbolTableListTraits<BasicBlock>;
+extern template class SymbolTableListTraits<Function>;
+extern template class SymbolTableListTraits<GlobalAlias>;
+extern template class SymbolTableListTraits<GlobalIFunc>;
+extern template class SymbolTableListTraits<GlobalVariable>;
 
 /// List that automatically updates parent links and symbol tables.
 ///

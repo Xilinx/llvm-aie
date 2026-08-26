@@ -31,7 +31,7 @@ class RISCVMCPlusBuilder : public MCPlusBuilder {
 public:
   using MCPlusBuilder::MCPlusBuilder;
 
-  bool equals(const MCSpecifierExpr &A, const MCSpecifierExpr &B,
+  bool equals(const MCTargetExpr &A, const MCTargetExpr &B,
               CompFuncTy Comp) const override {
     const auto &RISCVExprA = cast<RISCVMCExpr>(A);
     const auto &RISCVExprB = cast<RISCVMCExpr>(B);

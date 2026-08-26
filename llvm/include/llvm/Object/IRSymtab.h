@@ -30,7 +30,6 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <cassert>
@@ -163,9 +162,8 @@ struct Header {
 
 /// Fills in Symtab and StrtabBuilder with a valid symbol and string table for
 /// Mods.
-LLVM_ABI Error build(ArrayRef<Module *> Mods, SmallVector<char, 0> &Symtab,
-                     StringTableBuilder &StrtabBuilder,
-                     BumpPtrAllocator &Alloc);
+Error build(ArrayRef<Module *> Mods, SmallVector<char, 0> &Symtab,
+            StringTableBuilder &StrtabBuilder, BumpPtrAllocator &Alloc);
 
 /// This represents a symbol that has been read from a storage::Symbol and
 /// possibly a storage::Uncommon.
@@ -375,7 +373,7 @@ struct FileContents {
 };
 
 /// Reads the contents of a bitcode file, creating its irsymtab if necessary.
-LLVM_ABI Expected<FileContents> readBitcode(const BitcodeFileContents &BFC);
+Expected<FileContents> readBitcode(const BitcodeFileContents &BFC);
 
 } // end namespace irsymtab
 } // end namespace llvm

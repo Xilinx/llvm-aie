@@ -3098,7 +3098,8 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   // Generate leak node.
   ExplodedNode *N = C.getPredecessor();
   if (!Errors.empty()) {
-    N = C.generateNonFatalErrorNode(C.getState());
+    static CheckerProgramPointTag Tag("MallocChecker", "DeadSymbolsLeak");
+    N = C.generateNonFatalErrorNode(C.getState(), &Tag);
     if (N) {
       for (SymbolRef Sym : Errors) {
         HandleLeak(Sym, N, C);

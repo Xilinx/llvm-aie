@@ -10,7 +10,7 @@
 
 // template <class InputIterator>
 //     forward_list(InputIterator first, InputIterator last,
-//                  const allocator_type& a);                 // constexpr since C++26
+//                  const allocator_type& a);
 
 #include <forward_list>
 #include <cassert>
@@ -21,7 +21,7 @@
 #include "test_iterators.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef int T;
     typedef test_allocator<T> A;
@@ -49,15 +49,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(n == std::end(t) - std::begin(t));
     assert(c.get_allocator() == A());
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

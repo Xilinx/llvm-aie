@@ -1689,10 +1689,12 @@ void DevirtModule::exportConstant(VTableSlot Slot, ArrayRef<uint64_t> Args,
 
 Constant *DevirtModule::importGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
                                      StringRef Name) {
-  GlobalVariable *GV =
+  Constant *C =
       M.getOrInsertGlobal(getGlobalName(Slot, Args, Name), Int8Arr0Ty);
-  GV->setVisibility(GlobalValue::HiddenVisibility);
-  return GV;
+  auto *GV = dyn_cast<GlobalVariable>(C);
+  if (GV)
+    GV->setVisibility(GlobalValue::HiddenVisibility);
+  return C;
 }
 
 Constant *DevirtModule::importConstant(VTableSlot Slot, ArrayRef<uint64_t> Args,
@@ -1845,7 +1847,7 @@ bool DevirtModule::tryVirtualConstProp(
   if (BitWidth > 64)
     return false;
 
-  Align TypeAlignment = M.getDataLayout().getABIIntegerTypeAlignment(BitWidth);
+  Align TypeAlignment = M.getDataLayout().getPrefTypeAlign(RetType);
 
   // Make sure that each function is defined, does not access memory, takes at
   // least one argument, does not use its first argument (which we assume is

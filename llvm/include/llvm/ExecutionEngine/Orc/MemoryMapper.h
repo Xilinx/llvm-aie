@@ -15,7 +15,6 @@
 
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/Shared/MemoryFlags.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Process.h"
 
 #include <mutex>
@@ -24,7 +23,7 @@ namespace llvm {
 namespace orc {
 
 /// Manages mapping, content transfer and protections for JIT memory
-class LLVM_ABI MemoryMapper {
+class MemoryMapper {
 public:
   /// Represents a single allocation containing multiple segments and
   /// initialization and deinitialization actions
@@ -80,7 +79,7 @@ public:
   virtual ~MemoryMapper();
 };
 
-class LLVM_ABI InProcessMemoryMapper : public MemoryMapper {
+class InProcessMemoryMapper : public MemoryMapper {
 public:
   InProcessMemoryMapper(size_t PageSize);
 
@@ -122,7 +121,7 @@ private:
   size_t PageSize;
 };
 
-class LLVM_ABI SharedMemoryMapper final : public MemoryMapper {
+class SharedMemoryMapper final : public MemoryMapper {
 public:
   struct SymbolAddrs {
     ExecutorAddr Instance;

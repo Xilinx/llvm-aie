@@ -349,7 +349,7 @@ bool SelectionDAGISelLegacy::runOnMachineFunction(MachineFunction &MF) {
 
   // Do some sanity-checking on the command-line options.
   if (EnableFastISelAbort && !Selector->TM.Options.EnableFastISel)
-    reportFatalUsageError("-fast-isel-abort > 0 requires -fast-isel");
+    report_fatal_error("-fast-isel-abort > 0 requires -fast-isel");
 
   // Decide what flavour of variable location debug-info will be used, before
   // we change the optimisation level.
@@ -386,7 +386,10 @@ SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, CodeGenOptLevel OL)
   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 }
 
-SelectionDAGISel::~SelectionDAGISel() { delete CurDAG; }
+SelectionDAGISel::~SelectionDAGISel() {
+  delete CurDAG;
+  delete SwiftError;
+}
 
 void SelectionDAGISelLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
   CodeGenOptLevel OptLevel = Selector->OptLevel;
@@ -421,7 +424,7 @@ SelectionDAGISelPass::run(MachineFunction &MF,
 
   // Do some sanity-checking on the command-line options.
   if (EnableFastISelAbort && !Selector->TM.Options.EnableFastISel)
-    reportFatalUsageError("-fast-isel-abort > 0 requires -fast-isel");
+    report_fatal_error("-fast-isel-abort > 0 requires -fast-isel");
 
   // Decide what flavour of variable location debug-info will be used, before
   // we change the optimisation level.
@@ -794,7 +797,7 @@ static void reportFastISelFailure(MachineFunction &MF,
     R << (" (in function: " + MF.getName() + ")").str();
 
   if (ShouldAbort)
-    reportFatalUsageError(Twine(R.getMsg()));
+    report_fatal_error(Twine(R.getMsg()));
 
   ORE.emit(R);
   LLVM_DEBUG(dbgs() << R.getMsg() << "\n");

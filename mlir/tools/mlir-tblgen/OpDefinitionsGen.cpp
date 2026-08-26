@@ -491,28 +491,28 @@ void OpOrAdaptorHelper::computeAttrMetadata() {
   }
 
   auto makeProperty = [&](StringRef storageType, StringRef parserCall) {
-    return Property(/*maybeDef=*/nullptr,
-                    /*summary=*/"",
-                    /*description=*/"",
-                    /*storageType=*/storageType,
-                    /*interfaceType=*/"::llvm::ArrayRef<int32_t>",
-                    /*convertFromStorageCall=*/"$_storage",
-                    /*assignToStorageCall=*/
-                    "::llvm::copy($_value, $_storage.begin())",
-                    /*convertToAttributeCall=*/
-                    "return ::mlir::DenseI32ArrayAttr::get($_ctxt, $_storage);",
-                    /*convertFromAttributeCall=*/
-                    "return convertFromAttribute($_storage, $_attr, $_diag);",
-                    /*parserCall=*/parserCall,
-                    /*optionalParserCall=*/"",
-                    /*printerCall=*/printTextualSegmentSize,
-                    /*readFromMlirBytecodeCall=*/readBytecodeSegmentSizeNative,
-                    /*writeToMlirBytecodeCall=*/writeBytecodeSegmentSizeNative,
-                    /*hashPropertyCall=*/
-                    "::llvm::hash_combine_range(std::begin($_storage), "
-                    "std::end($_storage));",
-                    /*StringRef defaultValue=*/"",
-                    /*storageTypeValueOverride=*/"");
+    return Property(
+        /*summary=*/"",
+        /*description=*/"",
+        /*storageType=*/storageType,
+        /*interfaceType=*/"::llvm::ArrayRef<int32_t>",
+        /*convertFromStorageCall=*/"$_storage",
+        /*assignToStorageCall=*/
+        "::llvm::copy($_value, $_storage.begin())",
+        /*convertToAttributeCall=*/
+        "return ::mlir::DenseI32ArrayAttr::get($_ctxt, $_storage);",
+        /*convertFromAttributeCall=*/
+        "return convertFromAttribute($_storage, $_attr, $_diag);",
+        /*parserCall=*/parserCall,
+        /*optionalParserCall=*/"",
+        /*printerCall=*/printTextualSegmentSize,
+        /*readFromMlirBytecodeCall=*/readBytecodeSegmentSizeNative,
+        /*writeToMlirBytecodeCall=*/writeBytecodeSegmentSizeNative,
+        /*hashPropertyCall=*/
+        "::llvm::hash_combine_range(std::begin($_storage), "
+        "std::end($_storage));",
+        /*StringRef defaultValue=*/"",
+        /*storageTypeValueOverride=*/"");
   };
   // Include key attributes from several traits as implicitly registered.
   if (op.getTrait("::mlir::OpTrait::AttrSizedOperandSegments")) {
@@ -1052,9 +1052,8 @@ while (true) {{
       emitVerifier(namedAttr.attr, namedAttr.name, getVarName(namedAttr.name));
 }
 
-static void genPropertyVerifier(
-    const OpOrAdaptorHelper &emitHelper, FmtContext &ctx, MethodBody &body,
-    const StaticVerifierFunctionEmitter &staticVerifierEmitter) {
+static void genPropertyVerifier(const OpOrAdaptorHelper &emitHelper,
+                                FmtContext &ctx, MethodBody &body) {
 
   // Code to get a reference to a property into a variable to avoid multiple
   // evaluations while verifying a property.
@@ -1071,20 +1070,9 @@ static void genPropertyVerifier(
   // {1}: Emit error prefix.
   // {2}: Property name.
   // {3}: Property description.
-  const char *const verifyPropertyInline = R"(
+  const char *const verifyProperty = R"(
   if (!({0}))
     return {1}"property '{2}' failed to satisfy constraint: {3}");
-)";
-
-  // Verify the property using a uniqued constraint. Can only be used
-  // within the context of an op.
-  //
-  // {0}: Unique constraint name.
-  // {1}: Property variable name in interface type.
-  // {2}: Property name.
-  const char *const verifyPropertyUniqued = R"(
-    if (::mlir::failed({0}(*this, {1}, "{2}")))
-      return ::mlir::failure();
 )";
 
   // Prefix variables with `tblgen_` to avoid hiding the attribute accessor.
@@ -1113,13 +1101,9 @@ static void genPropertyVerifier(
         convertToCamelFromSnakeCase(prop.name, /*capitalizeFirst=*/true);
     body << formatv(fetchProperty, varName, getterName,
                     prop.prop.getInterfaceType());
-    auto uniquedFn = staticVerifierEmitter.getPropConstraintFn(prop.prop);
-    if (uniquedFn.has_value())
-      body << formatv(verifyPropertyUniqued, *uniquedFn, varName, prop.name);
-    else
-      body << formatv(
-          verifyPropertyInline, tgfmt(rawCondition, &ctx.withSelf(varName)),
-          emitHelper.emitErrorPrefix(), prop.name, prop.prop.getSummary());
+    body << formatv(verifyProperty, tgfmt(rawCondition, &ctx.withSelf(varName)),
+                    emitHelper.emitErrorPrefix(), prop.name,
+                    prop.prop.getSummary());
   }
 }
 
@@ -3889,7 +3873,7 @@ void OpEmitter::genVerifier() {
   bool useProperties = emitHelper.hasProperties();
 
   populateSubstitutions(emitHelper, verifyCtx);
-  genPropertyVerifier(emitHelper, verifyCtx, implBody, staticVerifierEmitter);
+  genPropertyVerifier(emitHelper, verifyCtx, implBody);
   genAttributeVerifier(emitHelper, verifyCtx, implBody, staticVerifierEmitter,
                        useProperties);
   genOperandResultVerifier(implBody, op.getOperands(), "operand");

@@ -223,11 +223,6 @@ static llvm::cl::opt<bool> enableCUDA("fcuda",
                                       llvm::cl::desc("enable CUDA Fortran"),
                                       llvm::cl::init(false));
 
-static llvm::cl::opt<bool>
-    disableCUDAWarpFunction("fcuda-disable-warp-function",
-                            llvm::cl::desc("Disable CUDA Warp Function"),
-                            llvm::cl::init(false));
-
 static llvm::cl::opt<std::string>
     enableGPUMode("gpu", llvm::cl::desc("Enable GPU Mode managed|unified"),
                   llvm::cl::init(""));
@@ -603,11 +598,6 @@ int main(int argc, char **argv) {
   // enable parsing of CUDA Fortran
   if (enableCUDA) {
     options.features.Enable(Fortran::common::LanguageFeature::CUDA);
-  }
-
-  if (disableCUDAWarpFunction) {
-    options.features.Enable(
-        Fortran::common::LanguageFeature::CudaWarpMatchFunction, false);
   }
 
   if (enableGPUMode == "managed") {

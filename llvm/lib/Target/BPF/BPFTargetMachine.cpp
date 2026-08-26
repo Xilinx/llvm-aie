@@ -37,10 +37,6 @@ static cl::
 opt<bool> DisableMIPeephole("disable-bpf-peephole", cl::Hidden,
                             cl::desc("Disable machine peepholes for BPF"));
 
-static cl::opt<bool>
-    DisableCheckUnreachable("bpf-disable-trap-unreachable", cl::Hidden,
-                            cl::desc("Disable Trap Unreachable for BPF"));
-
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTarget() {
   // Register the target.
   RegisterTargetMachine<BPFTargetMachine> X(getTheBPFleTarget());
@@ -81,11 +77,6 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
                                getEffectiveCodeModel(CM, CodeModel::Small), OL),
       TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, std::string(CPU), std::string(FS), *this) {
-  if (!DisableCheckUnreachable) {
-    this->Options.TrapUnreachable = true;
-    this->Options.NoTrapAfterNoreturn = true;
-  }
-
   initAsmInfo();
 
   BPFMCAsmInfo *MAI =

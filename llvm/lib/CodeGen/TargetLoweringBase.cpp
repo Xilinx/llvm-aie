@@ -2014,9 +2014,10 @@ Value *TargetLoweringBase::getIRStackGuard(IRBuilderBase &IRB) const {
   if (getTargetMachine().getTargetTriple().isOSOpenBSD()) {
     Module &M = *IRB.GetInsertBlock()->getParent()->getParent();
     PointerType *PtrTy = PointerType::getUnqual(M.getContext());
-    GlobalVariable *G = M.getOrInsertGlobal("__guard_local", PtrTy);
-    G->setVisibility(GlobalValue::HiddenVisibility);
-    return G;
+    Constant *C = M.getOrInsertGlobal("__guard_local", PtrTy);
+    if (GlobalVariable *G = dyn_cast_or_null<GlobalVariable>(C))
+      G->setVisibility(GlobalValue::HiddenVisibility);
+    return C;
   }
   return nullptr;
 }

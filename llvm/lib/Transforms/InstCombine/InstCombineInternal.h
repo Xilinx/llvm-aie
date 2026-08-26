@@ -147,7 +147,6 @@ public:
   Instruction *visitAddrSpaceCast(AddrSpaceCastInst &CI);
   Instruction *foldItoFPtoI(CastInst &FI);
   Instruction *visitSelectInst(SelectInst &SI);
-  Instruction *foldShuffledIntrinsicOperands(IntrinsicInst *II);
   Instruction *visitCallInst(CallInst &CI);
   Instruction *visitInvokeInst(InvokeInst &II);
   Instruction *visitCallBrInst(CallBrInst &CBI);
@@ -204,8 +203,8 @@ public:
                                    const Instruction *CtxI = nullptr,
                                    unsigned Depth = 0) const {
     return llvm::computeKnownFPClass(
-        Val, FMF, Interested, getSimplifyQuery().getWithInstruction(CtxI),
-        Depth);
+        Val, FMF, Interested, Depth,
+        getSimplifyQuery().getWithInstruction(CtxI));
   }
 
   KnownFPClass computeKnownFPClass(Value *Val,
@@ -213,7 +212,7 @@ public:
                                    const Instruction *CtxI = nullptr,
                                    unsigned Depth = 0) const {
     return llvm::computeKnownFPClass(
-        Val, Interested, getSimplifyQuery().getWithInstruction(CtxI), Depth);
+        Val, Interested, Depth, getSimplifyQuery().getWithInstruction(CtxI));
   }
 
   /// Check if fmul \p MulVal, +0.0 will yield +0.0 (or signed zero is
@@ -558,22 +557,20 @@ public:
   /// Attempts to replace I with a simpler value based on the demanded
   /// bits.
   Value *SimplifyDemandedUseBits(Instruction *I, const APInt &DemandedMask,
-                                 KnownBits &Known, const SimplifyQuery &Q,
-                                 unsigned Depth = 0);
+                                 KnownBits &Known, unsigned Depth,
+                                 const SimplifyQuery &Q);
   using InstCombiner::SimplifyDemandedBits;
   bool SimplifyDemandedBits(Instruction *I, unsigned Op,
                             const APInt &DemandedMask, KnownBits &Known,
-                            const SimplifyQuery &Q,
-                            unsigned Depth = 0) override;
+                            unsigned Depth, const SimplifyQuery &Q) override;
 
   /// Helper routine of SimplifyDemandedUseBits. It computes KnownZero/KnownOne
   /// bits. It also tries to handle simplifications that can be done based on
   /// DemandedMask, but without modifying the Instruction.
   Value *SimplifyMultipleUseDemandedBits(Instruction *I,
                                          const APInt &DemandedMask,
-                                         KnownBits &Known,
-                                         const SimplifyQuery &Q,
-                                         unsigned Depth = 0);
+                                         KnownBits &Known, unsigned Depth,
+                                         const SimplifyQuery &Q);
 
   /// Helper routine of SimplifyDemandedUseBits. It tries to simplify demanded
   /// bit for "r1 = shr x, c1; r2 = shl r1, c2" instruction sequence.
@@ -593,8 +590,8 @@ public:
   /// Attempts to replace V with a simpler value based on the demanded
   /// floating-point classes
   Value *SimplifyDemandedUseFPClass(Value *V, FPClassTest DemandedMask,
-                                    KnownFPClass &Known, Instruction *CxtI,
-                                    unsigned Depth = 0);
+                                    KnownFPClass &Known, unsigned Depth,
+                                    Instruction *CxtI);
   bool SimplifyDemandedFPClass(Instruction *I, unsigned Op,
                                FPClassTest DemandedMask, KnownFPClass &Known,
                                unsigned Depth = 0);
@@ -607,8 +604,6 @@ public:
   Instruction *foldVectorBinop(BinaryOperator &Inst);
   Instruction *foldVectorSelect(SelectInst &Sel);
   Instruction *foldSelectShuffle(ShuffleVectorInst &Shuf);
-  Constant *unshuffleConstant(ArrayRef<int> ShMask, Constant *C,
-                              VectorType *NewCTy);
 
   /// Given a binary operator, cast instruction, or select which has a PHI node
   /// as operand #0, see if we can fold the instruction into the PHI (which is

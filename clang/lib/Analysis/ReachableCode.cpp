@@ -25,6 +25,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include <optional>
 
 using namespace clang;

@@ -11,7 +11,6 @@
 #define LLVM_ANALYSIS_INLINEMODELFEATUREMAPS_H
 
 #include "llvm/Analysis/TensorSpec.h"
-#include "llvm/Support/Compiler.h"
 
 #include <array>
 #include <vector>
@@ -154,13 +153,13 @@ inlineCostFeatureToMlFeature(InlineCostFeatureIndex Feature) {
 constexpr size_t NumberOfFeatures =
     static_cast<size_t>(FeatureIndex::NumberOfFeatures);
 
-LLVM_ABI extern const std::vector<TensorSpec> FeatureMap;
+extern const std::vector<TensorSpec> FeatureMap;
 
-LLVM_ABI extern const char *const DecisionName;
-LLVM_ABI extern const TensorSpec InlineDecisionSpec;
-LLVM_ABI extern const char *const DefaultDecisionName;
-LLVM_ABI extern const TensorSpec DefaultDecisionSpec;
-LLVM_ABI extern const char *const RewardName;
+extern const char *const DecisionName;
+extern const TensorSpec InlineDecisionSpec;
+extern const char *const DefaultDecisionName;
+extern const TensorSpec DefaultDecisionSpec;
+extern const char *const RewardName;
 
 using InlineFeatures = std::vector<int64_t>;
 

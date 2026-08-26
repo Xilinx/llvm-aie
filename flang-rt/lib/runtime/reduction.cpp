@@ -223,13 +223,10 @@ enum class LogicalReduction { All, Any, Parity };
 template <LogicalReduction REDUCTION> class LogicalAccumulator {
 public:
   using Type = bool;
-  RT_API_ATTRS explicit LogicalAccumulator(const Descriptor &array)
-      : array_{array} {}
-  RT_API_ATTRS void Reinitialize() {
-    result_ = REDUCTION == LogicalReduction::All;
-  }
-  RT_API_ATTRS bool Result() const { return result_; }
-  RT_API_ATTRS bool Accumulate(bool x) {
+  explicit LogicalAccumulator(const Descriptor &array) : array_{array} {}
+  void Reinitialize() { result_ = REDUCTION == LogicalReduction::All; }
+  bool Result() const { return result_; }
+  bool Accumulate(bool x) {
     if constexpr (REDUCTION == LogicalReduction::Parity) {
       result_ = result_ != x;
     } else if (x != (REDUCTION == LogicalReduction::All)) {
@@ -239,7 +236,7 @@ public:
     return true;
   }
   template <typename IGNORED = void>
-  RT_API_ATTRS bool AccumulateAt(const SubscriptValue at[]) {
+  bool AccumulateAt(const SubscriptValue at[]) {
     return Accumulate(IsLogicalElementTrue(array_, at));
   }
 
@@ -249,9 +246,9 @@ private:
 };
 
 template <typename ACCUMULATOR>
-RT_API_ATTRS inline auto GetTotalLogicalReduction(const Descriptor &x,
-    const char *source, int line, int dim, ACCUMULATOR &&accumulator,
-    const char *intrinsic) -> typename ACCUMULATOR::Type {
+inline auto GetTotalLogicalReduction(const Descriptor &x, const char *source,
+    int line, int dim, ACCUMULATOR &&accumulator, const char *intrinsic) ->
+    typename ACCUMULATOR::Type {
   Terminator terminator{source, line};
   if (dim < 0 || dim > 1) {
     terminator.Crash("%s: bad DIM=%d for ARRAY with rank=1", intrinsic, dim);
@@ -267,9 +264,8 @@ RT_API_ATTRS inline auto GetTotalLogicalReduction(const Descriptor &x,
 }
 
 template <typename ACCUMULATOR>
-RT_API_ATTRS inline auto ReduceLogicalDimToScalar(
-    const Descriptor &x, int zeroBasedDim, SubscriptValue subscripts[]) ->
-    typename ACCUMULATOR::Type {
+inline auto ReduceLogicalDimToScalar(const Descriptor &x, int zeroBasedDim,
+    SubscriptValue subscripts[]) -> typename ACCUMULATOR::Type {
   ACCUMULATOR accumulator{x};
   SubscriptValue xAt[maxRank];
   GetExpandedSubscripts(xAt, x, zeroBasedDim, subscripts);
@@ -286,8 +282,8 @@ RT_API_ATTRS inline auto ReduceLogicalDimToScalar(
 
 template <LogicalReduction REDUCTION> struct LogicalReduceHelper {
   template <int KIND> struct Functor {
-    RT_API_ATTRS void operator()(Descriptor &result, const Descriptor &x,
-        int dim, Terminator &terminator, const char *intrinsic) const {
+    void operator()(Descriptor &result, const Descriptor &x, int dim,
+        Terminator &terminator, const char *intrinsic) const {
       // Standard requires result to have same LOGICAL kind as argument.
       CreatePartialReductionResult(
           result, x, x.ElementBytes(), dim, terminator, intrinsic, x.type());
@@ -305,9 +301,8 @@ template <LogicalReduction REDUCTION> struct LogicalReduceHelper {
 };
 
 template <LogicalReduction REDUCTION>
-RT_API_ATTRS inline void DoReduceLogicalDimension(Descriptor &result,
-    const Descriptor &x, int dim, Terminator &terminator,
-    const char *intrinsic) {
+inline void DoReduceLogicalDimension(Descriptor &result, const Descriptor &x,
+    int dim, Terminator &terminator, const char *intrinsic) {
   auto catKind{x.type().GetCategoryAndKind()};
   RUNTIME_CHECK(terminator, catKind && catKind->first == TypeCategory::Logical);
   ApplyLogicalKind<LogicalReduceHelper<REDUCTION>::template Functor, void>(
@@ -319,12 +314,11 @@ RT_API_ATTRS inline void DoReduceLogicalDimension(Descriptor &result,
 class CountAccumulator {
 public:
   using Type = std::int64_t;
-  RT_API_ATTRS explicit CountAccumulator(const Descriptor &array)
-      : array_{array} {}
-  RT_API_ATTRS void Reinitialize() { result_ = 0; }
-  RT_API_ATTRS Type Result() const { return result_; }
+  explicit CountAccumulator(const Descriptor &array) : array_{array} {}
+  void Reinitialize() { result_ = 0; }
+  Type Result() const { return result_; }
   template <typename IGNORED = void>
-  RT_API_ATTRS bool AccumulateAt(const SubscriptValue at[]) {
+  bool AccumulateAt(const SubscriptValue at[]) {
     if (IsLogicalElementTrue(array_, at)) {
       ++result_;
     }
@@ -337,7 +331,7 @@ private:
 };
 
 template <int KIND> struct CountDimension {
-  RT_API_ATTRS void operator()(Descriptor &result, const Descriptor &x, int dim,
+  void operator()(Descriptor &result, const Descriptor &x, int dim,
       Terminator &terminator) const {
     // Element size of the descriptor descriptor is the size
     // of {TypeCategory::Integer, KIND}.
