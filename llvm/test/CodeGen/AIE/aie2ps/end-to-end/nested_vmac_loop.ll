@@ -52,7 +52,7 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; REMARKS-NEXT:   - NS:              '2'
 ; REMARKS-NEXT:   - Loop:            bb.3.bb102
 ; REMARKS-NEXT:   - Prologue:        bb.2.bb61
-; REMARKS-NEXT:   - PrologueBundles: '38'
+; REMARKS-NEXT:   - PrologueBundles: '37'
 ; REMARKS-NEXT:   - Epilogue:        bb.4.bb90
 ; REMARKS-NEXT:   - EpilogueBundles: '49'
 ; REMARKS-NEXT: ...
@@ -133,17 +133,16 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; ASM-NEXT:    vlda bmhh4, [p3, #192]
 ; ASM-NEXT:    vlda bmhl4, [p3, #128]
 ; ASM-NEXT:    vlda bmlh4, [p3, #64]
-; ASM-NEXT:    vlda bmll4, [p3], m2
-; ASM-NEXT:    vlda bmhh0, [p4, #192]; vldb.fill [p1, lf1, r25]
-; ASM-NEXT:    vlda bmhl0, [p4, #128]; vldb.pop ex6, [p1, lf1, r25]
-; ASM-NEXT:    vlda bmlh0, [p4, #64]; vldb.pop ex4, [p1, lf1, r25]
-; ASM-NEXT:    vlda bmll0, [p4], m2; vldb.pop ex2, [p1, lf1, r25]
+; ASM-NEXT:    vlda bmll4, [p3], m2; vldb.fill [p1, lf1, r25]
+; ASM-NEXT:    vlda bmhh0, [p4, #192]; vldb.pop ex6, [p1, lf1, r25]
+; ASM-NEXT:    vlda bmhl0, [p4, #128]; vldb.pop ex4, [p1, lf1, r25]
+; ASM-NEXT:    vlda bmlh0, [p4, #64]; vldb.pop ex2, [p1, lf1, r25]
 ; ASM-NEXT:    vlda.fill [p0, lf0, r24]; vldb.pop ex0, [p1, lf1, r25]
 ; ASM-NEXT:    vlda.pop ex6, [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop ex5, [p0, lf0, r24]
 ; ASM-NEXT:    vlda.pop ex1, [p0, lf0, r24]; movxm ls, #.LBB0_3
 ; ASM-NEXT:    vlda.pop ex3, [p0, lf0, r24]; movxm le, #.L_LEnd0
-; ASM-NEXT:    add.nc lc, r1, #-1; mov r8, r16
+; ASM-NEXT:    vlda bmll0, [p4], m2; add.nc lc, r1, #-1; mov r8, r16
 ; ASM-NEXT:  .LBB0_3: // %bb102
 ; ASM-NEXT:    // Parent Loop BB0_2 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
