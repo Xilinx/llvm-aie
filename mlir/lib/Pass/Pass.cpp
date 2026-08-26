@@ -829,7 +829,7 @@ void OpToOpPassAdaptor::runOnOperationAsyncImpl(bool verifyPasses) {
 
   // An atomic failure variable for the async executors.
   std::vector<std::atomic<bool>> activePMs(asyncExecutors.size());
-  llvm::fill(activePMs, false);
+  std::fill(activePMs.begin(), activePMs.end(), false);
   std::atomic<bool> hasFailure = false;
   parallelForEach(context, opInfos, [&](OpPMInfo &opInfo) {
     // Find an executor for this operation.

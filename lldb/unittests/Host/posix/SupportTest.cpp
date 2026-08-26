@@ -7,14 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/posix/Support.h"
+#include "lldb/Host/aix/Support.h"
 #include "llvm/Support/Threading.h"
 #include "gtest/gtest.h"
-
-#if defined(_AIX)
-#include "lldb/Host/aix/Support.h"
-#elif defined(__linux__)
-#include "lldb/Host/linux/Support.h"
-#endif
 
 using namespace lldb_private;
 
@@ -26,16 +21,10 @@ TEST(Support, getProcFile_Pid) {
 }
 #endif // #ifndef __APPLE__
 
-#if defined(_AIX) || defined(__linux__)
+#if defined(_AIX) && defined(LLVM_ENABLE_THREADING)
 TEST(Support, getProcFile_Tid) {
-  auto BufferOrError = getProcFile(getpid(), llvm::get_threadid(),
-#ifdef _AIX
-                                   "lwpstatus"
-#else
-                                   "status"
-#endif
-  );
+  auto BufferOrError = getProcFile(getpid(), llvm::get_threadid(), "lwpstatus");
   ASSERT_TRUE(BufferOrError);
   ASSERT_TRUE(*BufferOrError);
 }
-#endif // #if defined(_AIX) || defined(__linux__)
+#endif // #ifdef _AIX && LLVM_ENABLE_THREADING

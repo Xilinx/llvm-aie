@@ -167,7 +167,7 @@ def conditional_guard(src, dst):
 nl = "\n"
 includes = []
 if not clc:
-    includes = ["<clc/opencl/convert.h>"]
+    includes = ["<clc/opencl/clc.h>"]
 else:
     includes = sorted(
         [

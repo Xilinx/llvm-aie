@@ -6,10 +6,5 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_COMMON_SMOOTHSTEP_H__
-#define __CLC_OPENCL_COMMON_SMOOTHSTEP_H__
-
 #define __CLC_BODY <clc/opencl/common/smoothstep.inc>
 #include <clc/math/gentype.inc>
-
-#endif // __CLC_OPENCL_COMMON_SMOOTHSTEP_H__

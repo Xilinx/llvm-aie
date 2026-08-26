@@ -332,11 +332,6 @@ bool mlirShapedTypeIsDynamicDim(MlirType type, intptr_t dim) {
       .isDynamicDim(static_cast<unsigned>(dim));
 }
 
-bool mlirShapedTypeIsStaticDim(MlirType type, intptr_t dim) {
-  return llvm::cast<ShapedType>(unwrap(type))
-      .isStaticDim(static_cast<unsigned>(dim));
-}
-
 int64_t mlirShapedTypeGetDimSize(MlirType type, intptr_t dim) {
   return llvm::cast<ShapedType>(unwrap(type))
       .getDimSize(static_cast<unsigned>(dim));
@@ -348,16 +343,8 @@ bool mlirShapedTypeIsDynamicSize(int64_t size) {
   return ShapedType::isDynamic(size);
 }
 
-bool mlirShapedTypeIsStaticSize(int64_t size) {
-  return ShapedType::isStatic(size);
-}
-
 bool mlirShapedTypeIsDynamicStrideOrOffset(int64_t val) {
   return ShapedType::isDynamic(val);
-}
-
-bool mlirShapedTypeIsStaticStrideOrOffset(int64_t val) {
-  return ShapedType::isStatic(val);
 }
 
 int64_t mlirShapedTypeGetDynamicStrideOrOffset() {

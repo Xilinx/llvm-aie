@@ -443,8 +443,6 @@ struct IntrinsicLibrary {
   fir::ExtendedValue genTranspose(mlir::Type,
                                   llvm::ArrayRef<fir::ExtendedValue>);
   mlir::Value genThisGrid(mlir::Type, llvm::ArrayRef<mlir::Value>);
-  mlir::Value genThisThreadBlock(mlir::Type, llvm::ArrayRef<mlir::Value>);
-  mlir::Value genThisWarp(mlir::Type, llvm::ArrayRef<mlir::Value>);
   void genThreadFence(llvm::ArrayRef<fir::ExtendedValue>);
   void genThreadFenceBlock(llvm::ArrayRef<fir::ExtendedValue>);
   void genThreadFenceSystem(llvm::ArrayRef<fir::ExtendedValue>);
@@ -753,7 +751,7 @@ static inline mlir::FunctionType genFuncType(mlir::MLIRContext *context,
   }
 
   if (TyR::ty == ParamTypeId::Void)
-    return mlir::FunctionType::get(context, argTypes, {});
+    return mlir::FunctionType::get(context, argTypes, std::nullopt);
 
   auto resType = getTypeHelper(context, builder, TyR::ty, TyR::kind);
   return mlir::FunctionType::get(context, argTypes, {resType});

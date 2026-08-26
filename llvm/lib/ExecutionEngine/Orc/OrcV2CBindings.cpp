@@ -729,9 +729,9 @@ LLVMOrcThreadSafeContextRef LLVMOrcCreateNewThreadSafeContext(void) {
   return wrap(new ThreadSafeContext(std::make_unique<LLVMContext>()));
 }
 
-LLVMOrcThreadSafeContextRef
-LLVMOrcCreateNewThreadSafeContextFromLLVMContext(LLVMContextRef Ctx) {
-  return wrap(new ThreadSafeContext(std::unique_ptr<LLVMContext>(unwrap(Ctx))));
+LLVMContextRef
+LLVMOrcThreadSafeContextGetContext(LLVMOrcThreadSafeContextRef TSCtx) {
+  return wrap(unwrap(TSCtx)->getContext());
 }
 
 void LLVMOrcDisposeThreadSafeContext(LLVMOrcThreadSafeContextRef TSCtx) {

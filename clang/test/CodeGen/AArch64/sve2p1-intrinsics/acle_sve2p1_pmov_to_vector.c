@@ -2,12 +2,6 @@
 // REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -target-feature +sve2 -target-feature +sve2p1\
 // RUN:   -Werror -emit-llvm -disable-O0-optnone -o - %s | opt -S -p mem2reg,instcombine,tailcallelim | FileCheck %s
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sme -target-feature +sme2 -target-feature +sme2p1\
-// RUN:   -Werror -emit-llvm -disable-O0-optnone -o - %s | opt -S -p mem2reg,instcombine,tailcallelim | FileCheck %s
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -target-feature +sme -target-feature +sve2p1\
-// RUN:   -Werror -emit-llvm -disable-O0-optnone -o - %s | opt -S -p mem2reg,instcombine,tailcallelim | FileCheck %s
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -target-feature +sme -target-feature +sme2p1\
-// RUN:   -Werror -emit-llvm -disable-O0-optnone -o - %s | opt -S -p mem2reg,instcombine,tailcallelim | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -target-feature +sve2 -target-feature +sve2p1\
 // RUN:   -Werror -emit-llvm -disable-O0-optnone -o - %s | opt -S -p mem2reg,instcombine,tailcallelim | FileCheck %s
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -target-feature +sve2 -target-feature +sve2p1\
@@ -27,14 +21,6 @@
 #define SVE_ACLE_FUNC(A1, A2, A3) A1##A2##A3
 #endif
 
-#if defined(__ARM_FEATURE_SME) && defined(__ARM_FEATURE_SVE)
-#define ATTR __arm_streaming_compatible
-#elif defined(__ARM_FEATURE_SME)
-#define ATTR __arm_streaming
-#else
-#define ATTR
-#endif
-
 // _m
 
 // CHECK-LABEL: define dso_local <vscale x 8 x i16> @test_svpmov_lane_u16_m
@@ -51,7 +37,7 @@
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 8 x i16> @llvm.aarch64.sve.pmov.to.vector.lane.merging.nxv8i16(<vscale x 8 x i16> [[ZN]], <vscale x 8 x i1> [[TMP0]], i32 1)
 // CPP-CHECK-NEXT:    ret <vscale x 8 x i16> [[TMP1]]
 //
-svuint16_t test_svpmov_lane_u16_m(svuint16_t zn, svbool_t pn) ATTR {
+svuint16_t test_svpmov_lane_u16_m(svuint16_t zn, svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_lane, _u16, _m)(zn, pn, 1);
 }
 
@@ -69,7 +55,7 @@ svuint16_t test_svpmov_lane_u16_m(svuint16_t zn, svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 8 x i16> @llvm.aarch64.sve.pmov.to.vector.lane.merging.nxv8i16(<vscale x 8 x i16> [[ZN]], <vscale x 8 x i1> [[TMP0]], i32 1)
 // CPP-CHECK-NEXT:    ret <vscale x 8 x i16> [[TMP1]]
 //
-svint16_t test_svpmov_lane_s16_m(svint16_t zn, svbool_t pn) ATTR {
+svint16_t test_svpmov_lane_s16_m(svint16_t zn, svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_lane, _s16, _m)(zn, pn, 1);
 }
 
@@ -87,7 +73,7 @@ svint16_t test_svpmov_lane_s16_m(svint16_t zn, svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 4 x i32> @llvm.aarch64.sve.pmov.to.vector.lane.merging.nxv4i32(<vscale x 4 x i32> [[ZN]], <vscale x 4 x i1> [[TMP0]], i32 1)
 // CPP-CHECK-NEXT:    ret <vscale x 4 x i32> [[TMP1]]
 //
-svuint32_t test_svpmov_lane_u32_m(svuint32_t zn, svbool_t pn) ATTR {
+svuint32_t test_svpmov_lane_u32_m(svuint32_t zn, svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_lane, _u32, _m)(zn, pn, 1);
 }
 
@@ -105,7 +91,7 @@ svuint32_t test_svpmov_lane_u32_m(svuint32_t zn, svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 4 x i32> @llvm.aarch64.sve.pmov.to.vector.lane.merging.nxv4i32(<vscale x 4 x i32> [[ZN]], <vscale x 4 x i1> [[TMP0]], i32 3)
 // CPP-CHECK-NEXT:    ret <vscale x 4 x i32> [[TMP1]]
 //
-svint32_t test_svpmov_lane_s32_m(svint32_t zn, svbool_t pn) ATTR {
+svint32_t test_svpmov_lane_s32_m(svint32_t zn, svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_lane, _s32, _m)(zn, pn, 3);
 }
 
@@ -123,7 +109,7 @@ svint32_t test_svpmov_lane_s32_m(svint32_t zn, svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 2 x i64> @llvm.aarch64.sve.pmov.to.vector.lane.merging.nxv2i64(<vscale x 2 x i64> [[ZN]], <vscale x 2 x i1> [[TMP0]], i32 1)
 // CPP-CHECK-NEXT:    ret <vscale x 2 x i64> [[TMP1]]
 //
-svuint64_t test_svpmov_lane_u64_m(svuint64_t zn, svbool_t pn) ATTR {
+svuint64_t test_svpmov_lane_u64_m(svuint64_t zn, svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_lane, _u64, _m)(zn, pn, 1);
 }
 
@@ -141,7 +127,7 @@ svuint64_t test_svpmov_lane_u64_m(svuint64_t zn, svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 2 x i64> @llvm.aarch64.sve.pmov.to.vector.lane.merging.nxv2i64(<vscale x 2 x i64> [[ZN]], <vscale x 2 x i1> [[TMP0]], i32 7)
 // CPP-CHECK-NEXT:    ret <vscale x 2 x i64> [[TMP1]]
 //
-svint64_t test_svpmov_lane_s64_m(svint64_t zn, svbool_t pn) ATTR {
+svint64_t test_svpmov_lane_s64_m(svint64_t zn, svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_lane, _s64, _m)(zn, pn, 7);
 }
 
@@ -160,7 +146,7 @@ svint64_t test_svpmov_lane_s64_m(svint64_t zn, svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP0:%.*]] = tail call <vscale x 16 x i8> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv16i8(<vscale x 16 x i1> [[PN]])
 // CPP-CHECK-NEXT:    ret <vscale x 16 x i8> [[TMP0]]
 //
-svuint8_t test_svpmov_lane_u8_z(svbool_t pn) ATTR {
+svuint8_t test_svpmov_lane_u8_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_u8, , _z)(pn);
 }
 
@@ -176,7 +162,7 @@ svuint8_t test_svpmov_lane_u8_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP0:%.*]] = tail call <vscale x 16 x i8> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv16i8(<vscale x 16 x i1> [[PN]])
 // CPP-CHECK-NEXT:    ret <vscale x 16 x i8> [[TMP0]]
 //
-svint8_t test_svpmov_lane_s8_z(svbool_t pn) ATTR {
+svint8_t test_svpmov_lane_s8_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_s8, , _z)(pn);
 }
 
@@ -194,7 +180,7 @@ svint8_t test_svpmov_lane_s8_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 8 x i16> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv8i16(<vscale x 8 x i1> [[TMP0]])
 // CPP-CHECK-NEXT:    ret <vscale x 8 x i16> [[TMP1]]
 //
-svuint16_t test_svpmov_lane_u16_z(svbool_t pn) ATTR {
+svuint16_t test_svpmov_lane_u16_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_u16, , _z)(pn);
 }
 
@@ -212,7 +198,7 @@ svuint16_t test_svpmov_lane_u16_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 8 x i16> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv8i16(<vscale x 8 x i1> [[TMP0]])
 // CPP-CHECK-NEXT:    ret <vscale x 8 x i16> [[TMP1]]
 //
-svint16_t test_svpmov_lane_s16_z(svbool_t pn) ATTR {
+svint16_t test_svpmov_lane_s16_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_s16, , _z)(pn);
 }
 
@@ -230,7 +216,7 @@ svint16_t test_svpmov_lane_s16_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 4 x i32> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv4i32(<vscale x 4 x i1> [[TMP0]])
 // CPP-CHECK-NEXT:    ret <vscale x 4 x i32> [[TMP1]]
 //
-svuint32_t test_svpmov_lane_u32_z(svbool_t pn) ATTR {
+svuint32_t test_svpmov_lane_u32_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_u32, , _z)(pn);
 }
 
@@ -248,7 +234,7 @@ svuint32_t test_svpmov_lane_u32_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 4 x i32> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv4i32(<vscale x 4 x i1> [[TMP0]])
 // CPP-CHECK-NEXT:    ret <vscale x 4 x i32> [[TMP1]]
 //
-svint32_t test_svpmov_lane_s32_z(svbool_t pn) ATTR {
+svint32_t test_svpmov_lane_s32_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_s32, , _z)(pn);
 }
 
@@ -266,7 +252,7 @@ svint32_t test_svpmov_lane_s32_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 2 x i64> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv2i64(<vscale x 2 x i1> [[TMP0]])
 // CPP-CHECK-NEXT:    ret <vscale x 2 x i64> [[TMP1]]
 //
-svuint64_t test_svpmov_lane_u64_z(svbool_t pn) ATTR {
+svuint64_t test_svpmov_lane_u64_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_u64, , _z)(pn);
 }
 
@@ -284,7 +270,7 @@ svuint64_t test_svpmov_lane_u64_z(svbool_t pn) ATTR {
 // CPP-CHECK-NEXT:    [[TMP1:%.*]] = tail call <vscale x 2 x i64> @llvm.aarch64.sve.pmov.to.vector.lane.zeroing.nxv2i64(<vscale x 2 x i1> [[TMP0]])
 // CPP-CHECK-NEXT:    ret <vscale x 2 x i64> [[TMP1]]
 //
-svint64_t test_svpmov_lane_s64_z(svbool_t pn) ATTR {
+svint64_t test_svpmov_lane_s64_z(svbool_t pn) {
   return SVE_ACLE_FUNC(svpmov_s64, , _z)(pn);
 }
 

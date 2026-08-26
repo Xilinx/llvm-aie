@@ -6416,7 +6416,7 @@ public:
   SpirvOperand() : Kind(Invalid), ResultType(), Value() {}
 
   SpirvOperand(SpirvOperandKind Kind, QualType ResultType, llvm::APInt Value)
-      : Kind(Kind), ResultType(ResultType), Value(std::move(Value)) {}
+      : Kind(Kind), ResultType(ResultType), Value(Value) {}
 
   SpirvOperand(const SpirvOperand &Other) { *this = Other; }
   ~SpirvOperand() {}
@@ -6450,11 +6450,11 @@ public:
   }
 
   static SpirvOperand createConstant(QualType ResultType, llvm::APInt Val) {
-    return SpirvOperand(ConstantId, ResultType, std::move(Val));
+    return SpirvOperand(ConstantId, ResultType, Val);
   }
 
   static SpirvOperand createLiteral(llvm::APInt Val) {
-    return SpirvOperand(Literal, QualType(), std::move(Val));
+    return SpirvOperand(Literal, QualType(), Val);
   }
 
   static SpirvOperand createType(QualType T) {

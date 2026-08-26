@@ -1257,8 +1257,7 @@ static Operation *vectorizeAffineLoad(AffineLoadOp loadOp,
   LLVM_DEBUG(permutationMap.print(dbgs()));
 
   auto transfer = state.builder.create<vector::TransferReadOp>(
-      loadOp.getLoc(), vectorType, loadOp.getMemRef(), indices,
-      /*padding=*/std::nullopt, permutationMap);
+      loadOp.getLoc(), vectorType, loadOp.getMemRef(), indices, permutationMap);
 
   // Register replacement for future uses in the scope.
   state.registerOpVectorReplacement(loadOp, transfer);

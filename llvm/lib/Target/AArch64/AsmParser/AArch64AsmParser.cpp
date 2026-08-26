@@ -2294,7 +2294,7 @@ public:
     Inst.addOperand(MCOperand::createImm((MCE->getValue() - 90) / 180));
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override;
+  void print(raw_ostream &OS) const override;
 
   static std::unique_ptr<AArch64Operand>
   CreateToken(StringRef Str, SMLoc S, MCContext &Ctx, bool IsSuffix = false) {
@@ -2584,7 +2584,7 @@ public:
 
 } // end anonymous namespace.
 
-void AArch64Operand::print(raw_ostream &OS, const MCAsmInfo &MAI) const {
+void AArch64Operand::print(raw_ostream &OS) const {
   switch (Kind) {
   case k_FPImm:
     OS << "<fpimm " << getFPImm().bitcastToAPInt().getZExtValue();
@@ -2601,12 +2601,12 @@ void AArch64Operand::print(raw_ostream &OS, const MCAsmInfo &MAI) const {
     break;
   }
   case k_Immediate:
-    MAI.printExpr(OS, *getImm());
+    OS << *getImm();
     break;
   case k_ShiftedImm: {
     unsigned Shift = getShiftedImmShift();
     OS << "<shiftedimm ";
-    MAI.printExpr(OS, *getShiftedImmVal());
+    OS << *getShiftedImmVal();
     OS << ", lsl #" << AArch64_AM::getShiftValue(Shift) << ">";
     break;
   }
@@ -3299,8 +3299,7 @@ ParseStatus AArch64AsmParser::tryParseAdrpLabel(OperandVector &Operands) {
     if (DarwinSpec == AArch64::S_None && ELFSpec == AArch64::S_INVALID) {
       // No modifier was specified at all; this is the syntax for an ELF basic
       // ADRP relocation (unfortunately).
-      Expr =
-          MCSpecifierExpr::create(Expr, AArch64::S_ABS_PAGE, getContext(), S);
+      Expr = MCSpecifierExpr::create(Expr, AArch64::S_ABS_PAGE, getContext());
     } else if ((DarwinSpec == AArch64::S_MACHO_GOTPAGE ||
                 DarwinSpec == AArch64::S_MACHO_TLVPPAGE) &&
                Addend != 0) {
@@ -3352,7 +3351,7 @@ ParseStatus AArch64AsmParser::tryParseAdrLabel(OperandVector &Operands) {
     if (DarwinSpec == AArch64::S_None && ELFSpec == AArch64::S_INVALID) {
       // No modifier was specified at all; this is the syntax for an ELF basic
       // ADR relocation (unfortunately).
-      Expr = MCSpecifierExpr::create(Expr, AArch64::S_ABS, getContext(), S);
+      Expr = MCSpecifierExpr::create(Expr, AArch64::S_ABS, getContext());
     } else if (ELFSpec != AArch64::S_GOT_AUTH_PAGE) {
       // For tiny code model, we use :got_auth: operator to fill 21-bit imm of
       // adr. It's not actually GOT entry page address but the GOT address
@@ -3742,8 +3741,7 @@ static const struct Extension {
     {"sve2", {AArch64::FeatureSVE2}},
     {"sve-aes", {AArch64::FeatureSVEAES}},
     {"sve2-aes", {AArch64::FeatureAliasSVE2AES, AArch64::FeatureSVEAES}},
-    {"sve-sm4", {AArch64::FeatureSVESM4}},
-    {"sve2-sm4", {AArch64::FeatureAliasSVE2SM4, AArch64::FeatureSVESM4}},
+    {"sve2-sm4", {AArch64::FeatureSVE2SM4}},
     {"sve-sha3", {AArch64::FeatureSVESHA3}},
     {"sve2-sha3", {AArch64::FeatureAliasSVE2SHA3, AArch64::FeatureSVESHA3}},
     {"sve-bitperm", {AArch64::FeatureSVEBitPerm}},
@@ -4396,7 +4394,7 @@ bool AArch64AsmParser::parseRegister(OperandVector &Operands) {
 bool AArch64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
   bool HasELFModifier = false;
   AArch64::Specifier RefKind;
-  SMLoc Loc = getLexer().getLoc();
+
   if (parseOptionalToken(AsmToken::Colon)) {
     HasELFModifier = true;
 
@@ -4470,7 +4468,7 @@ bool AArch64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
     return true;
 
   if (HasELFModifier)
-    ImmVal = MCSpecifierExpr::create(ImmVal, RefKind, getContext(), Loc);
+    ImmVal = MCSpecifierExpr::create(ImmVal, RefKind, getContext());
 
   SMLoc EndLoc;
   if (getContext().getAsmInfo()->hasSubsectionsViaSymbols()) {
@@ -7406,7 +7404,7 @@ bool AArch64AsmParser::parseDirectiveLOH(StringRef IDVal, SMLoc Loc) {
   if (parseEOL())
     return true;
 
-  getStreamer().emitLOHDirective(Kind, Args);
+  getStreamer().emitLOHDirective((MCLOHType)Kind, Args);
   return false;
 }
 
@@ -8213,7 +8211,7 @@ bool AArch64AsmParser::parseDataExpr(const MCExpr *&Res) {
     const MCExpr *Term;
     if (getParser().parsePrimaryExpr(Term, EndLoc, nullptr))
       return true;
-    Res = MCBinaryExpr::create(*Opcode, Res, Term, getContext(), Res->getLoc());
+    Res = MCBinaryExpr::create(*Opcode, Res, Term, getContext());
   }
   return false;
 }
@@ -8267,7 +8265,7 @@ bool AArch64AsmParser::parseAuthExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     return true;
 
   Res = AArch64AuthMCExpr::create(Res, Discriminator, *KeyIDOrNone,
-                                  UseAddressDiversity, Ctx, Res->getLoc());
+                                  UseAddressDiversity, Ctx);
   return false;
 }
 

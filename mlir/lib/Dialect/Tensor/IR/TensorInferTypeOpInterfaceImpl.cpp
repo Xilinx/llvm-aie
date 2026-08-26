@@ -10,6 +10,7 @@
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Arith/Utils/Utils.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/Interfaces/InferTypeOpInterface.h"
 
 using namespace mlir;
@@ -22,7 +23,7 @@ using namespace mlir::tensor;
 static OpFoldResult getCollapsedOutputDimFromInputShape(
     OpBuilder &builder, Location loc, int64_t dimIndex, Value src,
     ArrayRef<int64_t> dstStaticShape, ArrayRef<AffineMap> reassociationMap) {
-  if (ShapedType::isStatic(dstStaticShape[dimIndex])) {
+  if (!ShapedType::isDynamic(dstStaticShape[dimIndex])) {
     // Static dimension: return Attribute.
     return builder.getIndexAttr(dstStaticShape[dimIndex]);
   }

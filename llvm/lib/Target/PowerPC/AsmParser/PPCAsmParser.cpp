@@ -666,7 +666,7 @@ public:
     return StringRef(Tok.Data, Tok.Length);
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override;
+  void print(raw_ostream &OS) const override;
 
   static std::unique_ptr<PPCOperand> CreateToken(StringRef Str, SMLoc S,
                                                  bool IsPPC64) {
@@ -781,7 +781,7 @@ private:
 
 } // end anonymous namespace.
 
-void PPCOperand::print(raw_ostream &OS, const MCAsmInfo &MAI) const {
+void PPCOperand::print(raw_ostream &OS) const {
   switch (Kind) {
   case Token:
     OS << "'" << getToken() << "'";
@@ -791,10 +791,10 @@ void PPCOperand::print(raw_ostream &OS, const MCAsmInfo &MAI) const {
     OS << getImm();
     break;
   case Expression:
-    MAI.printExpr(OS, *getExpr());
+    OS << *getExpr();
     break;
   case TLSRegister:
-    MAI.printExpr(OS, *getTLSReg());
+    OS << *getTLSReg();
     break;
   }
 }
@@ -1514,7 +1514,8 @@ bool PPCAsmParser::parseOperand(OperandVector &Operands) {
             Tok.getString().compare_insensitive("plt") == 0))
         return Error(Tok.getLoc(), "expected 'plt'");
       EVal = MCSymbolRefExpr::create(getContext().getOrCreateSymbol(TlsGetAddr),
-                                     PPC::S_PLT, getContext());
+                                     MCSymbolRefExpr::VariantKind(PPC::S_PLT),
+                                     getContext());
       if (parseOptionalToken(AsmToken::Plus)) {
         const MCExpr *Addend = nullptr;
         SMLoc EndLoc;

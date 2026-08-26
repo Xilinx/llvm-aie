@@ -17,62 +17,54 @@ namespace hlsl {
 
 using TokenKind = RootSignatureToken::Kind;
 
-RootSignatureParser::RootSignatureParser(
-    llvm::dxbc::RootSignatureVersion Version,
-    SmallVector<RootSignatureElement> &Elements, StringLiteral *Signature,
-    Preprocessor &PP)
-    : Version(Version), Elements(Elements), Signature(Signature),
-      Lexer(Signature->getString()), PP(PP), CurToken(0) {}
+RootSignatureParser::RootSignatureParser(SmallVector<RootElement> &Elements,
+                                         RootSignatureLexer &Lexer,
+                                         Preprocessor &PP)
+    : Elements(Elements), Lexer(Lexer), PP(PP), CurToken(SourceLocation()) {}
 
 bool RootSignatureParser::parse() {
-  // Iterate as many RootSignatureElements as possible, until we hit the
-  // end of the stream
-  while (!peekExpectedToken(TokenKind::end_of_stream)) {
+  // Iterate as many RootElements as possible
+  do {
     if (tryConsumeExpectedToken(TokenKind::kw_RootFlags)) {
-      SourceLocation ElementLoc = getTokenLocation(CurToken);
       auto Flags = parseRootFlags();
       if (!Flags.has_value())
         return true;
-      Elements.emplace_back(ElementLoc, *Flags);
-    } else if (tryConsumeExpectedToken(TokenKind::kw_RootConstants)) {
-      SourceLocation ElementLoc = getTokenLocation(CurToken);
+      Elements.push_back(*Flags);
+    }
+
+    if (tryConsumeExpectedToken(TokenKind::kw_RootConstants)) {
       auto Constants = parseRootConstants();
       if (!Constants.has_value())
         return true;
-      Elements.emplace_back(ElementLoc, *Constants);
-    } else if (tryConsumeExpectedToken(TokenKind::kw_DescriptorTable)) {
-      SourceLocation ElementLoc = getTokenLocation(CurToken);
+      Elements.push_back(*Constants);
+    }
+
+    if (tryConsumeExpectedToken(TokenKind::kw_DescriptorTable)) {
       auto Table = parseDescriptorTable();
       if (!Table.has_value())
         return true;
-      Elements.emplace_back(ElementLoc, *Table);
-    } else if (tryConsumeExpectedToken(
-                   {TokenKind::kw_CBV, TokenKind::kw_SRV, TokenKind::kw_UAV})) {
-      SourceLocation ElementLoc = getTokenLocation(CurToken);
+      Elements.push_back(*Table);
+    }
+
+    if (tryConsumeExpectedToken(
+            {TokenKind::kw_CBV, TokenKind::kw_SRV, TokenKind::kw_UAV})) {
       auto Descriptor = parseRootDescriptor();
       if (!Descriptor.has_value())
         return true;
-      Elements.emplace_back(ElementLoc, *Descriptor);
-    } else if (tryConsumeExpectedToken(TokenKind::kw_StaticSampler)) {
-      SourceLocation ElementLoc = getTokenLocation(CurToken);
+      Elements.push_back(*Descriptor);
+    }
+
+    if (tryConsumeExpectedToken(TokenKind::kw_StaticSampler)) {
       auto Sampler = parseStaticSampler();
       if (!Sampler.has_value())
         return true;
-      Elements.emplace_back(ElementLoc, *Sampler);
-    } else {
-      consumeNextToken(); // let diagnostic be at the start of invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*parameter=*/0 << /*param of*/ TokenKind::kw_RootSignature;
-      return true;
+      Elements.push_back(*Sampler);
     }
-
-    // ',' denotes another element, otherwise, expected to be at end of stream
-    if (!tryConsumeExpectedToken(TokenKind::pu_comma))
-      break;
-  }
+  } while (tryConsumeExpectedToken(TokenKind::pu_comma));
 
   return consumeExpectedToken(TokenKind::end_of_stream,
-                              diag::err_expected_either, TokenKind::pu_comma);
+                              diag::err_hlsl_unexpected_end_of_params,
+                              /*param of=*/TokenKind::kw_RootSignature);
 }
 
 template <typename FlagType>
@@ -84,7 +76,7 @@ static FlagType maybeOrFlag(std::optional<FlagType> Flags, FlagType Flag) {
                                llvm::to_underlying(Flag));
 }
 
-std::optional<llvm::dxbc::RootFlags> RootSignatureParser::parseRootFlags() {
+std::optional<RootFlags> RootSignatureParser::parseRootFlags() {
   assert(CurToken.TokKind == TokenKind::kw_RootFlags &&
          "Expects to only be invoked starting at given keyword");
 
@@ -92,16 +84,12 @@ std::optional<llvm::dxbc::RootFlags> RootSignatureParser::parseRootFlags() {
                            CurToken.TokKind))
     return std::nullopt;
 
-  std::optional<llvm::dxbc::RootFlags> Flags = llvm::dxbc::RootFlags::None;
-
-  // Handle valid empty case
-  if (tryConsumeExpectedToken(TokenKind::pu_r_paren))
-    return Flags;
+  std::optional<RootFlags> Flags = RootFlags::None;
 
   // Handle the edge-case of '0' to specify no flags set
   if (tryConsumeExpectedToken(TokenKind::int_literal)) {
     if (!verifyZeroFlag()) {
-      reportDiag(diag::err_hlsl_rootsig_non_zero_flag);
+      getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_non_zero_flag);
       return std::nullopt;
     }
   } else {
@@ -116,24 +104,19 @@ std::optional<llvm::dxbc::RootFlags> RootSignatureParser::parseRootFlags() {
         switch (CurToken.TokKind) {
 #define ROOT_FLAG_ENUM(NAME, LIT)                                              \
   case TokenKind::en_##NAME:                                                   \
-    Flags = maybeOrFlag<llvm::dxbc::RootFlags>(Flags,                          \
-                                               llvm::dxbc::RootFlags::NAME);   \
+    Flags = maybeOrFlag<RootFlags>(Flags, RootFlags::NAME);                    \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
         default:
           llvm_unreachable("Switch for consumed enum token was not provided");
         }
-      } else {
-        consumeNextToken(); // consume token to point at invalid token
-        reportDiag(diag::err_hlsl_invalid_token)
-            << /*value=*/1 << /*value of*/ TokenKind::kw_RootFlags;
-        return std::nullopt;
       }
     } while (tryConsumeExpectedToken(TokenKind::pu_or));
   }
 
-  if (consumeExpectedToken(TokenKind::pu_r_paren, diag::err_expected_either,
-                           TokenKind::pu_comma))
+  if (consumeExpectedToken(TokenKind::pu_r_paren,
+                           diag::err_hlsl_unexpected_end_of_params,
+                           /*param of=*/TokenKind::kw_RootFlags))
     return std::nullopt;
 
   return Flags;
@@ -153,13 +136,9 @@ std::optional<RootConstants> RootSignatureParser::parseRootConstants() {
   if (!Params.has_value())
     return std::nullopt;
 
-  if (consumeExpectedToken(TokenKind::pu_r_paren, diag::err_expected_either,
-                           TokenKind::pu_comma))
-    return std::nullopt;
-
   // Check mandatory parameters where provided
   if (!Params->Num32BitConstants.has_value()) {
-    reportDiag(diag::err_hlsl_rootsig_missing_param)
+    getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_missing_param)
         << TokenKind::kw_num32BitConstants;
     return std::nullopt;
   }
@@ -167,7 +146,8 @@ std::optional<RootConstants> RootSignatureParser::parseRootConstants() {
   Constants.Num32BitConstants = Params->Num32BitConstants.value();
 
   if (!Params->Reg.has_value()) {
-    reportDiag(diag::err_hlsl_rootsig_missing_param) << TokenKind::bReg;
+    getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_missing_param)
+        << TokenKind::bReg;
     return std::nullopt;
   }
 
@@ -179,6 +159,11 @@ std::optional<RootConstants> RootSignatureParser::parseRootConstants() {
 
   if (Params->Space.has_value())
     Constants.Space = Params->Space.value();
+
+  if (consumeExpectedToken(TokenKind::pu_r_paren,
+                           diag::err_hlsl_unexpected_end_of_params,
+                           /*param of=*/TokenKind::kw_RootConstants))
+    return std::nullopt;
 
   return Constants;
 }
@@ -213,19 +198,16 @@ std::optional<RootDescriptor> RootSignatureParser::parseRootDescriptor() {
     ExpectedReg = TokenKind::uReg;
     break;
   }
-  Descriptor.setDefaultFlags(Version);
+  Descriptor.setDefaultFlags();
 
-  auto Params = parseRootDescriptorParams(DescriptorKind, ExpectedReg);
+  auto Params = parseRootDescriptorParams(ExpectedReg);
   if (!Params.has_value())
-    return std::nullopt;
-
-  if (consumeExpectedToken(TokenKind::pu_r_paren, diag::err_expected_either,
-                           TokenKind::pu_comma))
     return std::nullopt;
 
   // Check mandatory parameters were provided
   if (!Params->Reg.has_value()) {
-    reportDiag(diag::err_hlsl_rootsig_missing_param) << ExpectedReg;
+    getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_missing_param)
+        << ExpectedReg;
     return std::nullopt;
   }
 
@@ -241,6 +223,11 @@ std::optional<RootDescriptor> RootSignatureParser::parseRootDescriptor() {
   if (Params->Flags.has_value())
     Descriptor.Flags = Params->Flags.value();
 
+  if (consumeExpectedToken(TokenKind::pu_r_paren,
+                           diag::err_hlsl_unexpected_end_of_params,
+                           /*param of=*/TokenKind::kw_RootConstants))
+    return std::nullopt;
+
   return Descriptor;
 }
 
@@ -253,51 +240,43 @@ std::optional<DescriptorTable> RootSignatureParser::parseDescriptorTable() {
     return std::nullopt;
 
   DescriptorTable Table;
-  std::optional<llvm::dxbc::ShaderVisibility> Visibility;
+  std::optional<ShaderVisibility> Visibility;
 
-  // Iterate as many Clauses as possible, until we hit ')'
-  while (!peekExpectedToken(TokenKind::pu_r_paren)) {
+  // Iterate as many Clauses as possible
+  do {
     if (tryConsumeExpectedToken({TokenKind::kw_CBV, TokenKind::kw_SRV,
                                  TokenKind::kw_UAV, TokenKind::kw_Sampler})) {
-      // DescriptorTableClause - CBV, SRV, UAV, or Sampler
-      SourceLocation ElementLoc = getTokenLocation(CurToken);
       auto Clause = parseDescriptorTableClause();
       if (!Clause.has_value())
         return std::nullopt;
-      Elements.emplace_back(ElementLoc, *Clause);
+      Elements.push_back(*Clause);
       Table.NumClauses++;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
-      // visibility = SHADER_VISIBILITY
+    }
+
+    if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
       if (Visibility.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      Visibility = parseShaderVisibility(TokenKind::kw_visibility);
+      Visibility = parseShaderVisibility();
       if (!Visibility.has_value())
         return std::nullopt;
-    } else {
-      consumeNextToken(); // let diagnostic be at the start of invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*parameter=*/0 << /*param of*/ TokenKind::kw_DescriptorTable;
-      return std::nullopt;
     }
-
-    // ',' denotes another element, otherwise, expected to be at ')'
-    if (!tryConsumeExpectedToken(TokenKind::pu_comma))
-      break;
-  }
-
-  if (consumeExpectedToken(TokenKind::pu_r_paren, diag::err_expected_either,
-                           TokenKind::pu_comma))
-    return std::nullopt;
+  } while (tryConsumeExpectedToken(TokenKind::pu_comma));
 
   // Fill in optional visibility
   if (Visibility.has_value())
     Table.Visibility = Visibility.value();
+
+  if (consumeExpectedToken(TokenKind::pu_r_paren,
+                           diag::err_hlsl_unexpected_end_of_params,
+                           /*param of=*/TokenKind::kw_DescriptorTable))
+    return std::nullopt;
 
   return Table;
 }
@@ -338,19 +317,16 @@ RootSignatureParser::parseDescriptorTableClause() {
     ExpectedReg = TokenKind::sReg;
     break;
   }
-  Clause.setDefaultFlags(Version);
+  Clause.setDefaultFlags();
 
-  auto Params = parseDescriptorTableClauseParams(ParamKind, ExpectedReg);
+  auto Params = parseDescriptorTableClauseParams(ExpectedReg);
   if (!Params.has_value())
-    return std::nullopt;
-
-  if (consumeExpectedToken(TokenKind::pu_r_paren, diag::err_expected_either,
-                           TokenKind::pu_comma))
     return std::nullopt;
 
   // Check mandatory parameters were provided
   if (!Params->Reg.has_value()) {
-    reportDiag(diag::err_hlsl_rootsig_missing_param) << ExpectedReg;
+    getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_missing_param)
+        << ExpectedReg;
     return std::nullopt;
   }
 
@@ -369,6 +345,11 @@ RootSignatureParser::parseDescriptorTableClause() {
   if (Params->Flags.has_value())
     Clause.Flags = Params->Flags.value();
 
+  if (consumeExpectedToken(TokenKind::pu_r_paren,
+                           diag::err_hlsl_unexpected_end_of_params,
+                           /*param of=*/ParamKind))
+    return std::nullopt;
+
   return Clause;
 }
 
@@ -386,13 +367,10 @@ std::optional<StaticSampler> RootSignatureParser::parseStaticSampler() {
   if (!Params.has_value())
     return std::nullopt;
 
-  if (consumeExpectedToken(TokenKind::pu_r_paren, diag::err_expected_either,
-                           TokenKind::pu_comma))
-    return std::nullopt;
-
   // Check mandatory parameters were provided
   if (!Params->Reg.has_value()) {
-    reportDiag(diag::err_hlsl_rootsig_missing_param) << TokenKind::sReg;
+    getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_missing_param)
+        << TokenKind::sReg;
     return std::nullopt;
   }
 
@@ -435,6 +413,11 @@ std::optional<StaticSampler> RootSignatureParser::parseStaticSampler() {
   if (Params->Visibility.has_value())
     Sampler.Visibility = Params->Visibility.value();
 
+  if (consumeExpectedToken(TokenKind::pu_r_paren,
+                           diag::err_hlsl_unexpected_end_of_params,
+                           /*param of=*/TokenKind::kw_StaticSampler))
+    return std::nullopt;
+
   return Sampler;
 }
 
@@ -447,11 +430,12 @@ RootSignatureParser::parseRootConstantParams() {
          "Expects to only be invoked starting at given token");
 
   ParsedConstantParams Params;
-  while (!peekExpectedToken(TokenKind::pu_r_paren)) {
+  do {
+    // `num32BitConstants` `=` POS_INT
     if (tryConsumeExpectedToken(TokenKind::kw_num32BitConstants)) {
-      // `num32BitConstants` `=` POS_INT
       if (Params.Num32BitConstants.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -462,20 +446,26 @@ RootSignatureParser::parseRootConstantParams() {
       if (!Num32BitConstants.has_value())
         return std::nullopt;
       Params.Num32BitConstants = Num32BitConstants;
-    } else if (tryConsumeExpectedToken(TokenKind::bReg)) {
-      // `b` POS_INT
+    }
+
+    // `b` POS_INT
+    if (tryConsumeExpectedToken(TokenKind::bReg)) {
       if (Params.Reg.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
       auto Reg = parseRegister();
       if (!Reg.has_value())
         return std::nullopt;
       Params.Reg = Reg;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_space)) {
-      // `space` `=` POS_INT
+    }
+
+    // `space` `=` POS_INT
+    if (tryConsumeExpectedToken(TokenKind::kw_space)) {
       if (Params.Space.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -486,57 +476,54 @@ RootSignatureParser::parseRootConstantParams() {
       if (!Space.has_value())
         return std::nullopt;
       Params.Space = Space;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
-      // `visibility` `=` SHADER_VISIBILITY
+    }
+
+    // `visibility` `=` SHADER_VISIBILITY
+    if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
       if (Params.Visibility.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto Visibility = parseShaderVisibility(TokenKind::kw_visibility);
+      auto Visibility = parseShaderVisibility();
       if (!Visibility.has_value())
         return std::nullopt;
       Params.Visibility = Visibility;
-    } else {
-      consumeNextToken(); // let diagnostic be at the start of invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*parameter=*/0 << /*param of*/ TokenKind::kw_RootConstants;
-      return std::nullopt;
     }
-
-    // ',' denotes another element, otherwise, expected to be at ')'
-    if (!tryConsumeExpectedToken(TokenKind::pu_comma))
-      break;
-  }
+  } while (tryConsumeExpectedToken(TokenKind::pu_comma));
 
   return Params;
 }
 
 std::optional<RootSignatureParser::ParsedRootDescriptorParams>
-RootSignatureParser::parseRootDescriptorParams(TokenKind DescKind,
-                                               TokenKind RegType) {
+RootSignatureParser::parseRootDescriptorParams(TokenKind RegType) {
   assert(CurToken.TokKind == TokenKind::pu_l_paren &&
          "Expects to only be invoked starting at given token");
 
   ParsedRootDescriptorParams Params;
-  while (!peekExpectedToken(TokenKind::pu_r_paren)) {
+  do {
+    // ( `b` | `t` | `u`) POS_INT
     if (tryConsumeExpectedToken(RegType)) {
-      // ( `b` | `t` | `u`) POS_INT
       if (Params.Reg.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
       auto Reg = parseRegister();
       if (!Reg.has_value())
         return std::nullopt;
       Params.Reg = Reg;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_space)) {
-      // `space` `=` POS_INT
+    }
+
+    // `space` `=` POS_INT
+    if (tryConsumeExpectedToken(TokenKind::kw_space)) {
       if (Params.Space.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -547,71 +534,71 @@ RootSignatureParser::parseRootDescriptorParams(TokenKind DescKind,
       if (!Space.has_value())
         return std::nullopt;
       Params.Space = Space;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
-      // `visibility` `=` SHADER_VISIBILITY
+    }
+
+    // `visibility` `=` SHADER_VISIBILITY
+    if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
       if (Params.Visibility.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto Visibility = parseShaderVisibility(TokenKind::kw_visibility);
+      auto Visibility = parseShaderVisibility();
       if (!Visibility.has_value())
         return std::nullopt;
       Params.Visibility = Visibility;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_flags)) {
-      // `flags` `=` ROOT_DESCRIPTOR_FLAGS
+    }
+
+    // `flags` `=` ROOT_DESCRIPTOR_FLAGS
+    if (tryConsumeExpectedToken(TokenKind::kw_flags)) {
       if (Params.Flags.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto Flags = parseRootDescriptorFlags(TokenKind::kw_flags);
+      auto Flags = parseRootDescriptorFlags();
       if (!Flags.has_value())
         return std::nullopt;
       Params.Flags = Flags;
-    } else {
-      consumeNextToken(); // let diagnostic be at the start of invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*parameter=*/0 << /*param of*/ DescKind;
-      return std::nullopt;
     }
-
-    // ',' denotes another element, otherwise, expected to be at ')'
-    if (!tryConsumeExpectedToken(TokenKind::pu_comma))
-      break;
-  }
+  } while (tryConsumeExpectedToken(TokenKind::pu_comma));
 
   return Params;
 }
 
 std::optional<RootSignatureParser::ParsedClauseParams>
-RootSignatureParser::parseDescriptorTableClauseParams(TokenKind ClauseKind,
-                                                      TokenKind RegType) {
+RootSignatureParser::parseDescriptorTableClauseParams(TokenKind RegType) {
   assert(CurToken.TokKind == TokenKind::pu_l_paren &&
          "Expects to only be invoked starting at given token");
 
   ParsedClauseParams Params;
-  while (!peekExpectedToken(TokenKind::pu_r_paren)) {
+  do {
+    // ( `b` | `t` | `u` | `s`) POS_INT
     if (tryConsumeExpectedToken(RegType)) {
-      // ( `b` | `t` | `u` | `s`) POS_INT
       if (Params.Reg.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
       auto Reg = parseRegister();
       if (!Reg.has_value())
         return std::nullopt;
       Params.Reg = Reg;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_numDescriptors)) {
-      // `numDescriptors` `=` POS_INT | unbounded
+    }
+
+    // `numDescriptors` `=` POS_INT | unbounded
+    if (tryConsumeExpectedToken(TokenKind::kw_numDescriptors)) {
       if (Params.NumDescriptors.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -628,10 +615,13 @@ RootSignatureParser::parseDescriptorTableClauseParams(TokenKind ClauseKind,
       }
 
       Params.NumDescriptors = NumDescriptors;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_space)) {
-      // `space` `=` POS_INT
+    }
+
+    // `space` `=` POS_INT
+    if (tryConsumeExpectedToken(TokenKind::kw_space)) {
       if (Params.Space.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -642,10 +632,13 @@ RootSignatureParser::parseDescriptorTableClauseParams(TokenKind ClauseKind,
       if (!Space.has_value())
         return std::nullopt;
       Params.Space = Space;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_offset)) {
-      // `offset` `=` POS_INT | DESCRIPTOR_RANGE_OFFSET_APPEND
+    }
+
+    // `offset` `=` POS_INT | DESCRIPTOR_RANGE_OFFSET_APPEND
+    if (tryConsumeExpectedToken(TokenKind::kw_offset)) {
       if (Params.Offset.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -662,31 +655,26 @@ RootSignatureParser::parseDescriptorTableClauseParams(TokenKind ClauseKind,
       }
 
       Params.Offset = Offset;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_flags)) {
-      // `flags` `=` DESCRIPTOR_RANGE_FLAGS
+    }
+
+    // `flags` `=` DESCRIPTOR_RANGE_FLAGS
+    if (tryConsumeExpectedToken(TokenKind::kw_flags)) {
       if (Params.Flags.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto Flags = parseDescriptorRangeFlags(TokenKind::kw_flags);
+      auto Flags = parseDescriptorRangeFlags();
       if (!Flags.has_value())
         return std::nullopt;
       Params.Flags = Flags;
-    } else {
-      consumeNextToken(); // let diagnostic be at the start of invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*parameter=*/0 << /*param of*/ ClauseKind;
-      return std::nullopt;
     }
 
-    // ',' denotes another element, otherwise, expected to be at ')'
-    if (!tryConsumeExpectedToken(TokenKind::pu_comma))
-      break;
-  }
+  } while (tryConsumeExpectedToken(TokenKind::pu_comma));
 
   return Params;
 }
@@ -697,77 +685,93 @@ RootSignatureParser::parseStaticSamplerParams() {
          "Expects to only be invoked starting at given token");
 
   ParsedStaticSamplerParams Params;
-  while (!peekExpectedToken(TokenKind::pu_r_paren)) {
+  do {
+    // `s` POS_INT
     if (tryConsumeExpectedToken(TokenKind::sReg)) {
-      // `s` POS_INT
       if (Params.Reg.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
       auto Reg = parseRegister();
       if (!Reg.has_value())
         return std::nullopt;
       Params.Reg = Reg;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_filter)) {
-      // `filter` `=` FILTER
+    }
+
+    // `filter` `=` FILTER
+    if (tryConsumeExpectedToken(TokenKind::kw_filter)) {
       if (Params.Filter.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto Filter = parseSamplerFilter(TokenKind::kw_filter);
+      auto Filter = parseSamplerFilter();
       if (!Filter.has_value())
         return std::nullopt;
       Params.Filter = Filter;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_addressU)) {
-      // `addressU` `=` TEXTURE_ADDRESS
+    }
+
+    // `addressU` `=` TEXTURE_ADDRESS
+    if (tryConsumeExpectedToken(TokenKind::kw_addressU)) {
       if (Params.AddressU.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto AddressU = parseTextureAddressMode(TokenKind::kw_addressU);
+      auto AddressU = parseTextureAddressMode();
       if (!AddressU.has_value())
         return std::nullopt;
       Params.AddressU = AddressU;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_addressV)) {
-      // `addressV` `=` TEXTURE_ADDRESS
+    }
+
+    // `addressV` `=` TEXTURE_ADDRESS
+    if (tryConsumeExpectedToken(TokenKind::kw_addressV)) {
       if (Params.AddressV.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto AddressV = parseTextureAddressMode(TokenKind::kw_addressV);
+      auto AddressV = parseTextureAddressMode();
       if (!AddressV.has_value())
         return std::nullopt;
       Params.AddressV = AddressV;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_addressW)) {
-      // `addressW` `=` TEXTURE_ADDRESS
+    }
+
+    // `addressW` `=` TEXTURE_ADDRESS
+    if (tryConsumeExpectedToken(TokenKind::kw_addressW)) {
       if (Params.AddressW.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto AddressW = parseTextureAddressMode(TokenKind::kw_addressW);
+      auto AddressW = parseTextureAddressMode();
       if (!AddressW.has_value())
         return std::nullopt;
       Params.AddressW = AddressW;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_mipLODBias)) {
-      // `mipLODBias` `=` NUMBER
+    }
+
+    // `mipLODBias` `=` NUMBER
+    if (tryConsumeExpectedToken(TokenKind::kw_mipLODBias)) {
       if (Params.MipLODBias.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -778,10 +782,13 @@ RootSignatureParser::parseStaticSamplerParams() {
       if (!MipLODBias.has_value())
         return std::nullopt;
       Params.MipLODBias = MipLODBias;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_maxAnisotropy)) {
-      // `maxAnisotropy` `=` POS_INT
+    }
+
+    // `maxAnisotropy` `=` POS_INT
+    if (tryConsumeExpectedToken(TokenKind::kw_maxAnisotropy)) {
       if (Params.MaxAnisotropy.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -792,38 +799,47 @@ RootSignatureParser::parseStaticSamplerParams() {
       if (!MaxAnisotropy.has_value())
         return std::nullopt;
       Params.MaxAnisotropy = MaxAnisotropy;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_comparisonFunc)) {
-      // `comparisonFunc` `=` COMPARISON_FUNC
+    }
+
+    // `comparisonFunc` `=` COMPARISON_FUNC
+    if (tryConsumeExpectedToken(TokenKind::kw_comparisonFunc)) {
       if (Params.CompFunc.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto CompFunc = parseComparisonFunc(TokenKind::kw_comparisonFunc);
+      auto CompFunc = parseComparisonFunc();
       if (!CompFunc.has_value())
         return std::nullopt;
       Params.CompFunc = CompFunc;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_borderColor)) {
-      // `borderColor` `=` STATIC_BORDER_COLOR
+    }
+
+    // `borderColor` `=` STATIC_BORDER_COLOR
+    if (tryConsumeExpectedToken(TokenKind::kw_borderColor)) {
       if (Params.BorderColor.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto BorderColor = parseStaticBorderColor(TokenKind::kw_borderColor);
+      auto BorderColor = parseStaticBorderColor();
       if (!BorderColor.has_value())
         return std::nullopt;
       Params.BorderColor = BorderColor;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_minLOD)) {
-      // `minLOD` `=` NUMBER
+    }
+
+    // `minLOD` `=` NUMBER
+    if (tryConsumeExpectedToken(TokenKind::kw_minLOD)) {
       if (Params.MinLOD.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -834,10 +850,13 @@ RootSignatureParser::parseStaticSamplerParams() {
       if (!MinLOD.has_value())
         return std::nullopt;
       Params.MinLOD = MinLOD;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_maxLOD)) {
-      // `maxLOD` `=` NUMBER
+    }
+
+    // `maxLOD` `=` NUMBER
+    if (tryConsumeExpectedToken(TokenKind::kw_maxLOD)) {
       if (Params.MaxLOD.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -848,10 +867,13 @@ RootSignatureParser::parseStaticSamplerParams() {
       if (!MaxLOD.has_value())
         return std::nullopt;
       Params.MaxLOD = MaxLOD;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_space)) {
-      // `space` `=` POS_INT
+    }
+
+    // `space` `=` POS_INT
+    if (tryConsumeExpectedToken(TokenKind::kw_space)) {
       if (Params.Space.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
@@ -862,31 +884,25 @@ RootSignatureParser::parseStaticSamplerParams() {
       if (!Space.has_value())
         return std::nullopt;
       Params.Space = Space;
-    } else if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
-      // `visibility` `=` SHADER_VISIBILITY
+    }
+
+    // `visibility` `=` SHADER_VISIBILITY
+    if (tryConsumeExpectedToken(TokenKind::kw_visibility)) {
       if (Params.Visibility.has_value()) {
-        reportDiag(diag::err_hlsl_rootsig_repeat_param) << CurToken.TokKind;
+        getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_repeat_param)
+            << CurToken.TokKind;
         return std::nullopt;
       }
 
       if (consumeExpectedToken(TokenKind::pu_equal))
         return std::nullopt;
 
-      auto Visibility = parseShaderVisibility(TokenKind::kw_visibility);
+      auto Visibility = parseShaderVisibility();
       if (!Visibility.has_value())
         return std::nullopt;
       Params.Visibility = Visibility;
-    } else {
-      consumeNextToken(); // let diagnostic be at the start of invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*parameter=*/0 << /*param of*/ TokenKind::kw_StaticSampler;
-      return std::nullopt;
     }
-
-    // ',' denotes another element, otherwise, expected to be at ')'
-    if (!tryConsumeExpectedToken(TokenKind::pu_comma))
-      break;
-  }
+  } while (tryConsumeExpectedToken(TokenKind::pu_comma));
 
   return Params;
 }
@@ -967,8 +983,8 @@ std::optional<float> RootSignatureParser::parseFloatParam() {
   return std::nullopt;
 }
 
-std::optional<llvm::dxbc::ShaderVisibility>
-RootSignatureParser::parseShaderVisibility(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::ShaderVisibility>
+RootSignatureParser::parseShaderVisibility() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
@@ -977,17 +993,13 @@ RootSignatureParser::parseShaderVisibility(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  if (!tryConsumeExpectedToken(Expected)) {
-    consumeNextToken(); // consume token to point at invalid token
-    reportDiag(diag::err_hlsl_invalid_token)
-        << /*value=*/1 << /*value of*/ Context;
+  if (!tryConsumeExpectedToken(Expected))
     return std::nullopt;
-  }
 
   switch (CurToken.TokKind) {
 #define SHADER_VISIBILITY_ENUM(NAME, LIT)                                      \
   case TokenKind::en_##NAME:                                                   \
-    return llvm::dxbc::ShaderVisibility::NAME;                                 \
+    return ShaderVisibility::NAME;                                             \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   default:
@@ -997,8 +1009,8 @@ RootSignatureParser::parseShaderVisibility(TokenKind Context) {
   return std::nullopt;
 }
 
-std::optional<llvm::dxbc::SamplerFilter>
-RootSignatureParser::parseSamplerFilter(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::SamplerFilter>
+RootSignatureParser::parseSamplerFilter() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
@@ -1007,17 +1019,13 @@ RootSignatureParser::parseSamplerFilter(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  if (!tryConsumeExpectedToken(Expected)) {
-    consumeNextToken(); // consume token to point at invalid token
-    reportDiag(diag::err_hlsl_invalid_token)
-        << /*value=*/1 << /*value of*/ Context;
+  if (!tryConsumeExpectedToken(Expected))
     return std::nullopt;
-  }
 
   switch (CurToken.TokKind) {
 #define FILTER_ENUM(NAME, LIT)                                                 \
   case TokenKind::en_##NAME:                                                   \
-    return llvm::dxbc::SamplerFilter::NAME;                                    \
+    return SamplerFilter::NAME;                                                \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   default:
@@ -1027,8 +1035,8 @@ RootSignatureParser::parseSamplerFilter(TokenKind Context) {
   return std::nullopt;
 }
 
-std::optional<llvm::dxbc::TextureAddressMode>
-RootSignatureParser::parseTextureAddressMode(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::TextureAddressMode>
+RootSignatureParser::parseTextureAddressMode() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
@@ -1037,17 +1045,13 @@ RootSignatureParser::parseTextureAddressMode(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  if (!tryConsumeExpectedToken(Expected)) {
-    consumeNextToken(); // consume token to point at invalid token
-    reportDiag(diag::err_hlsl_invalid_token)
-        << /*value=*/1 << /*value of*/ Context;
+  if (!tryConsumeExpectedToken(Expected))
     return std::nullopt;
-  }
 
   switch (CurToken.TokKind) {
 #define TEXTURE_ADDRESS_MODE_ENUM(NAME, LIT)                                   \
   case TokenKind::en_##NAME:                                                   \
-    return llvm::dxbc::TextureAddressMode::NAME;                               \
+    return TextureAddressMode::NAME;                                           \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   default:
@@ -1057,8 +1061,8 @@ RootSignatureParser::parseTextureAddressMode(TokenKind Context) {
   return std::nullopt;
 }
 
-std::optional<llvm::dxbc::ComparisonFunc>
-RootSignatureParser::parseComparisonFunc(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::ComparisonFunc>
+RootSignatureParser::parseComparisonFunc() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
@@ -1067,17 +1071,13 @@ RootSignatureParser::parseComparisonFunc(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  if (!tryConsumeExpectedToken(Expected)) {
-    consumeNextToken(); // consume token to point at invalid token
-    reportDiag(diag::err_hlsl_invalid_token)
-        << /*value=*/1 << /*value of*/ Context;
+  if (!tryConsumeExpectedToken(Expected))
     return std::nullopt;
-  }
 
   switch (CurToken.TokKind) {
 #define COMPARISON_FUNC_ENUM(NAME, LIT)                                        \
   case TokenKind::en_##NAME:                                                   \
-    return llvm::dxbc::ComparisonFunc::NAME;                                   \
+    return ComparisonFunc::NAME;                                               \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   default:
@@ -1087,8 +1087,8 @@ RootSignatureParser::parseComparisonFunc(TokenKind Context) {
   return std::nullopt;
 }
 
-std::optional<llvm::dxbc::StaticBorderColor>
-RootSignatureParser::parseStaticBorderColor(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::StaticBorderColor>
+RootSignatureParser::parseStaticBorderColor() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
@@ -1097,17 +1097,13 @@ RootSignatureParser::parseStaticBorderColor(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  if (!tryConsumeExpectedToken(Expected)) {
-    consumeNextToken(); // consume token to point at invalid token
-    reportDiag(diag::err_hlsl_invalid_token)
-        << /*value=*/1 << /*value of*/ Context;
+  if (!tryConsumeExpectedToken(Expected))
     return std::nullopt;
-  }
 
   switch (CurToken.TokKind) {
 #define STATIC_BORDER_COLOR_ENUM(NAME, LIT)                                    \
   case TokenKind::en_##NAME:                                                   \
-    return llvm::dxbc::StaticBorderColor::NAME;                                \
+    return StaticBorderColor::NAME;                                            \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   default:
@@ -1117,18 +1113,18 @@ RootSignatureParser::parseStaticBorderColor(TokenKind Context) {
   return std::nullopt;
 }
 
-std::optional<llvm::dxbc::RootDescriptorFlags>
-RootSignatureParser::parseRootDescriptorFlags(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::RootDescriptorFlags>
+RootSignatureParser::parseRootDescriptorFlags() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
   // Handle the edge-case of '0' to specify no flags set
   if (tryConsumeExpectedToken(TokenKind::int_literal)) {
     if (!verifyZeroFlag()) {
-      reportDiag(diag::err_hlsl_rootsig_non_zero_flag);
+      getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_non_zero_flag);
       return std::nullopt;
     }
-    return llvm::dxbc::RootDescriptorFlags::None;
+    return RootDescriptorFlags::None;
   }
 
   TokenKind Expected[] = {
@@ -1136,43 +1132,38 @@ RootSignatureParser::parseRootDescriptorFlags(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  std::optional<llvm::dxbc::RootDescriptorFlags> Flags;
+  std::optional<RootDescriptorFlags> Flags;
 
   do {
     if (tryConsumeExpectedToken(Expected)) {
       switch (CurToken.TokKind) {
 #define ROOT_DESCRIPTOR_FLAG_ENUM(NAME, LIT)                                   \
   case TokenKind::en_##NAME:                                                   \
-    Flags = maybeOrFlag<llvm::dxbc::RootDescriptorFlags>(                      \
-        Flags, llvm::dxbc::RootDescriptorFlags::NAME);                         \
+    Flags =                                                                    \
+        maybeOrFlag<RootDescriptorFlags>(Flags, RootDescriptorFlags::NAME);    \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
       default:
         llvm_unreachable("Switch for consumed enum token was not provided");
       }
-    } else {
-      consumeNextToken(); // consume token to point at invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*value=*/1 << /*value of*/ Context;
-      return std::nullopt;
     }
   } while (tryConsumeExpectedToken(TokenKind::pu_or));
 
   return Flags;
 }
 
-std::optional<llvm::dxbc::DescriptorRangeFlags>
-RootSignatureParser::parseDescriptorRangeFlags(TokenKind Context) {
+std::optional<llvm::hlsl::rootsig::DescriptorRangeFlags>
+RootSignatureParser::parseDescriptorRangeFlags() {
   assert(CurToken.TokKind == TokenKind::pu_equal &&
          "Expects to only be invoked starting at given keyword");
 
   // Handle the edge-case of '0' to specify no flags set
   if (tryConsumeExpectedToken(TokenKind::int_literal)) {
     if (!verifyZeroFlag()) {
-      reportDiag(diag::err_hlsl_rootsig_non_zero_flag);
+      getDiags().Report(CurToken.TokLoc, diag::err_hlsl_rootsig_non_zero_flag);
       return std::nullopt;
     }
-    return llvm::dxbc::DescriptorRangeFlags::None;
+    return DescriptorRangeFlags::None;
   }
 
   TokenKind Expected[] = {
@@ -1180,25 +1171,20 @@ RootSignatureParser::parseDescriptorRangeFlags(TokenKind Context) {
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
   };
 
-  std::optional<llvm::dxbc::DescriptorRangeFlags> Flags;
+  std::optional<DescriptorRangeFlags> Flags;
 
   do {
     if (tryConsumeExpectedToken(Expected)) {
       switch (CurToken.TokKind) {
 #define DESCRIPTOR_RANGE_FLAG_ENUM(NAME, LIT, ON)                              \
   case TokenKind::en_##NAME:                                                   \
-    Flags = maybeOrFlag<llvm::dxbc::DescriptorRangeFlags>(                     \
-        Flags, llvm::dxbc::DescriptorRangeFlags::NAME);                        \
+    Flags =                                                                    \
+        maybeOrFlag<DescriptorRangeFlags>(Flags, DescriptorRangeFlags::NAME);  \
     break;
 #include "clang/Lex/HLSLRootSignatureTokenKinds.def"
       default:
         llvm_unreachable("Switch for consumed enum token was not provided");
       }
-    } else {
-      consumeNextToken(); // consume token to point at invalid token
-      reportDiag(diag::err_hlsl_invalid_token)
-          << /*value=*/1 << /*value of*/ Context;
-      return std::nullopt;
     }
   } while (tryConsumeExpectedToken(TokenKind::pu_or));
 
@@ -1207,9 +1193,9 @@ RootSignatureParser::parseDescriptorRangeFlags(TokenKind Context) {
 
 std::optional<uint32_t> RootSignatureParser::handleUIntLiteral() {
   // Parse the numeric value and do semantic checks on its specification
-  clang::NumericLiteralParser Literal(
-      CurToken.NumSpelling, getTokenLocation(CurToken), PP.getSourceManager(),
-      PP.getLangOpts(), PP.getTargetInfo(), PP.getDiagnostics());
+  clang::NumericLiteralParser Literal(CurToken.NumSpelling, CurToken.TokLoc,
+                                      PP.getSourceManager(), PP.getLangOpts(),
+                                      PP.getTargetInfo(), PP.getDiagnostics());
   if (Literal.hadError)
     return std::nullopt; // Error has already been reported so just return
 
@@ -1219,7 +1205,8 @@ std::optional<uint32_t> RootSignatureParser::handleUIntLiteral() {
   llvm::APSInt Val(32, /*IsUnsigned=*/true);
   if (Literal.GetIntegerValue(Val)) {
     // Report that the value has overflowed
-    reportDiag(diag::err_hlsl_number_literal_overflow)
+    PP.getDiagnostics().Report(CurToken.TokLoc,
+                               diag::err_hlsl_number_literal_overflow)
         << /*integer type*/ 0 << /*is signed*/ 0;
     return std::nullopt;
   }
@@ -1229,9 +1216,9 @@ std::optional<uint32_t> RootSignatureParser::handleUIntLiteral() {
 
 std::optional<int32_t> RootSignatureParser::handleIntLiteral(bool Negated) {
   // Parse the numeric value and do semantic checks on its specification
-  clang::NumericLiteralParser Literal(
-      CurToken.NumSpelling, getTokenLocation(CurToken), PP.getSourceManager(),
-      PP.getLangOpts(), PP.getTargetInfo(), PP.getDiagnostics());
+  clang::NumericLiteralParser Literal(CurToken.NumSpelling, CurToken.TokLoc,
+                                      PP.getSourceManager(), PP.getLangOpts(),
+                                      PP.getTargetInfo(), PP.getDiagnostics());
   if (Literal.hadError)
     return std::nullopt; // Error has already been reported so just return
 
@@ -1252,7 +1239,8 @@ std::optional<int32_t> RootSignatureParser::handleIntLiteral(bool Negated) {
 
   if (Overflowed) {
     // Report that the value has overflowed
-    reportDiag(diag::err_hlsl_number_literal_overflow)
+    PP.getDiagnostics().Report(CurToken.TokLoc,
+                               diag::err_hlsl_number_literal_overflow)
         << /*integer type*/ 0 << /*is signed*/ 1;
     return std::nullopt;
   }
@@ -1265,9 +1253,9 @@ std::optional<int32_t> RootSignatureParser::handleIntLiteral(bool Negated) {
 
 std::optional<float> RootSignatureParser::handleFloatLiteral(bool Negated) {
   // Parse the numeric value and do semantic checks on its specification
-  clang::NumericLiteralParser Literal(
-      CurToken.NumSpelling, getTokenLocation(CurToken), PP.getSourceManager(),
-      PP.getLangOpts(), PP.getTargetInfo(), PP.getDiagnostics());
+  clang::NumericLiteralParser Literal(CurToken.NumSpelling, CurToken.TokLoc,
+                                      PP.getSourceManager(), PP.getLangOpts(),
+                                      PP.getTargetInfo(), PP.getDiagnostics());
   if (Literal.hadError)
     return std::nullopt; // Error has already been reported so just return
 
@@ -1295,13 +1283,16 @@ std::optional<float> RootSignatureParser::handleFloatLiteral(bool Negated) {
 
   if (Status & llvm::APFloat::opStatus::opUnderflow) {
     // Report that the value has underflowed
-    reportDiag(diag::err_hlsl_number_literal_underflow);
+    PP.getDiagnostics().Report(CurToken.TokLoc,
+                               diag::err_hlsl_number_literal_underflow);
     return std::nullopt;
   }
 
   if (Status & llvm::APFloat::opStatus::opOverflow) {
     // Report that the value has overflowed
-    reportDiag(diag::err_hlsl_number_literal_overflow) << /*float type*/ 1;
+    PP.getDiagnostics().Report(CurToken.TokLoc,
+                               diag::err_hlsl_number_literal_overflow)
+        << /*float type*/ 1;
     return std::nullopt;
   }
 
@@ -1312,7 +1303,9 @@ std::optional<float> RootSignatureParser::handleFloatLiteral(bool Negated) {
   double FloatMax = double(std::numeric_limits<float>::max());
   if (FloatMax < DoubleVal || DoubleVal < -FloatMax) {
     // Report that the value has overflowed
-    reportDiag(diag::err_hlsl_number_literal_overflow) << /*float type*/ 1;
+    PP.getDiagnostics().Report(CurToken.TokLoc,
+                               diag::err_hlsl_number_literal_overflow)
+        << /*float type*/ 1;
     return std::nullopt;
   }
 
@@ -1341,16 +1334,15 @@ bool RootSignatureParser::consumeExpectedToken(TokenKind Expected,
     return false;
 
   // Report unexpected token kind error
-  DiagnosticBuilder DB = reportDiag(DiagID);
+  DiagnosticBuilder DB = getDiags().Report(CurToken.TokLoc, DiagID);
   switch (DiagID) {
   case diag::err_expected:
     DB << Expected;
     break;
+  case diag::err_hlsl_unexpected_end_of_params:
   case diag::err_expected_either:
-    DB << Expected << Context;
-    break;
   case diag::err_expected_after:
-    DB << Context << Expected;
+    DB << Expected << Context;
     break;
   default:
     break;
@@ -1369,11 +1361,6 @@ bool RootSignatureParser::tryConsumeExpectedToken(
     return false;
   consumeNextToken();
   return true;
-}
-
-SourceLocation RootSignatureParser::getTokenLocation(RootSignatureToken Tok) {
-  return Signature->getLocationOfByte(Tok.LocOffset, PP.getSourceManager(),
-                                      PP.getLangOpts(), PP.getTargetInfo());
 }
 
 } // namespace hlsl

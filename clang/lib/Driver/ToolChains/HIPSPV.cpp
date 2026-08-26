@@ -149,9 +149,11 @@ void HIPSPVToolChain::addClangTargetOptions(
     CC1Args.append(
         {"-fvisibility=hidden", "-fapply-global-visibility-to-externs"});
 
-  for (const BitCodeLibraryInfo &BCFile : getDeviceLibs(DriverArgs))
-    CC1Args.append(
-        {"-mlink-builtin-bitcode", DriverArgs.MakeArgString(BCFile.Path)});
+  llvm::for_each(getDeviceLibs(DriverArgs),
+                 [&](const BitCodeLibraryInfo &BCFile) {
+                   CC1Args.append({"-mlink-builtin-bitcode",
+                                   DriverArgs.MakeArgString(BCFile.Path)});
+                 });
 }
 
 Tool *HIPSPVToolChain::buildLinker() const {
@@ -226,8 +228,7 @@ HIPSPVToolChain::getDeviceLibs(const llvm::opt::ArgList &DriverArgs) const {
   // Maintain compatability with --hip-device-lib.
   auto BCLibArgs = DriverArgs.getAllArgValues(options::OPT_hip_device_lib_EQ);
   if (!BCLibArgs.empty()) {
-    bool Found = false;
-    for (StringRef BCName : BCLibArgs) {
+    llvm::for_each(BCLibArgs, [&](StringRef BCName) {
       StringRef FullName;
       for (std::string LibraryPath : LibraryPaths) {
         SmallString<128> Path(LibraryPath);
@@ -235,13 +236,11 @@ HIPSPVToolChain::getDeviceLibs(const llvm::opt::ArgList &DriverArgs) const {
         FullName = Path;
         if (llvm::sys::fs::exists(FullName)) {
           BCLibs.emplace_back(FullName.str());
-          Found = true;
-          break;
+          return;
         }
       }
-      if (!Found)
-        getDriver().Diag(diag::err_drv_no_such_file) << BCName;
-    }
+      getDriver().Diag(diag::err_drv_no_such_file) << BCName;
+    });
   } else {
     // Search device library named as 'hipspv-<triple>.bc'.
     auto TT = getTriple().normalize();

@@ -23,7 +23,6 @@ class RewritePatternSet;
 class RewriterBase;
 class Value;
 class ValueRange;
-class ReifyRankedShapedTypeOpInterface;
 
 namespace arith {
 class WideIntEmulationConverter;
@@ -209,6 +208,7 @@ FailureOr<Value> replaceWithIndependentOp(RewriterBase &rewriter,
 memref::AllocaOp allocToAlloca(
     RewriterBase &rewriter, memref::AllocOp alloc,
     function_ref<bool(memref::AllocOp, memref::DeallocOp)> filter = nullptr);
+
 } // namespace memref
 } // namespace mlir
 

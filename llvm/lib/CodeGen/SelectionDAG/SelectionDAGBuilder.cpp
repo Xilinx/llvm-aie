@@ -4351,12 +4351,18 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
   auto &TLI = DAG.getTargetLoweringInfo();
   GEPNoWrapFlags NW = cast<GEPOperator>(I).getNoWrapFlags();
 
-  // For a vector GEP, keep the prefix scalar as long as possible, then
-  // convert any scalars encountered after the first vector operand to vectors.
+  // Normalize Vector GEP - all scalar operands should be converted to the
+  // splat vector.
   bool IsVectorGEP = I.getType()->isVectorTy();
   ElementCount VectorElementCount =
       IsVectorGEP ? cast<VectorType>(I.getType())->getElementCount()
                   : ElementCount::getFixed(0);
+
+  if (IsVectorGEP && !N.getValueType().isVector()) {
+    LLVMContext &Context = *DAG.getContext();
+    EVT VT = EVT::getVectorVT(Context, N.getValueType(), VectorElementCount);
+    N = DAG.getSplat(VT, dl, N);
+  }
 
   for (gep_type_iterator GTI = gep_type_begin(&I), E = gep_type_end(&I);
        GTI != E; ++GTI) {
@@ -4405,7 +4411,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
         APInt Offs = ElementMul * CI->getValue().sextOrTrunc(IdxSize);
         LLVMContext &Context = *DAG.getContext();
         SDValue OffsVal;
-        if (N.getValueType().isVector())
+        if (IsVectorGEP)
           OffsVal = DAG.getConstant(
               Offs, dl, EVT::getVectorVT(Context, IdxTy, VectorElementCount));
         else
@@ -4427,16 +4433,10 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       // N = N + Idx * ElementMul;
       SDValue IdxN = getValue(Idx);
 
-      if (IdxN.getValueType().isVector() != N.getValueType().isVector()) {
-        if (N.getValueType().isVector()) {
-          EVT VT = EVT::getVectorVT(*Context, IdxN.getValueType(),
-                                    VectorElementCount);
-          IdxN = DAG.getSplat(VT, dl, IdxN);
-        } else {
-          EVT VT =
-              EVT::getVectorVT(*Context, N.getValueType(), VectorElementCount);
-          N = DAG.getSplat(VT, dl, N);
-        }
+      if (!IdxN.getValueType().isVector() && IsVectorGEP) {
+        EVT VT = EVT::getVectorVT(*Context, IdxN.getValueType(),
+                                  VectorElementCount);
+        IdxN = DAG.getSplat(VT, dl, IdxN);
       }
 
       // If the index is smaller or larger than intptr_t, truncate or extend
@@ -4457,7 +4457,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
         SDValue VScale = DAG.getNode(
             ISD::VSCALE, dl, VScaleTy,
             DAG.getConstant(ElementMul.getZExtValue(), dl, VScaleTy));
-        if (N.getValueType().isVector())
+        if (IsVectorGEP)
           VScale = DAG.getSplatVector(N.getValueType(), dl, VScale);
         IdxN = DAG.getNode(ISD::MUL, dl, N.getValueType(), IdxN, VScale,
                            ScaleFlags);
@@ -4488,11 +4488,6 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
 
       N = DAG.getMemBasePlusOffset(N, IdxN, dl, AddFlags);
     }
-  }
-
-  if (IsVectorGEP && !N.getValueType().isVector()) {
-    EVT VT = EVT::getVectorVT(*Context, N.getValueType(), VectorElementCount);
-    N = DAG.getSplat(VT, dl, N);
   }
 
   MVT PtrTy = TLI.getPointerTy(DAG.getDataLayout(), AS);

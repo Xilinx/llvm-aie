@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/opencl/atomic/atom_max.h>
-#include <clc/opencl/atomic/atomic_max.h>
 
 #ifdef cl_khr_global_int32_extended_atomics
 #define __CLC_ATOMIC_OP max

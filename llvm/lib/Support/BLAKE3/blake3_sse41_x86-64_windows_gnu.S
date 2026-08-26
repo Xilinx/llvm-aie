@@ -2044,7 +2044,7 @@ blake3_compress_xof_sse41:
         ret
 
 
-.section .rdata
+.section .rodata
 .p2align  6
 BLAKE3_IV:
         .long  0x6A09E667, 0xBB67AE85

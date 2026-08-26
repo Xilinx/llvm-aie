@@ -35,8 +35,6 @@ namespace lldb_private {
 /// location expression or a location list and interprets it.
 class DWARFExpression {
 public:
-  using Stack = std::vector<Value>;
-
   class Delegate {
   public:
     Delegate() = default;
@@ -55,7 +53,7 @@ public:
     virtual bool ParseVendorDWARFOpcode(uint8_t op,
                                         const DataExtractor &opcodes,
                                         lldb::offset_t &offset,
-                                        Stack &stack) const = 0;
+                                        std::vector<Value> &stack) const = 0;
 
     Delegate(const Delegate &) = delete;
     Delegate &operator=(const Delegate &) = delete;

@@ -27,7 +27,7 @@
 #include "../helpers.h"
 
 template <class KeyContainer>
-constexpr void test_one() {
+void test_one() {
   using Key = typename KeyContainer::value_type;
   using M   = std::flat_set<Key, std::less<Key>, KeyContainer>;
   using R   = M::iterator;
@@ -114,7 +114,7 @@ constexpr void test_one() {
 }
 
 template <class KeyContainer>
-constexpr void test_emplaceable() {
+void test_emplaceable() {
   using M = std::flat_set<Emplaceable, std::less<Emplaceable>, KeyContainer>;
   using R = M::iterator;
 
@@ -134,24 +134,16 @@ constexpr void test_emplaceable() {
   assert(*m.begin() == Emplaceable(1, 3.5));
 }
 
-constexpr bool test() {
+void test() {
   test_one<std::vector<int>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test_one<std::deque<int>>();
+  test_one<std::deque<int>>();
   test_one<MinSequenceContainer<int>>();
   test_one<std::vector<int, min_allocator<int>>>();
 
   test_emplaceable<std::vector<Emplaceable>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test_emplaceable<std::deque<Emplaceable>>();
+  test_emplaceable<std::vector<Emplaceable>>();
   test_emplaceable<MinSequenceContainer<Emplaceable>>();
   test_emplaceable<std::vector<Emplaceable, min_allocator<Emplaceable>>>();
-
-  return true;
 }
 
 void test_exception() {
@@ -162,9 +154,6 @@ void test_exception() {
 int main(int, char**) {
   test();
   test_exception();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

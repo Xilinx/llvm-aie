@@ -60,6 +60,7 @@
 ! CHECK: "-Reverything"
 ! CHECK: "-Rno-everything"
 ! CHECK: "-Rpass=inline"
+! CHECK: "-mframe-pointer=none"
 ! CHECK: "-mllvm" "-print-before-all"
 ! CHECK: "-fwrapv"
 ! CHECK: "-save-temps=obj"

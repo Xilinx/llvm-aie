@@ -59,7 +59,7 @@ class CodeGenTarget {
   const Record *TargetRec;
 
   mutable DenseMap<const Record *, std::unique_ptr<CodeGenInstruction>>
-      InstructionMap;
+      Instructions;
   mutable std::unique_ptr<CodeGenRegBank> RegBank;
   mutable ArrayRef<const Record *> RegAltNameIndices;
   mutable SmallVector<ValueTypeByHwMode, 8> LegalValueTypes;
@@ -154,21 +154,30 @@ public:
 
 private:
   DenseMap<const Record *, std::unique_ptr<CodeGenInstruction>> &
-  getInstructionMap() const {
-    if (InstructionMap.empty())
+  getInstructions() const {
+    if (Instructions.empty())
       ReadInstructions();
-    return InstructionMap;
+    return Instructions;
   }
 
 public:
   CodeGenInstruction &getInstruction(const Record *InstRec) const {
-    auto I = getInstructionMap().find(InstRec);
-    assert(I != InstructionMap.end() && "Not an instruction");
+    if (Instructions.empty())
+      ReadInstructions();
+    auto I = Instructions.find(InstRec);
+    assert(I != Instructions.end() && "Not an instruction");
     return *I->second;
   }
 
   /// Returns the number of predefined instructions.
   static unsigned getNumFixedInstructions();
+
+  /// Returns the number of pseudo instructions.
+  unsigned getNumPseudoInstructions() const {
+    if (InstrsByEnum.empty())
+      ComputeInstrsByEnum();
+    return NumPseudoInstructions;
+  }
 
   /// Return all of the instructions defined by the target, ordered by their
   /// enum value.
@@ -176,28 +185,10 @@ public:
   /// - fixed / generic instructions as declared in TargetOpcodes.def, in order;
   /// - pseudo instructions in lexicographical order sorted by name;
   /// - other instructions in lexicographical order sorted by name.
-  ArrayRef<const CodeGenInstruction *> getInstructions() const {
+  ArrayRef<const CodeGenInstruction *> getInstructionsByEnumValue() const {
     if (InstrsByEnum.empty())
       ComputeInstrsByEnum();
     return InstrsByEnum;
-  }
-
-  // Functions that return various slices of `getInstructions`, ordered by
-  // their enum values.
-  ArrayRef<const CodeGenInstruction *> getGenericInstructions() const {
-    return getInstructions().take_front(getNumFixedInstructions());
-  }
-
-  ArrayRef<const CodeGenInstruction *> getTargetInstructions() const {
-    return getInstructions().drop_front(getNumFixedInstructions());
-  }
-
-  ArrayRef<const CodeGenInstruction *> getTargetPseudoInstructions() const {
-    return getTargetInstructions().take_front(NumPseudoInstructions);
-  }
-
-  ArrayRef<const CodeGenInstruction *> getTargetNonPseudoInstructions() const {
-    return getTargetInstructions().drop_front(NumPseudoInstructions);
   }
 
   /// Return the integer enum value corresponding to this instruction record.
@@ -206,6 +197,12 @@ public:
       ComputeInstrsByEnum();
     return getInstruction(R).EnumVal;
   }
+
+  typedef ArrayRef<const CodeGenInstruction *>::const_iterator inst_iterator;
+  inst_iterator inst_begin() const {
+    return getInstructionsByEnumValue().begin();
+  }
+  inst_iterator inst_end() const { return getInstructionsByEnumValue().end(); }
 
   /// Return whether instructions have variable length encodings on this target.
   bool hasVariableLengthEncodings() const { return HasVariableLengthEncodings; }

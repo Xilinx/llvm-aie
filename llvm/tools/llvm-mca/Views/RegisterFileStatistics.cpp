@@ -38,10 +38,10 @@ RegisterFileStatistics::RegisterFileStatistics(const MCSubtargetInfo &sti)
   unsigned NumRegFiles = std::max(PI.NumRegisterFiles, 1U);
 
   PRFUsage.resize(NumRegFiles);
-  llvm::fill(PRFUsage, RFUEmpty);
+  std::fill(PRFUsage.begin(), PRFUsage.end(), RFUEmpty);
 
   MoveElimInfo.resize(NumRegFiles);
-  llvm::fill(MoveElimInfo, MEIEmpty);
+  std::fill(MoveElimInfo.begin(), MoveElimInfo.end(), MEIEmpty);
 }
 
 void RegisterFileStatistics::updateRegisterFileUsage(

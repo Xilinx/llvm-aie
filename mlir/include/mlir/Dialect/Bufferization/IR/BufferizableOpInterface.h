@@ -712,7 +712,7 @@ AliasingOpOperandList defaultGetAliasingOpOperands(Value value,
 /// This is the default implementation of
 /// BufferizableOpInterface::getBufferType. Should not be called from other
 /// places.
-FailureOr<BufferLikeType>
+FailureOr<BaseMemRefType>
 defaultGetBufferType(Value value, const BufferizationOptions &options,
                      const BufferizationState &state,
                      SmallVector<Value> &invocationStack);

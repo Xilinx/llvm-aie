@@ -34,28 +34,28 @@ body:             |
     BUNDLE {
       NOP_LDA
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @0 {{.*}} Kind:4013
+      ; FIXUP: MCFixup Offset:0 {{.*}} Kind:4017
       ; RELOC: {{.*}} R_AIE_3
     }
 
     BUNDLE {
       NOP_ST
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @8 {{.*}} Kind:4012
+      ; FIXUP: MCFixup Offset:8 {{.*}} Kind:4016
       ; RELOC: {{.*}} R_AIE_2
     }
 
     BUNDLE {
       NOP_ALU
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @16 {{.*}} Kind:4012
+      ; FIXUP: MCFixup Offset:16 {{.*}} Kind:4016
       ; RELOC: {{.*}} R_AIE_2
     }
 
     BUNDLE {
       NOP_LDA
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @24 {{.*}} Kind:4015
+      ; FIXUP: MCFixup Offset:24 {{.*}} Kind:4019
       ; RELOC: {{.*}} R_AIE_5
       NOP_VECA
     }
@@ -65,7 +65,7 @@ body:             |
       NOP_LDB
       NOP_ST
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @36 {{.*}} Kind:4014
+      ; FIXUP: MCFixup Offset:36 {{.*}} Kind:4018
       ; RELOC: {{.*}} R_AIE_4
     }
 
@@ -74,14 +74,14 @@ body:             |
       NOP_LDB
       NOP_ALU
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @48 {{.*}} Kind:4014
+      ; FIXUP: MCFixup Offset:48 {{.*}} Kind:4018
       ; RELOC: {{.*}} R_AIE_4
     }
 
     BUNDLE {
       NOP_LDA
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @60 {{.*}} Kind:4015
+      ; FIXUP: MCFixup Offset:60 {{.*}} Kind:4019
       ; RELOC: {{.*}} R_AIE_5
       NOP_VECM
     }
@@ -91,7 +91,7 @@ body:             |
       NOP_LDB
       NOP_ST
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @72 {{.*}} Kind:4010
+      ; FIXUP: MCFixup Offset:72 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECA
     }
@@ -101,7 +101,7 @@ body:             |
       NOP_LDB
       NOP_ALU
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @88 {{.*}} Kind:4010
+      ; FIXUP: MCFixup Offset:88 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECA
     }
@@ -111,7 +111,7 @@ body:             |
       NOP_LDB
       NOP_ST
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @104 {{.*}} Kind:4010
+      ; FIXUP: MCFixup Offset:104 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECM
     }
@@ -121,7 +121,7 @@ body:             |
       NOP_LDB
       NOP_ALU
       BEQZ $r0, @target_function
-      ; FIXUP: Fixup @120 {{.*}} Kind:4010
+      ; FIXUP: MCFixup Offset:120 {{.*}} Kind:4014
       ; RELOC: {{.*}} R_AIE_0
       NOP_VECM
     }

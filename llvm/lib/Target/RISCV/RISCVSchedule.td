@@ -519,12 +519,3 @@ include "RISCVScheduleZb.td"
 include "RISCVScheduleV.td"
 include "RISCVScheduleXSf.td"
 include "RISCVScheduleZvk.td"
-
-// Vendor Extensions
-multiclass UnsupportedSchedXsf {
-  defm : UnsupportedSchedXsfvcp;
-  defm : UnsupportedSchedXSfvfnrclipxfqf;
-  defm : UnsupportedSchedXSfvfwmaccqqq;
-  defm : UnsupportedSchedXSfvqmaccdod;
-  defm : UnsupportedSchedXSfvqmaccqoq;
-}

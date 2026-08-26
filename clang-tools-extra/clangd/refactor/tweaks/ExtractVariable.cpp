@@ -359,9 +359,9 @@ struct ParsedBinaryOperator {
 //    +   c <- End
 //   / \
 //  a   b <- Start
-SourceRange getBinaryOperatorRange(const SelectionTree::Node &N,
-                                   const SourceManager &SM,
-                                   const LangOptions &LangOpts) {
+const SourceRange getBinaryOperatorRange(const SelectionTree::Node &N,
+                                         const SourceManager &SM,
+                                         const LangOptions &LangOpts) {
   // If N is not a suitable binary operator, bail out.
   ParsedBinaryOperator Op;
   if (!Op.parse(N.ignoreImplicit()) || !Op.associative() ||

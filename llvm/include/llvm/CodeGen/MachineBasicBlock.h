@@ -25,7 +25,6 @@
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/UniqueBBID.h"
 #include <cassert>
 #include <cstdint>
 #include <iterator>
@@ -98,6 +97,13 @@ template <> struct DenseMapInfo<MBBSectionID> {
   static bool isEqual(const MBBSectionID &LHS, const MBBSectionID &RHS) {
     return LHS == RHS;
   }
+};
+
+// This structure represents the information for a basic block pertaining to
+// the basic block sections profile.
+struct UniqueBBID {
+  unsigned BaseID;
+  unsigned CloneID;
 };
 
 template <> struct ilist_traits<MachineInstr> {

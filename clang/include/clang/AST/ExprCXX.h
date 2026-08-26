@@ -84,7 +84,7 @@ class CXXOperatorCallExpr final : public CallExpr {
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 
-  SourceLocation BeginLoc;
+  SourceRange Range;
 
   // CXXOperatorCallExpr has some trailing objects belonging
   // to CallExpr. See CallExpr for the details.
@@ -158,9 +158,9 @@ public:
                : getOperatorLoc();
   }
 
-  SourceLocation getBeginLoc() const { return BeginLoc; }
-  SourceLocation getEndLoc() const { return getSourceRangeImpl().getEnd(); }
-  SourceRange getSourceRange() const { return getSourceRangeImpl(); }
+  SourceLocation getBeginLoc() const { return Range.getBegin(); }
+  SourceLocation getEndLoc() const { return Range.getEnd(); }
+  SourceRange getSourceRange() const { return Range; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXOperatorCallExprClass;

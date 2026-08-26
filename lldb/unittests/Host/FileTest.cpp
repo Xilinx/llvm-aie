@@ -14,10 +14,6 @@
 #include "llvm/Support/Program.h"
 #include "gtest/gtest.h"
 
-#ifdef _WIN32
-#include "lldb/Host/windows/windows.h"
-#endif
-
 using namespace lldb;
 using namespace lldb_private;
 
@@ -36,11 +32,7 @@ TEST(File, GetWaitableHandleFileno) {
   ASSERT_TRUE(stream);
 
   NativeFile file(stream, true);
-#ifdef _WIN32
-  EXPECT_EQ(file.GetWaitableHandle(), (HANDLE)_get_osfhandle(fd));
-#else
-  EXPECT_EQ(file.GetWaitableHandle(), (file_t)fd);
-#endif
+  EXPECT_EQ(file.GetWaitableHandle(), fd);
 }
 
 TEST(File, GetStreamFromDescriptor) {
@@ -61,9 +53,5 @@ TEST(File, GetStreamFromDescriptor) {
   ASSERT_TRUE(stream != NULL);
 
   EXPECT_EQ(file.GetDescriptor(), fd);
-#ifdef _WIN32
-  EXPECT_EQ(file.GetWaitableHandle(), (HANDLE)_get_osfhandle(fd));
-#else
-  EXPECT_EQ(file.GetWaitableHandle(), (file_t)fd);
-#endif
+  EXPECT_EQ(file.GetWaitableHandle(), fd);
 }

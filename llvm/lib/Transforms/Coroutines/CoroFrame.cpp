@@ -639,10 +639,10 @@ static DIType *solveDIType(DIBuilder &Builder, Type *Ty,
     SmallVector<Metadata *, 16> Elements;
     for (unsigned I = 0; I < StructTy->getNumElements(); I++) {
       DIType *DITy = solveDIType(Builder, StructTy->getElementType(I), Layout,
-                                 DIStruct, LineNum, DITypeCache);
+                                 Scope, LineNum, DITypeCache);
       assert(DITy);
       Elements.push_back(Builder.createMemberType(
-          DIStruct, DITy->getName(), DIStruct->getFile(), LineNum,
+          Scope, DITy->getName(), Scope->getFile(), LineNum,
           DITy->getSizeInBits(), DITy->getAlignInBits(),
           Layout.getStructLayout(StructTy)->getElementOffsetInBits(I),
           llvm::DINode::FlagArtificial, DITy));
@@ -688,8 +688,9 @@ static DIType *solveDIType(DIBuilder &Builder, Type *Ty,
 static void buildFrameDebugInfo(Function &F, coro::Shape &Shape,
                                 FrameDataInfo &FrameData) {
   DISubprogram *DIS = F.getSubprogram();
-  // If there is no DISubprogram for F, it implies the function is compiled
-  // without debug info. So we also don't generate debug info for the frame.
+  // If there is no DISubprogram for F, it implies the Function are not compiled
+  // with debug info. So we also don't need to generate debug info for the frame
+  // neither.
   if (!DIS || !DIS->getUnit() ||
       !dwarf::isCPlusPlus(
           (dwarf::SourceLanguage)DIS->getUnit()->getSourceLanguage()) ||

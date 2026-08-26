@@ -540,13 +540,6 @@ enabled sub-projects. Nearly all of these variable names begin with
   passed to invocations of both so that the project is built using libc++
   instead of stdlibc++. Defaults to OFF.
 
-**LLVM_ENABLE_LIBEDIT**:BOOL
-  Controls whether to enable libedit support for command-line editing and history
-  in LLVM tools. When ``ON``, forces libedit support to be enabled and will cause a
-  CMake configuration error if libedit cannot be found. When ``OFF``, disables
-  libedit support entirely. If not specified, LLVM will auto-detect libedit
-  availability. Defaults to auto-detection.
-
 **LLVM_ENABLE_LIBPFM**:BOOL
   Enable building with libpfm to support hardware counter measurements in LLVM
   tools.
@@ -717,7 +710,7 @@ enabled sub-projects. Nearly all of these variable names begin with
   For example, ar will be symlinked to llvm-ar.
 
 **LLVM_INSTALL_CCTOOLS_SYMLINKS**:BOOL
-  Install symlinks from the cctools tool names to the corresponding LLVM tools.
+  Install symliks from the cctools tool names to the corresponding LLVM tools.
   For example, lipo will be symlinked to llvm-lipo.
 
 **LLVM_INSTALL_OCAMLDOC_HTML_DIR**:STRING

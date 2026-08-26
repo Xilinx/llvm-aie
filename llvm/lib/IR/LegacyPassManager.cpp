@@ -120,7 +120,7 @@ void PMDataManager::emitInstrCountChangedRemark(
   // If no function was passed in, then we're either a module pass or an
   // CGSCC pass.
   if (!CouldOnlyImpactOneFunction)
-    llvm::for_each(M, UpdateFunctionChanges);
+    std::for_each(M.begin(), M.end(), UpdateFunctionChanges);
   else
     UpdateFunctionChanges(*F);
 
@@ -197,7 +197,9 @@ void PMDataManager::emitInstrCountChangedRemark(
   // Are we looking at more than one function? If so, emit remarks for all of
   // the functions in the module. Otherwise, only emit one remark.
   if (!CouldOnlyImpactOneFunction)
-    llvm::for_each(FunctionToInstrCount.keys(), EmitFunctionSizeChangedRemark);
+    std::for_each(FunctionToInstrCount.keys().begin(),
+                  FunctionToInstrCount.keys().end(),
+                  EmitFunctionSizeChangedRemark);
   else
     EmitFunctionSizeChangedRemark(F->getName().str());
 }

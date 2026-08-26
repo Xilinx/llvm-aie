@@ -68,11 +68,14 @@ SetVariableRequestHandler::Run(const SetVariableArguments &args) const {
       body.indexedVariables = variable.GetNumChildren();
     else
       body.namedVariables = variable.GetNumChildren();
+
+  } else {
+    body.variablesReference = 0;
   }
 
   if (const lldb::addr_t addr = variable.GetLoadAddress();
       addr != LLDB_INVALID_ADDRESS)
-    body.memoryReference = addr;
+    body.memoryReference = EncodeMemoryReference(addr);
 
   if (ValuePointsToCode(variable))
     body.valueLocationReference = new_var_ref;

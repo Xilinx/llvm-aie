@@ -17,7 +17,7 @@ func.func @entry() {
   return
 }
 
-func.func @test_deinterleave() attributes {no_inline} {
+func.func @test_deinterleave() {
   %step_vector = llvm.intr.stepvector : vector<[4]xi8>
   vector.print %step_vector : vector<[4]xi8>
   // CHECK: ( 0, 1, 2, 3, 4, 5, 6, 7 )

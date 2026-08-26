@@ -2886,20 +2886,7 @@ bool Compiler<Emitter>::VisitMaterializeTemporaryExpr(
 template <class Emitter>
 bool Compiler<Emitter>::VisitCXXBindTemporaryExpr(
     const CXXBindTemporaryExpr *E) {
-  const Expr *SubExpr = E->getSubExpr();
-
-  if (Initializing)
-    return this->delegate(SubExpr);
-
-  // Make sure we create a temporary even if we're discarding, since that will
-  // make sure we will also call the destructor.
-
-  if (!this->visit(SubExpr))
-    return false;
-
-  if (DiscardResult)
-    return this->emitPopPtr(E);
-  return true;
+  return this->delegate(E->getSubExpr());
 }
 
 template <class Emitter>
@@ -4587,23 +4574,22 @@ VarCreationState Compiler<Emitter>::visitDecl(const VarDecl *VD,
 template <class Emitter>
 bool Compiler<Emitter>::visitDeclAndReturn(const VarDecl *VD,
                                            bool ConstantContext) {
+  std::optional<PrimType> VarT = classify(VD->getType());
 
   // We only create variables if we're evaluating in a constant context.
   // Otherwise, just evaluate the initializer and return it.
   if (!ConstantContext) {
     DeclScope<Emitter> LS(this, VD);
-    const Expr *Init = VD->getInit();
-    if (!this->visit(Init))
+    if (!this->visit(VD->getAnyInitializer()))
       return false;
-    return this->emitRet(classify(Init).value_or(PT_Ptr), VD) &&
-           LS.destroyLocals() && this->emitCheckAllocations(VD);
+    return this->emitRet(VarT.value_or(PT_Ptr), VD) && LS.destroyLocals() &&
+           this->emitCheckAllocations(VD);
   }
 
   LocalScope<Emitter> VDScope(this, VD);
   if (!this->visitVarDecl(VD, /*Toplevel=*/true))
     return false;
 
-  std::optional<PrimType> VarT = classify(VD->getType());
   if (Context::shouldBeGloballyIndexed(VD)) {
     auto GlobalIndex = P.getGlobal(VD);
     assert(GlobalIndex); // visitVarDecl() didn't return false.
@@ -4912,18 +4898,6 @@ bool Compiler<Emitter>::VisitBuiltinCallExpr(const CallExpr *E,
   return true;
 }
 
-static const Expr *stripDerivedToBaseCasts(const Expr *E) {
-  if (const auto *PE = dyn_cast<ParenExpr>(E))
-    return stripDerivedToBaseCasts(PE->getSubExpr());
-
-  if (const auto *CE = dyn_cast<CastExpr>(E);
-      CE &&
-      (CE->getCastKind() == CK_DerivedToBase || CE->getCastKind() == CK_NoOp))
-    return stripDerivedToBaseCasts(CE->getSubExpr());
-
-  return E;
-}
-
 template <class Emitter>
 bool Compiler<Emitter>::VisitCallExpr(const CallExpr *E) {
   const FunctionDecl *FuncDecl = E->getDirectCallee();
@@ -5007,7 +4981,6 @@ bool Compiler<Emitter>::VisitCallExpr(const CallExpr *E) {
     }
   }
 
-  bool Devirtualized = false;
   std::optional<unsigned> CalleeOffset;
   // Add the (optional, implicit) This pointer.
   if (const auto *MC = dyn_cast<CXXMemberCallExpr>(E)) {
@@ -5026,26 +4999,8 @@ bool Compiler<Emitter>::VisitCallExpr(const CallExpr *E) {
         return false;
       if (!this->emitGetMemberPtrBase(E))
         return false;
-    } else {
-      const auto *InstancePtr = MC->getImplicitObjectArgument();
-      if (isa_and_nonnull<CXXDestructorDecl>(CompilingFunction) ||
-          isa_and_nonnull<CXXConstructorDecl>(CompilingFunction)) {
-        const auto *Stripped = stripDerivedToBaseCasts(InstancePtr);
-        if (isa<CXXThisExpr>(Stripped)) {
-          FuncDecl =
-              cast<CXXMethodDecl>(FuncDecl)->getCorrespondingMethodInClass(
-                  Stripped->getType()->getPointeeType()->getAsCXXRecordDecl());
-          Devirtualized = true;
-          if (!this->visit(Stripped))
-            return false;
-        } else {
-          if (!this->visit(InstancePtr))
-            return false;
-        }
-      } else {
-        if (!this->visit(InstancePtr))
-          return false;
-      }
+    } else if (!this->visit(MC->getImplicitObjectArgument())) {
+      return false;
     }
   } else if (const auto *PD =
                  dyn_cast<CXXPseudoDestructorExpr>(E->getCallee())) {
@@ -5091,7 +5046,7 @@ bool Compiler<Emitter>::VisitCallExpr(const CallExpr *E) {
 
     bool IsVirtual = false;
     if (const auto *MD = dyn_cast<CXXMethodDecl>(FuncDecl))
-      IsVirtual = !Devirtualized && MD->isVirtual();
+      IsVirtual = MD->isVirtual();
 
     // In any case call the function. The return value will end up on the stack
     // and if the function has RVO, we already have the pointer on the stack to
@@ -5319,7 +5274,7 @@ bool Compiler<Emitter>::visitCompoundStmt(const CompoundStmt *S) {
 template <class Emitter>
 bool Compiler<Emitter>::maybeEmitDeferredVarInit(const VarDecl *VD) {
   if (auto *DD = dyn_cast_if_present<DecompositionDecl>(VD)) {
-    for (auto *BD : DD->flat_bindings())
+    for (auto *BD : DD->bindings())
       if (auto *KD = BD->getHoldingVar(); KD && !this->visitVarDecl(KD))
         return false;
   }
@@ -5589,6 +5544,7 @@ bool Compiler<Emitter>::visitCXXForRangeStmt(const CXXForRangeStmt *S) {
   const Stmt *BeginStmt = S->getBeginStmt();
   const Stmt *RangeStmt = S->getRangeStmt();
   const Stmt *EndStmt = S->getEndStmt();
+  const VarDecl *LoopVar = S->getLoopVariable();
 
   LabelTy EndLabel = this->getLabel();
   LabelTy CondLabel = this->getLabel();
@@ -5613,7 +5569,7 @@ bool Compiler<Emitter>::visitCXXForRangeStmt(const CXXForRangeStmt *S) {
   if (!this->jumpFalse(EndLabel))
     return false;
 
-  if (!this->visitDeclStmt(S->getLoopVarStmt(), /*EvaluateConditionDecl=*/true))
+  if (!this->visitVarDecl(LoopVar))
     return false;
 
   // Body.
@@ -5660,9 +5616,6 @@ bool Compiler<Emitter>::visitContinueStmt(const ContinueStmt *S) {
 template <class Emitter>
 bool Compiler<Emitter>::visitSwitchStmt(const SwitchStmt *S) {
   const Expr *Cond = S->getCond();
-  if (Cond->containsErrors())
-    return false;
-
   PrimType CondT = this->classifyPrim(Cond->getType());
   LocalScope<Emitter> LS(this);
 
@@ -5882,8 +5835,6 @@ bool Compiler<Emitter>::compileConstructor(const CXXConstructorDecl *Ctor) {
     return false;
 
   if (R->isUnion() && Ctor->isCopyOrMoveConstructor()) {
-    if (R->getNumFields() == 0)
-      return this->emitRetVoid(Ctor);
     // union copy and move ctors are special.
     assert(cast<CompoundStmt>(Ctor->getBody())->body_empty());
     if (!this->emitThis(Ctor))
@@ -6057,8 +6008,6 @@ template <class Emitter>
 bool Compiler<Emitter>::visitFunc(const FunctionDecl *F) {
   // Classify the return type.
   ReturnType = this->classify(F->getReturnType());
-
-  this->CompilingFunction = F;
 
   if (const auto *Ctor = dyn_cast<CXXConstructorDecl>(F))
     return this->compileConstructor(Ctor);
@@ -6532,13 +6481,14 @@ bool Compiler<Emitter>::visitDeclRef(const ValueDecl *D, const Expr *E) {
   if (DiscardResult)
     return true;
 
-  if (const auto *ECD = dyn_cast<EnumConstantDecl>(D))
+  if (const auto *ECD = dyn_cast<EnumConstantDecl>(D)) {
     return this->emitConst(ECD->getInitVal(), E);
-  if (const auto *FuncDecl = dyn_cast<FunctionDecl>(D)) {
+  } else if (const auto *BD = dyn_cast<BindingDecl>(D)) {
+    return this->visit(BD->getBinding());
+  } else if (const auto *FuncDecl = dyn_cast<FunctionDecl>(D)) {
     const Function *F = getFunction(FuncDecl);
     return F && this->emitGetFnPtr(F, E);
-  }
-  if (const auto *TPOD = dyn_cast<TemplateParamObjectDecl>(D)) {
+  } else if (const auto *TPOD = dyn_cast<TemplateParamObjectDecl>(D)) {
     if (std::optional<unsigned> Index = P.getOrCreateGlobal(D)) {
       if (!this->emitGetPtrGlobal(*Index, E))
         return false;
@@ -6559,15 +6509,13 @@ bool Compiler<Emitter>::visitDeclRef(const ValueDecl *D, const Expr *E) {
   // value.
   bool IsReference = D->getType()->isReferenceType();
 
-  // Local variables.
+  // Check for local/global variables and parameters.
   if (auto It = Locals.find(D); It != Locals.end()) {
     const unsigned Offset = It->second.Offset;
     if (IsReference)
       return this->emitGetLocal(classifyPrim(E), Offset, E);
     return this->emitGetPtrLocal(Offset, E);
-  }
-  // Global variables.
-  if (auto GlobalIndex = P.getGlobal(D)) {
+  } else if (auto GlobalIndex = P.getGlobal(D)) {
     if (IsReference) {
       if (!Ctx.getLangOpts().CPlusPlus11)
         return this->emitGetGlobal(classifyPrim(E), *GlobalIndex, E);
@@ -6575,9 +6523,7 @@ bool Compiler<Emitter>::visitDeclRef(const ValueDecl *D, const Expr *E) {
     }
 
     return this->emitGetPtrGlobal(*GlobalIndex, E);
-  }
-  // Function parameters.
-  if (const auto *PVD = dyn_cast<ParmVarDecl>(D)) {
+  } else if (const auto *PVD = dyn_cast<ParmVarDecl>(D)) {
     if (auto It = this->Params.find(PVD); It != this->Params.end()) {
       if (IsReference || !It->second.IsPtr)
         return this->emitGetParam(classifyPrim(E), It->second.Offset, E);
@@ -6603,7 +6549,7 @@ bool Compiler<Emitter>::visitDeclRef(const ValueDecl *D, const Expr *E) {
     return this->visitDeclRef(D, E);
   };
 
-  // Lambda captures.
+  // Handle lambda captures.
   if (auto It = this->LambdaCaptures.find(D);
       It != this->LambdaCaptures.end()) {
     auto [Offset, IsPtr] = It->second;
@@ -6611,16 +6557,11 @@ bool Compiler<Emitter>::visitDeclRef(const ValueDecl *D, const Expr *E) {
     if (IsPtr)
       return this->emitGetThisFieldPtr(Offset, E);
     return this->emitGetPtrThisField(Offset, E);
-  }
-
-  if (const auto *DRE = dyn_cast<DeclRefExpr>(E);
-      DRE && DRE->refersToEnclosingVariableOrCapture()) {
+  } else if (const auto *DRE = dyn_cast<DeclRefExpr>(E);
+             DRE && DRE->refersToEnclosingVariableOrCapture()) {
     if (const auto *VD = dyn_cast<VarDecl>(D); VD && VD->isInitCapture())
       return revisit(VD);
   }
-
-  if (const auto *BD = dyn_cast<BindingDecl>(D))
-    return this->visit(BD->getBinding());
 
   // Avoid infinite recursion.
   if (D == InitializingDecl)
@@ -6674,7 +6615,7 @@ bool Compiler<Emitter>::visitDeclRef(const ValueDecl *D, const Expr *E) {
     if (VD->evaluateValue())
       return revisit(VD);
 
-    if (!IsReference)
+    if (!D->getType()->isReferenceType())
       return this->emitDummyPtr(D, E);
 
     return this->emitInvalidDeclRef(cast<DeclRefExpr>(E),

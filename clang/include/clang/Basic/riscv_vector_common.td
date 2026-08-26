@@ -591,8 +591,11 @@ class RVVMaskOp0Builtin<string prototype> : RVVOp0Builtin<"m", prototype, "c"> {
 let UnMaskedPolicyScheme = HasPolicyOperand,
     HasMaskedOffOperand = false in {
   multiclass RVVSlideUpBuiltinSet {
-    defm "" : RVVOutBuiltinSet<NAME, "csilxfdy",
+    defm "" : RVVOutBuiltinSet<NAME, "csilfd",
                                [["vx","v", "vvvz"]]>;
+    let RequiredFeatures = ["zvfhmin"] in
+      defm "" : RVVOutBuiltinSet<NAME, "x",
+                                 [["vx","v", "vvvz"]]>;
     defm "" : RVVOutBuiltinSet<NAME, "csil",
                                [["vx","Uv", "UvUvUvz"]]>;
   }
@@ -613,8 +616,11 @@ let UnMaskedPolicyScheme = HasPassthruOperand,
       IntrinsicTypes = {ResultType, Ops.back()->getType()};
     }] in {
   multiclass RVVSlideDownBuiltinSet {
-    defm "" : RVVOutBuiltinSet<NAME, "csilxfdy",
+    defm "" : RVVOutBuiltinSet<NAME, "csilfd",
                                [["vx","v", "vvz"]]>;
+    let RequiredFeatures = ["zvfhmin"] in
+      defm "" : RVVOutBuiltinSet<NAME, "x",
+                                 [["vx","v", "vvz"]]>;
     defm "" : RVVOutBuiltinSet<NAME, "csil",
                                [["vx","Uv", "UvUvz"]]>;
   }

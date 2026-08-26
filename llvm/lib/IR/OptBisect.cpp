@@ -37,15 +37,15 @@ static cl::opt<bool> OptBisectVerbose(
     cl::desc("Show verbose output when opt-bisect-limit is set"), cl::Hidden,
     cl::init(true), cl::Optional);
 
-static void printPassMessage(StringRef Name, int PassNum, StringRef TargetDesc,
-                             bool Running) {
+static void printPassMessage(const StringRef &Name, int PassNum,
+                             StringRef TargetDesc, bool Running) {
   StringRef Status = Running ? "" : "NOT ";
-  errs() << "BISECT: " << Status << "running pass (" << PassNum << ") " << Name
-         << " on " << TargetDesc << '\n';
+  errs() << "BISECT: " << Status << "running pass "
+         << "(" << PassNum << ") " << Name << " on " << TargetDesc << "\n";
 }
 
-bool OptBisect::shouldRunPass(StringRef PassName,
-                              StringRef IRDescription) const {
+bool OptBisect::shouldRunPass(const StringRef PassName,
+                              StringRef IRDescription) {
   assert(isEnabled());
 
   int CurBisectNum = ++LastBisectNum;
@@ -54,5 +54,7 @@ bool OptBisect::shouldRunPass(StringRef PassName,
     printPassMessage(PassName, CurBisectNum, IRDescription, ShouldRun);
   return ShouldRun;
 }
+
+const int OptBisect::Disabled;
 
 OptPassGate &llvm::getGlobalPassGate() { return getOptBisector(); }

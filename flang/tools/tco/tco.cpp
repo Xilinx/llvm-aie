@@ -70,11 +70,6 @@ static cl::opt<bool> codeGenLLVM(
     cl::desc("Run only CodeGen passes and translate FIR to LLVM IR"),
     cl::init(false));
 
-static cl::opt<bool> emitFinalMLIR(
-    "emit-final-mlir",
-    cl::desc("Only translate FIR to MLIR, do not lower to LLVM IR"),
-    cl::init(false));
-
 #include "flang/Optimizer/Passes/CommandLineOpts.h"
 #include "flang/Optimizer/Passes/Pipelines.h"
 
@@ -154,15 +149,13 @@ compileFIR(const mlir::PassPipelineCLParser &passPipeline) {
       fir::registerDefaultInlinerPass(config);
       fir::createMLIRToLLVMPassPipeline(pm, config);
     }
-    if (!emitFinalMLIR)
-      fir::addLLVMDialectToLLVMPass(pm, out.os());
+    fir::addLLVMDialectToLLVMPass(pm, out.os());
   }
 
   // run the pass manager
   if (mlir::succeeded(pm.run(*owningRef))) {
     // passes ran successfully, so keep the output
-    if ((emitFir || passPipeline.hasAnyOccurrences() || emitFinalMLIR) &&
-        !codeGenLLVM)
+    if ((emitFir || passPipeline.hasAnyOccurrences()) && !codeGenLLVM)
       printModule(*owningRef, out.os());
     out.keep();
     return mlir::success();

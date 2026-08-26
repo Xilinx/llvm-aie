@@ -6,9 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_ASYNC_ASYNC_WORK_GROUP_COPY_H__
-#define __CLC_OPENCL_ASYNC_ASYNC_WORK_GROUP_COPY_H__
-
 #define __CLC_DST_ADDR_SPACE local
 #define __CLC_SRC_ADDR_SPACE global
 #define __CLC_BODY <clc/opencl/async/async_work_group_copy.inc>
@@ -26,5 +23,3 @@
 #include <clc/math/gentype.inc>
 #undef __CLC_DST_ADDR_SPACE
 #undef __CLC_SRC_ADDR_SPACE
-
-#endif // __CLC_OPENCL_ASYNC_ASYNC_WORK_GROUP_COPY_H__

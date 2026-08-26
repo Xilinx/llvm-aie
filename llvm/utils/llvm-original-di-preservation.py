@@ -13,8 +13,7 @@ from collections import OrderedDict
 
 
 class DILocBug:
-    def __init__(self, origin, action, bb_name, fn_name, instr):
-        self.origin = origin
+    def __init__(self, action, bb_name, fn_name, instr):
         self.action = action
         self.bb_name = bb_name
         self.fn_name = fn_name
@@ -80,15 +79,6 @@ def generate_html_report(
         table_title_di_loc
     )
 
-    # If any DILocation bug has an origin stack trace, we emit an extra column in the table, which we must therefore
-    # determine up-front.
-    has_origin_col = any(
-        x.origin is not None
-        for per_file_bugs in di_location_bugs.values()
-        for per_pass_bugs in per_file_bugs.values()
-        for x in per_pass_bugs
-    )
-
     header_di_loc = [
         "File",
         "LLVM Pass Name",
@@ -97,8 +87,6 @@ def generate_html_report(
         "Basic Block Name",
         "Action",
     ]
-    if has_origin_col:
-        header_di_loc.append("Origin")
 
     for column in header_di_loc:
         table_di_loc += "    <th>{0}</th>\n".format(column.strip())
@@ -124,13 +112,6 @@ def generate_html_report(
                 row.append(x.fn_name)
                 row.append(x.bb_name)
                 row.append(x.action)
-                if has_origin_col:
-                    if x.origin is not None:
-                        row.append(
-                            f"<details><summary>View Origin StackTrace</summary><pre>{x.origin}</pre></details>"
-                        )
-                    else:
-                        row.append("")
                 row.append("    </tr>\n")
             # Dump the bugs info into the table.
             for column in row:
@@ -447,9 +428,9 @@ def Main():
         sys.exit(1)
 
     # Use the defaultdict in order to make multidim dicts.
-    di_location_bugs = defaultdict(lambda: defaultdict(list))
-    di_subprogram_bugs = defaultdict(lambda: defaultdict(list))
-    di_variable_bugs = defaultdict(lambda: defaultdict(list))
+    di_location_bugs = defaultdict(lambda: defaultdict(dict))
+    di_subprogram_bugs = defaultdict(lambda: defaultdict(dict))
+    di_variable_bugs = defaultdict(lambda: defaultdict(dict))
 
     # Use the ordered dict to make a summary.
     di_location_bugs_summary = OrderedDict()
@@ -489,9 +470,9 @@ def Main():
                 skipped_lines += 1
                 continue
 
-            di_loc_bugs = di_location_bugs[bugs_file][bugs_pass]
-            di_sp_bugs = di_subprogram_bugs[bugs_file][bugs_pass]
-            di_var_bugs = di_variable_bugs[bugs_file][bugs_pass]
+            di_loc_bugs = []
+            di_sp_bugs = []
+            di_var_bugs = []
 
             # Omit duplicated bugs.
             di_loc_set = set()
@@ -506,7 +487,6 @@ def Main():
 
                 if bugs_metadata == "DILocation":
                     try:
-                        origin = bug.get("origin")
                         action = bug["action"]
                         bb_name = bug["bb-name"]
                         fn_name = bug["fn-name"]
@@ -514,7 +494,7 @@ def Main():
                     except:
                         skipped_bugs += 1
                         continue
-                    di_loc_bug = DILocBug(origin, action, bb_name, fn_name, instr)
+                    di_loc_bug = DILocBug(action, bb_name, fn_name, instr)
                     if not str(di_loc_bug) in di_loc_set:
                         di_loc_set.add(str(di_loc_bug))
                         if opts.compress:

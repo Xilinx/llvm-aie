@@ -63,9 +63,9 @@ readDescriptorRanges(DXContainerYAML::RootParameterHeaderYaml &Header,
     NewR.RangeType = R.RangeType;
     if constexpr (std::is_same_v<T, dxbc::RTS0::v2::DescriptorRange>) {
       // Set all flag fields for v2
-#define DESCRIPTOR_RANGE_FLAG(Num, Enum, Flag)                                 \
-  NewR.Enum =                                                                  \
-      (R.Flags & llvm::to_underlying(dxbc::DescriptorRangeFlags::Enum)) != 0;
+#define DESCRIPTOR_RANGE_FLAG(Num, Val)                                        \
+  NewR.Val =                                                                   \
+      (R.Flags & llvm::to_underlying(dxbc::DescriptorRangeFlag::Val)) != 0;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
     }
     TableYaml.Ranges.push_back(NewR);
@@ -140,10 +140,10 @@ DXContainerYAML::RootSignatureYamlDesc::create(
       YamlDescriptor.ShaderRegister = Descriptor.ShaderRegister;
       YamlDescriptor.RegisterSpace = Descriptor.RegisterSpace;
       if (Version > 1) {
-#define ROOT_DESCRIPTOR_FLAG(Num, Enum, Flag)                                  \
-  YamlDescriptor.Enum =                                                        \
+#define ROOT_DESCRIPTOR_FLAG(Num, Val)                                         \
+  YamlDescriptor.Val =                                                         \
       (Descriptor.Flags &                                                      \
-       llvm::to_underlying(dxbc::RootDescriptorFlags::Enum)) > 0;
+       llvm::to_underlying(dxbc::RootDescriptorFlag::Val)) > 0;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
       }
     } else if (auto *DTV =
@@ -180,37 +180,38 @@ DXContainerYAML::RootSignatureYamlDesc::create(
     RootSigDesc.StaticSamplers.push_back(NewS);
   }
 
-#define ROOT_SIGNATURE_FLAG(Num, Val)                                          \
-  RootSigDesc.Val = (Flags & llvm::to_underlying(dxbc::RootFlags::Val)) > 0;
+#define ROOT_ELEMENT_FLAG(Num, Val)                                            \
+  RootSigDesc.Val =                                                            \
+      (Flags & llvm::to_underlying(dxbc::RootElementFlag::Val)) > 0;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
   return RootSigDesc;
 }
 
 uint32_t DXContainerYAML::RootDescriptorYaml::getEncodedFlags() const {
-  uint64_t Flags = 0;
-#define ROOT_DESCRIPTOR_FLAG(Num, Enum, Flag)                                  \
-  if (Enum)                                                                    \
-    Flags |= (uint32_t)dxbc::RootDescriptorFlags::Enum;
+  uint64_t Flag = 0;
+#define ROOT_DESCRIPTOR_FLAG(Num, Val)                                         \
+  if (Val)                                                                     \
+    Flag |= (uint32_t)dxbc::RootDescriptorFlag::Val;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
-  return Flags;
+  return Flag;
 }
 
 uint32_t DXContainerYAML::RootSignatureYamlDesc::getEncodedFlags() {
   uint64_t Flag = 0;
-#define ROOT_SIGNATURE_FLAG(Num, Val)                                          \
+#define ROOT_ELEMENT_FLAG(Num, Val)                                            \
   if (Val)                                                                     \
-    Flag |= (uint32_t)dxbc::RootFlags::Val;
+    Flag |= (uint32_t)dxbc::RootElementFlag::Val;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
   return Flag;
 }
 
 uint32_t DXContainerYAML::DescriptorRangeYaml::getEncodedFlags() const {
-  uint64_t Flags = 0;
-#define DESCRIPTOR_RANGE_FLAG(Num, Enum, Flag)                                 \
-  if (Enum)                                                                    \
-    Flags |= (uint32_t)dxbc::DescriptorRangeFlags::Enum;
+  uint64_t Flag = 0;
+#define DESCRIPTOR_RANGE_FLAG(Num, Val)                                        \
+  if (Val)                                                                     \
+    Flag |= (uint32_t)dxbc::DescriptorRangeFlag::Val;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
-  return Flags;
+  return Flag;
 }
 
 uint64_t DXContainerYAML::ShaderFeatureFlags::getEncodedFlags() {
@@ -381,7 +382,7 @@ void MappingTraits<DXContainerYAML::RootSignatureYamlDesc>::mapping(
   IO.mapRequired("StaticSamplersOffset", S.StaticSamplersOffset);
   IO.mapRequired("Parameters", S.Parameters.Locations, S);
   IO.mapOptional("Samplers", S.StaticSamplers);
-#define ROOT_SIGNATURE_FLAG(Num, Val) IO.mapOptional(#Val, S.Val, false);
+#define ROOT_ELEMENT_FLAG(Num, Val) IO.mapOptional(#Val, S.Val, false);
 #include "llvm/BinaryFormat/DXContainerConstants.def"
 }
 
@@ -405,8 +406,7 @@ void MappingTraits<llvm::DXContainerYAML::DescriptorRangeYaml>::mapping(
   IO.mapRequired("RegisterSpace", R.RegisterSpace);
   IO.mapRequired("OffsetInDescriptorsFromTableStart",
                  R.OffsetInDescriptorsFromTableStart);
-#define DESCRIPTOR_RANGE_FLAG(Num, Enum, Flag)                                 \
-  IO.mapOptional(#Flag, R.Enum, false);
+#define DESCRIPTOR_RANGE_FLAG(Num, Val) IO.mapOptional(#Val, R.Val, false);
 #include "llvm/BinaryFormat/DXContainerConstants.def"
 }
 
@@ -459,8 +459,7 @@ void MappingTraits<llvm::DXContainerYAML::RootDescriptorYaml>::mapping(
     IO &IO, llvm::DXContainerYAML::RootDescriptorYaml &D) {
   IO.mapRequired("RegisterSpace", D.RegisterSpace);
   IO.mapRequired("ShaderRegister", D.ShaderRegister);
-#define ROOT_DESCRIPTOR_FLAG(Num, Enum, Flag)                                  \
-  IO.mapOptional(#Flag, D.Enum, false);
+#define ROOT_DESCRIPTOR_FLAG(Num, Val) IO.mapOptional(#Val, D.Val, false);
 #include "llvm/BinaryFormat/DXContainerConstants.def"
 }
 

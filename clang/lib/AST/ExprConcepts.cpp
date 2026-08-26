@@ -23,6 +23,7 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
+#include <algorithm>
 
 using namespace clang;
 

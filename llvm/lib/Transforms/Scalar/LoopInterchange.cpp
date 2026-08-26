@@ -244,9 +244,11 @@ static void interChangeDependencies(CharMatrix &DepMatrix, unsigned FromIndx,
 // [Theorem] A permutation of the loops in a perfect nest is legal if and only
 // if the direction matrix, after the same permutation is applied to its
 // columns, has no ">" direction as the leftmost non-"=" direction in any row.
-static std::optional<bool>
-isLexicographicallyPositive(ArrayRef<char> DV, unsigned Begin, unsigned End) {
-  for (unsigned char Direction : DV.slice(Begin, End - Begin)) {
+static std::optional<bool> isLexicographicallyPositive(std::vector<char> &DV,
+                                                       unsigned Begin,
+                                                       unsigned End) {
+  ArrayRef<char> DVRef(DV);
+  for (unsigned char Direction : DVRef.slice(Begin, End - Begin)) {
     if (Direction == '<')
       return true;
     if (Direction == '>' || Direction == '*')
@@ -307,18 +309,18 @@ static void populateWorklist(Loop &L, LoopVector &LoopList) {
   LoopList.push_back(CurrentLoop);
 }
 
-static bool hasSupportedLoopDepth(ArrayRef<Loop *> LoopList,
+static bool hasSupportedLoopDepth(SmallVectorImpl<Loop *> &LoopList,
                                   OptimizationRemarkEmitter &ORE) {
   unsigned LoopNestDepth = LoopList.size();
   if (LoopNestDepth < MinLoopNestDepth || LoopNestDepth > MaxLoopNestDepth) {
     LLVM_DEBUG(dbgs() << "Unsupported depth of loop nest " << LoopNestDepth
                       << ", the supported range is [" << MinLoopNestDepth
                       << ", " << MaxLoopNestDepth << "].\n");
-    Loop *OuterLoop = LoopList.front();
+    Loop **OuterLoop = LoopList.begin();
     ORE.emit([&]() {
       return OptimizationRemarkMissed(DEBUG_TYPE, "UnsupportedLoopNestDepth",
-                                      OuterLoop->getStartLoc(),
-                                      OuterLoop->getHeader())
+                                      (*OuterLoop)->getStartLoc(),
+                                      (*OuterLoop)->getHeader())
              << "Unsupported depth of loop nest, the supported range is ["
              << std::to_string(MinLoopNestDepth) << ", "
              << std::to_string(MaxLoopNestDepth) << "].\n";
@@ -375,7 +377,7 @@ public:
     return OuterInnerReductions;
   }
 
-  const ArrayRef<PHINode *> getInnerLoopInductions() const {
+  const SmallVectorImpl<PHINode *> &getInnerLoopInductions() const {
     return InnerLoopInductions;
   }
 
@@ -407,32 +409,6 @@ private:
   SmallVector<PHINode *, 8> InnerLoopInductions;
 };
 
-/// Manages information utilized by the profitability check for cache. The main
-/// purpose of this class is to delay the computation of CacheCost until it is
-/// actually needed.
-class CacheCostManager {
-  Loop *OutermostLoop;
-  LoopStandardAnalysisResults *AR;
-  DependenceInfo *DI;
-
-  /// CacheCost for \ref OutermostLoop. Once it is computed, it is cached. Note
-  /// that the result can be nullptr.
-  std::optional<std::unique_ptr<CacheCost>> CC;
-
-  /// Maps each loop to an index representing the optimal position within the
-  /// loop-nest, as determined by the cache cost analysis.
-  DenseMap<const Loop *, unsigned> CostMap;
-
-  void computeIfUnitinialized();
-
-public:
-  CacheCostManager(Loop *OutermostLoop, LoopStandardAnalysisResults *AR,
-                   DependenceInfo *DI)
-      : OutermostLoop(OutermostLoop), AR(AR), DI(DI) {}
-  CacheCost *getCacheCost();
-  const DenseMap<const Loop *, unsigned> &getCostMap();
-};
-
 /// LoopInterchangeProfitability checks if it is profitable to interchange the
 /// loop.
 class LoopInterchangeProfitability {
@@ -444,12 +420,15 @@ public:
   /// Check if the loop interchange is profitable.
   bool isProfitable(const Loop *InnerLoop, const Loop *OuterLoop,
                     unsigned InnerLoopId, unsigned OuterLoopId,
-                    CharMatrix &DepMatrix, CacheCostManager &CCM);
+                    CharMatrix &DepMatrix,
+                    const DenseMap<const Loop *, unsigned> &CostMap,
+                    std::unique_ptr<CacheCost> &CC);
 
 private:
   int getInstrOrderCost();
   std::optional<bool> isProfitablePerLoopCacheAnalysis(
-      const DenseMap<const Loop *, unsigned> &CostMap, CacheCost *CC);
+      const DenseMap<const Loop *, unsigned> &CostMap,
+      std::unique_ptr<CacheCost> &CC);
   std::optional<bool> isProfitablePerInstrOrderCost();
   std::optional<bool> isProfitableForVectorization(unsigned InnerLoopId,
                                                    unsigned OuterLoopId,
@@ -500,15 +479,15 @@ struct LoopInterchange {
   LoopInfo *LI = nullptr;
   DependenceInfo *DI = nullptr;
   DominatorTree *DT = nullptr;
-  LoopStandardAnalysisResults *AR = nullptr;
+  std::unique_ptr<CacheCost> CC = nullptr;
 
   /// Interface to emit optimization remarks.
   OptimizationRemarkEmitter *ORE;
 
   LoopInterchange(ScalarEvolution *SE, LoopInfo *LI, DependenceInfo *DI,
-                  DominatorTree *DT, LoopStandardAnalysisResults *AR,
+                  DominatorTree *DT, std::unique_ptr<CacheCost> &CC,
                   OptimizationRemarkEmitter *ORE)
-      : SE(SE), LI(LI), DI(DI), DT(DT), AR(AR), ORE(ORE) {}
+      : SE(SE), LI(LI), DI(DI), DT(DT), CC(std::move(CC)), ORE(ORE) {}
 
   bool run(Loop *L) {
     if (L->getParentLoop())
@@ -563,7 +542,21 @@ struct LoopInterchange {
     }
 
     unsigned SelecLoopId = selectLoopForInterchange(LoopList);
-    CacheCostManager CCM(LoopList[0], AR, DI);
+    // Obtain the loop vector returned from loop cache analysis beforehand,
+    // and put each <Loop, index> pair into a map for constant time query
+    // later. Indices in loop vector reprsent the optimal order of the
+    // corresponding loop, e.g., given a loopnest with depth N, index 0
+    // indicates the loop should be placed as the outermost loop and index N
+    // indicates the loop should be placed as the innermost loop.
+    //
+    // For the old pass manager CacheCost would be null.
+    DenseMap<const Loop *, unsigned> CostMap;
+    if (CC != nullptr) {
+      const auto &LoopCosts = CC->getLoopCosts();
+      for (unsigned i = 0; i < LoopCosts.size(); i++) {
+        CostMap[LoopCosts[i].first] = i;
+      }
+    }
     // We try to achieve the globally optimal memory access for the loopnest,
     // and do interchange based on a bubble-sort fasion. We start from
     // the innermost loop, move it outwards to the best possible position
@@ -572,7 +565,7 @@ struct LoopInterchange {
       bool ChangedPerIter = false;
       for (unsigned i = SelecLoopId; i > SelecLoopId - j; i--) {
         bool Interchanged =
-            processLoop(LoopList, i, i - 1, DependencyMatrix, CCM);
+            processLoop(LoopList, i, i - 1, DependencyMatrix, CostMap);
         ChangedPerIter |= Interchanged;
         Changed |= Interchanged;
       }
@@ -587,7 +580,7 @@ struct LoopInterchange {
   bool processLoop(SmallVectorImpl<Loop *> &LoopList, unsigned InnerLoopId,
                    unsigned OuterLoopId,
                    std::vector<std::vector<char>> &DependencyMatrix,
-                   CacheCostManager &CCM) {
+                   const DenseMap<const Loop *, unsigned> &CostMap) {
     Loop *OuterLoop = LoopList[OuterLoopId];
     Loop *InnerLoop = LoopList[InnerLoopId];
     LLVM_DEBUG(dbgs() << "Processing InnerLoopId = " << InnerLoopId
@@ -600,7 +593,7 @@ struct LoopInterchange {
     LLVM_DEBUG(dbgs() << "Loops are legal to interchange\n");
     LoopInterchangeProfitability LIP(OuterLoop, InnerLoop, SE, ORE);
     if (!LIP.isProfitable(InnerLoop, OuterLoop, InnerLoopId, OuterLoopId,
-                          DependencyMatrix, CCM)) {
+                          DependencyMatrix, CostMap, CC)) {
       LLVM_DEBUG(dbgs() << "Interchanging loops not profitable.\n");
       return false;
     }
@@ -979,8 +972,8 @@ areInnerLoopExitPHIsSupported(Loop *InnerL, Loop *OuterL,
 static bool areOuterLoopExitPHIsSupported(Loop *OuterLoop, Loop *InnerLoop) {
   BasicBlock *LoopNestExit = OuterLoop->getUniqueExitBlock();
   for (PHINode &PHI : LoopNestExit->phis()) {
-    for (Value *Incoming : PHI.incoming_values()) {
-      Instruction *IncomingI = dyn_cast<Instruction>(Incoming);
+    for (unsigned i = 0; i < PHI.getNumIncomingValues(); i++) {
+      Instruction *IncomingI = dyn_cast<Instruction>(PHI.getIncomingValue(i));
       if (!IncomingI || IncomingI->getParent() != OuterLoop->getLoopLatch())
         continue;
 
@@ -1133,49 +1126,21 @@ bool LoopInterchangeLegality::canInterchangeLoops(unsigned InnerLoopId,
   return true;
 }
 
-void CacheCostManager::computeIfUnitinialized() {
-  if (CC.has_value())
-    return;
-
-  LLVM_DEBUG(dbgs() << "Compute CacheCost.\n");
-  CC = CacheCost::getCacheCost(*OutermostLoop, *AR, *DI);
-  // Obtain the loop vector returned from loop cache analysis beforehand,
-  // and put each <Loop, index> pair into a map for constant time query
-  // later. Indices in loop vector reprsent the optimal order of the
-  // corresponding loop, e.g., given a loopnest with depth N, index 0
-  // indicates the loop should be placed as the outermost loop and index N
-  // indicates the loop should be placed as the innermost loop.
-  //
-  // For the old pass manager CacheCost would be null.
-  if (*CC != nullptr)
-    for (const auto &[Idx, Cost] : enumerate((*CC)->getLoopCosts()))
-      CostMap[Cost.first] = Idx;
-}
-
-CacheCost *CacheCostManager::getCacheCost() {
-  computeIfUnitinialized();
-  return CC->get();
-}
-
-const DenseMap<const Loop *, unsigned> &CacheCostManager::getCostMap() {
-  computeIfUnitinialized();
-  return CostMap;
-}
-
 int LoopInterchangeProfitability::getInstrOrderCost() {
   unsigned GoodOrder, BadOrder;
   BadOrder = GoodOrder = 0;
   for (BasicBlock *BB : InnerLoop->blocks()) {
     for (Instruction &Ins : *BB) {
       if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&Ins)) {
+        unsigned NumOp = GEP->getNumOperands();
         bool FoundInnerInduction = false;
         bool FoundOuterInduction = false;
-        for (Value *Op : GEP->operands()) {
+        for (unsigned i = 0; i < NumOp; ++i) {
           // Skip operands that are not SCEV-able.
-          if (!SE->isSCEVable(Op->getType()))
+          if (!SE->isSCEVable(GEP->getOperand(i)->getType()))
             continue;
 
-          const SCEV *OperandVal = SE->getSCEV(Op);
+          const SCEV *OperandVal = SE->getSCEV(GEP->getOperand(i));
           const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(OperandVal);
           if (!AR)
             continue;
@@ -1217,7 +1182,8 @@ int LoopInterchangeProfitability::getInstrOrderCost() {
 
 std::optional<bool>
 LoopInterchangeProfitability::isProfitablePerLoopCacheAnalysis(
-    const DenseMap<const Loop *, unsigned> &CostMap, CacheCost *CC) {
+    const DenseMap<const Loop *, unsigned> &CostMap,
+    std::unique_ptr<CacheCost> &CC) {
   // This is the new cost model returned from loop cache analysis.
   // A smaller index means the loop should be placed an outer loop, and vice
   // versa.
@@ -1254,8 +1220,8 @@ LoopInterchangeProfitability::isProfitablePerInstrOrderCost() {
 
 /// Return true if we can vectorize the loop specified by \p LoopId.
 static bool canVectorize(const CharMatrix &DepMatrix, unsigned LoopId) {
-  for (const auto &Dep : DepMatrix) {
-    char Dir = Dep[LoopId];
+  for (unsigned I = 0; I != DepMatrix.size(); I++) {
+    char Dir = DepMatrix[I][LoopId];
     if (Dir != 'I' && Dir != '=')
       return false;
   }
@@ -1285,7 +1251,9 @@ std::optional<bool> LoopInterchangeProfitability::isProfitableForVectorization(
 
 bool LoopInterchangeProfitability::isProfitable(
     const Loop *InnerLoop, const Loop *OuterLoop, unsigned InnerLoopId,
-    unsigned OuterLoopId, CharMatrix &DepMatrix, CacheCostManager &CCM) {
+    unsigned OuterLoopId, CharMatrix &DepMatrix,
+    const DenseMap<const Loop *, unsigned> &CostMap,
+    std::unique_ptr<CacheCost> &CC) {
   // isProfitable() is structured to avoid endless loop interchange. If the
   // highest priority rule (isProfitablePerLoopCacheAnalysis by default) could
   // decide the profitability then, profitability check will stop and return the
@@ -1298,12 +1266,9 @@ bool LoopInterchangeProfitability::isProfitable(
   std::optional<bool> shouldInterchange;
   for (RuleTy RT : Profitabilities) {
     switch (RT) {
-    case RuleTy::PerLoopCacheAnalysis: {
-      CacheCost *CC = CCM.getCacheCost();
-      const DenseMap<const Loop *, unsigned> &CostMap = CCM.getCostMap();
+    case RuleTy::PerLoopCacheAnalysis:
       shouldInterchange = isProfitablePerLoopCacheAnalysis(CostMap, CC);
       break;
-    }
     case RuleTy::PerInstrOrderCost:
       shouldInterchange = isProfitablePerInstrOrderCost();
       break;
@@ -1881,7 +1846,10 @@ PreservedAnalyses LoopInterchangePass::run(LoopNest &LN,
   });
 
   DependenceInfo DI(&F, &AR.AA, &AR.SE, &AR.LI);
-  if (!LoopInterchange(&AR.SE, &AR.LI, &DI, &AR.DT, &AR, &ORE).run(LN))
+  std::unique_ptr<CacheCost> CC =
+      CacheCost::getCacheCost(LN.getOutermostLoop(), AR, DI);
+
+  if (!LoopInterchange(&AR.SE, &AR.LI, &DI, &AR.DT, CC, &ORE).run(LN))
     return PreservedAnalyses::all();
   U.markLoopNestChanged(true);
   return getLoopPassPreservedAnalyses();

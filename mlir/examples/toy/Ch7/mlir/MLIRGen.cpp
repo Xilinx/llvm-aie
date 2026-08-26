@@ -182,7 +182,7 @@ private:
         return nullptr;
       argTypes.push_back(type);
     }
-    auto funcType = builder.getFunctionType(argTypes, /*results=*/{});
+    auto funcType = builder.getFunctionType(argTypes, std::nullopt);
     return builder.create<mlir::toy::FuncOp>(location, proto.getName(),
                                              funcType);
   }
@@ -441,10 +441,10 @@ private:
     for (auto &var : lit.getValues()) {
       if (auto *number = llvm::dyn_cast<NumberExprAST>(var.get())) {
         attrElements.push_back(getConstantAttr(*number));
-        typeElements.push_back(getType(/*shape=*/{}));
+        typeElements.push_back(getType(std::nullopt));
       } else if (auto *lit = llvm::dyn_cast<LiteralExprAST>(var.get())) {
         attrElements.push_back(getConstantAttr(*lit));
-        typeElements.push_back(getType(/*shape=*/{}));
+        typeElements.push_back(getType(std::nullopt));
       } else {
         auto *structLit = llvm::cast<StructLiteralExprAST>(var.get());
         auto attrTypePair = getConstantAttr(*structLit);

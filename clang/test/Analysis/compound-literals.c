@@ -1,4 +1,4 @@
-// RUN: %clang_analyze_cc1 -triple=i386-apple-darwin10 -verify %s \
+// RUN: %clang_cc1 -triple=i386-apple-darwin10 -verify %s -analyze \
 // RUN:   -analyzer-checker=debug.ExprInspection
 
 #define NULL 0

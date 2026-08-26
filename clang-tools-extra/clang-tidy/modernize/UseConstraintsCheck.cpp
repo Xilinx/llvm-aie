@@ -161,7 +161,7 @@ matchTrailingTemplateParam(const FunctionTemplateDecl *FunctionTemplate) {
 
   const TemplateParameterList *TemplateParams =
       FunctionTemplate->getTemplateParameters();
-  if (TemplateParams->empty())
+  if (TemplateParams->size() == 0)
     return {};
 
   const NamedDecl *LastParam =
@@ -419,7 +419,7 @@ handleTrailingTemplateType(const FunctionTemplateDecl *FunctionTemplate,
   SourceRange RemovalRange;
   const TemplateParameterList *TemplateParams =
       FunctionTemplate->getTemplateParameters();
-  if (!TemplateParams || TemplateParams->empty())
+  if (!TemplateParams || TemplateParams->size() == 0)
     return {};
 
   if (TemplateParams->size() == 1) {

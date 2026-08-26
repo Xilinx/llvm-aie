@@ -9,37 +9,32 @@
 #include "llvm/TableGen/StringToOffsetTable.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Main.h"
 
 using namespace llvm;
 
-unsigned StringToOffsetTable::GetOrAddStringOffset(StringRef Str) {
+unsigned StringToOffsetTable::GetOrAddStringOffset(StringRef Str,
+                                                   bool appendZero) {
   auto [II, Inserted] = StringOffset.insert({Str, size()});
   if (Inserted) {
     // Add the string to the aggregate if this is the first time found.
     AggregateString.append(Str.begin(), Str.end());
-    if (AppendZero)
+    if (appendZero)
       AggregateString += '\0';
   }
 
   return II->second;
 }
 
-void StringToOffsetTable::EmitStringTableDef(raw_ostream &OS,
-                                             const Twine &Name) const {
-  // This generates a `llvm::StringTable` which expects that entries are null
-  // terminated. So fail with an error if `AppendZero` is false.
-  if (!AppendZero)
-    PrintFatalError("llvm::StringTable requires null terminated strings");
-
+void StringToOffsetTable::EmitStringTableDef(raw_ostream &OS, const Twine &Name,
+                                             const Twine &Indent) const {
   OS << formatv(R"(
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #endif
-static constexpr char {}Storage[] = )",
-                Name);
+{0}static constexpr char {1}Storage[] = )",
+                Indent, Name);
 
   // MSVC silently miscompiles string literals longer than 64k in some
   // circumstances. The build system sets EmitLongStrLiterals to false when it
@@ -59,7 +54,7 @@ static constexpr char {}Storage[] = )",
          "Expected empty string at the end due to terminators!");
   Strings.pop_back();
   for (StringRef Str : Strings) {
-    OS << LineSep << "  ";
+    OS << LineSep << Indent << "  ";
     // If we can, just emit this as a string literal to be concatenated.
     if (!UseChars) {
       OS << "\"";
@@ -76,17 +71,17 @@ static constexpr char {}Storage[] = )",
     }
     OS << CharSep << "'\\0'";
   }
-  OS << LineSep << (UseChars ? "};" : "  ;");
+  OS << LineSep << Indent << (UseChars ? "};" : "  ;");
 
   OS << formatv(R"(
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
 
-static constexpr llvm::StringTable
-{0} = {0}Storage;
+{0}static constexpr llvm::StringTable {1} =
+{0}    {1}Storage;
 )",
-                Name);
+                Indent, Name);
 }
 
 void StringToOffsetTable::EmitString(raw_ostream &O) const {

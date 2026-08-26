@@ -2244,8 +2244,6 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::NoExt;
   case bitc::ATTR_KIND_CAPTURES:
     return Attribute::Captures;
-  case bitc::ATTR_KIND_DEAD_ON_RETURN:
-    return Attribute::DeadOnReturn;
   }
 }
 
@@ -5084,9 +5082,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
 
       unsigned Line = Record[0], Col = Record[1];
       unsigned ScopeID = Record[2], IAID = Record[3];
-      bool isImplicitCode = Record.size() >= 5 && Record[4];
-      uint64_t AtomGroup = Record.size() == 7 ? Record[5] : 0;
-      uint8_t AtomRank = Record.size() == 7 ? Record[6] : 0;
+      bool isImplicitCode = Record.size() == 5 && Record[4];
 
       MDNode *Scope = nullptr, *IA = nullptr;
       if (ScopeID) {
@@ -5101,9 +5097,8 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         if (!IA)
           return error("Invalid record");
       }
-
       LastLoc = DILocation::get(Scope->getContext(), Line, Col, Scope, IA,
-                                isImplicitCode, AtomGroup, AtomRank);
+                                isImplicitCode);
       I->setDebugLoc(LastLoc);
       I = nullptr;
       continue;
@@ -7516,9 +7511,11 @@ std::vector<FunctionSummary::ParamAccess>
 ModuleSummaryIndexBitcodeReader::parseParamAccesses(ArrayRef<uint64_t> Record) {
   auto ReadRange = [&]() {
     APInt Lower(FunctionSummary::ParamAccess::RangeWidth,
-                BitcodeReader::decodeSignRotatedValue(Record.consume_front()));
+                BitcodeReader::decodeSignRotatedValue(Record.front()));
+    Record = Record.drop_front();
     APInt Upper(FunctionSummary::ParamAccess::RangeWidth,
-                BitcodeReader::decodeSignRotatedValue(Record.consume_front()));
+                BitcodeReader::decodeSignRotatedValue(Record.front()));
+    Record = Record.drop_front();
     ConstantRange Range{Lower, Upper};
     assert(!Range.isFullSet());
     assert(!Range.isUpperSignWrapped());
@@ -7529,13 +7526,16 @@ ModuleSummaryIndexBitcodeReader::parseParamAccesses(ArrayRef<uint64_t> Record) {
   while (!Record.empty()) {
     PendingParamAccesses.emplace_back();
     FunctionSummary::ParamAccess &ParamAccess = PendingParamAccesses.back();
-    ParamAccess.ParamNo = Record.consume_front();
+    ParamAccess.ParamNo = Record.front();
+    Record = Record.drop_front();
     ParamAccess.Use = ReadRange();
-    ParamAccess.Calls.resize(Record.consume_front());
+    ParamAccess.Calls.resize(Record.front());
+    Record = Record.drop_front();
     for (auto &Call : ParamAccess.Calls) {
-      Call.ParamNo = Record.consume_front();
-      Call.Callee =
-          std::get<0>(getValueInfoFromValueId(Record.consume_front()));
+      Call.ParamNo = Record.front();
+      Record = Record.drop_front();
+      Call.Callee = std::get<0>(getValueInfoFromValueId(Record.front()));
+      Record = Record.drop_front();
       Call.Offsets = ReadRange();
     }
   }

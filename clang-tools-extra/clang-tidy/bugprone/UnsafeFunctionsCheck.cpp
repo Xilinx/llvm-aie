@@ -248,7 +248,7 @@ void UnsafeFunctionsCheck::registerMatchers(MatchFinder *Finder) {
     FunctionNames.reserve(CustomFunctions.size());
 
     for (const auto &Entry : CustomFunctions)
-      FunctionNames.emplace_back(Entry.Name);
+      FunctionNames.push_back(Entry.Name);
 
     auto CustomFunctionsMatcher = matchers::matchesAnyListedName(FunctionNames);
 

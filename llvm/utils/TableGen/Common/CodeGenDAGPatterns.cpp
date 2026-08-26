@@ -2109,7 +2109,7 @@ TreePatternNodePtr TreePatternNode::clone() const {
 /// RemoveAllTypes - Recursively strip all the types of this tree.
 void TreePatternNode::RemoveAllTypes() {
   // Reset to unknown type.
-  llvm::fill(Types, TypeSetByHwMode());
+  std::fill(Types.begin(), Types.end(), TypeSetByHwMode());
   if (isLeaf())
     return;
   for (TreePatternNode &Child : children())
@@ -4135,7 +4135,8 @@ void CodeGenDAGPatterns::AddPatternToMatch(TreePattern *Pattern,
 }
 
 void CodeGenDAGPatterns::InferInstructionFlags() {
-  ArrayRef<const CodeGenInstruction *> Instructions = Target.getInstructions();
+  ArrayRef<const CodeGenInstruction *> Instructions =
+      Target.getInstructionsByEnumValue();
 
   unsigned Errors = 0;
 

@@ -66,6 +66,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <memory>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -2444,17 +2445,24 @@ bool VarDecl::hasInitWithSideEffects() const {
   if (!hasInit())
     return false;
 
-  EvaluatedStmt *ES = ensureEvaluatedStmt();
-  if (!ES->CheckedForSideEffects) {
-    const Expr *E = getInit();
-    ES->HasSideEffects =
-        E->HasSideEffects(getASTContext()) &&
-        // We can get a value-dependent initializer during error recovery.
-        (E->isValueDependent() || getType()->isDependentType() ||
-         !evaluateValue());
-    ES->CheckedForSideEffects = true;
+  // Check if we can get the initializer without deserializing
+  const Expr *E = nullptr;
+  if (auto *S = dyn_cast<Stmt *>(Init)) {
+    E = cast<Expr>(S);
+  } else {
+    E = cast_or_null<Expr>(getEvaluatedStmt()->Value.getWithoutDeserializing());
   }
-  return ES->HasSideEffects;
+
+  if (E)
+    return E->HasSideEffects(getASTContext()) &&
+           // We can get a value-dependent initializer during error recovery.
+           (E->isValueDependent() || !evaluateValue());
+
+  assert(getEvaluatedStmt()->Value.isOffset());
+  // ASTReader tracks this without having to deserialize the initializer
+  if (auto Source = getASTContext().getExternalSource())
+    return Source->hasInitializerWithSideEffects(this);
+  return false;
 }
 
 bool VarDecl::isOutOfLine() const {
@@ -5134,6 +5142,11 @@ RecordDecl *RecordDecl::CreateDeserialized(const ASTContext &C,
                  SourceLocation(), nullptr, nullptr);
   R->setMayHaveOutOfDateDef(C.getLangOpts().Modules);
   return R;
+}
+
+bool RecordDecl::isInjectedClassName() const {
+  return isImplicit() && getDeclName() && getDeclContext()->isRecord() &&
+    cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
 }
 
 bool RecordDecl::isLambda() const {

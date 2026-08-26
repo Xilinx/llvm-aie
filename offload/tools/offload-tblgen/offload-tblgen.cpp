@@ -26,14 +26,12 @@ enum ActionType {
   PrintRecords,
   DumpJSON,
   GenAPI,
-  GenDoc,
   GenFuncNames,
   GenImplFuncDecls,
   GenEntryPoints,
   GenPrintHeader,
   GenExports,
   GenErrcodes,
-  GenInfo,
 };
 
 namespace {
@@ -45,8 +43,6 @@ cl::opt<ActionType> Action(
         clEnumValN(DumpJSON, "dump-json",
                    "Dump all records as machine-readable JSON"),
         clEnumValN(GenAPI, "gen-api", "Generate Offload API header contents"),
-        clEnumValN(GenDoc, "gen-doc",
-                   "Generate Offload API documentation contents"),
         clEnumValN(GenFuncNames, "gen-func-names",
                    "Generate a list of all Offload API function names"),
         clEnumValN(
@@ -59,8 +55,7 @@ cl::opt<ActionType> Action(
         clEnumValN(GenExports, "gen-exports",
                    "Generate export file for the Offload library"),
         clEnumValN(GenErrcodes, "gen-errcodes",
-                   "Generate Offload Error Code enum"),
-        clEnumValN(GenInfo, "gen-info", "Generate Offload Info enum")));
+                   "Generate Offload Error Code enum")));
 }
 
 static bool OffloadTableGenMain(raw_ostream &OS, const RecordKeeper &Records) {
@@ -73,9 +68,6 @@ static bool OffloadTableGenMain(raw_ostream &OS, const RecordKeeper &Records) {
     break;
   case GenAPI:
     EmitOffloadAPI(Records, OS);
-    break;
-  case GenDoc:
-    EmitOffloadDoc(Records, OS);
     break;
   case GenFuncNames:
     EmitOffloadFuncNames(Records, OS);
@@ -94,9 +86,6 @@ static bool OffloadTableGenMain(raw_ostream &OS, const RecordKeeper &Records) {
     break;
   case GenErrcodes:
     EmitOffloadErrcodes(Records, OS);
-    break;
-  case GenInfo:
-    EmitOffloadInfo(Records, OS);
     break;
   }
 

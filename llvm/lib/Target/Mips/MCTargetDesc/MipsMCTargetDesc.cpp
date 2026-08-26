@@ -174,7 +174,7 @@ static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,
                                       const MCTargetOptions &Options) {
   MCAsmInfo *MAI;
 
-  if (TT.isOSBinFormatCOFF())
+  if (TT.isOSWindows())
     MAI = new MipsCOFFMCAsmInfo();
   else
     MAI = new MipsELFMCAsmInfo(TT, Options);

@@ -116,7 +116,6 @@ void BreakpointResolverAddress::ResolveBreakpointInModules(
 
 Searcher::CallbackReturn BreakpointResolverAddress::SearchCallback(
     SearchFilter &filter, SymbolContext &context, Address *addr) {
-  Log *log = GetLog(LLDBLog::Breakpoints);
   BreakpointSP breakpoint_sp = GetBreakpoint();
   Breakpoint &breakpoint = *breakpoint_sp;
 
@@ -141,6 +140,7 @@ Searcher::CallbackReturn BreakpointResolverAddress::SearchCallback(
       if (bp_loc_sp && !breakpoint.IsInternal()) {
         StreamString s;
         bp_loc_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
+        Log *log = GetLog(LLDBLog::Breakpoints);
         LLDB_LOGF(log, "Added location: %s\n", s.GetData());
       }
     } else {
@@ -149,10 +149,8 @@ Searcher::CallbackReturn BreakpointResolverAddress::SearchCallback(
           m_addr.GetLoadAddress(&breakpoint.GetTarget());
       if (cur_load_location != m_resolved_addr) {
         m_resolved_addr = cur_load_location;
-        if (llvm::Error error = loc_sp->ClearBreakpointSite())
-          LLDB_LOG_ERROR(log, std::move(error), "{0}");
-        if (llvm::Error error = loc_sp->ResolveBreakpointSite())
-          LLDB_LOG_ERROR(log, std::move(error), "{0}");
+        loc_sp->ClearBreakpointSite();
+        loc_sp->ResolveBreakpointSite();
       }
     }
   }

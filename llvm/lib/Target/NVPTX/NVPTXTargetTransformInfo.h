@@ -129,9 +129,8 @@ public:
         Insert = false;
       }
     }
-    if (Insert && NVPTX::isPackedVectorTy(VT) && VT.is32BitVector()) {
-      // Can be built in a single 32-bit mov (64-bit regs are emulated in SASS
-      // with 2x 32-bit regs)
+    if (Insert && Isv2x16VT(VT)) {
+      // Can be built in a single mov
       Cost += 1;
       Insert = false;
     }

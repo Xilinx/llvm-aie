@@ -1118,9 +1118,10 @@ void emitFunctionInfo(raw_ostream &OS, const FunctionInfo &FI) {
     emitParamInfo(OS, PI);
 
   writer.write<uint16_t>(FI.ResultType.size());
-  writer.write(ArrayRef<char>{FI.ResultType});
+  writer.write(ArrayRef<char>{FI.ResultType.data(), FI.ResultType.size()});
   writer.write<uint16_t>(FI.SwiftReturnOwnership.size());
-  writer.write(ArrayRef<char>{FI.SwiftReturnOwnership});
+  writer.write(ArrayRef<char>{FI.SwiftReturnOwnership.data(),
+                              FI.SwiftReturnOwnership.size()});
 }
 
 /// Used to serialize the on-disk global function table.

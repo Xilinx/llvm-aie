@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/VEMCAsmInfo.h"
+#include "MCTargetDesc/VEMCExpr.h"
 #include "VE.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"

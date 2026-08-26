@@ -698,13 +698,13 @@ class DeclarationNameLoc {
 
   // The location (if any) of the operator keyword is stored elsewhere.
   struct CXXOpName {
-    SourceLocation BeginOpNameLoc;
-    SourceLocation EndOpNameLoc;
+    SourceLocation::UIntTy BeginOpNameLoc;
+    SourceLocation::UIntTy EndOpNameLoc;
   };
 
   // The location (if any) of the operator keyword is stored elsewhere.
   struct CXXLitOpName {
-    SourceLocation OpNameLoc;
+    SourceLocation::UIntTy OpNameLoc;
   };
 
   // struct {} CXXUsingDirective;
@@ -720,12 +720,12 @@ class DeclarationNameLoc {
   void setNamedTypeLoc(TypeSourceInfo *TInfo) { NamedType.TInfo = TInfo; }
 
   void setCXXOperatorNameRange(SourceRange Range) {
-    CXXOperatorName.BeginOpNameLoc = Range.getBegin();
-    CXXOperatorName.EndOpNameLoc = Range.getEnd();
+    CXXOperatorName.BeginOpNameLoc = Range.getBegin().getRawEncoding();
+    CXXOperatorName.EndOpNameLoc = Range.getEnd().getRawEncoding();
   }
 
   void setCXXLiteralOperatorNameLoc(SourceLocation Loc) {
-    CXXLiteralOperatorName.OpNameLoc = Loc;
+    CXXLiteralOperatorName.OpNameLoc = Loc.getRawEncoding();
   }
 
 public:
@@ -739,12 +739,12 @@ public:
 
   /// Return the beginning location of the getCXXOperatorNameRange() range.
   SourceLocation getCXXOperatorNameBeginLoc() const {
-    return CXXOperatorName.BeginOpNameLoc;
+    return SourceLocation::getFromRawEncoding(CXXOperatorName.BeginOpNameLoc);
   }
 
   /// Return the end location of the getCXXOperatorNameRange() range.
   SourceLocation getCXXOperatorNameEndLoc() const {
-    return CXXOperatorName.EndOpNameLoc;
+    return SourceLocation::getFromRawEncoding(CXXOperatorName.EndOpNameLoc);
   }
 
   /// Return the range of the operator name (without the operator keyword).
@@ -759,7 +759,7 @@ public:
   /// keyword). Assumes that the object stores location information of a literal
   /// operator.
   SourceLocation getCXXLiteralOperatorNameLoc() const {
-    return CXXLiteralOperatorName.OpNameLoc;
+    return SourceLocation::getFromRawEncoding(CXXLiteralOperatorName.OpNameLoc);
   }
 
   /// Construct location information for a constructor, destructor or conversion

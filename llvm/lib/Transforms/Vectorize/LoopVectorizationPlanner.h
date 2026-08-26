@@ -28,10 +28,6 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/InstructionCost.h"
 
-namespace {
-class GeneratedRTChecks;
-}
-
 namespace llvm {
 
 class LoopInfo;
@@ -66,6 +62,12 @@ class VPBuilder {
                                    ArrayRef<VPValue *> Operands, DebugLoc DL,
                                    const Twine &Name = "") {
     return tryInsertInstruction(new VPInstruction(Opcode, Operands, DL, Name));
+  }
+
+  VPInstruction *createInstruction(unsigned Opcode,
+                                   std::initializer_list<VPValue *> Operands,
+                                   DebugLoc DL, const Twine &Name = "") {
+    return createInstruction(Opcode, ArrayRef<VPValue *>(Operands), DL, Name);
   }
 
 public:
@@ -557,10 +559,6 @@ private:
   void adjustRecipesForReductions(VPlanPtr &Plan,
                                   VPRecipeBuilder &RecipeBuilder,
                                   ElementCount MinVF);
-
-  /// Attach the runtime checks of \p RTChecks to \p Plan.
-  void attachRuntimeChecks(VPlan &Plan, GeneratedRTChecks &RTChecks,
-                           bool HasBranchWeights) const;
 
 #ifndef NDEBUG
   /// \return The most profitable vectorization factor for the available VPlans

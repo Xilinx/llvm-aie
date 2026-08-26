@@ -77,12 +77,14 @@ struct InstRegexOp : public SetTheory::Operator {
 
   void apply(SetTheory &ST, const DagInit *Expr, SetTheory::RecSet &Elts,
              ArrayRef<SMLoc> Loc) override {
-    ArrayRef<const CodeGenInstruction *> Generics =
-        Target.getGenericInstructions();
-    ArrayRef<const CodeGenInstruction *> Pseudos =
-        Target.getTargetPseudoInstructions();
-    ArrayRef<const CodeGenInstruction *> NonPseudos =
-        Target.getTargetNonPseudoInstructions();
+    ArrayRef<const CodeGenInstruction *> Instructions =
+        Target.getInstructionsByEnumValue();
+
+    unsigned NumGeneric = Target.getNumFixedInstructions();
+    unsigned NumPseudos = Target.getNumPseudoInstructions();
+    auto Generics = Instructions.slice(0, NumGeneric);
+    auto Pseudos = Instructions.slice(NumGeneric, NumPseudos);
+    auto NonPseudos = Instructions.slice(NumGeneric + NumPseudos);
 
     for (const Init *Arg : Expr->getArgs()) {
       const StringInit *SI = dyn_cast<StringInit>(Arg);
@@ -143,7 +145,7 @@ struct InstRegexOp : public SetTheory::Operator {
       }
 
       // Target instructions are split into two ranges: pseudo instructions
-      // first, then non-pseudos. Each range is in lexicographical order
+      // first, than non-pseudos. Each range is in lexicographical order
       // sorted by name. Find the sub-ranges that start with our prefix.
       struct Comp {
         bool operator()(const CodeGenInstruction *LHS, StringRef RHS) {
@@ -587,7 +589,7 @@ void CodeGenSchedModels::collectSchedRW() {
 
   // Find all SchedReadWrites referenced by instruction defs.
   ConstRecVec SWDefs, SRDefs;
-  for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     const Record *SchedDef = Inst->TheDef;
     if (SchedDef->isValueUnset("SchedRW"))
       continue;
@@ -836,7 +838,7 @@ void CodeGenSchedModels::collectSchedClasses() {
 
   // Create a SchedClass for each unique combination of itinerary class and
   // SchedRW list.
-  for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     const Record *ItinDef = Inst->TheDef->getValueAsDef("Itinerary");
     IdxVec Writes, Reads;
     if (!Inst->TheDef->isValueUnset("SchedRW"))
@@ -872,7 +874,7 @@ void CodeGenSchedModels::collectSchedClasses() {
   LLVM_DEBUG(
       dbgs()
       << "\n+++ ITINERARIES and/or MACHINE MODELS (collectSchedClasses) +++\n");
-  for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     StringRef InstName = Inst->TheDef->getName();
     unsigned SCIdx = getSchedClassIdx(*Inst);
     if (!SCIdx) {
@@ -1933,7 +1935,7 @@ void CodeGenSchedModels::checkCompleteness() {
     const bool HasItineraries = ProcModel.hasItineraries();
     if (!ProcModel.ModelDef->getValueAsBit("CompleteModel"))
       continue;
-    for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+    for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
       if (Inst->hasNoSchedulingInfo)
         continue;
       if (ProcModel.isUnsupported(*Inst))

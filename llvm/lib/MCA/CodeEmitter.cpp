@@ -22,8 +22,12 @@ CodeEmitter::EncodingInfo CodeEmitter::getOrCreateEncodingInfo(unsigned MCID) {
 
   SmallVector<llvm::MCFixup, 2> Fixups;
   const MCInst &Inst = Sequence[MCID];
+  MCInst Relaxed(Sequence[MCID]);
+  if (MAB.mayNeedRelaxation(Inst, STI))
+    MAB.relaxInstruction(Relaxed, STI);
+
   EI.first = Code.size();
-  MCE.encodeInstruction(Inst, Code, Fixups, STI);
+  MCE.encodeInstruction(Relaxed, Code, Fixups, STI);
   EI.second = Code.size() - EI.first;
   return EI;
 }

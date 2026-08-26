@@ -31,6 +31,7 @@ define amdgpu_kernel void @simple_barrier(ptr addrspace(1) %arg) {
 ; GCN-NEXT:    s_load_dword s2, s[0:1], 0x0
 ; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    s_barrier
+; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    ; wave barrier
 ; GCN-NEXT:    s_load_dword s3, s[0:1], 0x4
 ; GCN-NEXT:    s_waitcnt lgkmcnt(0)
@@ -284,15 +285,16 @@ define amdgpu_kernel void @no_clobbering_loop1(ptr addrspace(1) %arg, i1 %cc) {
 ; GCN-NEXT:    s_xor_b64 s[0:1], s[0:1], -1
 ; GCN-NEXT:    v_cndmask_b32_e64 v1, 0, 1, s[0:1]
 ; GCN-NEXT:    v_cmp_ne_u32_e64 s[0:1], 1, v1
+; GCN-NEXT:    s_and_b64 vcc, exec, s[0:1]
 ; GCN-NEXT:  .LBB4_1: ; %while.cond
 ; GCN-NEXT:    ; =>This Inner Loop Header: Depth=1
 ; GCN-NEXT:    s_load_dword s5, s[2:3], 0x4
-; GCN-NEXT:    s_and_b64 vcc, exec, s[0:1]
 ; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    s_add_i32 s5, s5, s4
 ; GCN-NEXT:    v_mov_b32_e32 v1, s5
 ; GCN-NEXT:    global_store_dword v0, v1, s[2:3] offset:8
 ; GCN-NEXT:    ; wave barrier
+; GCN-NEXT:    s_mov_b64 vcc, vcc
 ; GCN-NEXT:    s_cbranch_vccnz .LBB4_1
 ; GCN-NEXT:  ; %bb.2: ; %end
 ; GCN-NEXT:    s_endpgm

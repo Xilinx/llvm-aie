@@ -21,8 +21,10 @@
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
+#include "mlir/IR/Matchers.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/PatternMatch.h"
+#include "llvm/ADT/Bitset.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/FormatVariadic.h"
 
@@ -516,7 +518,7 @@ SparseTensorEncodingAttr::translateShape(ArrayRef<int64_t> srcShape,
   SmallVector<AffineExpr> dimRep;
   dimRep.reserve(srcShape.size());
   for (int64_t sz : srcShape) {
-    if (ShapedType::isStatic(sz)) {
+    if (!ShapedType::isDynamic(sz)) {
       // Push back the max coordinate for the given dimension/level size.
       dimRep.push_back(getAffineConstantExpr(sz - 1, getContext()));
     } else {
@@ -1529,7 +1531,7 @@ OpFoldResult LvlOp::fold(FoldAdaptor adaptor) {
   };
 
   SmallVector<Size> lvlShape = stt.getLvlShape();
-  if (ShapedType::isStatic(lvlShape[lvl]))
+  if (!ShapedType::isDynamic(lvlShape[lvl]))
     return getIndexAttr(lvlShape[lvl]);
 
   return {};
@@ -1874,7 +1876,7 @@ LogicalResult ConcatenateOp::verify() {
   for (Dimension d = 0; d < dimRank; d++) {
     const Size dstSh = dstTp.getDimShape()[d];
     if (d == concatDim) {
-      if (ShapedType::isStatic(dstSh)) {
+      if (!ShapedType::isDynamic(dstSh)) {
         // If we reach here, then all inputs have static shapes.  So we
         // can use `getDimShape()[d]` instead of `*getDynamicDimSize(d)`
         // to avoid redundant assertions in the loop.
@@ -1892,7 +1894,7 @@ LogicalResult ConcatenateOp::verify() {
       Size prev = dstSh;
       for (const auto src : getInputs()) {
         const auto sh = getSparseTensorType(src).getDimShape()[d];
-        if (ShapedType::isStatic(prev) && sh != prev)
+        if (!ShapedType::isDynamic(prev) && sh != prev)
           return emitError("All dimensions (expect for the concatenating one) "
                            "should be equal.");
         prev = sh;
@@ -2056,7 +2058,7 @@ LogicalResult SortOp::verify() {
   const auto checkDim = [&](Value v, Size minSize,
                             const char *message) -> LogicalResult {
     const Size sh = getMemRefType(v).getShape()[0];
-    if (ShapedType::isStatic(sh) && sh < minSize)
+    if (!ShapedType::isDynamic(sh) && sh < minSize)
       return emitError(
           llvm::formatv("{0} got {1} < {2}", message, sh, minSize));
     return success();

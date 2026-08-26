@@ -56,7 +56,7 @@ LOCAL_LABEL(case_denom_larger):
         add     sp, sp, #4
 #if defined(__ARM_FEATURE_PAC_DEFAULT)
         pop     { r12, lr }
-        PAC_RETURN
+        bxaut   r12, lr, sp
 #else
         pop     { pc }
 #endif

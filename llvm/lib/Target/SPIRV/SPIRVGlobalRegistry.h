@@ -501,13 +501,6 @@ private:
                                  MachineIRBuilder &MIRBuilder);
   bool hasBlockDecoration(SPIRVType *Type) const;
 
-  SPIRVType *
-  getOrCreateOpTypeImage(MachineIRBuilder &MIRBuilder, SPIRVType *SampledType,
-                         SPIRV::Dim::Dim Dim, uint32_t Depth, uint32_t Arrayed,
-                         uint32_t Multisampled, uint32_t Sampled,
-                         SPIRV::ImageFormat::ImageFormat ImageFormat,
-                         SPIRV::AccessQualifier::AccessQualifier AccQual);
-
 public:
   Register buildConstantInt(uint64_t Val, MachineIRBuilder &MIRBuilder,
                             SPIRVType *SpvType, bool EmitIR,
@@ -614,9 +607,11 @@ public:
                                    const TargetExtType *T, bool EmitIr = false);
 
   SPIRVType *
-  getImageType(const TargetExtType *ExtensionType,
-               const SPIRV::AccessQualifier::AccessQualifier Qualifier,
-               MachineIRBuilder &MIRBuilder);
+  getOrCreateOpTypeImage(MachineIRBuilder &MIRBuilder, SPIRVType *SampledType,
+                         SPIRV::Dim::Dim Dim, uint32_t Depth, uint32_t Arrayed,
+                         uint32_t Multisampled, uint32_t Sampled,
+                         SPIRV::ImageFormat::ImageFormat ImageFormat,
+                         SPIRV::AccessQualifier::AccessQualifier AccQual);
 
   SPIRVType *getOrCreateOpTypeSampler(MachineIRBuilder &MIRBuilder);
 

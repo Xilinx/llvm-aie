@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/math/clc_erfc.h>
-#include <clc/opencl/math/erfc.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION erfc
 #define __CLC_BODY <clc/shared/unary_def.inc>

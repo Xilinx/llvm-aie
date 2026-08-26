@@ -59,7 +59,7 @@ LanguageFeatureControl::LanguageFeatureControl() {
     std::string cliOption{details::CamelCaseToLowerCaseHyphenated(name)};
     cliOptions_.insert({cliOption, {feature}});
     languageFeatureCliCanonicalSpelling_[EnumToInt(feature)] =
-        std::move(cliOption);
+        std::string_view{cliOption};
   });
 
   ForEachUsageWarning([&](auto warning) {
@@ -67,7 +67,7 @@ LanguageFeatureControl::LanguageFeatureControl() {
     std::string cliOption{details::CamelCaseToLowerCaseHyphenated(name)};
     cliOptions_.insert({cliOption, {warning}});
     usageWarningCliCanonicalSpelling_[EnumToInt(warning)] =
-        std::move(cliOption);
+        std::string_view{cliOption};
   });
 
   // These features must be explicitly enabled by command line options.
@@ -174,16 +174,18 @@ bool LanguageFeatureControl::EnableWarning(std::string_view input) {
 
 void LanguageFeatureControl::ReplaceCliCanonicalSpelling(
     LanguageFeature f, std::string input) {
-  cliOptions_.erase(languageFeatureCliCanonicalSpelling_[EnumToInt(f)]);
+  std::string_view &old{languageFeatureCliCanonicalSpelling_[EnumToInt(f)]};
+  cliOptions_.erase(std::string{old});
+  languageFeatureCliCanonicalSpelling_[EnumToInt(f)] = input;
   cliOptions_.insert({input, {f}});
-  languageFeatureCliCanonicalSpelling_[EnumToInt(f)] = std::move(input);
 }
 
 void LanguageFeatureControl::ReplaceCliCanonicalSpelling(
     UsageWarning w, std::string input) {
-  cliOptions_.erase(usageWarningCliCanonicalSpelling_[EnumToInt(w)]);
+  std::string_view &old{usageWarningCliCanonicalSpelling_[EnumToInt(w)]};
+  cliOptions_.erase(std::string{old});
+  usageWarningCliCanonicalSpelling_[EnumToInt(w)] = input;
   cliOptions_.insert({input, {w}});
-  usageWarningCliCanonicalSpelling_[EnumToInt(w)] = std::move(input);
 }
 
 std::vector<const char *> LanguageFeatureControl::GetNames(

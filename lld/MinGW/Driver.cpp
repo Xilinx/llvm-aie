@@ -448,8 +448,6 @@ bool link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
       add("-machine:arm64");
     else if (s == "arm64ecpe")
       add("-machine:arm64ec");
-    else if (s == "arm64xpe")
-      add("-machine:arm64x");
     else
       error("unknown parameter: -m" + s);
   }

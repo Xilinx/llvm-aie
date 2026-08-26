@@ -12,7 +12,6 @@
 #include <memory>
 #include <string>
 
-#include "lldb/Breakpoint/StopCondition.h"
 #include "lldb/Utility/Baton.h"
 #include "lldb/Utility/Flags.h"
 #include "lldb/Utility/StringList.h"
@@ -246,15 +245,18 @@ public:
   const Baton *GetBaton() const;
 
   // Condition
-  /// Set the breakpoint stop condition.
+  /// Set the breakpoint option's condition.
   ///
   /// \param[in] condition
-  ///    The condition to evaluate when the breakpoint is hit.
-  void SetCondition(StopCondition condition);
+  ///    The condition expression to evaluate when the breakpoint is hit.
+  void SetCondition(const char *condition);
 
-  /// Return the breakpoint condition.
-  const StopCondition &GetCondition() const;
-  StopCondition &GetCondition();
+  /// Return a pointer to the text of the condition expression.
+  ///
+  /// \return
+  ///    A pointer to the condition expression text, or nullptr if no
+  //     condition has been set.
+  const char *GetConditionText(size_t *hash = nullptr) const;
 
   // Enabled/Ignore Count
 
@@ -388,7 +390,9 @@ private:
   /// Thread for which this breakpoint will stop.
   std::unique_ptr<ThreadSpec> m_thread_spec_up;
   /// The condition to test.
-  StopCondition m_condition;
+  std::string m_condition_text;
+  /// Its hash, so that locations know when the condition is updated.
+  size_t m_condition_text_hash;
   /// If set, inject breakpoint condition into process.
   bool m_inject_condition;
   /// If set, auto-continue from breakpoint.

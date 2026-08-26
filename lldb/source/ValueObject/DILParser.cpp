@@ -183,14 +183,12 @@ ASTNodeUP DILParser::ParsePostfixExpression() {
 //    "(" expression ")"
 //
 ASTNodeUP DILParser::ParsePrimaryExpression() {
-  if (CurToken().IsOneOf(
-          {Token::coloncolon, Token::identifier, Token::l_paren})) {
+  if (CurToken().IsOneOf({Token::coloncolon, Token::identifier})) {
     // Save the source location for the diagnostics message.
     uint32_t loc = CurToken().GetLocation();
-    std::string identifier = ParseIdExpression();
+    auto identifier = ParseIdExpression();
 
-    if (!identifier.empty())
-      return std::make_unique<IdentifierNode>(loc, identifier);
+    return std::make_unique<IdentifierNode>(loc, identifier);
   }
 
   if (CurToken().Is(Token::l_paren)) {
@@ -234,15 +232,16 @@ std::string DILParser::ParseNestedNameSpecifier() {
         m_dil_lexer.LookAhead(4).Is(Token::coloncolon)) {
       m_dil_lexer.Advance(4);
 
-      Expect(Token::coloncolon);
-      m_dil_lexer.Advance();
-      if (!CurToken().Is(Token::identifier) && !CurToken().Is(Token::l_paren)) {
-        BailOut("Expected an identifier or anonymous namespace, but not found.",
-                CurToken().GetLocation(), CurToken().GetSpelling().length());
-      }
+      assert(
+          (CurToken().Is(Token::identifier) || CurToken().Is(Token::l_paren)) &&
+          "Expected an identifier or anonymous namespace, but not found.");
       // Continue parsing the nested_namespace_specifier.
       std::string identifier2 = ParseNestedNameSpecifier();
-
+      if (identifier2.empty()) {
+        Expect(Token::identifier);
+        identifier2 = CurToken().GetSpelling();
+        m_dil_lexer.Advance();
+      }
       return "(anonymous namespace)::" + identifier2;
     }
 
@@ -301,9 +300,6 @@ std::string DILParser::ParseIdExpression() {
     return llvm::formatv("{0}{1}{2}", global_scope ? "::" : "",
                          nested_name_specifier, unqualified_id);
   }
-
-  if (!CurToken().Is(Token::identifier))
-    return "";
 
   // No nested_name_specifier, but with global scope -- this is also a
   // qualified_id production. Follow the second production rule.

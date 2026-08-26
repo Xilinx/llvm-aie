@@ -68,7 +68,7 @@ struct RootParametersContainer {
     Tables.push_back(Table);
   }
 
-  std::pair<uint32_t, uint32_t>
+  const std::pair<uint32_t, uint32_t>
   getTypeAndLocForParameter(uint32_t Location) const {
     const RootParameterInfo &Info = ParametersInfo[Location];
     return {Info.Header.ParameterType, Info.Location};

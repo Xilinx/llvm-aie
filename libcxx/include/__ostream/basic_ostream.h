@@ -15,9 +15,6 @@
 
 #  include <__exception/operations.h>
 #  include <__fwd/memory.h>
-#  include <__iterator/ostreambuf_iterator.h>
-#  include <__locale_dir/num.h>
-#  include <__locale_dir/pad_and_output.h>
 #  include <__memory/addressof.h>
 #  include <__memory/unique_ptr.h>
 #  include <__new/exceptions.h>
@@ -30,6 +27,7 @@
 #  include <__utility/declval.h>
 #  include <bitset>
 #  include <ios>
+#  include <locale>
 #  include <streambuf>
 #  include <string_view>
 

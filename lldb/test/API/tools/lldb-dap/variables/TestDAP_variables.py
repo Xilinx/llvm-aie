@@ -1,10 +1,12 @@
 """
-Test lldb-dap variables request
+Test lldb-dap setBreakpoints request
 """
 
 import os
 
+import dap_server
 import lldbdap_testcase
+from lldbsuite.test import lldbutil
 from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
 
@@ -141,7 +143,8 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
         self, enableAutoVariableSummaries: bool
     ):
         """
-        Tests the "scopes", "variables", "setVariable", and "evaluate" packets.
+        Tests the "scopes", "variables", "setVariable", and "evaluate"
+        packets.
         """
         program = self.getBuildArtifact("a.out")
         self.build_and_launch(
@@ -165,6 +168,15 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
                     "type": "int",
                     "value": "1",
                 },
+                "$__lldb_extensions": {
+                    "equals": {
+                        "value": "1",
+                    },
+                    "declaration": {
+                        "equals": {"line": 12, "column": 14},
+                        "contains": {"path": ["lldb-dap", "variables", "main.cpp"]},
+                    },
+                },
             },
             "argv": {
                 "equals": {"type": "const char **"},
@@ -184,6 +196,10 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
             },
             "x": {"equals": {"type": "int"}},
         }
+        if enableAutoVariableSummaries:
+            verify_locals["pt"]["$__lldb_extensions"] = {
+                "equals": {"autoSummary": "{x:11, y:22}"}
+            }
 
         verify_globals = {
             "s_local": {"equals": {"type": "float", "value": "2.25"}},
@@ -303,6 +319,7 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
         verify_response = {
             "type": "int",
             "value": str(variable_value),
+            "variablesReference": 0,
         }
         for key, value in verify_response.items():
             self.assertEqual(value, response["body"][key])
@@ -721,7 +738,7 @@ class TestDAP_variables(lldbdap_testcase.DAPTestCaseBase):
         self.do_test_indexedVariables(enableSyntheticChildDebugging=True)
 
     @skipIfWindows
-    @skipIfAsan  # FIXME this fails with a non-asan issue on green dragon.
+    @skipIfAsan # FIXME this fails with a non-asan issue on green dragon.
     def test_registers(self):
         """
         Test that registers whose byte size is the size of a pointer on

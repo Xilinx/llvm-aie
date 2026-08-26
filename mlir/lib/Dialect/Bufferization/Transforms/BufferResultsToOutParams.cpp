@@ -12,6 +12,7 @@
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/Operation.h"
+#include "mlir/Pass/Pass.h"
 
 namespace mlir {
 namespace bufferization {
@@ -32,7 +33,7 @@ static bool hasFullyDynamicLayoutMap(MemRefType type) {
     return false;
   if (!llvm::all_of(strides, ShapedType::isDynamic))
     return false;
-  if (ShapedType::isStatic(offset))
+  if (!ShapedType::isDynamic(offset))
     return false;
   return true;
 }

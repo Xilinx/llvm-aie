@@ -18,6 +18,7 @@ _CLC_DEF _CLC_OVERLOAD float __clc_fmax(float x, float y) {
   y = __builtin_canonicalizef(y);
   return __builtin_fmaxf(x, y);
 }
+_CLC_BINARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, float, __clc_fmax, float, float)
 
 #ifdef cl_khr_fp64
 
@@ -28,6 +29,8 @@ _CLC_DEF _CLC_OVERLOAD double __clc_fmax(double x, double y) {
   y = __builtin_canonicalize(y);
   return __builtin_fmax(x, y);
 }
+_CLC_BINARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, double, __clc_fmax, double,
+                      double)
 
 #endif
 #ifdef cl_khr_fp16
@@ -41,9 +44,6 @@ _CLC_DEF _CLC_OVERLOAD half __clc_fmax(half x, half y) {
     return x;
   return (y < x) ? x : y;
 }
+_CLC_BINARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, half, __clc_fmax, half, half)
 
 #endif
-
-#define FUNCTION __clc_fmax
-#define __CLC_BODY <clc/shared/binary_def_scalarize.inc>
-#include <clc/math/gentype.inc>

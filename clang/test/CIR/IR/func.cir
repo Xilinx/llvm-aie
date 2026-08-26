@@ -32,10 +32,6 @@ cir.func @intfunc() -> !s32i {
 // CHECK:   cir.return %[[VAL]] : !s32i
 // CHECK: }
 
-// Should print/parse function aliases.
-cir.func @a_empty() alias(@empty)
-// CHECK: cir.func @a_empty() alias(@empty)
-
 // int scopes() {
 //  {
 //    {

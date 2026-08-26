@@ -20,23 +20,22 @@
 #include <atomic>
 #include <future>
 #include <mutex>
-#include <condition_variable>
-#include <thread>
 
 std::mutex mux;
 
 int main(int, char**) {
-  std::condition_variable cond;
+  using namespace std::chrono_literals;
   std::unique_lock lock(mux);
-  auto v = std::async(std::launch::async, [&cond, value = 1]() mutable {
-    std::unique_lock thread_lock(mux);
-    cond.notify_all();
-    thread_lock.unlock();
-
+  std::atomic<bool> in_async = false;
+  auto v                     = std::async(std::launch::async, [&in_async, value = 1]() mutable {
+    in_async = true;
+    in_async.notify_all();
+    std::scoped_lock thread_lock(mux);
     value = 4;
     (void)value;
   });
-  cond.wait(lock);
+  in_async.wait(true);
+  lock.unlock();
 
   return 0;
 }

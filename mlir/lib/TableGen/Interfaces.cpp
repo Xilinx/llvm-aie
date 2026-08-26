@@ -8,7 +8,9 @@
 
 #include "mlir/TableGen/Interfaces.h"
 #include "llvm/ADT/FunctionExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 

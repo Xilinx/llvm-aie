@@ -445,7 +445,13 @@ bool CheckConstant(InterpState &S, CodePtr OpPC, const Descriptor *Desc) {
   assert(Desc);
 
   const auto *D = Desc->asVarDecl();
-  if (!D || D == S.EvaluatingDecl || D->isConstexpr())
+  if (!D || !D->hasGlobalStorage())
+    return true;
+
+  if (D == S.EvaluatingDecl)
+    return true;
+
+  if (D->isConstexpr())
     return true;
 
   // If we're evaluating the initializer for a constexpr variable in C23, we may
@@ -570,13 +576,22 @@ bool CheckConst(InterpState &S, CodePtr OpPC, const Pointer &Ptr) {
   if (!Ptr.isConst() || Ptr.isMutable())
     return true;
 
-  if (!Ptr.isBlockPointer())
-    return false;
-
   // The This pointer is writable in constructors and destructors,
   // even if isConst() returns true.
-  if (llvm::find(S.InitializingBlocks, Ptr.block()))
-    return true;
+  // TODO(perf): We could be hitting this code path quite a lot in complex
+  // constructors. Is there a better way to do this?
+  if (S.Current->getFunction()) {
+    for (const InterpFrame *Frame = S.Current; Frame; Frame = Frame->Caller) {
+      if (const Function *Func = Frame->getFunction();
+          Func && (Func->isConstructor() || Func->isDestructor()) &&
+          Ptr.block() == Frame->getThis().block()) {
+        return true;
+      }
+    }
+  }
+
+  if (!Ptr.isBlockPointer())
+    return false;
 
   const QualType Ty = Ptr.getType();
   const SourceInfo &Loc = S.Current->getSource(OpPC);
@@ -1181,8 +1196,6 @@ bool Free(InterpState &S, CodePtr OpPC, bool DeleteIsArrayForm,
   if (!CheckDynamicMemoryAllocation(S, OpPC))
     return false;
 
-  DynamicAllocator &Allocator = S.getAllocator();
-
   const Expr *Source = nullptr;
   const Block *BlockToDelete = nullptr;
   {
@@ -1198,21 +1211,6 @@ bool Free(InterpState &S, CodePtr OpPC, bool DeleteIsArrayForm,
     QualType InitialType = Ptr.getType();
     while (Ptr.isBaseClass())
       Ptr = Ptr.getBase();
-
-    Source = Ptr.getDeclDesc()->asExpr();
-    BlockToDelete = Ptr.block();
-
-    // Check that new[]/delete[] or new/delete were used, not a mixture.
-    const Descriptor *BlockDesc = BlockToDelete->getDescriptor();
-    if (std::optional<DynamicAllocator::Form> AllocForm =
-            Allocator.getAllocationForm(Source)) {
-      DynamicAllocator::Form DeleteForm =
-          DeleteIsArrayForm ? DynamicAllocator::Form::Array
-                            : DynamicAllocator::Form::NonArray;
-      if (!CheckNewDeleteForms(S, OpPC, *AllocForm, DeleteForm, BlockDesc,
-                               Source))
-        return false;
-    }
 
     // For the non-array case, the types must match if the static type
     // does not have a virtual destructor.
@@ -1231,6 +1229,9 @@ bool Free(InterpState &S, CodePtr OpPC, bool DeleteIsArrayForm,
           << Ptr.toDiagnosticString(S.getASTContext()) << Ptr.isOnePastEnd();
       return false;
     }
+
+    Source = Ptr.getDeclDesc()->asExpr();
+    BlockToDelete = Ptr.block();
 
     if (!CheckDeleteSource(S, OpPC, Source, Ptr))
       return false;
@@ -1265,6 +1266,11 @@ bool Free(InterpState &S, CodePtr OpPC, bool DeleteIsArrayForm,
   if (!RunDestructors(S, OpPC, BlockToDelete))
     return false;
 
+  DynamicAllocator &Allocator = S.getAllocator();
+  const Descriptor *BlockDesc = BlockToDelete->getDescriptor();
+  std::optional<DynamicAllocator::Form> AllocForm =
+      Allocator.getAllocationForm(Source);
+
   if (!Allocator.deallocate(Source, BlockToDelete, S)) {
     // Nothing has been deallocated, this must be a double-delete.
     const SourceInfo &Loc = S.Current->getSource(OpPC);
@@ -1272,7 +1278,12 @@ bool Free(InterpState &S, CodePtr OpPC, bool DeleteIsArrayForm,
     return false;
   }
 
-  return true;
+  assert(AllocForm);
+  DynamicAllocator::Form DeleteForm = DeleteIsArrayForm
+                                          ? DynamicAllocator::Form::Array
+                                          : DynamicAllocator::Form::NonArray;
+  return CheckNewDeleteForms(S, OpPC, *AllocForm, DeleteForm, BlockDesc,
+                             Source);
 }
 
 void diagnoseEnumValue(InterpState &S, CodePtr OpPC, const EnumDecl *ED,
@@ -1509,9 +1520,6 @@ bool Call(InterpState &S, CodePtr OpPC, const Function *Func,
       return false;
     if (Func->isDestructor() && !CheckDestructor(S, OpPC, ThisPtr))
       return false;
-
-    if (Func->isConstructor() || Func->isDestructor())
-      S.InitializingBlocks.push_back(ThisPtr.block());
   }
 
   if (!Func->isFullyCompiled())
@@ -1538,21 +1546,16 @@ bool Call(InterpState &S, CodePtr OpPC, const Function *Func,
   // Note that we cannot assert(CallResult.hasValue()) here since
   // Ret() above only sets the APValue if the curent frame doesn't
   // have a caller set.
-  bool Success = Interpret(S);
-  // Remove initializing  block again.
-  if (Func->isConstructor() || Func->isDestructor())
-    S.InitializingBlocks.pop_back();
-
-  if (!Success) {
-    // Interpreting the function failed somehow. Reset to
-    // previous state.
-    S.Current = FrameBefore;
-    return false;
+  if (Interpret(S)) {
+    NewFrame.release(); // Frame was delete'd already.
+    assert(S.Current == FrameBefore);
+    return true;
   }
 
-  NewFrame.release(); // Frame was delete'd already.
-  assert(S.Current == FrameBefore);
-  return true;
+  // Interpreting the function failed somehow. Reset to
+  // previous state.
+  S.Current = FrameBefore;
+  return false;
 }
 
 bool CallVirt(InterpState &S, CodePtr OpPC, const Function *Func,

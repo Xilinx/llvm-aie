@@ -2333,7 +2333,6 @@ def MemRef_ViewOp : MemRef_Op<"view", [
 
   let hasCanonicalizer = 1;
   let hasVerifier = 1;
-  let hasFolder = 1;
 }
 
 //===----------------------------------------------------------------------===//

@@ -30,7 +30,6 @@
 #include "llvm-c/Error.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Types.h"
-#include "llvm-c/Visibility.h"
 
 LLVM_C_EXTERN_C_BEGIN
 
@@ -489,7 +488,7 @@ typedef struct LLVMOrcOpaqueDumpObjects *LLVMOrcDumpObjectsRef;
  * requesting definitions from the JIT will typically be delivered a
  * FailureToMaterialize error instead).
  */
-LLVM_C_ABI void LLVMOrcExecutionSessionSetErrorReporter(
+void LLVMOrcExecutionSessionSetErrorReporter(
     LLVMOrcExecutionSessionRef ES, LLVMOrcErrorReporterFunction ReportError,
     void *Ctx);
 
@@ -499,7 +498,7 @@ LLVM_C_ABI void LLVMOrcExecutionSessionSetErrorReporter(
  * Ownership of the pool remains with the ExecutionSession: The caller is
  * not required to free the pool.
  */
-LLVM_C_ABI LLVMOrcSymbolStringPoolRef
+LLVMOrcSymbolStringPoolRef
 LLVMOrcExecutionSessionGetSymbolStringPool(LLVMOrcExecutionSessionRef ES);
 
 /**
@@ -512,8 +511,7 @@ LLVMOrcExecutionSessionGetSymbolStringPool(LLVMOrcExecutionSessionRef ES);
  * entries will have become unreferenced, e.g. after removing a module or
  * closing a JITDylib.
  */
-LLVM_C_ABI void
-LLVMOrcSymbolStringPoolClearDeadEntries(LLVMOrcSymbolStringPoolRef SSP);
+void LLVMOrcSymbolStringPoolClearDeadEntries(LLVMOrcSymbolStringPoolRef SSP);
 
 /**
  * Intern a string in the ExecutionSession's SymbolStringPool and return a
@@ -527,7 +525,7 @@ LLVMOrcSymbolStringPoolClearDeadEntries(LLVMOrcSymbolStringPoolRef SSP);
  *
  * Note that this function does not perform linker-mangling on the string.
  */
-LLVM_C_ABI LLVMOrcSymbolStringPoolEntryRef
+LLVMOrcSymbolStringPoolEntryRef
 LLVMOrcExecutionSessionIntern(LLVMOrcExecutionSessionRef ES, const char *Name);
 
 /**
@@ -576,7 +574,7 @@ typedef void (*LLVMOrcExecutionSessionLookupHandleResultFunction)(
  *
  * THIS API IS EXPERIMENTAL AND LIKELY TO CHANGE IN THE NEAR FUTURE!
  */
-LLVM_C_ABI void LLVMOrcExecutionSessionLookup(
+void LLVMOrcExecutionSessionLookup(
     LLVMOrcExecutionSessionRef ES, LLVMOrcLookupKind K,
     LLVMOrcCJITDylibSearchOrder SearchOrder, size_t SearchOrderSize,
     LLVMOrcCLookupSet Symbols, size_t SymbolsSize,
@@ -585,56 +583,49 @@ LLVM_C_ABI void LLVMOrcExecutionSessionLookup(
 /**
  * Increments the ref-count for a SymbolStringPool entry.
  */
-LLVM_C_ABI void
-LLVMOrcRetainSymbolStringPoolEntry(LLVMOrcSymbolStringPoolEntryRef S);
+void LLVMOrcRetainSymbolStringPoolEntry(LLVMOrcSymbolStringPoolEntryRef S);
 
 /**
  * Reduces the ref-count for of a SymbolStringPool entry.
  */
-LLVM_C_ABI void
-LLVMOrcReleaseSymbolStringPoolEntry(LLVMOrcSymbolStringPoolEntryRef S);
+void LLVMOrcReleaseSymbolStringPoolEntry(LLVMOrcSymbolStringPoolEntryRef S);
 
 /**
  * Return the c-string for the given symbol. This string will remain valid until
  * the entry is freed (once all LLVMOrcSymbolStringPoolEntryRefs have been
  * released).
  */
-LLVM_C_ABI const char *
-LLVMOrcSymbolStringPoolEntryStr(LLVMOrcSymbolStringPoolEntryRef S);
+const char *LLVMOrcSymbolStringPoolEntryStr(LLVMOrcSymbolStringPoolEntryRef S);
 
 /**
  * Reduces the ref-count of a ResourceTracker.
  */
-LLVM_C_ABI void LLVMOrcReleaseResourceTracker(LLVMOrcResourceTrackerRef RT);
+void LLVMOrcReleaseResourceTracker(LLVMOrcResourceTrackerRef RT);
 
 /**
  * Transfers tracking of all resources associated with resource tracker SrcRT
  * to resource tracker DstRT.
  */
-LLVM_C_ABI void
-LLVMOrcResourceTrackerTransferTo(LLVMOrcResourceTrackerRef SrcRT,
-                                 LLVMOrcResourceTrackerRef DstRT);
+void LLVMOrcResourceTrackerTransferTo(LLVMOrcResourceTrackerRef SrcRT,
+                                      LLVMOrcResourceTrackerRef DstRT);
 
 /**
  * Remove all resources associated with the given tracker. See
  * ResourceTracker::remove().
  */
-LLVM_C_ABI LLVMErrorRef
-LLVMOrcResourceTrackerRemove(LLVMOrcResourceTrackerRef RT);
+LLVMErrorRef LLVMOrcResourceTrackerRemove(LLVMOrcResourceTrackerRef RT);
 
 /**
  * Dispose of a JITDylib::DefinitionGenerator. This should only be called if
  * ownership has not been passed to a JITDylib (e.g. because some error
  * prevented the client from calling LLVMOrcJITDylibAddGenerator).
  */
-LLVM_C_ABI void
-LLVMOrcDisposeDefinitionGenerator(LLVMOrcDefinitionGeneratorRef DG);
+void LLVMOrcDisposeDefinitionGenerator(LLVMOrcDefinitionGeneratorRef DG);
 
 /**
  * Dispose of a MaterializationUnit.
  */
-LLVM_C_ABI void
-LLVMOrcDisposeMaterializationUnit(LLVMOrcMaterializationUnitRef MU);
+void LLVMOrcDisposeMaterializationUnit(LLVMOrcMaterializationUnitRef MU);
 
 /**
  * Create a custom MaterializationUnit.
@@ -669,7 +660,7 @@ LLVMOrcDisposeMaterializationUnit(LLVMOrcMaterializationUnitRef MU);
  * either passing it to a JITDylib (via LLVMOrcJITDylibDefine) or disposing
  * of it by calling LLVMOrcDisposeMaterializationUnit.
  */
-LLVM_C_ABI LLVMOrcMaterializationUnitRef LLVMOrcCreateCustomMaterializationUnit(
+LLVMOrcMaterializationUnitRef LLVMOrcCreateCustomMaterializationUnit(
     const char *Name, void *Ctx, LLVMOrcCSymbolFlagsMapPairs Syms,
     size_t NumSyms, LLVMOrcSymbolStringPoolEntryRef InitSym,
     LLVMOrcMaterializationUnitMaterializeFunction Materialize,
@@ -697,7 +688,7 @@ LLVM_C_ABI LLVMOrcMaterializationUnitRef LLVMOrcCreateCustomMaterializationUnit(
  * If a client wishes to reuse elements of the Sym array after this call they
  * must explicitly retain each of the elements for themselves.
  */
-LLVM_C_ABI LLVMOrcMaterializationUnitRef
+LLVMOrcMaterializationUnitRef
 LLVMOrcAbsoluteSymbols(LLVMOrcCSymbolMapPairs Syms, size_t NumPairs);
 
 /**
@@ -721,7 +712,7 @@ LLVMOrcAbsoluteSymbols(LLVMOrcCSymbolMapPairs Syms, size_t NumPairs);
  * If a client wishes to reuse elements of the CallableAliases array after this call they
  * must explicitly retain each of the elements for themselves.
  */
-LLVM_C_ABI LLVMOrcMaterializationUnitRef LLVMOrcLazyReexports(
+LLVMOrcMaterializationUnitRef LLVMOrcLazyReexports(
     LLVMOrcLazyCallThroughManagerRef LCTM, LLVMOrcIndirectStubsManagerRef ISM,
     LLVMOrcJITDylibRef SourceRef, LLVMOrcCSymbolAliasMapPairs CallableAliases,
     size_t NumPairs);
@@ -736,20 +727,19 @@ LLVM_C_ABI LLVMOrcMaterializationUnitRef LLVMOrcLazyReexports(
  * LLVMOrcMaterializationResponsibilityNotifyEmitted) or failed (via
  * LLVMOrcMaterializationResponsibilityFailMaterialization).
  */
-LLVM_C_ABI void LLVMOrcDisposeMaterializationResponsibility(
+void LLVMOrcDisposeMaterializationResponsibility(
     LLVMOrcMaterializationResponsibilityRef MR);
 
 /**
  * Returns the target JITDylib that these symbols are being materialized into.
  */
-LLVM_C_ABI LLVMOrcJITDylibRef
-LLVMOrcMaterializationResponsibilityGetTargetDylib(
+LLVMOrcJITDylibRef LLVMOrcMaterializationResponsibilityGetTargetDylib(
     LLVMOrcMaterializationResponsibilityRef MR);
 
 /**
  * Returns the ExecutionSession for this MaterializationResponsibility.
  */
-LLVM_C_ABI LLVMOrcExecutionSessionRef
+LLVMOrcExecutionSessionRef
 LLVMOrcMaterializationResponsibilityGetExecutionSession(
     LLVMOrcMaterializationResponsibilityRef MR);
 
@@ -763,8 +753,7 @@ LLVMOrcMaterializationResponsibilityGetExecutionSession(
  * MaterializationResponsibility requires the caller to retain the symbols
  * explicitly.
  */
-LLVM_C_ABI LLVMOrcCSymbolFlagsMapPairs
-LLVMOrcMaterializationResponsibilityGetSymbols(
+LLVMOrcCSymbolFlagsMapPairs LLVMOrcMaterializationResponsibilityGetSymbols(
     LLVMOrcMaterializationResponsibilityRef MR, size_t *NumPairs);
 
 /**
@@ -772,8 +761,7 @@ LLVMOrcMaterializationResponsibilityGetSymbols(
  *
  * Does not release the entries themselves.
  */
-LLVM_C_ABI void
-LLVMOrcDisposeCSymbolFlagsMap(LLVMOrcCSymbolFlagsMapPairs Pairs);
+void LLVMOrcDisposeCSymbolFlagsMap(LLVMOrcCSymbolFlagsMapPairs Pairs);
 
 /**
  * Returns the initialization pseudo-symbol, if any. This symbol will also
@@ -783,7 +771,7 @@ LLVMOrcDisposeCSymbolFlagsMap(LLVMOrcCSymbolFlagsMapPairs Pairs);
  * The returned symbol is not retained over any mutating operation of the
  * MaterializationResponsbility or beyond the lifetime thereof.
  */
-LLVM_C_ABI LLVMOrcSymbolStringPoolEntryRef
+LLVMOrcSymbolStringPoolEntryRef
 LLVMOrcMaterializationResponsibilityGetInitializerSymbol(
     LLVMOrcMaterializationResponsibilityRef MR);
 
@@ -793,7 +781,7 @@ LLVMOrcMaterializationResponsibilityGetInitializerSymbol(
  * information can be used to return responsibility for unrequested symbols
  * back to the JITDylib via the delegate method.
  */
-LLVM_C_ABI LLVMOrcSymbolStringPoolEntryRef *
+LLVMOrcSymbolStringPoolEntryRef *
 LLVMOrcMaterializationResponsibilityGetRequestedSymbols(
     LLVMOrcMaterializationResponsibilityRef MR, size_t *NumSymbols);
 
@@ -802,7 +790,7 @@ LLVMOrcMaterializationResponsibilityGetRequestedSymbols(
  *
  * Does not release the symbols themselves.
  */
-LLVM_C_ABI void LLVMOrcDisposeSymbols(LLVMOrcSymbolStringPoolEntryRef *Symbols);
+void LLVMOrcDisposeSymbols(LLVMOrcSymbolStringPoolEntryRef *Symbols);
 
 /**
  * Notifies the target JITDylib that the given symbols have been resolved.
@@ -820,7 +808,7 @@ LLVM_C_ABI void LLVMOrcDisposeSymbols(LLVMOrcSymbolStringPoolEntryRef *Symbols);
  * MaterializationResponsibility then this method is guaranteed to return
  * LLVMErrorSuccess.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityNotifyResolved(
+LLVMErrorRef LLVMOrcMaterializationResponsibilityNotifyResolved(
     LLVMOrcMaterializationResponsibilityRef MR, LLVMOrcCSymbolMapPairs Symbols,
     size_t NumPairs);
 
@@ -850,7 +838,7 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityNotifyResolved(
  * MaterializationResponsibility then this method is guaranteed to return
  * LLVMErrorSuccess.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityNotifyEmitted(
+LLVMErrorRef LLVMOrcMaterializationResponsibilityNotifyEmitted(
     LLVMOrcMaterializationResponsibilityRef MR,
     LLVMOrcCSymbolDependenceGroup *SymbolDepGroups, size_t NumSymbolDepGroups);
 
@@ -867,7 +855,7 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityNotifyEmitted(
  * additional symbols at materialization time (e.g. stubs, compile
  * callbacks, metadata)
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityDefineMaterializing(
+LLVMErrorRef LLVMOrcMaterializationResponsibilityDefineMaterializing(
     LLVMOrcMaterializationResponsibilityRef MR,
     LLVMOrcCSymbolFlagsMapPairs Pairs, size_t NumPairs);
 
@@ -878,7 +866,7 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityDefineMaterializing(
  * from the target JITDylib, and send an error to any queries waiting on
  * these symbols.
  */
-LLVM_C_ABI void LLVMOrcMaterializationResponsibilityFailMaterialization(
+void LLVMOrcMaterializationResponsibilityFailMaterialization(
     LLVMOrcMaterializationResponsibilityRef MR);
 
 /**
@@ -888,7 +876,7 @@ LLVM_C_ABI void LLVMOrcMaterializationResponsibilityFailMaterialization(
  * by introspecting which symbols have actually been looked up and
  * materializing only those).
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityReplace(
+LLVMErrorRef LLVMOrcMaterializationResponsibilityReplace(
     LLVMOrcMaterializationResponsibilityRef MR,
     LLVMOrcMaterializationUnitRef MU);
 
@@ -900,7 +888,7 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityReplace(
  * The caller retains responsibility of the the passed
  * MaterializationResponsibility.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityDelegate(
+LLVMErrorRef LLVMOrcMaterializationResponsibilityDelegate(
     LLVMOrcMaterializationResponsibilityRef MR,
     LLVMOrcSymbolStringPoolEntryRef *Symbols, size_t NumSymbols,
     LLVMOrcMaterializationResponsibilityRef *Result);
@@ -914,8 +902,9 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcMaterializationResponsibilityDelegate(
  * This call does not install any library code or symbols into the newly
  * created JITDylib. The client is responsible for all configuration.
  */
-LLVM_C_ABI LLVMOrcJITDylibRef LLVMOrcExecutionSessionCreateBareJITDylib(
-    LLVMOrcExecutionSessionRef ES, const char *Name);
+LLVMOrcJITDylibRef
+LLVMOrcExecutionSessionCreateBareJITDylib(LLVMOrcExecutionSessionRef ES,
+                                          const char *Name);
 
 /**
  * Create a JITDylib.
@@ -929,23 +918,25 @@ LLVM_C_ABI LLVMOrcJITDylibRef LLVMOrcExecutionSessionCreateBareJITDylib(
  * call is equivalent to LLVMExecutionSessionRefCreateBareJITDylib and will
  * always return success.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcExecutionSessionCreateJITDylib(
-    LLVMOrcExecutionSessionRef ES, LLVMOrcJITDylibRef *Result,
-    const char *Name);
+LLVMErrorRef
+LLVMOrcExecutionSessionCreateJITDylib(LLVMOrcExecutionSessionRef ES,
+                                      LLVMOrcJITDylibRef *Result,
+                                      const char *Name);
 
 /**
  * Returns the JITDylib with the given name, or NULL if no such JITDylib
  * exists.
  */
-LLVM_C_ABI LLVMOrcJITDylibRef LLVMOrcExecutionSessionGetJITDylibByName(
-    LLVMOrcExecutionSessionRef ES, const char *Name);
+LLVMOrcJITDylibRef
+LLVMOrcExecutionSessionGetJITDylibByName(LLVMOrcExecutionSessionRef ES,
+                                         const char *Name);
 
 /**
  * Return a reference to a newly created resource tracker associated with JD.
  * The tracker is returned with an initial ref-count of 1, and must be released
  * with LLVMOrcReleaseResourceTracker when no longer needed.
  */
-LLVM_C_ABI LLVMOrcResourceTrackerRef
+LLVMOrcResourceTrackerRef
 LLVMOrcJITDylibCreateResourceTracker(LLVMOrcJITDylibRef JD);
 
 /**
@@ -953,7 +944,7 @@ LLVMOrcJITDylibCreateResourceTracker(LLVMOrcJITDylibRef JD);
  * This operation will increase the retain count of the tracker: Clients should
  * call LLVMOrcReleaseResourceTracker when the result is no longer needed.
  */
-LLVM_C_ABI LLVMOrcResourceTrackerRef
+LLVMOrcResourceTrackerRef
 LLVMOrcJITDylibGetDefaultResourceTracker(LLVMOrcJITDylibRef JD);
 
 /**
@@ -963,14 +954,14 @@ LLVMOrcJITDylibGetDefaultResourceTracker(LLVMOrcJITDylibRef JD);
  * If the operation fails then ownership remains with the caller who should
  * call LLVMOrcDisposeMaterializationUnit to destroy it.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcJITDylibDefine(LLVMOrcJITDylibRef JD,
-                                              LLVMOrcMaterializationUnitRef MU);
+LLVMErrorRef LLVMOrcJITDylibDefine(LLVMOrcJITDylibRef JD,
+                                   LLVMOrcMaterializationUnitRef MU);
 
 /**
  * Calls remove on all trackers associated with this JITDylib, see
  * JITDylib::clear().
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcJITDylibClear(LLVMOrcJITDylibRef JD);
+LLVMErrorRef LLVMOrcJITDylibClear(LLVMOrcJITDylibRef JD);
 
 /**
  * Add a DefinitionGenerator to the given JITDylib.
@@ -978,8 +969,8 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcJITDylibClear(LLVMOrcJITDylibRef JD);
  * The JITDylib will take ownership of the given generator: The client is no
  * longer responsible for managing its memory.
  */
-LLVM_C_ABI void LLVMOrcJITDylibAddGenerator(LLVMOrcJITDylibRef JD,
-                                            LLVMOrcDefinitionGeneratorRef DG);
+void LLVMOrcJITDylibAddGenerator(LLVMOrcJITDylibRef JD,
+                                 LLVMOrcDefinitionGeneratorRef DG);
 
 /**
  * Create a custom generator.
@@ -994,8 +985,7 @@ LLVM_C_ABI void LLVMOrcJITDylibAddGenerator(LLVMOrcJITDylibRef JD,
  * Dispose is the disposal function for Ctx. This argument is permitted to be
  * null (in which case the client is responsible for the lifetime of Ctx).
  */
-LLVM_C_ABI LLVMOrcDefinitionGeneratorRef
-LLVMOrcCreateCustomCAPIDefinitionGenerator(
+LLVMOrcDefinitionGeneratorRef LLVMOrcCreateCustomCAPIDefinitionGenerator(
     LLVMOrcCAPIDefinitionGeneratorTryToGenerateFunction F, void *Ctx,
     LLVMOrcDisposeCAPIDefinitionGeneratorFunction Dispose);
 
@@ -1003,8 +993,8 @@ LLVMOrcCreateCustomCAPIDefinitionGenerator(
  * Continue a lookup that was suspended in a generator (see
  * LLVMOrcCAPIDefinitionGeneratorTryToGenerateFunction).
  */
-LLVM_C_ABI void LLVMOrcLookupStateContinueLookup(LLVMOrcLookupStateRef S,
-                                                 LLVMErrorRef Err);
+void LLVMOrcLookupStateContinueLookup(LLVMOrcLookupStateRef S,
+                                      LLVMErrorRef Err);
 
 /**
  * Get a DynamicLibrarySearchGenerator that will reflect process symbols into
@@ -1024,7 +1014,7 @@ LLVM_C_ABI void LLVMOrcLookupStateContinueLookup(LLVMOrcLookupStateRef S,
  * function is the full mangled symbol: The client is responsible for stripping
  * the global prefix if present.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(
+LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(
     LLVMOrcDefinitionGeneratorRef *Result, char GlobalPrefx,
     LLVMOrcSymbolPredicate Filter, void *FilterCtx);
 
@@ -1049,7 +1039,7 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(
  * THIS API IS EXPERIMENTAL AND LIKELY TO CHANGE IN THE NEAR FUTURE!
  * 
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForPath(
+LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForPath(
     LLVMOrcDefinitionGeneratorRef *Result, const char *FileName,
     char GlobalPrefix, LLVMOrcSymbolPredicate Filter, void *FilterCtx);
 
@@ -1067,43 +1057,30 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcCreateDynamicLibrarySearchGeneratorForPath(
  * THIS API IS EXPERIMENTAL AND LIKELY TO CHANGE IN THE NEAR FUTURE!
  * 
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcCreateStaticLibrarySearchGeneratorForPath(
+LLVMErrorRef LLVMOrcCreateStaticLibrarySearchGeneratorForPath(
     LLVMOrcDefinitionGeneratorRef *Result, LLVMOrcObjectLayerRef ObjLayer,
     const char *FileName);
 
 /**
- * Create a ThreadSafeContextRef containing a new LLVMContext.
+ * Create a ThreadSafeContext containing a new LLVMContext.
  *
  * Ownership of the underlying ThreadSafeContext data is shared: Clients
- * can and should dispose of their ThreadSafeContextRef as soon as they no
- * longer need to refer to it directly. Other references (e.g. from
- * ThreadSafeModules) will keep the underlying data alive as long as it is
- * needed.
+ * can and should dispose of their ThreadSafeContext as soon as they no longer
+ * need to refer to it directly. Other references (e.g. from ThreadSafeModules)
+ * will keep the data alive as long as it is needed.
  */
-LLVM_C_ABI LLVMOrcThreadSafeContextRef LLVMOrcCreateNewThreadSafeContext(void);
+LLVMOrcThreadSafeContextRef LLVMOrcCreateNewThreadSafeContext(void);
 
 /**
- * Create a ThreadSafeContextRef from a given LLVMContext, which must not be
- * associated with any existing ThreadSafeContext.
- *
- * The underlying ThreadSafeContext will take ownership of the LLVMContext
- * object, so clients should not free the LLVMContext passed to this
- * function.
- *
- * Ownership of the underlying ThreadSafeContext data is shared: Clients
- * can and should dispose of their ThreadSafeContextRef as soon as they no
- * longer need to refer to it directly. Other references (e.g. from
- * ThreadSafeModules) will keep the underlying data alive as long as it is
- * needed.
+ * Get a reference to the wrapped LLVMContext.
  */
-LLVM_C_ABI LLVMOrcThreadSafeContextRef
-LLVMOrcCreateNewThreadSafeContextFromLLVMContext(LLVMContextRef Ctx);
+LLVMContextRef
+LLVMOrcThreadSafeContextGetContext(LLVMOrcThreadSafeContextRef TSCtx);
 
 /**
  * Dispose of a ThreadSafeContext.
  */
-LLVM_C_ABI void
-LLVMOrcDisposeThreadSafeContext(LLVMOrcThreadSafeContextRef TSCtx);
+void LLVMOrcDisposeThreadSafeContext(LLVMOrcThreadSafeContextRef TSCtx);
 
 /**
  * Create a ThreadSafeModule wrapper around the given LLVM module. This takes
@@ -1115,22 +1092,24 @@ LLVMOrcDisposeThreadSafeContext(LLVMOrcThreadSafeContextRef TSCtx);
  * responsible for it. If it is not transferred to the JIT then the client
  * should call LLVMOrcDisposeThreadSafeModule to dispose of it.
  */
-LLVM_C_ABI LLVMOrcThreadSafeModuleRef LLVMOrcCreateNewThreadSafeModule(
-    LLVMModuleRef M, LLVMOrcThreadSafeContextRef TSCtx);
+LLVMOrcThreadSafeModuleRef
+LLVMOrcCreateNewThreadSafeModule(LLVMModuleRef M,
+                                 LLVMOrcThreadSafeContextRef TSCtx);
 
 /**
  * Dispose of a ThreadSafeModule. This should only be called if ownership has
  * not been passed to LLJIT (e.g. because some error prevented the client from
  * adding this to the JIT).
  */
-LLVM_C_ABI void LLVMOrcDisposeThreadSafeModule(LLVMOrcThreadSafeModuleRef TSM);
+void LLVMOrcDisposeThreadSafeModule(LLVMOrcThreadSafeModuleRef TSM);
 
 /**
  * Apply the given function to the module contained in this ThreadSafeModule.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcThreadSafeModuleWithModuleDo(
-    LLVMOrcThreadSafeModuleRef TSM, LLVMOrcGenericIRModuleOperationFunction F,
-    void *Ctx);
+LLVMErrorRef
+LLVMOrcThreadSafeModuleWithModuleDo(LLVMOrcThreadSafeModuleRef TSM,
+                                    LLVMOrcGenericIRModuleOperationFunction F,
+                                    void *Ctx);
 
 /**
  * Create a JITTargetMachineBuilder by detecting the host.
@@ -1140,7 +1119,7 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcThreadSafeModuleWithModuleDo(
  * LLVMOrcLLJITBuilderSetJITTargetMachineBuilder) or disposed of by calling
  * LLVMOrcDisposeJITTargetMachineBuilder.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcJITTargetMachineBuilderDetectHost(
+LLVMErrorRef LLVMOrcJITTargetMachineBuilderDetectHost(
     LLVMOrcJITTargetMachineBuilderRef *Result);
 
 /**
@@ -1152,14 +1131,14 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcJITTargetMachineBuilderDetectHost(
  * LLVMOrcLLJITBuilderSetJITTargetMachineBuilder) or disposed of by calling
  * LLVMOrcDisposeJITTargetMachineBuilder.
  */
-LLVM_C_ABI LLVMOrcJITTargetMachineBuilderRef
+LLVMOrcJITTargetMachineBuilderRef
 LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(LLVMTargetMachineRef TM);
 
 /**
  * Dispose of a JITTargetMachineBuilder.
  */
-LLVM_C_ABI void
-LLVMOrcDisposeJITTargetMachineBuilder(LLVMOrcJITTargetMachineBuilderRef JTMB);
+void LLVMOrcDisposeJITTargetMachineBuilder(
+    LLVMOrcJITTargetMachineBuilderRef JTMB);
 
 /**
  * Returns the target triple for the given JITTargetMachineBuilder as a string.
@@ -1167,14 +1146,14 @@ LLVMOrcDisposeJITTargetMachineBuilder(LLVMOrcJITTargetMachineBuilderRef JTMB);
  * The caller owns the resulting string as must dispose of it by calling
  * LLVMDisposeMessage
  */
-LLVM_C_ABI char *LLVMOrcJITTargetMachineBuilderGetTargetTriple(
+char *LLVMOrcJITTargetMachineBuilderGetTargetTriple(
     LLVMOrcJITTargetMachineBuilderRef JTMB);
 
 /**
  * Sets the target triple for the given JITTargetMachineBuilder to the given
  * string.
  */
-LLVM_C_ABI void LLVMOrcJITTargetMachineBuilderSetTargetTriple(
+void LLVMOrcJITTargetMachineBuilderSetTargetTriple(
     LLVMOrcJITTargetMachineBuilderRef JTMB, const char *TargetTriple);
 
 /**
@@ -1188,9 +1167,9 @@ LLVM_C_ABI void LLVMOrcJITTargetMachineBuilderSetTargetTriple(
  * Resources associated with the given object will be tracked by the given
  * JITDylib's default ResourceTracker.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcObjectLayerAddObjectFile(
-    LLVMOrcObjectLayerRef ObjLayer, LLVMOrcJITDylibRef JD,
-    LLVMMemoryBufferRef ObjBuffer);
+LLVMErrorRef LLVMOrcObjectLayerAddObjectFile(LLVMOrcObjectLayerRef ObjLayer,
+                                             LLVMOrcJITDylibRef JD,
+                                             LLVMMemoryBufferRef ObjBuffer);
 
 /**
  * Add an object to an ObjectLayer using the given ResourceTracker.
@@ -1203,9 +1182,10 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcObjectLayerAddObjectFile(
  * Resources associated with the given object will be tracked by
  * ResourceTracker RT.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcObjectLayerAddObjectFileWithRT(
-    LLVMOrcObjectLayerRef ObjLayer, LLVMOrcResourceTrackerRef RT,
-    LLVMMemoryBufferRef ObjBuffer);
+LLVMErrorRef
+LLVMOrcObjectLayerAddObjectFileWithRT(LLVMOrcObjectLayerRef ObjLayer,
+                                      LLVMOrcResourceTrackerRef RT,
+                                      LLVMMemoryBufferRef ObjBuffer);
 
 /**
  * Emit an object buffer to an ObjectLayer.
@@ -1213,33 +1193,31 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcObjectLayerAddObjectFileWithRT(
  * Ownership of the responsibility object and object buffer pass to this
  * function. The client is not responsible for cleanup.
  */
-LLVM_C_ABI void
-LLVMOrcObjectLayerEmit(LLVMOrcObjectLayerRef ObjLayer,
-                       LLVMOrcMaterializationResponsibilityRef R,
-                       LLVMMemoryBufferRef ObjBuffer);
+void LLVMOrcObjectLayerEmit(LLVMOrcObjectLayerRef ObjLayer,
+                            LLVMOrcMaterializationResponsibilityRef R,
+                            LLVMMemoryBufferRef ObjBuffer);
 
 /**
  * Dispose of an ObjectLayer.
  */
-LLVM_C_ABI void LLVMOrcDisposeObjectLayer(LLVMOrcObjectLayerRef ObjLayer);
+void LLVMOrcDisposeObjectLayer(LLVMOrcObjectLayerRef ObjLayer);
 
-LLVM_C_ABI void
-LLVMOrcIRTransformLayerEmit(LLVMOrcIRTransformLayerRef IRTransformLayer,
-                            LLVMOrcMaterializationResponsibilityRef MR,
-                            LLVMOrcThreadSafeModuleRef TSM);
+void LLVMOrcIRTransformLayerEmit(LLVMOrcIRTransformLayerRef IRTransformLayer,
+                                 LLVMOrcMaterializationResponsibilityRef MR,
+                                 LLVMOrcThreadSafeModuleRef TSM);
 
 /**
  * Set the transform function of the provided transform layer, passing through a
  * pointer to user provided context.
  */
-LLVM_C_ABI void LLVMOrcIRTransformLayerSetTransform(
+void LLVMOrcIRTransformLayerSetTransform(
     LLVMOrcIRTransformLayerRef IRTransformLayer,
     LLVMOrcIRTransformLayerTransformFunction TransformFunction, void *Ctx);
 
 /**
  * Set the transform function on an LLVMOrcObjectTransformLayer.
  */
-LLVM_C_ABI void LLVMOrcObjectTransformLayerSetTransform(
+void LLVMOrcObjectTransformLayerSetTransform(
     LLVMOrcObjectTransformLayerRef ObjTransformLayer,
     LLVMOrcObjectTransformLayerTransformFunction TransformFunction, void *Ctx);
 
@@ -1249,16 +1227,15 @@ LLVM_C_ABI void LLVMOrcObjectTransformLayerSetTransform(
  * The resulting IndirectStubsManager is owned by the client
  * and must be disposed of by calling LLVMOrcDisposeDisposeIndirectStubsManager.
  */
-LLVM_C_ABI LLVMOrcIndirectStubsManagerRef
+LLVMOrcIndirectStubsManagerRef
 LLVMOrcCreateLocalIndirectStubsManager(const char *TargetTriple);
 
 /**
  * Dispose of an IndirectStubsManager.
  */
-LLVM_C_ABI void
-LLVMOrcDisposeIndirectStubsManager(LLVMOrcIndirectStubsManagerRef ISM);
+void LLVMOrcDisposeIndirectStubsManager(LLVMOrcIndirectStubsManagerRef ISM);
 
-LLVM_C_ABI LLVMErrorRef LLVMOrcCreateLocalLazyCallThroughManager(
+LLVMErrorRef LLVMOrcCreateLocalLazyCallThroughManager(
     const char *TargetTriple, LLVMOrcExecutionSessionRef ES,
     LLVMOrcJITTargetAddress ErrorHandlerAddr,
     LLVMOrcLazyCallThroughManagerRef *LCTM);
@@ -1266,8 +1243,8 @@ LLVM_C_ABI LLVMErrorRef LLVMOrcCreateLocalLazyCallThroughManager(
 /**
  * Dispose of an LazyCallThroughManager.
  */
-LLVM_C_ABI void
-LLVMOrcDisposeLazyCallThroughManager(LLVMOrcLazyCallThroughManagerRef LCTM);
+void LLVMOrcDisposeLazyCallThroughManager(
+    LLVMOrcLazyCallThroughManagerRef LCTM);
 
 /**
  * Create a DumpObjects instance.
@@ -1283,19 +1260,19 @@ LLVMOrcDisposeLazyCallThroughManager(LLVMOrcLazyCallThroughManagerRef LCTM);
  * <ident>.2.o, <ident>.3.o, and so on). IdentifierOverride should not contain
  * an extension, as a .o suffix will be added by DumpObjects.
  */
-LLVM_C_ABI LLVMOrcDumpObjectsRef
-LLVMOrcCreateDumpObjects(const char *DumpDir, const char *IdentifierOverride);
+LLVMOrcDumpObjectsRef LLVMOrcCreateDumpObjects(const char *DumpDir,
+                                               const char *IdentifierOverride);
 
 /**
  * Dispose of a DumpObjects instance.
  */
-LLVM_C_ABI void LLVMOrcDisposeDumpObjects(LLVMOrcDumpObjectsRef DumpObjects);
+void LLVMOrcDisposeDumpObjects(LLVMOrcDumpObjectsRef DumpObjects);
 
 /**
  * Dump the contents of the given MemoryBuffer.
  */
-LLVM_C_ABI LLVMErrorRef LLVMOrcDumpObjects_CallOperator(
-    LLVMOrcDumpObjectsRef DumpObjects, LLVMMemoryBufferRef *ObjBuffer);
+LLVMErrorRef LLVMOrcDumpObjects_CallOperator(LLVMOrcDumpObjectsRef DumpObjects,
+                                             LLVMMemoryBufferRef *ObjBuffer);
 
 /**
  * @}

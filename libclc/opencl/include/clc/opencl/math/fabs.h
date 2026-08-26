@@ -6,14 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_MATH_FABS_H__
-#define __CLC_OPENCL_MATH_FABS_H__
-
 #define __CLC_BODY <clc/math/unary_decl.inc>
-#define FUNCTION fabs
+#define __CLC_FUNCTION fabs
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_MATH_FABS_H__
+#undef __CLC_FUNCTION

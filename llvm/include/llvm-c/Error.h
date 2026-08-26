@@ -15,7 +15,6 @@
 #define LLVM_C_ERROR_H
 
 #include "llvm-c/ExternC.h"
-#include "llvm-c/Visibility.h"
 
 LLVM_C_EXTERN_C_BEGIN
 
@@ -42,7 +41,7 @@ typedef const void *LLVMErrorTypeId;
  * Returns the type id for the given error instance, which must be a failure
  * value (i.e. non-null).
  */
-LLVM_C_ABI LLVMErrorTypeId LLVMGetErrorTypeId(LLVMErrorRef Err);
+LLVMErrorTypeId LLVMGetErrorTypeId(LLVMErrorRef Err);
 
 /**
  * Dispose of the given error without handling it. This operation consumes the
@@ -50,7 +49,7 @@ LLVM_C_ABI LLVMErrorTypeId LLVMGetErrorTypeId(LLVMErrorRef Err);
  * Note: This method *only* needs to be called if the error is not being passed
  * to some other consuming operation, e.g. LLVMGetErrorMessage.
  */
-LLVM_C_ABI void LLVMConsumeError(LLVMErrorRef Err);
+void LLVMConsumeError(LLVMErrorRef Err);
 
 /**
  * Report a fatal error if Err is a failure value.
@@ -58,7 +57,7 @@ LLVM_C_ABI void LLVMConsumeError(LLVMErrorRef Err);
  * This function can be used to wrap calls to fallible functions ONLY when it is
  * known that the Error will always be a success value.
  */
-LLVM_C_ABI void LLVMCantFail(LLVMErrorRef Err);
+void LLVMCantFail(LLVMErrorRef Err);
 
 /**
  * Returns the given string's error message. This operation consumes the error,
@@ -66,22 +65,22 @@ LLVM_C_ABI void LLVMCantFail(LLVMErrorRef Err);
  * The caller is responsible for disposing of the string by calling
  * LLVMDisposeErrorMessage.
  */
-LLVM_C_ABI char *LLVMGetErrorMessage(LLVMErrorRef Err);
+char *LLVMGetErrorMessage(LLVMErrorRef Err);
 
 /**
  * Dispose of the given error message.
  */
-LLVM_C_ABI void LLVMDisposeErrorMessage(char *ErrMsg);
+void LLVMDisposeErrorMessage(char *ErrMsg);
 
 /**
  * Returns the type id for llvm StringError.
  */
-LLVM_C_ABI LLVMErrorTypeId LLVMGetStringErrorTypeId(void);
+LLVMErrorTypeId LLVMGetStringErrorTypeId(void);
 
 /**
  * Create a StringError.
  */
-LLVM_C_ABI LLVMErrorRef LLVMCreateStringError(const char *ErrMsg);
+LLVMErrorRef LLVMCreateStringError(const char *ErrMsg);
 
 /**
  * @}

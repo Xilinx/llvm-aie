@@ -3,11 +3,15 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-define half @f1(half %x, i16 %y) nounwind {
+define half @f1(half %x, i16 %y) {
 ; CHECK-LABEL: f1:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r13, %r15, 104(%r15)
+; CHECK-NEXT:    .cfi_offset %r13, -56
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    lhr %r13, %r2
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    llgfr %r2, %r13
@@ -19,13 +23,18 @@ define half @f1(half %x, i16 %y) nounwind {
   ret half %tmp
 }
 
-define half @f2(half %x, half %y) nounwind {
+define half @f2(half %x, half %y) {
 ; CHECK-LABEL: f2:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -176
+; CHECK-NEXT:    .cfi_def_cfa_offset 336
 ; CHECK-NEXT:    std %f8, 168(%r15) # 8-byte Spill
 ; CHECK-NEXT:    std %f9, 160(%r15) # 8-byte Spill
+; CHECK-NEXT:    .cfi_offset %f8, -168
+; CHECK-NEXT:    .cfi_offset %f9, -176
 ; CHECK-NEXT:    ler %f8, %f2
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    ler %f9, %f0
@@ -43,11 +52,14 @@ define half @f2(half %x, half %y) nounwind {
   ret half %tmp
 }
 
-define half @f3(half %x) nounwind {
+define half @f3(half %x) {
 ; CHECK-LABEL: f3:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, sinf@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -57,11 +69,14 @@ define half @f3(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f4(half %x) nounwind {
+define half @f4(half %x) {
 ; CHECK-LABEL: f4:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, cosf@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -71,11 +86,14 @@ define half @f4(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f5(half %x) nounwind {
+define half @f5(half %x) {
 ; CHECK-LABEL: f5:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, expf@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -85,11 +103,14 @@ define half @f5(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f6(half %x) nounwind {
+define half @f6(half %x) {
 ; CHECK-LABEL: f6:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, exp2f@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -99,11 +120,14 @@ define half @f6(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f7(half %x) nounwind {
+define half @f7(half %x) {
 ; CHECK-LABEL: f7:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, logf@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -113,11 +137,14 @@ define half @f7(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f8(half %x) nounwind {
+define half @f8(half %x) {
 ; CHECK-LABEL: f8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, log2f@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -127,11 +154,14 @@ define half @f8(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f9(half %x) nounwind {
+define half @f9(half %x) {
 ; CHECK-LABEL: f9:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -160
+; CHECK-NEXT:    .cfi_def_cfa_offset 320
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    brasl %r14, log10f@PLT
 ; CHECK-NEXT:    brasl %r14, __truncsfhf2@PLT
@@ -141,13 +171,18 @@ define half @f9(half %x) nounwind {
   ret half %tmp
 }
 
-define half @f10(half %x, half %y) nounwind {
+define half @f10(half %x, half %y) {
 ; CHECK-LABEL: f10:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -176
+; CHECK-NEXT:    .cfi_def_cfa_offset 336
 ; CHECK-NEXT:    std %f8, 168(%r15) # 8-byte Spill
 ; CHECK-NEXT:    std %f9, 160(%r15) # 8-byte Spill
+; CHECK-NEXT:    .cfi_offset %f8, -168
+; CHECK-NEXT:    .cfi_offset %f9, -176
 ; CHECK-NEXT:    ler %f8, %f2
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    ler %f9, %f0
@@ -165,13 +200,18 @@ define half @f10(half %x, half %y) nounwind {
   ret half %tmp
 }
 
-define half @f11(half %x, half %y) nounwind {
+define half @f11(half %x, half %y) {
 ; CHECK-LABEL: f11:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -176
+; CHECK-NEXT:    .cfi_def_cfa_offset 336
 ; CHECK-NEXT:    std %f8, 168(%r15) # 8-byte Spill
 ; CHECK-NEXT:    std %f9, 160(%r15) # 8-byte Spill
+; CHECK-NEXT:    .cfi_offset %f8, -168
+; CHECK-NEXT:    .cfi_offset %f9, -176
 ; CHECK-NEXT:    ler %f8, %f2
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
 ; CHECK-NEXT:    ler %f9, %f0
@@ -191,13 +231,18 @@ define half @f11(half %x, half %y) nounwind {
 
 ; Verify that "nnan" minnum/maxnum calls are transformed to
 ; compare+select sequences instead of libcalls.
-define half @f12(half %x, half %y) nounwind {
+define half @f12(half %x, half %y) {
 ; CHECK-LABEL: f12:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -176
+; CHECK-NEXT:    .cfi_def_cfa_offset 336
 ; CHECK-NEXT:    std %f8, 168(%r15) # 8-byte Spill
 ; CHECK-NEXT:    std %f9, 160(%r15) # 8-byte Spill
+; CHECK-NEXT:    .cfi_offset %f8, -168
+; CHECK-NEXT:    .cfi_offset %f9, -176
 ; CHECK-NEXT:    ler %f9, %f0
 ; CHECK-NEXT:    ler %f0, %f2
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT
@@ -218,13 +263,18 @@ define half @f12(half %x, half %y) nounwind {
   ret half %tmp
 }
 
-define half @f13(half %x, half %y) nounwind {
+define half @f13(half %x, half %y) {
 ; CHECK-LABEL: f13:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    stmg %r14, %r15, 112(%r15)
+; CHECK-NEXT:    .cfi_offset %r14, -48
+; CHECK-NEXT:    .cfi_offset %r15, -40
 ; CHECK-NEXT:    aghi %r15, -176
+; CHECK-NEXT:    .cfi_def_cfa_offset 336
 ; CHECK-NEXT:    std %f8, 168(%r15) # 8-byte Spill
 ; CHECK-NEXT:    std %f9, 160(%r15) # 8-byte Spill
+; CHECK-NEXT:    .cfi_offset %f8, -168
+; CHECK-NEXT:    .cfi_offset %f9, -176
 ; CHECK-NEXT:    ler %f9, %f0
 ; CHECK-NEXT:    ler %f0, %f2
 ; CHECK-NEXT:    brasl %r14, __extendhfsf2@PLT

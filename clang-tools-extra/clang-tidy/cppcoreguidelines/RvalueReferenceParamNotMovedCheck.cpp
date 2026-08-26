@@ -42,9 +42,9 @@ void RvalueReferenceParamNotMovedCheck::registerMatchers(MatchFinder *Finder) {
   StatementMatcher MoveCallMatcher =
       callExpr(
           argumentCountIs(1),
-          anyOf(callee(functionDecl(hasName(MoveFunction))),
+          anyOf(callee(functionDecl(hasName("::std::move"))),
                 callee(unresolvedLookupExpr(hasAnyDeclaration(
-                    namedDecl(hasUnderlyingDecl(hasName(MoveFunction))))))),
+                    namedDecl(hasUnderlyingDecl(hasName("::std::move"))))))),
           hasArgument(
               0, argumentOf(
                      AllowPartialMove,
@@ -122,8 +122,7 @@ RvalueReferenceParamNotMovedCheck::RvalueReferenceParamNotMovedCheck(
       AllowPartialMove(Options.get("AllowPartialMove", false)),
       IgnoreUnnamedParams(Options.get("IgnoreUnnamedParams", false)),
       IgnoreNonDeducedTemplateTypes(
-          Options.get("IgnoreNonDeducedTemplateTypes", false)),
-      MoveFunction(Options.get("MoveFunction", "::std::move")) {}
+          Options.get("IgnoreNonDeducedTemplateTypes", false)) {}
 
 void RvalueReferenceParamNotMovedCheck::storeOptions(
     ClangTidyOptions::OptionMap &Opts) {
@@ -131,7 +130,6 @@ void RvalueReferenceParamNotMovedCheck::storeOptions(
   Options.store(Opts, "IgnoreUnnamedParams", IgnoreUnnamedParams);
   Options.store(Opts, "IgnoreNonDeducedTemplateTypes",
                 IgnoreNonDeducedTemplateTypes);
-  Options.store(Opts, "MoveFunction", MoveFunction);
 }
 
 } // namespace clang::tidy::cppcoreguidelines

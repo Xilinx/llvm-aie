@@ -6,15 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_MATH_HALF_LOG10_H__
-#define __CLC_OPENCL_MATH_HALF_LOG10_H__
-
 #define __CLC_BODY <clc/math/unary_decl.inc>
-#define FUNCTION half_log10
+#define __CLC_FUNCTION half_log10
 #define __FLOAT_ONLY
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_MATH_HALF_LOG10_H__
+#undef __FLOAT_ONLY
+#undef __CLC_FUNCTION

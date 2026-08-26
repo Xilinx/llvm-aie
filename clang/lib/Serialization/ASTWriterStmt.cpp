@@ -1702,7 +1702,7 @@ void ASTStmtWriter::VisitMSDependentExistsStmt(MSDependentExistsStmt *S) {
 void ASTStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());
-  Record.AddSourceLocation(E->BeginLoc);
+  Record.AddSourceRange(E->Range);
 
   if (!E->hasStoredFPFeatures() && !static_cast<bool>(E->getADLCallKind()))
     AbbrevToUse = Writer.getCXXOperatorCallExprAbbrev();

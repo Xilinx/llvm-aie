@@ -684,7 +684,7 @@ something notionally equivalent. Examples:
   };
 
   // The Foo constructor call is reading a file, don't use braces to call it.
-  llvm::fill(foo, Foo("name"));
+  std::fill(foo.begin(), foo.end(), Foo("name"));
 
   // The pair is being constructed like an aggregate, use braces.
   bar_map.insert({my_key, my_value});

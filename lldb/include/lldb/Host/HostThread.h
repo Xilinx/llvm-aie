@@ -43,8 +43,6 @@ public:
 
   bool EqualsThread(lldb::thread_t thread) const;
 
-  bool HasThread() const;
-
 private:
   std::shared_ptr<HostNativeThreadBase> m_native_thread;
 };

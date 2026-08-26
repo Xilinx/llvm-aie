@@ -181,7 +181,7 @@ struct SelectOpInterface
     return success();
   }
 
-  FailureOr<BufferLikeType>
+  FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
                 const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
@@ -196,17 +196,17 @@ struct SelectOpInterface
     if (failed(trueType) || failed(falseType))
       return failure();
     if (*trueType == *falseType)
-      return cast<BufferLikeType>(*trueType);
+      return *trueType;
     if (trueType->getMemorySpace() != falseType->getMemorySpace())
       return op->emitError("inconsistent memory space on true/false operands");
 
     // If the buffers have different types, they differ only in their layout
     // map.
     auto memrefType = llvm::cast<MemRefType>(*trueType);
-    return cast<BufferLikeType>(getMemRefTypeWithFullyDynamicLayout(
+    return getMemRefTypeWithFullyDynamicLayout(
         RankedTensorType::get(memrefType.getShape(),
                               memrefType.getElementType()),
-        memrefType.getMemorySpace()));
+        memrefType.getMemorySpace());
   }
 };
 

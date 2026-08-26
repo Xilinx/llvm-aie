@@ -606,20 +606,13 @@ unsigned getOpenACCScopeFlags(OpenACCDirectiveKind DirKind) {
   case OpenACCDirectiveKind::Parallel:
   case OpenACCDirectiveKind::Serial:
   case OpenACCDirectiveKind::Kernels:
-    // Mark this as a BreakScope/ContinueScope as well as a compute construct
-    // so that we can diagnose trying to 'break'/'continue' inside of one.
-    return Scope::BreakScope | Scope::ContinueScope |
-           Scope::OpenACCComputeConstructScope;
   case OpenACCDirectiveKind::ParallelLoop:
   case OpenACCDirectiveKind::SerialLoop:
   case OpenACCDirectiveKind::KernelsLoop:
     // Mark this as a BreakScope/ContinueScope as well as a compute construct
     // so that we can diagnose trying to 'break'/'continue' inside of one.
     return Scope::BreakScope | Scope::ContinueScope |
-           Scope::OpenACCComputeConstructScope |
-           Scope::OpenACCLoopConstructScope;
-  case OpenACCDirectiveKind::Loop:
-    return Scope::OpenACCLoopConstructScope;
+           Scope::OpenACCComputeConstructScope;
   case OpenACCDirectiveKind::Data:
   case OpenACCDirectiveKind::EnterData:
   case OpenACCDirectiveKind::ExitData:
@@ -628,6 +621,7 @@ unsigned getOpenACCScopeFlags(OpenACCDirectiveKind DirKind) {
   case OpenACCDirectiveKind::Init:
   case OpenACCDirectiveKind::Shutdown:
   case OpenACCDirectiveKind::Cache:
+  case OpenACCDirectiveKind::Loop:
   case OpenACCDirectiveKind::Atomic:
   case OpenACCDirectiveKind::Declare:
   case OpenACCDirectiveKind::Routine:
@@ -1422,15 +1416,12 @@ Parser::OpenACCVarParseResult Parser::ParseOpenACCVar(OpenACCDirectiveKind DK,
                                                       OpenACCClauseKind CK) {
   OpenACCArraySectionRAII ArraySections(*this);
 
-  getActions().OpenACC().ActOnStartParseVar(DK, CK);
   ExprResult Res = ParseAssignmentExpression();
-
-  if (!Res.isUsable()) {
-    getActions().OpenACC().ActOnInvalidParseVar();
+  if (!Res.isUsable())
     return {Res, OpenACCParseCanContinue::Cannot};
-  }
 
   Res = getActions().OpenACC().ActOnVar(DK, CK, Res.get());
+
   return {Res, OpenACCParseCanContinue::Can};
 }
 

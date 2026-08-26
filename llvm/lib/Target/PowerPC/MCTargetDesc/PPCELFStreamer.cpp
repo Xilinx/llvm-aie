@@ -159,7 +159,9 @@ void PPCELFStreamer::emitGOTToPCRelReloc(const MCInst &Inst) {
   assert(DF && "Expecting a valid data fragment.");
   MCFixupKind FixupKind = static_cast<MCFixupKind>(FirstLiteralRelocationKind +
                                                    ELF::R_PPC64_PCREL_OPT);
-  DF->addFixup(MCFixup::create(LabelSym->getOffset() - 8, SubExpr2, FixupKind));
+  DF->getFixups().push_back(
+      MCFixup::create(LabelSym->getOffset() - 8, SubExpr2,
+                      FixupKind, Inst.getLoc()));
   emitLabel(CurrentLocation, Inst.getLoc());
 }
 

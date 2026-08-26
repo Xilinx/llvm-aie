@@ -36,10 +36,12 @@ private:
   /// Draw the statusline with the given text.
   void Draw(std::string msg);
 
+  /// Update terminal dimensions.
+  void UpdateTerminalProperties();
+
   enum ScrollWindowMode {
     EnableStatusline,
     DisableStatusline,
-    ResizeStatusline,
   };
 
   /// Set the scroll window for the given mode.

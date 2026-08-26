@@ -569,7 +569,8 @@ define void @test_successor_with_loop_phi(ptr %A, ptr %B) {
 ; CHECK-NEXT:    ldr w8, [x0]
 ; CHECK-NEXT:    str wzr, [x0]
 ; CHECK-NEXT:    mov x0, x1
-; CHECK-NEXT:    tst w8, #0xfffffffb
+; CHECK-NEXT:    orr w8, w8, #0x4
+; CHECK-NEXT:    cmp w8, #4
 ; CHECK-NEXT:    b.eq LBB7_1
 ; CHECK-NEXT:  ; %bb.2: ; %exit
 ; CHECK-NEXT:    ret

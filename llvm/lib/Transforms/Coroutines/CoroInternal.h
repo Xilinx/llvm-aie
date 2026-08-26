@@ -24,7 +24,8 @@ namespace coro {
 
 bool isSuspendBlock(BasicBlock *BB);
 bool declaresAnyIntrinsic(const Module &M);
-bool declaresIntrinsics(const Module &M, ArrayRef<Intrinsic::ID> List);
+bool declaresIntrinsics(const Module &M,
+                        const std::initializer_list<StringRef>);
 void replaceCoroFree(CoroIdInst *CoroId, bool Elide);
 
 /// Replaces all @llvm.coro.alloc intrinsics calls associated with a given

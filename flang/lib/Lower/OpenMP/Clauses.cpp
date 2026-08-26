@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "flang/Lower/OpenMP/Clauses.h"
+#include "Clauses.h"
 
 #include "flang/Common/idioms.h"
 #include "flang/Evaluate/expression.h"

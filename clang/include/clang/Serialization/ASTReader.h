@@ -525,7 +525,7 @@ private:
   ContinuousRangeMap<unsigned, ModuleFile*, 64> GlobalSLocEntryMap;
 
   using GlobalSLocOffsetMapType =
-      ContinuousRangeMap<SourceLocation::UIntTy, ModuleFile *, 64>;
+      ContinuousRangeMap<unsigned, ModuleFile *, 64>;
 
   /// A map of reversed (SourceManager::MaxLoadedOffset - SLocOffset)
   /// SourceLocation offsets to the modules containing them.
@@ -1452,6 +1452,12 @@ private:
     const StringRef *operator->() && = delete;
     const StringRef &operator*() && = delete;
   };
+
+  /// VarDecls with initializers containing side effects must be emitted,
+  /// but DeclMustBeEmitted is not allowed to deserialize the intializer.
+  /// FIXME: Lower memory usage by removing VarDecls once the initializer
+  /// is deserialized.
+  llvm::SmallPtrSet<Decl *, 16> InitSideEffectVars;
 
 public:
   /// Get the buffer for resolving paths.
@@ -2403,6 +2409,8 @@ public:
   ExtKind hasExternalDefinitions(const Decl *D) override;
 
   bool wasThisDeclarationADefinition(const FunctionDecl *FD) override;
+
+  bool hasInitializerWithSideEffects(const VarDecl *VD) const override;
 
   /// Retrieve a selector from the given module with its local ID
   /// number.

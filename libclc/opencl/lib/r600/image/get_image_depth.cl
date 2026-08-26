@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/image/image.h>
+#include <clc/opencl/clc.h>
 
 _CLC_DECL int __clc_get_image_depth_3d(image3d_t);
 

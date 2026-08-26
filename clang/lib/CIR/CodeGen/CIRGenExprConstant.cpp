@@ -684,7 +684,7 @@ mlir::Attribute ConstantEmitter::tryEmitPrivate(const APValue &value,
     if (mlir::isa<cir::BoolType>(ty))
       return builder.getCIRBoolAttr(value.getInt().getZExtValue());
     assert(mlir::isa<cir::IntType>(ty) && "expected integral type");
-    return cir::IntAttr::get(ty, value.getInt());
+    return cgm.getBuilder().getAttr<cir::IntAttr>(ty, value.getInt());
   }
   case APValue::Float: {
     const llvm::APFloat &init = value.getFloat();
@@ -696,9 +696,9 @@ mlir::Attribute ConstantEmitter::tryEmitPrivate(const APValue &value,
     }
 
     mlir::Type ty = cgm.convertType(destType);
-    assert(mlir::isa<cir::FPTypeInterface>(ty) &&
+    assert(mlir::isa<cir::CIRFPTypeInterface>(ty) &&
            "expected floating-point type");
-    return cir::FPAttr::get(ty, init);
+    return cgm.getBuilder().getAttr<cir::FPAttr>(ty, init);
   }
   case APValue::Array: {
     const ArrayType *arrayTy = cgm.getASTContext().getAsArrayType(destType);
@@ -789,17 +789,17 @@ mlir::Attribute ConstantEmitter::tryEmitPrivate(const APValue &value,
       llvm::APSInt real = value.getComplexIntReal();
       llvm::APSInt imag = value.getComplexIntImag();
       return builder.getAttr<cir::ConstComplexAttr>(
-          complexType, cir::IntAttr::get(complexElemTy, real),
-          cir::IntAttr::get(complexElemTy, imag));
+          complexType, builder.getAttr<cir::IntAttr>(complexElemTy, real),
+          builder.getAttr<cir::IntAttr>(complexElemTy, imag));
     }
 
-    assert(isa<cir::FPTypeInterface>(complexElemTy) &&
+    assert(isa<cir::CIRFPTypeInterface>(complexElemTy) &&
            "expected floating-point type");
     llvm::APFloat real = value.getComplexFloatReal();
     llvm::APFloat imag = value.getComplexFloatImag();
     return builder.getAttr<cir::ConstComplexAttr>(
-        complexType, cir::FPAttr::get(complexElemTy, real),
-        cir::FPAttr::get(complexElemTy, imag));
+        complexType, builder.getAttr<cir::FPAttr>(complexElemTy, real),
+        builder.getAttr<cir::FPAttr>(complexElemTy, imag));
   }
   case APValue::FixedPoint:
   case APValue::AddrLabelDiff:

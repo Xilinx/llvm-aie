@@ -39,7 +39,7 @@ static_assert(!CanInsertRange<Set, std::ranges::subrange<std::pair<int, int>*>>)
 static_assert(!CanInsertRange<Set, std::ranges::subrange<std::pair<short, short>*>>);
 
 template <class KeyContainer>
-constexpr void test_one() {
+void test_one() {
   using Key = typename KeyContainer::value_type;
 
   {
@@ -65,7 +65,7 @@ constexpr void test_one() {
   {
     // The "uniquing" part uses the comparator, not operator==.
     struct ModTen {
-      constexpr bool operator()(int a, int b) const { return (a % 10) < (b % 10); }
+      bool operator()(int a, int b) const { return (a % 10) < (b % 10); }
     };
     using M  = std::flat_set<Key, ModTen, KeyContainer>;
     M m      = {21, 43, 15, 37};
@@ -83,12 +83,9 @@ constexpr void test_one() {
   }
 }
 
-constexpr bool test() {
+void test() {
   test_one<std::vector<int>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test_one<std::deque<int>>();
+  test_one<std::deque<int>>();
   test_one<MinSequenceContainer<int>>();
   test_one<std::vector<int, min_allocator<int>>>();
   {
@@ -99,8 +96,6 @@ constexpr bool test() {
     MoveOnly expected[] = {1, 3, 4, 5};
     assert(std::ranges::equal(m, expected));
   }
-
-  return true;
 }
 
 void test_exception() {
@@ -111,9 +106,6 @@ void test_exception() {
 int main(int, char**) {
   test();
   test_exception();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

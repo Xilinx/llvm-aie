@@ -27,8 +27,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 
-#include <optional>
 #include <vector>
+#include <optional>
 
 using namespace llvm;
 
@@ -260,8 +260,9 @@ static const std::vector<TensorSpec> TrainingOnlyFeatures{
 
 static const std::vector<TensorSpec> getInputFeatures() {
   std::vector<TensorSpec> InputSpecs;
-  for (const auto &Feature : FeatureMap)
-    InputSpecs.push_back(TensorSpec(TFFeedPrefix + Feature.name(), Feature));
+  for (size_t I = 0; I < NumberOfFeatures; ++I)
+    InputSpecs.push_back(
+        TensorSpec(TFFeedPrefix + FeatureMap[I].name(), FeatureMap[I]));
   append_range(InputSpecs, TrainingOnlyFeatures);
   return InputSpecs;
 }
@@ -298,8 +299,7 @@ void TrainingLogger::logInlineEvent(const InlineEvent &Event,
                                     const MLModelRunner &ModelRunner) {
   L->startObservation();
   size_t CurrentFeature = 0;
-  size_t FeatureMapSize = FeatureMap.size();
-  for (; CurrentFeature < FeatureMapSize; ++CurrentFeature)
+  for (; CurrentFeature < NumberOfFeatures; ++CurrentFeature)
     L->logTensorValue(CurrentFeature,
                       reinterpret_cast<const char *>(
                           ModelRunner.getTensorUntyped(CurrentFeature)));

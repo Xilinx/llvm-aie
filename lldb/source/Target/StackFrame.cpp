@@ -562,7 +562,6 @@ ValueObjectSP StackFrame::DILGetValueForVariableExpressionPath(
     return ValueObjectConstResult::Create(nullptr, std::move(error));
   }
 
-  var_sp = (*valobj_or_error)->GetVariable();
   return *valobj_or_error;
 }
 

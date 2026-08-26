@@ -17,7 +17,7 @@ subroutine extendsUsedIntrinsic
 end
 subroutine sameIntrinsic1
   use explicit
-  !WARNING: Use-associated 'cos' already has 'INTRINSIC' attribute [-Wredundant-attribute]
+  !WARNING: Use-associated 'cos' already has 'INTRINSIC' attribute
   intrinsic cos
   real :: one = cos(0.)
 end

@@ -2085,8 +2085,8 @@ TypeIndex CodeViewDebug::lowerTypeFunction(const DISubroutineType *Ty) {
   ArrayRef<TypeIndex> ArgTypeIndices = {};
   if (!ReturnAndArgTypeIndices.empty()) {
     auto ReturnAndArgTypesRef = ArrayRef(ReturnAndArgTypeIndices);
-    ReturnTypeIndex = ReturnAndArgTypesRef.consume_front();
-    ArgTypeIndices = ReturnAndArgTypesRef;
+    ReturnTypeIndex = ReturnAndArgTypesRef.front();
+    ArgTypeIndices = ReturnAndArgTypesRef.drop_front();
   }
 
   ArgListRecord ArgListRec(TypeRecordKind::ArgList, ArgTypeIndices);
@@ -3566,35 +3566,15 @@ void CodeViewDebug::collectDebugInfoForJumpTables(const MachineFunction *MF,
           break;
         }
 
-        const MachineJumpTableEntry &JTE = JTI.getJumpTables()[JumpTableIndex];
-        JumpTableInfo CVJTI{EntrySize,
-                            Base,
-                            BaseOffset,
-                            Branch,
-                            MF->getJTISymbol(JumpTableIndex, MMI->getContext()),
-                            JTE.MBBs.size(),
-                            {}};
-        for (const auto &MBB : JTE.MBBs)
-          CVJTI.Cases.push_back(MBB->getSymbol());
-        CurFn->JumpTables.push_back(std::move(CVJTI));
+        CurFn->JumpTables.push_back(
+            {EntrySize, Base, BaseOffset, Branch,
+             MF->getJTISymbol(JumpTableIndex, MMI->getContext()),
+             JTI.getJumpTables()[JumpTableIndex].MBBs.size()});
       });
 }
 
 void CodeViewDebug::emitDebugInfoForJumpTables(const FunctionInfo &FI) {
-  // Emit S_LABEL32 records for each jump target
-  for (const auto &JumpTable : FI.JumpTables) {
-    for (const auto &CaseSym : JumpTable.Cases) {
-      MCSymbol *LabelEnd = beginSymbolRecord(SymbolKind::S_LABEL32);
-      OS.AddComment("Offset and segment");
-      OS.emitCOFFSecRel32(CaseSym, 0);
-      OS.AddComment("Flags");
-      OS.emitInt8(0);
-      emitNullTerminatedSymbolName(OS, CaseSym->getName());
-      endSymbolRecord(LabelEnd);
-    }
-  }
-
-  for (const auto &JumpTable : FI.JumpTables) {
+  for (auto JumpTable : FI.JumpTables) {
     MCSymbol *JumpTableEnd = beginSymbolRecord(SymbolKind::S_ARMSWITCHTABLE);
     if (JumpTable.Base) {
       OS.AddComment("Base offset");

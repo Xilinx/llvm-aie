@@ -133,12 +133,6 @@ bool Argument::hasByValAttr() const {
   return hasAttribute(Attribute::ByVal);
 }
 
-bool Argument::hasDeadOnReturnAttr() const {
-  if (!getType()->isPointerTy())
-    return false;
-  return hasAttribute(Attribute::DeadOnReturn);
-}
-
 bool Argument::hasByRefAttr() const {
   if (!getType()->isPointerTy())
     return false;

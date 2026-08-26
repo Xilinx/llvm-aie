@@ -302,10 +302,10 @@ public:
     return Tok;
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &OS) const override {
     switch (Kind) {
     case Immediate:
-      MAI.printExpr(OS, *getImm());
+      OS << *getImm();
       break;
     case Register:
       OS << "<register x";

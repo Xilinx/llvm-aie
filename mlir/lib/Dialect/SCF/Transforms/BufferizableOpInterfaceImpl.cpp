@@ -274,7 +274,7 @@ struct IfOpInterface
     return success();
   }
 
-  FailureOr<BufferLikeType>
+  FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
                 const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
@@ -313,15 +313,15 @@ struct IfOpInterface
 
     // Best case: Both branches have the exact same buffer type.
     if (thenBufferType == elseBufferType)
-      return cast<BufferLikeType>(thenBufferType);
+      return thenBufferType;
 
     // Memory space mismatch.
     if (thenBufferType.getMemorySpace() != elseBufferType.getMemorySpace())
       return op->emitError("inconsistent memory space on then/else branches");
 
     // Layout maps are different: Promote to fully dynamic layout map.
-    return cast<BufferLikeType>(getMemRefTypeWithFullyDynamicLayout(
-        cast<TensorType>(opResult.getType()), thenBufferType.getMemorySpace()));
+    return getMemRefTypeWithFullyDynamicLayout(
+        cast<TensorType>(opResult.getType()), thenBufferType.getMemorySpace());
   }
 };
 
@@ -392,7 +392,7 @@ struct IndexSwitchOpInterface
     return success();
   }
 
-  FailureOr<BufferLikeType>
+  FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
                 const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
@@ -436,7 +436,7 @@ struct IndexSwitchOpInterface
           cast<TensorType>(value.getType()), bufferType.getMemorySpace());
     }
 
-    return cast<BufferLikeType>(bufferType);
+    return bufferType;
   }
 };
 
@@ -522,13 +522,13 @@ getBbArgReplacements(RewriterBase &rewriter, Block::BlockArgListType bbArgs,
 /// If both buffer types are equal, no casts are needed the computed buffer type
 /// can be used directly. Otherwise, the buffer types can only differ in their
 /// layout map and a cast must be inserted.
-static FailureOr<BufferLikeType> computeLoopRegionIterArgBufferType(
+static FailureOr<BaseMemRefType> computeLoopRegionIterArgBufferType(
     Operation *loopOp, BlockArgument iterArg, Value initArg, Value yieldedValue,
     const BufferizationOptions &options, const BufferizationState &state,
     SmallVector<Value> &invocationStack) {
   // Determine the buffer type of the init_arg.
-  auto initArgBufferType =
-      bufferization::getBufferType(initArg, options, state, invocationStack);
+  auto initArgBufferType = bufferization::detail::asMemRefType(
+      bufferization::getBufferType(initArg, options, state, invocationStack));
   if (failed(initArgBufferType))
     return failure();
 
@@ -547,15 +547,16 @@ static FailureOr<BufferLikeType> computeLoopRegionIterArgBufferType(
   }
 
   // Compute the buffer type of the yielded value.
-  BufferLikeType yieldedValueBufferType;
+  BaseMemRefType yieldedValueBufferType;
   if (isa<BaseMemRefType>(yieldedValue.getType())) {
     // scf.yield was already bufferized.
-    yieldedValueBufferType = cast<BufferLikeType>(yieldedValue.getType());
+    yieldedValueBufferType = cast<BaseMemRefType>(yieldedValue.getType());
   } else {
     // Note: This typically triggers a recursive call for the buffer type of
     // the iter_arg.
-    auto maybeBufferType = bufferization::getBufferType(yieldedValue, options,
-                                                        state, invocationStack);
+    auto maybeBufferType =
+        bufferization::detail::asMemRefType(bufferization::getBufferType(
+            yieldedValue, options, state, invocationStack));
     if (failed(maybeBufferType))
       return failure();
     yieldedValueBufferType = *maybeBufferType;
@@ -583,8 +584,8 @@ static FailureOr<BufferLikeType> computeLoopRegionIterArgBufferType(
         "expected same shape");
   }
 #endif // NDEBUG
-  return cast<BufferLikeType>(getMemRefTypeWithFullyDynamicLayout(
-      iterTensorType, yieldedBufferType.getMemorySpace()));
+  return getMemRefTypeWithFullyDynamicLayout(
+      iterTensorType, yieldedBufferType.getMemorySpace());
 }
 
 /// Return `true` if the given loop may have 0 iterations.
@@ -707,7 +708,7 @@ struct ForOpInterface
     return success();
   }
 
-  FailureOr<BufferLikeType>
+  FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
                 const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
@@ -718,8 +719,12 @@ struct ForOpInterface
     if (auto opResult = dyn_cast<OpResult>(value)) {
       // The type of an OpResult must match the corresponding iter_arg type.
       BlockArgument bbArg = forOp.getTiedLoopRegionIterArg(opResult);
-      return bufferization::getBufferType(bbArg, options, state,
-                                          invocationStack);
+      auto bufferType =
+          bufferization::getBufferType(bbArg, options, state, invocationStack);
+      if (failed(bufferType))
+        return failure();
+      assert(isa<BaseMemRefType>(*bufferType) && "expected memref type");
+      return cast<BaseMemRefType>(*bufferType);
     }
 
     // Compute result/argument number.
@@ -1042,7 +1047,7 @@ struct WhileOpInterface
     return success();
   }
 
-  FailureOr<BufferLikeType>
+  FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
                 const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
@@ -1076,10 +1081,10 @@ struct WhileOpInterface
     Value conditionYieldedVal = whileOp.getConditionOp().getArgs()[resultNum];
     if (!isa<TensorType>(conditionYieldedVal.getType())) {
       // scf.condition was already bufferized.
-      return cast<BufferLikeType>(conditionYieldedVal.getType());
+      return cast<BaseMemRefType>(conditionYieldedVal.getType());
     }
-    return bufferization::getBufferType(conditionYieldedVal, options, state,
-                                        invocationStack);
+    return bufferization::detail::asMemRefType(bufferization::getBufferType(
+        conditionYieldedVal, options, state, invocationStack));
   }
 
   /// Assert that yielded values of an scf.while op are equivalent to their
@@ -1298,7 +1303,7 @@ struct ForallOpInterface
     return success();
   }
 
-  FailureOr<BufferLikeType>
+  FailureOr<BaseMemRefType>
   getBufferType(Operation *op, Value value, const BufferizationOptions &options,
                 const BufferizationState &state,
                 SmallVector<Value> &invocationStack) const {
@@ -1307,15 +1312,15 @@ struct ForallOpInterface
     if (auto bbArg = dyn_cast<BlockArgument>(value))
       // A tensor block argument has the same bufferized type as the
       // corresponding output operand.
-      return bufferization::getBufferType(
-          forallOp.getTiedOpOperand(bbArg)->get(), options, state,
-          invocationStack);
+      return bufferization::detail::asMemRefType(
+          bufferization::getBufferType(forallOp.getTiedOpOperand(bbArg)->get(),
+                                       options, state, invocationStack));
 
     // The bufferized result type is the same as the bufferized type of the
     // corresponding output operand.
-    return bufferization::getBufferType(
+    return bufferization::detail::asMemRefType(bufferization::getBufferType(
         forallOp.getOutputs()[cast<OpResult>(value).getResultNumber()], options,
-        state, invocationStack);
+        state, invocationStack));
   }
 
   bool isRepetitiveRegion(Operation *op, unsigned index) const {

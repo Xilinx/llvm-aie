@@ -1,7 +1,6 @@
 add_lldb_library(lldbPluginProcessMachCore PLUGIN
   ProcessMachCore.cpp
   ThreadMachCore.cpp
-  RegisterContextUnifiedCore.cpp
 
   LINK_COMPONENTS
     Support

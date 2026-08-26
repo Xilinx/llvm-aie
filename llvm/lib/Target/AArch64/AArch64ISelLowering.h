@@ -233,7 +233,7 @@ public:
 
   bool shouldConsiderGEPOffsetSplit() const override;
 
-  EVT getOptimalMemOpType(LLVMContext &Context, const MemOp &Op,
+  EVT getOptimalMemOpType(const MemOp &Op,
                           const AttributeList &FuncAttributes) const override;
 
   LLT getOptimalMemOpLLT(const MemOp &Op,

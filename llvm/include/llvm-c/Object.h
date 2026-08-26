@@ -21,7 +21,6 @@
 
 #include "llvm-c/ExternC.h"
 #include "llvm-c/Types.h"
-#include "llvm-c/Visibility.h"
 #include "llvm/Config/llvm-config.h"
 
 LLVM_C_EXTERN_C_BEGIN
@@ -74,9 +73,9 @@ typedef enum {
  *
  * @see llvm::object::createBinary
  */
-LLVM_C_ABI LLVMBinaryRef LLVMCreateBinary(LLVMMemoryBufferRef MemBuf,
-                                          LLVMContextRef Context,
-                                          char **ErrorMessage);
+LLVMBinaryRef LLVMCreateBinary(LLVMMemoryBufferRef MemBuf,
+                               LLVMContextRef Context,
+                               char **ErrorMessage);
 
 /**
  * Dispose of a binary file.
@@ -84,7 +83,7 @@ LLVM_C_ABI LLVMBinaryRef LLVMCreateBinary(LLVMMemoryBufferRef MemBuf,
  * The binary file does not own its backing buffer.  It is the responsibilty
  * of the caller to free it with \c LLVMDisposeMemoryBuffer.
  */
-LLVM_C_ABI void LLVMDisposeBinary(LLVMBinaryRef BR);
+void LLVMDisposeBinary(LLVMBinaryRef BR);
 
 /**
  * Retrieves a copy of the memory buffer associated with this object file.
@@ -95,14 +94,14 @@ LLVM_C_ABI void LLVMDisposeBinary(LLVMBinaryRef BR);
  *
  * @see llvm::object::getMemoryBufferRef
  */
-LLVM_C_ABI LLVMMemoryBufferRef LLVMBinaryCopyMemoryBuffer(LLVMBinaryRef BR);
+LLVMMemoryBufferRef LLVMBinaryCopyMemoryBuffer(LLVMBinaryRef BR);
 
 /**
  * Retrieve the specific type of a binary.
  *
  * @see llvm::object::Binary::getType
  */
-LLVM_C_ABI LLVMBinaryType LLVMBinaryGetType(LLVMBinaryRef BR);
+LLVMBinaryType LLVMBinaryGetType(LLVMBinaryRef BR);
 
 /*
  * For a Mach-O universal binary file, retrieves the object file corresponding
@@ -115,8 +114,10 @@ LLVM_C_ABI LLVMBinaryType LLVMBinaryGetType(LLVMBinaryRef BR);
  * It is the responsiblity of the caller to free the returned object file by
  * calling \c LLVMDisposeBinary.
  */
-LLVM_C_ABI LLVMBinaryRef LLVMMachOUniversalBinaryCopyObjectForArch(
-    LLVMBinaryRef BR, const char *Arch, size_t ArchLen, char **ErrorMessage);
+LLVMBinaryRef LLVMMachOUniversalBinaryCopyObjectForArch(LLVMBinaryRef BR,
+                                                        const char *Arch,
+                                                        size_t ArchLen,
+                                                        char **ErrorMessage);
 
 /**
  * Retrieve a copy of the section iterator for this object file.
@@ -129,16 +130,15 @@ LLVM_C_ABI LLVMBinaryRef LLVMMachOUniversalBinaryCopyObjectForArch(
  *
  * @see llvm::object::sections()
  */
-LLVM_C_ABI LLVMSectionIteratorRef
-LLVMObjectFileCopySectionIterator(LLVMBinaryRef BR);
+LLVMSectionIteratorRef LLVMObjectFileCopySectionIterator(LLVMBinaryRef BR);
 
 /**
  * Returns whether the given section iterator is at the end.
  *
  * @see llvm::object::section_end
  */
-LLVM_C_ABI LLVMBool LLVMObjectFileIsSectionIteratorAtEnd(
-    LLVMBinaryRef BR, LLVMSectionIteratorRef SI);
+LLVMBool LLVMObjectFileIsSectionIteratorAtEnd(LLVMBinaryRef BR,
+                                              LLVMSectionIteratorRef SI);
 
 /**
  * Retrieve a copy of the symbol iterator for this object file.
@@ -151,81 +151,78 @@ LLVM_C_ABI LLVMBool LLVMObjectFileIsSectionIteratorAtEnd(
  *
  * @see llvm::object::symbols()
  */
-LLVM_C_ABI LLVMSymbolIteratorRef
-LLVMObjectFileCopySymbolIterator(LLVMBinaryRef BR);
+LLVMSymbolIteratorRef LLVMObjectFileCopySymbolIterator(LLVMBinaryRef BR);
 
 /**
  * Returns whether the given symbol iterator is at the end.
  *
  * @see llvm::object::symbol_end
  */
-LLVM_C_ABI LLVMBool
-LLVMObjectFileIsSymbolIteratorAtEnd(LLVMBinaryRef BR, LLVMSymbolIteratorRef SI);
+LLVMBool LLVMObjectFileIsSymbolIteratorAtEnd(LLVMBinaryRef BR,
+                                             LLVMSymbolIteratorRef SI);
 
-LLVM_C_ABI void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI);
+void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI);
 
-LLVM_C_ABI void LLVMMoveToNextSection(LLVMSectionIteratorRef SI);
-LLVM_C_ABI void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
-                                            LLVMSymbolIteratorRef Sym);
+void LLVMMoveToNextSection(LLVMSectionIteratorRef SI);
+void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
+                                 LLVMSymbolIteratorRef Sym);
 
 // ObjectFile Symbol iterators
-LLVM_C_ABI void LLVMDisposeSymbolIterator(LLVMSymbolIteratorRef SI);
-LLVM_C_ABI void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI);
+void LLVMDisposeSymbolIterator(LLVMSymbolIteratorRef SI);
+void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI);
 
 // SectionRef accessors
-LLVM_C_ABI const char *LLVMGetSectionName(LLVMSectionIteratorRef SI);
-LLVM_C_ABI uint64_t LLVMGetSectionSize(LLVMSectionIteratorRef SI);
-LLVM_C_ABI const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI);
-LLVM_C_ABI uint64_t LLVMGetSectionAddress(LLVMSectionIteratorRef SI);
-LLVM_C_ABI LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
-                                                 LLVMSymbolIteratorRef Sym);
+const char *LLVMGetSectionName(LLVMSectionIteratorRef SI);
+uint64_t LLVMGetSectionSize(LLVMSectionIteratorRef SI);
+const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI);
+uint64_t LLVMGetSectionAddress(LLVMSectionIteratorRef SI);
+LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
+                                 LLVMSymbolIteratorRef Sym);
 
 // Section Relocation iterators
-LLVM_C_ABI LLVMRelocationIteratorRef
-LLVMGetRelocations(LLVMSectionIteratorRef Section);
-LLVM_C_ABI void LLVMDisposeRelocationIterator(LLVMRelocationIteratorRef RI);
-LLVM_C_ABI LLVMBool LLVMIsRelocationIteratorAtEnd(
-    LLVMSectionIteratorRef Section, LLVMRelocationIteratorRef RI);
-LLVM_C_ABI void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef RI);
+LLVMRelocationIteratorRef LLVMGetRelocations(LLVMSectionIteratorRef Section);
+void LLVMDisposeRelocationIterator(LLVMRelocationIteratorRef RI);
+LLVMBool LLVMIsRelocationIteratorAtEnd(LLVMSectionIteratorRef Section,
+                                       LLVMRelocationIteratorRef RI);
+void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef RI);
+
 
 // SymbolRef accessors
-LLVM_C_ABI const char *LLVMGetSymbolName(LLVMSymbolIteratorRef SI);
-LLVM_C_ABI uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI);
-LLVM_C_ABI uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI);
+const char *LLVMGetSymbolName(LLVMSymbolIteratorRef SI);
+uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI);
+uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI);
 
 // RelocationRef accessors
-LLVM_C_ABI uint64_t LLVMGetRelocationOffset(LLVMRelocationIteratorRef RI);
-LLVM_C_ABI LLVMSymbolIteratorRef
-LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI);
-LLVM_C_ABI uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI);
+uint64_t LLVMGetRelocationOffset(LLVMRelocationIteratorRef RI);
+LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI);
+uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI);
 // NOTE: Caller takes ownership of returned string of the two
 // following functions.
-LLVM_C_ABI const char *LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI);
-LLVM_C_ABI const char *
-LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
+const char *LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI);
+const char *LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
 
 /** Deprecated: Use LLVMBinaryRef instead. */
 typedef struct LLVMOpaqueObjectFile *LLVMObjectFileRef;
 
 /** Deprecated: Use LLVMCreateBinary instead. */
-LLVM_C_ABI LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf);
+LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf);
 
 /** Deprecated: Use LLVMDisposeBinary instead. */
-LLVM_C_ABI void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile);
+void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile);
 
 /** Deprecated: Use LLVMObjectFileCopySectionIterator instead. */
-LLVM_C_ABI LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef ObjectFile);
+LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef ObjectFile);
 
 /** Deprecated: Use LLVMObjectFileIsSectionIteratorAtEnd instead. */
-LLVM_C_ABI LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
-                                               LLVMSectionIteratorRef SI);
+LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
+                                    LLVMSectionIteratorRef SI);
 
 /** Deprecated: Use LLVMObjectFileCopySymbolIterator instead. */
-LLVM_C_ABI LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile);
+LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile);
 
 /** Deprecated: Use LLVMObjectFileIsSymbolIteratorAtEnd instead. */
-LLVM_C_ABI LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef ObjectFile,
-                                              LLVMSymbolIteratorRef SI);
+LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef ObjectFile,
+                                   LLVMSymbolIteratorRef SI);
 /**
  * @}
  */

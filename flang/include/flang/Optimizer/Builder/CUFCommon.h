@@ -27,8 +27,7 @@ mlir::gpu::GPUModuleOp getOrCreateGPUModule(mlir::ModuleOp mod,
                                             mlir::SymbolTable &symTab);
 
 bool isCUDADeviceContext(mlir::Operation *op);
-bool isCUDADeviceContext(mlir::Region &,
-                         bool isDoConcurrentOffloadEnabled = false);
+bool isCUDADeviceContext(mlir::Region &);
 bool isRegisteredDeviceGlobal(fir::GlobalOp op);
 bool isRegisteredDeviceAttr(std::optional<cuf::DataAttribute> attr);
 

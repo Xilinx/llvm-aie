@@ -21,10 +21,7 @@ def Vector_Dialect : Dialect {
 
   let useDefaultAttributePrinterParser = 1;
   let hasConstantMaterializer = 1;
-  let dependentDialects = [
-    "arith::ArithDialect",
-    "ub::UBDialect"
-  ];
+  let dependentDialects = ["arith::ArithDialect"];
 }
 
 // Base class for Vector dialect ops.

@@ -151,63 +151,64 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM,
   if (STI.hasHWMult16()) {
     const struct {
       const RTLIB::Libcall Op;
-      const RTLIB::LibcallImpl Impl;
+      const char * const Name;
     } LibraryCalls[] = {
-        // Integer Multiply - EABI Table 9
-        {RTLIB::MUL_I16, RTLIB::__mspabi_mpyi_hw},
-        {RTLIB::MUL_I32, RTLIB::__mspabi_mpyl_hw},
-        {RTLIB::MUL_I64, RTLIB::__mspabi_mpyll_hw},
-        // TODO The __mspabi_mpysl*_hw functions ARE implemented in libgcc
-        // TODO The __mspabi_mpyul*_hw functions ARE implemented in libgcc
+      // Integer Multiply - EABI Table 9
+      { RTLIB::MUL_I16,   "__mspabi_mpyi_hw" },
+      { RTLIB::MUL_I32,   "__mspabi_mpyl_hw" },
+      { RTLIB::MUL_I64,   "__mspabi_mpyll_hw" },
+      // TODO The __mspabi_mpysl*_hw functions ARE implemented in libgcc
+      // TODO The __mspabi_mpyul*_hw functions ARE implemented in libgcc
     };
     for (const auto &LC : LibraryCalls) {
-      setLibcallImpl(LC.Op, LC.Impl);
+      setLibcallName(LC.Op, LC.Name);
     }
   } else if (STI.hasHWMult32()) {
     const struct {
       const RTLIB::Libcall Op;
-      const RTLIB::LibcallImpl Impl;
+      const char * const Name;
     } LibraryCalls[] = {
-        // Integer Multiply - EABI Table 9
-        {RTLIB::MUL_I16, RTLIB::__mspabi_mpyi_hw},
-        {RTLIB::MUL_I32, RTLIB::__mspabi_mpyl_hw32},
-        {RTLIB::MUL_I64, RTLIB::__mspabi_mpyll_hw32},
-        // TODO The __mspabi_mpysl*_hw32 functions ARE implemented in libgcc
-        // TODO The __mspabi_mpyul*_hw32 functions ARE implemented in libgcc
+      // Integer Multiply - EABI Table 9
+      { RTLIB::MUL_I16,   "__mspabi_mpyi_hw" },
+      { RTLIB::MUL_I32,   "__mspabi_mpyl_hw32" },
+      { RTLIB::MUL_I64,   "__mspabi_mpyll_hw32" },
+      // TODO The __mspabi_mpysl*_hw32 functions ARE implemented in libgcc
+      // TODO The __mspabi_mpyul*_hw32 functions ARE implemented in libgcc
     };
     for (const auto &LC : LibraryCalls) {
-      setLibcallImpl(LC.Op, LC.Impl);
+      setLibcallName(LC.Op, LC.Name);
     }
   } else if (STI.hasHWMultF5()) {
     const struct {
       const RTLIB::Libcall Op;
-      const RTLIB::LibcallImpl Impl;
+      const char * const Name;
     } LibraryCalls[] = {
-        // Integer Multiply - EABI Table 9
-        {RTLIB::MUL_I16, RTLIB::__mspabi_mpyi_f5hw},
-        {RTLIB::MUL_I32, RTLIB::__mspabi_mpyl_f5hw},
-        {RTLIB::MUL_I64, RTLIB::__mspabi_mpyll_f5hw},
-        // TODO The __mspabi_mpysl*_f5hw functions ARE implemented in libgcc
-        // TODO The __mspabi_mpyul*_f5hw functions ARE implemented in libgcc
+      // Integer Multiply - EABI Table 9
+      { RTLIB::MUL_I16,   "__mspabi_mpyi_f5hw" },
+      { RTLIB::MUL_I32,   "__mspabi_mpyl_f5hw" },
+      { RTLIB::MUL_I64,   "__mspabi_mpyll_f5hw" },
+      // TODO The __mspabi_mpysl*_f5hw functions ARE implemented in libgcc
+      // TODO The __mspabi_mpyul*_f5hw functions ARE implemented in libgcc
     };
     for (const auto &LC : LibraryCalls) {
-      setLibcallImpl(LC.Op, LC.Impl);
+      setLibcallName(LC.Op, LC.Name);
     }
   } else { // NoHWMult
     const struct {
       const RTLIB::Libcall Op;
-      const RTLIB::LibcallImpl Impl;
+      const char * const Name;
     } LibraryCalls[] = {
-        // Integer Multiply - EABI Table 9
-        {RTLIB::MUL_I16, RTLIB::__mspabi_mpyi},
-        {RTLIB::MUL_I32, RTLIB::__mspabi_mpyl},
-        {RTLIB::MUL_I64, RTLIB::__mspabi_mpyll},
-        // The __mspabi_mpysl* functions are NOT implemented in libgcc
-        // The __mspabi_mpyul* functions are NOT implemented in libgcc
+      // Integer Multiply - EABI Table 9
+      { RTLIB::MUL_I16,   "__mspabi_mpyi" },
+      { RTLIB::MUL_I32,   "__mspabi_mpyl" },
+      { RTLIB::MUL_I64,   "__mspabi_mpyll" },
+      // The __mspabi_mpysl* functions are NOT implemented in libgcc
+      // The __mspabi_mpyul* functions are NOT implemented in libgcc
     };
     for (const auto &LC : LibraryCalls) {
-      setLibcallImpl(LC.Op, LC.Impl);
+      setLibcallName(LC.Op, LC.Name);
     }
+    setLibcallCallingConv(RTLIB::MUL_I64, CallingConv::MSP430_BUILTIN);
   }
 
   setMinFunctionAlignment(Align(2));
@@ -767,8 +768,9 @@ SDValue MSP430TargetLowering::LowerCCCCallTo(
   // flag operands which copy the outgoing args into registers.  The InGlue in
   // necessary since all emitted instructions must be stuck together.
   SDValue InGlue;
-  for (const auto &[Reg, N] : RegsToPass) {
-    Chain = DAG.getCopyToReg(Chain, dl, Reg, N, InGlue);
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
+                             RegsToPass[i].second, InGlue);
     InGlue = Chain.getValue(1);
   }
 
@@ -788,8 +790,9 @@ SDValue MSP430TargetLowering::LowerCCCCallTo(
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
-  for (const auto &[Reg, N] : RegsToPass)
-    Ops.push_back(DAG.getRegister(Reg, N.getValueType()));
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
 
   if (InGlue.getNode())
     Ops.push_back(InGlue);
@@ -1140,6 +1143,9 @@ SDValue MSP430TargetLowering::LowerRETURNADDR(SDValue Op,
                                               SelectionDAG &DAG) const {
   MachineFrameInfo &MFI = DAG.getMachineFunction().getFrameInfo();
   MFI.setReturnAddressIsTaken(true);
+
+  if (verifyReturnAddressArgumentIsConstant(Op, DAG))
+    return SDValue();
 
   unsigned Depth = Op.getConstantOperandVal(0);
   SDLoc dl(Op);

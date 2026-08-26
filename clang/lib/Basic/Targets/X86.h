@@ -441,9 +441,8 @@ public:
   uint64_t getPointerAlignV(LangAS AddrSpace) const override {
     return getPointerWidthV(AddrSpace);
   }
-  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-              const TargetInfo *Aux) override {
-    TargetInfo::adjust(Diags, Opts, Aux);
+  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts) override {
+    TargetInfo::adjust(Diags, Opts);
     IsOpenCL = Opts.OpenCL;
   }
 
@@ -840,9 +839,8 @@ public:
     return llvm::IntegerType::MAX_INT_BITS;
   }
 
-  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-              const TargetInfo *Aux) override {
-    TargetInfo::adjust(Diags, Opts, Aux);
+  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts) override {
+    TargetInfo::adjust(Diags, Opts);
     IsOpenCL = Opts.OpenCL;
   }
 

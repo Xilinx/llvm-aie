@@ -42,7 +42,6 @@ public:
   friend class MCExpr;
   MCValue() = default;
   int64_t getConstant() const { return Cst; }
-  void setConstant(int64_t C) { Cst = C; }
   uint32_t getSpecifier() const { return Specifier; }
   void setSpecifier(uint32_t S) { Specifier = S; }
 

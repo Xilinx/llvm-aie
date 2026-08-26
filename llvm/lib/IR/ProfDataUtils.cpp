@@ -94,7 +94,6 @@ const char *MDProfLabels::ValueProfile = "VP";
 const char *MDProfLabels::FunctionEntryCount = "function_entry_count";
 const char *MDProfLabels::SyntheticFunctionEntryCount =
     "synthetic_function_entry_count";
-const char *MDProfLabels::UnknownBranchWeightsMarker = "unknown";
 
 bool hasProfMD(const Instruction &I) {
   return I.hasMetadata(LLVMContext::MD_prof);
@@ -104,7 +103,7 @@ bool isBranchWeightMD(const MDNode *ProfileData) {
   return isTargetMD(ProfileData, MDProfLabels::BranchWeights, MinBWOps);
 }
 
-bool isValueProfileMD(const MDNode *ProfileData) {
+static bool isValueProfileMD(const MDNode *ProfileData) {
   return isTargetMD(ProfileData, MDProfLabels::ValueProfile, MinVPOps);
 }
 
@@ -240,27 +239,6 @@ bool extractProfTotalWeight(const MDNode *ProfileData, uint64_t &TotalVal) {
 
 bool extractProfTotalWeight(const Instruction &I, uint64_t &TotalVal) {
   return extractProfTotalWeight(I.getMetadata(LLVMContext::MD_prof), TotalVal);
-}
-
-void setExplicitlyUnknownBranchWeights(Instruction &I) {
-  MDBuilder MDB(I.getContext());
-  I.setMetadata(
-      LLVMContext::MD_prof,
-      MDNode::get(I.getContext(),
-                  MDB.createString(MDProfLabels::UnknownBranchWeightsMarker)));
-}
-
-bool isExplicitlyUnknownBranchWeightsMetadata(const MDNode &MD) {
-  if (MD.getNumOperands() != 1)
-    return false;
-  return MD.getOperand(0).equalsStr(MDProfLabels::UnknownBranchWeightsMarker);
-}
-
-bool hasExplicitlyUnknownBranchWeights(const Instruction &I) {
-  auto *MD = I.getMetadata(LLVMContext::MD_prof);
-  if (!MD)
-    return false;
-  return isExplicitlyUnknownBranchWeightsMetadata(*MD);
 }
 
 void setBranchWeights(Instruction &I, ArrayRef<uint32_t> Weights,

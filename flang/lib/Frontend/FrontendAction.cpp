@@ -171,11 +171,7 @@ bool FrontendAction::runParse(bool emitMessages) {
   if (emitMessages) {
     // Report any non-fatal diagnostics from getParsing now rather than
     // combining them with messages from semantics.
-    const common::LanguageFeatureControl &features{
-        ci.getInvocation().getFortranOpts().features};
-    // Default maxErrors here because none are fatal.
-    ci.getParsing().messages().Emit(llvm::errs(), ci.getAllCookedSources(),
-                                    /*echoSourceLine=*/true, &features);
+    ci.getParsing().messages().Emit(llvm::errs(), ci.getAllCookedSources());
   }
   return true;
 }
@@ -227,18 +223,14 @@ bool FrontendAction::generateRtTypeTables() {
 
 template <unsigned N>
 bool FrontendAction::reportFatalErrors(const char (&message)[N]) {
-  const common::LanguageFeatureControl &features{
-      instance->getInvocation().getFortranOpts().features};
-  const size_t maxErrors{instance->getInvocation().getMaxErrors()};
   if (!instance->getParsing().messages().empty() &&
       (instance->getInvocation().getWarnAsErr() ||
        instance->getParsing().messages().AnyFatalError())) {
     const unsigned diagID = instance->getDiagnostics().getCustomDiagID(
         clang::DiagnosticsEngine::Error, message);
     instance->getDiagnostics().Report(diagID) << getCurrentFileOrBufferName();
-    instance->getParsing().messages().Emit(
-        llvm::errs(), instance->getAllCookedSources(),
-        /*echoSourceLines=*/true, &features, maxErrors);
+    instance->getParsing().messages().Emit(llvm::errs(),
+                                           instance->getAllCookedSources());
     return true;
   }
   if (instance->getParsing().parseTree().has_value() &&
@@ -247,9 +239,8 @@ bool FrontendAction::reportFatalErrors(const char (&message)[N]) {
     const unsigned diagID = instance->getDiagnostics().getCustomDiagID(
         clang::DiagnosticsEngine::Error, message);
     instance->getDiagnostics().Report(diagID) << getCurrentFileOrBufferName();
-    instance->getParsing().messages().Emit(
-        llvm::errs(), instance->getAllCookedSources(),
-        /*echoSourceLine=*/true, &features, maxErrors);
+    instance->getParsing().messages().Emit(llvm::errs(),
+                                           instance->getAllCookedSources());
     instance->getParsing().EmitMessage(
         llvm::errs(), instance->getParsing().finalRestingPlace(),
         "parser FAIL (final position)", "error: ", llvm::raw_ostream::RED);

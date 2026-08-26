@@ -11,6 +11,7 @@
 
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm64.h"
+#include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_riscv32.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
 #include "lldb/Core/Debugger.h"
@@ -79,6 +80,9 @@
 #endif
 #ifdef CPU_TYPE_ARM64_32
 #undef CPU_TYPE_ARM64_32
+#endif
+#ifdef CPU_TYPE_I386
+#undef CPU_TYPE_I386
 #endif
 #ifdef CPU_TYPE_X86_64
 #undef CPU_TYPE_X86_64
@@ -180,32 +184,46 @@ public:
     SetError(GPRRegSet, Read, -1);
     SetError(FPURegSet, Read, -1);
     SetError(EXCRegSet, Read, -1);
+    bool done = false;
 
-    while (offset < data.GetByteSize()) {
+    while (!done) {
       int flavor = data.GetU32(&offset);
       if (flavor == 0)
-        break;
-      uint32_t count = data.GetU32(&offset);
-      switch (flavor) {
-      case GPRRegSet: {
-        uint32_t *gpr_data = reinterpret_cast<uint32_t *>(&gpr.rax);
-        for (uint32_t i = 0; i < count && offset < data.GetByteSize(); ++i)
-          gpr_data[i] = data.GetU32(&offset);
-        SetError(GPRRegSet, Read, 0);
-      } break;
-      case FPURegSet:
-        // TODO: fill in FPU regs....
-        SetError(FPURegSet, Read, -1);
-        break;
-      case EXCRegSet:
-        exc.trapno = data.GetU32(&offset);
-        exc.err = data.GetU32(&offset);
-        exc.faultvaddr = data.GetU64(&offset);
-        SetError(EXCRegSet, Read, 0);
-        break;
-      default:
-        offset += count * 4;
-        break;
+        done = true;
+      else {
+        uint32_t i;
+        uint32_t count = data.GetU32(&offset);
+        switch (flavor) {
+        case GPRRegSet:
+          for (i = 0; i < count; ++i)
+            (&gpr.rax)[i] = data.GetU64(&offset);
+          SetError(GPRRegSet, Read, 0);
+          done = true;
+
+          break;
+        case FPURegSet:
+          // TODO: fill in FPU regs....
+          // SetError (FPURegSet, Read, -1);
+          done = true;
+
+          break;
+        case EXCRegSet:
+          exc.trapno = data.GetU32(&offset);
+          exc.err = data.GetU32(&offset);
+          exc.faultvaddr = data.GetU64(&offset);
+          SetError(EXCRegSet, Read, 0);
+          done = true;
+          break;
+        case 7:
+        case 8:
+        case 9:
+          // fancy flavors that encapsulate of the above flavors...
+          break;
+
+        default:
+          done = true;
+          break;
+        }
       }
     }
   }
@@ -335,11 +353,127 @@ public:
   }
 
 protected:
-  int DoReadGPR(lldb::tid_t tid, int flavor, GPR &gpr) override { return -1; }
+  int DoReadGPR(lldb::tid_t tid, int flavor, GPR &gpr) override { return 0; }
 
-  int DoReadFPU(lldb::tid_t tid, int flavor, FPU &fpu) override { return -1; }
+  int DoReadFPU(lldb::tid_t tid, int flavor, FPU &fpu) override { return 0; }
 
-  int DoReadEXC(lldb::tid_t tid, int flavor, EXC &exc) override { return -1; }
+  int DoReadEXC(lldb::tid_t tid, int flavor, EXC &exc) override { return 0; }
+
+  int DoWriteGPR(lldb::tid_t tid, int flavor, const GPR &gpr) override {
+    return 0;
+  }
+
+  int DoWriteFPU(lldb::tid_t tid, int flavor, const FPU &fpu) override {
+    return 0;
+  }
+
+  int DoWriteEXC(lldb::tid_t tid, int flavor, const EXC &exc) override {
+    return 0;
+  }
+};
+
+class RegisterContextDarwin_i386_Mach : public RegisterContextDarwin_i386 {
+public:
+  RegisterContextDarwin_i386_Mach(lldb_private::Thread &thread,
+                                  const DataExtractor &data)
+      : RegisterContextDarwin_i386(thread, 0) {
+    SetRegisterDataFrom_LC_THREAD(data);
+  }
+
+  void InvalidateAllRegisters() override {
+    // Do nothing... registers are always valid...
+  }
+
+  void SetRegisterDataFrom_LC_THREAD(const DataExtractor &data) {
+    lldb::offset_t offset = 0;
+    SetError(GPRRegSet, Read, -1);
+    SetError(FPURegSet, Read, -1);
+    SetError(EXCRegSet, Read, -1);
+    bool done = false;
+
+    while (!done) {
+      int flavor = data.GetU32(&offset);
+      if (flavor == 0)
+        done = true;
+      else {
+        uint32_t i;
+        uint32_t count = data.GetU32(&offset);
+        switch (flavor) {
+        case GPRRegSet:
+          for (i = 0; i < count; ++i)
+            (&gpr.eax)[i] = data.GetU32(&offset);
+          SetError(GPRRegSet, Read, 0);
+          done = true;
+
+          break;
+        case FPURegSet:
+          // TODO: fill in FPU regs....
+          // SetError (FPURegSet, Read, -1);
+          done = true;
+
+          break;
+        case EXCRegSet:
+          exc.trapno = data.GetU32(&offset);
+          exc.err = data.GetU32(&offset);
+          exc.faultvaddr = data.GetU32(&offset);
+          SetError(EXCRegSet, Read, 0);
+          done = true;
+          break;
+        case 7:
+        case 8:
+        case 9:
+          // fancy flavors that encapsulate of the above flavors...
+          break;
+
+        default:
+          done = true;
+          break;
+        }
+      }
+    }
+  }
+
+  static bool Create_LC_THREAD(Thread *thread, Stream &data) {
+    RegisterContextSP reg_ctx_sp(thread->GetRegisterContext());
+    if (reg_ctx_sp) {
+      RegisterContext *reg_ctx = reg_ctx_sp.get();
+
+      data.PutHex32(GPRRegSet); // Flavor
+      data.PutHex32(GPRWordCount);
+      PrintRegisterValue(reg_ctx, "eax", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "ebx", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "ecx", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "edx", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "edi", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "esi", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "ebp", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "esp", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "ss", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "eflags", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "eip", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "cs", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "ds", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "es", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "fs", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "gs", nullptr, 4, data);
+
+      // Write out the EXC registers
+      data.PutHex32(EXCRegSet);
+      data.PutHex32(EXCWordCount);
+      PrintRegisterValue(reg_ctx, "trapno", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "err", nullptr, 4, data);
+      PrintRegisterValue(reg_ctx, "faultvaddr", nullptr, 4, data);
+      return true;
+    }
+    return false;
+  }
+
+protected:
+  int DoReadGPR(lldb::tid_t tid, int flavor, GPR &gpr) override { return 0; }
+
+  int DoReadFPU(lldb::tid_t tid, int flavor, FPU &fpu) override { return 0; }
+
+  int DoReadEXC(lldb::tid_t tid, int flavor, EXC &exc) override { return 0; }
 
   int DoWriteGPR(lldb::tid_t tid, int flavor, const GPR &gpr) override {
     return 0;
@@ -371,11 +505,12 @@ public:
     SetError(GPRRegSet, Read, -1);
     SetError(FPURegSet, Read, -1);
     SetError(EXCRegSet, Read, -1);
+    bool done = false;
 
-    while (offset < data.GetByteSize()) {
+    while (!done) {
       int flavor = data.GetU32(&offset);
       uint32_t count = data.GetU32(&offset);
-      offset_t next_thread_state = offset + (count * 4);
+      lldb::offset_t next_thread_state = offset + (count * 4);
       switch (flavor) {
       case GPRAltRegSet:
       case GPRRegSet: {
@@ -389,7 +524,9 @@ public:
 
           SetError(GPRRegSet, Read, 0);
         }
-      } break;
+      }
+        offset = next_thread_state;
+        break;
 
       case FPURegSet: {
         uint8_t *fpu_reg_buf = (uint8_t *)&fpu.floats;
@@ -399,8 +536,12 @@ public:
           offset += fpu_reg_buf_size;
           fpu.fpscr = data.GetU32(&offset);
           SetError(FPURegSet, Read, 0);
+        } else {
+          done = true;
         }
-      } break;
+      }
+        offset = next_thread_state;
+        break;
 
       case EXCRegSet:
         if (count == 3) {
@@ -409,9 +550,14 @@ public:
           exc.far = data.GetU32(&offset);
           SetError(EXCRegSet, Read, 0);
         }
+        done = true;
+        offset = next_thread_state;
         break;
+
+      // Unknown register set flavor, stop trying to parse.
+      default:
+        done = true;
       }
-      offset = next_thread_state;
     }
   }
 
@@ -494,10 +640,11 @@ public:
     SetError(GPRRegSet, Read, -1);
     SetError(FPURegSet, Read, -1);
     SetError(EXCRegSet, Read, -1);
-    while (offset < data.GetByteSize()) {
+    bool done = false;
+    while (!done) {
       int flavor = data.GetU32(&offset);
       uint32_t count = data.GetU32(&offset);
-      offset_t next_thread_state = offset + (count * 4);
+      lldb::offset_t next_thread_state = offset + (count * 4);
       switch (flavor) {
       case GPRRegSet:
         // x0-x29 + fp + lr + sp + pc (== 33 64-bit registers) plus cpsr (1
@@ -512,6 +659,7 @@ public:
           gpr.cpsr = data.GetU32(&offset);
           SetError(GPRRegSet, Read, 0);
         }
+        offset = next_thread_state;
         break;
       case FPURegSet: {
         uint8_t *fpu_reg_buf = (uint8_t *)&fpu.v[0];
@@ -520,8 +668,12 @@ public:
             data.ExtractBytes(offset, fpu_reg_buf_size, eByteOrderLittle,
                               fpu_reg_buf) == fpu_reg_buf_size) {
           SetError(FPURegSet, Read, 0);
+        } else {
+          done = true;
         }
-      } break;
+      }
+        offset = next_thread_state;
+        break;
       case EXCRegSet:
         if (count == 4) {
           exc.far = data.GetU64(&offset);
@@ -529,9 +681,12 @@ public:
           exc.exception = data.GetU32(&offset);
           SetError(EXCRegSet, Read, 0);
         }
+        offset = next_thread_state;
+        break;
+      default:
+        done = true;
         break;
       }
-      offset = next_thread_state;
     }
   }
 
@@ -634,10 +789,11 @@ public:
     SetError(FPURegSet, Read, -1);
     SetError(EXCRegSet, Read, -1);
     SetError(CSRRegSet, Read, -1);
-    while (offset < data.GetByteSize()) {
+    bool done = false;
+    while (!done) {
       int flavor = data.GetU32(&offset);
       uint32_t count = data.GetU32(&offset);
-      offset_t next_thread_state = offset + (count * 4);
+      lldb::offset_t next_thread_state = offset + (count * 4);
       switch (flavor) {
       case GPRRegSet:
         // x0-x31 + pc
@@ -647,6 +803,7 @@ public:
           gpr.pc = data.GetU32(&offset);
           SetError(GPRRegSet, Read, 0);
         }
+        offset = next_thread_state;
         break;
       case FPURegSet: {
         // f0-f31 + fcsr
@@ -656,7 +813,9 @@ public:
           fpr.fcsr = data.GetU32(&offset);
           SetError(FPURegSet, Read, 0);
         }
-      } break;
+      }
+        offset = next_thread_state;
+        break;
       case EXCRegSet:
         if (count == 3) {
           exc.exception = data.GetU32(&offset);
@@ -664,9 +823,12 @@ public:
           exc.far = data.GetU32(&offset);
           SetError(EXCRegSet, Read, 0);
         }
+        offset = next_thread_state;
+        break;
+      default:
+        done = true;
         break;
       }
-      offset = next_thread_state;
     }
   }
 
@@ -5260,6 +5422,16 @@ lldb_private::Address ObjectFileMachO::GetEntryPointAddress() {
               done = true;
             }
             break;
+          case llvm::MachO::CPU_TYPE_I386:
+            if (flavor ==
+                1) // x86_THREAD_STATE32 from mach/i386/thread_status.h
+            {
+              offset += 40; // This is the offset of eip in the GPR thread state
+                            // data structure.
+              start_address = m_data.GetU32(&offset);
+              done = true;
+            }
+            break;
           case llvm::MachO::CPU_TYPE_X86_64:
             if (flavor ==
                 4) // x86_THREAD_STATE64 from mach/i386/thread_status.h
@@ -5622,8 +5794,27 @@ bool ObjectFileMachO::GetCorefileThreadExtraInfos(
     std::lock_guard<std::recursive_mutex> guard(module_sp->GetMutex());
 
     Log *log(GetLog(LLDBLog::Object | LLDBLog::Process | LLDBLog::Thread));
-    if (StructuredData::ObjectSP object_sp = GetCorefileProcessMetadata()) {
+    auto lc_notes = FindLC_NOTEByName("process metadata");
+    for (auto lc_note : lc_notes) {
+      offset_t payload_offset = std::get<0>(lc_note);
+      offset_t strsize = std::get<1>(lc_note);
+      std::string buf(strsize, '\0');
+      if (m_data.CopyData(payload_offset, strsize, buf.data()) != strsize) {
+        LLDB_LOGF(log,
+                  "Unable to read %" PRIu64
+                  " bytes of 'process metadata' LC_NOTE JSON contents",
+                  strsize);
+        return false;
+      }
+      while (buf.back() == '\0')
+        buf.resize(buf.size() - 1);
+      StructuredData::ObjectSP object_sp = StructuredData::ParseJSON(buf);
       StructuredData::Dictionary *dict = object_sp->GetAsDictionary();
+      if (!dict) {
+        LLDB_LOGF(log, "Unable to read 'process metadata' LC_NOTE, did not "
+                       "get a dictionary.");
+        return false;
+      }
       StructuredData::Array *threads;
       if (!dict->GetValueForKeyAsArray("threads", threads) || !threads) {
         LLDB_LOGF(log,
@@ -5666,49 +5857,6 @@ bool ObjectFileMachO::GetCorefileThreadExtraInfos(
   return false;
 }
 
-StructuredData::ObjectSP ObjectFileMachO::GetCorefileProcessMetadata() {
-  ModuleSP module_sp(GetModule());
-  if (!module_sp)
-    return {};
-
-  Log *log(GetLog(LLDBLog::Object | LLDBLog::Process | LLDBLog::Thread));
-  std::lock_guard<std::recursive_mutex> guard(module_sp->GetMutex());
-  auto lc_notes = FindLC_NOTEByName("process metadata");
-  if (lc_notes.size() == 0)
-    return {};
-
-  if (lc_notes.size() > 1)
-    LLDB_LOGF(
-        log,
-        "Multiple 'process metadata' LC_NOTEs found, only using the first.");
-
-  auto [payload_offset, strsize] = lc_notes[0];
-  std::string buf(strsize, '\0');
-  if (m_data.CopyData(payload_offset, strsize, buf.data()) != strsize) {
-    LLDB_LOGF(log,
-              "Unable to read %" PRIu64
-              " bytes of 'process metadata' LC_NOTE JSON contents",
-              strsize);
-    return {};
-  }
-  while (buf.back() == '\0')
-    buf.resize(buf.size() - 1);
-  StructuredData::ObjectSP object_sp = StructuredData::ParseJSON(buf);
-  if (!object_sp) {
-    LLDB_LOGF(log, "Unable to read 'process metadata' LC_NOTE, did not "
-                   "parse as valid JSON.");
-    return {};
-  }
-  StructuredData::Dictionary *dict = object_sp->GetAsDictionary();
-  if (!dict) {
-    LLDB_LOGF(log, "Unable to read 'process metadata' LC_NOTE, did not "
-                   "get a dictionary.");
-    return {};
-  }
-
-  return object_sp;
-}
-
 lldb::RegisterContextSP
 ObjectFileMachO::GetThreadContextAtIndex(uint32_t idx,
                                          lldb_private::Thread &thread) {
@@ -5737,6 +5885,11 @@ ObjectFileMachO::GetThreadContextAtIndex(uint32_t idx,
       case llvm::MachO::CPU_TYPE_ARM:
         reg_ctx_sp =
             std::make_shared<RegisterContextDarwin_arm_Mach>(thread, data);
+        break;
+
+      case llvm::MachO::CPU_TYPE_I386:
+        reg_ctx_sp =
+            std::make_shared<RegisterContextDarwin_i386_Mach>(thread, data);
         break;
 
       case llvm::MachO::CPU_TYPE_X86_64:
@@ -6603,6 +6756,11 @@ bool ObjectFileMachO::SaveCore(const lldb::ProcessSP &process_sp,
 
             case llvm::MachO::CPU_TYPE_ARM:
               RegisterContextDarwin_arm_Mach::Create_LC_THREAD(
+                  thread_sp.get(), LC_THREAD_datas[thread_idx]);
+              break;
+
+            case llvm::MachO::CPU_TYPE_I386:
+              RegisterContextDarwin_i386_Mach::Create_LC_THREAD(
                   thread_sp.get(), LC_THREAD_datas[thread_idx]);
               break;
 

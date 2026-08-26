@@ -41,5 +41,5 @@ PreservedAnalyses EmbedBitcodePass::run(Module &M, ModuleAnalysisManager &AM) {
 
   embedBufferInModule(M, MemoryBufferRef(Data, "ModuleData"), ".llvm.lto");
 
-  return PreservedAnalyses::none();
+  return PreservedAnalyses::all();
 }

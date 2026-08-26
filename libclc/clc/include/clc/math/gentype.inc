@@ -349,7 +349,3 @@
 
 #undef __CLC_AS_GENTYPE
 #undef __CLC_CONVERT_GENTYPE
-
-#undef __HALF_ONLY
-#undef __FLOAT_ONLY
-#undef __DOUBLE_ONLY

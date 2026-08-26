@@ -23,7 +23,6 @@
 #include "UsingDeclarationsSorter.h"
 #include "clang/Tooling/Inclusions/HeaderIncludes.h"
 #include "llvm/ADT/Sequence.h"
-#include <limits>
 
 #define DEBUG_TYPE "format-formatter"
 
@@ -778,7 +777,7 @@ template <> struct MappingTraits<FormatStyle::SpacesInLineComment> {
     IO.mapOptional("Maximum", signedMaximum);
     Space.Maximum = static_cast<unsigned>(signedMaximum);
 
-    if (Space.Maximum < std::numeric_limits<unsigned>::max())
+    if (Space.Maximum != -1u)
       Space.Minimum = std::min(Space.Minimum, Space.Maximum);
   }
 };
@@ -1673,8 +1672,7 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.SpacesInAngles = FormatStyle::SIAS_Never;
   LLVMStyle.SpacesInContainerLiterals = true;
-  LLVMStyle.SpacesInLineCommentPrefix = {
-      /*Minimum=*/1, /*Maximum=*/std::numeric_limits<unsigned>::max()};
+  LLVMStyle.SpacesInLineCommentPrefix = {/*Minimum=*/1, /*Maximum=*/-1u};
   LLVMStyle.SpacesInParens = FormatStyle::SIPO_Never;
   LLVMStyle.SpacesInSquareBrackets = false;
   LLVMStyle.Standard = FormatStyle::LS_Latest;
@@ -3170,12 +3168,11 @@ static bool affectsRange(ArrayRef<tooling::Range> Ranges, unsigned Start,
 // the index of the first of the duplicates as the others are going to be
 // removed. OffsetToEOL describes the cursor's position relative to the end of
 // its current line.
-// If `Cursor` is not on any #include, `Index` will be
-// std::numeric_limits<unsigned>::max().
+// If `Cursor` is not on any #include, `Index` will be UINT_MAX.
 static std::pair<unsigned, unsigned>
 FindCursorIndex(const ArrayRef<IncludeDirective> &Includes,
                 const ArrayRef<unsigned> &Indices, unsigned Cursor) {
-  unsigned CursorIndex = std::numeric_limits<unsigned>::max();
+  unsigned CursorIndex = UINT_MAX;
   unsigned OffsetToEOL = 0;
   for (int i = 0, e = Includes.size(); i != e; ++i) {
     unsigned Start = Includes[Indices[i]].Offset;
@@ -3443,12 +3440,11 @@ tooling::Replacements sortCppIncludes(const FormatStyle &Style, StringRef Code,
   return Replaces;
 }
 
-// Returns group number to use as a first order sort on imports. Gives
-// std::numeric_limits<unsigned>::max() if the import does not match any given
-// groups.
+// Returns group number to use as a first order sort on imports. Gives UINT_MAX
+// if the import does not match any given groups.
 static unsigned findJavaImportGroup(const FormatStyle &Style,
                                     StringRef ImportIdentifier) {
-  unsigned LongestMatchIndex = std::numeric_limits<unsigned>::max();
+  unsigned LongestMatchIndex = UINT_MAX;
   unsigned LongestMatchLength = 0;
   for (unsigned I = 0; I < Style.JavaImportGroups.size(); I++) {
     const std::string &GroupPrefix = Style.JavaImportGroups[I];
@@ -3586,7 +3582,7 @@ tooling::Replacements sortJavaImports(const FormatStyle &Style, StringRef Code,
       ImportsInBlock.push_back(
           {Identifier, Line, Prev, AssociatedCommentLines, IsStatic});
       AssociatedCommentLines.clear();
-    } else if (!Trimmed.empty() && !ImportsInBlock.empty()) {
+    } else if (Trimmed.size() > 0 && !ImportsInBlock.empty()) {
       // Associating comments within the imports with the nearest import below
       AssociatedCommentLines.push_back(Line);
     }
@@ -3677,15 +3673,13 @@ formatReplacements(StringRef Code, const tooling::Replacements &Replaces,
 namespace {
 
 inline bool isHeaderInsertion(const tooling::Replacement &Replace) {
-  return Replace.getOffset() == std::numeric_limits<unsigned>::max() &&
-         Replace.getLength() == 0 &&
+  return Replace.getOffset() == UINT_MAX && Replace.getLength() == 0 &&
          tooling::HeaderIncludes::IncludeRegex.match(
              Replace.getReplacementText());
 }
 
 inline bool isHeaderDeletion(const tooling::Replacement &Replace) {
-  return Replace.getOffset() == std::numeric_limits<unsigned>::max() &&
-         Replace.getLength() == 1;
+  return Replace.getOffset() == UINT_MAX && Replace.getLength() == 1;
 }
 
 // FIXME: insert empty lines between newly created blocks.
@@ -3705,7 +3699,7 @@ fixCppIncludeInsertions(StringRef Code, const tooling::Replacements &Replaces,
       consumeError(HeaderInsertions.add(R));
     } else if (isHeaderDeletion(R)) {
       HeadersToDelete.insert(R.getReplacementText());
-    } else if (R.getOffset() == std::numeric_limits<unsigned>::max()) {
+    } else if (R.getOffset() == UINT_MAX) {
       llvm::errs() << "Insertions other than header #include insertion are "
                       "not supported! "
                    << R.getReplacementText() << "\n";

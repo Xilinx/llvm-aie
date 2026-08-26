@@ -49,7 +49,9 @@ TEST_F(LexHLSLRootSignatureTest, ValidLexNumbersTest) {
     42.e+10f
   )cc";
 
-  hlsl::RootSignatureLexer Lexer(Source);
+  auto TokLoc = SourceLocation();
+
+  hlsl::RootSignatureLexer Lexer(Source, TokLoc);
 
   SmallVector<hlsl::RootSignatureToken> Tokens;
   SmallVector<TokenKind> Expected = {
@@ -227,7 +229,8 @@ TEST_F(LexHLSLRootSignatureTest, ValidLexAllTokensTest) {
     STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT
     STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT
   )cc";
-  hlsl::RootSignatureLexer Lexer(Source);
+  auto TokLoc = SourceLocation();
+  hlsl::RootSignatureLexer Lexer(Source, TokLoc);
 
   SmallVector<hlsl::RootSignatureToken> Tokens;
   SmallVector<TokenKind> Expected = {
@@ -248,7 +251,8 @@ TEST_F(LexHLSLRootSignatureTest, ValidCaseInsensitiveKeywordsTest) {
     SPACE visibility FLAGS
     numDescriptors OFFSET
   )cc";
-  hlsl::RootSignatureLexer Lexer(Source);
+  auto TokLoc = SourceLocation();
+  hlsl::RootSignatureLexer Lexer(Source, TokLoc);
 
   SmallVector<hlsl::RootSignatureToken> Tokens;
   SmallVector<TokenKind> Expected = {
@@ -272,7 +276,8 @@ TEST_F(LexHLSLRootSignatureTest, ValidLexPeekTest) {
   const llvm::StringLiteral Source = R"cc(
     )1
   )cc";
-  hlsl::RootSignatureLexer Lexer(Source);
+  auto TokLoc = SourceLocation();
+  hlsl::RootSignatureLexer Lexer(Source, TokLoc);
 
   // Test basic peek
   hlsl::RootSignatureToken Res = Lexer.peekNextToken();

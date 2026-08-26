@@ -17,6 +17,7 @@
 #include "mlir/Dialect/Index/IR/IndexOps.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
+#include "mlir/Pass/Pass.h"
 
 using namespace mlir;
 

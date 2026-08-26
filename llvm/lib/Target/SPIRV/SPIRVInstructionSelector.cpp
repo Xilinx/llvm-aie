@@ -341,14 +341,6 @@ private:
                                 GIntrinsic &HandleDef, MachineInstr &Pos) const;
 };
 
-bool sampledTypeIsSignedInteger(const llvm::Type *HandleType) {
-  const TargetExtType *TET = cast<TargetExtType>(HandleType);
-  if (TET->getTargetExtName() == "spirv.Image") {
-    return false;
-  }
-  assert(TET->getTargetExtName() == "spirv.SignedImage");
-  return TET->getTypeParameter(0)->isIntegerTy();
-}
 } // end anonymous namespace
 
 #define GET_GLOBALISEL_IMPL
@@ -1203,17 +1195,12 @@ bool SPIRVInstructionSelector::selectStore(MachineInstr &I) const {
 
     Register IdxReg = IntPtrDef->getOperand(3).getReg();
     if (HandleType->getOpcode() == SPIRV::OpTypeImage) {
-      auto BMI = BuildMI(*I.getParent(), I, I.getDebugLoc(),
-                         TII.get(SPIRV::OpImageWrite))
-                     .addUse(NewHandleReg)
-                     .addUse(IdxReg)
-                     .addUse(StoreVal);
-
-      const llvm::Type *LLVMHandleType = GR.getTypeForSPIRVType(HandleType);
-      if (sampledTypeIsSignedInteger(LLVMHandleType))
-        BMI.addImm(0x1000); // SignExtend
-
-      return BMI.constrainAllUses(TII, TRI, RBI);
+      return BuildMI(*I.getParent(), I, I.getDebugLoc(),
+                     TII.get(SPIRV::OpImageWrite))
+          .addUse(NewHandleReg)
+          .addUse(IdxReg)
+          .addUse(StoreVal)
+          .constrainAllUses(TII, TRI, RBI);
     }
   }
 
@@ -3055,32 +3042,6 @@ bool SPIRVInstructionSelector::selectIntrinsic(Register ResVReg,
     // a `LocalInvocationIndex` builtin variable
     return loadBuiltinInputID(SPIRV::BuiltIn::LocalInvocationIndex, ResVReg,
                               ResType, I);
-  case Intrinsic::spv_workgroup_size:
-    return loadVec3BuiltinInputID(SPIRV::BuiltIn::WorkgroupSize, ResVReg,
-                                  ResType, I);
-  case Intrinsic::spv_global_size:
-    return loadVec3BuiltinInputID(SPIRV::BuiltIn::GlobalSize, ResVReg, ResType,
-                                  I);
-  case Intrinsic::spv_global_offset:
-    return loadVec3BuiltinInputID(SPIRV::BuiltIn::GlobalOffset, ResVReg,
-                                  ResType, I);
-  case Intrinsic::spv_num_workgroups:
-    return loadVec3BuiltinInputID(SPIRV::BuiltIn::NumWorkgroups, ResVReg,
-                                  ResType, I);
-  case Intrinsic::spv_subgroup_size:
-    return loadBuiltinInputID(SPIRV::BuiltIn::SubgroupSize, ResVReg, ResType,
-                              I);
-  case Intrinsic::spv_num_subgroups:
-    return loadBuiltinInputID(SPIRV::BuiltIn::NumSubgroups, ResVReg, ResType,
-                              I);
-  case Intrinsic::spv_subgroup_id:
-    return loadBuiltinInputID(SPIRV::BuiltIn::SubgroupId, ResVReg, ResType, I);
-  case Intrinsic::spv_subgroup_local_invocation_id:
-    return loadBuiltinInputID(SPIRV::BuiltIn::SubgroupLocalInvocationId,
-                              ResVReg, ResType, I);
-  case Intrinsic::spv_subgroup_max_size:
-    return loadBuiltinInputID(SPIRV::BuiltIn::SubgroupMaxSize, ResVReg, ResType,
-                              I);
   case Intrinsic::spv_fdot:
     return selectFloatDot(ResVReg, ResType, I);
   case Intrinsic::spv_udot:
@@ -3285,35 +3246,25 @@ bool SPIRVInstructionSelector::generateImageRead(Register &ResVReg,
                                                  Register ImageReg,
                                                  Register IdxReg, DebugLoc Loc,
                                                  MachineInstr &Pos) const {
-  SPIRVType *ImageType = GR.getSPIRVTypeForVReg(ImageReg);
-  assert(ImageType && ImageType->getOpcode() == SPIRV::OpTypeImage &&
-         "ImageReg is not an image type.");
-  bool IsSignedInteger =
-      sampledTypeIsSignedInteger(GR.getTypeForSPIRVType(ImageType));
-
   uint64_t ResultSize = GR.getScalarOrVectorComponentCount(ResType);
   if (ResultSize == 4) {
-    auto BMI = BuildMI(*Pos.getParent(), Pos, Loc, TII.get(SPIRV::OpImageRead))
-                   .addDef(ResVReg)
-                   .addUse(GR.getSPIRVTypeID(ResType))
-                   .addUse(ImageReg)
-                   .addUse(IdxReg);
-
-    if (IsSignedInteger)
-      BMI.addImm(0x1000); // SignExtend
-    return BMI.constrainAllUses(TII, TRI, RBI);
+    return BuildMI(*Pos.getParent(), Pos, Loc, TII.get(SPIRV::OpImageRead))
+        .addDef(ResVReg)
+        .addUse(GR.getSPIRVTypeID(ResType))
+        .addUse(ImageReg)
+        .addUse(IdxReg)
+        .constrainAllUses(TII, TRI, RBI);
   }
 
   SPIRVType *ReadType = widenTypeToVec4(ResType, Pos);
   Register ReadReg = MRI->createVirtualRegister(GR.getRegClass(ReadType));
-  auto BMI = BuildMI(*Pos.getParent(), Pos, Loc, TII.get(SPIRV::OpImageRead))
-                 .addDef(ReadReg)
-                 .addUse(GR.getSPIRVTypeID(ReadType))
-                 .addUse(ImageReg)
-                 .addUse(IdxReg);
-  if (IsSignedInteger)
-    BMI.addImm(0x1000); // SignExtend
-  bool Succeed = BMI.constrainAllUses(TII, TRI, RBI);
+  bool Succeed =
+      BuildMI(*Pos.getParent(), Pos, Loc, TII.get(SPIRV::OpImageRead))
+          .addDef(ReadReg)
+          .addUse(GR.getSPIRVTypeID(ReadType))
+          .addUse(ImageReg)
+          .addUse(IdxReg)
+          .constrainAllUses(TII, TRI, RBI);
   if (!Succeed)
     return false;
 
@@ -4019,13 +3970,13 @@ bool SPIRVInstructionSelector::selectLog10(Register ResVReg,
 // Generate the instructions to load 3-element vector builtin input
 // IDs/Indices.
 // Like: GlobalInvocationId, LocalInvocationId, etc....
-
 bool SPIRVInstructionSelector::loadVec3BuiltinInputID(
     SPIRV::BuiltIn::BuiltIn BuiltInValue, Register ResVReg,
     const SPIRVType *ResType, MachineInstr &I) const {
   MachineIRBuilder MIRBuilder(I);
+  const SPIRVType *U32Type = GR.getOrCreateSPIRVIntegerType(32, MIRBuilder);
   const SPIRVType *Vec3Ty =
-      GR.getOrCreateSPIRVVectorType(ResType, 3, MIRBuilder, false);
+      GR.getOrCreateSPIRVVectorType(U32Type, 3, MIRBuilder, false);
   const SPIRVType *PtrType = GR.getOrCreateSPIRVPointerType(
       Vec3Ty, MIRBuilder, SPIRV::StorageClass::Input);
 
@@ -4155,7 +4106,6 @@ bool SPIRVInstructionSelector::loadHandleBeforePosition(
   // handle is the image object. So images get an extra load.
   uint32_t LoadOpcode =
       IsStructuredBuffer ? SPIRV::OpCopyObject : SPIRV::OpLoad;
-  GR.assignSPIRVTypeToVReg(ResType, HandleReg, *Pos.getMF());
   return BuildMI(*Pos.getParent(), Pos, HandleDef.getDebugLoc(),
                  TII.get(LoadOpcode))
       .addDef(HandleReg)

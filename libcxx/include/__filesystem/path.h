@@ -29,6 +29,7 @@
 
 #if _LIBCPP_HAS_LOCALIZATION
 #  include <iomanip> // for quoted
+#  include <locale>
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)

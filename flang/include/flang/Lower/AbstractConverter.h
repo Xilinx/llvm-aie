@@ -15,7 +15,6 @@
 
 #include "flang/Lower/LoweringOptions.h"
 #include "flang/Lower/PFTDefs.h"
-#include "flang/Lower/Support/Utils.h"
 #include "flang/Optimizer/Builder/BoxValue.h"
 #include "flang/Optimizer/Dialect/FIRAttr.h"
 #include "flang/Semantics/symbol.h"
@@ -24,7 +23,6 @@
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Operation.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace mlir {
 class SymbolTable;

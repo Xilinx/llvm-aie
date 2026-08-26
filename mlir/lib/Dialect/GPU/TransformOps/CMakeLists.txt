@@ -24,5 +24,4 @@ add_mlir_dialect_library(MLIRGPUTransformOps
   # ConversionPatterns
   MLIRNVGPUToNVVM
   MLIRGPUToNVVMTransforms
-  MLIRGPUToROCDLTransforms
   )  

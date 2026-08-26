@@ -18,6 +18,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionWasm.h"
 #include "llvm/MC/MCSymbolWasm.h"
@@ -478,7 +479,8 @@ void WasmObjectWriter::recordRelocation(const MCFragment &F,
                                         const MCFixup &Fixup, MCValue Target,
                                         uint64_t &FixedValue) {
   // The WebAssembly backend should never generate FKF_IsPCRel fixups
-  assert(!Fixup.isPCRel());
+  assert(!(Asm->getBackend().getFixupKindInfo(Fixup.getKind()).Flags &
+           MCFixupKindInfo::FKF_IsPCRel));
 
   const auto &FixupSection = cast<MCSectionWasm>(*F.getParent());
   uint64_t C = Target.getConstant();

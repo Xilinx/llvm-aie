@@ -335,8 +335,7 @@ bool clang::interp::DoBitCast(InterpState &S, CodePtr OpPC, const Pointer &Ptr,
 
   BitcastBuffer Buffer(FullBitWidth);
   size_t BuffSize = FullBitWidth.roundToBytes();
-  QualType DataType = Ptr.getFieldDesc()->getDataType(S.getASTContext());
-  if (!CheckBitcastType(S, OpPC, DataType, /*IsToType=*/false))
+  if (!CheckBitcastType(S, OpPC, Ptr.getType(), /*IsToType=*/false))
     return false;
 
   bool Success = readPointerToBuffer(S.getContext(), Ptr, Buffer,
@@ -371,8 +370,8 @@ bool clang::interp::DoBitCastPtr(InterpState &S, CodePtr OpPC,
   assert(FromPtr.isBlockPointer());
   assert(ToPtr.isBlockPointer());
 
-  QualType FromType = FromPtr.getFieldDesc()->getDataType(S.getASTContext());
-  QualType ToType = ToPtr.getFieldDesc()->getDataType(S.getASTContext());
+  QualType FromType = FromPtr.getType();
+  QualType ToType = ToPtr.getType();
 
   if (!CheckBitcastType(S, OpPC, ToType, /*IsToType=*/true))
     return false;

@@ -2562,7 +2562,8 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     const TargetRegisterClass *RC = isThumb2 ? &ARM::tGPRRegClass
                                              : &ARM::GPRRegClass;
 
-    const ARMBaseRegisterInfo *RegInfo = Subtarget->getRegisterInfo();
+    const ARMBaseRegisterInfo *RegInfo =
+        static_cast<const ARMBaseRegisterInfo *>(Subtarget->getRegisterInfo());
     Register FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
     Register SrcReg = FramePtr;
 

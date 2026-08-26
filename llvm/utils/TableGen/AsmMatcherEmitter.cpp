@@ -1541,7 +1541,7 @@ void AsmMatcherInfo::buildInfo() {
     Variant.Name = AsmVariant->getValueAsString("Name");
     Variant.AsmVariantNo = AsmVariant->getValueAsInt("Variant");
 
-    for (const CodeGenInstruction *CGI : Target.getInstructions()) {
+    for (const CodeGenInstruction *CGI : Target.getInstructionsByEnumValue()) {
 
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instructions we consider.
@@ -3440,7 +3440,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   if (!ReportMultipleNearMisses)
     emitAsmTiedOperandConstraints(Target, Info, OS, HasOptionalOperands);
 
-  StringToOffsetTable StringTable(/*AppendZero=*/false);
+  StringToOffsetTable StringTable;
 
   size_t MaxNumOperands = 0;
   unsigned MaxMnemonicIndex = 0;
@@ -3451,8 +3451,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
     // Store a pascal-style length byte in the mnemonic.
     std::string LenMnemonic = char(MI->Mnemonic.size()) + MI->Mnemonic.lower();
-    MaxMnemonicIndex = std::max(MaxMnemonicIndex,
-                                StringTable.GetOrAddStringOffset(LenMnemonic));
+    MaxMnemonicIndex = std::max(
+        MaxMnemonicIndex, StringTable.GetOrAddStringOffset(LenMnemonic, false));
   }
 
   OS << "static const char MnemonicTable[] =\n";
@@ -3724,8 +3724,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
         "<< ActualIdx);\n";
   OS << "      if (ActualIdx < Operands.size())\n";
   OS << "        DEBUG_WITH_TYPE(\"asm-matcher\", dbgs() << \" (\";\n";
-  OS << "                        Operands[ActualIdx]->print(dbgs(), "
-        "*getContext().getAsmInfo()); dbgs() << "
+  OS << "                        Operands[ActualIdx]->print(dbgs()); dbgs() << "
         "\"): \");\n";
   OS << "      else\n";
   OS << "        DEBUG_WITH_TYPE(\"asm-matcher\", dbgs() << \": \");\n";

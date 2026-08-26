@@ -237,7 +237,6 @@ TEST(Endian, PackedEndianSpecificIntegral) {
     reinterpret_cast<little32_t *>(little + 1);
 
   EXPECT_EQ(*big_val, *little_val);
-  EXPECT_EQ(big_val->value(), little_val->value());
 }
 
 TEST(Endian, PacketEndianSpecificIntegralAsEnum) {

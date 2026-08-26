@@ -1331,7 +1331,7 @@ def ProcessorFeatures {
   // Pantherlake
   list<SubtargetFeature> PTLAdditionalFeatures = [FeaturePREFETCHI];
   list<SubtargetFeature> PTLFeatures =
-    !listremove(!listconcat(ARLSFeatures, PTLAdditionalFeatures), [FeatureWIDEKL]);
+    !listconcat(ARLSFeatures, PTLAdditionalFeatures);
 
 
   // Clearwaterforest
@@ -1342,7 +1342,7 @@ def ProcessorFeatures {
                                                   FeatureSM4,
                                                   FeatureUSERMSR];
   list<SubtargetFeature> CWFFeatures =
-    !listremove(!listconcat(SRFFeatures, CWFAdditionalFeatures), [FeatureWIDEKL]);
+    !listconcat(SRFFeatures, CWFAdditionalFeatures);
 
   // Knights Landing
   list<SubtargetFeature> KNLFeatures = [FeatureX87,

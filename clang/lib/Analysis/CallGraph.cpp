@@ -223,7 +223,10 @@ void CallGraph::print(raw_ostream &OS) const {
   // We are going to print the graph in reverse post order, partially, to make
   // sure the output is deterministic.
   llvm::ReversePostOrderTraversal<const CallGraph *> RPOT(this);
-  for (const CallGraphNode *N : RPOT) {
+  for (llvm::ReversePostOrderTraversal<const CallGraph *>::rpo_iterator
+         I = RPOT.begin(), E = RPOT.end(); I != E; ++I) {
+    const CallGraphNode *N = *I;
+
     OS << "  Function: ";
     if (N == Root)
       OS << "< root >";

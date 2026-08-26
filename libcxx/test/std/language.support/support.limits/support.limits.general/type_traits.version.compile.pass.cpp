@@ -28,10 +28,6 @@
 #    error "__cpp_lib_bounded_array_traits should not be defined before c++20"
 #  endif
 
-#  ifdef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should not be defined before c++20"
-#  endif
-
 #  ifdef __cpp_lib_has_unique_object_representations
 #    error "__cpp_lib_has_unique_object_representations should not be defined before c++17"
 #  endif
@@ -132,10 +128,6 @@
 
 #  ifdef __cpp_lib_bounded_array_traits
 #    error "__cpp_lib_bounded_array_traits should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should not be defined before c++20"
 #  endif
 
 #  ifdef __cpp_lib_has_unique_object_representations
@@ -256,10 +248,6 @@
 
 #  ifdef __cpp_lib_bounded_array_traits
 #    error "__cpp_lib_bounded_array_traits should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should not be defined before c++20"
 #  endif
 
 #  ifndef __cpp_lib_has_unique_object_representations
@@ -404,13 +392,6 @@
 #  endif
 #  if __cpp_lib_bounded_array_traits != 201902L
 #    error "__cpp_lib_bounded_array_traits should have the value 201902L in c++20"
-#  endif
-
-#  ifndef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should be defined in c++20"
-#  endif
-#  if __cpp_lib_common_reference != 202302L
-#    error "__cpp_lib_common_reference should have the value 202302L in c++20"
 #  endif
 
 #  ifndef __cpp_lib_has_unique_object_representations
@@ -585,13 +566,6 @@
 #  endif
 #  if __cpp_lib_bounded_array_traits != 201902L
 #    error "__cpp_lib_bounded_array_traits should have the value 201902L in c++23"
-#  endif
-
-#  ifndef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should be defined in c++23"
-#  endif
-#  if __cpp_lib_common_reference != 202302L
-#    error "__cpp_lib_common_reference should have the value 202302L in c++23"
 #  endif
 
 #  ifndef __cpp_lib_has_unique_object_representations
@@ -787,13 +761,6 @@
 #  endif
 #  if __cpp_lib_bounded_array_traits != 201902L
 #    error "__cpp_lib_bounded_array_traits should have the value 201902L in c++26"
-#  endif
-
-#  ifndef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should be defined in c++26"
-#  endif
-#  if __cpp_lib_common_reference != 202302L
-#    error "__cpp_lib_common_reference should have the value 202302L in c++26"
 #  endif
 
 #  ifndef __cpp_lib_has_unique_object_representations

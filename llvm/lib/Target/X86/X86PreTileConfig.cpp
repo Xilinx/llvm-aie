@@ -80,12 +80,12 @@ struct MIRef {
   bool operator<(const MIRef &RHS) const {
     // Comparison between different BBs happens when inserting a MIRef into set.
     // So we compare MBB first to make the insertion happy.
-    return std::tie(MBB, Pos) < std::tie(RHS.MBB, RHS.Pos);
+    return MBB < RHS.MBB || (MBB == RHS.MBB && Pos < RHS.Pos);
   }
   bool operator>(const MIRef &RHS) const {
     // Comparison between different BBs happens when inserting a MIRef into set.
     // So we compare MBB first to make the insertion happy.
-    return std::tie(MBB, Pos) > std::tie(RHS.MBB, RHS.Pos);
+    return MBB > RHS.MBB || (MBB == RHS.MBB && Pos > RHS.Pos);
   }
 };
 

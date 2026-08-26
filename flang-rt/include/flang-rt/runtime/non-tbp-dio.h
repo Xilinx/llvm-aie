@@ -32,8 +32,6 @@ class DerivedType;
 
 namespace Fortran::runtime::io {
 
-RT_OFFLOAD_API_GROUP_BEGIN
-
 struct NonTbpDefinedIo {
   const typeInfo::DerivedType &derivedType;
   void (*subroutine)(); // null means no non-TBP defined I/O here
@@ -53,8 +51,6 @@ struct NonTbpDefinedIoTable {
   // but the remaining specifics remain visible.
   bool ignoreNonTbpEntries{false};
 };
-
-RT_OFFLOAD_API_GROUP_END
 
 } // namespace Fortran::runtime::io
 #endif // FLANG_RT_RUNTIME_NON_TBP_DIO_H_

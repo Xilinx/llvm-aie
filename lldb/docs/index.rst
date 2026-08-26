@@ -135,7 +135,6 @@ interesting areas to contribute to lldb.
    use/ondemand
    use/aarch64-linux
    use/symbolfilejson
-   use/mcp
    use/troubleshooting
    use/links
    Man Page <man/lldb>

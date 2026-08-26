@@ -6,10 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/MSP430MCAsmInfo.h"
-#include "MCTargetDesc/MSP430MCTargetDesc.h"
 #include "MSP430.h"
 #include "MSP430RegisterInfo.h"
+#include "MCTargetDesc/MSP430MCTargetDesc.h"
 #include "TargetInfo/MSP430TargetInfo.h"
 
 #include "llvm/ADT/APInt.h"
@@ -225,7 +224,7 @@ public:
   SMLoc getStartLoc() const override { return Start; }
   SMLoc getEndLoc() const override { return End; }
 
-  void print(raw_ostream &O, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &O) const override {
     switch (Kind) {
     case k_Tok:
       O << "Token " << Tok;
@@ -234,12 +233,11 @@ public:
       O << "Register " << Reg;
       break;
     case k_Imm:
-      O << "Immediate ";
-      MAI.printExpr(O, *Imm);
+      O << "Immediate " << *Imm;
       break;
     case k_Mem:
       O << "Memory ";
-      MAI.printExpr(O, *Mem.Offset);
+      O << *Mem.Offset << "(" << Reg << ")";
       break;
     case k_IndReg:
       O << "RegInd " << Reg;

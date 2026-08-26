@@ -119,7 +119,7 @@ static CVSymbol serializePublic(uint8_t *Mem, const BulkPublic &Pub) {
   memcpy(NameMem, Pub.Name, NameLen);
   // Zero the null terminator and remaining bytes.
   memset(&NameMem[NameLen], 0, Size - sizeof(PublicSym32Layout) - NameLen);
-  return CVSymbol(ArrayRef(Mem, Size));
+  return CVSymbol(ArrayRef(reinterpret_cast<uint8_t *>(Mem), Size));
 }
 
 uint32_t GSIHashStreamBuilder::calculateSerializedLength() const {

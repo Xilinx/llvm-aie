@@ -254,7 +254,7 @@ def LunarLakePfmCounters : ProcPfmCounters {
   ];
   let ValidationCounters = DefaultIntelPfmValidationCounters;
 }
-def : PfmCountersBinding<"lunarlake", LunarLakePfmCounters>;
+def : PfmCountersBinding<"Lunarlake", LunarLakePfmCounters>;
 
 // AMD X86 Counters.
 defvar DefaultAMDPfmValidationCounters = [

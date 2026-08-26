@@ -1448,7 +1448,8 @@ public:
                         Align Alignment = Align(4)) const;
 
   /// Returns if \p Offset is legal for the subtarget as the offset to a FLAT
-  /// encoded instruction with the given \p FlatVariant.
+  /// encoded instruction. If \p Signed, this is for an instruction that
+  /// interprets the offset as signed.
   bool isLegalFLATOffset(int64_t Offset, unsigned AddrSpace,
                          uint64_t FlatVariant) const;
 

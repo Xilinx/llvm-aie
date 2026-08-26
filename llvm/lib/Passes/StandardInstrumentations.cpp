@@ -1074,7 +1074,7 @@ bool OptPassGateInstrumentation::shouldRun(StringRef PassName, Any IR) {
 
 void OptPassGateInstrumentation::registerCallbacks(
     PassInstrumentationCallbacks &PIC) {
-  const OptPassGate &PassGate = Context.getOptPassGate();
+  OptPassGate &PassGate = Context.getOptPassGate();
   if (!PassGate.isEnabled())
     return;
 

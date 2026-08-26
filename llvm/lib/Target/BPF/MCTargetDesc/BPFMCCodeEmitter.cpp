@@ -77,11 +77,6 @@ MCCodeEmitter *llvm::createBPFbeMCCodeEmitter(const MCInstrInfo &MCII,
   return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), false, Ctx);
 }
 
-static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
-                     const MCExpr *Value, uint16_t Kind, bool PCRel = false) {
-  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
-}
-
 unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO,
                                              SmallVectorImpl<MCFixup> &Fixups,
@@ -107,14 +102,14 @@ unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
   if (MI.getOpcode() == BPF::JAL)
     // func call name
-    addFixup(Fixups, 0, Expr, FK_Data_4, true);
+    Fixups.push_back(MCFixup::create(0, Expr, FK_PCRel_4));
   else if (MI.getOpcode() == BPF::LD_imm64)
-    addFixup(Fixups, 0, Expr, FK_SecRel_8);
+    Fixups.push_back(MCFixup::create(0, Expr, FK_SecRel_8));
   else if (MI.getOpcode() == BPF::JMPL)
-    addFixup(Fixups, 0, Expr, BPF::FK_BPF_PCRel_4, true);
+    Fixups.push_back(MCFixup::create(0, Expr, (MCFixupKind)BPF::FK_BPF_PCRel_4));
   else
     // bb label
-    addFixup(Fixups, 0, Expr, FK_Data_2, true);
+    Fixups.push_back(MCFixup::create(0, Expr, FK_PCRel_2));
 
   return 0;
 }

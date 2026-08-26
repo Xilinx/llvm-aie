@@ -989,7 +989,7 @@ struct TargetTypeInfo {
 static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
   LLVMContext &C = Ty->getContext();
   StringRef Name = Ty->getName();
-  if (Name == "spirv.Image" || Name == "spirv.SignedImage")
+  if (Name == "spirv.Image")
     return TargetTypeInfo(PointerType::get(C, 0), TargetExtType::CanBeGlobal,
                           TargetExtType::CanBeLocal);
   if (Name == "spirv.Type") {

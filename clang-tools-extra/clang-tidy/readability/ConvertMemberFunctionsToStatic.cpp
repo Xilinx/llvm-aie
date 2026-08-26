@@ -71,7 +71,7 @@ AST_MATCHER(CXXMethodDecl, usesThis) {
   } UsageOfThis;
 
   // TraverseStmt does not modify its argument.
-  UsageOfThis.TraverseStmt(Node.getBody());
+  UsageOfThis.TraverseStmt(const_cast<Stmt *>(Node.getBody()));
 
   return UsageOfThis.Used;
 }

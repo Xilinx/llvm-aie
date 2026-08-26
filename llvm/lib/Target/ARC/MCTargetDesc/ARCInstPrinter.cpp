@@ -124,7 +124,7 @@ static void printExpr(const MCExpr *Expr, const MCAsmInfo *MAI,
     SRE = dyn_cast<MCSymbolRefExpr>(Expr);
     assert(SRE && "Unexpected MCExpr type.");
   }
-  assert(SRE->getSpecifier() == 0);
+  assert(SRE->getKind() == MCSymbolRefExpr::VK_None);
 
   // Symbols are prefixed with '@'
   OS << '@';

@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/relational/isgreaterequal.h>
+#include <clc/opencl/clc.h>
 #include <clc/relational/clc_isgreaterequal.h>
 
 #define FUNCTION isgreaterequal

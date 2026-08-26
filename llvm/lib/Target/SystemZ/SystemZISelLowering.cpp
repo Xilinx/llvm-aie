@@ -895,7 +895,7 @@ bool SystemZVectorConstantInfo::isVectorConstantLegal(
   if (SplatBitSize > 64)
     return false;
 
-  auto TryValue = [&](uint64_t Value) -> bool {
+  auto tryValue = [&](uint64_t Value) -> bool {
     // Try VECTOR REPLICATE IMMEDIATE
     int64_t SignedValue = SignExtend64(Value, SplatBitSize);
     if (isInt<16>(SignedValue)) {
@@ -931,14 +931,14 @@ bool SystemZVectorConstantInfo::isVectorConstantLegal(
   unsigned UpperBits = llvm::countl_zero(SplatBitsZ);
   uint64_t Lower = SplatUndefZ & maskTrailingOnes<uint64_t>(LowerBits);
   uint64_t Upper = SplatUndefZ & maskLeadingOnes<uint64_t>(UpperBits);
-  if (TryValue(SplatBitsZ | Upper | Lower))
+  if (tryValue(SplatBitsZ | Upper | Lower))
     return true;
 
   // Now try assuming that any undefined bits between the first and
   // last defined set bits are set.  This increases the chances of
   // using a non-wraparound mask.
   uint64_t Middle = SplatUndefZ & ~Upper & ~Lower;
-  return TryValue(SplatBitsZ | Middle);
+  return tryValue(SplatBitsZ | Middle);
 }
 
 SystemZVectorConstantInfo::SystemZVectorConstantInfo(APInt IntImm) {
@@ -1007,8 +1007,8 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
   assert(TRI->isTypeLegalForClass(*RC, MVT::i32) && "Invalid destination!");
   (void)TRI;
-  Register MainDstReg = MRI.createVirtualRegister(RC);
-  Register RestoreDstReg = MRI.createVirtualRegister(RC);
+  Register mainDstReg = MRI.createVirtualRegister(RC);
+  Register restoreDstReg = MRI.createVirtualRegister(RC);
 
   MVT PVT = getPointerTy(MF->getDataLayout());
   assert((PVT == MVT::i64 || PVT == MVT::i32) && "Invalid Pointer Size!");
@@ -1046,22 +1046,22 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   // restoreMBB:
   //  v_restore = 1
 
-  MachineBasicBlock *ThisMBB = MBB;
-  MachineBasicBlock *MainMBB = MF->CreateMachineBasicBlock(BB);
-  MachineBasicBlock *SinkMBB = MF->CreateMachineBasicBlock(BB);
-  MachineBasicBlock *RestoreMBB = MF->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *thisMBB = MBB;
+  MachineBasicBlock *mainMBB = MF->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *sinkMBB = MF->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *restoreMBB = MF->CreateMachineBasicBlock(BB);
 
-  MF->insert(I, MainMBB);
-  MF->insert(I, SinkMBB);
-  MF->push_back(RestoreMBB);
-  RestoreMBB->setMachineBlockAddressTaken();
+  MF->insert(I, mainMBB);
+  MF->insert(I, sinkMBB);
+  MF->push_back(restoreMBB);
+  restoreMBB->setMachineBlockAddressTaken();
 
   MachineInstrBuilder MIB;
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
-  SinkMBB->splice(SinkMBB->begin(), MBB,
+  sinkMBB->splice(sinkMBB->begin(), MBB,
                   std::next(MachineBasicBlock::iterator(MI)), MBB->end());
-  SinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
+  sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:
   const int64_t FPOffset = 0;                         // Slot 1.
@@ -1073,13 +1073,13 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   Register BufReg = MI.getOperand(1).getReg();
 
   const TargetRegisterClass *PtrRC = getRegClassFor(PVT);
-  Register LabelReg = MRI.createVirtualRegister(PtrRC);
+  unsigned LabelReg = MRI.createVirtualRegister(PtrRC);
 
   // Prepare IP for longjmp.
-  BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::LARL), LabelReg)
-      .addMBB(RestoreMBB);
+  BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::LARL), LabelReg)
+      .addMBB(restoreMBB);
   // Store IP for return from jmp, slot 2, offset = 1.
-  BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::STG))
+  BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::STG))
       .addReg(LabelReg)
       .addReg(BufReg)
       .addImm(LabelOffset)
@@ -1088,7 +1088,7 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   auto *SpecialRegs = Subtarget.getSpecialRegisters();
   bool HasFP = Subtarget.getFrameLowering()->hasFP(*MF);
   if (HasFP) {
-    BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::STG))
+    BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::STG))
         .addReg(SpecialRegs->getFramePointerRegister())
         .addReg(BufReg)
         .addImm(FPOffset)
@@ -1096,7 +1096,7 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   }
 
   // Store SP.
-  BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::STG))
+  BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::STG))
       .addReg(SpecialRegs->getStackPointerRegister())
       .addReg(BufReg)
       .addImm(SPOffset)
@@ -1107,12 +1107,12 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   if (BackChain) {
     Register BCReg = MRI.createVirtualRegister(PtrRC);
     auto *TFL = Subtarget.getFrameLowering<SystemZFrameLowering>();
-    MIB = BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::LG), BCReg)
+    MIB = BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::LG), BCReg)
               .addReg(SpecialRegs->getStackPointerRegister())
               .addImm(TFL->getBackchainOffset(*MF))
               .addReg(0);
 
-    BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::STG))
+    BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::STG))
         .addReg(BCReg)
         .addReg(BufReg)
         .addImm(BCOffset)
@@ -1120,34 +1120,34 @@ SystemZTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   }
 
   // Setup.
-  MIB = BuildMI(*ThisMBB, MI, DL, TII->get(SystemZ::EH_SjLj_Setup))
-            .addMBB(RestoreMBB);
+  MIB = BuildMI(*thisMBB, MI, DL, TII->get(SystemZ::EH_SjLj_Setup))
+            .addMBB(restoreMBB);
 
   const SystemZRegisterInfo *RegInfo = Subtarget.getRegisterInfo();
   MIB.addRegMask(RegInfo->getNoPreservedMask());
 
-  ThisMBB->addSuccessor(MainMBB);
-  ThisMBB->addSuccessor(RestoreMBB);
+  thisMBB->addSuccessor(mainMBB);
+  thisMBB->addSuccessor(restoreMBB);
 
   // mainMBB:
-  BuildMI(MainMBB, DL, TII->get(SystemZ::LHI), MainDstReg).addImm(0);
-  MainMBB->addSuccessor(SinkMBB);
+  BuildMI(mainMBB, DL, TII->get(SystemZ::LHI), mainDstReg).addImm(0);
+  mainMBB->addSuccessor(sinkMBB);
 
   // sinkMBB:
-  BuildMI(*SinkMBB, SinkMBB->begin(), DL, TII->get(SystemZ::PHI), DstReg)
-      .addReg(MainDstReg)
-      .addMBB(MainMBB)
-      .addReg(RestoreDstReg)
-      .addMBB(RestoreMBB);
+  BuildMI(*sinkMBB, sinkMBB->begin(), DL, TII->get(SystemZ::PHI), DstReg)
+      .addReg(mainDstReg)
+      .addMBB(mainMBB)
+      .addReg(restoreDstReg)
+      .addMBB(restoreMBB);
 
   // restoreMBB.
-  BuildMI(RestoreMBB, DL, TII->get(SystemZ::LHI), RestoreDstReg).addImm(1);
-  BuildMI(RestoreMBB, DL, TII->get(SystemZ::J)).addMBB(SinkMBB);
-  RestoreMBB->addSuccessor(SinkMBB);
+  BuildMI(restoreMBB, DL, TII->get(SystemZ::LHI), restoreDstReg).addImm(1);
+  BuildMI(restoreMBB, DL, TII->get(SystemZ::J)).addMBB(sinkMBB);
+  restoreMBB->addSuccessor(sinkMBB);
 
   MI.eraseFromParent();
 
-  return SinkMBB;
+  return sinkMBB;
 }
 
 MachineBasicBlock *
@@ -1423,9 +1423,8 @@ bool SystemZTargetLowering::isLegalAddressingMode(const DataLayout &DL,
 }
 
 bool SystemZTargetLowering::findOptimalMemOpLowering(
-    LLVMContext &Context, std::vector<EVT> &MemOps, unsigned Limit,
-    const MemOp &Op, unsigned DstAS, unsigned SrcAS,
-    const AttributeList &FuncAttributes) const {
+    std::vector<EVT> &MemOps, unsigned Limit, const MemOp &Op, unsigned DstAS,
+    unsigned SrcAS, const AttributeList &FuncAttributes) const {
   const int MVCFastLen = 16;
 
   if (Limit != ~unsigned(0)) {
@@ -1438,13 +1437,12 @@ bool SystemZTargetLowering::findOptimalMemOpLowering(
       return false; // Memset zero: Use XC
   }
 
-  return TargetLowering::findOptimalMemOpLowering(Context, MemOps, Limit, Op,
-                                                  DstAS, SrcAS, FuncAttributes);
+  return TargetLowering::findOptimalMemOpLowering(MemOps, Limit, Op, DstAS,
+                                                  SrcAS, FuncAttributes);
 }
 
-EVT SystemZTargetLowering::getOptimalMemOpType(
-    LLVMContext &Context, const MemOp &Op,
-    const AttributeList &FuncAttributes) const {
+EVT SystemZTargetLowering::getOptimalMemOpType(const MemOp &Op,
+                                   const AttributeList &FuncAttributes) const {
   return Subtarget.hasVector() ? MVT::v2i64 : MVT::Other;
 }
 
@@ -1512,72 +1510,71 @@ SystemZTargetLowering::getConstraintType(StringRef Constraint) const {
   return TargetLowering::getConstraintType(Constraint);
 }
 
-TargetLowering::ConstraintWeight
-SystemZTargetLowering::getSingleConstraintMatchWeight(
-    AsmOperandInfo &Info, const char *Constraint) const {
-  ConstraintWeight Weight = CW_Invalid;
-  Value *CallOperandVal = Info.CallOperandVal;
+TargetLowering::ConstraintWeight SystemZTargetLowering::
+getSingleConstraintMatchWeight(AsmOperandInfo &info,
+                               const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
   // If we don't have a value, we can't do a match,
   // but allow it at the lowest weight.
   if (!CallOperandVal)
     return CW_Default;
   Type *type = CallOperandVal->getType();
   // Look at the constraint type.
-  switch (*Constraint) {
+  switch (*constraint) {
   default:
-    Weight = TargetLowering::getSingleConstraintMatchWeight(Info, Constraint);
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
     break;
 
   case 'a': // Address register
   case 'd': // Data register (equivalent to 'r')
   case 'h': // High-part register
   case 'r': // General-purpose register
-    Weight =
-        CallOperandVal->getType()->isIntegerTy() ? CW_Register : CW_Default;
+    weight = CallOperandVal->getType()->isIntegerTy() ? CW_Register : CW_Default;
     break;
 
   case 'f': // Floating-point register
     if (!useSoftFloat())
-      Weight = type->isFloatingPointTy() ? CW_Register : CW_Default;
+      weight = type->isFloatingPointTy() ? CW_Register : CW_Default;
     break;
 
   case 'v': // Vector register
     if (Subtarget.hasVector())
-      Weight = (type->isVectorTy() || type->isFloatingPointTy()) ? CW_Register
+      weight = (type->isVectorTy() || type->isFloatingPointTy()) ? CW_Register
                                                                  : CW_Default;
     break;
 
   case 'I': // Unsigned 8-bit constant
     if (auto *C = dyn_cast<ConstantInt>(CallOperandVal))
       if (isUInt<8>(C->getZExtValue()))
-        Weight = CW_Constant;
+        weight = CW_Constant;
     break;
 
   case 'J': // Unsigned 12-bit constant
     if (auto *C = dyn_cast<ConstantInt>(CallOperandVal))
       if (isUInt<12>(C->getZExtValue()))
-        Weight = CW_Constant;
+        weight = CW_Constant;
     break;
 
   case 'K': // Signed 16-bit constant
     if (auto *C = dyn_cast<ConstantInt>(CallOperandVal))
       if (isInt<16>(C->getSExtValue()))
-        Weight = CW_Constant;
+        weight = CW_Constant;
     break;
 
   case 'L': // Signed 20-bit displacement (on all targets we support)
     if (auto *C = dyn_cast<ConstantInt>(CallOperandVal))
       if (isInt<20>(C->getSExtValue()))
-        Weight = CW_Constant;
+        weight = CW_Constant;
     break;
 
   case 'M': // 0x7fffffff
     if (auto *C = dyn_cast<ConstantInt>(CallOperandVal))
       if (C->getZExtValue() == 0x7fffffff)
-        Weight = CW_Constant;
+        weight = CW_Constant;
     break;
   }
-  return Weight;
+  return weight;
 }
 
 // Parse a "{tNNN}" register constraint for which the register type "t"
@@ -2140,7 +2137,7 @@ static SDValue getADAEntry(SelectionDAG &DAG, SDValue Val, SDLoc DL,
                            unsigned Offset, bool LoadAdr = false) {
   MachineFunction &MF = DAG.getMachineFunction();
   SystemZMachineFunctionInfo *MFI = MF.getInfo<SystemZMachineFunctionInfo>();
-  Register ADAvReg = MFI->getADAVirtualRegister();
+  unsigned ADAvReg = MFI->getADAVirtualRegister();
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
 
   SDValue Reg = DAG.getRegister(ADAvReg, PtrVT);
@@ -2194,7 +2191,7 @@ static bool getzOSCalleeAndADA(SelectionDAG &DAG, SDValue &Callee, SDValue &ADA,
     if (IsInternal) {
       SystemZMachineFunctionInfo *MFI =
           MF.getInfo<SystemZMachineFunctionInfo>();
-      Register ADAvReg = MFI->getADAVirtualRegister();
+      unsigned ADAvReg = MFI->getADAVirtualRegister();
       ADA = DAG.getCopyFromReg(Chain, DL, ADAvReg, PtrVT);
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, PtrVT);
       Callee = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Callee);
@@ -2390,8 +2387,9 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
   }
 
   // Build a sequence of copy-to-reg nodes, chained and glued together.
-  for (const auto &[Reg, N] : RegsToPass) {
-    Chain = DAG.getCopyToReg(Chain, DL, Reg, N, Glue);
+  for (unsigned I = 0, E = RegsToPass.size(); I != E; ++I) {
+    Chain = DAG.getCopyToReg(Chain, DL, RegsToPass[I].first,
+                             RegsToPass[I].second, Glue);
     Glue = Chain.getValue(1);
   }
 
@@ -2402,8 +2400,9 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
-  for (const auto &[Reg, N] : RegsToPass)
-    Ops.push_back(DAG.getRegister(Reg, N.getValueType()));
+  for (unsigned I = 0, E = RegsToPass.size(); I != E; ++I)
+    Ops.push_back(DAG.getRegister(RegsToPass[I].first,
+                                  RegsToPass[I].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
@@ -2485,10 +2484,12 @@ std::pair<SDValue, SDValue> SystemZTargetLowering::makeExternalCall(
   return LowerCallTo(CLI);
 }
 
-bool SystemZTargetLowering::CanLowerReturn(
-    CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
-    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context,
-    const Type *RetTy) const {
+bool SystemZTargetLowering::
+CanLowerReturn(CallingConv::ID CallConv,
+               MachineFunction &MF, bool isVarArg,
+               const SmallVectorImpl<ISD::OutputArg> &Outs,
+               LLVMContext &Context,
+               const Type *RetTy) const {
   // Special case that we cannot easily detect in RetCC_SystemZ since
   // i128 may not be a legal type.
   for (auto &Out : Outs)
@@ -2496,7 +2497,7 @@ bool SystemZTargetLowering::CanLowerReturn(
       return false;
 
   SmallVector<CCValAssign, 16> RetLocs;
-  CCState RetCCInfo(CallConv, IsVarArg, MF, RetLocs, Context);
+  CCState RetCCInfo(CallConv, isVarArg, MF, RetLocs, Context);
   return RetCCInfo.CheckReturn(Outs, RetCC_SystemZ);
 }
 
@@ -4252,6 +4253,9 @@ SDValue SystemZTargetLowering::lowerRETURNADDR(SDValue Op,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   MFI.setReturnAddressIsTaken(true);
+
+  if (verifyReturnAddressArgumentIsConstant(Op, DAG))
+    return SDValue();
 
   SDLoc DL(Op);
   unsigned Depth = Op.getConstantOperandVal(0);
@@ -6052,8 +6056,8 @@ SDValue GeneralShuffle::getNode(SelectionDAG &DAG, const SDLoc &DL) {
 #ifndef NDEBUG
 static void dumpBytes(const SmallVectorImpl<int> &Bytes, std::string Msg) {
   dbgs() << Msg.c_str() << " { ";
-  for (unsigned I = 0; I < Bytes.size(); I++)
-    dbgs() << Bytes[I] << " ";
+  for (unsigned i = 0; i < Bytes.size(); i++)
+    dbgs() << Bytes[i] << " ";
   dbgs() << "}\n";
 }
 #endif
@@ -6768,7 +6772,7 @@ SDValue SystemZTargetLowering::lowerFSHR(SDValue Op, SelectionDAG &DAG) const {
 }
 
 static SDValue lowerAddrSpaceCast(SDValue Op, SelectionDAG &DAG) {
-  SDLoc DL(Op);
+  SDLoc dl(Op);
   SDValue Src = Op.getOperand(0);
   MVT DstVT = Op.getSimpleValueType();
 
@@ -6781,14 +6785,14 @@ static SDValue lowerAddrSpaceCast(SDValue Op, SelectionDAG &DAG) {
   // addrspacecast [0 <- 1] : Assinging a ptr32 value to a 64-bit pointer.
   // addrspacecast [1 <- 0] : Assigining a 64-bit pointer to a ptr32 value.
   if (SrcAS == SYSTEMZAS::PTR32 && DstVT == MVT::i64) {
-    Op = DAG.getNode(ISD::AND, DL, MVT::i32, Src,
-                     DAG.getConstant(0x7fffffff, DL, MVT::i32));
-    Op = DAG.getNode(ISD::ZERO_EXTEND, DL, DstVT, Op);
+    Op = DAG.getNode(ISD::AND, dl, MVT::i32, Src,
+                     DAG.getConstant(0x7fffffff, dl, MVT::i32));
+    Op = DAG.getNode(ISD::ZERO_EXTEND, dl, DstVT, Op);
   } else if (DstVT == MVT::i32) {
-    Op = DAG.getNode(ISD::TRUNCATE, DL, DstVT, Src);
-    Op = DAG.getNode(ISD::AND, DL, MVT::i32, Op,
-                     DAG.getConstant(0x7fffffff, DL, MVT::i32));
-    Op = DAG.getNode(ISD::ZERO_EXTEND, DL, DstVT, Op);
+    Op = DAG.getNode(ISD::TRUNCATE, dl, DstVT, Src);
+    Op = DAG.getNode(ISD::AND, dl, MVT::i32, Op,
+                     DAG.getConstant(0x7fffffff, dl, MVT::i32));
+    Op = DAG.getNode(ISD::ZERO_EXTEND, dl, DstVT, Op);
   } else {
     report_fatal_error("Bad address space in addrspacecast");
   }
@@ -9286,8 +9290,8 @@ SystemZTargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
   Known.resetAll();
 
   // Intrinsic CC result is returned in the two low bits.
-  unsigned Tmp0, Tmp1; // not used
-  if (Op.getResNo() == 1 && isIntrinsicWithCC(Op, Tmp0, Tmp1)) {
+  unsigned tmp0, tmp1; // not used
+  if (Op.getResNo() == 1 && isIntrinsicWithCC(Op, tmp0, tmp1)) {
     Known.Zero.setBitsFrom(2);
     return;
   }
@@ -9512,10 +9516,10 @@ static bool checkCCKill(MachineInstr &MI, MachineBasicBlock *MBB) {
   // Scan forward through BB for a use/def of CC.
   MachineBasicBlock::iterator miI(std::next(MachineBasicBlock::iterator(MI)));
   for (MachineBasicBlock::iterator miE = MBB->end(); miI != miE; ++miI) {
-    const MachineInstr &MI = *miI;
-    if (MI.readsRegister(SystemZ::CC, /*TRI=*/nullptr))
+    const MachineInstr& mi = *miI;
+    if (mi.readsRegister(SystemZ::CC, /*TRI=*/nullptr))
       return false;
-    if (MI.definesRegister(SystemZ::CC, /*TRI=*/nullptr))
+    if (mi.definesRegister(SystemZ::CC, /*TRI=*/nullptr))
       break; // Should have kill-flag - update below.
   }
 

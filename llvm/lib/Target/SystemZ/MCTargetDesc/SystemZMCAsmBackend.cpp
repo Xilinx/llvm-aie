@@ -13,6 +13,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFObjectWriter.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -112,6 +113,7 @@ public:
   // Override MCAsmBackend
   std::optional<MCFixupKind> getFixupKind(StringRef Name) const override;
   MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override;
+  bool shouldForceRelocation(const MCFixup &, const MCValue &) override;
   void applyFixup(const MCFragment &, const MCFixup &, const MCValue &Target,
                   MutableArrayRef<char> Data, uint64_t Value,
                   bool IsResolved) override;
@@ -141,7 +143,7 @@ MCFixupKindInfo SystemZMCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   // Fixup kinds from .reloc directive are like R_390_NONE. They
   // do not require any extra processing.
   if (mc::isRelocation(Kind))
-    return {};
+    return MCAsmBackend::getFixupKindInfo(FK_NONE);
 
   if (Kind < FirstTargetFixupKind)
     return MCAsmBackend::getFixupKindInfo(Kind);
@@ -151,13 +153,15 @@ MCFixupKindInfo SystemZMCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   return SystemZ::MCFixupKindInfos[Kind - FirstTargetFixupKind];
 }
 
-void SystemZMCAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
+bool SystemZMCAsmBackend::shouldForceRelocation(const MCFixup &,
+                                                const MCValue &Target) {
+  return Target.getSpecifier();
+}
+
+void SystemZMCAsmBackend::applyFixup(const MCFragment &, const MCFixup &Fixup,
                                      const MCValue &Target,
                                      MutableArrayRef<char> Data, uint64_t Value,
                                      bool IsResolved) {
-  if (Target.getSpecifier())
-    IsResolved = false;
-  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
   MCFixupKind Kind = Fixup.getKind();
   if (mc::isRelocation(Kind))
     return;

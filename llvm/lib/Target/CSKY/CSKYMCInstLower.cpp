@@ -13,7 +13,7 @@
 
 #include "CSKYMCInstLower.h"
 #include "MCTargetDesc/CSKYBaseInfo.h"
-#include "MCTargetDesc/CSKYMCAsmInfo.h"
+#include "MCTargetDesc/CSKYMCExpr.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCExpr.h"
 
@@ -36,38 +36,38 @@ void CSKYMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 MCOperand CSKYMCInstLower::lowerSymbolOperand(const MachineOperand &MO,
                                               MCSymbol *Sym) const {
-  CSKY::Specifier Spec;
+  CSKYMCExpr::Specifier Spec;
   MCContext &Ctx = Printer.OutContext;
 
   switch (MO.getTargetFlags()) {
   default:
     llvm_unreachable("Unknown target flag.");
   case CSKYII::MO_None:
-    Spec = CSKY::S_None;
+    Spec = CSKYMCExpr::VK_None;
     break;
   case CSKYII::MO_GOT32:
-    Spec = CSKY::S_GOT;
+    Spec = CSKYMCExpr::VK_GOT;
     break;
   case CSKYII::MO_GOTOFF:
-    Spec = CSKY::S_GOTOFF;
+    Spec = CSKYMCExpr::VK_GOTOFF;
     break;
   case CSKYII::MO_ADDR32:
-    Spec = CSKY::S_ADDR;
+    Spec = CSKYMCExpr::VK_ADDR;
     break;
   case CSKYII::MO_PLT32:
-    Spec = CSKY::S_PLT;
+    Spec = CSKYMCExpr::VK_PLT;
     break;
   case CSKYII::MO_ADDR_HI16:
-    Spec = CSKY::S_ADDR_HI16;
+    Spec = CSKYMCExpr::VK_ADDR_HI16;
     break;
   case CSKYII::MO_ADDR_LO16:
-    Spec = CSKY::S_ADDR_LO16;
+    Spec = CSKYMCExpr::VK_ADDR_LO16;
     break;
   }
   const MCExpr *ME = MCSymbolRefExpr::create(Sym, Ctx);
 
-  if (Spec != CSKY::S_None)
-    ME = MCSpecifierExpr::create(ME, Spec, Ctx);
+  if (Spec != CSKYMCExpr::VK_None)
+    ME = CSKYMCExpr::create(ME, Spec, Ctx);
 
   return MCOperand::createExpr(ME);
 }

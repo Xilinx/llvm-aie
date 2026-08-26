@@ -640,7 +640,7 @@ bool isPossibleMacro(const FormatToken *Tok) {
     return false;
 
   const auto Text = Tok->TokenText;
-  assert(!Text.empty());
+  assert(Text.size() > 0);
 
   // T,K,U,V likely could be template arguments
   if (Text.size() == 1)

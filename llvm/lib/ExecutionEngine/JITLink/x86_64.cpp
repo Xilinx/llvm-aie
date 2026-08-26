@@ -75,7 +75,7 @@ const char *getEdgeKindName(Edge::Kind K) {
   case RequestTLVPAndTransformToPCRel32TLVPLoadREXRelaxable:
     return "RequestTLVPAndTransformToPCRel32TLVPLoadREXRelaxable";
   default:
-    return getGenericEdgeKindName(K);
+    return getGenericEdgeKindName(static_cast<Edge::Kind>(K));
   }
 }
 

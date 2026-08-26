@@ -145,7 +145,7 @@ private:
 // qualified name will be used for matching, otherwise its name will be used.
 inline ::clang::ast_matchers::internal::Matcher<NamedDecl>
 matchesAnyListedName(llvm::ArrayRef<StringRef> NameList) {
-  return ::clang::ast_matchers::internal::Matcher(
+  return ::clang::ast_matchers::internal::makeMatcher(
       new MatchesAnyListedNameMatcher(NameList));
 }
 
@@ -188,7 +188,7 @@ private:
 inline ::clang::ast_matchers::internal::Matcher<QualType>
 matchesAnyListedTypeName(llvm::ArrayRef<StringRef> NameList,
                          bool CanonicalTypes) {
-  return ::clang::ast_matchers::internal::Matcher(
+  return ::clang::ast_matchers::internal::makeMatcher(
       new MatchesAnyListedTypeNameMatcher(NameList, CanonicalTypes));
 }
 inline ::clang::ast_matchers::internal::Matcher<QualType>

@@ -1931,13 +1931,15 @@ Parser::ParseCXXCondition(StmtResult *InitStmt, SourceLocation Loc,
       return ParseCXXCondition(nullptr, Loc, CK, MissingOK);
     }
 
-    EnterExpressionEvaluationContext Eval(
-        Actions, Sema::ExpressionEvaluationContext::ConstantEvaluated,
-        /*LambdaContextDecl=*/nullptr,
-        /*ExprContext=*/Sema::ExpressionEvaluationContextRecord::EK_Other,
-        /*ShouldEnter=*/CK == Sema::ConditionKind::ConstexprIf);
-
-    ExprResult Expr = ParseExpression();
+    ExprResult Expr = [&] {
+      EnterExpressionEvaluationContext Eval(
+          Actions, Sema::ExpressionEvaluationContext::ConstantEvaluated,
+          /*LambdaContextDecl=*/nullptr,
+          /*ExprContext=*/Sema::ExpressionEvaluationContextRecord::EK_Other,
+          /*ShouldEnter=*/CK == Sema::ConditionKind::ConstexprIf);
+      // Parse the expression.
+      return ParseExpression(); // expression
+    }();
 
     if (Expr.isInvalid())
       return Sema::ConditionError();
@@ -3605,7 +3607,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
       Result = ParseCastExpression(CastParseKind::AnyCastExpr,
                                    false /*isAddressofOperand*/, NotCastExpr,
                                    // type-id has priority.
-                                   TypoCorrectionTypeBehavior::AllowTypes);
+                                   TypeCastState::IsTypeCast);
     }
 
     // If we parsed a cast-expression, it's really a type-id, otherwise it's

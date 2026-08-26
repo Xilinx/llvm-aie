@@ -33,6 +33,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_oeq:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -42,10 +43,12 @@
 ; X86-NEXT:    setnp %cl
 ; X86-NEXT:    sete %al
 ; X86-NEXT:    andb %cl, %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_oeq:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
@@ -54,6 +57,7 @@
 ; GISEL-X86-NEXT:    sete %cl
 ; GISEL-X86-NEXT:    setnp %al
 ; GISEL-X86-NEXT:    andb %cl, %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp oeq x86_fp80 %x, %y
     ret i1 %1
@@ -81,6 +85,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_ogt:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -88,16 +93,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    seta %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ogt:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    seta %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ogt x86_fp80 %x, %y
     ret i1 %1
@@ -125,6 +133,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_oge:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -132,16 +141,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    setae %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_oge:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setae %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp oge x86_fp80 %x, %y
     ret i1 %1
@@ -178,6 +190,7 @@
 ;
 ; SDAG-X86-LABEL: fcmp_x86_fp80_olt:
 ; SDAG-X86:       ## %bb.0:
+; SDAG-X86-NEXT:    subl $12, %esp
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fucompp
@@ -185,10 +198,12 @@
 ; SDAG-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; SDAG-X86-NEXT:    sahf
 ; SDAG-X86-NEXT:    seta %al
+; SDAG-X86-NEXT:    addl $12, %esp
 ; SDAG-X86-NEXT:    retl
 ;
 ; FAST-X86-LABEL: fcmp_x86_fp80_olt:
 ; FAST-X86:       ## %bb.0:
+; FAST-X86-NEXT:    subl $12, %esp
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fxch %st(1)
@@ -197,15 +212,18 @@
 ; FAST-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; FAST-X86-NEXT:    sahf
 ; FAST-X86-NEXT:    seta %al
+; FAST-X86-NEXT:    addl $12, %esp
 ; FAST-X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_olt:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    seta %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp olt x86_fp80 %x, %y
     ret i1 %1
@@ -242,6 +260,7 @@
 ;
 ; SDAG-X86-LABEL: fcmp_x86_fp80_ole:
 ; SDAG-X86:       ## %bb.0:
+; SDAG-X86-NEXT:    subl $12, %esp
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fucompp
@@ -249,10 +268,12 @@
 ; SDAG-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; SDAG-X86-NEXT:    sahf
 ; SDAG-X86-NEXT:    setae %al
+; SDAG-X86-NEXT:    addl $12, %esp
 ; SDAG-X86-NEXT:    retl
 ;
 ; FAST-X86-LABEL: fcmp_x86_fp80_ole:
 ; FAST-X86:       ## %bb.0:
+; FAST-X86-NEXT:    subl $12, %esp
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fxch %st(1)
@@ -261,15 +282,18 @@
 ; FAST-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; FAST-X86-NEXT:    sahf
 ; FAST-X86-NEXT:    setae %al
+; FAST-X86-NEXT:    addl $12, %esp
 ; FAST-X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ole:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setae %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ole x86_fp80 %x, %y
     ret i1 %1
@@ -297,6 +321,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_one:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -304,16 +329,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    setne %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_one:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setne %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp one x86_fp80 %x, %y
     ret i1 %1
@@ -341,6 +369,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_ord:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -348,16 +377,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    setnp %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ord:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setnp %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ord x86_fp80 %x, %y
     ret i1 %1
@@ -385,6 +417,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_uno:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -392,16 +425,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    setp %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_uno:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setp %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp uno x86_fp80 %x, %y
     ret i1 %1
@@ -429,6 +465,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_ueq:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -436,16 +473,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    sete %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ueq:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    sete %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ueq x86_fp80 %x, %y
     ret i1 %1
@@ -482,6 +522,7 @@
 ;
 ; SDAG-X86-LABEL: fcmp_x86_fp80_ugt:
 ; SDAG-X86:       ## %bb.0:
+; SDAG-X86-NEXT:    subl $12, %esp
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fucompp
@@ -489,10 +530,12 @@
 ; SDAG-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; SDAG-X86-NEXT:    sahf
 ; SDAG-X86-NEXT:    setb %al
+; SDAG-X86-NEXT:    addl $12, %esp
 ; SDAG-X86-NEXT:    retl
 ;
 ; FAST-X86-LABEL: fcmp_x86_fp80_ugt:
 ; FAST-X86:       ## %bb.0:
+; FAST-X86-NEXT:    subl $12, %esp
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fxch %st(1)
@@ -501,15 +544,18 @@
 ; FAST-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; FAST-X86-NEXT:    sahf
 ; FAST-X86-NEXT:    setb %al
+; FAST-X86-NEXT:    addl $12, %esp
 ; FAST-X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ugt:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setb %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ugt x86_fp80 %x, %y
     ret i1 %1
@@ -546,6 +592,7 @@
 ;
 ; SDAG-X86-LABEL: fcmp_x86_fp80_uge:
 ; SDAG-X86:       ## %bb.0:
+; SDAG-X86-NEXT:    subl $12, %esp
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; SDAG-X86-NEXT:    fucompp
@@ -553,10 +600,12 @@
 ; SDAG-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; SDAG-X86-NEXT:    sahf
 ; SDAG-X86-NEXT:    setbe %al
+; SDAG-X86-NEXT:    addl $12, %esp
 ; SDAG-X86-NEXT:    retl
 ;
 ; FAST-X86-LABEL: fcmp_x86_fp80_uge:
 ; FAST-X86:       ## %bb.0:
+; FAST-X86-NEXT:    subl $12, %esp
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; FAST-X86-NEXT:    fxch %st(1)
@@ -565,15 +614,18 @@
 ; FAST-X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; FAST-X86-NEXT:    sahf
 ; FAST-X86-NEXT:    setbe %al
+; FAST-X86-NEXT:    addl $12, %esp
 ; FAST-X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_uge:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setbe %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp uge x86_fp80 %x, %y
     ret i1 %1
@@ -601,6 +653,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_ult:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -608,16 +661,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    setb %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ult:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setb %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ult x86_fp80 %x, %y
     ret i1 %1
@@ -645,6 +701,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_ule:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -652,16 +709,19 @@
 ; X86-NEXT:    ## kill: def $ah killed $ah killed $ax
 ; X86-NEXT:    sahf
 ; X86-NEXT:    setbe %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_ule:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
 ; GISEL-X86-NEXT:    fucompi %st(1), %st
 ; GISEL-X86-NEXT:    fstp %st(0)
 ; GISEL-X86-NEXT:    setbe %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp ule x86_fp80 %x, %y
     ret i1 %1
@@ -693,6 +753,7 @@
 ;
 ; X86-LABEL: fcmp_x86_fp80_une:
 ; X86:       ## %bb.0:
+; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; X86-NEXT:    fucompp
@@ -702,10 +763,12 @@
 ; X86-NEXT:    setp %cl
 ; X86-NEXT:    setne %al
 ; X86-NEXT:    orb %cl, %al
+; X86-NEXT:    addl $12, %esp
 ; X86-NEXT:    retl
 ;
 ; GISEL-X86-LABEL: fcmp_x86_fp80_une:
 ; GISEL-X86:       ## %bb.0:
+; GISEL-X86-NEXT:    subl $12, %esp
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fldt {{[0-9]+}}(%esp)
 ; GISEL-X86-NEXT:    fxch %st(1)
@@ -714,6 +777,7 @@
 ; GISEL-X86-NEXT:    setne %cl
 ; GISEL-X86-NEXT:    setp %al
 ; GISEL-X86-NEXT:    orb %cl, %al
+; GISEL-X86-NEXT:    addl $12, %esp
 ; GISEL-X86-NEXT:    retl
     %1 = fcmp une x86_fp80 %x, %y
     ret i1 %1

@@ -25,7 +25,7 @@ namespace {
 
 AST_MATCHER(CXXMethodDecl, isVirtual) { return Node.isVirtual(); }
 
-static constexpr llvm::StringLiteral ErrorMsg =
+static const char *const ErrorMsg =
     "comparing a pointer to member virtual function with other pointer is "
     "unspecified behavior, only compare it with a null-pointer constant for "
     "equality.";

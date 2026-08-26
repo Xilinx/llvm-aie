@@ -9,7 +9,7 @@
 #ifndef FORTRAN_LOWER_OPENMPUTILS_H
 #define FORTRAN_LOWER_OPENMPUTILS_H
 
-#include "flang/Lower/OpenMP/Clauses.h"
+#include "Clauses.h"
 #include "mlir/Dialect/OpenMP/OpenMPDialect.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/Value.h"

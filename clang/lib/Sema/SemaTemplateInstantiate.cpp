@@ -309,24 +309,10 @@ Response HandleFunction(Sema &SemaRef, const FunctionDecl *Function,
         isGenericLambdaCallOperatorOrStaticInvokerSpecialization(Function))
       return Response::Done();
 
-  } else if (auto *Template = Function->getDescribedFunctionTemplate()) {
+  } else if (Function->getDescribedFunctionTemplate()) {
     assert(
         (ForConstraintInstantiation || Result.getNumSubstitutedLevels() == 0) &&
         "Outer template not instantiated?");
-    if (ForConstraintInstantiation) {
-      for (auto &Inst : llvm::reverse(SemaRef.CodeSynthesisContexts)) {
-        if (Inst.Kind == Sema::CodeSynthesisContext::ConstraintsCheck &&
-            Inst.Entity == Template) {
-          // After CWG2369, the outer templates are not instantiated when
-          // checking its associated constraints. So add them back through the
-          // synthesis context; this is useful for e.g. nested constraints
-          // involving lambdas.
-          Result.addOuterTemplateArguments(Template, Inst.template_arguments(),
-                                           /*Final=*/false);
-          break;
-        }
-      }
-    }
   }
   // If this is a friend or local declaration and it declares an entity at
   // namespace scope, take arguments from its lexical parent
@@ -488,6 +474,21 @@ MultiLevelTemplateArgumentList Sema::getTemplateInstantiationArgs(
   assert((ND || DC) && "Can't find arguments for a decl if one isn't provided");
   // Accumulate the set of template argument lists in this structure.
   MultiLevelTemplateArgumentList Result;
+  getTemplateInstantiationArgs(
+      Result, ND, DC, Final, Innermost, RelativeToPrimary, Pattern,
+      ForConstraintInstantiation, SkipForSpecialization,
+      ForDefaultArgumentSubstitution);
+  return Result;
+}
+
+void Sema::getTemplateInstantiationArgs(
+    MultiLevelTemplateArgumentList &Result, const NamedDecl *ND,
+    const DeclContext *DC, bool Final,
+    std::optional<ArrayRef<TemplateArgument>> Innermost, bool RelativeToPrimary,
+    const FunctionDecl *Pattern, bool ForConstraintInstantiation,
+    bool SkipForSpecialization, bool ForDefaultArgumentSubstitution) {
+  assert((ND || DC) && "Can't find arguments for a decl if one isn't provided");
+  // Accumulate the set of template argument lists in this structure.
 
   using namespace TemplateInstArgsHelpers;
   const Decl *CurDecl = ND;
@@ -547,13 +548,12 @@ MultiLevelTemplateArgumentList Sema::getTemplateInstantiationArgs(
     }
 
     if (R.IsDone)
-      return Result;
+      return;
     if (R.ClearRelativeToPrimary)
       RelativeToPrimary = false;
     assert(R.NextDecl);
     CurDecl = R.NextDecl;
   }
-  return Result;
 }
 
 bool Sema::CodeSynthesisContext::isInstantiationRecord() const {
@@ -4139,6 +4139,7 @@ static ActionResult<CXXRecordDecl *> getPatternForClassTemplateSpecialization(
         if (Ambiguous) {
           // Partial ordering did not produce a clear winner. Complain.
           Inst.Clear();
+          ClassTemplateSpec->setInvalidDecl();
           S.Diag(PointOfInstantiation,
                  diag::err_partial_spec_ordering_ambiguous)
               << ClassTemplateSpec;
@@ -4440,12 +4441,8 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       // No need to instantiate in-class initializers during explicit
       // instantiation.
       if (Field->hasInClassInitializer() && TSK == TSK_ImplicitInstantiation) {
-        // Handle local classes which could have substituted template params.
         CXXRecordDecl *ClassPattern =
-            Instantiation->isLocalClass()
-                ? Instantiation->getInstantiatedFromMemberClass()
-                : Instantiation->getTemplateInstantiationPattern();
-
+            Instantiation->getTemplateInstantiationPattern();
         DeclContext::lookup_result Lookup =
             ClassPattern->lookup(Field->getDeclName());
         FieldDecl *Pattern = Lookup.find_first<FieldDecl>();

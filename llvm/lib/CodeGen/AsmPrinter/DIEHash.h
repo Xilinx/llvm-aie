@@ -15,7 +15,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/DIE.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MD5.h"
 
 namespace llvm {
@@ -39,7 +38,7 @@ public:
   uint64_t computeCUSignature(StringRef DWOName, const DIE &Die);
 
   /// Computes the type signature.
-  LLVM_ABI_FOR_TEST uint64_t computeTypeSignature(const DIE &Die);
+  uint64_t computeTypeSignature(const DIE &Die);
 
   // Helper routines to process parts of a DIE.
 private:

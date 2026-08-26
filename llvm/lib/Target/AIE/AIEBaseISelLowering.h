@@ -27,7 +27,7 @@ public:
   explicit AIEBaseTargetLowering(const TargetMachine &TM,
                                  const AIEBaseSubtarget &STI);
   // Set the preferred type for memset intrinsics.
-  EVT getOptimalMemOpType(LLVMContext &, const MemOp &Op,
+  EVT getOptimalMemOpType(const MemOp &Op,
                           const AttributeList &FuncAttributes) const override {
     // Vector registers are hard to initilaize.  For the time being, try
     // to keep memory intrinsics (e.g. memset) using scalar types.

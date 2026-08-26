@@ -47,7 +47,6 @@ struct AllocatorOptions {
 void InitializeAllocator(const AllocatorOptions &options);
 void ReInitializeAllocator(const AllocatorOptions &options);
 void GetAllocatorOptions(AllocatorOptions *options);
-void ApplyAllocatorOptions(const AllocatorOptions &options);
 
 class AsanChunkView {
  public:
@@ -239,7 +238,7 @@ using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 typedef CompactSizeClassMap SizeClassMap;
 template <typename AddressSpaceViewTy>
 struct AP32 {
-  static const uptr kSpaceBeg = SANITIZER_MMAP_BEGIN;
+  static const uptr kSpaceBeg = 0;
   static const u64 kSpaceSize = SANITIZER_MMAP_RANGE_SIZE;
   static const uptr kMetadataSize = 0;
   typedef __asan::SizeClassMap SizeClassMap;

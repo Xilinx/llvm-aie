@@ -24,6 +24,9 @@
 #include "mlir/Dialect/Linalg/Utils/Utils.h"
 #include "mlir/Dialect/SCF/Transforms/TileUsingInterface.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Tensor/Utils/Utils.h"
+#include "mlir/Dialect/Transform/IR/TransformDialect.h"
+#include "mlir/Dialect/Transform/IR/TransformOps.h"
 #include "mlir/Dialect/Transform/IR/TransformTypes.h"
 #include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.h"
 #include "mlir/Dialect/Transform/Utils/Utils.h"
@@ -36,6 +39,7 @@
 #include "mlir/IR/TypeUtilities.h"
 #include "mlir/Interfaces/TilingInterface.h"
 #include "mlir/Support/LLVM.h"
+#include "mlir/Support/TypeID.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -2061,7 +2065,7 @@ transform::PadOp::apply(transform::TransformRewriter &rewriter,
       rewriter.setInsertionPoint(linalgTarget);
       for (OpOperand &operand : linalgTarget->getOpOperands()) {
         for (auto [i, dim] : llvm::enumerate(linalgTarget.getShape(&operand))) {
-          if (ShapedType::isStatic(dim))
+          if (!ShapedType::isDynamic(dim))
             continue;
           options.setSizeToPadTo(operand.getOperandNumber(), i,
                                  tensor::getMixedSize(rewriter,
@@ -2404,9 +2408,6 @@ transform::PromoteOp::applyToOne(transform::TransformRewriter &rewriter,
   if (getUseFullTilesByDefault())
     promotionOptions = promotionOptions.setUseFullTileBuffersByDefault(
         getUseFullTilesByDefault());
-  if (getUseOriginalSubviewSize())
-    promotionOptions =
-        promotionOptions.setUseOriginalSubviewSize(getUseOriginalSubviewSize());
   if (getUseAlloca())
     promotionOptions = promotionOptions.setUseAlloca(getUseAlloca());
   if (!getUseFullTileBuffers().empty())

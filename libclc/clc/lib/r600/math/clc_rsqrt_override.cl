@@ -13,11 +13,7 @@ _CLC_OVERLOAD _CLC_DEF float __clc_rsqrt(float x) {
   return __builtin_r600_recipsqrt_ieeef(x);
 }
 
-#define __FLOAT_ONLY
-#define FUNCTION __clc_rsqrt
-#define __CLC_BODY <clc/shared/unary_def_scalarize.inc>
-#include <clc/math/gentype.inc>
-#undef FUNCTION
+_CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, float, __clc_rsqrt, float);
 
 #ifdef cl_khr_fp64
 
@@ -27,10 +23,6 @@ _CLC_OVERLOAD _CLC_DEF double __clc_rsqrt(double x) {
   return __builtin_r600_recipsqrt_ieee(x);
 }
 
-#define __DOUBLE_ONLY
-#define FUNCTION __clc_rsqrt
-#define __CLC_BODY <clc/shared/unary_def_scalarize.inc>
-#include <clc/math/gentype.inc>
-#undef FUNCTION
+_CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, double, __clc_rsqrt, double);
 
 #endif

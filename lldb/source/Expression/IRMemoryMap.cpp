@@ -319,11 +319,11 @@ IRMemoryMap::Allocation::Allocation(lldb::addr_t process_alloc,
   }
 }
 
-llvm::Expected<lldb::addr_t>
-IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
-                    AllocationPolicy policy, bool zero_memory,
-                    AllocationPolicy *used_policy) {
+lldb::addr_t IRMemoryMap::Malloc(size_t size, uint8_t alignment,
+                                 uint32_t permissions, AllocationPolicy policy,
+                                 bool zero_memory, Status &error) {
   lldb_private::Log *log(GetLog(LLDBLog::Expressions));
+  error.Clear();
 
   lldb::ProcessSP process_sp;
   lldb::addr_t allocation_address = LLDB_INVALID_ADDRESS;
@@ -347,14 +347,15 @@ IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
 
   switch (policy) {
   default:
-    return llvm::createStringError(
-        llvm::inconvertibleErrorCode(),
-        "Couldn't malloc: invalid allocation policy");
+    error =
+        Status::FromErrorString("Couldn't malloc: invalid allocation policy");
+    return LLDB_INVALID_ADDRESS;
   case eAllocationPolicyHostOnly:
     allocation_address = FindSpace(allocation_size);
-    if (allocation_address == LLDB_INVALID_ADDRESS)
-      return llvm::createStringError(llvm::inconvertibleErrorCode(),
-                                     "Couldn't malloc: address space is full");
+    if (allocation_address == LLDB_INVALID_ADDRESS) {
+      error = Status::FromErrorString("Couldn't malloc: address space is full");
+      return LLDB_INVALID_ADDRESS;
+    }
     break;
   case eAllocationPolicyMirror:
     process_sp = m_process_wp.lock();
@@ -365,7 +366,6 @@ IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
               process_sp && process_sp->CanJIT() ? "true" : "false",
               process_sp && process_sp->IsAlive() ? "true" : "false");
     if (process_sp && process_sp->CanJIT() && process_sp->IsAlive()) {
-      Status error;
       if (!zero_memory)
         allocation_address =
             process_sp->AllocateMemory(allocation_size, permissions, error);
@@ -374,7 +374,7 @@ IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
             process_sp->CallocateMemory(allocation_size, permissions, error);
 
       if (!error.Success())
-        return error.takeError();
+        return LLDB_INVALID_ADDRESS;
     } else {
       LLDB_LOGF(log,
                 "IRMemoryMap::%s switching to eAllocationPolicyHostOnly "
@@ -382,17 +382,17 @@ IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
                 __FUNCTION__);
       policy = eAllocationPolicyHostOnly;
       allocation_address = FindSpace(allocation_size);
-      if (allocation_address == LLDB_INVALID_ADDRESS)
-        return llvm::createStringError(
-            llvm::inconvertibleErrorCode(),
-            "Couldn't malloc: address space is full");
+      if (allocation_address == LLDB_INVALID_ADDRESS) {
+        error =
+            Status::FromErrorString("Couldn't malloc: address space is full");
+        return LLDB_INVALID_ADDRESS;
+      }
     }
     break;
   case eAllocationPolicyProcessOnly:
     process_sp = m_process_wp.lock();
     if (process_sp) {
       if (process_sp->CanJIT() && process_sp->IsAlive()) {
-        Status error;
         if (!zero_memory)
           allocation_address =
               process_sp->AllocateMemory(allocation_size, permissions, error);
@@ -401,16 +401,17 @@ IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
               process_sp->CallocateMemory(allocation_size, permissions, error);
 
         if (!error.Success())
-          return error.takeError();
+          return LLDB_INVALID_ADDRESS;
       } else {
-        return llvm::createStringError(
-            llvm::inconvertibleErrorCode(),
+        error = Status::FromErrorString(
             "Couldn't malloc: process doesn't support allocating memory");
+        return LLDB_INVALID_ADDRESS;
       }
     } else {
-      return llvm::createStringError(llvm::inconvertibleErrorCode(),
-                                     "Couldn't malloc: process doesn't exist, "
-                                     "and this memory must be in the process");
+      error = Status::FromErrorString(
+          "Couldn't malloc: process doesn't exist, and this "
+          "memory must be in the process");
+      return LLDB_INVALID_ADDRESS;
     }
     break;
   }
@@ -453,9 +454,6 @@ IRMemoryMap::Malloc(size_t size, uint8_t alignment, uint32_t permissions,
               (uint64_t)allocation_size, (uint64_t)alignment,
               (uint64_t)permissions, policy_string, aligned_address);
   }
-
-  if (used_policy)
-    *used_policy = policy;
 
   return aligned_address;
 }

@@ -223,11 +223,6 @@ public:
 
 } // end anonymous namespace
 
-static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
-                     const MCExpr *Value, uint16_t Kind, bool PCRel = false) {
-  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
-}
-
 /// getMachineOpValue - Return binary encoding of operand. If the machine
 /// operand requires relocation, record the relocation and return zero.
 unsigned
@@ -253,7 +248,7 @@ AArch64MCCodeEmitter::getLdStUImm12OpValue(const MCInst &MI, unsigned OpIdx,
   else {
     assert(MO.isExpr() && "unable to encode load/store imm operand");
     MCFixupKind Kind = MCFixupKind(FixupKind);
-    addFixup(Fixups, 0, MO.getExpr(), Kind);
+    Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
     ++MCNumFixups;
   }
 
@@ -274,11 +269,14 @@ AArch64MCCodeEmitter::getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
   assert(MO.isExpr() && "Unexpected target type!");
   const MCExpr *Expr = MO.getExpr();
 
-  unsigned Kind = MI.getOpcode() == AArch64::ADR
-                      ? AArch64::fixup_aarch64_pcrel_adr_imm21
-                      : AArch64::fixup_aarch64_pcrel_adrp_imm21;
-  addFixup(Fixups, 0, Expr, Kind, true);
+  MCFixupKind Kind = MI.getOpcode() == AArch64::ADR
+                         ? MCFixupKind(AArch64::fixup_aarch64_pcrel_adr_imm21)
+                         : MCFixupKind(AArch64::fixup_aarch64_pcrel_adrp_imm21);
+  Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+
   MCNumFixups += 1;
+
+  // All of the information is in the fixup.
   return 0;
 }
 
@@ -303,8 +301,8 @@ AArch64MCCodeEmitter::getAddSubImmOpValue(const MCInst &MI, unsigned OpIdx,
   const MCExpr *Expr = MO.getExpr();
 
   // Encode the 12 bits of the fixup.
-  MCFixupKind Kind = AArch64::fixup_aarch64_add_imm12;
-  addFixup(Fixups, 0, Expr, Kind);
+  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_add_imm12);
+  Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
 
   ++MCNumFixups;
 
@@ -331,9 +329,12 @@ uint32_t AArch64MCCodeEmitter::getCondBranchTargetOpValue(
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected target type!");
 
-  addFixup(Fixups, 0, MO.getExpr(), AArch64::fixup_aarch64_pcrel_branch19,
-           true);
+  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_branch19);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
+
   ++MCNumFixups;
+
+  // All of the information is in the fixup.
   return 0;
 }
 
@@ -349,9 +350,12 @@ uint32_t AArch64MCCodeEmitter::getCondCompBranchTargetOpValue(
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected target type!");
 
-  Fixups.push_back(MCFixup::create(0, MO.getExpr(),
-                                   AArch64::fixup_aarch64_pcrel_branch9, true));
+  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_branch9);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
+
   ++MCNumFixups;
+
+  // All of the information is in the fixup.
   return 0;
 }
 
@@ -369,9 +373,12 @@ AArch64MCCodeEmitter::getPAuthPCRelOpValue(const MCInst &MI, unsigned OpIdx,
     return -(MO.getImm());
   assert(MO.isExpr() && "Unexpected target type!");
 
-  addFixup(Fixups, 0, MO.getExpr(), AArch64::fixup_aarch64_pcrel_branch16,
-           true);
+  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_branch16);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
+
   ++MCNumFixups;
+
+  // All of the information is in the fixup.
   return 0;
 }
 
@@ -388,9 +395,12 @@ AArch64MCCodeEmitter::getLoadLiteralOpValue(const MCInst &MI, unsigned OpIdx,
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected target type!");
 
-  addFixup(Fixups, 0, MO.getExpr(), AArch64::fixup_aarch64_ldr_pcrel_imm19,
-           true);
+  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_ldr_pcrel_imm19);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
+
   ++MCNumFixups;
+
+  // All of the information is in the fixup.
   return 0;
 }
 
@@ -413,8 +423,8 @@ AArch64MCCodeEmitter::getMoveWideImmOpValue(const MCInst &MI, unsigned OpIdx,
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected movz/movk immediate");
 
-  Fixups.push_back(
-      MCFixup::create(0, MO.getExpr(), AArch64::fixup_aarch64_movw));
+  Fixups.push_back(MCFixup::create(
+      0, MO.getExpr(), MCFixupKind(AArch64::fixup_aarch64_movw), MI.getLoc()));
 
   ++MCNumFixups;
 
@@ -433,9 +443,12 @@ uint32_t AArch64MCCodeEmitter::getTestBranchTargetOpValue(
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected ADR target type!");
 
-  addFixup(Fixups, 0, MO.getExpr(), AArch64::fixup_aarch64_pcrel_branch14,
-           true);
+  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_branch14);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
+
   ++MCNumFixups;
+
+  // All of the information is in the fixup.
   return 0;
 }
 
@@ -452,10 +465,10 @@ AArch64MCCodeEmitter::getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected ADR target type!");
 
-  unsigned Kind = MI.getOpcode() == AArch64::BL
-                      ? AArch64::fixup_aarch64_pcrel_call26
-                      : AArch64::fixup_aarch64_pcrel_branch26;
-  addFixup(Fixups, 0, MO.getExpr(), Kind, true);
+  MCFixupKind Kind = MI.getOpcode() == AArch64::BL
+                         ? MCFixupKind(AArch64::fixup_aarch64_pcrel_call26)
+                         : MCFixupKind(AArch64::fixup_aarch64_pcrel_branch26);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;
 
@@ -735,7 +748,7 @@ void AArch64MCCodeEmitter::encodeInstruction(const MCInst &MI,
     auto Reloc = STI.getTargetTriple().getEnvironment() == Triple::GNUILP32
                      ? ELF::R_AARCH64_P32_TLSDESC_CALL
                      : ELF::R_AARCH64_TLSDESC_CALL;
-    addFixup(Fixups, 0, MI.getOperand(0).getExpr(), Reloc);
+    Fixups.push_back(MCFixup::create(0, MI.getOperand(0).getExpr(), Reloc));
     return;
   }
 

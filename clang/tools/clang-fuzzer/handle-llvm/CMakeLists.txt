@@ -24,5 +24,4 @@ add_clang_library(clangHandleLLVM
 
   DEPENDS
   intrinsics_gen
-  vt_gen
   )

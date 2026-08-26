@@ -89,8 +89,7 @@ public:
 
   void setAddressSpaceMap(bool DefaultIsPrivate);
 
-  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-              const TargetInfo *Aux) override;
+  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts) override;
 
   uint64_t getPointerWidthV(LangAS AS) const override {
     if (isR600(getTriple()))
@@ -440,7 +439,6 @@ public:
   // pre-defined macros.
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
-    HasFullBFloat16 = true;
     auto TargetIDFeatures =
         getAllPossibleTargetIDFeatures(getTriple(), getArchNameAMDGCN(GPUKind));
     for (const auto &F : Features) {

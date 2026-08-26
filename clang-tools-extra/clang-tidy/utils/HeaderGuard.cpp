@@ -239,9 +239,7 @@ public:
 
       Check->diag(StartLoc, "header is missing header guard")
           << FixItHint::CreateInsertion(
-                 StartLoc,
-                 (Twine("#ifndef ") + CPPVar + "\n#define " + CPPVar + "\n\n")
-                     .str())
+                 StartLoc, "#ifndef " + CPPVar + "\n#define " + CPPVar + "\n\n")
           << FixItHint::CreateInsertion(
                  SM.getLocForEndOfFile(FID),
                  Check->shouldSuggestEndifComment(FileName)

@@ -2420,12 +2420,9 @@ void TypeSystemClang::DumpDeclHiearchy(clang::Decl *decl) {
 
   clang::RecordDecl *record_decl = llvm::dyn_cast<clang::RecordDecl>(decl);
   if (record_decl) {
-    bool is_injected_class_name =
-        llvm::isa<clang::CXXRecordDecl>(record_decl) &&
-        llvm::cast<CXXRecordDecl>(record_decl)->isInjectedClassName();
     printf("%20s: %s%s\n", decl->getDeclKindName(),
            record_decl->getDeclName().getAsString().c_str(),
-           is_injected_class_name ? " (injected class name)" : "");
+           record_decl->isInjectedClassName() ? " (injected class name)" : "");
 
   } else {
     clang::NamedDecl *named_decl = llvm::dyn_cast<clang::NamedDecl>(decl);

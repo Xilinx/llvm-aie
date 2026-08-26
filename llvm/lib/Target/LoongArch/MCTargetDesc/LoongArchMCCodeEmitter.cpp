@@ -97,18 +97,6 @@ public:
 };
 } // end namespace
 
-static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
-                     const MCExpr *Value, uint16_t Kind) {
-  bool PCRel = false;
-  switch (Kind) {
-  case LoongArch::fixup_loongarch_b16:
-  case LoongArch::fixup_loongarch_b21:
-  case LoongArch::fixup_loongarch_b26:
-    PCRel = true;
-  }
-  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
-}
-
 unsigned
 LoongArchMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                                           SmallVectorImpl<MCFixup> &Fixups,
@@ -179,7 +167,9 @@ LoongArchMCCodeEmitter::getExprOpValue(const MCInst &MI, const MCOperand &MO,
       RelaxCandidate = true;
       break;
     }
-  } else if (Kind == MCExpr::SymbolRef) {
+  } else if (Kind == MCExpr::SymbolRef &&
+             cast<MCSymbolRefExpr>(Expr)->getKind() ==
+                 MCSymbolRefExpr::VK_None) {
     switch (MI.getOpcode()) {
     default:
       break;
@@ -207,7 +197,8 @@ LoongArchMCCodeEmitter::getExprOpValue(const MCInst &MI, const MCOperand &MO,
   assert(FixupKind != LoongArch::fixup_loongarch_invalid &&
          "Unhandled expression!");
 
-  addFixup(Fixups, 0, Expr, FixupKind);
+  Fixups.push_back(
+      MCFixup::create(0, Expr, MCFixupKind(FixupKind), MI.getLoc()));
   // If linker relaxation is enabled and supported by this relocation, set
   // a bit so that if fixup is unresolved, a R_LARCH_RELAX relocation will be
   // appended.
@@ -260,7 +251,8 @@ void LoongArchMCCodeEmitter::expandAddTPRel(const MCInst &MI,
          "Expected %le_add_r relocation on TP-relative symbol");
 
   // Emit the correct %le_add_r relocation for the symbol.
-  addFixup(Fixups, 0, Expr, ELF::R_LARCH_TLS_LE_ADD_R);
+  Fixups.push_back(
+      MCFixup::create(0, Expr, ELF::R_LARCH_TLS_LE_ADD_R, MI.getLoc()));
   if (STI.hasFeature(LoongArch::FeatureRelax))
     Fixups.back().setLinkerRelaxable();
 

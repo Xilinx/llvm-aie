@@ -75,12 +75,9 @@ protected:
 
     ProtocolServer::Connection connection;
     connection.protocol = protocol_and_mode->first;
-    if (connection.protocol == Socket::SocketProtocol::ProtocolUnixDomain)
-      connection.name = uri->path;
-    else
-      connection.name = formatv(
-          "[{0}]:{1}", uri->hostname.empty() ? "0.0.0.0" : uri->hostname,
-          uri->port.value_or(0));
+    connection.name =
+        formatv("[{0}]:{1}", uri->hostname.empty() ? "0.0.0.0" : uri->hostname,
+                uri->port.value_or(0));
 
     if (llvm::Error error = server->Start(connection)) {
       result.AppendErrorWithFormatv("{0}", llvm::fmt_consume(std::move(error)));
@@ -93,7 +90,6 @@ protected:
       result.AppendMessageWithFormatv(
           "{0} server started with connection listeners: {1}", protocol,
           address);
-      result.SetStatus(eReturnStatusSuccessFinishNoResult);
     }
   }
 };

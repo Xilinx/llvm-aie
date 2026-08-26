@@ -632,19 +632,16 @@ Error ORCPlatformSupport::initialize(orc::JITDylib &JD) {
       int32_t result;
       auto E = ES.callSPSWrapper<SPSDLUpdateSig>(WrapperAddr->getAddress(),
                                                  result, DSOHandles[&JD]);
-      if (E)
-        return E;
-      else if (result)
+      if (result)
         return make_error<StringError>("dlupdate failed",
                                        inconvertibleErrorCode());
-    } else
-      return ES.callSPSWrapper<SPSDLOpenSig>(WrapperAddr->getAddress(),
-                                             DSOHandles[&JD], JD.getName(),
-                                             int32_t(ORC_RT_RTLD_LAZY));
+      return E;
+    }
+    return ES.callSPSWrapper<SPSDLOpenSig>(WrapperAddr->getAddress(),
+                                           DSOHandles[&JD], JD.getName(),
+                                           int32_t(ORC_RT_RTLD_LAZY));
   } else
     return WrapperAddr.takeError();
-
-  return Error::success();
 }
 
 Error ORCPlatformSupport::deinitialize(orc::JITDylib &JD) {

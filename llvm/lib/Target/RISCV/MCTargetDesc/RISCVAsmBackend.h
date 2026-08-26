@@ -14,6 +14,7 @@
 #include "MCTargetDesc/RISCVMCTargetDesc.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
@@ -46,10 +47,11 @@ public:
   bool shouldInsertFixupForCodeAlign(MCAssembler &Asm,
                                      MCAlignFragment &AF) override;
 
-  std::optional<bool> evaluateFixup(const MCFragment &, MCFixup &, MCValue &,
-                                    uint64_t &) override;
+  bool evaluateTargetFixup(const MCFixup &Fixup, const MCValue &Target,
+                           uint64_t &Value) override;
+
   bool addReloc(const MCFragment &, const MCFixup &, const MCValue &,
-                uint64_t &FixedValue, bool IsResolved);
+                uint64_t &FixedValue, bool IsResolved) override;
 
   void maybeAddVendorReloc(const MCFragment &, const MCFixup &);
 
@@ -67,8 +69,9 @@ public:
 
   MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override;
 
-  bool mayNeedRelaxation(unsigned Opcode, ArrayRef<MCOperand> Operands,
+  bool mayNeedRelaxation(const MCInst &Inst,
                          const MCSubtargetInfo &STI) const override;
+
   void relaxInstruction(MCInst &Inst,
                         const MCSubtargetInfo &STI) const override;
 

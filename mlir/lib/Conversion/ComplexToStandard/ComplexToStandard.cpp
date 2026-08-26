@@ -14,7 +14,9 @@
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/IR/ImplicitLocOpBuilder.h"
 #include "mlir/IR/PatternMatch.h"
+#include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include <memory>
 #include <type_traits>
 
 namespace mlir {

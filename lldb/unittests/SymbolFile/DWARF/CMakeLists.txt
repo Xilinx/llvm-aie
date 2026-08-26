@@ -6,7 +6,6 @@ add_lldb_unittest(SymbolFileDWARFTests
   DWARFUnitTest.cpp
   SymbolFileDWARFTests.cpp
   XcodeSDKModuleTests.cpp
-  DWARF64UnitTest.cpp
 
   LINK_COMPONENTS
     Support

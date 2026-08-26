@@ -1245,7 +1245,7 @@ struct ConcatenateRewriter : public OpRewritePattern<ConcatenateOp> {
       // by concatenate op verifier, which saves us from computing the offset
       // dynamically.
       const Size sz = getSparseTensorType(input).getDynamicDimSize(conDim);
-      assert(ShapedType::isStatic(sz));
+      assert(!ShapedType::isDynamic(sz));
       offset = rewriter.create<arith::AddIOp>(loc, offset,
                                               constantIndex(rewriter, loc, sz));
       iterArg = foreachOp.getResult(0);

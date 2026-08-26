@@ -76,18 +76,6 @@ void AMDGPUInstPrinter::printU32ImmOperand(const MCInst *MI, unsigned OpNo,
   O << formatHex(MI->getOperand(OpNo).getImm() & 0xffffffff);
 }
 
-void AMDGPUInstPrinter::printFP64ImmOperand(const MCInst *MI, unsigned OpNo,
-                                            const MCSubtargetInfo &STI,
-                                            raw_ostream &O) {
-  // KIMM64
-  // This part needs to align with AMDGPUInstPrinter::printImmediate64.
-  uint64_t Imm = MI->getOperand(OpNo).getImm();
-  if (STI.hasFeature(AMDGPU::Feature64BitLiterals) && Lo_32(Imm))
-    O << "lit64(" << formatHex(static_cast<uint64_t>(Imm)) << ')';
-  else
-    O << formatHex(static_cast<uint64_t>(Hi_32(Imm)));
-}
-
 void AMDGPUInstPrinter::printNamedBit(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &O, StringRef BitName) {
   if (MI->getOperand(OpNo).getImm()) {
@@ -185,12 +173,13 @@ void AMDGPUInstPrinter::printTH(const MCInst *MI, int64_t TH, int64_t Scope,
 
   const unsigned Opcode = MI->getOpcode();
   const MCInstrDesc &TID = MII.get(Opcode);
-  unsigned THType = AMDGPU::getTemporalHintType(TID);
-  bool IsStore = (THType == AMDGPU::CPol::TH_TYPE_STORE);
+  bool IsStore = TID.mayStore();
+  bool IsAtomic =
+      TID.TSFlags & (SIInstrFlags::IsAtomicNoRet | SIInstrFlags::IsAtomicRet);
 
   O << " th:";
 
-  if (THType == AMDGPU::CPol::TH_TYPE_ATOMIC) {
+  if (IsAtomic) {
     O << "TH_ATOMIC_";
     if (TH & AMDGPU::CPol::TH_ATOMIC_CASCADE) {
       if (Scope >= AMDGPU::CPol::SCOPE_DEV)
@@ -207,6 +196,9 @@ void AMDGPUInstPrinter::printTH(const MCInst *MI, int64_t TH, int64_t Scope,
     if (!IsStore && TH == AMDGPU::CPol::TH_RESERVED)
       O << formatHex(TH);
     else {
+      // This will default to printing load variants when neither MayStore nor
+      // MayLoad flag is present which is the case with instructions like
+      // image_get_resinfo.
       O << (IsStore ? "TH_STORE_" : "TH_LOAD_");
       switch (TH) {
       case AMDGPU::CPol::TH_NT:
@@ -616,21 +608,15 @@ void AMDGPUInstPrinter::printImmediate64(uint64_t Imm,
   else if (Imm == 0x3fc45f306dc9c882 &&
            STI.hasFeature(AMDGPU::FeatureInv2PiInlineImm))
     O << "0.15915494309189532";
-  else {
-    // This part needs to align with AMDGPUOperand::addLiteralImmOperand.
-    if (IsFP) {
-      if (STI.hasFeature(AMDGPU::Feature64BitLiterals) && Lo_32(Imm))
-        O << "lit64(" << formatHex(static_cast<uint64_t>(Imm)) << ')';
-      else
-        O << formatHex(static_cast<uint64_t>(Hi_32(Imm)));
-      return;
-    }
+  else if (IsFP) {
+    assert(AMDGPU::isValid32BitLiteral(Imm, true));
+    O << formatHex(static_cast<uint64_t>(Hi_32(Imm)));
+  } else {
+    assert(isUInt<32>(Imm) || isInt<32>(Imm));
 
-    if (STI.hasFeature(AMDGPU::Feature64BitLiterals) &&
-        (!isInt<32>(Imm) || !isUInt<32>(Imm)))
-      O << "lit64(" << formatHex(static_cast<uint64_t>(Imm)) << ')';
-    else
-      O << formatHex(static_cast<uint64_t>(Imm));
+    // In rare situations, we will have a 32-bit literal in a 64-bit
+    // operand. This is technically allowed for the encoding of s_mov_b64.
+    O << formatHex(static_cast<uint64_t>(Imm));
   }
 }
 

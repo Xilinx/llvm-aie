@@ -493,7 +493,7 @@ struct CallValue {
 
   static bool canHandle(Instruction *Inst) {
     CallInst *CI = dyn_cast<CallInst>(Inst);
-    if (!CI || (!CI->onlyReadsMemory() && !CI->onlyWritesMemory()) ||
+    if (!CI || !CI->onlyReadsMemory() ||
         // FIXME: Currently the calls which may access the thread id may
         // be considered as not accessing the memory. But this is
         // problematic for coroutines, since coroutines may resume in a
@@ -958,8 +958,7 @@ private:
   bool overridingStores(const ParseMemoryInst &Earlier,
                         const ParseMemoryInst &Later);
 
-  Value *getOrCreateResult(Instruction *Inst, Type *ExpectedType,
-                           bool CanCreate) const {
+  Value *getOrCreateResult(Instruction *Inst, Type *ExpectedType) const {
     // TODO: We could insert relevant casts on type mismatch.
     // The load or the store's first operand.
     Value *V;
@@ -972,8 +971,7 @@ private:
         V = II->getOperand(0);
         break;
       default:
-        return TTI.getOrCreateResultFromMemIntrinsic(II, ExpectedType,
-                                                     CanCreate);
+        return TTI.getOrCreateResultFromMemIntrinsic(II, ExpectedType);
       }
     } else {
       V = isa<LoadInst>(Inst) ? Inst : cast<StoreInst>(Inst)->getValueOperand();
@@ -1257,10 +1255,9 @@ Value *EarlyCSE::getMatchingValue(LoadValue &InVal, ParseMemoryInst &MemInst,
 
   // For stores check the result values before checking memory generation
   // (otherwise isSameMemGeneration may crash).
-  Value *Result =
-      MemInst.isStore()
-          ? getOrCreateResult(Matching, Other->getType(), /*CanCreate=*/false)
-          : nullptr;
+  Value *Result = MemInst.isStore()
+                      ? getOrCreateResult(Matching, Other->getType())
+                      : nullptr;
   if (MemInst.isStore() && InVal.DefInst != Result)
     return nullptr;
 
@@ -1281,7 +1278,7 @@ Value *EarlyCSE::getMatchingValue(LoadValue &InVal, ParseMemoryInst &MemInst,
     return nullptr;
 
   if (!Result)
-    Result = getOrCreateResult(Matching, Other->getType(), /*CanCreate=*/true);
+    Result = getOrCreateResult(Matching, Other->getType());
   return Result;
 }
 
@@ -1629,19 +1626,14 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         !(MemInst.isValid() && !MemInst.mayReadFromMemory()))
       LastStore = nullptr;
 
-    // If this is a read-only or write-only call, process it. Skip store
-    // MemInsts, as they will be more precisely handled later on. Also skip
-    // memsets, as DSE may be able to optimize them better by removing the
-    // earlier rather than later store.
-    if (CallValue::canHandle(&Inst) &&
-        (!MemInst.isValid() || !MemInst.isStore()) && !isa<MemSetInst>(&Inst)) {
+    // If this is a read-only call, process it.
+    if (CallValue::canHandle(&Inst)) {
       // If we have an available version of this call, and if it is the right
       // generation, replace this instruction.
       std::pair<Instruction *, unsigned> InVal = AvailableCalls.lookup(&Inst);
       if (InVal.first != nullptr &&
           isSameMemGeneration(InVal.second, CurrentGeneration, InVal.first,
-                              &Inst) &&
-          InVal.first->mayReadFromMemory() == Inst.mayReadFromMemory()) {
+                              &Inst)) {
         LLVM_DEBUG(dbgs() << "EarlyCSE CSE CALL: " << Inst
                           << "  to: " << *InVal.first << '\n');
         if (!DebugCounter::shouldExecute(CSECounter)) {
@@ -1658,11 +1650,6 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         ++NumCSECall;
         continue;
       }
-
-      // Increase memory generation for writes. Do this before inserting
-      // the call, so it has the generation after the write occurred.
-      if (Inst.mayWriteToMemory())
-        ++CurrentGeneration;
 
       // Otherwise, remember that we have this instruction.
       AvailableCalls.insert(&Inst, std::make_pair(&Inst, CurrentGeneration));

@@ -6198,7 +6198,7 @@ static bool initializeUniqueCases(SwitchInst *SI, PHINode *&PHI,
 // TODO: Handle switches with more than 2 cases that map to the same result.
 static Value *foldSwitchToSelect(const SwitchCaseResultVectorTy &ResultVector,
                                  Constant *DefaultResult, Value *Condition,
-                                 IRBuilder<> &Builder, const DataLayout &DL) {
+                                 IRBuilder<> &Builder) {
   // If we are selecting between only two cases transform into a simple
   // select or a two-way select if default is possible.
   // Example:
@@ -6234,33 +6234,10 @@ static Value *foldSwitchToSelect(const SwitchCaseResultVectorTy &ResultVector,
     // case 0,2,8,10 -> Cond & 0b1..0101 == 0 ? result : default
     if (isPowerOf2_32(CaseCount)) {
       ConstantInt *MinCaseVal = CaseValues[0];
-      // If there are bits that are set exclusively by CaseValues, we
-      // can transform the switch into a select if the conjunction of
-      // all the values uniquely identify CaseValues.
-      APInt AndMask = APInt::getAllOnes(MinCaseVal->getBitWidth());
-
-      // Find the minimum value and compute the and of all the case values.
-      for (auto *Case : CaseValues) {
+      // Find mininal value.
+      for (auto *Case : CaseValues)
         if (Case->getValue().slt(MinCaseVal->getValue()))
           MinCaseVal = Case;
-        AndMask &= Case->getValue();
-      }
-      KnownBits Known = computeKnownBits(Condition, DL);
-
-      if (!AndMask.isZero() && Known.getMaxValue().uge(AndMask)) {
-        // Compute the number of bits that are free to vary.
-        unsigned FreeBits = Known.countMaxActiveBits() - AndMask.popcount();
-
-        // Check if the number of values covered by the mask is equal
-        // to the number of cases.
-        if (FreeBits == Log2_32(CaseCount)) {
-          Value *And = Builder.CreateAnd(Condition, AndMask);
-          Value *Cmp = Builder.CreateICmpEQ(
-              And, Constant::getIntegerValue(And->getType(), AndMask));
-          return Builder.CreateSelect(Cmp, ResultVector[0].first,
-                                      DefaultResult);
-        }
-      }
 
       // Mark the bits case number touched.
       APInt BitMask = APInt::getZero(MinCaseVal->getBitWidth());
@@ -6348,7 +6325,7 @@ static bool trySwitchToSelect(SwitchInst *SI, IRBuilder<> &Builder,
   assert(PHI != nullptr && "PHI for value select not found");
   Builder.SetInsertPoint(SI);
   Value *SelectValue =
-      foldSwitchToSelect(UniqueResults, DefaultResult, Cond, Builder, DL);
+      foldSwitchToSelect(UniqueResults, DefaultResult, Cond, Builder);
   if (!SelectValue)
     return false;
 
@@ -6370,7 +6347,7 @@ public:
 
   /// Build instructions with Builder to retrieve the value at
   /// the position given by Index in the lookup table.
-  Value *buildLookup(Value *Index, IRBuilder<> &Builder, const DataLayout &DL);
+  Value *buildLookup(Value *Index, IRBuilder<> &Builder);
 
   /// Return true if a table with TableSize elements of
   /// type ElementType would fit in a target-legal register.
@@ -6556,8 +6533,7 @@ SwitchLookupTable::SwitchLookupTable(
   Kind = ArrayKind;
 }
 
-Value *SwitchLookupTable::buildLookup(Value *Index, IRBuilder<> &Builder,
-                                      const DataLayout &DL) {
+Value *SwitchLookupTable::buildLookup(Value *Index, IRBuilder<> &Builder) {
   switch (Kind) {
   case SingleValueKind:
     return SingleValue;
@@ -6599,12 +6575,16 @@ Value *SwitchLookupTable::buildLookup(Value *Index, IRBuilder<> &Builder,
     return Builder.CreateTrunc(DownShifted, BitMapElementTy, "switch.masked");
   }
   case ArrayKind: {
-    Type *IndexTy = DL.getIndexType(Array->getType());
+    // Make sure the table index will not overflow when treated as signed.
+    IntegerType *IT = cast<IntegerType>(Index->getType());
+    uint64_t TableSize =
+        Array->getInitializer()->getType()->getArrayNumElements();
+    if (TableSize > (1ULL << std::min(IT->getBitWidth() - 1, 63u)))
+      Index = Builder.CreateZExt(
+          Index, IntegerType::get(IT->getContext(), IT->getBitWidth() + 1),
+          "switch.tableidx.zext");
 
-    if (Index->getType() != IndexTy)
-      Index = Builder.CreateZExtOrTrunc(Index, IndexTy);
-
-    Value *GEPIndices[] = {ConstantInt::get(IndexTy, 0), Index};
+    Value *GEPIndices[] = {Builder.getInt32(0), Index};
     Value *GEP = Builder.CreateInBoundsGEP(Array->getValueType(), Array,
                                            GEPIndices, "switch.gep");
     return Builder.CreateLoad(
@@ -7084,7 +7064,7 @@ static bool switchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
     SwitchLookupTable Table(Mod, TableSize, TableIndexOffset, ResultList, DV,
                             DL, FuncName);
 
-    Value *Result = Table.buildLookup(TableIndex, Builder, DL);
+    Value *Result = Table.buildLookup(TableIndex, Builder);
 
     // Do a small peephole optimization: re-use the switch table compare if
     // possible.

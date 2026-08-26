@@ -25,8 +25,6 @@ class Descriptor;
 
 namespace Fortran::runtime::io {
 
-RT_OFFLOAD_API_GROUP_BEGIN
-
 class IoStatementState;
 
 enum EditingFlags {
@@ -202,8 +200,5 @@ private:
   // must be last, may be incomplete
   Iteration stack_[maxMaxHeight];
 };
-
-RT_OFFLOAD_API_GROUP_END
-
 } // namespace Fortran::runtime::io
 #endif // FLANG_RT_RUNTIME_FORMAT_H_

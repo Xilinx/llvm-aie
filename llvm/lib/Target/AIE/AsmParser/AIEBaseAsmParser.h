@@ -227,7 +227,7 @@ ParseStatus AIEBaseAsmParser<Parser, BundleType, OperandType>::parseCallSymbol(
   SMLoc E = SMLoc::getFromPointer(S.getPointer() + Identifier.size());
 
   MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
-  Res = MCSymbolRefExpr::create(Sym, getContext());
+  Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, getContext());
   Res = AIEMCExpr::create(Res, AIEMCExpr::VK_AIE_CALL, getContext());
   Operands.push_back(OperandType::CreateImm(getContext(), Res, S, E));
   return ParseStatus::Success;
@@ -255,7 +255,7 @@ bool AIEBaseAsmParser<Parser, BundleType, OperandType>::parseImmediate(
       return true /*MatchOperand_ParseFail*/;
 
     MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
-    Res = MCSymbolRefExpr::create(Sym, getContext());
+    Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, getContext());
     break;
   }
   case AsmToken::Minus:

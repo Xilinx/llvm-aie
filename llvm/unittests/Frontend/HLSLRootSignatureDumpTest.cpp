@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Frontend/HLSL/HLSLRootSignature.h"
+#include "llvm/Frontend/HLSL/HLSLRootSignatureUtils.h"
 #include "gtest/gtest.h"
 
 using namespace llvm::hlsl::rootsig;
@@ -17,7 +17,7 @@ TEST(HLSLRootSignatureTest, DescriptorCBVClauseDump) {
   DescriptorTableClause Clause;
   Clause.Type = ClauseType::CBuffer;
   Clause.Reg = {RegisterType::BReg, 0};
-  Clause.setDefaultFlags(llvm::dxbc::RootSignatureVersion::V1_1);
+  Clause.setDefaultFlags();
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -37,7 +37,7 @@ TEST(HLSLRootSignatureTest, DescriptorSRVClauseDump) {
   Clause.NumDescriptors = NumDescriptorsUnbounded;
   Clause.Space = 42;
   Clause.Offset = 3;
-  Clause.Flags = llvm::dxbc::DescriptorRangeFlags::None;
+  Clause.Flags = DescriptorRangeFlags::None;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -50,20 +50,13 @@ TEST(HLSLRootSignatureTest, DescriptorSRVClauseDump) {
 }
 
 TEST(HLSLRootSignatureTest, DescriptorUAVClauseDump) {
-  using llvm::dxbc::DescriptorRangeFlags;
   DescriptorTableClause Clause;
   Clause.Type = ClauseType::UAV;
   Clause.Reg = {RegisterType::UReg, 92374};
   Clause.NumDescriptors = 3298;
   Clause.Space = 932847;
   Clause.Offset = 1;
-  auto ValidDescriptorRangeFlags =
-      DescriptorRangeFlags::DescriptorsVolatile |
-      DescriptorRangeFlags::DataVolatile |
-      DescriptorRangeFlags::DataStaticWhileSetAtExecute |
-      DescriptorRangeFlags::DataStatic |
-      DescriptorRangeFlags::DescriptorsStaticKeepingBufferBoundsChecks;
-  Clause.Flags = ValidDescriptorRangeFlags;
+  Clause.Flags = DescriptorRangeFlags::ValidFlags;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -87,7 +80,7 @@ TEST(HLSLRootSignatureTest, DescriptorSamplerClauseDump) {
   Clause.NumDescriptors = 2;
   Clause.Space = 42;
   Clause.Offset = DescriptorTableOffsetAppend;
-  Clause.Flags = llvm::dxbc::DescriptorRangeFlags::DescriptorsVolatile;
+  Clause.Flags = DescriptorRangeFlags::ValidSamplerFlags;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -100,44 +93,10 @@ TEST(HLSLRootSignatureTest, DescriptorSamplerClauseDump) {
   EXPECT_EQ(Out, Expected);
 }
 
-TEST(HLSLRootSignatureTest, DescriptorCBVV10ClauseDump) {
-  DescriptorTableClause Clause;
-  Clause.Type = ClauseType::CBuffer;
-  Clause.Reg = {RegisterType::BReg, 0};
-  Clause.setDefaultFlags(llvm::dxbc::RootSignatureVersion::V1_0);
-
-  std::string Out;
-  llvm::raw_string_ostream OS(Out);
-  OS << Clause;
-  OS.flush();
-
-  std::string Expected = "CBV(b0, numDescriptors = 1, space = 0, "
-                         "offset = DescriptorTableOffsetAppend, "
-                         "flags = DescriptorsVolatile | DataVolatile)";
-  EXPECT_EQ(Out, Expected);
-}
-
-TEST(HLSLRootSignatureTest, DescriptorSamplerV10ClauseDump) {
-  DescriptorTableClause Clause;
-  Clause.Type = ClauseType::Sampler;
-  Clause.Reg = {RegisterType::SReg, 0};
-  Clause.setDefaultFlags(llvm::dxbc::RootSignatureVersion::V1_0);
-
-  std::string Out;
-  llvm::raw_string_ostream OS(Out);
-  OS << Clause;
-  OS.flush();
-
-  std::string Expected = "Sampler(s0, numDescriptors = 1, space = 0, offset = "
-                         "DescriptorTableOffsetAppend, "
-                         "flags = DescriptorsVolatile)";
-  EXPECT_EQ(Out, Expected);
-}
-
 TEST(HLSLRootSignatureTest, DescriptorTableDump) {
   DescriptorTable Table;
   Table.NumClauses = 4;
-  Table.Visibility = llvm::dxbc::ShaderVisibility::Geometry;
+  Table.Visibility = ShaderVisibility::Geometry;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -153,7 +112,7 @@ TEST(HLSLRootSignatureTest, RootCBVDump) {
   RootDescriptor Descriptor;
   Descriptor.Type = DescriptorType::CBuffer;
   Descriptor.Reg = {RegisterType::BReg, 0};
-  Descriptor.setDefaultFlags(llvm::dxbc::RootSignatureVersion::V1_1);
+  Descriptor.setDefaultFlags();
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -166,47 +125,13 @@ TEST(HLSLRootSignatureTest, RootCBVDump) {
   EXPECT_EQ(Out, Expected);
 }
 
-TEST(HLSLRootSignatureTest, RootSRV10Dump) {
-  RootDescriptor Descriptor;
-  Descriptor.Type = DescriptorType::SRV;
-  Descriptor.Reg = {RegisterType::TReg, 0};
-  Descriptor.setDefaultFlags(llvm::dxbc::RootSignatureVersion::V1_0);
-
-  std::string Out;
-  llvm::raw_string_ostream OS(Out);
-  OS << Descriptor;
-  OS.flush();
-
-  std::string Expected = "RootSRV(t0, space = 0, "
-                         "visibility = All, "
-                         "flags = DataVolatile)";
-  EXPECT_EQ(Out, Expected);
-}
-
-TEST(HLSLRootSignatureTest, RootUAVV10Dump) {
-  RootDescriptor Descriptor;
-  Descriptor.Type = DescriptorType::UAV;
-  Descriptor.Reg = {RegisterType::UReg, 0};
-  Descriptor.setDefaultFlags(llvm::dxbc::RootSignatureVersion::V1_0);
-
-  std::string Out;
-  llvm::raw_string_ostream OS(Out);
-  OS << Descriptor;
-  OS.flush();
-
-  std::string Expected = "RootUAV(u0, space = 0, "
-                         "visibility = All, "
-                         "flags = DataVolatile)";
-  EXPECT_EQ(Out, Expected);
-}
-
 TEST(HLSLRootSignatureTest, RootSRVDump) {
   RootDescriptor Descriptor;
   Descriptor.Type = DescriptorType::SRV;
   Descriptor.Reg = {RegisterType::TReg, 0};
   Descriptor.Space = 42;
-  Descriptor.Visibility = llvm::dxbc::ShaderVisibility::Geometry;
-  Descriptor.Flags = llvm::dxbc::RootDescriptorFlags::None;
+  Descriptor.Visibility = ShaderVisibility::Geometry;
+  Descriptor.Flags = RootDescriptorFlags::None;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -219,17 +144,12 @@ TEST(HLSLRootSignatureTest, RootSRVDump) {
 }
 
 TEST(HLSLRootSignatureTest, RootUAVDump) {
-  using llvm::dxbc::RootDescriptorFlags;
   RootDescriptor Descriptor;
   Descriptor.Type = DescriptorType::UAV;
   Descriptor.Reg = {RegisterType::UReg, 92374};
   Descriptor.Space = 932847;
-  Descriptor.Visibility = llvm::dxbc::ShaderVisibility::Hull;
-  auto ValidRootDescriptorFlags =
-      RootDescriptorFlags::DataVolatile |
-      RootDescriptorFlags::DataStaticWhileSetAtExecute |
-      RootDescriptorFlags::DataStatic;
-  Descriptor.Flags = ValidRootDescriptorFlags;
+  Descriptor.Visibility = ShaderVisibility::Hull;
+  Descriptor.Flags = RootDescriptorFlags::ValidFlags;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -274,18 +194,18 @@ TEST(HLSLRootSignatureTest, DefinedStaticSamplerDump) {
   StaticSampler Sampler;
   Sampler.Reg = {RegisterType::SReg, 0};
 
-  Sampler.Filter = llvm::dxbc::SamplerFilter::ComparisonMinMagLinearMipPoint;
-  Sampler.AddressU = llvm::dxbc::TextureAddressMode::Mirror;
-  Sampler.AddressV = llvm::dxbc::TextureAddressMode::Border;
-  Sampler.AddressW = llvm::dxbc::TextureAddressMode::Clamp;
+  Sampler.Filter = SamplerFilter::ComparisonMinMagLinearMipPoint;
+  Sampler.AddressU = TextureAddressMode::Mirror;
+  Sampler.AddressV = TextureAddressMode::Border;
+  Sampler.AddressW = TextureAddressMode::Clamp;
   Sampler.MipLODBias = 4.8f;
   Sampler.MaxAnisotropy = 32;
-  Sampler.CompFunc = llvm::dxbc::ComparisonFunc::NotEqual;
-  Sampler.BorderColor = llvm::dxbc::StaticBorderColor::OpaqueBlack;
+  Sampler.CompFunc = ComparisonFunc::NotEqual;
+  Sampler.BorderColor = StaticBorderColor::OpaqueBlack;
   Sampler.MinLOD = 1.0f;
   Sampler.MaxLOD = 32.0f;
   Sampler.Space = 7;
-  Sampler.Visibility = llvm::dxbc::ShaderVisibility::Domain;
+  Sampler.Visibility = ShaderVisibility::Domain;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -329,7 +249,7 @@ TEST(HLSLRootSignatureTest, SetRootConstantsDump) {
   Constants.Num32BitConstants = 983;
   Constants.Reg = {RegisterType::BReg, 34593};
   Constants.Space = 7;
-  Constants.Visibility = llvm::dxbc::ShaderVisibility::Pixel;
+  Constants.Visibility = ShaderVisibility::Pixel;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -342,7 +262,7 @@ TEST(HLSLRootSignatureTest, SetRootConstantsDump) {
 }
 
 TEST(HLSLRootSignatureTest, NoneRootFlagsDump) {
-  llvm::dxbc::RootFlags Flags = llvm::dxbc::RootFlags::None;
+  RootFlags Flags = RootFlags::None;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
@@ -354,23 +274,11 @@ TEST(HLSLRootSignatureTest, NoneRootFlagsDump) {
 }
 
 TEST(HLSLRootSignatureTest, AllRootFlagsDump) {
-  using llvm::dxbc::RootFlags;
-  auto ValidRootFlags = RootFlags::AllowInputAssemblerInputLayout |
-                        RootFlags::DenyVertexShaderRootAccess |
-                        RootFlags::DenyHullShaderRootAccess |
-                        RootFlags::DenyDomainShaderRootAccess |
-                        RootFlags::DenyGeometryShaderRootAccess |
-                        RootFlags::DenyPixelShaderRootAccess |
-                        RootFlags::AllowStreamOutput |
-                        RootFlags::LocalRootSignature |
-                        RootFlags::DenyAmplificationShaderRootAccess |
-                        RootFlags::DenyMeshShaderRootAccess |
-                        RootFlags::CBVSRVUAVHeapDirectlyIndexed |
-                        RootFlags::SamplerHeapDirectlyIndexed;
+  RootFlags Flags = RootFlags::ValidFlags;
 
   std::string Out;
   llvm::raw_string_ostream OS(Out);
-  OS << ValidRootFlags;
+  OS << Flags;
   OS.flush();
 
   std::string Expected = "RootFlags("

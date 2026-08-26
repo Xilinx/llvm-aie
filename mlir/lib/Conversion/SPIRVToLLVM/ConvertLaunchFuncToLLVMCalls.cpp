@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Conversion/SPIRVToLLVM/SPIRVToLLVMPass.h"
+
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/LoweringOptions.h"
@@ -267,9 +269,8 @@ class GPULaunchLowering : public ConvertOpToLLVMPattern<gpu::LaunchFuncOp> {
       copyInfo.push_back(info);
     }
     // Create a call to the kernel and copy the data back.
-    Operation *callOp = rewriter.replaceOpWithNewOp<LLVM::CallOp>(
-        op, kernelFunc, ArrayRef<Value>());
-    rewriter.setInsertionPointAfter(callOp);
+    rewriter.replaceOpWithNewOp<LLVM::CallOp>(op, kernelFunc,
+                                              ArrayRef<Value>());
     for (CopyInfo info : copyInfo)
       copy(loc, info.src, info.dst, info.size, rewriter);
     return success();

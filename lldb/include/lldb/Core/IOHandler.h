@@ -90,8 +90,6 @@ public:
 
   virtual void TerminalSizeChanged() {}
 
-  virtual void Refresh() {}
-
   virtual const char *GetPrompt() {
     // Prompt support isn't mandatory
     return nullptr;
@@ -405,8 +403,6 @@ public:
   uint32_t GetCurrentLineIndex() const;
 
   void PrintAsync(const char *s, size_t len, bool is_stdout) override;
-
-  void Refresh() override;
 
 private:
 #if LLDB_ENABLE_LIBEDIT

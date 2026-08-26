@@ -11,6 +11,7 @@
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/SparseTensor/IR/SparseTensor.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/IR/Matchers.h"
 #include <optional>
@@ -43,7 +44,7 @@ FailureOr<Value> mlir::bufferization::castOrReallocMemRefValue(
         failed(target.getStridesAndOffset(targetStrides, targetOffset)))
       return false;
     auto dynamicToStatic = [](int64_t a, int64_t b) {
-      return ShapedType::isDynamic(a) && ShapedType::isStatic(b);
+      return ShapedType::isDynamic(a) && !ShapedType::isDynamic(b);
     };
     if (dynamicToStatic(sourceOffset, targetOffset))
       return false;
@@ -221,7 +222,7 @@ AliasingValueList AllocTensorOp::getAliasingValues(OpOperand &opOperand,
   return {};
 }
 
-FailureOr<BufferLikeType>
+FailureOr<BaseMemRefType>
 AllocTensorOp::getBufferType(Value value, const BufferizationOptions &options,
                              const BufferizationState &state,
                              SmallVector<Value> &invocationStack) {
@@ -244,8 +245,7 @@ AllocTensorOp::getBufferType(Value value, const BufferizationOptions &options,
     return getOperation()->emitError("could not infer memory space");
   }
 
-  return cast<BufferLikeType>(
-      getMemRefTypeWithStaticIdentityLayout(getType(), memorySpace));
+  return getMemRefTypeWithStaticIdentityLayout(getType(), memorySpace);
 }
 
 LogicalResult AllocTensorOp::verify() {

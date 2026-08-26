@@ -10,7 +10,6 @@
 #define LLDB_PLUGINS_PROTOCOL_MCP_PROTOCOLSERVERMCP_H
 
 #include "Protocol.h"
-#include "Resource.h"
 #include "Tool.h"
 #include "lldb/Core/ProtocolServer.h"
 #include "lldb/Host/MainLoop.h"
@@ -47,8 +46,6 @@ protected:
       std::function<void(const protocol::Notification &)>;
 
   void AddTool(std::unique_ptr<Tool> tool);
-  void AddResourceProvider(std::unique_ptr<ResourceProvider> resource_provider);
-
   void AddRequestHandler(llvm::StringRef method, RequestHandler handler);
   void AddNotificationHandler(llvm::StringRef method,
                               NotificationHandler handler);
@@ -64,16 +61,10 @@ private:
 
   llvm::Expected<protocol::Response>
   InitializeHandler(const protocol::Request &);
-
   llvm::Expected<protocol::Response>
   ToolsListHandler(const protocol::Request &);
   llvm::Expected<protocol::Response>
   ToolsCallHandler(const protocol::Request &);
-
-  llvm::Expected<protocol::Response>
-  ResourcesListHandler(const protocol::Request &);
-  llvm::Expected<protocol::Response>
-  ResourcesReadHandler(const protocol::Request &);
 
   protocol::Capabilities GetCapabilities();
 
@@ -98,7 +89,6 @@ private:
 
   std::mutex m_server_mutex;
   llvm::StringMap<std::unique_ptr<Tool>> m_tools;
-  std::vector<std::unique_ptr<ResourceProvider>> m_resource_providers;
 
   llvm::StringMap<RequestHandler> m_request_handlers;
   llvm::StringMap<NotificationHandler> m_notification_handlers;

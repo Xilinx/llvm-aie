@@ -12,7 +12,7 @@
 #ifndef FORTRAN_LOWER_CLAUSEFINDER_H
 #define FORTRAN_LOWER_CLAUSEFINDER_H
 
-#include "flang/Lower/OpenMP/Clauses.h"
+#include "Clauses.h"
 
 namespace Fortran {
 namespace lower {

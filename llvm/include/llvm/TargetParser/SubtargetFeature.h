@@ -56,7 +56,7 @@ public:
   }
 
   FeatureBitset &set() {
-    llvm::fill(Bits, -1ULL);
+    std::fill(std::begin(Bits), std::end(Bits), -1ULL);
     return *this;
   }
 

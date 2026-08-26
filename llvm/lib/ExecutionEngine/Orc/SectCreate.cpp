@@ -23,7 +23,8 @@ void SectCreateMaterializationUnit::materialize(
       SubtargetFeatures(), getGenericEdgeKindName);
 
   auto &Sect = G->createSection(SectName, MP);
-  auto Content = G->allocateContent(ArrayRef<char>(Data->getBuffer()));
+  auto Content = G->allocateContent(
+      ArrayRef<char>(Data->getBuffer().data(), Data->getBuffer().size()));
   auto &B = G->createContentBlock(Sect, Content, ExecutorAddr(), Alignment, 0);
 
   for (auto &[Name, Info] : ExtraSymbols) {

@@ -95,9 +95,8 @@ public:
     return TargetInfo::VoidPtrBuiltinVaList;
   }
 
-  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-              const TargetInfo *Aux) override {
-    TargetInfo::adjust(Diags, Opts, Aux);
+  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts) override {
+    TargetInfo::adjust(Diags, Opts);
     // The static values this addresses do not apply outside of the same thread
     // This protection is neither available nor needed
     Opts.ThreadsafeStatics = false;

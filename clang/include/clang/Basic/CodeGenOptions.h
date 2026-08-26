@@ -41,26 +41,13 @@ class CodeGenOptionsBase {
   friend class CompilerInvocationBase;
 
 public:
-  /// For ASTs produced with different option value, signifies their level of
-  /// compatibility.
-  enum class CompatibilityKind {
-    /// Does affect the construction of the AST in a way that does prevent
-    /// module interoperability.
-    Affecting,
-    /// Does not affect the construction of the AST in any way (that is, the
-    /// value can be different between an implicit module and the user of that
-    /// module).
-    Benign,
-  };
-
-#define CODEGENOPT(Name, Bits, Default, Compatibility) unsigned Name : Bits;
-#define ENUM_CODEGENOPT(Name, Type, Bits, Default, Compatibility)
+#define CODEGENOPT(Name, Bits, Default) unsigned Name : Bits;
+#define ENUM_CODEGENOPT(Name, Type, Bits, Default)
 #include "clang/Basic/CodeGenOptions.def"
 
 protected:
-#define CODEGENOPT(Name, Bits, Default, Compatibility)
-#define ENUM_CODEGENOPT(Name, Type, Bits, Default, Compatibility)              \
-  unsigned Name : Bits;
+#define CODEGENOPT(Name, Bits, Default)
+#define ENUM_CODEGENOPT(Name, Type, Bits, Default) unsigned Name : Bits;
 #include "clang/Basic/CodeGenOptions.def"
 };
 
@@ -412,8 +399,6 @@ public:
   /// with extra debug info.
   SanitizerSet SanitizeAnnotateDebugInfo;
 
-  std::optional<double> AllowRuntimeCheckSkipHotCutoff;
-
   /// List of backend command-line options for -fembed-bitcode.
   std::vector<uint8_t> CmdArgs;
 
@@ -520,9 +505,9 @@ public:
 
 public:
   // Define accessors/mutators for code generation options of enumeration type.
-#define CODEGENOPT(Name, Bits, Default, Compatibility)
-#define ENUM_CODEGENOPT(Name, Type, Bits, Default, Compatibility)              \
-  Type get##Name() const { return static_cast<Type>(Name); }                   \
+#define CODEGENOPT(Name, Bits, Default)
+#define ENUM_CODEGENOPT(Name, Type, Bits, Default) \
+  Type get##Name() const { return static_cast<Type>(Name); } \
   void set##Name(Type Value) { Name = static_cast<unsigned>(Value); }
 #include "clang/Basic/CodeGenOptions.def"
 

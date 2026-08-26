@@ -552,6 +552,11 @@ inline bool Divc(InterpState &S, CodePtr OpPC) {
     HandleComplexComplexDiv(A, B, C, D, ResR, ResI);
 
     // Copy into the result.
+    // Result.atIndex(0).deref<Floating>() = Floating(ResR);
+    // Result.atIndex(0).initialize();
+    // Result.atIndex(1).deref<Floating>() = Floating(ResI);
+    // Result.atIndex(1).initialize();
+
     Floating RA = S.allocFloat(A.getSemantics());
     RA.copy(ResR);
     Result.atIndex(0).deref<Floating>() = RA; // Floating(ResR);
@@ -560,7 +565,6 @@ inline bool Divc(InterpState &S, CodePtr OpPC) {
     Floating RI = S.allocFloat(A.getSemantics());
     RI.copy(ResI);
     Result.atIndex(1).deref<Floating>() = RI; // Floating(ResI);
-    Result.atIndex(1).initialize();
 
     Result.initialize();
   } else {
@@ -1139,12 +1143,30 @@ inline bool CmpHelperEQ<Pointer>(InterpState &S, CodePtr OpPC, CompareFn Fn) {
   }
 
   if (Pointer::hasSameBase(LHS, RHS)) {
-    size_t A = LHS.computeOffsetForComparison();
-    size_t B = RHS.computeOffsetForComparison();
-    S.Stk.push<BoolT>(BoolT::from(Fn(Compare(A, B))));
+    if (LHS.inUnion() && RHS.inUnion()) {
+      // If the pointers point into a union, things are a little more
+      // complicated since the offset we save in interp::Pointer can't be used
+      // to compare the pointers directly.
+      size_t A = LHS.computeOffsetForComparison();
+      size_t B = RHS.computeOffsetForComparison();
+      S.Stk.push<BoolT>(BoolT::from(Fn(Compare(A, B))));
+      return true;
+    }
+
+    unsigned VL = LHS.getByteOffset();
+    unsigned VR = RHS.getByteOffset();
+    // In our Pointer class, a pointer to an array and a pointer to the first
+    // element in the same array are NOT equal. They have the same Base value,
+    // but a different Offset. This is a pretty rare case, so we fix this here
+    // by comparing pointers to the first elements.
+    if (!LHS.isZero() && LHS.isArrayRoot())
+      VL = LHS.atIndex(0).getByteOffset();
+    if (!RHS.isZero() && RHS.isArrayRoot())
+      VR = RHS.atIndex(0).getByteOffset();
+
+    S.Stk.push<BoolT>(BoolT::from(Fn(Compare(VL, VR))));
     return true;
   }
-
   // Otherwise we need to do a bunch of extra checks before returning Unordered.
   if (LHS.isOnePastEnd() && !RHS.isOnePastEnd() && !RHS.isZero() &&
       RHS.getOffset() == 0) {
@@ -1308,6 +1330,20 @@ bool GE(InterpState &S, CodePtr OpPC) {
     return R == ComparisonCategoryResult::Greater ||
            R == ComparisonCategoryResult::Equal;
   });
+}
+
+//===----------------------------------------------------------------------===//
+// InRange
+//===----------------------------------------------------------------------===//
+
+template <PrimType Name, class T = typename PrimConv<Name>::T>
+bool InRange(InterpState &S, CodePtr OpPC) {
+  const T RHS = S.Stk.pop<T>();
+  const T LHS = S.Stk.pop<T>();
+  const T Value = S.Stk.pop<T>();
+
+  S.Stk.push<bool>(LHS <= Value && Value <= RHS);
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1930,10 +1966,8 @@ bool StoreBitField(InterpState &S, CodePtr OpPC) {
   const Pointer &Ptr = S.Stk.peek<Pointer>();
   if (!CheckStore(S, OpPC, Ptr))
     return false;
-  if (Ptr.canBeInitialized()) {
+  if (Ptr.canBeInitialized())
     Ptr.initialize();
-    Ptr.activate();
-  }
   if (const auto *FD = Ptr.getField())
     Ptr.deref<T>() = Value.truncate(FD->getBitWidthValue());
   else
@@ -1947,10 +1981,8 @@ bool StoreBitFieldPop(InterpState &S, CodePtr OpPC) {
   const Pointer &Ptr = S.Stk.pop<Pointer>();
   if (!CheckStore(S, OpPC, Ptr))
     return false;
-  if (Ptr.canBeInitialized()) {
+  if (Ptr.canBeInitialized())
     Ptr.initialize();
-    Ptr.activate();
-  }
   if (const auto *FD = Ptr.getField())
     Ptr.deref<T>() = Value.truncate(FD->getBitWidthValue());
   else
@@ -2066,32 +2098,34 @@ inline bool CastMemberPtrPtr(InterpState &S, CodePtr OpPC) {
 //===----------------------------------------------------------------------===//
 
 template <class T, ArithOp Op>
-std::optional<Pointer> OffsetHelper(InterpState &S, CodePtr OpPC,
-                                    const T &Offset, const Pointer &Ptr,
-                                    bool IsPointerArith = false) {
+bool OffsetHelper(InterpState &S, CodePtr OpPC, const T &Offset,
+                  const Pointer &Ptr, bool IsPointerArith = false) {
   // A zero offset does not change the pointer.
-  if (Offset.isZero())
-    return Ptr;
+  if (Offset.isZero()) {
+    S.Stk.push<Pointer>(Ptr);
+    return true;
+  }
 
   if (IsPointerArith && !CheckNull(S, OpPC, Ptr, CSK_ArrayIndex)) {
     // The CheckNull will have emitted a note already, but we only
     // abort in C++, since this is fine in C.
     if (S.getLangOpts().CPlusPlus)
-      return std::nullopt;
+      return false;
   }
 
   // Arrays of unknown bounds cannot have pointers into them.
   if (!CheckArray(S, OpPC, Ptr))
-    return std::nullopt;
+    return false;
 
   // This is much simpler for integral pointers, so handle them first.
   if (Ptr.isIntegralPointer()) {
     uint64_t V = Ptr.getIntegerRepresentation();
     uint64_t O = static_cast<uint64_t>(Offset) * Ptr.elemSize();
     if constexpr (Op == ArithOp::Add)
-      return Pointer(V + O, Ptr.asIntPointer().Desc);
+      S.Stk.push<Pointer>(V + O, Ptr.asIntPointer().Desc);
     else
-      return Pointer(V - O, Ptr.asIntPointer().Desc);
+      S.Stk.push<Pointer>(V - O, Ptr.asIntPointer().Desc);
+    return true;
   } else if (Ptr.isFunctionPointer()) {
     uint64_t O = static_cast<uint64_t>(Offset);
     uint64_t N;
@@ -2103,7 +2137,8 @@ std::optional<Pointer> OffsetHelper(InterpState &S, CodePtr OpPC,
     if (N > 1)
       S.CCEDiag(S.Current->getSource(OpPC), diag::note_constexpr_array_index)
           << N << /*non-array*/ true << 0;
-    return Pointer(Ptr.asFunctionPointer().getFunction(), N);
+    S.Stk.push<Pointer>(Ptr.asFunctionPointer().getFunction(), N);
+    return true;
   }
 
   assert(Ptr.isBlockPointer());
@@ -2153,7 +2188,7 @@ std::optional<Pointer> OffsetHelper(InterpState &S, CodePtr OpPC,
   }
 
   if (Invalid && S.getLangOpts().CPlusPlus)
-    return std::nullopt;
+    return false;
 
   // Offset is valid - compute it on unsigned.
   int64_t WideIndex = static_cast<int64_t>(Index);
@@ -2169,11 +2204,15 @@ std::optional<Pointer> OffsetHelper(InterpState &S, CodePtr OpPC,
   // we don't get here.
   if (Result == 0 && Ptr.isOnePastEnd()) {
     if (Ptr.getFieldDesc()->isArray())
-      return Ptr.atIndex(0);
-    return Pointer(Ptr.asBlockPointer().Pointee, Ptr.asBlockPointer().Base);
+      S.Stk.push<Pointer>(Ptr.atIndex(0));
+    else
+      S.Stk.push<Pointer>(Ptr.asBlockPointer().Pointee,
+                          Ptr.asBlockPointer().Base);
+    return true;
   }
 
-  return Ptr.atIndex(static_cast<uint64_t>(Result));
+  S.Stk.push<Pointer>(Ptr.atIndex(static_cast<uint64_t>(Result)));
+  return true;
 }
 
 template <PrimType Name, class T = typename PrimConv<Name>::T>
@@ -2182,26 +2221,16 @@ bool AddOffset(InterpState &S, CodePtr OpPC) {
   Pointer Ptr = S.Stk.pop<Pointer>();
   if (Ptr.isBlockPointer())
     Ptr = Ptr.expand();
-
-  if (std::optional<Pointer> Result = OffsetHelper<T, ArithOp::Add>(
-          S, OpPC, Offset, Ptr, /*IsPointerArith=*/true)) {
-    S.Stk.push<Pointer>(*Result);
-    return true;
-  }
-  return false;
+  return OffsetHelper<T, ArithOp::Add>(S, OpPC, Offset, Ptr,
+                                       /*IsPointerArith=*/true);
 }
 
 template <PrimType Name, class T = typename PrimConv<Name>::T>
 bool SubOffset(InterpState &S, CodePtr OpPC) {
   const T &Offset = S.Stk.pop<T>();
   const Pointer &Ptr = S.Stk.pop<Pointer>();
-
-  if (std::optional<Pointer> Result = OffsetHelper<T, ArithOp::Sub>(
-          S, OpPC, Offset, Ptr, /*IsPointerArith=*/true)) {
-    S.Stk.push<Pointer>(*Result);
-    return true;
-  }
-  return false;
+  return OffsetHelper<T, ArithOp::Sub>(S, OpPC, Offset, Ptr,
+                                       /*IsPointerArith=*/true);
 }
 
 template <ArithOp Op>
@@ -2221,13 +2250,12 @@ static inline bool IncDecPtrHelper(InterpState &S, CodePtr OpPC,
 
   // Now the current Ptr again and a constant 1.
   OneT One = OneT::from(1);
-  if (std::optional<Pointer> Result =
-          OffsetHelper<OneT, Op>(S, OpPC, One, P, /*IsPointerArith=*/true)) {
-    // Store the new value.
-    Ptr.deref<Pointer>() = *Result;
-    return true;
-  }
-  return false;
+  if (!OffsetHelper<OneT, Op>(S, OpPC, One, P, /*IsPointerArith=*/true))
+    return false;
+
+  // Store the new value.
+  Ptr.deref<Pointer>() = S.Stk.pop<Pointer>();
+  return true;
 }
 
 static inline bool IncPtr(InterpState &S, CodePtr OpPC) {
@@ -2929,22 +2957,16 @@ inline bool ArrayElemPtr(InterpState &S, CodePtr OpPC) {
 
   if (Offset.isZero()) {
     if (Ptr.getFieldDesc()->isArray() && Ptr.getIndex() == 0) {
-      S.Stk.push<Pointer>(Ptr.atIndex(0).narrow());
-      return true;
+      S.Stk.push<Pointer>(Ptr.atIndex(0));
+    } else {
+      S.Stk.push<Pointer>(Ptr);
     }
-    S.Stk.push<Pointer>(Ptr);
-    return true;
+  } else {
+    if (!OffsetHelper<T, ArithOp::Add>(S, OpPC, Offset, Ptr))
+      return false;
   }
 
-  assert(!Offset.isZero());
-
-  if (std::optional<Pointer> Result =
-          OffsetHelper<T, ArithOp::Add>(S, OpPC, Offset, Ptr)) {
-    S.Stk.push<Pointer>(Result->narrow());
-    return true;
-  }
-
-  return false;
+  return NarrowPtr(S, OpPC);
 }
 
 template <PrimType Name, class T = typename PrimConv<Name>::T>
@@ -2959,21 +2981,16 @@ inline bool ArrayElemPtrPop(InterpState &S, CodePtr OpPC) {
 
   if (Offset.isZero()) {
     if (Ptr.getFieldDesc()->isArray() && Ptr.getIndex() == 0) {
-      S.Stk.push<Pointer>(Ptr.atIndex(0).narrow());
-      return true;
+      S.Stk.push<Pointer>(Ptr.atIndex(0));
+    } else {
+      S.Stk.push<Pointer>(Ptr);
     }
-    S.Stk.push<Pointer>(Ptr);
-    return true;
+  } else {
+    if (!OffsetHelper<T, ArithOp::Add>(S, OpPC, Offset, Ptr))
+      return false;
   }
 
-  assert(!Offset.isZero());
-
-  if (std::optional<Pointer> Result =
-          OffsetHelper<T, ArithOp::Add>(S, OpPC, Offset, Ptr)) {
-    S.Stk.push<Pointer>(Result->narrow());
-    return true;
-  }
-  return false;
+  return NarrowPtr(S, OpPC);
 }
 
 template <PrimType Name, class T = typename PrimConv<Name>::T>

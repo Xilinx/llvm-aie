@@ -24,6 +24,7 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/IRMapping.h"
 #include "mlir/Pass/Pass.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/Support/MathExtras.h"
 #include <optional>
 
@@ -43,7 +44,7 @@ static constexpr LLVM::GEPNoWrapFlags kNoWrapFlags =
 namespace {
 
 static bool isStaticStrideOrOffset(int64_t strideOrOffset) {
-  return ShapedType::isStatic(strideOrOffset);
+  return !ShapedType::isDynamic(strideOrOffset);
 }
 
 static FailureOr<LLVM::LLVMFuncOp>
@@ -407,7 +408,8 @@ struct AllocaScopeOpLowering
 
     // Save stack and then branch into the body of the region.
     rewriter.setInsertionPointToEnd(currentBlock);
-    auto stackSaveOp = rewriter.create<LLVM::StackSaveOp>(loc, getPtrType());
+    auto stackSaveOp =
+        rewriter.create<LLVM::StackSaveOp>(loc, getVoidPtrType());
     rewriter.create<LLVM::BrOp>(loc, ValueRange(), beforeBody);
 
     // Replace the alloca_scope return with a branch that jumps out of the body.
@@ -754,11 +756,9 @@ public:
 
     LLVM::Linkage linkage =
         global.isPublic() ? LLVM::Linkage::External : LLVM::Linkage::Private;
-    bool isExternal = global.isExternal();
-    bool isUninitialized = global.isUninitialized();
 
     Attribute initialValue = nullptr;
-    if (!isExternal && !isUninitialized) {
+    if (!global.isExternal() && !global.isUninitialized()) {
       auto elementsAttr = llvm::cast<ElementsAttr>(*global.getInitialValue());
       initialValue = elementsAttr;
 
@@ -775,29 +775,35 @@ public:
       return global.emitOpError(
           "memory space cannot be converted to an integer address space");
 
-    // Remove old operation from symbol table.
-    SymbolTable *symbolTable = nullptr;
     if (symbolTables) {
       Operation *symbolTableOp =
           global->getParentWithTrait<OpTrait::SymbolTable>();
-      symbolTable = &symbolTables->getSymbolTable(symbolTableOp);
-      symbolTable->remove(global);
+
+      if (symbolTableOp) {
+        SymbolTable &symbolTable = symbolTables->getSymbolTable(symbolTableOp);
+        symbolTable.remove(global);
+      }
     }
 
-    // Create new operation.
     auto newGlobal = rewriter.replaceOpWithNewOp<LLVM::GlobalOp>(
         global, arrayTy, global.getConstant(), linkage, global.getSymName(),
         initialValue, alignment, *addressSpace);
 
-    // Insert new operation into symbol table.
-    if (symbolTable)
-      symbolTable->insert(newGlobal, rewriter.getInsertionPoint());
+    if (symbolTables) {
+      Operation *symbolTableOp =
+          global->getParentWithTrait<OpTrait::SymbolTable>();
 
-    if (!isExternal && isUninitialized) {
+      if (symbolTableOp) {
+        SymbolTable &symbolTable = symbolTables->getSymbolTable(symbolTableOp);
+        symbolTable.insert(newGlobal, rewriter.getInsertionPoint());
+      }
+    }
+
+    if (!global.isExternal() && global.isUninitialized()) {
       rewriter.createBlock(&newGlobal.getInitializerRegion());
       Value undef[] = {
-          rewriter.create<LLVM::UndefOp>(newGlobal.getLoc(), arrayTy)};
-      rewriter.create<LLVM::ReturnOp>(newGlobal.getLoc(), undef);
+          rewriter.create<LLVM::UndefOp>(global.getLoc(), arrayTy)};
+      rewriter.create<LLVM::ReturnOp>(global.getLoc(), undef);
     }
     return success();
   }
@@ -1116,7 +1122,8 @@ public:
     };
 
     // Save stack position before promoting descriptors
-    auto stackSaveOp = rewriter.create<LLVM::StackSaveOp>(loc, getPtrType());
+    auto stackSaveOp =
+        rewriter.create<LLVM::StackSaveOp>(loc, getVoidPtrType());
 
     auto srcMemRefType = dyn_cast<MemRefType>(srcType);
     Value unrankedSource =
@@ -1242,7 +1249,7 @@ struct MemorySpaceCastOpLowering
                                              result, resultAddrSpace, sizes);
       Value resultUnderlyingSize = sizes.front();
       Value resultUnderlyingDesc = rewriter.create<LLVM::AllocaOp>(
-          loc, getPtrType(), rewriter.getI8Type(), resultUnderlyingSize);
+          loc, getVoidPtrType(), rewriter.getI8Type(), resultUnderlyingSize);
       result.setMemRefDescPtr(rewriter, loc, resultUnderlyingDesc);
 
       // Copy pointers, performing address space casts.
@@ -1464,7 +1471,7 @@ private:
       Value stride = nullptr;
       int64_t targetRank = targetMemRefType.getRank();
       for (auto i : llvm::reverse(llvm::seq<int64_t>(0, targetRank))) {
-        if (ShapedType::isStatic(strides[i])) {
+        if (!ShapedType::isDynamic(strides[i])) {
           // If the stride for this dimension is dynamic, then use the product
           // of the sizes of the inner dimensions.
           stride =
@@ -1523,7 +1530,8 @@ private:
     UnrankedMemRefDescriptor::computeSizes(rewriter, loc, *getTypeConverter(),
                                            targetDesc, addressSpace, sizes);
     Value underlyingDescPtr = rewriter.create<LLVM::AllocaOp>(
-        loc, getPtrType(), IntegerType::get(getContext(), 8), sizes.front());
+        loc, getVoidPtrType(), IntegerType::get(getContext(), 8),
+        sizes.front());
     targetDesc.setMemRefDescPtr(rewriter, loc, underlyingDescPtr);
 
     // Extract pointers and offset from the source memref.
@@ -1718,7 +1726,7 @@ struct ViewOpLowering : public ConvertOpToLLVMPattern<memref::ViewOp> {
                 ArrayRef<int64_t> shape, ValueRange dynamicSizes, unsigned idx,
                 Type indexType) const {
     assert(idx < shape.size());
-    if (ShapedType::isStatic(shape[idx]))
+    if (!ShapedType::isDynamic(shape[idx]))
       return createIndexAttrConstant(rewriter, loc, indexType, shape[idx]);
     // Count the number of dynamic dims in range [0, idx]
     unsigned nDynamic =
@@ -1734,7 +1742,7 @@ struct ViewOpLowering : public ConvertOpToLLVMPattern<memref::ViewOp> {
                   ArrayRef<int64_t> strides, Value nextSize,
                   Value runningStride, unsigned idx, Type indexType) const {
     assert(idx < strides.size());
-    if (ShapedType::isStatic(strides[idx]))
+    if (!ShapedType::isDynamic(strides[idx]))
       return createIndexAttrConstant(rewriter, loc, indexType, strides[idx]);
     if (nextSize)
       return runningStride

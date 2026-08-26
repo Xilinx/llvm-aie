@@ -672,13 +672,9 @@ private:
   DynTypedMatcher Implementation;
 };  // class Matcher
 
-// Deduction guide for Matcher.
-template <typename T> Matcher(MatcherInterface<T> *) -> Matcher<T>;
-
-// TODO: Remove in LLVM 23.
+/// A convenient helper for creating a Matcher<T> without specifying
+/// the template type argument.
 template <typename T>
-[[deprecated(
-    "Use CTAD constructor instead, 'makeMatcher' will be removed in LLVM 23.")]]
 inline Matcher<T> makeMatcher(MatcherInterface<T> *Implementation) {
   return Matcher<T>(Implementation);
 }

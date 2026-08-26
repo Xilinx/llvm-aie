@@ -108,11 +108,7 @@ public:
 
   /// Arithmetic operators
   LLVM_ABI Embedding &operator+=(const Embedding &RHS);
-  LLVM_ABI Embedding operator+(const Embedding &RHS) const;
   LLVM_ABI Embedding &operator-=(const Embedding &RHS);
-  LLVM_ABI Embedding operator-(const Embedding &RHS) const;
-  LLVM_ABI Embedding &operator*=(double Factor);
-  LLVM_ABI Embedding operator*(double Factor) const;
 
   /// Adds Src Embedding scaled by Factor with the called Embedding.
   /// Called_Embedding += Src * Factor
@@ -121,9 +117,7 @@ public:
   /// Returns true if the embedding is approximately equal to the RHS embedding
   /// within the specified tolerance.
   LLVM_ABI bool approximatelyEquals(const Embedding &RHS,
-                                    double Tolerance = 1e-4) const;
-
-  LLVM_ABI void print(raw_ostream &OS) const;
+                                    double Tolerance = 1e-6) const;
 };
 
 using InstEmbeddingsMap = DenseMap<const Instruction *, Embedding>;
@@ -175,7 +169,7 @@ public:
   virtual ~Embedder() = default;
 
   /// Factory method to create an Embedder object.
-  LLVM_ABI static std::unique_ptr<Embedder>
+  LLVM_ABI static Expected<std::unique_ptr<Embedder>>
   create(IR2VecKind Mode, const Function &F, const Vocab &Vocabulary);
 
   /// Returns a map containing instructions and the corresponding embeddings for
@@ -242,8 +236,6 @@ public:
 class IR2VecVocabAnalysis : public AnalysisInfoMixin<IR2VecVocabAnalysis> {
   ir2vec::Vocab Vocabulary;
   Error readVocabulary();
-  Error parseVocabSection(StringRef Key, const json::Value &ParsedVocabValue,
-                          ir2vec::Vocab &TargetVocab, unsigned &Dim);
   void emitError(Error Err, LLVMContext &Ctx);
 
 public:
@@ -259,19 +251,10 @@ public:
 /// functions.
 class IR2VecPrinterPass : public PassInfoMixin<IR2VecPrinterPass> {
   raw_ostream &OS;
+  void printVector(const ir2vec::Embedding &Vec) const;
 
 public:
   explicit IR2VecPrinterPass(raw_ostream &OS) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
-  static bool isRequired() { return true; }
-};
-
-/// This pass prints the embeddings in the vocabulary
-class IR2VecVocabPrinterPass : public PassInfoMixin<IR2VecVocabPrinterPass> {
-  raw_ostream &OS;
-
-public:
-  explicit IR2VecVocabPrinterPass(raw_ostream &OS) : OS(OS) {}
   LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
   static bool isRequired() { return true; }
 };

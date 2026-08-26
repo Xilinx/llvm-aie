@@ -6801,11 +6801,6 @@ public:
       llvm::OpenMPIRBuilder::MapNonContiguousArrayTy;
   using MapExprsArrayTy = SmallVector<MappingExprInfo, 4>;
   using MapValueDeclsArrayTy = SmallVector<const ValueDecl *, 4>;
-  using MapData =
-      std::tuple<OMPClauseMappableExprCommon::MappableExprComponentListRef,
-                 OpenMPMapClauseKind, ArrayRef<OpenMPMapModifierKind>,
-                 bool /*IsImplicit*/, const ValueDecl *, const Expr *>;
-  using MapDataArrayTy = SmallVector<MapData, 4>;
 
   /// This structure contains combined information generated for mappable
   /// clauses, including base pointers, pointers, sizes, map types, user-defined
@@ -8501,7 +8496,6 @@ public:
                          const StructRangeInfoTy &PartialStruct, bool IsMapThis,
                          llvm::OpenMPIRBuilder &OMPBuilder,
                          const ValueDecl *VD = nullptr,
-                         unsigned OffsetForMemberOfFlag = 0,
                          bool NotTargetParams = true) const {
     if (CurTypes.size() == 1 &&
         ((CurTypes.back() & OpenMPOffloadMappingFlags::OMP_MAP_MEMBER_OF) !=
@@ -8589,8 +8583,8 @@ public:
     // All other current entries will be MEMBER_OF the combined entry
     // (except for PTR_AND_OBJ entries which do not have a placeholder value
     // 0xFFFF in the MEMBER_OF field).
-    OpenMPOffloadMappingFlags MemberOfFlag = OMPBuilder.getMemberOfFlag(
-        OffsetForMemberOfFlag + CombinedInfo.BasePointers.size() - 1);
+    OpenMPOffloadMappingFlags MemberOfFlag =
+        OMPBuilder.getMemberOfFlag(CombinedInfo.BasePointers.size() - 1);
     for (auto &M : CurTypes)
       OMPBuilder.setCorrectMemberOfFlag(M, MemberOfFlag);
   }
@@ -8733,13 +8727,11 @@ public:
     }
   }
 
-  /// For a capture that has an associated clause, generate the base pointers,
-  /// section pointers, sizes, map types, and mappers (all included in
-  /// \a CurCaptureVarInfo).
-  void generateInfoForCaptureFromClauseInfo(
-      const CapturedStmt::Capture *Cap, llvm::Value *Arg,
-      MapCombinedInfoTy &CurCaptureVarInfo, llvm::OpenMPIRBuilder &OMPBuilder,
-      unsigned OffsetForMemberOfFlag) const {
+  /// Generate the base pointers, section pointers, sizes, map types, and
+  /// mappers associated to a given capture (all included in \a CombinedInfo).
+  void generateInfoForCapture(const CapturedStmt::Capture *Cap,
+                              llvm::Value *Arg, MapCombinedInfoTy &CombinedInfo,
+                              StructRangeInfoTy &PartialStruct) const {
     assert(!Cap->capturesVariableArrayType() &&
            "Not expecting to generate map info for a variable array type!");
 
@@ -8757,22 +8749,26 @@ public:
     // pass the pointer by value. If it is a reference to a declaration, we just
     // pass its value.
     if (VD && (DevPointersMap.count(VD) || HasDevAddrsMap.count(VD))) {
-      CurCaptureVarInfo.Exprs.push_back(VD);
-      CurCaptureVarInfo.BasePointers.emplace_back(Arg);
-      CurCaptureVarInfo.DevicePtrDecls.emplace_back(VD);
-      CurCaptureVarInfo.DevicePointers.emplace_back(DeviceInfoTy::Pointer);
-      CurCaptureVarInfo.Pointers.push_back(Arg);
-      CurCaptureVarInfo.Sizes.push_back(CGF.Builder.CreateIntCast(
+      CombinedInfo.Exprs.push_back(VD);
+      CombinedInfo.BasePointers.emplace_back(Arg);
+      CombinedInfo.DevicePtrDecls.emplace_back(VD);
+      CombinedInfo.DevicePointers.emplace_back(DeviceInfoTy::Pointer);
+      CombinedInfo.Pointers.push_back(Arg);
+      CombinedInfo.Sizes.push_back(CGF.Builder.CreateIntCast(
           CGF.getTypeSize(CGF.getContext().VoidPtrTy), CGF.Int64Ty,
           /*isSigned=*/true));
-      CurCaptureVarInfo.Types.push_back(
+      CombinedInfo.Types.push_back(
           OpenMPOffloadMappingFlags::OMP_MAP_LITERAL |
           OpenMPOffloadMappingFlags::OMP_MAP_TARGET_PARAM);
-      CurCaptureVarInfo.Mappers.push_back(nullptr);
+      CombinedInfo.Mappers.push_back(nullptr);
       return;
     }
 
-    MapDataArrayTy DeclComponentLists;
+    using MapData =
+        std::tuple<OMPClauseMappableExprCommon::MappableExprComponentListRef,
+                   OpenMPMapClauseKind, ArrayRef<OpenMPMapModifierKind>, bool,
+                   const ValueDecl *, const Expr *>;
+    SmallVector<MapData, 4> DeclComponentLists;
     // For member fields list in is_device_ptr, store it in
     // DeclComponentLists for generating components info.
     static const OpenMPMapModifierKind Unknown = OMPC_MAP_MODIFIER_unknown;
@@ -8830,51 +8826,6 @@ public:
       return (HasPresent && !HasPresentR) || (HasAllocs && !HasAllocsR);
     });
 
-    auto GenerateInfoForComponentLists =
-        [&](ArrayRef<MapData> DeclComponentLists,
-            bool IsEligibleForTargetParamFlag) {
-          MapCombinedInfoTy CurInfoForComponentLists;
-          StructRangeInfoTy PartialStruct;
-
-          if (DeclComponentLists.empty())
-            return;
-
-          generateInfoForCaptureFromComponentLists(
-              VD, DeclComponentLists, CurInfoForComponentLists, PartialStruct,
-              IsEligibleForTargetParamFlag,
-              /*AreBothBasePtrAndPteeMapped=*/HasMapBasePtr && HasMapArraySec);
-
-          // If there is an entry in PartialStruct it means we have a
-          // struct with individual members mapped. Emit an extra combined
-          // entry.
-          if (PartialStruct.Base.isValid()) {
-            CurCaptureVarInfo.append(PartialStruct.PreliminaryMapData);
-            emitCombinedEntry(
-                CurCaptureVarInfo, CurInfoForComponentLists.Types,
-                PartialStruct, Cap->capturesThis(), OMPBuilder, nullptr,
-                OffsetForMemberOfFlag,
-                /*NotTargetParams*/ !IsEligibleForTargetParamFlag);
-          }
-
-          // Return if we didn't add any entries.
-          if (CurInfoForComponentLists.BasePointers.empty())
-            return;
-
-          CurCaptureVarInfo.append(CurInfoForComponentLists);
-        };
-
-    GenerateInfoForComponentLists(DeclComponentLists,
-                                  /*IsEligibleForTargetParamFlag=*/true);
-  }
-
-  /// Generate the base pointers, section pointers, sizes, map types, and
-  /// mappers associated to \a DeclComponentLists for a given capture
-  /// \a VD (all included in \a CurComponentListInfo).
-  void generateInfoForCaptureFromComponentLists(
-      const ValueDecl *VD, ArrayRef<MapData> DeclComponentLists,
-      MapCombinedInfoTy &CurComponentListInfo, StructRangeInfoTy &PartialStruct,
-      bool IsListEligibleForTargetParamFlag,
-      bool AreBothBasePtrAndPteeMapped = false) const {
     // Find overlapping elements (including the offset from the base element).
     llvm::SmallDenseMap<
         const MapData *,
@@ -8998,7 +8949,7 @@ public:
 
     // Associated with a capture, because the mapping flags depend on it.
     // Go through all of the elements with the overlapped elements.
-    bool AddTargetParamFlag = IsListEligibleForTargetParamFlag;
+    bool IsFirstComponentList = true;
     MapCombinedInfoTy StructBaseCombinedInfo;
     for (const auto &Pair : OverlappedData) {
       const MapData &L = *Pair.getFirst();
@@ -9013,11 +8964,11 @@ public:
       ArrayRef<OMPClauseMappableExprCommon::MappableExprComponentListRef>
           OverlappedComponents = Pair.getSecond();
       generateInfoForComponentList(
-          MapType, MapModifiers, {}, Components, CurComponentListInfo,
-          StructBaseCombinedInfo, PartialStruct, AddTargetParamFlag, IsImplicit,
-          /*GenerateAllInfoForClauses*/ false, Mapper,
+          MapType, MapModifiers, {}, Components, CombinedInfo,
+          StructBaseCombinedInfo, PartialStruct, IsFirstComponentList,
+          IsImplicit, /*GenerateAllInfoForClauses*/ false, Mapper,
           /*ForDeviceAddr=*/false, VD, VarRef, OverlappedComponents);
-      AddTargetParamFlag = false;
+      IsFirstComponentList = false;
     }
     // Go through other elements without overlapped elements.
     for (const MapData &L : DeclComponentLists) {
@@ -9032,12 +8983,12 @@ public:
       auto It = OverlappedData.find(&L);
       if (It == OverlappedData.end())
         generateInfoForComponentList(
-            MapType, MapModifiers, {}, Components, CurComponentListInfo,
-            StructBaseCombinedInfo, PartialStruct, AddTargetParamFlag,
+            MapType, MapModifiers, {}, Components, CombinedInfo,
+            StructBaseCombinedInfo, PartialStruct, IsFirstComponentList,
             IsImplicit, /*GenerateAllInfoForClauses*/ false, Mapper,
             /*ForDeviceAddr=*/false, VD, VarRef,
-            /*OverlappedElements*/ {}, AreBothBasePtrAndPteeMapped);
-      AddTargetParamFlag = false;
+            /*OverlappedElements*/ {}, HasMapBasePtr && HasMapArraySec);
+      IsFirstComponentList = false;
     }
   }
 
@@ -9516,6 +9467,7 @@ static void genMapInfoForCaptures(
                                             CE = CS.capture_end();
        CI != CE; ++CI, ++RI, ++CV) {
     MappableExprsHandler::MapCombinedInfoTy CurInfo;
+    MappableExprsHandler::StructRangeInfoTy PartialStruct;
 
     // VLA sizes are passed to the outlined region by copy and do not have map
     // information associated.
@@ -9536,18 +9488,13 @@ static void genMapInfoForCaptures(
     } else {
       // If we have any information in the map clause, we use it, otherwise we
       // just do a default mapping.
-      MEHandler.generateInfoForCaptureFromClauseInfo(
-          CI, *CV, CurInfo, OMPBuilder,
-          /*OffsetForMemberOfFlag=*/CombinedInfo.BasePointers.size());
-
+      MEHandler.generateInfoForCapture(CI, *CV, CurInfo, PartialStruct);
       if (!CI->capturesThis())
         MappedVarSet.insert(CI->getCapturedVar());
       else
         MappedVarSet.insert(nullptr);
-
-      if (CurInfo.BasePointers.empty())
+      if (CurInfo.BasePointers.empty() && !PartialStruct.Base.isValid())
         MEHandler.generateDefaultMapInfo(*CI, **RI, *CV, CurInfo);
-
       // Generate correct mapping for variables captured by reference in
       // lambdas.
       if (CI->capturesVariable())
@@ -9555,13 +9502,22 @@ static void genMapInfoForCaptures(
                                                 CurInfo, LambdaPointers);
     }
     // We expect to have at least an element of information for this capture.
-    assert(!CurInfo.BasePointers.empty() &&
+    assert((!CurInfo.BasePointers.empty() || PartialStruct.Base.isValid()) &&
            "Non-existing map pointer for capture!");
     assert(CurInfo.BasePointers.size() == CurInfo.Pointers.size() &&
            CurInfo.BasePointers.size() == CurInfo.Sizes.size() &&
            CurInfo.BasePointers.size() == CurInfo.Types.size() &&
            CurInfo.BasePointers.size() == CurInfo.Mappers.size() &&
            "Inconsistent map information sizes!");
+
+    // If there is an entry in PartialStruct it means we have a struct with
+    // individual members mapped. Emit an extra combined entry.
+    if (PartialStruct.Base.isValid()) {
+      CombinedInfo.append(PartialStruct.PreliminaryMapData);
+      MEHandler.emitCombinedEntry(CombinedInfo, CurInfo.Types, PartialStruct,
+                                  CI->capturesThis(), OMPBuilder, nullptr,
+                                  /*NotTargetParams*/ false);
+    }
 
     // We need to append the results of this capture to what we already have.
     CombinedInfo.append(CurInfo);

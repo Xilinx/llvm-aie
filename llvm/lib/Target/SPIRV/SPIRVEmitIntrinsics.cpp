@@ -663,8 +663,7 @@ Type *SPIRVEmitIntrinsics::deduceElementTypeHelper(
     auto *II = dyn_cast<IntrinsicInst>(I);
     if (II && II->getIntrinsicID() == Intrinsic::spv_resource_getpointer) {
       auto *HandleType = cast<TargetExtType>(II->getOperand(0)->getType());
-      if (HandleType->getTargetExtName() == "spirv.Image" ||
-          HandleType->getTargetExtName() == "spirv.SignedImage") {
+      if (HandleType->getTargetExtName() == "spirv.Image") {
         if (II->hasOneUse()) {
           auto *U = *II->users().begin();
           Ty = cast<Instruction>(U)->getAccessType();

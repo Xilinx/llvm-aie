@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "hdr/errno_macros.h"
 #include "src/__support/error_or.h"
 #include "src/__support/wchar/character_converter.h"
 #include "src/__support/wchar/mbstate.h"
@@ -88,7 +87,7 @@ TEST(LlvmLibcCharacterConverterUTF8To32Test, InvalidByte) {
   LIBC_NAMESPACE::internal::CharacterConverter char_conv(&state);
   int err = char_conv.push(static_cast<char8_t>(ch));
 
-  ASSERT_EQ(err, EILSEQ);
+  ASSERT_EQ(err, -1);
 }
 
 TEST(LlvmLibcCharacterConverterUTF8To32Test, InvalidMultiByte) {
@@ -101,12 +100,12 @@ TEST(LlvmLibcCharacterConverterUTF8To32Test, InvalidMultiByte) {
 
   LIBC_NAMESPACE::internal::CharacterConverter char_conv(&state);
   int err = char_conv.push(static_cast<char8_t>(ch[0]));
-  ASSERT_EQ(err, EILSEQ);
+  ASSERT_EQ(err, -1);
   err = char_conv.push(static_cast<char8_t>(ch[1]));
   ASSERT_EQ(err, 0);
   // Prev byte was single byte so trying to push another should error.
   err = char_conv.push(static_cast<char8_t>(ch[2]));
-  ASSERT_EQ(err, EILSEQ);
+  ASSERT_EQ(err, -1);
   err = char_conv.push(static_cast<char8_t>(ch[3]));
   ASSERT_EQ(err, 0);
 }
@@ -128,7 +127,7 @@ TEST(LlvmLibcCharacterConverterUTF8To32Test, InvalidLastByte) {
   err = char_conv.push(static_cast<char8_t>(ch[2]));
   ASSERT_EQ(err, 0);
   err = char_conv.push(static_cast<char8_t>(ch[3]));
-  ASSERT_EQ(err, EILSEQ);
+  ASSERT_EQ(err, -1);
 }
 
 TEST(LlvmLibcCharacterConverterUTF8To32Test, ValidTwoByteWithExtraRead) {
@@ -145,7 +144,7 @@ TEST(LlvmLibcCharacterConverterUTF8To32Test, ValidTwoByteWithExtraRead) {
   ASSERT_EQ(err, 0);
   // Should produce an error on 3rd byte
   err = char_conv.push(static_cast<char8_t>(ch[2]));
-  ASSERT_EQ(err, EILSEQ);
+  ASSERT_EQ(err, -1);
 
   // Should produce an error since mbstate was reset
   auto wch = char_conv.pop_utf32();

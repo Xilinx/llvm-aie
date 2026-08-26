@@ -95,7 +95,7 @@ void AIEInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
 }
 
 template<int offset>
@@ -113,5 +113,5 @@ void AIEInstPrinter::printImmOffset(const MCInst *MI, unsigned OpNo,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
 }

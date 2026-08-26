@@ -18,7 +18,7 @@ const AArch64AuthMCExpr *AArch64AuthMCExpr::create(const MCExpr *Expr,
                                                    uint16_t Discriminator,
                                                    AArch64PACKey::ID Key,
                                                    bool HasAddressDiversity,
-                                                   MCContext &Ctx, SMLoc Loc) {
+                                                   MCContext &Ctx) {
   return new (Ctx)
-      AArch64AuthMCExpr(Expr, Discriminator, Key, HasAddressDiversity, Loc);
+      AArch64AuthMCExpr(Expr, Discriminator, Key, HasAddressDiversity);
 }

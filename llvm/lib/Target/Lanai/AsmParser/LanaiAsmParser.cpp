@@ -344,7 +344,7 @@ public:
       return SymbolRefExpr->getSpecifier() == Lanai::S_None;
     if (const MCSymbolRefExpr *SymbolRefExpr =
             dyn_cast<MCSymbolRefExpr>(Imm.Value)) {
-      return SymbolRefExpr->getSpecifier() == 0;
+      return SymbolRefExpr->getKind() == MCSymbolRefExpr::VK_None;
     }
 
     // Binary expression
@@ -354,7 +354,7 @@ public:
         return SymbolRefExpr->getSpecifier() == Lanai::S_None;
       if (const MCSymbolRefExpr *SymbolRefExpr =
               dyn_cast<MCSymbolRefExpr>(BinaryExpr->getLHS()))
-        return SymbolRefExpr->getSpecifier() == 0;
+        return SymbolRefExpr->getKind() == MCSymbolRefExpr::VK_None;
     }
 
     return false;
@@ -535,7 +535,8 @@ public:
 #ifndef NDEBUG
       const MCSymbolRefExpr *SymbolRefExpr =
           dyn_cast<MCSymbolRefExpr>(getImm());
-      assert(SymbolRefExpr && SymbolRefExpr->getSpecifier() == 0);
+      assert(SymbolRefExpr &&
+             SymbolRefExpr->getKind() == MCSymbolRefExpr::VK_None);
 #endif
       Inst.addOperand(MCOperand::createExpr(getImm()));
     } else if (isa<MCBinaryExpr>(getImm())) {
@@ -550,7 +551,7 @@ public:
       assert(false && "Operand type not supported.");
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &OS) const override {
     switch (Kind) {
     case IMMEDIATE:
       OS << "Imm: " << getImm() << "\n";
@@ -562,14 +563,10 @@ public:
       OS << "Reg: %r" << getReg() << "\n";
       break;
     case MEMORY_IMM:
-      OS << "MemImm: ";
-      MAI.printExpr(OS, *getMemOffset());
-      OS << '\n';
+      OS << "MemImm: " << *getMemOffset() << "\n";
       break;
     case MEMORY_REG_IMM:
-      OS << "MemRegImm: " << getMemBaseReg() << "+";
-      MAI.printExpr(OS, *getMemOffset());
-      OS << '\n';
+      OS << "MemRegImm: " << getMemBaseReg() << "+" << *getMemOffset() << "\n";
       break;
     case MEMORY_REG_REG:
       assert(getMemOffset() == nullptr);

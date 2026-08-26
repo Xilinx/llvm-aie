@@ -42,8 +42,6 @@ private:
   void printU16ImmDecOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printU32ImmOperand(const MCInst *MI, unsigned OpNo,
                           const MCSubtargetInfo &STI, raw_ostream &O);
-  void printFP64ImmOperand(const MCInst *MI, unsigned OpNo,
-                           const MCSubtargetInfo &STI, raw_ostream &O);
   void printNamedBit(const MCInst *MI, unsigned OpNo, raw_ostream &O,
                      StringRef BitName);
   void printOffset(const MCInst *MI, unsigned OpNo, const MCSubtargetInfo &STI,

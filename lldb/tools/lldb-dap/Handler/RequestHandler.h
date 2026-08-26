@@ -466,17 +466,14 @@ public:
   void operator()(const llvm::json::Object &request) const override;
 };
 
-class ModulesRequestHandler final
-    : public RequestHandler<std::optional<protocol::ModulesArguments>,
-                            llvm::Expected<protocol::ModulesResponseBody>> {
+class ModulesRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "modules"; }
   FeatureSet GetSupportedFeatures() const override {
     return {protocol::eAdapterFeatureModulesRequest};
   }
-  llvm::Expected<protocol::ModulesResponseBody>
-  Run(const std::optional<protocol::ModulesArguments> &args) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class PauseRequestHandler : public LegacyRequestHandler {
@@ -540,14 +537,11 @@ public:
   Run(const protocol::ThreadsArguments &) const override;
 };
 
-class VariablesRequestHandler
-    : public RequestHandler<protocol::VariablesArguments,
-                            llvm::Expected<protocol::VariablesResponseBody>> {
+class VariablesRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "variables"; }
-  llvm::Expected<protocol::VariablesResponseBody>
-  Run(const protocol::VariablesArguments &) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class LocationsRequestHandler : public LegacyRequestHandler {
@@ -605,19 +599,6 @@ public:
     return "_testGetTargetBreakpoints";
   }
   void operator()(const llvm::json::Object &request) const override;
-};
-
-class WriteMemoryRequestHandler final
-    : public RequestHandler<protocol::WriteMemoryArguments,
-                            llvm::Expected<protocol::WriteMemoryResponseBody>> {
-public:
-  using RequestHandler::RequestHandler;
-  static llvm::StringLiteral GetCommand() { return "writeMemory"; }
-  FeatureSet GetSupportedFeatures() const override {
-    return {protocol::eAdapterFeatureWriteMemoryRequest};
-  }
-  llvm::Expected<protocol::WriteMemoryResponseBody>
-  Run(const protocol::WriteMemoryArguments &args) const override;
 };
 
 } // namespace lldb_dap

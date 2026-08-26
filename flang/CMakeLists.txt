@@ -504,10 +504,9 @@ add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(cmake/modules)
 
-option(FLANG_INCLUDE_TOOLS "Generate build targets for the Flang tools." ON)
 option(FLANG_BUILD_TOOLS
   "Build the Flang tools. If OFF, just generate build targets." ON)
-if (FLANG_INCLUDE_TOOLS)
+if (FLANG_BUILD_TOOLS)
   add_subdirectory(tools)
 endif()
 

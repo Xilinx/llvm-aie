@@ -103,20 +103,15 @@ BitVector NVPTXRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 bool NVPTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                             int SPAdj, unsigned FIOperandNum,
-                                            RegScavenger *) const {
+                                            RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
   MachineInstr &MI = *II;
-  if (MI.isLifetimeMarker()) {
-    MI.eraseFromParent();
-    return true;
-  }
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
-  const int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
-
-  const MachineFunction &MF = *MI.getParent()->getParent();
-  const int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex) +
-                     MI.getOperand(FIOperandNum + 1).getImm();
+  MachineFunction &MF = *MI.getParent()->getParent();
+  int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex) +
+               MI.getOperand(FIOperandNum + 1).getImm();
 
   // Using I0 as the frame pointer
   MI.getOperand(FIOperandNum).ChangeToRegister(getFrameRegister(MF), false);

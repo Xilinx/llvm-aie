@@ -17,6 +17,7 @@
 #include "llvm/MC/MCCodeView.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCObjectFileInfo.h"
@@ -689,14 +690,22 @@ void MCAsmStreamer::emitDarwinTargetVariantBuildVersion(
 }
 
 void MCAsmStreamer::emitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
-  bool UseSet = MAI->usesSetToEquateSymbol();
-  if (UseSet)
-    OS << ".set ";
-  Symbol->print(OS, MAI);
-  OS << (UseSet ? ", " : " = ");
-  MAI->printExpr(OS, *Value);
+  // Do not emit a .set on inlined target assignments.
+  bool EmitSet = true;
+  if (auto *E = dyn_cast<MCTargetExpr>(Value))
+    if (E->inlineAssignedExpr())
+      EmitSet = false;
+  if (EmitSet) {
+    bool UseSet = MAI->usesSetToEquateSymbol();
+    if (UseSet)
+      OS << ".set ";
+    Symbol->print(OS, MAI);
+    OS << (UseSet ? ", " : " = ");
+    MAI->printExpr(OS, *Value);
 
-  EmitEOL();
+    EmitEOL();
+  }
+
   MCStreamer::emitAssignment(Symbol, Value);
 }
 
@@ -1220,7 +1229,7 @@ void MCAsmStreamer::PrintQuotedString(StringRef Data, raw_ostream &OS) const {
         continue;
       }
 
-      if (isPrint(C)) {
+      if (isPrint((unsigned char)C)) {
         OS << (char)C;
         continue;
       }
@@ -2413,14 +2422,9 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
     auto Kind = F.getKind();
     if (mc::isRelocation(Kind))
       OS << ", relocation type: " << Kind;
-    else {
-      OS << ", kind: ";
-      auto Info = getAssembler().getBackend().getFixupKindInfo(Kind);
-      if (F.isPCRel() && StringRef(Info.Name).starts_with("FK_Data_"))
-        OS << "FK_PCRel_" << (Info.TargetSize / 8);
-      else
-        OS << Info.Name;
-    }
+    else
+      OS << ", kind: "
+         << getAssembler().getBackend().getFixupKindInfo(Kind).Name;
     OS << '\n';
   }
 }

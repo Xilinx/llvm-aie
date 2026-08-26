@@ -8,11 +8,12 @@
 
 // UNSUPPORTED: c++03, c++11, c++14
 // UNSUPPORTED: no-threads
+// REQUIRES: thread-safety
+// ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
 
-// GCC doesn't have thread safety attributes
-// UNSUPPORTED: gcc
-
-// ADDITIONAL_COMPILE_FLAGS: -Wthread-safety
+// On Windows Clang bugs out when both __declspec and __attribute__ are present,
+// the processing goes awry preventing the definition of the types.
+// XFAIL: msvc
 
 // <shared_mutex>
 //
@@ -50,13 +51,13 @@ void f() {
   {
     m.lock_shared();
     read(data); // ok
-    ++data;     // expected-warning {{writing variable 'data' requires holding shared_mutex 'm' exclusively}}
+    ++data; // expected-error {{writing variable 'data' requires holding shared_mutex 'm' exclusively}}
     m.unlock_shared();
   }
   {
     if (m.try_lock_shared()) {
       read(data); // ok
-      ++data;     // expected-warning {{writing variable 'data' requires holding shared_mutex 'm' exclusively}}
+      ++data; // expected-error {{writing variable 'data' requires holding shared_mutex 'm' exclusively}}
       m.unlock_shared();
     }
   }

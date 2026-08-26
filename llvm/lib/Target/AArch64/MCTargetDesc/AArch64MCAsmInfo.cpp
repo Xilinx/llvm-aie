@@ -169,7 +169,7 @@ void AArch64AuthMCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   bool WrapSubExprInParens = !isa<MCSymbolRefExpr>(getSubExpr());
   if (WrapSubExprInParens)
     OS << '(';
-  MAI->printExpr(OS, *getSubExpr());
+  getSubExpr()->print(OS, MAI);
   if (WrapSubExprInParens)
     OS << ')';
 

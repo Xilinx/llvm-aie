@@ -19,16 +19,6 @@
 #include "llvm/ADT/TypeSwitch.h"
 
 //===----------------------------------------------------------------------===//
-// CIR Helpers
-//===----------------------------------------------------------------------===//
-bool cir::isSized(mlir::Type ty) {
-  if (auto sizedTy = mlir::dyn_cast<cir::SizedTypeInterface>(ty))
-    return sizedTy.isSized();
-  assert(!cir::MissingFeatures::unsizedTypes());
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
 // CIR Custom Parser/Printer Signatures
 //===----------------------------------------------------------------------===//
 
@@ -96,8 +86,6 @@ Type RecordType::parse(mlir::AsmParser &parser) {
   FailureOr<AsmParser::CyclicParseReset> cyclicParseGuard;
   const llvm::SMLoc loc = parser.getCurrentLocation();
   const mlir::Location eLoc = parser.getEncodedSourceLoc(loc);
-  bool packed = false;
-  bool padded = false;
   RecordKind kind;
   mlir::MLIRContext *context = parser.getContext();
 
@@ -140,12 +128,6 @@ Type RecordType::parse(mlir::AsmParser &parser) {
     }
   }
 
-  if (parser.parseOptionalKeyword("packed").succeeded())
-    packed = true;
-
-  if (parser.parseOptionalKeyword("padded").succeeded())
-    padded = true;
-
   // Parse record members or lack thereof.
   bool incomplete = true;
   llvm::SmallVector<mlir::Type> members;
@@ -167,15 +149,8 @@ Type RecordType::parse(mlir::AsmParser &parser) {
   mlir::Type type = {};
   if (name && incomplete) { // Identified & incomplete
     type = getChecked(eLoc, context, name, kind);
-  } else if (!name && !incomplete) { // Anonymous & complete
-    type = getChecked(eLoc, context, membersRef, packed, padded, kind);
-  } else if (!incomplete) { // Identified & complete
-    type = getChecked(eLoc, context, membersRef, name, packed, padded, kind);
-    // If the record has a self-reference, its type already exists in a
-    // incomplete state. In this case, we must complete it.
-    if (mlir::cast<RecordType>(type).isIncomplete())
-      mlir::cast<RecordType>(type).complete(membersRef, packed, padded);
-    assert(!cir::MissingFeatures::astRecordDeclAttr());
+  } else if (!incomplete) { // complete
+    parser.emitError(loc, "complete records are not yet supported");
   } else { // anonymous & incomplete
     parser.emitError(loc, "anonymous records must be complete");
     return {};
@@ -564,7 +539,8 @@ uint64_t FP128Type::getABIAlignment(const mlir::DataLayout &dataLayout,
 }
 
 const llvm::fltSemantics &LongDoubleType::getFloatSemantics() const {
-  return mlir::cast<cir::FPTypeInterface>(getUnderlying()).getFloatSemantics();
+  return mlir::cast<cir::CIRFPTypeInterface>(getUnderlying())
+      .getFloatSemantics();
 }
 
 llvm::TypeSize

@@ -67,8 +67,7 @@ bool Context::evaluateAsRValue(State &Parent, const Expr *E, APValue &Result) {
   }
 
   if (!Recursing) {
-    // We *can* actually get here with a non-empty stack, since
-    // things like InterpState::noteSideEffect() exist.
+    assert(Stk.empty());
     C.cleanup();
 #ifndef NDEBUG
     // Make sure we don't rely on some value being still alive in

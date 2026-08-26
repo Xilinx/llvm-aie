@@ -1821,8 +1821,8 @@ public:
     if (DeleteBindings)
       delete[] Bindings;
     else
-      for (Binding &B : llvm::MutableArrayRef(Bindings, NumBindings))
-        B.Attrs.reset();
+      llvm::for_each(llvm::MutableArrayRef(Bindings, NumBindings),
+                     [](Binding &B) { B.Attrs.reset(); });
     Bindings = nullptr;
     NumBindings = 0;
     DeleteBindings = false;

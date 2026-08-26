@@ -1391,8 +1391,7 @@ static uint32_t getBBAddrMapMetadata(const MachineBasicBlock &MBB) {
 }
 
 static llvm::object::BBAddrMap::Features
-getBBAddrMapFeature(const MachineFunction &MF, int NumMBBSectionRanges,
-                    bool HasCalls) {
+getBBAddrMapFeature(const MachineFunction &MF, int NumMBBSectionRanges) {
   // Ensure that the user has not passed in additional options while also
   // specifying all or none.
   if ((PgoAnalysisMapFeatures.isSet(PGOMapFeaturesEnum::None) ||
@@ -1425,14 +1424,13 @@ getBBAddrMapFeature(const MachineFunction &MF, int NumMBBSectionRanges,
           BrProbEnabled,
           MF.hasBBSections() && NumMBBSectionRanges > 1,
           static_cast<bool>(BBAddrMapSkipEmitBBEntries),
-          HasCalls};
+          false};
 }
 
 void AsmPrinter::emitBBAddrMapSection(const MachineFunction &MF) {
   MCSection *BBAddrMapSection =
       getObjFileLowering().getBBAddrMapSection(*MF.getSection());
   assert(BBAddrMapSection && ".llvm_bb_addr_map section is not initialized.");
-  bool HasCalls = !CurrentFnCallsiteSymbols.empty();
 
   const MCSymbol *FunctionSymbol = getFunctionBegin();
 
@@ -1442,7 +1440,7 @@ void AsmPrinter::emitBBAddrMapSection(const MachineFunction &MF) {
   uint8_t BBAddrMapVersion = OutStreamer->getContext().getBBAddrMapVersion();
   OutStreamer->emitInt8(BBAddrMapVersion);
   OutStreamer->AddComment("feature");
-  auto Features = getBBAddrMapFeature(MF, MBBSectionRanges.size(), HasCalls);
+  auto Features = getBBAddrMapFeature(MF, MBBSectionRanges.size());
   OutStreamer->emitInt8(Features.encode());
   // Emit BB Information for each basic block in the function.
   if (Features.MultiBBRange) {
@@ -1485,33 +1483,26 @@ void AsmPrinter::emitBBAddrMapSection(const MachineFunction &MF) {
     }
 
     if (!Features.OmitBBEntries) {
-      OutStreamer->AddComment("BB id");
-      // Emit the BB ID for this basic block.
-      // We only emit BaseID since CloneID is unset for
-      // -basic-block-adress-map.
-      // TODO: Emit the full BBID when labels and sections can be mixed
-      // together.
-      OutStreamer->emitULEB128IntValue(MBB.getBBID()->BaseID);
+      // TODO: Remove this check when version 1 is deprecated.
+      if (BBAddrMapVersion > 1) {
+        OutStreamer->AddComment("BB id");
+        // Emit the BB ID for this basic block.
+        // We only emit BaseID since CloneID is unset for
+        // -basic-block-adress-map.
+        // TODO: Emit the full BBID when labels and sections can be mixed
+        // together.
+        OutStreamer->emitULEB128IntValue(MBB.getBBID()->BaseID);
+      }
       // Emit the basic block offset relative to the end of the previous block.
       // This is zero unless the block is padded due to alignment.
       emitLabelDifferenceAsULEB128(MBBSymbol, PrevMBBEndSymbol);
-      const MCSymbol *CurrentLabel = MBBSymbol;
-      if (HasCalls) {
-        auto CallsiteSymbols = CurrentFnCallsiteSymbols.lookup(&MBB);
-        OutStreamer->AddComment("number of callsites");
-        OutStreamer->emitULEB128IntValue(CallsiteSymbols.size());
-        for (const MCSymbol *CallsiteSymbol : CallsiteSymbols) {
-          // Emit the callsite offset.
-          emitLabelDifferenceAsULEB128(CallsiteSymbol, CurrentLabel);
-          CurrentLabel = CallsiteSymbol;
-        }
-      }
-      // Emit the offset to the end of the block, which can be used to compute
-      // the total block size.
-      emitLabelDifferenceAsULEB128(MBB.getEndSymbol(), CurrentLabel);
+      // Emit the basic block size. When BBs have alignments, their size cannot
+      // always be computed from their offsets.
+      emitLabelDifferenceAsULEB128(MBB.getEndSymbol(), MBBSymbol);
       // Emit the Metadata.
       OutStreamer->emitULEB128IntValue(getBBAddrMapMetadata(MBB));
     }
+
     PrevMBBEndSymbol = MBB.getEndSymbol();
   }
 
@@ -1840,8 +1831,6 @@ void AsmPrinter::emitFunctionBody() {
           !MI.isDebugInstr()) {
         HasAnyRealCode = true;
       }
-      if (MI.isCall() && MF->getTarget().Options.BBAddrMap)
-        OutStreamer->emitLabel(createCallsiteSymbol(MBB));
 
       // If there is a pre-instruction symbol, emit a label for it here.
       if (MCSymbol *S = MI.getPreInstrSymbol())
@@ -2789,14 +2778,6 @@ MCSymbol *AsmPrinter::getMBBExceptionSym(const MachineBasicBlock &MBB) {
   return Res.first->second;
 }
 
-MCSymbol *AsmPrinter::createCallsiteSymbol(const MachineBasicBlock &MBB) {
-  MCContext &Ctx = MF->getContext();
-  MCSymbol *Sym = Ctx.createTempSymbol("BB" + Twine(MF->getFunctionNumber()) +
-                                       "_" + Twine(MBB.getNumber()) + "_CS");
-  CurrentFnCallsiteSymbols[&MBB].push_back(Sym);
-  return Sym;
-}
-
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
   const Function &F = MF.getFunction();
@@ -2831,7 +2812,6 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   CurrentFnBegin = nullptr;
   CurrentFnBeginLocal = nullptr;
   CurrentSectionBeginSym = nullptr;
-  CurrentFnCallsiteSymbols.clear();
   MBBSectionRanges.clear();
   MBBSectionExceptionSyms.clear();
   bool NeedsLocalForSize = MAI->needsLocalForSize();
@@ -4651,10 +4631,12 @@ void AsmPrinter::emitXRayTable() {
 
   // We then emit a single entry in the index per function. We use the symbols
   // that bound the instrumentation map as the range for a specific function.
-  // Each entry contains 2 words and needs to be word-aligned.
+  // Each entry here will be 2 * word size aligned, as we're writing down two
+  // pointers. This should work for both 32-bit and 64-bit platforms.
   if (FnSledIndex) {
     OutStreamer->switchSection(FnSledIndex);
-    OutStreamer->emitValueToAlignment(Align(WordSizeBytes));
+    OutStreamer->emitCodeAlignment(Align(2 * WordSizeBytes),
+                                   &getSubtargetInfo());
     // For Mach-O, use an "l" symbol as the atom of this subsection. The label
     // difference uses a SUBTRACTOR external relocation which references the
     // symbol.

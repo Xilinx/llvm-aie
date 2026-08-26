@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: not llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1 | FileCheck %s
+# RUN: not --crash llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - 2>&1 | FileCheck %s
 
 # Legalizing umulh > 32-bits requires to compute 128-bit multiplication, which we do not support currently
 # There is a libcall for it, but we don't support returning 128-bit values at this point

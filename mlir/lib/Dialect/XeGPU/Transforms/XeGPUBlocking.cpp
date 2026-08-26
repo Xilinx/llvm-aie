@@ -303,7 +303,9 @@ void XeGPUBlockingPass::runOnOperation() {
       // If the encoding is a ScatterTensorDescAttr, we need to
       // potentially adjust the chunk size based on the inst_data.
       if (tdescTy.isScattered()) {
-        int64_t chunkSize = tdescTy.getChunkSizeAsInt();
+        auto scatterAttr =
+            llvm::dyn_cast_if_present<xegpu::ScatterTensorDescAttr>(encoding);
+        int64_t chunkSize = scatterAttr.getChunkSize().getInt();
 
         if (chunkSize > 1) {
           int64_t blockedChunkSize = chunkSize;
@@ -313,7 +315,7 @@ void XeGPUBlockingPass::runOnOperation() {
 
           // To create a new attribute with a different chunk_size:
           auto newEncoding = xegpu::ScatterTensorDescAttr::get(
-              ctx, tdescTy.getMemorySpace(), blockedChunkSize);
+              ctx, scatterAttr.getMemorySpace().getValue(), blockedChunkSize);
 
           encoding = newEncoding;
         }

@@ -1323,7 +1323,7 @@ Value *llvm::getShuffleReduction(IRBuilderBase &Builder, Value *Src,
     SmallVector<int, 32> ShuffleMask(VF);
     for (unsigned stride = 1; stride < VF; stride <<= 1) {
       // Initialise the mask with undef.
-      llvm::fill(ShuffleMask, -1);
+      std::fill(ShuffleMask.begin(), ShuffleMask.end(), -1);
       for (unsigned j = 0; j < VF; j += stride << 1) {
         ShuffleMask[j] = j + stride;
       }
@@ -1379,10 +1379,8 @@ Value *llvm::createFindLastIVReduction(IRBuilderBase &Builder, Value *Src,
                                        RecurKind RdxKind, Value *Start,
                                        Value *Sentinel) {
   bool IsSigned = RecurrenceDescriptor::isSignedRecurrenceKind(RdxKind);
-  bool IsMaxRdx = RecurrenceDescriptor::isFindLastIVRecurrenceKind(RdxKind);
   Value *MaxRdx = Src->getType()->isVectorTy()
-                      ? (IsMaxRdx ? Builder.CreateIntMaxReduce(Src, IsSigned)
-                                  : Builder.CreateIntMinReduce(Src, IsSigned))
+                      ? Builder.CreateIntMaxReduce(Src, IsSigned)
                       : Src;
   // Correct the final reduction result back to the start value if the maximum
   // reduction is sentinel value.
@@ -1478,8 +1476,8 @@ Value *llvm::createSimpleReduction(IRBuilderBase &Builder, Value *Src,
 Value *llvm::createSimpleReduction(IRBuilderBase &Builder, Value *Src,
                                    RecurKind Kind, Value *Mask, Value *EVL) {
   assert(!RecurrenceDescriptor::isAnyOfRecurrenceKind(Kind) &&
-         !RecurrenceDescriptor::isFindIVRecurrenceKind(Kind) &&
-         "AnyOf and FindIV reductions are not supported.");
+         !RecurrenceDescriptor::isFindLastIVRecurrenceKind(Kind) &&
+         "AnyOf or FindLastIV reductions are not supported.");
   Intrinsic::ID Id = getReductionIntrinsicID(Kind);
   auto VPID = VPIntrinsic::getForIntrinsic(Id);
   assert(VPReductionIntrinsic::isVPReduction(VPID) &&

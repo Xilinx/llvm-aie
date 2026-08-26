@@ -6,14 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_GEOMETRIC_DISTANCE_H__
-#define __CLC_OPENCL_GEOMETRIC_DISTANCE_H__
-
-#define FUNCTION distance
+#define __CLC_FUNCTION distance
 #define __CLC_BODY <clc/geometric/binary_decl.inc>
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_GEOMETRIC_DISTANCE_H__
+#undef __CLC_FUNCTION

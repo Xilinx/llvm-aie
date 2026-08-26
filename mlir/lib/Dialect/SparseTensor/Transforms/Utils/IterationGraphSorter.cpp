@@ -10,6 +10,7 @@
 
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/SparseTensor/IR/SparseTensor.h"
+#include "mlir/Dialect/SparseTensor/IR/SparseTensorType.h"
 #include "mlir/Dialect/Utils/StructuredOpsUtils.h"
 #include "mlir/IR/AffineExprVisitor.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -166,10 +167,10 @@ IterationGraphSorter::IterationGraphSorter(
 AffineMap IterationGraphSorter::sort(SortMask mask, Value ignored) {
   // Reset the adjacency matrix that represents the iteration graph.
   for (auto &row : itGraph)
-    llvm::fill(row, false);
+    std::fill(row.begin(), row.end(), false);
 
   // Reset in-degree.
-  llvm::fill(inDegree, 0);
+  std::fill(inDegree.begin(), inDegree.end(), 0);
 
   // Add the constraints for the loop to level map.
   for (auto [in, map] : llvm::zip(ins, loop2InsLvl)) {

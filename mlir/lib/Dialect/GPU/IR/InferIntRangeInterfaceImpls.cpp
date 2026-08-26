@@ -10,7 +10,9 @@
 #include "mlir/IR/Matchers.h"
 #include "mlir/Interfaces/FunctionInterfaces.h"
 #include "mlir/Interfaces/InferIntRangeInterface.h"
+#include "llvm/ADT/STLForwardCompat.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include <optional>
 
 using namespace mlir;

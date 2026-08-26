@@ -46,7 +46,6 @@
 #include "mlir/Dialect/LLVMIR/NVVMDialect.h"
 #include "mlir/Dialect/LLVMIR/ROCDLDialect.h"
 #include "mlir/Dialect/LLVMIR/Transforms/InlinerInterfaceImpl.h"
-#include "mlir/Dialect/LLVMIR/XeVMDialect.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/AllInterfaces.h"
 #include "mlir/Dialect/Linalg/Transforms/RuntimeOpVerification.h"
@@ -153,8 +152,7 @@ inline void registerAllDialects(DialectRegistry &registry) {
                   ub::UBDialect,
                   vector::VectorDialect,
                   x86vector::X86VectorDialect,
-                  xegpu::XeGPUDialect,
-                  xevm::XeVMDialect>();
+                  xegpu::XeGPUDialect>();
   // clang-format on
 
   // Register all external models.

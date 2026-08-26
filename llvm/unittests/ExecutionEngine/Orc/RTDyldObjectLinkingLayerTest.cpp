@@ -128,25 +128,29 @@ TEST(RTDyldObjectLinkingLayerTest, TestOverrideObjectFlags) {
   };
 
   // Create a module with two void() functions: foo and bar.
+  ThreadSafeContext TSCtx(std::make_unique<LLVMContext>());
   ThreadSafeModule M;
   {
-    auto Ctx = std::make_unique<LLVMContext>();
-    ModuleBuilder MB(*Ctx, TM->getTargetTriple().str(), "dummy");
+    ModuleBuilder MB(*TSCtx.getContext(), TM->getTargetTriple().str(), "dummy");
     MB.getModule()->setDataLayout(TM->createDataLayout());
 
     Function *FooImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "foo");
-    BasicBlock *FooEntry = BasicBlock::Create(*Ctx, "entry", FooImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "foo");
+    BasicBlock *FooEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", FooImpl);
     IRBuilder<> B1(FooEntry);
     B1.CreateRetVoid();
 
     Function *BarImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "bar");
-    BasicBlock *BarEntry = BasicBlock::Create(*Ctx, "entry", BarImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "bar");
+    BasicBlock *BarEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", BarImpl);
     IRBuilder<> B2(BarEntry);
     B2.CreateRetVoid();
 
-    M = ThreadSafeModule(MB.takeModule(), std::move(Ctx));
+    M = ThreadSafeModule(MB.takeModule(), std::move(TSCtx));
   }
 
   // Create a simple stack and set the override flags option.
@@ -203,19 +207,21 @@ TEST(RTDyldObjectLinkingLayerTest, TestAutoClaimResponsibilityForSymbols) {
   };
 
   // Create a module with two void() functions: foo and bar.
+  ThreadSafeContext TSCtx(std::make_unique<LLVMContext>());
   ThreadSafeModule M;
   {
-    auto Ctx = std::make_unique<LLVMContext>();
-    ModuleBuilder MB(*Ctx, TM->getTargetTriple().str(), "dummy");
+    ModuleBuilder MB(*TSCtx.getContext(), TM->getTargetTriple().str(), "dummy");
     MB.getModule()->setDataLayout(TM->createDataLayout());
 
     Function *FooImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "foo");
-    BasicBlock *FooEntry = BasicBlock::Create(*Ctx, "entry", FooImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "foo");
+    BasicBlock *FooEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", FooImpl);
     IRBuilder<> B(FooEntry);
     B.CreateRetVoid();
 
-    M = ThreadSafeModule(MB.takeModule(), std::move(Ctx));
+    M = ThreadSafeModule(MB.takeModule(), std::move(TSCtx));
   }
 
   // Create a simple stack and set the override flags option.
@@ -252,19 +258,21 @@ TEST(RTDyldObjectLinkingLayerTest, TestMemoryBufferNamePropagation) {
     GTEST_SKIP();
 
   // Create a module with two void() functions: foo and bar.
+  ThreadSafeContext TSCtx(std::make_unique<LLVMContext>());
   ThreadSafeModule M;
   {
-    auto Ctx = std::make_unique<LLVMContext>();
-    ModuleBuilder MB(*Ctx, TM->getTargetTriple().str(), "dummy");
+    ModuleBuilder MB(*TSCtx.getContext(), TM->getTargetTriple().str(), "dummy");
     MB.getModule()->setDataLayout(TM->createDataLayout());
 
     Function *FooImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "foo");
-    BasicBlock *FooEntry = BasicBlock::Create(*Ctx, "entry", FooImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "foo");
+    BasicBlock *FooEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", FooImpl);
     IRBuilder<> B1(FooEntry);
     B1.CreateRetVoid();
 
-    M = ThreadSafeModule(MB.takeModule(), std::move(Ctx));
+    M = ThreadSafeModule(MB.takeModule(), std::move(TSCtx));
   }
 
   ExecutionSession ES{std::make_unique<UnsupportedExecutorProcessControl>()};

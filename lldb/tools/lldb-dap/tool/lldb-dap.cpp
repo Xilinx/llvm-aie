@@ -351,6 +351,8 @@ serveConnection(const Socket::SocketProtocol &protocol, const std::string &name,
                      << " disconnected failed: "
                      << llvm::toString(std::move(error)) << "\n";
       }
+      // Close the socket to ensure the DAP::Loop read finishes.
+      sock->Close();
     }
   }
 

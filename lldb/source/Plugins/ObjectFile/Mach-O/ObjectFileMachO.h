@@ -133,8 +133,6 @@ public:
 
   bool GetCorefileThreadExtraInfos(std::vector<lldb::tid_t> &tids) override;
 
-  lldb_private::StructuredData::ObjectSP GetCorefileProcessMetadata() override;
-
   bool LoadCoreFileImages(lldb_private::Process &process) override;
 
   lldb::RegisterContextSP

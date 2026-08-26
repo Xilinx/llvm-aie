@@ -291,8 +291,6 @@ private:
 
   LogicalResult processMatrixType(ArrayRef<uint32_t> operands);
 
-  LogicalResult processTensorARMType(ArrayRef<uint32_t> operands);
-
   LogicalResult processTypeForwardPointer(ArrayRef<uint32_t> operands);
 
   //===--------------------------------------------------------------------===//

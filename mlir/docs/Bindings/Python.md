@@ -51,10 +51,7 @@ python -m pip install --upgrade pip
 # packages will be installed there.
 python -m pip install -r mlir/python/requirements.txt
 
-# Now run your build command with `cmake`, `ninja`, et al.
-
-# Run mlir tests. For example, to run python bindings tests only using ninja:
-ninja check-mlir-python
+# Now run `cmake`, `ninja`, et al.
 ```
 
 For interactive use, it is sufficient to add the
@@ -862,7 +859,7 @@ mutually exclusive with a more complete mapping of the backing constructs.
 
 ## Testing
 
-Tests should be added in the `mlir/test/python` directory and should
+Tests should be added in the `test/Bindings/Python` directory and should
 typically be `.py` files that have a lit run line.
 
 We use `lit` and `FileCheck` based tests:

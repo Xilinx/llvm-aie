@@ -133,7 +133,7 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
   Timer.startTimer("Process definitions");
 
   ArrayRef<const CodeGenInstruction *> NumberedInstructions =
-      Target.getInstructions();
+      Target.getInstructionsByEnumValue();
 
   for (const CodeGenInstruction *CGI : NumberedInstructions) {
     const Record *R = CGI->TheDef;

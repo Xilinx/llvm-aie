@@ -12,7 +12,7 @@
 #include "llvm/Support/Signals.h"
 #include <sstream>
 
-using namespace llvm;
+#include <cmath>
 
 void SystemZHLASMAsmStreamer::EmitEOL() {
   // Comments are emitted on a new line before the instruction.
@@ -278,10 +278,5 @@ void SystemZHLASMAsmStreamer::emitValueImpl(const MCExpr *Value, unsigned Size,
 
   OS << " DC ";
   emitHLASMValueImpl(Value, Size, true);
-  EmitEOL();
-}
-
-void SystemZHLASMAsmStreamer::emitEnd() {
-  OS << " END";
   EmitEOL();
 }

@@ -15,17 +15,6 @@ using namespace clang::ast_matchers;
 
 namespace clang::tidy::readability {
 
-NamedParameterCheck::NamedParameterCheck(StringRef Name,
-                                         ClangTidyContext *Context)
-    : ClangTidyCheck(Name, Context),
-      InsertPlainNamesInForwardDecls(
-          Options.get("InsertPlainNamesInForwardDecls", false)) {}
-
-void NamedParameterCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
-  Options.store(Opts, "InsertPlainNamesInForwardDecls",
-                InsertPlainNamesInForwardDecls);
-}
-
 void NamedParameterCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
   Finder->addMatcher(functionDecl().bind("decl"), this);
 }
@@ -95,8 +84,7 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
 
     for (auto P : UnnamedParams) {
       // Fallback to an unused marker.
-      static constexpr StringRef FallbackName = "unused";
-      StringRef NewName = FallbackName;
+      StringRef NewName = "unused";
 
       // If the method is overridden, try to copy the name from the base method
       // into the overrider.
@@ -117,25 +105,12 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
           NewName = Name;
       }
 
-      // Now insert the fix. Note that getLocation() points to the place
+      // Now insert the comment. Note that getLocation() points to the place
       // where the name would be, this allows us to also get complex cases like
       // function pointers right.
       const ParmVarDecl *Parm = P.first->getParamDecl(P.second);
-
-      // The fix depends on the InsertPlainNamesInForwardDecls option,
-      // whether this is a forward declaration and whether the parameter has
-      // a real name.
-      const bool IsForwardDeclaration = (!Definition || Function != Definition);
-      if (InsertPlainNamesInForwardDecls && IsForwardDeclaration &&
-          NewName != FallbackName) {
-        // For forward declarations with InsertPlainNamesInForwardDecls enabled,
-        // insert the parameter name without comments.
-        D << FixItHint::CreateInsertion(Parm->getLocation(),
-                                        " " + NewName.str());
-      } else {
-        D << FixItHint::CreateInsertion(Parm->getLocation(),
-                                        " /*" + NewName.str() + "*/");
-      }
+      D << FixItHint::CreateInsertion(Parm->getLocation(),
+                                      " /*" + NewName.str() + "*/");
     }
   }
 }

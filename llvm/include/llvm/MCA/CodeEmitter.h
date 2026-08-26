@@ -34,6 +34,7 @@ namespace mca {
 /// strings. Encodings are cached internally for later usage.
 class CodeEmitter {
   const MCSubtargetInfo &STI;
+  const MCAsmBackend &MAB;
   const MCCodeEmitter &MCE;
 
   SmallString<256> Code;
@@ -51,7 +52,7 @@ class CodeEmitter {
 public:
   CodeEmitter(const MCSubtargetInfo &ST, const MCAsmBackend &AB,
               const MCCodeEmitter &CE, ArrayRef<MCInst> S)
-      : STI(ST), MCE(CE), Sequence(S), Encodings(S.size()) {}
+      : STI(ST), MAB(AB), MCE(CE), Sequence(S), Encodings(S.size()) {}
 
   StringRef getEncoding(unsigned MCID) {
     EncodingInfo EI = getOrCreateEncodingInfo(MCID);

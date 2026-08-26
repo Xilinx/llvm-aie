@@ -161,7 +161,8 @@ public:
 
   ValueVector::reference operator[](const VarDecl *vd);
 
-  Value getValue(const CFGBlock *block, const VarDecl *vd) {
+  Value getValue(const CFGBlock *block, const CFGBlock *dstBlock,
+                 const VarDecl *vd) {
     std::optional<unsigned> idx = declToIndex.getValueIndex(vd);
     return getValueVector(block)[*idx];
   }
@@ -588,12 +589,12 @@ public:
         if (!Pred)
           continue;
 
-        Value AtPredExit = vals.getValue(Pred, vd);
+        Value AtPredExit = vals.getValue(Pred, B, vd);
         if (AtPredExit == Initialized)
           // This block initializes the variable.
           continue;
         if (AtPredExit == MayUninitialized &&
-            vals.getValue(B, vd) == Uninitialized) {
+            vals.getValue(B, nullptr, vd) == Uninitialized) {
           // This block declares the variable (uninitialized), and is reachable
           // from a block that initializes the variable. We can't guarantee to
           // give an earlier location for the diagnostic (and it appears that
@@ -624,8 +625,6 @@ public:
     // Scan the frontier, looking for blocks where the variable was
     // uninitialized.
     for (const auto *Block : cfg) {
-      if (vals.getValue(Block, vd) != Uninitialized)
-        continue;
       unsigned BlockID = Block->getBlockID();
       const Stmt *Term = Block->getTerminatorStmt();
       if (SuccsVisited[BlockID] && SuccsVisited[BlockID] < Block->succ_size() &&
@@ -636,7 +635,8 @@ public:
         for (CFGBlock::const_succ_iterator I = Block->succ_begin(),
              E = Block->succ_end(); I != E; ++I) {
           const CFGBlock *Succ = *I;
-          if (Succ && SuccsVisited[Succ->getBlockID()] >= Succ->succ_size()) {
+          if (Succ && SuccsVisited[Succ->getBlockID()] >= Succ->succ_size() &&
+              vals.getValue(Block, Succ, vd) == Uninitialized) {
             // Switch cases are a special case: report the label to the caller
             // as the 'terminator', not the switch statement itself. Suppress
             // situations where no label matched: we can't be sure that's
@@ -675,11 +675,8 @@ void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
 
 void TransferFunctions::reportConstRefUse(const Expr *ex, const VarDecl *vd) {
   Value v = vals[vd];
-  if (isAlwaysUninit(v)) {
-    auto use = getUninitUse(ex, vd, v);
-    use.setConstRefUse();
-    handler.handleUseOfUninitVariable(vd, use);
-  }
+  if (isAlwaysUninit(v))
+    handler.handleConstRefUseOfUninitVariable(vd, getUninitUse(ex, vd, v));
 }
 
 void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS) {
@@ -890,6 +887,12 @@ struct PruneBlocksHandler : public UninitVariablesHandler {
 
   void handleUseOfUninitVariable(const VarDecl *vd,
                                  const UninitUse &use) override {
+    hadUse[currentBlock] = true;
+    hadAnyUse = true;
+  }
+
+  void handleConstRefUseOfUninitVariable(const VarDecl *vd,
+                                         const UninitUse &use) override {
     hadUse[currentBlock] = true;
     hadAnyUse = true;
   }

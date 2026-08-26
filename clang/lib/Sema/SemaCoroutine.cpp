@@ -783,8 +783,7 @@ static bool checkSuspensionContext(Sema &S, SourceLocation Loc,
   const auto ExprContext = S.currentEvaluationContext().ExprContext;
   const bool BadContext =
       S.isUnevaluatedContext() ||
-      (ExprContext != Sema::ExpressionEvaluationContextRecord::EK_Other &&
-       ExprContext != Sema::ExpressionEvaluationContextRecord::EK_VariableInit);
+      ExprContext != Sema::ExpressionEvaluationContextRecord::EK_Other;
   if (BadContext) {
     S.Diag(Loc, diag::err_coroutine_unevaluated_context) << Keyword;
     return false;

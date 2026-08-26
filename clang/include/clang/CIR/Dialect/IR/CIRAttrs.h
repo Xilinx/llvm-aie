@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CIR_DIALECT_IR_CIRATTRS_H
-#define CLANG_CIR_DIALECT_IR_CIRATTRS_H
+#ifndef LLVM_CLANG_CIR_DIALECT_IR_CIRATTRS_H
+#define LLVM_CLANG_CIR_DIALECT_IR_CIRATTRS_H
+
+#include "clang/CIR/Dialect/IR/CIROpsEnums.h"
+#include "clang/CIR/Dialect/IR/CIRTypes.h"
 
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/BuiltinAttributeInterfaces.h"
 
-#include "clang/CIR/Dialect/IR/CIROpsEnums.h"
-
-#include "clang/CIR/Interfaces/CIRTypeInterfaces.h"
+#include "llvm/ADT/SmallVector.h"
 
 //===----------------------------------------------------------------------===//
 // CIR Dialect Attrs
@@ -26,22 +27,15 @@
 
 namespace clang {
 class FunctionDecl;
-class RecordDecl;
 class VarDecl;
+class RecordDecl;
 } // namespace clang
 
 namespace cir {
 class ArrayType;
-class BoolType;
-class ComplexType;
-class IntType;
-class MethodType;
-class PointerType;
-class RecordType;
-class VectorType;
 } // namespace cir
 
 #define GET_ATTRDEF_CLASSES
 #include "clang/CIR/Dialect/IR/CIROpsAttributes.h.inc"
 
-#endif // CLANG_CIR_DIALECT_IR_CIRATTRS_H
+#endif // LLVM_CLANG_CIR_DIALECT_IR_CIRATTRS_H

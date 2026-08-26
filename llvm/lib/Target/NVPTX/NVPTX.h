@@ -14,12 +14,12 @@
 #ifndef LLVM_LIB_TARGET_NVPTX_NVPTX_H
 #define LLVM_LIB_TARGET_NVPTX_NVPTX_H
 
-#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
 class FunctionPass;
 class MachineFunctionPass;
@@ -76,7 +76,6 @@ void initializeNVPTXAAWrapperPassPass(PassRegistry &);
 void initializeNVPTXExternalAAWrapperPass(PassRegistry &);
 void initializeNVPTXPeepholePass(PassRegistry &);
 void initializeNVPTXTagInvariantLoadLegacyPassPass(PassRegistry &);
-void initializeNVPTXPrologEpilogPassPass(PassRegistry &);
 
 struct NVVMIntrRangePass : PassInfoMixin<NVVMIntrRangePass> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
@@ -224,6 +223,10 @@ enum CmpMode {
   LE,
   GT,
   GE,
+  LO,
+  LS,
+  HI,
+  HS,
   EQU,
   NEU,
   LTU,
@@ -233,6 +236,9 @@ enum CmpMode {
   NUM,
   // NAN is a MACRO
   NotANumber,
+
+  BASE_MASK = 0xFF,
+  FTZ_FLAG = 0x100
 };
 }
 

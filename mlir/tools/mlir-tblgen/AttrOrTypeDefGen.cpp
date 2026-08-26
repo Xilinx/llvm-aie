@@ -245,8 +245,9 @@ void DefGen::createParentWithTraits() {
                    ? cast<NativeTrait>(&trait)->getFullyQualifiedTraitName()
                    : cast<InterfaceTrait>(&trait)->getFullyQualifiedTraitName();
       }));
-  for (auto &traitName : traitNames)
+  llvm::for_each(traitNames, [&](auto &traitName) {
     defParent.addTemplateParam(traitName);
+  });
 
   // Add OpAsmInterface::Trait if we automatically generate mnemonic alias
   // method.
@@ -668,10 +669,10 @@ void DefGen::emitHashKey() {
 }
 
 void DefGen::emitConstruct() {
-  Method *construct = storageCls->addMethod(
+  Method *construct = storageCls->addMethod<Method::Inline>(
       strfmt("{0} *", def.getStorageClassName()), "construct",
       def.hasStorageCustomConstructor() ? Method::StaticDeclaration
-                                        : Method::StaticInline,
+                                        : Method::Static,
       MethodParameter(strfmt("::mlir::{0}StorageAllocator &", valueType),
                       "allocator"),
       MethodParameter("KeyTy &&", "tblgenKey"));

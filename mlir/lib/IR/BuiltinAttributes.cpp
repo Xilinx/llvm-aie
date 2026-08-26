@@ -18,6 +18,8 @@
 #include "mlir/IR/SymbolTable.h"
 #include "mlir/IR/Types.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/Sequence.h"
+#include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include <optional>
@@ -230,8 +232,8 @@ void StridedLayoutAttr::print(llvm::raw_ostream &os) const {
 /// Returns true if this layout is static, i.e. the strides and offset all have
 /// a known value > 0.
 bool StridedLayoutAttr::hasStaticLayout() const {
-  return ShapedType::isStatic(getOffset()) &&
-         ShapedType::isStaticShape(getStrides());
+  return !ShapedType::isDynamic(getOffset()) &&
+         !ShapedType::isDynamicShape(getStrides());
 }
 
 /// Returns the strided layout as an affine map.
@@ -1818,7 +1820,7 @@ AffineMap mlir::makeStridedLinearLayoutMap(ArrayRef<int64_t> strides,
 
   // AffineExpr for offset.
   // Static case.
-  if (ShapedType::isStatic(offset)) {
+  if (!ShapedType::isDynamic(offset)) {
     auto cst = getAffineConstantExpr(offset, context);
     expr = cst;
   } else {
@@ -1834,7 +1836,7 @@ AffineMap mlir::makeStridedLinearLayoutMap(ArrayRef<int64_t> strides,
     auto d = getAffineDimExpr(dim, context);
     AffineExpr mult;
     // Static case.
-    if (ShapedType::isStatic(stride))
+    if (!ShapedType::isDynamic(stride))
       mult = getAffineConstantExpr(stride, context);
     else
       // Dynamic case, new symbol for each new stride.

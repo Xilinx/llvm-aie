@@ -35,6 +35,9 @@ public:
 
   bool emitSymbolAttribute(MCSymbol *, MCSymbolAttr) override { return false; }
   void emitCommonSymbol(MCSymbol *, uint64_t, Align) override {}
+
+private:
+  void emitInstToData(const MCInst &, const MCSubtargetInfo &) override;
 };
 
 } // end namespace llvm

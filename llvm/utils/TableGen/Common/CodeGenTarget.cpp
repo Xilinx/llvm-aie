@@ -91,7 +91,7 @@ StringRef CodeGenTarget::getName() const { return TargetRec->getName(); }
 /// namespace. The namespace is cached because it is requested multiple times.
 StringRef CodeGenTarget::getInstNamespace() const {
   if (InstNamespace.empty()) {
-    for (const CodeGenInstruction *Inst : getInstructions()) {
+    for (const CodeGenInstruction *Inst : getInstructionsByEnumValue()) {
       // We are not interested in the "TargetOpcode" namespace.
       if (Inst->Namespace != "TargetOpcode") {
         InstNamespace = Inst->Namespace;
@@ -214,9 +214,10 @@ void CodeGenTarget::ReadInstructions() const {
 
   // Parse the instructions defined in the .td file.
   for (const Record *R : Insts) {
-    auto [II, _] =
-        InstructionMap.try_emplace(R, std::make_unique<CodeGenInstruction>(R));
-    HasVariableLengthEncodings |= II->second->isVariableLengthEncoding();
+    auto &Inst = Instructions[R];
+    Inst = std::make_unique<CodeGenInstruction>(R);
+    if (Inst->isVariableLengthEncoding())
+      HasVariableLengthEncodings = true;
   }
 }
 
@@ -244,9 +245,9 @@ unsigned CodeGenTarget::getNumFixedInstructions() {
 /// Return all of the instructions defined by the target, ordered by
 /// their enum value.
 void CodeGenTarget::ComputeInstrsByEnum() const {
-  const auto &InstMap = getInstructionMap();
+  const auto &Insts = getInstructions();
   for (const char *Name : FixedInstrs) {
-    const CodeGenInstruction *Instr = GetInstByName(Name, InstMap, Records);
+    const CodeGenInstruction *Instr = GetInstByName(Name, Insts, Records);
     assert(Instr && "Missing target independent instruction");
     assert(Instr->Namespace == "TargetOpcode" && "Bad namespace");
     InstrsByEnum.push_back(Instr);
@@ -255,24 +256,23 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   assert(EndOfPredefines == getNumFixedInstructions() &&
          "Missing generic opcode");
 
-  for (const auto &[_, CGIUp] : InstMap) {
-    const CodeGenInstruction *CGI = CGIUp.get();
+  for (const auto &I : Insts) {
+    const CodeGenInstruction *CGI = I.second.get();
     if (CGI->Namespace != "TargetOpcode") {
       InstrsByEnum.push_back(CGI);
-      NumPseudoInstructions += CGI->TheDef->getValueAsBit("isPseudo");
+      if (CGI->TheDef->getValueAsBit("isPseudo"))
+        ++NumPseudoInstructions;
     }
   }
 
-  assert(InstrsByEnum.size() == InstMap.size() && "Missing predefined instr");
+  assert(InstrsByEnum.size() == Insts.size() && "Missing predefined instr");
 
   // All of the instructions are now in random order based on the map iteration.
   llvm::sort(
       InstrsByEnum.begin() + EndOfPredefines, InstrsByEnum.end(),
       [](const CodeGenInstruction *Rec1, const CodeGenInstruction *Rec2) {
-        const Record &D1 = *Rec1->TheDef;
-        const Record &D2 = *Rec2->TheDef;
-        // Sort all pseudo instructions before non-pseudo ones, and sort by name
-        // within.
+        const auto &D1 = *Rec1->TheDef;
+        const auto &D2 = *Rec2->TheDef;
         return std::tuple(!D1.getValueAsBit("isPseudo"), D1.getName()) <
                std::tuple(!D2.getValueAsBit("isPseudo"), D2.getName());
       });

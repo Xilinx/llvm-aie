@@ -305,7 +305,8 @@ void RISCVAsmPrinter::emitNTLHint(const MachineInstr *MI) {
 }
 
 void RISCVAsmPrinter::emitInstruction(const MachineInstr *MI) {
-  RISCV_MC::verifyInstructionPredicates(MI->getOpcode(), STI->getFeatureBits());
+  RISCV_MC::verifyInstructionPredicates(MI->getOpcode(),
+                                        getSubtargetInfo().getFeatureBits());
 
   emitNTLHint(MI);
 
@@ -516,9 +517,12 @@ void RISCVAsmPrinter::emitSled(const MachineInstr *MI, SledKind Kind) {
   // Assuming we're using JAL to jump to .tmpN, then we only need
   // (68 - 4)/2 = 32 NOPs for RV64 and (44 - 4)/2 = 20 for RV32. However, there
   // is a chance that we'll use C.JAL instead, so an additional NOP is needed.
-  const uint8_t NoopsInSledCount = STI->is64Bit() ? 33 : 21;
+  const uint8_t NoopsInSledCount =
+      MI->getParent()->getParent()->getSubtarget<RISCVSubtarget>().is64Bit()
+          ? 33
+          : 21;
 
-  OutStreamer->emitCodeAlignment(Align(4), STI);
+  OutStreamer->emitCodeAlignment(Align(4), &getSubtargetInfo());
   auto CurSled = OutContext.createTempSymbol("xray_sled_", true);
   OutStreamer->emitLabel(CurSled);
   auto Target = OutContext.createTempSymbol();
@@ -1066,8 +1070,7 @@ bool RISCVAsmPrinter::lowerOperand(const MachineOperand &MO,
 }
 
 static bool lowerRISCVVMachineInstrToMCInst(const MachineInstr *MI,
-                                            MCInst &OutMI,
-                                            const RISCVSubtarget *STI) {
+                                            MCInst &OutMI) {
   const RISCVVPseudosTable::PseudoInfo *RVV =
       RISCVVPseudosTable::getPseudoInfo(MI->getOpcode());
   if (!RVV)
@@ -1075,8 +1078,14 @@ static bool lowerRISCVVMachineInstrToMCInst(const MachineInstr *MI,
 
   OutMI.setOpcode(RVV->BaseInstr);
 
-  const TargetInstrInfo *TII = STI->getInstrInfo();
-  const TargetRegisterInfo *TRI = STI->getRegisterInfo();
+  const MachineBasicBlock *MBB = MI->getParent();
+  assert(MBB && "MI expected to be in a basic block");
+  const MachineFunction *MF = MBB->getParent();
+  assert(MF && "MBB expected to be in a machine function");
+
+  const RISCVSubtarget &Subtarget = MF->getSubtarget<RISCVSubtarget>();
+  const TargetInstrInfo *TII = Subtarget.getInstrInfo();
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   assert(TRI && "TargetRegisterInfo expected");
 
   const MCInstrDesc &MCID = MI->getDesc();
@@ -1173,7 +1182,7 @@ static bool lowerRISCVVMachineInstrToMCInst(const MachineInstr *MI,
 }
 
 bool RISCVAsmPrinter::lowerToMCInst(const MachineInstr *MI, MCInst &OutMI) {
-  if (lowerRISCVVMachineInstrToMCInst(MI, OutMI, STI))
+  if (lowerRISCVVMachineInstrToMCInst(MI, OutMI))
     return false;
 
   OutMI.setOpcode(MI->getOpcode());

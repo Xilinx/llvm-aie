@@ -7,9 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "CSKYFixupKinds.h"
-#include "CSKYMCAsmInfo.h"
+#include "CSKYMCExpr.h"
 #include "CSKYMCTargetDesc.h"
-#include "MCTargetDesc/CSKYMCAsmInfo.h"
+#include "MCTargetDesc/CSKYMCExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -43,11 +43,11 @@ unsigned CSKYELFObjectWriter::getRelocType(const MCFixup &Fixup,
   uint8_t Modifier = Target.getSpecifier();
 
   switch (Target.getSpecifier()) {
-  case CSKY::S_TLSIE:
-  case CSKY::S_TLSLE:
-  case CSKY::S_TLSGD:
-  case CSKY::S_TLSLDM:
-  case CSKY::S_TLSLDO:
+  case CSKYMCExpr::VK_TLSIE:
+  case CSKYMCExpr::VK_TLSLE:
+  case CSKYMCExpr::VK_TLSGD:
+  case CSKYMCExpr::VK_TLSLDM:
+  case CSKYMCExpr::VK_TLSLDO:
     if (auto *SA = Target.getAddSym())
       cast<MCSymbolELF>(SA)->setType(ELF::STT_TLS);
     break;
@@ -62,6 +62,7 @@ unsigned CSKYELFObjectWriter::getRelocType(const MCFixup &Fixup,
       reportError(Fixup.getLoc(), "Unsupported relocation type");
       return ELF::R_CKCORE_NONE;
     case FK_Data_4:
+    case FK_PCRel_4:
       return ELF::R_CKCORE_PCREL32;
     case CSKY::fixup_csky_pcrel_uimm16_scale4:
       return ELF::R_CKCORE_PCREL_IMM16_4;
@@ -92,29 +93,29 @@ unsigned CSKYELFObjectWriter::getRelocType(const MCFixup &Fixup,
     reportError(Fixup.getLoc(), "2-byte data relocations not supported");
     return ELF::R_CKCORE_NONE;
   case FK_Data_4:
-    if (Expr->getKind() == MCExpr::Specifier) {
-      auto TK = cast<MCSpecifierExpr>(Expr)->getSpecifier();
-      if (TK == CSKY::S_ADDR)
+    if (Expr->getKind() == MCExpr::Target) {
+      auto TK = cast<CSKYMCExpr>(Expr)->getSpecifier();
+      if (TK == CSKYMCExpr::VK_ADDR)
         return ELF::R_CKCORE_ADDR32;
-      if (TK == CSKY::S_GOT)
+      if (TK == CSKYMCExpr::VK_GOT)
         return ELF::R_CKCORE_GOT32;
-      if (TK == CSKY::S_GOTOFF)
+      if (TK == CSKYMCExpr::VK_GOTOFF)
         return ELF::R_CKCORE_GOTOFF;
-      if (TK == CSKY::S_PLT)
+      if (TK == CSKYMCExpr::VK_PLT)
         return ELF::R_CKCORE_PLT32;
-      if (TK == CSKY::S_TLSIE)
+      if (TK == CSKYMCExpr::VK_TLSIE)
         return ELF::R_CKCORE_TLS_IE32;
-      if (TK == CSKY::S_TLSLE)
+      if (TK == CSKYMCExpr::VK_TLSLE)
         return ELF::R_CKCORE_TLS_LE32;
-      if (TK == CSKY::S_TLSGD)
+      if (TK == CSKYMCExpr::VK_TLSGD)
         return ELF::R_CKCORE_TLS_GD32;
-      if (TK == CSKY::S_TLSLDM)
+      if (TK == CSKYMCExpr::VK_TLSLDM)
         return ELF::R_CKCORE_TLS_LDM32;
-      if (TK == CSKY::S_TLSLDO)
+      if (TK == CSKYMCExpr::VK_TLSLDO)
         return ELF::R_CKCORE_TLS_LDO32;
-      if (TK == CSKY::S_GOTPC)
+      if (TK == CSKYMCExpr::VK_GOTPC)
         return ELF::R_CKCORE_GOTPC;
-      if (TK == CSKY::S_None)
+      if (TK == CSKYMCExpr::VK_None)
         return ELF::R_CKCORE_ADDR32;
 
       LLVM_DEBUG(dbgs() << "Unknown FK_Data_4 TK  = " << TK);
@@ -124,19 +125,19 @@ unsigned CSKYELFObjectWriter::getRelocType(const MCFixup &Fixup,
       default:
         reportError(Fixup.getLoc(), "invalid fixup for 4-byte data relocation");
         return ELF::R_CKCORE_NONE;
-      case CSKY::S_GOT:
+      case CSKYMCExpr::VK_GOT:
         return ELF::R_CKCORE_GOT32;
-      case CSKY::S_GOTOFF:
+      case CSKYMCExpr::VK_GOTOFF:
         return ELF::R_CKCORE_GOTOFF;
-      case CSKY::S_PLT:
+      case CSKYMCExpr::VK_PLT:
         return ELF::R_CKCORE_PLT32;
-      case CSKY::S_TLSGD:
+      case CSKYMCExpr::VK_TLSGD:
         return ELF::R_CKCORE_TLS_GD32;
-      case CSKY::S_TLSLDM:
+      case CSKYMCExpr::VK_TLSLDM:
         return ELF::R_CKCORE_TLS_LDM32;
-      case CSKY::S_TPOFF:
+      case CSKYMCExpr::VK_TPOFF:
         return ELF::R_CKCORE_TLS_LE32;
-      case CSKY::S_None:
+      case CSKYMCExpr::VK_None:
         return ELF::R_CKCORE_ADDR32;
       }
     }
@@ -166,8 +167,8 @@ unsigned CSKYELFObjectWriter::getRelocType(const MCFixup &Fixup,
 bool CSKYELFObjectWriter::needsRelocateWithSymbol(const MCValue &V,
                                                   unsigned Type) const {
   switch (V.getSpecifier()) {
-  case CSKY::S_PLT:
-  case CSKY::S_GOT:
+  case CSKYMCExpr::VK_PLT:
+  case CSKYMCExpr::VK_GOT:
     return true;
   default:
     return false;

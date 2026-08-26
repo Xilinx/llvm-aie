@@ -23,6 +23,7 @@
 #include "clang/Serialization/ASTRecordWriter.h"
 #include "llvm/Bitstream/BitstreamWriter.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <optional>
 using namespace clang;
 using namespace serialization;
 
@@ -301,7 +302,7 @@ namespace clang {
     }
     MutableArrayRef<FunctionTemplateSpecializationInfo>
     getPartialSpecializations(FunctionTemplateDecl::Common *) {
-      return {};
+      return std::nullopt;
     }
 
     template<typename DeclTy>
@@ -1305,6 +1306,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
     VarDeclBits.addBit(D->isConstexpr());
     VarDeclBits.addBit(D->isInitCapture());
     VarDeclBits.addBit(D->isPreviousDeclInSameBlockScope());
+    VarDeclBits.addBit(D->hasInitWithSideEffects());
 
     VarDeclBits.addBit(D->isEscapingByref());
     HasDeducedType = D->getType()->getContainedDeducedType();
@@ -1317,7 +1319,6 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       VarDeclBits.addBits(0, /*Width=*/3);
 
     VarDeclBits.addBit(D->isObjCForDecl());
-    VarDeclBits.addBit(D->isCXXForRangeImplicitVar());
   }
 
   Record.push_back(VarDeclBits);
@@ -2739,7 +2740,6 @@ void ASTWriter::WriteDeclAbbrevs() {
             // isInline, isInlineSpecified, isConstexpr,
             // isInitCapture, isPrevDeclInSameScope, hasInitWithSideEffects,
             // EscapingByref, HasDeducedType, ImplicitParamKind, isObjCForDecl
-            // IsCXXForRangeImplicitVar
   Abv->Add(BitCodeAbbrevOp(0));                         // VarKind (local enum)
   // Type Source Info
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
@@ -2934,6 +2934,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Source Location
   // CXXOperatorCallExpr
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Operator Kind
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Source Location
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Source Location
   CXXOperatorCallExprAbbrev = Stream.EmitAbbrev(std::move(Abv));
 

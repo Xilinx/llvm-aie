@@ -18,7 +18,7 @@ namespace lldb_dap_tests {
 
 /// A base class for tests that need transport configured for communicating DAP
 /// messages.
-class TransportBase : public PipePairTest {
+class TransportBase : public PipeTest {
 protected:
   std::unique_ptr<lldb_dap::Transport> to_dap;
   std::unique_ptr<lldb_dap::Transport> from_dap;

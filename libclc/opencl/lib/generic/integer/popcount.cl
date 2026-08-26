@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/integer/clc_popcount.h>
-#include <clc/opencl/integer/popcount.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION popcount
 #define __CLC_BODY <clc/shared/unary_def.inc>

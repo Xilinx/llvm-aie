@@ -10,7 +10,8 @@
 #include "AArch64RegisterInfo.h"
 
 #if defined(__aarch64__) && defined(__linux__)
-#include <sys/prctl.h> // For PR_PAC_* constants
+#include <linux/prctl.h> // For PR_PAC_* constants
+#include <sys/prctl.h>
 #ifndef PR_PAC_APIAKEY
 #define PR_PAC_APIAKEY (1UL << 0)
 #endif

@@ -102,7 +102,7 @@ void PropertyDeclarationCheck::registerMatchers(MatchFinder *Finder) {
 void PropertyDeclarationCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MatchedDecl =
       Result.Nodes.getNodeAs<ObjCPropertyDecl>("property");
-  assert(!MatchedDecl->getName().empty());
+  assert(MatchedDecl->getName().size() > 0);
   auto *DeclContext = MatchedDecl->getDeclContext();
   auto *CategoryDecl = llvm::dyn_cast<ObjCCategoryDecl>(DeclContext);
 

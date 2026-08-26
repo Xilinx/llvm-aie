@@ -8,7 +8,9 @@
 
 #include "mlir/Dialect/Transform/DebugExtension/DebugExtensionOps.h"
 
+#include "mlir/Dialect/Transform/IR/TransformDialect.h"
 #include "mlir/Dialect/Transform/IR/TransformTypes.h"
+#include "mlir/IR/OpImplementation.h"
 #include "llvm/Support/InterleavedRange.h"
 
 using namespace mlir;

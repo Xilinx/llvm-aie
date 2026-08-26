@@ -203,10 +203,6 @@ static cl::list<std::string> DisableBuiltins(
     "disable-builtin",
     cl::desc("Disable specific target library builtin function"));
 
-static cl::list<std::string> EnableBuiltins(
-    "enable-builtin",
-    cl::desc("Enable specific target library builtin functions"));
-
 static cl::opt<bool> EnableDebugify(
     "enable-debugify",
     cl::desc(
@@ -674,7 +670,7 @@ extern "C" int optMain(
   else {
     // Disable individual builtin functions in TargetLibraryInfo.
     LibFunc F;
-    for (auto &FuncName : DisableBuiltins) {
+    for (auto &FuncName : DisableBuiltins)
       if (TLII.getLibFunc(FuncName, F))
         TLII.setUnavailable(F);
       else {
@@ -682,17 +678,6 @@ extern "C" int optMain(
                << FuncName << '\n';
         return 1;
       }
-    }
-
-    for (auto &FuncName : EnableBuiltins) {
-      if (TLII.getLibFunc(FuncName, F))
-        TLII.setAvailable(F);
-      else {
-        errs() << argv[0] << ": cannot enable nonexistent builtin function "
-               << FuncName << '\n';
-        return 1;
-      }
-    }
   }
 
   if (UseNPM) {

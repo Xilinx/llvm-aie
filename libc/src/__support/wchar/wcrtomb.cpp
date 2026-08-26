@@ -30,9 +30,12 @@ ErrorOr<size_t> wcrtomb(char *__restrict s, wchar_t wc,
   if (!cr.isValidState())
     return Error(EINVAL);
 
+  if (s == nullptr)
+    return Error(EILSEQ);
+
   int status = cr.push(static_cast<char32_t>(wc));
   if (status != 0)
-    return Error(status);
+    return Error(EILSEQ);
 
   size_t count = 0;
   while (!cr.isEmpty()) {

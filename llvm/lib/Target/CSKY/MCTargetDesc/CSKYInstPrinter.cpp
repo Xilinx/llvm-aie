@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 #include "CSKYInstPrinter.h"
 #include "MCTargetDesc/CSKYBaseInfo.h"
-#include "MCTargetDesc/CSKYMCAsmInfo.h"
+#include "MCTargetDesc/CSKYMCExpr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -138,7 +138,7 @@ void CSKYInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
 }
 
 void CSKYInstPrinter::printDataSymbol(const MCInst *MI, unsigned OpNo,
@@ -150,7 +150,7 @@ void CSKYInstPrinter::printDataSymbol(const MCInst *MI, unsigned OpNo,
   if (MO.isImm())
     O << MO.getImm();
   else
-    MAI.printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, &MAI);
   O << "]";
 }
 
@@ -173,7 +173,7 @@ void CSKYInstPrinter::printConstpool(const MCInst *MI, uint64_t Address,
   assert(MO.isExpr() && "Unknown operand kind in printConstpool");
 
   O << "[";
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
   O << "]";
 }
 

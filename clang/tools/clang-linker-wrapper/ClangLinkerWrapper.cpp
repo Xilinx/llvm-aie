@@ -1302,9 +1302,6 @@ getDeviceInput(const ArgList &Args) {
   // after every regular input file so that libraries may be included out of
   // order. This follows 'ld.lld' semantics which are more lenient.
   bool Extracted = true;
-  llvm::DenseSet<StringRef> ShouldExtract;
-  for (auto &Arg : Args.getAllArgValues(OPT_should_extract))
-    ShouldExtract.insert(Arg);
   while (Extracted) {
     Extracted = false;
     for (OffloadFile &Binary : ArchiveFilesToExtract) {
@@ -1318,9 +1315,8 @@ getDeviceInput(const ArgList &Args) {
           CompatibleTargets.emplace_back(ID);
 
       for (const auto &[Index, ID] : llvm::enumerate(CompatibleTargets)) {
-        // Only extract an if we have an an object matching this target or it
-        // was specifically requested.
-        if (!InputFiles.count(ID) && !ShouldExtract.contains(ID.second))
+        // Only extract an if we have an an object matching this target.
+        if (!InputFiles.count(ID))
           continue;
 
         Expected<bool> ExtractOrErr =
@@ -1334,7 +1330,7 @@ getDeviceInput(const ArgList &Args) {
 
         // Skip including the file if it is an archive that does not resolve
         // any symbols.
-        if (!Extracted && !ShouldExtract.contains(ID.second))
+        if (!Extracted)
           continue;
 
         // If another target needs this binary it must be copied instead.

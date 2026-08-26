@@ -2,7 +2,6 @@ static_library("ProfileData") {
   output_name = "LLVMProfileData"
   deps = [
     "//llvm/lib/DebugInfo/DWARF",
-    "//llvm/lib/DebugInfo/DWARF/LowLevel",
     "//llvm/lib/DebugInfo/Symbolize",
     "//llvm/lib/IR",
     "//llvm/lib/Object",

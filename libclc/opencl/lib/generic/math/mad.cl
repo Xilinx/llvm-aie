@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/math/clc_mad.h>
-#include <clc/opencl/math/mad.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION mad
 #define __CLC_BODY <clc/shared/ternary_def.inc>

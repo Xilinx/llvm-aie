@@ -125,6 +125,79 @@ static constexpr auto BuiltinAArch64Infos =
 #include "clang/Basic/BuiltinsAArch64.def"
     });
 
+void AArch64TargetInfo::setArchFeatures() {
+  if (*ArchInfo == llvm::AArch64::ARMV8R) {
+    HasDotProd = true;
+    HasDIT = true;
+    HasFlagM = true;
+    HasRCPC = true;
+    FPU |= NeonMode;
+    HasCCPP = true;
+    HasCRC = true;
+    HasLSE = true;
+    HasRDM = true;
+  } else if (ArchInfo->Version.getMajor() == 8) {
+    if (ArchInfo->Version.getMinor() >= 7u) {
+      HasWFxT = true;
+    }
+    if (ArchInfo->Version.getMinor() >= 6u) {
+      HasBFloat16 = true;
+      HasMatMul = true;
+    }
+    if (ArchInfo->Version.getMinor() >= 5u) {
+      HasAlternativeNZCV = true;
+      HasFRInt3264 = true;
+      HasSSBS = true;
+      HasSB = true;
+      HasPredRes = true;
+      HasBTI = true;
+    }
+    if (ArchInfo->Version.getMinor() >= 4u) {
+      HasDotProd = true;
+      HasDIT = true;
+      HasFlagM = true;
+    }
+    if (ArchInfo->Version.getMinor() >= 3u) {
+      HasRCPC = true;
+      FPU |= NeonMode;
+    }
+    if (ArchInfo->Version.getMinor() >= 2u) {
+      HasCCPP = true;
+    }
+    if (ArchInfo->Version.getMinor() >= 1u) {
+      HasCRC = true;
+      HasLSE = true;
+      HasRDM = true;
+    }
+  } else if (ArchInfo->Version.getMajor() == 9) {
+    if (ArchInfo->Version.getMinor() >= 2u) {
+      HasWFxT = true;
+    }
+    if (ArchInfo->Version.getMinor() >= 1u) {
+      HasBFloat16 = true;
+      HasMatMul = true;
+    }
+    FPU |= SveMode;
+    HasSVE2 = true;
+    HasFullFP16 = true;
+    HasAlternativeNZCV = true;
+    HasFRInt3264 = true;
+    HasSSBS = true;
+    HasSB = true;
+    HasPredRes = true;
+    HasBTI = true;
+    HasDotProd = true;
+    HasDIT = true;
+    HasFlagM = true;
+    HasRCPC = true;
+    FPU |= NeonMode;
+    HasCCPP = true;
+    HasCRC = true;
+    HasLSE = true;
+    HasRDM = true;
+  }
+}
+
 AArch64TargetInfo::AArch64TargetInfo(const llvm::Triple &Triple,
                                      const TargetOptions &Opts)
     : TargetInfo(Triple), ABI("aapcs") {
@@ -750,36 +823,16 @@ AArch64TargetInfo::getTargetBuiltins() const {
 
 std::optional<std::pair<unsigned, unsigned>>
 AArch64TargetInfo::getVScaleRange(const LangOptions &LangOpts,
-                                  ArmStreamingKind Mode,
+                                  bool IsArmStreamingFunction,
                                   llvm::StringMap<bool> *FeatureMap) const {
-  if (Mode == ArmStreamingKind::NotStreaming &&
-      (LangOpts.VScaleMin || LangOpts.VScaleMax))
+  if (LangOpts.VScaleMin || LangOpts.VScaleMax)
     return std::pair<unsigned, unsigned>(
-        LangOpts.VScaleMin ? LangOpts.VScaleMin : 1,
-        LangOpts.VScaleMax ? LangOpts.VScaleMax : 16);
-
-  if (Mode == ArmStreamingKind::Streaming &&
-      (LangOpts.VScaleStreamingMin || LangOpts.VScaleStreamingMax))
-    return std::pair<unsigned, unsigned>(
-        LangOpts.VScaleStreamingMin ? LangOpts.VScaleStreamingMin : 1,
-        LangOpts.VScaleStreamingMax ? LangOpts.VScaleStreamingMax : 16);
-
-  if (Mode == ArmStreamingKind::StreamingCompatible &&
-      ((LangOpts.VScaleMin && LangOpts.VScaleStreamingMin) ||
-       (LangOpts.VScaleMax && LangOpts.VScaleStreamingMax))) {
-    unsigned Min =
-        std::min(LangOpts.VScaleMin ? LangOpts.VScaleMin : 1,
-                 LangOpts.VScaleStreamingMin ? LangOpts.VScaleStreamingMin : 1);
-    unsigned Max = std::max(
-        LangOpts.VScaleMax ? LangOpts.VScaleMax : 16,
-        LangOpts.VScaleStreamingMax ? LangOpts.VScaleStreamingMax : 16);
-    return std::pair(Min, Max);
-  }
+        LangOpts.VScaleMin ? LangOpts.VScaleMin : 1, LangOpts.VScaleMax);
 
   if (hasFeature("sve") || (FeatureMap && (FeatureMap->lookup("sve"))))
     return std::pair<unsigned, unsigned>(1, 16);
 
-  if (Mode == ArmStreamingKind::Streaming &&
+  if (IsArmStreamingFunction &&
       (hasFeature("sme") || (FeatureMap && (FeatureMap->lookup("sme")))))
     return std::pair<unsigned, unsigned>(1, 16);
 
@@ -1213,6 +1266,7 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   }
 
   setDataLayout();
+  setArchFeatures();
 
   if (HasNoFP) {
     FPU &= ~FPUMode;

@@ -21,7 +21,6 @@
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
-#include "llvm-c/Visibility.h"
 #include "llvm/Analysis/StaticDataProfileInfo.h"
 #include "llvm/BinaryFormat/COFF.h"
 #include "llvm/BinaryFormat/ELF.h"
@@ -192,9 +191,9 @@ void X86AsmPrinter::emitKCFITypeId(const MachineFunction &MF) {
   unsigned DestReg = X86::EAX;
 
   if (F.getParent()->getModuleFlag("kcfi-arity")) {
-    // The ArityToRegMap assumes the 64-bit SysV ABI.
+    // The ArityToRegMap assumes the 64-bit Linux kernel ABI
     [[maybe_unused]] const auto &Triple = MF.getTarget().getTargetTriple();
-    assert(Triple.isArch64Bit() && !Triple.isOSWindows());
+    assert(Triple.isArch64Bit() && Triple.isOSLinux());
 
     // Determine the function's arity (i.e., the number of arguments) at the ABI
     // level by counting the number of parameters that are passed
@@ -1003,11 +1002,11 @@ static bool usesMSVCFloatingPoint(const Triple &TT, const Module &M) {
 
   for (const Function &F : M) {
     for (const Instruction &I : instructions(F)) {
-      if (I.getType()->isFloatingPointTy())
+      if (I.getType()->isFPOrFPVectorTy())
         return true;
 
       for (const auto &Op : I.operands()) {
-        if (Op->getType()->isFloatingPointTy())
+        if (Op->getType()->isFPOrFPVectorTy())
           return true;
       }
     }

@@ -48,7 +48,6 @@ namespace RISCV {
 #define GET_RISCVVSETable_IMPL
 #define GET_RISCVVLXTable_IMPL
 #define GET_RISCVVSXTable_IMPL
-#define GET_RISCVNDSVLNTable_IMPL
 #include "RISCVGenSearchableTables.inc"
 } // namespace RISCV
 

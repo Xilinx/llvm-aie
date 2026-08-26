@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/image/image.h>
+#include <clc/opencl/clc.h>
 
 _CLC_DECL float4 __clc_read_imagef_tex(image2d_t, sampler_t, float2);
 

@@ -49,19 +49,6 @@ def DirectiveCustomValidD : TestFormat_Op<[{
 def DirectiveCustomValidE : TestFormat_Op<[{
   custom<MyDirective>(prop-dict) attr-dict
 }]>, Arguments<(ins UnitAttr:$flag)>;
-def DirectiveCustomValidF : TestFormat_Op<[{
-  $operand custom<MyDirective>(ref($operand)) attr-dict
-}]>, Arguments<(ins Optional<I64>:$operand)>;
-def DirectiveCustomValidG : TestFormat_Op<[{
-  $body custom<MyDirective>(ref($body)) attr-dict
-}]> {
-  let regions = (region AnyRegion:$body);
-}
-def DirectiveCustomValidH : TestFormat_Op<[{
-  $successor custom<MyDirective>(ref($successor)) attr-dict
-}]> {
-  let successors = (successor AnySuccessor:$successor);
-}
 
 //===----------------------------------------------------------------------===//
 // functional-type
@@ -95,7 +82,7 @@ def DirectiveRegionsValid : TestFormat_Op<[{
 //===----------------------------------------------------------------------===//
 
 // CHECK-NOT: error:
-def DirectiveResultsValid : TestFormat_Op<[{
+def DirectiveResultsInvalidA : TestFormat_Op<[{
   type(results) attr-dict
 }]>;
 
@@ -104,7 +91,7 @@ def DirectiveResultsValid : TestFormat_Op<[{
 //===----------------------------------------------------------------------===//
 
 // CHECK-NOT: error:
-def DirectiveSuccessorsValid : TestFormat_Op<[{
+def DirectiveSuccessorsInvalidA : TestFormat_Op<[{
   successors attr-dict
 }]>;
 
@@ -167,7 +154,7 @@ def OptionalValidA : TestFormat_Op<[{
 //===----------------------------------------------------------------------===//
 
 // CHECK-NOT: error
-def StringValid : TestFormat_Op<[{ custom<Foo>("foo") attr-dict }]>;
+def StringInvalidA : TestFormat_Op<[{ custom<Foo>("foo") attr-dict }]>;
 
 //===----------------------------------------------------------------------===//
 // Variables

@@ -315,8 +315,7 @@ bb:
   sandboxir::Context Ctx(C);
   auto &F = *Ctx.createFunction(&LLVMF);
   auto BB = F.begin();
-  sandboxir::SeedCollector SC(&*BB, SE, /*CollectStores=*/true,
-                              /*CollectLoads=*/false);
+  sandboxir::SeedCollector SC(&*BB, SE);
 
   // Find the stores
   auto It = std::next(BB->begin(), 4);
@@ -360,8 +359,7 @@ bb:
   sandboxir::Context Ctx(C);
   auto &F = *Ctx.createFunction(&LLVMF);
   auto BB = F.begin();
-  sandboxir::SeedCollector SC(&*BB, SE, /*CollectStores=*/true,
-                              /*CollectLoads=*/false);
+  sandboxir::SeedCollector SC(&*BB, SE);
 
   // Find the stores
   auto It = std::next(BB->begin(), 4);
@@ -421,8 +419,7 @@ bb:
   sandboxir::Context Ctx(C);
   auto &F = *Ctx.createFunction(&LLVMF);
   auto BB = F.begin();
-  sandboxir::SeedCollector SC(&*BB, SE, /*CollectStores=*/true,
-                              /*CollectLoads=*/false);
+  sandboxir::SeedCollector SC(&*BB, SE);
 
   // Find the stores
   auto It = std::next(BB->begin(), 3);
@@ -463,8 +460,7 @@ bb:
   sandboxir::Context Ctx(C);
   auto &F = *Ctx.createFunction(&LLVMF);
   auto BB = F.begin();
-  sandboxir::SeedCollector SC(&*BB, SE, /*CollectStores=*/true,
-                              /*CollectLoads=*/false);
+  sandboxir::SeedCollector SC(&*BB, SE);
 
   // Find the stores
   auto It = std::next(BB->begin(), 3);
@@ -507,8 +503,7 @@ bb:
   sandboxir::Context Ctx(C);
   auto &F = *Ctx.createFunction(&LLVMF);
   auto BB = F.begin();
-  sandboxir::SeedCollector SC(&*BB, SE, /*CollectStores=*/false,
-                              /*CollectLoads=*/true);
+  sandboxir::SeedCollector SC(&*BB, SE);
 
   // Find the loads
   auto It = std::next(BB->begin(), 2);

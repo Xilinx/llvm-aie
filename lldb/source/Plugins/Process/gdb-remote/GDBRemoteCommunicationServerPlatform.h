@@ -26,8 +26,7 @@ class GDBRemoteCommunicationServerPlatform
     : public GDBRemoteCommunicationServerCommon {
 public:
   GDBRemoteCommunicationServerPlatform(
-      FileSpec debugserver_path, const Socket::SocketProtocol socket_protocol,
-      uint16_t gdbserver_port);
+      const Socket::SocketProtocol socket_protocol, uint16_t gdbserver_port);
 
   ~GDBRemoteCommunicationServerPlatform() override;
 
@@ -41,7 +40,6 @@ public:
   void SetPendingGdbServer(const std::string &socket_name);
 
 protected:
-  const FileSpec m_debugserver_path;
   const Socket::SocketProtocol m_socket_protocol;
   std::recursive_mutex m_spawned_pids_mutex;
   std::set<lldb::pid_t> m_spawned_pids;

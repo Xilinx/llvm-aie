@@ -211,7 +211,7 @@ AST_MATCHER(CXXMethodDecl, usesThisAsConst) {
   FindUsageOfThis UsageOfThis(Finder->getASTContext());
 
   // TraverseStmt does not modify its argument.
-  UsageOfThis.TraverseStmt(Node.getBody());
+  UsageOfThis.TraverseStmt(const_cast<Stmt *>(Node.getBody()));
 
   return UsageOfThis.Usage == Const;
 }

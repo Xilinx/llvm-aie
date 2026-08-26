@@ -1660,18 +1660,18 @@ public:
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const override { return EndLoc; }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &OS) const override {
     switch (Kind) {
     case k_Immediate:
       OS << "Imm<";
-      MAI.printExpr(OS, *Imm.Val);
+      OS << *Imm.Val;
       OS << ">";
       break;
     case k_Memory:
       OS << "Mem<";
-      Mem.Base->print(OS, MAI);
+      Mem.Base->print(OS);
       OS << ", ";
-      MAI.printExpr(OS, *Mem.Off);
+      OS << *Mem.Off;
       OS << ">";
       break;
     case k_RegisterIndex:
@@ -1774,7 +1774,7 @@ static bool isEvaluated(const MCExpr *Expr) {
   case MCExpr::Constant:
     return true;
   case MCExpr::SymbolRef:
-    return (cast<MCSymbolRefExpr>(Expr)->getSpecifier());
+    return (cast<MCSymbolRefExpr>(Expr)->getKind() != MCSymbolRefExpr::VK_None);
   case MCExpr::Binary: {
     const MCBinaryExpr *BE = cast<MCBinaryExpr>(Expr);
     if (!isEvaluated(BE->getLHS()))
@@ -1817,7 +1817,7 @@ static bool needsExpandMemInst(MCInst &Inst, const MCInstrDesc &MCID) {
 
     // Expand symbol.
     const MCSymbolRefExpr *SR = static_cast<const MCSymbolRefExpr *>(Expr);
-    return SR->getSpecifier() == 0;
+    return SR->getKind() == MCSymbolRefExpr::VK_None;
   }
 
   return false;

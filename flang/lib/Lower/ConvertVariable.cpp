@@ -647,19 +647,13 @@ fir::GlobalOp Fortran::lower::defineGlobal(
 
 /// Return linkage attribute for \p var.
 static mlir::StringAttr
-getLinkageAttribute(Fortran::lower::AbstractConverter &converter,
+getLinkageAttribute(fir::FirOpBuilder &builder,
                     const Fortran::lower::pft::Variable &var) {
-  fir::FirOpBuilder &builder = converter.getFirOpBuilder();
   // Runtime type info for a same derived type is identical in each compilation
   // unit. It desired to avoid having to link against module that only define a
   // type. Therefore the runtime type info is generated everywhere it is needed
-  // with `linkonce_odr` LLVM linkage (unless the skipExternalRttiDefinition
-  // option is set, in which case one will need to link against objects of
-  // modules defining types). Builtin objects rtti is always generated because
-  // the builtin module is currently not compiled or part of the runtime.
-  if (var.isRuntimeTypeInfoData() &&
-      (!converter.getLoweringOptions().getSkipExternalRttiDefinition() ||
-       Fortran::semantics::IsFromBuiltinModule(var.getSymbol())))
+  // with `linkonce_odr` LLVM linkage.
+  if (var.isRuntimeTypeInfoData())
     return builder.createLinkOnceODRLinkage();
   if (var.isModuleOrSubmoduleVariable())
     return {}; // external linkage
@@ -679,7 +673,7 @@ static void instantiateGlobal(Fortran::lower::AbstractConverter &converter,
   fir::FirOpBuilder &builder = converter.getFirOpBuilder();
   std::string globalName = converter.mangleName(sym);
   mlir::Location loc = genLocation(converter, sym);
-  mlir::StringAttr linkage = getLinkageAttribute(converter, var);
+  mlir::StringAttr linkage = getLinkageAttribute(builder, var);
   fir::GlobalOp global;
   if (var.isModuleOrSubmoduleVariable()) {
     // A non-intrinsic module global is defined when lowering the module.
@@ -700,29 +694,6 @@ static void instantiateGlobal(Fortran::lower::AbstractConverter &converter,
   mlir::Value cast = builder.createConvert(loc, varAddrType, addrOf);
   Fortran::lower::StatementContext stmtCtx;
   mapSymbolAttributes(converter, var, symMap, stmtCtx, cast);
-}
-
-bool needCUDAAlloc(const Fortran::semantics::Symbol &sym) {
-  if (Fortran::semantics::IsDummy(sym))
-    return false;
-  if (const auto *details{
-          sym.GetUltimate()
-              .detailsIf<Fortran::semantics::ObjectEntityDetails>()}) {
-    if (details->cudaDataAttr() &&
-        (*details->cudaDataAttr() == Fortran::common::CUDADataAttr::Device ||
-         *details->cudaDataAttr() == Fortran::common::CUDADataAttr::Managed ||
-         *details->cudaDataAttr() == Fortran::common::CUDADataAttr::Unified ||
-         *details->cudaDataAttr() == Fortran::common::CUDADataAttr::Shared ||
-         *details->cudaDataAttr() == Fortran::common::CUDADataAttr::Pinned))
-      return true;
-    const Fortran::semantics::DeclTypeSpec *type{details->type()};
-    const Fortran::semantics::DerivedTypeSpec *derived{type ? type->AsDerived()
-                                                            : nullptr};
-    if (derived)
-      if (FindCUDADeviceAllocatableUltimateComponent(*derived))
-        return true;
-  }
-  return false;
 }
 
 //===----------------------------------------------------------------===//
@@ -755,7 +726,7 @@ static mlir::Value createNewLocal(Fortran::lower::AbstractConverter &converter,
   if (ultimateSymbol.test(Fortran::semantics::Symbol::Flag::CrayPointee))
     return builder.create<fir::ZeroOp>(loc, fir::ReferenceType::get(ty));
 
-  if (needCUDAAlloc(ultimateSymbol)) {
+  if (Fortran::semantics::NeedCUDAAlloc(ultimateSymbol)) {
     cuf::DataAttributeAttr dataAttr =
         Fortran::lower::translateSymbolCUFDataAttribute(builder.getContext(),
                                                         ultimateSymbol);
@@ -1110,7 +1081,7 @@ static void instantiateLocal(Fortran::lower::AbstractConverter &converter,
     Fortran::lower::defaultInitializeAtRuntime(converter, var.getSymbol(),
                                                symMap);
   auto *builder = &converter.getFirOpBuilder();
-  if (needCUDAAlloc(var.getSymbol()) &&
+  if (Fortran::semantics::NeedCUDAAlloc(var.getSymbol()) &&
       !cuf::isCUDADeviceContext(builder->getRegion())) {
     cuf::DataAttributeAttr dataAttr =
         Fortran::lower::translateSymbolCUFDataAttribute(builder->getContext(),
@@ -1294,7 +1265,7 @@ instantiateAggregateStore(Fortran::lower::AbstractConverter &converter,
   if (var.isGlobal()) {
     fir::GlobalOp global;
     auto &aggregate = var.getAggregateStore();
-    mlir::StringAttr linkage = getLinkageAttribute(converter, var);
+    mlir::StringAttr linkage = getLinkageAttribute(builder, var);
     if (var.isModuleOrSubmoduleVariable()) {
       // A module global was or will be defined when lowering the module. Emit
       // only a declaration if the global does not exist at that point.
@@ -2499,7 +2470,8 @@ void Fortran::lower::defineModuleVariable(
     AbstractConverter &converter, const Fortran::lower::pft::Variable &var) {
   // Use empty linkage for module variables, which makes them available
   // for use in another unit.
-  mlir::StringAttr linkage = getLinkageAttribute(converter, var);
+  mlir::StringAttr linkage =
+      getLinkageAttribute(converter.getFirOpBuilder(), var);
   if (!var.isGlobal())
     fir::emitFatalError(converter.getCurrentLocation(),
                         "attempting to lower module variable as local");
@@ -2634,9 +2606,10 @@ void Fortran::lower::createIntrinsicModuleGlobal(
 void Fortran::lower::createRuntimeTypeInfoGlobal(
     Fortran::lower::AbstractConverter &converter,
     const Fortran::semantics::Symbol &typeInfoSym) {
+  fir::FirOpBuilder &builder = converter.getFirOpBuilder();
   std::string globalName = converter.mangleName(typeInfoSym);
   auto var = Fortran::lower::pft::Variable(typeInfoSym, /*global=*/true);
-  mlir::StringAttr linkage = getLinkageAttribute(converter, var);
+  mlir::StringAttr linkage = getLinkageAttribute(builder, var);
   defineGlobal(converter, var, globalName, linkage);
 }
 

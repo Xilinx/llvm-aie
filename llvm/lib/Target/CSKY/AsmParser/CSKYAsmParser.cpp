@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/CSKYInstPrinter.h"
-#include "MCTargetDesc/CSKYMCAsmInfo.h"
+#include "MCTargetDesc/CSKYMCExpr.h"
 #include "MCTargetDesc/CSKYMCTargetDesc.h"
 #include "MCTargetDesc/CSKYTargetStreamer.h"
 #include "TargetInfo/CSKYTargetInfo.h"
@@ -430,7 +430,7 @@ public:
     return Tok;
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &OS) const override {
     auto RegName = [](MCRegister Reg) {
       if (Reg)
         return CSKYInstPrinter::getRegisterName(Reg);
@@ -440,10 +440,10 @@ public:
 
     switch (Kind) {
     case CPOP:
-      MAI.printExpr(OS, *getConstpoolOp());
+      OS << *getConstpoolOp();
       break;
     case Immediate:
-      MAI.printExpr(OS, *getImm());
+      OS << *getImm();
       break;
     case KindTy::Register:
       OS << "<register " << RegName(getReg()) << ">";
@@ -848,11 +848,11 @@ bool CSKYAsmParser::processLRW(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out) {
     }
   } else {
     const MCExpr *AdjustExpr = nullptr;
-    if (const auto *CSKYExpr =
-            dyn_cast<MCSpecifierExpr>(Inst.getOperand(1).getExpr())) {
-      if (CSKYExpr->getSpecifier() == CSKY::S_TLSGD ||
-          CSKYExpr->getSpecifier() == CSKY::S_TLSIE ||
-          CSKYExpr->getSpecifier() == CSKY::S_TLSLDM) {
+    if (const CSKYMCExpr *CSKYExpr =
+            dyn_cast<CSKYMCExpr>(Inst.getOperand(1).getExpr())) {
+      if (CSKYExpr->getSpecifier() == CSKYMCExpr::VK_TLSGD ||
+          CSKYExpr->getSpecifier() == CSKYMCExpr::VK_TLSIE ||
+          CSKYExpr->getSpecifier() == CSKYMCExpr::VK_TLSLDM) {
         MCSymbol *Dot = getContext().createNamedTempSymbol();
         Out.emitLabel(Dot);
         AdjustExpr = MCSymbolRefExpr::create(Dot, getContext());
@@ -1172,25 +1172,25 @@ ParseStatus CSKYAsmParser::parseCSKYSymbol(OperandVector &Operands) {
   if (getParser().parseIdentifier(Identifier))
     return Error(getLoc(), "unknown identifier");
 
-  CSKY::Specifier Kind = CSKY::S_None;
+  CSKYMCExpr::Specifier Kind = CSKYMCExpr::VK_None;
   if (Identifier.consume_back("@GOT"))
-    Kind = CSKY::S_GOT;
+    Kind = CSKYMCExpr::VK_GOT;
   else if (Identifier.consume_back("@GOTOFF"))
-    Kind = CSKY::S_GOTOFF;
+    Kind = CSKYMCExpr::VK_GOTOFF;
   else if (Identifier.consume_back("@PLT"))
-    Kind = CSKY::S_PLT;
+    Kind = CSKYMCExpr::VK_PLT;
   else if (Identifier.consume_back("@GOTPC"))
-    Kind = CSKY::S_GOTPC;
+    Kind = CSKYMCExpr::VK_GOTPC;
   else if (Identifier.consume_back("@TLSGD32"))
-    Kind = CSKY::S_TLSGD;
+    Kind = CSKYMCExpr::VK_TLSGD;
   else if (Identifier.consume_back("@GOTTPOFF"))
-    Kind = CSKY::S_TLSIE;
+    Kind = CSKYMCExpr::VK_TLSIE;
   else if (Identifier.consume_back("@TPOFF"))
-    Kind = CSKY::S_TLSLE;
+    Kind = CSKYMCExpr::VK_TLSLE;
   else if (Identifier.consume_back("@TLSLDM32"))
-    Kind = CSKY::S_TLSLDM;
+    Kind = CSKYMCExpr::VK_TLSLDM;
   else if (Identifier.consume_back("@TLSLDO32"))
-    Kind = CSKY::S_TLSLDO;
+    Kind = CSKYMCExpr::VK_TLSLDO;
 
   MCSymbol *Sym = getContext().getInlineAsmLabel(Identifier);
 
@@ -1210,8 +1210,8 @@ ParseStatus CSKYAsmParser::parseCSKYSymbol(OperandVector &Operands) {
   MCBinaryExpr::Opcode Opcode;
   switch (getLexer().getKind()) {
   default:
-    if (Kind != CSKY::S_None)
-      Res = MCSpecifierExpr::create(Res, Kind, getContext());
+    if (Kind != CSKYMCExpr::VK_None)
+      Res = CSKYMCExpr::create(Res, Kind, getContext());
 
     Operands.push_back(CSKYOperand::createImm(Res, S, E));
     return ParseStatus::Success;
@@ -1258,11 +1258,11 @@ ParseStatus CSKYAsmParser::parseDataSymbol(OperandVector &Operands) {
   if (getParser().parseIdentifier(Identifier))
     return Error(getLoc(), "unknown identifier " + Identifier);
 
-  CSKY::Specifier Kind = CSKY::S_None;
+  CSKYMCExpr::Specifier Kind = CSKYMCExpr::VK_None;
   if (Identifier.consume_back("@GOT"))
-    Kind = CSKY::S_GOT_IMM18_BY4;
+    Kind = CSKYMCExpr::VK_GOT_IMM18_BY4;
   else if (Identifier.consume_back("@PLT"))
-    Kind = CSKY::S_PLT_IMM18_BY4;
+    Kind = CSKYMCExpr::VK_PLT_IMM18_BY4;
 
   MCSymbol *Sym = getContext().getInlineAsmLabel(Identifier);
 
@@ -1288,8 +1288,8 @@ ParseStatus CSKYAsmParser::parseDataSymbol(OperandVector &Operands) {
 
     getLexer().Lex(); // Eat ']'.
 
-    if (Kind != CSKY::S_None)
-      Res = MCSpecifierExpr::create(Res, Kind, getContext());
+    if (Kind != CSKYMCExpr::VK_None)
+      Res = CSKYMCExpr::create(Res, Kind, getContext());
 
     Operands.push_back(CSKYOperand::createConstpoolOp(Res, S, E));
     return ParseStatus::Success;

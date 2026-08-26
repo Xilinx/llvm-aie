@@ -56,7 +56,6 @@ M68kTargetInfo::M68kTargetInfo(const llvm::Triple &Triple,
   SizeType = UnsignedInt;
   PtrDiffType = SignedInt;
   IntPtrType = SignedInt;
-  IntAlign = LongAlign = PointerAlign = 16;
 }
 
 bool M68kTargetInfo::setCPU(const std::string &Name) {

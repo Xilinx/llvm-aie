@@ -996,9 +996,8 @@ public:
     return 0;
   }
 
-  virtual Value *
-  getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst, Type *ExpectedType,
-                                    bool CanCreate = true) const {
+  virtual Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                                   Type *ExpectedType) const {
     return nullptr;
   }
 
@@ -1547,10 +1546,6 @@ public:
       auto *VecSrcTy = cast<VectorType>(Operands[0]->getType());
       ArrayRef<int> Mask = Shuffle->getShuffleMask();
       int NumSubElts, SubIndex;
-
-      // Treat undef/poison mask as free (no matter the length).
-      if (all_of(Mask, [](int M) { return M < 0; }))
-        return TTI::TCC_Free;
 
       // TODO: move more of this inside improveShuffleKindFromMask.
       if (Shuffle->changesLength()) {

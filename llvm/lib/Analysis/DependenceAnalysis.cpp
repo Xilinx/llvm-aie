@@ -187,20 +187,6 @@ static void dumpExampleDependence(raw_ostream &OS, DependenceInfo *DA,
           OS << "  da analyze - ";
           if (auto D = DA->depends(&*SrcI, &*DstI,
                                    /*UnderRuntimeAssumptions=*/true)) {
-
-#ifndef NDEBUG
-            // Verify that the distance being zero is equivalent to the
-            // direction being EQ.
-            for (unsigned Level = 1; Level <= D->getLevels(); Level++) {
-              const SCEV *Distance = D->getDistance(Level);
-              bool IsDistanceZero = Distance && Distance->isZero();
-              bool IsDirectionEQ =
-                  D->getDirection(Level) == Dependence::DVEntry::EQ;
-              assert(IsDistanceZero == IsDirectionEQ &&
-                     "Inconsistent distance and direction.");
-            }
-#endif
-
             // Normalize negative direction vectors if required by clients.
             if (NormalizeResults && D->normalize(&SE))
                 OS << "normalized - ";
@@ -2386,16 +2372,19 @@ bool DependenceInfo::testMIV(const SCEV *Src, const SCEV *Dst,
     banerjeeMIVtest(Src, Dst, Loops, Result);
 }
 
+
 // Given a product, e.g., 10*X*Y, returns the first constant operand,
-// in this case 10. If there is no constant part, returns std::nullopt.
-static std::optional<APInt> getConstantPart(const SCEV *Expr) {
+// in this case 10. If there is no constant part, returns NULL.
+static
+const SCEVConstant *getConstantPart(const SCEV *Expr) {
   if (const auto *Constant = dyn_cast<SCEVConstant>(Expr))
-    return Constant->getAPInt();
-  if (const auto *Product = dyn_cast<SCEVMulExpr>(Expr))
+    return Constant;
+  else if (const auto *Product = dyn_cast<SCEVMulExpr>(Expr))
     if (const auto *Constant = dyn_cast<SCEVConstant>(Product->getOperand(0)))
-      return Constant->getAPInt();
-  return std::nullopt;
+      return Constant;
+  return nullptr;
 }
+
 
 //===----------------------------------------------------------------------===//
 // gcdMIVtest -
@@ -2432,10 +2421,11 @@ bool DependenceInfo::gcdMIVtest(const SCEV *Src, const SCEV *Dst,
     const SCEV *Coeff = AddRec->getStepRecurrence(*SE);
     // If the coefficient is the product of a constant and other stuff,
     // we can use the constant in the GCD computation.
-    std::optional<APInt> ConstCoeff = getConstantPart(Coeff);
-    if (!ConstCoeff)
+    const auto *Constant = getConstantPart(Coeff);
+    if (!Constant)
       return false;
-    RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff->abs());
+    APInt ConstCoeff = Constant->getAPInt();
+    RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff.abs());
     Coefficients = AddRec->getStart();
   }
   const SCEV *SrcConst = Coefficients;
@@ -2450,10 +2440,11 @@ bool DependenceInfo::gcdMIVtest(const SCEV *Src, const SCEV *Dst,
     const SCEV *Coeff = AddRec->getStepRecurrence(*SE);
     // If the coefficient is the product of a constant and other stuff,
     // we can use the constant in the GCD computation.
-    std::optional<APInt> ConstCoeff = getConstantPart(Coeff);
-    if (!ConstCoeff)
+    const auto *Constant = getConstantPart(Coeff);
+    if (!Constant)
       return false;
-    RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff->abs());
+    APInt ConstCoeff = Constant->getAPInt();
+    RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff.abs());
     Coefficients = AddRec->getStart();
   }
   const SCEV *DstConst = Coefficients;
@@ -2472,10 +2463,12 @@ bool DependenceInfo::gcdMIVtest(const SCEV *Src, const SCEV *Dst,
       else if (const SCEVMulExpr *Product = dyn_cast<SCEVMulExpr>(Operand)) {
         // Search for constant operand to participate in GCD;
         // If none found; return false.
-        std::optional<APInt> ConstOp = getConstantPart(Product);
+        const SCEVConstant *ConstOp = getConstantPart(Product);
         if (!ConstOp)
           return false;
-        ExtraGCD = APIntOps::GreatestCommonDivisor(ExtraGCD, ConstOp->abs());
+        APInt ConstOpValue = ConstOp->getAPInt();
+        ExtraGCD = APIntOps::GreatestCommonDivisor(ExtraGCD,
+                                                   ConstOpValue.abs());
       }
       else
         return false;
@@ -2527,11 +2520,11 @@ bool DependenceInfo::gcdMIVtest(const SCEV *Src, const SCEV *Dst,
       else {
         // If the coefficient is the product of a constant and other stuff,
         // we can use the constant in the GCD computation.
-        std::optional<APInt> ConstCoeff = getConstantPart(Coeff);
-        if (!ConstCoeff)
+        Constant = getConstantPart(Coeff);
+        if (!Constant)
           return false;
-        RunningGCD =
-            APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff->abs());
+        APInt ConstCoeff = Constant->getAPInt();
+        RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff.abs());
       }
       Inner = AddRec->getStart();
     }
@@ -2544,23 +2537,24 @@ bool DependenceInfo::gcdMIVtest(const SCEV *Src, const SCEV *Dst,
       else {
         // If the coefficient is the product of a constant and other stuff,
         // we can use the constant in the GCD computation.
-        std::optional<APInt> ConstCoeff = getConstantPart(Coeff);
-        if (!ConstCoeff)
+        Constant = getConstantPart(Coeff);
+        if (!Constant)
           return false;
-        RunningGCD =
-            APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff->abs());
+        APInt ConstCoeff = Constant->getAPInt();
+        RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff.abs());
       }
       Inner = AddRec->getStart();
     }
     Delta = SE->getMinusSCEV(SrcCoeff, DstCoeff);
     // If the coefficient is the product of a constant and other stuff,
     // we can use the constant in the GCD computation.
-    std::optional<APInt> ConstCoeff = getConstantPart(Delta);
-    if (!ConstCoeff)
+    Constant = getConstantPart(Delta);
+    if (!Constant)
       // The difference of the two coefficients might not be a product
       // or constant, in which case we give up on this direction.
       continue;
-    RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff->abs());
+    APInt ConstCoeff = Constant->getAPInt();
+    RunningGCD = APIntOps::GreatestCommonDivisor(RunningGCD, ConstCoeff.abs());
     LLVM_DEBUG(dbgs() << "\tRunningGCD = " << RunningGCD << "\n");
     if (RunningGCD != 0) {
       Remainder = ConstDelta.srem(RunningGCD);
@@ -4005,28 +3999,6 @@ DependenceInfo::depends(Instruction *Src, Instruction *Dst,
     if (CompleteLoops[II])
       Result.DV[II - 1].Scalar = false;
 
-  // Set the distance to zero if the direction is EQ.
-  // TODO: Ideally, the distance should be set to 0 immediately simultaneously
-  // with the corresponding direction being set to EQ.
-  for (unsigned II = 1; II <= Result.getLevels(); ++II) {
-    if (Result.getDirection(II) == Dependence::DVEntry::EQ) {
-      if (Result.DV[II - 1].Distance == nullptr)
-        Result.DV[II - 1].Distance = SE->getZero(SrcSCEV->getType());
-      else
-        assert(Result.DV[II - 1].Distance->isZero() &&
-               "Inconsistency between distance and direction");
-    }
-
-#ifndef NDEBUG
-    // Check that the converse (i.e., if the distance is zero, then the
-    // direction is EQ) holds.
-    const SCEV *Distance = Result.getDistance(II);
-    if (Distance && Distance->isZero())
-      assert(Result.getDirection(II) == Dependence::DVEntry::EQ &&
-             "Distance is zero, but direction is not EQ");
-#endif
-  }
-
   if (PossiblyLoopIndependent) {
     // Make sure the LoopIndependent flag is set correctly.
     // All directions must include equal, otherwise no
@@ -4216,65 +4188,67 @@ const SCEV *DependenceInfo::getSplitIteration(const Dependence &Dep,
     }
   }
 
-  assert(!Coupled.empty() && "coupled expected non-empty");
-
-  // test coupled subscript groups
-  SmallVector<Constraint, 4> Constraints(MaxLevels + 1);
-  for (unsigned II = 0; II <= MaxLevels; ++II)
-    Constraints[II].setAny(SE);
-  for (unsigned SI : Coupled.set_bits()) {
-    SmallBitVector Group(Pair[SI].Group);
-    SmallBitVector Sivs(Pairs);
-    SmallBitVector Mivs(Pairs);
-    SmallBitVector ConstrainedLevels(MaxLevels + 1);
-    for (unsigned SJ : Group.set_bits()) {
-      if (Pair[SJ].Classification == Subscript::SIV)
-        Sivs.set(SJ);
-      else
-        Mivs.set(SJ);
-    }
-    while (Sivs.any()) {
-      bool Changed = false;
-      for (unsigned SJ : Sivs.set_bits()) {
-        // SJ is an SIV subscript that's part of the current coupled group
-        unsigned Level;
-        const SCEV *SplitIter = nullptr;
-        (void)testSIV(Pair[SJ].Src, Pair[SJ].Dst, Level, Result, NewConstraint,
-                      SplitIter);
-        if (Level == SplitLevel && SplitIter)
-          return SplitIter;
-        ConstrainedLevels.set(Level);
-        if (intersectConstraints(&Constraints[Level], &NewConstraint))
-          Changed = true;
-        Sivs.reset(SJ);
-      }
-      if (!Changed)
-        continue;
-      // propagate, possibly creating new SIVs and ZIVs
-      for (unsigned SJ : Mivs.set_bits()) {
-        // SJ is an MIV subscript that's part of the current coupled group
-        if (!propagate(Pair[SJ].Src, Pair[SJ].Dst, Pair[SJ].Loops, Constraints,
-                       Result.Consistent))
-          continue;
-        Pair[SJ].Classification = classifyPair(
-            Pair[SJ].Src, LI->getLoopFor(Src->getParent()), Pair[SJ].Dst,
-            LI->getLoopFor(Dst->getParent()), Pair[SJ].Loops);
-        switch (Pair[SJ].Classification) {
-        case Subscript::ZIV:
-          Mivs.reset(SJ);
-          break;
-        case Subscript::SIV:
+  if (Coupled.count()) {
+    // test coupled subscript groups
+    SmallVector<Constraint, 4> Constraints(MaxLevels + 1);
+    for (unsigned II = 0; II <= MaxLevels; ++II)
+      Constraints[II].setAny(SE);
+    for (unsigned SI : Coupled.set_bits()) {
+      SmallBitVector Group(Pair[SI].Group);
+      SmallBitVector Sivs(Pairs);
+      SmallBitVector Mivs(Pairs);
+      SmallBitVector ConstrainedLevels(MaxLevels + 1);
+      for (unsigned SJ : Group.set_bits()) {
+        if (Pair[SJ].Classification == Subscript::SIV)
           Sivs.set(SJ);
-          Mivs.reset(SJ);
-          break;
-        case Subscript::RDIV:
-        case Subscript::MIV:
-          break;
-        default:
-          llvm_unreachable("bad subscript classification");
+        else
+          Mivs.set(SJ);
+      }
+      while (Sivs.any()) {
+        bool Changed = false;
+        for (unsigned SJ : Sivs.set_bits()) {
+          // SJ is an SIV subscript that's part of the current coupled group
+          unsigned Level;
+          const SCEV *SplitIter = nullptr;
+          (void) testSIV(Pair[SJ].Src, Pair[SJ].Dst, Level,
+                         Result, NewConstraint, SplitIter);
+          if (Level == SplitLevel && SplitIter)
+            return SplitIter;
+          ConstrainedLevels.set(Level);
+          if (intersectConstraints(&Constraints[Level], &NewConstraint))
+            Changed = true;
+          Sivs.reset(SJ);
+        }
+        if (Changed) {
+          // propagate, possibly creating new SIVs and ZIVs
+          for (unsigned SJ : Mivs.set_bits()) {
+            // SJ is an MIV subscript that's part of the current coupled group
+            if (propagate(Pair[SJ].Src, Pair[SJ].Dst,
+                          Pair[SJ].Loops, Constraints, Result.Consistent)) {
+              Pair[SJ].Classification =
+                classifyPair(Pair[SJ].Src, LI->getLoopFor(Src->getParent()),
+                             Pair[SJ].Dst, LI->getLoopFor(Dst->getParent()),
+                             Pair[SJ].Loops);
+              switch (Pair[SJ].Classification) {
+              case Subscript::ZIV:
+                Mivs.reset(SJ);
+                break;
+              case Subscript::SIV:
+                Sivs.set(SJ);
+                Mivs.reset(SJ);
+                break;
+              case Subscript::RDIV:
+              case Subscript::MIV:
+                break;
+              default:
+                llvm_unreachable("bad subscript classification");
+              }
+            }
+          }
         }
       }
     }
   }
   llvm_unreachable("somehow reached end of routine");
+  return nullptr;
 }

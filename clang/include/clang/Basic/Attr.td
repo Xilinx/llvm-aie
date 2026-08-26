@@ -498,22 +498,9 @@ def TargetHasDLLImportExport : TargetSpec {
 def TargetItaniumCXXABI : TargetSpec {
   let CustomCode = [{ Target.getCXXABI().isItaniumFamily() }];
 }
-
 def TargetMicrosoftCXXABI : TargetArch<["x86", "x86_64", "arm", "thumb", "aarch64"]> {
   let CustomCode = [{ Target.getCXXABI().isMicrosoft() }];
 }
-
-// The target follows Microsoft record layout. Usually this happens in two
-// cases: 1. the target itself has Microsoft C++ ABI, e.g. x86_64 in MSVC
-// environment on Windows 2. an offloading target e.g. amdgcn or nvptx with
-// a host target in MSVC environment on Windows.
-def TargetMicrosoftRecordLayout : TargetArch<["x86", "x86_64", "arm", "thumb",
-                                              "aarch64", "amdgcn", "nvptx",
-                                              "nvptx64", "spirv", "spirv32",
-                                              "spirv64"]> {
-  let CustomCode = [{ Target.hasMicrosoftRecordLayout() }];
-}
-
 def TargetELF : TargetSpec {
   let ObjectFormats = ["ELF"];
 }
@@ -982,13 +969,6 @@ def AnalyzerNoReturn : InheritableAttr {
   let Spellings = [GNU<"analyzer_noreturn">];
   // TODO: Add subject list.
   let Documentation = [Undocumented];
-}
-
-def InferredNoReturn : InheritableAttr {
-  let Spellings = []; 
-  let SemaHandler = 0;
-  let Subjects = SubjectList<[Function], ErrorDiag>;
-  let Documentation = [InternalOnly];
 }
 
 def Annotate : InheritableParamOrStmtAttr {
@@ -1808,7 +1788,7 @@ def Destructor : InheritableAttr {
   let Documentation = [CtorDtorDocs];
 }
 
-def EmptyBases : InheritableAttr, TargetSpecificAttr<TargetMicrosoftRecordLayout> {
+def EmptyBases : InheritableAttr, TargetSpecificAttr<TargetMicrosoftCXXABI> {
   let Spellings = [Declspec<"empty_bases">];
   let Subjects = SubjectList<[CXXRecord]>;
   let Documentation = [EmptyBasesDocs];
@@ -2040,7 +2020,7 @@ def Restrict : InheritableAttr {
   let Documentation = [RestrictDocs];
 }
 
-def LayoutVersion : InheritableAttr, TargetSpecificAttr<TargetMicrosoftRecordLayout> {
+def LayoutVersion : InheritableAttr, TargetSpecificAttr<TargetMicrosoftCXXABI> {
   let Spellings = [Declspec<"layout_version">];
   let Args = [UnsignedArgument<"Version">];
   let Subjects = SubjectList<[CXXRecord]>;
@@ -2258,7 +2238,7 @@ def NoUniqueAddress : InheritableAttr {
   let Spellings = [CXX11<"", "no_unique_address", 201803>, CXX11<"msvc", "no_unique_address", 201803>];
   let TargetSpecificSpellings = [
     TargetSpecificSpelling<TargetItaniumCXXABI, [CXX11<"", "no_unique_address", 201803>]>,
-    TargetSpecificSpelling<TargetMicrosoftRecordLayout, [CXX11<"msvc", "no_unique_address", 201803>]>,
+    TargetSpecificSpelling<TargetMicrosoftCXXABI, [CXX11<"msvc", "no_unique_address", 201803>]>,
   ];
   let Documentation = [NoUniqueAddressDocs];
 }
@@ -3072,26 +3052,6 @@ def Regparm : TypeAttr {
   let Documentation = [RegparmDocs];
   // Represented as part of the enclosing function type.
   let ASTNode = 0;
-}
-
-def SwiftType : Attr {
-  // This attribute has no spellings as it is only ever created implicitly
-  // from API notes.
-  let Spellings = [];
-  let Args = [StringArgument<"TypeString">];
-  let SemaHandler = 0;
-  let Documentation = [InternalOnly];
-}
-
-def SwiftNullability : Attr {
-  // This attribute has no spellings as it is only ever created implicitly
-  // from API notes.
-  let Spellings = [];
-  let Args = [EnumArgument<"Kind", "Kind", /*is_string=*/false,
-                           ["non_null", "nullable", "unspecified", "nullable_result"],
-                           ["NonNull", "Nullable", "Unspecified", "NullableResult"]>];
-  let SemaHandler = 0;
-  let Documentation = [InternalOnly];
 }
 
 def SwiftAsyncName : InheritableAttr {

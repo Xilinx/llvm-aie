@@ -1,5 +1,5 @@
-// REQUIRES: riscv-registered-target
 // RUN: %clang --target=riscv32 -mcpu=andes-a45 --print-enabled-extensions | FileCheck %s
+// REQUIRES: riscv-registered-target
 
 // CHECK: Extensions enabled for the given RISC-V target
 // CHECK-EMPTY:

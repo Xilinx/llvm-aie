@@ -737,7 +737,7 @@ Sections:
     Type: SHT_LLVM_BB_ADDR_MAP
     Link: 2
     Entries:
-      - Version: 2
+      - Version: 1
         BBRanges:
           - BaseAddress: 0x33333
             BBEntries:
@@ -904,7 +904,7 @@ Sections:
   SmallString<128> UnsupportedLowVersionYamlString(CommonYamlString);
   UnsupportedLowVersionYamlString += R"(
       - Version: 1
-        Feature: 0x0
+        Feature: 0x4
         BBRanges:
           - BBEntries:
               - AddressOffset: 0x0
@@ -915,7 +915,8 @@ Sections:
   {
     SCOPED_TRACE("unsupported version");
     DoCheck(UnsupportedLowVersionYamlString,
-            "unsupported SHT_LLVM_BB_ADDR_MAP version: 1");
+            "version should be >= 2 for SHT_LLVM_BB_ADDR_MAP when PGO features "
+            "are enabled: version = 1 feature = 4");
   }
 
   // Check that we fail when function entry count is enabled but not provided.

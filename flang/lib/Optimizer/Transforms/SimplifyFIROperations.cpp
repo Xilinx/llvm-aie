@@ -234,10 +234,6 @@ public:
       loop.setLocalSymsAttr(nullptr);
     }
 
-    for (auto [reduceVar, reduceArg] :
-         llvm::zip_equal(loop.getReduceVars(), loop.getRegionReduceArgs()))
-      rewriter.replaceAllUsesWith(reduceArg, reduceVar);
-
     // Collect iteration variable(s) allocations so that we can move them
     // outside the `fir.do_concurrent` wrapper.
     llvm::SmallVector<mlir::Operation *> opsToMove;
@@ -261,15 +257,11 @@ public:
       innermostUnorderdLoop = rewriter.create<fir::DoLoopOp>(
           doConcurentOp.getLoc(), lb, ub, st,
           /*unordred=*/true, /*finalCountValue=*/false,
-          /*iterArgs=*/std::nullopt, loop.getReduceVars(),
+          /*iterArgs=*/std::nullopt, loop.getReduceOperands(),
           loop.getReduceAttrsAttr());
       ivArgs.push_back(innermostUnorderdLoop.getInductionVar());
       rewriter.setInsertionPointToStart(innermostUnorderdLoop.getBody());
     }
-
-    loop.getRegion().front().eraseArguments(loop.getNumInductionVars() +
-                                                loop.getNumLocalOperands(),
-                                            loop.getNumReduceOperands());
 
     rewriter.inlineBlockBefore(
         &loopBlock, innermostUnorderdLoop.getBody()->getTerminator(), ivArgs);

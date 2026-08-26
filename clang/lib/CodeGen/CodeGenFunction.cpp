@@ -1109,16 +1109,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   // Add vscale_range attribute if appropriate.
   llvm::StringMap<bool> FeatureMap;
-  auto IsArmStreaming = TargetInfo::ArmStreamingKind::NotStreaming;
+  bool IsArmStreaming = false;
   if (FD) {
     getContext().getFunctionFeatureMap(FeatureMap, FD);
-    if (const auto *T = FD->getType()->getAs<FunctionProtoType>())
-      if (T->getAArch64SMEAttributes() &
-          FunctionType::SME_PStateSMCompatibleMask)
-        IsArmStreaming = TargetInfo::ArmStreamingKind::StreamingCompatible;
-
-    if (IsArmStreamingFunction(FD, true))
-      IsArmStreaming = TargetInfo::ArmStreamingKind::Streaming;
+    IsArmStreaming = IsArmStreamingFunction(FD, true);
   }
   std::optional<std::pair<unsigned, unsigned>> VScaleRange =
       getContext().getTargetInfo().getVScaleRange(getLangOpts(), IsArmStreaming,

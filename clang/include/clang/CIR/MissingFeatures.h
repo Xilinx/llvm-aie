@@ -81,6 +81,7 @@ struct MissingFeatures {
   static bool opFuncMultipleReturnVals() { return false; }
   static bool opFuncAttributesForDefinition() { return false; }
   static bool opFuncMaybeHandleStaticInExternC() { return false; }
+  static bool opFuncGlobalAliases() { return false; }
   static bool setLLVMFunctionFEnvAttributes() { return false; }
   static bool setFunctionAttributes() { return false; }
 
@@ -109,9 +110,6 @@ struct MissingFeatures {
   static bool opCallCIRGenFuncInfoExtParamInfo() { return false; }
   static bool opCallLandingPad() { return false; }
   static bool opCallContinueBlock() { return false; }
-
-  // CXXNewExpr
-  static bool exprNewNullCheck() { return false; }
 
   // FnInfoOpts -- This is used to track whether calls are chain calls or
   // instance methods. Classic codegen uses chain call to track and extra free
@@ -172,15 +170,12 @@ struct MissingFeatures {
   static bool alignCXXRecordDecl() { return false; }
   static bool armComputeVolatileBitfields() { return false; }
   static bool asmLabelAttr() { return false; }
-  static bool assignMemcpyizer() { return false; }
   static bool astVarDeclInterface() { return false; }
-  static bool attributeBuiltin() { return false; }
   static bool attributeNoBuiltin() { return false; }
   static bool bitfields() { return false; }
   static bool builtinCall() { return false; }
   static bool builtinCallF128() { return false; }
   static bool builtinCallMathErrno() { return false; }
-  static bool builtinCheckKind() { return false; }
   static bool cgFPOptionsRAII() { return false; }
   static bool cirgenABIInfo() { return false; }
   static bool cleanupAfterErrorDiags() { return false; }

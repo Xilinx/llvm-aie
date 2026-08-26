@@ -13,17 +13,17 @@ module m
 !
   type, abstract :: boundProcType
    contains
-    !WARNING: Attribute 'PUBLIC' cannot be used more than once [-Wredundant-attribute]
+    !WARNING: Attribute 'PUBLIC' cannot be used more than once
     procedure(subPublic), public, deferred, public :: publicBinding
-    !WARNING: Attribute 'PRIVATE' cannot be used more than once [-Wredundant-attribute]
+    !WARNING: Attribute 'PRIVATE' cannot be used more than once
     procedure(subPrivate), private, deferred, private :: privateBinding
-    !WARNING: Attribute 'DEFERRED' cannot be used more than once [-Wredundant-attribute]
+    !WARNING: Attribute 'DEFERRED' cannot be used more than once
     procedure(subDeferred), deferred, public, deferred :: deferredBinding
-    !WARNING: Attribute 'NON_OVERRIDABLE' cannot be used more than once [-Wredundant-attribute]
+    !WARNING: Attribute 'NON_OVERRIDABLE' cannot be used more than once
     procedure, non_overridable, public, non_overridable :: subNon_overridable;
-    !WARNING: Attribute 'NOPASS' cannot be used more than once [-Wredundant-attribute]
+    !WARNING: Attribute 'NOPASS' cannot be used more than once
     procedure(subNopass), nopass, deferred, nopass :: nopassBinding
-    !WARNING: Attribute 'PASS' cannot be used more than once [-Wredundant-attribute]
+    !WARNING: Attribute 'PASS' cannot be used more than once
     procedure(subPass), pass, deferred, pass :: passBinding
     !ERROR: Attributes 'PASS' and 'NOPASS' conflict with each other
     procedure(subPassNopass), pass, deferred, nopass :: passNopassBinding  ! C781

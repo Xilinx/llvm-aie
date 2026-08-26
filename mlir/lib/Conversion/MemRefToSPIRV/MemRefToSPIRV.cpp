@@ -21,6 +21,7 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Visitors.h"
+#include "llvm/Support/Debug.h"
 #include <cassert>
 #include <optional>
 

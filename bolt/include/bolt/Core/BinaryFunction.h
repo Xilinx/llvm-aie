@@ -1663,11 +1663,7 @@ public:
       Offset = I->first;
     }
     assert(I->first == Offset && "CFI pointing to unknown instruction");
-    // When dealing with RememberState, we place this CFI in FrameInstructions.
-    // We want to ensure RememberState and RestoreState CFIs are in the same
-    // list in order to properly populate the StateStack.
-    if (I == Instructions.begin() &&
-        Inst.getOperation() != MCCFIInstruction::OpRememberState) {
+    if (I == Instructions.begin()) {
       CIEFrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
       return;
     }

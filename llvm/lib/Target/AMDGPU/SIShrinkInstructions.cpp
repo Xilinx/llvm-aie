@@ -842,7 +842,10 @@ bool SIShrinkInstructions::run(MachineFunction &MF) {
 
   unsigned VCCReg = ST->isWave32() ? AMDGPU::VCC_LO : AMDGPU::VCC;
 
-  for (MachineBasicBlock &MBB : MF) {
+  for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
+                                                  BI != BE; ++BI) {
+
+    MachineBasicBlock &MBB = *BI;
     MachineBasicBlock::iterator I, Next;
     for (I = MBB.begin(); I != MBB.end(); I = Next) {
       Next = std::next(I);

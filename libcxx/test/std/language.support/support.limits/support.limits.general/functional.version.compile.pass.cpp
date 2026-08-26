@@ -32,10 +32,6 @@
 #    error "__cpp_lib_boyer_moore_searcher should not be defined before c++17"
 #  endif
 
-#  ifdef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should not be defined before c++20"
-#  endif
-
 #  ifdef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should not be defined before c++20"
 #  endif
@@ -96,10 +92,6 @@
 
 #  ifdef __cpp_lib_boyer_moore_searcher
 #    error "__cpp_lib_boyer_moore_searcher should not be defined before c++17"
-#  endif
-
-#  ifdef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should not be defined before c++20"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_functional
@@ -171,10 +163,6 @@
 #  endif
 #  if __cpp_lib_boyer_moore_searcher != 201603L
 #    error "__cpp_lib_boyer_moore_searcher should have the value 201603L in c++17"
-#  endif
-
-#  ifdef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should not be defined before c++20"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_functional
@@ -255,13 +243,6 @@
 #  endif
 #  if __cpp_lib_boyer_moore_searcher != 201603L
 #    error "__cpp_lib_boyer_moore_searcher should have the value 201603L in c++20"
-#  endif
-
-#  ifndef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should be defined in c++20"
-#  endif
-#  if __cpp_lib_common_reference_wrapper != 202302L
-#    error "__cpp_lib_common_reference_wrapper should have the value 202302L in c++20"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_functional
@@ -354,13 +335,6 @@
 #  endif
 #  if __cpp_lib_boyer_moore_searcher != 201603L
 #    error "__cpp_lib_boyer_moore_searcher should have the value 201603L in c++23"
-#  endif
-
-#  ifndef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should be defined in c++23"
-#  endif
-#  if __cpp_lib_common_reference_wrapper != 202302L
-#    error "__cpp_lib_common_reference_wrapper should have the value 202302L in c++23"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_functional
@@ -465,13 +439,6 @@
 #  endif
 #  if __cpp_lib_boyer_moore_searcher != 201603L
 #    error "__cpp_lib_boyer_moore_searcher should have the value 201603L in c++26"
-#  endif
-
-#  ifndef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should be defined in c++26"
-#  endif
-#  if __cpp_lib_common_reference_wrapper != 202302L
-#    error "__cpp_lib_common_reference_wrapper should have the value 202302L in c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_functional

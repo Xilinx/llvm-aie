@@ -144,8 +144,7 @@ TaggedUnionMemberCountCheck::getNumberOfEnumValues(const EnumDecl *ED) {
 
   if (EnableCountingEnumHeuristic && LastEnumConstant &&
       isCountingEnumLikeName(LastEnumConstant->getName()) &&
-      llvm::APSInt::isSameValue(LastEnumConstant->getInitVal(),
-                                llvm::APSInt::get(EnumValues.size() - 1))) {
+      (LastEnumConstant->getInitVal() == (EnumValues.size() - 1))) {
     return {EnumValues.size() - 1, LastEnumConstant};
   }
 

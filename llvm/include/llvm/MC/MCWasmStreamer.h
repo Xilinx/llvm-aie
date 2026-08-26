@@ -58,6 +58,8 @@ public:
   void finishImpl() override;
 
 private:
+  void emitInstToData(const MCInst &Inst, const MCSubtargetInfo &) override;
+
   bool SeenIdent;
 };
 

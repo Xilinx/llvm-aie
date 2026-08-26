@@ -1,18 +1,10 @@
-// RUN: mlir-opt -allow-unregistered-dialect -split-input-file -test-legalize-patterns -verify-diagnostics -profile-actions-to=- %s | FileCheck %s
+// RUN: mlir-opt -allow-unregistered-dialect -split-input-file -test-legalize-patterns -verify-diagnostics %s | FileCheck %s
 
-//      CHECK: "name": "pass-execution", "cat": "PERF", "ph": "B"
-//      CHECK: "name": "apply-conversion", "cat": "PERF", "ph": "B"
-//      CHECK: "name": "apply-pattern", "cat": "PERF", "ph": "B"
-//      CHECK: "name": "apply-pattern", "cat": "PERF", "ph": "E"
-// Note: Listener notifications appear after the pattern application because
-// the conversion driver sends all notifications at the end of the conversion
-// in bulk.
 //      CHECK: notifyOperationInserted: test.legal_op_a, was unlinked
 // CHECK-NEXT: notifyOperationReplaced: test.illegal_op_a
-//      CHECK: notifyOperationModified: func.return
+// CHECK-NEXT: notifyOperationModified: func.return
 // CHECK-NEXT: notifyOperationErased: test.illegal_op_a
-//      CHECK: "name": "apply-conversion", "cat": "PERF", "ph": "E"
-//      CHECK: "name": "pass-execution", "cat": "PERF", "ph": "E"
+
 // CHECK-LABEL: verifyDirectPattern
 func.func @verifyDirectPattern() -> i32 {
   // CHECK-NEXT:  "test.legal_op_a"() <{status = "Success"}
@@ -25,11 +17,11 @@ func.func @verifyDirectPattern() -> i32 {
 
 //      CHECK: notifyOperationInserted: test.illegal_op_e, was unlinked
 // CHECK-NEXT: notifyOperationReplaced: test.illegal_op_c
-//      CHECK: notifyOperationModified: func.return
+// CHECK-NEXT: notifyOperationModified: func.return
 // CHECK-NEXT: notifyOperationErased: test.illegal_op_c
 // CHECK-NEXT: notifyOperationInserted: test.legal_op_a, was unlinked
 // CHECK-NEXT: notifyOperationReplaced: test.illegal_op_e
-//      CHECK: notifyOperationErased: test.illegal_op_e
+// CHECK-NEXT: notifyOperationErased: test.illegal_op_e
 
 // CHECK-LABEL: verifyLargerBenefit
 func.func @verifyLargerBenefit() -> i32 {
@@ -442,7 +434,7 @@ func.func @test_properties_rollback() {
   // CHECK: test.with_properties a = 32,
   // expected-remark @below{{op 'test.with_properties' is not legalizable}}
   test.with_properties
-      a = 32, b = "foo", c = "bar", flag = true, array = [1, 2, 3, 4], array32 = [5, 6]
+      a = 32, b = "foo", c = "bar", flag = true, array = [1, 2, 3, 4]
       {modify_inplace}
   "test.return"() : () -> ()
 }

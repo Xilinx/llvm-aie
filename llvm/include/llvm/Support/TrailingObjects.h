@@ -228,18 +228,12 @@ class TrailingObjects : private trailing_objects_internal::TrailingObjectsImpl<
 
   using ParentType::getTrailingObjectsImpl;
 
-  template <bool Strict> static void verifyTrailingObjectsAssertions() {
-    // The static_assert for BaseTy must be in a function, and not at
-    // class-level  because BaseTy isn't complete at class instantiation time,
-    // but will be by the time this function is instantiated.
+  // This function contains only a static_assert BaseTy is final. The
+  // static_assert must be in a function, and not at class-level
+  // because BaseTy isn't complete at class instantiation time, but
+  // will be by the time this function is instantiated.
+  static void verifyTrailingObjectsAssertions() {
     static_assert(std::is_final<BaseTy>(), "BaseTy must be final.");
-
-    // Verify that templated getTrailingObjects() is used only with multiple
-    // trailing types. Use getTrailingObjectsNonStrict() which does not check
-    // this.
-    static_assert(!Strict || sizeof...(TrailingTys) > 1,
-                  "Use templated getTrailingObjects() only when there are "
-                  "multiple trailing types");
   }
 
   // These two methods are the base of the recursion for this method.
@@ -289,7 +283,7 @@ public:
   /// (which must be one of those specified in the class template). The
   /// array may have zero or more elements in it.
   template <typename T> const T *getTrailingObjects() const {
-    verifyTrailingObjectsAssertions<true>();
+    verifyTrailingObjectsAssertions();
     // Forwards to an impl function with overloads, since member
     // function templates can't be specialized.
     return this->getTrailingObjectsImpl(
@@ -301,7 +295,7 @@ public:
   /// (which must be one of those specified in the class template). The
   /// array may have zero or more elements in it.
   template <typename T> T *getTrailingObjects() {
-    verifyTrailingObjectsAssertions<true>();
+    verifyTrailingObjectsAssertions();
     // Forwards to an impl function with overloads, since member
     // function templates can't be specialized.
     return this->getTrailingObjectsImpl(
@@ -316,20 +310,14 @@ public:
     static_assert(sizeof...(TrailingTys) == 1,
                   "Can use non-templated getTrailingObjects() only when there "
                   "is a single trailing type");
-    verifyTrailingObjectsAssertions<false>();
-    return this->getTrailingObjectsImpl(
-        static_cast<const BaseTy *>(this),
-        TrailingObjectsBase::OverloadToken<FirstTrailingType>());
+    return getTrailingObjects<FirstTrailingType>();
   }
 
   FirstTrailingType *getTrailingObjects() {
     static_assert(sizeof...(TrailingTys) == 1,
                   "Can use non-templated getTrailingObjects() only when there "
                   "is a single trailing type");
-    verifyTrailingObjectsAssertions<false>();
-    return this->getTrailingObjectsImpl(
-        static_cast<BaseTy *>(this),
-        TrailingObjectsBase::OverloadToken<FirstTrailingType>());
+    return getTrailingObjects<FirstTrailingType>();
   }
 
   // Functions that return the trailing objects as ArrayRefs.
@@ -347,31 +335,6 @@ public:
 
   ArrayRef<FirstTrailingType> getTrailingObjects(size_t N) const {
     return ArrayRef(getTrailingObjects(), N);
-  }
-
-  // Non-strict forms of templated `getTrailingObjects` that work with single
-  // trailing type.
-  template <typename T> const T *getTrailingObjectsNonStrict() const {
-    verifyTrailingObjectsAssertions<false>();
-    return this->getTrailingObjectsImpl(
-        static_cast<const BaseTy *>(this),
-        TrailingObjectsBase::OverloadToken<T>());
-  }
-
-  template <typename T> T *getTrailingObjectsNonStrict() {
-    verifyTrailingObjectsAssertions<false>();
-    return this->getTrailingObjectsImpl(
-        static_cast<BaseTy *>(this), TrailingObjectsBase::OverloadToken<T>());
-  }
-
-  template <typename T>
-  MutableArrayRef<T> getTrailingObjectsNonStrict(size_t N) {
-    return MutableArrayRef(getTrailingObjectsNonStrict<T>(), N);
-  }
-
-  template <typename T>
-  ArrayRef<T> getTrailingObjectsNonStrict(size_t N) const {
-    return ArrayRef(getTrailingObjectsNonStrict<T>(), N);
   }
 
   /// Returns the size of the trailing data, if an object were

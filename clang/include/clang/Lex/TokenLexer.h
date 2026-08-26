@@ -65,7 +65,7 @@ class TokenLexer {
 
   /// The offset of the macro expansion in the
   /// "source location address space".
-  SourceLocation::UIntTy MacroStartSLocOffset;
+  unsigned MacroStartSLocOffset;
 
   /// Location of the macro definition.
   SourceLocation MacroDefStart;

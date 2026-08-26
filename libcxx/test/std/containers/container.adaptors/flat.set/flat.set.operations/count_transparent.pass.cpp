@@ -35,7 +35,7 @@ static_assert(!CanCount<NonTransparentSet>);
 static_assert(!CanCount<const NonTransparentSet>);
 
 template <class KeyContainer>
-constexpr void test_one() {
+void test_one() {
   using Key = typename KeyContainer::value_type;
   using M   = std::flat_set<Key, TransparentComparator, KeyContainer>;
   {
@@ -59,12 +59,9 @@ constexpr void test_one() {
   }
 }
 
-constexpr bool test() {
+void test() {
   test_one<std::vector<std::string>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test_one<std::deque<std::string>>();
+  test_one<std::deque<std::string>>();
   test_one<MinSequenceContainer<std::string>>();
   test_one<std::vector<std::string, min_allocator<std::string>>>();
 
@@ -84,15 +81,10 @@ constexpr bool test() {
     assert(m.count("beta") == 1);
     assert(m.count("eta2") == 0);
   }
-
-  return true;
 }
 
 int main(int, char**) {
   test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

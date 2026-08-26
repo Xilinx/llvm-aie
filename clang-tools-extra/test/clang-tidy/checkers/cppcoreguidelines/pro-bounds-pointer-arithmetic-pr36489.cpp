@@ -1,14 +1,11 @@
 // RUN: %check_clang_tidy -std=c++14-or-later %s cppcoreguidelines-pro-bounds-pointer-arithmetic %t
 
 // Fix PR36489 and detect auto-deduced value correctly.
-typedef char* charPtr;
-
 char *getPtr();
 auto getPtrAuto() { return getPtr(); }
 decltype(getPtr()) getPtrDeclType();
 decltype(auto) getPtrDeclTypeAuto() { return getPtr(); }
 auto getPtrWithTrailingReturnType() -> char *;
-charPtr getCharPtr() { return getPtr(); }
 
 void auto_deduction_binary() {
   auto p1 = getPtr() + 1;
@@ -31,10 +28,6 @@ void auto_deduction_binary() {
   // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: do not use pointer arithmetic
   auto *p9 = getPtrDeclTypeAuto() + 1;
   // CHECK-MESSAGES: :[[@LINE-1]]:35: warning: do not use pointer arithmetic
-  auto p10 = getCharPtr() + 1;
-  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: do not use pointer 
-  auto* p11 = getCharPtr() + 1;
-  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not use pointer arithmetic
 }
 
 void auto_deduction_subscript() {
@@ -56,7 +49,5 @@ void auto_deduction_subscript() {
   auto p7 = getPtrDeclType()[8];
   // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use pointer arithmetic
   auto p8 = getPtrDeclTypeAuto()[9];
-  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use pointer arithmetic
-  auto p9 = getCharPtr()[10];
   // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use pointer arithmetic
 }

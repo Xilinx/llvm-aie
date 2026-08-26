@@ -21,6 +21,8 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCFragment.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
@@ -127,7 +129,7 @@ bool MCAssembler::isThumbFunc(const MCSymbol *Symbol) const {
   if (!Expr->evaluateAsRelocatable(V, nullptr))
     return false;
 
-  if (V.getSubSym() || V.getSpecifier())
+  if (V.getSubSym() || V.getSpecifier() != MCSymbolRefExpr::VK_None)
     return false;
 
   auto *Sym = V.getAddSym();
@@ -141,7 +143,7 @@ bool MCAssembler::isThumbFunc(const MCSymbol *Symbol) const {
   return true;
 }
 
-bool MCAssembler::evaluateFixup(const MCFragment &F, MCFixup &Fixup,
+bool MCAssembler::evaluateFixup(const MCFragment *DF, const MCFixup &Fixup,
                                 MCValue &Target, uint64_t &Value,
                                 bool RecordReloc,
                                 MutableArrayRef<char> Contents) const {
@@ -161,25 +163,38 @@ bool MCAssembler::evaluateFixup(const MCFragment &F, MCFixup &Fixup,
   }
 
   bool IsResolved = false;
-  if (auto State = getBackend().evaluateFixup(F, Fixup, Target, Value)) {
-    IsResolved = *State;
+  unsigned FixupFlags = getBackend().getFixupKindInfo(Fixup.getKind()).Flags;
+  if (FixupFlags & MCFixupKindInfo::FKF_IsTarget) {
+    IsResolved = getBackend().evaluateTargetFixup(Fixup, Target, Value);
   } else {
     const MCSymbol *Add = Target.getAddSym();
     const MCSymbol *Sub = Target.getSubSym();
-    Value += Target.getConstant();
+    Value = Target.getConstant();
     if (Add && Add->isDefined())
       Value += getSymbolOffset(*Add);
     if (Sub && Sub->isDefined())
       Value -= getSymbolOffset(*Sub);
 
-    if (Fixup.isPCRel()) {
-      Value -= getFragmentOffset(F) + Fixup.getOffset();
+    bool IsPCRel = FixupFlags & MCFixupKindInfo::FKF_IsPCRel;
+    bool ShouldAlignPC =
+        FixupFlags & MCFixupKindInfo::FKF_IsAlignedDownTo32Bits;
+    if (IsPCRel) {
+      uint64_t Offset = getFragmentOffset(*DF) + Fixup.getOffset();
+
+      // A number of ARM fixups in Thumb mode require that the effective PC
+      // address be determined as the 32-bit aligned version of the actual
+      // offset.
+      if (ShouldAlignPC)
+        Offset &= ~0x3;
+      Value -= Offset;
+
       if (Add && !Sub && !Add->isUndefined() && !Add->isAbsolute()) {
         IsResolved = getWriter().isSymbolRefDifferenceFullyResolvedImpl(
-            *Add, F, false, true);
+            *Add, *DF, false, true);
       }
     } else {
       IsResolved = Target.isAbsolute();
+      assert(!ShouldAlignPC && "FKF_IsAlignedDownTo32Bits must be PC-relative");
     }
   }
 
@@ -188,7 +203,8 @@ bool MCAssembler::evaluateFixup(const MCFragment &F, MCFixup &Fixup,
 
   if (IsResolved && mc::isRelocRelocation(Fixup.getKind()))
     IsResolved = false;
-  getBackend().applyFixup(F, Fixup, Target, Contents, Value, IsResolved);
+  IsResolved = getBackend().addReloc(*DF, Fixup, Target, Value, IsResolved);
+  getBackend().applyFixup(*DF, Fixup, Target, Contents, Value, IsResolved);
   return true;
 }
 
@@ -196,14 +212,9 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
   assert(getBackendPtr() && "Requires assembler backend");
   switch (F.getKind()) {
   case MCFragment::FT_Data:
+    return cast<MCDataFragment>(F).getContents().size();
   case MCFragment::FT_Relaxable:
-  case MCFragment::FT_LEB:
-  case MCFragment::FT_Dwarf:
-  case MCFragment::FT_DwarfFrame:
-  case MCFragment::FT_CVInlineLines:
-  case MCFragment::FT_CVDefRange:
-  case MCFragment::FT_PseudoProbe:
-    return cast<MCEncodedFragment>(F).getContents().size();
+    return cast<MCRelaxableFragment>(F).getContents().size();
   case MCFragment::FT_Fill: {
     auto &FF = cast<MCFillFragment>(F);
     int64_t NumValues = 0;
@@ -221,6 +232,9 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
 
   case MCFragment::FT_Nops:
     return cast<MCNopsFragment>(F).getNumBytes();
+
+  case MCFragment::FT_LEB:
+    return cast<MCLEBFragment>(F).getContents().size();
 
   case MCFragment::FT_BoundaryAlign:
     return cast<MCBoundaryAlignFragment>(F).getSize();
@@ -277,6 +291,17 @@ uint64_t MCAssembler::computeFragmentSize(const MCFragment &F) const {
     }
     return Size;
   }
+
+  case MCFragment::FT_Dwarf:
+    return cast<MCDwarfLineAddrFragment>(F).getContents().size();
+  case MCFragment::FT_DwarfFrame:
+    return cast<MCDwarfCallFrameFragment>(F).getContents().size();
+  case MCFragment::FT_CVInlineLines:
+    return cast<MCCVInlineLineTableFragment>(F).getContents().size();
+  case MCFragment::FT_CVDefRange:
+    return cast<MCCVDefRangeFragment>(F).getContents().size();
+  case MCFragment::FT_PseudoProbe:
+    return cast<MCPseudoProbeAddrFragment>(F).getContents().size();
   }
 
   llvm_unreachable("invalid fragment kind");
@@ -534,22 +559,6 @@ static void writeFragment(raw_ostream &OS, const MCAssembler &Asm,
   ++stats::EmittedFragments;
 
   switch (F.getKind()) {
-  case MCFragment::FT_Data:
-  case MCFragment::FT_Relaxable:
-  case MCFragment::FT_LEB:
-  case MCFragment::FT_Dwarf:
-  case MCFragment::FT_DwarfFrame:
-  case MCFragment::FT_CVInlineLines:
-  case MCFragment::FT_CVDefRange:
-  case MCFragment::FT_PseudoProbe: {
-    if (F.getKind() == MCFragment::FT_Data)
-      ++stats::EmittedDataFragments;
-    else if (F.getKind() == MCFragment::FT_Relaxable)
-      ++stats::EmittedRelaxableFragments;
-    const auto &EF = cast<MCEncodedFragment>(F);
-    OS << StringRef(EF.getContents().data(), EF.getContents().size());
-    break;
-  }
   case MCFragment::FT_Align: {
     ++stats::EmittedAlignFragments;
     const MCAlignFragment &AF = cast<MCAlignFragment>(F);
@@ -595,6 +604,16 @@ static void writeFragment(raw_ostream &OS, const MCAssembler &Asm,
     }
     break;
   }
+
+  case MCFragment::FT_Data:
+    ++stats::EmittedDataFragments;
+    OS << cast<MCDataFragment>(F).getContents();
+    break;
+
+  case MCFragment::FT_Relaxable:
+    ++stats::EmittedRelaxableFragments;
+    OS << cast<MCRelaxableFragment>(F).getContents();
+    break;
 
   case MCFragment::FT_Fill: {
     ++stats::EmittedFillFragments;
@@ -671,6 +690,12 @@ static void writeFragment(raw_ostream &OS, const MCAssembler &Asm,
     break;
   }
 
+  case MCFragment::FT_LEB: {
+    const MCLEBFragment &LF = cast<MCLEBFragment>(F);
+    OS << LF.getContents();
+    break;
+  }
+
   case MCFragment::FT_BoundaryAlign: {
     const MCBoundaryAlignFragment &BF = cast<MCBoundaryAlignFragment>(F);
     if (!Asm.getBackend().writeNopData(OS, FragmentSize, BF.getSubtargetInfo()))
@@ -695,6 +720,31 @@ static void writeFragment(raw_ostream &OS, const MCAssembler &Asm,
     break;
   }
 
+  case MCFragment::FT_Dwarf: {
+    const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
+    OS << OF.getContents();
+    break;
+  }
+  case MCFragment::FT_DwarfFrame: {
+    const MCDwarfCallFrameFragment &CF = cast<MCDwarfCallFrameFragment>(F);
+    OS << CF.getContents();
+    break;
+  }
+  case MCFragment::FT_CVInlineLines: {
+    const auto &OF = cast<MCCVInlineLineTableFragment>(F);
+    OS << OF.getContents();
+    break;
+  }
+  case MCFragment::FT_CVDefRange: {
+    const auto &DRF = cast<MCCVDefRangeFragment>(F);
+    OS << DRF.getContents();
+    break;
+  }
+  case MCFragment::FT_PseudoProbe: {
+    const MCPseudoProbeAddrFragment &PF = cast<MCPseudoProbeAddrFragment>(F);
+    OS << PF.getContents();
+    break;
+  }
   }
 
   assert(OS.tell() - Start == FragmentSize &&
@@ -762,10 +812,9 @@ void MCAssembler::writeSectionData(raw_ostream &OS,
 
 void MCAssembler::layout() {
   assert(getBackendPtr() && "Expected assembler backend");
-  DEBUG_WITH_TYPE("mc-dump-pre", {
-    errs() << "assembler backend - pre-layout\n--\n";
-    dump();
-  });
+  DEBUG_WITH_TYPE("mc-dump", {
+      errs() << "assembler backend - pre-layout\n--\n";
+      dump(); });
 
   // Assign section ordinals.
   unsigned SectionIndex = 0;
@@ -795,10 +844,13 @@ void MCAssembler::layout() {
   this->HasLayout = true;
   for (MCSection &Sec : *this)
     layoutSection(Sec);
-  unsigned FirstStable = Sections.size();
-  while ((FirstStable = relaxOnce(FirstStable)) > 0)
+  while (relaxOnce())
     if (getContext().hadError())
       return;
+
+  DEBUG_WITH_TYPE("mc-dump", {
+      errs() << "assembler backend - post-relaxation\n--\n";
+      dump(); });
 
   // Some targets might want to adjust fragment offsets. If so, perform another
   // layout iteration.
@@ -823,20 +875,69 @@ void MCAssembler::layout() {
   // Evaluate and apply the fixups, generating relocation entries as necessary.
   for (MCSection &Sec : *this) {
     for (MCFragment &Frag : Sec) {
-      // Process fragments with fixups here.
-      if (auto *F = dyn_cast<MCEncodedFragment>(&Frag)) {
-        auto Contents = F->getContents();
-        for (MCFixup &Fixup : F->getFixups()) {
-          uint64_t FixedValue;
-          MCValue Target;
-          evaluateFixup(Frag, Fixup, Target, FixedValue,
-                        /*RecordReloc=*/true, Contents);
-        }
-      } else if (auto *AF = dyn_cast<MCAlignFragment>(&Frag)) {
-        // For RISC-V linker relaxation, an alignment relocation might be
-        // needed.
-        if (AF->hasEmitNops())
-          getBackend().shouldInsertFixupForCodeAlign(*this, *AF);
+      MutableArrayRef<MCFixup> Fixups;
+      MutableArrayRef<char> Contents;
+
+      // Process MCAlignFragment and MCEncodedFragmentWithFixups here.
+      switch (Frag.getKind()) {
+      default:
+        continue;
+      case MCFragment::FT_Align: {
+        MCAlignFragment &AF = cast<MCAlignFragment>(Frag);
+        // Insert fixup type for code alignment if the target define
+        // shouldInsertFixupForCodeAlign target hook.
+        if (Sec.useCodeAlign() && AF.hasEmitNops())
+          getBackend().shouldInsertFixupForCodeAlign(*this, AF);
+        continue;
+      }
+      case MCFragment::FT_Data: {
+        MCDataFragment &DF = cast<MCDataFragment>(Frag);
+        Fixups = DF.getFixups();
+        Contents = DF.getContents();
+        break;
+      }
+      case MCFragment::FT_Relaxable: {
+        MCRelaxableFragment &RF = cast<MCRelaxableFragment>(Frag);
+        Fixups = RF.getFixups();
+        Contents = RF.getContents();
+        break;
+      }
+      case MCFragment::FT_CVDefRange: {
+        MCCVDefRangeFragment &CF = cast<MCCVDefRangeFragment>(Frag);
+        Fixups = CF.getFixups();
+        Contents = CF.getContents();
+        break;
+      }
+      case MCFragment::FT_Dwarf: {
+        MCDwarfLineAddrFragment &DF = cast<MCDwarfLineAddrFragment>(Frag);
+        Fixups = DF.getFixups();
+        Contents = DF.getContents();
+        break;
+      }
+      case MCFragment::FT_DwarfFrame: {
+        MCDwarfCallFrameFragment &DF = cast<MCDwarfCallFrameFragment>(Frag);
+        Fixups = DF.getFixups();
+        Contents = DF.getContents();
+        break;
+      }
+      case MCFragment::FT_LEB: {
+        auto &LF = cast<MCLEBFragment>(Frag);
+        Fixups = LF.getFixups();
+        Contents = LF.getContents();
+        break;
+      }
+      case MCFragment::FT_PseudoProbe: {
+        MCPseudoProbeAddrFragment &PF = cast<MCPseudoProbeAddrFragment>(Frag);
+        Fixups = PF.getFixups();
+        Contents = PF.getContents();
+        break;
+      }
+      }
+      for (const MCFixup &Fixup : Fixups) {
+        uint64_t FixedValue;
+        MCValue Target;
+        evaluateFixup(&Frag, Fixup, Target, FixedValue,
+                      /*RecordReloc=*/true, Contents);
       }
     }
   }
@@ -852,48 +953,54 @@ void MCAssembler::Finish() {
   assert(PendingErrors.empty());
 }
 
-bool MCAssembler::fixupNeedsRelaxation(const MCRelaxableFragment &F,
-                                       const MCFixup &Fixup) const {
+bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
+                                       const MCRelaxableFragment *DF) const {
   assert(getBackendPtr() && "Expected assembler backend");
   MCValue Target;
   uint64_t Value;
-  bool Resolved = evaluateFixup(F, const_cast<MCFixup &>(Fixup), Target, Value,
+  bool Resolved = evaluateFixup(DF, const_cast<MCFixup &>(Fixup), Target, Value,
                                 /*RecordReloc=*/false, {});
   return getBackend().fixupNeedsRelaxationAdvanced(Fixup, Target, Value,
                                                    Resolved);
 }
 
-bool MCAssembler::relaxInstruction(MCRelaxableFragment &F) {
-  assert(getEmitterPtr() &&
-         "Expected CodeEmitter defined for relaxInstruction");
+bool MCAssembler::fragmentNeedsRelaxation(const MCRelaxableFragment *F) const {
+  assert(getBackendPtr() && "Expected assembler backend");
   // If this inst doesn't ever need relaxation, ignore it. This occurs when we
   // are intentionally pushing out inst fragments, or because we relaxed a
   // previous instruction to one that doesn't need relaxation.
-  if (!getBackend().mayNeedRelaxation(F.getOpcode(), F.getOperands(),
-                                      *F.getSubtargetInfo()))
+  if (!getBackend().mayNeedRelaxation(F->getInst(), *F->getSubtargetInfo()))
     return false;
 
-  bool DoRelax = false;
-  for (const MCFixup &Fixup : F.getFixups())
-    if ((DoRelax = fixupNeedsRelaxation(F, Fixup)))
-      break;
-  if (!DoRelax)
+  for (const MCFixup &Fixup : F->getFixups())
+    if (fixupNeedsRelaxation(Fixup, F))
+      return true;
+
+  return false;
+}
+
+bool MCAssembler::relaxInstruction(MCRelaxableFragment &F) {
+  assert(getEmitterPtr() &&
+         "Expected CodeEmitter defined for relaxInstruction");
+  if (!fragmentNeedsRelaxation(&F))
     return false;
 
   ++stats::RelaxedInstructions;
 
-  // TODO Refactor relaxInstruction to accept MCRelaxableFragment and remove
-  // `setInst`.
+  // FIXME-PERF: We could immediately lower out instructions if we can tell
+  // they are fully resolved, to avoid retesting on later passes.
+
+  // Relax the fragment.
+
   MCInst Relaxed = F.getInst();
   getBackend().relaxInstruction(Relaxed, *F.getSubtargetInfo());
 
   // Encode the new instruction.
   F.setInst(Relaxed);
-  SmallVector<char, 16> Data;
-  SmallVector<MCFixup, 1> Fixups;
-  getEmitter().encodeInstruction(Relaxed, Data, Fixups, *F.getSubtargetInfo());
-  F.setContents(Data);
-  F.setFixups(Fixups);
+  F.getFixups().clear();
+  F.getContents().clear();
+  getEmitter().encodeInstruction(Relaxed, F.getContents(), F.getFixups(),
+                                 *F.getSubtargetInfo());
   return true;
 }
 
@@ -901,7 +1008,8 @@ bool MCAssembler::relaxLEB(MCLEBFragment &LF) {
   const unsigned OldSize = static_cast<unsigned>(LF.getContents().size());
   unsigned PadTo = OldSize;
   int64_t Value;
-  LF.clearFixups();
+  SmallVectorImpl<char> &Data = LF.getContents();
+  LF.getFixups().clear();
   // Use evaluateKnownAbsolute for Mach-O as a hack: .subsections_via_symbols
   // requires that .uleb128 A-B is foldable where A and B reside in different
   // fragments. This is used by __gcc_except_table.
@@ -922,18 +1030,17 @@ bool MCAssembler::relaxLEB(MCLEBFragment &LF) {
     if (UseZeroPad)
       Value = 0;
   }
-  uint8_t Data[16];
-  size_t Size = 0;
+  Data.clear();
+  raw_svector_ostream OSE(Data);
   // The compiler can generate EH table assembly that is impossible to assemble
   // without either adding padding to an LEB fragment or adding extra padding
   // to a later alignment fragment. To accommodate such tables, relaxation can
   // only increase an LEB fragment size here, not decrease it. See PR35809.
   if (LF.isSigned())
-    Size = encodeSLEB128(Value, Data, PadTo);
+    encodeSLEB128(Value, OSE, PadTo);
   else
-    Size = encodeULEB128(Value, Data, PadTo);
-  LF.setContents({reinterpret_cast<char *>(Data), Size});
-  return OldSize != Size;
+    encodeULEB128(Value, OSE, PadTo);
+  return OldSize != LF.getContents().size();
 }
 
 /// Check if the branch crosses the boundary.
@@ -1003,19 +1110,19 @@ bool MCAssembler::relaxDwarfLineAddr(MCDwarfLineAddrFragment &DF) {
     return WasRelaxed;
 
   MCContext &Context = getContext();
-  auto OldSize = DF.getContents().size();
+  uint64_t OldSize = DF.getContents().size();
   int64_t AddrDelta;
   bool Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, *this);
   assert(Abs && "We created a line delta with an invalid expression");
   (void)Abs;
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
-  SmallVector<char, 8> Data;
+  SmallVectorImpl<char> &Data = DF.getContents();
+  Data.clear();
+  DF.getFixups().clear();
 
   MCDwarfLineAddr::encode(Context, getDWARFLinetableParams(), LineDelta,
                           AddrDelta, Data);
-  DF.setContents(Data);
-  DF.clearFixups();
   return OldSize != Data.size();
 }
 
@@ -1034,11 +1141,12 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCDwarfCallFrameFragment &DF) {
     return false;
   }
 
-  auto OldSize = DF.getContents().size();
-  SmallVector<char, 8> Data;
+  SmallVectorImpl<char> &Data = DF.getContents();
+  uint64_t OldSize = Data.size();
+  Data.clear();
+  DF.getFixups().clear();
+
   MCDwarfFrameEmitter::encodeAdvanceLoc(Context, Value, Data);
-  DF.setContents(Data);
-  DF.clearFixups();
   return OldSize != Data.size();
 }
 
@@ -1068,13 +1176,13 @@ bool MCAssembler::relaxPseudoProbeAddr(MCPseudoProbeAddrFragment &PF) {
   bool Abs = PF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, *this);
   assert(Abs && "We created a pseudo probe with an invalid expression");
   (void)Abs;
-  SmallVector<char, 8> Data;
+  SmallVectorImpl<char> &Data = PF.getContents();
+  Data.clear();
   raw_svector_ostream OSE(Data);
+  PF.getFixups().clear();
 
   // AddrDelta is a signed integer
   encodeSLEB128(AddrDelta, OSE, OldSize);
-  PF.setContents(Data);
-  PF.clearFixups();
   return OldSize != Data.size();
 }
 
@@ -1121,15 +1229,17 @@ void MCAssembler::layoutSection(MCSection &Sec) {
   }
 }
 
-unsigned MCAssembler::relaxOnce(unsigned FirstStable) {
+bool MCAssembler::relaxOnce() {
   ++stats::RelaxationSteps;
   PendingErrors.clear();
 
-  unsigned Res = 0;
-  for (unsigned I = 0; I != FirstStable; ++I) {
+  // Size of fragments in one section can depend on the size of fragments in
+  // another. If any fragment has changed size, we have to re-layout (and
+  // as a result possibly further relax) all sections.
+  bool ChangedAny = false;
+  for (MCSection &Sec : *this) {
     // Assume each iteration finalizes at least one extra fragment. If the
     // layout does not converge after N+1 iterations, bail out.
-    auto &Sec = *Sections[I];
     auto MaxIter = Sec.curFragList()->Tail->getLayoutOrder() + 1;
     for (;;) {
       bool Changed = false;
@@ -1137,20 +1247,13 @@ unsigned MCAssembler::relaxOnce(unsigned FirstStable) {
         if (relaxFragment(F))
           Changed = true;
 
-      if (!Changed)
-        break;
-      // If any fragment changed size, it might impact the layout of subsequent
-      // sections. Therefore, we must re-evaluate all sections.
-      FirstStable = Sections.size();
-      Res = I;
-      if (--MaxIter == 0)
+      ChangedAny |= Changed;
+      if (!Changed || --MaxIter == 0)
         break;
       layoutSection(Sec);
     }
   }
-  // The subsequent relaxOnce call only needs to visit Sections [0,Res) if no
-  // change occurred.
-  return Res;
+  return ChangedAny;
 }
 
 void MCAssembler::reportError(SMLoc L, const Twine &Msg) const {
@@ -1170,26 +1273,31 @@ void MCAssembler::flushPendingErrors() const {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void MCAssembler::dump() const{
   raw_ostream &OS = errs();
-  DenseMap<const MCFragment *, SmallVector<const MCSymbol *, 0>> FragToSyms;
-  // Scan symbols and build a map of fragments to their corresponding symbols.
-  // For variable symbols, we don't want to call their getFragment, which might
-  // modify `Fragment`.
-  for (const MCSymbol &Sym : symbols())
-    if (!Sym.isVariable())
-      if (auto *F = Sym.getFragment())
-        FragToSyms.try_emplace(F).first->second.push_back(&Sym);
 
-  OS << "Sections:[";
+  OS << "<MCAssembler\n";
+  OS << "  Sections:[\n    ";
+  bool First = true;
   for (const MCSection &Sec : *this) {
-    OS << '\n';
-    Sec.dump(&FragToSyms);
+    if (First)
+      First = false;
+    else
+      OS << ",\n    ";
+    Sec.dump();
   }
-  OS << "\n]\n";
+  OS << "],\n";
+  OS << "  Symbols:[";
+
+  First = true;
+  for (const MCSymbol &Sym : symbols()) {
+    if (First)
+      First = false;
+    else
+      OS << ",\n           ";
+    OS << "(";
+    Sym.dump();
+    OS << ", Index:" << Sym.getIndex() << ", ";
+    OS << ")";
+  }
+  OS << "]>\n";
 }
 #endif
-
-SMLoc MCFixup::getLoc() const {
-  if (auto *E = getValue())
-    return E->getLoc();
-  return {};
-}

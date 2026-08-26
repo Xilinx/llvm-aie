@@ -609,7 +609,7 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
       return EC;
 
     if (!isOffsetLegal(*LineOffset)) {
-      return sampleprof_error::illegal_line_offset;
+      return std::error_code();
     }
 
     auto Discriminator = readNumber<uint64_t>();
@@ -1236,7 +1236,7 @@ std::error_code SampleProfileReaderExtBinaryBase::readCSNameTableSec() {
         return EC;
 
       if (!isOffsetLegal(*LineOffset))
-        return sampleprof_error::illegal_line_offset;
+        return std::error_code();
 
       auto Discriminator = readNumber<uint64_t>();
       if (std::error_code EC = Discriminator.getError())
@@ -1839,7 +1839,7 @@ std::error_code SampleProfileReaderGCC::readImpl() {
 }
 
 bool SampleProfileReaderGCC::hasFormat(const MemoryBuffer &Buffer) {
-  StringRef Magic(Buffer.getBufferStart());
+  StringRef Magic(reinterpret_cast<const char *>(Buffer.getBufferStart()));
   return Magic == "adcg*704";
 }
 

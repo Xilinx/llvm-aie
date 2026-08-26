@@ -2,7 +2,7 @@
 ; RUN: llc -global-isel -mtriple=amdgcn -mcpu=gfx1030 -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,GFX10,GFX1030 %s
 ; RUN: llc -global-isel -mtriple=amdgcn -mcpu=gfx1013 -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,GFX10,GFX1013 %s
 ; RUN: llc -global-isel -mtriple=amdgcn -mcpu=gfx1100 -mattr=-real-true16 -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,GFX11 %s
-; RUN: not llc -global-isel -mtriple=amdgcn -mcpu=gfx1012 -verify-machineinstrs < %s -o /dev/null 2>&1 | FileCheck -check-prefix=ERR %s
+; RUN: not --crash llc -global-isel -mtriple=amdgcn -mcpu=gfx1012 -verify-machineinstrs < %s -o /dev/null 2>&1 | FileCheck -check-prefix=ERR %s
 
 ; Failing since:
 ;   73a223272089  AMDGPU: Materialize bitwise not of inline immediates (#95960)

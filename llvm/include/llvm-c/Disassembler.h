@@ -17,7 +17,6 @@
 
 #include "llvm-c/DisassemblerTypes.h"
 #include "llvm-c/ExternC.h"
-#include "llvm-c/Visibility.h"
 
 /**
  * @defgroup LLVMCDisassembler Disassembler
@@ -36,9 +35,9 @@ LLVM_C_EXTERN_C_BEGIN
  * returns NULL. This function is equivalent to calling
  * LLVMCreateDisasmCPUFeatures() with an empty CPU name and feature set.
  */
-LLVM_C_ABI LLVMDisasmContextRef LLVMCreateDisasm(
-    const char *TripleName, void *DisInfo, int TagType,
-    LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp);
+LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
+                                      int TagType, LLVMOpInfoCallback GetOpInfo,
+                                      LLVMSymbolLookupCallback SymbolLookUp);
 
 /**
  * Create a disassembler for the TripleName and a specific CPU.  Symbolic
@@ -48,9 +47,10 @@ LLVM_C_ABI LLVMDisasmContextRef LLVMCreateDisasm(
  * disassembler context.  If not, it returns NULL. This function is equivalent
  * to calling LLVMCreateDisasmCPUFeatures() with an empty feature set.
  */
-LLVM_C_ABI LLVMDisasmContextRef LLVMCreateDisasmCPU(
-    const char *Triple, const char *CPU, void *DisInfo, int TagType,
-    LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp);
+LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
+                                         void *DisInfo, int TagType,
+                                         LLVMOpInfoCallback GetOpInfo,
+                                         LLVMSymbolLookupCallback SymbolLookUp);
 
 /**
  * Create a disassembler for the TripleName, a specific CPU and specific feature
@@ -59,16 +59,17 @@ LLVM_C_ABI LLVMDisasmContextRef LLVMCreateDisasmCPU(
  * described above.  These can all be passed * as NULL.  If successful, this
  * returns a disassembler context.  If not, it returns NULL.
  */
-LLVM_C_ABI LLVMDisasmContextRef LLVMCreateDisasmCPUFeatures(
-    const char *Triple, const char *CPU, const char *Features, void *DisInfo,
-    int TagType, LLVMOpInfoCallback GetOpInfo,
-    LLVMSymbolLookupCallback SymbolLookUp);
+LLVMDisasmContextRef
+LLVMCreateDisasmCPUFeatures(const char *Triple, const char *CPU,
+                            const char *Features, void *DisInfo, int TagType,
+                            LLVMOpInfoCallback GetOpInfo,
+                            LLVMSymbolLookupCallback SymbolLookUp);
 
 /**
  * Set the disassembler's options.  Returns 1 if it can set the Options and 0
  * otherwise.
  */
-LLVM_C_ABI int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, uint64_t Options);
+int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, uint64_t Options);
 
 /* The option to produce marked up assembly. */
 #define LLVMDisassembler_Option_UseMarkup 1
@@ -86,7 +87,7 @@ LLVM_C_ABI int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, uint64_t Options);
 /**
  * Dispose of a disassembler context.
  */
-LLVM_C_ABI void LLVMDisasmDispose(LLVMDisasmContextRef DC);
+void LLVMDisasmDispose(LLVMDisasmContextRef DC);
 
 /**
  * Disassemble a single instruction using the disassembler context specified in
@@ -98,9 +99,9 @@ LLVM_C_ABI void LLVMDisasmDispose(LLVMDisasmContextRef DC);
  * function returns the number of bytes in the instruction or zero if there was
  * no valid instruction.
  */
-LLVM_C_ABI size_t LLVMDisasmInstruction(LLVMDisasmContextRef DC, uint8_t *Bytes,
-                                        uint64_t BytesSize, uint64_t PC,
-                                        char *OutString, size_t OutStringSize);
+size_t LLVMDisasmInstruction(LLVMDisasmContextRef DC, uint8_t *Bytes,
+                             uint64_t BytesSize, uint64_t PC,
+                             char *OutString, size_t OutStringSize);
 
 /**
  * @}

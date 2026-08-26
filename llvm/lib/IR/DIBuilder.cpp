@@ -946,13 +946,9 @@ DILocalVariable *DIBuilder::createParameterVariable(
 }
 
 DILabel *DIBuilder::createLabel(DIScope *Context, StringRef Name, DIFile *File,
-                                unsigned LineNo, unsigned Column,
-                                bool IsArtificial,
-                                std::optional<unsigned> CoroSuspendIdx,
-                                bool AlwaysPreserve) {
+                                 unsigned LineNo, bool AlwaysPreserve) {
   auto *Scope = cast<DILocalScope>(Context);
-  auto *Node = DILabel::get(VMContext, Scope, Name, File, LineNo, Column,
-                            IsArtificial, CoroSuspendIdx);
+  auto *Node = DILabel::get(VMContext, Scope, Name, File, LineNo);
 
   if (AlwaysPreserve) {
     /// The optimizer may remove labels. If there is an interest
@@ -979,14 +975,14 @@ DISubprogram *DIBuilder::createFunction(
     unsigned LineNo, DISubroutineType *Ty, unsigned ScopeLine,
     DINode::DIFlags Flags, DISubprogram::DISPFlags SPFlags,
     DITemplateParameterArray TParams, DISubprogram *Decl,
-    DITypeArray ThrownTypes, DINodeArray Annotations, StringRef TargetFuncName,
-    bool UseKeyInstructions) {
+    DITypeArray ThrownTypes, DINodeArray Annotations,
+    StringRef TargetFuncName) {
   bool IsDefinition = SPFlags & DISubprogram::SPFlagDefinition;
   auto *Node = getSubprogram(
       /*IsDistinct=*/IsDefinition, VMContext, getNonCompileUnitScope(Context),
       Name, LinkageName, File, LineNo, Ty, ScopeLine, nullptr, 0, 0, Flags,
       SPFlags, IsDefinition ? CUNode : nullptr, TParams, Decl, nullptr,
-      ThrownTypes, Annotations, TargetFuncName, UseKeyInstructions);
+      ThrownTypes, Annotations, TargetFuncName);
 
   AllSubprograms.push_back(Node);
   trackIfUnresolved(Node);
@@ -1013,7 +1009,7 @@ DISubprogram *DIBuilder::createMethod(
     unsigned LineNo, DISubroutineType *Ty, unsigned VIndex, int ThisAdjustment,
     DIType *VTableHolder, DINode::DIFlags Flags,
     DISubprogram::DISPFlags SPFlags, DITemplateParameterArray TParams,
-    DITypeArray ThrownTypes, bool UseKeyInstructions) {
+    DITypeArray ThrownTypes) {
   assert(getNonCompileUnitScope(Context) &&
          "Methods should have both a Context and a context that isn't "
          "the compile unit.");
@@ -1023,7 +1019,7 @@ DISubprogram *DIBuilder::createMethod(
       /*IsDistinct=*/IsDefinition, VMContext, cast<DIScope>(Context), Name,
       LinkageName, F, LineNo, Ty, LineNo, VTableHolder, VIndex, ThisAdjustment,
       Flags, SPFlags, IsDefinition ? CUNode : nullptr, TParams, nullptr,
-      nullptr, ThrownTypes, nullptr, "", IsDefinition && UseKeyInstructions);
+      nullptr, ThrownTypes);
 
   AllSubprograms.push_back(SP);
   trackIfUnresolved(SP);

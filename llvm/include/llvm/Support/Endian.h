@@ -223,11 +223,10 @@ struct packed_endian_specific_integral {
 
   explicit packed_endian_specific_integral(value_type val) { *this = val; }
 
-  value_type value() const {
+  operator value_type() const {
     return endian::read<value_type, endian, alignment>(
       (const void*)Value.buffer);
   }
-  operator value_type() const { return value(); }
 
   void operator=(value_type newValue) {
     endian::write<value_type, endian, alignment>(

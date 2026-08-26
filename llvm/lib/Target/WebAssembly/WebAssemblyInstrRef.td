@@ -36,14 +36,6 @@ multiclass REF_I<WebAssemblyRegClass rc, ValueType vt, string ht> {
         Requires<[HasReferenceTypes]>;
 }
 
-defm REF_TEST_FUNCREF :
-  I<(outs I32: $res),
-    (ins TypeIndex:$type, FUNCREF: $ref),
-    (outs),
-    (ins TypeIndex:$type),
-    [],
-    "ref.test\t$type, $ref", "ref.test $type", 0xfb14>;
-
 defm "" : REF_I<FUNCREF, funcref, "func">;
 defm "" : REF_I<EXTERNREF, externref, "extern">;
 defm "" : REF_I<EXNREF, exnref, "exn">;

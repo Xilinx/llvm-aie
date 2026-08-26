@@ -129,10 +129,13 @@ void CrtpConstructorAccessibilityCheck::check(
         << HintFriend;
   }
 
-  auto WithFriendHintIfNeeded = [&](const DiagnosticBuilder &Diag,
-                                    bool NeedsFriend) {
+  auto WithFriendHintIfNeeded =
+      [&](const DiagnosticBuilder &Diag,
+          bool NeedsFriend) -> const DiagnosticBuilder & {
     if (NeedsFriend)
       Diag << HintFriend;
+
+    return Diag;
   };
 
   if (!CRTPDeclaration->hasUserDeclaredConstructor()) {

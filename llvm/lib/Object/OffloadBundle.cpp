@@ -339,7 +339,8 @@ CompressedOffloadBundle::decompress(llvm::MemoryBufferRef &Input,
     HashRecalcTimer.startTimer();
     llvm::MD5 Hash;
     llvm::MD5::MD5Result Result;
-    Hash.update(llvm::ArrayRef<uint8_t>(DecompressedData));
+    Hash.update(llvm::ArrayRef<uint8_t>(DecompressedData.data(),
+                                        DecompressedData.size()));
     Hash.final(Result);
     uint64_t RecalculatedHash = Result.low();
     HashRecalcTimer.stopTimer();

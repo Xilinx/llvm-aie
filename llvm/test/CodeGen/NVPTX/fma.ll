@@ -116,10 +116,11 @@ define ptx_device float @f32_iir(float %x) {
 define ptx_device float @f32_iii(float %x) {
 ; CHECK-LABEL: f32_iii(
 ; CHECK:       {
-; CHECK-EMPTY:
+; CHECK-NEXT:    .reg .b32 %r<2>;
 ; CHECK-EMPTY:
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    st.param.b32 [func_retval0], 1092616192;
+; CHECK-NEXT:    mov.b32 %r1, 0f41200000;
+; CHECK-NEXT:    st.param.b32 [func_retval0], %r1;
 ; CHECK-NEXT:    ret;
   %r = call float @llvm.fma.f32(float 2.0, float 3.0, float 4.0)
   ret float %r

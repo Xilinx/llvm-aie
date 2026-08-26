@@ -95,8 +95,6 @@ mlir::LogicalResult CIRGenFunction::emitOpenACCOpCombinedConstruct(
       builder.setInsertionPointToEnd(&innerBlock);
 
       LexicalScope ls{*this, start, builder.getInsertionBlock()};
-      ActiveOpenACCLoopRAII activeLoop{*this, &loopOp};
-
       res = emitStmt(loopStmt, /*useCurrentScope=*/true);
 
       builder.create<mlir::acc::YieldOp>(end);
@@ -252,60 +250,26 @@ mlir::LogicalResult CIRGenFunction::emitOpenACCHostDataConstruct(
 
 mlir::LogicalResult CIRGenFunction::emitOpenACCEnterDataConstruct(
     const OpenACCEnterDataConstruct &s) {
-  mlir::Location start = getLoc(s.getSourceRange().getBegin());
-  emitOpenACCOp<EnterDataOp>(start, s.getDirectiveKind(), s.getDirectiveLoc(),
-                             s.clauses());
-  return mlir::success();
+  cgm.errorNYI(s.getSourceRange(), "OpenACC EnterData Construct");
+  return mlir::failure();
 }
-
 mlir::LogicalResult CIRGenFunction::emitOpenACCExitDataConstruct(
     const OpenACCExitDataConstruct &s) {
-  mlir::Location start = getLoc(s.getSourceRange().getBegin());
-  emitOpenACCOp<ExitDataOp>(start, s.getDirectiveKind(), s.getDirectiveLoc(),
-                            s.clauses());
-  return mlir::success();
+  cgm.errorNYI(s.getSourceRange(), "OpenACC ExitData Construct");
+  return mlir::failure();
 }
-
 mlir::LogicalResult
 CIRGenFunction::emitOpenACCUpdateConstruct(const OpenACCUpdateConstruct &s) {
-  mlir::Location start = getLoc(s.getSourceRange().getBegin());
-  emitOpenACCOp<UpdateOp>(start, s.getDirectiveKind(), s.getDirectiveLoc(),
-                          s.clauses());
-  return mlir::success();
+  cgm.errorNYI(s.getSourceRange(), "OpenACC Update Construct");
+  return mlir::failure();
 }
-
-mlir::LogicalResult
-CIRGenFunction::emitOpenACCCacheConstruct(const OpenACCCacheConstruct &s) {
-  // The 'cache' directive 'may' be at the top of a loop by standard, but
-  // doesn't have to be. Additionally, there is nothing that requires this be a
-  // loop affected by an OpenACC pragma. Sema doesn't do any level of
-  // enforcement here, since it isn't particularly valuable to do so thanks to
-  // that. Instead, we treat cache as a 'noop' if there is no acc.loop to apply
-  // it to.
-  if (!activeLoopOp)
-    return mlir::success();
-
-  mlir::acc::LoopOp loopOp = *activeLoopOp;
-
-  mlir::OpBuilder::InsertionGuard guard(builder);
-  builder.setInsertionPoint(loopOp);
-
-  for (const Expr *var : s.getVarList()) {
-    CIRGenFunction::OpenACCDataOperandInfo opInfo =
-        getOpenACCDataOperandInfo(var);
-
-    auto cacheOp = builder.create<CacheOp>(
-        opInfo.beginLoc, opInfo.varValue,
-        /*structured=*/false, /*implicit=*/false, opInfo.name, opInfo.bounds);
-
-    loopOp.getCacheOperandsMutable().append(cacheOp.getResult());
-  }
-
-  return mlir::success();
-}
-
 mlir::LogicalResult
 CIRGenFunction::emitOpenACCAtomicConstruct(const OpenACCAtomicConstruct &s) {
   cgm.errorNYI(s.getSourceRange(), "OpenACC Atomic Construct");
+  return mlir::failure();
+}
+mlir::LogicalResult
+CIRGenFunction::emitOpenACCCacheConstruct(const OpenACCCacheConstruct &s) {
+  cgm.errorNYI(s.getSourceRange(), "OpenACC Cache Construct");
   return mlir::failure();
 }

@@ -403,7 +403,8 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
 
   const MipsSEInstrInfo &TII =
       *static_cast<const MipsSEInstrInfo *>(STI.getInstrInfo());
-  const MipsRegisterInfo &RegInfo = *STI.getRegisterInfo();
+  const MipsRegisterInfo &RegInfo =
+      *static_cast<const MipsRegisterInfo *>(STI.getRegisterInfo());
 
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl;
@@ -657,7 +658,8 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
 
   const MipsSEInstrInfo &TII =
       *static_cast<const MipsSEInstrInfo *>(STI.getInstrInfo());
-  const MipsRegisterInfo &RegInfo = *STI.getRegisterInfo();
+  const MipsRegisterInfo &RegInfo =
+      *static_cast<const MipsRegisterInfo *>(STI.getRegisterInfo());
 
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   MipsABIInfo ABI = STI.getABI();

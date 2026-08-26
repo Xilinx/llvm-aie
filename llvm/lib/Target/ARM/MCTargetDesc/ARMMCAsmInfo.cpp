@@ -34,7 +34,7 @@ const MCAsmInfo::AtSpecifier atSpecifiers[] = {
     {ARM::S_GOTTPOFF, "GOTTPOFF"},
     {ARM::S_GOTTPOFF_FDPIC, "gottpoff_fdpic"},
     {ARM::S_PLT, "PLT"},
-    {ARM::S_COFF_SECREL, "SECREL32"},
+    {MCSymbolRefExpr::VK_SECREL, "SECREL32"},
     {ARM::S_TLSCALL, "tlscall"},
     {ARM::S_TLSDESC, "tlsdesc"},
     {ARM::S_TLSGD, "TLSGD"},
@@ -53,7 +53,6 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin(const Triple &TheTriple) {
 
   Data64bitsDirective = nullptr;
   CommentString = "@";
-  AllowDollarAtStartOfIdentifier = false;
   UseDataRegionDirectives = true;
 
   SupportsDebugInformation = true;
@@ -81,7 +80,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo(const Triple &TheTriple) {
 
   Data64bitsDirective = nullptr;
   CommentString = "@";
-  AllowDollarAtStartOfIdentifier = false;
 
   SupportsDebugInformation = true;
 
@@ -139,7 +137,6 @@ ARMCOFFMCAsmInfoGNU::ARMCOFFMCAsmInfoGNU() {
   HasSingleParameterDotFile = true;
 
   CommentString = "@";
-  AllowDollarAtStartOfIdentifier = false;
   PrivateGlobalPrefix = ".L";
   PrivateLabelPrefix = ".L";
 

@@ -698,7 +698,7 @@ class TargetRegisterClass;
 
     bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
 
-    EVT getOptimalMemOpType(LLVMContext &Context, const MemOp &Op,
+    EVT getOptimalMemOpType(const MemOp &Op,
                             const AttributeList &FuncAttributes) const override;
 
     /// isFPImmLegal - Returns true if the target can instruction select the

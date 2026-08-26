@@ -186,17 +186,11 @@ bool Xtensa::checkRegister(MCRegister RegNo, const FeatureBitset &FeatureBits,
     return FeatureBits[Xtensa::FeatureMiscSR];
   case Xtensa::PRID:
     return RAType == Xtensa::REGISTER_READ && FeatureBits[Xtensa::FeaturePRID];
-  case Xtensa::THREADPTR:
-    return FeatureBits[FeatureTHREADPTR];
   case Xtensa::VECBASE:
     return FeatureBits[Xtensa::FeatureRelocatableVector];
   case Xtensa::FCR:
   case Xtensa::FSR:
     return FeatureBits[FeatureSingleFloat];
-  case Xtensa::F64R_LO:
-  case Xtensa::F64R_HI:
-  case Xtensa::F64S:
-    return FeatureBits[FeatureDFPAccel];
   case Xtensa::WINDOWBASE:
   case Xtensa::WINDOWSTART:
     return FeatureBits[Xtensa::FeatureWindowed];
@@ -209,23 +203,12 @@ bool Xtensa::checkRegister(MCRegister RegNo, const FeatureBitset &FeatureBits,
 
 // Get Xtensa User Register by encoding value.
 MCRegister Xtensa::getUserRegister(unsigned Code, const MCRegisterInfo &MRI) {
-  MCRegister UserReg = Xtensa::NoRegister;
-
   if (MRI.getEncodingValue(Xtensa::FCR) == Code) {
-    UserReg = Xtensa::FCR;
+    return Xtensa::FCR;
   } else if (MRI.getEncodingValue(Xtensa::FSR) == Code) {
-    UserReg = Xtensa::FSR;
-  } else if (MRI.getEncodingValue(Xtensa::F64R_LO) == Code) {
-    UserReg = Xtensa::F64R_LO;
-  } else if (MRI.getEncodingValue(Xtensa::F64R_HI) == Code) {
-    UserReg = Xtensa::F64R_HI;
-  } else if (MRI.getEncodingValue(Xtensa::F64S) == Code) {
-    UserReg = Xtensa::F64S;
-  } else if (MRI.getEncodingValue(Xtensa::THREADPTR) == Code) {
-    UserReg = Xtensa::THREADPTR;
+    return Xtensa::FSR;
   }
-
-  return UserReg;
+  return Xtensa::NoRegister;
 }
 
 static MCAsmInfo *createXtensaMCAsmInfo(const MCRegisterInfo &MRI,

@@ -17,6 +17,7 @@
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/Pattern.h"
 #include "mlir/Conversion/LLVMCommon/PrintCallHelper.h"
+#include "mlir/Conversion/LLVMCommon/VectorPattern.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/LLVMIR/FunctionCallUtils.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
@@ -24,6 +25,8 @@
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "llvm/ADT/StringRef.h"
+#include <functional>
 
 namespace mlir {
 #define GEN_PASS_DEF_CONVERTCONTROLFLOWTOLLVMPASS
@@ -138,12 +141,11 @@ struct BranchOpLowering : public ConvertOpToLLVMPattern<cf::BranchOp> {
                           TypeRange(adaptor.getOperands()));
     if (failed(convertedBlock))
       return failure();
-    DictionaryAttr attrs = op->getAttrDictionary();
     Operation *newOp = rewriter.replaceOpWithNewOp<LLVM::BrOp>(
         op, adaptor.getOperands(), *convertedBlock);
     // TODO: We should not just forward all attributes like that. But there are
     // existing Flang tests that depend on this behavior.
-    newOp->setAttrs(attrs);
+    newOp->setAttrs(op->getAttrDictionary());
     return success();
   }
 };
@@ -167,14 +169,18 @@ struct CondBranchOpLowering : public ConvertOpToLLVMPattern<cf::CondBranchOp> {
                           TypeRange(adaptor.getFalseDestOperands()));
     if (failed(convertedFalseBlock))
       return failure();
-    DictionaryAttr attrs = op->getAttrDictionary();
     auto newOp = rewriter.replaceOpWithNewOp<LLVM::CondBrOp>(
-        op, adaptor.getCondition(), adaptor.getTrueDestOperands(),
-        adaptor.getFalseDestOperands(), op.getBranchWeightsAttr(),
-        *convertedTrueBlock, *convertedFalseBlock);
+        op, adaptor.getCondition(), *convertedTrueBlock,
+        adaptor.getTrueDestOperands(), *convertedFalseBlock,
+        adaptor.getFalseDestOperands());
+    ArrayRef<int32_t> weights = op.getWeights();
+    if (!weights.empty()) {
+      newOp.setWeights(weights);
+      op.removeBranchWeightsAttr();
+    }
     // TODO: We should not just forward all attributes like that. But there are
     // existing Flang tests that depend on this behavior.
-    newOp->setAttrs(attrs);
+    newOp->setAttrs(op->getAttrDictionary());
     return success();
   }
 };

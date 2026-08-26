@@ -22,6 +22,7 @@
 #include "mlir/Dialect/SPIRV/Utils/LayoutUtils.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "llvm/ADT/SetVector.h"
 
 namespace mlir {
 namespace spirv {
