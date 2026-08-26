@@ -691,9 +691,8 @@ public:
     Value lhsForCmp = adaptValueType(adaptor.getLhs(), rewriter, cmpType);
     Value rhsForCmp = adaptValueType(adaptor.getRhs(), rewriter, cmpType);
 
-    Value cmp =
-        emitc::CmpOp::create(rewriter, op.getLoc(), rewriter.getI1Type(),
-                             predicate, lhsForCmp, rhsForCmp);
+    Value cmp = rewriter.create<emitc::CmpOp>(op.getLoc(), rewriter.getI1Type(),
+                                              predicate, lhsForCmp, rhsForCmp);
     rewriter.replaceOpWithNewOp<emitc::ConditionalOp>(
         op, type, cmp, adaptor.getLhs(), adaptor.getRhs());
     return success();
