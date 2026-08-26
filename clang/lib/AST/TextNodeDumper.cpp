@@ -843,10 +843,7 @@ void TextNodeDumper::Visit(const APValue &Value, QualType Ty) {
     }
 
     ColorScope Color(OS, ShowColors, DeclNameColor);
-    if (const ValueDecl *MemDecl = Value.getMemberPointerDecl())
-      OS << MemDecl->getDeclName();
-    else
-      OS << "null";
+    OS << Value.getMemberPointerDecl()->getDeclName();
     return;
   }
   case APValue::AddrLabelDiff:
@@ -1052,6 +1049,10 @@ void clang::TextNodeDumper::dumpNestedNameSpecifier(const NestedNameSpecifier *N
     case NestedNameSpecifier::Namespace:
       OS << " "; // "Namespace" is printed as the decl kind.
       dumpBareDeclRef(NNS->getAsNamespace());
+      break;
+    case NestedNameSpecifier::NamespaceAlias:
+      OS << " "; // "NamespaceAlias" is printed as the decl kind.
+      dumpBareDeclRef(NNS->getAsNamespaceAlias());
       break;
     case NestedNameSpecifier::TypeSpec:
       OS << " TypeSpec";

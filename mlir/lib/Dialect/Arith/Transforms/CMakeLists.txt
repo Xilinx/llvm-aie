@@ -27,7 +27,7 @@ add_mlir_dialect_library(MLIRArithTransforms
   MLIRInferIntRangeInterface
   MLIRIR
   MLIRMemRefDialect
-  MLIRShardDialect
+  MLIRMeshDialect
   MLIRPass
   MLIRShardingInterface
   MLIRTensorDialect

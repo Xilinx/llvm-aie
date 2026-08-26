@@ -9,7 +9,6 @@
 #ifndef LLDB_SOURCE_PLUGINS_OBJECTFILE_SaveCoreOPTIONS_H
 #define LLDB_SOURCE_PLUGINS_OBJECTFILE_SaveCoreOPTIONS_H
 
-#include "lldb/Target/CoreFileMemoryRanges.h"
 #include "lldb/Target/ThreadCollection.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/RangeMap.h"
@@ -24,7 +23,7 @@ namespace lldb_private {
 
 class SaveCoreOptions {
 public:
-  SaveCoreOptions() = default;
+  SaveCoreOptions(){};
   ~SaveCoreOptions() = default;
 
   lldb_private::Status SetPluginName(const char *name);
@@ -37,19 +36,17 @@ public:
   const std::optional<lldb_private::FileSpec> GetOutputFile() const;
 
   Status SetProcess(lldb::ProcessSP process_sp);
-  lldb::ProcessSP GetProcess() { return m_process_sp; }
 
   Status AddThread(lldb::ThreadSP thread_sp);
   bool RemoveThread(lldb::ThreadSP thread_sp);
   bool ShouldThreadBeSaved(lldb::tid_t tid) const;
   bool HasSpecifiedThreads() const;
 
-  Status EnsureValidConfiguration() const;
+  Status EnsureValidConfiguration(lldb::ProcessSP process_sp) const;
   const MemoryRanges &GetCoreFileMemoryRanges() const;
 
   void AddMemoryRegionToSave(const lldb_private::MemoryRegionInfo &region);
 
-  llvm::Expected<lldb_private::CoreFileMemoryRanges> GetMemoryRegionsToSave();
   lldb_private::ThreadCollection::collection GetThreadsToSave() const;
 
   llvm::Expected<uint64_t> GetCurrentSizeInBytes();

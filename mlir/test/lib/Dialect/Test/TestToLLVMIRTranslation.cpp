@@ -68,8 +68,8 @@ LogicalResult TestDialectLLVMIRTranslationInterface::amendOperation(
 
               if (createSymbol) {
                 OpBuilder builder(op->getRegion(0));
-                test::SymbolOp::create(
-                    builder, op->getLoc(),
+                builder.create<test::SymbolOp>(
+                    op->getLoc(),
                     StringAttr::get(op->getContext(), "sym_from_attr"),
                     /*sym_visibility=*/nullptr);
               }

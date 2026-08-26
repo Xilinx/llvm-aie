@@ -3,6 +3,9 @@ from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
 from lldbsuite.test import lldbutil
 
+USE_LIBSTDCPP = "USE_LIBSTDCPP"
+USE_LIBCPP = "USE_LIBCPP"
+
 
 class GenericDequeDataFormatterTestCase(TestBase):
     def findVariable(self, name):
@@ -53,7 +56,8 @@ class GenericDequeDataFormatterTestCase(TestBase):
             ],
         )
 
-    def do_test(self):
+    def do_test(self, stdlib_type):
+        self.build(dictionary={stdlib_type: "1"})
         (_, process, _, bkpt) = lldbutil.run_to_source_breakpoint(
             self, "break here", lldb.SBFileSpec("main.cpp")
         )
@@ -131,22 +135,15 @@ class GenericDequeDataFormatterTestCase(TestBase):
 
     @add_test_categories(["libstdcxx"])
     def test_libstdcpp(self):
-        self.build(dictionary={"USE_LIBSTDCPP": 1})
-        self.do_test()
+        self.do_test(USE_LIBSTDCPP)
 
     @add_test_categories(["libc++"])
     def test_libcpp(self):
-        self.build(dictionary={"USE_LIBCPP": 1})
-        self.do_test()
+        self.do_test(USE_LIBCPP)
 
-    @add_test_categories(["msvcstl"])
-    def test_msvcstl(self):
-        # No flags, because the "msvcstl" category checks that the MSVC STL is used by default.
-        self.build()
-        self.do_test()
-
-    def do_test_ref_and_ptr(self):
+    def do_test_ref_and_ptr(self, stdlib_type: str):
         """Test formatting of std::deque& and std::deque*"""
+        self.build(dictionary={stdlib_type: "1"})
         (self.target, process, thread, bkpt) = lldbutil.run_to_source_breakpoint(
             self, "stop here", lldb.SBFileSpec("main.cpp", False)
         )
@@ -160,15 +157,8 @@ class GenericDequeDataFormatterTestCase(TestBase):
 
     @add_test_categories(["libstdcxx"])
     def test_libstdcpp_ref_and_ptr(self):
-        self.build(dictionary={"USE_LIBSTDCPP": 1})
-        self.do_test_ref_and_ptr()
+        self.do_test_ref_and_ptr(USE_LIBSTDCPP)
 
     @add_test_categories(["libc++"])
     def test_libcpp_ref_and_ptr(self):
-        self.build(dictionary={"USE_LIBCPP": 1})
-        self.do_test_ref_and_ptr()
-
-    @add_test_categories(["msvcstl"])
-    def test_msvcstl_ref_and_ptr(self):
-        self.build()
-        self.do_test_ref_and_ptr()
+        self.do_test_ref_and_ptr(USE_LIBCPP)

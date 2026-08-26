@@ -63,10 +63,8 @@ void OptimizeReturned::visitCallBase(CallBase &CB) {
       if (isa<Constant>(Arg))
         continue;
       // Like replaceDominatedUsesWith but using Instruction/Use dominance.
-      Arg->replaceUsesWithIf(&CB, [&](Use &U) {
-        auto *I = cast<Instruction>(U.getUser());
-        return !I->isLifetimeStartOrEnd() && DT->dominates(&CB, U);
-      });
+      Arg->replaceUsesWithIf(&CB,
+                             [&](Use &U) { return DT->dominates(&CB, U); });
     }
 }
 

@@ -111,15 +111,3 @@ declare dso_local void @"??1MakeCleanup@@QEAA@XZ"(ptr)
 ; CHECK: # %unreachable
 ; CHECK: int3
 ; CHECK: .seh_handlerdata
-
-
-define dso_local void @last_call_no_return() {
-  call void @abort1()
-  unreachable
-}
-
-; CHECK-LABEL: last_call_no_return:
-; CHECK: callq abort1
-; CHECK-NEXT: int3
-; CHECK-NEXT: .seh_endproc
-

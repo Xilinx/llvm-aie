@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <cmath>
 #include <optional>
+#include <queue>
 
 using namespace llvm;
 using ProfCorrelatorKind = InstrProfCorrelator::ProfCorrelatorKind;
@@ -2848,8 +2849,9 @@ static int showInstrProfile(ShowFormat SFormat, raw_fd_ostream &OS) {
   auto FS = vfs::getRealFileSystem();
   auto ReaderOrErr = InstrProfReader::create(Filename, *FS);
   std::vector<uint32_t> Cutoffs = std::move(DetailedSummaryCutoffs);
-  if (Cutoffs.empty() && (ShowDetailedSummary || ShowHotFuncList))
+  if (ShowDetailedSummary && Cutoffs.empty()) {
     Cutoffs = ProfileSummaryBuilder::DefaultCutoffs;
+  }
   InstrProfSummaryBuilder Builder(std::move(Cutoffs));
   if (Error E = ReaderOrErr.takeError())
     exitWithError(std::move(E), Filename);
@@ -2861,7 +2863,15 @@ static int showInstrProfile(ShowFormat SFormat, raw_fd_ostream &OS) {
   int NumVPKind = IPVK_Last - IPVK_First + 1;
   std::vector<ValueSitesStats> VPStats(NumVPKind);
 
-  std::vector<std::pair<StringRef, uint64_t>> NameAndMaxCount;
+  auto MinCmp = [](const std::pair<std::string, uint64_t> &v1,
+                   const std::pair<std::string, uint64_t> &v2) {
+    return v1.second > v2.second;
+  };
+
+  std::priority_queue<std::pair<std::string, uint64_t>,
+                      std::vector<std::pair<std::string, uint64_t>>,
+                      decltype(MinCmp)>
+      HottestFuncs(MinCmp);
 
   if (!TextFormat && OnlyListBelow) {
     OS << "The list of functions with the maximum counter less than "
@@ -2936,8 +2946,15 @@ static int showInstrProfile(ShowFormat SFormat, raw_fd_ostream &OS) {
     } else if (OnlyListBelow)
       continue;
 
-    if (TopNFunctions || ShowHotFuncList)
-      NameAndMaxCount.emplace_back(Func.Name, FuncMax);
+    if (TopNFunctions) {
+      if (HottestFuncs.size() == TopNFunctions) {
+        if (HottestFuncs.top().second < FuncMax) {
+          HottestFuncs.pop();
+          HottestFuncs.emplace(std::make_pair(std::string(Func.Name), FuncMax));
+        }
+      } else
+        HottestFuncs.emplace(std::make_pair(std::string(Func.Name), FuncMax));
+    }
 
     if (Show) {
       if (!ShownFunctions)
@@ -3017,27 +3034,16 @@ static int showInstrProfile(ShowFormat SFormat, raw_fd_ostream &OS) {
        << "): " << PS->getNumFunctions() - BelowCutoffFunctions << "\n";
   }
 
-  // Sort by MaxCount in decreasing order
-  llvm::stable_sort(NameAndMaxCount, [](const auto &L, const auto &R) {
-    return L.second > R.second;
-  });
   if (TopNFunctions) {
+    std::vector<std::pair<std::string, uint64_t>> SortedHottestFuncs;
+    while (!HottestFuncs.empty()) {
+      SortedHottestFuncs.emplace_back(HottestFuncs.top());
+      HottestFuncs.pop();
+    }
     OS << "Top " << TopNFunctions
        << " functions with the largest internal block counts: \n";
-    auto TopFuncs = ArrayRef(NameAndMaxCount).take_front(TopNFunctions);
-    for (auto [Name, MaxCount] : TopFuncs)
-      OS << "  " << Name << ", max count = " << MaxCount << "\n";
-  }
-
-  if (ShowHotFuncList) {
-    auto HotCountThreshold =
-        ProfileSummaryBuilder::getHotCountThreshold(PS->getDetailedSummary());
-    OS << "# Hot count threshold: " << HotCountThreshold << "\n";
-    for (auto [Name, MaxCount] : NameAndMaxCount) {
-      if (MaxCount < HotCountThreshold)
-        break;
-      OS << Name << "\n";
-    }
+    for (auto &hotfunc : llvm::reverse(SortedHottestFuncs))
+      OS << "  " << hotfunc.first << ", max count = " << hotfunc.second << "\n";
   }
 
   if (ShownFunctions && ShowIndirectCallTargets) {

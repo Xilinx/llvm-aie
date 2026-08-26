@@ -59,9 +59,6 @@ bool IsExtendedListItem(const Symbol &sym);
 bool IsVariableListItem(const Symbol &sym);
 bool IsVarOrFunctionRef(const MaybeExpr &expr);
 
-bool IsMapEnteringType(parser::OmpMapType::Value type);
-bool IsMapExitingType(parser::OmpMapType::Value type);
-
 std::optional<SomeExpr> GetEvaluateExpr(const parser::Expr &parserExpr);
 std::optional<evaluate::DynamicType> GetDynamicType(
     const parser::Expr &parserExpr);

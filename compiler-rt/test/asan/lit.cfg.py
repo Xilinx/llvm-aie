@@ -28,7 +28,7 @@ default_asan_opts = list(config.default_sanitizer_opts)
 # tests to prevent regressions.
 # Currently, detect_leaks for asan tests only work on Intel MacOS.
 if (
-    config.target_os == "Darwin"
+    config.host_os == "Darwin"
     and config.apple_platform == "osx"
     and config.target_arch == "x86_64"
 ):
@@ -45,7 +45,7 @@ config.substitutions.append(
 # Setup source root.
 config.test_source_root = os.path.dirname(__file__)
 
-if config.target_os not in ["FreeBSD", "NetBSD"]:
+if config.host_os not in ["FreeBSD", "NetBSD"]:
     libdl_flag = "-ldl"
 else:
     libdl_flag = ""
@@ -125,17 +125,17 @@ config.substitutions.append(
     ("%clangxx_asan_lto ", build_invocation(clang_asan_cxxflags, True))
 )
 if config.asan_dynamic:
-    if config.target_os in ["Linux", "FreeBSD", "NetBSD", "SunOS"]:
+    if config.host_os in ["Linux", "FreeBSD", "NetBSD", "SunOS"]:
         shared_libasan_path = os.path.join(
             config.compiler_rt_libdir,
             "libclang_rt.asan{}.so".format(config.target_suffix),
         )
-    elif config.target_os == "Darwin":
+    elif config.host_os == "Darwin":
         shared_libasan_path = os.path.join(
             config.compiler_rt_libdir,
             "libclang_rt.asan_{}_dynamic.dylib".format(config.apple_platform),
         )
-    elif config.target_os == "Windows":
+    elif config.host_os == "Windows":
         shared_libasan_path = os.path.join(
             config.compiler_rt_libdir,
             "clang_rt.asan_dynamic-{}.lib".format(config.target_suffix),
@@ -274,16 +274,16 @@ leak_detection_android = (
     and (config.target_arch in ["x86_64", "i386", "i686", "aarch64"])
 )
 leak_detection_linux = (
-    (config.target_os == "Linux")
+    (config.host_os == "Linux")
     and (not config.android)
     and (config.target_arch in ["x86_64", "i386", "riscv64", "loongarch64"])
 )
 leak_detection_mac = (
-    (config.target_os == "Darwin")
+    (config.host_os == "Darwin")
     and (config.apple_platform == "osx")
     and (config.target_arch == "x86_64")
 )
-leak_detection_netbsd = (config.target_os == "NetBSD") and (
+leak_detection_netbsd = (config.host_os == "NetBSD") and (
     config.target_arch in ["x86_64", "i386"]
 )
 if (
@@ -296,7 +296,7 @@ if (
 
 # Add the RT libdir to PATH directly so that we can successfully run the gtest
 # binary to list its tests.
-if config.target_os == "Windows":
+if config.host_os == "Windows":
     os.environ["PATH"] = os.path.pathsep.join(
         [config.compiler_rt_libdir, os.environ.get("PATH", "")]
     )
@@ -310,10 +310,10 @@ if config.compiler_id == "MSVC":
 # Default test suffixes.
 config.suffixes = [".c", ".cpp"]
 
-if config.target_os == "Darwin":
+if config.host_os == "Darwin":
     config.suffixes.append(".mm")
 
-if config.target_os == "Windows":
+if config.host_os == "Windows":
     config.substitutions.append(("%fPIC", ""))
     config.substitutions.append(("%fPIE", ""))
     config.substitutions.append(("%pie", ""))
@@ -323,11 +323,11 @@ else:
     config.substitutions.append(("%pie", "-pie"))
 
 # Only run the tests on supported OSs.
-if config.target_os not in ["Linux", "Darwin", "FreeBSD", "SunOS", "Windows", "NetBSD"]:
+if config.host_os not in ["Linux", "Darwin", "FreeBSD", "SunOS", "Windows", "NetBSD"]:
     config.unsupported = True
 
 if not config.parallelism_group:
     config.parallelism_group = "shadow-memory"
 
-if config.target_os == "NetBSD":
+if config.host_os == "NetBSD":
     config.substitutions.insert(0, ("%run", config.netbsd_noaslr_prefix))

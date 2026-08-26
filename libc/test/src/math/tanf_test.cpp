@@ -15,7 +15,7 @@
 #include "test/src/math/sdcomp26094.h"
 #include "utils/MPFRWrapper/MPFRUtils.h"
 
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
 
 using LlvmLibcTanfTest = LIBC_NAMESPACE::testing::FPTest<float>;
 

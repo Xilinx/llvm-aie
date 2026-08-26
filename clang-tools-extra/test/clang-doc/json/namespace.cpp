@@ -20,11 +20,8 @@ enum Color {
 typedef int MyTypedef;
 
 // CHECK:       { 
-// CHECK-NEXT:    "DocumentationFileName": "index",
 // CHECK-NEXT:    "Enums": [
 // CHECK-NEXT:      {
-// CHECK-NEXT:        "End": true,
-// CHECK-NEXT:        "InfoType": "enum",
 // CHECK-NEXT:        "Location": {
 // CHECK-NEXT:          "Filename": "{{.*}}namespace.cpp",
 // CHECK-NEXT:          "LineNumber": 14
@@ -39,7 +36,6 @@ typedef int MyTypedef;
 // CHECK-NEXT:            "Value": "1"
 // CHECK-NEXT:          },
 // CHECK-NEXT:          {
-// CHECK-NEXT:            "End": true,
 // CHECK-NEXT:            "Name": "BLUE",
 // CHECK-NEXT:            "ValueExpr": "5"
 // CHECK-NEXT:          }
@@ -51,13 +47,10 @@ typedef int MyTypedef;
 // CHECK-NEXT:    ],
 // CHECK-NEXT:   "Functions": [
 // CHECK-NEXT:     {
-// CHECK-NEXT:       "End": true,
-// CHECK-NEXT:       "InfoType": "function",
 // CHECK-NEXT:       "IsStatic": false,
 // CHECK-NEXT:       "Name": "myFunction",
 // CHECK-NEXT:       "Params": [
 // CHECK-NEXT:         {
-// CHECK-NEXT:           "End": true,
 // CHECK-NEXT:           "Name": "Param",
 // CHECK-NEXT:           "Type": "int"
 // CHECK-NEXT:         }
@@ -72,13 +65,9 @@ typedef int MyTypedef;
 // CHECK-NEXT:       "USR": "{{[0-9A-F]*}}"
 // CHECK-NEXT:     }
 // CHECK-NEXT:   ],
-// CHECK-NEXT:   "HasEnums": true,
-// CHECK-NEXT:   "HasRecords": true,
-// CHECK-NEXT:   "InfoType": "namespace",
 // CHECK-NEXT:   "Name": "",
 // CHECK-NEXT:   "Namespaces": [
 // CHECK-NEXT:     {
-// CHECK-NEXT:       "End": true,
 // CHECK-NEXT:       "Name": "NestedNamespace",
 // CHECK-NEXT:       "Path": "",
 // CHECK-NEXT:       "QualName": "NestedNamespace",
@@ -87,8 +76,6 @@ typedef int MyTypedef;
 // CHECK-NEXT:   ],
 // CHECK-NEXT:   "Records": [
 // CHECK-NEXT:     {
-// CHECK-NEXT:       "DocumentationFileName": "_ZTV7MyClass",
-// CHECK-NEXT:       "End": true,
 // CHECK-NEXT:       "Name": "MyClass",
 // CHECK-NEXT:       "Path": "GlobalNamespace",
 // CHECK-NEXT:       "QualName": "MyClass",
@@ -97,8 +84,6 @@ typedef int MyTypedef;
 // CHECK-NEXT:   ],
 // CHECK-NEXT:   "Typedefs": [
 // CHECK-NEXT:    {
-// CHECK-NEXT:      "End": true,
-// CHECK-NEXT:      "InfoType": "typedef",
 // CHECK-NEXT:      "IsUsing": false,
 // CHECK-NEXT:      "Location": {
 // CHECK-NEXT:        "Filename": "{{.*}}namespace.cpp",
@@ -119,8 +104,6 @@ typedef int MyTypedef;
 // CHECK-NEXT:    "USR": "0000000000000000000000000000000000000000"
 // CHECK-NEXT:   "Variables": [
 // CHECK-NEXT:     {
-// CHECK-NEXT:       "End": true,
-// CHECK-NEXT:       "InfoType": "variable",
 // CHECK-NEXT:       "IsStatic": true,
 // CHECK-NEXT:       "Location": {
 // CHECK-NEXT:         "Filename": "{{.*}}namespace.cpp",

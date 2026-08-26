@@ -155,10 +155,9 @@ transform::MemRefAllocaToGlobalOp::apply(transform::TransformRewriter &rewriter,
       Type resultType = alloca.getResult().getType();
       OpBuilder builder(rewriter.getContext());
       // TODO: Add a better builder for this.
-      globalOp = memref::GlobalOp::create(
-          builder, loc, StringAttr::get(ctx, "alloca"),
-          StringAttr::get(ctx, "private"), TypeAttr::get(resultType),
-          Attribute{}, UnitAttr{}, IntegerAttr{});
+      globalOp = builder.create<memref::GlobalOp>(
+          loc, StringAttr::get(ctx, "alloca"), StringAttr::get(ctx, "private"),
+          TypeAttr::get(resultType), Attribute{}, UnitAttr{}, IntegerAttr{});
       symbolTable.insert(globalOp);
     }
 

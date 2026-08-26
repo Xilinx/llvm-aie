@@ -75,9 +75,9 @@ static void createCleanupRegion(Fortran::lower::AbstractConverter &converter,
                                         /*mutableProperties=*/{}};
         Fortran::lower::genDeallocateIfAllocated(converter, mutableBox, loc);
         if (isDoConcurrent)
-          fir::YieldOp::create(builder, loc);
+          builder.create<fir::YieldOp>(loc);
         else
-          mlir::omp::YieldOp::create(builder, loc);
+          builder.create<mlir::omp::YieldOp>(loc);
         return;
       }
     }
@@ -97,18 +97,18 @@ static void createCleanupRegion(Fortran::lower::AbstractConverter &converter,
         hlfir::genVariableRawAddress(loc, builder, hlfir::Entity{arg});
     mlir::Value isAllocated = builder.genIsNotNullAddr(loc, addr);
     fir::IfOp ifOp =
-        fir::IfOp::create(builder, loc, isAllocated, /*withElseRegion=*/false);
+        builder.create<fir::IfOp>(loc, isAllocated, /*withElseRegion=*/false);
     builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
 
     mlir::Value cast = builder.createConvert(
         loc, fir::HeapType::get(fir::dyn_cast_ptrEleTy(addr.getType())), addr);
-    fir::FreeMemOp::create(builder, loc, cast);
+    builder.create<fir::FreeMemOp>(loc, cast);
 
     builder.setInsertionPointAfter(ifOp);
     if (isDoConcurrent)
-      fir::YieldOp::create(builder, loc);
+      builder.create<fir::YieldOp>(loc);
     else
-      mlir::omp::YieldOp::create(builder, loc);
+      builder.create<mlir::omp::YieldOp>(loc);
     return;
   }
 
@@ -122,11 +122,11 @@ static void createCleanupRegion(Fortran::lower::AbstractConverter &converter,
     auto heapTy = fir::HeapType::get(refTy.getEleTy());
     addr = builder.createConvert(loc, heapTy, addr);
 
-    fir::FreeMemOp::create(builder, loc, addr);
+    builder.create<fir::FreeMemOp>(loc, addr);
     if (isDoConcurrent)
-      fir::YieldOp::create(builder, loc);
+      builder.create<fir::YieldOp>(loc);
     else
-      mlir::omp::YieldOp::create(builder, loc);
+      builder.create<mlir::omp::YieldOp>(loc);
 
     return;
   }
@@ -172,7 +172,7 @@ fir::ShapeShiftOp Fortran::lower::getShapeShift(
       // OpenACC does
       mlir::Value dim = builder.createIntegerConstant(loc, idxTy, i);
       auto dimInfo =
-          fir::BoxDimsOp::create(builder, loc, idxTy, idxTy, idxTy, box, dim);
+          builder.create<fir::BoxDimsOp>(loc, idxTy, idxTy, idxTy, box, dim);
       lbAndExtents.push_back(useDefaultLowerBounds ? one()
                                                    : dimInfo.getLowerBound());
       lbAndExtents.push_back(dimInfo.getExtent());
@@ -181,7 +181,7 @@ fir::ShapeShiftOp Fortran::lower::getShapeShift(
 
   auto shapeShiftTy = fir::ShapeShiftType::get(builder.getContext(), rank);
   auto shapeShift =
-      fir::ShapeShiftOp::create(builder, loc, shapeShiftTy, lbAndExtents);
+      builder.create<fir::ShapeShiftOp>(loc, shapeShiftTy, lbAndExtents);
   return shapeShift;
 }
 
@@ -270,7 +270,7 @@ static mlir::Value generateZeroShapeForRank(fir::FirOpBuilder &builder,
   mlir::SmallVector<mlir::Value> dims;
   dims.resize(rank, zero);
   mlir::Type shapeTy = fir::ShapeType::get(builder.getContext(), rank);
-  return fir::ShapeOp::create(builder, loc, shapeTy, dims);
+  return builder.create<fir::ShapeOp>(loc, shapeTy, dims);
 }
 
 namespace {
@@ -341,9 +341,9 @@ private:
 
   void createYield(mlir::Value ret) {
     if (isDoConcurrent)
-      fir::YieldOp::create(builder, loc, ret);
+      builder.create<fir::YieldOp>(loc, ret);
     else
-      mlir::omp::YieldOp::create(builder, loc, ret);
+      builder.create<mlir::omp::YieldOp>(loc, ret);
   }
 
   void initTrivialType() {
@@ -392,9 +392,9 @@ void PopulateInitAndCleanupRegionsHelper::initBoxedPrivatePointer(
   // Just incase, do initialize the box with a null value
   mlir::Value null = builder.createNullConstant(loc, boxTy.getEleTy());
   mlir::Value nullBox;
-  nullBox = fir::EmboxOp::create(builder, loc, boxTy, null, shape,
-                                 /*slice=*/mlir::Value{}, lenParams);
-  fir::StoreOp::create(builder, loc, nullBox, allocatedPrivVarArg);
+  nullBox = builder.create<fir::EmboxOp>(loc, boxTy, null, shape,
+                                         /*slice=*/mlir::Value{}, lenParams);
+  builder.create<fir::StoreOp>(loc, nullBox, allocatedPrivVarArg);
   createYield(allocatedPrivVarArg);
 }
 /// Check if an allocatable box is unallocated. If so, initialize the boxAlloca
@@ -410,10 +410,10 @@ void PopulateInitAndCleanupRegionsHelper::initBoxedPrivatePointer(
 /// }
 /// omp.yield %box_alloca
 fir::IfOp PopulateInitAndCleanupRegionsHelper::handleNullAllocatable() {
-  mlir::Value addr = fir::BoxAddrOp::create(builder, loc, getLoadedMoldArg());
+  mlir::Value addr = builder.create<fir::BoxAddrOp>(loc, getLoadedMoldArg());
   mlir::Value isNotAllocated = builder.genIsNullAddr(loc, addr);
-  fir::IfOp ifOp = fir::IfOp::create(builder, loc, isNotAllocated,
-                                     /*withElseRegion=*/true);
+  fir::IfOp ifOp = builder.create<fir::IfOp>(loc, isNotAllocated,
+                                             /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   // Just embox the null address and return.
   // We have to give the embox a shape so that the LLVM box structure has the
@@ -421,9 +421,9 @@ fir::IfOp PopulateInitAndCleanupRegionsHelper::handleNullAllocatable() {
   mlir::Value shape = generateZeroShapeForRank(builder, loc, moldArg);
 
   mlir::Value nullBox =
-      fir::EmboxOp::create(builder, loc, valType, addr, shape,
-                           /*slice=*/mlir::Value{}, lenParams);
-  fir::StoreOp::create(builder, loc, nullBox, allocatedPrivVarArg);
+      builder.create<fir::EmboxOp>(loc, valType, addr, shape,
+                                   /*slice=*/mlir::Value{}, lenParams);
+  builder.create<fir::StoreOp>(loc, nullBox, allocatedPrivVarArg);
   return ifOp;
 }
 
@@ -442,14 +442,14 @@ void PopulateInitAndCleanupRegionsHelper::initAndCleanupBoxedScalar(
                                                      /*shape=*/{}, lenParams);
   if (scalarInitValue)
     builder.createStoreWithConvert(loc, scalarInitValue, valAlloc);
-  mlir::Value box = fir::EmboxOp::create(builder, loc, valType, valAlloc,
-                                         /*shape=*/mlir::Value{},
-                                         /*slice=*/mlir::Value{}, lenParams);
+  mlir::Value box = builder.create<fir::EmboxOp>(
+      loc, valType, valAlloc, /*shape=*/mlir::Value{},
+      /*slice=*/mlir::Value{}, lenParams);
   initializeIfDerivedTypeBox(
       builder, loc, box, getLoadedMoldArg(), needsInitialization,
       /*isFirstPrivate=*/kind == DeclOperationKind::FirstPrivateOrLocalInit);
   fir::StoreOp lastOp =
-      fir::StoreOp::create(builder, loc, box, allocatedPrivVarArg);
+      builder.create<fir::StoreOp>(loc, box, allocatedPrivVarArg);
 
   createCleanupRegion(converter, loc, argType, cleanupRegion, sym,
                       isDoConcurrent);
@@ -483,15 +483,14 @@ void PopulateInitAndCleanupRegionsHelper::initAndCleanupBoxedArray(
     fir::ShapeShiftOp shape =
         getShapeShift(builder, loc, source, cannotHaveNonDefaultLowerBounds);
     mlir::Type arrayType = source.getElementOrSequenceType();
-    mlir::Value allocatedArray = fir::AllocMemOp::create(
-        builder, loc, arrayType, /*typeparams=*/mlir::ValueRange{},
-        shape.getExtents());
-    mlir::Value firClass = fir::EmboxOp::create(builder, loc, source.getType(),
-                                                allocatedArray, shape);
+    mlir::Value allocatedArray = builder.create<fir::AllocMemOp>(
+        loc, arrayType, /*typeparams=*/mlir::ValueRange{}, shape.getExtents());
+    mlir::Value firClass = builder.create<fir::EmboxOp>(loc, source.getType(),
+                                                        allocatedArray, shape);
     initializeIfDerivedTypeBox(
         builder, loc, firClass, source, needsInitialization,
         /*isFirstprivate=*/kind == DeclOperationKind::FirstPrivateOrLocalInit);
-    fir::StoreOp::create(builder, loc, firClass, allocatedPrivVarArg);
+    builder.create<fir::StoreOp>(loc, firClass, allocatedPrivVarArg);
     if (ifUnallocated)
       builder.setInsertionPointAfter(ifUnallocated);
     createYield(allocatedPrivVarArg);
@@ -544,21 +543,22 @@ void PopulateInitAndCleanupRegionsHelper::initAndCleanupBoxedArray(
   if (mlir::isa<fir::BaseBoxType>(temp.getType()))
     // the box created by the declare form createTempFromMold is missing
     // lower bounds info
-    box = fir::ReboxOp::create(builder, loc, boxType, temp, shapeShift,
-                               /*shift=*/mlir::Value{});
+    box = builder.create<fir::ReboxOp>(loc, boxType, temp, shapeShift,
+                                       /*shift=*/mlir::Value{});
   else
-    box = fir::EmboxOp::create(builder, loc, boxType, temp, shapeShift,
-                               /*slice=*/mlir::Value{},
-                               /*typeParams=*/llvm::ArrayRef<mlir::Value>{});
+    box = builder.create<fir::EmboxOp>(
+        loc, boxType, temp, shapeShift,
+        /*slice=*/mlir::Value{},
+        /*typeParams=*/llvm::ArrayRef<mlir::Value>{});
 
   if (scalarInitValue)
-    hlfir::AssignOp::create(builder, loc, scalarInitValue, box);
+    builder.create<hlfir::AssignOp>(loc, scalarInitValue, box);
 
   initializeIfDerivedTypeBox(
       builder, loc, box, getLoadedMoldArg(), needsInitialization,
       /*isFirstPrivate=*/kind == DeclOperationKind::FirstPrivateOrLocalInit);
 
-  fir::StoreOp::create(builder, loc, box, allocatedPrivVarArg);
+  builder.create<fir::StoreOp>(loc, box, allocatedPrivVarArg);
   if (ifUnallocated)
     builder.setInsertionPointAfter(ifUnallocated);
   createYield(allocatedPrivVarArg);
@@ -596,8 +596,8 @@ void PopulateInitAndCleanupRegionsHelper::initAndCleanupUnboxedDerivedType(
   builder.setInsertionPointToStart(initBlock);
   mlir::Type boxedTy = fir::BoxType::get(valType);
   mlir::Value newBox =
-      fir::EmboxOp::create(builder, loc, boxedTy, allocatedPrivVarArg);
-  mlir::Value moldBox = fir::EmboxOp::create(builder, loc, boxedTy, moldArg);
+      builder.create<fir::EmboxOp>(loc, boxedTy, allocatedPrivVarArg);
+  mlir::Value moldBox = builder.create<fir::EmboxOp>(loc, boxedTy, moldArg);
   initializeIfDerivedTypeBox(builder, loc, newBox, moldBox, needsInitialization,
                              /*isFirstPrivate=*/kind ==
                                  DeclOperationKind::FirstPrivateOrLocalInit);

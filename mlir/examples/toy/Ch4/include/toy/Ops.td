@@ -72,7 +72,7 @@ def ConstantOp : Toy_Op<"constant", [Pure]> {
 
   // Add custom build methods for the constant operation. These method populates
   // the `state` that MLIR uses to create operations, i.e. these are used when
-  // using `ConstantOp::create(builder, ...)`.
+  // using `builder.create<ConstantOp>(...)`.
   let builders = [
     // Build a constant with a given constant tensor value.
     OpBuilder<(ins "DenseElementsAttr":$value), [{

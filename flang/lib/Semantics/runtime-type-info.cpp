@@ -1131,7 +1131,7 @@ void RuntimeTableBuilder::DescribeSpecialProc(
   if (auto proc{evaluate::characteristics::Procedure::Characterize(
           specific, context_.foldingContext())}) {
     std::uint8_t isArgDescriptorSet{0};
-    bool specialCaseFlag{0};
+    std::uint8_t isArgContiguousSet{0};
     int argThatMightBeDescriptor{0};
     MaybeExpr which;
     if (isAssignment) {
@@ -1197,7 +1197,7 @@ void RuntimeTableBuilder::DescribeSpecialProc(
                         TypeAndShape::Attr::AssumedShape) ||
                 dummyData.attrs.test(evaluate::characteristics::
                         DummyDataObject::Attr::Contiguous)) {
-              specialCaseFlag = true;
+              isArgContiguousSet |= 1;
             }
           }
         }
@@ -1216,7 +1216,7 @@ void RuntimeTableBuilder::DescribeSpecialProc(
         return;
       }
       if (ddo->type.type().IsPolymorphic()) {
-        argThatMightBeDescriptor = 1;
+        isArgDescriptorSet |= 1;
       }
       switch (io.value()) {
       case common::DefinedIo::ReadFormatted:
@@ -1231,9 +1231,6 @@ void RuntimeTableBuilder::DescribeSpecialProc(
       case common::DefinedIo::WriteUnformatted:
         which = writeUnformattedEnum_;
         break;
-      }
-      if (context_.defaultKinds().GetDefaultKind(TypeCategory::Integer) == 8) {
-        specialCaseFlag = true; // UNIT= & IOSTAT= INTEGER(8)
       }
     }
     if (argThatMightBeDescriptor != 0) {
@@ -1265,8 +1262,8 @@ void RuntimeTableBuilder::DescribeSpecialProc(
     }
     CHECK(bindingIndex <= 255);
     AddValue(values, specialSchema_, "istypebound"s, IntExpr<1>(bindingIndex));
-    AddValue(values, specialSchema_, "specialcaseflag"s,
-        IntExpr<1>(specialCaseFlag));
+    AddValue(values, specialSchema_, "isargcontiguousset"s,
+        IntExpr<1>(isArgContiguousSet));
     AddValue(values, specialSchema_, procCompName,
         SomeExpr{evaluate::ProcedureDesignator{specific}});
     // index might already be present in the case of an override
@@ -1386,26 +1383,19 @@ CollectNonTbpDefinedIoGenericInterfaces(
               } else {
                 // Local scope's specific overrides host's for this type
                 bool updated{false};
-                std::uint8_t flags{0};
-                if (declType->IsPolymorphic()) {
-                  flags |= IsDtvArgPolymorphic;
-                }
-                if (scope.context().GetDefaultKind(TypeCategory::Integer) ==
-                    8) {
-                  flags |= DefinedIoInteger8;
-                }
                 for (auto [iter, end]{result.equal_range(dtDesc)}; iter != end;
                      ++iter) {
                   NonTbpDefinedIo &nonTbp{iter->second};
                   if (nonTbp.definedIo == which) {
                     nonTbp.subroutine = &*specific;
-                    nonTbp.flags = flags;
+                    nonTbp.isDtvArgPolymorphic = declType->IsPolymorphic();
                     updated = true;
                   }
                 }
                 if (!updated) {
-                  result.emplace(
-                      dtDesc, NonTbpDefinedIo{&*specific, which, flags});
+                  result.emplace(dtDesc,
+                      NonTbpDefinedIo{
+                          &*specific, which, declType->IsPolymorphic()});
                 }
               }
             }

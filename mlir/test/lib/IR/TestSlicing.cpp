@@ -30,8 +30,8 @@ static LogicalResult createBackwardSliceFunction(Operation *op,
   OpBuilder builder(parentFuncOp);
   Location loc = op->getLoc();
   std::string clonedFuncOpName = parentFuncOp.getName().str() + suffix.str();
-  func::FuncOp clonedFuncOp = func::FuncOp::create(
-      builder, loc, clonedFuncOpName, parentFuncOp.getFunctionType());
+  func::FuncOp clonedFuncOp = builder.create<func::FuncOp>(
+      loc, clonedFuncOpName, parentFuncOp.getFunctionType());
   IRMapping mapper;
   builder.setInsertionPointToEnd(clonedFuncOp.addEntryBlock());
   for (const auto &arg : enumerate(parentFuncOp.getArguments()))
@@ -46,7 +46,7 @@ static LogicalResult createBackwardSliceFunction(Operation *op,
   (void)result;
   for (Operation *slicedOp : slice)
     builder.clone(*slicedOp, mapper);
-  func::ReturnOp::create(builder, loc);
+  builder.create<func::ReturnOp>(loc);
   return success();
 }
 

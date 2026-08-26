@@ -62,7 +62,6 @@ class ASTContext;
 class ASTDeserializationListener;
 class ASTMutationListener;
 class ASTReader;
-class CodeGenOptions;
 class CompilerInstance;
 class CompilerInvocation;
 class Decl;
@@ -108,7 +107,6 @@ public:
 
 private:
   std::unique_ptr<LangOptions> LangOpts;
-  std::unique_ptr<CodeGenOptions> CodeGenOpts;
   // FIXME: The documentation on \c LoadFrom* member functions states that the
   // DiagnosticsEngine (and therefore DiagnosticOptions) must outlive the
   // returned ASTUnit. This is not the case. Enfore it by storing non-owning

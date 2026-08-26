@@ -16,7 +16,6 @@
 #include "lldb/ValueObject/ValueObject.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstdint>
-#include <memory>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -63,9 +62,10 @@ void ValueObjectPrinter::Init(
   m_summary.assign("");
   m_error.assign("");
   m_val_summary_ok = false;
-  m_printed_instance_pointers = printed_instance_pointers
-                                    ? printed_instance_pointers
-                                    : std::make_shared<InstancePointersSet>();
+  m_printed_instance_pointers =
+      printed_instance_pointers
+          ? printed_instance_pointers
+          : InstancePointersSetSP(new InstancePointersSet());
   SetupMostSpecializedValue();
 }
 
@@ -854,7 +854,7 @@ llvm::Error ValueObjectPrinter::PrintChildrenIfNeeded(bool value_printed,
       PrintChildren(value_printed, summary_printed, curr_ptr_depth);
   } else if (HasReachedMaximumDepth() && IsAggregate() &&
              ShouldPrintValueObject()) {
-    m_stream->PutCString(" {...}\n");
+    m_stream->PutCString("{...}\n");
     // The maximum child depth has been reached. If `m_max_depth` is the default
     // (i.e. the user has _not_ customized it), then lldb presents a warning to
     // the user. The warning tells the user that the limit has been reached, but

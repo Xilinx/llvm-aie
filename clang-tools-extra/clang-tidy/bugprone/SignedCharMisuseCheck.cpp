@@ -74,25 +74,17 @@ void SignedCharMisuseCheck::registerMatchers(MatchFinder *Finder) {
       charCastExpression(true, IntegerType, "signedCastExpression");
   const auto UnSignedCharCastExpr =
       charCastExpression(false, IntegerType, "unsignedCastExpression");
-  const bool IsC23 = getLangOpts().C23;
 
-  // Catch assignments with signed char -> integer conversion. Ignore false
-  // positives on C23 enums with the fixed underlying type of signed char.
+  // Catch assignments with signed char -> integer conversion.
   const auto AssignmentOperatorExpr =
       expr(binaryOperator(hasOperatorName("="), hasLHS(hasType(IntegerType)),
-                          hasRHS(SignedCharCastExpr)),
-           IsC23 ? unless(binaryOperator(
-                       hasLHS(hasType(hasCanonicalType(enumType())))))
-                 : Matcher<Stmt>(anything()));
+                          hasRHS(SignedCharCastExpr)));
 
   Finder->addMatcher(AssignmentOperatorExpr, this);
 
-  // Catch declarations with signed char -> integer conversion. Ignore false
-  // positives on C23 enums with the fixed underlying type of signed char.
-  const auto Declaration = varDecl(
-      isDefinition(), hasType(IntegerType), hasInitializer(SignedCharCastExpr),
-      IsC23 ? unless(hasType(hasCanonicalType(enumType())))
-            : Matcher<VarDecl>(anything()));
+  // Catch declarations with signed char -> integer conversion.
+  const auto Declaration = varDecl(isDefinition(), hasType(IntegerType),
+                                   hasInitializer(SignedCharCastExpr));
 
   Finder->addMatcher(Declaration, this);
 

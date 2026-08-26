@@ -12,7 +12,7 @@
 #define FUNCTION __clc_isfinite
 #define __CLC_BODY <clc/relational/unary_decl.inc>
 
-#include <clc/math/gentype.inc>
+#include <clc/relational/floatn.inc>
 
 #undef FUNCTION
 

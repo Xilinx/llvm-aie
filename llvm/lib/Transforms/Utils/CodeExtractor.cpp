@@ -1219,8 +1219,12 @@ void CodeExtractor::calculateNewCallTerminatorWeights(
 /// \p F.
 static void eraseDebugIntrinsicsWithNonLocalRefs(Function &F) {
   for (Instruction &I : instructions(F)) {
+    SmallVector<DbgVariableIntrinsic *, 4> DbgUsers;
     SmallVector<DbgVariableRecord *, 4> DbgVariableRecords;
-    findDbgUsers(&I, DbgVariableRecords);
+    findDbgUsers(DbgUsers, &I, &DbgVariableRecords);
+    for (DbgVariableIntrinsic *DVI : DbgUsers)
+      if (DVI->getFunction() != &F)
+        DVI->eraseFromParent();
     for (DbgVariableRecord *DVR : DbgVariableRecords)
       if (DVR->getFunction() != &F)
         DVR->eraseFromParent();
@@ -1282,13 +1286,17 @@ static void fixupDebugInfoPostExtraction(Function &OldFunc, Function &NewFunc,
         NewFunc.getEntryBlock().getTerminator()->getIterator());
   };
   for (auto [Input, NewVal] : zip_equal(Inputs, NewValues)) {
+    SmallVector<DbgVariableIntrinsic *, 1> DbgUsers;
     SmallVector<DbgVariableRecord *, 1> DPUsers;
-    findDbgUsers(Input, DPUsers);
+    findDbgUsers(DbgUsers, Input, &DPUsers);
     DIExpression *Expr = DIB.createExpression();
 
     // Iterate the debud users of the Input values. If they are in the extracted
     // function then update their location with the new value. If they are in
     // the parent function then create a similar debug record.
+    for (auto *DVI : DbgUsers)
+      UpdateOrInsertDebugRecord(DVI, Input, NewVal, Expr,
+                                isa<DbgDeclareInst>(DVI));
     for (auto *DVR : DPUsers)
       UpdateOrInsertDebugRecord(DVR, Input, NewVal, Expr, DVR->isDbgDeclare());
   }

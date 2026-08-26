@@ -1,15 +1,15 @@
 ! RUN: %python %S/test_symbols.py %s %flang_fc1
-!DEF: /MAIN MainProgram
-program MAIN
- !DEF: /MAIN/x POINTER ObjectEntity REAL(4)
+!DEF: /main MainProgram
+program main
+ !DEF: /main/x POINTER ObjectEntity REAL(4)
  pointer :: x
- !REF: /MAIN/x
+ !REF: /main/x
  real x
- !DEF: /MAIN/y EXTERNAL, POINTER (Function) ProcEntity REAL(4)
+ !DEF: /main/y EXTERNAL, POINTER (Function) ProcEntity REAL(4)
  pointer :: y
- !REF: /MAIN/y
+ !REF: /main/y
  procedure (real) :: y
- !DEF: /MAIN/z (Implicit) ObjectEntity REAL(4)
- !REF: /MAIN/y
+ !DEF: /main/z (Implicit) ObjectEntity REAL(4)
+ !REF: /main/y
  z = y()
 end program

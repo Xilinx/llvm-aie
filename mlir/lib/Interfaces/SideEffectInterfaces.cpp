@@ -9,6 +9,7 @@
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
 #include "mlir/IR/SymbolTable.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <utility>
 
 using namespace mlir;

@@ -105,9 +105,6 @@ set(TARGET_LIBC_ENTRYPOINTS
 
     # unistd.h entrypoints
     libc.src.unistd.getentropy
-
-    # wctype.h entrypoints
-    libc.src.wctype.iswalpha
 )
 
 set(TARGET_LIBM_ENTRYPOINTS

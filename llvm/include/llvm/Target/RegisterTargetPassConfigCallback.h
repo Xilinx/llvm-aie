@@ -15,7 +15,6 @@
 #define LLVM_TARGET_REGISTERTARGETPASSCONFIGCALLBACK_H
 
 #include "TargetMachine.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -26,13 +25,13 @@ class RegisterTargetPassConfigCallback {
 public:
   PassConfigCallback Callback;
 
-  LLVM_ABI explicit RegisterTargetPassConfigCallback(PassConfigCallback &&C);
-  LLVM_ABI ~RegisterTargetPassConfigCallback();
+  explicit RegisterTargetPassConfigCallback(PassConfigCallback &&C);
+  ~RegisterTargetPassConfigCallback();
 };
 
-LLVM_ABI void
-invokeGlobalTargetPassConfigCallbacks(TargetMachine &TM, PassManagerBase &PM,
-                                      TargetPassConfig *PassConfig);
+void invokeGlobalTargetPassConfigCallbacks(TargetMachine &TM,
+                                           PassManagerBase &PM,
+                                           TargetPassConfig *PassConfig);
 } // namespace llvm
 
 #endif // LLVM_TARGET_REGISTERTARGETPASSCONFIGCALLBACK_H

@@ -388,7 +388,7 @@ public:
     return CPU != llvm::X86::CK_None;
   }
 
-  llvm::APInt getFMVPriority(ArrayRef<StringRef> Features) const override;
+  uint64_t getFMVPriority(ArrayRef<StringRef> Features) const override;
 
   bool setFPMath(StringRef Name) override;
 

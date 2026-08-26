@@ -22,7 +22,7 @@ static Operation *createOp(MLIRContext *context, ArrayRef<Value> operands = {},
   context->allowUnregisteredDialects();
   return Operation::create(UnknownLoc::get(context),
                            OperationName("foo.bar", context), resultTypes,
-                           operands, NamedAttrList(), nullptr, {}, numRegions);
+                           operands, std::nullopt, nullptr, {}, numRegions);
 }
 
 namespace {

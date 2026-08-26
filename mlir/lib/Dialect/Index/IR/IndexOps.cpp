@@ -11,6 +11,7 @@
 #include "mlir/Dialect/Index/IR/IndexDialect.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/Matchers.h"
+#include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Interfaces/Utils/InferIntRangeCommon.h"
 #include "llvm/ADT/SmallString.h"
@@ -36,7 +37,7 @@ Operation *IndexDialect::materializeConstant(OpBuilder &b, Attribute value,
   if (auto boolValue = dyn_cast<BoolAttr>(value)) {
     if (!type.isSignlessInteger(1))
       return nullptr;
-    return BoolConstantOp::create(b, loc, type, boolValue);
+    return b.create<BoolConstantOp>(loc, type, boolValue);
   }
 
   // Materialize integer attributes as `index`.
@@ -46,7 +47,7 @@ Operation *IndexDialect::materializeConstant(OpBuilder &b, Attribute value,
       return nullptr;
     assert(indexValue.getValue().getBitWidth() ==
            IndexType::kInternalStorageBitWidth);
-    return ConstantOp::create(b, loc, indexValue);
+    return b.create<ConstantOp>(loc, indexValue);
   }
 
   return nullptr;
@@ -715,11 +716,11 @@ LogicalResult CmpOp::canonicalize(CmpOp op, PatternRewriter &rewriter) {
 
   index::CmpOp newCmp;
   if (rhsIsZero)
-    newCmp = index::CmpOp::create(rewriter, op.getLoc(), op.getPred(),
-                                  subOp.getLhs(), subOp.getRhs());
+    newCmp = rewriter.create<index::CmpOp>(op.getLoc(), op.getPred(),
+                                           subOp.getLhs(), subOp.getRhs());
   else
-    newCmp = index::CmpOp::create(rewriter, op.getLoc(), op.getPred(),
-                                  subOp.getRhs(), subOp.getLhs());
+    newCmp = rewriter.create<index::CmpOp>(op.getLoc(), op.getPred(),
+                                           subOp.getRhs(), subOp.getLhs());
   rewriter.replaceOp(op, newCmp);
   return success();
 }

@@ -61,7 +61,7 @@ public:
   }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
-                           const SchedRegion &Region) const override;
+                           unsigned NumRegionInstrs) const override;
 
   using TargetSubtargetInfo::adjustSchedDependency;
   void adjustSchedDependency(const InstrItineraryData &Itineraries, SUnit *Def,

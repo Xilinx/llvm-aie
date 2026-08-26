@@ -618,15 +618,19 @@ static void replaceSwiftErrorOps(Function &F, coro::Shape &Shape,
   }
 }
 
-/// Returns all debug records in F.
-static SmallVector<DbgVariableRecord *>
-collectDbgVariableRecords(Function &F) {
+/// Returns all DbgVariableIntrinsic in F.
+static std::pair<SmallVector<DbgVariableIntrinsic *, 8>,
+                 SmallVector<DbgVariableRecord *>>
+collectDbgVariableIntrinsics(Function &F) {
+  SmallVector<DbgVariableIntrinsic *, 8> Intrinsics;
   SmallVector<DbgVariableRecord *> DbgVariableRecords;
   for (auto &I : instructions(F)) {
     for (DbgVariableRecord &DVR : filterDbgVars(I.getDbgRecordRange()))
       DbgVariableRecords.push_back(&DVR);
+    if (auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I))
+      Intrinsics.push_back(DVI);
   }
-  return DbgVariableRecords;
+  return {Intrinsics, DbgVariableRecords};
 }
 
 void coro::BaseCloner::replaceSwiftErrorOps() {
@@ -634,11 +638,13 @@ void coro::BaseCloner::replaceSwiftErrorOps() {
 }
 
 void coro::BaseCloner::salvageDebugInfo() {
-  auto DbgVariableRecords = collectDbgVariableRecords(*NewF);
+  auto [Worklist, DbgVariableRecords] = collectDbgVariableIntrinsics(*NewF);
   SmallDenseMap<Argument *, AllocaInst *, 4> ArgToAllocaMap;
 
   // Only 64-bit ABIs have a register we can refer to with the entry value.
   bool UseEntryValue = OrigF.getParent()->getTargetTriple().isArch64Bit();
+  for (DbgVariableIntrinsic *DVI : Worklist)
+    coro::salvageDebugInfo(ArgToAllocaMap, *DVI, UseEntryValue);
   for (DbgVariableRecord *DVR : DbgVariableRecords)
     coro::salvageDebugInfo(ArgToAllocaMap, *DVR, UseEntryValue);
 
@@ -649,7 +655,7 @@ void coro::BaseCloner::salvageDebugInfo() {
     return !isPotentiallyReachable(&NewF->getEntryBlock(), BB, nullptr,
                                    &DomTree);
   };
-  auto RemoveOne = [&](DbgVariableRecord *DVI) {
+  auto RemoveOne = [&](auto *DVI) {
     if (IsUnreachableBlock(DVI->getParent()))
       DVI->eraseFromParent();
     else if (isa_and_nonnull<AllocaInst>(DVI->getVariableLocationOp(0))) {
@@ -663,6 +669,7 @@ void coro::BaseCloner::salvageDebugInfo() {
         DVI->eraseFromParent();
     }
   };
+  for_each(Worklist, RemoveOne);
   for_each(DbgVariableRecords, RemoveOne);
 }
 
@@ -801,14 +808,15 @@ static void updateScopeLine(Instruction *ActiveSuspend,
     return;
 
   // No subsequent instruction -> fallback to the location of ActiveSuspend.
-  if (!ActiveSuspend->getNextNode()) {
+  if (!ActiveSuspend->getNextNonDebugInstruction()) {
     if (auto DL = ActiveSuspend->getDebugLoc())
       if (SPToUpdate.getFile() == DL->getFile())
         SPToUpdate.setScopeLine(DL->getLine());
     return;
   }
 
-  BasicBlock::iterator Successor = ActiveSuspend->getNextNode()->getIterator();
+  BasicBlock::iterator Successor =
+      ActiveSuspend->getNextNonDebugInstruction()->getIterator();
   // Corosplit splits the BB around ActiveSuspend, so the meaningful
   // instructions are not in the same BB.
   if (auto *Branch = dyn_cast_or_null<BranchInst>(Successor);
@@ -2015,7 +2023,9 @@ static void doSplitCoroutine(Function &F, SmallVectorImpl<Function *> &Clones,
   // original function. The Cloner has already salvaged debug info in the new
   // coroutine funclets.
   SmallDenseMap<Argument *, AllocaInst *, 4> ArgToAllocaMap;
-  auto DbgVariableRecords = collectDbgVariableRecords(F);
+  auto [DbgInsts, DbgVariableRecords] = collectDbgVariableIntrinsics(F);
+  for (auto *DDI : DbgInsts)
+    coro::salvageDebugInfo(ArgToAllocaMap, *DDI, false /*UseEntryValue*/);
   for (DbgVariableRecord *DVR : DbgVariableRecords)
     coro::salvageDebugInfo(ArgToAllocaMap, *DVR, false /*UseEntryValue*/);
 

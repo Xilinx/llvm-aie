@@ -24,10 +24,11 @@ public:
 
     // Set up a Module with a dummy function operation inside.
     // Set the insertion point in the function entry block.
-    moduleOp = mlir::ModuleOp::create(builder, loc);
+    moduleOp = builder.create<mlir::ModuleOp>(loc);
     builder.setInsertionPointToStart(moduleOp->getBody());
-    mlir::func::FuncOp func = mlir::func::FuncOp::create(builder, loc,
-        "runtime_unit_tests_func", builder.getFunctionType({}, {}));
+    mlir::func::FuncOp func =
+        builder.create<mlir::func::FuncOp>(loc, "runtime_unit_tests_func",
+            builder.getFunctionType(std::nullopt, std::nullopt));
     auto *entryBlock = func.addEntryBlock();
     builder.setInsertionPointToStart(entryBlock);
 

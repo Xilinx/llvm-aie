@@ -179,7 +179,7 @@ private:
   void SetSymbolName(COFFSymbol &S);
   void SetSectionName(COFFSection &S);
 
-  bool isUninitializedData(const COFFSection &S);
+  bool IsPhysicalSection(COFFSection *S);
 
   // Entity writing methods.
   void WriteFileHeader(const COFF::header &Header);
@@ -373,7 +373,7 @@ void WinCOFFWriter::defineSymbol(const MCSymbol &MCSym) {
   COFFSection *Sec = nullptr;
   MCSectionCOFF *MCSec = nullptr;
   if (Base && Base->getFragment()) {
-    MCSec = static_cast<MCSectionCOFF *>(Base->getFragment()->getParent());
+    MCSec = cast<MCSectionCOFF>(Base->getFragment()->getParent());
     Sec = SectionMap[MCSec];
   }
 
@@ -453,8 +453,8 @@ void WinCOFFWriter::SetSymbolName(COFFSymbol &S) {
     std::memcpy(S.Data.Name, S.Name.c_str(), S.Name.size());
 }
 
-bool WinCOFFWriter::isUninitializedData(const COFFSection &S) {
-  return (S.Header.Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) !=
+bool WinCOFFWriter::IsPhysicalSection(COFFSection *S) {
+  return (S->Header.Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) ==
          0;
 }
 
@@ -606,9 +606,6 @@ void WinCOFFWriter::writeSection(const COFFSection &Sec) {
     assert(AuxSyms.size() == 1 && AuxSyms[0].AuxType == ATSectionDefinition);
     AuxSymbol &SecDef = AuxSyms[0];
     SecDef.Aux.SectionDefinition.CheckSum = CRC;
-  } else if (isUninitializedData(Sec)) {
-    // Error if fixups or non-zero bytes are present.
-    writeSectionContents(*Sec.MCSection);
   }
 
   // Write relocations for this section.
@@ -748,7 +745,7 @@ void WinCOFFWriter::assignFileOffsets() {
 
     Sec->Header.SizeOfRawData = Asm->getSectionAddressSize(Section);
 
-    if (!isUninitializedData(*Sec)) {
+    if (IsPhysicalSection(Sec)) {
       Sec->Header.PointerToRawData = Offset;
       Offset += Sec->Header.SizeOfRawData;
     }
@@ -1057,8 +1054,7 @@ uint64_t WinCOFFWriter::writeObject() {
       continue;
     }
 
-    const auto *AssocMCSec =
-        static_cast<const MCSectionCOFF *>(&AssocMCSym->getSection());
+    const auto *AssocMCSec = cast<MCSectionCOFF>(&AssocMCSym->getSection());
     assert(SectionMap.count(AssocMCSec));
     COFFSection *AssocSec = SectionMap[AssocMCSec];
 
@@ -1071,8 +1067,10 @@ uint64_t WinCOFFWriter::writeObject() {
 
   // Create the contents of the .llvm_addrsig section.
   if (Mode != DwoOnly && OWriter.getEmitAddrsigSection()) {
-    SmallString<0> Content;
-    raw_svector_ostream OS(Content);
+    auto *Sec = getContext().getCOFFSection(".llvm_addrsig",
+                                            COFF::IMAGE_SCN_LNK_REMOVE);
+    auto *Frag = cast<MCDataFragment>(Sec->curFragList()->Head);
+    raw_svector_ostream OS(Frag->getContentsForAppending());
     for (const MCSymbol *S : OWriter.AddrsigSyms) {
       if (!S->isRegistered())
         continue;
@@ -1087,15 +1085,15 @@ uint64_t WinCOFFWriter::writeObject() {
              "executePostLayoutBinding!");
       encodeULEB128(SectionMap[TargetSection]->Symbol->getIndex(), OS);
     }
-    auto *Sec = getContext().getCOFFSection(".llvm_addrsig",
-                                            COFF::IMAGE_SCN_LNK_REMOVE);
-    Sec->curFragList()->Tail->setVarContents(OS.str());
+    Frag->doneAppending();
   }
 
   // Create the contents of the .llvm.call-graph-profile section.
   if (Mode != DwoOnly && !OWriter.getCGProfile().empty()) {
-    SmallString<0> Content;
-    raw_svector_ostream OS(Content);
+    auto *Sec = getContext().getCOFFSection(".llvm.call-graph-profile",
+                                            COFF::IMAGE_SCN_LNK_REMOVE);
+    auto *Frag = cast<MCDataFragment>(Sec->curFragList()->Head);
+    raw_svector_ostream OS(Frag->getContentsForAppending());
     for (const auto &CGPE : OWriter.getCGProfile()) {
       uint32_t FromIndex = CGPE.From->getSymbol().getIndex();
       uint32_t ToIndex = CGPE.To->getSymbol().getIndex();
@@ -1103,9 +1101,7 @@ uint64_t WinCOFFWriter::writeObject() {
       support::endian::write(OS, ToIndex, W.Endian);
       support::endian::write(OS, CGPE.Count, W.Endian);
     }
-    auto *Sec = getContext().getCOFFSection(".llvm.call-graph-profile",
-                                            COFF::IMAGE_SCN_LNK_REMOVE);
-    Sec->curFragList()->Tail->setVarContents(OS.str());
+    Frag->doneAppending();
   }
 
   assignFileOffsets();

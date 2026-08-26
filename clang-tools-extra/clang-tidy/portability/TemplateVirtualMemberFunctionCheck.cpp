@@ -18,11 +18,10 @@ AST_MATCHER(CXXMethodDecl, isUsed) { return Node.isUsed(); }
 
 void TemplateVirtualMemberFunctionCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      cxxMethodDecl(isVirtual(),
-                    ofClass(classTemplateSpecializationDecl(
+      cxxMethodDecl(ofClass(classTemplateSpecializationDecl(
                                 unless(isExplicitTemplateSpecialization()))
                                 .bind("specialization")),
-                    unless(isUsed()), unless(isPure()),
+                    isVirtual(), unless(isUsed()),
                     unless(cxxDestructorDecl(isDefaulted())))
           .bind("method"),
       this);

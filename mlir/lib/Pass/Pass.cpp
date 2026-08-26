@@ -13,6 +13,7 @@
 #include "mlir/Pass/Pass.h"
 #include "PassDetail.h"
 #include "mlir/IR/Diagnostics.h"
+#include "mlir/IR/Dialect.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/Threading.h"
 #include "mlir/IR/Verifier.h"
@@ -21,9 +22,12 @@
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Threading.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include <optional>
 
 using namespace mlir;
@@ -901,7 +905,7 @@ LogicalResult PassManager::run(Operation *op) {
     if (failed(initialize(context, impl->initializationGeneration + 1)))
       return failure();
     initializationKey = newInitKey;
-    pipelineInitializationKey = pipelineKey;
+    pipelineKey = pipelineInitializationKey;
   }
 
   // Construct a top level analysis manager for the pipeline.

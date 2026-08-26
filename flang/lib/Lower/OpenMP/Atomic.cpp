@@ -528,8 +528,8 @@ genAtomicRead(lower::AbstractConverter &converter,
   }();
 
   builder.restoreInsertionPoint(atomicAt);
-  mlir::Operation *op = mlir::omp::AtomicReadOp::create(
-      builder, loc, atomAddr, toAddr, mlir::TypeAttr::get(atomType), hint,
+  mlir::Operation *op = builder.create<mlir::omp::AtomicReadOp>(
+      loc, atomAddr, toAddr, mlir::TypeAttr::get(atomType), hint,
       makeMemOrderAttr(converter, memOrder));
 
   if (atomType != storeType) {
@@ -537,7 +537,7 @@ genAtomicRead(lower::AbstractConverter &converter,
     // The READ operation could be a part of UPDATE CAPTURE, so make sure
     // we don't emit extra code into the body of the atomic op.
     builder.restoreInsertionPoint(postAt);
-    mlir::Value load = fir::LoadOp::create(builder, loc, toAddr);
+    mlir::Value load = builder.create<fir::LoadOp>(loc, toAddr);
     overrides.try_emplace(&atom, load);
 
     converter.overrideExprValues(&overrides);
@@ -545,7 +545,7 @@ genAtomicRead(lower::AbstractConverter &converter,
         fir::getBase(converter.genExprValue(assign.rhs, stmtCtx, &loc));
     converter.resetExprOverrides();
 
-    fir::StoreOp::create(builder, loc, value, storeAddr);
+    builder.create<fir::StoreOp>(loc, value, storeAddr);
   }
   return op;
 }
@@ -581,9 +581,8 @@ genAtomicWrite(lower::AbstractConverter &converter,
   mlir::Value converted = builder.createConvert(loc, atomType, value);
 
   builder.restoreInsertionPoint(atomicAt);
-  mlir::Operation *op =
-      mlir::omp::AtomicWriteOp::create(builder, loc, atomAddr, converted, hint,
-                                       makeMemOrderAttr(converter, memOrder));
+  mlir::Operation *op = builder.create<mlir::omp::AtomicWriteOp>(
+      loc, atomAddr, converted, hint, makeMemOrderAttr(converter, memOrder));
   return op;
 }
 
@@ -635,16 +634,9 @@ genAtomicUpdate(lower::AbstractConverter &converter,
     }
   }
 
-  mlir::ModuleOp module = builder.getModule();
-  mlir::omp::AtomicControlAttr atomicControlAttr =
-      mlir::omp::AtomicControlAttr::get(
-          builder.getContext(), fir::getAtomicIgnoreDenormalMode(module),
-          fir::getAtomicFineGrainedMemory(module),
-          fir::getAtomicRemoteMemory(module));
   builder.restoreInsertionPoint(atomicAt);
-  auto updateOp = mlir::omp::AtomicUpdateOp::create(
-      builder, loc, atomAddr, atomicControlAttr, hint,
-      makeMemOrderAttr(converter, memOrder));
+  auto updateOp = builder.create<mlir::omp::AtomicUpdateOp>(
+      loc, atomAddr, hint, makeMemOrderAttr(converter, memOrder));
 
   mlir::Region &region = updateOp->getRegion(0);
   mlir::Block *block = builder.createBlock(&region, {}, {atomType}, {loc});
@@ -655,7 +647,7 @@ genAtomicUpdate(lower::AbstractConverter &converter,
   mlir::Value updated =
       fir::getBase(converter.genExprValue(rhs, stmtCtx, &loc));
   mlir::Value converted = builder.createConvert(loc, atomType, updated);
-  mlir::omp::YieldOp::create(builder, loc, converted);
+  builder.create<mlir::omp::YieldOp>(loc, converted);
   converter.resetExprOverrides();
 
   builder.restoreInsertionPoint(postAt); // For naCtx cleanups
@@ -739,8 +731,8 @@ void Fortran::lower::omp::lowerAtomic(
              "Expexcing two actions");
       (void)action0;
       (void)action1;
-      captureOp = mlir::omp::AtomicCaptureOp::create(
-          builder, loc, hint, makeMemOrderAttr(converter, memOrder));
+      captureOp = builder.create<mlir::omp::AtomicCaptureOp>(
+          loc, hint, makeMemOrderAttr(converter, memOrder));
       // Set the non-atomic insertion point to before the atomic.capture.
       preAt = getInsertionPointBefore(captureOp);
 
@@ -748,7 +740,7 @@ void Fortran::lower::omp::lowerAtomic(
       builder.setInsertionPointToEnd(block);
       // Set the atomic insertion point to before the terminator inside
       // atomic.capture.
-      mlir::Operation *term = mlir::omp::TerminatorOp::create(builder, loc);
+      mlir::Operation *term = builder.create<mlir::omp::TerminatorOp>(loc);
       atomicAt = getInsertionPointBefore(term);
       postAt = getInsertionPointAfter(captureOp);
       hint = nullptr;

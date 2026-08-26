@@ -3212,15 +3212,11 @@ public:
   /// Lower an interleaved load to target specific intrinsics. Return
   /// true on success.
   ///
-  /// \p Load is the vector load instruction. Can be either a plain load
-  /// instruction or a vp.load intrinsic.
-  /// \p Mask is a per-segment (i.e. number of lanes equal to that of one
-  /// component being interwoven) mask.  Can be nullptr, in which case the
-  /// result is uncondiitional.
+  /// \p LI is the vector load instruction.
   /// \p Shuffles is the shufflevector list to DE-interleave the loaded vector.
   /// \p Indices is the corresponding indices for each shufflevector.
   /// \p Factor is the interleave factor.
-  virtual bool lowerInterleavedLoad(Instruction *Load, Value *Mask,
+  virtual bool lowerInterleavedLoad(LoadInst *LI,
                                     ArrayRef<ShuffleVectorInst *> Shuffles,
                                     ArrayRef<unsigned> Indices,
                                     unsigned Factor) const {
@@ -3230,16 +3226,33 @@ public:
   /// Lower an interleaved store to target specific intrinsics. Return
   /// true on success.
   ///
-  /// \p SI is the vector store instruction.  Can be either a plain store
-  /// or a vp.store.
-  /// \p Mask is a per-segment (i.e. number of lanes equal to that of one
-  /// component being interwoven) mask.  Can be nullptr, in which case the
-  /// result is unconditional.
+  /// \p SI is the vector store instruction.
   /// \p SVI is the shufflevector to RE-interleave the stored vector.
   /// \p Factor is the interleave factor.
-  virtual bool lowerInterleavedStore(Instruction *Store, Value *Mask,
-                                     ShuffleVectorInst *SVI,
+  virtual bool lowerInterleavedStore(StoreInst *SI, ShuffleVectorInst *SVI,
                                      unsigned Factor) const {
+    return false;
+  }
+
+  /// Lower an interleaved load to target specific intrinsics. Return
+  /// true on success.
+  ///
+  /// \p Load is a vp.load instruction.
+  /// \p Mask is a mask value
+  /// \p DeinterleaveRes is a list of deinterleaved results.
+  virtual bool lowerInterleavedVPLoad(VPIntrinsic *Load, Value *Mask,
+                                      ArrayRef<Value *> DeinterleaveRes) const {
+    return false;
+  }
+
+  /// Lower an interleaved store to target specific intrinsics. Return
+  /// true on success.
+  ///
+  /// \p Store is the vp.store instruction.
+  /// \p Mask is a mask value
+  /// \p InterleaveOps is a list of values being interleaved.
+  virtual bool lowerInterleavedVPStore(VPIntrinsic *Store, Value *Mask,
+                                       ArrayRef<Value *> InterleaveOps) const {
     return false;
   }
 
@@ -3247,11 +3260,11 @@ public:
   /// Return true on success. Currently only supports
   /// llvm.vector.deinterleave{2,3,5,7}
   ///
-  /// \p Load is the accompanying load instruction.  Can be either a plain load
-  /// instruction or a vp.load intrinsic.
-  /// \p DI represents the deinterleaveN intrinsic.
-  virtual bool lowerDeinterleaveIntrinsicToLoad(Instruction *Load, Value *Mask,
-                                                IntrinsicInst *DI) const {
+  /// \p LI is the accompanying load instruction.
+  /// \p DeinterleaveValues contains the deinterleaved values.
+  virtual bool
+  lowerDeinterleaveIntrinsicToLoad(LoadInst *LI,
+                                   ArrayRef<Value *> DeinterleaveValues) const {
     return false;
   }
 
@@ -3259,14 +3272,10 @@ public:
   /// Return true on success. Currently only supports
   /// llvm.vector.interleave{2,3,5,7}
   ///
-  /// \p Store is the accompanying store instruction.  Can be either a plain
-  /// store or a vp.store intrinsic.
-  /// \p Mask is a per-segment (i.e. number of lanes equal to that of one
-  /// component being interwoven) mask.  Can be nullptr, in which case the
-  /// result is uncondiitional.
+  /// \p SI is the accompanying store instruction
   /// \p InterleaveValues contains the interleaved values.
   virtual bool
-  lowerInterleaveIntrinsicToStore(Instruction *Store, Value *Mask,
+  lowerInterleaveIntrinsicToStore(StoreInst *SI,
                                   ArrayRef<Value *> InterleaveValues) const {
     return false;
   }

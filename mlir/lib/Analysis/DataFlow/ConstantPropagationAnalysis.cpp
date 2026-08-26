@@ -16,7 +16,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/DebugLog.h"
 #include <cassert>
 
 #define DEBUG_TYPE "constant-propagation"
@@ -47,7 +46,7 @@ void ConstantValue::print(raw_ostream &os) const {
 LogicalResult SparseConstantPropagation::visitOperation(
     Operation *op, ArrayRef<const Lattice<ConstantValue> *> operands,
     ArrayRef<Lattice<ConstantValue> *> results) {
-  LDBG() << "SCP: Visiting operation: " << *op;
+  LLVM_DEBUG(llvm::dbgs() << "SCP: Visiting operation: " << *op << "\n");
 
   // Don't try to simulate the results of a region operation as we can't
   // guarantee that folding will be out-of-place. We don't allow in-place
@@ -99,11 +98,12 @@ LogicalResult SparseConstantPropagation::visitOperation(
     // Merge in the result of the fold, either a constant or a value.
     OpFoldResult foldResult = std::get<1>(it);
     if (Attribute attr = llvm::dyn_cast_if_present<Attribute>(foldResult)) {
-      LDBG() << "Folded to constant: " << attr;
+      LLVM_DEBUG(llvm::dbgs() << "Folded to constant: " << attr << "\n");
       propagateIfChanged(lattice,
                          lattice->join(ConstantValue(attr, op->getDialect())));
     } else {
-      LDBG() << "Folded to value: " << cast<Value>(foldResult);
+      LLVM_DEBUG(llvm::dbgs()
+                 << "Folded to value: " << cast<Value>(foldResult) << "\n");
       AbstractSparseForwardDataFlowAnalysis::join(
           lattice, *getLatticeElement(cast<Value>(foldResult)));
     }

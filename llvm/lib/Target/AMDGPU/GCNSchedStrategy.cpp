@@ -803,8 +803,7 @@ void GCNScheduleDAGMILive::schedule() {
 GCNRegPressure
 GCNScheduleDAGMILive::getRealRegPressure(unsigned RegionIdx) const {
   GCNDownwardRPTracker RPTracker(*LIS);
-  RPTracker.advance(Regions[RegionIdx].first, Regions[RegionIdx].second,
-                    &LiveIns[RegionIdx]);
+  RPTracker.advance(begin(), end(), &LiveIns[RegionIdx]);
   return RPTracker.moveMaxPressure();
 }
 
@@ -1911,12 +1910,14 @@ void PreRARematStage::rematerialize() {
   for (auto &[DefMI, Remat] : Rematerializations) {
     MachineBasicBlock::iterator InsertPos(Remat.UseMI);
     Register Reg = DefMI->getOperand(0).getReg();
+    unsigned SubReg = DefMI->getOperand(0).getSubReg();
     unsigned DefRegion = MIRegion.at(DefMI);
 
     // Rematerialize DefMI to its use block.
-    TII->reMaterialize(*InsertPos->getParent(), InsertPos, Reg,
-                       AMDGPU::NoSubRegister, *DefMI, *DAG.TRI);
+    TII->reMaterialize(*InsertPos->getParent(), InsertPos, Reg, SubReg, *DefMI,
+                       *DAG.TRI);
     Remat.RematMI = &*std::prev(InsertPos);
+    Remat.RematMI->getOperand(0).setSubReg(SubReg);
     DAG.LIS->InsertMachineInstrInMaps(*Remat.RematMI);
 
     // Update region boundaries in regions we sinked from (remove defining MI)
@@ -2062,13 +2063,14 @@ void PreRARematStage::finalizeGCNSchedStage() {
     MachineBasicBlock::iterator InsertPos(DAG.Regions[DefRegion].second);
     MachineBasicBlock *MBB = RegionBB[DefRegion];
     Register Reg = RematMI.getOperand(0).getReg();
+    unsigned SubReg = RematMI.getOperand(0).getSubReg();
 
     // Re-rematerialize MI at the end of its original region. Note that it may
     // not be rematerialized exactly in the same position as originally within
     // the region, but it should not matter much.
-    TII->reMaterialize(*MBB, InsertPos, Reg, AMDGPU::NoSubRegister, RematMI,
-                       *DAG.TRI);
+    TII->reMaterialize(*MBB, InsertPos, Reg, SubReg, RematMI, *DAG.TRI);
     MachineInstr *NewMI = &*std::prev(InsertPos);
+    NewMI->getOperand(0).setSubReg(SubReg);
     DAG.LIS->InsertMachineInstrInMaps(*NewMI);
 
     auto UseRegion = MIRegion.find(Remat.UseMI);

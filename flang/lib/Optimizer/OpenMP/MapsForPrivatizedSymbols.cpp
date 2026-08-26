@@ -80,9 +80,9 @@ class MapsForPrivatizedSymbolsPass
       mlir::Block *allocaBlock = builder.getAllocaBlock();
       assert(allocaBlock && "No allocablock  found for a funcOp");
       builder.setInsertionPointToStart(allocaBlock);
-      auto alloca = fir::AllocaOp::create(builder, loc, varPtr.getType());
+      auto alloca = builder.create<fir::AllocaOp>(loc, varPtr.getType());
       builder.restoreInsertionPoint(savedInsPoint);
-      fir::StoreOp::create(builder, loc, varPtr, alloca);
+      builder.create<fir::StoreOp>(loc, varPtr, alloca);
       varPtr = alloca;
     }
     assert(mlir::isa<omp::PointerLikeType>(varPtr.getType()) &&
@@ -94,8 +94,8 @@ class MapsForPrivatizedSymbolsPass
     if (needsBoundsOps(varPtr))
       genBoundsOps(builder, varPtr, boundsOps);
 
-    return omp::MapInfoOp::create(
-        builder, loc, varPtr.getType(), varPtr,
+    return builder.create<omp::MapInfoOp>(
+        loc, varPtr.getType(), varPtr,
         TypeAttr::get(llvm::cast<omp::PointerLikeType>(varPtr.getType())
                           .getElementType()),
         builder.getIntegerAttr(builder.getIntegerType(64, /*isSigned=*/false),

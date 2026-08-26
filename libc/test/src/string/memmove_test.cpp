@@ -104,13 +104,13 @@ TEST(LlvmLibcMemmoveTest, SizeSweep) {
     }
 }
 
-#if defined(LIBC_ADD_NULL_CHECKS)
+#if defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
 
 TEST(LlvmLibcMemmoveTest, CrashOnNullPtr) {
   ASSERT_DEATH([]() { LIBC_NAMESPACE::memmove(nullptr, nullptr, 2); },
                WITH_SIGNAL(-1));
 }
 
-#endif // LIBC_ADD_NULL_CHECKS
+#endif // LIBC_TARGET_OS_IS_LINUX
 
 } // namespace LIBC_NAMESPACE_DECL

@@ -17,7 +17,6 @@ add_subdirectory(strings)
 add_subdirectory(time)
 add_subdirectory(unistd)
 add_subdirectory(wchar)
-add_subdirectory(wctype)
 
 if(${LIBC_TARGET_OS} STREQUAL "linux")
   add_subdirectory(dirent)

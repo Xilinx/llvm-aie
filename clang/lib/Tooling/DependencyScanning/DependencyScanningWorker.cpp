@@ -24,6 +24,7 @@
 #include "clang/Tooling/DependencyScanning/DependencyScanningService.h"
 #include "clang/Tooling/DependencyScanning/InProcessModuleCache.h"
 #include "clang/Tooling/DependencyScanning/ModuleDepCollector.h"
+#include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Error.h"
@@ -375,23 +376,25 @@ public:
 
 /// A clang tool that runs the preprocessor in a mode that's optimized for
 /// dependency scanning for the given compiler invocation.
-class DependencyScanningAction {
+class DependencyScanningAction : public tooling::ToolAction {
 public:
   DependencyScanningAction(
       DependencyScanningService &Service, StringRef WorkingDirectory,
       DependencyConsumer &Consumer, DependencyActionController &Controller,
       llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS,
-      std::optional<StringRef> ModuleName = std::nullopt)
+      bool DisableFree, std::optional<StringRef> ModuleName = std::nullopt)
       : Service(Service), WorkingDirectory(WorkingDirectory),
         Consumer(Consumer), Controller(Controller), DepFS(std::move(DepFS)),
-        ModuleName(ModuleName) {}
+        DisableFree(DisableFree), ModuleName(ModuleName) {}
 
   bool runInvocation(std::shared_ptr<CompilerInvocation> Invocation,
-                     IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS,
+                     FileManager *DriverFileMgr,
                      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
-                     DiagnosticConsumer *DiagConsumer) {
+                     DiagnosticConsumer *DiagConsumer) override {
     // Make a deep copy of the original Clang invocation.
     CompilerInvocation OriginalInvocation(*Invocation);
+    // Restore the value of DisableFree, which may be modified by Tooling.
+    OriginalInvocation.getFrontendOpts().DisableFree = DisableFree;
     if (any(Service.getOptimizeArgs() & ScanningOptimizations::Macros))
       canonicalizeDefines(OriginalInvocation.getPreprocessorOpts());
 
@@ -416,8 +419,8 @@ public:
     // Create the compiler's actual diagnostics engine.
     sanitizeDiagOpts(ScanInstance.getDiagnosticOpts());
     assert(!DiagConsumerFinished && "attempt to reuse finished consumer");
-    ScanInstance.createDiagnostics(*FS, DiagConsumer,
-                                   /*ShouldOwnClient=*/false);
+    ScanInstance.createDiagnostics(DriverFileMgr->getVirtualFileSystem(),
+                                   DiagConsumer, /*ShouldOwnClient=*/false);
     if (!ScanInstance.hasDiagnostics())
       return false;
 
@@ -428,7 +431,6 @@ public:
       ScanInstance.getHeaderSearchOpts().BuildSessionTimestamp =
           Service.getBuildSessionTimestamp();
 
-    ScanInstance.getFrontendOpts().DisableFree = false;
     ScanInstance.getFrontendOpts().GenerateGlobalModuleIndex = false;
     ScanInstance.getFrontendOpts().UseGlobalModuleIndex = false;
     // This will prevent us compiling individual modules asynchronously since
@@ -439,9 +441,9 @@ public:
         any(Service.getOptimizeArgs() & ScanningOptimizations::VFS);
 
     // Support for virtual file system overlays.
-    FS = createVFSFromCompilerInvocation(ScanInstance.getInvocation(),
-                                         ScanInstance.getDiagnostics(),
-                                         std::move(FS));
+    auto FS = createVFSFromCompilerInvocation(
+        ScanInstance.getInvocation(), ScanInstance.getDiagnostics(),
+        DriverFileMgr->getVirtualFileSystemPtr());
 
     // Create a new FileManager to match the invocation's FileSystemOptions.
     auto *FileMgr = ScanInstance.createFileManager(FS);
@@ -552,6 +554,9 @@ public:
     if (Result)
       setLastCC1Arguments(std::move(OriginalInvocation));
 
+    // Propagate the statistics to the parent FileManager.
+    DriverFileMgr->AddStats(ScanInstance.getFileManager());
+
     return Result;
   }
 
@@ -579,6 +584,7 @@ private:
   DependencyConsumer &Consumer;
   DependencyActionController &Controller;
   llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS;
+  bool DisableFree;
   std::optional<StringRef> ModuleName;
   std::optional<CompilerInstance> ScanInstanceStorage;
   std::shared_ptr<ModuleDepCollector> MDC;
@@ -663,13 +669,14 @@ llvm::Error DependencyScanningWorker::computeDependencies(
 }
 
 static bool forEachDriverJob(
-    ArrayRef<std::string> ArgStrs, DiagnosticsEngine &Diags,
-    IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS,
+    ArrayRef<std::string> ArgStrs, DiagnosticsEngine &Diags, FileManager &FM,
     llvm::function_ref<bool(const driver::Command &Cmd)> Callback) {
   SmallVector<const char *, 256> Argv;
   Argv.reserve(ArgStrs.size());
   for (const std::string &Arg : ArgStrs)
     Argv.push_back(Arg.c_str());
+
+  llvm::vfs::FileSystem *FS = &FM.getVirtualFileSystem();
 
   std::unique_ptr<driver::Driver> Driver = std::make_unique<driver::Driver>(
       Argv[0], llvm::sys::getDefaultTargetTriple(), Diags,
@@ -680,8 +687,7 @@ static bool forEachDriverJob(
   bool CLMode = driver::IsClangCL(
       driver::getDriverMode(Argv[0], ArrayRef(Argv).slice(1)));
 
-  if (llvm::Error E =
-          driver::expandResponseFiles(Argv, CLMode, Alloc, FS.get())) {
+  if (llvm::Error E = driver::expandResponseFiles(Argv, CLMode, Alloc, FS)) {
     Diags.Report(diag::err_drv_expand_response_file)
         << llvm::toString(std::move(E));
     return false;
@@ -704,25 +710,17 @@ static bool forEachDriverJob(
 
 static bool createAndRunToolInvocation(
     std::vector<std::string> CommandLine, DependencyScanningAction &Action,
-    IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS,
+    FileManager &FM,
     std::shared_ptr<clang::PCHContainerOperations> &PCHContainerOps,
     DiagnosticsEngine &Diags, DependencyConsumer &Consumer) {
 
   // Save executable path before providing CommandLine to ToolInvocation
   std::string Executable = CommandLine[0];
-
-  llvm::opt::ArgStringList Argv;
-  for (const std::string &Str : ArrayRef(CommandLine).drop_front())
-    Argv.push_back(Str.c_str());
-
-  auto Invocation = std::make_shared<CompilerInvocation>();
-  if (!CompilerInvocation::CreateFromArgs(*Invocation, Argv, Diags)) {
-    // FIXME: Should we just go on like cc1_main does?
-    return false;
-  }
-
-  if (!Action.runInvocation(std::move(Invocation), std::move(FS),
-                            PCHContainerOps, Diags.getClient()))
+  ToolInvocation Invocation(std::move(CommandLine), &Action, &FM,
+                            PCHContainerOps);
+  Invocation.setDiagnosticConsumer(Diags.getClient());
+  Invocation.setDiagnosticOptions(&Diags.getDiagnosticOptions());
+  if (!Invocation.run())
     return false;
 
   std::vector<std::string> Args = Action.takeLastCC1Arguments();
@@ -735,24 +733,37 @@ bool DependencyScanningWorker::scanDependencies(
     DependencyConsumer &Consumer, DependencyActionController &Controller,
     DiagnosticConsumer &DC, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS,
     std::optional<StringRef> ModuleName) {
+  auto FileMgr =
+      llvm::makeIntrusiveRefCnt<FileManager>(FileSystemOptions{}, FS);
+
   std::vector<const char *> CCommandLine(CommandLine.size(), nullptr);
   llvm::transform(CommandLine, CCommandLine.begin(),
                   [](const std::string &Str) { return Str.c_str(); });
   auto DiagOpts = CreateAndPopulateDiagOpts(CCommandLine);
   sanitizeDiagOpts(*DiagOpts);
-  auto Diags = CompilerInstance::createDiagnostics(*FS, *DiagOpts, &DC,
-                                                   /*ShouldOwnClient=*/false);
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diags =
+      CompilerInstance::createDiagnostics(FileMgr->getVirtualFileSystem(),
+                                          *DiagOpts, &DC,
+                                          /*ShouldOwnClient=*/false);
 
+  // Although `Diagnostics` are used only for command-line parsing, the
+  // custom `DiagConsumer` might expect a `SourceManager` to be present.
+  SourceManager SrcMgr(*Diags, *FileMgr);
+  Diags->setSourceManager(&SrcMgr);
+  // DisableFree is modified by Tooling for running
+  // in-process; preserve the original value, which is
+  // always true for a driver invocation.
+  bool DisableFree = true;
   DependencyScanningAction Action(Service, WorkingDirectory, Consumer,
-                                  Controller, DepFS, ModuleName);
+                                  Controller, DepFS, DisableFree, ModuleName);
 
   bool Success = false;
   if (CommandLine[1] == "-cc1") {
-    Success = createAndRunToolInvocation(CommandLine, Action, FS,
+    Success = createAndRunToolInvocation(CommandLine, Action, *FileMgr,
                                          PCHContainerOps, *Diags, Consumer);
   } else {
     Success = forEachDriverJob(
-        CommandLine, *Diags, FS, [&](const driver::Command &Cmd) {
+        CommandLine, *Diags, *FileMgr, [&](const driver::Command &Cmd) {
           if (StringRef(Cmd.getCreator().getName()) != "clang") {
             // Non-clang command. Just pass through to the dependency
             // consumer.
@@ -771,7 +782,7 @@ bool DependencyScanningWorker::scanDependencies(
           // system to ensure that any file system requests that
           // are made by the driver do not go through the
           // dependency scanning filesystem.
-          return createAndRunToolInvocation(std::move(Argv), Action, FS,
+          return createAndRunToolInvocation(std::move(Argv), Action, *FileMgr,
                                             PCHContainerOps, *Diags, Consumer);
         });
   }

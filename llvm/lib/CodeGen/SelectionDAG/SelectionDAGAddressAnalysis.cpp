@@ -303,7 +303,10 @@ BaseIndexOffset BaseIndexOffset::match(const SDNode *N,
   if (const auto *LS0 = dyn_cast<LSBaseSDNode>(N))
     return matchLSNode(LS0, DAG);
   if (const auto *LN = dyn_cast<LifetimeSDNode>(N)) {
-    return BaseIndexOffset(LN->getOperand(1), SDValue(), 0, false);
+    if (LN->hasOffset())
+      return BaseIndexOffset(LN->getOperand(1), SDValue(), LN->getOffset(),
+                             false);
+    return BaseIndexOffset(LN->getOperand(1), SDValue(), false);
   }
   return BaseIndexOffset();
 }

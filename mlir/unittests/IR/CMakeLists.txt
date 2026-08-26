@@ -6,7 +6,6 @@ add_mlir_unittest(MLIRIRTests
   AttrTypeReplacerTest.cpp
   Diagnostic.cpp
   DialectTest.cpp
-  DistinctAttributeAllocatorTest.cpp
   InterfaceTest.cpp
   IRMapping.cpp
   InterfaceAttachmentTest.cpp

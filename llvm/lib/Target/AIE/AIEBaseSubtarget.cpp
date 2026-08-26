@@ -23,7 +23,6 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
@@ -114,12 +113,12 @@ SDep &getBackwardEdge(const SUnit &SrcSU, const SDep &E) {
 } // namespace
 
 void AIEBaseSubtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
-                                           const SchedRegion &Region) const {
+                                           unsigned NumRegionInstrs) const {
   // The default policy is to avoid tracking pressure for "small regions". For
   // AIE, it is critical to estimate the pressure everywhere, especially small
   // loops. Spills are very expensive.
   Policy.ShouldTrackPressure =
-      Region.NumRegionInstrs >= RegPressureInstrPreMISchedThreshold;
+      NumRegionInstrs >= RegPressureInstrPreMISchedThreshold;
 }
 
 // Reminder: this is called for ALL dependencies carried by physical registers,

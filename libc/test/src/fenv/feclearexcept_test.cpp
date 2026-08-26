@@ -13,6 +13,7 @@
 #include "test/UnitTest/Test.h"
 
 #include "hdr/fenv_macros.h"
+#include <stdint.h>
 
 #include "excepts.h"
 

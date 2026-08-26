@@ -16,7 +16,7 @@
 
 #include <tuple>
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 struct ThrowOnIncrementIterator {
   int* it_;

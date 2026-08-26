@@ -37,11 +37,11 @@ TEST(LlvmLibcStrCatTest, NonEmptyDest) {
   ASSERT_STREQ(dest, "xyzabc");
 }
 
-#if defined(LIBC_ADD_NULL_CHECKS)
+#if defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
 
 TEST(LlvmLibcStrCatTest, CrashOnNullPtr) {
   ASSERT_DEATH([]() { LIBC_NAMESPACE::strcat(nullptr, nullptr); },
                WITH_SIGNAL(-1));
 }
 
-#endif // defined(LIBC_ADD_NULL_CHECKS)
+#endif // defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)

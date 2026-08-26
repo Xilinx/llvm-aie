@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "hdr/signal_macros.h"
-#include "hdr/stdint_proxy.h"
 #include "src/__support/OSUtil/syscall.h" // For internal syscall function.
 #include "src/__support/libc_errno.h"
 #include "src/signal/linux/signal_utils.h"
@@ -17,6 +16,7 @@
 #include "test/UnitTest/ErrnoSetterMatcher.h"
 #include "test/UnitTest/Test.h"
 
+#include <stdint.h>
 #include <sys/syscall.h>
 
 constexpr int LOCAL_VAR_SIZE = 512;

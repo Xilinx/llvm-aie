@@ -164,6 +164,7 @@ enum Ordering : OrderingUnderlyingType {
       (OrderingUnderlyingType)AtomicOrdering::SequentiallyConsistent,
   Volatile = SequentiallyConsistent + 1,
   RelaxedMMIO = Volatile + 1,
+  LASTORDERING = RelaxedMMIO
 };
 
 using ScopeUnderlyingType = unsigned int;
@@ -173,8 +174,7 @@ enum Scope : ScopeUnderlyingType {
   Cluster = 2,
   Device = 3,
   System = 4,
-  DefaultDevice = 5, //  For SM < 70: denotes PTX op implicit/default .gpu scope
-  LASTSCOPE = DefaultDevice
+  LASTSCOPE = System
 };
 
 using AddressSpaceUnderlyingType = unsigned int;

@@ -47,8 +47,7 @@ struct ExpRangeReduction {
   float exp_lo;
 };
 
-[[maybe_unused]] LIBC_INLINE static ExpRangeReduction
-exp_range_reduction(float16 x) {
+static constexpr ExpRangeReduction exp_range_reduction(float16 x) {
   // For -18 < x < 12, to compute exp(x), we perform the following range
   // reduction: find hi, mid, lo, such that:
   //   x = hi + mid + lo, in which

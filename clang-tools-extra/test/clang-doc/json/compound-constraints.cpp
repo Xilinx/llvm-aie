@@ -37,7 +37,6 @@ template<typename T> requires (Incrementable<T> && Decrementable<T>) || PreIncre
 // CHECK-NEXT:          "USR": "{{[0-9A-F]*}}"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "End": true,
 // CHECK-NEXT:          "Expression": "Decrementable<T>",
 // CHECK-NEXT:          "Name": "Decrementable",
 // CHECK-NEXT:          "Path": "",
@@ -56,7 +55,6 @@ template<typename T> requires (Incrementable<T> && Decrementable<T>) || PreIncre
 // CHECK-NEXT:          "USR": "{{[0-9A-F]*}}"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "End": true,
 // CHECK-NEXT:          "Expression": "Decrementable<T>",
 // CHECK-NEXT:          "Name": "Decrementable",
 // CHECK-NEXT:          "Path": "",
@@ -89,7 +87,6 @@ template<typename T> requires (Incrementable<T> && Decrementable<T>) || PreIncre
 // CHECK-NEXT:          "USR": "{{[0-9A-F]*}}"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "End": true,
 // CHECK-NEXT:          "Expression": "PreDecrementable<T>",
 // CHECK-NEXT:          "Name": "PreDecrementable",
 // CHECK-NEXT:          "Path": "",
@@ -115,7 +112,6 @@ template<typename T> requires (Incrementable<T> && Decrementable<T>) || PreIncre
 // CHECK-NEXT:          "USR": "{{[0-9A-F]*}}"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "End": true,
 // CHECK-NEXT:          "Expression": "PreIncrementable<T>",
 // CHECK-NEXT:          "Name": "PreIncrementable",
 // CHECK-NEXT:          "Path": "",

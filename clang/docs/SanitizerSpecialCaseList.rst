@@ -39,7 +39,6 @@ Example
   void bad_foo() {
     int *a = (int*)malloc(40);
     a[10] = 1;
-    free(a);
   }
   int main() { bad_foo(); }
   $ cat ignorelist.txt

@@ -43,8 +43,7 @@ struct DemapInsRewriter : public OpRewritePattern<SourceOp> {
     SmallVector<Value> deMappedIns(op->getOperands());
     for (Value &in : deMappedIns) {
       if (auto stt = tryGetSparseTensorType(in); stt && !stt->isIdentity()) {
-        in =
-            ReinterpretMapOp::create(rewriter, loc, stt->getDemappedType(), in);
+        in = rewriter.create<ReinterpretMapOp>(loc, stt->getDemappedType(), in);
         changed = true;
       }
     }
@@ -338,14 +337,14 @@ translateMap(linalg::GenericOp op, PatternRewriter &rewriter) {
 // Generates a "de"mapping reinterpretation of the map.
 static Value genDemap(OpBuilder &builder, SparseTensorEncodingAttr enc,
                       Value val) {
-  return ReinterpretMapOp::create(builder, val.getLoc(), enc.withoutDimToLvl(),
-                                  val);
+  return builder.create<ReinterpretMapOp>(val.getLoc(), enc.withoutDimToLvl(),
+                                          val);
 }
 
 // Generates a "re"mapping reinterpretation of the map.
 static Value genRemap(OpBuilder &builder, SparseTensorEncodingAttr enc,
                       Value val) {
-  return ReinterpretMapOp::create(builder, val.getLoc(), enc, val);
+  return builder.create<ReinterpretMapOp>(val.getLoc(), enc, val);
 }
 
 static SmallVector<Value> remapValueRange(OpBuilder &rewriter, TypeRange types,
@@ -354,7 +353,7 @@ static SmallVector<Value> remapValueRange(OpBuilder &rewriter, TypeRange types,
   assert(outs.size() == types.size());
   for (auto [r, t] : llvm::zip(ret, types))
     if (r.getType() != t)
-      r = ReinterpretMapOp::create(rewriter, r.getLoc(), t, r);
+      r = rewriter.create<ReinterpretMapOp>(r.getLoc(), t, r);
   return ret;
 }
 
@@ -567,7 +566,7 @@ private:
       // Inserting the transpose
       rewriter.setInsertionPoint(linalgOp);
       RankedTensorType dstTp = stt.withDimToLvl(dimToLvl).getRankedTensorType();
-      Value dst = ConvertOp::create(rewriter, tval.getLoc(), dstTp, tval);
+      Value dst = rewriter.create<ConvertOp>(tval.getLoc(), dstTp, tval);
       rewriter.modifyOpInPlace(linalgOp, [&]() {
         linalgOp->setOperand(t->getOperandNumber(), dst);
       });
@@ -575,7 +574,7 @@ private:
       // Release the transposed form afterwards.
       // TODO: CSE when used in more than one following op?
       rewriter.setInsertionPointAfter(linalgOp);
-      bufferization::DeallocTensorOp::create(rewriter, dst.getLoc(), dst);
+      rewriter.create<bufferization::DeallocTensorOp>(dst.getLoc(), dst);
 
       return success();
     }
@@ -605,8 +604,8 @@ struct TensorAllocDemapper : public OpRewritePattern<AllocOp> {
     ValueRange dynSz = op.getDynamicSizes();
     for (int64_t dimSz : stt.getDimShape()) {
       if (ShapedType::isDynamic(dimSz)) {
-        Value maxCrd = arith::SubIOp::create(rewriter, loc, dynSz.front(),
-                                             constantIndex(rewriter, loc, 1));
+        Value maxCrd = rewriter.create<arith::SubIOp>(
+            loc, dynSz.front(), constantIndex(rewriter, loc, 1));
         maxDimCrds.push_back(maxCrd);
         dynSz = dynSz.drop_front();
       } else {
@@ -620,8 +619,8 @@ struct TensorAllocDemapper : public OpRewritePattern<AllocOp> {
     SmallVector<Value> dynLvlSzs;
     for (unsigned i = 0, e = lvlShape.size(); i < e; i++) {
       if (ShapedType::isDynamic(lvlShape[i])) {
-        Value sz = arith::AddIOp::create(rewriter, loc, maxLvlCrds[i],
-                                         constantIndex(rewriter, loc, 1));
+        Value sz = rewriter.create<arith::AddIOp>(
+            loc, maxLvlCrds[i], constantIndex(rewriter, loc, 1));
         dynLvlSzs.push_back(sz);
       }
     }
@@ -651,8 +650,8 @@ struct TensorInsertDemapper
     auto stt = getSparseTensorType(op.getResult());
     ValueRange lvlCrd = stt.translateCrds(rewriter, loc, op.getIndices(),
                                           CrdTransDirectionKind::dim2lvl);
-    auto insertOp = tensor::InsertOp::create(rewriter, loc, op.getScalar(),
-                                             adaptor.getDest(), lvlCrd);
+    auto insertOp = rewriter.create<tensor::InsertOp>(
+        loc, op.getScalar(), adaptor.getDest(), lvlCrd);
 
     Value out = genRemap(rewriter, stt.getEncoding(), insertOp.getResult());
     rewriter.replaceOp(op, out);
@@ -766,7 +765,7 @@ struct ForeachOpDemapper
           stt && !stt->isIdentity()) {
         Value y =
             genDemap(rewriter, stt->getEncoding(), yield.getSingleResult());
-        YieldOp::create(rewriter, loc, y);
+        rewriter.create<YieldOp>(loc, y);
         rewriter.eraseOp(yield);
       }
     }

@@ -259,7 +259,6 @@ add_entrypoint_object(
   HDRS
     ../fgets.h
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.hdr.types.FILE
     .gpu_file
 )

@@ -38,11 +38,7 @@ bool llvm::isEqual(const GCNRPTracker::LiveRegSet &S1,
 
 unsigned GCNRegPressure::getRegKind(const TargetRegisterClass *RC,
                                     const SIRegisterInfo *STI) {
-  return STI->isSGPRClass(RC)
-             ? SGPR
-             : (STI->isAGPRClass(RC)
-                    ? AGPR
-                    : (STI->isVectorSuperClass(RC) ? AVGPR : VGPR));
+  return STI->isSGPRClass(RC) ? SGPR : (STI->isAGPRClass(RC) ? AGPR : VGPR);
 }
 
 void GCNRegPressure::inc(unsigned Reg,

@@ -56,7 +56,7 @@ struct TestSCFForUtilsPass
           SmallVector<Value> newYieldValues;
           for (auto yieldVal : oldYieldValues) {
             newYieldValues.push_back(
-                arith::AddFOp::create(b, loc, yieldVal, yieldVal));
+                b.create<arith::AddFOp>(loc, yieldVal, yieldVal));
           }
           return newYieldValues;
         };
@@ -160,13 +160,13 @@ struct TestSCFPipeliningPass
                                 Value pred) {
     Location loc = op->getLoc();
     auto ifOp =
-        scf::IfOp::create(rewriter, loc, op->getResultTypes(), pred, true);
+        rewriter.create<scf::IfOp>(loc, op->getResultTypes(), pred, true);
     // True branch.
     rewriter.moveOpBefore(op, &ifOp.getThenRegion().front(),
                           ifOp.getThenRegion().front().begin());
     rewriter.setInsertionPointAfter(op);
     if (op->getNumResults() > 0)
-      scf::YieldOp::create(rewriter, loc, op->getResults());
+      rewriter.create<scf::YieldOp>(loc, op->getResults());
     // False branch.
     rewriter.setInsertionPointToStart(&ifOp.getElseRegion().front());
     SmallVector<Value> elseYieldOperands;
@@ -181,12 +181,12 @@ struct TestSCFPipeliningPass
     } else {
       // Default to assuming constant numeric values.
       for (Type type : op->getResultTypes()) {
-        elseYieldOperands.push_back(arith::ConstantOp::create(
-            rewriter, loc, rewriter.getZeroAttr(type)));
+        elseYieldOperands.push_back(rewriter.create<arith::ConstantOp>(
+            loc, rewriter.getZeroAttr(type)));
       }
     }
     if (op->getNumResults() > 0)
-      scf::YieldOp::create(rewriter, loc, elseYieldOperands);
+      rewriter.create<scf::YieldOp>(loc, elseYieldOperands);
     return ifOp.getOperation();
   }
 

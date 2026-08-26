@@ -82,7 +82,6 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -3045,7 +3044,6 @@ std::pair<unsigned, unsigned> NewGVN::assignDFSNumbers(BasicBlock *B,
     if (isInstructionTriviallyDead(&I, TLI)) {
       InstrDFS[&I] = 0;
       LLVM_DEBUG(dbgs() << "Skipping trivially dead instruction " << I << "\n");
-      salvageDebugInfo(I);
       markInstructionForDeletion(&I);
       continue;
     }
@@ -4077,12 +4075,6 @@ bool NewGVN::eliminateInstructions(Function &F) {
                 // flags/metadata due to downstreams users of the leader.
                 if (!match(DefI, m_Intrinsic<Intrinsic::ssa_copy>()))
                   patchReplacementInstruction(DefI, DominatingLeader);
-
-                SmallVector<DbgVariableRecord *> DVRUsers;
-                findDbgUsers(DefI, DVRUsers);
-
-                for (auto *DVR : DVRUsers)
-                  DVR->replaceVariableLocationOp(DefI, DominatingLeader);
 
                 markInstructionForDeletion(DefI);
               }

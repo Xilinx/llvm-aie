@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/UB/IR/UBOps.h"
 #include "mlir/Dialect/Utils/IndexingUtils.h"
@@ -22,6 +23,7 @@
 #include "mlir/Dialect/Vector/Transforms/LoweringPatterns.h"
 #include "mlir/Dialect/Vector/Utils/VectorUtils.h"
 #include "mlir/IR/BuiltinTypes.h"
+#include "mlir/IR/ImplicitLocOpBuilder.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/IR/TypeUtilities.h"
@@ -81,8 +83,8 @@ getUnpackShufflePermFor128Lane(ArrayRef<int64_t> vals, int numBits) {
 static Value createUnpackLoPd(ImplicitLocOpBuilder &b, Value v1, Value v2,
                               int numBits) {
   int numElem = numBits / 32;
-  return vector::ShuffleOp::create(
-      b, v1, v2,
+  return b.create<vector::ShuffleOp>(
+      v1, v2,
       getUnpackShufflePermFor128Lane({0, 1, numElem, numElem + 1}, numBits));
 }
 
@@ -95,8 +97,8 @@ static Value createUnpackLoPd(ImplicitLocOpBuilder &b, Value v1, Value v2,
 static Value createUnpackHiPd(ImplicitLocOpBuilder &b, Value v1, Value v2,
                               int numBits) {
   int numElem = numBits / 32;
-  return vector::ShuffleOp::create(
-      b, v1, v2,
+  return b.create<vector::ShuffleOp>(
+      v1, v2,
       getUnpackShufflePermFor128Lane({2, 3, numElem + 2, numElem + 3},
                                      numBits));
 }
@@ -110,8 +112,8 @@ static Value createUnpackHiPd(ImplicitLocOpBuilder &b, Value v1, Value v2,
 static Value createUnpackLoPs(ImplicitLocOpBuilder &b, Value v1, Value v2,
                               int numBits) {
   int numElem = numBits / 32;
-  auto shuffle = vector::ShuffleOp::create(
-      b, v1, v2,
+  auto shuffle = b.create<vector::ShuffleOp>(
+      v1, v2,
       getUnpackShufflePermFor128Lane({0, numElem, 1, numElem + 1}, numBits));
   return shuffle;
 }
@@ -125,8 +127,8 @@ static Value createUnpackLoPs(ImplicitLocOpBuilder &b, Value v1, Value v2,
 static Value createUnpackHiPs(ImplicitLocOpBuilder &b, Value v1, Value v2,
                               int numBits) {
   int numElem = numBits / 32;
-  return vector::ShuffleOp::create(
-      b, v1, v2,
+  return b.create<vector::ShuffleOp>(
+      v1, v2,
       getUnpackShufflePermFor128Lane({2, numElem + 2, 3, numElem + 3},
                                      numBits));
 }
@@ -182,7 +184,7 @@ static Value create4x128BitSuffle(ImplicitLocOpBuilder &b, Value v1, Value v2,
   appendToMask(0, b23);
   appendToMask(16, b45);
   appendToMask(16, b67);
-  return vector::ShuffleOp::create(b, v1, v2, shuffleMask);
+  return b.create<vector::ShuffleOp>(v1, v2, shuffleMask);
 }
 
 /// Lowers the value to a vector.shuffle op. The `source` is expected to be a
@@ -193,7 +195,7 @@ static Value transposeToShuffle1D(OpBuilder &b, Value source, int m, int n) {
   for (int64_t j = 0; j < n; ++j)
     for (int64_t i = 0; i < m; ++i)
       mask.push_back(i * n + j);
-  return vector::ShuffleOp::create(b, source.getLoc(), source, source, mask);
+  return b.create<vector::ShuffleOp>(source.getLoc(), source, source, mask);
 }
 
 /// Lowers the value to a sequence of vector.shuffle ops. The `source` is
@@ -285,9 +287,9 @@ static Value transposeToShuffle16x16(OpBuilder &builder, Value source, int m,
 
   auto reshInputType = VectorType::get(
       {m, n}, cast<VectorType>(source.getType()).getElementType());
-  Value res = ub::PoisonOp::create(b, reshInputType);
+  Value res = b.create<ub::PoisonOp>(reshInputType);
   for (int64_t i = 0; i < m; ++i)
-    res = vector::InsertOp::create(b, vs[i], res, i);
+    res = b.create<vector::InsertOp>(vs[i], res, i);
   return res;
 }
 
@@ -330,6 +332,21 @@ public:
       return rewriter.notifyMatchFailure(
           op, "Options specifies lowering to shuffle");
 
+    // Handle a true 2-D matrix transpose differently when requested.
+    if (vectorTransposeLowering == vector::VectorTransposeLowering::Flat &&
+        resType.getRank() == 2 && transp[0] == 1 && transp[1] == 0) {
+      Type flattenedType =
+          VectorType::get(resType.getNumElements(), resType.getElementType());
+      auto matrix =
+          rewriter.create<vector::ShapeCastOp>(loc, flattenedType, input);
+      auto rows = rewriter.getI32IntegerAttr(resType.getShape()[0]);
+      auto columns = rewriter.getI32IntegerAttr(resType.getShape()[1]);
+      Value trans = rewriter.create<vector::FlatTransposeOp>(
+          loc, flattenedType, matrix, rows, columns);
+      rewriter.replaceOpWithNewOp<vector::ShapeCastOp>(op, resType, trans);
+      return success();
+    }
+
     // Generate unrolled extract/insert ops. We do not unroll the rightmost
     // (i.e., highest-order) dimensions that are not transposed and leave them
     // in vector form to improve performance. Therefore, we prune those
@@ -345,7 +362,7 @@ public:
     // of the leftmost transposed dimensions. We traverse every transpose
     // element using a linearized index that we delinearize to generate the
     // appropriate indices for the extract/insert operations.
-    Value result = ub::PoisonOp::create(rewriter, loc, resType);
+    Value result = rewriter.create<ub::PoisonOp>(loc, resType);
     int64_t numTransposedElements = ShapedType::getNumElements(prunedInShape);
 
     for (int64_t linearIdx = 0; linearIdx < numTransposedElements;
@@ -468,14 +485,14 @@ public:
     Location loc = op.getLoc();
     auto flattenedType = VectorType::get({n * m}, srcType.getElementType());
     auto reshInputType = VectorType::get({m, n}, srcType.getElementType());
-    auto reshInput = vector::ShapeCastOp::create(rewriter, loc, flattenedType,
-                                                 op.getVector());
+    auto reshInput = rewriter.create<vector::ShapeCastOp>(loc, flattenedType,
+                                                          op.getVector());
 
     Value res;
     if (vectorTransposeLowering == VectorTransposeLowering::Shuffle16x16 &&
         m == 16 && n == 16) {
       reshInput =
-          vector::ShapeCastOp::create(rewriter, loc, reshInputType, reshInput);
+          rewriter.create<vector::ShapeCastOp>(loc, reshInputType, reshInput);
       res = transposeToShuffle16x16(rewriter, reshInput, m, n);
     } else {
       // Fallback to shuffle on 1D approach.

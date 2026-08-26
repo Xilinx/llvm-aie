@@ -34,16 +34,11 @@ namespace Fortran::runtime::io {
 
 RT_OFFLOAD_API_GROUP_BEGIN
 
-enum NonTbpDefinedIoFlags {
-  IsDtvArgPolymorphic = 1 << 0, // first dummy arg is CLASS(T)
-  DefinedIoInteger8 = 1 << 1, // -fdefault-integer-8 affected UNIT= & IOSTAT=
-};
-
 struct NonTbpDefinedIo {
   const typeInfo::DerivedType &derivedType;
   void (*subroutine)(); // null means no non-TBP defined I/O here
   common::DefinedIo definedIo;
-  std::uint8_t flags;
+  bool isDtvArgPolymorphic; // first dummy arg is CLASS(T)
 };
 
 struct NonTbpDefinedIoTable {

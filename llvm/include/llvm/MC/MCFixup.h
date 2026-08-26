@@ -94,6 +94,7 @@ public:
   }
 
   MCFixupKind getKind() const { return Kind; }
+  unsigned getTargetKind() const { return Kind; }
 
   uint32_t getOffset() const { return Offset; }
   void setOffset(uint32_t Value) { Offset = Value; }

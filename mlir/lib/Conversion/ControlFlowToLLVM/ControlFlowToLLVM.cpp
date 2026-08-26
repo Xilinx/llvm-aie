@@ -73,13 +73,13 @@ struct AssertOpLowering : public ConvertOpToLLVMPattern<cf::AssertOp> {
         OpBuilder::InsertionGuard guard(rewriter);
         rewriter.setInsertionPointToStart(module.getBody());
         auto abortFuncTy = LLVM::LLVMFunctionType::get(getVoidType(), {});
-        abortFunc = LLVM::LLVMFuncOp::create(rewriter, rewriter.getUnknownLoc(),
-                                             "abort", abortFuncTy);
+        abortFunc = rewriter.create<LLVM::LLVMFuncOp>(rewriter.getUnknownLoc(),
+                                                      "abort", abortFuncTy);
       }
-      LLVM::CallOp::create(rewriter, loc, abortFunc, ValueRange());
-      LLVM::UnreachableOp::create(rewriter, loc);
+      rewriter.create<LLVM::CallOp>(loc, abortFunc, ValueRange());
+      rewriter.create<LLVM::UnreachableOp>(loc);
     } else {
-      LLVM::BrOp::create(rewriter, loc, ValueRange(), continuationBlock);
+      rewriter.create<LLVM::BrOp>(loc, ValueRange(), continuationBlock);
     }
 
     // Generate assertion test.

@@ -3,21 +3,7 @@ add_header_library(
   HDRS
     mbstate.h
   DEPENDS
-    libc.hdr.stdint_proxy
-    libc.hdr.types.char32_t
-)
-
-add_header_library(
-  string_converter
-  HDRS
-    string_converter.h
-  DEPENDS
-    libc.hdr.types.char8_t
-    libc.hdr.types.char32_t
-    libc.hdr.types.size_t
-    libc.src.__support.error_or
-    .mbstate
-    .character_converter 
+    libc.hdr.types.char32_t    
 )
 
 add_object_library(
@@ -30,7 +16,6 @@ add_object_library(
     libc.hdr.errno_macros
     libc.hdr.types.char8_t
     libc.hdr.types.char32_t
-    libc.hdr.types.size_t
     libc.src.__support.error_or
     libc.src.__support.math_extras
     .mbstate
@@ -68,21 +53,4 @@ add_object_library(
   libc.src.__support.macros.config
   .character_converter
   .mbstate
-)
-
-add_header_library(
-  wcsnrtombs
-  HDRS
-    wcsnrtombs.h
-  DEPENDS
-    libc.hdr.errno_macros
-    libc.hdr.types.char8_t
-    libc.hdr.types.char32_t
-    libc.hdr.types.size_t
-    libc.hdr.types.wchar_t
-    libc.src.__support.error_or
-    libc.src.__support.common
-    .string_converter
-    .character_converter
-    .mbstate
 )

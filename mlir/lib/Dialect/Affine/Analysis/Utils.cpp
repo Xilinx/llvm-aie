@@ -710,7 +710,7 @@ void MemRefDependenceGraph::clearNodeLoadAndStores(unsigned id) {
 void MemRefDependenceGraph::forEachMemRefInputEdge(
     unsigned id, const std::function<void(Edge)> &callback) {
   if (inEdges.count(id) > 0)
-    forEachMemRefEdge(inEdges.at(id), callback);
+    forEachMemRefEdge(inEdges[id], callback);
 }
 
 // Calls 'callback' for each output edge from node 'id' which carries a
@@ -718,7 +718,7 @@ void MemRefDependenceGraph::forEachMemRefInputEdge(
 void MemRefDependenceGraph::forEachMemRefOutputEdge(
     unsigned id, const std::function<void(Edge)> &callback) {
   if (outEdges.count(id) > 0)
-    forEachMemRefEdge(outEdges.at(id), callback);
+    forEachMemRefEdge(outEdges[id], callback);
 }
 
 // Calls 'callback' for each edge in 'edges' which carries a memref
@@ -730,6 +730,9 @@ void MemRefDependenceGraph::forEachMemRefEdge(
     if (!isa<MemRefType>(edge.value.getType()))
       continue;
     assert(nodes.count(edge.id) > 0);
+    // Skip if 'edge.id' is not a loop nest.
+    if (!isa<AffineForOp>(getNode(edge.id)->op))
+      continue;
     // Visit current input edge 'edge'.
     callback(edge);
   }
@@ -1547,17 +1550,15 @@ mlir::affine::computeSliceUnion(ArrayRef<Operation *> opsA,
   FlatAffineValueConstraints sliceUnionCst;
   assert(sliceUnionCst.getNumDimAndSymbolVars() == 0);
   std::vector<std::pair<Operation *, Operation *>> dependentOpPairs;
-  MemRefAccess srcAccess;
-  MemRefAccess dstAccess;
-  for (Operation *a : opsA) {
-    srcAccess = MemRefAccess(a);
-    for (Operation *b : opsB) {
-      dstAccess = MemRefAccess(b);
+  for (Operation *i : opsA) {
+    MemRefAccess srcAccess(i);
+    for (Operation *j : opsB) {
+      MemRefAccess dstAccess(j);
       if (srcAccess.memref != dstAccess.memref)
         continue;
       // Check if 'loopDepth' exceeds nesting depth of src/dst ops.
-      if ((!isBackwardSlice && loopDepth > getNestingDepth(a)) ||
-          (isBackwardSlice && loopDepth > getNestingDepth(b))) {
+      if ((!isBackwardSlice && loopDepth > getNestingDepth(i)) ||
+          (isBackwardSlice && loopDepth > getNestingDepth(j))) {
         LLVM_DEBUG(llvm::dbgs() << "Invalid loop depth\n");
         return SliceComputationResult::GenericFailure;
       }
@@ -1576,12 +1577,13 @@ mlir::affine::computeSliceUnion(ArrayRef<Operation *> opsA,
       }
       if (result.value == DependenceResult::NoDependence)
         continue;
-      dependentOpPairs.emplace_back(a, b);
+      dependentOpPairs.emplace_back(i, j);
 
       // Compute slice bounds for 'srcAccess' and 'dstAccess'.
       ComputationSliceState tmpSliceState;
-      getComputationSliceState(a, b, dependenceConstraints, loopDepth,
-                               isBackwardSlice, &tmpSliceState);
+      mlir::affine::getComputationSliceState(i, j, dependenceConstraints,
+                                             loopDepth, isBackwardSlice,
+                                             &tmpSliceState);
 
       if (sliceUnionCst.getNumDimAndSymbolVars() == 0) {
         // Initialize 'sliceUnionCst' with the bounds computed in previous step.
@@ -1946,16 +1948,16 @@ AffineForOp mlir::affine::insertBackwardComputationSlice(
 
 // Constructs  MemRefAccess populating it with the memref, its indices and
 // opinst from 'loadOrStoreOpInst'.
-MemRefAccess::MemRefAccess(Operation *memOp) {
-  if (auto loadOp = dyn_cast<AffineReadOpInterface>(memOp)) {
+MemRefAccess::MemRefAccess(Operation *loadOrStoreOpInst) {
+  if (auto loadOp = dyn_cast<AffineReadOpInterface>(loadOrStoreOpInst)) {
     memref = loadOp.getMemRef();
-    opInst = memOp;
+    opInst = loadOrStoreOpInst;
     llvm::append_range(indices, loadOp.getMapOperands());
   } else {
-    assert(isa<AffineWriteOpInterface>(memOp) &&
+    assert(isa<AffineWriteOpInterface>(loadOrStoreOpInst) &&
            "Affine read/write op expected");
-    auto storeOp = cast<AffineWriteOpInterface>(memOp);
-    opInst = memOp;
+    auto storeOp = cast<AffineWriteOpInterface>(loadOrStoreOpInst);
+    opInst = loadOrStoreOpInst;
     memref = storeOp.getMemRef();
     llvm::append_range(indices, storeOp.getMapOperands());
   }

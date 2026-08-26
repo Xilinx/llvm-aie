@@ -241,9 +241,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
   mutable llvm::FoldingSet<ElaboratedType> ElaboratedTypes{
       GeneralTypesLog2InitSize};
   mutable llvm::FoldingSet<DependentNameType> DependentNameTypes;
-  mutable llvm::DenseMap<llvm::FoldingSetNodeID,
-                         DependentTemplateSpecializationType *>
-      DependentTemplateSpecializationTypes;
+  mutable llvm::ContextualFoldingSet<DependentTemplateSpecializationType,
+                                     ASTContext&>
+    DependentTemplateSpecializationTypes;
   mutable llvm::FoldingSet<PackExpansionType> PackExpansionTypes;
   mutable llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   mutable llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
@@ -279,11 +279,6 @@ class ASTContext : public RefCountedBase<ASTContext> {
 
   mutable llvm::ContextualFoldingSet<ArrayParameterType, ASTContext &>
       ArrayParameterTypes;
-
-  /// Store the unique Type corresponding to each Kind.
-  mutable std::array<Type *,
-                     llvm::to_underlying(PredefinedSugarType::Kind::Last) + 1>
-      PredefinedSugarTypes{};
 
   /// The set of nested name specifiers.
   ///
@@ -1200,8 +1195,6 @@ public:
   bool isInSameModule(const Module *M1, const Module *M2) const;
 
   TranslationUnitDecl *getTranslationUnitDecl() const {
-    assert(TUDecl->getMostRecentDecl() == TUDecl &&
-           "The active TU is not current one!");
     return TUDecl->getMostRecentDecl();
   }
   void addTranslationUnitDecl() {
@@ -1578,8 +1571,6 @@ public:
   /// Return a dependent bit-precise integer type with the specified signedness
   /// and bit count.
   QualType getDependentBitIntType(bool Unsigned, Expr *BitsExpr) const;
-
-  QualType getPredefinedSugarType(PredefinedSugarType::Kind KD) const;
 
   /// Gets the struct used to keep track of the extended descriptor for
   /// pointer to blocks.
@@ -2013,13 +2004,11 @@ public:
   /// <stddef.h>.
   ///
   /// The sizeof operator requires this (C99 6.5.3.4p4).
-  QualType getSizeType() const;
-
-  CanQualType getCanonicalSizeType() const;
+  CanQualType getSizeType() const;
 
   /// Return the unique signed counterpart of
   /// the integer type corresponding to size_t.
-  QualType getSignedSizeType() const;
+  CanQualType getSignedSizeType() const;
 
   /// Return the unique type for "intmax_t" (C99 7.18.1.5), defined in
   /// <stdint.h>.
@@ -2315,8 +2304,6 @@ public:
   QualType getObjCSelType() const {
     return getTypeDeclType(getObjCSelDecl());
   }
-
-  PointerAuthQualifier getObjCMemberSelTypePtrAuth();
 
   /// Retrieve the typedef declaration corresponding to the predefined
   /// Objective-C 'Class' type.
@@ -2932,14 +2919,10 @@ public:
   NestedNameSpecifier *
   getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const;
 
-  /// Retrieves the default calling convention for the current context.
-  ///
-  /// The context's default calling convention may differ from the current
-  /// target's default calling convention if the -fdefault-calling-conv option
-  /// is used; to get the target's default calling convention, e.g. for built-in
-  /// functions, call getTargetInfo().getDefaultCallingConv() instead.
+  /// Retrieves the default calling convention for the current target.
   CallingConv getDefaultCallingConvention(bool IsVariadic,
-                                          bool IsCXXMethod) const;
+                                          bool IsCXXMethod,
+                                          bool IsBuiltin = false) const;
 
   /// Retrieves the "canonical" template name that refers to a
   /// given template.

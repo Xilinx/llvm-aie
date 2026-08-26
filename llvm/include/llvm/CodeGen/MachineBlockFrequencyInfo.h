@@ -39,8 +39,8 @@ class MachineBlockFrequencyInfo {
 public:
   LLVM_ABI MachineBlockFrequencyInfo(); // Legacy pass manager only.
   LLVM_ABI explicit MachineBlockFrequencyInfo(
-      const MachineFunction &F, const MachineBranchProbabilityInfo &MBPI,
-      const MachineLoopInfo &MLI);
+      MachineFunction &F, MachineBranchProbabilityInfo &MBPI,
+      MachineLoopInfo &MLI);
   LLVM_ABI MachineBlockFrequencyInfo(MachineBlockFrequencyInfo &&);
   LLVM_ABI ~MachineBlockFrequencyInfo();
 

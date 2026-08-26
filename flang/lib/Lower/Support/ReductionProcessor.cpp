@@ -39,7 +39,7 @@ namespace lower {
 namespace omp {
 
 // explicit template declarations
-template bool ReductionProcessor::processReductionArguments<
+template void ReductionProcessor::processReductionArguments<
     mlir::omp::DeclareReductionOp, omp::clause::ReductionOperatorList>(
     mlir::Location currentLocation, lower::AbstractConverter &converter,
     const omp::clause::ReductionOperatorList &redOperatorList,
@@ -48,7 +48,7 @@ template bool ReductionProcessor::processReductionArguments<
     llvm::SmallVectorImpl<mlir::Attribute> &reductionDeclSymbols,
     const llvm::SmallVectorImpl<const semantics::Symbol *> &reductionSymbols);
 
-template bool ReductionProcessor::processReductionArguments<
+template void ReductionProcessor::processReductionArguments<
     fir::DeclareReductionOp, llvm::SmallVector<fir::ReduceOperationEnum>>(
     mlir::Location currentLocation, lower::AbstractConverter &converter,
     const llvm::SmallVector<fir::ReduceOperationEnum> &redOperatorList,
@@ -134,7 +134,6 @@ ReductionProcessor::getReductionType(const fir::ReduceOperationEnum &redOp) {
   case fir::ReduceOperationEnum::MIN:
     return ReductionIdentifier::MIN;
   }
-  llvm_unreachable("Unhandled ReductionIdentifier case");
 }
 
 bool ReductionProcessor::supportedIntrinsicProcReduction(
@@ -260,20 +259,20 @@ ReductionProcessor::getReductionInitValue(mlir::Location loc, mlir::Type type,
                                                                initIm);
     }
     if (mlir::isa<mlir::FloatType>(type))
-      return mlir::arith::ConstantOp::create(
-          builder, loc, type,
+      return builder.create<mlir::arith::ConstantOp>(
+          loc, type,
           builder.getFloatAttr(type, (double)getOperationIdentity(redId, loc)));
 
     if (mlir::isa<fir::LogicalType>(type)) {
-      mlir::Value intConst = mlir::arith::ConstantOp::create(
-          builder, loc, builder.getI1Type(),
+      mlir::Value intConst = builder.create<mlir::arith::ConstantOp>(
+          loc, builder.getI1Type(),
           builder.getIntegerAttr(builder.getI1Type(),
                                  getOperationIdentity(redId, loc)));
       return builder.createConvert(loc, type, intConst);
     }
 
-    return mlir::arith::ConstantOp::create(
-        builder, loc, type,
+    return builder.create<mlir::arith::ConstantOp>(
+        loc, type,
         builder.getIntegerAttr(type, getOperationIdentity(redId, loc)));
   case ReductionIdentifier::ID:
   case ReductionIdentifier::USER_DEF_OP:
@@ -301,15 +300,15 @@ mlir::Value ReductionProcessor::createScalarCombiner(
     break;
   case ReductionIdentifier::IOR:
     assert((type.isIntOrIndex()) && "only integer is expected");
-    reductionOp = mlir::arith::OrIOp::create(builder, loc, op1, op2);
+    reductionOp = builder.create<mlir::arith::OrIOp>(loc, op1, op2);
     break;
   case ReductionIdentifier::IEOR:
     assert((type.isIntOrIndex()) && "only integer is expected");
-    reductionOp = mlir::arith::XOrIOp::create(builder, loc, op1, op2);
+    reductionOp = builder.create<mlir::arith::XOrIOp>(loc, op1, op2);
     break;
   case ReductionIdentifier::IAND:
     assert((type.isIntOrIndex()) && "only integer is expected");
-    reductionOp = mlir::arith::AndIOp::create(builder, loc, op1, op2);
+    reductionOp = builder.create<mlir::arith::AndIOp>(loc, op1, op2);
     break;
   case ReductionIdentifier::ADD:
     reductionOp =
@@ -325,8 +324,7 @@ mlir::Value ReductionProcessor::createScalarCombiner(
     mlir::Value op1I1 = builder.createConvert(loc, builder.getI1Type(), op1);
     mlir::Value op2I1 = builder.createConvert(loc, builder.getI1Type(), op2);
 
-    mlir::Value andiOp =
-        mlir::arith::AndIOp::create(builder, loc, op1I1, op2I1);
+    mlir::Value andiOp = builder.create<mlir::arith::AndIOp>(loc, op1I1, op2I1);
 
     reductionOp = builder.createConvert(loc, type, andiOp);
     break;
@@ -335,7 +333,7 @@ mlir::Value ReductionProcessor::createScalarCombiner(
     mlir::Value op1I1 = builder.createConvert(loc, builder.getI1Type(), op1);
     mlir::Value op2I1 = builder.createConvert(loc, builder.getI1Type(), op2);
 
-    mlir::Value oriOp = mlir::arith::OrIOp::create(builder, loc, op1I1, op2I1);
+    mlir::Value oriOp = builder.create<mlir::arith::OrIOp>(loc, op1I1, op2I1);
 
     reductionOp = builder.createConvert(loc, type, oriOp);
     break;
@@ -344,8 +342,8 @@ mlir::Value ReductionProcessor::createScalarCombiner(
     mlir::Value op1I1 = builder.createConvert(loc, builder.getI1Type(), op1);
     mlir::Value op2I1 = builder.createConvert(loc, builder.getI1Type(), op2);
 
-    mlir::Value cmpiOp = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::eq, op1I1, op2I1);
+    mlir::Value cmpiOp = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, op1I1, op2I1);
 
     reductionOp = builder.createConvert(loc, type, cmpiOp);
     break;
@@ -354,8 +352,8 @@ mlir::Value ReductionProcessor::createScalarCombiner(
     mlir::Value op1I1 = builder.createConvert(loc, builder.getI1Type(), op1);
     mlir::Value op2I1 = builder.createConvert(loc, builder.getI1Type(), op2);
 
-    mlir::Value cmpiOp = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::ne, op1I1, op2I1);
+    mlir::Value cmpiOp = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::ne, op1I1, op2I1);
 
     reductionOp = builder.createConvert(loc, type, cmpiOp);
     break;
@@ -371,9 +369,9 @@ template <typename ParentDeclOpType>
 static void genYield(fir::FirOpBuilder &builder, mlir::Location loc,
                      mlir::Value yieldedValue) {
   if constexpr (std::is_same_v<ParentDeclOpType, mlir::omp::DeclareReductionOp>)
-    mlir::omp::YieldOp::create(builder, loc, yieldedValue);
+    builder.create<mlir::omp::YieldOp>(loc, yieldedValue);
   else
-    fir::YieldOp::create(builder, loc, yieldedValue);
+    builder.create<fir::YieldOp>(loc, yieldedValue);
 }
 
 /// Create reduction combiner region for reduction variables which are boxed
@@ -394,24 +392,24 @@ static void genBoxCombiner(fir::FirOpBuilder &builder, mlir::Location loc,
 
   // load fir.ref<fir.box<...>>
   mlir::Value lhsAddr = lhs;
-  lhs = fir::LoadOp::create(builder, loc, lhs);
-  rhs = fir::LoadOp::create(builder, loc, rhs);
+  lhs = builder.create<fir::LoadOp>(loc, lhs);
+  rhs = builder.create<fir::LoadOp>(loc, rhs);
 
   if ((heapTy || ptrTy) && !seqTy) {
     // get box contents (heap pointers)
-    lhs = fir::BoxAddrOp::create(builder, loc, lhs);
-    rhs = fir::BoxAddrOp::create(builder, loc, rhs);
+    lhs = builder.create<fir::BoxAddrOp>(loc, lhs);
+    rhs = builder.create<fir::BoxAddrOp>(loc, rhs);
     mlir::Value lhsValAddr = lhs;
 
     // load heap pointers
-    lhs = fir::LoadOp::create(builder, loc, lhs);
-    rhs = fir::LoadOp::create(builder, loc, rhs);
+    lhs = builder.create<fir::LoadOp>(loc, lhs);
+    rhs = builder.create<fir::LoadOp>(loc, rhs);
 
     mlir::Type eleTy = heapTy ? heapTy.getEleTy() : ptrTy.getEleTy();
 
     mlir::Value result = ReductionProcessor::createScalarCombiner(
         builder, loc, redId, eleTy, lhs, rhs);
-    fir::StoreOp::create(builder, loc, result, lhsValAddr);
+    builder.create<fir::StoreOp>(loc, result, lhsValAddr);
     genYield<DeclRedOpType>(builder, loc, lhsAddr);
     return;
   }
@@ -438,17 +436,17 @@ static void genBoxCombiner(fir::FirOpBuilder &builder, mlir::Location loc,
   builder.setInsertionPointToStart(nest.body);
   const bool seqIsVolatile = fir::isa_volatile_type(seqTy.getEleTy());
   mlir::Type refTy = fir::ReferenceType::get(seqTy.getEleTy(), seqIsVolatile);
-  auto lhsEleAddr = fir::ArrayCoorOp::create(
-      builder, loc, refTy, lhs, shapeShift, /*slice=*/mlir::Value{},
+  auto lhsEleAddr = builder.create<fir::ArrayCoorOp>(
+      loc, refTy, lhs, shapeShift, /*slice=*/mlir::Value{},
       nest.oneBasedIndices, /*typeparms=*/mlir::ValueRange{});
-  auto rhsEleAddr = fir::ArrayCoorOp::create(
-      builder, loc, refTy, rhs, shapeShift, /*slice=*/mlir::Value{},
+  auto rhsEleAddr = builder.create<fir::ArrayCoorOp>(
+      loc, refTy, rhs, shapeShift, /*slice=*/mlir::Value{},
       nest.oneBasedIndices, /*typeparms=*/mlir::ValueRange{});
-  auto lhsEle = fir::LoadOp::create(builder, loc, lhsEleAddr);
-  auto rhsEle = fir::LoadOp::create(builder, loc, rhsEleAddr);
+  auto lhsEle = builder.create<fir::LoadOp>(loc, lhsEleAddr);
+  auto rhsEle = builder.create<fir::LoadOp>(loc, rhsEleAddr);
   mlir::Value scalarReduction = ReductionProcessor::createScalarCombiner(
       builder, loc, redId, refTy, lhsEle, rhsEle);
-  fir::StoreOp::create(builder, loc, scalarReduction, lhsEleAddr);
+  builder.create<fir::StoreOp>(loc, scalarReduction, lhsEleAddr);
 
   builder.setInsertionPointAfter(nest.outerOp);
   genYield<DeclRedOpType>(builder, loc, lhsAddr);
@@ -469,7 +467,7 @@ static void genCombiner(fir::FirOpBuilder &builder, mlir::Location loc,
     mlir::Value result = ReductionProcessor::createScalarCombiner(
         builder, loc, redId, ty, lhsLoaded, rhsLoaded);
     if (isByRef) {
-      fir::StoreOp::create(builder, loc, result, lhs);
+      builder.create<fir::StoreOp>(loc, result, lhs);
       genYield<DeclRedOpType>(builder, loc, lhs);
     } else {
       genYield<DeclRedOpType>(builder, loc, result);
@@ -540,7 +538,7 @@ static void createReductionAllocAndInitRegions(
     if (isByRef) {
       // alloc region
       builder.setInsertionPointToEnd(allocBlock);
-      mlir::Value alloca = fir::AllocaOp::create(builder, loc, ty);
+      mlir::Value alloca = builder.create<fir::AllocaOp>(loc, ty);
       yield(alloca);
       return;
     }
@@ -552,7 +550,7 @@ static void createReductionAllocAndInitRegions(
 
   // alloc region
   builder.setInsertionPointToEnd(allocBlock);
-  mlir::Value boxAlloca = fir::AllocaOp::create(builder, loc, ty);
+  mlir::Value boxAlloca = builder.create<fir::AllocaOp>(loc, ty);
   yield(boxAlloca);
 }
 
@@ -576,7 +574,7 @@ OpType ReductionProcessor::createDeclareReduction(
   if (!isByRef)
     type = valTy;
 
-  decl = OpType::create(modBuilder, loc, reductionOpName, type);
+  decl = modBuilder.create<OpType>(loc, reductionOpName, type);
   createReductionAllocAndInitRegions(converter, loc, decl, redId, type,
                                      isByRef);
 
@@ -607,7 +605,7 @@ static bool doReductionByRef(mlir::Value reductionVar) {
 }
 
 template <typename OpType, typename RedOperatorListTy>
-bool ReductionProcessor::processReductionArguments(
+void ReductionProcessor::processReductionArguments(
     mlir::Location currentLocation, lower::AbstractConverter &converter,
     const RedOperatorListTy &redOperatorList,
     llvm::SmallVectorImpl<mlir::Value> &reductionVars,
@@ -627,33 +625,21 @@ bool ReductionProcessor::processReductionArguments(
               std::get_if<omp::clause::ProcedureDesignator>(&redOperator.u)) {
         if (!ReductionProcessor::supportedIntrinsicProcReduction(
                 *reductionIntrinsic)) {
-          return false;
+          return;
         }
       } else {
-        return false;
+        return;
       }
     }
   }
 
+  fir::FirOpBuilder &firOpBuilder = converter.getFirOpBuilder();
+
   // Reduction variable processing common to both intrinsic operators and
   // procedure designators
   fir::FirOpBuilder &builder = converter.getFirOpBuilder();
-  mlir::OpBuilder::InsertPoint dcIP;
-  constexpr bool isDoConcurrent =
-      std::is_same_v<OpType, fir::DeclareReductionOp>;
-
-  if (isDoConcurrent) {
-    dcIP = builder.saveInsertionPoint();
-    builder.setInsertionPoint(
-        builder.getRegion().getParentOfType<fir::DoConcurrentOp>());
-  }
-
   for (const semantics::Symbol *symbol : reductionSymbols) {
     mlir::Value symVal = converter.getSymbolAddress(*symbol);
-
-    if (auto declOp = symVal.getDefiningOp<hlfir::DeclareOp>())
-      symVal = declOp.getBase();
-
     mlir::Type eleType;
     auto refType = mlir::dyn_cast_or_null<fir::ReferenceType>(symVal.getType());
     if (refType)
@@ -673,21 +659,21 @@ bool ReductionProcessor::processReductionArguments(
       // Always pass the box by reference so that the OpenMP dialect
       // verifiers don't need to know anything about fir.box
       auto alloca =
-          fir::AllocaOp::create(builder, currentLocation, box.getType());
-      fir::StoreOp::create(builder, currentLocation, box, alloca);
+          builder.create<fir::AllocaOp>(currentLocation, box.getType());
+      builder.create<fir::StoreOp>(currentLocation, box, alloca);
 
       symVal = alloca;
     } else if (mlir::isa<fir::BaseBoxType>(symVal.getType())) {
       // boxed arrays are passed as values not by reference. Unfortunately,
       // we can't pass a box by value to omp.redution_declare, so turn it
       // into a reference
-      auto oldIP = builder.saveInsertionPoint();
-      builder.setInsertionPointToStart(builder.getAllocaBlock());
+
       auto alloca =
-          fir::AllocaOp::create(builder, currentLocation, symVal.getType());
-      builder.restoreInsertionPoint(oldIP);
-      fir::StoreOp::create(builder, currentLocation, symVal, alloca);
+          builder.create<fir::AllocaOp>(currentLocation, symVal.getType());
+      builder.create<fir::StoreOp>(currentLocation, symVal, alloca);
       symVal = alloca;
+    } else if (auto declOp = symVal.getDefiningOp<hlfir::DeclareOp>()) {
+      symVal = declOp.getBase();
     }
 
     // this isn't the same as the by-val and by-ref passing later in the
@@ -707,7 +693,7 @@ bool ReductionProcessor::processReductionArguments(
   unsigned idx = 0;
   for (auto [symVal, isByRef] : llvm::zip(reductionVars, reduceVarByRef)) {
     auto redType = mlir::cast<fir::ReferenceType>(symVal.getType());
-    const auto &kindMap = builder.getKindMap();
+    const auto &kindMap = firOpBuilder.getKindMap();
     std::string reductionName;
     ReductionIdentifier redId;
 
@@ -759,14 +745,9 @@ bool ReductionProcessor::processReductionArguments(
     OpType decl = createDeclareReduction<OpType>(
         converter, reductionName, redId, redType, currentLocation, isByRef);
     reductionDeclSymbols.push_back(
-        mlir::SymbolRefAttr::get(builder.getContext(), decl.getSymName()));
+        mlir::SymbolRefAttr::get(firOpBuilder.getContext(), decl.getSymName()));
     ++idx;
   }
-
-  if (isDoConcurrent)
-    builder.restoreInsertionPoint(dcIP);
-
-  return true;
 }
 
 const semantics::SourceName

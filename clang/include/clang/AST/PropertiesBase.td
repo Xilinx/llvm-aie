@@ -91,7 +91,6 @@ def DeclRef : RefPropertyType<"Decl"> { let ConstWhenWriting = 1; }
     SubclassPropertyType<"FunctionDecl", DeclRef>;
   def NamedDeclRef :
     SubclassPropertyType<"NamedDecl", DeclRef>;
-  def NamespaceBaseDeclRef : SubclassPropertyType<"NamespaceBaseDecl", DeclRef>;
   def NamespaceDeclRef :
     SubclassPropertyType<"NamespaceDecl", DeclRef>;
   def NamespaceAliasDeclRef :

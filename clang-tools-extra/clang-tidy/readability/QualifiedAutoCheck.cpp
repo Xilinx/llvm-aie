@@ -106,14 +106,12 @@ QualifiedAutoCheck::QualifiedAutoCheck(StringRef Name,
     : ClangTidyCheck(Name, Context),
       AddConstToQualified(Options.get("AddConstToQualified", true)),
       AllowedTypes(
-          utils::options::parseStringList(Options.get("AllowedTypes", ""))),
-      IgnoreAliasing(Options.get("IgnoreAliasing", true)) {}
+          utils::options::parseStringList(Options.get("AllowedTypes", ""))) {}
 
 void QualifiedAutoCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "AddConstToQualified", AddConstToQualified);
   Options.store(Opts, "AllowedTypes",
                 utils::options::serializeStringList(AllowedTypes));
-  Options.store(Opts, "IgnoreAliasing", IgnoreAliasing);
 }
 
 void QualifiedAutoCheck::registerMatchers(MatchFinder *Finder) {
@@ -136,29 +134,15 @@ void QualifiedAutoCheck::registerMatchers(MatchFinder *Finder) {
 
   auto IsBoundToType = refersToType(equalsBoundNode("type"));
   auto UnlessFunctionType = unless(hasUnqualifiedDesugaredType(functionType()));
-
-  auto IsPointerType = [this](const auto &...InnerMatchers) {
-    if (this->IgnoreAliasing) {
-      return qualType(
-          hasUnqualifiedDesugaredType(pointerType(pointee(InnerMatchers...))));
-    } else {
-      return qualType(
-          anyOf(qualType(pointerType(pointee(InnerMatchers...))),
-                qualType(substTemplateTypeParmType(hasReplacementType(
-                    pointerType(pointee(InnerMatchers...)))))));
-    }
+  auto IsAutoDeducedToPointer = [](const std::vector<StringRef> &AllowedTypes,
+                                   const auto &...InnerMatchers) {
+    return autoType(hasDeducedType(
+        hasUnqualifiedDesugaredType(pointerType(pointee(InnerMatchers...))),
+        unless(hasUnqualifiedType(
+            matchers::matchesAnyListedTypeName(AllowedTypes, false))),
+        unless(pointerType(pointee(hasUnqualifiedType(
+            matchers::matchesAnyListedTypeName(AllowedTypes, false)))))));
   };
-
-  auto IsAutoDeducedToPointer =
-      [IsPointerType](const std::vector<StringRef> &AllowedTypes,
-                      const auto &...InnerMatchers) {
-        return autoType(hasDeducedType(
-            IsPointerType(InnerMatchers...),
-            unless(hasUnqualifiedType(
-                matchers::matchesAnyListedTypeName(AllowedTypes, false))),
-            unless(pointerType(pointee(hasUnqualifiedType(
-                matchers::matchesAnyListedTypeName(AllowedTypes, false)))))));
-      };
 
   Finder->addMatcher(
       ExplicitSingleVarDecl(

@@ -270,6 +270,7 @@ public:
   /// \param[in] suffix
   ///     The ANSI color code to end colorization. This is
   ///     environment-dependent.
+
   void PutCStringColorHighlighted(
       llvm::StringRef text,
       std::optional<HighlightSettings> settings = std::nullopt);

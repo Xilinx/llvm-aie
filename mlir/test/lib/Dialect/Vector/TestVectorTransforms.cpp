@@ -546,8 +546,8 @@ static Value allocateGlobalSharedMemory(Location loc, OpBuilder &builder,
 
   auto ip = builder.saveInsertionPoint();
   builder.setInsertionPoint(moduleOp);
-  auto global = memref::GlobalOp::create(
-      builder, loc,
+  auto global = builder.create<memref::GlobalOp>(
+      loc,
       /*sym_name=*/symbolName,
       /*sym_visibility=*/builder.getStringAttr("private"),
       /*type=*/memrefType,
@@ -560,18 +560,19 @@ static Value allocateGlobalSharedMemory(Location loc, OpBuilder &builder,
   global->moveBefore(&moduleOp.front());
 
   builder.restoreInsertionPoint(ip);
-  return memref::GetGlobalOp::create(builder, loc, memrefType, symbolName);
+  return builder.create<memref::GetGlobalOp>(loc, memrefType, symbolName);
 }
 
 static Value warpReduction(Location loc, OpBuilder &builder, Value input,
                            CombiningKind kind, uint32_t size) {
   // First reduce on a single thread to get per lane reduction value.
-  Value laneVal = vector::ReductionOp::create(builder, loc, kind, input);
+  Value laneVal = builder.create<vector::ReductionOp>(loc, kind, input);
   // Parallel reduction using butterfly shuffles.
   for (uint64_t i = 1; i < size; i <<= 1) {
-    Value shuffled = gpu::ShuffleOp::create(builder, loc, laneVal, i,
-                                            /*width=*/size,
-                                            /*mode=*/gpu::ShuffleMode::XOR)
+    Value shuffled = builder
+                         .create<gpu::ShuffleOp>(loc, laneVal, i,
+                                                 /*width=*/size,
+                                                 /*mode=*/gpu::ShuffleMode::XOR)
                          .getShuffleResult();
     laneVal = makeArithReduction(builder, loc, kind, laneVal, shuffled);
   }
@@ -646,11 +647,12 @@ struct TestVectorDistribution
              "unsupported shuffle type");
       Type i32Type = builder.getIntegerType(32);
       Value srcIdxI32 =
-          arith::IndexCastOp::create(builder, loc, i32Type, srcIdx);
-      Value warpSzI32 = arith::ConstantOp::create(
-          builder, loc, builder.getIntegerAttr(i32Type, warpSz));
-      Value result = gpu::ShuffleOp::create(builder, loc, val, srcIdxI32,
-                                            warpSzI32, gpu::ShuffleMode::IDX)
+          builder.create<arith::IndexCastOp>(loc, i32Type, srcIdx);
+      Value warpSzI32 = builder.create<arith::ConstantOp>(
+          loc, builder.getIntegerAttr(i32Type, warpSz));
+      Value result = builder
+                         .create<gpu::ShuffleOp>(loc, val, srcIdxI32, warpSzI32,
+                                                 gpu::ShuffleMode::IDX)
                          .getResult(0);
       return result;
     };
@@ -678,7 +680,7 @@ struct TestVectorDistribution
     options.warpAllocationFn = allocateGlobalSharedMemory;
     options.warpSyncronizationFn = [](Location loc, OpBuilder &builder,
                                       gpu::WarpExecuteOnLane0Op warpOp) {
-      gpu::BarrierOp::create(builder, loc);
+      builder.create<gpu::BarrierOp>(loc);
     };
     // Test on one pattern in isolation.
     if (warpOpToSCF) {

@@ -11,12 +11,15 @@
 #include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/LoopUtils.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Arith/Utils/Utils.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/SCF/Transforms/Patterns.h"
 #include "mlir/Dialect/SCF/Transforms/Transforms.h"
 #include "mlir/Dialect/SCF/Utils/Utils.h"
 #include "mlir/Dialect/Transform/IR/TransformDialect.h"
+#include "mlir/Dialect/Transform/IR/TransformOps.h"
 #include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
@@ -160,7 +163,7 @@ static scf::ExecuteRegionOp wrapInExecuteRegion(RewriterBase &b,
   OpBuilder::InsertionGuard g(b);
   b.setInsertionPoint(op);
   scf::ExecuteRegionOp executeRegionOp =
-      scf::ExecuteRegionOp::create(b, op->getLoc(), op->getResultTypes());
+      b.create<scf::ExecuteRegionOp>(op->getLoc(), op->getResultTypes());
   {
     OpBuilder::InsertionGuard g(b);
     b.setInsertionPointToStart(&executeRegionOp.getRegion().emplaceBlock());
@@ -169,7 +172,7 @@ static scf::ExecuteRegionOp wrapInExecuteRegion(RewriterBase &b,
     assert(clonedRegion.empty() && "expected empty region");
     b.inlineRegionBefore(op->getRegions().front(), clonedRegion,
                          clonedRegion.end());
-    scf::YieldOp::create(b, op->getLoc(), clonedOp->getResults());
+    b.create<scf::YieldOp>(op->getLoc(), clonedOp->getResults());
   }
   b.replaceOp(op, executeRegionOp.getResults());
   return executeRegionOp;
@@ -418,7 +421,7 @@ transform::LoopCoalesceOp::applyToOne(transform::TransformRewriter &rewriter,
 /// using the operands of the block terminator to replace operation results.
 static void replaceOpWithRegion(RewriterBase &rewriter, Operation *op,
                                 Region &region) {
-  assert(region.hasOneBlock() && "expected single-block region");
+  assert(llvm::hasSingleElement(region) && "expected single-region block");
   Block *block = &region.front();
   Operation *terminator = block->getTerminator();
   ValueRange results = terminator->getOperands();
@@ -434,7 +437,7 @@ DiagnosedSilenceableFailure transform::TakeAssumedBranchOp::applyToOne(
   rewriter.setInsertionPoint(ifOp);
   Region &region =
       getTakeElseBranch() ? ifOp.getElseRegion() : ifOp.getThenRegion();
-  if (!region.hasOneBlock()) {
+  if (!llvm::hasSingleElement(region)) {
     return emitDefiniteFailure()
            << "requires an scf.if op with a single-block "
            << ((getTakeElseBranch()) ? "`else`" : "`then`") << " region";

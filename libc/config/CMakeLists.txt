@@ -3,6 +3,5 @@ add_header_library(
   HDRS
     app.h
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.src.__support.common
 )

@@ -560,7 +560,6 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
         return true;
     }
   } else if (Current.is(TT_BinaryOperator) && Current.CanBreakBefore &&
-             Current.getPrecedence() != prec::Assignment &&
              CurrentState.BreakBeforeParameter) {
     return true;
   }
@@ -1725,8 +1724,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   }
   if (Previous && (Previous->isOneOf(TT_BinaryOperator, TT_ConditionalExpr) ||
                    (Previous->isOneOf(tok::l_paren, tok::comma, tok::colon) &&
-                    !Previous->isOneOf(TT_DictLiteral, TT_ObjCMethodExpr,
-                                       TT_CtorInitializerColon)))) {
+                    !Previous->isOneOf(TT_DictLiteral, TT_ObjCMethodExpr)))) {
     CurrentState.NestedBlockInlined =
         !Newline && hasNestedBlockInlined(Previous, Current, Style);
   }

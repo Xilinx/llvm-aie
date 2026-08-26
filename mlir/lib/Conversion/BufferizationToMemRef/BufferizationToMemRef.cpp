@@ -47,29 +47,30 @@ struct CloneOpConversion : public OpConversionPattern<bufferization::CloneOp> {
 
     if (auto unrankedType = dyn_cast<UnrankedMemRefType>(type)) {
       // Constants
-      Value zero = arith::ConstantIndexOp::create(rewriter, loc, 0);
-      Value one = arith::ConstantIndexOp::create(rewriter, loc, 1);
+      Value zero = rewriter.create<arith::ConstantIndexOp>(loc, 0);
+      Value one = rewriter.create<arith::ConstantIndexOp>(loc, 1);
 
       // Dynamically evaluate the size and shape of the unranked memref
-      Value rank = memref::RankOp::create(rewriter, loc, op.getInput());
+      Value rank = rewriter.create<memref::RankOp>(loc, op.getInput());
       MemRefType allocType =
           MemRefType::get({ShapedType::kDynamic}, rewriter.getIndexType());
-      Value shape = memref::AllocaOp::create(rewriter, loc, allocType, rank);
+      Value shape = rewriter.create<memref::AllocaOp>(loc, allocType, rank);
 
       // Create a loop to query dimension sizes, store them as a shape, and
       // compute the total size of the memref
       auto loopBody = [&](OpBuilder &builder, Location loc, Value i,
                           ValueRange args) {
         auto acc = args.front();
-        auto dim = memref::DimOp::create(rewriter, loc, op.getInput(), i);
+        auto dim = rewriter.create<memref::DimOp>(loc, op.getInput(), i);
 
-        memref::StoreOp::create(rewriter, loc, dim, shape, i);
-        acc = arith::MulIOp::create(rewriter, loc, acc, dim);
+        rewriter.create<memref::StoreOp>(loc, dim, shape, i);
+        acc = rewriter.create<arith::MulIOp>(loc, acc, dim);
 
-        scf::YieldOp::create(rewriter, loc, acc);
+        rewriter.create<scf::YieldOp>(loc, acc);
       };
-      auto size = scf::ForOp::create(rewriter, loc, zero, rank, one,
-                                     ValueRange(one), loopBody)
+      auto size = rewriter
+                      .create<scf::ForOp>(loc, zero, rank, one, ValueRange(one),
+                                          loopBody)
                       .getResult(0);
 
       MemRefType memrefType = MemRefType::get({ShapedType::kDynamic},
@@ -77,9 +78,9 @@ struct CloneOpConversion : public OpConversionPattern<bufferization::CloneOp> {
 
       // Allocate new memref with 1D dynamic shape, then reshape into the
       // shape of the original unranked memref
-      alloc = memref::AllocOp::create(rewriter, loc, memrefType, size);
+      alloc = rewriter.create<memref::AllocOp>(loc, memrefType, size);
       alloc =
-          memref::ReshapeOp::create(rewriter, loc, unrankedType, alloc, shape);
+          rewriter.create<memref::ReshapeOp>(loc, unrankedType, alloc, shape);
     } else {
       MemRefType memrefType = cast<MemRefType>(type);
       MemRefLayoutAttrInterface layout;
@@ -102,15 +103,14 @@ struct CloneOpConversion : public OpConversionPattern<bufferization::CloneOp> {
       }
 
       // Allocate a memref with identity layout.
-      alloc =
-          memref::AllocOp::create(rewriter, loc, allocType, dynamicOperands);
+      alloc = rewriter.create<memref::AllocOp>(loc, allocType, dynamicOperands);
       // Cast the allocation to the specified type if needed.
       if (memrefType != allocType)
         alloc =
-            memref::CastOp::create(rewriter, op->getLoc(), memrefType, alloc);
+            rewriter.create<memref::CastOp>(op->getLoc(), memrefType, alloc);
     }
 
-    memref::CopyOp::create(rewriter, loc, op.getInput(), alloc);
+    rewriter.create<memref::CopyOp>(loc, op.getInput(), alloc);
     rewriter.replaceOp(op, alloc);
     return success();
   }

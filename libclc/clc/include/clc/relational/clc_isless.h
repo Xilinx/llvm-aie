@@ -12,7 +12,7 @@
 #define FUNCTION __clc_isless
 #define __CLC_BODY <clc/relational/binary_decl.inc>
 
-#include <clc/math/gentype.inc>
+#include <clc/relational/floatn.inc>
 
 #undef FUNCTION
 

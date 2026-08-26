@@ -54,12 +54,6 @@ def : WriteRes<WriteShiftImm32, [Andes45ALU]>;
 def : WriteRes<WriteShiftReg, [Andes45ALU]>;
 def : WriteRes<WriteShiftReg32, [Andes45ALU]>;
 
-// Short forward branch
-def : WriteRes<WriteSFB, [Andes45ALU]> {
-  let Latency = 1;
-  let NumMicroOps = 2;
-}
-
 // Branching
 def : WriteRes<WriteJmp, [Andes45ALU]>;
 def : WriteRes<WriteJal, [Andes45ALU]>;
@@ -237,8 +231,6 @@ def : ReadAdvance<ReadShiftImm, 0>;
 def : ReadAdvance<ReadShiftImm32, 0>;
 def : ReadAdvance<ReadShiftReg, 0>;
 def : ReadAdvance<ReadShiftReg32, 0>;
-def : ReadAdvance<ReadSFBJmp, 0>;
-def : ReadAdvance<ReadSFBALU, 0>;
 def : ReadAdvance<ReadJalr, 0>;
 def : ReadAdvance<ReadJmp, 0>;
 def : ReadAdvance<ReadIMul, 0>;
@@ -336,6 +328,7 @@ def : ReadAdvance<ReadCSR, 0>;
 //===----------------------------------------------------------------------===//
 // Unsupported extensions
 defm : UnsupportedSchedQ;
+defm : UnsupportedSchedSFB;
 defm : UnsupportedSchedV;
 defm : UnsupportedSchedZabha;
 defm : UnsupportedSchedZbkb;

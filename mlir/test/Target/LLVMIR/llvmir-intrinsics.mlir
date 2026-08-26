@@ -1096,13 +1096,11 @@ llvm.func @vector_deinterleave2(%vec1: vector<4xf64>, %vec2: vector<[8]xi32>) {
 }
 
 // CHECK-LABEL: @lifetime
-llvm.func @lifetime() {
-  %c = llvm.mlir.constant(16 : i64) : i64
-  %a = llvm.alloca %c x i8 : (i64) -> !llvm.ptr
+llvm.func @lifetime(%p: !llvm.ptr) {
   // CHECK: call void @llvm.lifetime.start
-  llvm.intr.lifetime.start 16, %a : !llvm.ptr
+  llvm.intr.lifetime.start 16, %p : !llvm.ptr
   // CHECK: call void @llvm.lifetime.end
-  llvm.intr.lifetime.end 16, %a : !llvm.ptr
+  llvm.intr.lifetime.end 16, %p : !llvm.ptr
   llvm.return
 }
 

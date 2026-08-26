@@ -35,7 +35,7 @@ static Op getOrDefineGlobal(ModuleOp &moduleOp, const Location loc,
   if (!(ret = moduleOp.lookupSymbol<Op>(name))) {
     ConversionPatternRewriter::InsertionGuard guard(rewriter);
     rewriter.setInsertionPointToStart(moduleOp.getBody());
-    ret = Op::create(rewriter, loc, std::forward<Args>(args)...);
+    ret = rewriter.template create<Op>(loc, std::forward<Args>(args)...);
   }
   return ret;
 }
@@ -54,18 +54,18 @@ std::pair<Value, Value> getRawPtrAndSize(const Location loc,
                                          Value memRef, Type elType) {
   Type ptrType = LLVM::LLVMPointerType::get(rewriter.getContext());
   Value dataPtr =
-      LLVM::ExtractValueOp::create(rewriter, loc, ptrType, memRef, 1);
-  Value offset = LLVM::ExtractValueOp::create(rewriter, loc,
-                                              rewriter.getI64Type(), memRef, 2);
+      rewriter.create<LLVM::ExtractValueOp>(loc, ptrType, memRef, 1);
+  Value offset = rewriter.create<LLVM::ExtractValueOp>(
+      loc, rewriter.getI64Type(), memRef, 2);
   Value resPtr =
-      LLVM::GEPOp::create(rewriter, loc, ptrType, elType, dataPtr, offset);
+      rewriter.create<LLVM::GEPOp>(loc, ptrType, elType, dataPtr, offset);
   Value size;
   if (cast<LLVM::LLVMStructType>(memRef.getType()).getBody().size() > 3) {
-    size = LLVM::ExtractValueOp::create(rewriter, loc, memRef,
-                                        ArrayRef<int64_t>{3, 0});
-    size = LLVM::TruncOp::create(rewriter, loc, rewriter.getI32Type(), size);
+    size = rewriter.create<LLVM::ExtractValueOp>(loc, memRef,
+                                                 ArrayRef<int64_t>{3, 0});
+    size = rewriter.create<LLVM::TruncOp>(loc, rewriter.getI32Type(), size);
   } else {
-    size = arith::ConstantIntOp::create(rewriter, loc, 1, 32);
+    size = rewriter.create<arith::ConstantIntOp>(loc, 1, 32);
   }
   return {resPtr, size};
 }
@@ -157,13 +157,13 @@ public:
   Value getCommWorld(const Location loc,
                      ConversionPatternRewriter &rewriter) override {
     static constexpr int MPI_COMM_WORLD = 0x44000000;
-    return LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(),
-                                    MPI_COMM_WORLD);
+    return rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI64Type(),
+                                             MPI_COMM_WORLD);
   }
 
   Value castComm(const Location loc, ConversionPatternRewriter &rewriter,
                  Value comm) override {
-    return LLVM::TruncOp::create(rewriter, loc, rewriter.getI32Type(), comm);
+    return rewriter.create<LLVM::TruncOp>(loc, rewriter.getI32Type(), comm);
   }
 
   intptr_t getStatusIgnore() override { return 1; }
@@ -195,8 +195,7 @@ public:
       mtype = MPI_UINT8_T;
     else
       assert(false && "unsupported type");
-    return LLVM::ConstantOp::create(rewriter, loc, rewriter.getI32Type(),
-                                    mtype);
+    return rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI32Type(), mtype);
   }
 
   Value getMPIOp(const Location loc, ConversionPatternRewriter &rewriter,
@@ -246,7 +245,7 @@ public:
       op = MPI_REPLACE;
       break;
     }
-    return LLVM::ConstantOp::create(rewriter, loc, rewriter.getI32Type(), op);
+    return rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI32Type(), op);
   }
 };
 
@@ -282,16 +281,16 @@ public:
     getOrDefineExternalStruct(loc, rewriter, name, commStructT);
 
     // get address of symbol
-    auto comm = LLVM::AddressOfOp::create(rewriter, loc,
-                                          LLVM::LLVMPointerType::get(context),
-                                          SymbolRefAttr::get(context, name));
-    return LLVM::PtrToIntOp::create(rewriter, loc, rewriter.getI64Type(), comm);
+    auto comm = rewriter.create<LLVM::AddressOfOp>(
+        loc, LLVM::LLVMPointerType::get(context),
+        SymbolRefAttr::get(context, name));
+    return rewriter.create<LLVM::PtrToIntOp>(loc, rewriter.getI64Type(), comm);
   }
 
   Value castComm(const Location loc, ConversionPatternRewriter &rewriter,
                  Value comm) override {
-    return LLVM::IntToPtrOp::create(
-        rewriter, loc, LLVM::LLVMPointerType::get(rewriter.getContext()), comm);
+    return rewriter.create<LLVM::IntToPtrOp>(
+        loc, LLVM::LLVMPointerType::get(rewriter.getContext()), comm);
   }
 
   intptr_t getStatusIgnore() override { return 0; }
@@ -331,9 +330,9 @@ public:
     // make sure global op definition exists
     getOrDefineExternalStruct(loc, rewriter, mtype, typeStructT);
     // get address of symbol
-    return LLVM::AddressOfOp::create(rewriter, loc,
-                                     LLVM::LLVMPointerType::get(context),
-                                     SymbolRefAttr::get(context, mtype));
+    return rewriter.create<LLVM::AddressOfOp>(
+        loc, LLVM::LLVMPointerType::get(context),
+        SymbolRefAttr::get(context, mtype));
   }
 
   Value getMPIOp(const Location loc, ConversionPatternRewriter &rewriter,
@@ -390,9 +389,9 @@ public:
     // make sure global op definition exists
     getOrDefineExternalStruct(loc, rewriter, op, opStructT);
     // get address of symbol
-    return LLVM::AddressOfOp::create(rewriter, loc,
-                                     LLVM::LLVMPointerType::get(context),
-                                     SymbolRefAttr::get(context, op));
+    return rewriter.create<LLVM::AddressOfOp>(
+        loc, LLVM::LLVMPointerType::get(context),
+        SymbolRefAttr::get(context, op));
   }
 };
 
@@ -425,7 +424,7 @@ struct InitOpLowering : public ConvertOpToLLVMPattern<mpi::InitOp> {
     Type ptrType = LLVM::LLVMPointerType::get(rewriter.getContext());
 
     // instantiate nullptr `%nullptr = llvm.mlir.zero : !llvm.ptr`
-    auto nullPtrOp = LLVM::ZeroOp::create(rewriter, loc, ptrType);
+    auto nullPtrOp = rewriter.create<LLVM::ZeroOp>(loc, ptrType);
     Value llvmnull = nullPtrOp.getRes();
 
     // grab a reference to the global module op:
@@ -514,9 +513,9 @@ struct CommSplitOpLowering : public ConvertOpToLLVMPattern<mpi::CommSplitOp> {
 
     // get communicator
     Value comm = mpiTraits->castComm(loc, rewriter, adaptor.getComm());
-    auto one = LLVM::ConstantOp::create(rewriter, loc, i32, 1);
+    auto one = rewriter.create<LLVM::ConstantOp>(loc, i32, 1);
     auto outPtr =
-        LLVM::AllocaOp::create(rewriter, loc, ptrType, comm.getType(), one);
+        rewriter.create<LLVM::AllocaOp>(loc, ptrType, comm.getType(), one);
 
     // int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
     auto funcType =
@@ -525,14 +524,14 @@ struct CommSplitOpLowering : public ConvertOpToLLVMPattern<mpi::CommSplitOp> {
     LLVM::LLVMFuncOp funcDecl = getOrDefineFunction(moduleOp, loc, rewriter,
                                                     "MPI_Comm_split", funcType);
 
-    auto callOp =
-        LLVM::CallOp::create(rewriter, loc, funcDecl,
-                             ValueRange{comm, adaptor.getColor(),
-                                        adaptor.getKey(), outPtr.getRes()});
+    auto callOp = rewriter.create<LLVM::CallOp>(
+        loc, funcDecl,
+        ValueRange{comm, adaptor.getColor(), adaptor.getKey(),
+                   outPtr.getRes()});
 
     // load the communicator into a register
-    Value res = LLVM::LoadOp::create(rewriter, loc, i32, outPtr.getResult());
-    res = LLVM::SExtOp::create(rewriter, loc, rewriter.getI64Type(), res);
+    Value res = rewriter.create<LLVM::LoadOp>(loc, i32, outPtr.getResult());
+    res = rewriter.create<LLVM::SExtOp>(loc, rewriter.getI64Type(), res);
 
     // if retval is checked, replace uses of retval with the results from the
     // call op
@@ -581,14 +580,14 @@ struct CommRankOpLowering : public ConvertOpToLLVMPattern<mpi::CommRankOp> {
         moduleOp, loc, rewriter, "MPI_Comm_rank", rankFuncType);
 
     // replace with function call
-    auto one = LLVM::ConstantOp::create(rewriter, loc, i32, 1);
-    auto rankptr = LLVM::AllocaOp::create(rewriter, loc, ptrType, i32, one);
-    auto callOp = LLVM::CallOp::create(rewriter, loc, initDecl,
-                                       ValueRange{comm, rankptr.getRes()});
+    auto one = rewriter.create<LLVM::ConstantOp>(loc, i32, 1);
+    auto rankptr = rewriter.create<LLVM::AllocaOp>(loc, ptrType, i32, one);
+    auto callOp = rewriter.create<LLVM::CallOp>(
+        loc, initDecl, ValueRange{comm, rankptr.getRes()});
 
     // load the rank into a register
     auto loadedRank =
-        LLVM::LoadOp::create(rewriter, loc, i32, rankptr.getResult());
+        rewriter.create<LLVM::LoadOp>(loc, i32, rankptr.getResult());
 
     // if retval is checked, replace uses of retval with the results from the
     // call op
@@ -642,10 +641,10 @@ struct SendOpLowering : public ConvertOpToLLVMPattern<mpi::SendOp> {
         getOrDefineFunction(moduleOp, loc, rewriter, "MPI_Send", funcType);
 
     // replace op with function call
-    auto funcCall = LLVM::CallOp::create(rewriter, loc, funcDecl,
-                                         ValueRange{dataPtr, size, dataType,
-                                                    adaptor.getDest(),
-                                                    adaptor.getTag(), comm});
+    auto funcCall = rewriter.create<LLVM::CallOp>(
+        loc, funcDecl,
+        ValueRange{dataPtr, size, dataType, adaptor.getDest(), adaptor.getTag(),
+                   comm});
     if (op.getRetval())
       rewriter.replaceOp(op, funcCall.getResult());
     else
@@ -684,10 +683,10 @@ struct RecvOpLowering : public ConvertOpToLLVMPattern<mpi::RecvOp> {
     auto mpiTraits = MPIImplTraits::get(moduleOp);
     Value dataType = mpiTraits->getDataType(loc, rewriter, elemType);
     Value comm = mpiTraits->castComm(loc, rewriter, adaptor.getComm());
-    Value statusIgnore = LLVM::ConstantOp::create(rewriter, loc, i64,
-                                                  mpiTraits->getStatusIgnore());
+    Value statusIgnore = rewriter.create<LLVM::ConstantOp>(
+        loc, i64, mpiTraits->getStatusIgnore());
     statusIgnore =
-        LLVM::IntToPtrOp::create(rewriter, loc, ptrType, statusIgnore);
+        rewriter.create<LLVM::IntToPtrOp>(loc, ptrType, statusIgnore);
 
     // LLVM Function type representing `i32 MPI_Recv(data, count, datatype, dst,
     // tag, comm)`
@@ -699,8 +698,8 @@ struct RecvOpLowering : public ConvertOpToLLVMPattern<mpi::RecvOp> {
         getOrDefineFunction(moduleOp, loc, rewriter, "MPI_Recv", funcType);
 
     // replace op with function call
-    auto funcCall = LLVM::CallOp::create(
-        rewriter, loc, funcDecl,
+    auto funcCall = rewriter.create<LLVM::CallOp>(
+        loc, funcDecl,
         ValueRange{dataPtr, size, dataType, adaptor.getSource(),
                    adaptor.getTag(), comm, statusIgnore});
     if (op.getRetval())
@@ -739,10 +738,9 @@ struct AllReduceOpLowering : public ConvertOpToLLVMPattern<mpi::AllReduceOp> {
 
     // If input and output are the same, request in-place operation.
     if (adaptor.getSendbuf() == adaptor.getRecvbuf()) {
-      sendPtr = LLVM::ConstantOp::create(
-          rewriter, loc, i64,
-          reinterpret_cast<int64_t>(mpiTraits->getInPlace()));
-      sendPtr = LLVM::IntToPtrOp::create(rewriter, loc, ptrType, sendPtr);
+      sendPtr = rewriter.create<LLVM::ConstantOp>(
+          loc, i64, reinterpret_cast<int64_t>(mpiTraits->getInPlace()));
+      sendPtr = rewriter.create<LLVM::IntToPtrOp>(loc, ptrType, sendPtr);
     }
 
     Value dataType = mpiTraits->getDataType(loc, rewriter, elemType);
@@ -759,8 +757,8 @@ struct AllReduceOpLowering : public ConvertOpToLLVMPattern<mpi::AllReduceOp> {
         getOrDefineFunction(moduleOp, loc, rewriter, "MPI_Allreduce", funcType);
 
     // replace op with function call
-    auto funcCall = LLVM::CallOp::create(
-        rewriter, loc, funcDecl,
+    auto funcCall = rewriter.create<LLVM::CallOp>(
+        loc, funcDecl,
         ValueRange{sendPtr, recvPtr, sendSize, dataType, mpiOp, commWorld});
 
     if (op.getRetval())

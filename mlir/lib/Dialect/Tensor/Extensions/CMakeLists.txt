@@ -1,10 +1,10 @@
 set(LLVM_OPTIONAL_SOURCES
   AllExtensions.cpp
-  ShardingExtensions.cpp
+  MeshShardingExtensions.cpp
   )
 
-add_mlir_extension_library(MLIRTensorShardingExtensions
-  ShardingExtensions.cpp
+add_mlir_extension_library(MLIRTensorMeshShardingExtensions
+  MeshShardingExtensions.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/Tensor/Extensions
@@ -22,5 +22,5 @@ add_mlir_extension_library(MLIRTensorAllExtensions
   ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/Tensor/Extensions
 
   LINK_LIBS PUBLIC
-  MLIRTensorShardingExtensions
+  MLIRTensorMeshShardingExtensions
   )

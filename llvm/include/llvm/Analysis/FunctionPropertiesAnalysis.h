@@ -34,13 +34,13 @@ class FunctionPropertiesInfo {
   void reIncludeBB(const BasicBlock &BB);
 
   ir2vec::Embedding FunctionEmbedding = ir2vec::Embedding(0.0);
-  const ir2vec::Vocabulary *IR2VecVocab = nullptr;
+  std::optional<ir2vec::Vocab> IR2VecVocab;
 
 public:
   LLVM_ABI static FunctionPropertiesInfo
   getFunctionPropertiesInfo(const Function &F, const DominatorTree &DT,
                             const LoopInfo &LI,
-                            const ir2vec::Vocabulary *Vocabulary);
+                            const IR2VecVocabResult *VocabResult);
 
   LLVM_ABI static FunctionPropertiesInfo
   getFunctionPropertiesInfo(Function &F, FunctionAnalysisManager &FAM);
@@ -145,7 +145,9 @@ public:
     return FunctionEmbedding;
   }
 
-  const ir2vec::Vocabulary *getIR2VecVocab() const { return IR2VecVocab; }
+  const std::optional<ir2vec::Vocab> &getIR2VecVocab() const {
+    return IR2VecVocab;
+  }
 
   // Helper intended to be useful for unittests
   void setFunctionEmbeddingForTest(const ir2vec::Embedding &Embedding) {

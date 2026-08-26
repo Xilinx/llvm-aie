@@ -21,7 +21,7 @@
 #include "mlir/Transforms/InliningUtils.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/DebugLog.h"
+#include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "inlining"
 
@@ -348,11 +348,13 @@ static void collectCallOps(iterator_range<Region::iterator> blocks,
 // InlinerInterfaceImpl
 //===----------------------------------------------------------------------===//
 
+#ifndef NDEBUG
 static std::string getNodeName(CallOpInterface op) {
   if (llvm::dyn_cast_if_present<SymbolRefAttr>(op.getCallableForCallee()))
     return debugString(op);
   return "_unnamed_callee_";
 }
+#endif
 
 /// Return true if the specified `inlineHistoryID`  indicates an inline history
 /// that already includes `node`.
@@ -612,10 +614,10 @@ Inliner::Impl::inlineCallsInSCC(InlinerInterfaceImpl &inlinerIface,
   std::vector<InlineHistoryT> callHistory(calls.size(), InlineHistoryT{});
 
   LLVM_DEBUG({
-    LDBG() << "* Inliner: Initial calls in SCC are: {";
+    llvm::dbgs() << "* Inliner: Initial calls in SCC are: {\n";
     for (unsigned i = 0, e = calls.size(); i < e; ++i)
-      LDBG() << "  " << i << ". " << calls[i].call << ",";
-    LDBG() << "}";
+      llvm::dbgs() << "  " << i << ". " << calls[i].call << ",\n";
+    llvm::dbgs() << "}\n";
   });
 
   // Try to inline each of the call operations. Don't cache the end iterator
@@ -633,9 +635,9 @@ Inliner::Impl::inlineCallsInSCC(InlinerInterfaceImpl &inlinerIface,
     CallOpInterface call = it.call;
     LLVM_DEBUG({
       if (doInline)
-        LDBG() << "* Inlining call: " << i << ". " << call;
+        llvm::dbgs() << "* Inlining call: " << i << ". " << call << "\n";
       else
-        LDBG() << "* Not inlining call: " << i << ". " << call;
+        llvm::dbgs() << "* Not inlining call: " << i << ". " << call << "\n";
     });
     if (!doInline)
       continue;
@@ -652,7 +654,7 @@ Inliner::Impl::inlineCallsInSCC(InlinerInterfaceImpl &inlinerIface,
                    cast<CallableOpInterface>(targetRegion->getParentOp()),
                    targetRegion, /*shouldCloneInlinedRegion=*/!inlineInPlace);
     if (failed(inlineResult)) {
-      LDBG() << "** Failed to inline";
+      LLVM_DEBUG(llvm::dbgs() << "** Failed to inline\n");
       continue;
     }
     inlinedAnyCalls = true;
@@ -665,16 +667,19 @@ Inliner::Impl::inlineCallsInSCC(InlinerInterfaceImpl &inlinerIface,
     auto historyToString = [](InlineHistoryT h) {
       return h.has_value() ? std::to_string(*h) : "root";
     };
-    LDBG() << "* new inlineHistory entry: " << newInlineHistoryID << ". ["
-           << getNodeName(call) << ", " << historyToString(inlineHistoryID)
-           << "]";
+    (void)historyToString;
+    LLVM_DEBUG(llvm::dbgs()
+               << "* new inlineHistory entry: " << newInlineHistoryID << ". ["
+               << getNodeName(call) << ", " << historyToString(inlineHistoryID)
+               << "]\n");
 
     for (unsigned k = prevSize; k != calls.size(); ++k) {
       callHistory.push_back(newInlineHistoryID);
-      LDBG() << "* new call " << k << " {" << calls[k].call
-             << "}\n   with historyID = " << newInlineHistoryID
-             << ", added due to inlining of\n  call {" << call
-             << "}\n with historyID = " << historyToString(inlineHistoryID);
+      LLVM_DEBUG(llvm::dbgs() << "* new call " << k << " {" << calls[i].call
+                              << "}\n   with historyID = " << newInlineHistoryID
+                              << ", added due to inlining of\n  call {" << call
+                              << "}\n with historyID = "
+                              << historyToString(inlineHistoryID) << "\n");
     }
 
     // If the inlining was successful, Merge the new uses into the source node.

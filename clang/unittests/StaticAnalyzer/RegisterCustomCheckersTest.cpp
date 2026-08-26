@@ -44,7 +44,7 @@ void addCustomChecker(AnalysisASTConsumer &AnalysisConsumer,
                       AnalyzerOptions &AnOpts) {
   AnOpts.CheckersAndPackages = {{"test.CustomChecker", true}};
   AnalysisConsumer.AddCheckerRegistrationFn([](CheckerRegistry &Registry) {
-    Registry.addChecker<CustomChecker>("test.CustomChecker", "MockDescription");
+    Registry.addChecker<CustomChecker>("test.CustomChecker", "Description", "");
   });
 }
 
@@ -73,8 +73,8 @@ void addLocIncDecChecker(AnalysisASTConsumer &AnalysisConsumer,
                          AnalyzerOptions &AnOpts) {
   AnOpts.CheckersAndPackages = {{"test.LocIncDecChecker", true}};
   AnalysisConsumer.AddCheckerRegistrationFn([](CheckerRegistry &Registry) {
-    Registry.addChecker<CustomChecker>("test.LocIncDecChecker",
-                                       "MockDescription");
+    Registry.addChecker<CustomChecker>("test.LocIncDecChecker", "Description",
+                                       "");
   });
 }
 
@@ -119,10 +119,10 @@ bool shouldRegisterCheckerRegistrationOrderPrinter(const CheckerManager &mgr) {
 void addCheckerRegistrationOrderPrinter(CheckerRegistry &Registry) {
   Registry.addChecker(registerCheckerRegistrationOrderPrinter,
                       shouldRegisterCheckerRegistrationOrderPrinter,
-                      "test.RegistrationOrder", "Description");
+                      "test.RegistrationOrder", "Description", "", false);
 }
 
-#define UNITTEST_CHECKER(CHECKER_NAME)                                         \
+#define UNITTEST_CHECKER(CHECKER_NAME, DIAG_MSG)                               \
   class CHECKER_NAME : public Checker<check::PreStmt<DeclStmt>> {              \
   public:                                                                      \
     void checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {}          \
@@ -137,11 +137,11 @@ void addCheckerRegistrationOrderPrinter(CheckerRegistry &Registry) {
   }                                                                            \
   void add##CHECKER_NAME(CheckerRegistry &Registry) {                          \
     Registry.addChecker(register##CHECKER_NAME, shouldRegister##CHECKER_NAME,  \
-                        "test." #CHECKER_NAME, "Description");                 \
+                        "test." #CHECKER_NAME, "Description", "", false);      \
   }
 
-UNITTEST_CHECKER(StrongDep)
-UNITTEST_CHECKER(Dep)
+UNITTEST_CHECKER(StrongDep, "Strong")
+UNITTEST_CHECKER(Dep, "Dep")
 
 bool shouldRegisterStrongFALSE(const CheckerManager &mgr) {
   return false;
@@ -154,7 +154,7 @@ void addDep(AnalysisASTConsumer &AnalysisConsumer,
                                 {"test.RegistrationOrder", true}};
   AnalysisConsumer.AddCheckerRegistrationFn([](CheckerRegistry &Registry) {
     Registry.addChecker(registerStrongDep, shouldRegisterStrongFALSE,
-                        "test.Strong", "Description");
+                        "test.Strong", "Description", "", false);
     addStrongDep(Registry);
     addDep(Registry);
     addCheckerRegistrationOrderPrinter(Registry);
@@ -172,7 +172,7 @@ TEST(RegisterDeps, UnsatisfiedDependency) {
 // Weak checker dependencies.
 //===----------------------------------------------------------------------===//
 
-UNITTEST_CHECKER(WeakDep)
+UNITTEST_CHECKER(WeakDep, "Weak")
 
 void addWeakDepCheckerBothEnabled(AnalysisASTConsumer &AnalysisConsumer,
                                   AnalyzerOptions &AnOpts) {
@@ -225,8 +225,8 @@ void addWeakDepCheckerDepUnspecified(AnalysisASTConsumer &AnalysisConsumer,
   });
 }
 
-UNITTEST_CHECKER(WeakDep2)
-UNITTEST_CHECKER(Dep2)
+UNITTEST_CHECKER(WeakDep2, "Weak2")
+UNITTEST_CHECKER(Dep2, "Dep2")
 
 void addWeakDepHasWeakDep(AnalysisASTConsumer &AnalysisConsumer,
                           AnalyzerOptions &AnOpts) {

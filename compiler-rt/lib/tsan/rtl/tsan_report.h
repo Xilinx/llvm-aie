@@ -84,7 +84,7 @@ struct ReportLocation {
 
 struct ReportThread {
   Tid id;
-  ThreadID os_id;
+  tid_t os_id;
   bool running;
   ThreadType thread_type;
   char *name;

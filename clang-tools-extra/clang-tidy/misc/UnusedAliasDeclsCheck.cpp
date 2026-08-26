@@ -36,8 +36,7 @@ void UnusedAliasDeclsCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (const auto *NestedName =
           Result.Nodes.getNodeAs<NestedNameSpecifier>("nns")) {
-    if (const auto *AliasDecl = dyn_cast_if_present<NamespaceAliasDecl>(
-            NestedName->getAsNamespace())) {
+    if (const auto *AliasDecl = NestedName->getAsNamespaceAlias()) {
       FoundDecls[AliasDecl] = CharSourceRange();
     }
   }

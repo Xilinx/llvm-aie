@@ -31,7 +31,6 @@ add_llvm_unittest(SupportTests
   DataExtractorTest.cpp
   DebugCounterTest.cpp
   DebugTest.cpp
-  DebugLogTest.cpp
   DivisionByConstantTest.cpp
   DJBTest.cpp
   EndianStreamTest.cpp

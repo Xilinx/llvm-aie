@@ -21,7 +21,12 @@ BUILD_DIR="${BUILD_DIR:=${MONOREPO_ROOT}/build}"
 INSTALL_DIR="${BUILD_DIR}/install"
 rm -rf "${BUILD_DIR}"
 
-sccache --zero-stats
+ccache --zero-stats
+
+if [[ -n "${CLEAR_CACHE:-}" ]]; then
+  echo "clearing cache"
+  ccache --clear
+fi
 
 mkdir -p artifacts/reproducers
 
@@ -31,7 +36,7 @@ export CLANG_CRASH_DIAGNOSTICS_DIR=`realpath artifacts/reproducers`
 function at-exit {
   retcode=$?
 
-  sccache --show-stats > artifacts/sccache_stats.txt
+  ccache --print-stats > artifacts/ccache_stats.txt
   cp "${BUILD_DIR}"/.ninja_log artifacts/.ninja_log
   cp "${BUILD_DIR}"/test-results.*.xml artifacts/ || :
 
@@ -48,7 +53,6 @@ targets="${2}"
 runtimes="${3}"
 runtime_targets="${4}"
 runtime_targets_needs_reconfig="${5}"
-enable_cir="${6}"
 
 lit_args="-v --xunit-xml-output ${BUILD_DIR}/test-results.xml --use-unique-output-file-name --timeout=1200 --time-tests"
 
@@ -68,15 +72,13 @@ cmake -S "${MONOREPO_ROOT}"/llvm -B "${BUILD_DIR}" \
       -G Ninja \
       -D CMAKE_PREFIX_PATH="${HOME}/.local" \
       -D CMAKE_BUILD_TYPE=Release \
-      -D CLANG_ENABLE_CIR=${enable_cir} \
       -D LLVM_ENABLE_ASSERTIONS=ON \
       -D LLVM_BUILD_EXAMPLES=ON \
       -D COMPILER_RT_BUILD_LIBFUZZER=OFF \
       -D LLVM_LIT_ARGS="${lit_args}" \
       -D LLVM_ENABLE_LLD=ON \
       -D CMAKE_CXX_FLAGS=-gmlt \
-      -D CMAKE_C_COMPILER_LAUNCHER=sccache \
-      -D CMAKE_CXX_COMPILER_LAUNCHER=sccache \
+      -D LLVM_CCACHE_BUILD=ON \
       -D LIBCXX_CXX_ABI=libcxxabi \
       -D MLIR_ENABLE_BINDINGS_PYTHON=ON \
       -D LLDB_ENABLE_PYTHON=ON \

@@ -2579,34 +2579,30 @@ bool UnwrappedLineParser::parseBracedList(bool IsAngleBracket, bool IsEnum) {
 /// double ampersands. This applies for all nested scopes as well.
 ///
 /// Returns whether there is a `=` token between the parentheses.
-bool UnwrappedLineParser::parseParens(TokenType AmpAmpTokenType,
-                                      bool InMacroCall) {
+bool UnwrappedLineParser::parseParens(TokenType AmpAmpTokenType) {
   assert(FormatTok->is(tok::l_paren) && "'(' expected.");
   auto *LParen = FormatTok;
-  auto *Prev = FormatTok->Previous;
   bool SeenComma = false;
   bool SeenEqual = false;
   bool MightBeFoldExpr = false;
   nextToken();
   const bool MightBeStmtExpr = FormatTok->is(tok::l_brace);
-  if (!InMacroCall && Prev && Prev->is(TT_FunctionLikeMacro))
-    InMacroCall = true;
   do {
     switch (FormatTok->Tok.getKind()) {
     case tok::l_paren:
-      if (parseParens(AmpAmpTokenType, InMacroCall))
+      if (parseParens(AmpAmpTokenType))
         SeenEqual = true;
       if (Style.isJava() && FormatTok->is(tok::l_brace))
         parseChildBlock();
       break;
     case tok::r_paren: {
+      auto *Prev = LParen->Previous;
       auto *RParen = FormatTok;
       nextToken();
       if (Prev) {
         auto OptionalParens = [&] {
-          if (MightBeStmtExpr || MightBeFoldExpr || SeenComma || InMacroCall ||
-              Line->InMacroBody ||
-              Style.RemoveParentheses == FormatStyle::RPS_Leave ||
+          if (MightBeStmtExpr || MightBeFoldExpr || Line->InMacroBody ||
+              SeenComma || Style.RemoveParentheses == FormatStyle::RPS_Leave ||
               RParen->getPreviousNonComment() == LParen) {
             return false;
           }

@@ -666,14 +666,12 @@ std::string getQualification(ASTContext &Context,
   return getQualification(
       Context, DestContext, ND->getDeclContext(),
       [&](NestedNameSpecifier *NNS) {
-        const NamespaceDecl *NS =
-            dyn_cast_if_present<NamespaceDecl>(NNS->getAsNamespace());
-        if (!NS)
+        if (NNS->getKind() != NestedNameSpecifier::Namespace)
           return false;
-        NS = NS->getCanonicalDecl();
+        const auto *CanonNSD = NNS->getAsNamespace()->getCanonicalDecl();
         return llvm::any_of(VisibleNamespaceDecls,
-                            [NS](const NamespaceDecl *NSD) {
-                              return NSD->getCanonicalDecl() == NS;
+                            [CanonNSD](const NamespaceDecl *NSD) {
+                              return NSD->getCanonicalDecl() == CanonNSD;
                             });
       });
 }

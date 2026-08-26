@@ -13,7 +13,7 @@
 #include "test/UnitTest/FPMatcher.h"
 #include "test/UnitTest/Test.h"
 
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
 
 using LlvmLibcAsinhfTest = LIBC_NAMESPACE::testing::FPTest<float>;
 

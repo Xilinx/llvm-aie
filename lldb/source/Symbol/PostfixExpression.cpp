@@ -19,7 +19,7 @@
 
 using namespace lldb_private;
 using namespace lldb_private::postfix;
-using namespace llvm::dwarf;
+using namespace lldb_private::dwarf;
 
 static std::optional<BinaryOpNode::OpType>
 GetBinaryOpType(llvm::StringRef token) {

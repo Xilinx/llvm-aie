@@ -91,7 +91,8 @@ void addBlockEntranceTester(AnalysisASTConsumer &AnalysisConsumer,
   AnalysisConsumer.AddCheckerRegistrationFn([](CheckerRegistry &Registry) {
     Registry.addChecker(&registerChecker<BlockEntranceCallbackTester>,
                         &shouldAlwaysRegister, "test.BlockEntranceTester",
-                        "EmptyDescription");
+                        "EmptyDescription", "EmptyDocsUri",
+                        /*IsHidden=*/false);
   });
 }
 
@@ -101,7 +102,8 @@ void addBranchConditionTester(AnalysisASTConsumer &AnalysisConsumer,
   AnalysisConsumer.AddCheckerRegistrationFn([](CheckerRegistry &Registry) {
     Registry.addChecker(&registerChecker<BranchConditionCallbackTester>,
                         &shouldAlwaysRegister, "test.BranchConditionTester",
-                        "EmptyDescription");
+                        "EmptyDescription", "EmptyDocsUri",
+                        /*IsHidden=*/false);
   });
 }
 

@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CIR_DIALECT_IR_CIRTYPES_H
-#define CLANG_CIR_DIALECT_IR_CIRTYPES_H
+#ifndef MLIR_DIALECT_CIR_IR_CIRTYPES_H_
+#define MLIR_DIALECT_CIR_IR_CIRTYPES_H_
 
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Types.h"
@@ -50,4 +50,4 @@ namespace cir {
 #define GET_TYPEDEF_CLASSES
 #include "clang/CIR/Dialect/IR/CIROpsTypes.h.inc"
 
-#endif // CLANG_CIR_DIALECT_IR_CIRTYPES_H
+#endif // MLIR_DIALECT_CIR_IR_CIRTYPES_H_

@@ -47,8 +47,6 @@ cleanup1400.loopexit1:                            ; preds = %for.cond1050
   br label %cleanup1400
 
 cleanup1400:                                      ; preds = %cleanup1400.loopexit1, %cleanup1400.loopexit.split
-  call void @dummy()
+  call void @llvm.lifetime.end.p0(i64 4, ptr nonnull undef)
   unreachable
 }
-
-declare void @dummy()

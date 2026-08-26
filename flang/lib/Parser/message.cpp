@@ -453,7 +453,7 @@ void Messages::ResolveProvenances(const AllCookedSources &allCooked) {
 
 void Messages::Emit(llvm::raw_ostream &o, const AllCookedSources &allCooked,
     bool echoSourceLines, const common::LanguageFeatureControl *hintFlagPtr,
-    std::size_t maxErrorsToEmit, bool warningsAreErrors) const {
+    std::size_t maxErrorsToEmit) const {
   std::vector<const Message *> sorted;
   for (const auto &msg : messages_) {
     sorted.push_back(&msg);
@@ -469,7 +469,7 @@ void Messages::Emit(llvm::raw_ostream &o, const AllCookedSources &allCooked,
     }
     msg->Emit(o, allCooked, echoSourceLines, hintFlagPtr);
     lastMsg = msg;
-    if (warningsAreErrors || msg->IsFatal()) {
+    if (msg->IsFatal()) {
       ++errorsEmitted;
     }
     // If maxErrorsToEmit is 0, emit all errors, otherwise break after
@@ -491,18 +491,7 @@ void Messages::AttachTo(Message &msg, std::optional<Severity> severity) {
   messages_.clear();
 }
 
-bool Messages::AnyFatalError(bool warningsAreErrors) const {
-  // Short-circuit in the most common case.
-  if (messages_.empty()) {
-    return false;
-  }
-  // If warnings are errors and there are warnings or errors, this is fatal.
-  // This preserves the compiler's current behavior of treating any non-fatal
-  // message as a warning. We may want to refine this in the future.
-  if (warningsAreErrors) {
-    return true;
-  }
-  // Otherwise, check the message buffer for fatal errors.
+bool Messages::AnyFatalError() const {
   for (const auto &msg : messages_) {
     if (msg.IsFatal()) {
       return true;

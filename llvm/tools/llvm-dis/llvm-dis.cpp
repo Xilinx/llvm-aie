@@ -131,6 +131,20 @@ public:
         printDebugLoc(DL,OS);
         OS << "]";
       }
+      if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I)) {
+        if (!Padded) {
+          OS.PadToColumn(50);
+          OS << ";";
+        }
+        OS << " [debug variable = " << DDI->getVariable()->getName() << "]";
+      }
+      else if (const DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
+        if (!Padded) {
+          OS.PadToColumn(50);
+          OS << ";";
+        }
+        OS << " [debug variable = " << DVI->getVariable()->getName() << "]";
+      }
     }
   }
 };

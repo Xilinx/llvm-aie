@@ -242,20 +242,20 @@ FunctionPropertiesInfo FunctionPropertiesInfo::getFunctionPropertiesInfo(
   // We use the cached result of the IR2VecVocabAnalysis run by
   // InlineAdvisorAnalysis. If the IR2VecVocabAnalysis is not run, we don't
   // use IR2Vec embeddings.
-  auto Vocabulary = FAM.getResult<ModuleAnalysisManagerFunctionProxy>(F)
-                        .getCachedResult<IR2VecVocabAnalysis>(*F.getParent());
+  auto VocabResult = FAM.getResult<ModuleAnalysisManagerFunctionProxy>(F)
+                         .getCachedResult<IR2VecVocabAnalysis>(*F.getParent());
   return getFunctionPropertiesInfo(F, FAM.getResult<DominatorTreeAnalysis>(F),
-                                   FAM.getResult<LoopAnalysis>(F), Vocabulary);
+                                   FAM.getResult<LoopAnalysis>(F), VocabResult);
 }
 
 FunctionPropertiesInfo FunctionPropertiesInfo::getFunctionPropertiesInfo(
     const Function &F, const DominatorTree &DT, const LoopInfo &LI,
-    const ir2vec::Vocabulary *Vocabulary) {
+    const IR2VecVocabResult *VocabResult) {
 
   FunctionPropertiesInfo FPI;
-  if (Vocabulary && Vocabulary->isValid()) {
-    FPI.IR2VecVocab = Vocabulary;
-    FPI.FunctionEmbedding = ir2vec::Embedding(Vocabulary->getDimension(), 0.0);
+  if (VocabResult && VocabResult->isValid()) {
+    FPI.IR2VecVocab = VocabResult->getVocabulary();
+    FPI.FunctionEmbedding = ir2vec::Embedding(VocabResult->getDimension(), 0.0);
   }
   for (const auto &BB : F)
     if (DT.isReachableFromEntry(&BB))
@@ -588,9 +588,9 @@ bool FunctionPropertiesUpdater::isUpdateValid(Function &F,
     return false;
   DominatorTree DT(F);
   LoopInfo LI(DT);
-  auto Vocabulary = FAM.getResult<ModuleAnalysisManagerFunctionProxy>(F)
-                        .getCachedResult<IR2VecVocabAnalysis>(*F.getParent());
+  auto VocabResult = FAM.getResult<ModuleAnalysisManagerFunctionProxy>(F)
+                         .getCachedResult<IR2VecVocabAnalysis>(*F.getParent());
   auto Fresh =
-      FunctionPropertiesInfo::getFunctionPropertiesInfo(F, DT, LI, Vocabulary);
+      FunctionPropertiesInfo::getFunctionPropertiesInfo(F, DT, LI, VocabResult);
   return FPI == Fresh;
 }

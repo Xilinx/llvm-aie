@@ -3228,8 +3228,8 @@ lldb::ValueObjectSP ValueObject::CastToBasicType(CompilerType type) {
         llvm::APSInt ext =
             int_value_or_err->extOrTrunc(type_byte_size * CHAR_BIT);
         Scalar scalar_int(ext);
-        llvm::APFloat f =
-            scalar_int.CreateAPFloatFromAPSInt(type.GetBasicTypeEnumeration());
+        llvm::APFloat f = scalar_int.CreateAPFloatFromAPSInt(
+            type.GetCanonicalType().GetBasicTypeEnumeration());
         return ValueObject::CreateValueObjectFromAPFloat(target, f, type,
                                                          "result");
       } else {
@@ -3245,7 +3245,7 @@ lldb::ValueObjectSP ValueObject::CastToBasicType(CompilerType type) {
         if (int_value_or_err) {
           Scalar scalar_int(*int_value_or_err);
           llvm::APFloat f = scalar_int.CreateAPFloatFromAPSInt(
-              type.GetBasicTypeEnumeration());
+              type.GetCanonicalType().GetBasicTypeEnumeration());
           return ValueObject::CreateValueObjectFromAPFloat(target, f, type,
                                                            "result");
         } else {
@@ -3261,7 +3261,7 @@ lldb::ValueObjectSP ValueObject::CastToBasicType(CompilerType type) {
         if (float_value_or_err) {
           Scalar scalar_float(*float_value_or_err);
           llvm::APFloat f = scalar_float.CreateAPFloatFromAPFloat(
-              type.GetBasicTypeEnumeration());
+              type.GetCanonicalType().GetBasicTypeEnumeration());
           return ValueObject::CreateValueObjectFromAPFloat(target, f, type,
                                                            "result");
         } else {

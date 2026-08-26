@@ -1486,8 +1486,9 @@ static bool checkAndReplaceCondition(
 
     // Update the debug value records that satisfy the same condition used
     // in replaceUsesWithIf.
+    SmallVector<DbgVariableIntrinsic *> DbgUsers;
     SmallVector<DbgVariableRecord *> DVRUsers;
-    findDbgUsers(Cmp, DVRUsers);
+    findDbgUsers(DbgUsers, Cmp, &DVRUsers);
 
     for (auto *DVR : DVRUsers) {
       auto *DTN = DT.getNode(DVR->getParent());

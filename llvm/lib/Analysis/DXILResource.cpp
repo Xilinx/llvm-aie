@@ -1079,16 +1079,15 @@ void DXILResourceBindingInfo::populate(Module &M, DXILResourceTypeMap &DRTM) {
       // add new space
       S = &BS->Spaces.emplace_back(B.Space);
 
-    // The space is full - there are no free slots left, or the rest of the
-    // slots are taken by an unbounded array. Set flag to report overlapping
-    // binding later.
-    if (S->FreeRanges.empty() || S->FreeRanges.back().UpperBound < UINT32_MAX) {
+    // the space is full - set flag to report overlapping binding later
+    if (S->FreeRanges.empty()) {
       OverlappingBinding = true;
       continue;
     }
 
     // adjust the last free range lower bound, split it in two, or remove it
     BindingRange &LastFreeRange = S->FreeRanges.back();
+    assert(LastFreeRange.UpperBound == UINT32_MAX);
     if (LastFreeRange.LowerBound == B.LowerBound) {
       if (B.UpperBound < UINT32_MAX)
         LastFreeRange.LowerBound = B.UpperBound + 1;

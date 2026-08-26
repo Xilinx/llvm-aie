@@ -13,7 +13,6 @@
 
 #include <map>
 
-#include "min_allocator.h"
 #include "test_macros.h"
 
 struct A {
@@ -28,9 +27,6 @@ inline bool operator==(A const& L, A const& R) { return &L == &R; }
 inline bool operator<(A const& L, A const& R) { return L.data < R.data; }
 int main(int, char**) {
   A a;
-
-  // Make sure that the allocator isn't rebound to and incomplete type
-  std::multimap<int, int, std::less<int>, complete_type_allocator<std::pair<const int, int> > > m;
 
   return 0;
 }

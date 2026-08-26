@@ -477,25 +477,6 @@ public:
     RewriterBase::Listener *rewriteListener;
   };
 
-  /// A listener that logs notification events to llvm::dbgs() before
-  /// forwarding to the base listener.
-  struct PatternLoggingListener : public RewriterBase::ForwardingListener {
-    PatternLoggingListener(OpBuilder::Listener *listener, StringRef patternName)
-        : RewriterBase::ForwardingListener(listener), patternName(patternName) {
-    }
-
-    void notifyOperationInserted(Operation *op, InsertPoint previous) override;
-    void notifyOperationModified(Operation *op) override;
-    void notifyOperationReplaced(Operation *op, Operation *newOp) override;
-    void notifyOperationReplaced(Operation *op,
-                                 ValueRange replacement) override;
-    void notifyOperationErased(Operation *op) override;
-    void notifyPatternBegin(const Pattern &pattern, Operation *op) override;
-
-  private:
-    StringRef patternName;
-  };
-
   /// Move the blocks that belong to "region" before the given position in
   /// another region "parent". The two regions must be different. The caller
   /// is responsible for creating or updating the operation transferring flow
@@ -520,9 +501,7 @@ public:
   template <typename OpTy, typename... Args>
   OpTy replaceOpWithNewOp(Operation *op, ArrayRef<Location> locs,
                           Args &&...args) {
-    auto builder = static_cast<OpBuilder *>(this);
-    auto newOp = OpTy::create(*builder, getFusedLoc(locs),
-                               std::forward<Args>(args)...);
+    auto newOp = create<OpTy>(getFusedLoc(locs), std::forward<Args>(args)...);
     replaceOp(op, newOp.getOperation());
     return newOp;
   }
@@ -537,11 +516,6 @@ public:
   }
 
   /// This method erases an operation that is known to have no uses.
-  ///
-  /// If the current insertion point is before the erased operation, it is
-  /// adjusted to the following operation (or the end of the block). If the
-  /// current insertion point is within the erased operation, the insertion
-  /// point is left in an invalid state.
   virtual void eraseOp(Operation *op);
 
   /// This method erases all operations in a block.
@@ -556,9 +530,6 @@ public:
   /// somewhere in the middle (or beginning) of the dest block, the source block
   /// must have no successors. Otherwise, the resulting IR would have
   /// unreachable operations.
-  ///
-  /// If the insertion point is within the source block, it is adjusted to the
-  /// destination block.
   virtual void inlineBlockBefore(Block *source, Block *dest,
                                  Block::iterator before,
                                  ValueRange argValues = {});
@@ -569,9 +540,6 @@ public:
   ///
   /// The source block must have no successors. Otherwise, the resulting IR
   /// would have unreachable operations.
-  ///
-  /// If the insertion point is within the source block, it is adjusted to the
-  /// destination block.
   void inlineBlockBefore(Block *source, Operation *op,
                          ValueRange argValues = {});
 
@@ -581,9 +549,6 @@ public:
   ///
   /// The dest block must have no successors. Otherwise, the resulting IR would
   /// have unreachable operation.
-  ///
-  /// If the insertion point is within the source block, it is adjusted to the
-  /// destination block.
   void mergeBlocks(Block *source, Block *dest, ValueRange argValues = {});
 
   /// Split the operations starting at "before" (inclusive) out of the given

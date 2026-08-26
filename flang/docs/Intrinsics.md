@@ -709,9 +709,8 @@ CACHESIZE, EOF, FP_CLASS, INT_PTR_KIND, ISNAN, LOC
 MALLOC, FREE
 ```
 
-### Library subroutines and functions
+### Library subroutine
 ```
-ticks = MCLOCK()
 CALL BACKTRACE()
 CALL FDATE(TIME)
 CALL GETLOG(USRNAME)

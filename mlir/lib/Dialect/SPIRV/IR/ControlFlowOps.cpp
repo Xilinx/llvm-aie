@@ -391,7 +391,7 @@ void LoopOp::addEntryAndMergeBlock(OpBuilder &builder) {
   builder.createBlock(&getBody());
 
   // Add a spirv.mlir.merge op into the merge block.
-  spirv::MergeOp::create(builder, getLoc());
+  builder.create<spirv::MergeOp>(getLoc());
 }
 
 //===----------------------------------------------------------------------===//
@@ -543,7 +543,7 @@ void SelectionOp::addMergeBlock(OpBuilder &builder) {
   builder.createBlock(&getBody());
 
   // Add a spirv.mlir.merge op into the merge block.
-  spirv::MergeOp::create(builder, getLoc());
+  builder.create<spirv::MergeOp>(getLoc());
 }
 
 SelectionOp
@@ -551,7 +551,7 @@ SelectionOp::createIfThen(Location loc, Value condition,
                           function_ref<void(OpBuilder &builder)> thenBody,
                           OpBuilder &builder) {
   auto selectionOp =
-      spirv::SelectionOp::create(builder, loc, spirv::SelectionControl::None);
+      builder.create<spirv::SelectionOp>(loc, spirv::SelectionControl::None);
 
   selectionOp.addMergeBlock(builder);
   Block *mergeBlock = selectionOp.getMergeBlock();
@@ -562,17 +562,17 @@ SelectionOp::createIfThen(Location loc, Value condition,
     OpBuilder::InsertionGuard guard(builder);
     thenBlock = builder.createBlock(mergeBlock);
     thenBody(builder);
-    spirv::BranchOp::create(builder, loc, mergeBlock);
+    builder.create<spirv::BranchOp>(loc, mergeBlock);
   }
 
   // Build the header block.
   {
     OpBuilder::InsertionGuard guard(builder);
     builder.createBlock(thenBlock);
-    spirv::BranchConditionalOp::create(builder, loc, condition, thenBlock,
-                                       /*trueArguments=*/ArrayRef<Value>(),
-                                       mergeBlock,
-                                       /*falseArguments=*/ArrayRef<Value>());
+    builder.create<spirv::BranchConditionalOp>(
+        loc, condition, thenBlock,
+        /*trueArguments=*/ArrayRef<Value>(), mergeBlock,
+        /*falseArguments=*/ArrayRef<Value>());
   }
 
   return selectionOp;

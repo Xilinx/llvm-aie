@@ -15,7 +15,6 @@
 #define LLVM_CODEGEN_MACHINEINSTRBUNDLE_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachinePassManager.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -294,12 +293,6 @@ struct PhysRegInfo {
 LLVM_ABI PhysRegInfo AnalyzePhysRegInBundle(const MachineInstr &MI,
                                             Register Reg,
                                             const TargetRegisterInfo *TRI);
-
-class FinalizeBundleTestPass : public PassInfoMixin<FinalizeBundleTestPass> {
-public:
-  PreservedAnalyses run(MachineFunction &MF,
-                        MachineFunctionAnalysisManager &MFAM);
-};
 
 } // End llvm namespace
 

@@ -132,9 +132,7 @@ void tools::MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("thumb2pe");
     break;
   case llvm::Triple::aarch64:
-    if (Args.hasArg(options::OPT_marm64x))
-      CmdArgs.push_back("arm64xpe");
-    else if (TC.getEffectiveTriple().isWindowsArm64EC())
+    if (TC.getEffectiveTriple().isWindowsArm64EC())
       CmdArgs.push_back("arm64ecpe");
     else
       CmdArgs.push_back("arm64pe");
@@ -548,7 +546,7 @@ toolchains::MinGW::MinGW(const Driver &D, const llvm::Triple &Triple,
     getFilePaths().push_back(Base + "lib");
 
   NativeLLVMSupport =
-      Args.getLastArgValue(options::OPT_fuse_ld_EQ, D.getPreferredLinker())
+      Args.getLastArgValue(options::OPT_fuse_ld_EQ, CLANG_DEFAULT_LINKER)
           .equals_insensitive("lld");
 }
 

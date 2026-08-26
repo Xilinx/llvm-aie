@@ -99,7 +99,6 @@ add_libc_test(
   SRCS
     strtoint32_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.src.__support.str_to_integer
     libc.src.errno.errno
     .strtol_test_support
@@ -112,7 +111,6 @@ add_libc_test(
   SRCS
     strtoint64_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.src.__support.str_to_integer
     libc.src.errno.errno
     .strtol_test_support
@@ -382,7 +380,6 @@ add_libc_test(
   SRCS
     memalignment_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.include.stdlib
     libc.src.stdlib.memalignment
 )

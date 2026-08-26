@@ -533,7 +533,7 @@ void SystemZELFFrameLowering::emitPrologue(MachineFunction &MF,
   const SystemZSubtarget &STI = MF.getSubtarget<SystemZSubtarget>();
   const SystemZTargetLowering &TLI = *STI.getTargetLowering();
   MachineFrameInfo &MFFrame = MF.getFrameInfo();
-  auto *ZII = STI.getInstrInfo();
+  auto *ZII = static_cast<const SystemZInstrInfo *>(STI.getInstrInfo());
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   const MCRegisterInfo *MRI = MF.getContext().getRegisterInfo();
@@ -1239,7 +1239,7 @@ void SystemZXPLINKFrameLowering::emitPrologue(MachineFunction &MF,
   const SystemZSubtarget &Subtarget = MF.getSubtarget<SystemZSubtarget>();
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  auto *ZII = Subtarget.getInstrInfo();
+  auto *ZII = static_cast<const SystemZInstrInfo *>(Subtarget.getInstrInfo());
   auto &Regs = Subtarget.getSpecialRegisters<SystemZXPLINK64Registers>();
   MachineFrameInfo &MFFrame = MF.getFrameInfo();
   MachineInstr *StoreInstr = nullptr;
@@ -1354,7 +1354,7 @@ void SystemZXPLINKFrameLowering::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   MachineFrameInfo &MFFrame = MF.getFrameInfo();
-  auto *ZII = Subtarget.getInstrInfo();
+  auto *ZII = static_cast<const SystemZInstrInfo *>(Subtarget.getInstrInfo());
   auto &Regs = Subtarget.getSpecialRegisters<SystemZXPLINK64Registers>();
 
   // Skip the return instruction.

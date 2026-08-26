@@ -480,7 +480,7 @@ void WasmObjectWriter::recordRelocation(const MCFragment &F,
   // The WebAssembly backend should never generate FKF_IsPCRel fixups
   assert(!Fixup.isPCRel());
 
-  const auto &FixupSection = static_cast<MCSectionWasm &>(*F.getParent());
+  const auto &FixupSection = cast<MCSectionWasm>(*F.getParent());
   uint64_t C = Target.getConstant();
   uint64_t FixupOffset = Asm->getFragmentOffset(F) + Fixup.getOffset();
   MCContext &Ctx = getContext();
@@ -696,15 +696,14 @@ static void addData(SmallVectorImpl<char> &DataBytes,
     if (Frag.hasInstructions())
       report_fatal_error("only data supported in data sections");
 
-    llvm::append_range(DataBytes, Frag.getContents());
-    if (Frag.getKind() == MCFragment::FT_Align) {
-      if (Frag.getAlignFillLen() != 1)
+    if (auto *Align = dyn_cast<MCAlignFragment>(&Frag)) {
+      if (Align->getValueSize() != 1)
         report_fatal_error("only byte values supported for alignment");
       // If nops are requested, use zeros, as this is the data section.
-      uint8_t Value = Frag.hasAlignEmitNops() ? 0 : Frag.getAlignFill();
+      uint8_t Value = Align->hasEmitNops() ? 0 : Align->getValue();
       uint64_t Size =
-          std::min<uint64_t>(alignTo(DataBytes.size(), Frag.getAlignment()),
-                             DataBytes.size() + Frag.getAlignMaxBytesToEmit());
+          std::min<uint64_t>(alignTo(DataBytes.size(), Align->getAlignment()),
+                             DataBytes.size() + Align->getMaxBytesToEmit());
       DataBytes.resize(Size, Value);
     } else if (auto *Fill = dyn_cast<MCFillFragment>(&Frag)) {
       int64_t NumValues;
@@ -712,10 +711,10 @@ static void addData(SmallVectorImpl<char> &DataBytes,
         llvm_unreachable("The fill should be an assembler constant");
       DataBytes.insert(DataBytes.end(), Fill->getValueSize() * NumValues,
                        Fill->getValue());
-    } else if (Frag.getKind() == MCFragment::FT_LEB) {
-      llvm::append_range(DataBytes, Frag.getVarContents());
+    } else if (auto *LEB = dyn_cast<MCLEBFragment>(&Frag)) {
+      llvm::append_range(DataBytes, LEB->getContents());
     } else {
-      assert(Frag.getKind() == MCFragment::FT_Data);
+      llvm::append_range(DataBytes, cast<MCDataFragment>(Frag).getContents());
     }
   }
 
@@ -1857,9 +1856,23 @@ uint64_t WasmObjectWriter::writeOneObject(MCAssembler &Asm,
     auto IT = WS.begin();
     if (IT == WS.end())
       continue;
-    for (auto *Frag = &*IT; Frag; Frag = Frag->getNext()) {
-      if (Frag->hasInstructions() || (Frag->getKind() != MCFragment::FT_Align &&
-                                      Frag->getKind() != MCFragment::FT_Data))
+    const MCFragment &EmptyFrag = *IT;
+    if (EmptyFrag.getKind() != MCFragment::FT_Data)
+      report_fatal_error(".init_array section should be aligned");
+
+    const MCFragment *nextFrag = EmptyFrag.getNext();
+    while (nextFrag != nullptr) {
+      const MCFragment &AlignFrag = *nextFrag;
+      if (AlignFrag.getKind() != MCFragment::FT_Align)
+        report_fatal_error(".init_array section should be aligned");
+      if (cast<MCAlignFragment>(AlignFrag).getAlignment() !=
+          Align(is64Bit() ? 8 : 4))
+        report_fatal_error(
+            ".init_array section should be aligned for pointers");
+
+      const MCFragment &Frag = *AlignFrag.getNext();
+      nextFrag = Frag.getNext();
+      if (Frag.hasInstructions() || Frag.getKind() != MCFragment::FT_Data)
         report_fatal_error("only data supported in .init_array section");
 
       uint16_t Priority = UINT16_MAX;
@@ -1871,8 +1884,9 @@ uint64_t WasmObjectWriter::writeOneObject(MCAssembler &Asm,
         if (WS.getName().substr(PrefixLength + 1).getAsInteger(10, Priority))
           report_fatal_error("invalid .init_array section priority");
       }
-      assert(llvm::all_of(Frag->getContents(), [](char C) { return !C; }));
-      for (const MCFixup &Fixup : Frag->getFixups()) {
+      const auto &DataFrag = cast<MCDataFragment>(Frag);
+      assert(llvm::all_of(DataFrag.getContents(), [](char C) { return !C; }));
+      for (const MCFixup &Fixup : DataFrag.getFixups()) {
         assert(Fixup.getKind() ==
                MCFixup::getDataKindForSize(is64Bit() ? 8 : 4));
         const MCExpr *Expr = Fixup.getValue();

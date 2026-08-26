@@ -11,12 +11,11 @@
 
 namespace Fortran::parser {
 struct Program;
-}
+class Messages;
+} // namespace Fortran::parser
 
 namespace Fortran::semantics {
-class SemanticsContext;
-
-bool CanonicalizeOmp(SemanticsContext &context, parser::Program &program);
-} // namespace Fortran::semantics
+bool CanonicalizeOmp(parser::Messages &messages, parser::Program &program);
+}
 
 #endif // FORTRAN_SEMANTICS_CANONICALIZE_OMP_H_

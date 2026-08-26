@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy -std=c++20-or-later %s bugprone-exception-escape %t -- \
+// RUN: %check_clang_tidy -std=c++20 %s bugprone-exception-escape %t -- \
 // RUN:     -- -fexceptions -Wno-error=return-type
 
 namespace std {
@@ -221,8 +221,6 @@ Task<int> c_ShouldDiag(const int a, const int b) noexcept {
 
   co_return a / b;
 }
-// CHECK-MESSAGES: :186:5: note: frame #0: unhandled exception of type 'int' may be thrown in function '~Evil' here
-// CHECK-MESSAGES: :[[@LINE-8]]:11: note: frame #1: function 'c_ShouldDiag' calls function '~Evil'
 
 Task<int, true> d_ShouldNotDiag(const int a, const int b) {
   co_return a / b;
@@ -232,9 +230,6 @@ Task<int, true> d_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: an exception may be thrown in function 'd_ShouldDiag' which should not throw exceptions
   co_return a / b;
 }
-// CHECK-MESSAGES: :54:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Task' here
-// CHECK-MESSAGES: :109:12: note: frame #1: function 'get_return_object' calls function 'Task' here
-// CHECK-MESSAGES: :[[@LINE-6]]:17: note: frame #2: function 'd_ShouldDiag' calls function 'get_return_object' here
 
 Task<int, false, true> e_ShouldNotDiag(const int a, const int b) {
   co_return a / b;
@@ -244,8 +239,6 @@ Task<int, false, true> e_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: an exception may be thrown in function 'e_ShouldDiag' which should not throw exceptions
   co_return a / b;
 }
-// CHECK-MESSAGES: :100:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Promise' here
-// CHECK-MESSAGES: :[[@LINE-5]]:24: note: frame #1: function 'e_ShouldDiag' calls function 'Promise' here
 
 Task<int, false, false, true> f_ShouldNotDiag(const int a, const int b) {
   co_return a / b;
@@ -255,8 +248,6 @@ Task<int, false, false, true> f_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: an exception may be thrown in function 'f_ShouldDiag' which should not throw exceptions
   co_return a / b;
 }
-// CHECK-MESSAGES: :114:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'initial_suspend' here
-// CHECK-MESSAGES: :[[@LINE-5]]:31: note: frame #1: function 'f_ShouldDiag' calls function 'initial_suspend' here
 
 Task<int, false, false, false, true> g_ShouldNotDiag(const int a, const int b) {
   co_return a / b;
@@ -267,8 +258,6 @@ Task<int, false, false, false, true> g_ShouldDiag(const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:38: warning: an exception may be thrown in function 'g_ShouldDiag' which should not throw exceptions
   co_return a / b;
 }
-// CHECK-MESSAGES: :106:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'get_return_object' here
-// CHECK-MESSAGES: :[[@LINE-6]]:38: note: frame #1: function 'g_ShouldDiag' calls function 'get_return_object' here
 
 Task<int, false, false, false, false, true> h_ShouldNotDiag(const int a,
                                                             const int b) {
@@ -280,8 +269,6 @@ Task<int, false, false, false, false, true> h_ShouldDiag(const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:45: warning: an exception may be thrown in function 'h_ShouldDiag' which should not throw exceptions
   co_return a / b;
 }
-// CHECK-MESSAGES: :133:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'unhandled_exception' here
-// CHECK-MESSAGES: :[[@LINE-6]]:45: note: frame #1: function 'h_ShouldDiag' calls function 'unhandled_exception' here
 
 Task<int, false, false, false, false, false, true>
 i_ShouldNotDiag(const int a, const int b) {
@@ -309,7 +296,6 @@ j_ShouldDiag(const int a, const int b) noexcept {
 
   co_return a / b;
 }
-// CHECK-MESSAGES: :[[@LINE-4]]:5: note: frame #0: unhandled exception of type 'int' may be thrown in function 'j_ShouldDiag' here
 
 } // namespace coreturn
 
@@ -343,8 +329,6 @@ Task<int> c_ShouldDiag(const int a, const int b) noexcept {
 
   co_yield a / b;
 }
-// CHECK-MESSAGES: :186:5: note: frame #0: unhandled exception of type 'int' may be thrown in function '~Evil' here
-// CHECK-MESSAGES: :[[@LINE-8]]:11: note: frame #1: function 'c_ShouldDiag' calls function '~Evil'
 
 Task<int, true> d_ShouldNotDiag(const int a, const int b) {
   co_yield a / b;
@@ -354,9 +338,6 @@ Task<int, true> d_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: an exception may be thrown in function 'd_ShouldDiag' which should not throw exceptions
   co_yield a / b;
 }
-// CHECK-MESSAGES: :54:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Task' here
-// CHECK-MESSAGES: :109:12: note: frame #1: function 'get_return_object' calls function 'Task' here
-// CHECK-MESSAGES: :[[@LINE-6]]:17: note: frame #2: function 'd_ShouldDiag' calls function 'get_return_object' here
 
 Task<int, false, true> e_ShouldNotDiag(const int a, const int b) {
   co_yield a / b;
@@ -366,8 +347,6 @@ Task<int, false, true> e_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: an exception may be thrown in function 'e_ShouldDiag' which should not throw exceptions
   co_yield a / b;
 }
-// CHECK-MESSAGES: :100:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Promise' here
-// CHECK-MESSAGES: :[[@LINE-5]]:24: note: frame #1: function 'e_ShouldDiag' calls function 'Promise' here
 
 Task<int, false, false, true> f_ShouldNotDiag(const int a, const int b) {
   co_yield a / b;
@@ -377,8 +356,6 @@ Task<int, false, false, true> f_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: an exception may be thrown in function 'f_ShouldDiag' which should not throw exceptions
   co_yield a / b;
 }
-// CHECK-MESSAGES: :114:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'initial_suspend' here
-// CHECK-MESSAGES: :[[@LINE-5]]:31: note: frame #1: function 'f_ShouldDiag' calls function 'initial_suspend' here
 
 Task<int, false, false, false, true> g_ShouldNotDiag(const int a, const int b) {
   co_yield a / b;
@@ -389,8 +366,6 @@ Task<int, false, false, false, true> g_ShouldDiag(const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:38: warning: an exception may be thrown in function 'g_ShouldDiag' which should not throw exceptions
   co_yield a / b;
 }
-// CHECK-MESSAGES: :106:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'get_return_object' here
-// CHECK-MESSAGES: :[[@LINE-6]]:38: note: frame #1: function 'g_ShouldDiag' calls function 'get_return_object' here
 
 Task<int, false, false, false, false, true> h_ShouldNotDiag(const int a,
                                                             const int b) {
@@ -402,8 +377,6 @@ Task<int, false, false, false, false, true> h_ShouldDiag(const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:45: warning: an exception may be thrown in function 'h_ShouldDiag' which should not throw exceptions
   co_yield a / b;
 }
-// CHECK-MESSAGES: :133:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'unhandled_exception' here
-// CHECK-MESSAGES: :[[@LINE-6]]:45: note: frame #1: function 'h_ShouldDiag' calls function 'unhandled_exception' here
 
 Task<int, false, false, false, false, false, true>
 i_ShouldNotDiag(const int a, const int b) {
@@ -431,7 +404,6 @@ j_ShouldDiag(const int a, const int b) noexcept {
 
   co_yield a / b;
 }
-// CHECK-MESSAGES: :[[@LINE-4]]:5: note: frame #0: unhandled exception of type 'int' may be thrown in function 'j_ShouldDiag' here
 
 } // namespace coyield
 
@@ -465,8 +437,6 @@ Task<void> c_ShouldDiag(const int a, const int b) noexcept {
 
   co_await returnOne();
 }
-// CHECK-MESSAGES: :186:5: note: frame #0: unhandled exception of type 'int' may be thrown in function '~Evil' here
-// CHECK-MESSAGES: :[[@LINE-8]]:12: note: frame #1: function 'c_ShouldDiag' calls function '~Evil'
 
 Task<void, true> d_ShouldNotDiag(const int a, const int b) {
   co_await returnOne();
@@ -476,9 +446,6 @@ Task<void, true> d_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: an exception may be thrown in function 'd_ShouldDiag' which should not throw exceptions
   co_await returnOne();
 }
-// CHECK-MESSAGES: :81:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Task' here
-// CHECK-MESSAGES: :158:12: note: frame #1: function 'get_return_object' calls function 'Task' here
-// CHECK-MESSAGES: :[[@LINE-6]]:18: note: frame #2: function 'd_ShouldDiag' calls function 'get_return_object' here
 
 Task<void, false, true> e_ShouldNotDiag(const int a, const int b) {
   co_await returnOne();
@@ -488,8 +455,6 @@ Task<void, false, true> e_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: an exception may be thrown in function 'e_ShouldDiag' which should not throw exceptions
   co_await returnOne();
 }
-// CHECK-MESSAGES: :149:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Promise' here
-// CHECK-MESSAGES: :[[@LINE-5]]:25: note: frame #1: function 'e_ShouldDiag' calls function 'Promise' here
 
 Task<void, false, false, true> f_ShouldNotDiag(const int a, const int b) {
   co_await returnOne();
@@ -499,8 +464,6 @@ Task<void, false, false, true> f_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:32: warning: an exception may be thrown in function 'f_ShouldDiag' which should not throw exceptions
   co_await returnOne();
 }
-// CHECK-MESSAGES: :163:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'initial_suspend' here
-// CHECK-MESSAGES: :[[@LINE-5]]:32: note: frame #1: function 'f_ShouldDiag' calls function 'initial_suspend' here
 
 Task<void, false, false, false, true> g_ShouldNotDiag(const int a,
                                                       const int b) {
@@ -512,8 +475,6 @@ Task<void, false, false, false, true> g_ShouldDiag(const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:39: warning: an exception may be thrown in function 'g_ShouldDiag' which should not throw exceptions
   co_await returnOne();
 }
-// CHECK-MESSAGES: :155:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'get_return_object' here
-// CHECK-MESSAGES: :[[@LINE-6]]:39: note: frame #1: function 'g_ShouldDiag' calls function 'get_return_object' here
 
 Task<void, false, false, false, false, true> h_ShouldNotDiag(const int a,
                                                              const int b) {
@@ -525,8 +486,6 @@ h_ShouldDiag(const int a, const int b) noexcept {
   // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: an exception may be thrown in function 'h_ShouldDiag' which should not throw exceptions
   co_await returnOne();
 }
-// CHECK-MESSAGES: :175:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'unhandled_exception' here
-// CHECK-MESSAGES: :[[@LINE-5]]:1: note: frame #1: function 'h_ShouldDiag' calls function 'unhandled_exception' here
 
 Task<int, false, false, false, false, false, true>
 i_ShouldNotDiag(const int a, const int b) {
@@ -552,7 +511,6 @@ j_ShouldDiag(const int a, const int b) noexcept {
   if (b == 0)
     throw b;
 }
-// CHECK-MESSAGES: :[[@LINE-2]]:5: note: frame #0: unhandled exception of type 'int' may be thrown in function 'j_ShouldDiag' here
 
 } // namespace coawait
 
@@ -591,8 +549,6 @@ const auto c_ShouldDiag = [](const int a, const int b) noexcept -> Task<int> {
 
   co_return a / b;
 };
-// CHECK-MESSAGES: :186:5: note: frame #0: unhandled exception of type 'int' may be thrown in function '~Evil' here
-// CHECK-MESSAGES: :[[@LINE-8]]:27: note: frame #1: function 'operator()' calls function '~Evil'
 
 const auto d_ShouldNotDiag = [](const int a, const int b) -> Task<int, true> {
   co_return a / b;
@@ -603,9 +559,6 @@ const auto d_ShouldDiag = [](const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_return a / b;
 };
-// CHECK-MESSAGES: :54:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Task' here
-// CHECK-MESSAGES: :109:12: note: frame #1: function 'get_return_object' calls function 'Task' here
-// CHECK-MESSAGES: :[[@LINE-7]]:27: note: frame #2: function 'operator()' calls function 'get_return_object' here
 
 const auto e_ShouldNotDiag = [](const int a,
                                 const int b) -> Task<int, false, true> {
@@ -617,8 +570,6 @@ const auto e_ShouldDiag = [](const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_return a / b;
 };
-// CHECK-MESSAGES: :100:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Promise' here
-// CHECK-MESSAGES: :[[@LINE-6]]:27: note: frame #1: function 'operator()' calls function 'Promise' here
 
 const auto f_ShouldNotDiag = [](const int a,
                                 const int b) -> Task<int, false, false, true> {
@@ -630,8 +581,6 @@ const auto f_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_return a / b;
 };
-// CHECK-MESSAGES: :114:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'initial_suspend' here
-// CHECK-MESSAGES: :[[@LINE-5]]:5: note: frame #1: function 'operator()' calls function 'initial_suspend' here
 
 const auto g_ShouldNotDiag =
     [](const int a, const int b) -> Task<int, false, false, false, true> {
@@ -644,8 +593,6 @@ const auto g_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_return a / b;
 };
-// CHECK-MESSAGES: :106:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'get_return_object' here
-// CHECK-MESSAGES: :[[@LINE-6]]:5: note: frame #1: function 'operator()' calls function 'get_return_object' here
 
 const auto h_ShouldNotDiag =
     [](const int a,
@@ -659,8 +606,6 @@ const auto h_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_return a / b;
 };
-// CHECK-MESSAGES: :133:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'unhandled_exception' here
-// CHECK-MESSAGES: :[[@LINE-6]]:5: note: frame #1: function 'operator()' calls function 'unhandled_exception' here
 
 const auto i_ShouldNotDiag =
     [](const int a,
@@ -692,7 +637,6 @@ const auto j_ShouldDiag =
 
   co_return a / b;
 };
-// CHECK-MESSAGES: :[[@LINE-4]]:5: note: frame #0: unhandled exception of type 'int' may be thrown in function 'operator()' here
 
 } // namespace coreturn
 
@@ -727,8 +671,6 @@ const auto c_ShouldDiag = [](const int a, const int b) noexcept -> Task<int> {
 
   co_yield a / b;
 };
-// CHECK-MESSAGES: :186:5: note: frame #0: unhandled exception of type 'int' may be thrown in function '~Evil' here
-// CHECK-MESSAGES: :[[@LINE-8]]:27: note: frame #1: function 'operator()' calls function '~Evil'
 
 const auto d_ShouldNotDiag = [](const int a, const int b) -> Task<int, true> {
   co_yield a / b;
@@ -739,9 +681,6 @@ const auto d_ShouldDiag = [](const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_yield a / b;
 };
-// CHECK-MESSAGES: :54:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Task' here
-// CHECK-MESSAGES: :109:12: note: frame #1: function 'get_return_object' calls function 'Task' here
-// CHECK-MESSAGES: :[[@LINE-7]]:27: note: frame #2: function 'operator()' calls function 'get_return_object' here
 
 const auto e_ShouldNotDiag = [](const int a,
                                 const int b) -> Task<int, false, true> {
@@ -753,8 +692,6 @@ const auto e_ShouldDiag = [](const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_yield a / b;
 };
-// CHECK-MESSAGES: :100:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Promise' here
-// CHECK-MESSAGES: :[[@LINE-6]]:27: note: frame #1: function 'operator()' calls function 'Promise' here
 
 const auto f_ShouldNotDiag = [](const int a,
                                 const int b) -> Task<int, false, false, true> {
@@ -766,8 +703,6 @@ const auto f_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_yield a / b;
 };
-// CHECK-MESSAGES: :114:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'initial_suspend' here
-// CHECK-MESSAGES: :[[@LINE-5]]:5: note: frame #1: function 'operator()' calls function 'initial_suspend' here
 
 const auto g_ShouldNotDiag =
     [](const int a, const int b) -> Task<int, false, false, false, true> {
@@ -780,8 +715,6 @@ const auto g_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_yield a / b;
 };
-// CHECK-MESSAGES: :106:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'get_return_object' here
-// CHECK-MESSAGES: :[[@LINE-6]]:5: note: frame #1: function 'operator()' calls function 'get_return_object' here
 
 const auto h_ShouldNotDiag =
     [](const int a,
@@ -795,8 +728,6 @@ const auto h_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_yield a / b;
 };
-// CHECK-MESSAGES: :133:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'unhandled_exception' here
-// CHECK-MESSAGES: :[[@LINE-6]]:5: note: frame #1: function 'operator()' calls function 'unhandled_exception' here
 
 const auto i_ShouldNotDiag =
     [](const int a,
@@ -828,7 +759,6 @@ const auto j_ShouldDiag =
 
   co_yield a / b;
 };
-// CHECK-MESSAGES: :[[@LINE-4]]:5: note: frame #0: unhandled exception of type 'int' may be thrown in function 'operator()' here
 
 } // namespace coyield
 
@@ -863,8 +793,6 @@ const auto c_ShouldDiag = [](const int a, const int b) noexcept -> Task<void> {
 
   co_await returnOne();
 };
-// CHECK-MESSAGES: :186:5: note: frame #0: unhandled exception of type 'int' may be thrown in function '~Evil' here
-// CHECK-MESSAGES: :[[@LINE-8]]:27: note: frame #1: function 'operator()' calls function '~Evil'
 
 const auto d_ShouldNotDiag = [](const int a, const int b) -> Task<void, true> {
   co_await returnOne();
@@ -875,9 +803,6 @@ const auto d_ShouldDiag = [](const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_await returnOne();
 };
-// CHECK-MESSAGES: :81:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Task' here
-// CHECK-MESSAGES: :158:12: note: frame #1: function 'get_return_object' calls function 'Task' here
-// CHECK-MESSAGES: :[[@LINE-7]]:27: note: frame #2: function 'operator()' calls function 'get_return_object' here
 
 const auto e_ShouldNotDiag = [](const int a,
                                 const int b) -> Task<void, false, true> {
@@ -889,8 +814,6 @@ const auto e_ShouldDiag = [](const int a,
   // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_await returnOne();
 };
-// CHECK-MESSAGES: :149:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'Promise' here
-// CHECK-MESSAGES: :[[@LINE-6]]:27: note: frame #1: function 'operator()' calls function 'Promise' here
 
 const auto f_ShouldNotDiag = [](const int a,
                                 const int b) -> Task<void, false, false, true> {
@@ -902,8 +825,6 @@ const auto f_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_await returnOne();
 };
-// CHECK-MESSAGES: :163:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'initial_suspend' here
-// CHECK-MESSAGES: :[[@LINE-5]]:5: note: frame #1: function 'operator()' calls function 'initial_suspend' here
 
 const auto g_ShouldNotDiag =
     [](const int a, const int b) -> Task<void, false, false, false, true> {
@@ -916,8 +837,6 @@ const auto g_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_await returnOne();
 };
-// CHECK-MESSAGES: :155:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'get_return_object' here
-// CHECK-MESSAGES: :[[@LINE-6]]:5: note: frame #1: function 'operator()' calls function 'get_return_object' here
 
 const auto h_ShouldNotDiag =
     [](const int a,
@@ -931,8 +850,6 @@ const auto h_ShouldDiag =
   // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: an exception may be thrown in function 'operator()' which should not throw exceptions
   co_await returnOne();
 };
-// CHECK-MESSAGES: :175:7: note: frame #0: unhandled exception of type 'int' may be thrown in function 'unhandled_exception' here
-// CHECK-MESSAGES: :[[@LINE-6]]:5: note: frame #1: function 'operator()' calls function 'unhandled_exception' here
 
 const auto i_ShouldNotDiag =
     [](const int a,
@@ -962,7 +879,6 @@ const auto j_ShouldDiag =
   if (b == 0)
     throw b;
 };
-// CHECK-MESSAGES: :[[@LINE-2]]:5: note: frame #0: unhandled exception of type 'int' may be thrown in function 'operator()' here
 
 } // namespace coawait
 

@@ -36,7 +36,6 @@
 #include "lldb/Host/StreamFile.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Interpreter/Interfaces/ScriptedBreakpointInterface.h"
 #include "lldb/Interpreter/Interfaces/ScriptedStopHookInterface.h"
 #include "lldb/Interpreter/OptionGroupWatchpoint.h"
 #include "lldb/Interpreter/OptionValues.h"
@@ -1988,11 +1987,8 @@ size_t Target::ReadMemoryFromFileCache(const Address &addr, void *dst,
 
 size_t Target::ReadMemory(const Address &addr, void *dst, size_t dst_len,
                           Status &error, bool force_live_memory,
-                          lldb::addr_t *load_addr_ptr,
-                          bool *did_read_live_memory) {
+                          lldb::addr_t *load_addr_ptr) {
   error.Clear();
-  if (did_read_live_memory)
-    *did_read_live_memory = false;
 
   Address fixed_addr = addr;
   if (ProcessIsValid())
@@ -2090,8 +2086,6 @@ size_t Target::ReadMemory(const Address &addr, void *dst, size_t dst_len,
       if (bytes_read) {
         if (load_addr_ptr)
           *load_addr_ptr = load_addr;
-        if (did_read_live_memory)
-          *did_read_live_memory = true;
         return bytes_read;
       }
     }
@@ -2488,9 +2482,9 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &orig_module_spec,
 
           ModuleList found_modules;
           m_images.FindModules(module_spec_copy, found_modules);
-          found_modules.ForEach([&](const ModuleSP &found_module) {
+          found_modules.ForEach([&](const ModuleSP &found_module) -> bool {
             old_modules.push_back(found_module);
-            return IterationAction::Continue;
+            return true;
           });
         }
 

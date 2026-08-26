@@ -854,9 +854,6 @@ Error GenericDeviceTy::unloadBinary(DeviceImageTy *Image) {
       return Err;
   }
 
-  if (Image->getTgtImageBitcode())
-    Plugin.getJIT().erase(*Image->getTgtImageBitcode(), Image->getDevice());
-
   return unloadBinaryImpl(Image);
 }
 

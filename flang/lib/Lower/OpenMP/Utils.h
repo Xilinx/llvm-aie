@@ -166,7 +166,6 @@ bool collectLoopRelatedInfo(
     lower::pft::Evaluation &eval, const omp::List<omp::Clause> &clauses,
     mlir::omp::LoopRelatedClauseOps &result,
     llvm::SmallVectorImpl<const semantics::Symbol *> &iv);
-
 } // namespace omp
 } // namespace lower
 } // namespace Fortran

@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <cassert>
 #include <compare>
-#include <deque>
 #include <flat_map>
 #include <functional>
 #include <utility>
@@ -28,9 +27,9 @@
 struct MoveNegates {
   int value_    = 0;
   MoveNegates() = default;
-  constexpr MoveNegates(int v) : value_(v) {}
-  constexpr MoveNegates(MoveNegates&& rhs) : value_(rhs.value_) { rhs.value_ = -rhs.value_; }
-  constexpr MoveNegates& operator=(MoveNegates&& rhs) {
+  MoveNegates(int v) : value_(v) {}
+  MoveNegates(MoveNegates&& rhs) : value_(rhs.value_) { rhs.value_ = -rhs.value_; }
+  MoveNegates& operator=(MoveNegates&& rhs) {
     value_     = rhs.value_;
     rhs.value_ = -rhs.value_;
     return *this;
@@ -42,9 +41,9 @@ struct MoveNegates {
 struct MoveClears {
   int value_   = 0;
   MoveClears() = default;
-  constexpr MoveClears(int v) : value_(v) {}
-  constexpr MoveClears(MoveClears&& rhs) : value_(rhs.value_) { rhs.value_ = 0; }
-  constexpr MoveClears& operator=(MoveClears&& rhs) {
+  MoveClears(int v) : value_(v) {}
+  MoveClears(MoveClears&& rhs) : value_(rhs.value_) { rhs.value_ = 0; }
+  MoveClears& operator=(MoveClears&& rhs) {
     value_     = rhs.value_;
     rhs.value_ = 0;
     return *this;
@@ -53,39 +52,34 @@ struct MoveClears {
   auto operator<=>(const MoveClears&) const = default;
 };
 
-template <template <class...> class KeyContainer, template <class...> class ValueContainer>
-constexpr void test() {
-  auto value_eq = [](auto&& p, auto&& q) { return p.first == q.first; };
+int main(int, char**) {
   {
     const std::pair<int, int> expected[] = {{1, 1}, {1, 2}, {3, 3}, {3, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}};
-    using M =
-        std::flat_multimap<MoveNegates, int, std::less<MoveNegates>, KeyContainer<MoveNegates>, ValueContainer<int>>;
-    M m  = M(std::sorted_equivalent, expected, expected + 8);
-    M m2 = M(expected, expected + 3);
-
-    m2 = std::move(m);
-
-    assert(std::equal(m2.begin(), m2.end(), expected, expected + 8));
-    LIBCPP_ASSERT(m.empty());
-    assert(std::is_sorted(m.begin(), m.end(), m.value_comp()));          // still sorted
-    assert(std::adjacent_find(m.begin(), m.end(), value_eq) == m.end()); // still contains no duplicates
-    m.insert({1, 1});
-    m.insert({2, 2});
-    assert(m.contains(1));
-    assert(m.find(2) != m.end());
-  }
-  {
-    const std::pair<int, int> expected[] = {{1, 1}, {1, 2}, {3, 3}, {4, 4}, {4, 5}, {6, 6}, {7, 7}, {8, 8}};
-    using M = std::flat_multimap<MoveClears, int, std::less<MoveClears>, KeyContainer<MoveClears>, ValueContainer<int>>;
-    M m     = M(std::sorted_equivalent, expected, expected + 8);
+    using M = std::flat_multimap<MoveNegates, int, std::less<MoveNegates>, std::vector<MoveNegates>>;
+    M m     = M(expected, expected + 8);
     M m2    = M(expected, expected + 3);
 
     m2 = std::move(m);
 
     assert(std::equal(m2.begin(), m2.end(), expected, expected + 8));
     LIBCPP_ASSERT(m.empty());
-    assert(std::is_sorted(m.begin(), m.end(), m.value_comp()));          // still sorted
-    assert(std::adjacent_find(m.begin(), m.end(), value_eq) == m.end()); // still contains no duplicates
+    check_invariant(m);
+    m.insert({1, 1});
+    m.insert({2, 2});
+    assert(m.contains(1));
+    assert(m.find(2) != m.end());
+  }
+  {
+    const std::pair<int, int> expected[] = {{1, 1}, {1, 2}, {3, 3}, {4, 4}, {5, 5}, {5, 6}, {7, 7}, {8, 8}};
+    using M = std::flat_multimap<MoveClears, int, std::less<MoveClears>, std::vector<MoveClears>>;
+    M m     = M(expected, expected + 8);
+    M m2    = M(expected, expected + 3);
+
+    m2 = std::move(m);
+
+    assert(std::equal(m2.begin(), m2.end(), expected, expected + 8));
+    LIBCPP_ASSERT(m.empty());
+    check_invariant(m);
     m.insert({1, 1});
     m.insert({2, 2});
     assert(m.contains(1));
@@ -93,36 +87,15 @@ constexpr void test() {
   }
   {
     // moved-from object maintains invariant if one of underlying container does not clear after move
-    using M = std::flat_multimap<int, int, std::less<>, KeyContainer<int>, CopyOnlyVector<int>>;
-    M m1    = M({1, 1, 2, 3}, {1, 1, 2, 3});
-    M m2    = M({1, 2, 2}, {1, 2, 2});
+    using M = std::flat_multimap<int, int, std::less<>, std::vector<int>, CopyOnlyVector<int>>;
+    M m1    = M({1, 1, 3}, {1, 2, 3});
+    M m2    = M({1, 1}, {1, 2});
     m2      = std::move(m1);
-    assert(m2.size() == 4);
+    assert(m2.size() == 3);
     check_invariant(m1);
     LIBCPP_ASSERT(m1.empty());
     LIBCPP_ASSERT(m1.keys().size() == 0);
     LIBCPP_ASSERT(m1.values().size() == 0);
   }
-}
-
-constexpr bool test() {
-  test<std::vector, std::vector>();
-
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque, std::deque>();
-  }
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
-
   return 0;
 }

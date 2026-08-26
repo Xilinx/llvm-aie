@@ -269,8 +269,8 @@ public:
                               std::optional<int64_t> Value, unsigned ValueSize,
                               unsigned MaxBytesToEmit);
 
-  void emitValueToAlignment(Align Alignment, int64_t Fill = 0,
-                            uint8_t FillLen = 1,
+  void emitValueToAlignment(Align Alignment, int64_t Value = 0,
+                            unsigned ValueSize = 1,
                             unsigned MaxBytesToEmit = 0) override;
 
   void emitCodeAlignment(Align Alignment, const MCSubtargetInfo *STI,
@@ -345,7 +345,7 @@ public:
   void emitIdent(StringRef IdentString) override;
   void emitCFIBKeyFrame() override;
   void emitCFIMTETaggedFrame() override;
-  void emitCFISections(bool EH, bool Debug, bool SFrame) override;
+  void emitCFISections(bool EH, bool Debug) override;
   void emitCFIDefCfa(int64_t Register, int64_t Offset, SMLoc Loc) override;
   void emitCFIDefCfaOffset(int64_t Offset, SMLoc Loc) override;
   void emitCFIDefCfaRegister(int64_t Register, SMLoc Loc) override;
@@ -407,8 +407,13 @@ public:
                        const MCPseudoProbeInlineStack &InlineStack,
                        MCSymbol *FnSym) override;
 
-  void emitRelocDirective(const MCExpr &Offset, StringRef Name,
-                          const MCExpr *Expr, SMLoc Loc) override;
+  void emitBundleAlignMode(Align Alignment) override;
+  void emitBundleLock(bool AlignToEnd) override;
+  void emitBundleUnlock() override;
+
+  std::optional<std::pair<bool, std::string>>
+  emitRelocDirective(const MCExpr &Offset, StringRef Name, const MCExpr *Expr,
+                     SMLoc Loc, const MCSubtargetInfo &STI) override;
 
   void emitAddrsig() override;
   void emitAddrsigSym(const MCSymbol *Sym) override;
@@ -532,8 +537,8 @@ void MCAsmStreamer::switchSection(MCSection *Section, uint32_t Subsection) {
     if (MCTargetStreamer *TS = getTargetStreamer()) {
       TS->changeSection(Cur.first, Section, Subsection, OS);
     } else {
-      MAI->printSwitchToSection(*Section, Subsection,
-                                getContext().getTargetTriple(), OS);
+      Section->printSwitchToSection(*MAI, getContext().getTargetTriple(), OS,
+                                    Subsection);
     }
   }
   MCStreamer::switchSection(Section, Subsection);
@@ -543,7 +548,7 @@ bool MCAsmStreamer::popSection() {
   if (!MCStreamer::popSection())
     return false;
   auto [Sec, Subsec] = getCurrentSection();
-  MAI->printSwitchToSection(*Sec, Subsec, getContext().getTargetTriple(), OS);
+  Sec->printSwitchToSection(*MAI, getContext().getTargetTriple(), OS, Subsec);
   return true;
 }
 
@@ -1105,7 +1110,7 @@ void MCAsmStreamer::emitZerofill(MCSection *Section, MCSymbol *Symbol,
   // Note: a .zerofill directive does not switch sections.
   OS << ".zerofill ";
 
-  assert(getContext().getObjectFileType() == MCContext::IsMachO &&
+  assert(Section->getVariant() == MCSection::SV_MachO &&
          ".zerofill is a Mach-O specific directive");
   // This is a mach-o specific directive.
 
@@ -1130,7 +1135,7 @@ void MCAsmStreamer::emitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
 
   // Instead of using the Section we'll just use the shortcut.
 
-  assert(getContext().getObjectFileType() == MCContext::IsMachO &&
+  assert(Section->getVariant() == MCSection::SV_MachO &&
          ".zerofill is a Mach-O specific directive");
   // This is a mach-o specific directive and section.
 
@@ -1523,10 +1528,10 @@ void MCAsmStreamer::emitAlignmentDirective(uint64_t ByteAlignment,
   EmitEOL();
 }
 
-void MCAsmStreamer::emitValueToAlignment(Align Alignment, int64_t Fill,
-                                         uint8_t FillLen,
+void MCAsmStreamer::emitValueToAlignment(Align Alignment, int64_t Value,
+                                         unsigned ValueSize,
                                          unsigned MaxBytesToEmit) {
-  emitAlignmentDirective(Alignment.value(), Fill, FillLen, MaxBytesToEmit);
+  emitAlignmentDirective(Alignment.value(), Value, ValueSize, MaxBytesToEmit);
 }
 
 void MCAsmStreamer::emitCodeAlignment(Align Alignment,
@@ -1906,24 +1911,15 @@ void MCAsmStreamer::emitIdent(StringRef IdentString) {
   EmitEOL();
 }
 
-void MCAsmStreamer::emitCFISections(bool EH, bool Debug, bool SFrame) {
-  MCStreamer::emitCFISections(EH, Debug, SFrame);
+void MCAsmStreamer::emitCFISections(bool EH, bool Debug) {
+  MCStreamer::emitCFISections(EH, Debug);
   OS << "\t.cfi_sections ";
-  bool C = false;
   if (EH) {
     OS << ".eh_frame";
-    C = true;
-  }
-  if (Debug) {
-    if (C)
-      OS << ", ";
+    if (Debug)
+      OS << ", .debug_frame";
+  } else if (Debug) {
     OS << ".debug_frame";
-    C = true;
-  }
-  if (SFrame) {
-    if (C)
-      OS << ", ";
-    OS << ".sframe";
   }
 
   EmitEOL();
@@ -2470,14 +2466,32 @@ void MCAsmStreamer::emitPseudoProbe(uint64_t Guid, uint64_t Index,
   for (const auto &Site : InlineStack)
     OS << " @ " << std::get<0>(Site) << ":" << std::get<1>(Site);
 
-  OS << " ";
-  FnSym->print(OS, MAI);
+  OS << " " << FnSym->getName();
 
   EmitEOL();
 }
 
-void MCAsmStreamer::emitRelocDirective(const MCExpr &Offset, StringRef Name,
-                                       const MCExpr *Expr, SMLoc) {
+void MCAsmStreamer::emitBundleAlignMode(Align Alignment) {
+  OS << "\t.bundle_align_mode " << Log2(Alignment);
+  EmitEOL();
+}
+
+void MCAsmStreamer::emitBundleLock(bool AlignToEnd) {
+  OS << "\t.bundle_lock";
+  if (AlignToEnd)
+    OS << " align_to_end";
+  EmitEOL();
+}
+
+void MCAsmStreamer::emitBundleUnlock() {
+  OS << "\t.bundle_unlock";
+  EmitEOL();
+}
+
+std::optional<std::pair<bool, std::string>>
+MCAsmStreamer::emitRelocDirective(const MCExpr &Offset, StringRef Name,
+                                  const MCExpr *Expr, SMLoc,
+                                  const MCSubtargetInfo &STI) {
   OS << "\t.reloc ";
   MAI->printExpr(OS, Offset);
   OS << ", " << Name;
@@ -2486,6 +2500,7 @@ void MCAsmStreamer::emitRelocDirective(const MCExpr &Offset, StringRef Name,
     MAI->printExpr(OS, *Expr);
   }
   EmitEOL();
+  return std::nullopt;
 }
 
 void MCAsmStreamer::emitAddrsig() {

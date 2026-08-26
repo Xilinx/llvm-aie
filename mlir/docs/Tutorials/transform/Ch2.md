@@ -133,8 +133,6 @@ This will generate two files, `MyExtension.h.inc` and `MyExtension.cpp.inc`, tha
 ```c++
 // In MyExtension.cpp.
 
-#include "MyExtension.h"
-
 #define GET_OP_CLASSES
 #include "MyExtension.cpp.inc"
 
@@ -285,7 +283,7 @@ void registerMyExtension(::mlir::DialectRegistry &registry) {
 }
 ```
 
-After registering the extension, it becomes possible to use our new operation in the Transform dialect interpreter. The upstream testing pass can be used as is. It actually exists in `mlir/test/Examples/transform/Ch2/sequence.mlir`, which contains the `microkernel` implementation. 
+After registering the extension, it becomes possible to use our new operation in the Transform dialect interpreter. The upstream testing pass can be used as is.
 
 ```mlir
 module attributes {transform.with_named_sequence} {
@@ -302,7 +300,7 @@ module attributes {transform.with_named_sequence} {
 
     // The actual tiling transformation takes tile sizes as attributes. It
     // produces a handle to the loop generated during tiling.
-    %tiled, %loop = transform.structured.tile_using_forall %max
+    %loop, %tiled = transform.structured.tile_using_forall %max
                     tile_sizes [8, 32]
         : (!transform.any_op) -> (!transform.any_op, !transform.any_op)
 
@@ -313,32 +311,32 @@ module attributes {transform.with_named_sequence} {
     // a single handle to all operations and give it to
     // `fuse_into_containing_op` that would take care of the ordering in this
     // case.
-    %add_fused, %loop2 = transform.structured.fuse_into_containing_op %add into %loop
-        : (!transform.any_op, !transform.any_op) -> (!transform.any_op, !transform.any_op)
-    %matmul_fused, %loop3 = transform.structured.fuse_into_containing_op %arg1
-                    into %loop2
+    %add_fused = transform.structured.fuse_into_containing_op %add into %loop
+        : (!transform.any_op, !transform.any_op) -> !transform.any_op
+    %matmul_fused = transform.structured.fuse_into_containing_op %arg1
+                    into %loop
         : (!transform.op<"linalg.matmul">, !transform.any_op)
-       -> (!transform.any_op, !transform.any_op)
+       -> !transform.any_op
 
     // Tile again to get the desired size. Note that this time this tiles the
     // "add" operation and fuses matmul into the loop, but doesn't affect the
     // "max" operation. This illustrates the precise targeting with the
     // transform dialect. Otherwise, it is difficult to differentiate "add" and
     // "max", both of which having the same kind.
-    %tiled_second, %loop_second = transform.structured.tile_using_forall %add_fused
+    %loop_2, %tiled_2 = transform.structured.tile_using_forall %add_fused
                         tile_sizes [4, 4]
         : (!transform.any_op) -> (!transform.any_op, !transform.any_op)
-    %matmul_fused_2, %loop_second_2 = transform.structured.fuse_into_containing_op %matmul_fused
-                      into %loop_second
-        : (!transform.any_op, !transform.any_op) -> (!transform.any_op, !transform.any_op)
+    %matmul_fused_2 = transform.structured.fuse_into_containing_op %matmul_fused
+                      into %loop_2
+        : (!transform.any_op, !transform.any_op) -> !transform.any_op
 
     // Since outlining is currently only implemented for region-holding
     // operations such as loops, use tiling to size 1 to materialize the outer
     // loop that is going to be outlined.
-    %_0, %loop_third = transform.structured.tile_using_forall %tiled_second tile_sizes [1]
+    %outline_target, %_ = transform.structured.tile_using_forall %tiled_2 tile_sizes [1]
         : (!transform.any_op) -> (!transform.any_op, !transform.any_op)
-    %_1, %outline_target = transform.structured.fuse_into_containing_op %matmul_fused_2 into %loop_third
-        : (!transform.any_op, !transform.any_op) -> (!transform.any_op, !transform.any_op)
+    transform.structured.fuse_into_containing_op %matmul_fused_2 into %outline_target
+        : (!transform.any_op, !transform.any_op) -> !transform.any_op
     %func, %call = transform.loop.outline %outline_target
                    {func_name = "outlined"}
         : (!transform.any_op) -> (!transform.any_op, !transform.any_op)

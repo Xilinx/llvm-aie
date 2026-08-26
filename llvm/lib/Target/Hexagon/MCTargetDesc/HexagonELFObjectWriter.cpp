@@ -56,7 +56,7 @@ unsigned HexagonELFObjectWriter::getRelocType(const MCFixup &Fixup,
   default:
     break;
   }
-  switch (Fixup.getKind()) {
+  switch (Fixup.getTargetKind()) {
   default:
     report_fatal_error("Unrecognized relocation type");
     break;

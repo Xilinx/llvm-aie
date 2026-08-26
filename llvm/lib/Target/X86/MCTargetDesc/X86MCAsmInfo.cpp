@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86MCAsmInfo.h"
+#include "MCTargetDesc/X86MCExpr.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"

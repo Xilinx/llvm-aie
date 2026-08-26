@@ -217,8 +217,8 @@ static RT_API_ATTRS void DoElementalDefinedAssignment(const Descriptor &to,
   toElementDesc.Establish(derived, nullptr, 0, nullptr, CFI_attribute_pointer);
   fromElementDesc.Establish(
       derived, nullptr, 0, nullptr, CFI_attribute_pointer);
-  for (std::size_t toElements{to.InlineElements()}; toElements-- > 0;
-      to.IncrementSubscripts(toAt), from.IncrementSubscripts(fromAt)) {
+  for (std::size_t toElements{to.Elements()}; toElements-- > 0;
+       to.IncrementSubscripts(toAt), from.IncrementSubscripts(fromAt)) {
     toElementDesc.set_base_addr(to.Element<char>(toAt));
     fromElementDesc.set_base_addr(from.Element<char>(fromAt));
     DoScalarDefinedAssignment(toElementDesc, fromElementDesc, derived, special);
@@ -279,15 +279,13 @@ RT_API_ATTRS int AssignTicket::Begin(WorkQueue &workQueue) {
     if (mustDeallocateLHS) {
       // Convert the LHS into a temporary, then make it look deallocated.
       toDeallocate_ = &tempDescriptor_.descriptor();
+      persist_ = true; // tempDescriptor_ state must outlive child tickets
       std::memcpy(
           reinterpret_cast<void *>(toDeallocate_), &to_, to_.SizeInBytes());
       to_.set_base_addr(nullptr);
       if (toDerived_ && (flags_ & NeedFinalization)) {
-        int status{workQueue.BeginFinalize(*toDeallocate_, *toDerived_)};
-        if (status == StatContinue) {
-          // tempDescriptor_ state must outlive pending child ticket
-          persist_ = true;
-        } else if (status != StatOk) {
+        if (int status{workQueue.BeginFinalize(*toDeallocate_, *toDerived_)};
+            status != StatOk && status != StatContinue) {
           return status;
         }
         flags_ &= ~NeedFinalization;
@@ -306,9 +304,6 @@ RT_API_ATTRS int AssignTicket::Begin(WorkQueue &workQueue) {
       if (int stat{ReturnError(
               workQueue.terminator(), newFrom.Allocate(kNoAsyncObject))};
           stat != StatOk) {
-        if (stat == StatContinue) {
-          persist_ = true;
-        }
         return stat;
       }
       if (HasDynamicComponent(*from_)) {
@@ -436,14 +431,11 @@ RT_API_ATTRS int AssignTicket::Continue(WorkQueue &workQueue) {
     }
   }
   // Intrinsic assignment
-  std::size_t toElements{to_.InlineElements()};
-  if (from_->rank() > 0) {
-    std::size_t fromElements{from_->InlineElements()};
-    if (toElements != fromElements) {
-      workQueue.terminator().Crash("Assign: mismatching element counts in "
-                                   "array assignment (to %zd, from %zd)",
-          toElements, fromElements);
-    }
+  std::size_t toElements{to_.Elements()};
+  if (from_->rank() > 0 && toElements != from_->Elements()) {
+    workQueue.terminator().Crash("Assign: mismatching element counts in array "
+                                 "assignment (to %zd, from %zd)",
+        toElements, from_->Elements());
   }
   if (to_.type() != from_->type()) {
     workQueue.terminator().Crash(
@@ -512,7 +504,6 @@ RT_API_ATTRS int AssignTicket::Continue(WorkQueue &workQueue) {
     }
   }
   if (persist_) {
-    // tempDescriptor_ must outlive pending child ticket(s)
     done_ = true;
     return StatContinue;
   } else {
@@ -538,7 +529,7 @@ RT_API_ATTRS int DerivedAssignTicket<IS_COMPONENTWISE>::Begin(
       // allocatable components or defined ASSIGNMENT(=) at any level.
       memmoveFct_(this->instance_.template OffsetElement<char>(),
           this->from_->template OffsetElement<const char *>(),
-          this->instance_.InlineElements() * elementBytes);
+          this->instance_.Elements() * elementBytes);
       return StatOk;
     }
   }
@@ -553,7 +544,7 @@ RT_API_ATTRS int DerivedAssignTicket<IS_COMPONENTWISE>::Begin(
   // Copy procedure pointer components
   const Descriptor &procPtrDesc{this->derived_.procPtr()};
   bool noDataComponents{this->IsComplete()};
-  if (std::size_t numProcPtrs{procPtrDesc.InlineElements()}) {
+  if (std::size_t numProcPtrs{procPtrDesc.Elements()}) {
     for (std::size_t k{0}; k < numProcPtrs; ++k) {
       const auto &procPtr{
           *procPtrDesc.ZeroBasedIndexedElement<typeInfo::ProcPtrComponent>(k)};
@@ -624,7 +615,7 @@ RT_API_ATTRS int DerivedAssignTicket<IS_COMPONENTWISE>::Continue(
               memmoveFct_(to, from, componentByteSize);
             }
           }
-          this->SkipToNextComponent();
+          this->Componentwise::Advance();
         } else {
           memmoveFct_(
               this->instance_.template Element<char>(this->subscripts_) +
@@ -657,7 +648,7 @@ RT_API_ATTRS int DerivedAssignTicket<IS_COMPONENTWISE>::Continue(
             memmoveFct_(to, from, componentByteSize);
           }
         }
-        this->SkipToNextComponent();
+        this->Componentwise::Advance();
       } else {
         memmoveFct_(this->instance_.template Element<char>(this->subscripts_) +
                 this->component_->offset(),
@@ -679,11 +670,11 @@ RT_API_ATTRS int DerivedAssignTicket<IS_COMPONENTWISE>::Continue(
       if (toDesc->IsAllocatable() && !fromDesc->IsAllocated()) {
         if (toDesc->IsAllocated()) {
           if (this->phase_ == 0) {
+            this->phase_++;
             if (componentDerived && !componentDerived->noDestructionNeeded()) {
               if (int status{workQueue.BeginDestroy(
                       *toDesc, *componentDerived, /*finalize=*/false)};
                   status != StatOk) {
-                this->phase_++;
                 return status;
               }
             }
@@ -736,15 +727,15 @@ RT_API_ATTRS void DoFromSourceAssign(Descriptor &alloc,
     SubscriptValue allocAt[maxRank];
     alloc.GetLowerBounds(allocAt);
     if (allocDerived) {
-      for (std::size_t n{alloc.InlineElements()}; n-- > 0;
-          alloc.IncrementSubscripts(allocAt)) {
+      for (std::size_t n{alloc.Elements()}; n-- > 0;
+           alloc.IncrementSubscripts(allocAt)) {
         Descriptor allocElement{*Descriptor::Create(*allocDerived,
             reinterpret_cast<void *>(alloc.Element<char>(allocAt)), 0)};
         Assign(allocElement, source, terminator, NoAssignFlags, memmoveFct);
       }
     } else { // intrinsic type
-      for (std::size_t n{alloc.InlineElements()}; n-- > 0;
-          alloc.IncrementSubscripts(allocAt)) {
+      for (std::size_t n{alloc.Elements()}; n-- > 0;
+           alloc.IncrementSubscripts(allocAt)) {
         memmoveFct(alloc.Element<char>(allocAt), source.raw().base_addr,
             alloc.ElementBytes());
       }

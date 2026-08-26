@@ -61,6 +61,13 @@
 using namespace clang;
 using namespace clang::CodeGen;
 
+// TODO: consider deprecating ClArrayBoundsPseudoFn; functionality is subsumed
+//       by -fsanitize-annotate-debug-info
+static llvm::cl::opt<bool> ClArrayBoundsPseudoFn(
+    "array-bounds-pseudofn", llvm::cl::Hidden, llvm::cl::Optional,
+    llvm::cl::desc("Emit debug info that places array-bounds instrumentation "
+                   "in an inline function called __ubsan_check_array_bounds."));
+
 static uint32_t getTypeAlignIfRequired(const Type *Ty, const ASTContext &Ctx) {
   auto TI = Ctx.getTypeInfo(Ty);
   if (TI.isAlignRequired())
@@ -164,10 +171,6 @@ void CGDebugInfo::addInstToSpecificSourceAtom(llvm::Instruction *KeyInstruction,
                                               llvm::Value *Backup,
                                               uint64_t Group) {
   if (!Group || !CGM.getCodeGenOpts().DebugKeyInstructions)
-    return;
-
-  llvm::DISubprogram *SP = KeyInstruction->getFunction()->getSubprogram();
-  if (!SP || !SP->getKeyInstructionsEnabled())
     return;
 
   addInstSourceAtomMetadata(KeyInstruction, Group, /*Rank=*/1);
@@ -514,8 +517,6 @@ CGDebugInfo::computeChecksum(FileID FID, SmallString<64> &Checksum) const {
   case clang::CodeGenOptions::DSH_SHA256:
     llvm::toHex(llvm::SHA256::hash(Data), /*LowerCase=*/true, Checksum);
     return llvm::DIFile::CSK_SHA256;
-  case clang::CodeGenOptions::DSH_NONE:
-    return std::nullopt;
   }
   llvm_unreachable("Unhandled DebugSrcHashKind enum");
 }
@@ -799,8 +800,7 @@ void CGDebugInfo::CreateCompileUnit() {
   // Create new compile unit.
   TheCU = DBuilder.createCompileUnit(
       LangTag, CUFile, CGOpts.EmitVersionIdentMetadata ? Producer : "",
-      CGOpts.OptimizationLevel != 0 || CGOpts.PrepareForLTO ||
-          CGOpts.PrepareForThinLTO,
+      LO.Optimize || CGOpts.PrepareForLTO || CGOpts.PrepareForThinLTO,
       CGOpts.DwarfDebugFlags, RuntimeVers, CGOpts.SplitDwarfFile, EmissionKind,
       DwoId, CGOpts.SplitDwarfInlining, CGOpts.DebugInfoForProfiling,
       NameTableKind, CGOpts.DebugRangesBaseAddress, remapDIPath(Sysroot), SDK);
@@ -2291,7 +2291,7 @@ llvm::DISubprogram *CGDebugInfo::CreateCXXMemberFunction(
     Flags |= llvm::DINode::FlagRValueReference;
   if (!Method->isExternallyVisible())
     SPFlags |= llvm::DISubprogram::SPFlagLocalToUnit;
-  if (CGM.getCodeGenOpts().OptimizationLevel != 0)
+  if (CGM.getLangOpts().Optimize)
     SPFlags |= llvm::DISubprogram::SPFlagOptimized;
 
   // In this debug mode, emit type info for a class when its constructor type
@@ -4054,8 +4054,7 @@ llvm::DIType *CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile *Unit) {
     return CreateType(cast<HLSLAttributedResourceType>(Ty), Unit);
   case Type::HLSLInlineSpirv:
     return CreateType(cast<HLSLInlineSpirvType>(Ty), Unit);
-  case Type::PredefinedSugar:
-    return getOrCreateType(cast<PredefinedSugarType>(Ty)->desugar(), Unit);
+
   case Type::CountAttributed:
   case Type::Auto:
   case Type::Attributed:
@@ -4363,7 +4362,7 @@ llvm::DISubprogram *CGDebugInfo::getFunctionFwdDeclOrStub(GlobalDecl GD,
       FD->getReturnType(), ArgTypes, FunctionProtoType::ExtProtoInfo(CC));
   if (!FD->isExternallyVisible())
     SPFlags |= llvm::DISubprogram::SPFlagLocalToUnit;
-  if (CGM.getCodeGenOpts().OptimizationLevel != 0)
+  if (CGM.getLangOpts().Optimize)
     SPFlags |= llvm::DISubprogram::SPFlagOptimized;
 
   if (Stub) {
@@ -4639,7 +4638,6 @@ void CGDebugInfo::emitFunctionStart(GlobalDecl GD, SourceLocation Loc,
   llvm::DIFile *Unit = getOrCreateFile(Loc);
   llvm::DIScope *FDContext = Unit;
   llvm::DINodeArray TParamsArray;
-  bool KeyInstructions = CGM.getCodeGenOpts().DebugKeyInstructions;
   if (!HasDecl) {
     // Use llvm function name.
     LinkageName = Fn->getName();
@@ -4656,9 +4654,6 @@ void CGDebugInfo::emitFunctionStart(GlobalDecl GD, SourceLocation Loc,
     }
     collectFunctionDeclProps(GD, Unit, Name, LinkageName, FDContext,
                              TParamsArray, Flags);
-    // Disable KIs if this is a coroutine.
-    KeyInstructions =
-        KeyInstructions && !isa_and_present<CoroutineBodyStmt>(FD->getBody());
   } else if (const auto *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
     Flags |= llvm::DINode::FlagPrototyped;
@@ -4693,7 +4688,7 @@ void CGDebugInfo::emitFunctionStart(GlobalDecl GD, SourceLocation Loc,
 
   if (Fn->hasLocalLinkage())
     SPFlags |= llvm::DISubprogram::SPFlagLocalToUnit;
-  if (CGM.getCodeGenOpts().OptimizationLevel != 0)
+  if (CGM.getLangOpts().Optimize)
     SPFlags |= llvm::DISubprogram::SPFlagOptimized;
 
   llvm::DINode::DIFlags FlagsForDef = Flags | getCallSiteRelatedAttrs();
@@ -4720,7 +4715,7 @@ void CGDebugInfo::emitFunctionStart(GlobalDecl GD, SourceLocation Loc,
   llvm::DISubprogram *SP = DBuilder.createFunction(
       FDContext, Name, LinkageName, Unit, LineNo, DIFnType, ScopeLine,
       FlagsForDef, SPFlagsForDef, TParamsArray.get(), Decl, nullptr,
-      Annotations, "", KeyInstructions);
+      Annotations, "", CGM.getCodeGenOpts().DebugKeyInstructions);
   Fn->setSubprogram(SP);
 
   // We might get here with a VarDecl in the case we're generating
@@ -4776,7 +4771,7 @@ void CGDebugInfo::EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc,
   unsigned LineNo = getLineNumber(Loc);
   unsigned ScopeLine = 0;
   llvm::DISubprogram::DISPFlags SPFlags = llvm::DISubprogram::SPFlagZero;
-  if (CGM.getCodeGenOpts().OptimizationLevel != 0)
+  if (CGM.getLangOpts().Optimize)
     SPFlags |= llvm::DISubprogram::SPFlagOptimized;
 
   llvm::DINodeArray Annotations = CollectBTFDeclTagAnnotations(D);
@@ -5108,8 +5103,7 @@ llvm::DILocalVariable *CGDebugInfo::EmitDeclare(const VarDecl *VD,
         // Use VarDecl's Tag, Scope and Line number.
         auto FieldAlign = getDeclAlignIfRequired(Field, CGM.getContext());
         auto *D = DBuilder.createAutoVariable(
-            Scope, FieldName, Unit, Line, FieldTy,
-            CGM.getCodeGenOpts().OptimizationLevel != 0,
+            Scope, FieldName, Unit, Line, FieldTy, CGM.getLangOpts().Optimize,
             Flags | llvm::DINode::FlagArtificial, FieldAlign);
 
         // Insert an llvm.dbg.declare into the current block.
@@ -5135,9 +5129,9 @@ llvm::DILocalVariable *CGDebugInfo::EmitDeclare(const VarDecl *VD,
   llvm::DILocalVariable *D = nullptr;
   if (ArgNo) {
     llvm::DINodeArray Annotations = CollectBTFDeclTagAnnotations(VD);
-    D = DBuilder.createParameterVariable(
-        Scope, Name, *ArgNo, Unit, Line, Ty,
-        CGM.getCodeGenOpts().OptimizationLevel != 0, Flags, Annotations);
+    D = DBuilder.createParameterVariable(Scope, Name, *ArgNo, Unit, Line, Ty,
+                                         CGM.getLangOpts().Optimize, Flags,
+                                         Annotations);
   } else {
     // For normal local variable, we will try to find out whether 'VD' is the
     // copy parameter of coroutine.
@@ -5178,9 +5172,8 @@ llvm::DILocalVariable *CGDebugInfo::EmitDeclare(const VarDecl *VD,
     D = RemapCoroArgToLocalVar();
     // Or we will create a new DIVariable for this Decl if D dose not exists.
     if (!D)
-      D = DBuilder.createAutoVariable(
-          Scope, Name, Unit, Line, Ty,
-          CGM.getCodeGenOpts().OptimizationLevel != 0, Flags, Align);
+      D = DBuilder.createAutoVariable(Scope, Name, Unit, Line, Ty,
+                                      CGM.getLangOpts().Optimize, Flags, Align);
   }
   // Insert an llvm.dbg.declare into the current block.
   DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
@@ -5234,7 +5227,7 @@ llvm::DILocalVariable *CGDebugInfo::EmitDeclare(const BindingDecl *BD,
   auto *Scope = cast<llvm::DIScope>(LexicalBlockStack.back());
   // Create the descriptor for the variable.
   llvm::DILocalVariable *D = DBuilder.createAutoVariable(
-      Scope, Name, Unit, Line, Ty, CGM.getCodeGenOpts().OptimizationLevel != 0,
+      Scope, Name, Unit, Line, Ty, CGM.getLangOpts().Optimize,
       llvm::DINode::FlagZero, Align);
 
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(BD->getBinding())) {
@@ -5332,10 +5325,9 @@ void CGDebugInfo::EmitLabel(const LabelDecl *D, CGBuilderTy &Builder) {
   StringRef Name = D->getName();
 
   // Create the descriptor for the label.
-  auto *L = DBuilder.createLabel(Scope, Name, Unit, Line, Column,
-                                 /*IsArtificial=*/false,
-                                 /*CoroSuspendIdx=*/std::nullopt,
-                                 CGM.getCodeGenOpts().OptimizationLevel != 0);
+  auto *L = DBuilder.createLabel(
+      Scope, Name, Unit, Line, Column, /*IsArtificial=*/false,
+      /*CoroSuspendIdx=*/std::nullopt, CGM.getLangOpts().Optimize);
 
   // Insert an llvm.dbg.label into the current block.
   DBuilder.insertLabel(L,
@@ -5598,8 +5590,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 
   // Create the descriptor for the parameter.
   auto *debugVar = DBuilder.createParameterVariable(
-      scope, Name, ArgNo, tunit, line, type,
-      CGM.getCodeGenOpts().OptimizationLevel != 0, flags);
+      scope, Name, ArgNo, tunit, line, type, CGM.getLangOpts().Optimize, flags);
 
   // Insert an llvm.dbg.declare into the current block.
   DBuilder.insertDeclare(Alloca, debugVar, DBuilder.createExpression(),
@@ -6071,10 +6062,11 @@ void CGDebugInfo::EmitPseudoVariable(CGBuilderTy &Builder,
     // ptr, in this case its debug info may not match the actual type of object
     // being used as in the next instruction, so we will need to emit a pseudo
     // variable for type-casted value.
-    auto DeclareTypeMatches = [&](llvm::DbgVariableRecord *DbgDeclare) {
+    auto DeclareTypeMatches = [&](auto *DbgDeclare) {
       return DbgDeclare->getVariable()->getType() == Type;
     };
-    if (any_of(llvm::findDVRDeclares(Var), DeclareTypeMatches))
+    if (any_of(llvm::findDbgDeclares(Var), DeclareTypeMatches) ||
+        any_of(llvm::findDVRDeclares(Var), DeclareTypeMatches))
       return;
   }
 
@@ -6373,7 +6365,7 @@ llvm::DebugLoc CGDebugInfo::SourceLocToDebugLoc(SourceLocation Loc) {
 llvm::DINode::DIFlags CGDebugInfo::getCallSiteRelatedAttrs() const {
   // Call site-related attributes are only useful in optimized programs, and
   // when there's a possibility of debugging backtraces.
-  if (CGM.getCodeGenOpts().OptimizationLevel == 0 ||
+  if (!CGM.getLangOpts().Optimize ||
       DebugKind == llvm::codegenoptions::NoDebugInfo ||
       DebugKind == llvm::codegenoptions::LocTrackingOnly)
     return llvm::DINode::FlagZero;
@@ -6444,7 +6436,7 @@ CodeGenFunction::LexicalScope::~LexicalScope() {
 static std::string SanitizerHandlerToCheckLabel(SanitizerHandler Handler) {
   std::string Label;
   switch (Handler) {
-#define SANITIZER_CHECK(Enum, Name, Version, Msg)                              \
+#define SANITIZER_CHECK(Enum, Name, Version)                                   \
   case Enum:                                                                   \
     Label = "__ubsan_check_" #Name;                                            \
     break;
@@ -6482,25 +6474,24 @@ SanitizerOrdinalToCheckLabel(SanitizerKind::SanitizerOrdinal Ordinal) {
 llvm::DILocation *CodeGenFunction::SanitizerAnnotateDebugInfo(
     ArrayRef<SanitizerKind::SanitizerOrdinal> Ordinals,
     SanitizerHandler Handler) {
-  llvm::DILocation *CheckDebugLoc = Builder.getCurrentDebugLocation();
-  auto *DI = getDebugInfo();
-  if (!DI || !CheckDebugLoc)
-    return CheckDebugLoc;
-  const auto &AnnotateDebugInfo =
-      CGM.getCodeGenOpts().SanitizeAnnotateDebugInfo;
-  if (AnnotateDebugInfo.empty())
-    return CheckDebugLoc;
-
   std::string Label;
   if (Ordinals.size() == 1)
     Label = SanitizerOrdinalToCheckLabel(Ordinals[0]);
   else
     Label = SanitizerHandlerToCheckLabel(Handler);
 
-  if (any_of(Ordinals, [&](auto Ord) { return AnnotateDebugInfo.has(Ord); }))
-    return DI->CreateSyntheticInlineAt(CheckDebugLoc, Label);
+  llvm::DILocation *CheckDI = Builder.getCurrentDebugLocation();
 
-  return CheckDebugLoc;
+  for (auto Ord : Ordinals) {
+    // TODO: deprecate ClArrayBoundsPseudoFn
+    if (((ClArrayBoundsPseudoFn && Ord == SanitizerKind::SO_ArrayBounds) ||
+         CGM.getCodeGenOpts().SanitizeAnnotateDebugInfo.has(Ord)) &&
+        CheckDI) {
+      return getDebugInfo()->CreateSyntheticInlineAt(CheckDI, Label);
+    }
+  }
+
+  return CheckDI;
 }
 
 SanitizerDebugLocation::SanitizerDebugLocation(

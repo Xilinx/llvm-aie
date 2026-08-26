@@ -1,16 +1,4 @@
-//===--- OSLog.cpp - OS log format string analysis ------------------------===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-///
-/// \file
-/// This file implements analysis functions for OS log format strings and
-/// buffer layout computation for __builtin_os_log_format and related builtins.
-///
-//===----------------------------------------------------------------------===//
+// TODO: header template
 
 #include "clang/AST/OSLog.h"
 #include "clang/AST/Attr.h"
@@ -149,8 +137,8 @@ public:
     for (auto &Data : ArgsData) {
       if (!Data.MaskType.empty()) {
         CharUnits Size = CharUnits::fromQuantity(8);
-        Layout.Items.emplace_back(OSLogBufferItem::MaskKind, nullptr, Size, 0,
-                                  Data.MaskType);
+        Layout.Items.emplace_back(OSLogBufferItem::MaskKind, nullptr,
+                                  Size, 0, Data.MaskType);
       }
 
       if (Data.FieldWidth) {

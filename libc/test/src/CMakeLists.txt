@@ -51,9 +51,7 @@ function(add_fp_unittest name)
     ${test_type}
     LINK_LIBRARIES "${MATH_UNITTEST_LINK_LIBRARIES}"
     "${MATH_UNITTEST_UNPARSED_ARGUMENTS}"
-    DEPENDS
-      libc.hdr.stdint_proxy
-      "${deps}"
+    DEPENDS "${deps}"
   )
 endfunction(add_fp_unittest)
 
@@ -72,7 +70,6 @@ add_subdirectory(stdlib)
 add_subdirectory(string)
 add_subdirectory(strings)
 add_subdirectory(wchar)
-add_subdirectory(wctype)
 add_subdirectory(time)
 add_subdirectory(unistd)
 

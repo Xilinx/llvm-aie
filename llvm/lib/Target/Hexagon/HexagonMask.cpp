@@ -76,7 +76,7 @@ bool HexagonMask::runOnMachineFunction(MachineFunction &MF) {
   HII = HST.getInstrInfo();
   const Function &F = MF.getFunction();
 
-  if (!F.hasOptSize())
+  if (!F.hasFnAttribute(Attribute::OptimizeForSize))
     return false;
   // Mask instruction is available only from v66
   if (!HST.hasV66Ops())

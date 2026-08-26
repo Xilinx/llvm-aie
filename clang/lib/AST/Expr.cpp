@@ -1629,20 +1629,20 @@ QualType CallExpr::getCallReturnType(const ASTContext &Ctx) const {
   return FnType->getReturnType();
 }
 
-std::pair<const NamedDecl *, const WarnUnusedResultAttr *>
-Expr::getUnusedResultAttrImpl(const Decl *Callee, QualType ReturnType) {
+std::pair<const NamedDecl *, const Attr *>
+CallExpr::getUnusedResultAttr(const ASTContext &Ctx) const {
   // If the callee is marked nodiscard, return that attribute
-  if (Callee != nullptr)
-    if (const auto *A = Callee->getAttr<WarnUnusedResultAttr>())
+  if (const Decl *D = getCalleeDecl())
+    if (const auto *A = D->getAttr<WarnUnusedResultAttr>())
       return {nullptr, A};
 
   // If the return type is a struct, union, or enum that is marked nodiscard,
   // then return the return type attribute.
-  if (const TagDecl *TD = ReturnType->getAsTagDecl())
+  if (const TagDecl *TD = getCallReturnType(Ctx)->getAsTagDecl())
     if (const auto *A = TD->getAttr<WarnUnusedResultAttr>())
       return {TD, A};
 
-  for (const auto *TD = ReturnType->getAs<TypedefType>(); TD;
+  for (const auto *TD = getCallReturnType(Ctx)->getAs<TypedefType>(); TD;
        TD = TD->desugar()->getAs<TypedefType>())
     if (const auto *A = TD->getDecl()->getAttr<WarnUnusedResultAttr>())
       return {TD->getDecl(), A};
@@ -2844,11 +2844,12 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
       return true;
     }
 
-    if (ME->hasUnusedResultAttr(Ctx)) {
-      WarnE = this;
-      Loc = getExprLoc();
-      return true;
-    }
+    if (const ObjCMethodDecl *MD = ME->getMethodDecl())
+      if (MD->hasAttr<WarnUnusedResultAttr>()) {
+        WarnE = this;
+        Loc = getExprLoc();
+        return true;
+      }
 
     return false;
   }
@@ -3392,10 +3393,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef,
     //     an anonymous union, in declaration order.
     const InitListExpr *ILE = cast<InitListExpr>(this);
     assert(ILE->isSemanticForm() && "InitListExpr must be in semantic form");
-
-    if (ILE->isTransparent())
-      return ILE->getInit(0)->isConstantInitializer(Ctx, false, Culprit);
-
     if (ILE->getType()->isArrayType()) {
       unsigned numInits = ILE->getNumInits();
       for (unsigned i = 0; i < numInits; i++) {

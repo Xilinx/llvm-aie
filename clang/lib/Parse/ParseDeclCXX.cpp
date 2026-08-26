@@ -591,7 +591,8 @@ bool Parser::ParseUsingDeclarator(DeclaratorContext Context,
        NextToken().isRegularKeywordAttribute() ||
        NextToken().is(tok::kw___attribute)) &&
       D.SS.isNotEmpty() && LastII == Tok.getIdentifierInfo() &&
-      D.SS.getScopeRep()->getKind() != NestedNameSpecifier::Namespace) {
+      !D.SS.getScopeRep()->getAsNamespace() &&
+      !D.SS.getScopeRep()->getAsNamespaceAlias()) {
     SourceLocation IdLoc = ConsumeToken();
     ParsedType Type =
         Actions.getInheritingConstructorName(D.SS, IdLoc, *LastII);
@@ -1132,6 +1133,13 @@ void Parser::AnnotateExistingDecltypeSpecifier(const DeclSpec &DS,
   // make sure we have a token we can turn into an annotation token
   if (PP.isBacktrackEnabled()) {
     PP.RevertCachedTokens(1);
+    if (DS.getTypeSpecType() == TST_error) {
+      // We encountered an error in parsing 'decltype(...)' so lets annotate all
+      // the tokens in the backtracking cache - that we likely had to skip over
+      // to get to a token that allows us to resume parsing, such as a
+      // semi-colon.
+      EndLoc = PP.getLastCachedTokenLocation();
+    }
   } else
     PP.EnterToken(Tok, /*IsReinject*/ true);
 
@@ -4940,8 +4948,9 @@ void Parser::ParseHLSLRootSignatureAttributeArgs(ParsedAttributes &Attrs) {
   // signature string and construct the in-memory elements
   if (!Found) {
     // Invoke the root signature parser to construct the in-memory constructs
-    hlsl::RootSignatureParser Parser(getLangOpts().HLSLRootSigVer, Signature,
-                                     PP);
+    SmallVector<hlsl::RootSignatureElement> RootElements;
+    hlsl::RootSignatureParser Parser(getLangOpts().HLSLRootSigVer, RootElements,
+                                     Signature, PP);
     if (Parser.parse()) {
       T.consumeClose();
       return;
@@ -4949,7 +4958,7 @@ void Parser::ParseHLSLRootSignatureAttributeArgs(ParsedAttributes &Attrs) {
 
     // Construct the declaration.
     Actions.HLSL().ActOnFinishRootSignatureDecl(RootSignatureLoc, DeclIdent,
-                                                Parser.getElements());
+                                                RootElements);
   }
 
   // Create the arg for the ParsedAttr

@@ -81,8 +81,7 @@ public:
   void allocateStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                      MachineFunction &MF, uint64_t Offset,
                      uint64_t RealStackSize, bool EmitCFI, bool NeedProbe,
-                     uint64_t ProbeSize, bool DynAllocation,
-                     MachineInstr::MIFlag Flag) const;
+                     uint64_t ProbeSize, bool DynAllocation) const;
 
 protected:
   const RISCVSubtarget &STI;

@@ -14,6 +14,8 @@
 #include "mlir/Dialect/LLVMIR/NVVMDialect.h"
 #include "mlir/Target/LLVMIR/ModuleImport.h"
 
+#include "llvm/IR/ConstantRange.h"
+
 using namespace mlir;
 using namespace mlir::NVVM;
 

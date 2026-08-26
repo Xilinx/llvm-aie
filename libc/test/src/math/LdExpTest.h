@@ -17,7 +17,7 @@
 #include "test/UnitTest/Test.h"
 
 #include "hdr/math_macros.h"
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
 
 using LIBC_NAMESPACE::Sign;
 

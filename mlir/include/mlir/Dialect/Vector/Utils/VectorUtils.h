@@ -118,10 +118,9 @@ inline auto makeVscaleConstantBuilder(PatternRewriter &rewriter, Location loc) {
   Value vscale = nullptr;
   return [loc, vscale, &rewriter](int64_t multiplier) mutable {
     if (!vscale)
-      vscale = vector::VectorScaleOp::create(rewriter, loc);
-    return arith::MulIOp::create(
-        rewriter, loc, vscale,
-        arith::ConstantIndexOp::create(rewriter, loc, multiplier));
+      vscale = rewriter.create<vector::VectorScaleOp>(loc);
+    return rewriter.create<arith::MulIOp>(
+        loc, vscale, rewriter.create<arith::ConstantIndexOp>(loc, multiplier));
   };
 }
 
@@ -227,8 +226,7 @@ bool isLinearizableVector(VectorType type);
 /// Note: all read offsets are set to 0.
 Value createReadOrMaskedRead(OpBuilder &builder, Location loc, Value source,
                              ArrayRef<int64_t> inputVectorSizes, Value padValue,
-                             bool useInBoundsInsteadOfMasking = false,
-                             ArrayRef<bool> scalableDims = {});
+                             bool useInBoundsInsteadOfMasking = false);
 
 /// Returns success if `inputVectorSizes` is a valid masking configuraion for
 /// given `shape`, i.e., it meets:

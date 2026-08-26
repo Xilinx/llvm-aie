@@ -21,7 +21,7 @@ Value materializeAsUnrealizedCast(OpBuilder &builder, Type resultType,
   if (inputs.size() != 1)
     return Value();
 
-  return UnrealizedConversionCastOp::create(builder, loc, resultType, inputs)
+  return builder.create<UnrealizedConversionCastOp>(loc, resultType, inputs)
       .getResult(0);
 }
 

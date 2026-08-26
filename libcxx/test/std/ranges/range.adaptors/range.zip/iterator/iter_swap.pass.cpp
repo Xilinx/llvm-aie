@@ -15,7 +15,7 @@
 #include <cassert>
 #include <ranges>
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 struct ThrowingMove {
   ThrowingMove() = default;

@@ -160,7 +160,6 @@ clang_tidy_library(
         ":readability",
         ":utils",
         "//clang:tooling",
-        "//clang:transformer",
     ],
 )
 

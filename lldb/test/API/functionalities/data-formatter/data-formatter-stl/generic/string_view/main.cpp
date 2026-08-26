@@ -95,6 +95,7 @@ int main() {
   std::string_view *null_str = nullptr;
 
   std::string hello = "Hellooo ";
+  std::string_view oops = hello + "World\n";
 
   q_source[0] = 'H'; // Set break point at this line.
 

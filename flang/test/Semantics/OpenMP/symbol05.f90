@@ -31,10 +31,10 @@ contains
     end block
   end subroutine foo
 end module mm
-!DEF: /TT MainProgram
-program TT
+!DEF: /tt MainProgram
+program tt
   !REF: /mm
   use :: mm
-  !DEF: /TT/foo (Subroutine) Use
+  !DEF: /tt/foo (Subroutine) Use
   call foo
-end program TT
+end program tt

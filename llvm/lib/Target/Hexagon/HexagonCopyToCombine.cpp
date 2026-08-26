@@ -457,7 +457,7 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
   TII = ST->getInstrInfo();
 
   const Function &F = MF.getFunction();
-  bool OptForSize = F.hasOptSize();
+  bool OptForSize = F.hasFnAttribute(Attribute::OptimizeForSize);
 
   // Combine aggressively (for code size)
   ShouldCombineAggressively =

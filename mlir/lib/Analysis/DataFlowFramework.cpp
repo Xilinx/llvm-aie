@@ -14,7 +14,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/Config/abi-breaking.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/DebugLog.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define DEBUG_TYPE "dataflow"
@@ -44,8 +44,9 @@ void AnalysisState::addDependency(ProgramPoint *dependent,
   (void)inserted;
   DATAFLOW_DEBUG({
     if (inserted) {
-      LDBG() << "Creating dependency between " << debugName << " of " << anchor
-             << "\nand " << debugName << " on " << dependent;
+      llvm::dbgs() << "Creating dependency between " << debugName << " of "
+                   << anchor << "\nand " << debugName << " on " << dependent
+                   << "\n";
     }
   });
 }
@@ -115,7 +116,8 @@ LogicalResult DataFlowSolver::initializeAndRun(Operation *top) {
 
   // Initialize the analyses.
   for (DataFlowAnalysis &analysis : llvm::make_pointee_range(childAnalyses)) {
-    DATAFLOW_DEBUG(LDBG() << "Priming analysis: " << analysis.debugName);
+    DATAFLOW_DEBUG(llvm::dbgs()
+                   << "Priming analysis: " << analysis.debugName << "\n");
     if (failed(analysis.initialize(top)))
       return failure();
   }
@@ -127,8 +129,8 @@ LogicalResult DataFlowSolver::initializeAndRun(Operation *top) {
     auto [point, analysis] = worklist.front();
     worklist.pop();
 
-    DATAFLOW_DEBUG(LDBG() << "Invoking '" << analysis->debugName
-                          << "' on: " << point);
+    DATAFLOW_DEBUG(llvm::dbgs() << "Invoking '" << analysis->debugName
+                                << "' on: " << point << "\n");
     if (failed(analysis->visit(point)))
       return failure();
   }
@@ -141,9 +143,9 @@ void DataFlowSolver::propagateIfChanged(AnalysisState *state,
   assert(isRunning &&
          "DataFlowSolver is not running, should not use propagateIfChanged");
   if (changed == ChangeResult::Change) {
-    DATAFLOW_DEBUG(LDBG() << "Propagating update to " << state->debugName
-                          << " of " << state->anchor << "\n"
-                          << "Value: " << *state);
+    DATAFLOW_DEBUG(llvm::dbgs() << "Propagating update to " << state->debugName
+                                << " of " << state->anchor << "\n"
+                                << "Value: " << *state << "\n");
     state->onUpdate(this);
   }
 }

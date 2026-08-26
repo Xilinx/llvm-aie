@@ -381,13 +381,9 @@ void AMDGPUMCCodeEmitter::encodeInstruction(const MCInst &MI,
 
   // Set unused op_sel_hi bits to 1 for VOP3P and MAI instructions.
   // Note that accvgpr_read/write are MAI, have src0, but do not use op_sel.
-  if (((Desc.TSFlags & SIInstrFlags::VOP3P) ||
-       Opcode == AMDGPU::V_ACCVGPR_READ_B32_vi ||
-       Opcode == AMDGPU::V_ACCVGPR_WRITE_B32_vi) &&
-      // Matrix B format operand reuses op_sel_hi.
-      !AMDGPU::hasNamedOperand(Opcode, AMDGPU::OpName::matrix_b_fmt) &&
-      // Matrix B reuse operand reuses op_sel_hi.
-      !AMDGPU::hasNamedOperand(Opcode, AMDGPU::OpName::matrix_b_reuse)) {
+  if ((Desc.TSFlags & SIInstrFlags::VOP3P) ||
+      Opcode == AMDGPU::V_ACCVGPR_READ_B32_vi ||
+      Opcode == AMDGPU::V_ACCVGPR_WRITE_B32_vi) {
     Encoding |= getImplicitOpSelHiEncoding(Opcode);
   }
 
@@ -566,8 +562,7 @@ static bool needsPCRel(const MCExpr *Expr) {
   case MCExpr::SymbolRef: {
     auto *SE = cast<MCSymbolRefExpr>(Expr);
     auto Spec = AMDGPU::getSpecifier(SE);
-    return Spec != AMDGPUMCExpr::S_ABS32_LO &&
-           Spec != AMDGPUMCExpr::S_ABS32_HI && Spec != AMDGPUMCExpr::S_ABS64;
+    return Spec != AMDGPUMCExpr::S_ABS32_LO && Spec != AMDGPUMCExpr::S_ABS32_HI;
   }
   case MCExpr::Binary: {
     auto *BE = cast<MCBinaryExpr>(Expr);
@@ -690,12 +685,7 @@ void AMDGPUMCCodeEmitter::getMachineOpValueCommon(
     const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
     uint32_t Offset = Desc.getSize();
     assert(Offset == 4 || Offset == 8);
-    auto OpType = Desc.operands()[OpNo].OperandType;
-    MCFixupKind Kind = (STI.hasFeature(AMDGPU::Feature64BitLiterals) &&
-                        OpType == AMDGPU::OPERAND_REG_IMM_INT64)
-                           ? FK_Data_8
-                           : FK_Data_4;
-    addFixup(Fixups, Offset, MO.getExpr(), Kind, PCRel);
+    addFixup(Fixups, Offset, MO.getExpr(), FK_Data_4, PCRel);
   }
 
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());

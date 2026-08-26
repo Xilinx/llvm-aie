@@ -19,10 +19,11 @@
 #include "mlir/Interfaces/ValueBoundsOpInterface.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "llvm/ADT/IntEqClasses.h"
-#include "llvm/Support/DebugLog.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/InterleavedRange.h"
 
 #define DEBUG_TYPE "affine-min-max"
+#define DBGS() (llvm::dbgs() << "[" DEBUG_TYPE << "]: ")
 
 using namespace mlir;
 using namespace mlir::affine;
@@ -38,7 +39,7 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
   ValueRange operands = affineOp.getOperands();
   static constexpr bool isMin = std::is_same_v<AffineOp, AffineMinOp>;
 
-  LDBG() << "analyzing value: `" << affineOp;
+  LLVM_DEBUG({ DBGS() << "analyzing value: `" << affineOp << "`\n"; });
 
   // Create a `Variable` list with values corresponding to each of the results
   // in the affine affineMap.
@@ -47,9 +48,12 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
       [&](unsigned i) {
         return Variable(affineMap.getSliceMap(i, 1), operands);
       });
-  LDBG() << "- constructed variables are: "
-         << llvm::interleaved_array(llvm::map_range(
-                variables, [](const Variable &v) { return v.getMap(); }));
+  LLVM_DEBUG({
+    DBGS() << "- constructed variables are: "
+           << llvm::interleaved_array(llvm::map_range(
+                  variables, [](const Variable &v) { return v.getMap(); }))
+           << "`\n";
+  });
 
   // Get the comparison operation.
   ComparisonOperator cmpOp =
@@ -68,8 +72,10 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
     // Initialize the bound.
     Variable *bound = &v;
 
-    LDBG() << "- inspecting variable: #" << i << ", with map: `" << v.getMap()
-           << "`\n";
+    LLVM_DEBUG({
+      DBGS() << "- inspecting variable: #" << i << ", with map: `" << v.getMap()
+             << "`\n";
+    });
 
     // Check against the other variables.
     for (size_t j = i + 1; j < variables.size(); ++j) {
@@ -81,8 +87,10 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
       // Get the bound of the equivalence class or itself.
       Variable *nv = bounds.lookup_or(jEqClass, &variables[j]);
 
-      LDBG() << "- comparing with variable: #" << jEqClass
-             << ", with map: " << nv->getMap();
+      LLVM_DEBUG({
+        DBGS() << "- comparing with variable: #" << jEqClass
+               << ", with map: " << nv->getMap() << "\n";
+      });
 
       // Compare the variables.
       FailureOr<bool> cmpResult =
@@ -90,14 +98,18 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
 
       // The variables cannot be compared.
       if (failed(cmpResult)) {
-        LDBG() << "-- classes: #" << i << ", #" << jEqClass
-               << " cannot be merged";
+        LLVM_DEBUG({
+          DBGS() << "-- classes: #" << i << ", #" << jEqClass
+                 << " cannot be merged\n";
+        });
         continue;
       }
 
       // Join the equivalent classes and update the bound if necessary.
-      LDBG() << "-- merging classes: #" << i << ", #" << jEqClass
-             << ", is cmp(lhs, rhs): " << *cmpResult << "`";
+      LLVM_DEBUG({
+        DBGS() << "-- merging classes: #" << i << ", #" << jEqClass
+               << ", is cmp(lhs, rhs): " << *cmpResult << "`\n";
+      });
       if (*cmpResult) {
         boundedClasses.join(eqClass, jEqClass);
       } else {
@@ -112,7 +124,8 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
 
   // Return if there's no simplification.
   if (bounds.size() >= affineMap.getNumResults()) {
-    LDBG() << "- the affine operation couldn't get simplified";
+    LLVM_DEBUG(
+        { DBGS() << "- the affine operation couldn't get simplified\n"; });
     return false;
   }
 
@@ -122,11 +135,13 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
   for (auto [k, bound] : bounds)
     results.push_back(bound->getMap().getResult(0));
 
-  LDBG() << "- starting from map: " << affineMap;
-  LDBG() << "- creating new map with:";
-  LDBG() << "--- dims: " << affineMap.getNumDims();
-  LDBG() << "--- syms: " << affineMap.getNumSymbols();
-  LDBG() << "--- res: " << llvm::interleaved_array(results);
+  LLVM_DEBUG({
+    DBGS() << "- starting from map: " << affineMap << "\n";
+    DBGS() << "- creating new map with: \n";
+    DBGS() << "--- dims: " << affineMap.getNumDims() << "\n";
+    DBGS() << "--- syms: " << affineMap.getNumSymbols() << "\n";
+    DBGS() << "--- res: " << llvm::interleaved_array(results) << "\n";
+  });
 
   affineMap =
       AffineMap::get(0, affineMap.getNumSymbols() + affineMap.getNumDims(),
@@ -134,7 +149,7 @@ static bool simplifyAffineMinMaxOp(RewriterBase &rewriter, AffineOp affineOp) {
 
   // Update the affine op.
   rewriter.modifyOpInPlace(affineOp, [&]() { affineOp.setMap(affineMap); });
-  LDBG() << "- simplified affine op: `" << affineOp << "`";
+  LLVM_DEBUG({ DBGS() << "- simplified affine op: `" << affineOp << "`\n"; });
   return true;
 }
 

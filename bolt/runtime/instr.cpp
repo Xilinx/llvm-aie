@@ -568,13 +568,13 @@ struct FunctionDescription {
 /// should be straightforward as most data is POD or an array of POD elements.
 /// This metadata is used to reconstruct function CFGs.
 struct ProfileWriterContext {
-  const IndCallDescription *IndCallDescriptions;
-  const IndCallTargetDescription *IndCallTargets;
-  const uint8_t *FuncDescriptions;
-  const char *Strings; // String table with function names used in this binary
+  IndCallDescription *IndCallDescriptions;
+  IndCallTargetDescription *IndCallTargets;
+  uint8_t *FuncDescriptions;
+  char *Strings;  // String table with function names used in this binary
   int FileDesc;   // File descriptor for the file on disk backing this
                   // information in memory via mmap
-  const void *MMapPtr; // The mmap ptr
+  void *MMapPtr;  // The mmap ptr
   int MMapSize;   // The mmap size
 
   /// Hash table storing all possible call destinations to detect untracked
@@ -672,15 +672,14 @@ bool parseAddressRange(const char *Str, uint64_t &StartAddress,
   return true;
 }
 
-static constexpr uint32_t NameMax = 4096;
-static char TargetPath[NameMax] = {};
-
 /// Get full path to the real binary by getting current virtual address
 /// and searching for the appropriate link in address range in
 /// /proc/self/map_files
 static char *getBinaryPath() {
   const uint32_t BufSize = 1024;
+  const uint32_t NameMax = 4096;
   const char DirPath[] = "/proc/self/map_files/";
+  static char TargetPath[NameMax] = {};
   char Buf[BufSize];
 
   if (__bolt_instr_binpath[0] != '\0')
@@ -720,46 +719,36 @@ static char *getBinaryPath() {
   return nullptr;
 }
 
-ProfileWriterContext readDescriptions(const uint8_t *BinContents,
-                                      uint64_t Size) {
+ProfileWriterContext readDescriptions() {
   ProfileWriterContext Result;
+  char *BinPath = getBinaryPath();
+  assert(BinPath && BinPath[0] != '\0', "failed to find binary path");
 
-  assert((BinContents == nullptr) == (Size == 0),
-         "either empty or valid library content buffer");
+  uint64_t FD = __open(BinPath, O_RDONLY,
+                       /*mode=*/0666);
+  assert(static_cast<int64_t>(FD) >= 0, "failed to open binary path");
 
-  if (BinContents) {
-    Result.FileDesc = -1;
-  } else {
-    const char *BinPath = getBinaryPath();
-    assert(BinPath && BinPath[0] != '\0', "failed to find binary path");
+  Result.FileDesc = FD;
 
-    uint64_t FD = __open(BinPath, O_RDONLY,
-                         /*mode=*/0666);
-    assert(static_cast<int64_t>(FD) >= 0, "failed to open binary path");
-
-    Result.FileDesc = FD;
-
-    // mmap our binary to memory
-    Size = __lseek(FD, 0, SEEK_END);
-    BinContents = reinterpret_cast<uint8_t *>(
-        __mmap(0, Size, PROT_READ, MAP_PRIVATE, FD, 0));
-    assert(BinContents != MAP_FAILED, "readDescriptions: Failed to mmap self!");
-  }
+  // mmap our binary to memory
+  uint64_t Size = __lseek(FD, 0, SEEK_END);
+  uint8_t *BinContents = reinterpret_cast<uint8_t *>(
+      __mmap(0, Size, PROT_READ, MAP_PRIVATE, FD, 0));
+  assert(BinContents != MAP_FAILED, "readDescriptions: Failed to mmap self!");
   Result.MMapPtr = BinContents;
   Result.MMapSize = Size;
-  const Elf64_Ehdr *Hdr = reinterpret_cast<const Elf64_Ehdr *>(BinContents);
-  const Elf64_Shdr *Shdr =
-      reinterpret_cast<const Elf64_Shdr *>(BinContents + Hdr->e_shoff);
-  const Elf64_Shdr *StringTblHeader = reinterpret_cast<const Elf64_Shdr *>(
+  Elf64_Ehdr *Hdr = reinterpret_cast<Elf64_Ehdr *>(BinContents);
+  Elf64_Shdr *Shdr = reinterpret_cast<Elf64_Shdr *>(BinContents + Hdr->e_shoff);
+  Elf64_Shdr *StringTblHeader = reinterpret_cast<Elf64_Shdr *>(
       BinContents + Hdr->e_shoff + Hdr->e_shstrndx * Hdr->e_shentsize);
 
   // Find .bolt.instr.tables with the data we need and set pointers to it
   for (int I = 0; I < Hdr->e_shnum; ++I) {
-    const char *SecName = reinterpret_cast<const char *>(
+    char *SecName = reinterpret_cast<char *>(
         BinContents + StringTblHeader->sh_offset + Shdr->sh_name);
     if (compareStr(SecName, ".bolt.instr.tables", 64) != 0) {
-      Shdr = reinterpret_cast<const Elf64_Shdr *>(BinContents + Hdr->e_shoff +
-                                                  (I + 1) * Hdr->e_shentsize);
+      Shdr = reinterpret_cast<Elf64_Shdr *>(BinContents + Hdr->e_shoff +
+                                            (I + 1) * Hdr->e_shentsize);
       continue;
     }
     // Actual contents of the ELF note start after offset 20 decimal:
@@ -769,19 +758,19 @@ ProfileWriterContext readDescriptions(const uint8_t *BinContents,
     // Offset 12: Producer name (BOLT\0) (5 bytes + align to 4-byte boundary)
     // Offset 20: Contents
     uint32_t IndCallDescSize =
-        *reinterpret_cast<const uint32_t *>(BinContents + Shdr->sh_offset + 20);
-    uint32_t IndCallTargetDescSize = *reinterpret_cast<const uint32_t *>(
+        *reinterpret_cast<uint32_t *>(BinContents + Shdr->sh_offset + 20);
+    uint32_t IndCallTargetDescSize = *reinterpret_cast<uint32_t *>(
         BinContents + Shdr->sh_offset + 24 + IndCallDescSize);
-    uint32_t FuncDescSize = *reinterpret_cast<const uint32_t *>(
-        BinContents + Shdr->sh_offset + 28 + IndCallDescSize +
-        IndCallTargetDescSize);
-    Result.IndCallDescriptions = reinterpret_cast<const IndCallDescription *>(
+    uint32_t FuncDescSize =
+        *reinterpret_cast<uint32_t *>(BinContents + Shdr->sh_offset + 28 +
+                                      IndCallDescSize + IndCallTargetDescSize);
+    Result.IndCallDescriptions = reinterpret_cast<IndCallDescription *>(
         BinContents + Shdr->sh_offset + 24);
-    Result.IndCallTargets = reinterpret_cast<const IndCallTargetDescription *>(
+    Result.IndCallTargets = reinterpret_cast<IndCallTargetDescription *>(
         BinContents + Shdr->sh_offset + 28 + IndCallDescSize);
     Result.FuncDescriptions = BinContents + Shdr->sh_offset + 32 +
                               IndCallDescSize + IndCallTargetDescSize;
-    Result.Strings = reinterpret_cast<const char *>(
+    Result.Strings = reinterpret_cast<char *>(
         BinContents + Shdr->sh_offset + 32 + IndCallDescSize +
         IndCallTargetDescSize + FuncDescSize);
     return Result;
@@ -825,14 +814,13 @@ void printStats(const ProfileWriterContext &Ctx) {
       strCopy(StatPtr,
               "\nBOLT INSTRUMENTATION RUNTIME STATISTICS\n\nIndCallDescSize: ");
   StatPtr = intToStr(StatPtr,
-                     Ctx.FuncDescriptions - reinterpret_cast<const uint8_t *>(
-                                                Ctx.IndCallDescriptions),
+                     Ctx.FuncDescriptions -
+                         reinterpret_cast<uint8_t *>(Ctx.IndCallDescriptions),
                      10);
   StatPtr = strCopy(StatPtr, "\nFuncDescSize: ");
-  StatPtr = intToStr(StatPtr,
-                     reinterpret_cast<const uint8_t *>(Ctx.Strings) -
-                         Ctx.FuncDescriptions,
-                     10);
+  StatPtr = intToStr(
+      StatPtr,
+      reinterpret_cast<uint8_t *>(Ctx.Strings) - Ctx.FuncDescriptions, 10);
   StatPtr = strCopy(StatPtr, "\n__bolt_instr_num_ind_calls: ");
   StatPtr = intToStr(StatPtr, __bolt_instr_num_ind_calls, 10);
   StatPtr = strCopy(StatPtr, "\n__bolt_instr_num_funcs: ");
@@ -1519,7 +1507,7 @@ extern "C" void __bolt_instr_clear_counters() {
 }
 
 /// This is the entry point for profile writing.
-/// There are four ways of getting here:
+/// There are three ways of getting here:
 ///
 ///  * Program execution ended, finalization methods are running and BOLT
 ///    hooked into FINI from your binary dynamic section;
@@ -1528,18 +1516,9 @@ extern "C" void __bolt_instr_clear_counters() {
 ///  * BOLT prints this function address so you can attach a debugger and
 ///    call this function directly to get your profile written to disk
 ///    on demand.
-///  * Application can, at interesting runtime point, iterate through all
-///    the loaded native libraries and for each call dlopen() and dlsym()
-///    to get a pointer to this function and call through the acquired
-///    function pointer to dump profile data.
 ///
 extern "C" void __attribute((force_align_arg_pointer))
-__bolt_instr_data_dump(int FD, const char *LibPath = nullptr,
-                       const uint8_t *LibContents = nullptr,
-                       uint64_t LibSize = 0) {
-  if (LibPath)
-    strCopy(TargetPath, LibPath, NameMax);
-
+__bolt_instr_data_dump(int FD) {
   // Already dumping
   if (!GlobalWriteProfileMutex->acquire())
     return;
@@ -1550,7 +1529,7 @@ __bolt_instr_data_dump(int FD, const char *LibPath = nullptr,
   assert(ret == 0, "Failed to ftruncate!");
   BumpPtrAllocator HashAlloc;
   HashAlloc.setMaxSize(0x6400000);
-  ProfileWriterContext Ctx = readDescriptions(LibContents, LibSize);
+  ProfileWriterContext Ctx = readDescriptions();
   Ctx.CallFlowTable = new (HashAlloc, 0) CallFlowHashTable(HashAlloc);
 
   DEBUG(printStats(Ctx));
@@ -1570,10 +1549,8 @@ __bolt_instr_data_dump(int FD, const char *LibPath = nullptr,
   Ctx.CallFlowTable->forEachElement(visitCallFlowEntry, FD, &Ctx);
 
   __fsync(FD);
-  if (Ctx.FileDesc != -1) {
-    __munmap((void *)Ctx.MMapPtr, Ctx.MMapSize);
-    __close(Ctx.FileDesc);
-  }
+  __munmap(Ctx.MMapPtr, Ctx.MMapSize);
+  __close(Ctx.FileDesc);
   HashAlloc.destroy();
   GlobalWriteProfileMutex->release();
   DEBUG(report("Finished writing profile.\n"));
@@ -1779,7 +1756,7 @@ extern "C" __attribute((naked)) void __bolt_instr_start()
                       "jal x1, __bolt_instr_setup\n"
                       RESTORE_ALL
                       "setup_symbol:\n"
-                      "auipc x5, %%pcrel_hi(__bolt_start_trampoline)\n"
+                      "auipc x5, %%pcrel_hi(__bolt_start_trampoline)\n" 
                       "addi x5, x5, %%pcrel_lo(setup_symbol)\n"
                       "jr x5\n"
                       :::);
@@ -1811,8 +1788,8 @@ extern "C" void __bolt_instr_fini() {
   __asm__ __volatile__(
                       SAVE_ALL
                       "fini_symbol:\n"
-                      "auipc x5, %%pcrel_hi(__bolt_fini_trampoline)\n"
-                      "addi x5, x5, %%pcrel_lo(fini_symbol)\n"
+                      "auipc x5, %%pcrel_hi(__bolt_fini_trampoline)\n" 
+                      "addi x5, x5, %%pcrel_lo(fini_symbol)\n" 
                       "jalr x1, 0(x5)\n"
                       RESTORE_ALL
                       :::);

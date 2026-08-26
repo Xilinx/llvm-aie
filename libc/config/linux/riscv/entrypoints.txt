@@ -368,9 +368,6 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.wchar.wcslen
     libc.src.wchar.wctob
 
-    # wctype.h entrypoints
-    libc.src.wctype.iswalpha
-
     # sys/uio.h entrypoints
     libc.src.sys.uio.writev
     libc.src.sys.uio.readv

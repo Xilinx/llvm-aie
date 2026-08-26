@@ -422,18 +422,9 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     ArrayRef<llvm::Value *> operandsRef(operands);
     llvm::CallInst *call;
     if (auto attr = callOp.getCalleeAttr()) {
-      if (llvm::Function *function =
-              moduleTranslation.lookupFunction(attr.getValue())) {
-        call = builder.CreateCall(function, operandsRef, opBundles);
-      } else {
-        Operation *moduleOp = parentLLVMModule(&opInst);
-        Operation *ifuncOp =
-            moduleTranslation.symbolTable().lookupSymbolIn(moduleOp, attr);
-        llvm::GlobalValue *ifunc = moduleTranslation.lookupIFunc(ifuncOp);
-        llvm::FunctionType *calleeType = llvm::cast<llvm::FunctionType>(
-            moduleTranslation.convertType(callOp.getCalleeFunctionType()));
-        call = builder.CreateCall(calleeType, ifunc, operandsRef, opBundles);
-      }
+      call =
+          builder.CreateCall(moduleTranslation.lookupFunction(attr.getValue()),
+                             operandsRef, opBundles);
     } else {
       llvm::FunctionType *calleeType = llvm::cast<llvm::FunctionType>(
           moduleTranslation.convertType(callOp.getCalleeFunctionType()));
@@ -657,21 +648,18 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     LLVM::LLVMFuncOp function =
         addressOfOp.getFunction(moduleTranslation.symbolTable());
     LLVM::AliasOp alias = addressOfOp.getAlias(moduleTranslation.symbolTable());
-    LLVM::IFuncOp ifunc = addressOfOp.getIFunc(moduleTranslation.symbolTable());
 
     // The verifier should not have allowed this.
-    assert((global || function || alias || ifunc) &&
-           "referencing an undefined global, function, alias, or ifunc");
+    assert((global || function || alias) &&
+           "referencing an undefined global, function, or alias");
 
     llvm::Value *llvmValue = nullptr;
     if (global)
       llvmValue = moduleTranslation.lookupGlobal(global);
     else if (alias)
       llvmValue = moduleTranslation.lookupAlias(alias);
-    else if (function)
-      llvmValue = moduleTranslation.lookupFunction(function.getName());
     else
-      llvmValue = moduleTranslation.lookupIFunc(ifunc);
+      llvmValue = moduleTranslation.lookupFunction(function.getName());
 
     moduleTranslation.mapValue(addressOfOp.getResult(), llvmValue);
     return success();

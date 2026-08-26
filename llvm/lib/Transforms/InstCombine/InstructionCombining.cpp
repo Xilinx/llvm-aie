@@ -219,64 +219,18 @@ Value *InstCombinerImpl::EmitGEPOffset(GEPOperator *GEP, bool RewriteGEP) {
 Value *InstCombinerImpl::EmitGEPOffsets(ArrayRef<GEPOperator *> GEPs,
                                         GEPNoWrapFlags NW, Type *IdxTy,
                                         bool RewriteGEPs) {
-  auto Add = [&](Value *Sum, Value *Offset) -> Value * {
-    if (Sum)
-      return Builder.CreateAdd(Sum, Offset, "", NW.hasNoUnsignedWrap(),
-                               NW.isInBounds());
-    else
-      return Offset;
-  };
-
   Value *Sum = nullptr;
-  Value *OneUseSum = nullptr;
-  Value *OneUseBase = nullptr;
-  GEPNoWrapFlags OneUseFlags = GEPNoWrapFlags::all();
   for (GEPOperator *GEP : reverse(GEPs)) {
-    Value *Offset;
-    {
-      // Expand the offset at the point of the previous GEP to enable rewriting.
-      // However, use the original insertion point for calculating Sum.
-      IRBuilderBase::InsertPointGuard Guard(Builder);
-      auto *Inst = dyn_cast<Instruction>(GEP);
-      if (RewriteGEPs && Inst)
-        Builder.SetInsertPoint(Inst);
-
-      Offset = llvm::emitGEPOffset(&Builder, DL, GEP);
-      if (Offset->getType() != IdxTy)
-        Offset = Builder.CreateVectorSplat(
-            cast<VectorType>(IdxTy)->getElementCount(), Offset);
-      if (GEP->hasOneUse()) {
-        // Offsets of one-use GEPs will be merged into the next multi-use GEP.
-        OneUseSum = Add(OneUseSum, Offset);
-        OneUseFlags = OneUseFlags.intersectForOffsetAdd(GEP->getNoWrapFlags());
-        if (!OneUseBase)
-          OneUseBase = GEP->getPointerOperand();
-        continue;
-      }
-
-      if (OneUseSum)
-        Offset = Add(OneUseSum, Offset);
-
-      // Rewrite the GEP to reuse the computed offset. This also includes
-      // offsets from preceding one-use GEPs.
-      if (RewriteGEPs && Inst &&
-          !(GEP->getSourceElementType()->isIntegerTy(8) &&
-            GEP->getOperand(1) == Offset)) {
-        replaceInstUsesWith(
-            *Inst,
-            Builder.CreatePtrAdd(
-                OneUseBase ? OneUseBase : GEP->getPointerOperand(), Offset, "",
-                OneUseFlags.intersectForOffsetAdd(GEP->getNoWrapFlags())));
-        eraseInstFromFunction(*Inst);
-      }
-    }
-
-    Sum = Add(Sum, Offset);
-    OneUseSum = OneUseBase = nullptr;
-    OneUseFlags = GEPNoWrapFlags::all();
+    Value *Offset = EmitGEPOffset(GEP, RewriteGEPs);
+    if (Offset->getType() != IdxTy)
+      Offset = Builder.CreateVectorSplat(
+          cast<VectorType>(IdxTy)->getElementCount(), Offset);
+    if (Sum)
+      Sum = Builder.CreateAdd(Sum, Offset, "", NW.hasNoUnsignedWrap(),
+                              NW.isInBounds());
+    else
+      Sum = Offset;
   }
-  if (OneUseSum)
-    Sum = Add(Sum, OneUseSum);
   if (!Sum)
     return Constant::getNullValue(IdxTy);
   return Sum;
@@ -1463,17 +1417,24 @@ void InstCombinerImpl::freelyInvertAllUsersOf(Value *I, Value *IgnoredUser) {
   }
 
   // Update pre-existing debug value uses.
+  SmallVector<DbgValueInst *, 4> DbgValues;
   SmallVector<DbgVariableRecord *, 4> DbgVariableRecords;
-  llvm::findDbgValues(I, DbgVariableRecords);
+  llvm::findDbgValues(DbgValues, I, &DbgVariableRecords);
 
-  for (DbgVariableRecord *DbgVal : DbgVariableRecords) {
+  auto InvertDbgValueUse = [&](auto *DbgVal) {
     SmallVector<uint64_t, 1> Ops = {dwarf::DW_OP_not};
     for (unsigned Idx = 0, End = DbgVal->getNumVariableLocationOps();
          Idx != End; ++Idx)
       if (DbgVal->getVariableLocationOp(Idx) == I)
         DbgVal->setExpression(
             DIExpression::appendOpsToArg(DbgVal->getExpression(), Ops, Idx));
-  }
+  };
+
+  for (DbgValueInst *DVI : DbgValues)
+    InvertDbgValueUse(DVI);
+
+  for (DbgVariableRecord *DVR : DbgVariableRecords)
+    InvertDbgValueUse(DVR);
 }
 
 /// Given a 'sub' instruction, return the RHS of the instruction if the LHS is a
@@ -3609,10 +3570,11 @@ Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
 
   // If we are removing an alloca with a dbg.declare, insert dbg.value calls
   // before each store.
+  SmallVector<DbgVariableIntrinsic *, 8> DVIs;
   SmallVector<DbgVariableRecord *, 8> DVRs;
   std::unique_ptr<DIBuilder> DIB;
   if (isa<AllocaInst>(MI)) {
-    findDbgUsers(&MI, DVRs);
+    findDbgUsers(DVIs, &MI, &DVRs);
     DIB.reset(new DIBuilder(*MI.getModule(), /*AllowUnresolved=*/false));
   }
 
@@ -3682,6 +3644,9 @@ Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
                             ConstantInt::get(Type::getInt1Ty(C->getContext()),
                                              C->isFalseWhenEqual()));
       } else if (auto *SI = dyn_cast<StoreInst>(I)) {
+        for (auto *DVI : DVIs)
+          if (DVI->isAddressOfVariable())
+            ConvertDebugDeclareToDebugValue(DVI, SI, *DIB);
         for (auto *DVR : DVRs)
           if (DVR->isAddressOfVariable())
             ConvertDebugDeclareToDebugValue(DVR, SI, *DIB);
@@ -3734,6 +3699,9 @@ Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
     //
     // FIXME: the Assignment Tracking project has now likely made this
     // redundant (and it's sometimes harmful).
+    for (auto *DVI : DVIs)
+      if (DVI->isAddressOfVariable() || DVI->getExpression()->startsWithDeref())
+        DVI->eraseFromParent();
     for (auto *DVR : DVRs)
       if (DVR->isAddressOfVariable() || DVR->getExpression()->startsWithDeref())
         DVR->eraseFromParent();
@@ -3922,7 +3890,7 @@ bool InstCombinerImpl::removeInstructionsBeforeUnreachable(Instruction &I) {
   // This includes instructions like stores and "llvm.assume" that may not get
   // removed by simple dead code elimination.
   bool Changed = false;
-  while (Instruction *Prev = I.getPrevNode()) {
+  while (Instruction *Prev = I.getPrevNonDebugInstruction()) {
     // While we theoretically can erase EH, that would result in a block that
     // used to start with an EH no longer starting with EH, which is invalid.
     // To make it valid, we'd need to fixup predecessors to no longer refer to
@@ -4931,14 +4899,13 @@ InstCombinerImpl::pushFreezeToPreventPoisonFromPropagating(FreezeInst &OrigFI) {
   // If operand is guaranteed not to be poison, there is no need to add freeze
   // to the operand. So we first find the operand that is not guaranteed to be
   // poison.
-  Value *MaybePoisonOperand = nullptr;
-  for (Value *V : OrigOpInst->operands()) {
-    if (isa<MetadataAsValue>(V) || isGuaranteedNotToBeUndefOrPoison(V) ||
-        // Treat identical operands as a single operand.
-        (MaybePoisonOperand && MaybePoisonOperand == V))
+  Use *MaybePoisonOperand = nullptr;
+  for (Use &U : OrigOpInst->operands()) {
+    if (isa<MetadataAsValue>(U.get()) ||
+        isGuaranteedNotToBeUndefOrPoison(U.get()))
       continue;
     if (!MaybePoisonOperand)
-      MaybePoisonOperand = V;
+      MaybePoisonOperand = &U;
     else
       return nullptr;
   }
@@ -4950,10 +4917,10 @@ InstCombinerImpl::pushFreezeToPreventPoisonFromPropagating(FreezeInst &OrigFI) {
     return OrigOp;
 
   Builder.SetInsertPoint(OrigOpInst);
-  Value *FrozenMaybePoisonOperand = Builder.CreateFreeze(
-      MaybePoisonOperand, MaybePoisonOperand->getName() + ".fr");
+  auto *FrozenMaybePoisonOperand = Builder.CreateFreeze(
+      MaybePoisonOperand->get(), MaybePoisonOperand->get()->getName() + ".fr");
 
-  OrigOpInst->replaceUsesOfWith(MaybePoisonOperand, FrozenMaybePoisonOperand);
+  replaceUse(*MaybePoisonOperand, FrozenMaybePoisonOperand);
   return OrigOp;
 }
 
@@ -5285,8 +5252,11 @@ bool InstCombinerImpl::tryToSinkInstruction(Instruction *I,
   // maximise the range variables have location for. If we cannot salvage, then
   // mark the location undef: we know it was supposed to receive a new location
   // here, but that computation has been sunk.
+  SmallVector<DbgVariableIntrinsic *, 2> DbgUsers;
   SmallVector<DbgVariableRecord *, 2> DbgVariableRecords;
-  findDbgUsers(I, DbgVariableRecords);
+  findDbgUsers(DbgUsers, I, &DbgVariableRecords);
+  if (!DbgUsers.empty())
+    tryToSinkInstructionDbgValues(I, InsertPos, SrcBlock, DestBlock, DbgUsers);
   if (!DbgVariableRecords.empty())
     tryToSinkInstructionDbgVariableRecords(I, InsertPos, SrcBlock, DestBlock,
                                            DbgVariableRecords);
@@ -5303,12 +5273,71 @@ bool InstCombinerImpl::tryToSinkInstruction(Instruction *I,
   return true;
 }
 
+void InstCombinerImpl::tryToSinkInstructionDbgValues(
+    Instruction *I, BasicBlock::iterator InsertPos, BasicBlock *SrcBlock,
+    BasicBlock *DestBlock, SmallVectorImpl<DbgVariableIntrinsic *> &DbgUsers) {
+  // For all debug values in the destination block, the sunk instruction
+  // will still be available, so they do not need to be dropped.
+  SmallVector<DbgVariableIntrinsic *, 2> DbgUsersToSalvage;
+  for (auto &DbgUser : DbgUsers)
+    if (DbgUser->getParent() != DestBlock)
+      DbgUsersToSalvage.push_back(DbgUser);
+
+  // Process the sinking DbgUsersToSalvage in reverse order, as we only want
+  // to clone the last appearing debug intrinsic for each given variable.
+  SmallVector<DbgVariableIntrinsic *, 2> DbgUsersToSink;
+  for (DbgVariableIntrinsic *DVI : DbgUsersToSalvage)
+    if (DVI->getParent() == SrcBlock)
+      DbgUsersToSink.push_back(DVI);
+  llvm::sort(DbgUsersToSink,
+             [](auto *A, auto *B) { return B->comesBefore(A); });
+
+  SmallVector<DbgVariableIntrinsic *, 2> DIIClones;
+  SmallSet<DebugVariable, 4> SunkVariables;
+  for (auto *User : DbgUsersToSink) {
+    // A dbg.declare instruction should not be cloned, since there can only be
+    // one per variable fragment. It should be left in the original place
+    // because the sunk instruction is not an alloca (otherwise we could not be
+    // here).
+    if (isa<DbgDeclareInst>(User))
+      continue;
+
+    DebugVariable DbgUserVariable =
+        DebugVariable(User->getVariable(), User->getExpression(),
+                      User->getDebugLoc()->getInlinedAt());
+
+    if (!SunkVariables.insert(DbgUserVariable).second)
+      continue;
+
+    // Leave dbg.assign intrinsics in their original positions and there should
+    // be no need to insert a clone.
+    if (isa<DbgAssignIntrinsic>(User))
+      continue;
+
+    DIIClones.emplace_back(cast<DbgVariableIntrinsic>(User->clone()));
+    if (isa<DbgDeclareInst>(User) && isa<CastInst>(I))
+      DIIClones.back()->replaceVariableLocationOp(I, I->getOperand(0));
+    LLVM_DEBUG(dbgs() << "CLONE: " << *DIIClones.back() << '\n');
+  }
+
+  // Perform salvaging without the clones, then sink the clones.
+  if (!DIIClones.empty()) {
+    salvageDebugInfoForDbgValues(*I, DbgUsersToSalvage, {});
+    // The clones are in reverse order of original appearance, reverse again to
+    // maintain the original order.
+    for (auto &DIIClone : llvm::reverse(DIIClones)) {
+      DIIClone->insertBefore(InsertPos);
+      LLVM_DEBUG(dbgs() << "SINK: " << *DIIClone << '\n');
+    }
+  }
+}
+
 void InstCombinerImpl::tryToSinkInstructionDbgVariableRecords(
     Instruction *I, BasicBlock::iterator InsertPos, BasicBlock *SrcBlock,
     BasicBlock *DestBlock,
     SmallVectorImpl<DbgVariableRecord *> &DbgVariableRecords) {
-  // For all debug values in the destination block, the sunk instruction
-  // will still be available, so they do not need to be dropped.
+  // Implementation of tryToSinkInstructionDbgValues, but for the
+  // DbgVariableRecord of variable assignments rather than dbg.values.
 
   // Fetch all DbgVariableRecords not already in the destination.
   SmallVector<DbgVariableRecord *, 2> DbgVariableRecordsToSalvage;
@@ -5413,7 +5442,7 @@ void InstCombinerImpl::tryToSinkInstructionDbgVariableRecords(
   if (DVRClones.empty())
     return;
 
-  salvageDebugInfoForDbgValues(*I, DbgVariableRecordsToSalvage);
+  salvageDebugInfoForDbgValues(*I, {}, DbgVariableRecordsToSalvage);
 
   // The clones are in reverse order of original appearance. Assert that the
   // head bit is set on the iterator as we _should_ have received it via

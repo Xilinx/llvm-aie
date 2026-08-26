@@ -518,6 +518,7 @@ bool Sema::checkLiteralOperatorId(const CXXScopeSpec &SS,
   case NestedNameSpecifier::Global:
   case NestedNameSpecifier::Super:
   case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
     return false;
   }
 
@@ -3461,11 +3462,11 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     // non-templated allocation function we are trying to declare here.
     if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*Alloc)) {
       if (Func->getNumParams() == Params.size()) {
-        if (std::equal(Func->param_begin(), Func->param_end(), Params.begin(),
-                       Params.end(), [&](ParmVarDecl *D, QualType RT) {
-                         return Context.hasSameUnqualifiedType(D->getType(),
-                                                               RT);
-                       })) {
+        llvm::SmallVector<QualType, 3> FuncParams;
+        for (auto *P : Func->parameters())
+          FuncParams.push_back(
+              Context.getCanonicalType(P->getType().getUnqualifiedType()));
+        if (llvm::ArrayRef(FuncParams) == Params) {
           // Make the function visible to name lookup, even if we found it in
           // an unimported module. It either is an implicitly-declared global
           // allocation function, or is suppressing that function.
@@ -3476,8 +3477,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     }
   }
 
-  FunctionProtoType::ExtProtoInfo EPI(
-      Context.getTargetInfo().getDefaultCallingConv());
+  FunctionProtoType::ExtProtoInfo EPI(Context.getDefaultCallingConvention(
+      /*IsVariadic=*/false, /*IsCXXMethod=*/false, /*IsBuiltin=*/true));
 
   QualType BadAllocType;
   bool HasBadAllocExceptionSpec = Name.isAnyOperatorNew();
@@ -4095,7 +4096,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       if (!PointeeRD->hasIrrelevantDestructor()) {
         if (CXXDestructorDecl *Dtor = LookupDestructor(PointeeRD)) {
           if (Dtor->isCalledByDelete(OperatorDelete)) {
-            MarkFunctionReferenced(StartLoc, Dtor);
+            MarkFunctionReferenced(StartLoc,
+                                   const_cast<CXXDestructorDecl *>(Dtor));
             if (DiagnoseUseOfDecl(Dtor, StartLoc))
               return ExprError();
           }

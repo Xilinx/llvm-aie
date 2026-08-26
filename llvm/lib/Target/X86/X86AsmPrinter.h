@@ -151,7 +151,6 @@ private:
                                     MCSymbol *LazyPointer) override;
 
   void emitCallInstruction(const llvm::MCInst &MCI);
-  void maybeEmitNopAfterCallForWindowsEH(const MachineInstr *MI);
 
   // Emits a label to mark the next instruction as being relevant to Import Call
   // Optimization.

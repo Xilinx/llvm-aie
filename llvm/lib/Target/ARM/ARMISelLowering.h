@@ -681,12 +681,11 @@ class VectorType;
 
     unsigned getMaxSupportedInterleaveFactor() const override;
 
-    bool lowerInterleavedLoad(Instruction *Load, Value *Mask,
+    bool lowerInterleavedLoad(LoadInst *LI,
                               ArrayRef<ShuffleVectorInst *> Shuffles,
                               ArrayRef<unsigned> Indices,
                               unsigned Factor) const override;
-    bool lowerInterleavedStore(Instruction *Store, Value *Mask,
-                               ShuffleVectorInst *SVI,
+    bool lowerInterleavedStore(StoreInst *SI, ShuffleVectorInst *SVI,
                                unsigned Factor) const override;
 
     bool shouldInsertFencesForAtomic(const Instruction *I) const override;

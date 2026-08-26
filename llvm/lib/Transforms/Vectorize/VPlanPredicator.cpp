@@ -184,7 +184,8 @@ void VPPredicator::createSwitchEdgeMasks(VPInstruction *SI) {
   VPValue *Cond = SI->getOperand(0);
   VPBasicBlock *DefaultDst = cast<VPBasicBlock>(Src->getSuccessors()[0]);
   MapVector<VPBasicBlock *, SmallVector<VPValue *>> Dst2Compares;
-  for (const auto &[Idx, Succ] : enumerate(drop_begin(Src->getSuccessors()))) {
+  for (const auto &[Idx, Succ] :
+       enumerate(ArrayRef(Src->getSuccessors()).drop_front())) {
     VPBasicBlock *Dst = cast<VPBasicBlock>(Succ);
     assert(!getEdgeMask(Src, Dst) && "Edge masks already created");
     //  Cases whose destination is the same as default are redundant and can
@@ -205,7 +206,7 @@ void VPPredicator::createSwitchEdgeMasks(VPInstruction *SI) {
     // cases with destination == Dst are taken. Join the conditions for each
     // case whose destination == Dst using an OR.
     VPValue *Mask = Conds[0];
-    for (VPValue *V : drop_begin(Conds))
+    for (VPValue *V : ArrayRef<VPValue *>(Conds).drop_front())
       Mask = Builder.createOr(Mask, V);
     if (SrcMask)
       Mask = Builder.createLogicalAnd(SrcMask, Mask);
@@ -251,9 +252,8 @@ void VPPredicator::convertPhisToBlends(VPBasicBlock *VPBB) {
       }
       OperandsWithMask.push_back(EdgeMask);
     }
-    PHINode *IRPhi = cast_or_null<PHINode>(PhiR->getUnderlyingValue());
-    auto *Blend =
-        new VPBlendRecipe(IRPhi, OperandsWithMask, PhiR->getDebugLoc());
+    PHINode *IRPhi = cast<PHINode>(PhiR->getUnderlyingValue());
+    auto *Blend = new VPBlendRecipe(IRPhi, OperandsWithMask);
     Builder.insert(Blend);
     PhiR->replaceAllUsesWith(Blend);
     PhiR->eraseFromParent();

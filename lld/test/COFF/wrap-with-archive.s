@@ -6,8 +6,7 @@
 // RUN: rm -f %t.lib
 // RUN: llvm-ar rcs %t.lib %t.wrap.obj %t.other.obj
 
-// RUN: mkdir -p %t.dir
-// RUN: lld-link -out:%t.exe %t.main.obj -libpath:%t.dir %t.lib -entry:entry -subsystem:console -wrap:foo
+// RUN: lld-link -out:%t.exe %t.main.obj -libpath:%T %t.lib -entry:entry -subsystem:console -wrap:foo
 
 // Note: No real definition of foo exists here, but that works fine as long
 // as there's no actual references to __real_foo.

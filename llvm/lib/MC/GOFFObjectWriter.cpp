@@ -336,7 +336,7 @@ void GOFFWriter::defineSymbols() {
   unsigned Ordinal = 0;
   // Process all sections.
   for (MCSection &S : Asm) {
-    auto &Section = static_cast<MCSectionGOFF &>(S);
+    auto &Section = cast<MCSectionGOFF>(S);
     Section.setOrdinal(++Ordinal);
     defineSectionSymbols(Section);
   }

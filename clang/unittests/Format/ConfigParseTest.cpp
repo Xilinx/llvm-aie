@@ -249,7 +249,6 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(SpaceBeforeParensOptions,
                           AfterFunctionDefinitionName);
   CHECK_PARSE_NESTED_BOOL(SpaceBeforeParensOptions, AfterIfMacros);
-  CHECK_PARSE_NESTED_BOOL(SpaceBeforeParensOptions, AfterNot);
   CHECK_PARSE_NESTED_BOOL(SpaceBeforeParensOptions, AfterOverloadedOperator);
   CHECK_PARSE_NESTED_BOOL(SpaceBeforeParensOptions, AfterPlacementOperator);
   CHECK_PARSE_NESTED_BOOL(SpaceBeforeParensOptions, BeforeNonEmptyParentheses);
@@ -260,7 +259,6 @@ TEST(ConfigParseTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(SpacesInParensOptions, Other);
   CHECK_PARSE_NESTED_BOOL(SortIncludes, Enabled);
   CHECK_PARSE_NESTED_BOOL(SortIncludes, IgnoreCase);
-  CHECK_PARSE_NESTED_BOOL(SortIncludes, IgnoreExtension);
 }
 
 #undef CHECK_PARSE_BOOL
@@ -944,7 +942,6 @@ TEST(ConfigParseTest, ParsesConfiguration) {
 
   CHECK_PARSE_LIST(JavaImportGroups);
   CHECK_PARSE_LIST(Macros);
-  CHECK_PARSE_LIST(MacrosSkippedByRemoveParentheses);
   CHECK_PARSE_LIST(NamespaceMacros);
   CHECK_PARSE_LIST(ObjCPropertyAttributeOrder);
   CHECK_PARSE_LIST(TableGenBreakingDAGArgOperators);
@@ -982,20 +979,17 @@ TEST(ConfigParseTest, ParsesConfiguration) {
               IncludeStyle.IncludeIsMainSourceRegex, "abc$");
 
   Style.SortIncludes = {};
-  CHECK_PARSE(
-      "SortIncludes: true", SortIncludes,
-      FormatStyle::SortIncludesOptions(
-          {/*Enabled=*/true, /*IgnoreCase=*/false, /*IgnoreExtension=*/false}));
+  CHECK_PARSE("SortIncludes: true", SortIncludes,
+              FormatStyle::SortIncludesOptions(
+                  {/*Enabled=*/true, /*IgnoreCase=*/false}));
   CHECK_PARSE("SortIncludes: false", SortIncludes,
               FormatStyle::SortIncludesOptions({}));
-  CHECK_PARSE(
-      "SortIncludes: CaseInsensitive", SortIncludes,
-      FormatStyle::SortIncludesOptions(
-          {/*Enabled=*/true, /*IgnoreCase=*/true, /*IgnoreExtension=*/false}));
-  CHECK_PARSE(
-      "SortIncludes: CaseSensitive", SortIncludes,
-      FormatStyle::SortIncludesOptions(
-          {/*Enabled=*/true, /*IgnoreCase=*/false, /*IgnoreExtension=*/false}));
+  CHECK_PARSE("SortIncludes: CaseInsensitive", SortIncludes,
+              FormatStyle::SortIncludesOptions(
+                  {/*Enabled=*/true, /*IgnoreCase=*/true}));
+  CHECK_PARSE("SortIncludes: CaseSensitive", SortIncludes,
+              FormatStyle::SortIncludesOptions(
+                  {/*Enabled=*/true, /*IgnoreCase=*/false}));
   CHECK_PARSE("SortIncludes: Never", SortIncludes,
               FormatStyle::SortIncludesOptions({}));
 

@@ -12,7 +12,6 @@ unittest("BinaryFormatTests") {
     "MsgPackDocumentTest.cpp",
     "MsgPackReaderTest.cpp",
     "MsgPackWriterTest.cpp",
-    "SFrameTest.cpp",
     "TestFileMagic.cpp",
   ]
 }

@@ -62,7 +62,6 @@
 #include "flang-rt/runtime/stat.h"
 #include "flang-rt/runtime/type-info.h"
 #include "flang/Common/api-attrs.h"
-#include "flang/Common/optional.h"
 #include "flang/Runtime/freestanding-tools.h"
 #include <flang/Common/variant.h>
 
@@ -125,7 +124,7 @@ public:
 
 protected:
   const Descriptor &instance_, *from_{nullptr};
-  std::size_t elements_{instance_.InlineElements()};
+  std::size_t elements_{instance_.Elements()};
   std::size_t elementAt_{0};
   SubscriptValue subscripts_[common::maxRank];
   SubscriptValue fromSubscripts_[common::maxRank];
@@ -134,19 +133,11 @@ protected:
 // Base class for ticket workers that operate over derived type components.
 class Componentwise {
 public:
-  RT_API_ATTRS Componentwise(const typeInfo::DerivedType &derived)
-      : derived_{derived}, components_{derived_.component().InlineElements()} {
-    GetFirstComponent();
-  }
-
+  RT_API_ATTRS Componentwise(const typeInfo::DerivedType &);
   RT_API_ATTRS bool IsComplete() const { return componentAt_ >= components_; }
   RT_API_ATTRS void Advance() {
     ++componentAt_;
-    if (IsComplete()) {
-      component_ = nullptr;
-    } else {
-      ++component_;
-    }
+    GetComponent();
   }
   RT_API_ATTRS void SkipToEnd() {
     component_ = nullptr;
@@ -155,21 +146,15 @@ public:
   RT_API_ATTRS void Reset() {
     component_ = nullptr;
     componentAt_ = 0;
-    GetFirstComponent();
+    GetComponent();
   }
+  RT_API_ATTRS void GetComponent();
 
 protected:
   const typeInfo::DerivedType &derived_;
   std::size_t components_{0}, componentAt_{0};
   const typeInfo::Component *component_{nullptr};
   StaticDescriptor<common::maxRank, true, 0> componentDescriptor_;
-
-private:
-  RT_API_ATTRS void GetFirstComponent() {
-    if (components_ > 0) {
-      component_ = derived_.component().OffsetElement<typeInfo::Component>();
-    }
-  }
 };
 
 // Base class for ticket workers that operate over derived type components
@@ -245,14 +230,14 @@ protected:
 
 // Ticket worker classes
 
-// Implements derived type instance initialization.
+// Implements derived type instance initialization
 class InitializeTicket : public ImmediateTicketRunner<InitializeTicket>,
-                         private ElementsOverComponents {
+                         private ComponentsOverElements {
 public:
   RT_API_ATTRS InitializeTicket(
       const Descriptor &instance, const typeInfo::DerivedType &derived)
       : ImmediateTicketRunner<InitializeTicket>{*this},
-        ElementsOverComponents{instance, derived} {}
+        ComponentsOverElements{instance, derived} {}
   RT_API_ATTRS int Begin(WorkQueue &);
   RT_API_ATTRS int Continue(WorkQueue &);
 };
@@ -300,14 +285,12 @@ public:
   RT_API_ATTRS DestroyTicket(const Descriptor &instance,
       const typeInfo::DerivedType &derived, bool finalize)
       : ImmediateTicketRunner<DestroyTicket>{*this},
-        ComponentsOverElements{instance, derived}, finalize_{finalize},
-        fixedStride_{instance.FixedStride()} {}
+        ComponentsOverElements{instance, derived}, finalize_{finalize} {}
   RT_API_ATTRS int Begin(WorkQueue &);
   RT_API_ATTRS int Continue(WorkQueue &);
 
 private:
   bool finalize_{false};
-  common::optional<SubscriptValue> fixedStride_;
 };
 
 // Implements general intrinsic assignment
@@ -321,11 +304,11 @@ public:
   RT_API_ATTRS int Continue(WorkQueue &);
 
 private:
-  RT_API_ATTRS Descriptor &GetTempDescriptor();
   RT_API_ATTRS bool IsSimpleMemmove() const {
     return !toDerived_ && to_.rank() == from_->rank() && to_.IsContiguous() &&
         from_->IsContiguous() && to_.ElementBytes() == from_->ElementBytes();
   }
+  RT_API_ATTRS Descriptor &GetTempDescriptor();
 
   Descriptor &to_;
   const Descriptor *from_{nullptr};
@@ -569,7 +552,6 @@ private:
   TicketList *first_{nullptr}, *last_{nullptr}, *insertAfter_{nullptr};
   TicketList static_[numStatic_];
   TicketList *firstFree_{static_};
-  bool anyDynamicAllocation_{false};
 };
 
 RT_OFFLOAD_API_GROUP_END

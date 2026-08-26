@@ -702,10 +702,9 @@ void privatizeSymbol(
     // Boxes should be passed by reference into nested regions:
     auto oldIP = firOpBuilder.saveInsertionPoint();
     firOpBuilder.setInsertionPointToStart(firOpBuilder.getAllocaBlock());
-    auto alloca =
-        fir::AllocaOp::create(firOpBuilder, symLoc, privVal.getType());
+    auto alloca = firOpBuilder.create<fir::AllocaOp>(symLoc, privVal.getType());
     firOpBuilder.restoreInsertionPoint(oldIP);
-    fir::StoreOp::create(firOpBuilder, symLoc, privVal, alloca);
+    firOpBuilder.create<fir::StoreOp>(symLoc, privVal, alloca);
     privVal = alloca;
   }
 
@@ -727,15 +726,15 @@ void privatizeSymbol(
     OpType result;
 
     if constexpr (std::is_same_v<OpType, mlir::omp::PrivateClauseOp>) {
-      result = OpType::create(
-          firOpBuilder, symLoc, uniquePrivatizerName, allocType,
+      result = firOpBuilder.create<OpType>(
+          symLoc, uniquePrivatizerName, allocType,
           emitCopyRegion ? mlir::omp::DataSharingClauseType::FirstPrivate
                          : mlir::omp::DataSharingClauseType::Private);
     } else {
-      result =
-          OpType::create(firOpBuilder, symLoc, uniquePrivatizerName, allocType,
-                         emitCopyRegion ? fir::LocalitySpecifierType::LocalInit
-                                        : fir::LocalitySpecifierType::Local);
+      result = firOpBuilder.create<OpType>(
+          symLoc, uniquePrivatizerName, allocType,
+          emitCopyRegion ? fir::LocalitySpecifierType::LocalInit
+                         : fir::LocalitySpecifierType::Local);
     }
 
     fir::ExtendedValue symExV = converter.getSymbolExtendedValue(*sym);
@@ -816,12 +815,12 @@ void privatizeSymbol(
       copyFirstPrivateSymbol(converter, symToPrivatize, &ip);
 
       if constexpr (std::is_same_v<OpType, mlir::omp::PrivateClauseOp>) {
-        mlir::omp::YieldOp::create(
-            firOpBuilder, hsb.getAddr().getLoc(),
+        firOpBuilder.create<mlir::omp::YieldOp>(
+            hsb.getAddr().getLoc(),
             symTable.shallowLookupSymbol(*symToPrivatize).getAddr());
       } else {
-        fir::YieldOp::create(
-            firOpBuilder, hsb.getAddr().getLoc(),
+        firOpBuilder.create<fir::YieldOp>(
+            hsb.getAddr().getLoc(),
             symTable.shallowLookupSymbol(*symToPrivatize).getAddr());
       }
     }

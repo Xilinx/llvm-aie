@@ -47,7 +47,6 @@ intermediate LLVM representation.
    InstCombineContributorGuide
    InstrProfileFormat
    InstrRefDebugInfo
-   KeyInstructionsDebugInfo
    LinkTimeOptimization
    LoopTerminology
    MarkdownQuickstartTemplate
@@ -193,10 +192,6 @@ Optimizations
 :doc:`RemoveDIsDebugInfo`
    This is a migration guide describing how to move from debug info using
    intrinsics such as dbg.value to using the non-instruction DbgRecord object.
-
-:doc:`KeyInstructionsDebugInfo`
-   This document explains how the debug info feature Key Instructions is
-   implemented in LLVM.
 
 :doc:`InstrProfileFormat`
    This document explains two binary formats of instrumentation-based profiles.

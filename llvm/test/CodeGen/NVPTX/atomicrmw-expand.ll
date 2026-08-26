@@ -93,8 +93,7 @@ entry:
   %3 = atomicrmw or ptr %0, i8 %1 monotonic, align 1
   ; ALL: atom.xor.b32
   %4 = atomicrmw xor ptr %0, i8 %1 monotonic, align 1
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %5 = atomicrmw xchg ptr %0, i8 %1 monotonic, align 1
   ret void
 }
@@ -102,17 +101,13 @@ entry:
 ; CHECK-LABEL: minmax_i8
 define void @minmax_i8(ptr %0, i8 %1) {
 entry:
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %2 = atomicrmw min ptr %0, i8 %1 monotonic, align 1
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %3 = atomicrmw max ptr %0, i8 %1 monotonic, align 1
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %4 = atomicrmw umin ptr %0, i8 %1 monotonic, align 1
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %5 = atomicrmw umax ptr %0, i8 %1 monotonic, align 1
   ret void
 }
@@ -126,8 +121,7 @@ entry:
   %3 = atomicrmw or ptr %0, i16 %1 monotonic, align 2
   ; ALL: atom.xor.b32
   %4 = atomicrmw xor ptr %0, i16 %1 monotonic, align 2
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %5 = atomicrmw xchg ptr %0, i16 %1 monotonic, align 2
   ret void
 }
@@ -135,17 +129,13 @@ entry:
 ; CHECK-LABEL: minmax_i16
 define void @minmax_i16(ptr %0, i16 %1) {
 entry:
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %2 = atomicrmw min ptr %0, i16 %1 monotonic, align 2
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %3 = atomicrmw max ptr %0, i16 %1 monotonic, align 2
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %4 = atomicrmw umin ptr %0, i16 %1 monotonic, align 2
-  ; SM30: atom.cas.b32
-  ; SM60: atom.sys.cas.b32
+  ; ALL: atom.cas.b32
   %5 = atomicrmw umax ptr %0, i16 %1 monotonic, align 2
   ret void
 }

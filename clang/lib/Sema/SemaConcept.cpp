@@ -588,9 +588,6 @@ static bool CheckConstraintSatisfaction(
     return true;
 
   for (const AssociatedConstraint &AC : AssociatedConstraints) {
-    if (AC.isNull())
-      return true;
-
     Sema::ArgPackSubstIndexRAII _(S, AC.ArgPackSubstIndex);
     ExprResult Res = calculateConstraintSatisfaction(
         S, Template, TemplateIDRange.getBegin(), TemplateArgsLists,
@@ -928,12 +925,7 @@ static const Expr *SubstituteConstraintExpressionWithoutSatisfaction(
       ND && ND->isFunctionOrFunctionTemplate()) {
     ScopeForParameters.emplace(S, /*CombineWithOuterScope=*/true);
     const FunctionDecl *FD = ND->getAsFunction();
-    if (FunctionTemplateDecl *Template = FD->getDescribedFunctionTemplate();
-        Template && Template->getInstantiatedFromMemberTemplate())
-      FD = Template->getInstantiatedFromMemberTemplate()->getTemplatedDecl();
     for (auto *PVD : FD->parameters()) {
-      if (ScopeForParameters->getInstantiationOfIfExists(PVD))
-        continue;
       if (!PVD->isParameterPack()) {
         ScopeForParameters->InstantiatedLocal(PVD, PVD);
         continue;

@@ -37,7 +37,6 @@ expand_template(
         # All disabled, but required to substituted because they are not in quotes.
         "@LLVM_BUILD_EXAMPLES@": "0",
         "@LLVM_HAS_NVPTX_TARGET@": "0",
-        "@LLVM_INCLUDE_SPIRV_TOOLS_TESTS@": "0",
         "@MLIR_ENABLE_CUDA_RUNNER@": "0",
         "@MLIR_ENABLE_ROCM_CONVERSIONS@": "0",
         "@MLIR_ENABLE_ROCM_RUNNER@": "0",
@@ -904,8 +903,8 @@ cc_library(
 )
 
 cc_library(
-    name = "TestShard",
-    srcs = glob(["lib/Dialect/Shard/**/*.cpp"]),
+    name = "TestMesh",
+    srcs = glob(["lib/Dialect/Mesh/**/*.cpp"]),
     includes = ["lib/Dialect/Test"],
     deps = [
         ":TestDialect",
@@ -913,8 +912,8 @@ cc_library(
         "//mlir:DialectUtils",
         "//mlir:FuncDialect",
         "//mlir:IR",
-        "//mlir:ShardDialect",
-        "//mlir:ShardTransforms",
+        "//mlir:MeshDialect",
+        "//mlir:MeshTransforms",
         "//mlir:Pass",
         "//mlir:SPIRVDialect",
         "//mlir:Support",

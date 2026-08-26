@@ -46,28 +46,27 @@ static mlir::Value createKernelArgArray(mlir::Location loc,
   auto structTy = mlir::LLVM::LLVMStructType::getLiteral(ctx, structTypes);
   auto ptrTy = mlir::LLVM::LLVMPointerType::get(rewriter.getContext());
   mlir::Type i32Ty = rewriter.getI32Type();
-  auto zero = mlir::LLVM::ConstantOp::create(rewriter, loc, i32Ty,
-                                             rewriter.getIntegerAttr(i32Ty, 0));
-  auto one = mlir::LLVM::ConstantOp::create(rewriter, loc, i32Ty,
-                                            rewriter.getIntegerAttr(i32Ty, 1));
+  auto zero = rewriter.create<mlir::LLVM::ConstantOp>(
+      loc, i32Ty, rewriter.getIntegerAttr(i32Ty, 0));
+  auto one = rewriter.create<mlir::LLVM::ConstantOp>(
+      loc, i32Ty, rewriter.getIntegerAttr(i32Ty, 1));
   mlir::Value argStruct =
-      mlir::LLVM::AllocaOp::create(rewriter, loc, ptrTy, structTy, one);
-  auto size = mlir::LLVM::ConstantOp::create(
-      rewriter, loc, i32Ty, rewriter.getIntegerAttr(i32Ty, structTypes.size()));
+      rewriter.create<mlir::LLVM::AllocaOp>(loc, ptrTy, structTy, one);
+  auto size = rewriter.create<mlir::LLVM::ConstantOp>(
+      loc, i32Ty, rewriter.getIntegerAttr(i32Ty, structTypes.size()));
   mlir::Value argArray =
-      mlir::LLVM::AllocaOp::create(rewriter, loc, ptrTy, ptrTy, size);
+      rewriter.create<mlir::LLVM::AllocaOp>(loc, ptrTy, ptrTy, size);
 
   for (auto [i, arg] : llvm::enumerate(operands)) {
-    auto indice = mlir::LLVM::ConstantOp::create(
-        rewriter, loc, i32Ty, rewriter.getIntegerAttr(i32Ty, i));
-    mlir::Value structMember =
-        LLVM::GEPOp::create(rewriter, loc, ptrTy, structTy, argStruct,
-                            mlir::ArrayRef<mlir::Value>({zero, indice}));
-    LLVM::StoreOp::create(rewriter, loc, arg, structMember);
-    mlir::Value arrayMember =
-        LLVM::GEPOp::create(rewriter, loc, ptrTy, ptrTy, argArray,
-                            mlir::ArrayRef<mlir::Value>({indice}));
-    LLVM::StoreOp::create(rewriter, loc, structMember, arrayMember);
+    auto indice = rewriter.create<mlir::LLVM::ConstantOp>(
+        loc, i32Ty, rewriter.getIntegerAttr(i32Ty, i));
+    mlir::Value structMember = rewriter.create<LLVM::GEPOp>(
+        loc, ptrTy, structTy, argStruct,
+        mlir::ArrayRef<mlir::Value>({zero, indice}));
+    rewriter.create<LLVM::StoreOp>(loc, arg, structMember);
+    mlir::Value arrayMember = rewriter.create<LLVM::GEPOp>(
+        loc, ptrTy, ptrTy, argArray, mlir::ArrayRef<mlir::Value>({indice}));
+    rewriter.create<LLVM::StoreOp>(loc, structMember, arrayMember);
   }
   return argArray;
 }
@@ -95,8 +94,8 @@ struct GPULaunchKernelConversion
     mlir::Value dynamicMemorySize = op.getDynamicSharedMemorySize();
     mlir::Type i32Ty = rewriter.getI32Type();
     if (!dynamicMemorySize)
-      dynamicMemorySize = mlir::LLVM::ConstantOp::create(
-          rewriter, loc, i32Ty, rewriter.getIntegerAttr(i32Ty, 0));
+      dynamicMemorySize = rewriter.create<mlir::LLVM::ConstantOp>(
+          loc, i32Ty, rewriter.getIntegerAttr(i32Ty, 0));
 
     mlir::Value kernelArgs =
         createKernelArgArray(loc, adaptor.getKernelOperands(), rewriter);
@@ -109,17 +108,17 @@ struct GPULaunchKernelConversion
       if (!funcOp)
         return mlir::failure();
       kernelPtr =
-          LLVM::AddressOfOp::create(rewriter, loc, ptrTy, funcOp.getName());
+          rewriter.create<LLVM::AddressOfOp>(loc, ptrTy, funcOp.getName());
     } else {
       kernelPtr =
-          LLVM::AddressOfOp::create(rewriter, loc, ptrTy, kernel.getName());
+          rewriter.create<LLVM::AddressOfOp>(loc, ptrTy, kernel.getName());
     }
 
     auto llvmIntPtrType = mlir::IntegerType::get(
         ctx, this->getTypeConverter()->getPointerBitwidth(0));
     auto voidTy = mlir::LLVM::LLVMVoidType::get(ctx);
 
-    mlir::Value nullPtr = LLVM::ZeroOp::create(rewriter, loc, ptrTy);
+    mlir::Value nullPtr = rewriter.create<LLVM::ZeroOp>(loc, ptrTy);
 
     if (op.hasClusterSize()) {
       auto funcOp = mod.lookupSymbol<mlir::LLVM::LLVMFuncOp>(
@@ -135,8 +134,8 @@ struct GPULaunchKernelConversion
       if (!funcOp) {
         mlir::OpBuilder::InsertionGuard insertGuard(rewriter);
         rewriter.setInsertionPointToStart(mod.getBody());
-        auto launchKernelFuncOp = mlir::LLVM::LLVMFuncOp::create(
-            rewriter, loc, RTNAME_STRING(CUFLaunchClusterKernel), funcTy);
+        auto launchKernelFuncOp = rewriter.create<mlir::LLVM::LLVMFuncOp>(
+            loc, RTNAME_STRING(CUFLaunchClusterKernel), funcTy);
         launchKernelFuncOp.setVisibility(
             mlir::SymbolTable::Visibility::Private);
       }
@@ -149,8 +148,8 @@ struct GPULaunchKernelConversion
         stream = adaptor.getAsyncDependencies().front();
       }
 
-      mlir::LLVM::CallOp::create(
-          rewriter, loc, funcTy, cufLaunchClusterKernel,
+      rewriter.create<mlir::LLVM::CallOp>(
+          loc, funcTy, cufLaunchClusterKernel,
           mlir::ValueRange{kernelPtr, adaptor.getClusterSizeX(),
                            adaptor.getClusterSizeY(), adaptor.getClusterSizeZ(),
                            adaptor.getGridSizeX(), adaptor.getGridSizeY(),
@@ -179,7 +178,7 @@ struct GPULaunchKernelConversion
         mlir::OpBuilder::InsertionGuard insertGuard(rewriter);
         rewriter.setInsertionPointToStart(mod.getBody());
         auto launchKernelFuncOp =
-            mlir::LLVM::LLVMFuncOp::create(rewriter, loc, fctName, funcTy);
+            rewriter.create<mlir::LLVM::LLVMFuncOp>(loc, fctName, funcTy);
         launchKernelFuncOp.setVisibility(
             mlir::SymbolTable::Visibility::Private);
       }
@@ -192,8 +191,8 @@ struct GPULaunchKernelConversion
         stream = adaptor.getAsyncDependencies().front();
       }
 
-      mlir::LLVM::CallOp::create(
-          rewriter, loc, funcTy, cufLaunchKernel,
+      rewriter.create<mlir::LLVM::CallOp>(
+          loc, funcTy, cufLaunchKernel,
           mlir::ValueRange{kernelPtr, adaptor.getGridSizeX(),
                            adaptor.getGridSizeY(), adaptor.getGridSizeZ(),
                            adaptor.getBlockSizeX(), adaptor.getBlockSizeY(),
@@ -223,11 +222,11 @@ static mlir::Value createAddressOfOp(mlir::ConversionPatternRewriter &rewriter,
   auto llvmPtrTy = mlir::LLVM::LLVMPointerType::get(
       rewriter.getContext(), mlir::NVVM::NVVMMemorySpace::kSharedMemorySpace);
   if (auto g = gpuMod.lookupSymbol<fir::GlobalOp>(sharedGlobalName))
-    return mlir::LLVM::AddressOfOp::create(rewriter, loc, llvmPtrTy,
-                                           g.getSymName());
+    return rewriter.create<mlir::LLVM::AddressOfOp>(loc, llvmPtrTy,
+                                                    g.getSymName());
   if (auto g = gpuMod.lookupSymbol<mlir::LLVM::GlobalOp>(sharedGlobalName))
-    return mlir::LLVM::AddressOfOp::create(rewriter, loc, llvmPtrTy,
-                                           g.getSymName());
+    return rewriter.create<mlir::LLVM::AddressOfOp>(loc, llvmPtrTy,
+                                                    g.getSymName());
   return {};
 }
 
@@ -256,13 +255,13 @@ struct CUFSharedMemoryOpConversion
     if (!sharedGlobalAddr)
       mlir::emitError(loc, "Could not find the shared global operation\n");
 
-    auto castPtr = mlir::LLVM::AddrSpaceCastOp::create(
-        rewriter, loc, mlir::LLVM::LLVMPointerType::get(rewriter.getContext()),
+    auto castPtr = rewriter.create<mlir::LLVM::AddrSpaceCastOp>(
+        loc, mlir::LLVM::LLVMPointerType::get(rewriter.getContext()),
         sharedGlobalAddr);
     mlir::Type baseType = castPtr->getResultTypes().front();
     llvm::SmallVector<mlir::LLVM::GEPArg> gepArgs = {op.getOffset()};
-    mlir::Value shmemPtr = mlir::LLVM::GEPOp::create(
-        rewriter, loc, baseType, rewriter.getI8Type(), castPtr, gepArgs);
+    mlir::Value shmemPtr = rewriter.create<mlir::LLVM::GEPOp>(
+        loc, baseType, rewriter.getI8Type(), castPtr, gepArgs);
     rewriter.replaceOp(op, {shmemPtr});
     return mlir::success();
   }

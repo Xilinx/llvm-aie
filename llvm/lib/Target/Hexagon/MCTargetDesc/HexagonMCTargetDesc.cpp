@@ -252,21 +252,8 @@ public:
     std::string Buffer;
     {
       raw_string_ostream TempStream(Buffer);
-      for (auto &I : HexagonMCInstrInfo::bundleInstructions(Inst)) {
-        InstPrinter.printInst(I.getInst(), Address, "", STI, TempStream);
-        TempStream << "\n";
-      }
+      InstPrinter.printInst(&Inst, Address, "", STI, TempStream);
     }
-
-    std::string LoopString = "";
-    bool IsLoop0 = HexagonMCInstrInfo::isInnerLoop(Inst);
-    bool IsLoop1 = HexagonMCInstrInfo::isOuterLoop(Inst);
-    if (IsLoop0) {
-      LoopString += (IsLoop1 ? " :endloop01" : " :endloop0");
-    } else if (IsLoop1) {
-      LoopString += " :endloop1";
-    }
-
     StringRef Contents(Buffer);
     auto PacketBundle = Contents.rsplit('\n');
     auto HeadTail = PacketBundle.first.split('\n');
@@ -288,9 +275,9 @@ public:
     }
 
     if (HexagonMCInstrInfo::isMemReorderDisabled(Inst))
-      OS << "\n\t} :mem_noshuf" << LoopString;
+      OS << "\n\t} :mem_noshuf" << PacketBundle.second;
     else
-      OS << "\t}" << LoopString;
+      OS << "\t}" << PacketBundle.second;
   }
 
   void finish() override { finishAttributeSection(); }

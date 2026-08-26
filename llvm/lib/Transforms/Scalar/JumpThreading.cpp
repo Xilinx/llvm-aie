@@ -1960,6 +1960,7 @@ void JumpThreadingPass::updateSSA(BasicBlock *BB, BasicBlock *NewBB,
   // PHI insertion, of which we are prepared to do, clean these up now.
   SSAUpdater SSAUpdate;
   SmallVector<Use *, 16> UsesToRename;
+  SmallVector<DbgValueInst *, 4> DbgValues;
   SmallVector<DbgVariableRecord *, 4> DbgVariableRecords;
 
   for (Instruction &I : *BB) {
@@ -1977,13 +1978,16 @@ void JumpThreadingPass::updateSSA(BasicBlock *BB, BasicBlock *NewBB,
     }
 
     // Find debug values outside of the block
-    findDbgValues(&I, DbgVariableRecords);
+    findDbgValues(DbgValues, &I, &DbgVariableRecords);
+    llvm::erase_if(DbgValues, [&](const DbgValueInst *DbgVal) {
+      return DbgVal->getParent() == BB;
+    });
     llvm::erase_if(DbgVariableRecords, [&](const DbgVariableRecord *DbgVarRec) {
       return DbgVarRec->getParent() == BB;
     });
 
     // If there are no uses outside the block, we're done with this instruction.
-    if (UsesToRename.empty() && DbgVariableRecords.empty())
+    if (UsesToRename.empty() && DbgValues.empty() && DbgVariableRecords.empty())
       continue;
     LLVM_DEBUG(dbgs() << "JT: Renaming non-local uses of: " << I << "\n");
 
@@ -1996,8 +2000,10 @@ void JumpThreadingPass::updateSSA(BasicBlock *BB, BasicBlock *NewBB,
 
     while (!UsesToRename.empty())
       SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());
-    if (!DbgVariableRecords.empty()) {
+    if (!DbgValues.empty() || !DbgVariableRecords.empty()) {
+      SSAUpdate.UpdateDebugValues(&I, DbgValues);
       SSAUpdate.UpdateDebugValues(&I, DbgVariableRecords);
+      DbgValues.clear();
       DbgVariableRecords.clear();
     }
 
@@ -2026,7 +2032,32 @@ void JumpThreadingPass::cloneInstructions(ValueToValueMapTy &ValueMapping,
   // copy of the block 'NewBB'.  If there are PHI nodes in the source basic
   // block, evaluate them to account for entry from PredBB.
 
-  // Retargets dbg.value to any renamed variables.
+  // Retargets llvm.dbg.value to any renamed variables.
+  auto RetargetDbgValueIfPossible = [&](Instruction *NewInst) -> bool {
+    auto DbgInstruction = dyn_cast<DbgValueInst>(NewInst);
+    if (!DbgInstruction)
+      return false;
+
+    SmallSet<std::pair<Value *, Value *>, 16> OperandsToRemap;
+    for (auto DbgOperand : DbgInstruction->location_ops()) {
+      auto DbgOperandInstruction = dyn_cast<Instruction>(DbgOperand);
+      if (!DbgOperandInstruction)
+        continue;
+
+      auto I = ValueMapping.find(DbgOperandInstruction);
+      if (I != ValueMapping.end()) {
+        OperandsToRemap.insert(
+            std::pair<Value *, Value *>(DbgOperand, I->second));
+      }
+    }
+
+    for (auto &[OldOp, MappedOp] : OperandsToRemap)
+      DbgInstruction->replaceVariableLocationOp(OldOp, MappedOp);
+    return true;
+  };
+
+  // Duplicate implementation of the above dbg.value code, using
+  // DbgVariableRecords instead.
   auto RetargetDbgVariableRecordIfPossible = [&](DbgVariableRecord *DVR) {
     SmallSet<std::pair<Value *, Value *>, 16> OperandsToRemap;
     for (auto *Op : DVR->location_ops()) {
@@ -2084,6 +2115,9 @@ void JumpThreadingPass::cloneInstructions(ValueToValueMapTy &ValueMapping,
     CloneAndRemapDbgInfo(New, &*BI);
     if (const DebugLoc &DL = New->getDebugLoc())
       mapAtomInstance(DL, ValueMapping);
+
+    if (RetargetDbgValueIfPossible(New))
+      continue;
 
     // Remap operands to patch up intra-block references.
     for (unsigned i = 0, e = New->getNumOperands(); i != e; ++i)

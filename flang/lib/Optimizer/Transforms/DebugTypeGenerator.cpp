@@ -103,14 +103,13 @@ mlir::LLVM::DILocalVariableAttr DebugTypeGenerator::generateArtificialVariable(
   mlir::Type type = val.getType();
   if (!mlir::isa<mlir::IntegerType>(type) || !type.isSignlessInteger()) {
     type = builder.getIntegerType(64);
-    val = fir::ConvertOp::create(builder, declOp.getLoc(), type, val);
+    val = builder.create<fir::ConvertOp>(declOp.getLoc(), type, val);
   }
   mlir::LLVM::DITypeAttr Ty = convertType(type, fileAttr, scope, declOp);
   auto lvAttr = mlir::LLVM::DILocalVariableAttr::get(
       context, scope, name, fileAttr, /*line=*/0, /*argNo=*/0,
       /*alignInBits=*/0, Ty, mlir::LLVM::DIFlags::Artificial);
-  mlir::LLVM::DbgValueOp::create(builder, declOp.getLoc(), val, lvAttr,
-                                 nullptr);
+  builder.create<mlir::LLVM::DbgValueOp>(declOp.getLoc(), val, lvAttr, nullptr);
   return lvAttr;
 }
 

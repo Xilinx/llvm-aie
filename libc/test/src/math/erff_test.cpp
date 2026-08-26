@@ -13,7 +13,7 @@
 #include "test/UnitTest/Test.h"
 #include "utils/MPFRWrapper/MPFRUtils.h"
 
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
 
 using LlvmLibcErffTest = LIBC_NAMESPACE::testing::FPTest<float>;
 

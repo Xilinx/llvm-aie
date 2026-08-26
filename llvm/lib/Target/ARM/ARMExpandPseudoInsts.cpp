@@ -2542,7 +2542,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     }
     case ARM::Int_eh_sjlj_dispatchsetup: {
       MachineFunction &MF = *MI.getParent()->getParent();
-      const ARMBaseRegisterInfo &RI = TII->getRegisterInfo();
+      const ARMBaseInstrInfo *AII =
+        static_cast<const ARMBaseInstrInfo*>(TII);
+      const ARMBaseRegisterInfo &RI = AII->getRegisterInfo();
       // For functions using a base pointer, we rematerialize it (via the frame
       // pointer) here since eh.sjlj.setjmp and eh.sjlj.longjmp don't do it
       // for us. Otherwise, expand to nothing.

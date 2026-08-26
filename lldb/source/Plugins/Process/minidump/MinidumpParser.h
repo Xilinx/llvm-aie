@@ -104,8 +104,7 @@ public:
 
   std::optional<Range> FindMemoryRange(lldb::addr_t addr);
 
-  llvm::Expected<llvm::ArrayRef<uint8_t>> GetMemory(lldb::addr_t addr,
-                                                    size_t size);
+  llvm::ArrayRef<uint8_t> GetMemory(lldb::addr_t addr, size_t size);
 
   /// Returns a list of memory regions and a flag indicating whether the list is
   /// complete (includes all regions mapped into the process memory).

@@ -157,8 +157,3 @@ def pause : RISCVBuiltin<"void()">;
 // XCV extensions.
 //===----------------------------------------------------------------------===//
 include "clang/Basic/BuiltinsRISCVXCV.td"
-
-//===----------------------------------------------------------------------===//
-// XAndes extensions.
-//===----------------------------------------------------------------------===//
-include "clang/Basic/BuiltinsRISCVXAndes.td"

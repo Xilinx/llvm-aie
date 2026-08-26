@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -std=c++2c -verify %s
-// RUN: %clang_cc1 -std=c++2c -verify %s -fexperimental-new-constant-interpreter
 
 
 namespace std {

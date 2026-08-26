@@ -160,17 +160,17 @@ static mlir::func::FuncOp createCopyFunc(mlir::Location loc, mlir::Type varType,
   llvm::SmallVector<mlir::Type> argsTy = {varType, varType};
   auto funcType = mlir::FunctionType::get(builder.getContext(), argsTy, {});
   mlir::func::FuncOp funcOp =
-      mlir::func::FuncOp::create(modBuilder, loc, copyFuncName, funcType);
+      modBuilder.create<mlir::func::FuncOp>(loc, copyFuncName, funcType);
   funcOp.setVisibility(mlir::SymbolTable::Visibility::Private);
   fir::factory::setInternalLinkage(funcOp);
   builder.createBlock(&funcOp.getRegion(), funcOp.getRegion().end(), argsTy,
                       {loc, loc});
   builder.setInsertionPointToStart(&funcOp.getRegion().back());
 
-  Value loaded = fir::LoadOp::create(builder, loc, funcOp.getArgument(1));
-  fir::StoreOp::create(builder, loc, loaded, funcOp.getArgument(0));
+  Value loaded = builder.create<fir::LoadOp>(loc, funcOp.getArgument(1));
+  builder.create<fir::StoreOp>(loc, loaded, funcOp.getArgument(0));
 
-  mlir::func::ReturnOp::create(builder, loc);
+  builder.create<mlir::func::ReturnOp>(loc);
   return funcOp;
 }
 
@@ -234,9 +234,9 @@ static void parallelizeRegion(Region &sourceRegion, Region &targetRegion,
     if (auto reloaded = rootMapping.lookupOrNull(v))
       return nullptr;
     Type ty = v.getType();
-    Value alloc = fir::AllocaOp::create(allocaBuilder, loc, ty);
-    fir::StoreOp::create(singleBuilder, loc, singleMapping.lookup(v), alloc);
-    Value reloaded = fir::LoadOp::create(parallelBuilder, loc, ty, alloc);
+    Value alloc = allocaBuilder.create<fir::AllocaOp>(loc, ty);
+    singleBuilder.create<fir::StoreOp>(loc, singleMapping.lookup(v), alloc);
+    Value reloaded = parallelBuilder.create<fir::LoadOp>(loc, ty, alloc);
     rootMapping.map(v, reloaded);
     return alloc;
   };
@@ -293,7 +293,7 @@ static void parallelizeRegion(Region &sourceRegion, Region &targetRegion,
         allParallelized = false;
       }
     }
-    omp::TerminatorOp::create(singleBuilder, loc);
+    singleBuilder.create<omp::TerminatorOp>(loc);
     return {allParallelized, copyPrivate};
   };
 
@@ -370,7 +370,7 @@ static void parallelizeRegion(Region &sourceRegion, Region &targetRegion,
                 SymbolRefAttr::get(funcOp));
           }
           omp::SingleOp singleOp =
-              omp::SingleOp::create(rootBuilder, loc, singleOperands);
+              rootBuilder.create<omp::SingleOp>(loc, singleOperands);
           singleOp.getRegion().push_back(singleBlock);
           targetRegion.front().getOperations().splice(
               singleOp->getIterator(), allocaBlock->getOperations());
@@ -386,7 +386,7 @@ static void parallelizeRegion(Region &sourceRegion, Region &targetRegion,
           if (isLast)
             wsloopOperands.nowait = rootBuilder.getUnitAttr();
           auto wsloop =
-              mlir::omp::WsloopOp::create(rootBuilder, loc, wsloopOperands);
+              rootBuilder.create<mlir::omp::WsloopOp>(loc, wsloopOperands);
           auto clonedWslw = cast<omp::WorkshareLoopWrapperOp>(
               rootBuilder.clone(*wslw, rootMapping));
           wsloop.getRegion().takeBody(clonedWslw.getRegion());
@@ -465,9 +465,9 @@ LogicalResult lowerWorkshare(mlir::omp::WorkshareOp wsOp, DominanceInfo &di) {
     // it because our `parallelizeRegion` function works on regions and not
     // blocks.
     omp::WorkshareOp newOp =
-        omp::WorkshareOp::create(rootBuilder, loc, omp::WorkshareOperands());
+        rootBuilder.create<omp::WorkshareOp>(loc, omp::WorkshareOperands());
     if (!wsOp.getNowait())
-      omp::BarrierOp::create(rootBuilder, loc);
+      rootBuilder.create<omp::BarrierOp>(loc);
 
     parallelizeRegion(wsOp.getRegion(), newOp.getRegion(), rootMapping, loc,
                       di);
@@ -505,7 +505,7 @@ LogicalResult lowerWorkshare(mlir::omp::WorkshareOp wsOp, DominanceInfo &di) {
 
     omp::SingleOperands operands;
     operands.nowait = wsOp.getNowaitAttr();
-    omp::SingleOp newOp = omp::SingleOp::create(rootBuilder, loc, operands);
+    omp::SingleOp newOp = rootBuilder.create<omp::SingleOp>(loc, operands);
 
     newOp.getRegion().getBlocks().splice(newOp.getRegion().getBlocks().begin(),
                                          wsOp.getRegion().getBlocks());

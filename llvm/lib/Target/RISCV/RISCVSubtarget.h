@@ -395,11 +395,11 @@ public:
   }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
-                           const SchedRegion &Region) const override;
+                           unsigned NumRegionInstrs) const override;
 
   void overridePostRASchedPolicy(MachineSchedPolicy &Policy,
-                                 const SchedRegion &Region) const override;
+                                 unsigned NumRegionInstrs) const override;
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

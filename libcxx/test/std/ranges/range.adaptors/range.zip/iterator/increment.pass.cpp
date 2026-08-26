@@ -17,7 +17,7 @@
 #include <ranges>
 #include <tuple>
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 struct InputRange : IntBufferView {
   using IntBufferView::IntBufferView;
@@ -59,7 +59,7 @@ constexpr bool test() {
 
   {
     //  bidi
-    int buffer[3] = {1, 2, 3};
+    int buffer[2] = {1, 2};
 
     std::ranges::zip_view v(BidiCommonView{buffer});
     auto it = v.begin();
@@ -81,7 +81,7 @@ constexpr bool test() {
 
   {
     //  forward
-    int buffer[3] = {1, 2, 3};
+    int buffer[2] = {1, 2};
 
     std::ranges::zip_view v(ForwardSizedView{buffer});
     auto it = v.begin();

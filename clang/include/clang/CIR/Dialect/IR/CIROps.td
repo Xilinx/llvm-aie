@@ -128,12 +128,12 @@ def CIR_CastKind : CIR_I32EnumAttr<"CastKind", "cast kind", [
   // CK_BlockPointerToObjCPointerCast
   // CK_AnyPointerToBlockPointerCast
   // CK_ObjCObjectLValueCast
-  I32EnumAttrCase<"float_to_complex", 44>,
-  I32EnumAttrCase<"float_complex_to_real", 45>,
-  I32EnumAttrCase<"float_complex_to_bool", 46>,
+  // I32EnumAttrCase<"float_to_complex", 44>,
+  // I32EnumAttrCase<"float_complex_to_real", 45>,
+  // I32EnumAttrCase<"float_complex_to_bool", 46>,
   I32EnumAttrCase<"float_complex", 47>,
-  I32EnumAttrCase<"float_complex_to_int_complex", 48>,
-  I32EnumAttrCase<"int_to_complex", 49>,
+  // I32EnumAttrCase<"float_complex_to_int_complex", 48>,
+  // I32EnumAttrCase<"int_to_complex", 49>,
   I32EnumAttrCase<"int_complex_to_real", 50>,
   I32EnumAttrCase<"int_complex_to_bool", 51>,
   I32EnumAttrCase<"int_complex", 52>,
@@ -159,9 +159,9 @@ def CIR_CastKind : CIR_I32EnumAttr<"CastKind", "cast kind", [
   I32EnumAttrCase<"bool_to_float", 1000>,
 ]>;
 
-def CIR_CastOp : CIR_Op<"cast", [
-  Pure, DeclareOpInterfaceMethods<PromotableOpInterface>
-]> {
+def CastOp : CIR_Op<"cast",
+             [Pure,
+              DeclareOpInterfaceMethods<PromotableOpInterface>]> {
   // FIXME: not all conversions are free of side effects.
   let summary = "Conversion between values of different types";
   let description = [{
@@ -225,9 +225,8 @@ def CIR_CastOp : CIR_Op<"cast", [
 // PtrStrideOp
 //===----------------------------------------------------------------------===//
 
-def CIR_PtrStrideOp : CIR_Op<"ptr_stride", [
-  Pure, AllTypesMatch<["base", "result"]>
-]> {
+def PtrStrideOp : CIR_Op<"ptr_stride",
+                         [Pure, AllTypesMatch<["base", "result"]>]> {
   let summary = "Pointer access with stride";
   let description = [{
     Given a base pointer as first operand, provides a new pointer after applying
@@ -263,9 +262,8 @@ def CIR_PtrStrideOp : CIR_Op<"ptr_stride", [
 // ConstantOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ConstantOp : CIR_Op<"const", [
-  ConstantLike, Pure, AllTypesMatch<["value", "res"]>
-]> {
+def ConstantOp : CIR_Op<"const",
+                        [ConstantLike, Pure, AllTypesMatch<["value", "res"]>]> {
   let summary = "Defines a CIR constant";
   let description = [{
     The `cir.const` operation turns a literal into an SSA value. The data is
@@ -300,23 +298,22 @@ def CIR_ConstantOp : CIR_Op<"const", [
 // AllocaOp
 //===----------------------------------------------------------------------===//
 
-class CIR_AllocaTypesMatchWith<
-  string summary, string lhsArg, string rhsArg, string transform,
-  string comparator = "std::equal_to<>()"
-> : PredOpTrait<summary, CPred<comparator # "(" #
+class AllocaTypesMatchWith<string summary, string lhsArg, string rhsArg,
+                     string transform, string comparator = "std::equal_to<>()">
+  : PredOpTrait<summary, CPred<
+      comparator # "(" #
       !subst("$_self", "$" # lhsArg # ".getType()", transform) #
-             ", $" # rhsArg # ")">
-> {
+             ", $" # rhsArg # ")">> {
   string lhs = lhsArg;
   string rhs = rhsArg;
   string transformer = transform;
 }
 
-def CIR_AllocaOp : CIR_Op<"alloca", [
-  CIR_AllocaTypesMatchWith<"'allocaType' matches pointee type of 'addr'",
-    "addr", "allocaType", "mlir::cast<cir::PointerType>($_self).getPointee()">,
-  DeclareOpInterfaceMethods<PromotableAllocationOpInterface>
-]> {
+def AllocaOp : CIR_Op<"alloca", [
+  AllocaTypesMatchWith<"'allocaType' matches pointee type of 'addr'",
+                 "addr", "allocaType",
+                 "cast<PointerType>($_self).getPointee()">,
+                 DeclareOpInterfaceMethods<PromotableAllocationOpInterface>]> {
   let summary = "Defines a scope-local variable";
   let description = [{
     The `cir.alloca` operation defines a scope-local variable.
@@ -377,11 +374,12 @@ def CIR_AllocaOp : CIR_Op<"alloca", [
 // LoadOp
 //===----------------------------------------------------------------------===//
 
-def CIR_LoadOp : CIR_Op<"load", [
+def LoadOp : CIR_Op<"load", [
   TypesMatchWith<"type of 'result' matches pointee type of 'addr'",
-    "addr", "result", "mlir::cast<cir::PointerType>($_self).getPointee()">,
-  DeclareOpInterfaceMethods<PromotableMemOpInterface>
-]> {
+                 "addr", "result",
+                 "cast<PointerType>($_self).getPointee()">,
+                 DeclareOpInterfaceMethods<PromotableMemOpInterface>]> {
+
   let summary = "Load value from memory adddress";
   let description = [{
     `cir.load` reads a value (lvalue to rvalue conversion) given an address
@@ -422,11 +420,12 @@ def CIR_LoadOp : CIR_Op<"load", [
 // StoreOp
 //===----------------------------------------------------------------------===//
 
-def CIR_StoreOp : CIR_Op<"store", [
+def StoreOp : CIR_Op<"store", [
   TypesMatchWith<"type of 'value' matches pointee type of 'addr'",
-    "addr", "value", "mlir::cast<cir::PointerType>($_self).getPointee()">,
-  DeclareOpInterfaceMethods<PromotableMemOpInterface>
-]> {
+                 "addr", "value",
+                 "cast<PointerType>($_self).getPointee()">,
+                 DeclareOpInterfaceMethods<PromotableMemOpInterface>]> {
+
   let summary = "Store value to memory address";
   let description = [{
     `cir.store` stores a value (first operand) to the memory address specified
@@ -462,14 +461,10 @@ def CIR_StoreOp : CIR_Op<"store", [
 // ReturnOp
 //===----------------------------------------------------------------------===//
 
-defvar CIR_ReturnableScopes = [
-  "FuncOp", "ScopeOp", "IfOp", "SwitchOp", "CaseOp",
-  "DoWhileOp", "WhileOp", "ForOp"
-];
-
-def CIR_ReturnOp : CIR_Op<"return", [
-  ParentOneOf<CIR_ReturnableScopes>, Terminator
-]> {
+def ReturnOp : CIR_Op<"return", [ParentOneOf<["FuncOp", "ScopeOp", "IfOp",
+                                              "SwitchOp", "DoWhileOp","WhileOp",
+                                              "ForOp", "CaseOp"]>,
+                                 Terminator]> {
   let summary = "Return from function";
   let description = [{
     The "return" operation represents a return operation within a function.
@@ -509,10 +504,10 @@ def CIR_ReturnOp : CIR_Op<"return", [
 // IfOp
 //===----------------------------------------------------------------------===//
 
-def CIR_IfOp : CIR_Op<"if", [
-  DeclareOpInterfaceMethods<RegionBranchOpInterface>,
-  RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments
-]> {
+def IfOp : CIR_Op<"if",
+     [DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+     RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments]>{
+
   let summary = "the if-then-else operation";
   let description = [{
     The `cir.if` operation represents an if-then-else construct for
@@ -560,11 +555,10 @@ def CIR_IfOp : CIR_Op<"if", [
 // ConditionOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ConditionOp : CIR_Op<"condition", [
+def ConditionOp : CIR_Op<"condition", [
   Terminator,
-  DeclareOpInterfaceMethods<RegionBranchTerminatorOpInterface, [
-    "getSuccessorRegions"
-  ]>
+  DeclareOpInterfaceMethods<RegionBranchTerminatorOpInterface,
+                            ["getSuccessorRegions"]>
 ]> {
   let summary = "Loop continuation condition.";
   let description = [{
@@ -606,14 +600,10 @@ def CIR_ConditionOp : CIR_Op<"condition", [
 // YieldOp
 //===----------------------------------------------------------------------===//
 
-defvar CIR_YieldableScopes = [
-  "ArrayCtor", "CaseOp", "DoWhileOp", "ForOp", "IfOp", "ScopeOp", "SwitchOp",
-  "TernaryOp", "WhileOp"
-];
-
-def CIR_YieldOp : CIR_Op<"yield", [
-  ReturnLike, Terminator, ParentOneOf<CIR_YieldableScopes>
-]> {
+def YieldOp : CIR_Op<"yield", [ReturnLike, Terminator,
+                               ParentOneOf<["CaseOp", "DoWhileOp", "ForOp",
+                                            "IfOp", "ScopeOp", "SwitchOp",
+                                            "TernaryOp", "WhileOp"]>]> {
   let summary = "Represents the default branching behaviour of a region";
   let description = [{
     The `cir.yield` operation terminates regions on different CIR operations,
@@ -673,7 +663,7 @@ def CIR_YieldOp : CIR_Op<"yield", [
 // BreakOp
 //===----------------------------------------------------------------------===//
 
-def CIR_BreakOp : CIR_Op<"break", [Terminator]> {
+def BreakOp : CIR_Op<"break", [Terminator]> {
   let summary = "C/C++ `break` statement equivalent";
   let description = [{
     The `cir.break` operation is used to cease the execution of the current loop
@@ -688,7 +678,7 @@ def CIR_BreakOp : CIR_Op<"break", [Terminator]> {
 // ContinueOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ContinueOp : CIR_Op<"continue", [Terminator]> {
+def ContinueOp : CIR_Op<"continue", [Terminator]> {
   let summary = "C/C++ `continue` statement equivalent";
   let description = [{
     The `cir.continue` operation is used to end execution of the current
@@ -703,10 +693,9 @@ def CIR_ContinueOp : CIR_Op<"continue", [Terminator]> {
 // ScopeOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ScopeOp : CIR_Op<"scope", [
-  DeclareOpInterfaceMethods<RegionBranchOpInterface>,
-  RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments
-]> {
+def ScopeOp : CIR_Op<"scope", [
+       DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+       RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments]> {
   let summary = "Represents a C/C++ scope";
   let description = [{
     `cir.scope` contains one region and defines a strict "scope" for all new
@@ -768,10 +757,9 @@ def CIR_CaseOpKind : CIR_I32EnumAttr<"CaseOpKind", "case kind", [
   I32EnumAttrCase<"Range", 3, "range">
 ]>;
 
-def CIR_CaseOp : CIR_Op<"case", [
-  DeclareOpInterfaceMethods<RegionBranchOpInterface>,
-  RecursivelySpeculatable, AutomaticAllocationScope
-]> {
+def CaseOp : CIR_Op<"case", [
+       DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+       RecursivelySpeculatable, AutomaticAllocationScope]> {
   let summary = "Case operation";
   let description = [{
     The `cir.case` operation represents a case within a C/C++ switch.
@@ -803,11 +791,10 @@ def CIR_CaseOp : CIR_Op<"case", [
   ];
 }
 
-def CIR_SwitchOp : CIR_Op<"switch", [
-  SameVariadicOperandSize,
-  DeclareOpInterfaceMethods<RegionBranchOpInterface>,
-  RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments
-]> {
+def SwitchOp : CIR_Op<"switch",
+      [SameVariadicOperandSize,
+       DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+       RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments]> {
   let summary = "Switch operation";
   let description = [{
     The `cir.switch` operation represents C/C++ switch functionality for
@@ -972,10 +959,8 @@ def CIR_SwitchOp : CIR_Op<"switch", [
 // SwitchFlatOp
 //===----------------------------------------------------------------------===//
 
-def CIR_SwitchFlatOp : CIR_Op<"switch.flat", [
-  AttrSizedOperandSegments, Terminator
-]> {
-  let summary = "A flattened version of cir.switch";
+def SwitchFlatOp : CIR_Op<"switch.flat", [AttrSizedOperandSegments,
+                                          Terminator]> {
 
   let description = [{
     The `cir.switch.flat` operation is a region-less and simplified
@@ -1020,10 +1005,9 @@ def CIR_SwitchFlatOp : CIR_Op<"switch.flat", [
 // BrOp
 //===----------------------------------------------------------------------===//
 
-def CIR_BrOp : CIR_Op<"br",[
-  DeclareOpInterfaceMethods<BranchOpInterface, ["getSuccessorForOperands"]>,
-  Pure, Terminator
-]> {
+def BrOp : CIR_Op<"br",
+      [DeclareOpInterfaceMethods<BranchOpInterface, ["getSuccessorForOperands"]>,
+     Pure, Terminator]> {
   let summary = "Unconditional branch";
   let description = [{
     The `cir.br` branches unconditionally to a block. Used to represent C/C++
@@ -1069,7 +1053,7 @@ def CIR_UnaryOpKind : CIR_I32EnumAttr<"UnaryOpKind", "unary operation kind", [
   I32EnumAttrCase<"Not",   4, "not">
 ]>;
 
-def CIR_UnaryOp : CIR_Op<"unary", [Pure, SameOperandsAndResultType]> {
+def UnaryOp : CIR_Op<"unary", [Pure, SameOperandsAndResultType]> {
   let summary = "Unary operations";
   let description = [{
     `cir.unary` performs the unary operation according to
@@ -1109,10 +1093,9 @@ def CIR_UnaryOp : CIR_Op<"unary", [Pure, SameOperandsAndResultType]> {
 // BrCondOp
 //===----------------------------------------------------------------------===//
 
-def CIR_BrCondOp : CIR_Op<"brcond", [
-  DeclareOpInterfaceMethods<BranchOpInterface, ["getSuccessorForOperands"]>,
-  Pure, Terminator, AttrSizedOperandSegments
-]> {
+def BrCondOp : CIR_Op<"brcond",
+      [DeclareOpInterfaceMethods<BranchOpInterface, ["getSuccessorForOperands"]>,
+       Pure, Terminator, AttrSizedOperandSegments]> {
   let summary = "Conditional branch";
   let description = [{
     The `cir.brcond %cond, ^bb0, ^bb1` branches to 'bb0' block in case
@@ -1157,8 +1140,9 @@ def CIR_BrCondOp : CIR_Op<"brcond", [
 // Common loop op definitions
 //===----------------------------------------------------------------------===//
 
-class CIR_LoopOpBase<string mnemonic> : CIR_Op<mnemonic, [
-  LoopOpInterface, NoRegionArguments
+class LoopOpBase<string mnemonic> : CIR_Op<mnemonic, [
+  LoopOpInterface,
+  NoRegionArguments,
 ]> {
   let extraClassDefinition = [{
     void $cppClass::getSuccessorRegions(
@@ -1176,7 +1160,7 @@ class CIR_LoopOpBase<string mnemonic> : CIR_Op<mnemonic, [
 // While & DoWhileOp
 //===----------------------------------------------------------------------===//
 
-class CIR_WhileOpBase<string mnemonic> : CIR_LoopOpBase<mnemonic> {
+class WhileOpBase<string mnemonic> : LoopOpBase<mnemonic> {
   defvar isWhile = !eq(mnemonic, "while");
   let summary = "C/C++ " # !if(isWhile, "while", "do-while") # " loop";
   let builders = [
@@ -1196,7 +1180,7 @@ class CIR_WhileOpBase<string mnemonic> : CIR_LoopOpBase<mnemonic> {
   ];
 }
 
-def CIR_WhileOp : CIR_WhileOpBase<"while"> {
+def WhileOp : WhileOpBase<"while"> {
   let regions = (region SizedRegion<1>:$cond, MinSizedRegion<1>:$body);
   let assemblyFormat = "$cond `do` $body attr-dict";
 
@@ -1221,7 +1205,7 @@ def CIR_WhileOp : CIR_WhileOpBase<"while"> {
   }];
 }
 
-def CIR_DoWhileOp : CIR_WhileOpBase<"do"> {
+def DoWhileOp : WhileOpBase<"do"> {
   let regions = (region MinSizedRegion<1>:$body, SizedRegion<1>:$cond);
   let assemblyFormat = " $body `while` $cond attr-dict";
 
@@ -1251,7 +1235,7 @@ def CIR_DoWhileOp : CIR_WhileOpBase<"do"> {
 // ForOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ForOp : CIR_LoopOpBase<"for"> {
+def ForOp : LoopOpBase<"for"> {
   let summary = "C/C++ for loop counterpart";
   let description = [{
     Represents a C/C++ for loop. It consists of three regions:
@@ -1327,7 +1311,8 @@ def CIR_CmpOpKind : CIR_I32EnumAttr<"CmpOpKind", "compare operation kind", [
   I32EnumAttrCase<"ne", 5>
 ]>;
 
-def CIR_CmpOp : CIR_Op<"cmp", [Pure, SameTypeOperands]> {
+def CmpOp : CIR_Op<"cmp", [Pure, SameTypeOperands]> {
+
   let summary = "Compare values two values and produce a boolean result";
   let description = [{
     `cir.cmp` compares two input operands of the same type and produces a
@@ -1370,9 +1355,9 @@ def CIR_BinOpKind : CIR_I32EnumAttr<
     I32EnumAttrCase<"Max", 8, "max">
 ]>;
 
-def CIR_BinOp : CIR_Op<"binop", [
-  Pure, SameTypeOperands, SameOperandsAndResultType
-]> {
+def BinOp : CIR_Op<"binop", [Pure,
+  SameTypeOperands, SameOperandsAndResultType]> {
+
   let summary = "Binary operations (arith and logic)";
   let description = [{
     cir.binop performs the binary operation according to
@@ -1426,7 +1411,7 @@ def CIR_BinOp : CIR_Op<"binop", [
 // ShiftOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ShiftOp : CIR_Op<"shift", [Pure]> {
+def ShiftOp : CIR_Op<"shift", [Pure]> {
   let summary = "Shift";
   let description = [{
     The `cir.shift` operation performs a bitwise shift, either to the left or to
@@ -1467,9 +1452,8 @@ def CIR_ShiftOp : CIR_Op<"shift", [Pure]> {
 // SelectOp
 //===----------------------------------------------------------------------===//
 
-def CIR_SelectOp : CIR_Op<"select", [
-  Pure, AllTypesMatch<["true_value", "false_value", "result"]>
-]> {
+def SelectOp : CIR_Op<"select", [Pure,
+    AllTypesMatch<["true_value", "false_value", "result"]>]> {
   let summary = "Yield one of two values based on a boolean value";
   let description = [{
     The `cir.select` operation takes three operands. The first operand
@@ -1508,10 +1492,9 @@ def CIR_SelectOp : CIR_Op<"select", [
 // TernaryOp
 //===----------------------------------------------------------------------===//
 
-def CIR_TernaryOp : CIR_Op<"ternary", [
-  DeclareOpInterfaceMethods<RegionBranchOpInterface>,
-  RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments
-]> {
+def TernaryOp : CIR_Op<"ternary",
+      [DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+       RecursivelySpeculatable, AutomaticAllocationScope, NoRegionArguments]> {
   let summary = "The `cond ? a : b` C/C++ ternary operation";
   let description = [{
     The `cir.ternary` operation represents C/C++ ternary, much like a `select`
@@ -1600,9 +1583,8 @@ def CIR_GlobalLinkageKind : CIR_I32EnumAttr<
 // properties of a global variable will be added over time as more of ClangIR
 // is upstreamed.
 
-def CIR_GlobalOp : CIR_Op<"global", [
-  DeclareOpInterfaceMethods<CIRGlobalValueInterface>
-]> {
+def GlobalOp : CIR_Op<"global",
+                      [DeclareOpInterfaceMethods<CIRGlobalValueInterface>]> {
   let summary = "Declare or define a global variable";
   let description = [{
     The `cir.global` operation declares or defines a named global variable.
@@ -1663,9 +1645,8 @@ def CIR_GlobalOp : CIR_Op<"global", [
 // GetGlobalOp
 //===----------------------------------------------------------------------===//
 
-def CIR_GetGlobalOp : CIR_Op<"get_global", [
-  Pure, DeclareOpInterfaceMethods<SymbolUserOpInterface>
-]> {
+def GetGlobalOp : CIR_Op<"get_global",
+    [Pure, DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
   let summary = "Get the address of a global variable";
   let description = [{
     The `cir.get_global` operation retrieves the address pointing to a
@@ -1692,7 +1673,7 @@ def CIR_GetGlobalOp : CIR_Op<"get_global", [
 // SetBitfieldOp
 //===----------------------------------------------------------------------===//
 
-def CIR_SetBitfieldOp : CIR_Op<"set_bitfield"> {
+def SetBitfieldOp : CIR_Op<"set_bitfield"> {
   let summary = "Set the value of a bitfield member";
   let description = [{
     The `cir.set_bitfield` operation provides a store-like access to
@@ -1739,24 +1720,20 @@ def CIR_SetBitfieldOp : CIR_Op<"set_bitfield"> {
     %2 = cir.load %0 : !cir.ptr<!cir.ptr<!record_type>>, !cir.ptr<!record_type>
     %3 = cir.get_member %2[1] {name = "e"} : !cir.ptr<!record_type>
                                                              -> !cir.ptr<!u16i>
-    %4 = cir.set_bitfield align(4) (#bfi_e, %3 : !cir.ptr<!u16i>, %1 : !s32i)
-                                                                       -> !s32i
+    %4 = cir.set_bitfield(#bfi_e, %3 : !cir.ptr<!u16i>, %1 : !s32i) -> !s32i
     ```
    }];
 
   let arguments = (ins
     Arg<CIR_PointerType, "the address to store the value", [MemWrite]>:$addr,
     CIR_AnyType:$src,
-    CIR_BitfieldInfoAttr:$bitfield_info,
-    DefaultValuedOptionalAttr<I64Attr, "0">:$alignment,
+    BitfieldInfoAttr:$bitfield_info,
     UnitAttr:$is_volatile
   );
 
   let results = (outs CIR_IntType:$result);
 
-  let assemblyFormat = [{
-    (`align` `(` $alignment^ `)`)?
-    `(`$bitfield_info`,` $addr`:`qualified(type($addr))`,`
+  let assemblyFormat = [{ `(`$bitfield_info`,` $addr`:`qualified(type($addr))`,`
     $src`:`type($src) `)`  attr-dict `->` type($result) }];
 
   let builders = [
@@ -1768,15 +1745,14 @@ def CIR_SetBitfieldOp : CIR_Op<"set_bitfield"> {
                    "unsigned":$size,
                    "unsigned":$offset,
                    "bool":$is_signed,
-                   "bool":$is_volatile,
-                   CArg<"unsigned", "0">:$alignment
+                   "bool":$is_volatile
                    ),
    [{
       BitfieldInfoAttr info =
         BitfieldInfoAttr::get($_builder.getContext(),
                               name, storage_type,
                               size, offset, is_signed);
-      build($_builder, $_state, type, addr, src, info, alignment, is_volatile);
+      build($_builder, $_state, type, addr, src, info, is_volatile);
     }]>
   ];
 }
@@ -1785,7 +1761,7 @@ def CIR_SetBitfieldOp : CIR_Op<"set_bitfield"> {
 // GetBitfieldOp
 //===----------------------------------------------------------------------===//
 
-def CIR_GetBitfieldOp : CIR_Op<"get_bitfield"> {
+def GetBitfieldOp : CIR_Op<"get_bitfield"> {
   let summary = "Get the information for a bitfield member";
   let description = [{
     The `cir.get_bitfield` operation provides a load-like access to
@@ -1828,23 +1804,20 @@ def CIR_GetBitfieldOp : CIR_Op<"get_bitfield"> {
     %2 = cir.load %0 : !cir.ptr<!cir.ptr<!record_type>>, !cir.ptr<!record_type>
     %3 = cir.get_member %2[1] {name = "e"} : !cir.ptr<!record_type>
                                                              -> !cir.ptr<!u16i>
-    %4 = cir.get_bitfield align(4) (#bfi_e, %3 : !cir.ptr<!u16i>) -> !s32i
+    %4 = cir.get_bitfield(#bfi_e, %3 : !cir.ptr<!u16i>) -> !s32i
     ```
     }];
 
   let arguments = (ins
     Arg<CIR_PointerType, "the address to load from", [MemRead]>:$addr,
-    CIR_BitfieldInfoAttr:$bitfield_info,
-    DefaultValuedOptionalAttr<I64Attr, "0">:$alignment,
+    BitfieldInfoAttr:$bitfield_info,
     UnitAttr:$is_volatile
     );
 
   let results = (outs CIR_IntType:$result);
 
-  let assemblyFormat = [{
-    (`align` `(` $alignment^ `)`)?
-    `(`$bitfield_info `,` $addr attr-dict `:`
-    qualified(type($addr)) `)` `->` type($result) }];
+  let assemblyFormat = [{ `(`$bitfield_info `,` $addr attr-dict `:`
+   qualified(type($addr)) `)` `->` type($result) }];
 
   let builders = [
     OpBuilder<(ins "mlir::Type":$type,
@@ -1854,15 +1827,14 @@ def CIR_GetBitfieldOp : CIR_Op<"get_bitfield"> {
                    "unsigned":$size,
                    "unsigned":$offset,
                    "bool":$is_signed,
-                   "bool":$is_volatile,
-                   CArg<"unsigned", "0">:$alignment
+                   "bool":$is_volatile
                    ),
    [{
       BitfieldInfoAttr info =
         BitfieldInfoAttr::get($_builder.getContext(),
                               name, storage_type,
                               size, offset, is_signed);
-      build($_builder, $_state, type, addr, info, alignment, is_volatile);
+      build($_builder, $_state, type, addr, info, is_volatile);
     }]>
   ];
 }
@@ -1871,7 +1843,7 @@ def CIR_GetBitfieldOp : CIR_Op<"get_bitfield"> {
 // GetMemberOp
 //===----------------------------------------------------------------------===//
 
-def CIR_GetMemberOp : CIR_Op<"get_member"> {
+def GetMemberOp : CIR_Op<"get_member"> {
   let summary = "Get the address of a member of a record";
   let description = [{
     The `cir.get_member` operation gets the address of a particular named
@@ -1933,7 +1905,7 @@ def CIR_GetMemberOp : CIR_Op<"get_member"> {
 // TODO(CIR): FuncOp is still a tiny shell of what it will become.  Many more
 // properties and attributes will be added as upstreaming continues.
 
-def CIR_FuncOp : CIR_Op<"func", [
+def FuncOp : CIR_Op<"func", [
   AutomaticAllocationScope, CallableOpInterface, FunctionOpInterface,
   DeclareOpInterfaceMethods<CIRGlobalValueInterface>,
   IsolatedFromAbove
@@ -2057,10 +2029,10 @@ def CIR_SideEffect : CIR_I32EnumAttr<
 }
 
 class CIR_CallOpBase<string mnemonic, list<Trait> extra_traits = []>
-    : CIR_Op<mnemonic, !listconcat(extra_traits, [
-        DeclareOpInterfaceMethods<CIRCallOpInterface>,
-        DeclareOpInterfaceMethods<SymbolUserOpInterface>
-      ])> {
+    : Op<CIR_Dialect, mnemonic,
+         !listconcat(extra_traits,
+                     [DeclareOpInterfaceMethods<CIRCallOpInterface>,
+                      DeclareOpInterfaceMethods<SymbolUserOpInterface>])> {
   let extraClassDeclaration = [{
     /// Get the argument operands to the called function.
     mlir::OperandRange getArgOperands();
@@ -2114,7 +2086,7 @@ class CIR_CallOpBase<string mnemonic, list<Trait> extra_traits = []>
       DefaultValuedAttr<CIR_SideEffect, "SideEffect::All">:$side_effect);
 }
 
-def CIR_CallOp : CIR_CallOpBase<"call", [NoRegionArguments]> {
+def CallOp : CIR_CallOpBase<"call", [NoRegionArguments]> {
   let summary = "call a function";
   let description = [{
     The `cir.call` operation represents a function call. It could represent
@@ -2155,7 +2127,7 @@ def CIR_CallOp : CIR_CallOpBase<"call", [NoRegionArguments]> {
 // StackSaveOp & StackRestoreOp
 //===----------------------------------------------------------------------===//
 
-def CIR_StackSaveOp : CIR_Op<"stacksave"> {
+def StackSaveOp : CIR_Op<"stacksave"> {
   let summary = "remembers the current state of the function stack";
   let description = [{
     Saves current state of the function stack. Returns a pointer to an opaque object
@@ -2173,7 +2145,7 @@ def CIR_StackSaveOp : CIR_Op<"stacksave"> {
   let assemblyFormat = "attr-dict `:` qualified(type($result))";
 }
 
-def CIR_StackRestoreOp : CIR_Op<"stackrestore"> {
+def StackRestoreOp : CIR_Op<"stackrestore"> {
   let summary = "restores the state of the function stack";
   let description = [{
     Restore the state of the function stack to the state it was
@@ -2199,7 +2171,7 @@ def CIR_StackRestoreOp : CIR_Op<"stackrestore"> {
 // UnreachableOp
 //===----------------------------------------------------------------------===//
 
-def CIR_UnreachableOp : CIR_Op<"unreachable", [Terminator]> {
+def UnreachableOp : CIR_Op<"unreachable", [Terminator]> {
   let summary = "invoke immediate undefined behavior";
   let description = [{
     If the program control flow reaches a `cir.unreachable` operation, the
@@ -2215,7 +2187,7 @@ def CIR_UnreachableOp : CIR_Op<"unreachable", [Terminator]> {
 // TrapOp
 //===----------------------------------------------------------------------===//
 
-def CIR_TrapOp : CIR_Op<"trap", [Terminator]> {
+def TrapOp : CIR_Op<"trap", [Terminator]> {
   let summary = "Exit the program abnormally";
   let description = [{
     The cir.trap operation causes the program to exit abnormally. The
@@ -2229,54 +2201,11 @@ def CIR_TrapOp : CIR_Op<"trap", [Terminator]> {
 }
 
 //===----------------------------------------------------------------------===//
-// ArrayCtor
-//===----------------------------------------------------------------------===//
-
-class CIR_ArrayInitDestroy<string mnemonic> : CIR_Op<mnemonic> {
-  let arguments = (ins
-    Arg<CIR_PtrToArray, "array address", [MemWrite, MemRead]>:$addr
-  );
-
-  let regions = (region SizedRegion<1>:$body);
-  let assemblyFormat = [{
-    $addr `:` qualified(type($addr)) $body attr-dict
-  }];
-
-  let builders = [
-    OpBuilder<(ins "mlir::Value":$addr,
-      "llvm::function_ref<void(mlir::OpBuilder &, mlir::Location)>":$regionBuilder), [{
-        assert(regionBuilder && "builder callback expected");
-        mlir::OpBuilder::InsertionGuard guard($_builder);
-        mlir::Region *r = $_state.addRegion();
-        $_state.addOperands(ValueRange{addr});
-        $_builder.createBlock(r);
-        regionBuilder($_builder, $_state.location);
-    }]>
-  ];
-}
-
-def CIR_ArrayCtor : CIR_ArrayInitDestroy<"array.ctor"> {
-  let summary = "Initialize array elements with C++ constructors";
-  let description = [{
-    Initialize each array element using the same C++ constructor. This
-    operation has one region, with one single block. The block has an
-    incoming argument for the current array index to initialize.
-
-    ```mlir
-    cir.array.ctor(%0 : !cir.ptr<!cir.array<!rec_S x 42>>) {
-      ^bb0(%arg0: !cir.ptr<!rec_S>):
-        cir.call @some_ctor(%arg0) : (!cir.ptr<!rec_S>) -> ()
-        cir.yield
-    }
-    ```
-  }];
-}
-
-//===----------------------------------------------------------------------===//
 // VecCreate
 //===----------------------------------------------------------------------===//
 
-def CIR_VecCreateOp : CIR_Op<"vec.create", [Pure]> {
+def VecCreateOp : CIR_Op<"vec.create", [Pure]> {
+
   let summary = "Create a vector value";
   let description = [{
     The `cir.vec.create` operation creates a vector value with the given element
@@ -2300,12 +2229,11 @@ def CIR_VecCreateOp : CIR_Op<"vec.create", [Pure]> {
 // VecInsertOp
 //===----------------------------------------------------------------------===//
 
-def CIR_VecInsertOp : CIR_Op<"vec.insert", [
-  Pure,
-  TypesMatchWith<"argument type matches vector element type",
-    "vec", "value", "mlir::cast<cir::VectorType>($_self).getElementType()">,
-  AllTypesMatch<["result", "vec"]>
-]> {
+def VecInsertOp : CIR_Op<"vec.insert", [Pure,
+  TypesMatchWith<"argument type matches vector element type", "vec", "value",
+                 "cast<VectorType>($_self).getElementType()">,
+  AllTypesMatch<["result", "vec"]>]> {
+
   let summary = "Insert one element into a vector object";
   let description = [{
     The `cir.vec.insert` operation produces a new vector by replacing
@@ -2337,11 +2265,10 @@ def CIR_VecInsertOp : CIR_Op<"vec.insert", [
 // VecExtractOp
 //===----------------------------------------------------------------------===//
 
-def CIR_VecExtractOp : CIR_Op<"vec.extract", [
-  Pure,
-  TypesMatchWith<"type of 'result' matches element type of 'vec'",
-    "vec", "result", "mlir::cast<cir::VectorType>($_self).getElementType()">
-]> {
+def VecExtractOp : CIR_Op<"vec.extract", [Pure,
+  TypesMatchWith<"type of 'result' matches element type of 'vec'", "vec",
+                 "result", "cast<VectorType>($_self).getElementType()">]> {
+
   let summary = "Extract one element from a vector object";
   let description = [{
     The `cir.vec.extract` operation extracts the element at the given index
@@ -2368,7 +2295,8 @@ def CIR_VecExtractOp : CIR_Op<"vec.extract", [
 // VecCmpOp
 //===----------------------------------------------------------------------===//
 
-def CIR_VecCmpOp : CIR_Op<"vec.cmp", [Pure, SameTypeOperands]> {
+def VecCmpOp : CIR_Op<"vec.cmp", [Pure, SameTypeOperands]> {
+
   let summary = "Compare two vectors";
   let description = [{
     The `cir.vec.cmp` operation does an element-wise comparison of two vectors
@@ -2406,9 +2334,8 @@ def CIR_VecCmpOp : CIR_Op<"vec.cmp", [Pure, SameTypeOperands]> {
 // implement.  This could be useful for passes that don't care how the vector
 // shuffle was specified.
 
-def CIR_VecShuffleOp : CIR_Op<"vec.shuffle", [
-  Pure, AllTypesMatch<["vec1", "vec2"]>
-]> {
+def VecShuffleOp : CIR_Op<"vec.shuffle",
+                   [Pure, AllTypesMatch<["vec1", "vec2"]>]> {
   let summary = "Combine two vectors using indices passed as constant integers";
   let description = [{
     The `cir.vec.shuffle` operation implements the documented form of Clang's
@@ -2451,9 +2378,8 @@ def CIR_VecShuffleOp : CIR_Op<"vec.shuffle", [
 // VecShuffleDynamicOp
 //===----------------------------------------------------------------------===//
 
-def CIR_VecShuffleDynamicOp : CIR_Op<"vec.shuffle.dynamic", [
-  Pure, AllTypesMatch<["vec", "result"]>
-]> {
+def VecShuffleDynamicOp : CIR_Op<"vec.shuffle.dynamic",
+                          [Pure, AllTypesMatch<["vec", "result"]>]> {
   let summary = "Shuffle a vector using indices in another vector";
   let description = [{
     The `cir.vec.shuffle.dynamic` operation implements the undocumented form of
@@ -2487,9 +2413,8 @@ def CIR_VecShuffleDynamicOp : CIR_Op<"vec.shuffle.dynamic", [
 // VecTernaryOp
 //===----------------------------------------------------------------------===//
 
-def CIR_VecTernaryOp : CIR_Op<"vec.ternary", [
-  Pure, AllTypesMatch<["result", "lhs", "rhs"]>
-]> {
+def VecTernaryOp : CIR_Op<"vec.ternary",
+                   [Pure, AllTypesMatch<["result", "lhs", "rhs"]>]> {
   let summary = "The `cond ? a : b` ternary operator for vector types";
   let description = [{
     The `cir.vec.ternary` operation represents the C/C++ ternary operator,
@@ -2526,11 +2451,10 @@ def CIR_VecTernaryOp : CIR_Op<"vec.ternary", [
 // VecSplatOp
 //===----------------------------------------------------------------------===//
 
-def CIR_VecSplatOp : CIR_Op<"vec.splat", [
-  Pure,
-  TypesMatchWith<"type of 'value' matches element type of 'result'",
-    "result", "value", "mlir::cast<cir::VectorType>($_self).getElementType()">
-]> {
+def VecSplatOp : CIR_Op<"vec.splat", [Pure,
+  TypesMatchWith<"type of 'value' matches element type of 'result'", "result",
+                 "value", "cast<VectorType>($_self).getElementType()">]> {
+
   let summary = "Convert a scalar into a vector";
   let description = [{
     The `cir.vec.splat` operation creates a vector value from a scalar value.
@@ -2559,7 +2483,7 @@ def CIR_VecSplatOp : CIR_Op<"vec.splat", [
 // BaseClassAddrOp
 //===----------------------------------------------------------------------===//
 
-def CIR_BaseClassAddrOp : CIR_Op<"base_class_addr"> {
+def BaseClassAddrOp : CIR_Op<"base_class_addr"> {
   let summary = "Get the base class address for a class/struct";
   let description = [{
     The `cir.base_class_addr` operaration gets the address of a particular
@@ -2602,7 +2526,7 @@ def CIR_BaseClassAddrOp : CIR_Op<"base_class_addr"> {
 // ComplexCreateOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ComplexCreateOp : CIR_Op<"complex.create", [Pure, SameTypeOperands]> {
+def ComplexCreateOp : CIR_Op<"complex.create", [Pure, SameTypeOperands]> {
   let summary = "Create a complex value from its real and imaginary parts";
   let description = [{
     The `cir.complex.create` operation takes two operands that represent the
@@ -2634,7 +2558,7 @@ def CIR_ComplexCreateOp : CIR_Op<"complex.create", [Pure, SameTypeOperands]> {
 // ComplexRealOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ComplexRealOp : CIR_Op<"complex.real", [Pure]> {
+def ComplexRealOp : CIR_Op<"complex.real", [Pure]> {
   let summary = "Extract the real part of a complex value";
   let description = [{
     `cir.complex.real` operation takes an operand of `!cir.complex` type and
@@ -2663,7 +2587,7 @@ def CIR_ComplexRealOp : CIR_Op<"complex.real", [Pure]> {
 // ComplexImagOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ComplexImagOp : CIR_Op<"complex.imag", [Pure]> {
+def ComplexImagOp : CIR_Op<"complex.imag", [Pure]> {
   let summary = "Extract the imaginary part of a complex value";
   let description = [{
     `cir.complex.imag` operation takes an operand of `!cir.complex` type and
@@ -2692,7 +2616,7 @@ def CIR_ComplexImagOp : CIR_Op<"complex.imag", [Pure]> {
 // ComplexRealPtrOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ComplexRealPtrOp : CIR_Op<"complex.real_ptr", [Pure]> {
+def ComplexRealPtrOp : CIR_Op<"complex.real_ptr", [Pure]> {
   let summary = "Derive a pointer to the real part of a complex value";
   let description = [{
     `cir.complex.real_ptr` operation takes a pointer operand that points to a
@@ -2719,42 +2643,10 @@ def CIR_ComplexRealPtrOp : CIR_Op<"complex.real_ptr", [Pure]> {
 }
 
 //===----------------------------------------------------------------------===//
-// ComplexImagPtrOp
-//===----------------------------------------------------------------------===//
-
-def CIR_ComplexImagPtrOp : CIR_Op<"complex.imag_ptr", [Pure]> {
-  let summary = "Derive a pointer to the imaginary part of a complex value";
-  let description = [{
-    `cir.complex.imag_ptr` operation takes a pointer operand that points to a
-    complex value of type `!cir.complex` and yields a pointer to the imaginary
-    part of the operand.
-
-    Example:
-
-    ```mlir
-    %1 = cir.complex.imag_ptr %0 : !cir.ptr<!cir.complex<!cir.double>>
-      -> !cir.ptr<!cir.double>
-    ```
-  }];
-
-  let arguments = (ins CIR_PtrToComplexType:$operand);
-  let results = (outs CIR_PtrToIntOrFloatType:$result);
-
-  let assemblyFormat = [{
-    $operand `:`
-    qualified(type($operand)) `->` qualified(type($result)) attr-dict
-  }];
-
-  let hasVerifier = 1;
-}
-
-//===----------------------------------------------------------------------===//
 // ComplexAddOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ComplexAddOp : CIR_Op<"complex.add", [
-  Pure, SameOperandsAndResultType
-]> {
+def ComplexAddOp : CIR_Op<"complex.add", [Pure, SameOperandsAndResultType]> {
   let summary = "Complex addition";
   let description = [{
     The `cir.complex.add` operation takes two complex numbers and returns
@@ -2780,9 +2672,7 @@ def CIR_ComplexAddOp : CIR_Op<"complex.add", [
 // ComplexSubOp
 //===----------------------------------------------------------------------===//
 
-def CIR_ComplexSubOp : CIR_Op<"complex.sub", [
-  Pure, SameOperandsAndResultType
-]> {
+def ComplexSubOp : CIR_Op<"complex.sub", [Pure, SameOperandsAndResultType]> {
   let summary = "Complex subtraction";
   let description = [{
     The `cir.complex.sub` operation takes two complex numbers and returns
@@ -2810,36 +2700,34 @@ def CIR_ComplexSubOp : CIR_Op<"complex.sub", [
 //===----------------------------------------------------------------------===//
 
 class CIR_BitOpBase<string mnemonic, TypeConstraint operandTy>
-    : CIR_Op<mnemonic, [Pure, SameOperandsAndResultType]> {
+  : CIR_Op<mnemonic, [Pure, SameOperandsAndResultType]> {
   let arguments = (ins operandTy:$input);
   let results = (outs operandTy:$result);
 
   let assemblyFormat = [{
-    $input `:` type($result) attr-dict
+    `(` $input `:` type($input) `)` `:` type($result) attr-dict
   }];
-
-  let hasFolder = 1;
 }
 
 class CIR_BitZeroCountOpBase<string mnemonic, TypeConstraint operandTy>
-    : CIR_BitOpBase<mnemonic, operandTy> {
+  : CIR_BitOpBase<mnemonic, operandTy> {
   let arguments = (ins operandTy:$input, UnitAttr:$poison_zero);
 
   let assemblyFormat = [{
-    $input (`poison_zero` $poison_zero^)?
+    `(` $input `:` type($input) `)` (`poison_zero` $poison_zero^)?
     `:` type($result) attr-dict
   }];
 }
 
-def CIR_BitClrsbOp : CIR_BitOpBase<"clrsb", CIR_SIntOfWidths<[32, 64]>> {
+def BitClrsbOp : CIR_BitOpBase<"bit.clrsb", CIR_SIntOfWidths<[32, 64]>> {
   let summary = "Get the number of leading redundant sign bits in the input";
   let description = [{
     Compute the number of leading redundant sign bits in the input integer.
 
     The input integer must be a signed integer. The most significant bit of the
-    input integer is the sign bit. The `cir.clrsb` operation returns the number
-    of consecutive bits following the sign bit that are identical to the sign
-    bit.
+    input integer is the sign bit. The `cir.bit.clrsb` operation returns the
+    number of consecutive bits following the sign bit that are identical to the
+    sign bit.
 
     The bit width of the input integer must be either 32 or 64.
 
@@ -2850,25 +2738,24 @@ def CIR_BitClrsbOp : CIR_BitOpBase<"clrsb", CIR_SIntOfWidths<[32, 64]>> {
     %0 = cir.const #cir.int<3735928559> : !s32i
     // %1 will be 1 because there is 1 bit following the most significant bit
     // that is identical to it.
-    %1 = cir.clrsb %0 : !s32i
+    %1 = cir.bit.clrsb(%0 : !s32i) : !s32i
 
     // %2 = 1, 0b0000_0000_0000_0000_0000_0000_0000_0001
     %2 = cir.const #cir.int<1> : !s32i
     // %3 will be 30 because there are 30 consecutive bits following the sign
     // bit that are identical to the sign bit.
-    %3 = cir.clrsb %2 : !s32i
+    %3 = cir.bit.clrsb(%2 : !s32i) : !s32i
     ```
   }];
 }
 
-def CIR_BitClzOp : CIR_BitZeroCountOpBase<"clz",
-  CIR_UIntOfWidths<[16, 32, 64]>
-> {
+def BitClzOp : CIR_BitZeroCountOpBase<"bit.clz",
+                                      CIR_UIntOfWidths<[16, 32, 64]>> {
   let summary = "Get the number of leading 0-bits in the input";
   let description = [{
     Compute the number of leading 0-bits in the input.
 
-    The input integer must be an unsigned integer. The `cir.clz` operation
+    The input integer must be an unsigned integer. The `cir.bit.clz` operation
     returns the number of consecutive 0-bits at the most significant bit
     position in the input.
 
@@ -2881,19 +2768,18 @@ def CIR_BitClzOp : CIR_BitZeroCountOpBase<"clz",
     // %0 = 0b0000_0000_0000_0000_0000_0000_0000_1000
     %0 = cir.const #cir.int<8> : !u32i
     // %1 will be 28
-    %1 = cir.clz %0 poison_zero : !u32i
+    %1 = cir.bit.clz(%0 : !u32i) poison_zero : !u32i
     ```
   }];
 }
 
-def CIR_BitCtzOp : CIR_BitZeroCountOpBase<"ctz",
-  CIR_UIntOfWidths<[16, 32, 64]>
-> {
+def BitCtzOp : CIR_BitZeroCountOpBase<"bit.ctz",
+                                      CIR_UIntOfWidths<[16, 32, 64]>> {
   let summary = "Get the number of trailing 0-bits in the input";
   let description = [{
     Compute the number of trailing 0-bits in the input.
 
-    The input integer must be an unsigned integer. The `cir.ctz` operation
+    The input integer must be an unsigned integer. The `cir.bit.ctz` operation
     counts the number of consecutive 0-bits starting from the least significant
     bit.
 
@@ -2906,12 +2792,12 @@ def CIR_BitCtzOp : CIR_BitZeroCountOpBase<"ctz",
     // %0 = 0b1000
     %0 = cir.const #cir.int<8> : !u32i
     // %1 will be 3
-    %1 = cir.ctz %0 poison_zero : !u32i
+    %1 = cir.bit.ctz(%0 : !u32i) poison_zero : !u32i
     ```
   }];
 }
 
-def CIR_BitParityOp : CIR_BitOpBase<"parity", CIR_UIntOfWidths<[32, 64]>> {
+def BitParityOp : CIR_BitOpBase<"bit.parity", CIR_UIntOfWidths<[32, 64]>> {
   let summary = "Get the parity of input";
   let description = [{
     Compute the parity of the input. The parity of an integer is the number of
@@ -2925,14 +2811,13 @@ def CIR_BitParityOp : CIR_BitOpBase<"parity", CIR_UIntOfWidths<[32, 64]>> {
     // %0 = 0x0110_1000
     %0 = cir.const #cir.int<104> : !u32i
     // %1 will be 1 since there are three 1-bits in %0
-    %1 = cir.parity %0 : !u32i
+    %1 = cir.bit.parity(%0 : !u32i) : !u32i
     ```
   }];
 }
 
-def CIR_BitPopcountOp : CIR_BitOpBase<"popcount",
-  CIR_UIntOfWidths<[16, 32, 64]>
-> {
+def BitPopcountOp : CIR_BitOpBase<"bit.popcnt",
+                                  CIR_UIntOfWidths<[16, 32, 64]>> {
   let summary = "Get the number of 1-bits in input";
   let description = [{
     Compute the number of 1-bits in the input.
@@ -2945,30 +2830,30 @@ def CIR_BitPopcountOp : CIR_BitOpBase<"popcount",
     // %0 = 0x0110_1000
     %0 = cir.const #cir.int<104> : !u32i
     // %1 will be 3 since there are 3 1-bits in %0
-    %1 = cir.popcount %0 : !u32i
+    %1 = cir.bit.popcnt(%0 : !u32i) : !u32i
     ```
   }];
 }
 
-def CIR_BitReverseOp : CIR_BitOpBase<"bitreverse",
-  CIR_UIntOfWidths<[8, 16, 32, 64]>
-> {
+def BitReverseOp : CIR_BitOpBase<"bit.reverse",
+                                 CIR_UIntOfWidths<[8, 16, 32, 64]>> {
   let summary = "Reverse the bit pattern of the operand integer";
   let description = [{
-    The `cir.bitreverse` operation reverses the bits of the operand integer. Its
-    only argument must be of unsigned integer types of width 8, 16, 32, or 64.
+    The `cir.bit.reverse` operation reverses the bits of the operand integer.
+    Its only argument must be of unsigned integer types of width 8, 16, 32, or
+    64.
+
+    This operation covers the C/C++ builtin function `__builtin_bitreverse`.
 
     Example:
 
     ```mlir
-    %1 = cir.bitreverse %0: !u32i
+    %1 = cir.bit.reverse(%0 : !u32i): !u32i
     ```
   }];
 }
 
-def CIR_ByteSwapOp : CIR_BitOpBase<"byte_swap",
-  CIR_UIntOfWidths<[16, 32, 64]>
-> {
+def ByteSwapOp : CIR_BitOpBase<"byte_swap", CIR_UIntOfWidths<[16, 32, 64]>> {
   let summary = "Reverse the bytes in the object representation of the operand";
   let description = [{
     The `cir.byte_swap` operation takes an integer as operand, reverse the bytes
@@ -2984,57 +2869,16 @@ def CIR_ByteSwapOp : CIR_BitOpBase<"byte_swap",
     %0 = cir.const #cir.int<305419896> : !u32i
 
     // %1 should be 0x78563412
-    %1 = cir.byte_swap %0 : !u32i
+    %1 = cir.byte_swap(%0 : !u32i) : !u32i
     ```
   }];
-}
-
-//===----------------------------------------------------------------------===//
-// RotateOp
-//===----------------------------------------------------------------------===//
-
-def CIR_RotateOp : CIR_Op<"rotate", [Pure, SameOperandsAndResultType]> {
-  let summary = "Rotate the bits in the operand integer";
-  let description = [{
-    The `cir.rotate` rotates the bits in `input` by the given amount `amount`.
-    The rotate direction is specified by the `left` and `right` keyword.
-
-    `input` must be an unsigned integer and its width must be either 8, 16, 32,
-    or 64. The types of `input`, `amount`, and the result must all match.
-
-    Example:
-
-    ```mlir
-    %r = cir.rotate left %0, %1 : !u32i
-    %r = cir.rotate right %0, %1 : !u32i
-    ```
-  }];
-
-  let results = (outs CIR_IntType:$result);
-  let arguments = (ins
-    CIR_UIntOfWidths<[8, 16, 32, 64]>:$input,
-    CIR_IntType:$amount,
-    UnitAttr:$rotateLeft
-  );
-
-  let assemblyFormat = [{
-    (`left` $rotateLeft^) : (`right`)?
-    $input `,` $amount `:` type($result) attr-dict
-  }];
-
-  let extraClassDeclaration = [{
-    bool isRotateLeft() { return getRotateLeft(); }
-    bool isRotateRight() { return !getRotateLeft(); }
-  }];
-
-  let hasFolder = 1;
 }
 
 //===----------------------------------------------------------------------===//
 // Assume Operations
 //===----------------------------------------------------------------------===//
 
-def CIR_AssumeOp : CIR_Op<"assume"> {
+def AssumeOp : CIR_Op<"assume"> {
   let summary = "Tell the optimizer that a boolean value is true";
   let description = [{
     The `cir.assume` operation takes a single boolean prediate as its only
@@ -3052,34 +2896,12 @@ def CIR_AssumeOp : CIR_Op<"assume"> {
   }];
 }
 
-def CIR_AssumeSepStorageOp : CIR_Op<"assume_separate_storage", [
-  SameTypeOperands
-]> {
-  let summary =
-      "Tell the optimizer that two pointers point to different allocations";
-  let description = [{
-    The `cir.assume_separate_storage` operation takes two pointers as arguments,
-    and the operation tells the optimizer that these two pointers point to
-    different allocations.
-
-    This operation corresponds to the `__builtin_assume_separate_storage`
-    builtin function.
-  }];
-
-  let arguments = (ins CIR_VoidPtrType:$ptr1, CIR_VoidPtrType:$ptr2);
-
-  let assemblyFormat = [{
-    $ptr1 `,` $ptr2 `:` qualified(type($ptr1)) attr-dict
-  }];
-}
-
 //===----------------------------------------------------------------------===//
 // Branch Probability Operations
 //===----------------------------------------------------------------------===//
 
-def CIR_ExpectOp : CIR_Op<"expect", [
-  Pure, AllTypesMatch<["result", "val", "expected"]>
-]> {
+def ExpectOp : CIR_Op<"expect",
+  [Pure, AllTypesMatch<["result", "val", "expected"]>]> {
   let summary = "Tell the optimizer that two values are likely to be equal.";
   let description = [{
     The `cir.expect` operation may take 2 or 3 arguments.

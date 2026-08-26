@@ -119,7 +119,6 @@ add_libc_unittest(
     sigaltstack_test.cpp
   DEPENDS
     libc.hdr.signal_macros
-    libc.hdr.stdint_proxy
     libc.src.errno.errno
     libc.src.signal.raise
     libc.src.signal.sigaltstack

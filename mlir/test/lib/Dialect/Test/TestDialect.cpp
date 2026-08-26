@@ -346,7 +346,7 @@ TestDialect::~TestDialect() {
 
 Operation *TestDialect::materializeConstant(OpBuilder &builder, Attribute value,
                                             Type type, Location loc) {
-  return TestOpConstant::create(builder, loc, type, value);
+  return builder.create<TestOpConstant>(loc, type, value);
 }
 
 void *TestDialect::getRegisteredInterfaceForOp(TypeID typeID,

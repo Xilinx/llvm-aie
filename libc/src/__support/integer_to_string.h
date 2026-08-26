@@ -57,7 +57,8 @@
 #ifndef LLVM_LIBC_SRC___SUPPORT_INTEGER_TO_STRING_H
 #define LLVM_LIBC_SRC___SUPPORT_INTEGER_TO_STRING_H
 
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
+
 #include "src/__support/CPP/algorithm.h" // max
 #include "src/__support/CPP/array.h"
 #include "src/__support/CPP/bit.h"

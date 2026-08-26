@@ -35,7 +35,7 @@ add_mlir_dialect_library(MLIRTosaShardingInterfaceImpl
 
   LINK_LIBS PUBLIC
   MLIRIR
-  MLIRShardDialect
+  MLIRMeshDialect
   MLIRShardingInterface
   MLIRSupport
   MLIRTosaDialect

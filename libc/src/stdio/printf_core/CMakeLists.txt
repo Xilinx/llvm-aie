@@ -44,7 +44,6 @@ add_header_library(
   HDRS
     core_structs.h
   DEPENDS
-    libc.include.inttypes
     libc.src.__support.CPP.string_view
     libc.src.__support.FPUtil.fp_bits
 )
@@ -98,7 +97,6 @@ add_header_library(
     .core_structs
     .printf_config
     .writer
-    libc.include.inttypes
     libc.src.__support.big_int
     libc.src.__support.common
     libc.src.__support.CPP.limits

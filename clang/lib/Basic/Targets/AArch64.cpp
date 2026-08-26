@@ -786,8 +786,7 @@ AArch64TargetInfo::getVScaleRange(const LangOptions &LangOpts,
   return std::nullopt;
 }
 
-llvm::APInt
-AArch64TargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
+uint64_t AArch64TargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
   return llvm::AArch64::getFMVPriority(Features);
 }
 

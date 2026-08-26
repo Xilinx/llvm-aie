@@ -43,11 +43,6 @@ WebAssemblySubtarget::initializeSubtargetDependencies(StringRef CPU,
     Bits.set(WebAssembly::FeatureBulkMemoryOpt);
   }
 
-  // gc implies reference-types
-  if (HasGC) {
-    HasReferenceTypes = true;
-  }
-
   // reference-types implies call-indirect-overlong
   if (HasReferenceTypes) {
     HasCallIndirectOverlong = true;

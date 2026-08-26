@@ -340,6 +340,10 @@ public:
     /// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055a/IHI0055A_aapcs64.pdf
     AArch64ABIBuiltinVaList,
 
+    /// __builtin_va_list as defined by the PNaCl ABI:
+    /// http://www.chromium.org/nativeclient/pnacl/bitcode-abi#TOC-Machine-Types
+    PNaClABIBuiltinVaList,
+
     /// __builtin_va_list as defined by the Power ABI:
     /// https://www.power.org
     ///        /resources/downloads/Power-Arch-32-bit-ABI-supp-1.0-Embedded.pdf
@@ -1565,8 +1569,8 @@ public:
 
   // Return the target-specific priority for features/cpus/vendors so
   // that they can be properly sorted for checking.
-  virtual llvm::APInt getFMVPriority(ArrayRef<StringRef> Features) const {
-    return llvm::APInt::getZero(32);
+  virtual uint64_t getFMVPriority(ArrayRef<StringRef> Features) const {
+    return 0;
   }
 
   // Validate the contents of the __builtin_cpu_is(const char*)
@@ -1712,11 +1716,8 @@ public:
   /// Controls if __arithmetic_fence is supported in the targeted backend.
   virtual bool checkArithmeticFenceSupported() const { return false; }
 
-  /// Gets the default calling convention for the given target.
-  ///
-  /// This function does not take into account any user options to override the
-  /// default calling convention. For that, see
-  /// ASTContext::getDefaultCallingConvention().
+  /// Gets the default calling convention for the given target and
+  /// declaration context.
   virtual CallingConv getDefaultCallingConv() const {
     // Not all targets will specify an explicit calling convention that we can
     // express.  This will always do the right thing, even though it's not

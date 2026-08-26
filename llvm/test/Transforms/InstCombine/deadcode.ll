@@ -26,9 +26,8 @@ declare void @llvm.lifetime.start.p0(i64, ptr)
 declare void @llvm.lifetime.end.p0(i64, ptr)
 
 define void @test3() {
-  %a = alloca i32
-  call void @llvm.lifetime.start.p0(i64 -1, ptr %a)
-  call void @llvm.lifetime.end.p0(i64 -1, ptr %a)
+  call void @llvm.lifetime.start.p0(i64 -1, ptr undef)
+  call void @llvm.lifetime.end.p0(i64 -1, ptr undef)
   ret void
 }
 

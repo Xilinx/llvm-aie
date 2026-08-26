@@ -1889,7 +1889,7 @@ void ASTDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   D->NamespaceLoc = readSourceLocation();
   D->IdentLoc = readSourceLocation();
   D->QualifierLoc = Record.readNestedNameSpecifierLoc();
-  D->Namespace = readDeclAs<NamespaceBaseDecl>();
+  D->Namespace = readDeclAs<NamedDecl>();
   mergeRedeclarable(D, Redecl);
 }
 

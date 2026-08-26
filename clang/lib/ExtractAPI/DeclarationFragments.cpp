@@ -220,14 +220,23 @@ DeclarationFragmentsBuilder::getFragmentsForNNS(const NestedNameSpecifier *NNS,
     break;
 
   case NestedNameSpecifier::Namespace: {
-    const NamespaceBaseDecl *NS = NNS->getAsNamespace();
-    if (const auto *Namespace = dyn_cast<NamespaceDecl>(NS);
-        Namespace && Namespace->isAnonymousNamespace())
+    const NamespaceDecl *NS = NNS->getAsNamespace();
+    if (NS->isAnonymousNamespace())
       return Fragments;
     SmallString<128> USR;
     index::generateUSRForDecl(NS, USR);
     Fragments.append(NS->getName(),
                      DeclarationFragments::FragmentKind::Identifier, USR, NS);
+    break;
+  }
+
+  case NestedNameSpecifier::NamespaceAlias: {
+    const NamespaceAliasDecl *Alias = NNS->getAsNamespaceAlias();
+    SmallString<128> USR;
+    index::generateUSRForDecl(Alias, USR);
+    Fragments.append(Alias->getName(),
+                     DeclarationFragments::FragmentKind::Identifier, USR,
+                     Alias);
     break;
   }
 

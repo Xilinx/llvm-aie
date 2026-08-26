@@ -14,12 +14,10 @@ template<Incrementable T> Incrementable auto incrementTwo(T t);
 
 // CHECK:       "Functions": [
 // CHECK-NEXT:    {
-// CHECK-NEXT:      "InfoType": "function",
 // CHECK-NEXT:      "IsStatic": false,
 // CHECK-NEXT:      "Name": "increment",
 // CHECK-NEXT:      "Params": [
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "End": true,
 // CHECK-NEXT:          "Name": "t",
 // CHECK-NEXT:          "Type": "T"
 // CHECK-NEXT:        }
@@ -34,7 +32,6 @@ template<Incrementable T> Incrementable auto incrementTwo(T t);
 // CHECK-NEXT:      "Template": {
 // CHECK-NEXT:        "Constraints": [
 // CHECK-NEXT:          {
-// CHECK-NEXT:            "End": true,
 // CHECK-NEXT:            "Expression": "Incrementable<T>",
 // CHECK-NEXT:            "Name": "Incrementable",
 // CHECK-NEXT:            "Path": "",
@@ -49,13 +46,10 @@ template<Incrementable T> Incrementable auto incrementTwo(T t);
 // CHECK-NEXT:      "USR": "{{[0-9A-F]*}}" 
 // CHECK-NEXT:    },
 // CHECK-NEXT:    {
-// CHECK-NEXT:      "End": true,
-// CHECK-NEXT:      "InfoType": "function",
 // CHECK-NEXT:      "IsStatic": false,
 // CHECK-NEXT:      "Name": "incrementTwo",
 // CHECK-NEXT:      "Params": [
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "End": true,
 // CHECK-NEXT:          "Name": "t",
 // CHECK-NEXT:          "Type": "T"
 // CHECK-NEXT:        }
@@ -70,7 +64,6 @@ template<Incrementable T> Incrementable auto incrementTwo(T t);
 // CHECK-NEXT:      "Template": {
 // CHECK-NEXT:        "Constraints": [
 // CHECK-NEXT:          {
-// CHECK-NEXT:            "End": true,
 // CHECK-NEXT:            "Expression": "Incrementable<T>",
 // CHECK-NEXT:            "Name": "Incrementable",
 // CHECK-NEXT:            "Path": "",

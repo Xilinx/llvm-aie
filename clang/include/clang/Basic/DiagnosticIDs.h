@@ -283,10 +283,7 @@ public:
   // writing, nearly all callers of this function were invalid.
   unsigned getCustomDiagID(CustomDiagDesc Diag);
 
-  // FIXME: this API should almost never be used; custom diagnostics do not
-  // have an associated diagnostic group and thus cannot be controlled by users
-  // like other diagnostics. The number of times this API is used in Clang
-  // should only ever be reduced, not increased.
+  // TODO: Deprecate this once all uses are removed from LLVM
   // [[deprecated("Use a CustomDiagDesc instead of a Level")]]
   unsigned getCustomDiagID(Level Level, StringRef Message) {
     return getCustomDiagID([&]() -> CustomDiagDesc {

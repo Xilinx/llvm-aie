@@ -962,11 +962,7 @@ void VPlan::prepareToExecute(Value *TripCountV, Value *VectorTripCountV,
     BackedgeTakenCount->setUnderlyingValue(TCMO);
   }
 
-  if (!VectorTripCount.getUnderlyingValue())
-    VectorTripCount.setUnderlyingValue(VectorTripCountV);
-  else
-    assert(VectorTripCount.getUnderlyingValue() == VectorTripCountV &&
-           "VectorTripCount set earlier must much VectorTripCountV");
+  VectorTripCount.setUnderlyingValue(VectorTripCountV);
 
   IRBuilder<> Builder(State.CFG.PrevBB->getTerminator());
   // FIXME: Model VF * UF computation completely in VPlan.

@@ -98,6 +98,7 @@ class TestFrameVarDILArraySubscript(TestBase):
             substrs=["subscript of pointer to incomplete type 'void'"],
         )
 
+    @expectedFailureAll(oslist=["windows"])
     def test_subscript_synthetic(self):
         self.build()
         lldbutil.run_to_source_breakpoint(

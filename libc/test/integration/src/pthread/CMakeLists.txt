@@ -7,7 +7,6 @@ add_integration_test(
   SRCS
     pthread_mutex_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.include.pthread
     libc.src.errno.errno
     libc.src.pthread.pthread_mutex_destroy
@@ -85,7 +84,6 @@ add_integration_test(
   SRCS
     pthread_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.include.pthread
     libc.src.pthread.pthread_create
     libc.src.pthread.pthread_join
@@ -98,7 +96,6 @@ add_integration_test(
   SRCS
     pthread_equal_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.include.pthread
     libc.src.errno.errno
     libc.src.pthread.pthread_mutex_destroy
@@ -118,7 +115,6 @@ add_integration_test(
   SRCS
     pthread_name_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.include.pthread
     libc.src.errno.errno
     libc.src.pthread.pthread_create
@@ -169,7 +165,6 @@ add_integration_test(
   SRCS
     pthread_once_test.cpp
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.include.pthread
     libc.src.pthread.pthread_once
     libc.src.pthread.pthread_mutex_destroy

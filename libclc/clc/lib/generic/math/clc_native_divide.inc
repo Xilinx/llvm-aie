@@ -8,6 +8,5 @@
 
 _CLC_OVERLOAD _CLC_DEF __CLC_GENTYPE __clc_native_divide(__CLC_GENTYPE x,
                                                          __CLC_GENTYPE y) {
-  _Pragma("clang fp reciprocal(on)");
   return x / y;
 }

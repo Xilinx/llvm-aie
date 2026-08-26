@@ -70,22 +70,10 @@ void ConvertVectorToLLVMPass::runOnOperation() {
     populateVectorBitCastLoweringPatterns(patterns);
     populateVectorBroadcastLoweringPatterns(patterns);
     populateVectorContractLoweringPatterns(patterns, vectorContractLowering);
-    if (vectorContractLowering == vector::VectorContractLowering::Matmul) {
-      // This pattern creates a dependency on the LLVM dialect, hence we don't
-      // include it in `populateVectorContractLoweringPatterns` that is part of
-      // the Vector dialect (and should not depend on LLVM).
-      populateVectorContractToMatrixMultiply(patterns);
-    }
     populateVectorMaskOpLoweringPatterns(patterns);
     populateVectorShapeCastLoweringPatterns(patterns);
     populateVectorInterleaveLoweringPatterns(patterns);
     populateVectorTransposeLoweringPatterns(patterns, vectorTransposeLowering);
-    if (vectorTransposeLowering == vector::VectorTransposeLowering::Flat) {
-      // This pattern creates a dependency on the LLVM dialect, hence we don't
-      // include it in `populateVectorTransposeLoweringPatterns` that is part of
-      // the Vector dialect (and should not depend on LLVM).
-      populateVectorTransposeToFlatTranspose(patterns);
-    }
     // Vector transfer ops with rank > 1 should be lowered with VectorToSCF.
     populateVectorTransferLoweringPatterns(patterns, /*maxTransferRank=*/1);
     populateVectorMaskMaterializationPatterns(patterns,
@@ -96,15 +84,9 @@ void ConvertVectorToLLVMPass::runOnOperation() {
     populateVectorGatherLoweringPatterns(patterns);
     if (armI8MM) {
       if (armNeon)
-        arm_neon::populateLowerContractionToNeonI8MMPatterns(patterns);
+        arm_neon::populateLowerContractionToNeonI8MMPatternPatterns(patterns);
       if (armSVE)
-        populateLowerContractionToSVEI8MMPatterns(patterns);
-    }
-    if (armBF16) {
-      if (armNeon)
-        arm_neon::populateLowerContractionToNeonBFMMLAPatterns(patterns);
-      if (armSVE)
-        populateLowerContractionToSVEBFMMLAPatterns(patterns);
+        populateLowerContractionToSVEI8MMPatternPatterns(patterns);
     }
     (void)applyPatternsGreedily(getOperation(), std::move(patterns));
   }
@@ -114,9 +96,11 @@ void ConvertVectorToLLVMPass::runOnOperation() {
   LLVMTypeConverter converter(&getContext(), options);
   RewritePatternSet patterns(&getContext());
   populateVectorTransferLoweringPatterns(patterns);
+  populateVectorToLLVMMatrixConversionPatterns(converter, patterns);
   populateVectorToLLVMConversionPatterns(
       converter, patterns, reassociateFPReductions, force32BitVectorIndices,
       useVectorAlignment);
+  populateVectorToLLVMMatrixConversionPatterns(converter, patterns);
 
   // Architecture specific augmentations.
   LLVMConversionTarget target(getContext());

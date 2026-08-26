@@ -13,6 +13,7 @@
 #include "mlir/IR/Verifier.h"
 #include "mlir/Query/Matcher/MatchFinder.h"
 #include "mlir/Query/QuerySession.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -77,7 +78,7 @@ static Operation *extractFunction(std::vector<Operation *> &ops,
                       clonedOp->result_end());
   }
   // Add return operation
-  func::ReturnOp::create(builder, loc, clonedVals);
+  builder.create<func::ReturnOp>(loc, clonedVals);
 
   // Remove unused function arguments
   size_t currentIndex = 0;

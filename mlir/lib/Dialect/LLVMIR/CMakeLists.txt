@@ -21,7 +21,10 @@ add_mlir_dialect_library(MLIRLLVMDialect
   intrinsics_gen
 
   LINK_COMPONENTS
+  AsmParser
   BinaryFormat
+  BitReader
+  BitWriter
   Core
 
   LINK_LIBS PUBLIC

@@ -1,7 +1,7 @@
 add_mlir_dialect_library(MLIRArmSVETransforms
   LegalizeForLLVMExport.cpp
   LegalizeVectorStorage.cpp
-  LowerContractToSVEPatterns.cpp
+  LowerContractionToSVEI8MMPattern.cpp
 
   DEPENDS
   MLIRArmSVEConversionsIncGen

@@ -107,8 +107,7 @@ entry:
   ret i32 %add
 }
 
-define i8 @lifetime_end(i8 %val) {
-  %p = alloca [32 x i8]
+define i8 @lifetime_end(ptr %p, i8 %val) {
   call void @llvm.lifetime.start.p0(i64 32, ptr %p)
   store i8 %val, ptr %p
   call void @llvm.lifetime.end.p0(i64 32, ptr %p)

@@ -14,7 +14,7 @@
 #include "test/UnitTest/Test.h"
 #include "utils/MPFRWrapper/MPFRUtils.h"
 
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
 
 using LlvmLibcExpm1Test = LIBC_NAMESPACE::testing::FPTest<double>;
 

@@ -72,7 +72,6 @@ add_entrypoint_object(
     ../scanf.h
   DEPENDS
     .scanf_internal
-    libc.include.inttypes
     libc.src.stdio.scanf_core.scanf_main
     libc.src.__support.arg_list
     libc.src.__support.OSUtil.osutil

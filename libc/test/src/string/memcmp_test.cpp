@@ -66,13 +66,13 @@ TEST(LlvmLibcMemcmpTest, SizeSweep) {
   }
 }
 
-#if defined(LIBC_ADD_NULL_CHECKS)
+#if defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
 
 TEST(LlvmLibcMemcmpTest, CrashOnNullPtr) {
   ASSERT_DEATH([]() { LIBC_NAMESPACE::memcmp(nullptr, nullptr, 1); },
                WITH_SIGNAL(-1));
 }
 
-#endif // defined(LIBC_ADD_NULL_CHECKS)
+#endif // defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
 
 } // namespace LIBC_NAMESPACE_DECL

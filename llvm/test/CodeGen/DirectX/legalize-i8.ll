@@ -127,9 +127,10 @@ define i32 @i8_geps_index0() {
   ; CHECK:         [[LOAD:%.*]] = load i32, ptr [[GEP]], align 4
   ; CHECK-NEXT:    ret i32 [[LOAD]]
   %1 = alloca [2 x i32], align 8
-  %2 = load i8, ptr %1
-  %3 = sext i8 %2 to i32
-  ret i32 %3
+  %2 = getelementptr inbounds nuw i8, ptr %1, i32 0
+  %3 = load i8, ptr %2
+  %4 = sext i8 %3 to i32
+  ret i32 %4
 }
 
 define i32 @i8_geps_index1() {
@@ -148,14 +149,11 @@ define i32 @i8_geps_index1() {
 define i32 @i8_gep_store() {
   ; CHECK-LABEL: define i32 @i8_gep_store(
   ; CHECK-NEXT:    [[ALLOCA:%.*]] = alloca [2 x i32], align 8
-  ; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds nuw [2 x i32], ptr [[ALLOCA]], i32 0, i32 0
-  ; CHECK-NEXT:    store i32 0, ptr [[GEP]], align 4
   ; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds nuw [2 x i32], ptr [[ALLOCA]], i32 0, i32 1
   ; CHECK-NEXT:    store i32 1, ptr [[GEP]], align 4
   ; CHECK:         [[LOAD:%.*]] = load i32, ptr [[GEP]], align 4
   ; CHECK-NEXT:    ret i32 [[LOAD]]
   %1 = alloca [2 x i32], align 8
-  store i8 0, ptr %1
   %2 = getelementptr inbounds nuw i8, ptr %1, i32 4
   store i8 1, ptr %2
   %3 = load i8, ptr %2

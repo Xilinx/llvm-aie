@@ -236,14 +236,14 @@ public:
   // Emit the decoder state machine table. Returns a mask of MCD decoder ops
   // that were emitted.
   unsigned emitTable(formatted_raw_ostream &OS, DecoderTable &Table,
-                     unsigned BitWidth, StringRef Namespace,
+                     indent Indent, unsigned BitWidth, StringRef Namespace,
                      const EncodingIDsVec &EncodingIDs) const;
   void emitInstrLenTable(formatted_raw_ostream &OS,
                          ArrayRef<unsigned> InstrLen) const;
   void emitPredicateFunction(formatted_raw_ostream &OS,
-                             PredicateSet &Predicates) const;
-  void emitDecoderFunction(formatted_raw_ostream &OS,
-                           DecoderSet &Decoders) const;
+                             PredicateSet &Predicates, indent Indent) const;
+  void emitDecoderFunction(formatted_raw_ostream &OS, DecoderSet &Decoders,
+                           indent Indent) const;
 
   // run - Output the code emitter
   void run(raw_ostream &o);
@@ -842,8 +842,8 @@ unsigned Filter::usefulness() const {
 // Emit the decoder state machine table. Returns a mask of MCD decoder ops
 // that were emitted.
 unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
-                                   DecoderTable &Table, unsigned BitWidth,
-                                   StringRef Namespace,
+                                   DecoderTable &Table, indent Indent,
+                                   unsigned BitWidth, StringRef Namespace,
                                    const EncodingIDsVec &EncodingIDs) const {
   // We'll need to be able to map from a decoded opcode into the corresponding
   // EncodingID for this specific combination of BitWidth and Namespace. This
@@ -853,8 +853,10 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
   for (const auto &EI : EncodingIDs)
     OpcodeToEncodingID[EI.Opcode] = EI.EncodingID;
 
-  OS << "static const uint8_t DecoderTable" << Namespace << BitWidth
+  OS << Indent << "static const uint8_t DecoderTable" << Namespace << BitWidth
      << "[] = {\n";
+
+  Indent += 2;
 
   // Emit ULEB128 encoded value to OS, returning the number of bytes emitted.
   auto emitULEB128 = [](DecoderTable::const_iterator &I,
@@ -912,7 +914,7 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
       PrintFatalError("Invalid decode table opcode: " + Twine((int)DecoderOp) +
                       " at index " + Twine(Pos));
     case MCD::OPC_ExtractField: {
-      OS << "  MCD::OPC_ExtractField, ";
+      OS << Indent << "MCD::OPC_ExtractField, ";
 
       // ULEB128 encoded start value.
       const char *ErrMsg = nullptr;
@@ -930,7 +932,7 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
     case MCD::OPC_FilterValue:
     case MCD::OPC_FilterValueOrFail: {
       bool IsFail = DecoderOp == MCD::OPC_FilterValueOrFail;
-      OS << "  MCD::OPC_FilterValue" << (IsFail ? "OrFail, " : ", ");
+      OS << Indent << "MCD::OPC_FilterValue" << (IsFail ? "OrFail, " : ", ");
       // The filter value is ULEB128 encoded.
       emitULEB128(I, OS);
 
@@ -944,7 +946,7 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
     case MCD::OPC_CheckField:
     case MCD::OPC_CheckFieldOrFail: {
       bool IsFail = DecoderOp == MCD::OPC_CheckFieldOrFail;
-      OS << "  MCD::OPC_CheckField" << (IsFail ? "OrFail, " : ", ");
+      OS << Indent << "MCD::OPC_CheckField" << (IsFail ? "OrFail, " : ", ");
       // ULEB128 encoded start value.
       emitULEB128(I, OS);
       // 8-bit length.
@@ -964,7 +966,7 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
     case MCD::OPC_CheckPredicateOrFail: {
       bool IsFail = DecoderOp == MCD::OPC_CheckPredicateOrFail;
 
-      OS << "  MCD::OPC_CheckPredicate" << (IsFail ? "OrFail, " : ", ");
+      OS << Indent << "MCD::OPC_CheckPredicate" << (IsFail ? "OrFail, " : ", ");
       emitULEB128(I, OS);
 
       if (!IsFail) {
@@ -984,7 +986,7 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
       unsigned Opc = decodeULEB128(&*I, nullptr, EndPtr, &ErrMsg);
       assert(ErrMsg == nullptr && "ULEB128 value too large!");
 
-      OS << "  MCD::OPC_" << (IsTry ? "Try" : "") << "Decode"
+      OS << Indent << "MCD::OPC_" << (IsTry ? "Try" : "") << "Decode"
          << (IsFail ? "OrFail, " : ", ");
       emitULEB128(I, OS);
 
@@ -1014,7 +1016,7 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
       break;
     }
     case MCD::OPC_SoftFail: {
-      OS << "  MCD::OPC_SoftFail, ";
+      OS << Indent << "MCD::OPC_SoftFail, ";
       // Decode the positive mask.
       const char *ErrMsg = nullptr;
       uint64_t PositiveMask = decodeULEB128(&*I, nullptr, EndPtr, &ErrMsg);
@@ -1033,12 +1035,15 @@ unsigned DecoderEmitter::emitTable(formatted_raw_ostream &OS,
       break;
     }
     case MCD::OPC_Fail:
-      OS << "  MCD::OPC_Fail,\n";
+      OS << Indent << "MCD::OPC_Fail,\n";
       break;
     }
   }
-  OS << "  0\n";
-  OS << "};\n\n";
+  OS << Indent << "0\n";
+
+  Indent -= 2;
+
+  OS << Indent << "};\n\n";
 
   return OpcodeMask;
 }
@@ -1052,23 +1057,27 @@ void DecoderEmitter::emitInstrLenTable(formatted_raw_ostream &OS,
 }
 
 void DecoderEmitter::emitPredicateFunction(formatted_raw_ostream &OS,
-                                           PredicateSet &Predicates) const {
+                                           PredicateSet &Predicates,
+                                           indent Indent) const {
   // The predicate function is just a big switch statement based on the
   // input predicate index.
-  OS << "static bool checkDecoderPredicate(unsigned Idx, const FeatureBitset "
-        "&Bits) {\n";
-  OS << "  switch (Idx) {\n";
-  OS << "  default: llvm_unreachable(\"Invalid index!\");\n";
+  OS << Indent << "static bool checkDecoderPredicate(unsigned Idx, "
+     << "const FeatureBitset &Bits) {\n";
+  Indent += 2;
+  OS << Indent << "switch (Idx) {\n";
+  OS << Indent << "default: llvm_unreachable(\"Invalid index!\");\n";
   for (const auto &[Index, Predicate] : enumerate(Predicates)) {
-    OS << "  case " << Index << ":\n";
-    OS << "    return (" << Predicate << ");\n";
+    OS << Indent << "case " << Index << ":\n";
+    OS << Indent + 2 << "return (" << Predicate << ");\n";
   }
-  OS << "  }\n";
-  OS << "}\n\n";
+  OS << Indent << "}\n";
+  Indent -= 2;
+  OS << Indent << "}\n\n";
 }
 
 void DecoderEmitter::emitDecoderFunction(formatted_raw_ostream &OS,
-                                         DecoderSet &Decoders) const {
+                                         DecoderSet &Decoders,
+                                         indent Indent) const {
   // The decoder function is just a big switch statement or a table of function
   // pointers based on the input decoder index.
 
@@ -1085,46 +1094,53 @@ void DecoderEmitter::emitDecoderFunction(formatted_raw_ostream &OS,
   if (UseFnTableInDecodeToMCInst) {
     // Emit a function for each case first.
     for (const auto &[Index, Decoder] : enumerate(Decoders)) {
-      OS << "template <typename InsnType>\n";
-      OS << "DecodeStatus decodeFn" << Index << "(" << DecodeParams << ") {\n";
-      OS << "  " << TmpTypeDecl;
-      OS << "  [[maybe_unused]] TmpType tmp;\n";
+      OS << Indent << "template <typename InsnType>\n";
+      OS << Indent << "DecodeStatus decodeFn" << Index << "(" << DecodeParams
+         << ") {\n";
+      Indent += 2;
+      OS << Indent << TmpTypeDecl;
+      OS << Indent << "[[maybe_unused]] TmpType tmp;\n";
       OS << Decoder;
-      OS << "  return S;\n";
-      OS << "}\n\n";
+      OS << Indent << "return S;\n";
+      Indent -= 2;
+      OS << Indent << "}\n\n";
     }
   }
 
-  OS << "// Handling " << Decoders.size() << " cases.\n";
-  OS << "template <typename InsnType>\n";
-  OS << "static DecodeStatus decodeToMCInst(unsigned Idx, " << DecodeParams
-     << ") {\n";
-  OS << "  DecodeComplete = true;\n";
+  OS << Indent << "// Handling " << Decoders.size() << " cases.\n";
+  OS << Indent << "template <typename InsnType>\n";
+  OS << Indent << "static DecodeStatus decodeToMCInst(unsigned Idx, "
+     << DecodeParams << ") {\n";
+  Indent += 2;
+  OS << Indent << "DecodeComplete = true;\n";
 
   if (UseFnTableInDecodeToMCInst) {
     // Build a table of function pointers.
-    OS << "  using DecodeFnTy = DecodeStatus (*)(" << DecodeParams << ");\n";
-    OS << "  static constexpr DecodeFnTy decodeFnTable[] = {\n";
+    OS << Indent << "using DecodeFnTy = DecodeStatus (*)(" << DecodeParams
+       << ");\n";
+    OS << Indent << "static constexpr DecodeFnTy decodeFnTable[] = {\n";
     for (size_t Index : llvm::seq(Decoders.size()))
-      OS << "    decodeFn" << Index << ",\n";
-    OS << "  };\n";
-    OS << "  if (Idx >= " << Decoders.size() << ")\n";
-    OS << "    llvm_unreachable(\"Invalid index!\");\n";
-    OS << "  return decodeFnTable[Idx](S, insn, MI, Address, Decoder, "
+      OS << Indent + 2 << "decodeFn" << Index << ",\n";
+    OS << Indent << "};\n";
+    OS << Indent << "if (Idx >= " << Decoders.size() << ")\n";
+    OS << Indent + 2 << "llvm_unreachable(\"Invalid index!\");\n";
+    OS << Indent
+       << "return decodeFnTable[Idx](S, insn, MI, Address, Decoder, "
           "DecodeComplete);\n";
   } else {
-    OS << "  " << TmpTypeDecl;
-    OS << "  TmpType tmp;\n";
-    OS << "  switch (Idx) {\n";
-    OS << "  default: llvm_unreachable(\"Invalid index!\");\n";
+    OS << Indent << TmpTypeDecl;
+    OS << Indent << "TmpType tmp;\n";
+    OS << Indent << "switch (Idx) {\n";
+    OS << Indent << "default: llvm_unreachable(\"Invalid index!\");\n";
     for (const auto &[Index, Decoder] : enumerate(Decoders)) {
-      OS << "  case " << Index << ":\n";
+      OS << Indent << "case " << Index << ":\n";
       OS << Decoder;
-      OS << "    return S;\n";
+      OS << Indent + 2 << "return S;\n";
     }
-    OS << "  }\n";
+    OS << Indent << "}\n";
   }
-  OS << "}\n";
+  Indent -= 2;
+  OS << Indent << "}\n";
 }
 
 // Populates the field of the insn given the start position and the number of
@@ -2688,7 +2704,7 @@ namespace {
     TableInfo.Table.push_back(MCD::OPC_Fail);
 
     // Print the table to the output stream.
-    OpcodeMask |= emitTable(OS, TableInfo.Table, FC.getBitWidth(),
+    OpcodeMask |= emitTable(OS, TableInfo.Table, indent(0), FC.getBitWidth(),
                             DecoderNamespace, EncodingIDs);
   }
 
@@ -2704,10 +2720,10 @@ namespace {
 
   // Emit the predicate function.
   if (HasCheckPredicate)
-    emitPredicateFunction(OS, TableInfo.Predicates);
+    emitPredicateFunction(OS, TableInfo.Predicates, indent(0));
 
   // Emit the decoder function.
-  emitDecoderFunction(OS, TableInfo.Decoders);
+  emitDecoderFunction(OS, TableInfo.Decoders, indent(0));
 
   // Emit the main entry point for the decoder, decodeInstruction().
   emitDecodeInstruction(OS, IsVarLenInst, OpcodeMask);

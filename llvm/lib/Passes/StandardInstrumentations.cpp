@@ -1078,13 +1078,9 @@ void OptPassGateInstrumentation::registerCallbacks(
   if (!PassGate.isEnabled())
     return;
 
-  PIC.registerShouldRunOptionalPassCallback(
-      [this, &PIC](StringRef ClassName, Any IR) {
-        StringRef PassName = PIC.getPassNameForClassName(ClassName);
-        if (PassName.empty())
-          return this->shouldRun(ClassName, IR);
-        return this->shouldRun(PassName, IR);
-      });
+  PIC.registerShouldRunOptionalPassCallback([this](StringRef PassName, Any IR) {
+    return this->shouldRun(PassName, IR);
+  });
 }
 
 raw_ostream &PrintPassInstrumentation::print() {

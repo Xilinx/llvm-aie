@@ -4677,14 +4677,11 @@ void FieldDecl::setLazyInClassInitializer(LazyDeclStmtPtr NewInit) {
     Init = NewInit;
 }
 
-bool FieldDecl::hasConstantIntegerBitWidth() const {
-  const auto *CE = dyn_cast_if_present<ConstantExpr>(getBitWidth());
-  return CE && CE->getAPValueResult().isInt();
-}
-
 unsigned FieldDecl::getBitWidthValue() const {
   assert(isBitField() && "not a bitfield");
-  assert(hasConstantIntegerBitWidth());
+  assert(isa<ConstantExpr>(getBitWidth()));
+  assert(cast<ConstantExpr>(getBitWidth())->hasAPValueResult());
+  assert(cast<ConstantExpr>(getBitWidth())->getAPValueResult().isInt());
   return cast<ConstantExpr>(getBitWidth())
       ->getAPValueResult()
       .getInt()

@@ -42,6 +42,7 @@
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PseudoProbe.h"
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmInfoDarwin.h"
@@ -321,7 +322,28 @@ void TargetLoweringObjectFileELF::emitModuleMetadata(MCStreamer &Streamer,
     }
   }
 
-  emitPseudoProbeDescMetadata(Streamer, M);
+  if (NamedMDNode *FuncInfo = M.getNamedMetadata(PseudoProbeDescMetadataName)) {
+    // Emit a descriptor for every function including functions that have an
+    // available external linkage. We may not want this for imported functions
+    // that has code in another thinLTO module but we don't have a good way to
+    // tell them apart from inline functions defined in header files. Therefore
+    // we put each descriptor in a separate comdat section and rely on the
+    // linker to deduplicate.
+    for (const auto *Operand : FuncInfo->operands()) {
+      const auto *MD = cast<MDNode>(Operand);
+      auto *GUID = mdconst::dyn_extract<ConstantInt>(MD->getOperand(0));
+      auto *Hash = mdconst::dyn_extract<ConstantInt>(MD->getOperand(1));
+      auto *Name = cast<MDString>(MD->getOperand(2));
+      auto *S = C.getObjectFileInfo()->getPseudoProbeDescSection(
+          TM->getFunctionSections() ? Name->getString() : StringRef());
+
+      Streamer.switchSection(S);
+      Streamer.emitInt64(GUID->getZExtValue());
+      Streamer.emitInt64(Hash->getZExtValue());
+      Streamer.emitULEB128IntValue(Name->getString().size());
+      Streamer.emitBytes(Name->getString());
+    }
+  }
 
   if (NamedMDNode *LLVMStats = M.getNamedMetadata("llvm.stats")) {
     // Emit the metadata for llvm statistics into .llvm_stats section, which is
@@ -995,7 +1017,7 @@ MCSection *TargetLoweringObjectFileELF::getSectionForLSDA(
   if (!LSDASection || (!F.hasComdat() && !TM.getFunctionSections()))
     return LSDASection;
 
-  const auto *LSDA = static_cast<const MCSectionELF *>(LSDASection);
+  const auto *LSDA = cast<MCSectionELF>(LSDASection);
   unsigned Flags = LSDA->getFlags();
   const MCSymbolELF *LinkedToSym = nullptr;
   StringRef Group;
@@ -1734,8 +1756,7 @@ MCSection *TargetLoweringObjectFileCOFF::getExplicitSectionGlobal(
       Name == getInstrProfSectionName(IPSK_covdata, Triple::COFF,
                                       /*AddSegmentInfo=*/false) ||
       Name == getInstrProfSectionName(IPSK_covname, Triple::COFF,
-                                      /*AddSegmentInfo=*/false) ||
-      Name == ".llvmbc" || Name == ".llvmcmd")
+                                      /*AddSegmentInfo=*/false))
     Kind = SectionKind::getMetadata();
   int Selection = 0;
   unsigned Characteristics = getCOFFSectionFlags(Kind, TM);
@@ -2055,14 +2076,14 @@ MCSection *TargetLoweringObjectFileCOFF::getStaticCtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
   return getCOFFStaticStructorSection(
       getContext(), getContext().getTargetTriple(), true, Priority, KeySym,
-      static_cast<MCSectionCOFF *>(StaticCtorSection));
+      cast<MCSectionCOFF>(StaticCtorSection));
 }
 
 MCSection *TargetLoweringObjectFileCOFF::getStaticDtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
   return getCOFFStaticStructorSection(
       getContext(), getContext().getTargetTriple(), false, Priority, KeySym,
-      static_cast<MCSectionCOFF *>(StaticDtorSection));
+      cast<MCSectionCOFF>(StaticDtorSection));
 }
 
 const MCExpr *TargetLoweringObjectFileCOFF::lowerRelativeReference(
@@ -2389,25 +2410,23 @@ TargetLoweringObjectFileXCOFF::getTargetSymbol(const GlobalValue *GV,
   // here.
   if (const GlobalObject *GO = dyn_cast<GlobalObject>(GV)) {
     if (GO->isDeclarationForLinker())
-      return static_cast<const MCSectionXCOFF *>(
-                 getSectionForExternalReference(GO, TM))
+      return cast<MCSectionXCOFF>(getSectionForExternalReference(GO, TM))
           ->getQualNameSymbol();
 
     if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
       if (GVar->hasAttribute("toc-data"))
-        return static_cast<const MCSectionXCOFF *>(
+        return cast<MCSectionXCOFF>(
                    SectionForGlobal(GVar, SectionKind::getData(), TM))
             ->getQualNameSymbol();
 
     SectionKind GOKind = getKindForGlobal(GO, TM);
     if (GOKind.isText())
-      return static_cast<const MCSectionXCOFF *>(
+      return cast<MCSectionXCOFF>(
                  getSectionForFunctionDescriptor(cast<Function>(GO), TM))
           ->getQualNameSymbol();
     if ((TM.getDataSections() && !GO->hasSection()) || GO->hasCommonLinkage() ||
         GOKind.isBSSLocal() || GOKind.isThreadBSSLocal())
-      return static_cast<const MCSectionXCOFF *>(
-                 SectionForGlobal(GO, GOKind, TM))
+      return cast<MCSectionXCOFF>(SectionForGlobal(GO, GOKind, TM))
           ->getQualNameSymbol();
   }
 
@@ -2743,7 +2762,7 @@ MCSection *TargetLoweringObjectFileXCOFF::getSectionForTOCEntry(
 
 MCSection *TargetLoweringObjectFileXCOFF::getSectionForLSDA(
     const Function &F, const MCSymbol &FnSym, const TargetMachine &TM) const {
-  auto *LSDA = static_cast<MCSectionXCOFF *>(LSDASection);
+  auto *LSDA = cast<MCSectionXCOFF>(LSDASection);
   if (TM.getFunctionSections()) {
     // If option -ffunction-sections is on, append the function name to the
     // name of the LSDA csect so that each function has its own LSDA csect.

@@ -251,7 +251,11 @@ public:
         continue;
 
       case NestedNameSpecifier::Namespace:
-        asImpl().writeNamespaceBaseDeclRef(NNS->getAsNamespace());
+        asImpl().writeNamespaceDeclRef(NNS->getAsNamespace());
+        continue;
+
+      case NestedNameSpecifier::NamespaceAlias:
+        asImpl().writeNamespaceAliasDeclRef(NNS->getAsNamespaceAlias());
         continue;
 
       case NestedNameSpecifier::TypeSpec:

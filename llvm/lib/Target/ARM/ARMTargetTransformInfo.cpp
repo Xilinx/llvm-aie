@@ -1330,7 +1330,8 @@ InstructionCost ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind,
       std::pair<InstructionCost, MVT> LT = getTypeLegalizationCost(SrcTy);
       if (const auto *Entry = CostTableLookup(MVEDupTbl, ISD::VECTOR_SHUFFLE,
                                               LT.second))
-        return LT.first * Entry->Cost * ST->getMVEVectorCostFactor(CostKind);
+        return LT.first * Entry->Cost *
+               ST->getMVEVectorCostFactor(TTI::TCK_RecipThroughput);
     }
 
     if (!Mask.empty()) {
@@ -1339,7 +1340,7 @@ InstructionCost ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind,
           Mask.size() <= LT.second.getVectorNumElements() &&
           (isVREVMask(Mask, LT.second, 16) || isVREVMask(Mask, LT.second, 32) ||
            isVREVMask(Mask, LT.second, 64)))
-        return ST->getMVEVectorCostFactor(CostKind) * LT.first;
+        return ST->getMVEVectorCostFactor(TTI::TCK_RecipThroughput) * LT.first;
     }
   }
 
@@ -1347,7 +1348,7 @@ InstructionCost ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind,
   if (IsExtractSubvector)
     Kind = TTI::SK_ExtractSubvector;
   int BaseCost = ST->hasMVEIntegerOps() && SrcTy->isVectorTy()
-                     ? ST->getMVEVectorCostFactor(CostKind)
+                     ? ST->getMVEVectorCostFactor(TTI::TCK_RecipThroughput)
                      : 1;
   return BaseCost * BaseT::getShuffleCost(Kind, DstTy, SrcTy, Mask, CostKind,
                                           Index, SubTp);

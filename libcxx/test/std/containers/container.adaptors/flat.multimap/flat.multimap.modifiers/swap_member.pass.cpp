@@ -40,7 +40,7 @@ static_assert(NoExceptMemberSwap<
 #endif
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test() {
+void test() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
   using M     = std::flat_multimap<Key, Value, std::less<Key>, KeyContainer, ValueContainer>;
@@ -87,23 +87,11 @@ constexpr void test() {
   }
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<int>, std::vector<double>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test<std::deque<int>, std::vector<double>>();
+  test<std::deque<int>, std::vector<double>>();
   test<MinSequenceContainer<int>, MinSequenceContainer<double>>();
   test<std::vector<int, min_allocator<int>>, std::vector<double, min_allocator<double>>>();
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

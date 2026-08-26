@@ -523,16 +523,17 @@ void AArch64TargetELFStreamer::finish() {
   // mark it execute-only if it is empty and there is at least one
   // execute-only section in the object.
   if (any_of(Asm, [](const MCSection &Sec) {
-        return static_cast<const MCSectionELF &>(Sec).getFlags() &
-               ELF::SHF_AARCH64_PURECODE;
+        return cast<MCSectionELF>(Sec).getFlags() & ELF::SHF_AARCH64_PURECODE;
       })) {
     auto *Text =
         static_cast<MCSectionELF *>(Ctx.getObjectFileInfo()->getTextSection());
     bool Empty = true;
     for (auto &F : *Text) {
-      if (F.getSize()) {
-        Empty = false;
-        break;
+      if (auto *DF = dyn_cast<MCDataFragment>(&F)) {
+        if (!DF->getContents().empty()) {
+          Empty = false;
+          break;
+        }
       }
     }
     if (Empty)
@@ -560,7 +561,8 @@ void AArch64TargetELFStreamer::finish() {
     if (!Sym.isMemtag())
       continue;
     auto *SRE = MCSymbolRefExpr::create(&Sym, Ctx);
-    S.emitRelocDirective(*Zero, "BFD_RELOC_NONE", SRE);
+    (void)S.emitRelocDirective(*Zero, "BFD_RELOC_NONE", SRE, SMLoc(),
+                               *Ctx.getSubtargetInfo());
   }
 }
 

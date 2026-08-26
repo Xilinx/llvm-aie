@@ -67,5 +67,5 @@ config.substitutions.append(
 )
 
 # GWP-ASan tests are currently supported on Linux only.
-if config.target_os not in ["Linux"]:
+if config.host_os not in ["Linux"]:
     config.unsupported = True

@@ -75,7 +75,7 @@ bool runPassPipeline(
     bool ShouldPreserveAssemblyUseListOrder,
     bool ShouldPreserveBitcodeUseListOrder, bool EmitSummaryIndex,
     bool EmitModuleHash, bool EnableDebugify, bool VerifyDIPreserve,
-    bool EnableProfcheck, bool UnifiedLTO = false);
+    bool UnifiedLTO = false);
 } // namespace llvm
 
 #endif

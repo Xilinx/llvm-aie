@@ -51,7 +51,6 @@ add_flang_library(FortranLower
   FIRDialect
   FIRDialectSupport
   FIRBuilder
-  FIROpenACCSupport
   FIRSupport
   FIRTransforms
   HLFIRDialect

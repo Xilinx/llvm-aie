@@ -62,7 +62,7 @@ getFlatOffsetAndStrides(OpBuilder &rewriter, Location loc, Value source,
     OpBuilder::InsertionGuard g(rewriter);
     setInsertionPointToStart(rewriter, source);
     newExtractStridedMetadata =
-        memref::ExtractStridedMetadataOp::create(rewriter, loc, source);
+        rewriter.create<memref::ExtractStridedMetadataOp>(loc, source);
   }
 
   auto &&[sourceStrides, sourceOffset] = sourceType.getStridesAndOffset();
@@ -108,9 +108,9 @@ static Value getFlatMemref(OpBuilder &rewriter, Location loc, Value source,
   auto &&[base, offset, ignore] =
       getFlatOffsetAndStrides(rewriter, loc, source, offsetsTemp);
   MemRefType retType = inferCastResultType(base, offset);
-  return memref::ReinterpretCastOp::create(rewriter, loc, retType, base, offset,
-                                           ArrayRef<OpFoldResult>(),
-                                           ArrayRef<OpFoldResult>());
+  return rewriter.create<memref::ReinterpretCastOp>(loc, retType, base, offset,
+                                                    ArrayRef<OpFoldResult>(),
+                                                    ArrayRef<OpFoldResult>());
 }
 
 static bool needFlatten(Value val) {

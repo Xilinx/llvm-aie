@@ -20,7 +20,6 @@ struct MyClass;
 // CHECK-NEXT:  "Template": {
 // CHECK-NEXT:    "Constraints": [
 // CHECK-NEXT:      {
-// CHECK-NEXT:        "End": true,
 // CHECK-NEXT:        "Expression": "Addable<T>",
 // CHECK-NEXT:        "Name": "Addable",
 // CHECK-NEXT:        "Path": "",

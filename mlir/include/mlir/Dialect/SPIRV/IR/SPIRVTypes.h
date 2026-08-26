@@ -301,33 +301,30 @@ public:
 
   static constexpr StringLiteral name = "spirv.struct";
 
-  // Type for specifying the decoration(s) on struct members.
-  // If `decorationValue` is UnitAttr then decoration has no
-  // value.
+  // Type for specifying the decoration(s) on struct members
   struct MemberDecorationInfo {
-    uint32_t memberIndex;
+    uint32_t memberIndex : 31;
+    uint32_t hasValue : 1;
     Decoration decoration;
-    Attribute decorationValue;
+    uint32_t decorationValue;
 
-    MemberDecorationInfo(uint32_t index, Decoration decoration,
-                         Attribute decorationValue)
-        : memberIndex(index), decoration(decoration),
+    MemberDecorationInfo(uint32_t index, uint32_t hasValue,
+                         Decoration decoration, uint32_t decorationValue)
+        : memberIndex(index), hasValue(hasValue), decoration(decoration),
           decorationValue(decorationValue) {}
 
-    friend bool operator==(const MemberDecorationInfo &lhs,
-                           const MemberDecorationInfo &rhs) {
-      return lhs.memberIndex == rhs.memberIndex &&
-             lhs.decoration == rhs.decoration &&
-             lhs.decorationValue == rhs.decorationValue;
+    bool operator==(const MemberDecorationInfo &other) const {
+      return (this->memberIndex == other.memberIndex) &&
+             (this->decoration == other.decoration) &&
+             (this->decorationValue == other.decorationValue);
     }
 
-    friend bool operator<(const MemberDecorationInfo &lhs,
-                          const MemberDecorationInfo &rhs) {
-      return std::tuple(lhs.memberIndex, llvm::to_underlying(lhs.decoration)) <
-             std::tuple(rhs.memberIndex, llvm::to_underlying(rhs.decoration));
+    bool operator<(const MemberDecorationInfo &other) const {
+      return this->memberIndex < other.memberIndex ||
+             (this->memberIndex == other.memberIndex &&
+              static_cast<uint32_t>(this->decoration) <
+                  static_cast<uint32_t>(other.decoration));
     }
-
-    bool hasValue() const { return !isa<UnitAttr>(decorationValue); }
   };
 
   /// Construct a literal StructType with at least one member.

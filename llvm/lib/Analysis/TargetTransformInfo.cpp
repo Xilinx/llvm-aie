@@ -1442,7 +1442,7 @@ bool TargetTransformInfo::hasArmWideBranch(bool Thumb) const {
   return TTIImpl->hasArmWideBranch(Thumb);
 }
 
-APInt TargetTransformInfo::getFeatureMask(const Function &F) const {
+uint64_t TargetTransformInfo::getFeatureMask(const Function &F) const {
   return TTIImpl->getFeatureMask(F);
 }
 

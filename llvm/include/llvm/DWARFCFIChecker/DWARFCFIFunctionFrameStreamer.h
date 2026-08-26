@@ -20,7 +20,6 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 #include <optional>
 
@@ -31,7 +30,7 @@ namespace llvm {
 /// channels them to `CFIFunctionFrameReceiver`. A function frame is the machine
 /// instructions and CFI directives that are between `.cfi_startproc` and
 /// `.cfi_endproc` directives.
-class LLVM_ABI CFIFunctionFrameStreamer : public MCStreamer {
+class CFIFunctionFrameStreamer : public MCStreamer {
 public:
   CFIFunctionFrameStreamer(MCContext &Context,
                            std::unique_ptr<CFIFunctionFrameReceiver> Receiver)

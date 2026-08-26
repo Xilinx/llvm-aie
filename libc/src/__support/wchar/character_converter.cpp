@@ -9,7 +9,6 @@
 #include "hdr/errno_macros.h"
 #include "hdr/types/char32_t.h"
 #include "hdr/types/char8_t.h"
-#include "hdr/types/size_t.h"
 #include "src/__support/CPP/bit.h"
 #include "src/__support/common.h"
 #include "src/__support/error_or.h"
@@ -93,7 +92,6 @@ int CharacterConverter::push(char8_t utf8_byte) {
     state->bytes_stored++;
     return 0;
   }
-
   // Invalid byte -> reset the state
   clear();
   return EILSEQ;
@@ -132,12 +130,6 @@ ErrorOr<char32_t> CharacterConverter::pop_utf32() {
   return utf32;
 }
 
-size_t CharacterConverter::sizeAsUTF32() {
-  return 1; // a single utf-32 value can fit an entire character
-}
-
-size_t CharacterConverter::sizeAsUTF8() { return state->total_bytes; }
-
 ErrorOr<char8_t> CharacterConverter::pop_utf8() {
   if (isEmpty())
     return Error(-1);
@@ -164,9 +156,6 @@ ErrorOr<char8_t> CharacterConverter::pop_utf8() {
   }
 
   state->bytes_stored--;
-  if (state->bytes_stored == 0)
-    clear();
-
   return static_cast<char8_t>(output);
 }
 

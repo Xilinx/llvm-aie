@@ -8,8 +8,5 @@ unittest("SystemZAsmLexerTests") {
     "//llvm/lib/Target/SystemZ",
     "//llvm/lib/TargetParser",
   ]
-  sources = [
-    "SystemZAsmLexerTest.cpp",
-    "SystemZMCDisassemblerTest.cpp",
-  ]
+  sources = [ "SystemZAsmLexerTest.cpp" ]
 }

@@ -46,61 +46,56 @@
                 <div class="sidebar">
                     <h2>{{RecordType}} {{Name}}</h2>
                     <ul>
-                        {{#HasEnums}}
+                        {{#Enums}}
                         <li class="sidebar-section">
                             <a class="sidebar-item" href="#Enums">Enums</a>
                         </li>
                         <ul>
-                            {{#Enums}}
+                            {{#Obj}}
                             <li class="sidebar-item-container">
-                                <a class="sidebar-item" href="#{{USR}}">{{Name}}</a>
+                                <a class="sidebar-item" href="#{{ID}}">{{EnumName}}</a>
                             </li>
-                            {{/Enums}}
+                            {{/Obj}}
                         </ul>
-                        {{/HasEnums}}
-                        {{#HasRecords}}
+                        {{/Enums}}
+                        {{#Record}}
                         <li class="sidebar-section">
                             <a class="sidebar-item" href="#Classes">Inner Classes</a>
                         </li>
                         <ul>
-                            {{#Records}}
+                            {{#Links}}
                             <li class="sidebar-item-container">
-                                <a class="sidebar-item" href="#{{USR}}">{{Name}}</a>
+                                <a class="sidebar-item" href="#{{ID}}">{{Name}}</a>
                             </li>
-                            {{/Records}}
+                            {{/Links}}
                         </ul>
-                        {{/HasRecrods}}
+                        {{/Record}}
                     </ul>
                 </div>
                 <div class="resizer" id="resizer"></div>
                 <div class="content">
-                    {{#HasEnums}}
+                    {{#Enums}}
                     <section id="Enums" class="section-container">
                         <h2>Enumerations</h2>
                         <div>
-                            {{#Enums}}
+                            {{#Obj}}
                             {{>EnumPartial}}
-                            {{/Enums}}
+                            {{/Obj}}
                         </div>
                     </section>
-                    {{/HasEnums}}
-
-                    {{#HasRecords}}
+                    {{/Enums}}
+                    {{#Record}}
                     <section id="Classes" class="section-container">
                         <h2>Inner Classes</h2>
                         <ul class="class-container">
-                        {{#Records}}
-                            <li id="{{USR}}" style="max-height: 40px;">
-                                <a href="{{DocumentationFileName}}.html">
-                                    <pre>
-                                        <code class="language-cpp code-clang-doc">class {{Name}}</code>
-                                    </pre>
-                                </a>
+                        {{#Links}}
+                            <li id="{{ID}}" style="max-height: 40px;">
+                                <a href="{{Link}}"><pre><code class="language-cpp code-clang-doc" >class {{Name}}</code></pre></a>
                             </li>
-                        {{/Records}}
+                        {{/Links}}
                         </ul>
-                    {{/HasRecords}}
                     </section>
+                    {{/Record}}
                 </div>
             </div>
         </main>

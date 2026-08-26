@@ -791,8 +791,6 @@ void ModuleTranslation::forgetMapping(Region &region) {
           globalsMapping.erase(&op);
         if (isa<LLVM::AliasOp>(op))
           aliasesMapping.erase(&op);
-        if (isa<LLVM::IFuncOp>(op))
-          ifuncMapping.erase(&op);
         if (isa<LLVM::CallOp>(op))
           callMapping.erase(&op);
         llvm::append_range(
@@ -1870,33 +1868,6 @@ LogicalResult ModuleTranslation::convertFunctions() {
   return success();
 }
 
-LogicalResult ModuleTranslation::convertIFuncs() {
-  for (auto op : getModuleBody(mlirModule).getOps<IFuncOp>()) {
-    llvm::Type *type = convertType(op.getIFuncType());
-    llvm::GlobalValue::LinkageTypes linkage =
-        convertLinkageToLLVM(op.getLinkage());
-    llvm::Constant *resolver;
-    if (auto *resolverFn = lookupFunction(op.getResolver())) {
-      resolver = cast<llvm::Constant>(resolverFn);
-    } else {
-      Operation *aliasOp = symbolTable().lookupSymbolIn(parentLLVMModule(op),
-                                                        op.getResolverAttr());
-      resolver = cast<llvm::Constant>(lookupAlias(aliasOp));
-    }
-
-    auto *ifunc =
-        llvm::GlobalIFunc::create(type, op.getAddressSpace(), linkage,
-                                  op.getSymName(), resolver, llvmModule.get());
-    addRuntimePreemptionSpecifier(op.getDsoLocal(), ifunc);
-    ifunc->setUnnamedAddr(convertUnnamedAddrToLLVM(op.getUnnamedAddr()));
-    ifunc->setVisibility(convertVisibilityToLLVM(op.getVisibility_()));
-
-    ifuncMapping.try_emplace(op, ifunc);
-  }
-
-  return success();
-}
-
 LogicalResult ModuleTranslation::convertComdats() {
   for (auto comdatOp : getModuleBody(mlirModule).getOps<ComdatOp>()) {
     for (auto selectorOp : comdatOp.getOps<ComdatSelectorOp>()) {
@@ -2313,8 +2284,6 @@ mlir::translateModuleToLLVMIR(Operation *module, llvm::LLVMContext &llvmContext,
     return nullptr;
   if (failed(translator.convertGlobalsAndAliases()))
     return nullptr;
-  if (failed(translator.convertIFuncs()))
-    return nullptr;
   if (failed(translator.createTBAAMetadata()))
     return nullptr;
   if (failed(translator.createIdentMetadata()))
@@ -2327,8 +2296,7 @@ mlir::translateModuleToLLVMIR(Operation *module, llvm::LLVMContext &llvmContext,
   // Convert other top-level operations if possible.
   for (Operation &o : getModuleBody(module).getOperations()) {
     if (!isa<LLVM::LLVMFuncOp, LLVM::AliasOp, LLVM::GlobalOp,
-             LLVM::GlobalCtorsOp, LLVM::GlobalDtorsOp, LLVM::ComdatOp,
-             LLVM::IFuncOp>(&o) &&
+             LLVM::GlobalCtorsOp, LLVM::GlobalDtorsOp, LLVM::ComdatOp>(&o) &&
         !o.hasTrait<OpTrait::IsTerminator>() &&
         failed(translator.convertOperation(o, llvmBuilder))) {
       return nullptr;

@@ -17,6 +17,7 @@
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/MemRef/Transforms/Transforms.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Interfaces/DestinationStyleOpInterface.h"
 #include "mlir/Interfaces/InferTypeOpInterface.h"
 #include "llvm/Support/InterleavedRange.h"
 
@@ -115,12 +116,10 @@ static LogicalResult reifyOpResultShapes(RewriterBase &rewriter,
     // Update the type.
     newRes.setType(reifiedTy);
     if (isa<RankedTensorType>(reifiedTy)) {
-      newResults.push_back(
-          tensor::CastOp::create(rewriter, loc, oldTy, newRes));
+      newResults.push_back(rewriter.create<tensor::CastOp>(loc, oldTy, newRes));
     } else {
       assert(isa<MemRefType>(reifiedTy) && "expected a memref type");
-      newResults.push_back(
-          memref::CastOp::create(rewriter, loc, oldTy, newRes));
+      newResults.push_back(rewriter.create<memref::CastOp>(loc, oldTy, newRes));
     }
   }
 

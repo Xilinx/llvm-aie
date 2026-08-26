@@ -52,15 +52,10 @@ constexpr char procCompName[]{"proc"};
 
 SymbolVector CollectBindings(const Scope &dtScope);
 
-enum NonTbpDefinedIoFlags {
-  IsDtvArgPolymorphic = 1 << 0,
-  DefinedIoInteger8 = 1 << 1,
-};
-
 struct NonTbpDefinedIo {
   const Symbol *subroutine;
   common::DefinedIo definedIo;
-  std::uint8_t flags;
+  bool isDtvArgPolymorphic;
 };
 
 std::multimap<const Symbol *, NonTbpDefinedIo>

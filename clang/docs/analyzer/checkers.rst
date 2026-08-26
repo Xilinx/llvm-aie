@@ -1103,16 +1103,7 @@ To override this threshold to e.g. 4 bytes, use the
 
 optin.portability.UnixAPI
 """""""""""""""""""""""""
-Reports situations where 0 is passed as the "size" argument of various
-allocation functions ( ``calloc``, ``malloc``, ``realloc``, ``reallocf``,
-``alloca``, ``__builtin_alloca``, ``__builtin_alloca_with_align``, ``valloc``).
-
-Note that similar functionality is also supported by :ref:`unix-Malloc` which
-reports code that *uses* memory allocated with size zero.
-
-(The name of this checker is motivated by the fact that it was originally
-introduced with the vague goal that it "Finds implementation-defined behavior
-in UNIX/Posix functions.")
+Finds implementation-defined behavior in UNIX/Posix functions.
 
 
 optin.taint

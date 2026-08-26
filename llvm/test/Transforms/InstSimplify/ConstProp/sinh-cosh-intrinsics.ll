@@ -35,7 +35,8 @@ define double @test_sinh_neg0() {
 
 define double @test_sinh_poison() {
 ; CHECK-LABEL: define double @test_sinh_poison() {
-; CHECK-NEXT:    ret double poison
+; CHECK-NEXT:    [[RES:%.*]] = call double @llvm.sinh.f64(double poison)
+; CHECK-NEXT:    ret double [[RES]]
 ;
   %res = call double @llvm.sinh.f64(double poison)
   ret double %res
@@ -120,7 +121,8 @@ define double @test_cosh_neg0() {
 
 define double @test_cosh_poison() {
 ; CHECK-LABEL: define double @test_cosh_poison() {
-; CHECK-NEXT:    ret double poison
+; CHECK-NEXT:    [[RES:%.*]] = call double @llvm.cosh.f64(double poison)
+; CHECK-NEXT:    ret double [[RES]]
 ;
   %res = call double @llvm.cosh.f64(double poison)
   ret double %res

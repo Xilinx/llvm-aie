@@ -1,15 +1,17 @@
 header: spawn.h
-standards:
-  - posix
+header_template: spawn.h.def
+macros: []
 types:
   - type_name: posix_spawn_file_actions_t
   - type_name: posix_spawnattr_t
   - type_name: pid_t
   - type_name: mode_t
+enums: []
+objects: []
 functions:
   - name: posix_spawn
     standards:
-      - posix
+      - POSIX
     return_type: int
     arguments:
       - type: pid_t *__restrict
@@ -20,14 +22,14 @@ functions:
       - type: char * const * __restrict
   - name: posix_spawn_file_actions_addclose
     standards:
-      - posix
+      - POSIX
     return_type: int
     arguments:
       - type: posix_spawn_file_actions_t *
       - type: int
   - name: posix_spawn_file_actions_adddup2
     standards:
-      - posix
+      - POSIX
     return_type: int
     arguments:
       - type: posix_spawn_file_actions_t *
@@ -35,7 +37,7 @@ functions:
       - type: int
   - name: posix_spawn_file_actions_addopen
     standards:
-      - posix
+      - POSIX
     return_type: int
     arguments:
       - type: posix_spawn_file_actions_t *__restrict
@@ -45,13 +47,13 @@ functions:
       - type: mode_t
   - name: posix_spawn_file_actions_destroy
     standards:
-      - posix
+      - POSIX
     return_type: int
     arguments:
       - type: posix_spawn_file_actions_t *
   - name: posix_spawn_file_actions_init
     standards:
-      - posix
+      - POSIX
     return_type: int
     arguments:
       - type: posix_spawn_file_actions_t *

@@ -901,9 +901,10 @@ void CommandObjectFrameRecognizerAdd::DoExecute(Args &command,
       StackFrameRecognizerSP(new ScriptedStackFrameRecognizer(
           interpreter, m_options.m_class_name.c_str()));
   if (m_options.m_regex) {
-    auto module = std::make_shared<RegularExpression>(m_options.m_module);
+    auto module =
+        RegularExpressionSP(new RegularExpression(m_options.m_module));
     auto func =
-        std::make_shared<RegularExpression>(m_options.m_symbols.front());
+        RegularExpressionSP(new RegularExpression(m_options.m_symbols.front()));
     GetTarget().GetFrameRecognizerManager().AddRecognizer(
         recognizer_sp, module, func, Mangled::NamePreference::ePreferDemangled,
         m_options.m_first_instruction_only);

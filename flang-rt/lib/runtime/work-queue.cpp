@@ -21,6 +21,21 @@ static constexpr bool enableDebugOutput{false};
 
 RT_OFFLOAD_API_GROUP_BEGIN
 
+RT_API_ATTRS Componentwise::Componentwise(const typeInfo::DerivedType &derived)
+    : derived_{derived}, components_{derived_.component().Elements()} {
+  GetComponent();
+}
+
+RT_API_ATTRS void Componentwise::GetComponent() {
+  if (IsComplete()) {
+    component_ = nullptr;
+  } else {
+    const Descriptor &componentDesc{derived_.component()};
+    component_ = componentDesc.ZeroBasedIndexedElement<typeInfo::Component>(
+        componentAt_);
+  }
+}
+
 RT_API_ATTRS int Ticket::Continue(WorkQueue &workQueue) {
   if (!begun) {
     begun = true;
@@ -38,21 +53,19 @@ RT_API_ATTRS int Ticket::Continue(WorkQueue &workQueue) {
 }
 
 RT_API_ATTRS WorkQueue::~WorkQueue() {
-  if (anyDynamicAllocation_) {
-    if (last_) {
-      if ((last_->next = firstFree_)) {
-        last_->next->previous = last_;
-      }
-      firstFree_ = first_;
-      first_ = last_ = nullptr;
+  if (last_) {
+    if ((last_->next = firstFree_)) {
+      last_->next->previous = last_;
     }
-    while (firstFree_) {
-      TicketList *next{firstFree_->next};
-      if (!firstFree_->isStatic) {
-        FreeMemory(firstFree_);
-      }
-      firstFree_ = next;
+    firstFree_ = first_;
+    first_ = last_ = nullptr;
+  }
+  while (firstFree_) {
+    TicketList *next{firstFree_->next};
+    if (!firstFree_->isStatic) {
+      FreeMemory(firstFree_);
     }
+    firstFree_ = next;
   }
 }
 
@@ -61,7 +74,6 @@ RT_API_ATTRS Ticket &WorkQueue::StartTicket() {
     void *p{AllocateMemoryOrCrash(terminator_, sizeof(TicketList))};
     firstFree_ = new (p) TicketList;
     firstFree_->isStatic = false;
-    anyDynamicAllocation_ = true;
   }
   TicketList *newTicket{firstFree_};
   if ((firstFree_ = newTicket->next)) {

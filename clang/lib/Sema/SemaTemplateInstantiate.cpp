@@ -2272,6 +2272,11 @@ TemplateInstantiator::TransformCXXAssumeAttr(const CXXAssumeAttr *AA) {
   if (!Res.isUsable())
     return AA;
 
+  Res = getSema().ActOnFinishFullExpr(Res.get(),
+                                      /*DiscardedValue=*/false);
+  if (!Res.isUsable())
+    return AA;
+
   if (!(Res.get()->getDependence() & ExprDependence::TypeValueInstantiation)) {
     Res = getSema().BuildCXXAssumeExpr(Res.get(), AA->getAttrName(),
                                        AA->getRange());

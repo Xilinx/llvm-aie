@@ -102,15 +102,15 @@ void UnlockThreads() SANITIZER_NO_THREAD_SAFETY_ANALYSIS;
 // where leak checking is initiated from a non-main thread).
 void EnsureMainThreadIDIsCorrect();
 
-bool GetThreadRangesLocked(ThreadID os_id, uptr *stack_begin, uptr *stack_end,
+bool GetThreadRangesLocked(tid_t os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
                            uptr *cache_end, DTLS **dtls);
 void GetAllThreadAllocatorCachesLocked(InternalMmapVector<uptr> *caches);
 void GetThreadExtraStackRangesLocked(InternalMmapVector<Range> *ranges);
-void GetThreadExtraStackRangesLocked(ThreadID os_id,
+void GetThreadExtraStackRangesLocked(tid_t os_id,
                                      InternalMmapVector<Range> *ranges);
 void GetAdditionalThreadContextPtrsLocked(InternalMmapVector<uptr> *ptrs);
-void GetRunningThreadsLocked(InternalMmapVector<ThreadID> *threads);
+void GetRunningThreadsLocked(InternalMmapVector<tid_t> *threads);
 void PrintThreads();
 
 //// --------------------------------------------------------------------------
@@ -247,7 +247,7 @@ void ProcessPlatformSpecificAllocations(Frontier *frontier);
 struct CheckForLeaksParam {
   Frontier frontier;
   LeakedChunks leaks;
-  ThreadID caller_tid;
+  tid_t caller_tid;
   uptr caller_sp;
   bool success = false;
 };

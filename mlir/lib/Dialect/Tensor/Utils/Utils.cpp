@@ -56,7 +56,7 @@ PadOp mlir::tensor::createPadHighOp(RankedTensorType resType, Value source,
     high[idx] = affine::makeComposedFoldedAffineApply(b, loc, d0 - d1,
                                                       {outDim, sourceDim});
   }
-  return PadOp::create(b, loc, resType, source, low, high, pad, nofold);
+  return b.create<PadOp>(loc, resType, source, low, high, pad, nofold);
 }
 
 SmallVector<Value> mlir::tensor::createDynamicDimValues(OpBuilder &b,
@@ -67,7 +67,7 @@ SmallVector<Value> mlir::tensor::createDynamicDimValues(OpBuilder &b,
   for (const auto &en : llvm::enumerate(tensorTy.getShape())) {
     if (en.value() == ShapedType::kDynamic)
       dynamicDims.push_back(
-          tensor::DimOp::create(b, loc, rankedTensor, en.index()));
+          b.create<tensor::DimOp>(loc, rankedTensor, en.index()));
   }
   return dynamicDims;
 }
@@ -119,7 +119,7 @@ mlir::tensor::dropGivenUnitDims(OpBuilder &b, Location loc, Value src,
     reassocMaps.emplace_back(llvm::make_range(seq.begin(), seq.end()));
     nextDimToGroup = setBit + 1;
   }
-  return tensor::CollapseShapeOp::create(b, loc, src, reassocMaps);
+  return b.create<tensor::CollapseShapeOp>(loc, src, reassocMaps);
 }
 
 bool mlir::tensor::isCastLikeInsertSliceOp(InsertSliceOp op) {

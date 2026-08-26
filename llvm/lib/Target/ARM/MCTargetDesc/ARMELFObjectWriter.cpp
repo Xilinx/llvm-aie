@@ -75,7 +75,7 @@ bool ARMELFObjectWriter::needsRelocateWithSymbol(const MCValue &V,
 unsigned ARMELFObjectWriter::getRelocType(const MCFixup &Fixup,
                                           const MCValue &Target,
                                           bool IsPCRel) const {
-  auto Kind = Fixup.getKind();
+  unsigned Kind = Fixup.getTargetKind();
   uint8_t Specifier = Target.getSpecifier();
   auto CheckFDPIC = [&](uint32_t Type) {
     if (getOSABI() != ELF::ELFOSABI_ARM_FDPIC)
@@ -105,7 +105,7 @@ unsigned ARMELFObjectWriter::getRelocType(const MCFixup &Fixup,
   }
 
   if (IsPCRel) {
-    switch (Fixup.getKind()) {
+    switch (Fixup.getTargetKind()) {
     default:
       reportError(Fixup.getLoc(), "unsupported relocation type");
       return ELF::R_ARM_NONE;

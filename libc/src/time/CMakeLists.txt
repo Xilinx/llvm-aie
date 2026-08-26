@@ -7,11 +7,10 @@ add_header_library(
   HDRS
     time_constants.h
   DEPENDS
-    libc.hdr.stdint_proxy
-    libc.hdr.types.time_t
     libc.include.time
     libc.src.__support.CPP.array
     libc.src.__support.CPP.string_view
+    libc.hdr.types.time_t
 )
 
 add_object_library(
@@ -30,7 +29,6 @@ add_object_library(
     libc.hdr.types.time_t
     libc.hdr.types.size_t
     libc.hdr.types.struct_tm
-    libc.hdr.stdint_proxy
 )
 
 add_entrypoint_object(

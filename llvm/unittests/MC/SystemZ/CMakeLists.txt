@@ -4,14 +4,12 @@ include_directories(
 
 set(LLVM_LINK_COMPONENTS
   SystemZ
-  MCDisassembler
   MCParser
   MC
   Support
   TargetParser
   )
 
-add_llvm_unittest(SystemZMCTests
+add_llvm_unittest(SystemZAsmLexerTests
   SystemZAsmLexerTest.cpp
-  SystemZMCDisassemblerTest.cpp
   )

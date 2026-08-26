@@ -708,7 +708,6 @@ bool ConstructDecompositionT<C, H>::applyClause(
                      tomp::clause::MapT<TypeTy, IdTy, ExprTy>{
                          {/*MapType=*/MapType::Tofrom,
                           /*MapTypeModifier=*/std::nullopt,
-                          /*RefModifier=*/std::nullopt,
                           /*Mapper=*/std::nullopt, /*Iterator=*/std::nullopt,
                           /*LocatorList=*/std::move(tofrom)}});
       dirTarget->clauses.push_back(map);
@@ -796,9 +795,25 @@ bool ConstructDecompositionT<C, H>::applyClause(
   // assigned to which leaf constructs.
 
   // [5.2:340:33]
+  auto canMakePrivateCopy = [](llvm::omp::Clause id) {
+    switch (id) {
+    // Clauses with "privatization" property:
+    case llvm::omp::Clause::OMPC_firstprivate:
+    case llvm::omp::Clause::OMPC_in_reduction:
+    case llvm::omp::Clause::OMPC_lastprivate:
+    case llvm::omp::Clause::OMPC_linear:
+    case llvm::omp::Clause::OMPC_private:
+    case llvm::omp::Clause::OMPC_reduction:
+    case llvm::omp::Clause::OMPC_task_reduction:
+      return true;
+    default:
+      return false;
+    }
+  };
+
   bool applied = applyIf(node, [&](const auto &leaf) {
     return llvm::any_of(leaf.clauses, [&](const ClauseTy *n) {
-      return llvm::omp::isPrivatizingClause(n->id);
+      return canMakePrivateCopy(n->id);
     });
   });
 
@@ -970,8 +985,8 @@ bool ConstructDecompositionT<C, H>::applyClause(
           llvm::omp::Clause::OMPC_map,
           tomp::clause::MapT<TypeTy, IdTy, ExprTy>{
               {/*MapType=*/MapType::Tofrom, /*MapTypeModifier=*/std::nullopt,
-               /*RefModifier=*/std::nullopt, /*Mapper=*/std::nullopt,
-               /*Iterator=*/std::nullopt, /*LocatorList=*/std::move(tofrom)}});
+               /*Mapper=*/std::nullopt, /*Iterator=*/std::nullopt,
+               /*LocatorList=*/std::move(tofrom)}});
 
       dirTarget->clauses.push_back(map);
       applied = true;

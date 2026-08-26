@@ -957,6 +957,10 @@ TEST(TargetParserTest, ARMparseArchVersion) {
 TEST(TargetParserTest, getARMCPUForArch) {
   // Platform specific defaults.
   {
+    llvm::Triple Triple("arm--nacl");
+    EXPECT_EQ("cortex-a8", ARM::getARMCPUForArch(Triple));
+  }
+  {
     llvm::Triple Triple("arm--openbsd");
     EXPECT_EQ("cortex-a8", ARM::getARMCPUForArch(Triple));
   }

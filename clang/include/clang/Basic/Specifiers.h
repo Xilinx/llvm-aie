@@ -120,7 +120,7 @@ namespace clang {
 
   /// A C++ access specifier (public, private, protected), plus the
   /// special value "none" which means different things in different contexts.
-  enum AccessSpecifier : uint8_t {
+  enum AccessSpecifier {
     AS_public,
     AS_protected,
     AS_private,

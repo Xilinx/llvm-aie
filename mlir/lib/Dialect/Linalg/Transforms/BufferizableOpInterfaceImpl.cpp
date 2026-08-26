@@ -184,9 +184,9 @@ struct SoftmaxOpInterface
         getBuffer(rewriter, softmaxOp.getOutput(), options, state);
     if (failed(outputBuffer))
       return failure();
-    linalg::SoftmaxOp::create(rewriter, softmaxOp.getLoc(),
-                              /*result=*/TypeRange(), *inputBuffer,
-                              *outputBuffer, softmaxOp.getDimension());
+    rewriter.create<linalg::SoftmaxOp>(softmaxOp.getLoc(),
+                                       /*result=*/TypeRange(), *inputBuffer,
+                                       *outputBuffer, softmaxOp.getDimension());
     replaceOpWithBufferizedValues(rewriter, op, *outputBuffer);
     return success();
   }

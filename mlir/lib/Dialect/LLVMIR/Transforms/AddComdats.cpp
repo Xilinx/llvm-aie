@@ -28,15 +28,14 @@ static void addComdat(LLVM::LLVMFuncOp &op, OpBuilder &builder,
     PatternRewriter::InsertionGuard guard(builder);
     builder.setInsertionPointToStart(module.getBody());
     comdatOp =
-        mlir::LLVM::ComdatOp::create(builder, module.getLoc(), comdatName);
+        builder.create<mlir::LLVM::ComdatOp>(module.getLoc(), comdatName);
     symbolTable.insert(comdatOp);
   }
 
   PatternRewriter::InsertionGuard guard(builder);
   builder.setInsertionPointToStart(&comdatOp.getBody().back());
-  auto selectorOp = mlir::LLVM::ComdatSelectorOp::create(
-      builder, comdatOp.getLoc(), op.getSymName(),
-      mlir::LLVM::comdat::Comdat::Any);
+  auto selectorOp = builder.create<mlir::LLVM::ComdatSelectorOp>(
+      comdatOp.getLoc(), op.getSymName(), mlir::LLVM::comdat::Comdat::Any);
   op.setComdatAttr(mlir::SymbolRefAttr::get(
       builder.getContext(), comdatName,
       mlir::FlatSymbolRefAttr::get(selectorOp.getSymNameAttr())));

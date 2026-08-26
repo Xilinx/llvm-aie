@@ -861,7 +861,8 @@ std::string Symbol::OmpFlagToClauseName(Symbol::Flag ompFlag) {
   case Symbol::Flag::OmpMapTo:
   case Symbol::Flag::OmpMapFrom:
   case Symbol::Flag::OmpMapToFrom:
-  case Symbol::Flag::OmpMapStorage:
+  case Symbol::Flag::OmpMapAlloc:
+  case Symbol::Flag::OmpMapRelease:
   case Symbol::Flag::OmpMapDelete:
     clauseName = "MAP";
     break;

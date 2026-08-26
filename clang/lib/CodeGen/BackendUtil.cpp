@@ -407,13 +407,13 @@ static bool initTargetOptions(const CompilerInstance &CI,
   // Set EABI version.
   Options.EABIVersion = TargetOpts.EABIVersion;
 
-  if (CodeGenOpts.hasSjLjExceptions())
+  if (LangOpts.hasSjLjExceptions())
     Options.ExceptionModel = llvm::ExceptionHandling::SjLj;
-  if (CodeGenOpts.hasSEHExceptions())
+  if (LangOpts.hasSEHExceptions())
     Options.ExceptionModel = llvm::ExceptionHandling::WinEH;
-  if (CodeGenOpts.hasDWARFExceptions())
+  if (LangOpts.hasDWARFExceptions())
     Options.ExceptionModel = llvm::ExceptionHandling::DwarfCFI;
-  if (CodeGenOpts.hasWasmExceptions())
+  if (LangOpts.hasWasmExceptions())
     Options.ExceptionModel = llvm::ExceptionHandling::Wasm;
 
   Options.NoInfsFPMath = LangOpts.NoHonorInfs;
@@ -1026,6 +1026,12 @@ void EmitAssemblyHelper::RunOptimizationPipeline(
             if (Level != OptimizationLevel::O0)
               MPM.addPass(
                   createModuleToFunctionPassAdaptor(ObjCARCExpandPass()));
+          });
+      PB.registerPipelineEarlySimplificationEPCallback(
+          [](ModulePassManager &MPM, OptimizationLevel Level,
+             ThinOrFullLTOPhase) {
+            if (Level != OptimizationLevel::O0)
+              MPM.addPass(ObjCARCAPElimPass());
           });
       PB.registerScalarOptimizerLateEPCallback(
           [](FunctionPassManager &FPM, OptimizationLevel Level) {

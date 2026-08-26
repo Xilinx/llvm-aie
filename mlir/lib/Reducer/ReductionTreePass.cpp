@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/IR/DialectInterface.h"
+#include "mlir/IR/OpDefinition.h"
 #include "mlir/Reducer/Passes.h"
 #include "mlir/Reducer/ReductionNode.h"
 #include "mlir/Reducer/ReductionPatternInterface.h"
@@ -23,7 +24,9 @@
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/ManagedStatic.h"
 
 namespace mlir {
 #define GEN_PASS_DEF_REDUCTIONTREEPASS

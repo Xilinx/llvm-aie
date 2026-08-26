@@ -2261,30 +2261,6 @@ protected:
     unsigned NumExpansions;
   };
 
-  enum class PredefinedSugarKind {
-    /// The "size_t" type.
-    SizeT,
-
-    /// The signed integer type corresponding to "size_t".
-    SignedSizeT,
-
-    /// The "ptrdiff_t" type.
-    PtrdiffT,
-
-    // Indicates how many items the enum has.
-    Last = PtrdiffT
-  };
-
-  class PresefinedSugarTypeBitfields {
-    friend class PredefinedSugarType;
-
-    LLVM_PREFERRED_TYPE(TypeBitfields)
-    unsigned : NumTypeBits;
-
-    LLVM_PREFERRED_TYPE(PredefinedSugarKind)
-    unsigned Kind : 8;
-  };
-
   class CountAttributedTypeBitfields {
     friend class CountAttributedType;
 
@@ -2324,7 +2300,6 @@ protected:
       DependentTemplateSpecializationTypeBits;
     PackExpansionTypeBitfields PackExpansionTypeBits;
     CountAttributedTypeBitfields CountAttributedTypeBits;
-    PresefinedSugarTypeBitfields PredefinedSugarTypeBits;
   };
 
 private:
@@ -7288,7 +7263,8 @@ public:
 /// Represents a template specialization type whose template cannot be
 /// resolved, e.g.
 ///   A<T>::template B<T>
-class DependentTemplateSpecializationType : public TypeWithKeyword {
+class DependentTemplateSpecializationType : public TypeWithKeyword,
+                                            public llvm::FoldingSetNode {
   friend class ASTContext; // ASTContext creates these
 
   DependentTemplateStorage Name;
@@ -8071,37 +8047,6 @@ public:
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == DependentBitInt;
-  }
-};
-
-class PredefinedSugarType final : public Type {
-public:
-  friend class ASTContext;
-  using Kind = PredefinedSugarKind;
-
-private:
-  PredefinedSugarType(Kind KD, const IdentifierInfo *IdentName,
-                      QualType CanonicalType)
-      : Type(PredefinedSugar, CanonicalType, TypeDependence::None),
-        Name(IdentName) {
-    PredefinedSugarTypeBits.Kind = llvm::to_underlying(KD);
-  }
-
-  static StringRef getName(Kind KD);
-
-  const IdentifierInfo *Name;
-
-public:
-  bool isSugared() const { return true; }
-
-  QualType desugar() const { return getCanonicalTypeInternal(); }
-
-  Kind getKind() const { return Kind(PredefinedSugarTypeBits.Kind); }
-
-  const IdentifierInfo *getIdentifier() const { return Name; }
-
-  static bool classof(const Type *T) {
-    return T->getTypeClass() == PredefinedSugar;
   }
 };
 

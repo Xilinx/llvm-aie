@@ -28,7 +28,7 @@
 #include "min_allocator.h"
 
 template <class KeyContainer, class ValueContainer, class Compare = std::less<>>
-constexpr void test() {
+void test() {
   using M = std::flat_multimap<int, char, Compare, KeyContainer, ValueContainer>;
 
   auto make = [](std::initializer_list<int> il) {
@@ -78,17 +78,14 @@ constexpr void test() {
   assert(m.empty());
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<int>, std::vector<char>>();
   test<std::vector<int>, std::vector<char>, std::greater<>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test<std::deque<int>, std::vector<char>>();
+  test<std::deque<int>, std::vector<char>>();
   test<MinSequenceContainer<int>, MinSequenceContainer<char>>();
   test<std::vector<int, min_allocator<int>>, std::vector<char, min_allocator<char>>>();
 
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+  {
     auto erase_function = [](auto& m, auto key_arg) {
       using Map = std::decay_t<decltype(m)>;
       using Key = typename Map::key_type;
@@ -97,14 +94,6 @@ constexpr bool test() {
     };
     test_erase_exception_guarantee(erase_function);
   }
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

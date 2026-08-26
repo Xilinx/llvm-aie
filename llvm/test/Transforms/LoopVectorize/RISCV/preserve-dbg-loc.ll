@@ -1,5 +1,6 @@
 ; RUN: opt -passes=debugify,loop-vectorize \
-; RUN: -prefer-predicate-over-epilogue=predicate-else-scalar-epilogue \
+; RUN: -force-tail-folding-style=data-with-evl \
+; RUN: -prefer-predicate-over-epilogue=predicate-dont-vectorize \
 ; RUN: -mtriple=riscv64 -mattr=+v -riscv-v-vector-bits-max=128 -S < %s 2>&1 | FileCheck --check-prefix=DEBUGLOC %s
 
 ; Testing the debug locations of the generated vector intrinsic is same as

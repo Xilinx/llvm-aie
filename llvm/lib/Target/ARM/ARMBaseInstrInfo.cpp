@@ -4261,7 +4261,8 @@ std::optional<unsigned> ARMBaseInstrInfo::getOperandLatencyImpl(
     // instructions).
     if (Latency > 0 && Subtarget.isThumb2()) {
       const MachineFunction *MF = DefMI.getParent()->getParent();
-      if (MF->getFunction().hasOptSize())
+      // FIXME: Use Function::hasOptSize().
+      if (MF->getFunction().hasFnAttribute(Attribute::OptimizeForSize))
         --Latency;
     }
     return Latency;

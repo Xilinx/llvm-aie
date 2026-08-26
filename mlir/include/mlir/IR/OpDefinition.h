@@ -30,7 +30,6 @@
 namespace mlir {
 class Builder;
 class OpBuilder;
-class ImplicitLocOpBuilder;
 
 /// This class implements `Optional` functionality for ParseResult. We don't
 /// directly use Optional here, because it provides an implicit conversion
@@ -115,7 +114,7 @@ public:
   MLIRContext *getContext() { return getOperation()->getContext(); }
 
   /// Print the operation to the given stream.
-  void print(raw_ostream &os, OpPrintingFlags flags = {}) {
+  void print(raw_ostream &os, OpPrintingFlags flags = std::nullopt) {
     state->print(os, flags);
   }
   void print(raw_ostream &os, AsmState &asmState) {
@@ -889,7 +888,7 @@ public:
         continue;
 
       // Non-empty regions must contain a single basic block.
-      if (!region.hasOneBlock())
+      if (!llvm::hasSingleElement(region))
         return op->emitOpError("expects region #")
                << i << " to have 0 or 1 blocks";
 

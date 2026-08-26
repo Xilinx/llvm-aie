@@ -424,7 +424,7 @@ static Value createPrivateMemRef(AffineForOp forOp,
   // consumer loop nests to reduce their live range. Currently they are added
   // at the beginning of the block, because loop nests can be reordered
   // during the fusion pass.
-  Value newMemRef = memref::AllocOp::create(top, forOp.getLoc(), newMemRefType);
+  Value newMemRef = top.create<memref::AllocOp>(forOp.getLoc(), newMemRefType);
 
   // Build an AffineMap to remap access functions based on lower bound offsets.
   SmallVector<AffineExpr, 4> remapExprs;
@@ -1473,11 +1473,9 @@ public:
     SmallVector<MemRefDependenceGraph::Edge, 2> inEdges;
     mdg->forEachMemRefInputEdge(
         dstNode->id, [&](MemRefDependenceGraph::Edge inEdge) {
-          // Add 'inEdge' if it is a read-after-write dependence or an edge
-          // from a memref defining op (e.g. view-like op or alloc op).
+          // Add 'inEdge' if it is a read-after-write dependence.
           if (dstNode->getLoadOpCount(inEdge.value) > 0 &&
-              (mdg->getNode(inEdge.id)->getStoreOpCount(inEdge.value) > 0 ||
-               inEdge.value.getDefiningOp() == mdg->getNode(inEdge.id)->op))
+              mdg->getNode(inEdge.id)->getStoreOpCount(inEdge.value) > 0)
             inEdges.push_back(inEdge);
         });
 

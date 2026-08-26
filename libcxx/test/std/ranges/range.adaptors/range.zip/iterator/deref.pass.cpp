@@ -15,7 +15,7 @@
 #include <ranges>
 #include <tuple>
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 constexpr bool test() {
   std::array a{1, 2, 3, 4};

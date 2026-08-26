@@ -125,15 +125,6 @@ def SymbolScopeOp : TEST_Op<"symbol_scope",
   let regions = (region SizedRegion<1>:$region);
 }
 
-def SymbolScopeIsolatedOp
-    : TEST_Op<"symbol_scope_isolated", [IsolatedFromAbove, SymbolTable,
-                                        SingleBlockImplicitTerminator<
-                                            "TerminatorOp">]> {
-  let summary =
-      "operation which defines a new symbol table that is IsolatedFromAbove";
-  let regions = (region SizedRegion<1>:$region);
-}
-
 def SymbolTableRegionOp : TEST_Op<"symbol_table_region", [SymbolTable]> {
   let summary =  "operation which defines a new symbol table without a "
                  "restriction on a terminator";
@@ -2044,7 +2035,7 @@ def IllegalOpWithRegion : TEST_Op<"illegal_op_with_region"> {
        OpBuilder::InsertionGuard g($_builder);
        Block *body = $_builder.createBlock(bodyRegion);
        $_builder.setInsertionPointToEnd(body);
-       IllegalOpTerminator::create($_builder,$_state.location);
+       $_builder.create<IllegalOpTerminator>($_state.location);
     }]>];
 }
 def IllegalOpWithRegionAnchor : TEST_Op<"illegal_op_with_region_anchor">;
@@ -2747,7 +2738,7 @@ def TestLinalgConvOp :
     static void regionBuilder(mlir::ImplicitLocOpBuilder &b, mlir::Block &block,
                               mlir::ArrayRef<mlir::NamedAttribute> attrs,
                               llvm::function_ref<mlir::InFlightDiagnostic()> emitError) {
-      mlir::linalg::YieldOp::create(b,block.getArguments().back());
+      b.create<mlir::linalg::YieldOp>(block.getArguments().back());
     }
 
     static std::function<void(mlir::ImplicitLocOpBuilder &, mlir::Block &,
@@ -2810,7 +2801,7 @@ def TestLinalgFillOp :
     static void regionBuilder(mlir::ImplicitLocOpBuilder &b, mlir::Block &block,
                               mlir::ArrayRef<mlir::NamedAttribute> attrs,
                               llvm::function_ref<mlir::InFlightDiagnostic()> emitError) {
-      mlir::linalg::YieldOp::create(b,block.getArguments().back());
+      b.create<mlir::linalg::YieldOp>(block.getArguments().back());
     }
 
     static std::function<void(mlir::ImplicitLocOpBuilder &, mlir::Block &,

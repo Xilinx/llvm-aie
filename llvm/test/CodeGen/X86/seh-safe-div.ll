@@ -60,7 +60,6 @@ __try.cont:
 ; CHECK: .Ltmp0:
 ; CHECK: leaq [[rloc:.*\(%rbp\)]], %rcx
 ; CHECK: callq try_body
-; CHECK: nop
 ; CHECK-NEXT: .Ltmp1
 ; CHECK: [[cont_bb:\.LBB0_[0-9]+]]:
 ; CHECK: movl [[rloc]], %eax
@@ -83,11 +82,11 @@ __try.cont:
 ; CHECK-NEXT: .long (.Llsda_end0-.Llsda_begin0)/16
 ; CHECK-NEXT: .Llsda_begin0:
 ; CHECK-NEXT: .long .Ltmp0@IMGREL
-; CHECK-NEXT: .long .Ltmp1@IMGREL
+; CHECK-NEXT: .long .Ltmp1@IMGREL+1
 ; CHECK-NEXT: .long safe_div_filt0@IMGREL
 ; CHECK-NEXT: .long [[handler0]]@IMGREL
 ; CHECK-NEXT: .long .Ltmp0@IMGREL
-; CHECK-NEXT: .long .Ltmp1@IMGREL
+; CHECK-NEXT: .long .Ltmp1@IMGREL+1
 ; CHECK-NEXT: .long safe_div_filt1@IMGREL
 ; CHECK-NEXT: .long [[handler1]]@IMGREL
 ; CHECK-NEXT: .Llsda_end0:

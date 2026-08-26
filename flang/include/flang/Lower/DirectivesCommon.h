@@ -193,27 +193,26 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
                     mlir::Value box =
                         !fir::isBoxAddress(info.addr.getType())
                             ? info.addr
-                            : fir::LoadOp::create(builder, loc, info.addr);
+                            : builder.create<fir::LoadOp>(loc, info.addr);
                     mlir::Value d =
                         builder.createIntegerConstant(loc, idxTy, dimension);
-                    auto dimInfo = fir::BoxDimsOp::create(builder, loc, idxTy,
-                                                          idxTy, idxTy, box, d);
-                    fir::ResultOp::create(builder, loc,
-                                          dimInfo.getByteStride());
+                    auto dimInfo = builder.create<fir::BoxDimsOp>(
+                        loc, idxTy, idxTy, idxTy, box, d);
+                    builder.create<fir::ResultOp>(loc, dimInfo.getByteStride());
                   })
                   .genElse([&] {
                     mlir::Value zero =
                         builder.createIntegerConstant(loc, idxTy, 0);
-                    fir::ResultOp::create(builder, loc, zero);
+                    builder.create<fir::ResultOp>(loc, zero);
                   })
                   .getResults()[0];
         } else {
           mlir::Value box = !fir::isBoxAddress(info.addr.getType())
                                 ? info.addr
-                                : fir::LoadOp::create(builder, loc, info.addr);
+                                : builder.create<fir::LoadOp>(loc, info.addr);
           mlir::Value d = builder.createIntegerConstant(loc, idxTy, dimension);
           auto dimInfo =
-              fir::BoxDimsOp::create(builder, loc, idxTy, idxTy, idxTy, box, d);
+              builder.create<fir::BoxDimsOp>(loc, idxTy, idxTy, idxTy, box, d);
           stride = dimInfo.getByteStride();
         }
         strideInBytes = true;
@@ -243,14 +242,14 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
             lbound = builder.createIntegerConstant(loc, idxTy, *lval - 1);
           } else {
             mlir::Value lb = builder.createIntegerConstant(loc, idxTy, *lval);
-            lbound = mlir::arith::SubIOp::create(builder, loc, lb, baseLb);
+            lbound = builder.create<mlir::arith::SubIOp>(loc, lb, baseLb);
           }
           asFortran << *lval;
         } else {
           mlir::Value lb =
               fir::getBase(converter.genExprValue(loc, *lower, stmtCtx));
           lb = builder.createConvert(loc, baseLb.getType(), lb);
-          lbound = mlir::arith::SubIOp::create(builder, loc, lb, baseLb);
+          lbound = builder.create<mlir::arith::SubIOp>(loc, lb, baseLb);
           asFortran << detail::peelOuterConvert(*lower).AsFortran();
         }
       } else {
@@ -277,14 +276,14 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
               ubound = builder.createIntegerConstant(loc, idxTy, *uval - 1);
             } else {
               mlir::Value ub = builder.createIntegerConstant(loc, idxTy, *uval);
-              ubound = mlir::arith::SubIOp::create(builder, loc, ub, baseLb);
+              ubound = builder.create<mlir::arith::SubIOp>(loc, ub, baseLb);
             }
             asFortran << *uval;
           } else {
             mlir::Value ub =
                 fir::getBase(converter.genExprValue(loc, *upper, stmtCtx));
             ub = builder.createConvert(loc, baseLb.getType(), ub);
-            ubound = mlir::arith::SubIOp::create(builder, loc, ub, baseLb);
+            ubound = builder.create<mlir::arith::SubIOp>(loc, ub, baseLb);
             asFortran << detail::peelOuterConvert(*upper).AsFortran();
           }
         }
@@ -311,12 +310,12 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
                   .genThen([&]() {
                     mlir::Value ext = fir::factory::readExtent(
                         builder, loc, dataExv, dimension);
-                    fir::ResultOp::create(builder, loc, ext);
+                    builder.create<fir::ResultOp>(loc, ext);
                   })
                   .genElse([&] {
                     mlir::Value zero =
                         builder.createIntegerConstant(loc, idxTy, 0);
-                    fir::ResultOp::create(builder, loc, zero);
+                    builder.create<fir::ResultOp>(loc, zero);
                   })
                   .getResults()[0];
         } else {
@@ -327,8 +326,8 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
           extent = zero;
           if (ubound && lbound) {
             mlir::Value diff =
-                mlir::arith::SubIOp::create(builder, loc, ubound, lbound);
-            extent = mlir::arith::AddIOp::create(builder, loc, diff, one);
+                builder.create<mlir::arith::SubIOp>(loc, ubound, lbound);
+            extent = builder.create<mlir::arith::AddIOp>(loc, diff, one);
           }
           if (!ubound)
             ubound = lbound;
@@ -336,7 +335,7 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
 
         if (!ubound) {
           // ub = extent - 1
-          ubound = mlir::arith::SubIOp::create(builder, loc, extent, one);
+          ubound = builder.create<mlir::arith::SubIOp>(loc, extent, one);
         }
       }
 
@@ -348,9 +347,8 @@ genBoundsOps(fir::FirOpBuilder &builder, mlir::Location loc,
             loc, cumulativeExtent, extent);
       }
 
-      mlir::Value bound =
-          BoundsOp::create(builder, loc, boundTy, lbound, ubound, extent,
-                           stride, strideInBytes, baseLb);
+      mlir::Value bound = builder.create<BoundsOp>(
+          loc, boundTy, lbound, ubound, extent, stride, strideInBytes, baseLb);
       bounds.push_back(bound);
       ++dimension;
     }
@@ -463,8 +461,8 @@ fir::factory::AddrAndBoundsInfo gatherDataOperandAddrAndBounds(
     asFortran << designator.AsFortran();
 
     if (semantics::IsOptional(compRef->GetLastSymbol())) {
-      info.isPresent = fir::IsPresentOp::create(
-          builder, operandLocation, builder.getI1Type(), info.rawInput);
+      info.isPresent = builder.create<fir::IsPresentOp>(
+          operandLocation, builder.getI1Type(), info.rawInput);
     }
 
     if (unwrapFirBox) {
@@ -474,7 +472,7 @@ fir::factory::AddrAndBoundsInfo gatherDataOperandAddrAndBounds(
             fir::isPointerType(loadOp.getType())) {
           info.boxType = info.addr.getType();
           info.addr =
-              fir::BoxAddrOp::create(builder, operandLocation, info.addr);
+              builder.create<fir::BoxAddrOp>(operandLocation, info.addr);
         }
         info.rawInput = info.addr;
       }

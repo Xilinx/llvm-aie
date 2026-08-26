@@ -332,12 +332,3 @@ LogicalResult spirv::ImageSampleProjDrefImplicitLodOp::verify() {
   return verifyImageOperands(getOperation(), getImageOperandsAttr(),
                              getOperandArguments());
 }
-
-//===----------------------------------------------------------------------===//
-// spirv.ImageFetchOp
-//===----------------------------------------------------------------------===//
-
-LogicalResult spirv::ImageFetchOp::verify() {
-  return verifyImageOperands(getOperation(), getImageOperandsAttr(),
-                             getOperandArguments());
-}

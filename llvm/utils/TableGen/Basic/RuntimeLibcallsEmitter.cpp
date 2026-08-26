@@ -8,12 +8,10 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/SetTheory.h"
-#include "llvm/TableGen/StringToOffsetTable.h"
 #include "llvm/TableGen/TableGenBackend.h"
 
 using namespace llvm;
@@ -236,18 +234,8 @@ public:
     for (RuntimeLibcall &LibCall : RuntimeLibcallDefList)
       Def2RuntimeLibcall[LibCall.getDef()] = &LibCall;
 
-    ArrayRef<const Record *> AllRuntimeLibcallImplsRaw =
+    ArrayRef<const Record *> AllRuntimeLibcallImpls =
         Records.getAllDerivedDefinitions("RuntimeLibcallImpl");
-
-    SmallVector<const Record *, 1024> AllRuntimeLibcallImpls(
-        AllRuntimeLibcallImplsRaw);
-
-    // Sort by libcall impl name and secondarily by the enum name.
-    sort(AllRuntimeLibcallImpls, [](const Record *A, const Record *B) {
-      return std::pair(A->getValueAsString("LibCallFuncName"), A->getName()) <
-             std::pair(B->getValueAsString("LibCallFuncName"), B->getName());
-    });
-
     RuntimeLibcallImplDefList.reserve(AllRuntimeLibcallImpls.size());
 
     size_t LibCallImplEnumVal = 1;
@@ -317,6 +305,8 @@ void RuntimeLibcallEmitter::emitGetRuntimeLibcallEnum(raw_ostream &OS) const {
 
 void RuntimeLibcallEmitter::emitGetInitRuntimeLibcallNames(
     raw_ostream &OS) const {
+  // TODO: Emit libcall names as string offset table.
+
   OS << "const RTLIB::LibcallImpl "
         "llvm::RTLIB::RuntimeLibcallsInfo::"
         "DefaultLibcallImpls[RTLIB::UNKNOWN_LIBCALL + 1] = {\n";
@@ -341,24 +331,17 @@ void RuntimeLibcallEmitter::emitGetInitRuntimeLibcallNames(
         "};\n\n";
 
   // Emit the implementation names
-  StringToOffsetTable Table(/*AppendZero=*/true,
-                            "RTLIB::RuntimeLibcallsInfo::");
+  OS << "const char *const llvm::RTLIB::RuntimeLibcallsInfo::"
+        "LibCallImplNames[RTLIB::NumLibcallImpls] = {\n"
+        "  nullptr, // RTLIB::Unsupported\n";
 
-  for (const RuntimeLibcallImpl &LibCallImpl : RuntimeLibcallImplDefList)
-    Table.GetOrAddStringOffset(LibCallImpl.getLibcallFuncName());
-
-  Table.EmitStringTableDef(OS, "RuntimeLibcallImplNameTable");
-  OS << R"(
-const uint16_t RTLIB::RuntimeLibcallsInfo::RuntimeLibcallNameOffsetTable[] = {
-)";
-
-  OS << formatv("  {}, // {}\n", Table.GetStringOffset(""),
-                ""); // Unsupported entry
   for (const RuntimeLibcallImpl &LibCallImpl : RuntimeLibcallImplDefList) {
-    StringRef ImplName = LibCallImpl.getLibcallFuncName();
-    OS << formatv("  {}, // {}\n", Table.GetStringOffset(ImplName), ImplName);
+    OS << "  \"" << LibCallImpl.getLibcallFuncName() << "\", // ";
+    LibCallImpl.emitEnumEntry(OS);
+    OS << '\n';
   }
-  OS << "};\n";
+
+  OS << "};\n\n";
 
   // Emit the reverse mapping from implementation libraries to RTLIB::Libcall
   OS << "const RTLIB::Libcall llvm::RTLIB::RuntimeLibcallsInfo::"

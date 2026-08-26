@@ -86,11 +86,7 @@ void processEnum(const EnumRec &E, raw_ostream &OS) {
   for (const EnumValueRec Etor : E.getValues()) {
     OS << formatv("  .. c:enumerator:: {0}_{1}\n\n", E.getEnumValNamePrefix(),
                   Etor.getName());
-    OS << "    ";
-    if (E.isTyped()) {
-      OS << ":c:expr:`" << Etor.getTaggedType() << "` — ";
-    }
-    OS << Etor.getDesc() << "\n\n";
+    OS << "    " << Etor.getDesc() << "\n\n";
   }
 }
 

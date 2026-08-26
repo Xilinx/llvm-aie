@@ -293,7 +293,7 @@ void RISCVAsmPrinter::emitNTLHint(const MachineInstr *MI) {
 
   MCInst Hint;
   if (STI->hasStdExtZca())
-    Hint.setOpcode(RISCV::C_ADD);
+    Hint.setOpcode(RISCV::C_ADD_HINT);
   else
     Hint.setOpcode(RISCV::ADD);
 

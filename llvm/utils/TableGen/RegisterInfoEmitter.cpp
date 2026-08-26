@@ -1672,7 +1672,7 @@ void RegisterInfoEmitter::runTargetDesc(raw_ostream &OS) {
       for (const CodeGenRegister &Reg : Regs) {
         const CodeGenRegisterClass *BaseRC = nullptr;
         for (const CodeGenRegisterClass *RC : BaseClasses) {
-          if (RC->contains(&Reg)) {
+          if (is_contained(RC->getMembers(), &Reg)) {
             BaseRC = RC;
             break;
           }

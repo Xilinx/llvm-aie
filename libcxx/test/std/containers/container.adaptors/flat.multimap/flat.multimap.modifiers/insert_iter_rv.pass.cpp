@@ -25,7 +25,7 @@
 #include "test_macros.h"
 
 template <class Container, class Pair>
-constexpr void do_insert_iter_rv_test() {
+void do_insert_iter_rv_test() {
   using M = Container;
   using P = Pair;
   using R = typename M::iterator;
@@ -68,7 +68,7 @@ constexpr void do_insert_iter_rv_test() {
 }
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test() {
+void test() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
   using M     = std::flat_multimap<Key, Value, std::less<Key>, KeyContainer, ValueContainer>;
@@ -79,22 +79,17 @@ constexpr void test() {
   do_insert_iter_rv_test<M, CP>();
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<int>, std::vector<double>>();
   test<std::vector<int>, std::vector<MoveOnly>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque<int>, std::deque<double>>();
-    test<std::deque<int>, std::deque<MoveOnly>>();
-  }
+  test<std::deque<int>, std::deque<double>>();
+  test<std::deque<int>, std::deque<MoveOnly>>();
   test<MinSequenceContainer<int>, MinSequenceContainer<double>>();
   test<MinSequenceContainer<int>, MinSequenceContainer<MoveOnly>>();
   test<std::vector<int, min_allocator<int>>, std::vector<double, min_allocator<double>>>();
   test<std::vector<int, min_allocator<int>>, std::vector<MoveOnly, min_allocator<MoveOnly>>>();
 
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+  {
     auto insert_func = [](auto& m, auto key_arg, auto value_arg) {
       using FlatMap    = std::decay_t<decltype(m)>;
       using value_type = typename FlatMap::value_type;
@@ -103,14 +98,6 @@ constexpr bool test() {
     };
     test_emplace_exception_guarantee(insert_func);
   }
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

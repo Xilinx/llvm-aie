@@ -81,10 +81,6 @@ void DiagnosticInfoInlineAsm::print(DiagnosticPrinter &DP) const {
     DP << " at line " << getLocCookie();
 }
 
-void DiagnosticInfoLegalizationFailure::print(DiagnosticPrinter &DP) const {
-  DP << getLocationStr() << ": " << getMsgStr();
-}
-
 DiagnosticInfoRegAllocFailure::DiagnosticInfoRegAllocFailure(
     const Twine &MsgStr, const Function &Fn, const DiagnosticLocation &DL,
     DiagnosticSeverity Severity)

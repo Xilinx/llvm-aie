@@ -144,7 +144,7 @@ protected:
     llvm::SmallVector<mlir::LLVM::GEPArg> cv = {args...};
     auto llvmPtrTy =
         mlir::LLVM::LLVMPointerType::get(ty.getContext(), /*addressSpace=*/0);
-    return mlir::LLVM::GEPOp::create(rewriter, loc, llvmPtrTy, ty, base, cv);
+    return rewriter.create<mlir::LLVM::GEPOp>(loc, llvmPtrTy, ty, base, cv);
   }
 
   // Find the Block in which the alloca should be inserted.

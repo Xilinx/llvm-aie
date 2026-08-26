@@ -850,10 +850,6 @@ void mlirOperationMoveBefore(MlirOperation op, MlirOperation other) {
   return unwrap(op)->moveBefore(unwrap(other));
 }
 
-bool mlirOperationIsBeforeInBlock(MlirOperation op, MlirOperation other) {
-  return unwrap(op)->isBeforeInBlock(unwrap(other));
-}
-
 static mlir::WalkResult unwrap(MlirWalkResult result) {
   switch (result) {
   case MlirWalkResultAdvance:

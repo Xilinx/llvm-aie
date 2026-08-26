@@ -49,10 +49,10 @@ void InstrumentationRuntime::ModulesDidLoad(
     return;
   }
 
-  module_list.ForEach([this](const lldb::ModuleSP module_sp) {
+  module_list.ForEach([this](const lldb::ModuleSP module_sp) -> bool {
     const FileSpec &file_spec = module_sp->GetFileSpec();
     if (!file_spec)
-      return IterationAction::Continue;
+      return true; // Keep iterating.
 
     const RegularExpression &runtime_regex = GetPatternForRuntimeLibrary();
     if (runtime_regex.Execute(file_spec.GetFilename().GetCString()) ||
@@ -62,16 +62,16 @@ void InstrumentationRuntime::ModulesDidLoad(
         Activate();
         if (!IsActive())
           SetRuntimeModuleSP({}); // Don't cache module if activation failed.
-        return IterationAction::Stop;
+        return false; // Stop iterating, we're done.
       }
     }
 
-    return IterationAction::Continue;
+    return true;
   });
 }
 
 lldb::ThreadCollectionSP
 InstrumentationRuntime::GetBacktracesFromExtendedStopInfo(
     StructuredData::ObjectSP info) {
-  return std::make_shared<ThreadCollection>();
+  return ThreadCollectionSP(new ThreadCollection());
 }

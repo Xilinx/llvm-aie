@@ -32,10 +32,7 @@ public:
     eTypeInvalid,
     eType8,
     eType16,
-    eType16_2,        // a 32-bit Thumb instruction, made up of two words
-    eType16_32Tuples, // RISC-V that can have 2, 4, 6, 8 etc byte long
-                      // instructions which will be printed in combinations of
-                      // 16 & 32-bit words.
+    eType16_2, // a 32-bit Thumb instruction, made up of two words
     eType32,
     eType64,
     eTypeBytes
@@ -63,9 +60,9 @@ public:
     m_data.inst64 = inst;
   }
 
-  Opcode(uint8_t *bytes, size_t length, Opcode::Type type,
-         lldb::ByteOrder order) {
-    DoSetOpcodeBytes(bytes, length, type, order);
+  Opcode(uint8_t *bytes, size_t length)
+      : m_byte_order(lldb::eByteOrderInvalid) {
+    SetOpcodeBytes(bytes, length);
   }
 
   void Clear() {
@@ -84,8 +81,6 @@ public:
     case Opcode::eType16:
       break;
     case Opcode::eType16_2:
-      break;
-    case Opcode::eType16_32Tuples:
       break;
     case Opcode::eType32:
       break;
@@ -108,8 +103,6 @@ public:
                              : m_data.inst16;
     case Opcode::eType16_2:
       break;
-    case Opcode::eType16_32Tuples:
-      break;
     case Opcode::eType32:
       break;
     case Opcode::eType64:
@@ -129,8 +122,6 @@ public:
     case Opcode::eType16:
       return GetEndianSwap() ? llvm::byteswap<uint16_t>(m_data.inst16)
                              : m_data.inst16;
-    case Opcode::eType16_32Tuples:
-      break;
     case Opcode::eType16_2: // passthrough
     case Opcode::eType32:
       return GetEndianSwap() ? llvm::byteswap<uint32_t>(m_data.inst32)
@@ -152,8 +143,6 @@ public:
     case Opcode::eType16:
       return GetEndianSwap() ? llvm::byteswap<uint16_t>(m_data.inst16)
                              : m_data.inst16;
-    case Opcode::eType16_32Tuples:
-      break;
     case Opcode::eType16_2: // passthrough
     case Opcode::eType32:
       return GetEndianSwap() ? llvm::byteswap<uint32_t>(m_data.inst32)
@@ -197,30 +186,20 @@ public:
     m_byte_order = order;
   }
 
-  void SetOpcode16_32TupleBytes(const void *bytes, size_t length,
-                                lldb::ByteOrder order) {
-    DoSetOpcodeBytes(bytes, length, eType16_32Tuples, order);
-  }
-
   void SetOpcodeBytes(const void *bytes, size_t length) {
-    DoSetOpcodeBytes(bytes, length, eTypeBytes, lldb::eByteOrderInvalid);
-  }
-
-  void DoSetOpcodeBytes(const void *bytes, size_t length, Opcode::Type type,
-                        lldb::ByteOrder order) {
     if (bytes != nullptr && length > 0) {
-      m_type = type;
+      m_type = eTypeBytes;
       m_data.inst.length = length;
       assert(length < sizeof(m_data.inst.bytes));
       memcpy(m_data.inst.bytes, bytes, length);
-      m_byte_order = order;
+      m_byte_order = lldb::eByteOrderInvalid;
     } else {
       m_type = eTypeInvalid;
       m_data.inst.length = 0;
     }
   }
 
-  int Dump(Stream *s, uint32_t min_byte_width) const;
+  int Dump(Stream *s, uint32_t min_byte_width);
 
   const void *GetOpcodeBytes() const {
     return ((m_type == Opcode::eTypeBytes) ? m_data.inst.bytes : nullptr);
@@ -234,8 +213,6 @@ public:
       return sizeof(m_data.inst8);
     case Opcode::eType16:
       return sizeof(m_data.inst16);
-    case Opcode::eType16_32Tuples:
-      return m_data.inst.length;
     case Opcode::eType16_2: // passthrough
     case Opcode::eType32:
       return sizeof(m_data.inst32);
@@ -261,8 +238,6 @@ protected:
       return &m_data.inst8;
     case Opcode::eType16:
       return &m_data.inst16;
-    case Opcode::eType16_32Tuples:
-      return m_data.inst.bytes;
     case Opcode::eType16_2: // passthrough
     case Opcode::eType32:
       return &m_data.inst32;

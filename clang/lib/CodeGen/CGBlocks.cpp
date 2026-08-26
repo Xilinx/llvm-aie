@@ -853,24 +853,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       offset += size;
       index++;
     };
-    auto addSignedHeaderField =
-        [&](llvm::Value *Value, const PointerAuthSchema &Schema,
-            GlobalDecl Decl, QualType Type, CharUnits Size, const Twine &Name) {
-          auto StorageAddress = projectField(index, Name);
-          if (Schema) {
-            auto AuthInfo = EmitPointerAuthInfo(
-                Schema, StorageAddress.emitRawPointer(*this), Decl, Type);
-            Value = EmitPointerAuthSign(AuthInfo, Value);
-          }
-          Builder.CreateStore(Value, StorageAddress);
-          offset += Size;
-          index++;
-        };
 
     if (!IsOpenCL) {
-      addSignedHeaderField(
-          isa, CGM.getCodeGenOpts().PointerAuth.ObjCIsaPointers, GlobalDecl(),
-          QualType(), getPointerSize(), "block.isa");
+      addHeaderField(isa, getPointerSize(), "block.isa");
       addHeaderField(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
                      getIntSize(), "block.flags");
       addHeaderField(llvm::ConstantInt::get(IntTy, 0), getIntSize(),
@@ -1300,9 +1285,7 @@ static llvm::Constant *buildGlobalBlock(CodeGenModule &CGM,
     if (IsWindows)
       fields.addNullPointer(CGM.Int8PtrPtrTy);
     else
-      fields.addSignedPointer(CGM.getNSConcreteGlobalBlock(),
-                              CGM.getCodeGenOpts().PointerAuth.ObjCIsaPointers,
-                              GlobalDecl(), QualType());
+      fields.add(CGM.getNSConcreteGlobalBlock());
 
     // __flags
     BlockFlags flags = BLOCK_IS_GLOBAL;
@@ -1549,8 +1532,8 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(
   llvm::BasicBlock *resume = Builder.GetInsertBlock();
 
   // Go back to the entry.
-  if (entry_ptr->getNextNode())
-    entry_ptr = entry_ptr->getNextNode()->getIterator();
+  if (entry_ptr->getNextNonDebugInstruction())
+    entry_ptr = entry_ptr->getNextNonDebugInstruction()->getIterator();
   else
     entry_ptr = entry->end();
   Builder.SetInsertPoint(entry, entry_ptr);

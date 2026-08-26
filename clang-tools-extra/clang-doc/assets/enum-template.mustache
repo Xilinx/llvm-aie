@@ -9,7 +9,7 @@
     <div>
         <pre>
             <code class="language-cpp code-clang-doc">
-enum {{Name}}
+{{EnumName}}
             </code>
         </pre>
     </div>
@@ -23,21 +23,15 @@ enum {{Name}}
                 <th>Comment</th>
             {{/HasComment}}
         </tr>
-            {{#Members}}
+        {{#EnumValues}}
             <tr>
                 <td>{{Name}}</td>
-                {{! A ValueExpr is an explicitly assigned enum value }}
-                {{#Value}}
                 <td>{{Value}}</td>
-                {{/Value}}
-                {{^Value}}
-                <td>{{ValueExpr}}</td>
-                {{/Value}}
                 {{#EnumValueComments}}
                     <td>{{>Comments}}</td>
                 {{/EnumValueComments}}
             </tr>
-            {{/Members}}
+        {{/EnumValues}}
         </tbody>
     </table>
     {{#EnumComments}}

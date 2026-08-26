@@ -18,12 +18,15 @@
 #include "mlir/Support/IndentedOstream.h"
 #include "mlir/Support/LLVM.h"
 #include "mlir/Target/Cpp/CppEmitter.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FormatVariadic.h"
 #include <stack>
+#include <utility>
 
 #define DEBUG_TYPE "translate-to-cpp"
 
@@ -975,7 +978,8 @@ static LogicalResult printOperation(CppEmitter &emitter, emitc::ForOp forOp) {
   // inlined, and as such should be wrapped in parentheses in order to guarantee
   // its precedence and associativity.
   auto requiresParentheses = [&](Value value) {
-    auto expressionOp = value.getDefiningOp<ExpressionOp>();
+    auto expressionOp =
+        dyn_cast_if_present<ExpressionOp>(value.getDefiningOp());
     if (!expressionOp)
       return false;
     return emitter.shouldBeInlined(expressionOp);
@@ -1667,7 +1671,7 @@ LogicalResult CppEmitter::emitOperand(Value value) {
     return success();
   }
 
-  auto expressionOp = value.getDefiningOp<ExpressionOp>();
+  auto expressionOp = dyn_cast_if_present<ExpressionOp>(def);
   if (expressionOp && shouldBeInlined(expressionOp))
     return emitExpression(expressionOp);
 

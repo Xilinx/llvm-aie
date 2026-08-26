@@ -86,22 +86,16 @@ namespace {
 class CompressInstEmitter {
   struct OpData {
     enum MapKind { Operand, Imm, Reg } Kind;
-    // Info for an operand.
-    struct OpndInfo {
-      // Record from the Dag.
-      const Record *DagRec;
-      // Operand number mapped to.
-      unsigned Idx;
-      // Tied operand index within the instruction.
-      int TiedOpIdx;
-    };
     union {
-      OpndInfo OpInfo;
+      // Operand number mapped to.
+      unsigned OpNo;
       // Integer immediate value.
       int64_t ImmVal;
       // Physical register.
       const Record *RegRec;
     };
+    // Tied operand index within the instruction.
+    int TiedOpIdx = -1;
   };
   struct ArgData {
     unsigned DAGOpNo;
@@ -177,6 +171,10 @@ bool CompressInstEmitter::validateTypes(const Record *DagOpType,
                                         bool IsSourceInst) {
   if (DagOpType == InstOpType)
     return true;
+  // Only source instruction operands are allowed to not match Input Dag
+  // operands.
+  if (!IsSourceInst)
+    return false;
 
   if (DagOpType->isSubClassOf("RegisterClass") &&
       InstOpType->isSubClassOf("RegisterClass")) {
@@ -223,8 +221,12 @@ void CompressInstEmitter::addDagOperandMapping(const Record *Rec,
         Inst.Operands.back().MIOperandNo + Inst.Operands.back().MINumOperands;
   OperandMap.grow(NumMIOperands);
 
-  // Tied operands are not represented in the DAG so we count them separately.
-  unsigned DAGOpNo = 0;
+  // TiedCount keeps track of the number of operands skipped in Inst
+  // operands list to get to the corresponding Dag operand. This is
+  // necessary because the number of operands in Inst might be greater
+  // than number of operands in the Dag due to how tied operands
+  // are represented.
+  unsigned TiedCount = 0;
   unsigned OpNo = 0;
   for (const auto &Opnd : Inst.Operands) {
     int TiedOpIdx = Opnd.getTiedRegister();
@@ -233,24 +235,14 @@ void CompressInstEmitter::addDagOperandMapping(const Record *Rec,
       // Set the entry in OperandMap for the tied operand we're skipping.
       OperandMap[OpNo] = OperandMap[TiedOpIdx];
       ++OpNo;
-
-      // Source instructions can have at most 1 tied operand.
-      if (IsSourceInst && (OpNo - DAGOpNo > 1))
-        PrintFatalError(Rec->getLoc(),
-                        "Input operands for Inst '" + Inst.TheDef->getName() +
-                            "' and input Dag operand count mismatch");
-
+      ++TiedCount;
       continue;
     }
-    for (unsigned SubOp = 0; SubOp != Opnd.MINumOperands;
-         ++SubOp, ++OpNo, ++DAGOpNo) {
+    for (unsigned SubOp = 0; SubOp != Opnd.MINumOperands; ++SubOp, ++OpNo) {
+      unsigned DAGOpNo = OpNo - TiedCount;
       const Record *OpndRec = Opnd.Rec;
       if (Opnd.MINumOperands > 1)
         OpndRec = cast<DefInit>(Opnd.MIOperandInfo->getArg(SubOp))->getDef();
-
-      if (DAGOpNo >= Dag->getNumArgs())
-        PrintFatalError(Rec->getLoc(), "Inst '" + Inst.TheDef->getName() +
-                                           "' and Dag operand count mismatch");
 
       if (const auto *DI = dyn_cast<DefInit>(Dag->getArg(DAGOpNo))) {
         if (DI->getDef()->isSubClassOf("Register")) {
@@ -266,9 +258,9 @@ void CompressInstEmitter::addDagOperandMapping(const Record *Rec,
           continue;
         }
         // Validate that Dag operand type matches the type defined in the
-        // corresponding instruction. Operands in the input and output Dag
-        // patterns are allowed to be a subclass of the type specified in the
-        // corresponding instruction operand instead of being an exact match.
+        // corresponding instruction. Operands in the input Dag pattern are
+        // allowed to be a subclass of the type specified in corresponding
+        // instruction operand instead of being an exact match.
         if (!validateTypes(DI->getDef(), OpndRec, IsSourceInst))
           PrintFatalError(Rec->getLoc(),
                           "Error in Dag '" + Dag->getAsString() +
@@ -279,34 +271,9 @@ void CompressInstEmitter::addDagOperandMapping(const Record *Rec,
                               "' in the corresponding instruction operand!");
 
         OperandMap[OpNo].Kind = OpData::Operand;
-        OperandMap[OpNo].OpInfo.DagRec = DI->getDef();
-        OperandMap[OpNo].OpInfo.TiedOpIdx = -1;
-
-        // Create a mapping between the operand name in the Dag (e.g. $rs1) and
-        // its index in the list of Dag operands and check that operands with
-        // the same name have the same type. For example in 'C_ADD $rs1, $rs2'
-        // we generate the mapping $rs1 --> 0, $rs2 ---> 1. If the operand
-        // appears twice in the same Dag (tied in the compressed instruction),
-        // we note the previous index in the TiedOpIdx field.
-        StringRef ArgName = Dag->getArgNameStr(DAGOpNo);
-        if (ArgName.empty())
-          continue;
-
-        if (IsSourceInst) {
-          auto It = Operands.find(ArgName);
-          if (It != Operands.end()) {
-            OperandMap[OpNo].OpInfo.TiedOpIdx = It->getValue().MIOpNo;
-            if (OperandMap[It->getValue().MIOpNo].OpInfo.DagRec != DI->getDef())
-              PrintFatalError(Rec->getLoc(),
-                              "Input Operand '" + ArgName +
-                                  "' has a mismatched tied operand!");
-          }
-        }
-
-        Operands[ArgName] = {DAGOpNo, OpNo};
       } else if (const auto *II = dyn_cast<IntInit>(Dag->getArg(DAGOpNo))) {
         // Validate that corresponding instruction operand expects an immediate.
-        if (!OpndRec->isSubClassOf("Operand"))
+        if (OpndRec->isSubClassOf("RegisterClass"))
           PrintFatalError(Rec->getLoc(), "Error in Dag '" + Dag->getAsString() +
                                              "' Found immediate: '" +
                                              II->getAsString() +
@@ -323,13 +290,69 @@ void CompressInstEmitter::addDagOperandMapping(const Record *Rec,
       } else {
         llvm_unreachable("Unhandled CompressPat argument type!");
       }
+
+      // Create a mapping between the operand name in the Dag (e.g. $rs1) and
+      // its index in the list of Dag operands and check that operands with the
+      // same name have the same type. For example in 'C_ADD $rs1, $rs2' we
+      // generate the mapping $rs1 --> 0, $rs2 ---> 1. If the operand appears
+      // twice in the same Dag (tied in the compressed instruction), we note
+      // the previous index in the TiedOpIdx field.
+      StringRef ArgName = Dag->getArgNameStr(DAGOpNo);
+      if (ArgName.empty())
+        continue;
+
+      if (IsSourceInst) {
+        auto It = Operands.find(ArgName);
+        if (It != Operands.end()) {
+          OperandMap[OpNo].TiedOpIdx = It->getValue().MIOpNo;
+          if (!validateArgsTypes(Dag->getArg(It->getValue().DAGOpNo),
+                                 Dag->getArg(DAGOpNo)))
+            PrintFatalError(Rec->getLoc(),
+                            "Input Operand '" + ArgName +
+                                "' has a mismatched tied operand!");
+        }
+      }
+
+      Operands[ArgName] = {DAGOpNo, OpNo};
     }
   }
+}
 
-  // We shouldn't have extra Dag operands.
-  if (DAGOpNo != Dag->getNumArgs())
-    PrintFatalError(Rec->getLoc(), "Inst '" + Inst.TheDef->getName() +
-                                       "' and Dag operand count mismatch");
+// Verify the Dag operand count is enough to build an instruction.
+static bool verifyDagOpCount(const CodeGenInstruction &Inst, const DagInit *Dag,
+                             bool IsSource) {
+  unsigned NumMIOperands = 0;
+
+  unsigned TiedOpCount = 0;
+  for (const auto &Op : Inst.Operands) {
+    NumMIOperands += Op.MINumOperands;
+    if (Op.getTiedRegister() != -1)
+      TiedOpCount++;
+  }
+
+  if (Dag->getNumArgs() == NumMIOperands)
+    return true;
+
+  // Source instructions are non compressed instructions and have at most one
+  // tied operand.
+  if (IsSource && (TiedOpCount > 1))
+    PrintFatalError(Inst.TheDef->getLoc(),
+                    "Input operands for Inst '" + Inst.TheDef->getName() +
+                        "' and input Dag operand count mismatch");
+
+  // The Dag can't have more arguments than the Instruction.
+  if (Dag->getNumArgs() > NumMIOperands)
+    PrintFatalError(Inst.TheDef->getLoc(),
+                    "Inst '" + Inst.TheDef->getName() +
+                        "' and Dag operand count mismatch");
+
+  // The Instruction might have tied operands so the Dag might have
+  // a fewer operand count.
+  if (Dag->getNumArgs() != (NumMIOperands - TiedOpCount))
+    PrintFatalError(Inst.TheDef->getLoc(),
+                    "Inst '" + Inst.TheDef->getName() +
+                        "' and Dag operand count mismatch");
+  return true;
 }
 
 // Check that all names in the source DAG appear in the destionation DAG.
@@ -379,9 +402,8 @@ void CompressInstEmitter::createInstOperandMapping(
       if (DestOperandMap[OpNo].Kind == OpData::Operand)
         // No need to fill the SourceOperandMap here since it was mapped to
         // destination operand 'TiedInstOpIdx' in a previous iteration.
-        LLVM_DEBUG(dbgs() << "    " << DestOperandMap[OpNo].OpInfo.Idx
-                          << " ====> " << OpNo
-                          << "  Dest operand tied with operand '"
+        LLVM_DEBUG(dbgs() << "    " << DestOperandMap[OpNo].OpNo << " ====> "
+                          << OpNo << "  Dest operand tied with operand '"
                           << TiedInstOpIdx << "'\n");
       ++OpNo;
       continue;
@@ -406,8 +428,8 @@ void CompressInstEmitter::createInstOperandMapping(
              "Incorrect operand mapping detected!\n");
 
       unsigned SourceOpNo = SourceOp->getValue().MIOpNo;
-      DestOperandMap[OpNo].OpInfo.Idx = SourceOpNo;
-      SourceOperandMap[SourceOpNo].OpInfo.Idx = OpNo;
+      DestOperandMap[OpNo].OpNo = SourceOpNo;
+      SourceOperandMap[SourceOpNo].OpNo = OpNo;
       LLVM_DEBUG(dbgs() << "    " << SourceOpNo << " ====> " << OpNo << "\n");
     }
   }
@@ -445,6 +467,7 @@ void CompressInstEmitter::evaluateCompressPat(const Record *Rec) {
   // Checking we are transforming from compressed to uncompressed instructions.
   const Record *SourceOperator = SourceDag->getOperatorAsDef(Rec->getLoc());
   CodeGenInstruction SourceInst(SourceOperator);
+  verifyDagOpCount(SourceInst, SourceDag, true);
 
   // Validate output Dag operands.
   const DagInit *DestDag = Rec->getValueAsDag("Output");
@@ -453,6 +476,7 @@ void CompressInstEmitter::evaluateCompressPat(const Record *Rec) {
 
   const Record *DestOperator = DestDag->getOperatorAsDef(Rec->getLoc());
   CodeGenInstruction DestInst(DestOperator);
+  verifyDagOpCount(DestInst, DestDag, false);
 
   if (SourceOperator->getValueAsInt("Size") <=
       DestOperator->getValueAsInt("Size"))
@@ -648,7 +672,7 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
   StringRef PrevOp;
   StringRef CurOp;
   CaseStream << "  switch (MI.getOpcode()) {\n";
-  CaseStream << "  default: return false;\n";
+  CaseStream << "    default: return false;\n";
 
   bool CompressOrCheck =
       EType == EmitterType::Compress || EType == EmitterType::CheckCompress;
@@ -661,7 +685,7 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
                 .str()
           : "";
 
-  for (const auto &CompressPat : CompressPatterns) {
+  for (auto &CompressPat : CompressPatterns) {
     if (EType == EmitterType::Uncompress && CompressPat.IsCompressOnly)
       continue;
 
@@ -669,25 +693,23 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
     std::string CodeString;
     raw_string_ostream CondStream(CondString);
     raw_string_ostream CodeStream(CodeString);
-    const CodeGenInstruction &Source =
+    CodeGenInstruction &Source =
         CompressOrCheck ? CompressPat.Source : CompressPat.Dest;
-    const CodeGenInstruction &Dest =
+    CodeGenInstruction &Dest =
         CompressOrCheck ? CompressPat.Dest : CompressPat.Source;
-    const IndexedMap<OpData> &SourceOperandMap =
-        CompressOrCheck ? CompressPat.SourceOperandMap
-                        : CompressPat.DestOperandMap;
-    const IndexedMap<OpData> &DestOperandMap =
-        CompressOrCheck ? CompressPat.DestOperandMap
-                        : CompressPat.SourceOperandMap;
+    IndexedMap<OpData> SourceOperandMap = CompressOrCheck
+                                              ? CompressPat.SourceOperandMap
+                                              : CompressPat.DestOperandMap;
+    IndexedMap<OpData> &DestOperandMap = CompressOrCheck
+                                             ? CompressPat.DestOperandMap
+                                             : CompressPat.SourceOperandMap;
 
     CurOp = Source.TheDef->getName();
     // Check current and previous opcode to decide to continue or end a case.
     if (CurOp != PrevOp) {
-      if (!PrevOp.empty()) {
-        CaseStream.indent(4) << "break;\n";
-        CaseStream.indent(2) << "} // case " + PrevOp + "\n";
-      }
-      CaseStream.indent(2) << "case " + TargetName + "::" + CurOp + ": {\n";
+      if (!PrevOp.empty())
+        CaseStream.indent(6) << "break;\n    } // case " + PrevOp + "\n";
+      CaseStream.indent(4) << "case " + TargetName + "::" + CurOp + ": {\n";
     }
 
     std::set<std::pair<bool, StringRef>> FeaturesSet;
@@ -729,24 +751,21 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
     // Start Source Inst operands validation.
     unsigned OpNo = 0;
     for (const auto &SourceOperand : Source.Operands) {
+      if (SourceOperandMap[OpNo].TiedOpIdx != -1) {
+        if (Source.Operands[OpNo].Rec->isSubClassOf("RegisterClass"))
+          CondStream.indent(8)
+              << "(MI.getOperand(" << OpNo << ").isReg()) && (MI.getOperand("
+              << SourceOperandMap[OpNo].TiedOpIdx << ").isReg()) &&\n"
+              << indent(8) << "(MI.getOperand(" << OpNo
+              << ").getReg() ==  MI.getOperand("
+              << SourceOperandMap[OpNo].TiedOpIdx << ").getReg()) &&\n";
+        else
+          PrintFatalError("Unexpected tied operand types!");
+      }
       for (unsigned SubOp = 0; SubOp != SourceOperand.MINumOperands; ++SubOp) {
         // Check for fixed immediates\registers in the source instruction.
         switch (SourceOperandMap[OpNo].Kind) {
         case OpData::Operand:
-          if (SourceOperandMap[OpNo].OpInfo.TiedOpIdx != -1) {
-            if (Source.Operands[OpNo].Rec->isSubClassOf("RegisterClass"))
-              CondStream.indent(8) << "(MI.getOperand(" << OpNo
-                                   << ").isReg()) && (MI.getOperand("
-                                   << SourceOperandMap[OpNo].OpInfo.TiedOpIdx
-                                   << ").isReg()) &&\n"
-                                   << indent(8) << "(MI.getOperand(" << OpNo
-                                   << ").getReg() ==  MI.getOperand("
-                                   << SourceOperandMap[OpNo].OpInfo.TiedOpIdx
-                                   << ").getReg()) &&\n";
-            else
-              PrintFatalError("Unexpected tied operand types!");
-          }
-
           // We don't need to do anything for source instruction operand checks.
           break;
         case OpData::Imm:
@@ -784,18 +803,17 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
 
         switch (DestOperandMap[OpNo].Kind) {
         case OpData::Operand: {
-          unsigned OpIdx = DestOperandMap[OpNo].OpInfo.Idx;
-          const Record *DagRec = DestOperandMap[OpNo].OpInfo.DagRec;
+          unsigned OpIdx = DestOperandMap[OpNo].OpNo;
           // Check that the operand in the Source instruction fits
           // the type for the Dest instruction.
-          if (DagRec->isSubClassOf("RegisterClass") ||
-              DagRec->isSubClassOf("RegisterOperand")) {
-            auto *ClassRec = DagRec->isSubClassOf("RegisterClass")
-                                 ? DagRec
-                                 : DagRec->getValueAsDef("RegClass");
+          if (DestRec->isSubClassOf("RegisterClass") ||
+              DestRec->isSubClassOf("RegisterOperand")) {
+            auto *ClassRec = DestRec->isSubClassOf("RegisterClass")
+                                 ? DestRec
+                                 : DestRec->getValueAsDef("RegClass");
             // This is a register operand. Check the register class.
             // Don't check register class if this is a tied operand, it was done
-            // for the operand it's tied to.
+            // for the operand its tied to.
             if (DestOperand.getTiedRegister() == -1) {
               CondStream.indent(8) << "MI.getOperand(" << OpIdx << ").isReg()";
               if (EType == EmitterType::CheckCompress)
@@ -815,40 +833,19 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
             // Handling immediate operands.
             if (CompressOrUncompress) {
               unsigned Entry = getPredicates(MCOpPredicateMap, MCOpPredicates,
-                                             DagRec, "MCOperandPredicate");
-              CondStream.indent(8)
-                  << ValidatorName << "("
-                  << "MI.getOperand(" << OpIdx << "), STI, " << Entry << " /* "
-                  << DagRec->getName() << " */) &&\n";
-              // Also check DestRec if different than DagRec.
-              if (DagRec != DestRec) {
-                Entry = getPredicates(MCOpPredicateMap, MCOpPredicates, DestRec,
-                                      "MCOperandPredicate");
-                CondStream.indent(8)
-                    << ValidatorName << "("
-                    << "MI.getOperand(" << OpIdx << "), STI, " << Entry
-                    << " /* " << DestRec->getName() << " */) &&\n";
-              }
+                                             DestRec, "MCOperandPredicate");
+              CondStream.indent(8) << ValidatorName << "("
+                                   << "MI.getOperand(" << OpIdx << "), STI, "
+                                   << Entry << ") &&\n";
             } else {
               unsigned Entry =
-                  getPredicates(ImmLeafPredicateMap, ImmLeafPredicates, DagRec,
+                  getPredicates(ImmLeafPredicateMap, ImmLeafPredicates, DestRec,
                                 "ImmediateCode");
               CondStream.indent(8)
                   << "MI.getOperand(" << OpIdx << ").isImm() &&\n";
-              CondStream.indent(8)
-                  << TargetName << "ValidateMachineOperand("
-                  << "MI.getOperand(" << OpIdx << "), &STI, " << Entry << " /* "
-                  << DagRec->getName() << " */) &&\n";
-              if (DagRec != DestRec) {
-                Entry = getPredicates(ImmLeafPredicateMap, ImmLeafPredicates,
-                                      DestRec, "ImmediateCode");
-                CondStream.indent(8)
-                    << "MI.getOperand(" << OpIdx << ").isImm() &&\n";
-                CondStream.indent(8)
-                    << TargetName << "ValidateMachineOperand("
-                    << "MI.getOperand(" << OpIdx << "), &STI, " << Entry
-                    << " /* " << DestRec->getName() << " */) &&\n";
-              }
+              CondStream.indent(8) << TargetName << "ValidateMachineOperand("
+                                   << "MI.getOperand(" << OpIdx << "), &STI, "
+                                   << Entry << ") &&\n";
             }
             if (CompressOrUncompress)
               CodeStream.indent(6)
@@ -862,9 +859,8 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
                                            DestRec, "MCOperandPredicate");
             CondStream.indent(8)
                 << ValidatorName << "("
-                << "MCOperand::createImm(" << DestOperandMap[OpNo].ImmVal
-                << "), STI, " << Entry << " /* " << DestRec->getName()
-                << " */) &&\n";
+                << "MCOperand::createImm(" << DestOperandMap[OpNo].Imm
+                << "), STI, " << Entry << ") &&\n";
           } else {
             unsigned Entry =
                 getPredicates(ImmLeafPredicateMap, ImmLeafPredicates, DestRec,
@@ -872,8 +868,8 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
             CondStream.indent(8)
                 << TargetName
                 << "ValidateMachineOperand(MachineOperand::CreateImm("
-                << DestOperandMap[OpNo].ImmVal << "), &STI, " << Entry << " /* "
-                << DestRec->getName() << " */) &&\n";
+                << DestOperandMap[OpNo].ImmVal << "), &STI, " << Entry
+                << ") &&\n";
           }
           if (CompressOrUncompress)
             CodeStream.indent(6) << "OutInst.addOperand(MCOperand::createImm("
@@ -897,10 +893,9 @@ void CompressInstEmitter::emitCompressInstEmitter(raw_ostream &OS,
     mergeCondAndCode(CaseStream, CondString, CodeString);
     PrevOp = CurOp;
   }
-  Func << CaseString;
-  Func.indent(4) << "break;\n";
+  Func << CaseString << "\n";
   // Close brace for the last case.
-  Func.indent(2) << "} // case " << CurOp << "\n";
+  Func.indent(4) << "} // case " << CurOp << "\n";
   Func.indent(2) << "} // switch\n";
   Func.indent(2) << "return false;\n}\n";
 

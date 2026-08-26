@@ -1042,8 +1042,8 @@ private:
       }
       PrevState = CurrState;
     }
-    bool onRParen(StringRef &ErrMsg) {
-      IntelExprState CurrState = State;
+    void onRParen() {
+      PrevState = State;
       switch (State) {
       default:
         State = IES_ERROR;
@@ -1054,27 +1054,9 @@ private:
       case IES_RBRAC:
       case IES_RPAREN:
         State = IES_RPAREN;
-        // In the case of a multiply, onRegister has already set IndexReg
-        // directly, with appropriate scale.
-        // Otherwise if we just saw a register it has only been stored in
-        // TmpReg, so we need to store it into the state machine.
-        if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
-          // If we already have a BaseReg, then assume this is the IndexReg with
-          // no explicit scale.
-          if (!BaseReg) {
-            BaseReg = TmpReg;
-          } else {
-            if (IndexReg)
-              return regsUseUpError(ErrMsg);
-            IndexReg = TmpReg;
-            Scale = 0;
-          }
-        }
         IC.pushOperator(IC_RPAREN);
         break;
       }
-      PrevState = CurrState;
-      return false;
     }
     bool onOffset(const MCExpr *Val, SMLoc OffsetLoc, StringRef ID,
                   const InlineAsmIdentifierInfo &IDInfo,
@@ -2190,11 +2172,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
       }
       break;
     case AsmToken::LParen:  SM.onLParen(); break;
-    case AsmToken::RParen:
-      if (SM.onRParen(ErrMsg)) {
-        return Error(Tok.getLoc(), ErrMsg);
-      }
-      break;
+    case AsmToken::RParen:  SM.onRParen(); break;
     }
     if (SM.hadError())
       return Error(Tok.getLoc(), "unknown token in expression");
@@ -4803,7 +4781,7 @@ bool X86AsmParser::parseDirectiveEven(SMLoc L) {
     getStreamer().initSections(false, getSTI());
     Section = getStreamer().getCurrentSectionOnly();
   }
-  if (getContext().getAsmInfo()->useCodeAlign(*Section))
+  if (Section->useCodeAlign())
     getStreamer().emitCodeAlignment(Align(2), &getSTI(), 0);
   else
     getStreamer().emitValueToAlignment(Align(2), 0, 1, 0);

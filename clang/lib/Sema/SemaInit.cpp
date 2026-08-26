@@ -3572,7 +3572,7 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
       Designators.push_back(ASTDesignator::CreateFieldDesignator(
           D.getFieldDecl(), D.getDotLoc(), D.getFieldLoc()));
     } else if (D.isArrayDesignator()) {
-      Expr *Index = D.getArrayIndex();
+      Expr *Index = static_cast<Expr *>(D.getArrayIndex());
       llvm::APSInt IndexValue;
       if (!Index->isTypeDependent() && !Index->isValueDependent())
         Index = CheckArrayDesignatorExpr(*this, Index, IndexValue).get();
@@ -3584,8 +3584,8 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
         InitExpressions.push_back(Index);
       }
     } else if (D.isArrayRangeDesignator()) {
-      Expr *StartIndex = D.getArrayRangeStart();
-      Expr *EndIndex = D.getArrayRangeEnd();
+      Expr *StartIndex = static_cast<Expr *>(D.getArrayRangeStart());
+      Expr *EndIndex = static_cast<Expr *>(D.getArrayRangeEnd());
       llvm::APSInt StartValue;
       llvm::APSInt EndValue;
       bool StartDependent = StartIndex->isTypeDependent() ||

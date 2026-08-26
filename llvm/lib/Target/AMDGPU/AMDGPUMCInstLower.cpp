@@ -50,7 +50,6 @@ static AMDGPUMCExpr::Specifier getSpecifier(unsigned MOFlags) {
   default:
     return AMDGPUMCExpr::S_None;
   case SIInstrInfo::MO_GOTPCREL:
-  case SIInstrInfo::MO_GOTPCREL64:
     return AMDGPUMCExpr::S_GOTPCREL;
   case SIInstrInfo::MO_GOTPCREL32_LO:
     return AMDGPUMCExpr::S_GOTPCREL32_LO;
@@ -60,14 +59,10 @@ static AMDGPUMCExpr::Specifier getSpecifier(unsigned MOFlags) {
     return AMDGPUMCExpr::S_REL32_LO;
   case SIInstrInfo::MO_REL32_HI:
     return AMDGPUMCExpr::S_REL32_HI;
-  case SIInstrInfo::MO_REL64:
-    return AMDGPUMCExpr::S_REL64;
   case SIInstrInfo::MO_ABS32_LO:
     return AMDGPUMCExpr::S_ABS32_LO;
   case SIInstrInfo::MO_ABS32_HI:
     return AMDGPUMCExpr::S_ABS32_HI;
-  case SIInstrInfo::MO_ABS64:
-    return AMDGPUMCExpr::S_ABS64;
   }
 }
 

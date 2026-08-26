@@ -68,7 +68,7 @@ unsigned LoongArchELFObjectWriter::getRelocType(const MCFixup &Fixup,
     break;
   }
 
-  auto Kind = Fixup.getKind();
+  unsigned Kind = Fixup.getTargetKind();
   if (mc::isRelocation(Fixup.getKind()))
     return Kind;
   switch (Kind) {

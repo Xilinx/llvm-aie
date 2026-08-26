@@ -56,7 +56,7 @@ struct FIRInlinerInterface : public mlir::DialectInlinerInterface {
                                              mlir::Value input,
                                              mlir::Type resultType,
                                              mlir::Location loc) const final {
-    return fir::ConvertOp::create(builder, loc, resultType, input);
+    return builder.create<fir::ConvertOp>(loc, resultType, input);
   }
 };
 } // namespace

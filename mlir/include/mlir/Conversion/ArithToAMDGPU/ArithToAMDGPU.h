@@ -10,7 +10,6 @@
 #define MLIR_CONVERSION_ARITHTOAMDGPU_ARITHTOAMDGPU_H
 
 #include "mlir/Dialect/AMDGPU/Utils/Chipset.h"
-#include "mlir/IR/PatternMatch.h"
 #include <memory>
 #include <string>
 
@@ -32,8 +31,7 @@ void populateArithToAMDGPUConversionPatterns(RewritePatternSet &patterns,
                                              bool convertFP8Arithmetic,
                                              bool saturateFP8Truncf,
                                              bool allowPackedF16Rtz,
-                                             amdgpu::Chipset chipset,
-                                             PatternBenefit benefit = 1);
+                                             amdgpu::Chipset chipset);
 } // namespace arith
 } // namespace mlir
 

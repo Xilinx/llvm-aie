@@ -17,7 +17,6 @@
 #include "llvm/DebugInfo/DWARF/LowLevel/DWARFUnwindTable.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDwarf.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -31,13 +30,13 @@ class DWARFCFIState {
 public:
   DWARFCFIState(MCContext *Context) : Context(Context), IsInitiated(false) {};
 
-  LLVM_ABI std::optional<dwarf::UnwindRow> getCurrentUnwindRow() const;
+  std::optional<dwarf::UnwindRow> getCurrentUnwindRow() const;
 
   /// This method updates the state by applying \p Directive to the current
   /// state. If the directive is not supported by the checker or any error
   /// happens while applying the CFI directive, a warning or error is reported
   /// to the user, and the directive is ignored, leaving the state unchanged.
-  LLVM_ABI void update(const MCCFIInstruction &Directive);
+  void update(const MCCFIInstruction &Directive);
 
 private:
   dwarf::CFIProgram convert(MCCFIInstruction Directive);

@@ -16,6 +16,7 @@
 #include "flang/Common/idioms.h"
 #include "flang/Common/indirection.h"
 #include "flang/Common/visit.h"
+#include "flang/Evaluate/shape.h"
 #include "flang/Evaluate/tools.h"
 #include "flang/Evaluate/type.h"
 #include "flang/Parser/char-block.h"
@@ -36,7 +37,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Frontend/OpenMP/OMP.h"
 
@@ -781,15 +781,12 @@ void OmpStructureChecker::CheckTargetNest(const parser::OpenMPConstruct &c) {
 
 void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
   const auto &beginBlockDir{std::get<parser::OmpBeginBlockDirective>(x.t)};
-  const auto &endBlockDir{
-      std::get<std::optional<parser::OmpEndBlockDirective>>(x.t)};
+  const auto &endBlockDir{std::get<parser::OmpEndBlockDirective>(x.t)};
   const auto &beginDir{std::get<parser::OmpBlockDirective>(beginBlockDir.t)};
+  const auto &endDir{std::get<parser::OmpBlockDirective>(endBlockDir.t)};
   const parser::Block &block{std::get<parser::Block>(x.t)};
 
-  if (endBlockDir) {
-    const auto &endDir{std::get<parser::OmpBlockDirective>(endBlockDir->t)};
-    CheckMatching<parser::OmpBlockDirective>(beginDir, endDir);
-  }
+  CheckMatching<parser::OmpBlockDirective>(beginDir, endDir);
 
   PushContextAndClauseSets(beginDir.source, beginDir.v);
   if (llvm::omp::allTargetSet.test(GetContext().directive)) {
@@ -839,14 +836,14 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
     bool foundNowait{false};
     parser::CharBlock NowaitSource;
 
-    auto catchCopyPrivateNowaitClauses = [&](const auto &dir, bool isEnd) {
+    auto catchCopyPrivateNowaitClauses = [&](const auto &dir, bool endDir) {
       for (auto &clause : std::get<parser::OmpClauseList>(dir.t).v) {
         if (clause.Id() == llvm::omp::Clause::OMPC_copyprivate) {
           for (const auto &ompObject : GetOmpObjectList(clause)->v) {
             const auto *name{parser::Unwrap<parser::Name>(ompObject)};
             if (Symbol * symbol{name->symbol}) {
               if (singleCopyprivateSyms.count(symbol)) {
-                if (isEnd) {
+                if (endDir) {
                   context_.Warn(common::UsageWarning::OpenMPUsage, name->source,
                       "The COPYPRIVATE clause with '%s' is already used on the SINGLE directive"_warn_en_US,
                       name->ToString());
@@ -860,7 +857,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
                     "'%s' appears in more than one COPYPRIVATE clause on the END SINGLE directive"_err_en_US,
                     name->ToString());
               } else {
-                if (isEnd) {
+                if (endDir) {
                   endSingleCopyprivateSyms.insert(symbol);
                 } else {
                   singleCopyprivateSyms.insert(symbol);
@@ -873,7 +870,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
             context_.Say(clause.source,
                 "At most one NOWAIT clause can appear on the SINGLE directive"_err_en_US);
           } else {
-            foundNowait = !isEnd;
+            foundNowait = !endDir;
           }
           if (!NowaitSource.ToString().size()) {
             NowaitSource = clause.source;
@@ -882,9 +879,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
       }
     };
     catchCopyPrivateNowaitClauses(beginBlockDir, false);
-    if (endBlockDir) {
-      catchCopyPrivateNowaitClauses(*endBlockDir, true);
-    }
+    catchCopyPrivateNowaitClauses(endBlockDir, true);
     unsigned version{context_.langOptions().OpenMPVersion};
     if (version <= 52 && NowaitSource.ToString().size() &&
         (singleCopyprivateSyms.size() || endSingleCopyprivateSyms.size())) {
@@ -1161,7 +1156,8 @@ void OmpStructureChecker::CheckThreadprivateOrDeclareTargetVar(
                         (sym->has<MainProgramDetails>() ||
                             sym->has<ModuleDetails>())) {
                       context_.Say(name->source,
-                          "The module name cannot be in a %s "
+                          "The module name or main program name cannot be in a "
+                          "%s "
                           "directive"_err_en_US,
                           ContextDirectiveAsFortran());
                     } else if (!IsSaved(*name->symbol) &&
@@ -3403,22 +3399,23 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Detach &x) {
   }
 }
 
-void OmpStructureChecker::CheckAllowedMapTypes(parser::OmpMapType::Value type,
-    llvm::ArrayRef<parser::OmpMapType::Value> allowed) {
-  if (llvm::is_contained(allowed, type)) {
-    return;
+void OmpStructureChecker::CheckAllowedMapTypes(
+    const parser::OmpMapType::Value &type,
+    const std::list<parser::OmpMapType::Value> &allowedMapTypeList) {
+  if (!llvm::is_contained(allowedMapTypeList, type)) {
+    std::string commaSeparatedMapTypes;
+    llvm::interleave(
+        allowedMapTypeList.begin(), allowedMapTypeList.end(),
+        [&](const parser::OmpMapType::Value &mapType) {
+          commaSeparatedMapTypes.append(parser::ToUpperCaseLetters(
+              parser::OmpMapType::EnumToString(mapType)));
+        },
+        [&] { commaSeparatedMapTypes.append(", "); });
+    context_.Say(GetContext().clauseSource,
+        "Only the %s map types are permitted "
+        "for MAP clauses on the %s directive"_err_en_US,
+        commaSeparatedMapTypes, ContextDirectiveAsFortran());
   }
-
-  llvm::SmallVector<std::string> names;
-  llvm::transform(
-      allowed, std::back_inserter(names), [](parser::OmpMapType::Value val) {
-        return parser::ToUpperCaseLetters(
-            parser::OmpMapType::EnumToString(val));
-      });
-  llvm::sort(names);
-  context_.Say(GetContext().clauseSource,
-      "Only the %s map types are permitted for MAP clauses on the %s directive"_err_en_US,
-      llvm::join(names, ", "), ContextDirectiveAsFortran());
 }
 
 void OmpStructureChecker::Enter(const parser::OmpClause::Map &x) {
@@ -3439,62 +3436,27 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Map &x) {
     CheckIteratorModifier(*iter);
   }
   if (auto *type{OmpGetUniqueModifier<parser::OmpMapType>(modifiers)}) {
-    using Directive = llvm::omp::Directive;
     using Value = parser::OmpMapType::Value;
-
-    static auto isValidForVersion{
-        [](parser::OmpMapType::Value t, unsigned version) {
-          switch (t) {
-          case parser::OmpMapType::Value::Alloc:
-          case parser::OmpMapType::Value::Delete:
-          case parser::OmpMapType::Value::Release:
-            return version < 60;
-          case parser::OmpMapType::Value::Storage:
-            return version >= 60;
-          default:
-            return true;
-          }
-        }};
-
-    llvm::SmallVector<parser::OmpMapType::Value> mapEnteringTypes{[&]() {
-      llvm::SmallVector<parser::OmpMapType::Value> result;
-      for (size_t i{0}; i != parser::OmpMapType::Value_enumSize; ++i) {
-        auto t{static_cast<parser::OmpMapType::Value>(i)};
-        if (isValidForVersion(t, version) && IsMapEnteringType(t)) {
-          result.push_back(t);
-        }
-      }
-      return result;
-    }()};
-    llvm::SmallVector<parser::OmpMapType::Value> mapExitingTypes{[&]() {
-      llvm::SmallVector<parser::OmpMapType::Value> result;
-      for (size_t i{0}; i != parser::OmpMapType::Value_enumSize; ++i) {
-        auto t{static_cast<parser::OmpMapType::Value>(i)};
-        if (isValidForVersion(t, version) && IsMapExitingType(t)) {
-          result.push_back(t);
-        }
-      }
-      return result;
-    }()};
-
-    llvm::omp::Directive dir{GetContext().directive};
-    llvm::ArrayRef<llvm::omp::Directive> leafs{
-        llvm::omp::getLeafConstructsOrSelf(dir)};
-
-    if (llvm::is_contained(leafs, Directive::OMPD_target) ||
-        llvm::is_contained(leafs, Directive::OMPD_target_data)) {
-      if (version >= 60) {
-        // Map types listed in the decay table. [6.0:276]
-        CheckAllowedMapTypes(
-            type->v, {Value::Storage, Value::From, Value::To, Value::Tofrom});
-      } else {
-        CheckAllowedMapTypes(
-            type->v, {Value::Alloc, Value::From, Value::To, Value::Tofrom});
-      }
-    } else if (llvm::is_contained(leafs, Directive::OMPD_target_enter_data)) {
-      CheckAllowedMapTypes(type->v, mapEnteringTypes);
-    } else if (llvm::is_contained(leafs, Directive::OMPD_target_exit_data)) {
-      CheckAllowedMapTypes(type->v, mapExitingTypes);
+    switch (GetContext().directive) {
+    case llvm::omp::Directive::OMPD_target:
+    case llvm::omp::Directive::OMPD_target_teams:
+    case llvm::omp::Directive::OMPD_target_teams_distribute:
+    case llvm::omp::Directive::OMPD_target_teams_distribute_simd:
+    case llvm::omp::Directive::OMPD_target_teams_distribute_parallel_do:
+    case llvm::omp::Directive::OMPD_target_teams_distribute_parallel_do_simd:
+    case llvm::omp::Directive::OMPD_target_data:
+      CheckAllowedMapTypes(
+          type->v, {Value::To, Value::From, Value::Tofrom, Value::Alloc});
+      break;
+    case llvm::omp::Directive::OMPD_target_enter_data:
+      CheckAllowedMapTypes(type->v, {Value::To, Value::Alloc});
+      break;
+    case llvm::omp::Directive::OMPD_target_exit_data:
+      CheckAllowedMapTypes(
+          type->v, {Value::From, Value::Release, Value::Delete});
+      break;
+    default:
+      break;
     }
   }
 
@@ -4155,26 +4117,21 @@ void OmpStructureChecker::CheckArraySection(
   // Detect this by looking for array accesses on character variables which are
   // not arrays.
   bool isSubstring{false};
-  // Cannot analyze a base of an assumed-size array on its own. If we know
-  // this is an array (assumed-size or not) we can ignore it, since we're
-  // looking for strings.
-  if (!IsAssumedSizeArray(*name.symbol)) {
-    evaluate::ExpressionAnalyzer ea{context_};
-    if (MaybeExpr expr = ea.Analyze(arrayElement.base)) {
-      if (expr->Rank() == 0) {
-        // Not an array: rank 0
-        if (std::optional<evaluate::DynamicType> type = expr->GetType()) {
-          if (type->category() == evaluate::TypeCategory::Character) {
-            // Substrings are explicitly denied by the standard [6.0:163:9-11].
-            // This is supported as an extension. This restriction was added in
-            // OpenMP 5.2.
-            isSubstring = true;
-            context_.Say(GetContext().clauseSource,
-                "The use of substrings in OpenMP argument lists has been disallowed since OpenMP 5.2."_port_en_US);
-          } else {
-            llvm_unreachable(
-                "Array indexing on a variable that isn't an array");
-          }
+  evaluate::ExpressionAnalyzer ea{context_};
+  if (MaybeExpr expr = ea.Analyze(arrayElement.base)) {
+    std::optional<evaluate::Shape> shape = evaluate::GetShape(expr);
+    // Not an array: rank 0
+    if (shape && shape->size() == 0) {
+      if (std::optional<evaluate::DynamicType> type = expr->GetType()) {
+        if (type->category() == evaluate::TypeCategory::Character) {
+          // Substrings are explicitly denied by the standard [6.0:163:9-11].
+          // This is supported as an extension. This restriction was added in
+          // OpenMP 5.2.
+          isSubstring = true;
+          context_.Say(GetContext().clauseSource,
+              "The use of substrings in OpenMP argument lists has been disallowed since OpenMP 5.2."_port_en_US);
+        } else {
+          llvm_unreachable("Array indexing on a variable that isn't an array");
         }
       }
     }

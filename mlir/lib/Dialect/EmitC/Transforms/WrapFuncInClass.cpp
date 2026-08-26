@@ -31,7 +31,7 @@ struct WrapFuncInClassPass
     Operation *rootOp = getOperation();
 
     RewritePatternSet patterns(&getContext());
-    populateFuncPatterns(patterns);
+    populateFuncPatterns(patterns, namedAttribute);
 
     walkAndApplyPatterns(rootOp, std::move(patterns));
   }
@@ -43,14 +43,14 @@ struct WrapFuncInClassPass
 
 class WrapFuncInClass : public OpRewritePattern<emitc::FuncOp> {
 public:
-  WrapFuncInClass(MLIRContext *context)
-      : OpRewritePattern<emitc::FuncOp>(context) {}
+  WrapFuncInClass(MLIRContext *context, StringRef attrName)
+      : OpRewritePattern<emitc::FuncOp>(context), attributeName(attrName) {}
 
   LogicalResult matchAndRewrite(emitc::FuncOp funcOp,
                                 PatternRewriter &rewriter) const override {
 
     auto className = funcOp.getSymNameAttr().str() + "Class";
-    ClassOp newClassOp = ClassOp::create(rewriter, funcOp.getLoc(), className);
+    ClassOp newClassOp = rewriter.create<ClassOp>(funcOp.getLoc(), className);
 
     SmallVector<std::pair<StringAttr, TypeAttr>> fields;
     rewriter.createBlock(&newClassOp.getBody());
@@ -67,15 +67,15 @@ public:
 
       TypeAttr typeAttr = TypeAttr::get(val.getType());
       fields.push_back({fieldName, typeAttr});
-      emitc::FieldOp::create(rewriter, funcOp.getLoc(), fieldName, typeAttr,
-                             argAttr);
+      rewriter.create<emitc::FieldOp>(funcOp.getLoc(), fieldName, typeAttr,
+                                      argAttr);
     }
 
     rewriter.setInsertionPointToEnd(&newClassOp.getBody().front());
     FunctionType funcType = funcOp.getFunctionType();
     Location loc = funcOp.getLoc();
     FuncOp newFuncOp =
-        emitc::FuncOp::create(rewriter, loc, ("execute"), funcType);
+        rewriter.create<emitc::FuncOp>(loc, ("execute"), funcType);
 
     rewriter.createBlock(&newFuncOp.getBody());
     newFuncOp.getBody().takeBody(funcOp.getBody());
@@ -85,7 +85,7 @@ public:
     newArguments.reserve(fields.size());
     for (auto &[fieldName, attr] : fields) {
       GetFieldOp arg =
-          emitc::GetFieldOp::create(rewriter, loc, attr.getValue(), fieldName);
+          rewriter.create<emitc::GetFieldOp>(loc, attr.getValue(), fieldName);
       newArguments.push_back(arg);
     }
 
@@ -101,8 +101,12 @@ public:
     rewriter.replaceOp(funcOp, newClassOp);
     return success();
   }
+
+private:
+  StringRef attributeName;
 };
 
-void mlir::emitc::populateFuncPatterns(RewritePatternSet &patterns) {
-  patterns.add<WrapFuncInClass>(patterns.getContext());
+void mlir::emitc::populateFuncPatterns(RewritePatternSet &patterns,
+                                       StringRef namedAttribute) {
+  patterns.add<WrapFuncInClass>(patterns.getContext(), namedAttribute);
 }

@@ -38,7 +38,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -75,11 +74,10 @@ namespace llvm {
 /// checked, and in all other case(s), a warning is emitted.
 class DWARFCFIAnalysis {
 public:
-  LLVM_ABI DWARFCFIAnalysis(MCContext *Context, MCInstrInfo const &MCII,
-                            bool IsEH, ArrayRef<MCCFIInstruction> Prologue);
+  DWARFCFIAnalysis(MCContext *Context, MCInstrInfo const &MCII, bool IsEH,
+                   ArrayRef<MCCFIInstruction> Prologue);
 
-  LLVM_ABI void update(const MCInst &Inst,
-                       ArrayRef<MCCFIInstruction> Directives);
+  void update(const MCInst &Inst, ArrayRef<MCCFIInstruction> Directives);
 
 private:
   void checkRegDiff(const MCInst &Inst, DWARFRegNum Reg,

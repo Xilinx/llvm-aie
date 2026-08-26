@@ -97,10 +97,6 @@ Args:
   binary: Whether to write bytes (True) or str (False). Defaults to False.
   large_elements_limit: Whether to elide elements attributes above this
     number of elements. Defaults to None (no limit).
-  large_resource_limit: Whether to elide resource attributes above this
-    number of characters. Defaults to None (no limit). If large_elements_limit
-    is set and this is None, the behavior will be to use large_elements_limit
-    as large_resource_limit.
   enable_debug_info: Whether to print debug/location information. Defaults
     to False.
   pretty_debug_info: Whether to format debug information for easier reading
@@ -1307,7 +1303,6 @@ void PyOperation::checkValid() const {
 }
 
 void PyOperationBase::print(std::optional<int64_t> largeElementsLimit,
-                            std::optional<int64_t> largeResourceLimit,
                             bool enableDebugInfo, bool prettyDebugInfo,
                             bool printGenericOpForm, bool useLocalScope,
                             bool useNameLocAsPrefix, bool assumeVerified,
@@ -1319,10 +1314,10 @@ void PyOperationBase::print(std::optional<int64_t> largeElementsLimit,
     fileObject = nb::module_::import_("sys").attr("stdout");
 
   MlirOpPrintingFlags flags = mlirOpPrintingFlagsCreate();
-  if (largeElementsLimit)
+  if (largeElementsLimit) {
     mlirOpPrintingFlagsElideLargeElementsAttrs(flags, *largeElementsLimit);
-  if (largeResourceLimit)
-    mlirOpPrintingFlagsElideLargeResourceString(flags, *largeResourceLimit);
+    mlirOpPrintingFlagsElideLargeResourceString(flags, *largeElementsLimit);
+  }
   if (enableDebugInfo)
     mlirOpPrintingFlagsEnableDebugInfo(flags, /*enable=*/true,
                                        /*prettyForm=*/prettyDebugInfo);
@@ -1410,7 +1405,6 @@ void PyOperationBase::walk(
 
 nb::object PyOperationBase::getAsm(bool binary,
                                    std::optional<int64_t> largeElementsLimit,
-                                   std::optional<int64_t> largeResourceLimit,
                                    bool enableDebugInfo, bool prettyDebugInfo,
                                    bool printGenericOpForm, bool useLocalScope,
                                    bool useNameLocAsPrefix, bool assumeVerified,
@@ -1422,7 +1416,6 @@ nb::object PyOperationBase::getAsm(bool binary,
     fileObject = nb::module_::import_("io").attr("StringIO")();
   }
   print(/*largeElementsLimit=*/largeElementsLimit,
-        /*largeResourceLimit=*/largeResourceLimit,
         /*enableDebugInfo=*/enableDebugInfo,
         /*prettyDebugInfo=*/prettyDebugInfo,
         /*printGenericOpForm=*/printGenericOpForm,
@@ -1452,14 +1445,6 @@ void PyOperationBase::moveBefore(PyOperationBase &other) {
   otherOp.checkValid();
   mlirOperationMoveBefore(operation, otherOp);
   operation.parentKeepAlive = otherOp.parentKeepAlive;
-}
-
-bool PyOperationBase::isBeforeInBlock(PyOperationBase &other) {
-  PyOperation &operation = getOperation();
-  PyOperation &otherOp = other.getOperation();
-  operation.checkValid();
-  otherOp.checkValid();
-  return mlirOperationIsBeforeInBlock(operation, otherOp);
 }
 
 bool PyOperationBase::verify() {
@@ -3363,7 +3348,6 @@ void mlir::python::populateIRCore(nb::module_ &m) {
           [](PyOperationBase &self) {
             return self.getAsm(/*binary=*/false,
                                /*largeElementsLimit=*/std::nullopt,
-                               /*largeResourceLimit=*/std::nullopt,
                                /*enableDebugInfo=*/false,
                                /*prettyDebugInfo=*/false,
                                /*printGenericOpForm=*/false,
@@ -3379,12 +3363,11 @@ void mlir::python::populateIRCore(nb::module_ &m) {
            nb::arg("state"), nb::arg("file").none() = nb::none(),
            nb::arg("binary") = false, kOperationPrintStateDocstring)
       .def("print",
-           nb::overload_cast<std::optional<int64_t>, std::optional<int64_t>,
-                             bool, bool, bool, bool, bool, bool, nb::object,
-                             bool, bool>(&PyOperationBase::print),
+           nb::overload_cast<std::optional<int64_t>, bool, bool, bool, bool,
+                             bool, bool, nb::object, bool, bool>(
+               &PyOperationBase::print),
            // Careful: Lots of arguments must match up with print method.
            nb::arg("large_elements_limit").none() = nb::none(),
-           nb::arg("large_resource_limit").none() = nb::none(),
            nb::arg("enable_debug_info") = false,
            nb::arg("pretty_debug_info") = false,
            nb::arg("print_generic_op_form") = false,
@@ -3400,7 +3383,6 @@ void mlir::python::populateIRCore(nb::module_ &m) {
            // Careful: Lots of arguments must match up with get_asm method.
            nb::arg("binary") = false,
            nb::arg("large_elements_limit").none() = nb::none(),
-           nb::arg("large_resource_limit").none() = nb::none(),
            nb::arg("enable_debug_info") = false,
            nb::arg("pretty_debug_info") = false,
            nb::arg("print_generic_op_form") = false,
@@ -3417,13 +3399,6 @@ void mlir::python::populateIRCore(nb::module_ &m) {
       .def("move_before", &PyOperationBase::moveBefore, nb::arg("other"),
            "Puts self immediately before the other operation in its parent "
            "block.")
-      .def("is_before_in_block", &PyOperationBase::isBeforeInBlock,
-           nb::arg("other"),
-           "Given an operation 'other' that is within the same parent block, "
-           "return"
-           "whether the current operation is before 'other' in the operation "
-           "list"
-           "of the parent block.")
       .def(
           "clone",
           [](PyOperationBase &self, nb::object ip) {

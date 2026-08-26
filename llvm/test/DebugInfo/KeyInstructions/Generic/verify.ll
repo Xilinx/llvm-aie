@@ -7,8 +7,6 @@
 
 define dso_local void @f() !dbg !10 {
 entry:
-; Include non-key location to check verifier is checking the whole function.
-  %0 = add i32 0, 0, !dbg !14
   ret void, !dbg !13
 }
 
@@ -22,4 +20,3 @@ entry:
 !11 = !DISubroutineType(types: !12)
 !12 = !{null}
 !13 = !DILocation(line: 1, column: 11, scope: !10, atomGroup: 1, atomRank: 1)
-!14 = !DILocation(line: 1, column: 11, scope: !10)

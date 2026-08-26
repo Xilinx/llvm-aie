@@ -632,8 +632,7 @@ void PatternEmitter::emitOpMatch(DagNode tree, StringRef opName, int depth) {
         ++opArgIdx;
         continue;
       }
-      if (auto *operand =
-              llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
+      if (auto *operand = llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
         if (argTree.isVariadic()) {
           if (!operand->isVariadic()) {
             auto error = formatv("variadic DAG construct can't match op {0}'s "
@@ -1696,7 +1695,7 @@ std::string PatternEmitter::handleOpCreation(DagNode tree, int resultIndex,
 
     // Then create the op.
     os.scope("", "\n}\n").os
-        << formatv("{0} = {1}::create(rewriter, {2}, tblgen_values, {3});",
+        << formatv("{0} = rewriter.create<{1}>({2}, tblgen_values, {3});",
                    valuePackName, resultOp.getQualCppClassName(), locToUse,
                    useProperties ? "tblgen_props" : "tblgen_attrs");
     return resultValue;
@@ -1715,7 +1714,7 @@ std::string PatternEmitter::handleOpCreation(DagNode tree, int resultIndex,
     // aggregate-parameter builders.
     createSeparateLocalVarsForOpArgs(tree, childNodeNames);
 
-    os.scope().os << formatv("{0} = {1}::create(rewriter, {2}", valuePackName,
+    os.scope().os << formatv("{0} = rewriter.create<{1}>({2}", valuePackName,
                              resultOp.getQualCppClassName(), locToUse);
     supplyValuesForOpArgs(tree, childNodeNames, depth);
     os << "\n  );\n}\n";
@@ -1754,7 +1753,7 @@ std::string PatternEmitter::handleOpCreation(DagNode tree, int resultIndex,
                       resultIndex + i);
     }
   }
-  os << formatv("{0} = {1}::create(rewriter, {2}, tblgen_types, "
+  os << formatv("{0} = rewriter.create<{1}>({2}, tblgen_types, "
                 "tblgen_values, {3});\n",
                 valuePackName, resultOp.getQualCppClassName(), locToUse,
                 useProperties ? "tblgen_props" : "tblgen_attrs");
@@ -1773,8 +1772,8 @@ void PatternEmitter::createSeparateLocalVarsForOpArgs(
 
   int valueIndex = 0; // An index for uniquing local variable names.
   for (int argIndex = 0, e = resultOp.getNumArgs(); argIndex < e; ++argIndex) {
-    const auto *operand = llvm::dyn_cast_if_present<NamedTypeConstraint *>(
-        resultOp.getArg(argIndex));
+    const auto *operand =
+        llvm::dyn_cast_if_present<NamedTypeConstraint *>(resultOp.getArg(argIndex));
     // We do not need special handling for attributes or properties.
     if (!operand)
       continue;
@@ -1829,8 +1828,7 @@ void PatternEmitter::supplyValuesForOpArgs(
 
     Argument opArg = resultOp.getArg(argIndex);
     // Handle the case of operand first.
-    if (auto *operand =
-            llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
+    if (auto *operand = llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
       if (!operand->name.empty())
         os << "/*" << operand->name << "=*/";
       os << childNodeNames.lookup(argIndex);

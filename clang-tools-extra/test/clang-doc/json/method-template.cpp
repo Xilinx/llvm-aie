@@ -9,7 +9,6 @@ struct MyClass {
 
 // CHECK:           "PublicFunctions": [
 // CHECK-NEXT:        {
-// CHECK-NEXT:          "InfoType": "function",
 // CHECK-NEXT:          "IsStatic": false,
 // CHECK-NEXT:          "Location": {
 // CHECK-NEXT:            "Filename": "{{.*}}method-template.cpp",
@@ -22,7 +21,6 @@ struct MyClass {
 // CHECK-NEXT:          ],
 // CHECK-NEXT:          "Params": [
 // CHECK-NEXT:            {
-// CHECK-NEXT:              "End": true,
 // CHECK-NEXT:              "Name": "param",
 // CHECK-NEXT:              "Type": "T"
 // CHECK-NEXT:            }

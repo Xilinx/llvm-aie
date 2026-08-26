@@ -710,8 +710,7 @@ AST_MATCHER(FieldDecl, isBitField) {
 /// fieldDecl(hasBitWidth(2))
 ///   matches 'int a;' and 'int c;' but not 'int b;'.
 AST_MATCHER_P(FieldDecl, hasBitWidth, unsigned, Width) {
-  return Node.isBitField() && Node.hasConstantIntegerBitWidth() &&
-         Node.getBitWidthValue() == Width;
+  return Node.isBitField() && Node.getBitWidthValue() == Width;
 }
 
 /// Matches non-static data members that have an in-class initializer.
@@ -7894,9 +7893,9 @@ AST_MATCHER_P_OVERLOAD(NestedNameSpecifierLoc, hasPrefix,
 ///   matches "ns::"
 AST_MATCHER_P(NestedNameSpecifier, specifiesNamespace,
               internal::Matcher<NamespaceDecl>, InnerMatcher) {
-  if (auto *NS = dyn_cast_if_present<NamespaceDecl>(Node.getAsNamespace()))
-    return InnerMatcher.matches(*NS, Finder, Builder);
-  return false;
+  if (!Node.getAsNamespace())
+    return false;
+  return InnerMatcher.matches(*Node.getAsNamespace(), Finder, Builder);
 }
 
 /// Matches attributes.

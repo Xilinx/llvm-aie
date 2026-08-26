@@ -7,13 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "src/math/ldexpf16.h"
-
-#include "src/__support/math/ldexpf16.h"
+#include "src/__support/FPUtil/ManipulationFunctions.h"
+#include "src/__support/common.h"
+#include "src/__support/macros/config.h"
 
 namespace LIBC_NAMESPACE_DECL {
 
 LLVM_LIBC_FUNCTION(float16, ldexpf16, (float16 x, int exp)) {
-  return math::ldexpf16(x, exp);
+  return fputil::ldexp(x, exp);
 }
 
 } // namespace LIBC_NAMESPACE_DECL

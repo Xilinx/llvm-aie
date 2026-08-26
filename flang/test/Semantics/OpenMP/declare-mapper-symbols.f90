@@ -1,7 +1,7 @@
 ! RUN: %flang_fc1 -fdebug-dump-symbols -fopenmp -fopenmp-version=50 %s | FileCheck %s
 
 program main
-!CHECK-LABEL: MainProgram scope: MAIN
+!CHECK-LABEL: MainProgram scope: main
    implicit none
 
    type ty

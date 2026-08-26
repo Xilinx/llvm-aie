@@ -302,17 +302,6 @@ if "MLIR_OPT_CHECK_IR_ROUNDTRIP" in os.environ:
             ToolSubst("mlir-opt", "mlir-opt --verify-roundtrip", unresolved="fatal"),
         ]
     )
-elif "MLIR_GENERATE_PATTERN_CATALOG" in os.environ:
-    tools.extend(
-        [
-            ToolSubst(
-                "mlir-opt",
-                "mlir-opt --debug-only=pattern-logging-listener --mlir-disable-threading",
-                unresolved="fatal",
-            ),
-            ToolSubst("FileCheck", "FileCheck --dump-input=always", unresolved="fatal"),
-        ]
-    )
 else:
     tools.extend(["mlir-opt"])
 
@@ -343,6 +332,7 @@ if config.enable_assertions:
     config.available_features.add("asserts")
 else:
     config.available_features.add("noasserts")
+
 
 def have_host_jit_feature_support(feature_name):
     mlir_runner_exe = lit.util.which("mlir-runner", config.mlir_tools_dir)

@@ -12,8 +12,6 @@ namespace nested {
 
 // NESTED:       "Variables": [
 // NESTED-NEXT:    {
-// NESTED-NEXT:      "End": true,
-// NESTED-NEXT:      "InfoType": "variable",
 // NESTED-NEXT:      "IsStatic": false,
 // NESTED-NEXT:      "Location": {
 // NESTED-NEXT:        "Filename": "{{.*}}nested-namespace.cpp",
@@ -26,8 +24,6 @@ namespace nested {
 
 // INNER:       "Variables": [
 // INNER-NEXT:    {
-// INNER-NEXT:      "End": true,
-// INNER-NEXT:      "InfoType": "variable",
 // INNER-NEXT:      "IsStatic": false,
 // INNER-NEXT:      "Location": {
 // INNER-NEXT:        "Filename": "{{.*}}nested-namespace.cpp",

@@ -21,7 +21,6 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/LogicalResult.h"
-#include <variant>
 
 using namespace mlir;
 using namespace acc;
@@ -859,7 +858,7 @@ struct RemoveConstantIfCondition : public OpRewritePattern<OpTy> {
 /// using the operands of the block terminator to replace operation results.
 static void replaceOpWithRegion(PatternRewriter &rewriter, Operation *op,
                                 Region &region, ValueRange blockArgs = {}) {
-  assert(region.hasOneBlock() && "expected single-block region");
+  assert(llvm::hasSingleElement(region) && "expected single-region block");
   Block *block = &region.front();
   Operation *terminator = block->getTerminator();
   ValueRange results = terminator->getOperands();
@@ -3462,88 +3461,40 @@ LogicalResult acc::RoutineOp::verify() {
   return success();
 }
 
-static ParseResult parseBindName(OpAsmParser &parser,
-                                 mlir::ArrayAttr &bindIdName,
-                                 mlir::ArrayAttr &bindStrName,
-                                 mlir::ArrayAttr &deviceIdTypes,
-                                 mlir::ArrayAttr &deviceStrTypes) {
-  llvm::SmallVector<mlir::Attribute> bindIdNameAttrs;
-  llvm::SmallVector<mlir::Attribute> bindStrNameAttrs;
-  llvm::SmallVector<mlir::Attribute> deviceIdTypeAttrs;
-  llvm::SmallVector<mlir::Attribute> deviceStrTypeAttrs;
+static ParseResult parseBindName(OpAsmParser &parser, mlir::ArrayAttr &bindName,
+                                 mlir::ArrayAttr &deviceTypes) {
+  llvm::SmallVector<mlir::Attribute> bindNameAttrs;
+  llvm::SmallVector<mlir::Attribute> deviceTypeAttrs;
 
   if (failed(parser.parseCommaSeparatedList([&]() {
-        mlir::Attribute newAttr;
-        bool isSymbolRefAttr;
-        auto parseResult = parser.parseAttribute(newAttr);
-        if (auto symbolRefAttr = dyn_cast<mlir::SymbolRefAttr>(newAttr)) {
-          bindIdNameAttrs.push_back(symbolRefAttr);
-          isSymbolRefAttr = true;
-        } else if (auto stringAttr = dyn_cast<mlir::StringAttr>(newAttr)) {
-          bindStrNameAttrs.push_back(stringAttr);
-          isSymbolRefAttr = false;
-        }
-        if (parseResult)
+        if (parser.parseAttribute(bindNameAttrs.emplace_back()))
           return failure();
         if (failed(parser.parseOptionalLSquare())) {
-          if (isSymbolRefAttr) {
-            deviceIdTypeAttrs.push_back(mlir::acc::DeviceTypeAttr::get(
-                parser.getContext(), mlir::acc::DeviceType::None));
-          } else {
-            deviceStrTypeAttrs.push_back(mlir::acc::DeviceTypeAttr::get(
-                parser.getContext(), mlir::acc::DeviceType::None));
-          }
+          deviceTypeAttrs.push_back(mlir::acc::DeviceTypeAttr::get(
+              parser.getContext(), mlir::acc::DeviceType::None));
         } else {
-          if (isSymbolRefAttr) {
-            if (parser.parseAttribute(deviceIdTypeAttrs.emplace_back()) ||
-                parser.parseRSquare())
-              return failure();
-          } else {
-            if (parser.parseAttribute(deviceStrTypeAttrs.emplace_back()) ||
-                parser.parseRSquare())
-              return failure();
-          }
+          if (parser.parseAttribute(deviceTypeAttrs.emplace_back()) ||
+              parser.parseRSquare())
+            return failure();
         }
         return success();
       })))
     return failure();
 
-  bindIdName = ArrayAttr::get(parser.getContext(), bindIdNameAttrs);
-  bindStrName = ArrayAttr::get(parser.getContext(), bindStrNameAttrs);
-  deviceIdTypes = ArrayAttr::get(parser.getContext(), deviceIdTypeAttrs);
-  deviceStrTypes = ArrayAttr::get(parser.getContext(), deviceStrTypeAttrs);
+  bindName = ArrayAttr::get(parser.getContext(), bindNameAttrs);
+  deviceTypes = ArrayAttr::get(parser.getContext(), deviceTypeAttrs);
 
   return success();
 }
 
 static void printBindName(mlir::OpAsmPrinter &p, mlir::Operation *op,
-                          std::optional<mlir::ArrayAttr> bindIdName,
-                          std::optional<mlir::ArrayAttr> bindStrName,
-                          std::optional<mlir::ArrayAttr> deviceIdTypes,
-                          std::optional<mlir::ArrayAttr> deviceStrTypes) {
-  // Create combined vectors for all bind names and device types
-  llvm::SmallVector<mlir::Attribute> allBindNames;
-  llvm::SmallVector<mlir::Attribute> allDeviceTypes;
-
-  // Append bindIdName and deviceIdTypes
-  if (hasDeviceTypeValues(deviceIdTypes)) {
-    allBindNames.append(bindIdName->begin(), bindIdName->end());
-    allDeviceTypes.append(deviceIdTypes->begin(), deviceIdTypes->end());
-  }
-
-  // Append bindStrName and deviceStrTypes
-  if (hasDeviceTypeValues(deviceStrTypes)) {
-    allBindNames.append(bindStrName->begin(), bindStrName->end());
-    allDeviceTypes.append(deviceStrTypes->begin(), deviceStrTypes->end());
-  }
-
-  // Print the combined sequence
-  if (!allBindNames.empty())
-    llvm::interleaveComma(llvm::zip(allBindNames, allDeviceTypes), p,
-                          [&](const auto &pair) {
-                            p << std::get<0>(pair);
-                            printSingleDeviceType(p, std::get<1>(pair));
-                          });
+                          std::optional<mlir::ArrayAttr> bindName,
+                          std::optional<mlir::ArrayAttr> deviceTypes) {
+  llvm::interleaveComma(llvm::zip(*bindName, *deviceTypes), p,
+                        [&](const auto &pair) {
+                          p << std::get<0>(pair);
+                          printSingleDeviceType(p, std::get<1>(pair));
+                        });
 }
 
 static ParseResult parseRoutineGangClause(OpAsmParser &parser,
@@ -3703,32 +3654,19 @@ bool RoutineOp::hasSeq(mlir::acc::DeviceType deviceType) {
   return hasDeviceType(getSeq(), deviceType);
 }
 
-std::optional<std::variant<mlir::SymbolRefAttr, mlir::StringAttr>>
-RoutineOp::getBindNameValue() {
+std::optional<llvm::StringRef> RoutineOp::getBindNameValue() {
   return getBindNameValue(mlir::acc::DeviceType::None);
 }
 
-std::optional<std::variant<mlir::SymbolRefAttr, mlir::StringAttr>>
+std::optional<llvm::StringRef>
 RoutineOp::getBindNameValue(mlir::acc::DeviceType deviceType) {
-  if (!hasDeviceTypeValues(getBindIdNameDeviceType()) &&
-      !hasDeviceTypeValues(getBindStrNameDeviceType())) {
+  if (!hasDeviceTypeValues(getBindNameDeviceType()))
     return std::nullopt;
-  }
-
-  if (auto pos = findSegment(*getBindIdNameDeviceType(), deviceType)) {
-    auto attr = (*getBindIdName())[*pos];
-    auto symbolRefAttr = dyn_cast<mlir::SymbolRefAttr>(attr);
-    assert(symbolRefAttr && "expected SymbolRef");
-    return symbolRefAttr;
-  }
-
-  if (auto pos = findSegment(*getBindStrNameDeviceType(), deviceType)) {
-    auto attr = (*getBindStrName())[*pos];
+  if (auto pos = findSegment(*getBindNameDeviceType(), deviceType)) {
+    auto attr = (*getBindName())[*pos];
     auto stringAttr = dyn_cast<mlir::StringAttr>(attr);
-    assert(stringAttr && "expected String");
-    return stringAttr;
+    return stringAttr.getValue();
   }
-
   return std::nullopt;
 }
 

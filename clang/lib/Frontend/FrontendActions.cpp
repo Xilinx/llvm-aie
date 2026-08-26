@@ -139,7 +139,7 @@ GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
   Consumers.push_back(std::make_unique<PCHGenerator>(
       CI.getPreprocessor(), CI.getModuleCache(), OutputFile, Sysroot, Buffer,
-      CI.getCodeGenOpts(), FrontendOpts.ModuleFileExtensions,
+      FrontendOpts.ModuleFileExtensions,
       CI.getPreprocessorOpts().AllowPCHWithCompilerErrors,
       FrontendOpts.IncludeTimestamps, FrontendOpts.BuildingImplicitModule,
       +CI.getLangOpts().CacheGeneratedPCH));
@@ -199,7 +199,7 @@ GenerateModuleAction::CreateMultiplexConsumer(CompilerInstance &CI,
 
   Consumers.push_back(std::make_unique<PCHGenerator>(
       CI.getPreprocessor(), CI.getModuleCache(), OutputFile, Sysroot, Buffer,
-      CI.getCodeGenOpts(), CI.getFrontendOpts().ModuleFileExtensions,
+      CI.getFrontendOpts().ModuleFileExtensions,
       /*AllowASTWithErrors=*/
       +CI.getFrontendOpts().AllowPCMWithCompilerErrors,
       /*IncludeTimestamps=*/
@@ -292,13 +292,13 @@ GenerateModuleInterfaceAction::CreateASTConsumer(CompilerInstance &CI,
       !CI.getFrontendOpts().ModuleOutputPath.empty()) {
     Consumers.push_back(std::make_unique<ReducedBMIGenerator>(
         CI.getPreprocessor(), CI.getModuleCache(),
-        CI.getFrontendOpts().ModuleOutputPath, CI.getCodeGenOpts(),
+        CI.getFrontendOpts().ModuleOutputPath,
         +CI.getFrontendOpts().AllowPCMWithCompilerErrors));
   }
 
   Consumers.push_back(std::make_unique<CXX20ModulesGenerator>(
       CI.getPreprocessor(), CI.getModuleCache(),
-      CI.getFrontendOpts().OutputFile, CI.getCodeGenOpts(),
+      CI.getFrontendOpts().OutputFile,
       +CI.getFrontendOpts().AllowPCMWithCompilerErrors));
 
   return std::make_unique<MultiplexConsumer>(std::move(Consumers));
@@ -313,9 +313,9 @@ GenerateModuleInterfaceAction::CreateOutputFile(CompilerInstance &CI,
 std::unique_ptr<ASTConsumer>
 GenerateReducedModuleInterfaceAction::CreateASTConsumer(CompilerInstance &CI,
                                                         StringRef InFile) {
-  return std::make_unique<ReducedBMIGenerator>(
-      CI.getPreprocessor(), CI.getModuleCache(),
-      CI.getFrontendOpts().OutputFile, CI.getCodeGenOpts());
+  return std::make_unique<ReducedBMIGenerator>(CI.getPreprocessor(),
+                                               CI.getModuleCache(),
+                                               CI.getFrontendOpts().OutputFile);
 }
 
 bool GenerateHeaderUnitAction::BeginSourceFileAction(CompilerInstance &CI) {
@@ -358,8 +358,7 @@ void VerifyPCHAction::ExecuteAction() {
   const std::string &Sysroot = CI.getHeaderSearchOpts().Sysroot;
   std::unique_ptr<ASTReader> Reader(new ASTReader(
       CI.getPreprocessor(), CI.getModuleCache(), &CI.getASTContext(),
-      CI.getPCHContainerReader(), CI.getCodeGenOpts(),
-      CI.getFrontendOpts().ModuleFileExtensions,
+      CI.getPCHContainerReader(), CI.getFrontendOpts().ModuleFileExtensions,
       Sysroot.empty() ? "" : Sysroot.c_str(),
       DisableValidationForModuleKind::None,
       /*AllowASTWithCompilerErrors*/ false,

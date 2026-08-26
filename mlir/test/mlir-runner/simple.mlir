@@ -15,10 +15,10 @@
 // RUN: ls %t.o
 // RUN: rm %t.o
 
-// RUN: mlir-runner %s -dump-object-file -object-filename=%t.o \
+// RUN: mlir-runner %s -dump-object-file -object-filename=%T/test.o \
 // RUN:   %if target={{s390x-.*}} %{ -argext-abi-check=false %} | FileCheck %s
-// RUN: ls %t.o
-// RUN: rm %t.o
+// RUN: ls %T/test.o
+// RUN: rm %T/test.o
 
 // Declarations of C library functions.
 llvm.func @logbf(f32) -> f32
