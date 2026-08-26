@@ -204,9 +204,10 @@ private:
 
   /// Constructor for attributes with expression arguments.
   ParsedAttr(IdentifierInfo *attrName, SourceRange attrRange,
-             AttributeScopeInfo scope, ArgsUnion *args, unsigned numArgs,
-             Form formUsed, SourceLocation ellipsisLoc)
-      : AttributeCommonInfo(attrName, scope, attrRange, formUsed),
+             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+             ArgsUnion *args, unsigned numArgs, Form formUsed,
+             SourceLocation ellipsisLoc)
+      : AttributeCommonInfo(attrName, scopeName, attrRange, scopeLoc, formUsed),
         EllipsisLoc(ellipsisLoc), NumArgs(numArgs), Invalid(false),
         UsedAsTypeAttr(false), IsAvailability(false),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
@@ -218,14 +219,14 @@ private:
 
   /// Constructor for availability attributes.
   ParsedAttr(IdentifierInfo *attrName, SourceRange attrRange,
-             AttributeScopeInfo scope, IdentifierLoc *Parm,
-             const AvailabilityChange &introduced,
+             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+             IdentifierLoc *Parm, const AvailabilityChange &introduced,
              const AvailabilityChange &deprecated,
              const AvailabilityChange &obsoleted, SourceLocation unavailable,
              const Expr *messageExpr, Form formUsed, SourceLocation strict,
              const Expr *replacementExpr, const IdentifierLoc *environmentLoc)
-      : AttributeCommonInfo(attrName, scope, attrRange, formUsed), NumArgs(1),
-        Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
+      : AttributeCommonInfo(attrName, scopeName, attrRange, scopeLoc, formUsed),
+        NumArgs(1), Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
         HasProcessingCache(false), IsPragmaClangAttribute(false),
         UnavailableLoc(unavailable), MessageExpr(messageExpr),
@@ -239,13 +240,14 @@ private:
 
   /// Constructor for objc_bridge_related attributes.
   ParsedAttr(IdentifierInfo *attrName, SourceRange attrRange,
-             AttributeScopeInfo scope, IdentifierLoc *Parm1,
-             IdentifierLoc *Parm2, IdentifierLoc *Parm3, Form formUsed)
-      : AttributeCommonInfo(attrName, scope, attrRange, formUsed), NumArgs(3),
-        Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
-        IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
-        HasProcessingCache(false), IsPragmaClangAttribute(false),
-        Info(ParsedAttrInfo::get(*this)) {
+             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+             IdentifierLoc *Parm1, IdentifierLoc *Parm2, IdentifierLoc *Parm3,
+             Form formUsed)
+      : AttributeCommonInfo(attrName, scopeName, attrRange, scopeLoc, formUsed),
+        NumArgs(3), Invalid(false), UsedAsTypeAttr(false),
+        IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(false),
+        HasParsedType(false), HasProcessingCache(false),
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     ArgsUnion *Args = getArgsBuffer();
     Args[0] = Parm1;
     Args[1] = Parm2;
@@ -254,14 +256,14 @@ private:
 
   /// Constructor for type_tag_for_datatype attribute.
   ParsedAttr(IdentifierInfo *attrName, SourceRange attrRange,
-             AttributeScopeInfo scope, IdentifierLoc *ArgKind,
-             ParsedType matchingCType, bool layoutCompatible, bool mustBeNull,
-             Form formUsed)
-      : AttributeCommonInfo(attrName, scope, attrRange, formUsed), NumArgs(1),
-        Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
-        IsTypeTagForDatatype(true), IsProperty(false), HasParsedType(false),
-        HasProcessingCache(false), IsPragmaClangAttribute(false),
-        Info(ParsedAttrInfo::get(*this)) {
+             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+             IdentifierLoc *ArgKind, ParsedType matchingCType,
+             bool layoutCompatible, bool mustBeNull, Form formUsed)
+      : AttributeCommonInfo(attrName, scopeName, attrRange, scopeLoc, formUsed),
+        NumArgs(1), Invalid(false), UsedAsTypeAttr(false),
+        IsAvailability(false), IsTypeTagForDatatype(true), IsProperty(false),
+        HasParsedType(false), HasProcessingCache(false),
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     ArgsUnion PVal(ArgKind);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     detail::TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
@@ -272,9 +274,9 @@ private:
 
   /// Constructor for attributes with a single type argument.
   ParsedAttr(IdentifierInfo *attrName, SourceRange attrRange,
-             AttributeScopeInfo scope, ParsedType typeArg, Form formUsed,
-             SourceLocation ellipsisLoc)
-      : AttributeCommonInfo(attrName, scope, attrRange, formUsed),
+             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+             ParsedType typeArg, Form formUsed, SourceLocation ellipsisLoc)
+      : AttributeCommonInfo(attrName, scopeName, attrRange, scopeLoc, formUsed),
         EllipsisLoc(ellipsisLoc), NumArgs(0), Invalid(false),
         UsedAsTypeAttr(false), IsAvailability(false),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(true),
@@ -285,13 +287,13 @@ private:
 
   /// Constructor for microsoft __declspec(property) attribute.
   ParsedAttr(IdentifierInfo *attrName, SourceRange attrRange,
-             AttributeScopeInfo scope, IdentifierInfo *getterId,
-             IdentifierInfo *setterId, Form formUsed)
-      : AttributeCommonInfo(attrName, scope, attrRange, formUsed), NumArgs(0),
-        Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
-        IsTypeTagForDatatype(false), IsProperty(true), HasParsedType(false),
-        HasProcessingCache(false), IsPragmaClangAttribute(false),
-        Info(ParsedAttrInfo::get(*this)) {
+             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+             IdentifierInfo *getterId, IdentifierInfo *setterId, Form formUsed)
+      : AttributeCommonInfo(attrName, scopeName, attrRange, scopeLoc, formUsed),
+        NumArgs(0), Invalid(false), UsedAsTypeAttr(false),
+        IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(true),
+        HasParsedType(false), HasProcessingCache(false),
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     new (&getPropertyDataBuffer()) detail::PropertyData(getterId, setterId);
   }
 
@@ -733,21 +735,21 @@ public:
   void takeFrom(ParsedAttributesView &List, AttributePool &Pool);
 
   ParsedAttr *create(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, ArgsUnion *args,
-                     unsigned numArgs, ParsedAttr::Form form,
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     ArgsUnion *args, unsigned numArgs, ParsedAttr::Form form,
                      SourceLocation ellipsisLoc = SourceLocation()) {
     void *memory = allocate(
         ParsedAttr::totalSizeToAlloc<ArgsUnion, detail::AvailabilityData,
                                      detail::TypeTagForDatatypeData, ParsedType,
                                      detail::PropertyData>(numArgs, 0, 0, 0,
                                                            0));
-    return add(new (memory) ParsedAttr(attrName, attrRange, scope, args,
-                                       numArgs, form, ellipsisLoc));
+    return add(new (memory) ParsedAttr(attrName, attrRange, scopeName, scopeLoc,
+                                       args, numArgs, form, ellipsisLoc));
   }
 
   ParsedAttr *create(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, IdentifierLoc *Param,
-                     const AvailabilityChange &introduced,
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     IdentifierLoc *Param, const AvailabilityChange &introduced,
                      const AvailabilityChange &deprecated,
                      const AvailabilityChange &obsoleted,
                      SourceLocation unavailable, const Expr *MessageExpr,
@@ -755,54 +757,58 @@ public:
                      const Expr *ReplacementExpr,
                      IdentifierLoc *EnvironmentLoc) {
     void *memory = allocate(AttributeFactory::AvailabilityAllocSize);
-    return add(new (memory)
-                   ParsedAttr(attrName, attrRange, scope, Param, introduced,
-                              deprecated, obsoleted, unavailable, MessageExpr,
-                              form, strict, ReplacementExpr, EnvironmentLoc));
+    return add(new (memory) ParsedAttr(attrName, attrRange, scopeName, scopeLoc,
+                                       Param, introduced, deprecated, obsoleted,
+                                       unavailable, MessageExpr, form, strict,
+                                       ReplacementExpr, EnvironmentLoc));
   }
 
   ParsedAttr *create(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, IdentifierLoc *Param1,
-                     IdentifierLoc *Param2, IdentifierLoc *Param3,
-                     ParsedAttr::Form form) {
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     IdentifierLoc *Param1, IdentifierLoc *Param2,
+                     IdentifierLoc *Param3, ParsedAttr::Form form) {
     void *memory = allocate(
         ParsedAttr::totalSizeToAlloc<ArgsUnion, detail::AvailabilityData,
                                      detail::TypeTagForDatatypeData, ParsedType,
                                      detail::PropertyData>(3, 0, 0, 0, 0));
-    return add(new (memory) ParsedAttr(attrName, attrRange, scope, Param1,
-                                       Param2, Param3, form));
+    return add(new (memory) ParsedAttr(attrName, attrRange, scopeName, scopeLoc,
+                                       Param1, Param2, Param3, form));
   }
 
-  ParsedAttr *createTypeTagForDatatype(
-      IdentifierInfo *attrName, SourceRange attrRange, AttributeScopeInfo scope,
-      IdentifierLoc *argumentKind, ParsedType matchingCType,
-      bool layoutCompatible, bool mustBeNull, ParsedAttr::Form form) {
+  ParsedAttr *
+  createTypeTagForDatatype(IdentifierInfo *attrName, SourceRange attrRange,
+                           IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                           IdentifierLoc *argumentKind,
+                           ParsedType matchingCType, bool layoutCompatible,
+                           bool mustBeNull, ParsedAttr::Form form) {
     void *memory = allocate(AttributeFactory::TypeTagForDatatypeAllocSize);
-    return add(new (memory) ParsedAttr(attrName, attrRange, scope, argumentKind,
-                                       matchingCType, layoutCompatible,
-                                       mustBeNull, form));
+    return add(new (memory) ParsedAttr(attrName, attrRange, scopeName, scopeLoc,
+                                       argumentKind, matchingCType,
+                                       layoutCompatible, mustBeNull, form));
   }
 
   ParsedAttr *createTypeAttribute(IdentifierInfo *attrName,
                                   SourceRange attrRange,
-                                  AttributeScopeInfo scope, ParsedType typeArg,
+                                  IdentifierInfo *scopeName,
+                                  SourceLocation scopeLoc, ParsedType typeArg,
                                   ParsedAttr::Form formUsed,
                                   SourceLocation ellipsisLoc) {
     void *memory = allocate(
         ParsedAttr::totalSizeToAlloc<ArgsUnion, detail::AvailabilityData,
                                      detail::TypeTagForDatatypeData, ParsedType,
                                      detail::PropertyData>(0, 0, 0, 1, 0));
-    return add(new (memory) ParsedAttr(attrName, attrRange, scope, typeArg,
-                                       formUsed, ellipsisLoc));
+    return add(new (memory) ParsedAttr(attrName, attrRange, scopeName, scopeLoc,
+                                       typeArg, formUsed, ellipsisLoc));
   }
 
   ParsedAttr *
   createPropertyAttribute(IdentifierInfo *attrName, SourceRange attrRange,
-                          AttributeScopeInfo scope, IdentifierInfo *getterId,
-                          IdentifierInfo *setterId, ParsedAttr::Form formUsed) {
+                          IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                          IdentifierInfo *getterId, IdentifierInfo *setterId,
+                          ParsedAttr::Form formUsed) {
     void *memory = allocate(AttributeFactory::PropertyAllocSize);
-    return add(new (memory) ParsedAttr(attrName, attrRange, scope, getterId,
-                                       setterId, formUsed));
+    return add(new (memory) ParsedAttr(attrName, attrRange, scopeName, scopeLoc,
+                                       getterId, setterId, formUsed));
   }
 };
 
@@ -976,19 +982,19 @@ public:
 
   /// Add attribute with expression arguments.
   ParsedAttr *addNew(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, ArgsUnion *args,
-                     unsigned numArgs, ParsedAttr::Form form,
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     ArgsUnion *args, unsigned numArgs, ParsedAttr::Form form,
                      SourceLocation ellipsisLoc = SourceLocation()) {
-    ParsedAttr *attr = pool.create(attrName, attrRange, scope, args, numArgs,
-                                   form, ellipsisLoc);
+    ParsedAttr *attr = pool.create(attrName, attrRange, scopeName, scopeLoc,
+                                   args, numArgs, form, ellipsisLoc);
     addAtEnd(attr);
     return attr;
   }
 
   /// Add availability attribute.
   ParsedAttr *addNew(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, IdentifierLoc *Param,
-                     const AvailabilityChange &introduced,
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     IdentifierLoc *Param, const AvailabilityChange &introduced,
                      const AvailabilityChange &deprecated,
                      const AvailabilityChange &obsoleted,
                      SourceLocation unavailable, const Expr *MessageExpr,
@@ -996,31 +1002,33 @@ public:
                      const Expr *ReplacementExpr,
                      IdentifierLoc *EnvironmentLoc) {
     ParsedAttr *attr =
-        pool.create(attrName, attrRange, scope, Param, introduced, deprecated,
-                    obsoleted, unavailable, MessageExpr, form, strict,
-                    ReplacementExpr, EnvironmentLoc);
+        pool.create(attrName, attrRange, scopeName, scopeLoc, Param, introduced,
+                    deprecated, obsoleted, unavailable, MessageExpr, form,
+                    strict, ReplacementExpr, EnvironmentLoc);
     addAtEnd(attr);
     return attr;
   }
 
   /// Add objc_bridge_related attribute.
   ParsedAttr *addNew(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, IdentifierLoc *Param1,
-                     IdentifierLoc *Param2, IdentifierLoc *Param3,
-                     ParsedAttr::Form form) {
-    ParsedAttr *attr =
-        pool.create(attrName, attrRange, scope, Param1, Param2, Param3, form);
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     IdentifierLoc *Param1, IdentifierLoc *Param2,
+                     IdentifierLoc *Param3, ParsedAttr::Form form) {
+    ParsedAttr *attr = pool.create(attrName, attrRange, scopeName, scopeLoc,
+                                   Param1, Param2, Param3, form);
     addAtEnd(attr);
     return attr;
   }
 
   /// Add type_tag_for_datatype attribute.
-  ParsedAttr *addNewTypeTagForDatatype(
-      IdentifierInfo *attrName, SourceRange attrRange, AttributeScopeInfo scope,
-      IdentifierLoc *argumentKind, ParsedType matchingCType,
-      bool layoutCompatible, bool mustBeNull, ParsedAttr::Form form) {
+  ParsedAttr *
+  addNewTypeTagForDatatype(IdentifierInfo *attrName, SourceRange attrRange,
+                           IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                           IdentifierLoc *argumentKind,
+                           ParsedType matchingCType, bool layoutCompatible,
+                           bool mustBeNull, ParsedAttr::Form form) {
     ParsedAttr *attr = pool.createTypeTagForDatatype(
-        attrName, attrRange, scope, argumentKind, matchingCType,
+        attrName, attrRange, scopeName, scopeLoc, argumentKind, matchingCType,
         layoutCompatible, mustBeNull, form);
     addAtEnd(attr);
     return attr;
@@ -1028,11 +1036,12 @@ public:
 
   /// Add an attribute with a single type argument.
   ParsedAttr *addNewTypeAttr(IdentifierInfo *attrName, SourceRange attrRange,
-                             AttributeScopeInfo scope, ParsedType typeArg,
-                             ParsedAttr::Form formUsed,
+                             IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                             ParsedType typeArg, ParsedAttr::Form formUsed,
                              SourceLocation ellipsisLoc = SourceLocation()) {
-    ParsedAttr *attr = pool.createTypeAttribute(attrName, attrRange, scope,
-                                                typeArg, formUsed, ellipsisLoc);
+    ParsedAttr *attr =
+        pool.createTypeAttribute(attrName, attrRange, scopeName, scopeLoc,
+                                 typeArg, formUsed, ellipsisLoc);
     addAtEnd(attr);
     return attr;
   }
@@ -1040,10 +1049,11 @@ public:
   /// Add microsoft __delspec(property) attribute.
   ParsedAttr *
   addNewPropertyAttr(IdentifierInfo *attrName, SourceRange attrRange,
-                     AttributeScopeInfo scope, IdentifierInfo *getterId,
-                     IdentifierInfo *setterId, ParsedAttr::Form formUsed) {
+                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                     IdentifierInfo *getterId, IdentifierInfo *setterId,
+                     ParsedAttr::Form formUsed) {
     ParsedAttr *attr = pool.createPropertyAttribute(
-        attrName, attrRange, scope, getterId, setterId, formUsed);
+        attrName, attrRange, scopeName, scopeLoc, getterId, setterId, formUsed);
     addAtEnd(attr);
     return attr;
   }

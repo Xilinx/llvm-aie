@@ -69,8 +69,7 @@ template <typename... T>
 requires( ); // expected-error {{expected expression}}
 struct SS {
     void f( ) {
-        (*p).~T...[](); // expected-error {{use of undeclared identifier 'p'}} \
-                           expected-error {{undeclared identifier 'T' in destructor name}}
+        (*p).~T...[](); // expected-error {{use of undeclared identifier 'p'}}
     }
 };
 }

@@ -48,7 +48,8 @@ entry:
 ; CHECK-NEXT:   st.param.b64  [param0], %rd[[A_REG]]
 ; CHECK-NEXT:   .param .b64 param1;
 ; CHECK-NEXT:   st.param.b64  [param1], %rd[[SP_REG]]
-; CHECK-NEXT:   call.uni callee,
+; CHECK-NEXT:   call.uni
+; CHECK-NEXT:   callee,
 
   call void @callee(ptr %a, ptr %buf) #2
   ret void

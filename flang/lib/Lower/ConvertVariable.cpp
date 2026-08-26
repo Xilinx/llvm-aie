@@ -687,13 +687,8 @@ static void instantiateGlobal(Fortran::lower::AbstractConverter &converter,
   }
   auto addrOf = builder.create<fir::AddrOfOp>(loc, global.resultType(),
                                               global.getSymbol());
-  // The type of the global cannot be trusted to be the same as the one
-  // of the variable as some existing programs map common blocks to
-  // BIND(C) module variables (e.g. mpi_argv_null in MPI and MPI_F08).
-  mlir::Type varAddrType = fir::ReferenceType::get(converter.genType(sym));
-  mlir::Value cast = builder.createConvert(loc, varAddrType, addrOf);
   Fortran::lower::StatementContext stmtCtx;
-  mapSymbolAttributes(converter, var, symMap, stmtCtx, cast);
+  mapSymbolAttributes(converter, var, symMap, stmtCtx, addrOf);
 }
 
 //===----------------------------------------------------------------===//
@@ -1289,8 +1284,9 @@ instantiateAggregateStore(Fortran::lower::AbstractConverter &converter,
   auto size = std::get<1>(var.getInterval());
   fir::SequenceType::Shape shape(1, size);
   auto seqTy = fir::SequenceType::get(shape, i8Ty);
-  mlir::Value local = builder.allocateLocal(loc, seqTy, aggName, "", {}, {},
-                                            /*target=*/false);
+  mlir::Value local =
+      builder.allocateLocal(loc, seqTy, aggName, "", std::nullopt, std::nullopt,
+                            /*target=*/false);
   insertAggregateStore(storeMap, var, local);
 }
 
@@ -1838,8 +1834,8 @@ static void genDeclareSymbol(Fortran::lower::AbstractConverter &converter,
                              Fortran::lower::SymMap &symMap,
                              const Fortran::semantics::Symbol &sym,
                              mlir::Value base, mlir::Value len = {},
-                             llvm::ArrayRef<mlir::Value> shape = {},
-                             llvm::ArrayRef<mlir::Value> lbounds = {},
+                             llvm::ArrayRef<mlir::Value> shape = std::nullopt,
+                             llvm::ArrayRef<mlir::Value> lbounds = std::nullopt,
                              bool force = false) {
   // In HLFIR, procedure dummy symbols are not added with an hlfir.declare
   // because they are "values", and hlfir.declare is intended for variables. It
@@ -2007,8 +2003,8 @@ genAllocatableOrPointerDeclare(Fortran::lower::AbstractConverter &converter,
     explictLength = box.nonDeferredLenParams()[0];
   }
   genDeclareSymbol(converter, symMap, sym, base, explictLength,
-                   /*shape=*/{},
-                   /*lbounds=*/{}, force);
+                   /*shape=*/std::nullopt,
+                   /*lbounds=*/std::nullopt, force);
 }
 
 /// Map a procedure pointer
@@ -2017,8 +2013,8 @@ static void genProcPointer(Fortran::lower::AbstractConverter &converter,
                            const Fortran::semantics::Symbol &sym,
                            mlir::Value addr, bool force = false) {
   genDeclareSymbol(converter, symMap, sym, addr, mlir::Value{},
-                   /*shape=*/{},
-                   /*lbounds=*/{}, force);
+                   /*shape=*/std::nullopt,
+                   /*lbounds=*/std::nullopt, force);
 }
 
 /// Map a symbol represented with a runtime descriptor to its FIR fir.box and

@@ -676,7 +676,8 @@ INTERNAL
  Typically these kind of options are available only in *debug* builds.
 
  :program:`llvm-debuginfo-analyzer` supports these advanced options in
- both *release* and *debug* builds.
+ both *release* and *debug* builds, with the exception of the unique ID
+ that is generated only in *debug* builds.
 
 .. option:: --internal=<value[,value,...]>
 

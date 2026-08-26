@@ -1,5 +1,4 @@
-!RUN: rm -rf %t && mkdir -p %t
-!RUN: %flang -c -fhermetic-module-files -DWHICH=1 -J%t %s && %flang -c -fhermetic-module-files -DWHICH=2 -J%t %s && %flang_fc1 -fdebug-unparse -J%t %s | FileCheck %s
+!RUN: %flang -c -fhermetic-module-files -DWHICH=1 %s && %flang -c -fhermetic-module-files -DWHICH=2 %s && %flang_fc1 -fdebug-unparse %s | FileCheck %s
 
 #if WHICH == 1
 module modfile75a

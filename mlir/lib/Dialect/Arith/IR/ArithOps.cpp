@@ -257,7 +257,9 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
-                                 Type type, int64_t value) {
+                                 int64_t value, Type type) {
+  assert(type.isSignlessInteger() &&
+         "ConstantIntOp can only have signless integer type values");
   arith::ConstantOp::build(builder, result, type,
                            builder.getIntegerAttr(type, value));
 }
@@ -269,7 +271,7 @@ bool arith::ConstantIntOp::classof(Operation *op) {
 }
 
 void arith::ConstantFloatOp::build(OpBuilder &builder, OperationState &result,
-                                   FloatType type, const APFloat &value) {
+                                   const APFloat &value, FloatType type) {
   arith::ConstantOp::build(builder, result, type,
                            builder.getFloatAttr(type, value));
 }
@@ -1507,9 +1509,9 @@ bool arith::TruncIOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
 
 void arith::TruncIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                   MLIRContext *context) {
-  patterns
-      .add<TruncIExtSIToExtSI, TruncIExtUIToExtUI, TruncIShrSIToTrunciShrUI>(
-          context);
+  patterns.add<TruncIExtSIToExtSI, TruncIExtUIToExtUI, TruncIShrSIToTrunciShrUI,
+               TruncIShrUIMulIToMulSIExtended, TruncIShrUIMulIToMulUIExtended>(
+      context);
 }
 
 LogicalResult arith::TruncIOp::verify() {
@@ -2361,7 +2363,7 @@ struct SelectToExtUI : public OpRewritePattern<arith::SelectOp> {
           rewriter.create<arith::XOrIOp>(
               op.getLoc(), op.getCondition(),
               rewriter.create<arith::ConstantIntOp>(
-                  op.getLoc(), op.getCondition().getType(), 1)));
+                  op.getLoc(), 1, op.getCondition().getType())));
       return success();
     }
 

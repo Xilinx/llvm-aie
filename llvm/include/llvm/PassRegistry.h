@@ -19,7 +19,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/RWMutex.h"
 #include <memory>
 #include <vector>
@@ -50,36 +49,36 @@ class PassRegistry {
 
 public:
   PassRegistry() = default;
-  LLVM_ABI ~PassRegistry();
+  ~PassRegistry();
 
   /// getPassRegistry - Access the global registry object, which is
   /// automatically initialized at application launch and destroyed by
   /// llvm_shutdown.
-  LLVM_ABI static PassRegistry *getPassRegistry();
+  static PassRegistry *getPassRegistry();
 
   /// getPassInfo - Look up a pass' corresponding PassInfo, indexed by the pass'
   /// type identifier (&MyPass::ID).
-  LLVM_ABI const PassInfo *getPassInfo(const void *TI) const;
+  const PassInfo *getPassInfo(const void *TI) const;
 
   /// getPassInfo - Look up a pass' corresponding PassInfo, indexed by the pass'
   /// argument string.
-  LLVM_ABI const PassInfo *getPassInfo(StringRef Arg) const;
+  const PassInfo *getPassInfo(StringRef Arg) const;
 
   /// registerPass - Register a pass (by means of its PassInfo) with the
   /// registry.  Required in order to use the pass with a PassManager.
-  LLVM_ABI void registerPass(const PassInfo &PI, bool ShouldFree = false);
+  void registerPass(const PassInfo &PI, bool ShouldFree = false);
 
   /// enumerateWith - Enumerate the registered passes, calling the provided
   /// PassRegistrationListener's passEnumerate() callback on each of them.
-  LLVM_ABI void enumerateWith(PassRegistrationListener *L);
+  void enumerateWith(PassRegistrationListener *L);
 
   /// addRegistrationListener - Register the given PassRegistrationListener
   /// to receive passRegistered() callbacks whenever a new pass is registered.
-  LLVM_ABI void addRegistrationListener(PassRegistrationListener *L);
+  void addRegistrationListener(PassRegistrationListener *L);
 
   /// removeRegistrationListener - Unregister a PassRegistrationListener so that
   /// it no longer receives passRegistered() callbacks.
-  LLVM_ABI void removeRegistrationListener(PassRegistrationListener *L);
+  void removeRegistrationListener(PassRegistrationListener *L);
 };
 
 } // end namespace llvm

@@ -47,10 +47,6 @@
 #include "llvm/Transforms/Vectorize/LoadStoreVectorizer.h"
 #include <cstdlib>
 
-namespace llvm {
-class Triple;
-}
-
 namespace {
 struct ForcePassLinking {
   ForcePassLinking() {
@@ -151,7 +147,7 @@ struct ForcePassLinking {
     llvm::Function::Create(nullptr, llvm::GlobalValue::ExternalLinkage)
         ->viewCFGOnly();
     llvm::RGPassManager RGM;
-    llvm::TargetLibraryInfoImpl TLII((llvm::Triple()));
+    llvm::TargetLibraryInfoImpl TLII;
     llvm::TargetLibraryInfo TLI(TLII);
     llvm::AliasAnalysis AA(TLI);
     llvm::BatchAAResults BAA(AA);

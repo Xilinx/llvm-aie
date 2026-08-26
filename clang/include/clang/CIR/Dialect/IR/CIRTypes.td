@@ -600,8 +600,7 @@ def CIRRecordType : Type<
 
 def CIR_AnyType : AnyTypeOf<[
   CIR_VoidType, CIR_BoolType, CIR_ArrayType, CIR_VectorType, CIR_IntType,
-  CIR_AnyFloatType, CIR_PointerType, CIR_FuncType, CIR_RecordType,
-  CIR_ComplexType
+  CIR_AnyFloatType, CIR_PointerType, CIR_FuncType, CIR_RecordType
 ]>;
 
 #endif // MLIR_CIR_DIALECT_CIR_TYPES

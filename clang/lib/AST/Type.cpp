@@ -3988,9 +3988,10 @@ CountAttributedType::CountAttributedType(
   CountAttributedTypeBits.NumCoupledDecls = CoupledDecls.size();
   CountAttributedTypeBits.CountInBytes = CountInBytes;
   CountAttributedTypeBits.OrNull = OrNull;
-  auto *DeclSlot = getTrailingObjects();
-  llvm::copy(CoupledDecls, DeclSlot);
+  auto *DeclSlot = getTrailingObjects<TypeCoupledDeclRefInfo>();
   Decls = llvm::ArrayRef(DeclSlot, CoupledDecls.size());
+  for (unsigned i = 0; i != CoupledDecls.size(); ++i)
+    DeclSlot[i] = CoupledDecls[i];
 }
 
 StringRef CountAttributedType::getAttributeName(bool WithMacroPrefix) const {

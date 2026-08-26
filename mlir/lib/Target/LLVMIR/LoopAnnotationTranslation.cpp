@@ -206,7 +206,7 @@ void LoopAnnotationConversion::convertLocation(FusedLoc location) {
 
 llvm::MDNode *LoopAnnotationConversion::convert() {
   // Reserve operand 0 for loop id self reference.
-  auto dummy = llvm::MDNode::getTemporary(ctx, {});
+  auto dummy = llvm::MDNode::getTemporary(ctx, std::nullopt);
   metadataNodes.push_back(dummy.get());
 
   if (FusedLoc startLoc = attr.getStartLoc())

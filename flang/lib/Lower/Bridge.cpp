@@ -69,7 +69,6 @@
 #include "mlir/IR/Matchers.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Parser/Parser.h"
-#include "mlir/Support/StateStack.h"
 #include "mlir/Transforms/RegionUtils.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSet.h"
@@ -701,7 +700,8 @@ public:
   }
   mlir::Type genType(Fortran::common::TypeCategory tc) override final {
     return Fortran::lower::getFIRType(
-        &getMLIRContext(), tc, bridge.getDefaultKinds().GetDefaultKind(tc), {});
+        &getMLIRContext(), tc, bridge.getDefaultKinds().GetDefaultKind(tc),
+        std::nullopt);
   }
 
   Fortran::lower::TypeConstructionStack &
@@ -1236,8 +1236,6 @@ private:
   }
 
   mlir::SymbolTable *getMLIRSymbolTable() override { return &mlirSymbolTable; }
-
-  mlir::StateStack &getStateStack() override { return stateStack; }
 
   /// Add the symbol to the local map and return `true`. If the symbol is
   /// already in the map and \p forced is `false`, the map is not updated.
@@ -2035,11 +2033,7 @@ private:
     fir::LocalitySpecifierOperands privateClauseOps;
     auto doConcurrentLoopOp =
         mlir::dyn_cast_if_present<fir::DoConcurrentLoopOp>(info.loopOp);
-    // TODO Promote to using `enableDelayedPrivatization` (which is enabled by
-    // default unlike the staging flag) once the implementation of this is more
-    // complete.
-    bool useDelayedPriv =
-        enableDelayedPrivatizationStaging && doConcurrentLoopOp;
+    bool useDelayedPriv = enableDelayedPrivatization && doConcurrentLoopOp;
     llvm::SetVector<const Fortran::semantics::Symbol *> allPrivatizedSymbols;
     llvm::SmallSet<const Fortran::semantics::Symbol *, 16> mightHaveReadHostSym;
 
@@ -6554,9 +6548,6 @@ private:
   /// attribute since mlirSymbolTable must pro-actively be maintained when
   /// new Symbol operations are created.
   mlir::SymbolTable mlirSymbolTable;
-
-  /// Used to store context while recursing into regions during lowering.
-  mlir::StateStack stateStack;
 };
 
 } // namespace

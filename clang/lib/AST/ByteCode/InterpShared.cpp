@@ -14,7 +14,7 @@ namespace clang {
 namespace interp {
 
 llvm::BitVector collectNonNullArgs(const FunctionDecl *F,
-                                   ArrayRef<const Expr *> Args) {
+                                   const llvm::ArrayRef<const Expr *> &Args) {
   llvm::BitVector NonNullArgs;
   if (!F)
     return NonNullArgs;

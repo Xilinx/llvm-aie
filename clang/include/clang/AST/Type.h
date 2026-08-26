@@ -5451,7 +5451,7 @@ public:
   }
 
   ArrayRef<QualType> getParamTypes() const {
-    return {param_type_begin(), param_type_end()};
+    return llvm::ArrayRef(param_type_begin(), param_type_end());
   }
 
   ExtProtoInfo getExtProtoInfo() const {
@@ -5605,7 +5605,7 @@ public:
   using param_type_iterator = const QualType *;
 
   ArrayRef<QualType> param_types() const {
-    return {param_type_begin(), param_type_end()};
+    return llvm::ArrayRef(param_type_begin(), param_type_end());
   }
 
   param_type_iterator param_type_begin() const {
@@ -5619,7 +5619,7 @@ public:
   using exception_iterator = const QualType *;
 
   ArrayRef<QualType> exceptions() const {
-    return {exception_begin(), exception_end()};
+    return llvm::ArrayRef(exception_begin(), exception_end());
   }
 
   exception_iterator exception_begin() const {
@@ -6064,7 +6064,9 @@ public:
                       ArrayRef<QualType> Expansions);
 
 private:
-  const QualType *getExpansionsPtr() const { return getTrailingObjects(); }
+  const QualType *getExpansionsPtr() const {
+    return getTrailingObjects<QualType>();
+  }
 
   static TypeDependence computeDependence(QualType Pattern, Expr *IndexExpr,
                                           ArrayRef<QualType> Expansions = {});
@@ -6421,7 +6423,12 @@ public:
   SpirvOperand(const SpirvOperand &Other) { *this = Other; }
   ~SpirvOperand() {}
 
-  SpirvOperand &operator=(const SpirvOperand &Other) = default;
+  SpirvOperand &operator=(const SpirvOperand &Other) {
+    this->Kind = Other.Kind;
+    this->ResultType = Other.ResultType;
+    this->Value = Other.Value;
+    return *this;
+  }
 
   bool operator==(const SpirvOperand &Other) const {
     return Kind == Other.Kind && ResultType == Other.ResultType &&
@@ -6499,7 +6506,7 @@ public:
   uint32_t getSize() const { return Size; }
   uint32_t getAlignment() const { return Alignment; }
   ArrayRef<SpirvOperand> getOperands() const {
-    return getTrailingObjects(NumOperands);
+    return getTrailingObjects<SpirvOperand>(NumOperands);
   }
 
   bool isSugared() const { return false; }
@@ -7617,7 +7624,7 @@ public:
   /// Retrieve the type arguments of this object type as they were
   /// written.
   ArrayRef<QualType> getTypeArgsAsWritten() const {
-    return {getTypeArgStorage(), ObjCObjectTypeBits.NumTypeArgs};
+    return llvm::ArrayRef(getTypeArgStorage(), ObjCObjectTypeBits.NumTypeArgs);
   }
 
   /// Whether this is a "__kindof" type as written.

@@ -2214,7 +2214,7 @@ class AttributedStmt final
       : ValueStmt(AttributedStmtClass), SubStmt(SubStmt) {
     AttributedStmtBits.NumAttrs = Attrs.size();
     AttributedStmtBits.AttrLoc = Loc;
-    llvm::copy(Attrs, getAttrArrayPtr());
+    std::copy(Attrs.begin(), Attrs.end(), getAttrArrayPtr());
   }
 
   explicit AttributedStmt(EmptyShell Empty, unsigned NumAttrs)
@@ -2236,7 +2236,7 @@ public:
 
   SourceLocation getAttrLoc() const { return AttributedStmtBits.AttrLoc; }
   ArrayRef<const Attr *> getAttrs() const {
-    return {getAttrArrayPtr(), AttributedStmtBits.NumAttrs};
+    return llvm::ArrayRef(getAttrArrayPtr(), AttributedStmtBits.NumAttrs);
   }
 
   Stmt *getSubStmt() { return SubStmt; }
@@ -3649,13 +3649,16 @@ public:
   //===--- Other ---===//
 
   ArrayRef<StringRef> getAllConstraints() const {
-    return {Constraints, NumInputs + NumOutputs};
+    return llvm::ArrayRef(Constraints, NumInputs + NumOutputs);
   }
 
-  ArrayRef<StringRef> getClobbers() const { return {Clobbers, NumClobbers}; }
+  ArrayRef<StringRef> getClobbers() const {
+    return llvm::ArrayRef(Clobbers, NumClobbers);
+  }
 
   ArrayRef<Expr*> getAllExprs() const {
-    return {reinterpret_cast<Expr **>(Exprs), NumInputs + NumOutputs};
+    return llvm::ArrayRef(reinterpret_cast<Expr **>(Exprs),
+                          NumInputs + NumOutputs);
   }
 
   StringRef getClobber(unsigned i) const { return getClobbers()[i]; }

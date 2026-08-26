@@ -15,7 +15,6 @@
 #define LLVM_XRAY_INSTRUMENTATIONMAP_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <cstdint>
@@ -32,8 +31,7 @@ class InstrumentationMap;
 
 /// Loads the instrumentation map from |Filename|. This auto-deduces the type of
 /// the instrumentation map.
-LLVM_ABI Expected<InstrumentationMap>
-loadInstrumentationMap(StringRef Filename);
+Expected<InstrumentationMap> loadInstrumentationMap(StringRef Filename);
 
 /// Represents an XRay instrumentation sled entry from an object file.
 struct SledEntry {
@@ -85,18 +83,17 @@ private:
   FunctionAddressMap FunctionAddresses;
   FunctionAddressReverseMap FunctionIds;
 
-  LLVM_ABI friend Expected<InstrumentationMap>
-      loadInstrumentationMap(StringRef);
+  friend Expected<InstrumentationMap> loadInstrumentationMap(StringRef);
 
 public:
   /// Provides a raw accessor to the unordered map of function addresses.
   const FunctionAddressMap &getFunctionAddresses() { return FunctionAddresses; }
 
   /// Returns an XRay computed function id, provided a function address.
-  LLVM_ABI std::optional<int32_t> getFunctionId(uint64_t Addr) const;
+  std::optional<int32_t> getFunctionId(uint64_t Addr) const;
 
   /// Returns the function address for a function id.
-  LLVM_ABI std::optional<uint64_t> getFunctionAddr(int32_t FuncId) const;
+  std::optional<uint64_t> getFunctionAddr(int32_t FuncId) const;
 
   /// Provide read-only access to the entries of the instrumentation map.
   const SledContainer &sleds() const { return Sleds; };

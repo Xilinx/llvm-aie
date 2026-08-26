@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace logicalview {
@@ -53,7 +52,7 @@ struct LVSourceLanguage {
 
   bool isValid() const { return Language != Invalid; }
   TaggedLanguage get() const { return Language; }
-  LLVM_ABI StringRef getName() const;
+  StringRef getName() const;
 
 private:
   TaggedLanguage Language = Invalid;

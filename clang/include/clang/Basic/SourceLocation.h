@@ -70,8 +70,6 @@ private:
   int getOpaqueValue() const { return ID; }
 };
 
-using FileIDAndOffset = std::pair<FileID, unsigned>;
-
 /// Encodes a location in the source. The SourceManager can decode this
 /// to get at the full include stack, line and column information.
 ///
@@ -405,7 +403,7 @@ public:
   /// pair, after walking through all expansion records.
   ///
   /// \see SourceManager::getDecomposedExpansionLoc
-  FileIDAndOffset getDecomposedExpansionLoc() const;
+  std::pair<FileID, unsigned> getDecomposedExpansionLoc() const;
 
   unsigned getSpellingLineNumber(bool *Invalid = nullptr) const;
   unsigned getSpellingColumnNumber(bool *Invalid = nullptr) const;
@@ -426,7 +424,7 @@ public:
   ///
   /// The first element is the FileID, the second is the offset from the
   /// start of the buffer of the location.
-  FileIDAndOffset getDecomposedLoc() const;
+  std::pair<FileID, unsigned> getDecomposedLoc() const;
 
   bool isInSystemHeader() const;
 

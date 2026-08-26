@@ -532,7 +532,7 @@ public:
   /// unreachable operations.
   virtual void inlineBlockBefore(Block *source, Block *dest,
                                  Block::iterator before,
-                                 ValueRange argValues = {});
+                                 ValueRange argValues = std::nullopt);
 
   /// Inline the operations of block 'source' before the operation 'op'. The
   /// source block will be deleted and must have no uses. 'argValues' is used to
@@ -541,7 +541,7 @@ public:
   /// The source block must have no successors. Otherwise, the resulting IR
   /// would have unreachable operations.
   void inlineBlockBefore(Block *source, Operation *op,
-                         ValueRange argValues = {});
+                         ValueRange argValues = std::nullopt);
 
   /// Inline the operations of block 'source' into the end of block 'dest'. The
   /// source block will be deleted and must have no uses. 'argValues' is used to
@@ -549,7 +549,8 @@ public:
   ///
   /// The dest block must have no successors. Otherwise, the resulting IR would
   /// have unreachable operation.
-  void mergeBlocks(Block *source, Block *dest, ValueRange argValues = {});
+  void mergeBlocks(Block *source, Block *dest,
+                   ValueRange argValues = std::nullopt);
 
   /// Split the operations starting at "before" (inclusive) out of the given
   /// block into a new block, and return it.
@@ -825,7 +826,8 @@ public:
   RewritePatternSet &add(ConstructorArg &&arg, ConstructorArgs &&...args) {
     // The following expands a call to emplace_back for each of the pattern
     // types 'Ts'.
-    (addImpl<Ts>(/*debugLabels=*/{}, std::forward<ConstructorArg>(arg),
+    (addImpl<Ts>(/*debugLabels=*/std::nullopt,
+                 std::forward<ConstructorArg>(arg),
                  std::forward<ConstructorArgs>(args)...),
      ...);
     return *this;
@@ -908,7 +910,7 @@ public:
   RewritePatternSet &insert(ConstructorArg &&arg, ConstructorArgs &&...args) {
     // The following expands a call to emplace_back for each of the pattern
     // types 'Ts'.
-    (addImpl<Ts>(/*debugLabels=*/{}, arg, args...), ...);
+    (addImpl<Ts>(/*debugLabels=*/std::nullopt, arg, args...), ...);
     return *this;
   }
 

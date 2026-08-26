@@ -1065,7 +1065,7 @@ struct BinaryOp<Fortran::evaluate::Divide<
                                          hlfir::Entity lhs, hlfir::Entity rhs) {
     mlir::Type ty = Fortran::lower::getFIRType(
         builder.getContext(), Fortran::common::TypeCategory::Complex, KIND,
-        /*params=*/{});
+        /*params=*/std::nullopt);
     return hlfir::EntityWithAttributes{
         fir::genDivC(builder, loc, ty, lhs, rhs)};
   }
@@ -1078,7 +1078,7 @@ struct BinaryOp<Fortran::evaluate::Power<Fortran::evaluate::Type<TC, KIND>>> {
                                          fir::FirOpBuilder &builder, const Op &,
                                          hlfir::Entity lhs, hlfir::Entity rhs) {
     mlir::Type ty = Fortran::lower::getFIRType(builder.getContext(), TC, KIND,
-                                               /*params=*/{});
+                                               /*params=*/std::nullopt);
     return hlfir::EntityWithAttributes{fir::genPow(builder, loc, ty, lhs, rhs)};
   }
 };
@@ -1092,7 +1092,7 @@ struct BinaryOp<
                                          fir::FirOpBuilder &builder, const Op &,
                                          hlfir::Entity lhs, hlfir::Entity rhs) {
     mlir::Type ty = Fortran::lower::getFIRType(builder.getContext(), TC, KIND,
-                                               /*params=*/{});
+                                               /*params=*/std::nullopt);
     return hlfir::EntityWithAttributes{fir::genPow(builder, loc, ty, lhs, rhs)};
   }
 };
@@ -1416,7 +1416,7 @@ struct UnaryOp<Fortran::evaluate::Negate<
     // Like LLVM, integer negation is the binary op "0 - value"
     mlir::Type type = Fortran::lower::getFIRType(
         builder.getContext(), Fortran::common::TypeCategory::Integer, KIND,
-        /*params=*/{});
+        /*params=*/std::nullopt);
     mlir::Value zero = builder.createIntegerConstant(loc, type, 0);
     return hlfir::EntityWithAttributes{
         builder.create<mlir::arith::SubIOp>(loc, zero, lhs)};
@@ -1517,7 +1517,7 @@ struct UnaryOp<
       return hlfir::convertCharacterKind(loc, builder, lhs, KIND);
     }
     mlir::Type type = Fortran::lower::getFIRType(builder.getContext(), TC1,
-                                                 KIND, /*params=*/{});
+                                                 KIND, /*params=*/std::nullopt);
     mlir::Value res = builder.convertWithSemantics(loc, type, lhs);
     return hlfir::EntityWithAttributes{res};
   }
@@ -1661,7 +1661,7 @@ private:
     } else {
       elementType =
           Fortran::lower::getFIRType(builder.getContext(), R::category, R::kind,
-                                     /*params=*/{});
+                                     /*params=*/std::nullopt);
     }
     mlir::Value shape = hlfir::genShape(loc, builder, left);
     auto genKernel = [&op, &left, &unaryOp](
@@ -1699,7 +1699,7 @@ private:
     // Elemental expression.
     mlir::Type elementType =
         Fortran::lower::getFIRType(builder.getContext(), R::category, R::kind,
-                                   /*params=*/{});
+                                   /*params=*/std::nullopt);
     // TODO: "merge" shape, get cst shape from front-end if possible.
     mlir::Value shape;
     if (left.isArray()) {

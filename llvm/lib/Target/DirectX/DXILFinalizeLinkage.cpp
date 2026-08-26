@@ -24,9 +24,7 @@ static bool finalizeLinkage(Module &M) {
   for (Function &EF : M.functions()) {
     if (EF.isIntrinsic())
       continue;
-    if (EF.hasExternalLinkage() && EF.hasDefaultVisibility())
-      continue;
-    if (EF.hasFnAttribute("hlsl.shader"))
+    if (EF.hasFnAttribute("hlsl.shader") || EF.hasFnAttribute("hlsl.export"))
       continue;
     Funcs.push_back(&EF);
   }

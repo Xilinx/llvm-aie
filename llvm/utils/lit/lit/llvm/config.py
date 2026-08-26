@@ -630,8 +630,7 @@ class LLVMConfig(object):
                 ToolSubst(
                     "%clang_analyze_cc1",
                     command="%clang_cc1",
-                    # -setup-static-analyzer ensures that __clang_analyzer__ is defined
-                    extra_args=["-analyze", "-setup-static-analyzer"]
+                    extra_args=["-analyze", "%analyze", "-setup-static-analyzer"]
                     + additional_flags,
                 ),
                 ToolSubst(

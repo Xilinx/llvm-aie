@@ -15,7 +15,6 @@ set(MODULES
   "mma"
   "__cuda_builtins"
   "__cuda_device"
-  "cooperative_groups"
   "cudadevice"
   "ieee_arithmetic"
   "ieee_exceptions"
@@ -61,17 +60,12 @@ if (NOT CMAKE_CROSSCOMPILING)
     elseif(${filename} STREQUAL "__ppc_intrinsics" OR
            ${filename} STREQUAL "mma")
       set(depends ${FLANG_INTRINSIC_MODULES_DIR}/__ppc_types.mod)
-    elseif(${filename} STREQUAL "__cuda_device" OR
-           ${filename} STREQUAL "cudadevice" OR
-           ${filename} STREQUAL "cooperative_groups")
+    elseif(${filename} STREQUAL "__cuda_device")
       set(opts -fc1 -xcuda)
-      if(${filename} STREQUAL "__cuda_device")
-        set(depends ${FLANG_INTRINSIC_MODULES_DIR}/__cuda_builtins.mod)
-      elseif(${filename} STREQUAL "cudadevice")
-        set(depends ${FLANG_INTRINSIC_MODULES_DIR}/__cuda_device.mod)
-      elseif(${filename} STREQUAL "cooperative_groups")
-        set(depends ${FLANG_INTRINSIC_MODULES_DIR}/cudadevice.mod)
-      endif()
+      set(depends ${FLANG_INTRINSIC_MODULES_DIR}/__cuda_builtins.mod)
+    elseif(${filename} STREQUAL "cudadevice")
+      set(opts -fc1 -xcuda)
+      set(depends ${FLANG_INTRINSIC_MODULES_DIR}/__cuda_device.mod)
     else()
       set(depends ${FLANG_INTRINSIC_MODULES_DIR}/__fortran_builtins.mod)
       if(${filename} STREQUAL "iso_fortran_env")

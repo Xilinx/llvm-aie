@@ -1195,32 +1195,32 @@ template <typename Enum> struct EnumTraits : public std::false_type {};
 
 template <> struct EnumTraits<Attribute> : public std::true_type {
   static constexpr char Type[3] = "AT";
-  LLVM_ABI static StringRef (*const StringFn)(unsigned);
+  static constexpr StringRef (*StringFn)(unsigned) = &AttributeString;
 };
 
 template <> struct EnumTraits<Form> : public std::true_type {
   static constexpr char Type[5] = "FORM";
-  LLVM_ABI static StringRef (*const StringFn)(unsigned);
+  static constexpr StringRef (*StringFn)(unsigned) = &FormEncodingString;
 };
 
 template <> struct EnumTraits<Index> : public std::true_type {
   static constexpr char Type[4] = "IDX";
-  LLVM_ABI static StringRef (*const StringFn)(unsigned);
+  static constexpr StringRef (*StringFn)(unsigned) = &IndexString;
 };
 
 template <> struct EnumTraits<Tag> : public std::true_type {
   static constexpr char Type[4] = "TAG";
-  LLVM_ABI static StringRef (*const StringFn)(unsigned);
+  static constexpr StringRef (*StringFn)(unsigned) = &TagString;
 };
 
 template <> struct EnumTraits<LineNumberOps> : public std::true_type {
   static constexpr char Type[4] = "LNS";
-  LLVM_ABI static StringRef (*const StringFn)(unsigned);
+  static constexpr StringRef (*StringFn)(unsigned) = &LNStandardString;
 };
 
 template <> struct EnumTraits<LocationAtom> : public std::true_type {
   static constexpr char Type[3] = "OP";
-  LLVM_ABI static StringRef (*const StringFn)(unsigned);
+  static constexpr StringRef (*StringFn)(unsigned) = &OperationEncodingString;
 };
 
 inline uint64_t computeTombstoneAddress(uint8_t AddressByteSize) {

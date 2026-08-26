@@ -24,7 +24,8 @@ using namespace mlir::tensor;
 
 PadOp mlir::tensor::createPadHighOp(RankedTensorType resType, Value source,
                                     Value pad, bool nofold, Location loc,
-                                    OpBuilder &b, ValueRange dynOutDims) {
+                                    OpBuilder &b,
+                                    SmallVector<Value> dynOutDims) {
 
   // This assumption simplifies the following logic without limiting what's
   // required _today_. If needed, we can relax it in the future.

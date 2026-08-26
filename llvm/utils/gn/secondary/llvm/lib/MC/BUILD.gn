@@ -60,7 +60,6 @@ static_library("MC") {
     "MCSectionCOFF.cpp",
     "MCSectionDXContainer.cpp",
     "MCSectionELF.cpp",
-    "MCSectionGOFF.cpp",
     "MCSectionMachO.cpp",
     "MCSectionWasm.cpp",
     "MCSectionXCOFF.cpp",

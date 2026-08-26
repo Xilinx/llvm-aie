@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcISelLowering.h"
-#include "MCTargetDesc/SparcMCAsmInfo.h"
+#include "MCTargetDesc/SparcMCExpr.h"
 #include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "SparcMachineFunctionInfo.h"
 #include "SparcRegisterInfo.h"
@@ -1162,9 +1162,12 @@ Register SparcTargetLowering::getRegisterByName(const char* RegName, LLT VT,
   // make sure that said register is in the reserve list.
   const SparcRegisterInfo *TRI = Subtarget->getRegisterInfo();
   if (!TRI->isReservedReg(MF, Reg))
-    Reg = Register();
+    Reg = 0;
 
-  return Reg;
+  if (Reg)
+    return Reg;
+
+  report_fatal_error("Invalid register name global variable");
 }
 
 // Fixup floating point arguments in the ... part of a varargs call.

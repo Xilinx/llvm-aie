@@ -15,7 +15,6 @@
 #define LLVM_MC_MCSCHEDULE_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringTable.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -125,7 +124,7 @@ struct MCSchedClassDesc {
   static const unsigned short VariantNumMicroOps = InvalidNumMicroOps - 1;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-  uint32_t NameOff;
+  const char* Name;
 #endif
   uint16_t NumMicroOps : 13;
   uint16_t BeginGroup : 1;
@@ -325,7 +324,6 @@ struct MCSchedModel {
   const MCSchedClassDesc *SchedClassTable;
   unsigned NumProcResourceKinds;
   unsigned NumSchedClasses;
-  const StringTable *SchedClassNames;
   // Instruction itinerary tables used by InstrItineraryData.
   friend class InstrItineraryData;
   const InstrItinerary *InstrItineraries;
@@ -368,14 +366,6 @@ struct MCSchedModel {
 
     assert(SchedClassIdx < NumSchedClasses && "bad scheduling class idx");
     return &SchedClassTable[SchedClassIdx];
-  }
-
-  StringRef getSchedClassName(unsigned SchedClassIdx) const {
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-    return (*SchedClassNames)[SchedClassTable[SchedClassIdx].NameOff];
-#else
-    return "<unknown>";
-#endif
   }
 
   /// Returns the latency value for the scheduling class.

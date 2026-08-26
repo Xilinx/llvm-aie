@@ -432,33 +432,25 @@ public:
 };
 
 Error LinuxKernelRewriter::detectLinuxKernelVersion() {
-  // Check for global and local linux_banner symbol.
-  BinaryData *BD = BC.getBinaryDataByName("linux_banner");
-  if (!BD)
-    BD = BC.getBinaryDataByName("linux_banner/1");
+  if (BinaryData *BD = BC.getBinaryDataByName("linux_banner")) {
+    const BinarySection &Section = BD->getSection();
+    const std::string S =
+        Section.getContents().substr(BD->getOffset(), BD->getSize()).str();
 
-  if (!BD)
-    return createStringError(errc::executable_format_error,
-                             "unable to locate linux_banner");
-
-  const BinarySection &Section = BD->getSection();
-  const std::string S =
-      Section.getContents().substr(BD->getOffset(), BD->getSize()).str();
-
-  const std::regex Re(R"---(Linux version ((\d+)\.(\d+)(\.(\d+))?))---");
-  std::smatch Match;
-  if (std::regex_search(S, Match, Re)) {
-    const unsigned Major = std::stoi(Match[2].str());
-    const unsigned Minor = std::stoi(Match[3].str());
-    const unsigned Rev = Match[5].matched ? std::stoi(Match[5].str()) : 0;
-    LinuxKernelVersion = LKVersion(Major, Minor, Rev);
-    BC.outs() << "BOLT-INFO: Linux kernel version is " << Match[1].str()
-              << "\n";
-    return Error::success();
+    const std::regex Re(R"---(Linux version ((\d+)\.(\d+)(\.(\d+))?))---");
+    std::smatch Match;
+    if (std::regex_search(S, Match, Re)) {
+      const unsigned Major = std::stoi(Match[2].str());
+      const unsigned Minor = std::stoi(Match[3].str());
+      const unsigned Rev = Match[5].matched ? std::stoi(Match[5].str()) : 0;
+      LinuxKernelVersion = LKVersion(Major, Minor, Rev);
+      BC.outs() << "BOLT-INFO: Linux kernel version is " << Match[1].str()
+                << "\n";
+      return Error::success();
+    }
   }
-
   return createStringError(errc::executable_format_error,
-                           "Linux kernel version is unknown: " + S);
+                           "Linux kernel version is unknown");
 }
 
 void LinuxKernelRewriter::processLKSections() {

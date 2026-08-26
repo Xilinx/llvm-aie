@@ -16,7 +16,6 @@
 #include <deque>
 #include <flat_map>
 #include <functional>
-#include <type_traits>
 #include <vector>
 
 #include "MinSequenceContainer.h"
@@ -32,7 +31,7 @@ static_assert(CanIndex<std::flat_map<int, double>, const int&>);
 static_assert(!CanIndex<std::flat_map<int, NoDefaultCtr>, const int&>);
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test() {
+void test() {
   using P = std::pair<int, double>;
   P ar[]  = {
       P(1, 1.5),
@@ -59,18 +58,13 @@ constexpr void test() {
   assert(m.size() == 8);
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<int>, std::vector<double>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque<int>, std::vector<double>>();
-  }
+  test<std::deque<int>, std::vector<double>>();
   test<MinSequenceContainer<int>, MinSequenceContainer<double>>();
   test<std::vector<int, min_allocator<int>>, std::vector<double, min_allocator<double>>>();
 
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+  {
     auto index_func = [](auto& m, auto key_arg, auto value_arg) {
       using FlatMap                             = std::decay_t<decltype(m)>;
       const typename FlatMap::key_type key      = key_arg;
@@ -79,15 +73,5 @@ constexpr bool test() {
     };
     test_emplace_exception_guarantee(index_func);
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
-
   return 0;
 }

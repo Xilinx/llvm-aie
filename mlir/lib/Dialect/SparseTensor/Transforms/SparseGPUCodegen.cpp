@@ -651,7 +651,7 @@ static LogicalResult rewriteSpMV(PatternRewriter &rewriter,
   tokens.clear();
 
   // Done.
-  rewriter.replaceOpWithNewOp<bufferization::ToTensorOp>(op, y.getType(), memY);
+  rewriter.replaceOpWithNewOp<bufferization::ToTensorOp>(op, memY);
   return success();
 }
 
@@ -752,7 +752,7 @@ static LogicalResult rewriteSpMM(PatternRewriter &rewriter,
   tokens.clear();
 
   // Done.
-  rewriter.replaceOpWithNewOp<bufferization::ToTensorOp>(op, c.getType(), bufC);
+  rewriter.replaceOpWithNewOp<bufferization::ToTensorOp>(op, bufC);
   return success();
 }
 
@@ -925,12 +925,9 @@ static LogicalResult rewriteSpGEMM(PatternRewriter &rewriter,
   tokens.clear();
 
   // Done.
-  Value vt = rewriter.create<bufferization::ToTensorOp>(
-      loc, memref::getTensorTypeFromMemRefType(valH.getType()), valH);
-  Value rt = rewriter.create<bufferization::ToTensorOp>(
-      loc, memref::getTensorTypeFromMemRefType(rowH.getType()), rowH);
-  Value ct = rewriter.create<bufferization::ToTensorOp>(
-      loc, memref::getTensorTypeFromMemRefType(colH.getType()), colH);
+  Value vt = rewriter.create<bufferization::ToTensorOp>(loc, valH);
+  Value rt = rewriter.create<bufferization::ToTensorOp>(loc, rowH);
+  Value ct = rewriter.create<bufferization::ToTensorOp>(loc, colH);
   rewriter.replaceOpWithNewOp<AssembleOp>(op, c.getType(), ValueRange{rt, ct},
                                           vt);
   return success();
@@ -1046,7 +1043,7 @@ static LogicalResult rewrite2To4SpMM(PatternRewriter &rewriter,
   tokens.clear();
 
   // Done.
-  rewriter.replaceOpWithNewOp<bufferization::ToTensorOp>(op, C.getType(), bufC);
+  rewriter.replaceOpWithNewOp<bufferization::ToTensorOp>(op, bufC);
   return success();
 }
 

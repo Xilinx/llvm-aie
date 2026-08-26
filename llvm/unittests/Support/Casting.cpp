@@ -24,11 +24,13 @@ template <typename T> IllegalCast *cast(...) { return nullptr; }
 //
 struct bar {
   bar() {}
-  bar(const bar &) = delete;
   struct foo *baz();
   struct foo *caz();
   struct foo *daz();
   struct foo *naz();
+
+private:
+  bar(const bar &);
 };
 struct foo {
   foo(const bar &) {}

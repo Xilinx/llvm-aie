@@ -475,8 +475,6 @@ static void testLTOModule(const TargetOptions &Options) {
         printLTOSymbolAttributes(Module->getSymbolAttributes(I));
         outs() << "\n";
       }
-      for (int I = 0, E = Module->getAsmUndefSymbolCount(); I != E; ++I)
-        outs() << Module->getAsmUndefSymbolName(I) << "    { asm extern }\n";
     }
     if (QueryHasCtorDtor)
       outs() << Filename

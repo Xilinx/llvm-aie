@@ -6,10 +6,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <clc/clcmacro.h>
 #include <clc/math/clc_mad.h>
 #include <clc/opencl/clc.h>
 
-#define FUNCTION mad
-#define __CLC_BODY <clc/shared/ternary_def.inc>
+_CLC_DEFINE_TERNARY_BUILTIN(float, mad, __clc_mad, float, float, float)
 
-#include <clc/math/gentype.inc>
+#ifdef cl_khr_fp64
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+_CLC_DEFINE_TERNARY_BUILTIN(double, mad, __clc_mad, double, double, double)
+
+#endif
+
+#ifdef cl_khr_fp16
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
+_CLC_DEFINE_TERNARY_BUILTIN(half, mad, __clc_mad, half, half, half)
+
+#endif

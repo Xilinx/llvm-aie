@@ -15,6 +15,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
@@ -60,12 +61,19 @@ Type *IRBuilderBase::getCurrentFunctionReturnType() const {
   return BB->getParent()->getReturnType();
 }
 
-DebugLoc IRBuilderBase::getCurrentDebugLocation() const { return StoredDL; }
+DebugLoc IRBuilderBase::getCurrentDebugLocation() const {
+  for (auto &KV : MetadataToCopy)
+    if (KV.first == LLVMContext::MD_dbg)
+      return {cast<DILocation>(KV.second)};
+
+  return {};
+}
 void IRBuilderBase::SetInstDebugLocation(Instruction *I) const {
-  // We prefer to set our current debug location if any has been set, but if
-  // our debug location is empty and I has a valid location, we shouldn't
-  // overwrite it.
-  I->setDebugLoc(StoredDL.orElse(I->getDebugLoc()));
+  for (const auto &KV : MetadataToCopy)
+    if (KV.first == LLVMContext::MD_dbg) {
+      I->setDebugLoc(DebugLoc(KV.second));
+      return;
+    }
 }
 
 Value *IRBuilderBase::CreateAggregateCast(Value *V, Type *DestTy) {
@@ -117,7 +125,7 @@ static Value *CreateVScaleMultiple(IRBuilderBase &B, Type *Ty, uint64_t Scale) {
   if (Scale == 1)
     return VScale;
 
-  return B.CreateNUWMul(VScale, ConstantInt::get(Ty, Scale));
+  return B.CreateMul(VScale, ConstantInt::get(Ty, Scale));
 }
 
 Value *IRBuilderBase::CreateElementCount(Type *Ty, ElementCount EC) {

@@ -20,7 +20,6 @@ class DialectRegistry;
 class LLVMTypeConverter;
 class RewritePatternSet;
 class Pass;
-class SymbolTableCollection;
 
 #define GEN_PASS_DECL_CONVERTCONTROLFLOWTOLLVMPASS
 #include "mlir/Conversion/Passes.h.inc"
@@ -40,9 +39,9 @@ void populateControlFlowToLLVMConversionPatterns(
 /// Populate the cf.assert to LLVM conversion pattern. If `abortOnFailure` is
 /// set to false, the program execution continues when a condition is
 /// unsatisfied.
-void populateAssertToLLVMConversionPattern(
-    const LLVMTypeConverter &converter, RewritePatternSet &patterns,
-    bool abortOnFailure = true, SymbolTableCollection *symbolTables = nullptr);
+void populateAssertToLLVMConversionPattern(const LLVMTypeConverter &converter,
+                                           RewritePatternSet &patterns,
+                                           bool abortOnFailure = true);
 
 void registerConvertControlFlowToLLVMInterface(DialectRegistry &registry);
 

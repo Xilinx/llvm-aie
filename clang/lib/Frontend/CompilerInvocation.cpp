@@ -636,10 +636,6 @@ static bool FixupInvocation(CompilerInvocation &Invocation,
     Diags.Report(diag::err_drv_argument_not_allowed_with)
         << "-hlsl-entry" << GetInputKindName(IK);
 
-  if (Args.hasArg(OPT_fdx_rootsignature_version) && !LangOpts.HLSL)
-    Diags.Report(diag::err_drv_argument_not_allowed_with)
-        << "-fdx-rootsignature-version" << GetInputKindName(IK);
-
   if (Args.hasArg(OPT_fgpu_allow_device_init) && !LangOpts.HIP)
     Diags.Report(diag::warn_ignored_hip_only_option)
         << Args.getLastArg(OPT_fgpu_allow_device_init)->getAsString(Args);
@@ -1496,11 +1492,11 @@ static void setPGOUseInstrumentor(CodeGenOptions &Opts,
   // which is available (might be one or both).
   if (PGOReader->isIRLevelProfile() || PGOReader->hasMemoryProfile()) {
     if (PGOReader->hasCSIRLevelProfile())
-      Opts.setProfileUse(llvm::driver::ProfileInstrKind::ProfileCSIRInstr);
+      Opts.setProfileUse(CodeGenOptions::ProfileCSIRInstr);
     else
-      Opts.setProfileUse(llvm::driver::ProfileInstrKind::ProfileIRInstr);
+      Opts.setProfileUse(CodeGenOptions::ProfileIRInstr);
   } else
-    Opts.setProfileUse(llvm::driver::ProfileInstrKind::ProfileClangInstr);
+    Opts.setProfileUse(CodeGenOptions::ProfileClangInstr);
 }
 
 void CompilerInvocation::setDefaultPointerAuthOptions(
@@ -4479,8 +4475,6 @@ bool CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
         Opts.setClangABICompat(LangOptions::ClangABI::Ver18);
       else if (Major <= 19)
         Opts.setClangABICompat(LangOptions::ClangABI::Ver19);
-      else if (Major <= 20)
-        Opts.setClangABICompat(LangOptions::ClangABI::Ver20);
     } else if (Ver != "latest") {
       Diags.Report(diag::err_drv_invalid_value)
           << A->getAsString(Args) << A->getValue();

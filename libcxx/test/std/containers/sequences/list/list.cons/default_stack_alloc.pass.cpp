@@ -8,7 +8,7 @@
 
 // <list>
 
-// explicit list(const Alloc& = Alloc()); // constexpr since C++26
+// explicit list(const Alloc& = Alloc());
 
 #include <list>
 #include <cassert>
@@ -16,7 +16,7 @@
 #include "test_allocator.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     std::list<int> l;
     assert(l.size() == 0);
@@ -43,15 +43,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(l.size() == 0);
     assert(std::distance(l.begin(), l.end()) == 0);
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

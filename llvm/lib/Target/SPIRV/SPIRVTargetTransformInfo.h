@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/BasicTTIImpl.h"
 
 namespace llvm {
-class SPIRVTTIImpl final : public BasicTTIImplBase<SPIRVTTIImpl> {
+class SPIRVTTIImpl : public BasicTTIImplBase<SPIRVTTIImpl> {
   using BaseT = BasicTTIImplBase<SPIRVTTIImpl>;
   using TTI = TargetTransformInfo;
 

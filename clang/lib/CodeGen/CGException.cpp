@@ -319,9 +319,9 @@ static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
     llvm::Function *F = dyn_cast<llvm::Function>(U);
     if (!F) return false;
 
-    for (llvm::BasicBlock &BB : *F) {
-      if (BB.isLandingPad())
-        if (!LandingPadHasOnlyCXXUses(BB.getLandingPadInst()))
+    for (auto BB = F->begin(), E = F->end(); BB != E; ++BB) {
+      if (BB->isLandingPad())
+        if (!LandingPadHasOnlyCXXUses(BB->getLandingPadInst()))
           return false;
     }
   }
@@ -937,8 +937,8 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
                              filterTypes[0]->getType() : Int8PtrTy,
                            filterTypes.size());
 
-    for (llvm::Value *filterType : filterTypes)
-      Filters.push_back(cast<llvm::Constant>(filterType));
+    for (unsigned i = 0, e = filterTypes.size(); i != e; ++i)
+      Filters.push_back(cast<llvm::Constant>(filterTypes[i]));
     llvm::Constant *FilterArray = llvm::ConstantArray::get(AType, Filters);
     LPadInst->addClause(FilterArray);
 

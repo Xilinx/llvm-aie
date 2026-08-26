@@ -260,31 +260,6 @@ struct SimplifySwitch : public OpRewritePattern<SwitchOp> {
   }
 };
 
-struct SimplifyVecSplat : public OpRewritePattern<VecSplatOp> {
-  using OpRewritePattern<VecSplatOp>::OpRewritePattern;
-  LogicalResult matchAndRewrite(VecSplatOp op,
-                                PatternRewriter &rewriter) const override {
-    mlir::Value splatValue = op.getValue();
-    auto constant =
-        mlir::dyn_cast_if_present<cir::ConstantOp>(splatValue.getDefiningOp());
-    if (!constant)
-      return mlir::failure();
-
-    auto value = constant.getValue();
-    if (!mlir::isa_and_nonnull<cir::IntAttr>(value) &&
-        !mlir::isa_and_nonnull<cir::FPAttr>(value))
-      return mlir::failure();
-
-    cir::VectorType resultType = op.getResult().getType();
-    SmallVector<mlir::Attribute, 16> elements(resultType.getSize(), value);
-    auto constVecAttr = cir::ConstVectorAttr::get(
-        resultType, mlir::ArrayAttr::get(getContext(), elements));
-
-    rewriter.replaceOpWithNewOp<cir::ConstantOp>(op, constVecAttr);
-    return mlir::success();
-  }
-};
-
 //===----------------------------------------------------------------------===//
 // CIRSimplifyPass
 //===----------------------------------------------------------------------===//
@@ -300,8 +275,7 @@ void populateMergeCleanupPatterns(RewritePatternSet &patterns) {
   patterns.add<
     SimplifyTernary,
     SimplifySelect,
-    SimplifySwitch,
-    SimplifyVecSplat
+    SimplifySwitch
   >(patterns.getContext());
   // clang-format on
 }
@@ -314,7 +288,7 @@ void CIRSimplifyPass::runOnOperation() {
   // Collect operations to apply patterns.
   llvm::SmallVector<Operation *, 16> ops;
   getOperation()->walk([&](Operation *op) {
-    if (isa<TernaryOp, SelectOp, SwitchOp, VecSplatOp>(op))
+    if (isa<TernaryOp, SelectOp, SwitchOp>(op))
       ops.push_back(op);
   });
 

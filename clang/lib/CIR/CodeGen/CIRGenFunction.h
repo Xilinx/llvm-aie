@@ -66,11 +66,6 @@ public:
   ImplicitParamDecl *cxxabiThisDecl = nullptr;
   mlir::Value cxxabiThisValue = nullptr;
   mlir::Value cxxThisValue = nullptr;
-  clang::CharUnits cxxThisAlignment;
-
-  /// The value of 'this' to sue when evaluating CXXDefaultInitExprs within this
-  /// expression.
-  Address cxxDefaultInitExprThis = Address::invalid();
 
   // Holds the Decl for the current outermost non-closure context
   const clang::Decl *curFuncDecl = nullptr;
@@ -320,10 +315,6 @@ public:
     ~SourceLocRAIIObject() { restore(); }
   };
 
-  /// Hold counters for incrementally naming temporaries
-  unsigned counterAggTmp = 0;
-  std::string getCounterAggTmpAsString();
-
   /// Helpers to convert Clang's SourceLocation to a MLIR Location.
   mlir::Location getLoc(clang::SourceLocation srcLoc);
   mlir::Location getLoc(clang::SourceRange srcLoc);
@@ -341,8 +332,6 @@ public:
     PrototypeWrapper(const clang::FunctionProtoType *ft) : p(ft) {}
     PrototypeWrapper(const clang::ObjCMethodDecl *md) : p(md) {}
   };
-
-  bool isLValueSuitableForInlineAtomic(LValue lv);
 
   /// An abstract representation of regular/ObjC call/message targets.
   class AbstractCallee {
@@ -475,10 +464,6 @@ public:
   /// compare the result against zero, returning an Int1Ty value.
   mlir::Value evaluateExprAsBool(const clang::Expr *e);
 
-  cir::GlobalOp addInitializerToStaticVarDecl(const VarDecl &d,
-                                              cir::GlobalOp gv,
-                                              cir::GetGlobalOp gvAddr);
-
   /// Set the address of a local variable.
   void setAddrOfLocalVar(const clang::VarDecl *vd, Address addr) {
     assert(!localDeclMap.count(vd) && "Decl already exists in LocalDeclMap!");
@@ -488,32 +473,7 @@ public:
 
   bool shouldNullCheckClassCastValue(const CastExpr *ce);
 
-  RValue convertTempToRValue(Address addr, clang::QualType type,
-                             clang::SourceLocation loc);
-
-  static bool
-  isConstructorDelegationValid(const clang::CXXConstructorDecl *ctor);
-
-  /// A scope within which we are constructing the fields of an object which
-  /// might use a CXXDefaultInitExpr. This stashes away a 'this' value to use if
-  /// we need to evaluate the CXXDefaultInitExpr within the evaluation.
-  class FieldConstructionScope {
-  public:
-    FieldConstructionScope(CIRGenFunction &cgf, Address thisAddr)
-        : cgf(cgf), oldCXXDefaultInitExprThis(cgf.cxxDefaultInitExprThis) {
-      cgf.cxxDefaultInitExprThis = thisAddr;
-    }
-    ~FieldConstructionScope() {
-      cgf.cxxDefaultInitExprThis = oldCXXDefaultInitExprThis;
-    }
-
-  private:
-    CIRGenFunction &cgf;
-    Address oldCXXDefaultInitExprThis;
-  };
-
   LValue makeNaturalAlignPointeeAddrLValue(mlir::Value v, clang::QualType t);
-  LValue makeNaturalAlignAddrLValue(mlir::Value val, QualType ty);
 
   /// Construct an address with the natural alignment of T. If a pointer to T
   /// is expected to be signed, the pointer passed to this function must have
@@ -557,7 +517,6 @@ public:
     assert(cxxThisValue && "no 'this' value for this function");
     return cxxThisValue;
   }
-  Address loadCXXThisAddress();
 
   /// Get an appropriate 'undef' rvalue for the given type.
   /// TODO: What's the equivalent for MLIR? Currently we're only using this for
@@ -728,8 +687,6 @@ public:
                          mlir::OpBuilder::InsertPoint ip,
                          mlir::Value arraySize = nullptr);
 
-  void emitAggregateStore(mlir::Value value, Address dest);
-
   void emitAggExpr(const clang::Expr *e, AggValueSlot slot);
 
   LValue emitAggExprToLValue(const Expr *e);
@@ -738,8 +695,7 @@ public:
   /// result is returned as an RValue struct. If this is an aggregate
   /// expression, the aggloc/agglocvolatile arguments indicate where the result
   /// should be returned.
-  RValue emitAnyExpr(const clang::Expr *e,
-                     AggValueSlot aggSlot = AggValueSlot::ignored());
+  RValue emitAnyExpr(const clang::Expr *e);
 
   /// Similarly to emitAnyExpr(), however, the result will always be accessible
   /// even if no aggregate location is provided.
@@ -795,13 +751,7 @@ public:
 
   LValue emitCastLValue(const CastExpr *e);
 
-  /// Emits an argument for a call to a `__builtin_assume`. If the builtin
-  /// sanitizer is enabled, a runtime check is also emitted.
-  mlir::Value emitCheckedArgForAssume(const Expr *e);
-
   LValue emitCompoundAssignmentLValue(const clang::CompoundAssignOperator *e);
-
-  void emitConstructorBody(FunctionArgList &args);
 
   mlir::LogicalResult emitContinueStmt(const clang::ContinueStmt &s);
 
@@ -840,16 +790,6 @@ public:
                                        const CXXMethodDecl *md,
                                        ReturnValueSlot returnValue);
 
-  void emitCtorPrologue(const clang::CXXConstructorDecl *ctor,
-                        clang::CXXCtorType ctorType, FunctionArgList &args);
-
-  // It's important not to confuse this and emitDelegateCXXConstructorCall.
-  // Delegating constructors are the C++11 feature. The constructor delegate
-  // optimization is used to reduce duplication in the base and complete
-  // constructors where they are substantially the same.
-  void emitDelegatingCXXConstructorCall(const CXXConstructorDecl *ctor,
-                                        const FunctionArgList &args);
-
   mlir::LogicalResult emitDoStmt(const clang::DoStmt &s);
 
   /// Emit an expression as an initializer for an object (variable, field, etc.)
@@ -866,9 +806,6 @@ public:
                       LValue lvalue, bool capturedByInit = false);
 
   mlir::LogicalResult emitFunctionBody(const clang::Stmt *body);
-
-  void emitInitializerForField(clang::FieldDecl *field, LValue lhs,
-                               clang::Expr *init);
 
   mlir::Value emitPromotedScalarExpr(const Expr *e, QualType promotionType);
 
@@ -892,12 +829,6 @@ public:
 
   mlir::LogicalResult emitForStmt(const clang::ForStmt &s);
 
-  /// Emit the computation of the specified expression of complex type,
-  /// returning the result.
-  mlir::Value emitComplexExpr(const Expr *e);
-
-  LValue emitComplexAssignmentLValue(const BinaryOperator *e);
-
   void emitCompoundStmt(const clang::CompoundStmt &s);
 
   void emitCompoundStmtWithoutScope(const clang::CompoundStmt &s);
@@ -909,17 +840,6 @@ public:
   mlir::LogicalResult emitDefaultStmt(const clang::DefaultStmt &s,
                                       mlir::Type condType,
                                       bool buildingTopLevelCase);
-
-  void emitDelegateCXXConstructorCall(const clang::CXXConstructorDecl *ctor,
-                                      clang::CXXCtorType ctorType,
-                                      const FunctionArgList &args,
-                                      clang::SourceLocation loc);
-
-  /// We are performing a delegate call; that is, the current function is
-  /// delegating to another one. Produce a r-value suitable for passing the
-  /// given parameter.
-  void emitDelegateCallArg(CallArgList &args, const clang::VarDecl *param,
-                           clang::SourceLocation loc);
 
   /// Emit an `if` on a boolean condition to the specified blocks.
   /// FIXME: Based on the condition, this might try to simplify the codegen of
@@ -966,13 +886,6 @@ public:
   LValue emitLValue(const clang::Expr *e);
   LValue emitLValueForField(LValue base, const clang::FieldDecl *field);
 
-  /// Like emitLValueForField, excpet that if the Field is a reference, this
-  /// will return the address of the reference and not the address of the value
-  /// stored in the reference.
-  LValue emitLValueForFieldInitialization(LValue base,
-                                          const clang::FieldDecl *field,
-                                          llvm::StringRef fieldName);
-
   LValue emitMemberExpr(const MemberExpr *e);
 
   /// Given an expression with a pointer type, emit the value and compute our
@@ -1003,11 +916,6 @@ public:
 
   void emitScalarInit(const clang::Expr *init, mlir::Location loc,
                       LValue lvalue, bool capturedByInit = false);
-
-  void emitStaticVarDecl(const VarDecl &d, cir::GlobalLinkageKind linkage);
-
-  void emitStoreOfComplex(mlir::Location loc, mlir::Value v, LValue dest,
-                          bool isInit);
 
   void emitStoreOfScalar(mlir::Value value, Address addr, bool isVolatile,
                          clang::QualType ty, bool isInit = false,
@@ -1212,17 +1120,6 @@ public:
 
   void emitOpenACCDeclare(const OpenACCDeclareDecl &d);
   void emitOpenACCRoutine(const OpenACCRoutineDecl &d);
-
-  /// Create a temporary memory object for the given aggregate type.
-  AggValueSlot createAggTemp(QualType ty, mlir::Location loc,
-                             const Twine &name = "tmp",
-                             Address *alloca = nullptr) {
-    assert(!cir::MissingFeatures::aggValueSlot());
-    return AggValueSlot::forAddr(
-        createMemTemp(ty, loc, name, alloca), ty.getQualifiers(),
-        AggValueSlot::IsNotDestructed, AggValueSlot::IsNotAliased,
-        AggValueSlot::DoesNotOverlap);
-  }
 
 private:
   QualType getVarArgType(const Expr *arg);

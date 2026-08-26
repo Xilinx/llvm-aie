@@ -14,8 +14,8 @@
 #include "src/__support/macros/attributes.h"
 #include "src/__support/macros/config.h"
 #if defined(LIBC_HASHTABLE_USE_GETRANDOM)
-#include "hdr/errno_macros.h"
-#include "src/__support/OSUtil/linux/getrandom.h"
+#include "src/__support/libc_errno.h"
+#include "src/sys/random/getrandom.h"
 #endif
 
 namespace LIBC_NAMESPACE_DECL {
@@ -35,18 +35,20 @@ LIBC_INLINE uint64_t next_random_seed() {
     entropy[0] = reinterpret_cast<uint64_t>(&entropy);
     entropy[1] = reinterpret_cast<uint64_t>(&state);
 #if defined(LIBC_HASHTABLE_USE_GETRANDOM)
+    int errno_backup = libc_errno;
     size_t count = sizeof(entropy);
     uint8_t *buffer = reinterpret_cast<uint8_t *>(entropy);
     while (count > 0) {
-      auto len = internal::getrandom(buffer, count, 0);
-      if (!len.has_value()) {
-        if (len.error() == ENOSYS)
+      ssize_t len = getrandom(buffer, count, 0);
+      if (len == -1) {
+        if (libc_errno == ENOSYS)
           break;
         continue;
       }
-      count -= len.value();
-      buffer += len.value();
+      count -= len;
+      buffer += len;
     }
+    libc_errno = errno_backup;
 #endif
     state.update(&entropy, sizeof(entropy));
   }

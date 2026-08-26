@@ -17,9 +17,6 @@
 #include "mlir/Dialect/Tensor/Transforms/Transforms.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/Interfaces/TilingInterface.h"
-#include "llvm/Support/Debug.h"
-
-#define DEBUG_TYPE "tensor-swap-slices"
 
 using namespace mlir;
 
@@ -42,55 +39,21 @@ FailureOr<TilingResult> tensor::replaceExtractSliceWithTiledProducer(
   return *tiledResult;
 }
 
-FailureOr<TilingResult> tensor::replaceInsertSlicesWithTiledConsumer(
-    OpBuilder &builder, ArrayRef<tensor::InsertSliceOp> sliceOps,
-    ArrayRef<OpOperand *> consumerOperands) {
-  if (sliceOps.empty()) {
-    LLVM_DEBUG(
-        { llvm::dbgs() << "expected candidate slices list to be non-empty"; });
-    return failure();
-  }
-  if (sliceOps.size() != consumerOperands.size()) {
-    LLVM_DEBUG({
-      llvm::dbgs()
-          << "expected as many operands as the number of slices passed";
-    });
-    return failure();
-  }
-  auto consumerOp =
-      dyn_cast<TilingInterface>(consumerOperands.front()->getOwner());
+FailureOr<TilingResult> tensor::replaceInsertSliceWithTiledConsumer(
+    OpBuilder &builder, OffsetSizeAndStrideOpInterface sliceOp,
+    OpOperand &consumer) {
+  auto consumerOp = dyn_cast<TilingInterface>(consumer.getOwner());
   if (!consumerOp)
     return failure();
-  for (auto opOperand : consumerOperands.drop_front()) {
-    if (opOperand->getOwner() != consumerOp) {
-      LLVM_DEBUG({
-        llvm::dbgs()
-            << "expected all consumer operands to be from the same operation";
-      });
-      return failure();
-    }
-  }
 
-  auto consumerOperandNums = llvm::map_to_vector(
-      consumerOperands, [](OpOperand *opOperand) -> unsigned {
-        return opOperand->getOperandNumber();
-      });
-  SmallVector<SmallVector<OpFoldResult>> allOffsets;
-  SmallVector<SmallVector<OpFoldResult>> allSizes;
-  for (auto sliceOp : sliceOps) {
+  // `TilingInterface` currently only supports strides being 1.
+  if (!llvm::all_of(sliceOp.getMixedStrides(), isOneInteger))
+    return failure();
 
-    // `TilingInterface` currently only supports strides being 1.
-    if (!llvm::all_of(sliceOp.getMixedStrides(), isOneInteger))
-      return failure();
-
-    SmallVector<OpFoldResult> offsets = sliceOp.getMixedOffsets();
-    SmallVector<OpFoldResult> sizes = sliceOp.getMixedSizes();
-    allOffsets.emplace_back(std::move(offsets));
-    allSizes.emplace_back(std::move(sizes));
-  }
   FailureOr<TilingResult> tiledResult =
-      consumerOp.getTiledImplementationFromOperandTiles(
-          builder, consumerOperandNums, allOffsets, allSizes);
+      consumerOp.getTiledImplementationFromOperandTile(
+          builder, consumer.getOperandNumber(), sliceOp.getMixedOffsets(),
+          sliceOp.getMixedSizes());
   if (failed(tiledResult))
     return failure();
 

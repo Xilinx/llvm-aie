@@ -19,8 +19,6 @@
 #include "llvm/Testing/Support/Error.h"
 #include "gtest/gtest.h"
 
-#include "OrcTestCommon.h"
-
 using namespace llvm;
 using namespace llvm::jitlink;
 using namespace llvm::orc;

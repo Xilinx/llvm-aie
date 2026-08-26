@@ -491,8 +491,8 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// if possible.
   ///
   /// Not serialized intentionally.
-  mutable llvm::StringMap<const Module *> PrimaryModuleNameMap;
-  mutable llvm::DenseMap<const Module *, const Module *> SameModuleLookupSet;
+  llvm::StringMap<const Module *> PrimaryModuleNameMap;
+  llvm::DenseMap<const Module *, const Module *> SameModuleLookupSet;
 
   static constexpr unsigned ConstantArrayTypesLog2InitSize = 8;
   static constexpr unsigned GeneralTypesLog2InitSize = 9;
@@ -632,47 +632,9 @@ public:
   void setRelocationInfoForCXXRecord(const CXXRecordDecl *,
                                      CXXRecordDeclRelocationInfo);
 
-  /// Examines a given type, and returns whether the type itself
-  /// is address discriminated, or any transitively embedded types
-  /// contain data that is address discriminated. This includes
-  /// implicitly authenticated values like vtable pointers, as well as
-  /// explicitly qualified fields.
-  bool containsAddressDiscriminatedPointerAuth(QualType T) {
-    if (!isPointerAuthenticationAvailable())
-      return false;
-    return findPointerAuthContent(T) != PointerAuthContent::None;
-  }
-
-  /// Examines a given type, and returns whether the type itself
-  /// or any data it transitively contains has a pointer authentication
-  /// schema that is not safely relocatable. e.g. any data or fields
-  /// with address discrimination other than any otherwise similar
-  /// vtable pointers.
-  bool containsNonRelocatablePointerAuth(QualType T) {
-    if (!isPointerAuthenticationAvailable())
-      return false;
-    return findPointerAuthContent(T) ==
-           PointerAuthContent::AddressDiscriminatedData;
-  }
-
 private:
   llvm::DenseMap<const CXXRecordDecl *, CXXRecordDeclRelocationInfo>
       RelocatableClasses;
-
-  // FIXME: store in RecordDeclBitfields in future?
-  enum class PointerAuthContent : uint8_t {
-    None,
-    AddressDiscriminatedVTable,
-    AddressDiscriminatedData
-  };
-
-  // A simple helper function to short circuit pointer auth checks.
-  bool isPointerAuthenticationAvailable() const {
-    return LangOpts.PointerAuthCalls || LangOpts.PointerAuthIntrinsics;
-  }
-  PointerAuthContent findPointerAuthContent(QualType T);
-  llvm::DenseMap<const RecordDecl *, PointerAuthContent>
-      RecordContainsAddressDiscriminatedPointerAuth;
 
   ImportDecl *FirstLocalImport = nullptr;
   ImportDecl *LastLocalImport = nullptr;
@@ -817,7 +779,7 @@ public:
 
   llvm::StringRef backupStr(llvm::StringRef S) const {
     char *Buf = new (*this) char[S.size()];
-    llvm::copy(S, Buf);
+    std::copy(S.begin(), S.end(), Buf);
     return llvm::StringRef(Buf, S.size());
   }
 
@@ -1192,7 +1154,7 @@ public:
   ///
   /// FIXME: The signature may be confusing since `clang::Module` means to
   /// a module fragment or a module unit but not a C++20 module.
-  bool isInSameModule(const Module *M1, const Module *M2) const;
+  bool isInSameModule(const Module *M1, const Module *M2);
 
   TranslationUnitDecl *getTranslationUnitDecl() const {
     return TUDecl->getMostRecentDecl();
@@ -2529,6 +2491,15 @@ public:
   /// types.
   bool areCompatibleVectorTypes(QualType FirstVec, QualType SecondVec);
 
+  /// Return true if the given types are an SVE builtin and a VectorType that
+  /// is a fixed-length representation of the SVE builtin for a specific
+  /// vector-length.
+  bool areCompatibleSveTypes(QualType FirstType, QualType SecondType);
+
+  /// Return true if the given vector types are lax-compatible SVE vector types,
+  /// false otherwise.
+  bool areLaxCompatibleSveTypes(QualType FirstType, QualType SecondType);
+
   /// Return true if the given types are an RISC-V vector builtin type and a
   /// VectorType that is a fixed-length representation of the RISC-V vector
   /// builtin type for a specific vector-length.
@@ -3702,7 +3673,6 @@ public:
   /// authentication policy for the specified record.
   const CXXRecordDecl *
   baseForVTableAuthentication(const CXXRecordDecl *ThisClass);
-
   bool useAbbreviatedThunkName(GlobalDecl VirtualMethodDecl,
                                StringRef MangledName);
 

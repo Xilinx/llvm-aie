@@ -555,7 +555,8 @@ void TargetInfo::adjust(DiagnosticsEngine &Diags, LangOptions &Opts) {
 bool TargetInfo::initFeatureMap(
     llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
     const std::vector<std::string> &FeatureVec) const {
-  for (StringRef Name : FeatureVec) {
+  for (const auto &F : FeatureVec) {
+    StringRef Name = F;
     if (Name.empty())
       continue;
     // Apply the feature via the target.

@@ -56,7 +56,6 @@ enum {
   InstFormatQC_EB = 24,
   InstFormatQC_EJ = 25,
   InstFormatQC_ES = 26,
-  InstFormatNDS_BRANCH_10 = 27,
   InstFormatOther = 31,
 
   InstFormatMask = 31,

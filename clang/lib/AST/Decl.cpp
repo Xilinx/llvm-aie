@@ -2110,7 +2110,7 @@ void QualifierInfo::setTemplateParameterListsInfo(
   if (!TPLists.empty()) {
     TemplParamLists = new (Context) TemplateParameterList *[TPLists.size()];
     NumTemplParamLists = TPLists.size();
-    llvm::copy(TPLists, TemplParamLists);
+    std::copy(TPLists.begin(), TPLists.end(), TemplParamLists);
   }
 }
 
@@ -2439,30 +2439,6 @@ VarDecl *VarDecl::getInitializingDeclaration() {
     }
   }
   return Def;
-}
-
-bool VarDecl::hasInitWithSideEffects() const {
-  if (!hasInit())
-    return false;
-
-  // Check if we can get the initializer without deserializing
-  const Expr *E = nullptr;
-  if (auto *S = dyn_cast<Stmt *>(Init)) {
-    E = cast<Expr>(S);
-  } else {
-    E = cast_or_null<Expr>(getEvaluatedStmt()->Value.getWithoutDeserializing());
-  }
-
-  if (E)
-    return E->HasSideEffects(getASTContext()) &&
-           // We can get a value-dependent initializer during error recovery.
-           (E->isValueDependent() || !evaluateValue());
-
-  assert(getEvaluatedStmt()->Value.isOffset());
-  // ASTReader tracks this without having to deserialize the initializer
-  if (auto Source = getASTContext().getExternalSource())
-    return Source->hasInitializerWithSideEffects(this);
-  return false;
 }
 
 bool VarDecl::isOutOfLine() const {
@@ -3777,7 +3753,7 @@ void FunctionDecl::setParams(ASTContext &C,
   // Zero params -> null pointer.
   if (!NewParamInfo.empty()) {
     ParamInfo = new (C) ParmVarDecl*[NewParamInfo.size()];
-    llvm::copy(NewParamInfo, ParamInfo);
+    std::copy(NewParamInfo.begin(), NewParamInfo.end(), ParamInfo);
   }
 }
 
@@ -5346,7 +5322,7 @@ void BlockDecl::setParams(ArrayRef<ParmVarDecl *> NewParamInfo) {
   if (!NewParamInfo.empty()) {
     NumParams = NewParamInfo.size();
     ParamInfo = new (getASTContext()) ParmVarDecl*[NewParamInfo.size()];
-    llvm::copy(NewParamInfo, ParamInfo);
+    std::copy(NewParamInfo.begin(), NewParamInfo.end(), ParamInfo);
   }
 }
 
@@ -5403,8 +5379,8 @@ PragmaCommentDecl *PragmaCommentDecl::Create(const ASTContext &C,
   PragmaCommentDecl *PCD =
       new (C, DC, additionalSizeToAlloc<char>(Arg.size() + 1))
           PragmaCommentDecl(DC, CommentLoc, CommentKind);
-  llvm::copy(Arg, PCD->getTrailingObjects());
-  PCD->getTrailingObjects()[Arg.size()] = '\0';
+  memcpy(PCD->getTrailingObjects(), Arg.data(), Arg.size());
+  PCD->getTrailingObjects<char>()[Arg.size()] = '\0';
   return PCD;
 }
 
@@ -5425,9 +5401,9 @@ PragmaDetectMismatchDecl::Create(const ASTContext &C, TranslationUnitDecl *DC,
   PragmaDetectMismatchDecl *PDMD =
       new (C, DC, additionalSizeToAlloc<char>(ValueStart + Value.size() + 1))
           PragmaDetectMismatchDecl(DC, Loc, ValueStart);
-  llvm::copy(Name, PDMD->getTrailingObjects());
+  memcpy(PDMD->getTrailingObjects(), Name.data(), Name.size());
   PDMD->getTrailingObjects()[Name.size()] = '\0';
-  llvm::copy(Value, PDMD->getTrailingObjects() + ValueStart);
+  memcpy(PDMD->getTrailingObjects() + ValueStart, Value.data(), Value.size());
   PDMD->getTrailingObjects()[ValueStart + Value.size()] = '\0';
   return PDMD;
 }
@@ -5467,9 +5443,9 @@ LabelDecl *LabelDecl::CreateDeserialized(ASTContext &C, GlobalDeclID ID) {
 
 void LabelDecl::setMSAsmLabel(StringRef Name) {
 char *Buffer = new (getASTContext(), 1) char[Name.size() + 1];
-llvm::copy(Name, Buffer);
-Buffer[Name.size()] = '\0';
-MSAsmName = Buffer;
+  memcpy(Buffer, Name.data(), Name.size());
+  Buffer[Name.size()] = '\0';
+  MSAsmName = Buffer;
 }
 
 void ValueDecl::anchor() {}
@@ -5631,11 +5607,10 @@ IndirectFieldDecl::IndirectFieldDecl(ASTContext &C, DeclContext *DC,
     IdentifierNamespace |= IDNS_Tag;
 }
 
-IndirectFieldDecl *IndirectFieldDecl::Create(ASTContext &C, DeclContext *DC,
-                                             SourceLocation L,
-                                             const IdentifierInfo *Id,
-                                             QualType T,
-                                             MutableArrayRef<NamedDecl *> CH) {
+IndirectFieldDecl *
+IndirectFieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                          const IdentifierInfo *Id, QualType T,
+                          llvm::MutableArrayRef<NamedDecl *> CH) {
   return new (C, DC) IndirectFieldDecl(C, DC, L, Id, T, CH);
 }
 
@@ -5853,7 +5828,7 @@ void HLSLBufferDecl::setDefaultBufferDecls(ArrayRef<Decl *> Decls) {
 
   // allocate array for default decls with ASTContext allocator
   Decl **DeclsArray = new (getASTContext()) Decl *[Decls.size()];
-  llvm::copy(Decls, DeclsArray);
+  std::copy(Decls.begin(), Decls.end(), DeclsArray);
   DefaultBufferDecls = ArrayRef<Decl *>(DeclsArray, Decls.size());
 }
 
@@ -5878,32 +5853,31 @@ bool HLSLBufferDecl::buffer_decls_empty() {
 // HLSLRootSignatureDecl Implementation
 //===----------------------------------------------------------------------===//
 
-HLSLRootSignatureDecl::HLSLRootSignatureDecl(
-    DeclContext *DC, SourceLocation Loc, IdentifierInfo *ID,
-    llvm::dxbc::RootSignatureVersion Version, unsigned NumElems)
+HLSLRootSignatureDecl::HLSLRootSignatureDecl(DeclContext *DC,
+                                             SourceLocation Loc,
+                                             IdentifierInfo *ID,
+                                             unsigned NumElems)
     : NamedDecl(Decl::Kind::HLSLRootSignature, DC, Loc, DeclarationName(ID)),
-      Version(Version), NumElems(NumElems) {}
+      NumElems(NumElems) {}
 
 HLSLRootSignatureDecl *HLSLRootSignatureDecl::Create(
     ASTContext &C, DeclContext *DC, SourceLocation Loc, IdentifierInfo *ID,
-    llvm::dxbc::RootSignatureVersion Version,
     ArrayRef<llvm::hlsl::rootsig::RootElement> RootElements) {
   HLSLRootSignatureDecl *RSDecl =
       new (C, DC,
            additionalSizeToAlloc<llvm::hlsl::rootsig::RootElement>(
                RootElements.size()))
-          HLSLRootSignatureDecl(DC, Loc, ID, Version, RootElements.size());
+          HLSLRootSignatureDecl(DC, Loc, ID, RootElements.size());
   auto *StoredElems = RSDecl->getElems();
-  llvm::uninitialized_copy(RootElements, StoredElems);
+  std::uninitialized_copy(RootElements.begin(), RootElements.end(),
+                          StoredElems);
   return RSDecl;
 }
 
 HLSLRootSignatureDecl *
 HLSLRootSignatureDecl::CreateDeserialized(ASTContext &C, GlobalDeclID ID) {
   HLSLRootSignatureDecl *Result = new (C, ID)
-      HLSLRootSignatureDecl(nullptr, SourceLocation(), nullptr,
-                            /*Version*/ llvm::dxbc::RootSignatureVersion::V1_1,
-                            /*NumElems=*/0);
+      HLSLRootSignatureDecl(nullptr, SourceLocation(), nullptr, /*NumElems=*/0);
   return Result;
 }
 

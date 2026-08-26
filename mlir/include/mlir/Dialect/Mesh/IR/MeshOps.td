@@ -584,11 +584,11 @@ def Mesh_AllReduceOp : Mesh_CollectiveCommunicationOpBase<"all_reduce", [
     ```
   }];
   let arguments = !con(commonArgs, (ins
-    AnyTypeOf<[AnyMemRef, AnyRankedTensor]>:$input,
+    AnyRankedTensor:$input,
     DefaultValuedAttr<Mesh_ReductionKindAttr, "::mlir::mesh::ReductionKind::Sum">:$reduction
   ));
   let results = (outs
-    AnyTypeOf<[AnyMemRef, AnyRankedTensor]>:$result
+    AnyRankedTensor:$result
   );
   let assemblyFormat = [{
     $input `on` $mesh (`mesh_axes` `=` $mesh_axes^)? (`reduction` `=` $reduction^)?

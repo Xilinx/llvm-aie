@@ -22,12 +22,17 @@
 
 using namespace llvm;
 
+// Pin the vtable to this file.
+//void AMDGPUInstrInfo::anchor() {}
+
+AMDGPUInstrInfo::AMDGPUInstrInfo(const GCNSubtarget &ST) { }
+
 Intrinsic::ID AMDGPU::getIntrinsicID(const MachineInstr &I) {
   return I.getOperand(I.getNumExplicitDefs()).getIntrinsicID();
 }
 
 // TODO: Should largely merge with AMDGPUTTIImpl::isSourceOfDivergence.
-bool AMDGPU::isUniformMMO(const MachineMemOperand *MMO) {
+bool AMDGPUInstrInfo::isUniformMMO(const MachineMemOperand *MMO) {
   const Value *Ptr = MMO->getValue();
   // UndefValue means this is a load of a kernel input.  These are uniform.
   // Sometimes LDS instructions have constant pointers.

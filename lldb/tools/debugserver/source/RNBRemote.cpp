@@ -1476,6 +1476,7 @@ bool RNBRemote::InitializeRegisters(bool force) {
 
 void RNBRemote::NotifyThatProcessStopped(void) {
   RNBRemote::HandlePacket_last_signal(NULL);
+  return;
 }
 
 /* 'A arglen,argnum,arg,...'

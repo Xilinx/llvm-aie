@@ -156,15 +156,13 @@ static bool resultIsNotRead(Operation *op, std::vector<Operation *> &uses) {
 
 void eraseDeadAllocAndStores(RewriterBase &rewriter, Operation *parentOp) {
   std::vector<Operation *> opToErase;
-  parentOp->walk([&](Operation *op) {
+  parentOp->walk([&](memref::AllocOp op) {
     std::vector<Operation *> candidates;
-    if (isa<memref::AllocOp, memref::AllocaOp>(op) &&
-        resultIsNotRead(op, candidates)) {
+    if (resultIsNotRead(op, candidates)) {
       llvm::append_range(opToErase, candidates);
-      opToErase.push_back(op);
+      opToErase.push_back(op.getOperation());
     }
   });
-
   for (Operation *op : opToErase)
     rewriter.eraseOp(op);
 }

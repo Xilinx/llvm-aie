@@ -278,7 +278,7 @@ OPTIONS
   any analysis with a special representation (i.e. BlockFrequency,
   BranchProbability, etc) are printed as raw hex values.
 
-  Only supported for AArch64, BPF, PowerPC, and X86.
+  Only works with PowerPC objects or X86 linked images.
 
   Example:
     A non-symbolized branch instruction with a local target and pc-relative memory access like

@@ -66,16 +66,17 @@ void NORETURN reportInvalidFlag(const char *FlagType, const char *Value) {
 
 // The checksum of a chunk header is invalid. This could be caused by an
 // {over,under}write of the header, a pointer that is not an actual chunk.
-void NORETURN reportHeaderCorruption(void *Header, const void *Ptr) {
+void NORETURN reportHeaderCorruption(void *Header, void *Ptr) {
   ScopedErrorReport Report;
   Report.append("corrupted chunk header at address %p", Ptr);
   if (*static_cast<Chunk::PackedHeader *>(Header) == 0U) {
     // Header all zero, which could indicate that this might be a pointer that
     // has been double freed but the memory has been released to the kernel.
     Report.append(": chunk header is zero and might indicate memory corruption "
-                  "or a double free\n");
+                  "or a double free\n",
+                  Ptr);
   } else {
-    Report.append(": most likely due to memory corruption\n");
+    Report.append(": most likely due to memory corruption\n", Ptr);
   }
 }
 
@@ -130,13 +131,13 @@ static const char *stringifyAction(AllocatorAction Action) {
 
 // The chunk is not in a state congruent with the operation we want to perform.
 // This is usually the case with a double-free, a realloc of a freed pointer.
-void NORETURN reportInvalidChunkState(AllocatorAction Action, const void *Ptr) {
+void NORETURN reportInvalidChunkState(AllocatorAction Action, void *Ptr) {
   ScopedErrorReport Report;
   Report.append("invalid chunk state when %s address %p\n",
                 stringifyAction(Action), Ptr);
 }
 
-void NORETURN reportMisalignedPointer(AllocatorAction Action, const void *Ptr) {
+void NORETURN reportMisalignedPointer(AllocatorAction Action, void *Ptr) {
   ScopedErrorReport Report;
   Report.append("misaligned pointer when %s address %p\n",
                 stringifyAction(Action), Ptr);
@@ -144,7 +145,7 @@ void NORETURN reportMisalignedPointer(AllocatorAction Action, const void *Ptr) {
 
 // The deallocation function used is at odds with the one used to allocate the
 // chunk (eg: new[]/delete or malloc/delete, and so on).
-void NORETURN reportDeallocTypeMismatch(AllocatorAction Action, const void *Ptr,
+void NORETURN reportDeallocTypeMismatch(AllocatorAction Action, void *Ptr,
                                         u8 TypeA, u8 TypeB) {
   ScopedErrorReport Report;
   Report.append("allocation type mismatch when %s address %p (%d vs %d)\n",
@@ -153,7 +154,7 @@ void NORETURN reportDeallocTypeMismatch(AllocatorAction Action, const void *Ptr,
 
 // The size specified to the delete operator does not match the one that was
 // passed to new when allocating the chunk.
-void NORETURN reportDeleteSizeMismatch(const void *Ptr, uptr Size,
+void NORETURN reportDeleteSizeMismatch(void *Ptr, uptr Size,
                                        uptr ExpectedSize) {
   ScopedErrorReport Report;
   Report.append(

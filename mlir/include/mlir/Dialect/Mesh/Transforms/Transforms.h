@@ -42,11 +42,6 @@ createCollectiveProcessGroupSize(MeshOp mesh, ArrayRef<MeshAxis> axes,
 TypedValue<IndexType> createProcessLinearIndex(StringRef mesh,
                                                ArrayRef<MeshAxis> meshAxes,
                                                ImplicitLocOpBuilder &builder);
-// Get process linear index from a multi-index along the given mesh axes .
-TypedValue<IndexType>
-createProcessLinearIndex(StringRef mesh, ValueRange processInGroupMultiIndex,
-                         ArrayRef<MeshAxis> meshAxes,
-                         ImplicitLocOpBuilder &builder);
 
 } // namespace mesh
 } // namespace mlir

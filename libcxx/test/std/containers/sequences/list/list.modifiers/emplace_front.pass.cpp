@@ -10,7 +10,7 @@
 
 // <list>
 
-// template <class... Args> reference emplace_front(Args&&... args); // constexpr since C++26
+// template <class... Args> reference emplace_front(Args&&... args);
 // return type is 'reference' in C++17; 'void' before
 
 #include <list>
@@ -27,13 +27,13 @@ class A {
   A& operator=(const A&);
 
 public:
-  TEST_CONSTEXPR_CXX20 A(int i, double d) : i_(i), d_(d) {}
+  A(int i, double d) : i_(i), d_(d) {}
 
-  TEST_CONSTEXPR int geti() const { return i_; }
-  TEST_CONSTEXPR double getd() const { return d_; }
+  int geti() const { return i_; }
+  double getd() const { return d_; }
 };
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     std::list<A> c;
 #if TEST_STD_VER > 14
@@ -83,15 +83,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(c.back().geti() == 2);
     assert(c.back().getd() == 3.5);
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

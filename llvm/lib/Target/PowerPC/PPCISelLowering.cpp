@@ -1442,7 +1442,6 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
   setMinimumJumpTableEntries(PPCMinimumJumpTableEntries);
 
   setMinFunctionAlignment(Align(4));
-  setMinCmpXchgSizeInBits(Subtarget.hasPartwordAtomics() ? 8 : 32);
 
   auto CPUDirective = Subtarget.getCPUDirective();
   switch (CPUDirective) {
@@ -2242,15 +2241,10 @@ bool PPC::isSplatShuffleMask(ShuffleVectorSDNode *N, unsigned EltSize) {
       return false;
 
   for (unsigned i = EltSize, e = 16; i != e; i += EltSize) {
-    // An UNDEF element is a sequence of UNDEF bytes.
-    if (N->getMaskElt(i) < 0) {
-      for (unsigned j = 1; j != EltSize; ++j)
-        if (N->getMaskElt(i + j) >= 0)
-          return false;
-    } else
-      for (unsigned j = 0; j != EltSize; ++j)
-        if (N->getMaskElt(i + j) != N->getMaskElt(j))
-          return false;
+    if (N->getMaskElt(i) < 0) continue;
+    for (unsigned j = 0; j != EltSize; ++j)
+      if (N->getMaskElt(i+j) != N->getMaskElt(j))
+        return false;
   }
   return true;
 }
@@ -7772,9 +7766,7 @@ SDValue PPCTargetLowering::LowerCall_AIX(
           DAG.getConstant(VA.getLocMemOffset(), dl, StackPtr.getValueType());
       PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
       MemOpChains.push_back(
-          DAG.getStore(Chain, dl, Arg, PtrOff,
-                       MachinePointerInfo::getStack(MF, VA.getLocMemOffset()),
-                       Subtarget.getFrameLowering()->getStackAlign()));
+          DAG.getStore(Chain, dl, Arg, PtrOff, MachinePointerInfo()));
 
       continue;
     }
@@ -12696,76 +12688,6 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 
 static Instruction *callIntrinsic(IRBuilderBase &Builder, Intrinsic::ID Id) {
   return Builder.CreateIntrinsic(Id, {});
-}
-
-Value *PPCTargetLowering::emitLoadLinked(IRBuilderBase &Builder, Type *ValueTy,
-                                         Value *Addr,
-                                         AtomicOrdering Ord) const {
-  unsigned SZ = ValueTy->getPrimitiveSizeInBits();
-
-  assert((SZ == 8 || SZ == 16 || SZ == 32 || SZ == 64) &&
-         "Only 8/16/32/64-bit atomic loads supported");
-  Intrinsic::ID IntID;
-  switch (SZ) {
-  default:
-    llvm_unreachable("Unexpected PrimitiveSize");
-  case 8:
-    IntID = Intrinsic::ppc_lbarx;
-    assert(Subtarget.hasPartwordAtomics() && "No support partword atomics.");
-    break;
-  case 16:
-    IntID = Intrinsic::ppc_lharx;
-    assert(Subtarget.hasPartwordAtomics() && "No support partword atomics.");
-    break;
-  case 32:
-    IntID = Intrinsic::ppc_lwarx;
-    break;
-  case 64:
-    IntID = Intrinsic::ppc_ldarx;
-    break;
-  }
-  Value *Call =
-      Builder.CreateIntrinsic(IntID, Addr, /*FMFSource=*/nullptr, "larx");
-
-  return Builder.CreateTruncOrBitCast(Call, ValueTy);
-}
-
-// Perform a store-conditional operation to Addr. Return the status of the
-// store. This should be 0 if the store succeeded, non-zero otherwise.
-Value *PPCTargetLowering::emitStoreConditional(IRBuilderBase &Builder,
-                                               Value *Val, Value *Addr,
-                                               AtomicOrdering Ord) const {
-  Type *Ty = Val->getType();
-  unsigned SZ = Ty->getPrimitiveSizeInBits();
-
-  assert((SZ == 8 || SZ == 16 || SZ == 32 || SZ == 64) &&
-         "Only 8/16/32/64-bit atomic loads supported");
-  Intrinsic::ID IntID;
-  switch (SZ) {
-  default:
-    llvm_unreachable("Unexpected PrimitiveSize");
-  case 8:
-    IntID = Intrinsic::ppc_stbcx;
-    assert(Subtarget.hasPartwordAtomics() && "No support partword atomics.");
-    break;
-  case 16:
-    IntID = Intrinsic::ppc_sthcx;
-    assert(Subtarget.hasPartwordAtomics() && "No support partword atomics.");
-    break;
-  case 32:
-    IntID = Intrinsic::ppc_stwcx;
-    break;
-  case 64:
-    IntID = Intrinsic::ppc_stdcx;
-    break;
-  }
-
-  if (SZ == 8 || SZ == 16)
-    Val = Builder.CreateZExt(Val, Builder.getInt32Ty());
-
-  Value *Call = Builder.CreateIntrinsic(IntID, {Addr, Val},
-                                        /*FMFSource=*/nullptr, "stcx");
-  return Builder.CreateXor(Call, Builder.getInt32(1));
 }
 
 // The mappings for emitLeading/TrailingFence is taken from
@@ -17989,7 +17911,8 @@ Register PPCTargetLowering::getRegisterByName(const char *RegName, LLT VT,
 
   Register Reg = MatchRegisterName(RegName);
   if (!Reg)
-    return Reg;
+    report_fatal_error(
+        Twine("Invalid global name register \"" + StringRef(RegName) + "\"."));
 
   // FIXME: Unable to generate code for `-O2` but okay for `-O0`.
   // Need followup investigation as to why.
@@ -19728,7 +19651,7 @@ PPCTargetLowering::shouldExpandAtomicCmpXchgInIR(AtomicCmpXchgInst *AI) const {
   unsigned Size = AI->getNewValOperand()->getType()->getPrimitiveSizeInBits();
   if (shouldInlineQuadwordAtomics() && Size == 128)
     return AtomicExpansionKind::MaskedIntrinsic;
-  return AtomicExpansionKind::LLSC;
+  return TargetLowering::shouldExpandAtomicCmpXchgInIR(AI);
 }
 
 static Intrinsic::ID

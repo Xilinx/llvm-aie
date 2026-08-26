@@ -4969,14 +4969,17 @@ MipsTargetLowering::getRegisterByName(const char *RegName, LLT VT,
                        .Case("$28", Mips::GP_64)
                        .Case("sp", Mips::SP_64)
                        .Default(Register());
-    return Reg;
+    if (Reg)
+      return Reg;
+  } else {
+    Register Reg = StringSwitch<Register>(RegName)
+                       .Case("$28", Mips::GP)
+                       .Case("sp", Mips::SP)
+                       .Default(Register());
+    if (Reg)
+      return Reg;
   }
-
-  Register Reg = StringSwitch<Register>(RegName)
-                     .Case("$28", Mips::GP)
-                     .Case("sp", Mips::SP)
-                     .Default(Register());
-  return Reg;
+  report_fatal_error("Invalid register name global variable");
 }
 
 MachineBasicBlock *MipsTargetLowering::emitLDR_W(MachineInstr &MI,

@@ -151,15 +151,11 @@ void XtensaInstrInfo::getLoadStoreOpcodes(const TargetRegisterClass *RC,
                                           unsigned &LoadOpcode,
                                           unsigned &StoreOpcode,
                                           int64_t offset) const {
-  if (RC == &Xtensa::ARRegClass) {
-    LoadOpcode = Xtensa::L32I;
-    StoreOpcode = Xtensa::S32I;
-  } else if (RC == &Xtensa::FPRRegClass) {
-    LoadOpcode = Xtensa::LSI;
-    StoreOpcode = Xtensa::SSI;
-  } else {
-    llvm_unreachable("Unsupported regclass to load or store");
-  }
+  assert((RC == &Xtensa::ARRegClass) &&
+         "Unsupported regclass to load or store");
+
+  LoadOpcode = Xtensa::L32I;
+  StoreOpcode = Xtensa::S32I;
 }
 
 void XtensaInstrInfo::loadImmediate(MachineBasicBlock &MBB,
@@ -524,10 +520,8 @@ void XtensaInstrInfo::insertIndirectBranch(MachineBasicBlock &MBB,
     JumpToMBB = &RestoreBB;
   }
 
-  unsigned LabelId = XtensaFI->createCPLabelId();
-
   XtensaConstantPoolValue *C = XtensaConstantPoolMBB::Create(
-      MF->getFunction().getContext(), JumpToMBB, LabelId);
+      MF->getFunction().getContext(), JumpToMBB, 0);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align(4));
   L32R.addOperand(MachineOperand::CreateCPI(Idx, 0));
 

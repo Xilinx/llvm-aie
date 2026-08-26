@@ -373,24 +373,6 @@ struct LazySpecializationInfoLookupTable;
 
 } // namespace serialization
 
-struct VisibleLookupBlockOffsets {
-  uint64_t VisibleOffset = 0;
-  uint64_t ModuleLocalOffset = 0;
-  uint64_t TULocalOffset = 0;
-
-  operator bool() const {
-    return VisibleOffset || ModuleLocalOffset || TULocalOffset;
-  }
-};
-
-struct LookupBlockOffsets : VisibleLookupBlockOffsets {
-  uint64_t LexicalOffset = 0;
-
-  operator bool() const {
-    return VisibleLookupBlockOffsets::operator bool() || LexicalOffset;
-  }
-};
-
 /// Reads an AST files chain containing the contents of a translation
 /// unit.
 ///
@@ -464,6 +446,8 @@ public:
   using ModuleReverseIterator = ModuleManager::ModuleReverseIterator;
 
 private:
+  using LocSeq = SourceLocationSequence;
+
   /// The receiver of some callbacks invoked by ASTReader.
   std::unique_ptr<ASTReaderListener> Listener;
 
@@ -550,6 +534,13 @@ private:
   /// Declarations that have modifications residing in a later file
   /// in the chain.
   DeclUpdateOffsetsMap DeclUpdateOffsets;
+
+  struct LookupBlockOffsets {
+    uint64_t LexicalOffset;
+    uint64_t VisibleOffset;
+    uint64_t ModuleLocalOffset;
+    uint64_t TULocalOffset;
+  };
 
   using DelayedNamespaceOffsetMapTy =
       llvm::DenseMap<GlobalDeclID, LookupBlockOffsets>;
@@ -1452,12 +1443,6 @@ private:
     const StringRef *operator->() && = delete;
     const StringRef &operator*() && = delete;
   };
-
-  /// VarDecls with initializers containing side effects must be emitted,
-  /// but DeclMustBeEmitted is not allowed to deserialize the intializer.
-  /// FIXME: Lower memory usage by removing VarDecls once the initializer
-  /// is deserialized.
-  llvm::SmallPtrSet<Decl *, 16> InitSideEffectVars;
 
 public:
   /// Get the buffer for resolving paths.
@@ -2410,8 +2395,6 @@ public:
 
   bool wasThisDeclarationADefinition(const FunctionDecl *FD) override;
 
-  bool hasInitializerWithSideEffects(const VarDecl *VD) const override;
-
   /// Retrieve a selector from the given module with its local ID
   /// number.
   Selector getLocalSelector(ModuleFile &M, unsigned LocalID);
@@ -2443,16 +2426,18 @@ public:
   /// Read a source location from raw form and return it in its
   /// originating module file's source location space.
   std::pair<SourceLocation, unsigned>
-  ReadUntranslatedSourceLocation(RawLocEncoding Raw) const {
-    return SourceLocationEncoding::decode(Raw);
+  ReadUntranslatedSourceLocation(RawLocEncoding Raw,
+                                 LocSeq *Seq = nullptr) const {
+    return SourceLocationEncoding::decode(Raw, Seq);
   }
 
   /// Read a source location from raw form.
-  SourceLocation ReadSourceLocation(ModuleFile &MF, RawLocEncoding Raw) const {
+  SourceLocation ReadSourceLocation(ModuleFile &MF, RawLocEncoding Raw,
+                                    LocSeq *Seq = nullptr) const {
     if (!MF.ModuleOffsetMap.empty())
       ReadModuleOffsetMap(MF);
 
-    auto [Loc, ModuleFileIndex] = ReadUntranslatedSourceLocation(Raw);
+    auto [Loc, ModuleFileIndex] = ReadUntranslatedSourceLocation(Raw, Seq);
     ModuleFile *OwningModuleFile =
         ModuleFileIndex == 0 ? &MF : MF.TransitiveImports[ModuleFileIndex - 1];
 
@@ -2480,9 +2465,9 @@ public:
 
   /// Read a source location.
   SourceLocation ReadSourceLocation(ModuleFile &ModuleFile,
-                                    const RecordDataImpl &Record,
-                                    unsigned &Idx) {
-    return ReadSourceLocation(ModuleFile, Record[Idx++]);
+                                    const RecordDataImpl &Record, unsigned &Idx,
+                                    LocSeq *Seq = nullptr) {
+    return ReadSourceLocation(ModuleFile, Record[Idx++], Seq);
   }
 
   /// Read a FileID.
@@ -2501,7 +2486,7 @@ public:
 
   /// Read a source range.
   SourceRange ReadSourceRange(ModuleFile &F, const RecordData &Record,
-                              unsigned &Idx);
+                              unsigned &Idx, LocSeq *Seq = nullptr);
 
   static llvm::BitVector ReadBitVector(const RecordData &Record,
                                        const StringRef Blob);

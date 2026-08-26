@@ -163,8 +163,7 @@ struct TestVectorUnrollingPatterns
             .setFilterConstraint([](Operation *op) {
               return success(
                   isa<arith::AddFOp, vector::FMAOp, vector::MultiDimReductionOp,
-                      vector::BroadcastOp, vector::LoadOp, vector::StoreOp>(
-                      op));
+                      vector::BroadcastOp>(op));
             }));
     populateVectorUnrollPatterns(
         patterns, UnrollVectorOptions()

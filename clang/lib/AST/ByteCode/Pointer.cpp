@@ -114,6 +114,7 @@ void Pointer::operator=(Pointer &&P) {
     }
 
     if (Block *Pointee = PointeeStorage.BS.Pointee) {
+      assert(P.block() != this->block());
       Pointee->removePointer(this);
       PointeeStorage.BS.Pointee = nullptr;
       Pointee->cleanup();

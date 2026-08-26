@@ -185,11 +185,6 @@ static constexpr bool isExecutableDirective{common::HasMember<
                   parser::OpenMPConstruct, parser::CUFKernelDoConstruct>>};
 
 template <typename A>
-static constexpr bool isOpenMPDirective{
-    common::HasMember<A, std::tuple<parser::OpenMPConstruct,
-                                    parser::OpenMPDeclarativeConstruct>>};
-
-template <typename A>
 static constexpr bool isFunctionLike{common::HasMember<
     A, std::tuple<parser::MainProgram, parser::FunctionSubprogram,
                   parser::SubroutineSubprogram,
@@ -270,11 +265,6 @@ struct Evaluation : EvaluationVariant {
   constexpr bool isExecutableDirective() const {
     return visit(common::visitors{[](auto &r) {
       return pft::isExecutableDirective<std::decay_t<decltype(r)>>;
-    }});
-  }
-  constexpr bool isOpenMPDirective() const {
-    return visit(common::visitors{[](auto &r) {
-      return pft::isOpenMPDirective<std::decay_t<decltype(r)>>;
     }});
   }
 

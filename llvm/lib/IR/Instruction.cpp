@@ -86,7 +86,7 @@ void Instruction::removeFromParent() {
 }
 
 void Instruction::handleMarkerRemoval() {
-  if (!DebugMarker)
+  if (!getParent()->IsNewDbgInfoFormat || !DebugMarker)
     return;
 
   DebugMarker->removeMarker();
@@ -135,6 +135,9 @@ void Instruction::insertBefore(BasicBlock &BB,
   assert(!DebugMarker);
 
   BB.getInstList().insert(InsertPos, this);
+
+  if (!BB.IsNewDbgInfoFormat)
+    return;
 
   // We've inserted "this": if InsertAtHead is set then it comes before any
   // DbgVariableRecords attached to InsertPos. But if it's not set, then any
@@ -223,7 +226,7 @@ void Instruction::moveBeforeImpl(BasicBlock &BB, InstListType::iterator I,
 
   // If we've been given the "Preserve" flag, then just move the DbgRecords with
   // the instruction, no more special handling needed.
-  if (DebugMarker && !Preserve) {
+  if (BB.IsNewDbgInfoFormat && DebugMarker && !Preserve) {
     if (I != this->getIterator() || InsertAtHead) {
       // "this" is definitely moving in the list, or it's moving ahead of its
       // attached DbgVariableRecords. Detach any existing DbgRecords.
@@ -235,7 +238,7 @@ void Instruction::moveBeforeImpl(BasicBlock &BB, InstListType::iterator I,
   // the block splicer, which will do more debug-info things.
   BB.getInstList().splice(I, getParent()->getInstList(), getIterator());
 
-  if (!Preserve) {
+  if (BB.IsNewDbgInfoFormat && !Preserve) {
     DbgMarker *NextMarker = getParent()->getNextMarker(this);
 
     // If we're inserting at point I, and not in front of the DbgRecords
@@ -254,6 +257,10 @@ iterator_range<DbgRecord::self_iterator> Instruction::cloneDebugInfoFrom(
     bool InsertAtHead) {
   if (!From->DebugMarker)
     return DbgMarker::getEmptyDbgRecordRange();
+
+  assert(getParent()->IsNewDbgInfoFormat);
+  assert(getParent()->IsNewDbgInfoFormat ==
+         From->getParent()->IsNewDbgInfoFormat);
 
   if (!DebugMarker)
     getParent()->createMarker(this);
@@ -1354,9 +1361,6 @@ void Instruction::swapProfMetadata() {
 
 void Instruction::copyMetadata(const Instruction &SrcInst,
                                ArrayRef<unsigned> WL) {
-  if (WL.empty() || is_contained(WL, LLVMContext::MD_dbg))
-    setDebugLoc(SrcInst.getDebugLoc().orElse(getDebugLoc()));
-
   if (!SrcInst.hasMetadata())
     return;
 
@@ -1370,6 +1374,8 @@ void Instruction::copyMetadata(const Instruction &SrcInst,
     if (WL.empty() || WLS.count(MD.first))
       setMetadata(MD.first, MD.second);
   }
+  if (WL.empty() || WLS.count(LLVMContext::MD_dbg))
+    setDebugLoc(SrcInst.getDebugLoc());
 }
 
 Instruction *Instruction::clone() const {

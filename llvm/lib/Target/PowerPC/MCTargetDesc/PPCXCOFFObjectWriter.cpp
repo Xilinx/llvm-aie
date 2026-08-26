@@ -9,7 +9,7 @@
 
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
-#include "PPCMCAsmInfo.h"
+#include "PPCMCExpr.h"
 #include "llvm/BinaryFormat/XCOFF.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCValue.h"
@@ -61,15 +61,15 @@ std::pair<uint8_t, uint8_t> PPCXCOFFObjectWriter::getRelocTypeAndSignSize(
     switch (Specifier) {
     default:
       report_fatal_error("Unsupported modifier for half16 fixup.");
-    case PPC::S_None:
+    case PPCMCExpr::VK_None:
       return {XCOFF::RelocationType::R_TOC, SignAndSizeForHalf16};
-    case PPC::S_U:
+    case PPCMCExpr::VK_U:
       return {XCOFF::RelocationType::R_TOCU, SignAndSizeForHalf16};
-    case PPC::S_L:
+    case PPCMCExpr::VK_L:
       return {XCOFF::RelocationType::R_TOCL, SignAndSizeForHalf16};
-    case PPC::S_AIX_TLSLE:
+    case PPCMCExpr::VK_AIX_TLSLE:
       return {XCOFF::RelocationType::R_TLS_LE, SignAndSizeForHalf16};
-    case PPC::S_AIX_TLSLD:
+    case PPCMCExpr::VK_AIX_TLSLD:
       return {XCOFF::RelocationType::R_TLS_LD, SignAndSizeForHalf16};
     }
   } break;
@@ -80,13 +80,13 @@ std::pair<uint8_t, uint8_t> PPCXCOFFObjectWriter::getRelocTypeAndSignSize(
     switch (Specifier) {
     default:
       llvm_unreachable("Unsupported Modifier");
-    case PPC::S_None:
+    case PPCMCExpr::VK_None:
       return {XCOFF::RelocationType::R_TOC, 15};
-    case PPC::S_L:
+    case PPCMCExpr::VK_L:
       return {XCOFF::RelocationType::R_TOCL, 15};
-    case PPC::S_AIX_TLSLE:
+    case PPCMCExpr::VK_AIX_TLSLE:
       return {XCOFF::RelocationType::R_TLS_LE, 15};
-    case PPC::S_AIX_TLSLD:
+    case PPCMCExpr::VK_AIX_TLSLD:
       return {XCOFF::RelocationType::R_TLS_LD, 15};
     }
   } break;
@@ -97,7 +97,7 @@ std::pair<uint8_t, uint8_t> PPCXCOFFObjectWriter::getRelocTypeAndSignSize(
   case PPC::fixup_ppc_br24abs:
     return {XCOFF::RelocationType::R_RBA, EncodedSignednessIndicator | 25};
   case PPC::fixup_ppc_nofixup: {
-    if (Specifier == PPC::S_None)
+    if (Specifier == PPCMCExpr::VK_None)
       return {XCOFF::RelocationType::R_REF, 0};
     else
       llvm_unreachable("Unsupported Modifier");
@@ -110,19 +110,19 @@ std::pair<uint8_t, uint8_t> PPCXCOFFObjectWriter::getRelocTypeAndSignSize(
     switch (Specifier) {
     default:
       report_fatal_error("Unsupported modifier");
-    case PPC::S_AIX_TLSGD:
+    case PPCMCExpr::VK_AIX_TLSGD:
       return {XCOFF::RelocationType::R_TLS, SignAndSizeForFKData};
-    case PPC::S_AIX_TLSGDM:
+    case PPCMCExpr::VK_AIX_TLSGDM:
       return {XCOFF::RelocationType::R_TLSM, SignAndSizeForFKData};
-    case PPC::S_AIX_TLSIE:
+    case PPCMCExpr::VK_AIX_TLSIE:
       return {XCOFF::RelocationType::R_TLS_IE, SignAndSizeForFKData};
-    case PPC::S_AIX_TLSLE:
+    case PPCMCExpr::VK_AIX_TLSLE:
       return {XCOFF::RelocationType::R_TLS_LE, SignAndSizeForFKData};
-    case PPC::S_AIX_TLSLD:
+    case PPCMCExpr::VK_AIX_TLSLD:
       return {XCOFF::RelocationType::R_TLS_LD, SignAndSizeForFKData};
-    case PPC::S_AIX_TLSML:
+    case PPCMCExpr::VK_AIX_TLSML:
       return {XCOFF::RelocationType::R_TLSML, SignAndSizeForFKData};
-    case PPC::S_None:
+    case PPCMCExpr::VK_None:
       return {XCOFF::RelocationType::R_POS, SignAndSizeForFKData};
     }
   }

@@ -639,11 +639,12 @@ ExprDependence clang::computeDependence(PredefinedExpr *E) {
   return toExprDependenceForImpliedType(E->getType()->getDependence());
 }
 
-ExprDependence clang::computeDependence(CallExpr *E, ArrayRef<Expr *> PreArgs) {
+ExprDependence clang::computeDependence(CallExpr *E,
+                                        llvm::ArrayRef<Expr *> PreArgs) {
   auto D = E->getCallee()->getDependence();
   if (E->getType()->isDependentType())
     D |= ExprDependence::Type;
-  for (auto *A : ArrayRef(E->getArgs(), E->getNumArgs())) {
+  for (auto *A : llvm::ArrayRef(E->getArgs(), E->getNumArgs())) {
     if (A)
       D |= A->getDependence();
   }
@@ -708,7 +709,7 @@ ExprDependence clang::computeDependence(InitListExpr *E) {
 
 ExprDependence clang::computeDependence(ShuffleVectorExpr *E) {
   auto D = toExprDependenceForImpliedType(E->getType()->getDependence());
-  for (auto *C : ArrayRef(E->getSubExprs(), E->getNumSubExprs()))
+  for (auto *C : llvm::ArrayRef(E->getSubExprs(), E->getNumSubExprs()))
     D |= C->getDependence();
   return D;
 }
@@ -757,7 +758,7 @@ ExprDependence clang::computeDependence(PseudoObjectExpr *O) {
 
 ExprDependence clang::computeDependence(AtomicExpr *A) {
   auto D = ExprDependence::None;
-  for (auto *E : ArrayRef(A->getSubExprs(), A->getNumSubExprs()))
+  for (auto *E : llvm::ArrayRef(A->getSubExprs(), A->getNumSubExprs()))
     D |= E->getDependence();
   return D;
 }

@@ -34,7 +34,7 @@ namespace dxil {
 
 // Returns the resource name from dx_resource_handlefrombinding or
 // dx_resource_handlefromimplicitbinding call
-LLVM_ABI StringRef getResourceNameFromBindingCall(CallInst *CI);
+StringRef getResourceNameFromBindingCall(CallInst *CI);
 
 /// The dx.RawBuffer target extension type
 ///
@@ -387,7 +387,7 @@ public:
 
   const ResourceBinding &getBinding() const { return Binding; }
   TargetExtType *getHandleTy() const { return HandleTy; }
-  StringRef getName() const { return Name; }
+  const StringRef getName() const { return Name; }
 
   bool hasSymbol() const { return Symbol; }
   LLVM_ABI GlobalVariable *createSymbol(Module &M, StructType *Ty);

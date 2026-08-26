@@ -185,23 +185,9 @@ public:
                                     global.getSymName());
   }
 
-  mlir::Value createGetGlobal(cir::GlobalOp global) {
-    return createGetGlobal(global.getLoc(), global);
-  }
-
   cir::StoreOp createStore(mlir::Location loc, mlir::Value val, mlir::Value dst,
                            mlir::IntegerAttr align = {}) {
     return create<cir::StoreOp>(loc, val, dst, align);
-  }
-
-  [[nodiscard]] cir::GlobalOp createGlobal(mlir::ModuleOp mlirModule,
-                                           mlir::Location loc,
-                                           mlir::StringRef name,
-                                           mlir::Type type,
-                                           cir::GlobalLinkageKind linkage) {
-    mlir::OpBuilder::InsertionGuard guard(*this);
-    setInsertionPointToStart(mlirModule.getBody());
-    return create<cir::GlobalOp>(loc, name, type, linkage);
   }
 
   cir::GetMemberOp createGetMember(mlir::Location loc, mlir::Type resultTy,
@@ -227,26 +213,22 @@ public:
   //===--------------------------------------------------------------------===//
 
   cir::CallOp createCallOp(mlir::Location loc, mlir::SymbolRefAttr callee,
-                           mlir::Type returnType, mlir::ValueRange operands,
-                           cir::SideEffect sideEffect = cir::SideEffect::All) {
-    return create<cir::CallOp>(loc, callee, returnType, operands, sideEffect);
+                           mlir::Type returnType, mlir::ValueRange operands) {
+    return create<cir::CallOp>(loc, callee, returnType, operands);
   }
 
   cir::CallOp createCallOp(mlir::Location loc, cir::FuncOp callee,
-                           mlir::ValueRange operands,
-                           cir::SideEffect sideEffect = cir::SideEffect::All) {
+                           mlir::ValueRange operands) {
     return createCallOp(loc, mlir::SymbolRefAttr::get(callee),
-                        callee.getFunctionType().getReturnType(), operands,
-                        sideEffect);
+                        callee.getFunctionType().getReturnType(), operands);
   }
 
   cir::CallOp createIndirectCallOp(mlir::Location loc,
                                    mlir::Value indirectTarget,
                                    cir::FuncType funcType,
-                                   mlir::ValueRange operands,
-                                   cir::SideEffect sideEffect) {
+                                   mlir::ValueRange operands) {
     return create<cir::CallOp>(loc, indirectTarget, funcType.getReturnType(),
-                               operands, sideEffect);
+                               operands);
   }
 
   //===--------------------------------------------------------------------===//

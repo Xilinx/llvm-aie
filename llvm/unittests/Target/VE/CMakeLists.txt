@@ -10,7 +10,6 @@ set(LLVM_LINK_COMPONENTS
   CodeGen
   Core
   GlobalISel
-  Instrumentation
   MC
   SelectionDAG
   Support

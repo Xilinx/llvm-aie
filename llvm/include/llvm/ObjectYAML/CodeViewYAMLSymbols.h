@@ -16,7 +16,6 @@
 
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <memory>
@@ -33,12 +32,11 @@ struct SymbolRecordBase;
 struct SymbolRecord {
   std::shared_ptr<detail::SymbolRecordBase> Symbol;
 
-  LLVM_ABI codeview::CVSymbol
+  codeview::CVSymbol
   toCodeViewSymbol(BumpPtrAllocator &Allocator,
                    codeview::CodeViewContainer Container) const;
 
-  LLVM_ABI static Expected<SymbolRecord>
-  fromCodeViewSymbol(codeview::CVSymbol Symbol);
+  static Expected<SymbolRecord> fromCodeViewSymbol(codeview::CVSymbol Symbol);
 };
 
 } // end namespace CodeViewYAML

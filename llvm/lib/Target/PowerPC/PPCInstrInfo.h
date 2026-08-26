@@ -81,7 +81,6 @@ enum SpillOpcodeKey {
   SOK_AccumulatorSpill,
   SOK_UAccumulatorSpill,
   SOK_WAccumulatorSpill,
-  SOK_DMRpSpill,
   SOK_DMRSpill,
   SOK_SPESpill,
   SOK_PairedG8Spill,
@@ -120,7 +119,6 @@ enum PPCMachineCombinerPattern : unsigned {
    NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
-   NoInstr,                                                                    \
    PPC::EVLDD,                                                                 \
    PPC::RESTORE_QUADWORD}
 
@@ -136,7 +134,6 @@ enum PPCMachineCombinerPattern : unsigned {
    PPC::DFLOADf64,                                                             \
    PPC::DFLOADf32,                                                             \
    PPC::SPILLTOVSR_LD,                                                         \
-   NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
@@ -163,7 +160,6 @@ enum PPCMachineCombinerPattern : unsigned {
    NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
-   NoInstr,                                                                    \
    PPC::RESTORE_QUADWORD}
 
 #define FutureLoadOpcodes                                                      \
@@ -182,7 +178,6 @@ enum PPCMachineCombinerPattern : unsigned {
    PPC::RESTORE_ACC,                                                           \
    PPC::RESTORE_UACC,                                                          \
    PPC::RESTORE_WACC,                                                          \
-   PPC::RESTORE_DMRP,                                                          \
    PPC::RESTORE_DMR,                                                           \
    NoInstr,                                                                    \
    PPC::RESTORE_QUADWORD}
@@ -199,7 +194,6 @@ enum PPCMachineCombinerPattern : unsigned {
    PPC::STXSDX,                                                                \
    PPC::STXSSPX,                                                               \
    PPC::SPILLTOVSR_ST,                                                         \
-   NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
@@ -226,7 +220,6 @@ enum PPCMachineCombinerPattern : unsigned {
    NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
-   NoInstr,                                                                    \
    PPC::SPILL_QUADWORD}
 
 #define Pwr10StoreOpcodes                                                      \
@@ -244,7 +237,6 @@ enum PPCMachineCombinerPattern : unsigned {
    PPC::STXVP,                                                                 \
    PPC::SPILL_ACC,                                                             \
    PPC::SPILL_UACC,                                                            \
-   NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
    NoInstr,                                                                    \
@@ -266,7 +258,6 @@ enum PPCMachineCombinerPattern : unsigned {
    PPC::SPILL_ACC,                                                             \
    PPC::SPILL_UACC,                                                            \
    PPC::SPILL_WACC,                                                            \
-   PPC::SPILL_DMRP,                                                            \
    PPC::SPILL_DMR,                                                             \
    NoInstr,                                                                    \
    PPC::SPILL_QUADWORD}

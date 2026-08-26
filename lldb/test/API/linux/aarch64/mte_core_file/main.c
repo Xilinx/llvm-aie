@@ -5,14 +5,9 @@
 //
 // Compile with:
 // <gcc or clang> -march=armv8.5-a+memtag -g main.c -o a.out.mte
-// (use a.out.mte to generate core.mte.notags and core.mte)
 // <gcc or clang> -march=armv8.5-a+memtag -g main.c -DNO_MTE -o a.out.nomte
 //
-// Set /proc/self/coredump_filter to the following values when generating the
-// core files:
-// * core.mte - 3
-// * core.mte.notags - 2
-// * core.nomte - 3
+// /proc/self/coredump_filter was set to 2 when the core files were made.
 
 #include <arm_acle.h>
 #include <asm/mman.h>

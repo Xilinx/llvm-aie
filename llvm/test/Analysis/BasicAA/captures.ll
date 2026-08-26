@@ -17,7 +17,8 @@ define void @address_capture() {
 
 ; CHECK-LABEL: read_only_capture
 ; CHECK: MayAlias:	i32* %a, i32* %p
-; CHECK: Just Ref:  Ptr: i32* %a	<->  %p = call ptr @get_ptr()
+; CHECK: Both ModRef:  Ptr: i32* %a	<->  %p = call ptr @get_ptr()
+; TODO: The ModRef could be just Ref.
 define void @read_only_capture() {
   %a = alloca i32
   call void @capture(ptr captures(address, read_provenance) %a)

@@ -25,7 +25,6 @@
 #ifndef LLVM_WINDOWSMANIFEST_WINDOWSMANIFESTMERGER_H
 #define LLVM_WINDOWSMANIFEST_WINDOWSMANIFESTMERGER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -35,10 +34,9 @@ class MemoryBufferRef;
 
 namespace windows_manifest {
 
-LLVM_ABI bool isAvailable();
+bool isAvailable();
 
-class LLVM_ABI WindowsManifestError
-    : public ErrorInfo<WindowsManifestError, ECError> {
+class WindowsManifestError : public ErrorInfo<WindowsManifestError, ECError> {
 public:
   static char ID;
   WindowsManifestError(const Twine &Msg);
@@ -50,13 +48,13 @@ private:
 
 class WindowsManifestMerger {
 public:
-  LLVM_ABI WindowsManifestMerger();
-  LLVM_ABI ~WindowsManifestMerger();
-  LLVM_ABI Error merge(MemoryBufferRef Manifest);
+  WindowsManifestMerger();
+  ~WindowsManifestMerger();
+  Error merge(MemoryBufferRef Manifest);
 
   // Returns vector containing merged xml manifest, or uninitialized vector for
   // empty manifest.
-  LLVM_ABI std::unique_ptr<MemoryBuffer> getMergedManifest();
+  std::unique_ptr<MemoryBuffer> getMergedManifest();
 
 private:
   class WindowsManifestMergerImpl;

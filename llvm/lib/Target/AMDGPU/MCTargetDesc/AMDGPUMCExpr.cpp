@@ -77,7 +77,7 @@ void AMDGPUMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
     break;
   }
   for (const auto *It = Args.begin(); It != Args.end(); ++It) {
-    MAI->printExpr(OS, **It);
+    (*It)->print(OS, MAI);
     if ((It + 1) != Args.end())
       OS << ", ";
   }
@@ -313,11 +313,13 @@ const AMDGPUMCExpr *AMDGPUMCExpr::createTotalNumVGPR(const MCExpr *NumAGPR,
 /// Remove dependency on GCNSubtarget and depend only only the necessary values
 /// for said occupancy computation. Should match computeOccupancy implementation
 /// without passing \p STM on.
-const AMDGPUMCExpr *AMDGPUMCExpr::createOccupancy(
-    unsigned InitOcc, const MCExpr *NumSGPRs, const MCExpr *NumVGPRs,
-    unsigned DynamicVGPRBlockSize, const GCNSubtarget &STM, MCContext &Ctx) {
+const AMDGPUMCExpr *AMDGPUMCExpr::createOccupancy(unsigned InitOcc,
+                                                  const MCExpr *NumSGPRs,
+                                                  const MCExpr *NumVGPRs,
+                                                  const GCNSubtarget &STM,
+                                                  MCContext &Ctx) {
   unsigned MaxWaves = IsaInfo::getMaxWavesPerEU(&STM);
-  unsigned Granule = IsaInfo::getVGPRAllocGranule(&STM, DynamicVGPRBlockSize);
+  unsigned Granule = IsaInfo::getVGPRAllocGranule(&STM);
   unsigned TargetTotalNumVGPRs = IsaInfo::getTotalNumVGPRs(&STM);
   unsigned Generation = STM.getGeneration();
 
@@ -707,5 +709,5 @@ void llvm::AMDGPU::printAMDGPUMCExpr(const MCExpr *Expr, raw_ostream &OS,
     return;
   }
 
-  MAI->printExpr(OS, *Expr);
+  Expr->print(OS, MAI);
 }

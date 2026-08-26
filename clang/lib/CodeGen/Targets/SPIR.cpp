@@ -51,7 +51,7 @@ public:
         getABIInfo().getDataLayout().getAllocaAddrSpace());
   }
 
-  unsigned getDeviceKernelCallingConv() const override;
+  unsigned getOpenCLKernelCallingConv() const override;
   llvm::Type *getOpenCLType(CodeGenModule &CGM, const Type *T) const override;
   llvm::Type *
   getHLSLType(CodeGenModule &CGM, const Type *Ty,
@@ -75,10 +75,6 @@ public:
                                          SyncScope Scope,
                                          llvm::AtomicOrdering Ordering,
                                          llvm::LLVMContext &Ctx) const override;
-  bool supportsLibCall() const override {
-    return getABIInfo().getTarget().getTriple().getVendor() !=
-           llvm::Triple::AMD;
-  }
 };
 
 inline StringRef mapClangSyncScopeToLLVM(SyncScope Scope) {
@@ -223,7 +219,7 @@ void computeSPIRKernelABIInfo(CodeGenModule &CGM, CGFunctionInfo &FI) {
 }
 }
 
-unsigned CommonSPIRTargetCodeGenInfo::getDeviceKernelCallingConv() const {
+unsigned CommonSPIRTargetCodeGenInfo::getOpenCLKernelCallingConv() const {
   return llvm::CallingConv::SPIR_KERNEL;
 }
 

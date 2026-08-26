@@ -1830,8 +1830,8 @@ bool TreePatternNode::UpdateNodeTypeFromInst(unsigned ResNo,
 }
 
 bool TreePatternNode::ContainsUnresolvedType(TreePattern &TP) const {
-  for (const TypeSetByHwMode &Type : Types)
-    if (!TP.getInfer().isConcrete(Type, true))
+  for (unsigned i = 0, e = Types.size(); i != e; ++i)
+    if (!TP.getInfer().isConcrete(Types[i], true))
       return true;
   for (const TreePatternNode &Child : children())
     if (Child.ContainsUnresolvedType(TP))
@@ -3193,7 +3193,7 @@ bool TreePattern::InferAllTypes(
           return true;
         }
 
-        ArrayRef<TreePatternNode *> InNodes = InIter->second;
+        const SmallVectorImpl<TreePatternNode *> &InNodes = InIter->second;
 
         // The input types should be fully resolved by now.
         for (TreePatternNode *Node : Nodes) {
@@ -3610,14 +3610,16 @@ class InstAnalyzer {
   const CodeGenDAGPatterns &CDP;
 
 public:
-  bool hasSideEffects = false;
-  bool mayStore = false;
-  bool mayLoad = false;
-  bool isBitcast = false;
-  bool isVariadic = false;
-  bool hasChain = false;
+  bool hasSideEffects;
+  bool mayStore;
+  bool mayLoad;
+  bool isBitcast;
+  bool isVariadic;
+  bool hasChain;
 
-  InstAnalyzer(const CodeGenDAGPatterns &cdp) : CDP(cdp) {}
+  InstAnalyzer(const CodeGenDAGPatterns &cdp)
+      : CDP(cdp), hasSideEffects(false), mayStore(false), mayLoad(false),
+        isBitcast(false), isVariadic(false), hasChain(false) {}
 
   void Analyze(const PatternToMatch &Pat) {
     const TreePatternNode &N = Pat.getSrcPattern();

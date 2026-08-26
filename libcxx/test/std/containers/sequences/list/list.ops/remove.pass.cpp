@@ -9,7 +9,7 @@
 // <list>
 
 // void      remove(const value_type& value); // pre-c++20
-// size_type remove(const value_type& value); // c++20 and later; constexpr since C++26
+// size_type remove(const value_type& value); // c++20 and later
 
 #include <list>
 #include <cassert>
@@ -18,22 +18,22 @@
 #include "min_allocator.h"
 
 struct S {
-  TEST_CONSTEXPR_CXX20 S(int i) : i_(new int(i)) {}
-  TEST_CONSTEXPR_CXX20 S(const S& rhs) : i_(new int(*rhs.i_)) {}
-  TEST_CONSTEXPR_CXX14 S& operator=(const S& rhs) {
+  S(int i) : i_(new int(i)) {}
+  S(const S& rhs) : i_(new int(*rhs.i_)) {}
+  S& operator=(const S& rhs) {
     *i_ = *rhs.i_;
     return *this;
   }
-  TEST_CONSTEXPR_CXX20 ~S() {
+  ~S() {
     delete i_;
     i_ = NULL;
   }
-  TEST_CONSTEXPR bool operator==(const S& rhs) const { return *i_ == *rhs.i_; }
-  TEST_CONSTEXPR int get() const { return *i_; }
+  bool operator==(const S& rhs) const { return *i_ == *rhs.i_; }
+  int get() const { return *i_; }
   int* i_;
 };
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     int a1[] = {1, 2, 3, 4};
     int a2[] = {1, 2, 4};
@@ -99,15 +99,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
 #  endif
     assert((c == std::list<int, min_allocator<int>>(a2, a2 + 3)));
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

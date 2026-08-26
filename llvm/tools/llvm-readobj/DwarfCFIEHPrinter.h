@@ -12,7 +12,6 @@
 #include "llvm-readobj.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
-#include "llvm/DebugInfo/DWARF/DWARFCFIPrinter.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
@@ -229,8 +228,8 @@ void PrinterContext<ELFT>::printEHFrame(const Elf_Shdr *EHFrameShdr) const {
     W.indent();
     auto DumpOpts = DIDumpOptions();
     DumpOpts.IsEH = true;
-    printCFIProgram(Entry.cfis(), W.getOStream(), DumpOpts, W.getIndentLevel(),
-                    InitialLocation);
+    Entry.cfis().dump(W.getOStream(), DumpOpts, W.getIndentLevel(),
+                      InitialLocation);
     W.unindent();
     W.unindent();
     W.getOStream() << "\n";

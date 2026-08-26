@@ -2302,7 +2302,7 @@ void WarpExecuteOnLane0Op::build(OpBuilder &builder, OperationState &result,
                                  TypeRange resultTypes, Value laneId,
                                  int64_t warpSize) {
   build(builder, result, resultTypes, laneId, warpSize,
-        /*operands=*/{}, /*argTypes=*/{});
+        /*operands=*/std::nullopt, /*argTypes=*/std::nullopt);
 }
 
 void WarpExecuteOnLane0Op::build(OpBuilder &builder, OperationState &result,

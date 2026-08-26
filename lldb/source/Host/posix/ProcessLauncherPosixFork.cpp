@@ -255,7 +255,8 @@ ProcessLauncherPosixFork::LaunchProcess(const ProcessLaunchInfo &launch_info,
                                         Status &error) {
   // A pipe used by the child process to report errors.
   PipePosix pipe;
-  error = pipe.CreateNew();
+  const bool child_processes_inherit = false;
+  error = pipe.CreateNew(child_processes_inherit);
   if (error.Fail())
     return HostProcess();
 

@@ -28,7 +28,10 @@ define ptx_kernel void @kernel_func() {
 ; NO-TRAP-UNREACHABLE-EMPTY:
 ; NO-TRAP-UNREACHABLE-NEXT:  // %bb.0:
 ; NO-TRAP-UNREACHABLE-NEXT:    { // callseq 0, 0
-; NO-TRAP-UNREACHABLE-NEXT:    call.uni throw, ();
+; NO-TRAP-UNREACHABLE-NEXT:    call.uni
+; NO-TRAP-UNREACHABLE-NEXT:    throw,
+; NO-TRAP-UNREACHABLE-NEXT:    (
+; NO-TRAP-UNREACHABLE-NEXT:    );
 ; NO-TRAP-UNREACHABLE-NEXT:    } // callseq 0
 ; NO-TRAP-UNREACHABLE-NEXT:    // begin inline asm
 ; NO-TRAP-UNREACHABLE-NEXT:    exit;
@@ -40,7 +43,10 @@ define ptx_kernel void @kernel_func() {
 ; NO-TRAP-AFTER-NORETURN-EMPTY:
 ; NO-TRAP-AFTER-NORETURN-NEXT:  // %bb.0:
 ; NO-TRAP-AFTER-NORETURN-NEXT:    { // callseq 0, 0
-; NO-TRAP-AFTER-NORETURN-NEXT:    call.uni throw, ();
+; NO-TRAP-AFTER-NORETURN-NEXT:    call.uni
+; NO-TRAP-AFTER-NORETURN-NEXT:    throw,
+; NO-TRAP-AFTER-NORETURN-NEXT:    (
+; NO-TRAP-AFTER-NORETURN-NEXT:    );
 ; NO-TRAP-AFTER-NORETURN-NEXT:    } // callseq 0
 ; NO-TRAP-AFTER-NORETURN-NEXT:    // begin inline asm
 ; NO-TRAP-AFTER-NORETURN-NEXT:    exit;
@@ -53,7 +59,10 @@ define ptx_kernel void @kernel_func() {
 ; TRAP-EMPTY:
 ; TRAP-NEXT:  // %bb.0:
 ; TRAP-NEXT:    { // callseq 0, 0
-; TRAP-NEXT:    call.uni throw, ();
+; TRAP-NEXT:    call.uni
+; TRAP-NEXT:    throw,
+; TRAP-NEXT:    (
+; TRAP-NEXT:    );
 ; TRAP-NEXT:    } // callseq 0
 ; TRAP-NEXT:    trap; exit;
 ;
@@ -63,7 +72,10 @@ define ptx_kernel void @kernel_func() {
 ; BUG-FIXED-EMPTY:
 ; BUG-FIXED-NEXT:  // %bb.0:
 ; BUG-FIXED-NEXT:    { // callseq 0, 0
-; BUG-FIXED-NEXT:    call.uni throw, ();
+; BUG-FIXED-NEXT:    call.uni
+; BUG-FIXED-NEXT:    throw,
+; BUG-FIXED-NEXT:    (
+; BUG-FIXED-NEXT:    );
 ; BUG-FIXED-NEXT:    } // callseq 0
 ; BUG-FIXED-NEXT:    trap;
   call void @throw()

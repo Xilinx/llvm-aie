@@ -442,9 +442,9 @@ getRecurrences(BasicBlock *LoopLatch, const PHINode *IndVar, const Loop &L) {
   return std::make_pair(SimpleRecurrence, ConditionalRecurrence);
 }
 
-PolynomialInfo::PolynomialInfo(unsigned TripCount, Value *LHS, const APInt &RHS,
-                               Value *ComputedValue, bool ByteOrderSwapped,
-                               Value *LHSAux)
+PolynomialInfo::PolynomialInfo(unsigned TripCount, const Value *LHS,
+                               const APInt &RHS, const Value *ComputedValue,
+                               bool ByteOrderSwapped, const Value *LHSAux)
     : TripCount(TripCount), LHS(LHS), RHS(RHS), ComputedValue(ComputedValue),
       ByteOrderSwapped(ByteOrderSwapped), LHSAux(LHSAux) {}
 
@@ -472,13 +472,13 @@ static bool checkExtractBits(const KnownBits &Known, unsigned N,
 /// polynomial. The optimization technique of table-lookup for CRC is also
 /// called the Sarwate algorithm.
 CRCTable HashRecognize::genSarwateTable(const APInt &GenPoly,
-                                        bool ByteOrderSwapped) {
+                                        bool ByteOrderSwapped) const {
   unsigned BW = GenPoly.getBitWidth();
   CRCTable Table;
   Table[0] = APInt::getZero(BW);
 
   if (ByteOrderSwapped) {
-    APInt CRCInit = APInt::getSignedMinValue(BW);
+    APInt CRCInit(BW, 128);
     for (unsigned I = 1; I < 256; I <<= 1) {
       CRCInit = CRCInit.shl(1) ^
                 (CRCInit.isSignBitSet() ? GenPoly : APInt::getZero(BW));
@@ -542,11 +542,7 @@ static bool arePHIsIntertwined(
 // doing this, we're immune to whether the IR expression is mul/udiv or
 // equivalently shl/lshr. Return false when it is a UDiv, true when it is a Mul,
 // and std::nullopt otherwise.
-static std::optional<bool> isBigEndianBitShift(Value *V, ScalarEvolution &SE) {
-  if (!V->getType()->isIntegerTy())
-    return {};
-
-  const SCEV *E = SE.getSCEV(V);
+static std::optional<bool> isBigEndianBitShift(const SCEV *E) {
   if (match(E, m_scev_UDiv(m_SCEV(), m_scev_SpecificInt(2))))
     return false;
   if (match(E, m_scev_Mul(m_scev_SpecificInt(2), m_SCEV())))
@@ -561,14 +557,14 @@ std::variant<PolynomialInfo, ErrBits, StringRef>
 HashRecognize::recognizeCRC() const {
   if (!L.isInnermost())
     return "Loop is not innermost";
+  unsigned TC = SE.getSmallConstantMaxTripCount(&L);
+  if (!TC || TC > 256)
+    return "Unable to find a small constant trip count";
   BasicBlock *Latch = L.getLoopLatch();
   BasicBlock *Exit = L.getExitBlock();
   const PHINode *IndVar = L.getCanonicalInductionVariable();
-  if (!Latch || !Exit || !IndVar || L.getNumBlocks() != 1)
+  if (!Latch || !Exit || !IndVar)
     return "Loop not in canonical form";
-  unsigned TC = SE.getSmallConstantTripCount(&L);
-  if (!TC || TC > 256 || TC % 8)
-    return "Unable to find a small constant byte-multiple trip count";
 
   auto R = getRecurrences(Latch, IndVar, L);
   if (!R)
@@ -580,11 +576,12 @@ HashRecognize::recognizeCRC() const {
   // Make sure that all recurrences are either all SCEVMul with two or SCEVDiv
   // with two, or in other words, that they're single bit-shifts.
   std::optional<bool> ByteOrderSwapped =
-      isBigEndianBitShift(ConditionalRecurrence.BO, SE);
+      isBigEndianBitShift(SE.getSCEV(ConditionalRecurrence.BO));
   if (!ByteOrderSwapped)
     return "Loop with non-unit bitshifts";
   if (SimpleRecurrence) {
-    if (isBigEndianBitShift(SimpleRecurrence.BO, SE) != ByteOrderSwapped)
+    if (isBigEndianBitShift(SE.getSCEV(SimpleRecurrence.BO)) !=
+        ByteOrderSwapped)
       return "Loop with non-unit bitshifts";
     if (!arePHIsIntertwined(SimpleRecurrence.Phi, ConditionalRecurrence.Phi, L,
                             Instruction::BinaryOps::Xor))
@@ -623,7 +620,7 @@ HashRecognize::recognizeCRC() const {
   if (!checkExtractBits(ResultBits, TC, IsZero, *ByteOrderSwapped))
     return ErrBits(ResultBits, TC, *ByteOrderSwapped);
 
-  Value *LHSAux = SimpleRecurrence ? SimpleRecurrence.Start : nullptr;
+  const Value *LHSAux = SimpleRecurrence ? SimpleRecurrence.Start : nullptr;
   return PolynomialInfo(TC, ConditionalRecurrence.Start, GenPoly, ComputedValue,
                         *ByteOrderSwapped, LHSAux);
 }
@@ -686,13 +683,6 @@ void HashRecognize::print(raw_ostream &OS) const {
 void HashRecognize::dump() const { print(dbgs()); }
 #endif
 
-std::optional<PolynomialInfo> HashRecognize::getResult() const {
-  auto Res = HashRecognize(L, SE).recognizeCRC();
-  if (std::holds_alternative<PolynomialInfo>(Res))
-    return std::get<PolynomialInfo>(Res);
-  return std::nullopt;
-}
-
 HashRecognize::HashRecognize(const Loop &L, ScalarEvolution &SE)
     : L(L), SE(SE) {}
 
@@ -700,6 +690,13 @@ PreservedAnalyses HashRecognizePrinterPass::run(Loop &L,
                                                 LoopAnalysisManager &AM,
                                                 LoopStandardAnalysisResults &AR,
                                                 LPMUpdater &) {
-  HashRecognize(L, AR.SE).print(OS);
+  AM.getResult<HashRecognizeAnalysis>(L, AR).print(OS);
   return PreservedAnalyses::all();
 }
+
+HashRecognize HashRecognizeAnalysis::run(Loop &L, LoopAnalysisManager &AM,
+                                         LoopStandardAnalysisResults &AR) {
+  return {L, AR.SE};
+}
+
+AnalysisKey HashRecognizeAnalysis::Key;

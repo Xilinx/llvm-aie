@@ -27,9 +27,8 @@ add_host_subdirectory(common
   common/HostNativeThreadBase.cpp
   common/HostProcess.cpp
   common/HostThread.cpp
-  common/JSONTransport.cpp
-  common/LZMA.cpp
   common/LockFileBase.cpp
+  common/LZMA.cpp
   common/MainLoopBase.cpp
   common/MemoryMonitor.cpp
   common/MonitoringProcessLauncher.cpp

@@ -1,6 +1,3 @@
-# Process architecture-specific subdirectory FIRST to avoid missing targets.
-
-# Then process OS-specific subdirectory
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
   add_object_library(

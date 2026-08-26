@@ -42,9 +42,8 @@ class MTECtrlRegisterTestCase(TestBase):
             expected = [value]
 
             if self.hasXMLSupport():
-                tfc_modes = ["NONE", "SYNC", "ASYNC", "ASYMM"]
                 expected.append(
-                    f"(TAGS = 0, TCF = TCF_{tfc_modes[async_err << 1 | sync_err]}, TAGGED_ADDR_ENABLE = 1)".format(
+                    "(TAGS = 0, TCF_ASYNC = {}, TCF_SYNC = {}, TAGGED_ADDR_ENABLE = 1)".format(
                         async_err, sync_err
                     )
                 )

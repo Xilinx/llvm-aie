@@ -323,6 +323,10 @@ static unsigned skipNewline(const char *&First, const char *End) {
   return Len;
 }
 
+static bool wasLineContinuation(const char *First, unsigned EOLLen) {
+  return *(First - (int)EOLLen - 1) == '\\';
+}
+
 static void skipToNewlineRaw(const char *&First, const char *const End) {
   for (;;) {
     if (First == End)
@@ -332,16 +336,13 @@ static void skipToNewlineRaw(const char *&First, const char *const End) {
     if (Len)
       return;
 
-    char LastNonWhitespace = ' ';
     do {
-      if (!isHorizontalWhitespace(*First))
-        LastNonWhitespace = *First;
       if (++First == End)
         return;
       Len = isEOL(First, End);
     } while (!Len);
 
-    if (LastNonWhitespace != '\\')
+    if (First[-1] != '\\')
       return;
 
     First += Len;
@@ -393,7 +394,6 @@ static bool isQuoteCppDigitSeparator(const char *const Start,
 }
 
 void Scanner::skipLine(const char *&First, const char *const End) {
-  char LastNonWhitespace = ' ';
   for (;;) {
     assert(First <= End);
     if (First == End)
@@ -419,8 +419,6 @@ void Scanner::skipLine(const char *&First, const char *const End) {
       // Iterate over comments correctly.
       if (*First != '/' || End - First < 2) {
         LastTokenPtr = First;
-        if (!isWhitespace(*First))
-          LastNonWhitespace = *First;
         ++First;
         continue;
       }
@@ -433,8 +431,6 @@ void Scanner::skipLine(const char *&First, const char *const End) {
 
       if (First[1] != '*') {
         LastTokenPtr = First;
-        if (!isWhitespace(*First))
-          LastNonWhitespace = *First;
         ++First;
         continue;
       }
@@ -446,9 +442,8 @@ void Scanner::skipLine(const char *&First, const char *const End) {
       return;
 
     // Skip over the newline.
-    skipNewline(First, End);
-
-    if (LastNonWhitespace != '\\')
+    unsigned Len = skipNewline(First, End);
+    if (!wasLineContinuation(First, Len)) // Continue past line-continuations.
       break;
   }
 }
@@ -473,16 +468,9 @@ static void skipWhitespace(const char *&First, const char *const End) {
     if (End - First < 2)
       return;
 
-    if (*First == '\\') {
-      const char *Ptr = First + 1;
-      while (Ptr < End && isHorizontalWhitespace(*Ptr))
-        ++Ptr;
-      if (Ptr != End && isVerticalWhitespace(*Ptr)) {
-        skipNewline(Ptr, End);
-        First = Ptr;
-        continue;
-      }
-      return;
+    if (First[0] == '\\' && isVerticalWhitespace(First[1])) {
+      skipNewline(++First, End);
+      continue;
     }
 
     // Check for a non-comment character.

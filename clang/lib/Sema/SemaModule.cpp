@@ -136,7 +136,6 @@ makeTransitiveImportsVisible(ASTContext &Ctx, VisibleModuleSet &VisibleModules,
          "modules only.");
 
   llvm::SmallVector<Module *, 4> Worklist;
-  llvm::SmallSet<Module *, 16> Visited;
   Worklist.push_back(Imported);
 
   Module *FoundPrimaryModuleInterface =
@@ -145,22 +144,18 @@ makeTransitiveImportsVisible(ASTContext &Ctx, VisibleModuleSet &VisibleModules,
   while (!Worklist.empty()) {
     Module *Importing = Worklist.pop_back_val();
 
-    if (Visited.count(Importing))
+    if (VisibleModules.isVisible(Importing))
       continue;
-    Visited.insert(Importing);
 
     // FIXME: The ImportLoc here is not meaningful. It may be problematic if we
     // use the sourcelocation loaded from the visible modules.
     VisibleModules.setVisible(Importing, ImportLoc);
 
     if (isImportingModuleUnitFromSameModule(Ctx, Importing, CurrentModule,
-                                            FoundPrimaryModuleInterface)) {
+                                            FoundPrimaryModuleInterface))
       for (Module *TransImported : Importing->Imports)
-        Worklist.push_back(TransImported);
-
-      for (auto [Exports, _] : Importing->Exports)
-        Worklist.push_back(Exports);
-    }
+        if (!VisibleModules.isVisible(TransImported))
+          Worklist.push_back(TransImported);
   }
 }
 
@@ -263,11 +258,11 @@ static bool DiagReservedModuleName(Sema &S, const IdentifierInfo *II,
 Sema::DeclGroupPtrTy
 Sema::ActOnModuleDecl(SourceLocation StartLoc, SourceLocation ModuleLoc,
                       ModuleDeclKind MDK, ModuleIdPath Path,
-                      ModuleIdPath Partition, ModuleImportState &ImportState,
-                      bool IntroducerIsFirstPPToken) {
+                      ModuleIdPath Partition, ModuleImportState &ImportState) {
   assert(getLangOpts().CPlusPlusModules &&
          "should only have module decl in standard C++ modules");
 
+  bool IsFirstDecl = ImportState == ModuleImportState::FirstDecl;
   bool SeenGMF = ImportState == ModuleImportState::GlobalFragment;
   // If any of the steps here fail, we count that as invalidating C++20
   // module state;
@@ -333,13 +328,18 @@ Sema::ActOnModuleDecl(SourceLocation StartLoc, SourceLocation ModuleLoc,
           SeenGMF == (bool)this->TheGlobalModuleFragment) &&
          "mismatched global module state");
 
-  // In C++20, A module directive may only appear as the first preprocessing
-  // tokens in a file (excluding the global module fragment.).
-  if (getLangOpts().CPlusPlusModules && !IntroducerIsFirstPPToken && !SeenGMF) {
+  // In C++20, the module-declaration must be the first declaration if there
+  // is no global module fragment.
+  if (getLangOpts().CPlusPlusModules && !IsFirstDecl && !SeenGMF) {
     Diag(ModuleLoc, diag::err_module_decl_not_at_start);
-    SourceLocation BeginLoc = PP.getMainFileFirstPPTokenLoc();
-    Diag(BeginLoc, diag::note_global_module_introducer_missing)
-        << FixItHint::CreateInsertion(BeginLoc, "module;\n");
+    SourceLocation BeginLoc =
+        ModuleScopes.empty()
+            ? SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID())
+            : ModuleScopes.back().BeginLoc;
+    if (BeginLoc.isValid()) {
+      Diag(BeginLoc, diag::note_global_module_introducer_missing)
+          << FixItHint::CreateInsertion(BeginLoc, "module;\n");
+    }
   }
 
   // C++23 [module.unit]p1: ... The identifiers module and import shall not
@@ -712,13 +712,7 @@ DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,
       Mod->Kind == Module::ModuleKind::ModulePartitionImplementation) {
     Diag(ExportLoc, diag::err_export_partition_impl)
         << SourceRange(ExportLoc, Path.back().getLoc());
-  } else if (ExportLoc.isValid() &&
-             (ModuleScopes.empty() || currentModuleIsImplementation())) {
-    // [module.interface]p1:
-    // An export-declaration shall inhabit a namespace scope and appear in the
-    // purview of a module interface unit.
-    Diag(ExportLoc, diag::err_export_not_in_module_interface);
-  } else if (!ModuleScopes.empty()) {
+  } else if (!ModuleScopes.empty() && !currentModuleIsImplementation()) {
     // Re-export the module if the imported module is exported.
     // Note that we don't need to add re-exported module to Imports field
     // since `Exports` implies the module is imported already.
@@ -726,6 +720,11 @@ DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,
       getCurrentModule()->Exports.emplace_back(Mod, false);
     else
       getCurrentModule()->Imports.insert(Mod);
+  } else if (ExportLoc.isValid()) {
+    // [module.interface]p1:
+    // An export-declaration shall inhabit a namespace scope and appear in the
+    // purview of a module interface unit.
+    Diag(ExportLoc, diag::err_export_not_in_module_interface);
   }
 
   return Import;

@@ -422,6 +422,7 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
         DefArgResult = ParseBraceInitializer();
       } else
         DefArgResult = ParseAssignmentExpression();
+      DefArgResult = Actions.CorrectDelayedTyposInExpr(DefArgResult, Param);
       if (DefArgResult.isInvalid()) {
         Actions.ActOnParamDefaultArgumentError(Param, EqualLoc,
                                                /*DefaultArg=*/nullptr);

@@ -68,9 +68,7 @@ struct PreISelIntrinsicLowering {
 
   static bool shouldExpandMemIntrinsicWithSize(Value *Size,
                                                const TargetTransformInfo &TTI);
-  bool
-  expandMemIntrinsicUses(Function &F,
-                         DenseMap<Constant *, GlobalVariable *> &CMap) const;
+  bool expandMemIntrinsicUses(Function &F) const;
   bool lowerIntrinsics(Module &M) const;
 };
 
@@ -233,14 +231,6 @@ static bool canEmitLibcall(const TargetMachine *TM, Function *F,
   return TLI->getLibcallName(LC) != nullptr;
 }
 
-static bool canEmitMemcpy(const TargetMachine *TM, Function *F) {
-  // TODO: Should this consider the address space of the memcpy?
-  if (!TM)
-    return true;
-  const TargetLowering *TLI = TM->getSubtargetImpl(*F)->getTargetLowering();
-  return TLI->getMemcpyName() != nullptr;
-}
-
 // Return a value appropriate for use with the memset_pattern16 libcall, if
 // possible and if we know how. (Adapted from equivalent helper in
 // LoopIdiomRecognize).
@@ -297,8 +287,7 @@ static Constant *getMemSetPattern16Value(MemSetPatternInst *Inst,
 
 // TODO: Handle atomic memcpy and memcpy.inline
 // TODO: Pass ScalarEvolution
-bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
-    Function &F, DenseMap<Constant *, GlobalVariable *> &CMap) const {
+bool PreISelIntrinsicLowering::expandMemIntrinsicUses(Function &F) const {
   Intrinsic::ID ID = F.getIntrinsicID();
   bool Changed = false;
 
@@ -311,7 +300,8 @@ bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
       Function *ParentFunc = Memcpy->getFunction();
       const TargetTransformInfo &TTI = LookupTTI(*ParentFunc);
       if (shouldExpandMemIntrinsicWithSize(Memcpy->getLength(), TTI)) {
-        if (UseMemIntrinsicLibFunc && canEmitMemcpy(TM, ParentFunc))
+        if (UseMemIntrinsicLibFunc &&
+            canEmitLibcall(TM, ParentFunc, RTLIB::MEMCPY))
           break;
 
         // TODO: For optsize, emit the loop into a separate function
@@ -414,20 +404,13 @@ bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
       // global.
       assert(Memset->getRawDest()->getType()->getPointerAddressSpace() == 0 &&
              "Should have skipped if non-zero AS");
-      GlobalVariable *GV;
-      auto It = CMap.find(PatternValue);
-      if (It != CMap.end()) {
-        GV = It->second;
-      } else {
-        GV = new GlobalVariable(
-            *M, PatternValue->getType(), /*isConstant=*/true,
-            GlobalValue::PrivateLinkage, PatternValue, ".memset_pattern");
-        GV->setUnnamedAddr(
-            GlobalValue::UnnamedAddr::Global); // Ok to merge these.
-        // TODO: Consider relaxing alignment requirement.
-        GV->setAlignment(Align(16));
-        CMap[PatternValue] = GV;
-      }
+      GlobalVariable *GV = new GlobalVariable(
+          *M, PatternValue->getType(), /*isConstant=*/true,
+          GlobalValue::PrivateLinkage, PatternValue, ".memset_pattern");
+      GV->setUnnamedAddr(
+          GlobalValue::UnnamedAddr::Global); // Ok to merge these.
+      // TODO: Consider relaxing alignment requirement.
+      GV->setAlignment(Align(16));
       Value *PatternPtr = GV;
       Value *NumBytes = Builder.CreateMul(
           TLI.getAsSizeT(DL.getTypeAllocSize(Memset->getValue()->getType()),
@@ -456,8 +439,6 @@ bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
 }
 
 bool PreISelIntrinsicLowering::lowerIntrinsics(Module &M) const {
-  // Map unique constants to globals.
-  DenseMap<Constant *, GlobalVariable *> CMap;
   bool Changed = false;
   for (Function &F : M) {
     switch (F.getIntrinsicID()) {
@@ -469,7 +450,7 @@ bool PreISelIntrinsicLowering::lowerIntrinsics(Module &M) const {
     case Intrinsic::memset:
     case Intrinsic::memset_inline:
     case Intrinsic::experimental_memset_pattern:
-      Changed |= expandMemIntrinsicUses(F, CMap);
+      Changed |= expandMemIntrinsicUses(F);
       break;
     case Intrinsic::load_relative:
       Changed |= lowerLoadRelative(F);

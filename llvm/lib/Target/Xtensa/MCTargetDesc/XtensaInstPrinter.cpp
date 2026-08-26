@@ -13,9 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "XtensaInstPrinter.h"
-#include "MCTargetDesc/XtensaMCAsmInfo.h"
+#include "MCTargetDesc/XtensaMCExpr.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegister.h"
@@ -36,7 +35,14 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
   if (!(SRE = cast<MCSymbolRefExpr>(Expr)))
     assert(false && "Unexpected MCExpr type.");
 
-  assert(SRE->getSpecifier() == 0);
+  auto Spec = XtensaMCExpr::Specifier(SRE->getKind());
+  switch (Spec) {
+  case XtensaMCExpr::VK_None:
+    break;
+  // TODO
+  default:
+    report_fatal_error("Invalid kind!");
+  }
 
   OS << SRE->getSymbol();
 
@@ -45,6 +51,9 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
       OS << '+';
     OS << Offset;
   }
+
+  if (Spec != XtensaMCExpr::VK_None)
+    OS << ')';
 }
 
 void XtensaInstPrinter::printOperand(const MCOperand &MC, raw_ostream &O) {
@@ -88,7 +97,7 @@ void XtensaInstPrinter::printBranchTarget(const MCInst *MI, uint64_t Address,
     int64_t Val = MC.getImm() + 4;
     printPCRelImm(Address, Val, O);
   } else if (MC.isExpr())
-    MAI.printExpr(O, *MC.getExpr());
+    MC.getExpr()->print(O, &MAI);
   else
     llvm_unreachable("Invalid operand");
 }
@@ -100,7 +109,7 @@ void XtensaInstPrinter::printLoopTarget(const MCInst *MI, uint64_t Address,
     int64_t Val = MC.getImm() + 4;
     printPCRelImm(Address, Val, O);
   } else if (MC.isExpr())
-    MAI.printExpr(O, *MC.getExpr());
+    MC.getExpr()->print(O, &MAI, true);
   else
     llvm_unreachable("Invalid operand");
 }
@@ -112,7 +121,7 @@ void XtensaInstPrinter::printJumpTarget(const MCInst *MI, uint64_t Address,
     int64_t Val = MC.getImm() + 4;
     printPCRelImm(Address, Val, O);
   } else if (MC.isExpr())
-    MAI.printExpr(O, *MC.getExpr());
+    MC.getExpr()->print(O, &MAI);
   else
     llvm_unreachable("Invalid operand");
   ;
@@ -135,7 +144,7 @@ void XtensaInstPrinter::printCallOperand(const MCInst *MI, uint64_t Address,
       O << Val;
     }
   } else if (MC.isExpr())
-    MAI.printExpr(O, *MC.getExpr());
+    MC.getExpr()->print(O, &MAI);
   else
     llvm_unreachable("Invalid operand");
 }
@@ -159,7 +168,7 @@ void XtensaInstPrinter::printL32RTarget(const MCInst *MI, uint64_t Address,
       printPCRelImm(Address, Value, O);
     }
   } else if (MC.isExpr())
-    MAI.printExpr(O, *MC.getExpr());
+    MC.getExpr()->print(O, &MAI);
   else
     llvm_unreachable("Invalid operand");
 }

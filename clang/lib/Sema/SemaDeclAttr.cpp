@@ -56,6 +56,7 @@
 #include "clang/Sema/SemaOpenCL.h"
 #include "clang/Sema/SemaOpenMP.h"
 #include "clang/Sema/SemaRISCV.h"
+#include "clang/Sema/SemaSPIRV.h"
 #include "clang/Sema/SemaSYCL.h"
 #include "clang/Sema/SemaSwift.h"
 #include "clang/Sema/SemaWasm.h"
@@ -1988,13 +1989,14 @@ bool Sema::CheckAttrNoArgs(const ParsedAttr &Attrs) {
 bool Sema::CheckAttrTarget(const ParsedAttr &AL) {
   // Check whether the attribute is valid on the current target.
   if (!AL.existsInTarget(Context.getTargetInfo())) {
-    if (AL.isRegularKeywordAttribute())
-      Diag(AL.getLoc(), diag::err_keyword_not_supported_on_target);
-    else
-      DiagnoseUnknownAttribute(AL);
+    Diag(AL.getLoc(), AL.isRegularKeywordAttribute()
+                          ? diag::err_keyword_not_supported_on_target
+                          : diag::warn_unknown_attribute_ignored)
+        << AL << AL.getRange();
     AL.setInvalid();
     return true;
   }
+
   return false;
 }
 
@@ -3260,7 +3262,8 @@ bool Sema::checkTargetAttr(SourceLocation LiteralLoc, StringRef AttrStr) {
     if (ParsedAttrs.Duplicate != "")
       return Diag(LiteralLoc, diag::err_duplicate_target_attribute)
              << Duplicate << None << ParsedAttrs.Duplicate << Target;
-    for (StringRef CurFeature : ParsedAttrs.Features) {
+    for (const auto &Feature : ParsedAttrs.Features) {
+      StringRef CurFeature = Feature;
       if (!CurFeature.starts_with('+') && !CurFeature.starts_with('-'))
         return Diag(LiteralLoc, diag::warn_unsupported_target_attribute)
                << Unsupported << None << AttrStr << Target;
@@ -3268,7 +3271,8 @@ bool Sema::checkTargetAttr(SourceLocation LiteralLoc, StringRef AttrStr) {
   }
 
   if (Context.getTargetInfo().getTriple().isLoongArch()) {
-    for (StringRef CurFeature : ParsedAttrs.Features) {
+    for (const auto &Feature : ParsedAttrs.Features) {
+      StringRef CurFeature = Feature;
       if (CurFeature.starts_with("!arch=")) {
         StringRef ArchValue = CurFeature.split("=").second.trim();
         return Diag(LiteralLoc, diag::err_attribute_unsupported)
@@ -7625,9 +7629,6 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
   case ParsedAttr::AT_HLSLVkExtBuiltinInput:
     S.HLSL().handleVkExtBuiltinInputAttr(D, AL);
     break;
-  case ParsedAttr::AT_HLSLVkConstantId:
-    S.HLSL().handleVkConstantIdAttr(D, AL);
-    break;
   case ParsedAttr::AT_HLSLSV_GroupThreadID:
     S.HLSL().handleSV_GroupThreadIDAttr(D, AL);
     break;
@@ -7990,7 +7991,8 @@ static void checkUnusedDeclAttributes(Sema &S, const ParsedAttributesView &A) {
       continue;
 
     if (AL.getKind() == ParsedAttr::UnknownAttribute) {
-      S.DiagnoseUnknownAttribute(AL);
+      S.Diag(AL.getLoc(), diag::warn_unknown_attribute_ignored)
+          << AL << AL.getRange();
     } else {
       S.Diag(AL.getLoc(), diag::warn_attribute_not_on_decl) << AL
                                                             << AL.getRange();
@@ -8008,45 +8010,15 @@ void Sema::checkUnusedDeclAttributes(Declarator &D) {
 
 void Sema::DiagnoseUnknownAttribute(const ParsedAttr &AL) {
   std::string NormalizedFullName = '\'' + AL.getNormalizedFullName() + '\'';
-  SourceRange NR = AL.getNormalizedRange();
-
-  StringRef ScopeName = AL.getNormalizedScopeName();
-  std::optional<StringRef> CorrectedScopeName =
-      AL.tryGetCorrectedScopeName(ScopeName);
-  if (CorrectedScopeName) {
-    ScopeName = *CorrectedScopeName;
-  }
-
-  StringRef AttrName = AL.getNormalizedAttrName(ScopeName);
-  std::optional<StringRef> CorrectedAttrName = AL.tryGetCorrectedAttrName(
-      ScopeName, AttrName, Context.getTargetInfo(), getLangOpts());
-  if (CorrectedAttrName) {
-    AttrName = *CorrectedAttrName;
-  }
-
-  if (CorrectedScopeName || CorrectedAttrName) {
-    std::string CorrectedFullName =
-        AL.getNormalizedFullName(ScopeName, AttrName);
-    SemaDiagnosticBuilder D =
-        Diag(CorrectedScopeName ? NR.getBegin() : AL.getRange().getBegin(),
-             diag::warn_unknown_attribute_ignored_suggestion);
-
-    D << NormalizedFullName << CorrectedFullName;
-
-    if (AL.isExplicitScope()) {
-      D << FixItHint::CreateReplacement(NR, CorrectedFullName) << NR;
-    } else {
-      if (CorrectedScopeName) {
-        D << FixItHint::CreateReplacement(SourceRange(AL.getScopeLoc()),
-                                          ScopeName);
-      }
-      if (CorrectedAttrName) {
-        D << FixItHint::CreateReplacement(AL.getRange(), AttrName);
-      }
-    }
+  if (auto CorrectedFullName =
+          AL.getCorrectedFullName(Context.getTargetInfo(), getLangOpts())) {
+    Diag(AL.getNormalizedRange().getBegin(),
+         diag::warn_unknown_attribute_ignored_suggestion)
+        << NormalizedFullName << *CorrectedFullName << AL.getNormalizedRange();
   } else {
-    Diag(NR.getBegin(), diag::warn_unknown_attribute_ignored)
-        << NormalizedFullName << NR;
+    Diag(AL.getNormalizedRange().getBegin(),
+         diag::warn_unknown_attribute_ignored)
+        << NormalizedFullName << AL.getNormalizedRange();
   }
 }
 

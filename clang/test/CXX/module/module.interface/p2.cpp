@@ -1,26 +1,24 @@
 // RUN: rm -rf %t
 // RUN: mkdir -p %t
-// RUN: split-file %s %t
-//
 // RUN: %clang_cc1 -std=c++20 -x c++-header %S/Inputs/header.h -emit-header-unit -o %t/h.pcm
-// RUN: %clang_cc1 -std=c++20 %t/x.cppm -emit-module-interface -o %t/x.pcm
-// RUN: %clang_cc1 -std=c++20 %t/y.cppm -emit-module-interface -o %t/y.pcm
-// RUN: %clang_cc1 -std=c++20 %t/interface.cppm -fmodule-file=X=%t/x.pcm -fmodule-file=Y=%t/y.pcm -emit-module-interface -o %t/m.pcm
-// RUN: %clang_cc1 -std=c++20 %t/impl.cppm -I%S/Inputs -fmodule-file=%t/h.pcm \
+// RUN: %clang_cc1 -std=c++20 %s -DX_INTERFACE -emit-module-interface -o %t/x.pcm
+// RUN: %clang_cc1 -std=c++20 %s -DY_INTERFACE -emit-module-interface -o %t/y.pcm
+// RUN: %clang_cc1 -std=c++20 %s -DINTERFACE -fmodule-file=X=%t/x.pcm -fmodule-file=Y=%t/y.pcm -emit-module-interface -o %t/m.pcm
+// RUN: %clang_cc1 -std=c++20 %s -DIMPLEMENTATION -I%S/Inputs -fmodule-file=%t/h.pcm \
 // RUN:   -fmodule-file=X=%t/x.pcm -fmodule-file=Y=%t/y.pcm -fmodule-file=p2=%t/m.pcm -verify \
 // RUN:   -Wno-experimental-header-units
-// RUN: %clang_cc1 -std=c++20 %t/user.cppm -I%S/Inputs -fmodule-file=%t/h.pcm -fmodule-file=p2=%t/m.pcm \
+// RUN: %clang_cc1 -std=c++20 %s -DUSER -I%S/Inputs -fmodule-file=%t/h.pcm -fmodule-file=p2=%t/m.pcm \
 // RUN:   -fmodule-file=X=%t/x.pcm -fmodule-file=Y=%t/y.pcm -Wno-experimental-header-units -verify
 
-//--- x.cppm
+#if defined(X_INTERFACE)
 export module X;
 export int x;
 
-//--- y.cppm
+#elif defined(Y_INTERFACE)
 export module Y;
 export int y;
 
-//--- interface.cppm
+#elif defined(INTERFACE)
 export module p2;
 export import X;
 import Y; // not exported
@@ -41,7 +39,7 @@ namespace C {}
 namespace D { int f(); }
 export namespace D {}
 
-//--- impl.cppm
+#elif defined(IMPLEMENTATION)
 module p2;
 import "header.h";
 
@@ -68,7 +66,7 @@ void use() {
 
 int use_header() { return foo + bar::baz(); }
 
-//--- user.cppm
+#elif defined(USER)
 import p2;
 import "header.h";
 
@@ -98,3 +96,7 @@ void use() {
 }
 
 int use_header() { return foo + bar::baz(); }
+
+#else
+#error unknown mode
+#endif

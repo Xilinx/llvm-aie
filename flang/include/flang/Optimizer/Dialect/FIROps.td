@@ -2323,13 +2323,9 @@ def fir_DoLoopOp : region_Op<"do_loop", [AttrSizedOperandSegments,
   }];
 }
 
-def fir_IfOp
-    : region_Op<
-          "if", [DeclareOpInterfaceMethods<
-                     RegionBranchOpInterface, ["getRegionInvocationBounds",
-                                               "getEntrySuccessorRegions"]>,
-                 RecursiveMemoryEffects, NoRegionArguments,
-                 WeightedRegionBranchOpInterface]> {
+def fir_IfOp : region_Op<"if", [DeclareOpInterfaceMethods<RegionBranchOpInterface, [
+    "getRegionInvocationBounds", "getEntrySuccessorRegions"]>, RecursiveMemoryEffects,
+    NoRegionArguments]> {
   let summary = "if-then-else conditional operation";
   let description = [{
     Used to conditionally execute operations. This operation is the FIR
@@ -2346,8 +2342,7 @@ def fir_IfOp
     ```
   }];
 
-  let arguments = (ins I1:$condition,
-      OptionalAttr<DenseI32ArrayAttr>:$region_weights);
+  let arguments = (ins I1:$condition);
   let results = (outs Variadic<AnyType>:$results);
 
   let regions = (region
@@ -2376,21 +2371,6 @@ def fir_IfOp
 
     void resultToSourceOps(llvm::SmallVectorImpl<mlir::Value> &results,
                            unsigned resultNum);
-
-    /// Returns the display name string for the region_weights attribute.
-    static constexpr llvm::StringRef getWeightsAttrAssemblyName() {
-      return "weights";
-    }
-
-    /// Sets WeightedRegionBranchOpInterface weights to indicate
-    /// that either THEN or ELSE branch is unlikely.
-    /// By default, THEN branch is set to be unlikely.
-    void setUnlikelyIfWeights(bool unlikelyElse = false) {
-      if (unlikelyElse)
-        setWeights({1, 0});
-      else
-        setWeights({0, 1});
-    }
   }];
 }
 

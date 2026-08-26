@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/SparcFixupKinds.h"
-#include "MCTargetDesc/SparcMCAsmInfo.h"
+#include "SparcMCExpr.h"
 #include "SparcMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -134,8 +134,8 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
   assert(MO.isExpr());
   const MCExpr *Expr = MO.getExpr();
-  if (auto *SExpr = dyn_cast<MCSpecifierExpr>(Expr)) {
-    Fixups.push_back(MCFixup::create(0, Expr, SExpr->getSpecifier()));
+  if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Expr)) {
+    Fixups.push_back(MCFixup::create(0, Expr, SExpr->getFixupKind()));
     return 0;
   }
 
@@ -164,8 +164,8 @@ unsigned SparcMCCodeEmitter::getSImm5OpValue(const MCInst &MI, unsigned OpNo,
   if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
     return CE->getValue();
 
-  if (auto *SExpr = dyn_cast<MCSpecifierExpr>(Expr)) {
-    Fixups.push_back(MCFixup::create(0, Expr, SExpr->getSpecifier()));
+  if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Expr)) {
+    Fixups.push_back(MCFixup::create(0, Expr, SExpr->getFixupKind()));
     return 0;
   }
   Fixups.push_back(MCFixup::create(0, Expr, ELF::R_SPARC_5));
@@ -190,8 +190,8 @@ SparcMCCodeEmitter::getSImm13OpValue(const MCInst &MI, unsigned OpNo,
   if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
     return CE->getValue();
 
-  if (auto *SExpr = dyn_cast<MCSpecifierExpr>(Expr)) {
-    Fixups.push_back(MCFixup::create(0, Expr, SExpr->getSpecifier()));
+  if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Expr)) {
+    Fixups.push_back(MCFixup::create(0, Expr, SExpr->getFixupKind()));
     return 0;
   }
   Fixups.push_back(MCFixup::create(0, Expr, Sparc::fixup_sparc_13));

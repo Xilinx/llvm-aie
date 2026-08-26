@@ -15,7 +15,6 @@
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/TimeProfiler.h"
 
 using namespace clang;
 
@@ -406,7 +405,6 @@ void TemplateArgumentHasher::AddType(const Type *T) {
 
 unsigned clang::serialization::StableHashForTemplateArguments(
     llvm::ArrayRef<TemplateArgument> Args) {
-  llvm::TimeTraceScope TimeScope("Stable Hash for Template Arguments");
   TemplateArgumentHasher Hasher;
   Hasher.AddInteger(Args.size());
   for (TemplateArgument Arg : Args)

@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Error.h"
 #include "llvm/XRay/XRayRecord.h"
@@ -51,7 +50,7 @@ class Trace {
 
   typedef std::vector<XRayRecord>::const_iterator citerator;
 
-  LLVM_ABI friend Expected<Trace> loadTrace(const DataExtractor &, bool);
+  friend Expected<Trace> loadTrace(const DataExtractor &, bool);
 
 public:
   using size_type = RecordVector::size_type;
@@ -69,12 +68,11 @@ public:
 
 /// This function will attempt to load XRay trace records from the provided
 /// |Filename|.
-LLVM_ABI Expected<Trace> loadTraceFile(StringRef Filename, bool Sort = false);
+Expected<Trace> loadTraceFile(StringRef Filename, bool Sort = false);
 
 /// This function will attempt to load XRay trace records from the provided
 /// DataExtractor.
-LLVM_ABI Expected<Trace> loadTrace(const DataExtractor &Extractor,
-                                   bool Sort = false);
+Expected<Trace> loadTrace(const DataExtractor &Extractor, bool Sort = false);
 
 } // namespace xray
 } // namespace llvm

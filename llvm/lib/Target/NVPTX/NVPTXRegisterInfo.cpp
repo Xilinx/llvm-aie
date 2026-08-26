@@ -25,9 +25,9 @@ using namespace llvm;
 
 namespace llvm {
 StringRef getNVPTXRegClassName(TargetRegisterClass const *RC) {
-  if (RC == &NVPTX::B128RegClass)
+  if (RC == &NVPTX::Int128RegsRegClass)
     return ".b128";
-  if (RC == &NVPTX::B64RegClass)
+  if (RC == &NVPTX::Int64RegsRegClass)
     // We use untyped (.b) integer registers here as NVCC does.
     // Correctness of generated code does not depend on register type,
     // but using .s/.u registers runs into ptxas bug that prevents
@@ -47,11 +47,11 @@ StringRef getNVPTXRegClassName(TargetRegisterClass const *RC) {
     //   add.f16v2 rb32,rb32,rb32; // OK
     //   add.f16v2 rs32,rs32,rs32; // OK
     return ".b64";
-  if (RC == &NVPTX::B32RegClass)
+  if (RC == &NVPTX::Int32RegsRegClass)
     return ".b32";
-  if (RC == &NVPTX::B16RegClass)
+  if (RC == &NVPTX::Int16RegsRegClass)
     return ".b16";
-  if (RC == &NVPTX::B1RegClass)
+  if (RC == &NVPTX::Int1RegsRegClass)
     return ".pred";
   if (RC == &NVPTX::SpecialRegsRegClass)
     return "!Special!";
@@ -59,15 +59,15 @@ StringRef getNVPTXRegClassName(TargetRegisterClass const *RC) {
 }
 
 StringRef getNVPTXRegClassStr(TargetRegisterClass const *RC) {
-  if (RC == &NVPTX::B128RegClass)
+  if (RC == &NVPTX::Int128RegsRegClass)
     return "%rq";
-  if (RC == &NVPTX::B64RegClass)
+  if (RC == &NVPTX::Int64RegsRegClass)
     return "%rd";
-  if (RC == &NVPTX::B32RegClass)
+  if (RC == &NVPTX::Int32RegsRegClass)
     return "%r";
-  if (RC == &NVPTX::B16RegClass)
+  if (RC == &NVPTX::Int16RegsRegClass)
     return "%rs";
-  if (RC == &NVPTX::B1RegClass)
+  if (RC == &NVPTX::Int1RegsRegClass)
     return "%p";
   if (RC == &NVPTX::SpecialRegsRegClass)
     return "!Special!";

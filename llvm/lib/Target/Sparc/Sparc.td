@@ -42,28 +42,22 @@ def FeatureV8Deprecated
                      "Enable deprecated V8 instructions in V9 mode">;
 def FeatureVIS
   : SubtargetFeature<"vis", "IsVIS", "true",
-                     "Enable UltraSPARC Visual Instruction Set extensions",
-                     [FeatureV9]>;
+                     "Enable UltraSPARC Visual Instruction Set extensions">;
 def FeatureVIS2
   : SubtargetFeature<"vis2", "IsVIS2", "true",
-                     "Enable Visual Instruction Set extensions II",
-                     [FeatureV9]>;
+                     "Enable Visual Instruction Set extensions II">;
 def FeatureVIS3
   : SubtargetFeature<"vis3", "IsVIS3", "true",
-                     "Enable Visual Instruction Set extensions III",
-                     [FeatureV9]>;
+                     "Enable Visual Instruction Set extensions III">;
 def FeatureUA2005
   : SubtargetFeature<"ua2005", "IsUA2005", "true",
-                     "Enable UltraSPARC Architecture 2005 extensions",
-                     [FeatureV9, FeatureVIS, FeatureVIS2]>;
+                     "Enable UltraSPARC Architecture 2005 extensions">;
 def FeatureUA2007
   : SubtargetFeature<"ua2007", "IsUA2007", "true",
-                     "Enable UltraSPARC Architecture 2007 extensions",
-                     [FeatureV9, FeatureVIS, FeatureVIS2]>;
+                     "Enable UltraSPARC Architecture 2007 extensions">;
 def FeatureOSA2011
   : SubtargetFeature<"osa2011", "IsOSA2011", "true",
-                     "Enable Oracle SPARC Architecture 2011 extensions",
-                     [FeatureV9, FeatureVIS, FeatureVIS2, FeatureVIS3]>;
+                     "Enable Oracle SPARC Architecture 2011 extensions">;
 def FeatureLeon
   : SubtargetFeature<"leon", "IsLeon", "true",
                      "Enable LEON extensions">;

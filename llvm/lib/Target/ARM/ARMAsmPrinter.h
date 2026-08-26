@@ -76,8 +76,6 @@ public:
     return "ARM Assembly Printer";
   }
 
-  const ARMBaseTargetMachine &getTM() const;
-
   void printOperand(const MachineInstr *MI, int OpNum, raw_ostream &O);
 
   void PrintSymbolOperand(const MachineOperand &MO, raw_ostream &O) override;

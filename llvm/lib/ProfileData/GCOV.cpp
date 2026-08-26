@@ -191,7 +191,7 @@ bool GCOVFile::readGCNO(GCOVBuffer &buf) {
           buf.readString(filename);
           if (filename.empty())
             break;
-          Block.addFile(addNormalizedPathToMap(filename));
+          // TODO Unhandled
         }
       }
     }
@@ -456,13 +456,11 @@ void GCOVBlock::print(raw_ostream &OS) const {
     }
     OS << "\n";
   }
-  if (!locations.empty()) {
-    for (const GCOVBlockLocation &loc : locations) {
-      OS << "\tFile: " << loc.srcIdx << ": ";
-      for (uint32_t N : loc.lines)
-        OS << (N) << ",";
-      OS << "\n";
-    }
+  if (!lines.empty()) {
+    OS << "\tLines : ";
+    for (uint32_t N : lines)
+      OS << (N) << ",";
+    OS << "\n";
   }
 }
 
@@ -703,25 +701,20 @@ void Context::collectFunction(GCOVFunction &f, Summary &summary) {
   SmallSet<uint32_t, 16> lines;
   SmallSet<uint32_t, 16> linesExec;
   for (const GCOVBlock &b : f.blocksRange()) {
-    if (b.locations.empty())
+    if (b.lines.empty())
       continue;
-    for (const GCOVBlockLocation &loc : b.locations) {
-      SourceInfo &locSource = sources[loc.srcIdx];
-      uint32_t maxLineNum = *llvm::max_element(loc.lines);
-      if (maxLineNum >= locSource.lines.size())
-        locSource.lines.resize(maxLineNum + 1);
-      for (uint32_t lineNum : loc.lines) {
-        LineInfo &line = locSource.lines[lineNum];
-        line.exists = true;
-        line.count += b.count;
-        line.blocks.push_back(&b);
-        if (f.srcIdx == loc.srcIdx) {
-          if (lines.insert(lineNum).second)
-            ++summary.lines;
-          if (b.count && linesExec.insert(lineNum).second)
-            ++summary.linesExec;
-        }
-      }
+    uint32_t maxLineNum = *llvm::max_element(b.lines);
+    if (maxLineNum >= si.lines.size())
+      si.lines.resize(maxLineNum + 1);
+    for (uint32_t lineNum : b.lines) {
+      LineInfo &line = si.lines[lineNum];
+      if (lines.insert(lineNum).second)
+        ++summary.lines;
+      if (b.count && linesExec.insert(lineNum).second)
+        ++summary.linesExec;
+      line.exists = true;
+      line.count += b.count;
+      line.blocks.push_back(&b);
     }
   }
 }

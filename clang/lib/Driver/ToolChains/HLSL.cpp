@@ -182,15 +182,13 @@ std::string getSpirvExtArg(ArrayRef<std::string> SpvExtensionArgs) {
       (Twine("-spirv-ext=+") + SpvExtensionArgs.front()).str();
   SpvExtensionArgs = SpvExtensionArgs.slice(1);
   for (auto Extension : SpvExtensionArgs) {
-    if (Extension != "KHR")
-      Extension = (Twine("+") + Extension).str();
-    LlvmOption = (Twine(LlvmOption) + "," + Extension).str();
+    LlvmOption = (Twine(LlvmOption) + ",+" + Extension).str();
   }
   return LlvmOption;
 }
 
 bool isValidSPIRVExtensionName(const std::string &str) {
-  std::regex pattern("KHR|SPV_[a-zA-Z0-9_]+");
+  std::regex pattern("SPV_[a-zA-Z0-9_]+");
   return std::regex_match(str, pattern);
 }
 
@@ -202,7 +200,7 @@ bool checkExtensionArgsAreValid(ArrayRef<std::string> SpvExtensionArgs,
   for (auto Extension : SpvExtensionArgs) {
     if (!isValidSPIRVExtensionName(Extension)) {
       Driver.Diag(diag::err_drv_invalid_value)
-          << "-fspv-extension" << Extension;
+          << "-fspv_extension" << Extension;
       AllValid = false;
     }
   }
@@ -297,13 +295,6 @@ HLSLToolChain::TranslateArgs(const DerivedArgList &Args, StringRef BoundArch,
       A->claim();
       continue;
     }
-    if (A->getOption().getID() == options::OPT_dxc_rootsig_ver) {
-      DAL->AddJoinedArg(nullptr,
-                        Opts.getOption(options::OPT_fdx_rootsignature_version),
-                        A->getValue());
-      A->claim();
-      continue;
-    }
     if (A->getOption().getID() == options::OPT__SLASH_O) {
       StringRef OStr = A->getValue();
       if (OStr == "d") {
@@ -339,25 +330,6 @@ HLSLToolChain::TranslateArgs(const DerivedArgList &Args, StringRef BoundArch,
       A->claim();
       continue;
     }
-
-    if (A->getOption().getID() == options::OPT_fvk_use_dx_layout) {
-      // This is the only implemented layout so far.
-      A->claim();
-      continue;
-    }
-
-    if (A->getOption().getID() == options::OPT_fvk_use_scalar_layout) {
-      getDriver().Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-      A->claim();
-      continue;
-    }
-
-    if (A->getOption().getID() == options::OPT_fvk_use_gl_layout) {
-      getDriver().Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-      A->claim();
-      continue;
-    }
-
     DAL->append(A);
   }
 

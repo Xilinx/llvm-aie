@@ -108,9 +108,7 @@ TEST(LlvmLibcTableTest, Insertion) {
             static_cast<void *>(keys[CAP].bytes));
 
   for (size_t i = 0; i <= CAP; ++i) {
-    auto comp = [](char l, char r) -> int { return l - r; };
-    ASSERT_EQ(
-        inline_strcmp(table->find(keys[i].bytes)->key, keys[i].bytes, comp), 0);
+    ASSERT_EQ(strcmp(table->find(keys[i].bytes)->key, keys[i].bytes), 0);
   }
   for (size_t i = CAP + 1; i < 256; ++i) {
     ASSERT_EQ(table->find(keys[i].bytes), static_cast<ENTRY *>(nullptr));

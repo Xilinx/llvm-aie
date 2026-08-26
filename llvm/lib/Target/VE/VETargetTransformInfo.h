@@ -49,7 +49,7 @@ static bool isVectorLaneType(llvm::Type &ElemTy) {
 
 namespace llvm {
 
-class VETTIImpl final : public BasicTTIImplBase<VETTIImpl> {
+class VETTIImpl : public BasicTTIImplBase<VETTIImpl> {
   using BaseT = BasicTTIImplBase<VETTIImpl>;
   friend BaseT;
 

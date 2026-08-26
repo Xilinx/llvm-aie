@@ -7744,12 +7744,11 @@ void SIInstrInfo::moveToVALUImpl(SIInstrWorklist &Worklist,
                                                     ? &AMDGPU::VGPR_16RegClass
                                                     : &AMDGPU::VGPR_32RegClass);
     auto NewInstr = BuildMI(*MBB, Inst, DL, get(NewOpcode), NewDst)
-                        .add(Inst.getOperand(1)) // src0_modifiers
+                        .addImm(0) // src0_modifiers
                         .add(Inst.getOperand(2))
-                        .add(Inst.getOperand(3)) // clamp
-                        .add(Inst.getOperand(4)) // omod
-                        .setMIFlags(Inst.getFlags());
-    if (AMDGPU::hasNamedOperand(NewOpcode, AMDGPU::OpName::op_sel))
+                        .addImm(0)  // clamp
+                        .addImm(0); // omod
+    if (ST.useRealTrue16Insts())
       NewInstr.addImm(0); // opsel0
     MRI.replaceRegWith(Inst.getOperand(0).getReg(), NewDst);
     legalizeOperandsVALUt16(*NewInstr, MRI);
@@ -8716,8 +8715,9 @@ void SIInstrInfo::splitScalar64BitCountOp(SIInstrWorklist &Worklist,
 void SIInstrInfo::addUsersToMoveToVALUWorklist(
     Register DstReg, MachineRegisterInfo &MRI,
     SIInstrWorklist &Worklist) const {
-  for (MachineOperand &MO : make_early_inc_range(MRI.use_operands(DstReg))) {
-    MachineInstr &UseMI = *MO.getParent();
+  for (MachineRegisterInfo::use_iterator I = MRI.use_begin(DstReg),
+         E = MRI.use_end(); I != E;) {
+    MachineInstr &UseMI = *I->getParent();
 
     unsigned OpNo = 0;
 
@@ -8732,15 +8732,21 @@ void SIInstrInfo::addUsersToMoveToVALUWorklist(
     case AMDGPU::INSERT_SUBREG:
       break;
     default:
-      OpNo = MO.getOperandNo();
+      OpNo = I.getOperandNo();
       break;
     }
 
-    if (!RI.hasVectorRegisters(getOpRegClass(UseMI, OpNo)))
+    if (!RI.hasVectorRegisters(getOpRegClass(UseMI, OpNo))) {
       Worklist.insert(&UseMI);
-    else
-      // Legalization could change user list.
+
+      do {
+        ++I;
+      } while (I != E && I->getParent() == &UseMI);
+    } else {
       legalizeOperandsVALUt16(UseMI, OpNo, MRI);
+
+      ++I;
+    }
   }
 }
 
@@ -9568,8 +9574,7 @@ static unsigned subtargetEncodingFamily(const GCNSubtarget &ST) {
   case AMDGPUSubtarget::GFX11:
     return SIEncodingFamily::GFX11;
   case AMDGPUSubtarget::GFX12:
-    return ST.hasGFX1250Insts() ? SIEncodingFamily::GFX1250
-                                : SIEncodingFamily::GFX12;
+    return SIEncodingFamily::GFX12;
   }
   llvm_unreachable("Unknown subtarget generation!");
 }
@@ -9662,9 +9667,6 @@ int SIInstrInfo::pseudoToMCOpcode(int Opcode) const {
   }
 
   int MCOp = AMDGPU::getMCOpcode(Opcode, Gen);
-
-  if (MCOp == (uint16_t)-1 && ST.hasGFX1250Insts())
-    MCOp = AMDGPU::getMCOpcode(Opcode, SIEncodingFamily::GFX12);
 
   // -1 means that Opcode is already a native instruction.
   if (MCOp == -1)
@@ -10098,12 +10100,8 @@ unsigned SIInstrInfo::getDSShaderTypeValue(const MachineFunction &MF) {
     return 3;
   case CallingConv::AMDGPU_HS:
   case CallingConv::AMDGPU_LS:
-  case CallingConv::AMDGPU_ES: {
-    const Function &F = MF.getFunction();
-    F.getContext().diagnose(DiagnosticInfoUnsupported(
-        F, "ds_ordered_count unsupported for this calling conv"));
-    [[fallthrough]];
-  }
+  case CallingConv::AMDGPU_ES:
+    report_fatal_error("ds_ordered_count unsupported for this calling conv");
   case CallingConv::AMDGPU_CS:
   case CallingConv::AMDGPU_KERNEL:
   case CallingConv::C:

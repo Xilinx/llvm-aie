@@ -31,7 +31,6 @@
 #ifdef EXPENSIVE_CHECKS
 #include <cstdint>
 #endif
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -96,7 +95,7 @@ const char *to_string(ThinOrFullLTOPhase Phase);
 /// interprocedural optimization or you do not fit into any of the more
 /// constrained passes described below.
 ///
-class LLVM_ABI Pass {
+class Pass {
   AnalysisResolver *Resolver = nullptr;  // Used to resolve analysis
   const void *PassID;
   PassKind Kind;
@@ -175,6 +174,11 @@ public:
   /// longer used.
   virtual void releaseMemory();
 
+  /// getAdjustedAnalysisPointer - This method is used when a pass implements
+  /// an analysis interface through multiple inheritance.  If needed, it should
+  /// override this to adjust the this pointer as needed for the specified pass
+  /// info.
+  virtual void *getAdjustedAnalysisPointer(AnalysisID ID);
   virtual ImmutablePass *getAsImmutablePass();
   virtual PMDataManager *getAsPMDataManager();
 
@@ -248,7 +252,7 @@ public:
 /// interprocedural optimizations and analyses.  ModulePasses may do anything
 /// they want to the program.
 ///
-class LLVM_ABI ModulePass : public Pass {
+class ModulePass : public Pass {
 public:
   explicit ModulePass(char &pid) : Pass(PT_Module, pid) {}
 
@@ -278,7 +282,7 @@ protected:
 /// ImmutablePass class - This class is used to provide information that does
 /// not need to be run.  This is useful for things like target information.
 ///
-class LLVM_ABI ImmutablePass : public ModulePass {
+class ImmutablePass : public ModulePass {
 public:
   explicit ImmutablePass(char &pid) : ModulePass(pid) {}
 
@@ -307,7 +311,7 @@ public:
 ///  2. Optimizing a function does not cause the addition or removal of any
 ///     functions in the module
 ///
-class LLVM_ABI FunctionPass : public Pass {
+class FunctionPass : public Pass {
 public:
   explicit FunctionPass(char &pid) : Pass(PT_Function, pid) {}
 
@@ -334,13 +338,13 @@ protected:
 /// If the user specifies the -time-passes argument on an LLVM tool command line
 /// then the value of this boolean will be true, otherwise false.
 /// This is the storage for the -time-passes option.
-LLVM_ABI extern bool TimePassesIsEnabled;
+extern bool TimePassesIsEnabled;
 /// If TimePassesPerRun is true, there would be one line of report for
 /// each pass invocation.
 /// If TimePassesPerRun is false, there would be only one line of
 /// report for each pass (even there are more than one pass objects).
 /// (For new pass manager only)
-LLVM_ABI extern bool TimePassesPerRun;
+extern bool TimePassesPerRun;
 
 } // end namespace llvm
 

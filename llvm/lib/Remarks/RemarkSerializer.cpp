@@ -22,11 +22,12 @@ remarks::createRemarkSerializer(Format RemarksFormat, SerializerMode Mode,
                                 raw_ostream &OS) {
   switch (RemarksFormat) {
   case Format::Unknown:
-  case Format::Auto:
     return createStringError(std::errc::invalid_argument,
-                             "Invalid remark serializer format.");
+                             "Unknown remark serializer format.");
   case Format::YAML:
     return std::make_unique<YAMLRemarkSerializer>(OS, Mode);
+  case Format::YAMLStrTab:
+    return std::make_unique<YAMLStrTabRemarkSerializer>(OS, Mode);
   case Format::Bitstream:
     return std::make_unique<BitstreamRemarkSerializer>(OS, Mode);
   }
@@ -38,11 +39,13 @@ remarks::createRemarkSerializer(Format RemarksFormat, SerializerMode Mode,
                                 raw_ostream &OS, remarks::StringTable StrTab) {
   switch (RemarksFormat) {
   case Format::Unknown:
-  case Format::Auto:
     return createStringError(std::errc::invalid_argument,
-                             "Invalid remark serializer format.");
+                             "Unknown remark serializer format.");
   case Format::YAML:
     return std::make_unique<YAMLRemarkSerializer>(OS, Mode, std::move(StrTab));
+  case Format::YAMLStrTab:
+    return std::make_unique<YAMLStrTabRemarkSerializer>(OS, Mode,
+                                                        std::move(StrTab));
   case Format::Bitstream:
     return std::make_unique<BitstreamRemarkSerializer>(OS, Mode,
                                                        std::move(StrTab));

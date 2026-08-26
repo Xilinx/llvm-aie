@@ -2,8 +2,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -w -analyzer-config crosscheck-with-z3=true -verify %s
 // REQUIRES: z3
 
-// XFAIL: *
-
 typedef struct o p;
 struct o {
   struct {

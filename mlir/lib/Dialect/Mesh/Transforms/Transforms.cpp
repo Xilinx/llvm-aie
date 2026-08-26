@@ -207,27 +207,17 @@ createCollectiveProcessGroupSize(MeshOp mesh, ArrayRef<MeshAxis> axes,
       builder.getIndexType()));
 }
 
-TypedValue<IndexType>
-createProcessLinearIndex(StringRef mesh, ValueRange processInGroupMultiIndex,
-                         ArrayRef<MeshAxis> meshAxes,
-                         ImplicitLocOpBuilder &builder) {
+TypedValue<IndexType> createProcessLinearIndex(StringRef mesh,
+                                               ArrayRef<MeshAxis> meshAxes,
+                                               ImplicitLocOpBuilder &builder) {
+  ResultRange processInGroupMultiIndex =
+      builder.create<ProcessMultiIndexOp>(mesh, meshAxes).getResults();
   Operation::result_range processGroupShape =
       builder.create<MeshShapeOp>(mesh, meshAxes).getResult();
   OpFoldResult processInGroupLinearIndex = affine::linearizeIndex(
       llvm::to_vector_of<OpFoldResult>(processInGroupMultiIndex),
       llvm::to_vector_of<OpFoldResult>(processGroupShape), builder);
-  auto res = dyn_cast<Value>(processInGroupLinearIndex);
-  if (!res)
-    res = builder.create<arith::ConstantIndexOp>(
-        cast<IntegerAttr>(cast<Attribute>(processInGroupLinearIndex)).getInt());
-  return cast<TypedValue<IndexType>>(res);
+  return cast<TypedValue<IndexType>>(cast<Value>(processInGroupLinearIndex));
 }
 
-TypedValue<IndexType> createProcessLinearIndex(StringRef mesh,
-                                               ArrayRef<MeshAxis> meshAxes,
-                                               ImplicitLocOpBuilder &builder) {
-  return createProcessLinearIndex(
-      mesh, builder.create<ProcessMultiIndexOp>(mesh, meshAxes).getResults(),
-      meshAxes, builder);
-}
 } // namespace mlir::mesh

@@ -81,7 +81,6 @@ bool X86FixupInstTuningPass::processInstruction(
   MachineInstr &MI = *I;
   unsigned Opc = MI.getOpcode();
   unsigned NumOperands = MI.getDesc().getNumOperands();
-  bool OptSize = MF.getFunction().hasOptSize();
 
   auto GetInstTput = [&](unsigned Opcode) -> std::optional<double> {
     // We already checked that SchedModel exists in `NewOpcPreferable`.
@@ -132,15 +131,11 @@ bool X86FixupInstTuningPass::processInstruction(
   auto ProcessVPERMILPDri = [&](unsigned NewOpc) -> bool {
     if (!NewOpcPreferable(NewOpc))
       return false;
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      unsigned MaskImm = MI.getOperand(NumOperands - 1).getImm();
-      MI.removeOperand(NumOperands - 1);
-      MI.addOperand(MI.getOperand(NumOperands - 2));
-      MI.setDesc(TII->get(NewOpc));
-      MI.addOperand(MachineOperand::CreateImm(MaskImm));
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
+    unsigned MaskImm = MI.getOperand(NumOperands - 1).getImm();
+    MI.removeOperand(NumOperands - 1);
+    MI.addOperand(MI.getOperand(NumOperands - 2));
+    MI.setDesc(TII->get(NewOpc));
+    MI.addOperand(MachineOperand::CreateImm(MaskImm));
     return true;
   };
 
@@ -151,15 +146,11 @@ bool X86FixupInstTuningPass::processInstruction(
   auto ProcessVPERMILPSri = [&](unsigned NewOpc) -> bool {
     if (!NewOpcPreferable(NewOpc))
       return false;
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      unsigned MaskImm = MI.getOperand(NumOperands - 1).getImm();
-      MI.removeOperand(NumOperands - 1);
-      MI.addOperand(MI.getOperand(NumOperands - 2));
-      MI.setDesc(TII->get(NewOpc));
-      MI.addOperand(MachineOperand::CreateImm(MaskImm));
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
+    unsigned MaskImm = MI.getOperand(NumOperands - 1).getImm();
+    MI.removeOperand(NumOperands - 1);
+    MI.addOperand(MI.getOperand(NumOperands - 2));
+    MI.setDesc(TII->get(NewOpc));
+    MI.addOperand(MachineOperand::CreateImm(MaskImm));
     return true;
   };
 
@@ -172,11 +163,7 @@ bool X86FixupInstTuningPass::processInstruction(
     if (!ST->hasNoDomainDelayShuffle() ||
         !NewOpcPreferable(NewOpc, /*ReplaceInTie*/ false))
       return false;
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      MI.setDesc(TII->get(NewOpc));
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
+    MI.setDesc(TII->get(NewOpc));
     return true;
   };
 
@@ -197,12 +184,9 @@ bool X86FixupInstTuningPass::processInstruction(
   auto ProcessUNPCK = [&](unsigned NewOpc, unsigned MaskImm) -> bool {
     if (!NewOpcPreferable(NewOpc, /*ReplaceInTie*/ false))
       return false;
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      MI.setDesc(TII->get(NewOpc));
-      MI.addOperand(MachineOperand::CreateImm(MaskImm));
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
+
+    MI.setDesc(TII->get(NewOpc));
+    MI.addOperand(MachineOperand::CreateImm(MaskImm));
     return true;
   };
 
@@ -213,11 +197,7 @@ bool X86FixupInstTuningPass::processInstruction(
     if (!ST->hasNoDomainDelayShuffle() ||
         !NewOpcPreferable(NewOpc, /*ReplaceInTie*/ false))
       return false;
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      MI.setDesc(TII->get(NewOpc));
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
+    MI.setDesc(TII->get(NewOpc));
     return true;
   };
 
@@ -242,60 +222,7 @@ bool X86FixupInstTuningPass::processInstruction(
     return ProcessUNPCKToIntDomain(NewOpc);
   };
 
-  auto ProcessBLENDWToBLENDD = [&](unsigned MovOpc, unsigned NumElts) -> bool {
-    if (!ST->hasAVX2() || !NewOpcPreferable(MovOpc))
-      return false;
-    // Convert to VPBLENDD if scaling the VPBLENDW mask down/up loses no bits.
-    APInt MaskW =
-        APInt(8, MI.getOperand(NumOperands - 1).getImm(), /*IsSigned=*/false);
-    APInt MaskD = APIntOps::ScaleBitMask(MaskW, 4, /*MatchAllBits=*/true);
-    if (MaskW != APIntOps::ScaleBitMask(MaskD, 8, /*MatchAllBits=*/true))
-      return false;
-    APInt NewMaskD = APInt::getSplat(NumElts, MaskD);
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      MI.setDesc(TII->get(MovOpc));
-      MI.removeOperand(NumOperands - 1);
-      MI.addOperand(MachineOperand::CreateImm(NewMaskD.getZExtValue()));
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
-    return true;
-  };
-
-  auto ProcessBLENDToMOV = [&](unsigned MovOpc, unsigned Mask,
-                               unsigned MovImm) -> bool {
-    if ((MI.getOperand(NumOperands - 1).getImm() & Mask) != MovImm)
-      return false;
-    if (!OptSize && !NewOpcPreferable(MovOpc))
-      return false;
-    LLVM_DEBUG(dbgs() << "Replacing: " << MI);
-    {
-      MI.setDesc(TII->get(MovOpc));
-      MI.removeOperand(NumOperands - 1);
-    }
-    LLVM_DEBUG(dbgs() << "     With: " << MI);
-    return true;
-  };
-
   switch (Opc) {
-  case X86::BLENDPDrri:
-    return ProcessBLENDToMOV(X86::MOVSDrr, 0x3, 0x1);
-  case X86::VBLENDPDrri:
-    return ProcessBLENDToMOV(X86::VMOVSDrr, 0x3, 0x1);
-
-  case X86::BLENDPSrri:
-    return ProcessBLENDToMOV(X86::MOVSSrr, 0xF, 0x1) ||
-           ProcessBLENDToMOV(X86::MOVSDrr, 0xF, 0x3);
-  case X86::VBLENDPSrri:
-    return ProcessBLENDToMOV(X86::VMOVSSrr, 0xF, 0x1) ||
-           ProcessBLENDToMOV(X86::VMOVSDrr, 0xF, 0x3);
-
-  case X86::VPBLENDWrri:
-    // TODO: Add X86::VPBLENDWrmi handling
-    // TODO: Add X86::VPBLENDWYrri handling
-    // TODO: Add X86::VPBLENDWYrmi handling
-    return ProcessBLENDWToBLENDD(X86::VPBLENDDrri, 4);
-
   case X86::VPERMILPDri:
     return ProcessVPERMILPDri(X86::VSHUFPDrri);
   case X86::VPERMILPDYri:

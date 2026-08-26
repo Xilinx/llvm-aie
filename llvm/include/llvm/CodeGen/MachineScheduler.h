@@ -1501,7 +1501,7 @@ createCopyConstrainDAGMutation(const TargetInstrInfo *TII,
 /// default scheduler if the target does not set a default.
 /// Adds default DAG mutations.
 template <typename Strategy = GenericScheduler>
-ScheduleDAGMILive *createSchedLive(MachineSchedContext *C) {
+LLVM_ABI ScheduleDAGMILive *createSchedLive(MachineSchedContext *C) {
   ScheduleDAGMILive *DAG =
       new ScheduleDAGMILive(C, std::make_unique<Strategy>(C));
   // Register DAG post-processors.
@@ -1521,7 +1521,7 @@ ScheduleDAGMILive *createSchedLive(MachineSchedContext *C) {
 
 /// Create a generic scheduler with no vreg liveness or DAG mutation passes.
 template <typename Strategy = PostGenericScheduler>
-ScheduleDAGMI *createSchedPostRA(MachineSchedContext *C) {
+LLVM_ABI ScheduleDAGMI *createSchedPostRA(MachineSchedContext *C) {
   ScheduleDAGMI *DAG = new ScheduleDAGMI(C, std::make_unique<Strategy>(C),
                                          /*RemoveKillFlags=*/true);
   const TargetSubtargetInfo &STI = C->MF->getSubtarget();

@@ -31,10 +31,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/JSON.h"
 #include <map>
 
 namespace llvm {
@@ -46,7 +43,6 @@ class Function;
 class Type;
 class Value;
 class raw_ostream;
-class LLVMContext;
 
 /// IR2Vec computes two kinds of embeddings: Symbolic and Flow-aware.
 /// Symbolic embeddings capture the "syntactic" and "statistical correlation"
@@ -57,11 +53,6 @@ class LLVMContext;
 enum class IR2VecKind { Symbolic };
 
 namespace ir2vec {
-
-LLVM_ABI extern cl::opt<float> OpcWeight;
-LLVM_ABI extern cl::opt<float> TypeWeight;
-LLVM_ABI extern cl::opt<float> ArgWeight;
-
 /// Embedding is a datatype that wraps std::vector<double>. It provides
 /// additional functionality for arithmetic and comparison operations.
 /// It is meant to be used *like* std::vector<double> but is more restrictive
@@ -107,17 +98,16 @@ public:
   const std::vector<double> &getData() const { return Data; }
 
   /// Arithmetic operators
-  LLVM_ABI Embedding &operator+=(const Embedding &RHS);
-  LLVM_ABI Embedding &operator-=(const Embedding &RHS);
+  Embedding &operator+=(const Embedding &RHS);
+  Embedding &operator-=(const Embedding &RHS);
 
   /// Adds Src Embedding scaled by Factor with the called Embedding.
   /// Called_Embedding += Src * Factor
-  LLVM_ABI Embedding &scaleAndAdd(const Embedding &Src, float Factor);
+  Embedding &scaleAndAdd(const Embedding &Src, float Factor);
 
   /// Returns true if the embedding is approximately equal to the RHS embedding
   /// within the specified tolerance.
-  LLVM_ABI bool approximatelyEquals(const Embedding &RHS,
-                                    double Tolerance = 1e-6) const;
+  bool approximatelyEquals(const Embedding &RHS, double Tolerance = 1e-6) const;
 };
 
 using InstEmbeddingsMap = DenseMap<const Instruction *, Embedding>;
@@ -150,7 +140,7 @@ protected:
   mutable BBEmbeddingsMap BBVecMap;
   mutable InstEmbeddingsMap InstVecMap;
 
-  LLVM_ABI Embedder(const Function &F, const Vocab &Vocabulary);
+  Embedder(const Function &F, const Vocab &Vocabulary);
 
   /// Helper function to compute embeddings. It generates embeddings for all
   /// the instructions and basic blocks in the function F. Logic of computing
@@ -163,38 +153,38 @@ protected:
 
   /// Lookup vocabulary for a given Key. If the key is not found, it returns a
   /// zero vector.
-  LLVM_ABI Embedding lookupVocab(const std::string &Key) const;
+  Embedding lookupVocab(const std::string &Key) const;
 
 public:
   virtual ~Embedder() = default;
 
   /// Factory method to create an Embedder object.
-  LLVM_ABI static Expected<std::unique_ptr<Embedder>>
+  static Expected<std::unique_ptr<Embedder>>
   create(IR2VecKind Mode, const Function &F, const Vocab &Vocabulary);
 
   /// Returns a map containing instructions and the corresponding embeddings for
   /// the function F if it has been computed. If not, it computes the embeddings
   /// for the function and returns the map.
-  LLVM_ABI const InstEmbeddingsMap &getInstVecMap() const;
+  const InstEmbeddingsMap &getInstVecMap() const;
 
   /// Returns a map containing basic block and the corresponding embeddings for
   /// the function F if it has been computed. If not, it computes the embeddings
   /// for the function and returns the map.
-  LLVM_ABI const BBEmbeddingsMap &getBBVecMap() const;
+  const BBEmbeddingsMap &getBBVecMap() const;
 
   /// Returns the embedding for a given basic block in the function F if it has
   /// been computed. If not, it computes the embedding for the basic block and
   /// returns it.
-  LLVM_ABI const Embedding &getBBVector(const BasicBlock &BB) const;
+  const Embedding &getBBVector(const BasicBlock &BB) const;
 
   /// Computes and returns the embedding for the current function.
-  LLVM_ABI const Embedding &getFunctionVector() const;
+  const Embedding &getFunctionVector() const;
 };
 
 /// Class for computing the Symbolic embeddings of IR2Vec.
 /// Symbolic embeddings are constructed based on the entity-level
 /// representations obtained from the Vocabulary.
-class LLVM_ABI SymbolicEmbedder : public Embedder {
+class SymbolicEmbedder : public Embedder {
 private:
   /// Utility function to compute the embedding for a given type.
   Embedding getTypeEmbedding(const Type *Ty) const;
@@ -221,13 +211,13 @@ class IR2VecVocabResult {
 
 public:
   IR2VecVocabResult() = default;
-  LLVM_ABI IR2VecVocabResult(ir2vec::Vocab &&Vocabulary);
+  IR2VecVocabResult(ir2vec::Vocab &&Vocabulary);
 
   bool isValid() const { return Valid; }
-  LLVM_ABI const ir2vec::Vocab &getVocabulary() const;
-  LLVM_ABI unsigned getDimension() const;
-  LLVM_ABI bool invalidate(Module &M, const PreservedAnalyses &PA,
-                           ModuleAnalysisManager::Invalidator &Inv) const;
+  const ir2vec::Vocab &getVocabulary() const;
+  unsigned getDimension() const;
+  bool invalidate(Module &M, const PreservedAnalyses &PA,
+                  ModuleAnalysisManager::Invalidator &Inv) const;
 };
 
 /// This analysis provides the vocabulary for IR2Vec. The vocabulary provides a
@@ -236,15 +226,12 @@ public:
 class IR2VecVocabAnalysis : public AnalysisInfoMixin<IR2VecVocabAnalysis> {
   ir2vec::Vocab Vocabulary;
   Error readVocabulary();
-  void emitError(Error Err, LLVMContext &Ctx);
 
 public:
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
   IR2VecVocabAnalysis() = default;
-  LLVM_ABI explicit IR2VecVocabAnalysis(const ir2vec::Vocab &Vocab);
-  LLVM_ABI explicit IR2VecVocabAnalysis(ir2vec::Vocab &&Vocab);
   using Result = IR2VecVocabResult;
-  LLVM_ABI Result run(Module &M, ModuleAnalysisManager &MAM);
+  Result run(Module &M, ModuleAnalysisManager &MAM);
 };
 
 /// This pass prints the IR2Vec embeddings for instructions, basic blocks, and
@@ -255,7 +242,7 @@ class IR2VecPrinterPass : public PassInfoMixin<IR2VecPrinterPass> {
 
 public:
   explicit IR2VecPrinterPass(raw_ostream &OS) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
   static bool isRequired() { return true; }
 };
 

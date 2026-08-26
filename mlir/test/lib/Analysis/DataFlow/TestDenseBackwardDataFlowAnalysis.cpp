@@ -13,8 +13,9 @@
 #include "TestDenseDataFlowAnalysis.h"
 #include "TestDialect.h"
 #include "TestOps.h"
+#include "mlir/Analysis/DataFlow/ConstantPropagationAnalysis.h"
+#include "mlir/Analysis/DataFlow/DeadCodeAnalysis.h"
 #include "mlir/Analysis/DataFlow/DenseAnalysis.h"
-#include "mlir/Analysis/DataFlow/Utils.h"
 #include "mlir/Analysis/DataFlowFramework.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/SymbolTable.h"
@@ -282,8 +283,9 @@ struct TestNextAccessPass
 
     auto config = DataFlowConfig().setInterprocedural(interprocedural);
     DataFlowSolver solver(config);
-    loadBaselineAnalyses(solver);
+    solver.load<DeadCodeAnalysis>();
     solver.load<NextAccessAnalysis>(symbolTable, assumeFuncReads);
+    solver.load<SparseConstantPropagation>();
     solver.load<UnderlyingValueAnalysis>();
     if (failed(solver.initializeAndRun(op))) {
       emitError(op->getLoc(), "dataflow solver failed");

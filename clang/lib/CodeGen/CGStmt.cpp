@@ -757,9 +757,10 @@ void CodeGenFunction::LexicalScope::rescopeLabels() {
     = CGF.EHStack.getInnermostNormalCleanup();
 
   // Change the scope depth of all the labels.
-  for (const LabelDecl *Label : Labels) {
-    assert(CGF.LabelMap.count(Label));
-    JumpDest &dest = CGF.LabelMap.find(Label)->second;
+  for (SmallVectorImpl<const LabelDecl*>::const_iterator
+         i = Labels.begin(), e = Labels.end(); i != e; ++i) {
+    assert(CGF.LabelMap.count(*i));
+    JumpDest &dest = CGF.LabelMap.find(*i)->second;
     assert(dest.getScopeDepth().isValid());
     assert(innermostScope.encloses(dest.getScopeDepth()));
     dest.setScopeDepth(innermostScope);
@@ -2301,8 +2302,8 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
       // Okay, we can dead code eliminate everything except this case.  Emit the
       // specified series of statements and we're good.
-      for (const Stmt *CaseStmt : CaseStmts)
-        EmitStmt(CaseStmt);
+      for (unsigned i = 0, e = CaseStmts.size(); i != e; ++i)
+        EmitStmt(CaseStmts[i]);
       incrementProfileCounter(&S);
       PGO->markStmtMaybeUsed(S.getBody());
 

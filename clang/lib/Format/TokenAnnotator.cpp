@@ -1371,7 +1371,7 @@ private:
         Tok->setType(TT_InlineASMColon);
       } else if (Contexts.back().ColonIsDictLiteral || Style.isProto()) {
         Tok->setType(TT_DictLiteral);
-        if (Style.isTextProto())
+        if (Prev && Style.isTextProto())
           Prev->setType(TT_SelectorName);
       } else if (Contexts.back().ColonIsObjCMethodExpr ||
                  Line.startsWith(TT_ObjCMethodSpecifier)) {
@@ -1408,16 +1408,19 @@ private:
         }
       } else if (Contexts.back().ContextType == Context::C11GenericSelection) {
         Tok->setType(TT_GenericSelectionColon);
+        assert(Prev);
         if (Prev->isPointerOrReference())
           Prev->setFinalizedType(TT_PointerOrReference);
       } else if ((CurrentToken && CurrentToken->is(tok::numeric_constant)) ||
-                 (Prev->is(TT_StartOfName) && !Scopes.empty() &&
+                 (Prev && Prev->is(TT_StartOfName) && !Scopes.empty() &&
                   Scopes.back() == ST_Class)) {
         Tok->setType(TT_BitFieldColon);
       } else if (Contexts.size() == 1 &&
                  !Line.getFirstNonComment()->isOneOf(tok::kw_enum, tok::kw_case,
                                                      tok::kw_default) &&
                  !Line.startsWith(tok::kw_typedef, tok::kw_enum)) {
+        if (!Prev)
+          break;
         if (Prev->isOneOf(tok::r_paren, tok::kw_noexcept) ||
             Prev->ClosesRequiresClause) {
           Tok->setType(TT_CtorInitializerColon);
@@ -3975,7 +3978,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) const {
   for (auto *Tok = FirstNonComment && FirstNonComment->isNot(tok::kw_using)
                        ? FirstNonComment->Next
                        : nullptr;
-       Tok && Tok->isNot(BK_BracedInit); Tok = Tok->Next) {
+       Tok; Tok = Tok->Next) {
     if (Tok->is(TT_StartOfName))
       SeenName = true;
     if (Tok->Previous->EndsCppAttributeGroup)

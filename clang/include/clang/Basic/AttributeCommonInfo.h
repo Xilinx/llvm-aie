@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_BASIC_ATTRIBUTECOMMONINFO_H
 #define LLVM_CLANG_BASIC_ATTRIBUTECOMMONINFO_H
 
-#include "clang/Basic/AttributeScopeInfo.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
 
@@ -62,7 +61,6 @@ public:
     /// implicitly.
     AS_Implicit
   };
-
   enum Kind {
 #define PARSED_ATTR(NAME) AT_##NAME,
 #include "clang/Basic/AttrParsedAttrList.inc"
@@ -80,9 +78,9 @@ public:
 
 private:
   const IdentifierInfo *AttrName = nullptr;
-  AttributeScopeInfo AttrScope;
+  const IdentifierInfo *ScopeName = nullptr;
   SourceRange AttrRange;
-
+  const SourceLocation ScopeLoc;
   // Corresponds to the Kind enum.
   LLVM_PREFERRED_TYPE(Kind)
   unsigned AttrKind : 16;
@@ -148,10 +146,11 @@ public:
   };
 
   AttributeCommonInfo(const IdentifierInfo *AttrName,
-                      AttributeScopeInfo AttrScope, SourceRange AttrRange,
-                      Kind AttrKind, Form FormUsed)
-      : AttrName(AttrName), AttrScope(AttrScope), AttrRange(AttrRange),
-        AttrKind(AttrKind), SyntaxUsed(FormUsed.getSyntax()),
+                      const IdentifierInfo *ScopeName, SourceRange AttrRange,
+                      SourceLocation ScopeLoc, Kind AttrKind, Form FormUsed)
+      : AttrName(AttrName), ScopeName(ScopeName), AttrRange(AttrRange),
+        ScopeLoc(ScopeLoc), AttrKind(AttrKind),
+        SyntaxUsed(FormUsed.getSyntax()),
         SpellingIndex(FormUsed.getSpellingIndex()),
         IsAlignas(FormUsed.isAlignas()),
         IsRegularKeywordAttribute(FormUsed.isRegularKeywordAttribute()) {
@@ -159,20 +158,21 @@ public:
            "Invalid syntax!");
   }
 
-  AttributeCommonInfo(const IdentifierInfo *AttrName, AttributeScopeInfo Scope,
-                      SourceRange AttrRange, Form FormUsed)
+  AttributeCommonInfo(const IdentifierInfo *AttrName,
+                      const IdentifierInfo *ScopeName, SourceRange AttrRange,
+                      SourceLocation ScopeLoc, Form FormUsed)
       : AttributeCommonInfo(
-            AttrName, Scope, AttrRange,
-            getParsedKind(AttrName, Scope.getName(), FormUsed.getSyntax()),
+            AttrName, ScopeName, AttrRange, ScopeLoc,
+            getParsedKind(AttrName, ScopeName, FormUsed.getSyntax()),
             FormUsed) {}
 
   AttributeCommonInfo(const IdentifierInfo *AttrName, SourceRange AttrRange,
                       Form FormUsed)
-      : AttributeCommonInfo(AttrName, AttributeScopeInfo(), AttrRange,
+      : AttributeCommonInfo(AttrName, nullptr, AttrRange, SourceLocation(),
                             FormUsed) {}
 
   AttributeCommonInfo(SourceRange AttrRange, Kind K, Form FormUsed)
-      : AttributeCommonInfo(nullptr, AttributeScopeInfo(), AttrRange, K,
+      : AttributeCommonInfo(nullptr, nullptr, AttrRange, SourceLocation(), K,
                             FormUsed) {}
 
   AttributeCommonInfo(AttributeCommonInfo &&) = default;
@@ -190,27 +190,17 @@ public:
   SourceRange getRange() const { return AttrRange; }
   void setRange(SourceRange R) { AttrRange = R; }
 
-  bool hasScope() const { return AttrScope.isValid(); }
-  bool isExplicitScope() const { return AttrScope.isExplicit(); }
-
-  const IdentifierInfo *getScopeName() const { return AttrScope.getName(); }
-  SourceLocation getScopeLoc() const { return AttrScope.getNameLoc(); }
+  bool hasScope() const { return ScopeName; }
+  const IdentifierInfo *getScopeName() const { return ScopeName; }
+  SourceLocation getScopeLoc() const { return ScopeLoc; }
 
   /// Gets the normalized full name, which consists of both scope and name and
   /// with surrounding underscores removed as appropriate (e.g.
   /// __gnu__::__attr__ will be normalized to gnu::attr).
   std::string getNormalizedFullName() const;
-  std::string getNormalizedFullName(StringRef ScopeName,
-                                    StringRef AttrName) const;
-  StringRef getNormalizedScopeName() const;
-  StringRef getNormalizedAttrName(StringRef ScopeName) const;
-
-  std::optional<StringRef> tryGetCorrectedScopeName(StringRef ScopeName) const;
-  std::optional<StringRef>
-  tryGetCorrectedAttrName(StringRef ScopeName, StringRef AttrName,
-                          const TargetInfo &Target,
-                          const LangOptions &LangOpts) const;
-
+  std::optional<std::string>
+  getCorrectedFullName(const TargetInfo &Target,
+                       const LangOptions &LangOpts) const;
   SourceRange getNormalizedRange() const;
 
   bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec; }

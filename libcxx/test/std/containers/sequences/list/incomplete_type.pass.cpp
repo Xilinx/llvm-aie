@@ -12,7 +12,6 @@
 // type.
 
 #include <list>
-#include <cassert>
 
 #include "test_macros.h"
 
@@ -24,18 +23,8 @@ struct A {
   std::list<A>::const_reverse_iterator crit;
 };
 
-TEST_CONSTEXPR_CXX26 bool test() {
-  A a;
-  (void)a;
-
-  return true;
-}
-
 int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
+  A a;
 
   return 0;
 }

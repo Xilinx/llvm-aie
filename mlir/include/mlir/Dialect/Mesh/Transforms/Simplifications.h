@@ -62,9 +62,9 @@ void populateAllReduceEndomorphismSimplificationPatterns(
   auto isEndomorphismOp = [reduction](Operation *op,
                                       std::optional<Operation *> referenceOp) {
     auto allReduceOp = llvm::dyn_cast<AllReduceOp>(op);
-    auto inType = cast<ShapedType>(allReduceOp.getInput().getType());
-    auto outType = cast<ShapedType>(allReduceOp.getResult().getType());
-    if (!allReduceOp || inType.getElementType() != outType.getElementType() ||
+    if (!allReduceOp ||
+        allReduceOp.getInput().getType().getElementType() !=
+            allReduceOp.getResult().getType().getElementType() ||
         allReduceOp.getReduction() != reduction) {
       return false;
     }
@@ -83,9 +83,9 @@ void populateAllReduceEndomorphismSimplificationPatterns(
     }
 
     auto refAllReduceOp = llvm::dyn_cast<AllReduceOp>(referenceOp.value());
-    auto refType = cast<ShapedType>(refAllReduceOp.getResult().getType());
     return refAllReduceOp->getAttrs() == allReduceOp->getAttrs() &&
-           inType.getElementType() == refType.getElementType();
+           allReduceOp.getInput().getType().getElementType() ==
+               refAllReduceOp.getInput().getType().getElementType();
   };
   auto isAlgebraicOp = [](Operation *op) {
     return static_cast<bool>(llvm::dyn_cast<AlgebraicOp>(op));

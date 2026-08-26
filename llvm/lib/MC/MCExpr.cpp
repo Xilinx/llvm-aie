@@ -173,15 +173,8 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI,
     return;
   }
 
-  case MCExpr::Specifier: {
-    auto &SE = cast<MCSpecifierExpr>(*this);
-    if (MAI)
-      return MAI->printSpecifierExpr(OS, SE);
-    // Used by dump features like -show-inst. Regular MCAsmStreamer output must
-    // set MAI.
-    OS << "specifier(" << SE.getSpecifier() << ',' << *SE.getSubExpr() << ')';
-    return;
-  }
+  case MCExpr::Specifier:
+    return cast<MCSpecifierExpr>(this)->printImpl(OS, MAI);
   }
 
   llvm_unreachable("Invalid expression kind!");
@@ -685,10 +678,7 @@ bool MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     return true;
   }
   case Specifier:
-    // Fold the expression during relocation generation. As parse time Asm might
-    // be null, and targets should not rely on the folding.
-    return Asm && Asm->getContext().getAsmInfo()->evaluateAsRelocatableImpl(
-                      cast<MCSpecifierExpr>(*this), Res, Asm);
+    return cast<MCSpecifierExpr>(this)->evaluateAsRelocatableImpl(Res, Asm);
   }
 
   llvm_unreachable("Invalid assembly expression kind!");
@@ -745,12 +735,11 @@ MCFragment *MCExpr::findAssociatedFragment() const {
   llvm_unreachable("Invalid assembly expression kind!");
 }
 
-const MCSpecifierExpr *MCSpecifierExpr::create(const MCExpr *Expr, Spec S,
-                                               MCContext &Ctx, SMLoc Loc) {
-  return new (Ctx) MCSpecifierExpr(Expr, S, Loc);
-}
+bool MCSpecifierExpr::evaluateAsRelocatableImpl(MCValue &Res,
+                                                const MCAssembler *Asm) const {
+  if (!getSubExpr()->evaluateAsRelocatable(Res, Asm))
+    return false;
 
-const MCSpecifierExpr *MCSpecifierExpr::create(const MCSymbol *Sym, Spec S,
-                                               MCContext &Ctx, SMLoc Loc) {
-  return new (Ctx) MCSpecifierExpr(MCSymbolRefExpr::create(Sym, Ctx), S, Loc);
+  Res.setSpecifier(specifier);
+  return !Res.getSubSym();
 }

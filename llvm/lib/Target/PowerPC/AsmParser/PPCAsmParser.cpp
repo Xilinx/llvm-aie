@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/PPCMCAsmInfo.h"
+#include "MCTargetDesc/PPCMCExpr.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCTargetStreamer.h"
 #include "PPCInstrInfo.h"
@@ -24,7 +24,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -746,13 +745,13 @@ public:
       return CreateImm(CE->getValue(), S, E, IsPPC64);
 
     if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(Val))
-      if (getSpecifier(SRE) == PPC::S_TLS ||
-          getSpecifier(SRE) == PPC::S_TLS_PCREL)
+      if (getSpecifier(SRE) == PPCMCExpr::VK_TLS ||
+          getSpecifier(SRE) == PPCMCExpr::VK_TLS_PCREL)
         return CreateTLSReg(SRE, S, E, IsPPC64);
 
-    if (const auto *SE = dyn_cast<MCSpecifierExpr>(Val)) {
+    if (const PPCMCExpr *TE = dyn_cast<PPCMCExpr>(Val)) {
       int64_t Res;
-      if (PPC::evaluateAsConstant(*SE, Res))
+      if (TE->evaluateAsConstant(Res))
         return CreateContextImm(Res, S, E, IsPPC64);
     }
 
@@ -1376,28 +1375,28 @@ const MCExpr *PPCAsmParser::extractSpecifier(const MCExpr *E,
     break;
   case MCExpr::Specifier: {
     // Detect error but do not return a modified expression.
-    auto *TE = cast<MCSpecifierExpr>(E);
+    auto *TE = cast<PPCMCExpr>(E);
     Spec = TE->getSpecifier();
     (void)extractSpecifier(TE->getSubExpr(), Spec);
-    Spec = PPC::S_None;
+    Spec = PPCMCExpr::VK_None;
   } break;
 
   case MCExpr::SymbolRef: {
     const auto *SRE = cast<MCSymbolRefExpr>(E);
     switch (getSpecifier(SRE)) {
-    case PPC::S_None:
+    case PPCMCExpr::VK_None:
     default:
       break;
-    case PPC::S_LO:
-    case PPC::S_HI:
-    case PPC::S_HA:
-    case PPC::S_HIGH:
-    case PPC::S_HIGHA:
-    case PPC::S_HIGHER:
-    case PPC::S_HIGHERA:
-    case PPC::S_HIGHEST:
-    case PPC::S_HIGHESTA:
-      if (Spec == PPC::S_None)
+    case PPCMCExpr::VK_LO:
+    case PPCMCExpr::VK_HI:
+    case PPCMCExpr::VK_HA:
+    case PPCMCExpr::VK_HIGH:
+    case PPCMCExpr::VK_HIGHA:
+    case PPCMCExpr::VK_HIGHER:
+    case PPCMCExpr::VK_HIGHERA:
+    case PPCMCExpr::VK_HIGHEST:
+    case PPCMCExpr::VK_HIGHESTA:
+      if (Spec == PPCMCExpr::VK_None)
         Spec = getSpecifier(SRE);
       else
         Error(E->getLoc(), "cannot contain more than one relocation specifier");
@@ -1409,7 +1408,7 @@ const MCExpr *PPCAsmParser::extractSpecifier(const MCExpr *E,
   case MCExpr::Unary: {
     const MCUnaryExpr *UE = cast<MCUnaryExpr>(E);
     const MCExpr *Sub = extractSpecifier(UE->getSubExpr(), Spec);
-    if (Spec != PPC::S_None)
+    if (Spec != PPCMCExpr::VK_None)
       return MCUnaryExpr::create(UE->getOpcode(), Sub, Context);
     break;
   }
@@ -1418,7 +1417,7 @@ const MCExpr *PPCAsmParser::extractSpecifier(const MCExpr *E,
     const MCBinaryExpr *BE = cast<MCBinaryExpr>(E);
     const MCExpr *LHS = extractSpecifier(BE->getLHS(), Spec);
     const MCExpr *RHS = extractSpecifier(BE->getRHS(), Spec);
-    if (Spec != PPC::S_None)
+    if (Spec != PPCMCExpr::VK_None)
       return MCBinaryExpr::create(BE->getOpcode(), LHS, RHS, Context);
     break;
   }
@@ -1437,10 +1436,10 @@ bool PPCAsmParser::parseExpression(const MCExpr *&EVal) {
   if (getParser().parseExpression(EVal))
     return true;
 
-  uint16_t Spec = PPC::S_None;
+  uint16_t Spec = PPCMCExpr::VK_None;
   const MCExpr *E = extractSpecifier(EVal, Spec);
-  if (Spec != PPC::S_None)
-    EVal = MCSpecifierExpr::create(E, Spec, getParser().getContext());
+  if (Spec != PPCMCExpr::VK_None)
+    EVal = PPCMCExpr::create(Spec, E, getParser().getContext());
 
   return false;
 }
@@ -1513,9 +1512,9 @@ bool PPCAsmParser::parseOperand(OperandVector &Operands) {
       if (!(parseOptionalToken(AsmToken::Identifier) &&
             Tok.getString().compare_insensitive("plt") == 0))
         return Error(Tok.getLoc(), "expected 'plt'");
-      EVal = MCSymbolRefExpr::create(getContext().getOrCreateSymbol(TlsGetAddr),
-                                     MCSymbolRefExpr::VariantKind(PPC::S_PLT),
-                                     getContext());
+      EVal = MCSymbolRefExpr::create(
+          getContext().getOrCreateSymbol(TlsGetAddr),
+          MCSymbolRefExpr::VariantKind(PPCMCExpr::VK_PLT), getContext());
       if (parseOptionalToken(AsmToken::Plus)) {
         const MCExpr *Addend = nullptr;
         SMLoc EndLoc;
@@ -1785,8 +1784,7 @@ bool PPCAsmParser::parseGNUAttribute(SMLoc L) {
 }
 
 /// Force static initialization.
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializePowerPCAsmParser() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializePowerPCAsmParser() {
   RegisterMCAsmParser<PPCAsmParser> A(getThePPC32Target());
   RegisterMCAsmParser<PPCAsmParser> B(getThePPC32LETarget());
   RegisterMCAsmParser<PPCAsmParser> C(getThePPC64Target());
@@ -1828,20 +1826,20 @@ const MCExpr *PPCAsmParser::applySpecifier(const MCExpr *E, uint32_t Spec,
                                            MCContext &Ctx) {
   if (isa<MCConstantExpr>(E)) {
     switch (PPCMCExpr::Specifier(Spec)) {
-    case PPC::S_LO:
-    case PPC::S_HI:
-    case PPC::S_HA:
-    case PPC::S_HIGH:
-    case PPC::S_HIGHA:
-    case PPC::S_HIGHER:
-    case PPC::S_HIGHERA:
-    case PPC::S_HIGHEST:
-    case PPC::S_HIGHESTA:
+    case PPCMCExpr::VK_LO:
+    case PPCMCExpr::VK_HI:
+    case PPCMCExpr::VK_HA:
+    case PPCMCExpr::VK_HIGH:
+    case PPCMCExpr::VK_HIGHA:
+    case PPCMCExpr::VK_HIGHER:
+    case PPCMCExpr::VK_HIGHERA:
+    case PPCMCExpr::VK_HIGHEST:
+    case PPCMCExpr::VK_HIGHESTA:
       break;
     default:
       return nullptr;
     }
   }
 
-  return MCSpecifierExpr::create(E, Spec, Ctx);
+  return PPCMCExpr::create(PPCMCExpr::Specifier(Spec), E, Ctx);
 }

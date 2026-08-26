@@ -2345,8 +2345,7 @@ bool isFuncLocalAndNotCaptured(Value *Arg, const CallBase *CB,
                                EarliestEscapeAnalysis &EA) {
   const Value *UnderlyingObj = getUnderlyingObject(Arg);
   return isIdentifiedFunctionLocal(UnderlyingObj) &&
-         capturesNothing(
-             EA.getCapturesBefore(UnderlyingObj, CB, /*OrAt*/ true));
+         EA.isNotCapturedBefore(UnderlyingObj, CB, /*OrAt*/ true);
 }
 
 SmallVector<MemoryLocation, 1>

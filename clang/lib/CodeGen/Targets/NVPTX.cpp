@@ -78,7 +78,7 @@ public:
     return true;
   }
 
-  unsigned getDeviceKernelCallingConv() const override {
+  unsigned getOpenCLKernelCallingConv() const override {
     return llvm::CallingConv::PTX_Kernel;
   }
 

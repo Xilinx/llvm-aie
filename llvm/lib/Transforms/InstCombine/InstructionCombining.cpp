@@ -217,26 +217,6 @@ Value *InstCombinerImpl::EmitGEPOffset(GEPOperator *GEP, bool RewriteGEP) {
   return Offset;
 }
 
-Value *InstCombinerImpl::EmitGEPOffsets(ArrayRef<GEPOperator *> GEPs,
-                                        GEPNoWrapFlags NW, Type *IdxTy,
-                                        bool RewriteGEPs) {
-  Value *Sum = nullptr;
-  for (GEPOperator *GEP : reverse(GEPs)) {
-    Value *Offset = EmitGEPOffset(GEP, RewriteGEPs);
-    if (Offset->getType() != IdxTy)
-      Offset = Builder.CreateVectorSplat(
-          cast<VectorType>(IdxTy)->getElementCount(), Offset);
-    if (Sum)
-      Sum = Builder.CreateAdd(Sum, Offset, "", NW.hasNoUnsignedWrap(),
-                              NW.isInBounds());
-    else
-      Sum = Offset;
-  }
-  if (!Sum)
-    return Constant::getNullValue(IdxTy);
-  return Sum;
-}
-
 /// Legal integers and common types are considered desirable. This is used to
 /// avoid creating instructions with types that may not be supported well by the
 /// the backend.
@@ -1739,15 +1719,6 @@ Instruction *InstCombinerImpl::FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
   if (SI->getType()->isIntOrIntVectorTy(1))
     return nullptr;
 
-  // Avoid breaking min/max reduction pattern,
-  // which is necessary for vectorization later.
-  if (isa<MinMaxIntrinsic>(&Op))
-    for (Value *IntrinOp : Op.operands())
-      if (auto *PN = dyn_cast<PHINode>(IntrinOp))
-        for (Value *PhiOp : PN->operands())
-          if (PhiOp == &Op)
-            return nullptr;
-
   // Test if a FCmpInst instruction is used exclusively by a select as
   // part of a minimum or maximum operation. If so, refrain from doing
   // any other folding. This helps out other analyses which understand
@@ -2230,39 +2201,6 @@ Instruction *InstCombinerImpl::foldVectorBinop(BinaryOperator &Inst) {
   // Op(LHSSplat, rev(V2)) -> rev(Op(LHSSplat, V2))
   else if (isSplatValue(LHS) && match(RHS, m_OneUse(m_VecReverse(m_Value(V2)))))
     return createBinOpReverse(LHS, V2);
-
-  auto createBinOpVPReverse = [&](Value *X, Value *Y, Value *EVL) {
-    Value *V = Builder.CreateBinOp(Opcode, X, Y, Inst.getName());
-    if (auto *BO = dyn_cast<BinaryOperator>(V))
-      BO->copyIRFlags(&Inst);
-
-    ElementCount EC = cast<VectorType>(V->getType())->getElementCount();
-    Value *AllTrueMask = Builder.CreateVectorSplat(EC, Builder.getTrue());
-    Module *M = Inst.getModule();
-    Function *F = Intrinsic::getOrInsertDeclaration(
-        M, Intrinsic::experimental_vp_reverse, V->getType());
-    return CallInst::Create(F, {V, AllTrueMask, EVL});
-  };
-
-  Value *EVL;
-  if (match(LHS, m_Intrinsic<Intrinsic::experimental_vp_reverse>(
-                     m_Value(V1), m_AllOnes(), m_Value(EVL)))) {
-    // Op(rev(V1), rev(V2)) -> rev(Op(V1, V2))
-    if (match(RHS, m_Intrinsic<Intrinsic::experimental_vp_reverse>(
-                       m_Value(V2), m_AllOnes(), m_Specific(EVL))) &&
-        (LHS->hasOneUse() || RHS->hasOneUse() ||
-         (LHS == RHS && LHS->hasNUses(2))))
-      return createBinOpVPReverse(V1, V2, EVL);
-
-    // Op(rev(V1), RHSSplat)) -> rev(Op(V1, RHSSplat))
-    if (LHS->hasOneUse() && isSplatValue(RHS))
-      return createBinOpVPReverse(V1, RHS, EVL);
-  }
-  // Op(LHSSplat, rev(V2)) -> rev(Op(LHSSplat, V2))
-  else if (isSplatValue(LHS) &&
-           match(RHS, m_Intrinsic<Intrinsic::experimental_vp_reverse>(
-                          m_Value(V2), m_AllOnes(), m_Value(EVL))))
-    return createBinOpVPReverse(LHS, V2, EVL);
 
   // It may not be safe to reorder shuffles and things like div, urem, etc.
   // because we may trap when executing those ops on unknown vector elements.
@@ -2993,6 +2931,10 @@ Instruction *InstCombinerImpl::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         return replaceInstUsesWith(GEP, V);
       return &GEP;
     }
+
+    // TODO: 1) Scalarize splat operands, 2) scalarize entire instruction if
+    // possible (decide on canonical form for pointer broadcast), 3) exploit
+    // undef elements to decrease demanded bits
   }
 
   // Eliminate unneeded casts for indices, and replace indices which displace
@@ -3052,32 +2994,6 @@ Instruction *InstCombinerImpl::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     Value *NewGEP =
         Builder.CreatePtrAdd(PtrOp, Offset, "", GEP.getNoWrapFlags());
     return replaceInstUsesWith(GEP, NewGEP);
-  }
-
-  // Scalarize vector operands; prefer splat-of-gep.as canonical form.
-  // Note that this looses information about undef lanes; we run it after
-  // demanded bits to partially mitigate that loss.
-  if (GEPType->isVectorTy() && llvm::any_of(GEP.operands(), [](Value *Op) {
-        return Op->getType()->isVectorTy() && getSplatValue(Op);
-      })) {
-    SmallVector<Value *> NewOps;
-    for (auto &Op : GEP.operands()) {
-      if (Op->getType()->isVectorTy())
-        if (Value *Scalar = getSplatValue(Op)) {
-          NewOps.push_back(Scalar);
-          continue;
-        }
-      NewOps.push_back(Op);
-    }
-
-    Value *Res = Builder.CreateGEP(GEP.getSourceElementType(), NewOps[0],
-                                   ArrayRef(NewOps).drop_front(), GEP.getName(),
-                                   GEP.getNoWrapFlags());
-    if (!Res->getType()->isVectorTy()) {
-      ElementCount EC = cast<VectorType>(GEPType)->getElementCount();
-      Res = Builder.CreateVectorSplat(EC, Res);
-    }
-    return replaceInstUsesWith(GEP, Res);
   }
 
   // Check to see if the inputs to the PHI node are getelementptr instructions.
@@ -3299,13 +3215,12 @@ static bool isRemovableWrite(CallBase &CB, Value *UsedV,
   return Dest && Dest->Ptr == UsedV;
 }
 
-static std::optional<ModRefInfo>
-isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
-                     const TargetLibraryInfo &TLI, bool KnowInit) {
+static bool isAllocSiteRemovable(Instruction *AI,
+                                 SmallVectorImpl<WeakTrackingVH> &Users,
+                                 const TargetLibraryInfo &TLI) {
   SmallVector<Instruction*, 4> Worklist;
   const std::optional<StringRef> Family = getAllocationFamily(AI, &TLI);
   Worklist.push_back(AI);
-  ModRefInfo Access = KnowInit ? ModRefInfo::NoModRef : ModRefInfo::Mod;
 
   do {
     Instruction *PI = Worklist.pop_back_val();
@@ -3314,7 +3229,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
       switch (I->getOpcode()) {
       default:
         // Give up the moment we see something we can't handle.
-        return std::nullopt;
+        return false;
 
       case Instruction::AddrSpaceCast:
       case Instruction::BitCast:
@@ -3329,10 +3244,10 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
         // We also fold comparisons in some conditions provided the alloc has
         // not escaped (see isNeverEqualToUnescapedAlloc).
         if (!ICI->isEquality())
-          return std::nullopt;
+          return false;
         unsigned OtherIndex = (ICI->getOperand(0) == PI) ? 1 : 0;
         if (!isNeverEqualToUnescapedAlloc(ICI->getOperand(OtherIndex), TLI, AI))
-          return std::nullopt;
+          return false;
 
         // Do not fold compares to aligned_alloc calls, as they may have to
         // return null in case the required alignment cannot be satisfied,
@@ -3352,7 +3267,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
         if (CB && TLI.getLibFunc(*CB->getCalledFunction(), TheLibFunc) &&
             TLI.has(TheLibFunc) && TheLibFunc == LibFunc_aligned_alloc &&
             !AlignmentAndSizeKnownValid(CB))
-          return std::nullopt;
+          return false;
         Users.emplace_back(I);
         continue;
       }
@@ -3362,21 +3277,14 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
         if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
           switch (II->getIntrinsicID()) {
           default:
-            return std::nullopt;
+            return false;
 
           case Intrinsic::memmove:
           case Intrinsic::memcpy:
           case Intrinsic::memset: {
             MemIntrinsic *MI = cast<MemIntrinsic>(II);
-            if (MI->isVolatile())
-              return std::nullopt;
-            // Note: this could also be ModRef, but we can still interpret that
-            // as just Mod in that case.
-            ModRefInfo NewAccess =
-                MI->getRawDest() == PI ? ModRefInfo::Mod : ModRefInfo::Ref;
-            if ((Access & ~NewAccess) != ModRefInfo::NoModRef)
-              return std::nullopt;
-            Access |= NewAccess;
+            if (MI->isVolatile() || MI->getRawDest() != PI)
+              return false;
             [[fallthrough]];
           }
           case Intrinsic::assume:
@@ -3395,6 +3303,11 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
           }
         }
 
+        if (isRemovableWrite(*cast<CallBase>(I), PI, TLI)) {
+          Users.emplace_back(I);
+          continue;
+        }
+
         if (Family && getFreedOperand(cast<CallBase>(I), &TLI) == PI &&
             getAllocationFamily(I, &TLI) == Family) {
           Users.emplace_back(I);
@@ -3408,33 +3321,12 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
           continue;
         }
 
-        if (!isRefSet(Access) &&
-            isRemovableWrite(*cast<CallBase>(I), PI, TLI)) {
-          Access |= ModRefInfo::Mod;
-          Users.emplace_back(I);
-          continue;
-        }
-
-        return std::nullopt;
+        return false;
 
       case Instruction::Store: {
         StoreInst *SI = cast<StoreInst>(I);
         if (SI->isVolatile() || SI->getPointerOperand() != PI)
-          return std::nullopt;
-        if (isRefSet(Access))
-          return std::nullopt;
-        Access |= ModRefInfo::Mod;
-        Users.emplace_back(I);
-        continue;
-      }
-
-      case Instruction::Load: {
-        LoadInst *LI = cast<LoadInst>(I);
-        if (LI->isVolatile() || LI->getPointerOperand() != PI)
-          return std::nullopt;
-        if (isModSet(Access))
-          return std::nullopt;
-        Access |= ModRefInfo::Ref;
+          return false;
         Users.emplace_back(I);
         continue;
       }
@@ -3442,9 +3334,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakTrackingVH> &Users,
       llvm_unreachable("missing a return?");
     }
   } while (!Worklist.empty());
-
-  assert(Access != ModRefInfo::ModRef);
-  return Access;
+  return true;
 }
 
 Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
@@ -3472,35 +3362,14 @@ Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
     DIB.reset(new DIBuilder(*MI.getModule(), /*AllowUnresolved=*/false));
   }
 
-  // Determine what getInitialValueOfAllocation would return without actually
-  // allocating the result.
-  bool KnowInitUndef = false;
-  bool KnowInitZero = false;
-  Constant *Init =
-      getInitialValueOfAllocation(&MI, &TLI, Type::getInt8Ty(MI.getContext()));
-  if (Init) {
-    if (isa<UndefValue>(Init))
-      KnowInitUndef = true;
-    else if (Init->isNullValue())
-      KnowInitZero = true;
-  }
-  // The various sanitizers don't actually return undef memory, but rather
-  // memory initialized with special forms of runtime poison
-  auto &F = *MI.getFunction();
-  if (F.hasFnAttribute(Attribute::SanitizeMemory) ||
-      F.hasFnAttribute(Attribute::SanitizeAddress))
-    KnowInitUndef = false;
+  if (isAllocSiteRemovable(&MI, Users, TLI)) {
+    for (unsigned i = 0, e = Users.size(); i != e; ++i) {
+      // Lowering all @llvm.objectsize calls first because they may
+      // use a bitcast/GEP of the alloca we are removing.
+      if (!Users[i])
+       continue;
 
-  auto Removable =
-      isAllocSiteRemovable(&MI, Users, TLI, KnowInitZero | KnowInitUndef);
-  if (Removable) {
-    for (WeakTrackingVH &User : Users) {
-      // Lowering all @llvm.objectsize and MTI calls first because they may use
-      // a bitcast/GEP of the alloca we are removing.
-      if (!User)
-        continue;
-
-      Instruction *I = cast<Instruction>(&*User);
+      Instruction *I = cast<Instruction>(&*Users[i]);
 
       if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
         if (II->getIntrinsicID() == Intrinsic::objectsize) {
@@ -3511,27 +3380,15 @@ Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
             Worklist.add(Inserted);
           replaceInstUsesWith(*I, Result);
           eraseInstFromFunction(*I);
-          User = nullptr; // Skip examining in the next loop.
-          continue;
-        }
-        if (auto *MTI = dyn_cast<MemTransferInst>(I)) {
-          if (KnowInitZero && isRefSet(*Removable)) {
-            IRBuilderBase::InsertPointGuard Guard(Builder);
-            Builder.SetInsertPoint(MTI);
-            auto *M = Builder.CreateMemSet(
-                MTI->getRawDest(),
-                ConstantInt::get(Type::getInt8Ty(MI.getContext()), 0),
-                MTI->getLength(), MTI->getDestAlign());
-            M->copyMetadata(*MTI);
-          }
+          Users[i] = nullptr; // Skip examining in the next loop.
         }
       }
     }
-    for (WeakTrackingVH &User : Users) {
-      if (!User)
+    for (unsigned i = 0, e = Users.size(); i != e; ++i) {
+      if (!Users[i])
         continue;
 
-      Instruction *I = cast<Instruction>(&*User);
+      Instruction *I = cast<Instruction>(&*Users[i]);
 
       if (ICmpInst *C = dyn_cast<ICmpInst>(I)) {
         replaceInstUsesWith(*C,
@@ -3547,14 +3404,7 @@ Instruction *InstCombinerImpl::visitAllocSite(Instruction &MI) {
       } else {
         // Casts, GEP, or anything else: we're about to delete this instruction,
         // so it can not have any valid uses.
-        Constant *Replace;
-        if (isa<LoadInst>(I)) {
-          assert(KnowInitZero || KnowInitUndef);
-          Replace = KnowInitUndef ? UndefValue::get(I->getType())
-                                  : Constant::getNullValue(I->getType());
-        } else
-          Replace = PoisonValue::get(I->getType());
-        replaceInstUsesWith(*I, Replace);
+        replaceInstUsesWith(*I, PoisonValue::get(I->getType()));
       }
       eraseInstFromFunction(*I);
     }
@@ -4908,7 +4758,11 @@ bool InstCombinerImpl::freezeOtherUses(FreezeInst &FI) {
     MoveBefore = *MoveBeforeOpt;
   }
 
-  // Re-point iterator to come after any debug-info records.
+  // Don't move to the position of a debug intrinsic.
+  if (isa<DbgInfoIntrinsic>(MoveBefore))
+    MoveBefore = MoveBefore->getNextNonDebugInstruction()->getIterator();
+  // Re-point iterator to come after any debug-info records, if we're
+  // running in "RemoveDIs" mode
   MoveBefore.setHeadBit(false);
 
   bool Changed = false;
@@ -5486,7 +5340,8 @@ bool InstCombinerImpl::run() {
         // We copy the old instruction's DebugLoc to the new instruction, unless
         // InstCombine already assigned a DebugLoc to it, in which case we
         // should trust the more specifically selected DebugLoc.
-        Result->setDebugLoc(Result->getDebugLoc().orElse(I->getDebugLoc()));
+        if (!Result->getDebugLoc())
+          Result->setDebugLoc(I->getDebugLoc());
         // We also copy annotation metadata to the new instruction.
         Result->copyMetadata(*I, LLVMContext::MD_annotation);
         // Everything uses the new instruction now.
@@ -5699,9 +5554,11 @@ bool InstCombinerImpl::prepareWorklist(Function &F) {
       continue;
 
     unsigned NumDeadInstInBB;
-    NumDeadInstInBB = removeAllNonTerminatorAndEHPadInstructions(&BB);
+    unsigned NumDeadDbgInstInBB;
+    std::tie(NumDeadInstInBB, NumDeadDbgInstInBB) =
+        removeAllNonTerminatorAndEHPadInstructions(&BB);
 
-    MadeIRChange |= NumDeadInstInBB != 0;
+    MadeIRChange |= NumDeadInstInBB + NumDeadDbgInstInBB > 0;
     NumDeadInst += NumDeadInstInBB;
   }
 

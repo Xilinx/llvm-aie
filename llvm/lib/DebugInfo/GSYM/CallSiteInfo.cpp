@@ -12,7 +12,6 @@
 #include "llvm/DebugInfo/GSYM/GsymCreator.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/DataExtractor.h"
-#include "llvm/Support/InterleavedRange.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
@@ -232,7 +231,13 @@ Error CallSiteInfoLoader::processYAMLFunctions(
 raw_ostream &gsym::operator<<(raw_ostream &OS, const CallSiteInfo &CSI) {
   OS << "  Return=" << HEX64(CSI.ReturnOffset);
   OS << "  Flags=" << HEX8(CSI.Flags);
-  OS << "  RegEx=" << llvm::interleaved(CSI.MatchRegex, ",");
+
+  OS << "  RegEx=";
+  for (uint32_t i = 0; i < CSI.MatchRegex.size(); ++i) {
+    if (i > 0)
+      OS << ",";
+    OS << CSI.MatchRegex[i];
+  }
   return OS;
 }
 

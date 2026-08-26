@@ -34,8 +34,6 @@ let cppNamespace = "::cir" in {
           "Return the number of operands, accounts for indirect call or "
           "exception info",
           "unsigned", "getNumArgOperands", (ins)>,
-      InterfaceMethod<"Return the side effects of the call operation",
-                      "cir::SideEffect", "getSideEffect", (ins)>,
     ];
   }
 
@@ -138,13 +136,13 @@ let cppNamespace = "::cir" in {
       InterfaceMethod<"",
       "void", "setDSOLocal", (ins "bool":$val), [{}],
       /*defaultImplementation=*/[{
-        $_op.setDsoLocal(val);
+        $_op.setDsolocal(val);
       }]
       >,
       InterfaceMethod<"",
       "bool", "isDSOLocal", (ins), [{}],
       /*defaultImplementation=*/[{
-        return $_op.getDsoLocal();
+        return $_op.getDsolocal();
       }]
       >,
       InterfaceMethod<"",

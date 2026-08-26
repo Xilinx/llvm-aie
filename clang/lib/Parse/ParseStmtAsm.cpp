@@ -380,7 +380,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     ++NumTokensRead;
   } else {
     // Single-line inline asm; compute which line it is on.
-    FileIDAndOffset ExpAsmLoc = SrcMgr.getDecomposedExpansionLoc(EndLoc);
+    std::pair<FileID, unsigned> ExpAsmLoc =
+        SrcMgr.getDecomposedExpansionLoc(EndLoc);
     FID = ExpAsmLoc.first;
     LineNo = SrcMgr.getLineNumber(FID, ExpAsmLoc.second);
     LBraceLocs.push_back(SourceLocation());
@@ -407,14 +408,16 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
       InAsmComment = true;
       if (!SingleLineMode) {
         // Compute which line the comment is on.
-        FileIDAndOffset ExpSemiLoc = SrcMgr.getDecomposedExpansionLoc(TokLoc);
+        std::pair<FileID, unsigned> ExpSemiLoc =
+            SrcMgr.getDecomposedExpansionLoc(TokLoc);
         FID = ExpSemiLoc.first;
         LineNo = SrcMgr.getLineNumber(FID, ExpSemiLoc.second);
       }
     } else if (SingleLineMode || InAsmComment) {
       // If end-of-line is significant, check whether this token is on a
       // new line.
-      FileIDAndOffset ExpLoc = SrcMgr.getDecomposedExpansionLoc(TokLoc);
+      std::pair<FileID, unsigned> ExpLoc =
+          SrcMgr.getDecomposedExpansionLoc(TokLoc);
       if (ExpLoc.first != FID ||
           SrcMgr.getLineNumber(ExpLoc.first, ExpLoc.second) != LineNo) {
         // If this is a single-line __asm, we're done, except if the next
@@ -861,7 +864,7 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
     // Read the parenthesized expression.
     BalancedDelimiterTracker T(*this, tok::l_paren);
     T.consumeOpen();
-    ExprResult Res = ParseExpression();
+    ExprResult Res = Actions.CorrectDelayedTyposInExpr(ParseExpression());
     T.consumeClose();
     if (Res.isInvalid()) {
       SkipUntil(tok::r_paren, StopAtSemi);

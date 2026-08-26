@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-class XCoreTTIImpl final : public BasicTTIImplBase<XCoreTTIImpl> {
+class XCoreTTIImpl : public BasicTTIImplBase<XCoreTTIImpl> {
   typedef BasicTTIImplBase<XCoreTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;

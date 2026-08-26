@@ -14,7 +14,6 @@
 #include "X86IntelInstPrinter.h"
 #include "X86BaseInfo.h"
 #include "X86InstComments.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrAnalysis.h"
@@ -373,7 +372,7 @@ void X86IntelInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << "offset ";
-    MAI.printExpr(O, *Op.getExpr());
+    Op.getExpr()->print(O, &MAI);
   }
 }
 
@@ -416,7 +415,7 @@ void X86IntelInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   if (!DispSpec.isImm()) {
     if (NeedPlus) O << " + ";
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
-    MAI.printExpr(O, *DispSpec.getExpr());
+    DispSpec.getExpr()->print(O, &MAI);
   } else {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg())) {
@@ -471,7 +470,7 @@ void X86IntelInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
     markup(O, Markup::Immediate) << formatImm(DispSpec.getImm());
   } else {
     assert(DispSpec.isExpr() && "non-immediate displacement?");
-    MAI.printExpr(O, *DispSpec.getExpr());
+    DispSpec.getExpr()->print(O, &MAI);
   }
 
   O << ']';
@@ -480,7 +479,7 @@ void X86IntelInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
 void X86IntelInstPrinter::printU8Imm(const MCInst *MI, unsigned Op,
                                      raw_ostream &O) {
   if (MI->getOperand(Op).isExpr())
-    return MAI.printExpr(O, *MI->getOperand(Op).getExpr());
+    return MI->getOperand(Op).getExpr()->print(O, &MAI);
 
   markup(O, Markup::Immediate) << formatImm(MI->getOperand(Op).getImm() & 0xff);
 }

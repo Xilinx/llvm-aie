@@ -431,12 +431,12 @@ void LLVMAddModuleFlag(LLVMModuleRef M, LLVMModuleFlagBehavior Behavior,
                            {Key, KeyLen}, unwrap(Val));
 }
 
-LLVMBool LLVMIsNewDbgInfoFormat(LLVMModuleRef M) { return true; }
+LLVMBool LLVMIsNewDbgInfoFormat(LLVMModuleRef M) {
+  return unwrap(M)->IsNewDbgInfoFormat;
+}
 
 void LLVMSetIsNewDbgInfoFormat(LLVMModuleRef M, LLVMBool UseNewFormat) {
-  if (!UseNewFormat)
-    llvm_unreachable("LLVM no longer supports intrinsic based debug-info");
-  (void)M;
+  unwrap(M)->setIsNewDbgInfoFormat(UseNewFormat);
 }
 
 /*--.. Printing modules ....................................................--*/
@@ -2949,14 +2949,6 @@ LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst) {
   if (ICmpInst *I = dyn_cast<ICmpInst>(unwrap(Inst)))
     return (LLVMIntPredicate)I->getPredicate();
   return (LLVMIntPredicate)0;
-}
-
-LLVMBool LLVMGetICmpSameSign(LLVMValueRef Inst) {
-  return unwrap<ICmpInst>(Inst)->hasSameSign();
-}
-
-void LLVMSetICmpSameSign(LLVMValueRef Inst, LLVMBool SameSign) {
-  unwrap<ICmpInst>(Inst)->setSameSign(SameSign);
 }
 
 LLVMRealPredicate LLVMGetFCmpPredicate(LLVMValueRef Inst) {

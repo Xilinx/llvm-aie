@@ -1119,26 +1119,25 @@ void RISCVInsertVSETVLI::insertVSETVLI(MachineBasicBlock &MBB,
     LIS->InsertMachineInstrInMaps(*MI);
     LiveInterval &LI = LIS->getInterval(AVLReg);
     SlotIndex SI = LIS->getInstructionIndex(*MI).getRegSlot();
-    const VNInfo *CurVNI = Info.getAVLVNInfo();
     // If the AVL value isn't live at MI, do a quick check to see if it's easily
     // extendable. Otherwise, we need to copy it.
-    if (LI.getVNInfoBefore(SI) != CurVNI) {
+    if (LI.getVNInfoBefore(SI) != Info.getAVLVNInfo()) {
       if (!LI.liveAt(SI) && LI.containsOneValue())
         LIS->extendToIndices(LI, SI);
       else {
         Register AVLCopyReg =
             MRI->createVirtualRegister(&RISCV::GPRNoX0RegClass);
-        MachineBasicBlock *MBB = LIS->getMBBFromIndex(CurVNI->def);
         MachineBasicBlock::iterator II;
-        if (CurVNI->isPHIDef())
-          II = MBB->getFirstNonPHI();
+        if (Info.getAVLVNInfo()->isPHIDef())
+          II = LIS->getMBBFromIndex(Info.getAVLVNInfo()->def)->getFirstNonPHI();
         else {
-          II = LIS->getInstructionFromIndex(CurVNI->def);
+          II = LIS->getInstructionFromIndex(Info.getAVLVNInfo()->def);
           II = std::next(II);
         }
         assert(II.isValid());
-        auto AVLCopy = BuildMI(*MBB, II, DL, TII->get(RISCV::COPY), AVLCopyReg)
-                           .addReg(AVLReg);
+        auto AVLCopy =
+            BuildMI(*II->getParent(), II, DL, TII->get(RISCV::COPY), AVLCopyReg)
+                .addReg(AVLReg);
         LIS->InsertMachineInstrInMaps(*AVLCopy);
         MI->getOperand(1).setReg(AVLCopyReg);
         LIS->createAndComputeVirtRegInterval(AVLCopyReg);
@@ -1254,7 +1253,7 @@ void RISCVInsertVSETVLI::transferAfter(VSETVLIInfo &Info,
     return;
   }
 
-  if (RISCVInstrInfo::isFaultOnlyFirstLoad(MI)) {
+  if (RISCV::isFaultFirstLoad(MI)) {
     // Update AVL to vl-output of the fault first load.
     assert(MI.getOperand(1).getReg().isVirtual());
     if (LIS) {
@@ -1757,7 +1756,7 @@ void RISCVInsertVSETVLI::coalesceVSETVLIs(MachineBasicBlock &MBB) const {
 void RISCVInsertVSETVLI::insertReadVL(MachineBasicBlock &MBB) {
   for (auto I = MBB.begin(), E = MBB.end(); I != E;) {
     MachineInstr &MI = *I++;
-    if (RISCVInstrInfo::isFaultOnlyFirstLoad(MI)) {
+    if (RISCV::isFaultFirstLoad(MI)) {
       Register VLOutput = MI.getOperand(1).getReg();
       assert(VLOutput.isVirtual());
       if (!MI.getOperand(1).isDead()) {
@@ -1775,7 +1774,6 @@ void RISCVInsertVSETVLI::insertReadVL(MachineBasicBlock &MBB) {
       }
       // We don't use the vl output of the VLEFF/VLSEGFF anymore.
       MI.getOperand(1).setReg(RISCV::X0);
-      MI.addRegisterDefined(RISCV::VL, MRI->getTargetRegisterInfo());
     }
   }
 }

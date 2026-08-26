@@ -9,16 +9,18 @@ declare void @conv() convergent
 declare void @not_conv()
 
 define void @test(ptr %f) {
-  ; CHECK: CALL_UNI_conv @conv
+  ; CHECK: ConvergentCallUniPrintCall
+  ; CHECK-NEXT: @conv
   call void @conv()
 
-  ; CHECK: CALL_UNI @not_conv
+  ; CHECK: CallUniPrintCall
+  ; CHECK-NEXT: @not_conv
   call void @not_conv()
 
-  ; CHECK: CALL_conv %{{[0-9]+}}
+  ; CHECK: ConvergentCallPrintCall
   call void %f() convergent
 
-  ; CHECK: CALL %{{[0-9]+}}
+  ; CHECK: CallPrintCall
   call void %f()
 
   ret void

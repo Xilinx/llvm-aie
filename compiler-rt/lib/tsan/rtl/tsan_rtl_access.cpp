@@ -523,9 +523,9 @@ SECOND:
 }
 
 void ShadowSet(RawShadow* p, RawShadow* end, RawShadow v) {
-  DCHECK_LT(p, end);
+  DCHECK_LE(p, end);
   DCHECK(IsShadowMem(p));
-  DCHECK(IsShadowMem(end - 1));
+  DCHECK(IsShadowMem(end));
   UNUSED const uptr kAlign = kShadowCnt * kShadowSize;
   DCHECK_EQ(reinterpret_cast<uptr>(p) % kAlign, 0);
   DCHECK_EQ(reinterpret_cast<uptr>(end) % kAlign, 0);
@@ -569,7 +569,6 @@ static void MemoryRangeSet(uptr addr, uptr size, RawShadow val) {
   RawShadow* mid1 =
       Min(end, reinterpret_cast<RawShadow*>(RoundUp(
                    reinterpret_cast<uptr>(begin) + kPageSize / 2, kPageSize)));
-  // begin must < mid1
   ShadowSet(begin, mid1, val);
   // Reset middle part.
   RawShadow* mid2 = RoundDown(end, kPageSize);
@@ -578,10 +577,7 @@ static void MemoryRangeSet(uptr addr, uptr size, RawShadow val) {
       Die();
   }
   // Set the ending.
-  if (mid2 < end)
-    ShadowSet(mid2, end, val);
-  else
-    DCHECK_EQ(mid2, end);
+  ShadowSet(mid2, end, val);
 }
 
 void MemoryResetRange(ThreadState* thr, uptr pc, uptr addr, uptr size) {
@@ -673,7 +669,7 @@ void MemoryAccessRangeT(ThreadState* thr, uptr pc, uptr addr, uptr size) {
   RawShadow* shadow_mem = MemToShadow(addr);
   DPrintf2("#%d: MemoryAccessRange: @%p %p size=%d is_read=%d\n", thr->tid,
            (void*)pc, (void*)addr, (int)size, is_read);
-  DCHECK_NE(size, 0);
+
 #if SANITIZER_DEBUG
   if (!IsAppMem(addr)) {
     Printf("Access to non app mem start: %p\n", (void*)addr);

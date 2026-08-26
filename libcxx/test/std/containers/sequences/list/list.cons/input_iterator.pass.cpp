@@ -9,11 +9,10 @@
 // <list>
 
 // template <class InputIterator>
-//   list(InputIterator first, InputIterator last, const Allocator& = Allocator()); // constexpr since C++26
+//   list(InputIterator first, InputIterator last, const Allocator& = Allocator());
 
 #include <list>
 #include <cassert>
-
 #include "test_macros.h"
 #include "test_iterators.h"
 #include "test_allocator.h"
@@ -23,7 +22,7 @@
 #  include "container_test_types.h"
 #endif
 
-TEST_CONSTEXPR_CXX26 void basic_test() {
+void basic_test() {
   {
     int a[] = {0, 1, 2, 3};
     std::list<int> l(
@@ -82,7 +81,7 @@ TEST_CONSTEXPR_CXX26 void basic_test() {
 #endif
 }
 
-TEST_CONSTEXPR_CXX26 void test_emplacable_concept() {
+void test_emplacable_concept() {
 #if TEST_STD_VER >= 11
   int arr1[] = {42};
   int arr2[] = {1, 101, 42};
@@ -127,7 +126,7 @@ TEST_CONSTEXPR_CXX26 void test_emplacable_concept() {
 #endif
 }
 
-TEST_CONSTEXPR_CXX26 void test_emplacable_concept_with_alloc() {
+void test_emplacable_concept_with_alloc() {
 #if TEST_STD_VER >= 11
   int arr1[] = {42};
   int arr2[] = {1, 101, 42};
@@ -240,24 +239,12 @@ void test_ctor_under_alloc_with_alloc() {
 #endif
 }
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   basic_test();
   test_emplacable_concept();
   test_emplacable_concept_with_alloc();
-
-  if (!TEST_IS_CONSTANT_EVALUATED) {
-    test_ctor_under_alloc();
-    test_ctor_under_alloc_with_alloc();
-  }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
+  test_ctor_under_alloc();
+  test_ctor_under_alloc_with_alloc();
 
   return 0;
 }

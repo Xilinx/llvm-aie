@@ -315,9 +315,9 @@ Value clampScalarOrTensor(OpBuilder &builder, Location loc, Value input,
   auto inputType = input.getType();
   auto storageType = quantizedType.getStorageType();
   auto storageMinScalar = builder.create<arith::ConstantIntOp>(
-      loc, storageType, quantizedType.getStorageTypeMin());
+      loc, quantizedType.getStorageTypeMin(), storageType);
   auto storageMaxScalar = builder.create<arith::ConstantIntOp>(
-      loc, storageType, quantizedType.getStorageTypeMax());
+      loc, quantizedType.getStorageTypeMax(), storageType);
   auto storageMin = getScalarOrTensorConstant(builder, loc, storageMinScalar,
                                               inputType, inputShape);
   auto storageMax = getScalarOrTensorConstant(builder, loc, storageMaxScalar,

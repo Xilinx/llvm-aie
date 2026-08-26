@@ -2197,14 +2197,8 @@ bool AArch64InstructionSelector::preISelLower(MachineInstr &I) {
     }
     return Changed;
   }
-  case TargetOpcode::G_PTR_ADD: {
-    // If Checked Pointer Arithmetic (FEAT_CPA) is present, preserve the pointer
-    // arithmetic semantics instead of falling back to regular arithmetic.
-    const auto &TL = STI.getTargetLowering();
-    if (TL->shouldPreservePtrArith(MF.getFunction(), EVT()))
-      return false;
+  case TargetOpcode::G_PTR_ADD:
     return convertPtrAddToAdd(I, MRI);
-  }
   case TargetOpcode::G_LOAD: {
     // For scalar loads of pointers, we try to convert the dest type from p0
     // to s64 so that our imported patterns can match. Like with the G_PTR_ADD
@@ -5553,14 +5547,8 @@ bool AArch64InstructionSelector::selectIndexedExtLoad(
   unsigned MemSizeBits = ExtLd.getMMO().getMemoryType().getSizeInBits();
   bool IsPre = ExtLd.isPre();
   bool IsSExt = isa<GIndexedSExtLoad>(ExtLd);
-  unsigned InsertIntoSubReg = 0;
+  bool InsertIntoXReg = false;
   bool IsDst64 = Ty.getSizeInBits() == 64;
-
-  // ZExt/SExt should be on gpr but can handle extload and zextload of fpr, so
-  // long as they are scalar.
-  bool IsFPR = RBI.getRegBank(Dst, MRI, TRI)->getID() == AArch64::FPRRegBankID;
-  if ((IsSExt && IsFPR) || Ty.isVector())
-    return false;
 
   unsigned Opc = 0;
   LLT NewLdDstTy;
@@ -5574,13 +5562,9 @@ bool AArch64InstructionSelector::selectIndexedExtLoad(
       else
         Opc = IsPre ? AArch64::LDRSBWpre : AArch64::LDRSBWpost;
       NewLdDstTy = IsDst64 ? s64 : s32;
-    } else if (IsFPR) {
-      Opc = IsPre ? AArch64::LDRBpre : AArch64::LDRBpost;
-      InsertIntoSubReg = AArch64::bsub;
-      NewLdDstTy = LLT::scalar(MemSizeBits);
     } else {
       Opc = IsPre ? AArch64::LDRBBpre : AArch64::LDRBBpost;
-      InsertIntoSubReg = IsDst64 ? AArch64::sub_32 : 0;
+      InsertIntoXReg = IsDst64;
       NewLdDstTy = s32;
     }
   } else if (MemSizeBits == 16) {
@@ -5590,31 +5574,26 @@ bool AArch64InstructionSelector::selectIndexedExtLoad(
       else
         Opc = IsPre ? AArch64::LDRSHWpre : AArch64::LDRSHWpost;
       NewLdDstTy = IsDst64 ? s64 : s32;
-    } else if (IsFPR) {
-      Opc = IsPre ? AArch64::LDRHpre : AArch64::LDRHpost;
-      InsertIntoSubReg = AArch64::hsub;
-      NewLdDstTy = LLT::scalar(MemSizeBits);
     } else {
       Opc = IsPre ? AArch64::LDRHHpre : AArch64::LDRHHpost;
-      InsertIntoSubReg = IsDst64 ? AArch64::sub_32 : 0;
+      InsertIntoXReg = IsDst64;
       NewLdDstTy = s32;
     }
   } else if (MemSizeBits == 32) {
     if (IsSExt) {
       Opc = IsPre ? AArch64::LDRSWpre : AArch64::LDRSWpost;
       NewLdDstTy = s64;
-    } else if (IsFPR) {
-      Opc = IsPre ? AArch64::LDRSpre : AArch64::LDRSpost;
-      InsertIntoSubReg = AArch64::ssub;
-      NewLdDstTy = LLT::scalar(MemSizeBits);
     } else {
       Opc = IsPre ? AArch64::LDRWpre : AArch64::LDRWpost;
-      InsertIntoSubReg = IsDst64 ? AArch64::sub_32 : 0;
+      InsertIntoXReg = IsDst64;
       NewLdDstTy = s32;
     }
   } else {
     llvm_unreachable("Unexpected size for indexed load");
   }
+
+  if (RBI.getRegBank(Dst, MRI, TRI)->getID() == AArch64::FPRRegBankID)
+    return false; // We should be on gpr.
 
   auto Cst = getIConstantVRegVal(Offset, MRI);
   if (!Cst)
@@ -5625,18 +5604,15 @@ bool AArch64InstructionSelector::selectIndexedExtLoad(
   LdMI.cloneMemRefs(ExtLd);
   constrainSelectedInstRegOperands(*LdMI, TII, TRI, RBI);
   // Make sure to select the load with the MemTy as the dest type, and then
-  // insert into a larger reg if needed.
-  if (InsertIntoSubReg) {
+  // insert into X reg if needed.
+  if (InsertIntoXReg) {
     // Generate a SUBREG_TO_REG.
     auto SubToReg = MIB.buildInstr(TargetOpcode::SUBREG_TO_REG, {Dst}, {})
                         .addImm(0)
                         .addUse(LdMI.getReg(1))
-                        .addImm(InsertIntoSubReg);
-    RBI.constrainGenericRegister(
-        SubToReg.getReg(0),
-        *getRegClassForTypeOnBank(MRI.getType(Dst),
-                                  *RBI.getRegBank(Dst, MRI, TRI)),
-        MRI);
+                        .addImm(AArch64::sub_32);
+    RBI.constrainGenericRegister(SubToReg.getReg(0), AArch64::GPR64RegClass,
+                                 MRI);
   } else {
     auto Copy = MIB.buildCopy(Dst, LdMI.getReg(1));
     selectCopy(*Copy, TII, MRI, TRI, RBI);

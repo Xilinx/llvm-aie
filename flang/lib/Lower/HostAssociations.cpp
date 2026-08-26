@@ -449,7 +449,7 @@ public:
     }
 
     if (canReadCapturedBoxValue(converter, sym)) {
-      fir::BoxValue boxValue(box, lbounds, /*explicitParams=*/{});
+      fir::BoxValue boxValue(box, lbounds, /*explicitParams=*/std::nullopt);
       bindCapturedSymbol(sym,
                          fir::factory::readBoxValue(builder, loc, boxValue),
                          converter, args.symMap);
@@ -470,7 +470,7 @@ public:
         box = builder.create<mlir::arith::SelectOp>(loc, isPresent, box,
                                                     absentBox);
       }
-      fir::BoxValue boxValue(box, lbounds, /*explicitParams=*/{});
+      fir::BoxValue boxValue(box, lbounds, /*explicitParams=*/std::nullopt);
       bindCapturedSymbol(sym, boxValue, converter, args.symMap);
     }
   }

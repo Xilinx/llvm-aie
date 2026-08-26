@@ -702,16 +702,17 @@ void NotNullTerminatedResultCheck::registerMatchers(MatchFinder *Finder) {
     return hasArgument(
         CC.LengthPos,
         allOf(
-            anyOf(ignoringImpCasts(integerLiteral().bind(WrongLengthExprName)),
-                  allOf(unless(hasDefinition(SizeOfCharExpr)),
-                        allOf(CC.WithIncrease
-                                  ? ignoringImpCasts(hasDefinition(HasIncOp))
-                                  : ignoringImpCasts(
-                                        allOf(unless(hasDefinition(HasIncOp)),
-                                              hasDefinition(optionally(
-                                                  binaryOperator().bind(
-                                                      UnknownLengthName))))),
-                              AnyOfWrongLengthInit))),
+            anyOf(
+                ignoringImpCasts(integerLiteral().bind(WrongLengthExprName)),
+                allOf(unless(hasDefinition(SizeOfCharExpr)),
+                      allOf(CC.WithIncrease
+                                ? ignoringImpCasts(hasDefinition(HasIncOp))
+                                : ignoringImpCasts(allOf(
+                                      unless(hasDefinition(HasIncOp)),
+                                      anyOf(hasDefinition(binaryOperator().bind(
+                                                UnknownLengthName)),
+                                            hasDefinition(anything())))),
+                            AnyOfWrongLengthInit))),
             expr().bind(LengthExprName)));
   };
 

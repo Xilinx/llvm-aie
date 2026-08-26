@@ -263,7 +263,12 @@ declare half @test_callee(half %a, half %b) #0
 ; CHECK-DAG:  st.param.b16    [param0], [[A]];
 ; CHECK-DAG:  st.param.b16    [param1], [[B]];
 ; CHECK-DAG:  .param .align 2 .b8 retval0[2];
-; CHECK:      call.uni (retval0), test_callee, (param0, param1);
+; CHECK:      call.uni (retval0),
+; CHECK-NEXT:        test_callee,
+; CHECK-NEXT: (
+; CHECK-NEXT:        param0,
+; CHECK-NEXT:        param1
+; CHECK-NEXT: );
 ; CHECK-NEXT: ld.param.b16    [[R:%rs[0-9]+]], [retval0];
 ; CHECK-NEXT: }
 ; CHECK-NEXT: st.param.b16    [func_retval0], [[R]];
@@ -282,7 +287,12 @@ define half @test_call(half %a, half %b) #0 {
 ; CHECK-DAG:  st.param.b16    [param0], [[B]];
 ; CHECK-DAG:  st.param.b16    [param1], [[A]];
 ; CHECK-DAG:  .param .align 2 .b8 retval0[2];
-; CHECK:      call.uni (retval0), test_callee, (param0, param1);
+; CHECK:      call.uni (retval0),
+; CHECK-NEXT:        test_callee,
+; CHECK-NEXT: (
+; CHECK-NEXT:        param0,
+; CHECK-NEXT:        param1
+; CHECK-NEXT: );
 ; CHECK-NEXT: ld.param.b16    [[R:%rs[0-9]+]], [retval0];
 ; CHECK-NEXT: }
 ; CHECK-NEXT: st.param.b16    [func_retval0], [[R]];
@@ -301,7 +311,12 @@ define half @test_call_flipped(half %a, half %b) #0 {
 ; CHECK-DAG:  st.param.b16    [param0], [[B]];
 ; CHECK-DAG:  st.param.b16    [param1], [[A]];
 ; CHECK-DAG:  .param .align 2 .b8 retval0[2];
-; CHECK:      call.uni (retval0), test_callee, (param0, param1);
+; CHECK:      call.uni (retval0),
+; CHECK-NEXT:        test_callee,
+; CHECK-NEXT: (
+; CHECK-NEXT:        param0,
+; CHECK-NEXT:        param1
+; CHECK-NEXT: );
 ; CHECK-NEXT: ld.param.b16    [[R:%rs[0-9]+]], [retval0];
 ; CHECK-NEXT: }
 ; CHECK-NEXT: st.param.b16    [func_retval0], [[R]];
@@ -635,7 +650,8 @@ else:
 ; CHECK:      ld.b16  [[AB:%rs[0-9]+]], [%[[P1]]];
 ; CHECK:      {
 ; CHECK:      st.param.b64    [param0], %[[P1]];
-; CHECK:      call.uni (retval0), test_dummy
+; CHECK:      call.uni (retval0),
+; CHECK-NEXT: test_dummy
 ; CHECK:      }
 ; CHECK:      setp.ne.b32     [[PRED:%p[0-9]+]], %r{{[0-9]+}}, 0;
 ; CHECK:      @[[PRED]] bra   [[LOOP]];

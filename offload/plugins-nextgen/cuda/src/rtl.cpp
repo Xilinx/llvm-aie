@@ -358,19 +358,6 @@ struct CUDADeviceTy : public GenericDeviceTy {
     return Plugin::success();
   }
 
-  Error unloadBinaryImpl(DeviceImageTy *Image) override {
-    assert(Context && "Invalid CUDA context");
-
-    // Each image has its own module.
-    CUDADeviceImageTy &CUDAImage = static_cast<CUDADeviceImageTy &>(*Image);
-
-    // Unload the module of the image.
-    if (auto Err = CUDAImage.unloadModule())
-      return Err;
-
-    return Plugin::success();
-  }
-
   /// Deinitialize the device and release its resources.
   Error deinitImpl() override {
     if (Context) {
@@ -384,6 +371,20 @@ struct CUDADeviceTy : public GenericDeviceTy {
 
     if (auto Err = CUDAEventManager.deinit())
       return Err;
+
+    // Close modules if necessary.
+    if (!LoadedImages.empty()) {
+      assert(Context && "Invalid CUDA context");
+
+      // Each image has its own module.
+      for (DeviceImageTy *Image : LoadedImages) {
+        CUDADeviceImageTy &CUDAImage = static_cast<CUDADeviceImageTy &>(*Image);
+
+        // Unload the module of the image.
+        if (auto Err = CUDAImage.unloadModule())
+          return Err;
+      }
+    }
 
     if (Context) {
       CUresult Res = cuDevicePrimaryCtxRelease(Device);
@@ -921,12 +922,11 @@ struct CUDADeviceTy : public GenericDeviceTy {
   }
 
   /// Print information about the device.
-  Expected<InfoTreeNode> obtainInfoImpl() override {
+  Error obtainInfoImpl(InfoQueueTy &Info) override {
     char TmpChar[1000];
     const char *TmpCharPtr;
     size_t TmpSt;
     int TmpInt;
-    InfoTreeNode Info;
 
     CUresult Res = cuDriverGetVersion(&TmpInt);
     if (Res == CUDA_SUCCESS)
@@ -971,27 +971,27 @@ struct CUDADeviceTy : public GenericDeviceTy {
     if (Res == CUDA_SUCCESS)
       Info.add("Maximum Threads per Block", TmpInt);
 
-    auto &MaxBlock = *Info.add("Maximum Block Dimensions", "");
+    Info.add("Maximum Block Dimensions", "");
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, TmpInt);
     if (Res == CUDA_SUCCESS)
-      MaxBlock.add("x", TmpInt);
+      Info.add<InfoLevel2>("x", TmpInt);
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y, TmpInt);
     if (Res == CUDA_SUCCESS)
-      MaxBlock.add("y", TmpInt);
+      Info.add<InfoLevel2>("y", TmpInt);
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z, TmpInt);
     if (Res == CUDA_SUCCESS)
-      MaxBlock.add("z", TmpInt);
+      Info.add<InfoLevel2>("z", TmpInt);
 
-    auto &MaxGrid = *Info.add("Maximum Grid Dimensions", "");
+    Info.add("Maximum Grid Dimensions", "");
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X, TmpInt);
     if (Res == CUDA_SUCCESS)
-      MaxGrid.add("x", TmpInt);
+      Info.add<InfoLevel2>("x", TmpInt);
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Y, TmpInt);
     if (Res == CUDA_SUCCESS)
-      MaxGrid.add("y", TmpInt);
+      Info.add<InfoLevel2>("y", TmpInt);
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Z, TmpInt);
     if (Res == CUDA_SUCCESS)
-      MaxGrid.add("z", TmpInt);
+      Info.add<InfoLevel2>("z", TmpInt);
 
     Res = getDeviceAttrRaw(CU_DEVICE_ATTRIBUTE_MAX_PITCH, TmpInt);
     if (Res == CUDA_SUCCESS)
@@ -1087,7 +1087,7 @@ struct CUDADeviceTy : public GenericDeviceTy {
 
     Info.add("Compute Capabilities", ComputeCapability.str());
 
-    return Info;
+    return Plugin::success();
   }
 
   virtual bool shouldSetupDeviceMemoryPool() const override {

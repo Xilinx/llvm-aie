@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
@@ -369,7 +370,7 @@ bool LoadStoreOpt::doSingleStoreMerge(SmallVectorImpl<GStore *> &Stores) {
   // For each store, compute pairwise merged debug locs.
   DebugLoc MergedLoc = Stores.front()->getDebugLoc();
   for (auto *Store : drop_begin(Stores))
-    MergedLoc = DebugLoc::getMergedLocation(MergedLoc, Store->getDebugLoc());
+    MergedLoc = DILocation::getMergedLocation(MergedLoc, Store->getDebugLoc());
 
   Builder.setInstr(*Stores.back());
   Builder.setDebugLoc(MergedLoc);

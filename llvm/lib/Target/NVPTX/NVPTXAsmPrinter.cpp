@@ -77,7 +77,6 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/NativeFormatting.h"
@@ -215,15 +214,15 @@ unsigned NVPTXAsmPrinter::encodeVirtualRegister(unsigned Reg) {
     // Encode the register class in the upper 4 bits
     // Must be kept in sync with NVPTXInstPrinter::printRegName
     unsigned Ret = 0;
-    if (RC == &NVPTX::B1RegClass) {
+    if (RC == &NVPTX::Int1RegsRegClass) {
       Ret = (1 << 28);
-    } else if (RC == &NVPTX::B16RegClass) {
+    } else if (RC == &NVPTX::Int16RegsRegClass) {
       Ret = (2 << 28);
-    } else if (RC == &NVPTX::B32RegClass) {
+    } else if (RC == &NVPTX::Int32RegsRegClass) {
       Ret = (3 << 28);
-    } else if (RC == &NVPTX::B64RegClass) {
+    } else if (RC == &NVPTX::Int64RegsRegClass) {
       Ret = (4 << 28);
-    } else if (RC == &NVPTX::B128RegClass) {
+    } else if (RC == &NVPTX::Int128RegsRegClass) {
       Ret = (7 << 28);
     } else {
       report_fatal_error("Bad register class");
@@ -1851,7 +1850,7 @@ NVPTXAsmPrinter::lowerConstantForGV(const Constant *CV,
 }
 
 void NVPTXAsmPrinter::printMCExpr(const MCExpr &Expr, raw_ostream &OS) const {
-  OutContext.getAsmInfo()->printExpr(OS, Expr);
+  Expr.print(OS, OutContext.getAsmInfo());
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
@@ -1948,8 +1947,7 @@ INITIALIZE_PASS(NVPTXAsmPrinter, "nvptx-asm-printer", "NVPTX Assembly Printer",
                 false, false)
 
 // Force static initialization.
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeNVPTXAsmPrinter() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeNVPTXAsmPrinter() {
   RegisterAsmPrinter<NVPTXAsmPrinter> X(getTheNVPTXTarget32());
   RegisterAsmPrinter<NVPTXAsmPrinter> Y(getTheNVPTXTarget64());
 }

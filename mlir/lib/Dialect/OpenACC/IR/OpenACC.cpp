@@ -321,24 +321,6 @@ static LogicalResult checkVarAndAccVar(Op op) {
   return success();
 }
 
-template <typename Op>
-static LogicalResult checkNoModifier(Op op) {
-  if (op.getModifiers() != acc::DataClauseModifier::none)
-    return op.emitError("no data clause modifiers are allowed");
-  return success();
-}
-
-template <typename Op>
-static LogicalResult
-checkValidModifier(Op op, acc::DataClauseModifier validModifiers) {
-  if (acc::bitEnumContainsAny(op.getModifiers(), ~validModifiers))
-    return op.emitError(
-        "invalid data clause modifiers: " +
-        acc::stringifyDataClauseModifier(op.getModifiers() & ~validModifiers));
-
-  return success();
-}
-
 static ParseResult parseVar(mlir::OpAsmParser &parser,
                             OpAsmParser::UnresolvedOperand &var) {
   // Either `var` or `varPtr` keyword is required.
@@ -465,8 +447,6 @@ LogicalResult acc::PrivateOp::verify() {
         "data clause associated with private operation must match its intent");
   if (failed(checkVarAndVarType(*this)))
     return failure();
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -479,8 +459,6 @@ LogicalResult acc::FirstprivateOp::verify() {
                      "match its intent");
   if (failed(checkVarAndVarType(*this)))
     return failure();
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -492,8 +470,6 @@ LogicalResult acc::ReductionOp::verify() {
     return emitError("data clause associated with reduction operation must "
                      "match its intent");
   if (failed(checkVarAndVarType(*this)))
-    return failure();
-  if (failed(checkNoModifier(*this)))
     return failure();
   return success();
 }
@@ -509,8 +485,6 @@ LogicalResult acc::DevicePtrOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -524,8 +498,6 @@ LogicalResult acc::PresentOp::verify() {
   if (failed(checkVarAndVarType(*this)))
     return failure();
   if (failed(checkVarAndAccVar(*this)))
-    return failure();
-  if (failed(checkNoModifier(*this)))
     return failure();
   return success();
 }
@@ -546,17 +518,11 @@ LogicalResult acc::CopyinOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkValidModifier(*this, acc::DataClauseModifier::readonly |
-                                           acc::DataClauseModifier::always |
-                                           acc::DataClauseModifier::capture)))
-    return failure();
   return success();
 }
 
 bool acc::CopyinOp::isCopyinReadonly() {
-  return getDataClause() == acc::DataClause::acc_copyin_readonly ||
-         acc::bitEnumContainsAny(getModifiers(),
-                                 acc::DataClauseModifier::readonly);
+  return getDataClause() == acc::DataClause::acc_copyin_readonly;
 }
 
 //===----------------------------------------------------------------------===//
@@ -575,18 +541,13 @@ LogicalResult acc::CreateOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkValidModifier(*this, acc::DataClauseModifier::zero |
-                                           acc::DataClauseModifier::alwaysout |
-                                           acc::DataClauseModifier::capture)))
-    return failure();
   return success();
 }
 
 bool acc::CreateOp::isCreateZero() {
   // The zero modifier is encoded in the data clause.
   return getDataClause() == acc::DataClause::acc_create_zero ||
-         getDataClause() == acc::DataClause::acc_copyout_zero ||
-         acc::bitEnumContainsAny(getModifiers(), acc::DataClauseModifier::zero);
+         getDataClause() == acc::DataClause::acc_copyout_zero;
 }
 
 //===----------------------------------------------------------------------===//
@@ -599,8 +560,6 @@ LogicalResult acc::NoCreateOp::verify() {
   if (failed(checkVarAndVarType(*this)))
     return failure();
   if (failed(checkVarAndAccVar(*this)))
-    return failure();
-  if (failed(checkNoModifier(*this)))
     return failure();
   return success();
 }
@@ -615,8 +574,6 @@ LogicalResult acc::AttachOp::verify() {
   if (failed(checkVarAndVarType(*this)))
     return failure();
   if (failed(checkVarAndAccVar(*this)))
-    return failure();
-  if (failed(checkNoModifier(*this)))
     return failure();
   return success();
 }
@@ -633,8 +590,6 @@ LogicalResult acc::DeclareDeviceResidentOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -649,8 +604,6 @@ LogicalResult acc::DeclareLinkOp::verify() {
   if (failed(checkVarAndVarType(*this)))
     return failure();
   if (failed(checkVarAndAccVar(*this)))
-    return failure();
-  if (failed(checkNoModifier(*this)))
     return failure();
   return success();
 }
@@ -673,16 +626,11 @@ LogicalResult acc::CopyoutOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkValidModifier(*this, acc::DataClauseModifier::zero |
-                                           acc::DataClauseModifier::always |
-                                           acc::DataClauseModifier::capture)))
-    return failure();
   return success();
 }
 
 bool acc::CopyoutOp::isCopyoutZero() {
-  return getDataClause() == acc::DataClause::acc_copyout_zero ||
-         acc::bitEnumContainsAny(getModifiers(), acc::DataClauseModifier::zero);
+  return getDataClause() == acc::DataClause::acc_copyout_zero;
 }
 
 //===----------------------------------------------------------------------===//
@@ -704,13 +652,6 @@ LogicalResult acc::DeleteOp::verify() {
         " or specify original clause this operation was decomposed from");
   if (!getAccVar())
     return emitError("must have device pointer");
-  // This op is the exit part of copyin and create - thus allow all modifiers
-  // allowed on either case.
-  if (failed(checkValidModifier(*this, acc::DataClauseModifier::zero |
-                                           acc::DataClauseModifier::readonly |
-                                           acc::DataClauseModifier::alwaysin |
-                                           acc::DataClauseModifier::capture)))
-    return failure();
   return success();
 }
 
@@ -726,8 +667,6 @@ LogicalResult acc::DetachOp::verify() {
         " or specify original clause this operation was decomposed from");
   if (!getAccVar())
     return emitError("must have device pointer");
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -747,8 +686,6 @@ LogicalResult acc::UpdateHostOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -765,8 +702,6 @@ LogicalResult acc::UpdateDeviceOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkNoModifier(*this)))
-    return failure();
   return success();
 }
 
@@ -782,8 +717,6 @@ LogicalResult acc::UseDeviceOp::verify() {
   if (failed(checkVarAndVarType(*this)))
     return failure();
   if (failed(checkVarAndAccVar(*this)))
-    return failure();
-  if (failed(checkNoModifier(*this)))
     return failure();
   return success();
 }
@@ -802,15 +735,7 @@ LogicalResult acc::CacheOp::verify() {
     return failure();
   if (failed(checkVarAndAccVar(*this)))
     return failure();
-  if (failed(checkValidModifier(*this, acc::DataClauseModifier::readonly)))
-    return failure();
   return success();
-}
-
-bool acc::CacheOp::isCacheReadonly() {
-  return getDataClause() == acc::DataClause::acc_cache_readonly ||
-         acc::bitEnumContainsAny(getModifiers(),
-                                 acc::DataClauseModifier::readonly);
 }
 
 template <typename StructureOp>

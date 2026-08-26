@@ -220,7 +220,9 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
   CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
 
   // Emit the handlers.
-  for (CatchHandler &Handler : Handlers) {
+  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
+    CatchHandler &Handler = Handlers[I];
+
     CGF.EmitBlock(Handler.Block);
 
     CodeGenFunction::LexicalScope Cleanups(CGF, Handler.Body->getSourceRange());

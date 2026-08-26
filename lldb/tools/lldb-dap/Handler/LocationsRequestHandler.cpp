@@ -137,16 +137,7 @@ void LocationsRequestHandler::operator()(
       return;
     }
 
-    const std::optional<protocol::Source> source =
-        CreateSource(line_entry.GetFileSpec());
-    if (!source) {
-      response["success"] = false;
-      response["message"] = "Failed to resolve file path for location";
-      dap.SendJSON(llvm::json::Value(std::move(response)));
-      return;
-    }
-
-    body.try_emplace("source", *source);
+    body.try_emplace("source", CreateSource(line_entry.GetFileSpec()));
     if (int line = line_entry.GetLine())
       body.try_emplace("line", line);
     if (int column = line_entry.GetColumn())
@@ -161,16 +152,7 @@ void LocationsRequestHandler::operator()(
       return;
     }
 
-    const std::optional<protocol::Source> source =
-        CreateSource(decl.GetFileSpec());
-    if (!source) {
-      response["success"] = false;
-      response["message"] = "Failed to resolve file path for location";
-      dap.SendJSON(llvm::json::Value(std::move(response)));
-      return;
-    }
-
-    body.try_emplace("source", *source);
+    body.try_emplace("source", CreateSource(decl.GetFileSpec()));
     if (int line = decl.GetLine())
       body.try_emplace("line", line);
     if (int column = decl.GetColumn())

@@ -2189,14 +2189,8 @@ StmtProfiler::VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *S) {
 
 void StmtProfiler::VisitOverloadExpr(const OverloadExpr *S) {
   VisitExpr(S);
-  bool DescribingDependentVarTemplate =
-      S->getNumDecls() == 1 && isa<VarTemplateDecl>(*S->decls_begin());
-  if (DescribingDependentVarTemplate) {
-    VisitDecl(*S->decls_begin());
-  } else {
-    VisitNestedNameSpecifier(S->getQualifier());
-    VisitName(S->getName(), /*TreatAsDecl*/ true);
-  }
+  VisitNestedNameSpecifier(S->getQualifier());
+  VisitName(S->getName(), /*TreatAsDecl*/ true);
   ID.AddBoolean(S->hasExplicitTemplateArgs());
   if (S->hasExplicitTemplateArgs())
     VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
@@ -2364,6 +2358,10 @@ void StmtProfiler::VisitCoyieldExpr(const CoyieldExpr *S) {
 }
 
 void StmtProfiler::VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitTypoExpr(const TypoExpr *E) {
   VisitExpr(E);
 }
 

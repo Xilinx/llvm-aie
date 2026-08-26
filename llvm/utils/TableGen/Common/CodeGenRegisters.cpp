@@ -167,8 +167,8 @@ CodeGenRegister::CodeGenRegister(const Record *R, unsigned Enum)
     : TheDef(R), EnumValue(Enum),
       CostPerUse(R->getValueAsListOfInts("CostPerUse")),
       CoveredBySubRegs(R->getValueAsBit("CoveredBySubRegs")),
-      Constant(R->getValueAsBit("isConstant")), SubRegsComplete(false),
-      SuperRegsComplete(false), TopoSig(~0u) {
+      HasDisjunctSubRegs(false), Constant(R->getValueAsBit("isConstant")),
+      SubRegsComplete(false), SuperRegsComplete(false), TopoSig(~0u) {
   Artificial = R->getValueAsBit("isArtificial");
 }
 
@@ -896,7 +896,7 @@ bool CodeGenRegisterClass::hasType(const ValueTypeByHwMode &VT) const {
   if (VT.isSimple()) {
     MVT T = VT.getSimple();
     for (const ValueTypeByHwMode &OurVT : VTs) {
-      if (llvm::is_contained(llvm::make_second_range(OurVT), T))
+      if (llvm::count_if(OurVT, [T](auto &&P) { return P.second == T; }))
         return true;
     }
   }
@@ -948,7 +948,9 @@ bool CodeGenRegisterClass::Key::operator<(
 static bool testSubClass(const CodeGenRegisterClass *A,
                          const CodeGenRegisterClass *B) {
   return A->RSI.isSubClassOf(B->RSI) &&
-         llvm::includes(A->getMembers(), B->getMembers(), deref<std::less<>>());
+         std::includes(A->getMembers().begin(), A->getMembers().end(),
+                       B->getMembers().begin(), B->getMembers().end(),
+                       deref<std::less<>>());
 }
 
 /// Sorting predicate for register classes.  This provides a topological
@@ -2003,7 +2005,8 @@ findRegUnitSet(const std::vector<RegUnitSet> &UniqueSets,
 // Return true if the RUSubSet is a subset of RUSuperSet.
 static bool isRegUnitSubSet(const std::vector<unsigned> &RUSubSet,
                             const std::vector<unsigned> &RUSuperSet) {
-  return llvm::includes(RUSuperSet, RUSubSet);
+  return std::includes(RUSuperSet.begin(), RUSuperSet.end(), RUSubSet.begin(),
+                       RUSubSet.end());
 }
 
 /// Iteratively prune unit sets. Prune subsets that are close to the superset,

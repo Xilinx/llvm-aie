@@ -374,7 +374,7 @@ void X86InstPrinterCommon::printPCRelImm(const MCInst *MI, uint64_t Address,
       markup(O, Markup::Immediate) << formatHex((uint64_t)Address);
     } else {
       // Otherwise, just print the expression.
-      MAI.printExpr(O, *Op.getExpr());
+      Op.getExpr()->print(O, &MAI);
     }
   }
 }

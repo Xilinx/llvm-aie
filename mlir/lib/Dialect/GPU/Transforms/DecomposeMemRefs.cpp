@@ -55,7 +55,7 @@ static bool isInsideLaunch(Operation *op) {
 static std::tuple<Value, OpFoldResult, SmallVector<OpFoldResult>>
 getFlatOffsetAndStrides(OpBuilder &rewriter, Location loc, Value source,
                         ArrayRef<OpFoldResult> subOffsets,
-                        ArrayRef<OpFoldResult> subStrides = {}) {
+                        ArrayRef<OpFoldResult> subStrides = std::nullopt) {
   auto sourceType = cast<MemRefType>(source.getType());
   auto sourceRank = static_cast<unsigned>(sourceType.getRank());
 
@@ -111,8 +111,7 @@ static Value getFlatMemref(OpBuilder &rewriter, Location loc, Value source,
       getFlatOffsetAndStrides(rewriter, loc, source, offsetsTemp);
   MemRefType retType = inferCastResultType(base, offset);
   return rewriter.create<memref::ReinterpretCastOp>(loc, retType, base, offset,
-                                                    ArrayRef<OpFoldResult>(),
-                                                    ArrayRef<OpFoldResult>());
+                                                    std::nullopt, std::nullopt);
 }
 
 static bool needFlatten(Value val) {

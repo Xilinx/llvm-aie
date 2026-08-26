@@ -174,8 +174,6 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
   ExtendedTokenMode = 0;
 
   NewLinePtr = nullptr;
-
-  IsFirstPPToken = true;
 }
 
 /// Lexer constructor - Create a new lexer object for the specified buffer
@@ -383,7 +381,7 @@ StringRef Lexer::getSpelling(SourceLocation loc,
                              const LangOptions &options,
                              bool *invalid) {
   // Break down the source location.
-  FileIDAndOffset locInfo = SM.getDecomposedLoc(loc);
+  std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(loc);
 
   // Try to the load the file buffer.
   bool invalidTemp = false;
@@ -521,7 +519,7 @@ bool Lexer::getRawToken(SourceLocation Loc, Token &Result,
   // If this comes from a macro expansion, we really do want the macro name, not
   // the token this macro expanded to.
   Loc = SM.getExpansionLoc(Loc);
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   bool Invalid = false;
   StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
@@ -563,7 +561,7 @@ static SourceLocation getBeginningOfFileToken(SourceLocation Loc,
                                               const SourceManager &SM,
                                               const LangOptions &LangOpts) {
   assert(Loc.isFileID());
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   if (LocInfo.first.isInvalid())
     return Loc;
 
@@ -618,8 +616,9 @@ SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
 
   SourceLocation FileLoc = SM.getSpellingLoc(Loc);
   SourceLocation BeginFileLoc = getBeginningOfFileToken(FileLoc, SM, LangOpts);
-  FileIDAndOffset FileLocInfo = SM.getDecomposedLoc(FileLoc);
-  FileIDAndOffset BeginFileLocInfo = SM.getDecomposedLoc(BeginFileLoc);
+  std::pair<FileID, unsigned> FileLocInfo = SM.getDecomposedLoc(FileLoc);
+  std::pair<FileID, unsigned> BeginFileLocInfo =
+      SM.getDecomposedLoc(BeginFileLoc);
   assert(FileLocInfo.first == BeginFileLocInfo.first &&
          FileLocInfo.second >= BeginFileLocInfo.second);
   return Loc.getLocWithOffset(BeginFileLocInfo.second - FileLocInfo.second);
@@ -1032,7 +1031,7 @@ StringRef Lexer::getSourceText(CharSourceRange Range,
   }
 
   // Break down the source location.
-  FileIDAndOffset beginInfo = SM.getDecomposedLoc(Range.getBegin());
+  std::pair<FileID, unsigned> beginInfo = SM.getDecomposedLoc(Range.getBegin());
   if (beginInfo.first.isInvalid()) {
     if (Invalid) *Invalid = true;
     return {};
@@ -1098,7 +1097,7 @@ StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
 
   // Dig out the buffer where the macro name was spelled and the extents of the
   // name so that we can render it into the expansion note.
-  FileIDAndOffset ExpansionInfo = SM.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> ExpansionInfo = SM.getDecomposedLoc(Loc);
   unsigned MacroTokenLength = Lexer::MeasureTokenLength(Loc, SM, LangOpts);
   StringRef ExpansionBuffer = SM.getBufferData(ExpansionInfo.first);
   return ExpansionBuffer.substr(ExpansionInfo.second, MacroTokenLength);
@@ -1125,7 +1124,7 @@ StringRef Lexer::getImmediateMacroNameForDiagnostics(
 
   // Dig out the buffer where the macro name was spelled and the extents of the
   // name so that we can render it into the expansion note.
-  FileIDAndOffset ExpansionInfo = SM.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> ExpansionInfo = SM.getDecomposedLoc(Loc);
   unsigned MacroTokenLength = Lexer::MeasureTokenLength(Loc, SM, LangOpts);
   StringRef ExpansionBuffer = SM.getBufferData(ExpansionInfo.first);
   return ExpansionBuffer.substr(ExpansionInfo.second, MacroTokenLength);
@@ -1159,7 +1158,7 @@ StringRef Lexer::getIndentationForLine(SourceLocation Loc,
                                        const SourceManager &SM) {
   if (Loc.isInvalid() || Loc.isMacroID())
     return {};
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   if (LocInfo.first.isInvalid())
     return {};
   bool Invalid = false;
@@ -1333,7 +1332,7 @@ std::optional<Token> Lexer::findNextToken(SourceLocation Loc,
   Loc = Lexer::getLocForEndOfToken(Loc, 0, SM, LangOpts);
 
   // Break down the source location.
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
 
   // Try to load the file buffer.
   bool InvalidTemp = false;
@@ -3201,19 +3200,18 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   return PP->HandleEndOfFile(Result, isPragmaLexer());
 }
 
-/// peekNextPPToken - Return std::nullopt if there are no more tokens in the
-/// buffer controlled by this lexer, otherwise return the next unexpanded
-/// token.
-std::optional<Token> Lexer::peekNextPPToken() {
+/// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
+/// the specified lexer will return a tok::l_paren token, 0 if it is something
+/// else and 2 if there are no more tokens in the buffer controlled by the
+/// lexer.
+unsigned Lexer::isNextPPTokenLParen() {
   assert(!LexingRawMode && "How can we expand a macro from a skipping buffer?");
 
   if (isDependencyDirectivesLexer()) {
     if (NextDepDirectiveTokenIndex == DepDirectives.front().Tokens.size())
-      return std::nullopt;
-    Token Result;
-    (void)convertDependencyDirectiveToken(
-        DepDirectives.front().Tokens[NextDepDirectiveTokenIndex], Result);
-    return Result;
+      return 2;
+    return DepDirectives.front().Tokens[NextDepDirectiveTokenIndex].is(
+        tok::l_paren);
   }
 
   // Switch to 'skipping' mode.  This will ensure that we can lex a token
@@ -3227,7 +3225,6 @@ std::optional<Token> Lexer::peekNextPPToken() {
   bool atStartOfLine = IsAtStartOfLine;
   bool atPhysicalStartOfLine = IsAtPhysicalStartOfLine;
   bool leadingSpace = HasLeadingSpace;
-  bool isFirstPPToken = IsFirstPPToken;
 
   Token Tok;
   Lex(Tok);
@@ -3238,13 +3235,13 @@ std::optional<Token> Lexer::peekNextPPToken() {
   HasLeadingSpace = leadingSpace;
   IsAtStartOfLine = atStartOfLine;
   IsAtPhysicalStartOfLine = atPhysicalStartOfLine;
-  IsFirstPPToken = isFirstPPToken;
+
   // Restore the lexer back to non-skipping mode.
   LexingRawMode = false;
 
   if (Tok.is(tok::eof))
-    return std::nullopt;
-  return Tok;
+    return 2;
+  return Tok.is(tok::l_paren);
 }
 
 /// Find the end of a version control conflict marker.
@@ -3726,11 +3723,6 @@ bool Lexer::Lex(Token &Result) {
   if (HasLeadingEmptyMacro) {
     Result.setFlag(Token::LeadingEmptyMacro);
     HasLeadingEmptyMacro = false;
-  }
-
-  if (IsFirstPPToken) {
-    Result.setFlag(Token::FirstPPToken);
-    IsFirstPPToken = false;
   }
 
   bool atPhysicalStartOfLine = IsAtPhysicalStartOfLine;

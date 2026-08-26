@@ -25,17 +25,13 @@
 
 namespace llvm {
 
-class MCAssembler;
 class MCContext;
 class MCCFIInstruction;
 class MCExpr;
-class MCSpecifierExpr;
 class MCSection;
 class MCStreamer;
 class MCSubtargetInfo;
 class MCSymbol;
-class MCValue;
-class raw_ostream;
 
 namespace WinEH {
 
@@ -76,6 +72,7 @@ public:
     uint32_t Kind;
     StringRef Name;
   };
+  using VariantKindDesc = AtSpecifier;
 
 protected:
   //===------------------------------------------------------------------===//
@@ -143,9 +140,6 @@ protected:
 
   /// This is appended to emitted labels.  Defaults to ":"
   const char *LabelSuffix;
-
-  /// Use .set instead of = to equate a symbol to an expression.
-  bool UsesSetToEquateSymbol = false;
 
   // Print the EH begin symbol with an assignment. Defaults to false.
   bool UseAssignmentForEHBegin = false;
@@ -426,9 +420,9 @@ protected:
   // If true, use Motorola-style integers in Assembly (ex. $0ac).
   bool UseMotorolaIntegers = false;
 
-  llvm::DenseMap<uint32_t, StringRef> AtSpecifierToName;
-  llvm::StringMap<uint32_t> NameToAtSpecifier;
-  void initializeAtSpecifiers(ArrayRef<AtSpecifier>);
+  llvm::DenseMap<uint32_t, StringRef> SpecifierToName;
+  llvm::StringMap<uint32_t> NameToSpecifier;
+  void initializeVariantKinds(ArrayRef<VariantKindDesc> Descs);
 
 public:
   explicit MCAsmInfo();
@@ -531,7 +525,6 @@ public:
   bool shouldAllowAdditionalComments() const { return AllowAdditionalComments; }
   const char *getLabelSuffix() const { return LabelSuffix; }
 
-  bool usesSetToEquateSymbol() const { return UsesSetToEquateSymbol; }
   bool useAssignmentForEHBegin() const { return UseAssignmentForEHBegin; }
   bool needsLocalForSize() const { return NeedsLocalForSize; }
   StringRef getPrivateGlobalPrefix() const { return PrivateGlobalPrefix; }
@@ -712,14 +705,6 @@ public:
 
   StringRef getSpecifierName(uint32_t S) const;
   std::optional<uint32_t> getSpecifierForName(StringRef Name) const;
-
-  void printExpr(raw_ostream &, const MCExpr &) const;
-  virtual void printSpecifierExpr(raw_ostream &,
-                                  const MCSpecifierExpr &) const {
-    llvm_unreachable("Need to implement hook if target uses MCSpecifierExpr");
-  }
-  virtual bool evaluateAsRelocatableImpl(const MCSpecifierExpr &, MCValue &Res,
-                                         const MCAssembler *Asm) const;
 };
 
 } // end namespace llvm

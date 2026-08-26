@@ -1,5 +1,4 @@
-!RUN: rm -rf %t && mkdir -p %t
-!RUN: %flang -c -fhermetic-module-files -DWHICH=1 -J%t %s && %flang -c -fhermetic-module-files -DWHICH=2 -J%t %s && %flang -c -fhermetic-module-files -J%t %s && cat %t/modfile77c.mod | FileCheck %s
+!RUN: %flang -c -fhermetic-module-files -DWHICH=1 %s && %flang -c -fhermetic-module-files -DWHICH=2 %s && %flang -c -fhermetic-module-files %s && cat modfile77c.mod | FileCheck %s
 
 #if WHICH == 1
 module modfile77a

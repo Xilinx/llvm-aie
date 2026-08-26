@@ -147,12 +147,6 @@ struct GenELF64DeviceTy : public GenericDeviceTy {
   /// Initialize the device, which is a no-op
   Error initImpl(GenericPluginTy &Plugin) override { return Plugin::success(); }
 
-  /// Unload the binary image
-  ///
-  /// TODO: This currently does nothing, and should be implemented as part of
-  /// broader memory handling logic for this plugin
-  Error unloadBinaryImpl(DeviceImageTy *) override { return Plugin::success(); }
-
   /// Deinitialize the device, which is a no-op
   Error deinitImpl() override { return Plugin::success(); }
 
@@ -332,10 +326,9 @@ struct GenELF64DeviceTy : public GenericDeviceTy {
   Error syncEventImpl(void *EventPtr) override { return Plugin::success(); }
 
   /// Print information about the device.
-  Expected<InfoTreeNode> obtainInfoImpl() override {
-    InfoTreeNode Info;
+  Error obtainInfoImpl(InfoQueueTy &Info) override {
     Info.add("Device Type", "Generic-elf-64bit");
-    return Info;
+    return Plugin::success();
   }
 
   /// This plugin should not setup the device environment or memory pool.

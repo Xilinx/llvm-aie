@@ -367,13 +367,11 @@ static bool supportsAmdgpu(uint64_t Type) {
 }
 
 static uint64_t resolveAmdgpu(uint64_t Type, uint64_t Offset, uint64_t S,
-                              uint64_t LocData, int64_t Addend) {
-  assert((LocData == 0 || Addend == 0) &&
-         "one of LocData and Addend must be 0");
+                              uint64_t /*LocData*/, int64_t Addend) {
   switch (Type) {
   case ELF::R_AMDGPU_ABS32:
   case ELF::R_AMDGPU_ABS64:
-    return S + LocData + Addend;
+    return S + Addend;
   default:
     llvm_unreachable("Invalid relocation type");
   }

@@ -828,8 +828,10 @@ public:
         ID.AddInteger(paramInfo.getOpaqueValue());
     }
     resultType.Profile(ID);
-    for (const CanQualType &argType : argTypes)
-      argType.Profile(ID);
+    for (ArrayRef<CanQualType>::iterator
+           i = argTypes.begin(), e = argTypes.end(); i != e; ++i) {
+      i->Profile(ID);
+    }
   }
 };
 

@@ -5,15 +5,17 @@
 export void f1() {
 }
 
-// CHECK: define void @_ZN11MyNamespace2f2Ev()
+// CHECK: define void @_ZN11MyNamespace2f2Ev() [[Attr]]
 namespace MyNamespace {
   export void f2() {
   }
 }
 
 export {
-// CHECK: define void @_Z2f3v()
-// CHECK: define void @_Z2f4v()
+// CHECK: define void @_Z2f3v() [[Attr]]
+// CHECK: define void @_Z2f4v() [[Attr]]
     void f3() {}
     void f4() {}
 }
+
+// CHECK: attributes [[Attr]] = { {{.*}} "hlsl.export" {{.*}} }

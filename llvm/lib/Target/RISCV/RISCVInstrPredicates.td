@@ -129,13 +129,6 @@ def isVSlideInstr
                       !instances<Pseudo>("^PseudoVSLIDEUP_VI.*")
                      ])>>>;
 
-def isFaultOnlyFirstLoad
-    : TIIPredicate<"isFaultOnlyFirstLoad",
-                    MCReturnStatement<
-                      CheckOpcode<
-                       !instances<Pseudo>(
-                          "^PseudoVL(SEG[2-8])?E(8|16|32|64)FF_V.*")>>>;
-
 def isNonZeroLoadImmediate
     : TIIPredicate<"isNonZeroLoadImmediate",
                    MCReturnStatement<CheckAll<[

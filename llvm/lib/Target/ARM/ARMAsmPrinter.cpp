@@ -18,7 +18,7 @@
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
 #include "MCTargetDesc/ARMInstPrinter.h"
-#include "MCTargetDesc/ARMMCAsmInfo.h"
+#include "MCTargetDesc/ARMMCExpr.h"
 #include "TargetInfo/ARMTargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/BinaryFormat/COFF.h"
@@ -40,7 +40,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ARMBuildAttributes.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -53,10 +52,6 @@ ARMAsmPrinter::ARMAsmPrinter(TargetMachine &TM,
                              std::unique_ptr<MCStreamer> Streamer)
     : AsmPrinter(TM, std::move(Streamer), ID), Subtarget(nullptr), AFI(nullptr),
       MCP(nullptr), InConstantPool(false), OptimizationGoals(-1) {}
-
-const ARMBaseTargetMachine &ARMAsmPrinter::getTM() const {
-  return static_cast<const ARMBaseTargetMachine &>(TM);
-}
 
 void ARMAsmPrinter::emitFunctionBodyEnd() {
   // Make sure to terminate any constant pools that were at the end
@@ -97,7 +92,8 @@ void ARMAsmPrinter::emitXXStructor(const DataLayout &DL, const Constant *CV) {
 
   const MCExpr *E = MCSymbolRefExpr::create(
       GetARMGVSymbol(GV, ARMII::MO_NO_FLAG),
-      (Subtarget->isTargetELF() ? ARM::S_TARGET1 : ARM::S_None), OutContext);
+      (Subtarget->isTargetELF() ? ARMMCExpr::VK_TARGET1 : ARMMCExpr::VK_None),
+      OutContext);
 
   OutStreamer->emitValue(E, Size);
 }
@@ -754,7 +750,7 @@ void ARMAsmPrinter::emitAttributes() {
   ATS.emitAttribute(ARMBuildAttrs::ABI_align_preserved, 1);
 
   // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
-  if (getTM().isAAPCS_ABI() && TM.Options.FloatABIType == FloatABI::Hard)
+  if (STI.isAAPCS_ABI() && TM.Options.FloatABIType == FloatABI::Hard)
     ATS.emitAttribute(ARMBuildAttrs::ABI_VFP_args, ARMBuildAttrs::HardFPAAPCS);
 
   // FIXME: To support emitting this build attribute as GCC does, the
@@ -847,17 +843,17 @@ static MCSymbol *getPICLabel(StringRef Prefix, unsigned FunctionNumber,
 static uint8_t getModifierSpecifier(ARMCP::ARMCPModifier Modifier) {
   switch (Modifier) {
   case ARMCP::no_modifier:
-    return ARM::S_None;
+    return ARMMCExpr::VK_None;
   case ARMCP::TLSGD:
-    return ARM::S_TLSGD;
+    return ARMMCExpr::VK_TLSGD;
   case ARMCP::TPOFF:
-    return ARM::S_TPOFF;
+    return ARMMCExpr::VK_TPOFF;
   case ARMCP::GOTTPOFF:
-    return ARM::S_GOTTPOFF;
+    return ARMMCExpr::VK_GOTTPOFF;
   case ARMCP::SBREL:
-    return ARM::S_SBREL;
+    return ARMMCExpr::VK_SBREL;
   case ARMCP::GOT_PREL:
-    return ARM::S_GOT_PREL;
+    return ARMMCExpr::VK_GOT_PREL;
   case ARMCP::SECREL:
     return MCSymbolRefExpr::VK_SECREL;
   }
@@ -1624,15 +1620,12 @@ void ARMAsmPrinter::emitInstruction(const MachineInstr *MI) {
                     MI->getOperand(2).getImm(), OutContext);
     const MCExpr *LabelSymExpr= MCSymbolRefExpr::create(LabelSym, OutContext);
     unsigned PCAdj = (Opc == ARM::MOVi16_ga_pcrel) ? 8 : 4;
-    const MCExpr *PCRelExpr = ARM::createLower16(
-        MCBinaryExpr::createSub(
-            GVSymExpr,
-            MCBinaryExpr::createAdd(LabelSymExpr,
-                                    MCConstantExpr::create(PCAdj, OutContext),
-                                    OutContext),
-            OutContext),
-        OutContext);
-    TmpInst.addOperand(MCOperand::createExpr(PCRelExpr));
+    const MCExpr *PCRelExpr =
+      ARMMCExpr::createLower16(MCBinaryExpr::createSub(GVSymExpr,
+                                      MCBinaryExpr::createAdd(LabelSymExpr,
+                                      MCConstantExpr::create(PCAdj, OutContext),
+                                      OutContext), OutContext), OutContext);
+      TmpInst.addOperand(MCOperand::createExpr(PCRelExpr));
 
     // Add predicate operands.
     TmpInst.addOperand(MCOperand::createImm(ARMCC::AL));
@@ -1660,15 +1653,12 @@ void ARMAsmPrinter::emitInstruction(const MachineInstr *MI) {
                     MI->getOperand(3).getImm(), OutContext);
     const MCExpr *LabelSymExpr= MCSymbolRefExpr::create(LabelSym, OutContext);
     unsigned PCAdj = (Opc == ARM::MOVTi16_ga_pcrel) ? 8 : 4;
-    const MCExpr *PCRelExpr = ARM::createUpper16(
-        MCBinaryExpr::createSub(
-            GVSymExpr,
-            MCBinaryExpr::createAdd(LabelSymExpr,
-                                    MCConstantExpr::create(PCAdj, OutContext),
-                                    OutContext),
-            OutContext),
-        OutContext);
-    TmpInst.addOperand(MCOperand::createExpr(PCRelExpr));
+    const MCExpr *PCRelExpr =
+        ARMMCExpr::createUpper16(MCBinaryExpr::createSub(GVSymExpr,
+                                   MCBinaryExpr::createAdd(LabelSymExpr,
+                                      MCConstantExpr::create(PCAdj, OutContext),
+                                          OutContext), OutContext), OutContext);
+      TmpInst.addOperand(MCOperand::createExpr(PCRelExpr));
     // Add predicate operands.
     TmpInst.addOperand(MCOperand::createImm(ARMCC::AL));
     TmpInst.addOperand(MCOperand::createReg(0));
@@ -2461,8 +2451,7 @@ INITIALIZE_PASS(ARMAsmPrinter, "arm-asm-printer", "ARM Assembly Printer", false,
 //===----------------------------------------------------------------------===//
 
 // Force static initialization.
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeARMAsmPrinter() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeARMAsmPrinter() {
   RegisterAsmPrinter<ARMAsmPrinter> X(getTheARMLETarget());
   RegisterAsmPrinter<ARMAsmPrinter> Y(getTheARMBETarget());
   RegisterAsmPrinter<ARMAsmPrinter> A(getTheThumbLETarget());

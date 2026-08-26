@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/PPCMCAsmInfo.h"
+#include "MCTargetDesc/PPCMCExpr.h"
 #include "PPC.h"
 #include "PPCMachineFunctionInfo.h"
 #include "PPCSubtarget.h"
@@ -54,31 +54,31 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO,
 static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
                               AsmPrinter &Printer) {
   MCContext &Ctx = Printer.OutContext;
-  PPCMCExpr::Specifier RefKind = PPC::S_None;
+  PPCMCExpr::Specifier RefKind = PPCMCExpr::VK_None;
 
   unsigned access = MO.getTargetFlags();
 
   switch (access) {
     case PPCII::MO_TPREL_LO:
-      RefKind = PPC::S_TPREL_LO;
+      RefKind = PPCMCExpr::VK_TPREL_LO;
       break;
     case PPCII::MO_TPREL_HA:
-      RefKind = PPC::S_TPREL_HA;
+      RefKind = PPCMCExpr::VK_TPREL_HA;
       break;
     case PPCII::MO_DTPREL_LO:
-      RefKind = PPC::S_DTPREL_LO;
+      RefKind = PPCMCExpr::VK_DTPREL_LO;
       break;
     case PPCII::MO_TLSLD_LO:
-      RefKind = PPC::S_GOT_TLSLD_LO;
+      RefKind = PPCMCExpr::VK_GOT_TLSLD_LO;
       break;
     case PPCII::MO_TOC_LO:
-      RefKind = PPC::S_TOC_LO;
+      RefKind = PPCMCExpr::VK_TOC_LO;
       break;
     case PPCII::MO_TLS:
-      RefKind = PPC::S_TLS;
+      RefKind = PPCMCExpr::VK_TLS;
       break;
     case PPCII::MO_TLS_PCREL_FLAG:
-      RefKind = PPC::S_TLS_PCREL;
+      RefKind = PPCMCExpr::VK_TLS_PCREL;
       break;
   }
 
@@ -87,19 +87,19 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   const MachineFunction *MF = MI->getMF();
 
   if (MO.getTargetFlags() == PPCII::MO_PLT)
-    RefKind = PPC::S_PLT;
+    RefKind = PPCMCExpr::VK_PLT;
   else if (MO.getTargetFlags() == PPCII::MO_PCREL_FLAG)
-    RefKind = PPC::S_PCREL;
+    RefKind = PPCMCExpr::VK_PCREL;
   else if (MO.getTargetFlags() == PPCII::MO_GOT_PCREL_FLAG)
-    RefKind = PPC::S_GOT_PCREL;
+    RefKind = PPCMCExpr::VK_GOT_PCREL;
   else if (MO.getTargetFlags() == PPCII::MO_TPREL_PCREL_FLAG)
-    RefKind = PPC::S_TPREL;
+    RefKind = PPCMCExpr::VK_TPREL;
   else if (MO.getTargetFlags() == PPCII::MO_GOT_TLSGD_PCREL_FLAG)
-    RefKind = PPC::S_GOT_TLSGD_PCREL;
+    RefKind = PPCMCExpr::VK_GOT_TLSGD_PCREL;
   else if (MO.getTargetFlags() == PPCII::MO_GOT_TLSLD_PCREL_FLAG)
-    RefKind = PPC::S_GOT_TLSLD_PCREL;
+    RefKind = PPCMCExpr::VK_GOT_TLSLD_PCREL;
   else if (MO.getTargetFlags() == PPCII::MO_GOT_TPREL_PCREL_FLAG)
-    RefKind = PPC::S_GOT_TPREL_PCREL;
+    RefKind = PPCMCExpr::VK_GOT_TPREL_PCREL;
   else if (MO.getTargetFlags() == PPCII::MO_TPREL_FLAG ||
            MO.getTargetFlags() == PPCII::MO_TLSLD_FLAG) {
     assert(MO.isGlobal() && "Only expecting a global MachineOperand here!");
@@ -110,14 +110,14 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
     // the relocation type in case the result is used for purposes other than a
     // TOC reference. In TOC reference cases, this result is discarded.
     if (Model == TLSModel::LocalExec)
-      RefKind = PPC::S_AIX_TLSLE;
+      RefKind = PPCMCExpr::VK_AIX_TLSLE;
     else if (Model == TLSModel::LocalDynamic &&
              FuncInfo->isAIXFuncUseTLSIEForLD())
       // On AIX, TLS model opt may have turned local-dynamic accesses into
       // initial-exec accesses.
-      RefKind = PPC::S_AIX_TLSIE;
+      RefKind = PPCMCExpr::VK_AIX_TLSIE;
     else if (Model == TLSModel::LocalDynamic)
-      RefKind = PPC::S_AIX_TLSLD;
+      RefKind = PPCMCExpr::VK_AIX_TLSLD;
   }
 
   const Module *M = MF->getFunction().getParent();
@@ -130,10 +130,10 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
     if (MIOpcode == PPC::TAILB || MIOpcode == PPC::TAILB8 ||
         MIOpcode == PPC::TCRETURNdi || MIOpcode == PPC::TCRETURNdi8 ||
         MIOpcode == PPC::BL8_NOTOC || MIOpcode == PPC::BL8_NOTOC_RM) {
-      RefKind = PPC::S_NOTOC;
+      RefKind = PPCMCExpr::VK_NOTOC;
     }
     if (MO.getTargetFlags() == PPCII::MO_PCREL_OPT_FLAG)
-      RefKind = PPC::S_PCREL_OPT;
+      RefKind = PPCMCExpr::VK_PCREL_OPT;
   }
 
   const MCExpr *Expr = MCSymbolRefExpr::create(
@@ -164,11 +164,11 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   switch (access) {
     case PPCII::MO_LO:
     case PPCII::MO_PIC_LO_FLAG:
-      Expr = MCSpecifierExpr::create(Expr, PPC::S_LO, Ctx);
+      Expr = PPCMCExpr::createLo(Expr, Ctx);
       break;
     case PPCII::MO_HA:
     case PPCII::MO_PIC_HA_FLAG:
-      Expr = MCSpecifierExpr::create(Expr, PPC::S_HA, Ctx);
+      Expr = PPCMCExpr::createHa(Expr, Ctx);
       break;
   }
 

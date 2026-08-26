@@ -255,9 +255,13 @@ AMDGPUMCCodeEmitter::getLitEncoding(const MCOperand &MO,
                                     const MCSubtargetInfo &STI) const {
   int64_t Imm;
   if (MO.isExpr()) {
-    if (!MO.getExpr()->evaluateAsAbsolute(Imm))
+    const auto *C = dyn_cast<MCConstantExpr>(MO.getExpr());
+    if (!C)
       return 255;
+
+    Imm = C->getValue();
   } else {
+
     assert(!MO.isDFPImm());
 
     if (!MO.isImm())

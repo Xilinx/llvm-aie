@@ -6,14 +6,27 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <clc/clcmacro.h>
 #include <clc/math/clc_ldexp.h>
 #include <clc/opencl/clc.h>
 
-#define FUNCTION ldexp
-#define __CLC_FUNCTION(x) __clc_ldexp
-#define __CLC_BODY <clc/shared/binary_def_with_int_second_arg.inc>
+_CLC_DEFINE_BINARY_BUILTIN_NO_SCALARIZE(float, ldexp, __clc_ldexp, float, int)
 
-#include <clc/math/gentype.inc>
+#ifdef cl_khr_fp64
+
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+_CLC_DEFINE_BINARY_BUILTIN_NO_SCALARIZE(double, ldexp, __clc_ldexp, double, int)
+
+#endif
+
+#ifdef cl_khr_fp16
+
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
+_CLC_DEFINE_BINARY_BUILTIN_NO_SCALARIZE(half, ldexp, __clc_ldexp, half, int)
+
+#endif
 
 // This defines all the ldexp(GENTYPE, int) variants
 #define __CLC_BODY <ldexp.inc>

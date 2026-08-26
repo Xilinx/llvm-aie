@@ -14,7 +14,6 @@
 #include "MCTargetDesc/BPFMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCCodeEmitter.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
@@ -34,12 +33,11 @@ namespace {
 class BPFMCCodeEmitter : public MCCodeEmitter {
   const MCRegisterInfo &MRI;
   bool IsLittleEndian;
-  MCContext &Ctx;
 
 public:
   BPFMCCodeEmitter(const MCInstrInfo &, const MCRegisterInfo &mri,
-                   bool IsLittleEndian, MCContext &ctx)
-      : MRI(mri), IsLittleEndian(IsLittleEndian), Ctx(ctx) {}
+                   bool IsLittleEndian)
+      : MRI(mri), IsLittleEndian(IsLittleEndian) { }
   BPFMCCodeEmitter(const BPFMCCodeEmitter &) = delete;
   void operator=(const BPFMCCodeEmitter &) = delete;
   ~BPFMCCodeEmitter() override = default;
@@ -69,12 +67,12 @@ public:
 
 MCCodeEmitter *llvm::createBPFMCCodeEmitter(const MCInstrInfo &MCII,
                                             MCContext &Ctx) {
-  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), true, Ctx);
+  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), true);
 }
 
 MCCodeEmitter *llvm::createBPFbeMCCodeEmitter(const MCInstrInfo &MCII,
                                               MCContext &Ctx) {
-  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), false, Ctx);
+  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), false);
 }
 
 unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
@@ -83,16 +81,8 @@ unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCSubtargetInfo &STI) const {
   if (MO.isReg())
     return MRI.getEncodingValue(MO.getReg());
-  if (MO.isImm()) {
-    uint64_t Imm = MO.getImm();
-    uint64_t High32Bits = Imm >> 32, High33Bits = Imm >> 31;
-    if (MI.getOpcode() != BPF::LD_imm64 && High32Bits != 0 &&
-        High33Bits != 0x1FFFFFFFFULL) {
-      Ctx.reportWarning(MI.getLoc(),
-                        "immediate out of range, shall fit in 32 bits");
-    }
-    return static_cast<unsigned>(Imm);
-  }
+  if (MO.isImm())
+    return static_cast<unsigned>(MO.getImm());
 
   assert(MO.isExpr());
 

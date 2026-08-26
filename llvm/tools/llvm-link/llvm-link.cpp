@@ -523,10 +523,16 @@ int main(int argc, char **argv) {
 
   if (Verbose)
     errs() << "Writing bitcode...\n";
-  Composite->removeDebugIntrinsicDeclarations();
+  auto SetFormat = [&](bool NewFormat) {
+    Composite->setIsNewDbgInfoFormat(NewFormat);
+    if (NewFormat)
+      Composite->removeDebugIntrinsicDeclarations();
+  };
   if (OutputAssembly) {
+    SetFormat(true);
     Composite->print(Out.os(), nullptr, PreserveAssemblyUseListOrder);
   } else if (Force || !CheckBitcodeOutputToConsole(Out.os())) {
+    SetFormat(true);
     WriteBitcodeToFile(*Composite, Out.os(), PreserveBitcodeUseListOrder);
   }
 

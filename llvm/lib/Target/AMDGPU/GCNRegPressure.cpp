@@ -13,7 +13,6 @@
 
 #include "GCNRegPressure.h"
 #include "AMDGPU.h"
-#include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/RegisterPressure.h"
 
 using namespace llvm;
@@ -45,19 +44,16 @@ void GCNRegPressure::inc(unsigned Reg,
                          LaneBitmask PrevMask,
                          LaneBitmask NewMask,
                          const MachineRegisterInfo &MRI) {
-  unsigned NewNumCoveredRegs = SIRegisterInfo::getNumCoveredRegs(NewMask);
-  unsigned PrevNumCoveredRegs = SIRegisterInfo::getNumCoveredRegs(PrevMask);
-  if (NewNumCoveredRegs == PrevNumCoveredRegs)
+  if (SIRegisterInfo::getNumCoveredRegs(NewMask) ==
+      SIRegisterInfo::getNumCoveredRegs(PrevMask))
     return;
 
   int Sign = 1;
   if (NewMask < PrevMask) {
     std::swap(NewMask, PrevMask);
-    std::swap(NewNumCoveredRegs, PrevNumCoveredRegs);
     Sign = -1;
   }
-  assert(PrevMask < NewMask && PrevNumCoveredRegs < NewNumCoveredRegs &&
-         "prev mask should always be lesser than new");
+  assert(PrevMask < NewMask && "prev mask should always be lesser than new");
 
   const TargetRegisterClass *RC = MRI.getRegClass(Reg);
   const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
@@ -70,24 +66,7 @@ void GCNRegPressure::inc(unsigned Reg,
       Value[TupleIdx] += Sign * TRI->getRegClassWeight(RC).RegWeight;
     }
     // Pressure scales with number of new registers covered by the new mask.
-    // Note when true16 is enabled, we can no longer safely use the following
-    // approach to calculate the difference in the number of 32-bit registers
-    // between two masks:
-    //
-    // Sign *= SIRegisterInfo::getNumCoveredRegs(~PrevMask & NewMask);
-    //
-    // The issue is that the mask calculation `~PrevMask & NewMask` doesn't
-    // properly account for partial usage of a 32-bit register when dealing with
-    // 16-bit registers.
-    //
-    // Consider this example:
-    // Assume PrevMask = 0b0010 and NewMask = 0b1111. Here, the correct register
-    // usage difference should be 1, because even though PrevMask uses only half
-    // of a 32-bit register, it should still be counted as a full register use.
-    // However, the mask calculation yields `~PrevMask & NewMask = 0b1101`, and
-    // calling `getNumCoveredRegs` returns 2 instead of 1. This incorrect
-    // calculation can lead to integer overflow when Sign = -1.
-    Sign *= NewNumCoveredRegs - PrevNumCoveredRegs;
+    Sign *= SIRegisterInfo::getNumCoveredRegs(~PrevMask & NewMask);
   }
   Value[RegKind] += Sign;
 }
@@ -95,20 +74,17 @@ void GCNRegPressure::inc(unsigned Reg,
 bool GCNRegPressure::less(const MachineFunction &MF, const GCNRegPressure &O,
                           unsigned MaxOccupancy) const {
   const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
-  unsigned DynamicVGPRBlockSize =
-      MF.getInfo<SIMachineFunctionInfo>()->getDynamicVGPRBlockSize();
 
   const auto SGPROcc = std::min(MaxOccupancy,
                                 ST.getOccupancyWithNumSGPRs(getSGPRNum()));
-  const auto VGPROcc = std::min(
-      MaxOccupancy, ST.getOccupancyWithNumVGPRs(getVGPRNum(ST.hasGFX90AInsts()),
-                                                DynamicVGPRBlockSize));
+  const auto VGPROcc =
+    std::min(MaxOccupancy,
+             ST.getOccupancyWithNumVGPRs(getVGPRNum(ST.hasGFX90AInsts())));
   const auto OtherSGPROcc = std::min(MaxOccupancy,
                                 ST.getOccupancyWithNumSGPRs(O.getSGPRNum()));
   const auto OtherVGPROcc =
-      std::min(MaxOccupancy,
-               ST.getOccupancyWithNumVGPRs(O.getVGPRNum(ST.hasGFX90AInsts()),
-                                           DynamicVGPRBlockSize));
+    std::min(MaxOccupancy,
+             ST.getOccupancyWithNumVGPRs(O.getVGPRNum(ST.hasGFX90AInsts())));
 
   const auto Occ = std::min(SGPROcc, VGPROcc);
   const auto OtherOcc = std::min(OtherSGPROcc, OtherVGPROcc);
@@ -230,15 +206,13 @@ bool GCNRegPressure::less(const MachineFunction &MF, const GCNRegPressure &O,
                           O.getVGPRNum(ST.hasGFX90AInsts()));
 }
 
-Printable llvm::print(const GCNRegPressure &RP, const GCNSubtarget *ST,
-                      unsigned DynamicVGPRBlockSize) {
-  return Printable([&RP, ST, DynamicVGPRBlockSize](raw_ostream &OS) {
+Printable llvm::print(const GCNRegPressure &RP, const GCNSubtarget *ST) {
+  return Printable([&RP, ST](raw_ostream &OS) {
     OS << "VGPRs: " << RP.getArchVGPRNum() << ' '
        << "AGPRs: " << RP.getAGPRNum();
     if (ST)
       OS << "(O"
-         << ST->getOccupancyWithNumVGPRs(RP.getVGPRNum(ST->hasGFX90AInsts()),
-                                         DynamicVGPRBlockSize)
+         << ST->getOccupancyWithNumVGPRs(RP.getVGPRNum(ST->hasGFX90AInsts()))
          << ')';
     OS << ", SGPRs: " << RP.getSGPRNum();
     if (ST)
@@ -246,7 +220,7 @@ Printable llvm::print(const GCNRegPressure &RP, const GCNSubtarget *ST,
     OS << ", LVGPR WT: " << RP.getVGPRTuplesWeight()
        << ", LSGPR WT: " << RP.getSGPRTuplesWeight();
     if (ST)
-      OS << " -> Occ: " << RP.getOccupancy(*ST, DynamicVGPRBlockSize);
+      OS << " -> Occ: " << RP.getOccupancy(*ST);
     OS << '\n';
   });
 }
@@ -359,69 +333,6 @@ static LaneBitmask findUseBetween(unsigned Reg, LaneBitmask LastUseMask,
       return LaneBitmask::getNone();
   }
   return LastUseMask;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// GCNRPTarget
-
-GCNRPTarget::GCNRPTarget(const MachineFunction &MF, const GCNRegPressure &RP,
-                         bool CombineVGPRSavings)
-    : RP(RP), CombineVGPRSavings(CombineVGPRSavings) {
-  const Function &F = MF.getFunction();
-  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
-  setRegLimits(ST.getMaxNumSGPRs(F), ST.getMaxNumVGPRs(F), MF);
-}
-
-GCNRPTarget::GCNRPTarget(unsigned NumSGPRs, unsigned NumVGPRs,
-                         const MachineFunction &MF, const GCNRegPressure &RP,
-                         bool CombineVGPRSavings)
-    : RP(RP), CombineVGPRSavings(CombineVGPRSavings) {
-  setRegLimits(NumSGPRs, NumVGPRs, MF);
-}
-
-GCNRPTarget::GCNRPTarget(unsigned Occupancy, const MachineFunction &MF,
-                         const GCNRegPressure &RP, bool CombineVGPRSavings)
-    : RP(RP), CombineVGPRSavings(CombineVGPRSavings) {
-  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
-  unsigned DynamicVGPRBlockSize =
-      MF.getInfo<SIMachineFunctionInfo>()->getDynamicVGPRBlockSize();
-  setRegLimits(ST.getMaxNumSGPRs(Occupancy, /*Addressable=*/false),
-               ST.getMaxNumVGPRs(Occupancy, DynamicVGPRBlockSize), MF);
-}
-
-void GCNRPTarget::setRegLimits(unsigned NumSGPRs, unsigned NumVGPRs,
-                               const MachineFunction &MF) {
-  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
-  unsigned DynamicVGPRBlockSize =
-      MF.getInfo<SIMachineFunctionInfo>()->getDynamicVGPRBlockSize();
-  MaxSGPRs = std::min(ST.getAddressableNumSGPRs(), NumSGPRs);
-  MaxVGPRs = std::min(ST.getAddressableNumArchVGPRs(), NumVGPRs);
-  MaxUnifiedVGPRs =
-      ST.hasGFX90AInsts()
-          ? std::min(ST.getAddressableNumVGPRs(DynamicVGPRBlockSize), NumVGPRs)
-          : 0;
-}
-
-bool GCNRPTarget::isSaveBeneficial(Register Reg,
-                                   const MachineRegisterInfo &MRI) const {
-  const TargetRegisterClass *RC = MRI.getRegClass(Reg);
-  const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
-  const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo *>(TRI);
-
-  if (SRI->isSGPRClass(RC))
-    return RP.getSGPRNum() > MaxSGPRs;
-  unsigned NumVGPRs =
-      SRI->isAGPRClass(RC) ? RP.getAGPRNum() : RP.getArchVGPRNum();
-  return isVGPRBankSaveBeneficial(NumVGPRs);
-}
-
-bool GCNRPTarget::satisfied() const {
-  if (RP.getSGPRNum() > MaxSGPRs)
-    return false;
-  if (RP.getVGPRNum(false) > MaxVGPRs &&
-      (!CombineVGPRSavings || !satisifiesVGPRBanksTarget()))
-    return false;
-  return satisfiesUnifiedTarget();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

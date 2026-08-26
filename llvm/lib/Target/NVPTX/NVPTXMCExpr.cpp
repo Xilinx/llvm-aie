@@ -8,7 +8,6 @@
 
 #include "NVPTXMCExpr.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Format.h"
@@ -65,6 +64,6 @@ NVPTXGenericMCSymbolRefExpr::create(const MCSymbolRefExpr *SymExpr,
 void NVPTXGenericMCSymbolRefExpr::printImpl(raw_ostream &OS,
                                             const MCAsmInfo *MAI) const {
   OS << "generic(";
-  MAI->printExpr(OS, *SymExpr);
+  SymExpr->print(OS, MAI);
   OS << ")";
 }

@@ -240,7 +240,8 @@ public:
     return static_cast<bool>(getDependence() & ExprDependence::UnexpandedPack);
   }
 
-  /// Whether this expression contains subexpressions which had errors.
+  /// Whether this expression contains subexpressions which had errors, e.g. a
+  /// TypoExpr.
   bool containsErrors() const {
     return static_cast<bool>(getDependence() & ExprDependence::Error);
   }
@@ -1834,7 +1835,8 @@ class StringLiteral final
 
   /// Build a string literal.
   StringLiteral(const ASTContext &Ctx, StringRef Str, StringLiteralKind Kind,
-                bool Pascal, QualType Ty, ArrayRef<SourceLocation> Locs);
+                bool Pascal, QualType Ty, const SourceLocation *Loc,
+                unsigned NumConcatenated);
 
   /// Build an empty string literal.
   StringLiteral(EmptyShell Empty, unsigned NumConcatenated, unsigned Length,
@@ -1852,10 +1854,18 @@ class StringLiteral final
 
 public:
   /// This is the "fully general" constructor that allows representation of
-  /// strings formed from one or more concatenated tokens.
+  /// strings formed from multiple concatenated tokens.
   static StringLiteral *Create(const ASTContext &Ctx, StringRef Str,
                                StringLiteralKind Kind, bool Pascal, QualType Ty,
-                               ArrayRef<SourceLocation> Locs);
+                               const SourceLocation *Loc,
+                               unsigned NumConcatenated);
+
+  /// Simple constructor for string literals made from one token.
+  static StringLiteral *Create(const ASTContext &Ctx, StringRef Str,
+                               StringLiteralKind Kind, bool Pascal, QualType Ty,
+                               SourceLocation Loc) {
+    return Create(Ctx, Str, Kind, Pascal, Ty, &Loc, 1);
+  }
 
   /// Construct an empty string literal.
   static StringLiteral *CreateEmpty(const ASTContext &Ctx,
@@ -3097,9 +3107,9 @@ public:
   /// Compute and set dependence bits.
   void computeDependence() {
     setDependence(clang::computeDependence(
-        this,
-        ArrayRef(reinterpret_cast<Expr **>(getTrailingStmts() + PREARGS_START),
-                 getNumPreArgs())));
+        this, llvm::ArrayRef(
+                  reinterpret_cast<Expr **>(getTrailingStmts() + PREARGS_START),
+                  getNumPreArgs())));
   }
 
   /// Reduce the number of arguments in this call expression. This is used for
@@ -3144,7 +3154,8 @@ public:
   /// interface.  This provides efficient reverse iteration of the
   /// subexpressions.  This is currently used for CFG construction.
   ArrayRef<Stmt *> getRawSubExprs() {
-    return {getTrailingStmts(), PREARGS_START + getNumPreArgs() + getNumArgs()};
+    return llvm::ArrayRef(getTrailingStmts(),
+                          PREARGS_START + getNumPreArgs() + getNumArgs());
   }
 
   /// Get FPOptionsOverride from trailing storage.
@@ -5266,9 +5277,11 @@ public:
     return reinterpret_cast<Expr * const *>(InitExprs.data());
   }
 
-  ArrayRef<Expr *> inits() { return {getInits(), getNumInits()}; }
+  ArrayRef<Expr *> inits() { return llvm::ArrayRef(getInits(), getNumInits()); }
 
-  ArrayRef<Expr *> inits() const { return {getInits(), getNumInits()}; }
+  ArrayRef<Expr *> inits() const {
+    return llvm::ArrayRef(getInits(), getNumInits());
+  }
 
   const Expr *getInit(unsigned Init) const {
     assert(Init < getNumInits() && "Initializer access out of range!");
@@ -5496,7 +5509,7 @@ private:
   Designator *Designators;
 
   DesignatedInitExpr(const ASTContext &C, QualType Ty,
-                     ArrayRef<Designator> Designators,
+                     llvm::ArrayRef<Designator> Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
                      ArrayRef<Expr *> IndexExprs, Expr *Init);
 
@@ -5689,8 +5702,8 @@ public:
   };
 
   static DesignatedInitExpr *Create(const ASTContext &C,
-                                    ArrayRef<Designator> Designators,
-                                    ArrayRef<Expr *> IndexExprs,
+                                    llvm::ArrayRef<Designator> Designators,
+                                    ArrayRef<Expr*> IndexExprs,
                                     SourceLocation EqualOrColonLoc,
                                     bool GNUSyntax, Expr *Init);
 
@@ -5701,11 +5714,11 @@ public:
   unsigned size() const { return NumDesignators; }
 
   // Iterator access to the designators.
-  MutableArrayRef<Designator> designators() {
+  llvm::MutableArrayRef<Designator> designators() {
     return {Designators, NumDesignators};
   }
 
-  ArrayRef<Designator> designators() const {
+  llvm::ArrayRef<Designator> designators() const {
     return {Designators, NumDesignators};
   }
 
@@ -6040,7 +6053,7 @@ public:
 
   Expr **getExprs() { return reinterpret_cast<Expr **>(getTrailingObjects()); }
 
-  ArrayRef<Expr *> exprs() { return {getExprs(), getNumExprs()}; }
+  ArrayRef<Expr *> exprs() { return llvm::ArrayRef(getExprs(), getNumExprs()); }
 
   SourceLocation getLParenLoc() const { return LParenLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -6952,6 +6965,36 @@ public:
   }
 };
 
+/// TypoExpr - Internal placeholder for expressions where typo correction
+/// still needs to be performed and/or an error diagnostic emitted.
+class TypoExpr : public Expr {
+  // The location for the typo name.
+  SourceLocation TypoLoc;
+
+public:
+  TypoExpr(QualType T, SourceLocation TypoLoc)
+      : Expr(TypoExprClass, T, VK_LValue, OK_Ordinary), TypoLoc(TypoLoc) {
+    assert(T->isDependentType() && "TypoExpr given a non-dependent type");
+    setDependence(ExprDependence::TypeValueInstantiation |
+                  ExprDependence::Error);
+  }
+
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+  const_child_range children() const {
+    return const_child_range(const_child_iterator(), const_child_iterator());
+  }
+
+  SourceLocation getBeginLoc() const LLVM_READONLY { return TypoLoc; }
+  SourceLocation getEndLoc() const LLVM_READONLY { return TypoLoc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == TypoExprClass;
+  }
+
+};
+
 /// This class represents BOTH the OpenMP Array Section and OpenACC 'subarray',
 /// with a boolean differentiator.
 /// OpenMP 5.0 [2.1.5, Array Sections].
@@ -7352,14 +7395,17 @@ public:
                               ArrayRef<Expr *> SubExprs);
   static RecoveryExpr *CreateEmpty(ASTContext &Ctx, unsigned NumSubExprs);
 
-  ArrayRef<Expr *> subExpressions() { return getTrailingObjects(NumExprs); }
+  ArrayRef<Expr *> subExpressions() {
+    auto *B = getTrailingObjects<Expr *>();
+    return llvm::ArrayRef(B, B + NumExprs);
+  }
 
   ArrayRef<const Expr *> subExpressions() const {
     return const_cast<RecoveryExpr *>(this)->subExpressions();
   }
 
   child_range children() {
-    Stmt **B = reinterpret_cast<Stmt **>(getTrailingObjects());
+    Stmt **B = reinterpret_cast<Stmt **>(getTrailingObjects<Expr *>());
     return child_range(B, B + NumExprs);
   }
 

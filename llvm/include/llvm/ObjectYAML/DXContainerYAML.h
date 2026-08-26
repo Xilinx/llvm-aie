@@ -19,7 +19,6 @@
 #include "llvm/BinaryFormat/DXContainer.h"
 #include "llvm/Object/DXContainer.h"
 #include "llvm/ObjectYAML/YAML.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <array>
 #include <optional>
@@ -60,14 +59,14 @@ struct DXILProgram {
 #define SHADER_FEATURE_FLAG(Num, DxilModuleNum, Val, Str) bool Val = false;
 struct ShaderFeatureFlags {
   ShaderFeatureFlags() = default;
-  LLVM_ABI ShaderFeatureFlags(uint64_t FlagData);
-  LLVM_ABI uint64_t getEncodedFlags();
+  ShaderFeatureFlags(uint64_t FlagData);
+  uint64_t getEncodedFlags();
 #include "llvm/BinaryFormat/DXContainerConstants.def"
 };
 
 struct ShaderHash {
   ShaderHash() = default;
-  LLVM_ABI ShaderHash(const dxbc::ShaderHash &Data);
+  ShaderHash(const dxbc::ShaderHash &Data);
 
   bool IncludesSource;
   std::vector<llvm::yaml::Hex8> Digest;
@@ -85,7 +84,7 @@ struct RootDescriptorYaml {
   uint32_t ShaderRegister;
   uint32_t RegisterSpace;
 
-  LLVM_ABI uint32_t getEncodedFlags() const;
+  uint32_t getEncodedFlags() const;
 
 #define ROOT_DESCRIPTOR_FLAG(Num, Val) bool Val = false;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
@@ -98,7 +97,7 @@ struct DescriptorRangeYaml {
   uint32_t RegisterSpace;
   uint32_t OffsetInDescriptorsFromTableStart;
 
-  LLVM_ABI uint32_t getEncodedFlags() const;
+  uint32_t getEncodedFlags() const;
 
 #define DESCRIPTOR_RANGE_FLAG(Num, Val) bool Val = false;
 #include "llvm/BinaryFormat/DXContainerConstants.def"
@@ -194,13 +193,13 @@ struct RootSignatureYamlDesc {
   RootParameterYamlDesc Parameters;
   SmallVector<StaticSamplerYamlDesc> StaticSamplers;
 
-  LLVM_ABI uint32_t getEncodedFlags();
+  uint32_t getEncodedFlags();
 
   iterator_range<StaticSamplerYamlDesc *> samplers() {
     return make_range(StaticSamplers.begin(), StaticSamplers.end());
   }
 
-  LLVM_ABI static llvm::Expected<DXContainerYAML::RootSignatureYamlDesc>
+  static llvm::Expected<DXContainerYAML::RootSignatureYamlDesc>
   create(const object::DirectX::RootSignature &Data);
 
 #define ROOT_ELEMENT_FLAG(Num, Val) bool Val = false;
@@ -259,13 +258,13 @@ struct PSVInfo {
 
   StringRef EntryName;
 
-  LLVM_ABI void mapInfoForVersion(yaml::IO &IO);
+  void mapInfoForVersion(yaml::IO &IO);
 
-  LLVM_ABI PSVInfo();
-  LLVM_ABI PSVInfo(const dxbc::PSV::v0::RuntimeInfo *P, uint16_t Stage);
-  LLVM_ABI PSVInfo(const dxbc::PSV::v1::RuntimeInfo *P);
-  LLVM_ABI PSVInfo(const dxbc::PSV::v2::RuntimeInfo *P);
-  LLVM_ABI PSVInfo(const dxbc::PSV::v3::RuntimeInfo *P, StringRef StringTable);
+  PSVInfo();
+  PSVInfo(const dxbc::PSV::v0::RuntimeInfo *P, uint16_t Stage);
+  PSVInfo(const dxbc::PSV::v1::RuntimeInfo *P);
+  PSVInfo(const dxbc::PSV::v2::RuntimeInfo *P);
+  PSVInfo(const dxbc::PSV::v3::RuntimeInfo *P, StringRef StringTable);
 };
 
 struct SignatureParameter {
@@ -329,96 +328,88 @@ class raw_ostream;
 namespace yaml {
 
 template <> struct MappingTraits<DXContainerYAML::VersionTuple> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::VersionTuple &Version);
+  static void mapping(IO &IO, DXContainerYAML::VersionTuple &Version);
 };
 
 template <> struct MappingTraits<DXContainerYAML::FileHeader> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::FileHeader &Header);
+  static void mapping(IO &IO, DXContainerYAML::FileHeader &Header);
 };
 
 template <> struct MappingTraits<DXContainerYAML::DXILProgram> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::DXILProgram &Program);
+  static void mapping(IO &IO, DXContainerYAML::DXILProgram &Program);
 };
 
 template <> struct MappingTraits<DXContainerYAML::ShaderFeatureFlags> {
-  LLVM_ABI static void mapping(IO &IO,
-                               DXContainerYAML::ShaderFeatureFlags &Flags);
+  static void mapping(IO &IO, DXContainerYAML::ShaderFeatureFlags &Flags);
 };
 
 template <> struct MappingTraits<DXContainerYAML::ShaderHash> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::ShaderHash &Hash);
+  static void mapping(IO &IO, DXContainerYAML::ShaderHash &Hash);
 };
 
 template <> struct MappingTraits<DXContainerYAML::PSVInfo> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::PSVInfo &PSV);
+  static void mapping(IO &IO, DXContainerYAML::PSVInfo &PSV);
 };
 
 template <> struct MappingTraits<DXContainerYAML::Part> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::Part &Version);
+  static void mapping(IO &IO, DXContainerYAML::Part &Version);
 };
 
 template <> struct MappingTraits<DXContainerYAML::Object> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::Object &Obj);
+  static void mapping(IO &IO, DXContainerYAML::Object &Obj);
 };
 
 template <> struct MappingTraits<DXContainerYAML::ResourceFlags> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::ResourceFlags &Flags);
+  static void mapping(IO &IO, DXContainerYAML::ResourceFlags &Flags);
 };
 
 template <> struct MappingTraits<DXContainerYAML::ResourceBindInfo> {
-  LLVM_ABI static void mapping(IO &IO, DXContainerYAML::ResourceBindInfo &Res);
+  static void mapping(IO &IO, DXContainerYAML::ResourceBindInfo &Res);
 };
 
 template <> struct MappingTraits<DXContainerYAML::SignatureElement> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::SignatureElement &El);
+  static void mapping(IO &IO, llvm::DXContainerYAML::SignatureElement &El);
 };
 
 template <> struct MappingTraits<DXContainerYAML::SignatureParameter> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::SignatureParameter &El);
+  static void mapping(IO &IO, llvm::DXContainerYAML::SignatureParameter &El);
 };
 
 template <> struct MappingTraits<DXContainerYAML::Signature> {
-  LLVM_ABI static void mapping(IO &IO, llvm::DXContainerYAML::Signature &El);
+  static void mapping(IO &IO, llvm::DXContainerYAML::Signature &El);
 };
 
 template <> struct MappingTraits<DXContainerYAML::RootSignatureYamlDesc> {
-  LLVM_ABI static void
-  mapping(IO &IO, DXContainerYAML::RootSignatureYamlDesc &RootSignature);
+  static void mapping(IO &IO,
+                      DXContainerYAML::RootSignatureYamlDesc &RootSignature);
 };
 
 template <>
 struct MappingContextTraits<DXContainerYAML::RootParameterLocationYaml,
                             DXContainerYAML::RootSignatureYamlDesc> {
-  LLVM_ABI static void
-  mapping(IO &IO, llvm::DXContainerYAML::RootParameterLocationYaml &L,
-          DXContainerYAML::RootSignatureYamlDesc &S);
+  static void mapping(IO &IO,
+                      llvm::DXContainerYAML::RootParameterLocationYaml &L,
+                      DXContainerYAML::RootSignatureYamlDesc &S);
 };
 
 template <> struct MappingTraits<llvm::DXContainerYAML::RootConstantsYaml> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::RootConstantsYaml &C);
+  static void mapping(IO &IO, llvm::DXContainerYAML::RootConstantsYaml &C);
 };
 
 template <> struct MappingTraits<llvm::DXContainerYAML::RootDescriptorYaml> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::RootDescriptorYaml &D);
+  static void mapping(IO &IO, llvm::DXContainerYAML::RootDescriptorYaml &D);
 };
 
 template <> struct MappingTraits<llvm::DXContainerYAML::DescriptorTableYaml> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::DescriptorTableYaml &D);
+  static void mapping(IO &IO, llvm::DXContainerYAML::DescriptorTableYaml &D);
 };
 
 template <> struct MappingTraits<llvm::DXContainerYAML::DescriptorRangeYaml> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::DescriptorRangeYaml &D);
+  static void mapping(IO &IO, llvm::DXContainerYAML::DescriptorRangeYaml &D);
 };
 
 template <> struct MappingTraits<llvm::DXContainerYAML::StaticSamplerYamlDesc> {
-  LLVM_ABI static void mapping(IO &IO,
-                               llvm::DXContainerYAML::StaticSamplerYamlDesc &S);
+  static void mapping(IO &IO, llvm::DXContainerYAML::StaticSamplerYamlDesc &S);
 };
 
 } // namespace yaml

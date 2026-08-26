@@ -9,7 +9,7 @@
 #ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZMCINSTLOWER_H
 #define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZMCINSTLOWER_H
 
-#include "MCTargetDesc/SystemZMCAsmInfo.h"
+#include "MCTargetDesc/SystemZMCExpr.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
@@ -35,7 +35,8 @@ public:
   MCOperand lowerOperand(const MachineOperand& MO) const;
 
   // Return an MCExpr for symbolic operand MO with variant kind Kind.
-  const MCExpr *getExpr(const MachineOperand &MO, SystemZ::Specifier) const;
+  const MCExpr *getExpr(const MachineOperand &MO,
+                        SystemZMCExpr::Specifier) const;
 };
 } // end namespace llvm
 

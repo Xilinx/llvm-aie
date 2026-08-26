@@ -134,6 +134,7 @@ private:
 
     NF->copyAttributesFrom(&F);
     NF->copyMetadata(&F, 0);
+    NF->setIsNewDbgInfoFormat(F.IsNewDbgInfoFormat);
 
     F.getParent()->getFunctionList().insert(F.getIterator(), NF);
     NF->takeName(&F);

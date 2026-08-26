@@ -22,13 +22,12 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Error.h"
 
-namespace llvm {
-namespace offload {
-bool isTracingEnabled();
-bool isValidationEnabled();
-bool isOffloadInitialized();
-} // namespace offload
-} // namespace llvm
+struct OffloadConfig {
+  bool TracingEnabled = false;
+  bool ValidationEnabled = true;
+};
+
+OffloadConfig &offloadConfig();
 
 // Use the StringSet container to efficiently deduplicate repeated error
 // strings (e.g. if the same error is hit constantly in a long running program)

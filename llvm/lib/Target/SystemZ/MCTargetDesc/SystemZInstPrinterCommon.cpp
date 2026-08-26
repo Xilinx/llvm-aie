@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZInstPrinterCommon.h"
-#include "MCTargetDesc/SystemZMCAsmInfo.h"
+#include "MCTargetDesc/SystemZMCExpr.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegister.h"
@@ -53,7 +53,7 @@ void SystemZInstPrinterCommon::printOperand(const MCOperand &MO,
   } else if (MO.isImm())
     markup(O, Markup::Immediate) << MO.getImm();
   else if (MO.isExpr())
-    MAI->printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, MAI);
   else
     llvm_unreachable("Invalid operand");
 }
@@ -171,7 +171,7 @@ void SystemZInstPrinterCommon::printPCRelOperand(const MCInst *MI,
     markup(O, Markup::Target) << formatHex((uint64_t)TargetAddress);
   } else {
     // Otherwise, just print the expression.
-    MAI.printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, &MAI);
   }
 }
 
@@ -186,10 +186,10 @@ void SystemZInstPrinterCommon::printPCRelTLSOperand(const MCInst *MI,
     const MCOperand &MO = MI->getOperand(OpNum + 1);
     const MCSymbolRefExpr &refExp = cast<MCSymbolRefExpr>(*MO.getExpr());
     switch (refExp.getSpecifier()) {
-    case SystemZ::S_TLSGD:
+    case SystemZMCExpr::VK_TLSGD:
       O << ":tls_gdcall:";
       break;
-    case SystemZ::S_TLSLDM:
+    case SystemZMCExpr::VK_TLSLDM:
       O << ":tls_ldcall:";
       break;
     default:

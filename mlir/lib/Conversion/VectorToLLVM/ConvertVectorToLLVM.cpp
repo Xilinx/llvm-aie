@@ -1595,14 +1595,8 @@ private:
 };
 
 class VectorPrintOpConversion : public ConvertOpToLLVMPattern<vector::PrintOp> {
-  SymbolTableCollection *symbolTables = nullptr;
-
 public:
-  explicit VectorPrintOpConversion(
-      const LLVMTypeConverter &typeConverter,
-      SymbolTableCollection *symbolTables = nullptr)
-      : ConvertOpToLLVMPattern<vector::PrintOp>(typeConverter),
-        symbolTables(symbolTables) {}
+  using ConvertOpToLLVMPattern<vector::PrintOp>::ConvertOpToLLVMPattern;
 
   // Lowering implementation that relies on a small runtime support library,
   // which only needs to provide a few printing methods (single value for all
@@ -1649,17 +1643,13 @@ public:
       FailureOr<LLVM::LLVMFuncOp> op = [&]() {
         switch (punct) {
         case PrintPunctuation::Close:
-          return LLVM::lookupOrCreatePrintCloseFn(rewriter, parent,
-                                                  symbolTables);
+          return LLVM::lookupOrCreatePrintCloseFn(rewriter, parent);
         case PrintPunctuation::Open:
-          return LLVM::lookupOrCreatePrintOpenFn(rewriter, parent,
-                                                 symbolTables);
+          return LLVM::lookupOrCreatePrintOpenFn(rewriter, parent);
         case PrintPunctuation::Comma:
-          return LLVM::lookupOrCreatePrintCommaFn(rewriter, parent,
-                                                  symbolTables);
+          return LLVM::lookupOrCreatePrintCommaFn(rewriter, parent);
         case PrintPunctuation::NewLine:
-          return LLVM::lookupOrCreatePrintNewlineFn(rewriter, parent,
-                                                    symbolTables);
+          return LLVM::lookupOrCreatePrintNewlineFn(rewriter, parent);
         default:
           llvm_unreachable("unexpected punctuation");
         }
@@ -1693,17 +1683,17 @@ private:
     PrintConversion conversion = PrintConversion::None;
     FailureOr<Operation *> printer;
     if (printType.isF32()) {
-      printer = LLVM::lookupOrCreatePrintF32Fn(rewriter, parent, symbolTables);
+      printer = LLVM::lookupOrCreatePrintF32Fn(rewriter, parent);
     } else if (printType.isF64()) {
-      printer = LLVM::lookupOrCreatePrintF64Fn(rewriter, parent, symbolTables);
+      printer = LLVM::lookupOrCreatePrintF64Fn(rewriter, parent);
     } else if (printType.isF16()) {
       conversion = PrintConversion::Bitcast16; // bits!
-      printer = LLVM::lookupOrCreatePrintF16Fn(rewriter, parent, symbolTables);
+      printer = LLVM::lookupOrCreatePrintF16Fn(rewriter, parent);
     } else if (printType.isBF16()) {
       conversion = PrintConversion::Bitcast16; // bits!
-      printer = LLVM::lookupOrCreatePrintBF16Fn(rewriter, parent, symbolTables);
+      printer = LLVM::lookupOrCreatePrintBF16Fn(rewriter, parent);
     } else if (printType.isIndex()) {
-      printer = LLVM::lookupOrCreatePrintU64Fn(rewriter, parent, symbolTables);
+      printer = LLVM::lookupOrCreatePrintU64Fn(rewriter, parent);
     } else if (auto intTy = dyn_cast<IntegerType>(printType)) {
       // Integers need a zero or sign extension on the operand
       // (depending on the source type) as well as a signed or
@@ -1713,8 +1703,7 @@ private:
         if (width <= 64) {
           if (width < 64)
             conversion = PrintConversion::ZeroExt64;
-          printer =
-              LLVM::lookupOrCreatePrintU64Fn(rewriter, parent, symbolTables);
+          printer = LLVM::lookupOrCreatePrintU64Fn(rewriter, parent);
         } else {
           return failure();
         }
@@ -1727,8 +1716,7 @@ private:
             conversion = PrintConversion::ZeroExt64;
           else if (width < 64)
             conversion = PrintConversion::SignExt64;
-          printer =
-              LLVM::lookupOrCreatePrintI64Fn(rewriter, parent, symbolTables);
+          printer = LLVM::lookupOrCreatePrintI64Fn(rewriter, parent);
         } else {
           return failure();
         }
@@ -1985,38 +1973,6 @@ struct VectorFromElementsLowering
   }
 };
 
-/// Conversion pattern for a `vector.to_elements`.
-struct VectorToElementsLowering
-    : public ConvertOpToLLVMPattern<vector::ToElementsOp> {
-  using ConvertOpToLLVMPattern::ConvertOpToLLVMPattern;
-
-  LogicalResult
-  matchAndRewrite(vector::ToElementsOp toElementsOp, OpAdaptor adaptor,
-                  ConversionPatternRewriter &rewriter) const override {
-    Location loc = toElementsOp.getLoc();
-    auto idxType = typeConverter->convertType(rewriter.getIndexType());
-    Value source = adaptor.getSource();
-
-    SmallVector<Value> results(toElementsOp->getNumResults());
-    for (auto [idx, element] : llvm::enumerate(toElementsOp.getElements())) {
-      // Create an extractelement operation only for results that are not dead.
-      if (element.use_empty())
-        continue;
-
-      auto constIdx = rewriter.create<LLVM::ConstantOp>(
-          loc, idxType, rewriter.getIntegerAttr(idxType, idx));
-      auto llvmType = typeConverter->convertType(element.getType());
-
-      Value result = rewriter.create<LLVM::ExtractElementOp>(loc, llvmType,
-                                                             source, constIdx);
-      results[idx] = result;
-    }
-
-    rewriter.replaceOp(toElementsOp, results);
-    return success();
-  }
-};
-
 /// Conversion pattern for vector.step.
 struct VectorScalableStepOpLowering
     : public ConvertOpToLLVMPattern<vector::StepOp> {
@@ -2067,8 +2023,7 @@ void mlir::populateVectorToLLVMConversionPatterns(
                VectorScalableInsertOpLowering, VectorScalableExtractOpLowering,
                MaskedReductionOpConversion, VectorInterleaveOpLowering,
                VectorDeinterleaveOpLowering, VectorFromElementsLowering,
-               VectorToElementsLowering, VectorScalableStepOpLowering>(
-      converter);
+               VectorScalableStepOpLowering>(converter);
 }
 
 void mlir::populateVectorToLLVMMatrixConversionPatterns(

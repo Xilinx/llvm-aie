@@ -28,7 +28,6 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/LowerAtomicPass.h"
@@ -54,8 +53,7 @@ static cl::opt<bool> WasmDisableFixIrreducibleControlFlowPass(
              " irreducible control flow optimization pass"),
     cl::init(false));
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeWebAssemblyTarget() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeWebAssemblyTarget() {
   // Register the target.
   RegisterTargetMachine<WebAssemblyTargetMachine> X(
       getTheWebAssemblyTarget32());
@@ -602,16 +600,14 @@ void WebAssemblyPassConfig::addPreEmitPass() {
 
     // Prepare memory intrinsic calls for register stackifying.
     addPass(createWebAssemblyMemIntrinsicResults());
-  }
 
-  // Mark registers as representing wasm's value stack. This is a key
-  // code-compression technique in WebAssembly. We run this pass (and
-  // MemIntrinsicResults above) very late, so that it sees as much code as
-  // possible, including code emitted by PEI and expanded by late tail
-  // duplication.
-  addPass(createWebAssemblyRegStackify(getOptLevel()));
+    // Mark registers as representing wasm's value stack. This is a key
+    // code-compression technique in WebAssembly. We run this pass (and
+    // MemIntrinsicResults above) very late, so that it sees as much code as
+    // possible, including code emitted by PEI and expanded by late tail
+    // duplication.
+    addPass(createWebAssemblyRegStackify());
 
-  if (getOptLevel() != CodeGenOptLevel::None) {
     // Run the register coloring pass to reduce the total number of registers.
     // This runs after stackification so that it doesn't consider registers
     // that become stackified.

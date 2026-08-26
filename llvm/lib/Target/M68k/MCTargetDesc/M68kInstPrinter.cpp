@@ -27,7 +27,6 @@
 #include "M68kBaseInfo.h"
 
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -69,7 +68,7 @@ void M68kInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
 }
 
 void M68kInstPrinter::printImmediate(const MCInst *MI, unsigned opNum,
@@ -79,7 +78,7 @@ void M68kInstPrinter::printImmediate(const MCInst *MI, unsigned opNum,
     O << '#' << MO.getImm();
   else if (MO.isExpr()) {
     O << '#';
-    MAI.printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, &MAI);
   } else
     llvm_unreachable("Unknown immediate kind");
 }
@@ -145,7 +144,7 @@ void M68kInstPrinter::printDisp(const MCInst *MI, unsigned opNum,
     return;
   }
   assert(Op.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *Op.getExpr());
+  Op.getExpr()->print(O, &MAI);
 }
 
 // NOTE forcing (W,L) size available since M68020 only
@@ -154,7 +153,7 @@ void M68kInstPrinter::printAbsMem(const MCInst *MI, unsigned opNum,
   const MCOperand &MO = MI->getOperand(opNum);
 
   if (MO.isExpr()) {
-    MAI.printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, &MAI);
     return;
   }
 

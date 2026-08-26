@@ -66,9 +66,9 @@ struct ExtractStridedMetadataOnFatRawBufferCastFolder final
 } // namespace
 
 void mlir::amdgpu::populateAmdgpuResolveStridedMetadataPatterns(
-    RewritePatternSet &patterns, PatternBenefit benefit) {
+    RewritePatternSet &patterns) {
   patterns.add<ExtractStridedMetadataOnFatRawBufferCastFolder>(
-      patterns.getContext(), benefit);
+      patterns.getContext());
 }
 
 void AmdgpuResolveStridedMetadataPass::runOnOperation() {

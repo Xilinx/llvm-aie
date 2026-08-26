@@ -1688,19 +1688,19 @@ static unsigned estimateFunctionSizeInBytes(const MachineFunction &MF,
       //
       //        foo
       //        bne     t5, t6, .rev_cond # `TII->getInstSizeInBytes(MI)` bytes
-      //        sd      s11, 0(sp)        # 4 bytes, or 2 bytes with Zca
+      //        sd      s11, 0(sp)        # 4 bytes, or 2 bytes in RVC
       //        jump    .restore, s11     # 8 bytes
       // .rev_cond
       //        bar
-      //        j       .dest_bb          # 4 bytes, or 2 bytes with Zca
+      //        j       .dest_bb          # 4 bytes, or 2 bytes in RVC
       // .restore:
-      //        ld      s11, 0(sp)        # 4 bytes, or 2 bytes with Zca
+      //        ld      s11, 0(sp)        # 4 bytes, or 2 bytes in RVC
       // .dest:
       //        baz
       if (MI.isConditionalBranch())
         FnSize += TII.getInstSizeInBytes(MI);
       if (MI.isConditionalBranch() || MI.isUnconditionalBranch()) {
-        if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZca())
+        if (MF.getSubtarget<RISCVSubtarget>().hasStdExtCOrZca())
           FnSize += 2 + 8 + 2 + 2;
         else
           FnSize += 4 + 8 + 4 + 4;
@@ -1865,7 +1865,7 @@ RISCVFrameLowering::getFirstSPAdjustAmount(const MachineFunction &MF) const {
     // instructions be compressed, so try to adjust the amount to the largest
     // offset that stack compression instructions accept when target supports
     // compression instructions.
-    if (STI.hasStdExtZca()) {
+    if (STI.hasStdExtCOrZca()) {
       // The compression extensions may support the following instructions:
       // riscv32: c.lwsp rd, offset[7:2] => 2^(6 + 2)
       //          c.swsp rs2, offset[7:2] => 2^(6 + 2)

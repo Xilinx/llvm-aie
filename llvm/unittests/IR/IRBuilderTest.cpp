@@ -888,9 +888,14 @@ TEST_F(IRBuilderTest, DIBuilder) {
   };
 
   auto ExpectOrder = [&](DbgInstPtr First, BasicBlock::iterator Second) {
-    EXPECT_TRUE(isa<DbgRecord *>(First));
-    EXPECT_FALSE(Second->getDbgRecordRange().empty());
-    EXPECT_EQ(GetLastDbgRecord(&*Second), cast<DbgRecord *>(First));
+    if (M->IsNewDbgInfoFormat) {
+      EXPECT_TRUE(isa<DbgRecord *>(First));
+      EXPECT_FALSE(Second->getDbgRecordRange().empty());
+      EXPECT_EQ(GetLastDbgRecord(&*Second), cast<DbgRecord *>(First));
+    } else {
+      EXPECT_TRUE(isa<Instruction *>(First));
+      EXPECT_EQ(&*std::prev(Second), cast<Instruction *>(First));
+    }
   };
 
   auto RunTest = [&]() {

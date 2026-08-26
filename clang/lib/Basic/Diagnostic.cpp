@@ -119,8 +119,6 @@ bool DiagnosticsEngine::popMappings(SourceLocation Loc) {
   return true;
 }
 
-void DiagnosticsEngine::ResetPragmas() { DiagStatesByLoc.clear(/*Soft=*/true); }
-
 void DiagnosticsEngine::Reset(bool soft /*=false*/) {
   ErrorOccurred = false;
   UncompilableErrorOccurred = false;
@@ -137,7 +135,7 @@ void DiagnosticsEngine::Reset(bool soft /*=false*/) {
   if (!soft) {
     // Clear state related to #pragma diagnostic.
     DiagStates.clear();
-    DiagStatesByLoc.clear(false);
+    DiagStatesByLoc.clear();
     DiagStateOnPushStack.clear();
 
     // Create a DiagState and DiagStatePoint representing diagnostic changes
@@ -173,7 +171,7 @@ void DiagnosticsEngine::DiagStateMap::append(SourceManager &SrcMgr,
   CurDiagState = State;
   CurDiagStateLoc = Loc;
 
-  FileIDAndOffset Decomp = SrcMgr.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> Decomp = SrcMgr.getDecomposedLoc(Loc);
   unsigned Offset = Decomp.second;
   for (File *F = getFile(SrcMgr, Decomp.first); F;
        Offset = F->ParentOffset, F = F->Parent) {
@@ -199,7 +197,7 @@ DiagnosticsEngine::DiagStateMap::lookup(SourceManager &SrcMgr,
   if (Files.empty())
     return FirstDiagState;
 
-  FileIDAndOffset Decomp = SrcMgr.getDecomposedLoc(Loc);
+  std::pair<FileID, unsigned> Decomp = SrcMgr.getDecomposedLoc(Loc);
   const File *F = getFile(SrcMgr, Decomp.first);
   return F->lookup(Decomp.second);
 }
@@ -226,7 +224,7 @@ DiagnosticsEngine::DiagStateMap::getFile(SourceManager &SrcMgr,
   // We created a new File; look up the diagnostic state at the start of it and
   // initialize it.
   if (ID.isValid()) {
-    FileIDAndOffset Decomp = SrcMgr.getDecomposedIncludedLoc(ID);
+    std::pair<FileID, unsigned> Decomp = SrcMgr.getDecomposedIncludedLoc(ID);
     F.Parent = getFile(SrcMgr, Decomp.first);
     F.ParentOffset = Decomp.second;
     F.StateTransitions.push_back({F.Parent->lookup(Decomp.second), 0});
@@ -263,7 +261,8 @@ void DiagnosticsEngine::DiagStateMap::dump(SourceManager &SrcMgr,
                    << ">: " << SrcMgr.getBufferOrFake(ID).getBufferIdentifier();
 
       if (F.second.Parent) {
-        FileIDAndOffset Decomp = SrcMgr.getDecomposedIncludedLoc(ID);
+        std::pair<FileID, unsigned> Decomp =
+            SrcMgr.getDecomposedIncludedLoc(ID);
         assert(File.ParentOffset == Decomp.second);
         llvm::errs() << " parent " << File.Parent << " <FileID "
                      << Decomp.first.getHashValue() << "> ";

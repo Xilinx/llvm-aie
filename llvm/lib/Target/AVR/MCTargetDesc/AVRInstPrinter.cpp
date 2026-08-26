@@ -14,7 +14,6 @@
 
 #include "MCTargetDesc/AVRMCTargetDesc.h"
 
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -134,7 +133,7 @@ void AVRInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << formatImm(Op.getImm());
   } else {
     assert(Op.isExpr() && "Unknown operand kind in printOperand");
-    MAI.printExpr(O, *Op.getExpr());
+    O << *Op.getExpr();
   }
 }
 

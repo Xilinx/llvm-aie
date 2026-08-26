@@ -17,7 +17,6 @@
 #include <optional>
 
 #include "mlir/Dialect/Bufferization/IR/BufferizationEnums.h.inc"
-#include "mlir/Dialect/Bufferization/IR/BufferizationTypeInterfaces.h"
 
 namespace mlir {
 class OpBuilder;
@@ -266,9 +265,9 @@ struct BufferizationOptions {
       std::function<BaseMemRefType(TensorType, Attribute memorySpace,
                                    func::FuncOp, const BufferizationOptions &)>;
   /// Tensor -> MemRef type converter.
-  /// Parameters: tensor type, memory space, bufferization options
+  /// Parameters: Value, memory space, bufferization options
   using UnknownTypeConverterFn = std::function<BaseMemRefType(
-      TensorType, Attribute memorySpace, const BufferizationOptions &)>;
+      Value, Attribute memorySpace, const BufferizationOptions &)>;
   // Produce a MemorySpace attribute from a tensor type
   using DefaultMemorySpaceFn =
       std::function<std::optional<Attribute>(TensorType t)>;
@@ -616,7 +615,7 @@ FailureOr<Value> getBuffer(RewriterBase &rewriter, Value value,
 /// IR, this function can be used.
 ///
 /// This function is a wrapper around BufferizableOpInterface::getBufferType.
-FailureOr<BufferLikeType> getBufferType(Value value,
+FailureOr<BaseMemRefType> getBufferType(Value value,
                                         const BufferizationOptions &options,
                                         const BufferizationState &state);
 
@@ -630,7 +629,7 @@ FailureOr<BufferLikeType> getBufferType(Value value,
 /// IR, this function can be used.
 ///
 /// This function is a wrapper around `BufferizableOpInterface::getBufferType`.
-FailureOr<BufferLikeType> getBufferType(Value value,
+FailureOr<BaseMemRefType> getBufferType(Value value,
                                         const BufferizationOptions &options,
                                         const BufferizationState &state,
                                         SmallVector<Value> &invocationStack);
@@ -656,7 +655,7 @@ OpTy replaceOpWithNewBufferizedOp(RewriterBase &rewriter, Operation *op,
   return newOp;
 }
 
-/// Return a MemRefType to which the TensorType can be bufferized.
+/// Return a MemRefType to which the type of the given value can be bufferized.
 ///
 /// If possible, op bufferization implementations should not use this function
 /// and instead infer precise memref types for tensor results by themselves.
@@ -668,8 +667,7 @@ OpTy replaceOpWithNewBufferizedOp(RewriterBase &rewriter, Operation *op,
 /// Note: Canonicalization patterns could clean up layout maps and infer more
 /// precise layout maps after bufferization. However, many possible
 /// canonicalizations are currently not implemented.
-BaseMemRefType getMemRefType(TensorType tensorType,
-                             const BufferizationOptions &options,
+BaseMemRefType getMemRefType(Value value, const BufferizationOptions &options,
                              MemRefLayoutAttrInterface layout = {},
                              Attribute memorySpace = nullptr);
 
@@ -740,19 +738,6 @@ AliasingValueList unknownGetAliasingValues(OpOperand &opOperand);
 /// This is the default implementation of
 /// BufferizableOpInterface::hasTensorSemantics
 bool defaultHasTensorSemantics(Operation *op);
-
-/// This is a helper function used when buffer type is guaranteed to be memref.
-/// It performs two actions: failure state checking and an explicit llvm::cast<>
-/// from the buffer-like type interface to a BaseMemRefType. This allows easier
-/// management of differences in C++ types at the API boundaries. Valid buffer
-/// type is casted to the memref type. Otherwise, the failure state is
-/// propagated i.e. asMemRefType(mlir::failure()) returns mlir::failure().
-FailureOr<BaseMemRefType> asMemRefType(FailureOr<BufferLikeType> bufferType);
-
-/// This function is a free-standing helper that relies on
-/// bufferization::TensorLikeTypeInterface to verify the types in tensor and
-/// buffer worlds match.
-bool typesMatchAfterBufferization(Operation &op, Value tensor, Value buffer);
 } // namespace detail
 
 } // namespace bufferization

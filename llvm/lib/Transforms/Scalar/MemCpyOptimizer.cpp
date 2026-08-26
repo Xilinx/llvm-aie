@@ -107,9 +107,6 @@ struct MemsetRange {
 
 } // end anonymous namespace
 
-static bool overreadUndefContents(MemorySSA *MSSA, MemCpyInst *MemCpy,
-                                  MemIntrinsic *MemSrc, BatchAAResults &BAA);
-
 bool MemsetRange::isProfitableToUseMemset(const DataLayout &DL) const {
   // If we found more than 4 stores to merge or 16 bytes, use memset.
   if (TheStores.size() >= 4 || End - Start >= 16)
@@ -1132,29 +1129,14 @@ bool MemCpyOptPass::processMemCpyMemCpyDependence(MemCpyInst *M,
     MForwardOffset = *Offset;
   }
 
-  Value *CopyLength = M->getLength();
-
-  // The length of the memcpy's must be the same, or the preceding one must be
-  // larger than the following one, or the contents of the overread must be
-  // undefined bytes of a defined size.
-  if (MForwardOffset != 0 || MDep->getLength() != CopyLength) {
+  // The length of the memcpy's must be the same, or the preceding one
+  // must be larger than the following one.
+  if (MForwardOffset != 0 || MDep->getLength() != M->getLength()) {
     auto *MDepLen = dyn_cast<ConstantInt>(MDep->getLength());
-    auto *MLen = dyn_cast<ConstantInt>(CopyLength);
-    // This could be converted to a runtime test (%CopyLength =
-    // min(max(0, MDepLen - MForwardOffset), MLen)), but it is
-    // unclear if that is useful
-    if (!MDepLen || !MLen)
+    auto *MLen = dyn_cast<ConstantInt>(M->getLength());
+    if (!MDepLen || !MLen ||
+        MDepLen->getZExtValue() < MLen->getZExtValue() + MForwardOffset)
       return false;
-    if (MDepLen->getZExtValue() < MLen->getZExtValue() + MForwardOffset) {
-      if (!overreadUndefContents(MSSA, M, MDep, BAA))
-        return false;
-      if (MDepLen->getZExtValue() <= (uint64_t)MForwardOffset)
-        return false; // Should not reach here (there is obviously no aliasing
-                      // with MDep), so just bail in case it had incomplete info
-                      // somehow
-      CopyLength = ConstantInt::get(CopyLength->getType(),
-                                    MDepLen->getZExtValue() - MForwardOffset);
-    }
   }
 
   IRBuilder<> Builder(M);
@@ -1170,13 +1152,9 @@ bool MemCpyOptPass::processMemCpyMemCpyDependence(MemCpyInst *M,
       eraseInstruction(NewCopySource);
   });
   MaybeAlign CopySourceAlign = MDep->getSourceAlign();
-  auto MCopyLoc = MemoryLocation::getForSource(MDep);
-  // Truncate the size of the MDep access to just the bytes read
-  if (MDep->getLength() != CopyLength) {
-    auto *ConstLength = cast<ConstantInt>(CopyLength);
-    MCopyLoc = MCopyLoc.getWithNewSize(
-        LocationSize::precise(ConstLength->getZExtValue()));
-  }
+  // We just need to calculate the actual size of the copy.
+  auto MCopyLoc = MemoryLocation::getForSource(MDep).getWithNewSize(
+      MemoryLocation::getForSource(M).Size);
 
   // When the forwarding offset is greater than 0, we transform
   //    memcpy(d1 <- s1)
@@ -1245,18 +1223,20 @@ bool MemCpyOptPass::processMemCpyMemCpyDependence(MemCpyInst *M,
   // example we could be moving from movaps -> movq on x86.
   Instruction *NewM;
   if (UseMemMove)
-    NewM = Builder.CreateMemMove(M->getDest(), M->getDestAlign(), CopySource,
-                                 CopySourceAlign, CopyLength, M->isVolatile());
+    NewM =
+        Builder.CreateMemMove(M->getDest(), M->getDestAlign(), CopySource,
+                              CopySourceAlign, M->getLength(), M->isVolatile());
   else if (M->isForceInlined())
     // llvm.memcpy may be promoted to llvm.memcpy.inline, but the converse is
     // never allowed since that would allow the latter to be lowered as a call
     // to an external function.
     NewM = Builder.CreateMemCpyInline(M->getDest(), M->getDestAlign(),
-                                      CopySource, CopySourceAlign, CopyLength,
-                                      M->isVolatile());
+                                      CopySource, CopySourceAlign,
+                                      M->getLength(), M->isVolatile());
   else
     NewM = Builder.CreateMemCpy(M->getDest(), M->getDestAlign(), CopySource,
-                                CopySourceAlign, CopyLength, M->isVolatile());
+                                CopySourceAlign, M->getLength(),
+                                M->isVolatile());
 
   NewM->copyMetadata(*M, LLVMContext::MD_DIAssignID);
 
@@ -1460,7 +1440,7 @@ bool MemCpyOptPass::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
   int64_t MOffset = 0;
   const DataLayout &DL = MemCpy->getModule()->getDataLayout();
   // We can only transforms memcpy's where the dest of one is the source of the
-  // other, or they have a known offset.
+  // other, or the memory transfer has a known offset from the memset.
   if (MemCpy->getSource() != MemSet->getDest()) {
     std::optional<int64_t> Offset =
         MemCpy->getSource()->getPointerOffsetFrom(MemSet->getDest(), DL);
@@ -1471,28 +1451,28 @@ bool MemCpyOptPass::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
 
   if (MOffset != 0 || MemSetSize != CopySize) {
     // Make sure the memcpy doesn't read any more than what the memset wrote,
-    // other than undef. Don't worry about sizes larger than i64.
+    // other than undef. Don't worry about sizes larger than i64. A known memset
+    // size is required.
     auto *CMemSetSize = dyn_cast<ConstantInt>(MemSetSize);
+    if (!CMemSetSize)
+      return false;
+
+    // A known memcpy size is also required.
     auto *CCopySize = dyn_cast<ConstantInt>(CopySize);
-    if (!CMemSetSize || !CCopySize ||
-        CCopySize->getZExtValue() + MOffset > CMemSetSize->getZExtValue()) {
+    if (!CCopySize)
+      return false;
+    if (CCopySize->getZExtValue() + MOffset > CMemSetSize->getZExtValue()) {
       if (!overreadUndefContents(MSSA, MemCpy, MemSet, BAA))
         return false;
-
-      if (CMemSetSize && CCopySize) {
-        // If both have constant sizes and offsets, clip the memcpy to the
-        // bounds of the memset if applicable.
-        assert(CCopySize->getZExtValue() + MOffset >
-               CMemSetSize->getZExtValue());
-        if (MOffset == 0)
-          CopySize = MemSetSize;
-        else
-          CopySize =
-              ConstantInt::get(CopySize->getType(),
-                               CMemSetSize->getZExtValue() <= (uint64_t)MOffset
-                                   ? 0
-                                   : CMemSetSize->getZExtValue() - MOffset);
-      }
+      // Clip the memcpy to the bounds of the memset
+      if (MOffset == 0)
+        CopySize = MemSetSize;
+      else
+        CopySize =
+            ConstantInt::get(CopySize->getType(),
+                             CMemSetSize->getZExtValue() <= (uint64_t)MOffset
+                                 ? 0
+                                 : CMemSetSize->getZExtValue() - MOffset);
     }
   }
 

@@ -42,7 +42,8 @@ class ExecutorProcessControl;
 class LLVM_ABI LLJIT {
   template <typename, typename, typename> friend class LLJITBuilderSetters;
 
-  LLVM_ABI friend Expected<JITDylibSP> setUpGenericLLVMIRPlatform(LLJIT &J);
+  LLVM_ABI_FRIEND friend Expected<JITDylibSP>
+  setUpGenericLLVMIRPlatform(LLJIT &J);
 
 public:
   /// Initializer support for LLJIT.

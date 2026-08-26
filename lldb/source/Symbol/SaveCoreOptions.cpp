@@ -21,20 +21,9 @@ Status SaveCoreOptions::SetPluginName(const char *name) {
     return error;
   }
 
-  std::vector<llvm::StringRef> plugin_names =
-      PluginManager::GetSaveCorePluginNames();
-  if (llvm::find(plugin_names, name) == plugin_names.end()) {
-    StreamString stream;
-    stream.Printf("plugin name '%s' is not a valid ObjectFile plugin name.",
-                  name);
-
-    if (!plugin_names.empty()) {
-      stream.PutCString(" Valid names are: ");
-      std::string plugin_names_str = llvm::join(plugin_names, ", ");
-      stream.PutCString(plugin_names_str);
-      stream.PutChar('.');
-    }
-    return Status(stream.GetString().str());
+  if (!PluginManager::IsRegisteredObjectFilePluginName(name)) {
+    return Status::FromErrorStringWithFormat(
+        "plugin name '%s' is not a valid ObjectFile plugin name", name);
   }
 
   m_plugin_name = name;

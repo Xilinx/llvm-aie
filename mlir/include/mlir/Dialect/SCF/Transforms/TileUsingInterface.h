@@ -86,21 +86,28 @@ struct SCFTilingOptions {
     return *this;
   }
 
-  /// Specify mapping of loops to devices. This is only respected when the loop
-  /// constructs support such a mapping (like `scf.forall`). Will be ignored
-  /// when using loop constructs that dont support such a mapping (like
-  /// `scf.for`)
-  SmallVector<Attribute> mappingVector = {};
-  SCFTilingOptions &setMapping(ArrayRef<Attribute> mapping) {
-    mappingVector = llvm::to_vector(mapping);
-    return *this;
-  }
-
-  //-------------------------------------------------------------------------//
-  // Options related reduction tiling
-  //-------------------------------------------------------------------------//
-
   /// Specify how reduction dimensions should be tiled.
+  ///
+  /// Tiling can be thought of as splitting a dimension into 2 and materializing
+  /// the outer dimension as a loop:
+  ///
+  /// op[original] -> op[original / x, x] -> loop[original] { op[x] }
+  ///
+  /// For parallel dimensions, the split can only happen in one way, with both
+  /// dimensions being parallel. For reduction dimensions however, there is a
+  /// choice in how we split the reduction dimension. This enum exposes this
+  /// choice.
+  enum class ReductionTilingStrategy {
+    // [reduction] -> [reduction1, reduction2]
+    // -> loop[reduction1] { [reduction2] }
+    FullReduction,
+    // [reduction] -> [reduction1, parallel2]
+    // -> loop[reduction1] { [parallel2] }; merge[reduction1]
+    PartialReductionOuterReduction,
+    // [reduction] -> [parallel1, reduction2]
+    // -> loop[parallel1] { [reduction2] }; merge[parallel1]
+    PartialReductionOuterParallel
+  };
   ReductionTilingStrategy reductionStrategy =
       ReductionTilingStrategy::FullReduction;
   SCFTilingOptions &
@@ -109,13 +116,13 @@ struct SCFTilingOptions {
     return *this;
   }
 
-  /// Specify the reduction dimensions to be tiled. Note that this needs to be
-  /// specified. If left unspecified, then none of the reduction dimensions are
-  /// tiled.
-  SetVector<unsigned> reductionDims;
-  SCFTilingOptions &setReductionDims(ArrayRef<unsigned> dims) {
-    reductionDims.clear();
-    reductionDims.insert(dims.begin(), dims.end());
+  /// Specify mapping of loops to devices. This is only respected when the loop
+  /// constructs support such a mapping (like `scf.forall`). Will be ignored
+  /// when using loop constructs that dont support such a mapping (like
+  /// `scf.for`)
+  SmallVector<Attribute> mappingVector = {};
+  SCFTilingOptions &setMapping(ArrayRef<Attribute> mapping) {
+    mappingVector = llvm::to_vector(mapping);
     return *this;
   }
 };
@@ -288,10 +295,9 @@ FailureOr<SmallVector<Operation *>> yieldReplacementForFusedProducer(
 struct SCFTileAndFuseResult {
   /// List of untiled operations that were fused with the tiled consumer.
   llvm::SetVector<Operation *> fusedProducers;
-  /// List of tiled and fused operations generated. The first element is always
-  /// the tiled version of the original consumer operation processed by
-  /// `tileConsumerAndFuseProducersUsingSCF`, followed by any operations that
-  /// were fused with it.
+  /// List of tiled and fused operations generated. The first one in this list
+  /// is guaranteed to be the tiled operations generated during tiling of the
+  /// generated operation.
   llvm::SetVector<Operation *> tiledAndFusedOps;
   /// The `scf.for` operations that iterate over the tiles.
   SmallVector<LoopLikeOpInterface> loops;
@@ -329,23 +335,19 @@ tileConsumerAndFuseProducersUsingSCF(RewriterBase &rewriter,
                                      TilingInterface consumer,
                                      const SCFTileAndFuseOptions &options);
 
-/// Fuse the consumer `candidateSlices` by computing the required slice of the
-/// consumer in-place. All the entries of `candidateSlices` are expected to map
-/// to the same consumer. The method returns an error if the consumer cannot be
-/// tiled in a manner that is consistent for all the passed slices. Note that
-/// the method replaces the uses of `candidateSlices` with the tiled and fused
-/// consumer value but does not delete the slice operations.
+/// Fuse the consumer of the source of `candidateSliceOp` by computing the
+/// required slice of the consumer in-place.  Note that the method
+/// replaces the uses of `candidateSliceOp` with the tiled and fused consumer
+/// value but does not delete the slice operation.
 struct SCFFuseConsumerOfSliceResult {
-  // Original untiled consumer operands.
-  SmallVector<OpOperand *> origConsumerOperands;
-  // Tiled and fused consumer operands.
-  SmallVector<OpOperand *> tiledAndFusedConsumerOperands;
+  OpOperand *origConsumerOperand; // Original untiled consumer's operand.
+  OpOperand
+      *tiledAndFusedConsumerOperand; // Tiled and fused consumer's operand.
   SmallVector<Operation *> tiledOps;
 };
 FailureOr<scf::SCFFuseConsumerOfSliceResult>
-tileAndFuseConsumerOfSlices(RewriterBase &rewriter,
-                            ArrayRef<Operation *> candidateSlices,
-                            MutableArrayRef<LoopLikeOpInterface> loops);
+tileAndFuseConsumerOfSlice(RewriterBase &rewriter, Operation *candidateSliceOp,
+                           MutableArrayRef<LoopLikeOpInterface> loops);
 
 /// Method to lower an `op` that implements the `TilingInterface` to
 /// loops/scalars.

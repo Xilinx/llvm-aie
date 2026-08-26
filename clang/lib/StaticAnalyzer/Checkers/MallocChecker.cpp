@@ -430,8 +430,8 @@ private:
   CHECK_FN(checkGMemdup)
   CHECK_FN(checkGMallocN)
   CHECK_FN(checkGMallocN0)
-  CHECK_FN(preGetDelimOrGetLine)
-  CHECK_FN(checkGetDelimOrGetLine)
+  CHECK_FN(preGetdelim)
+  CHECK_FN(checkGetdelim)
   CHECK_FN(checkReallocN)
   CHECK_FN(checkOwnershipAttr)
 
@@ -445,16 +445,15 @@ private:
   const CallDescriptionMap<CheckFn> PreFnMap{
       // NOTE: the following CallDescription also matches the C++ standard
       // library function std::getline(); the callback will filter it out.
-      {{CDM::CLibrary, {"getline"}, 3}, &MallocChecker::preGetDelimOrGetLine},
-      {{CDM::CLibrary, {"getdelim"}, 4}, &MallocChecker::preGetDelimOrGetLine},
+      {{CDM::CLibrary, {"getline"}, 3}, &MallocChecker::preGetdelim},
+      {{CDM::CLibrary, {"getdelim"}, 4}, &MallocChecker::preGetdelim},
   };
 
   const CallDescriptionMap<CheckFn> PostFnMap{
       // NOTE: the following CallDescription also matches the C++ standard
       // library function std::getline(); the callback will filter it out.
-      {{CDM::CLibrary, {"getline"}, 3}, &MallocChecker::checkGetDelimOrGetLine},
-      {{CDM::CLibrary, {"getdelim"}, 4},
-       &MallocChecker::checkGetDelimOrGetLine},
+      {{CDM::CLibrary, {"getline"}, 3}, &MallocChecker::checkGetdelim},
+      {{CDM::CLibrary, {"getdelim"}, 4}, &MallocChecker::checkGetdelim},
   };
 
   const CallDescriptionMap<CheckFn> FreeingMemFnMap{
@@ -1372,20 +1371,6 @@ void MallocChecker::checkIfFreeNameIndex(ProgramStateRef State,
   C.addTransition(State);
 }
 
-const Expr *getPlacementNewBufferArg(const CallExpr *CE,
-                                     const FunctionDecl *FD) {
-  // Checking for signature:
-  // void* operator new  ( std::size_t count, void* ptr );
-  // void* operator new[]( std::size_t count, void* ptr );
-  if (CE->getNumArgs() != 2 || (FD->getOverloadedOperator() != OO_New &&
-                                FD->getOverloadedOperator() != OO_Array_New))
-    return nullptr;
-  auto BuffType = FD->getParamDecl(1)->getType();
-  if (BuffType.isNull() || !BuffType->isVoidPointerType())
-    return nullptr;
-  return CE->getArg(1);
-}
-
 void MallocChecker::checkCXXNewOrCXXDelete(ProgramStateRef State,
                                            const CallEvent &Call,
                                            CheckerContext &C) const {
@@ -1401,14 +1386,6 @@ void MallocChecker::checkCXXNewOrCXXDelete(ProgramStateRef State,
   // processed by the checkPostStmt callbacks for CXXNewExpr and
   // CXXDeleteExpr.
   const FunctionDecl *FD = C.getCalleeDecl(CE);
-  if (const auto *BufArg = getPlacementNewBufferArg(CE, FD)) {
-    // Placement new does not allocate memory
-    auto RetVal = State->getSVal(BufArg, Call.getLocationContext());
-    State = State->BindExpr(CE, C.getLocationContext(), RetVal);
-    C.addTransition(State);
-    return;
-  }
-
   switch (FD->getOverloadedOperator()) {
   case OO_New:
     State = MallocMemAux(C, Call, CE->getArg(0), UndefinedVal(), State,
@@ -1483,9 +1460,8 @@ static bool isFromStdNamespace(const CallEvent &Call) {
   return FD->isInStdNamespace();
 }
 
-void MallocChecker::preGetDelimOrGetLine(ProgramStateRef State,
-                                         const CallEvent &Call,
-                                         CheckerContext &C) const {
+void MallocChecker::preGetdelim(ProgramStateRef State, const CallEvent &Call,
+                                CheckerContext &C) const {
   // Discard calls to the C++ standard library function std::getline(), which
   // is completely unrelated to the POSIX getline() that we're checking.
   if (isFromStdNamespace(Call))
@@ -1507,9 +1483,8 @@ void MallocChecker::preGetDelimOrGetLine(ProgramStateRef State,
     C.addTransition(State);
 }
 
-void MallocChecker::checkGetDelimOrGetLine(ProgramStateRef State,
-                                           const CallEvent &Call,
-                                           CheckerContext &C) const {
+void MallocChecker::checkGetdelim(ProgramStateRef State, const CallEvent &Call,
+                                  CheckerContext &C) const {
   // Discard calls to the C++ standard library function std::getline(), which
   // is completely unrelated to the POSIX getline() that we're checking.
   if (isFromStdNamespace(Call))
@@ -1521,19 +1496,14 @@ void MallocChecker::checkGetDelimOrGetLine(ProgramStateRef State,
   if (!CE)
     return;
 
-  const auto LinePtrOpt = getPointeeVal(Call.getArgSVal(0), State);
-  const auto SizeOpt = getPointeeVal(Call.getArgSVal(1), State);
-  if (!LinePtrOpt || !SizeOpt || LinePtrOpt->isUnknownOrUndef() ||
-      SizeOpt->isUnknownOrUndef())
+  const auto LinePtr =
+      getPointeeVal(Call.getArgSVal(0), State)->getAs<DefinedSVal>();
+  const auto Size =
+      getPointeeVal(Call.getArgSVal(1), State)->getAs<DefinedSVal>();
+  if (!LinePtr || !Size || !LinePtr->getAsRegion())
     return;
 
-  const auto LinePtr = LinePtrOpt->getAs<DefinedSVal>();
-  const auto Size = SizeOpt->getAs<DefinedSVal>();
-  const MemRegion *LinePtrReg = LinePtr->getAsRegion();
-  if (!LinePtrReg)
-    return;
-
-  State = setDynamicExtent(State, LinePtrReg, *Size);
+  State = setDynamicExtent(State, LinePtr->getAsRegion(), *Size);
   C.addTransition(MallocUpdateRefState(C, CE, State,
                                        AllocationFamily(AF_Malloc), *LinePtr));
 }

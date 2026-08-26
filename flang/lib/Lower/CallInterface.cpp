@@ -1338,13 +1338,15 @@ private:
           getConverter().getFoldingContext(), toEvExpr(*expr)));
     return std::nullopt;
   }
-  void addFirOperand(mlir::Type type, int entityPosition, Property p,
-                     llvm::ArrayRef<mlir::NamedAttribute> attributes = {}) {
+  void addFirOperand(
+      mlir::Type type, int entityPosition, Property p,
+      llvm::ArrayRef<mlir::NamedAttribute> attributes = std::nullopt) {
     interface.inputs.emplace_back(
         FirPlaceHolder{type, entityPosition, p, attributes});
   }
-  void addFirResult(mlir::Type type, int entityPosition, Property p,
-                    llvm::ArrayRef<mlir::NamedAttribute> attributes = {}) {
+  void
+  addFirResult(mlir::Type type, int entityPosition, Property p,
+               llvm::ArrayRef<mlir::NamedAttribute> attributes = std::nullopt) {
     interface.outputs.emplace_back(
         FirPlaceHolder{type, entityPosition, p, attributes});
   }

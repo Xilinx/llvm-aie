@@ -70,18 +70,19 @@ struct SymbolAndDesignatorExtractor {
 
   static void verify(const SymbolWithDesignator &sd) {
     const semantics::Symbol *symbol = std::get<0>(sd);
-    const std::optional<evaluate::Expr<evaluate::SomeType>> &maybeDsg =
-        std::get<1>(sd);
+    assert(symbol && "Expecting symbol");
+    auto &maybeDsg = std::get<1>(sd);
     if (!maybeDsg)
       return; // Symbol with no designator -> OK
-    assert(symbol && "Expecting symbol");
-    std::optional<evaluate::DataRef> maybeRef = evaluate::ExtractDataRef(
-        *maybeDsg, /*intoSubstring=*/true, /*intoComplexPart=*/true);
+    std::optional<evaluate::DataRef> maybeRef =
+        evaluate::ExtractDataRef(*maybeDsg);
     if (maybeRef) {
       if (&maybeRef->GetLastSymbol() == symbol)
         return; // Symbol with a designator for it -> OK
       llvm_unreachable("Expecting designator for given symbol");
     } else {
+      // This could still be a Substring or ComplexPart, but at least Substring
+      // is not allowed in OpenMP.
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
       maybeDsg->dump();
 #endif
@@ -905,8 +906,8 @@ Inclusive make(const parser::OmpClause::Inclusive &inp,
 
 Indirect make(const parser::OmpClause::Indirect &inp,
               semantics::SemanticsContext &semaCtx) {
-  // inp.v.v -> std::optional<parser::ScalarLogicalExpr>
-  return Indirect{maybeApply(makeExprFn(semaCtx), inp.v.v)};
+  // inp -> empty
+  llvm_unreachable("Empty: indirect");
 }
 
 Init make(const parser::OmpClause::Init &inp,
@@ -1043,7 +1044,7 @@ Map make(const parser::OmpClause::Map &inp,
   auto type = [&]() -> std::optional<Map::MapType> {
     if (t3)
       return convert1(t3->v);
-    return std::nullopt;
+    return Map::MapType::Tofrom;
   }();
 
   Map::MapTypeModifiers typeMods;

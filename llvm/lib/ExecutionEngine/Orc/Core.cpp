@@ -1530,7 +1530,7 @@ Expected<DenseMap<JITDylib *, SymbolMap>> Platform::lookupInitSymbols(
   }
 
   std::unique_lock<std::mutex> Lock(LookupMutex);
-  CV.wait(Lock, [&] { return Count == 0; });
+  CV.wait(Lock, [&] { return Count == 0 || CompoundErr; });
 
   if (CompoundErr)
     return std::move(CompoundErr);

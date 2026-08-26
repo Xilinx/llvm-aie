@@ -422,11 +422,6 @@ CodeGenModule::CodeGenModule(ASTContext &C,
       CodeGenOpts.CoverageNotesFile.size() ||
       CodeGenOpts.CoverageDataFile.size())
     DebugInfo.reset(new CGDebugInfo(*this));
-  else if (getTriple().isOSWindows())
-    // On Windows targets, we want to emit compiler info even if debug info is
-    // otherwise disabled. Use a temporary CGDebugInfo instance to emit only
-    // basic compiler metadata.
-    CGDebugInfo(*this);
 
   Block.GlobalUniqueCount = 0;
 
@@ -466,35 +461,6 @@ CodeGenModule::CodeGenModule(ASTContext &C,
   if (Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
     getModule().addModuleFlag(llvm::Module::Error, "NumRegisterParameters",
                               CodeGenOpts.NumRegisterParameters);
-
-  // If there are any functions that are marked for Windows secure hot-patching,
-  // then build the list of functions now.
-  if (!CGO.MSSecureHotPatchFunctionsFile.empty() ||
-      !CGO.MSSecureHotPatchFunctionsList.empty()) {
-    if (!CGO.MSSecureHotPatchFunctionsFile.empty()) {
-      auto BufOrErr =
-          llvm::MemoryBuffer::getFile(CGO.MSSecureHotPatchFunctionsFile);
-      if (BufOrErr) {
-        const llvm::MemoryBuffer &FileBuffer = **BufOrErr;
-        for (llvm::line_iterator I(FileBuffer.getMemBufferRef(), true), E;
-             I != E; ++I)
-          this->MSHotPatchFunctions.push_back(std::string{*I});
-      } else {
-        auto &DE = Context.getDiagnostics();
-        unsigned DiagID =
-            DE.getCustomDiagID(DiagnosticsEngine::Error,
-                               "failed to open hotpatch functions file "
-                               "(-fms-hotpatch-functions-file): %0 : %1");
-        DE.Report(DiagID) << CGO.MSSecureHotPatchFunctionsFile
-                          << BufOrErr.getError().message();
-      }
-    }
-
-    for (const auto &FuncName : CGO.MSSecureHotPatchFunctionsList)
-      this->MSHotPatchFunctions.push_back(FuncName);
-
-    llvm::sort(this->MSHotPatchFunctions);
-  }
 }
 
 CodeGenModule::~CodeGenModule() {}
@@ -1006,7 +972,7 @@ void CodeGenModule::Release() {
         llvm::ConstantArray::get(ATy, UsedArray), "__clang_gpu_used_external");
     addCompilerUsedGlobal(GV);
   }
-  if (LangOpts.HIP) {
+  if (LangOpts.HIP && !getLangOpts().OffloadingNewDriver) {
     // Emit a unique ID so that host and device binaries from the same
     // compilation unit can be associated.
     auto *GV = new llvm::GlobalVariable(
@@ -1093,7 +1059,7 @@ void CodeGenModule::Release() {
                               "StrictVTablePointersRequirement",
                               llvm::MDNode::get(VMContext, Ops));
   }
-  if (getModuleDebugInfo() || getTriple().isOSWindows())
+  if (getModuleDebugInfo())
     // We support a single version in the linked module. The LLVM
     // parser will drop debug info with a different version number
     // (and warn about it, too).
@@ -1356,10 +1322,8 @@ void CodeGenModule::Release() {
                               1);
 
   // Enable unwind v2 (epilog).
-  if (CodeGenOpts.getWinX64EHUnwindV2() != llvm::WinX64EHUnwindV2Mode::Disabled)
-    getModule().addModuleFlag(
-        llvm::Module::Warning, "winx64-eh-unwindv2",
-        static_cast<unsigned>(CodeGenOpts.getWinX64EHUnwindV2()));
+  if (CodeGenOpts.WinX64EHUnwindV2)
+    getModule().addModuleFlag(llvm::Module::Warning, "winx64-eh-unwindv2", 1);
 
   // Indicate whether this Module was compiled with -fopenmp
   if (getLangOpts().OpenMP && !getLangOpts().OpenMPSimd)
@@ -1702,11 +1666,6 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
           OMPDeclareTargetDeclAttr::DT_NoHost &&
       LV.getVisibility() == HiddenVisibility) {
     GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
-    return;
-  }
-
-  if (Context.getLangOpts().HLSL && !D->isInExportDeclContext()) {
-    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
     return;
   }
 
@@ -3657,7 +3616,7 @@ CodeGenModule::isFunctionBlockedByProfileList(llvm::Function *Fn,
   // If the profile list is empty, then instrument everything.
   if (ProfileList.isEmpty())
     return ProfileList::Allow;
-  llvm::driver::ProfileInstrKind Kind = getCodeGenOpts().getProfileInstr();
+  CodeGenOptions::ProfileInstrKind Kind = getCodeGenOpts().getProfileInstr();
   // First, check the function name.
   if (auto V = ProfileList.isFunctionExcluded(Fn->getName(), Kind))
     return *V;

@@ -634,19 +634,16 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &Out,
 }
 
 // Represents the 'modifier' of a 'modifier-list', as applied to copy, copyin,
-// copyout, and create. Implemented as a 'bitmask'.
-// Note: This attempts to synchronize with mlir::acc::DataClauseModifier,
-// however has to store `Always` separately(whereas MLIR has it as AlwaysIn &
-// AlwaysOut). However, we keep them in sync so that we can cast between them.
+// copyout, and create. Implemented as a 'bitmask'
 enum class OpenACCModifierKind : uint8_t {
   Invalid = 0,
-  Zero = 1 << 0,
-  Readonly = 1 << 1,
-  AlwaysIn = 1 << 2,
-  AlwaysOut = 1 << 3,
-  Capture = 1 << 4,
-  Always = 1 << 5,
-  LLVM_MARK_AS_BITMASK_ENUM(Always)
+  Always = 1 << 0,
+  AlwaysIn = 1 << 1,
+  AlwaysOut = 1 << 2,
+  Readonly = 1 << 3,
+  Zero = 1 << 4,
+  Capture = 1 << 5,
+  LLVM_MARK_AS_BITMASK_ENUM(Capture)
 };
 
 inline bool isOpenACCModifierBitSet(OpenACCModifierKind List,

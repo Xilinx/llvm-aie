@@ -1,4 +1,6 @@
-; RUN: llc -mtriple=x86_64 -I %p/Inputs -filetype asm -o - %s | FileCheck %s
+; RUN: llc -I %p/Inputs -filetype asm -o - %s | FileCheck %s
+; UNSUPPORTED: target={{.*}}-zos{{.*}},target=nvptx{{.*}}
+; REQUIRES: default_triple
 
 module asm ".include \22module.x\22"
 
@@ -8,5 +10,5 @@ entry:
   ret void
 }
 
-; CHECK: MODULE = 1
-; CHECK: FUNCTION = 1
+; CHECK: .set MODULE, 1
+; CHECK: .set FUNCTION, 1

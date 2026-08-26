@@ -151,15 +151,3 @@ LogicalResult PtrType::verifyEntries(DataLayoutEntryListRef entries,
   }
   return success();
 }
-
-//===----------------------------------------------------------------------===//
-// Pointer metadata
-//===----------------------------------------------------------------------===//
-
-LogicalResult
-PtrMetadataType::verify(function_ref<InFlightDiagnostic()> emitError,
-                        PtrLikeTypeInterface type) {
-  if (!type.hasPtrMetadata())
-    return emitError() << "the ptr-like type has no metadata";
-  return success();
-}

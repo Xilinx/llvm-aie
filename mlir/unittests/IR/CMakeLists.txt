@@ -10,7 +10,6 @@ add_mlir_unittest(MLIRIRTests
   IRMapping.cpp
   InterfaceAttachmentTest.cpp
   LocationTest.cpp
-  MemrefLayoutTest.cpp
   OperationSupportTest.cpp
   PatternMatchTest.cpp
   ShapedTypeTest.cpp
@@ -19,7 +18,6 @@ add_mlir_unittest(MLIRIRTests
   TypeAttrNamesTest.cpp
   OpPropertiesTest.cpp
   ValueTest.cpp
-  BlobManagerTest.cpp
 
   DEPENDS
   MLIRTestInterfaceIncGen

@@ -78,7 +78,7 @@ static_assert(!CanInsertOrAssignIter<std::flat_map<int, ConstructFrom<V>>, int&&
 static_assert(!CanInsertOrAssignIter<std::flat_map<int, AssignFrom<V>>, int&&, V>);
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test_cv_key() {
+void test_cv_key() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
   using M     = std::flat_map<Key, Value, TransparentComparator, KeyContainer, ValueContainer>;
@@ -194,7 +194,7 @@ constexpr void test_cv_key() {
 }
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test_rv_key() {
+void test_rv_key() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
   using M     = std::flat_map<Key, Value, TransparentComparator, KeyContainer, ValueContainer>;
@@ -311,30 +311,16 @@ constexpr void test_rv_key() {
   }
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test_cv_key<std::vector<int>, std::vector<Moveable>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test_cv_key<std::deque<int>, std::vector<Moveable>>();
-    test_rv_key<std::deque<Moveable>, std::vector<Moveable>>();
-  }
+  test_cv_key<std::deque<int>, std::vector<Moveable>>();
   test_cv_key<MinSequenceContainer<int>, MinSequenceContainer<Moveable>>();
   test_cv_key<std::vector<int, min_allocator<int>>, std::vector<Moveable, min_allocator<Moveable>>>();
 
   test_rv_key<std::vector<Moveable>, std::vector<Moveable>>();
+  test_rv_key<std::deque<Moveable>, std::vector<Moveable>>();
   test_rv_key<MinSequenceContainer<Moveable>, MinSequenceContainer<Moveable>>();
   test_rv_key<std::vector<Moveable, min_allocator<Moveable>>, std::vector<Moveable, min_allocator<Moveable>>>();
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

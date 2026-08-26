@@ -14,7 +14,6 @@
 #define LLVM_CLANG_LIB_CIR_CODEGEN_CIRGENMODULE_H
 
 #include "CIRGenBuilder.h"
-#include "CIRGenCall.h"
 #include "CIRGenTypeCache.h"
 #include "CIRGenTypes.h"
 #include "CIRGenValue.h"
@@ -114,20 +113,7 @@ public:
 
   mlir::Operation *lastGlobalOp = nullptr;
 
-  llvm::DenseMap<const Decl *, cir::GlobalOp> staticLocalDeclMap;
-
   mlir::Operation *getGlobalValue(llvm::StringRef ref);
-
-  cir::GlobalOp getStaticLocalDeclAddress(const VarDecl *d) {
-    return staticLocalDeclMap[d];
-  }
-
-  void setStaticLocalDeclAddress(const VarDecl *d, cir::GlobalOp c) {
-    staticLocalDeclMap[d] = c;
-  }
-
-  cir::GlobalOp getOrCreateStaticVarDecl(const VarDecl &d,
-                                         cir::GlobalLinkageKind linkage);
 
   /// If the specified mangled name is not in the module, create and return an
   /// mlir::GlobalOp value
@@ -158,15 +144,6 @@ public:
   CharUnits computeNonVirtualBaseClassOffset(
       const CXXRecordDecl *derivedClass,
       llvm::iterator_range<CastExpr::path_const_iterator> path);
-
-  /// Get the CIR attributes and calling convention to use for a particular
-  /// function type.
-  ///
-  /// \param calleeInfo - The callee information these attributes are being
-  /// constructed for. If valid, the attributes applied to this decl may
-  /// contribute to the function attributes and calling convention.
-  void constructAttributeList(CIRGenCalleeInfo calleeInfo,
-                              cir::SideEffect &sideEffect);
 
   /// Return a constant array for the given string.
   mlir::Attribute getConstantArrayFromStringLiteral(const StringLiteral *e);
@@ -268,10 +245,6 @@ public:
   void setGVProperties(mlir::Operation *op, const NamedDecl *d) const;
   void setGVPropertiesAux(mlir::Operation *op, const NamedDecl *d) const;
 
-  /// Set function attributes for a function declaration.
-  void setFunctionAttributes(GlobalDecl gd, cir::FuncOp f,
-                             bool isIncompleteFunction, bool isThunk);
-
   void emitGlobalDefinition(clang::GlobalDecl gd,
                             mlir::Operation *op = nullptr);
   void emitGlobalFunctionDefinition(clang::GlobalDecl gd, mlir::Operation *op);
@@ -294,11 +267,6 @@ public:
   // Make sure that this type is translated.
   void updateCompletedType(const clang::TagDecl *td);
 
-  // Produce code for this constructor/destructor. This method doesn't try to
-  // apply any ABI rules about which other constructors/destructors are needed
-  // or if they are alias to each other.
-  cir::FuncOp codegenCXXStructor(clang::GlobalDecl gd);
-
   bool supportsCOMDAT() const;
   void maybeSetTrivialComdat(const clang::Decl &d, mlir::Operation *op);
 
@@ -314,10 +282,6 @@ public:
   cir::FuncOp createCIRFunction(mlir::Location loc, llvm::StringRef name,
                                 cir::FuncType funcType,
                                 const clang::FunctionDecl *funcDecl);
-
-  /// Given a builtin id for a function like "__builtin_fabsf", return a
-  /// Function* for "fabsf".
-  cir::FuncOp getBuiltinLibFunction(const FunctionDecl *fd, unsigned builtinID);
 
   mlir::IntegerAttr getSize(CharUnits size) {
     return builder.getSizeFromCharUnits(size);
@@ -344,16 +308,10 @@ public:
       clang::VisibilityAttr::VisibilityType visibility);
   cir::VisibilityAttr getGlobalVisibilityAttrFromDecl(const Decl *decl);
   static mlir::SymbolTable::Visibility getMLIRVisibility(cir::GlobalOp op);
-  cir::GlobalLinkageKind getFunctionLinkage(GlobalDecl gd);
+
   cir::GlobalLinkageKind getCIRLinkageForDeclarator(const DeclaratorDecl *dd,
                                                     GVALinkage linkage,
                                                     bool isConstantVariable);
-  void setFunctionLinkage(GlobalDecl gd, cir::FuncOp f) {
-    cir::GlobalLinkageKind l = getFunctionLinkage(gd);
-    f.setLinkageAttr(cir::GlobalLinkageKindAttr::get(&getMLIRContext(), l));
-    mlir::SymbolTable::setSymbolVisibility(f,
-                                           getMLIRVisibilityFromCIRLinkage(l));
-  }
 
   cir::GlobalLinkageKind getCIRLinkageVarDefinition(const VarDecl *vd,
                                                     bool isConstant);

@@ -261,8 +261,9 @@ CXXNewExpr::CXXNewExpr(bool IsGlobalNew, FunctionDecl *OperatorNew,
     getTrailingObjects<Stmt *>()[arraySizeOffset()] = *ArraySize;
   if (Initializer)
     getTrailingObjects<Stmt *>()[initExprOffset()] = Initializer;
-  llvm::copy(PlacementArgs,
-             getTrailingObjects<Stmt *>() + placementNewArgsOffset());
+  for (unsigned I = 0; I != PlacementArgs.size(); ++I)
+    getTrailingObjects<Stmt *>()[placementNewArgsOffset() + I] =
+        PlacementArgs[I];
   if (IsParenTypeId)
     getTrailingObjects<SourceRange>()[0] = TypeIdParens;
 
@@ -805,7 +806,8 @@ CXXDynamicCastExpr *CXXDynamicCastExpr::Create(const ASTContext &C, QualType T,
       new (Buffer) CXXDynamicCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
                                       RParenLoc, AngleBrackets);
   if (PathSize)
-    llvm::uninitialized_copy(*BasePath, E->getTrailingObjects());
+    llvm::uninitialized_copy(*BasePath,
+                             E->getTrailingObjects<CXXBaseSpecifier *>());
   return E;
 }
 
@@ -867,7 +869,8 @@ CXXReinterpretCastExpr::Create(const ASTContext &C, QualType T,
       new (Buffer) CXXReinterpretCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
                                           RParenLoc, AngleBrackets);
   if (PathSize)
-    llvm::uninitialized_copy(*BasePath, E->getTrailingObjects());
+    llvm::uninitialized_copy(*BasePath,
+                             E->getTrailingObjects<CXXBaseSpecifier *>());
   return E;
 }
 
@@ -1207,8 +1210,10 @@ CXXConstructExpr::CXXConstructExpr(
   CXXConstructExprBits.Loc = Loc;
 
   Stmt **TrailingArgs = getTrailingArgs();
-  llvm::copy(Args, TrailingArgs);
-  assert(!llvm::is_contained(Args, nullptr));
+  for (unsigned I = 0, N = Args.size(); I != N; ++I) {
+    assert(Args[I] && "NULL argument in CXXConstructExpr!");
+    TrailingArgs[I] = Args[I];
+  }
 
   // CXXTemporaryObjectExpr does this itself after setting its TypeSourceInfo.
   if (SC == CXXConstructExprClass)
@@ -1469,7 +1474,8 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(
       RParenLoc(RParenLoc) {
   CXXUnresolvedConstructExprBits.NumArgs = Args.size();
   auto **StoredArgs = getTrailingObjects();
-  llvm::copy(Args, StoredArgs);
+  for (unsigned I = 0; I != Args.size(); ++I)
+    StoredArgs[I] = Args[I];
   setDependence(computeDependence(this));
 }
 
@@ -1783,7 +1789,7 @@ SubstNonTypeTemplateParmPackExpr::getParameterPack() const {
 }
 
 TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
-  return TemplateArgument(ArrayRef(Arguments, NumArguments));
+  return TemplateArgument(llvm::ArrayRef(Arguments, NumArguments));
 }
 
 FunctionParmPackExpr::FunctionParmPackExpr(QualType T, ValueDecl *ParamPack,
@@ -1881,7 +1887,8 @@ TypeTraitExpr::TypeTraitExpr(QualType T, SourceLocation Loc, TypeTrait Kind,
   assert(Args.size() == TypeTraitExprBits.NumArgs &&
          "TypeTraitExprBits.NumArgs overflow!");
   auto **ToArgs = getTrailingObjects<TypeSourceInfo *>();
-  llvm::copy(Args, ToArgs);
+  for (unsigned I = 0, N = Args.size(); I != N; ++I)
+    ToArgs[I] = Args[I];
 
   setDependence(computeDependence(this));
 

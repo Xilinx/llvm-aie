@@ -867,15 +867,11 @@ LogicalResult spirv::Deserializer::processType(spirv::Opcode opcode,
     typeMap[operands[0]] = IntegerType::get(context, operands[1], sign);
   } break;
   case spirv::Opcode::OpTypeFloat: {
-    if (operands.size() != 2 && operands.size() != 3)
-      return emitError(unknownLoc,
-                       "OpTypeFloat expects either 2 operands (type, bitwidth) "
-                       "or 3 operands (type, bitwidth, encoding), but got ")
-             << operands.size();
-    uint32_t bitWidth = operands[1];
+    if (operands.size() != 2)
+      return emitError(unknownLoc, "OpTypeFloat must have bitwidth parameter");
 
     Type floatTy;
-    switch (bitWidth) {
+    switch (operands[1]) {
     case 16:
       floatTy = opBuilder.getF16Type();
       break;
@@ -887,20 +883,8 @@ LogicalResult spirv::Deserializer::processType(spirv::Opcode opcode,
       break;
     default:
       return emitError(unknownLoc, "unsupported OpTypeFloat bitwidth: ")
-             << bitWidth;
+             << operands[1];
     }
-
-    if (operands.size() == 3) {
-      if (spirv::FPEncoding(operands[2]) != spirv::FPEncoding::BFloat16KHR)
-        return emitError(unknownLoc, "unsupported OpTypeFloat FP encoding: ")
-               << operands[2];
-      if (bitWidth != 16)
-        return emitError(unknownLoc,
-                         "invalid OpTypeFloat bitwidth for bfloat16 encoding: ")
-               << bitWidth << " (expected 16)";
-      floatTy = opBuilder.getBF16Type();
-    }
-
     typeMap[operands[0]] = floatTy;
   } break;
   case spirv::Opcode::OpTypeVector: {
@@ -1415,9 +1399,6 @@ LogicalResult spirv::Deserializer::processConstant(ArrayRef<uint32_t> operands,
     } else if (floatType.isF16()) {
       APInt data(16, operands[2]);
       value = APFloat(APFloat::IEEEhalf(), data);
-    } else if (floatType.isBF16()) {
-      APInt data(16, operands[2]);
-      value = APFloat(APFloat::BFloat(), data);
     }
 
     auto attr = opBuilder.getFloatAttr(floatType, value);

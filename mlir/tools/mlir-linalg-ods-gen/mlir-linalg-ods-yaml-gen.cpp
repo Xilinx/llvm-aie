@@ -559,10 +559,9 @@ def {0} : LinalgStructuredBase_Op<"{1}", !listconcat([AttrSizedOperandSegments],
       SmallVector<utils::IteratorType> getIteratorTypesArray();
       ArrayAttr getIndexingMaps();
       static void regionBuilder(ImplicitLocOpBuilder &b,
-                                Block &block, ArrayRef<NamedAttribute> attrs,
-                                function_ref<InFlightDiagnostic()> emitError);
+                                Block &block, ArrayRef<NamedAttribute> attrs);
       static std::function<void(ImplicitLocOpBuilder &,
-                                Block &, ArrayRef<NamedAttribute>, function_ref<InFlightDiagnostic()> emitError)>
+                                Block &, ArrayRef<NamedAttribute>)>
       getRegionBuilder() {{
         return regionBuilder;
       }
@@ -1011,8 +1010,7 @@ LogicalResult {0}::verifyIndexingMapRequiredAttributes() {{
     // {3}: Statements
     static const char structuredOpRegionBuilderFormat[] = R"FMT(
 void {0}::regionBuilder(ImplicitLocOpBuilder &b,
-                        Block &block, ArrayRef<NamedAttribute> attrs,
-                        function_ref<InFlightDiagnostic()> emitError) {{
+                        Block &block, ArrayRef<NamedAttribute> attrs) {{
   assert({1} > 0 && block.getNumArguments() == {1} &&
          "{0} regionBuilder expects {1} (>=0) args");
   RegionBuilderHelper helper(b, block);
@@ -1139,13 +1137,8 @@ void {0}::regionBuilder(ImplicitLocOpBuilder &b,
           // Call the function builder.
           std::string cppIdent = llvm::formatv("value{0}", ++localCounter);
           stmts.push_back(llvm::formatv(
-              R"mlir(
-              Value {0} = helper.build{1}({2}, {3}, emitError);
-              if (!{0})
-                return;
-              )mlir",
-              cppIdent, enumName, funcType,
-              interleaveToString(operandCppValues, ", ")));
+              "Value {0} = helper.build{1}({2}, {3});", cppIdent, enumName,
+              funcType, interleaveToString(operandCppValues, ", ")));
           return cppIdent;
         }
         emitError(genContext.getLoc()) << "unknown ScalarExpression type";

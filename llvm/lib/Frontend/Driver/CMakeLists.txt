@@ -12,5 +12,4 @@ add_llvm_component_library(LLVMFrontendDriver
   Core
   Support
   Analysis
-  Instrumentation
   )

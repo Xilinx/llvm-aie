@@ -30,6 +30,11 @@ ol_code_location_t *&currentCodeLocation() {
   return CodeLoc;
 }
 
+OffloadConfig &offloadConfig() {
+  static OffloadConfig Config{};
+  return Config;
+}
+
 namespace llvm {
 namespace offload {
 // Pull in the declarations for the implementation functions. The actual entry

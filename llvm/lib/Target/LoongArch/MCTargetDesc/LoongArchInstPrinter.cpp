@@ -84,7 +84,7 @@ void LoongArchInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
 }
 
 void LoongArchInstPrinter::printAtomicMemOp(const MCInst *MI, unsigned OpNo,

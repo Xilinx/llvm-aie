@@ -13,7 +13,7 @@ namespace mlir {
 class RewritePatternSet;
 
 namespace arm_neon {
-void populateLowerContractionToNeonI8MMPatternPatterns(
+void populateLowerContractionToSMMLAPatternPatterns(
     RewritePatternSet &patterns);
 } // namespace arm_neon
 

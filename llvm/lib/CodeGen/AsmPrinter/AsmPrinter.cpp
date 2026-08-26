@@ -565,11 +565,8 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   if (MAI->doesSupportDebugInformation()) {
     bool EmitCodeView = M.getCodeViewFlag();
-    // On Windows targets, emit minimal CodeView compiler info even when debug
-    // info is disabled.
-    if ((TM.getTargetTriple().isOSWindows() &&
-         M.getNamedMetadata("llvm.dbg.cu")) ||
-        (TM.getTargetTriple().isUEFI() && EmitCodeView))
+    if (EmitCodeView &&
+        (TM.getTargetTriple().isOSWindows() || TM.getTargetTriple().isUEFI()))
       Handlers.push_back(std::make_unique<CodeViewDebug>(this));
     if (!EmitCodeView || M.getDwarfVersion()) {
       if (hasDebugInfo()) {
@@ -1081,6 +1078,13 @@ void AsmPrinter::emitFunctionHeader() {
 /// function.  This can be overridden by targets as required to do custom stuff.
 void AsmPrinter::emitFunctionEntryLabel() {
   CurrentFnSym->redefineIfPossible();
+
+  // The function label could have already been emitted if two symbols end up
+  // conflicting due to asm renaming.  Detect this and emit an error.
+  if (CurrentFnSym->isVariable())
+    report_fatal_error("'" + Twine(CurrentFnSym->getName()) +
+                       "' is a protected alias");
+
   OutStreamer->emitLabel(CurrentFnSym);
 
   if (TM.getTargetTriple().isOSBinFormatELF()) {
@@ -1419,12 +1423,9 @@ getBBAddrMapFeature(const MachineFunction &MF, int NumMBBSectionRanges) {
         "BB entries info is required for BBFreq and BrProb "
         "features");
   }
-  return {FuncEntryCountEnabled,
-          BBFreqEnabled,
-          BrProbEnabled,
+  return {FuncEntryCountEnabled, BBFreqEnabled, BrProbEnabled,
           MF.hasBBSections() && NumMBBSectionRanges > 1,
-          static_cast<bool>(BBAddrMapSkipEmitBBEntries),
-          false};
+          static_cast<bool>(BBAddrMapSkipEmitBBEntries)};
 }
 
 void AsmPrinter::emitBBAddrMapSection(const MachineFunction &MF) {
@@ -2142,20 +2143,16 @@ void AsmPrinter::emitFunctionBody() {
 }
 
 /// Compute the number of Global Variables that uses a Constant.
-static unsigned getNumGlobalVariableUses(const Constant *C,
-                                         bool &HasNonGlobalUsers) {
-  if (!C) {
-    HasNonGlobalUsers = true;
+static unsigned getNumGlobalVariableUses(const Constant *C) {
+  if (!C)
     return 0;
-  }
 
   if (isa<GlobalVariable>(C))
     return 1;
 
   unsigned NumUses = 0;
   for (const auto *CU : C->users())
-    NumUses +=
-        getNumGlobalVariableUses(dyn_cast<Constant>(CU), HasNonGlobalUsers);
+    NumUses += getNumGlobalVariableUses(dyn_cast<Constant>(CU));
 
   return NumUses;
 }
@@ -2166,8 +2163,7 @@ static unsigned getNumGlobalVariableUses(const Constant *C,
 /// candidates are skipped and are emitted later in case at least one cstexpr
 /// isn't replaced by a PC relative GOT entry access.
 static bool isGOTEquivalentCandidate(const GlobalVariable *GV,
-                                     unsigned &NumGOTEquivUsers,
-                                     bool &HasNonGlobalUsers) {
+                                     unsigned &NumGOTEquivUsers) {
   // Global GOT equivalents are unnamed private globals with a constant
   // pointer initializer to another global symbol. They must point to a
   // GlobalVariable or Function, i.e., as GlobalValue.
@@ -2179,8 +2175,7 @@ static bool isGOTEquivalentCandidate(const GlobalVariable *GV,
   // To be a got equivalent, at least one of its users need to be a constant
   // expression used by another global variable.
   for (const auto *U : GV->users())
-    NumGOTEquivUsers +=
-        getNumGlobalVariableUses(dyn_cast<Constant>(U), HasNonGlobalUsers);
+    NumGOTEquivUsers += getNumGlobalVariableUses(dyn_cast<Constant>(U));
 
   return NumGOTEquivUsers > 0;
 }
@@ -2198,13 +2193,9 @@ void AsmPrinter::computeGlobalGOTEquivs(Module &M) {
 
   for (const auto &G : M.globals()) {
     unsigned NumGOTEquivUsers = 0;
-    bool HasNonGlobalUsers = false;
-    if (!isGOTEquivalentCandidate(&G, NumGOTEquivUsers, HasNonGlobalUsers))
+    if (!isGOTEquivalentCandidate(&G, NumGOTEquivUsers))
       continue;
-    // If non-global variables use it, we still need to emit it.
-    // Add 1 here, then emit it in `emitGlobalGOTEquivs`.
-    if (HasNonGlobalUsers)
-      NumGOTEquivUsers += 1;
+
     const MCSymbol *GOTEquivSym = getSymbol(&G);
     GlobalGOTEquivs[GOTEquivSym] = std::make_pair(&G, NumGOTEquivUsers);
   }
@@ -2389,15 +2380,6 @@ void AsmPrinter::emitRemarksSection(remarks::RemarkStreamer &RS) {
   if (!RS.needsSection())
     return;
 
-  MCSection *RemarksSection =
-      OutContext.getObjectFileInfo()->getRemarksSection();
-  if (!RemarksSection) {
-    OutContext.reportWarning(SMLoc(), "Current object file format does not "
-                                      "support remarks sections. Use the yaml "
-                                      "remark format instead.");
-    return;
-  }
-
   remarks::RemarkSerializer &RemarkSerializer = RS.getSerializer();
 
   std::optional<SmallString<128>> Filename;
@@ -2415,7 +2397,10 @@ void AsmPrinter::emitRemarksSection(remarks::RemarkStreamer &RS) {
   MetaSerializer->emit();
 
   // Switch to the remarks section.
+  MCSection *RemarksSection =
+      OutContext.getObjectFileInfo()->getRemarksSection();
   OutStreamer->switchSection(RemarksSection);
+
   OutStreamer->emitBinaryData(Buf);
 }
 
@@ -3213,10 +3198,7 @@ bool AsmPrinter::emitSpecialLLVMGlobal(const GlobalVariable *GV) {
     return true;
   }
 
-  GV->getContext().emitError(
-      "unknown special variable with appending linkage: " +
-      GV->getNameOrAsOperand());
-  return true;
+  report_fatal_error("unknown special variable with appending linkage");
 }
 
 /// EmitLLVMUsedList - For targets that define a MAI::UsedDirective, mark each
@@ -3252,11 +3234,9 @@ void AsmPrinter::preprocessXXStructorList(const DataLayout &DL,
     S.Priority = Priority->getLimitedValue(65535);
     S.Func = CS->getOperand(1);
     if (!CS->getOperand(2)->isNullValue()) {
-      if (TM.getTargetTriple().isOSAIX()) {
-        CS->getContext().emitError(
+      if (TM.getTargetTriple().isOSAIX())
+        llvm::report_fatal_error(
             "associated data of XXStructor list is not yet supported on AIX");
-      }
-
       S.ComdatKey =
           dyn_cast<GlobalValue>(CS->getOperand(2)->stripPointerCasts());
     }
@@ -3614,11 +3594,10 @@ const MCExpr *AsmPrinter::lowerConstant(const Constant *CV,
   // Otherwise report the problem to the user.
   std::string S;
   raw_string_ostream OS(S);
-  OS << "unsupported expression in static initializer: ";
+  OS << "Unsupported expression in static initializer: ";
   CE->printAsOperand(OS, /*PrintType=*/false,
                      !MF ? nullptr : MF->getFunction().getParent());
-  CE->getContext().emitError(S);
-  return MCConstantExpr::create(0, Ctx);
+  report_fatal_error(Twine(S));
 }
 
 static void emitGlobalConstantImpl(const DataLayout &DL, const Constant *C,

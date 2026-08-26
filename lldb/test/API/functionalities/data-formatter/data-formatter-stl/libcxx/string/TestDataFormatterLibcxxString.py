@@ -65,9 +65,11 @@ class LibcxxStringDataFormatterTestCase(TestBase):
                 '(%s::wstring) IHaveEmbeddedZerosToo = L"hello world!\\0てざ ル゜䋨ミ㠧槊 きゅへ狦穤襩 じゃ馩リョ 䤦監"'
                 % ns,
                 '(%s::u16string) u16_string = u"ß水氶"' % ns,
-                '(%s::u16string) u16_empty = u""' % ns,
+                # FIXME: This should have a 'u' prefix.
+                '(%s::u16string) u16_empty = ""' % ns,
                 '(%s::u32string) u32_string = U"🍄🍅🍆🍌"' % ns,
-                '(%s::u32string) u32_empty = U""' % ns,
+                # FIXME: This should have a 'U' prefix.
+                '(%s::u32string) u32_empty = ""' % ns,
                 "(%s::string *) null_str = nullptr" % ns,
             ],
         )
@@ -121,7 +123,7 @@ class LibcxxStringDataFormatterTestCase(TestBase):
                 % ns,
                 '(%s::u16string) u16_string = u"ß水氶"' % ns,
                 '(%s::u32string) u32_string = U"🍄🍅🍆🍌"' % ns,
-                '(%s::u32string) u32_empty = U""' % ns,
+                '(%s::u32string) u32_empty = ""' % ns,
                 "(%s::string *) null_str = nullptr" % ns,
             ],
         )

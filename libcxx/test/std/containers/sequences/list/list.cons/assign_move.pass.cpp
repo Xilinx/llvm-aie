@@ -10,7 +10,7 @@
 
 // <list>
 
-// list& operator=(list&& c); // constexpr since C++26
+// list& operator=(list&& c);
 
 #include <list>
 #include <cassert>
@@ -19,7 +19,7 @@
 #include "test_allocator.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     std::list<MoveOnly, test_allocator<MoveOnly> > l(test_allocator<MoveOnly>(5));
     std::list<MoveOnly, test_allocator<MoveOnly> > lo(test_allocator<MoveOnly>(5));
@@ -78,15 +78,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(l2.get_allocator() == lo.get_allocator());
     assert(it == l2.begin()); // Iterators remain valid
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

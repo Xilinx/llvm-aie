@@ -249,10 +249,11 @@ bool llvm::PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
       capturesAnything, LI, MaxUsesToExplore));
 }
 
-std::pair<Instruction *, CaptureComponents>
-llvm::FindEarliestCapture(const Value *V, Function &F, bool ReturnCaptures,
-                          const DominatorTree &DT, CaptureComponents Mask,
-                          unsigned MaxUsesToExplore) {
+Instruction *llvm::FindEarliestCapture(const Value *V, Function &F,
+                                       bool ReturnCaptures,
+                                       const DominatorTree &DT,
+                                       CaptureComponents Mask,
+                                       unsigned MaxUsesToExplore) {
   assert(!isa<GlobalValue>(V) &&
          "It doesn't make sense to ask whether a global is captured.");
 
@@ -262,7 +263,7 @@ llvm::FindEarliestCapture(const Value *V, Function &F, bool ReturnCaptures,
     ++NumCapturedBefore;
   else
     ++NumNotCapturedBefore;
-  return {CB.EarliestCapture, CB.CC};
+  return CB.EarliestCapture;
 }
 
 UseCaptureInfo llvm::DetermineUseCaptureKind(const Use &U, const Value *Base) {

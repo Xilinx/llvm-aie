@@ -75,9 +75,6 @@ class StoredDeclsList;
 class SwitchCase;
 class Token;
 
-struct VisibleLookupBlockOffsets;
-struct LookupBlockOffsets;
-
 namespace serialization {
 enum class DeclUpdateKind;
 } // namespace serialization
@@ -114,6 +111,8 @@ private:
   /// Keys in the map never have const/volatile qualifiers.
   using TypeIdxMap = llvm::DenseMap<QualType, serialization::TypeIdx,
                                     serialization::UnsafeQualTypeDenseMapInfo>;
+
+  using LocSeq = SourceLocationSequence;
 
   /// The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
@@ -376,7 +375,6 @@ private:
   /// Only meaningful for standard C++ named modules. See the comments in
   /// createSignatureForNamedModule() for details.
   llvm::SetVector<Module *> TouchedTopLevelModules;
-  llvm::SetVector<serialization::ModuleFile *> TouchedModuleFiles;
 
   /// An update to a Decl.
   class DeclUpdate {
@@ -608,7 +606,9 @@ private:
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context,
                                         const DeclContext *DC);
   void WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC,
-                                    VisibleLookupBlockOffsets &Offsets);
+                                    uint64_t &VisibleBlockOffset,
+                                    uint64_t &ModuleLocalBlockOffset,
+                                    uint64_t &TULocalBlockOffset);
   void WriteTypeDeclOffsets();
   void WriteFileDeclIDsMap();
   void WriteComments(ASTContext &Context);
@@ -732,14 +732,16 @@ public:
   void AddFileID(FileID FID, RecordDataImpl &Record);
 
   /// Emit a source location.
-  void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record);
+  void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record,
+                         LocSeq *Seq = nullptr);
 
   /// Return the raw encodings for source locations.
   SourceLocationEncoding::RawLocEncoding
-  getRawSourceLocationEncoding(SourceLocation Loc);
+  getRawSourceLocationEncoding(SourceLocation Loc, LocSeq *Seq = nullptr);
 
   /// Emit a source range.
-  void AddSourceRange(SourceRange Range, RecordDataImpl &Record);
+  void AddSourceRange(SourceRange Range, RecordDataImpl &Record,
+                      LocSeq *Seq = nullptr);
 
   /// Emit a reference to an identifier.
   void AddIdentifierRef(const IdentifierInfo *II, RecordDataImpl &Record);
@@ -774,9 +776,6 @@ public:
     auto I = DeclIDs.find(D);
     return (I == DeclIDs.end() || I->second >= clang::NUM_PREDEF_DECL_IDS);
   };
-
-  void AddLookupOffsets(const LookupBlockOffsets &Offsets,
-                        RecordDataImpl &Record);
 
   /// Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordDataImpl &Record);
@@ -900,10 +899,6 @@ public:
     return WritingModule && WritingModule->isNamedModule();
   }
 
-  bool isWritingStdCXXHeaderUnit() const {
-    return WritingModule && WritingModule->isHeaderUnit();
-  }
-
   bool isGeneratingReducedBMI() const { return GeneratingReducedBMI; }
 
   bool getDoneWritingDeclsAndTypes() const { return DoneWritingDeclsAndTypes; }
@@ -913,8 +908,6 @@ public:
   }
 
   void handleVTable(CXXRecordDecl *RD);
-
-  void addTouchedModuleFile(serialization::ModuleFile *);
 
 private:
   // ASTDeserializationListener implementation

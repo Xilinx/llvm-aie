@@ -61,8 +61,7 @@ public:
   // ErrorReplyTimeout.
   PacketResult SendPacketAndWaitForResponse(
       llvm::StringRef payload, StringExtractorGDBRemote &response,
-      std::chrono::seconds interrupt_timeout = std::chrono::seconds(0),
-      bool sync_on_timeout = true);
+      std::chrono::seconds interrupt_timeout = std::chrono::seconds(0));
 
   PacketResult ReadPacketWithOutputSupport(
       StringExtractorGDBRemote &response, Timeout<std::micro> timeout,
@@ -105,8 +104,7 @@ public:
 protected:
   PacketResult
   SendPacketAndWaitForResponseNoLock(llvm::StringRef payload,
-                                     StringExtractorGDBRemote &response,
-                                     bool sync_on_timeout = true);
+                                     StringExtractorGDBRemote &response);
 
   virtual void OnRunPacketSent(bool first);
 

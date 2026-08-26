@@ -485,8 +485,8 @@ int main_platform(int argc, char *argv[]) {
 
     GDBRemoteCommunicationServerPlatform platform(socket->GetSocketProtocol(),
                                                   gdbserver_port);
-    platform.SetConnection(
-        std::make_unique<ConnectionFileDescriptor>(std::move(socket)));
+    platform.SetConnection(std::unique_ptr<Connection>(
+        new ConnectionFileDescriptor(socket.release())));
     client_handle(platform, inferior_arguments);
     return 0;
   }

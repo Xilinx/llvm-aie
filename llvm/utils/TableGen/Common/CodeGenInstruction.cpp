@@ -183,8 +183,8 @@ CGIOperandList::CGIOperandList(const Record *R) : TheDef(R) {
       // If we have no explicit sub-op dag, but have an top-level encoder
       // method, the single encoder will multiple sub-ops, itself.
       OpInfo.EncoderMethodNames[0] = EncoderMethod;
-      OpInfo.DoNotEncode.set();
-      OpInfo.DoNotEncode[0] = false;
+      for (unsigned j = 1; j < NumOps; ++j)
+        OpInfo.DoNotEncode[j] = true;
     }
 
     MIOperandNo += NumOps;
@@ -199,31 +199,36 @@ CGIOperandList::CGIOperandList(const Record *R) : TheDef(R) {
 /// specified name, abort.
 ///
 unsigned CGIOperandList::getOperandNamed(StringRef Name) const {
-  std::optional<unsigned> OpIdx = findOperandNamed(Name);
-  if (OpIdx)
-    return *OpIdx;
+  unsigned OpIdx;
+  if (hasOperandNamed(Name, OpIdx))
+    return OpIdx;
   PrintFatalError(TheDef->getLoc(), "'" + TheDef->getName() +
                                         "' does not have an operand named '$" +
                                         Name + "'!");
 }
 
-/// findOperandNamed - Query whether the instruction has an operand of the
-/// given name. If so, the index of the operand. Otherwise, return std::nullopt.
-std::optional<unsigned> CGIOperandList::findOperandNamed(StringRef Name) const {
+/// hasOperandNamed - Query whether the instruction has an operand of the
+/// given name. If so, return true and set OpIdx to the index of the
+/// operand. Otherwise, return false.
+bool CGIOperandList::hasOperandNamed(StringRef Name, unsigned &OpIdx) const {
   assert(!Name.empty() && "Cannot search for operand with no name!");
-  for (const auto &[Index, Opnd] : enumerate(OperandList))
-    if (Opnd.Name == Name)
-      return Index;
-  return std::nullopt;
+  for (unsigned i = 0, e = OperandList.size(); i != e; ++i)
+    if (OperandList[i].Name == Name) {
+      OpIdx = i;
+      return true;
+    }
+  return false;
 }
 
-std::optional<std::pair<unsigned, unsigned>>
-CGIOperandList::findSubOperandAlias(StringRef Name) const {
+bool CGIOperandList::hasSubOperandAlias(
+    StringRef Name, std::pair<unsigned, unsigned> &SubOp) const {
   assert(!Name.empty() && "Cannot search for operand with no name!");
   auto SubOpIter = SubOpAliases.find(Name);
-  if (SubOpIter != SubOpAliases.end())
-    return SubOpIter->second;
-  return std::nullopt;
+  if (SubOpIter != SubOpAliases.end()) {
+    SubOp = SubOpIter->second;
+    return true;
+  }
+  return false;
 }
 
 std::pair<unsigned, unsigned>
@@ -246,7 +251,9 @@ CGIOperandList::ParseOperandName(StringRef Op, bool AllowWholeOp) {
     OpName = OpName.substr(0, DotIdx);
   }
 
-  if (auto SubOp = findSubOperandAlias(OpName)) {
+  unsigned OpIdx;
+
+  if (std::pair<unsigned, unsigned> SubOp; hasSubOperandAlias(OpName, SubOp)) {
     // Found a name for a piece of an operand, just return it directly.
     if (!SubOpName.empty()) {
       PrintFatalError(
@@ -255,10 +262,10 @@ CGIOperandList::ParseOperandName(StringRef Op, bool AllowWholeOp) {
               ": Cannot use dotted suboperand name within suboperand '" +
               OpName + "'");
     }
-    return *SubOp;
+    return SubOp;
   }
 
-  unsigned OpIdx = getOperandNamed(OpName);
+  OpIdx = getOperandNamed(OpName);
 
   if (SubOpName.empty()) { // If no suboperand name was specified:
     // If one was needed, throw.
@@ -428,7 +435,7 @@ void CGIOperandList::ProcessDisableEncoding(StringRef DisableEncoding) {
 CodeGenInstruction::CodeGenInstruction(const Record *R)
     : TheDef(R), Operands(R), InferredFrom(nullptr) {
   Namespace = R->getValueAsString("Namespace");
-  AsmString = R->getValueAsString("AsmString");
+  AsmString = R->getValueAsString("AsmString").str();
 
   isPreISelOpcode = R->getValueAsBit("isPreISelOpcode");
   isReturn = R->getValueAsBit("isReturn");

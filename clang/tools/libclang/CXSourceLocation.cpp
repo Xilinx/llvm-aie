@@ -332,7 +332,7 @@ void clang_getSpellingLocation(CXSourceLocation location,
   const SourceManager &SM =
   *static_cast<const SourceManager*>(location.ptr_data[0]);
   SourceLocation SpellLoc = SM.getSpellingLoc(Loc);
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(SpellLoc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellLoc);
   FileID FID = LocInfo.first;
   unsigned FileOffset = LocInfo.second;
   
@@ -368,7 +368,7 @@ void clang_getFileLocation(CXSourceLocation location,
   const SourceManager &SM =
   *static_cast<const SourceManager*>(location.ptr_data[0]);
   SourceLocation FileLoc = SM.getFileLoc(Loc);
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(FileLoc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(FileLoc);
   FileID FID = LocInfo.first;
   unsigned FileOffset = LocInfo.second;
 

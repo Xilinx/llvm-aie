@@ -353,15 +353,14 @@ public:
   llvm::Error Run(const protocol::StepInArguments &args) const override;
 };
 
-class StepInTargetsRequestHandler
-    : public RequestHandler<
-          protocol::StepInTargetsArguments,
-          llvm::Expected<protocol::StepInTargetsResponseBody>> {
+class StepInTargetsRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "stepInTargets"; }
-  llvm::Expected<protocol::StepInTargetsResponseBody>
-  Run(const protocol::StepInTargetsArguments &args) const override;
+  FeatureSet GetSupportedFeatures() const override {
+    return {protocol::eAdapterFeatureStepInTargetsRequest};
+  }
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class StepOutRequestHandler : public RequestHandler<protocol::StepOutArguments,
@@ -387,21 +386,14 @@ public:
   Run(const protocol::SetBreakpointsArguments &args) const override;
 };
 
-class SetExceptionBreakpointsRequestHandler
-    : public RequestHandler<
-          protocol::SetExceptionBreakpointsArguments,
-          llvm::Expected<protocol::SetExceptionBreakpointsResponseBody>> {
+class SetExceptionBreakpointsRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "setExceptionBreakpoints"; }
   FeatureSet GetSupportedFeatures() const override {
-    /// Prefer the `filterOptions` feature over the `exceptionOptions`.
-    /// exceptionOptions is not supported in VSCode, while `filterOptions` is
-    /// supported.
-    return {protocol::eAdapterFeatureExceptionFilterOptions};
+    return {protocol::eAdapterFeatureExceptionOptions};
   }
-  llvm::Expected<protocol::SetExceptionBreakpointsResponseBody>
-  Run(const protocol::SetExceptionBreakpointsArguments &args) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class SetFunctionBreakpointsRequestHandler
@@ -564,17 +556,14 @@ public:
   Run(const protocol::DisassembleArguments &args) const override;
 };
 
-class ReadMemoryRequestHandler final
-    : public RequestHandler<protocol::ReadMemoryArguments,
-                            llvm::Expected<protocol::ReadMemoryResponseBody>> {
+class ReadMemoryRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "readMemory"; }
   FeatureSet GetSupportedFeatures() const override {
     return {protocol::eAdapterFeatureReadMemoryRequest};
   }
-  llvm::Expected<protocol::ReadMemoryResponseBody>
-  Run(const protocol::ReadMemoryArguments &args) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class CancelRequestHandler : public RequestHandler<protocol::CancelArguments,

@@ -26,7 +26,6 @@
 
 namespace mlir {
 class SymbolTable;
-class StateStack;
 }
 
 namespace fir {
@@ -267,7 +266,7 @@ public:
   /// Generate the type from a category and kind and length parameters.
   virtual mlir::Type
   genType(Fortran::common::TypeCategory tc, int kind,
-          llvm::ArrayRef<std::int64_t> lenParameters = {}) = 0;
+          llvm::ArrayRef<std::int64_t> lenParameters = std::nullopt) = 0;
   /// Generate the type from a DerivedTypeSpec.
   virtual mlir::Type genType(const Fortran::semantics::DerivedTypeSpec &) = 0;
   /// Generate the type from a Variable
@@ -361,8 +360,6 @@ public:
   /// always be provided to the builder helper creating globals and
   /// functions in order to be in sync).
   virtual mlir::SymbolTable *getMLIRSymbolTable() = 0;
-
-  virtual mlir::StateStack &getStateStack() = 0;
 
 private:
   /// Options controlling lowering behavior.

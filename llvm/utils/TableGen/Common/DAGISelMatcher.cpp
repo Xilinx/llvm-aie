@@ -286,11 +286,11 @@ void EmitNodeMatcherCommon::printImpl(raw_ostream &OS, indent Indent) const {
   OS << (isa<MorphNodeToMatcher>(this) ? "MorphNodeTo: " : "EmitNode: ")
      << CGI.Namespace << "::" << CGI.TheDef->getName() << ": <todo flags> ";
 
-  for (MVT::SimpleValueType VT : VTs)
-    OS << ' ' << getEnumName(VT);
+  for (unsigned i = 0, e = VTs.size(); i != e; ++i)
+    OS << ' ' << getEnumName(VTs[i]);
   OS << '(';
-  for (unsigned Operand : Operands)
-    OS << Operand << ' ';
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    OS << Operands[i] << ' ';
   OS << ")\n";
 }
 

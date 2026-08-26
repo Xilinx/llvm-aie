@@ -16,10 +16,10 @@ attributes #0 = { minsize optsize }
 
 ; CHECK: .globl x
 ; CHECK: .hidden x
-; CHECK: x = .L_MergedGlobals
+; CHECK: .set x, .L_MergedGlobals
 ; CHECK: .size x, 4
 
 ; CHECK: .globl y
 ; CHECK: .hidden y
-; CHECK: y = .L_MergedGlobals+4
+; CHECK: .set y, .L_MergedGlobals+4
 ; CHECK: .size y, 4

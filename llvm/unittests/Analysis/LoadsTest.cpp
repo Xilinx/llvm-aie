@@ -180,7 +180,7 @@ loop.end:
   auto *F2 = dyn_cast<Function>(GV2);
   ASSERT_TRUE(F1 && F2);
 
-  TargetLibraryInfoImpl TLII(M->getTargetTriple());
+  TargetLibraryInfoImpl TLII;
   TargetLibraryInfo TLI(TLII);
 
   auto IsDerefReadOnlyLoop = [&TLI](Function *F) -> bool {

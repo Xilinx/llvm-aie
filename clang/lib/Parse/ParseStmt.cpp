@@ -605,7 +605,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
   {
     ParseScopeFlags FilterScope(this, getCurScope()->getFlags() |
                                           Scope::SEHFilterScope);
-    FilterExpr = ParseExpression();
+    FilterExpr = Actions.CorrectDelayedTyposInExpr(ParseExpression());
   }
 
   if (getLangOpts().Borland) {
@@ -839,7 +839,8 @@ StmtResult Parser::ParseCaseStatement(ParsedStmtContext StmtCtx,
 
       Diag(ExpectedLoc, diag::err_expected_after)
           << "'case'" << tok::colon
-          << FixItHint::CreateInsertion(ExpectedLoc, ":");
+          << FixItHint::CreateInsertion(ExpectedLoc,
+                                        tok::getTokenName(tok::colon));
 
       ColonLoc = ExpectedLoc;
     }
@@ -1330,7 +1331,7 @@ struct MisleadingIndentationChecker {
     if (ColNo == 0 || TabStop == 1)
       return ColNo;
 
-    FileIDAndOffset FIDAndOffset = SM.getDecomposedLoc(Loc);
+    std::pair<FileID, unsigned> FIDAndOffset = SM.getDecomposedLoc(Loc);
 
     bool Invalid;
     StringRef BufData = SM.getBufferData(FIDAndOffset.first, &Invalid);
@@ -1834,7 +1835,11 @@ StmtResult Parser::ParseDoStatement() {
 
   SourceLocation Start = Tok.getLocation();
   ExprResult Cond = ParseExpression();
-  if (!Cond.isUsable()) {
+  // Correct the typos in condition before closing the scope.
+  if (Cond.isUsable())
+    Cond = Actions.CorrectDelayedTyposInExpr(Cond, /*InitDecl=*/nullptr,
+                                             /*RecoverUncorrectedTypos=*/true);
+  else {
     if (!Tok.isOneOf(tok::r_paren, tok::r_square, tok::r_brace))
       SkipUntil(tok::semi);
     Cond = Actions.CreateRecoveryExpr(
@@ -2016,7 +2021,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     }
   } else {
     ProhibitAttributes(attrs);
-    Value = ParseExpression();
+    Value = Actions.CorrectDelayedTyposInExpr(ParseExpression());
 
     ForEach = isTokIdentifier_in();
 
@@ -2175,10 +2180,12 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   StmtResult ForEachStmt;
 
   if (ForRangeInfo.ParsedForRangeDecl()) {
+    ExprResult CorrectedRange =
+        Actions.CorrectDelayedTyposInExpr(ForRangeInfo.RangeExpr.get());
     ForRangeStmt = Actions.ActOnCXXForRangeStmt(
         getCurScope(), ForLoc, CoawaitLoc, FirstPart.get(),
-        ForRangeInfo.LoopVar.get(), ForRangeInfo.ColonLoc,
-        ForRangeInfo.RangeExpr.get(), T.getCloseLocation(), Sema::BFRK_Build,
+        ForRangeInfo.LoopVar.get(), ForRangeInfo.ColonLoc, CorrectedRange.get(),
+        T.getCloseLocation(), Sema::BFRK_Build,
         ForRangeInfo.LifetimeExtendTemps);
   } else if (ForEach) {
     // Similarly, we need to do the semantic analysis for a for-range
@@ -2348,8 +2355,8 @@ StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts,
     ArgsUnion ArgHints[] = {Hint.PragmaNameLoc, Hint.OptionLoc, Hint.StateLoc,
                             ArgsUnion(Hint.ValueExpr), Hint.ValueIdentLoc};
     TempAttrs.addNew(Hint.PragmaNameLoc->getIdentifierInfo(), Hint.Range,
-                     AttributeScopeInfo(), ArgHints, /*numArgs=*/5,
-                     ParsedAttr::Form::Pragma());
+                     /*scopeName=*/nullptr, Hint.PragmaNameLoc->getLoc(),
+                     ArgHints, /*numArgs=*/5, ParsedAttr::Form::Pragma());
   }
 
   // Get the next statement.

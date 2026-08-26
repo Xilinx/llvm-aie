@@ -951,7 +951,7 @@ static void parseGnuPropertyNote(Ctx &ctx, ELFFileBase &f,
     } else if (ctx.arg.emachine == EM_AARCH64 &&
                type == GNU_PROPERTY_AARCH64_FEATURE_PAUTH) {
       ArrayRef<uint8_t> contents = data ? *data : desc;
-      if (f.aarch64PauthAbiCoreInfo) {
+      if (!f.aarch64PauthAbiCoreInfo.empty()) {
         return void(
             err(contents.data())
             << "multiple GNU_PROPERTY_AARCH64_FEATURE_PAUTH entries are "
@@ -962,9 +962,7 @@ static void parseGnuPropertyNote(Ctx &ctx, ELFFileBase &f,
                        "is invalid: expected 16 bytes, but got "
                     << size);
       }
-      f.aarch64PauthAbiCoreInfo = {
-          support::endian::read64<ELFT::Endianness>(&desc[0]),
-          support::endian::read64<ELFT::Endianness>(&desc[8])};
+      f.aarch64PauthAbiCoreInfo = desc;
     }
 
     // Padding is present in the note descriptor, if necessary.

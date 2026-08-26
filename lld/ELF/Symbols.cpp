@@ -333,13 +333,10 @@ bool elf::computeIsPreemptible(Ctx &ctx, const Symbol &sym) {
   if (sym.visibility() != STV_DEFAULT)
     return false;
 
-  // At this point copy relocations have not been created yet.
-  // Shared symbols are preemptible. Undefined symbols are preemptible
-  // when zDynamicUndefined (default in dynamic linking). Weakness is not
-  // checked, though undefined non-weak would typically trigger relocation
-  // errors unless options like -z undefs are used.
+  // At this point copy relocations have not been created yet, so any
+  // symbol that is not defined locally is preemptible.
   if (!sym.isDefined())
-    return !sym.isUndefined() || ctx.arg.zDynamicUndefined;
+    return true;
 
   if (!ctx.arg.shared)
     return false;
@@ -363,6 +360,7 @@ void elf::parseVersionAndComputeIsPreemptible(Ctx &ctx) {
   // can contain versions in the form of <name>@<version>.
   // Let them parse and update their names to exclude version suffix.
   // In addition, compute isExported and isPreemptible.
+  bool maybePreemptible = ctx.sharedFiles.size() || ctx.arg.shared;
   for (Symbol *sym : ctx.symtab->getSymbols()) {
     if (sym->hasVersionSuffix)
       sym->parseSymbolVersion(ctx);
@@ -371,11 +369,11 @@ void elf::parseVersionAndComputeIsPreemptible(Ctx &ctx) {
       continue;
     }
     if (!sym->isDefined() && !sym->isCommon()) {
-      sym->isPreemptible = computeIsPreemptible(ctx, *sym);
+      sym->isPreemptible = maybePreemptible && computeIsPreemptible(ctx, *sym);
     } else if (ctx.arg.exportDynamic &&
                (sym->isUsedInRegularObj || !sym->ltoCanOmit)) {
       sym->isExported = true;
-      sym->isPreemptible = computeIsPreemptible(ctx, *sym);
+      sym->isPreemptible = maybePreemptible && computeIsPreemptible(ctx, *sym);
     }
   }
 }

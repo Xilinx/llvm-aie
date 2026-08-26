@@ -14,7 +14,6 @@
 #define MLIR_DIALECT_AMDGPU_TRANSFORMS_PASSES_H_
 
 #include "mlir/Dialect/AMDGPU/Utils/Chipset.h"
-#include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
@@ -29,14 +28,11 @@ namespace amdgpu {
 
 void populateAmdgpuEmulateAtomicsPatterns(ConversionTarget &target,
                                           RewritePatternSet &patterns,
-                                          Chipset chipset,
-                                          PatternBenefit benefit = 1);
+                                          Chipset chipset);
 
-void populateAmdgpuResolveStridedMetadataPatterns(RewritePatternSet &patterns,
-                                                  PatternBenefit benefit = 1);
+void populateAmdgpuResolveStridedMetadataPatterns(RewritePatternSet &patterns);
 
-void populateAmdgpuTransferReadToLoadPatterns(RewritePatternSet &patterns,
-                                              PatternBenefit benefit = 1);
+void populateAmdgpuTransferReadToLoadPatterns(RewritePatternSet &patterns);
 
 } // namespace amdgpu
 } // namespace mlir

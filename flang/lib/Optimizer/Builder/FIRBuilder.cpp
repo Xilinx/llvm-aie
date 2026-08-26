@@ -283,9 +283,6 @@ mlir::Block *fir::FirOpBuilder::getAllocaBlock() {
   if (auto doConcurentOp = getRegion().getParentOfType<fir::DoConcurrentOp>())
     return doConcurentOp.getBody();
 
-  if (auto firLocalOp = getRegion().getParentOfType<fir::LocalitySpecifierOp>())
-    return &getRegion().front();
-
   return getEntryBlock();
 }
 

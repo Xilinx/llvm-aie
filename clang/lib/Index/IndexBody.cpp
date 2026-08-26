@@ -435,13 +435,6 @@ public:
                                             ParentDC, SymbolRoleSet(),
                                             /*Relations=*/{}, E);
           }
-        } else {
-          if (D.isArrayDesignator())
-            TraverseStmt(E->getArrayIndex(D));
-          else if (D.isArrayRangeDesignator()) {
-            TraverseStmt(E->getArrayRangeStart(D));
-            TraverseStmt(E->getArrayRangeEnd(D));
-          }
         }
       }
       return true;

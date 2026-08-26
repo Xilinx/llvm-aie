@@ -19,7 +19,6 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/PGOOptions.h"
 #include "llvm/Target/CGPassBuilderOption.h"
@@ -29,7 +28,7 @@
 #include <string>
 #include <utility>
 
-LLVM_ABI extern llvm::cl::opt<bool> NoKernelInfoEndLTO;
+extern llvm::cl::opt<bool> NoKernelInfoEndLTO;
 
 namespace llvm {
 
@@ -79,7 +78,7 @@ struct MachineFunctionInfo;
 /// machine.  All target-specific information should be accessible through this
 /// interface.
 ///
-class LLVM_ABI TargetMachine {
+class TargetMachine {
 protected: // Can only create subclasses.
   TargetMachine(const Target &T, StringRef DataLayoutString,
                 const Triple &TargetTriple, StringRef CPU, StringRef FS,

@@ -32,9 +32,4 @@ ArraySubscriptNode::Accept(Visitor *v) const {
   return v->Visit(this);
 }
 
-llvm::Expected<lldb::ValueObjectSP>
-BitFieldExtractionNode::Accept(Visitor *v) const {
-  return v->Visit(this);
-}
-
 } // namespace lldb_private::dil

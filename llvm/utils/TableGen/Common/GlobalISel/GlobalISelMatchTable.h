@@ -501,13 +501,13 @@ protected:
 
   /// ID for the next instruction variable defined with
   /// implicitlyDefineInsnVar()
-  unsigned NextInsnVarID = 0;
+  unsigned NextInsnVarID;
 
   /// ID for the next output instruction allocated with allocateOutputInsnID()
-  unsigned NextOutputInsnID = 0;
+  unsigned NextOutputInsnID;
 
   /// ID for the next temporary register ID allocated with allocateTempRegID()
-  unsigned NextTempRegID = 0;
+  unsigned NextTempRegID;
 
   /// ID for the next recorded type. Starts at -1 and counts down.
   TempTypeIdx NextTempTypeIdx = -1;
@@ -545,7 +545,9 @@ protected:
                              StringRef FlagName, GISelFlags FlagBit);
 
 public:
-  RuleMatcher(ArrayRef<SMLoc> SrcLoc) : SrcLoc(SrcLoc), RuleID(NextRuleID++) {}
+  RuleMatcher(ArrayRef<SMLoc> SrcLoc)
+      : NextInsnVarID(0), NextOutputInsnID(0), NextTempRegID(0), SrcLoc(SrcLoc),
+        RuleID(NextRuleID++) {}
   RuleMatcher(RuleMatcher &&Other) = default;
   RuleMatcher &operator=(RuleMatcher &&Other) = default;
 
@@ -2037,12 +2039,12 @@ protected:
   unsigned NewInsnID;
   /// The name of the operand.
   const std::string SymbolicName;
-  bool Signed = true;
+  bool Signed;
 
 public:
   CopyConstantAsImmRenderer(unsigned NewInsnID, StringRef SymbolicName)
       : OperandRenderer(OR_CopyConstantAsImm), NewInsnID(NewInsnID),
-        SymbolicName(SymbolicName) {}
+        SymbolicName(SymbolicName), Signed(true) {}
 
   static bool classof(const OperandRenderer *R) {
     return R->getKind() == OR_CopyConstantAsImm;
@@ -2357,7 +2359,7 @@ class BuildMIAction : public MatchAction {
 private:
   unsigned InsnID;
   const CodeGenInstruction *I;
-  InstructionMatcher *Matched = nullptr;
+  InstructionMatcher *Matched;
   std::vector<std::unique_ptr<OperandRenderer>> OperandRenderers;
   SmallPtrSet<const Record *, 4> DeadImplicitDefs;
 
@@ -2370,7 +2372,7 @@ private:
 
 public:
   BuildMIAction(unsigned InsnID, const CodeGenInstruction *I)
-      : MatchAction(AK_BuildMI), InsnID(InsnID), I(I) {}
+      : MatchAction(AK_BuildMI), InsnID(InsnID), I(I), Matched(nullptr) {}
 
   static bool classof(const MatchAction *A) {
     return A->getKind() == AK_BuildMI;

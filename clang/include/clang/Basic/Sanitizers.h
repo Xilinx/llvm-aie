@@ -218,7 +218,8 @@ bool parseSanitizerWeightedValue(StringRef Value, bool AllowGroups,
 void serializeSanitizerSet(SanitizerSet Set,
                            SmallVectorImpl<StringRef> &Values);
 
-/// Serialize a SanitizerMaskCutoffs into command line arguments.
+/// Serialize a SanitizerMaskCutoffs into values for -fsanitize= or
+/// -fno-sanitize=.
 void serializeSanitizerMaskCutoffs(const SanitizerMaskCutoffs &Cutoffs,
                                    SmallVectorImpl<std::string> &Values);
 

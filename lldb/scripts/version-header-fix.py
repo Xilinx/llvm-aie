@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Usage: -i <path/to/input-header.h> -o <path/to/output-header.h> -m LLDB_MAJOR_VERSION -n LLDB_MINOR_VERSION -p LLDB_PATCH_VERSION
+Usage: <path/to/input-header.h> <path/to/output-header.h> LLDB_MAJOR_VERSION LLDB_MINOR_VERSION LLDB_PATCH_VERSION
 
-This script uncomments and populates the versioning information in lldb-defines.h. Note that the LLDB version numbering looks like MAJOR.MINOR.PATCH
+This script uncomments and populates the versioning information in lldb-defines.h
 """
 
 import argparse
@@ -15,19 +15,18 @@ LLDB_VERSION_STRING_REGEX = re.compile(r"//\s*#define LLDB_VERSION_STRING\s*$", 
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="This script uncomments and populates the versioning information in lldb-defines.h. Note that the LLDB version numbering looks like MAJOR.MINOR.PATCH"
-    )
-    parser.add_argument("-i", "--input_path", help="The filepath for the input header.")
-    parser.add_argument(
-        "-o", "--output_path", help="The filepath for the output header."
-    )
-    parser.add_argument("-m", "--major", help="The LLDB version major.")
-    parser.add_argument("-n", "--minor", help="The LLDB version minor.")
-    parser.add_argument("-p", "--patch", help="The LLDB version patch number.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_path")
+    parser.add_argument("output_path")
+    parser.add_argument("lldb_version_major")
+    parser.add_argument("lldb_version_minor")
+    parser.add_argument("lldb_version_patch")
     args = parser.parse_args()
     input_path = str(args.input_path)
     output_path = str(args.output_path)
+    lldb_version_major = args.lldb_version_major
+    lldb_version_minor = args.lldb_version_minor
+    lldb_version_patch = args.lldb_version_patch
 
     with open(input_path, "r") as input_file:
         lines = input_file.readlines()
@@ -39,19 +38,19 @@ def main():
         # e.g. //#define LLDB_VERSION -> #define LLDB_VERSION <LLDB_MAJOR_VERSION>
         file_buffer = re.sub(
             LLDB_VERSION_REGEX,
-            r"#define LLDB_VERSION " + args.major,
+            r"#define LLDB_VERSION " + lldb_version_major,
             file_buffer,
         )
 
         file_buffer = re.sub(
             LLDB_REVISION_REGEX,
-            r"#define LLDB_REVISION " + args.patch,
+            r"#define LLDB_REVISION " + lldb_version_patch,
             file_buffer,
         )
         file_buffer = re.sub(
             LLDB_VERSION_STRING_REGEX,
             r'#define LLDB_VERSION_STRING "{0}.{1}.{2}"'.format(
-                args.major, args.minor, args.patch
+                lldb_version_major, lldb_version_minor, lldb_version_patch
             ),
             file_buffer,
         )

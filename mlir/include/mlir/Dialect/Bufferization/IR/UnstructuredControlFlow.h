@@ -65,13 +65,12 @@ struct OpWithUnstructuredControlFlowBufferizableOpInterfaceExternalModel
         // The operand was already bufferized. Take its type directly.
         callerType = memrefType;
       } else {
-        FailureOr<BufferLikeType> maybeCallerType =
+        FailureOr<BaseMemRefType> maybeCallerType =
             bufferization::getBufferType(opOperand->get(), options, state,
                                          invocationStack);
         if (failed(maybeCallerType))
           return failure();
-        assert(isa<BaseMemRefType>(*maybeCallerType) && "expected memref type");
-        callerType = cast<BaseMemRefType>(*maybeCallerType);
+        callerType = *maybeCallerType;
       }
 
       if (!bufferType) {

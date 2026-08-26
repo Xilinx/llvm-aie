@@ -73,7 +73,6 @@ if (NOT FLANG_STANDALONE_BUILD)
     not
     llvm-dis
     llvm-objdump
-    llvm-profdata
     llvm-readobj
     split-file
   )

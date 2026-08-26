@@ -350,7 +350,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     switch (Expr->getKind()) {
     case MCExpr::Binary:
       O << '#';
-      MAI.printExpr(O, *Expr);
+      Expr->print(O, &MAI);
       break;
     case MCExpr::Constant: {
       // If a symbolic branch target was added as a constant expression then
@@ -360,7 +360,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       int64_t TargetAddress;
       if (!Constant->evaluateAsAbsolute(TargetAddress)) {
         O << '#';
-        MAI.printExpr(O, *Expr);
+        Expr->print(O, &MAI);
       } else {
         O << "0x";
         O.write_hex(static_cast<uint32_t>(TargetAddress));
@@ -370,7 +370,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     default:
       // FIXME: Should we always treat this as if it is a constant literal and
       // prefix it with '#'?
-      MAI.printExpr(O, *Expr);
+      Expr->print(O, &MAI);
       break;
     }
   }
@@ -395,7 +395,7 @@ void ARMInstPrinter::printThumbLdrLabelOperand(const MCInst *MI, unsigned OpNum,
                                                raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   if (MO1.isExpr()) {
-    MAI.printExpr(O, *MO1.getExpr());
+    MO1.getExpr()->print(O, &MAI);
     return;
   }
 
@@ -1081,7 +1081,7 @@ void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
   const MCOperand &MO = MI->getOperand(OpNum);
 
   if (MO.isExpr()) {
-    MAI.printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, &MAI);
     return;
   }
 

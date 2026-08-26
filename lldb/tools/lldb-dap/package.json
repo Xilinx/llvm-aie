@@ -290,7 +290,7 @@
         "language": "d"
       },
       {
-        "language": "fortran"
+        "language": "fortan"
       },
       {
         "language": "fortran-modern"
@@ -318,22 +318,6 @@
       {
         "type": "lldb-dap",
         "label": "LLDB DAP Debugger",
-        "languages": [
-          "ada",
-          "arm",
-          "c",
-          "cpp",
-          "crystal",
-          "d",
-          "fortran",
-          "fortran-modern",
-          "nim",
-          "objective-c",
-          "objectpascal",
-          "pascal",
-          "rust",
-          "swift"
-        ],
         "configurationAttributes": {
           "launch": {
             "required": [

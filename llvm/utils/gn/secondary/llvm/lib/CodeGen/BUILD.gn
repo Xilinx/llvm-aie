@@ -253,7 +253,6 @@ static_library("CodeGen") {
     "WasmEHPrepare.cpp",
     "WinEHPrepare.cpp",
     "WindowScheduler.cpp",
-    "WindowsSecureHotPatching.cpp",
     "XRayInstrumentation.cpp",
   ]
 }

@@ -5,25 +5,25 @@ target triple = "dxilv1.5-pc-shadermodel6.5-compute"
 
 ; Confirm that DXILFinalizeLinkage will remove functions that have compatible
 ; linkage and are not called from anywhere. This should be any function that
-; is marked hidden or internal.
+; is not explicitly marked export and is not an entry point.
 
-; Is hidden, and uncalled, this should be removed.
+; Has no specified inlining/linking behavior and is uncalled, this should be removed.
 ; CHECK-NOT: define {{.*}}doNothingUncalled
-define hidden void @"?doNothingUncalled@@YAXXZ"() #2 {
+define void @"?doNothingUncalled@@YAXXZ"() #2 {
 entry:
   ret void
 }
 
-; Alwaysinline, hidden and uncalled, this should be removed.
+; Alwaysinline and uncalled, this should be removed.
 ; CHECK-NOT: define {{.*}}doAlwaysInlineUncalled
-define hidden void @"?doAlwaysInlineUncalled@@YAXXZ"() #0 {
+define void @"?doAlwaysInlineUncalled@@YAXXZ"() #0 {
 entry:
   ret void
 }
 
-; Noinline, hidden and uncalled, this should be removed.
+; Noinline and uncalled, this should be removed.
 ; CHECK-NOT: define {{.*}}doNoinlineUncalled
-define hidden void @"?doNoinlineUncalled@@YAXXZ"() #4 {
+define void @"?doNoinlineUncalled@@YAXXZ"() #4 {
 entry:
   ret void
 }
@@ -49,44 +49,44 @@ entry:
   ret void
 }
 
-; Marked external, hidden and uncalled, this should become internal and be removed.
+; Marked external and uncalled, this should become internal and be removed.
 ; CHECK-NOT: define {{.*}}doExternalUncalled
-define external hidden void @"?doExternalUncalled@@YAXXZ"() #2 {
+define external void @"?doExternalUncalled@@YAXXZ"() #2 {
 entry:
   ret void
 }
 
-; Alwaysinline, external, hidden and uncalled, this should become internal and be removed.
+; Alwaysinline, external and uncalled, this should become internal and be removed.
 ; CHECK-NOT: define {{.*}}doAlwaysInlineExternalUncalled
-define external hidden void @"?doAlwaysInlineExternalUncalled@@YAXXZ"() #0 {
+define external void @"?doAlwaysInlineExternalUncalled@@YAXXZ"() #0 {
 entry:
   ret void
 }
 
-; Noinline, external, hidden and uncalled, this should become internal and be removed.
+; Noinline, external and uncalled, this should become internal and be removed.
 ; CHECK-NOT: define {{.*}}doNoinlineExternalUncalled
-define external hidden void @"?doNoinlineExternalUncalled@@YAXXZ"() #4 {
+define external void @"?doNoinlineExternalUncalled@@YAXXZ"() #4 {
 entry:
   ret void
 }
 
-; No inlining attribute, hidden and called, this should stay.
+; No inlining attribute and called, this should stay.
 ; CHECK: define {{.*}}doNothingCalled
-define hidden void @"?doNothingCalled@@YAXXZ"() #2 {
+define void @"?doNothingCalled@@YAXXZ"() #2 {
 entry:
   ret void
 }
 
-; Alwaysinline, hidden and called, this should stay.
+; Alwaysinline and called, this should stay.
 ; CHECK: define {{.*}}doAlwaysInlineCalled
-define hidden void @"?doAlwaysInlineCalled@@YAXXZ"() #0 {
+define void @"?doAlwaysInlineCalled@@YAXXZ"() #0 {
 entry:
   ret void
 }
 
-; Noinline, hidden and called, this should stay.
+; Noinline and called, this should stay.
 ; CHECK: define {{.*}}doNoinlineCalled
-define hidden void @"?doNoinlineCalled@@YAXXZ"() #4 {
+define void @"?doNoinlineCalled@@YAXXZ"() #4 {
 entry:
   ret void
 }
@@ -112,23 +112,23 @@ entry:
   ret void
 }
 
-; Marked external, hidden and called, this should become internal and stay.
+; Marked external and called, this should become internal and stay.
 ; CHECK: define {{.*}}doExternalCalled
-define external hidden void @"?doExternalCalled@@YAXXZ"() #2 {
+define external void @"?doExternalCalled@@YAXXZ"() #2 {
 entry:
   ret void
 }
 
-; Always inlined, external, hidden and called, this should become internal and stay.
+; Always inlined, external and called, this should become internal and stay.
 ; CHECK: define {{.*}}doAlwaysInlineExternalCalled
-define external hidden void @"?doAlwaysInlineExternalCalled@@YAXXZ"() #0 {
+define external void @"?doAlwaysInlineExternalCalled@@YAXXZ"() #0 {
 entry:
   ret void
 }
 
-; Noinline, external, hidden and called, this should become internal and stay.
+; Noinline, external and called, this should become internal and stay.
 ; CHECK: define {{.*}}doNoinlineExternalCalled
-define external hidden void @"?doNoinlineExternalCalled@@YAXXZ"() #4 {
+define external void @"?doNoinlineExternalCalled@@YAXXZ"() #4 {
 entry:
   ret void
 }
@@ -150,6 +150,27 @@ entry:
 ; Noinline attribute and exported, this should stay.
 ; CHECK: define {{.*}}doNoinlineExported
 define void @"?doNoinlineExported@@YAXXZ"() #5 {
+entry:
+  ret void
+}
+
+; No inlining attribute, internal, and exported; this should stay.
+; CHECK: define {{.*}}doInternalExported
+define internal void @"?doInternalExported@@YAXXZ"() #3 {
+entry:
+  ret void
+}
+
+; Alwaysinline, internal, and exported; this should stay.
+; CHECK: define {{.*}}doAlwaysInlineInternalExported
+define internal void @"?doAlwaysInlineInternalExported@@YAXXZ"() #1 {
+entry:
+  ret void
+}
+
+; Noinline, internal, and exported; this should stay.
+; CHECK: define {{.*}}doNoinlineInternalExported
+define internal void @"?doNoinlineInternalExported@@YAXXZ"() #5 {
 entry:
   ret void
 }
@@ -192,10 +213,10 @@ entry:
 }
 
 attributes #0 = { alwaysinline convergent norecurse nounwind }
-attributes #1 = { alwaysinline convergent norecurse nounwind }
+attributes #1 = { alwaysinline convergent norecurse nounwind "hlsl.export"}
 attributes #2 = { convergent norecurse nounwind }
-attributes #3 = { convergent norecurse nounwind }
+attributes #3 = { convergent norecurse nounwind "hlsl.export"}
 attributes #4 = { convergent noinline norecurse nounwind }
-attributes #5 = { convergent noinline norecurse nounwind }
+attributes #5 = { convergent noinline norecurse nounwind "hlsl.export"}
 attributes #6 = { convergent noinline norecurse "hlsl.numthreads"="1,1,1" "hlsl.shader"="compute" }
 attributes #7 = { convergent }

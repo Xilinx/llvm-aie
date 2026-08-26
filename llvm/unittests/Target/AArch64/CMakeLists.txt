@@ -16,7 +16,6 @@ set(LLVM_LINK_COMPONENTS
   GlobalISel
   MC
   MIRParser
-  Passes
   SelectionDAG
   Support
   Target

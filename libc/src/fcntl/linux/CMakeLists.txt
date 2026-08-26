@@ -19,7 +19,6 @@ add_entrypoint_object(
   DEPENDS
     libc.hdr.fcntl_macros
     libc.src.__support.OSUtil.osutil
-    libc.src.errno.errno
 )
 
 add_entrypoint_object(

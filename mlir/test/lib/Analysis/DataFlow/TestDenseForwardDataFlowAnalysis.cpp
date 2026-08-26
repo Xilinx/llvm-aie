@@ -13,8 +13,9 @@
 #include "TestDenseDataFlowAnalysis.h"
 #include "TestDialect.h"
 #include "TestOps.h"
+#include "mlir/Analysis/DataFlow/ConstantPropagationAnalysis.h"
+#include "mlir/Analysis/DataFlow/DeadCodeAnalysis.h"
 #include "mlir/Analysis/DataFlow/DenseAnalysis.h"
-#include "mlir/Analysis/DataFlow/Utils.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Support/LLVM.h"
@@ -239,7 +240,8 @@ struct TestLastModifiedPass
     Operation *op = getOperation();
 
     DataFlowSolver solver(DataFlowConfig().setInterprocedural(interprocedural));
-    loadBaselineAnalyses(solver);
+    solver.load<DeadCodeAnalysis>();
+    solver.load<SparseConstantPropagation>();
     solver.load<LastModifiedAnalysis>(assumeFuncWrites);
     solver.load<UnderlyingValueAnalysis>();
     if (failed(solver.initializeAndRun(op)))

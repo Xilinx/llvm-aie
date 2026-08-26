@@ -223,10 +223,10 @@ mlir::getBufferizationOptionsForSparsification(bool analysisOnly) {
   OneShotBufferizationOptions options;
   options.bufferizeFunctionBoundaries = true;
   options.setFunctionBoundaryTypeConversion(LayoutMapOption::IdentityLayoutMap);
-  options.unknownTypeConverterFn = [](TensorType tensorType,
-                                      Attribute memorySpace,
+  options.unknownTypeConverterFn = [](Value value, Attribute memorySpace,
                                       const BufferizationOptions &options) {
-    return getMemRefTypeWithStaticIdentityLayout(tensorType, memorySpace);
+    return getMemRefTypeWithStaticIdentityLayout(
+        cast<TensorType>(value.getType()), memorySpace);
   };
   if (analysisOnly) {
     options.testAnalysisOnly = true;

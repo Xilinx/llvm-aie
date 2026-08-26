@@ -13,7 +13,6 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_COFF_H
 #define LLVM_EXECUTIONENGINE_ORC_COFF_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -32,8 +31,8 @@ class COFFImportFileScanner {
 public:
   COFFImportFileScanner(std::set<std::string> &ImportedDynamicLibraries)
       : ImportedDynamicLibraries(ImportedDynamicLibraries) {}
-  LLVM_ABI Expected<bool>
-  operator()(object::Archive &A, MemoryBufferRef MemberBuf, size_t Index) const;
+  Expected<bool> operator()(object::Archive &A, MemoryBufferRef MemberBuf,
+                            size_t Index) const;
 
 private:
   std::set<std::string> &ImportedDynamicLibraries;

@@ -69,7 +69,6 @@ private:
   const bool AllowMissingMoveFunctionsWhenCopyIsDeleted;
   const bool AllowImplicitlyDeletedCopyOrMove;
   ClassDefiningSpecialMembersMap ClassWithSpecialMembers;
-  const bool IgnoreMacros;
 };
 
 } // namespace clang::tidy::cppcoreguidelines

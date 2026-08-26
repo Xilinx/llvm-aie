@@ -236,158 +236,199 @@ static bool PrettyPrintFunctionNameWithArgs(Stream &out_stream,
   return true;
 }
 
-static llvm::Expected<std::pair<llvm::StringRef, DemangledNameInfo>>
-GetAndValidateInfo(const SymbolContext &sc) {
+static std::optional<llvm::StringRef>
+GetDemangledBasename(const SymbolContext &sc) {
   Mangled mangled = sc.GetPossiblyInlinedFunctionName();
   if (!mangled)
-    return llvm::createStringError("Function does not have a mangled name.");
+    return std::nullopt;
 
   auto demangled_name = mangled.GetDemangledName().GetStringRef();
   if (demangled_name.empty())
-    return llvm::createStringError(
-        "Function '%s' does not have a demangled name.",
-        mangled.GetMangledName().AsCString(""));
+    return std::nullopt;
 
   const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
   if (!info)
-    return llvm::createStringError(
-        "Function '%s' does not have demangled info.", demangled_name.data());
+    return std::nullopt;
 
   // Function without a basename is nonsense.
   if (!info->hasBasename())
-    return llvm::createStringError(
-        "DemangledInfo for '%s does not have basename range.",
-        demangled_name.data());
+    return std::nullopt;
 
-  return std::make_pair(demangled_name, *info);
+  return demangled_name.slice(info->BasenameRange.first,
+                              info->BasenameRange.second);
 }
 
-static llvm::Expected<llvm::StringRef>
-GetDemangledBasename(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
-
-  auto [demangled_name, info] = *info_or_err;
-
-  return demangled_name.slice(info.BasenameRange.first,
-                              info.BasenameRange.second);
-}
-
-static llvm::Expected<llvm::StringRef>
+static std::optional<llvm::StringRef>
 GetDemangledTemplateArguments(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
+    return std::nullopt;
 
-  auto [demangled_name, info] = *info_or_err;
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return std::nullopt;
 
-  if (info.ArgumentsRange.first < info.BasenameRange.second)
-    return llvm::createStringError("Arguments range for '%s' is invalid.",
-                                   demangled_name.data());
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return std::nullopt;
 
-  return demangled_name.slice(info.BasenameRange.second,
-                              info.ArgumentsRange.first);
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return std::nullopt;
+
+  if (info->ArgumentsRange.first < info->BasenameRange.second)
+    return std::nullopt;
+
+  return demangled_name.slice(info->BasenameRange.second,
+                              info->ArgumentsRange.first);
 }
 
-static llvm::Expected<llvm::StringRef>
+static std::optional<llvm::StringRef>
 GetDemangledReturnTypeLHS(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
+    return std::nullopt;
 
-  auto [demangled_name, info] = *info_or_err;
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return std::nullopt;
 
-  if (info.ScopeRange.first >= demangled_name.size())
-    return llvm::createStringError(
-        "Scope range for '%s' LHS return type is invalid.",
-        demangled_name.data());
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return std::nullopt;
 
-  return demangled_name.substr(0, info.ScopeRange.first);
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return std::nullopt;
+
+  if (info->ScopeRange.first >= demangled_name.size())
+    return std::nullopt;
+
+  return demangled_name.substr(0, info->ScopeRange.first);
 }
 
-static llvm::Expected<llvm::StringRef>
+static std::optional<llvm::StringRef>
 GetDemangledFunctionQualifiers(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
+    return std::nullopt;
 
-  auto [demangled_name, info] = *info_or_err;
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return std::nullopt;
 
-  if (!info.hasQualifiers())
-    return llvm::createStringError("Qualifiers range for '%s' is invalid.",
-                                   demangled_name.data());
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return std::nullopt;
 
-  return demangled_name.slice(info.QualifiersRange.first,
-                              info.QualifiersRange.second);
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return std::nullopt;
+
+  if (info->QualifiersRange.second < info->QualifiersRange.first)
+    return std::nullopt;
+
+  return demangled_name.slice(info->QualifiersRange.first,
+                              info->QualifiersRange.second);
 }
 
-static llvm::Expected<llvm::StringRef>
+static std::optional<llvm::StringRef>
 GetDemangledReturnTypeRHS(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
+    return std::nullopt;
 
-  auto [demangled_name, info] = *info_or_err;
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return std::nullopt;
 
-  if (info.QualifiersRange.first < info.ArgumentsRange.second)
-    return llvm::createStringError(
-        "Qualifiers range for '%s' RHS return type  is invalid.",
-        demangled_name.data());
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return std::nullopt;
 
-  return demangled_name.slice(info.ArgumentsRange.second,
-                              info.QualifiersRange.first);
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return std::nullopt;
+
+  if (info->QualifiersRange.first < info->ArgumentsRange.second)
+    return std::nullopt;
+
+  return demangled_name.slice(info->ArgumentsRange.second,
+                              info->QualifiersRange.first);
 }
 
-static llvm::Expected<llvm::StringRef>
+static std::optional<llvm::StringRef>
 GetDemangledScope(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
+    return std::nullopt;
 
-  auto [demangled_name, info] = *info_or_err;
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return std::nullopt;
 
-  if (!info.hasScope())
-    return llvm::createStringError("Scope range for '%s' is invalid.",
-                                   demangled_name.data());
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return std::nullopt;
 
-  return demangled_name.slice(info.ScopeRange.first, info.ScopeRange.second);
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return std::nullopt;
+
+  if (info->ScopeRange.second < info->ScopeRange.first)
+    return std::nullopt;
+
+  return demangled_name.slice(info->ScopeRange.first, info->ScopeRange.second);
 }
 
 /// Handles anything printed after the FunctionEncoding ItaniumDemangle
 /// node. Most notably the DotSUffix node.
-static llvm::Expected<llvm::StringRef>
+static std::optional<llvm::StringRef>
 GetDemangledFunctionSuffix(const SymbolContext &sc) {
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err)
-    return info_or_err.takeError();
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
+    return std::nullopt;
 
-  auto [demangled_name, info] = *info_or_err;
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return std::nullopt;
 
-  if (!info.hasSuffix())
-    return llvm::createStringError("Suffix range for '%s' is invalid.",
-                                   demangled_name.data());
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return std::nullopt;
 
-  return demangled_name.slice(info.SuffixRange.first, info.SuffixRange.second);
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return std::nullopt;
+
+  return demangled_name.slice(info->SuffixRange.first,
+                              info->SuffixRange.second);
 }
 
 static bool PrintDemangledArgumentList(Stream &s, const SymbolContext &sc) {
   assert(sc.symbol);
 
-  auto info_or_err = GetAndValidateInfo(sc);
-  if (!info_or_err) {
-    LLDB_LOG_ERROR(
-        GetLog(LLDBLog::Language), info_or_err.takeError(),
-        "Failed to handle ${{function.basename}} frame-format variable: {0}");
-    return false;
-  }
-  auto [demangled_name, info] = *info_or_err;
-
-  if (!info.hasArguments())
+  Mangled mangled = sc.GetPossiblyInlinedFunctionName();
+  if (!mangled)
     return false;
 
-  s << demangled_name.slice(info.ArgumentsRange.first,
-                            info.ArgumentsRange.second);
+  auto demangled_name = mangled.GetDemangledName().GetStringRef();
+  if (demangled_name.empty())
+    return false;
+
+  const std::optional<DemangledNameInfo> &info = mangled.GetDemangledInfo();
+  if (!info)
+    return false;
+
+  // Function without a basename is nonsense.
+  if (!info->hasBasename())
+    return false;
+
+  if (info->ArgumentsRange.second < info->ArgumentsRange.first)
+    return false;
+
+  s << demangled_name.slice(info->ArgumentsRange.first,
+                            info->ArgumentsRange.second);
 
   return true;
 }
@@ -1913,44 +1954,32 @@ bool CPlusPlusLanguage::HandleFrameFormatVariable(
     FormatEntity::Entry::Type type, Stream &s) {
   switch (type) {
   case FormatEntity::Entry::Type::FunctionScope: {
-    auto scope_or_err = GetDemangledScope(sc);
-    if (!scope_or_err) {
-      LLDB_LOG_ERROR(
-          GetLog(LLDBLog::Language), scope_or_err.takeError(),
-          "Failed to handle ${{function.scope}} frame-format variable: {0}");
+    std::optional<llvm::StringRef> scope = GetDemangledScope(sc);
+    if (!scope)
       return false;
-    }
 
-    s << *scope_or_err;
+    s << *scope;
 
     return true;
   }
 
   case FormatEntity::Entry::Type::FunctionBasename: {
-    auto name_or_err = GetDemangledBasename(sc);
-    if (!name_or_err) {
-      LLDB_LOG_ERROR(
-          GetLog(LLDBLog::Language), name_or_err.takeError(),
-          "Failed to handle ${{function.basename}} frame-format variable: {0}");
+    std::optional<llvm::StringRef> name = GetDemangledBasename(sc);
+    if (!name)
       return false;
-    }
 
-    s << *name_or_err;
+    s << *name;
 
     return true;
   }
 
   case FormatEntity::Entry::Type::FunctionTemplateArguments: {
-    auto template_args_or_err = GetDemangledTemplateArguments(sc);
-    if (!template_args_or_err) {
-      LLDB_LOG_ERROR(GetLog(LLDBLog::Language),
-                     template_args_or_err.takeError(),
-                     "Failed to handle ${{function.template-arguments}} "
-                     "frame-format variable: {0}");
+    std::optional<llvm::StringRef> template_args =
+        GetDemangledTemplateArguments(sc);
+    if (!template_args)
       return false;
-    }
 
-    s << *template_args_or_err;
+    s << *template_args;
 
     return true;
   }
@@ -1979,54 +2008,38 @@ bool CPlusPlusLanguage::HandleFrameFormatVariable(
     return true;
   }
   case FormatEntity::Entry::Type::FunctionReturnRight: {
-    auto return_rhs_or_err = GetDemangledReturnTypeRHS(sc);
-    if (!return_rhs_or_err) {
-      LLDB_LOG_ERROR(GetLog(LLDBLog::Language), return_rhs_or_err.takeError(),
-                     "Failed to handle ${{function.return-right}} frame-format "
-                     "variable: {0}");
+    std::optional<llvm::StringRef> return_rhs = GetDemangledReturnTypeRHS(sc);
+    if (!return_rhs)
       return false;
-    }
 
-    s << *return_rhs_or_err;
+    s << *return_rhs;
 
     return true;
   }
   case FormatEntity::Entry::Type::FunctionReturnLeft: {
-    auto return_lhs_or_err = GetDemangledReturnTypeLHS(sc);
-    if (!return_lhs_or_err) {
-      LLDB_LOG_ERROR(GetLog(LLDBLog::Language), return_lhs_or_err.takeError(),
-                     "Failed to handle ${{function.return-left}} frame-format "
-                     "variable: {0}");
+    std::optional<llvm::StringRef> return_lhs = GetDemangledReturnTypeLHS(sc);
+    if (!return_lhs)
       return false;
-    }
 
-    s << *return_lhs_or_err;
+    s << *return_lhs;
 
     return true;
   }
   case FormatEntity::Entry::Type::FunctionQualifiers: {
-    auto quals_or_err = GetDemangledFunctionQualifiers(sc);
-    if (!quals_or_err) {
-      LLDB_LOG_ERROR(GetLog(LLDBLog::Language), quals_or_err.takeError(),
-                     "Failed to handle ${{function.qualifiers}} frame-format "
-                     "variable: {0}");
+    std::optional<llvm::StringRef> quals = GetDemangledFunctionQualifiers(sc);
+    if (!quals)
       return false;
-    }
 
-    s << *quals_or_err;
+    s << *quals;
 
     return true;
   }
   case FormatEntity::Entry::Type::FunctionSuffix: {
-    auto suffix_or_err = GetDemangledFunctionSuffix(sc);
-    if (!suffix_or_err) {
-      LLDB_LOG_ERROR(
-          GetLog(LLDBLog::Language), suffix_or_err.takeError(),
-          "Failed to handle ${{function.suffix}} frame-format variable: {0}");
+    std::optional<llvm::StringRef> suffix = GetDemangledFunctionSuffix(sc);
+    if (!suffix)
       return false;
-    }
 
-    s << *suffix_or_err;
+    s << *suffix;
 
     return true;
   }

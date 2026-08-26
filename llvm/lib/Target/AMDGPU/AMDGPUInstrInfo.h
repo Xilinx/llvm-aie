@@ -23,9 +23,14 @@ class GCNSubtarget;
 class MachineMemOperand;
 class MachineInstr;
 
-namespace AMDGPU {
+class AMDGPUInstrInfo {
+public:
+  explicit AMDGPUInstrInfo(const GCNSubtarget &st);
 
-bool isUniformMMO(const MachineMemOperand *MMO);
+  static bool isUniformMMO(const MachineMemOperand *MMO);
+};
+
+namespace AMDGPU {
 
 /// Return the intrinsic ID for opcodes with the G_AMDGPU_INTRIN_ prefix.
 ///

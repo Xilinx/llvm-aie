@@ -210,12 +210,12 @@ static StringRef getFunctionName(const DISubprogram *SP) {
   return SP->getName();
 }
 
-/// Extract a filename for a DIScope.
+/// Extract a filename for a DISubprogram.
 ///
 /// Prefer relative paths in the coverage notes. Clang also may split
 /// up absolute paths into a directory and filename component. When
 /// the relative path doesn't exist, reconstruct the absolute path.
-static SmallString<128> getFilename(const DIScope *SP) {
+static SmallString<128> getFilename(const DISubprogram *SP) {
   SmallString<128> Path;
   StringRef RelPath = SP->getFilename();
   if (sys::fs::exists(RelPath))
@@ -244,9 +244,7 @@ namespace {
   // list of line numbers and a single filename, representing lines that belong
   // to the block.
   class GCOVLines : public GCOVRecord {
-  public:
-    StringRef getFilename() { return Filename; }
-
+   public:
     void addLine(uint32_t Line) {
       assert(Line != 0 && "Line zero is not a valid real line number.");
       Lines.push_back(Line);
@@ -278,9 +276,7 @@ namespace {
   class GCOVBlock : public GCOVRecord {
    public:
     GCOVLines &getFile(StringRef Filename) {
-      if (Lines.empty() || Lines.back().getFilename() != Filename)
-        Lines.emplace_back(P, Filename);
-      return Lines.back();
+      return LinesByFile.try_emplace(Filename, P, Filename).first->second;
     }
 
     void addEdge(GCOVBlock &Successor, uint32_t Flags) {
@@ -289,16 +285,22 @@ namespace {
 
     void writeOut() {
       uint32_t Len = 3;
-
-      for (auto &L : Lines)
-        Len += L.length();
+      SmallVector<StringMapEntry<GCOVLines> *, 32> SortedLinesByFile;
+      for (auto &I : LinesByFile) {
+        Len += I.second.length();
+        SortedLinesByFile.push_back(&I);
+      }
 
       write(GCOV_TAG_LINES);
       write(Len);
       write(Number);
 
-      for (auto &L : Lines)
-        L.writeOut();
+      llvm::sort(SortedLinesByFile, [](StringMapEntry<GCOVLines> *LHS,
+                                       StringMapEntry<GCOVLines> *RHS) {
+        return LHS->getKey() < RHS->getKey();
+      });
+      for (auto &I : SortedLinesByFile)
+        I->getValue().writeOut();
       write(0);
       write(0);
     }
@@ -307,7 +309,7 @@ namespace {
       // Only allow copy before edges and lines have been added. After that,
       // there are inter-block pointers (eg: edges) that won't take kindly to
       // blocks being copied or moved around.
-      assert(Lines.empty());
+      assert(LinesByFile.empty());
       assert(OutEdges.empty());
     }
 
@@ -320,7 +322,7 @@ namespace {
     GCOVBlock(GCOVProfiler *P, uint32_t Number)
         : GCOVRecord(P), Number(Number) {}
 
-    SmallVector<GCOVLines> Lines;
+    StringMap<GCOVLines> LinesByFile;
   };
 
   // A function has a unique identifier, a checksum (we leave as zero) and a
@@ -581,6 +583,10 @@ static bool functionHasLines(const Function &F, unsigned &EndLine) {
   EndLine = 0;
   for (const auto &BB : F) {
     for (const auto &I : BB) {
+      // Debug intrinsic locations correspond to the location of the
+      // declaration, not necessarily any statements or expressions.
+      if (isa<DbgInfoIntrinsic>(&I)) continue;
+
       const DebugLoc &Loc = I.getDebugLoc();
       if (!Loc)
         continue;
@@ -868,6 +874,10 @@ bool GCOVProfiler::emitProfileNotes(
         }
 
         for (const auto &I : BB) {
+          // Debug intrinsic locations correspond to the location of the
+          // declaration, not necessarily any statements or expressions.
+          if (isa<DbgInfoIntrinsic>(&I)) continue;
+
           const DebugLoc &Loc = I.getDebugLoc();
           if (!Loc)
             continue;
@@ -879,10 +889,11 @@ bool GCOVProfiler::emitProfileNotes(
           if (Line == Loc.getLine()) continue;
           Line = Loc.getLine();
           MDNode *Scope = Loc.getScope();
-          if (SP != getDISubprogram(Scope))
+          // TODO: Handle blocks from another file due to #line, #include, etc.
+          if (isa<DILexicalBlockFile>(Scope) || SP != getDISubprogram(Scope))
             continue;
 
-          GCOVLines &Lines = Block.getFile(getFilename(Loc->getScope()));
+          GCOVLines &Lines = Block.getFile(Filename);
           Lines.addLine(Loc.getLine());
         }
         Line = 0;

@@ -1888,11 +1888,10 @@ namespace PR15884 {
 }
 
 namespace AfterError {
-  constexpr int error() { // pre-cxx23-error {{no return statement in constexpr function}}
+  constexpr int error() {
     return foobar; // expected-error {{undeclared identifier}}
-  } // cxx23-note {{control reached end of constexpr function}}
-  constexpr int k = error(); // cxx23-error {{constexpr variable 'k' must be initialized by a constant expression}} \
-                                cxx23-note {{in call to 'error()'}}
+  }
+  constexpr int k = error(); // expected-error {{constexpr variable 'k' must be initialized by a constant expression}}
 }
 
 namespace std {

@@ -226,8 +226,6 @@ static const char *getLDMOption(const llvm::Triple &T, const ArgList &Args) {
       return "elf_iamcu";
     return "elf_i386";
   case llvm::Triple::aarch64:
-    if (T.isOSManagarm())
-      return "aarch64managarm";
     return "aarch64linux";
   case llvm::Triple::aarch64_be:
     return "aarch64linuxb";
@@ -404,9 +402,7 @@ void tools::gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Most Android ARM64 targets should enable the linker fix for erratum
   // 843419. Only non-Cortex-A53 devices are allowed to skip this flag.
-  if (Arch == llvm::Triple::aarch64 && (isAndroid || isOHOSFamily) &&
-      Args.hasFlag(options::OPT_mfix_cortex_a53_843419,
-                   options::OPT_mno_fix_cortex_a53_843419, true)) {
+  if (Arch == llvm::Triple::aarch64 && (isAndroid || isOHOSFamily)) {
     std::string CPU = getCPUName(D, Args, Triple);
     if (CPU.empty() || CPU == "generic" || CPU == "cortex-a53")
       CmdArgs.push_back("--fix-cortex-a53-843419");

@@ -8,7 +8,6 @@
 
 #include "TargetInfo/MipsTargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 Target &llvm::getTheMipsTarget() {
@@ -28,8 +27,7 @@ Target &llvm::getTheMips64elTarget() {
   return TheMips64elTarget;
 }
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeMipsTargetInfo() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMipsTargetInfo() {
   RegisterTarget<Triple::mips,
                  /*HasJIT=*/true>
       X(getTheMipsTarget(), "mips", "MIPS (32-bit big endian)", "Mips");

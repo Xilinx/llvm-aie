@@ -347,7 +347,9 @@ void SelfUpdate() {
 #pragma acc update host(s) self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'zero'}}
+  // expected-error@+3{{use of undeclared identifier 'zero'}}
+  // expected-error@+2{{expected ','}}
+  // expected-error@+1{{expected expression}}
 #pragma acc update self(zero : s.array[s.value : 5], s.value), if_present
   for(int i = 0; i < 5;++i) {}
 
@@ -451,6 +453,8 @@ void VarListClauses() {
 #pragma acc parallel copy(always, alwaysin, always: HasMem.MemArr[3:]) self
   for(int i = 0; i < 5;++i) {}
 
+  // expected-error@+3{{use of undeclared identifier 'always'}}
+  // expected-error@+2{{use of undeclared identifier 'alwaysin'}}
   // expected-error@+1{{use of undeclared identifier 'always'}}
 #pragma acc parallel copy(always, alwaysin, always, HasMem.MemArr[3:]) self
   for(int i = 0; i < 5;++i) {}
@@ -587,7 +591,8 @@ void VarListClauses() {
 #pragma acc serial copyout(zero : s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'zero'}}
+  // expected-error@+2{{use of undeclared identifier 'zero'}}
+  // expected-error@+1{{expected ','}}
 #pragma acc serial copyout(zero s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
@@ -603,7 +608,8 @@ void VarListClauses() {
 #pragma acc serial copyout(invalid:s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'invalid'}}
+  // expected-error@+2{{use of undeclared identifier 'invalid'}}
+  // expected-error@+1{{expected ','}}
 #pragma acc serial copyout(invalid s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
@@ -651,7 +657,8 @@ void VarListClauses() {
 #pragma acc serial create(zero : s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'zero'}}
+  // expected-error@+2{{use of undeclared identifier 'zero'}}
+  // expected-error@+1{{expected ','}}
 #pragma acc serial create(zero s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
@@ -667,7 +674,8 @@ void VarListClauses() {
 #pragma acc serial create(invalid:s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'invalid'}}
+  // expected-error@+2{{use of undeclared identifier 'invalid'}}
+  // expected-error@+1{{expected ','}}
 #pragma acc serial create(invalid s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
@@ -692,7 +700,8 @@ void VarListClauses() {
 #pragma acc serial copyin(readonly : s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'readonly'}}
+  // expected-error@+2{{use of undeclared identifier 'readonly'}}
+  // expected-error@+1{{expected ','}}
 #pragma acc serial copyin(readonly s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
@@ -708,7 +717,8 @@ void VarListClauses() {
 #pragma acc serial copyin(invalid:s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 
-  // expected-error@+1{{use of undeclared identifier 'invalid'}}
+  // expected-error@+2{{use of undeclared identifier 'invalid'}}
+  // expected-error@+1{{expected ','}}
 #pragma acc serial copyin(invalid s.array[s.value : 5], s.value), self
   for(int i = 0; i < 5;++i) {}
 

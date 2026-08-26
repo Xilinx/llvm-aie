@@ -16,7 +16,6 @@
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DXILABI.h"
-#include <limits>
 #include <variant>
 
 namespace llvm {

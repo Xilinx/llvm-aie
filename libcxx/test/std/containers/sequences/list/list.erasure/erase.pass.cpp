@@ -11,7 +11,7 @@
 
 // template <class T, class Allocator, class U>
 //   typename list<T, Allocator>::size_type
-//   erase(list<T, Allocator>& c, const U& value); // constexpr since C++26
+//   erase(list<T, Allocator>& c, const U& value);
 
 #include <list>
 #include <optional>
@@ -21,14 +21,14 @@
 #include "min_allocator.h"
 
 template <class S, class U>
-TEST_CONSTEXPR_CXX26 void test0(S s, U val, S expected, std::size_t expected_erased_count) {
+void test0(S s, U val, S expected, std::size_t expected_erased_count) {
   ASSERT_SAME_TYPE(typename S::size_type, decltype(std::erase(s, val)));
   assert(expected_erased_count == std::erase(s, val));
   assert(s == expected);
 }
 
 template <class S>
-TEST_CONSTEXPR_CXX26 void test1() {
+void test() {
   test0(S(), 1, S(), 0);
 
   test0(S({1}), 1, S(), 1);
@@ -62,22 +62,13 @@ TEST_CONSTEXPR_CXX26 void test1() {
   test0(S({1, 2, 1}), opt(3), S({1, 2, 1}), 0);
 }
 
-TEST_CONSTEXPR_CXX26 bool test() {
-  test1<std::list<int>>();
-  test1<std::list<int, min_allocator<int>>>();
-  test1<std::list<int, test_allocator<int>>>();
-
-  test1<std::list<long>>();
-  test1<std::list<double>>();
-
-  return true;
-}
-
 int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
+  test<std::list<int>>();
+  test<std::list<int, min_allocator<int>>>();
+  test<std::list<int, test_allocator<int>>>();
+
+  test<std::list<long>>();
+  test<std::list<double>>();
 
   return 0;
 }

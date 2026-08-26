@@ -107,6 +107,10 @@ void Pass::verifyAnalysis() const {
   // By default, don't do anything.
 }
 
+void *Pass::getAdjustedAnalysisPointer(AnalysisID AID) {
+  return this;
+}
+
 ImmutablePass *Pass::getAsImmutablePass() {
   return nullptr;
 }

@@ -83,7 +83,7 @@ public:
 
   void CheckOpen(CheckerContext &C, const CallEvent &Call) const;
   void CheckOpenAt(CheckerContext &C, const CallEvent &Call) const;
-  void CheckGetDelimOrGetline(CheckerContext &C, const CallEvent &Call) const;
+  void CheckGetDelim(CheckerContext &C, const CallEvent &Call) const;
   void CheckPthreadOnce(CheckerContext &C, const CallEvent &Call) const;
 
   void CheckOpenVariant(CheckerContext &C, const CallEvent &Call,
@@ -128,7 +128,7 @@ ProgramStateRef UnixAPIMisuseChecker::EnsurePtrNotNull(
     const StringRef PtrDescr,
     std::optional<std::reference_wrapper<const BugType>> BT) const {
   const auto Ptr = PtrVal.getAs<DefinedSVal>();
-  if (!Ptr || !PtrExpr->getType()->isPointerType())
+  if (!Ptr)
     return State;
 
   const auto [PtrNotNull, PtrNull] = State->assume(*Ptr);
@@ -177,7 +177,7 @@ void UnixAPIMisuseChecker::checkPreCall(const CallEvent &Call,
     CheckPthreadOnce(C, Call);
 
   else if (is_contained({"getdelim", "getline"}, FName))
-    CheckGetDelimOrGetline(C, Call);
+    CheckGetDelim(C, Call);
 }
 void UnixAPIMisuseChecker::ReportOpenBug(CheckerContext &C,
                                          ProgramStateRef State,
@@ -332,12 +332,8 @@ ProgramStateRef UnixAPIMisuseChecker::EnsureGetdelimBufferAndSizeCorrect(
 
   // We have a pointer to a pointer to the buffer, and a pointer to the size.
   // We want what they point at.
-  const auto LinePtrValOpt = getPointeeVal(LinePtrPtrSVal, State);
-  if (!LinePtrValOpt)
-    return nullptr;
-
-  const auto LinePtrSVal = LinePtrValOpt->getAs<DefinedSVal>();
-  const auto NSVal = getPointeeVal(SizePtrSVal, State);
+  auto LinePtrSVal = getPointeeVal(LinePtrPtrSVal, State)->getAs<DefinedSVal>();
+  auto NSVal = getPointeeVal(SizePtrSVal, State);
   if (!LinePtrSVal || !NSVal || NSVal->isUnknown())
     return nullptr;
 
@@ -354,16 +350,9 @@ ProgramStateRef UnixAPIMisuseChecker::EnsureGetdelimBufferAndSizeCorrect(
     // If it is defined, and known, its size must be less than or equal to
     // the buffer size.
     auto NDefSVal = NSVal->getAs<DefinedSVal>();
-    if (!NDefSVal)
-      return LinePtrNotNull;
-
     auto &SVB = C.getSValBuilder();
-
-    const MemRegion *LinePtrRegion = LinePtrSVal->getAsRegion();
-    if (!LinePtrRegion)
-      return LinePtrNotNull;
-
-    auto LineBufSize = getDynamicExtent(LinePtrNotNull, LinePtrRegion, SVB);
+    auto LineBufSize =
+        getDynamicExtent(LinePtrNotNull, LinePtrSVal->getAsRegion(), SVB);
     auto LineBufSizeGtN = SVB.evalBinOp(LinePtrNotNull, BO_GE, LineBufSize,
                                         *NDefSVal, SVB.getConditionType())
                               .getAs<DefinedOrUnknownSVal>();
@@ -378,11 +367,8 @@ ProgramStateRef UnixAPIMisuseChecker::EnsureGetdelimBufferAndSizeCorrect(
   return State;
 }
 
-void UnixAPIMisuseChecker::CheckGetDelimOrGetline(CheckerContext &C,
-                                                  const CallEvent &Call) const {
-  if (Call.getNumArgs() < 2)
-    return;
-
+void UnixAPIMisuseChecker::CheckGetDelim(CheckerContext &C,
+                                         const CallEvent &Call) const {
   ProgramStateRef State = C.getState();
 
   // The parameter `n` must not be NULL.

@@ -35,7 +35,7 @@ MarkedJTDataRegions("mark-data-regions", cl::init(true),
   cl::desc("Mark code section jump table data regions."),
   cl::Hidden);
 
-const MCAsmInfo::AtSpecifier atSpecifiers[] = {
+const MCAsmInfo::VariantKindDesc variantKindDescs[] = {
     {X86MCExpr::VK_ABS8, "ABS8"},
     {X86MCExpr::VK_DTPOFF, "DTPOFF"},
     {X86MCExpr::VK_DTPREL, "DTPREL"},
@@ -102,7 +102,7 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
   // overwhelm ld64's tiny little mind and it fails).
   DwarfFDESymbolsUseAbsDiff = true;
 
-  initializeAtSpecifiers(atSpecifiers);
+  initializeVariantKinds(variantKindDescs);
 }
 
 X86_64MCAsmInfoDarwin::X86_64MCAsmInfoDarwin(const Triple &Triple)
@@ -131,7 +131,7 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
   // Exceptions handling
   ExceptionsType = ExceptionHandling::DwarfCFI;
 
-  initializeAtSpecifiers(atSpecifiers);
+  initializeVariantKinds(variantKindDescs);
 }
 
 const MCExpr *
@@ -166,7 +166,7 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
 
   AllowAtInName = true;
 
-  initializeAtSpecifiers(atSpecifiers);
+  initializeVariantKinds(variantKindDescs);
 }
 
 void X86MCAsmInfoMicrosoftMASM::anchor() { }
@@ -201,5 +201,5 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
 
   AllowAtInName = true;
 
-  initializeAtSpecifiers(atSpecifiers);
+  initializeVariantKinds(variantKindDescs);
 }

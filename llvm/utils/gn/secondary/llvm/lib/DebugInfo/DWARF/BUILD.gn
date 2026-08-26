@@ -11,7 +11,6 @@ static_library("DWARF") {
     "DWARFAbbreviationDeclaration.cpp",
     "DWARFAcceleratorTable.cpp",
     "DWARFAddressRange.cpp",
-    "DWARFCFIPrinter.cpp",
     "DWARFCFIProgram.cpp",
     "DWARFCompileUnit.cpp",
     "DWARFContext.cpp",

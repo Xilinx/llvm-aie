@@ -947,7 +947,9 @@ uint64_t ObjCStubsSection::getSize() const {
 
 void ObjCStubsSection::writeTo(uint8_t *buf) const {
   uint64_t stubOffset = 0;
-  for (Defined *sym : symbols) {
+  for (size_t i = 0, n = symbols.size(); i < n; ++i) {
+    Defined *sym = symbols[i];
+
     auto methname = getMethname(sym);
     InputSection *selRef = ObjCSelRefsHelper::getSelRef(methname);
     assert(selRef != nullptr && "no selref for methname");

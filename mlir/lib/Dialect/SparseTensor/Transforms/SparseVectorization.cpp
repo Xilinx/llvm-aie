@@ -198,14 +198,14 @@ static Value genVectorReducInit(PatternRewriter &rewriter, Location loc,
   case vector::CombiningKind::ADD:
   case vector::CombiningKind::XOR:
     // Initialize reduction vector to: | 0 | .. | 0 | r |
-    return rewriter.create<vector::InsertOp>(loc, r,
-                                             constantZero(rewriter, loc, vtp),
-                                             constantIndex(rewriter, loc, 0));
+    return rewriter.create<vector::InsertElementOp>(
+        loc, r, constantZero(rewriter, loc, vtp),
+        constantIndex(rewriter, loc, 0));
   case vector::CombiningKind::MUL:
     // Initialize reduction vector to: | 1 | .. | 1 | r |
-    return rewriter.create<vector::InsertOp>(loc, r,
-                                             constantOne(rewriter, loc, vtp),
-                                             constantIndex(rewriter, loc, 0));
+    return rewriter.create<vector::InsertElementOp>(
+        loc, r, constantOne(rewriter, loc, vtp),
+        constantIndex(rewriter, loc, 0));
   case vector::CombiningKind::AND:
   case vector::CombiningKind::OR:
     // Initialize reduction vector to: | r | .. | r | r |
@@ -628,49 +628,31 @@ private:
   const VL vl;
 };
 
-static LogicalResult cleanReducChain(PatternRewriter &rewriter, Operation *op,
-                                     Value inp) {
-  if (auto redOp = inp.getDefiningOp<vector::ReductionOp>()) {
-    if (auto forOp = redOp.getVector().getDefiningOp<scf::ForOp>()) {
-      if (forOp->hasAttr(LoopEmitter::getLoopEmitterLoopAttrName())) {
-        rewriter.replaceOp(op, redOp.getVector());
-        return success();
-      }
-    }
-  }
-  return failure();
-}
-
-/// Reduction chain cleanup.
-///   v = for { }
-///   s = vsum(v)                  v = for { }
-///   u = broadcast(s)       ->    for (v) { }
-///   for (u) { }
-struct ReducChainBroadcastRewriter
-    : public OpRewritePattern<vector::BroadcastOp> {
-public:
-  using OpRewritePattern<vector::BroadcastOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(vector::BroadcastOp op,
-                                PatternRewriter &rewriter) const override {
-    return cleanReducChain(rewriter, op, op.getSource());
-  }
-};
-
 /// Reduction chain cleanup.
 ///   v = for { }
 ///   s = vsum(v)               v = for { }
-///   u = insert(s)       ->    for (v) { }
+///   u = expand(s)       ->    for (v) { }
 ///   for (u) { }
-struct ReducChainInsertRewriter : public OpRewritePattern<vector::InsertOp> {
+template <typename VectorOp>
+struct ReducChainRewriter : public OpRewritePattern<VectorOp> {
 public:
-  using OpRewritePattern<vector::InsertOp>::OpRewritePattern;
+  using OpRewritePattern<VectorOp>::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(vector::InsertOp op,
+  LogicalResult matchAndRewrite(VectorOp op,
                                 PatternRewriter &rewriter) const override {
-    return cleanReducChain(rewriter, op, op.getValueToStore());
+    Value inp = op.getSource();
+    if (auto redOp = inp.getDefiningOp<vector::ReductionOp>()) {
+      if (auto forOp = redOp.getVector().getDefiningOp<scf::ForOp>()) {
+        if (forOp->hasAttr(LoopEmitter::getLoopEmitterLoopAttrName())) {
+          rewriter.replaceOp(op, redOp.getVector());
+          return success();
+        }
+      }
+    }
+    return failure();
   }
 };
+
 } // namespace
 
 //===----------------------------------------------------------------------===//
@@ -686,6 +668,6 @@ void mlir::populateSparseVectorizationPatterns(RewritePatternSet &patterns,
   vector::populateVectorStepLoweringPatterns(patterns);
   patterns.add<ForOpRewriter>(patterns.getContext(), vectorLength,
                               enableVLAVectorization, enableSIMDIndex32);
-  patterns.add<ReducChainInsertRewriter, ReducChainBroadcastRewriter>(
-      patterns.getContext());
+  patterns.add<ReducChainRewriter<vector::InsertElementOp>,
+               ReducChainRewriter<vector::BroadcastOp>>(patterns.getContext());
 }

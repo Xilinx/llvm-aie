@@ -16,7 +16,7 @@
 #include <complex>
 #include <concepts>
 
-template <std::size_t I, typename C>
+template <size_t I, typename C>
 concept HasTupleElement = requires { std::tuple_element<I, C>{}; };
 
 struct SomeObject {};

@@ -66,10 +66,17 @@ void RemarkLinker::setExternalFilePrependPath(StringRef PrependPathIn) {
   PrependPath = std::string(PrependPathIn);
 }
 
-Error RemarkLinker::link(StringRef Buffer, Format RemarkFormat) {
+Error RemarkLinker::link(StringRef Buffer, std::optional<Format> RemarkFormat) {
+  if (!RemarkFormat) {
+    Expected<Format> ParserFormat = magicToFormat(Buffer);
+    if (!ParserFormat)
+      return ParserFormat.takeError();
+    RemarkFormat = *ParserFormat;
+  }
+
   Expected<std::unique_ptr<RemarkParser>> MaybeParser =
       createRemarkParserFromMeta(
-          RemarkFormat, Buffer,
+          *RemarkFormat, Buffer, /*StrTab=*/std::nullopt,
           PrependPath ? std::optional<StringRef>(StringRef(*PrependPath))
                       : std::optional<StringRef>());
   if (!MaybeParser)
@@ -95,7 +102,8 @@ Error RemarkLinker::link(StringRef Buffer, Format RemarkFormat) {
   return Error::success();
 }
 
-Error RemarkLinker::link(const object::ObjectFile &Obj, Format RemarkFormat) {
+Error RemarkLinker::link(const object::ObjectFile &Obj,
+                         std::optional<Format> RemarkFormat) {
   Expected<std::optional<StringRef>> SectionOrErr =
       getRemarksSectionContents(Obj);
   if (!SectionOrErr)

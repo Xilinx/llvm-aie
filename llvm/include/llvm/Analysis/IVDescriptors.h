@@ -54,12 +54,9 @@ enum class RecurKind {
   FMulAdd,  ///< Sum of float products with llvm.fmuladd(a * b + sum).
   AnyOf,    ///< AnyOf reduction with select(cmp(),x,y) where one of (x,y) is
             ///< loop invariant, and both x and y are integer type.
-  FindLastIVSMax, ///< FindLast reduction with select(cmp(),x,y) where one of
-                  ///< (x,y) is increasing loop induction, and both x and y
-                  ///< are integer type, producing a SMax reduction.
-  FindLastIVUMax, ///< FindLast reduction with select(cmp(),x,y) where one of
-                  ///< (x,y) is increasing loop induction, and both x and y
-                  ///< are integer type, producing a UMax reduction.
+  FindLastIV, ///< FindLast reduction with select(cmp(),x,y) where one of
+              ///< (x,y) is increasing loop induction, and both x and y are
+              ///< integer type.
   // clang-format on
   // TODO: Any_of and FindLast reduction need not be restricted to integer type
   // only.
@@ -262,14 +259,7 @@ public:
   /// Returns true if the recurrence kind is of the form
   ///   select(cmp(),x,y) where one of (x,y) is increasing loop induction.
   static bool isFindLastIVRecurrenceKind(RecurKind Kind) {
-    return Kind == RecurKind::FindLastIVSMax ||
-           Kind == RecurKind::FindLastIVUMax;
-  }
-
-  /// Returns true if recurrece kind is a signed redux kind.
-  static bool isSignedRecurrenceKind(RecurKind Kind) {
-    return Kind == RecurKind::SMax || Kind == RecurKind::SMin ||
-           Kind == RecurKind::FindLastIVSMax;
+    return Kind == RecurKind::FindLastIV;
   }
 
   /// Returns the type of the recurrence. This type can be narrower than the
@@ -281,10 +271,8 @@ public:
   Value *getSentinelValue() const {
     assert(isFindLastIVRecurrenceKind(Kind) && "Unexpected recurrence kind");
     Type *Ty = StartValue->getType();
-    unsigned BW = Ty->getIntegerBitWidth();
-    return ConstantInt::get(Ty, isSignedRecurrenceKind(Kind)
-                                    ? APInt::getSignedMinValue(BW)
-                                    : APInt::getMinValue(BW));
+    return ConstantInt::get(Ty,
+                            APInt::getSignedMinValue(Ty->getIntegerBitWidth()));
   }
 
   /// Returns a reference to the instructions used for type-promoting the

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/SparcMCAsmInfo.h"
+#include "SparcMCExpr.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -22,7 +22,21 @@ using namespace llvm;
 
 #define DEBUG_TYPE "sparcmcexpr"
 
-StringRef Sparc::getSpecifierName(uint16_t S) {
+const SparcMCExpr *SparcMCExpr::create(uint16_t S, const MCExpr *Expr,
+                                       MCContext &Ctx) {
+  return new (Ctx) SparcMCExpr(S, Expr);
+}
+
+void SparcMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
+  StringRef S = getSpecifierName(specifier);
+  if (!S.empty())
+    OS << '%' << S << '(';
+  getSubExpr()->print(OS, MAI);
+  if (!S.empty())
+    OS << ')';
+}
+
+StringRef SparcMCExpr::getSpecifierName(uint16_t S) {
   // clang-format off
   switch (uint16_t(S)) {
   case 0:                          return {};
@@ -69,7 +83,7 @@ StringRef Sparc::getSpecifierName(uint16_t S) {
   llvm_unreachable("Unhandled SparcMCExpr::Specifier");
 }
 
-uint16_t Sparc::parseSpecifier(StringRef name) {
+uint16_t SparcMCExpr::parseSpecifier(StringRef name) {
   return StringSwitch<uint16_t>(name)
       .Case("lo", ELF::R_SPARC_LO10)
       .Case("hi", ELF::R_SPARC_HI22)
@@ -113,4 +127,9 @@ uint16_t Sparc::parseSpecifier(StringRef name) {
       .Case("gdop_lox10", ELF::R_SPARC_GOTDATA_OP_LOX10)
       .Case("gdop", ELF::R_SPARC_GOTDATA_OP)
       .Default(0);
+}
+
+uint16_t SparcMCExpr::getFixupKind() const {
+  assert(uint16_t(specifier) < FirstTargetFixupKind);
+  return specifier;
 }

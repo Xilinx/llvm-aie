@@ -124,7 +124,7 @@ class Lexer : public PreprocessorLexer {
   //===--------------------------------------------------------------------===//
   // Context that changes as the file is lexed.
   // NOTE: any state that mutates when in raw mode must have save/restore code
-  // in Lexer::peekNextPPToken.
+  // in Lexer::isNextPPTokenLParen.
 
   // BufferPtr - Current pointer into the buffer.  This is the next character
   // to be lexed.
@@ -142,9 +142,6 @@ class Lexer : public PreprocessorLexer {
 
   /// True if this is the first time we're lexing the input file.
   bool IsFirstTimeLexingFile;
-
-  /// True if current lexing token is the first pp-token.
-  bool IsFirstPPToken;
 
   // NewLinePtr - A pointer to new line character '\n' being lexed. For '\r\n',
   // it also points to '\n.'
@@ -645,10 +642,10 @@ private:
     BufferPtr = TokEnd;
   }
 
-  /// peekNextPPToken - Return std::nullopt if there are no more tokens in the
-  /// buffer controlled by this lexer, otherwise return the next unexpanded
-  /// token.
-  std::optional<Token> peekNextPPToken();
+  /// isNextPPTokenLParen - Return 1 if the next unexpanded token will return a
+  /// tok::l_paren token, 0 if it is something else and 2 if there are no more
+  /// tokens in the buffer controlled by this lexer.
+  unsigned isNextPPTokenLParen();
 
   //===--------------------------------------------------------------------===//
   // Lexer character reading interfaces.

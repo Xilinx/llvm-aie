@@ -5,9 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-
 #include "GDBRemoteTestUtils.h"
-#include "lldb/Host/ConnectionFileDescriptor.h"
 #include "llvm/Testing/Support/Error.h"
 
 using namespace lldb_private::process_gdb_remote;
@@ -30,12 +28,8 @@ public:
 class GDBRemoteCommunicationTest : public GDBRemoteTest {
 public:
   void SetUp() override {
-    llvm::Expected<Socket::Pair> pair = Socket::CreatePair();
-    ASSERT_THAT_EXPECTED(pair, llvm::Succeeded());
-    client.SetConnection(
-        std::make_unique<ConnectionFileDescriptor>(std::move(pair->first)));
-    server.SetConnection(
-        std::make_unique<ConnectionFileDescriptor>(std::move(pair->second)));
+    ASSERT_THAT_ERROR(GDBRemoteCommunication::ConnectLocally(client, server),
+                      llvm::Succeeded());
   }
 
 protected:

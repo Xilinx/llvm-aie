@@ -828,7 +828,7 @@ public:
   }
 
   ArrayRef<SourceLocation> getProtocolLocs() const {
-    return {getProtocolLocArray(), getNumProtocols()};
+    return llvm::ArrayRef(getProtocolLocArray(), getNumProtocols());
   }
 
   void initializeLocal(ASTContext &Context, SourceLocation Loc);
@@ -1088,7 +1088,7 @@ public:
 
 
   ArrayRef<SourceLocation> getProtocolLocs() const {
-    return {getProtocolLocArray(), getNumProtocols()};
+    return llvm::ArrayRef(getProtocolLocArray(), getNumProtocols());
   }
 
   bool hasBaseTypeAsWritten() const {
@@ -1545,7 +1545,7 @@ public:
   }
 
   ArrayRef<ParmVarDecl *> getParams() const {
-    return {getParmArray(), getNumParams()};
+    return llvm::ArrayRef(getParmArray(), getNumParams());
   }
 
   // ParmVarDecls* are stored after Info, one for each parameter.
