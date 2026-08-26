@@ -804,7 +804,8 @@ bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
   // Zero overhead loops are candidates for PostPipeliner, which does a better
   // job on multi-stage live-ranges without spilling or moving.
 
-  // PostPipeliner can do nothing without tripcount > 1
+  // Without a minimum tripcount > 1 the PostPipeliner is limited to a single
+  // stage, plus at most one peeled side-effect-free stage: keep the loop here.
   if (!hasMoreIterationsThan(1) || HasIIPragma) {
     return false;
   }
