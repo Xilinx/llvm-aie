@@ -25,9 +25,9 @@
 // RUN:   | FileCheck -check-prefix=NOLIBS %s
 // RUN: %clang %s -### --target=aie2p-none-unknown-elf -nostdlib -nodefaultlibs 2>&1 \
 // RUN:   | FileCheck -check-prefix=NOLIBS %s
-// NOLIBS-NOT: ld.lld{{.*}}libclang_rt.builtins.a
-// NOLIBS-NOT: ld.lld{{.*}}-lm
-// NOLIBS-NOT: ld.lld{{.*}}-lc
+// NOLIBS-NOT: libclang_rt.builtins
+// NOLIBS-NOT: "-lm"
+// NOLIBS-NOT: "-lc"
 
 // ... for -nostartfiles
 // RUN: %clang %s -### --target=aie2-none-unknown-elf -nostartfiles -ccc-install-dir  %S/../Inputs/basic_aie_tree/bin 2>&1 \
