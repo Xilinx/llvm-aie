@@ -4272,6 +4272,54 @@ bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
   return true;
 }
 
+/// Return the maximum number of scalar insertions worth using to implement a
+/// shuffle before scalarization in the legalizer becomes preferable.
+static unsigned getShuffleMaxNumInsertions(const MachineFunction &MF,
+                                           unsigned NumSrcElems) {
+  // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
+  // if there are more exceptions than NumSrcElems / 2, as AIE2P's
+  // VINSERT instructions require a move to a register used for the index unlike
+  // VPUSH.
+  const Triple &T = MF.getTarget().getTargetTriple();
+  if (T.isAIE2P() || T.isAIE2PS())
+    return (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                          : NumSrcElems / 2;
+  llvm_unreachable(
+      "MaxNumInsertions unimplemented for target. Does the target's Insert "
+      "instruction take immediate indices or does it require a register for "
+      "the index?");
+}
+
+/// Insert the \p Exceptions lanes of \p Mask into \p StartReg, at their
+/// original positions, extracting each lane from whichever source it indexes.
+/// Intermediate results are fresh \p InsertTy vregs; the last insertion writes
+/// \p FinalDst when it is valid. Returns the final result register.
+static Register
+buildShuffleExceptionInserts(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                             ArrayRef<int> Mask, ArrayRef<unsigned> Exceptions,
+                             unsigned NumSrcElems, Register Src1Reg,
+                             Register Src2Reg, LLT ElemTy, LLT InsertTy,
+                             Register StartReg, Register FinalDst) {
+  Register InsertSrc = StartReg;
+  Register Result = StartReg;
+  for (unsigned I = 0, E = Exceptions.size(); I < E; ++I) {
+    const unsigned ExceptionIdx = Exceptions[I];
+    Register VecToExtract =
+        Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
+    int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
+    auto ExtrElt =
+        B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
+    auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
+    const bool IsLast = (I + 1 == E);
+    Result = (IsLast && FinalDst.isValid())
+                 ? FinalDst
+                 : MRI.createGenericVirtualRegister(InsertTy);
+    B.buildInsertVectorElement(Result, InsertSrc, ExtrElt, ExceptionIdxReg);
+    InsertSrc = Result;
+  }
+  return Result;
+}
+
 /// Match shuffle vectors that are mostly sequential (identity or extract
 /// subvector) with a few element insertions from either source.
 ///
@@ -4336,20 +4384,8 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
 
   const LLT ElemTy = Src1Ty.getElementType();
 
-  unsigned MaxNumInsertions;
-  const Triple &T = MI.getMF()->getTarget().getTargetTriple();
-  if (T.isAIE2P() || T.isAIE2PS())
-    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
-    // instructions require a move to a register used for the index unlike
-    // VPUSH.
-    MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                      : NumSrcElems / 2;
-  else
-    llvm_unreachable(
-        "MaxNumInsertions unimplemented for target. Does the target's Insert "
-        "instruction take immediate indices or does it require a register for "
-        "the index?");
+  const unsigned MaxNumInsertions =
+      getShuffleMaxNumInsertions(*MI.getMF(), NumSrcElems);
 
   if (Mask.size() != NumDstElems)
     return false;
@@ -4374,35 +4410,17 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
     return false;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    // For shrinking shuffles, first extract the subvector using UNPAD
-    Register InsertSrc;
+    // For shrinking shuffles, first extract the subvector using UNPAD.
+    Register InsertSrc = Src1Reg;
     if (IsShrinking) {
       InsertSrc = MRI.createGenericVirtualRegister(DstTy);
       const AIEBaseInstrInfo &TII = getAIETII(B);
       B.buildInstr(TII.getGenericUnpadVectorOpcode(), {InsertSrc}, {Src1Reg});
-    } else {
-      InsertSrc = Src1Reg;
     }
 
-    Register InsertDst;
-    for (const unsigned ExceptionIdx : Exceptions) {
-      Register VecToExtract =
-          Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
-
-      int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
-      auto ExtrElt =
-          B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
-
-      auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
-
-      InsertDst = (ExceptionIdx == Exceptions.back())
-                      ? DstReg
-                      : MRI.createGenericVirtualRegister(DstTy);
-
-      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
-                                 ExceptionIdxReg);
-      InsertSrc = InsertDst;
-    }
+    buildShuffleExceptionInserts(B, MRI, Mask, Exceptions, NumSrcElems, Src1Reg,
+                                 Src2Reg, ElemTy, DstTy, InsertSrc,
+                                 /*FinalDst=*/DstReg);
   };
 
   return true;
