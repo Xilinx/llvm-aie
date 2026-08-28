@@ -1766,12 +1766,16 @@ SmallVector<SDep, 4> getPreds(SUnit &SU) {
   return Preds;
 }
 
-/// Remove all Anti (WAR) and Output (WAW) dependencies on simplifiable
-/// reserved registers unconditionally. This function should only be called
-/// in virtualized postpipeliner mode where schedule correctness is verified
-/// afterward by the register allocator via non-virtualizable live ranges.
-///
-/// \param DAG The scheduling DAG to modify.
+// Remove all Anti (WAR) and Output (WAW) dependencies on LocalScope
+// registers unconditionally. By removing them, we give the pipeliner the
+// freedom to interchange full live ranges, which sometimes helps to interleave
+// pipeline stages. The downside it that we need to check the schedule
+// afterwards. That check is made part of postregalloc, treating these ranges
+// as any other live range.
+// Therefore, we should only call this function in the virtualized postpipeliner
+// mode where schedule correctness is verified afterwards.
+//
+// \param DAG The scheduling DAG to modify.
 void simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
   MachineFunction &MF = DAG.MF;
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
@@ -1783,7 +1787,9 @@ void simplifyReservedRegDeps(ScheduleDAGMI &DAG) {
         continue;
 
       const Register Reg = Dep.getReg();
-      if (!Reg.isPhysical() || !RI->isSimplifiableReservedReg(Reg))
+      if (!Reg.isPhysical() ||
+          !RI->hasPhysRegProperty(
+              Reg, AIEBaseRegisterInfo::PhysRegProperty::LocalScope))
         continue;
 
       SU.removePred(Dep);
