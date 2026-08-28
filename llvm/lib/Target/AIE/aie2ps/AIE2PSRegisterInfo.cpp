@@ -782,6 +782,13 @@ bool AIE2PSRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
                               AIE2PS::mCRm_fileRegClass.contains(PhysReg));
 }
 
+bool AIE2PSRegisterInfo::hasPhysRegProperty(MCRegister PhysReg,
+                                            PhysRegProperty Prop) const {
+  if (Prop == PhysRegProperty::LocalScope && PhysReg == AIE2PS::crSRSMode)
+    return true;
+  return AIEBaseRegisterInfo::hasPhysRegProperty(PhysReg, Prop);
+}
+
 bool AIE2PSRegisterInfo::isVecOrAccRegClass(
     const TargetRegisterClass &RC) const {
   // ******** Vector classes ********

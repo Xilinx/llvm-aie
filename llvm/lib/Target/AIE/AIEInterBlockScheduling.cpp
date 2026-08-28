@@ -1743,7 +1743,8 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
       // Analyze once using the invariant semantic order. The semantic order
       // and physical register state are invariant across all pipelining
       // attempts.
-      RegTracker->setTrackImplicitRanges(SimplifyReservedRegs);
+      RegTracker->trackImplicitRanges(
+          AIEBaseRegisterInfo::PhysRegProperty::LocalScope);
       RegTracker->analyze(*TheBlock, getTop().getFreeInstructions());
 
       DEBUG_REGALLOC(RegTracker->dump("FINAL LIVE RANGES\n"));

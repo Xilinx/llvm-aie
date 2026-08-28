@@ -276,10 +276,11 @@ class RegLiveRangeTracker {
   // invariant enforced by the assert at the top of analyze().
   bool AnalysisDone = false;
 
-  // When true, implicit operands are included in the backward liveness scan
-  // and the IsVirtualizable flag is derived from the collected operands.
-  // Enabled when --aie-simplify-reserved-regs is active.
-  bool TrackImplicitRanges = false;
+  // When set, non-virtualizable ranges whose base register has this property
+  // are kept in the live range list instead of being discarded. This is used
+  // to track implicit-use live ranges for registers whose scheduling
+  // dependencies were removed by simplifyReservedRegDeps.
+  std::optional<AIEBaseRegisterInfo::PhysRegProperty> ImplicitRangesProperty;
 
   /// Get the sub-register index if AccessReg is a sub-register of BaseReg
   /// Returns 0 if AccessReg is not a sub-register of BaseReg
@@ -510,11 +511,14 @@ public:
     return MostPromisingScarceRanges;
   }
 
-  /// Configure whether the backward scan should include implicit operands and
-  /// compute IsVirtualizable from the collected ranges.  Must be called before
-  /// analyze().  When false (default), implicit operands are skipped and the
-  /// behavior matches the pre-simplification baseline.
-  void setTrackImplicitRanges(bool Track) { TrackImplicitRanges = Track; }
+  /// Retain non-virtualizable live ranges whose base register has \p Prop.
+  /// By default all non-virtualizable ranges are discarded; calling this
+  /// before analyze() keeps those that carry \p Prop (e.g. LocalScope),
+  /// preserving liveness information for registers whose scheduling
+  /// dependencies were removed by simplifyReservedRegDeps.
+  void trackImplicitRanges(AIEBaseRegisterInfo::PhysRegProperty Prop) {
+    ImplicitRangesProperty = Prop;
+  }
 };
 
 } // end namespace llvm
