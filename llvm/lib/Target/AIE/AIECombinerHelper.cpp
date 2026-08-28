@@ -4366,7 +4366,78 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
   if (DstTy.getElementType() != Src1Ty.getElementType())
     return false;
 
-  // No growing shuffles; shrinking requires divisibility
+  // Widen-by-undef case: the destination is a whole multiple of the source and
+  // every lane above the source width is undef. The lower NumSrcElems lanes are
+  // then a mostly-sequential run (from either source) plus a few insertions,
+  // and the result is widened to the destination by concatenating undef
+  // sub-vectors. This avoids scalarizing such shuffles during legalization.
+  if (NumDstElems > NumSrcElems) {
+    if (NumDstElems % NumSrcElems != 0)
+      return false;
+    if (Mask.size() != NumDstElems)
+      return false;
+    if (MaskMatch::isMaskWithAllUndefs(Mask))
+      return false;
+
+    for (unsigned I = NumSrcElems; I < NumDstElems; ++I)
+      if (Mask[I] != -1)
+        return false;
+
+    const unsigned MaxNumInsertions =
+        getShuffleMaxNumInsertions(*MI.getMF(), NumSrcElems);
+
+    ArrayRef<int> EffMask = Mask.take_front(NumSrcElems);
+
+    // Try a sequential run from either source (Src1 at Height 0, Src2 at Height
+    // NumSrcElems) and keep the base with the fewest insertions.
+    bool FoundBase = false;
+    unsigned BestHeight = 0;
+    SmallVector<unsigned, 4> BestExceptions;
+    for (unsigned Height : {0u, NumSrcElems}) {
+      MaskMatch SequentialMask{/*Height*/ Height};
+      ShuffleMaskValidity Validity =
+          SequentialMask.getShuffleMaskValidity(EffMask);
+      // A fully sequential run is a plain copy/widen; leave it to other
+      // combines.
+      if (Validity.IsValid)
+        return false;
+      if (!FoundBase ||
+          Validity.MaskExceptions.size() < BestExceptions.size()) {
+        FoundBase = true;
+        BestHeight = Height;
+        BestExceptions = Validity.MaskExceptions;
+      }
+    }
+
+    assert(FoundBase && !BestExceptions.empty() &&
+           "expected at least one insertion");
+    if (BestExceptions.size() >= MaxNumInsertions)
+      return false;
+
+    const LLT ElemTy = Src1Ty.getElementType();
+    // The sequential base selects the copy source.
+    const Register SeqSrcReg = (BestHeight == 0) ? Src1Reg : Src2Reg;
+    const SmallVector<unsigned, 4> Exceptions = BestExceptions;
+
+    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+      // Insert the exception lanes into the sequential source (built at the
+      // source width), then widen to the destination with undef sub-vectors.
+      Register Result = buildShuffleExceptionInserts(
+          B, MRI, Mask, Exceptions, NumSrcElems, Src1Reg, Src2Reg, ElemTy,
+          Src1Ty, SeqSrcReg, /*FinalDst=*/Register());
+
+      SmallVector<Register, 4> ConcatOps;
+      ConcatOps.push_back(Result);
+      const unsigned NumPads = NumDstElems / NumSrcElems - 1;
+      for (unsigned I = 0; I < NumPads; ++I)
+        ConcatOps.push_back(B.buildUndef(Src1Ty).getReg(0));
+      B.buildConcatVectors(DstReg, ConcatOps);
+    };
+
+    return true;
+  }
+
+  // Only the widen-by-undef case above grows; shrinking requires divisibility.
   if (NumSrcElems % NumDstElems != 0)
     return false;
 
