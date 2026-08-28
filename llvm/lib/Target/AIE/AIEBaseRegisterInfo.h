@@ -23,6 +23,41 @@ namespace llvm {
 
 struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   using TargetRegisterInfo::TargetRegisterInfo;
+
+  // Properties that can be queried for a physical register.
+  enum class PhysRegProperty {
+    // Whether redundant assignments to this reserved register can be
+    // simplified by removing WAW/WAR scheduling edges.
+    Simplifiable,
+    // Whether this reserved register is sticky: it retains its value
+    // (or flag status) through implicit defs until an explicit reset.
+    Sticky,
+    // Whether this reserved register has local scope: its live range is
+    // confined within a single loop iteration and does not carry a value
+    // across the loop back-edge.
+    LocalScope,
+  };
+
+  // Query a boolean property of a physical register.
+  // The default implementation delegates to the existing virtual predicates
+  // via the vtable, so derived classes that override those predicates
+  // automatically get correct behaviour here without any further changes.
+  // Derived classes may override this method directly to handle additional
+  // properties (e.g. LocalScope) without adding a new virtual per
+  // architecture variant.
+  virtual bool hasPhysRegProperty(MCRegister PhysReg,
+                                  PhysRegProperty Prop) const {
+    switch (Prop) {
+    case PhysRegProperty::Simplifiable:
+      return isSimplifiableReservedReg(PhysReg);
+    case PhysRegProperty::Sticky:
+      return isReservedStickyReg(PhysReg);
+    case PhysRegProperty::LocalScope:
+      return false;
+    }
+    llvm_unreachable("Unknown PhysRegProperty");
+  }
+
   virtual Register getStackPointerRegister() const = 0;
   /// Returns a TargetRegisterClass used for GPR RegClass.
   virtual const TargetRegisterClass *

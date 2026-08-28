@@ -1481,14 +1481,17 @@ void RegLiveRangeTracker::analyze(MachineBasicBlock &MBB,
   // Non-virtualizable ranges bypass RC computation and are kept as-is.
   computeRegisterClassesAndFilter();
 
-  // When simplification is not enabled, discard non-virtualizable ranges
-  // entirely so they neither appear in the live range list nor inflate
-  // AvailablePhysRegs in the subsequent finalization step.
-  if (!TrackImplicitRanges) {
+  // Discard non-virtualizable ranges unless their base register has the
+  // configured property. Ranges without the property are dropped so they
+  // neither appear in the live range list nor inflate AvailablePhysRegs.
+  {
     SmallVector<RegLiveRange, 16> Filtered;
-    for (RegLiveRange &LR : LiveRanges)
-      if (LR.isVirtualizable())
+    for (RegLiveRange &LR : LiveRanges) {
+      if (LR.isVirtualizable() ||
+          (ImplicitRangesProperty &&
+           TRI->hasPhysRegProperty(LR.getBaseReg(), *ImplicitRangesProperty)))
         Filtered.push_back(std::move(LR));
+    }
     LiveRanges = std::move(Filtered);
   }
 
