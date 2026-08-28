@@ -89,7 +89,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova m0, #-20 // Delay Slot 4
 ; CHECK-NEXT:    mova m0, #36; paddb [p3], m0 // Delay Slot 3
-; CHECK-NEXT:    lda r20, [p3], m0 // Delay Slot 2
+; CHECK-NEXT:    lda r22, [p3], m0 // Delay Slot 2
 ; CHECK-NEXT:    lda r24, [p3, #0] // Delay Slot 1
 ; CHECK-NEXT:  // %bb.6: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
 ; CHECK-NEXT:    ne r4, r4, r16
@@ -104,7 +104,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    mova m0, #-104; paddb [p3], m0
 ; CHECK-NEXT:    lda r4, [p3], m0
 ; CHECK-NEXT:    lda.u8 r28, [p3], #1; mov m0, #131
-; CHECK-NEXT:    lda.s8 r22, [p3], m0
+; CHECK-NEXT:    lda.s8 r20, [p3], m0
 ; CHECK-NEXT:    lda m0, [p3], #-8
 ; CHECK-NEXT:    lda dn0, [p3], #-8
 ; CHECK-NEXT:    lda dj0, [p3], #12
@@ -118,21 +118,21 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    lda r26, [p3], m1
 ; CHECK-NEXT:    lda m1, [p3], #-8
 ; CHECK-NEXT:    lda dn1, [p3], #-8; movx crupsmode, #0
-; CHECK-NEXT:    lda dj1, [p3], #12; movx crsrsmode, #0; mov r3, #2
-; CHECK-NEXT:    lda dn5, [p3], #-8; lshl r5, r20, r3; mov m2, #32
-; CHECK-NEXT:    lda dj5, [p3], m2; lshl r24, r24, r3
+; CHECK-NEXT:    lda dj1, [p3], #12; movx crsrsmode, #0; mov r1, #2
+; CHECK-NEXT:    lda dn5, [p3], #-8; lshl r5, r22, r1; mov m2, #32
+; CHECK-NEXT:    lda dj5, [p3], m2; lshl r24, r24, r1
 ; CHECK-NEXT:    lda m2, [p3], #-8; add r24, r5, r24
 ; CHECK-NEXT:    lda dn2, [p3], #-8; geu r5, r16, r18
 ; CHECK-NEXT:    lda dj2, [p3], #12; movx r16, #0; mov dj3, #-158
-; CHECK-NEXT:    lda dn6, [p3], #-8; sub r16, r16, r20; mov dc3, #0
-; CHECK-NEXT:    lda.s8 r1, [p3, dj3]; lshl r16, r16, r3; mov p6, p5
-; CHECK-NEXT:    mova r18, #9; movs dc6, dc3; lshl r20, r5, r28; mov m3, r24
+; CHECK-NEXT:    lda dn6, [p3], #-8; sub r16, r16, r22; mov dc3, #0
+; CHECK-NEXT:    lda.s8 r3, [p3, dj3]; lshl r16, r16, r1; mov p6, p5
+; CHECK-NEXT:    mova r18, #9; movs dc6, dc3; lshl r22, r5, r28; mov m3, r24
 ; CHECK-NEXT:    mova r24, #256; movs dc2, dc3; lshl r18, r30, r18; mov dc5, dc3
-; CHECK-NEXT:    mova r16, #7; paddb [p1], m3; or r8, r18, r24; vbcst.32 x0, r20; movs m3, r16
-; CHECK-NEXT:    mova r10, #264; movs dc1, dc3; lshl r28, r26, r16; mov s0, r22
+; CHECK-NEXT:    mova r16, #7; paddb [p1], m3; or r8, r18, r24; vbcst.32 x0, r22; movs m3, r16
+; CHECK-NEXT:    mova r10, #264; movs dc1, dc3; lshl r28, r26, r16; mov s0, r20
 ; CHECK-NEXT:    mova r16, #16; movs p2, p1; add r18, r26, #-1; mov r30, #63
 ; CHECK-NEXT:    padda [p2], m3; movs dc0, dc3; or r24, r0, r0; mov m3, r28
-; CHECK-NEXT:    lda dj6, [p3, #0]; movs p3, p4; or r12, r8, r5; mov s1, r1
+; CHECK-NEXT:    lda dj6, [p3, #0]; movs p3, p4; or r12, r8, r5; mov s1, r3
 ; CHECK-NEXT:  .LBB0_8: // %for.body.i68
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_9 Depth 2
