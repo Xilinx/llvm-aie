@@ -913,6 +913,11 @@ static bool findUnmergeOrigin(MachineInstr &ConcatI, const unsigned UseOpIdx,
       }
       UnmergeDefReg = IncomingReg;
       UnmergeI = IncomingMI;
+      // Record the PHI's actual incoming predecessor block for this operand.
+      // The unmerge source may be defined in a different block (e.g. an inner
+      // loop), so we must use this predecessor when rebuilding the PHI rather
+      // than the unmerge source's definition block.
+      MatchData.UnmergeIncomingMBB = MBB;
     }
     return {UnmergeI, UnmergeDefReg};
   };
@@ -1025,10 +1030,15 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
   NewPHI->addOperand(MachineOperand::CreateMBB(MatchInfo.NewConcatMBB));
 
   // Add second PHI operand (unmerge Components).
+  // The incoming block must be the PHI's actual CFG predecessor for this
+  // operand (captured in findUnmergeOrigin), not the block where the unmerge
+  // source happens to be defined. These can differ when the value is produced
+  // in a nested block (e.g. an inner loop) and reaches the PHI through a
+  // different predecessor.
+  assert(MatchInfo.UnmergeIncomingMBB &&
+         "Missing PHI predecessor block for unmerge operand");
   NewPHI.addUse(*MatchInfo.UnmergeSourceReg);
-  MachineBasicBlock *UnmergeMBB =
-      MRI.getVRegDef(*MatchInfo.UnmergeSourceReg)->getParent();
-  NewPHI->addOperand(MachineOperand::CreateMBB(UnmergeMBB));
+  NewPHI->addOperand(MachineOperand::CreateMBB(MatchInfo.UnmergeIncomingMBB));
   LLVM_DEBUG(dbgs() << "Created New Instruction " << *NewPHI.getInstr());
   Observer.erasingInstr(ConcatI);
   ConcatI.eraseFromParent();
