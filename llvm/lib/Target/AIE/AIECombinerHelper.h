@@ -40,6 +40,11 @@ struct AIEConcatUnmergeCombineMatchData {
   // PHI component of the backedge
   // Register for the PHI Source operand 2 sitting in the backedge path.
   std::optional<Register> UnmergeSourceReg;
+
+  // The PHI incoming block associated with the unmerge (back-edge) operand.
+  // This is the actual CFG predecessor of the PHI for that operand, which is
+  // not necessarily the block where the unmerge source is defined.
+  MachineBasicBlock *UnmergeIncomingMBB = nullptr;
 };
 
 /// The mask is represented by a sawtooth function F with Period, Height and
