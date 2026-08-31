@@ -1,0 +1,67 @@
+# Crash when aggressive realloc de-allocates a register that is live-through an
+# empty loop, and a subsequent loop defines that same register with a
+# high-latency instruction: getHighOutputLatencyRegs then calls VRM->getPhys()
+# on the now-unmapped VReg and feeds NoRegister to MCRegAliasIterator.
+#
+# %2 and %3 are live-through bb.1, which has no renaming candidates, so nothing
+# re-assigns them before bb.3 is processed. %3 is defined in bb.3 by a mayLoad
+# instruction, which is what triggers the unguarded lookup.
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# XFAIL: *
+# RUN: llc -mtriple=aie2ps -start-before=greedy --stop-after=virtregrewriter \
+# RUN:   --aie-aggressive-realloc -aie-gpr-realloc %s -o - | FileCheck %s
+
+---
+name:            waw_livethrough_crash
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+noPhis:          true
+isSSA:           false
+noVRegs:         false
+registers:
+  - { id: 0, class: mlockid_reg }
+  - { id: 1, class: ep }
+  - { id: 2, class: vec512 }
+  - { id: 3, class: vec512 }
+  - { id: 4, class: mlockid_reg }
+  - { id: 5, class: vec512 }
+body:             |
+  bb.0:
+    successors: %bb.1
+
+    %0:mlockid_reg = MOV_RLC_imm11_pseudo 0
+    %2:vec512 = VBCST_32 %0
+    %1:ep = MOV_PD_imm11_pseudo 0
+    undef %3.sub_256_lo:vec512 = COPY %2.sub_256_lo
+    %4:mlockid_reg = MOV_RLC_imm11_pseudo 1
+
+  bb.1:
+    successors: %bb.1, %bb.2
+
+    PseudoLoopEnd <mcsymbol .L_LEnd1>, %bb.1
+    PseudoJ_jump_imm %bb.2
+
+  bb.2:
+    successors: %bb.3
+
+  bb.3:
+    successors: %bb.3, %bb.4
+
+    %3.sub_256_hi:vec512 = VLD_w_idx_imm_pseudo %1, 0
+    %5:vec512 = VSHIFT %3, %2, %4
+    VST_dmw_sts_w_st_idx_imm %5.sub_256_lo, %1, 0
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
+    PseudoJ_jump_imm %bb.4
+
+  bb.4:
+    PseudoRET implicit $lr
+...
