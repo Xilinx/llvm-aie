@@ -888,6 +888,14 @@ std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
       if (!IsHighLatInstrOperand())
         continue;
 
+      // AggressiveReAlloc de-allocates the live-through registers of every
+      // loop it processes and leaves them for the greedy run that follows this
+      // pass. A later loop can therefore define a register that currently
+      // holds no physreg, which then classifies as neither high nor low
+      // latency. It cannot become a candidate here either, see isWorthRenaming.
+      if (!VRM->hasPhys(Reg))
+        continue;
+
       const MCRegister AssignedPhysReg = VRM->getPhys(Reg);
       for (MCRegAliasIterator AI(AssignedPhysReg, TRI, true); AI.isValid();
            ++AI)
