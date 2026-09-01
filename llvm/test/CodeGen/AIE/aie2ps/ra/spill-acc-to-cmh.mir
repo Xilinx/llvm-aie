@@ -8,7 +8,7 @@
 # RUN: llc -mtriple=aie2ps -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter %s -o - | FileCheck %s
 
 ---
-# 10 live eCML: 4 mem spills.
+# 10 live eCML: 4 park in cmh via COPY (cml2/cml3 held as scratch), no mem spill.
 name:            spill_acc_overflow_to_cmh
 alignment:       16
 legalized:       true
@@ -20,13 +20,13 @@ body:             |
   ; CHECK-NEXT:   liveins: $r13, $x0, $x1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $cmh0 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.1, implicit $sp :: (store (s1024) into %stack.1, align 64)
+  ; CHECK-NEXT:   renamable $cmh1 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.2, implicit $sp :: (store (s1024) into %stack.2, align 64)
+  ; CHECK-NEXT:   renamable $cmh2 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.3, implicit $sp :: (store (s1024) into %stack.3, align 64)
+  ; CHECK-NEXT:   renamable $cmh3 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml4 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
   ; CHECK-NEXT:   renamable $cml5 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
   ; CHECK-NEXT:   renamable $cml6 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
@@ -36,14 +36,14 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $cml0, $cml1, $cml4, $cml5, $cml6, $cml7, $r13
+  ; CHECK-NEXT:   liveins: $cmh0, $cmh1, $cmh2, $cmh3, $cml0, $cml1, $cml4, $cml5, $cml6, $cml7, $r13
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $cml2 = VLDA_CM_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.1, implicit $sp :: (load (s1024) from %stack.1, align 64)
+  ; CHECK-NEXT:   renamable $cml2 = COPY renamable $cmh0
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh1
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.2, implicit $sp :: (load (s1024) from %stack.2, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh2
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.3, implicit $sp :: (load (s1024) from %stack.3, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh3
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, renamable $cml4, $r13
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, renamable $cml5, $r13
@@ -83,7 +83,7 @@ body:             |
     PseudoJ_jump_imm %bb.1
 ...
 
-# 12 spills.
+# 18 live eCML: 8 go to cmh, 6 to cml (cml2/cml3 scratch), the other 4 to stack.
 ---
 name:            spill_acc_exhaust_to_memory
 alignment:       16
@@ -104,21 +104,21 @@ body:             |
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
   ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.3, implicit $sp :: (store (s1024) into %stack.3, align 64)
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.4, implicit $sp :: (store (s1024) into %stack.4, align 64)
+  ; CHECK-NEXT:   renamable $cmh4 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.5, implicit $sp :: (store (s1024) into %stack.5, align 64)
+  ; CHECK-NEXT:   renamable $cmh5 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.6, implicit $sp :: (store (s1024) into %stack.6, align 64)
+  ; CHECK-NEXT:   renamable $cmh6 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.7, implicit $sp :: (store (s1024) into %stack.7, align 64)
+  ; CHECK-NEXT:   renamable $cmh7 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.8, implicit $sp :: (store (s1024) into %stack.8, align 64)
+  ; CHECK-NEXT:   renamable $cmh0 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.9, implicit $sp :: (store (s1024) into %stack.9, align 64)
+  ; CHECK-NEXT:   renamable $cmh1 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.10, implicit $sp :: (store (s1024) into %stack.10, align 64)
+  ; CHECK-NEXT:   renamable $cmh2 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml0 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
-  ; CHECK-NEXT:   VST_CM_SPILL killed renamable $cml0, %stack.11, implicit $sp :: (store (s1024) into %stack.11, align 64)
+  ; CHECK-NEXT:   renamable $cmh3 = COPY killed renamable $cml0
   ; CHECK-NEXT:   renamable $cml4 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
   ; CHECK-NEXT:   renamable $cml5 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
   ; CHECK-NEXT:   renamable $cml6 = VMUL_vmul_half_vmul_cm_half_core_X_X $x0, $x1, $r13
@@ -128,7 +128,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $cml0, $cml1, $cml4, $cml5, $cml6, $cml7, $r13
+  ; CHECK-NEXT:   liveins: $cmh0, $cmh1, $cmh2, $cmh3, $cmh4, $cmh5, $cmh6, $cmh7, $cml0, $cml1, $cml4, $cml5, $cml6, $cml7, $r13
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $cml2 = VLDA_CM_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
   ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.1, implicit $sp :: (load (s1024) from %stack.1, align 64)
@@ -137,21 +137,21 @@ body:             |
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
   ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.3, implicit $sp :: (load (s1024) from %stack.3, align 64)
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.4, implicit $sp :: (load (s1024) from %stack.4, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh4
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.5, implicit $sp :: (load (s1024) from %stack.5, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh5
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.6, implicit $sp :: (load (s1024) from %stack.6, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh6
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.7, implicit $sp :: (load (s1024) from %stack.7, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh7
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.8, implicit $sp :: (load (s1024) from %stack.8, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh0
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.9, implicit $sp :: (load (s1024) from %stack.9, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh1
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.10, implicit $sp :: (load (s1024) from %stack.10, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh2
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
-  ; CHECK-NEXT:   renamable $cml3 = VLDA_CM_SPILL %stack.11, implicit $sp :: (load (s1024) from %stack.11, align 64)
+  ; CHECK-NEXT:   renamable $cml3 = COPY renamable $cmh3
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, killed renamable $cml3, $r13
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, renamable $cml4, $r13
   ; CHECK-NEXT:   renamable $cml2 = VADD_vacc_half killed renamable $cml2, renamable $cml5, $r13

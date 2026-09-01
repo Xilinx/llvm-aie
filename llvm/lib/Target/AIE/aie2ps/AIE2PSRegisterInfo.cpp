@@ -507,6 +507,11 @@ AIE2PSRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
   if (AIE2PS::eSRegClass.hasSubClassEq(RC))
     return &AIE2PS::spill_eS_to_eRRegClass;
 
+  // Widen eCML to the full acc bank so fp-acc overflow parks in cmh, not stack.
+  // TODO: extend to VEC1024
+  if (AIE2PS::ACC1024RegClass.hasSubClassEq(RC))
+    return &AIE2PS::ACC1024RegClass;
+
   return RC;
 }
 
