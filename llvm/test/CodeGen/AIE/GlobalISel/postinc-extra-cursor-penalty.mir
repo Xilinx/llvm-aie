@@ -42,12 +42,11 @@ body:             |
   ; COMBINE-NEXT:   %p:_(p0) = G_PHI %base(p0), %bb.0, %next(p0), %bb.1
   ; COMBINE-NEXT:   %i:_(s32) = G_PHI %n(s32), %bb.0, %inext(s32), %bb.1
   ; COMBINE-NEXT:   %off1:_(s20) = G_CONSTANT i20 4
-  ; COMBINE-NEXT:   %p1:_(p0) = G_PTR_ADD %p, %off1(s20)
-  ; COMBINE-NEXT:   %off2:_(s20) = G_CONSTANT i20 4
-  ; COMBINE-NEXT:   %v1:_(s32), %p2:_(p0) = G_AIE_POSTINC_LOAD %p1, %off2(s20) :: (load (s32))
-  ; COMBINE-NEXT:   %v2:_(s32) = G_LOAD %p2(p0) :: (load (s32))
-  ; COMBINE-NEXT:   %off3:_(s20) = G_CONSTANT i20 4
-  ; COMBINE-NEXT:   %v3:_(s32) = G_AIE_OFFSET_LOAD %p2(p0), %off3(s20) :: (load (s32))
+  ; COMBINE-NEXT:   %v1:_(s32) = G_AIE_OFFSET_LOAD %p(p0), %off1(s20) :: (load (s32))
+  ; COMBINE-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; COMBINE-NEXT:   %v2:_(s32) = G_AIE_OFFSET_LOAD %p(p0), [[C]](s20) :: (load (s32))
+  ; COMBINE-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
+  ; COMBINE-NEXT:   %v3:_(s32) = G_AIE_OFFSET_LOAD %p(p0), [[C1]](s20) :: (load (s32))
   ; COMBINE-NEXT:   %d0:_(s20) = G_CONSTANT i20 1
   ; COMBINE-NEXT:   %d1:_(s20) = G_CONSTANT i20 2
   ; COMBINE-NEXT:   %d2:_(s20) = G_CONSTANT i20 3
@@ -77,11 +76,9 @@ body:             |
   ; ISEL-NEXT: {{  $}}
   ; ISEL-NEXT:   %p:ep = PHI %base, %bb.0, %next, %bb.1
   ; ISEL-NEXT:   %i:mlockid_reg = PHI %n, %bb.0, %inext, %bb.1
-  ; ISEL-NEXT:   %off1:em = MOV_PD_imm11_pseudo 4
-  ; ISEL-NEXT:   %p1:ep = PADD_mod_pseudo %p, %off1
-  ; ISEL-NEXT:   %v1:mlockid_reg, %p2:ep = LDA_dms_lda_scalar_ld_pstm_nrm_imm %p1, 4 :: (load (s32))
-  ; ISEL-NEXT:   %v2:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm %p2, 0 :: (load (s32))
-  ; ISEL-NEXT:   %v3:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm %p2, 4 :: (load (s32))
+  ; ISEL-NEXT:   %v1:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm %p, 4 :: (load (s32))
+  ; ISEL-NEXT:   %v2:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm %p, 8 :: (load (s32))
+  ; ISEL-NEXT:   %v3:mlockid_reg = LDA_dms_lda_scalar_ld_idx_imm %p, 12 :: (load (s32))
   ; ISEL-NEXT:   %d0:em = MOV_PD_imm11_pseudo 1
   ; ISEL-NEXT:   %d1:edj = MOV_PD_imm11_pseudo 2
   ; ISEL-NEXT:   %d2:edn = MOV_PD_imm11_pseudo 3
