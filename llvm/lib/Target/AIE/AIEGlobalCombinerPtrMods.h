@@ -160,6 +160,11 @@ class PostIncCombiner : public PointerModifierCombiner {
   bool isPostIncCandidate(const MachineInstr *PtrMod,
                           const MachineRegisterInfo &MRI) const;
 
+  /// \return whether keeping this post-increment would leave the chain root
+  /// live across the chain because the loop advances it separately, forcing a
+  /// copy of it on every iteration.
+  bool chainingForcesExtraCursor() const;
+
   bool UserIntrinsic = false;
 
 protected:
