@@ -998,6 +998,16 @@ bool llvm::matchConcatUnmergePhis(MachineInstr &ConcatI,
 
   assert(MatchInfo.NewConcatMBB);
   assert(MatchInfo.UnmergeSourceReg);
+
+  // The transformation rebuilds a single wide value from the concat's
+  // sub-vectors and feeds it through a PHI whose back-edge value is the
+  // G_UNMERGE source. This is only valid if the concat's sub-vectors exactly
+  // reconstruct that source, i.e. the concat output type matches the unmerge
+  // source type.
+  const LLT ConcatDstTy = MRI.getType(ConcatI.getOperand(0).getReg());
+  if (ConcatDstTy != MRI.getType(*MatchInfo.UnmergeSourceReg))
+    return false;
+
   return true;
 }
 
