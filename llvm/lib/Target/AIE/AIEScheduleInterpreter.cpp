@@ -286,7 +286,13 @@ DenseMap<unsigned, AIE::LivenessVector> AIEScheduleInterpreter::buildLiveLanes(
         LiveLanesByLRIndex[Event.LRIndex][ModuloCycle] |= M;
 
         // If this write uses a bypass, mark bypass write one cycle earlier.
-        if (Event.ForwardingClass != 0) {
+        // For dead ranges (no uses) the bypassed value has no reader, so the
+        // bypass write occupancy contributes no real constraint and is skipped.
+        // Without this, two dead writes to the same scarce register with
+        // adjacent issue cycles create an artificial interference through the
+        // bypass write slot that prevents both from being allocated.
+        if (Event.ForwardingClass != 0 &&
+            Tracker[Event.LRIndex].getNumUses() > 0) {
           const int BypassWriteCycle = C - 1;
           if (BypassWriteCycle >= 0) {
             const int BypassModuloCycle = BypassWriteCycle % II;
