@@ -85,3 +85,58 @@ body:             |
   bb.4:
     PseudoRET implicit $lr
 ...
+
+# Negative test: the G_UNMERGE source (%big, <32 x s32>) is wider than the
+# G_CONCAT_VECTORS output (%concat, <8 x s32>). The concat's sub-vectors only
+# reconstruct the first two lanes of the unmerge source, so rebuilding a wide
+# value from them would not cover the source register. The combine must bail
+# out instead of building an ill-formed G_CONCAT_VECTORS (which previously
+# triggered an assertion in buildMergeLikeInstr).
+
+---
+name:            concat_narrower_than_unmerge_source
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: concat_narrower_than_unmerge_source
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   G_BR %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(<4 x s32>) = G_PHI [[DEF]](<4 x s32>), %bb.0, %3(<4 x s32>), %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(<4 x s32>) = G_PHI [[DEF1]](<4 x s32>), %bb.0, %3(<4 x s32>), %bb.1
+  ; CHECK-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[PHI]](<4 x s32>), [[PHI1]](<4 x s32>)
+  ; CHECK-NEXT:   [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[DEF3:%[0-9]+]]:_(s1) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   G_BRCOND [[DEF3]](s1), %bb.1
+  ; CHECK-NEXT:   G_BR %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s32>)
+  bb.0:
+    successors: %bb.1
+
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<4 x s32>) = G_IMPLICIT_DEF
+    G_BR %bb.1
+
+  bb.1:
+    successors: %bb.1, %bb.2
+
+    %2:_(<4 x s32>) = G_PHI %0(<4 x s32>), %bb.0, %5(<4 x s32>), %bb.1
+    %3:_(<4 x s32>) = G_PHI %1(<4 x s32>), %bb.0, %6(<4 x s32>), %bb.1
+    %4:_(<8 x s32>) = G_CONCAT_VECTORS %2(<4 x s32>), %3(<4 x s32>)
+    %10:_(<32 x s32>) = G_IMPLICIT_DEF
+    %5:_(<4 x s32>), %6:_(<4 x s32>), %7:_(<4 x s32>), %8:_(<4 x s32>), %9:_(<4 x s32>), %11:_(<4 x s32>), %12:_(<4 x s32>), %13:_(<4 x s32>) = G_UNMERGE_VALUES %10(<32 x s32>)
+    %14:_(s1) = G_IMPLICIT_DEF
+    G_BRCOND %14(s1), %bb.1
+    G_BR %bb.2
+
+  bb.2:
+    PseudoRET implicit $lr, implicit %4(<8 x s32>)
+...
