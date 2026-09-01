@@ -61,13 +61,13 @@ body:             |
   ; CHECK-NEXT: Args:
   ; CHECK-NEXT:   - String:          Schedule found
   ; CHECK-NEXT:   - Pipeliner:       postpipeliner
-  ; CHECK-NEXT:   - II:              '4'
-  ; CHECK-NEXT:   - NS:              '3'
+  ; CHECK-NEXT:   - II:              '2'
+  ; CHECK-NEXT:   - NS:              '5'
   ; CHECK-NEXT:   - Loop:            bb.1.loop_body
   ; CHECK-NEXT:   - Prologue:        bb.0.preheader
   ; CHECK-NEXT:   - PrologueBundles: '8'
   ; CHECK-NEXT:   - Epilogue:        bb.2.exit
-  ; CHECK-NEXT:   - EpilogueBundles: '7'
+  ; CHECK-NEXT:   - EpilogueBundles: '8'
   ; CHECK-NEXT: ...
   bb.0.preheader:
     successors: %bb.1
