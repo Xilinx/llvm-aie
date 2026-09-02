@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "obj2yaml.h"
@@ -242,7 +245,8 @@ static void dumpSectionOffsets(const typename ELFT::Ehdr &Header,
 
   uint64_t ExpectedOffset;
   if (Header.e_phoff > 0)
-    ExpectedOffset = Header.e_phoff + Header.e_phentsize * Header.e_phnum;
+    ExpectedOffset = Header.e_phoff +
+                     static_cast<uint64_t>(Header.e_phentsize) * Header.e_phnum;
   else
     ExpectedOffset = sizeof(typename ELFT::Ehdr);
 
