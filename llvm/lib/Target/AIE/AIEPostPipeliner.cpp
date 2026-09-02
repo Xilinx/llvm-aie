@@ -1480,24 +1480,22 @@ public:
   }
 
   // Apply placement modifiers to adjust the cycle chosen for SU.
-  // Currently supports DeferNonCritical, which nudges non-critical
-  // nodes one cycle later so their earliest modulo slot stays free
-  // for critical-path nodes.
+  // DeferNonCritical nudges non-critical (EffH=0) nodes one cycle later.
   std::optional<int>
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
-    const bool ShouldDefer = llvm::is_contained(Modifiers, DeferNonCritical) &&
-                             Info[SU.NodeNum].EffectiveHeight == 0;
-    if (ShouldDefer && Earliest + 1 <= Latest) {
+    const bool ShouldDeferOne =
+        llvm::is_contained(Modifiers, DeferNonCritical) &&
+        Info[SU.NodeNum].EffectiveHeight == 0;
+    if (ShouldDeferOne && Earliest + 1 <= Latest) {
       // Try the deferred range [Earliest+1, Latest] first. If no
       // resource-free cycle exists there, fall back to the original
-      // range so the node is never left unscheduled.
+      // earliest so the node is never left unscheduled.
       auto Result = PostPipelinerStrategy::fitInInterval(
           SU, Earliest + 1, Latest, II, HR, Scoreboard);
       if (Result)
         return Result;
-      // No need to retry [Earliest+1, Latest]
       return PostPipelinerStrategy::fitInInterval(SU, Earliest, Earliest, II,
                                                   HR, Scoreboard);
     }
@@ -1546,6 +1544,83 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}, {}},
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
+
+/// Spreads independent instructions apart by deferring one instruction per
+/// run to first-fit+1, cycling through all NodeNums in scheduling order.
+/// Construction initializes state for the first run (DeferAt=0). nextRun()
+/// increments the deferred node index and returns true until all instructions
+/// have been tried. Lone-root nodes (sole Depth=0 entry point) are skipped.
+class DeferNthNodeStrategy : public MultiRunPostPipelinerStrategy {
+  unsigned DeferAt = 0;
+  const unsigned NInstr;
+  unsigned NumRoots = 0;
+
+  bool fromTop() override { return true; }
+
+  bool better(const SUnit &A, const SUnit &B) override {
+    return A.NodeNum < B.NodeNum;
+  }
+
+public:
+  std::string name() override { return "DeferNth_" + std::to_string(DeferAt); }
+
+  DeferNthNodeStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                       unsigned NInstr)
+      : MultiRunPostPipelinerStrategy(DAG, Info, Length), NInstr(NInstr) {
+    for (const SUnit &SU : DAG.SUnits)
+      if (SU.getDepth() == 0)
+        NumRoots++;
+  }
+
+  bool nextRun() override {
+    ++DeferAt;
+    return DeferAt < NInstr;
+  }
+
+  std::optional<int>
+  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
+                const AIEHazardRecognizer &HR,
+                ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
+    const bool IsLoneRoot = (SU.getDepth() == 0 && NumRoots == 1);
+    if (SU.NodeNum == DeferAt && !IsLoneRoot) {
+      // Find the first admissible cycle, then try to place the node after
+      // that first fit. The intention is to leave a gap in the resource usage
+      // that can be exploited by later stages of the pipeline.
+      // nextRun() ensures DeferAt changes only between
+      // runs, never mid-run. Falls back to the first-fit if Latest is exceeded.
+      auto FirstFit = PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest,
+                                                           II, HR, Scoreboard);
+      if (!FirstFit)
+        return std::nullopt;
+      std::optional<int> LaterFit;
+      if (*FirstFit + 1 <= Latest)
+        LaterFit = PostPipelinerStrategy::fitInInterval(
+            SU, *FirstFit + 1, Latest, II, HR, Scoreboard);
+      return LaterFit ? LaterFit : FirstFit;
+    }
+    return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
+                                                Scoreboard);
+  }
+};
+
+bool MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
+                                                    int MaxRuns) {
+  PP.resetSchedule(/*FullReset=*/true);
+  for (int Run = 0; Run < MaxRuns; ++Run) {
+    DEBUG_SUMMARY(dbgs() << "--- Strategy " << name() << " run=" << Run
+                         << " trying II=" << PP.II << "\n");
+    if (PP.scheduleWithStrategy(*this)) {
+      DEBUG_SUMMARY(dbgs() << "    Strategy " << name() << " found NS="
+                           << PP.NStages << " II=" << PP.II << "\n");
+      return true;
+    }
+    if (!nextRun())
+      break;
+    PP.resetSchedule(/*FullReset=*/false);
+  }
+  DEBUG_SUMMARY(dbgs() << "    Strategy " << name() << " failed\n");
+  return false;
+}
 
 bool PostPipelinerStrategy::isEnabled() {
   return DisabledStrategyPrefix.empty() ||
@@ -1598,6 +1673,15 @@ bool PostPipeliner::tryApproaches() {
     if (scheduleWithStrategy(Relaxed)) {
       return true;
     }
+  }
+
+  // DeferNthNode: try deferring each instruction one cycle after its first-fit
+  // slot, one instruction per run. Runs after all standard heuristics and
+  // IterCountSlackStrategy to avoid short-circuiting them.
+  {
+    DeferNthNodeStrategy S(*DAG, Info, MinLength + II, NInstr);
+    if (S.isEnabled() && S.scheduleAllRuns(*this, HeuristicRuns))
+      return true;
   }
 
   // TargetII is the OK from the user to spend some time reaching this II.
