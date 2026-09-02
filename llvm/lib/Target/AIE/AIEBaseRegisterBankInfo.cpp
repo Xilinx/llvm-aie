@@ -319,6 +319,16 @@ bool AIEBaseRegisterBankInfo::requiresGPRRegBank(const MachineInstr &MI,
   case TargetOpcode::G_SEXT:
   case TargetOpcode::G_ZEXT:
     return true;
+  case TargetOpcode::G_ICMP:
+    // Scalar and pointer comparisons are only supported on GPRs (see the
+    // G_ICMP handling in getInstrMapping).
+    return true;
+  case TargetOpcode::G_SELECT: {
+    // Pointers (and scalars) are selected on GPRs (see the G_SELECT handling
+    // in getInstrMapping). Vector selects stay on the vector bank.
+    LLT Ty = MRI.getType(MI.getOperand(0).getReg());
+    return Ty.isPointer() || (Ty.isScalar() && Ty.getSizeInBits() <= 32);
+  }
   default:
     break;
   }
@@ -329,6 +339,24 @@ bool AIEBaseRegisterBankInfo::requiresGPRRegBank(const MachineInstr &MI,
   return any_of(MRI.use_nodbg_instructions(MI.getOperand(0).getReg()),
                 [&](const MachineInstr &UseMI) {
                   return requiresGPRRegBank(UseMI, MRI, Depth + 1);
+                });
+}
+
+bool AIEBaseRegisterBankInfo::pointerLoadDefShouldBeGPR(
+    const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
+  // Loaded pointers default to the pointer bank because they are usually
+  // dereferenced. When *every* use forces the value onto a GPR (e.g. it only
+  // feeds a pointer G_SELECT / G_ICMP), keeping it on the pointer bank only
+  // introduces bridging cross-bank copies. In that case map the loaded value
+  // directly to the GPR bank instead (mirrors the G_TRUNC/G_PTRTOINT logic).
+  Register Dst = MI.getOperand(0).getReg();
+  if (!MRI.getType(Dst).isPointer())
+    return false;
+  if (MRI.use_nodbg_empty(Dst))
+    return false;
+  return all_of(MRI.use_nodbg_instructions(Dst),
+                [&](const MachineInstr &UseMI) {
+                  return requiresGPRRegBank(UseMI, MRI, 0);
                 });
 }
 
@@ -422,6 +450,13 @@ AIEBaseRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // Pointers are selected on GPRs
     if (OpSize[0] == 20)
       OpRegBankIdx = {PMI_GPR, PMI_GPR, PMI_GPR, PMI_GPR};
+    break;
+  }
+  case TargetOpcode::G_LOAD: {
+    // A loaded pointer whose every use forces it onto a GPR is mapped to the
+    // GPR bank directly, avoiding a ptr->gpr bridging copy.
+    if (pointerLoadDefShouldBeGPR(MI, MRI))
+      OpRegBankIdx[0] = PMI_GPR;
     break;
   }
   case TargetOpcode::G_FRAME_INDEX: {
