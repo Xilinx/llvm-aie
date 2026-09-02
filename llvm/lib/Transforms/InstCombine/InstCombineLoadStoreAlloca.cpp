@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1029,6 +1029,98 @@ static bool canSimplifyNullStoreOrGEP(StoreInst &SI) {
           !NullPointerIsDefined(SI.getFunction(), SI.getPointerAddressSpace()));
 }
 
+/// Optimize loads that feed trunc->inttoptr patterns on targets with
+/// non-byte-aligned pointer sizes.
+///
+/// Pattern: load iN -> trunc iM -> inttoptr ptr (where iM is pointer size)
+/// Transform: load iN -> (zext (ptrtoint (load ptr)))
+///
+/// This transformation is only applied when all uses of the load only
+/// access the low PtrSize bits, ensuring the transformation is safe.
+///
+/// Safety is verified by checking each use:
+/// - Truncations to PtrSize or smaller bits are safe
+/// - And operations with masks that don't touch upper bits are safe
+/// - Other uses are conservatively rejected
+///
+/// Note: We manually check specific patterns rather than using DemandedBits
+/// analysis because DemandedBits/SimplifyDemandedBits would modify the IR,
+/// and we need a read-only check here. This approach could be extended to
+/// handle additional safe patterns in the future (e.g., shifts, specific
+/// arithmetic operations with known ranges).
+///
+/// \returns the replacement value if optimization was applied, nullptr
+/// otherwise.
+static Value *foldLoadWithTruncIntToPtrPattern(InstCombinerImpl &IC,
+                                               LoadInst &LI) {
+  if (!LI.getType()->isIntegerTy())
+    return nullptr;
+
+  const unsigned LoadWidth = LI.getType()->getIntegerBitWidth();
+  const unsigned AS = LI.getPointerAddressSpace();
+  const DataLayout &DL = IC.getDataLayout();
+  const unsigned PtrSize = DL.getPointerSizeInBits(AS);
+
+  // Check if pattern exists: trunc to PtrSize -> inttoptr
+  bool HasPattern = false;
+  for (const User *U : LI.users()) {
+    if (const auto *Trunc = dyn_cast<TruncInst>(U)) {
+      if (Trunc->getDestTy()->getIntegerBitWidth() == PtrSize) {
+        for (const User *TU : Trunc->users()) {
+          if (isa<IntToPtrInst>(TU)) {
+            HasPattern = true;
+            break;
+          }
+        }
+      }
+    }
+    if (HasPattern)
+      break;
+  }
+
+  if (!HasPattern)
+    return nullptr;
+
+  // Safety check: verify all uses only need low PtrSize bits
+  const APInt UpperBitsMask =
+      APInt::getHighBitsSet(LoadWidth, LoadWidth - PtrSize);
+
+  for (const User *LoadUser : LI.users()) {
+    // Trunc to PtrSize or smaller is safe
+    if (const auto *T = dyn_cast<TruncInst>(LoadUser)) {
+      if (T->getDestTy()->getIntegerBitWidth() > PtrSize)
+        return nullptr; // Early return: unsafe trunc
+      continue;
+    }
+
+    // And with mask that doesn't touch upper bits is safe
+    if (const auto *And = dyn_cast<BinaryOperator>(LoadUser)) {
+      if (And->getOpcode() == Instruction::And) {
+        if (const auto *C = dyn_cast<ConstantInt>(And->getOperand(1))) {
+          if ((C->getValue() & UpperBitsMask).isZero())
+            continue; // Safe
+        }
+      }
+    }
+
+    // Other uses - conservatively reject
+    return nullptr; // Early return: unsafe use
+  }
+
+  // All checks passed - apply transformation
+  Type *PtrTy = PointerType::get(LI.getContext(), AS);
+  LoadInst *PtrLoad =
+      new LoadInst(PtrTy, LI.getPointerOperand(), LI.getName(), LI.isVolatile(),
+                   LI.getAlign(), LI.getOrdering(), LI.getSyncScopeID());
+  PtrLoad->setDebugLoc(LI.getDebugLoc());
+  PtrLoad->copyMetadata(LI);
+  IC.InsertNewInstWith(PtrLoad, LI.getIterator());
+
+  Value *PtrToInt = IC.Builder.CreatePtrToInt(
+      PtrLoad, IntegerType::get(LI.getContext(), PtrSize));
+  return IC.Builder.CreateZExt(PtrToInt, LI.getType());
+}
+
 static bool canSimplifyNullLoadOrGEP(LoadInst &LI, Value *Op) {
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
     const Value *GEPI0 = GEPI->getOperand(0);
@@ -1091,6 +1183,10 @@ Value *InstCombinerImpl::simplifyNonNullOperand(Value *V,
 }
 
 Instruction *InstCombinerImpl::visitLoadInst(LoadInst &LI) {
+  // Optimize integer loads that feed trunc->inttoptr pattern
+  if (Value *V = foldLoadWithTruncIntToPtrPattern(*this, LI))
+    return replaceInstUsesWith(LI, V);
+
   Value *Op = LI.getOperand(0);
   if (Value *Res = simplifyLoadInst(&LI, Op, SQ.getWithInstruction(&LI)))
     return replaceInstUsesWith(LI, Res);
