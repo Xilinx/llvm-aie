@@ -760,16 +760,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \p UseMI (schedule class \p UseSchedClass) for the given operand indices.
   /// The schedule classes are pre-computed by the caller; they are passed
   /// explicitly so the base implementation avoids calling getSchedClass again.
-  /// Subclasses may additionally inspect the MachineInstrs for analysis data.
   /// Returns 0 if no bypass is taken.
-  /// PLEASE NOTE: overriding this is discouraged. Instead, use itinerary reg
-  /// pairs to switch the itinerary.
-  virtual unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
-                                        const MachineInstr &DefMI,
-                                        unsigned DefSchedClass, unsigned DefIdx,
-                                        const MachineInstr &UseMI,
-                                        unsigned UseSchedClass,
-                                        unsigned UseIdx) const;
+  unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
+                                unsigned DefSchedClass, unsigned DefIdx,
+                                unsigned UseSchedClass, unsigned UseIdx) const;
 
   /// Returns the latency to be observed to preserve the ordering of aliasing
   /// memory operations.
