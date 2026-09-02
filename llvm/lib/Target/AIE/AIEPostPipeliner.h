@@ -220,6 +220,25 @@ public:
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard);
 };
 
+class PostPipeliner; // Forward declaration for scheduleAllRuns.
+
+/// Extension of PostPipelinerStrategy for heuristics that need multiple runs
+/// with per-run state. Construction initializes state for the first run.
+/// nextRun() carries state forward and returns true if another run should
+/// follow; returning false terminates the run loop.
+class MultiRunPostPipelinerStrategy : public PostPipelinerStrategy {
+public:
+  using PostPipelinerStrategy::PostPipelinerStrategy;
+  // Advance state for the next run. Returns true if another run should be
+  // attempted, false when all variations have been exhausted.
+  virtual bool nextRun() { return false; }
+
+  // Execute all runs against \p PP, up to \p MaxRuns. Resets the schedule
+  // before the first run and between subsequent runs. Returns true on the
+  // first successful schedule, false if all runs fail.
+  bool scheduleAllRuns(PostPipeliner &PP, int MaxRuns);
+};
+
 class PipelineScheduleVisitor {
 public:
   virtual ~PipelineScheduleVisitor();
@@ -233,6 +252,8 @@ public:
 };
 
 class PostPipeliner {
+  friend class MultiRunPostPipelinerStrategy;
+
   const AIEHazardRecognizer &HR;
   RegLiveRangeTracker &RegTracker;
   ScheduleDAGMI *DAG = nullptr;
