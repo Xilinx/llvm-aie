@@ -22,8 +22,6 @@ public:
   CSKYAsmBackend(const MCSubtargetInfo &STI, const MCTargetOptions &OP)
       : MCAsmBackend(llvm::endianness::little) {}
 
-  std::optional<bool> evaluateFixup(const MCFragment &, MCFixup &, MCValue &,
-                                    uint64_t &) override;
   void applyFixup(const MCFragment &, const MCFixup &, const MCValue &Target,
                   MutableArrayRef<char> Data, uint64_t Value,
                   bool IsResolved) override;
@@ -33,19 +31,20 @@ public:
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value) const override;
 
-  bool mayNeedRelaxation(unsigned Opcode, ArrayRef<MCOperand> Operands,
-                         const MCSubtargetInfo &STI) const override;
   void relaxInstruction(MCInst &Inst,
                         const MCSubtargetInfo &STI) const override;
 
-  bool fixupNeedsRelaxationAdvanced(const MCFragment &, const MCFixup &,
-                                    const MCValue &, uint64_t,
+  bool mayNeedRelaxation(const MCInst &Inst,
+                         const MCSubtargetInfo &STI) const override;
+
+  bool fixupNeedsRelaxationAdvanced(const MCFixup &, const MCValue &, uint64_t,
                                     bool) const override;
 
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
 
-  bool shouldForceRelocation(const MCFixup &Fixup, const MCValue &Target);
+  bool shouldForceRelocation(const MCFixup &Fixup,
+                             const MCValue &Target) override;
 
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;

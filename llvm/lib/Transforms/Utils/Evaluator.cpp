@@ -77,9 +77,7 @@ isSimpleEnoughValueToCommitHelper(Constant *C,
   // We don't know exactly what relocations are allowed in constant expressions,
   // so we allow &global+constantoffset, which is safe and uniformly supported
   // across targets.
-  ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
-  if (!CE)
-    return false;
+  ConstantExpr *CE = cast<ConstantExpr>(C);
   switch (CE->getOpcode()) {
   case Instruction::BitCast:
     // Bitcast is fine if the casted value is fine.
@@ -352,6 +350,13 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
       LLVM_DEBUG(dbgs() << "Found an alloca. Result: " << *InstResult << "\n");
     } else if (isa<CallInst>(CurInst) || isa<InvokeInst>(CurInst)) {
       CallBase &CB = *cast<CallBase>(&*CurInst);
+
+      // Debug info can safely be ignored here.
+      if (isa<DbgInfoIntrinsic>(CB)) {
+        LLVM_DEBUG(dbgs() << "Ignoring debug info.\n");
+        ++CurInst;
+        continue;
+      }
 
       // Cannot handle inline asm.
       if (CB.isInlineAsm()) {

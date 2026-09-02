@@ -8,13 +8,16 @@
 
 #include "PassDetail.h"
 #include "mlir/IR/Diagnostics.h"
+#include "mlir/IR/Dialect.h"
 #include "mlir/IR/SymbolTable.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser/Parser.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Support/FileUtilities.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
@@ -411,19 +414,14 @@ private:
 
 LogicalResult PassManager::runWithCrashRecovery(Operation *op,
                                                 AnalysisManager am) {
-  const bool threadingEnabled = getContext()->isMultithreadingEnabled();
   crashReproGenerator->initialize(getPasses(), op, verifyPasses);
 
   // Safely invoke the passes within a recovery context.
   LogicalResult passManagerResult = failure();
   llvm::CrashRecoveryContext recoveryContext;
-  const auto runPassesFn = [&] { passManagerResult = runPasses(op, am); };
-  if (threadingEnabled)
-    recoveryContext.RunSafelyOnThread(runPassesFn);
-  else
-    recoveryContext.RunSafely(runPassesFn);
+  recoveryContext.RunSafelyOnThread(
+      [&] { passManagerResult = runPasses(op, am); });
   crashReproGenerator->finalize(op, passManagerResult);
-
   return passManagerResult;
 }
 
@@ -445,8 +443,7 @@ makeReproducerStreamFactory(StringRef outputFile) {
 
 void printAsTextualPipeline(
     raw_ostream &os, StringRef anchorName,
-    const llvm::iterator_range<OpPassManager::pass_iterator> &passes,
-    bool pretty = false);
+    const llvm::iterator_range<OpPassManager::pass_iterator> &passes);
 
 std::string mlir::makeReproducer(
     StringRef anchorName,

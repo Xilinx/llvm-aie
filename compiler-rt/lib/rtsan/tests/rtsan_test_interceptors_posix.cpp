@@ -63,14 +63,6 @@
 #define MAYBE_APPEND_64(func) func
 #endif
 
-#if SANITIZER_INTERCEPT_FREE_SIZED
-extern "C" void free_sized(void *ptr, size_t size);
-#endif
-
-#if SANITIZER_INTERCEPT_FREE_ALIGNED_SIZED
-extern "C" void free_aligned_sized(void *ptr, size_t alignment, size_t size);
-#endif
-
 using namespace testing;
 using namespace rtsan_testing;
 using namespace std::chrono_literals;
@@ -156,6 +148,7 @@ TEST(TestRtsanInterceptors, AlignedAllocDiesWhenRealtime) {
   }
 }
 
+// free_sized and free_aligned_sized (both C23) are not yet supported
 TEST(TestRtsanInterceptors, FreeDiesWhenRealtime) {
   void *ptr_1 = malloc(1);
   void *ptr_2 = malloc(1);
@@ -167,54 +160,10 @@ TEST(TestRtsanInterceptors, FreeDiesWhenRealtime) {
   ASSERT_NE(nullptr, ptr_2);
 }
 
-#if SANITIZER_INTERCEPT_FREE_SIZED
-TEST(TestRtsanInterceptors, FreeSizedDiesWhenRealtime) {
-  void *ptr_1 = malloc(1);
-  void *ptr_2 = malloc(1);
-  ExpectRealtimeDeath([ptr_1]() { free_sized(ptr_1, 1); }, "free_sized");
-  ExpectNonRealtimeSurvival([ptr_2]() { free_sized(ptr_2, 1); });
-
-  // Prevent malloc/free pair being optimised out
-  ASSERT_NE(nullptr, ptr_1);
-  ASSERT_NE(nullptr, ptr_2);
-}
-#endif
-
-#if SANITIZER_INTERCEPT_FREE_ALIGNED_SIZED
-TEST(TestRtsanInterceptors, FreeAlignedSizedDiesWhenRealtime) {
-  if (ALIGNED_ALLOC_AVAILABLE()) {
-    void *ptr_1 = aligned_alloc(16, 32);
-    void *ptr_2 = aligned_alloc(16, 32);
-    ExpectRealtimeDeath([ptr_1]() { free_aligned_sized(ptr_1, 16, 32); },
-                        "free_aligned_sized");
-    ExpectNonRealtimeSurvival([ptr_2]() { free_aligned_sized(ptr_2, 16, 32); });
-
-    // Prevent malloc/free pair being optimised out
-    ASSERT_NE(nullptr, ptr_1);
-    ASSERT_NE(nullptr, ptr_2);
-  }
-}
-#endif
-
 TEST(TestRtsanInterceptors, FreeSurvivesWhenRealtimeIfArgumentIsNull) {
   RealtimeInvoke([]() { free(NULL); });
   ExpectNonRealtimeSurvival([]() { free(NULL); });
 }
-
-#if SANITIZER_INTERCEPT_FREE_SIZED
-TEST(TestRtsanInterceptors, FreeSizedSurvivesWhenRealtimeIfArgumentIsNull) {
-  RealtimeInvoke([]() { free_sized(NULL, 0); });
-  ExpectNonRealtimeSurvival([]() { free_sized(NULL, 0); });
-}
-#endif
-
-#if SANITIZER_INTERCEPT_FREE_ALIGNED_SIZED
-TEST(TestRtsanInterceptors,
-     FreeAlignedSizedSurvivesWhenRealtimeIfArgumentIsNull) {
-  RealtimeInvoke([]() { free_aligned_sized(NULL, 0, 0); });
-  ExpectNonRealtimeSurvival([]() { free_aligned_sized(NULL, 0, 0); });
-}
-#endif
 
 TEST(TestRtsanInterceptors, PosixMemalignDiesWhenRealtime) {
   auto Func = []() {
@@ -500,6 +449,12 @@ TEST_F(RtsanFileTest, FcntlSetFdDiesWhenRealtime) {
   close(fd);
 }
 
+TEST(TestRtsanInterceptors, CloseDiesWhenRealtime) {
+  auto Func = []() { close(0); };
+  ExpectRealtimeDeath(Func, "close");
+  ExpectNonRealtimeSurvival(Func);
+}
+
 TEST(TestRtsanInterceptors, ChdirDiesWhenRealtime) {
   auto Func = []() { chdir("."); };
   ExpectRealtimeDeath(Func, "chdir");
@@ -651,10 +606,8 @@ protected:
   }
 
   void TearDown() override {
-    const bool is_open = fcntl(fd, F_GETFD) != -1;
-    if (is_open && file != nullptr)
+    if (file != nullptr)
       fclose(file);
-
     RtsanFileTest::TearDown();
   }
 
@@ -666,16 +619,6 @@ private:
   FILE *file = nullptr;
   int fd = -1;
 };
-
-TEST_F(RtsanOpenedFileTest, CloseDiesWhenRealtime) {
-  auto Func = [this]() { close(GetOpenFd()); };
-  ExpectRealtimeDeath(Func, "close");
-}
-
-TEST_F(RtsanOpenedFileTest, CloseSurvivesWhenNotRealtime) {
-  auto Func = [this]() { close(GetOpenFd()); };
-  ExpectNonRealtimeSurvival(Func);
-}
 
 #if SANITIZER_INTERCEPT_FSEEK
 TEST_F(RtsanOpenedFileTest, FgetposDieWhenRealtime) {

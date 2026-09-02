@@ -8,6 +8,7 @@
 
 #include "hdr/signal_macros.h"
 #include "src/__support/FPUtil/FPBits.h"
+#include "src/__support/macros/sanitizer.h"
 #include "src/__support/uint128.h"
 #include "src/math/nanf128.h"
 #include "test/UnitTest/FEnvSafeTest.h"
@@ -54,8 +55,8 @@ TEST_F(LlvmLibcNanf128Test, RandomString) {
            QUIET_NAN);
 }
 
-#if defined(LIBC_ADD_NULL_CHECKS)
+#if defined(LIBC_ADD_NULL_CHECKS) && !defined(LIBC_HAS_SANITIZER)
 TEST_F(LlvmLibcNanf128Test, InvalidInput) {
-  EXPECT_DEATH([] { LIBC_NAMESPACE::nanf128(nullptr); }, WITH_SIGNAL(-1));
+  EXPECT_DEATH([] { LIBC_NAMESPACE::nanf128(nullptr); });
 }
-#endif // LIBC_ADD_NULL_CHECKS
+#endif // LIBC_HAS_ADDRESS_SANITIZER

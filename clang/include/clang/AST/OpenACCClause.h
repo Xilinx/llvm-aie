@@ -307,7 +307,7 @@ public:
   }
 
   ArrayRef<DeviceTypeArgument> getArchitectures() const {
-    return getTrailingObjects(NumArchs);
+    return getTrailingObjects<DeviceTypeArgument>(NumArchs);
   }
 
   static OpenACCDeviceTypeClause *
@@ -513,7 +513,7 @@ protected:
 
   /// Gets the entire list of expressions, but leave it to the
   /// individual clauses to expose this how they'd like.
-  ArrayRef<Expr *> getExprs() const { return Exprs; }
+  llvm::ArrayRef<Expr *> getExprs() const { return Exprs; }
 
 public:
   static bool classof(const OpenACCClause *C);
@@ -563,10 +563,10 @@ public:
   SourceLocation getQueuesLoc() const { return QueuesLoc; }
   bool hasDevNumExpr() const { return getExprs()[0]; }
   Expr *getDevNumExpr() const { return getExprs()[0]; }
-  ArrayRef<Expr *> getQueueIdExprs() {
+  llvm::ArrayRef<Expr *> getQueueIdExprs() {
     return OpenACCClauseWithExprs::getExprs().drop_front();
   }
-  ArrayRef<Expr *> getQueueIdExprs() const {
+  llvm::ArrayRef<Expr *> getQueueIdExprs() const {
     return OpenACCClauseWithExprs::getExprs().drop_front();
   }
   // If this is a plain `wait` (no parens) this returns 'false'. Else Sema/Parse
@@ -594,9 +594,11 @@ public:
   Create(const ASTContext &C, SourceLocation BeginLoc, SourceLocation LParenLoc,
          ArrayRef<Expr *> IntExprs, SourceLocation EndLoc);
 
-  ArrayRef<Expr *> getIntExprs() { return OpenACCClauseWithExprs::getExprs(); }
+  llvm::ArrayRef<Expr *> getIntExprs() {
+    return OpenACCClauseWithExprs::getExprs();
+  }
 
-  ArrayRef<Expr *> getIntExprs() const {
+  llvm::ArrayRef<Expr *> getIntExprs() const {
     return OpenACCClauseWithExprs::getExprs();
   }
 };
@@ -620,9 +622,11 @@ public:
                                    SourceLocation LParenLoc,
                                    ArrayRef<Expr *> SizeExprs,
                                    SourceLocation EndLoc);
-  ArrayRef<Expr *> getSizeExprs() { return OpenACCClauseWithExprs::getExprs(); }
+  llvm::ArrayRef<Expr *> getSizeExprs() {
+    return OpenACCClauseWithExprs::getExprs();
+  }
 
-  ArrayRef<Expr *> getSizeExprs() const {
+  llvm::ArrayRef<Expr *> getSizeExprs() const {
     return OpenACCClauseWithExprs::getExprs();
   }
 };

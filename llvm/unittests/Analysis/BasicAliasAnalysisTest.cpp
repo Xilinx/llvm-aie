@@ -66,8 +66,7 @@ protected:
 
 public:
   BasicAATest()
-      : M("BasicAATest", C), B(C), DL(DLString), TLII(M.getTargetTriple()),
-        TLI(TLII), F(nullptr) {}
+      : M("BasicAATest", C), B(C), DL(DLString), TLI(TLII), F(nullptr) {}
 };
 
 // Check that a function arg can't trivially alias a global when we're accessing
@@ -82,7 +81,8 @@ TEST_F(BasicAATest, AliasInstWithObjectOfImpreciseSize) {
 
   Value *IncomingI32Ptr = F->arg_begin();
 
-  auto *GlobalPtr = M.getOrInsertGlobal("some_global", B.getInt8Ty());
+  auto *GlobalPtr =
+      cast<GlobalVariable>(M.getOrInsertGlobal("some_global", B.getInt8Ty()));
 
   // Without sufficiently restricted linkage/an init, some of the object size
   // checking bits get more conservative.

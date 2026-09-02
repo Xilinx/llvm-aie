@@ -11,7 +11,6 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/SMLoc.h"
 #include <vector>
@@ -75,9 +74,9 @@ public:
   bool is(TokenKind K) const { return Kind == K; }
   bool isNot(TokenKind K) const { return Kind != K; }
 
-  LLVM_ABI SMLoc getLoc() const;
-  LLVM_ABI SMLoc getEndLoc() const;
-  LLVM_ABI SMRange getLocRange() const;
+  SMLoc getLoc() const;
+  SMLoc getEndLoc() const;
+  SMRange getLocRange() const;
 
   /// Get the contents of a string token (without quotes).
   StringRef getStringContents() const {
@@ -116,7 +115,7 @@ public:
     return IntVal;
   }
 
-  LLVM_ABI void dump(raw_ostream &OS) const;
+  void dump(raw_ostream &OS) const;
 };
 
 struct MCAsmMacroParameter {

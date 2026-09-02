@@ -35,14 +35,6 @@ module _Builtin_intrinsics [system] [extern_c] {
     }
   }
 
-  explicit module arm64 {
-    requires arm64
-    requires windows
-
-    header "arm64intr.h"
-    export *
-  }
-
   explicit module intel {
     requires x86
     export *
@@ -236,11 +228,6 @@ module _Builtin_stdatomic [system] {
 
 module _Builtin_stdbool [system] {
   header "stdbool.h"
-  export *
-}
-
-module _Builtin_stdcountof [system] {
-  header "stdcountof.h"
   export *
 }
 

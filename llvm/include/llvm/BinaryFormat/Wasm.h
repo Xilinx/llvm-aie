@@ -17,7 +17,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -253,7 +252,7 @@ const unsigned WASM_SYMBOL_ABSOLUTE = 0x200;
 
 #define WASM_RELOC(name, value) name = value,
 
-enum WasmRelocType : unsigned {
+enum : unsigned {
 #include "WasmRelocs.def"
 };
 
@@ -452,8 +451,6 @@ struct WasmRelocation {
   uint32_t Index;  // Index into either symbol or type index space.
   uint64_t Offset; // Offset from the start of the section.
   int64_t Addend;  // A value to add to the symbol.
-
-  WasmRelocType getType() const { return static_cast<WasmRelocType>(Type); }
 };
 
 struct WasmInitFunc {
@@ -550,10 +547,10 @@ inline bool operator==(const WasmTableType &LHS, const WasmTableType &RHS) {
   return LHS.ElemType == RHS.ElemType && LHS.Limits == RHS.Limits;
 }
 
-LLVM_ABI llvm::StringRef toString(WasmSymbolType type);
-LLVM_ABI llvm::StringRef relocTypetoString(uint32_t type);
-LLVM_ABI llvm::StringRef sectionTypeToString(uint32_t type);
-LLVM_ABI bool relocTypeHasAddend(uint32_t type);
+llvm::StringRef toString(WasmSymbolType type);
+llvm::StringRef relocTypetoString(uint32_t type);
+llvm::StringRef sectionTypeToString(uint32_t type);
+bool relocTypeHasAddend(uint32_t type);
 
 } // end namespace wasm
 } // end namespace llvm

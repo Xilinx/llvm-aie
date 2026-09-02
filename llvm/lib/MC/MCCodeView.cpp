@@ -26,10 +26,8 @@ using namespace llvm;
 using namespace llvm::codeview;
 
 void CodeViewContext::finish() {
-  if (!StrTabFragment)
-    return;
-  assert(StrTabFragment->getKind() == MCFragment::FT_Data);
-  StrTabFragment->setVarContents(StrTab);
+  if (StrTabFragment)
+    StrTabFragment->setContents(StrTab);
 }
 
 /// This is a valid number for use with .cv_loc if we've already seen a .cv_file
@@ -168,9 +166,8 @@ void CodeViewContext::emitStringTable(MCObjectStreamer &OS) {
   // somewhere else. If somebody wants two string tables in their .s file, one
   // will just be empty.
   if (!StrTabFragment) {
-    OS.newFragment();
-    StrTabFragment = OS.getCurrentFragment();
-    OS.newFragment();
+    StrTabFragment = Ctx.allocFragment<MCDataFragment>();
+    OS.insert(StrTabFragment);
   }
 
   OS.emitValueToAlignment(Align(4), 0);
@@ -445,13 +442,10 @@ MCFragment *CodeViewContext::emitDefRange(
     MCObjectStreamer &OS,
     ArrayRef<std::pair<const MCSymbol *, const MCSymbol *>> Ranges,
     StringRef FixedSizePortion) {
-  // Store `Ranges` and `FixedSizePortion` in the context, returning references,
-  // as MCCVDefRangeFragment does not own these objects.
-  FixedSizePortion = MCCtx->allocateString(FixedSizePortion);
-  auto &Saved = DefRangeStorage.emplace_back(Ranges.begin(), Ranges.end());
   // Create and insert a fragment into the current section that will be encoded
   // later.
-  auto *F = MCCtx->allocFragment<MCCVDefRangeFragment>(Saved, FixedSizePortion);
+  auto *F =
+      MCCtx->allocFragment<MCCVDefRangeFragment>(Ranges, FixedSizePortion);
   OS.insert(F);
   return F;
 }
@@ -459,8 +453,9 @@ MCFragment *CodeViewContext::emitDefRange(
 static unsigned computeLabelDiff(const MCAssembler &Asm, const MCSymbol *Begin,
                                  const MCSymbol *End) {
   MCContext &Ctx = Asm.getContext();
-  const MCExpr *BeginRef = MCSymbolRefExpr::create(Begin, Ctx),
-               *EndRef = MCSymbolRefExpr::create(End, Ctx);
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  const MCExpr *BeginRef = MCSymbolRefExpr::create(Begin, Variant, Ctx),
+               *EndRef = MCSymbolRefExpr::create(End, Variant, Ctx);
   const MCExpr *AddrDelta =
       MCBinaryExpr::create(MCBinaryExpr::Sub, EndRef, BeginRef, Ctx);
   int64_t Result;
@@ -513,7 +508,8 @@ void CodeViewContext::encodeInlineLineTable(const MCAssembler &Asm,
 
   MCCVFunctionInfo *SiteInfo = getCVFunctionInfo(Frag.SiteFuncId);
 
-  SmallVector<char, 0> Buffer;
+  SmallVectorImpl<char> &Buffer = Frag.getContents();
+  Buffer.clear(); // Clear old contents if we went through relaxation.
   for (const MCCVLoc &Loc : Locs) {
     // Exit early if our line table would produce an oversized InlineSiteSym
     // record. Account for the ChangeCodeLength annotation emitted after the
@@ -606,14 +602,15 @@ void CodeViewContext::encodeInlineLineTable(const MCAssembler &Asm,
 
   compressAnnotation(BinaryAnnotationsOpCode::ChangeCodeLength, Buffer);
   compressAnnotation(std::min(EndSymLength, LocAfterLength), Buffer);
-  Frag.setVarContents(Buffer);
 }
 
 void CodeViewContext::encodeDefRange(const MCAssembler &Asm,
                                      MCCVDefRangeFragment &Frag) {
   MCContext &Ctx = Asm.getContext();
-  SmallVector<char, 0> Contents;
-  SmallVector<MCFixup, 0> Fixups;
+  SmallVectorImpl<char> &Contents = Frag.getContents();
+  Contents.clear();
+  SmallVectorImpl<MCFixup> &Fixups = Frag.getFixups();
+  Fixups.clear();
   raw_svector_ostream OS(Contents);
 
   // Compute all the sizes up front.
@@ -693,7 +690,4 @@ void CodeViewContext::encodeDefRange(const MCAssembler &Asm,
       GapStartOffset += GapSize + RangeSize;
     }
   }
-
-  Frag.setVarContents(Contents);
-  Frag.setVarFixups(Fixups);
 }

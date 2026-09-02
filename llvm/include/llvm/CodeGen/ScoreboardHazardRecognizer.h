@@ -59,7 +59,7 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
 
     const InstrStage::FuncUnits &operator[](size_t idx) const {
       // Depth is expected to be a power-of-2.
-      assert(llvm::has_single_bit(Depth) &&
+      assert(Depth && !(Depth & (Depth - 1)) &&
              "Scoreboard was not initialized properly!");
 
       return Data[(Head + idx) & (Depth-1)];

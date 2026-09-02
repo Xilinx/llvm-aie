@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
-#include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/Analysis/ScopedNoAliasAA.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -43,7 +42,6 @@
 #include "llvm/CodeGen/GlobalMerge.h"
 #include "llvm/CodeGen/GlobalMergeFunctions.h"
 #include "llvm/CodeGen/IndirectBrExpand.h"
-#include "llvm/CodeGen/InitUndef.h"
 #include "llvm/CodeGen/InterleavedAccess.h"
 #include "llvm/CodeGen/InterleavedLoadCombine.h"
 #include "llvm/CodeGen/JMCInstrumenter.h"
@@ -69,10 +67,8 @@
 #include "llvm/CodeGen/PHIElimination.h"
 #include "llvm/CodeGen/PatchableFunction.h"
 #include "llvm/CodeGen/PeepholeOptimizer.h"
-#include "llvm/CodeGen/PostRAMachineSink.h"
 #include "llvm/CodeGen/PostRASchedulerList.h"
 #include "llvm/CodeGen/PreISelIntrinsicLowering.h"
-#include "llvm/CodeGen/ProcessImplicitDefs.h"
 #include "llvm/CodeGen/RegAllocEvictionAdvisor.h"
 #include "llvm/CodeGen/RegAllocFast.h"
 #include "llvm/CodeGen/RegAllocGreedyPass.h"
@@ -172,12 +168,8 @@ public:
 
     // Target should override TM.Options.EnableIPRA in their target-specific
     // LLVMTM ctor. See TargetMachine::setGlobalISel for example.
-    if (Opt.EnableIPRA) {
+    if (Opt.EnableIPRA)
       TM.Options.EnableIPRA = *Opt.EnableIPRA;
-    } else {
-      // If not explicitly specified, use target default.
-      TM.Options.EnableIPRA |= TM.useIPRA();
-    }
 
     if (Opt.EnableGlobalISelAbort)
       TM.Options.GlobalISelAbort = *Opt.EnableGlobalISelAbort;
@@ -195,6 +187,9 @@ public:
   }
 
 protected:
+  template <typename PassT>
+  using has_required_t = decltype(std::declval<PassT &>().isRequired());
+
   template <typename PassT>
   using is_module_pass_t = decltype(std::declval<PassT &>().run(
       std::declval<Module &>(), std::declval<ModuleAnalysisManager &>()));
@@ -215,15 +210,20 @@ protected:
   class AddIRPass {
   public:
     AddIRPass(ModulePassManager &MPM, const DerivedT &PB) : MPM(MPM), PB(PB) {}
-    ~AddIRPass() { flushFPMToMPM(); }
+    ~AddIRPass() {
+      if (!FPM.isEmpty())
+        MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    }
 
     template <typename PassT>
-    void operator()(PassT &&Pass, bool Force = false,
-                    StringRef Name = PassT::name()) {
+    void operator()(PassT &&Pass, StringRef Name = PassT::name()) {
       static_assert((is_detected<is_function_pass_t, PassT>::value ||
                      is_detected<is_module_pass_t, PassT>::value) &&
                     "Only module pass and function pass are supported.");
-      if (!Force && !PB.runBeforeAdding(Name))
+      bool Required = false;
+      if constexpr (is_detected<has_required_t, PassT>::value)
+        Required = PassT::isRequired();
+      if (!PB.runBeforeAdding(Name) && !Required)
         return;
 
       // Add Function Pass
@@ -231,40 +231,16 @@ protected:
         FPM.addPass(std::forward<PassT>(Pass));
       } else {
         // Add Module Pass
-        flushFPMToMPM();
+        if (!FPM.isEmpty()) {
+          MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+          FPM = FunctionPassManager();
+        }
+
         MPM.addPass(std::forward<PassT>(Pass));
       }
     }
 
-    /// Setting this will add passes to the CGSCC pass manager.
-    void requireCGSCCOrder() {
-      if (PB.AddInCGSCCOrder)
-        return;
-      flushFPMToMPM();
-      PB.AddInCGSCCOrder = true;
-    }
-
-    /// Stop adding passes to the CGSCC pass manager.
-    /// Existing passes won't be removed.
-    void stopAddingInCGSCCOrder() {
-      if (!PB.AddInCGSCCOrder)
-        return;
-      flushFPMToMPM();
-      PB.AddInCGSCCOrder = false;
-    }
-
   private:
-    void flushFPMToMPM() {
-      if (FPM.isEmpty())
-        return;
-      if (PB.AddInCGSCCOrder) {
-        MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(
-            createCGSCCToFunctionPassAdaptor(std::move(FPM))));
-      } else {
-        MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
-      }
-      FPM = FunctionPassManager();
-    }
     ModulePassManager &MPM;
     FunctionPassManager FPM;
     const DerivedT &PB;
@@ -276,17 +252,13 @@ protected:
     AddMachinePass(ModulePassManager &MPM, const DerivedT &PB)
         : MPM(MPM), PB(PB) {}
     ~AddMachinePass() {
-      if (MFPM.isEmpty())
-        return;
-
-      FunctionPassManager FPM;
-      FPM.addPass(createFunctionToMachineFunctionPassAdaptor(std::move(MFPM)));
-      FPM.addPass(FreeMachineFunctionPass());
-      if (this->PB.AddInCGSCCOrder) {
-        MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(
-            createCGSCCToFunctionPassAdaptor(std::move(FPM))));
-      } else
+      if (!MFPM.isEmpty()) {
+        FunctionPassManager FPM;
+        FPM.addPass(
+            createFunctionToMachineFunctionPassAdaptor(std::move(MFPM)));
+        FPM.addPass(InvalidateAnalysisPass<MachineFunctionAnalysis>());
         MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+      }
     }
 
     template <typename PassT>
@@ -304,7 +276,12 @@ protected:
         MFPM.addPass(std::forward<PassT>(Pass));
       } else {
         // Add Module Pass
-        flushMFPMToMPM();
+        if (!MFPM.isEmpty()) {
+          MPM.addPass(createModuleToFunctionPassAdaptor(
+              createFunctionToMachineFunctionPassAdaptor(std::move(MFPM))));
+          MFPM = MachineFunctionPassManager();
+        }
+
         MPM.addPass(std::forward<PassT>(Pass));
       }
 
@@ -312,39 +289,7 @@ protected:
         C(Name, MFPM);
     }
 
-    /// Setting this will add passes to the CGSCC pass manager.
-    void requireCGSCCOrder() {
-      if (PB.AddInCGSCCOrder)
-        return;
-      flushMFPMToMPM();
-      PB.AddInCGSCCOrder = true;
-    }
-
-    /// Stop adding passes to the CGSCC pass manager.
-    /// Existing passes won't be removed.
-    void stopAddingInCGSCCOrder() {
-      if (!PB.AddInCGSCCOrder)
-        return;
-      flushMFPMToMPM();
-      PB.AddInCGSCCOrder = false;
-    }
-
   private:
-    void flushMFPMToMPM() {
-      if (MFPM.isEmpty())
-        return;
-
-      if (PB.AddInCGSCCOrder) {
-        MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(
-            createCGSCCToFunctionPassAdaptor(
-                createFunctionToMachineFunctionPassAdaptor(std::move(MFPM)))));
-      } else {
-        MPM.addPass(createModuleToFunctionPassAdaptor(
-            createFunctionToMachineFunctionPassAdaptor(std::move(MFPM))));
-      }
-      MFPM = MachineFunctionPassManager();
-    }
-
     ModulePassManager &MPM;
     MachineFunctionPassManager MFPM;
     const DerivedT &PB;
@@ -576,13 +521,11 @@ protected:
   /// Insert InsertedPass pass after TargetPass pass.
   /// Only machine function passes are supported.
   template <typename TargetPassT, typename InsertedPassT>
-  void insertPass(InsertedPassT &&Pass) const {
+  void insertPass(InsertedPassT &&Pass) {
     AfterCallbacks.emplace_back(
         [&](StringRef Name, MachineFunctionPassManager &MFPM) mutable {
-          if (Name == TargetPassT::name() &&
-              runBeforeAdding(InsertedPassT::name())) {
+          if (Name == TargetPassT::name())
             MFPM.addPass(std::forward<InsertedPassT>(Pass));
-          }
         });
   }
 
@@ -612,7 +555,6 @@ private:
   /// Helper variable for `-start-before/-start-after/-stop-before/-stop-after`
   mutable bool Started = true;
   mutable bool Stopped = true;
-  mutable bool AddInCGSCCOrder = false;
 };
 
 template <typename Derived, typename TargetMachineT>
@@ -629,12 +571,9 @@ Error CodeGenPassBuilder<Derived, TargetMachineT>::buildPipeline(
 
   {
     AddIRPass addIRPass(MPM, derived());
-    addIRPass(RequireAnalysisPass<MachineModuleAnalysis, Module>(),
-              /*Force=*/true);
-    addIRPass(RequireAnalysisPass<ProfileSummaryAnalysis, Module>(),
-              /*Force=*/true);
-    addIRPass(RequireAnalysisPass<CollectorMetadataAnalysis, Module>(),
-              /*Force=*/true);
+    addIRPass(RequireAnalysisPass<MachineModuleAnalysis, Module>());
+    addIRPass(RequireAnalysisPass<ProfileSummaryAnalysis, Module>());
+    addIRPass(RequireAnalysisPass<CollectorMetadataAnalysis, Module>());
     addISelPasses(addIRPass);
   }
 
@@ -750,7 +689,7 @@ void CodeGenPassBuilder<Derived, TargetMachineT>::addIRPasses(
   // Before running any passes, run the verifier to determine if the input
   // coming from the front-end and/or optimizer is valid.
   if (!Opt.DisableVerify)
-    addPass(VerifierPass(), /*Force=*/true);
+    addPass(VerifierPass());
 
   // Run loop strength reduction before anything else.
   if (getOptLevel() != CodeGenOptLevel::None && !Opt.DisableLSR) {
@@ -874,9 +813,6 @@ void CodeGenPassBuilder<Derived, TargetMachineT>::addISelPrepare(
     AddIRPass &addPass) const {
   derived().addPreISel(addPass);
 
-  if (Opt.RequiresCodeGenSCCOrder)
-    addPass.requireCGSCCOrder();
-
   addPass(CallBrPreparePass());
   // Add both the safe stack and the stack protection passes: each of them will
   // only protect functions that have corresponding attributes.
@@ -890,7 +826,7 @@ void CodeGenPassBuilder<Derived, TargetMachineT>::addISelPrepare(
   // All passes which modify the LLVM IR are now complete; run the verifier
   // to ensure that the IR is valid.
   if (!Opt.DisableVerify)
-    addPass(VerifierPass(), /*Force=*/true);
+    addPass(VerifierPass());
 }
 
 template <typename Derived, typename TargetMachineT>

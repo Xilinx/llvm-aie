@@ -23,7 +23,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Caching.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TargetParser/Triple.h"
 #include <mutex>
@@ -35,9 +34,9 @@ enum CGDataSectKind {
 #include "llvm/CGData/CodeGenData.inc"
 };
 
-LLVM_ABI std::string getCodeGenDataSectionName(CGDataSectKind CGSK,
-                                               Triple::ObjectFormatType OF,
-                                               bool AddSegmentInfo = true);
+std::string getCodeGenDataSectionName(CGDataSectKind CGSK,
+                                      Triple::ObjectFormatType OF,
+                                      bool AddSegmentInfo = true);
 
 enum class CGDataKind {
   Unknown = 0x0,
@@ -48,7 +47,7 @@ enum class CGDataKind {
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/StableFunctionMergingMap)
 };
 
-LLVM_ABI const std::error_category &cgdata_category();
+const std::error_category &cgdata_category();
 
 enum class cgdata_error {
   success = 0,
@@ -64,7 +63,7 @@ inline std::error_code make_error_code(cgdata_error E) {
   return std::error_code(static_cast<int>(E), cgdata_category());
 }
 
-class LLVM_ABI CGDataError : public ErrorInfo<CGDataError> {
+class CGDataError : public ErrorInfo<CGDataError> {
 public:
   CGDataError(cgdata_error Err, const Twine &ErrStr = Twine())
       : Err(Err), Msg(ErrStr.str()) {
@@ -131,7 +130,7 @@ class CodeGenData {
 public:
   ~CodeGenData() = default;
 
-  LLVM_ABI static CodeGenData &getInstance();
+  static CodeGenData &getInstance();
 
   /// Returns true if we have a valid outlined hash tree.
   bool hasOutlinedHashTree() {
@@ -246,8 +245,8 @@ struct StreamCacheData {
 /// \p Task represents the partition number in the parallel code generation
 /// process. \p AddStream is the callback used to add the serialized module to
 /// the stream.
-LLVM_ABI void saveModuleForTwoRounds(const Module &TheModule, unsigned Task,
-                                     AddStreamFn AddStream);
+void saveModuleForTwoRounds(const Module &TheModule, unsigned Task,
+                            AddStreamFn AddStream);
 
 /// Load the optimized bitcode module for the second codegen round.
 /// \p OrigModule is the original bitcode module.
@@ -255,18 +254,18 @@ LLVM_ABI void saveModuleForTwoRounds(const Module &TheModule, unsigned Task,
 /// process. \p Context provides the environment settings for module operations.
 /// \p IRFiles contains optimized bitcode module files needed for loading.
 /// \return A unique_ptr to the loaded Module, or nullptr if loading fails.
-LLVM_ABI std::unique_ptr<Module>
-loadModuleForTwoRounds(BitcodeModule &OrigModule, unsigned Task,
-                       LLVMContext &Context, ArrayRef<StringRef> IRFiles);
+std::unique_ptr<Module> loadModuleForTwoRounds(BitcodeModule &OrigModule,
+                                               unsigned Task,
+                                               LLVMContext &Context,
+                                               ArrayRef<StringRef> IRFiles);
 
 /// Merge the codegen data from the scratch objects \p ObjectFiles from the
 /// first codegen round.
 /// \return the combined hash of the merged codegen data.
-LLVM_ABI Expected<stable_hash>
-mergeCodeGenData(ArrayRef<StringRef> ObjectFiles);
+Expected<stable_hash> mergeCodeGenData(ArrayRef<StringRef> ObjectFiles);
 
-LLVM_ABI void warn(Error E, StringRef Whence = "");
-LLVM_ABI void warn(Twine Message, StringRef Whence = "", StringRef Hint = "");
+void warn(Error E, StringRef Whence = "");
+void warn(Twine Message, StringRef Whence = "", StringRef Hint = "");
 
 } // end namespace cgdata
 
@@ -282,9 +281,6 @@ enum CGDataVersion {
   Version1 = 1,
   // Version 2 supports the stable function merging map.
   Version2 = 2,
-  // Version 3 adds the total size of the Names in the stable function map so
-  // we can skip reading them into the memory for non-assertion builds.
-  Version3 = 3,
   CurrentVersion = CG_DATA_INDEX_VERSION
 };
 const uint64_t Version = CGDataVersion::CurrentVersion;
@@ -301,7 +297,7 @@ struct Header {
   // the new field is read correctly.
 
   // Reads a header struct from the buffer.
-  LLVM_ABI static Expected<Header> readFromBuffer(const unsigned char *Curr);
+  static Expected<Header> readFromBuffer(const unsigned char *Curr);
 };
 
 } // end namespace IndexedCGData

@@ -6,8 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/as_type.h>
-#include <clc/opencl/atomic/atomic_xchg.h>
+#include <clc/opencl/clc.h>
 
 _CLC_OVERLOAD _CLC_DEF float atomic_xchg(volatile global float *p, float val) {
   return as_float(atomic_xchg((volatile global uint *)p, as_uint(val)));

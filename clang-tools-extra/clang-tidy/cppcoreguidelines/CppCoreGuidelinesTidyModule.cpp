@@ -48,7 +48,6 @@
 #include "RvalueReferenceParamNotMovedCheck.h"
 #include "SlicingCheck.h"
 #include "SpecialMemberFunctionsCheck.h"
-#include "UseEnumClassCheck.h"
 #include "VirtualClassDestructorCheck.h"
 
 namespace clang::tidy {
@@ -132,8 +131,6 @@ public:
     CheckFactories.registerCheck<SlicingCheck>("cppcoreguidelines-slicing");
     CheckFactories.registerCheck<modernize::UseDefaultMemberInitCheck>(
         "cppcoreguidelines-use-default-member-init");
-    CheckFactories.registerCheck<UseEnumClassCheck>(
-        "cppcoreguidelines-use-enum-class");
     CheckFactories.registerCheck<misc::UnconventionalAssignOperatorCheck>(
         "cppcoreguidelines-c-copy-assignment-signature");
     CheckFactories.registerCheck<VirtualClassDestructorCheck>(
@@ -159,7 +156,6 @@ static ClangTidyModuleRegistry::Add<CppCoreGuidelinesModule>
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the CppCoreGuidelinesModule.
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 volatile int CppCoreGuidelinesModuleAnchorSource = 0;
 
 } // namespace clang::tidy

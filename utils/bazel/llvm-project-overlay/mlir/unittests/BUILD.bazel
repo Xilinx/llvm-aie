@@ -41,7 +41,6 @@ cc_test(
         "//mlir:CallOpInterfaces",
         "//mlir:FunctionInterfaces",
         "//mlir:IR",
-        "//mlir:MemRefDialect",
         "//mlir:Parser",
         "//mlir:Support",
         "//mlir/test:TestDialect",

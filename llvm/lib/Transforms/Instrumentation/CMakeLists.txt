@@ -6,8 +6,7 @@ add_llvm_component_library(LLVMInstrumentation
   DataFlowSanitizer.cpp
   GCOVProfiling.cpp
   BlockCoverageInference.cpp
-  MemProfInstrumentation.cpp
-  MemProfUse.cpp
+  MemProfiler.cpp
   MemorySanitizer.cpp
   NumericalStabilitySanitizer.cpp
   IndirectCallPromotion.cpp

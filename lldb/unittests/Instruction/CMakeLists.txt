@@ -3,8 +3,6 @@ add_lldb_unittest(EmulatorTests
   LoongArch/TestLoongArchEmulator.cpp
   RISCV/TestRISCVEmulator.cpp
 
-  LINK_COMPONENTS
-    Support
   LINK_LIBS
     lldbCore
     lldbSymbol
@@ -12,4 +10,7 @@ add_lldb_unittest(EmulatorTests
     lldbPluginInstructionARM64
     lldbPluginInstructionLoongArch
     lldbPluginInstructionRISCV
+
+  LINK_COMPONENTS
+    Support
   )

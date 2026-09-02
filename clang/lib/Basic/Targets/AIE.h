@@ -61,7 +61,6 @@ public:
       : TargetInfo(Triple) {
     NoAsmVariants = true;
     LongLongAlign = 32;
-    Int128Align = 32;
     SuitableAlign = 32;
     DoubleAlign = LongDoubleAlign = 32;
     SizeType = UnsignedInt;
@@ -102,9 +101,8 @@ public:
     return A == LangAS::Default && isTargetAddressSpace(B);
   }
 
-  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-              const TargetInfo *Aux) override {
-    TargetInfo::adjust(Diags, Opts, Aux);
+  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts) override {
+    TargetInfo::adjust(Diags, Opts);
     // Enable native half type operations when we have legal half type support
     if (hasLegalHalfType())
       Opts.NativeHalfType = true;
@@ -130,7 +128,7 @@ public:
   }
 
   ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
-    return {};
+    return std::nullopt;
   }
 
   bool validateAsmConstraint(const char *&Name,

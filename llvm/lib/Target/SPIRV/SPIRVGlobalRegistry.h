@@ -26,7 +26,6 @@
 namespace llvm {
 class SPIRVSubtarget;
 using SPIRVType = const MachineInstr;
-using StructOffsetDecorator = std::function<void(Register)>;
 
 class SPIRVGlobalRegistry : public SPIRVIRMapping {
   // Registers holding values which have types associated with them.
@@ -452,7 +451,7 @@ private:
 
   SPIRVType *getOpTypeStruct(const StructType *Ty, MachineIRBuilder &MIRBuilder,
                              SPIRV::AccessQualifier::AccessQualifier AccQual,
-                             StructOffsetDecorator Decorator, bool EmitIR);
+                             bool ExplicitLayoutRequired, bool EmitIR);
 
   SPIRVType *getOpTypePointer(SPIRV::StorageClass::StorageClass SC,
                               SPIRVType *ElemType, MachineIRBuilder &MIRBuilder,
@@ -501,13 +500,6 @@ private:
                                  MachineIRBuilder &MIRBuilder);
   bool hasBlockDecoration(SPIRVType *Type) const;
 
-  SPIRVType *
-  getOrCreateOpTypeImage(MachineIRBuilder &MIRBuilder, SPIRVType *SampledType,
-                         SPIRV::Dim::Dim Dim, uint32_t Depth, uint32_t Arrayed,
-                         uint32_t Multisampled, uint32_t Sampled,
-                         SPIRV::ImageFormat::ImageFormat ImageFormat,
-                         SPIRV::AccessQualifier::AccessQualifier AccQual);
-
 public:
   Register buildConstantInt(uint64_t Val, MachineIRBuilder &MIRBuilder,
                             SPIRVType *SpvType, bool EmitIR,
@@ -555,7 +547,6 @@ public:
                                bool IsInstSelector);
   Register getOrCreateGlobalVariableWithBinding(const SPIRVType *VarType,
                                                 uint32_t Set, uint32_t Binding,
-                                                StringRef Name,
                                                 MachineIRBuilder &MIRBuilder);
 
   // Convenient helpers for getting types with check for duplicates.
@@ -610,13 +601,12 @@ public:
                                          SPIRV::StorageClass::StorageClass SC,
                                          bool IsWritable, bool EmitIr = false);
 
-  SPIRVType *getOrCreateLayoutType(MachineIRBuilder &MIRBuilder,
-                                   const TargetExtType *T, bool EmitIr = false);
-
   SPIRVType *
-  getImageType(const TargetExtType *ExtensionType,
-               const SPIRV::AccessQualifier::AccessQualifier Qualifier,
-               MachineIRBuilder &MIRBuilder);
+  getOrCreateOpTypeImage(MachineIRBuilder &MIRBuilder, SPIRVType *SampledType,
+                         SPIRV::Dim::Dim Dim, uint32_t Depth, uint32_t Arrayed,
+                         uint32_t Multisampled, uint32_t Sampled,
+                         SPIRV::ImageFormat::ImageFormat ImageFormat,
+                         SPIRV::AccessQualifier::AccessQualifier AccQual);
 
   SPIRVType *getOrCreateOpTypeSampler(MachineIRBuilder &MIRBuilder);
 

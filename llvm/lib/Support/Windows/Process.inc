@@ -37,6 +37,11 @@
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
+#ifdef __MINGW32__
+// This ban should be lifted when MinGW 1.0+ has defined this value.
+#define _HEAPOK (-2)
+#endif
+
 using namespace llvm;
 
 Process::Pid Process::getProcessId() {

@@ -30,11 +30,11 @@ template <>
 struct DenseMapInfo<clang::tidy::RenamerClangTidyCheck::NamingCheckId> {
   using NamingCheckId = clang::tidy::RenamerClangTidyCheck::NamingCheckId;
 
-  static NamingCheckId getEmptyKey() {
+  static inline NamingCheckId getEmptyKey() {
     return {DenseMapInfo<clang::SourceLocation>::getEmptyKey(), "EMPTY"};
   }
 
-  static NamingCheckId getTombstoneKey() {
+  static inline NamingCheckId getTombstoneKey() {
     return {DenseMapInfo<clang::SourceLocation>::getTombstoneKey(),
             "TOMBSTONE"};
   }
@@ -282,8 +282,7 @@ public:
 
   bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc Loc) {
     if (const NestedNameSpecifier *Spec = Loc.getNestedNameSpecifier()) {
-      if (const auto *Decl =
-              dyn_cast_if_present<NamespaceDecl>(Spec->getAsNamespace()))
+      if (const NamespaceDecl *Decl = Spec->getAsNamespace())
         Check->addUsage(Decl, Loc.getLocalSourceRange(), SM);
     }
 

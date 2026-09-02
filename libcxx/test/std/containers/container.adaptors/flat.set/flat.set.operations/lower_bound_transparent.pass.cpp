@@ -16,7 +16,6 @@
 #include <cassert>
 #include <deque>
 #include <flat_set>
-#include <functional>
 #include <string>
 #include <utility>
 
@@ -36,7 +35,7 @@ static_assert(!CanLowerBound<NonTransparentSet>);
 static_assert(!CanLowerBound<const NonTransparentSet>);
 
 template <class KeyContainer>
-constexpr void test_one() {
+void test_one() {
   using Key = typename KeyContainer::value_type;
   using M   = std::flat_set<Key, TransparentComparator, KeyContainer>;
 
@@ -83,12 +82,9 @@ constexpr void test_one() {
   }
 }
 
-constexpr bool test() {
+void test() {
   test_one<std::vector<std::string>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test_one<std::deque<std::string>>();
+  test_one<std::deque<std::string>>();
   test_one<MinSequenceContainer<std::string>>();
   test_one<std::vector<std::string, min_allocator<std::string>>>();
 
@@ -101,24 +97,10 @@ constexpr bool test() {
     assert(it != m.end());
     assert(transparent_used);
   }
-  {
-    // LWG4239 std::string and C string literal
-    using M = std::flat_set<std::string, std::less<>>;
-    M m{"alpha", "beta", "epsilon", "eta", "gamma"};
-    auto it = m.lower_bound("beta");
-    assert(it == m.begin() + 1);
-    auto it2 = m.lower_bound("beta2");
-    assert(it2 == m.begin() + 2);
-  }
-
-  return true;
 }
 
 int main(int, char**) {
   test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

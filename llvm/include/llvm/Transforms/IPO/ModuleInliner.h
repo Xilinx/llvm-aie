@@ -12,7 +12,6 @@
 #include "llvm/Analysis/InlineAdvisor.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -33,7 +32,7 @@ public:
       : Params(Params), Mode(Mode), LTOPhase(LTOPhase){};
   ModuleInlinerPass(ModuleInlinerPass &&Arg) = default;
 
-  LLVM_ABI PreservedAnalyses run(Module &, ModuleAnalysisManager &);
+  PreservedAnalyses run(Module &, ModuleAnalysisManager &);
 
 private:
   InlineAdvisor &getAdvisor(const ModuleAnalysisManager &MAM,

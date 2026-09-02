@@ -9,25 +9,19 @@ module mlocModule
   end interface maxlocUpdate
 contains
 
-  attributes(global) subroutine maxlocPartialMaskR_32F1D(back)
+  attributes(global) subroutine maxlocPartialMaskR_32F1D()
     implicit none
-    logical, intent(in), value :: back
     real(4) :: mval
-  block
-    integer(8) :: xloc
-    call maxlocUpdate(mval, xloc, back)
-  end block
+
+    call maxlocUpdate(mval)
+
   end subroutine maxlocPartialMaskR_32F1D
 
-  attributes(device) subroutine maxlocUpdateR_32F(mval, xloc, back)
+  attributes(device) subroutine maxlocUpdateR_32F(mval)
     real(4) :: mval
-    integer(8) :: xloc
-    logical :: back
   end subroutine maxlocUpdateR_32F
 
-  attributes(device) subroutine maxlocUpdateR_64F(mval, xloc, back)
+  attributes(device) subroutine maxlocUpdateR_64F(mval)
     real(8) :: mval
-    integer(8) :: xloc
-    logical :: back
   end subroutine maxlocUpdateR_64F
 end module

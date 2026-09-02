@@ -45,7 +45,7 @@ NamespaceDecl *LookupNamespace(Sema &S, llvm::StringRef Name,
                                const DeclContext *Within = nullptr);
 
 NamedDecl *LookupNamed(Sema &S, llvm::StringRef Name,
-                       const DeclContext *Within = nullptr);
+                       const DeclContext *Within);
 
 std::string GetFullTypeName(ASTContext &Ctx, QualType QT);
 } // namespace clang

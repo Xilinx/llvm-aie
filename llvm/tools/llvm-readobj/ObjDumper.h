@@ -139,7 +139,6 @@ public:
   virtual void printSectionDetails() {}
   virtual void printArchSpecificInfo() {}
   virtual void printMemtag() {}
-  virtual void printSectionsAsSFrame(ArrayRef<std::string> Sections) {}
 
   // Only implemented for PE/COFF.
   virtual void printCOFFImports() { }
@@ -158,10 +157,8 @@ public:
                      llvm::codeview::GlobalTypeTableBuilder &GlobalCVTypes,
                      bool GHash) {}
 
-  // Only implemented for XCOFF/COFF.
-  virtual void printStringTable() {}
-
   // Only implemented for XCOFF.
+  virtual void printStringTable() {}
   virtual void printAuxiliaryHeader() {}
   virtual void printExceptionSection() {}
   virtual void printLoaderSection(bool PrintHeader, bool PrintSymbols,
@@ -190,10 +187,6 @@ public:
 
 protected:
   ScopedPrinter &W;
-
-  static std::vector<object::SectionRef>
-  getSectionRefsByNameOrIndex(const object::ObjectFile &Obj,
-                              ArrayRef<std::string> Sections);
 
 private:
   virtual void printSymbols(bool ExtraSymInfo) {}

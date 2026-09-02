@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cstddef>
 #include <mdspan>
+#include <span> // dynamic_extent
 
 #include "test_macros.h"
 

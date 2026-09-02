@@ -19,7 +19,6 @@
 #define LLVM_TRANSFORMS_SCALAR_SCALARIZER_H
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -56,7 +55,7 @@ public:
   ScalarizerPass() = default;
   ScalarizerPass(const ScalarizerPassOptions &Options) : Options(Options) {}
 
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 
   void setScalarizeVariableInsertExtract(bool Value) {
     Options.ScalarizeVariableInsertExtract = Value;
@@ -66,7 +65,7 @@ public:
 };
 
 /// Create a legacy pass manager instance of the Scalarizer pass
-LLVM_ABI FunctionPass *createScalarizerPass(
+FunctionPass *createScalarizerPass(
     const ScalarizerPassOptions &Options = ScalarizerPassOptions());
 }
 

@@ -38,7 +38,8 @@ void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
       binaryOperator(
           hasAnyOperatorName("&&", "=="),
           hasEitherOperand(ignoringImpCasts(stringLiteral().bind("assertMSG"))),
-          optionally(binaryOperator(hasEitherOperand(IsAlwaysFalseWithCast))))
+          anyOf(binaryOperator(hasEitherOperand(IsAlwaysFalseWithCast)),
+                anything()))
           .bind("assertExprRoot"),
       IsAlwaysFalse);
   auto NonConstexprFunctionCall =
@@ -51,10 +52,12 @@ void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
   auto NonConstexprCode =
       expr(anyOf(NonConstexprFunctionCall, NonConstexprVariableReference));
   auto AssertCondition =
-      expr(optionally(expr(ignoringParenCasts(anyOf(
-               AssertExprRoot, unaryOperator(hasUnaryOperand(
-                                   ignoringParenCasts(AssertExprRoot))))))),
-           unless(NonConstexprCode), unless(hasDescendant(NonConstexprCode)))
+      expr(
+          anyOf(expr(ignoringParenCasts(anyOf(
+                    AssertExprRoot, unaryOperator(hasUnaryOperand(
+                                        ignoringParenCasts(AssertExprRoot)))))),
+                anything()),
+          unless(NonConstexprCode), unless(hasDescendant(NonConstexprCode)))
           .bind("condition");
   auto Condition =
       anyOf(ignoringParenImpCasts(callExpr(

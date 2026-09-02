@@ -10,7 +10,6 @@
 #define LLVM_DEBUGINFO_PDB_PDBSYMBOLFUNC_H
 
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
-#include "llvm/Support/Compiler.h"
 
 #include "PDBSymbol.h"
 #include "PDBTypes.h"
@@ -24,7 +23,7 @@ class PDBSymbolData;
 class PDBSymbolTypeFunctionSig;
 template <typename ChildType> class IPDBEnumChildren;
 
-class LLVM_ABI PDBSymbolFunc : public PDBSymbol {
+class PDBSymbolFunc : public PDBSymbol {
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Function)
 public:
   void dump(PDBSymDumper &Dumper) const override;

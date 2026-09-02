@@ -198,7 +198,6 @@ struct FragmentCompiler {
     compile(std::move(F.InlayHints));
     compile(std::move(F.SemanticTokens));
     compile(std::move(F.Style));
-    compile(std::move(F.Documentation));
   }
 
   void compile(Fragment::IfBlock &&F) {
@@ -791,21 +790,6 @@ struct FragmentCompiler {
             C.SemanticTokens.DisabledModifiers.push_back(std::move(Kind));
         }
       });
-    }
-  }
-
-  void compile(Fragment::DocumentationBlock &&F) {
-    if (F.CommentFormat) {
-      if (auto Val =
-              compileEnum<Config::CommentFormatPolicy>("CommentFormat",
-                                                       *F.CommentFormat)
-                  .map("Plaintext", Config::CommentFormatPolicy::PlainText)
-                  .map("Markdown", Config::CommentFormatPolicy::Markdown)
-                  .map("Doxygen", Config::CommentFormatPolicy::Doxygen)
-                  .value())
-        Out.Apply.push_back([Val](const Params &, Config &C) {
-          C.Documentation.CommentFormat = *Val;
-        });
     }
   }
 

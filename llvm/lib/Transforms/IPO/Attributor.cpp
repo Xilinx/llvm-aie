@@ -242,6 +242,8 @@ Constant *
 AA::getInitialValueForObj(Attributor &A, const AbstractAttribute &QueryingAA,
                           Value &Obj, Type &Ty, const TargetLibraryInfo *TLI,
                           const DataLayout &DL, AA::RangeTy *RangePtr) {
+  if (isa<AllocaInst>(Obj))
+    return UndefValue::get(&Ty);
   if (Constant *Init = getInitialValueOfAllocation(&Obj, TLI, &Ty))
     return Init;
   auto *GV = dyn_cast<GlobalVariable>(&Obj);
@@ -793,7 +795,7 @@ isPotentiallyReachable(Attributor &A, const Instruction &FromI,
       if (isa<InvokeInst>(CB))
         return false;
 
-      Instruction *Inst = CB->getNextNode();
+      Instruction *Inst = CB->getNextNonDebugInstruction();
       Worklist.push_back(Inst);
       return true;
     };
@@ -987,13 +989,6 @@ static bool addIfNotExistent(LLVMContext &Ctx, const Attribute &Attr,
       if (!ForceReplace && isEqualOrWorse(Attr, AttrSet.getAttribute(Kind)))
         return false;
     }
-    AB.addAttribute(Attr);
-    return true;
-  }
-  if (Attr.isConstantRangeAttribute()) {
-    Attribute::AttrKind Kind = Attr.getKindAsEnum();
-    if (!ForceReplace && AttrSet.hasAttribute(Kind))
-      return false;
     AB.addAttribute(Attr);
     return true;
   }
@@ -2731,6 +2726,8 @@ void Attributor::createShallowWrapper(Function &F) {
       Function::Create(FnTy, F.getLinkage(), F.getAddressSpace(), F.getName());
   F.setName(""); // set the inside function anonymous
   M.getFunctionList().insert(F.getIterator(), Wrapper);
+  // Flag whether the function is using new-debug-info or not.
+  Wrapper->IsNewDbgInfoFormat = M.IsNewDbgInfoFormat;
 
   F.setLinkage(GlobalValue::InternalLinkage);
 
@@ -2811,6 +2808,8 @@ bool Attributor::internalizeFunctions(SmallPtrSetImpl<Function *> &FnSet,
       VMap[&Arg] = &(*NewFArgIt++);
     }
     SmallVector<ReturnInst *, 8> Returns;
+    // Flag whether the function is using new-debug-info or not.
+    Copied->IsNewDbgInfoFormat = F->IsNewDbgInfoFormat;
 
     // Copy the body of the original function to the new one
     CloneFunctionInto(Copied, F, VMap,
@@ -3028,6 +3027,8 @@ ChangeStatus Attributor::rewriteFunctionSignatures(
     OldFn->getParent()->getFunctionList().insert(OldFn->getIterator(), NewFn);
     NewFn->takeName(OldFn);
     NewFn->copyAttributesFrom(OldFn);
+    // Flag whether the function is using new-debug-info or not.
+    NewFn->IsNewDbgInfoFormat = OldFn->IsNewDbgInfoFormat;
 
     // Patch the pointer to LLVM function in debug info descriptor.
     NewFn->setSubprogram(OldFn->getSubprogram());
@@ -3619,8 +3620,6 @@ void Attributor::identifyDefaultAbstractAttributes(Function &F) {
       if (SimplifyAllLoads)
         getAssumedSimplified(IRPosition::value(I), nullptr,
                              UsedAssumedInformation, AA::Intraprocedural);
-      getOrCreateAAFor<AAInvariantLoadPointer>(
-          IRPosition::value(*LI->getPointerOperand()));
       getOrCreateAAFor<AAAddressSpace>(
           IRPosition::value(*LI->getPointerOperand()));
     } else {

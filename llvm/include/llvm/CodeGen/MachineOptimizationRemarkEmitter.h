@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/MachinePassManager.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -42,7 +41,7 @@ public:
   /// MI-specific kinds of diagnostic Arguments.
   struct MachineArgument : public DiagnosticInfoOptimizationBase::Argument {
     /// Print an entire MachineInstr.
-    LLVM_ABI MachineArgument(StringRef Key, const MachineInstr &MI);
+    MachineArgument(StringRef Key, const MachineInstr &MI);
   };
 
   static bool classof(const DiagnosticInfo *DI) {
@@ -161,11 +160,11 @@ public:
       default;
 
   /// Handle invalidation events in the new pass manager.
-  LLVM_ABI bool invalidate(MachineFunction &MF, const PreservedAnalyses &PA,
-                           MachineFunctionAnalysisManager::Invalidator &Inv);
+  bool invalidate(MachineFunction &MF, const PreservedAnalyses &PA,
+                  MachineFunctionAnalysisManager::Invalidator &Inv);
 
   /// Emit an optimization remark.
-  LLVM_ABI void emit(DiagnosticInfoOptimizationBase &OptDiag);
+  void emit(DiagnosticInfoOptimizationBase &OptDiag);
 
   /// Whether we allow for extra compile-time budget to perform more
   /// analysis to be more informative.
@@ -225,12 +224,11 @@ private:
 class MachineOptimizationRemarkEmitterAnalysis
     : public AnalysisInfoMixin<MachineOptimizationRemarkEmitterAnalysis> {
   friend AnalysisInfoMixin<MachineOptimizationRemarkEmitterAnalysis>;
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   using Result = MachineOptimizationRemarkEmitter;
-  LLVM_ABI Result run(MachineFunction &MF,
-                      MachineFunctionAnalysisManager &MFAM);
+  Result run(MachineFunction &MF, MachineFunctionAnalysisManager &MFAM);
 };
 
 /// The analysis pass
@@ -238,8 +236,7 @@ public:
 /// Note that this pass shouldn't generally be marked as preserved by other
 /// passes.  It's holding onto BFI, so if the pass does not preserve BFI, BFI
 /// could be freed.
-class LLVM_ABI MachineOptimizationRemarkEmitterPass
-    : public MachineFunctionPass {
+class MachineOptimizationRemarkEmitterPass : public MachineFunctionPass {
   std::unique_ptr<MachineOptimizationRemarkEmitter> ORE;
 
 public:

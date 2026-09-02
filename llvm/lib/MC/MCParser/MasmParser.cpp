@@ -2317,7 +2317,7 @@ bool MasmParser::parseStatement(ParseStatementInfo &Info,
     for (unsigned i = 0; i != Info.ParsedOperands.size(); ++i) {
       if (i != 0)
         OS << ", ";
-      Info.ParsedOperands[i]->print(OS, MAI);
+      Info.ParsedOperands[i]->print(OS);
     }
     OS << "]";
 
@@ -4228,7 +4228,8 @@ bool MasmParser::emitAlignTo(int64_t Alignment) {
     // Check whether we should use optimal code alignment for this align
     // directive.
     const MCSection *Section = getStreamer().getCurrentSectionOnly();
-    if (MAI.useCodeAlign(*Section)) {
+    assert(Section && "must have section to emit alignment");
+    if (Section->useCodeAlign()) {
       getStreamer().emitCodeAlignment(Align(Alignment),
                                       &getTargetParser().getSTI(),
                                       /*MaxBytesToEmit=*/0);

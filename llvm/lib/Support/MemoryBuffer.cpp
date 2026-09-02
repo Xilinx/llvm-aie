@@ -15,7 +15,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Alignment.h"
-#include "llvm/Support/AutoConvert.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -35,6 +34,9 @@
 #include <io.h>
 #endif
 
+#ifdef __MVS__
+#include "llvm/Support/AutoConvert.h"
+#endif
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -506,15 +508,15 @@ getOpenFileImpl(sys::fs::file_t FD, const Twine &Filename, uint64_t FileSize,
   }
 
 #ifdef __MVS__
-  ErrorOr<bool> NeedsConversion = needConversion(Filename.str().c_str(), FD);
-  if (std::error_code EC = NeedsConversion.getError())
+  ErrorOr<bool> NeedConversion = needzOSConversion(Filename.str().c_str(), FD);
+  if (std::error_code EC = NeedConversion.getError())
     return EC;
   // File size may increase due to EBCDIC -> UTF-8 conversion, therefore we
   // cannot trust the file size and we create the memory buffer by copying
   // off the stream.
   // Note: This only works with the assumption of reading a full file (i.e,
   // Offset == 0 and MapSize == FileSize). Reading a file slice does not work.
-  if (*NeedsConversion && Offset == 0 && MapSize == FileSize)
+  if (Offset == 0 && MapSize == FileSize && *NeedConversion)
     return getMemoryBufferForStream(FD, Filename);
 #endif
 

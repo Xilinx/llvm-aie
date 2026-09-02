@@ -19,14 +19,12 @@ add_mlir_dialect_library(MLIRVectorDialect
   MLIRDataLayoutInterfaces
   MLIRDestinationStyleOpInterface
   MLIRDialectUtils
-  MLIRIndexingMapOpInterface
   MLIRIR
   MLIRMaskableOpInterface
   MLIRMaskingOpInterface
   MLIRMemRefDialect
   MLIRSideEffectInterfaces
   MLIRTensorDialect
-  MLIRUBDialect
   MLIRValueBoundsOpInterface
   MLIRVectorInterfaces
   )

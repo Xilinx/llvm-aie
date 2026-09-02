@@ -475,16 +475,8 @@ void SafeStack::checkStackGuard(IRBuilder<> &IRB, Function &F, Instruction &RI,
       SplitBlockAndInsertIfThen(Cmp, &RI, /* Unreachable */ true, Weights, DTU);
   IRBuilder<> IRBFail(CheckTerm);
   // FIXME: respect -fsanitize-trap / -ftrap-function here?
-  const char *StackChkFailName =
-      TL.getLibcallName(RTLIB::STACKPROTECTOR_CHECK_FAIL);
-  if (!StackChkFailName) {
-    F.getContext().emitError(
-        "no libcall available for stackprotector check fail");
-    return;
-  }
-
   FunctionCallee StackChkFail =
-      F.getParent()->getOrInsertFunction(StackChkFailName, IRB.getVoidTy());
+      F.getParent()->getOrInsertFunction("__stack_chk_fail", IRB.getVoidTy());
   IRBFail.CreateCall(StackChkFail, {});
 }
 
@@ -613,13 +605,6 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
     while (!AI->use_empty()) {
       Use &U = *AI->use_begin();
       Instruction *User = cast<Instruction>(U.getUser());
-
-      // Drop lifetime markers now that this is no longer an alloca.
-      // SafeStack has already performed its own stack coloring.
-      if (User->isLifetimeStartOrEnd()) {
-        User->eraseFromParent();
-        continue;
-      }
 
       Instruction *InsertBefore;
       if (auto *PHI = dyn_cast<PHINode>(User))
@@ -806,16 +791,8 @@ bool SafeStack::run() {
     IRB.SetCurrentDebugLocation(
         DILocation::get(SP->getContext(), SP->getScopeLine(), 0, SP));
   if (SafeStackUsePointerAddress) {
-    const char *SafestackPointerAddressName =
-        TL.getLibcallName(RTLIB::SAFESTACK_POINTER_ADDRESS);
-    if (!SafestackPointerAddressName) {
-      F.getContext().emitError(
-          "no libcall available for safestack pointer address");
-      return false;
-    }
-
     FunctionCallee Fn = F.getParent()->getOrInsertFunction(
-        SafestackPointerAddressName, IRB.getPtrTy(0));
+        "__safestack_pointer_address", IRB.getPtrTy(0));
     UnsafeStackPtr = IRB.CreateCall(Fn);
   } else {
     UnsafeStackPtr = TL.getSafeStackPointerLocation(IRB);

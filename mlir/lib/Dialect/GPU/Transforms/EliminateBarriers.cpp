@@ -22,6 +22,7 @@
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/IR/Operation.h"
+#include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Debug.h"
@@ -158,7 +159,7 @@ getEffectsBefore(Operation *op,
 
   // If there is a non-structured control flow, bail.
   Region *region = op->getBlock()->getParent();
-  if (region && !region->hasOneBlock()) {
+  if (region && !llvm::hasSingleElement(region->getBlocks())) {
     addAllValuelessEffects(effects);
     return false;
   }
@@ -250,7 +251,7 @@ getEffectsAfter(Operation *op,
 
   // If there is a non-structured control flow, bail.
   Region *region = op->getBlock()->getParent();
-  if (region && !region->hasOneBlock()) {
+  if (region && !llvm::hasSingleElement(region->getBlocks())) {
     addAllValuelessEffects(effects);
     return false;
   }

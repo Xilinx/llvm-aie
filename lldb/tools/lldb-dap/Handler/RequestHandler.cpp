@@ -80,8 +80,7 @@ RunInTerminal(DAP &dap, const protocol::LaunchRequestArguments &arguments) {
 
   llvm::json::Object reverse_request = CreateRunInTerminalReverseRequest(
       arguments.configuration.program, arguments.args, arguments.env,
-      arguments.cwd, comm_file.m_path, debugger_pid,
-      arguments.console == protocol::eConsoleExternalTerminal);
+      arguments.cwd, comm_file.m_path, debugger_pid);
   dap.SendReverseRequest<LogFailureResponseHandler>("runInTerminal",
                                                     std::move(reverse_request));
 
@@ -193,7 +192,7 @@ llvm::Error BaseRequestHandler::LaunchProcess(
     // about process state changes during the launch.
     ScopeSyncMode scope_sync_mode(dap.debugger);
 
-    if (arguments.console != protocol::eConsoleInternal) {
+    if (arguments.runInTerminal) {
       if (llvm::Error err = RunInTerminal(dap, arguments))
         return err;
     } else if (launchCommands.empty()) {

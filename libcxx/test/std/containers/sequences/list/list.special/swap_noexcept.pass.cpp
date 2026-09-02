@@ -12,7 +12,7 @@
 
 // void swap(list& c)
 //     noexcept(!allocator_type::propagate_on_container_swap::value ||
-//              __is_nothrow_swappable<allocator_type>::value); // constexpr since C++26
+//              __is_nothrow_swappable<allocator_type>::value);
 //
 //  In C++17, the standard says that swap shall have:
 //     noexcept(allocator_traits<Allocator>::is_always_equal::value);
@@ -52,7 +52,7 @@ struct some_alloc2 {
   typedef std::true_type is_always_equal;
 };
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef std::list<MoveOnly> C;
     static_assert(noexcept(swap(std::declval<C&>(), std::declval<C&>())), "");
@@ -82,15 +82,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     //  if the allocators are always equal, then the swap can be noexcept
     static_assert(noexcept(swap(std::declval<C&>(), std::declval<C&>())), "");
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

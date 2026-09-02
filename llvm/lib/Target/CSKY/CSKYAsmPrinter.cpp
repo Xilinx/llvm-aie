@@ -15,7 +15,7 @@
 #include "CSKYConstantPoolValue.h"
 #include "CSKYTargetMachine.h"
 #include "MCTargetDesc/CSKYInstPrinter.h"
-#include "MCTargetDesc/CSKYMCAsmInfo.h"
+#include "MCTargetDesc/CSKYMCExpr.h"
 #include "MCTargetDesc/CSKYTargetStreamer.h"
 #include "TargetInfo/CSKYTargetInfo.h"
 #include "llvm/ADT/Statistic.h"
@@ -168,24 +168,25 @@ void CSKYAsmPrinter::emitInstruction(const MachineInstr *MI) {
 
 // Convert a CSKY-specific constant pool modifier into the associated
 // MCSymbolRefExpr variant kind.
-static CSKY::Specifier getModifierVariantKind(CSKYCP::CSKYCPModifier Modifier) {
+static CSKYMCExpr::Specifier
+getModifierVariantKind(CSKYCP::CSKYCPModifier Modifier) {
   switch (Modifier) {
   case CSKYCP::NO_MOD:
-    return CSKY::S_None;
+    return CSKYMCExpr::VK_None;
   case CSKYCP::ADDR:
-    return CSKY::S_ADDR;
+    return CSKYMCExpr::VK_ADDR;
   case CSKYCP::GOT:
-    return CSKY::S_GOT;
+    return CSKYMCExpr::VK_GOT;
   case CSKYCP::GOTOFF:
-    return CSKY::S_GOTOFF;
+    return CSKYMCExpr::VK_GOTOFF;
   case CSKYCP::PLT:
-    return CSKY::S_PLT;
+    return CSKYMCExpr::VK_PLT;
   case CSKYCP::TLSGD:
-    return CSKY::S_TLSGD;
+    return CSKYMCExpr::VK_TLSGD;
   case CSKYCP::TLSLE:
-    return CSKY::S_TLSLE;
+    return CSKYMCExpr::VK_TLSLE;
   case CSKYCP::TLSIE:
-    return CSKY::S_TLSIE;
+    return CSKYMCExpr::VK_TLSIE;
   }
   llvm_unreachable("Invalid CSKYCPModifier!");
 }
@@ -239,8 +240,8 @@ void CSKYAsmPrinter::emitMachineConstantPoolValue(
   }
 
   // Create an MCSymbol for the reference.
-  Expr = MCSpecifierExpr::create(
-      Expr, getModifierVariantKind(CCPV->getModifier()), OutContext);
+  Expr = CSKYMCExpr::create(Expr, getModifierVariantKind(CCPV->getModifier()),
+                            OutContext);
 
   OutStreamer->emitValue(Expr, Size);
 }

@@ -14,17 +14,19 @@ define i32 @foo() nounwind {
   ret i32 %1
 }
 
-define ptr @bar(ptr %retval) nounwind {
+define ptr @bar() nounwind {
 ; CHECK-LABEL: @bar(
 ; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[RETVAL:%.*]] = alloca ptr, align 4
 ; CHECK-NEXT:    br i1 true, label [[COND_TRUE:%.*]], label [[COND_FALSE:%.*]]
 ; CHECK:       cond.true:
-; CHECK-NEXT:    [[TMP1:%.*]] = load ptr, ptr [[RETVAL:%.*]], align 4
-; CHECK-NEXT:    ret ptr [[TMP1]]
+; CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[RETVAL]], align 4
+; CHECK-NEXT:    ret ptr [[TMP0]]
 ; CHECK:       cond.false:
 ; CHECK-NEXT:    ret ptr poison
 ;
 entry:
+  %retval = alloca ptr
   %0 = call i32 @llvm.objectsize.i32.p0(ptr @a, i1 false, i1 false, i1 false)
   %cmp = icmp ne i32 %0, -1
   br i1 %cmp, label %cond.true, label %cond.false

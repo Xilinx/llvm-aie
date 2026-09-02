@@ -25,7 +25,7 @@ using namespace llvm::sys;
 class DynamicLibrary::HandleSet {
   typedef std::vector<void *> HandleList;
   HandleList Handles;
-  void *Process = &Invalid;
+  void *Process = nullptr;
 
 public:
   static void *DLOpen(const char *Filename, std::string *Err);
@@ -58,7 +58,7 @@ public:
       Handles.push_back(Handle);
     } else {
 #ifndef _WIN32
-      if (Process != &Invalid) {
+      if (Process) {
         if (CanClose)
           DLClose(Process);
         if (Process == Handle)
@@ -97,11 +97,11 @@ public:
     assert(!((Order & SO_LoadedFirst) && (Order & SO_LoadedLast)) &&
            "Invalid Ordering");
 
-    if (Process == &Invalid || (Order & SO_LoadedFirst)) {
+    if (!Process || (Order & SO_LoadedFirst)) {
       if (void *Ptr = LibLookup(Symbol, Order))
         return Ptr;
     }
-    if (Process != &Invalid) {
+    if (Process) {
       // Use OS facilities to search the current binary and all loaded libs.
       if (void *Ptr = DLSym(Process, Symbol))
         return Ptr;

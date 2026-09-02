@@ -16,6 +16,7 @@
 #include "MipsELFStreamer.h"
 #include "MipsInstPrinter.h"
 #include "MipsMCAsmInfo.h"
+#include "MipsMCNaCl.h"
 #include "MipsTargetStreamer.h"
 #include "TargetInfo/MipsTargetInfo.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
@@ -28,7 +29,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/TargetParser/Triple.h"
@@ -173,7 +173,7 @@ static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,
                                       const MCTargetOptions &Options) {
   MCAsmInfo *MAI;
 
-  if (TT.isOSBinFormatCOFF())
+  if (TT.isOSWindows())
     MAI = new MipsCOFFMCAsmInfo();
   else
     MAI = new MipsELFMCAsmInfo(TT, Options);
@@ -198,8 +198,12 @@ static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
                                     std::unique_ptr<MCObjectWriter> &&OW,
                                     std::unique_ptr<MCCodeEmitter> &&Emitter) {
   MCStreamer *S;
-  S = createMipsELFStreamer(Context, std::move(MAB), std::move(OW),
-                            std::move(Emitter));
+  if (!T.isOSNaCl())
+    S = createMipsELFStreamer(Context, std::move(MAB), std::move(OW),
+                              std::move(Emitter));
+  else
+    S = createMipsNaClELFStreamer(Context, std::move(MAB), std::move(OW),
+                                  std::move(Emitter));
   return S;
 }
 
@@ -255,7 +259,7 @@ static MCInstrAnalysis *createMipsMCInstrAnalysis(const MCInstrInfo *Info) {
   return new MipsMCInstrAnalysis(Info);
 }
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMipsTargetMC() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMipsTargetMC() {
   for (Target *T : {&getTheMipsTarget(), &getTheMipselTarget(),
                     &getTheMips64Target(), &getTheMips64elTarget()}) {
     // Register the MC asm info.

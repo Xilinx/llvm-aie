@@ -16,8 +16,7 @@
 
 namespace clang::tidy::abseil {
 
-/// Finds deprecated uses of `absl::Duration` arithmetic operators and
-/// factories.
+/// Finds deprecated uses of `absl::Duration` arithmetic operators and factories.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/abseil/upgrade-duration-conversions.html

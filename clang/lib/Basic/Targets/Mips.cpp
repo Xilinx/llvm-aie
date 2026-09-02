@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips.h"
+#include "Targets.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/MacroBuilder.h"
 #include "clang/Basic/TargetBuiltins.h"
@@ -336,7 +337,7 @@ WindowsMipsTargetInfo::checkCallingConvention(CallingConv CC) const {
   case CC_X86VectorCall:
     return CCCR_Ignore;
   case CC_C:
-  case CC_DeviceKernel:
+  case CC_OpenCLKernel:
   case CC_PreserveMost:
   case CC_PreserveAll:
   case CC_Swift:

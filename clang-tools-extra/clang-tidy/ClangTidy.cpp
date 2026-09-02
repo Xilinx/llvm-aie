@@ -55,9 +55,7 @@ namespace clang::tidy {
 
 namespace {
 #if CLANG_TIDY_ENABLE_STATIC_ANALYZER
-#define ANALYZER_CHECK_NAME_PREFIX "clang-analyzer-"
-static constexpr llvm::StringLiteral AnalyzerCheckNamePrefix =
-    ANALYZER_CHECK_NAME_PREFIX;
+static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
 
 class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
 public:
@@ -353,9 +351,10 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
 static void
 setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
                              clang::AnalyzerOptions &AnalyzerOptions) {
+  StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
   for (const auto &Opt : Opts.CheckOptions) {
     StringRef OptName(Opt.getKey());
-    if (!OptName.consume_front(AnalyzerCheckNamePrefix))
+    if (!OptName.consume_front(AnalyzerPrefix))
       continue;
     // Analyzer options are always local options so we can ignore priority.
     AnalyzerOptions.Config[OptName] = Opt.getValue().Value;
@@ -420,8 +419,8 @@ ClangTidyASTConsumerFactory::createASTConsumer(
 
   std::unique_ptr<ClangTidyProfiling> Profiling;
   if (Context.getEnableProfiling()) {
-    Profiling =
-        std::make_unique<ClangTidyProfiling>(Context.getProfileStorageParams());
+    Profiling = std::make_unique<ClangTidyProfiling>(
+        Context.getProfileStorageParams());
     FinderOptions.CheckProfiling.emplace(Profiling->Records);
   }
 
@@ -433,8 +432,8 @@ ClangTidyASTConsumerFactory::createASTConsumer(
 
   if (Context.canEnableModuleHeadersParsing() &&
       Context.getLangOpts().Modules && OverlayFS != nullptr) {
-    auto ModuleExpander =
-        std::make_unique<ExpandModularHeadersPPCallbacks>(&Compiler, OverlayFS);
+    auto ModuleExpander = std::make_unique<ExpandModularHeadersPPCallbacks>(
+        &Compiler, OverlayFS);
     ModuleExpanderPP = ModuleExpander->getPreprocessor();
     PP->addPPCallbacks(std::move(ModuleExpander));
   }
@@ -477,8 +476,7 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
 #if CLANG_TIDY_ENABLE_STATIC_ANALYZER
   for (const auto &AnalyzerCheck : getAnalyzerCheckersAndPackages(
            Context, Context.canEnableAnalyzerAlphaCheckers()))
-    CheckNames.emplace_back(
-        (AnalyzerCheckNamePrefix + AnalyzerCheck.first).str());
+    CheckNames.push_back(AnalyzerCheckNamePrefix + AnalyzerCheck.first);
 #endif // CLANG_TIDY_ENABLE_STATIC_ANALYZER
 
   llvm::sort(CheckNames);
@@ -499,24 +497,10 @@ getCheckNames(const ClangTidyOptions &Options,
               bool AllowEnablingAnalyzerAlphaCheckers) {
   clang::tidy::ClangTidyContext Context(
       std::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
-                                               Options),
+                                                Options),
       AllowEnablingAnalyzerAlphaCheckers);
   ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckNames();
-}
-
-void filterCheckOptions(ClangTidyOptions &Options,
-                        const std::vector<std::string> &EnabledChecks) {
-  ClangTidyOptions::OptionMap FilteredOptions;
-  for (const auto &[OptionName, Value] : Options.CheckOptions) {
-    const size_t CheckNameEndPos = OptionName.find('.');
-    if (CheckNameEndPos == StringRef::npos)
-      continue;
-    const StringRef CheckName = OptionName.substr(0, CheckNameEndPos);
-    if (llvm::binary_search(EnabledChecks, CheckName))
-      FilteredOptions[OptionName] = Value;
-  }
-  Options.CheckOptions = std::move(FilteredOptions);
 }
 
 ClangTidyOptions::OptionMap
@@ -524,7 +508,7 @@ getCheckOptions(const ClangTidyOptions &Options,
                 bool AllowEnablingAnalyzerAlphaCheckers) {
   clang::tidy::ClangTidyContext Context(
       std::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
-                                               Options),
+                                                Options),
       AllowEnablingAnalyzerAlphaCheckers);
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   auto DiagOpts = std::make_unique<DiagnosticOptions>();
@@ -684,19 +668,18 @@ getAllChecksAndOptions(bool AllowEnablingAnalyzerAlphaCheckers) {
     Buffer.append(AnalyzerCheck);
     Result.Checks.insert(Buffer);
   }
-
-  static constexpr llvm::StringLiteral OptionNames[] = {
+  for (std::string OptionName : {
 #define GET_CHECKER_OPTIONS
 #define CHECKER_OPTION(TYPE, CHECKER, OPTION_NAME, DESCRIPTION, DEFAULT,       \
                        RELEASE, HIDDEN)                                        \
-  ANALYZER_CHECK_NAME_PREFIX CHECKER ":" OPTION_NAME,
+  Twine(AnalyzerCheckNamePrefix).concat(CHECKER ":" OPTION_NAME).str(),
 
 #include "clang/StaticAnalyzer/Checkers/Checkers.inc"
 #undef CHECKER_OPTION
 #undef GET_CHECKER_OPTIONS
-  };
-
-  Result.Options.insert_range(OptionNames);
+       }) {
+    Result.Options.insert(OptionName);
+  }
 #endif // CLANG_TIDY_ENABLE_STATIC_ANALYZER
 
   Context.setOptionsCollector(&Result.Options);

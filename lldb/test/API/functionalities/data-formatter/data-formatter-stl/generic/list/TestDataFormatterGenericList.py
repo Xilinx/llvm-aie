@@ -8,6 +8,9 @@ from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
 from lldbsuite.test import lldbutil
 
+USE_LIBSTDCPP = "USE_LIBSTDCPP"
+USE_LIBCPP = "USE_LIBCPP"
+
 
 class GenericListDataFormatterTestCase(TestBase):
     def setUp(self):
@@ -22,8 +25,9 @@ class GenericListDataFormatterTestCase(TestBase):
             "main.cpp", "// Set final break point at this line."
         )
 
-    def do_test_with_run_command(self, *, is_libstdcpp=False):
+    def do_test_with_run_command(self, stdlib_type):
         """Test that that file and class static variables display correctly."""
+        self.build(dictionary={stdlib_type: "1"})
         self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line(
@@ -58,7 +62,7 @@ class GenericListDataFormatterTestCase(TestBase):
             "frame variable numbers_list --raw", matching=False, substrs=["size=0"]
         )
 
-        if is_libstdcpp:
+        if stdlib_type == USE_LIBSTDCPP:
             self.expect(
                 "frame variable &numbers_list._M_impl._M_node --raw",
                 matching=False,
@@ -226,8 +230,10 @@ class GenericListDataFormatterTestCase(TestBase):
             "text_list.MightHaveChildren() says False for non empty!",
         )
 
-    def do_test_ptr_and_ref(self):
+    def do_test_ptr_and_ref(self, stdlib_type):
         """Test that ref and ptr to std::list is displayed correctly"""
+        self.build(dictionary={stdlib_type: "1"})
+
         (_, process, _, bkpt) = lldbutil.run_to_source_breakpoint(
             self, "Check ref and ptr", lldb.SBFileSpec("main.cpp", False)
         )
@@ -296,31 +302,16 @@ class GenericListDataFormatterTestCase(TestBase):
 
     @add_test_categories(["libstdcxx"])
     def test_with_run_command_libstdcpp(self):
-        self.build(dictionary={"USE_LIBSTDCPP": 1})
-        self.do_test_with_run_command(is_libstdcpp=True)
+        self.do_test_with_run_command(USE_LIBSTDCPP)
 
     @add_test_categories(["libstdcxx"])
     def test_ptr_and_ref_libstdcpp(self):
-        self.build(dictionary={"USE_LIBSTDCPP": 1})
-        self.do_test_ptr_and_ref()
+        self.do_test_ptr_and_ref(USE_LIBSTDCPP)
 
     @add_test_categories(["libc++"])
     def test_with_run_command_libcpp(self):
-        self.build(dictionary={"USE_LIBCPP": 1})
-        self.do_test_with_run_command()
+        self.do_test_with_run_command(USE_LIBCPP)
 
     @add_test_categories(["libc++"])
     def test_ptr_and_ref_libcpp(self):
-        self.build(dictionary={"USE_LIBCPP": 1})
-        self.do_test_ptr_and_ref()
-
-    @add_test_categories(["msvcstl"])
-    def test_with_run_command_msvcstl(self):
-        # No flags, because the "msvcstl" category checks that the MSVC STL is used by default.
-        self.build()
-        self.do_test_with_run_command()
-
-    @add_test_categories(["msvcstl"])
-    def test_ptr_and_ref_msvcstl(self):
-        self.build()
-        self.do_test_ptr_and_ref()
+        self.do_test_ptr_and_ref(USE_LIBCPP)

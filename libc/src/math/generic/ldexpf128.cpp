@@ -7,13 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "src/math/ldexpf128.h"
-
-#include "src/__support/math/ldexpf128.h"
+#include "src/__support/FPUtil/ManipulationFunctions.h"
+#include "src/__support/common.h"
+#include "src/__support/macros/config.h"
 
 namespace LIBC_NAMESPACE_DECL {
 
 LLVM_LIBC_FUNCTION(float128, ldexpf128, (float128 x, int exp)) {
-  return math::ldexpf128(x, exp);
+  return fputil::ldexp(x, exp);
 }
 
 } // namespace LIBC_NAMESPACE_DECL

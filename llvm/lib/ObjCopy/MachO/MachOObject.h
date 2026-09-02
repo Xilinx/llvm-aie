@@ -64,14 +64,14 @@ struct Section {
     return static_cast<MachO::SectionType>(Flags & MachO::SECTION_TYPE);
   }
 
-  bool isBssSection() const {
+  bool isVirtualSection() const {
     return (getType() == MachO::S_ZEROFILL ||
             getType() == MachO::S_GB_ZEROFILL ||
             getType() == MachO::S_THREAD_LOCAL_ZEROFILL);
   }
 
   bool hasValidOffset() const {
-    return !(isBssSection() || OriginalOffset == 0);
+    return !(isVirtualSection() || (OriginalOffset && *OriginalOffset == 0));
   }
 };
 
@@ -341,6 +341,9 @@ struct Object {
   /// The index of the LC_SEGMENT or LC_SEGMENT_64 load command
   /// corresponding to the __TEXT segment.
   std::optional<size_t> TextSegmentCommandIndex;
+  /// The index of the LC_ENCRYPTION_INFO or LC_ENCRYPTION_INFO_64 load command
+  /// if present.
+  std::optional<size_t> EncryptionInfoCommandIndex;
 
   BumpPtrAllocator Alloc;
   StringSaver NewSectionsContents;

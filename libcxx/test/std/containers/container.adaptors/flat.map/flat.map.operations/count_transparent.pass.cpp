@@ -15,7 +15,6 @@
 #include <cassert>
 #include <deque>
 #include <flat_map>
-#include <functional>
 #include <string>
 #include <utility>
 
@@ -35,7 +34,7 @@ static_assert(!CanCount<NonTransparentMap>);
 static_assert(!CanCount<const NonTransparentMap>);
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test() {
+void test() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
   using M     = std::flat_map<Key, Value, TransparentComparator, KeyContainer, ValueContainer>;
@@ -53,14 +52,9 @@ constexpr void test() {
   assert(m.count(Transparent<std::string>{"g"}) == 0);
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<std::string>, std::vector<int>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque<std::string>, std::vector<int>>();
-  }
+  test<std::deque<std::string>, std::vector<int>>();
   test<MinSequenceContainer<std::string>, MinSequenceContainer<int>>();
   test<std::vector<std::string, min_allocator<std::string>>, std::vector<int, min_allocator<int>>>();
 
@@ -73,22 +67,6 @@ constexpr bool test() {
     assert(n == 1);
     assert(transparent_used);
   }
-  {
-    // LWG4239 std::string and C string literal
-    using M = std::flat_map<std::string, int, std::less<>>;
-    M m{{"alpha", 1}, {"beta", 2}, {"epsilon", 1}, {"eta", 3}, {"gamma", 3}};
-    assert(m.count("alpha") == 1);
-    assert(m.count("charlie") == 0);
-  }
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

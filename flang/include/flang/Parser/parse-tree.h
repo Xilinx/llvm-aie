@@ -267,7 +267,6 @@ struct AccEndCombinedDirective;
 struct OpenACCDeclarativeConstruct;
 struct OpenACCRoutineConstruct;
 struct OpenMPConstruct;
-struct OpenMPLoopConstruct;
 struct OpenMPDeclarativeConstruct;
 struct OmpEndLoopDirective;
 struct OmpMemoryOrderClause;
@@ -3481,9 +3480,6 @@ struct OmpDirectiveName {
   // This allows "construct<OmpDirectiveName>(Verbatim("<name>"))".
   OmpDirectiveName(const Verbatim &name);
   using WrapperTrait = std::true_type;
-
-  bool IsExecutionPart() const; // Is allowed in the execution part
-
   CharBlock source;
   llvm::omp::Directive v{llvm::omp::Directive::OMPD_unknown};
 };
@@ -3544,7 +3540,7 @@ WRAPPER_CLASS(OmpLocatorList, std::list<OmpLocator>);
 struct OmpMapperSpecifier {
   // Absent mapper-identifier is equivalent to DEFAULT.
   TUPLE_CLASS_BOILERPLATE(OmpMapperSpecifier);
-  std::tuple<std::string, TypeSpec, Name> t;
+  std::tuple<std::optional<Name>, TypeSpec, Name> t;
 };
 
 // Ref: [4.5:222:1-5], [5.0:305:20-27], [5.1:337:11-19], [5.2:139:18-23],
@@ -3756,19 +3752,6 @@ struct OmpAllocatorComplexModifier {
   WRAPPER_CLASS_BOILERPLATE(OmpAllocatorComplexModifier, ScalarIntExpr);
 };
 
-// Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158],
-// [6.0:279-288]
-//
-// always-modifier ->
-//    ALWAYS                                        // since 4.5
-//
-// Until 5.2, it was a part of map-type-modifier. Since 6.0 the
-// map-type-modifier has been split into individual modifiers.
-struct OmpAlwaysModifier {
-  ENUM_CLASS(Value, Always)
-  WRAPPER_CLASS_BOILERPLATE(OmpAlwaysModifier, Value);
-};
-
 // Ref: [5.2:252-254]
 //
 // chunk-modifier ->
@@ -3780,29 +3763,17 @@ struct OmpChunkModifier {
   WRAPPER_CLASS_BOILERPLATE(OmpChunkModifier, Value);
 };
 
-// Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158],
-// [6.0:279-288]
+// Ref: [5.0:47-49], [5.1:49-51], [5.2:67-69]
 //
-// close-modifier ->
-//    CLOSE                                         // since 5.0
-//
-// Until 5.2, it was a part of map-type-modifier. Since 6.0 the
-// map-type-modifier has been split into individual modifiers.
-struct OmpCloseModifier {
-  ENUM_CLASS(Value, Close)
-  WRAPPER_CLASS_BOILERPLATE(OmpCloseModifier, Value);
-};
-
-// Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158],
-// [6.0:279-288]
-//
-// delete-modifier ->
-//    DELETE                                        // since 6.0
-//
-// Until 5.2, it was a part of map-type.
-struct OmpDeleteModifier {
-  ENUM_CLASS(Value, Delete)
-  WRAPPER_CLASS_BOILERPLATE(OmpDeleteModifier, Value);
+// iterator-specifier ->
+//    [iterator-type] iterator-identifier
+//        = range-specification |                   // since 5.0
+//    [iterator-type ::] iterator-identifier
+//        = range-specification                     // since 5.2
+struct OmpIteratorSpecifier {
+  TUPLE_CLASS_BOILERPLATE(OmpIteratorSpecifier);
+  CharBlock source;
+  std::tuple<TypeDeclarationStmt, SubscriptTriplet> t;
 };
 
 // Ref: [4.5:169-170], [5.0:255-256], [5.1:288-289]
@@ -3894,19 +3865,6 @@ struct OmpInteropType {
 
 // Ref: [5.0:47-49], [5.1:49-51], [5.2:67-69]
 //
-// iterator-specifier ->
-//    [iterator-type] iterator-identifier
-//        = range-specification |                   // since 5.0
-//    [iterator-type ::] iterator-identifier
-//        = range-specification                     // since 5.2
-struct OmpIteratorSpecifier {
-  TUPLE_CLASS_BOILERPLATE(OmpIteratorSpecifier);
-  CharBlock source;
-  std::tuple<TypeDeclarationStmt, SubscriptTriplet> t;
-};
-
-// Ref: [5.0:47-49], [5.1:49-51], [5.2:67-69]
-//
 // iterator-modifier ->
 //    ITERATOR(iterator-specifier [, ...])          // since 5.0
 struct OmpIterator {
@@ -3939,28 +3897,21 @@ struct OmpMapper {
   WRAPPER_CLASS_BOILERPLATE(OmpMapper, Name);
 };
 
-// Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158],
-// [6.0:279-288]
+// Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158]
 //
 // map-type ->
-//    ALLOC | DELETE | RELEASE |                    // since 4.5, until 5.2
-//    FROM | TO | TOFROM |                          // since 4.5
-//    STORAGE                                       // since 6.0
-//
-// Since 6.0 DELETE is a separate delete-modifier.
+//    ALLOC | DELETE | FROM | RELEASE | TO | TOFROM // since 4.5
 struct OmpMapType {
-  ENUM_CLASS(Value, Alloc, Delete, From, Release, Storage, To, Tofrom);
+  ENUM_CLASS(Value, Alloc, Delete, From, Release, To, Tofrom);
   WRAPPER_CLASS_BOILERPLATE(OmpMapType, Value);
 };
 
 // Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158]
 //
 // map-type-modifier ->
-//    ALWAYS |                                      // since 4.5, until 5.2
-//    CLOSE |                                       // since 5.0, until 5.2
-//    PRESENT                                       // since 5.1, until 5.2
-// Since 6.0 the map-type-modifier has been split into individual modifiers.
-//
+//    ALWAYS |                                      // since 4.5
+//    CLOSE |                                       // since 5.0
+//    PRESENT                                       // since 5.1
 struct OmpMapTypeModifier {
   ENUM_CLASS(Value, Always, Close, Present, Ompx_Hold)
   WRAPPER_CLASS_BOILERPLATE(OmpMapTypeModifier, Value);
@@ -3999,19 +3950,6 @@ struct OmpPrescriptiveness {
   WRAPPER_CLASS_BOILERPLATE(OmpPrescriptiveness, Value);
 };
 
-// Ref: [4.5:216-219], [5.0:315-324], [5.1:347-355], [5.2:150-158],
-// [6.0:279-288]
-//
-// present-modifier ->
-//    PRESENT                                       // since 5.1
-//
-// Until 5.2, it was a part of map-type-modifier. Since 6.0 the
-// map-type-modifier has been split into individual modifiers.
-struct OmpPresentModifier {
-  ENUM_CLASS(Value, Present)
-  WRAPPER_CLASS_BOILERPLATE(OmpPresentModifier, Value);
-};
-
 // Ref: [5.0:300-302], [5.1:332-334], [5.2:134-137]
 //
 // reduction-modifier ->
@@ -4019,26 +3957,6 @@ struct OmpPresentModifier {
 struct OmpReductionModifier {
   ENUM_CLASS(Value, Default, Inscan, Task);
   WRAPPER_CLASS_BOILERPLATE(OmpReductionModifier, Value);
-};
-
-// Ref: [6.0:279-288]
-//
-// ref-modifier ->
-//    REF_PTEE | REF_PTR | REF_PTR_PTEE             // since 6.0
-//
-struct OmpRefModifier {
-  ENUM_CLASS(Value, Ref_Ptee, Ref_Ptr, Ref_Ptr_Ptee)
-  WRAPPER_CLASS_BOILERPLATE(OmpRefModifier, Value);
-};
-
-// Ref: [6.0:279-288]
-//
-// self-modifier ->
-//    SELF                                          // since 6.0
-//
-struct OmpSelfModifier {
-  ENUM_CLASS(Value, Self)
-  WRAPPER_CLASS_BOILERPLATE(OmpSelfModifier, Value);
 };
 
 // Ref: [5.2:117-120]
@@ -4077,19 +3995,6 @@ struct OmpTaskDependenceType {
 struct OmpVariableCategory {
   ENUM_CLASS(Value, Aggregate, All, Allocatable, Pointer, Scalar)
   WRAPPER_CLASS_BOILERPLATE(OmpVariableCategory, Value);
-};
-
-// Extension:
-// https://openmp.llvm.org//openacc/OpenMPExtensions.html#ompx-hold
-//
-// ompx-hold-modifier ->
-//    OMPX_HOLD                                     // since 4.5
-//
-// Until 5.2, it was a part of map-type-modifier. Since 6.0 the
-// map-type-modifier has been split into individual modifiers.
-struct OmpxHoldModifier {
-  ENUM_CLASS(Value, Ompx_Hold)
-  WRAPPER_CLASS_BOILERPLATE(OmpxHoldModifier, Value);
 };
 
 // context-selector
@@ -4395,12 +4300,6 @@ struct OmpHoldsClause {
   WRAPPER_CLASS_BOILERPLATE(OmpHoldsClause, common::Indirection<Expr>);
 };
 
-// Ref: [5.2: 209]
-struct OmpIndirectClause {
-  WRAPPER_CLASS_BOILERPLATE(
-      OmpIndirectClause, std::optional<ScalarLogicalExpr>);
-};
-
 // Ref: [5.2:72-73], in 4.5-5.1 it's scattered over individual directives
 // that allow the IF clause.
 //
@@ -4467,25 +4366,13 @@ struct OmpLinearClause {
 // map-clause ->
 //    MAP([modifier...:] locator-list)              // since 4.5
 // modifier ->
-//    map-type-modifier [replaced] |                // since 4.5, until 5.2
-//    always-modifier |                             // since 6.0
-//    close-modifier |                              // since 6.0
-//    delete-modifier |                             // since 6.0
-//    present-modifier |                            // since 6.0
-//    ref-modifier |                                // since 6.0
-//    self-modifier |                               // since 6.0
+//    map-type-modifier |                           // since 4.5
 //    mapper |                                      // since 5.0
 //    iterator |                                    // since 5.1
 //    map-type                                      // since 4.5
-//    ompx-hold-modifier |                          // since 6.0
-//
-// Since 6.0 the map-type-modifier has been split into individual modifiers,
-// and delete-modifier has been split from map-type.
 struct OmpMapClause {
   TUPLE_CLASS_BOILERPLATE(OmpMapClause);
-  MODIFIER_BOILERPLATE(OmpAlwaysModifier, OmpCloseModifier, OmpDeleteModifier,
-      OmpMapTypeModifier, OmpPresentModifier, OmpRefModifier, OmpSelfModifier,
-      OmpMapper, OmpIterator, OmpMapType, OmpxHoldModifier);
+  MODIFIER_BOILERPLATE(OmpMapTypeModifier, OmpMapper, OmpIterator, OmpMapType);
   std::tuple<MODIFIERS(), OmpObjectList, /*CommaSeparated=*/bool> t;
 };
 
@@ -4704,11 +4591,8 @@ struct OmpClauseList {
 struct OmpDirectiveSpecification {
   ENUM_CLASS(Flags, None, DeprecatedSyntax);
   TUPLE_CLASS_BOILERPLATE(OmpDirectiveSpecification);
-  const OmpDirectiveName &DirName() const {
-    return std::get<OmpDirectiveName>(t);
-  }
   llvm::omp::Directive DirId() const { //
-    return DirName().v;
+    return std::get<OmpDirectiveName>(t).v;
   }
   const OmpArgumentList &Arguments() const;
   const OmpClauseList &Clauses() const;
@@ -4721,7 +4605,7 @@ struct OmpDirectiveSpecification {
 
 struct OmpMetadirectiveDirective {
   TUPLE_CLASS_BOILERPLATE(OmpMetadirectiveDirective);
-  std::tuple<Verbatim, OmpClauseList> t;
+  std::tuple<OmpClauseList> t;
   CharBlock source;
 };
 
@@ -4948,17 +4832,17 @@ struct OpenMPExecutableAllocate {
       t;
 };
 
-// Ref: [5.2:180-181], [6.0:315]
-//
-// allocators-construct ->
-//    ALLOCATORS [allocate-clause...]
-//    block
-//    [END ALLOCATORS]
+EMPTY_CLASS(OmpEndAllocators);
+
+// 6.7 Allocators construct [OpenMP 5.2]
+//     allocators-construct -> ALLOCATORS [allocate-clause [,]]
+//                                allocate-stmt
+//                             [omp-end-allocators-construct]
 struct OpenMPAllocatorsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPAllocatorsConstruct);
   CharBlock source;
-  std::tuple<OmpDirectiveSpecification, Block,
-      std::optional<OmpDirectiveSpecification>>
+  std::tuple<Verbatim, OmpClauseList, Statement<AllocateStmt>,
+      std::optional<OmpEndAllocators>>
       t;
 };
 
@@ -4973,37 +4857,94 @@ struct OmpMemoryOrderClause {
   CharBlock source;
 };
 
-struct OpenMPAtomicConstruct {
-  llvm::omp::Clause GetKind() const;
-  bool IsCapture() const;
-  bool IsCompare() const;
-  TUPLE_CLASS_BOILERPLATE(OpenMPAtomicConstruct);
+// 2.17.7 Atomic construct
+//        atomic-clause -> memory-order-clause | HINT(hint-expression) |
+//        FAIL(memory-order)
+struct OmpAtomicClause {
+  UNION_CLASS_BOILERPLATE(OmpAtomicClause);
   CharBlock source;
-  std::tuple<OmpDirectiveSpecification, Block,
-      std::optional<OmpDirectiveSpecification>>
+  std::variant<OmpMemoryOrderClause, OmpFailClause, OmpHintClause> u;
+};
+
+// atomic-clause-list -> [atomic-clause, [atomic-clause], ...]
+struct OmpAtomicClauseList {
+  WRAPPER_CLASS_BOILERPLATE(OmpAtomicClauseList, std::list<OmpAtomicClause>);
+  CharBlock source;
+};
+
+// END ATOMIC
+EMPTY_CLASS(OmpEndAtomic);
+
+// ATOMIC READ
+struct OmpAtomicRead {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicRead);
+  CharBlock source;
+  std::tuple<OmpAtomicClauseList, Verbatim, OmpAtomicClauseList,
+      Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
       t;
+};
 
-  // Information filled out during semantic checks to avoid duplication
-  // of analyses.
-  struct Analysis {
-    static constexpr int None = 0;
-    static constexpr int Read = 1;
-    static constexpr int Write = 2;
-    static constexpr int Update = Read | Write;
-    static constexpr int Action = 3; // Bitmask for None, Read, Write, Update
-    static constexpr int IfTrue = 4;
-    static constexpr int IfFalse = 8;
-    static constexpr int Condition = 12; // Bitmask for IfTrue, IfFalse
+// ATOMIC WRITE
+struct OmpAtomicWrite {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicWrite);
+  CharBlock source;
+  std::tuple<OmpAtomicClauseList, Verbatim, OmpAtomicClauseList,
+      Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
+      t;
+};
 
-    struct Op {
-      int what;
-      AssignmentStmt::TypedAssignment assign;
-    };
-    TypedExpr atom, cond;
-    Op op0, op1;
-  };
+// ATOMIC UPDATE
+struct OmpAtomicUpdate {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicUpdate);
+  CharBlock source;
+  std::tuple<OmpAtomicClauseList, Verbatim, OmpAtomicClauseList,
+      Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
+      t;
+};
 
-  mutable Analysis analysis;
+// ATOMIC CAPTURE
+struct OmpAtomicCapture {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicCapture);
+  CharBlock source;
+  WRAPPER_CLASS(Stmt1, Statement<AssignmentStmt>);
+  WRAPPER_CLASS(Stmt2, Statement<AssignmentStmt>);
+  std::tuple<OmpAtomicClauseList, Verbatim, OmpAtomicClauseList, Stmt1, Stmt2,
+      OmpEndAtomic>
+      t;
+};
+
+struct OmpAtomicCompareIfStmt {
+  UNION_CLASS_BOILERPLATE(OmpAtomicCompareIfStmt);
+  std::variant<common::Indirection<IfStmt>, common::Indirection<IfConstruct>> u;
+};
+
+// ATOMIC COMPARE (OpenMP 5.1, OPenMP 5.2 spec: 15.8.4)
+struct OmpAtomicCompare {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicCompare);
+  CharBlock source;
+  std::tuple<OmpAtomicClauseList, Verbatim, OmpAtomicClauseList,
+      OmpAtomicCompareIfStmt, std::optional<OmpEndAtomic>>
+      t;
+};
+
+// ATOMIC
+struct OmpAtomic {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomic);
+  CharBlock source;
+  std::tuple<Verbatim, OmpAtomicClauseList, Statement<AssignmentStmt>,
+      std::optional<OmpEndAtomic>>
+      t;
+};
+
+// 2.17.7 atomic ->
+//        ATOMIC [atomic-clause-list] atomic-construct [atomic-clause-list] |
+//        ATOMIC [atomic-clause-list]
+//        atomic-construct -> READ | WRITE | UPDATE | CAPTURE | COMPARE
+struct OpenMPAtomicConstruct {
+  UNION_CLASS_BOILERPLATE(OpenMPAtomicConstruct);
+  std::variant<OmpAtomicRead, OmpAtomicWrite, OmpAtomicCapture, OmpAtomicUpdate,
+      OmpAtomicCompare, OmpAtomic>
+      u;
 };
 
 // OpenMP directives that associate with loop(s)
@@ -5045,11 +4986,19 @@ struct OpenMPDepobjConstruct {
 //                    nocontext-clause |
 //                    novariants-clause |
 //                    nowait-clause
+struct OmpDispatchDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpDispatchDirective);
+  CharBlock source;
+  std::tuple<Verbatim, OmpClauseList> t;
+};
+
+EMPTY_CLASS(OmpEndDispatchDirective);
+
 struct OpenMPDispatchConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPDispatchConstruct);
   CharBlock source;
-  std::tuple<OmpDirectiveSpecification, Block,
-      std::optional<OmpDirectiveSpecification>>
+  std::tuple<OmpDispatchDirective, Block,
+      std::optional<OmpEndDispatchDirective>>
       t;
 };
 
@@ -5119,27 +5068,17 @@ struct OmpEndBlockDirective {
 
 struct OpenMPBlockConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPBlockConstruct);
-  std::tuple<OmpBeginBlockDirective, Block, std::optional<OmpEndBlockDirective>>
-      t;
+  std::tuple<OmpBeginBlockDirective, Block, OmpEndBlockDirective> t;
 };
 
 // OpenMP directives enclosing do loop
-using NestedConstruct =
-    std::variant<DoConstruct, common::Indirection<OpenMPLoopConstruct>>;
 struct OpenMPLoopConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPLoopConstruct);
   OpenMPLoopConstruct(OmpBeginLoopDirective &&a)
       : t({std::move(a), std::nullopt, std::nullopt}) {}
-  std::tuple<OmpBeginLoopDirective, std::optional<NestedConstruct>,
+  std::tuple<OmpBeginLoopDirective, std::optional<DoConstruct>,
       std::optional<OmpEndLoopDirective>>
       t;
-};
-
-// Lookahead class to identify execution-part OpenMP constructs without
-// parsing the entire OpenMP construct.
-struct OpenMPExecDirective {
-  WRAPPER_CLASS_BOILERPLATE(OpenMPExecDirective, OmpDirectiveName);
-  CharBlock source;
 };
 
 struct OpenMPConstruct {

@@ -14,4 +14,6 @@
 
 #include <clc/math/gentype.inc>
 
+#undef __DOUBLE_ONLY
+
 #endif // __CLC_MATH_CLC_EXP_HELPER

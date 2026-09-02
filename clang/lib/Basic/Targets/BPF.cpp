@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BPF.h"
+#include "Targets.h"
 #include "clang/Basic/MacroBuilder.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "llvm/ADT/StringRef.h"

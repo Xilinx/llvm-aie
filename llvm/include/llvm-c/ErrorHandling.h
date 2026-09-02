@@ -15,7 +15,6 @@
 #define LLVM_C_ERRORHANDLING_H
 
 #include "llvm-c/ExternC.h"
-#include "llvm-c/Visibility.h"
 
 LLVM_C_EXTERN_C_BEGIN
 
@@ -34,20 +33,20 @@ typedef void (*LLVMFatalErrorHandler)(const char *Reason);
  * function allows you to install a callback that will be invoked prior to the
  * call to exit(1).
  */
-LLVM_C_ABI void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler);
+void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler);
 
 /**
  * Reset the fatal error handler. This resets LLVM's fatal error handling
  * behavior to the default.
  */
-LLVM_C_ABI void LLVMResetFatalErrorHandler(void);
+void LLVMResetFatalErrorHandler(void);
 
 /**
  * Enable LLVM's built-in stack trace code. This intercepts the OS's crash
  * signals and prints which component of LLVM you were in at the time if the
  * crash.
  */
-LLVM_C_ABI void LLVMEnablePrettyStackTrace(void);
+void LLVMEnablePrettyStackTrace(void);
 
 /**
  * @}

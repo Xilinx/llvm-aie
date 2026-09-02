@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/relational/isfinite.h>
+#include <clc/opencl/clc.h>
 #include <clc/relational/clc_isfinite.h>
 
 #define FUNCTION isfinite
 #define __CLC_BODY "unary_def.inc"
 
-#include <clc/math/gentype.inc>
+#include <clc/relational/floatn.inc>

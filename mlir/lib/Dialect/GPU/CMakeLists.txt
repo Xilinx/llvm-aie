@@ -20,7 +20,6 @@ add_mlir_dialect_library(MLIRGPUDialect
   MLIRFunctionInterfaces
   MLIRInferIntRangeInterface
   MLIRIR
-  MLIRMathDialect
   MLIRMemRefDialect
   MLIRSideEffectInterfaces
   MLIRSupport
@@ -44,7 +43,6 @@ add_mlir_dialect_library(MLIRGPUTransforms
   Transforms/ShuffleRewriter.cpp
   Transforms/SubgroupIdRewriter.cpp
   Transforms/SubgroupReduceLowering.cpp
-  Transforms/XeVMAttachTarget.cpp
 
   OBJECT
 
@@ -79,7 +77,6 @@ add_mlir_dialect_library(MLIRGPUTransforms
   MLIRSupport
   MLIRTransformUtils
   MLIRVectorDialect
-  MLIRXeVMDialect
   )
 
 add_subdirectory(TransformOps)

@@ -25,7 +25,8 @@ namespace lldb_private::dil {
 /// evaluating).
 lldb::ValueObjectSP LookupIdentifier(llvm::StringRef name_ref,
                                      std::shared_ptr<StackFrame> frame_sp,
-                                     lldb::DynamicValueType use_dynamic);
+                                     lldb::DynamicValueType use_dynamic,
+                                     CompilerType *scope_ptr = nullptr);
 
 /// Given the name of an identifier, check to see if it matches the name of a
 /// global variable. If so, find the ValueObject for that global variable, and
@@ -34,7 +35,8 @@ lldb::ValueObjectSP LookupIdentifier(llvm::StringRef name_ref,
 lldb::ValueObjectSP LookupGlobalIdentifier(llvm::StringRef name_ref,
                                            std::shared_ptr<StackFrame> frame_sp,
                                            lldb::TargetSP target_sp,
-                                           lldb::DynamicValueType use_dynamic);
+                                           lldb::DynamicValueType use_dynamic,
+                                           CompilerType *scope_ptr = nullptr);
 
 class Interpreter : Visitor {
 public:
@@ -52,8 +54,6 @@ private:
   llvm::Expected<lldb::ValueObjectSP> Visit(const UnaryOpNode *node) override;
   llvm::Expected<lldb::ValueObjectSP>
   Visit(const ArraySubscriptNode *node) override;
-  llvm::Expected<lldb::ValueObjectSP>
-  Visit(const BitFieldExtractionNode *node) override;
 
   // Used by the interpreter to create objects, perform casts, etc.
   lldb::TargetSP m_target;

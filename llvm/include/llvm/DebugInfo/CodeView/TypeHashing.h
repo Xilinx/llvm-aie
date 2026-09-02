@@ -12,7 +12,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeCollection.h"
@@ -37,7 +36,7 @@ struct LocallyHashedType {
   ArrayRef<uint8_t> RecordData;
 
   /// Given a type, compute its local hash.
-  LLVM_ABI static LocallyHashedType hashType(ArrayRef<uint8_t> RecordData);
+  static LocallyHashedType hashType(ArrayRef<uint8_t> RecordData);
 
   /// Given a sequence of types, compute all of the local hashes.
   template <typename Range>
@@ -104,10 +103,9 @@ struct GloballyHashedType {
   /// this record.  Due to the nature of global hashes incorporating the hashes
   /// of referenced records, this function requires a list of types and ids
   /// that RecordData might reference, indexable by TypeIndex.
-  LLVM_ABI static GloballyHashedType
-  hashType(ArrayRef<uint8_t> RecordData,
-           ArrayRef<GloballyHashedType> PreviousTypes,
-           ArrayRef<GloballyHashedType> PreviousIds);
+  static GloballyHashedType hashType(ArrayRef<uint8_t> RecordData,
+                                     ArrayRef<GloballyHashedType> PreviousTypes,
+                                     ArrayRef<GloballyHashedType> PreviousIds);
 
   /// Given a sequence of bytes representing a record, compute a global hash for
   /// this record.  Due to the nature of global hashes incorporating the hashes
@@ -183,8 +181,8 @@ static_assert(std::is_trivially_copyable<GloballyHashedType>::value,
 } // namespace codeview
 
 template <> struct DenseMapInfo<codeview::LocallyHashedType> {
-  LLVM_ABI static codeview::LocallyHashedType Empty;
-  LLVM_ABI static codeview::LocallyHashedType Tombstone;
+  static codeview::LocallyHashedType Empty;
+  static codeview::LocallyHashedType Tombstone;
 
   static codeview::LocallyHashedType getEmptyKey() { return Empty; }
 
@@ -203,8 +201,8 @@ template <> struct DenseMapInfo<codeview::LocallyHashedType> {
 };
 
 template <> struct DenseMapInfo<codeview::GloballyHashedType> {
-  LLVM_ABI static codeview::GloballyHashedType Empty;
-  LLVM_ABI static codeview::GloballyHashedType Tombstone;
+  static codeview::GloballyHashedType Empty;
+  static codeview::GloballyHashedType Tombstone;
 
   static codeview::GloballyHashedType getEmptyKey() { return Empty; }
 

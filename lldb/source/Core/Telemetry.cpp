@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 #include "lldb/Core/Telemetry.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Telemetry.h"
 #include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/UUID.h"
@@ -119,19 +120,6 @@ llvm::Error TelemetryManager::preDispatch(TelemetryInfo *entry) {
   return llvm::Error::success();
 }
 
-// Helper for extracting time field from a Dictionary.
-static std::optional<std::chrono::nanoseconds>
-GetAsNanosec(StructuredData::Dictionary *dict, llvm::StringRef key) {
-  auto value = dict->GetValueForKey(key);
-  if (!value->IsValid()) {
-    LLDB_LOG(GetLog(LLDBLog::Object),
-             "Cannot determine {0} from client-telemetry entry", key);
-    return std::nullopt;
-  }
-
-  return std::chrono::nanoseconds(value->GetUnsignedIntegerValue(0));
-}
-
 void TelemetryManager::DispatchClientTelemetry(
     const lldb_private::StructuredDataImpl &entry, Debugger *debugger) {
   if (!m_config->enable_client_telemetry)
@@ -161,12 +149,23 @@ void TelemetryManager::DispatchClientTelemetry(
     LLDB_LOG(GetLog(LLDBLog::Object),
              "Cannot determine client_data from client-telemetry entry");
 
-  if (auto maybe_start_time = GetAsNanosec(dict, "start_time"))
-    client_info.start_time += *maybe_start_time;
+  int64_t start_time;
+  if (dict->GetValueForKeyAsInteger("start_time", start_time)) {
+    client_info.start_time +=
+        std::chrono::nanoseconds(static_cast<size_t>(start_time));
+  } else {
+    LLDB_LOG(GetLog(LLDBLog::Object),
+             "Cannot determine start-time from client-telemetry entry");
+  }
 
-  if (auto maybe_end_time = GetAsNanosec(dict, "end_time")) {
+  int64_t end_time;
+  if (dict->GetValueForKeyAsInteger("end_time", end_time)) {
     SteadyTimePoint epoch;
-    client_info.end_time = epoch + *maybe_end_time;
+    client_info.end_time =
+        epoch + std::chrono::nanoseconds(static_cast<size_t>(end_time));
+  } else {
+    LLDB_LOG(GetLog(LLDBLog::Object),
+             "Cannot determine end-time from client-telemetry entry");
   }
 
   llvm::StringRef error_msg;

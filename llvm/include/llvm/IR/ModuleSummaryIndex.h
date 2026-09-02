@@ -249,14 +249,14 @@ struct ValueInfo {
   /// Returns the most constraining visibility among summaries. The
   /// visibilities, ordered from least to most constraining, are: default,
   /// protected and hidden.
-  LLVM_ABI GlobalValue::VisibilityTypes getELFVisibility() const;
+  GlobalValue::VisibilityTypes getELFVisibility() const;
 
   /// Checks if all summaries are DSO local (have the flag set). When DSOLocal
   /// propagation has been done, set the parameter to enable fast check.
-  LLVM_ABI bool isDSOLocal(bool WithDSOLocalPropagation = false) const;
+  bool isDSOLocal(bool WithDSOLocalPropagation = false) const;
 
   /// Checks if all copies are eligible for auto-hiding (have flag set).
-  LLVM_ABI bool canAutoHide() const;
+  bool canAutoHide() const;
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const ValueInfo &VI) {
@@ -873,7 +873,7 @@ public:
   }
 
   /// A dummy node to reference external functions that aren't in the index
-  LLVM_ABI static FunctionSummary ExternalNode;
+  static FunctionSummary ExternalNode;
 
 private:
   /// Number of instructions (ignoring debug instructions, e.g.) computed
@@ -943,7 +943,7 @@ public:
       Allocs = std::make_unique<AllocsTy>(std::move(AllocList));
   }
   // Gets the number of readonly and writeonly refs in RefEdgeList
-  LLVM_ABI std::pair<unsigned, unsigned> specialRefCounts() const;
+  std::pair<unsigned, unsigned> specialRefCounts() const;
 
   /// Check if this is a function summary.
   static bool classof(const GlobalValueSummary *GVS) {
@@ -1527,8 +1527,8 @@ public:
 
   bool haveGVs() const { return HaveGVs; }
 
-  LLVM_ABI uint64_t getFlags() const;
-  LLVM_ABI void setFlags(uint64_t Flags);
+  uint64_t getFlags() const;
+  void setFlags(uint64_t Flags);
 
   uint64_t getBlockCount() const { return BlockCount; }
   void addBlockCount(uint64_t C) { BlockCount += C; }
@@ -1672,7 +1672,7 @@ public:
   bool isGlobalValueLive(const GlobalValueSummary *GVS) const {
     return !WithGlobalValueDeadStripping || GVS->isLive();
   }
-  LLVM_ABI bool isGUIDLive(GlobalValue::GUID GUID) const;
+  bool isGUIDLive(GlobalValue::GUID GUID) const;
 
   /// Return a ValueInfo for the index value_type (convenient when iterating
   /// index).
@@ -1796,9 +1796,8 @@ public:
   /// Returns the first GlobalValueSummary for \p ValueGUID, asserting that
   /// there
   /// is only one if \p PerModuleIndex.
-  LLVM_ABI GlobalValueSummary *
-  getGlobalValueSummary(GlobalValue::GUID ValueGUID,
-                        bool PerModuleIndex = true) const;
+  GlobalValueSummary *getGlobalValueSummary(GlobalValue::GUID ValueGUID,
+                                            bool PerModuleIndex = true) const;
 
   /// Table of modules, containing module hash and id.
   const StringMap<ModuleHash> &modulePaths() const {
@@ -1926,9 +1925,8 @@ public:
 
   /// Collect for the given module the list of functions it defines
   /// (GUID -> Summary).
-  LLVM_ABI void
-  collectDefinedFunctionsForModule(StringRef ModulePath,
-                                   GVSummaryMapTy &GVSummaryMap) const;
+  void collectDefinedFunctionsForModule(StringRef ModulePath,
+                                        GVSummaryMapTy &GVSummaryMap) const;
 
   /// Collect for each module the list of Summaries it defines (GUID ->
   /// Summary).
@@ -1944,31 +1942,29 @@ public:
   }
 
   /// Print to an output stream.
-  LLVM_ABI void print(raw_ostream &OS, bool IsForDebug = false) const;
+  void print(raw_ostream &OS, bool IsForDebug = false) const;
 
   /// Dump to stderr (for debugging).
-  LLVM_ABI void dump() const;
+  void dump() const;
 
   /// Export summary to dot file for GraphViz.
-  LLVM_ABI void
+  void
   exportToDot(raw_ostream &OS,
               const DenseSet<GlobalValue::GUID> &GUIDPreservedSymbols) const;
 
   /// Print out strongly connected components for debugging.
-  LLVM_ABI void dumpSCCs(raw_ostream &OS);
+  void dumpSCCs(raw_ostream &OS);
 
   /// Do the access attribute and DSOLocal propagation in combined index.
-  LLVM_ABI void
-  propagateAttributes(const DenseSet<GlobalValue::GUID> &PreservedSymbols);
+  void propagateAttributes(const DenseSet<GlobalValue::GUID> &PreservedSymbols);
 
   /// Checks if we can import global variable from another module.
-  LLVM_ABI bool canImportGlobalVar(const GlobalValueSummary *S,
-                                   bool AnalyzeRefs) const;
+  bool canImportGlobalVar(const GlobalValueSummary *S, bool AnalyzeRefs) const;
 
   /// Same as above but checks whether the global var is importable as a
   /// declaration.
-  LLVM_ABI bool canImportGlobalVar(const GlobalValueSummary *S,
-                                   bool AnalyzeRefs, bool &CanImportDecl) const;
+  bool canImportGlobalVar(const GlobalValueSummary *S, bool AnalyzeRefs,
+                          bool &CanImportDecl) const;
 };
 
 /// GraphTraits definition to build SCC for the index

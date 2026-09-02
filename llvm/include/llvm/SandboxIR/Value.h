@@ -12,7 +12,6 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Value.h"
 #include "llvm/SandboxIR/Use.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm::sandboxir {
 
@@ -33,7 +32,6 @@ class IntrinsicInst;
 class Operator;
 class OverflowingBinaryOperator;
 class FPMathOperator;
-class Region;
 
 /// Iterator for the `Use` edges of a Value's users.
 /// \Returns a `Use` when dereferenced.
@@ -52,7 +50,7 @@ public:
 
   UserUseIterator() = default;
   value_type operator*() const { return Use; }
-  LLVM_ABI UserUseIterator &operator++();
+  UserUseIterator &operator++();
   bool operator==(const UserUseIterator &Other) const {
     return Use == Other.Use;
   }
@@ -181,7 +179,7 @@ protected:
   void clearValue() { Val = nullptr; }
   template <typename ItTy, typename SBTy> friend class LLVMOpUserItToSBTy;
 
-  LLVM_ABI Value(ClassID SubclassID, llvm::Value *Val, Context &Ctx);
+  Value(ClassID SubclassID, llvm::Value *Val, Context &Ctx);
   /// Disable copies.
   Value(const Value &) = delete;
   Value &operator=(const Value &) = delete;
@@ -193,7 +191,7 @@ public:
   using use_iterator = UserUseIterator;
   using const_use_iterator = UserUseIterator;
 
-  LLVM_ABI use_iterator use_begin();
+  use_iterator use_begin();
   const_use_iterator use_begin() const {
     return const_cast<Value *>(this)->use_begin();
   }
@@ -217,7 +215,7 @@ public:
   using user_iterator = mapped_iterator<sandboxir::UserUseIterator, UseToUser>;
   using const_user_iterator = user_iterator;
 
-  LLVM_ABI user_iterator user_begin();
+  user_iterator user_begin();
   user_iterator user_end() {
     return user_iterator(Use(nullptr, nullptr, Ctx), UseToUser());
   }
@@ -236,7 +234,7 @@ public:
   }
   /// \Returns the number of user edges (not necessarily to unique users).
   /// WARNING: This is a linear-time operation.
-  LLVM_ABI unsigned getNumUses() const;
+  unsigned getNumUses() const;
   /// Return true if this value has N uses or more.
   /// This is logically equivalent to getNumUses() >= N.
   /// WARNING: This can be expensive, as it is linear to the number of users.
@@ -258,14 +256,13 @@ public:
     return Cnt == Num;
   }
 
-  LLVM_ABI Type *getType() const;
+  Type *getType() const;
 
   Context &getContext() const { return Ctx; }
 
-  LLVM_ABI void
-  replaceUsesWithIf(Value *OtherV,
-                    llvm::function_ref<bool(const Use &)> ShouldReplace);
-  LLVM_ABI void replaceAllUsesWith(Value *Other);
+  void replaceUsesWithIf(Value *OtherV,
+                         llvm::function_ref<bool(const Use &)> ShouldReplace);
+  void replaceAllUsesWith(Value *Other);
 
   /// \Returns the LLVM IR name of the bottom-most LLVM value.
   StringRef getName() const { return Val->getName(); }

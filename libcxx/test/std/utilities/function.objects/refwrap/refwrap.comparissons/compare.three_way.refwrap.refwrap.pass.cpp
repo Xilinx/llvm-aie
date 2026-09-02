@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// REQUIRES: std-at-least-c++26
+// UNSUPPORTED: c++03, c++11, c++14, c++17, c++20, c++23
 
 // <functional>
 
@@ -22,13 +22,17 @@
 
 #include "test_comparisons.h"
 #include "test_macros.h"
+
+#include "helper_concepts.h"
+#include "helper_types.h"
+
 // Test SFINAE.
 
-static_assert(HasOperatorSpaceship<std::reference_wrapper<StrongOrder>>);
-static_assert(HasOperatorSpaceship<std::reference_wrapper<WeakOrder>>);
-static_assert(HasOperatorSpaceship<std::reference_wrapper<PartialOrder>>);
+static_assert(std::three_way_comparable<std::reference_wrapper<StrongOrder>>);
+static_assert(std::three_way_comparable<std::reference_wrapper<WeakOrder>>);
+static_assert(std::three_way_comparable<std::reference_wrapper<PartialOrder>>);
 
-static_assert(!HasOperatorSpaceship<std::reference_wrapper<NonComparable>>);
+static_assert(!std::three_way_comparable<std::reference_wrapper<NonComparable>>);
 
 // Test comparisons.
 

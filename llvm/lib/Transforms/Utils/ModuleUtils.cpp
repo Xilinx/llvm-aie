@@ -18,7 +18,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/xxhash.h"
@@ -347,11 +346,10 @@ void llvm::filterDeadComdatFunctions(
 std::string llvm::getUniqueModuleId(Module *M) {
   MD5 Md5;
 
-  auto *UniqueSourceFileIdentifier = dyn_cast_or_null<MDNode>(
-      M->getModuleFlag("Unique Source File Identifier"));
-  if (UniqueSourceFileIdentifier) {
-    Md5.update(
-        cast<MDString>(UniqueSourceFileIdentifier->getOperand(0))->getString());
+  auto *UniqueSourceFileNames = mdconst::extract_or_null<ConstantInt>(
+      M->getModuleFlag("Unique Source File Names"));
+  if (UniqueSourceFileNames && UniqueSourceFileNames->getZExtValue()) {
+    Md5.update(M->getSourceFileName());
   } else {
     bool ExportsSymbols = false;
     for (auto &GV : M->global_values()) {

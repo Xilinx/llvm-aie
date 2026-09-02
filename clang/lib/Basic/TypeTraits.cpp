@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/TypeTraits.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <cstring>
 using namespace clang;

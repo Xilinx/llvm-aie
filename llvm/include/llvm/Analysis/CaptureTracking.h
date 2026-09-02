@@ -14,7 +14,6 @@
 #define LLVM_ANALYSIS_CAPTURETRACKING_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ModRef.h"
 
 namespace llvm {
@@ -32,7 +31,7 @@ namespace llvm {
   /// getDefaultMaxUsesToExploreForCaptureTracking - Return default value of
   /// the maximal number of uses to explore before giving up. It is used by
   /// PointerMayBeCaptured family analysis.
-  LLVM_ABI unsigned getDefaultMaxUsesToExploreForCaptureTracking();
+  unsigned getDefaultMaxUsesToExploreForCaptureTracking();
 
   /// PointerMayBeCaptured - Return true if this pointer value may be captured
   /// by the enclosing function (which is required to exist).  This routine can
@@ -45,8 +44,8 @@ namespace llvm {
   /// This function only considers captures of the passed value via its def-use
   /// chain, without considering captures of values it may be based on, or
   /// implicit captures such as for external globals.
-  LLVM_ABI bool PointerMayBeCaptured(const Value *V, bool ReturnCaptures,
-                                     unsigned MaxUsesToExplore = 0);
+  bool PointerMayBeCaptured(const Value *V, bool ReturnCaptures,
+                            unsigned MaxUsesToExplore = 0);
 
   /// Return which components of the pointer may be captured. Only consider
   /// components that are part of \p Mask. Once \p StopFn on the accumulated
@@ -55,7 +54,7 @@ namespace llvm {
   /// This function only considers captures of the passed value via its def-use
   /// chain, without considering captures of values it may be based on, or
   /// implicit captures such as for external globals.
-  LLVM_ABI CaptureComponents PointerMayBeCaptured(
+  CaptureComponents PointerMayBeCaptured(
       const Value *V, bool ReturnCaptures, CaptureComponents Mask,
       function_ref<bool(CaptureComponents)> StopFn = capturesAnything,
       unsigned MaxUsesToExplore = 0);
@@ -74,12 +73,11 @@ namespace llvm {
   /// This function only considers captures of the passed value via its def-use
   /// chain, without considering captures of values it may be based on, or
   /// implicit captures such as for external globals.
-  LLVM_ABI bool PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
-                                           const Instruction *I,
-                                           const DominatorTree *DT,
-                                           bool IncludeI = false,
-                                           unsigned MaxUsesToExplore = 0,
-                                           const LoopInfo *LI = nullptr);
+  bool PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
+                                  const Instruction *I, const DominatorTree *DT,
+                                  bool IncludeI = false,
+                                  unsigned MaxUsesToExplore = 0,
+                                  const LoopInfo *LI = nullptr);
 
   /// Return which components of the pointer may be captured on the path to
   /// \p I. Only consider components that are part of \p Mask. Once \p StopFn
@@ -89,27 +87,26 @@ namespace llvm {
   /// This function only considers captures of the passed value via its def-use
   /// chain, without considering captures of values it may be based on, or
   /// implicit captures such as for external globals.
-  LLVM_ABI CaptureComponents PointerMayBeCapturedBefore(
+  CaptureComponents PointerMayBeCapturedBefore(
       const Value *V, bool ReturnCaptures, const Instruction *I,
       const DominatorTree *DT, bool IncludeI, CaptureComponents Mask,
       function_ref<bool(CaptureComponents)> StopFn = capturesAnything,
       const LoopInfo *LI = nullptr, unsigned MaxUsesToExplore = 0);
 
-  // Returns the 'earliest' instruction that captures \p V in \F, and which
-  // components may be captured (by any use, not necessarily the earliest one).
-  // An instruction A is considered earlier than instruction B, if A dominates
-  // B. If 2 escapes do not dominate each other, the terminator of the common
-  // dominator is chosen. If not all uses can be analyzed, the earliest escape
-  // is set to the first instruction in the function entry block. If \p V does
-  // not escape, nullptr is returned. Note that the caller of the function has
-  // to ensure that the instruction the result value is compared against is
-  // not in a cycle.
+  // Returns the 'earliest' instruction that captures \p V in \F. An instruction
+  // A is considered earlier than instruction B, if A dominates B. If 2 escapes
+  // do not dominate each other, the terminator of the common dominator is
+  // chosen. If not all uses can be analyzed, the earliest escape is set to
+  // the first instruction in the function entry block. If \p V does not escape,
+  // nullptr is returned. Note that the caller of the function has to ensure
+  // that the instruction the result value is compared against is not in a
+  // cycle.
   //
   // Only consider components that are part of \p Mask.
-  LLVM_ABI std::pair<Instruction *, CaptureComponents>
-  FindEarliestCapture(const Value *V, Function &F, bool ReturnCaptures,
-                      const DominatorTree &DT, CaptureComponents Mask,
-                      unsigned MaxUsesToExplore = 0);
+  Instruction *FindEarliestCapture(const Value *V, Function &F,
+                                   bool ReturnCaptures, const DominatorTree &DT,
+                                   CaptureComponents Mask,
+                                   unsigned MaxUsesToExplore = 0);
 
   /// Capture information for a specific Use.
   struct UseCaptureInfo {
@@ -136,7 +133,7 @@ namespace llvm {
   /// This callback is used in conjunction with PointerMayBeCaptured. In
   /// addition to the interface here, you'll need to provide your own getters
   /// to see whether anything was captured.
-  struct LLVM_ABI CaptureTracker {
+  struct CaptureTracker {
     /// Action returned from captures().
     enum Action {
       /// Stop the traversal.
@@ -181,8 +178,7 @@ namespace llvm {
   ///
   /// \p Base is the starting value of the capture analysis, which is
   /// relevant for address_is_null captures.
-  LLVM_ABI UseCaptureInfo DetermineUseCaptureKind(const Use &U,
-                                                  const Value *Base);
+  UseCaptureInfo DetermineUseCaptureKind(const Use &U, const Value *Base);
 
   /// PointerMayBeCaptured - Visit the value and the values derived from it and
   /// find values which appear to be capturing the pointer value. This feeds
@@ -193,8 +189,14 @@ namespace llvm {
   /// This function only considers captures of the passed value via its def-use
   /// chain, without considering captures of values it may be based on, or
   /// implicit captures such as for external globals.
-  LLVM_ABI void PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker,
-                                     unsigned MaxUsesToExplore = 0);
+  void PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker,
+                            unsigned MaxUsesToExplore = 0);
+
+  /// Returns true if the pointer is to a function-local object that never
+  /// escapes from the function.
+  bool isNonEscapingLocalObject(
+      const Value *V,
+      SmallDenseMap<const Value *, bool, 8> *IsCapturedCache = nullptr);
 } // end namespace llvm
 
 #endif

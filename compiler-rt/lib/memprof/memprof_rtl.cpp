@@ -219,6 +219,7 @@ static void MemprofInitInternal() {
   MemprofThread *main_thread = CreateMainThread();
   CHECK_EQ(0, main_thread->tid());
   force_interface_symbols(); // no-op.
+  SanitizerInitializeUnwinder();
 
   Symbolizer::LateInitialize();
 

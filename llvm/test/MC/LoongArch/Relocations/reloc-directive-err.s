@@ -2,6 +2,6 @@
 # RUN: not llvm-mc --filetype=obj --triple=loongarch64 %s -o /dev/null 2>&1 \
 # RUN:			| FileCheck %s
 
-# PRINT: .reloc {{.*}}, R_INVALID, 0
+# PRINT: .reloc 0, R_INVALID, 0
 # CHECK: {{.*}}.s:[[# @LINE+1]]:11: error: unknown relocation name
-.reloc ., R_INVALID, 0
+.reloc 0, R_INVALID, 0

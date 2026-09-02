@@ -458,10 +458,8 @@ bool ScalarizerVisitor::visit(Function &F) {
       Instruction *I = &*II;
       bool Done = InstVisitor::visit(I);
       ++II;
-      if (Done && I->getType()->isVoidTy()) {
+      if (Done && I->getType()->isVoidTy())
         I->eraseFromParent();
-        Scalarized = true;
-      }
     }
   }
   return finish();
@@ -1107,9 +1105,7 @@ bool ScalarizerVisitor::visitExtractValueInst(ExtractValueInst &EVI) {
     Res.push_back(ResElem);
   }
 
-  Type *ActualVecType = cast<FixedVectorType>(OpTy->getContainedType(Index));
-  std::optional<VectorSplit> AVS = getVectorSplit(ActualVecType);
-  gather(&EVI, Res, *AVS);
+  gather(&EVI, Res, *VS);
   return true;
 }
 

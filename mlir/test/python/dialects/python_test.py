@@ -361,9 +361,7 @@ def testCustomAttribute():
         try:
             TestAttr(42)
         except TypeError as e:
-            assert "Expected an MLIR object (got 42)" in str(e)
-        except ValueError as e:
-            assert "Cannot cast attribute to TestAttr (from 42)" in str(e)
+            assert "Expected an MLIR object" in str(e)
         else:
             raise
 
@@ -408,9 +406,7 @@ def testCustomType():
         try:
             TestType(42)
         except TypeError as e:
-            assert "Expected an MLIR object (got 42)" in str(e)
-        except ValueError as e:
-            assert "Cannot cast type to TestType (from 42)" in str(e)
+            assert "Expected an MLIR object" in str(e)
         else:
             raise
 

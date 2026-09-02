@@ -147,10 +147,6 @@ private:
   mlir::ValueRange values;
 };
 
-struct LocalitySpecifierOperands {
-  llvm::SmallVector<::mlir::Value> privateVars;
-  llvm::SmallVector<::mlir::Attribute> privateSyms;
-};
 } // namespace fir
 
 #endif // FORTRAN_OPTIMIZER_DIALECT_FIROPS_H

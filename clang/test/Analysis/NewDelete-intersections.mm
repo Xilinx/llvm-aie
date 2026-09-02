@@ -78,11 +78,11 @@ void testObjcFreeNewed() {
 void testFreeAfterDelete() {
   int *p = new int;
   delete p;
-  free(p); // newdelete-warning{{Use of memory after it is released}}
+  free(p); // newdelete-warning{{Use of memory after it is freed}}
 }
 
 void testStandardPlacementNewAfterDelete() {
   int *p = new int;
   delete p;
-  p = new (p) int; // newdelete-warning{{Use of memory after it is released}}
+  p = new (p) int; // newdelete-warning{{Use of memory after it is freed}}
 }

@@ -46,8 +46,6 @@ enum class ARCRuntimeEntryPointKind {
   UnsafeClaimRV,
   RetainAutorelease,
   RetainAutoreleaseRV,
-  AutoreleasePoolPush,
-  AutoreleasePoolPop,
 };
 
 /// Declarations for ObjC runtime functions and constants. These are initialized
@@ -69,8 +67,6 @@ public:
     UnsafeClaimRV = nullptr;
     RetainAutorelease = nullptr;
     RetainAutoreleaseRV = nullptr;
-    AutoreleasePoolPush = nullptr;
-    AutoreleasePoolPop = nullptr;
   }
 
   Function *get(ARCRuntimeEntryPointKind kind) {
@@ -105,12 +101,6 @@ public:
     case ARCRuntimeEntryPointKind::RetainAutoreleaseRV:
       return getIntrinsicEntryPoint(RetainAutoreleaseRV,
                                 Intrinsic::objc_retainAutoreleaseReturnValue);
-    case ARCRuntimeEntryPointKind::AutoreleasePoolPush:
-      return getIntrinsicEntryPoint(AutoreleasePoolPush,
-                                    Intrinsic::objc_autoreleasePoolPush);
-    case ARCRuntimeEntryPointKind::AutoreleasePoolPop:
-      return getIntrinsicEntryPoint(AutoreleasePoolPop,
-                                    Intrinsic::objc_autoreleasePoolPop);
     }
 
     llvm_unreachable("Switch should be a covered switch.");
@@ -152,12 +142,6 @@ private:
 
   /// Declaration for objc_retainAutoreleaseReturnValue().
   Function *RetainAutoreleaseRV = nullptr;
-
-  /// Declaration for objc_autoreleasePoolPush().
-  Function *AutoreleasePoolPush = nullptr;
-
-  /// Declaration for objc_autoreleasePoolPop().
-  Function *AutoreleasePoolPop = nullptr;
 
   Function *getIntrinsicEntryPoint(Function *&Decl, Intrinsic::ID IntID) {
     if (Decl)

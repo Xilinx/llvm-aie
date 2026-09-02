@@ -8,7 +8,6 @@
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
 
-#include <string>
 #include <unordered_set>
 #include <utility>
 
@@ -28,7 +27,6 @@ struct support::adapt_operations<std::unordered_set<K>> {
 
 int main(int argc, char** argv) {
   support::associative_container_benchmarks<std::unordered_set<int>>("std::unordered_set<int>");
-  support::associative_container_benchmarks<std::unordered_set<std::string>>("std::unordered_set<std::string>");
 
   benchmark::Initialize(&argc, argv);
   benchmark::RunSpecifiedBenchmarks();

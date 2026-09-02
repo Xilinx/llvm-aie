@@ -72,7 +72,7 @@ static void EmitInstrDocs(const RecordKeeper &RK, raw_ostream &OS) {
   writeTitle(Title, OS);
   OS << "\n";
 
-  for (const CodeGenInstruction *II : Target.getInstructions()) {
+  for (const CodeGenInstruction *II : Target.getInstructionsByEnumValue()) {
     const Record *Inst = II->TheDef;
 
     // Don't print the target-independent instructions.

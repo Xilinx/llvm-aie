@@ -120,7 +120,6 @@ ASTNodeUP DILParser::ParseUnaryExpression() {
 //  postfix_expression:
 //    primary_expression
 //    postfix_expression "[" integer_literal "]"
-//    postfix_expression "[" integer_literal "-" integer_literal "]"
 //    postfix_expression "." id_expression
 //    postfix_expression "->" id_expression
 //
@@ -132,30 +131,17 @@ ASTNodeUP DILParser::ParsePostfixExpression() {
     switch (token.GetKind()) {
     case Token::l_square: {
       m_dil_lexer.Advance();
-      std::optional<int64_t> index = ParseIntegerConstant();
-      if (!index) {
+      std::optional<int64_t> rhs = ParseIntegerConstant();
+      if (!rhs) {
         BailOut(
             llvm::formatv("failed to parse integer constant: {0}", CurToken()),
             CurToken().GetLocation(), CurToken().GetSpelling().length());
         return std::make_unique<ErrorNode>();
       }
-      if (CurToken().GetKind() == Token::minus) {
-        m_dil_lexer.Advance();
-        std::optional<int64_t> last_index = ParseIntegerConstant();
-        if (!last_index) {
-          BailOut(llvm::formatv("failed to parse integer constant: {0}",
-                                CurToken()),
-                  CurToken().GetLocation(), CurToken().GetSpelling().length());
-          return std::make_unique<ErrorNode>();
-        }
-        lhs = std::make_unique<BitFieldExtractionNode>(
-            loc, std::move(lhs), std::move(*index), std::move(*last_index));
-      } else {
-        lhs = std::make_unique<ArraySubscriptNode>(loc, std::move(lhs),
-                                                   std::move(*index));
-      }
       Expect(Token::r_square);
       m_dil_lexer.Advance();
+      lhs = std::make_unique<ArraySubscriptNode>(loc, std::move(lhs),
+                                                 std::move(*rhs));
       break;
     }
     case Token::period:
@@ -183,14 +169,12 @@ ASTNodeUP DILParser::ParsePostfixExpression() {
 //    "(" expression ")"
 //
 ASTNodeUP DILParser::ParsePrimaryExpression() {
-  if (CurToken().IsOneOf(
-          {Token::coloncolon, Token::identifier, Token::l_paren})) {
+  if (CurToken().IsOneOf({Token::coloncolon, Token::identifier})) {
     // Save the source location for the diagnostics message.
     uint32_t loc = CurToken().GetLocation();
-    std::string identifier = ParseIdExpression();
+    auto identifier = ParseIdExpression();
 
-    if (!identifier.empty())
-      return std::make_unique<IdentifierNode>(loc, identifier);
+    return std::make_unique<IdentifierNode>(loc, identifier);
   }
 
   if (CurToken().Is(Token::l_paren)) {
@@ -234,15 +218,16 @@ std::string DILParser::ParseNestedNameSpecifier() {
         m_dil_lexer.LookAhead(4).Is(Token::coloncolon)) {
       m_dil_lexer.Advance(4);
 
-      Expect(Token::coloncolon);
-      m_dil_lexer.Advance();
-      if (!CurToken().Is(Token::identifier) && !CurToken().Is(Token::l_paren)) {
-        BailOut("Expected an identifier or anonymous namespace, but not found.",
-                CurToken().GetLocation(), CurToken().GetSpelling().length());
-      }
+      assert(
+          (CurToken().Is(Token::identifier) || CurToken().Is(Token::l_paren)) &&
+          "Expected an identifier or anonymous namespace, but not found.");
       // Continue parsing the nested_namespace_specifier.
       std::string identifier2 = ParseNestedNameSpecifier();
-
+      if (identifier2.empty()) {
+        Expect(Token::identifier);
+        identifier2 = CurToken().GetSpelling();
+        m_dil_lexer.Advance();
+      }
       return "(anonymous namespace)::" + identifier2;
     }
 
@@ -302,9 +287,6 @@ std::string DILParser::ParseIdExpression() {
                          nested_name_specifier, unqualified_id);
   }
 
-  if (!CurToken().Is(Token::identifier))
-    return "";
-
   // No nested_name_specifier, but with global scope -- this is also a
   // qualified_id production. Follow the second production rule.
   if (global_scope) {
@@ -352,15 +334,8 @@ void DILParser::BailOut(const std::string &error, uint32_t loc,
 //    ? Integer constant ?
 //
 std::optional<int64_t> DILParser::ParseIntegerConstant() {
-  std::string number_spelling;
-  if (CurToken().GetKind() == Token::minus) {
-    // StringRef::getAsInteger<>() can parse negative numbers.
-    // FIXME: Remove this once unary minus operator is added.
-    number_spelling = "-";
-    m_dil_lexer.Advance();
-  }
-  number_spelling.append(CurToken().GetSpelling());
-  llvm::StringRef spelling_ref = number_spelling;
+  auto spelling = CurToken().GetSpelling();
+  llvm::StringRef spelling_ref = spelling;
   int64_t raw_value;
   if (!spelling_ref.getAsInteger<int64_t>(0, raw_value)) {
     m_dil_lexer.Advance();

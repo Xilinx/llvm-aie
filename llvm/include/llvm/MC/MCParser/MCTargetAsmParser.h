@@ -15,7 +15,6 @@
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/MC/MCTargetOptions.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/TargetParser/SubtargetFeature.h"
 #include <cstdint>
@@ -332,7 +331,7 @@ private:
 };
 
 /// MCTargetAsmParser - Generic interface to target specific assembly parsers.
-class LLVM_ABI MCTargetAsmParser : public MCAsmParserExtension {
+class MCTargetAsmParser : public MCAsmParserExtension {
 public:
   enum MatchResultTy {
     Match_InvalidOperand,

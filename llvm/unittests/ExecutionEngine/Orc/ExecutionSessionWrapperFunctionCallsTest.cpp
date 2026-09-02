@@ -9,7 +9,6 @@
 #include "llvm/ExecutionEngine/Orc/AbsoluteSymbols.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
-#include "llvm/ExecutionEngine/Orc/SelfExecutorProcessControl.h"
 #include "llvm/Support/MSVCErrorWorkarounds.h"
 #include "llvm/Testing/Support/Error.h"
 #include "gtest/gtest.h"
@@ -110,7 +109,7 @@ TEST(ExecutionSessionWrapperFunctionCalls, RegisterAsyncHandlerAndRun) {
         EXPECT_TRUE(SPSArgList<int32_t>::deserialize(IB, Result));
         RP.set_value(Result);
       },
-      AddAsyncTagAddr, ArrayRef<char>(ArgBuffer));
+      AddAsyncTagAddr, ArrayRef<char>(ArgBuffer.data(), ArgBuffer.size()));
 
   EXPECT_EQ(RF.get(), (int32_t)3);
 

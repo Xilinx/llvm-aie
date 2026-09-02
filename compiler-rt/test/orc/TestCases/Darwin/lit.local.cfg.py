@@ -1,2 +1,2 @@
-if config.root.target_os != "Darwin":
+if config.root.host_os != "Darwin":
     config.unsupported = True

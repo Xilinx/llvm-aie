@@ -247,8 +247,6 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
     llvm::errs() << " [LeadingSpace]";
   if (Tok.isExpandDisabled())
     llvm::errs() << " [ExpandDisabled]";
-  if (Tok.isFirstPPToken())
-    llvm::errs() << " [First pp-token]";
   if (Tok.needsCleaning()) {
     const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
     llvm::errs() << " [UnClean='" << StringRef(Start, Tok.getLength())
@@ -510,7 +508,7 @@ void Preprocessor::CreateString(StringRef Str, Token &Tok,
 SourceLocation Preprocessor::SplitToken(SourceLocation Loc, unsigned Length) {
   auto &SM = getSourceManager();
   SourceLocation SpellingLoc = SM.getSpellingLoc(Loc);
-  FileIDAndOffset LocInfo = SM.getDecomposedLoc(SpellingLoc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellingLoc);
   bool Invalid = false;
   StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
@@ -566,21 +564,6 @@ void Preprocessor::EnterMainSourceFile() {
     // #imported, it won't be re-entered.
     if (OptionalFileEntryRef FE = SourceMgr.getFileEntryRefForID(MainFileID))
       markIncluded(*FE);
-
-    // Record the first PP token in the main file. This is used to generate
-    // better diagnostics for C++ modules.
-    //
-    // // This is a comment.
-    // #define FOO int  // note: add 'module;' to the start of the file
-    // ^ FirstPPToken   //       to introduce a global module fragment.
-    //
-    // export module M; // error: module declaration must occur
-    //                  //        at the start of the translation unit.
-    if (getLangOpts().CPlusPlusModules) {
-      std::optional<Token> FirstPPTok = CurLexer->peekNextPPToken();
-      if (FirstPPTok && FirstPPTok->isFirstPPToken())
-        FirstPPTokenLoc = FirstPPTok->getLocation();
-    }
   }
 
   // Preprocess Predefines to populate the initial preprocessor state.
@@ -828,14 +811,14 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
       if (!Identifier.isExpandDisabled() && MI->isEnabled()) {
         // C99 6.10.3p10: If the preprocessing token immediately after the
         // macro name isn't a '(', this macro should not be expanded.
-        if (!MI->isFunctionLike() || isNextPPTokenOneOf(tok::l_paren))
+        if (!MI->isFunctionLike() || isNextPPTokenLParen())
           return HandleMacroExpandedIdentifier(Identifier, MD);
       } else {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
         // expanded, even if it's in a context where it could be expanded in the
         // future.
         Identifier.setFlag(Token::DisableExpand);
-        if (MI->isObjectLike() || isNextPPTokenOneOf(tok::l_paren))
+        if (MI->isObjectLike() || isNextPPTokenLParen())
           Diag(Identifier, diag::pp_disabled_macro_expansion);
       }
     }
@@ -949,8 +932,6 @@ void Preprocessor::Lex(Token &Result) {
       break;
     case tok::period:
       ModuleDeclState.handlePeriod();
-      break;
-    case tok::eod:
       break;
     case tok::identifier:
       // Check "import" and "module" when there is no open bracket. The two

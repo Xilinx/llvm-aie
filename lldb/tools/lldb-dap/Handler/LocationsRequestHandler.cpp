@@ -9,12 +9,8 @@
 #include "DAP.h"
 #include "EventHelper.h"
 #include "JSONUtils.h"
-#include "LLDBUtils.h"
-#include "ProtocolUtils.h"
 #include "RequestHandler.h"
-#include "lldb/API/SBAddress.h"
 #include "lldb/API/SBDeclaration.h"
-#include "lldb/API/SBLineEntry.h"
 
 namespace lldb_dap {
 
@@ -126,9 +122,9 @@ void LocationsRequestHandler::operator()(
       return;
     }
 
-    lldb::addr_t raw_addr = variable.GetValueAsAddress();
-    lldb::SBAddress addr = dap.target.ResolveLoadAddress(raw_addr);
-    lldb::SBLineEntry line_entry = GetLineEntryForAddress(dap.target, addr);
+    lldb::addr_t addr = variable.GetValueAsAddress();
+    lldb::SBLineEntry line_entry =
+        dap.target.ResolveLoadAddress(addr).GetLineEntry();
 
     if (!line_entry.IsValid()) {
       response["success"] = false;
@@ -137,16 +133,7 @@ void LocationsRequestHandler::operator()(
       return;
     }
 
-    const std::optional<protocol::Source> source =
-        CreateSource(line_entry.GetFileSpec());
-    if (!source) {
-      response["success"] = false;
-      response["message"] = "Failed to resolve file path for location";
-      dap.SendJSON(llvm::json::Value(std::move(response)));
-      return;
-    }
-
-    body.try_emplace("source", *source);
+    body.try_emplace("source", CreateSource(line_entry.GetFileSpec()));
     if (int line = line_entry.GetLine())
       body.try_emplace("line", line);
     if (int column = line_entry.GetColumn())
@@ -161,16 +148,7 @@ void LocationsRequestHandler::operator()(
       return;
     }
 
-    const std::optional<protocol::Source> source =
-        CreateSource(decl.GetFileSpec());
-    if (!source) {
-      response["success"] = false;
-      response["message"] = "Failed to resolve file path for location";
-      dap.SendJSON(llvm::json::Value(std::move(response)));
-      return;
-    }
-
-    body.try_emplace("source", *source);
+    body.try_emplace("source", CreateSource(decl.GetFileSpec()));
     if (int line = decl.GetLine())
       body.try_emplace("line", line);
     if (int column = decl.GetColumn())

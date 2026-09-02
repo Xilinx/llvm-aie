@@ -45,10 +45,9 @@ public:
   template <typename... Ty>
   using FixedSizeStorage = TrailingObjects::FixedSizeStorage<Ty...>;
 
+  using TrailingObjects::totalSizeToAlloc;
   using TrailingObjects::additionalSizeToAlloc;
   using TrailingObjects::getTrailingObjects;
-  using TrailingObjects::getTrailingObjectsNonStrict;
-  using TrailingObjects::totalSizeToAlloc;
 };
 
 // Here, there are two singular optional object types appended. Note
@@ -124,11 +123,11 @@ TEST(TrailingObjects, OneArg) {
   EXPECT_EQ(Class1::totalSizeToAlloc<short>(3),
             sizeof(Class1) + sizeof(short) * 3);
 
-  EXPECT_EQ(C->getTrailingObjects(), reinterpret_cast<short *>(C + 1));
+  EXPECT_EQ(C->getTrailingObjects<short>(), reinterpret_cast<short *>(C + 1));
   EXPECT_EQ(C->get(0), 1);
   EXPECT_EQ(C->get(2), 3);
 
-  EXPECT_EQ(C->getTrailingObjects(), C->getTrailingObjectsNonStrict<short>());
+  EXPECT_EQ(C->getTrailingObjects(), C->getTrailingObjects<short>());
 
   delete C;
 }

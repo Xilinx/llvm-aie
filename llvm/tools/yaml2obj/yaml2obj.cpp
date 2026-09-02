@@ -117,9 +117,8 @@ int main(int argc, char **argv) {
       argc, argv, "Create an object file from a YAML description", nullptr,
       nullptr, /*LongOptionsUseDoubleDash=*/true);
 
-  constexpr StringRef ProgName = "yaml2obj";
-  auto ErrHandler = [&](const Twine &Msg) {
-    WithColor::error(errs(), ProgName) << Msg << "\n";
+  auto ErrHandler = [](const Twine &Msg) {
+    WithColor::error(errs(), "yaml2obj") << Msg << "\n";
   };
 
   std::error_code EC;
@@ -132,10 +131,8 @@ int main(int argc, char **argv) {
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
       MemoryBuffer::getFileOrSTDIN(Input, /*IsText=*/true);
-  if (std::error_code EC = Buf.getError()) {
-    WithColor::error(errs(), ProgName) << Input << ": " << EC.message() << '\n';
+  if (!Buf)
     return 1;
-  }
 
   std::optional<std::string> Buffer =
       preprocess(Buf.get()->getBuffer(), ErrHandler);

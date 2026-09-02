@@ -441,74 +441,98 @@ bool RISCVABIInfo::detectVLSCCEligibleStruct(QualType Ty, unsigned ABIVLen,
   //     __attribute__((vector_size(64))) int d;
   //   }
   //
-  // 1. Struct of 1 fixed-length vector is passed as a scalable vector.
-  // 2. Struct of >1 fixed-length vectors are passed as vector tuple.
-  // 3. Struct of an array with 1 element of fixed-length vectors is passed as a
-  //    scalable vector.
-  // 4. Struct of an array with >1 elements of fixed-length vectors is passed as
-  //    vector tuple.
-  // 5. Otherwise, pass the struct indirectly.
+  // Struct of 1 fixed-length vector is passed as a scalable vector.
+  // Struct of >1 fixed-length vectors are passed as vector tuple.
+  // Struct of 1 array of fixed-length vectors is passed as a scalable vector.
+  // Otherwise, pass the struct indirectly.
 
-  llvm::StructType *STy = dyn_cast<llvm::StructType>(CGT.ConvertType(Ty));
-  if (!STy)
-    return false;
+  if (llvm::StructType *STy = dyn_cast<llvm::StructType>(CGT.ConvertType(Ty))) {
+    unsigned NumElts = STy->getStructNumElements();
+    if (NumElts > 8)
+      return false;
 
-  unsigned NumElts = STy->getStructNumElements();
-  if (NumElts > 8)
-    return false;
+    auto *FirstEltTy = STy->getElementType(0);
+    if (!STy->containsHomogeneousTypes())
+      return false;
 
-  auto *FirstEltTy = STy->getElementType(0);
-  if (!STy->containsHomogeneousTypes())
-    return false;
+    // Check structure of fixed-length vectors and turn them into vector tuple
+    // type if legal.
+    if (auto *FixedVecTy = dyn_cast<llvm::FixedVectorType>(FirstEltTy)) {
+      if (NumElts == 1) {
+        // Handle single fixed-length vector.
+        VLSType = llvm::ScalableVectorType::get(
+            FixedVecTy->getElementType(),
+            llvm::divideCeil(FixedVecTy->getNumElements() *
+                                 llvm::RISCV::RVVBitsPerBlock,
+                             ABIVLen));
+        // Check registers needed <= 8.
+        return llvm::divideCeil(
+                   FixedVecTy->getNumElements() *
+                       FixedVecTy->getElementType()->getScalarSizeInBits(),
+                   ABIVLen) <= 8;
+      }
+      // LMUL
+      // = fixed-length vector size / ABIVLen
+      // = 8 * I8EltCount / RVVBitsPerBlock
+      // =>
+      // I8EltCount
+      // = (fixed-length vector size * RVVBitsPerBlock) / (ABIVLen * 8)
+      unsigned I8EltCount = llvm::divideCeil(
+          FixedVecTy->getNumElements() *
+              FixedVecTy->getElementType()->getScalarSizeInBits() *
+              llvm::RISCV::RVVBitsPerBlock,
+          ABIVLen * 8);
+      VLSType = llvm::TargetExtType::get(
+          getVMContext(), "riscv.vector.tuple",
+          llvm::ScalableVectorType::get(llvm::Type::getInt8Ty(getVMContext()),
+                                        I8EltCount),
+          NumElts);
+      // Check registers needed <= 8.
+      return NumElts *
+                 llvm::divideCeil(
+                     FixedVecTy->getNumElements() *
+                         FixedVecTy->getElementType()->getScalarSizeInBits(),
+                     ABIVLen) <=
+             8;
+    }
 
-  if (auto *ArrayTy = dyn_cast<llvm::ArrayType>(FirstEltTy)) {
-    // Only struct of single array is accepted
+    // If elements are not fixed-length vectors, it should be an array.
     if (NumElts != 1)
       return false;
-    FirstEltTy = ArrayTy->getArrayElementType();
-    NumElts = ArrayTy->getNumElements();
+
+    // Check array of fixed-length vector and turn it into scalable vector type
+    // if legal.
+    if (auto *ArrTy = dyn_cast<llvm::ArrayType>(FirstEltTy)) {
+      unsigned NumArrElt = ArrTy->getNumElements();
+      if (NumArrElt > 8)
+        return false;
+
+      auto *ArrEltTy = dyn_cast<llvm::FixedVectorType>(ArrTy->getElementType());
+      if (!ArrEltTy)
+        return false;
+
+      // LMUL
+      // = NumArrElt * fixed-length vector size / ABIVLen
+      // = fixed-length vector elt size * ScalVecNumElts / RVVBitsPerBlock
+      // =>
+      // ScalVecNumElts
+      // = (NumArrElt * fixed-length vector size * RVVBitsPerBlock) /
+      //   (ABIVLen * fixed-length vector elt size)
+      // = NumArrElt * num fixed-length vector elt * RVVBitsPerBlock /
+      //   ABIVLen
+      unsigned ScalVecNumElts = llvm::divideCeil(
+          NumArrElt * ArrEltTy->getNumElements() * llvm::RISCV::RVVBitsPerBlock,
+          ABIVLen);
+      VLSType = llvm::ScalableVectorType::get(ArrEltTy->getElementType(),
+                                              ScalVecNumElts);
+      // Check registers needed <= 8.
+      return llvm::divideCeil(
+                 ScalVecNumElts *
+                     ArrEltTy->getElementType()->getScalarSizeInBits(),
+                 llvm::RISCV::RVVBitsPerBlock) <= 8;
+    }
   }
-
-  auto *FixedVecTy = dyn_cast<llvm::FixedVectorType>(FirstEltTy);
-  if (!FixedVecTy)
-    return false;
-
-  // Check registers needed <= 8.
-  if (NumElts * llvm::divideCeil(
-                    FixedVecTy->getNumElements() *
-                        FixedVecTy->getElementType()->getScalarSizeInBits(),
-                    ABIVLen) >
-      8)
-    return false;
-
-  // Turn them into scalable vector type or vector tuple type if legal.
-  if (NumElts == 1) {
-    // Handle single fixed-length vector.
-    VLSType = llvm::ScalableVectorType::get(
-        FixedVecTy->getElementType(),
-        llvm::divideCeil(FixedVecTy->getNumElements() *
-                             llvm::RISCV::RVVBitsPerBlock,
-                         ABIVLen));
-    return true;
-  }
-
-  // LMUL
-  // = fixed-length vector size / ABIVLen
-  // = 8 * I8EltCount / RVVBitsPerBlock
-  // =>
-  // I8EltCount
-  // = (fixed-length vector size * RVVBitsPerBlock) / (ABIVLen * 8)
-  unsigned I8EltCount =
-      llvm::divideCeil(FixedVecTy->getNumElements() *
-                           FixedVecTy->getElementType()->getScalarSizeInBits() *
-                           llvm::RISCV::RVVBitsPerBlock,
-                       ABIVLen * 8);
-  VLSType = llvm::TargetExtType::get(
-      getVMContext(), "riscv.vector.tuple",
-      llvm::ScalableVectorType::get(llvm::Type::getInt8Ty(getVMContext()),
-                                    I8EltCount),
-      NumElts);
-  return true;
+  return false;
 }
 
 // Fixed-length RVV vectors are represented as scalable vectors in function
@@ -520,7 +544,7 @@ ABIArgInfo RISCVABIInfo::coerceVLSVector(QualType Ty, unsigned ABIVLen) const {
   assert(VT->getElementType()->isBuiltinType() && "expected builtin type!");
 
   auto VScale = getContext().getTargetInfo().getVScaleRange(
-      getContext().getLangOpts(), TargetInfo::ArmStreamingKind::NotStreaming);
+      getContext().getLangOpts(), false);
 
   unsigned NumElts = VT->getNumElements();
   llvm::Type *EltType = llvm::Type::getInt1Ty(getVMContext());

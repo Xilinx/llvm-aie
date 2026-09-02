@@ -17,7 +17,6 @@ User Guide for the DirectX Target
    DirectX/DXILArchitecture
    DirectX/DXILOpTableGenDesign
    DirectX/DXILResources
-   DirectX/RootSignatures
 
 Introduction
 ============

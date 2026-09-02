@@ -89,12 +89,12 @@ define i8 @extractelement_bitcast_insert_extra_use_bitcast(<vscale x 2 x i32> %a
   ret i8 %r
 }
 
-; while it may be that the extract is out-of-bounds, any valid index
-; is going to yield %v (because the mask is all-zeros).
-
 define i32 @extractelement_shuffle_maybe_out_of_range(i32 %v) {
 ; CHECK-LABEL: @extractelement_shuffle_maybe_out_of_range(
-; CHECK-NEXT:    ret i32 [[V:%.*]]
+; CHECK-NEXT:    [[IN:%.*]] = insertelement <vscale x 4 x i32> poison, i32 [[V:%.*]], i64 0
+; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <vscale x 4 x i32> [[IN]], <vscale x 4 x i32> poison, <vscale x 4 x i32> zeroinitializer
+; CHECK-NEXT:    [[R:%.*]] = extractelement <vscale x 4 x i32> [[SPLAT]], i64 4
+; CHECK-NEXT:    ret i32 [[R]]
 ;
   %in = insertelement <vscale x 4 x i32> poison, i32 %v, i32 0
   %splat = shufflevector <vscale x 4 x i32> %in, <vscale x 4 x i32> poison, <vscale x 4 x i32> zeroinitializer
@@ -104,7 +104,10 @@ define i32 @extractelement_shuffle_maybe_out_of_range(i32 %v) {
 
 define i32 @extractelement_shuffle_invalid_index(i32 %v) {
 ; CHECK-LABEL: @extractelement_shuffle_invalid_index(
-; CHECK-NEXT:    ret i32 [[V:%.*]]
+; CHECK-NEXT:    [[IN:%.*]] = insertelement <vscale x 4 x i32> poison, i32 [[V:%.*]], i64 0
+; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <vscale x 4 x i32> [[IN]], <vscale x 4 x i32> poison, <vscale x 4 x i32> zeroinitializer
+; CHECK-NEXT:    [[R:%.*]] = extractelement <vscale x 4 x i32> [[SPLAT]], i64 4294967295
+; CHECK-NEXT:    ret i32 [[R]]
 ;
   %in = insertelement <vscale x 4 x i32> poison, i32 %v, i32 0
   %splat = shufflevector <vscale x 4 x i32> %in, <vscale x 4 x i32> poison, <vscale x 4 x i32> zeroinitializer

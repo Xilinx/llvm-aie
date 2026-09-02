@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
+#include "MemRefDescriptor.h"
 #include "mlir/Conversion/LLVMCommon/MemRefBuilder.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/LLVMIR/LLVMTypes.h"
@@ -91,7 +92,7 @@ static Value unrankedMemRefMaterialization(OpBuilder &builder,
       packUnrankedMemRefDesc(builder, resultType, inputs, loc, converter);
   if (!packed)
     return Value();
-  return UnrealizedConversionCastOp::create(builder, loc, resultType, packed)
+  return builder.create<UnrealizedConversionCastOp>(loc, resultType, packed)
       .getResult(0);
 }
 
@@ -107,7 +108,7 @@ static Value rankedMemRefMaterialization(OpBuilder &builder,
       packRankedMemRefDesc(builder, resultType, inputs, loc, converter);
   if (!packed)
     return Value();
-  return UnrealizedConversionCastOp::create(builder, loc, resultType, packed)
+  return builder.create<UnrealizedConversionCastOp>(loc, resultType, packed)
       .getResult(0);
 }
 
@@ -224,12 +225,12 @@ LLVMTypeConverter::LLVMTypeConverter(MLIRContext *ctx,
   // non-LLVM types persist after an LLVM conversion.
   addSourceMaterialization([&](OpBuilder &builder, Type resultType,
                                ValueRange inputs, Location loc) {
-    return UnrealizedConversionCastOp::create(builder, loc, resultType, inputs)
+    return builder.create<UnrealizedConversionCastOp>(loc, resultType, inputs)
         .getResult(0);
   });
   addTargetMaterialization([&](OpBuilder &builder, Type resultType,
                                ValueRange inputs, Location loc) {
-    return UnrealizedConversionCastOp::create(builder, loc, resultType, inputs)
+    return builder.create<UnrealizedConversionCastOp>(loc, resultType, inputs)
         .getResult(0);
   });
 
@@ -609,7 +610,7 @@ bool LLVMTypeConverter::canConvertToBarePtr(BaseMemRefType type) {
     if (ShapedType::isDynamic(stride))
       return false;
 
-  return ShapedType::isStatic(offset);
+  return !ShapedType::isDynamic(offset);
 }
 
 /// Convert a memref type to a bare pointer to the memref element type.
@@ -731,12 +732,12 @@ Value LLVMTypeConverter::promoteOneMemRefDescriptor(Location loc, Value operand,
   // Alloca with proper alignment. We do not expect optimizations of this
   // alloca op and so we omit allocating at the entry block.
   auto ptrType = LLVM::LLVMPointerType::get(builder.getContext());
-  Value one = LLVM::ConstantOp::create(builder, loc, builder.getI64Type(),
-                                       builder.getIndexAttr(1));
+  Value one = builder.create<LLVM::ConstantOp>(loc, builder.getI64Type(),
+                                               builder.getIndexAttr(1));
   Value allocated =
-      LLVM::AllocaOp::create(builder, loc, ptrType, operand.getType(), one);
+      builder.create<LLVM::AllocaOp>(loc, ptrType, operand.getType(), one);
   // Store into the alloca'ed descriptor.
-  LLVM::StoreOp::create(builder, loc, operand, allocated);
+  builder.create<LLVM::StoreOp>(loc, operand, allocated);
   return allocated;
 }
 

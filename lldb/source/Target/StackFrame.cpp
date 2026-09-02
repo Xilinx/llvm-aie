@@ -562,7 +562,6 @@ ValueObjectSP StackFrame::DILGetValueForVariableExpressionPath(
     return ValueObjectConstResult::Create(nullptr, std::move(error));
   }
 
-  var_sp = (*valobj_or_error)->GetVariable();
   return *valobj_or_error;
 }
 
@@ -1938,15 +1937,12 @@ void StackFrame::DumpUsingSettingsFormat(Stream *strm, bool show_unique,
   ExecutionContext exe_ctx(shared_from_this());
 
   const FormatEntity::Entry *frame_format = nullptr;
-  FormatEntity::Entry format_entry;
   Target *target = exe_ctx.GetTargetPtr();
   if (target) {
     if (show_unique) {
-      format_entry = target->GetDebugger().GetFrameFormatUnique();
-      frame_format = &format_entry;
+      frame_format = target->GetDebugger().GetFrameFormatUnique();
     } else {
-      format_entry = target->GetDebugger().GetFrameFormat();
-      frame_format = &format_entry;
+      frame_format = target->GetDebugger().GetFrameFormat();
     }
   }
   if (!DumpUsingFormat(*strm, frame_format, frame_marker)) {

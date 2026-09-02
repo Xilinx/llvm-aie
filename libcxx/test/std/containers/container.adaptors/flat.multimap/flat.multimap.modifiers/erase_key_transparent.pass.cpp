@@ -14,7 +14,6 @@
 
 // size_type erase(K&& k);
 
-#include <algorithm>
 #include <compare>
 #include <concepts>
 #include <deque>
@@ -41,10 +40,10 @@ static_assert(!CanErase<const NonTransparentMap>);
 
 template <class Key, class It>
 struct HeterogeneousKey {
-  constexpr explicit HeterogeneousKey(Key key, It it) : key_(key), it_(it) {}
-  constexpr operator It() && { return it_; }
-  constexpr auto operator<=>(Key key) const { return key_ <=> key; }
-  constexpr friend bool operator<(const HeterogeneousKey&, const HeterogeneousKey&) {
+  explicit HeterogeneousKey(Key key, It it) : key_(key), it_(it) {}
+  operator It() && { return it_; }
+  auto operator<=>(Key key) const { return key_ <=> key; }
+  friend bool operator<(const HeterogeneousKey&, const HeterogeneousKey&) {
     assert(false);
     return false;
   }
@@ -53,7 +52,7 @@ struct HeterogeneousKey {
 };
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test_simple() {
+void test_simple() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
   using M     = std::flat_multimap<Key, Value, std::ranges::less, KeyContainer, ValueContainer>;
@@ -74,7 +73,7 @@ constexpr void test_simple() {
 }
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test_transparent_comparator() {
+void test_transparent_comparator() {
   using M = std::flat_multimap<std::string, int, TransparentComparator, KeyContainer, ValueContainer>;
   using P = std::pair<std::string, int>;
   M m     = {
@@ -83,14 +82,12 @@ constexpr void test_transparent_comparator() {
 
   auto n = m.erase(Transparent<std::string>{"epsilon"});
   assert(n == 2);
-  check_invariant(m);
-  assert(std::ranges::is_permutation(
+  assert(std::ranges::equal(
       m, std::vector<P>{{"alpha", 1}, {"beta", 2}, {"eta", 4}, {"gamma", 5}, {"gamma", 6}, {"gamma", 7}}));
 
   auto n2 = m.erase(Transparent<std::string>{"aaa"});
   assert(n2 == 0);
-  check_invariant(m);
-  assert(std::ranges::is_permutation(
+  assert(std::ranges::equal(
       m, std::vector<P>{{"alpha", 1}, {"beta", 2}, {"eta", 4}, {"gamma", 5}, {"gamma", 6}, {"gamma", 7}}));
 
   auto n3 = m.erase(Transparent<std::string>{"gamma"});
@@ -118,20 +115,14 @@ constexpr void test_transparent_comparator() {
   assert(std::ranges::equal(m, std::vector<P>{}));
 }
 
-constexpr bool test() {
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test_simple<std::deque<int>, std::vector<double>>();
-    test_transparent_comparator<std::deque<std::string>, std::vector<int>>();
-  }
-
+int main(int, char**) {
   test_simple<std::vector<int>, std::vector<double>>();
+  test_simple<std::deque<int>, std::vector<double>>();
   test_simple<MinSequenceContainer<int>, MinSequenceContainer<double>>();
   test_simple<std::vector<int, min_allocator<int>>, std::vector<double, min_allocator<double>>>();
 
   test_transparent_comparator<std::vector<std::string>, std::vector<int>>();
+  test_transparent_comparator<std::deque<std::string>, std::vector<int>>();
   test_transparent_comparator<MinSequenceContainer<std::string>, MinSequenceContainer<int>>();
   test_transparent_comparator<std::vector<std::string, min_allocator<std::string>>,
                               std::vector<int, min_allocator<int>>>();
@@ -157,8 +148,7 @@ constexpr bool test() {
     assert(n == 2);
     assert(transparent_used);
   }
-
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+  {
     auto erase_transparent = [](auto& m, auto key_arg) {
       using Map = std::decay_t<decltype(m)>;
       using Key = typename Map::key_type;
@@ -166,21 +156,6 @@ constexpr bool test() {
     };
     test_erase_exception_guarantee(erase_transparent);
   }
-  {
-    // LWG4239 std::string and C string literal
-    using M = std::flat_multimap<std::string, int, std::less<>>;
-    M m{{"alpha", 1}, {"beta", 2}, {"beta", 1}, {"eta", 3}, {"gamma", 3}};
-    auto n = m.erase("beta");
-    assert(n == 2);
-  }
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

@@ -10,10 +10,12 @@
 ; CHECK-SPIRV: OpReturn
 ; CHECK-SPIRV: OpFunctionEnd
 
-define void @main() {
+define void @main() #1 {
 entry:
   %0 = alloca <2 x i32>, align 4
   %1 = getelementptr <2 x i32>, ptr %0, i32 0, i32 0
   %2 = alloca float, align 4
   ret void
 }
+
+attributes #1 = { "hlsl.numthreads"="4,8,16" "hlsl.shader"="compute" }

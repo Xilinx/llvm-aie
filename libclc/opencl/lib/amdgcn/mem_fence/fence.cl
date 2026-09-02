@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/explicit_fence/explicit_memory_fence.h>
+#include <clc/opencl/clc.h>
 
 void __clc_amdgcn_s_waitcnt(unsigned flags);
 

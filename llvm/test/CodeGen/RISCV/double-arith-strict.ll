@@ -379,7 +379,8 @@ define double @fmsub_d(double %a, double %b, double %c) nounwind strictfp {
 ;
 ; RV32IZFINXZDINX-LABEL: fmsub_d:
 ; RV32IZFINXZDINX:       # %bb.0:
-; RV32IZFINXZDINX-NEXT:    fadd.d a4, a4, zero
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a6, zero
+; RV32IZFINXZDINX-NEXT:    fadd.d a4, a4, a6
 ; RV32IZFINXZDINX-NEXT:    fmsub.d a0, a0, a2, a4
 ; RV32IZFINXZDINX-NEXT:    ret
 ;
@@ -469,8 +470,9 @@ define double @fnmadd_d(double %a, double %b, double %c) nounwind strictfp {
 ;
 ; RV32IZFINXZDINX-LABEL: fnmadd_d:
 ; RV32IZFINXZDINX:       # %bb.0:
-; RV32IZFINXZDINX-NEXT:    fadd.d a0, a0, zero
-; RV32IZFINXZDINX-NEXT:    fadd.d a4, a4, zero
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a6, zero
+; RV32IZFINXZDINX-NEXT:    fadd.d a0, a0, a6
+; RV32IZFINXZDINX-NEXT:    fadd.d a4, a4, a6
 ; RV32IZFINXZDINX-NEXT:    fnmadd.d a0, a0, a2, a4
 ; RV32IZFINXZDINX-NEXT:    ret
 ;
@@ -579,8 +581,9 @@ define double @fnmadd_d_2(double %a, double %b, double %c) nounwind strictfp {
 ;
 ; RV32IZFINXZDINX-LABEL: fnmadd_d_2:
 ; RV32IZFINXZDINX:       # %bb.0:
-; RV32IZFINXZDINX-NEXT:    fadd.d a2, a2, zero
-; RV32IZFINXZDINX-NEXT:    fadd.d a4, a4, zero
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a6, zero
+; RV32IZFINXZDINX-NEXT:    fadd.d a2, a2, a6
+; RV32IZFINXZDINX-NEXT:    fadd.d a4, a4, a6
 ; RV32IZFINXZDINX-NEXT:    fnmadd.d a0, a2, a0, a4
 ; RV32IZFINXZDINX-NEXT:    ret
 ;
@@ -688,7 +691,8 @@ define double @fnmsub_d(double %a, double %b, double %c) nounwind strictfp {
 ;
 ; RV32IZFINXZDINX-LABEL: fnmsub_d:
 ; RV32IZFINXZDINX:       # %bb.0:
-; RV32IZFINXZDINX-NEXT:    fadd.d a0, a0, zero
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a6, zero
+; RV32IZFINXZDINX-NEXT:    fadd.d a0, a0, a6
 ; RV32IZFINXZDINX-NEXT:    fnmsub.d a0, a0, a2, a4
 ; RV32IZFINXZDINX-NEXT:    ret
 ;
@@ -772,7 +776,8 @@ define double @fnmsub_d_2(double %a, double %b, double %c) nounwind strictfp {
 ;
 ; RV32IZFINXZDINX-LABEL: fnmsub_d_2:
 ; RV32IZFINXZDINX:       # %bb.0:
-; RV32IZFINXZDINX-NEXT:    fadd.d a2, a2, zero
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a6, zero
+; RV32IZFINXZDINX-NEXT:    fadd.d a2, a2, a6
 ; RV32IZFINXZDINX-NEXT:    fnmsub.d a0, a2, a0, a4
 ; RV32IZFINXZDINX-NEXT:    ret
 ;

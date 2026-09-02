@@ -10,11 +10,9 @@ if(LIBC_TESTS_CAN_USE_MPFR OR LIBC_TESTS_CAN_USE_MPC)
   target_compile_options(libcMPCommon PRIVATE -O3 ${compile_options})
   add_dependencies(
     libcMPCommon
-    libc.hdr.stdint_proxy
     libc.src.__support.CPP.string
     libc.src.__support.CPP.string_view
     libc.src.__support.CPP.type_traits
-    libc.src.__support.FPUtil.bfloat16
     libc.src.__support.FPUtil.cast
     libc.src.__support.FPUtil.fp_bits
   )
@@ -40,7 +38,6 @@ if(LIBC_TESTS_CAN_USE_MPFR)
   add_dependencies(
     libcMPFRWrapper
     libcMPCommon
-    libc.hdr.stdint_proxy
     libc.src.__support.CPP.array
     libc.src.__support.CPP.stringstream
     libc.src.__support.FPUtil.fp_bits

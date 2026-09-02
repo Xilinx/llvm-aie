@@ -21,6 +21,9 @@ add_custom_command(OUTPUT "${vcs_version_inc}"
                            "-DLLVM_FORCE_VC_REPOSITORY=${LLVM_FORCE_VC_REPOSITORY}"
                            -P "${generate_vcs_version_script}")
 
+set_source_files_properties("${vcs_version_inc}"
+  PROPERTIES GENERATED TRUE
+             HEADER_FILE_ONLY TRUE)
 
 # Configure the Version.inc file.
 set(version_inc "${LLDB_BINARY_DIR}/include/lldb/Version/Version.inc")
@@ -29,15 +32,13 @@ configure_file(
   ${LLDB_SOURCE_DIR}/include/lldb/Version/Version.inc.in
   ${version_inc})
 
-set_source_files_properties(
-  "${vcs_version_inc}" "${version_inc}"
+set_source_files_properties("${version_inc}"
   PROPERTIES GENERATED TRUE
-)
+             HEADER_FILE_ONLY TRUE)
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_lldb_library(lldbVersion NO_PLUGIN_DEPENDENCIES
   Version.cpp
-  ADDITIONAL_HEADERS
-    ${version_inc}
-    ${vcs_version_inc}
-)
+  ${vcs_version_inc}
+  ${version_inc})

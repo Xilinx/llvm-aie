@@ -9,7 +9,6 @@
 #ifndef LLVM_MC_MCFIXUP_H
 #define LLVM_MC_MCFIXUP_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SMLoc.h"
@@ -19,8 +18,7 @@ namespace llvm {
 class MCExpr;
 
 /// Extensible enumeration to represent the type of a fixup.
-using MCFixupKind = uint16_t;
-enum {
+enum MCFixupKind : uint16_t {
   // [0, FirstLiteralRelocationKind) encodes raw relocation types.
 
   // [FirstLiteralRelocationKind, FK_NONE) encodes raw relocation types coming
@@ -36,6 +34,10 @@ enum {
   FK_Data_4,      ///< A four-byte fixup.
   FK_Data_8,      ///< A eight-byte fixup.
   FK_Data_leb128, ///< A leb128 fixup.
+  FK_PCRel_1,     ///< A one-byte pc relative fixup.
+  FK_PCRel_2,     ///< A two-byte pc relative fixup.
+  FK_PCRel_4,     ///< A four-byte pc relative fixup.
+  FK_PCRel_8,     ///< A eight-byte pc relative fixup.
   FK_SecRel_1,    ///< A one-byte section relative fixup.
   FK_SecRel_2,    ///< A two-byte section relative fixup.
   FK_SecRel_4,    ///< A four-byte section relative fixup.
@@ -71,37 +73,38 @@ class MCFixup {
   /// determine how the operand value should be encoded into the instruction.
   MCFixupKind Kind = FK_NONE;
 
-  /// True if this is a PC-relative fixup. The relocatable expression is
-  /// typically resolved When SymB is nullptr and SymA is a local symbol defined
-  /// within the current section.
-  bool PCRel = false;
-
   /// Used by RISC-V style linker relaxation. Whether the fixup is
   /// linker-relaxable.
   bool LinkerRelaxable = false;
 
   /// Consider bit fields if we need more flags.
 
+  /// The source location which gave rise to the fixup, if any.
+  SMLoc Loc;
 public:
-  static MCFixup create(uint32_t Offset, const MCExpr *Value, MCFixupKind Kind,
-                        bool PCRel = false) {
+  static MCFixup create(uint32_t Offset, const MCExpr *Value,
+                        MCFixupKind Kind, SMLoc Loc = SMLoc()) {
     MCFixup FI;
     FI.Value = Value;
     FI.Offset = Offset;
     FI.Kind = Kind;
-    FI.PCRel = PCRel;
+    FI.Loc = Loc;
     return FI;
+  }
+  static MCFixup create(uint32_t Offset, const MCExpr *Value, unsigned Kind,
+                        SMLoc Loc = SMLoc()) {
+    return create(Offset, Value, MCFixupKind(Kind), Loc);
   }
 
   MCFixupKind getKind() const { return Kind; }
+
+  unsigned getTargetKind() const { return Kind; }
 
   uint32_t getOffset() const { return Offset; }
   void setOffset(uint32_t Value) { Offset = Value; }
 
   const MCExpr *getValue() const { return Value; }
 
-  bool isPCRel() const { return PCRel; }
-  void setPCRel() { PCRel = true; }
   bool isLinkerRelaxable() const { return LinkerRelaxable; }
   void setLinkerRelaxable() { LinkerRelaxable = true; }
 
@@ -121,7 +124,7 @@ public:
     }
   }
 
-  LLVM_ABI SMLoc getLoc() const;
+  SMLoc getLoc() const { return Loc; }
 };
 
 namespace mc {

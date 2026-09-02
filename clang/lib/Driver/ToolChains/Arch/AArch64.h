@@ -30,7 +30,6 @@ std::string getAArch64TargetCPU(const llvm::opt::ArgList &Args,
 
 void setPAuthABIInTriple(const Driver &D, const llvm::opt::ArgList &Args,
                          llvm::Triple &triple);
-bool isAArch64BareMetal(const llvm::Triple &Triple);
 
 } // end namespace aarch64
 } // end namespace target

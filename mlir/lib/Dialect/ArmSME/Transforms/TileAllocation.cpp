@@ -52,8 +52,10 @@
 #include "mlir/Dialect/ArmSME/Transforms/Transforms.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Transforms/RegionUtils.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/TypeSwitch.h"
+#include <algorithm>
 
 namespace mlir::arm_sme {
 #define GEN_PASS_DEF_TESTTILEALLOCATION
@@ -210,7 +212,7 @@ void splitCondBranches(IRRewriter &rewriter, FunctionOpInterface function) {
 
   auto insertJump = [&](Location loc, Block *source, Block *dest, auto args) {
     rewriter.setInsertionPointToEnd(source);
-    cf::BranchOp::create(rewriter, loc, dest, args);
+    rewriter.create<cf::BranchOp>(loc, dest, args);
   };
 
   for (auto condBranch : worklist) {
@@ -253,7 +255,7 @@ void insertCopiesAtBranches(IRRewriter &rewriter,
     for (OpOperand &operand : terminator->getOpOperands()) {
       if (isValidSMETileVectorType(operand.get().getType())) {
         auto copy =
-            CopyTileOp::create(rewriter, terminator->getLoc(), operand.get());
+            rewriter.create<CopyTileOp>(terminator->getLoc(), operand.get());
         rewriter.modifyOpInPlace(terminator, [&] { operand.assign(copy); });
       }
     }
@@ -526,7 +528,8 @@ chooseSpillUsingHeuristics(OverlappingRangesIterator overlappingRanges,
            a.end() < b.end();
   };
   LiveRange &latestEndingLiveRange =
-      *llvm::max_element(overlappingRanges, isSmallerTileTypeOrEndsEarlier);
+      *std::max_element(overlappingRanges.begin(), overlappingRanges.end(),
+                        isSmallerTileTypeOrEndsEarlier);
   if (!isSmallerTileTypeOrEndsEarlier(latestEndingLiveRange, *newRange))
     return &latestEndingLiveRange;
   return newRange;

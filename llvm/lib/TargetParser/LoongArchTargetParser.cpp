@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/TargetParser/LoongArchTargetParser.h"
-#include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
 using namespace llvm::LoongArch;
@@ -32,18 +31,6 @@ bool LoongArch::isValidArchName(StringRef Arch) {
   for (const auto A : AllArchs)
     if (A.Name == Arch)
       return true;
-  return false;
-}
-
-bool LoongArch::isValidFeatureName(StringRef Feature) {
-  if (Feature.starts_with("+") || Feature.starts_with("-"))
-    return false;
-  for (const auto &F : AllFeatures) {
-    StringRef CanonicalName =
-        F.Name.starts_with("+") ? F.Name.drop_front() : F.Name;
-    if (CanonicalName == Feature)
-      return true;
-  }
   return false;
 }
 

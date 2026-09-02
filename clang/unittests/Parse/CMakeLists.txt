@@ -11,6 +11,5 @@ add_clang_unittest(ParseTests
   LLVMTestingSupport
   clangTesting
   LLVM_COMPONENTS
-  FrontendHLSL
   Support
   )

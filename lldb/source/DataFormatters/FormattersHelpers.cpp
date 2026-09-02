@@ -113,41 +113,15 @@ lldb_private::formatters::ExtractIndexFromString(const char *item_name) {
 
 Address
 lldb_private::formatters::GetArrayAddressOrPointerValue(ValueObject &valobj) {
-  ValueObject::AddrAndType data_addr;
+  lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
+  AddressType type;
 
   if (valobj.IsPointerType())
-    data_addr = valobj.GetPointerValue();
+    data_addr = valobj.GetPointerValue(&type);
   else if (valobj.IsArrayType())
-    data_addr = valobj.GetAddressOf(/*scalar_is_load_address=*/true);
+    data_addr = valobj.GetAddressOf(/*scalar_is_load_address=*/true, &type);
+  if (data_addr != LLDB_INVALID_ADDRESS && type == eAddressTypeFile)
+    return Address(data_addr, valobj.GetModule()->GetSectionList());
 
-  if (data_addr.address != LLDB_INVALID_ADDRESS &&
-      data_addr.type == eAddressTypeFile)
-    return Address(data_addr.address, valobj.GetModule()->GetSectionList());
-
-  return data_addr.address;
-}
-
-void lldb_private::formatters::DumpCxxSmartPtrPointerSummary(
-    Stream &stream, ValueObject &ptr, const TypeSummaryOptions &options) {
-  if (ptr.GetValueAsUnsigned(0) == 0) {
-    stream.Printf("nullptr");
-    return;
-  }
-
-  Status error;
-  ValueObjectSP pointee_sp = ptr.Dereference(error);
-  if (!pointee_sp || !error.Success())
-    return;
-
-  if (!pointee_sp->DumpPrintableRepresentation(
-          stream, ValueObject::eValueObjectRepresentationStyleSummary,
-          lldb::eFormatInvalid,
-          ValueObject::PrintableRepresentationSpecialCases::eDisable, false))
-    stream.Printf("ptr = 0x%" PRIx64, ptr.GetValueAsUnsigned(0));
-}
-
-bool lldb_private::formatters::ContainerSizeSummaryProvider(
-    ValueObject &valobj, Stream &stream, const TypeSummaryOptions &options) {
-  return FormatEntity::FormatStringRef("size=${svar%#}", stream, nullptr,
-                                       nullptr, nullptr, &valobj, false, false);
+  return data_addr;
 }

@@ -14,7 +14,6 @@ unittest("StaticAnalysisTests") {
   sources = [
     "APSIntTypeTest.cpp",
     "AnalyzerOptionsTest.cpp",
-    "BlockEntranceCallbackTest.cpp",
     "BugReportInterestingnessTest.cpp",
     "CallDescriptionTest.cpp",
     "CallEventTest.cpp",

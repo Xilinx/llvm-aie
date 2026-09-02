@@ -13,7 +13,6 @@
 #include "RemarkCounter.h"
 #include "RemarkUtilRegistry.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/InterleavedRange.h"
 #include "llvm/Support/Regex.h"
 
 using namespace llvm;
@@ -112,6 +111,19 @@ static unsigned getValForKey(StringRef Key, const Remark &Remark) {
   return *RemarkArg->getValAsInt();
 }
 
+Error Filters::regexArgumentsValid() {
+  if (RemarkNameFilter && RemarkNameFilter->IsRegex)
+    if (auto E = checkRegex(RemarkNameFilter->FilterRE))
+      return E;
+  if (PassNameFilter && PassNameFilter->IsRegex)
+    if (auto E = checkRegex(PassNameFilter->FilterRE))
+      return E;
+  if (ArgFilter && ArgFilter->IsRegex)
+    if (auto E = checkRegex(ArgFilter->FilterRE))
+      return E;
+  return Error::success();
+}
+
 bool Filters::filterRemark(const Remark &Remark) {
   if (RemarkNameFilter && !RemarkNameFilter->match(Remark.RemarkName))
     return false;
@@ -198,11 +210,23 @@ Error ArgumentCounter::print(StringRef OutputFileName) {
 
   auto OF = std::move(*MaybeOF);
   OF->os() << groupByToStr(Group) << ",";
-  OF->os() << llvm::interleaved(llvm::make_first_range(ArgumentSetIdxMap), ",");
+  unsigned Idx = 0;
+  for (auto [Key, _] : ArgumentSetIdxMap) {
+    OF->os() << Key;
+    if (Idx != ArgumentSetIdxMap.size() - 1)
+      OF->os() << ",";
+    Idx++;
+  }
   OF->os() << "\n";
   for (auto [Header, CountVector] : CountByKeysMap) {
     OF->os() << Header << ",";
-    OF->os() << llvm::interleaved(CountVector, ",");
+    unsigned Idx = 0;
+    for (auto Count : CountVector) {
+      OF->os() << Count;
+      if (Idx != ArgumentSetIdxMap.size() - 1)
+        OF->os() << ",";
+      Idx++;
+    }
     OF->os() << "\n";
   }
   return Error::success();
@@ -225,29 +249,28 @@ Error RemarkCounter::print(StringRef OutputFileName) {
 
 Expected<Filters> getRemarkFilter() {
   // Create Filter properties.
-  auto MaybeRemarkNameFilter =
-      FilterMatcher::createExactOrRE(RemarkNameOpt, RemarkNameOptRE);
-  if (!MaybeRemarkNameFilter)
-    return MaybeRemarkNameFilter.takeError();
-
-  auto MaybePassNameFilter =
-      FilterMatcher::createExactOrRE(PassNameOpt, PassNameOptRE);
-  if (!MaybePassNameFilter)
-    return MaybePassNameFilter.takeError();
-
-  auto MaybeRemarkArgFilter = FilterMatcher::createExactOrRE(
-      RemarkFilterArgByOpt, RemarkArgFilterOptRE);
-  if (!MaybeRemarkArgFilter)
-    return MaybeRemarkArgFilter.takeError();
-
+  std::optional<FilterMatcher> RemarkNameFilter;
+  std::optional<FilterMatcher> PassNameFilter;
+  std::optional<FilterMatcher> RemarkArgFilter;
   std::optional<Type> RemarkType;
+  if (!RemarkNameOpt.empty())
+    RemarkNameFilter = {RemarkNameOpt, false};
+  else if (!RemarkNameOptRE.empty())
+    RemarkNameFilter = {RemarkNameOptRE, true};
+  if (!PassNameOpt.empty())
+    PassNameFilter = {PassNameOpt, false};
+  else if (!PassNameOptRE.empty())
+    PassNameFilter = {PassNameOptRE, true};
   if (RemarkTypeOpt != Type::Failure)
     RemarkType = RemarkTypeOpt;
-
+  if (!RemarkFilterArgByOpt.empty())
+    RemarkArgFilter = {RemarkFilterArgByOpt, false};
+  else if (!RemarkArgFilterOptRE.empty())
+    RemarkArgFilter = {RemarkArgFilterOptRE, true};
   // Create RemarkFilter.
-  return Filters{std::move(*MaybeRemarkNameFilter),
-                 std::move(*MaybePassNameFilter),
-                 std::move(*MaybeRemarkArgFilter), RemarkType};
+  return Filters::createRemarkFilter(std::move(RemarkNameFilter),
+                                     std::move(PassNameFilter),
+                                     std::move(RemarkArgFilter), RemarkType);
 }
 
 Error useCollectRemark(StringRef Buffer, Counter &Counter, Filters &Filter) {
@@ -290,16 +313,12 @@ static Error collectRemarks() {
     SmallVector<FilterMatcher, 4> ArgumentsVector;
     if (!Keys.empty()) {
       for (auto &Key : Keys)
-        ArgumentsVector.push_back(FilterMatcher::createExact(Key));
+        ArgumentsVector.push_back({Key, false});
     } else if (!RKeys.empty())
-      for (auto Key : RKeys) {
-        auto FM = FilterMatcher::createRE(Key, RKeys);
-        if (!FM)
-          return FM.takeError();
-        ArgumentsVector.push_back(std::move(*FM));
-      }
+      for (auto Key : RKeys)
+        ArgumentsVector.push_back({Key, true});
     else
-      ArgumentsVector.push_back(FilterMatcher::createAny());
+      ArgumentsVector.push_back({".*", true});
 
     Expected<ArgumentCounter> AC = ArgumentCounter::createArgumentCounter(
         GroupByOpt, ArgumentsVector, Buffer, Filter);

@@ -76,8 +76,10 @@ static void findReturnsToZap(Function &F,
                if (!isa<CallBase>(U))
                  return true;
                if (U->getType()->isStructTy()) {
-                 return none_of(Solver.getStructLatticeValueFor(U),
-                                SCCPSolver::isOverdefined);
+                 return all_of(Solver.getStructLatticeValueFor(U),
+                               [](const ValueLatticeElement &LV) {
+                                 return !SCCPSolver::isOverdefined(LV);
+                               });
                }
 
                // We don't consider assume-like intrinsics to be actual address
@@ -250,7 +252,19 @@ static bool runIPSCCP(
       if (!DeadBB->hasAddressTaken())
         DTU.deleteBB(DeadBB);
 
-    Solver.removeSSACopies(F);
+    for (BasicBlock &BB : F) {
+      for (Instruction &Inst : llvm::make_early_inc_range(BB)) {
+        if (Solver.getPredicateInfoFor(&Inst)) {
+          if (auto *II = dyn_cast<IntrinsicInst>(&Inst)) {
+            if (II->getIntrinsicID() == Intrinsic::ssa_copy) {
+              Value *Op = II->getOperand(0);
+              Inst.replaceAllUsesWith(Op);
+              Inst.eraseFromParent();
+            }
+          }
+        }
+      }
+    }
   }
 
   // If we inferred constant or undef return values for a function, we replaced

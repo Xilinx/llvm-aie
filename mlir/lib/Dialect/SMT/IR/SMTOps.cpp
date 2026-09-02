@@ -405,7 +405,7 @@ static void buildQuantifier(
         SmallVector<Location>(boundVarTypes.size(), odsState.location));
     Value returnVal =
         bodyBuilder(odsBuilder, odsState.location, block->getArguments());
-    smt::YieldOp::create(odsBuilder, odsState.location, returnVal);
+    odsBuilder.create<smt::YieldOp>(odsState.location, returnVal);
   }
   if (patternBuilder) {
     Region *region = odsState.addRegion();
@@ -416,7 +416,7 @@ static void buildQuantifier(
         SmallVector<Location>(boundVarTypes.size(), odsState.location));
     ValueRange returnVals =
         patternBuilder(odsBuilder, odsState.location, block->getArguments());
-    smt::YieldOp::create(odsBuilder, odsState.location, returnVals);
+    odsBuilder.create<smt::YieldOp>(odsState.location, returnVals);
   }
 }
 

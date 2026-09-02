@@ -648,10 +648,8 @@ static void emitSpecializedAttrDef(const Record &enumDef, raw_ostream &os) {
 
   os << formatv("{0} {1}::getValue() const {{\n", enumName, attrClassName);
 
-  os << formatv(
-      "  return "
-      "static_cast<{0}>(::mlir::IntegerAttr::getValue().getZExtValue());\n",
-      enumName);
+  os << formatv("  return static_cast<{0}>(::mlir::IntegerAttr::getInt());\n",
+                enumName);
 
   os << "}\n";
 }

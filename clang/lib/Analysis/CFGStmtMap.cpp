@@ -83,8 +83,8 @@ CFGStmtMap *CFGStmtMap::Build(CFG *C, ParentMap *PM) {
 
   // Walk all blocks, accumulating the block-level expressions, labels,
   // and terminators.
-  for (CFGBlock *BB : *C)
-    Accumulate(*SM, BB);
+  for (CFG::iterator I = C->begin(), E = C->end(); I != E; ++I)
+    Accumulate(*SM, *I);
 
   return new CFGStmtMap(PM, SM);
 }

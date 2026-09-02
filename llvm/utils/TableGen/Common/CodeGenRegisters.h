@@ -317,8 +317,6 @@ inline bool operator==(const CodeGenRegister &A, const CodeGenRegister &B) {
 
 class CodeGenRegisterClass {
   CodeGenRegister::Vec Members;
-  // Bit mask of members, indexed by getRegIndex.
-  BitVector MemberBV;
   // Allocation orders. Order[0] always contains all registers in Members.
   std::vector<SmallVector<const Record *, 16>> Orders;
   // Bit mask of sub-classes including this, indexed by their EnumValue.
@@ -570,7 +568,7 @@ struct RegUnit {
   // Weight assigned to this RegUnit for estimating register pressure.
   // This is useful when equalizing weights in register classes with mixed
   // register topologies.
-  unsigned Weight = 0;
+  unsigned Weight;
 
   // Each native RegUnit corresponds to one or two root registers. The full
   // set of registers containing this unit can be computed as the union of
@@ -579,12 +577,14 @@ struct RegUnit {
 
   // Index into RegClassUnitSets where we can find the list of UnitSets that
   // contain this unit.
-  unsigned RegClassUnitSetsIdx = 0;
+  unsigned RegClassUnitSetsIdx;
   // A register unit is artificial if at least one of its roots is
   // artificial.
-  bool Artificial = false;
+  bool Artificial;
 
-  RegUnit() { Roots[0] = Roots[1] = nullptr; }
+  RegUnit() : Weight(0), RegClassUnitSetsIdx(0), Artificial(false) {
+    Roots[0] = Roots[1] = nullptr;
+  }
 
   ArrayRef<const CodeGenRegister *> getRoots() const {
     assert(!(Roots[1] && !Roots[0]) && "Invalid roots array");
@@ -611,8 +611,6 @@ typedef SmallVector<unsigned, 16> TopoSigId;
 // CodeGenRegBank - Represent a target's registers and the relations between
 // them.
 class CodeGenRegBank {
-  const RecordKeeper &Records;
-
   SetTheory Sets;
 
   const CodeGenHwModes &CGH;
@@ -768,7 +766,7 @@ public:
   CodeGenRegister *getReg(const Record *);
 
   // Get a Register's index into the Registers array.
-  static unsigned getRegIndex(const CodeGenRegister *Reg) {
+  unsigned getRegIndex(const CodeGenRegister *Reg) const {
     return Reg->EnumValue - 1;
   }
 
@@ -848,13 +846,6 @@ public:
   const std::vector<unsigned> &getIgnoreRegPressureSets() const {
     return IgnoreRegPressureSets;
   }
-  
-  /// Return the largest register class which supports \p Ty and covers \p
-  /// SubIdx if it exists.
-  const CodeGenRegisterClass *
-  getSuperRegForSubReg(const ValueTypeByHwMode &Ty,
-                       const CodeGenSubRegIndex *SubIdx,
-                       bool MustBeAllocatable = false) const;
 
   // Get the sum of unit weights.
   unsigned getRegUnitSetWeight(const std::vector<unsigned> &Units) const {

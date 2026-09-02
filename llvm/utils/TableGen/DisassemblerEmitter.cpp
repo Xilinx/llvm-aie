@@ -103,7 +103,8 @@ static void emitDisassembler(const RecordKeeper &Records, raw_ostream &OS) {
   if (Target.getName() == "X86") {
     DisassemblerTables Tables;
 
-    for (const auto &[Idx, NumberedInst] : enumerate(Target.getInstructions()))
+    for (const auto &[Idx, NumberedInst] :
+         enumerate(Target.getInstructionsByEnumValue()))
       RecognizableInstr::processInstr(Tables, *NumberedInst, Idx);
 
     if (Tables.hasConflicts()) {
@@ -119,7 +120,7 @@ static void emitDisassembler(const RecordKeeper &Records, raw_ostream &OS) {
   // below (which depends on a Size table-gen Record), and also uses a custom
   // disassembler.
   if (Target.getName() == "WebAssembly") {
-    emitWebAssemblyDisassemblerTables(OS, Target.getInstructions());
+    emitWebAssemblyDisassemblerTables(OS, Target.getInstructionsByEnumValue());
     return;
   }
 

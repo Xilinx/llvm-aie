@@ -16,7 +16,6 @@
 
 #include "llvm-c/ExternC.h"
 #include "llvm-c/Types.h"
-#include "llvm-c/Visibility.h"
 
 LLVM_C_EXTERN_C_BEGIN
 
@@ -39,7 +38,7 @@ typedef enum {
  * The return value is true if an error occurred, false otherwise.
  * Use the diagnostic handler to get any diagnostic message.
 */
-LLVM_C_ABI LLVMBool LLVMLinkModules2(LLVMModuleRef Dest, LLVMModuleRef Src);
+LLVMBool LLVMLinkModules2(LLVMModuleRef Dest, LLVMModuleRef Src);
 
 LLVM_C_EXTERN_C_END
 

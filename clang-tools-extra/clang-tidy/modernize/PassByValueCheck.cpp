@@ -20,21 +20,8 @@ using namespace llvm;
 
 namespace clang::tidy::modernize {
 
-static bool isFirstFriendOfSecond(const CXXRecordDecl *Friend,
-                                  const CXXRecordDecl *Class) {
-  return llvm::any_of(
-      Class->friends(), [Friend](FriendDecl *FriendDecl) -> bool {
-        if (TypeSourceInfo *FriendTypeSource = FriendDecl->getFriendType()) {
-          const QualType FriendType = FriendTypeSource->getType();
-          return FriendType->getAsCXXRecordDecl() == Friend;
-        }
-        return false;
-      });
-}
-
 namespace {
-/// Matches move-constructible classes whose constructor can be called inside
-/// a CXXRecordDecl with a bound ID.
+/// Matches move-constructible classes.
 ///
 /// Given
 /// \code
@@ -45,33 +32,15 @@ namespace {
 ///     Bar(Bar &&) = deleted;
 ///     int a;
 ///   };
-///
-///   class Buz {
-///     Buz(Buz &&);
-///     int a;
-///     friend class Outer;
-///   };
-///
-///   class Outer {
-///   };
 /// \endcode
-/// recordDecl(isMoveConstructibleInBoundCXXRecordDecl("Outer"))
-///   matches "Foo", "Buz".
-AST_MATCHER_P(CXXRecordDecl, isMoveConstructibleInBoundCXXRecordDecl, StringRef,
-              RecordDeclID) {
-  return Builder->removeBindings(
-      [this,
-       &Node](const ast_matchers::internal::BoundNodesMap &Nodes) -> bool {
-        const auto *BoundClass =
-            Nodes.getNode(this->RecordDeclID).get<CXXRecordDecl>();
-        for (const CXXConstructorDecl *Ctor : Node.ctors()) {
-          if (Ctor->isMoveConstructor() && !Ctor->isDeleted() &&
-              (Ctor->getAccess() == AS_public ||
-               (BoundClass && isFirstFriendOfSecond(BoundClass, &Node))))
-            return false;
-        }
-        return true;
-      });
+/// recordDecl(isMoveConstructible())
+///   matches "Foo".
+AST_MATCHER(CXXRecordDecl, isMoveConstructible) {
+  for (const CXXConstructorDecl *Ctor : Node.ctors()) {
+    if (Ctor->isMoveConstructor() && !Ctor->isDeleted())
+      return true;
+  }
+  return false;
 }
 } // namespace
 
@@ -233,7 +202,6 @@ void PassByValueCheck::registerMatchers(MatchFinder *Finder) {
       traverse(
           TK_AsIs,
           cxxConstructorDecl(
-              ofClass(cxxRecordDecl().bind("outer")),
               forEachConstructorInitializer(
                   cxxCtorInitializer(
                       unless(isBaseInitializer()),
@@ -257,9 +225,8 @@ void PassByValueCheck::registerMatchers(MatchFinder *Finder) {
                                   .bind("Param"))))),
                           hasDeclaration(cxxConstructorDecl(
                               isCopyConstructor(), unless(isDeleted()),
-                              hasDeclContext(cxxRecordDecl(
-                                  isMoveConstructibleInBoundCXXRecordDecl(
-                                      "outer"))))))))
+                              hasDeclContext(
+                                  cxxRecordDecl(isMoveConstructible())))))))
                       .bind("Initializer")))
               .bind("Ctor")),
       this);

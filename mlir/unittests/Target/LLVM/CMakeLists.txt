@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS nativecodegen BitReader)
+set(LLVM_LINK_COMPONENTS nativecodegen)
 
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 

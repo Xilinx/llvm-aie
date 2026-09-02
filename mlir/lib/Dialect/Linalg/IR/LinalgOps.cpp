@@ -19,26 +19,30 @@
 #include "mlir/Dialect/Complex/IR/Complex.h"
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/SparseTensor/IR/SparseTensor.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Tensor/Utils/Utils.h"
 #include "mlir/Dialect/Utils/IndexingUtils.h"
 #include "mlir/Dialect/Utils/ReshapeOpsUtils.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
+#include "mlir/IR/AffineExprVisitor.h"
 #include "mlir/IR/AffineMap.h"
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypeInterfaces.h"
+#include "mlir/IR/Matchers.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/OperationSupport.h"
 #include "mlir/IR/PatternMatch.h"
-#include "mlir/IR/TypeUtilities.h"
 #include "mlir/Interfaces/InferTypeOpInterface.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/TypeSwitch.h"
@@ -63,10 +67,10 @@ static OpFoldResult getDimValue(OpBuilder &builder, Location loc, Value v,
   return getAsOpFoldResult(
       TypeSwitch<Type, Value>(v.getType())
           .Case<RankedTensorType>([&](RankedTensorType t) -> Value {
-            return tensor::DimOp::create(builder, loc, v, dim);
+            return builder.create<tensor::DimOp>(loc, v, dim);
           })
           .Case<MemRefType>([&](MemRefType t) -> Value {
-            return memref::DimOp::create(builder, loc, v, dim);
+            return builder.create<memref::DimOp>(loc, v, dim);
           }));
 }
 
@@ -78,12 +82,12 @@ static Operation *getSlice(OpBuilder &b, Location loc, Value source,
                            ArrayRef<OpFoldResult> strides) {
   return TypeSwitch<Type, Operation *>(source.getType())
       .Case<RankedTensorType>([&](RankedTensorType t) -> Operation * {
-        return tensor::ExtractSliceOp::create(b, loc, source, offsets, sizes,
-                                              strides);
+        return b.create<tensor::ExtractSliceOp>(loc, source, offsets, sizes,
+                                                strides);
       })
       .Case<MemRefType>([&](MemRefType type) -> Operation * {
-        return memref::SubViewOp::create(b, loc, source, offsets, sizes,
-                                         strides);
+        return b.create<memref::SubViewOp>(loc, source, offsets, sizes,
+                                           strides);
       })
       .Default([&](Type t) -> Operation * { return nullptr; });
 }
@@ -113,9 +117,8 @@ OpFoldResult linalg::createFoldedDimOp(OpBuilder &b, Location loc, Value source,
 // Support for named Linalg ops defined in ods-gen.
 //===----------------------------------------------------------------------===//
 
-using RegionBuilderFn = llvm::function_ref<void(
-    ImplicitLocOpBuilder &, Block &, ArrayRef<NamedAttribute>,
-    function_ref<InFlightDiagnostic()>)>;
+using RegionBuilderFn = llvm::function_ref<void(ImplicitLocOpBuilder &, Block &,
+                                                ArrayRef<NamedAttribute>)>;
 
 /// Fills the region of a structured operation using the provided
 /// `regionBuilder`. The method is used by both named structured ops created by
@@ -125,7 +128,6 @@ using RegionBuilderFn = llvm::function_ref<void(
 static void fillStructuredOpRegion(OpBuilder &opBuilder, Region &region,
                                    TypeRange inputTypes, TypeRange outputTypes,
                                    ArrayRef<NamedAttribute> attrs,
-                                   function_ref<InFlightDiagnostic()> emitError,
                                    RegionBuilderFn regionBuilder) {
   SmallVector<Type, 8> argTypes;
   SmallVector<Location, 8> argLocs;
@@ -146,7 +148,7 @@ static void fillStructuredOpRegion(OpBuilder &opBuilder, Region &region,
 
   opBuilder.setInsertionPointToStart(body);
   ImplicitLocOpBuilder b(opBuilder.getUnknownLoc(), opBuilder);
-  regionBuilder(b, *body, attrs, emitError);
+  regionBuilder(b, *body, attrs);
 
   // indexing_maps is an auto-generated method.
 
@@ -182,8 +184,7 @@ static void buildStructuredOp(OpBuilder &b, OperationState &state,
   // Create and fill the region of the structured operation.
   Region &region = *state.addRegion();
   fillStructuredOpRegion(b, region, TypeRange(inputs), TypeRange(outputs),
-                         state.attributes.getAttrs(), /*emitError=*/{},
-                         regionBuilder);
+                         state.attributes.getAttrs(), regionBuilder);
 }
 
 static void buildMatmulOp(OpBuilder &b, OperationState &state,
@@ -328,7 +329,7 @@ static void printCommonStructuredOpParts(OpAsmPrinter &p, ValueRange inputs,
 static ParseResult parseNamedStructuredOpRegion(
     OpAsmParser &parser, Region &region, unsigned numRegionArgs,
     TypeRange inputTypes, TypeRange outputTypes, ArrayRef<NamedAttribute> attrs,
-    RegionBuilderFn regionBuilder, SMLoc loc) {
+    RegionBuilderFn regionBuilder) {
   if (numRegionArgs != inputTypes.size() + outputTypes.size()) {
     return parser.emitError(
         parser.getCurrentLocation(),
@@ -338,15 +339,9 @@ static ParseResult parseNamedStructuredOpRegion(
   }
 
   OpBuilder opBuilder(parser.getContext());
-  ParseResult result = success();
-  fillStructuredOpRegion(
-      opBuilder, region, inputTypes, outputTypes, attrs,
-      [&]() {
-        result = failure();
-        return parser.emitError(loc);
-      },
-      regionBuilder);
-  return result;
+  fillStructuredOpRegion(opBuilder, region, inputTypes, outputTypes, attrs,
+                         regionBuilder);
+  return success();
 }
 
 static ParseResult
@@ -363,7 +358,6 @@ static ParseResult parseNamedStructuredOp(OpAsmParser &parser,
                                           RegionBuilderFn regionBuilder) {
   // TODO: Enable when ods-gen supports captures.
   SmallVector<Type, 1> inputTypes, outputTypes;
-  SMLoc loc = parser.getCurrentLocation();
   if (parseCommonStructuredOpParts(parser, result, inputTypes, outputTypes))
     return failure();
 
@@ -381,7 +375,7 @@ static ParseResult parseNamedStructuredOp(OpAsmParser &parser,
   std::unique_ptr<Region> region = std::make_unique<Region>();
   if (parseNamedStructuredOpRegion(parser, *region, numRegionArgs, inputTypes,
                                    outputTypes, result.attributes.getAttrs(),
-                                   regionBuilder, loc))
+                                   regionBuilder))
     return failure();
   result.addRegion(std::move(region));
 
@@ -441,165 +435,124 @@ public:
       : builder(builder), block(block) {}
 
   // Build the unary functions defined by OpDSL.
-  Value buildUnaryFn(UnaryFn unaryFn, Value arg,
-                     function_ref<InFlightDiagnostic()> emitError = {}) {
-    if (!isFloatingPoint(arg)) {
-      if (emitError) {
-        emitError() << "unsupported non numeric type";
-        return nullptr;
-      }
+  Value buildUnaryFn(UnaryFn unaryFn, Value arg) {
+    if (!isFloatingPoint(arg))
       llvm_unreachable("unsupported non numeric type");
-    }
     OpBuilder::InsertionGuard g(builder);
     builder.setInsertionPointToEnd(&block);
     switch (unaryFn) {
     case UnaryFn::exp:
-      return math::ExpOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::ExpOp>(arg.getLoc(), arg);
     case UnaryFn::log:
-      return math::LogOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::LogOp>(arg.getLoc(), arg);
     case UnaryFn::abs:
-      return math::AbsFOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::AbsFOp>(arg.getLoc(), arg);
     case UnaryFn::ceil:
-      return math::CeilOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::CeilOp>(arg.getLoc(), arg);
     case UnaryFn::floor:
-      return math::FloorOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::FloorOp>(arg.getLoc(), arg);
     case UnaryFn::negf:
-      return arith::NegFOp::create(builder, arg.getLoc(), arg);
+      return builder.create<arith::NegFOp>(arg.getLoc(), arg);
     case UnaryFn::reciprocal: {
       Attribute oneAttr = builder.getOneAttr(arg.getType());
-      auto one = arith::ConstantOp::create(builder, arg.getLoc(),
-                                           ::cast<TypedAttr>(oneAttr));
-      return arith::DivFOp::create(builder, arg.getLoc(), one, arg);
+      auto one = builder.create<arith::ConstantOp>(arg.getLoc(),
+                                                   ::cast<TypedAttr>(oneAttr));
+      return builder.create<arith::DivFOp>(arg.getLoc(), one, arg);
     }
     case UnaryFn::round:
-      return math::RoundOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::RoundOp>(arg.getLoc(), arg);
     case UnaryFn::sqrt:
-      return math::SqrtOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::SqrtOp>(arg.getLoc(), arg);
     case UnaryFn::rsqrt:
-      return math::RsqrtOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::RsqrtOp>(arg.getLoc(), arg);
     case UnaryFn::square:
-      return arith::MulFOp::create(builder, arg.getLoc(), arg, arg);
+      return builder.create<arith::MulFOp>(arg.getLoc(), arg, arg);
     case UnaryFn::tanh:
-      return math::TanhOp::create(builder, arg.getLoc(), arg);
+      return builder.create<math::TanhOp>(arg.getLoc(), arg);
     case UnaryFn::erf:
-      return math::ErfOp::create(builder, arg.getLoc(), arg);
-    }
-    if (emitError) {
-      emitError() << "unsupported unary function";
-      return nullptr;
+      return builder.create<math::ErfOp>(arg.getLoc(), arg);
     }
     llvm_unreachable("unsupported unary function");
   }
 
   // Build the binary functions defined by OpDSL.
-  // If emitError is provided, an error will be emitted if the operation is not
-  // supported and a nullptr will be returned, otherwise an assertion will be
-  // raised.
-  Value buildBinaryFn(BinaryFn binaryFn, Value arg0, Value arg1,
-                      function_ref<InFlightDiagnostic()> emitError = {}) {
+  Value buildBinaryFn(BinaryFn binaryFn, Value arg0, Value arg1) {
     bool allComplex = isComplex(arg0) && isComplex(arg1);
     bool allFloatingPoint = isFloatingPoint(arg0) && isFloatingPoint(arg1);
     bool allInteger = isInteger(arg0) && isInteger(arg1);
     bool allBool = allInteger && arg0.getType().getIntOrFloatBitWidth() == 1 &&
                    arg1.getType().getIntOrFloatBitWidth() == 1;
-    if (!allComplex && !allFloatingPoint && !allInteger) {
-      if (emitError) {
-        emitError()
-            << "Cannot build binary Linalg operation: expects allComplex, "
-               "allFloatingPoint, or allInteger, got "
-            << arg0.getType() << " and " << arg1.getType();
-        return nullptr;
-      }
+    if (!allComplex && !allFloatingPoint && !allInteger)
       llvm_unreachable("unsupported non numeric type");
-    }
     OpBuilder::InsertionGuard g(builder);
     builder.setInsertionPointToEnd(&block);
     switch (binaryFn) {
     case BinaryFn::add:
       if (allComplex)
-        return complex::AddOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<complex::AddOp>(arg0.getLoc(), arg0, arg1);
       if (allFloatingPoint)
-        return arith::AddFOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::AddFOp>(arg0.getLoc(), arg0, arg1);
       if (allBool)
-        return arith::OrIOp::create(builder, arg0.getLoc(), arg0, arg1);
-      return arith::AddIOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::OrIOp>(arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::AddIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::sub:
       if (allComplex)
-        return complex::SubOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<complex::SubOp>(arg0.getLoc(), arg0, arg1);
       if (allFloatingPoint)
-        return arith::SubFOp::create(builder, arg0.getLoc(), arg0, arg1);
-      if (allBool) {
-        if (emitError) {
-          emitError() << "unsupported operation: sub with bools";
-          return nullptr;
-        }
+        return builder.create<arith::SubFOp>(arg0.getLoc(), arg0, arg1);
+      if (allBool)
         llvm_unreachable("unsupported operation: sub with bools");
-      }
-      return arith::SubIOp::create(builder, arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::SubIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::mul:
       if (allComplex)
-        return complex::MulOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<complex::MulOp>(arg0.getLoc(), arg0, arg1);
       if (allFloatingPoint)
-        return arith::MulFOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::MulFOp>(arg0.getLoc(), arg0, arg1);
       if (allBool)
-        return arith::AndIOp::create(builder, arg0.getLoc(), arg0, arg1);
-      return arith::MulIOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::AndIOp>(arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::MulIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::div:
       if (allComplex)
-        return complex::DivOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<complex::DivOp>(arg0.getLoc(), arg0, arg1);
       if (allFloatingPoint)
-        return arith::DivFOp::create(builder, arg0.getLoc(), arg0, arg1);
-      if (allBool) {
-        if (emitError) {
-          emitError() << "unsupported operation: div with bools";
-          return nullptr;
-        }
+        return builder.create<arith::DivFOp>(arg0.getLoc(), arg0, arg1);
+      if (allBool)
         llvm_unreachable("unsupported operation: div with bools");
-      }
-      return arith::DivSIOp::create(builder, arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::DivSIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::div_unsigned:
-      if (!allInteger || allBool) {
-        if (emitError) {
-          emitError() << "unsupported operation: unsigned div not on uint";
-          return nullptr;
-        }
+      if (!allInteger || allBool)
         llvm_unreachable("unsupported operation: unsigned div not on uint");
-      }
-      return arith::DivUIOp::create(builder, arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::DivUIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::max_signed:
       assert(!allComplex);
       if (allFloatingPoint)
-        return arith::MaximumFOp::create(builder, arg0.getLoc(), arg0, arg1);
-      return arith::MaxSIOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::MaximumFOp>(arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::MaxSIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::min_signed:
       assert(!allComplex);
       if (allFloatingPoint)
-        return arith::MinimumFOp::create(builder, arg0.getLoc(), arg0, arg1);
-      return arith::MinSIOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::MinimumFOp>(arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::MinSIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::max_unsigned:
       assert(!allComplex);
       if (allFloatingPoint)
-        return arith::MaximumFOp::create(builder, arg0.getLoc(), arg0, arg1);
-      return arith::MaxUIOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::MaximumFOp>(arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::MaxUIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::min_unsigned:
       assert(!allComplex);
       if (allFloatingPoint)
-        return arith::MinimumFOp::create(builder, arg0.getLoc(), arg0, arg1);
-      return arith::MinUIOp::create(builder, arg0.getLoc(), arg0, arg1);
+        return builder.create<arith::MinimumFOp>(arg0.getLoc(), arg0, arg1);
+      return builder.create<arith::MinUIOp>(arg0.getLoc(), arg0, arg1);
     case BinaryFn::powf:
       assert(allFloatingPoint);
-      return math::PowFOp::create(builder, arg0.getLoc(), arg0, arg1);
-    }
-    if (emitError) {
-      emitError() << "unsupported binary function";
-      return nullptr;
+      return builder.create<math::PowFOp>(arg0.getLoc(), arg0, arg1);
     }
     llvm_unreachable("unsupported binary function");
   }
 
   // Build the ternary functions defined by OpDSL.
-  Value buildTernaryFn(TernaryFn ternaryFn, Value arg0, Value arg1, Value arg2,
-                       function_ref<InFlightDiagnostic()> emitError = {}) {
+  Value buildTernaryFn(TernaryFn ternaryFn, Value arg0, Value arg1,
+                       Value arg2) {
     bool headBool =
         isInteger(arg0) && arg0.getType().getIntOrFloatBitWidth() == 1;
     bool tailFloatingPoint =
@@ -611,27 +564,18 @@ public:
     case TernaryFn::select:
       if (!headBool && !(tailFloatingPoint || tailInteger))
         llvm_unreachable("unsupported non numeric type");
-      return arith::SelectOp::create(builder, arg0.getLoc(), arg0, arg1, arg2);
-    }
-    if (emitError) {
-      emitError() << "unsupported ternary function";
-      return nullptr;
+      return builder.create<arith::SelectOp>(arg0.getLoc(), arg0, arg1, arg2);
     }
     llvm_unreachable("unsupported ternary function");
   }
 
   // Build the type functions defined by OpDSL.
-  Value buildTypeFn(TypeFn typeFn, Type toType, Value operand,
-                    function_ref<InFlightDiagnostic()> emitError = {}) {
+  Value buildTypeFn(TypeFn typeFn, Type toType, Value operand) {
     switch (typeFn) {
     case TypeFn::cast_signed:
       return cast(toType, operand, false);
     case TypeFn::cast_unsigned:
       return cast(toType, operand, true);
-    }
-    if (emitError) {
-      emitError() << "unsupported type conversion function";
-      return nullptr;
     }
     llvm_unreachable("unsupported type conversion function");
   }
@@ -640,7 +584,7 @@ public:
     OpBuilder::InsertionGuard g(builder);
     builder.setInsertionPointToEnd(&block);
     Location loc = builder.getUnknownLoc();
-    YieldOp::create(builder, loc, values);
+    builder.create<YieldOp>(loc, values);
   }
 
   Value constant(const std::string &value) {
@@ -648,14 +592,13 @@ public:
     builder.setInsertionPointToEnd(&block);
     Location loc = builder.getUnknownLoc();
     Attribute valueAttr = parseAttribute(value, builder.getContext());
-    return arith::ConstantOp::create(builder, loc,
-                                     ::cast<TypedAttr>(valueAttr));
+    return builder.create<arith::ConstantOp>(loc, ::cast<TypedAttr>(valueAttr));
   }
 
   Value index(int64_t dim) {
     OpBuilder::InsertionGuard g(builder);
     builder.setInsertionPointToEnd(&block);
-    return IndexOp::create(builder, builder.getUnknownLoc(), dim);
+    return builder.create<IndexOp>(builder.getUnknownLoc(), dim);
   }
 
   Type getIntegerType(unsigned width) {
@@ -674,13 +617,6 @@ private:
     OpBuilder::InsertionGuard g(builder);
     builder.setInsertionPointToEnd(&block);
     auto loc = operand.getLoc();
-    if (isa<UnknownLoc>(loc)) {
-      if (operand.getDefiningOp())
-        loc = operand.getDefiningOp()->getLoc();
-      else if (operand.getParentBlock() &&
-               operand.getParentBlock()->getParentOp())
-        loc = operand.getParentBlock()->getParentOp()->getLoc();
-    }
     return convertScalarToDtype(builder, loc, operand, toType, isUnsignedCast);
   }
 
@@ -751,14 +687,14 @@ struct FoldFillWithTensorReshape : OpRewritePattern<TensorReshapeOp> {
     TensorReshapeOp newInit;
     if constexpr (std::is_same<TensorReshapeOp, tensor::ExpandShapeOp>::value) {
 
-      newInit = TensorReshapeOp::create(
-          rewriter, loc, reshapeOp.getResultType(), oldFill.output(),
+      newInit = rewriter.create<TensorReshapeOp>(
+          loc, reshapeOp.getResultType(), oldFill.output(),
           reshapeOp.getReassociation(), reshapeOp.getOutputShape(),
           reshapeOp.getStaticOutputShape());
     } else {
-      newInit = TensorReshapeOp::create(
-          rewriter, loc, reshapeOp.getResultType(), oldFill.output(),
-          reshapeOp.getReassociation());
+      newInit = rewriter.create<TensorReshapeOp>(loc, reshapeOp.getResultType(),
+                                                 oldFill.output(),
+                                                 reshapeOp.getReassociation());
     }
     rewriter.replaceOpWithNewOp<FillOp>(reshapeOp, ValueRange{oldFill.value()},
                                         ValueRange{newInit});
@@ -788,16 +724,17 @@ struct FoldFillWithPad final : public OpRewritePattern<tensor::PadOp> {
       return rewriter.notifyMatchFailure(
           padOp, "failed to reify tensor.pad op result shape");
 
-    auto emptyTensor =
-        tensor::EmptyOp::create(rewriter, padOp.getLoc(), reifiedShape.front(),
-                                padOp.getResultType().getElementType());
+    auto emptyTensor = rewriter.create<tensor::EmptyOp>(
+        padOp.getLoc(), reifiedShape.front(),
+        padOp.getResultType().getElementType());
     Value replacement =
-        FillOp::create(rewriter, fillOp.getLoc(), ValueRange{padValue},
-                       ValueRange{emptyTensor})
+        rewriter
+            .create<FillOp>(fillOp.getLoc(), ValueRange{padValue},
+                            ValueRange{emptyTensor})
             .getResult(0);
     if (replacement.getType() != padOp.getResultType()) {
-      replacement = tensor::CastOp::create(rewriter, fillOp.getLoc(),
-                                           padOp.getResultType(), replacement);
+      replacement = rewriter.create<tensor::CastOp>(
+          fillOp.getLoc(), padOp.getResultType(), replacement);
     }
     rewriter.replaceOp(padOp, replacement);
     return success();
@@ -890,7 +827,7 @@ struct FoldInsertPadIntoFill : public OpRewritePattern<tensor::InsertSliceOp> {
     for (int i = 0, e = srcPadType.getRank(); i < e; ++i) {
       if (srcPadType.isDynamicDim(i)) {
         newSizes.push_back(
-            tensor::DimOp::create(rewriter, loc, srcPadOp.getSource(), i)
+            rewriter.create<tensor::DimOp>(loc, srcPadOp.getSource(), i)
                 .getResult());
       } else {
         newSizes.push_back(rewriter.getIndexAttr(srcPadType.getDimSize(i)));
@@ -943,8 +880,8 @@ static FailureOr<FillOp> foldFillPackIntoFillOp(RewriterBase &rewriter,
   if (!packOpDest.hasOneUse())
     return failure();
 
-  return linalg::FillOp::create(rewriter, packOp.getLoc(), fillOp.getInputs(),
-                                packOp.getDest());
+  return rewriter.create<linalg::FillOp>(packOp.getLoc(), fillOp.getInputs(),
+                                         packOp.getDest());
 }
 
 /// Wrapper pattern that applies foldFillPackIntoFillOp method.
@@ -1043,8 +980,8 @@ struct FoldConcatsOfFill : public OpRewritePattern<tensor::ConcatOp> {
           concatOp, "not all operands are defined by a compatible fill op");
     }
 
-    Value outsConcat = tensor::ConcatOp::create(rewriter, concatOp.getLoc(),
-                                                concatOp.getDim(), allOuts);
+    Value outsConcat = rewriter.create<tensor::ConcatOp>(
+        concatOp.getLoc(), concatOp.getDim(), allOuts);
     rewriter.replaceOpWithNewOp<linalg::FillOp>(
         concatOp, firstFillOp.getDpsInputOperand(0)->get(), outsConcat);
     return success();
@@ -1341,9 +1278,8 @@ LogicalResult GenericOp::verify() { return success(); }
 
 namespace {
 
-/// Remove linalg operations that are just copying the values from inputs to
-/// results. In the memref case, the operation must be copying to and from the
-/// same value. Requirements are:
+/// Remove any linalg operation (on tensors) that are just copying
+/// the values from inputs to the results. Requirements are
 /// 1) All iterator types are parallel
 /// 2) The body contains just a yield operation with the yielded values being
 ///    the arguments corresponding to the operands.
@@ -1368,27 +1304,18 @@ struct EraseIdentityLinalgOp : public OpRewritePattern<OpTy> {
 
     // In the buffer case, we need to check exact buffer equality.
     if (linalgOp.hasPureBufferSemantics()) {
-      if (linalgOp.getNumDpsInputs() != 1 || linalgOp.getNumDpsInits() != 1 ||
-          linalgOp.getDpsInputOperand(0)->get() !=
+      if (linalgOp.getNumDpsInputs() == 1 && linalgOp.getNumDpsInits() == 1 &&
+          linalgOp.getDpsInputOperand(0)->get() ==
               linalgOp.getDpsInitOperand(0)->get()) {
-        return rewriter.notifyMatchFailure(
-            linalgOp, "expected single input and output to be the same value");
+        rewriter.eraseOp(linalgOp);
+        return success();
       }
-
-      auto yieldArg = dyn_cast<BlockArgument>(yieldOp.getOperand(0));
-      if (!yieldArg || yieldArg.getOwner() != &body) {
-        return rewriter.notifyMatchFailure(linalgOp,
-                                           "cannot fold fill-like op");
-      }
-
-      rewriter.eraseOp(linalgOp);
-      return success();
+      return failure();
     }
 
-    if (!linalgOp.hasPureTensorSemantics()) {
-      return rewriter.notifyMatchFailure(
-          linalgOp, "mixed semantics is not supported yet");
-    }
+    // Mixed semantics is not supported yet.
+    if (!linalgOp.hasPureTensorSemantics())
+      return failure();
 
     // Get the argument number of the returned values. That is the operand
     // number to use for replacing uses of this operation.
@@ -1408,14 +1335,14 @@ struct EraseIdentityLinalgOp : public OpRewritePattern<OpTy> {
         // TODO: unify the two ops?
         if (sparse_tensor::getSparseTensorEncoding(returnType) ||
             sparse_tensor::getSparseTensorEncoding(resultType))
-          returnedArg = sparse_tensor::ConvertOp::create(
-              rewriter, linalgOp.getLoc(), resultType, returnedArg);
+          returnedArg = rewriter.create<sparse_tensor::ConvertOp>(
+              linalgOp.getLoc(), resultType, returnedArg);
         else {
           if (!tensor::CastOp::areCastCompatible(returnedArg.getType(),
                                                  resultType))
             return failure();
-          returnedArg = tensor::CastOp::create(rewriter, linalgOp.getLoc(),
-                                               resultType, returnedArg);
+          returnedArg = rewriter.create<tensor::CastOp>(
+              linalgOp.getLoc(), resultType, returnedArg);
         }
       }
       returnedArgs.push_back(returnedArg);
@@ -1529,7 +1456,7 @@ static void addBodyWithPayloadOp(OpAsmParser &parser, OperationState &result,
       TypeRange{llvm::cast<ShapedType>(result.operands.back().getType())
                     .getElementType()},
       payloadOpAttrs);
-  YieldOp::create(b, result.location, payloadOp->getResults());
+  b.create<YieldOp>(result.location, payloadOp->getResults());
 }
 
 ParseResult MapOp::parse(OpAsmParser &parser, OperationState &result) {
@@ -1946,7 +1873,7 @@ static void buildIdentityRegion(OpBuilder &builder, Location loc,
   buildGenericRegion(builder, loc, region, inputs, outputs,
                      [](OpBuilder &b, Location loc, ValueRange args) {
                        if (!args.empty())
-                         linalg::YieldOp::create(b, loc, args[0]);
+                         b.create<linalg::YieldOp>(loc, args[0]);
                      });
 }
 
@@ -2139,7 +2066,7 @@ struct SwapTransposeWithBroadcast : OpRewritePattern<linalg::TransposeOp> {
     unsigned inputRank = broadcastInputTy.getRank();
     for (unsigned i = 0; i < inputRank; ++i) {
       if (broadcastInputTy.isDynamicDim(i)) {
-        dims.push_back(tensor::DimOp::create(rewriter, loc, broadcastInput, i)
+        dims.push_back(rewriter.create<tensor::DimOp>(loc, broadcastInput, i)
                            ->getResult(0));
       } else {
         dims.push_back(IntegerAttr::get(IndexType::get(ctx),
@@ -2148,14 +2075,15 @@ struct SwapTransposeWithBroadcast : OpRewritePattern<linalg::TransposeOp> {
     }
     SmallVector<OpFoldResult> transposeResultShapes =
         applyPermutation(dims, resultPerms);
-    Value transposeInit = tensor::EmptyOp::create(
-        rewriter, transposeOp.getLoc(), transposeResultShapes,
+    Value transposeInit = rewriter.create<tensor::EmptyOp>(
+        transposeOp.getLoc(), transposeResultShapes,
         broadcastInputTy.getElementType());
 
     // Create broadcast(transpose(input)).
     Value transposeResult =
-        TransposeOp::create(rewriter, loc, broadcastOp.getInput(),
-                            transposeInit, resultPerms)
+        rewriter
+            .create<TransposeOp>(loc, broadcastOp.getInput(), transposeInit,
+                                 resultPerms)
             ->getResult(0);
     rewriter.replaceOpWithNewOp<BroadcastOp>(
         transposeOp, transposeResult, transposeOp.getInit(), resultDimensions);
@@ -2547,7 +2475,7 @@ struct FoldTensorCastConsumerOp : public OpRewritePattern<tensor::CastOp> {
     // continue to propagate as far up the stack as it can go.
     OpOperand *outOperand = linalgOp.getDpsInitOperand(resultNumber);
     Value newOperand =
-        tensor::CastOp::create(rewriter, loc, resultType, outOperand->get());
+        rewriter.create<tensor::CastOp>(loc, resultType, outOperand->get());
     SmallVector<Value> newOperands = linalgOp.getDpsInputs();
     SmallVector<Value> outputOperands(linalgOp.getDpsInits().begin(),
                                       linalgOp.getDpsInits().end());
@@ -2560,8 +2488,8 @@ struct FoldTensorCastConsumerOp : public OpRewritePattern<tensor::CastOp> {
     Operation *newOp = clone(rewriter, linalgOp, resultTypes, newOperands);
 
     // Create a tensor.cast operation back to the original type.
-    Value castBack = tensor::CastOp::create(
-        rewriter, loc, resultValue.getType(), newOp->getResult(resultNumber));
+    Value castBack = rewriter.create<tensor::CastOp>(
+        loc, resultValue.getType(), newOp->getResult(resultNumber));
 
     SmallVector<Value> results(newOp->result_begin(), newOp->result_end());
     results[resultNumber] = castBack;
@@ -2653,7 +2581,7 @@ static void createNewOperandWithStaticSizes(
     changeNeeded = true;
     // Get the new operand value given its size and element type by
     // casting it.
-    Value newOperand = tensor::CastOp::create(rewriter, loc, resultType, src);
+    Value newOperand = rewriter.create<tensor::CastOp>(loc, resultType, src);
     unsigned index = opOperand->getOperandNumber();
     newOperands[index] = newOperand;
   }
@@ -2718,7 +2646,7 @@ struct InferStaticShapeOfOperands : public OpInterfaceRewritePattern<LinalgOp> {
       Type oldType = oldResult.getType();
       replacements.push_back(
           (newType != oldType)
-              ? tensor::CastOp::create(rewriter, loc, oldType, newResult)
+              ? rewriter.create<tensor::CastOp>(loc, oldType, newResult)
               : newResult);
     }
     rewriter.replaceOp(linalgOp, replacements);
@@ -2756,8 +2684,8 @@ SmallVector<Range> SoftmaxOp::getIterationDomain(OpBuilder &builder) {
   int64_t operandRank = getInputOperandRank();
   SmallVector<Range> loopBounds(operandRank);
   Location loc = getLoc();
-  Value zero = arith::ConstantIndexOp::create(builder, loc, 0);
-  Value one = arith::ConstantIndexOp::create(builder, loc, 1);
+  Value zero = builder.create<arith::ConstantIndexOp>(loc, 0);
+  Value one = builder.create<arith::ConstantIndexOp>(loc, 1);
   Value source = getInput();
   for (auto dim : llvm::seq<int64_t>(0, operandRank)) {
     loopBounds[dim].offset = zero;
@@ -2941,11 +2869,11 @@ static Value reduce(OpBuilder &builder, Location loc, Value input, Value output,
          "We should have two maps: 1 for the input, 1 for the output");
   assert(indexingMaps[0].isIdentity() && "input map should be identity");
 
-  auto genericOp = linalg::GenericOp::create(
-      builder, loc, output.getType(), input, output, indexingMaps,
-      iteratorTypes, [&](OpBuilder &b, Location loc, ValueRange args) {
-        Value result = T::create(b, loc, args[0], args[1]);
-        linalg::YieldOp::create(b, loc, result);
+  auto genericOp = builder.create<linalg::GenericOp>(
+      loc, output.getType(), input, output, indexingMaps, iteratorTypes,
+      [&](OpBuilder &b, Location loc, ValueRange args) {
+        Value result = b.create<T>(loc, args[0], args[1]);
+        b.create<linalg::YieldOp>(loc, result);
       });
   return genericOp.getResult(0);
 }
@@ -2964,13 +2892,12 @@ static Value buildSubAndExpOp(OpBuilder &builder, Location loc, Value input,
   assert(indexingMaps[0].isIdentity() && "input map should be identity");
   // Add the affine map for the output argument.
   indexingMaps.push_back(indexingMaps[0]);
-  auto genericOp = linalg::GenericOp::create(
-      builder, loc, input.getType(), ValueRange{input, max}, output,
-      indexingMaps, iteratorTypes,
-      [&](OpBuilder &b, Location loc, ValueRange args) {
-        Value diff = arith::SubFOp::create(b, loc, args[0], args[1]);
-        Value result = math::ExpOp::create(b, loc, diff);
-        linalg::YieldOp::create(b, loc, result);
+  auto genericOp = builder.create<linalg::GenericOp>(
+      loc, input.getType(), ValueRange{input, max}, output, indexingMaps,
+      iteratorTypes, [&](OpBuilder &b, Location loc, ValueRange args) {
+        Value diff = b.create<arith::SubFOp>(loc, args[0], args[1]);
+        Value result = b.create<math::ExpOp>(loc, diff);
+        b.create<linalg::YieldOp>(loc, result);
       });
   return genericOp.getResult(0);
 }
@@ -2992,12 +2919,12 @@ static Value buildDivOp(OpBuilder &builder, Location loc, Value numerator,
   assert(indexingMaps[0].isIdentity() && "Numerator map should be identity");
   // Add the affine map for the output tensor.
   indexingMaps.push_back(indexingMaps[0]);
-  auto genericOp = linalg::GenericOp::create(
-      builder, loc, numerator.getType(), ValueRange{numerator, denominator},
-      output, indexingMaps, iteratorTypes,
+  auto genericOp = builder.create<linalg::GenericOp>(
+      loc, numerator.getType(), ValueRange{numerator, denominator}, output,
+      indexingMaps, iteratorTypes,
       [&](OpBuilder &b, Location loc, ValueRange args) {
-        Value result = arith::DivFOp::create(b, loc, args[0], args[1]);
-        linalg::YieldOp::create(b, loc, result);
+        Value result = b.create<arith::DivFOp>(loc, args[0], args[1]);
+        b.create<linalg::YieldOp>(loc, result);
       });
   return genericOp.getResult(0);
 }
@@ -3033,12 +2960,12 @@ FailureOr<SmallVector<Value>> SoftmaxOp::decomposeOperation(OpBuilder &b) {
   Value output = getOutput();
   dims.erase(dims.begin() + reductionDim);
   // Step 1: Compute max along dim.
-  Value outputReduce = tensor::EmptyOp::create(b, loc, dims, elementType);
+  Value outputReduce = b.create<tensor::EmptyOp>(loc, dims, elementType);
   Value neutralForMaxF = arith::getIdentityValue(arith::AtomicRMWKind::maxnumf,
                                                  elementType, b, loc,
                                                  /*useOnlyFiniteValue=*/true);
   Value neutralForMaxFInit =
-      linalg::FillOp::create(b, loc, Value{neutralForMaxF}, outputReduce)
+      b.create<linalg::FillOp>(loc, Value{neutralForMaxF}, outputReduce)
           .result();
   Value max =
       reduce<arith::MaxNumFOp>(b, loc, input, neutralForMaxFInit, reductionDim);
@@ -3050,7 +2977,7 @@ FailureOr<SmallVector<Value>> SoftmaxOp::decomposeOperation(OpBuilder &b) {
   Value zero = arith::getIdentityValue(arith::AtomicRMWKind::addf, elementType,
                                        b, loc, /*useOnlyFiniteValue=*/true);
   Value zeroInit =
-      linalg::FillOp::create(b, loc, Value{zero}, outputReduce).result();
+      b.create<linalg::FillOp>(loc, Value{zero}, outputReduce).result();
   Value denominator =
       reduce<arith::AddFOp>(b, loc, numerator, zeroInit, reductionDim);
 
@@ -3069,9 +2996,8 @@ LogicalResult WinogradFilterTransformOp::verify() {
   ArrayRef<int64_t> filterShape = filterType.getShape();
   int64_t filterH = filterShape[getFilterHDim()];
   int64_t filterW = filterShape[getFilterWDim()];
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int64_t r = getR();
+  int64_t m = getM();
 
   if (filterH != r && filterH != 1)
     return emitOpError("expect filter height either equals to r or 1");
@@ -3127,9 +3053,8 @@ LogicalResult WinogradFilterTransformOp::getResultTilePosition(
   ArrayRef<int64_t> filterShape = filterType.getShape();
   int64_t filterH = filterShape[getFilterHDim()];
   int64_t filterW = filterShape[getFilterWDim()];
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int64_t m = getM();
+  int64_t r = getR();
   int64_t alpha = m + r - 1;
   int64_t alphaH = filterH != 1 ? alpha : 1;
   int64_t alphaW = filterW != 1 ? alpha : 1;
@@ -3171,8 +3096,8 @@ FailureOr<TilingResult> WinogradFilterTransformOp::getTiledImplementation(
   int64_t filterRank = getFilterOperandRank();
   SmallVector<OpFoldResult> filterStrides(filterRank, oneAttr);
   Location loc = getLoc();
-  auto filterSlice = tensor::ExtractSliceOp::create(
-      builder, loc, getFilter(), sliceOffsets, sliceSizes, filterStrides);
+  auto filterSlice = builder.create<tensor::ExtractSliceOp>(
+      loc, getFilter(), sliceOffsets, sliceSizes, filterStrides);
   tiledOperands.emplace_back(filterSlice);
 
   SmallVector<OpFoldResult> resultOffsets, resultSizes;
@@ -3182,8 +3107,8 @@ FailureOr<TilingResult> WinogradFilterTransformOp::getTiledImplementation(
 
   int64_t outputRank = getOutputOperandRank();
   SmallVector<OpFoldResult> outputStrides(outputRank, oneAttr);
-  auto outputSlice = tensor::ExtractSliceOp::create(
-      builder, loc, getOutput(), resultOffsets, resultSizes, outputStrides);
+  auto outputSlice = builder.create<tensor::ExtractSliceOp>(
+      loc, getOutput(), resultOffsets, resultSizes, outputStrides);
   tiledOperands.emplace_back(outputSlice);
 
   SmallVector<Type> resultTypes;
@@ -3206,9 +3131,8 @@ LogicalResult WinogradInputTransformOp::verify() {
   ArrayRef<int64_t> inputShape = inputType.getShape();
   int64_t inputH = inputShape[getInputHDim()];
   int64_t inputW = inputShape[getInputWDim()];
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int m = getM();
+  int r = getR();
   int64_t tileSize = m + r - 1;
 
   auto outputType = cast<ShapedType>(getOutput().getType());
@@ -3277,9 +3201,8 @@ LogicalResult WinogradInputTransformOp::getResultTilePosition(
   int64_t outputAlphaH = outputShape[getOutputAlphaHDim()];
   int64_t outputAlphaW = outputShape[getOutputAlphaWDim()];
 
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int64_t m = getM();
+  int64_t r = getR();
   int64_t alpha = m + r - 1;
   int64_t alphaH = outputAlphaH != 1 ? alpha : 1;
   int64_t alphaW = outputAlphaW != 1 ? alpha : 1;
@@ -3308,9 +3231,8 @@ WinogradInputTransformOp::getTiledImplementation(OpBuilder &builder,
                                                  ArrayRef<OpFoldResult> offsets,
                                                  ArrayRef<OpFoldResult> sizes) {
   IntegerAttr oneAttr = builder.getI64IntegerAttr(1);
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int64_t m = getM();
+  int64_t r = getR();
 
   ShapedType outputType = getOutputOperandType();
   ArrayRef<int64_t> outputShape = outputType.getShape();
@@ -3351,8 +3273,8 @@ WinogradInputTransformOp::getTiledImplementation(OpBuilder &builder,
       {sizes[getOutputNDim()], sizeH, sizeW, sizes[getOutputCDim()]});
   int64_t inputRank = getInputOperandRank();
   SmallVector<OpFoldResult> inputStrides(inputRank, oneAttr);
-  auto inputSlice = tensor::ExtractSliceOp::create(
-      builder, loc, getInput(), sliceOffsets, sliceSizes, inputStrides);
+  auto inputSlice = builder.create<tensor::ExtractSliceOp>(
+      loc, getInput(), sliceOffsets, sliceSizes, inputStrides);
   tiledOperands.emplace_back(inputSlice);
 
   SmallVector<OpFoldResult> resultOffsets, resultSizes;
@@ -3362,8 +3284,8 @@ WinogradInputTransformOp::getTiledImplementation(OpBuilder &builder,
 
   int64_t outputRank = getOutputOperandRank();
   SmallVector<OpFoldResult> outputStrides(outputRank, oneAttr);
-  auto outputSlice = tensor::ExtractSliceOp::create(
-      builder, loc, getOutput(), resultOffsets, resultSizes, outputStrides);
+  auto outputSlice = builder.create<tensor::ExtractSliceOp>(
+      loc, getOutput(), resultOffsets, resultSizes, outputStrides);
   tiledOperands.emplace_back(outputSlice);
 
   SmallVector<Type> resultTypes;
@@ -3388,9 +3310,8 @@ LogicalResult WinogradOutputTransformOp::verify() {
   int64_t valueW = valueShape[getValueAlphaWDim()];
   int64_t valueTileH = valueShape[getValueTileHDim()];
   int64_t valueTileW = valueShape[getValueTileWDim()];
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int m = getM();
+  int r = getR();
   bool leftTransform = valueH != 1;
   bool rightTransform = valueW != 1;
 
@@ -3451,9 +3372,7 @@ LogicalResult WinogradOutputTransformOp::getResultTilePosition(
     OpBuilder &builder, unsigned resultNumber, ArrayRef<OpFoldResult> offsets,
     ArrayRef<OpFoldResult> sizes, SmallVector<OpFoldResult> &resultOffsets,
     SmallVector<OpFoldResult> &resultSizes) {
-  WinogradConv2DFmr fmr = getFmr();
-  int64_t m, r;
-  std::tie(m, r) = getFmrFromWinogradConv2DFmr(fmr);
+  int64_t m = getM();
 
   Location loc = getLoc();
   MLIRContext *context = builder.getContext();
@@ -3522,8 +3441,8 @@ FailureOr<TilingResult> WinogradOutputTransformOp::getTiledImplementation(
                      sizes[getValueFDim()]});
   int64_t valueRank = getValueOperandRank();
   SmallVector<OpFoldResult> sliceStrides(valueRank, oneAttr);
-  auto valueSlice = tensor::ExtractSliceOp::create(
-      builder, loc, getValue(), sliceOffsets, sliceSizes, sliceStrides);
+  auto valueSlice = builder.create<tensor::ExtractSliceOp>(
+      loc, getValue(), sliceOffsets, sliceSizes, sliceStrides);
   tiledOperands.emplace_back(valueSlice);
 
   SmallVector<OpFoldResult> resultOffsets, resultSizes;
@@ -3533,8 +3452,8 @@ FailureOr<TilingResult> WinogradOutputTransformOp::getTiledImplementation(
 
   int64_t outputRank = getOutputOperandRank();
   SmallVector<OpFoldResult> strides(outputRank, oneAttr);
-  auto outputSlice = tensor::ExtractSliceOp::create(
-      builder, loc, getOutput(), resultOffsets, resultSizes, strides);
+  auto outputSlice = builder.create<tensor::ExtractSliceOp>(
+      loc, getOutput(), resultOffsets, resultSizes, strides);
   tiledOperands.emplace_back(outputSlice);
 
   SmallVector<Type> resultTypes;
@@ -3711,27 +3630,6 @@ verifyExtendedBatchVariantMatmulSemantic(OpTy batchVariantMatmulOp,
 namespace mlir {
 namespace linalg {
 
-std::optional<WinogradConv2DFmr> getWinogradConv2DFmr(int64_t m, int64_t r) {
-  if (m == 2 && r == 3)
-    return WinogradConv2DFmr::F_2_3;
-  if (m == 4 && r == 3)
-    return WinogradConv2DFmr::F_4_3;
-  if (m == 2 && r == 5)
-    return WinogradConv2DFmr::F_2_5;
-  return std::nullopt;
-}
-
-std::pair<int64_t, int64_t> getFmrFromWinogradConv2DFmr(WinogradConv2DFmr fmr) {
-  switch (fmr) {
-  case WinogradConv2DFmr::F_2_3:
-    return {2, 3};
-  case WinogradConv2DFmr::F_4_3:
-    return {4, 3};
-  case WinogradConv2DFmr::F_2_5:
-    return {2, 5};
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // MatMulOp
 //===----------------------------------------------------------------------===//
@@ -3773,15 +3671,9 @@ bool MatmulOp::hasUserDefinedMaps() {
 /// Implements the block region builder for the MatmulOp. This is called by
 /// 'fillStructuredOpRegion'.
 void MatmulOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
-                             ArrayRef<NamedAttribute> attrs,
-                             function_ref<InFlightDiagnostic()> emitError) {
-  if (emitError && block.getNumArguments() != 3) {
-    emitError() << "MatmulOp regionBuilder expects 3 args, got "
-                << block.getNumArguments();
-    return;
-  }
-  assert(block.getNumArguments() == 3 &&
-         "MatmulOp regionBuilder expects 3 args");
+                             ArrayRef<NamedAttribute> attrs) {
+  assert(3 > 0 && block.getNumArguments() == 3 &&
+         "MatmulOp regionBuilder expects 3 (>=0) args");
   RegionBuilderHelper helper(b, block);
   SmallVector<Value> yields;
 
@@ -3798,13 +3690,9 @@ void MatmulOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
                                     block.getArgument(0));
   Value value2 = helper.buildTypeFn(castVal, block.getArgument(2).getType(),
                                     block.getArgument(1));
-  Value value3 = helper.buildBinaryFn(BinaryFn::mul, value1, value2, emitError);
-  if (!value3)
-    return;
-  Value value4 = helper.buildBinaryFn(BinaryFn::add, block.getArgument(2),
-                                      value3, emitError);
-  if (!value4)
-    return;
+  Value value3 = helper.buildBinaryFn(BinaryFn::mul, value1, value2);
+  Value value4 =
+      helper.buildBinaryFn(BinaryFn::add, block.getArgument(2), value3);
   yields.push_back(value4);
   helper.yieldOutputs(yields);
 }
@@ -3932,13 +3820,7 @@ unsigned ContractOp::getNumRegionArgs() { return 3; }
 
 /// Implement block region builder, which is called by 'fillStructuredOpRegion'.
 void ContractOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
-                               ArrayRef<NamedAttribute> attrs,
-                               function_ref<InFlightDiagnostic()> emitError) {
-  if (emitError && block.getNumArguments() != 3) {
-    emitError() << "ContractOp regionBuilder expects 3 args, got "
-                << block.getNumArguments();
-    return;
-  }
+                               ArrayRef<NamedAttribute> attrs) {
   assert(block.getNumArguments() == 3 &&
          "ContractOp regionBuilder expects 3 args");
   RegionBuilderHelper helper(b, block);
@@ -3958,14 +3840,10 @@ void ContractOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
       helper.buildTypeFn(castSignedness, outType, block.getArgument(0));
   Value rhsAtOutType =
       helper.buildTypeFn(castSignedness, outType, block.getArgument(1));
-  Value productAtOutType = helper.buildBinaryFn(BinaryFn::mul, lhsAtOutType,
-                                                rhsAtOutType, emitError);
-  if (!productAtOutType)
-    return;
+  Value productAtOutType =
+      helper.buildBinaryFn(BinaryFn::mul, lhsAtOutType, rhsAtOutType);
   Value result = helper.buildBinaryFn(BinaryFn::add, block.getArgument(2),
-                                      productAtOutType, emitError);
-  if (!result)
-    return;
+                                      productAtOutType);
   helper.yieldOutputs({result});
 }
 
@@ -4157,16 +4035,10 @@ bool BatchMatmulOp::isValidLhsRhsBroadcastMap(AffineMap bcastMap, bool isLHS) {
   return isValid;
 }
 
-void BatchMatmulOp::regionBuilder(
-    ImplicitLocOpBuilder &b, Block &block, ArrayRef<NamedAttribute> attrs,
-    function_ref<InFlightDiagnostic()> emitError) {
-  if (emitError && block.getNumArguments() != 3) {
-    emitError() << "BatchMatmulOp regionBuilder expects 3 args, got "
-                << block.getNumArguments();
-    return;
-  }
+void BatchMatmulOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
+                                  ArrayRef<NamedAttribute> attrs) {
   assert(block.getNumArguments() == 3 &&
-         "BatchMatmulOp regionBuilder expects 3 args");
+         "BatchMatmulOp regionBuilder expects 3 (>=0) args");
   RegionBuilderHelper helper(b, block);
   SmallVector<Value> yields;
 
@@ -4438,9 +4310,8 @@ LogicalResult ElementwiseOp::verify() {
 
 /// Implements the block region builder for the ElementwiseOp. This is called by
 /// 'fillStructuredOpRegion'.
-void ElementwiseOp::regionBuilder(
-    ImplicitLocOpBuilder &b, Block &block, ArrayRef<NamedAttribute> attrs,
-    function_ref<InFlightDiagnostic()> emitError) {
+void ElementwiseOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
+                                  ArrayRef<NamedAttribute> attrs) {
   ElementwiseKind elemwiseKind;
   for (auto attr : attrs) {
     if (attr.getName() == b.getStringAttr("kind")) {
@@ -4454,13 +4325,6 @@ void ElementwiseOp::regionBuilder(
   ArityGroupAndKind groupAndKind = getArityGroupAndKind(elemwiseKind);
   auto arityGroup = groupAndKind.arityGroup;
   auto kind = groupAndKind.kind;
-  if (emitError && block.getNumArguments() !=
-                       getArityGroupAsUInt(arityGroup) + 1 /*output*/) {
-    emitError() << "Elementwise regionBuilder expects "
-                << (getArityGroupAsUInt(arityGroup) + 1) << " args, got "
-                << block.getNumArguments();
-    return;
-  }
   assert(block.getNumArguments() ==
              getArityGroupAsUInt(arityGroup) + 1 /*output*/
          && "Elementwise regionBuilder number of block args mismatch");
@@ -4508,29 +4372,6 @@ Speculation::Speculatability ElementwiseOp::getSpeculatability() {
 //===----------------------------------------------------------------------===//
 // PackOp/UnPackOp Common
 //===----------------------------------------------------------------------===//
-
-template <typename OpTy, typename>
-SmallVector<int64_t>
-getPackedOuterShapeWithoutTransposition(OpTy packOrUnPack) {
-  RankedTensorType packedType = (std::is_same<OpTy, PackOp>::value)
-                                    ? packOrUnPack.getDestType()
-                                    : packOrUnPack.getSourceType();
-  RankedTensorType unpackedType = (std::is_same<OpTy, PackOp>::value)
-                                      ? packOrUnPack.getSourceType()
-                                      : packOrUnPack.getDestType();
-  SmallVector<int64_t> result(
-      packedType.getShape().take_front(unpackedType.getRank()));
-  if (!packOrUnPack.getOuterDimsPerm().empty()) {
-    applyPermutationToVector(
-        result, invertPermutationVector(packOrUnPack.getOuterDimsPerm()));
-  }
-  return result;
-}
-template SmallVector<int64_t>
-    getPackedOuterShapeWithoutTransposition<PackOp>(PackOp);
-template SmallVector<int64_t>
-    getPackedOuterShapeWithoutTransposition<UnPackOp>(UnPackOp);
-
 // Given the (potentially) updated packed type, `newPackedTy`, generates an
 // updated mixed-tile-sizes attribute. A tile size is updated only
 // when:
@@ -4605,7 +4446,7 @@ static SmallVector<OpFoldResult> getMixedTilesImpl(OpTy op) {
   SmallVector<OpFoldResult> mixedInnerTiles;
   unsigned dynamicValIndex = 0;
   for (int64_t staticTile : op.getStaticInnerTiles()) {
-    if (ShapedType::isStatic(staticTile))
+    if (!ShapedType::isDynamic(staticTile))
       mixedInnerTiles.push_back(builder.getI64IntegerAttr(staticTile));
     else
       mixedInnerTiles.push_back(op.getInnerTiles()[dynamicValIndex++]);
@@ -4638,6 +4479,22 @@ static bool isInvalidPackingPosSpecification(ArrayRef<int64_t> dimsPos,
   return llvm::any_of(dimsPos, [rank](int64_t dimPos) {
     return dimPos < 0 || dimPos >= static_cast<int64_t>(rank);
   });
+}
+
+/// Returns true if the dimension of `sourceShape` is smaller than the dimension
+/// of the `limitShape`.
+static bool areAllInBound(ArrayRef<int64_t> sourceShape,
+                          ArrayRef<int64_t> limitShape) {
+  assert(
+      sourceShape.size() == limitShape.size() &&
+      "expected source shape rank, and limit of the shape to have same rank");
+  return llvm::all_of(
+      llvm::zip(sourceShape, limitShape), [](std::tuple<int64_t, int64_t> it) {
+        int64_t sourceExtent = std::get<0>(it);
+        int64_t limit = std::get<1>(it);
+        return ShapedType::isDynamic(sourceExtent) ||
+               ShapedType::isDynamic(limit) || sourceExtent <= limit;
+      });
 }
 
 template <typename OpTy>
@@ -4698,6 +4555,11 @@ static LogicalResult commonVerifierPackAndUnPackOp(OpTy packOrUnPack) {
   // represents full tiles.
   RankedTensorType expectedPackedType = PackOp::inferPackedType(
       unpackedType, packOrUnPack.getStaticTiles(), innerDimsPos, outerDimPerm);
+  if (!areAllInBound(expectedPackedType.getShape(), packedType.getShape())) {
+    return op->emitError("the shape of output is not large enough to hold the "
+                         "packed data. Expected at least ")
+           << expectedPackedType << ", got " << packedType;
+  }
   if (!llvm::all_of(
           llvm::zip(packedType.getShape().take_back(mixedTiles.size()),
                     mixedTiles),
@@ -4713,12 +4575,6 @@ static LogicalResult commonVerifierPackAndUnPackOp(OpTy packOrUnPack) {
           })) {
     return op->emitError("mismatch in inner tile sizes specified and shaped of "
                          "tiled dimension in the packed type");
-  }
-  if (failed(verifyCompatibleShape(expectedPackedType.getShape(),
-                                   packedType.getShape()))) {
-    return op->emitError("expected ")
-           << expectedPackedType << " for the packed domain value, got "
-           << packedType;
   }
   return success();
 }
@@ -4855,7 +4711,7 @@ bool PackOp::requirePaddingValue(ArrayRef<int64_t> inputShape,
     std::optional<int64_t> constantTile = getConstantIntValue(tileSize);
 
     if (!constantTile) {
-      if (ShapedType::isStatic(outputTileSizes[pos]) &&
+      if (!ShapedType::isDynamic(outputTileSizes[pos]) &&
           (inputShape[pos] % outputTileSizes[pos] != 0))
         return true;
     } else if (inputShape[pos] % (*constantTile) != 0) {
@@ -4961,7 +4817,7 @@ SmallVector<OpFoldResult> PackOp::getResultShape(
   // use dispatchIndexOpFoldResults on the result, and rely on exact number of
   // dynamic dims returned by that.
   for (unsigned i = 0; i < resultDims.size(); ++i) {
-    if (ShapedType::isStatic(resultTypeShape[i]))
+    if (!ShapedType::isDynamic(resultTypeShape[i]))
       continue;
     resultDims[i] =
         getValueOrCreateConstantIndexOp(builder, loc, resultDims[i]);
@@ -4997,7 +4853,7 @@ Value PackOp::createDestinationTensor(OpBuilder &b, Location loc, Value source,
            llvm::cast<RankedTensorType>(source.getType()).getShape())) {
     if (ShapedType::isDynamic(value))
       mixedSizes.push_back(
-          tensor::DimOp::create(b, loc, source, index).getResult());
+          b.create<tensor::DimOp>(loc, source, index).getResult());
     else
       mixedSizes.push_back(b.getIndexAttr(value));
   }
@@ -5011,7 +4867,7 @@ Value PackOp::createDestinationTensor(OpBuilder &b, Location loc, Value source,
 
   mixedSizes.append(innerTileSizes.begin(), innerTileSizes.end());
   auto elemType = llvm::cast<ShapedType>(source.getType()).getElementType();
-  return tensor::EmptyOp::create(b, loc, mixedSizes, elemType);
+  return b.create<tensor::EmptyOp>(loc, mixedSizes, elemType);
 }
 
 PackOp PackOp::createTransposedClone(OpBuilder &b, Location loc,
@@ -5022,9 +4878,9 @@ PackOp PackOp::createTransposedClone(OpBuilder &b, Location loc,
   Value transposedDest =
       createDestinationTensor(b, loc, getSource(), metadata.innerTiles,
                               metadata.innerDimsPos, metadata.outerDimsPerm);
-  return PackOp::create(b, loc, getSource(), transposedDest,
-                        metadata.innerDimsPos, metadata.innerTiles,
-                        getPaddingValue(), metadata.outerDimsPerm);
+  return b.create<PackOp>(loc, getSource(), transposedDest,
+                          metadata.innerDimsPos, metadata.innerTiles,
+                          getPaddingValue(), metadata.outerDimsPerm);
 }
 
 /// Returns true if the tiles and the tiled dims are constant.
@@ -5164,7 +5020,7 @@ LogicalResult PackOp::canonicalize(PackOp packOp, PatternRewriter &rewriter) {
     if (srcShape != packOp.getSourceType().getShape()) {
       auto newSrcType = packOp.getSourceType().clone(srcShape);
       source =
-          tensor::CastOp::create(rewriter, loc, newSrcType, packOp.getSource());
+          rewriter.create<tensor::CastOp>(loc, newSrcType, packOp.getSource());
     }
     Value dest = packOp.getDest();
     RankedTensorType originalResultType = packOp.getDestType();
@@ -5172,7 +5028,7 @@ LogicalResult PackOp::canonicalize(PackOp packOp, PatternRewriter &rewriter) {
     if (needUpdateDestType) {
       auto newDestType = packOp.getDestType().clone(destShape);
       dest =
-          tensor::CastOp::create(rewriter, loc, newDestType, packOp.getDest());
+          rewriter.create<tensor::CastOp>(loc, newDestType, packOp.getDest());
     }
     rewriter.modifyOpInPlace(packOp, [&] {
       packOp.getSourceMutable().assign(source);
@@ -5183,7 +5039,7 @@ LogicalResult PackOp::canonicalize(PackOp packOp, PatternRewriter &rewriter) {
     if (needUpdateDestType) {
       rewriter.setInsertionPointAfter(packOp);
       auto castOp =
-          tensor::CastOp::create(rewriter, loc, originalResultType, packOp);
+          rewriter.create<tensor::CastOp>(loc, originalResultType, packOp);
       rewriter.replaceAllUsesExcept(packOp, castOp, castOp);
     }
     return success();
@@ -5276,20 +5132,18 @@ struct FoldTensorCastPackOp : public OpRewritePattern<PackOp> {
     // TODO: Strictly speaking, discardable attributes should be _discarded_ at
     // this point. However, in practice, we use them for things that we'd like
     // to preserve. Implement a better abstraction.
-    PackOp newOp =
-        PackOp::create(rewriter, op.getLoc(), newOperands[0], newOperands[1],
-                       op.getInnerDimsPos(), newMixedTileSizes,
-                       op.getPaddingValue(), op.getOuterDimsPerm());
+    PackOp newOp = rewriter.create<PackOp>(
+        op.getLoc(), newOperands[0], newOperands[1], op.getInnerDimsPos(),
+        newMixedTileSizes, op.getPaddingValue(), op.getOuterDimsPerm());
     newOp->setDiscardableAttrs(op->getDiscardableAttrDictionary());
 
     // Replace op.
     Value oldResult = op.getResult();
     Value newResult = newOp.getResult();
-    Value replacement =
-        (newResult.getType() != oldResult.getType())
-            ? tensor::CastOp::create(rewriter, op->getLoc(),
-                                     oldResult.getType(), newResult)
-            : newResult;
+    Value replacement = (newResult.getType() != oldResult.getType())
+                            ? rewriter.create<tensor::CastOp>(
+                                  op->getLoc(), oldResult.getType(), newResult)
+                            : newResult;
 
     rewriter.replaceOp(op, {replacement});
 
@@ -5386,8 +5240,7 @@ Value UnPackOp::createDestinationTensor(OpBuilder &b, Location loc,
   for (auto i :
        llvm::seq<unsigned>(0, srcType.getRank() - innerTileSizes.size())) {
     if (srcType.isDynamicDim(i))
-      mixedSizes.push_back(
-          tensor::DimOp::create(b, loc, source, i).getResult());
+      mixedSizes.push_back(b.create<tensor::DimOp>(loc, source, i).getResult());
     else
       mixedSizes.push_back(b.getIndexAttr(srcType.getDimSize(i)));
   }
@@ -5400,7 +5253,7 @@ Value UnPackOp::createDestinationTensor(OpBuilder &b, Location loc,
     mixedSizes[dimPos] = dimMul(mixedSizes[dimPos], tileSize);
 
   auto elemType = srcType.getElementType();
-  return tensor::EmptyOp::create(b, loc, mixedSizes, elemType);
+  return b.create<tensor::EmptyOp>(loc, mixedSizes, elemType);
 }
 
 UnPackOp UnPackOp::createTransposedClone(OpBuilder &b, Location loc,
@@ -5409,9 +5262,9 @@ UnPackOp UnPackOp::createTransposedClone(OpBuilder &b, Location loc,
                                          ArrayRef<int64_t> outerPermutation) {
   PackOrUnPackTransposeResult metadata = commonPermutationOfPackAndUnPackOp(
       *this, innerPermutation, outerPermutation);
-  return UnPackOp::create(b, loc, transposedSource, getDest(),
-                          metadata.innerDimsPos, metadata.innerTiles,
-                          metadata.outerDimsPerm);
+  return b.create<UnPackOp>(loc, transposedSource, getDest(),
+                            metadata.innerDimsPos, metadata.innerTiles,
+                            metadata.outerDimsPerm);
 }
 
 /// Returns true if the `srcShape` or `destShape` is different from the one in
@@ -5476,11 +5329,15 @@ LogicalResult UnPackOp::canonicalize(UnPackOp unPackOp,
   if (unPackOp->hasOneUse()) {
     auto extractSliceUser =
         dyn_cast<tensor::ExtractSliceOp>(*unPackOp->getUsers().begin());
-    if (extractSliceUser && unPackOp.canFoldSliceOp(extractSliceUser)) {
+    if (extractSliceUser &&
+        areAllConstantIntValue(extractSliceUser.getMixedOffsets(), 0) &&
+        areAllConstantIntValue(extractSliceUser.getMixedStrides(), 1) &&
+        extractSliceUser.getSourceType().getRank() ==
+            extractSliceUser.getResultType().getRank()) {
       OpBuilder::InsertionGuard g(rewriter);
       rewriter.setInsertionPoint(unPackOp);
-      auto newDest = tensor::ExtractSliceOp::create(
-          rewriter, unPackOp->getLoc(), unPackOp.getDest(),
+      auto newDest = rewriter.create<tensor::ExtractSliceOp>(
+          unPackOp->getLoc(), unPackOp.getDest(),
           extractSliceUser.getMixedOffsets(), extractSliceUser.getMixedSizes(),
           extractSliceUser.getMixedStrides());
       rewriter.modifyOpInPlace(unPackOp, [&]() {
@@ -5499,50 +5356,24 @@ LogicalResult UnPackOp::canonicalize(UnPackOp unPackOp,
     Value source = unPackOp.getSource();
     if (srcShape != unPackOp.getSourceType().getShape()) {
       auto newSrcType = unPackOp.getSourceType().clone(srcShape);
-      source = tensor::CastOp::create(rewriter, loc, newSrcType,
-                                      unPackOp.getSource());
+      source = rewriter.create<tensor::CastOp>(loc, newSrcType,
+                                               unPackOp.getSource());
     }
     Value dest = unPackOp.getDest();
     if (destShape != unPackOp.getDestType().getShape()) {
       auto newDestType = unPackOp.getDestType().clone(destShape);
-      dest = tensor::CastOp::create(rewriter, loc, newDestType,
-                                    unPackOp.getDest());
+      dest =
+          rewriter.create<tensor::CastOp>(loc, newDestType, unPackOp.getDest());
     }
-    Value newOp = UnPackOp::create(
-        rewriter, loc, source, dest, unPackOp.getInnerDimsPos(),
-        unPackOp.getMixedTiles(), unPackOp.getOuterDimsPerm());
+    Value newOp = rewriter.create<UnPackOp>(
+        loc, source, dest, unPackOp.getInnerDimsPos(), unPackOp.getMixedTiles(),
+        unPackOp.getOuterDimsPerm());
     rewriter.replaceOpWithNewOp<tensor::CastOp>(
         unPackOp, unPackOp.getResult().getType(), newOp);
     return success();
   }
 
   return failure();
-}
-
-bool UnPackOp::canFoldSliceOp(tensor::ExtractSliceOp sliceOp) {
-  // Rank-reduced folding is not supported.
-  if (sliceOp.getResultType().getRank() != this->getDestType().getRank())
-    return false;
-  if (!areAllConstantIntValue(sliceOp.getMixedOffsets(), 0) ||
-      !areAllConstantIntValue(sliceOp.getMixedStrides(), 1))
-    return false;
-  RankedTensorType unpackedTypeAfterFold = sliceOp.getResultType();
-  SmallVector<int64_t> outerShapeWithoutTranspose =
-      getPackedOuterShapeWithoutTransposition(*this);
-  for (auto [pos, tileSize] :
-       llvm::zip_equal(this->getInnerDimsPos(), this->getStaticInnerTiles())) {
-    if (unpackedTypeAfterFold.isDynamicDim(pos))
-      return false;
-    if (ShapedType::isDynamic(outerShapeWithoutTranspose[pos]))
-      return false;
-    if (ShapedType::isDynamic(tileSize))
-      return false;
-    int64_t paddingSize = outerShapeWithoutTranspose[pos] * tileSize -
-                          unpackedTypeAfterFold.getDimSize(pos);
-    if (paddingSize >= tileSize)
-      return false;
-  }
-  return true;
 }
 
 bool UnPackOp::isLikeUnPad() {
@@ -5593,19 +5424,18 @@ struct FoldTensorCastUnPackOp : public OpRewritePattern<UnPackOp> {
     // TODO: Strictly speaking, discardable attributes should be _discarded_ at
     // this point. However, in practice, we use them for things that we'd like
     // to preserve. Implement a better abstraction.
-    UnPackOp newOp = UnPackOp::create(rewriter, op.getLoc(), sourceTensor,
-                                      newOperands[1], op.getInnerDimsPos(),
-                                      newMixedTileSizes, op.getOuterDimsPerm());
+    UnPackOp newOp = rewriter.create<UnPackOp>(
+        op.getLoc(), sourceTensor, newOperands[1], op.getInnerDimsPos(),
+        newMixedTileSizes, op.getOuterDimsPerm());
     newOp->setDiscardableAttrs(op->getDiscardableAttrDictionary());
 
     // Replace op.
     Value oldResult = op.getResult();
     Value newResult = newOp.getResult();
-    Value replacement =
-        (newResult.getType() != oldResult.getType())
-            ? tensor::CastOp::create(rewriter, op->getLoc(),
-                                     oldResult.getType(), newResult)
-            : newResult;
+    Value replacement = (newResult.getType() != oldResult.getType())
+                            ? rewriter.create<tensor::CastOp>(
+                                  op->getLoc(), oldResult.getType(), newResult)
+                            : newResult;
 
     rewriter.replaceOp(op, {replacement});
 
@@ -5678,16 +5508,10 @@ bool BatchReduceMatmulOp::isValidLhsRhsBroadcastMap(AffineMap bcastMap,
   return isValid;
 }
 
-void BatchReduceMatmulOp::regionBuilder(
-    ImplicitLocOpBuilder &b, Block &block, ArrayRef<NamedAttribute> attrs,
-    function_ref<InFlightDiagnostic()> emitError) {
-  if (emitError && block.getNumArguments() != 3) {
-    emitError() << "BatchReduceMatmulOp regionBuilder expects 3 args, got "
-                << block.getNumArguments();
-    return;
-  }
+void BatchReduceMatmulOp::regionBuilder(ImplicitLocOpBuilder &b, Block &block,
+                                        ArrayRef<NamedAttribute> attrs) {
   assert(block.getNumArguments() == 3 &&
-         "BatchReduceMatmulOp regionBuilder expects 3 args");
+         "BatchReduceMatmulOp regionBuilder expects 3 (>=0) args");
   RegionBuilderHelper helper(b, block);
   SmallVector<Value> yields;
 

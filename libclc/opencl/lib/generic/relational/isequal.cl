@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/relational/isequal.h>
+#include <clc/opencl/clc.h>
 #include <clc/relational/clc_isequal.h>
 
 #define FUNCTION isequal
 #define __CLC_BODY "binary_def.inc"
 
-#include <clc/math/gentype.inc>
+#include <clc/relational/floatn.inc>

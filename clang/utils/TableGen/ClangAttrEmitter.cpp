@@ -3739,8 +3739,7 @@ static void GenerateHasAttrSpellingStringSwitch(
                       : '(' + itostr(Version) + ')';
 
     if (Scope.empty() || Scope == Spelling.nameSpace()) {
-      if (TestStringMap.contains(Spelling.name()) &&
-          TestStringMap[Spelling.name()] != TestStr)
+      if (TestStringMap.contains(Spelling.name()))
         TestStringMap[Spelling.name()] += " || " + TestStr;
       else
         TestStringMap[Spelling.name()] = TestStr;
@@ -4904,8 +4903,9 @@ void EmitClangAttrParsedAttrImpl(const RecordKeeper &Records, raw_ostream &OS) {
   }
 
   OS << "static const ParsedAttrInfo *AttrInfoMap[] = {\n";
-  for (const auto &Attr : Attrs)
-    OS << "&ParsedAttrInfo" << Attr.first << "::Instance,\n";
+  for (auto I = Attrs.begin(), E = Attrs.end(); I != E; ++I) {
+    OS << "&ParsedAttrInfo" << I->first << "::Instance,\n";
+  }
   OS << "};\n\n";
 
   // Generate function for handling attributes with delayed arguments
@@ -5260,9 +5260,10 @@ GetAttributeHeadingAndSpellings(const Record &Documentation,
       Heading = Spellings.begin()->name();
     else {
       std::set<std::string> Uniques;
-      for (const FlattenedSpelling &FS : Spellings) {
+      for (auto I = Spellings.begin(), E = Spellings.end();
+           I != E; ++I) {
         std::string Spelling =
-            NormalizeNameForSpellingComparison(FS.name()).str();
+            NormalizeNameForSpellingComparison(I->name()).str();
         Uniques.insert(Spelling);
       }
       // If the semantic map has only one spelling, that is sufficient for our
@@ -5404,7 +5405,7 @@ void EmitClangAttrDocs(const RecordKeeper &Records, raw_ostream &OS) {
       // Handle Undocumented category separately - no content merging
       if (Cat == "Undocumented" && UndocumentedCategory) {
         UndocumentedDocs.push_back(
-            DocumentationData(Doc, Attr, std::move(HeadingAndSpellings)));
+            DocumentationData(Doc, Attr, HeadingAndSpellings));
         continue;
       }
 
@@ -5480,12 +5481,14 @@ void EmitTestPragmaAttributeSupportedAttributes(const RecordKeeper &Records,
     }
     const Record *SubjectObj = I.second->getValueAsDef("Subjects");
     OS << " (";
-    ListSeparator LS;
+    bool PrintComma = false;
     for (const auto &Subject :
          enumerate(SubjectObj->getValueAsListOfDefs("Subjects"))) {
       if (!isSupportedPragmaClangAttributeSubject(*Subject.value()))
         continue;
-      OS << LS;
+      if (PrintComma)
+        OS << ", ";
+      PrintComma = true;
       PragmaClangAttributeSupport::RuleOrAggregateRuleSet &RuleSet =
           Support.SubjectsToRules.find(Subject.value())->getSecond();
       if (RuleSet.isRule()) {

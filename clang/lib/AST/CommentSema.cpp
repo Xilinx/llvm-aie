@@ -132,91 +132,89 @@ void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
   if (!Info->IsRecordLikeDeclarationCommand)
     return;
-  std::optional<unsigned> DiagSelect;
+  unsigned DiagSelect;
   switch (Comment->getCommandID()) {
     case CommandTraits::KCI_class:
-      if (!isClassOrStructOrTagTypedefDecl() && !isClassTemplateDecl())
-        DiagSelect = diag::DeclContainerKind::Class;
-
+      DiagSelect =
+          (!isClassOrStructOrTagTypedefDecl() && !isClassTemplateDecl()) ? 1
+                                                                         : 0;
       // Allow @class command on @interface declarations.
       // FIXME. Currently, \class and @class are indistinguishable. So,
       // \class is also allowed on an @interface declaration
       if (DiagSelect && Comment->getCommandMarker() && isObjCInterfaceDecl())
-        DiagSelect = std::nullopt;
+        DiagSelect = 0;
       break;
     case CommandTraits::KCI_interface:
-      if (!isObjCInterfaceDecl())
-        DiagSelect = diag::DeclContainerKind::Interface;
+      DiagSelect = !isObjCInterfaceDecl() ? 2 : 0;
       break;
     case CommandTraits::KCI_protocol:
-      if (!isObjCProtocolDecl())
-        DiagSelect = diag::DeclContainerKind::Protocol;
+      DiagSelect = !isObjCProtocolDecl() ? 3 : 0;
       break;
     case CommandTraits::KCI_struct:
-      if (!isClassOrStructOrTagTypedefDecl())
-        DiagSelect = diag::DeclContainerKind::Struct;
+      DiagSelect = !isClassOrStructOrTagTypedefDecl() ? 4 : 0;
       break;
     case CommandTraits::KCI_union:
-      if (!isUnionDecl())
-        DiagSelect = diag::DeclContainerKind::Union;
+      DiagSelect = !isUnionDecl() ? 5 : 0;
       break;
     default:
-      DiagSelect = std::nullopt;
+      DiagSelect = 0;
       break;
   }
   if (DiagSelect)
     Diag(Comment->getLocation(), diag::warn_doc_api_container_decl_mismatch)
-        << Comment->getCommandMarker() << (*DiagSelect) << (*DiagSelect)
-        << Comment->getSourceRange();
+    << Comment->getCommandMarker()
+    << (DiagSelect-1) << (DiagSelect-1)
+    << Comment->getSourceRange();
 }
 
 void Sema::checkContainerDecl(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
   if (!Info->IsRecordLikeDetailCommand || isRecordLikeDecl())
     return;
-  std::optional<unsigned> DiagSelect;
+  unsigned DiagSelect;
   switch (Comment->getCommandID()) {
     case CommandTraits::KCI_classdesign:
-      DiagSelect = diag::DocCommandKind::ClassDesign;
+      DiagSelect = 1;
       break;
     case CommandTraits::KCI_coclass:
-      DiagSelect = diag::DocCommandKind::CoClass;
+      DiagSelect = 2;
       break;
     case CommandTraits::KCI_dependency:
-      DiagSelect = diag::DocCommandKind::Dependency;
+      DiagSelect = 3;
       break;
     case CommandTraits::KCI_helper:
-      DiagSelect = diag::DocCommandKind::Helper;
+      DiagSelect = 4;
       break;
     case CommandTraits::KCI_helperclass:
-      DiagSelect = diag::DocCommandKind::HelperClass;
+      DiagSelect = 5;
       break;
     case CommandTraits::KCI_helps:
-      DiagSelect = diag::DocCommandKind::Helps;
+      DiagSelect = 6;
       break;
     case CommandTraits::KCI_instancesize:
-      DiagSelect = diag::DocCommandKind::InstanceSize;
+      DiagSelect = 7;
       break;
     case CommandTraits::KCI_ownership:
-      DiagSelect = diag::DocCommandKind::Ownership;
+      DiagSelect = 8;
       break;
     case CommandTraits::KCI_performance:
-      DiagSelect = diag::DocCommandKind::Performance;
+      DiagSelect = 9;
       break;
     case CommandTraits::KCI_security:
-      DiagSelect = diag::DocCommandKind::Security;
+      DiagSelect = 10;
       break;
     case CommandTraits::KCI_superclass:
-      DiagSelect = diag::DocCommandKind::Superclass;
+      DiagSelect = 11;
       break;
     default:
-      DiagSelect = std::nullopt;
+      DiagSelect = 0;
       break;
   }
   if (DiagSelect)
     Diag(Comment->getLocation(), diag::warn_doc_container_decl_mismatch)
-        << Comment->getCommandMarker() << (*DiagSelect)
-        << Comment->getSourceRange();
+    << Comment->getCommandMarker()
+    << (DiagSelect-1)
+    << Comment->getSourceRange();
 }
 
 /// Turn a string into the corresponding PassDirection or -1 if it's not
@@ -270,7 +268,7 @@ void Sema::actOnParamCommandParamNameArg(ParamCommandComment *Command,
   }
   auto *A = new (Allocator)
       Comment::Argument{SourceRange(ArgLocBegin, ArgLocEnd), Arg};
-  Command->setArgs(ArrayRef(A, 1));
+  Command->setArgs(llvm::ArrayRef(A, 1));
 }
 
 void Sema::actOnParamCommandFinish(ParamCommandComment *Command,
@@ -306,7 +304,7 @@ void Sema::actOnTParamCommandParamNameArg(TParamCommandComment *Command,
 
   auto *A = new (Allocator)
       Comment::Argument{SourceRange(ArgLocBegin, ArgLocEnd), Arg};
-  Command->setArgs(ArrayRef(A, 1));
+  Command->setArgs(llvm::ArrayRef(A, 1));
 
   if (!isTemplateOrSpecialization()) {
     // We already warned that this \\tparam is not attached to a template decl.
@@ -317,7 +315,7 @@ void Sema::actOnTParamCommandParamNameArg(TParamCommandComment *Command,
       ThisDeclInfo->TemplateParameters;
   SmallVector<unsigned, 2> Position;
   if (resolveTParamReference(Arg, TemplateParameters, &Position)) {
-    Command->setPosition(copyArray(ArrayRef(Position)));
+    Command->setPosition(copyArray(llvm::ArrayRef(Position)));
     TParamCommandComment *&PrevCommand = TemplateParameterDocs[Arg];
     if (PrevCommand) {
       SourceRange ArgRange(ArgLocBegin, ArgLocEnd);

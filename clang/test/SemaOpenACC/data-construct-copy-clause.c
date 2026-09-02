@@ -79,9 +79,7 @@ void ModList() {
   // expected-error@+1{{OpenACC 'zero' modifier not valid on 'copy' clause}}
 #pragma acc data copy(zero: V1)
   ;
-#pragma acc data copy(capture:V1)
-  ;
-#pragma acc data copy(always, alwaysin, alwaysout, capture: V1)
+#pragma acc data copy(always, alwaysin, alwaysout: V1)
 ;
 }
 

@@ -99,7 +99,7 @@ public:
   TraversalKind GetTraversalKind() const { return Traversal; }
 
   void Visit(const Decl *D, bool VisitLocs = false) {
-    if (Traversal == TK_IgnoreUnlessSpelledInSource && D && D->isImplicit())
+    if (Traversal == TK_IgnoreUnlessSpelledInSource && D->isImplicit())
       return;
 
     getNodeDelegate().AddChild([=] {
@@ -450,24 +450,6 @@ public:
     if (!Contained.isNull())
       Visit(Contained);
   }
-  void VisitHLSLInlineSpirvType(const HLSLInlineSpirvType *T) {
-    for (auto &Operand : T->getOperands()) {
-      using SpirvOperandKind = SpirvOperand::SpirvOperandKind;
-
-      switch (Operand.getKind()) {
-      case SpirvOperandKind::ConstantId:
-      case SpirvOperandKind::Literal:
-        break;
-
-      case SpirvOperandKind::TypeId:
-        Visit(Operand.getResultType());
-        break;
-
-      default:
-        llvm_unreachable("Invalid SpirvOperand kind!");
-      }
-    }
-  }
   void VisitSubstTemplateTypeParmType(const SubstTemplateTypeParmType *) {}
   void
   VisitSubstTemplateTypeParmPackType(const SubstTemplateTypeParmPackType *T) {
@@ -605,7 +587,7 @@ public:
   }
 
   void VisitFileScopeAsmDecl(const FileScopeAsmDecl *D) {
-    Visit(D->getAsmStringExpr());
+    Visit(D->getAsmString());
   }
 
   void VisitTopLevelStmtDecl(const TopLevelStmtDecl *D) { Visit(D->getStmt()); }

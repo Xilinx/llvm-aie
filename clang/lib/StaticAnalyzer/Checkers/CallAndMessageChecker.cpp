@@ -253,8 +253,6 @@ public:
       const RecordDecl *RD = RT->getDecl()->getDefinition();
       assert(RD && "Referred record has no definition");
       for (const auto *I : RD->fields()) {
-        if (I->isUnnamedBitField())
-          continue;
         const FieldRegion *FR = MrMgr.getFieldRegion(I, R);
         FieldChain.push_back(I);
         T = I->getType();
@@ -673,6 +671,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
                                               ProgramStateRef state,
                                               const ObjCMethodCall &Msg) const {
   ASTContext &Ctx = C.getASTContext();
+  static CheckerProgramPointTag Tag(this, "NilReceiver");
 
   // Check the return type of the message expression.  A message to nil will
   // return different values depending on the return type and the architecture.
@@ -683,7 +682,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   if (CanRetTy->isStructureOrClassType()) {
     // Structure returns are safe since the compiler zeroes them out.
     SVal V = C.getSValBuilder().makeZeroVal(RetTy);
-    C.addTransition(state->BindExpr(Msg.getOriginExpr(), LCtx, V));
+    C.addTransition(state->BindExpr(Msg.getOriginExpr(), LCtx, V), &Tag);
     return;
   }
 
@@ -702,7 +701,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
             Ctx.LongDoubleTy == CanRetTy ||
             Ctx.LongLongTy == CanRetTy ||
             Ctx.UnsignedLongLongTy == CanRetTy)))) {
-      if (ExplodedNode *N = C.generateErrorNode(state))
+      if (ExplodedNode *N = C.generateErrorNode(state, &Tag))
         emitNilReceiverBug(C, Msg, N);
       return;
     }
@@ -721,7 +720,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     // of this case unless we have *a lot* more knowledge.
     //
     SVal V = C.getSValBuilder().makeZeroVal(RetTy);
-    C.addTransition(state->BindExpr(Msg.getOriginExpr(), LCtx, V));
+    C.addTransition(state->BindExpr(Msg.getOriginExpr(), LCtx, V), &Tag);
     return;
   }
 

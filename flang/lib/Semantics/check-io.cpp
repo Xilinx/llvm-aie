@@ -478,8 +478,6 @@ void IoChecker::Enter(const parser::InquireSpec::LogVar &spec) {
     specKind = IoSpecKind::Pending;
     break;
   }
-  CheckForDefinableVariable(std::get<parser::ScalarLogicalVariable>(spec.t),
-      parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   SetSpecifier(specKind);
 }
 

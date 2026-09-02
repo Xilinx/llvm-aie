@@ -53,10 +53,7 @@ BitVector XtensaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     // Reserve frame pointer.
     Reserved.set(getFrameRegister(MF));
   }
-  if (Subtarget.hasTHREADPTR()) {
-    // Reserve frame pointer.
-    Reserved.set(Xtensa::THREADPTR);
-  }
+
   // Reserve stack pointer.
   Reserved.set(Xtensa::SP);
   return Reserved;

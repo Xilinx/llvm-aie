@@ -20,7 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Common/ErrorHandler.h"
-#include "lld/Common/Utils.h"
 #include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
@@ -148,6 +147,19 @@ static SmallVector<std::pair<unsigned, UtilityNodes>> getUnsForCompression(
   return sectionUns;
 }
 
+/// Symbols can be appended with "(.__uniq.xxxx)?(.llvm.yyyy)?(.Tgm)?" where
+/// "xxxx" and "yyyy" are numbers that could change between builds, and .Tgm is
+/// the global merge functions suffix
+/// (see GlobalMergeFunc::MergingInstanceSuffix). We need to use the root symbol
+/// name before this suffix so these symbols can be matched with profiles which
+/// may have different suffixes.
+inline StringRef getRootSymbol(StringRef name) {
+  name.consume_back(".Tgm");
+  auto [P0, S0] = name.rsplit(".llvm.");
+  auto [P1, S1] = P0.rsplit(".__uniq.");
+  return P1;
+}
+
 template <class D>
 auto BPOrderer<D>::computeOrder(
     StringRef profilePath, bool forFunctionCompression, bool forDataCompression,
@@ -185,7 +197,7 @@ auto BPOrderer<D>::computeOrder(
       for (size_t timestamp = 0; timestamp < trace.size(); timestamp++) {
         auto [_, parsedFuncName] = getParsedIRPGOName(
             reader->getSymtab().getFuncOrVarName(trace[timestamp]));
-        parsedFuncName = lld::utils::getRootSymbol(parsedFuncName);
+        parsedFuncName = getRootSymbol(parsedFuncName);
 
         auto sectionIdxsIt =
             rootSymbolToSectionIdxs.find(CachedHashStringRef(parsedFuncName));
@@ -292,54 +304,45 @@ auto BPOrderer<D>::computeOrder(
     bp.run(nodesForDataCompression);
   }
 
-  unsigned numStartupSections = 0, startupSize = 0;
-  unsigned numCodeCompressionSections = 0, codeCompressionSize = 0;
-  unsigned numDuplicateCodeSections = 0, duplicateCodeSize = 0;
-  unsigned numDataCompressionSections = 0, dataCompressionSize = 0;
-  unsigned numDuplicateDataSections = 0, duplicateDataSize = 0;
+  unsigned numStartupSections = 0;
+  unsigned numCodeCompressionSections = 0;
+  unsigned numDuplicateCodeSections = 0;
+  unsigned numDataCompressionSections = 0;
+  unsigned numDuplicateDataSections = 0;
   SetVector<const Section *> orderedSections;
   // Order startup functions,
   for (auto &node : nodesForStartup) {
     const auto *isec = sections[node.Id];
-    if (orderedSections.insert(isec)) {
-      startupSize += D::getSize(*isec);
+    if (orderedSections.insert(isec))
       ++numStartupSections;
-    }
   }
   // then functions for compression,
   for (auto &node : nodesForFunctionCompression) {
     const auto *isec = sections[node.Id];
-    if (orderedSections.insert(isec)) {
-      codeCompressionSize += D::getSize(*isec);
+    if (orderedSections.insert(isec))
       ++numCodeCompressionSections;
-    }
+
     auto It = duplicateSectionIdxs.find(node.Id);
     if (It == duplicateSectionIdxs.end())
       continue;
     for (auto dupSecIdx : It->getSecond()) {
       const auto *dupIsec = sections[dupSecIdx];
-      if (orderedSections.insert(dupIsec)) {
-        duplicateCodeSize += D::getSize(*dupIsec);
+      if (orderedSections.insert(dupIsec))
         ++numDuplicateCodeSections;
-      }
     }
   }
   // then data for compression.
   for (auto &node : nodesForDataCompression) {
     const auto *isec = sections[node.Id];
-    if (orderedSections.insert(isec)) {
-      dataCompressionSize += D::getSize(*isec);
+    if (orderedSections.insert(isec))
       ++numDataCompressionSections;
-    }
     auto It = duplicateSectionIdxs.find(node.Id);
     if (It == duplicateSectionIdxs.end())
       continue;
     for (auto dupSecIdx : It->getSecond()) {
       const auto *dupIsec = sections[dupSecIdx];
-      if (orderedSections.insert(dupIsec)) {
-        duplicateDataSize += D::getSize(*dupIsec);
+      if (orderedSections.insert(dupIsec))
         ++numDuplicateDataSections;
-      }
     }
   }
 
@@ -348,21 +351,14 @@ auto BPOrderer<D>::computeOrder(
         numStartupSections + numCodeCompressionSections +
         numDuplicateCodeSections + numDataCompressionSections +
         numDuplicateDataSections;
-    unsigned totalOrderedSize = startupSize + codeCompressionSize +
-                                duplicateCodeSize + dataCompressionSize +
-                                duplicateDataSize;
-    dbgs() << "Ordered " << numTotalOrderedSections << " sections ("
-           << totalOrderedSize << " bytes) using balanced partitioning:\n";
-    dbgs() << "  Functions for startup: " << numStartupSections << " ("
-           << startupSize << " bytes)\n";
-    dbgs() << "  Functions for compression: " << numCodeCompressionSections
-           << " (" << codeCompressionSize << " bytes)\n";
-    dbgs() << "  Duplicate functions: " << numDuplicateCodeSections << " ("
-           << duplicateCodeSize << " bytes)\n";
-    dbgs() << "  Data for compression: " << numDataCompressionSections << " ("
-           << dataCompressionSize << " bytes)\n";
-    dbgs() << "  Duplicate data: " << numDuplicateDataSections << " ("
-           << duplicateDataSize << " bytes)\n";
+    dbgs()
+        << "Ordered " << numTotalOrderedSections
+        << " sections using balanced partitioning:\n  Functions for startup: "
+        << numStartupSections
+        << "\n  Functions for compression: " << numCodeCompressionSections
+        << "\n  Duplicate functions: " << numDuplicateCodeSections
+        << "\n  Data for compression: " << numDataCompressionSections
+        << "\n  Duplicate data: " << numDuplicateDataSections << "\n";
 
     if (!profilePath.empty()) {
       // Evaluate this function order for startup
@@ -379,7 +375,7 @@ auto BPOrderer<D>::computeOrder(
           // 4?
           uint64_t lastPage = endAddress / pageSize;
           StringRef rootSymbol = D::getSymName(*sym);
-          rootSymbol = lld::utils::getRootSymbol(rootSymbol);
+          rootSymbol = getRootSymbol(rootSymbol);
           symbolToPageNumbers.try_emplace(rootSymbol, firstPage, lastPage);
           if (auto resolvedLinkageName = D::getResolvedLinkageName(rootSymbol))
             symbolToPageNumbers.try_emplace(resolvedLinkageName.value(),
@@ -397,7 +393,7 @@ auto BPOrderer<D>::computeOrder(
           auto traceId = trace.FunctionNameRefs[step];
           auto [Filename, ParsedFuncName] =
               getParsedIRPGOName(reader->getSymtab().getFuncOrVarName(traceId));
-          ParsedFuncName = lld::utils::getRootSymbol(ParsedFuncName);
+          ParsedFuncName = getRootSymbol(ParsedFuncName);
           auto it = symbolToPageNumbers.find(ParsedFuncName);
           if (it != symbolToPageNumbers.end()) {
             auto &[firstPage, lastPage] = it->getValue();

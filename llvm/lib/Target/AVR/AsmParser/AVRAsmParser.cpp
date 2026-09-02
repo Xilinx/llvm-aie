@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AVRRegisterInfo.h"
-#include "MCTargetDesc/AVRMCAsmInfo.h"
 #include "MCTargetDesc/AVRMCELFStreamer.h"
+#include "MCTargetDesc/AVRMCExpr.h"
 #include "MCTargetDesc/AVRMCTargetDesc.h"
 #include "TargetInfo/AVRTargetInfo.h"
 
@@ -24,7 +24,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 
@@ -247,7 +246,7 @@ public:
   SMLoc getStartLoc() const override { return Start; }
   SMLoc getEndLoc() const override { return End; }
 
-  void print(raw_ostream &O, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &O) const override {
     switch (Kind) {
     case k_Token:
       O << "Token: \"" << getToken() << "\"";
@@ -256,16 +255,12 @@ public:
       O << "Register: " << getReg();
       break;
     case k_Immediate:
-      O << "Immediate: \"";
-      MAI.printExpr(O, *getImm());
-      O << "\"";
+      O << "Immediate: \"" << *getImm() << "\"";
       break;
     case k_Memri: {
       // only manually print the size for non-negative values,
       // as the sign is inserted automatically.
-      O << "Memri: \"" << getReg() << '+';
-      MAI.printExpr(O, *getImm());
-      O << "\"";
+      O << "Memri: \"" << getReg() << '+' << *getImm() << "\"";
       break;
     }
     }
@@ -452,7 +447,7 @@ bool AVRAsmParser::tryParseExpression(OperandVector &Operands, int64_t offset) {
 
 bool AVRAsmParser::tryParseRelocExpression(OperandVector &Operands) {
   bool isNegated = false;
-  AVR::Specifier ModifierKind = AVR::S_AVR_NONE;
+  AVRMCExpr::Specifier ModifierKind = AVRMCExpr::VK_AVR_NONE;
 
   SMLoc S = Parser.getTok().getLoc();
 
@@ -478,14 +473,14 @@ bool AVRAsmParser::tryParseRelocExpression(OperandVector &Operands) {
   StringRef ModifierName = Parser.getTok().getString();
   ModifierKind = AVRMCExpr::parseSpecifier(ModifierName);
 
-  if (ModifierKind != AVR::S_AVR_NONE) {
+  if (ModifierKind != AVRMCExpr::VK_AVR_NONE) {
     Parser.Lex();
     Parser.Lex(); // Eat modifier name and parenthesis
     if (Parser.getTok().getString() == GENERATE_STUBS &&
         Parser.getTok().getKind() == AsmToken::Identifier) {
       std::string GSModName = ModifierName.str() + "_" + GENERATE_STUBS;
       ModifierKind = AVRMCExpr::parseSpecifier(GSModName);
-      if (ModifierKind != AVR::S_AVR_NONE)
+      if (ModifierKind != AVRMCExpr::VK_AVR_NONE)
         Parser.Lex(); // Eat gs modifier name
     }
   } else {
@@ -703,15 +698,15 @@ ParseStatus AVRAsmParser::parseLiteralValues(unsigned SizeInBytes, SMLoc L) {
       Tokens[1].getKind() == AsmToken::Identifier) {
     MCSymbol *Symbol = getContext().getOrCreateSymbol(".text");
     AVRStreamer.emitValueForModiferKind(Symbol, SizeInBytes, L,
-                                        AVR::S_AVR_NONE);
+                                        AVRMCExpr::VK_AVR_NONE);
     return ParseStatus::NoMatch;
   }
 
   if (Parser.getTok().getKind() == AsmToken::Identifier &&
       Parser.getLexer().peekTok().getKind() == AsmToken::LParen) {
     StringRef ModifierName = Parser.getTok().getString();
-    AVR::Specifier Spec = AVRMCExpr::parseSpecifier(ModifierName);
-    if (Spec != AVR::S_AVR_NONE) {
+    AVRMCExpr::Specifier Spec = AVRMCExpr::parseSpecifier(ModifierName);
+    if (Spec != AVRMCExpr::VK_AVR_NONE) {
       Parser.Lex();
       Parser.Lex(); // Eat the modifier and parenthesis
     } else {
@@ -736,7 +731,7 @@ ParseStatus AVRAsmParser::parseLiteralValues(unsigned SizeInBytes, SMLoc L) {
   return (parseMany(parseOne));
 }
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAVRAsmParser() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAVRAsmParser() {
   RegisterMCAsmParser<AVRAsmParser> X(getTheAVRTarget());
 }
 

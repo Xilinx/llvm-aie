@@ -15,6 +15,8 @@
 
 using namespace llvm;
 
+void NVPTXMCAsmInfo::anchor() {}
+
 NVPTXMCAsmInfo::NVPTXMCAsmInfo(const Triple &TheTriple,
                                const MCTargetOptions &Options) {
   if (TheTriple.getArch() == Triple::nvptx64) {

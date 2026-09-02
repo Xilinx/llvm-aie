@@ -15,7 +15,6 @@
 #define LLVM_CODEGEN_MIRPRINTER_H
 
 #include "llvm/CodeGen/MachinePassManager.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -31,7 +30,7 @@ class PrintMIRPreparePass : public PassInfoMixin<PrintMIRPreparePass> {
 
 public:
   PrintMIRPreparePass(raw_ostream &OS = errs()) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &MFAM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MFAM);
   static bool isRequired() { return true; }
 };
 
@@ -40,18 +39,18 @@ class PrintMIRPass : public PassInfoMixin<PrintMIRPass> {
 
 public:
   PrintMIRPass(raw_ostream &OS = errs()) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(MachineFunction &MF,
-                                 MachineFunctionAnalysisManager &MFAM);
+  PreservedAnalyses run(MachineFunction &MF,
+                        MachineFunctionAnalysisManager &MFAM);
   static bool isRequired() { return true; }
 };
 
 /// Print LLVM IR using the MIR serialization format to the given output stream.
-LLVM_ABI void printMIR(raw_ostream &OS, const Module &M);
+void printMIR(raw_ostream &OS, const Module &M);
 
 /// Print a machine function using the MIR serialization format to the given
 /// output stream.
-LLVM_ABI void printMIR(raw_ostream &OS, const MachineModuleInfo &MMI,
-                       const MachineFunction &MF);
+void printMIR(raw_ostream &OS, const MachineModuleInfo &MMI,
+              const MachineFunction &MF);
 
 /// Determine a possible list of successors of a basic block based on the
 /// basic block machine operand being used inside the block. This should give
@@ -60,9 +59,9 @@ LLVM_ABI void printMIR(raw_ostream &OS, const MachineModuleInfo &MMI,
 /// The MIRPRinter will skip printing successors if they match the result of
 /// this function and the parser will use this function to construct a list if
 /// it is missing.
-LLVM_ABI void guessSuccessors(const MachineBasicBlock &MBB,
-                              SmallVectorImpl<MachineBasicBlock *> &Result,
-                              bool &IsFallthrough);
+void guessSuccessors(const MachineBasicBlock &MBB,
+                     SmallVectorImpl<MachineBasicBlock*> &Result,
+                     bool &IsFallthrough);
 
 } // end namespace llvm
 

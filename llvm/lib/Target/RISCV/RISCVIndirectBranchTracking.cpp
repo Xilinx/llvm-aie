@@ -20,9 +20,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 
-#define DEBUG_TYPE "riscv-indrect-branch-tracking"
-#define PASS_NAME "RISC-V Indirect Branch Tracking"
-
 using namespace llvm;
 
 cl::opt<uint32_t> PreferredLandingPadLabel(
@@ -30,28 +27,27 @@ cl::opt<uint32_t> PreferredLandingPadLabel(
     cl::desc("Use preferred fixed label for all labels"));
 
 namespace {
-class RISCVIndirectBranchTracking : public MachineFunctionPass {
+class RISCVIndirectBranchTrackingPass : public MachineFunctionPass {
 public:
-  static char ID;
-  RISCVIndirectBranchTracking() : MachineFunctionPass(ID) {}
+  RISCVIndirectBranchTrackingPass() : MachineFunctionPass(ID) {}
 
-  StringRef getPassName() const override { return PASS_NAME; }
+  StringRef getPassName() const override {
+    return "RISC-V Indirect Branch Tracking";
+  }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
+  static char ID;
   const Align LpadAlign = Align(4);
 };
 
 } // end anonymous namespace
 
-INITIALIZE_PASS(RISCVIndirectBranchTracking, DEBUG_TYPE, PASS_NAME, false,
-                false)
-
-char RISCVIndirectBranchTracking::ID = 0;
+char RISCVIndirectBranchTrackingPass::ID = 0;
 
 FunctionPass *llvm::createRISCVIndirectBranchTrackingPass() {
-  return new RISCVIndirectBranchTracking();
+  return new RISCVIndirectBranchTrackingPass();
 }
 
 static void emitLpad(MachineBasicBlock &MBB, const RISCVInstrInfo *TII,
@@ -61,7 +57,8 @@ static void emitLpad(MachineBasicBlock &MBB, const RISCVInstrInfo *TII,
       .addImm(Label);
 }
 
-bool RISCVIndirectBranchTracking::runOnMachineFunction(MachineFunction &MF) {
+bool RISCVIndirectBranchTrackingPass::runOnMachineFunction(
+    MachineFunction &MF) {
   const auto &Subtarget = MF.getSubtarget<RISCVSubtarget>();
   const RISCVInstrInfo *TII = Subtarget.getInstrInfo();
   if (!Subtarget.hasStdExtZicfilp())

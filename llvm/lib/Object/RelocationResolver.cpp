@@ -367,13 +367,11 @@ static bool supportsAmdgpu(uint64_t Type) {
 }
 
 static uint64_t resolveAmdgpu(uint64_t Type, uint64_t Offset, uint64_t S,
-                              uint64_t LocData, int64_t Addend) {
-  assert((LocData == 0 || Addend == 0) &&
-         "one of LocData and Addend must be 0");
+                              uint64_t /*LocData*/, int64_t Addend) {
   switch (Type) {
   case ELF::R_AMDGPU_ABS32:
   case ELF::R_AMDGPU_ABS64:
-    return S + LocData + Addend;
+    return S + Addend;
   default:
     llvm_unreachable("Invalid relocation type");
   }
@@ -905,7 +903,6 @@ getRelocationResolver(const ObjectFile &Obj) {
       case Triple::amdgcn:
         return {supportsAmdgpu, resolveAmdgpu};
       case Triple::riscv64:
-      case Triple::riscv64be:
         return {supportsRISCV, resolveRISCV};
       default:
         if (isAMDGPU(Obj))
@@ -953,7 +950,6 @@ getRelocationResolver(const ObjectFile &Obj) {
     case Triple::r600:
       return {supportsAmdgpu, resolveAmdgpu};
     case Triple::riscv32:
-    case Triple::riscv32be:
       return {supportsRISCV, resolveRISCV};
     case Triple::csky:
       return {supportsCSKY, resolveCSKY};
@@ -993,16 +989,13 @@ uint64_t resolveRelocation(RelocationResolver Resolver, const RelocationRef &R,
         return Elf64BEObj->getRelSection(R.getRawDataRefImpl())->sh_type;
       };
 
-      if (GetRelSectionType() == ELF::SHT_RELA ||
-          GetRelSectionType() == ELF::SHT_CREL) {
+      if (GetRelSectionType() == ELF::SHT_RELA) {
         Addend = getELFAddend(R);
         // LoongArch and RISCV relocations use both LocData and Addend.
         if (Obj->getArch() != Triple::loongarch32 &&
             Obj->getArch() != Triple::loongarch64 &&
             Obj->getArch() != Triple::riscv32 &&
-            Obj->getArch() != Triple::riscv64 &&
-            Obj->getArch() != Triple::riscv32be &&
-            Obj->getArch() != Triple::riscv64be)
+            Obj->getArch() != Triple::riscv64)
           LocData = 0;
       }
     }

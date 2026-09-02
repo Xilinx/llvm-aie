@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsmParser/WebAssemblyAsmTypeCheck.h"
-#include "MCTargetDesc/WebAssemblyMCAsmInfo.h"
+#include "MCTargetDesc/WebAssemblyMCExpr.h"
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
 #include "MCTargetDesc/WebAssemblyMCTypeUtilities.h"
 #include "MCTargetDesc/WebAssemblyTargetStreamer.h"
@@ -32,7 +32,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolWasm.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 
 using namespace llvm;
@@ -180,7 +179,7 @@ struct WebAssemblyOperand : public MCParsedAsmOperand {
     }
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
+  void print(raw_ostream &OS) const override {
     switch (Kind) {
     case Token:
       OS << "Tok:" << Tok.Tok;
@@ -669,10 +668,6 @@ public:
       if (parseFunctionTableOperand(&FunctionTable))
         return true;
       ExpectFuncType = true;
-    } else if (Name == "ref.test") {
-      // When we get support for wasm-gc types, this should become
-      // ExpectRefType.
-      ExpectFuncType = true;
     }
 
     // Returns true if the next tokens are a catch clause
@@ -900,8 +895,7 @@ public:
 
   bool checkDataSection() {
     if (CurrentState != DataSection) {
-      auto *WS = static_cast<const MCSectionWasm *>(
-          getStreamer().getCurrentSectionOnly());
+      auto *WS = cast<MCSectionWasm>(getStreamer().getCurrentSectionOnly());
       if (WS && WS->isText())
         return error("data directive must occur in a data segment: ",
                      Lexer.getTok());
@@ -1219,8 +1213,7 @@ public:
 
   void doBeforeLabelEmit(MCSymbol *Symbol, SMLoc IDLoc) override {
     // Code below only applies to labels in text sections.
-    auto *CWS = static_cast<const MCSectionWasm *>(
-        getStreamer().getCurrentSectionOnly());
+    auto *CWS = cast<MCSectionWasm>(getStreamer().getCurrentSectionOnly());
     if (!CWS->isText())
       return;
 
@@ -1289,8 +1282,7 @@ public:
 } // end anonymous namespace
 
 // Force static initialization.
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeWebAssemblyAsmParser() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeWebAssemblyAsmParser() {
   RegisterMCAsmParser<WebAssemblyAsmParser> X(getTheWebAssemblyTarget32());
   RegisterMCAsmParser<WebAssemblyAsmParser> Y(getTheWebAssemblyTarget64());
 }

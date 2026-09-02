@@ -39,7 +39,7 @@
 
 namespace llvm {
 
-LLVM_ABI extern cl::opt<bool> UseSegmentSetForPhysRegs;
+extern cl::opt<bool> UseSegmentSetForPhysRegs;
 
 class BitVector;
 class MachineBlockFrequencyInfo;
@@ -105,30 +105,30 @@ class LiveIntervals {
     analyze(MF);
   }
 
-  LLVM_ABI void analyze(MachineFunction &MF);
+  void analyze(MachineFunction &MF);
 
-  LLVM_ABI void clear();
+  void clear();
 
 public:
   LiveIntervals(LiveIntervals &&) = default;
-  LLVM_ABI ~LiveIntervals();
+  ~LiveIntervals();
 
-  LLVM_ABI bool invalidate(MachineFunction &MF, const PreservedAnalyses &PA,
-                           MachineFunctionAnalysisManager::Invalidator &Inv);
-
-  /// Calculate the spill weight to assign to a single instruction.
-  /// If \p PSI is provided the calculation is altered for optsize functions.
-  LLVM_ABI static float getSpillWeight(bool isDef, bool isUse,
-                                       const MachineBlockFrequencyInfo *MBFI,
-                                       const MachineInstr &MI,
-                                       ProfileSummaryInfo *PSI = nullptr);
+  bool invalidate(MachineFunction &MF, const PreservedAnalyses &PA,
+                  MachineFunctionAnalysisManager::Invalidator &Inv);
 
   /// Calculate the spill weight to assign to a single instruction.
   /// If \p PSI is provided the calculation is altered for optsize functions.
-  LLVM_ABI static float getSpillWeight(bool isDef, bool isUse,
-                                       const MachineBlockFrequencyInfo *MBFI,
-                                       const MachineBasicBlock *MBB,
-                                       ProfileSummaryInfo *PSI = nullptr);
+  static float getSpillWeight(bool isDef, bool isUse,
+                              const MachineBlockFrequencyInfo *MBFI,
+                              const MachineInstr &MI,
+                              ProfileSummaryInfo *PSI = nullptr);
+
+  /// Calculate the spill weight to assign to a single instruction.
+  /// If \p PSI is provided the calculation is altered for optsize functions.
+  static float getSpillWeight(bool isDef, bool isUse,
+                              const MachineBlockFrequencyInfo *MBFI,
+                              const MachineBasicBlock *MBB,
+                              ProfileSummaryInfo *PSI = nullptr);
 
   LiveInterval &getInterval(Register Reg) {
     if (hasInterval(Reg))
@@ -176,8 +176,8 @@ public:
 
   /// Given a register and an instruction, adds a live segment from that
   /// instruction to the end of its MBB.
-  LLVM_ABI LiveInterval::Segment
-  addSegmentToEndOfBlock(Register Reg, MachineInstr &startInst);
+  LiveInterval::Segment addSegmentToEndOfBlock(Register Reg,
+                                               MachineInstr &startInst);
 
   /// After removing some uses of a register, shrink its live range to just
   /// the remaining uses. This method does not compute reaching defs for new
@@ -185,8 +185,8 @@ public:
   /// Dead PHIDef values are marked as unused. New dead machine instructions
   /// are added to the dead vector. Returns true if the interval may have been
   /// separated into multiple connected components.
-  LLVM_ABI bool shrinkToUses(LiveInterval *li,
-                             SmallVectorImpl<MachineInstr *> *dead = nullptr);
+  bool shrinkToUses(LiveInterval *li,
+                    SmallVectorImpl<MachineInstr *> *dead = nullptr);
 
   /// Specialized version of
   /// shrinkToUses(LiveInterval *li, SmallVectorImpl<MachineInstr*> *dead)
@@ -194,7 +194,7 @@ public:
   /// the lane mask of the subregister range.
   /// This may leave the subrange empty which needs to be cleaned up with
   /// LiveInterval::removeEmptySubranges() afterwards.
-  LLVM_ABI void shrinkToUses(LiveInterval::SubRange &SR, Register Reg);
+  void shrinkToUses(LiveInterval::SubRange &SR, Register Reg);
 
   /// Extend the live range \p LR to reach all points in \p Indices. The
   /// points in the \p Indices array must be jointly dominated by the union
@@ -208,8 +208,8 @@ public:
   /// \p Undefs, the live range will not be extended to that point.
   ///
   /// See also LiveRangeCalc::extend().
-  LLVM_ABI void extendToIndices(LiveRange &LR, ArrayRef<SlotIndex> Indices,
-                                ArrayRef<SlotIndex> Undefs);
+  void extendToIndices(LiveRange &LR, ArrayRef<SlotIndex> Indices,
+                       ArrayRef<SlotIndex> Undefs);
 
   void extendToIndices(LiveRange &LR, ArrayRef<SlotIndex> Indices) {
     extendToIndices(LR, Indices, /*Undefs=*/{});
@@ -222,8 +222,8 @@ public:
   ///
   /// Calling pruneValue() and extendToIndices() can be used to reconstruct
   /// SSA form after adding defs to a virtual register.
-  LLVM_ABI void pruneValue(LiveRange &LR, SlotIndex Kill,
-                           SmallVectorImpl<SlotIndex> *EndPoints);
+  void pruneValue(LiveRange &LR, SlotIndex Kill,
+                  SmallVectorImpl<SlotIndex> *EndPoints);
 
   /// This function should not be used. Its intent is to tell you that you are
   /// doing something wrong if you call pruneValue directly on a
@@ -303,8 +303,8 @@ public:
   VNInfo::Allocator &getVNInfoAllocator() { return VNInfoAllocator; }
 
   /// Implement the dump method.
-  LLVM_ABI void print(raw_ostream &O) const;
-  LLVM_ABI void dump() const;
+  void print(raw_ostream &O) const;
+  void dump() const;
 
   // For legacy pass to recompute liveness.
   void reanalyze(MachineFunction &MF) {
@@ -316,21 +316,21 @@ public:
 
   /// If LI is confined to a single basic block, return a pointer to that
   /// block.  If LI is live in to or out of any block, return NULL.
-  LLVM_ABI MachineBasicBlock *intervalIsInOneMBB(const LiveInterval &LI) const;
+  MachineBasicBlock *intervalIsInOneMBB(const LiveInterval &LI) const;
 
   /// Returns true if VNI is killed by any PHI-def values in LI.
   /// This may conservatively return true to avoid expensive computations.
-  LLVM_ABI bool hasPHIKill(const LiveInterval &LI, const VNInfo *VNI) const;
+  bool hasPHIKill(const LiveInterval &LI, const VNInfo *VNI) const;
 
   /// Add kill flags to any instruction that kills a virtual register.
-  LLVM_ABI void addKillFlags(const VirtRegMap *);
+  void addKillFlags(const VirtRegMap *);
 
   /// Call this method to notify LiveIntervals that instruction \p MI has been
   /// moved within a basic block. This will update the live intervals for all
   /// operands of \p MI. Moves between basic blocks are not supported.
   ///
   /// \param UpdateFlags Update live intervals for nonallocatable physregs.
-  LLVM_ABI void handleMove(MachineInstr &MI, bool UpdateFlags = false);
+  void handleMove(MachineInstr &MI, bool UpdateFlags = false);
 
   /// Update intervals of operands of all instructions in the newly
   /// created bundle specified by \p BundleStart.
@@ -340,8 +340,8 @@ public:
   /// Assumes existing liveness is accurate.
   /// \pre BundleStart should be the first instruction in the Bundle.
   /// \pre BundleStart should not have a have SlotIndex as one will be assigned.
-  LLVM_ABI void handleMoveIntoNewBundle(MachineInstr &BundleStart,
-                                        bool UpdateFlags = false);
+  void handleMoveIntoNewBundle(MachineInstr &BundleStart,
+                               bool UpdateFlags = false);
 
   /// Update live intervals for instructions in a range of iterators. It is
   /// intended for use after target hooks that may insert or remove
@@ -352,10 +352,10 @@ public:
   ///
   /// Currently, the only changes that are supported are simple removal
   /// and addition of uses.
-  LLVM_ABI void repairIntervalsInRange(MachineBasicBlock *MBB,
-                                       MachineBasicBlock::iterator Begin,
-                                       MachineBasicBlock::iterator End,
-                                       ArrayRef<Register> OrigRegs);
+  void repairIntervalsInRange(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator Begin,
+                              MachineBasicBlock::iterator End,
+                              ArrayRef<Register> OrigRegs);
 
   // Register mask functions.
   //
@@ -396,8 +396,7 @@ public:
   ///
   /// Returns false if \p LI doesn't cross any register mask instructions. In
   /// that case, the bit vector is not filled in.
-  LLVM_ABI bool checkRegMaskInterference(const LiveInterval &LI,
-                                         BitVector &UsableRegs);
+  bool checkRegMaskInterference(const LiveInterval &LI, BitVector &UsableRegs);
 
   // Register unit functions.
   //
@@ -450,21 +449,20 @@ public:
   /// Remove value numbers and related live segments starting at position
   /// \p Pos that are part of any liverange of physical register \p Reg or one
   /// of its subregisters.
-  LLVM_ABI void removePhysRegDefAt(MCRegister Reg, SlotIndex Pos);
+  void removePhysRegDefAt(MCRegister Reg, SlotIndex Pos);
 
   /// Remove value number and related live segments of \p LI and its subranges
   /// that start at position \p Pos.
-  LLVM_ABI void removeVRegDefAt(LiveInterval &LI, SlotIndex Pos);
+  void removeVRegDefAt(LiveInterval &LI, SlotIndex Pos);
 
   /// Split separate components in LiveInterval \p LI into separate intervals.
-  LLVM_ABI void
-  splitSeparateComponents(LiveInterval &LI,
-                          SmallVectorImpl<LiveInterval *> &SplitLIs);
+  void splitSeparateComponents(LiveInterval &LI,
+                               SmallVectorImpl<LiveInterval *> &SplitLIs);
 
   /// For live interval \p LI with correct SubRanges construct matching
   /// information for the main live range. Expects the main live range to not
   /// have any segments or value numbers.
-  LLVM_ABI void constructMainRangeFromSubranges(LiveInterval &LI);
+  void constructMainRangeFromSubranges(LiveInterval &LI);
 
 private:
   /// Compute live intervals for all virtual registers.
@@ -483,14 +481,14 @@ private:
   bool computeDeadValues(LiveInterval &LI,
                          SmallVectorImpl<MachineInstr *> *dead);
 
-  LLVM_ABI static LiveInterval *createInterval(Register Reg);
+  static LiveInterval *createInterval(Register Reg);
 
   void printInstrs(raw_ostream &O) const;
   void dumpInstrs() const;
 
   void computeLiveInRegUnits();
-  LLVM_ABI void computeRegUnitRange(LiveRange &, unsigned Unit);
-  LLVM_ABI bool computeVirtRegInterval(LiveInterval &);
+  void computeRegUnitRange(LiveRange &, unsigned Unit);
+  bool computeVirtRegInterval(LiveInterval &);
 
   using ShrinkToUsesWorkList = SmallVector<std::pair<SlotIndex, VNInfo *>, 16>;
   void extendSegmentsToUses(LiveRange &Segments, ShrinkToUsesWorkList &WorkList,
@@ -510,12 +508,11 @@ private:
 
 class LiveIntervalsAnalysis : public AnalysisInfoMixin<LiveIntervalsAnalysis> {
   friend AnalysisInfoMixin<LiveIntervalsAnalysis>;
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   using Result = LiveIntervals;
-  LLVM_ABI Result run(MachineFunction &MF,
-                      MachineFunctionAnalysisManager &MFAM);
+  Result run(MachineFunction &MF, MachineFunctionAnalysisManager &MFAM);
 };
 
 class LiveIntervalsPrinterPass
@@ -524,12 +521,12 @@ class LiveIntervalsPrinterPass
 
 public:
   explicit LiveIntervalsPrinterPass(raw_ostream &OS) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(MachineFunction &MF,
-                                 MachineFunctionAnalysisManager &MFAM);
+  PreservedAnalyses run(MachineFunction &MF,
+                        MachineFunctionAnalysisManager &MFAM);
   static bool isRequired() { return true; }
 };
 
-class LLVM_ABI LiveIntervalsWrapperPass : public MachineFunctionPass {
+class LiveIntervalsWrapperPass : public MachineFunctionPass {
   LiveIntervals LIS;
 
 public:

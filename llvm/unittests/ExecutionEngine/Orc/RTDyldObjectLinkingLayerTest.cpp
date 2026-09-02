@@ -50,10 +50,9 @@ static bool testSetProcessAllSections(std::unique_ptr<MemoryBuffer> Obj,
   auto &JD = ES.createBareJITDylib("main");
   auto Foo = ES.intern("foo");
 
-  RTDyldObjectLinkingLayer ObjLayer(
-      ES, [&NonAllocSectionSeen](const MemoryBuffer &) {
-        return std::make_unique<MemoryManagerWrapper>(NonAllocSectionSeen);
-      });
+  RTDyldObjectLinkingLayer ObjLayer(ES, [&NonAllocSectionSeen]() {
+    return std::make_unique<MemoryManagerWrapper>(NonAllocSectionSeen);
+  });
 
   auto OnResolveDoNothing = [](Expected<SymbolMap> R) {
     cantFail(std::move(R));
@@ -128,34 +127,37 @@ TEST(RTDyldObjectLinkingLayerTest, TestOverrideObjectFlags) {
   };
 
   // Create a module with two void() functions: foo and bar.
+  ThreadSafeContext TSCtx(std::make_unique<LLVMContext>());
   ThreadSafeModule M;
   {
-    auto Ctx = std::make_unique<LLVMContext>();
-    ModuleBuilder MB(*Ctx, TM->getTargetTriple().str(), "dummy");
+    ModuleBuilder MB(*TSCtx.getContext(), TM->getTargetTriple().str(), "dummy");
     MB.getModule()->setDataLayout(TM->createDataLayout());
 
     Function *FooImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "foo");
-    BasicBlock *FooEntry = BasicBlock::Create(*Ctx, "entry", FooImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "foo");
+    BasicBlock *FooEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", FooImpl);
     IRBuilder<> B1(FooEntry);
     B1.CreateRetVoid();
 
     Function *BarImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "bar");
-    BasicBlock *BarEntry = BasicBlock::Create(*Ctx, "entry", BarImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "bar");
+    BasicBlock *BarEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", BarImpl);
     IRBuilder<> B2(BarEntry);
     B2.CreateRetVoid();
 
-    M = ThreadSafeModule(MB.takeModule(), std::move(Ctx));
+    M = ThreadSafeModule(MB.takeModule(), std::move(TSCtx));
   }
 
   // Create a simple stack and set the override flags option.
   ExecutionSession ES{std::make_unique<UnsupportedExecutorProcessControl>()};
   auto &JD = ES.createBareJITDylib("main");
   auto Foo = ES.intern("foo");
-  RTDyldObjectLinkingLayer ObjLayer(ES, [](const MemoryBuffer &) {
-    return std::make_unique<SectionMemoryManager>();
-  });
+  RTDyldObjectLinkingLayer ObjLayer(
+      ES, []() { return std::make_unique<SectionMemoryManager>(); });
   IRCompileLayer CompileLayer(ES, ObjLayer,
                               std::make_unique<FunkySimpleCompiler>(*TM));
 
@@ -203,28 +205,29 @@ TEST(RTDyldObjectLinkingLayerTest, TestAutoClaimResponsibilityForSymbols) {
   };
 
   // Create a module with two void() functions: foo and bar.
+  ThreadSafeContext TSCtx(std::make_unique<LLVMContext>());
   ThreadSafeModule M;
   {
-    auto Ctx = std::make_unique<LLVMContext>();
-    ModuleBuilder MB(*Ctx, TM->getTargetTriple().str(), "dummy");
+    ModuleBuilder MB(*TSCtx.getContext(), TM->getTargetTriple().str(), "dummy");
     MB.getModule()->setDataLayout(TM->createDataLayout());
 
     Function *FooImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "foo");
-    BasicBlock *FooEntry = BasicBlock::Create(*Ctx, "entry", FooImpl);
+        FunctionType::get(Type::getVoidTy(*TSCtx.getContext()), {}, false),
+        "foo");
+    BasicBlock *FooEntry =
+        BasicBlock::Create(*TSCtx.getContext(), "entry", FooImpl);
     IRBuilder<> B(FooEntry);
     B.CreateRetVoid();
 
-    M = ThreadSafeModule(MB.takeModule(), std::move(Ctx));
+    M = ThreadSafeModule(MB.takeModule(), std::move(TSCtx));
   }
 
   // Create a simple stack and set the override flags option.
   ExecutionSession ES{std::make_unique<UnsupportedExecutorProcessControl>()};
   auto &JD = ES.createBareJITDylib("main");
   auto Foo = ES.intern("foo");
-  RTDyldObjectLinkingLayer ObjLayer(ES, [](const MemoryBuffer &) {
-    return std::make_unique<SectionMemoryManager>();
-  });
+  RTDyldObjectLinkingLayer ObjLayer(
+      ES, []() { return std::make_unique<SectionMemoryManager>(); });
   IRCompileLayer CompileLayer(ES, ObjLayer,
                               std::make_unique<FunkySimpleCompiler>(*TM));
 
@@ -239,63 +242,6 @@ TEST(RTDyldObjectLinkingLayerTest, TestAutoClaimResponsibilityForSymbols) {
 
   if (auto Err = ES.endSession())
     ES.reportError(std::move(Err));
-}
-
-TEST(RTDyldObjectLinkingLayerTest, TestMemoryBufferNamePropagation) {
-  OrcNativeTarget::initialize();
-
-  std::unique_ptr<TargetMachine> TM(
-      EngineBuilder().selectTarget(Triple("x86_64-unknown-linux-gnu"), "", "",
-                                   SmallVector<std::string, 1>()));
-
-  if (!TM)
-    GTEST_SKIP();
-
-  // Create a module with two void() functions: foo and bar.
-  ThreadSafeModule M;
-  {
-    auto Ctx = std::make_unique<LLVMContext>();
-    ModuleBuilder MB(*Ctx, TM->getTargetTriple().str(), "dummy");
-    MB.getModule()->setDataLayout(TM->createDataLayout());
-
-    Function *FooImpl = MB.createFunctionDecl(
-        FunctionType::get(Type::getVoidTy(*Ctx), {}, false), "foo");
-    BasicBlock *FooEntry = BasicBlock::Create(*Ctx, "entry", FooImpl);
-    IRBuilder<> B1(FooEntry);
-    B1.CreateRetVoid();
-
-    M = ThreadSafeModule(MB.takeModule(), std::move(Ctx));
-  }
-
-  ExecutionSession ES{std::make_unique<UnsupportedExecutorProcessControl>()};
-  auto &JD = ES.createBareJITDylib("main");
-  auto Foo = ES.intern("foo");
-  std::string ObjectIdentifer;
-
-  RTDyldObjectLinkingLayer ObjLayer(
-      ES, [&ObjectIdentifer](const MemoryBuffer &Obj) {
-        // Capture the name of the object so that we can confirm that it
-        // contains the module name.
-        ObjectIdentifer = Obj.getBufferIdentifier().str();
-        return std::make_unique<SectionMemoryManager>();
-      });
-  IRCompileLayer CompileLayer(ES, ObjLayer,
-                              std::make_unique<SimpleCompiler>(*TM));
-
-  // Capture the module name before we move the module.
-  std::string ModuleName = M.getModuleUnlocked()->getName().str();
-
-  cantFail(CompileLayer.add(JD, std::move(M)));
-  ES.lookup(
-      LookupKind::Static, makeJITDylibSearchOrder(&JD), SymbolLookupSet(Foo),
-      SymbolState::Resolved,
-      [](Expected<SymbolMap> R) { cantFail(std::move(R)); },
-      NoDependenciesToRegister);
-
-  if (auto Err = ES.endSession())
-    ES.reportError(std::move(Err));
-
-  EXPECT_TRUE(ObjectIdentifer.find(ModuleName) != std::string::npos);
 }
 
 } // end anonymous namespace

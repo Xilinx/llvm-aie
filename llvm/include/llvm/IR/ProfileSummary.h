@@ -13,7 +13,6 @@
 #ifndef LLVM_IR_PROFILESUMMARY_H
 #define LLVM_IR_PROFILESUMMARY_H
 
-#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -82,10 +81,10 @@ public:
 
   Kind getKind() const { return PSK; }
   /// Return summary information as metadata.
-  LLVM_ABI Metadata *getMD(LLVMContext &Context, bool AddPartialField = true,
-                           bool AddPartialProfileRatioField = true);
+  Metadata *getMD(LLVMContext &Context, bool AddPartialField = true,
+                  bool AddPartialProfileRatioField = true);
   /// Construct profile summary from metdata.
-  LLVM_ABI static ProfileSummary *getFromMD(Metadata *MD);
+  static ProfileSummary *getFromMD(Metadata *MD);
   const SummaryEntryVector &getDetailedSummary() { return DetailedSummary; }
   uint32_t getNumFunctions() const { return NumFunctions; }
   uint64_t getMaxFunctionCount() const { return MaxFunctionCount; }
@@ -100,8 +99,8 @@ public:
     assert(isPartialProfile() && "Unexpected when not partial profile");
     PartialProfileRatio = R;
   }
-  LLVM_ABI void printSummary(raw_ostream &OS) const;
-  LLVM_ABI void printDetailedSummary(raw_ostream &OS) const;
+  void printSummary(raw_ostream &OS) const;
+  void printDetailedSummary(raw_ostream &OS) const;
 };
 
 } // end namespace llvm

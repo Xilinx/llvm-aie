@@ -12,6 +12,7 @@
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 #include "mlir/Conversion/ConvertToLLVM/ToLLVMInterface.h"
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/Pattern.h"
 #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
@@ -40,16 +41,6 @@ namespace {
 template <typename T>
 struct OpenMPOpConversion : public ConvertOpToLLVMPattern<T> {
   using ConvertOpToLLVMPattern<T>::ConvertOpToLLVMPattern;
-
-  OpenMPOpConversion(LLVMTypeConverter &typeConverter,
-                     PatternBenefit benefit = 1)
-      : ConvertOpToLLVMPattern<T>(typeConverter, benefit) {
-    // Operations using CanonicalLoopInfoType are lowered only by
-    // mlir::translateModuleToLLVMIR() using the OpenMPIRBuilder. Until then,
-    // the type and operations using it must be preserved.
-    typeConverter.addConversion(
-        [&](::mlir::omp::CanonicalLoopInfoType type) { return type; });
-  }
 
   LogicalResult
   matchAndRewrite(T op, typename T::Adaptor adaptor,
@@ -95,8 +86,8 @@ struct OpenMPOpConversion : public ConvertOpToLLVMPattern<T> {
     }
 
     // Create new operation.
-    auto newOp = T::create(rewriter, op.getLoc(), resTypes, convertedOperands,
-                           convertedAttrs);
+    auto newOp = rewriter.create<T>(op.getLoc(), resTypes, convertedOperands,
+                                    convertedAttrs);
 
     // Translate regions.
     for (auto [originalRegion, convertedRegion] :

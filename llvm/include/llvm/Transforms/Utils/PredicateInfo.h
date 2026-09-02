@@ -52,11 +52,11 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -78,7 +78,7 @@ struct PredicateConstraint {
 
 // Base class for all predicate information we provide.
 // All of our predicate information has at least a comparison.
-class PredicateBase {
+class PredicateBase : public ilist_node<PredicateBase> {
 public:
   PredicateType Type;
   // The original operand before we renamed it.
@@ -95,13 +95,14 @@ public:
   PredicateBase(const PredicateBase &) = delete;
   PredicateBase &operator=(const PredicateBase &) = delete;
   PredicateBase() = delete;
+  virtual ~PredicateBase() = default;
   static bool classof(const PredicateBase *PB) {
     return PB->Type == PT_Assume || PB->Type == PT_Branch ||
            PB->Type == PT_Switch;
   }
 
   /// Fetch condition in the form of PredicateConstraint, if possible.
-  LLVM_ABI std::optional<PredicateConstraint> getConstraint() const;
+  std::optional<PredicateConstraint> getConstraint() const;
 
 protected:
   PredicateBase(PredicateType PT, Value *Op, Value *Condition)
@@ -175,14 +176,13 @@ public:
 /// accesses.
 class PredicateInfo {
 public:
-  LLVM_ABI PredicateInfo(Function &, DominatorTree &, AssumptionCache &,
-                         BumpPtrAllocator &);
-  LLVM_ABI ~PredicateInfo();
+  PredicateInfo(Function &, DominatorTree &, AssumptionCache &);
+  ~PredicateInfo();
 
-  LLVM_ABI void verifyPredicateInfo() const;
+  void verifyPredicateInfo() const;
 
-  LLVM_ABI void dump() const;
-  LLVM_ABI void print(raw_ostream &) const;
+  void dump() const;
+  void print(raw_ostream &) const;
 
   const PredicateBase *getPredicateInfoFor(const Value *V) const {
     return PredicateMap.lookup(V);
@@ -196,14 +196,15 @@ protected:
 private:
   Function &F;
 
+  // This owns the all the predicate infos in the function, placed or not.
+  iplist<PredicateBase> AllInfos;
+
   // This maps from copy operands to Predicate Info. Note that it does not own
   // the Predicate Info, they belong to the ValueInfo structs in the ValueInfos
   // vector.
   DenseMap<const Value *, const PredicateBase *> PredicateMap;
   // The set of ssa_copy declarations we created with our custom mangling.
   SmallSet<AssertingVH<Function>, 20> CreatedDeclarations;
-  // Cache of ssa.copy declaration for a given type.
-  SmallDenseMap<Type *, Function *> DeclarationCache;
 };
 
 /// Printer pass for \c PredicateInfo.
@@ -213,13 +214,13 @@ class PredicateInfoPrinterPass
 
 public:
   explicit PredicateInfoPrinterPass(raw_ostream &OS) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 
 /// Verifier pass for \c PredicateInfo.
 struct PredicateInfoVerifierPass : PassInfoMixin<PredicateInfoVerifierPass> {
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 

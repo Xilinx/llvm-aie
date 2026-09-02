@@ -22,7 +22,9 @@
 #include "mlir/IR/AffineExpr.h"
 #include "mlir/IR/AffineMap.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/Transforms/Passes.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -424,7 +426,7 @@ static Value createPrivateMemRef(AffineForOp forOp,
   // consumer loop nests to reduce their live range. Currently they are added
   // at the beginning of the block, because loop nests can be reordered
   // during the fusion pass.
-  Value newMemRef = memref::AllocOp::create(top, forOp.getLoc(), newMemRefType);
+  Value newMemRef = top.create<memref::AllocOp>(forOp.getLoc(), newMemRefType);
 
   // Build an AffineMap to remap access functions based on lower bound offsets.
   SmallVector<AffineExpr, 4> remapExprs;
@@ -443,15 +445,10 @@ static Value createPrivateMemRef(AffineForOp forOp,
   // Replace all users of 'oldMemRef' with 'newMemRef'.
   Operation *domFilter =
       getDominanceFilterForPrivateMemRefRepl(sliceInsertionBlock, storeOps);
-  auto userFilterFn = [&](Operation *user) {
-    auto domInfo = std::make_unique<DominanceInfo>(
-        domFilter->getParentOfType<FunctionOpInterface>());
-    return domInfo->dominates(domFilter, user);
-  };
   LogicalResult res = replaceAllMemRefUsesWith(
       oldMemRef, newMemRef, /*extraIndices=*/{}, indexRemap,
       /*extraOperands=*/outerIVs,
-      /*symbolOperands=*/{}, userFilterFn);
+      /*symbolOperands=*/{}, domFilter);
   assert(succeeded(res) &&
          "replaceAllMemrefUsesWith should always succeed here");
   (void)res;
@@ -1000,8 +997,6 @@ public:
           if (producerConsumerMemrefs.count(
                   cast<AffineWriteOpInterface>(op).getMemRef()))
             dstMemrefOps.push_back(op);
-        if (dstMemrefOps.empty())
-          continue;
         unsigned dstLoopDepthTest =
             getInnermostCommonLoopDepth(dstMemrefOps) - numSurroundingLoops;
 
@@ -1473,11 +1468,9 @@ public:
     SmallVector<MemRefDependenceGraph::Edge, 2> inEdges;
     mdg->forEachMemRefInputEdge(
         dstNode->id, [&](MemRefDependenceGraph::Edge inEdge) {
-          // Add 'inEdge' if it is a read-after-write dependence or an edge
-          // from a memref defining op (e.g. view-like op or alloc op).
+          // Add 'inEdge' if it is a read-after-write dependence.
           if (dstNode->getLoadOpCount(inEdge.value) > 0 &&
-              (mdg->getNode(inEdge.id)->getStoreOpCount(inEdge.value) > 0 ||
-               inEdge.value.getDefiningOp() == mdg->getNode(inEdge.id)->op))
+              mdg->getNode(inEdge.id)->getStoreOpCount(inEdge.value) > 0)
             inEdges.push_back(inEdge);
         });
 

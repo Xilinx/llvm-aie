@@ -32,6 +32,18 @@ namespace bolt {
 
 class BinaryFunction;
 
+struct LBREntry {
+  uint64_t From;
+  uint64_t To;
+  bool Mispred;
+};
+
+inline raw_ostream &operator<<(raw_ostream &OS, const LBREntry &LBR) {
+  OS << "0x" << Twine::utohexstr(LBR.From) << " -> 0x"
+     << Twine::utohexstr(LBR.To);
+  return OS;
+}
+
 struct Location {
   bool IsSymbol;
   StringRef Name;
@@ -96,9 +108,6 @@ struct FuncBranchData {
 
   /// Total execution count for the function.
   int64_t ExecutionCount{0};
-
-  /// Total entry count from external code for the function.
-  uint64_t ExternEntryCount{0};
 
   /// Indicate if the data was used.
   bool Used{false};

@@ -20,7 +20,6 @@
 #include "llvm/MC/MCSchedule.h"
 #include "llvm/MCA/Instruction.h"
 #include "llvm/MCA/Support.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace mca {
@@ -45,7 +44,7 @@ enum ResourceStateEvent {
 };
 
 /// Resource allocation strategy used by hardware scheduler resources.
-class LLVM_ABI ResourceStrategy {
+class ResourceStrategy {
   ResourceStrategy(const ResourceStrategy &) = delete;
   ResourceStrategy &operator=(const ResourceStrategy &) = delete;
 
@@ -65,7 +64,7 @@ public:
 
 /// Default resource allocation strategy used by processor resource groups and
 /// processor resources with multiple units.
-class LLVM_ABI DefaultResourceStrategy final : public ResourceStrategy {
+class DefaultResourceStrategy final : public ResourceStrategy {
   /// A Mask of resource unit identifiers.
   ///
   /// There is one bit set for every available resource unit.
@@ -212,8 +211,7 @@ class ResourceState {
   }
 
 public:
-  LLVM_ABI ResourceState(const MCProcResourceDesc &Desc, unsigned Index,
-                         uint64_t Mask);
+  ResourceState(const MCProcResourceDesc &Desc, unsigned Index, uint64_t Mask);
 
   unsigned getProcResourceID() const { return ProcResourceDescIndex; }
   uint64_t getResourceMask() const { return ResourceMask; }
@@ -232,7 +230,7 @@ public:
 
   /// Returs true if this resource is not reserved, and if there are at least
   /// `NumUnits` available units.
-  LLVM_ABI bool isReady(unsigned NumUnits = 1) const;
+  bool isReady(unsigned NumUnits = 1) const;
 
   uint64_t getNumReadyUnits() const { return llvm::popcount(ReadyMask); }
 
@@ -263,7 +261,7 @@ public:
   /// is reserved.
   ///
   /// Returns RS_BUFFER_UNAVAILABLE if there are no available slots.
-  LLVM_ABI ResourceStateEvent isBufferAvailable() const;
+  ResourceStateEvent isBufferAvailable() const;
 
   /// Reserve a buffer slot.
   ///
@@ -383,11 +381,11 @@ class ResourceManager {
 
   // Overrides the selection strategy for the processor resource with the given
   // mask.
-  LLVM_ABI void setCustomStrategyImpl(std::unique_ptr<ResourceStrategy> S,
-                                      uint64_t ResourceMask);
+  void setCustomStrategyImpl(std::unique_ptr<ResourceStrategy> S,
+                             uint64_t ResourceMask);
 
 public:
-  LLVM_ABI ResourceManager(const MCSchedModel &SM);
+  ResourceManager(const MCSchedModel &SM);
   virtual ~ResourceManager() = default;
 
   // Overrides the selection strategy for the resource at index ResourceID in
@@ -401,33 +399,33 @@ public:
 
   // Returns RS_BUFFER_AVAILABLE if buffered resources are not reserved, and if
   // there are enough available slots in the buffers.
-  LLVM_ABI ResourceStateEvent canBeDispatched(uint64_t ConsumedBuffers) const;
+  ResourceStateEvent canBeDispatched(uint64_t ConsumedBuffers) const;
 
   // Return the processor resource identifier associated to this Mask.
-  LLVM_ABI unsigned resolveResourceMask(uint64_t Mask) const;
+  unsigned resolveResourceMask(uint64_t Mask) const;
 
   // Acquires a slot from every buffered resource in mask `ConsumedBuffers`.
   // Units that are dispatch hazards (i.e. BufferSize=0) are marked as reserved.
-  LLVM_ABI void reserveBuffers(uint64_t ConsumedBuffers);
+  void reserveBuffers(uint64_t ConsumedBuffers);
 
   // Releases a slot from every buffered resource in mask `ConsumedBuffers`.
   // ConsumedBuffers is a bitmask of previously acquired buffers (using method
   // `reserveBuffers`). Units that are dispatch hazards (i.e. BufferSize=0) are
   // not automatically unreserved by this method.
-  LLVM_ABI void releaseBuffers(uint64_t ConsumedBuffers);
+  void releaseBuffers(uint64_t ConsumedBuffers);
 
   // Reserve a processor resource. A reserved resource is not available for
   // instruction issue until it is released.
-  LLVM_ABI void reserveResource(uint64_t ResourceID);
+  void reserveResource(uint64_t ResourceID);
 
   // Release a previously reserved processor resource.
-  LLVM_ABI void releaseResource(uint64_t ResourceID);
+  void releaseResource(uint64_t ResourceID);
 
   // Returns a zero mask if resources requested by Desc are all available during
   // this cycle. It returns a non-zero mask value only if there are unavailable
   // processor resources; each bit set in the mask represents a busy processor
   // resource unit or a reserved processor resource group.
-  LLVM_ABI uint64_t checkAvailability(const InstrDesc &Desc) const;
+  uint64_t checkAvailability(const InstrDesc &Desc) const;
 
   uint64_t getProcResUnitMask() const { return ProcResUnitMask; }
   uint64_t getAvailableProcResUnits() const { return AvailableProcResUnits; }
@@ -448,20 +446,18 @@ public:
   // schedule, no matter in which order individual uses are processed. For that
   // reason, the vector of resource uses is simply (and quickly) processed in
   // sequence. The resulting schedule is eventually stored into vector `Pipes`.
-  LLVM_ABI void
-  fastIssueInstruction(const InstrDesc &Desc,
-                       SmallVectorImpl<ResourceWithCycles> &Pipes);
+  void fastIssueInstruction(const InstrDesc &Desc,
+                            SmallVectorImpl<ResourceWithCycles> &Pipes);
 
   // Selects pipeline resources consumed by an instruction.
   // This method works under the assumption that used resource groups may
   // partially overlap. This complicates the selection process, because the
   // order in which uses are processed matters. The logic internally prioritizes
   // groups which are more constrained than others.
-  LLVM_ABI void
-  issueInstructionImpl(const InstrDesc &Desc,
-                       SmallVectorImpl<ResourceWithCycles> &Pipes);
+  void issueInstructionImpl(const InstrDesc &Desc,
+                            SmallVectorImpl<ResourceWithCycles> &Pipes);
 
-  LLVM_ABI void cycleEvent(SmallVectorImpl<ResourceRef> &ResourcesFreed);
+  void cycleEvent(SmallVectorImpl<ResourceRef> &ResourcesFreed);
 
 #ifndef NDEBUG
   void dump() const {

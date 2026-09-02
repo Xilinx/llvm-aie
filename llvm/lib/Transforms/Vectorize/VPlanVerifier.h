@@ -24,8 +24,6 @@
 #ifndef LLVM_TRANSFORMS_VECTORIZE_VPLANVERIFIER_H
 #define LLVM_TRANSFORMS_VECTORIZE_VPLANVERIFIER_H
 
-#include "llvm/Support/Compiler.h"
-
 namespace llvm {
 class VPlan;
 
@@ -37,8 +35,7 @@ class VPlan;
 /// 2. all phi-like recipes must be at the beginning of a block, with no other
 /// recipes in between. Note that currently there is still an exception for
 /// VPBlendRecipes.
-LLVM_ABI_FOR_TEST bool verifyVPlanIsValid(const VPlan &Plan,
-                                          bool VerifyLate = false);
+bool verifyVPlanIsValid(const VPlan &Plan, bool VerifyLate = false);
 
 } // namespace llvm
 

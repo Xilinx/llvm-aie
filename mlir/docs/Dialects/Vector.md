@@ -1,8 +1,5 @@
 # 'vector' Dialect
 
-**Please post an RFC on the [forum](https://llvm.discourse.group/c/mlir/31)
-before adding  any operation in this dialect.**
-
 [TOC]
 
 MLIR supports multi-dimensional `vector` types and custom operations on those
@@ -294,7 +291,7 @@ LLVM instructions are prefixed by the `llvm.` dialect prefix (e.g.
 `llvm.insertvalue`). Such ops operate exclusively on 1-D vectors and aggregates
 following the [LLVM LangRef](https://llvm.org/docs/LangRef.html). MLIR
 operations are prefixed by the `vector.` dialect prefix (e.g.
-`vector.insert`). Such ops operate exclusively on MLIR `n-D` `vector`
+`vector.insertelement`). Such ops operate exclusively on MLIR `n-D` `vector`
 types.
 
 ### Alternatives For Lowering an n-D Vector Type to LLVM

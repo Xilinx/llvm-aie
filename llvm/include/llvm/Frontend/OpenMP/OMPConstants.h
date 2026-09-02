@@ -190,9 +190,6 @@ enum class OMPScheduleType {
   LLVM_MARK_AS_BITMASK_ENUM(/* LargestValue */ ModifierMask)
 };
 
-// Default OpenMP mapper name suffix.
-inline constexpr const char *OmpDefaultMapperName = ".omp.default.mapper";
-
 /// Values for bit flags used to specify the mapping type for
 /// offloading.
 enum class OpenMPOffloadMappingFlags : uint64_t {

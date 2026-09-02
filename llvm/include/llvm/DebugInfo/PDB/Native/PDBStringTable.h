@@ -12,7 +12,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/Support/BinaryStreamArray.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
@@ -26,20 +25,19 @@ struct PDBStringTableHeader;
 
 class PDBStringTable {
 public:
-  LLVM_ABI Error reload(BinaryStreamReader &Reader);
+  Error reload(BinaryStreamReader &Reader);
 
-  LLVM_ABI uint32_t getByteSize() const;
-  LLVM_ABI uint32_t getNameCount() const;
-  LLVM_ABI uint32_t getHashVersion() const;
-  LLVM_ABI uint32_t getSignature() const;
+  uint32_t getByteSize() const;
+  uint32_t getNameCount() const;
+  uint32_t getHashVersion() const;
+  uint32_t getSignature() const;
 
-  LLVM_ABI Expected<StringRef> getStringForID(uint32_t ID) const;
-  LLVM_ABI Expected<uint32_t> getIDForString(StringRef Str) const;
+  Expected<StringRef> getStringForID(uint32_t ID) const;
+  Expected<uint32_t> getIDForString(StringRef Str) const;
 
-  LLVM_ABI FixedStreamArray<support::ulittle32_t> name_ids() const;
+  FixedStreamArray<support::ulittle32_t> name_ids() const;
 
-  LLVM_ABI const codeview::DebugStringTableSubsectionRef &
-  getStringTable() const;
+  const codeview::DebugStringTableSubsectionRef &getStringTable() const;
 
 private:
   Error readHeader(BinaryStreamReader &Reader);

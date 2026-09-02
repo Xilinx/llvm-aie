@@ -13,8 +13,6 @@
 #ifndef LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 #define LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 
-#include "llvm/Support/Compiler.h"
-
 namespace llvm {
 
 class GlobalValue;
@@ -25,12 +23,12 @@ class PseudoSourceValue;
 class raw_ostream;
 class TargetMachine;
 
-LLVM_ABI raw_ostream &operator<<(raw_ostream &OS, const PseudoSourceValue *PSV);
+raw_ostream &operator<<(raw_ostream &OS, const PseudoSourceValue* PSV);
 
 /// Special value supplied for machine level alias analysis. It indicates that
 /// a memory access references the functions stack frame (e.g., a spill slot),
 /// below the stack frame (e.g., argument space), or constant pool.
-class LLVM_ABI PseudoSourceValue {
+class PseudoSourceValue {
 public:
   enum PSVKind : unsigned {
     Stack,
@@ -46,8 +44,8 @@ public:
 private:
   unsigned Kind;
   unsigned AddressSpace;
-  LLVM_ABI friend raw_ostream &llvm::operator<<(raw_ostream &OS,
-                                                const PseudoSourceValue *PSV);
+  friend raw_ostream &llvm::operator<<(raw_ostream &OS,
+                                       const PseudoSourceValue* PSV);
 
   friend class MachineMemOperand; // For printCustom().
   friend class MIRFormatter;      // For printCustom().
@@ -89,7 +87,7 @@ public:
 
 /// A specialized PseudoSourceValue for holding FixedStack values, which must
 /// include a frame index.
-class LLVM_ABI FixedStackPseudoSourceValue : public PseudoSourceValue {
+class FixedStackPseudoSourceValue : public PseudoSourceValue {
   const int FI;
 
 public:
@@ -111,7 +109,7 @@ public:
   int getFrameIndex() const { return FI; }
 };
 
-class LLVM_ABI CallEntryPseudoSourceValue : public PseudoSourceValue {
+class CallEntryPseudoSourceValue : public PseudoSourceValue {
 protected:
   CallEntryPseudoSourceValue(unsigned Kind, const TargetMachine &TM);
 
@@ -126,8 +124,7 @@ class GlobalValuePseudoSourceValue : public CallEntryPseudoSourceValue {
   const GlobalValue *GV;
 
 public:
-  LLVM_ABI GlobalValuePseudoSourceValue(const GlobalValue *GV,
-                                        const TargetMachine &TM);
+  GlobalValuePseudoSourceValue(const GlobalValue *GV, const TargetMachine &TM);
 
   static bool classof(const PseudoSourceValue *V) {
     return V->kind() == GlobalValueCallEntry;
@@ -141,8 +138,7 @@ class ExternalSymbolPseudoSourceValue : public CallEntryPseudoSourceValue {
   const char *ES;
 
 public:
-  LLVM_ABI ExternalSymbolPseudoSourceValue(const char *ES,
-                                           const TargetMachine &TM);
+  ExternalSymbolPseudoSourceValue(const char *ES, const TargetMachine &TM);
 
   static bool classof(const PseudoSourceValue *V) {
     return V->kind() == ExternalSymbolCallEntry;

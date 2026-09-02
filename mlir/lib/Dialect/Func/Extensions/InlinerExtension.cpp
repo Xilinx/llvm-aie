@@ -61,8 +61,7 @@ struct FuncInlinerInterface : public DialectInlinerInterface {
 
     // Replace the return with a branch to the dest.
     OpBuilder builder(op);
-    cf::BranchOp::create(builder, op->getLoc(), newDest,
-                         returnOp.getOperands());
+    builder.create<cf::BranchOp>(op->getLoc(), newDest, returnOp.getOperands());
     op->erase();
   }
 

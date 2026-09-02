@@ -588,9 +588,6 @@ static bool CheckConstraintSatisfaction(
     return true;
 
   for (const AssociatedConstraint &AC : AssociatedConstraints) {
-    if (AC.isNull())
-      return true;
-
     Sema::ArgPackSubstIndexRAII _(S, AC.ArgPackSubstIndex);
     ExprResult Res = calculateConstraintSatisfaction(
         S, Template, TemplateIDRange.getBegin(), TemplateArgsLists,
@@ -795,7 +792,7 @@ bool Sema::CheckFunctionConstraints(const FunctionDecl *FD,
                                     bool ForOverloadResolution) {
   // Don't check constraints if the function is dependent. Also don't check if
   // this is a function template specialization, as the call to
-  // CheckFunctionTemplateConstraints after this will check it
+  // CheckinstantiatedFunctionTemplateConstraints after this will check it
   // better.
   if (FD->isDependentContext() ||
       FD->getTemplatedKind() ==
@@ -901,7 +898,7 @@ static const Expr *SubstituteConstraintExpressionWithoutSatisfaction(
     Sema &S, const Sema::TemplateCompareNewDeclInfo &DeclInfo,
     const Expr *ConstrExpr) {
   MultiLevelTemplateArgumentList MLTAL = S.getTemplateInstantiationArgs(
-      DeclInfo.getDecl(), DeclInfo.getDeclContext(), /*Final=*/false,
+      DeclInfo.getDecl(), DeclInfo.getLexicalDeclContext(), /*Final=*/false,
       /*Innermost=*/std::nullopt,
       /*RelativeToPrimary=*/true,
       /*Pattern=*/nullptr, /*ForConstraintInstantiation=*/true,
@@ -928,12 +925,7 @@ static const Expr *SubstituteConstraintExpressionWithoutSatisfaction(
       ND && ND->isFunctionOrFunctionTemplate()) {
     ScopeForParameters.emplace(S, /*CombineWithOuterScope=*/true);
     const FunctionDecl *FD = ND->getAsFunction();
-    if (FunctionTemplateDecl *Template = FD->getDescribedFunctionTemplate();
-        Template && Template->getInstantiatedFromMemberTemplate())
-      FD = Template->getInstantiatedFromMemberTemplate()->getTemplatedDecl();
     for (auto *PVD : FD->parameters()) {
-      if (ScopeForParameters->getInstantiationOfIfExists(PVD))
-        continue;
       if (!PVD->isParameterPack()) {
         ScopeForParameters->InstantiatedLocal(PVD, PVD);
         continue;
@@ -1068,63 +1060,12 @@ bool Sema::EnsureTemplateArgumentListConstraints(
   return false;
 }
 
-static bool CheckFunctionConstraintsWithoutInstantiation(
-    Sema &SemaRef, SourceLocation PointOfInstantiation,
-    FunctionTemplateDecl *Template, ArrayRef<TemplateArgument> TemplateArgs,
-    ConstraintSatisfaction &Satisfaction) {
-  SmallVector<AssociatedConstraint, 3> TemplateAC;
-  Template->getAssociatedConstraints(TemplateAC);
-  if (TemplateAC.empty()) {
-    Satisfaction.IsSatisfied = true;
-    return false;
-  }
-
-  LocalInstantiationScope Scope(SemaRef);
-
-  FunctionDecl *FD = Template->getTemplatedDecl();
-  // Collect the list of template arguments relative to the 'primary'
-  // template. We need the entire list, since the constraint is completely
-  // uninstantiated at this point.
-
-  MultiLevelTemplateArgumentList MLTAL;
-  {
-    // getTemplateInstantiationArgs uses this instantiation context to find out
-    // template arguments for uninstantiated functions.
-    // We don't want this RAII object to persist, because there would be
-    // otherwise duplicate diagnostic notes.
-    Sema::InstantiatingTemplate Inst(
-        SemaRef, PointOfInstantiation,
-        Sema::InstantiatingTemplate::ConstraintsCheck{}, Template, TemplateArgs,
-        PointOfInstantiation);
-    if (Inst.isInvalid())
-      return true;
-    MLTAL = SemaRef.getTemplateInstantiationArgs(
-        /*D=*/FD, FD,
-        /*Final=*/false, /*Innermost=*/{}, /*RelativeToPrimary=*/true,
-        /*Pattern=*/nullptr, /*ForConstraintInstantiation=*/true);
-  }
-
-  Sema::ContextRAII SavedContext(SemaRef, FD);
-  std::optional<Sema::CXXThisScopeRAII> ThisScope;
-  if (auto *Method = dyn_cast<CXXMethodDecl>(FD))
-    ThisScope.emplace(SemaRef, /*Record=*/Method->getParent(),
-                      /*ThisQuals=*/Method->getMethodQualifiers());
-  return SemaRef.CheckConstraintSatisfaction(
-      Template, TemplateAC, MLTAL, PointOfInstantiation, Satisfaction);
-}
-
-bool Sema::CheckFunctionTemplateConstraints(
+bool Sema::CheckInstantiatedFunctionTemplateConstraints(
     SourceLocation PointOfInstantiation, FunctionDecl *Decl,
     ArrayRef<TemplateArgument> TemplateArgs,
     ConstraintSatisfaction &Satisfaction) {
   // In most cases we're not going to have constraints, so check for that first.
   FunctionTemplateDecl *Template = Decl->getPrimaryTemplate();
-
-  if (!Template)
-    return ::CheckFunctionConstraintsWithoutInstantiation(
-        *this, PointOfInstantiation, Decl->getDescribedFunctionTemplate(),
-        TemplateArgs, Satisfaction);
-
   // Note - code synthesis context for the constraints check is created
   // inside CheckConstraintsSatisfaction.
   SmallVector<AssociatedConstraint, 3> TemplateAC;
@@ -1154,8 +1095,8 @@ bool Sema::CheckFunctionTemplateConstraints(
   }
 
   CXXThisScopeRAII ThisScope(*this, Record, ThisQuals, Record != nullptr);
-  LambdaScopeForCallOperatorInstantiationRAII LambdaScope(*this, Decl, *MLTAL,
-                                                          Scope);
+  LambdaScopeForCallOperatorInstantiationRAII LambdaScope(
+      *this, const_cast<FunctionDecl *>(Decl), *MLTAL, Scope);
 
   return CheckConstraintSatisfaction(Template, TemplateAC, *MLTAL,
                                      PointOfInstantiation, Satisfaction);

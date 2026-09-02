@@ -1696,7 +1696,7 @@ bool IRTranslator::translateGetElementPtr(const User &U,
     auto OffsetMIB =
         MIRBuilder.buildConstant(OffsetTy, Offset);
 
-    if (Offset >= 0 && cast<GEPOperator>(U).isInBounds())
+    if (int64_t(Offset) >= 0 && cast<GEPOperator>(U).isInBounds())
       Flags |= MachineInstr::MIFlag::NoUWrap;
 
     MIRBuilder.buildPtrAdd(getOrCreateVReg(U), BaseReg, OffsetMIB.getReg(0),
@@ -2204,11 +2204,23 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID,
     unsigned Op = ID == Intrinsic::lifetime_start ? TargetOpcode::LIFETIME_START
                                                   : TargetOpcode::LIFETIME_END;
 
-    const AllocaInst *AI = cast<AllocaInst>(CI.getArgOperand(1));
-    if (!AI->isStaticAlloca())
-      return true;
+    // Get the underlying objects for the location passed on the lifetime
+    // marker.
+    SmallVector<const Value *, 4> Allocas;
+    getUnderlyingObjects(CI.getArgOperand(1), Allocas);
 
-    MIRBuilder.buildInstr(Op).addFrameIndex(getOrCreateFrameIndex(*AI));
+    // Iterate over each underlying object, creating lifetime markers for each
+    // static alloca. Quit if we find a non-static alloca.
+    for (const Value *V : Allocas) {
+      const AllocaInst *AI = dyn_cast<AllocaInst>(V);
+      if (!AI)
+        continue;
+
+      if (!AI->isStaticAlloca())
+        return true;
+
+      MIRBuilder.buildInstr(Op).addFrameIndex(getOrCreateFrameIndex(*AI));
+    }
     return true;
   }
   case Intrinsic::fake_use: {
@@ -2596,9 +2608,6 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID,
   case Intrinsic::reset_fpmode:
     MIRBuilder.buildResetFPMode();
     return true;
-  case Intrinsic::get_rounding:
-    MIRBuilder.buildGetRounding(getOrCreateVReg(CI));
-    return true;
   case Intrinsic::vscale: {
     MIRBuilder.buildVScale(getOrCreateVReg(CI), 1);
     return true;
@@ -2783,8 +2792,11 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
 
   diagnoseDontCall(CI);
 
-  Intrinsic::ID ID = F ? F->getIntrinsicID() : Intrinsic::not_intrinsic;
-  if (!F || ID == Intrinsic::not_intrinsic)
+  Intrinsic::ID ID = Intrinsic::not_intrinsic;
+  if (F && F->isIntrinsic())
+    ID = F->getIntrinsicID();
+
+  if (!F || !F->isIntrinsic() || ID == Intrinsic::not_intrinsic)
     return translateCallBase(CI, MIRBuilder);
 
   assert(ID != Intrinsic::not_intrinsic && "unknown intrinsic");

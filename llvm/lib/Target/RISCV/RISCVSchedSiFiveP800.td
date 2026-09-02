@@ -1183,5 +1183,5 @@ defm : UnsupportedSchedZbkb;
 defm : UnsupportedSchedZbkx;
 defm : UnsupportedSchedSFB;
 defm : UnsupportedSchedZfaWithQ;
-defm : UnsupportedSchedXsf;
+defm : UnsupportedSchedXsfvcp;
 }

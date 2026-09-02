@@ -299,7 +299,8 @@ TEST(DependencyScanner, ScanDepsWithModuleLookup) {
       ScanTool.getDependencyFile(CommandLine, CWD).moveInto(DepFile),
       llvm::Failed());
 
-  EXPECT_TRUE(!llvm::is_contained(InterceptFS->StatPaths, OtherPath));
+  EXPECT_TRUE(llvm::find(InterceptFS->StatPaths, OtherPath) ==
+              InterceptFS->StatPaths.end());
   EXPECT_EQ(InterceptFS->ReadFiles, std::vector<std::string>{"test.m"});
 }
 

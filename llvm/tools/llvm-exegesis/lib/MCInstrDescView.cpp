@@ -12,7 +12,6 @@
 #include <tuple>
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/InterleavedRange.h"
 
 namespace llvm {
 namespace exegesis {
@@ -294,8 +293,15 @@ void Instruction::dump(const MCRegisterInfo &RegInfo,
   }
   for (const auto &Var : Variables) {
     Stream << "- Var" << Var.getIndex();
-    Stream << " ";
-    Stream << llvm::interleaved_array(Var.TiedOperands, ",");
+    Stream << " [";
+    bool IsFirst = true;
+    for (auto OperandIndex : Var.TiedOperands) {
+      if (!IsFirst)
+        Stream << ",";
+      Stream << "Op" << OperandIndex;
+      IsFirst = false;
+    }
+    Stream << "]";
     Stream << "\n";
   }
   if (hasMemoryOperands())

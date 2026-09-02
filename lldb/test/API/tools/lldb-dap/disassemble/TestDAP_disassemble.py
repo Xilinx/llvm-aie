@@ -2,9 +2,13 @@
 Test lldb-dap disassemble request
 """
 
-from lldbsuite.test.decorators import skipIfWindows
-from lldbsuite.test.lldbtest import line_number
+
+import dap_server
+from lldbsuite.test.decorators import *
+from lldbsuite.test.lldbtest import *
+from lldbsuite.test import lldbutil
 import lldbdap_testcase
+import os
 
 
 class TestDAP_disassemble(lldbdap_testcase.DAPTestCaseBase):
@@ -16,35 +20,18 @@ class TestDAP_disassemble(lldbdap_testcase.DAPTestCaseBase):
         program = self.getBuildArtifact("a.out")
         self.build_and_launch(program)
         source = "main.c"
-        bp_line_no = line_number(source, "// breakpoint 1")
-        self.set_source_breakpoints(source, [bp_line_no])
+        self.set_source_breakpoints(source, [line_number(source, "// breakpoint 1")])
         self.continue_to_next_stop()
 
-        insts_with_bp, pc_with_bp_assembly = self.disassemble(frameIndex=0)
-        self.assertIn("location", pc_with_bp_assembly, "Source location missing.")
-        self.assertEqual(
-            pc_with_bp_assembly["line"], bp_line_no, "Expects the same line number"
-        )
-        no_bp = self.set_source_breakpoints(source, [])
-        self.assertEqual(len(no_bp), 0, "Expects no breakpoints.")
-        self.assertIn(
-            "instruction", pc_with_bp_assembly, "Assembly instruction missing."
-        )
+        _, pc_assembly = self.disassemble(frameIndex=0)
+        self.assertIn("location", pc_assembly, "Source location missing.")
+        self.assertIn("instruction", pc_assembly, "Assembly instruction missing.")
 
-        insts_no_bp, pc_no_bp_assembly = self.disassemble(frameIndex=0)
-        self.assertIn("location", pc_no_bp_assembly, "Source location missing.")
-        self.assertEqual(
-            pc_with_bp_assembly["line"], bp_line_no, "Expects the same line number"
-        )
-        # the disassembly instructions should be the same with breakpoint and no breakpoint;
-        self.assertDictEqual(
-            insts_with_bp,
-            insts_no_bp,
-            "Expects instructions are the same after removing breakpoints.",
-        )
-        self.assertIn("instruction", pc_no_bp_assembly, "Assembly instruction missing.")
-
-        self.continue_to_exit()
+        # The calling frame (qsort) is coming from a system library, as a result
+        # we should not have a source location.
+        _, qsort_assembly = self.disassemble(frameIndex=1)
+        self.assertNotIn("location", qsort_assembly, "Source location not expected.")
+        self.assertIn("instruction", pc_assembly, "Assembly instruction missing.")
 
     @skipIfWindows
     def test_disassemble_backwards(self):
@@ -87,7 +74,3 @@ class TestDAP_disassemble(lldbdap_testcase.DAPTestCaseBase):
             backwards_instructions,
             f"requested instruction should be preceeded by {backwards_instructions} instructions. Actual index: {frame_instruction_index}",
         )
-
-        # clear breakpoints
-        self.set_source_breakpoints(source, [])
-        self.continue_to_exit()

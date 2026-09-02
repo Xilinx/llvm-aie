@@ -17,7 +17,6 @@
 
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -52,7 +51,7 @@ public:
     }
 
     assert(MO.isExpr() && "Unknown operand kind in printOperand");
-    MAI.printExpr(O, *MO.getExpr());
+    MO.getExpr()->print(O, &MAI);
   }
   virtual void printInstruction(const MCInst *MI, uint64_t Address,
                                 const MCSubtargetInfo &STI, raw_ostream &O) = 0;

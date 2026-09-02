@@ -10,7 +10,6 @@
 #define LLVM_DEBUGINFO_CODEVIEW_SIMPLETYPESERIALIZER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/Compiler.h"
 #include <vector>
 
 namespace llvm {
@@ -21,8 +20,8 @@ class SimpleTypeSerializer {
   std::vector<uint8_t> ScratchBuffer;
 
 public:
-  LLVM_ABI SimpleTypeSerializer();
-  LLVM_ABI ~SimpleTypeSerializer();
+  SimpleTypeSerializer();
+  ~SimpleTypeSerializer();
 
   // This template is explicitly instantiated in the implementation file for all
   // supported types.  The method itself is ugly, so inlining it into the header

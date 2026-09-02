@@ -17,6 +17,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Regex.h"
 
+#include <algorithm>
+#include <optional>
+
 #define DEBUG_TYPE "format-qualifier-alignment-fixer"
 
 namespace clang {
@@ -635,26 +638,15 @@ bool isConfiguredQualifierOrType(const FormatToken *Tok,
 // If a token is an identifier and it's upper case, it could
 // be a macro and hence we need to be able to ignore it.
 bool isPossibleMacro(const FormatToken *Tok) {
-  assert(Tok);
+  if (!Tok)
+    return false;
   if (Tok->isNot(tok::identifier))
     return false;
-
-  const auto Text = Tok->TokenText;
-  assert(!Text.empty());
-
-  // T,K,U,V likely could be template arguments
-  if (Text.size() == 1)
-    return false;
-
-  // It's unlikely that qualified names are object-like macros.
-  const auto *Prev = Tok->getPreviousNonComment();
-  if (Prev && Prev->is(tok::coloncolon))
-    return false;
-  const auto *Next = Tok->getNextNonComment();
-  if (Next && Next->is(tok::coloncolon))
-    return false;
-
-  return Text == Text.upper();
+  if (Tok->TokenText.upper() == Tok->TokenText.str()) {
+    // T,K,U,V likely could be template arguments
+    return Tok->TokenText.size() != 1;
+  }
+  return false;
 }
 
 } // namespace format

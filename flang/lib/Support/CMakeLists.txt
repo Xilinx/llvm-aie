@@ -44,7 +44,6 @@ endif()
 
 add_flang_library(FortranSupport
   default-kinds.cpp
-  Flags.cpp
   Fortran.cpp
   Fortran-features.cpp
   idioms.cpp

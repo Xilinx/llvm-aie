@@ -26,7 +26,6 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 #include <optional>
 #include <vector>
@@ -59,7 +58,6 @@ class TargetRegisterClass;
 class TargetRegisterInfo;
 class TargetSchedModel;
 class Triple;
-struct SchedRegion;
 
 //===----------------------------------------------------------------------===//
 ///
@@ -67,7 +65,7 @@ struct SchedRegion;
 /// Target-specific options that control code generation and printing should
 /// be exposed through a TargetSubtargetInfo-derived class.
 ///
-class LLVM_ABI TargetSubtargetInfo : public MCSubtargetInfo {
+class TargetSubtargetInfo : public MCSubtargetInfo {
 protected: // Can only create subclasses...
   TargetSubtargetInfo(const Triple &TT, StringRef CPU, StringRef TuneCPU,
                       StringRef FS, ArrayRef<StringRef> PN,
@@ -258,7 +256,7 @@ public:
   /// scheduling heuristics (no custom MachineSchedStrategy) to make
   /// changes to the generic scheduling policy.
   virtual void overrideSchedPolicy(MachineSchedPolicy &Policy,
-                                   const SchedRegion &Region) const {}
+                                   unsigned NumRegionInstrs) const {}
 
   /// Override generic post-ra scheduling policy within a region.
   ///
@@ -268,7 +266,7 @@ public:
   /// Note that some options like tracking register pressure won't take effect
   /// in post-ra scheduling.
   virtual void overridePostRASchedPolicy(MachineSchedPolicy &Policy,
-                                         const SchedRegion &Region) const {}
+                                         unsigned NumRegionInstrs) const {}
 
   // Perform target-specific adjustments to the latency of a schedule
   // dependency.

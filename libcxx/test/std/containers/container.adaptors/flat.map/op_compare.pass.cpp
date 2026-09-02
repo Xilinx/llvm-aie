@@ -31,7 +31,7 @@
 #include "test_container_comparisons.h"
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test() {
+void test() {
   using Key   = typename KeyContainer::value_type;
   using Value = typename ValueContainer::value_type;
 
@@ -70,14 +70,9 @@ constexpr void test() {
   }
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<int>, std::vector<int>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque<int>, std::deque<int>>();
-  }
+  test<std::deque<int>, std::deque<int>>();
   test<MinSequenceContainer<int>, MinSequenceContainer<int>>();
   test<std::vector<int, min_allocator<int>>, std::vector<int, min_allocator<int>>>();
   test<std::vector<int, min_allocator<int>>, std::vector<int, min_allocator<int>>>();
@@ -103,7 +98,7 @@ constexpr bool test() {
   {
     // Comparisons use value_type's native operators, not the comparator
     struct StrongComp {
-      constexpr bool operator()(double a, double b) const { return std::strong_order(a, b) < 0; }
+      bool operator()(double a, double b) const { return std::strong_order(a, b) < 0; }
     };
     using C = std::flat_map<double, double, StrongComp>;
     C s1    = {{1, 1}};
@@ -119,15 +114,5 @@ constexpr bool test() {
     assert(s1 != s2);
     assert((s1 <=> s2) == std::partial_ordering::unordered);
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
-
   return 0;
 }

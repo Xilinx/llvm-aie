@@ -150,8 +150,6 @@ void CommandObjectDWIMPrint::DoExecute(StringRef command,
         return;
       }
     }
-    m_interpreter.PrintWarningsIfNecessary(result.GetOutputStream(),
-                                           m_cmd_name);
     result.SetStatus(eReturnStatusSuccessFinishResult);
   };
 

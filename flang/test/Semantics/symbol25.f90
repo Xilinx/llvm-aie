@@ -38,23 +38,23 @@ contains
   end subroutine inner1
  end subroutine outer
 end module m
-!DEF: /MAIN MainProgram
-program MAIN
+!DEF: /main MainProgram
+program main
  !REF: /m
  use :: m
  !REF: /m/specific1
  call generic
- !DEF: /MAIN/inner2 (Subroutine) Subprogram
+ !DEF: /main/inner2 (Subroutine) Subprogram
  call inner2
 contains
- !REF: /MAIN/inner2
+ !REF: /main/inner2
  subroutine inner2
-  !DEF: /MAIN/inner2/generic (Subroutine) Generic
+  !DEF: /main/inner2/generic (Subroutine) Generic
   interface generic
-   !DEF: /MAIN/specific2 (Subroutine) Use
+   !DEF: /main/specific2 (Subroutine) Use
    module procedure :: specific2
   end interface
-  !REF: /MAIN/specific2
+  !REF: /main/specific2
   call generic
  end subroutine inner2
 end program

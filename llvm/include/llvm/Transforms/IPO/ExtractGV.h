@@ -11,7 +11,6 @@
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class GlobalValue;
@@ -23,9 +22,9 @@ private:
   bool keepConstInit;
 
 public:
-  LLVM_ABI ExtractGVPass(std::vector<GlobalValue *> &GVs, bool deleteS = true,
-                         bool keepConstInit = false);
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &);
+  ExtractGVPass(std::vector<GlobalValue *> &GVs, bool deleteS = true,
+                bool keepConstInit = false);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &);
 };
 } // namespace llvm
 

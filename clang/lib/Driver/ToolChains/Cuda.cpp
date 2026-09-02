@@ -7,9 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Cuda.h"
+#include "CommonArgs.h"
 #include "clang/Basic/Cuda.h"
 #include "clang/Config/config.h"
-#include "clang/Driver/CommonArgs.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Distro.h"
 #include "clang/Driver/Driver.h"
@@ -302,8 +302,7 @@ void CudaInstallationDetector::AddCudaIncludeArgs(
     CC1Args.push_back(DriverArgs.MakeArgString(P));
   }
 
-  if (!DriverArgs.hasFlag(options::OPT_offload_inc, options::OPT_no_offload_inc,
-                          true))
+  if (DriverArgs.hasArg(options::OPT_nogpuinc))
     return;
 
   if (!isValid()) {
@@ -810,12 +809,12 @@ Expected<SmallVector<std::string>>
 NVPTXToolChain::getSystemGPUArchs(const ArgList &Args) const {
   // Detect NVIDIA GPUs availible on the system.
   std::string Program;
-  if (Arg *A = Args.getLastArg(options::OPT_offload_arch_tool_EQ))
+  if (Arg *A = Args.getLastArg(options::OPT_nvptx_arch_tool_EQ))
     Program = A->getValue();
   else
     Program = GetProgramPath("nvptx-arch");
 
-  auto StdoutOrErr = getDriver().executeProgram({Program});
+  auto StdoutOrErr = executeToolChainProgram(Program);
   if (!StdoutOrErr)
     return StdoutOrErr.takeError();
 
@@ -929,8 +928,7 @@ llvm::DenormalMode CudaToolChain::getDefaultDenormalModeForType(
 void CudaToolChain::AddCudaIncludeArgs(const ArgList &DriverArgs,
                                        ArgStringList &CC1Args) const {
   // Check our CUDA version if we're going to include the CUDA headers.
-  if (DriverArgs.hasFlag(options::OPT_offload_inc, options::OPT_no_offload_inc,
-                         true) &&
+  if (!DriverArgs.hasArg(options::OPT_nogpuinc) &&
       !DriverArgs.hasArg(options::OPT_no_cuda_version_check)) {
     StringRef Arch = DriverArgs.getLastArgValue(options::OPT_march_EQ);
     assert(!Arch.empty() && "Must have an explicit GPU arch.");
@@ -1003,9 +1001,7 @@ void CudaToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                               ArgStringList &CC1Args) const {
   HostTC.AddClangSystemIncludeArgs(DriverArgs, CC1Args);
 
-  if (DriverArgs.hasFlag(options::OPT_offload_inc, options::OPT_no_offload_inc,
-                         true) &&
-      CudaInstallation.isValid())
+  if (!DriverArgs.hasArg(options::OPT_nogpuinc) && CudaInstallation.isValid())
     CC1Args.append(
         {"-internal-isystem",
          DriverArgs.MakeArgString(CudaInstallation.getIncludePath())});

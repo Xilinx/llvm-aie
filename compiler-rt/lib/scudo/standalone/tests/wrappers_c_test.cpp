@@ -175,20 +175,7 @@ TEST_F(ScudoWrappersCDeathTest, Malloc) {
 
   free(P);
   verifyDeallocHookPtr(P);
-
-  // Verify a double free causes an abort.
-  // Don't simply free(P) since EXPECT_DEATH will do a number of
-  // allocations before creating a new process. There is a possibility
-  // that the previously freed P is reused, therefore, in the new
-  // process doing free(P) is not a double free.
-  EXPECT_DEATH(
-      {
-        // Note: volatile here prevents the calls from being optimized out.
-        void *volatile Ptr = malloc(Size);
-        free(Ptr);
-        free(Ptr);
-      },
-      "");
+  EXPECT_DEATH(free(P), "");
 
   P = malloc(0U);
   EXPECT_NE(P, nullptr);

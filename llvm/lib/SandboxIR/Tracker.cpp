@@ -10,8 +10,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/StructuralHash.h"
 #include "llvm/SandboxIR/Instruction.h"
+#include <sstream>
 
 using namespace llvm::sandboxir;
 

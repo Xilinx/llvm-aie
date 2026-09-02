@@ -1563,7 +1563,7 @@ static Value insertYieldOp(RewriterBase &rewriter, Location loc, Region &region,
   Block &clonedBlock = tmpRegion.front();
   YieldOp clonedYield = cast<YieldOp>(clonedBlock.getTerminator());
   // Merge cloned block and return yield value.
-  Operation *placeholder = arith::ConstantIndexOp::create(rewriter, loc, 0);
+  Operation *placeholder = rewriter.create<arith::ConstantIndexOp>(loc, 0);
   rewriter.inlineBlockBefore(&tmpRegion.front(), placeholder, vals);
   Value val = clonedYield.getSingleResult();
   rewriter.eraseOp(clonedYield);
@@ -1603,16 +1603,16 @@ static Value buildRelu(RewriterBase &rewriter, Location loc, Value v0,
                        Attribute attr) {
   Type tp = v0.getType();
   auto zero =
-      arith::ConstantOp::create(rewriter, loc, tp, rewriter.getZeroAttr(tp));
+      rewriter.create<arith::ConstantOp>(loc, tp, rewriter.getZeroAttr(tp));
   Value cmp;
   if (isa<FloatType>(tp)) {
     auto pred = llvm::cast<arith::CmpFPredicateAttr>(attr);
-    cmp = arith::CmpFOp::create(rewriter, loc, pred, v0, zero);
+    cmp = rewriter.create<arith::CmpFOp>(loc, pred, v0, zero);
   } else {
     auto pred = llvm::cast<arith::CmpIPredicateAttr>(attr);
-    cmp = arith::CmpIOp::create(rewriter, loc, pred, v0, zero);
+    cmp = rewriter.create<arith::CmpIOp>(loc, pred, v0, zero);
   }
-  return arith::SelectOp::create(rewriter, loc, cmp, v0, zero);
+  return rewriter.create<arith::SelectOp>(loc, cmp, v0, zero);
 }
 
 Value Merger::buildExp(RewriterBase &rewriter, Location loc, ExprId e, Value v0,
@@ -1627,128 +1627,128 @@ Value Merger::buildExp(RewriterBase &rewriter, Location loc, ExprId e, Value v0,
     llvm_unreachable("unexpected non-op");
   // Unary operations.
   case TensorExp::Kind::kAbsF:
-    return math::AbsFOp::create(rewriter, loc, v0);
+    return rewriter.create<math::AbsFOp>(loc, v0);
   case TensorExp::Kind::kAbsC: {
     auto type = cast<ComplexType>(v0.getType());
     auto eltType = cast<FloatType>(type.getElementType());
-    return complex::AbsOp::create(rewriter, loc, eltType, v0);
+    return rewriter.create<complex::AbsOp>(loc, eltType, v0);
   }
   case TensorExp::Kind::kAbsI:
-    return math::AbsIOp::create(rewriter, loc, v0);
+    return rewriter.create<math::AbsIOp>(loc, v0);
   case TensorExp::Kind::kCeilF:
-    return math::CeilOp::create(rewriter, loc, v0);
+    return rewriter.create<math::CeilOp>(loc, v0);
   case TensorExp::Kind::kFloorF:
-    return math::FloorOp::create(rewriter, loc, v0);
+    return rewriter.create<math::FloorOp>(loc, v0);
   case TensorExp::Kind::kSqrtF:
-    return math::SqrtOp::create(rewriter, loc, v0);
+    return rewriter.create<math::SqrtOp>(loc, v0);
   case TensorExp::Kind::kSqrtC:
-    return complex::SqrtOp::create(rewriter, loc, v0);
+    return rewriter.create<complex::SqrtOp>(loc, v0);
   case TensorExp::Kind::kExpm1F:
-    return math::ExpM1Op::create(rewriter, loc, v0);
+    return rewriter.create<math::ExpM1Op>(loc, v0);
   case TensorExp::Kind::kExpm1C:
-    return complex::Expm1Op::create(rewriter, loc, v0);
+    return rewriter.create<complex::Expm1Op>(loc, v0);
   case TensorExp::Kind::kLog1pF:
-    return math::Log1pOp::create(rewriter, loc, v0);
+    return rewriter.create<math::Log1pOp>(loc, v0);
   case TensorExp::Kind::kLog1pC:
-    return complex::Log1pOp::create(rewriter, loc, v0);
+    return rewriter.create<complex::Log1pOp>(loc, v0);
   case TensorExp::Kind::kRelu:
     return buildRelu(rewriter, loc, v0, expr.attr);
   case TensorExp::Kind::kSinF:
-    return math::SinOp::create(rewriter, loc, v0);
+    return rewriter.create<math::SinOp>(loc, v0);
   case TensorExp::Kind::kSinC:
-    return complex::SinOp::create(rewriter, loc, v0);
+    return rewriter.create<complex::SinOp>(loc, v0);
   case TensorExp::Kind::kTanhF:
-    return math::TanhOp::create(rewriter, loc, v0);
+    return rewriter.create<math::TanhOp>(loc, v0);
   case TensorExp::Kind::kTanhC:
-    return complex::TanhOp::create(rewriter, loc, v0);
+    return rewriter.create<complex::TanhOp>(loc, v0);
   case TensorExp::Kind::kNegF:
-    return arith::NegFOp::create(rewriter, loc, v0);
+    return rewriter.create<arith::NegFOp>(loc, v0);
   case TensorExp::Kind::kNegC:
-    return complex::NegOp::create(rewriter, loc, v0);
+    return rewriter.create<complex::NegOp>(loc, v0);
   case TensorExp::Kind::kNegI: // no negi in std
-    return arith::SubIOp::create(
-        rewriter, loc,
-        arith::ConstantOp::create(rewriter, loc, v0.getType(),
-                                  rewriter.getZeroAttr(v0.getType())),
+    return rewriter.create<arith::SubIOp>(
+        loc,
+        rewriter.create<arith::ConstantOp>(loc, v0.getType(),
+                                           rewriter.getZeroAttr(v0.getType())),
         v0);
   case TensorExp::Kind::kTruncF:
-    return arith::TruncFOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::TruncFOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kExtF:
-    return arith::ExtFOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::ExtFOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastFS:
-    return arith::FPToSIOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::FPToSIOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastFU:
-    return arith::FPToUIOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::FPToUIOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastSF:
-    return arith::SIToFPOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::SIToFPOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastUF:
-    return arith::UIToFPOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::UIToFPOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastS:
-    return arith::ExtSIOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::ExtSIOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastU:
-    return arith::ExtUIOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::ExtUIOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCastIdx:
-    return arith::IndexCastOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::IndexCastOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kTruncI:
-    return arith::TruncIOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::TruncIOp>(loc, inferType(e, v0), v0);
   case TensorExp::Kind::kCIm: {
     auto type = cast<ComplexType>(v0.getType());
     auto eltType = cast<FloatType>(type.getElementType());
-    return complex::ImOp::create(rewriter, loc, eltType, v0);
+    return rewriter.create<complex::ImOp>(loc, eltType, v0);
   }
   case TensorExp::Kind::kCRe: {
     auto type = cast<ComplexType>(v0.getType());
     auto eltType = cast<FloatType>(type.getElementType());
-    return complex::ReOp::create(rewriter, loc, eltType, v0);
+    return rewriter.create<complex::ReOp>(loc, eltType, v0);
   }
   case TensorExp::Kind::kBitCast:
-    return arith::BitcastOp::create(rewriter, loc, inferType(e, v0), v0);
+    return rewriter.create<arith::BitcastOp>(loc, inferType(e, v0), v0);
   // Binary operations.
   case TensorExp::Kind::kMulF:
-    return arith::MulFOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::MulFOp>(loc, v0, v1);
   case TensorExp::Kind::kMulC:
-    return complex::MulOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<complex::MulOp>(loc, v0, v1);
   case TensorExp::Kind::kMulI:
-    return arith::MulIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::MulIOp>(loc, v0, v1);
   case TensorExp::Kind::kDivF:
-    return arith::DivFOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::DivFOp>(loc, v0, v1);
   case TensorExp::Kind::kDivC:
-    return complex::DivOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<complex::DivOp>(loc, v0, v1);
   case TensorExp::Kind::kDivS:
-    return arith::DivSIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::DivSIOp>(loc, v0, v1);
   case TensorExp::Kind::kDivU:
-    return arith::DivUIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::DivUIOp>(loc, v0, v1);
   case TensorExp::Kind::kAddF:
-    return arith::AddFOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::AddFOp>(loc, v0, v1);
   case TensorExp::Kind::kAddC:
-    return complex::AddOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<complex::AddOp>(loc, v0, v1);
   case TensorExp::Kind::kAddI:
-    return arith::AddIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::AddIOp>(loc, v0, v1);
   case TensorExp::Kind::kSubF:
-    return arith::SubFOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::SubFOp>(loc, v0, v1);
   case TensorExp::Kind::kSubC:
-    return complex::SubOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<complex::SubOp>(loc, v0, v1);
   case TensorExp::Kind::kSubI:
-    return arith::SubIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::SubIOp>(loc, v0, v1);
   case TensorExp::Kind::kAndI:
-    return arith::AndIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::AndIOp>(loc, v0, v1);
   case TensorExp::Kind::kOrI:
-    return arith::OrIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::OrIOp>(loc, v0, v1);
   case TensorExp::Kind::kXorI:
-    return arith::XOrIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::XOrIOp>(loc, v0, v1);
   case TensorExp::Kind::kShrS:
-    return arith::ShRSIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::ShRSIOp>(loc, v0, v1);
   case TensorExp::Kind::kShrU:
-    return arith::ShRUIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::ShRUIOp>(loc, v0, v1);
   case TensorExp::Kind::kShlI:
-    return arith::ShLIOp::create(rewriter, loc, v0, v1);
+    return rewriter.create<arith::ShLIOp>(loc, v0, v1);
   case TensorExp::Kind::kCmpI: {
     auto predicate = llvm::cast<arith::CmpIPredicateAttr>(expr.attr);
-    return arith::CmpIOp::create(rewriter, loc, predicate, v0, v1);
+    return rewriter.create<arith::CmpIOp>(loc, predicate, v0, v1);
   }
   case TensorExp::Kind::kCmpF: {
     auto predicate = llvm::cast<arith::CmpFPredicateAttr>(expr.attr);
-    return arith::CmpFOp::create(rewriter, loc, predicate, v0, v1);
+    return rewriter.create<arith::CmpFOp>(loc, predicate, v0, v1);
   }
   case TensorExp::Kind::kBinaryBranch: // semi-ring ops with custom logic.
     return insertYieldOp(rewriter, loc, *expr.op->getBlock()->getParent(),

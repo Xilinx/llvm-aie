@@ -17,12 +17,11 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace orc {
 
-class LLVM_ABI ExecutorBootstrapService {
+class ExecutorBootstrapService {
 public:
   virtual ~ExecutorBootstrapService();
 

@@ -1,4 +1,4 @@
-//==--- AbstractBasicReader.h - Abstract basic value deserialization -----===//
+//==--- AbstractBasiceReader.h - Abstract basic value deserialization -----===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -143,7 +143,8 @@ public:
   // structure into a single data stream.
   Impl &readObject() { return asImpl(); }
 
-  template <class T> ArrayRef<T> readArray(llvm::SmallVectorImpl<T> &buffer) {
+  template <class T>
+  llvm::ArrayRef<T> readArray(llvm::SmallVectorImpl<T> &buffer) {
     assert(buffer.empty());
 
     uint32_t size = asImpl().readUInt32();
@@ -269,7 +270,12 @@ public:
 
       case NestedNameSpecifier::Namespace:
         cur = NestedNameSpecifier::Create(ctx, cur,
-                                          asImpl().readNamespaceBaseDeclRef());
+                                          asImpl().readNamespaceDeclRef());
+        continue;
+
+      case NestedNameSpecifier::NamespaceAlias:
+        cur = NestedNameSpecifier::Create(ctx, cur,
+                                     asImpl().readNamespaceAliasDeclRef());
         continue;
 
       case NestedNameSpecifier::TypeSpec:

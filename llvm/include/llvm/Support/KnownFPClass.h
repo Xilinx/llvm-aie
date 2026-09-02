@@ -15,7 +15,6 @@
 #define LLVM_SUPPORT_KNOWNFPCLASS_H
 
 #include "llvm/ADT/FloatingPointMode.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -79,13 +78,13 @@ struct KnownFPClass {
   /// Return true if it's know this can never be interpreted as a zero. This
   /// extends isKnownNeverZero to cover the case where the assumed
   /// floating-point mode for the function interprets denormals as zero.
-  LLVM_ABI bool isKnownNeverLogicalZero(DenormalMode Mode) const;
+  bool isKnownNeverLogicalZero(DenormalMode Mode) const;
 
   /// Return true if it's know this can never be interpreted as a negative zero.
-  LLVM_ABI bool isKnownNeverLogicalNegZero(DenormalMode Mode) const;
+  bool isKnownNeverLogicalNegZero(DenormalMode Mode) const;
 
   /// Return true if it's know this can never be interpreted as a positive zero.
-  LLVM_ABI bool isKnownNeverLogicalPosZero(DenormalMode Mode) const;
+  bool isKnownNeverLogicalPosZero(DenormalMode Mode) const;
 
   static constexpr FPClassTest OrderedLessThanZeroMask =
       fcNegSubnormal | fcNegNormal | fcNegInf;
@@ -210,7 +209,7 @@ struct KnownFPClass {
   ///
   /// This assumes a copy-like operation and will replace any currently known
   /// information.
-  LLVM_ABI void propagateDenormal(const KnownFPClass &Src, DenormalMode Mode);
+  void propagateDenormal(const KnownFPClass &Src, DenormalMode Mode);
 
   /// Report known classes if \p Src is evaluated through a potentially
   /// canonicalizing operation. We can assume signaling nans will not be
@@ -218,8 +217,7 @@ struct KnownFPClass {
   ///
   /// This assumes a copy-like operation and will replace any currently known
   /// information.
-  LLVM_ABI void propagateCanonicalizingSrc(const KnownFPClass &Src,
-                                           DenormalMode Mode);
+  void propagateCanonicalizingSrc(const KnownFPClass &Src, DenormalMode Mode);
 
   void resetAll() { *this = KnownFPClass(); }
 };

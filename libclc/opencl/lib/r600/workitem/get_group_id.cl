@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <clc/opencl/workitem/get_group_id.h>
+#include <clc/opencl/clc.h>
 
 _CLC_DEF _CLC_OVERLOAD uint get_group_id(uint dim) {
   switch (dim) {

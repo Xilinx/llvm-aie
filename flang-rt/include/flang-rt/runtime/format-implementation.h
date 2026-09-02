@@ -427,11 +427,7 @@ RT_API_ATTRS int FormatControl<CONTEXT>::CueUpNextDataEdit(
       } else {
         --chars;
       }
-      if constexpr (std::is_base_of_v<InputStatementState, CONTEXT>) {
-        context.HandleRelativePosition(chars);
-      } else {
-        EmitAscii(context, format_ + start, chars);
-      }
+      EmitAscii(context, format_ + start, chars);
     } else if (ch == 'H') {
       // 9HHOLLERITH
       if (!repeat || *repeat < 1 || offset_ + *repeat > formatLength_) {
@@ -439,12 +435,7 @@ RT_API_ATTRS int FormatControl<CONTEXT>::CueUpNextDataEdit(
             maybeReversionPoint);
         return 0;
       }
-      if constexpr (std::is_base_of_v<InputStatementState, CONTEXT>) {
-        context.HandleRelativePosition(static_cast<std::size_t>(*repeat));
-      } else {
-        EmitAscii(
-            context, format_ + offset_, static_cast<std::size_t>(*repeat));
-      }
+      EmitAscii(context, format_ + offset_, static_cast<std::size_t>(*repeat));
       offset_ += *repeat;
     } else if (ch >= 'A' && ch <= 'Z') {
       int start{offset_ - 1};

@@ -175,7 +175,8 @@ lldb::addr_t OptionArgParser::ToAddress(const ExecutionContext *exe_ctx,
   lldb::addr_t addr = *maybe_addr;
 
   if (Process *process = exe_ctx->GetProcessPtr())
-    addr = process->FixAnyAddress(addr);
+    if (ABISP abi_sp = process->GetABI())
+      addr = abi_sp->FixCodeAddress(addr);
 
   return addr;
 }

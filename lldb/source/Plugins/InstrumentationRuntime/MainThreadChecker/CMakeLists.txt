@@ -1,8 +1,6 @@
 add_lldb_library(lldbPluginInstrumentationRuntimeMainThreadChecker PLUGIN
   InstrumentationRuntimeMainThreadChecker.cpp
 
-  LINK_COMPONENTS
-    Support
   LINK_LIBS
     lldbBreakpoint
     lldbCore
@@ -10,4 +8,6 @@ add_lldb_library(lldbPluginInstrumentationRuntimeMainThreadChecker PLUGIN
     lldbInterpreter
     lldbSymbol
     lldbTarget
+  LINK_COMPONENTS
+    Support
   )

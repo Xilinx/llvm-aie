@@ -3,9 +3,6 @@ add_lldb_library(lldbPluginDynamicLoaderMacOSXDYLD PLUGIN
   DynamicLoaderMacOS.cpp
   DynamicLoaderDarwin.cpp
 
-  LINK_COMPONENTS
-    Support
-    TargetParser
   LINK_LIBS
     lldbBreakpoint
     lldbCore
@@ -15,4 +12,7 @@ add_lldb_library(lldbPluginDynamicLoaderMacOSXDYLD PLUGIN
     lldbTarget
     lldbUtility
     lldbPluginTypeSystemClang
+  LINK_COMPONENTS
+    Support
+    TargetParser
   )

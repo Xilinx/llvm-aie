@@ -6,11 +6,4 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_WORKITEM_GET_WORK_DIM_H__
-#define __CLC_OPENCL_WORKITEM_GET_WORK_DIM_H__
-
-#include <clc/opencl/opencl-base.h>
-
 _CLC_DECL _CLC_OVERLOAD uint get_work_dim(void);
-
-#endif // __CLC_OPENCL_WORKITEM_GET_WORK_DIM_H__

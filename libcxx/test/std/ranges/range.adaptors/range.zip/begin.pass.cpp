@@ -18,7 +18,7 @@
 #include <tuple>
 #include <utility>
 
-#include "../range_adaptor_types.h"
+#include "types.h"
 
 template <class T>
 concept HasConstBegin = requires(const T& ct) { ct.begin(); };

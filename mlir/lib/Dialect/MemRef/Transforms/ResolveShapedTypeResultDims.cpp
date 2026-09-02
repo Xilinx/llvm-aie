@@ -69,7 +69,7 @@ struct DimOfShapedTypeOpInterface : public OpRewritePattern<OpTy> {
     Location loc = dimOp->getLoc();
     rewriter.replaceOpWithNewOp<tensor::ExtractOp>(
         dimOp, resultShape,
-        arith::ConstantIndexOp::create(rewriter, loc, *dimIndex).getResult());
+        rewriter.create<arith::ConstantIndexOp>(loc, *dimIndex).getResult());
     return success();
   }
 };

@@ -17,7 +17,4 @@
 
 #include "mlir/Dialect/Transform/IR/TransformDialectEnums.h.inc"
 
-#define GET_ATTRDEF_CLASSES
-#include "mlir/Dialect/Transform/IR/TransformAttrs.h.inc"
-
 #endif // MLIR_DIALECT_TRANSFORM_IR_TRANSFORMATTRS_H

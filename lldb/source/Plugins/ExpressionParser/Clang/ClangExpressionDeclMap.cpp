@@ -1047,6 +1047,8 @@ void ClangExpressionDeclMap::LookupInModulesDeclVendor(
     MaybeRegisterFunctionBody(copied_function);
 
     context.AddNamedDecl(copied_function);
+
+    context.m_found_function_with_type_info = true;
   } else if (auto copied_var = dyn_cast<clang::VarDecl>(copied_decl)) {
     context.AddNamedDecl(copied_var);
     context.m_found_variable = true;
@@ -1215,11 +1217,11 @@ SymbolContextList ClangExpressionDeclMap::SearchFunctionsInSymbolContexts(
   return sc_func_list;
 }
 
-bool ClangExpressionDeclMap::LookupFunction(
+void ClangExpressionDeclMap::LookupFunction(
     NameSearchContext &context, lldb::ModuleSP module_sp, ConstString name,
     const CompilerDeclContext &namespace_decl) {
   if (!m_parser_vars)
-    return false;
+    return;
 
   Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
 
@@ -1279,8 +1281,6 @@ bool ClangExpressionDeclMap::LookupFunction(
     }
   }
 
-  bool found_function_with_type_info = false;
-
   if (sc_list.GetSize()) {
     Symbol *extern_symbol = nullptr;
     Symbol *non_extern_symbol = nullptr;
@@ -1297,7 +1297,7 @@ bool ClangExpressionDeclMap::LookupFunction(
           continue;
 
         AddOneFunction(context, sym_ctx.function, nullptr);
-        found_function_with_type_info = true;
+        context.m_found_function_with_type_info = true;
       } else if (sym_ctx.symbol) {
         Symbol *symbol = sym_ctx.symbol;
         if (target && symbol->GetType() == eSymbolTypeReExported) {
@@ -1313,20 +1313,20 @@ bool ClangExpressionDeclMap::LookupFunction(
       }
     }
 
-    if (!found_function_with_type_info) {
+    if (!context.m_found_function_with_type_info) {
       for (clang::NamedDecl *decl : decls_from_modules) {
         if (llvm::isa<clang::FunctionDecl>(decl)) {
           clang::NamedDecl *copied_decl =
               llvm::cast_or_null<FunctionDecl>(CopyDecl(decl));
           if (copied_decl) {
             context.AddNamedDecl(copied_decl);
-            found_function_with_type_info = true;
+            context.m_found_function_with_type_info = true;
           }
         }
       }
     }
 
-    if (!found_function_with_type_info) {
+    if (!context.m_found_function_with_type_info) {
       if (extern_symbol) {
         AddOneFunction(context, nullptr, extern_symbol);
       } else if (non_extern_symbol) {
@@ -1334,8 +1334,6 @@ bool ClangExpressionDeclMap::LookupFunction(
       }
     }
   }
-
-  return found_function_with_type_info;
 }
 
 void ClangExpressionDeclMap::FindExternalVisibleDecls(
@@ -1434,7 +1432,10 @@ void ClangExpressionDeclMap::FindExternalVisibleDecls(
     }
   }
 
-  if (!LookupFunction(context, module_sp, name, namespace_decl))
+  LookupFunction(context, module_sp, name, namespace_decl);
+
+  // Try the modules next.
+  if (!context.m_found_function_with_type_info)
     LookupInModulesDeclVendor(context, name);
 
   if (target && !context.m_found_variable && !namespace_decl) {
@@ -1978,10 +1979,10 @@ void ClangExpressionDeclMap::AddContextClassType(NameSearchContext &context,
       copied_clang_type.GetCompleteType()) {
     CompilerType void_clang_type =
         m_clang_ast_context->GetBasicType(eBasicTypeVoid);
-    std::array<CompilerType, 1> args{void_clang_type.GetPointerType()};
+    CompilerType void_ptr_clang_type = void_clang_type.GetPointerType();
 
     CompilerType method_type = m_clang_ast_context->CreateFunctionType(
-        void_clang_type, args, false, 0);
+        void_clang_type, &void_ptr_clang_type, 1, false, 0);
 
     const bool is_virtual = false;
     const bool is_static = false;

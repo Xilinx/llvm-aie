@@ -295,13 +295,9 @@ Attribute Attribute::getWithCaptureInfo(LLVMContext &Context, CaptureInfo CI) {
 Attribute
 Attribute::getWithAllocSizeArgs(LLVMContext &Context, unsigned ElemSizeArg,
                                 const std::optional<unsigned> &NumElemsArg) {
-  assert(!(ElemSizeArg == 0 && NumElemsArg == 0) &&
+  assert(!(ElemSizeArg == 0 && NumElemsArg && *NumElemsArg == 0) &&
          "Invalid allocsize arguments -- given allocsize(0, 0)");
   return get(Context, AllocSize, packAllocSizeArgs(ElemSizeArg, NumElemsArg));
-}
-
-Attribute Attribute::getWithAllocKind(LLVMContext &Context, AllocFnKind Kind) {
-  return get(Context, AllocKind, static_cast<uint64_t>(Kind));
 }
 
 Attribute Attribute::getWithVScaleRangeArgs(LLVMContext &Context,
@@ -2424,8 +2420,7 @@ AttributeMask AttributeFuncs::typeIncompatible(Type *Ty, AttributeSet AS,
           .addAttribute(Attribute::Writable)
           .addAttribute(Attribute::DeadOnUnwind)
           .addAttribute(Attribute::Initializes)
-          .addAttribute(Attribute::Captures)
-          .addAttribute(Attribute::DeadOnReturn);
+          .addAttribute(Attribute::Captures);
     if (ASK & ASK_UNSAFE_TO_DROP)
       Incompatible.addAttribute(Attribute::Nest)
           .addAttribute(Attribute::SwiftError)

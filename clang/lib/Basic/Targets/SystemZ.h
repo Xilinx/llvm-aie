@@ -45,7 +45,6 @@ static const unsigned ZOSAddressMap[] = {
     0, // hlsl_constant
     0, // hlsl_private
     0, // hlsl_device
-    0, // hlsl_input
     0  // wasm_funcref
 };
 
@@ -90,8 +89,6 @@ public:
       resetDataLayout("E-m:l-p1:32:32-i1:8:16-i8:8:16-i64:64-f128:64-v128:64-"
                       "a:8:16-n32:64");
     } else {
-      // Support _Float16.
-      HasFloat16 = true;
       TLSSupported = true;
       resetDataLayout("E-m:e-i1:8:16-i8:8:16-i64:64-f128:64"
                       "-v128:64-a:8:16-n32:64");
@@ -105,6 +102,8 @@ public:
     // and instead the backend will promote each half operation to float
     // individually.
     HasLegalHalfType = false;
+    // Support _Float16.
+    HasFloat16 = true;
 
     HasStrictFP = true;
   }
@@ -245,7 +244,7 @@ public:
     switch (CC) {
     case CC_C:
     case CC_Swift:
-    case CC_DeviceKernel:
+    case CC_OpenCLKernel:
       return CCCR_OK;
     case CC_SwiftAsync:
       return CCCR_Error;

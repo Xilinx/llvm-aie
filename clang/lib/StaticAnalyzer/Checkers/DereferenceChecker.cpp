@@ -25,22 +25,18 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-
-class DerefBugType : public BugType {
-  StringRef ArrayMsg, FieldMsg;
-
-public:
-  DerefBugType(CheckerFrontend *FE, StringRef Desc, const char *AMsg,
-               const char *FMsg = nullptr)
-      : BugType(FE, Desc), ArrayMsg(AMsg), FieldMsg(FMsg ? FMsg : AMsg) {}
-  StringRef getArrayMsg() const { return ArrayMsg; }
-  StringRef getFieldMsg() const { return FieldMsg; }
-};
-
 class DereferenceChecker
-    : public CheckerFamily<check::Location, check::Bind,
-                           EventDispatcher<ImplicitNullDerefEvent>> {
-  void reportBug(const DerefBugType &BT, ProgramStateRef State, const Stmt *S,
+    : public Checker< check::Location,
+                      check::Bind,
+                      EventDispatcher<ImplicitNullDerefEvent> > {
+  enum DerefKind {
+    NullPointer,
+    UndefinedPointerValue,
+    AddressOfLabel,
+    FixedAddress,
+  };
+
+  void reportBug(DerefKind K, ProgramStateRef State, const Stmt *S,
                  CheckerContext &C) const;
 
   bool suppressReport(CheckerContext &C, const Expr *E) const;
@@ -56,23 +52,13 @@ public:
                              const LocationContext *LCtx,
                              bool loadedFrom = false);
 
-  CheckerFrontend NullDerefChecker, FixedDerefChecker;
-  const DerefBugType NullBug{&NullDerefChecker, "Dereference of null pointer",
-                             "a null pointer dereference",
-                             "a dereference of a null pointer"};
-  const DerefBugType UndefBug{&NullDerefChecker,
-                              "Dereference of undefined pointer value",
-                              "an undefined pointer dereference",
-                              "a dereference of an undefined pointer value"};
-  const DerefBugType LabelBug{&NullDerefChecker,
-                              "Dereference of the address of a label",
-                              "an undefined pointer dereference",
-                              "a dereference of an address of a label"};
-  const DerefBugType FixedAddressBug{&FixedDerefChecker,
-                                     "Dereference of a fixed address",
-                                     "a dereference of a fixed address"};
+  bool CheckNullDereference = false;
+  bool CheckFixedDereference = false;
 
-  StringRef getDebugTag() const override { return "DereferenceChecker"; }
+  std::unique_ptr<BugType> BT_Null;
+  std::unique_ptr<BugType> BT_Undef;
+  std::unique_ptr<BugType> BT_Label;
+  std::unique_ptr<BugType> BT_FixedAddress;
 };
 } // end anonymous namespace
 
@@ -172,87 +158,115 @@ static bool isDeclRefExprToReference(const Expr *E) {
   return false;
 }
 
-void DereferenceChecker::reportBug(const DerefBugType &BT,
-                                   ProgramStateRef State, const Stmt *S,
-                                   CheckerContext &C) const {
-  if (&BT == &FixedAddressBug) {
-    if (!FixedDerefChecker.isEnabled())
-      // Deliberately don't add a sink node if check is disabled.
-      // This situation may be valid in special cases.
-      return;
-  } else {
-    if (!NullDerefChecker.isEnabled()) {
+void DereferenceChecker::reportBug(DerefKind K, ProgramStateRef State,
+                                   const Stmt *S, CheckerContext &C) const {
+  const BugType *BT = nullptr;
+  llvm::StringRef DerefStr1;
+  llvm::StringRef DerefStr2;
+  switch (K) {
+  case DerefKind::NullPointer:
+    if (!CheckNullDereference) {
       C.addSink();
       return;
     }
-  }
+    BT = BT_Null.get();
+    DerefStr1 = " results in a null pointer dereference";
+    DerefStr2 = " results in a dereference of a null pointer";
+    break;
+  case DerefKind::UndefinedPointerValue:
+    if (!CheckNullDereference) {
+      C.addSink();
+      return;
+    }
+    BT = BT_Undef.get();
+    DerefStr1 = " results in an undefined pointer dereference";
+    DerefStr2 = " results in a dereference of an undefined pointer value";
+    break;
+  case DerefKind::AddressOfLabel:
+    if (!CheckNullDereference) {
+      C.addSink();
+      return;
+    }
+    BT = BT_Label.get();
+    DerefStr1 = " results in an undefined pointer dereference";
+    DerefStr2 = " results in a dereference of an address of a label";
+    break;
+  case DerefKind::FixedAddress:
+    // Deliberately don't add a sink node if check is disabled.
+    // This situation may be valid in special cases.
+    if (!CheckFixedDereference)
+      return;
+
+    BT = BT_FixedAddress.get();
+    DerefStr1 = " results in a dereference of a fixed address";
+    DerefStr2 = " results in a dereference of a fixed address";
+    break;
+  };
 
   // Generate an error node.
   ExplodedNode *N = C.generateErrorNode(State);
   if (!N)
     return;
 
-  SmallString<100> Buf;
-  llvm::raw_svector_ostream Out(Buf);
+  SmallString<100> buf;
+  llvm::raw_svector_ostream os(buf);
 
   SmallVector<SourceRange, 2> Ranges;
 
   switch (S->getStmtClass()) {
   case Stmt::ArraySubscriptExprClass: {
-    Out << "Array access";
+    os << "Array access";
     const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
-    AddDerefSource(Out, Ranges, AE->getBase()->IgnoreParenCasts(), State.get(),
-                   N->getLocationContext());
-    Out << " results in " << BT.getArrayMsg();
+    AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
+                   State.get(), N->getLocationContext());
+    os << DerefStr1;
     break;
   }
   case Stmt::ArraySectionExprClass: {
-    Out << "Array access";
+    os << "Array access";
     const ArraySectionExpr *AE = cast<ArraySectionExpr>(S);
-    AddDerefSource(Out, Ranges, AE->getBase()->IgnoreParenCasts(), State.get(),
-                   N->getLocationContext());
-    Out << " results in " << BT.getArrayMsg();
+    AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
+                   State.get(), N->getLocationContext());
+    os << DerefStr1;
     break;
   }
   case Stmt::UnaryOperatorClass: {
-    Out << BT.getDescription();
+    os << BT->getDescription();
     const UnaryOperator *U = cast<UnaryOperator>(S);
-    AddDerefSource(Out, Ranges, U->getSubExpr()->IgnoreParens(), State.get(),
-                   N->getLocationContext(), true);
+    AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
+                   State.get(), N->getLocationContext(), true);
     break;
   }
   case Stmt::MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(S);
     if (M->isArrow() || isDeclRefExprToReference(M->getBase())) {
-      Out << "Access to field '" << M->getMemberNameInfo() << "' results in "
-          << BT.getFieldMsg();
-      AddDerefSource(Out, Ranges, M->getBase()->IgnoreParenCasts(), State.get(),
-                     N->getLocationContext(), true);
+      os << "Access to field '" << M->getMemberNameInfo() << "'" << DerefStr2;
+      AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
+                     State.get(), N->getLocationContext(), true);
     }
     break;
   }
   case Stmt::ObjCIvarRefExprClass: {
     const ObjCIvarRefExpr *IV = cast<ObjCIvarRefExpr>(S);
-    Out << "Access to instance variable '" << *IV->getDecl() << "' results in "
-        << BT.getFieldMsg();
-    AddDerefSource(Out, Ranges, IV->getBase()->IgnoreParenCasts(), State.get(),
-                   N->getLocationContext(), true);
+    os << "Access to instance variable '" << *IV->getDecl() << "'" << DerefStr2;
+    AddDerefSource(os, Ranges, IV->getBase()->IgnoreParenCasts(),
+                   State.get(), N->getLocationContext(), true);
     break;
   }
   default:
     break;
   }
 
-  auto BR = std::make_unique<PathSensitiveBugReport>(
-      BT, Buf.empty() ? BT.getDescription() : Buf.str(), N);
+  auto report = std::make_unique<PathSensitiveBugReport>(
+      *BT, buf.empty() ? BT->getDescription() : buf.str(), N);
 
-  bugreporter::trackExpressionValue(N, bugreporter::getDerefExpr(S), *BR);
+  bugreporter::trackExpressionValue(N, bugreporter::getDerefExpr(S), *report);
 
   for (SmallVectorImpl<SourceRange>::iterator
        I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
-    BR->addRange(*I);
+    report->addRange(*I);
 
-  C.emitReport(std::move(BR));
+  C.emitReport(std::move(report));
 }
 
 void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
@@ -261,7 +275,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
   if (l.isUndef()) {
     const Expr *DerefExpr = getDereferenceExpr(S);
     if (!suppressReport(C, DerefExpr))
-      reportBug(UndefBug, C.getState(), DerefExpr, C);
+      reportBug(DerefKind::UndefinedPointerValue, C.getState(), DerefExpr, C);
     return;
   }
 
@@ -282,7 +296,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
       // we call an "explicit" null dereference.
       const Expr *expr = getDereferenceExpr(S);
       if (!suppressReport(C, expr)) {
-        reportBug(NullBug, nullState, expr, C);
+        reportBug(DerefKind::NullPointer, nullState, expr, C);
         return;
       }
     }
@@ -300,7 +314,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
   if (location.isConstant()) {
     const Expr *DerefExpr = getDereferenceExpr(S, isLoad);
     if (!suppressReport(C, DerefExpr))
-      reportBug(FixedAddressBug, notNullState, DerefExpr, C);
+      reportBug(DerefKind::FixedAddress, notNullState, DerefExpr, C);
     return;
   }
 
@@ -316,7 +330,7 @@ void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
 
   // One should never write to label addresses.
   if (auto Label = L.getAs<loc::GotoLabel>()) {
-    reportBug(LabelBug, C.getState(), S, C);
+    reportBug(DerefKind::AddressOfLabel, C.getState(), S, C);
     return;
   }
 
@@ -337,7 +351,7 @@ void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
     if (!StNonNull) {
       const Expr *expr = getDereferenceExpr(S, /*IsBind=*/true);
       if (!suppressReport(C, expr)) {
-        reportBug(NullBug, StNull, expr, C);
+        reportBug(DerefKind::NullPointer, StNull, expr, C);
         return;
       }
     }
@@ -355,7 +369,7 @@ void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
   if (V.isConstant()) {
     const Expr *DerefExpr = getDereferenceExpr(S, true);
     if (!suppressReport(C, DerefExpr))
-      reportBug(FixedAddressBug, State, DerefExpr, C);
+      reportBug(DerefKind::FixedAddress, State, DerefExpr, C);
     return;
   }
 
@@ -378,8 +392,26 @@ void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
   C.addTransition(State, this);
 }
 
+void ento::registerDereferenceModeling(CheckerManager &Mgr) {
+  Mgr.registerChecker<DereferenceChecker>();
+}
+
+bool ento::shouldRegisterDereferenceModeling(const CheckerManager &) {
+  return true;
+}
+
 void ento::registerNullDereferenceChecker(CheckerManager &Mgr) {
-  Mgr.getChecker<DereferenceChecker>()->NullDerefChecker.enable(Mgr);
+  auto *Chk = Mgr.getChecker<DereferenceChecker>();
+  Chk->CheckNullDereference = true;
+  Chk->BT_Null.reset(new BugType(Mgr.getCurrentCheckerName(),
+                                 "Dereference of null pointer",
+                                 categories::LogicError));
+  Chk->BT_Undef.reset(new BugType(Mgr.getCurrentCheckerName(),
+                                  "Dereference of undefined pointer value",
+                                  categories::LogicError));
+  Chk->BT_Label.reset(new BugType(Mgr.getCurrentCheckerName(),
+                                  "Dereference of the address of a label",
+                                  categories::LogicError));
 }
 
 bool ento::shouldRegisterNullDereferenceChecker(const CheckerManager &) {
@@ -387,7 +419,11 @@ bool ento::shouldRegisterNullDereferenceChecker(const CheckerManager &) {
 }
 
 void ento::registerFixedAddressDereferenceChecker(CheckerManager &Mgr) {
-  Mgr.getChecker<DereferenceChecker>()->FixedDerefChecker.enable(Mgr);
+  auto *Chk = Mgr.getChecker<DereferenceChecker>();
+  Chk->CheckFixedDereference = true;
+  Chk->BT_FixedAddress.reset(new BugType(Mgr.getCurrentCheckerName(),
+                                         "Dereference of a fixed address",
+                                         categories::LogicError));
 }
 
 bool ento::shouldRegisterFixedAddressDereferenceChecker(

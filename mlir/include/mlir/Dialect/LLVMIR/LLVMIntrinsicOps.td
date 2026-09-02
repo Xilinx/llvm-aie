@@ -324,8 +324,8 @@ def LLVM_NoAliasScopeDeclOp
       return success();
     if (scopeAttrs->size() != 1)
       return failure();
-    $_op = LLVM::NoAliasScopeDeclOp::create(
-      $_builder, $_location, (*scopeAttrs)[0]);
+    $_op = $_builder.create<LLVM::NoAliasScopeDeclOp>(
+      $_location, (*scopeAttrs)[0]);
   }];
   let assemblyFormat = "$scope attr-dict";
 }
@@ -468,7 +468,7 @@ class LLVM_ConstrainedIntr<string mnem, int numArgs,
         $_builder.getNamedAttr($_qualCppClassName::getRoundingModeAttrName(),
                                roundingModeAttr));
     }], true : "") # [{
-    $res = $_qualCppClassName::create($_builder, $_location,
+    $res = $_builder.create<$_qualCppClassName>($_location,
       $_resultType, mlirOperands, mlirAttrs);
   }];
 }
@@ -555,6 +555,8 @@ def LLVM_AssumeOp
 
   let builders = [
     OpBuilder<(ins "Value":$cond)>,
+    OpBuilder<(ins "Value":$cond,
+                   "ArrayRef<llvm::OperandBundleDefT<Value>>":$opBundles)>,
     OpBuilder<(ins "Value":$cond, "llvm::StringRef":$tag, "ValueRange":$args)>,
     OpBuilder<(ins "Value":$cond, "AssumeAlignTag":$tag, "Value":$ptr,
                    "Value":$align)>,
@@ -741,7 +743,7 @@ def LLVM_DbgLabelOp : LLVM_IntrOp<"dbg.label", [], [], [], 0> {
     // Drop the intrinsic if the label translation fails due to cylic metadata.
     if (!labelAttr)
       return success();
-    $_op = $_qualCppClassName::create($_builder, $_location, labelAttr);
+    $_op = $_builder.create<$_qualCppClassName>($_location, labelAttr);
   }];
   let assemblyFormat = "$label attr-dict";
 }
@@ -881,7 +883,7 @@ def LLVM_MatrixColumnMajorLoadOp : LLVM_OneResultIntrOp<"matrix.column.major.loa
       $columns);
   }];
   string mlirBuilder = [{
-    $res = LLVM::MatrixColumnMajorLoadOp::create($_builder,
+    $res = $_builder.create<LLVM::MatrixColumnMajorLoadOp>(
       $_location, $_resultType, $data, $stride,
       $_int_attr($isVolatile), $_int_attr($rows), $_int_attr($columns));
   }];
@@ -915,7 +917,7 @@ def LLVM_MatrixColumnMajorStoreOp : LLVM_ZeroResultIntrOp<"matrix.column.major.s
       $rows, $columns);
   }];
   string mlirBuilder = [{
-    $_op = LLVM::MatrixColumnMajorStoreOp::create($_builder,
+    $_op = $_builder.create<LLVM::MatrixColumnMajorStoreOp>(
       $_location, $matrix, $data, $stride,
       $_int_attr($isVolatile), $_int_attr($rows), $_int_attr($columns));
   }];
@@ -938,7 +940,7 @@ def LLVM_MatrixMultiplyOp : LLVM_OneResultIntrOp<"matrix.multiply"> {
       $rhs_columns);
   }];
   string mlirBuilder = [{
-    $res = LLVM::MatrixMultiplyOp::create($_builder,
+    $res = $_builder.create<LLVM::MatrixMultiplyOp>(
       $_location, $_resultType, $lhs, $rhs,
       $_int_attr($lhs_rows), $_int_attr($lhs_columns), $_int_attr($rhs_columns));
   }];
@@ -958,7 +960,7 @@ def LLVM_MatrixTransposeOp : LLVM_OneResultIntrOp<"matrix.transpose"> {
       $matrix, $rows, $columns);
   }];
   string mlirBuilder = [{
-    $res = LLVM::MatrixTransposeOp::create($_builder,
+    $res = $_builder.create<LLVM::MatrixTransposeOp>(
       $_location, $_resultType, $matrix,
       $_int_attr($rows), $_int_attr($columns));
   }];
@@ -995,7 +997,7 @@ def LLVM_MaskedLoadOp : LLVM_OneResultIntrOp<"masked.load"> {
   string mlirBuilder = [{
     auto *intrinInst = dyn_cast<llvm::IntrinsicInst>(inst);
     bool nontemporal = intrinInst->hasMetadata(llvm::LLVMContext::MD_nontemporal);
-    $res = LLVM::MaskedLoadOp::create($_builder, $_location,
+    $res = $_builder.create<LLVM::MaskedLoadOp>($_location,
       $_resultType, $data, $mask, $pass_thru, $_int_attr($alignment),
         nontemporal ? $_builder.getUnitAttr() : nullptr);
   }];
@@ -1015,7 +1017,7 @@ def LLVM_MaskedStoreOp : LLVM_ZeroResultIntrOp<"masked.store"> {
       $value, $data, llvm::Align($alignment), $mask);
   }];
   string mlirBuilder = [{
-    $_op = LLVM::MaskedStoreOp::create($_builder, $_location,
+    $_op = $_builder.create<LLVM::MaskedStoreOp>($_location,
       $value, $data, $mask, $_int_attr($alignment));
   }];
   list<int> llvmArgIndices = [0, 1, 3, 2];
@@ -1038,7 +1040,7 @@ def LLVM_masked_gather : LLVM_OneResultIntrOp<"masked.gather"> {
         $_resultType, $ptrs, llvm::Align($alignment), $mask, $pass_thru[0]);
   }];
   string mlirBuilder = [{
-    $res = LLVM::masked_gather::create($_builder, $_location,
+    $res = $_builder.create<LLVM::masked_gather>($_location,
       $_resultType, $ptrs, $mask, $pass_thru, $_int_attr($alignment));
   }];
   list<int> llvmArgIndices = [0, 2, 3, 1];
@@ -1059,7 +1061,7 @@ def LLVM_masked_scatter : LLVM_ZeroResultIntrOp<"masked.scatter"> {
       $value, $ptrs, llvm::Align($alignment), $mask);
   }];
   string mlirBuilder = [{
-    $_op = LLVM::masked_scatter::create($_builder, $_location,
+    $_op = $_builder.create<LLVM::masked_scatter>($_location,
       $value, $ptrs, $mask, $_int_attr($alignment));
   }];
   list<int> llvmArgIndices = [0, 1, 3, 2];

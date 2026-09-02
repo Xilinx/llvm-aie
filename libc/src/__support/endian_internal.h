@@ -9,9 +9,10 @@
 #ifndef LLVM_LIBC_SRC___SUPPORT_ENDIAN_INTERNAL_H
 #define LLVM_LIBC_SRC___SUPPORT_ENDIAN_INTERNAL_H
 
-#include "hdr/stdint_proxy.h"
-#include "src/__support/common.h"
+#include "common.h"
 #include "src/__support/macros/config.h"
+
+#include <stdint.h>
 
 namespace LIBC_NAMESPACE_DECL {
 

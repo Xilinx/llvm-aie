@@ -206,15 +206,21 @@ def CallAndMessageChecker : Checker<"CallAndMessage">,
   Documentation<HasDocumentation>,
   Dependencies<[CallAndMessageModeling]>;
 
+def DereferenceModeling : Checker<"DereferenceModeling">,
+  HelpText<"General support for dereference related checkers">,
+  Documentation<NotDocumented>,
+  Hidden;
+
 def FixedAddressDereferenceChecker
     : Checker<"FixedAddressDereference">,
       HelpText<"Check for dereferences of fixed addresses">,
-      Documentation<HasDocumentation>;
+      Documentation<HasDocumentation>,
+      Dependencies<[DereferenceModeling]>;
 
-def NullDereferenceChecker
-    : Checker<"NullDereference">,
-      HelpText<"Check for dereferences of null pointers">,
-      Documentation<HasDocumentation>;
+def NullDereferenceChecker : Checker<"NullDereference">,
+  HelpText<"Check for dereferences of null pointers">,
+  Documentation<HasDocumentation>,
+  Dependencies<[DereferenceModeling]>;
 
 def NonNullParamChecker : Checker<"NonNullParamChecker">,
   HelpText<"Check for null pointers passed as arguments to a function whose "
@@ -288,12 +294,10 @@ def TestAfterDivZeroChecker : Checker<"TestAfterDivZero">,
            "Either the comparison is useless or there is division by zero.">,
   Documentation<HasDocumentation>;
 
-def DynamicTypeChecker
-    : Checker<"DynamicTypeChecker">,
-      HelpText<"Check for cases where the dynamic and the static type of an "
-               "object are unrelated.">,
-      Dependencies<[DynamicTypePropagation]>,
-      Documentation<HasDocumentation>;
+def DynamicTypeChecker : Checker<"DynamicTypeChecker">,
+  HelpText<"Check for cases where the dynamic and the static type of an object "
+           "are unrelated.">,
+  Documentation<HasDocumentation>;
 
 def StackAddrAsyncEscapeChecker : Checker<"StackAddressAsyncEscape">,
   HelpText<"Check that addresses to stack memory do not escape the function">,
@@ -322,34 +326,39 @@ def StdVariantChecker : Checker<"StdVariant">,
 
 let ParentPackage = Nullability in {
 
-  def NullPassedToNonnullChecker
-      : Checker<"NullPassedToNonnull">,
-        HelpText<"Warns when a null pointer is passed to a pointer which has a "
-                 "_Nonnull type.">,
-        Documentation<HasDocumentation>;
+def NullabilityBase : Checker<"NullabilityBase">,
+  HelpText<"Stores information during the analysis about nullability.">,
+  Documentation<NotDocumented>,
+  Hidden;
 
-  def NullReturnedFromNonnullChecker
-      : Checker<"NullReturnedFromNonnull">,
-        HelpText<"Warns when a null pointer is returned from a function that "
-                 "has _Nonnull return type.">,
-        Documentation<HasDocumentation>;
+def NullPassedToNonnullChecker : Checker<"NullPassedToNonnull">,
+  HelpText<"Warns when a null pointer is passed to a pointer which has a "
+           "_Nonnull type.">,
+  Dependencies<[NullabilityBase]>,
+  Documentation<HasDocumentation>;
 
-  def NullableDereferencedChecker
-      : Checker<"NullableDereferenced">,
-        HelpText<"Warns when a nullable pointer is dereferenced.">,
-        Documentation<HasDocumentation>;
+def NullReturnedFromNonnullChecker : Checker<"NullReturnedFromNonnull">,
+  HelpText<"Warns when a null pointer is returned from a function that has "
+           "_Nonnull return type.">,
+  Dependencies<[NullabilityBase]>,
+  Documentation<HasDocumentation>;
 
-  def NullablePassedToNonnullChecker
-      : Checker<"NullablePassedToNonnull">,
-        HelpText<"Warns when a nullable pointer is passed to a pointer which "
-                 "has a _Nonnull type.">,
-        Documentation<HasDocumentation>;
+def NullableDereferencedChecker : Checker<"NullableDereferenced">,
+  HelpText<"Warns when a nullable pointer is dereferenced.">,
+  Dependencies<[NullabilityBase]>,
+  Documentation<HasDocumentation>;
 
-  def NullableReturnedFromNonnullChecker
-      : Checker<"NullableReturnedFromNonnull">,
-        HelpText<"Warns when a nullable pointer is returned from a function "
-                 "that has _Nonnull return type.">,
-        Documentation<NotDocumented>;
+def NullablePassedToNonnullChecker : Checker<"NullablePassedToNonnull">,
+  HelpText<"Warns when a nullable pointer is passed to a pointer which has a "
+           "_Nonnull type.">,
+  Dependencies<[NullabilityBase]>,
+  Documentation<HasDocumentation>;
+
+def NullableReturnedFromNonnullChecker : Checker<"NullableReturnedFromNonnull">,
+  HelpText<"Warns when a nullable pointer is returned from a function that has "
+           "_Nonnull return type.">,
+  Dependencies<[NullabilityBase]>,
+  Documentation<NotDocumented>;
 
 } // end "nullability"
 
@@ -1650,8 +1659,8 @@ def CloneChecker : Checker<"CloneChecker">,
 let ParentPackage = PortabilityOptIn in {
 
 def UnixAPIPortabilityChecker : Checker<"UnixAPI">,
-  HelpText<"Finds dynamic memory allocation with size zero">,
-  Documentation<HasDocumentation>;
+  HelpText<"Finds implementation-defined behavior in UNIX/Posix functions">,
+  Documentation<NotDocumented>;
 
 } // end optin.portability
 

@@ -78,9 +78,9 @@ void MoveConstArgCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-static bool isRValueReferenceParam(const Expr *Invocation,
-                                   const QualType *InvocationParmType,
-                                   const Expr *Arg) {
+bool isRValueReferenceParam(const Expr *Invocation,
+                            const QualType *InvocationParmType,
+                            const Expr *Arg) {
   if (Invocation && (*InvocationParmType)->isRValueReferenceType() &&
       Arg->isLValue()) {
     if (!Invocation->getType()->isRecordType())

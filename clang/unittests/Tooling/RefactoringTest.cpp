@@ -748,8 +748,7 @@ class NestedNameSpecifierAVisitor : public TestVisitor {
 public:
   bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNSLoc) override {
     if (NNSLoc.getNestedNameSpecifier()) {
-      if (const auto *NS = dyn_cast_if_present<NamespaceDecl>(
-              NNSLoc.getNestedNameSpecifier()->getAsNamespace())) {
+      if (const NamespaceDecl* NS = NNSLoc.getNestedNameSpecifier()->getAsNamespace()) {
         if (NS->getName() == "a") {
           Replace = Replacement(*SM, &NNSLoc, "", Context->getLangOpts());
         }

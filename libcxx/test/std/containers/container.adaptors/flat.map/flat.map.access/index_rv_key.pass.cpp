@@ -16,7 +16,6 @@
 #include <deque>
 #include <functional>
 #include <cassert>
-#include <type_traits>
 
 #include "MinSequenceContainer.h"
 #include "../helpers.h"
@@ -32,7 +31,7 @@ static_assert(CanIndex<std::flat_map<int, double>, int&&>);
 static_assert(!CanIndex<std::flat_map<int, NoDefaultCtr>, int&&>);
 
 template <class KeyContainer, class ValueContainer>
-constexpr void test() {
+void test() {
   {
     std::flat_map<MoveOnly, double, std::less<MoveOnly>, KeyContainer, ValueContainer> m;
     ASSERT_SAME_TYPE(decltype(m[MoveOnly{}]), double&);
@@ -50,18 +49,13 @@ constexpr void test() {
   }
 }
 
-constexpr bool test() {
+int main(int, char**) {
   test<std::vector<MoveOnly>, std::vector<double>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque<MoveOnly>, std::vector<double>>();
-  }
+  test<std::deque<MoveOnly>, std::vector<double>>();
   test<MinSequenceContainer<MoveOnly>, MinSequenceContainer<double>>();
   test<std::vector<MoveOnly, min_allocator<MoveOnly>>, std::vector<double, min_allocator<double>>>();
 
-  if (!TEST_IS_CONSTANT_EVALUATED) {
+  {
     auto index_func = [](auto& m, auto key_arg, auto value_arg) {
       using FlatMap                             = std::decay_t<decltype(m)>;
       typename FlatMap::key_type key            = key_arg;
@@ -70,14 +64,5 @@ constexpr bool test() {
     };
     test_emplace_exception_guarantee(index_func);
   }
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
-
   return 0;
 }

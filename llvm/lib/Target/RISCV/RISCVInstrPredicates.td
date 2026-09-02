@@ -54,8 +54,6 @@ def isSelectPseudo
                        Select_GPRNoX0_Using_CC_UImm5NonZero_QC,
                        Select_GPRNoX0_Using_CC_SImm16NonZero_QC,
                        Select_GPRNoX0_Using_CC_UImm16NonZero_QC,
-                       Select_GPR_Using_CC_UImmLog2XLen_NDS,
-                       Select_GPR_Using_CC_UImm7_NDS,
                        Select_FPR16_Using_CC_GPR,
                        Select_FPR16INX_Using_CC_GPR,
                        Select_FPR32_Using_CC_GPR,
@@ -72,7 +70,6 @@ def isVectorConfigInstr
                      CheckOpcode<[
                        PseudoVSETVLI,
                        PseudoVSETVLIX0,
-                       PseudoVSETVLIX0X0,
                        PseudoVSETIVLI
                      ]>>>;
 
@@ -80,7 +77,11 @@ def isVectorConfigInstr
 // VL and only sets VTYPE.
 def isVLPreservingConfig
     : TIIPredicate<"isVLPreservingConfig",
-                   MCReturnStatement<CheckOpcode<[PseudoVSETVLIX0X0]>>>;
+                   MCReturnStatement<
+                     CheckAll<[
+                       CheckOpcode<[PseudoVSETVLIX0]>,
+                       CheckRegOperand<0, X0>
+                     ]>>>;
 
 def isFloatScalarMoveOrScalarSplatInstr
     : TIIPredicate<"isFloatScalarMoveOrScalarSplatInstr",
@@ -130,13 +131,6 @@ def isVSlideInstr
                       !instances<Pseudo>("^PseudoVSLIDEUP_VX.*"),
                       !instances<Pseudo>("^PseudoVSLIDEUP_VI.*")
                      ])>>>;
-
-def isFaultOnlyFirstLoad
-    : TIIPredicate<"isFaultOnlyFirstLoad",
-                    MCReturnStatement<
-                      CheckOpcode<
-                       !instances<Pseudo>(
-                          "^PseudoVL(SEG[2-8])?E(8|16|32|64)FF_V.*")>>>;
 
 def isNonZeroLoadImmediate
     : TIIPredicate<"isNonZeroLoadImmediate",

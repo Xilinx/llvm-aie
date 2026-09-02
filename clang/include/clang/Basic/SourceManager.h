@@ -719,8 +719,6 @@ class SourceManager : public RefCountedBase<SourceManager> {
   /// Positive FileIDs are indexes into this table. Entry 0 indicates an invalid
   /// expansion.
   SmallVector<SrcMgr::SLocEntry, 0> LocalSLocEntryTable;
-  /// An in-parallel offset table, merely used for speeding up FileID lookup.
-  SmallVector<SourceLocation::UIntTy> LocalLocOffsetTable;
 
   /// The table of SLocEntries that are loaded from other modules.
   ///
@@ -769,8 +767,6 @@ class SourceManager : public RefCountedBase<SourceManager> {
   /// LastFileIDLookup records the last FileID looked up or created, because it
   /// is very common to look up many tokens from the same file.
   mutable FileID LastFileIDLookup;
-  mutable SourceLocation::UIntTy LastLookupStartOffset;
-  mutable SourceLocation::UIntTy LastLookupEndOffset; // exclude
 
   /// Holds information for \#line directives.
   ///
@@ -799,7 +795,7 @@ class SourceManager : public RefCountedBase<SourceManager> {
   ///
   /// Used to cache results from and speed-up \c getDecomposedIncludedLoc
   /// function.
-  mutable llvm::DenseMap<FileID, FileIDAndOffset> IncludedLocMap;
+  mutable llvm::DenseMap<FileID, std::pair<FileID, unsigned>> IncludedLocMap;
 
   /// The key value into the IsBeforeInTUCache table.
   using IsBeforeInTUCacheKey = std::pair<FileID, FileID>;
@@ -1273,7 +1269,7 @@ public:
   ///
   /// The first element is the FileID, the second is the offset from the
   /// start of the buffer of the location.
-  FileIDAndOffset getDecomposedLoc(SourceLocation Loc) const {
+  std::pair<FileID, unsigned> getDecomposedLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
     auto *Entry = getSLocEntryOrNull(FID);
     if (!Entry)
@@ -1285,7 +1281,8 @@ public:
   ///
   /// If the location is an expansion record, walk through it until we find
   /// the final location expanded.
-  FileIDAndOffset getDecomposedExpansionLoc(SourceLocation Loc) const {
+  std::pair<FileID, unsigned>
+  getDecomposedExpansionLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
     auto *E = getSLocEntryOrNull(FID);
     if (!E)
@@ -1302,7 +1299,8 @@ public:
   ///
   /// If the location is an expansion record, walk through it until we find
   /// its spelling record.
-  FileIDAndOffset getDecomposedSpellingLoc(SourceLocation Loc) const {
+  std::pair<FileID, unsigned>
+  getDecomposedSpellingLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
     auto *E = getSLocEntryOrNull(FID);
     if (!E)
@@ -1316,7 +1314,7 @@ public:
 
   /// Returns the "included/expanded in" decomposed location of the given
   /// FileID.
-  FileIDAndOffset getDecomposedIncludedLoc(FileID FID) const;
+  std::pair<FileID, unsigned> getDecomposedIncludedLoc(FileID FID) const;
 
   /// Returns the offset from the start of the file that the
   /// specified SourceLocation represents.
@@ -1684,8 +1682,8 @@ public:
   ///          are in the same TU. The second bool is true if the first is true
   ///          and \p LOffs is before \p ROffs.
   std::pair<bool, bool>
-  isInTheSameTranslationUnit(FileIDAndOffset &LOffs,
-                             FileIDAndOffset &ROffs) const;
+  isInTheSameTranslationUnit(std::pair<FileID, unsigned> &LOffs,
+                             std::pair<FileID, unsigned> &ROffs) const;
 
   /// \param Loc a source location in a loaded AST (of a PCH/Module file).
   /// \returns a FileID uniquely identifies the AST of a loaded
@@ -1693,8 +1691,9 @@ public:
   FileID getUniqueLoadedASTFileID(SourceLocation Loc) const;
 
   /// Determines whether the two decomposed source location is in the same TU.
-  bool isInTheSameTranslationUnitImpl(const FileIDAndOffset &LOffs,
-                                      const FileIDAndOffset &ROffs) const;
+  bool isInTheSameTranslationUnitImpl(
+      const std::pair<FileID, unsigned> &LOffs,
+      const std::pair<FileID, unsigned> &ROffs) const;
 
   /// Determines the order of 2 source locations in the "source location
   /// address space".
@@ -1905,8 +1904,9 @@ private:
 
   FileID getFileID(SourceLocation::UIntTy SLocOffset) const {
     // If our one-entry cache covers this offset, just return it.
-    if (SLocOffset >= LastLookupStartOffset && SLocOffset < LastLookupEndOffset)
+    if (isOffsetInFileID(LastFileIDLookup, SLocOffset))
       return LastFileIDLookup;
+
     return getFileIDSlow(SLocOffset);
   }
 
@@ -1979,10 +1979,11 @@ private:
   SourceLocation getSpellingLocSlowCase(SourceLocation Loc) const;
   SourceLocation getFileLocSlowCase(SourceLocation Loc) const;
 
-  FileIDAndOffset
+  std::pair<FileID, unsigned>
   getDecomposedExpansionLocSlowCase(const SrcMgr::SLocEntry *E) const;
-  FileIDAndOffset getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
-                                                   unsigned Offset) const;
+  std::pair<FileID, unsigned>
+  getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
+                                   unsigned Offset) const;
   void computeMacroArgsCache(MacroArgsMap &MacroArgsCache, FileID FID) const;
   void associateFileChunkWithMacroArgExp(MacroArgsMap &MacroArgsCache,
                                          FileID FID,

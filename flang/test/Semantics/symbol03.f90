@@ -1,23 +1,23 @@
 ! RUN: %python %S/test_symbols.py %s %flang_fc1
 ! Test host association in internal subroutine of main program.
 
-!DEF: /MAIN MainProgram
-program MAIN
- !DEF: /MAIN/x ObjectEntity INTEGER(4)
+!DEF: /main MainProgram
+program main
+ !DEF: /main/x ObjectEntity INTEGER(4)
  integer x
- !DEF: /MAIN/s (Subroutine) Subprogram
+ !DEF: /main/s (Subroutine) Subprogram
  call s
 contains
- !REF: /MAIN/s
+ !REF: /main/s
  subroutine s
-  !DEF: /MAIN/s/y (Implicit) ObjectEntity REAL(4)
-  !DEF: /MAIN/s/x HostAssoc INTEGER(4)
+  !DEF: /main/s/y (Implicit) ObjectEntity REAL(4)
+  !DEF: /main/s/x HostAssoc INTEGER(4)
   y = x
  contains
-  !DEF: /MAIN/s/s2 (Subroutine) Subprogram
+  !DEF: /main/s/s2 (Subroutine) Subprogram
   subroutine s2
-   !DEF: /MAIN/s/s2/z (Implicit) ObjectEntity REAL(4)
-   !DEF: /MAIN/s/s2/x HostAssoc INTEGER(4)
+   !DEF: /main/s/s2/z (Implicit) ObjectEntity REAL(4)
+   !DEF: /main/s/s2/x HostAssoc INTEGER(4)
    z = x
   end subroutine
  end subroutine

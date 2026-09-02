@@ -10,7 +10,6 @@
 
 #include "src/__support/OSUtil/fcntl.h"
 #include "src/__support/common.h"
-#include "src/__support/libc_errno.h"
 #include "src/__support/macros/config.h"
 
 #include <stdarg.h>
@@ -23,14 +22,7 @@ LLVM_LIBC_FUNCTION(int, fcntl, (int fd, int cmd, ...)) {
   va_start(varargs, cmd);
   arg = va_arg(varargs, void *);
   va_end(varargs);
-
-  auto result = LIBC_NAMESPACE::internal::fcntl(fd, cmd, arg);
-
-  if (!result.has_value()) {
-    libc_errno = result.error();
-    return -1;
-  }
-  return result.value();
+  return LIBC_NAMESPACE::internal::fcntl(fd, cmd, arg);
 }
 
 } // namespace LIBC_NAMESPACE_DECL

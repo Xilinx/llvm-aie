@@ -202,8 +202,8 @@ MachineBlockFrequencyInfo::MachineBlockFrequencyInfo(
     MachineBlockFrequencyInfo &&) = default;
 
 MachineBlockFrequencyInfo::MachineBlockFrequencyInfo(
-    const MachineFunction &F, const MachineBranchProbabilityInfo &MBPI,
-    const MachineLoopInfo &MLI) {
+    MachineFunction &F, MachineBranchProbabilityInfo &MBPI,
+    MachineLoopInfo &MLI) {
   calculate(F, MBPI, MLI);
 }
 

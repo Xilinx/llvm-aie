@@ -273,7 +273,7 @@ protected:
   unsigned HasBuiltinMSVaList : 1;
 
   LLVM_PREFERRED_TYPE(bool)
-  unsigned HasAArch64ACLETypes : 1;
+  unsigned HasAArch64SVETypes : 1;
 
   LLVM_PREFERRED_TYPE(bool)
   unsigned HasRISCVVTypes : 1;
@@ -291,8 +291,6 @@ protected:
   std::optional<unsigned> MaxBitIntWidth;
 
   std::optional<llvm::Triple> DarwinTargetVariantTriple;
-
-  bool HasMicrosoftRecordLayout = false;
 
   // TargetInfo Constructor.  Default initializes all fields.
   TargetInfo(const llvm::Triple &T);
@@ -339,6 +337,10 @@ public:
     /// __builtin_va_list as defined by the AArch64 ABI
     /// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055a/IHI0055A_aapcs64.pdf
     AArch64ABIBuiltinVaList,
+
+    /// __builtin_va_list as defined by the PNaCl ABI:
+    /// http://www.chromium.org/nativeclient/pnacl/bitcode-abi#TOC-Machine-Types
+    PNaClABIBuiltinVaList,
 
     /// __builtin_va_list as defined by the Power ABI:
     /// https://www.power.org
@@ -1046,15 +1048,9 @@ public:
   /// set of primary and secondary targets.
   virtual llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const = 0;
 
-  enum class ArmStreamingKind {
-    NotStreaming,
-    StreamingCompatible,
-    Streaming,
-  };
-
   /// Returns target-specific min and max values VScale_Range.
   virtual std::optional<std::pair<unsigned, unsigned>>
-  getVScaleRange(const LangOptions &LangOpts, ArmStreamingKind Mode,
+  getVScaleRange(const LangOptions &LangOpts, bool IsArmStreamingFunction,
                  llvm::StringMap<bool> *FeatureMap = nullptr) const {
     return std::nullopt;
   }
@@ -1073,9 +1069,9 @@ public:
   /// available on this target.
   bool hasBuiltinMSVaList() const { return HasBuiltinMSVaList; }
 
-  /// Returns whether or not the AArch64 ACLE built-in types are
+  /// Returns whether or not the AArch64 SVE built-in types are
   /// available on this target.
-  bool hasAArch64ACLETypes() const { return HasAArch64ACLETypes; }
+  bool hasAArch64SVETypes() const { return HasAArch64SVETypes; }
 
   /// Returns whether or not the RISC-V V built-in types are
   /// available on this target.
@@ -1343,8 +1339,7 @@ public:
   /// Apply changes to the target information with respect to certain
   /// language options which change the target configuration and adjust
   /// the language based on the target options where applicable.
-  virtual void adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-                      const TargetInfo *Aux);
+  virtual void adjust(DiagnosticsEngine &Diags, LangOptions &Opts);
 
   /// Initialize the map with the default set of target features for the
   /// CPU this should include all legal feature strings on the target.
@@ -1565,8 +1560,8 @@ public:
 
   // Return the target-specific priority for features/cpus/vendors so
   // that they can be properly sorted for checking.
-  virtual llvm::APInt getFMVPriority(ArrayRef<StringRef> Features) const {
-    return llvm::APInt::getZero(32);
+  virtual uint64_t getFMVPriority(ArrayRef<StringRef> Features) const {
+    return 0;
   }
 
   // Validate the contents of the __builtin_cpu_is(const char*)
@@ -1712,11 +1707,8 @@ public:
   /// Controls if __arithmetic_fence is supported in the targeted backend.
   virtual bool checkArithmeticFenceSupported() const { return false; }
 
-  /// Gets the default calling convention for the given target.
-  ///
-  /// This function does not take into account any user options to override the
-  /// default calling convention. For that, see
-  /// ASTContext::getDefaultCallingConvention().
+  /// Gets the default calling convention for the given target and
+  /// declaration context.
   virtual CallingConv getDefaultCallingConv() const {
     // Not all targets will specify an explicit calling convention that we can
     // express.  This will always do the right thing, even though it's not
@@ -1862,8 +1854,6 @@ public:
 
   virtual void setAuxTarget(const TargetInfo *Aux) {}
 
-  bool hasMicrosoftRecordLayout() const { return HasMicrosoftRecordLayout; }
-
   /// Whether target allows debuginfo types for decl only variables/functions.
   virtual bool allowDebugInfoForExternalRef() const { return false; }
 
@@ -1875,7 +1865,7 @@ public:
 
   /// Returns the version of the darwin target variant SDK which was used during
   /// the compilation if one was specified, or an empty version otherwise.
-  std::optional<VersionTuple> getDarwinTargetVariantSDKVersion() const {
+  const std::optional<VersionTuple> getDarwinTargetVariantSDKVersion() const {
     return !getTargetOpts().DarwinTargetVariantSDKVersion.empty()
                ? getTargetOpts().DarwinTargetVariantSDKVersion
                : std::optional<VersionTuple>();

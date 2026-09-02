@@ -10,7 +10,7 @@
 
 // <list>
 
-// iterator insert(const_iterator position, value_type&& x); // constexpr since C++26
+// iterator insert(const_iterator position, value_type&& x);
 
 #include <list>
 #include <cassert>
@@ -19,7 +19,7 @@
 #include "MoveOnly.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     std::list<MoveOnly> l1;
     l1.insert(l1.cend(), MoveOnly(1));
@@ -40,15 +40,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(l1.front() == MoveOnly(2));
     assert(l1.back() == MoveOnly(1));
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

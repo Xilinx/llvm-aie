@@ -6,11 +6,4 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_WORKITEM_GET_GLOBAL_OFFSET_H__
-#define __CLC_OPENCL_WORKITEM_GET_GLOBAL_OFFSET_H__
-
-#include <clc/opencl/opencl-base.h>
-
 _CLC_DECL _CLC_OVERLOAD size_t get_global_offset(uint dim);
-
-#endif // __CLC_OPENCL_WORKITEM_GET_GLOBAL_OFFSET_H__

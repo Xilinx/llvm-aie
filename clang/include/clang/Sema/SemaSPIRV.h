@@ -21,8 +21,7 @@ class SemaSPIRV : public SemaBase {
 public:
   SemaSPIRV(Sema &S);
 
-  bool CheckSPIRVBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
-                                     CallExpr *TheCall);
+  bool CheckSPIRVBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
 };
 } // namespace clang
 

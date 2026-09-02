@@ -85,8 +85,3 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   DwarfUsesRelocationsAcrossSections = false;
   SetDirectiveSuppressesReloc = true;
 }
-
-bool MCAsmInfoDarwin::useCodeAlign(const MCSection &Sec) const {
-  return static_cast<const MCSectionMachO &>(Sec).hasAttribute(
-      MachO::S_ATTR_PURE_INSTRUCTIONS);
-}

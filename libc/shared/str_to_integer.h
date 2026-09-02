@@ -9,7 +9,6 @@
 #ifndef LLVM_LIBC_SHARED_STR_TO_INTEGER_H
 #define LLVM_LIBC_SHARED_STR_TO_INTEGER_H
 
-#include "libc_common.h"
 #include "src/__support/str_to_integer.h"
 
 namespace LIBC_NAMESPACE_DECL {

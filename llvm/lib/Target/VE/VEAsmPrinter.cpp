@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/VEInstPrinter.h"
-#include "MCTargetDesc/VEMCAsmInfo.h"
+#include "MCTargetDesc/VEMCExpr.h"
 #include "MCTargetDesc/VETargetStreamer.h"
 #include "TargetInfo/VETargetInfo.h"
 #include "VE.h"
@@ -28,7 +28,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -68,17 +67,18 @@ public:
 };
 } // end of anonymous namespace
 
-static MCOperand createVEMCOperand(VE::Specifier Kind, MCSymbol *Sym,
+static MCOperand createVEMCOperand(VEMCExpr::Specifier Kind, MCSymbol *Sym,
                                    MCContext &OutContext) {
   const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::create(Sym, OutContext);
-  return MCOperand::createExpr(
-      MCSpecifierExpr::create(MCSym, Kind, OutContext));
+  const VEMCExpr *expr = VEMCExpr::create(Kind, MCSym, OutContext);
+  return MCOperand::createExpr(expr);
 }
 
-static MCOperand createGOTRelExprOp(VE::Specifier Kind, MCSymbol *GOTLabel,
-                                    MCContext &OutContext) {
+static MCOperand createGOTRelExprOp(VEMCExpr::Specifier Kind,
+                                    MCSymbol *GOTLabel, MCContext &OutContext) {
   const MCSymbolRefExpr *GOT = MCSymbolRefExpr::create(GOTLabel, OutContext);
-  return MCOperand::createExpr(MCSpecifierExpr::create(GOT, Kind, OutContext));
+  const VEMCExpr *expr = VEMCExpr::create(Kind, GOT, OutContext);
+  return MCOperand::createExpr(expr);
 }
 
 static void emitSIC(MCStreamer &OutStreamer, MCOperand &RD,
@@ -166,8 +166,9 @@ static void emitANDrm(MCStreamer &OutStreamer, MCOperand &RS1, MCOperand &Imm,
 }
 
 static void emitHiLo(MCStreamer &OutStreamer, MCSymbol *GOTSym,
-                     VE::Specifier HiKind, VE::Specifier LoKind, MCOperand &RD,
-                     MCContext &OutContext, const MCSubtargetInfo &STI) {
+                     VEMCExpr::Specifier HiKind, VEMCExpr::Specifier LoKind,
+                     MCOperand &RD, MCContext &OutContext,
+                     const MCSubtargetInfo &STI) {
 
   MCOperand hi = createVEMCOperand(HiKind, GOTSym, OutContext);
   MCOperand lo = createVEMCOperand(LoKind, GOTSym, OutContext);
@@ -193,8 +194,8 @@ void VEAsmPrinter::lowerGETGOTAndEmitMCInsts(const MachineInstr *MI,
     case CodeModel::Small:
     case CodeModel::Medium:
     case CodeModel::Large:
-      emitHiLo(*OutStreamer, GOTLabel, VE::S_HI32, VE::S_LO32, MCRegOP,
-               OutContext, STI);
+      emitHiLo(*OutStreamer, GOTLabel, VEMCExpr::VK_HI32, VEMCExpr::VK_LO32,
+               MCRegOP, OutContext, STI);
       break;
     }
     return;
@@ -208,12 +209,14 @@ void VEAsmPrinter::lowerGETGOTAndEmitMCInsts(const MachineInstr *MI,
   // sic %plt
   // lea.sl %got, _GLOBAL_OFFSET_TABLE_@PC_HI(%plt, %got)
   MCOperand cim24 = MCOperand::createImm(-24);
-  MCOperand loImm = createGOTRelExprOp(VE::S_PC_LO32, GOTLabel, OutContext);
+  MCOperand loImm =
+      createGOTRelExprOp(VEMCExpr::VK_PC_LO32, GOTLabel, OutContext);
   emitLEAzii(*OutStreamer, cim24, loImm, MCRegOP, STI);
   MCOperand M032 = MCOperand::createImm(M0(32));
   emitANDrm(*OutStreamer, MCRegOP, M032, MCRegOP, STI);
   emitSIC(*OutStreamer, RegPLT, STI);
-  MCOperand hiImm = createGOTRelExprOp(VE::S_PC_HI32, GOTLabel, OutContext);
+  MCOperand hiImm =
+      createGOTRelExprOp(VEMCExpr::VK_PC_HI32, GOTLabel, OutContext);
   emitLEASLrri(*OutStreamer, RegGOT, RegPLT, hiImm, MCRegOP, STI);
 }
 
@@ -254,12 +257,14 @@ void VEAsmPrinter::lowerGETFunPLTAndEmitMCInsts(const MachineInstr *MI,
   // sic %plt                            ; FIXME: is it safe to use %plt here?
   // lea.sl %dst, func@plt_hi(%plt, %dst)
   MCOperand cim24 = MCOperand::createImm(-24);
-  MCOperand loImm = createGOTRelExprOp(VE::S_PLT_LO32, AddrSym, OutContext);
+  MCOperand loImm =
+      createGOTRelExprOp(VEMCExpr::VK_PLT_LO32, AddrSym, OutContext);
   emitLEAzii(*OutStreamer, cim24, loImm, MCRegOP, STI);
   MCOperand M032 = MCOperand::createImm(M0(32));
   emitANDrm(*OutStreamer, MCRegOP, M032, MCRegOP, STI);
   emitSIC(*OutStreamer, RegPLT, STI);
-  MCOperand hiImm = createGOTRelExprOp(VE::S_PLT_HI32, AddrSym, OutContext);
+  MCOperand hiImm =
+      createGOTRelExprOp(VEMCExpr::VK_PLT_HI32, AddrSym, OutContext);
   emitLEASLrri(*OutStreamer, MCRegOP, RegPLT, hiImm, MCRegOP, STI);
 }
 
@@ -300,20 +305,22 @@ void VEAsmPrinter::lowerGETTLSAddrAndEmitMCInsts(const MachineInstr *MI,
   // lea.sl %s12, __tls_get_addr@plt_hi(%s12, %lr)
   // bsic %lr, (, %s12)
   MCOperand cim24 = MCOperand::createImm(-24);
-  MCOperand loImm = createGOTRelExprOp(VE::S_TLS_GD_LO32, AddrSym, OutContext);
+  MCOperand loImm =
+      createGOTRelExprOp(VEMCExpr::VK_TLS_GD_LO32, AddrSym, OutContext);
   emitLEAzii(*OutStreamer, cim24, loImm, RegS0, STI);
   MCOperand M032 = MCOperand::createImm(M0(32));
   emitANDrm(*OutStreamer, RegS0, M032, RegS0, STI);
   emitSIC(*OutStreamer, RegLR, STI);
-  MCOperand hiImm = createGOTRelExprOp(VE::S_TLS_GD_HI32, AddrSym, OutContext);
+  MCOperand hiImm =
+      createGOTRelExprOp(VEMCExpr::VK_TLS_GD_HI32, AddrSym, OutContext);
   emitLEASLrri(*OutStreamer, RegS0, RegLR, hiImm, RegS0, STI);
   MCOperand ci8 = MCOperand::createImm(8);
   MCOperand loImm2 =
-      createGOTRelExprOp(VE::S_PLT_LO32, GetTLSLabel, OutContext);
+      createGOTRelExprOp(VEMCExpr::VK_PLT_LO32, GetTLSLabel, OutContext);
   emitLEAzii(*OutStreamer, ci8, loImm2, RegS12, STI);
   emitANDrm(*OutStreamer, RegS12, M032, RegS12, STI);
   MCOperand hiImm2 =
-      createGOTRelExprOp(VE::S_PLT_HI32, GetTLSLabel, OutContext);
+      createGOTRelExprOp(VEMCExpr::VK_PLT_HI32, GetTLSLabel, OutContext);
   emitLEASLrri(*OutStreamer, RegS12, RegLR, hiImm2, RegS12, STI);
   emitBSIC(*OutStreamer, RegLR, RegS12, STI);
 }
@@ -420,6 +427,6 @@ INITIALIZE_PASS(VEAsmPrinter, "ve-asm-printer", "VE Assembly Printer", false,
                 false)
 
 // Force static initialization.
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeVEAsmPrinter() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeVEAsmPrinter() {
   RegisterAsmPrinter<VEAsmPrinter> X(getTheVETarget());
 }

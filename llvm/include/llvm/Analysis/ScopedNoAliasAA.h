@@ -17,7 +17,6 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 
 namespace llvm {
@@ -37,18 +36,15 @@ public:
     return false;
   }
 
-  LLVM_ABI AliasResult alias(const MemoryLocation &LocA,
-                             const MemoryLocation &LocB, AAQueryInfo &AAQI,
-                             const Instruction *CtxI);
-  LLVM_ABI ModRefInfo getModRefInfo(const CallBase *Call,
-                                    const MemoryLocation &Loc,
-                                    AAQueryInfo &AAQI);
-  LLVM_ABI ModRefInfo getModRefInfo(const CallBase *Call1,
-                                    const CallBase *Call2, AAQueryInfo &AAQI);
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB,
+                    AAQueryInfo &AAQI, const Instruction *CtxI);
+  ModRefInfo getModRefInfo(const CallBase *Call, const MemoryLocation &Loc,
+                           AAQueryInfo &AAQI);
+  ModRefInfo getModRefInfo(const CallBase *Call1, const CallBase *Call2,
+                           AAQueryInfo &AAQI);
 
-  LLVM_ABI void
-  collectScopedDomains(const MDNode *NoAlias,
-                       SmallPtrSetImpl<const MDNode *> &Domains) const;
+  void collectScopedDomains(const MDNode *NoAlias,
+                            SmallPtrSetImpl<const MDNode *> &Domains) const;
 
 private:
   bool mayAliasInScopes(const MDNode *Scopes, const MDNode *NoAlias) const;
@@ -58,16 +54,16 @@ private:
 class ScopedNoAliasAA : public AnalysisInfoMixin<ScopedNoAliasAA> {
   friend AnalysisInfoMixin<ScopedNoAliasAA>;
 
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   using Result = ScopedNoAliasAAResult;
 
-  LLVM_ABI ScopedNoAliasAAResult run(Function &F, FunctionAnalysisManager &AM);
+  ScopedNoAliasAAResult run(Function &F, FunctionAnalysisManager &AM);
 };
 
 /// Legacy wrapper pass to provide the ScopedNoAliasAAResult object.
-class LLVM_ABI ScopedNoAliasAAWrapperPass : public ImmutablePass {
+class ScopedNoAliasAAWrapperPass : public ImmutablePass {
   std::unique_ptr<ScopedNoAliasAAResult> Result;
 
 public:
@@ -88,7 +84,7 @@ public:
 // createScopedNoAliasAAWrapperPass - This pass implements metadata-based
 // scoped noalias analysis.
 //
-LLVM_ABI ImmutablePass *createScopedNoAliasAAWrapperPass();
+ImmutablePass *createScopedNoAliasAAWrapperPass();
 
 } // end namespace llvm
 

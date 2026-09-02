@@ -40,7 +40,7 @@ program main
     procedure, nopass :: b => s
   end type
 
-  ! WARNING: A derived type with the BIND attribute should not be empty [-Wempty-bind-c-derived-type]
+  ! WARNING: A derived type with the BIND attribute should not be empty
   type, bind(c) :: t5
   end type
 
@@ -71,7 +71,7 @@ program main
   end type
 
   type, bind(c) :: t10
-    !WARNING: A CHARACTER component of an interoperable type should have length 1 [-Wbind-c-char-length]
+    !WARNING: A CHARACTER component of an interoperable type should have length 1
     character(len=2) x
   end type
   type, bind(c) :: t11
@@ -79,7 +79,7 @@ program main
     character(kind=2) x
   end type
   type, bind(c) :: t12
-    !PORTABILITY: A LOGICAL component of an interoperable type should have the interoperable KIND=C_BOOL [-Wlogical-vs-c-bool]
+    !PORTABILITY: A LOGICAL component of an interoperable type should have the interoperable KIND=C_BOOL
     logical(kind=8) x
   end type
   type, bind(c) :: t13

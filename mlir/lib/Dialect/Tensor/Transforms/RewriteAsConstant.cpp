@@ -196,7 +196,7 @@ struct PadOpToConstant final : public OpRewritePattern<PadOp> {
                                          "tensor type not supported");
 
     if (newOp.getType() != resultType)
-      newOp = tensor::CastOp::create(rewriter, loc, resultType, newOp);
+      newOp = rewriter.create<tensor::CastOp>(loc, resultType, newOp);
 
     rewriter.replaceOp(padTensorOp, newOp);
     return success();

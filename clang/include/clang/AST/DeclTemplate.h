@@ -139,8 +139,10 @@ public:
   unsigned size() const { return NumParams; }
   bool empty() const { return NumParams == 0; }
 
-  ArrayRef<NamedDecl *> asArray() { return {begin(), end()}; }
-  ArrayRef<const NamedDecl *> asArray() const { return {begin(), size()}; }
+  ArrayRef<NamedDecl *> asArray() { return llvm::ArrayRef(begin(), end()); }
+  ArrayRef<const NamedDecl*> asArray() const {
+    return llvm::ArrayRef(begin(), size());
+  }
 
   NamedDecl* getParam(unsigned Idx) {
     assert(Idx < size() && "Template parameter index out-of-range");
@@ -277,7 +279,7 @@ public:
 
   /// Produce this as an array ref.
   ArrayRef<TemplateArgument> asArray() const {
-    return getTrailingObjects(size());
+    return llvm::ArrayRef(data(), size());
   }
 
   /// Retrieve the number of template arguments in this
@@ -285,7 +287,9 @@ public:
   unsigned size() const { return NumArguments; }
 
   /// Retrieve a pointer to the template argument list.
-  const TemplateArgument *data() const { return getTrailingObjects(); }
+  const TemplateArgument *data() const {
+    return getTrailingObjects<TemplateArgument>();
+  }
 };
 
 void *allocateDefaultArgStorageChain(const ASTContext &C);
@@ -501,10 +505,12 @@ private:
         TemplateArgumentsAsWritten(TemplateArgsAsWritten),
         PointOfInstantiation(POI) {
     if (MSInfo)
-      getTrailingObjects()[0] = MSInfo;
+      getTrailingObjects<MemberSpecializationInfo *>()[0] = MSInfo;
   }
 
-  size_t numTrailingObjects() const { return Function.getInt(); }
+  size_t numTrailingObjects(OverloadToken<MemberSpecializationInfo*>) const {
+    return Function.getInt();
+  }
 
 public:
   friend TrailingObjects;
@@ -591,7 +597,9 @@ public:
   /// function and the function template, and should always be
   /// TSK_ExplicitSpecialization whenever we have MemberSpecializationInfo.
   MemberSpecializationInfo *getMemberSpecializationInfo() const {
-    return numTrailingObjects() ? getTrailingObjects()[0] : nullptr;
+    return numTrailingObjects(OverloadToken<MemberSpecializationInfo *>())
+               ? getTrailingObjects<MemberSpecializationInfo *>()[0]
+               : nullptr;
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -770,7 +778,7 @@ protected:
 
   void loadLazySpecializationsImpl(bool OnlyPartial = false) const;
 
-  bool loadLazySpecializationsImpl(ArrayRef<TemplateArgument> Args,
+  bool loadLazySpecializationsImpl(llvm::ArrayRef<TemplateArgument> Args,
                                    TemplateParameterList *TPL = nullptr) const;
 
   template <class EntryType, typename... ProfileArguments>

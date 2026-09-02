@@ -85,10 +85,11 @@ module attributes {
       // CHECK: spirv.Load "StorageBuffer"
       %val = memref.load %arg0[%idx0] : memref<2xi32>
       // CHECK: spirv.CompositeInsert
-      %vec = vector.insert %val, %vec0[%idx0] : i32 into vector<2xi32>
+      %vec = vector.insertelement %val, %vec0[%idx0 : index] : vector<2xi32>
       // CHECK: spirv.VectorShuffle
       %shuffle = vector.shuffle %vec, %vec[3, 2, 1, 0] : vector<2xi32>, vector<2xi32>
-      %res = vector.extract %shuffle[%idx0] : i32 from vector<4xi32>
+      // CHECK: spirv.CompositeExtract
+      %res = vector.extractelement %shuffle[%idx0 : index] : vector<4xi32>
       // CHECK: spirv.AccessChain
       // CHECK: spirv.Store "StorageBuffer"
       memref.store %res, %arg1[%idx0]: memref<4xi32>
@@ -101,9 +102,9 @@ module attributes {
   // CHECK-SAME: %{{.*}}: memref<2xi32>, %{{.*}}: memref<4xi32>
   // CHECK:      arith.constant
   // CHECK:      memref.load
-  // CHECK:      vector.insert
+  // CHECK:      vector.insertelement
   // CHECK:      vector.shuffle
-  // CHECK:      vector.extract
+  // CHECK:      vector.extractelement
   // CHECK:      memref.store
   // CHECK:      gpu.return
 }

@@ -20,11 +20,9 @@ class raw_ostream;
 class LoopAccessInfoPrinterPass
     : public PassInfoMixin<LoopAccessInfoPrinterPass> {
   raw_ostream &OS;
-  bool AllowPartial;
 
 public:
-  explicit LoopAccessInfoPrinterPass(raw_ostream &OS, bool AllowPartial)
-      : OS(OS), AllowPartial(AllowPartial) {}
+  explicit LoopAccessInfoPrinterPass(raw_ostream &OS) : OS(OS) {}
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };

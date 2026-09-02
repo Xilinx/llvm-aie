@@ -131,6 +131,7 @@ static_library("LLVMAMDGPUCodeGen") {
   sources = [
     "AMDGPUAliasAnalysis.cpp",
     "AMDGPUAlwaysInlinePass.cpp",
+    "AMDGPUAnnotateKernelFeatures.cpp",
     "AMDGPUAnnotateUniformValues.cpp",
     "AMDGPUArgumentUsageInfo.cpp",
     "AMDGPUAsanInstrumentation.cpp",
@@ -176,7 +177,6 @@ static_library("LLVMAMDGPUCodeGen") {
     "AMDGPUPreLegalizerCombiner.cpp",
     "AMDGPUPreloadKernArgProlog.cpp",
     "AMDGPUPreloadKernelArguments.cpp",
-    "AMDGPUPrepareAGPRAlloc.cpp",
     "AMDGPUPrintfRuntimeBinding.cpp",
     "AMDGPUPromoteAlloca.cpp",
     "AMDGPUPromoteKernelArguments.cpp",
@@ -189,7 +189,6 @@ static_library("LLVMAMDGPUCodeGen") {
     "AMDGPURemoveIncompatibleFunctions.cpp",
     "AMDGPUReserveWWMRegs.cpp",
     "AMDGPUResourceUsageAnalysis.cpp",
-    "AMDGPURewriteAGPRCopyMFMA.cpp",
     "AMDGPURewriteOutArguments.cpp",
     "AMDGPURewriteUndefForPHI.cpp",
     "AMDGPUSelectionDAGInfo.cpp",

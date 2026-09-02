@@ -231,7 +231,8 @@ define i64 @test_floor_ui64(double %x) nounwind {
 ; RV32IZFINXZDINX-NEXT:    neg s2, a0
 ; RV32IZFINXZDINX-NEXT:    mv a0, s0
 ; RV32IZFINXZDINX-NEXT:    call __fixunsdfdi
-; RV32IZFINXZDINX-NEXT:    fle.d a2, zero, s0
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a2, zero
+; RV32IZFINXZDINX-NEXT:    fle.d a2, a2, s0
 ; RV32IZFINXZDINX-NEXT:    neg a2, a2
 ; RV32IZFINXZDINX-NEXT:    and a0, a2, a0
 ; RV32IZFINXZDINX-NEXT:    and a1, a2, a1
@@ -480,7 +481,8 @@ define i64 @test_ceil_ui64(double %x) nounwind {
 ; RV32IZFINXZDINX-NEXT:    neg s2, a0
 ; RV32IZFINXZDINX-NEXT:    mv a0, s0
 ; RV32IZFINXZDINX-NEXT:    call __fixunsdfdi
-; RV32IZFINXZDINX-NEXT:    fle.d a2, zero, s0
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a2, zero
+; RV32IZFINXZDINX-NEXT:    fle.d a2, a2, s0
 ; RV32IZFINXZDINX-NEXT:    neg a2, a2
 ; RV32IZFINXZDINX-NEXT:    and a0, a2, a0
 ; RV32IZFINXZDINX-NEXT:    and a1, a2, a1
@@ -729,7 +731,8 @@ define i64 @test_trunc_ui64(double %x) nounwind {
 ; RV32IZFINXZDINX-NEXT:    neg s2, a0
 ; RV32IZFINXZDINX-NEXT:    mv a0, s0
 ; RV32IZFINXZDINX-NEXT:    call __fixunsdfdi
-; RV32IZFINXZDINX-NEXT:    fle.d a2, zero, s0
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a2, zero
+; RV32IZFINXZDINX-NEXT:    fle.d a2, a2, s0
 ; RV32IZFINXZDINX-NEXT:    neg a2, a2
 ; RV32IZFINXZDINX-NEXT:    and a0, a2, a0
 ; RV32IZFINXZDINX-NEXT:    and a1, a2, a1
@@ -978,7 +981,8 @@ define i64 @test_round_ui64(double %x) nounwind {
 ; RV32IZFINXZDINX-NEXT:    neg s2, a0
 ; RV32IZFINXZDINX-NEXT:    mv a0, s0
 ; RV32IZFINXZDINX-NEXT:    call __fixunsdfdi
-; RV32IZFINXZDINX-NEXT:    fle.d a2, zero, s0
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a2, zero
+; RV32IZFINXZDINX-NEXT:    fle.d a2, a2, s0
 ; RV32IZFINXZDINX-NEXT:    neg a2, a2
 ; RV32IZFINXZDINX-NEXT:    and a0, a2, a0
 ; RV32IZFINXZDINX-NEXT:    and a1, a2, a1
@@ -1227,7 +1231,8 @@ define i64 @test_roundeven_ui64(double %x) nounwind {
 ; RV32IZFINXZDINX-NEXT:    neg s2, a0
 ; RV32IZFINXZDINX-NEXT:    mv a0, s0
 ; RV32IZFINXZDINX-NEXT:    call __fixunsdfdi
-; RV32IZFINXZDINX-NEXT:    fle.d a2, zero, s0
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a2, zero
+; RV32IZFINXZDINX-NEXT:    fle.d a2, a2, s0
 ; RV32IZFINXZDINX-NEXT:    neg a2, a2
 ; RV32IZFINXZDINX-NEXT:    and a0, a2, a0
 ; RV32IZFINXZDINX-NEXT:    and a1, a2, a1
@@ -1476,7 +1481,8 @@ define i64 @test_rint_ui64(double %x) nounwind {
 ; RV32IZFINXZDINX-NEXT:    neg s2, a0
 ; RV32IZFINXZDINX-NEXT:    mv a0, s0
 ; RV32IZFINXZDINX-NEXT:    call __fixunsdfdi
-; RV32IZFINXZDINX-NEXT:    fle.d a2, zero, s0
+; RV32IZFINXZDINX-NEXT:    fcvt.d.w a2, zero
+; RV32IZFINXZDINX-NEXT:    fle.d a2, a2, s0
 ; RV32IZFINXZDINX-NEXT:    neg a2, a2
 ; RV32IZFINXZDINX-NEXT:    and a0, a2, a0
 ; RV32IZFINXZDINX-NEXT:    and a1, a2, a1

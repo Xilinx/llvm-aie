@@ -9,7 +9,7 @@
 // UNSUPPORTED: no-exceptions
 // <forward_list>
 
-// void push_front(const value_type& x); // constexpr since C++26
+// void push_front(const value_type& x);
 
 #include <forward_list>
 #include <cassert>

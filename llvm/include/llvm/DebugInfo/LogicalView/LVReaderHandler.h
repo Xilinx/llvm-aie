@@ -19,7 +19,6 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include <string>
@@ -53,8 +52,8 @@ class LVReaderHandler {
                       object::Archive &Arch);
   Error handleBuffer(LVReaders &Readers, StringRef Filename,
                      MemoryBufferRef Buffer, StringRef ExePath = {});
-  LLVM_ABI Error handleFile(LVReaders &Readers, StringRef Filename,
-                            StringRef ExePath = {});
+  Error handleFile(LVReaders &Readers, StringRef Filename,
+                   StringRef ExePath = {});
   Error handleMach(LVReaders &Readers, StringRef Filename,
                    object::MachOUniversalBinary &Mach);
   Error handleObject(LVReaders &Readers, StringRef Filename,
@@ -78,7 +77,7 @@ public:
   Error createReader(StringRef Filename, LVReaders &Readers) {
     return handleFile(Readers, Filename);
   }
-  LLVM_ABI Error process();
+  Error process();
 
   Expected<std::unique_ptr<LVReader>> createReader(StringRef Pathname) {
     LVReaders Readers;
@@ -87,7 +86,7 @@ public:
     return std::move(Readers[0]);
   }
 
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump() const { print(dbgs()); }

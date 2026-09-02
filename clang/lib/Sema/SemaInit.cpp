@@ -21,7 +21,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Designator.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Initialization.h"
@@ -260,37 +259,29 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
              diag::ext_initializer_string_for_char_array_too_long)
           << Str->getSourceRange();
     else if (StrLength - 1 == ArrayLen) {
-      // In C, if the string literal is null-terminated explicitly, e.g., `char
-      // a[4] = "ABC\0"`, there should be no warning:
-      const auto *SL = dyn_cast<StringLiteral>(Str->IgnoreParens());
-      bool IsSLSafe = SL && SL->getLength() > 0 &&
-                      SL->getCodeUnit(SL->getLength() - 1) == 0;
+      // If the entity being initialized has the nonstring attribute, then
+      // silence the "missing nonstring" diagnostic. If there's no entity,
+      // check whether we're initializing an array of arrays; if so, walk the
+      // parents to find an entity.
+      auto FindCorrectEntity =
+          [](const InitializedEntity *Entity) -> const ValueDecl * {
+        while (Entity) {
+          if (const ValueDecl *VD = Entity->getDecl())
+            return VD;
+          if (!Entity->getType()->isArrayType())
+            return nullptr;
+          Entity = Entity->getParent();
+        }
 
-      if (!IsSLSafe) {
-        // If the entity being initialized has the nonstring attribute, then
-        // silence the "missing nonstring" diagnostic. If there's no entity,
-        // check whether we're initializing an array of arrays; if so, walk the
-        // parents to find an entity.
-        auto FindCorrectEntity =
-            [](const InitializedEntity *Entity) -> const ValueDecl * {
-          while (Entity) {
-            if (const ValueDecl *VD = Entity->getDecl())
-              return VD;
-            if (!Entity->getType()->isArrayType())
-              return nullptr;
-            Entity = Entity->getParent();
-          }
+        return nullptr;
+      };
+      if (const ValueDecl *D = FindCorrectEntity(&Entity);
+          !D || !D->hasAttr<NonStringAttr>())
+        S.Diag(
+            Str->getBeginLoc(),
+            diag::warn_initializer_string_for_char_array_too_long_no_nonstring)
+            << ArrayLen << StrLength << Str->getSourceRange();
 
-          return nullptr;
-        };
-        if (const ValueDecl *D = FindCorrectEntity(&Entity);
-            !D || !D->hasAttr<NonStringAttr>())
-          S.Diag(
-              Str->getBeginLoc(),
-              diag::
-                  warn_initializer_string_for_char_array_too_long_no_nonstring)
-              << ArrayLen << StrLength << Str->getSourceRange();
-      }
       // Always emit the C++ compatibility diagnostic.
       S.Diag(Str->getBeginLoc(),
              diag::warn_initializer_string_for_char_array_too_long_for_cpp)
@@ -650,10 +641,8 @@ ExprResult InitListChecker::PerformEmptyInit(SourceLocation Loc,
   // in that case. stlport does so too.
   // Look for std::__debug for libstdc++, and for std:: for stlport.
   // This is effectively a compiler-side implementation of LWG2193.
-  if (!InitSeq && EmptyInitList &&
-      InitSeq.getFailureKind() ==
-          InitializationSequence::FK_ExplicitConstructor &&
-      SemaRef.getPreprocessor().NeedsStdLibCxxWorkaroundBefore(2014'04'22)) {
+  if (!InitSeq && EmptyInitList && InitSeq.getFailureKind() ==
+          InitializationSequence::FK_ExplicitConstructor) {
     OverloadCandidateSet::iterator Best;
     OverloadingResult O =
         InitSeq.getFailedCandidateSet()
@@ -790,8 +779,7 @@ void InitListChecker::FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
       return;
     }
 
-    if (!VerifyOnly && Field->hasAttr<ExplicitInitAttr>() &&
-        !SemaRef.isUnevaluatedContext()) {
+    if (!VerifyOnly && Field->hasAttr<ExplicitInitAttr>()) {
       SemaRef.Diag(ILE->getExprLoc(), diag::warn_field_requires_explicit_init)
           << /* Var-in-Record */ 0 << Field;
       SemaRef.Diag(Field->getLocation(), diag::note_entity_declared_at)
@@ -3572,7 +3560,7 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
       Designators.push_back(ASTDesignator::CreateFieldDesignator(
           D.getFieldDecl(), D.getDotLoc(), D.getFieldLoc()));
     } else if (D.isArrayDesignator()) {
-      Expr *Index = D.getArrayIndex();
+      Expr *Index = static_cast<Expr *>(D.getArrayIndex());
       llvm::APSInt IndexValue;
       if (!Index->isTypeDependent() && !Index->isValueDependent())
         Index = CheckArrayDesignatorExpr(*this, Index, IndexValue).get();
@@ -3584,8 +3572,8 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
         InitExpressions.push_back(Index);
       }
     } else if (D.isArrayRangeDesignator()) {
-      Expr *StartIndex = D.getArrayRangeStart();
-      Expr *EndIndex = D.getArrayRangeEnd();
+      Expr *StartIndex = static_cast<Expr *>(D.getArrayRangeStart());
+      Expr *EndIndex = static_cast<Expr *>(D.getArrayRangeEnd());
       llvm::APSInt StartValue;
       llvm::APSInt EndValue;
       bool StartDependent = StartIndex->isTypeDependent() ||
@@ -4632,8 +4620,7 @@ static void TryConstructorInitialization(Sema &S,
          Kind.getKind() == InitializationKind::IK_Direct) &&
         !(CtorDecl->isCopyOrMoveConstructor() && CtorDecl->isImplicit()) &&
         DestRecordDecl->isAggregate() &&
-        DestRecordDecl->hasUninitializedExplicitInitFields() &&
-        !S.isUnevaluatedContext()) {
+        DestRecordDecl->hasUninitializedExplicitInitFields()) {
       S.Diag(Kind.getLocation(), diag::warn_field_requires_explicit_init)
           << /* Var-in-Record */ 1 << DestRecordDecl;
       emitUninitializedExplicitInitFields(S, DestRecordDecl);
@@ -5997,8 +5984,7 @@ static void TryOrBuildParenListInitialization(
       } else {
         // We've processed all of the args, but there are still members that
         // have to be initialized.
-        if (!VerifyOnly && FD->hasAttr<ExplicitInitAttr>() &&
-            !S.isUnevaluatedContext()) {
+        if (!VerifyOnly && FD->hasAttr<ExplicitInitAttr>()) {
           S.Diag(Kind.getLocation(), diag::warn_field_requires_explicit_init)
               << /* Var-in-Record */ 0 << FD;
           S.Diag(FD->getLocation(), diag::note_entity_declared_at) << FD;
@@ -6424,9 +6410,9 @@ static bool TryOCLSamplerInitialization(Sema &S,
   return true;
 }
 
-static bool IsZeroInitializer(const Expr *Init, ASTContext &Ctx) {
-  std::optional<llvm::APSInt> Value = Init->getIntegerConstantExpr(Ctx);
-  return Value && Value->isZero();
+static bool IsZeroInitializer(Expr *Initializer, Sema &S) {
+  return Initializer->isIntegerConstantExpr(S.getASTContext()) &&
+    (Initializer->EvaluateKnownConstInt(S.getASTContext()) == 0);
 }
 
 static bool TryOCLZeroOpaqueTypeInitialization(Sema &S,
@@ -6445,7 +6431,7 @@ static bool TryOCLZeroOpaqueTypeInitialization(Sema &S,
   // event should be zero.
   //
   if (DestType->isEventT() || DestType->isQueueT()) {
-    if (!IsZeroInitializer(Initializer, S.getASTContext()))
+    if (!IsZeroInitializer(Initializer, S))
       return false;
 
     Sequence.AddOCLZeroOpaqueTypeStep(DestType);
@@ -6461,7 +6447,7 @@ static bool TryOCLZeroOpaqueTypeInitialization(Sema &S,
     if (DestType->isOCLIntelSubgroupAVCMcePayloadType() ||
         DestType->isOCLIntelSubgroupAVCMceResultType())
       return false;
-    if (!IsZeroInitializer(Initializer, S.getASTContext()))
+    if (!IsZeroInitializer(Initializer, S))
       return false;
 
     Sequence.AddOCLZeroOpaqueTypeStep(DestType);
@@ -6620,7 +6606,7 @@ void InitializationSequence::InitializeFrom(Sema &S,
     if (RecordDecl *Rec = DestType->getAsRecordDecl()) {
       VarDecl *Var = dyn_cast_or_null<VarDecl>(Entity.getDecl());
       if (Rec->hasUninitializedExplicitInitFields()) {
-        if (Var && !Initializer && !S.isUnevaluatedContext()) {
+        if (Var && !Initializer) {
           S.Diag(Var->getLocation(), diag::warn_field_requires_explicit_init)
               << /* Var-in-Record */ 1 << Rec;
           emitUninitializedExplicitInitFields(S, Rec);
@@ -6631,7 +6617,7 @@ void InitializationSequence::InitializeFrom(Sema &S,
       // initializer present. However, we only do this for structure types, not
       // union types, because an unitialized field in a union is generally
       // reasonable, especially in C where unions can be used for type punning.
-      if (Var && !Initializer && !Rec->isUnion() && !Rec->isInvalidDecl()) {
+      if (!Initializer && !Rec->isUnion() && !Rec->isInvalidDecl()) {
         if (const FieldDecl *FD = getConstField(Rec)) {
           unsigned DiagID = diag::warn_default_init_const_field_unsafe;
           if (Var->getStorageDuration() == SD_Static ||
@@ -7484,8 +7470,7 @@ PerformConstructorInitialization(Sema &S,
       if (RD && RD->isAggregate() && RD->hasUninitializedExplicitInitFields()) {
         unsigned I = 0;
         for (const FieldDecl *FD : RD->fields()) {
-          if (I >= ConstructorArgs.size() && FD->hasAttr<ExplicitInitAttr>() &&
-              !S.isUnevaluatedContext()) {
+          if (I >= ConstructorArgs.size() && FD->hasAttr<ExplicitInitAttr>()) {
             S.Diag(Loc, diag::warn_field_requires_explicit_init)
                 << /* Var-in-Record */ 0 << FD;
             S.Diag(FD->getLocation(), diag::note_entity_declared_at) << FD;

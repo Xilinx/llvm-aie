@@ -19,9 +19,11 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/IntegerSet.h"
 #include "mlir/IR/MLIRContext.h"
+#include "mlir/Support/StorageUniquer.h"
+#include "mlir/Support/ThreadLocalCache.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/Support/Allocator.h"
-#include <mutex>
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/TrailingObjects.h"
 
 namespace mlir {
 namespace detail {
@@ -394,30 +396,27 @@ private:
                                               Attribute referencedAttr);
 };
 
-/// An allocator for distinct attribute storage instances. Uses a synchronized
-/// BumpPtrAllocator to ensure thread-safety. The allocated storage is deleted
-/// when the DistinctAttributeAllocator is destroyed.
-class DistinctAttributeAllocator final {
+/// An allocator for distinct attribute storage instances. It uses thread local
+/// bump pointer allocators stored in a thread local cache to ensure the storage
+/// is freed after the destruction of the distinct attribute allocator.
+class DistinctAttributeAllocator {
 public:
   DistinctAttributeAllocator() = default;
+
   DistinctAttributeAllocator(DistinctAttributeAllocator &&) = delete;
   DistinctAttributeAllocator(const DistinctAttributeAllocator &) = delete;
   DistinctAttributeAllocator &
   operator=(const DistinctAttributeAllocator &) = delete;
 
+  /// Allocates a distinct attribute storage using a thread local bump pointer
+  /// allocator to enable synchronization free parallel allocations.
   DistinctAttrStorage *allocate(Attribute referencedAttr) {
-    std::scoped_lock<std::mutex> guard(allocatorMutex);
-    return new (allocator.Allocate<DistinctAttrStorage>())
+    return new (allocatorCache.get().Allocate<DistinctAttrStorage>())
         DistinctAttrStorage(referencedAttr);
-  };
+  }
 
 private:
-  /// Used to allocate distict attribute storages. The managed memory is freed
-  /// automatically when the allocator instance is destroyed.
-  llvm::BumpPtrAllocator allocator;
-
-  /// Used to lock access to the allocator.
-  std::mutex allocatorMutex;
+  ThreadLocalCache<llvm::BumpPtrAllocator> allocatorCache;
 };
 } // namespace detail
 } // namespace mlir

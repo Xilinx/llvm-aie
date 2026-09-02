@@ -523,7 +523,7 @@ private:
     case ELFTLSDescCall:
       return "ELFTLSDescCall";
     default:
-      return getGenericEdgeKindName(R);
+      return getGenericEdgeKindName(static_cast<Edge::Kind>(R));
     }
   }
 

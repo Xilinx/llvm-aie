@@ -11,12 +11,12 @@
 @end
 
 @implementation DBGViewDebuggerSupport_iOS
-+ (void)addViewLayerInfo:(id)aView;
++ (void)addViewLayerInfo:(id)aView; // expected-note {{'aView' declared here}}
 {
-    [super addViewLayerInfo:view]; // expected-error {{use of undeclared identifier 'view'}}
+    [super addViewLayerInfo:view]; // expected-error {{use of undeclared identifier 'view'; did you mean 'aView'?}}
 }
-- (void)addInstViewLayerInfo:(id)aView;
+- (void)addInstViewLayerInfo:(id)aView; // expected-note {{'aView' declared here}}
 {
-    [super addInstViewLayerInfo:view]; // expected-error {{use of undeclared identifier 'view'}}
+    [super addInstViewLayerInfo:view]; // expected-error {{use of undeclared identifier 'view'; did you mean 'aView'?}}
 }
 @end

@@ -7,9 +7,8 @@ add_mlir_library(MLIRTestIRDLToCppDialect
 
   DEPENDS
   TestIRDLToCppGen
-)
 
-mlir_target_link_libraries(MLIRTestIRDLToCppDialect PUBLIC
+  LINK_LIBS PUBLIC
   MLIRIR
   MLIRPass
   MLIRTransforms

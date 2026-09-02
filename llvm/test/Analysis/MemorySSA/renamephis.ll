@@ -41,7 +41,7 @@ block.exit: ; preds = %cond.exit
   unreachable
 
 sw.bb94:                                          ; preds = %cond.exit
-  call void @g()
+  call void @llvm.lifetime.end.p0(i64 8, ptr nonnull undef)
   br label %cleanup
 
 cleanup:                                          ; preds = %sw.bb94, %cond.exit, %cond.exit

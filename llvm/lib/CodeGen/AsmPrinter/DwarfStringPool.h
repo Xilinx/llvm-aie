@@ -13,7 +13,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/DwarfStringPoolEntry.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -38,16 +37,14 @@ class DwarfStringPool {
 public:
   using EntryRef = DwarfStringPoolEntryRef;
 
-  LLVM_ABI_FOR_TEST DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm,
-                                    StringRef Prefix);
+  DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm, StringRef Prefix);
 
-  LLVM_ABI_FOR_TEST void emitStringOffsetsTableHeader(AsmPrinter &Asm,
-                                                      MCSection *OffsetSection,
-                                                      MCSymbol *StartSym);
+  void emitStringOffsetsTableHeader(AsmPrinter &Asm, MCSection *OffsetSection,
+                                    MCSymbol *StartSym);
 
-  LLVM_ABI_FOR_TEST void emit(AsmPrinter &Asm, MCSection *StrSection,
-                              MCSection *OffsetSection = nullptr,
-                              bool UseRelativeOffsets = false);
+  void emit(AsmPrinter &Asm, MCSection *StrSection,
+            MCSection *OffsetSection = nullptr,
+            bool UseRelativeOffsets = false);
 
   bool empty() const { return Pool.empty(); }
 
@@ -56,12 +53,12 @@ public:
   unsigned getNumIndexedStrings() const { return NumIndexedStrings; }
 
   /// Get a reference to an entry in the string pool.
-  LLVM_ABI_FOR_TEST EntryRef getEntry(AsmPrinter &Asm, StringRef Str);
+  EntryRef getEntry(AsmPrinter &Asm, StringRef Str);
 
   /// Same as getEntry, except that you can use EntryRef::getIndex to obtain a
   /// unique ID of this entry (e.g., for use in indexed forms like
   /// DW_FORM_strx).
-  LLVM_ABI_FOR_TEST EntryRef getIndexedEntry(AsmPrinter &Asm, StringRef Str);
+  EntryRef getIndexedEntry(AsmPrinter &Asm, StringRef Str);
 };
 
 } // end namespace llvm

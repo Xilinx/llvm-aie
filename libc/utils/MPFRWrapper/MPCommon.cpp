@@ -9,7 +9,6 @@
 #include "MPCommon.h"
 
 #include "src/__support/CPP/string_view.h"
-#include "src/__support/FPUtil/bfloat16.h"
 #include "src/__support/FPUtil/cast.h"
 #include "src/__support/macros/config.h"
 #include "src/__support/macros/properties/types.h"
@@ -74,7 +73,8 @@ MPFRNumber MPFRNumber::acosh() const {
 MPFRNumber MPFRNumber::acospi() const {
   MPFRNumber result(*this);
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(4, 2, 0)
+#if MPFR_VERSION_MAJOR > 4 ||                                                  \
+    (MPFR_VERSION_MAJOR == 4 && MPFR_VERSION_MINOR >= 2)
   mpfr_acospi(result.value, value, mpfr_rounding);
   return result;
 #else
@@ -150,7 +150,8 @@ MPFRNumber MPFRNumber::cosh() const {
 MPFRNumber MPFRNumber::cospi() const {
   MPFRNumber result(*this);
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(4, 2, 0)
+#if MPFR_VERSION_MAJOR > 4 ||                                                  \
+    (MPFR_VERSION_MAJOR == 4 && MPFR_VERSION_MINOR >= 2)
   mpfr_cospi(result.value, value, mpfr_rounding);
   return result;
 #else
@@ -194,7 +195,8 @@ MPFRNumber MPFRNumber::exp2() const {
 
 MPFRNumber MPFRNumber::exp2m1() const {
   // TODO: Only use mpfr_exp2m1 once CI and buildbots get MPFR >= 4.2.0.
-#if MPFR_VERSION >= MPFR_VERSION_NUM(4, 2, 0)
+#if MPFR_VERSION_MAJOR > 4 ||                                                  \
+    (MPFR_VERSION_MAJOR == 4 && MPFR_VERSION_MINOR >= 2)
   MPFRNumber result(*this);
   mpfr_exp2m1(result.value, value, mpfr_rounding);
   return result;
@@ -229,7 +231,8 @@ MPFRNumber MPFRNumber::exp10() const {
 
 MPFRNumber MPFRNumber::exp10m1() const {
   // TODO: Only use mpfr_exp10m1 once CI and buildbots get MPFR >= 4.2.0.
-#if MPFR_VERSION >= MPFR_VERSION_NUM(4, 2, 0)
+#if MPFR_VERSION_MAJOR > 4 ||                                                  \
+    (MPFR_VERSION_MAJOR == 4 && MPFR_VERSION_MINOR >= 2)
   MPFRNumber result(*this);
   mpfr_exp10m1(result.value, value, mpfr_rounding);
   return result;
@@ -399,7 +402,9 @@ MPFRNumber MPFRNumber::sin() const {
 MPFRNumber MPFRNumber::sinpi() const {
   MPFRNumber result(*this);
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(4, 2, 0)
+#if MPFR_VERSION_MAJOR > 4 ||                                                  \
+    (MPFR_VERSION_MAJOR == 4 && MPFR_VERSION_MINOR >= 2)
+
   mpfr_sinpi(result.value, value, mpfr_rounding);
   return result;
 #else
@@ -458,7 +463,9 @@ MPFRNumber MPFRNumber::tanh() const {
 MPFRNumber MPFRNumber::tanpi() const {
   MPFRNumber result(*this);
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(4, 2, 0)
+#if MPFR_VERSION_MAJOR > 4 ||                                                  \
+    (MPFR_VERSION_MAJOR == 4 && MPFR_VERSION_MINOR >= 2)
+
   mpfr_tanpi(result.value, value, mpfr_rounding);
   return result;
 #else
@@ -563,11 +570,8 @@ template <> float16 MPFRNumber::as<float16>() const {
 template <> float128 MPFRNumber::as<float128>() const {
   return mpfr_get_float128(value, mpfr_rounding);
 }
-#endif // LIBC_TYPES_FLOAT128_IS_NOT_LONG_DOUBLE
 
-template <> bfloat16 MPFRNumber::as<bfloat16>() const {
-  return fputil::cast<bfloat16>(mpfr_get_flt(value, mpfr_rounding));
-}
+#endif // LIBC_TYPES_FLOAT128_IS_NOT_LONG_DOUBLE
 
 } // namespace mpfr
 } // namespace testing

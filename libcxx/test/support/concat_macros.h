@@ -9,7 +9,6 @@
 #ifndef TEST_SUPPORT_CONCAT_MACROS_H
 #define TEST_SUPPORT_CONCAT_MACROS_H
 
-#include <algorithm>
 #include <cstdio>
 #include <string>
 #include <source_location>

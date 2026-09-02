@@ -548,7 +548,7 @@ async def main() -> None:
     files = {f for f in files if file_name_re.search(f)}
 
     print(
-        f"Running clang-tidy in {max_task} threads for",
+        "Running clang-tidy for",
         len(files),
         "files out of",
         number_files_in_database,

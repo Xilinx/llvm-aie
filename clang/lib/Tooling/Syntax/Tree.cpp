@@ -10,6 +10,7 @@
 #include "clang/Tooling/Syntax/Nodes.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Casting.h"
 #include <cassert>
 
 using namespace clang;

@@ -16,6 +16,7 @@
 
 #include "mlir/Dialect/SPIRV/IR/SPIRVOps.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/IR/BuiltinOps.h"
 
 namespace mlir {
 namespace spirv {
@@ -65,8 +66,8 @@ void RewriteInsertsPass::runOnOperation() {
       operands.push_back(insertionOp.getObject());
 
     OpBuilder builder(lastCompositeInsertOp);
-    auto compositeConstructOp = spirv::CompositeConstructOp::create(
-        builder, location, compositeType, operands);
+    auto compositeConstructOp = builder.create<spirv::CompositeConstructOp>(
+        location, compositeType, operands);
 
     lastCompositeInsertOp.replaceAllUsesWith(
         compositeConstructOp->getResult(0));

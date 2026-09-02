@@ -572,7 +572,7 @@ void MergeFunctions::filterInstsUnrelatedToPDI(
 
   // Work out whether a dbg.value intrinsic or an equivalent DbgVariableRecord
   // is a parameter to be preserved.
-  auto ExamineDbgValue = [&PDVRRelated](DbgVariableRecord *DbgVal) {
+  auto ExamineDbgValue = [](auto *DbgVal, auto &Container) {
     LLVM_DEBUG(dbgs() << " Deciding: ");
     LLVM_DEBUG(DbgVal->print(dbgs()));
     LLVM_DEBUG(dbgs() << "\n");
@@ -581,7 +581,7 @@ void MergeFunctions::filterInstsUnrelatedToPDI(
       LLVM_DEBUG(dbgs() << "  Include (parameter): ");
       LLVM_DEBUG(DbgVal->print(dbgs()));
       LLVM_DEBUG(dbgs() << "\n");
-      PDVRRelated.insert(DbgVal);
+      Container.insert(DbgVal);
     } else {
       LLVM_DEBUG(dbgs() << "  Delete (!parameter): ");
       LLVM_DEBUG(DbgVal->print(dbgs()));
@@ -589,8 +589,7 @@ void MergeFunctions::filterInstsUnrelatedToPDI(
     }
   };
 
-  auto ExamineDbgDeclare = [&PDIRelated,
-                            &PDVRRelated](DbgVariableRecord *DbgDecl) {
+  auto ExamineDbgDeclare = [&PDIRelated](auto *DbgDecl, auto &Container) {
     LLVM_DEBUG(dbgs() << " Deciding: ");
     LLVM_DEBUG(DbgDecl->print(dbgs()));
     LLVM_DEBUG(dbgs() << "\n");
@@ -617,7 +616,7 @@ void MergeFunctions::filterInstsUnrelatedToPDI(
                 LLVM_DEBUG(dbgs() << "  Include: ");
                 LLVM_DEBUG(DbgDecl->print(dbgs()));
                 LLVM_DEBUG(dbgs() << "\n");
-                PDVRRelated.insert(DbgDecl);
+                Container.insert(DbgDecl);
               } else {
                 LLVM_DEBUG(dbgs() << "   Delete (!parameter): ");
                 LLVM_DEBUG(SI->print(dbgs()));
@@ -648,14 +647,18 @@ void MergeFunctions::filterInstsUnrelatedToPDI(
     // they connected to parameters?
     for (DbgVariableRecord &DVR : filterDbgVars(BI->getDbgRecordRange())) {
       if (DVR.isDbgValue() || DVR.isDbgAssign()) {
-        ExamineDbgValue(&DVR);
+        ExamineDbgValue(&DVR, PDVRRelated);
       } else {
         assert(DVR.isDbgDeclare());
-        ExamineDbgDeclare(&DVR);
+        ExamineDbgDeclare(&DVR, PDVRRelated);
       }
     }
 
-    if (BI->isTerminator() && &*BI == GEntryBlock->getTerminator()) {
+    if (auto *DVI = dyn_cast<DbgValueInst>(&*BI)) {
+      ExamineDbgValue(DVI, PDIRelated);
+    } else if (auto *DDI = dyn_cast<DbgDeclareInst>(&*BI)) {
+      ExamineDbgDeclare(DDI, PDIRelated);
+    } else if (BI->isTerminator() && &*BI == GEntryBlock->getTerminator()) {
       LLVM_DEBUG(dbgs() << " Will Include Terminator: ");
       LLVM_DEBUG(BI->print(dbgs()));
       LLVM_DEBUG(dbgs() << "\n");
@@ -748,6 +751,7 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
     NewG = Function::Create(G->getFunctionType(), G->getLinkage(),
                             G->getAddressSpace(), "", G->getParent());
     NewG->setComdat(G->getComdat());
+    NewG->IsNewDbgInfoFormat = G->IsNewDbgInfoFormat;
     BB = BasicBlock::Create(F->getContext(), "", NewG);
   }
 
@@ -893,6 +897,7 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
     NewF->takeName(F);
     NewF->setComdat(F->getComdat());
     F->setComdat(nullptr);
+    NewF->IsNewDbgInfoFormat = F->IsNewDbgInfoFormat;
     // Ensure CFI type metadata is propagated to the new function.
     copyMetadataIfPresent(F, NewF, "type");
     copyMetadataIfPresent(F, NewF, "kcfi_type");

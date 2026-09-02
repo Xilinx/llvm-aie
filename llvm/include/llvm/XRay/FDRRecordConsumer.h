@@ -8,7 +8,6 @@
 #ifndef LLVM_XRAY_FDRRECORDCONSUMER_H
 #define LLVM_XRAY_FDRRECORDCONSUMER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/XRay/FDRRecords.h"
 #include <algorithm>
@@ -26,7 +25,7 @@ public:
 
 // This consumer will collect all the records into a vector of records, in
 // arrival order.
-class LLVM_ABI LogBuilderConsumer : public RecordConsumer {
+class LogBuilderConsumer : public RecordConsumer {
   std::vector<std::unique_ptr<Record>> &Records;
 
 public:
@@ -39,7 +38,7 @@ public:
 // A PipelineConsumer applies a set of visitors to every consumed Record, in the
 // order by which the visitors are added to the pipeline in the order of
 // appearance.
-class LLVM_ABI PipelineConsumer : public RecordConsumer {
+class PipelineConsumer : public RecordConsumer {
   std::vector<RecordVisitor *> Visitors;
 
 public:

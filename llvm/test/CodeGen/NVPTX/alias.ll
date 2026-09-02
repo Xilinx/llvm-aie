@@ -56,7 +56,8 @@ attributes #0 = { noreturn }
 ; CHECK-NEXT: .noreturn
 
 ;      CHECK: .visible .func  (.param .b32 func_retval0) z()
-;      CHECK:      call.uni (retval0), b,
+;      CHECK:      call.uni (retval0), 
+; CHECK-NEXT:      b,
 
 
 ; CHECK: .alias b, a;

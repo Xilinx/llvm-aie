@@ -35,7 +35,7 @@
 #include "mlir/IR/Value.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/DebugLog.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdint>
@@ -44,6 +44,9 @@
 using namespace mlir;
 
 #define DEBUG_TYPE "vector-narrow-type-emulation"
+#define DBGS() (llvm::dbgs() << "[" DEBUG_TYPE "]: ")
+#define DBGSNL() (llvm::dbgs() << "\n")
+#define LDBG(X) LLVM_DEBUG(DBGS() << X << "\n")
 
 using VectorValue = TypedValue<VectorType>;
 using MemRefValue = TypedValue<MemRefType>;
@@ -132,19 +135,20 @@ static FailureOr<Operation *> getCompressedMaskOp(OpBuilder &rewriter,
                 SmallVector<Value> newMaskOperands(maskOperands.drop_back());
                 newMaskOperands.push_back(
                     getValueOrCreateConstantIndexOp(rewriter, loc, maskIndex));
-                return vector::CreateMaskOp::create(rewriter, loc, newMaskType,
-                                                    newMaskOperands);
+                return rewriter.create<vector::CreateMaskOp>(loc, newMaskType,
+                                                             newMaskOperands);
               })
-          .Case<vector::ConstantMaskOp>([&](auto constantMaskOp)
-                                            -> std::optional<Operation *> {
-            // Take the shape of mask, compress its trailing dimension:
-            SmallVector<int64_t> maskDimSizes(constantMaskOp.getMaskDimSizes());
-            int64_t &maskIndex = maskDimSizes.back();
-            maskIndex = llvm::divideCeil(numFrontPadElems + maskIndex,
-                                         numSrcElemsPerDest);
-            return vector::ConstantMaskOp::create(rewriter, loc, newMaskType,
-                                                  maskDimSizes);
-          })
+          .Case<vector::ConstantMaskOp>(
+              [&](auto constantMaskOp) -> std::optional<Operation *> {
+                // Take the shape of mask, compress its trailing dimension:
+                SmallVector<int64_t> maskDimSizes(
+                    constantMaskOp.getMaskDimSizes());
+                int64_t &maskIndex = maskDimSizes.back();
+                maskIndex = llvm::divideCeil(numFrontPadElems + maskIndex,
+                                             numSrcElemsPerDest);
+                return rewriter.create<vector::ConstantMaskOp>(loc, newMaskType,
+                                                               maskDimSizes);
+              })
           .Case<arith::ConstantOp>([&](auto constantOp)
                                        -> std::optional<Operation *> {
             // TODO: Support multiple dimensions.
@@ -182,18 +186,16 @@ static FailureOr<Operation *> getCompressedMaskOp(OpBuilder &rewriter,
               }
               compressedMaskValues.push_back(combinedValue);
             }
-            return arith::ConstantOp::create(
-                rewriter, loc,
-                DenseElementsAttr::get(newMaskType, compressedMaskValues));
+            return rewriter.create<arith::ConstantOp>(
+                loc, DenseElementsAttr::get(newMaskType, compressedMaskValues));
           });
 
   if (!newMask)
     return failure();
 
   while (!extractOps.empty()) {
-    newMask =
-        vector::ExtractOp::create(rewriter, loc, (*newMask)->getResults()[0],
-                                  extractOps.back().getMixedPosition());
+    newMask = rewriter.create<vector::ExtractOp>(
+        loc, (*newMask)->getResults()[0], extractOps.back().getMixedPosition());
     extractOps.pop_back();
   }
 
@@ -232,8 +234,9 @@ static Value staticallyExtractSubvector(OpBuilder &rewriter, Location loc,
 
   auto resultVectorType =
       VectorType::get({numElemsToExtract}, vectorType.getElementType());
-  return vector::ExtractStridedSliceOp::create(rewriter, loc, resultVectorType,
-                                               src, offsets, sizes, strides)
+  return rewriter
+      .create<vector::ExtractStridedSliceOp>(loc, resultVectorType, src,
+                                             offsets, sizes, strides)
       ->getResult(0);
 }
 
@@ -259,8 +262,8 @@ static Value staticallyInsertSubvector(OpBuilder &rewriter, Location loc,
 
   auto offsets = rewriter.getI64ArrayAttr({offset});
   auto strides = rewriter.getI64ArrayAttr({1});
-  return vector::InsertStridedSliceOp::create(rewriter, loc, destVecTy, src,
-                                              dest, offsets, strides);
+  return rewriter.create<vector::InsertStridedSliceOp>(loc, destVecTy, src,
+                                                       dest, offsets, strides);
 }
 
 /// Extracts 1-D subvector from a 1-D vector.
@@ -302,12 +305,11 @@ static Value dynamicallyExtractSubVector(OpBuilder &rewriter, Location loc,
   for (int i = 0; i < numElemsToExtract; ++i) {
     Value extractLoc =
         (i == 0) ? dyn_cast<Value>(offset)
-                 : arith::AddIOp::create(
-                       rewriter, loc, rewriter.getIndexType(),
-                       dyn_cast<Value>(offset),
-                       arith::ConstantIndexOp::create(rewriter, loc, i));
-    auto extractOp = vector::ExtractOp::create(rewriter, loc, src, extractLoc);
-    dest = vector::InsertOp::create(rewriter, loc, extractOp, dest, i);
+                 : rewriter.create<arith::AddIOp>(
+                       loc, rewriter.getIndexType(), dyn_cast<Value>(offset),
+                       rewriter.create<arith::ConstantIndexOp>(loc, i));
+    auto extractOp = rewriter.create<vector::ExtractOp>(loc, src, extractLoc);
+    dest = rewriter.create<vector::InsertOp>(loc, extractOp, dest, i);
   }
   return dest;
 }
@@ -346,13 +348,13 @@ static Value dynamicallyInsertSubVector(RewriterBase &rewriter, Location loc,
 
   Value destOffsetVal = getValueOrCreateConstantIndexOp(rewriter, loc, offset);
   for (int64_t i = 0; i < numElemsToInsert; ++i) {
-    auto insertLoc =
-        i == 0 ? destOffsetVal
-               : arith::AddIOp::create(
-                     rewriter, loc, rewriter.getIndexType(), destOffsetVal,
-                     arith::ConstantIndexOp::create(rewriter, loc, i));
-    auto extractOp = vector::ExtractOp::create(rewriter, loc, src, i);
-    dest = vector::InsertOp::create(rewriter, loc, extractOp, dest, insertLoc);
+    auto insertLoc = i == 0
+                         ? destOffsetVal
+                         : rewriter.create<arith::AddIOp>(
+                               loc, rewriter.getIndexType(), destOffsetVal,
+                               rewriter.create<arith::ConstantIndexOp>(loc, i));
+    auto extractOp = rewriter.create<vector::ExtractOp>(loc, src, i);
+    dest = rewriter.create<vector::InsertOp>(loc, extractOp, dest, insertLoc);
   }
   return dest;
 }
@@ -371,11 +373,11 @@ static VectorValue emulatedVectorLoad(OpBuilder &rewriter, Location loc,
                                       Type containerElemTy) {
   auto emulatedPerContainerElem = containerElemTy.getIntOrFloatBitWidth() /
                                   emulatedElemTy.getIntOrFloatBitWidth();
-  auto newLoad = vector::LoadOp::create(
-      rewriter, loc, VectorType::get(numContainerElemsToLoad, containerElemTy),
-      base, getValueOrCreateConstantIndexOp(rewriter, loc, linearizedIndices));
-  return vector::BitCastOp::create(
-      rewriter, loc,
+  auto newLoad = rewriter.create<vector::LoadOp>(
+      loc, VectorType::get(numContainerElemsToLoad, containerElemTy), base,
+      getValueOrCreateConstantIndexOp(rewriter, loc, linearizedIndices));
+  return rewriter.create<vector::BitCastOp>(
+      loc,
       VectorType::get(numContainerElemsToLoad * emulatedPerContainerElem,
                       emulatedElemTy),
       newLoad);
@@ -392,17 +394,16 @@ static Value downcastSelectAndUpcast(OpBuilder &builder, Location loc,
           upcastType.getNumElements() * upcastType.getElementTypeBitWidth() &&
       "expected input and output number of bits to match");
   if (trueValue.getType() != downcastType) {
-    trueValue =
-        vector::BitCastOp::create(builder, loc, downcastType, trueValue);
+    trueValue = builder.create<vector::BitCastOp>(loc, downcastType, trueValue);
   }
   if (falseValue.getType() != downcastType) {
     falseValue =
-        vector::BitCastOp::create(builder, loc, downcastType, falseValue);
+        builder.create<vector::BitCastOp>(loc, downcastType, falseValue);
   }
   Value selectedType =
-      arith::SelectOp::create(builder, loc, mask, trueValue, falseValue);
+      builder.create<arith::SelectOp>(loc, mask, trueValue, falseValue);
   // Upcast the selected value to the new type.
-  return vector::BitCastOp::create(builder, loc, upcastType, selectedType);
+  return builder.create<vector::BitCastOp>(loc, upcastType, selectedType);
 }
 
 /// Emits `memref.generic_atomic_rmw` op to store a subbyte-sized value to a
@@ -425,8 +426,8 @@ static void atomicRMW(OpBuilder &builder, Location loc,
 
   // Create an atomic load-modify-write region using
   // `memref.generic_atomic_rmw`.
-  auto atomicOp = memref::GenericAtomicRMWOp::create(
-      builder, loc, linearizedMemref, ValueRange{storeIdx});
+  auto atomicOp = builder.create<memref::GenericAtomicRMWOp>(
+      loc, linearizedMemref, ValueRange{storeIdx});
   Value origValue = atomicOp.getCurrentValue();
 
   OpBuilder::InsertionGuard guard(builder);
@@ -435,16 +436,16 @@ static void atomicRMW(OpBuilder &builder, Location loc,
   // Load the original value from memory, and cast it to the original element
   // type.
   auto oneElemVecType = VectorType::get({1}, origValue.getType());
-  Value origVecValue = vector::FromElementsOp::create(
-      builder, loc, oneElemVecType, ValueRange{origValue});
+  Value origVecValue = builder.create<vector::FromElementsOp>(
+      loc, oneElemVecType, ValueRange{origValue});
 
   // Construct the final masked value and yield it.
   Value maskedValue =
       downcastSelectAndUpcast(builder, loc, valueToStore.getType(),
                               oneElemVecType, mask, valueToStore, origVecValue);
   auto scalarMaskedValue =
-      vector::ExtractOp::create(builder, loc, maskedValue, 0);
-  memref::AtomicYieldOp::create(builder, loc, scalarMaskedValue);
+      builder.create<vector::ExtractOp>(loc, maskedValue, 0);
+  builder.create<memref::AtomicYieldOp>(loc, scalarMaskedValue);
 }
 
 /// Generate a non-atomic read-modify-write sequence for storing to the emulated
@@ -456,17 +457,16 @@ static void nonAtomicRMW(OpBuilder &builder, Location loc,
 
   auto oneElemVecType =
       VectorType::get({1}, linearizedMemref.getType().getElementType());
-  Value origVecValue =
-      vector::LoadOp::create(builder, loc, oneElemVecType, linearizedMemref,
-                             ValueRange{linearizedIndex});
-  origVecValue = vector::BitCastOp::create(builder, loc, valueToStore.getType(),
-                                           origVecValue);
+  Value origVecValue = builder.create<vector::LoadOp>(
+      loc, oneElemVecType, linearizedMemref, ValueRange{linearizedIndex});
+  origVecValue = builder.create<vector::BitCastOp>(loc, valueToStore.getType(),
+                                                   origVecValue);
 
   Value maskedValue =
       downcastSelectAndUpcast(builder, loc, valueToStore.getType(),
                               oneElemVecType, mask, valueToStore, origVecValue);
-  vector::StoreOp::create(builder, loc, maskedValue, linearizedMemref,
-                          linearizedIndex);
+  builder.create<vector::StoreOp>(loc, maskedValue, linearizedMemref,
+                                  linearizedIndex);
 }
 
 /// Extract `sliceNumElements` from source `vector` at `extractOffset`,
@@ -493,9 +493,8 @@ static Value extractSliceIntoByte(ConversionPatternRewriter &rewriter,
   assert(8 % vectorElementType.getIntOrFloatBitWidth() == 0 &&
          "vector element must be a valid sub-byte type");
   auto emulatedPerContainerElem = 8 / vectorElementType.getIntOrFloatBitWidth();
-  auto emptyByteVector = arith::ConstantOp::create(
-      rewriter, loc,
-      VectorType::get({emulatedPerContainerElem}, vectorElementType),
+  auto emptyByteVector = rewriter.create<arith::ConstantOp>(
+      loc, VectorType::get({emulatedPerContainerElem}, vectorElementType),
       rewriter.getZeroAttr(
           VectorType::get({emulatedPerContainerElem}, vectorElementType)));
   auto extracted = staticallyExtractSubvector(rewriter, loc, vector,
@@ -607,7 +606,7 @@ struct ConvertVectorStore final : OpConversionPattern<vector::StoreOp> {
         ShapedType::isDynamic(trailingDim) || trailingDim == origElements;
 
     auto stridedMetadata =
-        memref::ExtractStridedMetadataOp::create(rewriter, loc, op.getBase());
+        rewriter.create<memref::ExtractStridedMetadataOp>(loc, op.getBase());
 
     // FIXME: ATM, we do not test cases where offsets, sizes, or strides are
     // non-zero. As such, this is not needed.
@@ -669,8 +668,8 @@ struct ConvertVectorStore final : OpConversionPattern<vector::StoreOp> {
     if (!emulationRequiresPartialStores) {
       // Basic case: storing full bytes.
       auto numElements = origElements / emulatedPerContainerElem;
-      auto bitCast = vector::BitCastOp::create(
-          rewriter, loc, VectorType::get(numElements, containerElemTy),
+      auto bitCast = rewriter.create<vector::BitCastOp>(
+          loc, VectorType::get(numElements, containerElemTy),
           op.getValueToStore());
       rewriter.replaceOpWithNewOp<vector::StoreOp>(
           op, bitCast.getResult(), memrefBase,
@@ -737,9 +736,8 @@ struct ConvertVectorStore final : OpConversionPattern<vector::StoreOp> {
         std::fill_n(frontMaskValues.end() - frontSubWidthStoreElem,
                     *foldedNumFrontPadElems, true);
       }
-      auto frontMask = arith::ConstantOp::create(
-          rewriter, loc,
-          DenseElementsAttr::get(subWidthStoreMaskType, frontMaskValues));
+      auto frontMask = rewriter.create<arith::ConstantOp>(
+          loc, DenseElementsAttr::get(subWidthStoreMaskType, frontMaskValues));
 
       currentSourceIndex = emulatedPerContainerElem - (*foldedNumFrontPadElems);
       auto value =
@@ -757,9 +755,9 @@ struct ConvertVectorStore final : OpConversionPattern<vector::StoreOp> {
 
     // Increment the destination index by 1 to align to the emulated width
     // boundary.
-    auto constantOne = arith::ConstantIndexOp::create(rewriter, loc, 1);
-    currentDestIndex = arith::AddIOp::create(
-        rewriter, loc, rewriter.getIndexType(), currentDestIndex, constantOne);
+    auto constantOne = rewriter.create<arith::ConstantIndexOp>(loc, 1);
+    currentDestIndex = rewriter.create<arith::AddIOp>(
+        loc, rewriter.getIndexType(), currentDestIndex, constantOne);
 
     // 2. Full width store for the inner output bytes.
     // After the previous step, the store address is aligned to the emulated
@@ -778,15 +776,15 @@ struct ConvertVectorStore final : OpConversionPattern<vector::StoreOp> {
       auto storeType = VectorType::get(
           {originType.getNumElements() / emulatedPerContainerElem},
           memrefElemType);
-      auto bitCast = vector::BitCastOp::create(rewriter, loc, storeType,
-                                               fullWidthStorePart);
-      vector::StoreOp::create(rewriter, loc, bitCast.getResult(), memrefBase,
-                              currentDestIndex);
+      auto bitCast = rewriter.create<vector::BitCastOp>(loc, storeType,
+                                                        fullWidthStorePart);
+      rewriter.create<vector::StoreOp>(loc, bitCast.getResult(), memrefBase,
+                                       currentDestIndex);
 
       currentSourceIndex += numNonFullWidthElements;
-      currentDestIndex = arith::AddIOp::create(
-          rewriter, loc, rewriter.getIndexType(), currentDestIndex,
-          arith::ConstantIndexOp::create(rewriter, loc, fullWidthStoreSize));
+      currentDestIndex = rewriter.create<arith::AddIOp>(
+          loc, rewriter.getIndexType(), currentDestIndex,
+          rewriter.create<arith::ConstantIndexOp>(loc, fullWidthStoreSize));
     }
 
     // 3. Partial width store for the trailing output byte.
@@ -801,9 +799,8 @@ struct ConvertVectorStore final : OpConversionPattern<vector::StoreOp> {
       // Generate back mask.
       auto maskValues = SmallVector<bool>(emulatedPerContainerElem, 0);
       std::fill_n(maskValues.begin(), remainingElements, 1);
-      auto backMask = arith::ConstantOp::create(
-          rewriter, loc,
-          DenseElementsAttr::get(subWidthStoreMaskType, maskValues));
+      auto backMask = rewriter.create<arith::ConstantOp>(
+          loc, DenseElementsAttr::get(subWidthStoreMaskType, maskValues));
 
       storeFunc(rewriter, loc, memrefBase, currentDestIndex,
                 cast<VectorValue>(subWidthStorePart), backMask.getResult());
@@ -855,7 +852,7 @@ struct ConvertVectorMaskedStore final
       return failure();
 
     auto stridedMetadata =
-        memref::ExtractStridedMetadataOp::create(rewriter, loc, op.getBase());
+        rewriter.create<memref::ExtractStridedMetadataOp>(loc, op.getBase());
     OpFoldResult linearizedIndicesOfr;
     memref::LinearizedMemRefInfo linearizedInfo;
     std::tie(linearizedInfo, linearizedIndicesOfr) =
@@ -908,21 +905,21 @@ struct ConvertVectorMaskedStore final
     auto numElements = (origElements + emulatedPerContainerElem - 1) /
                        emulatedPerContainerElem;
     auto newType = VectorType::get(numElements, containerElemTy);
-    auto passThru = arith::ConstantOp::create(rewriter, loc, newType,
-                                              rewriter.getZeroAttr(newType));
+    auto passThru = rewriter.create<arith::ConstantOp>(
+        loc, newType, rewriter.getZeroAttr(newType));
 
-    auto newLoad = vector::MaskedLoadOp::create(
-        rewriter, loc, newType, adaptor.getBase(), linearizedIndices,
+    auto newLoad = rewriter.create<vector::MaskedLoadOp>(
+        loc, newType, adaptor.getBase(), linearizedIndices,
         newMask.value()->getResult(0), passThru);
 
     auto newBitCastType =
         VectorType::get(numElements * emulatedPerContainerElem, emulatedElemTy);
     Value valueToStore =
-        vector::BitCastOp::create(rewriter, loc, newBitCastType, newLoad);
-    valueToStore = arith::SelectOp::create(rewriter, loc, op.getMask(),
-                                           op.getValueToStore(), valueToStore);
+        rewriter.create<vector::BitCastOp>(loc, newBitCastType, newLoad);
+    valueToStore = rewriter.create<arith::SelectOp>(
+        loc, op.getMask(), op.getValueToStore(), valueToStore);
     valueToStore =
-        vector::BitCastOp::create(rewriter, loc, newType, valueToStore);
+        rewriter.create<vector::BitCastOp>(loc, newType, valueToStore);
 
     rewriter.replaceOpWithNewOp<vector::MaskedStoreOp>(
         op, adaptor.getBase(), linearizedIndices, newMask.value()->getResult(0),
@@ -997,7 +994,7 @@ struct ConvertVectorLoad final : OpConversionPattern<vector::LoadOp> {
     bool isDivisibleInSize = origElements % emulatedPerContainerElem == 0;
 
     auto stridedMetadata =
-        memref::ExtractStridedMetadataOp::create(rewriter, loc, op.getBase());
+        rewriter.create<memref::ExtractStridedMetadataOp>(loc, op.getBase());
 
     OpFoldResult linearizedIndices;
     memref::LinearizedMemRefInfo linearizedInfo;
@@ -1023,8 +1020,8 @@ struct ConvertVectorLoad final : OpConversionPattern<vector::LoadOp> {
                            numElements, emulatedElemTy, containerElemTy);
 
     if (!foldedIntraVectorOffset) {
-      auto resultVector = arith::ConstantOp::create(
-          rewriter, loc, op.getType(), rewriter.getZeroAttr(op.getType()));
+      auto resultVector = rewriter.create<arith::ConstantOp>(
+          loc, op.getType(), rewriter.getZeroAttr(op.getType()));
       result = dynamicallyExtractSubVector(
           rewriter, loc, dyn_cast<TypedValue<VectorType>>(result), resultVector,
           linearizedInfo.intraDataOffset, origElements);
@@ -1118,7 +1115,7 @@ struct ConvertVectorMaskedLoad final
     bool isDivisibleInSize = origElements % emulatedPerContainerElem == 0;
 
     auto stridedMetadata =
-        memref::ExtractStridedMetadataOp::create(rewriter, loc, op.getBase());
+        rewriter.create<memref::ExtractStridedMetadataOp>(loc, op.getBase());
     OpFoldResult linearizedIndices;
     memref::LinearizedMemRefInfo linearizedInfo;
     std::tie(linearizedInfo, linearizedIndices) =
@@ -1149,8 +1146,8 @@ struct ConvertVectorMaskedLoad final
     auto newBitcastType =
         VectorType::get(numElements * emulatedPerContainerElem, emulatedElemTy);
 
-    auto emptyVector = arith::ConstantOp::create(
-        rewriter, loc, newBitcastType, rewriter.getZeroAttr(newBitcastType));
+    auto emptyVector = rewriter.create<arith::ConstantOp>(
+        loc, newBitcastType, rewriter.getZeroAttr(newBitcastType));
     if (!foldedIntraVectorOffset) {
       passthru = dynamicallyInsertSubVector(
           rewriter, loc, passthru, emptyVector, linearizedInfo.intraDataOffset,
@@ -1160,26 +1157,25 @@ struct ConvertVectorMaskedLoad final
                                            *foldedIntraVectorOffset);
     }
     auto newPassThru =
-        vector::BitCastOp::create(rewriter, loc, loadType, passthru);
+        rewriter.create<vector::BitCastOp>(loc, loadType, passthru);
 
     // Generating the new masked load.
-    auto newLoad = vector::MaskedLoadOp::create(
-        rewriter, loc, loadType, adaptor.getBase(),
+    auto newLoad = rewriter.create<vector::MaskedLoadOp>(
+        loc, loadType, adaptor.getBase(),
         getValueOrCreateConstantIndexOp(rewriter, loc, linearizedIndices),
         newMask.value()->getResult(0), newPassThru);
 
     // Setting the part that originally was not effectively loaded from memory
     // to pass through.
     auto bitCast =
-        vector::BitCastOp::create(rewriter, loc, newBitcastType, newLoad);
+        rewriter.create<vector::BitCastOp>(loc, newBitcastType, newLoad);
 
     Value mask = op.getMask();
     auto newSelectMaskType = VectorType::get(
         numElements * emulatedPerContainerElem, rewriter.getI1Type());
     // TODO: try to fold if op's mask is constant
-    auto emptyMask =
-        arith::ConstantOp::create(rewriter, loc, newSelectMaskType,
-                                  rewriter.getZeroAttr(newSelectMaskType));
+    auto emptyMask = rewriter.create<arith::ConstantOp>(
+        loc, newSelectMaskType, rewriter.getZeroAttr(newSelectMaskType));
     if (!foldedIntraVectorOffset) {
       mask = dynamicallyInsertSubVector(rewriter, loc, mask, emptyMask,
                                         linearizedInfo.intraDataOffset,
@@ -1190,7 +1186,7 @@ struct ConvertVectorMaskedLoad final
     }
 
     Value result =
-        arith::SelectOp::create(rewriter, loc, mask, bitCast, passthru);
+        rewriter.create<arith::SelectOp>(loc, mask, bitCast, passthru);
     if (!foldedIntraVectorOffset) {
       result = dynamicallyExtractSubVector(
           rewriter, loc, result, op.getPassThru(),
@@ -1276,21 +1272,11 @@ struct ConvertVectorTransferRead final
     bool isDivisibleInSize =
         fitsInMultiByteContainerTy(op.getVectorType(), containerElemTy);
 
-    // Pad the padding value with 0s on the left. These bits are discarded and
-    // thus their values don't matter.
-    Value padding = adaptor.getPadding();
-    if (!padding.getType().isInteger()) {
-      padding = arith::BitcastOp::create(
-          rewriter, loc,
-          IntegerType::get(rewriter.getContext(),
-                           padding.getType().getIntOrFloatBitWidth()),
-          padding);
-    }
-    auto newPadding =
-        arith::ExtUIOp::create(rewriter, loc, containerElemTy, padding);
+    auto newPadding = rewriter.create<arith::ExtUIOp>(loc, containerElemTy,
+                                                      adaptor.getPadding());
 
     auto stridedMetadata =
-        memref::ExtractStridedMetadataOp::create(rewriter, loc, op.getBase());
+        rewriter.create<memref::ExtractStridedMetadataOp>(loc, op.getBase());
 
     OpFoldResult linearizedIndices;
     memref::LinearizedMemRefInfo linearizedInfo;
@@ -1311,21 +1297,20 @@ struct ConvertVectorTransferRead final
     auto numElements = llvm::divideCeil(maxIntraDataOffset + origElements,
                                         emulatedPerContainerElem);
 
-    auto newRead = vector::TransferReadOp::create(
-        rewriter, loc, VectorType::get(numElements, containerElemTy),
-        adaptor.getBase(),
+    auto newRead = rewriter.create<vector::TransferReadOp>(
+        loc, VectorType::get(numElements, containerElemTy), adaptor.getBase(),
         getValueOrCreateConstantIndexOp(rewriter, loc, linearizedIndices),
         newPadding);
 
-    auto bitCast = vector::BitCastOp::create(
-        rewriter, loc,
+    auto bitCast = rewriter.create<vector::BitCastOp>(
+        loc,
         VectorType::get(numElements * emulatedPerContainerElem, emulatedElemTy),
         newRead);
 
     Value result = bitCast->getResult(0);
     if (!foldedIntraVectorOffset) {
-      auto zeros = arith::ConstantOp::create(
-          rewriter, loc, op.getType(), rewriter.getZeroAttr(op.getType()));
+      auto zeros = rewriter.create<arith::ConstantOp>(
+          loc, op.getType(), rewriter.getZeroAttr(op.getType()));
       result = dynamicallyExtractSubVector(rewriter, loc, bitCast, zeros,
                                            linearizedInfo.intraDataOffset,
                                            origElements);
@@ -1525,11 +1510,11 @@ BitCastBitsEnumerator::BitCastBitsEnumerator(VectorType sourceVectorType,
          "requires -D non-scalable vector type");
   int64_t sourceBitWidth = sourceVectorType.getElementTypeBitWidth();
   int64_t mostMinorSourceDim = sourceVectorType.getShape().back();
-  LDBG() << "sourceVectorType: " << sourceVectorType;
+  LDBG("sourceVectorType: " << sourceVectorType);
 
   int64_t targetBitWidth = targetVectorType.getElementTypeBitWidth();
   int64_t mostMinorTargetDim = targetVectorType.getShape().back();
-  LDBG() << "targetVectorType: " << targetVectorType;
+  LDBG("targetVectorType: " << targetVectorType);
 
   int64_t bitwidth = targetBitWidth * mostMinorTargetDim;
   (void)mostMinorSourceDim;
@@ -1554,7 +1539,7 @@ BitCastBitsEnumerator::BitCastBitsEnumerator(VectorType sourceVectorType,
 BitCastRewriter::BitCastRewriter(VectorType sourceVectorType,
                                  VectorType targetVectorType)
     : enumerator(BitCastBitsEnumerator(sourceVectorType, targetVectorType)) {
-  LDBG() << "\n" << enumerator.sourceElementRanges;
+  LDBG("\n" << enumerator.sourceElementRanges);
 }
 
 /// Verify that the precondition type meets the common preconditions for any
@@ -1698,33 +1683,32 @@ Value BitCastRewriter::genericRewriteStep(
     PatternRewriter &rewriter, Location loc, Value initialValue,
     Value runningResult, const BitCastRewriter::Metadata &metadata) {
   // Create vector.shuffle from the metadata.
-  auto shuffleOp = vector::ShuffleOp::create(rewriter, loc, initialValue,
-                                             initialValue, metadata.shuffles);
+  auto shuffleOp = rewriter.create<vector::ShuffleOp>(
+      loc, initialValue, initialValue, metadata.shuffles);
 
   // Intersect with the mask.
   VectorType shuffledVectorType = shuffleOp.getResultVectorType();
-  auto constOp = arith::ConstantOp::create(
-      rewriter, loc,
-      DenseElementsAttr::get(shuffledVectorType, metadata.masks));
-  Value andValue = arith::AndIOp::create(rewriter, loc, shuffleOp, constOp);
+  auto constOp = rewriter.create<arith::ConstantOp>(
+      loc, DenseElementsAttr::get(shuffledVectorType, metadata.masks));
+  Value andValue = rewriter.create<arith::AndIOp>(loc, shuffleOp, constOp);
 
   // Align right on 0.
-  auto shiftRightConstantOp = arith::ConstantOp::create(
-      rewriter, loc,
+  auto shiftRightConstantOp = rewriter.create<arith::ConstantOp>(
+      loc,
       DenseElementsAttr::get(shuffledVectorType, metadata.shiftRightAmounts));
   Value shiftedRight =
-      arith::ShRUIOp::create(rewriter, loc, andValue, shiftRightConstantOp);
+      rewriter.create<arith::ShRUIOp>(loc, andValue, shiftRightConstantOp);
 
   // Shift bits left into their final position.
-  auto shiftLeftConstantOp = arith::ConstantOp::create(
-      rewriter, loc,
+  auto shiftLeftConstantOp = rewriter.create<arith::ConstantOp>(
+      loc,
       DenseElementsAttr::get(shuffledVectorType, metadata.shiftLeftAmounts));
   Value shiftedLeft =
-      arith::ShLIOp::create(rewriter, loc, shiftedRight, shiftLeftConstantOp);
+      rewriter.create<arith::ShLIOp>(loc, shiftedRight, shiftLeftConstantOp);
 
   runningResult =
       runningResult
-          ? arith::OrIOp::create(rewriter, loc, runningResult, shiftedLeft)
+          ? rewriter.create<arith::OrIOp>(loc, runningResult, shiftedLeft)
           : shiftedLeft;
 
   return runningResult;
@@ -1747,7 +1731,7 @@ static Value bitcastSubByteVectorToI8(PatternRewriter &rewriter, Location loc,
   // Adjust last dimension of the vector, so the total size remains the same.
   vecShape.back() = vecShape.back() / numSrcElemsPerByte;
   auto i8VecType = VectorType::get(vecShape, rewriter.getI8Type());
-  return vector::BitCastOp::create(rewriter, loc, i8VecType, subByteVec);
+  return rewriter.create<vector::BitCastOp>(loc, i8VecType, subByteVec);
 }
 
 /// Extracts a signed N-bit sequence from each element of a vector of bytes,
@@ -1775,15 +1759,15 @@ static Value extractNBitsPerByteAndSignExtendToI8(PatternRewriter &rewriter,
   assert(bitIdx >= 0 && bitsToShiftLeft >= 0 && numBits > 0 && numBits <= 8 &&
          "Invalid bitIdx range");
   if (bitsToShiftLeft != 0) {
-    Value shiftLeftValues = arith::ConstantOp::create(
-        rewriter, loc, DenseElementsAttr::get(srcType, bitsToShiftLeft));
-    shl = arith::ShLIOp::create(rewriter, loc, src, shiftLeftValues);
+    Value shiftLeftValues = rewriter.create<arith::ConstantOp>(
+        loc, DenseElementsAttr::get(srcType, bitsToShiftLeft));
+    shl = rewriter.create<arith::ShLIOp>(loc, src, shiftLeftValues);
   }
 
   int8_t bitsToShiftRight = 8 - numBits;
-  Value shiftRightValues = arith::ConstantOp::create(
-      rewriter, loc, DenseElementsAttr::get(srcType, bitsToShiftRight));
-  Value shr = arith::ShRSIOp::create(rewriter, loc, shl, shiftRightValues);
+  Value shiftRightValues = rewriter.create<arith::ConstantOp>(
+      loc, DenseElementsAttr::get(srcType, bitsToShiftRight));
+  Value shr = rewriter.create<arith::ShRSIOp>(loc, shl, shiftRightValues);
   return shr;
 }
 
@@ -1817,17 +1801,17 @@ static Value extractNBitsPerByteAndExtendToI8(PatternRewriter &rewriter,
   int8_t bitsToShiftRight = bitIdx;
   Value shr = src;
   if (bitsToShiftRight != 0) {
-    Value shiftRightValues = arith::ConstantOp::create(
-        rewriter, loc, DenseElementsAttr::get(srcType, bitsToShiftRight));
-    shr = arith::ShRUIOp::create(rewriter, loc, src, shiftRightValues);
+    Value shiftRightValues = rewriter.create<arith::ConstantOp>(
+        loc, DenseElementsAttr::get(srcType, bitsToShiftRight));
+    shr = rewriter.create<arith::ShRUIOp>(loc, src, shiftRightValues);
   }
   if (bitIdx + numBits == 8) {
     return shr;
   }
   uint8_t lowBitsMask = (1 << numBits) - 1;
-  Value lowBitsMaskValues = arith::ConstantOp::create(
-      rewriter, loc, DenseElementsAttr::get(srcType, lowBitsMask));
-  return arith::AndIOp::create(rewriter, loc, shr, lowBitsMaskValues);
+  Value lowBitsMaskValues = rewriter.create<arith::ConstantOp>(
+      loc, DenseElementsAttr::get(srcType, lowBitsMask));
+  return rewriter.create<arith::AndIOp>(loc, shr, lowBitsMaskValues);
 }
 
 using ExtractNBitsFn =
@@ -1850,7 +1834,7 @@ static Value rewriteI4ToI8Ext(PatternRewriter &rewriter, Location loc,
   Value high = extFn(rewriter, loc, i8Vector, 4, 4);
 
   // 3. Interleave low and high i8 elements.
-  return vector::InterleaveOp::create(rewriter, loc, low, high);
+  return rewriter.create<vector::InterleaveOp>(loc, low, high);
 }
 
 /// Rewrite the i2 -> i8  extension into a sequence of shuffles and
@@ -1883,10 +1867,9 @@ static Value rewriteI2ToI8Ext(PatternRewriter &rewriter, Location loc,
   // 02    = [0,2,0,2,0,2,0,2],...
   // 13    = [1,3,1,3,1,3,1,3],...
   // 0213  = [0,1,2,3,...],...
-  Value interleave02 = vector::InterleaveOp::create(rewriter, loc, vec0, vec2);
-  Value interleave13 = vector::InterleaveOp::create(rewriter, loc, vec1, vec3);
-  return vector::InterleaveOp::create(rewriter, loc, interleave02,
-                                      interleave13);
+  Value interleave02 = rewriter.create<vector::InterleaveOp>(loc, vec0, vec2);
+  Value interleave13 = rewriter.create<vector::InterleaveOp>(loc, vec1, vec3);
+  return rewriter.create<vector::InterleaveOp>(loc, interleave02, interleave13);
 }
 
 /// Rewrite the i8 -> i4 truncation into a deinterleave and series of bitwise
@@ -1898,29 +1881,29 @@ static Value rewriteI8ToI4Trunc(PatternRewriter &rewriter, Location loc,
          "Expected i8 type");
 
   // 1. De-interleave low and high i8 elements.
-  auto deinterleaveOp = vector::DeinterleaveOp::create(rewriter, loc, srcValue);
+  auto deinterleaveOp = rewriter.create<vector::DeinterleaveOp>(loc, srcValue);
 
   // 2. Zero out the upper side of each low i8 element.
   constexpr int8_t i8LowBitMask = 0x0F;
   VectorType deinterI8VecType = deinterleaveOp.getResultVectorType();
-  Value zeroOutMask = arith::ConstantOp::create(
-      rewriter, loc, DenseElementsAttr::get(deinterI8VecType, i8LowBitMask));
-  Value zeroOutLow = arith::AndIOp::create(
-      rewriter, loc, deinterleaveOp.getRes1(), zeroOutMask);
+  Value zeroOutMask = rewriter.create<arith::ConstantOp>(
+      loc, DenseElementsAttr::get(deinterI8VecType, i8LowBitMask));
+  Value zeroOutLow = rewriter.create<arith::AndIOp>(
+      loc, deinterleaveOp.getRes1(), zeroOutMask);
 
   // 3. Move high i4 values to upper side of the byte.
   constexpr int8_t bitsToShift = 4;
-  auto shiftValues = arith::ConstantOp::create(
-      rewriter, loc, DenseElementsAttr::get(deinterI8VecType, bitsToShift));
-  Value shlHigh = arith::ShLIOp::create(rewriter, loc, deinterleaveOp.getRes2(),
-                                        shiftValues);
+  auto shiftValues = rewriter.create<arith::ConstantOp>(
+      loc, DenseElementsAttr::get(deinterI8VecType, bitsToShift));
+  Value shlHigh = rewriter.create<arith::ShLIOp>(loc, deinterleaveOp.getRes2(),
+                                                 shiftValues);
 
   // 4. Merge high and low i4 values.
-  auto mergedHiLowOp = arith::OrIOp::create(rewriter, loc, zeroOutLow, shlHigh);
+  auto mergedHiLowOp = rewriter.create<arith::OrIOp>(loc, zeroOutLow, shlHigh);
 
   // 5. Generate a bitcast vector<Xxi8> -> vector<2Xxi4>.
   auto i4VecType = srcVecType.cloneWith(std::nullopt, rewriter.getI4Type());
-  return vector::BitCastOp::create(rewriter, loc, i4VecType, mergedHiLowOp);
+  return rewriter.create<vector::BitCastOp>(loc, i4VecType, mergedHiLowOp);
 }
 
 namespace {
@@ -2162,7 +2145,7 @@ struct RewriteAlignedSubByteIntTrunc : OpRewritePattern<arith::TruncIOp> {
     Location loc = truncOp.getLoc();
     auto i8VecType = srcVecType.cloneWith(std::nullopt, rewriter.getI8Type());
     Value i8TruncVal =
-        arith::TruncIOp::create(rewriter, loc, i8VecType, srcValue);
+        rewriter.create<arith::TruncIOp>(loc, i8VecType, srcValue);
 
     // Rewrite the i8 -> i4 truncation part.
     Value subByteTrunc = rewriteI8ToI4Trunc(rewriter, loc, i8TruncVal);
@@ -2210,10 +2193,10 @@ struct RewriteVectorTranspose : OpRewritePattern<vector::TransposeOp> {
     // support is available.
     auto srcNativeVecType = srcSubByteVecType.cloneWith(
         std::nullopt, rewriter.getIntegerType(minNativeBitwidth));
-    Value extOp = arith::ExtSIOp::create(rewriter, loc, srcNativeVecType,
-                                         transposeOp.getVector());
-    Value newTranspose = vector::TransposeOp::create(
-        rewriter, loc, extOp, transposeOp.getPermutation());
+    Value extOp = rewriter.create<arith::ExtSIOp>(loc, srcNativeVecType,
+                                                  transposeOp.getVector());
+    Value newTranspose = rewriter.create<vector::TransposeOp>(
+        loc, extOp, transposeOp.getPermutation());
     VectorType dstSubByteVecType = transposeOp.getResultVectorType();
     rewriter.replaceOpWithNewOp<arith::TruncIOp>(transposeOp, dstSubByteVecType,
                                                  newTranspose);

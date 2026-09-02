@@ -129,7 +129,6 @@ constexpr llvm::StringRef lookupStrings[] = {
     "${function.initial-function}",
     "${function.changed}",
     "${function.is-optimized}",
-    "${function.is-inlined}",
     "${line.file.basename}",
     "${line.file.dirname}",
     "${line.file.fullpath}",

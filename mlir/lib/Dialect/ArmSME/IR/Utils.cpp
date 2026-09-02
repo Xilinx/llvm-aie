@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/ArmSME/Utils/Utils.h"
+#include "mlir/Dialect/ArmSME/IR/ArmSME.h"
 
 namespace mlir::arm_sme {
 
@@ -75,21 +76,21 @@ scf::ForOp createLoopOverTileSlices(
     PatternRewriter &rewriter, Location loc, Value initTile,
     std::function<Value(OpBuilder &, Location, Value, Value)> makeLoopBody) {
   OpBuilder::InsertionGuard g(rewriter);
-  auto step = arith::ConstantIndexOp::create(rewriter, loc, 1);
-  auto minTileSlices = arith::ConstantIndexOp::create(
-      rewriter, loc, llvm::cast<VectorType>(initTile.getType()).getDimSize(0));
+  auto step = rewriter.create<arith::ConstantIndexOp>(loc, 1);
+  auto minTileSlices = rewriter.create<arith::ConstantIndexOp>(
+      loc, llvm::cast<VectorType>(initTile.getType()).getDimSize(0));
   auto vscale =
-      vector::VectorScaleOp::create(rewriter, loc, rewriter.getIndexType());
-  auto lowerBound = arith::ConstantIndexOp::create(rewriter, loc, 0);
+      rewriter.create<vector::VectorScaleOp>(loc, rewriter.getIndexType());
+  auto lowerBound = rewriter.create<arith::ConstantIndexOp>(loc, 0);
   auto numTileSlices =
-      arith::MulIOp::create(rewriter, loc, minTileSlices, vscale);
-  auto forOp = scf::ForOp::create(rewriter, loc, lowerBound, numTileSlices,
-                                  step, ValueRange{initTile});
+      rewriter.create<arith::MulIOp>(loc, minTileSlices, vscale);
+  auto forOp = rewriter.create<scf::ForOp>(loc, lowerBound, numTileSlices, step,
+                                           ValueRange{initTile});
   rewriter.setInsertionPointToStart(forOp.getBody());
   Value nextTile =
       makeLoopBody(rewriter, loc, /*tileSliceIndex=*/forOp.getInductionVar(),
                    /*currentTile=*/forOp.getRegionIterArg(0));
-  scf::YieldOp::create(rewriter, loc, nextTile);
+  rewriter.create<scf::YieldOp>(loc, nextTile);
   return forOp;
 }
 

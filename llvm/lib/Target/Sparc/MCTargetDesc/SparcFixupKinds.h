@@ -11,7 +11,6 @@
 
 #include "llvm/MC/MCFixup.h"
 
-// clang-format off
 namespace llvm {
   namespace Sparc {
   // clang-format off
@@ -29,5 +28,5 @@ namespace llvm {
   // clang-format on
   }
 }
-// clang-format on
+
 #endif

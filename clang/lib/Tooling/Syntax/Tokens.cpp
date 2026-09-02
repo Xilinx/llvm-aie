@@ -23,7 +23,9 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <optional>
 #include <string>
 #include <utility>

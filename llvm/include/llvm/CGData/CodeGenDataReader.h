@@ -16,7 +16,6 @@
 #include "llvm/CGData/CodeGenData.h"
 #include "llvm/CGData/OutlinedHashTreeRecord.h"
 #include "llvm/CGData/StableFunctionMapRecord.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
@@ -50,12 +49,12 @@ public:
 
   /// Factory method to create an appropriately typed reader for the given
   /// codegen data file path and file system.
-  LLVM_ABI static Expected<std::unique_ptr<CodeGenDataReader>>
+  static Expected<std::unique_ptr<CodeGenDataReader>>
   create(const Twine &Path, vfs::FileSystem &FS);
 
   /// Factory method to create an appropriately typed reader for the given
   /// memory buffer.
-  LLVM_ABI static Expected<std::unique_ptr<CodeGenDataReader>>
+  static Expected<std::unique_ptr<CodeGenDataReader>>
   create(std::unique_ptr<MemoryBuffer> Buffer);
 
   /// Extract the cgdata embedded in sections from the given object file and
@@ -63,7 +62,7 @@ public:
   /// is used by `llvm-cgdata --merge` or ThinLTO's two-codegen rounds.
   /// Optionally, \p CombinedHash can be used to compuate the combined hash of
   /// the merged data.
-  LLVM_ABI static Error
+  static Error
   mergeFromObjectFile(const object::ObjectFile *Obj,
                       OutlinedHashTreeRecord &GlobalOutlineRecord,
                       StableFunctionMapRecord &GlobalFunctionMapRecord,
@@ -99,7 +98,7 @@ protected:
   Error success() { return error(cgdata_error::success); }
 };
 
-class LLVM_ABI IndexedCodeGenDataReader : public CodeGenDataReader {
+class IndexedCodeGenDataReader : public CodeGenDataReader {
   /// The codegen data file contents.
   std::unique_ptr<MemoryBuffer> DataBuffer;
   /// The header
@@ -140,7 +139,7 @@ public:
 /// codegen data is recorded. `#` is used to indicate a comment.
 /// The subsequent data is a YAML format per each codegen data in order.
 /// Currently, it only has a function outlined hash tree.
-class LLVM_ABI TextCodeGenDataReader : public CodeGenDataReader {
+class TextCodeGenDataReader : public CodeGenDataReader {
   /// The codegen data file contents.
   std::unique_ptr<MemoryBuffer> DataBuffer;
   /// Iterator over the profile data.

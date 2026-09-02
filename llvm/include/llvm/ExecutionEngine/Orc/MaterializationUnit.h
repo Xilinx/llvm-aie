@@ -16,7 +16,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/CoreContainers.h"
 #include "llvm/ExecutionEngine/Orc/SymbolStringPool.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm::orc {
 
@@ -30,7 +29,7 @@ class MaterializationResponsibility;
 /// JITDylibs. The JITDylib will call materialize when the address of a symbol
 /// is requested via the lookup method. The JITDylib will call discard if a
 /// stronger definition is added or already present.
-class LLVM_ABI MaterializationUnit {
+class MaterializationUnit {
   friend class ExecutionSession;
   friend class JITDylib;
 

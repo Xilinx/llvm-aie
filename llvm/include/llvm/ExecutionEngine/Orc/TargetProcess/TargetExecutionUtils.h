@@ -15,7 +15,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -29,11 +28,11 @@ namespace orc {
 /// It is legal to have an empty argument list and no program name, however
 /// many main functions will expect a name argument at least, and will fail
 /// if none is provided.
-LLVM_ABI int runAsMain(int (*Main)(int, char *[]), ArrayRef<std::string> Args,
-                       std::optional<StringRef> ProgramName = std::nullopt);
+int runAsMain(int (*Main)(int, char *[]), ArrayRef<std::string> Args,
+              std::optional<StringRef> ProgramName = std::nullopt);
 
-LLVM_ABI int runAsVoidFunction(int (*Func)(void));
-LLVM_ABI int runAsIntFunction(int (*Func)(int), int Arg);
+int runAsVoidFunction(int (*Func)(void));
+int runAsIntFunction(int (*Func)(int), int Arg);
 
 } // end namespace orc
 } // end namespace llvm

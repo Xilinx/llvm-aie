@@ -14,7 +14,6 @@
 #define MLIR_DIALECT_AMDGPU_TRANSFORMS_PASSES_H_
 
 #include "mlir/Dialect/AMDGPU/Utils/Chipset.h"
-#include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
@@ -22,25 +21,18 @@ class ConversionTarget;
 namespace amdgpu {
 
 #define GEN_PASS_DECL_AMDGPUEMULATEATOMICSPASS
-#define GEN_PASS_DECL_AMDGPUFOLDMEMREFOPSPASS
-#define GEN_PASS_DECL_AMDGPUMASKEDLOADTOLOADPASS
 #define GEN_PASS_DECL_AMDGPURESOLVESTRIDEDMETADATAPASS
+#define GEN_PASS_DECL_AMDGPUTRANSFERREADTOLOADPASS
 #define GEN_PASS_REGISTRATION
 #include "mlir/Dialect/AMDGPU/Transforms/Passes.h.inc"
 
 void populateAmdgpuEmulateAtomicsPatterns(ConversionTarget &target,
                                           RewritePatternSet &patterns,
-                                          Chipset chipset,
-                                          PatternBenefit benefit = 1);
+                                          Chipset chipset);
 
-void populateAmdgpuResolveStridedMetadataPatterns(RewritePatternSet &patterns,
-                                                  PatternBenefit benefit = 1);
+void populateAmdgpuResolveStridedMetadataPatterns(RewritePatternSet &patterns);
 
-void populateAmdgpuMaskedloadToLoadPatterns(RewritePatternSet &patterns,
-                                            PatternBenefit benefit = 1);
-
-void populateAmdgpuFoldMemRefOpsPatterns(RewritePatternSet &patterns,
-                                         PatternBenefit benefit = 1);
+void populateAmdgpuTransferReadToLoadPatterns(RewritePatternSet &patterns);
 
 } // namespace amdgpu
 } // namespace mlir

@@ -18,7 +18,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/FloatingPointMode.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -30,14 +29,13 @@ template <typename ContextT> class GenericFloatingPointPredicateUtils {
   constexpr static ValueRefT Invalid = {};
 
 private:
-  LLVM_ABI static DenormalMode queryDenormalMode(const FunctionT &F,
-                                                 ValueRefT Val);
+  static DenormalMode queryDenormalMode(const FunctionT &F, ValueRefT Val);
 
-  LLVM_ABI static bool lookThroughFAbs(const FunctionT &F, ValueRefT LHS,
-                                       ValueRefT &Src);
+  static bool lookThroughFAbs(const FunctionT &F, ValueRefT LHS,
+                              ValueRefT &Src);
 
-  LLVM_ABI static std::optional<APFloat> matchConstantFloat(const FunctionT &F,
-                                                            ValueRefT Val);
+  static std::optional<APFloat> matchConstantFloat(const FunctionT &F,
+                                                   ValueRefT Val);
 
   /// Return the return value for fcmpImpliesClass for a compare that produces
   /// an exact class test.

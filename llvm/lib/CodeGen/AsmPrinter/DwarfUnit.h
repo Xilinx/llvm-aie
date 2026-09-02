@@ -216,8 +216,7 @@ public:
                 DIEBlock *Block);
 
   /// Add location information to specified debug information entry.
-  void addSourceLine(DIE &Die, unsigned Line, unsigned Column,
-                     const DIFile *File);
+  void addSourceLine(DIE &Die, unsigned Line, const DIFile *File);
   void addSourceLine(DIE &Die, const DILocalVariable *V);
   void addSourceLine(DIE &Die, const DIGlobalVariable *G);
   void addSourceLine(DIE &Die, const DISubprogram *SP);
@@ -274,11 +273,7 @@ public:
   void constructContainingTypeDIEs();
 
   /// Construct function argument DIEs.
-  ///
-  /// \returns The index of the object parameter in \c Args if one exists.
-  /// Returns std::nullopt otherwise.
-  std::optional<unsigned> constructSubprogramArguments(DIE &Buffer,
-                                                       DITypeRefArray Args);
+  void constructSubprogramArguments(DIE &Buffer, DITypeRefArray Args);
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.

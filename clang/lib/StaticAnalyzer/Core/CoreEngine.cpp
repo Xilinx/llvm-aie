@@ -304,37 +304,26 @@ void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
       }
     }
 
-    ExplodedNodeSet CheckerNodes;
-    BlockEntrance BE(L.getSrc(), L.getDst(), Pred->getLocationContext());
-    ExprEng.runCheckersForBlockEntrance(BuilderCtx, BE, Pred, CheckerNodes);
-
     // Process the final state transition.
-    for (ExplodedNode *P : CheckerNodes) {
-      ExprEng.processEndOfFunction(BuilderCtx, P, RS);
-    }
+    ExprEng.processEndOfFunction(BuilderCtx, Pred, RS);
 
     // This path is done. Don't enqueue any more nodes.
     return;
   }
 
   // Call into the ExprEngine to process entering the CFGBlock.
+  ExplodedNodeSet dstNodes;
   BlockEntrance BE(L.getSrc(), L.getDst(), Pred->getLocationContext());
-  ExplodedNodeSet DstNodes;
-  NodeBuilderWithSinks NodeBuilder(Pred, DstNodes, BuilderCtx, BE);
-  ExprEng.processCFGBlockEntrance(L, NodeBuilder, Pred);
+  NodeBuilderWithSinks nodeBuilder(Pred, dstNodes, BuilderCtx, BE);
+  ExprEng.processCFGBlockEntrance(L, nodeBuilder, Pred);
 
   // Auto-generate a node.
-  if (!NodeBuilder.hasGeneratedNodes()) {
-    NodeBuilder.generateNode(Pred->State, Pred);
-  }
-
-  ExplodedNodeSet CheckerNodes;
-  for (auto *N : DstNodes) {
-    ExprEng.runCheckersForBlockEntrance(BuilderCtx, BE, N, CheckerNodes);
+  if (!nodeBuilder.hasGeneratedNodes()) {
+    nodeBuilder.generateNode(Pred->State, Pred);
   }
 
   // Enqueue nodes onto the worklist.
-  enqueue(CheckerNodes);
+  enqueue(dstNodes);
 }
 
 void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,

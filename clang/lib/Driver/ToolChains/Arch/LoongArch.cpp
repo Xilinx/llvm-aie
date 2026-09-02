@@ -8,8 +8,8 @@
 
 #include "LoongArch.h"
 #include "../Clang.h"
+#include "ToolChains/CommonArgs.h"
 #include "clang/Basic/DiagnosticDriver.h"
-#include "clang/Driver/CommonArgs.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Options.h"
 #include "llvm/TargetParser/Host.h"
@@ -214,16 +214,16 @@ void loongarch::getLoongArchTargetFeatures(const Driver &D,
     if (MSIMD == "lsx") {
       // Option -msimd=lsx depends on 64-bit FPU.
       // -m*-float and -mfpu=none/0/32 conflict with -msimd=lsx.
-      if (llvm::is_contained(Features, "-d"))
+      if (llvm::find(Features, "-d") != Features.end())
         D.Diag(diag::err_drv_loongarch_wrong_fpu_width) << /*LSX*/ 0;
       else
         Features.push_back("+lsx");
     } else if (MSIMD == "lasx") {
       // Option -msimd=lasx depends on 64-bit FPU and LSX.
       // -m*-float, -mfpu=none/0/32 and -mno-lsx conflict with -msimd=lasx.
-      if (llvm::is_contained(Features, "-d"))
+      if (llvm::find(Features, "-d") != Features.end())
         D.Diag(diag::err_drv_loongarch_wrong_fpu_width) << /*LASX*/ 1;
-      else if (llvm::is_contained(Features, "-lsx"))
+      else if (llvm::find(Features, "-lsx") != Features.end())
         D.Diag(diag::err_drv_loongarch_invalid_simd_option_combination);
 
       // The command options do not contain -mno-lasx.
@@ -232,9 +232,9 @@ void loongarch::getLoongArchTargetFeatures(const Driver &D,
         Features.push_back("+lasx");
       }
     } else if (MSIMD == "none") {
-      if (llvm::is_contained(Features, "+lsx"))
+      if (llvm::find(Features, "+lsx") != Features.end())
         Features.push_back("-lsx");
-      if (llvm::is_contained(Features, "+lasx"))
+      if (llvm::find(Features, "+lasx") != Features.end())
         Features.push_back("-lasx");
     } else {
       D.Diag(diag::err_drv_loongarch_invalid_msimd_EQ) << MSIMD;
@@ -252,7 +252,6 @@ void loongarch::getLoongArchTargetFeatures(const Driver &D,
         Features.push_back("+lsx");
     } else /*-mno-lsx*/ {
       Features.push_back("-lsx");
-      Features.push_back("-lasx");
     }
   }
 

@@ -12,7 +12,6 @@
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/raw_ostream.h"
@@ -111,8 +110,8 @@ public:
     llvm_unreachable("Invalid DWARF format (expected DWARF32 or DWARF64");
   }
 
-  LLVM_ABI void dump(DataExtractor Data, raw_ostream &OS,
-                     DIDumpOptions DumpOpts = {}) const;
+  void dump(DataExtractor Data, raw_ostream &OS,
+            DIDumpOptions DumpOpts = {}) const;
   std::optional<uint64_t> getOffsetEntry(DataExtractor Data,
                                          uint32_t Index) const {
     if (Index >= HeaderData.OffsetEntryCount)
@@ -132,12 +131,12 @@ public:
   }
 
   /// Extract the table header and the array of offsets.
-  LLVM_ABI Error extract(DWARFDataExtractor Data, uint64_t *OffsetPtr);
+  Error extract(DWARFDataExtractor Data, uint64_t *OffsetPtr);
 
   /// Returns the length of the table, including the length field, or 0 if the
   /// length has not been determined (e.g. because the table has not yet been
   /// parsed, or there was a problem in parsing).
-  LLVM_ABI uint64_t length() const;
+  uint64_t length() const;
 };
 
 /// A class representing a table of lists as specified in the DWARF v5

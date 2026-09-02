@@ -19,7 +19,7 @@ void InterfacesGlobalInitCheck::registerMatchers(MatchFinder *Finder) {
               hasDeclContext(anyOf(translationUnitDecl(), // Global scope.
                                    namespaceDecl(),       // Namespace scope.
                                    recordDecl())),        // Class scope.
-              unless(isConstexpr()), unless(isConstinit()));
+              unless(isConstexpr()));
 
   const auto ReferencesUndefinedGlobalVar = declRefExpr(hasDeclaration(
       varDecl(GlobalVarDecl, unless(isDefinition())).bind("referencee")));

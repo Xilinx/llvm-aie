@@ -151,7 +151,7 @@ public:
         Uses += PredicateUsage[TP];
 
       // We only add the first predicate here since they are with the same code.
-      PredicateList.emplace_back(TPs[0], Uses);
+      PredicateList.push_back({TPs[0], Uses});
     }
 
     stable_sort(PredicateList, [](const auto &A, const auto &B) {
@@ -1158,7 +1158,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(raw_ostream &OS) {
   EmitNodePredicatesFunction(
       NodePredicatesWithOperands,
       "CheckNodePredicateWithOperands(SDValue Op, unsigned PredNo, "
-      "ArrayRef<SDValue> Operands) const",
+      "const SmallVectorImpl<SDValue> &Operands) const",
       OS);
 
   // Emit CompletePattern matchers.

@@ -448,10 +448,7 @@ void GCNIterativeScheduler::sortRegionsByPressure(unsigned TargetOcc) {
 unsigned GCNIterativeScheduler::tryMaximizeOccupancy(unsigned TargetOcc) {
   // TODO: assert Regions are sorted descending by pressure
   const auto &ST = MF.getSubtarget<GCNSubtarget>();
-  const unsigned DynamicVGPRBlockSize =
-      MF.getInfo<SIMachineFunctionInfo>()->getDynamicVGPRBlockSize();
-  const auto Occ =
-      Regions.front()->MaxPressure.getOccupancy(ST, DynamicVGPRBlockSize);
+  const auto Occ = Regions.front()->MaxPressure.getOccupancy(ST);
   LLVM_DEBUG(dbgs() << "Trying to improve occupancy, target = " << TargetOcc
                     << ", current = " << Occ << '\n');
 
@@ -460,7 +457,7 @@ unsigned GCNIterativeScheduler::tryMaximizeOccupancy(unsigned TargetOcc) {
     // Always build the DAG to add mutations
     BuildDAG DAG(*R, *this);
 
-    if (R->MaxPressure.getOccupancy(ST, DynamicVGPRBlockSize) >= NewOcc)
+    if (R->MaxPressure.getOccupancy(ST) >= NewOcc)
       continue;
 
     LLVM_DEBUG(printRegion(dbgs(), R->Begin, R->End, LIS, 3);
@@ -471,7 +468,7 @@ unsigned GCNIterativeScheduler::tryMaximizeOccupancy(unsigned TargetOcc) {
     LLVM_DEBUG(dbgs() << "Occupancy improvement attempt:\n";
                printSchedRP(dbgs(), R->MaxPressure, MaxRP));
 
-    NewOcc = std::min(NewOcc, MaxRP.getOccupancy(ST, DynamicVGPRBlockSize));
+    NewOcc = std::min(NewOcc, MaxRP.getOccupancy(ST));
     if (NewOcc <= Occ)
       break;
 
@@ -492,11 +489,9 @@ void GCNIterativeScheduler::scheduleLegacyMaxOccupancy(
   const auto &ST = MF.getSubtarget<GCNSubtarget>();
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   auto TgtOcc = MFI->getMinAllowedOccupancy();
-  unsigned DynamicVGPRBlockSize = MFI->getDynamicVGPRBlockSize();
 
   sortRegionsByPressure(TgtOcc);
-  auto Occ =
-      Regions.front()->MaxPressure.getOccupancy(ST, DynamicVGPRBlockSize);
+  auto Occ = Regions.front()->MaxPressure.getOccupancy(ST);
 
   bool IsReentry = false;
   if (TryMaximizeOccupancy && Occ < TgtOcc) {
@@ -527,21 +522,19 @@ void GCNIterativeScheduler::scheduleLegacyMaxOccupancy(
       const auto RP = getRegionPressure(*R);
       LLVM_DEBUG(printSchedRP(dbgs(), R->MaxPressure, RP));
 
-      if (RP.getOccupancy(ST, DynamicVGPRBlockSize) < TgtOcc) {
+      if (RP.getOccupancy(ST) < TgtOcc) {
         LLVM_DEBUG(dbgs() << "Didn't fit into target occupancy O" << TgtOcc);
-        if (R->BestSchedule.get() && R->BestSchedule->MaxPressure.getOccupancy(
-                                         ST, DynamicVGPRBlockSize) >= TgtOcc) {
+        if (R->BestSchedule.get() &&
+            R->BestSchedule->MaxPressure.getOccupancy(ST) >= TgtOcc) {
           LLVM_DEBUG(dbgs() << ", scheduling minimal register\n");
           scheduleBest(*R);
         } else {
           LLVM_DEBUG(dbgs() << ", restoring\n");
           Ovr.restoreOrder();
-          assert(R->MaxPressure.getOccupancy(ST, DynamicVGPRBlockSize) >=
-                 TgtOcc);
+          assert(R->MaxPressure.getOccupancy(ST) >= TgtOcc);
         }
       }
-      FinalOccupancy =
-          std::min(FinalOccupancy, RP.getOccupancy(ST, DynamicVGPRBlockSize));
+      FinalOccupancy = std::min(FinalOccupancy, RP.getOccupancy(ST));
     }
   }
   MFI->limitOccupancy(FinalOccupancy);
@@ -587,11 +580,9 @@ void GCNIterativeScheduler::scheduleILP(
   const auto &ST = MF.getSubtarget<GCNSubtarget>();
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   auto TgtOcc = MFI->getMinAllowedOccupancy();
-  unsigned DynamicVGPRBlockSize = MFI->getDynamicVGPRBlockSize();
 
   sortRegionsByPressure(TgtOcc);
-  auto Occ =
-      Regions.front()->MaxPressure.getOccupancy(ST, DynamicVGPRBlockSize);
+  auto Occ = Regions.front()->MaxPressure.getOccupancy(ST);
 
   bool IsReentry = false;
   if (TryMaximizeOccupancy && Occ < TgtOcc) {
@@ -612,18 +603,17 @@ void GCNIterativeScheduler::scheduleILP(
     const auto RP = getSchedulePressure(*R, ILPSchedule);
     LLVM_DEBUG(printSchedRP(dbgs(), R->MaxPressure, RP));
 
-    if (RP.getOccupancy(ST, DynamicVGPRBlockSize) < TgtOcc) {
+    if (RP.getOccupancy(ST) < TgtOcc) {
       LLVM_DEBUG(dbgs() << "Didn't fit into target occupancy O" << TgtOcc);
-      if (R->BestSchedule.get() && R->BestSchedule->MaxPressure.getOccupancy(
-                                       ST, DynamicVGPRBlockSize) >= TgtOcc) {
+      if (R->BestSchedule.get() &&
+        R->BestSchedule->MaxPressure.getOccupancy(ST) >= TgtOcc) {
         LLVM_DEBUG(dbgs() << ", scheduling minimal register\n");
         scheduleBest(*R);
       }
     } else {
       scheduleRegion(*R, ILPSchedule, RP);
       LLVM_DEBUG(printSchedResult(dbgs(), R, RP));
-      FinalOccupancy =
-          std::min(FinalOccupancy, RP.getOccupancy(ST, DynamicVGPRBlockSize));
+      FinalOccupancy = std::min(FinalOccupancy, RP.getOccupancy(ST));
     }
   }
   MFI->limitOccupancy(FinalOccupancy);

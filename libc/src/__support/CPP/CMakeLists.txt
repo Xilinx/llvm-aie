@@ -17,7 +17,6 @@ add_header_library(
   DEPENDS
     .limits
     .type_traits
-    libc.hdr.stdint_proxy
     libc.src.__support.macros.attributes
     libc.src.__support.macros.sanitizer
 )
@@ -40,8 +39,6 @@ add_header_library(
   functional
   HDRS
     functional.h
-  DEPENDS
-    libc.hdr.stdint_proxy
 )
 
 add_header_library(

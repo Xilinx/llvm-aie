@@ -2856,7 +2856,7 @@ struct AAExecutionDomainFunction : public AAExecutionDomain {
       if (!It->getSecond().IsReachingAlignedBarrierOnly)
         ForwardIsOk = false;
       break;
-    } while ((CurI = CurI->getNextNode()));
+    } while ((CurI = CurI->getNextNonDebugInstruction()));
 
     if (!CurI && !BEDMap.lookup(I.getParent()).IsReachingAlignedBarrierOnly)
       ForwardIsOk = false;
@@ -2875,7 +2875,7 @@ struct AAExecutionDomainFunction : public AAExecutionDomain {
       if (It->getSecond().IsReachedFromAlignedBarrierOnly)
         break;
       return false;
-    } while ((CurI = CurI->getPrevNode()));
+    } while ((CurI = CurI->getPrevNonDebugInstruction()));
 
     // Delayed decision on the forward pass to allow aligned barrier detection
     // in the backwards traversal.
@@ -5232,7 +5232,8 @@ struct AAFoldRuntimeCallCallSiteReturned : AAFoldRuntimeCall {
         IRPosition::callsite_returned(CB),
         [&](const IRPosition &IRP, const AbstractAttribute *AA,
             bool &UsedAssumedInformation) -> std::optional<Value *> {
-          assert((isValidState() || SimplifiedValue == nullptr) &&
+          assert((isValidState() ||
+                  (SimplifiedValue && *SimplifiedValue == nullptr)) &&
                  "Unexpected invalid state!");
 
           if (!isAtFixpoint()) {

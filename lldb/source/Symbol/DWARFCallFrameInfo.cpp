@@ -26,7 +26,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
-using namespace llvm::dwarf;
+using namespace lldb_private::dwarf;
 
 // GetDwarfEHPtr
 //

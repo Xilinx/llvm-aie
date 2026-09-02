@@ -77,20 +77,6 @@ public:
                          const MCSubtargetInfo &STI) const override;
 };
 
-static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
-                     const MCExpr *Value, uint16_t Kind) {
-  bool PCRel = false;
-  switch (Kind) {
-  case MSP430::fixup_10_pcrel:
-  case MSP430::fixup_16_pcrel:
-  case MSP430::fixup_16_pcrel_byte:
-  case MSP430::fixup_2x_pcrel:
-  case MSP430::fixup_rl_pcrel:
-    PCRel = true;
-  }
-  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
-}
-
 void MSP430MCCodeEmitter::encodeInstruction(const MCInst &MI,
                                             SmallVectorImpl<char> &CB,
                                             SmallVectorImpl<MCFixup> &Fixups,
@@ -125,7 +111,8 @@ unsigned MSP430MCCodeEmitter::getMachineOpValue(const MCInst &MI,
   }
 
   assert(MO.isExpr() && "Expected expr operand");
-  addFixup(Fixups, Offset, MO.getExpr(), MSP430::fixup_16_byte);
+  Fixups.push_back(MCFixup::create(Offset, MO.getExpr(),
+      static_cast<MCFixupKind>(MSP430::fixup_16_byte), MI.getLoc()));
   Offset += 2;
   return 0;
 }
@@ -156,7 +143,8 @@ unsigned MSP430MCCodeEmitter::getMemOpValue(const MCInst &MI, unsigned Op,
     FixupKind = MSP430::fixup_16_byte;
     break;
   }
-  addFixup(Fixups, Offset, MO2.getExpr(), FixupKind);
+  Fixups.push_back(MCFixup::create(Offset, MO2.getExpr(),
+    static_cast<MCFixupKind>(FixupKind), MI.getLoc()));
   Offset += 2;
   return Reg;
 }
@@ -169,7 +157,8 @@ unsigned MSP430MCCodeEmitter::getPCRelImmOpValue(const MCInst &MI, unsigned Op,
     return MO.getImm();
 
   assert(MO.isExpr() && "Expr operand expected");
-  addFixup(Fixups, 0, MO.getExpr(), MSP430::fixup_10_pcrel);
+  Fixups.push_back(MCFixup::create(0, MO.getExpr(),
+    static_cast<MCFixupKind>(MSP430::fixup_10_pcrel), MI.getLoc()));
   return 0;
 }
 

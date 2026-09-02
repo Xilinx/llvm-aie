@@ -115,21 +115,6 @@ public:
                     AffineMap tagMap, ValueRange tagIndices, Value numElements,
                     Value stride = nullptr, Value elementsPerStride = nullptr);
 
-  static AffineDmaStartOp
-  create(OpBuilder &builder, Location location, Value srcMemRef,
-         AffineMap srcMap, ValueRange srcIndices, Value destMemRef,
-         AffineMap dstMap, ValueRange destIndices, Value tagMemRef,
-         AffineMap tagMap, ValueRange tagIndices, Value numElements,
-         Value stride = nullptr, Value elementsPerStride = nullptr);
-
-  static AffineDmaStartOp create(ImplicitLocOpBuilder &builder, Value srcMemRef,
-                                 AffineMap srcMap, ValueRange srcIndices,
-                                 Value destMemRef, AffineMap dstMap,
-                                 ValueRange destIndices, Value tagMemRef,
-                                 AffineMap tagMap, ValueRange tagIndices,
-                                 Value numElements, Value stride = nullptr,
-                                 Value elementsPerStride = nullptr);
-
   /// Returns the operand index of the source memref.
   unsigned getSrcMemRefOperandIndex() { return 0; }
 
@@ -335,12 +320,6 @@ public:
 
   static void build(OpBuilder &builder, OperationState &result, Value tagMemRef,
                     AffineMap tagMap, ValueRange tagIndices, Value numElements);
-  static AffineDmaWaitOp create(OpBuilder &builder, Location location,
-                                Value tagMemRef, AffineMap tagMap,
-                                ValueRange tagIndices, Value numElements);
-  static AffineDmaWaitOp create(ImplicitLocOpBuilder &builder, Value tagMemRef,
-                                AffineMap tagMap, ValueRange tagIndices,
-                                Value numElements);
 
   static StringRef getOperationName() { return "affine.dma_wait"; }
 
@@ -432,11 +411,9 @@ void canonicalizeSetAndOperands(IntegerSet *set,
 /// other AffineApplyOps supplying those operands. The operands of the resulting
 /// AffineApplyOp do not change the length of  AffineApplyOp chains.
 AffineApplyOp makeComposedAffineApply(OpBuilder &b, Location loc, AffineMap map,
-                                      ArrayRef<OpFoldResult> operands,
-                                      bool composeAffineMin = false);
+                                      ArrayRef<OpFoldResult> operands);
 AffineApplyOp makeComposedAffineApply(OpBuilder &b, Location loc, AffineExpr e,
-                                      ArrayRef<OpFoldResult> operands,
-                                      bool composeAffineMin = false);
+                                      ArrayRef<OpFoldResult> operands);
 
 /// Constructs an AffineApplyOp that applies `map` to `operands` after composing
 /// the map with the maps of any other AffineApplyOp supplying the operands,
@@ -445,19 +422,16 @@ AffineApplyOp makeComposedAffineApply(OpBuilder &b, Location loc, AffineExpr e,
 /// map.
 OpFoldResult makeComposedFoldedAffineApply(OpBuilder &b, Location loc,
                                            AffineMap map,
-                                           ArrayRef<OpFoldResult> operands,
-                                           bool composeAffineMin = false);
+                                           ArrayRef<OpFoldResult> operands);
 /// Variant of `makeComposedFoldedAffineApply` that applies to an expression.
 OpFoldResult makeComposedFoldedAffineApply(OpBuilder &b, Location loc,
                                            AffineExpr expr,
-                                           ArrayRef<OpFoldResult> operands,
-                                           bool composeAffineMin = false);
+                                           ArrayRef<OpFoldResult> operands);
 /// Variant of `makeComposedFoldedAffineApply` suitable for multi-result maps.
 /// Note that this may create as many affine.apply operations as the map has
 /// results given that affine.apply must be single-result.
 SmallVector<OpFoldResult> makeComposedFoldedMultiResultAffineApply(
-    OpBuilder &b, Location loc, AffineMap map, ArrayRef<OpFoldResult> operands,
-    bool composeAffineMin = false);
+    OpBuilder &b, Location loc, AffineMap map, ArrayRef<OpFoldResult> operands);
 
 /// Returns an AffineMinOp obtained by composing `map` and `operands` with
 /// AffineApplyOps supplying those operands.
@@ -486,8 +460,7 @@ OpFoldResult makeComposedFoldedAffineMax(OpBuilder &b, Location loc,
 /// terminal symbol, i.e., a symbol defined at the top level or a block/function
 /// argument.
 void fullyComposeAffineMapAndOperands(AffineMap *map,
-                                      SmallVectorImpl<Value> *operands,
-                                      bool composeAffineMin = false);
+                                      SmallVectorImpl<Value> *operands);
 
 } // namespace affine
 } // namespace mlir

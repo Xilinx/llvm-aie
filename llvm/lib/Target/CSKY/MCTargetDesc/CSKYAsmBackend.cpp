@@ -11,6 +11,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
@@ -31,27 +32,34 @@ MCFixupKindInfo CSKYAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
       {CSKY::Fixups::fixup_csky_addr_hi16, {"fixup_csky_addr_hi16", 0, 32, 0}},
       {CSKY::Fixups::fixup_csky_addr_lo16, {"fixup_csky_addr_lo16", 0, 32, 0}},
       {CSKY::Fixups::fixup_csky_pcrel_imm16_scale2,
-       {"fixup_csky_pcrel_imm16_scale2", 0, 32, 0}},
+       {"fixup_csky_pcrel_imm16_scale2", 0, 32, MCFixupKindInfo::FKF_IsPCRel}},
       {CSKY::Fixups::fixup_csky_pcrel_uimm16_scale4,
-       {"fixup_csky_pcrel_uimm16_scale4", 0, 32, 0}},
+       {"fixup_csky_pcrel_uimm16_scale4", 0, 32,
+        MCFixupKindInfo::FKF_IsPCRel |
+            MCFixupKindInfo::FKF_IsAlignedDownTo32Bits}},
       {CSKY::Fixups::fixup_csky_pcrel_uimm8_scale4,
-       {"fixup_csky_pcrel_uimm8_scale4", 0, 32, 0}},
+       {"fixup_csky_pcrel_uimm8_scale4", 0, 32,
+        MCFixupKindInfo::FKF_IsPCRel |
+            MCFixupKindInfo::FKF_IsAlignedDownTo32Bits}},
       {CSKY::Fixups::fixup_csky_pcrel_imm26_scale2,
-       {"fixup_csky_pcrel_imm26_scale2", 0, 32, 0}},
+       {"fixup_csky_pcrel_imm26_scale2", 0, 32, MCFixupKindInfo::FKF_IsPCRel}},
       {CSKY::Fixups::fixup_csky_pcrel_imm18_scale2,
-       {"fixup_csky_pcrel_imm18_scale2", 0, 32, 0}},
+       {"fixup_csky_pcrel_imm18_scale2", 0, 32, MCFixupKindInfo::FKF_IsPCRel}},
       {CSKY::Fixups::fixup_csky_got32, {"fixup_csky_got32", 0, 32, 0}},
       {CSKY::Fixups::fixup_csky_got_imm18_scale4,
        {"fixup_csky_got_imm18_scale4", 0, 32, 0}},
       {CSKY::Fixups::fixup_csky_gotoff, {"fixup_csky_gotoff", 0, 32, 0}},
-      {CSKY::Fixups::fixup_csky_gotpc, {"fixup_csky_gotpc", 0, 32, 0}},
+      {CSKY::Fixups::fixup_csky_gotpc,
+       {"fixup_csky_gotpc", 0, 32, MCFixupKindInfo::FKF_IsPCRel}},
       {CSKY::Fixups::fixup_csky_plt32, {"fixup_csky_plt32", 0, 32, 0}},
       {CSKY::Fixups::fixup_csky_plt_imm18_scale4,
        {"fixup_csky_plt_imm18_scale4", 0, 32, 0}},
       {CSKY::Fixups::fixup_csky_pcrel_imm10_scale2,
-       {"fixup_csky_pcrel_imm10_scale2", 0, 16, 0}},
+       {"fixup_csky_pcrel_imm10_scale2", 0, 16, MCFixupKindInfo::FKF_IsPCRel}},
       {CSKY::Fixups::fixup_csky_pcrel_uimm7_scale4,
-       {"fixup_csky_pcrel_uimm7_scale4", 0, 16, 0}},
+       {"fixup_csky_pcrel_uimm7_scale4", 0, 16,
+        MCFixupKindInfo::FKF_IsPCRel |
+            MCFixupKindInfo::FKF_IsAlignedDownTo32Bits}},
       {CSKY::Fixups::fixup_csky_doffset_imm18,
        {"fixup_csky_doffset_imm18", 0, 18, 0}},
       {CSKY::Fixups::fixup_csky_doffset_imm18_scale2,
@@ -63,7 +71,7 @@ MCFixupKindInfo CSKYAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
          "Not all fixup kinds added to Infos array");
 
   if (mc::isRelocation(Kind))
-    return {};
+    return MCAsmBackend::getFixupKindInfo(FK_NONE);
   if (Kind < FirstTargetFixupKind)
     return MCAsmBackend::getFixupKindInfo(Kind);
   return Infos[Kind];
@@ -71,7 +79,7 @@ MCFixupKindInfo CSKYAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
 
 static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
                                  MCContext &Ctx) {
-  switch (Fixup.getKind()) {
+  switch (Fixup.getTargetKind()) {
   default:
     llvm_unreachable("Unknown fixup kind!");
   case CSKY::fixup_csky_got32:
@@ -157,8 +165,7 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   }
 }
 
-bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCFragment &,
-                                                  const MCFixup &Fixup,
+bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCFixup &Fixup,
                                                   const MCValue &,
                                                   uint64_t Value,
                                                   bool Resolved) const {
@@ -167,7 +174,7 @@ bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCFragment &,
     return true;
 
   int64_t Offset = int64_t(Value);
-  switch (Fixup.getKind()) {
+  switch (Fixup.getTargetKind()) {
   default:
     return false;
   case CSKY::fixup_csky_pcrel_imm10_scale2:
@@ -181,29 +188,10 @@ bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCFragment &,
   }
 }
 
-std::optional<bool> CSKYAsmBackend::evaluateFixup(const MCFragment &F,
-                                                  MCFixup &Fixup, MCValue &,
-                                                  uint64_t &Value) {
-  // For a few PC-relative fixups, offsets need to be aligned down. We
-  // compensate here because the default handler's `Value` decrement doesn't
-  // account for this alignment.
-  switch (Fixup.getKind()) {
-  case CSKY::fixup_csky_pcrel_uimm16_scale4:
-  case CSKY::fixup_csky_pcrel_uimm8_scale4:
-  case CSKY::fixup_csky_pcrel_uimm7_scale4:
-    Value = (Asm->getFragmentOffset(F) + Fixup.getOffset()) % 4;
-  }
-  return {};
-}
-
-void CSKYAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
+void CSKYAsmBackend::applyFixup(const MCFragment &, const MCFixup &Fixup,
                                 const MCValue &Target,
                                 MutableArrayRef<char> Data, uint64_t Value,
                                 bool IsResolved) {
-  if (IsResolved && shouldForceRelocation(Fixup, Target))
-    IsResolved = false;
-  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
-
   MCFixupKind Kind = Fixup.getKind();
   if (mc::isRelocation(Kind))
     return;
@@ -240,9 +228,9 @@ void CSKYAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
   }
 }
 
-bool CSKYAsmBackend::mayNeedRelaxation(unsigned Opcode, ArrayRef<MCOperand>,
+bool CSKYAsmBackend::mayNeedRelaxation(const MCInst &Inst,
                                        const MCSubtargetInfo &STI) const {
-  switch (Opcode) {
+  switch (Inst.getOpcode()) {
   default:
     return false;
   case CSKY::JBR32:
@@ -265,7 +253,7 @@ bool CSKYAsmBackend::shouldForceRelocation(const MCFixup &Fixup,
                                            const MCValue &Target /*STI*/) {
   if (Target.getSpecifier())
     return true;
-  switch (Fixup.getKind()) {
+  switch (Fixup.getTargetKind()) {
   default:
     break;
   case CSKY::fixup_csky_doffset_imm18:

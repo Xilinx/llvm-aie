@@ -10,11 +10,12 @@
 #define __CLC_MATH_CLC_NATIVE_SIN_H__
 
 #define __FLOAT_ONLY
-#define FUNCTION __clc_native_sin
+#define __CLC_FUNCTION __clc_native_sin
 #define __CLC_BODY <clc/shared/unary_decl.inc>
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
+#undef __CLC_FUNCTION
+#undef __FLOAT_ONLY
 
 #endif // __CLC_MATH_CLC_NATIVE_SIN_H__

@@ -53,8 +53,7 @@ struct TransferReadOpInterface
     auto readOp = cast<vector::TransferReadOp>(op);
     assert(isa<TensorType>(readOp.getShapedType()) &&
            "only tensor types expected");
-    FailureOr<Value> buffer =
-        getBuffer(rewriter, readOp.getBase(), options, state);
+    FailureOr<Value> buffer = getBuffer(rewriter, readOp.getBase(), options);
     if (failed(buffer))
       return failure();
     replaceOpWithNewBufferizedOp<vector::TransferReadOp>(
@@ -113,11 +112,11 @@ struct TransferWriteOpInterface
 
     // Create a new transfer_write on buffer that doesn't have a return value.
     FailureOr<Value> resultBuffer =
-        getBuffer(rewriter, writeOp.getBase(), options, state);
+        getBuffer(rewriter, writeOp.getBase(), options);
     if (failed(resultBuffer))
       return failure();
-    vector::TransferWriteOp::create(
-        rewriter, writeOp.getLoc(), writeOp.getVector(), *resultBuffer,
+    rewriter.create<vector::TransferWriteOp>(
+        writeOp.getLoc(), writeOp.getVector(), *resultBuffer,
         writeOp.getIndices(), writeOp.getPermutationMapAttr(),
         writeOp.getMask(), writeOp.getInBoundsAttr());
     replaceOpWithBufferizedValues(rewriter, op, *resultBuffer);
@@ -156,8 +155,7 @@ struct GatherOpInterface
     auto gatherOp = cast<vector::GatherOp>(op);
     assert(isa<TensorType>(gatherOp.getBaseType()) &&
            "only tensor types expected");
-    FailureOr<Value> buffer =
-        getBuffer(rewriter, gatherOp.getBase(), options, state);
+    FailureOr<Value> buffer = getBuffer(rewriter, gatherOp.getBase(), options);
     if (failed(buffer))
       return failure();
     replaceOpWithNewBufferizedOp<vector::GatherOp>(
@@ -186,13 +184,10 @@ struct MaskOpInterface
     return {{&yieldOp->getOpOperand(resultNum), BufferRelation::Equivalent}};
   }
 
-  LogicalResult
-  resolveConflicts(Operation *op, RewriterBase &rewriter,
-                   const AnalysisState &analysisState,
-                   const BufferizationState &bufferizationState) const {
+  LogicalResult resolveConflicts(Operation *op, RewriterBase &rewriter,
+                                 const AnalysisState &state) const {
     auto bufferizableOp = cast<BufferizableOpInterface>(op);
-    if (failed(bufferizableOp.resolveTensorOpOperandConflicts(
-            rewriter, analysisState, bufferizationState)))
+    if (failed(bufferizableOp.resolveTensorOpOperandConflicts(rewriter, state)))
       return failure();
 
     // TODO: Remove this function when vector.mask bodies can bufferize
@@ -241,9 +236,8 @@ struct MaskOpInterface
     // Create a new vector.mask op.
     ValueRange newYieldedValuesRange(newYieldedValues);
     TypeRange newResultTypes(newYieldedValuesRange);
-    auto newOp = vector::MaskOp::create(
-        rewriter, op->getLoc(), newResultTypes, maskOp.getMask(),
-        maskOp.getPassthru(),
+    auto newOp = rewriter.create<vector::MaskOp>(
+        op->getLoc(), newResultTypes, maskOp.getMask(), maskOp.getPassthru(),
         /*maskableOp=*/nullptr,
         /*maskRegionBuilder=*/[](OpBuilder &b, Operation *) {});
     newOp.getRegion().takeBody(maskOp.getMaskRegion());
@@ -308,8 +302,7 @@ struct YieldOpInterface
     SmallVector<Value> newResults;
     for (Value value : yieldOp.getOperands()) {
       if (isa<TensorType>(value.getType())) {
-        FailureOr<Value> maybeBuffer =
-            getBuffer(rewriter, value, options, state);
+        FailureOr<Value> maybeBuffer = getBuffer(rewriter, value, options);
         if (failed(maybeBuffer))
           return failure();
         newResults.push_back(*maybeBuffer);

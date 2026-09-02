@@ -21,7 +21,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <unordered_map>
 #include <utility>
@@ -117,7 +116,7 @@ public:
   void setDFSIn(unsigned I) { DFSIn = I; }
 
   /// dump - print lexical scope.
-  LLVM_ABI void dump(unsigned Indent = 0) const;
+  void dump(unsigned Indent = 0) const;
 
 private:
   LexicalScope *Parent;                        // Parent to this scope.
@@ -145,10 +144,10 @@ public:
 
   /// initialize - Scan machine function and constuct lexical scope nest, resets
   /// the instance if necessary.
-  LLVM_ABI void initialize(const MachineFunction &);
+  void initialize(const MachineFunction &);
 
   /// releaseMemory - release memory.
-  LLVM_ABI void reset();
+  void reset();
 
   /// empty - Return true if there is any lexical scope information available.
   bool empty() { return CurrentFnLexicalScope == nullptr; }
@@ -161,17 +160,16 @@ public:
   /// getMachineBasicBlocks - Populate given set using machine basic blocks
   /// which have machine instructions that belong to lexical scope identified by
   /// DebugLoc.
-  LLVM_ABI void
-  getMachineBasicBlocks(const DILocation *DL,
-                        SmallPtrSetImpl<const MachineBasicBlock *> &MBBs);
+  void getMachineBasicBlocks(const DILocation *DL,
+                             SmallPtrSetImpl<const MachineBasicBlock *> &MBBs);
 
   /// Return true if DebugLoc's lexical scope dominates at least one machine
   /// instruction's lexical scope in a given machine basic block.
-  LLVM_ABI bool dominates(const DILocation *DL, MachineBasicBlock *MBB);
+  bool dominates(const DILocation *DL, MachineBasicBlock *MBB);
 
   /// findLexicalScope - Find lexical scope, either regular or inlined, for the
   /// given DebugLoc. Return NULL if not found.
-  LLVM_ABI LexicalScope *findLexicalScope(const DILocation *DL);
+  LexicalScope *findLexicalScope(const DILocation *DL);
 
   /// getAbstractScopesList - Return a reference to list of abstract scopes.
   ArrayRef<LexicalScope *> getAbstractScopesList() const {
@@ -197,14 +195,13 @@ public:
   }
 
   /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
-  LLVM_ABI LexicalScope *getOrCreateAbstractScope(const DILocalScope *Scope);
+  LexicalScope *getOrCreateAbstractScope(const DILocalScope *Scope);
 
 private:
   /// getOrCreateLexicalScope - Find lexical scope for the given Scope/IA. If
   /// not available then create new lexical scope.
-  LLVM_ABI LexicalScope *
-  getOrCreateLexicalScope(const DILocalScope *Scope,
-                          const DILocation *IA = nullptr);
+  LexicalScope *getOrCreateLexicalScope(const DILocalScope *Scope,
+                                        const DILocation *IA = nullptr);
   LexicalScope *getOrCreateLexicalScope(const DILocation *DL) {
     return DL ? getOrCreateLexicalScope(DL->getScope(), DL->getInlinedAt())
               : nullptr;

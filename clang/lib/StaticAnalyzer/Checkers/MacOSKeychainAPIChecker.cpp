@@ -556,7 +556,8 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     return;
   }
 
-  ExplodedNode *N = C.generateNonFatalErrorNode(C.getState());
+  static CheckerProgramPointTag Tag(this, "DeadSymbolsLeak");
+  ExplodedNode *N = C.generateNonFatalErrorNode(C.getState(), &Tag);
   if (!N)
     return;
 

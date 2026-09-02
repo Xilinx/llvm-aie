@@ -8,7 +8,7 @@
 
 // <list>
 
-// void splice(const_iterator position, list& x, iterator first, iterator last); // constexpr since C++26
+// void splice(const_iterator position, list& x, iterator first, iterator last);
 
 #include <list>
 #include <cassert>
@@ -16,7 +16,7 @@
 #include "test_macros.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   int a1[] = {1, 2, 3};
   int a2[] = {4, 5, 6};
   {
@@ -212,15 +212,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     i = l2.begin();
     assert(*i == 4);
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

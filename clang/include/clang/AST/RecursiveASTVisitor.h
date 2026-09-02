@@ -789,6 +789,7 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifier(
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Identifier:
   case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
   case NestedNameSpecifier::Global:
   case NestedNameSpecifier::Super:
     return true;
@@ -812,6 +813,7 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifierLoc(
   switch (NNS.getNestedNameSpecifier()->getKind()) {
   case NestedNameSpecifier::Identifier:
   case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
   case NestedNameSpecifier::Global:
   case NestedNameSpecifier::Super:
     return true;
@@ -1152,14 +1154,6 @@ DEF_TRAVERSE_TYPE(BTFTagAttributedType,
 DEF_TRAVERSE_TYPE(HLSLAttributedResourceType,
                   { TRY_TO(TraverseType(T->getWrappedType())); })
 
-DEF_TRAVERSE_TYPE(HLSLInlineSpirvType, {
-  for (auto &Operand : T->getOperands()) {
-    if (Operand.isConstant() || Operand.isType()) {
-      TRY_TO(TraverseType(Operand.getResultType()));
-    }
-  }
-})
-
 DEF_TRAVERSE_TYPE(ParenType, { TRY_TO(TraverseType(T->getInnerType())); })
 
 DEF_TRAVERSE_TYPE(MacroQualifiedType,
@@ -1207,8 +1201,6 @@ DEF_TRAVERSE_TYPE(PipeType, { TRY_TO(TraverseType(T->getElementType())); })
 DEF_TRAVERSE_TYPE(BitIntType, {})
 DEF_TRAVERSE_TYPE(DependentBitIntType,
                   { TRY_TO(TraverseStmt(T->getNumBitsExpr())); })
-
-DEF_TRAVERSE_TYPE(PredefinedSugarType, {})
 
 #undef DEF_TRAVERSE_TYPE
 
@@ -1465,9 +1457,6 @@ DEF_TRAVERSE_TYPELOC(BTFTagAttributedType,
 DEF_TRAVERSE_TYPELOC(HLSLAttributedResourceType,
                      { TRY_TO(TraverseTypeLoc(TL.getWrappedLoc())); })
 
-DEF_TRAVERSE_TYPELOC(HLSLInlineSpirvType,
-                     { TRY_TO(TraverseType(TL.getType())); })
-
 DEF_TRAVERSE_TYPELOC(ElaboratedType, {
   if (TL.getQualifierLoc()) {
     TRY_TO(TraverseNestedNameSpecifierLoc(TL.getQualifierLoc()));
@@ -1525,8 +1514,6 @@ DEF_TRAVERSE_TYPELOC(BitIntType, {})
 DEF_TRAVERSE_TYPELOC(DependentBitIntType, {
   TRY_TO(TraverseStmt(TL.getTypePtr()->getNumBitsExpr()));
 })
-
-DEF_TRAVERSE_TYPELOC(PredefinedSugarType, {})
 
 #undef DEF_TRAVERSE_TYPELOC
 
@@ -1619,7 +1606,7 @@ DEF_TRAVERSE_DECL(LifetimeExtendedTemporaryDecl, {
 })
 
 DEF_TRAVERSE_DECL(FileScopeAsmDecl,
-                  { TRY_TO(TraverseStmt(D->getAsmStringExpr())); })
+                  { TRY_TO(TraverseStmt(D->getAsmString())); })
 
 DEF_TRAVERSE_DECL(TopLevelStmtDecl, { TRY_TO(TraverseStmt(D->getStmt())); })
 
@@ -2958,6 +2945,7 @@ DEF_TRAVERSE_STMT(CXXRewrittenBinaryOperator, {
   }
 })
 DEF_TRAVERSE_STMT(OpaqueValueExpr, {})
+DEF_TRAVERSE_STMT(TypoExpr, {})
 DEF_TRAVERSE_STMT(RecoveryExpr, {})
 DEF_TRAVERSE_STMT(CUDAKernelCallExpr, {})
 

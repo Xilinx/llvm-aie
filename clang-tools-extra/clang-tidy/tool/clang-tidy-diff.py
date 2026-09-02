@@ -177,7 +177,7 @@ def main():
     parser.add_argument(
         "-j",
         type=int,
-        default=0,
+        default=1,
         help="number of tidy instances to be run in parallel.",
     )
     parser.add_argument(
@@ -318,7 +318,6 @@ def main():
     if max_task_count == 0:
         max_task_count = multiprocessing.cpu_count()
     max_task_count = min(len(lines_by_file), max_task_count)
-    print(f"Running clang-tidy in {max_task_count} threads...")
 
     combine_fixes = False
     export_fixes_dir = None

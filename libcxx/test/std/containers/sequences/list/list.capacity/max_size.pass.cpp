@@ -8,7 +8,7 @@
 
 // <list>
 
-// size_type max_size() const noexcept // constexpr since C++26
+// size_type max_size() const noexcept
 
 #include <cassert>
 #include <limits>
@@ -18,7 +18,7 @@
 #include "test_allocator.h"
 #include "test_macros.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef limited_allocator<int, 10> A;
     typedef std::list<int, A> C;
@@ -41,15 +41,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(c.max_size() <= max_dist);
     assert(c.max_size() <= alloc_max_size(c.get_allocator()));
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

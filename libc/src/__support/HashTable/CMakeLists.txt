@@ -5,7 +5,6 @@ add_header_library(
   FLAGS
     EXPLICIT_SIMD_OPT
   DEPENDS
-    libc.hdr.stdint_proxy
     libc.src.__support.common
     libc.src.__support.CPP.bit
     libc.src.__support.macros.properties.cpu_features
@@ -16,8 +15,7 @@ if (NOT ${getrandom_index} EQUAL -1)
   message(STATUS "Using getrandom for hashtable randomness")
   set(randomness_compile_flags -DLIBC_HASHTABLE_USE_GETRANDOM)
   set(randomness_extra_depends
-    libc.src.__support.OSUtil.linux.getrandom
-    libc.hdr.errno_macros)
+    libc.src.sys.random.getrandom libc.src.errno.errno)
 endif()
 
 
@@ -27,7 +25,6 @@ add_header_library(
     table.h
   DEPENDS
     .bitmask
-    libc.hdr.stdint_proxy
     libc.hdr.types.ENTRY
     libc.src.__support.CPP.bit
     libc.src.__support.CPP.new
@@ -35,8 +32,9 @@ add_header_library(
     libc.src.__support.macros.attributes
     libc.src.__support.macros.optimization
     libc.src.__support.memory_size
-    libc.src.string.memory_utils.inline_strcmp
-    libc.src.string.string_utils
+    libc.src.string.memset
+    libc.src.string.strcmp
+    libc.src.string.strlen
 )
 
 add_header_library(

@@ -374,8 +374,7 @@ body: |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   V_NOP_e32 implicit $exec
-  ; CHECK-NEXT:   S_CMP_EQ_U32 0, 0, implicit-def $scc
-  ; CHECK-NEXT:   S_BARRIER_SIGNAL_ISFIRST_IMM -1, implicit-def $scc, implicit $scc
+  ; CHECK-NEXT:   S_BARRIER_SIGNAL_ISFIRST_IMM -1, implicit-def $scc
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   S_ENDPGM 0
@@ -386,8 +385,7 @@ body: |
   bb.1:
     successors: %bb.2
     V_NOP_e32 implicit $exec
-    S_CMP_EQ_U32 0, 0, implicit-def $scc
-    S_BARRIER_SIGNAL_ISFIRST_IMM -1, implicit-def $scc, implicit $scc
+    S_BARRIER_SIGNAL_ISFIRST_IMM -1, implicit-def $scc
 
   bb.2:
     S_ENDPGM 0
@@ -439,7 +437,6 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   V_NOP_e32 implicit $exec
   ; CHECK-NEXT:   $m0 = S_MOV_B32 -1
-  ; CHECK-NEXT:   S_CMP_EQ_U32 0, 0, implicit-def $scc
   ; CHECK-NEXT:   S_BARRIER_SIGNAL_ISFIRST_M0 implicit $m0, implicit-def $scc
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -452,8 +449,7 @@ body: |
     successors: %bb.2
     V_NOP_e32 implicit $exec
     $m0 = S_MOV_B32 -1
-    S_CMP_EQ_U32 0, 0, implicit-def $scc
-    S_BARRIER_SIGNAL_ISFIRST_M0 implicit $m0, implicit-def $scc, implicit $scc
+    S_BARRIER_SIGNAL_ISFIRST_M0 implicit $m0, implicit-def $scc
 
   bb.2:
     S_ENDPGM 0

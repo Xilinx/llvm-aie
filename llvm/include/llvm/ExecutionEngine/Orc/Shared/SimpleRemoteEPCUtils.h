@@ -19,7 +19,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
 #include "llvm/ExecutionEngine/Orc/Shared/SimplePackedSerialization.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 #include <atomic>
@@ -31,8 +30,8 @@ namespace llvm {
 namespace orc {
 
 namespace SimpleRemoteEPCDefaultBootstrapSymbolNames {
-LLVM_ABI extern const char *ExecutorSessionObjectName;
-LLVM_ABI extern const char *DispatchFnName;
+extern const char *ExecutorSessionObjectName;
+extern const char *DispatchFnName;
 } // end namespace SimpleRemoteEPCDefaultBootstrapSymbolNames
 
 enum class SimpleRemoteEPCOpcode : uint8_t {
@@ -52,7 +51,7 @@ struct SimpleRemoteEPCExecutorInfo {
 
 using SimpleRemoteEPCArgBytesVector = SmallVector<char, 128>;
 
-class LLVM_ABI SimpleRemoteEPCTransportClient {
+class SimpleRemoteEPCTransportClient {
 public:
   enum HandleMessageAction { ContinueSession, EndSession };
 
@@ -76,7 +75,7 @@ public:
   virtual void handleDisconnect(Error Err) = 0;
 };
 
-class LLVM_ABI SimpleRemoteEPCTransport {
+class SimpleRemoteEPCTransport {
 public:
   virtual ~SimpleRemoteEPCTransport();
 
@@ -101,7 +100,7 @@ public:
 };
 
 /// Uses read/write on FileDescriptors for transport.
-class LLVM_ABI FDSimpleRemoteEPCTransport : public SimpleRemoteEPCTransport {
+class FDSimpleRemoteEPCTransport : public SimpleRemoteEPCTransport {
 public:
   /// Create a FDSimpleRemoteEPCTransport using the given FDs for
   /// reading (InFD) and writing (OutFD).

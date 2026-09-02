@@ -116,13 +116,6 @@ lldb::StreamSP ScriptInterpreter::GetOpaqueTypeFromSBStream(
   return nullptr;
 }
 
-SymbolContext ScriptInterpreter::GetOpaqueTypeFromSBSymbolContext(
-    const lldb::SBSymbolContext &sb_sym_ctx) const {
-  if (sb_sym_ctx.m_opaque_up)
-    return *sb_sym_ctx.m_opaque_up.get();
-  return {};
-}
-
 std::optional<MemoryRegionInfo>
 ScriptInterpreter::GetOpaqueTypeFromSBMemoryRegionInfo(
     const lldb::SBMemoryRegionInfo &mem_region) const {
@@ -227,7 +220,7 @@ ScriptInterpreterIORedirect::ScriptInterpreterIORedirect(
     m_input_file_sp = debugger.GetInputFileSP();
 
     Pipe pipe;
-    Status pipe_result = pipe.CreateNew();
+    Status pipe_result = pipe.CreateNew(false);
 #if defined(_WIN32)
     lldb::file_t read_file = pipe.GetReadNativeHandle();
     pipe.ReleaseReadFileDescriptor();

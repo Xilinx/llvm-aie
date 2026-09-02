@@ -9,6 +9,8 @@
 #include "mlir/Dialect/SPIRV/Transforms/Passes.h"
 
 #include "mlir/Dialect/SPIRV/IR/SPIRVGLCanonicalization.h"
+#include "mlir/Dialect/SPIRV/IR/SPIRVOps.h"
+#include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 namespace mlir {

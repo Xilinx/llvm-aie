@@ -88,24 +88,16 @@ static void extractFromBranchWeightMD(const MDNode *ProfileData,
 
 namespace llvm {
 
-const char *MDProfLabels::BranchWeights = "branch_weights";
-const char *MDProfLabels::ExpectedBranchWeights = "expected";
-const char *MDProfLabels::ValueProfile = "VP";
-const char *MDProfLabels::FunctionEntryCount = "function_entry_count";
-const char *MDProfLabels::SyntheticFunctionEntryCount =
-    "synthetic_function_entry_count";
-const char *MDProfLabels::UnknownBranchWeightsMarker = "unknown";
-
 bool hasProfMD(const Instruction &I) {
   return I.hasMetadata(LLVMContext::MD_prof);
 }
 
 bool isBranchWeightMD(const MDNode *ProfileData) {
-  return isTargetMD(ProfileData, MDProfLabels::BranchWeights, MinBWOps);
+  return isTargetMD(ProfileData, "branch_weights", MinBWOps);
 }
 
-bool isValueProfileMD(const MDNode *ProfileData) {
-  return isTargetMD(ProfileData, MDProfLabels::ValueProfile, MinVPOps);
+static bool isValueProfileMD(const MDNode *ProfileData) {
+  return isTargetMD(ProfileData, "VP", MinVPOps);
 }
 
 bool hasBranchWeightMD(const Instruction &I) {
@@ -139,8 +131,7 @@ bool hasBranchWeightOrigin(const MDNode *ProfileData) {
   // NOTE: if we ever have more types of branch weight provenance,
   // we need to check the string value is "expected". For now, we
   // supply a more generic API, and avoid the spurious comparisons.
-  assert(ProfDataName == nullptr ||
-         ProfDataName->getString() == MDProfLabels::ExpectedBranchWeights);
+  assert(ProfDataName == nullptr || ProfDataName->getString() == "expected");
   return ProfDataName != nullptr;
 }
 
@@ -219,7 +210,7 @@ bool extractProfTotalWeight(const MDNode *ProfileData, uint64_t &TotalVal) {
   if (!ProfDataName)
     return false;
 
-  if (ProfDataName->getString() == MDProfLabels::BranchWeights) {
+  if (ProfDataName->getString() == "branch_weights") {
     unsigned Offset = getBranchWeightOffset(ProfileData);
     for (unsigned Idx = Offset; Idx < ProfileData->getNumOperands(); ++Idx) {
       auto *V = mdconst::extract<ConstantInt>(ProfileData->getOperand(Idx));
@@ -228,8 +219,7 @@ bool extractProfTotalWeight(const MDNode *ProfileData, uint64_t &TotalVal) {
     return true;
   }
 
-  if (ProfDataName->getString() == MDProfLabels::ValueProfile &&
-      ProfileData->getNumOperands() > 3) {
+  if (ProfDataName->getString() == "VP" && ProfileData->getNumOperands() > 3) {
     TotalVal = mdconst::dyn_extract<ConstantInt>(ProfileData->getOperand(2))
                    ->getValue()
                    .getZExtValue();
@@ -240,27 +230,6 @@ bool extractProfTotalWeight(const MDNode *ProfileData, uint64_t &TotalVal) {
 
 bool extractProfTotalWeight(const Instruction &I, uint64_t &TotalVal) {
   return extractProfTotalWeight(I.getMetadata(LLVMContext::MD_prof), TotalVal);
-}
-
-void setExplicitlyUnknownBranchWeights(Instruction &I) {
-  MDBuilder MDB(I.getContext());
-  I.setMetadata(
-      LLVMContext::MD_prof,
-      MDNode::get(I.getContext(),
-                  MDB.createString(MDProfLabels::UnknownBranchWeightsMarker)));
-}
-
-bool isExplicitlyUnknownBranchWeightsMetadata(const MDNode &MD) {
-  if (MD.getNumOperands() != 1)
-    return false;
-  return MD.getOperand(0).equalsStr(MDProfLabels::UnknownBranchWeightsMarker);
-}
-
-bool hasExplicitlyUnknownBranchWeights(const Instruction &I) {
-  auto *MD = I.getMetadata(LLVMContext::MD_prof);
-  if (!MD)
-    return false;
-  return isExplicitlyUnknownBranchWeightsMetadata(*MD);
 }
 
 void setBranchWeights(Instruction &I, ArrayRef<uint32_t> Weights,
@@ -277,9 +246,8 @@ void scaleProfData(Instruction &I, uint64_t S, uint64_t T) {
     return;
 
   auto *ProfDataName = dyn_cast<MDString>(ProfileData->getOperand(0));
-  if (!ProfDataName ||
-      (ProfDataName->getString() != MDProfLabels::BranchWeights &&
-       ProfDataName->getString() != MDProfLabels::ValueProfile))
+  if (!ProfDataName || (ProfDataName->getString() != "branch_weights" &&
+                        ProfDataName->getString() != "VP"))
     return;
 
   if (!hasCountTypeMD(I))
@@ -291,7 +259,7 @@ void scaleProfData(Instruction &I, uint64_t S, uint64_t T) {
   SmallVector<Metadata *, 3> Vals;
   Vals.push_back(ProfileData->getOperand(0));
   APInt APS(128, S), APT(128, T);
-  if (ProfDataName->getString() == MDProfLabels::BranchWeights &&
+  if (ProfDataName->getString() == "branch_weights" &&
       ProfileData->getNumOperands() > 0) {
     // Using APInt::div may be expensive, but most cases should fit 64 bits.
     APInt Val(128,
@@ -302,7 +270,7 @@ void scaleProfData(Instruction &I, uint64_t S, uint64_t T) {
     Val *= APS;
     Vals.push_back(MDB.createConstant(ConstantInt::get(
         Type::getInt32Ty(C), Val.udiv(APT).getLimitedValue(UINT32_MAX))));
-  } else if (ProfDataName->getString() == MDProfLabels::ValueProfile)
+  } else if (ProfDataName->getString() == "VP")
     for (unsigned Idx = 1; Idx < ProfileData->getNumOperands(); Idx += 2) {
       // The first value is the key of the value profile, which will not change.
       Vals.push_back(ProfileData->getOperand(Idx));

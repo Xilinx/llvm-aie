@@ -14,7 +14,6 @@ driver_executable("dsymutil") {
     "//llvm/lib/DWARFLinker/Classic",
     "//llvm/lib/DWARFLinker/Parallel",
     "//llvm/lib/DebugInfo/DWARF",
-    "//llvm/lib/DebugInfo/DWARF/LowLevel",
     "//llvm/lib/MC",
     "//llvm/lib/Object",
     "//llvm/lib/Option",

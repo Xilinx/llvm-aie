@@ -1,11 +1,10 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++26 %s -verify
-// RUN: %clang_cc1 -fsyntax-only -std=c++26 %s -verify -fexperimental-new-constant-interpreter
 
 template <typename T>
 struct type_ { };
 
 template <typename ...T>
-constexpr auto sum(T... t) { return (t + ...); }
+auto sum(T... t) { return (t + ...); }
 
 struct my_struct {
   int a;
@@ -18,7 +17,7 @@ struct fake_tuple {
   int arr[4] = {1, 2, 3, 6};
 
   template <unsigned i>
-  constexpr int& get() {
+  int get() {
     return arr[i];
   }
 };
@@ -233,29 +232,4 @@ void g() {
     f('x'); // expected-note {{in instantiation}}
 }
 
-}
-
-namespace constant_interpreter {
-using Arr = int[2];
-struct Triple { int x, y, z = 3; };
-
-constexpr int ref_to_same_obj(auto&& arg) {
-  auto& [...xs] = arg;
-  auto& [...ys] = arg;
-  (..., (xs += 2));
-  return sum(ys...);
-}
-static_assert(ref_to_same_obj(Arr{}) == 4);
-static_assert(ref_to_same_obj(fake_tuple{}) == 20);
-static_assert(ref_to_same_obj(Triple{}) == 9);
-
-constexpr int copy_obj(auto&& arg) {
-  auto& [...xs] = arg;
-  auto [...ys] = arg;
-  (..., (xs += 2));
-  return sum(ys...);
-}
-static_assert(copy_obj(Arr{}) == 0);
-static_assert(copy_obj(fake_tuple{}) == 12);
-static_assert(copy_obj(Triple{}) == 3);
 }

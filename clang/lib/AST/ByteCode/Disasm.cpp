@@ -50,57 +50,34 @@ inline static std::string printArg(Program &P, CodePtr &OpPC) {
 }
 
 template <> inline std::string printArg<Floating>(Program &P, CodePtr &OpPC) {
-  auto Sem = Floating::deserializeSemantics(*OpPC);
+  auto F = Floating::deserialize(*OpPC);
+  OpPC += align(F.bytesToSerialize());
 
-  unsigned BitWidth = llvm::APFloatBase::semanticsSizeInBits(
-      llvm::APFloatBase::EnumToSemantics(Sem));
-  auto Memory =
-      std::make_unique<uint64_t[]>(llvm::APInt::getNumWords(BitWidth));
-  Floating Result(Memory.get(), Sem);
-  Floating::deserialize(*OpPC, &Result);
-
-  OpPC += align(Result.bytesToSerialize());
-
-  std::string S;
-  llvm::raw_string_ostream SS(S);
-  SS << std::move(Result);
-  return S;
+  std::string Result;
+  llvm::raw_string_ostream SS(Result);
+  SS << F;
+  return Result;
 }
 
 template <>
 inline std::string printArg<IntegralAP<false>>(Program &P, CodePtr &OpPC) {
-  using T = IntegralAP<false>;
-  uint32_t BitWidth = T::deserializeSize(*OpPC);
-  auto Memory =
-      std::make_unique<uint64_t[]>(llvm::APInt::getNumWords(BitWidth));
+  auto F = IntegralAP<false>::deserialize(*OpPC);
+  OpPC += align(F.bytesToSerialize());
 
-  T Result(Memory.get(), BitWidth);
-  T::deserialize(*OpPC, &Result);
-
-  OpPC += align(Result.bytesToSerialize());
-
-  std::string Str;
-  llvm::raw_string_ostream SS(Str);
-  SS << std::move(Result);
-  return Str;
+  std::string Result;
+  llvm::raw_string_ostream SS(Result);
+  SS << F;
+  return Result;
 }
-
 template <>
 inline std::string printArg<IntegralAP<true>>(Program &P, CodePtr &OpPC) {
-  using T = IntegralAP<true>;
-  uint32_t BitWidth = T::deserializeSize(*OpPC);
-  auto Memory =
-      std::make_unique<uint64_t[]>(llvm::APInt::getNumWords(BitWidth));
+  auto F = IntegralAP<true>::deserialize(*OpPC);
+  OpPC += align(F.bytesToSerialize());
 
-  T Result(Memory.get(), BitWidth);
-  T::deserialize(*OpPC, &Result);
-
-  OpPC += align(Result.bytesToSerialize());
-
-  std::string Str;
-  llvm::raw_string_ostream SS(Str);
-  SS << std::move(Result);
-  return Str;
+  std::string Result;
+  llvm::raw_string_ostream SS(Result);
+  SS << F;
+  return Result;
 }
 
 template <> inline std::string printArg<FixedPoint>(Program &P, CodePtr &OpPC) {
@@ -109,7 +86,7 @@ template <> inline std::string printArg<FixedPoint>(Program &P, CodePtr &OpPC) {
 
   std::string Result;
   llvm::raw_string_ostream SS(Result);
-  SS << std::move(F);
+  SS << F;
   return Result;
 }
 
@@ -445,7 +422,6 @@ LLVM_DUMP_METHOD void InlineDescriptor::dump(llvm::raw_ostream &OS) const {
   OS << "InUnion: " << InUnion << "\n";
   OS << "IsFieldMutable: " << IsFieldMutable << "\n";
   OS << "IsArrayElement: " << IsArrayElement << "\n";
-  OS << "IsConstInMutable: " << IsConstInMutable << '\n';
   OS << "Desc: ";
   if (Desc)
     Desc->dump(OS);

@@ -25,8 +25,8 @@ mlir::gpu::GPUModuleOp cuf::getOrCreateGPUModule(mlir::ModuleOp mod,
                mlir::UnitAttr::get(ctx));
 
   mlir::OpBuilder builder(ctx);
-  auto gpuMod = mlir::gpu::GPUModuleOp::create(builder, mod.getLoc(),
-                                               cudaDeviceModuleName);
+  auto gpuMod = builder.create<mlir::gpu::GPUModuleOp>(mod.getLoc(),
+                                                       cudaDeviceModuleName);
   mlir::Block::iterator insertPt(mod.getBodyRegion().front().end());
   symTab.insert(gpuMod, insertPt);
   return gpuMod;
@@ -43,8 +43,7 @@ bool cuf::isCUDADeviceContext(mlir::Operation *op) {
 // for it.
 // If the insertion point is inside an OpenACC region op, it is considered
 // device context.
-bool cuf::isCUDADeviceContext(mlir::Region &region,
-                              bool isDoConcurrentOffloadEnabled) {
+bool cuf::isCUDADeviceContext(mlir::Region &region) {
   if (region.getParentOfType<cuf::KernelOp>())
     return true;
   if (region.getParentOfType<mlir::acc::ComputeRegionOpInterface>())
@@ -57,9 +56,6 @@ bool cuf::isCUDADeviceContext(mlir::Region &region,
              cudaProcAttr.getValue() != cuf::ProcAttribute::HostDevice;
     }
   }
-  if (isDoConcurrentOffloadEnabled &&
-      region.getParentOfType<fir::DoConcurrentLoopOp>())
-    return true;
   return false;
 }
 
@@ -84,8 +80,8 @@ void cuf::genPointerSync(const mlir::Value box, fir::FirOpBuilder &builder) {
       if (auto globalOp =
               mod.lookupSymbol<fir::GlobalOp>(addrOfOp.getSymbol())) {
         if (cuf::isRegisteredDeviceGlobal(globalOp)) {
-          cuf::SyncDescriptorOp::create(builder, box.getLoc(),
-                                        addrOfOp.getSymbol());
+          builder.create<cuf::SyncDescriptorOp>(box.getLoc(),
+                                                addrOfOp.getSymbol());
         }
       }
     }

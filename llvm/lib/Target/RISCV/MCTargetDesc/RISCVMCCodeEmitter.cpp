@@ -12,7 +12,7 @@
 
 #include "MCTargetDesc/RISCVBaseInfo.h"
 #include "MCTargetDesc/RISCVFixupKinds.h"
-#include "MCTargetDesc/RISCVMCAsmInfo.h"
+#include "MCTargetDesc/RISCVMCExpr.h"
 #include "MCTargetDesc/RISCVMCTargetDesc.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -120,28 +120,6 @@ MCCodeEmitter *llvm::createRISCVMCCodeEmitter(const MCInstrInfo &MCII,
   return new RISCVMCCodeEmitter(Ctx, MCII);
 }
 
-static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
-                     const MCExpr *Value, uint16_t Kind) {
-  bool PCRel = false;
-  switch (Kind) {
-  case ELF::R_RISCV_CALL_PLT:
-  case RISCV::fixup_riscv_pcrel_hi20:
-  case RISCV::fixup_riscv_pcrel_lo12_i:
-  case RISCV::fixup_riscv_pcrel_lo12_s:
-  case RISCV::fixup_riscv_jal:
-  case RISCV::fixup_riscv_branch:
-  case RISCV::fixup_riscv_rvc_jump:
-  case RISCV::fixup_riscv_rvc_branch:
-  case RISCV::fixup_riscv_call:
-  case RISCV::fixup_riscv_call_plt:
-  case RISCV::fixup_riscv_qc_e_branch:
-  case RISCV::fixup_riscv_qc_e_call_plt:
-  case RISCV::fixup_riscv_nds_branch_10:
-    PCRel = true;
-  }
-  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
-}
-
 // Expand PseudoCALL(Reg), PseudoTAIL and PseudoJump to AUIPC and JALR with
 // relocation types. We expand those pseudo-instructions while encoding them,
 // meaning AUIPC and JALR won't go through RISC-V MC to MC compressed
@@ -199,11 +177,12 @@ void RISCVMCCodeEmitter::expandTLSDESCCall(const MCInst &MI,
   MCOperand SrcSymbol = MI.getOperand(3);
   assert(SrcSymbol.isExpr() &&
          "Expected expression as first input to TLSDESCCALL");
-  const auto *Expr = dyn_cast<MCSpecifierExpr>(SrcSymbol.getExpr());
+  const RISCVMCExpr *Expr = dyn_cast<RISCVMCExpr>(SrcSymbol.getExpr());
   MCRegister Link = MI.getOperand(0).getReg();
   MCRegister Dest = MI.getOperand(1).getReg();
   int64_t Imm = MI.getOperand(2).getImm();
-  addFixup(Fixups, 0, Expr, ELF::R_RISCV_TLSDESC_CALL);
+  Fixups.push_back(
+      MCFixup::create(0, Expr, ELF::R_RISCV_TLSDESC_CALL, MI.getLoc()));
   MCInst Call =
       MCInstBuilder(RISCV::JALR).addReg(Link).addReg(Dest).addImm(Imm);
 
@@ -226,11 +205,12 @@ void RISCVMCCodeEmitter::expandAddTPRel(const MCInst &MI,
   assert(SrcSymbol.isExpr() &&
          "Expected expression as third input to TP-relative add");
 
-  const auto *Expr = dyn_cast<MCSpecifierExpr>(SrcSymbol.getExpr());
+  const RISCVMCExpr *Expr = dyn_cast<RISCVMCExpr>(SrcSymbol.getExpr());
   assert(Expr && Expr->getSpecifier() == ELF::R_RISCV_TPREL_ADD &&
          "Expected tprel_add relocation on TP-relative symbol");
 
-  addFixup(Fixups, 0, Expr, ELF::R_RISCV_TPREL_ADD);
+  Fixups.push_back(
+      MCFixup::create(0, Expr, ELF::R_RISCV_TPREL_ADD, MI.getLoc()));
   if (STI.hasFeature(RISCV::FeatureRelax))
     Fixups.back().setLinkerRelaxable();
 
@@ -300,7 +280,8 @@ void RISCVMCCodeEmitter::expandLongCondBr(const MCInst &MI,
       Opcode == RISCV::PseudoLongBNE || Opcode == RISCV::PseudoLongBEQ;
 
   bool UseCompressedBr = false;
-  if (IsEqTest && STI.hasFeature(RISCV::FeatureStdExtZca)) {
+  if (IsEqTest && (STI.hasFeature(RISCV::FeatureStdExtC) ||
+                   STI.hasFeature(RISCV::FeatureStdExtZca))) {
     if (RISCV::X8 <= SrcReg1.id() && SrcReg1.id() <= RISCV::X15 &&
         SrcReg2.id() == RISCV::X0) {
       UseCompressedBr = true;
@@ -340,8 +321,11 @@ void RISCVMCCodeEmitter::expandLongCondBr(const MCInst &MI,
   // Drop any fixup added so we can add the correct one.
   Fixups.resize(FixupStartIndex);
 
-  if (SrcSymbol.isExpr())
-    addFixup(Fixups, Offset, SrcSymbol.getExpr(), RISCV::fixup_riscv_jal);
+  if (SrcSymbol.isExpr()) {
+    Fixups.push_back(MCFixup::create(Offset, SrcSymbol.getExpr(),
+                                     MCFixupKind(RISCV::fixup_riscv_jal),
+                                     MI.getLoc()));
+  }
 }
 
 // Expand PseudoLongQC_(E_)Bxxx to an inverted conditional branch and an
@@ -388,8 +372,11 @@ void RISCVMCCodeEmitter::expandQCLongCondBrImm(const MCInst &MI,
   support::endian::write(CB, JBinary, llvm::endianness::little);
   // Drop any fixup added so we can add the correct one.
   Fixups.resize(FixupStartIndex);
-  if (SrcSymbol.isExpr())
-    addFixup(Fixups, Offset, SrcSymbol.getExpr(), RISCV::fixup_riscv_jal);
+  if (SrcSymbol.isExpr()) {
+    Fixups.push_back(MCFixup::create(Offset, SrcSymbol.getExpr(),
+                                     MCFixupKind(RISCV::fixup_riscv_jal),
+                                     MI.getLoc()));
+  }
 }
 
 void RISCVMCCodeEmitter::encodeInstruction(const MCInst &MI,
@@ -578,8 +565,8 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
   MCExpr::ExprKind Kind = Expr->getKind();
   unsigned FixupKind = RISCV::fixup_riscv_invalid;
   bool RelaxCandidate = false;
-  if (Kind == MCExpr::Specifier) {
-    const auto *RVExpr = cast<MCSpecifierExpr>(Expr);
+  if (Kind == MCExpr::Target) {
+    const RISCVMCExpr *RVExpr = cast<RISCVMCExpr>(Expr);
     FixupKind = RVExpr->getSpecifier();
     switch (RVExpr->getSpecifier()) {
     default:
@@ -593,7 +580,7 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
       // encounter it here is an error.
       llvm_unreachable(
           "ELF::R_RISCV_TPREL_ADD should not represent an instruction operand");
-    case RISCV::S_LO:
+    case RISCVMCExpr::VK_LO:
       if (MIFrm == RISCVII::InstFormatI)
         FixupKind = RISCV::fixup_riscv_lo12_i;
       else if (MIFrm == RISCVII::InstFormatS)
@@ -606,7 +593,7 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
       FixupKind = RISCV::fixup_riscv_hi20;
       RelaxCandidate = true;
       break;
-    case RISCV::S_PCREL_LO:
+    case RISCVMCExpr::VK_PCREL_LO:
       if (MIFrm == RISCVII::InstFormatI)
         FixupKind = RISCV::fixup_riscv_pcrel_lo12_i;
       else if (MIFrm == RISCVII::InstFormatS)
@@ -619,7 +606,7 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
       FixupKind = RISCV::fixup_riscv_pcrel_hi20;
       RelaxCandidate = true;
       break;
-    case RISCV::S_TPREL_LO:
+    case RISCVMCExpr::VK_TPREL_LO:
       if (MIFrm == RISCVII::InstFormatI)
         FixupKind = ELF::R_RISCV_TPREL_LO12_I;
       else if (MIFrm == RISCVII::InstFormatS)
@@ -635,9 +622,8 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
       FixupKind = RISCV::fixup_riscv_call_plt;
       RelaxCandidate = true;
       break;
-    case RISCV::S_QC_ABS20:
+    case RISCVMCExpr::VK_QC_ABS20:
       FixupKind = RISCV::fixup_riscv_qc_abs20_u;
-      RelaxCandidate = true;
       break;
     }
   } else if (Kind == MCExpr::SymbolRef || Kind == MCExpr::Binary) {
@@ -650,26 +636,20 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
       FixupKind = RISCV::fixup_riscv_rvc_jump;
     } else if (MIFrm == RISCVII::InstFormatCB) {
       FixupKind = RISCV::fixup_riscv_rvc_branch;
-    } else if (MIFrm == RISCVII::InstFormatCI) {
-      FixupKind = RISCV::fixup_riscv_rvc_imm;
     } else if (MIFrm == RISCVII::InstFormatI) {
       FixupKind = RISCV::fixup_riscv_12_i;
     } else if (MIFrm == RISCVII::InstFormatQC_EB) {
       FixupKind = RISCV::fixup_riscv_qc_e_branch;
     } else if (MIFrm == RISCVII::InstFormatQC_EAI) {
       FixupKind = RISCV::fixup_riscv_qc_e_32;
-      RelaxCandidate = true;
     } else if (MIFrm == RISCVII::InstFormatQC_EJ) {
-      FixupKind = RISCV::fixup_riscv_qc_e_call_plt;
-      RelaxCandidate = true;
-    } else if (MIFrm == RISCVII::InstFormatNDS_BRANCH_10) {
-      FixupKind = RISCV::fixup_riscv_nds_branch_10;
+      FixupKind = RISCV::fixup_riscv_qc_e_jump_plt;
     }
   }
 
   assert(FixupKind != RISCV::fixup_riscv_invalid && "Unhandled expression!");
 
-  addFixup(Fixups, 0, Expr, FixupKind);
+  Fixups.push_back(MCFixup::create(0, Expr, FixupKind, MI.getLoc()));
   // If linker relaxation is enabled and supported by this relocation, set
   // a bit so that if fixup is unresolved, a R_RISCV_RELAX relocation will be
   // appended.

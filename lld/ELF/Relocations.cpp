@@ -161,7 +161,7 @@ static RelType getMipsPairType(RelType type, bool isLocal) {
     // symbol, the R_MIPS_GOT16 relocation creates a GOT entry to hold
     // the high 16 bits of the symbol's value. A paired R_MIPS_LO16
     // relocations handle low 16 bits of the address. That allows
-    // to allocate only one GOT entry for every 64 KiB of local data.
+    // to allocate only one GOT entry for every 64 KBytes of local data.
     return isLocal ? R_MIPS_LO16 : R_MIPS_NONE;
   case R_MICROMIPS_GOT16:
     return isLocal ? R_MICROMIPS_LO16 : R_MIPS_NONE;
@@ -990,17 +990,10 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
   // only the low bits are used.
   if (e == R_GOT || e == R_PLT)
     return ctx.target->usesOnlyLowPageBits(type) || !ctx.arg.isPic;
-  // R_AARCH64_AUTH_ABS64 requires a dynamic relocation.
-  if (e == RE_AARCH64_AUTH)
-    return false;
 
-  // The behavior of an undefined weak reference is implementation defined.
-  // (We treat undefined non-weak the same as undefined weak.) For static
-  // -no-pie linking, dynamic relocations are generally avoided (except
-  // IRELATIVE). Emitting dynamic relocations for -shared aligns with its -z
-  // undefs default. Dynamic -no-pie linking and -pie allow flexibility.
-  if (sym.isPreemptible)
-    return sym.isUndefined() && !ctx.arg.isPic;
+  // R_AARCH64_AUTH_ABS64 requires a dynamic relocation.
+  if (sym.isPreemptible || e == RE_AARCH64_AUTH)
+    return false;
   if (!ctx.arg.isPic)
     return true;
 
@@ -1120,7 +1113,19 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
   // If the relocation is known to be a link-time constant, we know no dynamic
   // relocation will be created, pass the control to relocateAlloc() or
   // relocateNonAlloc() to resolve it.
-  if (isStaticLinkTimeConstant(expr, type, sym, offset)) {
+  //
+  // The behavior of an undefined weak reference is implementation defined. For
+  // non-link-time constants, we resolve relocations statically (let
+  // relocate{,Non}Alloc() resolve them) for -no-pie and try producing dynamic
+  // relocations for -pie and -shared.
+  //
+  // The general expectation of -no-pie static linking is that there is no
+  // dynamic relocation (except IRELATIVE). Emitting dynamic relocations for
+  // -shared matches the spirit of its -z undefs default. -pie has freedom on
+  // choices, and we choose dynamic relocations to be consistent with the
+  // handling of GOT-generating relocations.
+  if (isStaticLinkTimeConstant(expr, type, sym, offset) ||
+      (!ctx.arg.isPic && sym.isUndefWeak())) {
     sec->addReloc({expr, type, offset, addend, &sym});
     return;
   }
@@ -1340,10 +1345,22 @@ unsigned RelocationScanner::handleTlsRelocation(RelExpr expr, RelType type,
   if (ctx.arg.emachine == EM_MIPS)
     return handleMipsTlsRelocation(ctx, type, sym, *sec, offset, addend, expr);
 
+  // LoongArch does not yet implement transition from TLSDESC to LE/IE, so
+  // generate TLSDESC dynamic relocation for the dynamic linker to handle.
+  if (ctx.arg.emachine == EM_LOONGARCH &&
+      oneof<RE_LOONGARCH_TLSDESC_PAGE_PC, R_TLSDESC, R_TLSDESC_PC,
+            R_TLSDESC_CALL>(expr)) {
+    if (expr != R_TLSDESC_CALL) {
+      sym.setFlags(NEEDS_TLSDESC);
+      sec->addReloc({expr, type, offset, addend, &sym});
+    }
+    return 1;
+  }
+
   bool isRISCV = ctx.arg.emachine == EM_RISCV;
 
   if (oneof<RE_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
-            R_TLSDESC_GOTPLT, RE_LOONGARCH_TLSDESC_PAGE_PC>(expr) &&
+            R_TLSDESC_GOTPLT>(expr) &&
       ctx.arg.shared) {
     // R_RISCV_TLSDESC_{LOAD_LO12,ADD_LO12_I,CALL} reference a label. Do not
     // set NEEDS_TLSDESC on the label.
@@ -1357,14 +1374,10 @@ unsigned RelocationScanner::handleTlsRelocation(RelExpr expr, RelType type,
     return 1;
   }
 
-  // LoongArch supports IE to LE, DESC GD/LD to IE/LE optimizations in
-  // non-extreme code model.
+  // LoongArch supports IE to LE optimization in non-extreme code model.
   bool execOptimizeInLoongArch =
       ctx.arg.emachine == EM_LOONGARCH &&
-      (type == R_LARCH_TLS_IE_PC_HI20 || type == R_LARCH_TLS_IE_PC_LO12 ||
-       type == R_LARCH_TLS_DESC_PC_HI20 || type == R_LARCH_TLS_DESC_PC_LO12 ||
-       type == R_LARCH_TLS_DESC_LD || type == R_LARCH_TLS_DESC_CALL ||
-       type == R_LARCH_TLS_DESC_PCREL20_S2);
+      (type == R_LARCH_TLS_IE_PC_HI20 || type == R_LARCH_TLS_IE_PC_LO12);
 
   // ARM, Hexagon, LoongArch and RISC-V do not support GD/LD to IE/LE
   // optimizations.
@@ -1423,23 +1436,9 @@ unsigned RelocationScanner::handleTlsRelocation(RelExpr expr, RelType type,
     return 1;
   }
 
-  // LoongArch does not support transition from TLSDESC to LE/IE in the extreme
-  // code model, in which NEEDS_TLSDESC should set, rather than NEEDS_TLSGD. So
-  // we check independently.
-  if (ctx.arg.emachine == EM_LOONGARCH &&
-      oneof<RE_LOONGARCH_TLSDESC_PAGE_PC, R_TLSDESC, R_TLSDESC_PC,
-            R_TLSDESC_CALL>(expr) &&
-      !execOptimize) {
-    if (expr != R_TLSDESC_CALL) {
-      sym.setFlags(NEEDS_TLSDESC);
-      sec->addReloc({expr, type, offset, addend, &sym});
-    }
-    return 1;
-  }
-
   if (oneof<RE_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
             R_TLSDESC_GOTPLT, R_TLSGD_GOT, R_TLSGD_GOTPLT, R_TLSGD_PC,
-            RE_LOONGARCH_TLSGD_PAGE_PC, RE_LOONGARCH_TLSDESC_PAGE_PC>(expr)) {
+            RE_LOONGARCH_TLSGD_PAGE_PC>(expr)) {
     if (!execOptimize) {
       sym.setFlags(NEEDS_TLSGD);
       sec->addReloc({expr, type, offset, addend, &sym});
@@ -1671,11 +1670,9 @@ void RelocationScanner::scan(Relocs<RelTy> rels) {
   }
 
   // Sort relocations by offset for more efficient searching for
-  // R_RISCV_PCREL_HI20, ALIGN relocations, R_PPC64_ADDR64 and the
-  // branch-to-branch optimization.
-  if (is_contained({EM_RISCV, EM_LOONGARCH}, ctx.arg.emachine) ||
-      (ctx.arg.emachine == EM_PPC64 && sec->name == ".toc") ||
-      ctx.arg.branchToBranch)
+  // R_RISCV_PCREL_HI20 and R_PPC64_ADDR64.
+  if (ctx.arg.emachine == EM_RISCV ||
+      (ctx.arg.emachine == EM_PPC64 && sec->name == ".toc"))
     llvm::stable_sort(sec->relocs(),
                       [](const Relocation &lhs, const Relocation &rhs) {
                         return lhs.offset < rhs.offset;
@@ -1966,9 +1963,6 @@ void elf::postScanRelocations(Ctx &ctx) {
   for (ELFFileBase *file : ctx.objectFiles)
     for (Symbol *sym : file->getLocalSymbols())
       fn(*sym);
-
-  if (ctx.arg.branchToBranch)
-    ctx.target->applyBranchToBranchOpt();
 }
 
 static bool mergeCmp(const InputSection *a, const InputSection *b) {
@@ -2140,44 +2134,17 @@ void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> outputSections) {
       });
 }
 
-constexpr uint32_t HEXAGON_MASK_END_PACKET = 3 << 14;
-constexpr uint32_t HEXAGON_END_OF_PACKET = 3 << 14;
-constexpr uint32_t HEXAGON_END_OF_DUPLEX = 0 << 14;
-
-// Return the distance between the packet start and the instruction in the
-// relocation.
-static int getHexagonPacketOffset(const InputSection &isec,
-                                  const Relocation &rel) {
-  const ArrayRef<uint8_t> data = isec.content();
-
-  // Search back as many as 3 instructions.
-  for (unsigned i = 0;; i++) {
-    if (i == 3 || rel.offset < (i + 1) * 4)
-      return i * 4;
-    uint32_t instWord = 0;
-    const ArrayRef<uint8_t> instWordContents =
-        data.drop_front(rel.offset - (i + 1) * 4);
-    memcpy(&instWord, instWordContents.data(), sizeof(instWord));
-    if (((instWord & HEXAGON_MASK_END_PACKET) == HEXAGON_END_OF_PACKET) ||
-        ((instWord & HEXAGON_MASK_END_PACKET) == HEXAGON_END_OF_DUPLEX))
-      return i * 4;
+static int64_t getPCBias(Ctx &ctx, RelType type) {
+  if (ctx.arg.emachine != EM_ARM)
+    return 0;
+  switch (type) {
+  case R_ARM_THM_JUMP19:
+  case R_ARM_THM_JUMP24:
+  case R_ARM_THM_CALL:
+    return 4;
+  default:
+    return 8;
   }
-}
-static int64_t getPCBias(Ctx &ctx, const InputSection &isec,
-                         const Relocation &rel) {
-  if (ctx.arg.emachine == EM_ARM) {
-    switch (rel.type) {
-    case R_ARM_THM_JUMP19:
-    case R_ARM_THM_JUMP24:
-    case R_ARM_THM_CALL:
-      return 4;
-    default:
-      return 8;
-    }
-  }
-  if (ctx.arg.emachine == EM_HEXAGON)
-    return -getHexagonPacketOffset(isec, rel);
-  return 0;
 }
 
 // Find or create a ThunkSection within the InputSectionDescription (ISD) that
@@ -2189,7 +2156,7 @@ ThunkSection *ThunkCreator::getISDThunkSec(OutputSection *os,
                                            const Relocation &rel,
                                            uint64_t src) {
   // See the comment in getThunk for -pcBias below.
-  const int64_t pcBias = getPCBias(ctx, *isec, rel);
+  const int64_t pcBias = getPCBias(ctx, rel.type);
   for (std::pair<ThunkSection *, uint32_t> tp : isd->thunkSections) {
     ThunkSection *ts = tp.first;
     uint64_t tsBase = os->addr + ts->outSecOff - pcBias;
@@ -2350,7 +2317,7 @@ std::pair<Thunk *, bool> ThunkCreator::getThunk(InputSection *isec,
   // out in the relocation addend. We compensate for the PC bias so that
   // an Arm and Thumb relocation to the same destination get the same keyAddend,
   // which is usually 0.
-  const int64_t pcBias = getPCBias(ctx, *isec, rel);
+  const int64_t pcBias = getPCBias(ctx, rel.type);
   const int64_t keyAddend = rel.addend + pcBias;
 
   // We use a ((section, offset), addend) pair to find the thunk position if
@@ -2509,7 +2476,7 @@ bool ThunkCreator::createThunks(uint32_t pass,
             // STT_SECTION + non-zero addend, clear the addend after
             // redirection.
             if (ctx.arg.emachine != EM_MIPS)
-              rel.addend = -getPCBias(ctx, *isec, rel);
+              rel.addend = -getPCBias(ctx, rel.type);
           }
 
         for (auto &p : isd->thunkSections)
@@ -2553,8 +2520,7 @@ void elf::hexagonTLSSymbolUpdate(Ctx &ctx) {
           for (Relocation &rel : isec->relocs())
             if (rel.sym->type == llvm::ELF::STT_TLS && rel.expr == R_PLT_PC) {
               if (needEntry) {
-                if (sym->auxIdx == 0)
-                  sym->allocateAux(ctx);
+                sym->allocateAux(ctx);
                 addPltEntry(ctx, *ctx.in.plt, *ctx.in.gotPlt, *ctx.in.relaPlt,
                             ctx.target->pltRel, *sym);
                 needEntry = false;

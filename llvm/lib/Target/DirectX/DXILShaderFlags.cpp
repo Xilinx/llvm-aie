@@ -106,11 +106,11 @@ void ModuleShaderFlags::updateFunctionFlags(ComputedShaderFlags &CSF,
                                             DXILResourceTypeMap &DRTM,
                                             const ModuleMetadataInfo &MMDI) {
   if (!CSF.Doubles)
-    CSF.Doubles = I.getType()->getScalarType()->isDoubleTy();
+    CSF.Doubles = I.getType()->isDoubleTy();
 
   if (!CSF.Doubles) {
     for (const Value *Op : I.operands()) {
-      if (Op->getType()->getScalarType()->isDoubleTy()) {
+      if (Op->getType()->isDoubleTy()) {
         CSF.Doubles = true;
         break;
       }
@@ -130,13 +130,12 @@ void ModuleShaderFlags::updateFunctionFlags(ComputedShaderFlags &CSF,
   }
 
   if (!CSF.LowPrecisionPresent)
-    CSF.LowPrecisionPresent = I.getType()->getScalarType()->isIntegerTy(16) ||
-                              I.getType()->getScalarType()->isHalfTy();
+    CSF.LowPrecisionPresent =
+        I.getType()->isIntegerTy(16) || I.getType()->isHalfTy();
 
   if (!CSF.LowPrecisionPresent) {
     for (const Value *Op : I.operands()) {
-      if (Op->getType()->getScalarType()->isIntegerTy(16) ||
-          Op->getType()->getScalarType()->isHalfTy()) {
+      if (Op->getType()->isIntegerTy(16) || Op->getType()->isHalfTy()) {
         CSF.LowPrecisionPresent = true;
         break;
       }
@@ -151,11 +150,11 @@ void ModuleShaderFlags::updateFunctionFlags(ComputedShaderFlags &CSF,
   }
 
   if (!CSF.Int64Ops)
-    CSF.Int64Ops = I.getType()->getScalarType()->isIntegerTy(64);
+    CSF.Int64Ops = I.getType()->isIntegerTy(64);
 
-  if (!CSF.Int64Ops && !isa<LifetimeIntrinsic>(&I)) {
+  if (!CSF.Int64Ops) {
     for (const Value *Op : I.operands()) {
-      if (Op->getType()->getScalarType()->isIntegerTy(64)) {
+      if (Op->getType()->isIntegerTy(64)) {
         CSF.Int64Ops = true;
         break;
       }

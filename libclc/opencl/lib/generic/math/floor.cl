@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/math/clc_floor.h>
-#include <clc/opencl/math/floor.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION floor
 #define __CLC_BODY <clc/shared/unary_def.inc>

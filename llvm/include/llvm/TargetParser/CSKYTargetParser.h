@@ -15,7 +15,6 @@
 #ifndef LLVM_TARGETPARSER_CSKYTARGETPARSER_H
 #define LLVM_TARGETPARSER_CSKYTARGETPARSER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/Triple.h"
 #include <vector>
 
@@ -177,26 +176,25 @@ const ArchNames<CSKY::ArchKind> ARCHNames[] = {
 #include "llvm/TargetParser/CSKYTargetParser.def"
 };
 
-LLVM_ABI StringRef getArchName(ArchKind AK);
-LLVM_ABI StringRef getDefaultCPU(StringRef Arch);
-LLVM_ABI StringRef getArchExtName(uint64_t ArchExtKind);
-LLVM_ABI StringRef getArchExtFeature(StringRef ArchExt);
-LLVM_ABI uint64_t getDefaultExtensions(StringRef CPU);
-LLVM_ABI bool getExtensionFeatures(uint64_t Extensions,
-                                   std::vector<StringRef> &Features);
+StringRef getArchName(ArchKind AK);
+StringRef getDefaultCPU(StringRef Arch);
+StringRef getArchExtName(uint64_t ArchExtKind);
+StringRef getArchExtFeature(StringRef ArchExt);
+uint64_t getDefaultExtensions(StringRef CPU);
+bool getExtensionFeatures(uint64_t Extensions,
+                          std::vector<StringRef> &Features);
 
 // Information by ID
-LLVM_ABI StringRef getFPUName(unsigned FPUKind);
-LLVM_ABI FPUVersion getFPUVersion(unsigned FPUKind);
+StringRef getFPUName(unsigned FPUKind);
+FPUVersion getFPUVersion(unsigned FPUKind);
 
-LLVM_ABI bool getFPUFeatures(CSKYFPUKind Kind,
-                             std::vector<StringRef> &Features);
+bool getFPUFeatures(CSKYFPUKind Kind, std::vector<StringRef> &Features);
 
 // Parser
-LLVM_ABI ArchKind parseArch(StringRef Arch);
-LLVM_ABI ArchKind parseCPUArch(StringRef CPU);
-LLVM_ABI uint64_t parseArchExt(StringRef ArchExt);
-LLVM_ABI void fillValidCPUArchList(SmallVectorImpl<StringRef> &Values);
+ArchKind parseArch(StringRef Arch);
+ArchKind parseCPUArch(StringRef CPU);
+uint64_t parseArchExt(StringRef ArchExt);
+void fillValidCPUArchList(SmallVectorImpl<StringRef> &Values);
 
 } // namespace CSKY
 

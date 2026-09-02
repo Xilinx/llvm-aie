@@ -12,7 +12,6 @@
 #include "llvm/ExecutionEngine/Orc/MapperJITLinkMemoryManager.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectTransformLayer.h"
-#include "llvm/ExecutionEngine/Orc/SelfExecutorProcessControl.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/CodeGen.h"
@@ -176,8 +175,8 @@ TEST_F(ReOptimizeLayerTest, BasicReOptimization) {
       });
   EXPECT_THAT_ERROR(ROLayer->reigsterRuntimeFunctions(*JD), Succeeded());
 
-  auto Ctx = std::make_unique<LLVMContext>();
-  auto M = std::make_unique<Module>("<main>", *Ctx);
+  ThreadSafeContext Ctx(std::make_unique<LLVMContext>());
+  auto M = std::make_unique<Module>("<main>", *Ctx.getContext());
   M->setTargetTriple(Triple(sys::getProcessTriple()));
 
   (void)createRetFunction(M.get(), "main", 42);

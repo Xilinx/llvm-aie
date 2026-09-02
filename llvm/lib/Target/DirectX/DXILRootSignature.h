@@ -10,8 +10,6 @@
 ///       Root Signatures.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_LIB_TARGET_DIRECTX_DXILROOTSIGNATURE_H
-#define LLVM_LIB_TARGET_DIRECTX_DXILROOTSIGNATURE_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/DXILMetadataAnalysis.h"
@@ -26,33 +24,11 @@
 namespace llvm {
 namespace dxil {
 
-class RootSignatureBindingInfo {
-private:
-  SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc> FuncToRsMap;
-
-public:
-  using iterator =
-      SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc>::iterator;
-
-  RootSignatureBindingInfo() = default;
-  RootSignatureBindingInfo(
-      SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc> Map)
-      : FuncToRsMap(Map) {};
-
-  iterator find(const Function *F) { return FuncToRsMap.find(F); }
-
-  iterator end() { return FuncToRsMap.end(); }
-
-  std::optional<mcdxbc::RootSignatureDesc>
-  getDescForFunction(const Function *F) {
-    const auto FuncRs = find(F);
-    if (FuncRs == end())
-      return std::nullopt;
-
-    return FuncRs->second;
-  }
+enum class RootSignatureElementKind {
+  Error = 0,
+  RootFlags = 1,
+  RootConstants = 2
 };
-
 class RootSignatureAnalysis : public AnalysisInfoMixin<RootSignatureAnalysis> {
   friend AnalysisInfoMixin<RootSignatureAnalysis>;
   static AnalysisKey Key;
@@ -60,9 +36,10 @@ class RootSignatureAnalysis : public AnalysisInfoMixin<RootSignatureAnalysis> {
 public:
   RootSignatureAnalysis() = default;
 
-  using Result = RootSignatureBindingInfo;
+  using Result = SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc>;
 
-  Result run(Module &M, ModuleAnalysisManager &AM);
+  SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc>
+  run(Module &M, ModuleAnalysisManager &AM);
 };
 
 /// Wrapper pass for the legacy pass manager.
@@ -71,13 +48,19 @@ public:
 /// passes which run through the legacy pass manager.
 class RootSignatureAnalysisWrapper : public ModulePass {
 private:
-  std::unique_ptr<RootSignatureBindingInfo> FuncToRsMap;
+  SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc> FuncToRsMap;
 
 public:
   static char ID;
+
   RootSignatureAnalysisWrapper() : ModulePass(ID) {}
 
-  RootSignatureBindingInfo &getRSInfo() { return *FuncToRsMap; }
+  using iterator =
+      SmallDenseMap<const Function *, mcdxbc::RootSignatureDesc>::iterator;
+
+  iterator find(const Function *F) { return FuncToRsMap.find(F); }
+
+  iterator end() { return FuncToRsMap.end(); }
 
   bool runOnModule(Module &M) override;
 
@@ -96,4 +79,3 @@ public:
 
 } // namespace dxil
 } // namespace llvm
-#endif

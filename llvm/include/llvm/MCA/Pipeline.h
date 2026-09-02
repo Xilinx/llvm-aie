@@ -16,7 +16,6 @@
 #define LLVM_MCA_PIPELINE_H
 
 #include "llvm/MCA/Stages/Stage.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -71,12 +70,12 @@ class Pipeline {
 
 public:
   Pipeline() = default;
-  LLVM_ABI void appendStage(std::unique_ptr<Stage> S);
+  void appendStage(std::unique_ptr<Stage> S);
 
   /// Returns the total number of simulated cycles.
-  LLVM_ABI Expected<unsigned> run();
+  Expected<unsigned> run();
 
-  LLVM_ABI void addEventListener(HWEventListener *Listener);
+  void addEventListener(HWEventListener *Listener);
 
   /// Returns whether the pipeline is currently paused.
   bool isPaused() const { return CurrentState == State::Paused; }

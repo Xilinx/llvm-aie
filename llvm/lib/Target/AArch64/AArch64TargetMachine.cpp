@@ -44,7 +44,6 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Triple.h"
@@ -224,8 +223,7 @@ static cl::opt<bool>
                            cl::desc("Enable Machine Pipeliner for AArch64"),
                            cl::init(false), cl::Hidden);
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeAArch64Target() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAArch64Target() {
   // Register the target.
   RegisterTargetMachine<AArch64leTargetMachine> X(getTheAArch64leTarget());
   RegisterTargetMachine<AArch64beTargetMachine> Y(getTheAArch64beTarget());
@@ -481,8 +479,7 @@ AArch64TargetMachine::getSubtargetImpl(const Function &F) const {
         MaxSVEVectorSize, IsStreaming, IsStreamingCompatible, HasMinSize);
   }
 
-  if (IsStreaming && !I->hasSME())
-    reportFatalUsageError("streaming SVE functions require SME");
+  assert((!IsStreaming || I->hasSME()) && "Expected SME to be available");
 
   return I.get();
 }
@@ -490,7 +487,7 @@ AArch64TargetMachine::getSubtargetImpl(const Function &F) const {
 ScheduleDAGInstrs *
 AArch64TargetMachine::createMachineScheduler(MachineSchedContext *C) const {
   const AArch64Subtarget &ST = C->MF->getSubtarget<AArch64Subtarget>();
-  ScheduleDAGMILive *DAG = createSchedLive(C);
+  ScheduleDAGMILive *DAG = createGenericSchedLive(C);
   DAG->addMutation(createLoadClusterDAGMutation(DAG->TII, DAG->TRI));
   DAG->addMutation(createStoreClusterDAGMutation(DAG->TII, DAG->TRI));
   if (ST.hasFusion())
@@ -501,7 +498,9 @@ AArch64TargetMachine::createMachineScheduler(MachineSchedContext *C) const {
 ScheduleDAGInstrs *
 AArch64TargetMachine::createPostMachineScheduler(MachineSchedContext *C) const {
   const AArch64Subtarget &ST = C->MF->getSubtarget<AArch64Subtarget>();
-  ScheduleDAGMI *DAG = createSchedPostRA<AArch64PostRASchedStrategy>(C);
+  ScheduleDAGMI *DAG =
+      new ScheduleDAGMI(C, std::make_unique<AArch64PostRASchedStrategy>(C),
+                        /* RemoveKillFlags=*/true);
   if (ST.hasFusion()) {
     // Run the Macro Fusion after RA again since literals are expanded from
     // pseudos then (v. addPreSched2()).
@@ -510,15 +509,6 @@ AArch64TargetMachine::createPostMachineScheduler(MachineSchedContext *C) const {
   }
 
   return DAG;
-}
-
-size_t AArch64TargetMachine::clearLinkerOptimizationHints(
-    const SmallPtrSetImpl<MachineInstr *> &MIs) const {
-  if (MIs.empty())
-    return 0;
-  auto *MI = *MIs.begin();
-  auto *FuncInfo = MI->getMF()->getInfo<AArch64FunctionInfo>();
-  return FuncInfo->clearLinkerOptimizationHints(MIs);
 }
 
 void AArch64leTargetMachine::anchor() { }

@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 #include "startup/linux/do_start.h"
 #include "config/linux/app.h"
-#include "hdr/stdint_proxy.h"
 #include "include/llvm-libc-macros/link-macros.h"
 #include "src/__support/OSUtil/syscall.h"
 #include "src/__support/macros/config.h"
@@ -18,6 +17,7 @@
 
 #include <linux/auxvec.h>
 #include <linux/elf.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 

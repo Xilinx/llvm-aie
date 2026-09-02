@@ -12,13 +12,16 @@ from functionalities.breakpoint.hardware_breakpoints.base import *
 
 
 class HardwareBreakpointMultiThreadTestCase(HardwareBreakpointTestBase):
-    @skipTestIfFn(HardwareBreakpointTestBase.hw_breakpoints_unsupported)
+    def does_not_support_hw_breakpoints(self):
+        return not super().supports_hw_breakpoints()
+
+    @skipTestIfFn(does_not_support_hw_breakpoints)
     def test_hw_break_set_delete_multi_thread_macos(self):
         self.build()
         self.setTearDownCleanup()
         self.break_multi_thread("delete")
 
-    @skipTestIfFn(HardwareBreakpointTestBase.hw_breakpoints_unsupported)
+    @skipTestIfFn(does_not_support_hw_breakpoints)
     def test_hw_break_set_disable_multi_thread_macos(self):
         self.build()
         self.setTearDownCleanup()

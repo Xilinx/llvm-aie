@@ -20,7 +20,6 @@
 #include "ARMISelLowering.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
-#include "ARMTargetMachine.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "Utils/ARMBaseInfo.h"
@@ -135,9 +134,9 @@ class ARMFastISel final : public FastISel {
   /// make the right decision when generating code for different targets.
   const ARMSubtarget *Subtarget;
   Module &M;
-  const ARMBaseInstrInfo &TII;
-  const ARMTargetLowering &TLI;
-  const ARMBaseTargetMachine &TM;
+  const TargetMachine &TM;
+  const TargetInstrInfo &TII;
+  const TargetLowering &TLI;
   ARMFunctionInfo *AFI;
 
   // Convenience variables to avoid some queries.
@@ -150,8 +149,8 @@ class ARMFastISel final : public FastISel {
         : FastISel(funcInfo, libInfo),
           Subtarget(&funcInfo.MF->getSubtarget<ARMSubtarget>()),
           M(const_cast<Module &>(*funcInfo.Fn->getParent())),
-          TII(*Subtarget->getInstrInfo()), TLI(*Subtarget->getTargetLowering()),
-          TM(TLI.getTM()) {
+          TM(funcInfo.MF->getTarget()), TII(*Subtarget->getInstrInfo()),
+          TLI(*Subtarget->getTargetLowering()) {
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
       isThumb2 = AFI->isThumbFunction();
       Context = &funcInfo.Fn->getContext();
@@ -1894,7 +1893,7 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC,
     report_fatal_error("Unsupported calling convention");
   case CallingConv::Fast:
     if (Subtarget->hasVFP2Base() && !isVarArg) {
-      if (!TM.isAAPCS_ABI())
+      if (!Subtarget->isAAPCS_ABI())
         return (Return ? RetFastCC_ARM_APCS : FastCC_ARM_APCS);
       // For AAPCS ABI targets, just use VFP variant of the calling convention.
       return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
@@ -1903,7 +1902,7 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC,
   case CallingConv::C:
   case CallingConv::CXX_FAST_TLS:
     // Use target triple & subtarget features to do actual dispatch.
-    if (TM.isAAPCS_ABI()) {
+    if (Subtarget->isAAPCS_ABI()) {
       if (Subtarget->hasFPRegs() &&
           TM.Options.FloatABIType == FloatABI::Hard && !isVarArg)
         return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
@@ -2562,7 +2561,8 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     const TargetRegisterClass *RC = isThumb2 ? &ARM::tGPRRegClass
                                              : &ARM::GPRRegClass;
 
-    const ARMBaseRegisterInfo *RegInfo = Subtarget->getRegisterInfo();
+    const ARMBaseRegisterInfo *RegInfo =
+        static_cast<const ARMBaseRegisterInfo *>(Subtarget->getRegisterInfo());
     Register FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
     Register SrcReg = FramePtr;
 
@@ -2635,8 +2635,12 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     return SelectCall(&I, "memset");
   }
   case Intrinsic::trap: {
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD,
-            TII.get(Subtarget->isThumb() ? ARM::tTRAP : ARM::TRAP));
+    unsigned Opcode;
+    if (Subtarget->isThumb())
+      Opcode = ARM::tTRAP;
+    else
+      Opcode = Subtarget->useNaClTrap() ? ARM::TRAPNaCl : ARM::TRAP;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(Opcode));
     return true;
   }
   }

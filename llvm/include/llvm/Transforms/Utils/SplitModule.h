@@ -16,7 +16,6 @@
 #define LLVM_TRANSFORMS_UTILS_SPLITMODULE_H
 
 #include "llvm/ADT/STLFunctionalExtras.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 
 namespace llvm {
@@ -36,10 +35,10 @@ class Module;
 ///   module.
 /// - Internal symbols defined in module-level inline asm should be visible to
 ///   each partition.
-LLVM_ABI void
-SplitModule(Module &M, unsigned N,
-            function_ref<void(std::unique_ptr<Module> MPart)> ModuleCallback,
-            bool PreserveLocals = false, bool RoundRobin = false);
+void SplitModule(
+    Module &M, unsigned N,
+    function_ref<void(std::unique_ptr<Module> MPart)> ModuleCallback,
+    bool PreserveLocals = false, bool RoundRobin = false);
 
 } // end namespace llvm
 

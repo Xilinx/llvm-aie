@@ -23,10 +23,9 @@ namespace lldb_dap {
 /// Launch request; value of command field is 'launch'.
 Error LaunchRequestHandler::Run(const LaunchRequestArguments &arguments) const {
   // Validate that we have a well formed launch request.
-  if (!arguments.launchCommands.empty() &&
-      arguments.console != protocol::eConsoleInternal)
+  if (!arguments.launchCommands.empty() && arguments.runInTerminal)
     return make_error<DAPError>(
-        "'launchCommands' and non-internal 'console' are mutually exclusive");
+        "'launchCommands' and 'runInTerminal' are mutually exclusive");
 
   dap.SetConfiguration(arguments.configuration, /*is_attach=*/false);
   dap.last_launch_request = arguments;

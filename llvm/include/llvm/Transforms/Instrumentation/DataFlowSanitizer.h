@@ -9,7 +9,6 @@
 #define LLVM_TRANSFORMS_INSTRUMENTATION_DATAFLOWSANITIZER_H
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <string>
 #include <vector>
 
@@ -24,7 +23,7 @@ public:
   DataFlowSanitizerPass(
       const std::vector<std::string> &ABIListFiles = std::vector<std::string>())
       : ABIListFiles(ABIListFiles) {}
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 

@@ -1,15 +1,13 @@
-# RUN: not llvm-mc -filetype=obj -triple=x86_64-pc-win32 %s -o /dev/null 2>&1 | FileCheck %s --implicit-check-not=error:
+# RUN: not llvm-mc -filetype=obj -triple=x86_64-pc-win32 %s -o /dev/null 2>&1 | FileCheck %s
 
 ## -filetype=asm does not check the error.
 # RUN: llvm-mc -triple=x86_64-pc-win32 %s
 
-.bss
-# CHECK: <unknown>:0: error: BSS section '.bss' cannot have non-zero bytes
-  addb %bl,(%rax)
-
 .section uninitialized,"b"
-# CHECK: <unknown>:0: error: BSS section 'uninitialized' cannot have non-zero bytes
+# MCRelaxableFragment
+# CHECK: {{.*}}.s:[[#@LINE+1]]:3: error: IMAGE_SCN_CNT_UNINITIALIZED_DATA section 'uninitialized' cannot have instructions
   jmp foo
 
-.section bss0,"b"
+.bss
+# CHECK: {{.*}}.s:[[#@LINE+1]]:3: error: IMAGE_SCN_CNT_UNINITIALIZED_DATA section '.bss' cannot have instructions
   addb %al,(%rax)

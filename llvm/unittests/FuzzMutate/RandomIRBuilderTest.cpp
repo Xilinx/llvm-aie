@@ -520,7 +520,7 @@ TEST(RandomIRBuilderTest, sinkToIntrinsic) {
   ASSERT_TRUE(Modified);
 
   Modified = false;
-  I = I->getNextNode();
+  I = I->getNextNonDebugInstruction();
   for (int i = 0; i < 20; i++) {
     Value *OldOperand = I->getOperand(0);
     Value *Src = F.getArg(5);

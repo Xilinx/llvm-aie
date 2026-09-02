@@ -14,7 +14,6 @@
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/BinaryStreamRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 #include <vector>
@@ -39,27 +38,24 @@ struct TpiStreamHeader;
 
 class TpiStreamBuilder {
 public:
-  LLVM_ABI explicit TpiStreamBuilder(msf::MSFBuilder &Msf, uint32_t StreamIdx);
-  LLVM_ABI ~TpiStreamBuilder();
+  explicit TpiStreamBuilder(msf::MSFBuilder &Msf, uint32_t StreamIdx);
+  ~TpiStreamBuilder();
 
   TpiStreamBuilder(const TpiStreamBuilder &) = delete;
   TpiStreamBuilder &operator=(const TpiStreamBuilder &) = delete;
 
-  LLVM_ABI void setVersionHeader(PdbRaw_TpiVer Version);
-  LLVM_ABI void addTypeRecord(ArrayRef<uint8_t> Type,
-                              std::optional<uint32_t> Hash);
-  LLVM_ABI void addTypeRecords(ArrayRef<uint8_t> Types,
-                               ArrayRef<uint16_t> Sizes,
-                               ArrayRef<uint32_t> Hashes);
+  void setVersionHeader(PdbRaw_TpiVer Version);
+  void addTypeRecord(ArrayRef<uint8_t> Type, std::optional<uint32_t> Hash);
+  void addTypeRecords(ArrayRef<uint8_t> Types, ArrayRef<uint16_t> Sizes,
+                      ArrayRef<uint32_t> Hashes);
 
-  LLVM_ABI Error finalizeMsfLayout();
+  Error finalizeMsfLayout();
 
   uint32_t getRecordCount() const { return TypeRecordCount; }
 
-  LLVM_ABI Error commit(const msf::MSFLayout &Layout,
-                        WritableBinaryStreamRef Buffer);
+  Error commit(const msf::MSFLayout &Layout, WritableBinaryStreamRef Buffer);
 
-  LLVM_ABI uint32_t calculateSerializedLength();
+  uint32_t calculateSerializedLength();
 
 private:
   void updateTypeIndexOffsets(ArrayRef<uint16_t> Sizes);

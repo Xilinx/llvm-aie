@@ -23,10 +23,10 @@ lldb::ModuleSP GetPreferredAsanModule(const Target &target) {
   target.GetImages().ForEach([&](const lldb::ModuleSP &m) {
     if (pattern.match(m->GetFileSpec().GetFilename().GetStringRef())) {
       module = m;
-      return IterationAction::Stop;
+      return false;
     }
 
-    return IterationAction::Continue;
+    return true;
   });
 
   return module;

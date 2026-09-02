@@ -244,16 +244,17 @@ def AffineForOp : Affine_Op<"for",
   let regions = (region SizedRegion<1>:$region);
 
   let skipDefaultBuilders = 1;
-  let builders =
-      [OpBuilder<(ins "int64_t":$lowerBound, "int64_t":$upperBound,
-           CArg<"int64_t", "1">:$step, CArg<"ValueRange", "{}">:$iterArgs,
-           CArg<"function_ref<void(OpBuilder &, Location, Value, ValueRange)>",
-                "nullptr">:$bodyBuilder)>,
-       OpBuilder<(ins "ValueRange":$lbOperands, "AffineMap":$lbMap,
-           "ValueRange":$ubOperands, "AffineMap":$ubMap,
-           CArg<"int64_t", "1">:$step, CArg<"ValueRange", "{}">:$iterArgs,
-           CArg<"function_ref<void(OpBuilder &, Location, Value, ValueRange)>",
-                "nullptr">:$bodyBuilder)>];
+  let builders = [
+    OpBuilder<(ins "int64_t":$lowerBound, "int64_t":$upperBound,
+      CArg<"int64_t", "1">:$step, CArg<"ValueRange", "std::nullopt">:$iterArgs,
+      CArg<"function_ref<void(OpBuilder &, Location, Value, ValueRange)>",
+           "nullptr">:$bodyBuilder)>,
+    OpBuilder<(ins "ValueRange":$lbOperands, "AffineMap":$lbMap,
+      "ValueRange":$ubOperands, "AffineMap":$ubMap, CArg<"int64_t", "1">:$step,
+      CArg<"ValueRange", "std::nullopt">:$iterArgs,
+      CArg<"function_ref<void(OpBuilder &, Location, Value, ValueRange)>",
+           "nullptr">:$bodyBuilder)>
+  ];
 
   let extraClassDeclaration = [{
     /// Defining the function type we use for building the body of affine.for.
@@ -921,7 +922,9 @@ def AffineYieldOp : Affine_Op<"yield", [Pure, Terminator, ReturnLike,
 
   let arguments = (ins Variadic<AnyType>:$operands);
 
-  let builders = [OpBuilder<(ins), [{ build($_builder, $_state, {}); }]>];
+  let builders = [
+    OpBuilder<(ins), [{ build($_builder, $_state, std::nullopt); }]>
+  ];
 
   let assemblyFormat = "attr-dict ($operands^ `:` type($operands))?";
   let hasVerifier = 1;

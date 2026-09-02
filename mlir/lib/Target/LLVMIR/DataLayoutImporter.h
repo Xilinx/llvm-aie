@@ -113,9 +113,6 @@ private:
   tryToEmplaceFunctionPointerAlignmentEntry(StringRef fnPtrAlignEntry,
                                             StringRef token);
 
-  /// Adds legal int widths entry if there is none yet.
-  LogicalResult tryToEmplaceLegalIntWidthsEntry(StringRef token);
-
   std::string layoutStr = {};
   StringRef lastToken = {};
   SmallVector<StringRef> unhandledTokens;

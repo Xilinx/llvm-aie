@@ -10,7 +10,6 @@
 
 #include "PDBSymbol.h"
 #include "PDBTypes.h"
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -19,7 +18,7 @@ class raw_ostream;
 
 namespace pdb {
 
-class LLVM_ABI PDBSymbolCompiland : public PDBSymbol {
+class PDBSymbolCompiland : public PDBSymbol {
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Compiland)
 public:
   void dump(PDBSymDumper &Dumper) const override;

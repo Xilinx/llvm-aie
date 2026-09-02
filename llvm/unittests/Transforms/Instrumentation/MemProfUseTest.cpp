@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation/MemProfUse.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/LLVMContext.h"
@@ -18,6 +17,7 @@
 #include "llvm/ProfileData/MemProf.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Testing/Support/Error.h"
+#include "llvm/Transforms/Instrumentation/MemProfiler.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -91,7 +91,7 @@ declare !dbg !19 void @_Z2f3v()
   auto *F = M->getFunction("_Z3foov");
   ASSERT_NE(F, nullptr);
 
-  TargetLibraryInfoWrapperPass WrapperPass(M->getTargetTriple());
+  TargetLibraryInfoWrapperPass WrapperPass;
   auto &TLI = WrapperPass.getTLI(*F);
   auto Calls = extractCallsFromIR(*M, TLI);
 
@@ -191,7 +191,7 @@ declare !dbg !25 void @_Z2g2v() local_unnamed_addr
   auto *F = M->getFunction("_Z3foov");
   ASSERT_NE(F, nullptr);
 
-  TargetLibraryInfoWrapperPass WrapperPass(M->getTargetTriple());
+  TargetLibraryInfoWrapperPass WrapperPass;
   auto &TLI = WrapperPass.getTLI(*F);
   auto Calls = extractCallsFromIR(*M, TLI);
 
@@ -282,7 +282,7 @@ attributes #2 = { builtin allocsize(0) }
   auto *F = M->getFunction("_Z3foov");
   ASSERT_NE(F, nullptr);
 
-  TargetLibraryInfoWrapperPass WrapperPass(M->getTargetTriple());
+  TargetLibraryInfoWrapperPass WrapperPass;
   auto &TLI = WrapperPass.getTLI(*F);
   auto Calls = extractCallsFromIR(*M, TLI);
 
@@ -398,7 +398,7 @@ attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "t
   auto *F = M->getFunction("_Z3foov");
   ASSERT_NE(F, nullptr);
 
-  TargetLibraryInfoWrapperPass WrapperPass(M->getTargetTriple());
+  TargetLibraryInfoWrapperPass WrapperPass;
   auto &TLI = WrapperPass.getTLI(*F);
   auto Calls = extractCallsFromIR(*M, TLI);
 

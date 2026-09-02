@@ -15,7 +15,6 @@
 #define LLVM_TEXTAPI_RECORDSLICE_H
 
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/TextAPI/FileTypes.h"
 #include "llvm/TextAPI/PackedVersion.h"
 #include "llvm/TextAPI/Record.h"
@@ -44,10 +43,9 @@ public:
   /// symbol.
   /// \param Linkage The linkage of symbol.
   /// \return The non-owning pointer to added record in slice.
-  LLVM_ABI Record *
-  addRecord(StringRef Name, SymbolFlags Flags,
-            GlobalRecord::Kind GV = GlobalRecord::Kind::Unknown,
-            RecordLinkage Linkage = RecordLinkage::Unknown);
+  Record *addRecord(StringRef Name, SymbolFlags Flags,
+                    GlobalRecord::Kind GV = GlobalRecord::Kind::Unknown,
+                    RecordLinkage Linkage = RecordLinkage::Unknown);
 
   /// Add non-ObjC global record.
   ///
@@ -58,10 +56,10 @@ public:
   /// \param Inlined Whether declaration is inlined, only applicable to
   /// functions.
   /// \return The non-owning pointer to added record in slice.
-  LLVM_ABI GlobalRecord *addGlobal(StringRef Name, RecordLinkage Linkage,
-                                   GlobalRecord::Kind GV,
-                                   SymbolFlags Flags = SymbolFlags::None,
-                                   bool Inlined = false);
+  GlobalRecord *addGlobal(StringRef Name, RecordLinkage Linkage,
+                          GlobalRecord::Kind GV,
+                          SymbolFlags Flags = SymbolFlags::None,
+                          bool Inlined = false);
 
   /// Add ObjC Class record.
   ///
@@ -69,9 +67,8 @@ public:
   /// \param Linkage The linkage of symbol.
   /// \param SymType The symbols this class represents.
   /// \return The non-owning pointer to added record in slice.
-  LLVM_ABI ObjCInterfaceRecord *addObjCInterface(StringRef Name,
-                                                 RecordLinkage Linkage,
-                                                 ObjCIFSymbolKind SymType);
+  ObjCInterfaceRecord *addObjCInterface(StringRef Name, RecordLinkage Linkage,
+                                        ObjCIFSymbolKind SymType);
 
   /// Add ObjC IVar record.
   ///
@@ -79,8 +76,8 @@ public:
   /// \param Name The name of ivar, not symbol.
   /// \param Linkage The linkage of symbol.
   /// \return The non-owning pointer to added record in slice.
-  LLVM_ABI ObjCIVarRecord *addObjCIVar(ObjCContainerRecord *Container,
-                                       StringRef Name, RecordLinkage Linkage);
+  ObjCIVarRecord *addObjCIVar(ObjCContainerRecord *Container, StringRef Name,
+                              RecordLinkage Linkage);
 
   /// Add ObjC Category record.
   ///
@@ -88,22 +85,22 @@ public:
   /// category, not symbol.
   /// \param Category The name of category.
   /// \return The non-owning pointer to added record in slice.
-  LLVM_ABI ObjCCategoryRecord *addObjCCategory(StringRef ClassToExtend,
-                                               StringRef Category);
+  ObjCCategoryRecord *addObjCCategory(StringRef ClassToExtend,
+                                      StringRef Category);
 
   /// Find ObjC Class.
   ///
   /// \param Name name of class, not full symbol name.
   /// \return The non-owning pointer to record in slice.
-  LLVM_ABI ObjCInterfaceRecord *findObjCInterface(StringRef Name) const;
+  ObjCInterfaceRecord *findObjCInterface(StringRef Name) const;
 
   /// Find ObjC Category.
   ///
   /// \param ClassToExtend The name of class, not full symbol name.
   /// \param Category The name of category.
   /// \return The non-owning pointer to record in slice.
-  LLVM_ABI ObjCCategoryRecord *findObjCCategory(StringRef ClassToExtend,
-                                                StringRef Category) const;
+  ObjCCategoryRecord *findObjCCategory(StringRef ClassToExtend,
+                                       StringRef Category) const;
 
   /// Find ObjC Container. This is commonly used for assigning for looking up
   /// instance variables that are assigned to either a category or class.
@@ -113,23 +110,21 @@ public:
   /// \param Name Either the name of ivar or name of container.
   /// \return The non-owning pointer to record in
   /// slice.
-  LLVM_ABI ObjCContainerRecord *findContainer(bool IsIVar,
-                                              StringRef Name) const;
+  ObjCContainerRecord *findContainer(bool IsIVar, StringRef Name) const;
 
   /// Find ObjC instance variable.
   ///
   /// \param IsScopedName This is used to determine how to parse the name.
   /// \param Name Either the full name of the symbol or just the ivar.
   /// \return The non-owning pointer to record in slice.
-  LLVM_ABI ObjCIVarRecord *findObjCIVar(bool IsScopedName,
-                                        StringRef Name) const;
+  ObjCIVarRecord *findObjCIVar(bool IsScopedName, StringRef Name) const;
 
   /// Find non-objc global.
   ///
   /// \param Name The name of symbol.
   /// \param GV The Kind of global to find.
   /// \return The non-owning pointer to record in slice.
-  LLVM_ABI GlobalRecord *
+  GlobalRecord *
   findGlobal(StringRef Name,
              GlobalRecord::Kind GV = GlobalRecord::Kind::Unknown) const;
 
@@ -143,7 +138,7 @@ public:
   }
 
   // Visit all records known to RecordsSlice.
-  LLVM_ABI void visit(RecordVisitor &V) const;
+  void visit(RecordVisitor &V) const;
 
   struct BinaryAttrs {
     std::vector<StringRef> AllowableClients;
@@ -163,11 +158,11 @@ public:
   };
 
   /// Return reference to BinaryAttrs.
-  LLVM_ABI BinaryAttrs &getBinaryAttrs();
+  BinaryAttrs &getBinaryAttrs();
 
   /// Store any strings owned by RecordSlice into allocator and return back
   /// reference to that.
-  LLVM_ABI StringRef copyString(StringRef String);
+  StringRef copyString(StringRef String);
 
 private:
   const llvm::Triple TargetTriple;
@@ -201,8 +196,7 @@ private:
 
 using Records = llvm::SmallVector<std::shared_ptr<RecordsSlice>, 4>;
 class InterfaceFile;
-LLVM_ABI std::unique_ptr<InterfaceFile>
-convertToInterfaceFile(const Records &Slices);
+std::unique_ptr<InterfaceFile> convertToInterfaceFile(const Records &Slices);
 
 } // namespace MachO
 } // namespace llvm

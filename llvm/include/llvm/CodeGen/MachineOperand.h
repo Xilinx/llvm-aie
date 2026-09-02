@@ -16,7 +16,6 @@
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 
 namespace llvm {
@@ -254,38 +253,35 @@ public:
   void clearParent() { ParentMI = nullptr; }
 
   /// Returns the index of this operand in the instruction that it belongs to.
-  LLVM_ABI unsigned getOperandNo() const;
+  unsigned getOperandNo() const;
 
   /// Print a subreg index operand.
   /// MO_Immediate operands can also be subreg idices. If it's the case, the
   /// subreg index name will be printed. MachineInstr::isOperandSubregIdx can be
   /// called to check this.
-  LLVM_ABI static void printSubRegIdx(raw_ostream &OS, uint64_t Index,
-                                      const TargetRegisterInfo *TRI);
+  static void printSubRegIdx(raw_ostream &OS, uint64_t Index,
+                             const TargetRegisterInfo *TRI);
 
   /// Print operand target flags.
-  LLVM_ABI static void printTargetFlags(raw_ostream &OS,
-                                        const MachineOperand &Op);
+  static void printTargetFlags(raw_ostream& OS, const MachineOperand &Op);
 
   /// Print a MCSymbol as an operand.
-  LLVM_ABI static void printSymbol(raw_ostream &OS, MCSymbol &Sym);
+  static void printSymbol(raw_ostream &OS, MCSymbol &Sym);
 
   /// Print a stack object reference.
-  LLVM_ABI static void printStackObjectReference(raw_ostream &OS,
-                                                 unsigned FrameIndex,
-                                                 bool IsFixed, StringRef Name);
+  static void printStackObjectReference(raw_ostream &OS, unsigned FrameIndex,
+                                        bool IsFixed, StringRef Name);
 
   /// Print the offset with explicit +/- signs.
-  LLVM_ABI static void printOperandOffset(raw_ostream &OS, int64_t Offset);
+  static void printOperandOffset(raw_ostream &OS, int64_t Offset);
 
   /// Print an IRSlotNumber.
-  LLVM_ABI static void printIRSlotNumber(raw_ostream &OS, int Slot);
+  static void printIRSlotNumber(raw_ostream &OS, int Slot);
 
   /// Print the MachineOperand to \p os.
   /// Providing a valid \p TRI results in a more target-specific printing. If
   /// \p TRI is null, the function will try to pick it up from the parent.
-  LLVM_ABI void print(raw_ostream &os,
-                      const TargetRegisterInfo *TRI = nullptr) const;
+  void print(raw_ostream &os, const TargetRegisterInfo *TRI = nullptr) const;
 
   /// More complex way of printing a MachineOperand.
   /// \param TypeToPrint specifies the generic type to be printed on uses and
@@ -307,18 +303,17 @@ public:
   /// \param TRI - provide more target-specific information to the printer.
   /// Unlike the previous function, this one will not try and get the
   /// information from it's parent.
-  LLVM_ABI void print(raw_ostream &os, ModuleSlotTracker &MST, LLT TypeToPrint,
-                      std::optional<unsigned> OpIdx, bool PrintDef,
-                      bool IsStandalone, bool ShouldPrintRegisterTies,
-                      unsigned TiedOperandIdx,
-                      const TargetRegisterInfo *TRI) const;
+  void print(raw_ostream &os, ModuleSlotTracker &MST, LLT TypeToPrint,
+             std::optional<unsigned> OpIdx, bool PrintDef, bool IsStandalone,
+             bool ShouldPrintRegisterTies, unsigned TiedOperandIdx,
+             const TargetRegisterInfo *TRI) const;
 
   /// Same as print(os, TRI), but allows to specify the low-level type to be
   /// printed the same way the full version of print(...) does it.
-  LLVM_ABI void print(raw_ostream &os, LLT TypeToPrint,
-                      const TargetRegisterInfo *TRI = nullptr) const;
+  void print(raw_ostream &os, LLT TypeToPrint,
+             const TargetRegisterInfo *TRI = nullptr) const;
 
-  LLVM_ABI void dump() const;
+  void dump() const;
 
   //===--------------------------------------------------------------------===//
   // Accessors that tell you what kind of MachineOperand you're looking at.
@@ -434,7 +429,7 @@ public:
   ///   prevents any operands from being marked renamable for targets that don't
   ///   have detailed opcode hasExtraSrcRegAllocReq/hasExtraDstRegAllocReq
   ///   values.
-  LLVM_ABI bool isRenamable() const;
+  bool isRenamable() const;
 
   bool isInternalRead() const {
     assert(isReg() && "Wrong MachineOperand accessor");
@@ -484,7 +479,7 @@ public:
 
   /// Change the register this operand corresponds to.
   ///
-  LLVM_ABI void setReg(Register Reg);
+  void setReg(Register Reg);
 
   void setSubReg(unsigned subReg) {
     assert(isReg() && "Wrong MachineOperand mutator");
@@ -497,19 +492,18 @@ public:
   /// using TargetRegisterInfo to compose the subreg indices if necessary.
   /// Reg must be a virtual register, SubIdx can be 0.
   ///
-  LLVM_ABI void substVirtReg(Register Reg, unsigned SubIdx,
-                             const TargetRegisterInfo &);
+  void substVirtReg(Register Reg, unsigned SubIdx, const TargetRegisterInfo&);
 
   /// substPhysReg - Substitute the current register with the physical register
   /// Reg, taking any existing SubReg into account. For instance,
   /// substPhysReg(%eax) will change %reg1024:sub_8bit to %al.
   ///
-  LLVM_ABI void substPhysReg(MCRegister Reg, const TargetRegisterInfo &);
+  void substPhysReg(MCRegister Reg, const TargetRegisterInfo&);
 
   void setIsUse(bool Val = true) { setIsDef(!Val); }
 
   /// Change a def to a use, or a use to a def.
-  LLVM_ABI void setIsDef(bool Val = true);
+  void setIsDef(bool Val = true);
 
   void setImplicit(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand mutator");
@@ -532,7 +526,7 @@ public:
     IsUndef = Val;
   }
 
-  LLVM_ABI void setIsRenamable(bool Val = true);
+  void setIsRenamable(bool Val = true);
 
   void setIsInternalRead(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand mutator");
@@ -756,7 +750,7 @@ public:
   /// Returns true if this operand is identical to the specified operand except
   /// for liveness related flags (isKill, isUndef and isDead). Note that this
   /// should stay in sync with the hash_value overload below.
-  LLVM_ABI bool isIdenticalTo(const MachineOperand &Other) const;
+  bool isIdenticalTo(const MachineOperand &Other) const;
 
   /// MachineOperand hash_value overload.
   ///
@@ -764,55 +758,54 @@ public:
   /// isIdenticalTo uses for comparison. It is thus suited for use in hash
   /// tables which use that function for equality comparisons only. This must
   /// stay exactly in sync with isIdenticalTo above.
-  LLVM_ABI friend hash_code hash_value(const MachineOperand &MO);
+  friend hash_code hash_value(const MachineOperand &MO);
 
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
   /// the specified value.  If an operand is known to be an immediate already,
   /// the setImm method should be used.
-  LLVM_ABI void ChangeToImmediate(int64_t ImmVal, unsigned TargetFlags = 0);
+  void ChangeToImmediate(int64_t ImmVal, unsigned TargetFlags = 0);
 
   /// ChangeToFPImmediate - Replace this operand with a new FP immediate operand
   /// of the specified value.  If an operand is known to be an FP immediate
   /// already, the setFPImm method should be used.
-  LLVM_ABI void ChangeToFPImmediate(const ConstantFP *FPImm,
-                                    unsigned TargetFlags = 0);
+  void ChangeToFPImmediate(const ConstantFP *FPImm, unsigned TargetFlags = 0);
 
   /// ChangeToES - Replace this operand with a new external symbol operand.
-  LLVM_ABI void ChangeToES(const char *SymName, unsigned TargetFlags = 0);
+  void ChangeToES(const char *SymName, unsigned TargetFlags = 0);
 
   /// ChangeToGA - Replace this operand with a new global address operand.
-  LLVM_ABI void ChangeToGA(const GlobalValue *GV, int64_t Offset,
-                           unsigned TargetFlags = 0);
+  void ChangeToGA(const GlobalValue *GV, int64_t Offset,
+                  unsigned TargetFlags = 0);
 
   /// ChangeToBA - Replace this operand with a new block address operand.
-  LLVM_ABI void ChangeToBA(const BlockAddress *BA, int64_t Offset,
-                           unsigned TargetFlags = 0);
+  void ChangeToBA(const BlockAddress *BA, int64_t Offset,
+                  unsigned TargetFlags = 0);
 
   /// ChangeToMCSymbol - Replace this operand with a new MC symbol operand.
-  LLVM_ABI void ChangeToMCSymbol(MCSymbol *Sym, unsigned TargetFlags = 0);
+  void ChangeToMCSymbol(MCSymbol *Sym, unsigned TargetFlags = 0);
 
   /// Replace this operand with a frame index.
-  LLVM_ABI void ChangeToFrameIndex(int Idx, unsigned TargetFlags = 0);
+  void ChangeToFrameIndex(int Idx, unsigned TargetFlags = 0);
 
   /// Replace this operand with a target index.
-  LLVM_ABI void ChangeToTargetIndex(unsigned Idx, int64_t Offset,
-                                    unsigned TargetFlags = 0);
+  void ChangeToTargetIndex(unsigned Idx, int64_t Offset,
+                           unsigned TargetFlags = 0);
 
   /// Replace this operand with an Instruction Reference.
-  LLVM_ABI void ChangeToDbgInstrRef(unsigned InstrIdx, unsigned OpIdx,
-                                    unsigned TargetFlags = 0);
+  void ChangeToDbgInstrRef(unsigned InstrIdx, unsigned OpIdx,
+                           unsigned TargetFlags = 0);
 
   /// ChangeToRegister - Replace this operand with a new register operand of
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
-  LLVM_ABI void ChangeToRegister(Register Reg, bool isDef, bool isImp = false,
-                                 bool isKill = false, bool isDead = false,
-                                 bool isUndef = false, bool isDebug = false);
+  void ChangeToRegister(Register Reg, bool isDef, bool isImp = false,
+                        bool isKill = false, bool isDead = false,
+                        bool isUndef = false, bool isDebug = false);
 
   /// getTargetIndexName - If this MachineOperand is a TargetIndex that has a
   /// name, attempt to get the name. Returns nullptr if the TargetIndex does not
   /// have a name. Asserts if MO is not a TargetIndex.
-  LLVM_ABI const char *getTargetIndexName() const;
+  const char *getTargetIndexName() const;
 
   //===--------------------------------------------------------------------===//
   // Construction methods.
@@ -1047,7 +1040,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const MachineOperand &MO) {
 
 // See friend declaration above. This additional declaration is required in
 // order to compile LLVM with IBM xlC compiler.
-LLVM_ABI hash_code hash_value(const MachineOperand &MO);
+hash_code hash_value(const MachineOperand &MO);
 } // namespace llvm
 
 #endif

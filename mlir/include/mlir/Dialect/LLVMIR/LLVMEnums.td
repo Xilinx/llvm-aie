@@ -604,7 +604,7 @@ def FCmpPredicate : LLVM_EnumAttr<
 def ICmpPredicate : LLVM_EnumAttr<
     "ICmpPredicate",
     "::llvm::CmpInst::Predicate",
-    "llvm.icmp comparison predicate",
+    "lvm.icmp comparison predicate",
     [ICmpPredicateEQ, ICmpPredicateNE, ICmpPredicateSLT, ICmpPredicateSLE,
      ICmpPredicateSGT, ICmpPredicateSGE, ICmpPredicateULT, ICmpPredicateULE,
      ICmpPredicateUGT, ICmpPredicateUGE],

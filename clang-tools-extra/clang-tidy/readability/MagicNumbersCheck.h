@@ -43,12 +43,11 @@ private:
 
   bool isBitFieldWidth(const clang::ast_matchers::MatchFinder::MatchResult &,
                        const FloatingLiteral &) const {
-    return false;
+     return false;
   }
 
-  bool
-  isBitFieldWidth(const clang::ast_matchers::MatchFinder::MatchResult &Result,
-                  const IntegerLiteral &Literal) const;
+  bool isBitFieldWidth(const clang::ast_matchers::MatchFinder::MatchResult &Result,
+                       const IntegerLiteral &Literal) const;
 
   bool isUserDefinedLiteral(
       const clang::ast_matchers::MatchFinder::MatchResult &Result,

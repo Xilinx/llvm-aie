@@ -10,7 +10,6 @@
 #define LLVM_TRANSFORMS_INSTRUMENTATION_BOUNDSCHECKING_H
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -34,11 +33,10 @@ public:
   };
 
   BoundsCheckingPass(Options Opts) : Opts(Opts) {}
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
-  LLVM_ABI void
-  printPipeline(raw_ostream &OS,
-                function_ref<StringRef(StringRef)> MapClassName2PassName);
+  void printPipeline(raw_ostream &OS,
+                     function_ref<StringRef(StringRef)> MapClassName2PassName);
 
 private:
   Options Opts;

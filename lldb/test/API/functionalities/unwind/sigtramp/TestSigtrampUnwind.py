@@ -44,7 +44,7 @@ class SigtrampUnwind(TestBase):
             )
 
         self.expect(
-            "proc handle  -n false -p true -s false SIGUSR1",
+            "pro handle  -n false -p true -s false SIGUSR1",
             "Have lldb pass SIGUSR1 signals",
             substrs=["SIGUSR1", "true", "false", "false"],
         )

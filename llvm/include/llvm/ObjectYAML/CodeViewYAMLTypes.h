@@ -17,7 +17,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <cstdint>
@@ -46,16 +45,15 @@ struct MemberRecord {
 struct LeafRecord {
   std::shared_ptr<detail::LeafRecordBase> Leaf;
 
-  LLVM_ABI codeview::CVType
+  codeview::CVType
   toCodeViewRecord(codeview::AppendingTypeTableBuilder &Serializer) const;
-  LLVM_ABI static Expected<LeafRecord>
-  fromCodeViewRecord(codeview::CVType Type);
+  static Expected<LeafRecord> fromCodeViewRecord(codeview::CVType Type);
 };
 
-LLVM_ABI std::vector<LeafRecord> fromDebugT(ArrayRef<uint8_t> DebugTorP,
-                                            StringRef SectionName);
-LLVM_ABI ArrayRef<uint8_t>
-toDebugT(ArrayRef<LeafRecord>, BumpPtrAllocator &Alloc, StringRef SectionName);
+std::vector<LeafRecord> fromDebugT(ArrayRef<uint8_t> DebugTorP,
+                                   StringRef SectionName);
+ArrayRef<uint8_t> toDebugT(ArrayRef<LeafRecord>, BumpPtrAllocator &Alloc,
+                           StringRef SectionName);
 
 } // end namespace CodeViewYAML
 

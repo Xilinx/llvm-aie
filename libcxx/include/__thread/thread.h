@@ -16,7 +16,6 @@
 #include <__exception/terminate.h>
 #include <__functional/hash.h>
 #include <__functional/unary_function.h>
-#include <__locale>
 #include <__memory/addressof.h>
 #include <__memory/unique_ptr.h>
 #include <__mutex/mutex.h>
@@ -31,6 +30,7 @@
 #include <tuple>
 
 #if _LIBCPP_HAS_LOCALIZATION
+#  include <locale>
 #  include <sstream>
 #endif
 
@@ -42,6 +42,7 @@ _LIBCPP_PUSH_MACROS
 #include <__undef_macros>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+_LIBCPP_BEGIN_EXPLICIT_ABI_ANNOTATIONS
 
 #if _LIBCPP_HAS_THREADS
 
@@ -155,8 +156,8 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, __thread_id __id) {
 #  ifndef _LIBCPP_CXX03_LANG
 
 template <class _TSp, class _Fp, class... _Args, size_t... _Indices>
-inline _LIBCPP_HIDE_FROM_ABI void __thread_execute(tuple<_TSp, _Fp, _Args...>& __t, __index_sequence<_Indices...>) {
-  std::__invoke(std::move(std::get<_Indices + 1>(__t))...);
+inline _LIBCPP_HIDE_FROM_ABI void __thread_execute(tuple<_TSp, _Fp, _Args...>& __t, __tuple_indices<_Indices...>) {
+  std::__invoke(std::move(std::get<1>(__t)), std::move(std::get<_Indices>(__t))...);
 }
 
 template <class _Fp>
@@ -164,7 +165,8 @@ _LIBCPP_HIDE_FROM_ABI void* __thread_proxy(void* __vp) {
   // _Fp = tuple< unique_ptr<__thread_struct>, Functor, Args...>
   unique_ptr<_Fp> __p(static_cast<_Fp*>(__vp));
   __thread_local_data().set_pointer(std::get<0>(*__p.get()).release());
-  std::__thread_execute(*__p.get(), __make_index_sequence<tuple_size<_Fp>::value - 1>());
+  typedef typename __make_tuple_indices<tuple_size<_Fp>::value, 2>::type _Index;
+  std::__thread_execute(*__p.get(), _Index());
   return nullptr;
 }
 
@@ -255,6 +257,7 @@ inline _LIBCPP_HIDE_FROM_ABI void swap(thread& __x, thread& __y) _NOEXCEPT { __x
 
 #endif // _LIBCPP_HAS_THREADS
 
+_LIBCPP_END_EXPLICIT_ABI_ANNOTATIONS
 _LIBCPP_END_NAMESPACE_STD
 
 _LIBCPP_POP_MACROS

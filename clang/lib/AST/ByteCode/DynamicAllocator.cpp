@@ -86,11 +86,9 @@ Block *DynamicAllocator::allocate(const Descriptor *D, unsigned EvalID,
   ID->IsInitialized = false;
   ID->IsVolatile = false;
 
-  if (D->isCompositeArray())
-    ID->LifeState = Lifetime::Started;
-  else
-    ID->LifeState =
-        AllocForm == Form::Operator ? Lifetime::Ended : Lifetime::Started;
+  ID->LifeState =
+      AllocForm == Form::Operator ? Lifetime::Ended : Lifetime::Started;
+  ;
 
   B->IsDynamic = true;
 

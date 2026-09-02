@@ -9,7 +9,7 @@
 // <forward_list>
 
 // template <class Predicate> void      remove_if(Predicate pred); // C++17 and before
-// template <class Predicate> size_type remove_if(Predicate pred); // C++20 and after; constexpr since C++26
+// template <class Predicate> size_type remove_if(Predicate pred); // C++20 and after
 
 #include <forward_list>
 #include <iterator>
@@ -22,7 +22,7 @@
 #include "counting_predicates.h"
 
 template <class L, class Predicate>
-TEST_CONSTEXPR_CXX26 void do_remove_if(L& l, Predicate pred, typename L::size_type expected) {
+void do_remove_if(L& l, Predicate pred, typename L::size_type expected) {
   typename L::size_type old_size = std::distance(l.begin(), l.end());
 #if TEST_STD_VER > 17
   ASSERT_SAME_TYPE(decltype(l.remove_if(pred)), typename L::size_type);
@@ -34,18 +34,18 @@ TEST_CONSTEXPR_CXX26 void do_remove_if(L& l, Predicate pred, typename L::size_ty
   assert(old_size - std::distance(l.begin(), l.end()) == expected);
 }
 
-TEST_CONSTEXPR bool g(int i) { return i < 3; }
+bool g(int i) { return i < 3; }
 
 struct PredLWG526 {
-  TEST_CONSTEXPR_CXX20 PredLWG526(int i) : i_(i) {}
-  TEST_CONSTEXPR_CXX20 ~PredLWG526() { i_ = -32767; }
-  TEST_CONSTEXPR bool operator()(const PredLWG526& p) const { return p.i_ == i_; }
+  PredLWG526(int i) : i_(i) {}
+  ~PredLWG526() { i_ = -32767; }
+  bool operator()(const PredLWG526& p) const { return p.i_ == i_; }
 
-  TEST_CONSTEXPR bool operator==(int i) const { return i == i_; }
+  bool operator==(int i) const { return i == i_; }
   int i_;
 };
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef int T;
     typedef unary_counting_predicate<bool (*)(T), T> Predicate;
@@ -185,15 +185,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(c1 == c2);
     assert(cp.count() == static_cast<std::size_t>(std::distance(std::begin(t1), std::end(t1))));
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

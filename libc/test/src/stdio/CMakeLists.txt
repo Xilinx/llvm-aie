@@ -20,7 +20,6 @@ add_libc_test(
     libc.src.stdio.fread
     libc.src.stdio.fseek
     libc.src.stdio.fwrite
-    libc.test.UnitTest.ErrnoCheckingTest
 )
 
 add_libc_test(
@@ -69,7 +68,6 @@ add_libc_test(
     libc.src.stdio.fread
     libc.src.stdio.fwrite
     libc.src.stdio.setvbuf
-    libc.test.UnitTest.ErrnoCheckingTest
 )
 
 add_libc_test(
@@ -90,7 +88,6 @@ add_libc_test(
     libc.src.stdio.fread_unlocked
     libc.src.stdio.funlockfile
     libc.src.stdio.fwrite_unlocked
-    libc.test.UnitTest.ErrnoCheckingTest
 )
 
 add_libc_test(
@@ -112,7 +109,6 @@ add_libc_test(
     libc.src.stdio.fread
     libc.src.stdio.fseek
     libc.src.stdio.fwrite
-    libc.test.UnitTest.ErrnoCheckingTest
   LINK_LIBRARIES
     LibcMemoryHelpers
 )
@@ -362,18 +358,6 @@ add_libc_test(
 )
 
 add_libc_test(
-  perror_test
-  HERMETIC_TEST_ONLY # writes to libc's stderr
-  SUITE
-    libc_stdio_unittests
-  SRCS
-    perror_test.cpp
-  DEPENDS
-    libc.src.stdio.perror
-    libc.src.errno.errno
-)
-
-add_libc_test(
   fputs_test
   HERMETIC_TEST_ONLY # writes to libc's stdout and stderr
   SUITE
@@ -442,7 +426,6 @@ if(${LIBC_TARGET_OS} STREQUAL "linux")
       libc.src.sys.stat.mkdirat
       libc.src.unistd.access
       libc.src.unistd.close
-      libc.test.UnitTest.ErrnoCheckingTest
   )
 
   add_libc_test(
@@ -457,7 +440,6 @@ if(${LIBC_TARGET_OS} STREQUAL "linux")
       libc.src.stdio.rename
       libc.src.unistd.access
       libc.src.unistd.close
-      libc.test.UnitTest.ErrnoCheckingTest
       libc.test.UnitTest.ErrnoSetterMatcher
   )
 
@@ -474,7 +456,6 @@ if(${LIBC_TARGET_OS} STREQUAL "linux")
       libc.src.stdio.fgets
       libc.src.stdio.fputs
       libc.src.unistd.close
-      libc.test.UnitTest.ErrnoCheckingTest
       libc.test.UnitTest.ErrnoSetterMatcher
   )
 endif()
@@ -495,8 +476,6 @@ add_libc_test(
     libc.src.stdio.fopen
     libc.src.stdio.fwrite
     libc.src.stdio.getc
-    libc.test.UnitTest.ErrnoCheckingTest
-    libc.test.UnitTest.ErrnoSetterMatcher
 )
 
 add_libc_test(
@@ -519,8 +498,6 @@ add_libc_test(
     libc.src.stdio.funlockfile
     libc.src.stdio.fwrite
     libc.src.stdio.getc_unlocked
-    libc.test.UnitTest.ErrnoCheckingTest
-    libc.test.UnitTest.ErrnoSetterMatcher
 )
 
 add_libc_test(
@@ -538,8 +515,6 @@ add_libc_test(
     libc.src.stdio.fgets
     libc.src.stdio.fopen
     libc.src.stdio.fwrite
-    libc.test.UnitTest.ErrnoCheckingTest
-    libc.test.UnitTest.ErrnoSetterMatcher
 )
 
 add_libc_test(

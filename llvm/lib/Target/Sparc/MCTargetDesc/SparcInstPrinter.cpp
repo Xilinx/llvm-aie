@@ -12,7 +12,6 @@
 
 #include "SparcInstPrinter.h"
 #include "Sparc.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -143,7 +142,7 @@ void SparcInstPrinter::printOperand(const MCInst *MI, int opNum,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MAI.printExpr(O, *MO.getExpr());
+  MO.getExpr()->print(O, &MAI);
 }
 
 void SparcInstPrinter::printMemOperand(const MCInst *MI, int opNum,
@@ -289,5 +288,5 @@ void SparcInstPrinter::printCTILabel(const MCInst *MI, uint64_t Address,
   }
 
   // Otherwise, just print the expression.
-  MAI.printExpr(O, *Op.getExpr());
+  Op.getExpr()->print(O, &MAI);
 }

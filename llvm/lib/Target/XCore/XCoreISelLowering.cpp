@@ -1064,8 +1064,9 @@ SDValue XCoreTargetLowering::LowerCCCCallTo(
   // The InGlue in necessary since all emitted instructions must be
   // stuck together.
   SDValue InGlue;
-  for (const auto &[Reg, N] : RegsToPass) {
-    Chain = DAG.getCopyToReg(Chain, dl, Reg, N, InGlue);
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
+                             RegsToPass[i].second, InGlue);
     InGlue = Chain.getValue(1);
   }
 
@@ -1088,8 +1089,9 @@ SDValue XCoreTargetLowering::LowerCCCCallTo(
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
-  for (const auto &[Reg, N] : RegsToPass)
-    Ops.push_back(DAG.getRegister(Reg, N.getValueType()));
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
 
   if (InGlue.getNode())
     Ops.push_back(InGlue);

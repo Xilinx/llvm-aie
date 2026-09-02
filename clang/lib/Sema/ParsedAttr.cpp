@@ -91,8 +91,7 @@ void AttributePool::takePool(AttributePool &pool) {
 
 void AttributePool::takeFrom(ParsedAttributesView &List, AttributePool &Pool) {
   assert(&Pool != this && "AttributePool can't take attributes from itself");
-  for (ParsedAttr *A : List.AttrList)
-    Pool.remove(A);
+  llvm::for_each(List.AttrList, [&Pool](ParsedAttr *A) { Pool.remove(A); });
   llvm::append_range(Attrs, List.AttrList);
 }
 

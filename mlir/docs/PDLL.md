@@ -1492,7 +1492,7 @@ be defined by specifying a string code block after the rewrite declaration:
 
 ```pdll
 Rewrite BuildOp(value: Value) -> (foo: Op<my_dialect.foo>, bar: Op<my_dialect.bar>) [{
-  return {my_dialect::FooOp::create(rewriter, value), my_dialect::BarOp::create(rewriter)};
+  return {rewriter.create<my_dialect::FooOp>(value), rewriter.create<my_dialect::BarOp>()};
 }];
 
 Pattern {
@@ -1517,7 +1517,7 @@ translated into:
 
 ```c++
 std::tuple<my_dialect::FooOp, my_dialect::BarOp> BuildOp(Value value) {
-  return {my_dialect::FooOp::create(rewriter, value), my_dialect::BarOp::create(rewriter)};
+  return {rewriter.create<my_dialect::FooOp>(value), rewriter.create<my_dialect::BarOp>()};
 }
 ```
 
@@ -1539,7 +1539,7 @@ below describes the various result translation scenarios:
 
 ```pdll
 Rewrite createOp() [{
-  my_dialect::FooOp::create(rewriter);
+  rewriter.create<my_dialect::FooOp>();
 }];
 ```
 
@@ -1547,7 +1547,7 @@ In the case where a native `Rewrite` has no results, the native function returns
 
 ```c++
 void createOp(PatternRewriter &rewriter) {
-  my_dialect::FooOp::create(rewriter);
+  rewriter.create<my_dialect::FooOp>();
 }
 ```
 
@@ -1555,7 +1555,7 @@ void createOp(PatternRewriter &rewriter) {
 
 ```pdll
 Rewrite createOp() -> Op<my_dialect.foo> [{
-  return my_dialect::FooOp::create(rewriter);
+  return rewriter.create<my_dialect::FooOp>();
 }];
 ```
 
@@ -1564,7 +1564,7 @@ native type for that single result:
 
 ```c++
 my_dialect::FooOp createOp(PatternRewriter &rewriter) {
-  return my_dialect::FooOp::create(rewriter);
+  return rewriter.create<my_dialect::FooOp>();
 }
 ```
 

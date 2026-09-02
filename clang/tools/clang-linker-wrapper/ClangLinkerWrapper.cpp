@@ -268,8 +268,7 @@ Expected<std::string> findProgram(StringRef Name, ArrayRef<StringRef> Paths) {
 bool linkerSupportsLTO(const ArgList &Args) {
   llvm::Triple Triple(Args.getLastArgValue(OPT_triple_EQ));
   return Triple.isNVPTX() || Triple.isAMDGPU() ||
-         (!Triple.isGPU() &&
-          Args.getLastArgValue(OPT_linker_path_EQ).ends_with("lld"));
+         Args.getLastArgValue(OPT_linker_path_EQ).ends_with("lld");
 }
 
 /// Returns the hashed value for a constant string.
@@ -311,21 +310,22 @@ Error relocateOffloadSection(const ArgList &Args, StringRef Output) {
   // Remove the old .llvm.offloading section to prevent further linking.
   ObjcopyArgs.emplace_back("--remove-section");
   ObjcopyArgs.emplace_back(".llvm.offloading");
-  StringRef Prefix = "llvm";
-  auto Section = (Prefix + "_offload_entries").str();
-  // Rename the offloading entires to make them private to this link unit.
-  ObjcopyArgs.emplace_back("--rename-section");
-  ObjcopyArgs.emplace_back(
-      Args.MakeArgString(Section + "=" + Section + Suffix));
+  for (StringRef Prefix : {"omp", "cuda", "hip"}) {
+    auto Section = (Prefix + "_offloading_entries").str();
+    // Rename the offloading entires to make them private to this link unit.
+    ObjcopyArgs.emplace_back("--rename-section");
+    ObjcopyArgs.emplace_back(
+        Args.MakeArgString(Section + "=" + Section + Suffix));
 
-  // Rename the __start_ / __stop_ symbols appropriately to iterate over the
-  // newly renamed section containing the offloading entries.
-  ObjcopyArgs.emplace_back("--redefine-sym");
-  ObjcopyArgs.emplace_back(Args.MakeArgString("__start_" + Section + "=" +
-                                              "__start_" + Section + Suffix));
-  ObjcopyArgs.emplace_back("--redefine-sym");
-  ObjcopyArgs.emplace_back(Args.MakeArgString("__stop_" + Section + "=" +
-                                              "__stop_" + Section + Suffix));
+    // Rename the __start_ / __stop_ symbols appropriately to iterate over the
+    // newly renamed section containing the offloading entries.
+    ObjcopyArgs.emplace_back("--redefine-sym");
+    ObjcopyArgs.emplace_back(Args.MakeArgString("__start_" + Section + "=" +
+                                                "__start_" + Section + Suffix));
+    ObjcopyArgs.emplace_back("--redefine-sym");
+    ObjcopyArgs.emplace_back(Args.MakeArgString("__stop_" + Section + "=" +
+                                                "__stop_" + Section + Suffix));
+  }
 
   if (Error Err = executeCommands(*ObjcopyPath, ObjcopyArgs))
     return Err;
@@ -1302,9 +1302,6 @@ getDeviceInput(const ArgList &Args) {
   // after every regular input file so that libraries may be included out of
   // order. This follows 'ld.lld' semantics which are more lenient.
   bool Extracted = true;
-  llvm::DenseSet<StringRef> ShouldExtract;
-  for (auto &Arg : Args.getAllArgValues(OPT_should_extract))
-    ShouldExtract.insert(Arg);
   while (Extracted) {
     Extracted = false;
     for (OffloadFile &Binary : ArchiveFilesToExtract) {
@@ -1318,9 +1315,8 @@ getDeviceInput(const ArgList &Args) {
           CompatibleTargets.emplace_back(ID);
 
       for (const auto &[Index, ID] : llvm::enumerate(CompatibleTargets)) {
-        // Only extract an if we have an an object matching this target or it
-        // was specifically requested.
-        if (!InputFiles.count(ID) && !ShouldExtract.contains(ID.second))
+        // Only extract an if we have an an object matching this target.
+        if (!InputFiles.count(ID))
           continue;
 
         Expected<bool> ExtractOrErr =
@@ -1334,7 +1330,7 @@ getDeviceInput(const ArgList &Args) {
 
         // Skip including the file if it is an archive that does not resolve
         // any symbols.
-        if (!Extracted && !ShouldExtract.contains(ID.second))
+        if (!Extracted)
           continue;
 
         // If another target needs this binary it must be copied instead.

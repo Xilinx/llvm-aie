@@ -442,7 +442,7 @@ public:
     assert(PH && "Preheader should exist!");
     Value *InitialPtr = SEE.expandCodeFor(PtrSCEV->getStart(), Ptr->getType(),
                                           PH->getTerminator());
-    Instruction *Initial =
+    Value *Initial =
         new LoadInst(Cand.Load->getType(), InitialPtr, "load_initial",
                      /* isVolatile */ false, Cand.Load->getAlign(),
                      PH->getTerminator()->getIterator());
@@ -450,7 +450,6 @@ public:
     // into the loop's preheader. A debug location inside the loop will cause
     // a misleading stepping when debugging. The test update-debugloc-store
     // -forwarded.ll checks this.
-    Initial->setDebugLoc(DebugLoc::getDropped());
 
     PHINode *PHI = PHINode::Create(Initial->getType(), 2, "store_forwarded");
     PHI->insertBefore(L->getHeader()->begin());

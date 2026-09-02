@@ -10,7 +10,6 @@ from lldbsuite.test import lldbutil
 class TestDbgInfoContentForwardList(TestBase):
     @add_test_categories(["libc++"])
     @skipIf(compiler=no_match("clang"))
-    @skipUnlessDarwin
     def test(self):
         self.build()
 

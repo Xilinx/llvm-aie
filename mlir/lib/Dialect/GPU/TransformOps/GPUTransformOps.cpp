@@ -10,15 +10,15 @@
 
 #include "mlir/Conversion/GPUCommon/GPUCommonPass.h"
 #include "mlir/Conversion/GPUToNVVM/GPUToNVVMPass.h"
-#include "mlir/Conversion/GPUToROCDL/GPUToROCDLPass.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
 #include "mlir/Dialect/AMDGPU/IR/AMDGPUDialect.h"
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/GPU/IR/GPUDialect.h"
 #include "mlir/Dialect/GPU/TransformOps/Utils.h"
 #include "mlir/Dialect/GPU/Transforms/Passes.h"
 #include "mlir/Dialect/LLVMIR/NVVMDialect.h"
-#include "mlir/Dialect/LLVMIR/ROCDLDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/IR/DeviceMappingInterface.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
@@ -39,10 +39,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/TypeSwitch.h"
-#include "llvm/Support/DebugLog.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InterleavedRange.h"
-#include "llvm/Support/LogicalResult.h"
 #include <type_traits>
 
 using namespace mlir;
@@ -51,6 +50,11 @@ using namespace mlir::transform;
 using namespace mlir::transform::gpu;
 
 #define DEBUG_TYPE "gpu-transforms"
+#define DEBUG_TYPE_ALIAS "gpu-transforms-alias"
+
+#define DBGS() (llvm::dbgs() << '[' << DEBUG_TYPE << "] ")
+#define LDBG(X) LLVM_DEBUG(DBGS() << X << "\n")
+#define DBGS_ALIAS() (llvm::dbgs() << '[' << DEBUG_TYPE_ALIAS << "] ")
 
 //===----------------------------------------------------------------------===//
 // Apply...ConversionPatternsOp
@@ -120,41 +124,6 @@ void transform::ApplyGPUSubgroupReduceToNVVMConversionPatternsOp::
 
 LogicalResult transform::ApplyGPUSubgroupReduceToNVVMConversionPatternsOp::
     verifyTypeConverter(transform::TypeConverterBuilderOpInterface builder) {
-  if (builder.getTypeConverterType() != "LLVMTypeConverter")
-    return emitOpError("expected LLVMTypeConverter");
-  return success();
-}
-
-void transform::ApplyGPUToROCDLConversionPatternsOp::populatePatterns(
-    TypeConverter &typeConverter, RewritePatternSet &patterns) {
-  auto &llvmTypeConverter = static_cast<LLVMTypeConverter &>(typeConverter);
-  populateGpuMemorySpaceAttributeConversions(
-      llvmTypeConverter, [](AddressSpace space) {
-        switch (space) {
-        case AddressSpace::Global:
-          return ROCDL::ROCDLDialect::kGlobalMemoryAddressSpace;
-        case AddressSpace::Workgroup:
-          return ROCDL::ROCDLDialect::kSharedMemoryAddressSpace;
-        case AddressSpace::Private:
-          return ROCDL::ROCDLDialect::kPrivateMemoryAddressSpace;
-        }
-        llvm_unreachable("unknown address space enum value");
-      });
-  FailureOr<amdgpu::Chipset> maybeChipset =
-      amdgpu::Chipset::parse(getChipset());
-  assert(llvm::succeeded(maybeChipset) && "expected valid chipset");
-  populateGpuToROCDLConversionPatterns(
-      llvmTypeConverter, patterns, mlir::gpu::amd::Runtime::HIP, *maybeChipset);
-}
-
-LogicalResult
-transform::ApplyGPUToROCDLConversionPatternsOp::verifyTypeConverter(
-    transform::TypeConverterBuilderOpInterface builder) {
-  FailureOr<amdgpu::Chipset> maybeChipset =
-      amdgpu::Chipset::parse(getChipset());
-  if (failed(maybeChipset)) {
-    return emitOpError("Invalid chipset name: " + getChipset());
-  }
   if (builder.getTypeConverterType() != "LLVMTypeConverter")
     return emitOpError("expected LLVMTypeConverter");
   return success();
@@ -344,14 +313,11 @@ checkMappingAttributeTypes(std::optional<TransformOpInterface> transformOp,
                                      llvm::IsaPred<GPUWarpMappingAttr>);
   bool hasThreadMapping = llvm::any_of(forallOp.getMapping().value(),
                                        llvm::IsaPred<GPUThreadMappingAttr>);
-  bool hasLaneMapping = llvm::any_of(forallOp.getMapping().value(),
-                                     llvm::IsaPred<GPULaneMappingAttr>);
   int64_t countMappingTypes = 0;
   countMappingTypes += hasBlockMapping ? 1 : 0;
   countMappingTypes += hasWarpgroupMapping ? 1 : 0;
   countMappingTypes += hasWarpMapping ? 1 : 0;
   countMappingTypes += hasThreadMapping ? 1 : 0;
-  countMappingTypes += hasLaneMapping ? 1 : 0;
   if (countMappingTypes > 1) {
     return definiteFailureHelper(
         transformOp, forallOp,
@@ -364,8 +330,7 @@ checkMappingAttributeTypes(std::optional<TransformOpInterface> transformOp,
         "scf.forall op requires a mapping attribute of kind 'block'");
   }
   if (std::is_same<MappingKindType, ThreadMappingKind>::value &&
-      !hasLaneMapping && !hasThreadMapping && !hasWarpMapping &&
-      !hasWarpgroupMapping) {
+      !hasThreadMapping && !hasWarpMapping && !hasWarpgroupMapping) {
     return definiteFailureHelper(transformOp, forallOp,
                                  "scf.forall op requires a mapping attribute "
                                  "of kind 'thread' or 'warp'");
@@ -382,23 +347,14 @@ checkMappingAttributeTypes(std::optional<TransformOpInterface> transformOp,
     seen.insert(map);
   }
 
-  auto isLinear = [](DeviceMappingAttrInterface attr) {
-    return attr.isLinearMapping();
+  auto isLinear = [](Attribute a) {
+    return cast<DeviceMappingAttrInterface>(a).isLinearMapping();
   };
-  if (llvm::any_of(forallOp.getDeviceMappingAttrs(), isLinear) &&
-      !llvm::all_of(forallOp.getDeviceMappingAttrs(), isLinear)) {
+  if (llvm::any_of(forallOp.getMapping()->getValue(), isLinear) &&
+      !llvm::all_of(forallOp.getMapping()->getValue(), isLinear)) {
     return definiteFailureHelper(
         transformOp, forallOp,
         "cannot mix linear and non-linear mapping modes");
-  }
-
-  FailureOr<DeviceMaskingAttrInterface> maybeMaskingAttr =
-      forallOp.getDeviceMaskingAttr();
-  if (succeeded(maybeMaskingAttr) && *maybeMaskingAttr &&
-      !forallOp.usesLinearMapping()) {
-    return definiteFailureHelper(
-        transformOp, forallOp,
-        "device masking is only available in linear mapping mode");
   }
 
   return DiagnosedSilenceableFailure::success();
@@ -421,7 +377,9 @@ verifyGpuMapping(std::optional<TransformOpInterface> transformOp,
   if (forallOp.getNumResults() > 0)
     return definiteFailureHelper(transformOp, forallOp,
                                  "only bufferized scf.forall can be mapped");
-  bool useLinearMapping = forallOp.usesLinearMapping();
+  bool useLinearMapping = cast<DeviceMappingAttrInterface>(
+                              forallOp.getMapping()->getValue().front())
+                              .isLinearMapping();
   // TODO: This would be more natural with support for Optional<EnumParameter>
   // in GPUDeviceMappingAttr.
   int64_t maxNumMappingsSupported =
@@ -466,7 +424,7 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
     RewriterBase &rewriter, std::optional<TransformOpInterface> transformOp,
     scf::ForallOp forallOp, ArrayRef<int64_t> availableMappingSizes,
     ForallRewriteResult &result, const GpuIdBuilder &gpuIdBuilder) {
-  LDBG() << "--start rewriteOneForallCommonImpl";
+  LDBG("--start rewriteOneForallCommonImpl");
 
   // Step 1. Complete the mapping to a full mapping (with 1s) if necessary.
   auto numParallelIterations =
@@ -474,10 +432,8 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
   assert(forallOp.isNormalized() && numParallelIterations.has_value() &&
          "requires statically sized, normalized forall op");
   SmallVector<int64_t> tmpMappingSizes = numParallelIterations.value();
-  SmallVector<DeviceMappingAttrInterface> forallMappingAttrsVec =
-      forallOp.getDeviceMappingAttrs();
   SetVector<Attribute> forallMappingAttrs;
-  forallMappingAttrs.insert_range(forallMappingAttrsVec);
+  forallMappingAttrs.insert_range(forallOp.getMapping()->getValue());
   auto comparator = [](Attribute a, Attribute b) -> bool {
     return cast<DeviceMappingAttrInterface>(a).getMappingId() <
            cast<DeviceMappingAttrInterface>(b).getMappingId();
@@ -501,14 +457,14 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
     // Otherwise, we have a new insertion without a size -> use size 1.
     tmpMappingSizes.push_back(1);
   }
-  LDBG() << "----tmpMappingSizes extracted from scf.forall op: "
-         << llvm::interleaved(tmpMappingSizes);
+  LDBG("----tmpMappingSizes extracted from scf.forall op: "
+       << llvm::interleaved(tmpMappingSizes));
 
   // Step 2. sort the values by the corresponding DeviceMappingAttrInterface.
   SmallVector<int64_t> forallMappingSizes = getValuesSortedByKey(
       forallMappingAttrs.getArrayRef(), tmpMappingSizes, comparator);
-  LDBG() << "----forallMappingSizes: " << llvm::interleaved(forallMappingSizes);
-  LDBG() << "----forallMappingAttrs: " << llvm::interleaved(forallMappingAttrs);
+  LDBG("----forallMappingSizes: " << llvm::interleaved(forallMappingSizes));
+  LDBG("----forallMappingAttrs: " << llvm::interleaved(forallMappingAttrs));
 
   // Step 3. Generate the mappingIdOps using the provided generator.
   Location loc = forallOp.getLoc();
@@ -517,24 +473,13 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
   SmallVector<int64_t> originalBasis(availableMappingSizes);
   bool originalBasisWasProvided = !originalBasis.empty();
   if (!originalBasisWasProvided) {
-    LDBG() << "----originalBasis was not provided, deriving it and there will "
-              "be no "
-              "predication";
     originalBasis = forallMappingSizes;
     while (originalBasis.size() < 3)
       originalBasis.push_back(1);
-  } else {
-    LDBG() << "----originalBasis was provided, using it, there will be "
-              "predication";
   }
-  LDBG() << "------originalBasis: " << llvm::interleaved(originalBasis);
 
   IdBuilderResult builderResult =
       gpuIdBuilder.idBuilder(rewriter, loc, forallMappingSizes, originalBasis);
-  if (!builderResult.errorMsg.empty())
-    return definiteFailureHelper(transformOp, forallOp, builderResult.errorMsg);
-
-  LDBG() << builderResult;
 
   // Step 4. Map the induction variables to the mappingIdOps, this may involve
   // a permutation.
@@ -545,7 +490,6 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
            forallMappingAttrs.getArrayRef().take_front(forallOp.getRank()))) {
     auto mappingAttr = cast<DeviceMappingAttrInterface>(dim);
     Value peIdOp = mappingIdOps[mappingAttr.getRelativeIndex()];
-    LDBG() << "----map: " << iv << " to " << peIdOp;
     bvm.map(iv, peIdOp);
   }
 
@@ -554,9 +498,34 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
   // originalBasis and no predication occurs.
   Value predicate;
   if (originalBasisWasProvided) {
-    for (Value tmpPredicate : builderResult.predicateOps) {
-      predicate = predicate ? arith::AndIOp::create(rewriter, loc, predicate,
-                                                    tmpPredicate)
+    SmallVector<int64_t> activeMappingSizes = builderResult.activeMappingSizes;
+    SmallVector<int64_t> availableMappingSizes =
+        builderResult.availableMappingSizes;
+    SmallVector<Value> activeIdOps = builderResult.activeIdOps;
+    LDBG("----activeMappingSizes: " << llvm::interleaved(activeMappingSizes));
+    LDBG("----availableMappingSizes: "
+         << llvm::interleaved(availableMappingSizes));
+    LDBG("----activeIdOps: " << llvm::interleaved(activeIdOps));
+    for (auto [activeId, activeMappingSize, availableMappingSize] :
+         llvm::zip_equal(activeIdOps, activeMappingSizes,
+                         availableMappingSizes)) {
+      if (activeMappingSize > availableMappingSize) {
+        return definiteFailureHelper(
+            transformOp, forallOp,
+            "Trying to map to fewer GPU threads than loop iterations but "
+            "overprovisioning is not yet supported. "
+            "Try additional tiling of the before mapping or map to more "
+            "threads.");
+      }
+      if (activeMappingSize == availableMappingSize)
+        continue;
+      Value idx =
+          rewriter.create<arith::ConstantIndexOp>(loc, activeMappingSize);
+      Value tmpPredicate = rewriter.create<arith::CmpIOp>(
+          loc, arith::CmpIPredicate::ult, activeId, idx);
+      LDBG("----predicate: " << tmpPredicate);
+      predicate = predicate ? rewriter.create<arith::AndIOp>(loc, predicate,
+                                                             tmpPredicate)
                             : tmpPredicate;
     }
   }
@@ -568,8 +537,8 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
   Block::iterator insertionPoint;
   if (predicate) {
     // Step 6.a. If predicated, move at the beginning.
-    auto ifOp = scf::IfOp::create(rewriter, loc, predicate,
-                                  /*withElseRegion=*/false);
+    auto ifOp = rewriter.create<scf::IfOp>(loc, predicate,
+                                           /*withElseRegion=*/false);
     targetBlock = ifOp.thenBlock();
     insertionPoint = ifOp.thenBlock()->begin();
   } else {
@@ -591,9 +560,9 @@ static DiagnosedSilenceableFailure rewriteOneForallCommonImpl(
   // Step 8. Erase old op.
   rewriter.eraseOp(forallOp);
 
-  LDBG() << "----result forallMappingSizes: "
-         << llvm::interleaved(forallMappingSizes);
-  LDBG() << "----result mappingIdOps: " << llvm::interleaved(mappingIdOps);
+  LDBG("----result forallMappingSizes: "
+       << llvm::interleaved(forallMappingSizes));
+  LDBG("----result mappingIdOps: " << llvm::interleaved(mappingIdOps));
 
   result = ForallRewriteResult{forallMappingSizes, mappingIdOps};
   return DiagnosedSilenceableFailure::success();
@@ -607,7 +576,7 @@ DiagnosedSilenceableFailure mlir::transform::gpu::mapForallToBlocksImpl(
     RewriterBase &rewriter, TransformOpInterface transformOp,
     scf::ForallOp forallOp, SmallVectorImpl<int64_t> &gridDims,
     const GpuIdBuilder &gpuIdBuilder) {
-  LDBG() << "Start mapForallToBlocksImpl";
+  LDBG("Start mapForallToBlocksImpl");
 
   {
     // GPU-specific verifications. There is no better place to anchor
@@ -627,7 +596,7 @@ DiagnosedSilenceableFailure mlir::transform::gpu::mapForallToBlocksImpl(
     // the insertion point.
     OpBuilder::InsertionGuard guard(rewriter);
     rewriter.setInsertionPointToStart(parentBlock);
-    zero = arith::ConstantIndexOp::create(rewriter, loc, 0);
+    zero = rewriter.create<arith::ConstantIndexOp>(loc, 0);
   }
 
   ForallRewriteResult rewriteResult;
@@ -722,17 +691,12 @@ DiagnosedSilenceableFailure transform::MapForallToBlocks::applyToOne(
 
   // The BlockIdBuilder adapts to whatever is thrown at it.
   bool useLinearMapping = false;
-  if (topLevelForallOp.getMapping())
-    useLinearMapping = topLevelForallOp.usesLinearMapping();
-
-  FailureOr<DeviceMaskingAttrInterface> maybeMaskingAttr =
-      topLevelForallOp.getDeviceMaskingAttr();
-  assert(succeeded(maybeMaskingAttr) && "unexpected failed maybeMaskingAttr");
-  assert((!*maybeMaskingAttr || useLinearMapping) &&
-         "masking requires linear mapping");
-
-  GpuBlockIdBuilder gpuBlockIdBuilder(getContext(), useLinearMapping,
-                                      *maybeMaskingAttr);
+  if (topLevelForallOp.getMapping()) {
+    auto mappingAttr = cast<DeviceMappingAttrInterface>(
+        topLevelForallOp.getMapping()->getValue().front());
+    useLinearMapping = mappingAttr.isLinearMapping();
+  }
+  GpuBlockIdBuilder gpuBlockIdBuilder(getContext(), useLinearMapping);
 
   diag = mlir::transform::gpu::mapForallToBlocksImpl(
       rewriter, transformOp, topLevelForallOp, gridDims, gpuBlockIdBuilder);
@@ -789,8 +753,8 @@ static DiagnosedSilenceableFailure
 getThreadIdBuilder(std::optional<TransformOpInterface> transformOp,
                    scf::ForallOp forallOp, ArrayRef<int64_t> blockSizes,
                    int64_t warpSize, GpuIdBuilder &gpuIdBuilder) {
-  DeviceMappingAttrInterface mappingAttr =
-      forallOp.getDeviceMappingAttrs().front();
+  auto mappingAttr = cast<DeviceMappingAttrInterface>(
+      forallOp.getMapping()->getValue().front());
   bool useLinearMapping = mappingAttr.isLinearMapping();
 
   // Sanity checks that may result in runtime verification errors.
@@ -813,30 +777,18 @@ getThreadIdBuilder(std::optional<TransformOpInterface> transformOp,
   if (!diag.succeeded())
     return diag;
 
-  FailureOr<DeviceMaskingAttrInterface> maybeMaskingAttr =
-      forallOp.getDeviceMaskingAttr();
-  assert(succeeded(maybeMaskingAttr) && "unexpected failed maybeMaskingAttr");
-  assert((!*maybeMaskingAttr || useLinearMapping) &&
-         "masking requires linear mapping");
-
   // Start mapping.
   MLIRContext *ctx = forallOp.getContext();
   gpuIdBuilder =
       TypeSwitch<DeviceMappingAttrInterface, GpuIdBuilder>(mappingAttr)
           .Case([&](GPUWarpgroupMappingAttr) {
-            return GpuWarpgroupIdBuilder(ctx, warpSize, useLinearMapping,
-                                         *maybeMaskingAttr);
+            return GpuWarpgroupIdBuilder(ctx, warpSize, useLinearMapping);
           })
           .Case([&](GPUWarpMappingAttr) {
-            return GpuWarpIdBuilder(ctx, warpSize, useLinearMapping,
-                                    *maybeMaskingAttr);
+            return GpuWarpIdBuilder(ctx, warpSize, useLinearMapping);
           })
           .Case([&](GPUThreadMappingAttr) {
-            return GpuThreadIdBuilder(ctx, useLinearMapping, *maybeMaskingAttr);
-          })
-          .Case([&](GPULaneMappingAttr) {
-            return GpuLaneIdBuilder(ctx, warpSize, useLinearMapping,
-                                    *maybeMaskingAttr);
+            return GpuThreadIdBuilder(ctx, useLinearMapping);
           })
           .Default([&](DeviceMappingAttrInterface) -> GpuIdBuilder {
             llvm_unreachable("unknown mapping attribute");
@@ -879,7 +831,7 @@ DiagnosedSilenceableFailure mlir::transform::gpu::mapOneForallToThreadsImpl(
     return diag;
   // Add a syncthreads if needed. TODO: warpsync
   if (syncAfterDistribute)
-    BarrierOp::create(rewriter, loc);
+    rewriter.create<BarrierOp>(loc);
 
   return DiagnosedSilenceableFailure::success();
 }
@@ -888,7 +840,7 @@ DiagnosedSilenceableFailure mlir::transform::gpu::mapNestedForallToThreadsImpl(
     RewriterBase &rewriter, std::optional<TransformOpInterface> transformOp,
     Operation *target, ArrayRef<int64_t> blockDims, int64_t warpSize,
     bool syncAfterDistribute) {
-  LDBG() << "Start mapNestedForallToThreadsImpl";
+  LDBG("Start mapNestedForallToThreadsImpl");
   if (blockDims.size() != 3) {
     return definiteFailureHelper(transformOp, target,
                                  "requires size-3 thread mapping");
@@ -896,7 +848,7 @@ DiagnosedSilenceableFailure mlir::transform::gpu::mapNestedForallToThreadsImpl(
 
   // Create an early zero index value for replacements.
   Location loc = target->getLoc();
-  Value zero = arith::ConstantIndexOp::create(rewriter, loc, 0);
+  Value zero = rewriter.create<arith::ConstantIndexOp>(loc, 0);
   DiagnosedSilenceableFailure diag = DiagnosedSilenceableFailure::success();
   WalkResult walkResult = target->walk([&](scf::ForallOp forallOp) {
     diag = mlir::transform::gpu::mapOneForallToThreadsImpl(

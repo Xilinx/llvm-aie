@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/math/clc_sinpi.h>
-#include <clc/opencl/math/sinpi.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION sinpi
 #define __CLC_BODY <clc/shared/unary_def.inc>

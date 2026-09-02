@@ -94,7 +94,7 @@ public:
     default:
       return CCCR_Warning;
     case CC_C:
-    case CC_DeviceKernel:
+    case CC_OpenCLKernel:
       return CCCR_OK;
     }
   }

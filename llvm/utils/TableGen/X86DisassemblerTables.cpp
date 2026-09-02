@@ -603,7 +603,8 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_W_OPSIZE_KZ_B_U:
     return false;
   default:
-    errs() << "Unknown instruction class: " << stringForContext(parent) << "\n";
+    errs() << "Unknown instruction class: "
+           << stringForContext((InstructionContext)parent) << "\n";
     llvm_unreachable("Unknown instruction class");
   }
 }
@@ -881,9 +882,9 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
     N = ++OperandSetNum;
 
     o << "  { /* " << (OperandSetNum - 1) << " */\n";
-    for (const auto &[Enc, Ty] : OperandList) {
-      const char *Encoding = stringForOperandEncoding(Enc);
-      const char *Type = stringForOperandType(Ty);
+    for (unsigned i = 0, e = OperandList.size(); i != e; ++i) {
+      const char *Encoding = stringForOperandEncoding(OperandList[i].first);
+      const char *Type = stringForOperandType(OperandList[i].second);
       o << "    { " << Encoding << ", " << Type << " },\n";
     }
     o << "  },\n";

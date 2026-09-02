@@ -44,6 +44,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/InitializePasses.h"
@@ -553,7 +554,7 @@ static std::optional<EstimatedUnrollCost> analyzeLoopUnrollCost(
       for (Instruction &I : *BB) {
         // These won't get into the final code - don't even try calculating the
         // cost for them.
-        if (EphValues.count(&I))
+        if (isa<DbgInfoIntrinsic>(I) || EphValues.count(&I))
           continue;
 
         // Track this instruction's expected baseline cost when executing the

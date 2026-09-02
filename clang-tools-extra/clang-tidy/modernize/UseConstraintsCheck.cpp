@@ -161,7 +161,7 @@ matchTrailingTemplateParam(const FunctionTemplateDecl *FunctionTemplate) {
 
   const TemplateParameterList *TemplateParams =
       FunctionTemplate->getTemplateParameters();
-  if (TemplateParams->empty())
+  if (TemplateParams->size() == 0)
     return {};
 
   const NamedDecl *LastParam =
@@ -279,7 +279,7 @@ findInsertionForConstraint(const FunctionDecl *Function, ASTContext &Context) {
   return Body->getBeginLoc();
 }
 
-static bool isPrimaryExpression(const Expr *Expression) {
+bool isPrimaryExpression(const Expr *Expression) {
   // This function is an incomplete approximation of checking whether
   // an Expr is a primary expression. In particular, if this function
   // returns true, the expression is a primary expression. The converse
@@ -419,7 +419,7 @@ handleTrailingTemplateType(const FunctionTemplateDecl *FunctionTemplate,
   SourceRange RemovalRange;
   const TemplateParameterList *TemplateParams =
       FunctionTemplate->getTemplateParameters();
-  if (!TemplateParams || TemplateParams->empty())
+  if (!TemplateParams || TemplateParams->size() == 0)
     return {};
 
   if (TemplateParams->size() == 1) {

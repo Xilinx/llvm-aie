@@ -2,13 +2,17 @@ from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
 from lldbsuite.test import lldbutil
 
+USE_LIBSTDCPP = "USE_LIBSTDCPP"
+USE_LIBCPP = "USE_LIBCPP"
+
 
 class GenericUnorderedDataFormatterTestCase(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.namespace = "std"
 
-    def do_test_with_run_command(self):
+    def do_test_with_run_command(self, stdlib_type):
+        self.build(dictionary={stdlib_type: "1"})
         self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_source_regexp(self, "Set break point at this line.")
@@ -123,23 +127,8 @@ class GenericUnorderedDataFormatterTestCase(TestBase):
 
     @add_test_categories(["libstdcxx"])
     def test_with_run_command_libstdcpp(self):
-        self.build(dictionary={"USE_LIBSTDCPP": 1})
-        self.do_test_with_run_command()
-
-    @add_test_categories(["libstdcxx"])
-    def test_with_run_command_libstdcxx_debug(self):
-        self.build(
-            dictionary={"USE_LIBSTDCPP": 1, "CXXFLAGS_EXTRAS": "-D_GLIBCXX_DEBUG"}
-        )
-        self.do_test_with_run_command()
+        self.do_test_with_run_command(USE_LIBSTDCPP)
 
     @add_test_categories(["libc++"])
     def test_with_run_command_libcpp(self):
-        self.build(dictionary={"USE_LIBCPP": 1})
-        self.do_test_with_run_command()
-
-    @add_test_categories(["msvcstl"])
-    def test_with_run_command_msvcstl(self):
-        # No flags, because the "msvcstl" category checks that the MSVC STL is used by default.
-        self.build()
-        self.do_test_with_run_command()
+        self.do_test_with_run_command(USE_LIBCPP)

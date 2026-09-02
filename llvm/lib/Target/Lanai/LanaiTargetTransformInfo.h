@@ -25,7 +25,7 @@
 #include "llvm/Support/MathExtras.h"
 
 namespace llvm {
-class LanaiTTIImpl final : public BasicTTIImplBase<LanaiTTIImpl> {
+class LanaiTTIImpl : public BasicTTIImplBase<LanaiTTIImpl> {
   typedef BasicTTIImplBase<LanaiTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;

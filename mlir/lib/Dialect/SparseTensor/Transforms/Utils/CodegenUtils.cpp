@@ -7,12 +7,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodegenUtils.h"
+#include "SparseTensorDescriptor.h"
 
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Utils/Utils.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/IR/Matchers.h"
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Value.h"
 #include <optional>
@@ -153,7 +156,7 @@ Value sparse_tensor::genCast(OpBuilder &builder, Location loc, Value value,
 
   // int <=> index
   if (isa<IndexType>(srcTp) || isa<IndexType>(dstTp))
-    return arith::IndexCastOp::create(builder, loc, dstTp, value);
+    return builder.create<arith::IndexCastOp>(loc, dstTp, value);
 
   const auto srcIntTp = dyn_cast_or_null<IntegerType>(srcTp);
   const bool isUnsignedCast = srcIntTp ? srcIntTp.isUnsigned() : false;
@@ -166,19 +169,19 @@ Value sparse_tensor::genScalarToTensor(OpBuilder &builder, Location loc,
     // Scalars can only be converted to 0-ranked tensors.
     assert(rtp.getRank() == 0);
     elem = sparse_tensor::genCast(builder, loc, elem, rtp.getElementType());
-    return tensor::FromElementsOp::create(builder, loc, rtp, elem);
+    return builder.create<tensor::FromElementsOp>(loc, rtp, elem);
   }
   return sparse_tensor::genCast(builder, loc, elem, dstTp);
 }
 
 Value sparse_tensor::genIndexLoad(OpBuilder &builder, Location loc, Value mem,
                                   ValueRange s) {
-  Value load = memref::LoadOp::create(builder, loc, mem, s);
+  Value load = builder.create<memref::LoadOp>(loc, mem, s);
   if (!isa<IndexType>(load.getType())) {
     if (load.getType().getIntOrFloatBitWidth() < 64)
-      load = arith::ExtUIOp::create(builder, loc, builder.getI64Type(), load);
+      load = builder.create<arith::ExtUIOp>(loc, builder.getI64Type(), load);
     load =
-        arith::IndexCastOp::create(builder, loc, builder.getIndexType(), load);
+        builder.create<arith::IndexCastOp>(loc, builder.getIndexType(), load);
   }
   return load;
 }
@@ -203,13 +206,13 @@ Value mlir::sparse_tensor::genIsNonzero(OpBuilder &builder, mlir::Location loc,
   Type tp = v.getType();
   Value zero = constantZero(builder, loc, tp);
   if (isa<FloatType>(tp))
-    return arith::CmpFOp::create(builder, loc, arith::CmpFPredicate::UNE, v,
-                                 zero);
+    return builder.create<arith::CmpFOp>(loc, arith::CmpFPredicate::UNE, v,
+                                         zero);
   if (tp.isIntOrIndex())
-    return arith::CmpIOp::create(builder, loc, arith::CmpIPredicate::ne, v,
-                                 zero);
+    return builder.create<arith::CmpIOp>(loc, arith::CmpIPredicate::ne, v,
+                                         zero);
   if (isa<ComplexType>(tp))
-    return complex::NotEqualOp::create(builder, loc, v, zero);
+    return builder.create<complex::NotEqualOp>(loc, v, zero);
   llvm_unreachable("Non-numeric type");
 }
 
@@ -223,7 +226,7 @@ void mlir::sparse_tensor::genReshapeDstShape(
     for (const auto &map : llvm::enumerate(reassociation)) {
       auto dstDim = constantIndex(builder, loc, 1);
       for (unsigned i = start; i < start + map.value().size(); i++) {
-        dstDim = arith::MulIOp::create(builder, loc, dstDim, srcShape[i]);
+        dstDim = builder.create<arith::MulIOp>(loc, dstDim, srcShape[i]);
       }
       dstShape.push_back(dstDim);
       start = start + map.value().size();
@@ -257,7 +260,7 @@ void mlir::sparse_tensor::genReshapeDstShape(
         // Compute the dynamic dimension size.
         Value productVal = constantIndex(builder, loc, product);
         Value dynamicSize =
-            arith::DivUIOp::create(builder, loc, srcDim, productVal);
+            builder.create<arith::DivUIOp>(loc, srcDim, productVal);
         dstShape.push_back(dynamicSize);
       } else {
         // The expanded dimension is statically known.
@@ -286,7 +289,7 @@ void mlir::sparse_tensor::reshapeCvs(
     // Prepare strides information in dimension slice.
     Value linear = constantIndex(builder, loc, 1);
     for (unsigned j = start, end = start + map.value().size(); j < end; j++) {
-      linear = arith::MulIOp::create(builder, loc, linear, sizes[j]);
+      linear = builder.create<arith::MulIOp>(loc, linear, sizes[j]);
     }
     // Start expansion.
     Value val;
@@ -294,17 +297,16 @@ void mlir::sparse_tensor::reshapeCvs(
       val = srcCvs[i];
     // Iterate over dimension slice.
     for (unsigned j = start, end = start + map.value().size(); j < end; j++) {
-      linear = arith::DivUIOp::create(builder, loc, linear, sizes[j]);
+      linear = builder.create<arith::DivUIOp>(loc, linear, sizes[j]);
       if (isCollapse) {
-        const Value mul =
-            arith::MulIOp::create(builder, loc, srcCvs[j], linear);
-        val = val ? arith::AddIOp::create(builder, loc, val, mul) : mul;
+        const Value mul = builder.create<arith::MulIOp>(loc, srcCvs[j], linear);
+        val = val ? builder.create<arith::AddIOp>(loc, val, mul) : mul;
       } else {
         const Value old = val;
-        val = arith::DivUIOp::create(builder, loc, val, linear);
+        val = builder.create<arith::DivUIOp>(loc, val, linear);
         assert(dstCvs.size() == j);
         dstCvs.push_back(val);
-        val = arith::RemUIOp::create(builder, loc, old, linear);
+        val = builder.create<arith::RemUIOp>(loc, old, linear);
       }
     }
     // Finalize collapse.
@@ -327,8 +329,8 @@ FlatSymbolRefAttr mlir::sparse_tensor::getFunc(ModuleOp module, StringRef name,
   auto func = module.lookupSymbol<func::FuncOp>(result.getAttr());
   if (!func) {
     OpBuilder moduleBuilder(module.getBodyRegion());
-    func = func::FuncOp::create(
-        moduleBuilder, module.getLoc(), name,
+    func = moduleBuilder.create<func::FuncOp>(
+        module.getLoc(), name,
         FunctionType::get(context, operands.getTypes(), resultType));
     func.setPrivate();
     if (static_cast<bool>(emitCInterface))
@@ -344,7 +346,7 @@ func::CallOp mlir::sparse_tensor::createFuncCall(
   auto module = builder.getBlock()->getParentOp()->getParentOfType<ModuleOp>();
   FlatSymbolRefAttr fn =
       getFunc(module, name, resultType, operands, emitCInterface);
-  return func::CallOp::create(builder, loc, resultType, fn, operands);
+  return builder.create<func::CallOp>(loc, resultType, fn, operands);
 }
 
 Type mlir::sparse_tensor::getOpaquePointerType(MLIRContext *ctx) {
@@ -359,7 +361,7 @@ Value mlir::sparse_tensor::genAlloca(OpBuilder &builder, Location loc,
                                      unsigned sz, Type tp, bool staticShape) {
   if (staticShape) {
     auto memTp = MemRefType::get({sz}, tp);
-    return memref::AllocaOp::create(builder, loc, memTp);
+    return builder.create<memref::AllocaOp>(loc, memTp);
   }
   return genAlloca(builder, loc, constantIndex(builder, loc, sz), tp);
 }
@@ -367,12 +369,12 @@ Value mlir::sparse_tensor::genAlloca(OpBuilder &builder, Location loc,
 Value mlir::sparse_tensor::genAlloca(OpBuilder &builder, Location loc, Value sz,
                                      Type tp) {
   auto memTp = MemRefType::get({ShapedType::kDynamic}, tp);
-  return memref::AllocaOp::create(builder, loc, memTp, ValueRange{sz});
+  return builder.create<memref::AllocaOp>(loc, memTp, ValueRange{sz});
 }
 
 Value mlir::sparse_tensor::genAllocaScalar(OpBuilder &builder, Location loc,
                                            Type tp) {
-  return memref::AllocaOp::create(builder, loc, MemRefType::get({}, tp));
+  return builder.create<memref::AllocaOp>(loc, MemRefType::get({}, tp));
 }
 
 Value mlir::sparse_tensor::allocaBuffer(OpBuilder &builder, Location loc,
@@ -382,7 +384,7 @@ Value mlir::sparse_tensor::allocaBuffer(OpBuilder &builder, Location loc,
   Value buffer = genAlloca(builder, loc, sz, values[0].getType());
   for (unsigned i = 0; i < sz; i++) {
     Value idx = constantIndex(builder, loc, i);
-    memref::StoreOp::create(builder, loc, values[i], buffer, idx);
+    builder.create<memref::StoreOp>(loc, values[i], buffer, idx);
   }
   return buffer;
 }
@@ -398,15 +400,15 @@ Value mlir::sparse_tensor::allocDenseTensor(OpBuilder &builder, Location loc,
     if (shape[i] == ShapedType::kDynamic)
       dynamicSizes.push_back(sizes[i]);
   }
-  Value mem = memref::AllocOp::create(builder, loc, memTp, dynamicSizes);
+  Value mem = builder.create<memref::AllocOp>(loc, memTp, dynamicSizes);
   Value zero = constantZero(builder, loc, elemTp);
-  linalg::FillOp::create(builder, loc, ValueRange{zero}, ValueRange{mem});
+  builder.create<linalg::FillOp>(loc, ValueRange{zero}, ValueRange{mem});
   return mem;
 }
 
 void mlir::sparse_tensor::deallocDenseTensor(OpBuilder &builder, Location loc,
                                              Value buffer) {
-  memref::DeallocOp::create(builder, loc, buffer);
+  builder.create<memref::DeallocOp>(loc, buffer);
 }
 
 void mlir::sparse_tensor::sizesFromSrc(OpBuilder &builder,
@@ -484,17 +486,17 @@ void sparse_tensor::foreachInSparseConstant(
     cvs.clear();
     for (Dimension d = 0; d < dimRank; d++) {
       auto crd = elems[i].first[d].getInt();
-      cvs.push_back(arith::ConstantIndexOp::create(builder, loc, crd));
+      cvs.push_back(builder.create<arith::ConstantIndexOp>(loc, crd));
     }
     // Remap value.
     Value val;
     if (isa<ComplexType>(attr.getElementType())) {
       auto valAttr = cast<ArrayAttr>(elems[i].second);
-      val = complex::ConstantOp::create(builder, loc, attr.getElementType(),
-                                        valAttr);
+      val = builder.create<complex::ConstantOp>(loc, attr.getElementType(),
+                                                valAttr);
     } else {
       auto valAttr = cast<TypedAttr>(elems[i].second);
-      val = arith::ConstantOp::create(builder, loc, valAttr);
+      val = builder.create<arith::ConstantOp>(loc, valAttr);
     }
     assert(val);
     callback(cvs, val);
@@ -514,10 +516,10 @@ SmallVector<Value> sparse_tensor::loadAll(OpBuilder &builder, Location loc,
   SmallVector<Value> vs;
   vs.reserve(size);
   for (unsigned i = 0; i < size; i++) {
-    Value v = memref::LoadOp::create(builder, loc, mem,
-                                     constantIndex(builder, loc, i));
+    Value v = builder.create<memref::LoadOp>(loc, mem,
+                                             constantIndex(builder, loc, i));
     if (i == offsetIdx && offsetVal)
-      v = arith::AddIOp::create(builder, loc, v, offsetVal);
+      v = builder.create<arith::AddIOp>(loc, v, offsetVal);
     vs.push_back(v);
   }
   return vs;
@@ -536,10 +538,10 @@ void sparse_tensor::storeAll(OpBuilder &builder, Location loc, Value mem,
   for (const auto &v : llvm::enumerate(vs)) {
     const Value w =
         (offsetIdx == v.index() && offsetVal)
-            ? arith::AddIOp::create(builder, loc, v.value(), offsetVal)
+            ? builder.create<arith::AddIOp>(loc, v.value(), offsetVal)
             : v.value();
-    memref::StoreOp::create(builder, loc, w, mem,
-                            constantIndex(builder, loc, v.index()));
+    builder.create<memref::StoreOp>(loc, w, mem,
+                                    constantIndex(builder, loc, v.index()));
   }
 }
 
@@ -547,8 +549,8 @@ TypedValue<BaseMemRefType>
 sparse_tensor::genToMemref(OpBuilder &builder, Location loc, Value tensor) {
   auto tTp = llvm::cast<TensorType>(tensor.getType());
   auto mTp = MemRefType::get(tTp.getShape(), tTp.getElementType());
-  return cast<TypedValue<BaseMemRefType>>(
-      bufferization::ToBufferOp::create(builder, loc, mTp, tensor).getResult());
+  return builder.create<bufferization::ToBufferOp>(loc, mTp, tensor)
+      .getResult();
 }
 
 Value sparse_tensor::createOrFoldSliceOffsetOp(OpBuilder &builder, Location loc,
@@ -558,7 +560,7 @@ Value sparse_tensor::createOrFoldSliceOffsetOp(OpBuilder &builder, Location loc,
   std::optional<unsigned> offset = enc.getStaticDimSliceOffset(dim);
   if (offset.has_value())
     return constantIndex(builder, loc, *offset);
-  return ToSliceOffsetOp::create(builder, loc, tensor, APInt(64, dim));
+  return builder.create<ToSliceOffsetOp>(loc, tensor, APInt(64, dim));
 }
 
 Value sparse_tensor::createOrFoldSliceStrideOp(OpBuilder &builder, Location loc,
@@ -568,7 +570,7 @@ Value sparse_tensor::createOrFoldSliceStrideOp(OpBuilder &builder, Location loc,
   std::optional<unsigned> stride = enc.getStaticDimSliceStride(dim);
   if (stride.has_value())
     return constantIndex(builder, loc, *stride);
-  return ToSliceStrideOp::create(builder, loc, tensor, APInt(64, dim));
+  return builder.create<ToSliceStrideOp>(loc, tensor, APInt(64, dim));
 }
 
 Value sparse_tensor::genReader(OpBuilder &builder, Location loc,
@@ -610,8 +612,8 @@ Value sparse_tensor::genReader(OpBuilder &builder, Location loc,
     // subsequent clients need the values (DCE will remove unused).
     for (Dimension d = 0; d < dimRank; d++) {
       if (stt.isDynamicDim(d))
-        dimSizesValues[d] = memref::LoadOp::create(
-            builder, loc, dimSizesBuffer, constantIndex(builder, loc, d));
+        dimSizesValues[d] = builder.create<memref::LoadOp>(
+            loc, dimSizesBuffer, constantIndex(builder, loc, d));
     }
   }
   return reader;
@@ -687,8 +689,8 @@ Value sparse_tensor::genMapBuffers(
     if (cm == 0) {
       lvlSz = dimSizesValues[d];
       if (cf != 0)
-        lvlSz = arith::DivUIOp::create(builder, loc, lvlSz,
-                                       constantIndex(builder, loc, cf));
+        lvlSz = builder.create<arith::DivUIOp>(loc, lvlSz,
+                                               constantIndex(builder, loc, cf));
     } else {
       lvlSz = constantIndex(builder, loc, cm);
     }

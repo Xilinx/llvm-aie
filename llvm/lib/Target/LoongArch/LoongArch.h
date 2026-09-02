@@ -35,8 +35,7 @@ bool lowerLoongArchMachineOperandToMCOperand(const MachineOperand &MO,
 
 FunctionPass *createLoongArchDeadRegisterDefinitionsPass();
 FunctionPass *createLoongArchExpandAtomicPseudoPass();
-FunctionPass *createLoongArchISelDag(LoongArchTargetMachine &TM,
-                                     CodeGenOptLevel OptLevel);
+FunctionPass *createLoongArchISelDag(LoongArchTargetMachine &TM);
 FunctionPass *createLoongArchMergeBaseOffsetOptPass();
 FunctionPass *createLoongArchOptWInstrsPass();
 FunctionPass *createLoongArchPreRAExpandPseudoPass();

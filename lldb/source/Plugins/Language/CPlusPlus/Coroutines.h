@@ -43,7 +43,9 @@ public:
   llvm::Expected<size_t> GetIndexOfChildWithName(ConstString name) override;
 
 private:
-  std::vector<lldb::ValueObjectSP> m_children;
+  lldb::ValueObjectSP m_resume_ptr_sp;
+  lldb::ValueObjectSP m_destroy_ptr_sp;
+  lldb::ValueObjectSP m_promise_ptr_sp;
 };
 
 SyntheticChildrenFrontEnd *

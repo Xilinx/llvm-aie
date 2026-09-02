@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include <vector>
 
 //===----------------------------------------------------------------------===//
@@ -107,7 +106,7 @@ enum PassDebuggingString {
 
 /// PassManagerPrettyStackEntry - This is used to print informative information
 /// about what pass is running when/if a stack trace is generated.
-class LLVM_ABI PassManagerPrettyStackEntry : public PrettyStackTraceEntry {
+class PassManagerPrettyStackEntry : public PrettyStackTraceEntry {
   Pass *P;
   Value *V;
   Module *M;
@@ -140,12 +139,12 @@ public:
   iterator begin() const { return S.rbegin(); }
   iterator end() const { return S.rend(); }
 
-  LLVM_ABI void pop();
+  void pop();
   PMDataManager *top() const { return S.back(); }
-  LLVM_ABI void push(PMDataManager *PM);
+  void push(PMDataManager *PM);
   bool empty() const { return S.empty(); }
 
-  LLVM_ABI void dump() const;
+  void dump() const;
 
 private:
   std::vector<PMDataManager *> S;
@@ -156,7 +155,7 @@ private:
 //
 /// PMTopLevelManager manages LastUser info and collects common APIs used by
 /// top level pass managers.
-class LLVM_ABI PMTopLevelManager {
+class PMTopLevelManager {
 protected:
   explicit PMTopLevelManager(PMDataManager *PMDM);
 
@@ -293,7 +292,7 @@ private:
 
 /// PMDataManager provides the common place to manage the analysis data
 /// used by pass managers.
-class LLVM_ABI PMDataManager {
+class PMDataManager {
 public:
   explicit PMDataManager() { initializeAnalysisInfo(); }
 
@@ -333,7 +332,8 @@ public:
   /// Initialize available analysis information.
   void initializeAnalysisInfo() {
     AvailableAnalysis.clear();
-    llvm::fill(InheritedAnalysis, nullptr);
+    for (auto &IA : InheritedAnalysis)
+      IA = nullptr;
   }
 
   // Return true if P preserves high level analysis used by other
@@ -454,7 +454,7 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class LLVM_ABI FPPassManager : public ModulePass, public PMDataManager {
+class FPPassManager : public ModulePass, public PMDataManager {
 public:
   static char ID;
   explicit FPPassManager() : ModulePass(ID) {}
@@ -508,6 +508,7 @@ public:
     return PMT_FunctionPassManager;
   }
 };
+
 }
 
 #endif

@@ -75,12 +75,12 @@ struct WasmEHFuncInfo;
 struct WinEHFuncInfo;
 
 template <> struct ilist_alloc_traits<MachineBasicBlock> {
-  LLVM_ABI void deleteNode(MachineBasicBlock *MBB);
+  void deleteNode(MachineBasicBlock *MBB);
 };
 
 template <> struct ilist_callback_traits<MachineBasicBlock> {
-  LLVM_ABI void addNodeToList(MachineBasicBlock *N);
-  LLVM_ABI void removeNodeFromList(MachineBasicBlock *N);
+  void addNodeToList(MachineBasicBlock* N);
+  void removeNodeFromList(MachineBasicBlock* N);
 
   template <class Iterator>
   void transferNodesFromList(ilist_callback_traits &OldList, Iterator, Iterator) {
@@ -101,7 +101,7 @@ enum class MachineFunctionDataHotness {
 /// hold private target-specific information for each MachineFunction.  Objects
 /// of type are accessed/created with MF::getInfo and destroyed when the
 /// MachineFunction is destroyed.
-struct LLVM_ABI MachineFunctionInfo {
+struct MachineFunctionInfo {
   virtual ~MachineFunctionInfo();
 
   /// Factory function: default behavior is to call new using the
@@ -256,7 +256,7 @@ public:
   }
 
   /// Print the MachineFunctionProperties in human-readable form.
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
 private:
   std::bitset<static_cast<unsigned>(Property::LastProperty) + 1> Properties;
@@ -485,7 +485,7 @@ public:
     }
   };
 
-  class LLVM_ABI Delegate {
+  class Delegate {
     virtual void anchor();
 
   public:
@@ -515,8 +515,6 @@ public:
   struct CallSiteInfo {
     /// Vector of call argument and its forwarding register.
     SmallVector<ArgRegPair, 1> ArgRegPairs;
-    /// Callee type ids.
-    SmallVector<ConstantInt *, 4> CalleeTypeIds;
   };
 
   struct CalledGlobalInfo {
@@ -1565,8 +1563,8 @@ template <> struct GraphTraits<Inverse<const MachineFunction*>> :
   }
 };
 
-LLVM_ABI void verifyMachineFunction(const std::string &Banner,
-                                    const MachineFunction &MF);
+void verifyMachineFunction(const std::string &Banner,
+                           const MachineFunction &MF);
 
 } // end namespace llvm
 

@@ -16,7 +16,6 @@ static_library("Host") {
   ]
   public_deps = [ "//llvm/utils/gn/build/libs/xml" ]
   sources = [
-    "aix/Support.cpp",
     "common/File.cpp",
     "common/FileAction.cpp",
     "common/FileCache.cpp",
@@ -27,7 +26,6 @@ static_library("Host") {
     "common/HostNativeThreadBase.cpp",
     "common/HostProcess.cpp",
     "common/HostThread.cpp",
-    "common/JSONTransport.cpp",
     "common/LZMA.cpp",
     "common/LockFileBase.cpp",
     "common/MainLoopBase.cpp",

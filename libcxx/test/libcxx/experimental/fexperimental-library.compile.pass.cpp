@@ -29,7 +29,3 @@
 #if !_LIBCPP_HAS_EXPERIMENTAL_SYNCSTREAM
 #  error "-fexperimental-library should enable the syncstream header"
 #endif
-
-#if !_LIBCPP_HAS_EXPERIMENTAL_HARDENING_OBSERVE_SEMANTIC
-#  error "-fexperimental-library should allow using the Hardening observe semantic"
-#endif

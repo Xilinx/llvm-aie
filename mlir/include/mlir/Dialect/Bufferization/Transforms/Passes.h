@@ -120,10 +120,8 @@ func::FuncOp buildDeallocationLibraryFunction(OpBuilder &builder, Location loc,
                                               SymbolTable &symbolTable);
 
 /// Run the ownership-based buffer deallocation.
-LogicalResult
-deallocateBuffersOwnershipBased(FunctionOpInterface op,
-                                DeallocationOptions options,
-                                SymbolTableCollection &symbolTables);
+LogicalResult deallocateBuffersOwnershipBased(FunctionOpInterface op,
+                                              DeallocationOptions options);
 
 // Options struct for BufferResultsToOutParams pass.
 // Note: defined only here, not in tablegen.
@@ -148,14 +146,14 @@ struct BufferResultsToOutParamsOpts {
   /// Default memref.alloc is used
   AllocationFn allocationFn = [](OpBuilder &builder, Location loc,
                                  MemRefType type) {
-    return memref::AllocOp::create(builder, loc, type).getResult();
+    return builder.create<memref::AllocOp>(loc, type).getResult();
   };
 
   /// Memcpy function; used to create a copy between two memrefs.
   /// Default memref.copy is used.
   MemCpyFn memCpyFn = [](OpBuilder &builder, Location loc, Value from,
                          Value to) {
-    memref::CopyOp::create(builder, loc, from, to);
+    builder.create<memref::CopyOp>(loc, from, to);
     return success();
   };
 

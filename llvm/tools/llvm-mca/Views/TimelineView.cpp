@@ -28,14 +28,14 @@ TimelineView::TimelineView(const MCSubtargetInfo &sti, MCInstPrinter &Printer,
   NumInstructions *= Iterations;
   Timeline.resize(NumInstructions);
   TimelineViewEntry InvalidTVEntry = {-1, 0, 0, 0, 0};
-  llvm::fill(Timeline, InvalidTVEntry);
+  std::fill(Timeline.begin(), Timeline.end(), InvalidTVEntry);
 
   WaitTimeEntry NullWTEntry = {0, 0, 0};
-  llvm::fill(WaitTime, NullWTEntry);
+  std::fill(WaitTime.begin(), WaitTime.end(), NullWTEntry);
 
   std::pair<unsigned, int> NullUsedBufferEntry = {/* Invalid resource ID*/ 0,
                                                   /* unknown buffer size */ -1};
-  llvm::fill(UsedBuffer, NullUsedBufferEntry);
+  std::fill(UsedBuffer.begin(), UsedBuffer.end(), NullUsedBufferEntry);
 }
 
 void TimelineView::onReservedBuffers(const InstRef &IR,

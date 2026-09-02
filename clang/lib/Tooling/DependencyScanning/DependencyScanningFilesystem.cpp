@@ -8,6 +8,7 @@
 
 #include "clang/Tooling/DependencyScanning/DependencyScanningFilesystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SmallVectorMemoryBuffer.h"
 #include "llvm/Support/Threading.h"
 #include <optional>
 
@@ -107,48 +108,31 @@ DependencyScanningFilesystemSharedCache::getShardForUID(
   return CacheShards[Hash % NumShards];
 }
 
-std::vector<DependencyScanningFilesystemSharedCache::OutOfDateEntry>
-DependencyScanningFilesystemSharedCache::getOutOfDateEntries(
+std::vector<StringRef>
+DependencyScanningFilesystemSharedCache::getInvalidNegativeStatCachedPaths(
     llvm::vfs::FileSystem &UnderlyingFS) const {
   // Iterate through all shards and look for cached stat errors.
-  std::vector<OutOfDateEntry> InvalidDiagInfo;
+  std::vector<StringRef> InvalidPaths;
   for (unsigned i = 0; i < NumShards; i++) {
     const CacheShard &Shard = CacheShards[i];
     std::lock_guard<std::mutex> LockGuard(Shard.CacheLock);
     for (const auto &[Path, CachedPair] : Shard.CacheByFilename) {
       const CachedFileSystemEntry *Entry = CachedPair.first;
-      llvm::ErrorOr<llvm::vfs::Status> Status = UnderlyingFS.status(Path);
-      if (Status) {
-        if (Entry->getError()) {
+
+      if (Entry->getError()) {
+        // Only examine cached errors.
+        llvm::ErrorOr<llvm::vfs::Status> Stat = UnderlyingFS.status(Path);
+        if (Stat) {
           // This is the case where we have cached the non-existence
-          // of the file at Path first, and a file at the path is created
+          // of the file at Path first, and a a file at the path is created
           // later. The cache entry is not invalidated (as we have no good
           // way to do it now), which may lead to missing file build errors.
-          InvalidDiagInfo.emplace_back(Path.data());
-        } else {
-          llvm::vfs::Status CachedStatus = Entry->getStatus();
-          if (Status->getType() == llvm::sys::fs::file_type::regular_file &&
-              Status->getType() == CachedStatus.getType()) {
-            // We only check regular files. Directory files sizes could change
-            // due to content changes, and reporting directory size changes can
-            // lead to false positives.
-            // TODO: At the moment, we do not detect symlinks to files whose
-            // size may change. We need to decide if we want to detect cached
-            // symlink size changes. We can also expand this to detect file
-            // type changes.
-            uint64_t CachedSize = CachedStatus.getSize();
-            uint64_t ActualSize = Status->getSize();
-            if (CachedSize != ActualSize) {
-              // This is the case where the cached file has a different size
-              // from the actual file that comes from the underlying FS.
-              InvalidDiagInfo.emplace_back(Path.data(), CachedSize, ActualSize);
-            }
-          }
+          InvalidPaths.push_back(Path);
         }
       }
     }
   }
-  return InvalidDiagInfo;
+  return InvalidPaths;
 }
 
 const CachedFileSystemEntry *
@@ -190,7 +174,7 @@ DependencyScanningFilesystemSharedCache::CacheShard::getOrEmplaceEntryForUID(
     llvm::sys::fs::UniqueID UID, llvm::vfs::Status Stat,
     std::unique_ptr<llvm::MemoryBuffer> Contents) {
   std::lock_guard<std::mutex> LockGuard(CacheLock);
-  auto [It, Inserted] = EntriesByUID.try_emplace(UID);
+  auto [It, Inserted] = EntriesByUID.insert({UID, nullptr});
   auto &CachedEntry = It->getSecond();
   if (Inserted) {
     CachedFileContents *StoredContents = nullptr;

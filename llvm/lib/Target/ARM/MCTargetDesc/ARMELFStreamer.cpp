@@ -14,7 +14,7 @@
 
 #include "ARMMCTargetDesc.h"
 #include "ARMUnwindOpAsm.h"
-#include "MCTargetDesc/ARMMCAsmInfo.h"
+#include "MCTargetDesc/ARMMCExpr.h"
 #include "Utils/ARMBaseInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
@@ -32,6 +32,7 @@
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCFragment.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCObjectFileInfo.h"
@@ -287,7 +288,7 @@ void ARMTargetAsmStreamer::emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) {
   OS << "\t.thumb_set\t";
   Symbol->print(OS, MAI);
   OS << ", ";
-  MAI->printExpr(OS, *Value);
+  Value->print(OS, MAI);
   OS << '\n';
 }
 
@@ -589,11 +590,11 @@ public:
   /// necessary.
   void emitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) override {
     if (const MCSymbolRefExpr *SRE = dyn_cast_or_null<MCSymbolRefExpr>(Value)) {
-      if (SRE->getSpecifier() == ARM::S_SBREL && !(Size == 4)) {
+      if (getSpecifier(SRE) == ARMMCExpr::VK_SBREL && !(Size == 4)) {
         getContext().reportError(Loc, "relocated expression must be 32-bit");
         return;
       }
-      getCurrentFragment();
+      getOrCreateDataFragment();
     }
 
     emitDataMappingSymbol();
@@ -638,7 +639,7 @@ private:
       Offset = 0;
     }
     bool hasInfo() { return F != nullptr; }
-    MCFragment *F = nullptr;
+    MCDataFragment *F = nullptr;
     uint64_t Offset = 0;
     ElfMappingSymbol State = EMS_None;
   };
@@ -650,11 +651,11 @@ private:
       // This is a tentative symbol, it won't really be emitted until it's
       // actually needed.
       ElfMappingSymbolInfo *EMS = LastEMSInfo.get();
-      auto *DF = getCurrentFragment();
-      if (DF->getKind() != MCFragment::FT_Data)
+      auto *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
+      if (!DF)
         return;
       EMS->F = DF;
-      EMS->Offset = DF->getFixedSize();
+      EMS->Offset = DF->getContents().size();
       LastEMSInfo->State = EMS_Data;
       return;
     }
@@ -686,7 +687,7 @@ private:
     Symbol->setBinding(ELF::STB_LOCAL);
   }
 
-  void emitMappingSymbol(StringRef Name, MCFragment &F, uint64_t Offset) {
+  void emitMappingSymbol(StringRef Name, MCDataFragment &F, uint64_t Offset) {
     auto *Symbol = cast<MCSymbolELF>(getContext().createLocalSymbol(Name));
     emitLabelAtPos(Symbol, SMLoc(), F, Offset);
     Symbol->setType(ELF::STT_NOTYPE);
@@ -707,6 +708,8 @@ private:
                          SectionKind Kind, const MCSymbol &Fn);
   void SwitchToExTabSection(const MCSymbol &FnStart);
   void SwitchToExIdxSection(const MCSymbol &FnStart);
+
+  void EmitFixup(const MCExpr *Expr, MCFixupKind Kind);
 
   bool IsThumb;
   bool IsAndroid;
@@ -1094,8 +1097,8 @@ void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
 }
 
 void ARMTargetELFStreamer::annotateTLSDescriptorSequence(
-    const MCSymbolRefExpr *Expr) {
-  getStreamer().addFixup(Expr, FK_Data_4);
+    const MCSymbolRefExpr *S) {
+  getStreamer().EmitFixup(S, FK_Data_4);
 }
 
 void ARMTargetELFStreamer::emitCode16() { getStreamer().setIsThumb(true); }
@@ -1138,14 +1141,14 @@ void ARMTargetELFStreamer::finish() {
   MCContext &Ctx = getContext();
   auto &Asm = getStreamer().getAssembler();
   if (any_of(Asm, [](const MCSection &Sec) {
-        return static_cast<const MCSectionELF &>(Sec).getFlags() &
-               ELF::SHF_ARM_PURECODE;
+        return cast<MCSectionELF>(Sec).getFlags() & ELF::SHF_ARM_PURECODE;
       })) {
     auto *Text =
         static_cast<MCSectionELF *>(Ctx.getObjectFileInfo()->getTextSection());
     for (auto &F : *Text)
-      if (F.getSize())
-        return;
+      if (auto *DF = dyn_cast<MCDataFragment>(&F))
+        if (!DF->getContents().empty())
+          return;
     Text->setFlags(Text->getFlags() | ELF::SHF_ARM_PURECODE);
   }
 }
@@ -1205,6 +1208,12 @@ inline void ARMELFStreamer::SwitchToExIdxSection(const MCSymbol &FnStart) {
                     SectionKind::getData(), FnStart);
 }
 
+void ARMELFStreamer::EmitFixup(const MCExpr *Expr, MCFixupKind Kind) {
+  MCDataFragment *Frag = getOrCreateDataFragment();
+  Frag->getFixups().push_back(MCFixup::create(Frag->getContents().size(), Expr,
+                                              Kind));
+}
+
 void ARMELFStreamer::EHReset() {
   ExTab = nullptr;
   FnStart = nullptr;
@@ -1246,7 +1255,7 @@ void ARMELFStreamer::emitFnEnd() {
     EmitPersonalityFixup(GetAEABIUnwindPersonalityName(PersonalityIndex));
 
   const MCSymbolRefExpr *FnStartRef =
-      MCSymbolRefExpr::create(FnStart, ARM::S_PREL31, getContext());
+      MCSymbolRefExpr::create(FnStart, ARMMCExpr::VK_PREL31, getContext());
 
   emitValue(FnStartRef, 4);
 
@@ -1255,7 +1264,7 @@ void ARMELFStreamer::emitFnEnd() {
   } else if (ExTab) {
     // Emit a reference to the unwind opcodes in the ".ARM.extab" section.
     const MCSymbolRefExpr *ExTabEntryRef =
-        MCSymbolRefExpr::create(ExTab, ARM::S_PREL31, getContext());
+        MCSymbolRefExpr::create(ExTab, ARMMCExpr::VK_PREL31, getContext());
     emitValue(ExTabEntryRef, 4);
   } else {
     // For the __aeabi_unwind_cpp_pr0, we have to emit the unwind opcodes in
@@ -1284,11 +1293,14 @@ void ARMELFStreamer::emitCantUnwind() { CantUnwind = true; }
 // Add the R_ARM_NONE fixup at the same position
 void ARMELFStreamer::EmitPersonalityFixup(StringRef Name) {
   const MCSymbol *PersonalitySym = getContext().getOrCreateSymbol(Name);
-  visitUsedSymbol(*PersonalitySym);
 
-  const MCSymbolRefExpr *PersonalityRef =
-      MCSymbolRefExpr::create(PersonalitySym, ARM::S_ARM_NONE, getContext());
-  addFixup(PersonalityRef, FK_Data_4);
+  const MCSymbolRefExpr *PersonalityRef = MCSymbolRefExpr::create(
+      PersonalitySym, ARMMCExpr::VK_ARM_NONE, getContext());
+
+  visitUsedExpr(*PersonalityRef);
+  MCDataFragment *DF = getOrCreateDataFragment();
+  DF->getFixups().push_back(
+      MCFixup::create(DF->getContents().size(), PersonalityRef, FK_Data_4));
 }
 
 void ARMELFStreamer::FlushPendingOffset() {
@@ -1329,7 +1341,7 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
   // Emit personality
   if (Personality) {
     const MCSymbolRefExpr *PersonalityRef = MCSymbolRefExpr::create(
-        Personality, uint16_t(ARM::S_PREL31), getContext());
+        Personality, uint16_t(ARMMCExpr::VK_PREL31), getContext());
 
     emitValue(PersonalityRef, 4);
   }

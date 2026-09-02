@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstdint>
 #include <memory>
@@ -87,7 +86,7 @@ class RemarkStreamer;
 }
 
 /// This class is intended to be used as a driving class for all asm writers.
-class LLVM_ABI AsmPrinter : public MachineFunctionPass {
+class AsmPrinter : public MachineFunctionPass {
 public:
   /// Target machine description.
   TargetMachine &TM;
@@ -134,13 +133,6 @@ public:
   /// purpose of calculating its size (e.g. using the .size directive). By
   /// default, this is equal to CurrentFnSym.
   MCSymbol *CurrentFnSymForSize = nullptr;
-
-  /// Vector of symbols marking the position of callsites in the current
-  /// function, keyed by their containing basic block.
-  /// The callsite symbols of each block are stored in the order they appear
-  /// in that block.
-  DenseMap<const MachineBasicBlock *, SmallVector<MCSymbol *, 1>>
-      CurrentFnCallsiteSymbols;
 
   /// Provides the profile information for constants.
   const StaticDataProfileInfo *SDPI = nullptr;
@@ -302,10 +294,6 @@ public:
   /// to emit them as well, return the whole set.
   ArrayRef<MCSymbol *> getAddrLabelSymbolToEmit(const BasicBlock *BB);
 
-  /// Creates a new symbol to be used for the beginning of a callsite at the
-  /// specified basic block.
-  MCSymbol *createCallsiteSymbol(const MachineBasicBlock &MBB);
-
   /// If the specified function has had any references to address-taken blocks
   /// generated, but the block got deleted, return the symbol now so we can
   /// emit it.  This prevents emitting a reference to a symbol that has no
@@ -381,7 +369,7 @@ public:
     const class Function *Fn;
     uint8_t Version;
 
-    LLVM_ABI void emit(int, MCStreamer *) const;
+    void emit(int, MCStreamer *) const;
   };
 
   // All the sleds to be emitted.

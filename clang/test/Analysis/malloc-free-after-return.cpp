@@ -12,10 +12,10 @@ private:
 };
 
 int *freeAfterReturnTemp() {
-  return S().getData(); // expected-warning {{Use of memory after it is released}}
+  return S().getData(); // expected-warning {{Use of memory after it is freed}}
 }
 
 int *freeAfterReturnLocal() {
   S X;
-  return X.getData(); // expected-warning {{Use of memory after it is released}}
+  return X.getData(); // expected-warning {{Use of memory after it is freed}}
 }

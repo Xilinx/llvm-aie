@@ -15,7 +15,6 @@
 #include "llvm/DebugInfo/PDB/Native/NamedStreamMap.h"
 #include "llvm/DebugInfo/PDB/Native/PDBStringTableBuilder.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <memory>
@@ -39,29 +38,28 @@ class TpiStreamBuilder;
 
 class PDBFileBuilder {
 public:
-  LLVM_ABI explicit PDBFileBuilder(BumpPtrAllocator &Allocator);
-  LLVM_ABI ~PDBFileBuilder();
+  explicit PDBFileBuilder(BumpPtrAllocator &Allocator);
+  ~PDBFileBuilder();
   PDBFileBuilder(const PDBFileBuilder &) = delete;
   PDBFileBuilder &operator=(const PDBFileBuilder &) = delete;
 
-  LLVM_ABI Error initialize(uint32_t BlockSize);
+  Error initialize(uint32_t BlockSize);
 
-  LLVM_ABI msf::MSFBuilder &getMsfBuilder();
-  LLVM_ABI InfoStreamBuilder &getInfoBuilder();
-  LLVM_ABI DbiStreamBuilder &getDbiBuilder();
-  LLVM_ABI TpiStreamBuilder &getTpiBuilder();
-  LLVM_ABI TpiStreamBuilder &getIpiBuilder();
-  LLVM_ABI PDBStringTableBuilder &getStringTableBuilder();
-  LLVM_ABI GSIStreamBuilder &getGsiBuilder();
+  msf::MSFBuilder &getMsfBuilder();
+  InfoStreamBuilder &getInfoBuilder();
+  DbiStreamBuilder &getDbiBuilder();
+  TpiStreamBuilder &getTpiBuilder();
+  TpiStreamBuilder &getIpiBuilder();
+  PDBStringTableBuilder &getStringTableBuilder();
+  GSIStreamBuilder &getGsiBuilder();
 
   // If HashPDBContentsToGUID is true on the InfoStreamBuilder, Guid is filled
   // with the computed PDB GUID on return.
-  LLVM_ABI Error commit(StringRef Filename, codeview::GUID *Guid);
+  Error commit(StringRef Filename, codeview::GUID *Guid);
 
-  LLVM_ABI Expected<uint32_t> getNamedStreamIndex(StringRef Name) const;
-  LLVM_ABI Error addNamedStream(StringRef Name, StringRef Data);
-  LLVM_ABI void addInjectedSource(StringRef Name,
-                                  std::unique_ptr<MemoryBuffer> Buffer);
+  Expected<uint32_t> getNamedStreamIndex(StringRef Name) const;
+  Error addNamedStream(StringRef Name, StringRef Data);
+  void addInjectedSource(StringRef Name, std::unique_ptr<MemoryBuffer> Buffer);
 
 private:
   struct InjectedSourceDescriptor {

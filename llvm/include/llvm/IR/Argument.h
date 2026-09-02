@@ -16,7 +16,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Value.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -38,8 +37,8 @@ class Argument final : public Value {
 
 public:
   /// Argument constructor.
-  LLVM_ABI explicit Argument(Type *Ty, const Twine &Name = "",
-                             Function *F = nullptr, unsigned ArgNo = 0);
+  explicit Argument(Type *Ty, const Twine &Name = "", Function *F = nullptr,
+                    unsigned ArgNo = 0);
 
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
@@ -57,136 +56,133 @@ public:
   /// addrspace(0).
   /// If AllowUndefOrPoison is true, respect the semantics of nonnull attribute
   /// and return true even if the argument can be undef or poison.
-  LLVM_ABI bool hasNonNullAttr(bool AllowUndefOrPoison = true) const;
+  bool hasNonNullAttr(bool AllowUndefOrPoison = true) const;
 
   /// If this argument has the dereferenceable attribute, return the number of
   /// bytes known to be dereferenceable. Otherwise, zero is returned.
-  LLVM_ABI uint64_t getDereferenceableBytes() const;
+  uint64_t getDereferenceableBytes() const;
 
   /// If this argument has the dereferenceable_or_null attribute, return the
   /// number of bytes known to be dereferenceable. Otherwise, zero is returned.
-  LLVM_ABI uint64_t getDereferenceableOrNullBytes() const;
+  uint64_t getDereferenceableOrNullBytes() const;
 
   /// If this argument has nofpclass attribute, return the mask representing
   /// disallowed floating-point values. Otherwise, fcNone is returned.
-  LLVM_ABI FPClassTest getNoFPClass() const;
+  FPClassTest getNoFPClass() const;
 
   /// If this argument has a range attribute, return the value range of the
   /// argument. Otherwise, std::nullopt is returned.
-  LLVM_ABI std::optional<ConstantRange> getRange() const;
+  std::optional<ConstantRange> getRange() const;
 
   /// Return true if this argument has the byval attribute.
-  LLVM_ABI bool hasByValAttr() const;
-
-  /// Return true if this argument has the dead_on_return attribute.
-  LLVM_ABI bool hasDeadOnReturnAttr() const;
+  bool hasByValAttr() const;
 
   /// Return true if this argument has the byref attribute.
-  LLVM_ABI bool hasByRefAttr() const;
+  bool hasByRefAttr() const;
 
   /// Return true if this argument has the swiftself attribute.
-  LLVM_ABI bool hasSwiftSelfAttr() const;
+  bool hasSwiftSelfAttr() const;
 
   /// Return true if this argument has the swifterror attribute.
-  LLVM_ABI bool hasSwiftErrorAttr() const;
+  bool hasSwiftErrorAttr() const;
 
   /// Return true if this argument has the byval, inalloca, or preallocated
   /// attribute. These attributes represent arguments being passed by value,
   /// with an associated copy between the caller and callee
-  LLVM_ABI bool hasPassPointeeByValueCopyAttr() const;
+  bool hasPassPointeeByValueCopyAttr() const;
 
   /// If this argument satisfies has hasPassPointeeByValueAttr, return the
   /// in-memory ABI size copied to the stack for the call. Otherwise, return 0.
-  LLVM_ABI uint64_t getPassPointeeByValueCopySize(const DataLayout &DL) const;
+  uint64_t getPassPointeeByValueCopySize(const DataLayout &DL) const;
 
   /// Return true if this argument has the byval, sret, inalloca, preallocated,
   /// or byref attribute. These attributes represent arguments being passed by
   /// value (which may or may not involve a stack copy)
-  LLVM_ABI bool hasPointeeInMemoryValueAttr() const;
+  bool hasPointeeInMemoryValueAttr() const;
 
   /// If hasPointeeInMemoryValueAttr returns true, the in-memory ABI type is
   /// returned. Otherwise, nullptr.
-  LLVM_ABI Type *getPointeeInMemoryValueType() const;
+  Type *getPointeeInMemoryValueType() const;
 
   /// If this is a byval or inalloca argument, return its alignment.
   /// FIXME: Remove this function once transition to Align is over.
   /// Use getParamAlign() instead.
-  LLVM_ABI LLVM_DEPRECATED("Use getParamAlign() instead",
-                           "getParamAlign") uint64_t getParamAlignment() const;
+  LLVM_DEPRECATED("Use getParamAlign() instead", "getParamAlign")
+  uint64_t getParamAlignment() const;
 
   /// If this is a byval or inalloca argument, return its alignment.
-  LLVM_ABI MaybeAlign getParamAlign() const;
+  MaybeAlign getParamAlign() const;
 
-  LLVM_ABI MaybeAlign getParamStackAlign() const;
+  MaybeAlign getParamStackAlign() const;
 
   /// If this is a byval argument, return its type.
-  LLVM_ABI Type *getParamByValType() const;
+  Type *getParamByValType() const;
 
   /// If this is an sret argument, return its type.
-  LLVM_ABI Type *getParamStructRetType() const;
+  Type *getParamStructRetType() const;
 
   /// If this is a byref argument, return its type.
-  LLVM_ABI Type *getParamByRefType() const;
+  Type *getParamByRefType() const;
 
   /// If this is an inalloca argument, return its type.
-  LLVM_ABI Type *getParamInAllocaType() const;
+  Type *getParamInAllocaType() const;
 
   /// Return true if this argument has the nest attribute.
-  LLVM_ABI bool hasNestAttr() const;
+  bool hasNestAttr() const;
 
   /// Return true if this argument has the noalias attribute.
-  LLVM_ABI bool hasNoAliasAttr() const;
+  bool hasNoAliasAttr() const;
 
   /// Return true if this argument has the nocapture attribute.
-  LLVM_ABI bool hasNoCaptureAttr() const;
+  bool hasNoCaptureAttr() const;
 
   /// Return true if this argument has the nofree attribute.
-  LLVM_ABI bool hasNoFreeAttr() const;
+  bool hasNoFreeAttr() const;
 
   /// Return true if this argument has the sret attribute.
-  LLVM_ABI bool hasStructRetAttr() const;
+  bool hasStructRetAttr() const;
 
   /// Return true if this argument has the inreg attribute.
-  LLVM_ABI bool hasInRegAttr() const;
+  bool hasInRegAttr() const;
 
   /// Return true if this argument has the returned attribute.
-  LLVM_ABI bool hasReturnedAttr() const;
+  bool hasReturnedAttr() const;
 
   /// Return true if this argument has the readonly or readnone attribute.
-  LLVM_ABI bool onlyReadsMemory() const;
+  bool onlyReadsMemory() const;
 
   /// Return true if this argument has the inalloca attribute.
-  LLVM_ABI bool hasInAllocaAttr() const;
+  bool hasInAllocaAttr() const;
 
   /// Return true if this argument has the preallocated attribute.
-  LLVM_ABI bool hasPreallocatedAttr() const;
+  bool hasPreallocatedAttr() const;
 
   /// Return true if this argument has the zext attribute.
-  LLVM_ABI bool hasZExtAttr() const;
+  bool hasZExtAttr() const;
 
   /// Return true if this argument has the sext attribute.
-  LLVM_ABI bool hasSExtAttr() const;
+  bool hasSExtAttr() const;
 
   /// Add attributes to an argument.
-  LLVM_ABI void addAttrs(AttrBuilder &B);
+  void addAttrs(AttrBuilder &B);
 
-  LLVM_ABI void addAttr(Attribute::AttrKind Kind);
+  void addAttr(Attribute::AttrKind Kind);
 
-  LLVM_ABI void addAttr(Attribute Attr);
+  void addAttr(Attribute Attr);
 
   /// Remove attributes from an argument.
-  LLVM_ABI void removeAttr(Attribute::AttrKind Kind);
+  void removeAttr(Attribute::AttrKind Kind);
 
-  LLVM_ABI void removeAttrs(const AttributeMask &AM);
+  void removeAttrs(const AttributeMask &AM);
 
   /// Check if an argument has a given attribute.
-  LLVM_ABI bool hasAttribute(Attribute::AttrKind Kind) const;
+  bool hasAttribute(Attribute::AttrKind Kind) const;
 
-  LLVM_ABI bool hasAttribute(StringRef Kind) const;
+  bool hasAttribute(StringRef Kind) const;
 
-  LLVM_ABI Attribute getAttribute(Attribute::AttrKind Kind) const;
+  Attribute getAttribute(Attribute::AttrKind Kind) const;
 
-  LLVM_ABI AttributeSet getAttributes() const;
+  AttributeSet getAttributes() const;
 
   /// Method for support type inquiry through isa, cast, and dyn_cast.
   static bool classof(const Value *V) {

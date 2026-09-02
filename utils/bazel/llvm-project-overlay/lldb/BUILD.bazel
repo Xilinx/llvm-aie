@@ -307,7 +307,6 @@ cc_library(
         "//llvm:BinaryFormat",
         "//llvm:Core",
         "//llvm:DebugInfoDWARF",
-        "//llvm:DebugInfoDWARFLowLevel",
         "//llvm:ExecutionEngine",
         "//llvm:Support",
     ],
@@ -455,7 +454,6 @@ cc_library(
         ":UtilityPrivateHeaders",
         "//llvm:DebugInfo",
         "//llvm:DebugInfoDWARF",
-        "//llvm:DebugInfoDWARFLowLevel",
         "//llvm:Support",
     ],
 )

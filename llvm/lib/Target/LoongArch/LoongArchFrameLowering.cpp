@@ -158,12 +158,7 @@ void LoongArchFrameLowering::processFunctionBeforeFrameFinalized(
   // estimateStackSize has been observed to under-estimate the final stack
   // size, so give ourselves wiggle-room by checking for stack size
   // representable an 11-bit signed field rather than 12-bits.
-  // For [x]vstelm.{b/h/w/d} memory instructions with 8 imm offset, 7-bit
-  // signed field is fine.
-  unsigned EstimateStackSize = MFI.estimateStackSize(MF);
-  if (!isInt<11>(EstimateStackSize) ||
-      (MF.getSubtarget<LoongArchSubtarget>().hasExtLSX() &&
-       !isInt<7>(EstimateStackSize)))
+  if (!isInt<11>(MFI.estimateStackSize(MF)))
     ScavSlotsNum = std::max(ScavSlotsNum, 1u);
 
   // For CFR spill.

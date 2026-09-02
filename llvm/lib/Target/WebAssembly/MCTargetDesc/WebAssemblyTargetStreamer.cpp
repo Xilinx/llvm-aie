@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/WebAssemblyTargetStreamer.h"
-#include "MCTargetDesc/WebAssemblyMCAsmInfo.h"
 #include "MCTargetDesc/WebAssemblyMCTypeUtilities.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionWasm.h"
@@ -113,9 +112,7 @@ void WebAssemblyTargetAsmStreamer::emitExportName(const MCSymbolWasm *Sym,
 }
 
 void WebAssemblyTargetAsmStreamer::emitIndIdx(const MCExpr *Value) {
-  OS << "\t.indidx\t";
-  getContext().getAsmInfo()->printExpr(OS, *Value);
-  OS << '\n';
+  OS << "\t.indidx  \t" << *Value << '\n';
 }
 
 void WebAssemblyTargetWasmStreamer::emitLocal(ArrayRef<wasm::ValType> Types) {

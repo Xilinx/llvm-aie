@@ -111,9 +111,7 @@ MemoryLocation MemoryLocation::getForDest(const AnyMemIntrinsic *MI) {
 
 std::optional<MemoryLocation>
 MemoryLocation::getForDest(const CallBase *CB, const TargetLibraryInfo &TLI) {
-  // Check that the only possible writes are to arguments.
-  MemoryEffects WriteME = CB->getMemoryEffects() & MemoryEffects::writeOnly();
-  if (!WriteME.onlyAccessesArgPointees())
+  if (!CB->onlyAccessesArgMemory())
     return std::nullopt;
 
   if (CB->hasOperandBundles())

@@ -9,7 +9,7 @@
 // <forward_list>
 
 // template <class InputIterator>
-//     forward_list(InputIterator first, InputIterator last); // constexpr since C++26
+//     forward_list(InputIterator first, InputIterator last);
 
 #include <forward_list>
 #include <cassert>
@@ -19,7 +19,7 @@
 #include "test_iterators.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef int T;
     typedef std::forward_list<T> C;
@@ -43,15 +43,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
       assert(*i == n);
     assert(n == std::end(t) - std::begin(t));
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

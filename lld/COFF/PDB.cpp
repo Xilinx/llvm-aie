@@ -1135,12 +1135,9 @@ static pdb::BulkPublic createPublic(COFFLinkerContext &ctx, Defined *def) {
   pub.setFlags(flags);
 
   OutputSection *os = ctx.getOutputSection(def->getChunk());
-  assert((os || !def->getChunk()->getSize()) &&
-         "all publics should be in final image");
-  if (os) {
-    pub.Offset = def->getRVA() - os->getRVA();
-    pub.Segment = os->sectionIndex;
-  }
+  assert(os && "all publics should be in final image");
+  pub.Offset = def->getRVA() - os->getRVA();
+  pub.Segment = os->sectionIndex;
   return pub;
 }
 

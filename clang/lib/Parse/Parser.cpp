@@ -1606,9 +1606,8 @@ ExprResult Parser::ParseAsmStringLiteral(bool ForAsmLabel) {
 
     EnterExpressionEvaluationContext ConstantEvaluated(
         Actions, Sema::ExpressionEvaluationContext::ConstantEvaluated);
-    AsmString = ParseParenExpression(
-        ExprType, /*StopIfCastExr=*/true, ParenExprKind::Unknown,
-        TypoCorrectionTypeBehavior::AllowBoth, CastTy, RParenLoc);
+    AsmString = ParseParenExpression(ExprType, true /*stopIfCastExpr*/, false,
+                                     CastTy, RParenLoc);
     if (!AsmString.isInvalid())
       AsmString = Actions.ActOnConstantExpression(AsmString);
 
@@ -1872,11 +1871,6 @@ Parser::TryAnnotateName(CorrectionCandidateCallback *CCC,
   if (SS.isNotEmpty())
     AnnotateScopeToken(SS, !WasScopeAnnotation);
   return AnnotatedNameKind::Unresolved;
-}
-
-SourceLocation Parser::getEndOfPreviousToken() const {
-  SourceLocation TokenEndLoc = PP.getLocForEndOfToken(PrevTokLocation);
-  return TokenEndLoc.isValid() ? TokenEndLoc : Tok.getLocation();
 }
 
 bool Parser::TryKeywordIdentFallback(bool DisableKeyword) {
@@ -2341,8 +2335,7 @@ void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
 
 Parser::DeclGroupPtrTy
 Parser::ParseModuleDecl(Sema::ModuleImportState &ImportState) {
-  Token Introducer = Tok;
-  SourceLocation StartLoc = Introducer.getLocation();
+  SourceLocation StartLoc = Tok.getLocation();
 
   Sema::ModuleDeclKind MDK = TryConsumeToken(tok::kw_export)
                                  ? Sema::ModuleDeclKind::Interface
@@ -2361,7 +2354,7 @@ Parser::ParseModuleDecl(Sema::ModuleImportState &ImportState) {
   // Parse a global-module-fragment, if present.
   if (getLangOpts().CPlusPlusModules && Tok.is(tok::semi)) {
     SourceLocation SemiLoc = ConsumeToken();
-    if (!Introducer.isFirstPPToken()) {
+    if (ImportState != Sema::ModuleImportState::FirstDecl) {
       Diag(StartLoc, diag::err_global_module_introducer_not_at_start)
         << SourceRange(StartLoc, SemiLoc);
       return nullptr;
@@ -2418,7 +2411,7 @@ Parser::ParseModuleDecl(Sema::ModuleImportState &ImportState) {
   ExpectAndConsumeSemi(diag::err_module_expected_semi);
 
   return Actions.ActOnModuleDecl(StartLoc, ModuleLoc, MDK, Path, Partition,
-                                 ImportState, Introducer.isFirstPPToken());
+                                 ImportState);
 }
 
 Decl *Parser::ParseModuleImport(SourceLocation AtLoc,
@@ -2519,7 +2512,6 @@ Decl *Parser::ParseModuleImport(SourceLocation AtLoc,
     break;
   }
   ExpectAndConsumeSemi(diag::err_module_expected_semi);
-  TryConsumeToken(tok::eod);
 
   if (SeenError)
     return nullptr;

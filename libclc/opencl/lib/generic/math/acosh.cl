@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/math/clc_acosh.h>
-#include <clc/opencl/math/acosh.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION acosh
 #define __CLC_BODY <clc/shared/unary_def.inc>

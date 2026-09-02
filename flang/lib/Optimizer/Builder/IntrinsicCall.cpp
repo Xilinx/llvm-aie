@@ -246,7 +246,6 @@ static constexpr IntrinsicHandler handlers[]{
     {"abs", &I::genAbs},
     {"achar", &I::genChar},
     {"acosd", &I::genAcosd},
-    {"acospi", &I::genAcospi},
     {"adjustl",
      &I::genAdjustRtCall<fir::runtime::genAdjustL>,
      {{{"string", asAddr}}},
@@ -279,7 +278,6 @@ static constexpr IntrinsicHandler handlers[]{
      {{{"mask", asValue}, {"pred", asValue}}},
      /*isElemental=*/false},
     {"asind", &I::genAsind},
-    {"asinpi", &I::genAsinpi},
     {"associated",
      &I::genAssociated,
      {{{"pointer", asInquired}, {"target", asInquired}}},
@@ -371,8 +369,7 @@ static constexpr IntrinsicHandler handlers[]{
      &I::genCFPointer,
      {{{"cptr", asValue},
        {"fptr", asInquired},
-       {"shape", asAddr, handleDynamicOptional},
-       {"lower", asAddr, handleDynamicOptional}}},
+       {"shape", asAddr, handleDynamicOptional}}},
      /*isElemental=*/false},
     {"c_f_procpointer",
      &I::genCFProcPointer,
@@ -388,18 +385,13 @@ static constexpr IntrinsicHandler handlers[]{
      &I::genChdir,
      {{{"name", asAddr}, {"status", asAddr, handleDynamicOptional}}},
      /*isElemental=*/false},
-    {"clock", &I::genNVVMTime<mlir::NVVM::ClockOp>, {}, /*isElemental=*/false},
-    {"clock64",
-     &I::genNVVMTime<mlir::NVVM::Clock64Op>,
-     {},
-     /*isElemental=*/false},
+    {"clock64", &I::genClock64, {}, /*isElemental=*/false},
     {"cmplx",
      &I::genCmplx,
      {{{"x", asValue}, {"y", asValue, handleDynamicOptional}}}},
     {"command_argument_count", &I::genCommandArgumentCount},
     {"conjg", &I::genConjg},
     {"cosd", &I::genCosd},
-    {"cospi", &I::genCospi},
     {"count",
      &I::genCount,
      {{{"mask", asAddr}, {"dim", asValue}, {"kind", asValue}}},
@@ -511,10 +503,6 @@ static constexpr IntrinsicHandler handlers[]{
     {"getgid", &I::genGetGID},
     {"getpid", &I::genGetPID},
     {"getuid", &I::genGetUID},
-    {"globaltimer",
-     &I::genNVVMTime<mlir::NVVM::GlobalTimerOp>,
-     {},
-     /*isElemental=*/false},
     {"hostnm",
      &I::genHostnm,
      {{{"c", asBox}, {"status", asAddr, handleDynamicOptional}}},
@@ -904,7 +892,6 @@ static constexpr IntrinsicHandler handlers[]{
      {{{"number", asValue}, {"handler", asAddr}, {"status", asAddr}}},
      /*isElemental=*/false},
     {"sind", &I::genSind},
-    {"sinpi", &I::genSinpi},
     {"size",
      &I::genSize,
      {{{"array", asBox},
@@ -945,10 +932,6 @@ static constexpr IntrinsicHandler handlers[]{
      {{{"count", asAddr}, {"count_rate", asAddr}, {"count_max", asAddr}}},
      /*isElemental=*/false},
     {"tand", &I::genTand},
-    {"tanpi", &I::genTanpi},
-    {"this_grid", &I::genThisGrid, {}, /*isElemental=*/false},
-    {"this_thread_block", &I::genThisThreadBlock, {}, /*isElemental=*/false},
-    {"this_warp", &I::genThisWarp, {}, /*isElemental=*/false},
     {"threadfence", &I::genThreadFence, {}, /*isElemental=*/false},
     {"threadfence_block", &I::genThreadFenceBlock, {}, /*isElemental=*/false},
     {"threadfence_system", &I::genThreadFenceSystem, {}, /*isElemental=*/false},
@@ -1115,7 +1098,7 @@ mlir::Value genLibCall(fir::FirOpBuilder &builder, mlir::Location loc,
     // was just created from user functions with the same name.
     funcOp->setAttr(fir::FIROpsDialect::getFirRuntimeAttrName(),
                     builder.getUnitAttr());
-    auto libCall = fir::CallOp::create(builder, loc, funcOp, args);
+    auto libCall = builder.create<fir::CallOp>(loc, funcOp, args);
     // TODO: ensure 'strictfp' setting on the call for "precise/strict"
     //       FP mode. Set appropriate Fast-Math Flags otherwise.
     // TODO: we should also mark as many libm function as possible
@@ -1129,7 +1112,7 @@ mlir::Value genLibCall(fir::FirOpBuilder &builder, mlir::Location loc,
   mlir::Type soughtFuncType = funcOp.getFunctionType();
 
   if (soughtFuncType == libFuncType) {
-    libCall = fir::CallOp::create(builder, loc, funcOp, args);
+    libCall = builder.create<fir::CallOp>(loc, funcOp, args);
   } else {
     // A function with the same name might have been declared
     // before (e.g. with an explicit interface and a binding label).
@@ -1143,13 +1126,13 @@ mlir::Value genLibCall(fir::FirOpBuilder &builder, mlir::Location loc,
                  llvm::Twine("' may lead to undefined behavior.")));
     mlir::SymbolRefAttr funcSymbolAttr = builder.getSymbolRefAttr(libFuncName);
     mlir::Value funcPointer =
-        fir::AddrOfOp::create(builder, loc, soughtFuncType, funcSymbolAttr);
+        builder.create<fir::AddrOfOp>(loc, soughtFuncType, funcSymbolAttr);
     funcPointer = builder.createConvert(loc, libFuncType, funcPointer);
 
     llvm::SmallVector<mlir::Value, 3> operands{funcPointer};
     operands.append(args.begin(), args.end());
-    libCall = fir::CallOp::create(builder, loc, mlir::SymbolRefAttr{},
-                                  libFuncType.getResults(), operands);
+    libCall = builder.create<fir::CallOp>(loc, mlir::SymbolRefAttr{},
+                                          libFuncType.getResults(), operands);
   }
 
   LLVM_DEBUG(libCall.dump(); llvm::dbgs() << "\n");
@@ -1225,7 +1208,7 @@ mlir::Value genMathOp(fir::FirOpBuilder &builder, mlir::Location loc,
     LLVM_DEBUG(llvm::dbgs() << "Generating '" << mathLibFuncName
                             << "' operation with type ";
                mathLibFuncType.dump(); llvm::dbgs() << "\n");
-    result = T::create(builder, loc, args);
+    result = builder.create<T>(loc, args);
   }
   LLVM_DEBUG(result.dump(); llvm::dbgs() << "\n");
   return result;
@@ -1245,11 +1228,8 @@ mlir::Value genComplexMathOp(fir::FirOpBuilder &builder, mlir::Location loc,
   llvm::StringRef mathLibFuncName = mathOp.runtimeFunc;
   if (!mathLibFuncName.empty()) {
     // If we enabled MLIR complex or can use approximate operations, we should
-    // NOT use libm. Avoid libm when targeting AMDGPU as those symbols are not
-    // available on the device and we rely on MLIR complex operations to
-    // later map to OCML calls.
-    bool isAMDGPU = fir::getTargetTriple(builder.getModule()).isAMDGCN();
-    if (!forceMlirComplex && !canUseApprox && !isAMDGPU) {
+    // NOT use libm.
+    if (!forceMlirComplex && !canUseApprox) {
       result = genLibCall(builder, loc, mathOp, mathLibFuncType, args);
       LLVM_DEBUG(result.dump(); llvm::dbgs() << "\n");
       return result;
@@ -1263,12 +1243,12 @@ mlir::Value genComplexMathOp(fir::FirOpBuilder &builder, mlir::Location loc,
   // the argument types for an operation
   if constexpr (T::template hasTrait<
                     mlir::OpTrait::SameOperandsAndResultType>()) {
-    result = T::create(builder, loc, args);
+    result = builder.create<T>(loc, args);
     result = builder.createConvert(loc, mathLibFuncType.getResult(0), result);
   } else {
     auto complexTy = mlir::cast<mlir::ComplexType>(mathLibFuncType.getInput(0));
     auto realTy = complexTy.getElementType();
-    result = T::create(builder, loc, realTy, args);
+    result = builder.create<T>(loc, realTy, args);
     result = builder.createConvert(loc, mathLibFuncType.getResult(0), result);
   }
 
@@ -2466,7 +2446,7 @@ IntrinsicLibrary::outlineInWrapper(GeneratorType generator,
     nameOS << '.' << fmfString;
   }
   mlir::func::FuncOp wrapper = getWrapper(generator, funcName, funcType);
-  return fir::CallOp::create(builder, loc, wrapper, args).getResult(0);
+  return builder.create<fir::CallOp>(loc, wrapper, args).getResult(0);
 }
 
 template <typename GeneratorType>
@@ -2482,7 +2462,7 @@ fir::ExtendedValue IntrinsicLibrary::outlineInExtendedWrapper(
     mlirArgs.emplace_back(toValue(extendedVal, builder, loc));
   mlir::FunctionType funcType = getFunctionType(resultType, mlirArgs, builder);
   mlir::func::FuncOp wrapper = getWrapper(generator, name, funcType);
-  auto call = fir::CallOp::create(builder, loc, wrapper, mlirArgs);
+  auto call = builder.create<fir::CallOp>(loc, wrapper, mlirArgs);
   if (resultType)
     return toExtendedValue(call.getResult(0), builder, loc);
   // Subroutine calls
@@ -2600,9 +2580,9 @@ IntrinsicLibrary::readAndAddCleanUp(fir::MutableBoxValue resultMutableBox,
         return box;
       },
       [&](const mlir::Value &tempAddr) -> fir::ExtendedValue {
-        auto load = fir::LoadOp::create(builder, loc, resultType, tempAddr);
+        auto load = builder.create<fir::LoadOp>(loc, resultType, tempAddr);
         // Temp can be freed right away since it was loaded.
-        fir::FreeMemOp::create(builder, loc, tempAddr);
+        builder.create<fir::FreeMemOp>(loc, tempAddr);
         return load;
       },
       [&](const fir::CharBoxValue &box) -> fir::ExtendedValue {
@@ -2655,9 +2635,9 @@ mlir::Value IntrinsicLibrary::genAbs(mlir::Type resultType,
     // So, implement abs here without branching.
     mlir::Value shift =
         builder.createIntegerConstant(loc, intType, intType.getWidth() - 1);
-    auto mask = mlir::arith::ShRSIOp::create(builder, loc, arg, shift);
-    auto xored = mlir::arith::XOrIOp::create(builder, loc, arg, mask);
-    return mlir::arith::SubIOp::create(builder, loc, xored, mask);
+    auto mask = builder.create<mlir::arith::ShRSIOp>(loc, arg, shift);
+    auto xored = builder.create<mlir::arith::XOrIOp>(loc, arg, mask);
+    return builder.create<mlir::arith::SubIOp>(loc, xored, mask);
   }
   llvm_unreachable("unexpected type in ABS argument");
 }
@@ -2665,33 +2645,16 @@ mlir::Value IntrinsicLibrary::genAbs(mlir::Type resultType,
 // ACOSD
 mlir::Value IntrinsicLibrary::genAcosd(mlir::Type resultType,
                                        llvm::ArrayRef<mlir::Value> args) {
-  // maps ACOSD to ACOS * 180 / pi
   assert(args.size() == 1);
   mlir::MLIRContext *context = builder.getContext();
   mlir::FunctionType ftype =
       mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  mlir::Value result =
-      getRuntimeCallGenerator("acos", ftype)(builder, loc, {args[0]});
   llvm::APFloat pi = llvm::APFloat(llvm::numbers::pi);
   mlir::Value dfactor = builder.createRealConstant(
-      loc, mlir::Float64Type::get(context), llvm::APFloat(180.0) / pi);
+      loc, mlir::Float64Type::get(context), pi / llvm::APFloat(180.0));
   mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
-  return mlir::arith::MulFOp::create(builder, loc, result, factor);
-}
-
-// ACOSPI
-mlir::Value IntrinsicLibrary::genAcospi(mlir::Type resultType,
-                                        llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 1);
-  mlir::MLIRContext *context = builder.getContext();
-  mlir::FunctionType ftype =
-      mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  mlir::Value acos = getRuntimeCallGenerator("acos", ftype)(builder, loc, args);
-  llvm::APFloat inv_pi = llvm::APFloat(llvm::numbers::inv_pi);
-  mlir::Value dfactor =
-      builder.createRealConstant(loc, mlir::Float64Type::get(context), inv_pi);
-  mlir::Value factor = builder.createConvert(loc, resultType, dfactor);
-  return mlir::arith::MulFOp::create(builder, loc, acos, factor);
+  mlir::Value arg = builder.create<mlir::arith::MulFOp>(loc, args[0], factor);
+  return getRuntimeCallGenerator("acos", ftype)(builder, loc, {arg});
 }
 
 // ADJUSTL & ADJUSTR
@@ -2833,33 +2796,16 @@ IntrinsicLibrary::genAny(mlir::Type resultType,
 // ASIND
 mlir::Value IntrinsicLibrary::genAsind(mlir::Type resultType,
                                        llvm::ArrayRef<mlir::Value> args) {
-  // maps ASIND to ASIN * 180 / pi
   assert(args.size() == 1);
   mlir::MLIRContext *context = builder.getContext();
   mlir::FunctionType ftype =
       mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  mlir::Value result =
-      getRuntimeCallGenerator("asin", ftype)(builder, loc, {args[0]});
   llvm::APFloat pi = llvm::APFloat(llvm::numbers::pi);
   mlir::Value dfactor = builder.createRealConstant(
-      loc, mlir::Float64Type::get(context), llvm::APFloat(180.0) / pi);
+      loc, mlir::Float64Type::get(context), pi / llvm::APFloat(180.0));
   mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
-  return mlir::arith::MulFOp::create(builder, loc, result, factor);
-}
-
-// ASINPI
-mlir::Value IntrinsicLibrary::genAsinpi(mlir::Type resultType,
-                                        llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 1);
-  mlir::MLIRContext *context = builder.getContext();
-  mlir::FunctionType ftype =
-      mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  mlir::Value asin = getRuntimeCallGenerator("asin", ftype)(builder, loc, args);
-  llvm::APFloat inv_pi = llvm::APFloat(llvm::numbers::inv_pi);
-  mlir::Value dfactor =
-      builder.createRealConstant(loc, mlir::Float64Type::get(context), inv_pi);
-  mlir::Value factor = builder.createConvert(loc, resultType, dfactor);
-  return mlir::arith::MulFOp::create(builder, loc, asin, factor);
+  mlir::Value arg = builder.create<mlir::arith::MulFOp>(loc, args[0], factor);
+  return getRuntimeCallGenerator("asin", ftype)(builder, loc, {arg});
 }
 
 // ATAND, ATAN2D
@@ -2873,8 +2819,8 @@ mlir::Value IntrinsicLibrary::genAtand(mlir::Type resultType,
 
   // atand = atan * 180/pi
   if (args.size() == 2) {
-    atan = mlir::math::Atan2Op::create(builder, loc, fir::getBase(args[0]),
-                                       fir::getBase(args[1]));
+    atan = builder.create<mlir::math::Atan2Op>(loc, fir::getBase(args[0]),
+                                               fir::getBase(args[1]));
   } else {
     mlir::FunctionType ftype =
         mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
@@ -2884,7 +2830,7 @@ mlir::Value IntrinsicLibrary::genAtand(mlir::Type resultType,
   mlir::Value dfactor = builder.createRealConstant(
       loc, mlir::Float64Type::get(context), llvm::APFloat(180.0) / pi);
   mlir::Value factor = builder.createConvert(loc, resultType, dfactor);
-  return mlir::arith::MulFOp::create(builder, loc, atan, factor);
+  return builder.create<mlir::arith::MulFOp>(loc, atan, factor);
 }
 
 // ATANPI, ATAN2PI
@@ -2898,8 +2844,8 @@ mlir::Value IntrinsicLibrary::genAtanpi(mlir::Type resultType,
 
   // atanpi = atan / pi
   if (args.size() == 2) {
-    atan = mlir::math::Atan2Op::create(builder, loc, fir::getBase(args[0]),
-                                       fir::getBase(args[1]));
+    atan = builder.create<mlir::math::Atan2Op>(loc, fir::getBase(args[0]),
+                                               fir::getBase(args[1]));
   } else {
     mlir::FunctionType ftype =
         mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
@@ -2909,7 +2855,7 @@ mlir::Value IntrinsicLibrary::genAtanpi(mlir::Type resultType,
   mlir::Value dfactor =
       builder.createRealConstant(loc, mlir::Float64Type::get(context), inv_pi);
   mlir::Value factor = builder.createConvert(loc, resultType, dfactor);
-  return mlir::arith::MulFOp::create(builder, loc, atan, factor);
+  return builder.create<mlir::arith::MulFOp>(loc, atan, factor);
 }
 
 static mlir::Value genAtomBinOp(fir::FirOpBuilder &builder, mlir::Location &loc,
@@ -2917,8 +2863,8 @@ static mlir::Value genAtomBinOp(fir::FirOpBuilder &builder, mlir::Location &loc,
                                 mlir::Value arg1) {
   auto llvmPointerType = mlir::LLVM::LLVMPointerType::get(builder.getContext());
   arg0 = builder.createConvert(loc, llvmPointerType, arg0);
-  return mlir::LLVM::AtomicRMWOp::create(builder, loc, binOp, arg0, arg1,
-                                         mlir::LLVM::AtomicOrdering::seq_cst);
+  return builder.create<mlir::LLVM::AtomicRMWOp>(
+      loc, binOp, arg0, arg1, mlir::LLVM::AtomicOrdering::seq_cst);
 }
 
 mlir::Value IntrinsicLibrary::genAtomicAdd(mlir::Type resultType,
@@ -2976,11 +2922,11 @@ IntrinsicLibrary::genAtomicCas(mlir::Type resultType,
 
   auto bitCastFloat = [&](mlir::Value arg) -> mlir::Value {
     if (mlir::isa<mlir::Float32Type>(arg.getType()))
-      return mlir::LLVM::BitcastOp::create(builder, loc, builder.getI32Type(),
-                                           arg);
+      return builder.create<mlir::LLVM::BitcastOp>(loc, builder.getI32Type(),
+                                                   arg);
     if (mlir::isa<mlir::Float64Type>(arg.getType()))
-      return mlir::LLVM::BitcastOp::create(builder, loc, builder.getI64Type(),
-                                           arg);
+      return builder.create<mlir::LLVM::BitcastOp>(loc, builder.getI64Type(),
+                                                   arg);
     return arg;
   };
 
@@ -2993,11 +2939,11 @@ IntrinsicLibrary::genAtomicCas(mlir::Type resultType,
   }
 
   auto address =
-      mlir::UnrealizedConversionCastOp::create(builder, loc, llvmPtrTy, arg0)
+      builder.create<mlir::UnrealizedConversionCastOp>(loc, llvmPtrTy, arg0)
           .getResult(0);
-  auto cmpxchg = mlir::LLVM::AtomicCmpXchgOp::create(
-      builder, loc, address, arg1, arg2, successOrdering, failureOrdering);
-  return mlir::LLVM::ExtractValueOp::create(builder, loc, cmpxchg, 1);
+  auto cmpxchg = builder.create<mlir::LLVM::AtomicCmpXchgOp>(
+      loc, address, arg1, arg2, successOrdering, failureOrdering);
+  return builder.create<mlir::LLVM::ExtractValueOp>(loc, cmpxchg, 1);
 }
 
 mlir::Value IntrinsicLibrary::genAtomicDec(mlir::Type resultType,
@@ -3073,31 +3019,31 @@ IntrinsicLibrary::genAssociated(mlir::Type resultType,
                 mlir::isa<fir::BoxProcType>(ptrTy))) {
     mlir::Value pointerBoxProc =
         fir::isBoxProcAddressType(ptrTy)
-            ? fir::LoadOp::create(builder, loc, fir::getBase(args[0]))
+            ? builder.create<fir::LoadOp>(loc, fir::getBase(args[0]))
             : fir::getBase(args[0]);
     mlir::Value pointerTarget =
-        fir::BoxAddrOp::create(builder, loc, pointerBoxProc);
+        builder.create<fir::BoxAddrOp>(loc, pointerBoxProc);
     if (isStaticallyAbsent(args[1]))
       return builder.genIsNotNullAddr(loc, pointerTarget);
     mlir::Value target = fir::getBase(args[1]);
     if (fir::isBoxProcAddressType(target.getType()))
-      target = fir::LoadOp::create(builder, loc, target);
+      target = builder.create<fir::LoadOp>(loc, target);
     if (mlir::isa<fir::BoxProcType>(target.getType()))
-      target = fir::BoxAddrOp::create(builder, loc, target);
+      target = builder.create<fir::BoxAddrOp>(loc, target);
     mlir::Type intPtrTy = builder.getIntPtrType();
     mlir::Value pointerInt =
         builder.createConvert(loc, intPtrTy, pointerTarget);
     mlir::Value targetInt = builder.createConvert(loc, intPtrTy, target);
-    mlir::Value sameTarget = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::eq, pointerInt, targetInt);
+    mlir::Value sameTarget = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, pointerInt, targetInt);
     mlir::Value zero = builder.createIntegerConstant(loc, intPtrTy, 0);
-    mlir::Value notNull = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::ne, zero, pointerInt);
+    mlir::Value notNull = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::ne, zero, pointerInt);
     // The not notNull test covers the following two cases:
     // - TARGET is a procedure that is OPTIONAL and absent at runtime.
     // - TARGET is a procedure pointer that is NULL.
     // In both cases, ASSOCIATED should be false if POINTER is NULL.
-    return mlir::arith::AndIOp::create(builder, loc, sameTarget, notNull);
+    return builder.create<mlir::arith::AndIOp>(loc, sameTarget, notNull);
   }
   auto *pointer =
       args[0].match([&](const fir::MutableBoxValue &x) { return &x; },
@@ -3110,7 +3056,7 @@ IntrinsicLibrary::genAssociated(mlir::Type resultType,
   mlir::Value targetBox = builder.createBox(loc, target);
   mlir::Value pointerBoxRef =
       fir::factory::getMutableIRBox(builder, loc, *pointer);
-  auto pointerBox = fir::LoadOp::create(builder, loc, pointerBoxRef);
+  auto pointerBox = builder.create<fir::LoadOp>(loc, pointerBoxRef);
   return fir::runtime::genAssociated(builder, loc, pointerBox, targetBox);
 }
 
@@ -3141,12 +3087,12 @@ IntrinsicLibrary::genBesselJn(mlir::Type resultType,
     mlir::Value resultBox =
         fir::factory::getMutableIRBox(builder, loc, resultMutableBox);
 
-    mlir::Value cmpXEq0 = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::UEQ, x, zero);
-    mlir::Value cmpN1LtN2 = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::slt, n1, n2);
-    mlir::Value cmpN1EqN2 = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::eq, n1, n2);
+    mlir::Value cmpXEq0 = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::UEQ, x, zero);
+    mlir::Value cmpN1LtN2 = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::slt, n1, n2);
+    mlir::Value cmpN1EqN2 = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, n1, n2);
 
     auto genXEq0 = [&]() {
       fir::runtime::genBesselJnX0(builder, loc, floatTy, resultBox, n1, n2);
@@ -3158,7 +3104,7 @@ IntrinsicLibrary::genBesselJn(mlir::Type resultType,
       // https://dlmf.nist.gov/10.6.E1). When n1 < n2, this requires
       // the values of BESSEL_JN(n2) and BESSEL_JN(n2 - 1) since they
       // are the anchors of the recursion.
-      mlir::Value n2_1 = mlir::arith::SubIOp::create(builder, loc, n2, one);
+      mlir::Value n2_1 = builder.create<mlir::arith::SubIOp>(loc, n2, one);
       mlir::Value bn2 = genRuntimeCall("bessel_jn", resultType, {n2, x});
       mlir::Value bn2_1 = genRuntimeCall("bessel_jn", resultType, {n2_1, x});
       fir::runtime::genBesselJn(builder, loc, resultBox, n1, n2, x, bn2, bn2_1);
@@ -3226,12 +3172,12 @@ IntrinsicLibrary::genBesselYn(mlir::Type resultType,
     mlir::Value resultBox =
         fir::factory::getMutableIRBox(builder, loc, resultMutableBox);
 
-    mlir::Value cmpXEq0 = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::UEQ, x, zero);
-    mlir::Value cmpN1LtN2 = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::slt, n1, n2);
-    mlir::Value cmpN1EqN2 = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::eq, n1, n2);
+    mlir::Value cmpXEq0 = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::UEQ, x, zero);
+    mlir::Value cmpN1LtN2 = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::slt, n1, n2);
+    mlir::Value cmpN1EqN2 = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, n1, n2);
 
     auto genXEq0 = [&]() {
       fir::runtime::genBesselYnX0(builder, loc, floatTy, resultBox, n1, n2);
@@ -3243,7 +3189,7 @@ IntrinsicLibrary::genBesselYn(mlir::Type resultType,
       // https://dlmf.nist.gov/10.6.E1). When n1 < n2, this requires
       // the values of BESSEL_YN(n1) and BESSEL_YN(n1 + 1) since they
       // are the anchors of the recursion.
-      mlir::Value n1_1 = mlir::arith::AddIOp::create(builder, loc, n1, one);
+      mlir::Value n1_1 = builder.create<mlir::arith::AddIOp>(loc, n1, one);
       mlir::Value bn1 = genRuntimeCall("bessel_yn", resultType, {n1, x});
       mlir::Value bn1_1 = genRuntimeCall("bessel_yn", resultType, {n1_1, x});
       fir::runtime::genBesselYn(builder, loc, resultBox, n1, n2, x, bn1, bn1_1);
@@ -3315,12 +3261,12 @@ IntrinsicLibrary::genBitwiseCompare(mlir::Type resultType,
   if (arg0Ty.isUnsignedInteger())
     arg0 = builder.createConvert(loc, signlessType, arg0);
   else if (bits0 < widest)
-    arg0 = mlir::arith::ExtUIOp::create(builder, loc, signlessType, arg0);
+    arg0 = builder.create<mlir::arith::ExtUIOp>(loc, signlessType, arg0);
   if (arg1Ty.isUnsignedInteger())
     arg1 = builder.createConvert(loc, signlessType, arg1);
   else if (bits1 < widest)
-    arg1 = mlir::arith::ExtUIOp::create(builder, loc, signlessType, arg1);
-  return mlir::arith::CmpIOp::create(builder, loc, pred, arg0, arg1);
+    arg1 = builder.create<mlir::arith::ExtUIOp>(loc, signlessType, arg1);
+  return builder.create<mlir::arith::CmpIOp>(loc, pred, arg0, arg1);
 }
 
 // BTEST
@@ -3339,9 +3285,9 @@ mlir::Value IntrinsicLibrary::genBtest(mlir::Type resultType,
     word = builder.createConvert(loc, signlessType, word);
   mlir::Value shiftCount = builder.createConvert(loc, signlessType, args[1]);
   mlir::Value shifted =
-      mlir::arith::ShRUIOp::create(builder, loc, word, shiftCount);
+      builder.create<mlir::arith::ShRUIOp>(loc, word, shiftCount);
   mlir::Value one = builder.createIntegerConstant(loc, signlessType, 1);
-  mlir::Value bit = mlir::arith::AndIOp::create(builder, loc, shifted, one);
+  mlir::Value bit = builder.create<mlir::arith::AndIOp>(loc, shifted, one);
   return builder.createConvert(loc, resultType, bit);
 }
 
@@ -3352,11 +3298,11 @@ static mlir::Value getAddrFromBox(fir::FirOpBuilder &builder,
   mlir::Value addr{nullptr};
   if (isFunc) {
     auto funcTy = mlir::cast<fir::BoxProcType>(argValue.getType()).getEleTy();
-    addr = fir::BoxAddrOp::create(builder, loc, funcTy, argValue);
+    addr = builder.create<fir::BoxAddrOp>(loc, funcTy, argValue);
   } else {
     const auto *box = arg.getBoxOf<fir::BoxValue>();
-    addr = fir::BoxAddrOp::create(builder, loc, box->getMemTy(),
-                                  fir::getBase(*box));
+    addr = builder.create<fir::BoxAddrOp>(loc, box->getMemTy(),
+                                          fir::getBase(*box));
   }
   return addr;
 }
@@ -3366,7 +3312,7 @@ genCLocOrCFunLoc(fir::FirOpBuilder &builder, mlir::Location loc,
                  mlir::Type resultType, llvm::ArrayRef<fir::ExtendedValue> args,
                  bool isFunc = false, bool isDevLoc = false) {
   assert(args.size() == 1);
-  mlir::Value res = fir::AllocaOp::create(builder, loc, resultType);
+  mlir::Value res = builder.create<fir::AllocaOp>(loc, resultType);
   mlir::Value resAddr;
   if (isDevLoc)
     resAddr = fir::factory::genCDevPtrAddr(builder, loc, res, resultType);
@@ -3377,7 +3323,7 @@ genCLocOrCFunLoc(fir::FirOpBuilder &builder, mlir::Location loc,
   mlir::Value argAddr = getAddrFromBox(builder, loc, args[0], isFunc);
   mlir::Value argAddrVal = builder.createConvert(
       loc, fir::unwrapRefType(resAddr.getType()), argAddr);
-  fir::StoreOp::create(builder, loc, argAddrVal, resAddr);
+  builder.create<fir::StoreOp>(loc, argAddrVal, resAddr);
   return res;
 }
 
@@ -3390,8 +3336,8 @@ genCAssociated(fir::FirOpBuilder &builder, mlir::Location loc,
   mlir::Value cPtrVal1 =
       fir::factory::genCPtrOrCFunptrValue(builder, loc, cPtr1);
   mlir::Value zero = builder.createIntegerConstant(loc, cPtrVal1.getType(), 0);
-  mlir::Value res = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::ne, cPtrVal1, zero);
+  mlir::Value res = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::ne, cPtrVal1, zero);
 
   if (isStaticallyPresent(args[1])) {
     mlir::Type i1Ty = builder.getI1Type();
@@ -3400,16 +3346,15 @@ genCAssociated(fir::FirOpBuilder &builder, mlir::Location loc,
     res =
         builder
             .genIfOp(loc, {i1Ty}, isDynamicallyAbsent, /*withElseRegion=*/true)
-            .genThen([&]() { fir::ResultOp::create(builder, loc, res); })
+            .genThen([&]() { builder.create<fir::ResultOp>(loc, res); })
             .genElse([&]() {
               mlir::Value cPtrVal2 =
                   fir::factory::genCPtrOrCFunptrValue(builder, loc, cPtr2);
-              mlir::Value cmpVal = mlir::arith::CmpIOp::create(
-                  builder, loc, mlir::arith::CmpIPredicate::eq, cPtrVal1,
-                  cPtrVal2);
+              mlir::Value cmpVal = builder.create<mlir::arith::CmpIOp>(
+                  loc, mlir::arith::CmpIPredicate::eq, cPtrVal1, cPtrVal2);
               mlir::Value newRes =
-                  mlir::arith::AndIOp::create(builder, loc, res, cmpVal);
-              fir::ResultOp::create(builder, loc, newRes);
+                  builder.create<mlir::arith::AndIOp>(loc, res, cmpVal);
+              builder.create<fir::ResultOp>(loc, newRes);
             })
             .getResults()[0];
   }
@@ -3439,7 +3384,7 @@ IntrinsicLibrary::genCDevLoc(mlir::Type resultType,
 
 // C_F_POINTER
 void IntrinsicLibrary::genCFPointer(llvm::ArrayRef<fir::ExtendedValue> args) {
-  assert(args.size() == 4);
+  assert(args.size() == 3);
   // Handle CPTR argument
   // Get the value of the C address or the result of a reference to C_LOC.
   mlir::Value cPtr = fir::getBase(args[0]);
@@ -3454,12 +3399,9 @@ void IntrinsicLibrary::genCFPointer(llvm::ArrayRef<fir::ExtendedValue> args) {
     mlir::Value addr =
         builder.createConvert(loc, fPtr->getMemTy(), cPtrAddrVal);
     mlir::SmallVector<mlir::Value> extents;
-    mlir::SmallVector<mlir::Value> lbounds;
     if (box.hasRank()) {
       assert(isStaticallyPresent(args[2]) &&
              "FPTR argument must be an array if SHAPE argument exists");
-
-      // Handle and unpack SHAPE argument
       mlir::Value shape = fir::getBase(args[2]);
       int arrayRank = box.rank();
       mlir::Type shapeElementType =
@@ -3467,36 +3409,22 @@ void IntrinsicLibrary::genCFPointer(llvm::ArrayRef<fir::ExtendedValue> args) {
       mlir::Type idxType = builder.getIndexType();
       for (int i = 0; i < arrayRank; ++i) {
         mlir::Value index = builder.createIntegerConstant(loc, idxType, i);
-        mlir::Value var = fir::CoordinateOp::create(
-            builder, loc, builder.getRefType(shapeElementType), shape, index);
-        mlir::Value load = fir::LoadOp::create(builder, loc, var);
+        mlir::Value var = builder.create<fir::CoordinateOp>(
+            loc, builder.getRefType(shapeElementType), shape, index);
+        mlir::Value load = builder.create<fir::LoadOp>(loc, var);
         extents.push_back(builder.createConvert(loc, idxType, load));
-      }
-
-      // Handle and unpack LOWER argument if present
-      if (isStaticallyPresent(args[3])) {
-        mlir::Value lower = fir::getBase(args[3]);
-        mlir::Type lowerElementType =
-            fir::unwrapSequenceType(fir::unwrapPassByRefType(lower.getType()));
-        for (int i = 0; i < arrayRank; ++i) {
-          mlir::Value index = builder.createIntegerConstant(loc, idxType, i);
-          mlir::Value var = builder.create<fir::CoordinateOp>(
-              loc, builder.getRefType(lowerElementType), lower, index);
-          mlir::Value load = builder.create<fir::LoadOp>(loc, var);
-          lbounds.push_back(builder.createConvert(loc, idxType, load));
-        }
       }
     }
     if (box.isCharacter()) {
       mlir::Value len = box.nonDeferredLenParams()[0];
       if (box.hasRank())
-        return fir::CharArrayBoxValue{addr, len, extents, lbounds};
+        return fir::CharArrayBoxValue{addr, len, extents};
       return fir::CharBoxValue{addr, len};
     }
     if (box.isDerivedWithLenParameters())
       TODO(loc, "get length parameters of derived type");
     if (box.hasRank())
-      return fir::ArrayBoxValue{addr, extents, lbounds};
+      return fir::ArrayBoxValue{addr, extents};
     return addr;
   };
 
@@ -3527,8 +3455,8 @@ void IntrinsicLibrary::genCFProcPointer(
   mlir::Value cptrCast =
       builder.createConvert(loc, boxProcType.getEleTy(), cptr);
   mlir::Value cptrBox =
-      fir::EmboxProcOp::create(builder, loc, boxProcType, cptrCast);
-  fir::StoreOp::create(builder, loc, cptrBox, fptr);
+      builder.create<fir::EmboxProcOp>(loc, boxProcType, cptrCast);
+  builder.create<fir::StoreOp>(loc, cptrBox, fptr);
 }
 
 // C_FUNLOC
@@ -3558,7 +3486,7 @@ IntrinsicLibrary::genCPtrCompare(mlir::Type resultType,
   mlir::Value cPtrVal2 =
       fir::factory::genCPtrOrCFunptrValue(builder, loc, cPtr2);
   mlir::Value cmp =
-      mlir::arith::CmpIOp::create(builder, loc, pred, cPtrVal1, cPtrVal2);
+      builder.create<mlir::arith::CmpIOp>(loc, pred, cPtrVal1, cPtrVal2);
   return builder.createConvert(loc, resultType, cmp);
 }
 
@@ -3622,6 +3550,16 @@ IntrinsicLibrary::genChdir(std::optional<mlir::Type> resultType,
   return {};
 }
 
+// CLOCK64
+mlir::Value IntrinsicLibrary::genClock64(mlir::Type resultType,
+                                         llvm::ArrayRef<mlir::Value> args) {
+  constexpr llvm::StringLiteral funcName = "llvm.nvvm.read.ptx.sreg.clock64";
+  mlir::MLIRContext *context = builder.getContext();
+  mlir::FunctionType ftype = mlir::FunctionType::get(context, {}, {resultType});
+  auto funcOp = builder.createFunction(loc, funcName, ftype);
+  return builder.create<fir::CallOp>(loc, funcOp, args).getResult(0);
+}
+
 // CMPLX
 mlir::Value IntrinsicLibrary::genCmplx(mlir::Type resultType,
                                        llvm::ArrayRef<mlir::Value> args) {
@@ -3657,7 +3595,7 @@ mlir::Value IntrinsicLibrary::genConjg(mlir::Type resultType,
   mlir::Value cplx = args[0];
   auto imag = fir::factory::Complex{builder, loc}.extractComplexPart(
       cplx, /*isImagPart=*/true);
-  auto negImag = mlir::arith::NegFOp::create(builder, loc, imag);
+  auto negImag = builder.create<mlir::arith::NegFOp>(loc, imag);
   return fir::factory::Complex{builder, loc}.insertComplexPart(
       cplx, negImag, /*isImagPart=*/true);
 }
@@ -3673,22 +3611,7 @@ mlir::Value IntrinsicLibrary::genCosd(mlir::Type resultType,
   mlir::Value dfactor = builder.createRealConstant(
       loc, mlir::Float64Type::get(context), pi / llvm::APFloat(180.0));
   mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
-  mlir::Value arg = mlir::arith::MulFOp::create(builder, loc, args[0], factor);
-  return getRuntimeCallGenerator("cos", ftype)(builder, loc, {arg});
-}
-
-// COSPI
-mlir::Value IntrinsicLibrary::genCospi(mlir::Type resultType,
-                                       llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 1);
-  mlir::MLIRContext *context = builder.getContext();
-  mlir::FunctionType ftype =
-      mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  llvm::APFloat pi = llvm::APFloat(llvm::numbers::pi);
-  mlir::Value dfactor =
-      builder.createRealConstant(loc, mlir::Float64Type::get(context), pi);
-  mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
-  mlir::Value arg = mlir::arith::MulFOp::create(builder, loc, args[0], factor);
+  mlir::Value arg = builder.create<mlir::arith::MulFOp>(loc, args[0], factor);
   return getRuntimeCallGenerator("cos", ftype)(builder, loc, {arg});
 }
 
@@ -3749,7 +3672,7 @@ void IntrinsicLibrary::genCpuTime(llvm::ArrayRef<fir::ExtendedValue> args) {
   mlir::Value res1 = fir::runtime::genCpuTime(builder, loc);
   mlir::Value res2 =
       builder.createConvert(loc, fir::dyn_cast_ptrEleTy(arg->getType()), res1);
-  fir::StoreOp::create(builder, loc, res2, *arg);
+  builder.create<fir::StoreOp>(loc, res2, *arg);
 }
 
 // CSHIFT
@@ -3776,7 +3699,7 @@ IntrinsicLibrary::genCshift(mlir::Type resultType,
     // Handle required SHIFT argument as a scalar
     const mlir::Value *shiftAddr = args[1].getUnboxed();
     assert(shiftAddr && "nonscalar CSHIFT argument");
-    auto shift = fir::LoadOp::create(builder, loc, *shiftAddr);
+    auto shift = builder.create<fir::LoadOp>(loc, *shiftAddr);
 
     fir::runtime::genCshiftVector(builder, loc, resultIrBox, array, shift);
   } else {
@@ -3802,9 +3725,9 @@ IntrinsicLibrary::genCUDALDXXFunc(mlir::Type resultType,
   assert(args.size() == 1);
   mlir::Type resTy = fir::SequenceType::get(extent, resultType);
   mlir::Value arg = fir::getBase(args[0]);
-  mlir::Value res = fir::AllocaOp::create(builder, loc, resTy);
+  mlir::Value res = builder.create<fir::AllocaOp>(loc, resTy);
   if (mlir::isa<fir::BaseBoxType>(arg.getType()))
-    arg = fir::BoxAddrOp::create(builder, loc, arg);
+    arg = builder.create<fir::BoxAddrOp>(loc, arg);
   mlir::Type refResTy = fir::ReferenceType::get(resTy);
   mlir::FunctionType ftype =
       mlir::FunctionType::get(arg.getContext(), {refResTy, refResTy}, {});
@@ -3812,7 +3735,7 @@ IntrinsicLibrary::genCUDALDXXFunc(mlir::Type resultType,
   llvm::SmallVector<mlir::Value> funcArgs;
   funcArgs.push_back(res);
   funcArgs.push_back(arg);
-  fir::CallOp::create(builder, loc, funcOp, funcArgs);
+  builder.create<fir::CallOp>(loc, funcOp, funcArgs);
   mlir::Value ext =
       builder.createIntegerConstant(loc, builder.getIndexType(), extent);
   return fir::ArrayBoxValue(res, {ext});
@@ -3828,8 +3751,8 @@ void IntrinsicLibrary::genDateAndTime(llvm::ArrayRef<fir::ExtendedValue> args) {
 
   mlir::Value values = fir::getBase(args[3]);
   if (!values)
-    values = fir::AbsentOp::create(builder, loc,
-                                   fir::BoxType::get(builder.getNoneType()));
+    values = builder.create<fir::AbsentOp>(
+        loc, fir::BoxType::get(builder.getNoneType()));
 
   fir::runtime::genDateAndTime(builder, loc, charArgs[0], charArgs[1],
                                charArgs[2], values);
@@ -3841,17 +3764,17 @@ mlir::Value IntrinsicLibrary::genDim(mlir::Type resultType,
   assert(args.size() == 2);
   if (mlir::isa<mlir::IntegerType>(resultType)) {
     mlir::Value zero = builder.createIntegerConstant(loc, resultType, 0);
-    auto diff = mlir::arith::SubIOp::create(builder, loc, args[0], args[1]);
-    auto cmp = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::sgt, diff, zero);
-    return mlir::arith::SelectOp::create(builder, loc, cmp, diff, zero);
+    auto diff = builder.create<mlir::arith::SubIOp>(loc, args[0], args[1]);
+    auto cmp = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::sgt, diff, zero);
+    return builder.create<mlir::arith::SelectOp>(loc, cmp, diff, zero);
   }
   assert(fir::isa_real(resultType) && "Only expects real and integer in DIM");
   mlir::Value zero = builder.createRealZeroConstant(loc, resultType);
-  auto diff = mlir::arith::SubFOp::create(builder, loc, args[0], args[1]);
-  auto cmp = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OGT, diff, zero);
-  return mlir::arith::SelectOp::create(builder, loc, cmp, diff, zero);
+  auto diff = builder.create<mlir::arith::SubFOp>(loc, args[0], args[1]);
+  auto cmp = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OGT, diff, zero);
+  return builder.create<mlir::arith::SelectOp>(loc, cmp, diff, zero);
 }
 
 // DOT_PRODUCT
@@ -3869,13 +3792,12 @@ IntrinsicLibrary::genDotProduct(mlir::Type resultType,
   if (fir::isa_complex(eleTy)) {
     mlir::Value result = builder.createTemporary(loc, eleTy);
     fir::runtime::genDotProduct(builder, loc, vectorA, vectorB, result);
-    return fir::LoadOp::create(builder, loc, result);
+    return builder.create<fir::LoadOp>(loc, result);
   }
 
   // This operation is only used to pass the result type
   // information to the DotProduct generator.
-  auto resultBox =
-      fir::AbsentOp::create(builder, loc, fir::BoxType::get(eleTy));
+  auto resultBox = builder.create<fir::AbsentOp>(loc, fir::BoxType::get(eleTy));
   return fir::runtime::genDotProduct(builder, loc, vectorA, vectorB, resultBox);
 }
 
@@ -3887,7 +3809,7 @@ mlir::Value IntrinsicLibrary::genDprod(mlir::Type resultType,
          "Result must be double precision in DPROD");
   mlir::Value a = builder.createConvert(loc, resultType, args[0]);
   mlir::Value b = builder.createConvert(loc, resultType, args[1]);
-  return mlir::arith::MulFOp::create(builder, loc, a, b);
+  return builder.create<mlir::arith::MulFOp>(loc, a, b);
 }
 
 // DSHIFTL
@@ -3910,14 +3832,14 @@ mlir::Value IntrinsicLibrary::genDshiftl(mlir::Type resultType,
 
   // Per the standard, the value of DSHIFTL(I, J, SHIFT) is equal to
   // IOR (SHIFTL(I, SHIFT), SHIFTR(J, BIT_SIZE(J) - SHIFT))
-  mlir::Value diff = mlir::arith::SubIOp::create(builder, loc, bitSize, shift);
+  mlir::Value diff = builder.create<mlir::arith::SubIOp>(loc, bitSize, shift);
 
   mlir::Value lArgs[2]{i, shift};
   mlir::Value lft = genShift<mlir::arith::ShLIOp>(signlessType, lArgs);
 
   mlir::Value rArgs[2]{j, diff};
   mlir::Value rgt = genShift<mlir::arith::ShRUIOp>(signlessType, rArgs);
-  mlir::Value result = mlir::arith::OrIOp::create(builder, loc, lft, rgt);
+  mlir::Value result = builder.create<mlir::arith::OrIOp>(loc, lft, rgt);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -3943,14 +3865,14 @@ mlir::Value IntrinsicLibrary::genDshiftr(mlir::Type resultType,
 
   // Per the standard, the value of DSHIFTR(I, J, SHIFT) is equal to
   // IOR (SHIFTL(I, BIT_SIZE(I) - SHIFT), SHIFTR(J, SHIFT))
-  mlir::Value diff = mlir::arith::SubIOp::create(builder, loc, bitSize, shift);
+  mlir::Value diff = builder.create<mlir::arith::SubIOp>(loc, bitSize, shift);
 
   mlir::Value lArgs[2]{i, diff};
   mlir::Value lft = genShift<mlir::arith::ShLIOp>(signlessType, lArgs);
 
   mlir::Value rArgs[2]{j, shift};
   mlir::Value rgt = genShift<mlir::arith::ShRUIOp>(signlessType, rArgs);
-  mlir::Value result = mlir::arith::OrIOp::create(builder, loc, lft, rgt);
+  mlir::Value result = builder.create<mlir::arith::OrIOp>(loc, lft, rgt);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -3978,8 +3900,8 @@ IntrinsicLibrary::genEoshift(mlir::Type resultType,
   // Handle optional BOUNDARY argument
   mlir::Value boundary =
       isStaticallyAbsent(args[2])
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getNoneType()))
+          ? builder.create<fir::AbsentOp>(
+                loc, fir::BoxType::get(builder.getNoneType()))
           : builder.createBox(loc, args[2]);
 
   if (arrayRank == 1) {
@@ -3987,7 +3909,7 @@ IntrinsicLibrary::genEoshift(mlir::Type resultType,
     // Handle required SHIFT argument as a scalar
     const mlir::Value *shiftAddr = args[1].getUnboxed();
     assert(shiftAddr && "nonscalar EOSHIFT SHIFT argument");
-    auto shift = fir::LoadOp::create(builder, loc, *shiftAddr);
+    auto shift = builder.create<fir::LoadOp>(loc, *shiftAddr);
     fir::runtime::genEoshiftVector(builder, loc, resultIrBox, array, shift,
                                    boundary);
   } else {
@@ -4035,15 +3957,14 @@ void IntrinsicLibrary::genExecuteCommandLine(
                    .genIfOp(loc, {i1Ty}, waitIsPresentAtRuntime,
                             /*withElseRegion=*/true)
                    .genThen([&]() {
-                     auto waitLoad =
-                         fir::LoadOp::create(builder, loc, waitAddr);
+                     auto waitLoad = builder.create<fir::LoadOp>(loc, waitAddr);
                      mlir::Value cast =
                          builder.createConvert(loc, i1Ty, waitLoad);
-                     fir::ResultOp::create(builder, loc, cast);
+                     builder.create<fir::ResultOp>(loc, cast);
                    })
                    .genElse([&]() {
                      mlir::Value trueVal = builder.createBool(loc, true);
-                     fir::ResultOp::create(builder, loc, trueVal);
+                     builder.create<fir::ResultOp>(loc, trueVal);
                    })
                    .getResults()[0];
   }
@@ -4051,15 +3972,15 @@ void IntrinsicLibrary::genExecuteCommandLine(
   mlir::Value exitstatBox =
       isStaticallyPresent(exitstat)
           ? fir::getBase(exitstat)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value cmdstatBox =
       isStaticallyPresent(cmdstat)
           ? fir::getBase(cmdstat)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value cmdmsgBox =
       isStaticallyPresent(cmdmsg)
           ? fir::getBase(cmdmsg)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   fir::runtime::genExecuteCommandLine(builder, loc, command, waitBool,
                                       exitstatBox, cmdstatBox, cmdmsgBox);
 }
@@ -4080,7 +4001,7 @@ IntrinsicLibrary::genEtime(std::optional<mlir::Type> resultType,
     auto timeAddr = builder.createTemporary(loc, *resultType);
     auto timeBox = builder.createBox(loc, timeAddr);
     fir::runtime::genEtime(builder, loc, values, timeBox);
-    return fir::LoadOp::create(builder, loc, timeAddr);
+    return builder.create<fir::LoadOp>(loc, timeAddr);
   } else {
     // subroutine form
     mlir::Value time = fir::getBase(args[1]);
@@ -4153,8 +4074,8 @@ IntrinsicLibrary::genFindloc(mlir::Type resultType,
 
   // Handle optional mask argument
   auto mask = isStaticallyAbsent(args[3])
-                  ? fir::AbsentOp::create(
-                        builder, loc, fir::BoxType::get(builder.getI1Type()))
+                  ? builder.create<fir::AbsentOp>(
+                        loc, fir::BoxType::get(builder.getI1Type()))
                   : builder.createBox(loc, args[3]);
 
   // Handle optional kind argument
@@ -4343,15 +4264,15 @@ void IntrinsicLibrary::genGetCommand(llvm::ArrayRef<fir::ExtendedValue> args) {
   mlir::Value commandBox =
       isStaticallyPresent(command)
           ? fir::getBase(command)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value lenBox =
       isStaticallyPresent(length)
           ? fir::getBase(length)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value errBox =
       isStaticallyPresent(errmsg)
           ? fir::getBase(errmsg)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value stat =
       fir::runtime::genGetCommand(builder, loc, commandBox, lenBox, errBox);
   if (isStaticallyPresent(status)) {
@@ -4410,15 +4331,15 @@ void IntrinsicLibrary::genGetCommandArgument(
   mlir::Value valBox =
       isStaticallyPresent(value)
           ? fir::getBase(value)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value lenBox =
       isStaticallyPresent(length)
           ? fir::getBase(length)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value errBox =
       isStaticallyPresent(errmsg)
           ? fir::getBase(errmsg)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value stat = fir::runtime::genGetCommandArgument(
       builder, loc, number, valBox, lenBox, errBox);
   if (isStaticallyPresent(status)) {
@@ -4463,14 +4384,13 @@ void IntrinsicLibrary::genGetEnvironmentVariable(
                .genIfOp(loc, {i1Ty}, trimNameIsPresentAtRuntime,
                         /*withElseRegion=*/true)
                .genThen([&]() {
-                 auto trimLoad =
-                     fir::LoadOp::create(builder, loc, trimNameAddr);
+                 auto trimLoad = builder.create<fir::LoadOp>(loc, trimNameAddr);
                  mlir::Value cast = builder.createConvert(loc, i1Ty, trimLoad);
-                 fir::ResultOp::create(builder, loc, cast);
+                 builder.create<fir::ResultOp>(loc, cast);
                })
                .genElse([&]() {
                  mlir::Value trueVal = builder.createBool(loc, true);
-                 fir::ResultOp::create(builder, loc, trueVal);
+                 builder.create<fir::ResultOp>(loc, trueVal);
                })
                .getResults()[0];
   }
@@ -4479,15 +4399,15 @@ void IntrinsicLibrary::genGetEnvironmentVariable(
   mlir::Value valBox =
       isStaticallyPresent(value)
           ? fir::getBase(value)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value lenBox =
       isStaticallyPresent(length)
           ? fir::getBase(length)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value errBox =
       isStaticallyPresent(errmsg)
           ? fir::getBase(errmsg)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   mlir::Value stat = fir::runtime::genGetEnvVariable(builder, loc, name, valBox,
                                                      lenBox, trim, errBox);
   if (isStaticallyPresent(status)) {
@@ -4572,8 +4492,8 @@ IntrinsicLibrary::genReduction(FN func, FD funcDim, llvm::StringRef errMsg,
 
   // Handle optional mask argument
   auto mask = isStaticallyAbsent(args[2])
-                  ? fir::AbsentOp::create(
-                        builder, loc, fir::BoxType::get(builder.getI1Type()))
+                  ? builder.create<fir::AbsentOp>(
+                        loc, fir::BoxType::get(builder.getI1Type()))
                   : builder.createBox(loc, args[2]);
 
   bool absentDim = isStaticallyAbsent(args[1]);
@@ -4587,10 +4507,10 @@ IntrinsicLibrary::genReduction(FN func, FD funcDim, llvm::StringRef errMsg,
     if (fir::isa_complex(eleTy)) {
       mlir::Value result = builder.createTemporary(loc, eleTy);
       func(builder, loc, array, mask, result);
-      return fir::LoadOp::create(builder, loc, result);
+      return builder.create<fir::LoadOp>(loc, result);
     }
-    auto resultBox = fir::AbsentOp::create(
-        builder, loc, fir::BoxType::get(builder.getI1Type()));
+    auto resultBox = builder.create<fir::AbsentOp>(
+        loc, fir::BoxType::get(builder.getI1Type()));
     return func(builder, loc, array, mask, resultBox);
   }
   // Handle Product/Sum cases that have an array result.
@@ -4637,8 +4557,8 @@ mlir::Value IntrinsicLibrary::genIbclr(mlir::Type resultType,
   mlir::Value one = builder.createIntegerConstant(loc, signlessType, 1);
   mlir::Value ones = builder.createAllOnesInteger(loc, signlessType);
   mlir::Value pos = builder.createConvert(loc, signlessType, args[1]);
-  mlir::Value bit = mlir::arith::ShLIOp::create(builder, loc, one, pos);
-  mlir::Value mask = mlir::arith::XOrIOp::create(builder, loc, ones, bit);
+  mlir::Value bit = builder.create<mlir::arith::ShLIOp>(loc, one, pos);
+  mlir::Value mask = builder.create<mlir::arith::XOrIOp>(loc, ones, bit);
   return builder.createUnsigned<mlir::arith::AndIOp>(loc, resultType, args[0],
                                                      mask);
 }
@@ -4666,18 +4586,18 @@ mlir::Value IntrinsicLibrary::genIbits(mlir::Type resultType,
   mlir::Value bitSize = builder.createIntegerConstant(
       loc, signlessType, mlir::cast<mlir::IntegerType>(resultType).getWidth());
   mlir::Value shiftCount =
-      mlir::arith::SubIOp::create(builder, loc, bitSize, len);
+      builder.create<mlir::arith::SubIOp>(loc, bitSize, len);
   mlir::Value zero = builder.createIntegerConstant(loc, signlessType, 0);
   mlir::Value ones = builder.createAllOnesInteger(loc, signlessType);
   mlir::Value mask =
-      mlir::arith::ShRUIOp::create(builder, loc, ones, shiftCount);
+      builder.create<mlir::arith::ShRUIOp>(loc, ones, shiftCount);
   mlir::Value res1 = builder.createUnsigned<mlir::arith::ShRSIOp>(
       loc, signlessType, word, pos);
-  mlir::Value res2 = mlir::arith::AndIOp::create(builder, loc, res1, mask);
-  mlir::Value lenIsZero = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, len, zero);
+  mlir::Value res2 = builder.create<mlir::arith::AndIOp>(loc, res1, mask);
+  mlir::Value lenIsZero = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, len, zero);
   mlir::Value result =
-      mlir::arith::SelectOp::create(builder, loc, lenIsZero, zero, res2);
+      builder.create<mlir::arith::SelectOp>(loc, lenIsZero, zero, res2);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -4696,7 +4616,7 @@ mlir::Value IntrinsicLibrary::genIbset(mlir::Type resultType,
       mlir::IntegerType::SignednessSemantics::Signless);
   mlir::Value one = builder.createIntegerConstant(loc, signlessType, 1);
   mlir::Value pos = builder.createConvert(loc, signlessType, args[1]);
-  mlir::Value mask = mlir::arith::ShLIOp::create(builder, loc, one, pos);
+  mlir::Value mask = builder.create<mlir::arith::ShLIOp>(loc, one, pos);
   return builder.createUnsigned<mlir::arith::OrIOp>(loc, resultType, args[0],
                                                     mask);
 }
@@ -4730,13 +4650,13 @@ IntrinsicLibrary::genIchar(mlir::Type resultType,
         fir::CharacterType::get(builder.getContext(), eleType.getFKind(), 1);
     mlir::Type toTy = builder.getRefType(charType);
     mlir::Value cast = builder.createConvert(loc, toTy, buffer);
-    charVal = fir::LoadOp::create(builder, loc, cast);
+    charVal = builder.create<fir::LoadOp>(loc, cast);
   }
   LLVM_DEBUG(llvm::dbgs() << "ichar(" << charVal << ")\n");
   auto code = helper.extractCodeFromSingleton(charVal);
   if (code.getType() == resultType)
     return code;
-  return mlir::arith::ExtUIOp::create(builder, loc, resultType, code);
+  return builder.create<mlir::arith::ExtUIOp>(loc, resultType, code);
 }
 
 // llvm floating point class intrinsic test values
@@ -4766,7 +4686,7 @@ mlir::Value IntrinsicLibrary::genIsFPClass(mlir::Type resultType,
   assert(args.size() == 1);
   mlir::Type i1Ty = builder.getI1Type();
   mlir::Value isfpclass =
-      mlir::LLVM::IsFPClass::create(builder, loc, i1Ty, args[0], fpclass);
+      builder.create<mlir::LLVM::IsFPClass>(loc, i1Ty, args[0], fpclass);
   return builder.createConvert(loc, resultType, isfpclass);
 }
 
@@ -4781,7 +4701,7 @@ mlir::Value IntrinsicLibrary::genQNan(mlir::Type resultType) {
 void IntrinsicLibrary::genRaiseExcept(int excepts, mlir::Value cond) {
   fir::IfOp ifOp;
   if (cond) {
-    ifOp = fir::IfOp::create(builder, loc, cond, /*withElseRegion=*/false);
+    ifOp = builder.create<fir::IfOp>(loc, cond, /*withElseRegion=*/false);
     builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   }
   mlir::Type i32Ty = builder.getIntegerType(32);
@@ -4802,11 +4722,11 @@ getFieldRef(fir::FirOpBuilder &builder, mlir::Location loc, mlir::Value rec,
       mlir::dyn_cast<fir::RecordType>(fir::unwrapPassByRefType(rec.getType()));
   assert(index < recType.getTypeList().size() && "not enough components");
   auto [fieldName, fieldTy] = recType.getTypeList()[index];
-  mlir::Value field = fir::FieldIndexOp::create(
-      builder, loc, fir::FieldType::get(recType.getContext()), fieldName,
-      recType, fir::getTypeParams(rec));
-  return {fir::CoordinateOp::create(builder, loc, builder.getRefType(fieldTy),
-                                    rec, field),
+  mlir::Value field = builder.create<fir::FieldIndexOp>(
+      loc, fir::FieldType::get(recType.getContext()), fieldName, recType,
+      fir::getTypeParams(rec));
+  return {builder.create<fir::CoordinateOp>(loc, builder.getRefType(fieldTy),
+                                            rec, field),
           fieldTy};
 }
 
@@ -4819,9 +4739,9 @@ IntrinsicLibrary::genIeeeTypeCompare(mlir::Type resultType,
   assert(args.size() == 2);
   auto [leftRef, fieldTy] = getFieldRef(builder, loc, args[0]);
   auto [rightRef, ignore] = getFieldRef(builder, loc, args[1]);
-  mlir::Value left = fir::LoadOp::create(builder, loc, fieldTy, leftRef);
-  mlir::Value right = fir::LoadOp::create(builder, loc, fieldTy, rightRef);
-  return mlir::arith::CmpIOp::create(builder, loc, pred, left, right);
+  mlir::Value left = builder.create<fir::LoadOp>(loc, fieldTy, leftRef);
+  mlir::Value right = builder.create<fir::LoadOp>(loc, fieldTy, rightRef);
+  return builder.create<mlir::arith::CmpIOp>(loc, pred, left, right);
 }
 
 // IEEE_CLASS
@@ -4852,7 +4772,7 @@ mlir::Value IntrinsicLibrary::genIeeeClass(mlir::Type resultType,
   const unsigned intWidth = realType.getWidth();
   mlir::Type intType = builder.getIntegerType(intWidth);
   mlir::Value intVal =
-      mlir::arith::BitcastOp::create(builder, loc, intType, realVal);
+      builder.create<mlir::arith::BitcastOp>(loc, intType, realVal);
   llvm::StringRef tableName = RTNAME_STRING(IeeeClassTable);
   uint64_t highSignificandSize = (realType.getWidth() == 80) + 1;
 
@@ -4862,8 +4782,8 @@ mlir::Value IntrinsicLibrary::genIeeeClass(mlir::Type resultType,
     return builder.createIntegerConstant(loc, intType, k);
   };
   auto createIntegerConstantAPI = [&](const llvm::APInt &apInt) {
-    return mlir::arith::ConstantOp::create(
-        builder, loc, intType, builder.getIntegerAttr(intType, apInt));
+    return builder.create<mlir::arith::ConstantOp>(
+        loc, intType, builder.getIntegerAttr(intType, apInt));
   };
   auto getMasksAndShifts = [&](uint64_t totalSize, uint64_t exponentSize,
                                uint64_t significandSize,
@@ -4910,52 +4830,50 @@ mlir::Value IntrinsicLibrary::genIeeeClass(mlir::Type resultType,
 
   // [s] sign bit
   int pos = 3 + highSignificandSize;
-  mlir::Value index = mlir::arith::AndIOp::create(
-      builder, loc,
-      mlir::arith::ShRUIOp::create(builder, loc, intVal, signShift),
+  mlir::Value index = builder.create<mlir::arith::AndIOp>(
+      loc, builder.create<mlir::arith::ShRUIOp>(loc, intVal, signShift),
       createIntegerConstant(1ULL << pos));
 
   // [e] exponent != 0
   mlir::Value exponent =
-      mlir::arith::AndIOp::create(builder, loc, intVal, exponentMask);
+      builder.create<mlir::arith::AndIOp>(loc, intVal, exponentMask);
   mlir::Value zero = createIntegerConstant(0);
-  index = mlir::arith::OrIOp::create(
-      builder, loc, index,
-      mlir::arith::SelectOp::create(
-          builder, loc,
-          mlir::arith::CmpIOp::create(
-              builder, loc, mlir::arith::CmpIPredicate::ne, exponent, zero),
+  index = builder.create<mlir::arith::OrIOp>(
+      loc, index,
+      builder.create<mlir::arith::SelectOp>(
+          loc,
+          builder.create<mlir::arith::CmpIOp>(
+              loc, mlir::arith::CmpIPredicate::ne, exponent, zero),
           createIntegerConstant(1ULL << --pos), zero));
 
   // [m] exponent == 1..1 (max exponent)
-  index = mlir::arith::OrIOp::create(
-      builder, loc, index,
-      mlir::arith::SelectOp::create(
-          builder, loc,
-          mlir::arith::CmpIOp::create(builder, loc,
-                                      mlir::arith::CmpIPredicate::eq, exponent,
-                                      exponentMask),
+  index = builder.create<mlir::arith::OrIOp>(
+      loc, index,
+      builder.create<mlir::arith::SelectOp>(
+          loc,
+          builder.create<mlir::arith::CmpIOp>(
+              loc, mlir::arith::CmpIPredicate::eq, exponent, exponentMask),
           createIntegerConstant(1ULL << --pos), zero));
 
   // [l] low-order significand != 0
-  index = mlir::arith::OrIOp::create(
-      builder, loc, index,
-      mlir::arith::SelectOp::create(
-          builder, loc,
-          mlir::arith::CmpIOp::create(
-              builder, loc, mlir::arith::CmpIPredicate::ne,
-              mlir::arith::AndIOp::create(builder, loc, intVal,
-                                          lowSignificandMask),
+  index = builder.create<mlir::arith::OrIOp>(
+      loc, index,
+      builder.create<mlir::arith::SelectOp>(
+          loc,
+          builder.create<mlir::arith::CmpIOp>(
+              loc, mlir::arith::CmpIPredicate::ne,
+              builder.create<mlir::arith::AndIOp>(loc, intVal,
+                                                  lowSignificandMask),
               zero),
           createIntegerConstant(1ULL << --pos), zero));
 
   // [h] high-order significand (1 or 2 bits)
-  index = mlir::arith::OrIOp::create(
-      builder, loc, index,
-      mlir::arith::AndIOp::create(
-          builder, loc,
-          mlir::arith::ShRUIOp::create(builder, loc, intVal,
-                                       highSignificandShift),
+  index = builder.create<mlir::arith::OrIOp>(
+      loc, index,
+      builder.create<mlir::arith::AndIOp>(
+          loc,
+          builder.create<mlir::arith::ShRUIOp>(loc, intVal,
+                                               highSignificandShift),
           createIntegerConstant((1 << highSignificandSize) - 1)));
 
   int tableSize = 1 << (4 + highSignificandSize);
@@ -5083,10 +5001,10 @@ mlir::Value IntrinsicLibrary::genIeeeClass(mlir::Type resultType,
             mlir::RankedTensorType::get(tableSize, int8Ty), values));
   }
 
-  return fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(resultType),
-      fir::AddrOfOp::create(builder, loc, builder.getRefType(tableTy),
-                            builder.getSymbolRefAttr(tableName)),
+  return builder.create<fir::CoordinateOp>(
+      loc, builder.getRefType(resultType),
+      builder.create<fir::AddrOfOp>(loc, builder.getRefType(tableTy),
+                                    builder.getSymbolRefAttr(tableName)),
       index);
 }
 
@@ -5113,36 +5031,34 @@ IntrinsicLibrary::genIeeeCopySign(mlir::Type resultType,
 
   // Args have the same type.
   if (xRealType == yRealType)
-    return mlir::math::CopySignOp::create(builder, loc, xRealVal, yRealVal);
+    return builder.create<mlir::math::CopySignOp>(loc, xRealVal, yRealVal);
 
   // Args have different types.
   mlir::Type xIntType = builder.getIntegerType(xRealType.getWidth());
   mlir::Type yIntType = builder.getIntegerType(yRealType.getWidth());
   mlir::Value xIntVal =
-      mlir::arith::BitcastOp::create(builder, loc, xIntType, xRealVal);
+      builder.create<mlir::arith::BitcastOp>(loc, xIntType, xRealVal);
   mlir::Value yIntVal =
-      mlir::arith::BitcastOp::create(builder, loc, yIntType, yRealVal);
+      builder.create<mlir::arith::BitcastOp>(loc, yIntType, yRealVal);
   mlir::Value xZero = builder.createIntegerConstant(loc, xIntType, 0);
   mlir::Value yZero = builder.createIntegerConstant(loc, yIntType, 0);
   mlir::Value xOne = builder.createIntegerConstant(loc, xIntType, 1);
-  mlir::Value ySign = mlir::arith::ShRUIOp::create(
-      builder, loc, yIntVal,
+  mlir::Value ySign = builder.create<mlir::arith::ShRUIOp>(
+      loc, yIntVal,
       builder.createIntegerConstant(loc, yIntType, yRealType.getWidth() - 1));
-  mlir::Value xAbs = mlir::arith::ShRUIOp::create(
-      builder, loc, mlir::arith::ShLIOp::create(builder, loc, xIntVal, xOne),
-      xOne);
-  mlir::Value xSign = mlir::arith::SelectOp::create(
-      builder, loc,
-      mlir::arith::CmpIOp::create(builder, loc, mlir::arith::CmpIPredicate::eq,
-                                  ySign, yZero),
+  mlir::Value xAbs = builder.create<mlir::arith::ShRUIOp>(
+      loc, builder.create<mlir::arith::ShLIOp>(loc, xIntVal, xOne), xOne);
+  mlir::Value xSign = builder.create<mlir::arith::SelectOp>(
+      loc,
+      builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::eq,
+                                          ySign, yZero),
       xZero,
-      mlir::arith::ShLIOp::create(
-          builder, loc, xOne,
+      builder.create<mlir::arith::ShLIOp>(
+          loc, xOne,
           builder.createIntegerConstant(loc, xIntType,
                                         xRealType.getWidth() - 1)));
-  return mlir::arith::BitcastOp::create(
-      builder, loc, xRealType,
-      mlir::arith::OrIOp::create(builder, loc, xAbs, xSign));
+  return builder.create<mlir::arith::BitcastOp>(
+      loc, xRealType, builder.create<mlir::arith::OrIOp>(loc, xAbs, xSign));
 }
 
 // IEEE_GET_FLAG
@@ -5156,16 +5072,16 @@ void IntrinsicLibrary::genIeeeGetFlag(llvm::ArrayRef<fir::ExtendedValue> args) {
   mlir::Type i32Ty = builder.getIntegerType(32);
   mlir::Value zero = builder.createIntegerConstant(loc, i32Ty, 0);
   auto [fieldRef, ignore] = getFieldRef(builder, loc, flag);
-  mlir::Value field = fir::LoadOp::create(builder, loc, fieldRef);
+  mlir::Value field = builder.create<fir::LoadOp>(loc, fieldRef);
   mlir::Value excepts = fir::runtime::genFetestexcept(
       builder, loc,
       fir::runtime::genMapExcept(
-          builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, field)));
-  mlir::Value logicalResult = fir::ConvertOp::create(
-      builder, loc, resultTy,
-      mlir::arith::CmpIOp::create(builder, loc, mlir::arith::CmpIPredicate::ne,
-                                  excepts, zero));
-  fir::StoreOp::create(builder, loc, logicalResult, flagValue);
+          builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, field)));
+  mlir::Value logicalResult = builder.create<fir::ConvertOp>(
+      loc, resultTy,
+      builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::ne,
+                                          excepts, zero));
+  builder.create<fir::StoreOp>(loc, logicalResult, flagValue);
 }
 
 // IEEE_GET_HALTING_MODE
@@ -5180,17 +5096,17 @@ void IntrinsicLibrary::genIeeeGetHaltingMode(
   mlir::Type i32Ty = builder.getIntegerType(32);
   mlir::Value zero = builder.createIntegerConstant(loc, i32Ty, 0);
   auto [fieldRef, ignore] = getFieldRef(builder, loc, flag);
-  mlir::Value field = fir::LoadOp::create(builder, loc, fieldRef);
+  mlir::Value field = builder.create<fir::LoadOp>(loc, fieldRef);
   mlir::Value haltSet = fir::runtime::genFegetexcept(builder, loc);
-  mlir::Value intResult = mlir::arith::AndIOp::create(
-      builder, loc, haltSet,
+  mlir::Value intResult = builder.create<mlir::arith::AndIOp>(
+      loc, haltSet,
       fir::runtime::genMapExcept(
-          builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, field)));
-  mlir::Value logicalResult = fir::ConvertOp::create(
-      builder, loc, resultTy,
-      mlir::arith::CmpIOp::create(builder, loc, mlir::arith::CmpIPredicate::ne,
-                                  intResult, zero));
-  fir::StoreOp::create(builder, loc, logicalResult, halting);
+          builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, field)));
+  mlir::Value logicalResult = builder.create<fir::ConvertOp>(
+      loc, resultTy,
+      builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::ne,
+                                          intResult, zero));
+  builder.create<fir::StoreOp>(loc, logicalResult, halting);
 }
 
 // IEEE_GET_MODES, IEEE_SET_MODES
@@ -5215,34 +5131,34 @@ void IntrinsicLibrary::genIeeeGetOrSetModesOrStatus(
     // allotment. Allocate data space from the heap.
     auto [fieldRef, fieldTy] =
         getFieldRef(builder, loc, fir::getBase(args[0]), 1);
-    addr = fir::BoxAddrOp::create(builder, loc,
-                                  fir::LoadOp::create(builder, loc, fieldRef));
+    addr = builder.create<fir::BoxAddrOp>(
+        loc, builder.create<fir::LoadOp>(loc, fieldRef));
     mlir::Type heapTy = addr.getType();
-    mlir::Value allocated = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::ne,
+    mlir::Value allocated = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::ne,
         builder.createConvert(loc, i64Ty, addr),
         builder.createIntegerConstant(loc, i64Ty, 0));
-    auto ifOp = fir::IfOp::create(builder, loc, heapTy, allocated,
-                                  /*withElseRegion=*/true);
+    auto ifOp = builder.create<fir::IfOp>(loc, heapTy, allocated,
+                                          /*withElseRegion=*/true);
     builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
-    fir::ResultOp::create(builder, loc, addr);
+    builder.create<fir::ResultOp>(loc, addr);
     builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
     mlir::Value byteSize =
         isModes ? fir::runtime::genGetModesTypeSize(builder, loc)
                 : fir::runtime::genGetStatusTypeSize(builder, loc);
     byteSize = builder.createConvert(loc, builder.getIndexType(), byteSize);
-    addr = fir::AllocMemOp::create(builder, loc, extractSequenceType(heapTy),
-                                   /*typeparams=*/mlir::ValueRange(), byteSize);
-    mlir::Value shape = fir::ShapeOp::create(builder, loc, byteSize);
-    fir::StoreOp::create(
-        builder, loc, fir::EmboxOp::create(builder, loc, fieldTy, addr, shape),
-        fieldRef);
-    fir::ResultOp::create(builder, loc, addr);
+    addr =
+        builder.create<fir::AllocMemOp>(loc, extractSequenceType(heapTy),
+                                        /*typeparams=*/std::nullopt, byteSize);
+    mlir::Value shape = builder.create<fir::ShapeOp>(loc, byteSize);
+    builder.create<fir::StoreOp>(
+        loc, builder.create<fir::EmboxOp>(loc, fieldTy, addr, shape), fieldRef);
+    builder.create<fir::ResultOp>(loc, addr);
     builder.setInsertionPointAfter(ifOp);
-    addr = fir::ConvertOp::create(builder, loc, ptrTy, ifOp.getResult(0));
+    addr = builder.create<fir::ConvertOp>(loc, ptrTy, ifOp.getResult(0));
   } else {
     // Place floating point environment data in __data storage.
-    addr = fir::ConvertOp::create(builder, loc, ptrTy, getBase(args[0]));
+    addr = builder.create<fir::ConvertOp>(loc, ptrTy, getBase(args[0]));
   }
   llvm::StringRef func = isModes ? (isGet ? "fegetmode" : "fesetmode")
                                  : (isGet ? "fegetenv" : "fesetenv");
@@ -5253,11 +5169,11 @@ void IntrinsicLibrary::genIeeeGetOrSetModesOrStatus(
 // Check that an explicit ieee_[get|set]_rounding_mode call radix value is 2.
 static void checkRadix(fir::FirOpBuilder &builder, mlir::Location loc,
                        mlir::Value radix, std::string procName) {
-  mlir::Value notTwo = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::ne, radix,
+  mlir::Value notTwo = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::ne, radix,
       builder.createIntegerConstant(loc, radix.getType(), 2));
-  auto ifOp = fir::IfOp::create(builder, loc, notTwo,
-                                /*withElseRegion=*/false);
+  auto ifOp = builder.create<fir::IfOp>(loc, notTwo,
+                                        /*withElseRegion=*/false);
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   fir::runtime::genReportFatalUserError(builder, loc,
                                         procName + " radix argument must be 2");
@@ -5275,9 +5191,9 @@ void IntrinsicLibrary::genIeeeGetRoundingMode(
     checkRadix(builder, loc, fir::getBase(args[1]), "ieee_get_rounding_mode");
   auto [fieldRef, fieldTy] = getFieldRef(builder, loc, fir::getBase(args[0]));
   mlir::func::FuncOp getRound = fir::factory::getLlvmGetRounding(builder);
-  mlir::Value mode = fir::CallOp::create(builder, loc, getRound).getResult(0);
+  mlir::Value mode = builder.create<fir::CallOp>(loc, getRound).getResult(0);
   mode = builder.createConvert(loc, fieldTy, mode);
-  fir::StoreOp::create(builder, loc, mode, fieldRef);
+  builder.create<fir::StoreOp>(loc, mode, fieldRef);
 }
 
 // IEEE_GET_UNDERFLOW_MODE
@@ -5302,45 +5218,44 @@ mlir::Value IntrinsicLibrary::genIeeeInt(mlir::Type resultType,
   mlir::FloatType realType = mlir::cast<mlir::FloatType>(args[0].getType());
   mlir::Value realResult = genIeeeRint(realType, {args[0], args[1]});
   int intWidth = mlir::cast<mlir::IntegerType>(resultType).getWidth();
-  mlir::Value intLBound = mlir::arith::ConstantOp::create(
-      builder, loc, resultType,
+  mlir::Value intLBound = builder.create<mlir::arith::ConstantOp>(
+      loc, resultType,
       builder.getIntegerAttr(resultType,
                              llvm::APInt::getBitsSet(intWidth,
                                                      /*lo=*/intWidth - 1,
                                                      /*hi=*/intWidth)));
-  mlir::Value intUBound = mlir::arith::ConstantOp::create(
-      builder, loc, resultType,
+  mlir::Value intUBound = builder.create<mlir::arith::ConstantOp>(
+      loc, resultType,
       builder.getIntegerAttr(resultType,
                              llvm::APInt::getBitsSet(intWidth, /*lo=*/0,
                                                      /*hi=*/intWidth - 1)));
   mlir::Value realLBound =
-      fir::ConvertOp::create(builder, loc, realType, intLBound);
-  mlir::Value realUBound =
-      mlir::arith::NegFOp::create(builder, loc, realLBound);
-  mlir::Value aGreaterThanLBound = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OGE, realResult, realLBound);
-  mlir::Value aLessThanUBound = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OLT, realResult, realUBound);
-  mlir::Value resultIsValid = mlir::arith::AndIOp::create(
-      builder, loc, aGreaterThanLBound, aLessThanUBound);
+      builder.create<fir::ConvertOp>(loc, realType, intLBound);
+  mlir::Value realUBound = builder.create<mlir::arith::NegFOp>(loc, realLBound);
+  mlir::Value aGreaterThanLBound = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OGE, realResult, realLBound);
+  mlir::Value aLessThanUBound = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OLT, realResult, realUBound);
+  mlir::Value resultIsValid = builder.create<mlir::arith::AndIOp>(
+      loc, aGreaterThanLBound, aLessThanUBound);
 
   // Result is valid. It may be exact or inexact.
   mlir::Value result;
-  fir::IfOp ifOp = fir::IfOp::create(builder, loc, resultType, resultIsValid,
-                                     /*withElseRegion=*/true);
+  fir::IfOp ifOp = builder.create<fir::IfOp>(loc, resultType, resultIsValid,
+                                             /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
-  mlir::Value inexact = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::ONE, args[0], realResult);
+  mlir::Value inexact = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::ONE, args[0], realResult);
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INEXACT, inexact);
-  result = fir::ConvertOp::create(builder, loc, resultType, realResult);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<fir::ConvertOp>(loc, resultType, realResult);
+  builder.create<fir::ResultOp>(loc, result);
 
   // Result is invalid.
   builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INVALID);
-  result = mlir::arith::SelectOp::create(builder, loc, aGreaterThanLBound,
-                                         intUBound, intLBound);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<mlir::arith::SelectOp>(loc, aGreaterThanLBound,
+                                                 intUBound, intLBound);
+  builder.create<fir::ResultOp>(loc, result);
   builder.setInsertionPointAfter(ifOp);
   return ifOp.getResult(0);
 }
@@ -5395,7 +5310,7 @@ mlir::Value IntrinsicLibrary::genIeeeLogb(mlir::Type resultType,
   int bitWidth = realType.getWidth();
   mlir::Type intType = builder.getIntegerType(realType.getWidth());
   mlir::Value intVal =
-      mlir::arith::BitcastOp::create(builder, loc, intType, realVal);
+      builder.create<mlir::arith::BitcastOp>(loc, intType, realVal);
   mlir::Type i1Ty = builder.getI1Type();
 
   int exponentBias, significandSize, nonSignificandSize;
@@ -5442,72 +5357,72 @@ mlir::Value IntrinsicLibrary::genIeeeLogb(mlir::Type resultType,
     llvm_unreachable("unknown real type");
   }
 
-  mlir::Value isZero = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OEQ, realVal,
+  mlir::Value isZero = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OEQ, realVal,
       builder.createRealZeroConstant(loc, resultType));
-  auto outerIfOp = fir::IfOp::create(builder, loc, resultType, isZero,
-                                     /*withElseRegion=*/true);
+  auto outerIfOp = builder.create<fir::IfOp>(loc, resultType, isZero,
+                                             /*withElseRegion=*/true);
   // X is zero -- result is -infinity
   builder.setInsertionPointToStart(&outerIfOp.getThenRegion().front());
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_DIVIDE_BY_ZERO);
   mlir::Value ones = builder.createAllOnesInteger(loc, intType);
-  mlir::Value result = mlir::arith::ShLIOp::create(
-      builder, loc, ones,
+  mlir::Value result = builder.create<mlir::arith::ShLIOp>(
+      loc, ones,
       builder.createIntegerConstant(loc, intType,
                                     // kind=10 high-order bit is explicit
                                     significandSize - (bitWidth == 80)));
-  result = mlir::arith::BitcastOp::create(builder, loc, resultType, result);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<mlir::arith::BitcastOp>(loc, resultType, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   builder.setInsertionPointToStart(&outerIfOp.getElseRegion().front());
   mlir::Value one = builder.createIntegerConstant(loc, intType, 1);
   mlir::Value shiftLeftOne =
-      mlir::arith::ShLIOp::create(builder, loc, intVal, one);
+      builder.create<mlir::arith::ShLIOp>(loc, intVal, one);
   mlir::Value isFinite = genIsFPClass(i1Ty, args, finiteTest);
-  auto innerIfOp = fir::IfOp::create(builder, loc, resultType, isFinite,
-                                     /*withElseRegion=*/true);
+  auto innerIfOp = builder.create<fir::IfOp>(loc, resultType, isFinite,
+                                             /*withElseRegion=*/true);
   // X is non-zero finite -- result is unbiased exponent of X
   builder.setInsertionPointToStart(&innerIfOp.getThenRegion().front());
   mlir::Value isNormal = genIsFPClass(i1Ty, args, normalTest);
-  auto normalIfOp = fir::IfOp::create(builder, loc, resultType, isNormal,
-                                      /*withElseRegion=*/true);
+  auto normalIfOp = builder.create<fir::IfOp>(loc, resultType, isNormal,
+                                              /*withElseRegion=*/true);
   // X is normal
   builder.setInsertionPointToStart(&normalIfOp.getThenRegion().front());
-  mlir::Value biasedExponent = mlir::arith::ShRUIOp::create(
-      builder, loc, shiftLeftOne,
+  mlir::Value biasedExponent = builder.create<mlir::arith::ShRUIOp>(
+      loc, shiftLeftOne,
       builder.createIntegerConstant(loc, intType, significandSize + 1));
-  result = mlir::arith::SubIOp::create(
-      builder, loc, biasedExponent,
+  result = builder.create<mlir::arith::SubIOp>(
+      loc, biasedExponent,
       builder.createIntegerConstant(loc, intType, exponentBias));
-  result = fir::ConvertOp::create(builder, loc, resultType, result);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<fir::ConvertOp>(loc, resultType, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   // X is denormal -- result is (-exponentBias - ctlz(significand))
   builder.setInsertionPointToStart(&normalIfOp.getElseRegion().front());
-  mlir::Value significand = mlir::arith::ShLIOp::create(
-      builder, loc, intVal,
+  mlir::Value significand = builder.create<mlir::arith::ShLIOp>(
+      loc, intVal,
       builder.createIntegerConstant(loc, intType, nonSignificandSize));
   mlir::Value ctlz =
-      mlir::math::CountLeadingZerosOp::create(builder, loc, significand);
+      builder.create<mlir::math::CountLeadingZerosOp>(loc, significand);
   mlir::Type i32Ty = builder.getI32Type();
-  result = mlir::arith::SubIOp::create(
-      builder, loc, builder.createIntegerConstant(loc, i32Ty, -exponentBias),
-      fir::ConvertOp::create(builder, loc, i32Ty, ctlz));
-  result = fir::ConvertOp::create(builder, loc, resultType, result);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<mlir::arith::SubIOp>(
+      loc, builder.createIntegerConstant(loc, i32Ty, -exponentBias),
+      builder.create<fir::ConvertOp>(loc, i32Ty, ctlz));
+  result = builder.create<fir::ConvertOp>(loc, resultType, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   builder.setInsertionPointToEnd(&innerIfOp.getThenRegion().front());
-  fir::ResultOp::create(builder, loc, normalIfOp.getResult(0));
+  builder.create<fir::ResultOp>(loc, normalIfOp.getResult(0));
 
   // X is infinity or NaN -- result is +infinity or NaN
   builder.setInsertionPointToStart(&innerIfOp.getElseRegion().front());
-  result = mlir::arith::ShRUIOp::create(builder, loc, shiftLeftOne, one);
-  result = mlir::arith::BitcastOp::create(builder, loc, resultType, result);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<mlir::arith::ShRUIOp>(loc, shiftLeftOne, one);
+  result = builder.create<mlir::arith::BitcastOp>(loc, resultType, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   // Unwind the if nest.
   builder.setInsertionPointToEnd(&outerIfOp.getElseRegion().front());
-  fir::ResultOp::create(builder, loc, innerIfOp.getResult(0));
+  builder.create<fir::ResultOp>(loc, innerIfOp.getResult(0));
   builder.setInsertionPointAfter(outerIfOp);
   return outerIfOp.getResult(0);
 }
@@ -5541,8 +5456,8 @@ mlir::Value IntrinsicLibrary::genIeeeMaxMin(mlir::Type resultType,
   mlir::Value x1, y1; // X or ABS(X), Y or ABS(Y)
   if constexpr (isMag) {
     mlir::Value zero = builder.createRealZeroConstant(loc, resultType);
-    x1 = mlir::math::CopySignOp::create(builder, loc, x, zero);
-    y1 = mlir::math::CopySignOp::create(builder, loc, y, zero);
+    x1 = builder.create<mlir::math::CopySignOp>(loc, x, zero);
+    y1 = builder.create<mlir::math::CopySignOp>(loc, y, zero);
   } else {
     x1 = x;
     y1 = y;
@@ -5553,56 +5468,56 @@ mlir::Value IntrinsicLibrary::genIeeeMaxMin(mlir::Type resultType,
 
   // X1 < Y1 -- MAX result is Y; MIN result is X.
   pred = mlir::arith::CmpFPredicate::OLT;
-  cmp = mlir::arith::CmpFOp::create(builder, loc, pred, x1, y1);
-  auto ifOp1 = fir::IfOp::create(builder, loc, resultType, cmp, true);
+  cmp = builder.create<mlir::arith::CmpFOp>(loc, pred, x1, y1);
+  auto ifOp1 = builder.create<fir::IfOp>(loc, resultType, cmp, true);
   builder.setInsertionPointToStart(&ifOp1.getThenRegion().front());
   result = isMax ? y : x;
-  fir::ResultOp::create(builder, loc, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   // X1 > Y1 -- MAX result is X; MIN result is Y.
   builder.setInsertionPointToStart(&ifOp1.getElseRegion().front());
   pred = mlir::arith::CmpFPredicate::OGT;
-  cmp = mlir::arith::CmpFOp::create(builder, loc, pred, x1, y1);
-  auto ifOp2 = fir::IfOp::create(builder, loc, resultType, cmp, true);
+  cmp = builder.create<mlir::arith::CmpFOp>(loc, pred, x1, y1);
+  auto ifOp2 = builder.create<fir::IfOp>(loc, resultType, cmp, true);
   builder.setInsertionPointToStart(&ifOp2.getThenRegion().front());
   result = isMax ? x : y;
-  fir::ResultOp::create(builder, loc, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   // X1 == Y1 -- MAX favors a positive result; MIN favors a negative result.
   builder.setInsertionPointToStart(&ifOp2.getElseRegion().front());
   pred = mlir::arith::CmpFPredicate::OEQ;
-  cmp = mlir::arith::CmpFOp::create(builder, loc, pred, x1, y1);
-  auto ifOp3 = fir::IfOp::create(builder, loc, resultType, cmp, true);
+  cmp = builder.create<mlir::arith::CmpFOp>(loc, pred, x1, y1);
+  auto ifOp3 = builder.create<fir::IfOp>(loc, resultType, cmp, true);
   builder.setInsertionPointToStart(&ifOp3.getThenRegion().front());
   resultIsX = isMax ? genIsFPClass(i1Ty, x, positiveTest)
                     : genIsFPClass(i1Ty, x, negativeTest);
-  result = mlir::arith::SelectOp::create(builder, loc, resultIsX, x, y);
-  fir::ResultOp::create(builder, loc, result);
+  result = builder.create<mlir::arith::SelectOp>(loc, resultIsX, x, y);
+  builder.create<fir::ResultOp>(loc, result);
 
   // X or Y or both are NaNs -- result may be X, Y, or a qNaN
   builder.setInsertionPointToStart(&ifOp3.getElseRegion().front());
   if constexpr (isNum) {
     pred = mlir::arith::CmpFPredicate::ORD; // check for a non-NaN
-    resultIsX = mlir::arith::CmpFOp::create(builder, loc, pred, x, x);
-    resultIsY = mlir::arith::CmpFOp::create(builder, loc, pred, y, y);
+    resultIsX = builder.create<mlir::arith::CmpFOp>(loc, pred, x, x);
+    resultIsY = builder.create<mlir::arith::CmpFOp>(loc, pred, y, y);
   } else {
     resultIsX = resultIsY = builder.createBool(loc, false);
   }
-  result = mlir::arith::SelectOp::create(
-      builder, loc, resultIsX, x,
-      mlir::arith::SelectOp::create(builder, loc, resultIsY, y,
-                                    genQNan(resultType)));
-  mlir::Value hasSNaNOp = mlir::arith::OrIOp::create(
-      builder, loc, genIsFPClass(builder.getI1Type(), args[0], snanTest),
+  result = builder.create<mlir::arith::SelectOp>(
+      loc, resultIsX, x,
+      builder.create<mlir::arith::SelectOp>(loc, resultIsY, y,
+                                            genQNan(resultType)));
+  mlir::Value hasSNaNOp = builder.create<mlir::arith::OrIOp>(
+      loc, genIsFPClass(builder.getI1Type(), args[0], snanTest),
       genIsFPClass(builder.getI1Type(), args[1], snanTest));
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INVALID, hasSNaNOp);
-  fir::ResultOp::create(builder, loc, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   // Unwind the if nest.
   builder.setInsertionPointAfter(ifOp3);
-  fir::ResultOp::create(builder, loc, ifOp3.getResult(0));
+  builder.create<fir::ResultOp>(loc, ifOp3.getResult(0));
   builder.setInsertionPointAfter(ifOp2);
-  fir::ResultOp::create(builder, loc, ifOp2.getResult(0));
+  builder.create<fir::ResultOp>(loc, ifOp2.getResult(0));
   builder.setInsertionPointAfter(ifOp1);
   return ifOp1.getResult(0);
 }
@@ -5615,13 +5530,13 @@ IntrinsicLibrary::genIeeeQuietCompare(mlir::Type resultType,
                                       llvm::ArrayRef<mlir::Value> args) {
   // Compare X and Y with special case treatment of NaN operands.
   assert(args.size() == 2);
-  mlir::Value hasSNaNOp = mlir::arith::OrIOp::create(
-      builder, loc, genIsFPClass(builder.getI1Type(), args[0], snanTest),
+  mlir::Value hasSNaNOp = builder.create<mlir::arith::OrIOp>(
+      loc, genIsFPClass(builder.getI1Type(), args[0], snanTest),
       genIsFPClass(builder.getI1Type(), args[1], snanTest));
   mlir::Value res =
-      mlir::arith::CmpFOp::create(builder, loc, pred, args[0], args[1]);
+      builder.create<mlir::arith::CmpFOp>(loc, pred, args[0], args[1]);
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INVALID, hasSNaNOp);
-  return fir::ConvertOp::create(builder, loc, resultType, res);
+  return builder.create<fir::ConvertOp>(loc, resultType, res);
 }
 
 // IEEE_REAL
@@ -5673,14 +5588,14 @@ mlir::Value IntrinsicLibrary::genIeeeReal(mlir::Type resultType,
   // If the argument is an sNaN, raise an invalid exception and return a qNaN.
   // Otherwise return the argument.
   auto processSnan = [&](mlir::Value x) {
-    fir::IfOp ifOp = fir::IfOp::create(builder, loc, resultType,
-                                       genIsFPClass(i1Ty, x, snanTest),
-                                       /*withElseRegion=*/true);
+    fir::IfOp ifOp = builder.create<fir::IfOp>(loc, resultType,
+                                               genIsFPClass(i1Ty, x, snanTest),
+                                               /*withElseRegion=*/true);
     builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
     genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INVALID);
-    fir::ResultOp::create(builder, loc, genQNan(resultType));
+    builder.create<fir::ResultOp>(loc, genQNan(resultType));
     builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
-    fir::ResultOp::create(builder, loc, x);
+    builder.create<fir::ResultOp>(loc, x);
     builder.setInsertionPointAfter(ifOp);
     return ifOp.getResult(0);
   };
@@ -5696,7 +5611,7 @@ mlir::Value IntrinsicLibrary::genIeeeReal(mlir::Type resultType,
     a = builder.createConvert(loc, f32Ty, a);
     aType = f32Ty;
   }
-  r = fir::ConvertOp::create(builder, loc, resultType, a);
+  r = builder.create<fir::ConvertOp>(loc, resultType, a);
 
   mlir::IntegerType aIntType = mlir::dyn_cast<mlir::IntegerType>(aType);
   mlir::FloatType aFloatType = mlir::dyn_cast<mlir::FloatType>(aType);
@@ -5708,144 +5623,142 @@ mlir::Value IntrinsicLibrary::genIeeeReal(mlir::Type resultType,
     return aIntType ? r : processSnan(r);
 
   // A possibly inexact conversion result may need to be rounded up or down.
-  mlir::Value b = fir::ConvertOp::create(builder, loc, aType, r);
+  mlir::Value b = builder.create<fir::ConvertOp>(loc, aType, r);
   mlir::Value aEqB;
   if (aIntType)
-    aEqB = mlir::arith::CmpIOp::create(builder, loc,
-                                       mlir::arith::CmpIPredicate::eq, a, b);
+    aEqB = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, a, b);
   else
-    aEqB = mlir::arith::CmpFOp::create(builder, loc,
-                                       mlir::arith::CmpFPredicate::UEQ, a, b);
+    aEqB = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::UEQ, a, b);
 
   // [a == b] a is a NaN or r is exact (a may be -0, +0, -inf, +inf) -- return r
-  fir::IfOp ifOp1 = fir::IfOp::create(builder, loc, resultType, aEqB,
-                                      /*withElseRegion=*/true);
+  fir::IfOp ifOp1 = builder.create<fir::IfOp>(loc, resultType, aEqB,
+                                              /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&ifOp1.getThenRegion().front());
-  fir::ResultOp::create(builder, loc, aIntType ? r : processSnan(r));
+  builder.create<fir::ResultOp>(loc, aIntType ? r : processSnan(r));
 
   // Code common to (a < b) and (a > b) branches.
   builder.setInsertionPointToStart(&ifOp1.getElseRegion().front());
   mlir::func::FuncOp getRound = fir::factory::getLlvmGetRounding(builder);
-  mlir::Value mode = fir::CallOp::create(builder, loc, getRound).getResult(0);
+  mlir::Value mode = builder.create<fir::CallOp>(loc, getRound).getResult(0);
   mlir::Value aIsNegative, aIsPositive;
   if (aIntType) {
     mlir::Value zero = builder.createIntegerConstant(loc, aIntType, 0);
-    aIsNegative = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::slt, a, zero);
-    aIsPositive = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::sgt, a, zero);
+    aIsNegative = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::slt, a, zero);
+    aIsPositive = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::sgt, a, zero);
   } else {
     mlir::Value zero = builder.createRealZeroConstant(loc, aFloatType);
-    aIsNegative = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::OLT, a, zero);
-    aIsPositive = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::OGT, a, zero);
+    aIsNegative = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::OLT, a, zero);
+    aIsPositive = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::OGT, a, zero);
   }
   mlir::Type resultIntType = builder.getIntegerType(resultFloatType.getWidth());
   mlir::Value resultCast =
-      mlir::arith::BitcastOp::create(builder, loc, resultIntType, r);
+      builder.create<mlir::arith::BitcastOp>(loc, resultIntType, r);
   mlir::Value one = builder.createIntegerConstant(loc, resultIntType, 1);
-  mlir::Value rIsOdd = fir::ConvertOp::create(
-      builder, loc, i1Ty,
-      mlir::arith::AndIOp::create(builder, loc, resultCast, one));
+  mlir::Value rIsOdd = builder.create<fir::ConvertOp>(
+      loc, i1Ty, builder.create<mlir::arith::AndIOp>(loc, resultCast, one));
   // Check for a rounding mode match.
   auto match = [&](int m) {
-    return mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::eq, mode,
+    return builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, mode,
         builder.createIntegerConstant(loc, mode.getType(), m));
   };
-  mlir::Value roundToNearestBit = mlir::arith::OrIOp::create(
-      builder, loc,
+  mlir::Value roundToNearestBit = builder.create<mlir::arith::OrIOp>(
+      loc,
       // IEEE_OTHER is an alias for IEEE_NEAREST.
       match(_FORTRAN_RUNTIME_IEEE_NEAREST), match(_FORTRAN_RUNTIME_IEEE_OTHER));
   mlir::Value roundToNearest =
-      mlir::arith::AndIOp::create(builder, loc, roundToNearestBit, rIsOdd);
+      builder.create<mlir::arith::AndIOp>(loc, roundToNearestBit, rIsOdd);
   mlir::Value roundToZeroBit = match(_FORTRAN_RUNTIME_IEEE_TO_ZERO);
   mlir::Value roundAwayBit = match(_FORTRAN_RUNTIME_IEEE_AWAY);
   mlir::Value roundToZero, roundAway, mustAdjust;
   fir::IfOp adjustIfOp;
   mlir::Value aLtB;
   if (aIntType)
-    aLtB = mlir::arith::CmpIOp::create(builder, loc,
-                                       mlir::arith::CmpIPredicate::slt, a, b);
+    aLtB = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::slt, a, b);
   else
-    aLtB = mlir::arith::CmpFOp::create(builder, loc,
-                                       mlir::arith::CmpFPredicate::OLT, a, b);
+    aLtB = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::OLT, a, b);
   mlir::Value upResult =
-      mlir::arith::AddIOp::create(builder, loc, resultCast, one);
+      builder.create<mlir::arith::AddIOp>(loc, resultCast, one);
   mlir::Value downResult =
-      mlir::arith::SubIOp::create(builder, loc, resultCast, one);
+      builder.create<mlir::arith::SubIOp>(loc, resultCast, one);
 
   // (a < b): r is inexact -- return r or ieee_next_down(r)
-  fir::IfOp ifOp2 = fir::IfOp::create(builder, loc, resultType, aLtB,
-                                      /*withElseRegion=*/true);
+  fir::IfOp ifOp2 = builder.create<fir::IfOp>(loc, resultType, aLtB,
+                                              /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&ifOp2.getThenRegion().front());
   roundToZero =
-      mlir::arith::AndIOp::create(builder, loc, roundToZeroBit, aIsPositive);
+      builder.create<mlir::arith::AndIOp>(loc, roundToZeroBit, aIsPositive);
   roundAway =
-      mlir::arith::AndIOp::create(builder, loc, roundAwayBit, aIsNegative);
+      builder.create<mlir::arith::AndIOp>(loc, roundAwayBit, aIsNegative);
   mlir::Value roundDown = match(_FORTRAN_RUNTIME_IEEE_DOWN);
   mustAdjust =
-      mlir::arith::OrIOp::create(builder, loc, roundToNearest, roundToZero);
-  mustAdjust = mlir::arith::OrIOp::create(builder, loc, mustAdjust, roundAway);
-  mustAdjust = mlir::arith::OrIOp::create(builder, loc, mustAdjust, roundDown);
-  adjustIfOp = fir::IfOp::create(builder, loc, resultType, mustAdjust,
-                                 /*withElseRegion=*/true);
+      builder.create<mlir::arith::OrIOp>(loc, roundToNearest, roundToZero);
+  mustAdjust = builder.create<mlir::arith::OrIOp>(loc, mustAdjust, roundAway);
+  mustAdjust = builder.create<mlir::arith::OrIOp>(loc, mustAdjust, roundDown);
+  adjustIfOp = builder.create<fir::IfOp>(loc, resultType, mustAdjust,
+                                         /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&adjustIfOp.getThenRegion().front());
   if (resultType.isF80())
     r1 = fir::runtime::genNearest(builder, loc, r,
                                   builder.createBool(loc, false));
   else
-    r1 = mlir::arith::BitcastOp::create(
-        builder, loc, resultType,
-        mlir::arith::SelectOp::create(builder, loc, aIsNegative, upResult,
-                                      downResult));
-  fir::ResultOp::create(builder, loc, r1);
+    r1 = builder.create<mlir::arith::BitcastOp>(
+        loc, resultType,
+        builder.create<mlir::arith::SelectOp>(loc, aIsNegative, upResult,
+                                              downResult));
+  builder.create<fir::ResultOp>(loc, r1);
   builder.setInsertionPointToStart(&adjustIfOp.getElseRegion().front());
-  fir::ResultOp::create(builder, loc, r);
+  builder.create<fir::ResultOp>(loc, r);
   builder.setInsertionPointAfter(adjustIfOp);
-  fir::ResultOp::create(builder, loc, adjustIfOp.getResult(0));
+  builder.create<fir::ResultOp>(loc, adjustIfOp.getResult(0));
 
   // (a > b): r is inexact -- return r or ieee_next_up(r)
   builder.setInsertionPointToStart(&ifOp2.getElseRegion().front());
   roundToZero =
-      mlir::arith::AndIOp::create(builder, loc, roundToZeroBit, aIsNegative);
+      builder.create<mlir::arith::AndIOp>(loc, roundToZeroBit, aIsNegative);
   roundAway =
-      mlir::arith::AndIOp::create(builder, loc, roundAwayBit, aIsPositive);
+      builder.create<mlir::arith::AndIOp>(loc, roundAwayBit, aIsPositive);
   mlir::Value roundUp = match(_FORTRAN_RUNTIME_IEEE_UP);
   mustAdjust =
-      mlir::arith::OrIOp::create(builder, loc, roundToNearest, roundToZero);
-  mustAdjust = mlir::arith::OrIOp::create(builder, loc, mustAdjust, roundAway);
-  mustAdjust = mlir::arith::OrIOp::create(builder, loc, mustAdjust, roundUp);
-  adjustIfOp = fir::IfOp::create(builder, loc, resultType, mustAdjust,
-                                 /*withElseRegion=*/true);
+      builder.create<mlir::arith::OrIOp>(loc, roundToNearest, roundToZero);
+  mustAdjust = builder.create<mlir::arith::OrIOp>(loc, mustAdjust, roundAway);
+  mustAdjust = builder.create<mlir::arith::OrIOp>(loc, mustAdjust, roundUp);
+  adjustIfOp = builder.create<fir::IfOp>(loc, resultType, mustAdjust,
+                                         /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&adjustIfOp.getThenRegion().front());
   if (resultType.isF80())
     r1 = fir::runtime::genNearest(builder, loc, r,
                                   builder.createBool(loc, true));
   else
-    r1 = mlir::arith::BitcastOp::create(
-        builder, loc, resultType,
-        mlir::arith::SelectOp::create(builder, loc, aIsPositive, upResult,
-                                      downResult));
-  fir::ResultOp::create(builder, loc, r1);
+    r1 = builder.create<mlir::arith::BitcastOp>(
+        loc, resultType,
+        builder.create<mlir::arith::SelectOp>(loc, aIsPositive, upResult,
+                                              downResult));
+  builder.create<fir::ResultOp>(loc, r1);
   builder.setInsertionPointToStart(&adjustIfOp.getElseRegion().front());
-  fir::ResultOp::create(builder, loc, r);
+  builder.create<fir::ResultOp>(loc, r);
   builder.setInsertionPointAfter(adjustIfOp);
-  fir::ResultOp::create(builder, loc, adjustIfOp.getResult(0));
+  builder.create<fir::ResultOp>(loc, adjustIfOp.getResult(0));
 
   // Generate exceptions for (a < b) and (a > b) branches.
   builder.setInsertionPointAfter(ifOp2);
   r = ifOp2.getResult(0);
-  fir::IfOp exceptIfOp1 =
-      fir::IfOp::create(builder, loc, genIsFPClass(i1Ty, r, infiniteTest),
-                        /*withElseRegion=*/true);
+  fir::IfOp exceptIfOp1 = builder.create<fir::IfOp>(
+      loc, genIsFPClass(i1Ty, r, infiniteTest), /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&exceptIfOp1.getThenRegion().front());
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_OVERFLOW |
                  _FORTRAN_RUNTIME_IEEE_INEXACT);
   builder.setInsertionPointToStart(&exceptIfOp1.getElseRegion().front());
-  fir::IfOp exceptIfOp2 = fir::IfOp::create(
-      builder, loc, genIsFPClass(i1Ty, r, subnormalTest | zeroTest),
+  fir::IfOp exceptIfOp2 = builder.create<fir::IfOp>(
+      loc, genIsFPClass(i1Ty, r, subnormalTest | zeroTest),
       /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&exceptIfOp2.getThenRegion().front());
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_UNDERFLOW |
@@ -5853,7 +5766,7 @@ mlir::Value IntrinsicLibrary::genIeeeReal(mlir::Type resultType,
   builder.setInsertionPointToStart(&exceptIfOp2.getElseRegion().front());
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INEXACT);
   builder.setInsertionPointAfter(exceptIfOp1);
-  fir::ResultOp::create(builder, loc, ifOp2.getResult(0));
+  builder.create<fir::ResultOp>(loc, ifOp2.getResult(0));
   builder.setInsertionPointAfter(ifOp1);
   return ifOp1.getResult(0);
 }
@@ -5869,19 +5782,19 @@ mlir::Value IntrinsicLibrary::genIeeeRem(mlir::Type resultType,
   mlir::Value y = args[1];
   if (mlir::dyn_cast<mlir::FloatType>(resultType).getWidth() < 32) {
     mlir::Type f32Ty = mlir::Float32Type::get(builder.getContext());
-    x = fir::ConvertOp::create(builder, loc, f32Ty, x);
-    y = fir::ConvertOp::create(builder, loc, f32Ty, y);
+    x = builder.create<fir::ConvertOp>(loc, f32Ty, x);
+    y = builder.create<fir::ConvertOp>(loc, f32Ty, y);
   } else {
-    x = fir::ConvertOp::create(builder, loc, resultType, x);
-    y = fir::ConvertOp::create(builder, loc, resultType, y);
+    x = builder.create<fir::ConvertOp>(loc, resultType, x);
+    y = builder.create<fir::ConvertOp>(loc, resultType, y);
   }
   // remainder calls do not signal IEEE_UNDERFLOW.
-  mlir::Value underflow = mlir::arith::AndIOp::create(
-      builder, loc, genIsFPClass(builder.getI1Type(), x, subnormalTest),
+  mlir::Value underflow = builder.create<mlir::arith::AndIOp>(
+      loc, genIsFPClass(builder.getI1Type(), x, subnormalTest),
       genIsFPClass(builder.getI1Type(), y, infiniteTest));
   mlir::Value result = genRuntimeCall("remainder", x.getType(), {x, y});
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_UNDERFLOW, underflow);
-  return fir::ConvertOp::create(builder, loc, resultType, result);
+  return builder.create<fir::ConvertOp>(loc, resultType, result);
 }
 
 // IEEE_RINT
@@ -5897,19 +5810,19 @@ mlir::Value IntrinsicLibrary::genIeeeRint(mlir::Type resultType,
   mlir::func::FuncOp setRound = fir::factory::getLlvmSetRounding(builder);
   mlir::Value mode;
   if (isStaticallyPresent(args[1])) {
-    mode = fir::CallOp::create(builder, loc, getRound).getResult(0);
+    mode = builder.create<fir::CallOp>(loc, getRound).getResult(0);
     genIeeeSetRoundingMode({args[1]});
   }
   if (mlir::cast<mlir::FloatType>(resultType).getWidth() == 16)
-    a = fir::ConvertOp::create(builder, loc,
-                               mlir::Float32Type::get(builder.getContext()), a);
-  mlir::Value result = fir::ConvertOp::create(
-      builder, loc, resultType, genRuntimeCall("nearbyint", a.getType(), a));
+    a = builder.create<fir::ConvertOp>(
+        loc, mlir::Float32Type::get(builder.getContext()), a);
+  mlir::Value result = builder.create<fir::ConvertOp>(
+      loc, resultType, genRuntimeCall("nearbyint", a.getType(), a));
   if (isStaticallyPresent(args[1])) {
-    fir::CallOp::create(builder, loc, setRound, mode);
+    builder.create<fir::CallOp>(loc, setRound, mode);
   } else {
-    mlir::Value inexact = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::ONE, args[0], result);
+    mlir::Value inexact = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::ONE, args[0], result);
     genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INEXACT, inexact);
   }
   return result;
@@ -5925,19 +5838,18 @@ void IntrinsicLibrary::genIeeeSetFlagOrHaltingMode(
   mlir::Type i1Ty = builder.getI1Type();
   mlir::Type i32Ty = builder.getIntegerType(32);
   auto [fieldRef, ignore] = getFieldRef(builder, loc, getBase(args[0]));
-  mlir::Value field = fir::LoadOp::create(builder, loc, fieldRef);
+  mlir::Value field = builder.create<fir::LoadOp>(loc, fieldRef);
   mlir::Value except = fir::runtime::genMapExcept(
-      builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, field));
-  auto ifOp = fir::IfOp::create(
-      builder, loc,
-      fir::ConvertOp::create(builder, loc, i1Ty, getBase(args[1])),
+      builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, field));
+  auto ifOp = builder.create<fir::IfOp>(
+      loc, builder.create<fir::ConvertOp>(loc, i1Ty, getBase(args[1])),
       /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   (isFlag ? fir::runtime::genFeraiseexcept : fir::runtime::genFeenableexcept)(
-      builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, except));
+      builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, except));
   builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
   (isFlag ? fir::runtime::genFeclearexcept : fir::runtime::genFedisableexcept)(
-      builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, except));
+      builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, except));
   builder.setInsertionPointAfter(ifOp);
 }
 
@@ -5954,7 +5866,7 @@ void IntrinsicLibrary::genIeeeSetRoundingMode(
     checkRadix(builder, loc, fir::getBase(args[1]), "ieee_set_rounding_mode");
   auto [fieldRef, fieldTy] = getFieldRef(builder, loc, fir::getBase(args[0]));
   mlir::func::FuncOp setRound = fir::factory::getLlvmSetRounding(builder);
-  mlir::Value mode = fir::LoadOp::create(builder, loc, fieldRef);
+  mlir::Value mode = builder.create<fir::LoadOp>(loc, fieldRef);
   static_assert(
       _FORTRAN_RUNTIME_IEEE_TO_ZERO >= 0 &&
       _FORTRAN_RUNTIME_IEEE_TO_ZERO <= 3 &&
@@ -5962,28 +5874,28 @@ void IntrinsicLibrary::genIeeeSetRoundingMode(
       _FORTRAN_RUNTIME_IEEE_NEAREST <= 3 && _FORTRAN_RUNTIME_IEEE_UP >= 0 &&
       _FORTRAN_RUNTIME_IEEE_UP <= 3 && _FORTRAN_RUNTIME_IEEE_DOWN >= 0 &&
       _FORTRAN_RUNTIME_IEEE_DOWN <= 3 && "unexpected rounding mode mapping");
-  mlir::Value mask = mlir::arith::ShLIOp::create(
-      builder, loc, builder.createAllOnesInteger(loc, fieldTy),
+  mlir::Value mask = builder.create<mlir::arith::ShLIOp>(
+      loc, builder.createAllOnesInteger(loc, fieldTy),
       builder.createIntegerConstant(loc, fieldTy, 2));
-  mlir::Value modeIsSupported = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq,
-      mlir::arith::AndIOp::create(builder, loc, mode, mask),
+  mlir::Value modeIsSupported = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq,
+      builder.create<mlir::arith::AndIOp>(loc, mode, mask),
       builder.createIntegerConstant(loc, fieldTy, 0));
   mlir::Value nearest = builder.createIntegerConstant(
       loc, fieldTy, _FORTRAN_RUNTIME_IEEE_NEAREST);
-  mode = mlir::arith::SelectOp::create(builder, loc, modeIsSupported, mode,
-                                       nearest);
-  mode = fir::ConvertOp::create(builder, loc,
-                                setRound.getFunctionType().getInput(0), mode);
-  fir::CallOp::create(builder, loc, setRound, mode);
+  mode = builder.create<mlir::arith::SelectOp>(loc, modeIsSupported, mode,
+                                               nearest);
+  mode = builder.create<fir::ConvertOp>(
+      loc, setRound.getFunctionType().getInput(0), mode);
+  builder.create<fir::CallOp>(loc, setRound, mode);
 }
 
 // IEEE_SET_UNDERFLOW_MODE
 void IntrinsicLibrary::genIeeeSetUnderflowMode(
     llvm::ArrayRef<fir::ExtendedValue> args) {
   assert(args.size() == 1);
-  mlir::Value gradual = fir::ConvertOp::create(
-      builder, loc, builder.getI1Type(), getBase(args[0]));
+  mlir::Value gradual = builder.create<fir::ConvertOp>(loc, builder.getI1Type(),
+                                                       getBase(args[0]));
   fir::runtime::genSetUnderflowMode(builder, loc, {gradual});
 }
 
@@ -5997,9 +5909,9 @@ IntrinsicLibrary::genIeeeSignalingCompare(mlir::Type resultType,
   assert(args.size() == 2);
   mlir::Value hasNaNOp = genIeeeUnordered(mlir::Type{}, args);
   mlir::Value res =
-      mlir::arith::CmpFOp::create(builder, loc, pred, args[0], args[1]);
+      builder.create<mlir::arith::CmpFOp>(loc, pred, args[0], args[1]);
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INVALID, hasNaNOp);
-  return fir::ConvertOp::create(builder, loc, resultType, res);
+  return builder.create<fir::ConvertOp>(loc, resultType, res);
 }
 
 // IEEE_SIGNBIT
@@ -6018,9 +5930,9 @@ mlir::Value IntrinsicLibrary::genIeeeSignbit(mlir::Type resultType,
   }
   mlir::Type intType = builder.getIntegerType(bitWidth);
   mlir::Value intVal =
-      mlir::arith::BitcastOp::create(builder, loc, intType, realVal);
+      builder.create<mlir::arith::BitcastOp>(loc, intType, realVal);
   mlir::Value shift = builder.createIntegerConstant(loc, intType, bitWidth - 1);
-  mlir::Value sign = mlir::arith::ShRUIOp::create(builder, loc, intVal, shift);
+  mlir::Value sign = builder.create<mlir::arith::ShRUIOp>(loc, intVal, shift);
   return builder.createConvert(loc, resultType, sign);
 }
 
@@ -6033,21 +5945,21 @@ IntrinsicLibrary::genIeeeSupportFlag(mlir::Type resultType,
   mlir::Type i1Ty = builder.getI1Type();
   mlir::Type i32Ty = builder.getIntegerType(32);
   auto [fieldRef, fieldTy] = getFieldRef(builder, loc, getBase(args[0]));
-  mlir::Value flag = fir::LoadOp::create(builder, loc, fieldRef);
+  mlir::Value flag = builder.create<fir::LoadOp>(loc, fieldRef);
   mlir::Value standardFlagMask = builder.createIntegerConstant(
       loc, fieldTy,
       _FORTRAN_RUNTIME_IEEE_INVALID | _FORTRAN_RUNTIME_IEEE_DIVIDE_BY_ZERO |
           _FORTRAN_RUNTIME_IEEE_OVERFLOW | _FORTRAN_RUNTIME_IEEE_UNDERFLOW |
           _FORTRAN_RUNTIME_IEEE_INEXACT);
-  mlir::Value isStandardFlag = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::ne,
-      mlir::arith::AndIOp::create(builder, loc, flag, standardFlagMask),
+  mlir::Value isStandardFlag = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::ne,
+      builder.create<mlir::arith::AndIOp>(loc, flag, standardFlagMask),
       builder.createIntegerConstant(loc, fieldTy, 0));
-  fir::IfOp ifOp = fir::IfOp::create(builder, loc, i1Ty, isStandardFlag,
-                                     /*withElseRegion=*/true);
+  fir::IfOp ifOp = builder.create<fir::IfOp>(loc, i1Ty, isStandardFlag,
+                                             /*withElseRegion=*/true);
   // Standard flags are supported.
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
-  fir::ResultOp::create(builder, loc, builder.createBool(loc, true));
+  builder.create<fir::ResultOp>(loc, builder.createBool(loc, true));
 
   // TargetCharacteristics information for the nonstandard ieee_denorm flag
   // is not available here. So use a runtime check restricted to possibly
@@ -6071,17 +5983,17 @@ IntrinsicLibrary::genIeeeSupportFlag(mlir::Type resultType,
     }
   }
   if (mayBeSupported) {
-    mlir::Value isDenorm = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::eq, flag,
+    mlir::Value isDenorm = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::eq, flag,
         builder.createIntegerConstant(loc, fieldTy,
                                       _FORTRAN_RUNTIME_IEEE_DENORM));
-    mlir::Value result = mlir::arith::AndIOp::create(
-        builder, loc, isDenorm,
+    mlir::Value result = builder.create<mlir::arith::AndIOp>(
+        loc, isDenorm,
         fir::runtime::genSupportHalting(
-            builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, flag)));
-    fir::ResultOp::create(builder, loc, result);
+            builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, flag)));
+    builder.create<fir::ResultOp>(loc, result);
   } else {
-    fir::ResultOp::create(builder, loc, builder.createBool(loc, false));
+    builder.create<fir::ResultOp>(loc, builder.createBool(loc, false));
   }
   builder.setInsertionPointAfter(ifOp);
   return builder.createConvert(loc, resultType, ifOp.getResult(0));
@@ -6096,11 +6008,11 @@ fir::ExtendedValue IntrinsicLibrary::genIeeeSupportHalting(
   assert(args.size() == 1);
   mlir::Type i32Ty = builder.getIntegerType(32);
   auto [fieldRef, ignore] = getFieldRef(builder, loc, getBase(args[0]));
-  mlir::Value field = fir::LoadOp::create(builder, loc, fieldRef);
+  mlir::Value field = builder.create<fir::LoadOp>(loc, fieldRef);
   return builder.createConvert(
       loc, resultType,
       fir::runtime::genSupportHalting(
-          builder, loc, fir::ConvertOp::create(builder, loc, i32Ty, field)));
+          builder, loc, builder.create<fir::ConvertOp>(loc, i32Ty, field)));
 }
 
 // IEEE_SUPPORT_ROUNDING
@@ -6117,16 +6029,16 @@ fir::ExtendedValue IntrinsicLibrary::genIeeeSupportRounding(
   //  4 - to nearest, ties away from zero [not supported]
   assert(args.size() == 1 || args.size() == 2);
   auto [fieldRef, fieldTy] = getFieldRef(builder, loc, getBase(args[0]));
-  mlir::Value mode = fir::LoadOp::create(builder, loc, fieldRef);
-  mlir::Value lbOk = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::sge, mode,
+  mlir::Value mode = builder.create<fir::LoadOp>(loc, fieldRef);
+  mlir::Value lbOk = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::sge, mode,
       builder.createIntegerConstant(loc, fieldTy,
                                     _FORTRAN_RUNTIME_IEEE_TO_ZERO));
-  mlir::Value ubOk = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::sle, mode,
+  mlir::Value ubOk = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::sle, mode,
       builder.createIntegerConstant(loc, fieldTy, _FORTRAN_RUNTIME_IEEE_DOWN));
   return builder.createConvert(
-      loc, resultType, mlir::arith::AndIOp::create(builder, loc, lbOk, ubOk));
+      loc, resultType, builder.create<mlir::arith::AndIOp>(loc, lbOk, ubOk));
 }
 
 // IEEE_SUPPORT_STANDARD
@@ -6150,15 +6062,15 @@ IntrinsicLibrary::genIeeeUnordered(mlir::Type resultType,
   // If there is no result type return an i1 result.
   assert(args.size() == 2);
   if (args[0].getType() == args[1].getType()) {
-    mlir::Value res = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::UNO, args[0], args[1]);
+    mlir::Value res = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::UNO, args[0], args[1]);
     return resultType ? builder.createConvert(loc, resultType, res) : res;
   }
   assert(resultType && "expecting a (mixed arg type) unordered result type");
   mlir::Type i1Ty = builder.getI1Type();
   mlir::Value xIsNan = genIsFPClass(i1Ty, args[0], nanTest);
   mlir::Value yIsNan = genIsFPClass(i1Ty, args[1], nanTest);
-  mlir::Value res = mlir::arith::OrIOp::create(builder, loc, xIsNan, yIsNan);
+  mlir::Value res = builder.create<mlir::arith::OrIOp>(loc, xIsNan, yIsNan);
   return builder.createConvert(loc, resultType, res);
 }
 
@@ -6283,22 +6195,22 @@ mlir::Value IntrinsicLibrary::genIeeeValue(mlir::Type resultType,
   mlir::Value which;
   if (args.size() == 2) { // user call
     auto [index, ignore] = getFieldRef(builder, loc, args[1]);
-    which = fir::LoadOp::create(builder, loc, index);
+    which = builder.create<fir::LoadOp>(loc, index);
   } else { // compiler generated call
     which = args[0];
   }
-  mlir::Value bits = fir::LoadOp::create(
-      builder, loc,
-      fir::CoordinateOp::create(
-          builder, loc, builder.getRefType(valueTy),
-          fir::AddrOfOp::create(builder, loc, builder.getRefType(tableTy),
-                                builder.getSymbolRefAttr(tableName)),
+  mlir::Value bits = builder.create<fir::LoadOp>(
+      loc,
+      builder.create<fir::CoordinateOp>(
+          loc, builder.getRefType(valueTy),
+          builder.create<fir::AddrOfOp>(loc, builder.getRefType(tableTy),
+                                        builder.getSymbolRefAttr(tableName)),
           which));
   if (bitWidth > 64)
-    bits = mlir::arith::ShLIOp::create(
-        builder, loc, builder.createConvert(loc, intType, bits),
+    bits = builder.create<mlir::arith::ShLIOp>(
+        loc, builder.createConvert(loc, intType, bits),
         builder.createIntegerConstant(loc, intType, bitWidth - 64));
-  return mlir::arith::BitcastOp::create(builder, loc, realType, bits);
+  return builder.create<mlir::arith::BitcastOp>(loc, realType, bits);
 }
 
 // IEOR
@@ -6340,14 +6252,13 @@ IntrinsicLibrary::genIndex(mlir::Type resultType,
         builder.getContext(), builder.getKindMap().defaultLogicalKind());
     mlir::Value temp = builder.createTemporary(loc, logTy);
     mlir::Value castb = builder.createConvert(loc, logTy, b);
-    fir::StoreOp::create(builder, loc, castb, temp);
+    builder.create<fir::StoreOp>(loc, castb, temp);
     return builder.createBox(loc, temp);
   };
-  mlir::Value backOpt =
-      isStaticallyAbsent(args, 2)
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getI1Type()))
-          : makeRefThenEmbox(fir::getBase(args[2]));
+  mlir::Value backOpt = isStaticallyAbsent(args, 2)
+                            ? builder.create<fir::AbsentOp>(
+                                  loc, fir::BoxType::get(builder.getI1Type()))
+                            : makeRefThenEmbox(fir::getBase(args[2]));
   mlir::Value kindVal = isStaticallyAbsent(args, 3)
                             ? builder.createIntegerConstant(
                                   loc, builder.getIndexType(),
@@ -6396,8 +6307,8 @@ mlir::Value
 IntrinsicLibrary::genIsIostatValue(mlir::Type resultType,
                                    llvm::ArrayRef<mlir::Value> args) {
   assert(args.size() == 1);
-  return mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, args[0],
+  return builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, args[0],
       builder.createIntegerConstant(loc, args[0].getType(), value));
 }
 
@@ -6424,16 +6335,16 @@ mlir::Value IntrinsicLibrary::genIshft(mlir::Type resultType,
   mlir::Value word = args[0];
   if (word.getType().isUnsignedInteger())
     word = builder.createConvert(loc, signlessType, word);
-  auto left = mlir::arith::ShLIOp::create(builder, loc, word, absShift);
-  auto right = mlir::arith::ShRUIOp::create(builder, loc, word, absShift);
-  auto shiftIsLarge = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::sge, absShift, bitSize);
-  auto shiftIsNegative = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::slt, shift, zero);
+  auto left = builder.create<mlir::arith::ShLIOp>(loc, word, absShift);
+  auto right = builder.create<mlir::arith::ShRUIOp>(loc, word, absShift);
+  auto shiftIsLarge = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::sge, absShift, bitSize);
+  auto shiftIsNegative = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::slt, shift, zero);
   auto sel =
-      mlir::arith::SelectOp::create(builder, loc, shiftIsNegative, right, left);
+      builder.create<mlir::arith::SelectOp>(loc, shiftIsNegative, right, left);
   mlir::Value result =
-      mlir::arith::SelectOp::create(builder, loc, shiftIsLarge, zero, sel);
+      builder.create<mlir::arith::SelectOp>(loc, shiftIsLarge, zero, sel);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -6474,42 +6385,42 @@ mlir::Value IntrinsicLibrary::genIshftc(mlir::Type resultType,
   mlir::Value zero = builder.createIntegerConstant(loc, signlessType, 0);
   mlir::Value ones = builder.createAllOnesInteger(loc, signlessType);
   mlir::Value absShift = genAbs(signlessType, {shift});
-  auto elseSize = mlir::arith::SubIOp::create(builder, loc, size, absShift);
-  auto shiftIsZero = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, shift, zero);
-  auto shiftEqualsSize = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, absShift, size);
+  auto elseSize = builder.create<mlir::arith::SubIOp>(loc, size, absShift);
+  auto shiftIsZero = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, shift, zero);
+  auto shiftEqualsSize = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, absShift, size);
   auto shiftIsNop =
-      mlir::arith::OrIOp::create(builder, loc, shiftIsZero, shiftEqualsSize);
-  auto shiftIsPositive = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::sgt, shift, zero);
-  auto leftSize = mlir::arith::SelectOp::create(builder, loc, shiftIsPositive,
-                                                absShift, elseSize);
-  auto rightSize = mlir::arith::SelectOp::create(builder, loc, shiftIsPositive,
-                                                 elseSize, absShift);
-  auto hasUnchanged = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::ne, size, bitSize);
-  auto unchangedTmp1 = mlir::arith::ShRUIOp::create(builder, loc, word, size);
+      builder.create<mlir::arith::OrIOp>(loc, shiftIsZero, shiftEqualsSize);
+  auto shiftIsPositive = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::sgt, shift, zero);
+  auto leftSize = builder.create<mlir::arith::SelectOp>(loc, shiftIsPositive,
+                                                        absShift, elseSize);
+  auto rightSize = builder.create<mlir::arith::SelectOp>(loc, shiftIsPositive,
+                                                         elseSize, absShift);
+  auto hasUnchanged = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::ne, size, bitSize);
+  auto unchangedTmp1 = builder.create<mlir::arith::ShRUIOp>(loc, word, size);
   auto unchangedTmp2 =
-      mlir::arith::ShLIOp::create(builder, loc, unchangedTmp1, size);
-  auto unchanged = mlir::arith::SelectOp::create(builder, loc, hasUnchanged,
-                                                 unchangedTmp2, zero);
+      builder.create<mlir::arith::ShLIOp>(loc, unchangedTmp1, size);
+  auto unchanged = builder.create<mlir::arith::SelectOp>(loc, hasUnchanged,
+                                                         unchangedTmp2, zero);
   auto leftMaskShift =
-      mlir::arith::SubIOp::create(builder, loc, bitSize, leftSize);
+      builder.create<mlir::arith::SubIOp>(loc, bitSize, leftSize);
   auto leftMask =
-      mlir::arith::ShRUIOp::create(builder, loc, ones, leftMaskShift);
-  auto leftTmp = mlir::arith::ShRUIOp::create(builder, loc, word, rightSize);
-  auto left = mlir::arith::AndIOp::create(builder, loc, leftTmp, leftMask);
+      builder.create<mlir::arith::ShRUIOp>(loc, ones, leftMaskShift);
+  auto leftTmp = builder.create<mlir::arith::ShRUIOp>(loc, word, rightSize);
+  auto left = builder.create<mlir::arith::AndIOp>(loc, leftTmp, leftMask);
   auto rightMaskShift =
-      mlir::arith::SubIOp::create(builder, loc, bitSize, rightSize);
+      builder.create<mlir::arith::SubIOp>(loc, bitSize, rightSize);
   auto rightMask =
-      mlir::arith::ShRUIOp::create(builder, loc, ones, rightMaskShift);
-  auto rightTmp = mlir::arith::AndIOp::create(builder, loc, word, rightMask);
-  auto right = mlir::arith::ShLIOp::create(builder, loc, rightTmp, leftSize);
-  auto resTmp = mlir::arith::OrIOp::create(builder, loc, unchanged, left);
-  auto res = mlir::arith::OrIOp::create(builder, loc, resTmp, right);
+      builder.create<mlir::arith::ShRUIOp>(loc, ones, rightMaskShift);
+  auto rightTmp = builder.create<mlir::arith::AndIOp>(loc, word, rightMask);
+  auto right = builder.create<mlir::arith::ShLIOp>(loc, rightTmp, leftSize);
+  auto resTmp = builder.create<mlir::arith::OrIOp>(loc, unchanged, left);
+  auto res = builder.create<mlir::arith::OrIOp>(loc, resTmp, right);
   mlir::Value result =
-      mlir::arith::SelectOp::create(builder, loc, shiftIsNop, word, res);
+      builder.create<mlir::arith::SelectOp>(loc, shiftIsNop, word, res);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -6521,7 +6432,7 @@ mlir::Value IntrinsicLibrary::genLeadz(mlir::Type resultType,
   assert(args.size() == 1);
 
   mlir::Value result =
-      mlir::math::CountLeadingZerosOp::create(builder, loc, args);
+      builder.create<mlir::math::CountLeadingZerosOp>(loc, args);
 
   return builder.createConvert(loc, resultType, result);
 }
@@ -6589,18 +6500,18 @@ IntrinsicLibrary::genLoc(mlir::Type resultType,
   // created when preparing the argument cases, but the box can be safely be
   // used for all those cases and the address will be null if absent.
   mlir::Value isPresent =
-      fir::IsPresentOp::create(builder, loc, builder.getI1Type(), box);
+      builder.create<fir::IsPresentOp>(loc, builder.getI1Type(), box);
   return builder
       .genIfOp(loc, {resultType}, isPresent,
                /*withElseRegion=*/true)
       .genThen([&]() {
         mlir::Value argAddr = getAddrFromBox(builder, loc, args[0], isFunc);
         mlir::Value cast = builder.createConvert(loc, resultType, argAddr);
-        fir::ResultOp::create(builder, loc, cast);
+        builder.create<fir::ResultOp>(loc, cast);
       })
       .genElse([&]() {
         mlir::Value zero = builder.createIntegerConstant(loc, resultType, 0);
-        fir::ResultOp::create(builder, loc, zero);
+        builder.create<fir::ResultOp>(loc, zero);
       })
       .getResults()[0];
 }
@@ -6633,12 +6544,12 @@ mlir::Value IntrinsicLibrary::genMask(mlir::Type resultType,
   // non-deterministic result. Other compilers don't produce a consistent result
   // in this case either, so we choose the most efficient implementation.
   mlir::Value shift =
-      mlir::arith::SubIOp::create(builder, loc, bitSize, bitsToSet);
-  mlir::Value shifted = Shift::create(builder, loc, ones, shift);
-  mlir::Value isZero = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, bitsToSet, zero);
+      builder.create<mlir::arith::SubIOp>(loc, bitSize, bitsToSet);
+  mlir::Value shifted = builder.create<Shift>(loc, ones, shift);
+  mlir::Value isZero = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, bitsToSet, zero);
   mlir::Value result =
-      mlir::arith::SelectOp::create(builder, loc, isZero, zero, shifted);
+      builder.create<mlir::arith::SelectOp>(loc, isZero, zero, shifted);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -6656,8 +6567,8 @@ IntrinsicLibrary::genMatchAllSync(mlir::Type resultType,
 
   mlir::Value arg1 = args[1];
   if (arg1.getType().isF32() || arg1.getType().isF64())
-    arg1 = fir::ConvertOp::create(
-        builder, loc, is32 ? builder.getI32Type() : builder.getI64Type(), arg1);
+    arg1 = builder.create<fir::ConvertOp>(
+        loc, is32 ? builder.getI32Type() : builder.getI64Type(), arg1);
 
   mlir::Type retTy =
       mlir::LLVM::LLVMStructType::getLiteral(context, {resultType, i1Ty});
@@ -6666,10 +6577,10 @@ IntrinsicLibrary::genMatchAllSync(mlir::Type resultType,
           .create<mlir::NVVM::MatchSyncOp>(loc, retTy, args[0], arg1,
                                            mlir::NVVM::MatchSyncKind::all)
           .getResult();
-  auto value = mlir::LLVM::ExtractValueOp::create(builder, loc, match, 0);
-  auto pred = mlir::LLVM::ExtractValueOp::create(builder, loc, match, 1);
-  auto conv = mlir::LLVM::ZExtOp::create(builder, loc, resultType, pred);
-  fir::StoreOp::create(builder, loc, conv, args[2]);
+  auto value = builder.create<mlir::LLVM::ExtractValueOp>(loc, match, 0);
+  auto pred = builder.create<mlir::LLVM::ExtractValueOp>(loc, match, 1);
+  auto conv = builder.create<mlir::LLVM::ZExtOp>(loc, resultType, pred);
+  builder.create<fir::StoreOp>(loc, conv, args[2]);
   return value;
 }
 
@@ -6679,14 +6590,14 @@ mlir::Value IntrinsicLibrary::genVoteSync(mlir::Type resultType,
                                           llvm::ArrayRef<mlir::Value> args) {
   assert(args.size() == 2);
   mlir::Value arg1 =
-      fir::ConvertOp::create(builder, loc, builder.getI1Type(), args[1]);
+      builder.create<fir::ConvertOp>(loc, builder.getI1Type(), args[1]);
   mlir::Type resTy = kind == mlir::NVVM::VoteSyncKind::ballot
                          ? builder.getI32Type()
                          : builder.getI1Type();
   auto voteRes =
-      mlir::NVVM::VoteSyncOp::create(builder, loc, resTy, args[0], arg1, kind)
+      builder.create<mlir::NVVM::VoteSyncOp>(loc, resTy, args[0], arg1, kind)
           .getResult();
-  return fir::ConvertOp::create(builder, loc, resultType, voteRes);
+  return builder.create<fir::ConvertOp>(loc, resultType, voteRes);
 }
 
 // MATCH_ANY_SYNC
@@ -6698,8 +6609,8 @@ IntrinsicLibrary::genMatchAnySync(mlir::Type resultType,
 
   mlir::Value arg1 = args[1];
   if (arg1.getType().isF32() || arg1.getType().isF64())
-    arg1 = fir::ConvertOp::create(
-        builder, loc, is32 ? builder.getI32Type() : builder.getI64Type(), arg1);
+    arg1 = builder.create<fir::ConvertOp>(
+        loc, is32 ? builder.getI32Type() : builder.getI64Type(), arg1);
 
   return builder
       .create<mlir::NVVM::MatchSyncOp>(loc, resultType, args[0], arg1,
@@ -6783,10 +6694,10 @@ IntrinsicLibrary::genMerge(mlir::Type,
                                  mlir::Value other) -> mlir::Value {
     mlir::Type otherType = other.getType();
     if (mlir::isa<fir::BaseBoxType>(otherType))
-      return fir::ReboxOp::create(builder, loc, otherType, polymorphic,
-                                  /*shape*/ mlir::Value{},
-                                  /*slice=*/mlir::Value{});
-    return fir::BoxAddrOp::create(builder, loc, otherType, polymorphic);
+      return builder.create<fir::ReboxOp>(loc, otherType, polymorphic,
+                                          /*shape*/ mlir::Value{},
+                                          /*slice=*/mlir::Value{});
+    return builder.create<fir::BoxAddrOp>(loc, otherType, polymorphic);
   };
   if (fir::isPolymorphicType(tsource.getType()) &&
       !fir::isPolymorphicType(fsource.getType())) {
@@ -6802,8 +6713,8 @@ IntrinsicLibrary::genMerge(mlir::Type,
     // fulfill mlir::SelectOp constraint that the MLIR types must be the same.
     fsourceCast = builder.createConvert(loc, tsource.getType(), fsource);
   }
-  auto rslt = mlir::arith::SelectOp::create(builder, loc, mask, tsourceCast,
-                                            fsourceCast);
+  auto rslt = builder.create<mlir::arith::SelectOp>(loc, mask, tsourceCast,
+                                                    fsourceCast);
   if (isCharRslt) {
     // Need a CharBoxValue for character results
     const fir::CharBoxValue *charBox = args[0].getCharBox();
@@ -6844,7 +6755,7 @@ mlir::Value IntrinsicLibrary::genMod(mlir::Type resultType,
                                                         args[0], args[1]);
   }
   if (mlir::isa<mlir::IntegerType>(resultType))
-    return mlir::arith::RemSIOp::create(builder, loc, args[0], args[1]);
+    return builder.create<mlir::arith::RemSIOp>(loc, args[0], args[1]);
 
   // Use runtime.
   return builder.createConvert(
@@ -6874,19 +6785,19 @@ mlir::Value IntrinsicLibrary::genModulo(mlir::Type resultType,
   }
   if (mlir::isa<mlir::IntegerType>(resultType)) {
     auto remainder =
-        mlir::arith::RemSIOp::create(builder, loc, args[0], args[1]);
-    auto argXor = mlir::arith::XOrIOp::create(builder, loc, args[0], args[1]);
+        builder.create<mlir::arith::RemSIOp>(loc, args[0], args[1]);
+    auto argXor = builder.create<mlir::arith::XOrIOp>(loc, args[0], args[1]);
     mlir::Value zero = builder.createIntegerConstant(loc, argXor.getType(), 0);
-    auto argSignDifferent = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::slt, argXor, zero);
-    auto remainderIsNotZero = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::ne, remainder, zero);
-    auto mustAddP = mlir::arith::AndIOp::create(
-        builder, loc, remainderIsNotZero, argSignDifferent);
+    auto argSignDifferent = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::slt, argXor, zero);
+    auto remainderIsNotZero = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::ne, remainder, zero);
+    auto mustAddP = builder.create<mlir::arith::AndIOp>(loc, remainderIsNotZero,
+                                                        argSignDifferent);
     auto remPlusP =
-        mlir::arith::AddIOp::create(builder, loc, remainder, args[1]);
-    return mlir::arith::SelectOp::create(builder, loc, mustAddP, remPlusP,
-                                         remainder);
+        builder.create<mlir::arith::AddIOp>(loc, remainder, args[1]);
+    return builder.create<mlir::arith::SelectOp>(loc, mustAddP, remPlusP,
+                                                 remainder);
   }
 
   auto fastMathFlags = builder.getFastMathFlags();
@@ -6899,21 +6810,21 @@ mlir::Value IntrinsicLibrary::genModulo(mlir::Type resultType,
         loc, resultType,
         fir::runtime::genModulo(builder, loc, args[0], args[1]));
 
-  auto remainder = mlir::arith::RemFOp::create(builder, loc, args[0], args[1]);
+  auto remainder = builder.create<mlir::arith::RemFOp>(loc, args[0], args[1]);
   mlir::Value zero = builder.createRealZeroConstant(loc, remainder.getType());
-  auto remainderIsNotZero = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::UNE, remainder, zero);
-  auto aLessThanZero = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OLT, args[0], zero);
-  auto pLessThanZero = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OLT, args[1], zero);
+  auto remainderIsNotZero = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::UNE, remainder, zero);
+  auto aLessThanZero = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OLT, args[0], zero);
+  auto pLessThanZero = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OLT, args[1], zero);
   auto argSignDifferent =
-      mlir::arith::XOrIOp::create(builder, loc, aLessThanZero, pLessThanZero);
-  auto mustAddP = mlir::arith::AndIOp::create(builder, loc, remainderIsNotZero,
-                                              argSignDifferent);
-  auto remPlusP = mlir::arith::AddFOp::create(builder, loc, remainder, args[1]);
-  return mlir::arith::SelectOp::create(builder, loc, mustAddP, remPlusP,
-                                       remainder);
+      builder.create<mlir::arith::XOrIOp>(loc, aLessThanZero, pLessThanZero);
+  auto mustAddP = builder.create<mlir::arith::AndIOp>(loc, remainderIsNotZero,
+                                                      argSignDifferent);
+  auto remPlusP = builder.create<mlir::arith::AddFOp>(loc, remainder, args[1]);
+  return builder.create<mlir::arith::SelectOp>(loc, mustAddP, remPlusP,
+                                               remainder);
 }
 
 void IntrinsicLibrary::genMoveAlloc(llvm::ArrayRef<fir::ExtendedValue> args) {
@@ -6928,7 +6839,7 @@ void IntrinsicLibrary::genMoveAlloc(llvm::ArrayRef<fir::ExtendedValue> args) {
   mlir::Value errBox =
       isStaticallyPresent(errMsg)
           ? fir::getBase(errMsg)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
 
   const fir::MutableBoxValue *fromBox = from.getBoxOf<fir::MutableBoxValue>();
   const fir::MutableBoxValue *toBox = to.getBoxOf<fir::MutableBoxValue>();
@@ -6985,34 +6896,33 @@ void IntrinsicLibrary::genMvbits(llvm::ArrayRef<fir::ExtendedValue> args) {
   mlir::Type toType{fir::dyn_cast_ptrEleTy(toAddr.getType())};
   assert(toType.getIntOrFloatBitWidth() == fromType.getIntOrFloatBitWidth() &&
          "mismatched mvbits types");
-  auto to = fir::LoadOp::create(builder, loc, signlessType, toAddr);
+  auto to = builder.create<fir::LoadOp>(loc, signlessType, toAddr);
   mlir::Value topos = builder.createConvert(loc, signlessType, unbox(args[4]));
   mlir::Value zero = builder.createIntegerConstant(loc, signlessType, 0);
   mlir::Value ones = builder.createAllOnesInteger(loc, signlessType);
   mlir::Value bitSize = builder.createIntegerConstant(
       loc, signlessType,
       mlir::cast<mlir::IntegerType>(signlessType).getWidth());
-  auto shiftCount = mlir::arith::SubIOp::create(builder, loc, bitSize, len);
-  auto mask = mlir::arith::ShRUIOp::create(builder, loc, ones, shiftCount);
-  auto unchangedTmp1 = mlir::arith::ShLIOp::create(builder, loc, mask, topos);
+  auto shiftCount = builder.create<mlir::arith::SubIOp>(loc, bitSize, len);
+  auto mask = builder.create<mlir::arith::ShRUIOp>(loc, ones, shiftCount);
+  auto unchangedTmp1 = builder.create<mlir::arith::ShLIOp>(loc, mask, topos);
   auto unchangedTmp2 =
-      mlir::arith::XOrIOp::create(builder, loc, unchangedTmp1, ones);
-  auto unchanged = mlir::arith::AndIOp::create(builder, loc, unchangedTmp2, to);
+      builder.create<mlir::arith::XOrIOp>(loc, unchangedTmp1, ones);
+  auto unchanged = builder.create<mlir::arith::AndIOp>(loc, unchangedTmp2, to);
   if (fromType.isUnsignedInteger())
     from = builder.createConvert(loc, signlessType, from);
-  auto frombitsTmp1 = mlir::arith::ShRUIOp::create(builder, loc, from, frompos);
+  auto frombitsTmp1 = builder.create<mlir::arith::ShRUIOp>(loc, from, frompos);
   auto frombitsTmp2 =
-      mlir::arith::AndIOp::create(builder, loc, frombitsTmp1, mask);
-  auto frombits =
-      mlir::arith::ShLIOp::create(builder, loc, frombitsTmp2, topos);
-  auto resTmp = mlir::arith::OrIOp::create(builder, loc, unchanged, frombits);
-  auto lenIsZero = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, len, zero);
+      builder.create<mlir::arith::AndIOp>(loc, frombitsTmp1, mask);
+  auto frombits = builder.create<mlir::arith::ShLIOp>(loc, frombitsTmp2, topos);
+  auto resTmp = builder.create<mlir::arith::OrIOp>(loc, unchanged, frombits);
+  auto lenIsZero = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, len, zero);
   mlir::Value res =
-      mlir::arith::SelectOp::create(builder, loc, lenIsZero, to, resTmp);
+      builder.create<mlir::arith::SelectOp>(loc, lenIsZero, to, resTmp);
   if (toType.isUnsignedInteger())
     res = builder.createConvert(loc, toType, res);
-  fir::StoreOp::create(builder, loc, res, toAddr);
+  builder.create<fir::StoreOp>(loc, res, toAddr);
 }
 
 // NEAREST, IEEE_NEXT_AFTER, IEEE_NEXT_DOWN, IEEE_NEXT_UP
@@ -7054,7 +6964,7 @@ mlir::Value IntrinsicLibrary::genNearest(mlir::Type resultType,
     // If isNan(Y), set X to a qNaN that will propagate to the resultIsX result.
     mlir::Value qNan = genQNan(xType);
     mlir::Value isFPClass = genIsFPClass(i1Ty, args[1], nanTest);
-    x = mlir::arith::SelectOp::create(builder, loc, isFPClass, qNan, x);
+    x = builder.create<mlir::arith::SelectOp>(loc, isFPClass, qNan, x);
   }
   mlir::Value resultIsX = genIsFPClass(i1Ty, x, nanTest);
   mlir::Type intType = builder.getIntegerType(xBitWidth);
@@ -7065,15 +6975,15 @@ mlir::Value IntrinsicLibrary::genNearest(mlir::Type resultType,
   if constexpr (proc == NearestProc::Nearest) {
     // Arg S must not be zero.
     fir::IfOp ifOp =
-        fir::IfOp::create(builder, loc, genIsFPClass(i1Ty, args[1], zeroTest),
-                          /*withElseRegion=*/false);
+        builder.create<fir::IfOp>(loc, genIsFPClass(i1Ty, args[1], zeroTest),
+                                  /*withElseRegion=*/false);
     builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
     fir::runtime::genReportFatalUserError(
         builder, loc, "intrinsic nearest S argument is zero");
     builder.setInsertionPointAfter(ifOp);
     mlir::Value sSign = IntrinsicLibrary::genIeeeSignbit(intType, {args[1]});
-    valueUp = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::ne, sSign, one);
+    valueUp = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::ne, sSign, one);
   } else if constexpr (proc == NearestProc::NextAfter) {
     // Convert X and Y to a common type to allow comparison. Direct conversions
     // between kinds 2, 3, 10, and 16 are not all supported. These conversions
@@ -7094,58 +7004,58 @@ mlir::Value IntrinsicLibrary::genNearest(mlir::Type resultType,
       if (xBitWidth > 32 && xBitWidth > yBitWidth)
         y = builder.createConvert(loc, xType, y);
     }
-    resultIsX = mlir::arith::OrIOp::create(
-        builder, loc, resultIsX,
-        mlir::arith::CmpFOp::create(builder, loc,
-                                    mlir::arith::CmpFPredicate::OEQ, x1, y));
-    valueUp = mlir::arith::CmpFOp::create(
-        builder, loc, mlir::arith::CmpFPredicate::OLT, x1, y);
+    resultIsX = builder.create<mlir::arith::OrIOp>(
+        loc, resultIsX,
+        builder.create<mlir::arith::CmpFOp>(
+            loc, mlir::arith::CmpFPredicate::OEQ, x1, y));
+    valueUp = builder.create<mlir::arith::CmpFOp>(
+        loc, mlir::arith::CmpFPredicate::OLT, x1, y);
   } else if constexpr (proc == NearestProc::NextDown) {
     valueUp = builder.createBool(loc, false);
   } else if constexpr (proc == NearestProc::NextUp) {
     valueUp = builder.createBool(loc, true);
   }
-  mlir::Value magnitudeUp = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::ne, valueUp,
+  mlir::Value magnitudeUp = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::ne, valueUp,
       IntrinsicLibrary::genIeeeSignbit(i1Ty, {args[0]}));
-  resultIsX = mlir::arith::OrIOp::create(
-      builder, loc, resultIsX,
-      mlir::arith::AndIOp::create(
-          builder, loc, genIsFPClass(i1Ty, x, infiniteTest), magnitudeUp));
+  resultIsX = builder.create<mlir::arith::OrIOp>(
+      loc, resultIsX,
+      builder.create<mlir::arith::AndIOp>(
+          loc, genIsFPClass(i1Ty, x, infiniteTest), magnitudeUp));
 
   // Result is X. (For ieee_next_after with isNan(Y), X has been set to a NaN.)
-  fir::IfOp outerIfOp = fir::IfOp::create(builder, loc, resultType, resultIsX,
-                                          /*withElseRegion=*/true);
+  fir::IfOp outerIfOp = builder.create<fir::IfOp>(loc, resultType, resultIsX,
+                                                  /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&outerIfOp.getThenRegion().front());
   if constexpr (proc == NearestProc::NextDown || proc == NearestProc::NextUp)
     genRaiseExcept(_FORTRAN_RUNTIME_IEEE_INVALID,
                    genIsFPClass(i1Ty, x, snanTest));
-  fir::ResultOp::create(builder, loc, x);
+  builder.create<fir::ResultOp>(loc, x);
 
   // Result is minPositiveSubnormal or minNegativeSubnormal. (X is zero.)
   builder.setInsertionPointToStart(&outerIfOp.getElseRegion().front());
-  mlir::Value resultIsMinSubnormal = mlir::arith::CmpFOp::create(
-      builder, loc, mlir::arith::CmpFPredicate::OEQ, x,
+  mlir::Value resultIsMinSubnormal = builder.create<mlir::arith::CmpFOp>(
+      loc, mlir::arith::CmpFPredicate::OEQ, x,
       builder.createRealZeroConstant(loc, xType));
   fir::IfOp innerIfOp =
-      fir::IfOp::create(builder, loc, resultType, resultIsMinSubnormal,
-                        /*withElseRegion=*/true);
+      builder.create<fir::IfOp>(loc, resultType, resultIsMinSubnormal,
+                                /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&innerIfOp.getThenRegion().front());
   mlir::Value minPositiveSubnormal =
-      mlir::arith::BitcastOp::create(builder, loc, resultType, one);
-  mlir::Value minNegativeSubnormal = mlir::arith::BitcastOp::create(
-      builder, loc, resultType,
-      mlir::arith::ConstantOp::create(
-          builder, loc, intType,
+      builder.create<mlir::arith::BitcastOp>(loc, resultType, one);
+  mlir::Value minNegativeSubnormal = builder.create<mlir::arith::BitcastOp>(
+      loc, resultType,
+      builder.create<mlir::arith::ConstantOp>(
+          loc, intType,
           builder.getIntegerAttr(
               intType, llvm::APInt::getBitsSetWithWrap(
                            xBitWidth, /*lo=*/xBitWidth - 1, /*hi=*/1))));
-  mlir::Value result = mlir::arith::SelectOp::create(
-      builder, loc, valueUp, minPositiveSubnormal, minNegativeSubnormal);
+  mlir::Value result = builder.create<mlir::arith::SelectOp>(
+      loc, valueUp, minPositiveSubnormal, minNegativeSubnormal);
   if constexpr (proc == NearestProc::Nearest || proc == NearestProc::NextAfter)
     genRaiseExcept(_FORTRAN_RUNTIME_IEEE_UNDERFLOW |
                    _FORTRAN_RUNTIME_IEEE_INEXACT);
-  fir::ResultOp::create(builder, loc, result);
+  builder.create<fir::ResultOp>(loc, result);
 
   // Result is (X + minPositiveSubnormal) or (X - minPositiveSubnormal).
   builder.setInsertionPointToStart(&innerIfOp.getElseRegion().front());
@@ -7171,15 +7081,15 @@ mlir::Value IntrinsicLibrary::genNearest(mlir::Type resultType,
       genRuntimeCall("feraiseexcept", i32Ty, excepts);
       genRuntimeCall("feenableexcept", i32Ty, mask);
     }
-    fir::ResultOp::create(builder, loc, result);
+    builder.create<fir::ResultOp>(loc, result);
   } else {
     // Kind 2, 3, 4, 8, 16. Increment or decrement X cast to integer.
-    mlir::Value intX = mlir::arith::BitcastOp::create(builder, loc, intType, x);
-    mlir::Value add = mlir::arith::AddIOp::create(builder, loc, intX, one);
-    mlir::Value sub = mlir::arith::SubIOp::create(builder, loc, intX, one);
-    result = mlir::arith::BitcastOp::create(
-        builder, loc, resultType,
-        mlir::arith::SelectOp::create(builder, loc, magnitudeUp, add, sub));
+    mlir::Value intX = builder.create<mlir::arith::BitcastOp>(loc, intType, x);
+    mlir::Value add = builder.create<mlir::arith::AddIOp>(loc, intX, one);
+    mlir::Value sub = builder.create<mlir::arith::SubIOp>(loc, intX, one);
+    result = builder.create<mlir::arith::BitcastOp>(
+        loc, resultType,
+        builder.create<mlir::arith::SelectOp>(loc, magnitudeUp, add, sub));
     if constexpr (proc == NearestProc::Nearest ||
                   proc == NearestProc::NextAfter) {
       genRaiseExcept(_FORTRAN_RUNTIME_IEEE_OVERFLOW |
@@ -7189,11 +7099,11 @@ mlir::Value IntrinsicLibrary::genNearest(mlir::Type resultType,
                          _FORTRAN_RUNTIME_IEEE_INEXACT,
                      genIsFPClass(i1Ty, result, subnormalTest));
     }
-    fir::ResultOp::create(builder, loc, result);
+    builder.create<fir::ResultOp>(loc, result);
   }
 
   builder.setInsertionPointAfter(innerIfOp);
-  fir::ResultOp::create(builder, loc, innerIfOp.getResult(0));
+  builder.create<fir::ResultOp>(loc, innerIfOp.getResult(0));
   builder.setInsertionPointAfter(outerIfOp);
   return outerIfOp.getResult(0);
 }
@@ -7275,16 +7185,8 @@ IntrinsicLibrary::genNull(mlir::Type, llvm::ArrayRef<fir::ExtendedValue> args) {
   mlir::Value boxStorage = builder.createTemporary(loc, boxType);
   mlir::Value box = fir::factory::createUnallocatedBox(
       builder, loc, boxType, mold->nonDeferredLenParams());
-  fir::StoreOp::create(builder, loc, box, boxStorage);
+  builder.create<fir::StoreOp>(loc, box, boxStorage);
   return fir::MutableBoxValue(boxStorage, mold->nonDeferredLenParams(), {});
-}
-
-// CLOCK, CLOCK64, GLOBALTIMER
-template <typename OpTy>
-mlir::Value IntrinsicLibrary::genNVVMTime(mlir::Type resultType,
-                                          llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 0 && "expect no arguments");
-  return OpTy::create(builder, loc, resultType).getResult();
 }
 
 // PACK
@@ -7301,11 +7203,10 @@ IntrinsicLibrary::genPack(mlir::Type resultType,
   mlir::Value mask = builder.createBox(loc, args[1]);
 
   // Handle optional vector argument
-  mlir::Value vector =
-      isStaticallyAbsent(args, 2)
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getI1Type()))
-          : builder.createBox(loc, args[2]);
+  mlir::Value vector = isStaticallyAbsent(args, 2)
+                           ? builder.create<fir::AbsentOp>(
+                                 loc, fir::BoxType::get(builder.getI1Type()))
+                           : builder.createBox(loc, args[2]);
 
   // Create mutable fir.box to be passed to the runtime for the result.
   mlir::Type resultArrayType = builder.getVarLenSeqTy(resultType, 1);
@@ -7365,7 +7266,7 @@ void IntrinsicLibrary::genPerror(llvm::ArrayRef<fir::ExtendedValue> args) {
   fir::ExtendedValue str = args[0];
   const auto *box = str.getBoxOf<fir::BoxValue>();
   mlir::Value addr =
-      fir::BoxAddrOp::create(builder, loc, box->getMemTy(), fir::getBase(*box));
+      builder.create<fir::BoxAddrOp>(loc, box->getMemTy(), fir::getBase(*box));
   fir::runtime::genPerror(builder, loc, addr);
 }
 
@@ -7374,7 +7275,7 @@ mlir::Value IntrinsicLibrary::genPopcnt(mlir::Type resultType,
                                         llvm::ArrayRef<mlir::Value> args) {
   assert(args.size() == 1);
 
-  mlir::Value count = mlir::math::CtPopOp::create(builder, loc, args);
+  mlir::Value count = builder.create<mlir::math::CtPopOp>(loc, args);
 
   return builder.createConvert(loc, resultType, count);
 }
@@ -7387,7 +7288,7 @@ mlir::Value IntrinsicLibrary::genPoppar(mlir::Type resultType,
   mlir::Value count = genPopcnt(resultType, args);
   mlir::Value one = builder.createIntegerConstant(loc, resultType, 1);
 
-  return mlir::arith::AndIOp::create(builder, loc, count, one);
+  return builder.create<mlir::arith::AndIOp>(loc, count, one);
 }
 
 // PRESENT
@@ -7395,8 +7296,8 @@ fir::ExtendedValue
 IntrinsicLibrary::genPresent(mlir::Type,
                              llvm::ArrayRef<fir::ExtendedValue> args) {
   assert(args.size() == 1);
-  return fir::IsPresentOp::create(builder, loc, builder.getI1Type(),
-                                  fir::getBase(args[0]));
+  return builder.create<fir::IsPresentOp>(loc, builder.getI1Type(),
+                                          fir::getBase(args[0]));
 }
 
 // PRODUCT
@@ -7461,7 +7362,7 @@ void IntrinsicLibrary::genRandomSeed(llvm::ArrayRef<fir::ExtendedValue> args) {
   auto getDesc = [&](int i) {
     return isStaticallyPresent(args[i])
                ? fir::getBase(args[i])
-               : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+               : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
   };
   mlir::Value size = getDesc(0);
   mlir::Value put = getDesc(1);
@@ -7505,13 +7406,13 @@ IntrinsicLibrary::genReduce(mlir::Type resultType,
   bool absentDim = isStaticallyAbsent(args[2]);
 
   auto mask = isStaticallyAbsent(args[3])
-                  ? fir::AbsentOp::create(
-                        builder, loc, fir::BoxType::get(builder.getI1Type()))
+                  ? builder.create<fir::AbsentOp>(
+                        loc, fir::BoxType::get(builder.getI1Type()))
                   : builder.createBox(loc, args[3]);
 
   mlir::Value identity =
       isStaticallyAbsent(args[4])
-          ? fir::AbsentOp::create(builder, loc, fir::ReferenceType::get(eleTy))
+          ? builder.create<fir::AbsentOp>(loc, fir::ReferenceType::get(eleTy))
           : fir::getBase(args[4]);
 
   mlir::Value ordered = isStaticallyAbsent(args[5])
@@ -7527,7 +7428,7 @@ IntrinsicLibrary::genReduce(mlir::Type resultType,
                               ordered, result, argByRef);
       if (fir::isa_derived(eleTy))
         return result;
-      return fir::LoadOp::create(builder, loc, result);
+      return builder.create<fir::LoadOp>(loc, result);
     }
     if (fir::isa_char(eleTy)) {
       auto charTy = mlir::dyn_cast_or_null<fir::CharacterType>(resultType);
@@ -7577,7 +7478,7 @@ IntrinsicLibrary::genRename(std::optional<mlir::Type> resultType,
     auto statusAddr = builder.createTemporary(loc, *resultType);
     auto statusBox = builder.createBox(loc, statusAddr);
     fir::runtime::genRename(builder, loc, path1, path2, statusBox);
-    return fir::LoadOp::create(builder, loc, statusAddr);
+    return builder.create<fir::LoadOp>(loc, statusAddr);
   } else {
     // code-gen for the procedure form of RENAME
     mlir::Type boxNoneTy = fir::BoxType::get(builder.getNoneType());
@@ -7585,7 +7486,7 @@ IntrinsicLibrary::genRename(std::optional<mlir::Type> resultType,
     mlir::Value statusBox =
         isStaticallyPresent(status)
             ? fir::getBase(status)
-            : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+            : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
     fir::runtime::genRename(builder, loc, path1, path2, statusBox);
     return {};
   }
@@ -7630,18 +7531,16 @@ IntrinsicLibrary::genReshape(mlir::Type resultType,
     TODO(loc, "intrinsic: reshape requires computing rank of result");
 
   // Handle optional pad argument
-  mlir::Value pad =
-      isStaticallyAbsent(args[2])
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getI1Type()))
-          : builder.createBox(loc, args[2]);
+  mlir::Value pad = isStaticallyAbsent(args[2])
+                        ? builder.create<fir::AbsentOp>(
+                              loc, fir::BoxType::get(builder.getI1Type()))
+                        : builder.createBox(loc, args[2]);
 
   // Handle optional order argument
-  mlir::Value order =
-      isStaticallyAbsent(args[3])
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getI1Type()))
-          : builder.createBox(loc, args[3]);
+  mlir::Value order = isStaticallyAbsent(args[3])
+                          ? builder.create<fir::AbsentOp>(
+                                loc, fir::BoxType::get(builder.getI1Type()))
+                          : builder.createBox(loc, args[3]);
 
   // Create mutable fir.box to be passed to the runtime for the result.
   mlir::Type type = builder.getVarLenSeqTy(resultType, resultRank);
@@ -7712,27 +7611,26 @@ mlir::Value IntrinsicLibrary::genScale(mlir::Type resultType,
   // If X is finite and result is infinite, signal IEEE_OVERFLOW
   // If X is finite and scale(result, -I) != X, signal IEEE_UNDERFLOW
   fir::IfOp outerIfOp =
-      fir::IfOp::create(builder, loc, genIsFPClass(i1Ty, args[0], finiteTest),
-                        /*withElseRegion=*/false);
+      builder.create<fir::IfOp>(loc, genIsFPClass(i1Ty, args[0], finiteTest),
+                                /*withElseRegion=*/false);
   builder.setInsertionPointToStart(&outerIfOp.getThenRegion().front());
   fir::IfOp innerIfOp =
-      fir::IfOp::create(builder, loc, genIsFPClass(i1Ty, result, infiniteTest),
-                        /*withElseRegion=*/true);
+      builder.create<fir::IfOp>(loc, genIsFPClass(i1Ty, result, infiniteTest),
+                                /*withElseRegion=*/true);
   builder.setInsertionPointToStart(&innerIfOp.getThenRegion().front());
   genRaiseExcept(_FORTRAN_RUNTIME_IEEE_OVERFLOW |
                  _FORTRAN_RUNTIME_IEEE_INEXACT);
   builder.setInsertionPointToStart(&innerIfOp.getElseRegion().front());
-  mlir::Value minusI = mlir::arith::MulIOp::create(
-      builder, loc, args[1],
-      builder.createAllOnesInteger(loc, args[1].getType()));
+  mlir::Value minusI = builder.create<mlir::arith::MulIOp>(
+      loc, args[1], builder.createAllOnesInteger(loc, args[1].getType()));
   mlir::Value reverseResult = builder.createConvert(
       loc, resultType,
       fir::runtime::genScale(
           builder, loc, builder.createConvert(loc, f32Ty, result), minusI));
   genRaiseExcept(
       _FORTRAN_RUNTIME_IEEE_UNDERFLOW | _FORTRAN_RUNTIME_IEEE_INEXACT,
-      mlir::arith::CmpFOp::create(builder, loc, mlir::arith::CmpFPredicate::ONE,
-                                  args[0], reverseResult));
+      builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::ONE,
+                                          args[0], reverseResult));
   builder.setInsertionPointAfter(outerIfOp);
   return result;
 }
@@ -7784,14 +7682,13 @@ IntrinsicLibrary::genScan(mlir::Type resultType,
         builder.getContext(), builder.getKindMap().defaultLogicalKind());
     mlir::Value temp = builder.createTemporary(loc, logTy);
     mlir::Value castb = builder.createConvert(loc, logTy, b);
-    fir::StoreOp::create(builder, loc, castb, temp);
+    builder.create<fir::StoreOp>(loc, castb, temp);
     return builder.createBox(loc, temp);
   };
-  mlir::Value back =
-      fir::isUnboxedValue(args[2])
-          ? makeRefThenEmbox(*args[2].getUnboxed())
-          : fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getI1Type()));
+  mlir::Value back = fir::isUnboxedValue(args[2])
+                         ? makeRefThenEmbox(*args[2].getUnboxed())
+                         : builder.create<fir::AbsentOp>(
+                               loc, fir::BoxType::get(builder.getI1Type()));
 
   // Handle required string argument
   mlir::Value string = builder.createBox(loc, args[0]);
@@ -7832,7 +7729,7 @@ IntrinsicLibrary::genSecond(std::optional<mlir::Type> resultType,
   genCpuTime(subroutineArgs);
 
   if (resultType)
-    return fir::LoadOp::create(builder, loc, fir::getBase(result));
+    return builder.create<fir::LoadOp>(loc, fir::getBase(result));
   return {};
 }
 
@@ -7879,22 +7776,22 @@ IntrinsicLibrary::genSelectedRealKind(mlir::Type resultType,
   // Handle optional precision(P) argument
   mlir::Value precision =
       isStaticallyAbsent(args[0])
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::ReferenceType::get(builder.getI1Type()))
+          ? builder.create<fir::AbsentOp>(
+                loc, fir::ReferenceType::get(builder.getI1Type()))
           : fir::getBase(args[0]);
 
   // Handle optional range(R) argument
   mlir::Value range =
       isStaticallyAbsent(args[1])
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::ReferenceType::get(builder.getI1Type()))
+          ? builder.create<fir::AbsentOp>(
+                loc, fir::ReferenceType::get(builder.getI1Type()))
           : fir::getBase(args[1]);
 
   // Handle optional radix(RADIX) argument
   mlir::Value radix =
       isStaticallyAbsent(args[2])
-          ? fir::AbsentOp::create(builder, loc,
-                                  fir::ReferenceType::get(builder.getI1Type()))
+          ? builder.create<fir::AbsentOp>(
+                loc, fir::ReferenceType::get(builder.getI1Type()))
           : fir::getBase(args[2]);
 
   return builder.createConvert(
@@ -7932,9 +7829,9 @@ createBoxForRuntimeBoundInquiry(mlir::Location loc, fir::FirOpBuilder &builder,
         // shape information.
         mlir::Value localShape = builder.createShape(loc, array);
         mlir::Value oldBox = boxValue.getAddr();
-        return fir::ReboxOp::create(builder, loc, oldBox.getType(), oldBox,
-                                    localShape,
-                                    /*slice=*/mlir::Value{});
+        return builder.create<fir::ReboxOp>(loc, oldBox.getType(), oldBox,
+                                            localShape,
+                                            /*slice=*/mlir::Value{});
       },
       [&](const auto &) -> mlir::Value {
         // This is a pointer/allocatable, or an entity not yet tracked with a
@@ -7980,7 +7877,7 @@ genBoundInquiry(fir::FirOpBuilder &builder, mlir::Location loc,
     mlir::Value resultBase =
         builder.createConvert(loc, baseType, resultStorage);
     mlir::Value rankValue =
-        fir::BoxRankOp::create(builder, loc, builder.getIndexType(), arrayBox);
+        builder.create<fir::BoxRankOp>(loc, builder.getIndexType(), arrayBox);
     return fir::ArrayBoxValue{resultBase, {rankValue}};
   }
   // Result extent is a compile time constant in the other cases.
@@ -8010,9 +7907,9 @@ IntrinsicLibrary::genShape(mlir::Type resultType,
     mlir::Value extent = fir::factory::readExtent(builder, loc, array, dim);
     extent = builder.createConvert(loc, extentType, extent);
     auto index = builder.createIntegerConstant(loc, indexType, dim);
-    auto shapeAddr = fir::CoordinateOp::create(builder, loc, shapeAddrType,
-                                               shapeArray, index);
-    fir::StoreOp::create(builder, loc, extent, shapeAddr);
+    auto shapeAddr = builder.create<fir::CoordinateOp>(loc, shapeAddrType,
+                                                       shapeArray, index);
+    builder.create<fir::StoreOp>(loc, extent, shapeAddr);
   }
   mlir::Value shapeArrayExtent =
       builder.createIntegerConstant(loc, indexType, rank);
@@ -8038,18 +7935,18 @@ mlir::Value IntrinsicLibrary::genShift(mlir::Type resultType,
   mlir::Value zero = builder.createIntegerConstant(loc, signlessType, 0);
   mlir::Value shift = builder.createConvert(loc, signlessType, args[1]);
 
-  mlir::Value tooSmall = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::slt, shift, zero);
-  mlir::Value tooLarge = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::sge, shift, bitSize);
+  mlir::Value tooSmall = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::slt, shift, zero);
+  mlir::Value tooLarge = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::sge, shift, bitSize);
   mlir::Value outOfBounds =
-      mlir::arith::OrIOp::create(builder, loc, tooSmall, tooLarge);
+      builder.create<mlir::arith::OrIOp>(loc, tooSmall, tooLarge);
   mlir::Value word = args[0];
   if (word.getType().isUnsignedInteger())
     word = builder.createConvert(loc, signlessType, word);
-  mlir::Value shifted = Shift::create(builder, loc, word, shift);
+  mlir::Value shifted = builder.create<Shift>(loc, word, shift);
   mlir::Value result =
-      mlir::arith::SelectOp::create(builder, loc, outOfBounds, zero, shifted);
+      builder.create<mlir::arith::SelectOp>(loc, outOfBounds, zero, shifted);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -8064,8 +7961,8 @@ mlir::Value IntrinsicLibrary::genShiftA(mlir::Type resultType,
                              mlir::IntegerType::SignednessSemantics::Signless);
   mlir::Value bitSize = builder.createIntegerConstant(loc, signlessType, bits);
   mlir::Value shift = builder.createConvert(loc, signlessType, args[1]);
-  mlir::Value shiftGeBitSize = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::uge, shift, bitSize);
+  mlir::Value shiftGeBitSize = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::uge, shift, bitSize);
 
   // Lowering of mlir::arith::ShRSIOp is using `ashr`. `ashr` is undefined when
   // the shift amount is equal to the element size.
@@ -8077,13 +7974,13 @@ mlir::Value IntrinsicLibrary::genShiftA(mlir::Type resultType,
   mlir::Value word = args[0];
   if (word.getType().isUnsignedInteger())
     word = builder.createConvert(loc, signlessType, word);
-  mlir::Value valueIsNeg = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::slt, word, zero);
+  mlir::Value valueIsNeg = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::slt, word, zero);
   mlir::Value specialRes =
-      mlir::arith::SelectOp::create(builder, loc, valueIsNeg, minusOne, zero);
-  mlir::Value shifted = mlir::arith::ShRSIOp::create(builder, loc, word, shift);
-  mlir::Value result = mlir::arith::SelectOp::create(
-      builder, loc, shiftGeBitSize, specialRes, shifted);
+      builder.create<mlir::arith::SelectOp>(loc, valueIsNeg, minusOne, zero);
+  mlir::Value shifted = builder.create<mlir::arith::ShRSIOp>(loc, word, shift);
+  mlir::Value result = builder.create<mlir::arith::SelectOp>(
+      loc, shiftGeBitSize, specialRes, shifted);
   if (resultType.isUnsignedInteger())
     return builder.createConvert(loc, resultType, result);
   return result;
@@ -8108,10 +8005,10 @@ mlir::Value IntrinsicLibrary::genSign(mlir::Type resultType,
   if (mlir::isa<mlir::IntegerType>(resultType)) {
     mlir::Value abs = genAbs(resultType, {args[0]});
     mlir::Value zero = builder.createIntegerConstant(loc, resultType, 0);
-    auto neg = mlir::arith::SubIOp::create(builder, loc, zero, abs);
-    auto cmp = mlir::arith::CmpIOp::create(
-        builder, loc, mlir::arith::CmpIPredicate::slt, args[1], zero);
-    return mlir::arith::SelectOp::create(builder, loc, cmp, neg, abs);
+    auto neg = builder.create<mlir::arith::SubIOp>(loc, zero, abs);
+    auto cmp = builder.create<mlir::arith::CmpIOp>(
+        loc, mlir::arith::CmpIPredicate::slt, args[1], zero);
+    return builder.create<mlir::arith::SelectOp>(loc, cmp, neg, abs);
   }
   return genRuntimeCall("sign", resultType, args);
 }
@@ -8126,21 +8023,6 @@ mlir::Value IntrinsicLibrary::genSind(mlir::Type resultType,
   llvm::APFloat pi = llvm::APFloat(llvm::numbers::pi);
   mlir::Value dfactor = builder.createRealConstant(
       loc, mlir::Float64Type::get(context), pi / llvm::APFloat(180.0));
-  mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
-  mlir::Value arg = mlir::arith::MulFOp::create(builder, loc, args[0], factor);
-  return getRuntimeCallGenerator("sin", ftype)(builder, loc, {arg});
-}
-
-// SINPI
-mlir::Value IntrinsicLibrary::genSinpi(mlir::Type resultType,
-                                       llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 1);
-  mlir::MLIRContext *context = builder.getContext();
-  mlir::FunctionType ftype =
-      mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  llvm::APFloat pi = llvm::APFloat(llvm::numbers::pi);
-  mlir::Value dfactor =
-      builder.createRealConstant(loc, mlir::Float64Type::get(context), pi);
   mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
   mlir::Value arg = builder.create<mlir::arith::MulFOp>(loc, args[0], factor);
   return getRuntimeCallGenerator("sin", ftype)(builder, loc, {arg});
@@ -8186,14 +8068,14 @@ IntrinsicLibrary::genSize(mlir::Type resultType,
       .genThen([&]() {
         mlir::Value size = builder.createConvert(
             loc, resultType, fir::runtime::genSize(builder, loc, array));
-        fir::ResultOp::create(builder, loc, size);
+        builder.create<fir::ResultOp>(loc, size);
       })
       .genElse([&]() {
-        mlir::Value dimValue = fir::LoadOp::create(builder, loc, dim);
+        mlir::Value dimValue = builder.create<fir::LoadOp>(loc, dim);
         mlir::Value size = builder.createConvert(
             loc, resultType,
             fir::runtime::genSizeDim(builder, loc, array, dimValue));
-        fir::ResultOp::create(builder, loc, size);
+        builder.create<fir::ResultOp>(loc, size);
       })
       .getResults()[0];
 }
@@ -8204,13 +8086,12 @@ IntrinsicLibrary::genSizeOf(mlir::Type resultType,
                             llvm::ArrayRef<fir::ExtendedValue> args) {
   assert(args.size() == 1);
   mlir::Value box = fir::getBase(args[0]);
-  mlir::Value eleSize =
-      fir::BoxEleSizeOp::create(builder, loc, resultType, box);
+  mlir::Value eleSize = builder.create<fir::BoxEleSizeOp>(loc, resultType, box);
   if (!fir::isArray(args[0]))
     return eleSize;
   mlir::Value arraySize = builder.createConvert(
       loc, resultType, fir::runtime::genSize(builder, loc, box));
-  return mlir::arith::MulIOp::create(builder, loc, eleSize, arraySize);
+  return builder.create<mlir::arith::MulIOp>(loc, eleSize, arraySize);
 }
 
 // TAND
@@ -8224,202 +8105,8 @@ mlir::Value IntrinsicLibrary::genTand(mlir::Type resultType,
   mlir::Value dfactor = builder.createRealConstant(
       loc, mlir::Float64Type::get(context), pi / llvm::APFloat(180.0));
   mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
-  mlir::Value arg = mlir::arith::MulFOp::create(builder, loc, args[0], factor);
-  return getRuntimeCallGenerator("tan", ftype)(builder, loc, {arg});
-}
-
-// TANPI
-mlir::Value IntrinsicLibrary::genTanpi(mlir::Type resultType,
-                                       llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 1);
-  mlir::MLIRContext *context = builder.getContext();
-  mlir::FunctionType ftype =
-      mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
-  llvm::APFloat pi = llvm::APFloat(llvm::numbers::pi);
-  mlir::Value dfactor =
-      builder.createRealConstant(loc, mlir::Float64Type::get(context), pi);
-  mlir::Value factor = builder.createConvert(loc, args[0].getType(), dfactor);
   mlir::Value arg = builder.create<mlir::arith::MulFOp>(loc, args[0], factor);
   return getRuntimeCallGenerator("tan", ftype)(builder, loc, {arg});
-}
-
-// THIS_GRID
-mlir::Value IntrinsicLibrary::genThisGrid(mlir::Type resultType,
-                                          llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 0);
-  auto recTy = mlir::cast<fir::RecordType>(resultType);
-  assert(recTy && "RecordType expepected");
-  mlir::Value res = fir::AllocaOp::create(builder, loc, resultType);
-  mlir::Type i32Ty = builder.getI32Type();
-
-  mlir::Value threadIdX = mlir::NVVM::ThreadIdXOp::create(builder, loc, i32Ty);
-  mlir::Value threadIdY = mlir::NVVM::ThreadIdYOp::create(builder, loc, i32Ty);
-  mlir::Value threadIdZ = mlir::NVVM::ThreadIdZOp::create(builder, loc, i32Ty);
-
-  mlir::Value blockIdX = mlir::NVVM::BlockIdXOp::create(builder, loc, i32Ty);
-  mlir::Value blockIdY = mlir::NVVM::BlockIdYOp::create(builder, loc, i32Ty);
-  mlir::Value blockIdZ = mlir::NVVM::BlockIdZOp::create(builder, loc, i32Ty);
-
-  mlir::Value blockDimX = mlir::NVVM::BlockDimXOp::create(builder, loc, i32Ty);
-  mlir::Value blockDimY = mlir::NVVM::BlockDimYOp::create(builder, loc, i32Ty);
-  mlir::Value blockDimZ = mlir::NVVM::BlockDimZOp::create(builder, loc, i32Ty);
-  mlir::Value gridDimX = mlir::NVVM::GridDimXOp::create(builder, loc, i32Ty);
-  mlir::Value gridDimY = mlir::NVVM::GridDimYOp::create(builder, loc, i32Ty);
-  mlir::Value gridDimZ = mlir::NVVM::GridDimZOp::create(builder, loc, i32Ty);
-
-  // this_grid.size = ((blockDim.z * gridDim.z) * (blockDim.y * gridDim.y)) *
-  // (blockDim.x * gridDim.x);
-  mlir::Value resZ =
-      mlir::arith::MulIOp::create(builder, loc, blockDimZ, gridDimZ);
-  mlir::Value resY =
-      mlir::arith::MulIOp::create(builder, loc, blockDimY, gridDimY);
-  mlir::Value resX =
-      mlir::arith::MulIOp::create(builder, loc, blockDimX, gridDimX);
-  mlir::Value resZY = mlir::arith::MulIOp::create(builder, loc, resZ, resY);
-  mlir::Value size = mlir::arith::MulIOp::create(builder, loc, resZY, resX);
-
-  // tmp = ((blockIdx.z * gridDim.y * gridDim.x) + (blockIdx.y * gridDim.x)) +
-  //   blockIdx.x;
-  // this_group.rank = tmp * ((blockDim.x * blockDim.y) * blockDim.z) +
-  //   ((threadIdx.z * blockDim.y) * blockDim.x) +
-  //   (threadIdx.y * blockDim.x) + threadIdx.x + 1;
-  mlir::Value r1 =
-      mlir::arith::MulIOp::create(builder, loc, blockIdZ, gridDimY);
-  mlir::Value r2 = mlir::arith::MulIOp::create(builder, loc, r1, gridDimX);
-  mlir::Value r3 =
-      mlir::arith::MulIOp::create(builder, loc, blockIdY, gridDimX);
-  mlir::Value r2r3 = mlir::arith::AddIOp::create(builder, loc, r2, r3);
-  mlir::Value tmp = mlir::arith::AddIOp::create(builder, loc, r2r3, blockIdX);
-
-  mlir::Value bXbY =
-      mlir::arith::MulIOp::create(builder, loc, blockDimX, blockDimY);
-  mlir::Value bXbYbZ =
-      mlir::arith::MulIOp::create(builder, loc, bXbY, blockDimZ);
-  mlir::Value tZbY =
-      mlir::arith::MulIOp::create(builder, loc, threadIdZ, blockDimY);
-  mlir::Value tZbYbX =
-      mlir::arith::MulIOp::create(builder, loc, tZbY, blockDimX);
-  mlir::Value tYbX =
-      mlir::arith::MulIOp::create(builder, loc, threadIdY, blockDimX);
-  mlir::Value rank = mlir::arith::MulIOp::create(builder, loc, tmp, bXbYbZ);
-  rank = mlir::arith::AddIOp::create(builder, loc, rank, tZbYbX);
-  rank = mlir::arith::AddIOp::create(builder, loc, rank, tYbX);
-  rank = mlir::arith::AddIOp::create(builder, loc, rank, threadIdX);
-  mlir::Value one = builder.createIntegerConstant(loc, i32Ty, 1);
-  rank = mlir::arith::AddIOp::create(builder, loc, rank, one);
-
-  auto sizeFieldName = recTy.getTypeList()[1].first;
-  mlir::Type sizeFieldTy = recTy.getTypeList()[1].second;
-  mlir::Type fieldIndexType = fir::FieldType::get(resultType.getContext());
-  mlir::Value sizeFieldIndex = fir::FieldIndexOp::create(
-      builder, loc, fieldIndexType, sizeFieldName, recTy,
-      /*typeParams=*/mlir::ValueRange{});
-  mlir::Value sizeCoord = fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(sizeFieldTy), res, sizeFieldIndex);
-  fir::StoreOp::create(builder, loc, size, sizeCoord);
-
-  auto rankFieldName = recTy.getTypeList()[2].first;
-  mlir::Type rankFieldTy = recTy.getTypeList()[2].second;
-  mlir::Value rankFieldIndex = fir::FieldIndexOp::create(
-      builder, loc, fieldIndexType, rankFieldName, recTy,
-      /*typeParams=*/mlir::ValueRange{});
-  mlir::Value rankCoord = fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(rankFieldTy), res, rankFieldIndex);
-  fir::StoreOp::create(builder, loc, rank, rankCoord);
-  return res;
-}
-
-// THIS_THREAD_BLOCK
-mlir::Value
-IntrinsicLibrary::genThisThreadBlock(mlir::Type resultType,
-                                     llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 0);
-  auto recTy = mlir::cast<fir::RecordType>(resultType);
-  assert(recTy && "RecordType expepected");
-  mlir::Value res = fir::AllocaOp::create(builder, loc, resultType);
-  mlir::Type i32Ty = builder.getI32Type();
-
-  // this_thread_block%size = blockDim.z * blockDim.y * blockDim.x;
-  mlir::Value blockDimX = mlir::NVVM::BlockDimXOp::create(builder, loc, i32Ty);
-  mlir::Value blockDimY = mlir::NVVM::BlockDimYOp::create(builder, loc, i32Ty);
-  mlir::Value blockDimZ = mlir::NVVM::BlockDimZOp::create(builder, loc, i32Ty);
-  mlir::Value size =
-      mlir::arith::MulIOp::create(builder, loc, blockDimZ, blockDimY);
-  size = mlir::arith::MulIOp::create(builder, loc, size, blockDimX);
-
-  // this_thread_block%rank = ((threadIdx.z * blockDim.y) * blockDim.x) +
-  //   (threadIdx.y * blockDim.x) + threadIdx.x + 1;
-  mlir::Value threadIdX = mlir::NVVM::ThreadIdXOp::create(builder, loc, i32Ty);
-  mlir::Value threadIdY = mlir::NVVM::ThreadIdYOp::create(builder, loc, i32Ty);
-  mlir::Value threadIdZ = mlir::NVVM::ThreadIdZOp::create(builder, loc, i32Ty);
-  mlir::Value r1 =
-      mlir::arith::MulIOp::create(builder, loc, threadIdZ, blockDimY);
-  mlir::Value r2 = mlir::arith::MulIOp::create(builder, loc, r1, blockDimX);
-  mlir::Value r3 =
-      mlir::arith::MulIOp::create(builder, loc, threadIdY, blockDimX);
-  mlir::Value r2r3 = mlir::arith::AddIOp::create(builder, loc, r2, r3);
-  mlir::Value rank = mlir::arith::AddIOp::create(builder, loc, r2r3, threadIdX);
-  mlir::Value one = builder.createIntegerConstant(loc, i32Ty, 1);
-  rank = mlir::arith::AddIOp::create(builder, loc, rank, one);
-
-  auto sizeFieldName = recTy.getTypeList()[1].first;
-  mlir::Type sizeFieldTy = recTy.getTypeList()[1].second;
-  mlir::Type fieldIndexType = fir::FieldType::get(resultType.getContext());
-  mlir::Value sizeFieldIndex = fir::FieldIndexOp::create(
-      builder, loc, fieldIndexType, sizeFieldName, recTy,
-      /*typeParams=*/mlir::ValueRange{});
-  mlir::Value sizeCoord = fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(sizeFieldTy), res, sizeFieldIndex);
-  fir::StoreOp::create(builder, loc, size, sizeCoord);
-
-  auto rankFieldName = recTy.getTypeList()[2].first;
-  mlir::Type rankFieldTy = recTy.getTypeList()[2].second;
-  mlir::Value rankFieldIndex = fir::FieldIndexOp::create(
-      builder, loc, fieldIndexType, rankFieldName, recTy,
-      /*typeParams=*/mlir::ValueRange{});
-  mlir::Value rankCoord = fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(rankFieldTy), res, rankFieldIndex);
-  fir::StoreOp::create(builder, loc, rank, rankCoord);
-  return res;
-}
-
-// THIS_WARP
-mlir::Value IntrinsicLibrary::genThisWarp(mlir::Type resultType,
-                                          llvm::ArrayRef<mlir::Value> args) {
-  assert(args.size() == 0);
-  auto recTy = mlir::cast<fir::RecordType>(resultType);
-  assert(recTy && "RecordType expepected");
-  mlir::Value res = fir::AllocaOp::create(builder, loc, resultType);
-  mlir::Type i32Ty = builder.getI32Type();
-
-  // coalesced_group%size = 32
-  mlir::Value size = builder.createIntegerConstant(loc, i32Ty, 32);
-  auto sizeFieldName = recTy.getTypeList()[1].first;
-  mlir::Type sizeFieldTy = recTy.getTypeList()[1].second;
-  mlir::Type fieldIndexType = fir::FieldType::get(resultType.getContext());
-  mlir::Value sizeFieldIndex = fir::FieldIndexOp::create(
-      builder, loc, fieldIndexType, sizeFieldName, recTy,
-      /*typeParams=*/mlir::ValueRange{});
-  mlir::Value sizeCoord = fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(sizeFieldTy), res, sizeFieldIndex);
-  fir::StoreOp::create(builder, loc, size, sizeCoord);
-
-  // coalesced_group%rank = threadIdx.x & 31 + 1
-  mlir::Value threadIdX = mlir::NVVM::ThreadIdXOp::create(builder, loc, i32Ty);
-  mlir::Value mask = builder.createIntegerConstant(loc, i32Ty, 31);
-  mlir::Value one = builder.createIntegerConstant(loc, i32Ty, 1);
-  mlir::Value masked =
-      mlir::arith::AndIOp::create(builder, loc, threadIdX, mask);
-  mlir::Value rank = mlir::arith::AddIOp::create(builder, loc, masked, one);
-  auto rankFieldName = recTy.getTypeList()[2].first;
-  mlir::Type rankFieldTy = recTy.getTypeList()[2].second;
-  mlir::Value rankFieldIndex = fir::FieldIndexOp::create(
-      builder, loc, fieldIndexType, rankFieldName, recTy,
-      /*typeParams=*/mlir::ValueRange{});
-  mlir::Value rankCoord = fir::CoordinateOp::create(
-      builder, loc, builder.getRefType(rankFieldTy), res, rankFieldIndex);
-  fir::StoreOp::create(builder, loc, rank, rankCoord);
-  return res;
 }
 
 // TRAILZ
@@ -8428,7 +8115,7 @@ mlir::Value IntrinsicLibrary::genTrailz(mlir::Type resultType,
   assert(args.size() == 1);
 
   mlir::Value result =
-      mlir::math::CountTrailingZerosOp::create(builder, loc, args);
+      builder.create<mlir::math::CountTrailingZerosOp>(loc, args);
 
   return builder.createConvert(loc, resultType, result);
 }
@@ -8456,10 +8143,10 @@ static mlir::Value computeLBOUND(fir::FirOpBuilder &builder, mlir::Location loc,
   zero = builder.createConvert(loc, extent.getType(), zero);
   // Note: for assumed size, the extent is -1, and the lower bound should
   // be returned. It is important to test extent == 0 and not extent > 0.
-  auto dimIsEmpty = mlir::arith::CmpIOp::create(
-      builder, loc, mlir::arith::CmpIPredicate::eq, extent, zero);
+  auto dimIsEmpty = builder.create<mlir::arith::CmpIOp>(
+      loc, mlir::arith::CmpIPredicate::eq, extent, zero);
   one = builder.createConvert(loc, lb.getType(), one);
-  return mlir::arith::SelectOp::create(builder, loc, dimIsEmpty, one, lb);
+  return builder.create<mlir::arith::SelectOp>(loc, dimIsEmpty, one, lb);
 }
 
 // LBOUND
@@ -8495,8 +8182,8 @@ IntrinsicLibrary::genLbound(mlir::Type resultType,
       lb = builder.createConvert(loc, lbType, lb);
       auto index = builder.createIntegerConstant(loc, indexType, dim);
       auto lbAddr =
-          fir::CoordinateOp::create(builder, loc, lbAddrType, lbArray, index);
-      fir::StoreOp::create(builder, loc, lb, lbAddr);
+          builder.create<fir::CoordinateOp>(loc, lbAddrType, lbArray, index);
+      builder.create<fir::StoreOp>(loc, lb, lbAddr);
     }
     mlir::Value lbArrayExtent =
         builder.createIntegerConstant(loc, indexType, rank);
@@ -8535,8 +8222,8 @@ IntrinsicLibrary::genUbound(mlir::Type resultType,
     mlir::Value lbound = fir::getBase(genLbound(resultType, args));
 
     mlir::Value one = builder.createIntegerConstant(loc, resultType, 1);
-    mlir::Value ubound = mlir::arith::SubIOp::create(builder, loc, lbound, one);
-    return mlir::arith::AddIOp::create(builder, loc, ubound, extent);
+    mlir::Value ubound = builder.create<mlir::arith::SubIOp>(loc, lbound, one);
+    return builder.create<mlir::arith::AddIOp>(loc, ubound, extent);
   }
   // Handle calls to UBOUND without the DIM argument, which return an array
   int kindPos = args.size() == 2 ? 1 : 2;
@@ -8630,9 +8317,9 @@ IntrinsicLibrary::genStorageSize(mlir::Type resultType,
 
   box = builder.createBox(loc, args[0],
                           /*isPolymorphic=*/args[0].isPolymorphic());
-  mlir::Value eleSize = fir::BoxEleSizeOp::create(builder, loc, kindTy, box);
+  mlir::Value eleSize = builder.create<fir::BoxEleSizeOp>(loc, kindTy, box);
   mlir::Value c8 = builder.createIntegerConstant(loc, kindTy, 8);
-  return mlir::arith::MulIOp::create(builder, loc, eleSize, c8);
+  return builder.create<mlir::arith::MulIOp>(loc, eleSize, c8);
 }
 
 // SUM
@@ -8645,7 +8332,7 @@ IntrinsicLibrary::genSum(mlir::Type resultType,
 
 // SYNCTHREADS
 void IntrinsicLibrary::genSyncThreads(llvm::ArrayRef<fir::ExtendedValue> args) {
-  mlir::NVVM::Barrier0Op::create(builder, loc);
+  builder.create<mlir::NVVM::Barrier0Op>(loc);
 }
 
 // SYNCTHREADS_AND
@@ -8657,7 +8344,7 @@ IntrinsicLibrary::genSyncThreadsAnd(mlir::Type resultType,
   mlir::FunctionType ftype =
       mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
   auto funcOp = builder.createFunction(loc, funcName, ftype);
-  return fir::CallOp::create(builder, loc, funcOp, args).getResult(0);
+  return builder.create<fir::CallOp>(loc, funcOp, args).getResult(0);
 }
 
 // SYNCTHREADS_COUNT
@@ -8669,7 +8356,7 @@ IntrinsicLibrary::genSyncThreadsCount(mlir::Type resultType,
   mlir::FunctionType ftype =
       mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
   auto funcOp = builder.createFunction(loc, funcName, ftype);
-  return fir::CallOp::create(builder, loc, funcOp, args).getResult(0);
+  return builder.create<fir::CallOp>(loc, funcOp, args).getResult(0);
 }
 
 // SYNCTHREADS_OR
@@ -8681,7 +8368,7 @@ IntrinsicLibrary::genSyncThreadsOr(mlir::Type resultType,
   mlir::FunctionType ftype =
       mlir::FunctionType::get(context, {resultType}, {args[0].getType()});
   auto funcOp = builder.createFunction(loc, funcName, ftype);
-  return fir::CallOp::create(builder, loc, funcOp, args).getResult(0);
+  return builder.create<fir::CallOp>(loc, funcOp, args).getResult(0);
 }
 
 // SYNCWARP
@@ -8693,7 +8380,7 @@ void IntrinsicLibrary::genSyncWarp(llvm::ArrayRef<fir::ExtendedValue> args) {
       mlir::FunctionType::get(builder.getContext(), {mask.getType()}, {});
   auto funcOp = builder.createFunction(loc, funcName, funcType);
   llvm::SmallVector<mlir::Value> argsList{mask};
-  fir::CallOp::create(builder, loc, funcOp, argsList);
+  builder.create<fir::CallOp>(loc, funcOp, argsList);
 }
 
 // SYSTEM
@@ -8719,26 +8406,25 @@ IntrinsicLibrary::genSystem(std::optional<mlir::Type> resultType,
   mlir::Value exitstatBox =
       isStaticallyPresent(exitstat)
           ? fir::getBase(exitstat)
-          : fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+          : builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
 
   // Create a dummmy cmdstat to prevent EXECUTE_COMMAND_LINE terminate itself
   // when cmdstat is assigned with a non-zero value but not present
   mlir::Value tempValue =
       builder.createIntegerConstant(loc, builder.getI16Type(), 0);
   mlir::Value temp = builder.createTemporary(loc, builder.getI16Type());
-  fir::StoreOp::create(builder, loc, tempValue, temp);
+  builder.create<fir::StoreOp>(loc, tempValue, temp);
   mlir::Value cmdstatBox = builder.createBox(loc, temp);
 
   mlir::Value cmdmsgBox =
-      fir::AbsentOp::create(builder, loc, boxNoneTy).getResult();
+      builder.create<fir::AbsentOp>(loc, boxNoneTy).getResult();
 
   fir::runtime::genExecuteCommandLine(builder, loc, command, waitBool,
                                       exitstatBox, cmdstatBox, cmdmsgBox);
 
   if (resultType) {
-    mlir::Value exitstatAddr =
-        fir::BoxAddrOp::create(builder, loc, exitstatBox);
-    return fir::LoadOp::create(builder, loc, fir::getBase(exitstatAddr));
+    mlir::Value exitstatAddr = builder.create<fir::BoxAddrOp>(loc, exitstatBox);
+    return builder.create<fir::LoadOp>(loc, fir::getBase(exitstatAddr));
   }
   return {};
 }
@@ -8834,7 +8520,7 @@ void IntrinsicLibrary::genThreadFence(llvm::ArrayRef<fir::ExtendedValue> args) {
       mlir::FunctionType::get(builder.getContext(), {}, {});
   auto funcOp = builder.createFunction(loc, funcName, funcType);
   llvm::SmallVector<mlir::Value> noArgs;
-  fir::CallOp::create(builder, loc, funcOp, noArgs);
+  builder.create<fir::CallOp>(loc, funcOp, noArgs);
 }
 
 // THREADFENCE_BLOCK
@@ -8845,7 +8531,7 @@ void IntrinsicLibrary::genThreadFenceBlock(
       mlir::FunctionType::get(builder.getContext(), {}, {});
   auto funcOp = builder.createFunction(loc, funcName, funcType);
   llvm::SmallVector<mlir::Value> noArgs;
-  fir::CallOp::create(builder, loc, funcOp, noArgs);
+  builder.create<fir::CallOp>(loc, funcOp, noArgs);
 }
 
 // THREADFENCE_SYSTEM
@@ -8856,7 +8542,7 @@ void IntrinsicLibrary::genThreadFenceSystem(
       mlir::FunctionType::get(builder.getContext(), {}, {});
   auto funcOp = builder.createFunction(loc, funcName, funcType);
   llvm::SmallVector<mlir::Value> noArgs;
-  fir::CallOp::create(builder, loc, funcOp, noArgs);
+  builder.create<fir::CallOp>(loc, funcOp, noArgs);
 }
 
 // TIME
@@ -8908,30 +8594,29 @@ static mlir::Value createExtremumCompare(mlir::Location loc,
       // Return the number if one of the inputs is NaN and the other is
       // a number.
       auto leftIsResult =
-          mlir::arith::CmpFOp::create(builder, loc, orderedCmp, left, right);
-      auto rightIsNan = mlir::arith::CmpFOp::create(
-          builder, loc, mlir::arith::CmpFPredicate::UNE, right, right);
+          builder.create<mlir::arith::CmpFOp>(loc, orderedCmp, left, right);
+      auto rightIsNan = builder.create<mlir::arith::CmpFOp>(
+          loc, mlir::arith::CmpFPredicate::UNE, right, right);
       result =
-          mlir::arith::OrIOp::create(builder, loc, leftIsResult, rightIsNan);
+          builder.create<mlir::arith::OrIOp>(loc, leftIsResult, rightIsNan);
     } else if constexpr (behavior == ExtremumBehavior::IeeeMinMaximum) {
       // Always return NaNs if one the input is NaNs
       auto leftIsResult =
-          mlir::arith::CmpFOp::create(builder, loc, orderedCmp, left, right);
-      auto leftIsNan = mlir::arith::CmpFOp::create(
-          builder, loc, mlir::arith::CmpFPredicate::UNE, left, left);
-      result =
-          mlir::arith::OrIOp::create(builder, loc, leftIsResult, leftIsNan);
+          builder.create<mlir::arith::CmpFOp>(loc, orderedCmp, left, right);
+      auto leftIsNan = builder.create<mlir::arith::CmpFOp>(
+          loc, mlir::arith::CmpFPredicate::UNE, left, left);
+      result = builder.create<mlir::arith::OrIOp>(loc, leftIsResult, leftIsNan);
     } else if constexpr (behavior == ExtremumBehavior::MinMaxss) {
       // If the left is a NaN, return the right whatever it is.
       result =
-          mlir::arith::CmpFOp::create(builder, loc, orderedCmp, left, right);
+          builder.create<mlir::arith::CmpFOp>(loc, orderedCmp, left, right);
     } else if constexpr (behavior == ExtremumBehavior::PgfortranLlvm) {
       // If one of the operand is a NaN, return left whatever it is.
       static constexpr auto unorderedCmp =
           extremum == Extremum::Max ? mlir::arith::CmpFPredicate::UGT
                                     : mlir::arith::CmpFPredicate::ULT;
       result =
-          mlir::arith::CmpFOp::create(builder, loc, unorderedCmp, left, right);
+          builder.create<mlir::arith::CmpFOp>(loc, unorderedCmp, left, right);
     } else {
       // TODO: ieeeMinNum/ieeeMaxNum
       static_assert(behavior == ExtremumBehavior::IeeeMinMaxNum,
@@ -8945,8 +8630,8 @@ static mlir::Value createExtremumCompare(mlir::Location loc,
       left = builder.createConvert(loc, signlessType, left);
       right = builder.createConvert(loc, signlessType, right);
     }
-    result = mlir::arith::CmpIOp::create(builder, loc, integerPredicate, left,
-                                         right);
+    result =
+        builder.create<mlir::arith::CmpIOp>(loc, integerPredicate, left, right);
   } else if (fir::isa_char(type) || fir::isa_char(fir::unwrapRefType(type))) {
     // TODO: ! character min and max is tricky because the result
     // length is the length of the longest argument!
@@ -9067,14 +8752,13 @@ IntrinsicLibrary::genVerify(mlir::Type resultType,
         builder.getContext(), builder.getKindMap().defaultLogicalKind());
     mlir::Value temp = builder.createTemporary(loc, logTy);
     mlir::Value castb = builder.createConvert(loc, logTy, b);
-    fir::StoreOp::create(builder, loc, castb, temp);
+    builder.create<fir::StoreOp>(loc, castb, temp);
     return builder.createBox(loc, temp);
   };
-  mlir::Value back =
-      fir::isUnboxedValue(args[2])
-          ? makeRefThenEmbox(*args[2].getUnboxed())
-          : fir::AbsentOp::create(builder, loc,
-                                  fir::BoxType::get(builder.getI1Type()));
+  mlir::Value back = fir::isUnboxedValue(args[2])
+                         ? makeRefThenEmbox(*args[2].getUnboxed())
+                         : builder.create<fir::AbsentOp>(
+                               loc, fir::BoxType::get(builder.getI1Type()));
 
   // Handle required string argument
   mlir::Value string = builder.createBox(loc, args[0]);
@@ -9114,8 +8798,8 @@ IntrinsicLibrary::genExtremumloc(FN func, FD funcDim, llvm::StringRef errMsg,
 
   // Handle optional mask argument
   auto mask = isStaticallyAbsent(args[2])
-                  ? fir::AbsentOp::create(
-                        builder, loc, fir::BoxType::get(builder.getI1Type()))
+                  ? builder.create<fir::AbsentOp>(
+                        loc, fir::BoxType::get(builder.getI1Type()))
                   : builder.createBox(loc, args[2]);
 
   // Handle optional kind argument
@@ -9197,8 +8881,8 @@ IntrinsicLibrary::genExtremumVal(FN func, FD funcDim, FC funcChar,
 
   // Handle optional mask argument
   auto mask = isStaticallyAbsent(args[2])
-                  ? fir::AbsentOp::create(
-                        builder, loc, fir::BoxType::get(builder.getI1Type()))
+                  ? builder.create<fir::AbsentOp>(
+                        loc, fir::BoxType::get(builder.getI1Type()))
                   : builder.createBox(loc, args[2]);
 
   bool absentDim = isStaticallyAbsent(args[1]);
@@ -9262,7 +8946,7 @@ mlir::Value IntrinsicLibrary::genExtremum(mlir::Type,
   for (auto arg : args.drop_front()) {
     mlir::Value mask =
         createExtremumCompare<extremum, behavior>(loc, builder, result, arg);
-    result = mlir::arith::SelectOp::create(builder, loc, mask, result, arg);
+    result = builder.create<mlir::arith::SelectOp>(loc, mask, result, arg);
   }
   return result;
 }

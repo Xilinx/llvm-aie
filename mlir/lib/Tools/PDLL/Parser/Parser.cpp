@@ -27,6 +27,7 @@
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/TableGen/Error.h"
@@ -1206,7 +1207,8 @@ ast::Decl *Parser::createODSNativePDLLConstraintDecl(
   // Build the native constraint.
   auto *constraintDecl = ast::UserConstraintDecl::createNative(
       ctx, ast::Name::create(ctx, name, loc), paramVar,
-      /*results=*/{}, codeBlock, ast::TupleType::get(ctx), nativeType);
+      /*results=*/std::nullopt, codeBlock, ast::TupleType::get(ctx),
+      nativeType);
   constraintDecl->setDocComment(ctx, docString);
   curDeclScope->add(constraintDecl);
   return constraintDecl;
@@ -2002,7 +2004,7 @@ Parser::parseConstraint(std::optional<SMRange> &typeConstraint,
 
 FailureOr<ast::ConstraintRef> Parser::parseArgOrResultConstraint() {
   std::optional<SMRange> typeConstraint;
-  return parseConstraint(typeConstraint, /*existingConstraints=*/{},
+  return parseConstraint(typeConstraint, /*existingConstraints=*/std::nullopt,
                          /*allowInlineTypeConstraints=*/false);
 }
 
@@ -3554,9 +3556,8 @@ Parser::validateOperationOperands(SMRange loc, std::optional<StringRef> name,
                                   SmallVectorImpl<ast::Expr *> &operands) {
   return validateOperationOperandsOrResults(
       "operand", loc, odsOp ? odsOp->getLoc() : std::optional<SMRange>(), name,
-      operands,
-      odsOp ? odsOp->getOperands() : ArrayRef<pdll::ods::OperandOrResult>(),
-      valueTy, valueRangeTy);
+      operands, odsOp ? odsOp->getOperands() : std::nullopt, valueTy,
+      valueRangeTy);
 }
 
 LogicalResult
@@ -3565,9 +3566,7 @@ Parser::validateOperationResults(SMRange loc, std::optional<StringRef> name,
                                  SmallVectorImpl<ast::Expr *> &results) {
   return validateOperationOperandsOrResults(
       "result", loc, odsOp ? odsOp->getLoc() : std::optional<SMRange>(), name,
-      results,
-      odsOp ? odsOp->getResults() : ArrayRef<pdll::ods::OperandOrResult>(),
-      typeTy, typeRangeTy);
+      results, odsOp ? odsOp->getResults() : std::nullopt, typeTy, typeRangeTy);
 }
 
 void Parser::checkOperationResultTypeInferrence(SMRange loc, StringRef opName,
@@ -3666,8 +3665,8 @@ LogicalResult Parser::validateOperationOperandsOrResults(
       // Otherwise, create dummy values for each of the entries so that we
       // adhere to the ODS signature.
       for (unsigned i = 0, e = odsValues.size(); i < e; ++i) {
-        values.push_back(
-            ast::RangeExpr::create(ctx, loc, /*elements=*/{}, rangeTy));
+        values.push_back(ast::RangeExpr::create(
+            ctx, loc, /*elements=*/std::nullopt, rangeTy));
       }
       return success();
     }

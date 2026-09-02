@@ -8,13 +8,16 @@
 // RUN: -emit-llvm -O1 -o - | FileCheck %s --check-prefix=SPVCHECK
 
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) half @_Z16test_length_halfDh(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) half @_Z16test_length_halfDh(
+//
+
+// CHECK-LABEL: define noundef nofpclass(nan inf) half @_Z16test_length_halfDh(
 // CHECK-SAME: half noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[ELT_ABS_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.fabs.f16(half nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    ret half [[ELT_ABS_I]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) half @_Z16test_length_halfDh(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) half @_Z16test_length_halfDh(
 // SPVCHECK-SAME: half noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[ELT_ABS_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.fabs.f16(half nofpclass(nan inf) [[P0]])
@@ -25,14 +28,18 @@ half test_length_half(half p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) half @_Z17test_length_half2Dv2_Dh(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) half @_Z17test_length_half2Dv2_Dh(
+//
+
+
+// CHECK-LABEL: define noundef nofpclass(nan inf) half @_Z17test_length_half2Dv2_Dh(
 // CHECK-SAME: <2 x half> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[HLSL_DOT_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn half @llvm.dx.fdot.v2f16(<2 x half> nofpclass(nan inf) [[P0]], <2 x half> nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.sqrt.f16(half [[HLSL_DOT_I]])
 // CHECK-NEXT:    ret half [[TMP0]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) half @_Z17test_length_half2Dv2_Dh(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) half @_Z17test_length_half2Dv2_Dh(
 // SPVCHECK-SAME: <2 x half> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[SPV_LENGTH_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.spv.length.v2f16(<2 x half> nofpclass(nan inf) [[P0]])
@@ -43,14 +50,15 @@ half test_length_half2(half2 p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) half @_Z17test_length_half3Dv3_Dh(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) half @_Z17test_length_half3Dv3_Dh(
+// CHECK-LABEL: define noundef nofpclass(nan inf) half @_Z17test_length_half3Dv3_Dh(
 // CHECK-SAME: <3 x half> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[HLSL_DOT_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn half @llvm.dx.fdot.v3f16(<3 x half> nofpclass(nan inf) [[P0]], <3 x half> nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.sqrt.f16(half [[HLSL_DOT_I]])
 // CHECK-NEXT:    ret half [[TMP0]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) half @_Z17test_length_half3Dv3_Dh(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) half @_Z17test_length_half3Dv3_Dh(
 // SPVCHECK-SAME: <3 x half> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[SPV_LENGTH_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.spv.length.v3f16(<3 x half> nofpclass(nan inf) [[P0]])
@@ -61,14 +69,15 @@ half test_length_half3(half3 p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) half @_Z17test_length_half4Dv4_Dh(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) half @_Z17test_length_half4Dv4_Dh(
+// CHECK-LABEL: define noundef nofpclass(nan inf) half @_Z17test_length_half4Dv4_Dh(
 // CHECK-SAME: <4 x half> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[HLSL_DOT_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn half @llvm.dx.fdot.v4f16(<4 x half> nofpclass(nan inf) [[P0]], <4 x half> nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.sqrt.f16(half [[HLSL_DOT_I]])
 // CHECK-NEXT:    ret half [[TMP0]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) half @_Z17test_length_half4Dv4_Dh(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) half @_Z17test_length_half4Dv4_Dh(
 // SPVCHECK-SAME: <4 x half> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[SPV_LENGTH_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef half @llvm.spv.length.v4f16(<4 x half> nofpclass(nan inf) [[P0]])
@@ -79,13 +88,14 @@ half test_length_half4(half4 p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) float @_Z17test_length_floatf(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) float @_Z17test_length_floatf(
+// CHECK-LABEL: define noundef nofpclass(nan inf) float @_Z17test_length_floatf(
 // CHECK-SAME: float noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[ELT_ABS_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.fabs.f32(float nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    ret float [[ELT_ABS_I]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) float @_Z17test_length_floatf(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) float @_Z17test_length_floatf(
 // SPVCHECK-SAME: float noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[ELT_ABS_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.fabs.f32(float nofpclass(nan inf) [[P0]])
@@ -96,14 +106,15 @@ float test_length_float(float p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) float @_Z18test_length_float2Dv2_f(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) float @_Z18test_length_float2Dv2_f(
+// CHECK-LABEL: define noundef nofpclass(nan inf) float @_Z18test_length_float2Dv2_f(
 // CHECK-SAME: <2 x float> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[HLSL_DOT_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn float @llvm.dx.fdot.v2f32(<2 x float> nofpclass(nan inf) [[P0]], <2 x float> nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.sqrt.f32(float [[HLSL_DOT_I]])
 // CHECK-NEXT:    ret float [[TMP0]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) float @_Z18test_length_float2Dv2_f(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) float @_Z18test_length_float2Dv2_f(
 // SPVCHECK-SAME: <2 x float> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[SPV_LENGTH_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.spv.length.v2f32(<2 x float> nofpclass(nan inf) [[P0]])
@@ -114,14 +125,15 @@ float test_length_float2(float2 p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) float @_Z18test_length_float3Dv3_f(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) float @_Z18test_length_float3Dv3_f(
+// CHECK-LABEL: define noundef nofpclass(nan inf) float @_Z18test_length_float3Dv3_f(
 // CHECK-SAME: <3 x float> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[HLSL_DOT_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn float @llvm.dx.fdot.v3f32(<3 x float> nofpclass(nan inf) [[P0]], <3 x float> nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.sqrt.f32(float [[HLSL_DOT_I]])
 // CHECK-NEXT:    ret float [[TMP0]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) float @_Z18test_length_float3Dv3_f(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) float @_Z18test_length_float3Dv3_f(
 // SPVCHECK-SAME: <3 x float> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[SPV_LENGTH_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.spv.length.v3f32(<3 x float> nofpclass(nan inf) [[P0]])
@@ -132,14 +144,15 @@ float test_length_float3(float3 p0)
   return length(p0);
 }
 
-// CHECK-LABEL: define hidden noundef nofpclass(nan inf) float @_Z18test_length_float4Dv4_f(
+// DXCHECK-LABEL: define noundef nofpclass(nan inf) float @_Z18test_length_float4Dv4_f(
+// CHECK-LABEL: define noundef nofpclass(nan inf) float @_Z18test_length_float4Dv4_f(
 // CHECK-SAME: <4 x float> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[HLSL_DOT_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn float @llvm.dx.fdot.v4f32(<4 x float> nofpclass(nan inf) [[P0]], <4 x float> nofpclass(nan inf) [[P0]])
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.sqrt.f32(float [[HLSL_DOT_I]])
 // CHECK-NEXT:    ret float [[TMP0]]
 //
-// SPVCHECK-LABEL: define hidden spir_func noundef nofpclass(nan inf) float @_Z18test_length_float4Dv4_f(
+// SPVCHECK-LABEL: define spir_func noundef nofpclass(nan inf) float @_Z18test_length_float4Dv4_f(
 // SPVCHECK-SAME: <4 x float> noundef nofpclass(nan inf) [[P0:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // SPVCHECK-NEXT:  [[ENTRY:.*:]]
 // SPVCHECK-NEXT:    [[SPV_LENGTH_I:%.*]] = tail call reassoc nnan ninf nsz arcp afn noundef float @llvm.spv.length.v4f32(<4 x float> nofpclass(nan inf) [[P0]])

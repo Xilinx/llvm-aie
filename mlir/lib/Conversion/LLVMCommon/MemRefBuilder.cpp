@@ -32,7 +32,7 @@ MemRefDescriptor::MemRefDescriptor(Value descriptor)
 MemRefDescriptor MemRefDescriptor::poison(OpBuilder &builder, Location loc,
                                           Type descriptorType) {
 
-  Value descriptor = LLVM::PoisonOp::create(builder, loc, descriptorType);
+  Value descriptor = builder.create<LLVM::PoisonOp>(loc, descriptorType);
   return MemRefDescriptor(descriptor);
 }
 
@@ -53,7 +53,7 @@ MemRefDescriptor MemRefDescriptor::fromStaticShape(
 
   // Extract all strides and offsets and verify they are static.
   auto [strides, offset] = type.getStridesAndOffset();
-  assert(ShapedType::isStatic(offset) && "expected static offset");
+  assert(!ShapedType::isDynamic(offset) && "expected static offset");
   assert(!llvm::any_of(strides, ShapedType::isDynamic) &&
          "expected static strides");
 
@@ -99,21 +99,21 @@ void MemRefDescriptor::setAlignedPtr(OpBuilder &builder, Location loc,
 // integer attribute.
 static Value createIndexAttrConstant(OpBuilder &builder, Location loc,
                                      Type resultType, int64_t value) {
-  return LLVM::ConstantOp::create(builder, loc, resultType,
-                                  builder.getIndexAttr(value));
+  return builder.create<LLVM::ConstantOp>(loc, resultType,
+                                          builder.getIndexAttr(value));
 }
 
 /// Builds IR extracting the offset from the descriptor.
 Value MemRefDescriptor::offset(OpBuilder &builder, Location loc) {
-  return LLVM::ExtractValueOp::create(builder, loc, value,
-                                      kOffsetPosInMemRefDescriptor);
+  return builder.create<LLVM::ExtractValueOp>(loc, value,
+                                              kOffsetPosInMemRefDescriptor);
 }
 
 /// Builds IR inserting the offset into the descriptor.
 void MemRefDescriptor::setOffset(OpBuilder &builder, Location loc,
                                  Value offset) {
-  value = LLVM::InsertValueOp::create(builder, loc, value, offset,
-                                      kOffsetPosInMemRefDescriptor);
+  value = builder.create<LLVM::InsertValueOp>(loc, value, offset,
+                                              kOffsetPosInMemRefDescriptor);
 }
 
 /// Builds IR inserting the offset into the descriptor.
@@ -125,9 +125,8 @@ void MemRefDescriptor::setConstantOffset(OpBuilder &builder, Location loc,
 
 /// Builds IR extracting the pos-th size from the descriptor.
 Value MemRefDescriptor::size(OpBuilder &builder, Location loc, unsigned pos) {
-  return LLVM::ExtractValueOp::create(
-      builder, loc, value,
-      ArrayRef<int64_t>({kSizePosInMemRefDescriptor, pos}));
+  return builder.create<LLVM::ExtractValueOp>(
+      loc, value, ArrayRef<int64_t>({kSizePosInMemRefDescriptor, pos}));
 }
 
 Value MemRefDescriptor::size(OpBuilder &builder, Location loc, Value pos,
@@ -138,25 +137,23 @@ Value MemRefDescriptor::size(OpBuilder &builder, Location loc, Value pos,
 
   // Copy size values to stack-allocated memory.
   auto one = createIndexAttrConstant(builder, loc, indexType, 1);
-  auto sizes = LLVM::ExtractValueOp::create(
-      builder, loc, value,
-      llvm::ArrayRef<int64_t>({kSizePosInMemRefDescriptor}));
-  auto sizesPtr = LLVM::AllocaOp::create(builder, loc, ptrTy, arrayTy, one,
-                                         /*alignment=*/0);
-  LLVM::StoreOp::create(builder, loc, sizes, sizesPtr);
+  auto sizes = builder.create<LLVM::ExtractValueOp>(
+      loc, value, llvm::ArrayRef<int64_t>({kSizePosInMemRefDescriptor}));
+  auto sizesPtr = builder.create<LLVM::AllocaOp>(loc, ptrTy, arrayTy, one,
+                                                 /*alignment=*/0);
+  builder.create<LLVM::StoreOp>(loc, sizes, sizesPtr);
 
   // Load an return size value of interest.
-  auto resultPtr = LLVM::GEPOp::create(builder, loc, ptrTy, arrayTy, sizesPtr,
-                                       ArrayRef<LLVM::GEPArg>{0, pos});
-  return LLVM::LoadOp::create(builder, loc, indexType, resultPtr);
+  auto resultPtr = builder.create<LLVM::GEPOp>(loc, ptrTy, arrayTy, sizesPtr,
+                                               ArrayRef<LLVM::GEPArg>{0, pos});
+  return builder.create<LLVM::LoadOp>(loc, indexType, resultPtr);
 }
 
 /// Builds IR inserting the pos-th size into the descriptor
 void MemRefDescriptor::setSize(OpBuilder &builder, Location loc, unsigned pos,
                                Value size) {
-  value = LLVM::InsertValueOp::create(
-      builder, loc, value, size,
-      ArrayRef<int64_t>({kSizePosInMemRefDescriptor, pos}));
+  value = builder.create<LLVM::InsertValueOp>(
+      loc, value, size, ArrayRef<int64_t>({kSizePosInMemRefDescriptor, pos}));
 }
 
 void MemRefDescriptor::setConstantSize(OpBuilder &builder, Location loc,
@@ -167,16 +164,15 @@ void MemRefDescriptor::setConstantSize(OpBuilder &builder, Location loc,
 
 /// Builds IR extracting the pos-th stride from the descriptor.
 Value MemRefDescriptor::stride(OpBuilder &builder, Location loc, unsigned pos) {
-  return LLVM::ExtractValueOp::create(
-      builder, loc, value,
-      ArrayRef<int64_t>({kStridePosInMemRefDescriptor, pos}));
+  return builder.create<LLVM::ExtractValueOp>(
+      loc, value, ArrayRef<int64_t>({kStridePosInMemRefDescriptor, pos}));
 }
 
 /// Builds IR inserting the pos-th stride into the descriptor
 void MemRefDescriptor::setStride(OpBuilder &builder, Location loc, unsigned pos,
                                  Value stride) {
-  value = LLVM::InsertValueOp::create(
-      builder, loc, value, stride,
+  value = builder.create<LLVM::InsertValueOp>(
+      loc, value, stride,
       ArrayRef<int64_t>({kStridePosInMemRefDescriptor, pos}));
 }
 
@@ -211,8 +207,8 @@ Value MemRefDescriptor::bufferPtr(OpBuilder &builder, Location loc,
           ? offset(builder, loc)
           : createIndexAttrConstant(builder, loc, indexType, offsetCst);
   Type elementType = converter.convertType(type.getElementType());
-  ptr = LLVM::GEPOp::create(builder, loc, ptr.getType(), elementType, ptr,
-                            offsetVal);
+  ptr = builder.create<LLVM::GEPOp>(loc, ptr.getType(), elementType, ptr,
+                                    offsetVal);
   return ptr;
 }
 
@@ -307,7 +303,7 @@ UnrankedMemRefDescriptor::UnrankedMemRefDescriptor(Value descriptor)
 UnrankedMemRefDescriptor UnrankedMemRefDescriptor::poison(OpBuilder &builder,
                                                           Location loc,
                                                           Type descriptorType) {
-  Value descriptor = LLVM::PoisonOp::create(builder, loc, descriptorType);
+  Value descriptor = builder.create<LLVM::PoisonOp>(loc, descriptorType);
   return UnrankedMemRefDescriptor(descriptor);
 }
 Value UnrankedMemRefDescriptor::rank(OpBuilder &builder, Location loc) const {
@@ -384,19 +380,19 @@ void UnrankedMemRefDescriptor::computeSizes(
         builder, loc, indexType,
         llvm::divideCeil(typeConverter.getPointerBitwidth(addressSpace), 8));
     Value doublePointerSize =
-        LLVM::MulOp::create(builder, loc, indexType, two, pointerSize);
+        builder.create<LLVM::MulOp>(loc, indexType, two, pointerSize);
 
     // (1 + 2 * rank) * sizeof(index)
     Value rank = desc.rank(builder, loc);
-    Value doubleRank = LLVM::MulOp::create(builder, loc, indexType, two, rank);
+    Value doubleRank = builder.create<LLVM::MulOp>(loc, indexType, two, rank);
     Value doubleRankIncremented =
-        LLVM::AddOp::create(builder, loc, indexType, doubleRank, one);
-    Value rankIndexSize = LLVM::MulOp::create(builder, loc, indexType,
-                                              doubleRankIncremented, indexSize);
+        builder.create<LLVM::AddOp>(loc, indexType, doubleRank, one);
+    Value rankIndexSize = builder.create<LLVM::MulOp>(
+        loc, indexType, doubleRankIncremented, indexSize);
 
     // Total allocation size.
-    Value allocationSize = LLVM::AddOp::create(
-        builder, loc, indexType, doublePointerSize, rankIndexSize);
+    Value allocationSize = builder.create<LLVM::AddOp>(
+        loc, indexType, doublePointerSize, rankIndexSize);
     sizes.push_back(allocationSize);
   }
 }
@@ -404,13 +400,13 @@ void UnrankedMemRefDescriptor::computeSizes(
 Value UnrankedMemRefDescriptor::allocatedPtr(
     OpBuilder &builder, Location loc, Value memRefDescPtr,
     LLVM::LLVMPointerType elemPtrType) {
-  return LLVM::LoadOp::create(builder, loc, elemPtrType, memRefDescPtr);
+  return builder.create<LLVM::LoadOp>(loc, elemPtrType, memRefDescPtr);
 }
 
 void UnrankedMemRefDescriptor::setAllocatedPtr(
     OpBuilder &builder, Location loc, Value memRefDescPtr,
     LLVM::LLVMPointerType elemPtrType, Value allocatedPtr) {
-  LLVM::StoreOp::create(builder, loc, allocatedPtr, memRefDescPtr);
+  builder.create<LLVM::StoreOp>(loc, allocatedPtr, memRefDescPtr);
 }
 
 static std::pair<Value, Type>
@@ -427,9 +423,9 @@ Value UnrankedMemRefDescriptor::alignedPtr(
       castToElemPtrPtr(builder, loc, memRefDescPtr, elemPtrType);
 
   Value alignedGep =
-      LLVM::GEPOp::create(builder, loc, elemPtrPtrType, elemPtrType,
-                          elementPtrPtr, ArrayRef<LLVM::GEPArg>{1});
-  return LLVM::LoadOp::create(builder, loc, elemPtrType, alignedGep);
+      builder.create<LLVM::GEPOp>(loc, elemPtrPtrType, elemPtrType,
+                                  elementPtrPtr, ArrayRef<LLVM::GEPArg>{1});
+  return builder.create<LLVM::LoadOp>(loc, elemPtrType, alignedGep);
 }
 
 void UnrankedMemRefDescriptor::setAlignedPtr(
@@ -439,9 +435,9 @@ void UnrankedMemRefDescriptor::setAlignedPtr(
       castToElemPtrPtr(builder, loc, memRefDescPtr, elemPtrType);
 
   Value alignedGep =
-      LLVM::GEPOp::create(builder, loc, elemPtrPtrType, elemPtrType,
-                          elementPtrPtr, ArrayRef<LLVM::GEPArg>{1});
-  LLVM::StoreOp::create(builder, loc, alignedPtr, alignedGep);
+      builder.create<LLVM::GEPOp>(loc, elemPtrPtrType, elemPtrType,
+                                  elementPtrPtr, ArrayRef<LLVM::GEPArg>{1});
+  builder.create<LLVM::StoreOp>(loc, alignedPtr, alignedGep);
 }
 
 Value UnrankedMemRefDescriptor::offsetBasePtr(
@@ -450,8 +446,8 @@ Value UnrankedMemRefDescriptor::offsetBasePtr(
   auto [elementPtrPtr, elemPtrPtrType] =
       castToElemPtrPtr(builder, loc, memRefDescPtr, elemPtrType);
 
-  return LLVM::GEPOp::create(builder, loc, elemPtrPtrType, elemPtrType,
-                             elementPtrPtr, ArrayRef<LLVM::GEPArg>{2});
+  return builder.create<LLVM::GEPOp>(loc, elemPtrPtrType, elemPtrType,
+                                     elementPtrPtr, ArrayRef<LLVM::GEPArg>{2});
 }
 
 Value UnrankedMemRefDescriptor::offset(OpBuilder &builder, Location loc,
@@ -460,8 +456,8 @@ Value UnrankedMemRefDescriptor::offset(OpBuilder &builder, Location loc,
                                        LLVM::LLVMPointerType elemPtrType) {
   Value offsetPtr =
       offsetBasePtr(builder, loc, typeConverter, memRefDescPtr, elemPtrType);
-  return LLVM::LoadOp::create(builder, loc, typeConverter.getIndexType(),
-                              offsetPtr);
+  return builder.create<LLVM::LoadOp>(loc, typeConverter.getIndexType(),
+                                      offsetPtr);
 }
 
 void UnrankedMemRefDescriptor::setOffset(OpBuilder &builder, Location loc,
@@ -471,7 +467,7 @@ void UnrankedMemRefDescriptor::setOffset(OpBuilder &builder, Location loc,
                                          Value offset) {
   Value offsetPtr =
       offsetBasePtr(builder, loc, typeConverter, memRefDescPtr, elemPtrType);
-  LLVM::StoreOp::create(builder, loc, offset, offsetPtr);
+  builder.create<LLVM::StoreOp>(loc, offset, offsetPtr);
 }
 
 Value UnrankedMemRefDescriptor::sizeBasePtr(
@@ -481,8 +477,8 @@ Value UnrankedMemRefDescriptor::sizeBasePtr(
   Type structTy = LLVM::LLVMStructType::getLiteral(
       indexTy.getContext(), {elemPtrType, elemPtrType, indexTy, indexTy});
   auto resultType = LLVM::LLVMPointerType::get(builder.getContext());
-  return LLVM::GEPOp::create(builder, loc, resultType, structTy, memRefDescPtr,
-                             ArrayRef<LLVM::GEPArg>{0, 3});
+  return builder.create<LLVM::GEPOp>(loc, resultType, structTy, memRefDescPtr,
+                                     ArrayRef<LLVM::GEPArg>{0, 3});
 }
 
 Value UnrankedMemRefDescriptor::size(OpBuilder &builder, Location loc,
@@ -493,8 +489,8 @@ Value UnrankedMemRefDescriptor::size(OpBuilder &builder, Location loc,
   auto ptrType = LLVM::LLVMPointerType::get(builder.getContext());
 
   Value sizeStoreGep =
-      LLVM::GEPOp::create(builder, loc, ptrType, indexTy, sizeBasePtr, index);
-  return LLVM::LoadOp::create(builder, loc, indexTy, sizeStoreGep);
+      builder.create<LLVM::GEPOp>(loc, ptrType, indexTy, sizeBasePtr, index);
+  return builder.create<LLVM::LoadOp>(loc, indexTy, sizeStoreGep);
 }
 
 void UnrankedMemRefDescriptor::setSize(OpBuilder &builder, Location loc,
@@ -505,8 +501,8 @@ void UnrankedMemRefDescriptor::setSize(OpBuilder &builder, Location loc,
   auto ptrType = LLVM::LLVMPointerType::get(builder.getContext());
 
   Value sizeStoreGep =
-      LLVM::GEPOp::create(builder, loc, ptrType, indexTy, sizeBasePtr, index);
-  LLVM::StoreOp::create(builder, loc, size, sizeStoreGep);
+      builder.create<LLVM::GEPOp>(loc, ptrType, indexTy, sizeBasePtr, index);
+  builder.create<LLVM::StoreOp>(loc, size, sizeStoreGep);
 }
 
 Value UnrankedMemRefDescriptor::strideBasePtr(
@@ -515,7 +511,7 @@ Value UnrankedMemRefDescriptor::strideBasePtr(
   Type indexTy = typeConverter.getIndexType();
   auto ptrType = LLVM::LLVMPointerType::get(builder.getContext());
 
-  return LLVM::GEPOp::create(builder, loc, ptrType, indexTy, sizeBasePtr, rank);
+  return builder.create<LLVM::GEPOp>(loc, ptrType, indexTy, sizeBasePtr, rank);
 }
 
 Value UnrankedMemRefDescriptor::stride(OpBuilder &builder, Location loc,
@@ -526,8 +522,8 @@ Value UnrankedMemRefDescriptor::stride(OpBuilder &builder, Location loc,
   auto ptrType = LLVM::LLVMPointerType::get(builder.getContext());
 
   Value strideStoreGep =
-      LLVM::GEPOp::create(builder, loc, ptrType, indexTy, strideBasePtr, index);
-  return LLVM::LoadOp::create(builder, loc, indexTy, strideStoreGep);
+      builder.create<LLVM::GEPOp>(loc, ptrType, indexTy, strideBasePtr, index);
+  return builder.create<LLVM::LoadOp>(loc, indexTy, strideStoreGep);
 }
 
 void UnrankedMemRefDescriptor::setStride(OpBuilder &builder, Location loc,
@@ -538,6 +534,6 @@ void UnrankedMemRefDescriptor::setStride(OpBuilder &builder, Location loc,
   auto ptrType = LLVM::LLVMPointerType::get(builder.getContext());
 
   Value strideStoreGep =
-      LLVM::GEPOp::create(builder, loc, ptrType, indexTy, strideBasePtr, index);
-  LLVM::StoreOp::create(builder, loc, stride, strideStoreGep);
+      builder.create<LLVM::GEPOp>(loc, ptrType, indexTy, strideBasePtr, index);
+  builder.create<LLVM::StoreOp>(loc, stride, strideStoreGep);
 }

@@ -153,7 +153,8 @@ unsigned MacroRepeatedPPCallbacks::countArgumentExpansions(
     // Count argument.
     if (TII == Arg) {
       Current++;
-      Max = std::max(Max, Current);
+      if (Current > Max)
+        Max = Current;
     }
   }
   return Max;

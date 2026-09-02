@@ -18,25 +18,22 @@
 using namespace llvm;
 
 namespace llvm {
-template class LLVM_EXPORT_TEMPLATE
-    DominatorTreeBase<MachineBasicBlock, true>; // PostDomTreeBase
+template class DominatorTreeBase<MachineBasicBlock, true>; // PostDomTreeBase
 
 namespace DomTreeBuilder {
 
-template LLVM_EXPORT_TEMPLATE void
-Calculate<MBBPostDomTree>(MBBPostDomTree &DT);
-template LLVM_EXPORT_TEMPLATE void
-InsertEdge<MBBPostDomTree>(MBBPostDomTree &DT, MachineBasicBlock *From,
-                           MachineBasicBlock *To);
-template LLVM_EXPORT_TEMPLATE void
-DeleteEdge<MBBPostDomTree>(MBBPostDomTree &DT, MachineBasicBlock *From,
-                           MachineBasicBlock *To);
-template LLVM_EXPORT_TEMPLATE void
-ApplyUpdates<MBBPostDomTree>(MBBPostDomTree &DT, MBBPostDomTreeGraphDiff &,
-                             MBBPostDomTreeGraphDiff *);
-template LLVM_EXPORT_TEMPLATE bool
-Verify<MBBPostDomTree>(const MBBPostDomTree &DT,
-                       MBBPostDomTree::VerificationLevel VL);
+template void Calculate<MBBPostDomTree>(MBBPostDomTree &DT);
+template void InsertEdge<MBBPostDomTree>(MBBPostDomTree &DT,
+                                         MachineBasicBlock *From,
+                                         MachineBasicBlock *To);
+template void DeleteEdge<MBBPostDomTree>(MBBPostDomTree &DT,
+                                         MachineBasicBlock *From,
+                                         MachineBasicBlock *To);
+template void ApplyUpdates<MBBPostDomTree>(MBBPostDomTree &DT,
+                                           MBBPostDomTreeGraphDiff &,
+                                           MBBPostDomTreeGraphDiff *);
+template bool Verify<MBBPostDomTree>(const MBBPostDomTree &DT,
+                                     MBBPostDomTree::VerificationLevel VL);
 
 } // namespace DomTreeBuilder
 extern bool VerifyMachineDomInfo;
@@ -99,8 +96,8 @@ MachineBasicBlock *MachinePostDominatorTree::findNearestCommonDominator(
     ArrayRef<MachineBasicBlock *> Blocks) const {
   assert(!Blocks.empty());
 
-  MachineBasicBlock *NCD = Blocks.consume_front();
-  for (MachineBasicBlock *BB : Blocks) {
+  MachineBasicBlock *NCD = Blocks.front();
+  for (MachineBasicBlock *BB : Blocks.drop_front()) {
     NCD = Base::findNearestCommonDominator(NCD, BB);
 
     // Stop when the root is reached.

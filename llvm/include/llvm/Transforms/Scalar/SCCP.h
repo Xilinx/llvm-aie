@@ -21,7 +21,6 @@
 #define LLVM_TRANSFORMS_SCALAR_SCCP_H
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class Function;
@@ -29,7 +28,7 @@ class Function;
 /// This pass performs function-level constant propagation and merging.
 class SCCPPass : public PassInfoMixin<SCCPPass> {
 public:
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
 } // end namespace llvm

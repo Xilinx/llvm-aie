@@ -889,7 +889,8 @@ symbolize(const RawCoverage &Data, const std::string ObjectFile) {
   }
 
   std::set<uint64_t> AllAddrs = findCoveragePointAddrs(ObjectFile);
-  if (!llvm::includes(AllAddrs, *Data.Addrs)) {
+  if (!std::includes(AllAddrs.begin(), AllAddrs.end(), Data.Addrs->begin(),
+                     Data.Addrs->end())) {
     fail("Coverage points in binary and .sancov file do not match.");
   }
   Coverage->Points = getCoveragePoints(ObjectFile, AllAddrs, *Data.Addrs);

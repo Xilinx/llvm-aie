@@ -18,6 +18,7 @@
 #include "llvm/Support/Error.h"
 #include <string>
 #include <utility>
+#include <vector>
 
 using namespace clang;
 using namespace transformer;

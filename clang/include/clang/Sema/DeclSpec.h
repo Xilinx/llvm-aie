@@ -44,7 +44,8 @@ namespace clang {
   class TypeLoc;
   class LangOptions;
   class IdentifierInfo;
-  class NamespaceBaseDecl;
+  class NamespaceAliasDecl;
+  class NamespaceDecl;
   class ObjCDeclSpec;
   class Sema;
   class Declarator;
@@ -128,14 +129,28 @@ public:
   /// \param Context The AST context in which this nested-name-specifier
   /// resides.
   ///
-  /// \param Namespace The namespace or the namespace alias.
+  /// \param Namespace The namespace.
   ///
-  /// \param NamespaceLoc The location of the namespace name or the namespace
-  /// alias.
+  /// \param NamespaceLoc The location of the namespace name.
   ///
   /// \param ColonColonLoc The location of the trailing '::'.
-  void Extend(ASTContext &Context, NamespaceBaseDecl *Namespace,
+  void Extend(ASTContext &Context, NamespaceDecl *Namespace,
               SourceLocation NamespaceLoc, SourceLocation ColonColonLoc);
+
+  /// Extend the current nested-name-specifier by another
+  /// nested-name-specifier component of the form 'namespace-alias::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Alias The namespace alias.
+  ///
+  /// \param AliasLoc The location of the namespace alias
+  /// name.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
+              SourceLocation AliasLoc, SourceLocation ColonColonLoc);
 
   /// Turn this (empty) nested-name-specifier into the global
   /// nested-name-specifier '::'.
@@ -1806,8 +1821,8 @@ public:
     if (DeleteBindings)
       delete[] Bindings;
     else
-      for (Binding &B : llvm::MutableArrayRef(Bindings, NumBindings))
-        B.Attrs.reset();
+      llvm::for_each(llvm::MutableArrayRef(Bindings, NumBindings),
+                     [](Binding &B) { B.Attrs.reset(); });
     Bindings = nullptr;
     NumBindings = 0;
     DeleteBindings = false;
@@ -1903,7 +1918,7 @@ private:
   /// parsed.  This is pushed from the identifier out, which means that element
   /// #0 will be the most closely bound to the identifier, and
   /// DeclTypeInfo.back() will be the least closely bound.
-  SmallVector<DeclaratorChunk, 4> DeclTypeInfo;
+  SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
 
   /// InvalidType - Set by Sema::GetTypeForDeclarator().
   LLVM_PREFERRED_TYPE(bool)

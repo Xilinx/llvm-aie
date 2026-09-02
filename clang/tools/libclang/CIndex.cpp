@@ -273,10 +273,10 @@ bool CursorVisitor::visitFileRegion() {
   ASTUnit *Unit = cxtu::getASTUnit(TU);
   SourceManager &SM = Unit->getSourceManager();
 
-  FileIDAndOffset Begin = SM.getDecomposedLoc(
-                      SM.getFileLoc(RegionOfInterest.getBegin())),
-                  End = SM.getDecomposedLoc(
-                      SM.getFileLoc(RegionOfInterest.getEnd()));
+  std::pair<FileID, unsigned> Begin = SM.getDecomposedLoc(
+                                  SM.getFileLoc(RegionOfInterest.getBegin())),
+                              End = SM.getDecomposedLoc(
+                                  SM.getFileLoc(RegionOfInterest.getEnd()));
 
   if (End.first != Begin.first) {
     // If the end does not reside in the same file, try to recover by
@@ -1441,6 +1441,10 @@ bool CursorVisitor::VisitNestedNameSpecifier(NestedNameSpecifier *NNS,
     return Visit(
         MakeCursorNamespaceRef(NNS->getAsNamespace(), Range.getBegin(), TU));
 
+  case NestedNameSpecifier::NamespaceAlias:
+    return Visit(MakeCursorNamespaceRef(NNS->getAsNamespaceAlias(),
+                                        Range.getBegin(), TU));
+
   case NestedNameSpecifier::TypeSpec: {
     // If the type has a form where we know that the beginning of the source
     // range matches up with a reference cursor. Visit the appropriate reference
@@ -1477,6 +1481,13 @@ bool CursorVisitor::VisitNestedNameSpecifierLoc(
     switch (NNS->getKind()) {
     case NestedNameSpecifier::Namespace:
       if (Visit(MakeCursorNamespaceRef(NNS->getAsNamespace(),
+                                       Q.getLocalBeginLoc(), TU)))
+        return true;
+
+      break;
+
+    case NestedNameSpecifier::NamespaceAlias:
+      if (Visit(MakeCursorNamespaceRef(NNS->getAsNamespaceAlias(),
                                        Q.getLocalBeginLoc(), TU)))
         return true;
 
@@ -1630,7 +1641,7 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::OCLQueue:
   case BuiltinType::OCLReserveID:
 #define SVE_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
-#include "clang/Basic/AArch64ACLETypes.def"
+#include "clang/Basic/AArch64SVEACLETypes.def"
 #define PPC_VECTOR_TYPE(Name, Id, Size) case BuiltinType::Id:
 #include "clang/Basic/PPCTypes.def"
 #define RVV_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
@@ -1675,10 +1686,6 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
 
 bool CursorVisitor::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   return Visit(MakeCursorTypeRef(TL.getTypedefNameDecl(), TL.getNameLoc(), TU));
-}
-
-bool CursorVisitor::VisitPredefinedSugarTypeLoc(PredefinedSugarTypeLoc TL) {
-  return false;
 }
 
 bool CursorVisitor::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
@@ -1790,11 +1797,6 @@ bool CursorVisitor::VisitBTFTagAttributedTypeLoc(BTFTagAttributedTypeLoc TL) {
 bool CursorVisitor::VisitHLSLAttributedResourceTypeLoc(
     HLSLAttributedResourceTypeLoc TL) {
   return Visit(TL.getWrappedLoc());
-}
-
-bool CursorVisitor::VisitHLSLInlineSpirvTypeLoc(HLSLInlineSpirvTypeLoc TL) {
-  // Nothing to do.
-  return false;
 }
 
 bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL,
@@ -7634,7 +7636,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
     return cxstring::createEmpty();
 
   SourceLocation Loc = SourceLocation::getFromRawEncoding(CXTok.int_data[1]);
-  FileIDAndOffset LocInfo =
+  std::pair<FileID, unsigned> LocInfo =
       CXXUnit->getSourceManager().getDecomposedSpellingLoc(Loc);
   bool Invalid = false;
   StringRef Buffer =
@@ -7678,9 +7680,9 @@ CXSourceRange clang_getTokenExtent(CXTranslationUnit TU, CXToken CXTok) {
 static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
                       SmallVectorImpl<CXToken> &CXTokens) {
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
-  FileIDAndOffset BeginLocInfo =
+  std::pair<FileID, unsigned> BeginLocInfo =
       SourceMgr.getDecomposedSpellingLoc(Range.getBegin());
-  FileIDAndOffset EndLocInfo =
+  std::pair<FileID, unsigned> EndLocInfo =
       SourceMgr.getDecomposedSpellingLoc(Range.getEnd());
 
   // Cannot tokenize across files.
@@ -7759,7 +7761,7 @@ CXToken *clang_getToken(CXTranslationUnit TU, CXSourceLocation Location) {
   if (Begin.isInvalid())
     return nullptr;
   SourceManager &SM = CXXUnit->getSourceManager();
-  FileIDAndOffset DecomposedEnd = SM.getDecomposedLoc(Begin);
+  std::pair<FileID, unsigned> DecomposedEnd = SM.getDecomposedLoc(Begin);
   DecomposedEnd.second +=
       Lexer::MeasureTokenLength(Begin, SM, CXXUnit->getLangOpts());
 
@@ -8408,9 +8410,9 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
 
   Preprocessor &PP = CXXUnit->getPreprocessor();
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
-  FileIDAndOffset BeginLocInfo =
+  std::pair<FileID, unsigned> BeginLocInfo =
       SourceMgr.getDecomposedSpellingLoc(RegionOfInterest.getBegin());
-  FileIDAndOffset EndLocInfo =
+  std::pair<FileID, unsigned> EndLocInfo =
       SourceMgr.getDecomposedSpellingLoc(RegionOfInterest.getEnd());
 
   if (BeginLocInfo.first != EndLocInfo.first)
@@ -8644,100 +8646,6 @@ void clang_annotateTokens(CXTranslationUnit TU, CXToken *Tokens,
   if (!RunSafely(CRC, AnnotateTokensImpl, GetSafetyThreadStackSize() * 2)) {
     fprintf(stderr, "libclang: crash detected while annotating tokens\n");
   }
-}
-
-//===----------------------------------------------------------------------===//
-// Operations for querying information of a GCC inline assembly block under a
-// cursor.
-//===----------------------------------------------------------------------===//
-CXString clang_Cursor_getGCCAssemblyTemplate(CXCursor Cursor) {
-  if (!clang_isStatement(Cursor.kind))
-    return cxstring::createEmpty();
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor))) {
-    ASTContext const &C = getCursorContext(Cursor);
-    std::string AsmTemplate = S->generateAsmString(C);
-    return cxstring::createDup(AsmTemplate);
-  }
-  return cxstring::createEmpty();
-}
-
-unsigned clang_Cursor_isGCCAssemblyHasGoto(CXCursor Cursor) {
-  if (!clang_isStatement(Cursor.kind))
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor)))
-    return S->isAsmGoto();
-  return 0;
-}
-
-unsigned clang_Cursor_getGCCAssemblyNumOutputs(CXCursor Cursor) {
-  if (!clang_isStatement(Cursor.kind))
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor)))
-    return S->getNumOutputs();
-  return 0;
-}
-
-unsigned clang_Cursor_getGCCAssemblyNumInputs(CXCursor Cursor) {
-  if (!clang_isStatement(Cursor.kind))
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor)))
-    return S->getNumInputs();
-  return 0;
-}
-
-unsigned clang_Cursor_getGCCAssemblyInput(CXCursor Cursor, unsigned Index,
-                                          CXString *Constraint,
-                                          CXCursor *ExprCursor) {
-  if (!clang_isStatement(Cursor.kind) || !Constraint || !ExprCursor)
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor));
-      S && Index < S->getNumInputs()) {
-    *Constraint = cxstring::createDup(S->getInputConstraint(Index));
-    *ExprCursor = MakeCXCursor(S->getInputExpr(Index), getCursorDecl(Cursor),
-                               cxcursor::getCursorTU(Cursor));
-    return 1;
-  }
-  return 0;
-}
-
-unsigned clang_Cursor_getGCCAssemblyOutput(CXCursor Cursor, unsigned Index,
-                                           CXString *Constraint,
-                                           CXCursor *ExprCursor) {
-  if (!clang_isStatement(Cursor.kind) || !Constraint || !ExprCursor)
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor));
-      S && Index < S->getNumOutputs()) {
-    *Constraint = cxstring::createDup(S->getOutputConstraint(Index));
-    *ExprCursor = MakeCXCursor(S->getOutputExpr(Index), getCursorDecl(Cursor),
-                               cxcursor::getCursorTU(Cursor));
-    return 1;
-  }
-  return 0;
-}
-
-unsigned clang_Cursor_getGCCAssemblyNumClobbers(CXCursor Cursor) {
-  if (!clang_isStatement(Cursor.kind))
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor)))
-    return S->getNumClobbers();
-  return 0;
-}
-
-CXString clang_Cursor_getGCCAssemblyClobber(CXCursor Cursor, unsigned Index) {
-  if (!clang_isStatement(Cursor.kind))
-    return cxstring::createEmpty();
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor));
-      S && Index < S->getNumClobbers())
-    return cxstring::createDup(S->getClobber(Index));
-  return cxstring::createEmpty();
-}
-
-unsigned clang_Cursor_isGCCAssemblyVolatile(CXCursor Cursor) {
-  if (!clang_isStatement(Cursor.kind))
-    return 0;
-  if (auto const *S = dyn_cast_or_null<GCCAsmStmt>(getCursorStmt(Cursor)))
-    return S->isVolatile();
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//

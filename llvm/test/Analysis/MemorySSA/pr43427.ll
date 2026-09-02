@@ -30,7 +30,7 @@
 ; CHECK-NEXT: ; [[NO6:.*]] = MemoryDef([[NO7]])
 ; CHECK-NEXT:   store i16 undef, ptr %e, align 1
 ; CHECK-NEXT:  3 = MemoryDef([[NO6]])
-; CHECK-NEXT:   call void @g()
+; CHECK-NEXT:   call void @llvm.lifetime.end.p0(i64 1, ptr null)
 
 define void @f(i1 %arg) {
 entry:
@@ -57,7 +57,7 @@ cleanup:                                          ; preds = %lbl3
   br i1 %switch, label %cleanup.cont, label %lbl1
 
 cleanup.cont:                                     ; preds = %cleanup
-  call void @g()
+  call void @llvm.lifetime.end.p0(i64 1, ptr null)
   ret void
 
 if.else:                                          ; preds = %lbl1
@@ -65,3 +65,6 @@ if.else:                                          ; preds = %lbl1
 }
 
 declare void @g()
+
+; Function Attrs: argmemonly nounwind willreturn
+declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture)

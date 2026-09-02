@@ -12,8 +12,11 @@
 
 #include "mlir/Dialect/X86Vector/X86VectorDialect.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/LLVMIR/LLVMTypes.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/TypeUtilities.h"
+#include "mlir/Interfaces/InferTypeOpInterface.h"
 
 using namespace mlir;
 
@@ -60,11 +63,11 @@ SmallVector<Value> x86vector::MaskCompressOp::getIntrinsicOperands(
   if (adaptor.getSrc()) {
     src = adaptor.getSrc();
   } else if (adaptor.getConstantSrc()) {
-    src = LLVM::ConstantOp::create(rewriter, loc, opType,
-                                   adaptor.getConstantSrcAttr());
+    src = rewriter.create<LLVM::ConstantOp>(loc, opType,
+                                            adaptor.getConstantSrcAttr());
   } else {
     auto zeroAttr = rewriter.getZeroAttr(opType);
-    src = LLVM::ConstantOp::create(rewriter, loc, opType, zeroAttr);
+    src = rewriter.create<LLVM::ConstantOp>(loc, opType, zeroAttr);
   }
 
   return SmallVector<Value>{adaptor.getA(), src, adaptor.getK()};
@@ -77,33 +80,10 @@ x86vector::DotOp::getIntrinsicOperands(ArrayRef<Value> operands,
   SmallVector<Value> intrinsicOperands(operands);
   // Dot product of all elements, broadcasted to all elements.
   Value scale =
-      LLVM::ConstantOp::create(rewriter, getLoc(), rewriter.getI8Type(), 0xff);
+      rewriter.create<LLVM::ConstantOp>(getLoc(), rewriter.getI8Type(), 0xff);
   intrinsicOperands.push_back(scale);
 
   return intrinsicOperands;
-}
-
-SmallVector<Value> x86vector::DotInt8Op::getIntrinsicOperands(
-    ArrayRef<Value> operands, const LLVMTypeConverter &typeConverter,
-    RewriterBase &rewriter) {
-  SmallVector<Value> intrinsicOprnds;
-  Adaptor adaptor(operands, *this);
-  intrinsicOprnds.push_back(adaptor.getW());
-  // Bitcast `a` and `b` to i32
-  Value bitcast_a = LLVM::BitcastOp::create(
-      rewriter, getLoc(),
-      VectorType::get((getA().getType().getShape()[0] / 4),
-                      rewriter.getIntegerType(32)),
-      adaptor.getA());
-  intrinsicOprnds.push_back(bitcast_a);
-  Value bitcast_b = LLVM::BitcastOp::create(
-      rewriter, getLoc(),
-      VectorType::get((getB().getType().getShape()[0] / 4),
-                      rewriter.getIntegerType(32)),
-      adaptor.getB());
-  intrinsicOprnds.push_back(bitcast_b);
-
-  return intrinsicOprnds;
 }
 
 SmallVector<Value> x86vector::BcstToPackedF32Op::getIntrinsicOperands(

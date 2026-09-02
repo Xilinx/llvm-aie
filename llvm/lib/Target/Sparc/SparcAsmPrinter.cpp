@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/SparcInstPrinter.h"
-#include "MCTargetDesc/SparcMCAsmInfo.h"
+#include "MCTargetDesc/SparcMCExpr.h"
 #include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "MCTargetDesc/SparcTargetStreamer.h"
 #include "Sparc.h"
@@ -32,7 +32,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -83,7 +82,7 @@ public:
 static MCOperand createSparcMCOperand(uint16_t Kind, MCSymbol *Sym,
                                       MCContext &OutContext) {
   const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::create(Sym, OutContext);
-  auto *expr = MCSpecifierExpr::create(MCSym, Kind, OutContext);
+  const SparcMCExpr *expr = SparcMCExpr::create(Kind, MCSym, OutContext);
   return MCOperand::createExpr(expr);
 }
 static MCOperand createPCXCallOP(MCSymbol *Label,
@@ -102,7 +101,7 @@ static MCOperand createPCXRelExprOp(uint16_t Spec, MCSymbol *GOTLabel,
 
   const MCBinaryExpr *Sub = MCBinaryExpr::createSub(Cur, Start, OutContext);
   const MCBinaryExpr *Add = MCBinaryExpr::createAdd(GOT, Sub, OutContext);
-  auto *expr = MCSpecifierExpr::create(Add, Spec, OutContext);
+  const SparcMCExpr *expr = SparcMCExpr::create(Spec, Add, OutContext);
   return MCOperand::createExpr(expr);
 }
 
@@ -303,7 +302,7 @@ MCOperand SparcAsmPrinter::lowerOperand(const MachineOperand &MO) const {
 
     const MCExpr *expr = MCSymbolRefExpr::create(Symbol, OutContext);
     if (RelType)
-      expr = MCSpecifierExpr::create(expr, RelType, OutContext);
+      expr = SparcMCExpr::create(RelType, expr, OutContext);
     return MCOperand::createExpr(expr);
   }
 
@@ -372,7 +371,11 @@ void SparcAsmPrinter::emitFunctionBodyStart() {
 void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                    raw_ostream &O) {
   const DataLayout &DL = getDataLayout();
-  const MachineOperand &MO = MI->getOperand(opNum);
+  const MachineOperand &MO = MI->getOperand (opNum);
+  auto TF = MO.getTargetFlags();
+
+  StringRef Spec = SparcMCExpr::getSpecifierName(TF);
+  O << Spec;
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     O << "%" << StringRef(getRegisterName(MO.getReg())).lower();
@@ -403,6 +406,8 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   default:
     llvm_unreachable("<unknown operand type>");
   }
+  if (!Spec.empty())
+    O << ")";
 }
 
 void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
@@ -507,8 +512,7 @@ INITIALIZE_PASS(SparcAsmPrinter, "sparc-asm-printer", "Sparc Assembly Printer",
                 false, false)
 
 // Force static initialization.
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeSparcAsmPrinter() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSparcAsmPrinter() {
   RegisterAsmPrinter<SparcAsmPrinter> X(getTheSparcTarget());
   RegisterAsmPrinter<SparcAsmPrinter> Y(getTheSparcV9Target());
   RegisterAsmPrinter<SparcAsmPrinter> Z(getTheSparcelTarget());

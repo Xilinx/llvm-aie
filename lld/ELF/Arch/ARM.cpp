@@ -1317,11 +1317,11 @@ void elf::processArmCmseSymbols(Ctx &ctx) {
   // with its corresponding special symbol __acle_se_<sym>.
   parallelForEach(ctx.objectFiles, [&](InputFile *file) {
     MutableArrayRef<Symbol *> syms = file->getMutableSymbols();
-    for (Symbol *&sym : syms) {
-      StringRef symName = sym->getName();
+    for (size_t i = 0, e = syms.size(); i != e; ++i) {
+      StringRef symName = syms[i]->getName();
       auto it = ctx.symtab->cmseSymMap.find(symName);
       if (it != ctx.symtab->cmseSymMap.end())
-        sym = it->second.acleSeSym;
+        syms[i] = it->second.acleSeSym;
     }
   });
 }

@@ -8,19 +8,18 @@
 
 // <list>
 
-// explicit list(size_type n); // constexpr since C++26
+// explicit list(size_type n);
 
 #include <list>
 #include <cassert>
 #include <cstddef>
-
 #include "test_macros.h"
 #include "DefaultOnly.h"
 #include "test_allocator.h"
 #include "min_allocator.h"
 
 template <class T, class Allocator>
-TEST_CONSTEXPR_CXX26 void test1(unsigned n, Allocator const& alloc = Allocator()) {
+void test3(unsigned n, Allocator const& alloc = Allocator()) {
 #if TEST_STD_VER > 11
   typedef std::list<T, Allocator> C;
   {
@@ -35,7 +34,7 @@ TEST_CONSTEXPR_CXX26 void test1(unsigned n, Allocator const& alloc = Allocator()
 #endif
 }
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     std::list<int> l(3);
     assert(l.size() == 3);
@@ -71,10 +70,15 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(*i == 0);
     ++i;
     assert(*i == 0);
-    test1<int, min_allocator<int>>(3);
+    test3<int, min_allocator<int>>(3);
   }
 #endif
 #if TEST_STD_VER >= 11
+  {
+    std::list<DefaultOnly> l(3);
+    assert(l.size() == 3);
+    assert(std::distance(l.begin(), l.end()) == 3);
+  }
   {
     std::list<int, min_allocator<int>> l(3);
     assert(l.size() == 3);
@@ -86,28 +90,11 @@ TEST_CONSTEXPR_CXX26 bool test() {
     ++i;
     assert(*i == 0);
   }
-
-  if (!TEST_IS_CONSTANT_EVALUATED) {
-    {
-      std::list<DefaultOnly> l(3);
-      assert(l.size() == 3);
-      assert(std::distance(l.begin(), l.end()) == 3);
-    }
-    {
-      std::list<DefaultOnly, min_allocator<DefaultOnly>> l(3);
-      assert(l.size() == 3);
-      assert(std::distance(l.begin(), l.end()) == 3);
-    }
+  {
+    std::list<DefaultOnly, min_allocator<DefaultOnly>> l(3);
+    assert(l.size() == 3);
+    assert(std::distance(l.begin(), l.end()) == 3);
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

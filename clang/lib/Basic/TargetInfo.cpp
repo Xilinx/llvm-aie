@@ -49,8 +49,6 @@ static const LangASMap FakeAddrSpaceMap = {
     13, // hlsl_groupshared
     14, // hlsl_constant
     15, // hlsl_private
-    16, // hlsl_device
-    17, // hlsl_input
     20, // wasm_funcref
 };
 
@@ -159,7 +157,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : Triple(T) {
   SSERegParmMax = 0;
   HasAlignMac68kSupport = false;
   HasBuiltinMSVaList = false;
-  HasAArch64ACLETypes = false;
+  HasAArch64SVETypes = false;
   HasRISCVVTypes = false;
   AllowAMDGPUUnsafeFPAtomics = false;
   HasUnalignedAccess = false;
@@ -172,11 +170,9 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : Triple(T) {
   ComplexLongDoubleUsesFP2Ret = false;
 
   // Set the C++ ABI based on the triple.
-  TheCXXABI.set(Triple.isKnownWindowsMSVCEnvironment() || Triple.isUEFI()
+  TheCXXABI.set(Triple.isKnownWindowsMSVCEnvironment()
                     ? TargetCXXABI::Microsoft
                     : TargetCXXABI::GenericItanium);
-
-  HasMicrosoftRecordLayout = TheCXXABI.isMicrosoft();
 
   // Default to an empty address space map.
   AddrSpaceMap = &DefaultAddrSpaceMap;
@@ -412,8 +408,7 @@ bool TargetInfo::isTypeSigned(IntType T) {
 /// Apply changes to the target information with respect to certain
 /// language options which change the target configuration and adjust
 /// the language based on the target options where applicable.
-void TargetInfo::adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
-                        const TargetInfo *Aux) {
+void TargetInfo::adjust(DiagnosticsEngine &Diags, LangOptions &Opts) {
   if (Opts.NoBitFieldTypeAlign)
     UseBitFieldTypeAlignment = false;
 
@@ -553,16 +548,13 @@ void TargetInfo::adjust(DiagnosticsEngine &Diags, LangOptions &Opts,
 
   if (Opts.FakeAddressSpaceMap)
     AddrSpaceMap = &FakeAddrSpaceMap;
-
-  // Check if it's CUDA device compilation; ensure layout consistency with host.
-  if (Opts.CUDA && Opts.CUDAIsDevice && Aux && !HasMicrosoftRecordLayout)
-    HasMicrosoftRecordLayout = Aux->getCXXABI().isMicrosoft();
 }
 
 bool TargetInfo::initFeatureMap(
     llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
     const std::vector<std::string> &FeatureVec) const {
-  for (StringRef Name : FeatureVec) {
+  for (const auto &F : FeatureVec) {
+    StringRef Name = F;
     if (Name.empty())
       continue;
     // Apply the feature via the target.

@@ -39,7 +39,8 @@ createTargetMachine(std::string TargetStr, StringRef CPU, StringRef FS) {
     return nullptr;
   TargetOptions Options;
   return std::unique_ptr<TargetMachine>(
-      T->createTargetMachine(TT, CPU, FS, Options, std::nullopt, std::nullopt));
+      static_cast<TargetMachine *>(T->createTargetMachine(
+          TT, CPU, FS, Options, std::nullopt, std::nullopt)));
 }
 
 std::unique_ptr<Module> parseMIR(const TargetMachine &TM, StringRef MIRCode,

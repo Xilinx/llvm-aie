@@ -249,7 +249,7 @@ static bool hasPossibleIncompatibleOps(const Function *F) {
   return false;
 }
 
-APInt AArch64TTIImpl::getFeatureMask(const Function &F) const {
+uint64_t AArch64TTIImpl::getFeatureMask(const Function &F) const {
   StringRef AttributeStr =
       isMultiversionedFunction(F) ? "fmv-features" : "target-features";
   StringRef FeatureStr = F.getFnAttribute(AttributeStr).getValueAsString();
@@ -1167,7 +1167,7 @@ struct SVEIntrinsicInfo {
   }
 
   // NOTE: Whilst not limited to only inactive lanes, the common use case is:
-  // inactiveLanesAreZeroed =
+  // inactiveLanesAreZerod =
   //     resultIsZeroInitialized() && inactiveLanesAreUnused()
   bool resultIsZeroInitialized() const { return ResultIsZeroInitialized; }
 
@@ -2051,10 +2051,10 @@ instCombineSVECntElts(InstCombiner &IC, IntrinsicInst &II, unsigned NumElts) {
   const auto Pattern = cast<ConstantInt>(II.getArgOperand(0))->getZExtValue();
 
   if (Pattern == AArch64SVEPredPattern::all) {
-    Value *Cnt = IC.Builder.CreateElementCount(
-        II.getType(), ElementCount::getScalable(NumElts));
-    Cnt->takeName(&II);
-    return IC.replaceInstUsesWith(II, Cnt);
+    Constant *StepVal = ConstantInt::get(II.getType(), NumElts);
+    auto *VScale = IC.Builder.CreateVScale(StepVal);
+    VScale->takeName(&II);
+    return IC.replaceInstUsesWith(II, VScale);
   }
 
   unsigned MinNumElts = getNumElementsFromSVEPredPattern(Pattern);
@@ -2674,14 +2674,14 @@ static std::optional<Instruction *> instCombineSVEInsr(InstCombiner &IC,
 static std::optional<Instruction *> instCombineDMB(InstCombiner &IC,
                                                    IntrinsicInst &II) {
   // If this barrier is post-dominated by identical one we can remove it
-  auto *NI = II.getNextNode();
+  auto *NI = II.getNextNonDebugInstruction();
   unsigned LookaheadThreshold = DMBLookaheadThreshold;
   auto CanSkipOver = [](Instruction *I) {
     return !I->mayReadOrWriteMemory() && !I->mayHaveSideEffects();
   };
   while (LookaheadThreshold-- && CanSkipOver(NI)) {
     auto *NIBB = NI->getParent();
-    NI = NI->getNextNode();
+    NI = NI->getNextNonDebugInstruction();
     if (!NI) {
       if (auto *SuccBB = NIBB->getUniqueSuccessor())
         NI = &*SuccBB->getFirstNonPHIOrDbgOrLifetime();
@@ -2720,16 +2720,6 @@ static std::optional<Instruction *> instCombineSVEUxt(InstCombiner &IC,
     return IC.replaceInstUsesWith(II, And);
   }
 
-  return std::nullopt;
-}
-
-static std::optional<Instruction *>
-instCombineInStreamingMode(InstCombiner &IC, IntrinsicInst &II) {
-  SMEAttrs FnSMEAttrs(*II.getFunction());
-  bool IsStreaming = FnSMEAttrs.hasStreamingInterfaceOrBody();
-  if (IsStreaming || !FnSMEAttrs.hasStreamingCompatibleInterface())
-    return IC.replaceInstUsesWith(
-        II, ConstantInt::getBool(II.getType(), IsStreaming));
   return std::nullopt;
 }
 
@@ -2838,8 +2828,6 @@ AArch64TTIImpl::instCombineIntrinsic(InstCombiner &IC,
     return instCombineSVEUxt(IC, II, 16);
   case Intrinsic::aarch64_sve_uxtw:
     return instCombineSVEUxt(IC, II, 32);
-  case Intrinsic::aarch64_sme_in_streaming_mode:
-    return instCombineInStreamingMode(IC, II);
   }
 
   return std::nullopt;
@@ -3724,7 +3712,7 @@ InstructionCost AArch64TTIImpl::getCFInstrCost(unsigned Opcode,
 
 InstructionCost AArch64TTIImpl::getVectorInstrCostHelper(
     unsigned Opcode, Type *Val, TTI::TargetCostKind CostKind, unsigned Index,
-    const Instruction *I, Value *Scalar,
+    bool HasRealUse, const Instruction *I, Value *Scalar,
     ArrayRef<std::tuple<Value *, User *, int>> ScalarUserAndIdx) const {
   assert(Val->isVectorTy() && "This must be a vector type");
 
@@ -3744,10 +3732,12 @@ InstructionCost AArch64TTIImpl::getVectorInstrCostHelper(
     }
 
     // The element at index zero is already inside the vector.
-    // - For a insert-element or extract-element
+    // - For a physical (HasRealUse==true) insert-element or extract-element
     // instruction that extracts integers, an explicit FPR -> GPR move is
     // needed. So it has non-zero cost.
-    if (Index == 0 && !Val->getScalarType()->isIntegerTy())
+    // - For the rest of cases (virtual instruction or element type is float),
+    // consider the instruction free.
+    if (Index == 0 && (!HasRealUse || !Val->getScalarType()->isIntegerTy()))
       return 0;
 
     // This is recognising a LD1 single-element structure to one lane of one
@@ -3897,28 +3887,25 @@ InstructionCost AArch64TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
                                                    unsigned Index,
                                                    const Value *Op0,
                                                    const Value *Op1) const {
-  // Treat insert at lane 0 into a poison vector as having zero cost. This
-  // ensures vector broadcasts via an insert + shuffle (and will be lowered to a
-  // single dup) are treated as cheap.
-  if (Opcode == Instruction::InsertElement && Index == 0 && Op0 &&
-      isa<PoisonValue>(Op0))
-    return 0;
-  return getVectorInstrCostHelper(Opcode, Val, CostKind, Index);
+  bool HasRealUse =
+      Opcode == Instruction::InsertElement && Op0 && !isa<UndefValue>(Op0);
+  return getVectorInstrCostHelper(Opcode, Val, CostKind, Index, HasRealUse);
 }
 
 InstructionCost AArch64TTIImpl::getVectorInstrCost(
     unsigned Opcode, Type *Val, TTI::TargetCostKind CostKind, unsigned Index,
     Value *Scalar,
     ArrayRef<std::tuple<Value *, User *, int>> ScalarUserAndIdx) const {
-  return getVectorInstrCostHelper(Opcode, Val, CostKind, Index, nullptr, Scalar,
-                                  ScalarUserAndIdx);
+  return getVectorInstrCostHelper(Opcode, Val, CostKind, Index, false, nullptr,
+                                  Scalar, ScalarUserAndIdx);
 }
 
 InstructionCost AArch64TTIImpl::getVectorInstrCost(const Instruction &I,
                                                    Type *Val,
                                                    TTI::TargetCostKind CostKind,
                                                    unsigned Index) const {
-  return getVectorInstrCostHelper(I.getOpcode(), Val, CostKind, Index, &I);
+  return getVectorInstrCostHelper(I.getOpcode(), Val, CostKind, Index,
+                                  true /* HasRealUse */, &I);
 }
 
 InstructionCost AArch64TTIImpl::getScalarizationOverhead(
@@ -3971,7 +3958,7 @@ InstructionCost AArch64TTIImpl::getArithmeticInstrCost(
     scalarization of the division operation.
     2. Constant divisors, either negative in whole or partially, don't result in
     significantly different codegen as compared to positive constant divisors.
-    So, we don't consider negative divisors separately.
+    So, we don't consider negative divisors seperately.
     3. If the codegen is significantly different with SVE, it has been indicated
     using comments at appropriate places.
 
@@ -3993,7 +3980,7 @@ InstructionCost AArch64TTIImpl::getArithmeticInstrCost(
 
     other sdiv/srem cases:
     -------------------------------------------------------------------------
-    common codegen            | + srem     | + sdiv     | pow-of-2  | Type
+    commom codegen            | + srem     | + sdiv     | pow-of-2  | Type
     -------------------------------------------------------------------------
     smulh + asr + add + add   | -          | -          | N         | i64
     smull + lsr + add + add   | -          | -          | N         | i32
@@ -4018,8 +4005,7 @@ InstructionCost AArch64TTIImpl::getArithmeticInstrCost(
       // have similar cost.
       auto VT = TLI->getValueType(DL, Ty);
       if (VT.isScalarInteger() && VT.getSizeInBits() <= 64) {
-        if (Op2Info.isPowerOf2() || Op2Info.isNegatedPowerOf2()) {
-          // Neg can be folded into the asr instruction.
+        if (Op2Info.isPowerOf2()) {
           return ISD == ISD::SDIV ? (3 * AddCost + AsrCost)
                                   : (3 * AsrCost + AddCost);
         } else {
@@ -4027,24 +4013,17 @@ InstructionCost AArch64TTIImpl::getArithmeticInstrCost(
         }
       } else if (VT.isVector()) {
         InstructionCost UsraCost = 2 * AsrCost;
-        if (Op2Info.isPowerOf2() || Op2Info.isNegatedPowerOf2()) {
+        if (Op2Info.isPowerOf2()) {
           // Division with scalable types corresponds to native 'asrd'
           // instruction when SVE is available.
           // e.g. %1 = sdiv <vscale x 4 x i32> %a, splat (i32 8)
-
-          // One more for the negation in SDIV
-          InstructionCost Cost =
-              (Op2Info.isNegatedPowerOf2() && ISD == ISD::SDIV) ? AsrCost : 0;
           if (Ty->isScalableTy() && ST->hasSVE())
-            Cost += 2 * AsrCost;
-          else {
-            Cost +=
-                UsraCost +
-                (ISD == ISD::SDIV
-                     ? (LT.second.getScalarType() == MVT::i64 ? 1 : 2) * AsrCost
-                     : 2 * AddCost);
-          }
-          return Cost;
+            return 2 * AsrCost;
+          return UsraCost +
+                 (ISD == ISD::SDIV
+                      ? (LT.second.getScalarType() == MVT::i64 ? 1 : 2) *
+                            AsrCost
+                      : 2 * AddCost);
         } else if (LT.second == MVT::v2i64) {
           return VT.getVectorNumElements() *
                  getArithmeticInstrCost(Opcode, Ty->getScalarType(), CostKind,
@@ -4127,8 +4106,10 @@ InstructionCost AArch64TTIImpl::getArithmeticInstrCost(
       if (TLI->isOperationLegalOrCustom(ISD, LT.second) && ST->hasSVE()) {
         // SDIV/UDIV operations are lowered using SVE, then we can have less
         // costs.
-        if (VT.isSimple() && isa<FixedVectorType>(Ty) &&
-            Ty->getPrimitiveSizeInBits().getFixedValue() < 128) {
+        if (isa<FixedVectorType>(Ty) && cast<FixedVectorType>(Ty)
+                                                ->getPrimitiveSizeInBits()
+                                                .getFixedValue() < 128) {
+          EVT VT = TLI->getValueType(DL, Ty);
           static const CostTblEntry DivTbl[]{
               {ISD::SDIV, MVT::v2i8, 5},  {ISD::SDIV, MVT::v4i8, 8},
               {ISD::SDIV, MVT::v8i8, 8},  {ISD::SDIV, MVT::v2i16, 5},
@@ -4275,9 +4256,14 @@ InstructionCost AArch64TTIImpl::getCmpSelInstrCost(
     unsigned Opcode, Type *ValTy, Type *CondTy, CmpInst::Predicate VecPred,
     TTI::TargetCostKind CostKind, TTI::OperandValueInfo Op1Info,
     TTI::OperandValueInfo Op2Info, const Instruction *I) const {
+  // TODO: Handle other cost kinds.
+  if (CostKind != TTI::TCK_RecipThroughput)
+    return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy, VecPred, CostKind,
+                                     Op1Info, Op2Info, I);
+
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   // We don't lower some vector selects well that are wider than the register
-  // width. TODO: Improve this with different cost kinds.
+  // width.
   if (isa<FixedVectorType>(ValTy) && ISD == ISD::SELECT) {
     // We would need this many instructions to hide the scalarization happening.
     const int AmortizationCost = 20;
@@ -4359,27 +4345,15 @@ InstructionCost AArch64TTIImpl::getCmpSelInstrCost(
     }
   }
 
-  // Treat the icmp in icmp(and, 0) or icmp(and, -1/1) when it can be folded to
-  // icmp(and, 0) as free, as we can make use of ands, but only if the
-  // comparison is not unsigned. FIXME: Enable for non-throughput cost kinds
-  // providing it will not cause performance regressions.
-  if (CostKind == TTI::TCK_RecipThroughput && ValTy->isIntegerTy() &&
-      ISD == ISD::SETCC && I && !CmpInst::isUnsigned(VecPred) &&
+  // Treat the icmp in icmp(and, 0) as free, as we can make use of ands.
+  // FIXME: This can apply to more conditions and add/sub if it can be shown to
+  // be profitable.
+  if (ValTy->isIntegerTy() && ISD == ISD::SETCC && I &&
+      ICmpInst::isEquality(VecPred) &&
       TLI->isTypeLegal(TLI->getValueType(DL, ValTy)) &&
-      match(I->getOperand(0), m_And(m_Value(), m_Value()))) {
-    if (match(I->getOperand(1), m_Zero()))
-      return 0;
-
-    // x >= 1 / x < 1 -> x > 0 / x <= 0
-    if (match(I->getOperand(1), m_One()) &&
-        (VecPred == CmpInst::ICMP_SLT || VecPred == CmpInst::ICMP_SGE))
-      return 0;
-
-    // x <= -1 / x > -1 -> x > 0 / x <= 0
-    if (match(I->getOperand(1), m_AllOnes()) &&
-        (VecPred == CmpInst::ICMP_SLE || VecPred == CmpInst::ICMP_SGT))
-      return 0;
-  }
+      match(I->getOperand(1), m_Zero()) &&
+      match(I->getOperand(0), m_And(m_Value(), m_Value())))
+    return 0;
 
   // The base case handles scalable vectors fine for now, since it treats the
   // cost as 1 * legalization cost.
@@ -4599,13 +4573,6 @@ InstructionCost AArch64TTIImpl::getInterleavedMemoryOpCost(
   auto *VecVTy = cast<VectorType>(VecTy);
 
   if (VecTy->isScalableTy() && !ST->hasSVE())
-    return InstructionCost::getInvalid();
-
-  // Scalable VFs will emit vector.[de]interleave intrinsics, and currently we
-  // only have lowering for power-of-2 factors.
-  // TODO: Add lowering for vector.[de]interleave3 intrinsics and support in
-  // InterleavedAccessPass for ld3/st3
-  if (VecTy->isScalableTy() && !isPowerOf2_32(Factor))
     return InstructionCost::getInvalid();
 
   // Vectorization for masked interleaved accesses is only enabled for scalable
@@ -4862,7 +4829,7 @@ getAppleRuntimeUnrollPreferences(Loop *L, ScalarEvolution &SE,
   auto *Latch = L->getLoopLatch();
   SmallVector<BasicBlock *> Preds(predecessors(Latch));
   if (!Term || !Term->isConditional() || Preds.size() == 1 ||
-      !llvm::is_contained(Preds, Header) ||
+      none_of(Preds, [Header](BasicBlock *Pred) { return Header == Pred; }) ||
       none_of(Preds, [L](BasicBlock *Pred) { return L->contains(Pred); }))
     return;
 
@@ -4905,14 +4872,15 @@ void AArch64TTIImpl::getUnrollingPreferences(
   // Disable partial & runtime unrolling on -Os.
   UP.PartialOptSizeThreshold = 0;
 
-  // No need to unroll auto-vectorized loops
-  if (findStringMetadataForLoop(L, "llvm.loop.isvectorized"))
-    return;
-
   // Scan the loop: don't unroll loops with calls as this could prevent
-  // inlining.
+  // inlining. Don't unroll vector loops either, as they don't benefit much from
+  // unrolling.
   for (auto *BB : L->getBlocks()) {
     for (auto &I : *BB) {
+      // Don't unroll vectorised loop.
+      if (I.getType()->isVectorTy())
+        return;
+
       if (isa<CallBase>(I)) {
         if (isa<CallInst>(I) || isa<InvokeInst>(I))
           if (const Function *F = cast<CallBase>(I).getCalledFunction())
@@ -4973,9 +4941,9 @@ void AArch64TTIImpl::getPeelingPreferences(Loop *L, ScalarEvolution &SE,
   BaseT::getPeelingPreferences(L, SE, PP);
 }
 
-Value *AArch64TTIImpl::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
-                                                         Type *ExpectedType,
-                                                         bool CanCreate) const {
+Value *
+AArch64TTIImpl::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                                  Type *ExpectedType) const {
   switch (Inst->getIntrinsicID()) {
   default:
     return nullptr;
@@ -4984,7 +4952,7 @@ Value *AArch64TTIImpl::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
   case Intrinsic::aarch64_neon_st4: {
     // Create a struct type
     StructType *ST = dyn_cast<StructType>(ExpectedType);
-    if (!CanCreate || !ST)
+    if (!ST)
       return nullptr;
     unsigned NumElts = Inst->arg_size() - 1;
     if (ST->getNumElements() != NumElts)
@@ -5211,34 +5179,33 @@ AArch64TTIImpl::getArithmeticReductionCost(unsigned Opcode, VectorType *ValTy,
   // XOR: llvm/test/CodeGen/AArch64/reduce-xor.ll
   // AND: llvm/test/CodeGen/AArch64/reduce-and.ll
   static const CostTblEntry CostTblNoPairwise[]{
-      {ISD::ADD, MVT::v8i8, 2},
-      {ISD::ADD, MVT::v16i8, 2},
-      {ISD::ADD, MVT::v4i16, 2},
-      {ISD::ADD, MVT::v8i16, 2},
-      {ISD::ADD, MVT::v2i32, 2},
-      {ISD::ADD, MVT::v4i32, 2},
-      {ISD::ADD, MVT::v2i64, 2},
-      {ISD::OR, MVT::v8i8, 5},  // fmov + orr_lsr + orr_lsr + lsr + orr
-      {ISD::OR, MVT::v16i8, 7}, // ext + orr + same as v8i8
-      {ISD::OR, MVT::v4i16, 4}, // fmov + orr_lsr + lsr + orr
-      {ISD::OR, MVT::v8i16, 6}, // ext + orr + same as v4i16
-      {ISD::OR, MVT::v2i32, 3}, // fmov + lsr + orr
-      {ISD::OR, MVT::v4i32, 5}, // ext + orr + same as v2i32
-      {ISD::OR, MVT::v2i64, 3}, // ext + orr + fmov
-      {ISD::XOR, MVT::v8i8, 5}, // Same as above for or...
-      {ISD::XOR, MVT::v16i8, 7},
-      {ISD::XOR, MVT::v4i16, 4},
-      {ISD::XOR, MVT::v8i16, 6},
-      {ISD::XOR, MVT::v2i32, 3},
-      {ISD::XOR, MVT::v4i32, 5},
-      {ISD::XOR, MVT::v2i64, 3},
-      {ISD::AND, MVT::v8i8, 5}, // Same as above for or...
-      {ISD::AND, MVT::v16i8, 7},
-      {ISD::AND, MVT::v4i16, 4},
-      {ISD::AND, MVT::v8i16, 6},
-      {ISD::AND, MVT::v2i32, 3},
-      {ISD::AND, MVT::v4i32, 5},
-      {ISD::AND, MVT::v2i64, 3},
+      {ISD::ADD, MVT::v8i8,   2},
+      {ISD::ADD, MVT::v16i8,  2},
+      {ISD::ADD, MVT::v4i16,  2},
+      {ISD::ADD, MVT::v8i16,  2},
+      {ISD::ADD, MVT::v4i32,  2},
+      {ISD::ADD, MVT::v2i64,  2},
+      {ISD::OR,  MVT::v8i8,  15},
+      {ISD::OR,  MVT::v16i8, 17},
+      {ISD::OR,  MVT::v4i16,  7},
+      {ISD::OR,  MVT::v8i16,  9},
+      {ISD::OR,  MVT::v2i32,  3},
+      {ISD::OR,  MVT::v4i32,  5},
+      {ISD::OR,  MVT::v2i64,  3},
+      {ISD::XOR, MVT::v8i8,  15},
+      {ISD::XOR, MVT::v16i8, 17},
+      {ISD::XOR, MVT::v4i16,  7},
+      {ISD::XOR, MVT::v8i16,  9},
+      {ISD::XOR, MVT::v2i32,  3},
+      {ISD::XOR, MVT::v4i32,  5},
+      {ISD::XOR, MVT::v2i64,  3},
+      {ISD::AND, MVT::v8i8,  15},
+      {ISD::AND, MVT::v16i8, 17},
+      {ISD::AND, MVT::v4i16,  7},
+      {ISD::AND, MVT::v8i16,  9},
+      {ISD::AND, MVT::v2i32,  3},
+      {ISD::AND, MVT::v4i32,  5},
+      {ISD::AND, MVT::v2i64,  3},
   };
   switch (ISD) {
   default:
@@ -5402,31 +5369,18 @@ AArch64TTIImpl::getSpliceCost(VectorType *Tp, int Index,
 InstructionCost AArch64TTIImpl::getPartialReductionCost(
     unsigned Opcode, Type *InputTypeA, Type *InputTypeB, Type *AccumType,
     ElementCount VF, TTI::PartialReductionExtendKind OpAExtend,
-    TTI::PartialReductionExtendKind OpBExtend, std::optional<unsigned> BinOp,
-    TTI::TargetCostKind CostKind) const {
+    TTI::PartialReductionExtendKind OpBExtend,
+    std::optional<unsigned> BinOp) const {
   InstructionCost Invalid = InstructionCost::getInvalid();
   InstructionCost Cost(TTI::TCC_Basic);
 
-  if (CostKind != TTI::TCK_RecipThroughput)
-    return Invalid;
-
   // Sub opcodes currently only occur in chained cases.
   // Independent partial reduction subtractions are still costed as an add
-  if ((Opcode != Instruction::Add && Opcode != Instruction::Sub) ||
-      OpAExtend == TTI::PR_None)
+  if (Opcode != Instruction::Add && Opcode != Instruction::Sub)
     return Invalid;
 
-  // We only support multiply binary operations for now, and for muls we
-  // require the types being extended to be the same.
-  // NOTE: For muls AArch64 supports lowering mixed extensions to a usdot but
-  // only if the i8mm or sve/streaming features are available.
-  if (BinOp && (*BinOp != Instruction::Mul || InputTypeA != InputTypeB ||
-                OpBExtend == TTI::PR_None ||
-                (OpAExtend != OpBExtend && !ST->hasMatMulInt8() &&
-                 !ST->isSVEorStreamingSVEAvailable())))
+  if (InputTypeA != InputTypeB)
     return Invalid;
-  assert((BinOp || (OpBExtend == TTI::PR_None && !InputTypeB)) &&
-         "Unexpected values for OpBExtend or InputTypeB");
 
   EVT InputEVT = EVT::getEVT(InputTypeA);
   EVT AccumEVT = EVT::getEVT(AccumType);
@@ -5473,28 +5427,31 @@ InstructionCost AArch64TTIImpl::getPartialReductionCost(
   } else
     return Invalid;
 
+  // AArch64 supports lowering mixed fixed-width extensions to a usdot but only
+  // if the i8mm feature is available.
+  if (OpAExtend == TTI::PR_None || OpBExtend == TTI::PR_None ||
+      (OpAExtend != OpBExtend && !ST->hasMatMulInt8()))
+    return Invalid;
+
+  if (!BinOp || *BinOp != Instruction::Mul)
+    return Invalid;
+
   return Cost;
 }
 
-InstructionCost
-AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
-                               VectorType *SrcTy, ArrayRef<int> Mask,
-                               TTI::TargetCostKind CostKind, int Index,
-                               VectorType *SubTp, ArrayRef<const Value *> Args,
-                               const Instruction *CxtI) const {
-  assert((Mask.empty() || DstTy->isScalableTy() ||
-          Mask.size() == DstTy->getElementCount().getKnownMinValue()) &&
-         "Expected the Mask to match the return size if given");
-  assert(SrcTy->getScalarType() == DstTy->getScalarType() &&
-         "Expected the same scalar types");
-  std::pair<InstructionCost, MVT> LT = getTypeLegalizationCost(SrcTy);
+InstructionCost AArch64TTIImpl::getShuffleCost(
+    TTI::ShuffleKind Kind, VectorType *Tp, ArrayRef<int> Mask,
+    TTI::TargetCostKind CostKind, int Index, VectorType *SubTp,
+    ArrayRef<const Value *> Args, const Instruction *CxtI) const {
+  std::pair<InstructionCost, MVT> LT = getTypeLegalizationCost(Tp);
 
   // If we have a Mask, and the LT is being legalized somehow, split the Mask
   // into smaller vectors and sum the cost of each shuffle.
-  if (!Mask.empty() && isa<FixedVectorType>(SrcTy) && LT.second.isVector() &&
+  if (!Mask.empty() && isa<FixedVectorType>(Tp) && LT.second.isVector() &&
       LT.second.getScalarSizeInBits() * Mask.size() > 128 &&
-      SrcTy->getScalarSizeInBits() == LT.second.getScalarSizeInBits() &&
+      Tp->getScalarSizeInBits() == LT.second.getScalarSizeInBits() &&
       Mask.size() > LT.second.getVectorNumElements() && !Index && !SubTp) {
+
     // Check for LD3/LD4 instructions, which are represented in llvm IR as
     // deinterleaving-shuffle(load). The shuffle cost could potentially be free,
     // but we model it with a cost of LT.first so that LD3/LD4 have a higher
@@ -5510,16 +5467,16 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
     // cost than just the store.
     if (CxtI && CxtI->hasOneUse() && isa<StoreInst>(*CxtI->user_begin()) &&
         (ShuffleVectorInst::isInterleaveMask(
-             Mask, 4, SrcTy->getElementCount().getKnownMinValue() * 2) ||
+             Mask, 4, Tp->getElementCount().getKnownMinValue() * 2) ||
          ShuffleVectorInst::isInterleaveMask(
-             Mask, 3, SrcTy->getElementCount().getKnownMinValue() * 2)))
+             Mask, 3, Tp->getElementCount().getKnownMinValue() * 2)))
       return LT.first;
 
     unsigned TpNumElts = Mask.size();
     unsigned LTNumElts = LT.second.getVectorNumElements();
     unsigned NumVecs = (TpNumElts + LTNumElts - 1) / LTNumElts;
-    VectorType *NTp = VectorType::get(SrcTy->getScalarType(),
-                                      LT.second.getVectorElementCount());
+    VectorType *NTp =
+        VectorType::get(Tp->getScalarType(), LT.second.getVectorElementCount());
     InstructionCost Cost;
     std::map<std::tuple<unsigned, unsigned, SmallVector<int>>, InstructionCost>
         PreviousCosts;
@@ -5527,7 +5484,7 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
       SmallVector<int> NMask;
       // Split the existing mask into chunks of size LTNumElts. Track the source
       // sub-vectors to ensure the result has at most 2 inputs.
-      unsigned Source1 = -1U, Source2 = -1U;
+      unsigned Source1 = 0, Source2 = 0;
       unsigned NumSources = 0;
       for (unsigned E = 0; E < LTNumElts; E++) {
         int MaskElt = (N * LTNumElts + E < TpNumElts) ? Mask[N * LTNumElts + E]
@@ -5575,8 +5532,7 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
           NumSources <= 2
               ? getShuffleCost(NumSources <= 1 ? TTI::SK_PermuteSingleSrc
                                                : TTI::SK_PermuteTwoSrc,
-                               NTp, NTp, NMask, CostKind, 0, nullptr, Args,
-                               CxtI)
+                               NTp, NMask, CostKind, 0, nullptr, Args, CxtI)
               : LTNumElts;
       Result.first->second = NCost;
       Cost += NCost;
@@ -5584,7 +5540,7 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
     return Cost;
   }
 
-  Kind = improveShuffleKindFromMask(Kind, Mask, SrcTy, Index, SubTp);
+  Kind = improveShuffleKindFromMask(Kind, Mask, Tp, Index, SubTp);
   bool IsExtractSubvector = Kind == TTI::SK_ExtractSubvector;
   // A subvector extract can be implemented with an ext (or trivial extract, if
   // from lane 0). This currently only handles low or high extracts to prevent
@@ -5600,35 +5556,6 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
     }
     Kind = TTI::SK_PermuteSingleSrc;
   }
-  // FIXME: This was added to keep the costs equal when adding DstTys. Update
-  // the code to handle length-changing shuffles.
-  if (Kind == TTI::SK_InsertSubvector) {
-    LT = getTypeLegalizationCost(DstTy);
-    SrcTy = DstTy;
-  }
-
-  // Segmented shuffle matching.
-  if (Kind == TTI::SK_PermuteSingleSrc && isa<FixedVectorType>(SrcTy) &&
-      !Mask.empty() && SrcTy->getPrimitiveSizeInBits().isNonZero() &&
-      SrcTy->getPrimitiveSizeInBits().isKnownMultipleOf(
-          AArch64::SVEBitsPerBlock)) {
-
-    FixedVectorType *VTy = cast<FixedVectorType>(SrcTy);
-    unsigned Segments =
-        VTy->getPrimitiveSizeInBits() / AArch64::SVEBitsPerBlock;
-    unsigned SegmentElts = VTy->getNumElements() / Segments;
-
-    // dupq zd.t, zn.t[idx]
-    if ((ST->hasSVE2p1() || ST->hasSME2p1()) &&
-        ST->isSVEorStreamingSVEAvailable() &&
-        isDUPQMask(Mask, Segments, SegmentElts))
-      return LT.first;
-
-    // mov zd.q, vn
-    if (ST->isSVEorStreamingSVEAvailable() &&
-        isDUPFirstSegmentMask(Mask, Segments, SegmentElts))
-      return LT.first;
-  }
 
   // Check for broadcast loads, which are supported by the LD1R instruction.
   // In terms of code-size, the shuffle vector is free when a load + dup get
@@ -5640,17 +5567,15 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
   if (CostKind == TTI::TCK_CodeSize && Kind == TTI::SK_Broadcast) {
     bool IsLoad = !Args.empty() && isa<LoadInst>(Args[0]);
     if (IsLoad && LT.second.isVector() &&
-        isLegalBroadcastLoad(SrcTy->getElementType(),
+        isLegalBroadcastLoad(Tp->getElementType(),
                              LT.second.getVectorElementCount()))
       return 0;
   }
 
   // If we have 4 elements for the shuffle and a Mask, get the cost straight
   // from the perfect shuffle tables.
-  if (Mask.size() == 4 &&
-      SrcTy->getElementCount() == ElementCount::getFixed(4) &&
-      (SrcTy->getScalarSizeInBits() == 16 ||
-       SrcTy->getScalarSizeInBits() == 32) &&
+  if (Mask.size() == 4 && Tp->getElementCount() == ElementCount::getFixed(4) &&
+      (Tp->getScalarSizeInBits() == 16 || Tp->getScalarSizeInBits() == 32) &&
       all_of(Mask, [](int E) { return E < 8; }))
     return getPerfectShuffleCost(Mask);
 
@@ -5810,8 +5735,8 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
       return LT.first * Entry->Cost;
   }
 
-  if (Kind == TTI::SK_Splice && isa<ScalableVectorType>(SrcTy))
-    return getSpliceCost(SrcTy, Index, CostKind);
+  if (Kind == TTI::SK_Splice && isa<ScalableVectorType>(Tp))
+    return getSpliceCost(Tp, Index, CostKind);
 
   // Inserting a subvector can often be done with either a D, S or H register
   // move, so long as the inserted vector is "aligned".
@@ -5829,8 +5754,8 @@ AArch64TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, VectorType *DstTy,
   // Restore optimal kind.
   if (IsExtractSubvector)
     Kind = TTI::SK_ExtractSubvector;
-  return BaseT::getShuffleCost(Kind, DstTy, SrcTy, Mask, CostKind, Index, SubTp,
-                               Args, CxtI);
+  return BaseT::getShuffleCost(Kind, Tp, Mask, CostKind, Index, SubTp, Args,
+                               CxtI);
 }
 
 static bool containsDecreasingPointers(Loop *TheLoop,
@@ -5996,7 +5921,7 @@ static bool areExtractShuffleVectors(Value *Op1, Value *Op2,
       !match(Op2, m_Shuffle(m_Value(S2Op1), m_Undef(), m_Mask(M2))))
     return false;
 
-  // If we allow splats, set S1Op1/S2Op1 to nullptr for the relevant arg so that
+  // If we allow splats, set S1Op1/S2Op1 to nullptr for the relavant arg so that
   // it is not checked as an extract below.
   if (AllowSplat && isSplatShuffle(Op1))
     S1Op1 = nullptr;
@@ -6400,6 +6325,7 @@ bool AArch64TTIImpl::isProfitableToSinkOperands(
         // the backend to generate a umull.
         unsigned Bitwidth = I->getType()->getScalarSizeInBits();
         APInt UpperMask = APInt::getHighBitsSet(Bitwidth, Bitwidth / 2);
+        const DataLayout &DL = I->getDataLayout();
         if (!MaskedValueIsZero(OperandInstr, UpperMask, DL))
           continue;
         NumZExts++;

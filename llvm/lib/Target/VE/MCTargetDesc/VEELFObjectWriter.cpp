@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/VEMCAsmInfo.h"
+#include "MCTargetDesc/VEMCExpr.h"
 #include "VEFixupKinds.h"
-#include "VEMCAsmInfo.h"
+#include "VEMCExpr.h"
 #include "VEMCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFObjectWriter.h"
@@ -40,27 +40,28 @@ unsigned VEELFObjectWriter::getRelocType(const MCFixup &Fixup,
                                          const MCValue &Target,
                                          bool IsPCRel) const {
   switch (Target.getSpecifier()) {
-  case VE::S_TLS_GD_HI32:
-  case VE::S_TLS_GD_LO32:
-  case VE::S_TPOFF_HI32:
-  case VE::S_TPOFF_LO32:
+  case VEMCExpr::VK_TLS_GD_HI32:
+  case VEMCExpr::VK_TLS_GD_LO32:
+  case VEMCExpr::VK_TPOFF_HI32:
+  case VEMCExpr::VK_TPOFF_LO32:
     if (auto *SA = Target.getAddSym())
       cast<MCSymbolELF>(SA)->setType(ELF::STT_TLS);
     break;
   default:
     break;
   }
-  if (auto *SExpr = dyn_cast<MCSpecifierExpr>(Fixup.getValue())) {
-    if (SExpr->getSpecifier() == VE::S_PC_LO32)
+  if (const VEMCExpr *SExpr = dyn_cast<VEMCExpr>(Fixup.getValue())) {
+    if (SExpr->getSpecifier() == VEMCExpr::VK_PC_LO32)
       return ELF::R_VE_PC_LO32;
   }
 
   if (IsPCRel) {
-    switch (Fixup.getKind()) {
+    switch (Fixup.getTargetKind()) {
     default:
       reportError(Fixup.getLoc(), "Unsupported pc-relative fixup kind");
       return ELF::R_VE_NONE;
     case FK_Data_1:
+    case FK_PCRel_1:
       reportError(Fixup.getLoc(),
                   "1-byte pc-relative data relocation is not supported");
       return ELF::R_VE_NONE;
@@ -71,6 +72,7 @@ unsigned VEELFObjectWriter::getRelocType(const MCFixup &Fixup,
     case FK_Data_4:
       return ELF::R_VE_SREL32;
     case FK_Data_8:
+    case FK_PCRel_8:
       reportError(Fixup.getLoc(),
                   "8-byte pc-relative data relocation is not supported");
       return ELF::R_VE_NONE;
@@ -84,7 +86,7 @@ unsigned VEELFObjectWriter::getRelocType(const MCFixup &Fixup,
     }
   }
 
-  switch (Fixup.getKind()) {
+  switch (Fixup.getTargetKind()) {
   default:
     reportError(Fixup.getLoc(), "Unknown ELF relocation type");
     return ELF::R_VE_NONE;

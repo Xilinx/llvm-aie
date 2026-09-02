@@ -20,7 +20,7 @@
 #include "test_macros.h"
 
 template <class... Args>
-constexpr void check_invariant(const std::flat_set<Args...>& m) {
+void check_invariant(const std::flat_set<Args...>& m) {
   assert(std::is_sorted(m.begin(), m.end(), m.key_comp()));
   auto key_equal = [&](const auto& x, const auto& y) {
     const auto& c = m.key_comp();

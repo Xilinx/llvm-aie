@@ -14,8 +14,6 @@
 #ifndef LLVM_TRANSFORMS_UTILS_H
 #define LLVM_TRANSFORMS_UTILS_H
 
-#include "llvm/Support/Compiler.h"
-
 namespace llvm {
 
 class ModulePass;
@@ -27,16 +25,16 @@ class Pass;
 // LowerInvoke - This pass removes invoke instructions, converting them to call
 // instructions.
 //
-LLVM_ABI FunctionPass *createLowerInvokePass();
-LLVM_ABI extern char &LowerInvokePassID;
+FunctionPass *createLowerInvokePass();
+extern char &LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
 //
 // LowerSwitch - This pass converts SwitchInst instructions into a sequence of
 // chained binary branch instructions.
 //
-LLVM_ABI FunctionPass *createLowerSwitchPass();
-LLVM_ABI extern char &LowerSwitchID;
+FunctionPass *createLowerSwitchPass();
+extern char &LowerSwitchID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -45,7 +43,7 @@ LLVM_ABI extern char &LowerSwitchID;
 // variants, intended to run pre- and post-inlining, respectively. Only the
 // post-inlining variant is used with the legacy pass manager.
 //
-LLVM_ABI FunctionPass *createPostInlineEntryExitInstrumenterPass();
+FunctionPass *createPostInlineEntryExitInstrumenterPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -58,16 +56,16 @@ LLVM_ABI FunctionPass *createPostInlineEntryExitInstrumenterPass();
 // This pass obviously invalidates the CFG, but can update forward dominator
 // (set, immediate dominators, tree, and frontier) information.
 //
-LLVM_ABI FunctionPass *createBreakCriticalEdgesPass();
-LLVM_ABI extern char &BreakCriticalEdgesID;
+FunctionPass *createBreakCriticalEdgesPass();
+extern char &BreakCriticalEdgesID;
 
 //===----------------------------------------------------------------------===//
 //
 // LCSSA - This pass inserts phi nodes at loop boundaries to simplify other loop
 // optimizations.
 //
-LLVM_ABI Pass *createLCSSAPass();
-LLVM_ABI extern char &LCSSAID;
+Pass *createLCSSAPass();
+extern char &LCSSAID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -81,7 +79,7 @@ LLVM_ABI extern char &LCSSAID;
 //   %Y = load i32* %X
 //   ret i32 %Y
 //
-LLVM_ABI FunctionPass *createPromoteMemoryToRegisterPass();
+FunctionPass *createPromoteMemoryToRegisterPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -89,7 +87,7 @@ LLVM_ABI FunctionPass *createPromoteMemoryToRegisterPass();
 // references. In basically undoes the PromoteMemoryToRegister pass to make cfg
 // hacking easier.
 //
-LLVM_ABI FunctionPass *createRegToMemWrapperPass();
+FunctionPass *createRegToMemWrapperPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -99,8 +97,8 @@ LLVM_ABI FunctionPass *createRegToMemWrapperPass();
 //
 //   AU.addRequiredID(LoopSimplifyID);
 //
-LLVM_ABI Pass *createLoopSimplifyPass();
-LLVM_ABI extern char &LoopSimplifyID;
+Pass *createLoopSimplifyPass();
+extern char &LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -108,27 +106,27 @@ LLVM_ABI extern char &LoopSimplifyID;
 // blocks branch to N, and then N distributes control flow to all the original
 // exit blocks.
 //
-LLVM_ABI FunctionPass *createUnifyLoopExitsPass();
+FunctionPass *createUnifyLoopExitsPass();
 
 //===----------------------------------------------------------------------===//
 //
 // FixIrreducible - Convert each SCC with irreducible control-flow
 // into a natural loop.
 //
-LLVM_ABI FunctionPass *createFixIrreduciblePass();
+FunctionPass *createFixIrreduciblePass();
 
 //===----------------------------------------------------------------------===//
 //
 // CanonicalizeFreezeInLoops - Canonicalize freeze instructions in loops so they
 // don't block SCEV.
 //
-LLVM_ABI Pass *createCanonicalizeFreezeInLoopsPass();
+Pass *createCanonicalizeFreezeInLoopsPass();
 
 //===----------------------------------------------------------------------===//
 // LowerGlobalDtorsLegacy - Lower @llvm.global_dtors by creating wrapper
 // functions that are registered in @llvm.global_ctors and which contain a call
 // to `__cxa_atexit` to register their destructor functions.
-LLVM_ABI ModulePass *createLowerGlobalDtorsLegacyPass();
+ModulePass *createLowerGlobalDtorsLegacyPass();
 } // namespace llvm
 
 #endif

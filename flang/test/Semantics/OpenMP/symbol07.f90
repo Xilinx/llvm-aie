@@ -21,17 +21,17 @@ subroutine function_call_in_region
   !DEF: /function_call_in_region/b ObjectEntity REAL(4)
   real :: b = 5.
   !$omp parallel  default(none) private(a) shared(b)
-  !DEF: /function_call_in_region/OtherConstruct1/a (OmpPrivate, OmpExplicit) HostAssoc REAL(4)
+  !DEF: /function_call_in_region/OtherConstruct1/a (OmpPrivate) HostAssoc REAL(4)
   !REF: /function_call_in_region/foo
-  !DEF: /function_call_in_region/OtherConstruct1/b (OmpShared, OmpExplicit) HostAssoc REAL(4)
+  !DEF: /function_call_in_region/OtherConstruct1/b (OmpShared) HostAssoc REAL(4)
   a = foo(b)
   !$omp end parallel
   !REF: /function_call_in_region/a
   !REF: /function_call_in_region/b
   print *, a, b
 end subroutine function_call_in_region
-!DEF: /MM MainProgram
-program MM
+!DEF: /mm MainProgram
+program mm
   !REF: /function_call_in_region
   call function_call_in_region
-end program MM
+end program mm

@@ -133,7 +133,6 @@ static Error tryBitstream2YAML() {
   if (!E.isA<EndOfFileError>())
     return E;
   consumeError(std::move(E));
-  OF->keep();
   return Error::success();
 }
 } // namespace bitstream2yaml

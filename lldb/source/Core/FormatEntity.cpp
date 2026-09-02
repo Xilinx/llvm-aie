@@ -124,8 +124,6 @@ constexpr Definition g_function_child_entries[] = {
     Definition("initial-function", EntryType::FunctionInitial),
     Definition("changed", EntryType::FunctionChanged),
     Definition("is-optimized", EntryType::FunctionIsOptimized),
-    Definition("is-inlined", EntryType::FunctionIsInlined),
-    Definition("prefix", EntryType::FunctionPrefix),
     Definition("scope", EntryType::FunctionScope),
     Definition("basename", EntryType::FunctionBasename),
     Definition("template-arguments", EntryType::FunctionTemplateArguments),
@@ -387,7 +385,6 @@ const char *FormatEntity::Entry::TypeToCString(Type t) {
     ENUM_TO_CSTR(FunctionNameWithArgs);
     ENUM_TO_CSTR(FunctionNameNoArgs);
     ENUM_TO_CSTR(FunctionMangledName);
-    ENUM_TO_CSTR(FunctionPrefix);
     ENUM_TO_CSTR(FunctionScope);
     ENUM_TO_CSTR(FunctionBasename);
     ENUM_TO_CSTR(FunctionTemplateArguments);
@@ -403,7 +400,6 @@ const char *FormatEntity::Entry::TypeToCString(Type t) {
     ENUM_TO_CSTR(FunctionInitial);
     ENUM_TO_CSTR(FunctionChanged);
     ENUM_TO_CSTR(FunctionIsOptimized);
-    ENUM_TO_CSTR(FunctionIsInlined);
     ENUM_TO_CSTR(LineEntryFile);
     ENUM_TO_CSTR(LineEntryLineNumber);
     ENUM_TO_CSTR(LineEntryColumn);
@@ -470,7 +466,9 @@ static bool DumpAddressAndContent(Stream &s, const SymbolContext *sc,
                                   bool print_file_addr_or_load_addr) {
   Target *target = Target::GetTargetFromContexts(exe_ctx, sc);
 
-  addr_t vaddr = addr.GetLoadAddress(target);
+  addr_t vaddr = LLDB_INVALID_ADDRESS;
+  if (target && target->HasLoadedSections())
+    vaddr = addr.GetLoadAddress(target);
   if (vaddr == LLDB_INVALID_ADDRESS)
     vaddr = addr.GetFileAddress();
   if (vaddr == LLDB_INVALID_ADDRESS)
@@ -1279,15 +1277,13 @@ static bool FormatFunctionNameForLanguage(Stream &s,
   if (!language_plugin)
     return false;
 
-  FormatEntity::Entry format = language_plugin->GetFunctionNameFormat();
-
-  // Bail on invalid or empty format.
-  if (!format || format == FormatEntity::Entry(Entry::Type::Root))
+  const auto *format = language_plugin->GetFunctionNameFormat();
+  if (!format)
     return false;
 
   StreamString name_stream;
   const bool success =
-      FormatEntity::Format(format, name_stream, sc, exe_ctx, /*addr=*/nullptr,
+      FormatEntity::Format(*format, name_stream, sc, exe_ctx, /*addr=*/nullptr,
                            /*valobj=*/nullptr, /*function_changed=*/false,
                            /*initial_function=*/false);
   if (success)
@@ -1839,7 +1835,6 @@ bool FormatEntity::Format(const Entry &entry, Stream &s,
     return true;
   }
 
-  case Entry::Type::FunctionPrefix:
   case Entry::Type::FunctionScope:
   case Entry::Type::FunctionBasename:
   case Entry::Type::FunctionTemplateArguments:
@@ -1928,10 +1923,6 @@ bool FormatEntity::Format(const Entry &entry, Stream &s,
       is_optimized = true;
     }
     return is_optimized;
-  }
-
-  case Entry::Type::FunctionIsInlined: {
-    return sc && sc->block && sc->block->GetInlinedFunctionInfo();
   }
 
   case Entry::Type::FunctionInitial:

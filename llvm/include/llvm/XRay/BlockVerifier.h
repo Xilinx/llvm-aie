@@ -13,13 +13,12 @@
 #ifndef LLVM_XRAY_BLOCKVERIFIER_H
 #define LLVM_XRAY_BLOCKVERIFIER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/XRay/FDRRecords.h"
 
 namespace llvm {
 namespace xray {
 
-class LLVM_ABI BlockVerifier : public RecordVisitor {
+class BlockVerifier : public RecordVisitor {
 public:
   // We force State elements to be size_t, to be used as indices for containers.
   enum class State : std::size_t {

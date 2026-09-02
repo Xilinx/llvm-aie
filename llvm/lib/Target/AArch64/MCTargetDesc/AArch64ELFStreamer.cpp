@@ -231,7 +231,7 @@ class AArch64TargetAsmStreamer : public AArch64TargetStreamer {
     OS << "\n";
   }
 
-  void emitAttributesSubsection(
+  void emitAtributesSubsection(
       StringRef SubsectionName,
       AArch64BuildAttributes::SubsectionOptional Optional,
       AArch64BuildAttributes::SubsectionType ParameterType) override {
@@ -278,7 +278,7 @@ class AArch64TargetAsmStreamer : public AArch64TargetStreamer {
        << ", " << ParameterStr;
     // Keep the data structure consistent with the case of ELF emission
     // (important for llvm-mc asm parsing)
-    AArch64TargetStreamer::emitAttributesSubsection(SubsectionName, Optional,
+    AArch64TargetStreamer::emitAtributesSubsection(SubsectionName, Optional,
                                                    ParameterType);
     OS << "\n";
   }
@@ -433,10 +433,10 @@ AArch64ELFStreamer &AArch64TargetELFStreamer::getStreamer() {
   return static_cast<AArch64ELFStreamer &>(Streamer);
 }
 
-void AArch64TargetELFStreamer::emitAttributesSubsection(
+void AArch64TargetELFStreamer::emitAtributesSubsection(
     StringRef VendorName, AArch64BuildAttributes::SubsectionOptional IsOptional,
     AArch64BuildAttributes::SubsectionType ParameterType) {
-  AArch64TargetStreamer::emitAttributesSubsection(VendorName, IsOptional,
+  AArch64TargetStreamer::emitAtributesSubsection(VendorName, IsOptional,
                                                  ParameterType);
 }
 
@@ -523,16 +523,17 @@ void AArch64TargetELFStreamer::finish() {
   // mark it execute-only if it is empty and there is at least one
   // execute-only section in the object.
   if (any_of(Asm, [](const MCSection &Sec) {
-        return static_cast<const MCSectionELF &>(Sec).getFlags() &
-               ELF::SHF_AARCH64_PURECODE;
+        return cast<MCSectionELF>(Sec).getFlags() & ELF::SHF_AARCH64_PURECODE;
       })) {
     auto *Text =
         static_cast<MCSectionELF *>(Ctx.getObjectFileInfo()->getTextSection());
     bool Empty = true;
     for (auto &F : *Text) {
-      if (F.getSize()) {
-        Empty = false;
-        break;
+      if (auto *DF = dyn_cast<MCDataFragment>(&F)) {
+        if (!DF->getContents().empty()) {
+          Empty = false;
+          break;
+        }
       }
     }
     if (Empty)
@@ -560,7 +561,8 @@ void AArch64TargetELFStreamer::finish() {
     if (!Sym.isMemtag())
       continue;
     auto *SRE = MCSymbolRefExpr::create(&Sym, Ctx);
-    S.emitRelocDirective(*Zero, "BFD_RELOC_NONE", SRE);
+    (void)S.emitRelocDirective(*Zero, "BFD_RELOC_NONE", SRE, SMLoc(),
+                               *Ctx.getSubtargetInfo());
   }
 }
 

@@ -9,7 +9,6 @@
 #ifndef LLVM_LIBC_SRC___SUPPORT_BIG_INT_H
 #define LLVM_LIBC_SRC___SUPPORT_BIG_INT_H
 
-#include "hdr/stdint_proxy.h"
 #include "src/__support/CPP/array.h"
 #include "src/__support/CPP/bit.h" // countl_zero
 #include "src/__support/CPP/limits.h"
@@ -24,6 +23,7 @@
 #include "src/__support/number_pair.h"
 
 #include <stddef.h> // For size_t
+#include <stdint.h>
 
 namespace LIBC_NAMESPACE_DECL {
 

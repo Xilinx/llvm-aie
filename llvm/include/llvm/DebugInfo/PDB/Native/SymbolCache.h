@@ -18,7 +18,6 @@
 #include "llvm/DebugInfo/PDB/Native/NativeRawSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeSourceFile.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
-#include "llvm/Support/Compiler.h"
 
 #include <memory>
 #include <vector>
@@ -122,7 +121,7 @@ class SymbolCache {
                                                           uint32_t Offset);
 
 public:
-  LLVM_ABI SymbolCache(NativeSession &Session, DbiStream *Dbi);
+  SymbolCache(NativeSession &Session, DbiStream *Dbi);
 
   template <typename ConcreteSymbolT, typename... Args>
   SymIndexId createSymbol(Args &&...ConstructorArgs) const {
@@ -143,16 +142,16 @@ public:
     return Id;
   }
 
-  LLVM_ABI std::unique_ptr<IPDBEnumSymbols>
+  std::unique_ptr<IPDBEnumSymbols>
   createTypeEnumerator(codeview::TypeLeafKind Kind);
 
-  LLVM_ABI std::unique_ptr<IPDBEnumSymbols>
+  std::unique_ptr<IPDBEnumSymbols>
   createTypeEnumerator(std::vector<codeview::TypeLeafKind> Kinds);
 
-  LLVM_ABI std::unique_ptr<IPDBEnumSymbols>
+  std::unique_ptr<IPDBEnumSymbols>
   createGlobalsEnumerator(codeview::SymbolKind Kind);
 
-  LLVM_ABI SymIndexId findSymbolByTypeIndex(codeview::TypeIndex TI) const;
+  SymIndexId findSymbolByTypeIndex(codeview::TypeIndex TI) const;
 
   template <typename ConcreteSymbolT, typename... Args>
   SymIndexId getOrCreateFieldListMember(codeview::TypeIndex FieldListTI,
@@ -169,34 +168,31 @@ public:
     return SymId;
   }
 
-  LLVM_ABI SymIndexId getOrCreateGlobalSymbolByOffset(uint32_t Offset);
-  LLVM_ABI SymIndexId getOrCreateInlineSymbol(codeview::InlineSiteSym Sym,
-                                              uint64_t ParentAddr,
-                                              uint16_t Modi,
-                                              uint32_t RecordOffset) const;
+  SymIndexId getOrCreateGlobalSymbolByOffset(uint32_t Offset);
+  SymIndexId getOrCreateInlineSymbol(codeview::InlineSiteSym Sym,
+                                     uint64_t ParentAddr, uint16_t Modi,
+                                     uint32_t RecordOffset) const;
 
-  LLVM_ABI std::unique_ptr<PDBSymbol>
+  std::unique_ptr<PDBSymbol>
   findSymbolBySectOffset(uint32_t Sect, uint32_t Offset, PDB_SymType Type);
 
-  LLVM_ABI std::unique_ptr<IPDBEnumLineNumbers>
+  std::unique_ptr<IPDBEnumLineNumbers>
   findLineNumbersByVA(uint64_t VA, uint32_t Length) const;
 
-  LLVM_ABI std::unique_ptr<PDBSymbolCompiland>
-  getOrCreateCompiland(uint32_t Index);
-  LLVM_ABI uint32_t getNumCompilands() const;
+  std::unique_ptr<PDBSymbolCompiland> getOrCreateCompiland(uint32_t Index);
+  uint32_t getNumCompilands() const;
 
-  LLVM_ABI std::unique_ptr<PDBSymbol> getSymbolById(SymIndexId SymbolId) const;
+  std::unique_ptr<PDBSymbol> getSymbolById(SymIndexId SymbolId) const;
 
-  LLVM_ABI NativeRawSymbol &getNativeSymbolById(SymIndexId SymbolId) const;
+  NativeRawSymbol &getNativeSymbolById(SymIndexId SymbolId) const;
 
   template <typename ConcreteT>
   ConcreteT &getNativeSymbolById(SymIndexId SymbolId) const {
     return static_cast<ConcreteT &>(getNativeSymbolById(SymbolId));
   }
 
-  LLVM_ABI std::unique_ptr<IPDBSourceFile>
-  getSourceFileById(SymIndexId FileId) const;
-  LLVM_ABI SymIndexId
+  std::unique_ptr<IPDBSourceFile> getSourceFileById(SymIndexId FileId) const;
+  SymIndexId
   getOrCreateSourceFile(const codeview::FileChecksumEntry &Checksum) const;
 };
 

@@ -202,6 +202,8 @@ private:
   bool emitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override {
     return false;
   }
+  void emitValueToAlignment(Align Alignment, int64_t Value, unsigned ValueSize,
+                            unsigned MaxBytesToEmit) override {}
   void emitZerofill(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
                     Align ByteAlignment, SMLoc Loc) override {}
 

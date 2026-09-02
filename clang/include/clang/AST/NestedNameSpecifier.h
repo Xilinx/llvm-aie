@@ -31,7 +31,8 @@ class ASTContext;
 class CXXRecordDecl;
 class IdentifierInfo;
 class LangOptions;
-class NamespaceBaseDecl;
+class NamespaceAliasDecl;
+class NamespaceDecl;
 struct PrintingPolicy;
 class Type;
 class TypeLoc;
@@ -78,8 +79,11 @@ public:
     /// An identifier, stored as an IdentifierInfo*.
     Identifier,
 
-    /// A namespace-like entity, stored as a NamespaceBaseDecl*.
+    /// A namespace, stored as a NamespaceDecl*.
     Namespace,
+
+    /// A namespace alias, stored as a NamespaceAliasDecl*.
+    NamespaceAlias,
 
     /// A type, stored as a Type*.
     TypeSpec,
@@ -117,10 +121,15 @@ public:
                                      NestedNameSpecifier *Prefix,
                                      const IdentifierInfo *II);
 
-  /// Builds a nested name specifier that names a namespace or namespace alias.
+  /// Builds a nested name specifier that names a namespace.
   static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
-                                     const NamespaceBaseDecl *NS);
+                                     const NamespaceDecl *NS);
+
+  /// Builds a nested name specifier that names a namespace alias.
+  static NestedNameSpecifier *Create(const ASTContext &Context,
+                                     NestedNameSpecifier *Prefix,
+                                     const NamespaceAliasDecl *Alias);
 
   /// Builds a nested name specifier that names a type.
   static NestedNameSpecifier *
@@ -165,9 +174,13 @@ public:
     return nullptr;
   }
 
-  /// Retrieve the namespace or namespace alias stored in this nested name
+  /// Retrieve the namespace stored in this nested name
   /// specifier.
-  NamespaceBaseDecl *getAsNamespace() const;
+  NamespaceDecl *getAsNamespace() const;
+
+  /// Retrieve the namespace alias stored in this nested name
+  /// specifier.
+  NamespaceAliasDecl *getAsNamespaceAlias() const;
 
   /// Retrieve the record declaration stored in this nested name
   /// specifier.
@@ -270,9 +283,7 @@ public:
   /// For example, if this instance refers to a nested-name-specifier
   /// \c \::std::vector<int>::, the returned source range would cover
   /// from the initial '::' to the last '::'.
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getBeginLoc(), getEndLoc());
-  }
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   /// Retrieve the source range covering just the last part of
   /// this nested-name-specifier, not including the prefix.
@@ -285,18 +296,14 @@ public:
   /// Retrieve the location of the beginning of this
   /// nested-name-specifier.
   SourceLocation getBeginLoc() const {
-    if (!Qualifier)
-      return SourceLocation();
-
-    NestedNameSpecifierLoc First = *this;
-    while (NestedNameSpecifierLoc Prefix = First.getPrefix())
-      First = Prefix;
-    return First.getLocalSourceRange().getBegin();
+    return getSourceRange().getBegin();
   }
 
   /// Retrieve the location of the end of this
   /// nested-name-specifier.
-  SourceLocation getEndLoc() const { return getLocalSourceRange().getEnd(); }
+  SourceLocation getEndLoc() const {
+    return getSourceRange().getEnd();
+  }
 
   /// Retrieve the location of the beginning of this
   /// component of the nested-name-specifier.
@@ -412,14 +419,28 @@ public:
   /// \param Context The AST context in which this nested-name-specifier
   /// resides.
   ///
-  /// \param Namespace The namespace or namespace alias.
+  /// \param Namespace The namespace.
   ///
-  /// \param NamespaceLoc The location of the namespace name or the namespace
-  //  alias.
+  /// \param NamespaceLoc The location of the namespace name.
   ///
   /// \param ColonColonLoc The location of the trailing '::'.
-  void Extend(ASTContext &Context, NamespaceBaseDecl *Namespace,
+  void Extend(ASTContext &Context, NamespaceDecl *Namespace,
               SourceLocation NamespaceLoc, SourceLocation ColonColonLoc);
+
+  /// Extend the current nested-name-specifier by another
+  /// nested-name-specifier component of the form 'namespace-alias::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Alias The namespace alias.
+  ///
+  /// \param AliasLoc The location of the namespace alias
+  /// name.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
+              SourceLocation AliasLoc, SourceLocation ColonColonLoc);
 
   /// Turn this (empty) nested-name-specifier into the global
   /// nested-name-specifier '::'.

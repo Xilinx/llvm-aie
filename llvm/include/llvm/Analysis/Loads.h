@@ -15,7 +15,6 @@
 
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -35,30 +34,33 @@ class TargetLibraryInfo;
 /// Return true if this is always a dereferenceable pointer. If the context
 /// instruction is specified perform context-sensitive analysis and return true
 /// if the pointer is dereferenceable at the specified instruction.
-LLVM_ABI bool isDereferenceablePointer(const Value *V, Type *Ty,
-                                       const DataLayout &DL,
-                                       const Instruction *CtxI = nullptr,
-                                       AssumptionCache *AC = nullptr,
-                                       const DominatorTree *DT = nullptr,
-                                       const TargetLibraryInfo *TLI = nullptr);
+bool isDereferenceablePointer(const Value *V, Type *Ty, const DataLayout &DL,
+                              const Instruction *CtxI = nullptr,
+                              AssumptionCache *AC = nullptr,
+                              const DominatorTree *DT = nullptr,
+                              const TargetLibraryInfo *TLI = nullptr);
 
 /// Returns true if V is always a dereferenceable pointer with alignment
 /// greater or equal than requested. If the context instruction is specified
 /// performs context-sensitive analysis and returns true if the pointer is
 /// dereferenceable at the specified instruction.
-LLVM_ABI bool isDereferenceableAndAlignedPointer(
-    const Value *V, Type *Ty, Align Alignment, const DataLayout &DL,
-    const Instruction *CtxI = nullptr, AssumptionCache *AC = nullptr,
-    const DominatorTree *DT = nullptr, const TargetLibraryInfo *TLI = nullptr);
+bool isDereferenceableAndAlignedPointer(const Value *V, Type *Ty,
+                                        Align Alignment, const DataLayout &DL,
+                                        const Instruction *CtxI = nullptr,
+                                        AssumptionCache *AC = nullptr,
+                                        const DominatorTree *DT = nullptr,
+                                        const TargetLibraryInfo *TLI = nullptr);
 
 /// Returns true if V is always dereferenceable for Size byte with alignment
 /// greater or equal than requested. If the context instruction is specified
 /// performs context-sensitive analysis and returns true if the pointer is
 /// dereferenceable at the specified instruction.
-LLVM_ABI bool isDereferenceableAndAlignedPointer(
-    const Value *V, Align Alignment, const APInt &Size, const DataLayout &DL,
-    const Instruction *CtxI = nullptr, AssumptionCache *AC = nullptr,
-    const DominatorTree *DT = nullptr, const TargetLibraryInfo *TLI = nullptr);
+bool isDereferenceableAndAlignedPointer(const Value *V, Align Alignment,
+                                        const APInt &Size, const DataLayout &DL,
+                                        const Instruction *CtxI = nullptr,
+                                        AssumptionCache *AC = nullptr,
+                                        const DominatorTree *DT = nullptr,
+                                        const TargetLibraryInfo *TLI = nullptr);
 
 /// Return true if we know that executing a load from this value cannot trap.
 ///
@@ -68,10 +70,11 @@ LLVM_ABI bool isDereferenceableAndAlignedPointer(
 /// If it is not obviously safe to load from the specified pointer, we do a
 /// quick local scan of the basic block containing ScanFrom, to determine if
 /// the address is already accessed.
-LLVM_ABI bool isSafeToLoadUnconditionally(
-    Value *V, Align Alignment, const APInt &Size, const DataLayout &DL,
-    Instruction *ScanFrom, AssumptionCache *AC = nullptr,
-    const DominatorTree *DT = nullptr, const TargetLibraryInfo *TLI = nullptr);
+bool isSafeToLoadUnconditionally(Value *V, Align Alignment, const APInt &Size,
+                                 const DataLayout &DL, Instruction *ScanFrom,
+                                 AssumptionCache *AC = nullptr,
+                                 const DominatorTree *DT = nullptr,
+                                 const TargetLibraryInfo *TLI = nullptr);
 
 /// Return true if we can prove that the given load (which is assumed to be
 /// within the specified loop) would access only dereferenceable memory, and
@@ -80,14 +83,14 @@ LLVM_ABI bool isSafeToLoadUnconditionally(
 /// that required by the header itself and could be hoisted into the header
 /// if desired.)  This is more powerful than the variants above when the
 /// address loaded from is analyzeable by SCEV.
-LLVM_ABI bool isDereferenceableAndAlignedInLoop(
+bool isDereferenceableAndAlignedInLoop(
     LoadInst *LI, Loop *L, ScalarEvolution &SE, DominatorTree &DT,
     AssumptionCache *AC = nullptr,
     SmallVectorImpl<const SCEVPredicate *> *Predicates = nullptr);
 
 /// Return true if the loop \p L cannot fault on any iteration and only
 /// contains read-only memory accesses.
-LLVM_ABI bool isDereferenceableReadOnlyLoop(
+bool isDereferenceableReadOnlyLoop(
     Loop *L, ScalarEvolution *SE, DominatorTree *DT, AssumptionCache *AC,
     SmallVectorImpl<const SCEVPredicate *> *Predicates = nullptr);
 
@@ -99,21 +102,22 @@ LLVM_ABI bool isDereferenceableReadOnlyLoop(
 /// If it is not obviously safe to load from the specified pointer, we do a
 /// quick local scan of the basic block containing ScanFrom, to determine if
 /// the address is already accessed.
-LLVM_ABI bool isSafeToLoadUnconditionally(
-    Value *V, Type *Ty, Align Alignment, const DataLayout &DL,
-    Instruction *ScanFrom, AssumptionCache *AC = nullptr,
-    const DominatorTree *DT = nullptr, const TargetLibraryInfo *TLI = nullptr);
+bool isSafeToLoadUnconditionally(Value *V, Type *Ty, Align Alignment,
+                                 const DataLayout &DL, Instruction *ScanFrom,
+                                 AssumptionCache *AC = nullptr,
+                                 const DominatorTree *DT = nullptr,
+                                 const TargetLibraryInfo *TLI = nullptr);
 
 /// Return true if speculation of the given load must be suppressed to avoid
 /// ordering or interfering with an active sanitizer.  If not suppressed,
 /// dereferenceability and alignment must be proven separately.  Note: This
 /// is only needed for raw reasoning; if you use the interface below
 /// (isSafeToSpeculativelyExecute), this is handled internally.
-LLVM_ABI bool mustSuppressSpeculation(const LoadInst &LI);
+bool mustSuppressSpeculation(const LoadInst &LI);
 
 /// The default number of maximum instructions to scan in the block, used by
 /// FindAvailableLoadedValue().
-LLVM_ABI extern cl::opt<unsigned> DefMaxInstsToScan;
+extern cl::opt<unsigned> DefMaxInstsToScan;
 
 /// Scan backwards to see if we have the value of the given load available
 /// locally within a small number of instructions.
@@ -139,18 +143,20 @@ LLVM_ABI extern cl::opt<unsigned> DefMaxInstsToScan;
 /// location in memory, as opposed to the value operand of a store.
 ///
 /// \returns The found value, or nullptr if no value is found.
-LLVM_ABI Value *FindAvailableLoadedValue(
-    LoadInst *Load, BasicBlock *ScanBB, BasicBlock::iterator &ScanFrom,
-    unsigned MaxInstsToScan = DefMaxInstsToScan, BatchAAResults *AA = nullptr,
-    bool *IsLoadCSE = nullptr, unsigned *NumScanedInst = nullptr);
+Value *FindAvailableLoadedValue(LoadInst *Load, BasicBlock *ScanBB,
+                                BasicBlock::iterator &ScanFrom,
+                                unsigned MaxInstsToScan = DefMaxInstsToScan,
+                                BatchAAResults *AA = nullptr,
+                                bool *IsLoadCSE = nullptr,
+                                unsigned *NumScanedInst = nullptr);
 
 /// This overload provides a more efficient implementation of
 /// FindAvailableLoadedValue() for the case where we are not interested in
 /// finding the closest clobbering instruction if no available load is found.
 /// This overload cannot be used to scan across multiple blocks.
-LLVM_ABI Value *
-FindAvailableLoadedValue(LoadInst *Load, BatchAAResults &AA, bool *IsLoadCSE,
-                         unsigned MaxInstsToScan = DefMaxInstsToScan);
+Value *FindAvailableLoadedValue(LoadInst *Load, BatchAAResults &AA,
+                                bool *IsLoadCSE,
+                                unsigned MaxInstsToScan = DefMaxInstsToScan);
 
 /// Scan backwards to see if we have the value of the given pointer available
 /// locally within a small number of instructions.
@@ -175,10 +181,11 @@ FindAvailableLoadedValue(LoadInst *Load, BatchAAResults &AA, bool *IsLoadCSE,
 /// location in memory, as opposed to the value operand of a store.
 ///
 /// \returns The found value, or nullptr if no value is found.
-LLVM_ABI Value *findAvailablePtrLoadStore(
-    const MemoryLocation &Loc, Type *AccessTy, bool AtLeastAtomic,
-    BasicBlock *ScanBB, BasicBlock::iterator &ScanFrom, unsigned MaxInstsToScan,
-    BatchAAResults *AA, bool *IsLoadCSE, unsigned *NumScanedInst);
+Value *findAvailablePtrLoadStore(const MemoryLocation &Loc, Type *AccessTy,
+                                 bool AtLeastAtomic, BasicBlock *ScanBB,
+                                 BasicBlock::iterator &ScanFrom,
+                                 unsigned MaxInstsToScan, BatchAAResults *AA,
+                                 bool *IsLoadCSE, unsigned *NumScanedInst);
 
 /// Returns true if a pointer value \p From can be replaced with another pointer
 /// value \To if they are deemed equal through some means (e.g. information from
@@ -187,10 +194,10 @@ LLVM_ABI Value *findAvailablePtrLoadStore(
 /// instructions, as well as when we are replacing with a null pointer.
 /// Additionally it also allows replacement of pointers when both pointers have
 /// the same underlying object.
-LLVM_ABI bool canReplacePointersIfEqual(const Value *From, const Value *To,
-                                        const DataLayout &DL);
-LLVM_ABI bool canReplacePointersInUseIfEqual(const Use &U, const Value *To,
-                                             const DataLayout &DL);
+bool canReplacePointersIfEqual(const Value *From, const Value *To,
+                               const DataLayout &DL);
+bool canReplacePointersInUseIfEqual(const Use &U, const Value *To,
+                                    const DataLayout &DL);
 }
 
 #endif

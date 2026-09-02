@@ -117,12 +117,12 @@ static Value getScalarOrVectorConstInt(Type type, uint64_t value,
   if (auto vectorType = dyn_cast<VectorType>(type)) {
     Attribute element = IntegerAttr::get(vectorType.getElementType(), value);
     auto attr = SplatElementsAttr::get(vectorType, element);
-    return spirv::ConstantOp::create(builder, loc, vectorType, attr);
+    return builder.create<spirv::ConstantOp>(loc, vectorType, attr);
   }
 
   if (auto intType = dyn_cast<IntegerType>(type))
-    return spirv::ConstantOp::create(builder, loc, type,
-                                     builder.getIntegerAttr(type, value));
+    return builder.create<spirv::ConstantOp>(
+        loc, type, builder.getIntegerAttr(type, value));
 
   return nullptr;
 }
@@ -418,19 +418,18 @@ static Value emulateSignedRemainder(Location loc, Value lhs, Value rhs,
   Type type = lhs.getType();
 
   // Calculate the remainder with spirv.UMod.
-  Value lhsAbs = SignedAbsOp::create(builder, loc, type, lhs);
-  Value rhsAbs = SignedAbsOp::create(builder, loc, type, rhs);
-  Value abs = spirv::UModOp::create(builder, loc, lhsAbs, rhsAbs);
+  Value lhsAbs = builder.create<SignedAbsOp>(loc, type, lhs);
+  Value rhsAbs = builder.create<SignedAbsOp>(loc, type, rhs);
+  Value abs = builder.create<spirv::UModOp>(loc, lhsAbs, rhsAbs);
 
   // Fix the sign.
   Value isPositive;
   if (lhs == signOperand)
-    isPositive = spirv::IEqualOp::create(builder, loc, lhs, lhsAbs);
+    isPositive = builder.create<spirv::IEqualOp>(loc, lhs, lhsAbs);
   else
-    isPositive = spirv::IEqualOp::create(builder, loc, rhs, rhsAbs);
-  Value absNegate = spirv::SNegateOp::create(builder, loc, type, abs);
-  return spirv::SelectOp::create(builder, loc, type, isPositive, abs,
-                                 absNegate);
+    isPositive = builder.create<spirv::IEqualOp>(loc, rhs, rhsAbs);
+  Value absNegate = builder.create<spirv::SNegateOp>(loc, type, abs);
+  return builder.create<spirv::SelectOp>(loc, type, isPositive, abs, absNegate);
 }
 
 /// Converts arith.remsi to GLSL SPIR-V ops.
@@ -602,13 +601,13 @@ struct ExtSII1Pattern final : public OpConversionPattern<arith::ExtSIOp> {
     Value allOnes;
     if (auto intTy = dyn_cast<IntegerType>(dstType)) {
       unsigned componentBitwidth = intTy.getWidth();
-      allOnes = spirv::ConstantOp::create(
-          rewriter, loc, intTy,
+      allOnes = rewriter.create<spirv::ConstantOp>(
+          loc, intTy,
           rewriter.getIntegerAttr(intTy, APInt::getAllOnes(componentBitwidth)));
     } else if (auto vectorTy = dyn_cast<VectorType>(dstType)) {
       unsigned componentBitwidth = vectorTy.getElementTypeBitWidth();
-      allOnes = spirv::ConstantOp::create(
-          rewriter, loc, vectorTy,
+      allOnes = rewriter.create<spirv::ConstantOp>(
+          loc, vectorTy,
           SplatElementsAttr::get(vectorTy,
                                  APInt::getAllOnes(componentBitwidth)));
     } else {
@@ -654,8 +653,8 @@ struct ExtSIPattern final : public OpConversionPattern<arith::ExtSIOp> {
       // First shift left to sequeeze out all leading bits beyond the original
       // bitwidth. Here we need to use the original source and result type's
       // bitwidth.
-      auto shiftLOp = spirv::ShiftLeftLogicalOp::create(
-          rewriter, op.getLoc(), dstType, adaptor.getIn(), shiftSize);
+      auto shiftLOp = rewriter.create<spirv::ShiftLeftLogicalOp>(
+          op.getLoc(), dstType, adaptor.getIn(), shiftSize);
 
       // Then we perform arithmetic right shift to make sure we have the right
       // sign bits for negative values.
@@ -758,9 +757,9 @@ struct TruncII1Pattern final : public OpConversionPattern<arith::TruncIOp> {
     auto srcType = adaptor.getOperands().front().getType();
     // Check if (x & 1) == 1.
     Value mask = spirv::ConstantOp::getOne(srcType, loc, rewriter);
-    Value maskedSrc = spirv::BitwiseAndOp::create(
-        rewriter, loc, srcType, adaptor.getOperands()[0], mask);
-    Value isOne = spirv::IEqualOp::create(rewriter, loc, maskedSrc, mask);
+    Value maskedSrc = rewriter.create<spirv::BitwiseAndOp>(
+        loc, srcType, adaptor.getOperands()[0], mask);
+    Value isOne = rewriter.create<spirv::IEqualOp>(loc, maskedSrc, mask);
 
     Value zero = spirv::ConstantOp::getZero(dstType, loc, rewriter);
     Value one = spirv::ConstantOp::getOne(dstType, loc, rewriter);
@@ -915,9 +914,9 @@ public:
       if (auto vectorType = dyn_cast<VectorType>(dstType))
         type = VectorType::get(vectorType.getShape(), type);
       Value extLhs =
-          arith::ExtUIOp::create(rewriter, op.getLoc(), type, adaptor.getLhs());
+          rewriter.create<arith::ExtUIOp>(op.getLoc(), type, adaptor.getLhs());
       Value extRhs =
-          arith::ExtUIOp::create(rewriter, op.getLoc(), type, adaptor.getRhs());
+          rewriter.create<arith::ExtUIOp>(op.getLoc(), type, adaptor.getRhs());
 
       rewriter.replaceOpWithNewOp<arith::CmpIOp>(op, op.getPredicate(), extLhs,
                                                  extRhs);
@@ -1068,12 +1067,12 @@ public:
         replace = spirv::ConstantOp::getZero(op.getType(), loc, rewriter);
       }
     } else {
-      Value lhsIsNan = spirv::IsNanOp::create(rewriter, loc, adaptor.getLhs());
-      Value rhsIsNan = spirv::IsNanOp::create(rewriter, loc, adaptor.getRhs());
+      Value lhsIsNan = rewriter.create<spirv::IsNanOp>(loc, adaptor.getLhs());
+      Value rhsIsNan = rewriter.create<spirv::IsNanOp>(loc, adaptor.getRhs());
 
-      replace = spirv::LogicalOrOp::create(rewriter, loc, lhsIsNan, rhsIsNan);
+      replace = rewriter.create<spirv::LogicalOrOp>(loc, lhsIsNan, rhsIsNan);
       if (op.getPredicate() == arith::CmpFPredicate::ORD)
-        replace = spirv::LogicalNotOp::create(rewriter, loc, replace);
+        replace = rewriter.create<spirv::LogicalNotOp>(loc, replace);
     }
 
     rewriter.replaceOp(op, replace);
@@ -1095,17 +1094,17 @@ public:
                   ConversionPatternRewriter &rewriter) const override {
     Type dstElemTy = adaptor.getLhs().getType();
     Location loc = op->getLoc();
-    Value result = spirv::IAddCarryOp::create(rewriter, loc, adaptor.getLhs(),
-                                              adaptor.getRhs());
+    Value result = rewriter.create<spirv::IAddCarryOp>(loc, adaptor.getLhs(),
+                                                       adaptor.getRhs());
 
-    Value sumResult = spirv::CompositeExtractOp::create(rewriter, loc, result,
-                                                        llvm::ArrayRef(0));
-    Value carryValue = spirv::CompositeExtractOp::create(rewriter, loc, result,
-                                                         llvm::ArrayRef(1));
+    Value sumResult = rewriter.create<spirv::CompositeExtractOp>(
+        loc, result, llvm::ArrayRef(0));
+    Value carryValue = rewriter.create<spirv::CompositeExtractOp>(
+        loc, result, llvm::ArrayRef(1));
 
     // Convert the carry value to boolean.
     Value one = spirv::ConstantOp::getOne(dstElemTy, loc, rewriter);
-    Value carryResult = spirv::IEqualOp::create(rewriter, loc, carryValue, one);
+    Value carryResult = rewriter.create<spirv::IEqualOp>(loc, carryValue, one);
 
     rewriter.replaceOp(op, {sumResult, carryResult});
     return success();
@@ -1126,12 +1125,12 @@ public:
                   ConversionPatternRewriter &rewriter) const override {
     Location loc = op->getLoc();
     Value result =
-        SPIRVMulOp::create(rewriter, loc, adaptor.getLhs(), adaptor.getRhs());
+        rewriter.create<SPIRVMulOp>(loc, adaptor.getLhs(), adaptor.getRhs());
 
-    Value low = spirv::CompositeExtractOp::create(rewriter, loc, result,
-                                                  llvm::ArrayRef(0));
-    Value high = spirv::CompositeExtractOp::create(rewriter, loc, result,
-                                                   llvm::ArrayRef(1));
+    Value low = rewriter.create<spirv::CompositeExtractOp>(loc, result,
+                                                           llvm::ArrayRef(0));
+    Value high = rewriter.create<spirv::CompositeExtractOp>(loc, result,
+                                                            llvm::ArrayRef(1));
 
     rewriter.replaceOp(op, {low, high});
     return success();
@@ -1184,20 +1183,20 @@ public:
 
     Location loc = op.getLoc();
     Value spirvOp =
-        SPIRVOp::create(rewriter, loc, dstType, adaptor.getOperands());
+        rewriter.create<SPIRVOp>(loc, dstType, adaptor.getOperands());
 
     if (bitEnumContainsAll(op.getFastmath(), arith::FastMathFlags::nnan)) {
       rewriter.replaceOp(op, spirvOp);
       return success();
     }
 
-    Value lhsIsNan = spirv::IsNanOp::create(rewriter, loc, adaptor.getLhs());
-    Value rhsIsNan = spirv::IsNanOp::create(rewriter, loc, adaptor.getRhs());
+    Value lhsIsNan = rewriter.create<spirv::IsNanOp>(loc, adaptor.getLhs());
+    Value rhsIsNan = rewriter.create<spirv::IsNanOp>(loc, adaptor.getRhs());
 
-    Value select1 = spirv::SelectOp::create(rewriter, loc, dstType, lhsIsNan,
-                                            adaptor.getLhs(), spirvOp);
-    Value select2 = spirv::SelectOp::create(rewriter, loc, dstType, rhsIsNan,
-                                            adaptor.getRhs(), select1);
+    Value select1 = rewriter.create<spirv::SelectOp>(loc, dstType, lhsIsNan,
+                                                     adaptor.getLhs(), spirvOp);
+    Value select2 = rewriter.create<spirv::SelectOp>(loc, dstType, rhsIsNan,
+                                                     adaptor.getRhs(), select1);
 
     rewriter.replaceOp(op, select2);
     return success();
@@ -1238,7 +1237,7 @@ public:
 
     Location loc = op.getLoc();
     Value spirvOp =
-        SPIRVOp::create(rewriter, loc, dstType, adaptor.getOperands());
+        rewriter.create<SPIRVOp>(loc, dstType, adaptor.getOperands());
 
     if (!shouldInsertNanGuards<SPIRVOp>() ||
         bitEnumContainsAll(op.getFastmath(), arith::FastMathFlags::nnan)) {
@@ -1246,13 +1245,13 @@ public:
       return success();
     }
 
-    Value lhsIsNan = spirv::IsNanOp::create(rewriter, loc, adaptor.getLhs());
-    Value rhsIsNan = spirv::IsNanOp::create(rewriter, loc, adaptor.getRhs());
+    Value lhsIsNan = rewriter.create<spirv::IsNanOp>(loc, adaptor.getLhs());
+    Value rhsIsNan = rewriter.create<spirv::IsNanOp>(loc, adaptor.getRhs());
 
-    Value select1 = spirv::SelectOp::create(rewriter, loc, dstType, lhsIsNan,
-                                            adaptor.getRhs(), spirvOp);
-    Value select2 = spirv::SelectOp::create(rewriter, loc, dstType, rhsIsNan,
-                                            adaptor.getLhs(), select1);
+    Value select1 = rewriter.create<spirv::SelectOp>(loc, dstType, lhsIsNan,
+                                                     adaptor.getRhs(), spirvOp);
+    Value select2 = rewriter.create<spirv::SelectOp>(loc, dstType, rhsIsNan,
+                                                     adaptor.getLhs(), select1);
 
     rewriter.replaceOp(op, select2);
     return success();

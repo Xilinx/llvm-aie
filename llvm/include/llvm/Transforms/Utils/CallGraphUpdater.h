@@ -17,7 +17,6 @@
 
 #include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Analysis/LazyCallGraph.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -67,25 +66,25 @@ public:
   ///}
 
   /// Finalizer that will trigger actions like function removal from the CG.
-  LLVM_ABI bool finalize();
+  bool finalize();
 
   /// Remove \p Fn from the call graph.
-  LLVM_ABI void removeFunction(Function &Fn);
+  void removeFunction(Function &Fn);
 
   /// After an CGSCC pass changes a function in ways that affect the call
   /// graph, this method can be called to update it.
-  LLVM_ABI void reanalyzeFunction(Function &Fn);
+  void reanalyzeFunction(Function &Fn);
 
   /// If a new function was created by outlining, this method can be called
   /// to update the call graph for the new function. Note that the old one
   /// still needs to be re-analyzed or manually updated.
-  LLVM_ABI void registerOutlinedFunction(Function &OriginalFn, Function &NewFn);
+  void registerOutlinedFunction(Function &OriginalFn, Function &NewFn);
 
   /// Replace \p OldFn in the call graph (and SCC) with \p NewFn. The uses
   /// outside the call graph and the function \p OldFn are not modified.
   /// Note that \p OldFn is also removed from the call graph
   /// (\see removeFunction).
-  LLVM_ABI void replaceFunctionWith(Function &OldFn, Function &NewFn);
+  void replaceFunctionWith(Function &OldFn, Function &NewFn);
 };
 
 } // end namespace llvm

@@ -117,20 +117,9 @@ class Display(object):
     def print_result(self, test):
         # Show the test result line.
         test_name = test.getFullName()
-
-        extra_info = ""
-        if test.result.attempts > 1:
-            extra_info = f", {test.result.attempts} of {test.result.max_allowed_attempts} attempts"
-
         print(
-            "%s: %s (%d of %d%s)"
-            % (
-                test.result.code.name,
-                test_name,
-                self.completed,
-                self.num_tests,
-                extra_info,
-            )
+            "%s: %s (%d of %d)"
+            % (test.result.code.name, test_name, self.completed, self.num_tests)
         )
 
         # Show the test failure output, if requested.

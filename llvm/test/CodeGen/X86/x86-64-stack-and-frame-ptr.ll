@@ -1,5 +1,6 @@
 ; RUN: llc -verify-machineinstrs -mtriple=x86_64-pc-linux < %s | FileCheck %s
 ; RUN: llc -verify-machineinstrs -mtriple=x86_64-pc-linux-gnux32 < %s | FileCheck -check-prefix=X32ABI %s
+; RUN: llc -verify-machineinstrs -mtriple=x86_64-pc-nacl < %s | FileCheck -check-prefix=NACL %s
 
 ; x32 uses %esp, %ebp as stack and frame pointers
 
@@ -13,6 +14,12 @@
 ; X32ABI: movl %esp, %ebp
 ; X32ABI: movl %edi, -4(%ebp)
 ; X32ABI: popq %rbp
+; NACL-LABEL: foo
+; NACL: pushq %rbp
+; NACL: movq %rsp, %rbp
+; NACL: movl %edi, -4(%rbp)
+; NACL: popq %rbp
+
 
 define void @foo(ptr %a) #0 {
 entry:
@@ -23,3 +30,5 @@ entry:
 }
 
 attributes #0 = { nounwind uwtable "frame-pointer"="all"}
+
+

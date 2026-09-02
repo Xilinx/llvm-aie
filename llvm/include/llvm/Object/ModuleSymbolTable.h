@@ -20,7 +20,6 @@
 #include "llvm/IR/Mangler.h"
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -45,17 +44,17 @@ private:
 
 public:
   ArrayRef<Symbol> symbols() const { return SymTab; }
-  LLVM_ABI void addModule(Module *M);
+  void addModule(Module *M);
 
-  LLVM_ABI void printSymbolName(raw_ostream &OS, Symbol S) const;
-  LLVM_ABI uint32_t getSymbolFlags(Symbol S) const;
+  void printSymbolName(raw_ostream &OS, Symbol S) const;
+  uint32_t getSymbolFlags(Symbol S) const;
 
   /// Parse inline ASM and collect the symbols that are defined or referenced in
   /// the current module.
   ///
   /// For each found symbol, call \p AsmSymbol with the name of the symbol found
   /// and the associated flags.
-  LLVM_ABI static void CollectAsmSymbols(
+  static void CollectAsmSymbols(
       const Module &M,
       function_ref<void(StringRef, object::BasicSymbolRef::Flags)> AsmSymbol);
 
@@ -64,7 +63,7 @@ public:
   ///
   /// For each found symbol, call \p AsmSymver with the name of the symbol and
   /// its alias.
-  LLVM_ABI static void
+  static void
   CollectAsmSymvers(const Module &M,
                     function_ref<void(StringRef, StringRef)> AsmSymver);
 };

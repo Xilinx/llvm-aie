@@ -45,7 +45,6 @@ protected:
 
 private:
   friend class SBProcess;
-  friend class SBSaveCoreOptions;
 
   lldb_private::MemoryRegionInfos &ref();
 

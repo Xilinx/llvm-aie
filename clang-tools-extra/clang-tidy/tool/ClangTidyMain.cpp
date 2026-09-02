@@ -328,7 +328,7 @@ This option overrides the 'UseColor' option in
 
 static cl::opt<bool> VerifyConfig("verify-config", desc(R"(
 Check the config files to ensure each check and
-option is recognized without running any checks.
+option is recognized.
 )"),
                                   cl::init(false), cl::cat(ClangTidyCategory));
 
@@ -337,7 +337,8 @@ Allow empty enabled checks. This suppresses
 the "no checks enabled" error when disabling
 all of the checks.
 )"),
-                                   cl::init(false), cl::cat(ClangTidyCategory));
+                                         cl::init(false),
+                                         cl::cat(ClangTidyCategory));
 
 namespace clang::tidy {
 
@@ -369,8 +370,8 @@ static void printStats(const ClangTidyStats &Stats) {
   }
 }
 
-static std::unique_ptr<ClangTidyOptionsProvider>
-createOptionsProvider(llvm::IntrusiveRefCntPtr<vfs::FileSystem> FS) {
+static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(
+   llvm::IntrusiveRefCntPtr<vfs::FileSystem> FS) {
   ClangTidyGlobalOptions GlobalOptions;
   if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
@@ -447,7 +448,7 @@ createOptionsProvider(llvm::IntrusiveRefCntPtr<vfs::FileSystem> FS) {
       std::move(OverrideOptions), std::move(FS));
 }
 
-static llvm::IntrusiveRefCntPtr<vfs::FileSystem>
+llvm::IntrusiveRefCntPtr<vfs::FileSystem>
 getVfsFromFile(const std::string &OverlayFile,
                llvm::IntrusiveRefCntPtr<vfs::FileSystem> BaseFS) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
@@ -659,10 +660,9 @@ int clangTidyMain(int argc, const char **argv) {
   if (DumpConfig) {
     EffectiveOptions.CheckOptions =
         getCheckOptions(EffectiveOptions, AllowEnablingAnalyzerAlphaCheckers);
-    ClangTidyOptions OptionsToDump =
-        ClangTidyOptions::getDefaults().merge(EffectiveOptions, 0);
-    filterCheckOptions(OptionsToDump, EnabledChecks);
-    llvm::outs() << configurationAsText(OptionsToDump) << "\n";
+    llvm::outs() << configurationAsText(ClangTidyOptions::getDefaults().merge(
+                        EffectiveOptions, 0))
+                 << "\n";
     return 0;
   }
 

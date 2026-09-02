@@ -241,7 +241,7 @@ public:
   StringRef sourceFile;
   uint32_t andFeatures = 0;
   bool hasCommonSyms = false;
-  std::optional<AArch64PauthAbiCoreInfo> aarch64PauthAbiCoreInfo;
+  ArrayRef<uint8_t> aarch64PauthAbiCoreInfo;
 };
 
 // .o file.

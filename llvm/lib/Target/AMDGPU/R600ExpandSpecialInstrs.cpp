@@ -270,6 +270,5 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
       MI.eraseFromParent();
     }
   }
-  finalizeBundles(MF);
   return false;
 }

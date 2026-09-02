@@ -50,9 +50,10 @@ lldb::ValueObjectSP ValueObjectConstResultChild::AddressOf(Status &error) {
   return m_impl.AddressOf(error);
 }
 
-ValueObject::AddrAndType
-ValueObjectConstResultChild::GetAddressOf(bool scalar_is_load_address) {
-  return m_impl.GetAddressOf(scalar_is_load_address);
+lldb::addr_t
+ValueObjectConstResultChild::GetAddressOf(bool scalar_is_load_address,
+                                          AddressType *address_type) {
+  return m_impl.GetAddressOf(scalar_is_load_address, address_type);
 }
 
 size_t ValueObjectConstResultChild::GetPointeeData(DataExtractor &data,

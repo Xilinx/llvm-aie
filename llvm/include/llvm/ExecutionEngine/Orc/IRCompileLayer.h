@@ -16,7 +16,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/Layer.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <functional>
@@ -29,9 +28,9 @@ class Module;
 
 namespace orc {
 
-class LLVM_ABI IRCompileLayer : public IRLayer {
+class IRCompileLayer : public IRLayer {
 public:
-  class LLVM_ABI IRCompiler {
+  class IRCompiler {
   public:
     IRCompiler(IRSymbolMapper::ManglingOptions MO) : MO(std::move(MO)) {}
     virtual ~IRCompiler();

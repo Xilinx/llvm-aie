@@ -20,9 +20,13 @@
 #include "mlir/Dialect/Affine/IR/AffineValueMap.h"
 #include "llvm/Support/MathExtras.h"
 
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include <numeric>
 #include <optional>
+#include <type_traits>
 
 #define DEBUG_TYPE "affine-loop-analysis"
 
@@ -398,7 +402,9 @@ isVectorizableLoopBodyWithOpCond(AffineForOp loop,
           return !VectorType::isValidElementType(type);
         }))
       return true;
-    return !llvm::all_of(op.getResultTypes(), VectorType::isValidElementType);
+    return llvm::any_of(op.getResultTypes(), [](Type type) {
+      return !VectorType::isValidElementType(type);
+    });
   });
   SmallVector<NestedMatch, 8> opsMatched;
   types.match(forOp, &opsMatched);

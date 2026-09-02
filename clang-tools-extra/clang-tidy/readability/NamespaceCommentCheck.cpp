@@ -27,15 +27,11 @@ NamespaceCommentCheck::NamespaceCommentCheck(StringRef Name,
           "namespace( +(((inline )|([a-zA-Z0-9_:]))+))?\\.? *(\\*/)?$",
           llvm::Regex::IgnoreCase),
       ShortNamespaceLines(Options.get("ShortNamespaceLines", 1U)),
-      SpacesBeforeComments(Options.get("SpacesBeforeComments", 1U)),
-      AllowOmittingNamespaceComments(
-          Options.get("AllowOmittingNamespaceComments", false)) {}
+      SpacesBeforeComments(Options.get("SpacesBeforeComments", 1U)) {}
 
 void NamespaceCommentCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "ShortNamespaceLines", ShortNamespaceLines);
   Options.store(Opts, "SpacesBeforeComments", SpacesBeforeComments);
-  Options.store(Opts, "AllowOmittingNamespaceComments",
-                AllowOmittingNamespaceComments);
 }
 
 void NamespaceCommentCheck::registerMatchers(MatchFinder *Finder) {
@@ -110,7 +106,7 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
   // Currently for nested namespace (n1::n2::...) the AST matcher will match foo
   // then bar instead of a single match. So if we got a nested namespace we have
   // to skip the next ones.
-  for (const SourceLocation &EndOfNameLocation : Ends) {
+  for (const auto &EndOfNameLocation : Ends) {
     if (Sources.isBeforeInTranslationUnit(ND->getLocation(), EndOfNameLocation))
       return;
   }
@@ -144,7 +140,6 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
 
   SourceRange OldCommentRange(AfterRBrace, AfterRBrace);
   std::string Message = "%0 not terminated with a closing comment";
-  bool HasComment = false;
 
   // Try to find existing namespace closing comment on the same line.
   if (Tok.is(tok::comment) && NextTokenIsOnSameLine) {
@@ -162,8 +157,6 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
         // comments with different format.
         return;
       }
-
-      HasComment = true;
 
       // Otherwise we need to fix the comment.
       NeedLineBreak = Comment.starts_with("/*");
@@ -187,13 +180,8 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   std::string NamespaceNameForDiag =
-      ND->isAnonymousNamespace()
-          ? "anonymous namespace"
-          : ("namespace '" + *NamespaceNameAsWritten + "'");
-
-  // If no namespace comment is allowed
-  if (!HasComment && AllowOmittingNamespaceComments)
-    return;
+      ND->isAnonymousNamespace() ? "anonymous namespace"
+                                 : ("namespace '" + *NamespaceNameAsWritten + "'");
 
   std::string Fix(SpacesBeforeComments, ' ');
   Fix.append("// namespace");

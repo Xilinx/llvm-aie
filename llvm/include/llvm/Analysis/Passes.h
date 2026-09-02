@@ -14,8 +14,6 @@
 #ifndef LLVM_ANALYSIS_PASSES_H
 #define LLVM_ANALYSIS_PASSES_H
 
-#include "llvm/Support/Compiler.h"
-
 namespace llvm {
   class FunctionPass;
   class ImmutablePass;
@@ -25,21 +23,21 @@ namespace llvm {
   //
   /// createLazyValueInfoPass - This creates an instance of the LazyValueInfo
   /// pass.
-  LLVM_ABI FunctionPass *createLazyValueInfoPass();
+  FunctionPass *createLazyValueInfoPass();
 
   //===--------------------------------------------------------------------===//
   //
   // createDependenceAnalysisWrapperPass - This creates an instance of the
   // DependenceAnalysisWrapper pass.
   //
-  LLVM_ABI FunctionPass *createDependenceAnalysisWrapperPass();
+  FunctionPass *createDependenceAnalysisWrapperPass();
 
   //===--------------------------------------------------------------------===//
   //
   // createRegionInfoPass - This pass finds all single entry single exit regions
   // in a function and builds the region hierarchy.
   //
-  LLVM_ABI FunctionPass *createRegionInfoPass();
+  FunctionPass *createRegionInfoPass();
 }
 
 #endif

@@ -19,7 +19,6 @@
 #include "llvm/ADT/FunctionExtras.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
-#include "llvm/Support/Compiler.h"
 
 #include <vector>
 
@@ -42,7 +41,7 @@ namespace orc {
 /// addresses before using them).
 ///
 /// Asynchronous version.
-LLVM_ABI void lookupAndRecordAddrs(
+void lookupAndRecordAddrs(
     unique_function<void(Error)> OnRecorded, ExecutionSession &ES, LookupKind K,
     const JITDylibSearchOrder &SearchOrder,
     std::vector<std::pair<SymbolStringPtr, ExecutorAddr *>> Pairs,
@@ -51,7 +50,7 @@ LLVM_ABI void lookupAndRecordAddrs(
 /// Record addresses of the given symbols in the given ExecutorAddrs.
 ///
 /// Blocking version.
-LLVM_ABI Error lookupAndRecordAddrs(
+Error lookupAndRecordAddrs(
     ExecutionSession &ES, LookupKind K, const JITDylibSearchOrder &SearchOrder,
     std::vector<std::pair<SymbolStringPtr, ExecutorAddr *>> Pairs,
     SymbolLookupFlags LookupFlags = SymbolLookupFlags::RequiredSymbol);
@@ -60,7 +59,7 @@ LLVM_ABI Error lookupAndRecordAddrs(
 ///
 /// ExecutorProcessControl lookup version. Lookups are always implicitly
 /// weak.
-LLVM_ABI Error lookupAndRecordAddrs(
+Error lookupAndRecordAddrs(
     ExecutorProcessControl &EPC, tpctypes::DylibHandle H,
     std::vector<std::pair<SymbolStringPtr, ExecutorAddr *>> Pairs,
     SymbolLookupFlags LookupFlags = SymbolLookupFlags::RequiredSymbol);

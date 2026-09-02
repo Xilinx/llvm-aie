@@ -236,6 +236,7 @@ def NotInMicroMips :  Predicate<"!Subtarget->inMicroMipsMode()">,
                       AssemblerPredicate<(all_of (not FeatureMicroMips))>;
 def IsLE           :  Predicate<"Subtarget->isLittle()">;
 def IsBE           :  Predicate<"!Subtarget->isLittle()">;
+def IsNotNaCl    :    Predicate<"!Subtarget->isTargetNaCl()">;
 def UseTCCInDIV    :  AssemblerPredicate<(all_of FeatureUseTCCInDIV)>;
 def HasEVA       :    Predicate<"Subtarget->hasEVA()">,
                       AssemblerPredicate<(all_of FeatureEVA)>;

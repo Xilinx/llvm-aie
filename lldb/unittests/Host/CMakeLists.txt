@@ -6,7 +6,6 @@ set (FILES
   HostInfoTest.cpp
   HostTest.cpp
   MainLoopTest.cpp
-  JSONTransportTest.cpp
   NativeProcessProtocolTest.cpp
   PipeTest.cpp
   ProcessLaunchInfoTest.cpp
@@ -37,9 +36,7 @@ add_lldb_unittest(HostTests
     lldbUtilityHelpers
     lldbHostHelpers
     LLVMTestingSupport
-
-  LINK_COMPONENTS
-    TargetParser
+    LLVMTargetParser
   )
 
 add_subdirectory(common)

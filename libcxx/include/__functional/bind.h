@@ -83,14 +83,15 @@ inline _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20 _Tp& __mu(reference_w
 
 template <class _Ti, class... _Uj, size_t... _Indx>
 inline _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20 __invoke_result_t<_Ti&, _Uj...>
-__mu_expand(_Ti& __ti, tuple<_Uj...>& __uj, __index_sequence<_Indx...>) {
+__mu_expand(_Ti& __ti, tuple<_Uj...>& __uj, __tuple_indices<_Indx...>) {
   return __ti(std::forward<_Uj>(std::get<_Indx>(__uj))...);
 }
 
 template <class _Ti, class... _Uj, __enable_if_t<is_bind_expression<_Ti>::value, int> = 0>
 inline _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20 __invoke_result_t<_Ti&, _Uj...>
 __mu(_Ti& __ti, tuple<_Uj...>& __uj) {
-  return std::__mu_expand(__ti, __uj, __make_index_sequence<sizeof...(_Uj)>());
+  typedef typename __make_tuple_indices<sizeof...(_Uj)>::type __indices;
+  return std::__mu_expand(__ti, __uj, __indices());
 }
 
 template <bool _IsPh, class _Ti, class _Uj>
@@ -190,7 +191,7 @@ struct __bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj, true> {
 
 template <class _Fp, class _BoundArgs, size_t... _Indx, class _Args>
 inline _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20 typename __bind_return<_Fp, _BoundArgs, _Args>::type
-__apply_functor(_Fp& __f, _BoundArgs& __bound_args, __index_sequence<_Indx...>, _Args&& __args) {
+__apply_functor(_Fp& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>, _Args&& __args) {
   return std::__invoke(__f, std::__mu(std::get<_Indx>(__bound_args), __args)...);
 }
 
@@ -204,6 +205,8 @@ private:
   _Fd __f_;
   _Td __bound_args_;
 
+  typedef typename __make_tuple_indices<sizeof...(_BoundArgs)>::type __indices;
+
 public:
   template <
       class _Gp,
@@ -216,22 +219,14 @@ public:
   template <class... _Args>
   _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20 typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type
   operator()(_Args&&... __args) {
-    return std::__apply_functor(
-        __f_,
-        __bound_args_,
-        __make_index_sequence<sizeof...(_BoundArgs)>(),
-        tuple<_Args&&...>(std::forward<_Args>(__args)...));
+    return std::__apply_functor(__f_, __bound_args_, __indices(), tuple<_Args&&...>(std::forward<_Args>(__args)...));
   }
 
   template <class... _Args>
   _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20
   typename __bind_return<const _Fd, const _Td, tuple<_Args&&...> >::type
   operator()(_Args&&... __args) const {
-    return std::__apply_functor(
-        __f_,
-        __bound_args_,
-        __make_index_sequence<sizeof...(_BoundArgs)>(),
-        tuple<_Args&&...>(std::forward<_Args>(__args)...));
+    return std::__apply_functor(__f_, __bound_args_, __indices(), tuple<_Args&&...>(std::forward<_Args>(__args)...));
   }
 };
 

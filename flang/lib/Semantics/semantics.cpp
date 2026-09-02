@@ -376,7 +376,8 @@ const DeclTypeSpec &SemanticsContext::MakeLogicalType(int kind) {
 }
 
 bool SemanticsContext::AnyFatalError() const {
-  return messages_.AnyFatalError(warningsAreErrors_);
+  return !messages_.empty() &&
+      (warningsAreErrors_ || messages_.AnyFatalError());
 }
 bool SemanticsContext::HasError(const Symbol &symbol) {
   return errorSymbols_.count(symbol) > 0;
@@ -642,7 +643,8 @@ bool Semantics::Perform() {
   return ValidateLabels(context_, program_) &&
       parser::CanonicalizeDo(program_) && // force line break
       CanonicalizeAcc(context_.messages(), program_) &&
-      CanonicalizeOmp(context_, program_) && CanonicalizeCUDA(program_) &&
+      CanonicalizeOmp(context_.messages(), program_) &&
+      CanonicalizeCUDA(program_) &&
       PerformStatementSemantics(context_, program_) &&
       CanonicalizeDirectives(context_.messages(), program_) &&
       ModFileWriter{context_}
@@ -654,9 +656,7 @@ void Semantics::EmitMessages(llvm::raw_ostream &os) {
   // Resolve the CharBlock locations of the Messages to ProvenanceRanges
   // so messages from parsing and semantics are intermixed in source order.
   context_.messages().ResolveProvenances(context_.allCookedSources());
-  context_.messages().Emit(os, context_.allCookedSources(),
-      /*echoSourceLine=*/true, &context_.languageFeatures(),
-      context_.maxErrors(), context_.warningsAreErrors());
+  context_.messages().Emit(os, context_.allCookedSources());
 }
 
 void SemanticsContext::DumpSymbols(llvm::raw_ostream &os) {

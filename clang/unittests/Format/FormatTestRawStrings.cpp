@@ -1002,11 +1002,9 @@ TEST_F(FormatTestRawStrings, Json) {
   };
 
   EXPECT_EQ("json = R\"json({\n"
-            "                \"foo\": \"bar\",\n"
             "                \"str\": \"test\"\n"
             "              })json\";",
             format("json = R\"json({\n"
-                   "  \"foo\": \"bar\",\n"
                    "  \"str\": \"test\"\n"
                    "})json\";",
                    Style));

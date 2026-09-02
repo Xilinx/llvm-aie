@@ -27,6 +27,8 @@
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCFragment.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -119,7 +121,7 @@ struct ELFWriter {
   } Mode;
 
   uint64_t symbolValue(const MCSymbol &Sym);
-  bool isInSymtab(const MCSymbolELF &Symbol);
+  bool isInSymtab(const MCSymbolELF &Symbol, bool Used, bool Renamed);
 
   /// Helper struct for containing some precomputed information on symbols.
   struct ELFSymbolData {
@@ -397,9 +399,8 @@ static bool isIFunc(const MCSymbolELF *Symbol) {
     const MCSymbolRefExpr *Value;
     if (!Symbol->isVariable() ||
         !(Value = dyn_cast<MCSymbolRefExpr>(Symbol->getVariableValue())) ||
-        Value->getSpecifier() ||
-        mergeTypeForSet(Symbol->getType(), ELF::STT_GNU_IFUNC) !=
-            ELF::STT_GNU_IFUNC)
+        Value->getKind() != MCSymbolRefExpr::VK_None ||
+        mergeTypeForSet(Symbol->getType(), ELF::STT_GNU_IFUNC) != ELF::STT_GNU_IFUNC)
       return false;
     Symbol = &cast<MCSymbolELF>(Value->getSymbol());
   }
@@ -467,13 +468,7 @@ void ELFWriter::writeSymbol(SymbolTableWriter &Writer, uint32_t StringIndex,
                      IsReserved);
 }
 
-bool ELFWriter::isInSymtab(const MCSymbolELF &Symbol) {
-  if (Symbol.isUsedInReloc() || Symbol.isSignature())
-    return true;
-
-  if (OWriter.Renames.count(&Symbol))
-    return false;
-
+bool ELFWriter::isInSymtab(const MCSymbolELF &Symbol, bool Used, bool Renamed) {
   if (Symbol.isVariable()) {
     const MCExpr *Expr = Symbol.getVariableValue();
     // Target Expressions that are always inlined do not appear in the symtab
@@ -483,18 +478,27 @@ bool ELFWriter::isInSymtab(const MCSymbolELF &Symbol) {
     // The .weakref alias does not appear in the symtab.
     if (Symbol.isWeakref())
       return false;
+  }
 
-    if (Symbol.isUndefined()) {
-      // FIXME: this is here just to diagnose the case of a var = commmon_sym.
-      Asm.getBaseSymbol(Symbol);
-      return false;
-    }
+  if (Used)
+    return true;
+
+  if (Renamed)
+    return false;
+
+  if (Symbol.isVariable() && Symbol.isUndefined()) {
+    // FIXME: this is here just to diagnose the case of a var = commmon_sym.
+    Asm.getBaseSymbol(Symbol);
+    return false;
   }
 
   if (Symbol.isTemporary())
     return false;
 
-  return Symbol.getType() != ELF::STT_SECTION;
+  if (Symbol.getType() == ELF::STT_SECTION)
+    return false;
+
+  return true;
 }
 
 void ELFWriter::computeSymbolTable(const RevGroupMapTy &RevGroupMap) {
@@ -524,7 +528,10 @@ void ELFWriter::computeSymbolTable(const RevGroupMapTy &RevGroupMap) {
   bool HasLargeSectionIndex = false;
   for (auto It : llvm::enumerate(Asm.symbols())) {
     const auto &Symbol = cast<MCSymbolELF>(It.value());
-    if (!isInSymtab(Symbol))
+    bool Used = Symbol.isUsedInReloc();
+    bool isSignature = Symbol.isSignature();
+    if (!isInSymtab(Symbol, Used || isSignature,
+                    OWriter.Renames.count(&Symbol)))
       continue;
 
     if (Symbol.isTemporary() && Symbol.isUndefined()) {
@@ -549,7 +556,7 @@ void ELFWriter::computeSymbolTable(const RevGroupMapTy &RevGroupMap) {
         MSD.SectionIndex = ELF::SHN_COMMON;
       }
     } else if (Symbol.isUndefined()) {
-      if (Symbol.isSignature() && !Symbol.isUsedInReloc()) {
+      if (isSignature && !Used) {
         MSD.SectionIndex = RevGroupMap.lookup(&Symbol);
         if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
           HasLargeSectionIndex = true;
@@ -559,7 +566,20 @@ void ELFWriter::computeSymbolTable(const RevGroupMapTy &RevGroupMap) {
     } else {
       const MCSectionELF &Section =
           static_cast<const MCSectionELF &>(Symbol.getSection());
-      assert(Section.isRegistered());
+
+      // We may end up with a situation when section symbol is technically
+      // defined, but should not be. That happens because we explicitly
+      // pre-create few .debug_* sections to have accessors.
+      // And if these sections were not really defined in the code, but were
+      // referenced, we simply error out.
+      if (!Section.isRegistered()) {
+        assert(static_cast<const MCSymbolELF &>(Symbol).getType() ==
+               ELF::STT_SECTION);
+        Ctx.reportError(SMLoc(),
+                        "Undefined section reference: " + Symbol.getName());
+        continue;
+      }
+
       if (Mode == NonDwoOnly && isDwoSection(Section))
         continue;
       MSD.SectionIndex = Section.getOrdinal();
@@ -1087,8 +1107,7 @@ uint64_t ELFWriter::writeObject() {
       // Remember the offset into the file for this section.
       const uint64_t SecStart = align(RelSection->getAlign());
 
-      writeRelocations(
-          static_cast<const MCSectionELF &>(*RelSection->getLinkedToSection()));
+      writeRelocations(cast<MCSectionELF>(*RelSection->getLinkedToSection()));
 
       uint64_t SecEnd = W.OS.tell();
       RelSection->setOffsets(SecStart, SecEnd);
@@ -1155,9 +1174,7 @@ void ELFObjectWriter::reset() {
   OverrideABIVersion.reset();
   Relocations.clear();
   Renames.clear();
-  Weakrefs.clear();
   Symvers.clear();
-  SeenGnuAbi = false;
   MCObjectWriter::reset();
 }
 
@@ -1261,7 +1278,7 @@ bool ELFObjectWriter::useSectionSymbol(const MCValue &Val,
   // that it pointed to another string and subtracting 42 at runtime will
   // produce the wrong value.
   if (Sym->isInSection()) {
-    auto &Sec = static_cast<const MCSectionELF &>(Sym->getSection());
+    auto &Sec = cast<MCSectionELF>(Sym->getSection());
     unsigned Flags = Sec.getFlags();
     if (Flags & ELF::SHF_MERGE) {
       if (C != 0)
@@ -1313,18 +1330,19 @@ bool ELFObjectWriter::checkRelocation(SMLoc Loc, const MCSectionELF *From,
 void ELFObjectWriter::recordRelocation(const MCFragment &F,
                                        const MCFixup &Fixup, MCValue Target,
                                        uint64_t &FixedValue) {
-  auto &Section = static_cast<const MCSectionELF &>(*F.getParent());
+  MCAsmBackend &Backend = Asm->getBackend();
+  const MCSectionELF &Section = cast<MCSectionELF>(*F.getParent());
   MCContext &Ctx = getContext();
 
   const auto *SymA = cast_or_null<MCSymbolELF>(Target.getAddSym());
-  const MCSectionELF *SecA =
-      (SymA && SymA->isInSection())
-          ? static_cast<const MCSectionELF *>(&SymA->getSection())
-          : nullptr;
+  const MCSectionELF *SecA = (SymA && SymA->isInSection())
+                                 ? cast<MCSectionELF>(&SymA->getSection())
+                                 : nullptr;
   if (DwoOS && !checkRelocation(Fixup.getLoc(), &Section, SecA))
     return;
 
-  bool IsPCRel = Fixup.isPCRel();
+  bool IsPCRel = Backend.getFixupKindInfo(Fixup.getKind()).Flags &
+                 MCFixupKindInfo::FKF_IsPCRel;
   uint64_t FixupOffset = Asm->getFragmentOffset(F) + Fixup.getOffset();
   uint64_t Addend = Target.getConstant();
   if (auto *RefB = Target.getSubSym()) {

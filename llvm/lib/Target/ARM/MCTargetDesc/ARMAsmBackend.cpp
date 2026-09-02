@@ -12,7 +12,7 @@
 #include "MCTargetDesc/ARMAsmBackendELF.h"
 #include "MCTargetDesc/ARMAsmBackendWinCOFF.h"
 #include "MCTargetDesc/ARMFixupKinds.h"
-#include "MCTargetDesc/ARMMCAsmInfo.h"
+#include "MCTargetDesc/ARMMCExpr.h"
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/ELF.h"
@@ -22,6 +22,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -69,30 +70,44 @@ MCFixupKindInfo ARMAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
       // ARMFixupKinds.h.
       //
       // Name                      Offset (bits) Size (bits)     Flags
-      {"fixup_arm_ldst_pcrel_12", 0, 32, 0},
-      {"fixup_t2_ldst_pcrel_12", 0, 32, 0},
-      {"fixup_arm_pcrel_10_unscaled", 0, 32, 0},
-      {"fixup_arm_pcrel_10", 0, 32, 0},
-      {"fixup_t2_pcrel_10", 0, 32, 0},
-      {"fixup_arm_pcrel_9", 0, 32, 0},
-      {"fixup_t2_pcrel_9", 0, 32, 0},
+      {"fixup_arm_ldst_pcrel_12", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_ldst_pcrel_12", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_pcrel_10_unscaled", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_pcrel_10", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_pcrel_10", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_pcrel_9", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_pcrel_9", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
       {"fixup_arm_ldst_abs_12", 0, 32, 0},
-      {"fixup_thumb_adr_pcrel_10", 0, 8, 0},
-      {"fixup_arm_adr_pcrel_12", 0, 32, 0},
-      {"fixup_t2_adr_pcrel_12", 0, 32, 0},
-      {"fixup_arm_condbranch", 0, 24, 0},
-      {"fixup_arm_uncondbranch", 0, 24, 0},
-      {"fixup_t2_condbranch", 0, 32, 0},
-      {"fixup_t2_uncondbranch", 0, 32, 0},
-      {"fixup_arm_thumb_br", 0, 16, 0},
-      {"fixup_arm_uncondbl", 0, 24, 0},
-      {"fixup_arm_condbl", 0, 24, 0},
-      {"fixup_arm_blx", 0, 24, 0},
-      {"fixup_arm_thumb_bl", 0, 32, 0},
-      {"fixup_arm_thumb_blx", 0, 32, 0},
-      {"fixup_arm_thumb_cb", 0, 16, 0},
-      {"fixup_arm_thumb_cp", 0, 8, 0},
-      {"fixup_arm_thumb_bcc", 0, 8, 0},
+      {"fixup_thumb_adr_pcrel_10", 0, 8,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_adr_pcrel_12", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_adr_pcrel_12", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_condbranch", 0, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_uncondbranch", 0, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_condbranch", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_uncondbranch", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_br", 0, 16, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_uncondbl", 0, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_condbl", 0, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_blx", 0, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_bl", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_blx", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_thumb_cb", 0, 16, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_cp", 0, 8,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_thumb_bcc", 0, 8, MCFixupKindInfo::FKF_IsPCRel},
       // movw / movt: 16-bits immediate but scattered into two chunks 0 - 12, 16
       // - 19.
       {"fixup_arm_movt_hi16", 0, 20, 0},
@@ -105,43 +120,56 @@ MCFixupKindInfo ARMAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
       {"fixup_arm_thumb_lower_0_7", 0, 8, 0},
       {"fixup_arm_mod_imm", 0, 12, 0},
       {"fixup_t2_so_imm", 0, 26, 0},
-      {"fixup_bf_branch", 0, 32, 0},
-      {"fixup_bf_target", 0, 32, 0},
-      {"fixup_bfl_target", 0, 32, 0},
-      {"fixup_bfc_target", 0, 32, 0},
+      {"fixup_bf_branch", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_bf_target", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_bfl_target", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_bfc_target", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
       {"fixup_bfcsel_else_target", 0, 32, 0},
-      {"fixup_wls", 0, 32, 0},
-      {"fixup_le", 0, 32, 0},
-  };
+      {"fixup_wls", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_le", 0, 32, MCFixupKindInfo::FKF_IsPCRel}};
   const static MCFixupKindInfo InfosBE[ARM::NumTargetFixupKinds] = {
       // This table *must* be in the order that the fixup_* kinds are defined in
       // ARMFixupKinds.h.
       //
       // Name                      Offset (bits) Size (bits)     Flags
-      {"fixup_arm_ldst_pcrel_12", 0, 32, 0},
-      {"fixup_t2_ldst_pcrel_12", 0, 32, 0},
-      {"fixup_arm_pcrel_10_unscaled", 0, 32, 0},
-      {"fixup_arm_pcrel_10", 0, 32, 0},
-      {"fixup_t2_pcrel_10", 0, 32, 0},
-      {"fixup_arm_pcrel_9", 0, 32, 0},
-      {"fixup_t2_pcrel_9", 0, 32, 0},
+      {"fixup_arm_ldst_pcrel_12", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_ldst_pcrel_12", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_pcrel_10_unscaled", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_pcrel_10", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_pcrel_10", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_pcrel_9", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_pcrel_9", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
       {"fixup_arm_ldst_abs_12", 0, 32, 0},
-      {"fixup_thumb_adr_pcrel_10", 8, 8, 0},
-      {"fixup_arm_adr_pcrel_12", 0, 32, 0},
-      {"fixup_t2_adr_pcrel_12", 0, 32, 0},
-      {"fixup_arm_condbranch", 8, 24, 0},
-      {"fixup_arm_uncondbranch", 8, 24, 0},
-      {"fixup_t2_condbranch", 0, 32, 0},
-      {"fixup_t2_uncondbranch", 0, 32, 0},
-      {"fixup_arm_thumb_br", 0, 16, 0},
-      {"fixup_arm_uncondbl", 8, 24, 0},
-      {"fixup_arm_condbl", 8, 24, 0},
-      {"fixup_arm_blx", 8, 24, 0},
-      {"fixup_arm_thumb_bl", 0, 32, 0},
-      {"fixup_arm_thumb_blx", 0, 32, 0},
-      {"fixup_arm_thumb_cb", 0, 16, 0},
-      {"fixup_arm_thumb_cp", 8, 8, 0},
-      {"fixup_arm_thumb_bcc", 8, 8, 0},
+      {"fixup_thumb_adr_pcrel_10", 8, 8,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_adr_pcrel_12", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_adr_pcrel_12", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_condbranch", 8, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_uncondbranch", 8, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_condbranch", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_t2_uncondbranch", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_br", 0, 16, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_uncondbl", 8, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_condbl", 8, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_blx", 8, 24, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_bl", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_blx", 0, 32,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_thumb_cb", 0, 16, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_arm_thumb_cp", 8, 8,
+       MCFixupKindInfo::FKF_IsPCRel |
+           MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+      {"fixup_arm_thumb_bcc", 8, 8, MCFixupKindInfo::FKF_IsPCRel},
       // movw / movt: 16-bits immediate but scattered into two chunks 0 - 12, 16
       // - 19.
       {"fixup_arm_movt_hi16", 12, 20, 0},
@@ -154,19 +182,18 @@ MCFixupKindInfo ARMAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
       {"fixup_arm_thumb_lower_0_7", 24, 8, 0},
       {"fixup_arm_mod_imm", 20, 12, 0},
       {"fixup_t2_so_imm", 26, 6, 0},
-      {"fixup_bf_branch", 0, 32, 0},
-      {"fixup_bf_target", 0, 32, 0},
-      {"fixup_bfl_target", 0, 32, 0},
-      {"fixup_bfc_target", 0, 32, 0},
+      {"fixup_bf_branch", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_bf_target", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_bfl_target", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_bfc_target", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
       {"fixup_bfcsel_else_target", 0, 32, 0},
-      {"fixup_wls", 0, 32, 0},
-      {"fixup_le", 0, 32, 0},
-  };
+      {"fixup_wls", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
+      {"fixup_le", 0, 32, MCFixupKindInfo::FKF_IsPCRel}};
 
   // Fixup kinds from .reloc directive are like R_ARM_NONE. They do not require
   // any extra processing.
   if (mc::isRelocation(Kind))
-    return {};
+    return MCAsmBackend::getFixupKindInfo(FK_NONE);
 
   if (Kind < FirstTargetFixupKind)
     return MCAsmBackend::getFixupKindInfo(Kind);
@@ -201,9 +228,11 @@ unsigned ARMAsmBackend::getRelaxedOpcode(unsigned Op,
   }
 }
 
-bool ARMAsmBackend::mayNeedRelaxation(unsigned Opcode, ArrayRef<MCOperand>,
+bool ARMAsmBackend::mayNeedRelaxation(const MCInst &Inst,
                                       const MCSubtargetInfo &STI) const {
-  return getRelaxedOpcode(Opcode, STI) != Opcode;
+  if (getRelaxedOpcode(Inst.getOpcode(), STI) != Inst.getOpcode())
+    return true;
+  return false;
 }
 
 static const char *checkPCRelOffset(uint64_t Value, int64_t Min, int64_t Max) {
@@ -215,7 +244,7 @@ static const char *checkPCRelOffset(uint64_t Value, int64_t Min, int64_t Max) {
 
 const char *ARMAsmBackend::reasonForFixupRelaxation(const MCFixup &Fixup,
                                                     uint64_t Value) const {
-  switch (Fixup.getKind()) {
+  switch (Fixup.getTargetKind()) {
   case ARM::fixup_arm_thumb_br: {
     // Relaxing tB to t2B. tB has a signed 12-bit displacement with the
     // low bit being an implied zero. There's an implied +4 offset for the
@@ -311,13 +340,12 @@ static bool needsInterworking(const MCAssembler &Asm, const MCSymbol *Sym,
   return false;
 }
 
-bool ARMAsmBackend::fixupNeedsRelaxationAdvanced(const MCFragment &,
-                                                 const MCFixup &Fixup,
+bool ARMAsmBackend::fixupNeedsRelaxationAdvanced(const MCFixup &Fixup,
                                                  const MCValue &Target,
                                                  uint64_t Value,
                                                  bool Resolved) const {
   const MCSymbol *Sym = Target.getAddSym();
-  if (needsInterworking(*Asm, Sym, Fixup.getKind()))
+  if (needsInterworking(*Asm, Sym, Fixup.getTargetKind()))
     return true;
 
   if (!Resolved)
@@ -328,7 +356,15 @@ bool ARMAsmBackend::fixupNeedsRelaxationAdvanced(const MCFragment &,
 void ARMAsmBackend::relaxInstruction(MCInst &Inst,
                                      const MCSubtargetInfo &STI) const {
   unsigned RelaxedOp = getRelaxedOpcode(Inst.getOpcode(), STI);
-  assert(RelaxedOp != Inst.getOpcode());
+
+  // Return a diagnostic if we get here w/ a bogus instruction.
+  if (RelaxedOp == Inst.getOpcode()) {
+    SmallString<256> Tmp;
+    raw_svector_ostream OS(Tmp);
+    Inst.dump_pretty(OS);
+    OS << "\n";
+    report_fatal_error("unexpected instruction to relax: " + OS.str());
+  }
 
   // If we are changing Thumb CBZ or CBNZ instruction to a NOP, aka tHINT, we
   // have to change the operands too.
@@ -583,7 +619,7 @@ unsigned ARMAsmBackend::adjustFixupValue(const MCAssembler &Asm,
     // Offset by 8 just as above.
     if (const MCSymbolRefExpr *SRE =
             dyn_cast<MCSymbolRefExpr>(Fixup.getValue()))
-      if (SRE->getSpecifier() == ARM::S_TLSCALL)
+      if (getSpecifier(SRE) == ARMMCExpr::VK_TLSCALL)
         return 0;
     return 0xffffff & (Value >> 2);
   case ARM::fixup_t2_uncondbranch: {
@@ -710,7 +746,7 @@ unsigned ARMAsmBackend::adjustFixupValue(const MCAssembler &Asm,
     uint32_t offset = (Value - 4) >> 2;
     if (const MCSymbolRefExpr *SRE =
             dyn_cast<MCSymbolRefExpr>(Fixup.getValue()))
-      if (SRE->getSpecifier() == ARM::S_TLSCALL)
+      if (getSpecifier(SRE) == ARMMCExpr::VK_TLSCALL)
         offset = 0;
     uint32_t signBit = (offset & 0x400000) >> 22;
     uint32_t I1Bit = (offset & 0x200000) >> 21;
@@ -948,7 +984,7 @@ bool ARMAsmBackend::shouldForceRelocation(const MCFixup &Fixup,
   }
   // Create relocations for unconditional branches to function symbols with
   // different execution mode in ELF binaries.
-  if (needsInterworking(*Asm, Sym, Fixup.getKind()))
+  if (needsInterworking(*Asm, Sym, Fixup.getTargetKind()))
     return true;
   // We must always generate a relocation for BL/BLX instructions if we have
   // a symbol to reference, as the linker relies on knowing the destination
@@ -1088,32 +1124,10 @@ static unsigned getFixupKindContainerSizeBytes(unsigned Kind) {
   }
 }
 
-std::optional<bool> ARMAsmBackend::evaluateFixup(const MCFragment &F,
-                                                 MCFixup &Fixup, MCValue &,
-                                                 uint64_t &Value) {
-  // For a few PC-relative fixups in Thumb mode, offsets need to be aligned
-  // down. We compensate here because the default handler's `Value` decrement
-  // doesn't account for this alignment.
-  switch (Fixup.getKind()) {
-  case ARM::fixup_t2_ldst_pcrel_12:
-  case ARM::fixup_t2_pcrel_10:
-  case ARM::fixup_t2_pcrel_9:
-  case ARM::fixup_thumb_adr_pcrel_10:
-  case ARM::fixup_t2_adr_pcrel_12:
-  case ARM::fixup_arm_thumb_blx:
-  case ARM::fixup_arm_thumb_cp:
-    Value = (Asm->getFragmentOffset(F) + Fixup.getOffset()) % 4;
-  }
-  return {};
-}
-
 void ARMAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
                                const MCValue &Target,
                                MutableArrayRef<char> Data, uint64_t Value,
                                bool IsResolved) {
-  if (IsResolved && shouldForceRelocation(Fixup, Target))
-    IsResolved = false;
-  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
   auto Kind = Fixup.getKind();
   if (mc::isRelocation(Kind))
     return;

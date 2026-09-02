@@ -125,11 +125,6 @@ private:
   void emitAttributeMatch(DagNode tree, StringRef castedName, int argIndex,
                           int depth);
 
-  // Emits C++ statements for matching the `argIndex`-th argument of the given
-  // DAG `tree` as a property.
-  void emitPropertyMatch(DagNode tree, StringRef castedName, int argIndex,
-                         int depth);
-
   // Emits C++ for checking a match with a corresponding match failure
   // diagnostic.
   void emitMatchCheck(StringRef opName, const FmtObjectBase &matchFmt,
@@ -343,7 +338,7 @@ private:
   // for each DagNode.
   int staticMatcherCounter = 0;
 
-  // The DagLeaf which contains type, attr, or prop constraint.
+  // The DagLeaf which contains type or attr constraint.
   SetVector<DagLeaf> constraints;
 
   // Static type/attribute verification function emitter.
@@ -492,19 +487,6 @@ void PatternEmitter::emitNativeCodeMatch(DagNode tree, StringRef opName,
       auto leaf = tree.getArgAsLeaf(i);
       if (leaf.isAttrMatcher() || leaf.isConstantAttr()) {
         os << "::mlir::Attribute " << argName << ";\n";
-      } else if (leaf.isPropMatcher()) {
-        StringRef interfaceType = leaf.getAsPropConstraint().getInterfaceType();
-        if (interfaceType.empty())
-          PrintFatalError(loc, "NativeCodeCall cannot have a property operand "
-                               "with unspecified interface type");
-        os << interfaceType << " " << argName;
-        if (leaf.isPropDefinition()) {
-          Property propDef = leaf.getAsProperty();
-          // Ensure properties that aren't zero-arg-constructable still work.
-          if (propDef.hasDefaultValue())
-            os << " = " << propDef.getDefaultValue();
-        }
-        os << ";\n";
       } else {
         os << "::mlir::Value " << argName << ";\n";
       }
@@ -557,7 +539,7 @@ void PatternEmitter::emitNativeCodeMatch(DagNode tree, StringRef opName,
     auto constraint = leaf.getAsConstraint();
 
     std::string self;
-    if (leaf.isAttrMatcher() || leaf.isConstantAttr() || leaf.isPropMatcher())
+    if (leaf.isAttrMatcher() || leaf.isConstantAttr())
       self = argName;
     else
       self = formatv("{0}.getType()", argName);
@@ -632,8 +614,7 @@ void PatternEmitter::emitOpMatch(DagNode tree, StringRef opName, int depth) {
         ++opArgIdx;
         continue;
       }
-      if (auto *operand =
-              llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
+      if (auto *operand = llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
         if (argTree.isVariadic()) {
           if (!operand->isVariadic()) {
             auto error = formatv("variadic DAG construct can't match op {0}'s "
@@ -684,8 +665,6 @@ void PatternEmitter::emitOpMatch(DagNode tree, StringRef opName, int depth) {
       ++nextOperand;
     } else if (isa<NamedAttribute *>(opArg)) {
       emitAttributeMatch(tree, castedName, opArgIdx, depth);
-    } else if (isa<NamedProperty *>(opArg)) {
-      emitPropertyMatch(tree, castedName, opArgIdx, depth);
     } else {
       PrintFatalError(loc, "unhandled case when matching op");
     }
@@ -958,46 +937,6 @@ void PatternEmitter::emitAttributeMatch(DagNode tree, StringRef castedName,
   // `$_` is a special symbol to ignore op argument matching.
   if (!name.empty() && name != "_") {
     os << formatv("{0} = tblgen_attr;\n", name);
-  }
-
-  os.unindent() << "}\n";
-}
-
-void PatternEmitter::emitPropertyMatch(DagNode tree, StringRef castedName,
-                                       int argIndex, int depth) {
-  Operator &op = tree.getDialectOp(opMap);
-  auto *namedProp = cast<NamedProperty *>(op.getArg(argIndex));
-
-  os << "{\n";
-  os.indent() << formatv(
-      "[[maybe_unused]] auto tblgen_prop = {0}.getProperties().{1}();\n",
-      castedName, op.getGetterName(namedProp->name));
-
-  auto matcher = tree.getArgAsLeaf(argIndex);
-  if (!matcher.isUnspecified()) {
-    if (!matcher.isPropMatcher()) {
-      PrintFatalError(
-          loc, formatv("the {1}-th argument of op '{0}' should be a property",
-                       op.getOperationName(), argIndex + 1));
-    }
-
-    // If a constraint is specified, we need to generate function call to its
-    // static verifier.
-    StringRef verifier = staticMatcherHelper.getVerifierName(matcher);
-    emitStaticVerifierCall(
-        verifier, castedName, "tblgen_prop",
-        formatv("\"op '{0}' property '{1}' failed to satisfy constraint: "
-                "'{2}'\"",
-                op.getOperationName(), namedProp->name,
-                escapeString(matcher.getAsConstraint().getSummary()))
-            .str());
-  }
-
-  // Capture the value
-  auto name = tree.getArgName(argIndex);
-  // `$_` is a special symbol to ignore op argument matching.
-  if (!name.empty() && name != "_") {
-    os << formatv("{0} = tblgen_prop;\n", name);
   }
 
   os.unindent() << "}\n";
@@ -1445,10 +1384,6 @@ std::string PatternEmitter::handleOpArgument(DagLeaf leaf,
     std::string val = std::to_string(enumCase.getValue());
     return handleConstantAttr(Attribute(&enumCase.getDef()), val);
   }
-  if (leaf.isConstantProp()) {
-    auto constantProp = leaf.getAsConstantProp();
-    return constantProp.getValue().str();
-  }
 
   LLVM_DEBUG(llvm::dbgs() << "handle argument '" << patArgName << "'\n");
   auto argName = symbolInfoMap.getValueAndRangeUse(patArgName);
@@ -1696,7 +1631,7 @@ std::string PatternEmitter::handleOpCreation(DagNode tree, int resultIndex,
 
     // Then create the op.
     os.scope("", "\n}\n").os
-        << formatv("{0} = {1}::create(rewriter, {2}, tblgen_values, {3});",
+        << formatv("{0} = rewriter.create<{1}>({2}, tblgen_values, {3});",
                    valuePackName, resultOp.getQualCppClassName(), locToUse,
                    useProperties ? "tblgen_props" : "tblgen_attrs");
     return resultValue;
@@ -1715,7 +1650,7 @@ std::string PatternEmitter::handleOpCreation(DagNode tree, int resultIndex,
     // aggregate-parameter builders.
     createSeparateLocalVarsForOpArgs(tree, childNodeNames);
 
-    os.scope().os << formatv("{0} = {1}::create(rewriter, {2}", valuePackName,
+    os.scope().os << formatv("{0} = rewriter.create<{1}>({2}", valuePackName,
                              resultOp.getQualCppClassName(), locToUse);
     supplyValuesForOpArgs(tree, childNodeNames, depth);
     os << "\n  );\n}\n";
@@ -1754,7 +1689,7 @@ std::string PatternEmitter::handleOpCreation(DagNode tree, int resultIndex,
                       resultIndex + i);
     }
   }
-  os << formatv("{0} = {1}::create(rewriter, {2}, tblgen_types, "
+  os << formatv("{0} = rewriter.create<{1}>({2}, tblgen_types, "
                 "tblgen_values, {3});\n",
                 valuePackName, resultOp.getQualCppClassName(), locToUse,
                 useProperties ? "tblgen_props" : "tblgen_attrs");
@@ -1773,9 +1708,9 @@ void PatternEmitter::createSeparateLocalVarsForOpArgs(
 
   int valueIndex = 0; // An index for uniquing local variable names.
   for (int argIndex = 0, e = resultOp.getNumArgs(); argIndex < e; ++argIndex) {
-    const auto *operand = llvm::dyn_cast_if_present<NamedTypeConstraint *>(
-        resultOp.getArg(argIndex));
-    // We do not need special handling for attributes or properties.
+    const auto *operand =
+        llvm::dyn_cast_if_present<NamedTypeConstraint *>(resultOp.getArg(argIndex));
+    // We do not need special handling for attributes.
     if (!operand)
       continue;
 
@@ -1829,8 +1764,7 @@ void PatternEmitter::supplyValuesForOpArgs(
 
     Argument opArg = resultOp.getArg(argIndex);
     // Handle the case of operand first.
-    if (auto *operand =
-            llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
+    if (auto *operand = llvm::dyn_cast_if_present<NamedTypeConstraint *>(opArg)) {
       if (!operand->name.empty())
         os << "/*" << operand->name << "=*/";
       os << childNodeNames.lookup(argIndex);
@@ -1842,7 +1776,7 @@ void PatternEmitter::supplyValuesForOpArgs(
     if (auto subTree = node.getArgAsNestedDag(argIndex)) {
       if (!subTree.isNativeCodeCall())
         PrintFatalError(loc, "only NativeCodeCall allowed in nested dag node "
-                             "for creating attributes and properties");
+                             "for creating attribute");
       os << formatv("/*{0}=*/{1}", opArgName, childNodeNames.lookup(argIndex));
     } else {
       auto leaf = node.getArgAsLeaf(argIndex);
@@ -1852,11 +1786,6 @@ void PatternEmitter::supplyValuesForOpArgs(
         // TODO: Refactor out into map to avoid recomputing these.
         if (!isa<NamedAttribute *>(opArg))
           PrintFatalError(loc, Twine("expected attribute ") + Twine(argIndex));
-        if (!patArgName.empty())
-          os << "/*" << patArgName << "=*/";
-      } else if (leaf.isConstantProp()) {
-        if (!isa<NamedProperty *>(opArg))
-          PrintFatalError(loc, Twine("expected property ") + Twine(argIndex));
         if (!patArgName.empty())
           os << "/*" << patArgName << "=*/";
       } else {
@@ -1891,7 +1820,6 @@ void PatternEmitter::createAggregateLocalVarsForOpArgs(
       "  tblgen_attrs.emplace_back(rewriter.getStringAttr(\"{0}\"), "
       "tmpAttr);\n}\n";
   const char *setterCmd = (useProperties) ? setPropCmd : addAttrCmd;
-  const char *propSetterCmd = "tblgen_props.{0}({1});\n";
 
   int numVariadic = 0;
   bool hasOperandSegmentSizes = false;
@@ -1913,28 +1841,6 @@ void PatternEmitter::createAggregateLocalVarsForOpArgs(
         // The argument in the result DAG pattern.
         auto patArgName = node.getArgName(argIndex);
         os << formatv(setterCmd, opArgName, handleOpArgument(leaf, patArgName));
-      }
-      continue;
-    }
-
-    if (isa<NamedProperty *>(resultOp.getArg(argIndex))) {
-      // The argument in the op definition.
-      auto opArgName = resultOp.getArgName(argIndex);
-      auto setterName = resultOp.getSetterName(opArgName);
-      if (auto subTree = node.getArgAsNestedDag(argIndex)) {
-        if (!subTree.isNativeCodeCall())
-          PrintFatalError(loc, "only NativeCodeCall allowed in nested dag node "
-                               "for creating property");
-
-        os << formatv(propSetterCmd, setterName,
-                      childNodeNames.lookup(argIndex));
-      } else {
-        auto leaf = node.getArgAsLeaf(argIndex);
-        // The argument in the result DAG pattern.
-        auto patArgName = node.getArgName(argIndex);
-        // The argument in the result DAG pattern.
-        os << formatv(propSetterCmd, setterName,
-                      handleOpArgument(leaf, patArgName));
       }
       continue;
     }
@@ -2065,12 +1971,6 @@ StringRef StaticMatcherHelper::getVerifierName(DagLeaf leaf) {
     std::optional<StringRef> constraint =
         staticVerifierEmitter.getAttrConstraintFn(leaf.getAsConstraint());
     assert(constraint && "attribute constraint was not uniqued");
-    return *constraint;
-  }
-  if (leaf.isPropMatcher()) {
-    std::optional<StringRef> constraint =
-        staticVerifierEmitter.getPropConstraintFn(leaf.getAsConstraint());
-    assert(constraint && "prop constraint was not uniqued");
     return *constraint;
   }
   assert(leaf.isOperandMatcher());

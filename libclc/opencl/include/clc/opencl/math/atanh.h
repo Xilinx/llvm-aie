@@ -6,14 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_MATH_ATANH_H__
-#define __CLC_OPENCL_MATH_ATANH_H__
-
 #define __CLC_BODY <clc/math/unary_decl.inc>
-#define FUNCTION atanh
+#define __CLC_FUNCTION atanh
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_MATH_ATANH_H__
+#undef __CLC_FUNCTION

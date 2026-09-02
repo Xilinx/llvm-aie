@@ -1,9 +1,7 @@
 ; RUN: llc < %s -mtriple=arm-none-eabi -mcpu=cortex-a8 2>&1 | FileCheck %s --check-prefix=ACORE
-; RUN: not llc < %s -mtriple=thumb-none-eabi -mcpu=cortex-m4 2>&1 | FileCheck %s --check-prefix=MCORE
+; RUN: not --crash llc < %s -mtriple=thumb-none-eabi -mcpu=cortex-m4 2>&1 | FileCheck %s --check-prefix=MCORE
 
-; MCORE: error: <unknown>:0:0: invalid register "cpsr" for llvm.read_register
-; MCORE: error: <unknown>:0:0: invalid register "spsr_cxsf" for llvm.write_register
-
+; MCORE: LLVM ERROR: Invalid register name "cpsr".
 
 define i32 @read_cpsr() nounwind {
   ; ACORE-LABEL: read_cpsr:

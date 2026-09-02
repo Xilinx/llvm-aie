@@ -17,7 +17,6 @@
 #include "CGOpenCLRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "CodeGenPGO.h"
 #include "ConstantEmitter.h"
 #include "TargetInfo.h"
 #include "clang/AST/Attr.h"
@@ -853,24 +852,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       offset += size;
       index++;
     };
-    auto addSignedHeaderField =
-        [&](llvm::Value *Value, const PointerAuthSchema &Schema,
-            GlobalDecl Decl, QualType Type, CharUnits Size, const Twine &Name) {
-          auto StorageAddress = projectField(index, Name);
-          if (Schema) {
-            auto AuthInfo = EmitPointerAuthInfo(
-                Schema, StorageAddress.emitRawPointer(*this), Decl, Type);
-            Value = EmitPointerAuthSign(AuthInfo, Value);
-          }
-          Builder.CreateStore(Value, StorageAddress);
-          offset += Size;
-          index++;
-        };
 
     if (!IsOpenCL) {
-      addSignedHeaderField(
-          isa, CGM.getCodeGenOpts().PointerAuth.ObjCIsaPointers, GlobalDecl(),
-          QualType(), getPointerSize(), "block.isa");
+      addHeaderField(isa, getPointerSize(), "block.isa");
       addHeaderField(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
                      getIntSize(), "block.flags");
       addHeaderField(llvm::ConstantInt::get(IntTy, 0), getIntSize(),
@@ -1300,9 +1284,7 @@ static llvm::Constant *buildGlobalBlock(CodeGenModule &CGM,
     if (IsWindows)
       fields.addNullPointer(CGM.Int8PtrPtrTy);
     else
-      fields.addSignedPointer(CGM.getNSConcreteGlobalBlock(),
-                              CGM.getCodeGenOpts().PointerAuth.ObjCIsaPointers,
-                              GlobalDecl(), QualType());
+      fields.add(CGM.getNSConcreteGlobalBlock());
 
     // __flags
     BlockFlags flags = BLOCK_IS_GLOBAL;
@@ -1432,10 +1414,10 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(
   // Arrange for local static and local extern declarations to appear
   // to be local to this function as well, in case they're directly
   // referenced in a block.
-  for (const auto &KV : ldm) {
-    const auto *var = dyn_cast<VarDecl>(KV.first);
+  for (DeclMapTy::const_iterator i = ldm.begin(), e = ldm.end(); i != e; ++i) {
+    const auto *var = dyn_cast<VarDecl>(i->first);
     if (var && !var->hasLocalStorage())
-      setAddrOfLocalVar(var, KV.second);
+      setAddrOfLocalVar(var, i->second);
   }
 
   // Begin building the function declaration.
@@ -1540,7 +1522,7 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(
   if (IsLambdaConversionToBlock)
     EmitLambdaBlockInvokeBody();
   else {
-    PGO->assignRegionCounters(GlobalDecl(blockDecl), fn);
+    PGO.assignRegionCounters(GlobalDecl(blockDecl), fn);
     incrementProfileCounter(blockDecl->getBody());
     EmitStmt(blockDecl->getBody());
   }
@@ -1549,8 +1531,8 @@ llvm::Function *CodeGenFunction::GenerateBlockFunction(
   llvm::BasicBlock *resume = Builder.GetInsertBlock();
 
   // Go back to the entry.
-  if (entry_ptr->getNextNode())
-    entry_ptr = entry_ptr->getNextNode()->getIterator();
+  if (entry_ptr->getNextNonDebugInstruction())
+    entry_ptr = entry_ptr->getNextNonDebugInstruction()->getIterator();
   else
     entry_ptr = entry->end();
   Builder.SetInsertPoint(entry, entry_ptr);

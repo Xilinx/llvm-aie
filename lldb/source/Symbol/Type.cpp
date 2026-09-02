@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cstdio>
 #include <iterator>
-#include <memory>
 #include <optional>
 
 #include "lldb/Core/Module.h"
@@ -247,7 +246,7 @@ public:
   TypeAppendVisitor(TypeListImpl &type_list) : m_type_list(type_list) {}
 
   bool operator()(const lldb::TypeSP &type) {
-    m_type_list.Append(std::make_shared<TypeImpl>(type));
+    m_type_list.Append(TypeImplSP(new TypeImpl(type)));
     return true;
   }
 

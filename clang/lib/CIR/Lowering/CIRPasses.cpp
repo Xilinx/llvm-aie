@@ -31,8 +31,6 @@ mlir::LogicalResult runCIRToCIRPasses(mlir::ModuleOp theModule,
   if (enableCIRSimplify)
     pm.addPass(mlir::createCIRSimplifyPass());
 
-  pm.addPass(mlir::createLoweringPreparePass(&astContext));
-
   pm.enableVerifier(enableVerifier);
   (void)mlir::applyPassManagerCLOptions(pm);
   return pm.run(theModule);

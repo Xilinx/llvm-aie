@@ -18,7 +18,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -551,7 +550,7 @@ ScheduleDAGInstrs *MachineSchedulerImpl::createMachineScheduler() {
     return Scheduler;
 
   // Default to GenericScheduler.
-  return createSchedLive(this);
+  return createGenericSchedLive(this);
 }
 
 bool MachineSchedulerImpl::run(MachineFunction &Func, const TargetMachine &TM,
@@ -599,7 +598,7 @@ ScheduleDAGInstrs *PostMachineSchedulerImpl::createPostMachineScheduler() {
     return Scheduler;
 
   // Default to GenericScheduler.
-  return createSchedPostRA(this);
+  return createGenericSchedPostRA(this);
 }
 
 bool PostMachineSchedulerImpl::run(MachineFunction &Func,
@@ -775,6 +774,24 @@ static bool isSchedBoundary(MachineBasicBlock::iterator MI,
          MI->isFakeUse();
 }
 
+/// A region of an MBB for scheduling.
+namespace {
+struct SchedRegion {
+  /// RegionBegin is the first instruction in the scheduling region, and
+  /// RegionEnd is either MBB->end() or the scheduling boundary after the
+  /// last instruction in the scheduling region. These iterators cannot refer
+  /// to instructions outside of the identified scheduling region because
+  /// those may be reordered before scheduling this region.
+  MachineBasicBlock::iterator RegionBegin;
+  MachineBasicBlock::iterator RegionEnd;
+  unsigned NumRegionInstrs;
+
+  SchedRegion(MachineBasicBlock::iterator B, MachineBasicBlock::iterator E,
+              unsigned N) :
+    RegionBegin(B), RegionEnd(E), NumRegionInstrs(N) {}
+};
+} // end anonymous namespace
+
 using MBBRegionsVector = SmallVector<SchedRegion, 16>;
 
 static void
@@ -940,6 +957,8 @@ void ScheduleDAGMI::releaseSucc(SUnit *SU, SDep *SuccEdge) {
 
   if (SuccEdge->isWeak()) {
     --SuccSU->WeakPredsLeft;
+    if (SuccEdge->isCluster())
+      NextClusterSucc = SuccSU;
     return;
   }
 #ifndef NDEBUG
@@ -975,6 +994,8 @@ void ScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
 
   if (PredEdge->isWeak()) {
     --PredSU->WeakSuccsLeft;
+    if (PredEdge->isCluster())
+      NextClusterPred = PredSU;
     return;
   }
 #ifndef NDEBUG
@@ -1252,8 +1273,11 @@ findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
 }
 
 /// Identify DAG roots and setup scheduler queues.
-void ScheduleDAGMI::initQueues(ArrayRef<SUnit *> TopRoots,
-                               ArrayRef<SUnit *> BotRoots) {
+void ScheduleDAGMI::initQueues(ArrayRef<SUnit*> TopRoots,
+                               ArrayRef<SUnit*> BotRoots) {
+  NextClusterSucc = nullptr;
+  NextClusterPred = nullptr;
+
   // Release all DAG roots for scheduling, not including EntrySU/ExitSU.
   //
   // Nodes with unreleased weak edges can still be roots.
@@ -1368,13 +1392,13 @@ LLVM_DUMP_METHOD void ScheduleDAGMI::dumpScheduleTraceTopDown() const {
                    SchedModel.getWriteProcResEnd(SC)));
 
     if (MISchedSortResourcesInTrace)
-      llvm::stable_sort(
-          ResourcesIt,
-          [](const MCWriteProcResEntry &LHS,
-             const MCWriteProcResEntry &RHS) -> bool {
-            return std::tie(LHS.AcquireAtCycle, LHS.ReleaseAtCycle) <
-                   std::tie(RHS.AcquireAtCycle, RHS.ReleaseAtCycle);
-          });
+      llvm::stable_sort(ResourcesIt,
+                        [](const MCWriteProcResEntry &LHS,
+                           const MCWriteProcResEntry &RHS) -> bool {
+                          return LHS.AcquireAtCycle < RHS.AcquireAtCycle ||
+                                 (LHS.AcquireAtCycle == RHS.AcquireAtCycle &&
+                                  LHS.ReleaseAtCycle < RHS.ReleaseAtCycle);
+                        });
     for (const MCWriteProcResEntry &PI : ResourcesIt) {
       C = FirstCycle;
       const std::string ResName =
@@ -1449,13 +1473,13 @@ LLVM_DUMP_METHOD void ScheduleDAGMI::dumpScheduleTraceBottomUp() const {
                    SchedModel.getWriteProcResEnd(SC)));
 
     if (MISchedSortResourcesInTrace)
-      llvm::stable_sort(
-          ResourcesIt,
-          [](const MCWriteProcResEntry &LHS,
-             const MCWriteProcResEntry &RHS) -> bool {
-            return std::tie(LHS.AcquireAtCycle, LHS.ReleaseAtCycle) <
-                   std::tie(RHS.AcquireAtCycle, RHS.ReleaseAtCycle);
-          });
+      llvm::stable_sort(ResourcesIt,
+                        [](const MCWriteProcResEntry &LHS,
+                           const MCWriteProcResEntry &RHS) -> bool {
+                          return LHS.AcquireAtCycle < RHS.AcquireAtCycle ||
+                                 (LHS.AcquireAtCycle == RHS.AcquireAtCycle &&
+                                  LHS.ReleaseAtCycle < RHS.ReleaseAtCycle);
+                        });
     for (const MCWriteProcResEntry &PI : ResourcesIt) {
       C = FirstCycle;
       const std::string ResName =
@@ -2185,7 +2209,6 @@ void BaseMemOpClusterMutation::clusterNeighboringMemOps(
     ScheduleDAGInstrs *DAG) {
   // Keep track of the current cluster length and bytes for each SUnit.
   DenseMap<unsigned, std::pair<unsigned, unsigned>> SUnit2ClusterInfo;
-  EquivalenceClasses<SUnit *> Clusters;
 
   // At this point, `MemOpRecords` array must hold atleast two mem ops. Try to
   // cluster mem ops collected within `MemOpRecords` array.
@@ -2225,7 +2248,6 @@ void BaseMemOpClusterMutation::clusterNeighboringMemOps(
 
     SUnit *SUa = MemOpa.SU;
     SUnit *SUb = MemOpb.SU;
-
     if (!ReorderWhileClustering && SUa->NodeNum > SUb->NodeNum)
       std::swap(SUa, SUb);
 
@@ -2233,7 +2255,6 @@ void BaseMemOpClusterMutation::clusterNeighboringMemOps(
     if (!DAG->addEdge(SUb, SDep(SUa, SDep::Cluster)))
       continue;
 
-    Clusters.unionSets(SUa, SUb);
     LLVM_DEBUG(dbgs() << "Cluster ld/st SU(" << SUa->NodeNum << ") - SU("
                       << SUb->NodeNum << ")\n");
     ++NumClustered;
@@ -2272,21 +2293,6 @@ void BaseMemOpClusterMutation::clusterNeighboringMemOps(
     LLVM_DEBUG(dbgs() << "  Curr cluster length: " << ClusterLength
                       << ", Curr cluster bytes: " << CurrentClusterBytes
                       << "\n");
-  }
-
-  // Add cluster group information.
-  // Iterate over all of the equivalence sets.
-  auto &AllClusters = DAG->getClusters();
-  for (const EquivalenceClasses<SUnit *>::ECValue *I : Clusters) {
-    if (!I->isLeader())
-      continue;
-    ClusterInfo Group;
-    unsigned ClusterIdx = AllClusters.size();
-    for (SUnit *MemberI : Clusters.members(*I)) {
-      MemberI->ParentClusterIdx = ClusterIdx;
-      Group.insert(MemberI);
-    }
-    AllClusters.push_back(Group);
   }
 }
 
@@ -3794,9 +3800,6 @@ void GenericScheduler::initialize(ScheduleDAGMI *dag) {
   }
   TopCand.SU = nullptr;
   BotCand.SU = nullptr;
-
-  TopCluster = nullptr;
-  BotCluster = nullptr;
 }
 
 /// Initialize the per-region scheduling policy.
@@ -3826,8 +3829,7 @@ void GenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
   RegionPolicy.OnlyBottomUp = true;
 
   // Allow the subtarget to override default policy.
-  SchedRegion Region(Begin, End, NumRegionInstrs);
-  MF.getSubtarget().overrideSchedPolicy(RegionPolicy, Region);
+  MF.getSubtarget().overrideSchedPolicy(RegionPolicy, NumRegionInstrs);
 
   // After subtarget overrides, apply command line options.
   if (!EnableRegPressure) {
@@ -4107,11 +4109,13 @@ bool GenericScheduler::tryCandidate(SchedCandidate &Cand,
   // This is a best effort to set things up for a post-RA pass. Optimizations
   // like generating loads of multiple registers should ideally be done within
   // the scheduler pass by combining the loads during DAG postprocessing.
-  const ClusterInfo *CandCluster = Cand.AtTop ? TopCluster : BotCluster;
-  const ClusterInfo *TryCandCluster = TryCand.AtTop ? TopCluster : BotCluster;
-  if (tryGreater(TryCandCluster && TryCandCluster->contains(TryCand.SU),
-                 CandCluster && CandCluster->contains(Cand.SU), TryCand, Cand,
-                 Cluster))
+  const SUnit *CandNextClusterSU =
+    Cand.AtTop ? DAG->getNextClusterSucc() : DAG->getNextClusterPred();
+  const SUnit *TryCandNextClusterSU =
+    TryCand.AtTop ? DAG->getNextClusterSucc() : DAG->getNextClusterPred();
+  if (tryGreater(TryCand.SU == TryCandNextClusterSU,
+                 Cand.SU == CandNextClusterSU,
+                 TryCand, Cand, Cluster))
     return TryCand.Reason != NoCand;
 
   if (SameBoundary) {
@@ -4370,33 +4374,39 @@ void GenericScheduler::reschedulePhysReg(SUnit *SU, bool isTop) {
 void GenericScheduler::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     SU->TopReadyCycle = std::max(SU->TopReadyCycle, Top.getCurrCycle());
-    TopCluster = DAG->getCluster(SU->ParentClusterIdx);
-    LLVM_DEBUG(if (TopCluster) {
-      dbgs() << "  Top Cluster: ";
-      for (auto *N : *TopCluster)
-        dbgs() << N->NodeNum << '\t';
-      dbgs() << '\n';
-    });
     Top.bumpNode(SU);
     if (SU->hasPhysRegUses)
       reschedulePhysReg(SU, true);
   } else {
     SU->BotReadyCycle = std::max(SU->BotReadyCycle, Bot.getCurrCycle());
-    BotCluster = DAG->getCluster(SU->ParentClusterIdx);
-    LLVM_DEBUG(if (BotCluster) {
-      dbgs() << "  Bot Cluster: ";
-      for (auto *N : *BotCluster)
-        dbgs() << N->NodeNum << '\t';
-      dbgs() << '\n';
-    });
     Bot.bumpNode(SU);
     if (SU->hasPhysRegDefs)
       reschedulePhysReg(SU, false);
   }
 }
 
+/// Create the standard converging machine scheduler. This will be used as the
+/// default scheduler if the target does not set a default.
+ScheduleDAGMILive *llvm::createGenericSchedLive(MachineSchedContext *C) {
+  ScheduleDAGMILive *DAG =
+      new ScheduleDAGMILive(C, std::make_unique<GenericScheduler>(C));
+  // Register DAG post-processors.
+  //
+  // FIXME: extend the mutation API to allow earlier mutations to instantiate
+  // data and pass it to later mutations. Have a single mutation that gathers
+  // the interesting nodes in one pass.
+  DAG->addMutation(createCopyConstrainDAGMutation(DAG->TII, DAG->TRI));
+
+  const TargetSubtargetInfo &STI = C->MF->getSubtarget();
+  // Add MacroFusion mutation if fusions are not empty.
+  const auto &MacroFusions = STI.getMacroFusions();
+  if (!MacroFusions.empty())
+    DAG->addMutation(createMacroFusionDAGMutation(MacroFusions));
+  return DAG;
+}
+
 static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
-  return createSchedLive(C);
+  return createGenericSchedLive(C);
 }
 
 static MachineSchedRegistry
@@ -4425,8 +4435,6 @@ void PostGenericScheduler::initialize(ScheduleDAGMI *Dag) {
   if (!Bot.HazardRec) {
     Bot.HazardRec = DAG->TII->CreateTargetMIHazardRecognizer(Itin, DAG);
   }
-  TopCluster = nullptr;
-  BotCluster = nullptr;
 }
 
 void PostGenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
@@ -4440,8 +4448,7 @@ void PostGenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
   RegionPolicy.OnlyBottomUp = false;
 
   // Allow the subtarget to override default policy.
-  SchedRegion Region(Begin, End, NumRegionInstrs);
-  MF.getSubtarget().overridePostRASchedPolicy(RegionPolicy, Region);
+  MF.getSubtarget().overridePostRASchedPolicy(RegionPolicy, NumRegionInstrs);
 
   // After subtarget overrides, apply command line options.
   if (PostRADirection == MISched::TopDown) {
@@ -4492,12 +4499,14 @@ bool PostGenericScheduler::tryCandidate(SchedCandidate &Cand,
     return TryCand.Reason != NoCand;
 
   // Keep clustered nodes together.
-  const ClusterInfo *CandCluster = Cand.AtTop ? TopCluster : BotCluster;
-  const ClusterInfo *TryCandCluster = TryCand.AtTop ? TopCluster : BotCluster;
-  if (tryGreater(TryCandCluster && TryCandCluster->contains(TryCand.SU),
-                 CandCluster && CandCluster->contains(Cand.SU), TryCand, Cand,
-                 Cluster))
+  const SUnit *CandNextClusterSU =
+      Cand.AtTop ? DAG->getNextClusterSucc() : DAG->getNextClusterPred();
+  const SUnit *TryCandNextClusterSU =
+      TryCand.AtTop ? DAG->getNextClusterSucc() : DAG->getNextClusterPred();
+  if (tryGreater(TryCand.SU == TryCandNextClusterSU,
+                 Cand.SU == CandNextClusterSU, TryCand, Cand, Cluster))
     return TryCand.Reason != NoCand;
+
   // Avoid critical resource consumption and balance the schedule.
   if (tryLess(TryCand.ResDelta.CritResources, Cand.ResDelta.CritResources,
               TryCand, Cand, ResourceReduce))
@@ -4714,13 +4723,23 @@ SUnit *PostGenericScheduler::pickNode(bool &IsTopNode) {
 void PostGenericScheduler::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     SU->TopReadyCycle = std::max(SU->TopReadyCycle, Top.getCurrCycle());
-    TopCluster = DAG->getCluster(SU->ParentClusterIdx);
     Top.bumpNode(SU);
   } else {
     SU->BotReadyCycle = std::max(SU->BotReadyCycle, Bot.getCurrCycle());
-    BotCluster = DAG->getCluster(SU->ParentClusterIdx);
     Bot.bumpNode(SU);
   }
+}
+
+ScheduleDAGMI *llvm::createGenericSchedPostRA(MachineSchedContext *C) {
+  ScheduleDAGMI *DAG =
+      new ScheduleDAGMI(C, std::make_unique<PostGenericScheduler>(C),
+                        /*RemoveKillFlags=*/true);
+  const TargetSubtargetInfo &STI = C->MF->getSubtarget();
+  // Add MacroFusion mutation if fusions are not empty.
+  const auto &MacroFusions = STI.getMacroFusions();
+  if (!MacroFusions.empty())
+    DAG->addMutation(createMacroFusionDAGMutation(MacroFusions));
+  return DAG;
 }
 
 //===----------------------------------------------------------------------===//

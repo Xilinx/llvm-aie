@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Compiler.h"
 #include <tuple>
 
 namespace llvm {
@@ -40,7 +39,7 @@ using VarID =
 /// statistics.
 class DroppedVariableStats {
 public:
-  LLVM_ABI DroppedVariableStats(bool DroppedVarStatsEnabled);
+  DroppedVariableStats(bool DroppedVarStatsEnabled);
 
   virtual ~DroppedVariableStats() {}
 
@@ -51,9 +50,9 @@ public:
   bool getPassDroppedVariables() { return PassDroppedVariables; }
 
 protected:
-  LLVM_ABI void setup();
+  void setup();
 
-  LLVM_ABI void cleanup();
+  void cleanup();
 
   bool DroppedVariableStatsEnabled = false;
   struct DebugVariables {
@@ -76,26 +75,26 @@ protected:
   SmallVector<DenseMap<StringRef, DenseMap<VarID, DILocation *>>> InlinedAts;
   /// Calculate the number of dropped variables in an llvm::Function or
   /// llvm::MachineFunction and print the relevant information to stdout.
-  LLVM_ABI void calculateDroppedStatsAndPrint(
-      DebugVariables &DbgVariables, StringRef FuncName, StringRef PassID,
-      StringRef FuncOrModName, StringRef PassLevel, const Function *Func);
+  void calculateDroppedStatsAndPrint(DebugVariables &DbgVariables,
+                                     StringRef FuncName, StringRef PassID,
+                                     StringRef FuncOrModName,
+                                     StringRef PassLevel, const Function *Func);
 
   /// Check if a \p Var has been dropped or is a false positive. Also update the
   /// \p DroppedCount if a debug variable is dropped.
-  LLVM_ABI bool updateDroppedCount(DILocation *DbgLoc, const DIScope *Scope,
-                                   const DIScope *DbgValScope,
-                                   DenseMap<VarID, DILocation *> &InlinedAtsMap,
-                                   VarID Var, unsigned &DroppedCount);
+  bool updateDroppedCount(DILocation *DbgLoc, const DIScope *Scope,
+                          const DIScope *DbgValScope,
+                          DenseMap<VarID, DILocation *> &InlinedAtsMap,
+                          VarID Var, unsigned &DroppedCount);
 
   /// Run code to populate relevant data structures over an llvm::Function or
   /// llvm::MachineFunction.
-  LLVM_ABI void run(DebugVariables &DbgVariables, StringRef FuncName,
-                    bool Before);
+  void run(DebugVariables &DbgVariables, StringRef FuncName, bool Before);
 
   /// Populate the VarIDSet and InlinedAtMap with the relevant information
   /// needed for before and after pass analysis to determine dropped variable
   /// status.
-  LLVM_ABI void populateVarIDSetAndInlinedMap(
+  void populateVarIDSetAndInlinedMap(
       const DILocalVariable *DbgVar, DebugLoc DbgLoc, DenseSet<VarID> &VarIDSet,
       DenseMap<StringRef, DenseMap<VarID, DILocation *>> &InlinedAtsMap,
       StringRef FuncName, bool Before);

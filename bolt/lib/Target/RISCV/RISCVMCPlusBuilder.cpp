@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/RISCVMCAsmInfo.h"
+#include "MCTargetDesc/RISCVMCExpr.h"
 #include "MCTargetDesc/RISCVMCTargetDesc.h"
 #include "bolt/Core/MCPlusBuilder.h"
 #include "llvm/BinaryFormat/ELF.h"
@@ -31,10 +31,10 @@ class RISCVMCPlusBuilder : public MCPlusBuilder {
 public:
   using MCPlusBuilder::MCPlusBuilder;
 
-  bool equals(const MCSpecifierExpr &A, const MCSpecifierExpr &B,
+  bool equals(const MCTargetExpr &A, const MCTargetExpr &B,
               CompFuncTy Comp) const override {
-    const auto &RISCVExprA = cast<MCSpecifierExpr>(A);
-    const auto &RISCVExprB = cast<MCSpecifierExpr>(B);
+    const auto &RISCVExprA = cast<RISCVMCExpr>(A);
+    const auto &RISCVExprB = cast<RISCVMCExpr>(B);
     if (RISCVExprA.getSpecifier() != RISCVExprB.getSpecifier())
       return false;
 
@@ -171,8 +171,8 @@ public:
     (void)Result;
     assert(Result && "unimplemented branch");
 
-    Inst.getOperand(SymOpIndex) =
-        MCOperand::createExpr(MCSymbolRefExpr::create(TBB, *Ctx));
+    Inst.getOperand(SymOpIndex) = MCOperand::createExpr(
+        MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx));
   }
 
   IndirectBranchType analyzeIndirectBranch(
@@ -233,7 +233,8 @@ public:
     Inst.setOpcode(RISCV::JAL);
     Inst.clear();
     Inst.addOperand(MCOperand::createReg(RISCV::X0));
-    Inst.addOperand(MCOperand::createExpr(MCSymbolRefExpr::create(TBB, *Ctx)));
+    Inst.addOperand(MCOperand::createExpr(
+        MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx)));
   }
 
   StringRef getTrapFillValue() const override {
@@ -244,8 +245,9 @@ public:
                   MCContext *Ctx) {
     Inst.setOpcode(Opcode);
     Inst.clear();
-    Inst.addOperand(MCOperand::createExpr(MCSpecifierExpr::create(
-        MCSymbolRefExpr::create(Target, *Ctx), ELF::R_RISCV_CALL_PLT, *Ctx)));
+    Inst.addOperand(MCOperand::createExpr(RISCVMCExpr::create(
+        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
+        ELF::R_RISCV_CALL_PLT, *Ctx)));
   }
 
   void createCall(MCInst &Inst, const MCSymbol *Target,
@@ -340,7 +342,7 @@ public:
   }
 
   const MCSymbol *getTargetSymbol(const MCExpr *Expr) const override {
-    auto *RISCVExpr = dyn_cast<MCSpecifierExpr>(Expr);
+    auto *RISCVExpr = dyn_cast<RISCVMCExpr>(Expr);
     if (RISCVExpr && RISCVExpr->getSubExpr())
       return getTargetSymbol(RISCVExpr->getSubExpr());
 
@@ -433,19 +435,19 @@ public:
     case ELF::R_RISCV_TLS_GD_HI20:
       // The GOT is reused so no need to create GOT relocations
     case ELF::R_RISCV_PCREL_HI20:
-      return MCSpecifierExpr::create(Expr, ELF::R_RISCV_PCREL_HI20, Ctx);
+      return RISCVMCExpr::create(Expr, ELF::R_RISCV_PCREL_HI20, Ctx);
     case ELF::R_RISCV_PCREL_LO12_I:
     case ELF::R_RISCV_PCREL_LO12_S:
-      return MCSpecifierExpr::create(Expr, RISCV::S_PCREL_LO, Ctx);
+      return RISCVMCExpr::create(Expr, RISCVMCExpr::VK_PCREL_LO, Ctx);
     case ELF::R_RISCV_HI20:
-      return MCSpecifierExpr::create(Expr, ELF::R_RISCV_HI20, Ctx);
+      return RISCVMCExpr::create(Expr, ELF::R_RISCV_HI20, Ctx);
     case ELF::R_RISCV_LO12_I:
     case ELF::R_RISCV_LO12_S:
-      return MCSpecifierExpr::create(Expr, RISCV::S_LO, Ctx);
+      return RISCVMCExpr::create(Expr, RISCVMCExpr::VK_LO, Ctx);
     case ELF::R_RISCV_CALL:
-      return MCSpecifierExpr::create(Expr, ELF::R_RISCV_CALL_PLT, Ctx);
+      return RISCVMCExpr::create(Expr, ELF::R_RISCV_CALL_PLT, Ctx);
     case ELF::R_RISCV_CALL_PLT:
-      return MCSpecifierExpr::create(Expr, ELF::R_RISCV_CALL_PLT, Ctx);
+      return RISCVMCExpr::create(Expr, ELF::R_RISCV_CALL_PLT, Ctx);
     }
   }
 
@@ -464,10 +466,10 @@ public:
       return false;
 
     const auto *ImmExpr = ImmOp.getExpr();
-    if (!isa<MCSpecifierExpr>(ImmExpr))
+    if (!isa<RISCVMCExpr>(ImmExpr))
       return false;
 
-    switch (cast<MCSpecifierExpr>(ImmExpr)->getSpecifier()) {
+    switch (cast<RISCVMCExpr>(ImmExpr)->getSpecifier()) {
     default:
       return false;
     case ELF::R_RISCV_CALL_PLT:
@@ -561,7 +563,8 @@ public:
     Insts.emplace_back(MCInstBuilder(RISCV::BEQ)
                            .addReg(RegNo)
                            .addReg(RegTmp)
-                           .addExpr(MCSymbolRefExpr::create(Target, *Ctx)));
+                           .addExpr(MCSymbolRefExpr::create(
+                               Target, MCSymbolRefExpr::VK_None, *Ctx)));
     return Insts;
   }
 
@@ -660,12 +663,14 @@ public:
     if (IsTailCall) {
       Inst.addOperand(MCOperand::createReg(RISCV::X0));
       Inst.addOperand(MCOperand::createExpr(getTargetExprFor(
-          Inst, MCSymbolRefExpr::create(Target, *Ctx), *Ctx, 0)));
+          Inst, MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
+          *Ctx, 0)));
       convertJmpToTailCall(Inst);
     } else {
       Inst.addOperand(MCOperand::createReg(RISCV::X1));
       Inst.addOperand(MCOperand::createExpr(getTargetExprFor(
-          Inst, MCSymbolRefExpr::create(Target, *Ctx), *Ctx, 0)));
+          Inst, MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
+          *Ctx, 0)));
     }
   }
 

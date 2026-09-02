@@ -17,22 +17,13 @@
 
 #include "test_macros.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   std::priority_queue<int> q;
   assert(q.size() == 0);
   q.push(1);
   assert(q.size() == 1);
   q.pop();
   assert(q.size() == 0);
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

@@ -9,6 +9,7 @@
 #include "mlir/Tools/mlir-lsp-server/MlirLspServerMain.h"
 #include "LSPServer.h"
 #include "MLIRServer.h"
+#include "mlir/IR/Dialect.h"
 #include "mlir/Tools/lsp-server-support/Logging.h"
 #include "mlir/Tools/lsp-server-support/Transport.h"
 #include "llvm/Support/CommandLine.h"
@@ -18,7 +19,7 @@ using namespace mlir;
 using namespace mlir::lsp;
 
 LogicalResult mlir::MlirLspServerMain(int argc, char **argv,
-                                      DialectRegistryFn registry_fn) {
+                                      DialectRegistry &registry) {
   llvm::cl::opt<JSONStreamStyle> inputStyle{
       "input-style",
       llvm::cl::desc("Input JSON stream encoding"),
@@ -71,15 +72,6 @@ LogicalResult mlir::MlirLspServerMain(int argc, char **argv,
   URIForFile::registerSupportedScheme("mlir.bytecode-mlir");
 
   // Configure the servers and start the main language server.
-  MLIRServer server(registry_fn);
+  MLIRServer server(registry);
   return runMlirLSPServer(server, transport);
-}
-
-llvm::LogicalResult mlir::MlirLspServerMain(int argc, char **argv,
-                                            DialectRegistry &registry) {
-  auto registry_fn =
-      [&registry](const lsp::URIForFile &uri) -> DialectRegistry & {
-    return registry;
-  };
-  return MlirLspServerMain(argc, argv, registry_fn);
 }

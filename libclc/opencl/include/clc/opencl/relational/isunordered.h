@@ -6,16 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_RELATIONAL_ISUNORDERED_H__
-#define __CLC_OPENCL_RELATIONAL_ISUNORDERED_H__
+#undef isunordered
 
-#include <clc/opencl/opencl-base.h>
-
-#define FUNCTION isunordered
+#define __CLC_FUNCTION isunordered
 #define __CLC_BODY <clc/relational/binary_decl.inc>
 
-#include <clc/math/gentype.inc>
+#include <clc/relational/floatn.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_RELATIONAL_ISUNORDERED_H__
+#undef __CLC_FUNCTION

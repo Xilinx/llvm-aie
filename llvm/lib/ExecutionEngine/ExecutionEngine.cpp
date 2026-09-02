@@ -952,7 +952,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       if (CAZ) {
         GenericValue floatZero;
         floatZero.FloatVal = 0.f;
-        llvm::fill(Result.AggregateVal, floatZero);
+        std::fill(Result.AggregateVal.begin(), Result.AggregateVal.end(),
+                  floatZero);
         break;
       }
       if(CV) {
@@ -973,7 +974,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       if (CAZ) {
         GenericValue doubleZero;
         doubleZero.DoubleVal = 0.0;
-        llvm::fill(Result.AggregateVal, doubleZero);
+        std::fill(Result.AggregateVal.begin(), Result.AggregateVal.end(),
+                  doubleZero);
         break;
       }
       if(CV) {
@@ -994,7 +996,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       if (CAZ) {
         GenericValue intZero;
         intZero.IntVal = APInt(ElemTy->getScalarSizeInBits(), 0ull);
-        llvm::fill(Result.AggregateVal, intZero);
+        std::fill(Result.AggregateVal.begin(), Result.AggregateVal.end(),
+                  intZero);
         break;
       }
       if(CV) {

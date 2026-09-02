@@ -11,7 +11,6 @@
 #define LLVM_CLANG_C_FATAL_ERROR_HANDLER_H
 
 #include "clang-c/ExternC.h"
-#include "clang-c/Platform.h"
 
 LLVM_CLANG_C_EXTERN_C_BEGIN
 
@@ -19,14 +18,14 @@ LLVM_CLANG_C_EXTERN_C_BEGIN
  * Installs error handler that prints error message to stderr and calls abort().
  * Replaces currently installed error handler (if any).
  */
-CINDEX_LINKAGE void clang_install_aborting_llvm_fatal_error_handler(void);
+void clang_install_aborting_llvm_fatal_error_handler(void);
 
 /**
  * Removes currently installed error handler (if any).
  * If no error handler is intalled, the default strategy is to print error
  * message to stderr and call exit(1).
  */
-CINDEX_LINKAGE void clang_uninstall_llvm_fatal_error_handler(void);
+void clang_uninstall_llvm_fatal_error_handler(void);
 
 LLVM_CLANG_C_EXTERN_C_END
 

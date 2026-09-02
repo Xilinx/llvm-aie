@@ -14,8 +14,6 @@
 #ifndef LLVM_IR_REPLACECONSTANT_H
 #define LLVM_IR_REPLACECONSTANT_H
 
-#include "llvm/Support/Compiler.h"
-
 namespace llvm {
 
 template <typename T> class ArrayRef;
@@ -35,9 +33,10 @@ class Function;
 ///
 /// If \p IncludeSelf is enabled, also convert the passed constants themselves
 /// to instructions, rather than only their users.
-LLVM_ABI bool convertUsersOfConstantsToInstructions(
-    ArrayRef<Constant *> Consts, Function *RestrictToFunc = nullptr,
-    bool RemoveDeadConstants = true, bool IncludeSelf = false);
+bool convertUsersOfConstantsToInstructions(ArrayRef<Constant *> Consts,
+                                           Function *RestrictToFunc = nullptr,
+                                           bool RemoveDeadConstants = true,
+                                           bool IncludeSelf = false);
 
 } // end namespace llvm
 

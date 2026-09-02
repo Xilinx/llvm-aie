@@ -707,15 +707,11 @@ struct GetReturnObjectManager {
     Builder.CreateStore(Builder.getFalse(), GroActiveFlag);
 
     GroEmission = CGF.EmitAutoVarAlloca(*GroVarDecl);
-
-    if (!GroVarDecl->isNRVOVariable()) {
-      // NRVO variables don't have allocas and won't have the same issue.
-      auto *GroAlloca = dyn_cast_or_null<llvm::AllocaInst>(
-          GroEmission.getOriginalAllocatedAddress().getPointer());
-      assert(GroAlloca && "expected alloca to be emitted");
-      GroAlloca->setMetadata(llvm::LLVMContext::MD_coro_outside_frame,
-                             llvm::MDNode::get(CGF.CGM.getLLVMContext(), {}));
-    }
+    auto *GroAlloca = dyn_cast_or_null<llvm::AllocaInst>(
+        GroEmission.getOriginalAllocatedAddress().getPointer());
+    assert(GroAlloca && "expected alloca to be emitted");
+    GroAlloca->setMetadata(llvm::LLVMContext::MD_coro_outside_frame,
+                           llvm::MDNode::get(CGF.CGM.getLLVMContext(), {}));
 
     // Remember the top of EHStack before emitting the cleanup.
     auto old_top = CGF.EHStack.stable_begin();
@@ -1006,15 +1002,15 @@ RValue CodeGenFunction::EmitCoroutineIntrinsic(const CallExpr *E,
   }
   case llvm::Intrinsic::coro_size: {
     auto &Context = getContext();
-    llvm::IntegerType *T =
-        Builder.getIntNTy(Context.getTypeSize(Context.getSizeType()));
+    CanQualType SizeTy = Context.getSizeType();
+    llvm::IntegerType *T = Builder.getIntNTy(Context.getTypeSize(SizeTy));
     llvm::Function *F = CGM.getIntrinsic(llvm::Intrinsic::coro_size, T);
     return RValue::get(Builder.CreateCall(F));
   }
   case llvm::Intrinsic::coro_align: {
     auto &Context = getContext();
-    llvm::IntegerType *T =
-        Builder.getIntNTy(Context.getTypeSize(Context.getSizeType()));
+    CanQualType SizeTy = Context.getSizeType();
+    llvm::IntegerType *T = Builder.getIntNTy(Context.getTypeSize(SizeTy));
     llvm::Function *F = CGM.getIntrinsic(llvm::Intrinsic::coro_align, T);
     return RValue::get(Builder.CreateCall(F));
   }

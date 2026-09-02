@@ -18,7 +18,6 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/Specifiers.h"
-#include "clang/Basic/UnsignedOrNone.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FunctionExtras.h"
@@ -50,7 +49,6 @@ class FileSystem;
 namespace clang {
 
 class DeclContext;
-class Diagnostic;
 class DiagnosticBuilder;
 class DiagnosticConsumer;
 class IdentifierInfo;
@@ -230,8 +228,6 @@ public:
 class DiagnosticsEngine : public RefCountedBase<DiagnosticsEngine> {
 public:
   /// The level of the diagnostic, after it has been through mapping.
-  // FIXME: Make this an alias for DiagnosticIDs::Level as soon as
-  // we can use 'using enum'.
   enum Level {
     Ignored = DiagnosticIDs::Ignored,
     Note = DiagnosticIDs::Note,
@@ -289,9 +285,6 @@ public:
 
     /// Expr *
     ak_expr,
-
-    /// AttributeCommonInfo *
-    ak_attr_info,
   };
 
   /// Represents on argument value, which is a union discriminated
@@ -427,13 +420,10 @@ private:
     bool empty() const { return Files.empty(); }
 
     /// Clear out this map.
-    void clear(bool Soft) {
-      // Just clear the cache when in soft mode.
+    void clear() {
       Files.clear();
-      if (!Soft) {
-        FirstDiagState = CurDiagState = nullptr;
-        CurDiagStateLoc = SourceLocation();
-      }
+      FirstDiagState = CurDiagState = nullptr;
+      CurDiagStateLoc = SourceLocation();
     }
 
     /// Produce a debugging dump of the diagnostic state.
@@ -542,7 +532,7 @@ private:
   ///
   /// This is used to emit continuation diagnostics with the same level as the
   /// diagnostic that they follow.
-  Level LastDiagLevel;
+  DiagnosticIDs::Level LastDiagLevel;
 
   /// Number of warnings reported
   unsigned NumWarnings;
@@ -787,16 +777,18 @@ public:
   /// the middle of another diagnostic.
   ///
   /// This can be used by clients who suppress diagnostics themselves.
-  void setLastDiagnosticIgnored(bool IsIgnored) {
-    if (LastDiagLevel == Fatal)
+  void setLastDiagnosticIgnored(bool Ignored) {
+    if (LastDiagLevel == DiagnosticIDs::Fatal)
       FatalErrorOccurred = true;
-    LastDiagLevel = IsIgnored ? Ignored : Warning;
+    LastDiagLevel = Ignored ? DiagnosticIDs::Ignored : DiagnosticIDs::Warning;
   }
 
   /// Determine whether the previous diagnostic was ignored. This can
   /// be used by clients that want to determine whether notes attached to a
   /// diagnostic will be suppressed.
-  bool isLastDiagnosticIgnored() const { return LastDiagLevel == Ignored; }
+  bool isLastDiagnosticIgnored() const {
+    return LastDiagLevel == DiagnosticIDs::Ignored;
+  }
 
   /// Controls whether otherwise-unmapped extension diagnostics are
   /// mapped onto ignore/warning/error.
@@ -895,10 +887,7 @@ public:
   /// \param FormatString A fixed diagnostic format string that will be hashed
   /// and mapped to a unique DiagID.
   template <unsigned N>
-  // FIXME: this API should almost never be used; custom diagnostics do not
-  // have an associated diagnostic group and thus cannot be controlled by users
-  // like other diagnostics. The number of times this API is used in Clang
-  // should only ever be reduced, not increased.
+  // TODO: Deprecate this once all uses are removed from Clang.
   // [[deprecated("Use a CustomDiagDesc instead of a Level")]]
   unsigned getCustomDiagID(Level L, const char (&FormatString)[N]) {
     return Diags->getCustomDiagID((DiagnosticIDs::Level)L,
@@ -929,10 +918,6 @@ public:
   /// Reset the state of the diagnostic object to its initial configuration.
   /// \param[in] soft - if true, doesn't reset the diagnostic mappings and state
   void Reset(bool soft = false);
-  /// We keep a cache of FileIDs for diagnostics mapped by pragmas. These might
-  /// get invalidated when diagnostics engine is shared across different
-  /// compilations. Provide users with a way to reset that.
-  void ResetPragmas();
 
   //===--------------------------------------------------------------------===//
   // DiagnosticsEngine classification and reporting interfaces.
@@ -1039,10 +1024,9 @@ private:
   /// Used to report a diagnostic that is finally fully formed.
   ///
   /// \returns true if the diagnostic was emitted, false if it was suppressed.
-  bool ProcessDiag(const DiagnosticBuilder &DiagBuilder);
-
-  /// Forward a diagnostic to the DiagnosticConsumer.
-  void Report(Level DiagLevel, const Diagnostic &Info);
+  bool ProcessDiag(const DiagnosticBuilder &DiagBuilder) {
+    return Diags->ProcessDiag(*this, DiagBuilder);
+  }
 
   /// @name Diagnostic Emission
   /// @{

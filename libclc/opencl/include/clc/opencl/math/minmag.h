@@ -6,14 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_MATH_MINMAG_H__
-#define __CLC_OPENCL_MATH_MINMAG_H__
-
 #define __CLC_BODY <clc/shared/binary_decl.inc>
-#define FUNCTION minmag
+#define __CLC_FUNCTION minmag
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_MATH_MINMAG_H__
+#undef __CLC_FUNCTION

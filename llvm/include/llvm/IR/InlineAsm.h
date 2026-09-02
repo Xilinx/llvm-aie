@@ -19,7 +19,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Value.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <string>
@@ -64,11 +63,10 @@ public:
 
   /// InlineAsm::get - Return the specified uniqued inline asm string.
   ///
-  LLVM_ABI static InlineAsm *get(FunctionType *Ty, StringRef AsmString,
-                                 StringRef Constraints, bool hasSideEffects,
-                                 bool isAlignStack = false,
-                                 AsmDialect asmDialect = AD_ATT,
-                                 bool canThrow = false);
+  static InlineAsm *get(FunctionType *Ty, StringRef AsmString,
+                        StringRef Constraints, bool hasSideEffects,
+                        bool isAlignStack = false,
+                        AsmDialect asmDialect = AD_ATT, bool canThrow = false);
 
   bool hasSideEffects() const { return HasSideEffects; }
   bool isAlignStack() const { return IsAlignStack; }
@@ -83,15 +81,15 @@ public:
 
   /// getFunctionType - InlineAsm's are always pointers to functions.
   ///
-  LLVM_ABI FunctionType *getFunctionType() const;
+  FunctionType *getFunctionType() const;
 
   StringRef getAsmString() const { return AsmString; }
   StringRef getConstraintString() const { return Constraints; }
-  LLVM_ABI void collectAsmStrs(SmallVectorImpl<StringRef> &AsmStrs) const;
+  void collectAsmStrs(SmallVectorImpl<StringRef> &AsmStrs) const;
 
   /// This static method can be used by the parser to check to see if the
   /// specified constraint string is legal for the type.
-  LLVM_ABI static Error verify(FunctionType *Ty, StringRef Constraints);
+  static Error verify(FunctionType *Ty, StringRef Constraints);
 
   // Constraint String Parsing
   enum ConstraintPrefix {
@@ -171,11 +169,11 @@ public:
     /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.
-    LLVM_ABI bool Parse(StringRef Str, ConstraintInfoVector &ConstraintsSoFar);
+    bool Parse(StringRef Str, ConstraintInfoVector &ConstraintsSoFar);
 
     /// selectAlternative - Point this constraint to the alternative constraint
     /// indicated by the index.
-    LLVM_ABI void selectAlternative(unsigned index);
+    void selectAlternative(unsigned index);
 
     /// Whether this constraint corresponds to an argument.
     bool hasArg() const {
@@ -186,8 +184,7 @@ public:
   /// ParseConstraints - Split up the constraint string into the specific
   /// constraints and their prefixes.  If this returns an empty vector, and if
   /// the constraint string itself isn't empty, there was an error parsing.
-  LLVM_ABI static ConstraintInfoVector
-  ParseConstraints(StringRef ConstraintString);
+  static ConstraintInfoVector ParseConstraints(StringRef ConstraintString);
 
   /// ParseConstraints - Parse the constraints of this inlineasm object,
   /// returning them the same way that ParseConstraints(str) does.

@@ -16,8 +16,6 @@
 #include <flat_map>
 #include <vector>
 
-#include "test_macros.h"
-
 struct A {
   using Map = std::flat_map<A, A>;
   int data;
@@ -27,19 +25,9 @@ struct A {
 };
 
 // Implement the operator< required in order to instantiate flat_map<A, X>
-constexpr bool operator<(A const& L, A const& R) { return L.data < R.data; }
-
-constexpr bool test() {
-  A a;
-
-  return true;
-}
+bool operator<(A const& L, A const& R) { return L.data < R.data; }
 
 int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
-
+  A a;
   return 0;
 }

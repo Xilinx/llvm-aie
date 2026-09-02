@@ -8,8 +8,10 @@
 
 #include "mlir/Dialect/MemRef/Transforms/Transforms.h"
 
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/Transforms/Transforms.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/Interfaces/ValueBoundsOpInterface.h"
 
 using namespace mlir;
@@ -51,13 +53,14 @@ FailureOr<Value> memref::buildIndependentOp(OpBuilder &b,
 
   // Create a new memref::AllocaOp.
   Value newAllocaOp =
-      AllocaOp::create(b, loc, newSizes, allocaOp.getType().getElementType());
+      b.create<AllocaOp>(loc, newSizes, allocaOp.getType().getElementType());
 
   // Create a memref::SubViewOp.
   SmallVector<OpFoldResult> offsets(newSizes.size(), b.getIndexAttr(0));
   SmallVector<OpFoldResult> strides(newSizes.size(), b.getIndexAttr(1));
-  return SubViewOp::create(b, loc, newAllocaOp, offsets,
-                           allocaOp.getMixedSizes(), strides)
+  return b
+      .create<SubViewOp>(loc, newAllocaOp, offsets, allocaOp.getMixedSizes(),
+                         strides)
       .getResult();
 }
 
@@ -70,11 +73,11 @@ propagateSubViewOp(RewriterBase &rewriter,
   MemRefType newResultType = SubViewOp::inferRankReducedResultType(
       op.getType().getShape(), op.getSourceType(), op.getMixedOffsets(),
       op.getMixedSizes(), op.getMixedStrides());
-  Value newSubview = SubViewOp::create(
-      rewriter, op.getLoc(), newResultType, conversionOp.getOperand(0),
+  Value newSubview = rewriter.create<SubViewOp>(
+      op.getLoc(), newResultType, conversionOp.getOperand(0),
       op.getMixedOffsets(), op.getMixedSizes(), op.getMixedStrides());
-  auto newConversionOp = UnrealizedConversionCastOp::create(
-      rewriter, op.getLoc(), op.getType(), newSubview);
+  auto newConversionOp = rewriter.create<UnrealizedConversionCastOp>(
+      op.getLoc(), op.getType(), newSubview);
   rewriter.replaceAllUsesWith(op.getResult(), newConversionOp->getResult(0));
   return newConversionOp;
 }
@@ -105,8 +108,8 @@ static void replaceAndPropagateMemRefType(RewriterBase &rewriter,
   SmallVector<UnrealizedConversionCastOp> unrealizedConversions;
   for (const auto &it :
        llvm::enumerate(llvm::zip(from->getResults(), to->getResults()))) {
-    unrealizedConversions.push_back(UnrealizedConversionCastOp::create(
-        rewriter, to->getLoc(), std::get<0>(it.value()).getType(),
+    unrealizedConversions.push_back(rewriter.create<UnrealizedConversionCastOp>(
+        to->getLoc(), std::get<0>(it.value()).getType(),
         std::get<1>(it.value())));
     rewriter.replaceAllUsesWith(from->getResult(it.index()),
                                 unrealizedConversions.back()->getResult(0));

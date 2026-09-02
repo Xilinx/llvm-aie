@@ -21,9 +21,7 @@
 // CHECK_ERROR_7: can't run 'wrong-op' pass manager on 'builtin.module' op
 
 // RUN: mlir-opt %s -pass-pipeline='any(cse)' -dump-pass-pipeline 2>&1 | FileCheck %s -check-prefix=CHECK_ROUNDTRIP
-// CHECK_ROUNDTRIP: any(
-// CHECK_ROUNDTRIP-NEXT: cse
-// CHECK_ROUNDTRIP-NEXT: )
+// CHECK_ROUNDTRIP: any(cse)
 
 func.func @foo() {
   return

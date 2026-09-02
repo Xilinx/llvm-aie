@@ -15,9 +15,11 @@ define i1 @check_i1() {
   ; PTX-DAG: ld.param.b32 [[LD:%r[0-9]+]], [retval0];
   ; PTX-DAG: } // callseq {{[0-9]+}}
 
-  ; PTX-WITHOUT-DAG: mov.b32 [[RES:%r[0-9]+]], [[LD]];
-  ; PTX-WITHOUT-DAG: st.param.b32 [func_retval0], [[RES]];
-  ; PTX-WITH-DAG: st.param.b32 [func_retval0], [[LD]];
+  ; PTX-WITHOUT-DAG: mov.b32 [[PROXY:%r[0-9]+]], [[LD]];
+  ; PTX-WITHOUT-DAG: and.b32 [[RES:%r[0-9]+]], [[PROXY]], 1;
+  ; PTX-WITH-DAG:    and.b32 [[RES:%r[0-9]+]], [[LD]], 1;
+
+  ; PTX-DAG: st.param.b32 [func_retval0], [[RES]];
 
   %ret = call i1 @callee_i1()
   ret i1 %ret
@@ -30,9 +32,11 @@ define  i16 @check_i16() {
   ; PTX-DAG: ld.param.b32 [[LD:%r[0-9]+]], [retval0];
   ; PTX-DAG: } // callseq {{[0-9]+}}
 
-  ; PTX-WITHOUT-DAG: mov.b32 [[RES:%r[0-9]+]], [[LD]];
-  ; PTX-WITHOUT-DAG: st.param.b32 [func_retval0], [[RES]];
-  ; PTX-WITH-DAG: st.param.b32 [func_retval0], [[LD]];
+  ; PTX-WITHOUT-DAG: mov.b32 [[PROXY:%r[0-9]+]], [[LD]];
+  ; PTX-WITHOUT-DAG: and.b32 [[RES:%r[0-9]+]], [[PROXY]], 65535;
+  ; PTX-WITH-DAG:    and.b32 [[RES:%r[0-9]+]], [[LD]], 65535;
+
+  ; PTX-DAG: st.param.b32 [func_retval0], [[RES]];
 
   %ret = call i16 @callee_i16()
   ret i16 %ret

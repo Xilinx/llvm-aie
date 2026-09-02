@@ -13,7 +13,6 @@
 // flat_map(const flat_map& m);
 
 #include <cassert>
-#include <deque>
 #include <flat_map>
 #include <vector>
 
@@ -21,12 +20,11 @@
 #include "../../../test_compare.h"
 #include "test_allocator.h"
 
-template <template <class...> class KeyContainer, template <class...> class ValueContainer>
-constexpr void test() {
+int main(int, char**) {
   {
     using C = test_less<int>;
-    KeyContainer<int, test_allocator<int>> ks({1, 3, 5}, test_allocator<int>(6));
-    ValueContainer<char, test_allocator<char>> vs({2, 2, 1}, test_allocator<char>(7));
+    std::vector<int, test_allocator<int>> ks({1, 3, 5}, test_allocator<int>(6));
+    std::vector<char, test_allocator<char>> vs({2, 2, 1}, test_allocator<char>(7));
     using M = std::flat_map<int, char, C, decltype(ks), decltype(vs)>;
     auto mo = M(ks, vs, C(5));
     auto m  = mo;
@@ -46,8 +44,8 @@ constexpr void test() {
   }
   {
     using C  = test_less<int>;
-    using Ks = KeyContainer<int, other_allocator<int>>;
-    using Vs = ValueContainer<char, other_allocator<char>>;
+    using Ks = std::vector<int, other_allocator<int>>;
+    using Vs = std::vector<char, other_allocator<char>>;
     auto ks  = Ks({1, 3, 5}, other_allocator<int>(6));
     auto vs  = Vs({2, 2, 1}, other_allocator<char>(7));
     using M  = std::flat_map<int, char, C, Ks, Vs>;
@@ -67,26 +65,6 @@ constexpr void test() {
     assert(mo.keys().get_allocator() == other_allocator<int>(6));
     assert(mo.values().get_allocator() == other_allocator<char>(7));
   }
-}
-
-constexpr bool test() {
-  test<std::vector, std::vector>();
-
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-  {
-    test<std::deque, std::deque>();
-  }
-
-  return true;
-}
-
-int main(int, char**) {
-  test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

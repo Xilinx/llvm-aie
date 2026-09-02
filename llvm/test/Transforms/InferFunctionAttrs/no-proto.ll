@@ -977,6 +977,3 @@ declare void @vsscanf(...)
 
 ; CHECK: declare void @write(...)
 declare void @write(...)
-
-; CHECK: declare double @cabs(...)
-declare double @cabs(...)

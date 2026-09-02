@@ -8,12 +8,10 @@ struct rdar38642201 {
 
 void rdar38642201_callee(int x, int y);
 void rdar38642201_caller() {
-  struct rdar38642201 structVar;      //expected-note 2{{'structVar' declared here}}
+  struct rdar38642201 structVar;
   rdar38642201_callee(
-      structVar1.fieldName1.member1,  //expected-error{{use of undeclared identifier 'structVar1'}} \
-                                        expected-error{{no member named 'fieldName1' in 'rdar38642201'}}
-      structVar2.fieldName2.member2); //expected-error{{use of undeclared identifier 'structVar2'}} \
-                                        expected-error{{no member named 'fieldName2' in 'rdar38642201'}}
+      structVar1.fieldName1.member1,  //expected-error{{use of undeclared identifier 'structVar1'}}
+      structVar2.fieldName2.member2); //expected-error{{use of undeclared identifier 'structVar2'}}
 }
 
 // Similar reproducer.
@@ -22,7 +20,7 @@ public:
   int minut() const = delete;
   int hour() const = delete;
 
-  int longit() const;
+  int longit() const; //expected-note{{'longit' declared here}}
   int latit() const;
 };
 
@@ -37,6 +35,6 @@ int Foo(const B &b) {
 }
 
 int Bar(const B &b) {
-  return b.depar().longitude() + //expected-error{{no member named 'longitude' in 'A'}}
+  return b.depar().longitude() + //expected-error{{no member named 'longitude' in 'A'; did you mean 'longit'?}}
          b.depar().latitude();   //expected-error{{no member named 'latitude' in 'A'}}
 }

@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <clc/integer/clc_rotate.h>
-#include <clc/opencl/integer/rotate.h>
+#include <clc/opencl/clc.h>
 
 #define FUNCTION rotate
 #define __CLC_BODY <clc/shared/binary_def.inc>

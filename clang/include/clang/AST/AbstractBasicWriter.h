@@ -138,7 +138,8 @@ public:
     asImpl().writeUInt32(uint32_t(value));
   }
 
-  template <class T> void writeArray(ArrayRef<T> array) {
+  template <class T>
+  void writeArray(llvm::ArrayRef<T> array) {
     asImpl().writeUInt32(array.size());
     for (const T &elt : array) {
       WriteDispatcher<T>::write(asImpl(), elt);
@@ -251,7 +252,11 @@ public:
         continue;
 
       case NestedNameSpecifier::Namespace:
-        asImpl().writeNamespaceBaseDeclRef(NNS->getAsNamespace());
+        asImpl().writeNamespaceDeclRef(NNS->getAsNamespace());
+        continue;
+
+      case NestedNameSpecifier::NamespaceAlias:
+        asImpl().writeNamespaceAliasDeclRef(NNS->getAsNamespaceAlias());
         continue;
 
       case NestedNameSpecifier::TypeSpec:

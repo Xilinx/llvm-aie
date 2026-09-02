@@ -20,23 +20,17 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCTargetOptions.h"
-#include "llvm/Support/Compiler.h"
 #include <vector>
 
 namespace llvm {
 
-class MCAssembler;
 class MCContext;
 class MCCFIInstruction;
 class MCExpr;
-class MCSpecifierExpr;
 class MCSection;
 class MCStreamer;
 class MCSubtargetInfo;
 class MCSymbol;
-class MCValue;
-class Triple;
-class raw_ostream;
 
 namespace WinEH {
 
@@ -61,7 +55,7 @@ enum LCOMMType { NoAlignment, ByteAlignment, Log2Alignment };
 
 /// This class is intended to be used as a base class for asm
 /// properties and features specific to the target.
-class LLVM_ABI MCAsmInfo {
+class MCAsmInfo {
 public:
   /// Assembly character literal syntax types.
   enum AsmCharLiteralSyntax {
@@ -77,6 +71,7 @@ public:
     uint32_t Kind;
     StringRef Name;
   };
+  using VariantKindDesc = AtSpecifier;
 
 protected:
   //===------------------------------------------------------------------===//
@@ -144,9 +139,6 @@ protected:
 
   /// This is appended to emitted labels.  Defaults to ":"
   const char *LabelSuffix;
-
-  /// Use .set instead of = to equate a symbol to an expression.
-  bool UsesSetToEquateSymbol = false;
 
   // Print the EH begin symbol with an assignment. Defaults to false.
   bool UseAssignmentForEHBegin = false;
@@ -427,17 +419,13 @@ protected:
   // If true, use Motorola-style integers in Assembly (ex. $0ac).
   bool UseMotorolaIntegers = false;
 
-  llvm::DenseMap<uint32_t, StringRef> AtSpecifierToName;
-  llvm::StringMap<uint32_t> NameToAtSpecifier;
-  void initializeAtSpecifiers(ArrayRef<AtSpecifier>);
+  llvm::DenseMap<uint32_t, StringRef> SpecifierToName;
+  llvm::StringMap<uint32_t> NameToSpecifier;
+  void initializeVariantKinds(ArrayRef<VariantKindDesc> Descs);
 
 public:
   explicit MCAsmInfo();
   virtual ~MCAsmInfo();
-
-  // Explicitly non-copyable.
-  MCAsmInfo(MCAsmInfo const &) = delete;
-  MCAsmInfo &operator=(MCAsmInfo const &) = delete;
 
   /// Get the code pointer size in bytes.
   unsigned getCodePointerSize() const { return CodePointerSize; }
@@ -486,9 +474,6 @@ public:
   /// syntactically correct.
   virtual bool isValidUnquotedName(StringRef Name) const;
 
-  virtual void printSwitchToSection(const MCSection &, uint32_t Subsection,
-                                    const Triple &, raw_ostream &) const {}
-
   /// Return true if the .section directive should be omitted when
   /// emitting \p SectionName.  For example:
   ///
@@ -497,10 +482,6 @@ public:
   /// returns false => .section .text,#alloc,#execinstr
   /// returns true  => .text
   virtual bool shouldOmitSectionDirective(StringRef SectionName) const;
-
-  // Return true if a .align directive should use "optimized nops" to fill
-  // instead of 0s.
-  virtual bool useCodeAlign(const MCSection &Sec) const { return false; }
 
   bool usesSunStyleELFSectionSwitchSyntax() const {
     return SunStyleELFSectionSwitchSyntax;
@@ -539,7 +520,6 @@ public:
   bool shouldAllowAdditionalComments() const { return AllowAdditionalComments; }
   const char *getLabelSuffix() const { return LabelSuffix; }
 
-  bool usesSetToEquateSymbol() const { return UsesSetToEquateSymbol; }
   bool useAssignmentForEHBegin() const { return UseAssignmentForEHBegin; }
   bool needsLocalForSize() const { return NeedsLocalForSize; }
   StringRef getPrivateGlobalPrefix() const { return PrivateGlobalPrefix; }
@@ -720,14 +700,6 @@ public:
 
   StringRef getSpecifierName(uint32_t S) const;
   std::optional<uint32_t> getSpecifierForName(StringRef Name) const;
-
-  void printExpr(raw_ostream &, const MCExpr &) const;
-  virtual void printSpecifierExpr(raw_ostream &,
-                                  const MCSpecifierExpr &) const {
-    llvm_unreachable("Need to implement hook if target uses MCSpecifierExpr");
-  }
-  virtual bool evaluateAsRelocatableImpl(const MCSpecifierExpr &, MCValue &Res,
-                                         const MCAssembler *Asm) const;
 };
 
 } // end namespace llvm

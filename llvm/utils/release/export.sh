@@ -123,7 +123,7 @@ export_sources() {
                 tar -C test-suite-$release$rc.src --strip-components=1 -xzf -
         fi
         echo "Creating tarball for test-suite ..."
-        XZ_OPT="-T0" tar --sort=name --owner=0 --group=0 \
+        tar --sort=name --owner=0 --group=0 \
             --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
             -cJf test-suite-$release$rc.src.tar.xz test-suite-$release$rc.src
     fi

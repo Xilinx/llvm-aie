@@ -11,14 +11,16 @@ define i64 @remove_loop_region_int_iv_used_outside(ptr %dst) {
 ; CHECK:       [[VECTOR_PH]]:
 ; CHECK-NEXT:    br label %[[VECTOR_BODY:.*]]
 ; CHECK:       [[VECTOR_BODY]]:
-; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[DST]], i32 8
-; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[DST]], align 8
+; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr ptr, ptr [[DST]], i64 0
+; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr ptr, ptr [[TMP0]], i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[TMP0]], i32 8
+; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP1]], align 8
 ; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP2]], align 8
 ; CHECK-NEXT:    br label %[[MIDDLE_BLOCK:.*]]
 ; CHECK:       [[MIDDLE_BLOCK]]:
-; CHECK-NEXT:    br label %[[EXIT:.*]]
+; CHECK-NEXT:    br i1 true, label %[[EXIT:.*]], label %[[SCALAR_PH]]
 ; CHECK:       [[SCALAR_PH]]:
-; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi i64 [ 0, %[[ENTRY]] ]
+; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi i64 [ 16, %[[MIDDLE_BLOCK]] ], [ 0, %[[ENTRY]] ]
 ; CHECK-NEXT:    br label %[[LOOP:.*]]
 ; CHECK:       [[LOOP]]:
 ; CHECK-NEXT:    [[IV:%.*]] = phi i64 [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[IV_NEXT:%.*]], %[[LOOP]] ]
@@ -55,14 +57,16 @@ define i64 @remove_loop_region_int_iv_inc_used_outside(ptr %dst) {
 ; CHECK:       [[VECTOR_PH]]:
 ; CHECK-NEXT:    br label %[[VECTOR_BODY:.*]]
 ; CHECK:       [[VECTOR_BODY]]:
-; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[DST]], i32 8
-; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[DST]], align 8
+; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr ptr, ptr [[DST]], i64 0
+; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr ptr, ptr [[TMP0]], i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[TMP0]], i32 8
+; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP1]], align 8
 ; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP2]], align 8
 ; CHECK-NEXT:    br label %[[MIDDLE_BLOCK:.*]]
 ; CHECK:       [[MIDDLE_BLOCK]]:
-; CHECK-NEXT:    br label %[[EXIT:.*]]
+; CHECK-NEXT:    br i1 true, label %[[EXIT:.*]], label %[[SCALAR_PH]]
 ; CHECK:       [[SCALAR_PH]]:
-; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi i64 [ 0, %[[ENTRY]] ]
+; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi i64 [ 16, %[[MIDDLE_BLOCK]] ], [ 0, %[[ENTRY]] ]
 ; CHECK-NEXT:    br label %[[LOOP:.*]]
 ; CHECK:       [[LOOP]]:
 ; CHECK-NEXT:    [[IV:%.*]] = phi i64 [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[IV_NEXT:%.*]], %[[LOOP]] ]
@@ -100,16 +104,18 @@ define ptr @remove_loop_region_ptr_iv_used_outside(ptr %dst) {
 ; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr i8, ptr [[DST]], i64 128
 ; CHECK-NEXT:    br label %[[VECTOR_BODY:.*]]
 ; CHECK:       [[VECTOR_BODY]]:
-; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[DST]], i32 8
-; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[DST]], align 8
+; CHECK-NEXT:    [[NEXT_GEP:%.*]] = getelementptr i8, ptr [[DST]], i64 0
+; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr ptr, ptr [[NEXT_GEP]], i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[NEXT_GEP]], i32 8
+; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP1]], align 8
 ; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP2]], align 8
 ; CHECK-NEXT:    br label %[[MIDDLE_BLOCK:.*]]
 ; CHECK:       [[MIDDLE_BLOCK]]:
 ; CHECK-NEXT:    [[IND_ESCAPE:%.*]] = getelementptr i8, ptr [[TMP0]], i64 -8
-; CHECK-NEXT:    br label %[[EXIT:.*]]
+; CHECK-NEXT:    br i1 true, label %[[EXIT:.*]], label %[[SCALAR_PH]]
 ; CHECK:       [[SCALAR_PH]]:
-; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi ptr [ [[DST]], %[[ENTRY]] ]
-; CHECK-NEXT:    [[BC_RESUME_VAL1:%.*]] = phi i64 [ 0, %[[ENTRY]] ]
+; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi ptr [ [[TMP0]], %[[MIDDLE_BLOCK]] ], [ [[DST]], %[[ENTRY]] ]
+; CHECK-NEXT:    [[BC_RESUME_VAL1:%.*]] = phi i64 [ 16, %[[MIDDLE_BLOCK]] ], [ 0, %[[ENTRY]] ]
 ; CHECK-NEXT:    br label %[[LOOP:.*]]
 ; CHECK:       [[LOOP]]:
 ; CHECK-NEXT:    [[PTR_IV:%.*]] = phi ptr [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[PTR_IV_NEXT:%.*]], %[[LOOP]] ]
@@ -149,15 +155,17 @@ define ptr @remove_loop_region_ptr_iv_inc_used_outside(ptr %dst) {
 ; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr i8, ptr [[DST]], i64 128
 ; CHECK-NEXT:    br label %[[VECTOR_BODY:.*]]
 ; CHECK:       [[VECTOR_BODY]]:
-; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[DST]], i32 8
-; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[DST]], align 8
+; CHECK-NEXT:    [[NEXT_GEP:%.*]] = getelementptr i8, ptr [[DST]], i64 0
+; CHECK-NEXT:    [[TMP1:%.*]] = getelementptr ptr, ptr [[NEXT_GEP]], i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr ptr, ptr [[NEXT_GEP]], i32 8
+; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP1]], align 8
 ; CHECK-NEXT:    store <8 x ptr> zeroinitializer, ptr [[TMP2]], align 8
 ; CHECK-NEXT:    br label %[[MIDDLE_BLOCK:.*]]
 ; CHECK:       [[MIDDLE_BLOCK]]:
-; CHECK-NEXT:    br label %[[EXIT:.*]]
+; CHECK-NEXT:    br i1 true, label %[[EXIT:.*]], label %[[SCALAR_PH]]
 ; CHECK:       [[SCALAR_PH]]:
-; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi ptr [ [[DST]], %[[ENTRY]] ]
-; CHECK-NEXT:    [[BC_RESUME_VAL1:%.*]] = phi i64 [ 0, %[[ENTRY]] ]
+; CHECK-NEXT:    [[BC_RESUME_VAL:%.*]] = phi ptr [ [[TMP0]], %[[MIDDLE_BLOCK]] ], [ [[DST]], %[[ENTRY]] ]
+; CHECK-NEXT:    [[BC_RESUME_VAL1:%.*]] = phi i64 [ 16, %[[MIDDLE_BLOCK]] ], [ 0, %[[ENTRY]] ]
 ; CHECK-NEXT:    br label %[[LOOP:.*]]
 ; CHECK:       [[LOOP]]:
 ; CHECK-NEXT:    [[PTR_IV:%.*]] = phi ptr [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[PTR_IV_NEXT:%.*]], %[[LOOP]] ]

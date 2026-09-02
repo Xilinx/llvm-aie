@@ -42,7 +42,6 @@ static_library("Object") {
     "OffloadBundle.cpp",
     "RecordStreamer.cpp",
     "RelocationResolver.cpp",
-    "SFrameParser.cpp",
     "SymbolSize.cpp",
     "SymbolicFile.cpp",
     "TapiFile.cpp",

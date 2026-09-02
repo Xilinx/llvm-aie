@@ -3,11 +3,12 @@ add_lldb_unittest(LLDBValueObjectTests
   DILLexerTests.cpp
   DynamicValueObjectLocalBuffer.cpp
 
-  LINK_COMPONENTS
-    Support
   LINK_LIBS
     lldbValueObject
     lldbPluginPlatformLinux
     lldbPluginScriptInterpreterNone
     LLVMTestingSupport
+
+  LINK_COMPONENTS
+    Support
   )

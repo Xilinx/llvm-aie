@@ -13,6 +13,7 @@
 #include "lldb/API/SBFrame.h"
 #include "lldb/API/SBFile.h"
 
+#include "lldb/API/SBInstruction.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/Core/Disassembler.h"

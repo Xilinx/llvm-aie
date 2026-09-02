@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -54,9 +53,9 @@ struct BitSetInfo {
     return Bits.size() == BitSize;
   }
 
-  LLVM_ABI bool containsGlobalOffset(uint64_t Offset) const;
+  bool containsGlobalOffset(uint64_t Offset) const;
 
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 };
 
 struct BitSetBuilder {
@@ -75,7 +74,7 @@ struct BitSetBuilder {
     Offsets.push_back(Offset);
   }
 
-  LLVM_ABI BitSetInfo build();
+  BitSetInfo build();
 };
 
 /// This class implements a layout algorithm for globals referenced by bit sets
@@ -138,7 +137,7 @@ struct GlobalLayoutBuilder {
   /// Add F to the layout while trying to keep its indices contiguous.
   /// If a previously seen fragment uses any of F's indices, that
   /// fragment will be laid out inside F.
-  LLVM_ABI void addFragment(const std::set<uint64_t> &F);
+  void addFragment(const std::set<uint64_t> &F);
 };
 
 /// This class is used to build a byte array containing overlapping bit sets. By
@@ -190,11 +189,11 @@ struct ByteArrayBuilder {
   /// AllocMask is set to the bitmask for those bits. This uses the LPT (Longest
   /// Processing Time) multiprocessor scheduling algorithm to lay out the bits
   /// efficiently; the pass allocates bit sets in decreasing size order.
-  LLVM_ABI void allocate(const std::set<uint64_t> &Bits, uint64_t BitSize,
-                         uint64_t &AllocByteOffset, uint8_t &AllocMask);
+  void allocate(const std::set<uint64_t> &Bits, uint64_t BitSize,
+                uint64_t &AllocByteOffset, uint8_t &AllocMask);
 };
 
-LLVM_ABI bool isJumpTableCanonical(Function *F);
+bool isJumpTableCanonical(Function *F);
 
 /// Specifies how to drop type tests.
 enum class DropTestKind {
@@ -221,12 +220,7 @@ public:
                          lowertypetests::DropTestKind::None)
       : ExportSummary(ExportSummary), ImportSummary(ImportSummary),
         DropTypeTests(DropTypeTests) {}
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
-};
-
-class SimplifyTypeTestsPass : public PassInfoMixin<SimplifyTypeTestsPass> {
-public:
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 } // end namespace llvm

@@ -10,7 +10,7 @@
 
 // <list>
 
-// iterator insert(const_iterator p, initializer_list<value_type> il); // constexpr since C++26
+// iterator insert(const_iterator p, initializer_list<value_type> il);
 
 #include <list>
 #include <cassert>
@@ -18,7 +18,7 @@
 #include "test_macros.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     std::list<int> d(10, 1);
     std::list<int>::iterator i = d.insert(std::next(d.cbegin(), 2), {3, 4, 5, 6});
@@ -61,15 +61,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     assert(*i++ == 1);
     assert(*i++ == 1);
   }
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

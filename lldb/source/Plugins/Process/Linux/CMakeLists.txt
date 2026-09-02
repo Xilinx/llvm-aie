@@ -18,9 +18,6 @@ add_lldb_library(lldbPluginProcessLinux
   Procfs.cpp
   SingleStepCheck.cpp
 
-  LINK_COMPONENTS
-    Support
-    TargetParser
   LINK_LIBS
     lldbCore
     lldbHost
@@ -29,4 +26,7 @@ add_lldb_library(lldbPluginProcessLinux
     lldbUtility
     lldbPluginProcessPOSIX
     lldbPluginProcessUtility
+  LINK_COMPONENTS
+    Support
+    TargetParser
   )

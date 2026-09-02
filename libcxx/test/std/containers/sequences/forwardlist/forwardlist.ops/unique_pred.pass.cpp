@@ -9,7 +9,7 @@
 // <forward_list>
 
 // template <class BinaryPredicate> void unique(BinaryPredicate binary_pred);      // C++17 and before
-// template <class BinaryPredicate> size_type unique(BinaryPredicate binary_pred); // C++20 and after; constexpr since C++26
+// template <class BinaryPredicate> size_type unique(BinaryPredicate binary_pred); // C++20 and after
 
 #include <cassert>
 #include <forward_list>
@@ -20,7 +20,7 @@
 #include "min_allocator.h"
 
 template <class L, class Predicate>
-TEST_CONSTEXPR_CXX26 void do_unique(L& l, Predicate pred, typename L::size_type expected) {
+void do_unique(L& l, Predicate pred, typename L::size_type expected) {
   typename L::size_type old_size = std::distance(l.begin(), l.end());
 #if TEST_STD_VER > 17
   ASSERT_SAME_TYPE(decltype(l.unique(pred)), typename L::size_type);
@@ -33,17 +33,17 @@ TEST_CONSTEXPR_CXX26 void do_unique(L& l, Predicate pred, typename L::size_type 
 }
 
 struct PredLWG526 {
-  TEST_CONSTEXPR_CXX20 PredLWG526(int i) : i_(i) {}
-  TEST_CONSTEXPR_CXX20 ~PredLWG526() { i_ = -32767; }
-  TEST_CONSTEXPR bool operator()(const PredLWG526& lhs, const PredLWG526& rhs) const { return lhs.i_ == rhs.i_; }
+  PredLWG526(int i) : i_(i) {}
+  ~PredLWG526() { i_ = -32767; }
+  bool operator()(const PredLWG526& lhs, const PredLWG526& rhs) const { return lhs.i_ == rhs.i_; }
 
-  TEST_CONSTEXPR bool operator==(int i) const { return i == i_; }
+  bool operator==(int i) const { return i == i_; }
   int i_;
 };
 
-TEST_CONSTEXPR bool g(int x, int y) { return x == y; }
+bool g(int x, int y) { return x == y; }
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     typedef int T;
     typedef std::forward_list<T> C;
@@ -155,15 +155,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     do_unique(c1, g, 2);
     assert(c1 == c2);
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

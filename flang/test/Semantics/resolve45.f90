@@ -36,13 +36,13 @@ subroutine s3(x)
 end
 
 subroutine s4
-  !WARNING: Explicit SAVE of 'z' is redundant due to global SAVE statement [-Wredundant-attribute]
+  !WARNING: Explicit SAVE of 'z' is redundant due to global SAVE statement
   save z
   save
   procedure(integer), pointer :: x
-  !WARNING: Explicit SAVE of 'x' is redundant due to global SAVE statement [-Wredundant-attribute]
+  !WARNING: Explicit SAVE of 'x' is redundant due to global SAVE statement
   save :: x
-  !WARNING: Explicit SAVE of 'y' is redundant due to global SAVE statement [-Wredundant-attribute]
+  !WARNING: Explicit SAVE of 'y' is redundant due to global SAVE statement
   integer, save :: y
 end
 

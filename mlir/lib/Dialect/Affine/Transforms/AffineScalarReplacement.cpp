@@ -17,6 +17,7 @@
 #include "mlir/Dialect/Affine/Utils.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/Dominance.h"
+#include <algorithm>
 
 namespace mlir {
 namespace affine {

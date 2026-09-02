@@ -17,7 +17,6 @@
 #include "llvm-c/DataTypes.h"
 #include "llvm-c/ExternC.h"
 #include "llvm-c/Types.h"
-#include "llvm-c/Visibility.h"
 
 LLVM_C_EXTERN_C_BEGIN
 
@@ -33,7 +32,7 @@ LLVM_C_EXTERN_C_BEGIN
  *
  * @see sys::DynamicLibrary::LoadLibraryPermanently()
   */
-LLVM_C_ABI LLVMBool LLVMLoadLibraryPermanently(const char *Filename);
+LLVMBool LLVMLoadLibraryPermanently(const char* Filename);
 
 /**
  * This function parses the given arguments using the LLVM command line parser.
@@ -43,8 +42,8 @@ LLVM_C_ABI LLVMBool LLVMLoadLibraryPermanently(const char *Filename);
  *
  * @see llvm::cl::ParseCommandLineOptions()
  */
-LLVM_C_ABI void LLVMParseCommandLineOptions(int argc, const char *const *argv,
-                                            const char *Overview);
+void LLVMParseCommandLineOptions(int argc, const char *const *argv,
+                                 const char *Overview);
 
 /**
  * This function will search through all previously loaded dynamic
@@ -53,7 +52,7 @@ LLVM_C_ABI void LLVMParseCommandLineOptions(int argc, const char *const *argv,
  *
  * @see sys::DynamicLibrary::SearchForAddressOfSymbol()
  */
-LLVM_C_ABI void *LLVMSearchForAddressOfSymbol(const char *symbolName);
+void *LLVMSearchForAddressOfSymbol(const char *symbolName);
 
 /**
  * This functions permanently adds the symbol \p symbolName with the
@@ -62,7 +61,7 @@ LLVM_C_ABI void *LLVMSearchForAddressOfSymbol(const char *symbolName);
  *
  * @see sys::DynamicLibrary::AddSymbol()
  */
-LLVM_C_ABI void LLVMAddSymbol(const char *symbolName, void *symbolValue);
+void LLVMAddSymbol(const char *symbolName, void *symbolValue);
 
 /**
  * @}

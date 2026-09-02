@@ -15,7 +15,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/BinaryFormat/XCOFF.h"
 #include "llvm/MC/MCDisassembler/MCSymbolizer.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
 #include <memory>
@@ -29,7 +28,7 @@ struct XCOFFSymbolInfoTy {
   std::optional<XCOFF::StorageMappingClass> StorageMappingClass;
   std::optional<uint32_t> Index;
   bool IsLabel = false;
-  LLVM_ABI bool operator<(const XCOFFSymbolInfoTy &SymInfo) const;
+  bool operator<(const XCOFFSymbolInfoTy &SymInfo) const;
 };
 
 struct SymbolInfoTy {
@@ -87,7 +86,7 @@ class raw_ostream;
 
 /// Superclass for all disassemblers. Consumes a memory region and provides an
 /// array of assembly instructions.
-class LLVM_ABI MCDisassembler {
+class MCDisassembler {
 public:
   /// Ternary decode status. Most backends will just use Fail and
   /// Success, however some have a concept of an instruction with
@@ -140,18 +139,6 @@ public:
   virtual DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
                                       ArrayRef<uint8_t> Bytes, uint64_t Address,
                                       raw_ostream &CStream) const = 0;
-
-  /// Returns the disassembly of an instruction bundle for VLIW architectures
-  /// like Hexagon.
-  ///
-  /// \param Instr    - An MCInst to populate with the contents of
-  /// the Bundle with sub-instructions encoded as Inst operands.
-  virtual DecodeStatus getInstructionBundle(MCInst &Instr, uint64_t &Size,
-                                            ArrayRef<uint8_t> Bytes,
-                                            uint64_t Address,
-                                            raw_ostream &CStream) const {
-    return Fail;
-  }
 
   /// Used to perform separate target specific disassembly for a particular
   /// symbol. May parse any prelude that precedes instructions after the

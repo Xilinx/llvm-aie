@@ -39,7 +39,7 @@ func.func @entry() {
   //           x          =
   // ( 2, 3 )     (6, 7)     ( 26, 31 )
   //
-  %c = llvm.intr.matrix.multiply %a, %b
+  %c = vector.matrix_multiply %a, %b
       { lhs_rows = 2: i32, lhs_columns = 2: i32 , rhs_columns = 2: i32 }
       : (vector<4xf64>, vector<4xf64>) -> vector<4xf64>
 

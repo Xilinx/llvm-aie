@@ -18,7 +18,6 @@
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ExtensibleRTTI.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -29,7 +28,7 @@ namespace orc {
 /// wrapping LLVM IR. Represents materialization responsibility for all symbols
 /// in the given module. If symbols are overridden by other definitions, then
 /// their linkage is changed to available-externally.
-class LLVM_ABI IRMaterializationUnit : public MaterializationUnit {
+class IRMaterializationUnit : public MaterializationUnit {
 public:
   using SymbolNameToDefinitionMap = std::map<SymbolStringPtr, GlobalValue *>;
 
@@ -65,7 +64,7 @@ private:
 };
 
 /// Interface for layers that accept LLVM IR.
-class LLVM_ABI IRLayer {
+class IRLayer {
 public:
   IRLayer(ExecutionSession &ES, const IRSymbolMapper::ManglingOptions *&MO)
       : ES(ES), MO(MO) {}
@@ -118,7 +117,7 @@ private:
 
 /// MaterializationUnit that materializes modules by calling the 'emit' method
 /// on the given IRLayer.
-class LLVM_ABI BasicIRLayerMaterializationUnit : public IRMaterializationUnit {
+class BasicIRLayerMaterializationUnit : public IRMaterializationUnit {
 public:
   BasicIRLayerMaterializationUnit(IRLayer &L,
                                   const IRSymbolMapper::ManglingOptions &MO,
@@ -131,7 +130,7 @@ private:
 };
 
 /// Interface for Layers that accept object files.
-class LLVM_ABI ObjectLayer : public RTTIExtends<ObjectLayer, RTTIRoot> {
+class ObjectLayer : public RTTIExtends<ObjectLayer, RTTIRoot> {
 public:
   static char ID;
 
@@ -173,8 +172,7 @@ private:
 
 /// Materializes the given object file (represented by a MemoryBuffer
 /// instance) by calling 'emit' on the given ObjectLayer.
-class LLVM_ABI BasicObjectLayerMaterializationUnit
-    : public MaterializationUnit {
+class BasicObjectLayerMaterializationUnit : public MaterializationUnit {
 public:
   /// Create using the default object interface builder function.
   static Expected<std::unique_ptr<BasicObjectLayerMaterializationUnit>>

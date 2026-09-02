@@ -7,7 +7,9 @@
 //===----------------------------------------------------------------===//
 
 #include "llvm/Object/OffloadBundle.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/Magic.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/MC/StringTableBuilder.h"
@@ -18,6 +20,7 @@
 #include "llvm/Object/Error.h"
 #include "llvm/Object/IRObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Timer.h"
@@ -35,11 +38,12 @@ Error extractOffloadBundle(MemoryBufferRef Contents, uint64_t SectionOffset,
                            StringRef FileName,
                            SmallVectorImpl<OffloadBundleFatBin> &Bundles) {
 
-  size_t Offset = 0;
-  size_t NextbundleStart = 0;
+  uint64_t Offset = 0;
+  int64_t NextbundleStart = 0;
 
   // There could be multiple offloading bundles stored at this section.
-  while (NextbundleStart != StringRef::npos) {
+  while (NextbundleStart >= 0) {
+
     std::unique_ptr<MemoryBuffer> Buffer =
         MemoryBuffer::getMemBuffer(Contents.getBuffer().drop_front(Offset), "",
                                    /*RequiresNullTerminator=*/false);
@@ -56,9 +60,10 @@ Error extractOffloadBundle(MemoryBufferRef Contents, uint64_t SectionOffset,
 
     // Find the next bundle by searching for the magic string
     StringRef Str = Buffer->getBuffer();
-    NextbundleStart = Str.find(StringRef("__CLANG_OFFLOAD_BUNDLE__"), 24);
+    NextbundleStart =
+        (int64_t)Str.find(StringRef("__CLANG_OFFLOAD_BUNDLE__"), 24);
 
-    if (NextbundleStart != StringRef::npos)
+    if (NextbundleStart >= 0)
       Offset += NextbundleStart;
   }
 
@@ -339,7 +344,8 @@ CompressedOffloadBundle::decompress(llvm::MemoryBufferRef &Input,
     HashRecalcTimer.startTimer();
     llvm::MD5 Hash;
     llvm::MD5::MD5Result Result;
-    Hash.update(llvm::ArrayRef<uint8_t>(DecompressedData));
+    Hash.update(llvm::ArrayRef<uint8_t>(DecompressedData.data(),
+                                        DecompressedData.size()));
     Hash.final(Result);
     uint64_t RecalculatedHash = Result.low();
     HashRecalcTimer.stopTimer();

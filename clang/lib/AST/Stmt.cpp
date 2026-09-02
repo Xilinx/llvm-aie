@@ -384,7 +384,8 @@ CompoundStmt::CompoundStmt(ArrayRef<Stmt *> Stmts, FPOptionsOverride FPFeatures,
 void CompoundStmt::setStmts(ArrayRef<Stmt *> Stmts) {
   assert(CompoundStmtBits.NumStmts == Stmts.size() &&
          "NumStmts doesn't fit in bits of CompoundStmtBits.NumStmts!");
-  llvm::copy(Stmts, body_begin());
+
+  std::copy(Stmts.begin(), Stmts.end(), body_begin());
 }
 
 CompoundStmt *CompoundStmt::Create(const ASTContext &C, ArrayRef<Stmt *> Stmts,
@@ -946,10 +947,10 @@ void MSAsmStmt::initialize(const ASTContext &C, StringRef asmstr,
   AsmStr = copyIntoContext(C, asmstr);
 
   Exprs = new (C) Stmt*[exprs.size()];
-  llvm::copy(exprs, Exprs);
+  std::copy(exprs.begin(), exprs.end(), Exprs);
 
   AsmToks = new (C) Token[asmtoks.size()];
-  llvm::copy(asmtoks, AsmToks);
+  std::copy(asmtoks.begin(), asmtoks.end(), AsmToks);
 
   Constraints = new (C) StringRef[exprs.size()];
   std::transform(constraints.begin(), constraints.end(), Constraints,
@@ -1153,12 +1154,12 @@ void SwitchStmt::setConditionVariable(const ASTContext &Ctx, VarDecl *V) {
          "This switch statement has no storage for a condition variable!");
 
   if (!V) {
-    getTrailingObjects()[varOffset()] = nullptr;
+    getTrailingObjects<Stmt *>()[varOffset()] = nullptr;
     return;
   }
 
   SourceRange VarRange = V->getSourceRange();
-  getTrailingObjects()[varOffset()] = new (Ctx)
+  getTrailingObjects<Stmt *>()[varOffset()] = new (Ctx)
       DeclStmt(DeclGroupRef(V), VarRange.getBegin(), VarRange.getEnd());
 }
 
@@ -1214,12 +1215,12 @@ void WhileStmt::setConditionVariable(const ASTContext &Ctx, VarDecl *V) {
          "This while statement has no storage for a condition variable!");
 
   if (!V) {
-    getTrailingObjects()[varOffset()] = nullptr;
+    getTrailingObjects<Stmt *>()[varOffset()] = nullptr;
     return;
   }
 
   SourceRange VarRange = V->getSourceRange();
-  getTrailingObjects()[varOffset()] = new (Ctx)
+  getTrailingObjects<Stmt *>()[varOffset()] = new (Ctx)
       DeclStmt(DeclGroupRef(V), VarRange.getBegin(), VarRange.getEnd());
 }
 
@@ -1384,7 +1385,7 @@ CapturedStmt::CapturedStmt(Stmt *S, CapturedRegionKind Kind,
 
   // Copy all Capture objects.
   Capture *Buffer = getStoredCaptures();
-  llvm::copy(Captures, Buffer);
+  std::copy(Captures.begin(), Captures.end(), Buffer);
 }
 
 CapturedStmt::CapturedStmt(EmptyShell Empty, unsigned NumCaptures)

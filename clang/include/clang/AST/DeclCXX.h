@@ -365,10 +365,12 @@ private:
       return getVBasesSlowCase();
     }
 
-    ArrayRef<CXXBaseSpecifier> bases() const { return {getBases(), NumBases}; }
+    ArrayRef<CXXBaseSpecifier> bases() const {
+      return llvm::ArrayRef(getBases(), NumBases);
+    }
 
     ArrayRef<CXXBaseSpecifier> vbases() const {
-      return {getVBases(), NumVBases};
+      return llvm::ArrayRef(getVBases(), NumVBases);
     }
 
   private:
@@ -546,7 +548,8 @@ public:
   }
 
   CXXRecordDecl *getMostRecentNonInjectedDecl() {
-    CXXRecordDecl *Recent = getMostRecentDecl();
+    CXXRecordDecl *Recent =
+        static_cast<CXXRecordDecl *>(this)->getMostRecentDecl();
     while (Recent->isInjectedClassName()) {
       // FIXME: Does injected class name need to be in the redeclarations chain?
       assert(Recent->getPreviousDecl());
@@ -1888,21 +1891,6 @@ public:
     DL.IsGenericLambda = IsGeneric;
   }
 
-  /// Determines whether this declaration represents the
-  /// injected class name.
-  ///
-  /// The injected class name in C++ is the name of the class that
-  /// appears inside the class itself. For example:
-  ///
-  /// \code
-  /// struct C {
-  ///   // C is implicitly declared here as a synonym for the class name.
-  /// };
-  ///
-  /// C::C c; // same as "C c;"
-  /// \endcode
-  bool isInjectedClassName() const;
-
   // Determine whether this type is an Interface Like type for
   // __interface inheritance purposes.
   bool isInterfaceLike() const;
@@ -3186,7 +3174,7 @@ public:
 /// \code
 /// namespace Foo = Bar;
 /// \endcode
-class NamespaceAliasDecl : public NamespaceBaseDecl,
+class NamespaceAliasDecl : public NamedDecl,
                            public Redeclarable<NamespaceAliasDecl> {
   friend class ASTDeclReader;
 
@@ -3203,14 +3191,14 @@ class NamespaceAliasDecl : public NamespaceBaseDecl,
 
   /// The Decl that this alias points to, either a NamespaceDecl or
   /// a NamespaceAliasDecl.
-  NamespaceBaseDecl *Namespace;
+  NamedDecl *Namespace;
 
   NamespaceAliasDecl(ASTContext &C, DeclContext *DC,
                      SourceLocation NamespaceLoc, SourceLocation AliasLoc,
                      IdentifierInfo *Alias, NestedNameSpecifierLoc QualifierLoc,
-                     SourceLocation IdentLoc, NamespaceBaseDecl *Namespace)
-      : NamespaceBaseDecl(NamespaceAlias, DC, AliasLoc, Alias),
-        redeclarable_base(C), NamespaceLoc(NamespaceLoc), IdentLoc(IdentLoc),
+                     SourceLocation IdentLoc, NamedDecl *Namespace)
+      : NamedDecl(NamespaceAlias, DC, AliasLoc, Alias), redeclarable_base(C),
+        NamespaceLoc(NamespaceLoc), IdentLoc(IdentLoc),
         QualifierLoc(QualifierLoc), Namespace(Namespace) {}
 
   void anchor() override;
@@ -3222,11 +3210,13 @@ class NamespaceAliasDecl : public NamespaceBaseDecl,
   NamespaceAliasDecl *getMostRecentDeclImpl() override;
 
 public:
-  static NamespaceAliasDecl *
-  Create(ASTContext &C, DeclContext *DC, SourceLocation NamespaceLoc,
-         SourceLocation AliasLoc, IdentifierInfo *Alias,
-         NestedNameSpecifierLoc QualifierLoc, SourceLocation IdentLoc,
-         NamespaceBaseDecl *Namespace);
+  static NamespaceAliasDecl *Create(ASTContext &C, DeclContext *DC,
+                                    SourceLocation NamespaceLoc,
+                                    SourceLocation AliasLoc,
+                                    IdentifierInfo *Alias,
+                                    NestedNameSpecifierLoc QualifierLoc,
+                                    SourceLocation IdentLoc,
+                                    NamedDecl *Namespace);
 
   static NamespaceAliasDecl *CreateDeserialized(ASTContext &C, GlobalDeclID ID);
 
@@ -3280,7 +3270,7 @@ public:
 
   /// Retrieve the namespace that this alias refers to, which
   /// may either be a NamespaceDecl or a NamespaceAliasDecl.
-  NamespaceBaseDecl *getAliasedNamespace() const { return Namespace; }
+  NamedDecl *getAliasedNamespace() const { return Namespace; }
 
   SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(NamespaceLoc, IdentLoc);
@@ -3307,7 +3297,7 @@ class LifetimeExtendedTemporaryDecl final
 
   mutable APValue *Value = nullptr;
 
-  LLVM_DECLARE_VIRTUAL_ANCHOR_FUNCTION();
+  virtual void anchor();
 
   LifetimeExtendedTemporaryDecl(Expr *Temp, ValueDecl *EDecl, unsigned Mangling)
       : Decl(Decl::LifetimeExtendedTemporary, EDecl->getDeclContext(),
@@ -4200,7 +4190,7 @@ public:
   Expr *getBinding() const { return Binding; }
 
   // Get the array of nested BindingDecls when the binding represents a pack.
-  ArrayRef<BindingDecl *> getBindingPackDecls() const;
+  llvm::ArrayRef<BindingDecl *> getBindingPackDecls() const;
 
   /// Get the decomposition declaration that this binding represents a
   /// decomposition of.
@@ -4279,11 +4269,11 @@ public:
 
   // Provide a flattened range to visit each binding.
   auto flat_bindings() const {
-    ArrayRef<BindingDecl *> Bindings = bindings();
-    ArrayRef<BindingDecl *> PackBindings;
+    llvm::ArrayRef<BindingDecl *> Bindings = bindings();
+    llvm::ArrayRef<BindingDecl *> PackBindings;
 
     // Split the bindings into subranges split by the pack.
-    ArrayRef<BindingDecl *> BeforePackBindings = Bindings.take_until(
+    llvm::ArrayRef<BindingDecl *> BeforePackBindings = Bindings.take_until(
         [](BindingDecl *BD) { return BD->isParameterPack(); });
 
     Bindings = Bindings.drop_front(BeforePackBindings.size());

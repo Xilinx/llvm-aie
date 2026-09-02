@@ -87,9 +87,9 @@ void RTDEF(PointerAssociateLowerBounds)(Descriptor &pointer,
   }
 }
 
-static void RT_API_ATTRS PointerRemapping(Descriptor &pointer,
+void RTDEF(PointerAssociateRemapping)(Descriptor &pointer,
     const Descriptor &target, const Descriptor &bounds, const char *sourceFile,
-    int sourceLine, bool isMonomorphic) {
+    int sourceLine) {
   Terminator terminator{sourceFile, sourceLine};
   SubscriptValue byteStride{/*captured from first dimension*/};
   std::size_t boundElementBytes{bounds.ElementBytes()};
@@ -99,7 +99,7 @@ static void RT_API_ATTRS PointerRemapping(Descriptor &pointer,
   // the ranks may mismatch. Use target as a mold for initializing
   // the pointer descriptor.
   INTERNAL_CHECK(static_cast<std::size_t>(pointer.rank()) == boundsRank);
-  pointer.ApplyMold(target, boundsRank, isMonomorphic);
+  pointer.ApplyMold(target, boundsRank);
   pointer.set_base_addr(target.raw().base_addr);
   pointer.raw().attribute = CFI_attribute_pointer;
   for (unsigned j{0}; j < boundsRank; ++j) {
@@ -115,26 +115,11 @@ static void RT_API_ATTRS PointerRemapping(Descriptor &pointer,
       byteStride *= dim.Extent();
     }
   }
-  std::size_t pointerElements{pointer.Elements()};
-  std::size_t targetElements{target.Elements()};
-  if (pointerElements > targetElements) {
+  if (pointer.Elements() > target.Elements()) {
     terminator.Crash("PointerAssociateRemapping: too many elements in remapped "
                      "pointer (%zd > %zd)",
-        pointerElements, targetElements);
+        pointer.Elements(), target.Elements());
   }
-}
-
-void RTDEF(PointerAssociateRemapping)(Descriptor &pointer,
-    const Descriptor &target, const Descriptor &bounds, const char *sourceFile,
-    int sourceLine) {
-  PointerRemapping(
-      pointer, target, bounds, sourceFile, sourceLine, /*isMonomorphic=*/false);
-}
-void RTDEF(PointerAssociateRemappingMonomorphic)(Descriptor &pointer,
-    const Descriptor &target, const Descriptor &bounds, const char *sourceFile,
-    int sourceLine) {
-  PointerRemapping(
-      pointer, target, bounds, sourceFile, sourceLine, /*isMonomorphic=*/true);
 }
 
 RT_API_ATTRS void *AllocateValidatedPointerPayload(

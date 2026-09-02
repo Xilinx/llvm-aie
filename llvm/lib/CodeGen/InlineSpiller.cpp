@@ -1670,7 +1670,7 @@ void HoistSpillHelper::hoistAllSpills() {
   for (unsigned i = 0, e = MRI.getNumVirtRegs(); i != e; ++i) {
     Register Reg = Register::index2VirtReg(i);
     Register Original = VRM.getPreSplitReg(Reg);
-    if (!MRI.def_empty(Reg) && Original.isValid())
+    if (!MRI.def_empty(Reg))
       Virt2SiblingsMap[Original].insert(Reg);
   }
 

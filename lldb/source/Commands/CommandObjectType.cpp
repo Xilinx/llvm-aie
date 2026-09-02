@@ -51,13 +51,12 @@ public:
   FormatterMatchType m_match_type;
   ConstString m_name;
   std::string m_category;
-  uint32_t m_ptr_match_depth;
 
   ScriptAddOptions(const TypeSummaryImpl::Flags &flags,
                    FormatterMatchType match_type, ConstString name,
-                   std::string catg, uint32_t m_ptr_match_depth)
+                   std::string catg)
       : m_flags(flags), m_match_type(match_type), m_name(name),
-        m_category(catg), m_ptr_match_depth(m_ptr_match_depth) {}
+        m_category(catg) {}
 
   typedef std::shared_ptr<ScriptAddOptions> SharedPointer;
 };
@@ -147,7 +146,6 @@ private:
     std::string m_python_function;
     bool m_is_add_script = false;
     std::string m_category;
-    uint32_t m_ptr_match_depth = 1;
   };
 
   CommandOptions m_options;
@@ -213,7 +211,7 @@ public:
                 TypeSummaryImplSP script_format;
                 script_format = std::make_shared<ScriptSummaryFormat>(
                     options->m_flags, funct_name_str.c_str(),
-                    lines.CopyList("    ").c_str(), options->m_ptr_match_depth);
+                    lines.CopyList("    ").c_str());
 
                 Status error;
 
@@ -1180,13 +1178,6 @@ Status CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue(
   case 'p':
     m_flags.SetSkipPointers(true);
     break;
-  case 'd':
-    if (option_arg.getAsInteger(0, m_ptr_match_depth)) {
-      error = Status::FromErrorStringWithFormat(
-          "invalid integer value for option '%c': %s", short_option,
-          option_arg.data());
-    }
-    break;
   case 'r':
     m_flags.SetSkipReferences(true);
     break;
@@ -1275,8 +1266,7 @@ bool CommandObjectTypeSummaryAdd::Execute_ScriptSummary(
         ("    " + m_options.m_python_function + "(valobj,internal_dict)");
 
     script_format = std::make_shared<ScriptSummaryFormat>(
-        m_options.m_flags, funct_name, code.c_str(),
-        m_options.m_ptr_match_depth);
+        m_options.m_flags, funct_name, code.c_str());
 
     ScriptInterpreter *interpreter = GetDebugger().GetScriptInterpreter();
 
@@ -1310,13 +1300,12 @@ bool CommandObjectTypeSummaryAdd::Execute_ScriptSummary(
     std::string code = "    " + m_options.m_python_script;
 
     script_format = std::make_shared<ScriptSummaryFormat>(
-        m_options.m_flags, funct_name_str.c_str(), code.c_str(),
-        m_options.m_ptr_match_depth);
+        m_options.m_flags, funct_name_str.c_str(), code.c_str());
   } else {
     // Use an IOHandler to grab Python code from the user
     auto options = std::make_unique<ScriptAddOptions>(
         m_options.m_flags, m_options.m_match_type, m_options.m_name,
-        m_options.m_category, m_options.m_ptr_match_depth);
+        m_options.m_category);
 
     for (auto &entry : command.entries()) {
       if (entry.ref().empty()) {
@@ -1391,8 +1380,8 @@ bool CommandObjectTypeSummaryAdd::Execute_StringSummary(
     return false;
   }
 
-  std::unique_ptr<StringSummaryFormat> string_format(new StringSummaryFormat(
-      m_options.m_flags, format_cstr, m_options.m_ptr_match_depth));
+  std::unique_ptr<StringSummaryFormat> string_format(
+      new StringSummaryFormat(m_options.m_flags, format_cstr));
   if (!string_format) {
     result.AppendError("summary creation failed");
     return false;

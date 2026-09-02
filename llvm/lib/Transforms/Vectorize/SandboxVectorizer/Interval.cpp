@@ -8,7 +8,6 @@
 
 #include "llvm/Transforms/Vectorize/SandboxVectorizer/Interval.h"
 #include "llvm/SandboxIR/Instruction.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Vectorize/SandboxVectorizer/DependencyGraph.h"
 
@@ -43,7 +42,7 @@ template <typename T> void Interval<T>::print(raw_ostream &OS) const {
 template <typename T> void Interval<T>::dump() const { print(dbgs()); }
 #endif
 
-template class LLVM_EXPORT_TEMPLATE Interval<Instruction>;
-template class LLVM_EXPORT_TEMPLATE Interval<MemDGNode>;
+template class Interval<Instruction>;
+template class Interval<MemDGNode>;
 
 } // namespace llvm::sandboxir

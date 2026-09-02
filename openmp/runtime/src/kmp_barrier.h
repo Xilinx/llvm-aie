@@ -130,7 +130,8 @@ public:
     d->init(nThreads);
     return d;
   }
-  static void deallocate(distributedBarrier *db);
+
+  static void deallocate(distributedBarrier *db) { KMP_ALIGNED_FREE(db); }
 
   void update_num_threads(size_t nthr) { init(nthr); }
 

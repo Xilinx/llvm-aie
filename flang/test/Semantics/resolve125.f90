@@ -43,7 +43,7 @@ contains
   end subroutine reset
 end module m2
 
-!CHECK: MainProgram scope: MAIN
+!CHECK: MainProgram scope: main
 !CHECK:       i: Use from i in m2
 !CHECK:       i2: Use from i2 in m2
 !CHECK:       init (Subroutine): Use from init in m2

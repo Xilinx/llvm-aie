@@ -1,14 +1,14 @@
 add_clang_library(MLIRCIRInterfaces
   CIROpInterfaces.cpp
   CIRLoopOpInterface.cpp
-  CIRTypeInterfaces.cpp
+  CIRFPTypeInterface.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${MLIR_MAIN_INCLUDE_DIR}/mlir/Interfaces
 
   DEPENDS
   MLIRCIREnumsGen
-  MLIRCIRTypeInterfacesIncGen
+  MLIRCIRFPTypeInterfaceIncGen
   MLIRCIRLoopOpInterfaceIncGen
   MLIRCIROpInterfacesIncGen
 

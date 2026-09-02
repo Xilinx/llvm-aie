@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetMachine.h"
 #include <bitset>
 
@@ -84,7 +83,6 @@ public:
     SiFive7,
     VentanaVeyron,
     MIPSP8700,
-    Andes45,
   };
   enum RISCVVRGatherCostModelEnum : uint8_t {
     Quadratic,
@@ -169,8 +167,7 @@ public:
   bool GETTER() const { return ATTRIBUTE; }
 #include "RISCVGenSubtargetInfo.inc"
 
-  LLVM_DEPRECATED("Now Equivalent to hasStdExtZca", "hasStdExtZca")
-  bool hasStdExtCOrZca() const { return HasStdExtZca; }
+  bool hasStdExtCOrZca() const { return HasStdExtC || HasStdExtZca; }
   bool hasStdExtCOrZcd() const { return HasStdExtC || HasStdExtZcd; }
   bool hasStdExtCOrZcfOrZce() const {
     return HasStdExtC || HasStdExtZcf || HasStdExtZce;
@@ -188,7 +185,7 @@ public:
 
   bool hasConditionalMoveFusion() const {
     // Do we support fusing a branch+mv or branch+c.mv as a conditional move.
-    return (hasConditionalCompressedMoveFusion() && hasStdExtZca()) ||
+    return (hasConditionalCompressedMoveFusion() && hasStdExtCOrZca()) ||
            hasShortForwardBranchOpt();
   }
 
@@ -395,11 +392,11 @@ public:
   }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
-                           const SchedRegion &Region) const override;
+                           unsigned NumRegionInstrs) const override;
 
   void overridePostRASchedPolicy(MachineSchedPolicy &Policy,
-                                 const SchedRegion &Region) const override;
+                                 unsigned NumRegionInstrs) const override;
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

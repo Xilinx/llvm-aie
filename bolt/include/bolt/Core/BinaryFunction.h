@@ -388,10 +388,6 @@ private:
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
-  /// Profile data for the number of times this function was entered from
-  /// external code (DSO, JIT, etc).
-  uint64_t ExternEntryCount{0};
-
   /// Profile match ratio.
   float ProfileMatchRatio{0.0f};
 
@@ -1663,11 +1659,7 @@ public:
       Offset = I->first;
     }
     assert(I->first == Offset && "CFI pointing to unknown instruction");
-    // When dealing with RememberState, we place this CFI in FrameInstructions.
-    // We want to ensure RememberState and RestoreState CFIs are in the same
-    // list in order to properly populate the StateStack.
-    if (I == Instructions.begin() &&
-        Inst.getOperation() != MCCFIInstruction::OpRememberState) {
+    if (I == Instructions.begin()) {
       CIEFrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
       return;
     }
@@ -1885,10 +1877,6 @@ public:
     return *this;
   }
 
-  /// Set the profile data for the number of times the function was entered from
-  /// external code (DSO/JIT).
-  void setExternEntryCount(uint64_t Count) { ExternEntryCount = Count; }
-
   /// Adjust execution count for the function by a given \p Count. The value
   /// \p Count will be subtracted from the current function count.
   ///
@@ -1915,10 +1903,6 @@ public:
   ///
   /// Return COUNT_NO_PROFILE if there's no profile info.
   uint64_t getExecutionCount() const { return ExecutionCount; }
-
-  /// Return the profile information about the number of times the function was
-  /// entered from external code (DSO/JIT).
-  uint64_t getExternEntryCount() const { return ExternEntryCount; }
 
   /// Return the raw profile information about the number of branch
   /// executions corresponding to this function.
@@ -2364,7 +2348,6 @@ public:
       releaseCFG();
       CurrentState = State::Emitted;
     }
-    clearList(Relocations);
   }
 
   /// Process LSDA information for the function.

@@ -12,9 +12,10 @@ from functionalities.breakpoint.hardware_breakpoints.base import *
 
 
 class WriteMemoryWithHWBreakpoint(HardwareBreakpointTestBase):
+    def does_not_support_hw_breakpoints(self):
+        return not super().supports_hw_breakpoints()
 
-    @skipTestIfFn(HardwareBreakpointTestBase.supports_hw_breakpoints)
-    @skip
+    @skipTestIfFn(does_not_support_hw_breakpoints)
     def test_copy_memory_with_hw_break(self):
         self.build()
         exe = self.getBuildArtifact("a.out")

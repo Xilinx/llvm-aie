@@ -25,7 +25,6 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Support/Compiler.h"
 #include <optional>
 
 namespace llvm {
@@ -53,17 +52,17 @@ class [[nodiscard]] ConstantFPRange {
   void makeFull();
 
   /// Initialize a full or empty set for the specified semantics.
-  LLVM_ABI explicit ConstantFPRange(const fltSemantics &Sem, bool IsFullSet);
+  explicit ConstantFPRange(const fltSemantics &Sem, bool IsFullSet);
 
 public:
   /// Initialize a range to hold the single specified value.
-  LLVM_ABI explicit ConstantFPRange(const APFloat &Value);
+  explicit ConstantFPRange(const APFloat &Value);
 
   /// Initialize a range of values explicitly.
   /// Note: If \p LowerVal is greater than \p UpperVal, please use the canonical
   /// form [Inf, -Inf].
-  LLVM_ABI ConstantFPRange(APFloat LowerVal, APFloat UpperVal, bool MayBeQNaN,
-                           bool MayBeSNaN);
+  ConstantFPRange(APFloat LowerVal, APFloat UpperVal, bool MayBeQNaN,
+                  bool MayBeSNaN);
 
   /// Create empty constant range with the given semantics.
   static ConstantFPRange getEmpty(const fltSemantics &Sem) {
@@ -76,10 +75,10 @@ public:
   }
 
   /// Helper for (-inf, inf) to represent all finite values.
-  LLVM_ABI static ConstantFPRange getFinite(const fltSemantics &Sem);
+  static ConstantFPRange getFinite(const fltSemantics &Sem);
 
   /// Helper for [-inf, inf] to represent all non-NaN values.
-  LLVM_ABI static ConstantFPRange getNonNaN(const fltSemantics &Sem);
+  static ConstantFPRange getNonNaN(const fltSemantics &Sem);
 
   /// Create a range which doesn't contain NaNs.
   static ConstantFPRange getNonNaN(APFloat LowerVal, APFloat UpperVal) {
@@ -94,8 +93,8 @@ public:
   }
 
   /// Create a range which only contains NaNs.
-  LLVM_ABI static ConstantFPRange getNaNOnly(const fltSemantics &Sem,
-                                             bool MayBeQNaN, bool MayBeSNaN);
+  static ConstantFPRange getNaNOnly(const fltSemantics &Sem, bool MayBeQNaN,
+                                    bool MayBeSNaN);
 
   /// Produce the smallest range such that all values that may satisfy the given
   /// predicate with any value contained within Other is contained in the
@@ -105,8 +104,8 @@ public:
   /// a proper superset of the above.
   ///
   /// Example: Pred = ole and Other = float [2, 5] returns Result = [-inf, 5]
-  LLVM_ABI static ConstantFPRange
-  makeAllowedFCmpRegion(FCmpInst::Predicate Pred, const ConstantFPRange &Other);
+  static ConstantFPRange makeAllowedFCmpRegion(FCmpInst::Predicate Pred,
+                                               const ConstantFPRange &Other);
 
   /// Produce the largest range such that all values in the returned range
   /// satisfy the given predicate with all values contained within Other.
@@ -116,9 +115,8 @@ public:
   /// will be a proper subset of the above.
   ///
   /// Example: Pred = ole and Other = float [2, 5] returns [-inf, 2]
-  LLVM_ABI static ConstantFPRange
-  makeSatisfyingFCmpRegion(FCmpInst::Predicate Pred,
-                           const ConstantFPRange &Other);
+  static ConstantFPRange makeSatisfyingFCmpRegion(FCmpInst::Predicate Pred,
+                                                  const ConstantFPRange &Other);
 
   /// Produce the exact range such that all values in the returned range satisfy
   /// the given predicate with any value contained within Other. Formally, this
@@ -127,13 +125,12 @@ public:
   /// Example: Pred = olt and Other = float 3 returns [-inf, 3)
   /// If the exact answer is not representable as a ConstantFPRange, returns
   /// std::nullopt.
-  LLVM_ABI static std::optional<ConstantFPRange>
+  static std::optional<ConstantFPRange>
   makeExactFCmpRegion(FCmpInst::Predicate Pred, const APFloat &Other);
 
   /// Does the predicate \p Pred hold between ranges this and \p Other?
   /// NOTE: false does not mean that inverse predicate holds!
-  LLVM_ABI bool fcmp(FCmpInst::Predicate Pred,
-                     const ConstantFPRange &Other) const;
+  bool fcmp(FCmpInst::Predicate Pred, const ConstantFPRange &Other) const;
 
   /// Return the lower value for this range.
   const APFloat &getLower() const { return Lower; }
@@ -144,27 +141,27 @@ public:
   bool containsNaN() const { return MayBeQNaN || MayBeSNaN; }
   bool containsQNaN() const { return MayBeQNaN; }
   bool containsSNaN() const { return MayBeSNaN; }
-  LLVM_ABI bool isNaNOnly() const;
+  bool isNaNOnly() const;
 
   /// Get the semantics of this ConstantFPRange.
   const fltSemantics &getSemantics() const { return Lower.getSemantics(); }
 
   /// Return true if this set contains all of the elements possible
   /// for this data-type.
-  LLVM_ABI bool isFullSet() const;
+  bool isFullSet() const;
 
   /// Return true if this set contains no members.
-  LLVM_ABI bool isEmptySet() const;
+  bool isEmptySet() const;
 
   /// Return true if the specified value is in the set.
-  LLVM_ABI bool contains(const APFloat &Val) const;
+  bool contains(const APFloat &Val) const;
 
   /// Return true if the other range is a subset of this one.
-  LLVM_ABI bool contains(const ConstantFPRange &CR) const;
+  bool contains(const ConstantFPRange &CR) const;
 
   /// If this set contains a single element, return it, otherwise return null.
   /// If \p ExcludesNaN is true, return the non-NaN single element.
-  LLVM_ABI const APFloat *getSingleElement(bool ExcludesNaN = false) const;
+  const APFloat *getSingleElement(bool ExcludesNaN = false) const;
 
   /// Return true if this set contains exactly one member.
   /// If \p ExcludesNaN is true, return true if this set contains exactly one
@@ -176,30 +173,30 @@ public:
   /// Return true if the sign bit of all values in this range is 1.
   /// Return false if the sign bit of all values in this range is 0.
   /// Otherwise, return std::nullopt.
-  LLVM_ABI std::optional<bool> getSignBit() const;
+  std::optional<bool> getSignBit() const;
 
   /// Return true if this range is equal to another range.
-  LLVM_ABI bool operator==(const ConstantFPRange &CR) const;
+  bool operator==(const ConstantFPRange &CR) const;
   /// Return true if this range is not equal to another range.
   bool operator!=(const ConstantFPRange &CR) const { return !operator==(CR); }
 
   /// Return the FPClassTest which will return true for the value.
-  LLVM_ABI FPClassTest classify() const;
+  FPClassTest classify() const;
 
   /// Print out the bounds to a stream.
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
   /// Allow printing from a debugger easily.
-  LLVM_ABI void dump() const;
+  void dump() const;
 
   /// Return the range that results from the intersection of this range with
   /// another range.
-  LLVM_ABI ConstantFPRange intersectWith(const ConstantFPRange &CR) const;
+  ConstantFPRange intersectWith(const ConstantFPRange &CR) const;
 
   /// Return the smallest range that results from the union of this range
   /// with another range.  The resultant range is guaranteed to include the
   /// elements of both sets, but may contain more.
-  LLVM_ABI ConstantFPRange unionWith(const ConstantFPRange &CR) const;
+  ConstantFPRange unionWith(const ConstantFPRange &CR) const;
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const ConstantFPRange &CR) {

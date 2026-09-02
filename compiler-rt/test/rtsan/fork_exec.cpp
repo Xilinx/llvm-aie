@@ -45,12 +45,7 @@ int main() MAYBE_NONBLOCKING {
 }
 
 // CHECK-NOHALT: Intercepted call to {{.*}} `fork` {{.*}}
-
-// We should also get some other intercepted call. On some systems this
-// is `execve`, on others, it's a lock to set up `execve`. In either
-// case, just check that we get a second intercepted call, don't sweat
-// the name.
-// CHECK-NOHALT: Intercepted call to {{.*}}
+// CHECK-NOHALT: Intercepted call to {{.*}} `execve` {{.*}}
 
 // usleep checks that rtsan is still enabled in the parent process
 // See note in our interceptors file for why we don't look for `wait`

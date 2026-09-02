@@ -105,7 +105,5 @@ static int LLVM_ATTRIBUTE_UNUSED HTMLGeneratorAnchorDest =
     HTMLGeneratorAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED MHTMLGeneratorAnchorDest =
     MHTMLGeneratorAnchorSource;
-static int LLVM_ATTRIBUTE_UNUSED JSONGeneratorAnchorDest =
-    JSONGeneratorAnchorSource;
 } // namespace doc
 } // namespace clang

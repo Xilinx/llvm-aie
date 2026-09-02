@@ -129,19 +129,11 @@ std::optional<int> tryExpandAsInteger(StringRef Macro, const Preprocessor &PP) {
 
   // Parse an integer at the end of the macro definition.
   const Token &T = FilteredTokens.back();
-
-  if (!T.isLiteral())
+  // FIXME: EOF macro token coming from a PCH file on macOS while marked as
+  //        literal, doesn't contain any literal data
+  if (!T.isLiteral() || !T.getLiteralData())
     return std::nullopt;
-
-  bool InvalidSpelling = false;
-  SmallVector<char> Buffer(T.getLength());
-  // `Preprocessor::getSpelling` can get the spelling of the token regardless of
-  // whether the macro is defined in a PCH or not:
-  StringRef ValueStr = PP.getSpelling(T, Buffer, &InvalidSpelling);
-
-  if (InvalidSpelling)
-    return std::nullopt;
-
+  StringRef ValueStr = StringRef(T.getLiteralData(), T.getLength());
   llvm::APInt IntValue;
   constexpr unsigned AutoSenseRadix = 0;
   if (ValueStr.getAsInteger(AutoSenseRadix, IntValue))

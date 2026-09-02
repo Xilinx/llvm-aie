@@ -270,7 +270,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 
   // Binary operators
   case ISD::ADD:                        return "add";
-  case ISD::PTRADD:                     return "ptradd";
   case ISD::SUB:                        return "sub";
   case ISD::MUL:                        return "mul";
   case ISD::MULHU:                      return "mulhu";
@@ -585,8 +584,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
     return "partial_reduce_umla";
   case ISD::PARTIAL_REDUCE_SMLA:
     return "partial_reduce_smla";
-  case ISD::PARTIAL_REDUCE_SUMLA:
-    return "partial_reduce_sumla";
 
     // Vector Predication
 #define BEGIN_REGISTER_VP_SDNODE(SDID, LEGALARG, NAME, ...)                    \
@@ -947,7 +944,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
        << ASC->getDestAddressSpace()
        << ']';
   } else if (const LifetimeSDNode *LN = dyn_cast<LifetimeSDNode>(this)) {
-    OS << "<0 to " << LN->getSize() << ">";
+    if (LN->hasOffset())
+      OS << "<" << LN->getOffset() << " to " << LN->getOffset() + LN->getSize() << ">";
   } else if (const auto *AA = dyn_cast<AssertAlignSDNode>(this)) {
     OS << '<' << AA->getAlign().value() << '>';
   }

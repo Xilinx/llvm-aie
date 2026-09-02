@@ -1295,7 +1295,7 @@ Error IndexedInstrProfReader::readHeader() {
     // Writer first writes the length of compressed string, and then the actual
     // content.
     const char *VTableNamePtr = (const char *)Ptr;
-    if (VTableNamePtr > DataBuffer->getBufferEnd())
+    if (VTableNamePtr > (const char *)DataBuffer->getBufferEnd())
       return make_error<InstrProfError>(instrprof_error::truncated);
 
     VTableName = StringRef(VTableNamePtr, CompressedVTableNamesLen);
@@ -1369,7 +1369,7 @@ InstrProfSymtab &IndexedInstrProfReader::getSymtab() {
   return *Symtab;
 }
 
-Expected<NamedInstrProfRecord> IndexedInstrProfReader::getInstrProfRecord(
+Expected<InstrProfRecord> IndexedInstrProfReader::getInstrProfRecord(
     StringRef FuncName, uint64_t FuncHash, StringRef DeprecatedFuncName,
     uint64_t *MismatchedFuncSum) {
   ArrayRef<NamedInstrProfRecord> Data;
@@ -1572,7 +1572,7 @@ memprof::AllMemProfData IndexedMemProfReader::getAllMemProfData() const {
 Error IndexedInstrProfReader::getFunctionCounts(StringRef FuncName,
                                                 uint64_t FuncHash,
                                                 std::vector<uint64_t> &Counts) {
-  auto Record = getInstrProfRecord(FuncName, FuncHash);
+  Expected<InstrProfRecord> Record = getInstrProfRecord(FuncName, FuncHash);
   if (Error E = Record.takeError())
     return error(std::move(E));
 
@@ -1583,7 +1583,7 @@ Error IndexedInstrProfReader::getFunctionCounts(StringRef FuncName,
 Error IndexedInstrProfReader::getFunctionBitmap(StringRef FuncName,
                                                 uint64_t FuncHash,
                                                 BitVector &Bitmap) {
-  auto Record = getInstrProfRecord(FuncName, FuncHash);
+  Expected<InstrProfRecord> Record = getInstrProfRecord(FuncName, FuncHash);
   if (Error E = Record.takeError())
     return error(std::move(E));
 

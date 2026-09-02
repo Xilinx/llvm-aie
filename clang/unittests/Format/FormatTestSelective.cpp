@@ -41,11 +41,6 @@ TEST_F(FormatTestSelective, RemovesTrailingWhitespaceOfFormattedLine) {
   EXPECT_EQ("int a;", format("int a;         ", 0, 0));
   EXPECT_EQ("int a;\n", format("int a;  \n   \n   \n ", 0, 0));
   EXPECT_EQ("int a;\nint b;    ", format("int a;  \nint b;    ", 0, 0));
-
-  EXPECT_EQ("void f() {}", format("void f() {\n"
-                                  "  \n"
-                                  "}",
-                                  11, 0));
 }
 
 TEST_F(FormatTestSelective, FormatsCorrectRegionForLeadingWhitespace) {
@@ -672,14 +667,15 @@ TEST_F(FormatTestSelective, FormatMacroRegardlessOfPreviousIndent) {
   // need to be adapted.
   Style = getLLVMStyle();
 
-  constexpr StringRef Code("      class Foo {\n"
-                           "            void test() {\n"
-                           "    #ifdef 1\n"
-                           "                #define some\n" // format this line
-                           "         #endif\n"
-                           "    }};");
+  const StringRef Code{"      class Foo {\n"
+                       "            void test() {\n"
+                       "    #ifdef 1\n"
+                       "                #define some\n" // format this line
+                       "         #endif\n"
+                       "    }};"};
 
-  EXPECT_EQ(Style.IndentPPDirectives, FormatStyle::PPDIS_None);
+  EXPECT_EQ(Style.IndentPPDirectives,
+            FormatStyle::PPDirectiveIndentStyle::PPDIS_None);
   EXPECT_EQ("      class Foo {\n"
             "            void test() {\n"
             "    #ifdef 1\n"
@@ -688,7 +684,8 @@ TEST_F(FormatTestSelective, FormatMacroRegardlessOfPreviousIndent) {
             "            }};", // Ditto: Bug?
             format(Code, 57, 0));
 
-  Style.IndentPPDirectives = FormatStyle::PPDIS_BeforeHash;
+  Style.IndentPPDirectives =
+      FormatStyle::PPDirectiveIndentStyle::PPDIS_BeforeHash;
   EXPECT_EQ("      class Foo {\n"
             "            void test() {\n"
             "    #ifdef 1\n"
@@ -697,7 +694,8 @@ TEST_F(FormatTestSelective, FormatMacroRegardlessOfPreviousIndent) {
             "    }};",
             format(Code, 57, 0));
 
-  Style.IndentPPDirectives = FormatStyle::PPDIS_AfterHash;
+  Style.IndentPPDirectives =
+      FormatStyle::PPDirectiveIndentStyle::PPDIS_AfterHash;
   EXPECT_EQ("      class Foo {\n"
             "            void test() {\n"
             "    #ifdef 1\n"

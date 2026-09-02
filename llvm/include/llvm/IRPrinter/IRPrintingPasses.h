@@ -19,7 +19,6 @@
 #define LLVM_IRPRINTER_IRPRINTINGPASSES_H
 
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -37,12 +36,12 @@ class PrintModulePass : public PassInfoMixin<PrintModulePass> {
   bool EmitSummaryIndex;
 
 public:
-  LLVM_ABI PrintModulePass();
-  LLVM_ABI PrintModulePass(raw_ostream &OS, const std::string &Banner = "",
-                           bool ShouldPreserveUseListOrder = false,
-                           bool EmitSummaryIndex = false);
+  PrintModulePass();
+  PrintModulePass(raw_ostream &OS, const std::string &Banner = "",
+                  bool ShouldPreserveUseListOrder = false,
+                  bool EmitSummaryIndex = false);
 
-  LLVM_ABI PreservedAnalyses run(Module &M, AnalysisManager<Module> &);
+  PreservedAnalyses run(Module &M, AnalysisManager<Module> &);
   static bool isRequired() { return true; }
 };
 
@@ -53,10 +52,10 @@ class PrintFunctionPass : public PassInfoMixin<PrintFunctionPass> {
   std::string Banner;
 
 public:
-  LLVM_ABI PrintFunctionPass();
-  LLVM_ABI PrintFunctionPass(raw_ostream &OS, const std::string &Banner = "");
+  PrintFunctionPass();
+  PrintFunctionPass(raw_ostream &OS, const std::string &Banner = "");
 
-  LLVM_ABI PreservedAnalyses run(Function &F, AnalysisManager<Function> &);
+  PreservedAnalyses run(Function &F, AnalysisManager<Function> &);
   static bool isRequired() { return true; }
 };
 

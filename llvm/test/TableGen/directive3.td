@@ -7,20 +7,20 @@ def TestDirectiveLanguage : DirectiveLanguage {
   let name = "TdlError";
 }
 
-def TDLC_ClauseA : Clause<[Spelling<"clausea">]> {
+def TDLC_ClauseA : Clause<"clausea"> {
   let isDefault = 1;
 }
 
-def TDLC_ClauseB : Clause<[Spelling<"clauseb">]> {
+def TDLC_ClauseB : Clause<"clauseb"> {
 }
 
-def TDLC_ClauseC : Clause<[Spelling<"clausec">]> {
+def TDLC_ClauseC : Clause<"clausec"> {
 }
 
-def TDLC_ClauseD : Clause<[Spelling<"claused">]> {
+def TDLC_ClauseD : Clause<"claused"> {
 }
 
-def TDL_DirA : Directive<[Spelling<"dira">]> {
+def TDL_DirA : Directive<"dira"> {
   let allowedClauses = [
     VersionedClause<TDLC_ClauseA>,
     VersionedClause<TDLC_ClauseB>,

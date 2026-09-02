@@ -9,8 +9,6 @@
 #ifndef TEST_LIBCXX_CONTAINERS_CONTAINER_ADAPTORS_FLAT_HELPERS_H
 #define TEST_LIBCXX_CONTAINERS_CONTAINER_ADAPTORS_FLAT_HELPERS_H
 
-#include <vector>
-
 struct TrackCopyMove {
   mutable int copy_count = 0;
   int move_count         = 0;
@@ -37,12 +35,6 @@ struct TrackCopyMove {
   }
   constexpr bool operator==(const TrackCopyMove&) const { return true; }
   constexpr bool operator<(const TrackCopyMove&) const { return false; }
-};
-
-template <class T>
-struct NotQuiteSequenceContainer : std::vector<T> {
-  // hide the name insert_range
-  void insert_range() = delete;
 };
 
 #endif // TEST_LIBCXX_CONTAINERS_CONTAINER_ADAPTORS_FLAT_HELPERS_H

@@ -14,12 +14,14 @@
 #include "mlir/Dialect/Bufferization/Transforms/OneShotAnalysis.h"
 #include "mlir/Dialect/Bufferization/Transforms/OneShotModuleBufferize.h"
 #include "mlir/Dialect/Bufferization/Transforms/Transforms.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Pass/PassManager.h"
+#include "mlir/Transforms/Passes.h"
 #include <optional>
 
 namespace mlir {
@@ -107,9 +109,9 @@ struct OneShotBufferizePass
                   "'unknown-type-conversion'");
         return signalPassFailure();
       }
-      opt.unknownTypeConverterFn = [=](TensorType tensorType,
-                                       Attribute memorySpace,
+      opt.unknownTypeConverterFn = [=](Value value, Attribute memorySpace,
                                        const BufferizationOptions &options) {
+        auto tensorType = cast<TensorType>(value.getType());
         if (unknownTypeConversionOption == LayoutMapOption::IdentityLayoutMap)
           return bufferization::getMemRefTypeWithStaticIdentityLayout(
               tensorType, memorySpace);
@@ -278,8 +280,8 @@ LogicalResult bufferization::bufferizeOp(Operation *op,
                                          BufferizationState &bufferizationState,
                                          BufferizationStatistics *statistics) {
   if (options.copyBeforeWrite) {
-    AnalysisState analysisState(options);
-    if (failed(insertTensorCopies(op, analysisState, bufferizationState)))
+    AnalysisState state(options);
+    if (failed(insertTensorCopies(op, state)))
       return failure();
   }
 
@@ -394,8 +396,7 @@ LogicalResult bufferization::bufferizeOp(Operation *op,
 
 LogicalResult
 bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
-                                       const BufferizationOptions &options,
-                                       BufferizationState &state) {
+                                       const BufferizationOptions &options) {
   OpBuilder::InsertionGuard g(rewriter);
   auto bufferizableOp = options.dynCastBufferizableOp(block->getParentOp());
   if (!bufferizableOp)
@@ -410,11 +411,11 @@ bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
       continue;
     }
 
-    FailureOr<BufferLikeType> bufferType =
-        bufferization::getBufferType(bbArg, options, state);
-    if (failed(bufferType))
+    FailureOr<BaseMemRefType> memrefType =
+        bufferization::getBufferType(bbArg, options);
+    if (failed(memrefType))
       return failure();
-    newTypes.push_back(*bufferType);
+    newTypes.push_back(*memrefType);
   }
 
   // Change the type of all block arguments.
@@ -434,8 +435,8 @@ bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
     // Replace all uses of the original tensor bbArg.
     rewriter.setInsertionPointToStart(block);
     if (!bbArgUses.empty()) {
-      Value toTensorOp = bufferization::ToTensorOp::create(
-          rewriter, bbArg.getLoc(), tensorType, bbArg);
+      Value toTensorOp = rewriter.create<bufferization::ToTensorOp>(
+          bbArg.getLoc(), tensorType, bbArg);
       for (OpOperand *use : bbArgUses)
         use->set(toTensorOp);
     }
@@ -461,18 +462,18 @@ bufferization::bufferizeBlockSignature(Block *block, RewriterBase &rewriter,
         newOperands.push_back(operand);
         continue;
       }
-      FailureOr<BufferLikeType> operandBufferType =
-          bufferization::getBufferType(operand, options, state);
+      FailureOr<BaseMemRefType> operandBufferType =
+          bufferization::getBufferType(operand, options);
       if (failed(operandBufferType))
         return failure();
       rewriter.setInsertionPointAfterValue(operand);
-      Value bufferizedOperand = bufferization::ToBufferOp::create(
-          rewriter, operand.getLoc(), *operandBufferType, operand);
+      Value bufferizedOperand = rewriter.create<bufferization::ToBufferOp>(
+          operand.getLoc(), *operandBufferType, operand);
       // A cast is needed if the operand and the block argument have different
       // bufferized types.
       if (type != *operandBufferType)
-        bufferizedOperand = memref::CastOp::create(rewriter, operand.getLoc(),
-                                                   type, bufferizedOperand);
+        bufferizedOperand = rewriter.create<memref::CastOp>(
+            operand.getLoc(), type, bufferizedOperand);
       newOperands.push_back(bufferizedOperand);
     }
     operands.getMutableForwardedOperands().assign(newOperands);

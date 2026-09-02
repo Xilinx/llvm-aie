@@ -343,7 +343,7 @@ llvm::ArrayRef<std::unique_ptr<CallEdge>> Function::GetCallEdges() {
   Block &block = GetBlock(/*can_create*/true);
   SymbolFile *sym_file = block.GetSymbolFile();
   if (!sym_file)
-    return {};
+    return std::nullopt;
 
   // Lazily read call site information from the SymbolFile.
   m_call_edges = sym_file->ParseCallEdgesInFunction(GetID());

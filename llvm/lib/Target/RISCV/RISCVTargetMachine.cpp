@@ -34,7 +34,6 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
@@ -104,6 +103,11 @@ static cl::opt<bool> EnablePostMISchedLoadStoreClustering(
     cl::desc("Enable PostRA load and store clustering in the machine scheduler"),
     cl::init(true));
 
+static cl::opt<bool>
+    EnableVLOptimizer("riscv-enable-vl-optimizer",
+                      cl::desc("Enable the RISC-V VL Optimizer pass"),
+                      cl::init(true), cl::Hidden);
+
 static cl::opt<bool> DisableVectorMaskMutation(
     "riscv-disable-vector-mask-mutation",
     cl::desc("Disable the vector mask scheduling mutation"), cl::init(false),
@@ -114,7 +118,7 @@ static cl::opt<bool>
                            cl::desc("Enable Machine Pipeliner for RISC-V"),
                            cl::init(false), cl::Hidden);
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeRISCVTarget() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeRISCVTarget() {
   RegisterTargetMachine<RISCVTargetMachine> X(getTheRISCV32Target());
   RegisterTargetMachine<RISCVTargetMachine> Y(getTheRISCV64Target());
   auto *PR = PassRegistry::getPassRegistry();
@@ -143,7 +147,6 @@ extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeRISCVTarget() {
   initializeRISCVDAGToDAGISelLegacyPass(*PR);
   initializeRISCVMoveMergePass(*PR);
   initializeRISCVPushPopOptPass(*PR);
-  initializeRISCVIndirectBranchTrackingPass(*PR);
   initializeRISCVLoadStoreOptPass(*PR);
   initializeRISCVExpandAtomicPseudoPass(*PR);
   initializeRISCVRedundantCopyEliminationPass(*PR);
@@ -294,8 +297,9 @@ bool RISCVTargetMachine::isNoopAddrSpaceCast(unsigned SrcAS,
 
 ScheduleDAGInstrs *
 RISCVTargetMachine::createMachineScheduler(MachineSchedContext *C) const {
-  ScheduleDAGMILive *DAG = createSchedLive(C);
+  ScheduleDAGMILive *DAG = nullptr;
   if (EnableMISchedLoadStoreClustering) {
+    DAG = createGenericSchedLive(C);
     DAG->addMutation(createLoadClusterDAGMutation(
         DAG->TII, DAG->TRI, /*ReorderWhileClustering=*/true));
     DAG->addMutation(createStoreClusterDAGMutation(
@@ -303,16 +307,18 @@ RISCVTargetMachine::createMachineScheduler(MachineSchedContext *C) const {
   }
 
   const RISCVSubtarget &ST = C->MF->getSubtarget<RISCVSubtarget>();
-  if (!DisableVectorMaskMutation && ST.hasVInstructions())
+  if (!DisableVectorMaskMutation && ST.hasVInstructions()) {
+    DAG = DAG ? DAG : createGenericSchedLive(C);
     DAG->addMutation(createRISCVVectorMaskDAGMutation(DAG->TRI));
-
+  }
   return DAG;
 }
 
 ScheduleDAGInstrs *
 RISCVTargetMachine::createPostMachineScheduler(MachineSchedContext *C) const {
-  ScheduleDAGMI *DAG = createSchedPostRA(C);
+  ScheduleDAGMI *DAG = nullptr;
   if (EnablePostMISchedLoadStoreClustering) {
+    DAG = createGenericSchedPostRA(C);
     DAG->addMutation(createLoadClusterDAGMutation(
         DAG->TII, DAG->TRI, /*ReorderWhileClustering=*/true));
     DAG->addMutation(createStoreClusterDAGMutation(
@@ -566,10 +572,6 @@ void RISCVPassConfig::addPreEmitPass() {
     addPass(createMachineCopyPropagationPass(true));
   if (TM->getOptLevel() >= CodeGenOptLevel::Default)
     addPass(createRISCVLateBranchOptPass());
-  // The IndirectBranchTrackingPass inserts lpad and could have changed the
-  // basic block alignment. It must be done before Branch Relaxation to
-  // prevent the adjusted offset exceeding the branch range.
-  addPass(createRISCVIndirectBranchTrackingPass());
   addPass(&BranchRelaxationPassID);
   addPass(createRISCVMakeCompressibleOptPass());
 }
@@ -581,6 +583,7 @@ void RISCVPassConfig::addPreEmitPass2() {
     // ensuring return instruction is detected correctly.
     addPass(createRISCVPushPopOptimizationPass());
   }
+  addPass(createRISCVIndirectBranchTrackingPass());
   addPass(createRISCVExpandPseudoPass());
 
   // Schedule the expansion of AMOs at the last possible moment, avoiding the
@@ -612,7 +615,8 @@ void RISCVPassConfig::addPreRegAlloc() {
   addPass(createRISCVPreRAExpandPseudoPass());
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     addPass(createRISCVMergeBaseOffsetOptPass());
-    addPass(createRISCVVLOptimizerPass());
+    if (EnableVLOptimizer)
+      addPass(createRISCVVLOptimizerPass());
   }
 
   addPass(createRISCVInsertReadWriteCSRPass());

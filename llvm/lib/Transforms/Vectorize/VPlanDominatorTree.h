@@ -20,7 +20,6 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/Support/GenericDomTree.h"
-#include "llvm/Support/GenericDomTreeConstruction.h"
 
 namespace llvm {
 

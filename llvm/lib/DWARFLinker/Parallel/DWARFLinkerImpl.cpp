@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFLinkerImpl.h"
+#include "DIEGenerator.h"
 #include "DependencyTracker.h"
 #include "llvm/DWARFLinker/Utils.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugAbbrev.h"

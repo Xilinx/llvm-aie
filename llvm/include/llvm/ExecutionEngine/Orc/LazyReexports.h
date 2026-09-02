@@ -21,7 +21,6 @@
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
 #include "llvm/ExecutionEngine/Orc/RedirectionManager.h"
 #include "llvm/ExecutionEngine/Orc/Speculation.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -42,17 +41,16 @@ public:
   using NotifyResolvedFunction =
       unique_function<Error(ExecutorAddr ResolvedAddr)>;
 
-  LLVM_ABI LazyCallThroughManager(ExecutionSession &ES,
-                                  ExecutorAddr ErrorHandlerAddr,
-                                  TrampolinePool *TP);
+  LazyCallThroughManager(ExecutionSession &ES, ExecutorAddr ErrorHandlerAddr,
+                         TrampolinePool *TP);
 
   // Return a free call-through trampoline and bind it to look up and call
   // through to the given symbol.
-  LLVM_ABI Expected<ExecutorAddr>
+  Expected<ExecutorAddr>
   getCallThroughTrampoline(JITDylib &SourceJD, SymbolStringPtr SymbolName,
                            NotifyResolvedFunction NotifyResolved);
 
-  LLVM_ABI void resolveTrampolineLandingAddress(
+  void resolveTrampolineLandingAddress(
       ExecutorAddr TrampolineAddr,
       TrampolinePool::NotifyLandingResolvedFunction NotifyLandingResolved);
 
@@ -67,10 +65,9 @@ protected:
     SymbolStringPtr SymbolName;
   };
 
-  LLVM_ABI ExecutorAddr reportCallThroughError(Error Err);
-  LLVM_ABI Expected<ReexportsEntry> findReexport(ExecutorAddr TrampolineAddr);
-  LLVM_ABI Error notifyResolved(ExecutorAddr TrampolineAddr,
-                                ExecutorAddr ResolvedAddr);
+  ExecutorAddr reportCallThroughError(Error Err);
+  Expected<ReexportsEntry> findReexport(ExecutorAddr TrampolineAddr);
+  Error notifyResolved(ExecutorAddr TrampolineAddr, ExecutorAddr ResolvedAddr);
   void setTrampolinePool(TrampolinePool &TP) { this->TP = &TP; }
 
 private:
@@ -132,7 +129,7 @@ public:
 
 /// Create a LocalLazyCallThroughManager from the given triple and execution
 /// session.
-LLVM_ABI Expected<std::unique_ptr<LazyCallThroughManager>>
+Expected<std::unique_ptr<LazyCallThroughManager>>
 createLocalLazyCallThroughManager(const Triple &T, ExecutionSession &ES,
                                   ExecutorAddr ErrorHandlerAddr);
 
@@ -141,7 +138,7 @@ createLocalLazyCallThroughManager(const Triple &T, ExecutionSession &ES,
 /// Unlike a 'true' re-export, the address of the lazy re-export will not
 /// match the address of the re-exported symbol, but calling it will behave
 /// the same as calling the re-exported symbol.
-class LLVM_ABI LazyReexportsMaterializationUnit : public MaterializationUnit {
+class LazyReexportsMaterializationUnit : public MaterializationUnit {
 public:
   LazyReexportsMaterializationUnit(LazyCallThroughManager &LCTManager,
                                    RedirectableSymbolManager &RSManager,
@@ -176,7 +173,7 @@ lazyReexports(LazyCallThroughManager &LCTManager,
       LCTManager, RSManager, SourceJD, std::move(CallableAliases), SrcJDLoc);
 }
 
-class LLVM_ABI LazyReexportsManager : public ResourceManager {
+class LazyReexportsManager : public ResourceManager {
 
   friend std::unique_ptr<MaterializationUnit>
   lazyReexports(LazyReexportsManager &, SymbolAliasMap);
@@ -188,7 +185,7 @@ public:
     SymbolStringPtr BodyName;
   };
 
-  class LLVM_ABI Listener {
+  class Listener {
   public:
     using CallThroughInfo = LazyReexportsManager::CallThroughInfo;
 
@@ -271,8 +268,7 @@ lazyReexports(LazyReexportsManager &LRM, SymbolAliasMap Reexports) {
   return LRM.createLazyReexports(std::move(Reexports));
 }
 
-class LLVM_ABI SimpleLazyReexportsSpeculator
-    : public LazyReexportsManager::Listener {
+class SimpleLazyReexportsSpeculator : public LazyReexportsManager::Listener {
 public:
   using RecordExecutionFunction =
       unique_function<void(const CallThroughInfo &CTI)>;

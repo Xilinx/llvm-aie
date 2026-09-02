@@ -19,7 +19,6 @@
 #define LLVM_FUZZMUTATE_IRMUTATOR_H
 
 #include "llvm/FuzzMutate/OpDescriptor.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
 
@@ -33,7 +32,7 @@ struct RandomIRBuilder;
 
 /// Base class for describing how to mutate a module. mutation functions for
 /// each IR unit forward to the contained unit.
-class LLVM_ABI IRMutationStrategy {
+class IRMutationStrategy {
 public:
   virtual ~IRMutationStrategy() = default;
 
@@ -76,18 +75,18 @@ public:
   ///
   /// \param M module
   /// \return number of objects in module
-  LLVM_ABI static size_t getModuleSize(const Module &M);
+  static size_t getModuleSize(const Module &M);
 
   /// Mutate given module. No change will be made if no strategy is selected.
   ///
   /// \param M  module to mutate
   /// \param Seed seed for random mutation
   /// \param MaxSize max module size (see getModuleSize)
-  LLVM_ABI void mutateModule(Module &M, int Seed, size_t MaxSize);
+  void mutateModule(Module &M, int Seed, size_t MaxSize);
 };
 
 /// Strategy that injects operations into the function.
-class LLVM_ABI InjectorIRStrategy : public IRMutationStrategy {
+class InjectorIRStrategy : public IRMutationStrategy {
   std::vector<fuzzerop::OpDescriptor> Operations;
 
   std::optional<fuzzerop::OpDescriptor> chooseOperation(Value *Src,
@@ -110,7 +109,7 @@ public:
 };
 
 /// Strategy that deletes instructions when the Module is too large.
-class LLVM_ABI InstDeleterIRStrategy : public IRMutationStrategy {
+class InstDeleterIRStrategy : public IRMutationStrategy {
 public:
   uint64_t getWeight(size_t CurrentSize, size_t MaxSize,
                      uint64_t CurrentWeight) override;
@@ -121,7 +120,7 @@ public:
 };
 
 /// Strategy that modifies instruction attributes and operands.
-class LLVM_ABI InstModificationIRStrategy : public IRMutationStrategy {
+class InstModificationIRStrategy : public IRMutationStrategy {
 public:
   uint64_t getWeight(size_t CurrentSize, size_t MaxSize,
                      uint64_t CurrentWeight) override {
@@ -135,7 +134,7 @@ public:
 /// Strategy that generates new function calls and inserts function signatures
 /// to the modules. If any signatures are present in the module it will be
 /// called.
-class LLVM_ABI InsertFunctionStrategy : public IRMutationStrategy {
+class InsertFunctionStrategy : public IRMutationStrategy {
 public:
   uint64_t getWeight(size_t CurrentSize, size_t MaxSize,
                      uint64_t CurrentWeight) override {
@@ -147,7 +146,7 @@ public:
 };
 
 /// Strategy to split a random block and insert a random CFG in between.
-class LLVM_ABI InsertCFGStrategy : public IRMutationStrategy {
+class InsertCFGStrategy : public IRMutationStrategy {
 private:
   uint64_t MaxNumCases;
   enum CFGToSink { Return, DirectSink, SinkOrSelfLoop, EndOfCFGToLink };
@@ -167,7 +166,7 @@ private:
 };
 
 /// Strategy to insert PHI Nodes at the head of each basic block.
-class LLVM_ABI InsertPHIStrategy : public IRMutationStrategy {
+class InsertPHIStrategy : public IRMutationStrategy {
 public:
   uint64_t getWeight(size_t CurrentSize, size_t MaxSize,
                      uint64_t CurrentWeight) override {
@@ -179,7 +178,7 @@ public:
 
 /// Strategy to select a random instruction and add a new sink (user) to it to
 /// increate data dependency.
-class LLVM_ABI SinkInstructionStrategy : public IRMutationStrategy {
+class SinkInstructionStrategy : public IRMutationStrategy {
 public:
   uint64_t getWeight(size_t CurrentSize, size_t MaxSize,
                      uint64_t CurrentWeight) override {
@@ -192,7 +191,7 @@ public:
 
 /// Strategy to randomly select a block and shuffle the operations without
 /// affecting data dependency.
-class LLVM_ABI ShuffleBlockStrategy : public IRMutationStrategy {
+class ShuffleBlockStrategy : public IRMutationStrategy {
 public:
   uint64_t getWeight(size_t CurrentSize, size_t MaxSize,
                      uint64_t CurrentWeight) override {
@@ -207,8 +206,8 @@ public:
 /// \param Data Bitcode we are going to parse
 /// \param Size Size of the 'Data' in bytes
 /// \return New module or nullptr in case of error
-LLVM_ABI std::unique_ptr<Module> parseModule(const uint8_t *Data, size_t Size,
-                                             LLVMContext &Context);
+std::unique_ptr<Module> parseModule(const uint8_t *Data, size_t Size,
+                                    LLVMContext &Context);
 
 /// Fuzzer friendly interface for the llvm bitcode printer.
 ///
@@ -217,13 +216,13 @@ LLVM_ABI std::unique_ptr<Module> parseModule(const uint8_t *Data, size_t Size,
 /// \param MaxSize Size of the destination buffer
 /// \return Number of bytes that were written. When module size exceeds MaxSize
 ///         returns 0 and leaves Dest unchanged.
-LLVM_ABI size_t writeModule(const Module &M, uint8_t *Dest, size_t MaxSize);
+size_t writeModule(const Module &M, uint8_t *Dest, size_t MaxSize);
 
 /// Try to parse module and verify it. May output verification errors to the
 /// errs().
 /// \return New module or nullptr in case of error.
-LLVM_ABI std::unique_ptr<Module>
-parseAndVerify(const uint8_t *Data, size_t Size, LLVMContext &Context);
+std::unique_ptr<Module> parseAndVerify(const uint8_t *Data, size_t Size,
+                                       LLVMContext &Context);
 
 } // namespace llvm
 

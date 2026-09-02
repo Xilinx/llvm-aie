@@ -13,7 +13,7 @@
 #include "test/UnitTest/Test.h"
 #include "utils/MPFRWrapper/MPFRUtils.h"
 
-#include "hdr/stdint_proxy.h"
+#include <stdint.h>
 
 using LlvmLibcPowfTest = LIBC_NAMESPACE::testing::FPTest<float>;
 using LIBC_NAMESPACE::testing::tlog;
@@ -78,7 +78,7 @@ TEST_F(LlvmLibcPowfTest, InFloatRange) {
         if (FPBits(w).is_nan() || FPBits(w).is_inf())
           continue;
 
-        libc_errno = 0;
+        LIBC_NAMESPACE::libc_errno = 0;
         float result = LIBC_NAMESPACE::powf(x, y);
         ++cc;
         if (FPBits(result).is_nan() || FPBits(result).is_inf())

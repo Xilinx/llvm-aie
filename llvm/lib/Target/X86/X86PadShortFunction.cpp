@@ -100,7 +100,6 @@ FunctionPass *llvm::createX86PadShortFunctions() {
 /// runOnMachineFunction - Loop over all of the basic blocks, inserting
 /// NOOP instructions before early exits.
 bool PadShortFunc::runOnMachineFunction(MachineFunction &MF) {
-  LLVM_DEBUG(dbgs() << "Start X86PadShortFunctionPass\n";);
   if (skipFunction(MF.getFunction()))
     return false;
 
@@ -150,7 +149,7 @@ bool PadShortFunc::runOnMachineFunction(MachineFunction &MF) {
       MadeChange = true;
     }
   }
-  LLVM_DEBUG(dbgs() << "End X86PadShortFunctionPass\n";);
+
   return MadeChange;
 }
 

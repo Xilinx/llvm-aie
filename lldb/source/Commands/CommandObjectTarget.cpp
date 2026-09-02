@@ -1412,13 +1412,11 @@ static bool DumpModuleSymbolFile(Stream &strm, Module *module) {
 }
 
 static bool GetSeparateDebugInfoList(StructuredData::Array &list,
-                                     Module *module, bool errors_only,
-                                     bool load_all_debug_info) {
+                                     Module *module, bool errors_only) {
   if (module) {
     if (SymbolFile *symbol_file = module->GetSymbolFile(/*can_create=*/true)) {
       StructuredData::Dictionary d;
-      if (symbol_file->GetSeparateDebugInfo(d, errors_only,
-                                            load_all_debug_info)) {
+      if (symbol_file->GetSeparateDebugInfo(d, errors_only)) {
         list.AddItem(
             std::make_shared<StructuredData::Dictionary>(std::move(d)));
         return true;
@@ -2237,22 +2235,10 @@ public:
       : CommandObjectTargetModulesModuleAutoComplete(
             interpreter, "target modules dump ast",
             "Dump the clang ast for a given module's symbol file.",
-            "target modules dump ast [--filter <name>] [<file1> ...]",
-            eCommandRequiresTarget),
-        m_filter(LLDB_OPT_SET_1, false, "filter", 'f', 0, eArgTypeName,
-                 "Dump only the decls whose names contain the specified filter "
-                 "string.",
-                 /*default_value=*/"") {
-    m_option_group.Append(&m_filter, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
-    m_option_group.Finalize();
-  }
-
-  Options *GetOptions() override { return &m_option_group; }
+            //"target modules dump ast [<file1> ...]")
+            nullptr, eCommandRequiresTarget) {}
 
   ~CommandObjectTargetModulesDumpClangAST() override = default;
-
-  OptionGroupOptions m_option_group;
-  OptionGroupString m_filter;
 
 protected:
   void DoExecute(Args &command, CommandReturnObject &result) override {
@@ -2265,8 +2251,6 @@ protected:
       return;
     }
 
-    llvm::StringRef filter = m_filter.GetOptionValue().GetCurrentValueAsRef();
-
     if (command.GetArgumentCount() == 0) {
       // Dump all ASTs for all modules images
       result.GetOutputStream().Format("Dumping clang ast for {0} modules.\n",
@@ -2275,7 +2259,7 @@ protected:
         if (INTERRUPT_REQUESTED(GetDebugger(), "Interrupted dumping clang ast"))
           break;
         if (SymbolFile *sf = module_sp->GetSymbolFile())
-          sf->DumpClangAST(result.GetOutputStream(), filter);
+          sf->DumpClangAST(result.GetOutputStream());
       }
       result.SetStatus(eReturnStatusSuccessFinishResult);
       return;
@@ -2304,7 +2288,7 @@ protected:
 
         Module *m = module_list.GetModulePointerAtIndex(i);
         if (SymbolFile *sf = m->GetSymbolFile())
-          sf->DumpClangAST(result.GetOutputStream(), filter);
+          sf->DumpClangAST(result.GetOutputStream());
       }
     }
     result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -2524,10 +2508,6 @@ public:
       const int short_option = m_getopt_table[option_idx].val;
 
       switch (short_option) {
-      case 'f':
-        m_load_all_debug_info.SetCurrentValue(true);
-        m_load_all_debug_info.SetOptionWasSet();
-        break;
       case 'j':
         m_json.SetCurrentValue(true);
         m_json.SetOptionWasSet();
@@ -2545,7 +2525,6 @@ public:
     void OptionParsingStarting(ExecutionContext *execution_context) override {
       m_json.Clear();
       m_errors_only.Clear();
-      m_load_all_debug_info.Clear();
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
@@ -2554,7 +2533,6 @@ public:
 
     OptionValueBoolean m_json = false;
     OptionValueBoolean m_errors_only = false;
-    OptionValueBoolean m_load_all_debug_info = false;
   };
 
 protected:
@@ -2586,8 +2564,7 @@ protected:
 
         if (GetSeparateDebugInfoList(separate_debug_info_lists_by_module,
                                      module_sp.get(),
-                                     bool(m_options.m_errors_only),
-                                     bool(m_options.m_load_all_debug_info)))
+                                     bool(m_options.m_errors_only)))
           num_dumped++;
       }
     } else {
@@ -2608,8 +2585,7 @@ protected:
               break;
             Module *module = module_list.GetModulePointerAtIndex(i);
             if (GetSeparateDebugInfoList(separate_debug_info_lists_by_module,
-                                         module, bool(m_options.m_errors_only),
-                                         bool(m_options.m_load_all_debug_info)))
+                                         module, bool(m_options.m_errors_only)))
               num_dumped++;
           }
         } else
@@ -4096,6 +4072,8 @@ protected:
     // Dump all sections for all modules images
 
     if (command.GetArgumentCount() == 0) {
+      ModuleSP current_module;
+
       // Where it is possible to look in the current symbol context first,
       // try that.  If this search was successful and --all was not passed,
       // don't print anything else.
@@ -4118,7 +4096,8 @@ protected:
       }
 
       for (ModuleSP module_sp : target_modules.ModulesNoLocking()) {
-        if (LookupInModule(m_interpreter, module_sp.get(), result,
+        if (module_sp != current_module &&
+            LookupInModule(m_interpreter, module_sp.get(), result,
                            syntax_error)) {
           result.GetOutputStream().EOL();
           num_successful_lookups++;
@@ -4892,9 +4871,9 @@ public:
 Command Based stop-hooks:
 -------------------------
   Stop hooks can run a list of lldb commands by providing one or more
-  --one-liner options.  The commands will get run in the order they are added.
-  Or you can provide no commands, in which case you will enter a command editor
-  where you can enter the commands to be run.
+  --one-line-command options.  The commands will get run in the order they are
+  added.  Or you can provide no commands, in which case you will enter a
+  command editor where you can enter the commands to be run.
 
 Python Based Stop Hooks:
 ------------------------
@@ -5293,7 +5272,7 @@ protected:
     // Go over every scratch TypeSystem and dump to the command output.
     for (lldb::TypeSystemSP ts : GetTarget().GetScratchTypeSystems())
       if (ts)
-        ts->Dump(result.GetOutputStream().AsRawOstream(), "");
+        ts->Dump(result.GetOutputStream().AsRawOstream());
 
     result.SetStatus(eReturnStatusSuccessFinishResult);
   }

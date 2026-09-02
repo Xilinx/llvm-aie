@@ -16,6 +16,7 @@
 #include "mlir/Dialect/SPIRV/IR/SPIRVOps.h"
 
 #include "mlir/Dialect/CommonFolders.h"
+#include "mlir/Dialect/SPIRV/IR/SPIRVDialect.h"
 #include "mlir/Dialect/SPIRV/IR/SPIRVTypes.h"
 #include "mlir/Dialect/UB/IR/UBOps.h"
 #include "mlir/IR/Matchers.h"
@@ -178,16 +179,16 @@ struct IAddCarryFold final : OpRewritePattern<spirv::IAddCarryOp> {
       return failure();
 
     Value addsVal =
-        spirv::ConstantOp::create(rewriter, loc, constituentType, adds);
+        rewriter.create<spirv::ConstantOp>(loc, constituentType, adds);
 
     Value carrysVal =
-        spirv::ConstantOp::create(rewriter, loc, constituentType, carrys);
+        rewriter.create<spirv::ConstantOp>(loc, constituentType, carrys);
 
     // Create empty struct
-    Value undef = spirv::UndefOp::create(rewriter, loc, op.getType());
+    Value undef = rewriter.create<spirv::UndefOp>(loc, op.getType());
     // Fill in adds at id 0
     Value intermediate =
-        spirv::CompositeInsertOp::create(rewriter, loc, addsVal, undef, 0);
+        rewriter.create<spirv::CompositeInsertOp>(loc, addsVal, undef, 0);
     // Fill in carrys at id 1
     rewriter.replaceOpWithNewOp<spirv::CompositeInsertOp>(op, carrysVal,
                                                           intermediate, 1);
@@ -260,16 +261,16 @@ struct MulExtendedFold final : OpRewritePattern<MulOp> {
       return failure();
 
     Value lowBitsVal =
-        spirv::ConstantOp::create(rewriter, loc, constituentType, lowBits);
+        rewriter.create<spirv::ConstantOp>(loc, constituentType, lowBits);
 
     Value highBitsVal =
-        spirv::ConstantOp::create(rewriter, loc, constituentType, highBits);
+        rewriter.create<spirv::ConstantOp>(loc, constituentType, highBits);
 
     // Create empty struct
-    Value undef = spirv::UndefOp::create(rewriter, loc, op.getType());
+    Value undef = rewriter.create<spirv::UndefOp>(loc, op.getType());
     // Fill in lowBits at id 0
     Value intermediate =
-        spirv::CompositeInsertOp::create(rewriter, loc, lowBitsVal, undef, 0);
+        rewriter.create<spirv::CompositeInsertOp>(loc, lowBitsVal, undef, 0);
     // Fill in highBits at id 1
     rewriter.replaceOpWithNewOp<spirv::CompositeInsertOp>(op, highBitsVal,
                                                           intermediate, 1);
@@ -325,6 +326,7 @@ void spirv::UMulExtendedOp::getCanonicalizationPatterns(
 
 // The transformation is only applied if one divisor is a multiple of the other.
 
+// TODO(https://github.com/llvm/llvm-project/issues/63174): Add support for vector constants
 struct UModSimplification final : OpRewritePattern<spirv::UModOp> {
   using OpRewritePattern::OpRewritePattern;
 
@@ -334,29 +336,19 @@ struct UModSimplification final : OpRewritePattern<spirv::UModOp> {
     if (!prevUMod)
       return failure();
 
-    TypedAttr prevValue;
-    TypedAttr currValue;
+    IntegerAttr prevValue;
+    IntegerAttr currValue;
     if (!matchPattern(prevUMod.getOperand(1), m_Constant(&prevValue)) ||
         !matchPattern(umodOp.getOperand(1), m_Constant(&currValue)))
       return failure();
 
-    // Ensure that previous divisor is a multiple of the current divisor. If
-    // not, fail the transformation.
-    bool isApplicable = false;
-    if (auto prevInt = dyn_cast<IntegerAttr>(prevValue)) {
-      auto currInt = cast<IntegerAttr>(currValue);
-      isApplicable = prevInt.getValue().urem(currInt.getValue()) == 0;
-    } else if (auto prevVec = dyn_cast<DenseElementsAttr>(prevValue)) {
-      auto currVec = cast<DenseElementsAttr>(currValue);
-      isApplicable = llvm::all_of(llvm::zip_equal(prevVec.getValues<APInt>(),
-                                                  currVec.getValues<APInt>()),
-                                  [](const auto &pair) {
-                                    auto &[prev, curr] = pair;
-                                    return prev.urem(curr) == 0;
-                                  });
-    }
+    APInt prevConstValue = prevValue.getValue();
+    APInt currConstValue = currValue.getValue();
 
-    if (!isApplicable)
+    // Ensure that one divisor is a multiple of the other. If not, fail the
+    // transformation.
+    if (prevConstValue.urem(currConstValue) != 0 &&
+        currConstValue.urem(prevConstValue) != 0)
       return failure();
 
     // The transformation is safe. Replace the existing UMod operation with a
@@ -1309,11 +1301,11 @@ struct ConvertSelectionOpToSelect final : OpRewritePattern<spirv::SelectionOp> {
     auto storeOpAttributes =
         cast<spirv::StoreOp>(trueBlock->front())->getAttrs();
 
-    auto selectOp = spirv::SelectOp::create(
-        rewriter, selectionOp.getLoc(), trueValue.getType(),
+    auto selectOp = rewriter.create<spirv::SelectOp>(
+        selectionOp.getLoc(), trueValue.getType(),
         brConditionalOp.getCondition(), trueValue, falseValue);
-    spirv::StoreOp::create(rewriter, selectOp.getLoc(), ptrValue,
-                           selectOp.getResult(), storeOpAttributes);
+    rewriter.create<spirv::StoreOp>(selectOp.getLoc(), ptrValue,
+                                    selectOp.getResult(), storeOpAttributes);
 
     // `spirv.mlir.selection` is not needed anymore.
     rewriter.eraseOp(op);

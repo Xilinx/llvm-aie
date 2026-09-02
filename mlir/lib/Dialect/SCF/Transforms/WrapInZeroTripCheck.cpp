@@ -96,8 +96,8 @@ FailureOr<scf::WhileOp> mlir::scf::wrapWhileLoopInZeroTripCheck(
       condOp.getArgs(), [&](Value arg) { return mapper.lookupOrDefault(arg); });
 
   // Create rotated while loop.
-  auto newLoopOp = scf::WhileOp::create(
-      rewriter, whileOp.getLoc(), whileOp.getResultTypes(), clonedCondArgs,
+  auto newLoopOp = rewriter.create<scf::WhileOp>(
+      whileOp.getLoc(), whileOp.getResultTypes(), clonedCondArgs,
       [&](OpBuilder &builder, Location loc, ValueRange args) {
         // Rotate and move the loop body into before block.
         auto newBlock = builder.getBlock();
@@ -109,21 +109,21 @@ FailureOr<scf::WhileOp> mlir::scf::wrapWhileLoopInZeroTripCheck(
       },
       [&](OpBuilder &builder, Location loc, ValueRange args) {
         // Pass through values.
-        scf::YieldOp::create(builder, loc, args);
+        builder.create<scf::YieldOp>(loc, args);
       });
 
   // Create zero-trip-check and move the while loop in.
-  auto ifOp = scf::IfOp::create(
-      rewriter, whileOp.getLoc(), clonedCondition,
+  auto ifOp = rewriter.create<scf::IfOp>(
+      whileOp.getLoc(), clonedCondition,
       [&](OpBuilder &builder, Location loc) {
         // Then runs the while loop.
         rewriter.moveOpBefore(newLoopOp, builder.getInsertionBlock(),
                               builder.getInsertionPoint());
-        scf::YieldOp::create(builder, loc, newLoopOp.getResults());
+        builder.create<scf::YieldOp>(loc, newLoopOp.getResults());
       },
       [&](OpBuilder &builder, Location loc) {
         // Else returns the results from precondition.
-        scf::YieldOp::create(builder, loc, clonedCondArgs);
+        builder.create<scf::YieldOp>(loc, clonedCondArgs);
       });
 
   rewriter.replaceOp(whileOp, ifOp);

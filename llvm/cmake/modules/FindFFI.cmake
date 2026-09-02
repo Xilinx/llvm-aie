@@ -23,10 +23,7 @@
 # Additionally, the following import target will be defined:
 # FFI::ffi
 
-find_package(PkgConfig QUIET)
-pkg_check_modules(PC_LIBFFI QUIET libffi)
-
-find_path(FFI_INCLUDE_DIRS ffi.h PATHS ${FFI_INCLUDE_DIR} ${PC_LIBFFI_INCLUDE_DIRS})
+find_path(FFI_INCLUDE_DIRS ffi.h PATHS ${FFI_INCLUDE_DIR})
 if( EXISTS "${FFI_INCLUDE_DIRS}/ffi.h" )
   set(FFI_HEADER ffi.h CACHE INTERNAL "")
   set(HAVE_FFI_H 1 CACHE INTERNAL "")
@@ -38,8 +35,8 @@ else()
   endif()
 endif()
 
-find_library(FFI_LIBRARIES NAMES ffi PATHS ${FFI_LIBRARY_DIR} ${PC_LIBFFI_LIBRARY_DIRS})
-find_library(FFI_STATIC_LIBRARIES NAMES libffi.a PATHS ${FFI_LIBRARY_DIR} ${PC_LIBFFI_LIBRARY_DIRS})
+find_library(FFI_LIBRARIES NAMES ffi PATHS ${FFI_LIBRARY_DIR})
+find_library(FFI_STATIC_LIBRARIES NAMES libffi.a PATHS ${FFI_LIBRARY_DIR})
 
 if(FFI_LIBRARIES)
   include(CMakePushCheckState)

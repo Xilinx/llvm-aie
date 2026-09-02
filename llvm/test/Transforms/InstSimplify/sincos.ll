@@ -50,7 +50,8 @@ define { <2 x float>, <2 x float> } @sincos_zero_vector() {
 
 define { float, float } @sincos_poison() {
 ; CHECK-LABEL: define { float, float } @sincos_poison() {
-; CHECK-NEXT:    ret { float, float } poison 
+; CHECK-NEXT:    [[RET:%.*]] = call { float, float } @llvm.sincos.f32(float poison)
+; CHECK-NEXT:    ret { float, float } [[RET]]
 ;
   %ret = call { float, float } @llvm.sincos.f32(float poison)
   ret { float, float } %ret
@@ -58,7 +59,8 @@ define { float, float } @sincos_poison() {
 
 define { <2 x float>, <2 x float> } @sincos_poison_vector() {
 ; CHECK-LABEL: define { <2 x float>, <2 x float> } @sincos_poison_vector() {
-; CHECK-NEXT:    ret { <2 x float>, <2 x float> } poison 
+; CHECK-NEXT:    [[RET:%.*]] = call { <2 x float>, <2 x float> } @llvm.sincos.v2f32(<2 x float> poison)
+; CHECK-NEXT:    ret { <2 x float>, <2 x float> } [[RET]]
 ;
   %ret = call { <2 x float>, <2 x float> } @llvm.sincos.v2f32(<2 x float> poison)
   ret { <2 x float>, <2 x float> } %ret
@@ -66,7 +68,8 @@ define { <2 x float>, <2 x float> } @sincos_poison_vector() {
 
 define { <vscale x 2 x float>, <vscale x 2 x float> } @sincos_poison_scalable_vector() {
 ; CHECK-LABEL: define { <vscale x 2 x float>, <vscale x 2 x float> } @sincos_poison_scalable_vector() {
-; CHECK-NEXT:    ret { <vscale x 2 x float>, <vscale x 2 x float> } poison
+; CHECK-NEXT:    [[RET:%.*]] = call { <vscale x 2 x float>, <vscale x 2 x float> } @llvm.sincos.nxv2f32(<vscale x 2 x float> poison)
+; CHECK-NEXT:    ret { <vscale x 2 x float>, <vscale x 2 x float> } [[RET]]
 ;
   %ret = call { <vscale x 2 x float>, <vscale x 2 x float> } @llvm.sincos.nxv2f32(<vscale x 2 x float> poison)
   ret { <vscale x 2 x float>, <vscale x 2 x float> } %ret

@@ -10,13 +10,23 @@
 #define LLVM_MC_MCTARGETOPTIONS_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Compression.h"
 #include <string>
 #include <vector>
 
 namespace llvm {
+
+enum class ExceptionHandling {
+  None,     ///< No exception support
+  DwarfCFI, ///< DWARF-like instruction based exceptions
+  SjLj,     ///< setjmp/longjmp based exceptions
+  ARM,      ///< ARM EHABI
+  WinEH,    ///< Windows Exception Handling
+  Wasm,     ///< WebAssembly Exception Handling
+  AIX,      ///< AIX Exception Handling
+  ZOS,      ///< z/OS MVS Exception Handling. Very similar to DwarfCFI, but the PPA1
+            ///< is used instead of an .eh_frame section.
+};
 
 enum class EmitDwarfUnwindType {
   Always,          // Always emit dwarf unwind
@@ -102,23 +112,20 @@ public:
   // functions on Darwins.
   bool EmitCompactUnwindNonCanonical : 1;
 
-  // Whether to emit SFrame unwind sections.
-  bool EmitSFrameUnwind : 1;
-
   // Whether or not to use full register names on PowerPC.
   bool PPCUseFullRegisterNames : 1;
 
-  LLVM_ABI MCTargetOptions();
+  MCTargetOptions();
 
   /// getABIName - If this returns a non-empty string this represents the
   /// textual name of the ABI that we want the backend to use, e.g. o32, or
   /// aapcs-linux.
-  LLVM_ABI StringRef getABIName() const;
+  StringRef getABIName() const;
 
   /// getAssemblyLanguage - If this returns a non-empty string this represents
   /// the textual name of the assembly language that we will use for this
   /// target, e.g. masm.
-  LLVM_ABI StringRef getAssemblyLanguage() const;
+  StringRef getAssemblyLanguage() const;
 };
 
 } // end namespace llvm

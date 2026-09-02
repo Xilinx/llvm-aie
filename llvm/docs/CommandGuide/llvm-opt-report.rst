@@ -94,6 +94,7 @@ be sent to standard output.
  The Argument is one of the following:
 
  - yaml
+ - yaml-strtab
  - bitstream
 
 .. option:: --no-demangle

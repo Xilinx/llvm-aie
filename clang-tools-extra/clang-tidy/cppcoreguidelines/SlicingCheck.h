@@ -14,7 +14,11 @@
 namespace clang::tidy::cppcoreguidelines {
 
 /// Flags slicing (incomplete copying of an object's state) of member variables
-/// or vtable.
+/// or vtable. See:
+///   - https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#es63-dont-slice
+///     for the former, and
+///   - https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#c145-access-polymorphic-objects-through-pointers-and-references
+///     for the latter
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/slicing.html

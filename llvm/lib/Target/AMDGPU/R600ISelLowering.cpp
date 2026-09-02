@@ -1448,7 +1448,7 @@ CCAssignFn *R600TargetLowering::CCAssignFnForCall(CallingConv::ID CC,
   case CallingConv::AMDGPU_LS:
     return CC_R600;
   default:
-    reportFatalUsageError("unsupported calling convention");
+    report_fatal_error("Unsupported calling convention.");
   }
 }
 

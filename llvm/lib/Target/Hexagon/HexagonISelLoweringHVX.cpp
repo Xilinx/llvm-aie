@@ -117,8 +117,6 @@ HexagonTargetLowering::initializeHVXLowering() {
   setOperationAction(ISD::VECTOR_SHUFFLE,          ByteW, Legal);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  if (Subtarget.useHVX128BOps())
-    setOperationAction(ISD::BITCAST, MVT::v32i1, Custom);
   if (Subtarget.useHVX128BOps() && Subtarget.useHVXV68Ops() &&
       Subtarget.useHVXFloatingPoint()) {
 
@@ -206,8 +204,6 @@ HexagonTargetLowering::initializeHVXLowering() {
     setOperationAction(ISD::CTLZ,           T, Legal);
     setOperationAction(ISD::SELECT,         T, Legal);
     setOperationAction(ISD::SPLAT_VECTOR,   T, Legal);
-    setOperationAction(ISD::UADDSAT, T, Legal);
-    setOperationAction(ISD::SADDSAT, T, Legal);
     if (T != ByteV) {
       setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, T, Legal);
       setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, T, Legal);
@@ -299,8 +295,6 @@ HexagonTargetLowering::initializeHVXLowering() {
     setOperationAction(ISD::CTPOP,    T, Custom);
 
     setOperationAction(ISD::ADD,      T, Legal);
-    setOperationAction(ISD::UADDSAT, T, Legal);
-    setOperationAction(ISD::SADDSAT, T, Legal);
     setOperationAction(ISD::SUB,      T, Legal);
     setOperationAction(ISD::MUL,      T, Custom);
     setOperationAction(ISD::MULHS,    T, Custom);
@@ -1693,27 +1687,28 @@ HexagonTargetLowering::LowerHvxConcatVectors(SDValue Op, SelectionDAG &DAG)
     // all operations are expected to be type-legalized, and i16 is not
     // a legal type. If any of the extracted elements is not of a valid
     // type, sign-extend it to a valid one.
-    for (SDValue &V : Elems) {
+    for (unsigned i = 0, e = Elems.size(); i != e; ++i) {
+      SDValue V = Elems[i];
       MVT Ty = ty(V);
       if (!isTypeLegal(Ty)) {
         MVT NTy = typeLegalize(Ty, DAG);
         if (V.getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
-          V = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, NTy,
-                          DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NTy,
-                                      V.getOperand(0), V.getOperand(1)),
-                          DAG.getValueType(Ty));
+          Elems[i] = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, NTy,
+                                 DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NTy,
+                                             V.getOperand(0), V.getOperand(1)),
+                                 DAG.getValueType(Ty));
           continue;
         }
         // A few less complicated cases.
         switch (V.getOpcode()) {
           case ISD::Constant:
-            V = DAG.getSExtOrTrunc(V, dl, NTy);
+            Elems[i] = DAG.getSExtOrTrunc(V, dl, NTy);
             break;
           case ISD::UNDEF:
-            V = DAG.getUNDEF(NTy);
+            Elems[i] = DAG.getUNDEF(NTy);
             break;
           case ISD::TRUNCATE:
-            V = V.getOperand(0);
+            Elems[i] = V.getOperand(0);
             break;
           default:
             llvm_unreachable("Unexpected vector element");
@@ -2007,28 +2002,6 @@ HexagonTargetLowering::LowerHvxBitcast(SDValue Op, SelectionDAG &DAG) const {
 
     return DAG.getNode(ISD::BUILD_PAIR, dl, ResTy, Combines);
   }
-
-  // Handle bitcast from i32, v2i16, and v4i8 to v32i1.
-  // Splat the input into a 32-element i32 vector, then AND each element
-  // with a unique bitmask to isolate individual bits.
-  if (ResTy == MVT::v32i1 &&
-      (ValTy == MVT::i32 || ValTy == MVT::v2i16 || ValTy == MVT::v4i8) &&
-      Subtarget.useHVX128BOps()) {
-    SDValue Val32 = Val;
-    if (ValTy == MVT::v2i16 || ValTy == MVT::v4i8)
-      Val32 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Val);
-
-    MVT VecTy = MVT::getVectorVT(MVT::i32, 32);
-    SDValue Splat = DAG.getNode(ISD::SPLAT_VECTOR, dl, VecTy, Val32);
-    SmallVector<SDValue, 32> Mask;
-    for (unsigned i = 0; i < 32; ++i)
-      Mask.push_back(DAG.getConstant(1ull << i, dl, MVT::i32));
-
-    SDValue MaskVec = DAG.getBuildVector(VecTy, dl, Mask);
-    SDValue Anded = DAG.getNode(ISD::AND, dl, VecTy, Splat, MaskVec);
-    return DAG.getNode(HexagonISD::V2Q, dl, ResTy, Anded);
-  }
-
   if (isHvxBoolTy(ResTy) && ValTy.isScalarInteger()) {
     // Handle bitcast from i128 -> v128i1 and i64 -> v64i1.
     unsigned BitWidth = ValTy.getSizeInBits();

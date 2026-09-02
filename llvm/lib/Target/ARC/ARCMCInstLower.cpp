@@ -29,6 +29,7 @@ ARCMCInstLower::ARCMCInstLower(MCContext *C, AsmPrinter &AsmPrinter)
 MCOperand ARCMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                              MachineOperandType MOTy,
                                              unsigned Offset) const {
+  MCSymbolRefExpr::VariantKind Kind = MCSymbolRefExpr::VK_None;
   const MCSymbol *Symbol;
 
   switch (MOTy) {
@@ -59,7 +60,7 @@ MCOperand ARCMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   }
 
   assert(Symbol && "Symbol creation failed.\n");
-  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::create(Symbol, *Ctx);
+  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::create(Symbol, Kind, *Ctx);
 
   if (!Offset)
     return MCOperand::createExpr(MCSym);

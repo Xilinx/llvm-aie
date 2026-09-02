@@ -96,11 +96,11 @@ namespace test5 {
 namespace PR7508 {
   struct A {
     struct CleanupScope {};
-    void PopCleanupBlock();
+    void PopCleanupBlock(); // expected-note{{'PopCleanupBlock' declared here}}
   };
 
   void foo(A &a) {
-    a.PopCleanupScope(); // expected-error{{no member named 'PopCleanupScope' in 'PR7508::A'}}
+    a.PopCleanupScope(); // expected-error{{no member named 'PopCleanupScope' in 'PR7508::A'; did you mean 'PopCleanupBlock'?}}
   }
 }
 
@@ -189,7 +189,7 @@ namespace PR15045 {
   }
 
   struct bar {
-    void func();
+    void func();  // expected-note {{'func' declared here}}
   };
 
   struct foo {
@@ -207,7 +207,7 @@ namespace PR15045 {
 
     // Show that recovery has happened by also triggering typo correction
     e->Func();  // expected-error {{member reference type 'bar' is not a pointer; did you mean to use '.'?}} \
-                // expected-error {{no member named 'Func' in 'PR15045::bar'}}
+                // expected-error {{no member named 'Func' in 'PR15045::bar'; did you mean 'func'?}}
 
     // Make sure a fixit isn't given in the case that the '->' isn't actually
     // the problem (the problem is with the return value of an operator->).

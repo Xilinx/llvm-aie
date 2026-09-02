@@ -15,7 +15,6 @@
 #ifndef LLVM_IR_DIAGNOSTICPRINTER_H
 #define LLVM_IR_DIAGNOSTICPRINTER_H
 
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -59,7 +58,7 @@ public:
 };
 
 /// Basic diagnostic printer that uses an underlying raw_ostream.
-class LLVM_ABI DiagnosticPrinterRawOStream : public DiagnosticPrinter {
+class DiagnosticPrinterRawOStream : public DiagnosticPrinter {
 protected:
   raw_ostream &Stream;
 

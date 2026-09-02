@@ -170,6 +170,7 @@ DEFAULT_PARAMETERS = [
             [
                 AddFeature("target={}".format(triple)),
                 AddFlagIfSupported("--target={}".format(triple)),
+                AddSubstitution("%{triple}", triple),
             ],
         ),
     ),
@@ -361,7 +362,6 @@ DEFAULT_PARAMETERS = [
             AddFeature("libcpp-has-no-incomplete-pstl"),
             AddFeature("libcpp-has-no-experimental-tzdb"),
             AddFeature("libcpp-has-no-experimental-syncstream"),
-            AddFeature("libcpp-has-no-experimental-hardening-observe-semantic"),
         ],
     ),
     # TODO: This can be improved once we use a version of GoogleBenchmark that supports the dry-run mode.

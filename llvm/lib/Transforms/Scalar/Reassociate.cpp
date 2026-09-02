@@ -83,10 +83,10 @@ static void PrintOps(Instruction *I, const SmallVectorImpl<ValueEntry> &Ops) {
   Module *M = I->getModule();
   dbgs() << Instruction::getOpcodeName(I->getOpcode()) << " "
        << *Ops[0].Op->getType() << '\t';
-  for (const ValueEntry &Op : Ops) {
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     dbgs() << "[ ";
-    Op.Op->printAsOperand(dbgs(), false, M);
-    dbgs() << ", #" << Op.Rank << "] ";
+    Ops[i].Op->printAsOperand(dbgs(), false, M);
+    dbgs() << ", #" << Ops[i].Rank << "] ";
   }
 }
 #endif
@@ -1585,9 +1585,9 @@ Value *ReassociatePass::OptimizeAdd(Instruction *I,
   // where they are actually the same multiply.
   unsigned MaxOcc = 0;
   Value *MaxOccVal = nullptr;
-  for (const ValueEntry &Op : Ops) {
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     BinaryOperator *BOp =
-        isReassociableOp(Op.Op, Instruction::Mul, Instruction::FMul);
+        isReassociableOp(Ops[i].Op, Instruction::Mul, Instruction::FMul);
     if (!BOp)
       continue;
 

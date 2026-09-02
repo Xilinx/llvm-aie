@@ -352,7 +352,7 @@ class ScriptedThread(metaclass=ABCMeta):
     def get_register_info(self):
         if self.register_info is None:
             self.register_info = dict()
-            if "x86_64" in self.originating_process.arch:
+            if self.originating_process.arch == "x86_64":
                 self.register_info["sets"] = ["General Purpose Registers"]
                 self.register_info["registers"] = INTEL64_GPR
             elif (

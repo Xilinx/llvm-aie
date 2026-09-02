@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CIR_DIALECT_IR_CIRDIALECT_TD
-#define CLANG_CIR_DIALECT_IR_CIRDIALECT_TD
+#ifndef LLVM_CLANG_CIR_DIALECT_IR_CIRDIALECT
+#define LLVM_CLANG_CIR_DIALECT_IR_CIRDIALECT
 
 include "mlir/IR/OpBase.td"
 
@@ -36,10 +36,6 @@ def CIR_Dialect : Dialect {
 
   let extraClassDeclaration = [{
     static llvm::StringRef getTripleAttrName() { return "cir.triple"; }
-    static llvm::StringRef getOptInfoAttrName() { return "cir.opt_info"; }
-    static llvm::StringRef getCalleeAttrName() { return "callee"; }
-    static llvm::StringRef getNoThrowAttrName() { return "nothrow"; }
-    static llvm::StringRef getSideEffectAttrName() { return "side_effect"; }
 
     void registerAttributes();
     void registerTypes();
@@ -56,4 +52,4 @@ def CIR_Dialect : Dialect {
   }];
 }
 
-#endif // CLANG_CIR_DIALECT_IR_CIRDIALECT_TD
+#endif // LLVM_CLANG_CIR_DIALECT_IR_CIRDIALECT

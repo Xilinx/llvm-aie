@@ -30,7 +30,6 @@
 #include "Commands/CommandObjectPlatform.h"
 #include "Commands/CommandObjectPlugin.h"
 #include "Commands/CommandObjectProcess.h"
-#include "Commands/CommandObjectProtocolServer.h"
 #include "Commands/CommandObjectQuit.h"
 #include "Commands/CommandObjectRegexCommand.h"
 #include "Commands/CommandObjectRegister.h"
@@ -135,7 +134,8 @@ CommandInterpreter::CommandInterpreter(Debugger &debugger,
                                        bool synchronous_execution)
     : Broadcaster(debugger.GetBroadcasterManager(),
                   CommandInterpreter::GetStaticBroadcasterClass().str()),
-      Properties(std::make_shared<OptionValueProperties>("interpreter")),
+      Properties(
+          OptionValuePropertiesSP(new OptionValueProperties("interpreter"))),
       IOHandlerDelegate(IOHandlerDelegate::Completion::LLDBCommand),
       m_debugger(debugger), m_synchronous_execution(true),
       m_skip_lldbinit_files(false), m_skip_app_init_files(false),
@@ -574,7 +574,6 @@ void CommandInterpreter::LoadCommandDictionary() {
   REGISTER_COMMAND_OBJECT("platform", CommandObjectPlatform);
   REGISTER_COMMAND_OBJECT("plugin", CommandObjectPlugin);
   REGISTER_COMMAND_OBJECT("process", CommandObjectMultiwordProcess);
-  REGISTER_COMMAND_OBJECT("protocol-server", CommandObjectProtocolServer);
   REGISTER_COMMAND_OBJECT("quit", CommandObjectQuit);
   REGISTER_COMMAND_OBJECT("register", CommandObjectRegister);
   REGISTER_COMMAND_OBJECT("scripting", CommandObjectMultiwordScripting);
@@ -615,8 +614,7 @@ void CommandInterpreter::LoadCommandDictionary() {
   std::unique_ptr<CommandObjectRegexCommand> break_regex_cmd_up(
       new CommandObjectRegexCommand(
           *this, "_regexp-break",
-          "Set a breakpoint using one of several shorthand formats, or list "
-          "the existing breakpoints if no arguments are provided.",
+          "Set a breakpoint using one of several shorthand formats.",
           "\n"
           "_regexp-break <filename>:<linenum>:<colnum>\n"
           "              main.c:12:21          // Break at line 12 and column "
@@ -643,10 +641,7 @@ void CommandInterpreter::LoadCommandDictionary() {
           "              /break here/          // Break on source lines in "
           "current file\n"
           "                                    // containing text 'break "
-          "here'.\n"
-          "_regexp-break\n"
-          "                                    // List the existing "
-          "breakpoints\n",
+          "here'.\n",
           lldb::eSymbolCompletion | lldb::eSourceFileCompletion, false));
 
   if (break_regex_cmd_up) {
@@ -1023,28 +1018,6 @@ CommandInterpreter::VerifyUserMultiwordCmdPath(Args &path, bool leaf_is_command,
   return cur_as_multi;
 }
 
-CommandObjectSP CommandInterpreter::GetFrameLanguageCommand() const {
-  auto frame_sp = GetExecutionContext().GetFrameSP();
-  if (!frame_sp)
-    return {};
-  auto frame_language =
-      Language::GetPrimaryLanguage(frame_sp->GuessLanguage().AsLanguageType());
-
-  auto it = m_command_dict.find("language");
-  if (it == m_command_dict.end())
-    return {};
-  // The root "language" command.
-  CommandObjectSP language_cmd_sp = it->second;
-
-  auto *plugin = Language::FindPlugin(frame_language);
-  if (!plugin)
-    return {};
-  // "cplusplus", "objc", etc.
-  auto lang_name = plugin->GetPluginName();
-
-  return language_cmd_sp->GetSubcommandSPExact(lang_name);
-}
-
 CommandObjectSP
 CommandInterpreter::GetCommandSP(llvm::StringRef cmd_str, bool include_aliases,
                                  bool exact, StringList *matches,
@@ -1163,34 +1136,7 @@ CommandInterpreter::GetCommandSP(llvm::StringRef cmd_str, bool include_aliases,
       else
         return user_match_sp;
     }
-  }
-
-  // When no single match is found, attempt to resolve the command as a language
-  // plugin subcommand.
-  if (!command_sp) {
-    // The `language` subcommand ("language objc", "language cplusplus", etc).
-    CommandObjectMultiword *lang_subcmd = nullptr;
-    if (auto lang_subcmd_sp = GetFrameLanguageCommand()) {
-      lang_subcmd = lang_subcmd_sp->GetAsMultiwordCommand();
-      command_sp = lang_subcmd_sp->GetSubcommandSPExact(cmd_str);
-    }
-
-    if (!command_sp && !exact && lang_subcmd) {
-      StringList lang_matches;
-      AddNamesMatchingPartialString(lang_subcmd->GetSubcommandDictionary(),
-                                    cmd_str, lang_matches, descriptions);
-      if (matches)
-        matches->AppendList(lang_matches);
-      if (lang_matches.GetSize() == 1) {
-        const auto &lang_dict = lang_subcmd->GetSubcommandDictionary();
-        auto pos = lang_dict.find(lang_matches[0]);
-        if (pos != lang_dict.end())
-          return pos->second;
-      }
-    }
-  }
-
-  if (matches && command_sp) {
+  } else if (matches && command_sp) {
     matches->AppendString(cmd_str);
     if (descriptions)
       descriptions->AppendString(command_sp->GetHelp());

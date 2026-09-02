@@ -11,7 +11,6 @@ add_libc_unittest(
     libc.src.errno.errno
     libc.src.sys.mman.mmap
     libc.src.sys.mman.munmap
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -27,7 +26,6 @@ add_libc_unittest(
     libc.src.sys.mman.mmap
     libc.src.sys.mman.mremap
     libc.src.sys.mman.munmap
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -45,7 +43,6 @@ if (NOT LLVM_USE_SANITIZER)
       libc.src.sys.mman.mmap
       libc.src.sys.mman.munmap
       libc.src.sys.mman.mprotect
-      libc.test.UnitTest.ErrnoCheckingTest
       libc.test.UnitTest.ErrnoSetterMatcher
   )
 endif()
@@ -62,7 +59,6 @@ add_libc_unittest(
     libc.src.sys.mman.mmap
     libc.src.sys.mman.munmap
     libc.src.sys.mman.madvise
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -79,7 +75,6 @@ add_libc_unittest(
     libc.src.sys.mman.mmap
     libc.src.sys.mman.munmap
     libc.src.sys.mman.posix_madvise
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -100,7 +95,6 @@ add_libc_unittest(
     libc.src.sys.mman.mlock
     libc.src.sys.mman.munlock
     libc.src.unistd.sysconf
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -126,7 +120,6 @@ add_libc_unittest(
     libc.src.sys.resource.getrlimit
     libc.src.__support.OSUtil.osutil
     libc.src.unistd.sysconf
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -147,7 +140,6 @@ add_libc_unittest(
     libc.src.sys.mman.mlock
     libc.src.sys.mman.munlock
     libc.src.unistd.sysconf
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
 
@@ -161,7 +153,6 @@ add_libc_unittest(
     libc.include.sys_mman
     libc.include.sys_stat
     libc.src.unistd.sysconf
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
     libc.src.sys.mman.remap_file_pages
     libc.src.errno.errno
@@ -188,6 +179,5 @@ add_libc_unittest(
     libc.src.unistd.close
     libc.src.__support.OSUtil.osutil
     libc.hdr.fcntl_macros
-    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )

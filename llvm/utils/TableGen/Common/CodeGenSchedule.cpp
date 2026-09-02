@@ -77,12 +77,14 @@ struct InstRegexOp : public SetTheory::Operator {
 
   void apply(SetTheory &ST, const DagInit *Expr, SetTheory::RecSet &Elts,
              ArrayRef<SMLoc> Loc) override {
-    ArrayRef<const CodeGenInstruction *> Generics =
-        Target.getGenericInstructions();
-    ArrayRef<const CodeGenInstruction *> Pseudos =
-        Target.getTargetPseudoInstructions();
-    ArrayRef<const CodeGenInstruction *> NonPseudos =
-        Target.getTargetNonPseudoInstructions();
+    ArrayRef<const CodeGenInstruction *> Instructions =
+        Target.getInstructionsByEnumValue();
+
+    unsigned NumGeneric = Target.getNumFixedInstructions();
+    unsigned NumPseudos = Target.getNumPseudoInstructions();
+    auto Generics = Instructions.slice(0, NumGeneric);
+    auto Pseudos = Instructions.slice(NumGeneric, NumPseudos);
+    auto NonPseudos = Instructions.slice(NumGeneric + NumPseudos);
 
     for (const Init *Arg : Expr->getArgs()) {
       const StringInit *SI = dyn_cast<StringInit>(Arg);
@@ -143,7 +145,7 @@ struct InstRegexOp : public SetTheory::Operator {
       }
 
       // Target instructions are split into two ranges: pseudo instructions
-      // first, then non-pseudos. Each range is in lexicographical order
+      // first, than non-pseudos. Each range is in lexicographical order
       // sorted by name. Find the sub-ranges that start with our prefix.
       struct Comp {
         bool operator()(const CodeGenInstruction *LHS, StringRef RHS) {
@@ -587,7 +589,7 @@ void CodeGenSchedModels::collectSchedRW() {
 
   // Find all SchedReadWrites referenced by instruction defs.
   ConstRecVec SWDefs, SRDefs;
-  for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     const Record *SchedDef = Inst->TheDef;
     if (SchedDef->isValueUnset("SchedRW"))
       continue;
@@ -836,7 +838,7 @@ void CodeGenSchedModels::collectSchedClasses() {
 
   // Create a SchedClass for each unique combination of itinerary class and
   // SchedRW list.
-  for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     const Record *ItinDef = Inst->TheDef->getValueAsDef("Itinerary");
     IdxVec Writes, Reads;
     if (!Inst->TheDef->isValueUnset("SchedRW"))
@@ -872,7 +874,7 @@ void CodeGenSchedModels::collectSchedClasses() {
   LLVM_DEBUG(
       dbgs()
       << "\n+++ ITINERARIES and/or MACHINE MODELS (collectSchedClasses) +++\n");
-  for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+  for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     StringRef InstName = Inst->TheDef->getName();
     unsigned SCIdx = getSchedClassIdx(*Inst);
     if (!SCIdx) {
@@ -1301,8 +1303,8 @@ public:
 
   PredTransitions(CodeGenSchedModels &sm) : SchedModels(sm) {}
 
-  bool substituteVariantOperand(ArrayRef<unsigned> RWSeq, bool IsRead,
-                                unsigned StartIdx);
+  bool substituteVariantOperand(const SmallVectorImpl<unsigned> &RWSeq,
+                                bool IsRead, unsigned StartIdx);
 
   bool substituteVariants(const PredTransition &Trans);
 
@@ -1535,8 +1537,8 @@ void PredTransitions::pushVariant(const TransVariant &VInfo, bool IsRead) {
 // operand. StartIdx is an index into TransVec where partial results
 // starts. RWSeq must be applied to all transitions between StartIdx and the end
 // of TransVec.
-bool PredTransitions::substituteVariantOperand(ArrayRef<unsigned> RWSeq,
-                                               bool IsRead, unsigned StartIdx) {
+bool PredTransitions::substituteVariantOperand(
+    const SmallVectorImpl<unsigned> &RWSeq, bool IsRead, unsigned StartIdx) {
   bool Subst = false;
   // Visit each original RW within the current sequence.
   for (unsigned int RWI : RWSeq) {
@@ -1600,7 +1602,7 @@ bool PredTransitions::substituteVariants(const PredTransition &Trans) {
 }
 
 static void addSequences(CodeGenSchedModels &SchedModels,
-                         ArrayRef<SmallVector<unsigned, 4>> Seqs,
+                         const SmallVectorImpl<SmallVector<unsigned, 4>> &Seqs,
                          IdxVec &Result, bool IsRead) {
   for (const auto &S : Seqs)
     if (!S.empty())
@@ -1646,7 +1648,7 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
     // Transition should not contain processor indices already assigned to
     // InstRWs in this scheduling class.
     const CodeGenSchedClass &FromSC = SchedModels.getSchedClass(FromClassIdx);
-    if (FromSC.InstRWProcIndices.contains(LastTransition.ProcIndex))
+    if (FromSC.InstRWProcIndices.count(LastTransition.ProcIndex))
       continue;
     SCTrans.ProcIndex = LastTransition.ProcIndex;
     SCTrans.ToClassIdx =
@@ -1933,7 +1935,7 @@ void CodeGenSchedModels::checkCompleteness() {
     const bool HasItineraries = ProcModel.hasItineraries();
     if (!ProcModel.ModelDef->getValueAsBit("CompleteModel"))
       continue;
-    for (const CodeGenInstruction *Inst : Target.getInstructions()) {
+    for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
       if (Inst->hasNoSchedulingInfo)
         continue;
       if (ProcModel.isUnsupported(*Inst))
@@ -2125,8 +2127,7 @@ void CodeGenSchedModels::addWriteRes(const Record *ProcWriteResDef,
     const Record *WRDef = ProcWriteResDef->getValueAsDef("WriteType");
     if (!WRMap.try_emplace(WRDef, ProcWriteResDef).second)
       PrintFatalError(ProcWriteResDef->getLoc(),
-                      "WriteType of " + WRDef->getName() +
-                          " already used in another WriteRes");
+                      "WriteType already used in another WriteRes");
   }
 
   // Visit ProcResourceKinds referenced by the newly discovered WriteRes.
@@ -2160,8 +2161,7 @@ void CodeGenSchedModels::addReadAdvance(const Record *ProcReadAdvanceDef,
     const Record *RADef = ProcReadAdvanceDef->getValueAsDef("ReadType");
     if (!RAMap.try_emplace(RADef, ProcReadAdvanceDef).second)
       PrintFatalError(ProcReadAdvanceDef->getLoc(),
-                      "ReadType of " + RADef->getName() +
-                          " already used in another ReadAdvance");
+                      "ReadType already used in another ReadAdvance");
   }
 }
 
@@ -2187,7 +2187,7 @@ bool CodeGenProcModel::isUnsupported(const CodeGenInstruction &Inst) const {
 }
 
 bool CodeGenProcModel::hasReadOfWrite(const Record *WriteDef) const {
-  return ReadOfWriteSet.contains(WriteDef);
+  return ReadOfWriteSet.count(WriteDef);
 }
 
 #ifndef NDEBUG
@@ -2243,10 +2243,13 @@ void PredTransitions::dump() const {
       dbgs() << LS << SchedModels.getSchedRW(PC.RWIdx, PC.IsRead).Name << ":"
              << PC.Predicate->getName();
     dbgs() << "},\n  => {";
-    for (const auto &WS : TI.WriteSequences) {
+    for (SmallVectorImpl<SmallVector<unsigned, 4>>::const_iterator
+             WSI = TI.WriteSequences.begin(),
+             WSE = TI.WriteSequences.end();
+         WSI != WSE; ++WSI) {
       dbgs() << "(";
       ListSeparator LS;
-      for (unsigned N : WS)
+      for (unsigned N : *WSI)
         dbgs() << LS << SchedModels.getSchedWrite(N).Name;
       dbgs() << "),";
     }

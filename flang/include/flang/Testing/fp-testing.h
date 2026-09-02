@@ -27,7 +27,7 @@ public:
 
 private:
   fenv_t originalFenv_;
-#if __x86_64__ || _M_X64
+#if __x86_64__
   unsigned int originalMxcsr;
 #endif
 };

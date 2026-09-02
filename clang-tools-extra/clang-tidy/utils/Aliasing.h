@@ -25,7 +25,7 @@ namespace clang::tidy::utils {
 /// For `f()` and `n` the function returns ``true`` because `p` is a
 /// pointer to `n` created in `f()`.
 
-bool hasPtrOrReferenceInFunc(const Decl *Func, const ValueDecl *Var);
+bool hasPtrOrReferenceInFunc(const Decl *Func, const VarDecl *Var);
 
 } // namespace clang::tidy::utils
 

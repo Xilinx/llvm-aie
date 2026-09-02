@@ -60,9 +60,9 @@ struct InlineScalarOperands : public OpRewritePattern<GenericOp> {
 
     Location loc = genericOp->getLoc();
     SmallVector<Value> outputOperands = genericOp.getOutputs();
-    auto newOp = GenericOp::create(rewriter, loc, genericOp->getResultTypes(),
-                                   newOperands, outputOperands, newIndexingMaps,
-                                   genericOp.getIteratorTypesArray());
+    auto newOp = rewriter.create<GenericOp>(
+        loc, genericOp->getResultTypes(), newOperands, outputOperands,
+        newIndexingMaps, genericOp.getIteratorTypesArray());
     rewriter.cloneRegionBefore(genericOp.getRegion(), newOp.getRegion(),
                                newOp.getRegion().begin());
 
@@ -77,11 +77,11 @@ struct InlineScalarOperands : public OpRewritePattern<GenericOp> {
       SmallVector<Value> indicesValues;
       for (auto idx : indices)
         indicesValues.emplace_back(
-            arith::ConstantIndexOp::create(rewriter, loc, idx));
+            rewriter.create<arith::ConstantIndexOp>(loc, idx));
       Value scalarValue = opOperand->get();
       if (isa<RankedTensorType>(scalarValue.getType())) {
-        scalarValue = tensor::ExtractOp::create(rewriter, loc, scalarValue,
-                                                indicesValues);
+        scalarValue =
+            rewriter.create<tensor::ExtractOp>(loc, scalarValue, indicesValues);
       }
       body->getArgument(idx).replaceAllUsesWith(scalarValue);
       body->eraseArgument(idx);

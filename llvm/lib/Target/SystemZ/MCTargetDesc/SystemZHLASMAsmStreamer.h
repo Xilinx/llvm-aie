@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_SYSTEMZ_MCTARGETDESC_SYSTEMZHLASMASMSTREAMER_H
-#define LLVM_LIB_TARGET_SYSTEMZ_MCTARGETDESC_SYSTEMZHLASMASMSTREAMER_H
-
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -27,7 +24,7 @@
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Support/FormattedStream.h"
 
-namespace llvm {
+using namespace llvm;
 
 class SystemZHLASMAsmStreamer final : public MCStreamer {
   constexpr static size_t InstLimit = 80;
@@ -86,8 +83,9 @@ public:
 
   void emitAlignmentDS(uint64_t ByteAlignment, std::optional<int64_t> Value,
                        unsigned ValueSize, unsigned MaxBytesToEmit);
-  void emitValueToAlignment(Align Alignment, int64_t Fill, uint8_t FillLen,
-                            unsigned MaxBytesToEmit) override;
+  void emitValueToAlignment(Align Alignment, int64_t Value = 0,
+                            unsigned ValueSize = 1,
+                            unsigned MaxBytesToEmit = 0) override;
 
   void emitCodeAlignment(Align Alignment, const MCSubtargetInfo *STI,
                          unsigned MaxBytesToEmit = 0) override;
@@ -121,9 +119,4 @@ public:
   void emitHLASMValueImpl(const MCExpr *Value, unsigned Size,
                           bool Parens = false);
   /// @}
-
-  void emitEnd();
 };
-} // namespace llvm
-
-#endif // LLVM_LIB_TARGET_SYSTEMZ_MCTARGETDESC_SYSTEMZHLASMASMSTREAMER_H

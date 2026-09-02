@@ -124,7 +124,7 @@ static void resolveTopLevelMetadata(llvm::Function *Fn,
   auto *DIS = Fn->getSubprogram();
   if (!DIS)
     return;
-  auto *NewDIS = llvm::MDNode::replaceWithDistinct(DIS->clone());
+  auto *NewDIS = DIS->replaceWithDistinct(DIS->clone());
   VMap.MD()[DIS].reset(NewDIS);
 
   // Find all llvm.dbg.declare intrinsics and resolve the DILocalVariable nodes
@@ -1138,9 +1138,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
                  llvm::Function::InternalLinkage;
 
       case TSK_ExplicitInstantiationDeclaration:
-        return IsExternalDefinition
-                   ? llvm::GlobalVariable::AvailableExternallyLinkage
-                   : llvm::GlobalVariable::ExternalLinkage;
+        llvm_unreachable("Should not have been asked to emit this");
       }
   }
 

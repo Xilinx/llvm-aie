@@ -9,12 +9,11 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBLINENUMBER_H
 #define LLVM_DEBUGINFO_PDB_IPDBLINENUMBER_H
 
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 
 namespace llvm {
 namespace pdb {
-class LLVM_ABI IPDBLineNumber {
+class IPDBLineNumber {
 public:
   virtual ~IPDBLineNumber();
 

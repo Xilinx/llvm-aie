@@ -20,8 +20,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PassInstrumentation.h"
@@ -117,41 +115,9 @@ InjectorIRStrategy::chooseOperation(Value *Src, RandomIRBuilder &IB) {
   return *RS;
 }
 
-static inline Instruction *getEffectiveTerminator(BasicBlock &BB) {
-  if (Instruction *I = BB.getTerminatingMustTailCall()) {
-    return I;
-  } else {
-    // Certain intrinsics, such as @llvm.amdgcn.cs.chain, must be immediately
-    // followed by an unreachable instruction..
-    if (UnreachableInst *UI = dyn_cast<UnreachableInst>(BB.getTerminator())) {
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(UI->getPrevNode())) {
-        return II;
-      }
-    }
-  }
-
-  return BB.getTerminator();
-}
-
-static inline BasicBlock::iterator getEndIterator(BasicBlock &BB) {
-  auto End = BB.end();
-
-  if (BB.empty()) {
-    return End;
-  }
-
-  Instruction *EffectiveTerminator = getEffectiveTerminator(BB);
-  if (EffectiveTerminator != BB.getTerminator()) {
-    // Adjust range for special cases such as tail call.
-    End = std::prev(BB.end());
-  }
-
-  return End;
-}
-
 static inline iterator_range<BasicBlock::iterator>
 getInsertionRange(BasicBlock &BB) {
-  auto End = getEndIterator(BB);
+  auto End = BB.getTerminatingMustTailCall() ? std::prev(BB.end()) : BB.end();
   return make_range(BB.getFirstInsertionPt(), End);
 }
 
@@ -390,68 +356,6 @@ static uint64_t getUniqueCaseValue(SmallSet<uint64_t, 4> &CasesTaken,
   return tmp;
 }
 
-/// Determines whether a function is unsupported by the current mutator's
-/// implementation. The function returns true if any of the following criteria
-/// are met:
-///   * The function accepts metadata or token types as arguments.
-///   * The function has ABI attributes that could cause UB.
-///   * The function uses a non-callable CC that may result in UB.
-static bool isUnsupportedFunction(Function *F) {
-  // Some functions accept metadata type or token type as arguments.
-  // We don't call those functions for now.
-  // For example, `@llvm.dbg.declare(metadata, metadata, metadata)`
-  // https://llvm.org/docs/SourceLevelDebugging.html#llvm-dbg-declare
-  auto IsUnsupportedTy = [](Type *T) {
-    return T->isMetadataTy() || T->isTokenTy();
-  };
-
-  if (IsUnsupportedTy(F->getReturnType()) ||
-      any_of(F->getFunctionType()->params(), IsUnsupportedTy)) {
-    return true;
-  }
-
-  // ABI attributes must be specified both at the function
-  // declaration/definition and call-site, otherwise the
-  // behavior may be undefined.
-  // We don't call those functions for now to prevent UB from happening.
-  auto IsABIAttribute = [](AttributeSet A) {
-    static const Attribute::AttrKind ABIAttrs[] = {
-        Attribute::StructRet,      Attribute::ByVal,
-        Attribute::InAlloca,       Attribute::InReg,
-        Attribute::StackAlignment, Attribute::SwiftSelf,
-        Attribute::SwiftAsync,     Attribute::SwiftError,
-        Attribute::Preallocated,   Attribute::ByRef,
-        Attribute::ZExt,           Attribute::SExt};
-
-    return llvm::any_of(ABIAttrs, [&](Attribute::AttrKind kind) {
-      return A.hasAttribute(kind);
-    });
-  };
-
-  auto FuncAttrs = F->getAttributes();
-  if (IsABIAttribute(FuncAttrs.getRetAttrs())) {
-    return true;
-  }
-  for (size_t i = 0; i < F->arg_size(); i++) {
-    if (IsABIAttribute(FuncAttrs.getParamAttrs(i))) {
-      return true;
-    }
-  }
-
-  // If it is not satisfied, the IR will be invalid.
-  if (!isCallableCC(F->getCallingConv())) {
-    return true;
-  }
-
-  // This intrinsic has specific requirements for its parameters and the caller
-  // must adhere to certain calling conventions.
-  if (F->isIntrinsic() && F->getIntrinsicID() == Intrinsic::amdgcn_cs_chain) {
-    return true;
-  }
-
-  return false;
-}
-
 void InsertFunctionStrategy::mutate(BasicBlock &BB, RandomIRBuilder &IB) {
   Module *M = BB.getParent()->getParent();
   // If nullptr is selected, we will create a new function declaration.
@@ -462,8 +366,16 @@ void InsertFunctionStrategy::mutate(BasicBlock &BB, RandomIRBuilder &IB) {
 
   auto RS = makeSampler(IB.Rand, Functions);
   Function *F = RS.getSelection();
-
-  if (!F || isUnsupportedFunction(F)) {
+  // Some functions accept metadata type or token type as arguments.
+  // We don't call those functions for now.
+  // For example, `@llvm.dbg.declare(metadata, metadata, metadata)`
+  // https://llvm.org/docs/SourceLevelDebugging.html#llvm-dbg-declare
+  auto IsUnsupportedTy = [](Type *T) {
+    return T->isMetadataTy() || T->isTokenTy();
+  };
+  if (!F || IsUnsupportedTy(F->getReturnType()) ||
+      any_of(F->getFunctionType()->params(), IsUnsupportedTy) ||
+      !isCallableCC(F->getCallingConv())) {
     F = IB.createFunctionDeclaration(*M);
   }
 
@@ -681,9 +593,8 @@ void ShuffleBlockStrategy::mutate(BasicBlock &BB, RandomIRBuilder &IB) {
   std::map<size_t, Instruction *> AliveInsts;
   std::map<Instruction *, size_t> AliveInstsLookup;
   size_t InsertIdx = 0;
-  for (auto &I : make_early_inc_range(
-           make_range(BB.getFirstInsertionPt(),
-                      getEffectiveTerminator(BB)->getIterator()))) {
+  for (auto &I : make_early_inc_range(make_range(
+           BB.getFirstInsertionPt(), BB.getTerminator()->getIterator()))) {
     // First gather all instructions that can be shuffled. Don't take
     // terminator.
     AliveInsts.insert({InsertIdx, &I});
@@ -743,7 +654,7 @@ void ShuffleBlockStrategy::mutate(BasicBlock &BB, RandomIRBuilder &IB) {
     }
   }
 
-  Instruction *Terminator = getEffectiveTerminator(BB);
+  Instruction *Terminator = BB.getTerminator();
   // Then put instructions back.
   for (Instruction *I : Insts) {
     I->insertBefore(Terminator->getIterator());

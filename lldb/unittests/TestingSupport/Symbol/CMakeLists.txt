@@ -2,8 +2,6 @@ set_property(DIRECTORY PROPERTY EXCLUDE_FROM_ALL ON)
 add_lldb_library(lldbSymbolHelpers
   YAMLModuleTester.cpp
 
-  LINK_COMPONENTS
-    ObjectYAML
   LINK_LIBS
     lldbCore
     lldbHost
@@ -13,4 +11,7 @@ add_lldb_library(lldbSymbolHelpers
     lldbPluginTypeSystemClang
     lldbUtilityHelpers
     LLVMTestingSupport
+
+  LINK_COMPONENTS
+    ObjectYAML
   )

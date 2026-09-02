@@ -198,9 +198,10 @@ AffineExpr substWithMin(AffineExpr e, AffineExpr dim, AffineExpr min,
 /// of its input list. `indexRemap`'s dimensional inputs are expected to
 /// correspond to memref's indices, and its symbolic inputs if any should be
 /// provided in `symbolOperands`.
-//
-/// If `userFilterFn` is specified, restrict replacement to only those users
-/// that pass the specified filter (i.e., the filter returns true).
+///
+/// `domOpFilter`, if non-null, restricts the replacement to only those
+/// operations that are dominated by the former; similarly, `postDomOpFilter`
+/// restricts replacement to only those operations that are postdominated by it.
 ///
 /// 'allowNonDereferencingOps', if set, allows replacement of non-dereferencing
 /// uses of a memref without any requirement for access index rewrites as long
@@ -223,14 +224,13 @@ AffineExpr substWithMin(AffineExpr e, AffineExpr dim, AffineExpr min,
 //  d1, d2) -> (d0 - d1, d2), and %ii will be the extra operand. Without any
 //  extra operands, note that 'indexRemap' would just be applied to existing
 //  indices (%i, %j).
-//
 //  TODO: allow extraIndices to be added at any position.
 LogicalResult replaceAllMemRefUsesWith(
     Value oldMemRef, Value newMemRef, ArrayRef<Value> extraIndices = {},
     AffineMap indexRemap = AffineMap(), ArrayRef<Value> extraOperands = {},
-    ArrayRef<Value> symbolOperands = {},
-    llvm::function_ref<bool(Operation *)> userFilterFn = nullptr,
-    bool allowNonDereferencingOps = false, bool replaceInDeallocOp = false);
+    ArrayRef<Value> symbolOperands = {}, Operation *domOpFilter = nullptr,
+    Operation *postDomOpFilter = nullptr, bool allowNonDereferencingOps = false,
+    bool replaceInDeallocOp = false);
 
 /// Performs the same replacement as the other version above but only for the
 /// dereferencing uses of `oldMemRef` in `op`, except in cases where

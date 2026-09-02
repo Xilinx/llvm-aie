@@ -67,19 +67,19 @@ class TestDAP_setBreakpointsAssembly(lldbdap_testcase.DAPTestCaseBase):
             "Invalid sourceReference.",
         )
 
-        # Verify that setting a breakpoint on a source reference that is not created fails
+        # Verify that setting a breakpoint on a source reference without a symbol also fails
         response = self.dap_server.request_setBreakpoints(
-            Source(source_reference=200), [1]
+            Source(source_reference=0), [1]
         )
         self.assertIsNotNone(response)
         breakpoints = response["body"]["breakpoints"]
         self.assertEqual(len(breakpoints), 1)
-        break_point = breakpoints[0]
+        breakpoint = breakpoints[0]
         self.assertFalse(
-            break_point["verified"], "Expected breakpoint to not be verified"
+            breakpoint["verified"], "Expected breakpoint to not be verified"
         )
-        self.assertIn("message", break_point, "Expected message to be present")
+        self.assertIn("message", breakpoint, "Expected message to be present")
         self.assertEqual(
-            break_point["message"],
-            "Invalid sourceReference.",
+            breakpoint["message"],
+            "Breakpoints in assembly without a valid symbol are not supported yet.",
         )

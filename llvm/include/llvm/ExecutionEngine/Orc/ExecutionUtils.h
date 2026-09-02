@@ -21,7 +21,6 @@
 #include "llvm/ExecutionEngine/Orc/Shared/OrcError.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/Archive.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include <algorithm>
 #include <cstdint>
@@ -66,23 +65,23 @@ public:
 
   /// Construct an iterator instance. If End is true then this iterator
   ///        acts as the end of the range, otherwise it is the beginning.
-  LLVM_ABI CtorDtorIterator(const GlobalVariable *GV, bool End);
+  CtorDtorIterator(const GlobalVariable *GV, bool End);
 
   /// Test iterators for equality.
-  LLVM_ABI bool operator==(const CtorDtorIterator &Other) const;
+  bool operator==(const CtorDtorIterator &Other) const;
 
   /// Test iterators for inequality.
-  LLVM_ABI bool operator!=(const CtorDtorIterator &Other) const;
+  bool operator!=(const CtorDtorIterator &Other) const;
 
   /// Pre-increment iterator.
-  LLVM_ABI CtorDtorIterator &operator++();
+  CtorDtorIterator& operator++();
 
   /// Post-increment iterator.
-  LLVM_ABI CtorDtorIterator operator++(int);
+  CtorDtorIterator operator++(int);
 
   /// Dereference iterator. The resulting value provides a read-only view
   ///        of this element of the global_ctors/global_dtors list.
-  LLVM_ABI Element operator*() const;
+  Element operator*() const;
 
 private:
   const ConstantArray *InitList;
@@ -91,11 +90,11 @@ private:
 
 /// Create an iterator range over the entries of the llvm.global_ctors
 ///        array.
-LLVM_ABI iterator_range<CtorDtorIterator> getConstructors(const Module &M);
+iterator_range<CtorDtorIterator> getConstructors(const Module &M);
 
 /// Create an iterator range over the entries of the llvm.global_ctors
 ///        array.
-LLVM_ABI iterator_range<CtorDtorIterator> getDestructors(const Module &M);
+iterator_range<CtorDtorIterator> getDestructors(const Module &M);
 
 /// This iterator provides a convenient way to iterate over GlobalValues that
 /// have initialization effects.
@@ -125,7 +124,7 @@ public:
   GlobalValue &operator*() { return *I; }
 
 private:
-  LLVM_ABI bool isStaticInitGlobal(GlobalValue &GV);
+  bool isStaticInitGlobal(GlobalValue &GV);
   void moveToNextStaticInitGlobal() {
     ++I;
     while (I != E && !isStaticInitGlobal(*I))
@@ -147,8 +146,8 @@ inline iterator_range<StaticInitGVIterator> getStaticInitGVs(Module &M) {
 class CtorDtorRunner {
 public:
   CtorDtorRunner(JITDylib &JD) : JD(JD) {}
-  LLVM_ABI void add(iterator_range<CtorDtorIterator> CtorDtors);
-  LLVM_ABI Error run();
+  void add(iterator_range<CtorDtorIterator> CtorDtors);
+  Error run();
 
 private:
   using CtorDtorList = std::vector<SymbolStringPtr>;
@@ -177,20 +176,20 @@ class LocalCXXRuntimeOverridesBase {
 public:
   /// Run any destructors recorded by the overriden __cxa_atexit function
   /// (CXAAtExitOverride).
-  LLVM_ABI void runDestructors();
+  void runDestructors();
 
 protected:
   using DestructorPtr = void (*)(void *);
   using CXXDestructorDataPair = std::pair<DestructorPtr, void *>;
   using CXXDestructorDataPairList = std::vector<CXXDestructorDataPair>;
   CXXDestructorDataPairList DSOHandleOverride;
-  LLVM_ABI static int CXAAtExitOverride(DestructorPtr Destructor, void *Arg,
-                                        void *DSOHandle);
+  static int CXAAtExitOverride(DestructorPtr Destructor, void *Arg,
+                               void *DSOHandle);
 };
 
 class LocalCXXRuntimeOverrides : public LocalCXXRuntimeOverridesBase {
 public:
-  LLVM_ABI Error enable(JITDylib &JD, MangleAndInterner &Mangler);
+  Error enable(JITDylib &JD, MangleAndInterner &Mangler);
 };
 
 /// An interface for Itanium __cxa_atexit interposer implementations.
@@ -201,8 +200,8 @@ public:
     void *Ctx;
   };
 
-  LLVM_ABI void registerAtExit(void (*F)(void *), void *Ctx, void *DSOHandle);
-  LLVM_ABI void runAtExits(void *DSOHandle);
+  void registerAtExit(void (*F)(void *), void *Ctx, void *DSOHandle);
+  void runAtExits(void *DSOHandle);
 
 private:
   std::mutex AtExitsMutex;
@@ -214,7 +213,7 @@ private:
 /// If an instance of this class is attached to a JITDylib as a fallback
 /// definition generator, then any symbol found in the given DynamicLibrary that
 /// passes the 'Allow' predicate will be added to the JITDylib.
-class LLVM_ABI DynamicLibrarySearchGenerator : public DefinitionGenerator {
+class DynamicLibrarySearchGenerator : public DefinitionGenerator {
 public:
   using SymbolPredicate = std::function<bool(const SymbolStringPtr &)>;
   using AddAbsoluteSymbolsFn = unique_function<Error(JITDylib &, SymbolMap)>;
@@ -267,39 +266,22 @@ private:
 /// If an instance of this class is attached to a JITDylib as a fallback
 /// definition generator, then any symbol found in the archive will result in
 /// the containing object being added to the JITDylib.
-class LLVM_ABI StaticLibraryDefinitionGenerator : public DefinitionGenerator {
+class StaticLibraryDefinitionGenerator : public DefinitionGenerator {
 public:
   /// Interface builder function for objects loaded from this archive.
   using GetObjectFileInterface =
       unique_function<Expected<MaterializationUnit::Interface>(
           ExecutionSession &ES, MemoryBufferRef ObjBuffer)>;
 
-  /// Callback for visiting archive members at construction time. Can be used
-  /// to pre-load members.
-  ///
-  /// Callbacks are provided with a reference to the underlying archive, a
-  /// MemoryBufferRef covering the bytes for the given member, and the index of
-  /// the given member.
-  ///
-  /// Implementations should return true if the given member file should be
-  /// loadable via the generator, false if it should not, and an Error if the
-  /// member is malformed in a way that renders the archive itself invalid.
-  ///
-  /// Note: Linkers typically ignore invalid files within archives, so it's
-  ///       expected that implementations will usually return `false` (i.e.
-  ///       not-loadable) for malformed buffers, and will only return an
-  ///       Error in exceptional circumstances.
-  using VisitMembersFunction = unique_function<Expected<bool>(
-      object::Archive &, MemoryBufferRef, size_t)>;
+  /// Callback for visiting archive members at construction time.
+  /// Con be used to pre-load archive members.
+  using VisitMembersFunction = unique_function<Error(MemoryBufferRef)>;
 
   /// A VisitMembersFunction that unconditionally loads all object files from
   /// the archive.
   /// Archive members that are not valid object files will be skipped.
   static VisitMembersFunction loadAllObjectFileMembers(ObjectLayer &L,
                                                        JITDylib &JD);
-
-  static std::unique_ptr<MemoryBuffer>
-  createMemberBuffer(object::Archive &A, MemoryBufferRef BufRef, size_t Index);
 
   /// Try to create a StaticLibraryDefinitionGenerator from the given path.
   ///
@@ -331,22 +313,32 @@ public:
          VisitMembersFunction VisitMembers = VisitMembersFunction(),
          GetObjectFileInterface GetObjFileInterface = GetObjectFileInterface());
 
+  /// Returns a list of filenames of dynamic libraries that this archive has
+  /// imported. This class does not load these libraries by itself. User is
+  /// responsible for making sure these libraries are available to the JITDylib.
+  const std::set<std::string> &getImportedDynamicLibraries() const {
+    return ImportedDynamicLibraries;
+  }
+
   Error tryToGenerate(LookupState &LS, LookupKind K, JITDylib &JD,
                       JITDylibLookupFlags JDLookupFlags,
                       const SymbolLookupSet &Symbols) override;
 
 private:
-  StaticLibraryDefinitionGenerator(
-      ObjectLayer &L, std::unique_ptr<MemoryBuffer> ArchiveBuffer,
-      std::unique_ptr<object::Archive> Archive,
-      GetObjectFileInterface GetObjFileInterface,
-      DenseMap<SymbolStringPtr, size_t> SymbolToMemberIndexMap);
+  StaticLibraryDefinitionGenerator(ObjectLayer &L,
+                                   std::unique_ptr<MemoryBuffer> ArchiveBuffer,
+                                   std::unique_ptr<object::Archive> Archive,
+                                   GetObjectFileInterface GetObjFileInterface,
+                                   Error &Err);
+  Error buildObjectFilesMap();
 
   ObjectLayer &L;
   GetObjectFileInterface GetObjFileInterface;
+  std::set<std::string> ImportedDynamicLibraries;
   std::unique_ptr<MemoryBuffer> ArchiveBuffer;
   std::unique_ptr<object::Archive> Archive;
-  DenseMap<SymbolStringPtr, size_t> SymbolToMemberIndexMap;
+  DenseMap<SymbolStringPtr, MemoryBufferRef> ObjectFilesMap;
+  BumpPtrAllocator ObjFileNameStorage;
 };
 
 /// A utility class to create COFF dllimport GOT symbols (__imp_*) and PLT
@@ -356,7 +348,7 @@ private:
 /// definition generator, PLT stubs and dllimport __imp_ symbols will be
 /// generated for external symbols found outside the given jitdylib. Currently
 /// only supports x86_64 architecture.
-class LLVM_ABI DLLImportDefinitionGenerator : public DefinitionGenerator {
+class DLLImportDefinitionGenerator : public DefinitionGenerator {
 public:
   /// Creates a DLLImportDefinitionGenerator instance.
   static std::unique_ptr<DLLImportDefinitionGenerator>

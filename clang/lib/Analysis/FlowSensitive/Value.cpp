@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/FlowSensitive/Value.h"
+#include "clang/Analysis/FlowSensitive/DebugSupport.h"
+#include "llvm/Support/Casting.h"
 
 namespace clang {
 namespace dataflow {

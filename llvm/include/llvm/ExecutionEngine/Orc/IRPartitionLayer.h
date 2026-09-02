@@ -28,14 +28,13 @@
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace orc {
 
 /// A layer that breaks up IR modules into smaller submodules that only contains
 /// looked up symbols.
-class LLVM_ABI IRPartitionLayer : public IRLayer {
+class IRPartitionLayer : public IRLayer {
   friend class PartitioningIRMaterializationUnit;
 
 public:

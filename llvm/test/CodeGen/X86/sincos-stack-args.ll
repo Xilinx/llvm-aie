@@ -7,10 +7,11 @@ declare double @g(double, double)
 ; Though not visible within the IR, this will lower to an FSINCOS node, with
 ; store users, that are within a (callseq_start, callseq_end) pair. In this
 ; case, the stores cannot be folded into the sincos call.
-define double @negative_sincos_with_stores_within_call_sequence(double %a) nounwind {
+define double @negative_sincos_with_stores_within_call_sequence(double %a) {
 ; CHECK-LABEL: negative_sincos_with_stores_within_call_sequence:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    subl $44, %esp
+; CHECK-NEXT:    .cfi_def_cfa_offset 48
 ; CHECK-NEXT:    fldl 48(%esp)
 ; CHECK-NEXT:    leal 24(%esp), %eax
 ; CHECK-NEXT:    movl %eax, 12(%esp)
@@ -26,6 +27,7 @@ define double @negative_sincos_with_stores_within_call_sequence(double %a) nounw
 ; CHECK-NEXT:    fstpl (%esp)
 ; CHECK-NEXT:    calll g@PLT
 ; CHECK-NEXT:    addl $44, %esp
+; CHECK-NEXT:    .cfi_def_cfa_offset 4
 ; CHECK-NEXT:    retl
 entry:
   %0 = tail call double @llvm.sin.f64(double %a)

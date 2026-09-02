@@ -89,7 +89,7 @@ define void @foo(ptr %ptr) {
 )IR");
   llvm::Function &LLVMF = *M->getFunction("foo");
   DominatorTree DT(LLVMF);
-  TargetLibraryInfoImpl TLII(M->getTargetTriple());
+  TargetLibraryInfoImpl TLII;
   TargetLibraryInfo TLI(TLII);
   DataLayout DL(M->getDataLayout());
   AssumptionCache AC(LLVMF);

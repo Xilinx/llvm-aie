@@ -19,6 +19,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -368,6 +369,22 @@ void SPIRVInstPrinter::printUnknownType(const MCInst *MI, raw_ostream &O) {
   printRemainingVariableOps(MI, NumFixedOps, O, true);
 }
 
+static void printExpr(const MCExpr *Expr, raw_ostream &O) {
+#ifndef NDEBUG
+  const MCSymbolRefExpr *SRE;
+
+  if (const MCBinaryExpr *BE = dyn_cast<MCBinaryExpr>(Expr))
+    SRE = cast<MCSymbolRefExpr>(BE->getLHS());
+  else
+    SRE = cast<MCSymbolRefExpr>(Expr);
+
+  MCSymbolRefExpr::VariantKind Kind = SRE->getKind();
+
+  assert(Kind == MCSymbolRefExpr::VK_None);
+#endif
+  O << *Expr;
+}
+
 void SPIRVInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O) {
   if (OpNo < MI->getNumOperands()) {
@@ -379,7 +396,7 @@ void SPIRVInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     else if (Op.isDFPImm())
       O << formatImm((double)Op.getDFPImm());
     else if (Op.isExpr())
-      MAI.printExpr(O, *Op.getExpr());
+      printExpr(Op.getExpr(), O);
     else
       llvm_unreachable("Unexpected operand type");
   }

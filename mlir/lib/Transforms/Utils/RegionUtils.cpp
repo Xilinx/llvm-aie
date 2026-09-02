@@ -11,10 +11,12 @@
 #include "mlir/Analysis/SliceAnalysis.h"
 #include "mlir/Analysis/TopologicalSortUtils.h"
 #include "mlir/IR/Block.h"
+#include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Dominance.h"
 #include "mlir/IR/IRMapping.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/PatternMatch.h"
+#include "mlir/IR/RegionGraphTraits.h"
 #include "mlir/IR/Value.h"
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
@@ -23,6 +25,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallSet.h"
 
 #include <deque>
 #include <iterator>
@@ -420,7 +423,7 @@ static LogicalResult deleteDeadness(RewriterBase &rewriter,
   for (Region &region : regions) {
     if (region.empty())
       continue;
-    bool hasSingleBlock = region.hasOneBlock();
+    bool hasSingleBlock = llvm::hasSingleElement(region);
 
     // Delete every operation that is not live. Graph regions may have cycles
     // in the use-def graph, so we must explicitly dropAllUses() from each
@@ -945,7 +948,7 @@ LogicalResult BlockMergeCluster::merge(RewriterBase &rewriter) {
 /// failure otherwise.
 static LogicalResult mergeIdenticalBlocks(RewriterBase &rewriter,
                                           Region &region) {
-  if (region.empty() || region.hasOneBlock())
+  if (region.empty() || llvm::hasSingleElement(region))
     return failure();
 
   // Identify sets of blocks, other than the entry block, that branch to the

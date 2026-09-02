@@ -18,7 +18,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/ObjectYAML/YAML.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <unordered_map>
@@ -55,9 +54,9 @@ public:
   /// the source and the stable_hash of the sink for an edge. These generic
   /// callbacks can be used to traverse a OutlinedHashTree for the purpose of
   /// print debugging or serializing it.
-  LLVM_ABI void walkGraph(NodeCallbackFn CallbackNode,
-                          EdgeCallbackFn CallbackEdge = nullptr,
-                          bool SortedWalk = false) const;
+  void walkGraph(NodeCallbackFn CallbackNode,
+                 EdgeCallbackFn CallbackEdge = nullptr,
+                 bool SortedWalk = false) const;
 
   /// Release all hash nodes except the root hash node.
   void clear() {
@@ -72,10 +71,10 @@ public:
   /// \p GetTerminalCountOnly is true, it only counts the terminal nodes
   /// (meaning it returns the the number of hash sequences in the
   /// OutlinedHashTree).
-  LLVM_ABI size_t size(bool GetTerminalCountOnly = false) const;
+  size_t size(bool GetTerminalCountOnly = false) const;
 
   /// \returns the depth of a OutlinedHashTree by traversing it.
-  LLVM_ABI size_t depth() const;
+  size_t depth() const;
 
   /// \returns the root hash node of a OutlinedHashTree.
   const HashNode *getRoot() const { return &Root; }
@@ -83,13 +82,13 @@ public:
 
   /// Inserts a \p Sequence into the this tree. The last node in the sequence
   /// will increase Terminals.
-  LLVM_ABI void insert(const HashSequencePair &SequencePair);
+  void insert(const HashSequencePair &SequencePair);
 
   /// Merge a \p OtherTree into this Tree.
-  LLVM_ABI void merge(const OutlinedHashTree *OtherTree);
+  void merge(const OutlinedHashTree *OtherTree);
 
   /// \returns the matching count if \p Sequence exists in the OutlinedHashTree.
-  LLVM_ABI std::optional<unsigned> find(const HashSequence &Sequence) const;
+  std::optional<unsigned> find(const HashSequence &Sequence) const;
 
 private:
   HashNode Root;

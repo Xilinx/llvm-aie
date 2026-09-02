@@ -188,11 +188,10 @@ extern int __unw_step_stage2(unw_cursor_t *);
 
 #if defined(_LIBUNWIND_USE_GCS)
 // Enable the GCS target feature to permit gcspop instructions to be used.
-__attribute__((target("+gcs")))
+__attribute__((target("gcs")))
 #endif
 static _Unwind_Reason_Code
-unwind_phase2(unw_context_t *uc, unw_cursor_t *cursor,
-              _Unwind_Exception *exception_object) {
+unwind_phase2(unw_context_t *uc, unw_cursor_t *cursor, _Unwind_Exception *exception_object) {
   __unw_init_local(cursor, uc);
 
   _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_obj=%p)",
@@ -333,12 +332,12 @@ unwind_phase2(unw_context_t *uc, unw_cursor_t *cursor,
 
 #if defined(_LIBUNWIND_USE_GCS)
 // Enable the GCS target feature to permit gcspop instructions to be used.
-__attribute__((target("+gcs")))
+__attribute__((target("gcs")))
 #endif
 static _Unwind_Reason_Code
 unwind_phase2_forced(unw_context_t *uc, unw_cursor_t *cursor,
-                     _Unwind_Exception *exception_object, _Unwind_Stop_Fn stop,
-                     void *stop_parameter) {
+                     _Unwind_Exception *exception_object,
+                     _Unwind_Stop_Fn stop, void *stop_parameter) {
   __unw_init_local(cursor, uc);
 
   // uc is initialized by __unw_getcontext in the parent frame. The first stack
@@ -443,6 +442,7 @@ unwind_phase2_forced(unw_context_t *uc, unw_cursor_t *cursor,
   // would.
   return _URC_FATAL_PHASE2_ERROR;
 }
+
 
 /// Called by __cxa_throw.  Only returns if there is a fatal error.
 _LIBUNWIND_EXPORT _Unwind_Reason_Code

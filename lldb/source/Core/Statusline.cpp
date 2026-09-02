@@ -24,9 +24,10 @@
 #define ANSI_SAVE_CURSOR ESCAPE "7"
 #define ANSI_RESTORE_CURSOR ESCAPE "8"
 #define ANSI_CLEAR_BELOW ESCAPE "[J"
-#define ANSI_CLEAR_SCREEN ESCAPE "[2J"
-#define ANSI_SET_SCROLL_ROWS ESCAPE "[1;%ur"
-#define ANSI_TO_START_OF_ROW ESCAPE "[%u;1f"
+#define ANSI_CURSOR_DOWN ESCAPE "[B"
+#define ANSI_CLEAR_LINE ESCAPE "[2K"
+#define ANSI_SET_SCROLL_ROWS ESCAPE "[0;%ur"
+#define ANSI_TO_START_OF_ROW ESCAPE "[%u;0f"
 #define ANSI_REVERSE_VIDEO ESCAPE "[7m"
 #define ANSI_UP_ROWS ESCAPE "[%dA"
 
@@ -42,12 +43,10 @@ Statusline::Statusline(Debugger &debugger)
 Statusline::~Statusline() { Disable(); }
 
 void Statusline::TerminalSizeChanged() {
-  m_terminal_width = m_debugger.GetTerminalWidth();
-  m_terminal_height = m_debugger.GetTerminalHeight();
+  UpdateTerminalProperties();
 
-  UpdateScrollWindow(ResizeStatusline);
-
-  // Draw the old statusline.
+  // This definitely isn't signal safe, but the best we can do, until we
+  // have proper signal-catching thread.
   Redraw(/*update=*/false);
 }
 
@@ -88,6 +87,13 @@ void Statusline::Draw(std::string str) {
   locked_stream << ANSI_RESTORE_CURSOR;
 }
 
+void Statusline::UpdateTerminalProperties() {
+  UpdateScrollWindow(DisableStatusline);
+  m_terminal_width = m_debugger.GetTerminalWidth();
+  m_terminal_height = m_debugger.GetTerminalHeight();
+  UpdateScrollWindow(EnableStatusline);
+}
+
 void Statusline::UpdateScrollWindow(ScrollWindowMode mode) {
   assert(m_terminal_width != 0 && m_terminal_height != 0);
 
@@ -95,36 +101,24 @@ void Statusline::UpdateScrollWindow(ScrollWindowMode mode) {
   if (!stream_sp)
     return;
 
-  const unsigned reduced_scroll_window = m_terminal_height - 1;
-  LockedStreamFile locked_stream = stream_sp->Lock();
+  const unsigned scroll_height =
+      (mode == DisableStatusline) ? m_terminal_height : m_terminal_height - 1;
 
+  LockedStreamFile locked_stream = stream_sp->Lock();
+  locked_stream << ANSI_SAVE_CURSOR;
+  locked_stream.Printf(ANSI_SET_SCROLL_ROWS, scroll_height);
+  locked_stream << ANSI_RESTORE_CURSOR;
   switch (mode) {
   case EnableStatusline:
     // Move everything on the screen up.
-    locked_stream << '\n';
     locked_stream.Printf(ANSI_UP_ROWS, 1);
-    // Reduce the scroll window.
-    locked_stream << ANSI_SAVE_CURSOR;
-    locked_stream.Printf(ANSI_SET_SCROLL_ROWS, reduced_scroll_window);
-    locked_stream << ANSI_RESTORE_CURSOR;
+    locked_stream << '\n';
     break;
   case DisableStatusline:
-    // Reset the scroll window.
-    locked_stream << ANSI_SAVE_CURSOR;
-    locked_stream.Printf(ANSI_SET_SCROLL_ROWS, 0);
-    locked_stream << ANSI_RESTORE_CURSOR;
     // Clear the screen below to hide the old statusline.
     locked_stream << ANSI_CLEAR_BELOW;
     break;
-  case ResizeStatusline:
-    // Clear the screen and update the scroll window.
-    // FIXME: Find a better solution (#146919).
-    locked_stream << ANSI_CLEAR_SCREEN;
-    locked_stream.Printf(ANSI_SET_SCROLL_ROWS, reduced_scroll_window);
-    break;
   }
-
-  m_debugger.RefreshIOHandler();
 }
 
 void Statusline::Redraw(bool update) {
@@ -152,9 +146,9 @@ void Statusline::Redraw(bool update) {
   }
 
   StreamString stream;
-  FormatEntity::Entry format = m_debugger.GetStatuslineFormat();
-  FormatEntity::Format(format, stream, &symbol_ctx, &exe_ctx, nullptr, nullptr,
-                       false, false);
+  if (auto *format = m_debugger.GetStatuslineFormat())
+    FormatEntity::Format(*format, stream, &symbol_ctx, &exe_ctx, nullptr,
+                         nullptr, false, false);
 
-  Draw(stream.GetString().str());
+  Draw(std::string(stream.GetString()));
 }

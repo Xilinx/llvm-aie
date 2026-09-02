@@ -45,8 +45,7 @@ public:
   /// \p M is the module for which the diagnostic is being emitted. \p Msg is
   /// the message to show. Note that this class does not copy this message, so
   /// this reference must be valid for the whole life time of the diagnostic.
-  DiagnosticInfoTranslateMD(const Module &M,
-                            const Twine &Msg LLVM_LIFETIME_BOUND,
+  DiagnosticInfoTranslateMD(const Module &M, const Twine &Msg,
                             DiagnosticSeverity Severity = DS_Error)
       : DiagnosticInfo(DK_Unsupported, Severity), Msg(Msg), Mod(M) {}
 
@@ -79,8 +78,7 @@ static NamedMDNode *emitResourceMetadata(Module &M, DXILResourceMap &DRM,
 
   for (ResourceInfo &RI : DRM)
     if (!RI.hasSymbol())
-      RI.createSymbol(M,
-                      DRTM[RI.getHandleTy()].createElementStruct(RI.getName()));
+      RI.createSymbol(M, DRTM[RI.getHandleTy()].createElementStruct());
 
   SmallVector<Metadata *> SRVs, UAVs, CBufs, Smps;
   for (const ResourceInfo &RI : DRM.srvs())
@@ -410,7 +408,6 @@ public:
     AU.addPreserved<DXILResourceWrapperPass>();
     AU.addPreserved<DXILMetadataAnalysisWrapperPass>();
     AU.addPreserved<ShaderFlagsAnalysisWrapper>();
-    AU.addPreserved<DXILResourceBindingWrapperPass>();
   }
 
   bool runOnModule(Module &M) override {

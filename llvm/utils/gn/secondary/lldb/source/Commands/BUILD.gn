@@ -50,7 +50,6 @@ static_library("Commands") {
     "CommandObjectPlatform.cpp",
     "CommandObjectPlugin.cpp",
     "CommandObjectProcess.cpp",
-    "CommandObjectProtocolServer.cpp",
     "CommandObjectQuit.cpp",
     "CommandObjectRegexCommand.cpp",
     "CommandObjectRegister.cpp",

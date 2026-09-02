@@ -78,7 +78,7 @@ void CodeGenFormat::run(raw_ostream &o) {
   // Instructions are going to be ordered as they are in
   // CodeGenEmitter
   ArrayRef<const CodeGenInstruction *> NumberedInstructions =
-      Target.getInstructions();
+      Target.getInstructionsByEnumValue();
 
   // Our main container of Formats
   std::vector<TGInstrLayout> InstFormats;
@@ -508,14 +508,15 @@ void TGInstrLayout::resolveIsSlot() {
       if (Field->isFixedBits())
         continue;
 
-      if (auto OpIdx = CGI->Operands.findOperandNamed(Field->Label)) {
+      unsigned OpIdx;
+      if (CGI->Operands.hasOperandNamed(Field->Label, OpIdx)) {
         // find by Record
         TGTargetSlots::const_iterator SlotIt =
-            SlotsRegistry.find(CGI->Operands[*OpIdx].Rec);
+            SlotsRegistry.find(CGI->Operands[OpIdx].Rec);
         if (SlotIt != SlotsRegistry.end())
           Field->setSlot(SlotIt->second);
         else {
-          dbgs() << "Operand " << CGI->Operands[*OpIdx].Rec->getName()
+          dbgs() << "Operand " << CGI->Operands[OpIdx].Rec->getName()
                  << " skipped when resolving Slot information for the "
                     "composite record "
                  << CGI->TheDef->getName() << "\n";
@@ -591,12 +592,13 @@ void TGInstrLayout::resolveMCOperandNumber() {
     // If the operand matches by name, reference according to that
     // operand number. Non-matching operands are assumed to be in
     // order.
-    if (auto OpIdx = CGI->Operands.findOperandNamed(Field->Label)) {
+    unsigned OpIdx;
+    if (CGI->Operands.hasOperandNamed(Field->Label, OpIdx)) {
       // Get the machine operand number for the indicated operand.
-      unsigned MIOpIdx = CGI->Operands[*OpIdx].MIOperandNo;
-      assert(!CGI->Operands.isFlatOperandNotEmitted(MIOpIdx) &&
+      OpIdx = CGI->Operands[OpIdx].MIOperandNo;
+      assert(!CGI->Operands.isFlatOperandNotEmitted(OpIdx) &&
              "Explicitly used operand also marked as not emitted!");
-      Field->setMCOperandIndex(MIOpIdx);
+      Field->setMCOperandIndex(OpIdx);
     }
   }
 }

@@ -119,45 +119,45 @@ protected:
 
 TEST_F(SCFLoopLikeTest, queryUnidimensionalLooplikes) {
   OwningOpRef<arith::ConstantIndexOp> lb =
-      arith::ConstantIndexOp::create(b, loc, 0);
+      b.create<arith::ConstantIndexOp>(loc, 0);
   OwningOpRef<arith::ConstantIndexOp> ub =
-      arith::ConstantIndexOp::create(b, loc, 10);
+      b.create<arith::ConstantIndexOp>(loc, 10);
   OwningOpRef<arith::ConstantIndexOp> step =
-      arith::ConstantIndexOp::create(b, loc, 2);
+      b.create<arith::ConstantIndexOp>(loc, 2);
 
   OwningOpRef<scf::ForOp> forOp =
-      scf::ForOp::create(b, loc, lb.get(), ub.get(), step.get());
+      b.create<scf::ForOp>(loc, lb.get(), ub.get(), step.get());
   checkUnidimensional(forOp.get());
 
-  OwningOpRef<scf::ForallOp> forallOp = scf::ForallOp::create(
-      b, loc, ArrayRef<OpFoldResult>(lb->getResult()),
+  OwningOpRef<scf::ForallOp> forallOp = b.create<scf::ForallOp>(
+      loc, ArrayRef<OpFoldResult>(lb->getResult()),
       ArrayRef<OpFoldResult>(ub->getResult()),
       ArrayRef<OpFoldResult>(step->getResult()), ValueRange(), std::nullopt);
   checkUnidimensional(forallOp.get());
 
-  OwningOpRef<scf::ParallelOp> parallelOp = scf::ParallelOp::create(
-      b, loc, ValueRange(lb->getResult()), ValueRange(ub->getResult()),
+  OwningOpRef<scf::ParallelOp> parallelOp = b.create<scf::ParallelOp>(
+      loc, ValueRange(lb->getResult()), ValueRange(ub->getResult()),
       ValueRange(step->getResult()), ValueRange());
   checkUnidimensional(parallelOp.get());
 }
 
 TEST_F(SCFLoopLikeTest, queryMultidimensionalLooplikes) {
   OwningOpRef<arith::ConstantIndexOp> lb =
-      arith::ConstantIndexOp::create(b, loc, 0);
+      b.create<arith::ConstantIndexOp>(loc, 0);
   OwningOpRef<arith::ConstantIndexOp> ub =
-      arith::ConstantIndexOp::create(b, loc, 10);
+      b.create<arith::ConstantIndexOp>(loc, 10);
   OwningOpRef<arith::ConstantIndexOp> step =
-      arith::ConstantIndexOp::create(b, loc, 2);
+      b.create<arith::ConstantIndexOp>(loc, 2);
 
-  OwningOpRef<scf::ForallOp> forallOp = scf::ForallOp::create(
-      b, loc, ArrayRef<OpFoldResult>({lb->getResult(), lb->getResult()}),
+  OwningOpRef<scf::ForallOp> forallOp = b.create<scf::ForallOp>(
+      loc, ArrayRef<OpFoldResult>({lb->getResult(), lb->getResult()}),
       ArrayRef<OpFoldResult>({ub->getResult(), ub->getResult()}),
       ArrayRef<OpFoldResult>({step->getResult(), step->getResult()}),
       ValueRange(), std::nullopt);
   checkMultidimensional(forallOp.get());
 
-  OwningOpRef<scf::ParallelOp> parallelOp = scf::ParallelOp::create(
-      b, loc, ValueRange({lb->getResult(), lb->getResult()}),
+  OwningOpRef<scf::ParallelOp> parallelOp = b.create<scf::ParallelOp>(
+      loc, ValueRange({lb->getResult(), lb->getResult()}),
       ValueRange({ub->getResult(), ub->getResult()}),
       ValueRange({step->getResult(), step->getResult()}), ValueRange());
   checkMultidimensional(parallelOp.get());
@@ -165,22 +165,22 @@ TEST_F(SCFLoopLikeTest, queryMultidimensionalLooplikes) {
 
 TEST_F(SCFLoopLikeTest, testForallNormalize) {
   OwningOpRef<arith::ConstantIndexOp> lb =
-      arith::ConstantIndexOp::create(b, loc, 1);
+      b.create<arith::ConstantIndexOp>(loc, 1);
   OwningOpRef<arith::ConstantIndexOp> ub =
-      arith::ConstantIndexOp::create(b, loc, 10);
+      b.create<arith::ConstantIndexOp>(loc, 10);
   OwningOpRef<arith::ConstantIndexOp> step =
-      arith::ConstantIndexOp::create(b, loc, 3);
+      b.create<arith::ConstantIndexOp>(loc, 3);
 
-  scf::ForallOp forallOp = scf::ForallOp::create(
-      b, loc, ArrayRef<OpFoldResult>({lb->getResult(), lb->getResult()}),
+  scf::ForallOp forallOp = b.create<scf::ForallOp>(
+      loc, ArrayRef<OpFoldResult>({lb->getResult(), lb->getResult()}),
       ArrayRef<OpFoldResult>({ub->getResult(), ub->getResult()}),
       ArrayRef<OpFoldResult>({step->getResult(), step->getResult()}),
       ValueRange(), std::nullopt);
   // Create a user of the induction variable. Bitcast is chosen for simplicity
   // since it is unary.
   b.setInsertionPointToStart(forallOp.getBody());
-  arith::BitcastOp::create(b, UnknownLoc::get(&context), b.getF64Type(),
-                           forallOp.getInductionVar(0));
+  b.create<arith::BitcastOp>(UnknownLoc::get(&context), b.getF64Type(),
+                             forallOp.getInductionVar(0));
   IRRewriter rewriter(b);
   FailureOr<scf::ForallOp> maybeNormalizedForallOp =
       normalizeForallOp(rewriter, forallOp);

@@ -41,9 +41,7 @@
 
 #include "test_macros.h"
 
-#if TEST_STD_VER >= 26
-// expected-no-diagnostics
-#else
+
 struct MyBoolExplicit {
   bool value;
   constexpr explicit MyBoolExplicit(bool v) : value(v) {}
@@ -72,7 +70,8 @@ inline constexpr MyBoolExplicit operator>=(const ComparesToMyBoolExplicit& LHS, 
   return MyBoolExplicit(LHS.value >= RHS.value);
 }
 
-void test() {
+
+int main(int, char**) {
   using V = std::variant<int, ComparesToMyBoolExplicit>;
   V v1(42);
   V v2(101);
@@ -84,6 +83,6 @@ void test() {
   (void)(v1 <= v2); // expected-note {{here}}
   (void)(v1 > v2); // expected-note {{here}}
   (void)(v1 >= v2); // expected-note {{here}}
-}
 
-#endif
+  return 0;
+}

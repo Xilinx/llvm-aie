@@ -14,7 +14,6 @@
 #ifndef LLVM_TEXTAPI_TEXTAPIERROR_H
 #define LLVM_TEXTAPI_TEXTAPIERROR_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm::MachO {
@@ -26,7 +25,7 @@ enum class TextAPIErrorCode {
   UnsupportedTarget
 };
 
-class LLVM_ABI TextAPIError : public llvm::ErrorInfo<TextAPIError> {
+class TextAPIError : public llvm::ErrorInfo<TextAPIError> {
 public:
   static char ID;
   TextAPIErrorCode EC;

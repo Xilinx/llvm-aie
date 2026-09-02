@@ -99,7 +99,8 @@ public:
   }
 
   ValueT &operator[](const KeyT &Key) {
-    std::pair<typename MapType::iterator, bool> Result = Map.try_emplace(Key);
+    std::pair<KeyT, typename MapType::mapped_type> Pair = std::make_pair(Key, 0);
+    std::pair<typename MapType::iterator, bool> Result = Map.insert(Pair);
     auto &I = Result.first->second;
     if (Result.second) {
       Vector.push_back(std::make_pair(Key, ValueT()));
@@ -118,7 +119,7 @@ public:
 
   template <typename... Ts>
   std::pair<iterator, bool> try_emplace(const KeyT &Key, Ts &&...Args) {
-    auto [It, Inserted] = Map.try_emplace(Key);
+    auto [It, Inserted] = Map.insert(std::make_pair(Key, 0));
     if (Inserted) {
       It->second = Vector.size();
       Vector.emplace_back(std::piecewise_construct, std::forward_as_tuple(Key),
@@ -129,7 +130,7 @@ public:
   }
   template <typename... Ts>
   std::pair<iterator, bool> try_emplace(KeyT &&Key, Ts &&...Args) {
-    auto [It, Inserted] = Map.try_emplace(Key);
+    auto [It, Inserted] = Map.insert(std::make_pair(Key, 0));
     if (Inserted) {
       It->second = Vector.size();
       Vector.emplace_back(std::piecewise_construct,

@@ -13,7 +13,6 @@
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/BinaryFormat/Dwarf.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <vector>
 
@@ -75,10 +74,10 @@ private:
 public:
   DWARFDebugPubTable() = default;
 
-  LLVM_ABI void extract(DWARFDataExtractor Data, bool GnuStyle,
-                        function_ref<void(Error)> RecoverableErrorHandler);
+  void extract(DWARFDataExtractor Data, bool GnuStyle,
+               function_ref<void(Error)> RecoverableErrorHandler);
 
-  LLVM_ABI void dump(raw_ostream &OS) const;
+  void dump(raw_ostream &OS) const;
 
   ArrayRef<Set> getData() { return Sets; }
 };

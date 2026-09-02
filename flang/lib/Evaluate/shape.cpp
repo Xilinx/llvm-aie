@@ -1073,8 +1073,8 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
         }
       }
     } else if (intrinsic->name == "spread") {
-      // SHAPE(SPREAD(ARRAY,DIM,NCOPIES)) = SHAPE(ARRAY) with MAX(0,NCOPIES)
-      // inserted at position DIM.
+      // SHAPE(SPREAD(ARRAY,DIM,NCOPIES)) = SHAPE(ARRAY) with NCOPIES inserted
+      // at position DIM.
       if (call.arguments().size() == 3) {
         auto arrayShape{
             (*this)(UnwrapExpr<Expr<SomeType>>(call.arguments().at(0)))};
@@ -1086,8 +1086,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
             if (*dim >= 1 &&
                 static_cast<std::size_t>(*dim) <= arrayShape->size() + 1) {
               arrayShape->emplace(arrayShape->begin() + *dim - 1,
-                  Extremum<SubscriptInteger>{Ordering::Greater, ExtentExpr{0},
-                      ConvertToType<ExtentType>(common::Clone(*nCopies))});
+                  ConvertToType<ExtentType>(common::Clone(*nCopies)));
               return std::move(*arrayShape);
             }
           }

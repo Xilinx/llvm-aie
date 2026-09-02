@@ -15,7 +15,6 @@
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/BinaryStreamArray.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/StringSaver.h"
 #include <cstdint>
@@ -46,7 +45,7 @@ namespace codeview {
 /// require more than one linear scan.  For a type stream of N elements divided
 /// into M chunks of roughly equal size, this yields a worst case lookup time
 /// of O(N/M) and an amortized time of O(1).
-class LLVM_ABI LazyRandomTypeCollection : public TypeCollection {
+class LazyRandomTypeCollection : public TypeCollection {
   using PartialOffsetArray = FixedStreamArray<TypeIndexOffset>;
 
   struct CacheEntry {

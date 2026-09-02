@@ -174,7 +174,7 @@ static __hwasan::HwasanThreadList *GetHwasanThreadListLocked() {
   return &tl;
 }
 
-static __hwasan::Thread *GetThreadByOsIDLocked(ThreadID os_id) {
+static __hwasan::Thread *GetThreadByOsIDLocked(tid_t os_id) {
   return GetHwasanThreadListLocked()->FindThreadLocked(
       [os_id](__hwasan::Thread *t) { return t->os_id() == os_id; });
 }
@@ -191,7 +191,7 @@ void UnlockThreads() {
 
 void EnsureMainThreadIDIsCorrect() { __hwasan::EnsureMainThreadIDIsCorrect(); }
 
-bool GetThreadRangesLocked(ThreadID os_id, uptr *stack_begin, uptr *stack_end,
+bool GetThreadRangesLocked(tid_t os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
                            uptr *cache_end, DTLS **dtls) {
   auto *t = GetThreadByOsIDLocked(os_id);
@@ -210,7 +210,7 @@ bool GetThreadRangesLocked(ThreadID os_id, uptr *stack_begin, uptr *stack_end,
 
 void GetAllThreadAllocatorCachesLocked(InternalMmapVector<uptr> *caches) {}
 
-void GetThreadExtraStackRangesLocked(ThreadID os_id,
+void GetThreadExtraStackRangesLocked(tid_t os_id,
                                      InternalMmapVector<Range> *ranges) {}
 void GetThreadExtraStackRangesLocked(InternalMmapVector<Range> *ranges) {}
 
@@ -218,7 +218,7 @@ void GetAdditionalThreadContextPtrsLocked(InternalMmapVector<uptr> *ptrs) {
   __hwasan::hwasanThreadArgRetval().GetAllPtrsLocked(ptrs);
 }
 
-void GetRunningThreadsLocked(InternalMmapVector<ThreadID> *threads) {
+void GetRunningThreadsLocked(InternalMmapVector<tid_t> *threads) {
   // TODO: implement.
 }
 void PrintThreads() {

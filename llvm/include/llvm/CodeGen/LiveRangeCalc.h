@@ -31,7 +31,6 @@
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/SlotIndexes.h"
-#include "llvm/Support/Compiler.h"
 #include <utility>
 
 namespace llvm {
@@ -171,7 +170,7 @@ protected:
   VNInfo::Allocator *getVNAlloc() { return Alloc; }
 
   /// Reset Map and Seen fields.
-  LLVM_ABI void resetLiveOutMap();
+  void resetLiveOutMap();
 
 public:
   LiveRangeCalc() = default;
@@ -188,8 +187,8 @@ public:
   /// that may overlap a previously computed live range, and before the first
   /// live range in a function.  If live ranges are not known to be
   /// non-overlapping, call reset before each.
-  LLVM_ABI void reset(const MachineFunction *mf, SlotIndexes *SI,
-                      MachineDominatorTree *MDT, VNInfo::Allocator *VNIA);
+  void reset(const MachineFunction *mf, SlotIndexes *SI,
+             MachineDominatorTree *MDT, VNInfo::Allocator *VNIA);
 
   //===--------------------------------------------------------------------===//
   // Mid-level interface.
@@ -205,8 +204,8 @@ public:
   /// inserted as required to preserve SSA form.
   ///
   /// PhysReg, when set, is used to verify live-in lists on basic blocks.
-  LLVM_ABI void extend(LiveRange &LR, SlotIndex Use, Register PhysReg,
-                       ArrayRef<SlotIndex> Undefs);
+  void extend(LiveRange &LR, SlotIndex Use, Register PhysReg,
+              ArrayRef<SlotIndex> Undefs);
 
   //===--------------------------------------------------------------------===//
   // Low-level interface.
@@ -253,15 +252,16 @@ public:
   ///
   /// Every predecessor of a live-in block must have been given a value with
   /// setLiveOutValue, the value may be null for live-trough blocks.
-  LLVM_ABI void calculateValues();
+  void calculateValues();
 
   /// A diagnostic function to check if the end of the block @p MBB is
   /// jointly dominated by the blocks corresponding to the slot indices
   /// in @p Defs. This function is mainly for use in self-verification
   /// checks.
-  LLVM_ABI LLVM_ATTRIBUTE_UNUSED static bool
-  isJointlyDominated(const MachineBasicBlock *MBB, ArrayRef<SlotIndex> Defs,
-                     const SlotIndexes &Indexes);
+  LLVM_ATTRIBUTE_UNUSED
+  static bool isJointlyDominated(const MachineBasicBlock *MBB,
+                                 ArrayRef<SlotIndex> Defs,
+                                 const SlotIndexes &Indexes);
 };
 
 } // end namespace llvm

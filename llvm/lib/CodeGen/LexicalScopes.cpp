@@ -287,7 +287,8 @@ void LexicalScopes::getMachineBasicBlocks(
     return;
 
   if (Scope == CurrentFnLexicalScope) {
-    MBBs.insert_range(llvm::make_pointer_range(*MF));
+    for (const auto &MBB : *MF)
+      MBBs.insert(&MBB);
     return;
   }
 

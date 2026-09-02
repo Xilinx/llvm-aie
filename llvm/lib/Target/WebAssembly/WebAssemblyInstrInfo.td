@@ -76,9 +76,6 @@ def HasReferenceTypes :
     Predicate<"Subtarget->hasReferenceTypes()">,
     AssemblerPredicate<(all_of FeatureReferenceTypes), "reference-types">;
 
-def HasGC : Predicate<"Subtarget->hasGC()">,
-            AssemblerPredicate<(all_of FeatureGC), "gc">;
-
 def HasRelaxedSIMD :
     Predicate<"Subtarget->hasRelaxedSIMD()">,
     AssemblerPredicate<(all_of FeatureRelaxedSIMD), "relaxed-simd">;

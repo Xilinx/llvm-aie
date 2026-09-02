@@ -8,7 +8,7 @@
 
 // <list>
 
-// void pop_back(); // constexpr since C++26
+// void pop_back();
 
 #include <list>
 #include <cassert>
@@ -16,7 +16,7 @@
 #include "test_macros.h"
 #include "min_allocator.h"
 
-TEST_CONSTEXPR_CXX26 bool test() {
+int main(int, char**) {
   {
     int a[] = {1, 2, 3};
     std::list<int> c(a, a + 3);
@@ -38,15 +38,6 @@ TEST_CONSTEXPR_CXX26 bool test() {
     c.pop_back();
     assert(c.empty());
   }
-#endif
-
-  return true;
-}
-
-int main(int, char**) {
-  assert(test());
-#if TEST_STD_VER >= 26
-  static_assert(test());
 #endif
 
   return 0;

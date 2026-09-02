@@ -47,7 +47,6 @@ private:
   const std::optional<unsigned> ParameterThreshold;
   const std::optional<unsigned> NestingThreshold;
   const std::optional<unsigned> VariableThreshold;
-  const bool CountMemberInitAsStmt;
 
   static constexpr std::optional<unsigned> DefaultLineThreshold = std::nullopt;
   static constexpr std::optional<unsigned> DefaultStatementThreshold = 800U;
@@ -59,7 +58,6 @@ private:
       std::nullopt;
   static constexpr std::optional<unsigned> DefaultVariableThreshold =
       std::nullopt;
-  static constexpr bool DefaultCountMemberInitAsStmt = true;
 };
 
 } // namespace clang::tidy::readability

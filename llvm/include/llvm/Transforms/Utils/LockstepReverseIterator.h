@@ -61,7 +61,7 @@ public:
     }
     Insts.clear();
     for (BasicBlock *BB : Blocks) {
-      Instruction *Prev = BB->getTerminator()->getPrevNode();
+      Instruction *Prev = BB->getTerminator()->getPrevNonDebugInstruction();
       if (!Prev) {
         // Block wasn't big enough - only contained a terminator.
         if constexpr (EarlyFailure) {
@@ -108,7 +108,7 @@ public:
       return *this;
     SmallVector<Instruction *, 4> NewInsts;
     for (Instruction *Inst : Insts) {
-      Instruction *Prev = Inst->getPrevNode();
+      Instruction *Prev = Inst->getPrevNonDebugInstruction();
       if (!Prev) {
         if constexpr (!EarlyFailure) {
           this->ActiveBlocks.remove(Inst->getParent());
@@ -133,7 +133,7 @@ public:
       return *this;
     SmallVector<Instruction *, 4> NewInsts;
     for (Instruction *Inst : Insts) {
-      Instruction *Next = Inst->getNextNode();
+      Instruction *Next = Inst->getNextNonDebugInstruction();
       // Already at end of block.
       if (!Next) {
         Fail = true;

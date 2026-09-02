@@ -471,6 +471,10 @@ CodeExtractor::getLifetimeMarkers(const CodeExtractorAnalysisCache &CEAC,
         Info.LifeEnd = IntrInst;
         continue;
       }
+      // At this point, permit debug uses outside of the region.
+      // This is fixed in a later call to fixupDebugInfoPostExtraction().
+      if (isa<DbgInfoIntrinsic>(IntrInst))
+        continue;
     }
     // Find untracked uses of the address, bail.
     if (!definedInRegion(Blocks, U))
@@ -788,6 +792,7 @@ void CodeExtractor::severSplitPHINodesOfExits() {
         NewBB = BasicBlock::Create(ExitBB->getContext(),
                                    ExitBB->getName() + ".split",
                                    ExitBB->getParent(), ExitBB);
+        NewBB->IsNewDbgInfoFormat = ExitBB->IsNewDbgInfoFormat;
         SmallVector<BasicBlock *, 4> Preds(predecessors(ExitBB));
         for (BasicBlock *PredBB : Preds)
           if (Blocks.count(PredBB))
@@ -1020,7 +1025,6 @@ Function *CodeExtractor::constructFunctionDeclaration(
       case Attribute::EndAttrKinds:
       case Attribute::EmptyKey:
       case Attribute::TombstoneKey:
-      case Attribute::DeadOnReturn:
         llvm_unreachable("Not a function attribute");
       }
 
@@ -1073,6 +1077,10 @@ static void applyFirstDebugLoc(Function *oldFunction,
     any_of(Blocks, [&BranchI](const BasicBlock *BB) {
       return any_of(*BB, [&BranchI](const Instruction &I) {
         if (!I.getDebugLoc())
+          return false;
+        // Don't use source locations attached to debug-intrinsics: they could
+        // be from completely unrelated scopes.
+        if (isa<DbgInfoIntrinsic>(I))
           return false;
         BranchI->setDebugLoc(I.getDebugLoc());
         return true;
@@ -1219,8 +1227,12 @@ void CodeExtractor::calculateNewCallTerminatorWeights(
 /// \p F.
 static void eraseDebugIntrinsicsWithNonLocalRefs(Function &F) {
   for (Instruction &I : instructions(F)) {
+    SmallVector<DbgVariableIntrinsic *, 4> DbgUsers;
     SmallVector<DbgVariableRecord *, 4> DbgVariableRecords;
-    findDbgUsers(&I, DbgVariableRecords);
+    findDbgUsers(DbgUsers, &I, &DbgVariableRecords);
+    for (DbgVariableIntrinsic *DVI : DbgUsers)
+      if (DVI->getFunction() != &F)
+        DVI->eraseFromParent();
     for (DbgVariableRecord *DVR : DbgVariableRecords)
       if (DVR->getFunction() != &F)
         DVR->eraseFromParent();
@@ -1282,13 +1294,17 @@ static void fixupDebugInfoPostExtraction(Function &OldFunc, Function &NewFunc,
         NewFunc.getEntryBlock().getTerminator()->getIterator());
   };
   for (auto [Input, NewVal] : zip_equal(Inputs, NewValues)) {
+    SmallVector<DbgVariableIntrinsic *, 1> DbgUsers;
     SmallVector<DbgVariableRecord *, 1> DPUsers;
-    findDbgUsers(Input, DPUsers);
+    findDbgUsers(DbgUsers, Input, &DPUsers);
     DIExpression *Expr = DIB.createExpression();
 
     // Iterate the debud users of the Input values. If they are in the extracted
     // function then update their location with the new value. If they are in
     // the parent function then create a similar debug record.
+    for (auto *DVI : DbgUsers)
+      UpdateOrInsertDebugRecord(DVI, Input, NewVal, Expr,
+                                isa<DbgDeclareInst>(DVI));
     for (auto *DVR : DPUsers)
       UpdateOrInsertDebugRecord(DVR, Input, NewVal, Expr, DVR->isDbgDeclare());
   }
@@ -1314,6 +1330,7 @@ static void fixupDebugInfoPostExtraction(Function &OldFunc, Function &NewFunc,
   //  2) They need to point to fresh metadata, e.g. because they currently
   //     point to a variable in the wrong scope.
   SmallDenseMap<DINode *, DINode *> RemappedMetadata;
+  SmallVector<Instruction *, 4> DebugIntrinsicsToDelete;
   SmallVector<DbgVariableRecord *, 4> DVRsToDelete;
   DenseMap<const MDNode *, MDNode *> Cache;
 
@@ -1340,10 +1357,8 @@ static void fixupDebugInfoPostExtraction(Function &OldFunc, Function &NewFunc,
     if (!NewLabel) {
       DILocalScope *NewScope = DILocalScope::cloneScopeForSubprogram(
           *OldLabel->getScope(), *NewSP, Ctx, Cache);
-      NewLabel =
-          DILabel::get(Ctx, NewScope, OldLabel->getName(), OldLabel->getFile(),
-                       OldLabel->getLine(), OldLabel->getColumn(),
-                       OldLabel->isArtificial(), OldLabel->getCoroSuspendIdx());
+      NewLabel = DILabel::get(Ctx, NewScope, OldLabel->getName(),
+                              OldLabel->getFile(), OldLabel->getLine());
     }
     LabelRecord->setLabel(cast<DILabel>(NewLabel));
   };
@@ -1356,29 +1371,55 @@ static void fixupDebugInfoPostExtraction(Function &OldFunc, Function &NewFunc,
       }
 
       DbgVariableRecord &DVR = cast<DbgVariableRecord>(DR);
-      // If any of the used locations are invalid, delete the record.
+      // Apply the two updates that dbg.values get: invalid operands, and
+      // variable metadata fixup.
       if (any_of(DVR.location_ops(), IsInvalidLocation)) {
         DVRsToDelete.push_back(&DVR);
         continue;
       }
-
-      // DbgAssign intrinsics have an extra Value argument:
       if (DVR.isDbgAssign() && IsInvalidLocation(DVR.getAddress())) {
         DVRsToDelete.push_back(&DVR);
         continue;
       }
-
-      // If the variable was in the scope of the old function, i.e. it was not
-      // inlined, point the intrinsic to a fresh variable within the new
-      // function.
       if (!DVR.getDebugLoc().getInlinedAt())
         DVR.setVariable(GetUpdatedDIVariable(DVR.getVariable()));
     }
   };
 
-  for (Instruction &I : instructions(NewFunc))
+  for (Instruction &I : instructions(NewFunc)) {
     UpdateDbgRecordsOnInst(I);
 
+    auto *DII = dyn_cast<DbgInfoIntrinsic>(&I);
+    if (!DII)
+      continue;
+
+    // Point the intrinsic to a fresh label within the new function if the
+    // intrinsic was not inlined from some other function.
+    if (auto *DLI = dyn_cast<DbgLabelInst>(&I)) {
+      UpdateDbgLabel(DLI);
+      continue;
+    }
+
+    auto *DVI = cast<DbgVariableIntrinsic>(DII);
+    // If any of the used locations are invalid, delete the intrinsic.
+    if (any_of(DVI->location_ops(), IsInvalidLocation)) {
+      DebugIntrinsicsToDelete.push_back(DVI);
+      continue;
+    }
+    // DbgAssign intrinsics have an extra Value argument:
+    if (auto *DAI = dyn_cast<DbgAssignIntrinsic>(DVI);
+        DAI && IsInvalidLocation(DAI->getAddress())) {
+      DebugIntrinsicsToDelete.push_back(DVI);
+      continue;
+    }
+    // If the variable was in the scope of the old function, i.e. it was not
+    // inlined, point the intrinsic to a fresh variable within the new function.
+    if (!DVI->getDebugLoc().getInlinedAt())
+      DVI->setVariable(GetUpdatedDIVariable(DVI->getVariable()));
+  }
+
+  for (auto *DII : DebugIntrinsicsToDelete)
+    DII->eraseFromParent();
   for (auto *DVR : DVRsToDelete)
     DVR->getMarker()->MarkedInstr->dropOneDbgRecord(DVR);
   DIB.finalizeSubprogram(NewSP);
@@ -1507,6 +1548,7 @@ CodeExtractor::extractCodeRegion(const CodeExtractorAnalysisCache &CEAC,
   Function *newFunction = constructFunctionDeclaration(
       inputs, outputs, EntryFreq, oldFunction->getName() + "." + SuffixToUse,
       StructValues, StructTy);
+  newFunction->IsNewDbgInfoFormat = oldFunction->IsNewDbgInfoFormat;
   SmallVector<Value *> NewValues;
 
   emitFunctionBody(inputs, outputs, StructValues, newFunction, StructTy, header,
@@ -1523,10 +1565,12 @@ CodeExtractor::extractCodeRegion(const CodeExtractorAnalysisCache &CEAC,
   fixupDebugInfoPostExtraction(*oldFunction, *newFunction, *TheCall, inputs,
                                NewValues);
 
-  LLVM_DEBUG(llvm::dbgs() << "After extractCodeRegion - newFunction:\n");
-  LLVM_DEBUG(newFunction->dump());
-  LLVM_DEBUG(llvm::dbgs() << "After extractCodeRegion - oldFunction:\n");
-  LLVM_DEBUG(oldFunction->dump());
+  LLVM_DEBUG(if (verifyFunction(*newFunction, &errs())) {
+    newFunction->dump();
+    report_fatal_error("verification of newFunction failed!");
+  });
+  LLVM_DEBUG(if (verifyFunction(*oldFunction))
+                 report_fatal_error("verification of oldFunction failed!"));
   LLVM_DEBUG(if (AC && verifyAssumptionCache(*oldFunction, *newFunction, AC))
                  report_fatal_error("Stale Asumption cache for old Function!"));
   return newFunction;
@@ -1593,6 +1637,7 @@ void CodeExtractor::emitFunctionBody(
   // head of the region, but the entry node of a function cannot have preds.
   BasicBlock *newFuncRoot =
       BasicBlock::Create(Context, "newFuncRoot", newFunction);
+  newFuncRoot->IsNewDbgInfoFormat = oldFunction->IsNewDbgInfoFormat;
 
   // Now sink all instructions which only have non-phi uses inside the region.
   // Group the allocas at the start of the block, so that any bitcast uses of
@@ -1826,11 +1871,10 @@ CallInst *CodeExtractor::emitReplacerCall(
   // This takes place of the original loop
   BasicBlock *codeReplacer =
       BasicBlock::Create(Context, "codeRepl", oldFunction, ReplIP);
-  if (AllocationBlock)
-    assert(AllocationBlock->getParent() == oldFunction &&
-           "AllocationBlock is not in the same function");
+  codeReplacer->IsNewDbgInfoFormat = oldFunction->IsNewDbgInfoFormat;
   BasicBlock *AllocaBlock =
       AllocationBlock ? AllocationBlock : &oldFunction->getEntryBlock();
+  AllocaBlock->IsNewDbgInfoFormat = oldFunction->IsNewDbgInfoFormat;
 
   // Update the entry count of the function.
   if (BFI)

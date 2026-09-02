@@ -1256,7 +1256,6 @@ def Tensor_CollapseShapeOp : Tensor_ReassociativeReshapeOp<"collapse_shape"> {
 
 def Tensor_PadOp : Tensor_Op<"pad", [
     DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
-    DeclareOpInterfaceMethods<ReifyRankedShapedTypeOpInterface>,
     AttrSizedOperandSegments,
     Pure,
     SingleBlockImplicitTerminator<"mlir::tensor::YieldOp">]> {
@@ -1771,7 +1770,8 @@ def Tensor_SplatOp : Tensor_Op<"splat", [
   ]> {
   let summary = "tensor splat or broadcast operation";
   let description = [{
-    Broadcast the operand to all elements of the result tensor.
+    Broadcast the operand to all elements of the result tensor. The operand is
+    required to be of integer/index/float type.
 
     An additional argument of type `index` must be provided for each dynamic
     dimension present in the result type.
@@ -1794,7 +1794,8 @@ def Tensor_SplatOp : Tensor_Op<"splat", [
     ```
   }];
 
-  let arguments = (ins AnyType:$input,
+  let arguments = (ins AnyTypeOf<[AnySignlessInteger, Index, AnyFloat],
+                                 "integer/index/float type">:$input,
                        Variadic<Index>:$dynamicSizes);
   let results = (outs AnyRankedTensor:$aggregate);
 

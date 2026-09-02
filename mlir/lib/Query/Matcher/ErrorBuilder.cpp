@@ -8,6 +8,7 @@
 
 #include "mlir/Query/Matcher/ErrorBuilder.h"
 #include "Diagnostics.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include <initializer_list>
 

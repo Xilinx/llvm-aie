@@ -27,7 +27,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ProfDataUtils.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/FormatVariadic.h"
 
@@ -37,25 +36,25 @@ class ModuleSlotTracker;
 template <class GraphType> struct GraphTraits;
 class CFGViewerPass : public PassInfoMixin<CFGViewerPass> {
 public:
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 
 class CFGOnlyViewerPass : public PassInfoMixin<CFGOnlyViewerPass> {
 public:
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 
 class CFGPrinterPass : public PassInfoMixin<CFGPrinterPass> {
 public:
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 
 class CFGOnlyPrinterPass : public PassInfoMixin<CFGOnlyPrinterPass> {
 public:
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 
@@ -72,10 +71,10 @@ private:
 
 public:
   DOTFuncInfo(const Function *F) : DOTFuncInfo(F, nullptr, nullptr, 0) {}
-  LLVM_ABI ~DOTFuncInfo();
+  ~DOTFuncInfo();
 
-  LLVM_ABI DOTFuncInfo(const Function *F, const BlockFrequencyInfo *BFI,
-                       const BranchProbabilityInfo *BPI, uint64_t MaxFreq);
+  DOTFuncInfo(const Function *F, const BlockFrequencyInfo *BFI,
+              const BranchProbabilityInfo *BPI, uint64_t MaxFreq);
 
   const BlockFrequencyInfo *getBFI() const { return BFI; }
 
@@ -83,7 +82,7 @@ public:
 
   const Function *getFunction() const { return this->F; }
 
-  LLVM_ABI ModuleSlotTracker *getModuleSlotTracker();
+  ModuleSlotTracker *getModuleSlotTracker();
 
   uint64_t getMaxFreq() const { return MaxFreq; }
 
@@ -205,7 +204,7 @@ struct DOTGraphTraits<DOTFuncInfo *> : public DefaultDOTGraphTraits {
     return SimpleNodeLabelString(Node);
   }
 
-  LLVM_ABI static std::string getCompleteNodeLabel(
+  static std::string getCompleteNodeLabel(
       const BasicBlock *Node, DOTFuncInfo *,
       function_ref<void(raw_string_ostream &, const BasicBlock &)>
           HandleBasicBlock = {},
@@ -326,9 +325,8 @@ struct DOTGraphTraits<DOTFuncInfo *> : public DefaultDOTGraphTraits {
                         " fontname=\"Courier\"";
     return Attrs;
   }
-  LLVM_ABI bool isNodeHidden(const BasicBlock *Node,
-                             const DOTFuncInfo *CFGInfo);
-  LLVM_ABI void computeDeoptOrUnreachablePaths(const Function *F);
+  bool isNodeHidden(const BasicBlock *Node, const DOTFuncInfo *CFGInfo);
+  void computeDeoptOrUnreachablePaths(const Function *F);
 };
 } // namespace llvm
 

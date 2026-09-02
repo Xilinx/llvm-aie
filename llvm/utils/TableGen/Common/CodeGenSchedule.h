@@ -193,7 +193,7 @@ struct CodeGenRegisterFile {
   unsigned MaxMovesEliminatedPerCycle;
   bool AllowZeroMoveEliminationOnly;
 
-  unsigned NumPhysRegs = 0;
+  unsigned NumPhysRegs;
   std::vector<CodeGenRegisterCost> Costs;
 
   CodeGenRegisterFile(StringRef name, const Record *def,
@@ -201,7 +201,7 @@ struct CodeGenRegisterFile {
                       bool AllowZeroMoveElimOnly = false)
       : Name(name), RegisterFileDef(def),
         MaxMovesEliminatedPerCycle(MaxMoveElimPerCy),
-        AllowZeroMoveEliminationOnly(AllowZeroMoveElimOnly) {}
+        AllowZeroMoveEliminationOnly(AllowZeroMoveElimOnly), NumPhysRegs(0) {}
 
   bool hasDefaultCosts() const { return Costs.empty(); }
 };
@@ -261,16 +261,16 @@ struct CodeGenProcModel {
   std::vector<CodeGenRegisterFile> RegisterFiles;
 
   // Optional Retire Control Unit definition.
-  const Record *RetireControlUnit = nullptr;
+  const Record *RetireControlUnit;
 
   // Load/Store queue descriptors.
-  const Record *LoadQueue = nullptr;
-  const Record *StoreQueue = nullptr;
+  const Record *LoadQueue;
+  const Record *StoreQueue;
 
   CodeGenProcModel(unsigned Idx, std::string Name, const Record *MDef,
                    const Record *IDef)
-      : Index(Idx), ModelName(std::move(Name)), ModelDef(MDef), ItinsDef(IDef) {
-  }
+      : Index(Idx), ModelName(std::move(Name)), ModelDef(MDef), ItinsDef(IDef),
+        RetireControlUnit(nullptr), LoadQueue(nullptr), StoreQueue(nullptr) {}
 
   bool hasItineraries() const {
     return !ItinsDef->getValueAsListOfDefs("IID").empty();

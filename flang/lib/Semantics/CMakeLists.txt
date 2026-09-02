@@ -20,9 +20,6 @@ add_flang_library(FortranSemantics
   check-io.cpp
   check-namelist.cpp
   check-nullify.cpp
-  check-omp-atomic.cpp
-  check-omp-loop.cpp
-  check-omp-metadirective.cpp
   check-omp-structure.cpp
   check-purity.cpp
   check-return.cpp
@@ -35,15 +32,14 @@ add_flang_library(FortranSemantics
   dump-expr.cpp
   expression.cpp
   mod-file.cpp
-  openmp-dsa.cpp
   openmp-modifiers.cpp
-  openmp-utils.cpp
   pointer-assignment.cpp
   program-tree.cpp
-  resolve-directives.cpp
   resolve-labels.cpp
-  resolve-names.cpp
+  resolve-directives.cpp
   resolve-names-utils.cpp
+  resolve-names.cpp
+  rewrite-directives.cpp
   rewrite-parse-tree.cpp
   runtime-type-info.cpp
   scope.cpp

@@ -137,7 +137,7 @@ protected:
     _verifyFormat(File, Line, Code, Code, Style);
   }
 
-  /// Verify that clang-format does not crash on the given input.
+  /// \brief Verify that clang-format does not crash on the given input.
   void verifyNoCrash(StringRef Code,
                      const std::optional<FormatStyle> &Style = {}) {
     format(Code, Style, SC_DoNotCheck);

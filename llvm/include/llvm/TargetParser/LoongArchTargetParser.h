@@ -14,7 +14,6 @@
 #ifndef LLVM_TARGETPARSER_LOONGARCHTARGETPARSER_H
 #define LLVM_TARGETPARSER_LOONGARCHTARGETPARSER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/TargetParser/Triple.h"
 #include <vector>
 
@@ -85,12 +84,11 @@ struct ArchInfo {
   uint32_t Features;
 };
 
-LLVM_ABI bool isValidArchName(StringRef Arch);
-LLVM_ABI bool isValidFeatureName(StringRef Feature);
-LLVM_ABI bool getArchFeatures(StringRef Arch, std::vector<StringRef> &Features);
-LLVM_ABI bool isValidCPUName(StringRef TuneCPU);
-LLVM_ABI void fillValidCPUList(SmallVectorImpl<StringRef> &Values);
-LLVM_ABI StringRef getDefaultArch(bool Is64Bit);
+bool isValidArchName(StringRef Arch);
+bool getArchFeatures(StringRef Arch, std::vector<StringRef> &Features);
+bool isValidCPUName(StringRef TuneCPU);
+void fillValidCPUList(SmallVectorImpl<StringRef> &Values);
+StringRef getDefaultArch(bool Is64Bit);
 
 } // namespace LoongArch
 

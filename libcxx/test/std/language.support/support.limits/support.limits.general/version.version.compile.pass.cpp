@@ -164,14 +164,6 @@
 #    error "__cpp_lib_clamp should not be defined before c++17"
 #  endif
 
-#  ifdef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should not be defined before c++20"
-#  endif
-
 #  ifdef __cpp_lib_complex_udls
 #    error "__cpp_lib_complex_udls should not be defined before c++14"
 #  endif
@@ -204,20 +196,12 @@
 #    error "__cpp_lib_constexpr_dynamic_alloc should not be defined before c++20"
 #  endif
 
-#  ifdef __cpp_lib_constexpr_forward_list
-#    error "__cpp_lib_constexpr_forward_list should not be defined before c++26"
-#  endif
-
 #  ifdef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should not be defined before c++20"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_iterator
 #    error "__cpp_lib_constexpr_iterator should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_list
-#    error "__cpp_lib_constexpr_list should not be defined before c++26"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_memory
@@ -230,10 +214,6 @@
 
 #  ifdef __cpp_lib_constexpr_numeric
 #    error "__cpp_lib_constexpr_numeric should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_queue
-#    error "__cpp_lib_constexpr_queue should not be defined before c++26"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_string
@@ -1065,14 +1045,6 @@
 #    error "__cpp_lib_clamp should not be defined before c++17"
 #  endif
 
-#  ifdef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should not be defined before c++20"
-#  endif
-
 #  ifndef __cpp_lib_complex_udls
 #    error "__cpp_lib_complex_udls should be defined in c++14"
 #  endif
@@ -1108,20 +1080,12 @@
 #    error "__cpp_lib_constexpr_dynamic_alloc should not be defined before c++20"
 #  endif
 
-#  ifdef __cpp_lib_constexpr_forward_list
-#    error "__cpp_lib_constexpr_forward_list should not be defined before c++26"
-#  endif
-
 #  ifdef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should not be defined before c++20"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_iterator
 #    error "__cpp_lib_constexpr_iterator should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_list
-#    error "__cpp_lib_constexpr_list should not be defined before c++26"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_memory
@@ -1134,10 +1098,6 @@
 
 #  ifdef __cpp_lib_constexpr_numeric
 #    error "__cpp_lib_constexpr_numeric should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_queue
-#    error "__cpp_lib_constexpr_queue should not be defined before c++26"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_string
@@ -2071,14 +2031,6 @@
 #    error "__cpp_lib_clamp should have the value 201603L in c++17"
 #  endif
 
-#  ifdef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should not be defined before c++20"
-#  endif
-
 #  ifndef __cpp_lib_complex_udls
 #    error "__cpp_lib_complex_udls should be defined in c++17"
 #  endif
@@ -2114,20 +2066,12 @@
 #    error "__cpp_lib_constexpr_dynamic_alloc should not be defined before c++20"
 #  endif
 
-#  ifdef __cpp_lib_constexpr_forward_list
-#    error "__cpp_lib_constexpr_forward_list should not be defined before c++26"
-#  endif
-
 #  ifdef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should not be defined before c++20"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_iterator
 #    error "__cpp_lib_constexpr_iterator should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_list
-#    error "__cpp_lib_constexpr_list should not be defined before c++26"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_memory
@@ -2140,10 +2084,6 @@
 
 #  ifdef __cpp_lib_constexpr_numeric
 #    error "__cpp_lib_constexpr_numeric should not be defined before c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_queue
-#    error "__cpp_lib_constexpr_queue should not be defined before c++26"
 #  endif
 
 #  ifdef __cpp_lib_constexpr_string
@@ -3305,20 +3245,6 @@
 #    error "__cpp_lib_clamp should have the value 201603L in c++20"
 #  endif
 
-#  ifndef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should be defined in c++20"
-#  endif
-#  if __cpp_lib_common_reference != 202302L
-#    error "__cpp_lib_common_reference should have the value 202302L in c++20"
-#  endif
-
-#  ifndef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should be defined in c++20"
-#  endif
-#  if __cpp_lib_common_reference_wrapper != 202302L
-#    error "__cpp_lib_common_reference_wrapper should have the value 202302L in c++20"
-#  endif
-
 #  ifndef __cpp_lib_complex_udls
 #    error "__cpp_lib_complex_udls should be defined in c++20"
 #  endif
@@ -3366,10 +3292,6 @@
 #    error "__cpp_lib_constexpr_dynamic_alloc should have the value 201907L in c++20"
 #  endif
 
-#  ifdef __cpp_lib_constexpr_forward_list
-#    error "__cpp_lib_constexpr_forward_list should not be defined before c++26"
-#  endif
-
 #  ifndef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should be defined in c++20"
 #  endif
@@ -3382,10 +3304,6 @@
 #  endif
 #  if __cpp_lib_constexpr_iterator != 201811L
 #    error "__cpp_lib_constexpr_iterator should have the value 201811L in c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_list
-#    error "__cpp_lib_constexpr_list should not be defined before c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_memory
@@ -3404,10 +3322,6 @@
 #  endif
 #  if __cpp_lib_constexpr_numeric != 201911L
 #    error "__cpp_lib_constexpr_numeric should have the value 201911L in c++20"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_queue
-#    error "__cpp_lib_constexpr_queue should not be defined before c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_string
@@ -4764,20 +4678,6 @@
 #    error "__cpp_lib_clamp should have the value 201603L in c++23"
 #  endif
 
-#  ifndef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should be defined in c++23"
-#  endif
-#  if __cpp_lib_common_reference != 202302L
-#    error "__cpp_lib_common_reference should have the value 202302L in c++23"
-#  endif
-
-#  ifndef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should be defined in c++23"
-#  endif
-#  if __cpp_lib_common_reference_wrapper != 202302L
-#    error "__cpp_lib_common_reference_wrapper should have the value 202302L in c++23"
-#  endif
-
 #  ifndef __cpp_lib_complex_udls
 #    error "__cpp_lib_complex_udls should be defined in c++23"
 #  endif
@@ -4840,10 +4740,6 @@
 #    error "__cpp_lib_constexpr_dynamic_alloc should have the value 201907L in c++23"
 #  endif
 
-#  ifdef __cpp_lib_constexpr_forward_list
-#    error "__cpp_lib_constexpr_forward_list should not be defined before c++26"
-#  endif
-
 #  ifndef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should be defined in c++23"
 #  endif
@@ -4856,10 +4752,6 @@
 #  endif
 #  if __cpp_lib_constexpr_iterator != 201811L
 #    error "__cpp_lib_constexpr_iterator should have the value 201811L in c++23"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_list
-#    error "__cpp_lib_constexpr_list should not be defined before c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_memory
@@ -4878,10 +4770,6 @@
 #  endif
 #  if __cpp_lib_constexpr_numeric != 201911L
 #    error "__cpp_lib_constexpr_numeric should have the value 201911L in c++23"
-#  endif
-
-#  ifdef __cpp_lib_constexpr_queue
-#    error "__cpp_lib_constexpr_queue should not be defined before c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_string
@@ -5685,11 +5573,17 @@
 #    error "__cpp_lib_ranges_iota should have the value 202202L in c++23"
 #  endif
 
-#  ifndef __cpp_lib_ranges_join_with
-#    error "__cpp_lib_ranges_join_with should be defined in c++23"
-#  endif
-#  if __cpp_lib_ranges_join_with != 202202L
-#    error "__cpp_lib_ranges_join_with should have the value 202202L in c++23"
+#  if !defined(_LIBCPP_VERSION)
+#    ifndef __cpp_lib_ranges_join_with
+#      error "__cpp_lib_ranges_join_with should be defined in c++23"
+#    endif
+#    if __cpp_lib_ranges_join_with != 202202L
+#      error "__cpp_lib_ranges_join_with should have the value 202202L in c++23"
+#    endif
+#  else
+#    ifdef __cpp_lib_ranges_join_with
+#      error "__cpp_lib_ranges_join_with should not be defined because it is unimplemented in libc++!"
+#    endif
 #  endif
 
 #  ifndef __cpp_lib_ranges_repeat
@@ -6451,20 +6345,6 @@
 #    error "__cpp_lib_clamp should have the value 201603L in c++26"
 #  endif
 
-#  ifndef __cpp_lib_common_reference
-#    error "__cpp_lib_common_reference should be defined in c++26"
-#  endif
-#  if __cpp_lib_common_reference != 202302L
-#    error "__cpp_lib_common_reference should have the value 202302L in c++26"
-#  endif
-
-#  ifndef __cpp_lib_common_reference_wrapper
-#    error "__cpp_lib_common_reference_wrapper should be defined in c++26"
-#  endif
-#  if __cpp_lib_common_reference_wrapper != 202302L
-#    error "__cpp_lib_common_reference_wrapper should have the value 202302L in c++26"
-#  endif
-
 #  ifndef __cpp_lib_complex_udls
 #    error "__cpp_lib_complex_udls should be defined in c++26"
 #  endif
@@ -6527,13 +6407,6 @@
 #    error "__cpp_lib_constexpr_dynamic_alloc should have the value 201907L in c++26"
 #  endif
 
-#  ifndef __cpp_lib_constexpr_forward_list
-#    error "__cpp_lib_constexpr_forward_list should be defined in c++26"
-#  endif
-#  if __cpp_lib_constexpr_forward_list != 202502L
-#    error "__cpp_lib_constexpr_forward_list should have the value 202502L in c++26"
-#  endif
-
 #  ifndef __cpp_lib_constexpr_functional
 #    error "__cpp_lib_constexpr_functional should be defined in c++26"
 #  endif
@@ -6546,13 +6419,6 @@
 #  endif
 #  if __cpp_lib_constexpr_iterator != 201811L
 #    error "__cpp_lib_constexpr_iterator should have the value 201811L in c++26"
-#  endif
-
-#  ifndef __cpp_lib_constexpr_list
-#    error "__cpp_lib_constexpr_list should be defined in c++26"
-#  endif
-#  if __cpp_lib_constexpr_list != 202502L
-#    error "__cpp_lib_constexpr_list should have the value 202502L in c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_memory
@@ -6580,13 +6446,6 @@
 #  endif
 #  if __cpp_lib_constexpr_numeric != 201911L
 #    error "__cpp_lib_constexpr_numeric should have the value 201911L in c++26"
-#  endif
-
-#  ifndef __cpp_lib_constexpr_queue
-#    error "__cpp_lib_constexpr_queue should be defined in c++26"
-#  endif
-#  if __cpp_lib_constexpr_queue != 202502L
-#    error "__cpp_lib_constexpr_queue should have the value 202502L in c++26"
 #  endif
 
 #  ifndef __cpp_lib_constexpr_string
@@ -6635,8 +6494,8 @@
 #    ifndef __cpp_lib_constrained_equality
 #      error "__cpp_lib_constrained_equality should be defined in c++26"
 #    endif
-#    if __cpp_lib_constrained_equality != 202411L
-#      error "__cpp_lib_constrained_equality should have the value 202411L in c++26"
+#    if __cpp_lib_constrained_equality != 202403L
+#      error "__cpp_lib_constrained_equality should have the value 202403L in c++26"
 #    endif
 #  else
 #    ifdef __cpp_lib_constrained_equality
@@ -7609,11 +7468,17 @@
 #    error "__cpp_lib_ranges_iota should have the value 202202L in c++26"
 #  endif
 
-#  ifndef __cpp_lib_ranges_join_with
-#    error "__cpp_lib_ranges_join_with should be defined in c++26"
-#  endif
-#  if __cpp_lib_ranges_join_with != 202202L
-#    error "__cpp_lib_ranges_join_with should have the value 202202L in c++26"
+#  if !defined(_LIBCPP_VERSION)
+#    ifndef __cpp_lib_ranges_join_with
+#      error "__cpp_lib_ranges_join_with should be defined in c++26"
+#    endif
+#    if __cpp_lib_ranges_join_with != 202202L
+#      error "__cpp_lib_ranges_join_with should have the value 202202L in c++26"
+#    endif
+#  else
+#    ifdef __cpp_lib_ranges_join_with
+#      error "__cpp_lib_ranges_join_with should not be defined because it is unimplemented in libc++!"
+#    endif
 #  endif
 
 #  ifndef __cpp_lib_ranges_repeat
@@ -8154,3 +8019,4 @@
 #endif // TEST_STD_VER > 23
 
 // clang-format on
+

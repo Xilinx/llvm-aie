@@ -554,8 +554,8 @@ variables with initializers are marked as internal.
 An interprocedural variant of :ref:`Sparse Conditional Constant Propagation
 <passes-sccp>`.
 
-``normalize``: Transforms IR into a normal form that's easier to diff
----------------------------------------------------------------------
+``ir-normalizer``: Transforms IR into a normal form that's easier to diff
+----------------------------------------------------------------------------
 
 This pass aims to transform LLVM Modules into a normal form by reordering and
 renaming instructions while preserving the same semantics. The normalizer makes

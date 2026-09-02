@@ -25,7 +25,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DebugInfo/BTF/BTF.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataExtractor.h"
 
 namespace llvm {
@@ -75,33 +74,32 @@ class BTFParser {
 public:
   // Looks-up a string in the .BTF section's string table.
   // Offset is relative to string table start.
-  LLVM_ABI StringRef findString(uint32_t Offset) const;
+  StringRef findString(uint32_t Offset) const;
 
   // Search for line information for a specific address,
   // address match is exact (contrary to DWARFContext).
   // Return nullptr if no information found.
   // If information is present, return a pointer to object
   // owned by this class.
-  LLVM_ABI const BTF::BPFLineInfo *findLineInfo(SectionedAddress Address) const;
+  const BTF::BPFLineInfo *findLineInfo(SectionedAddress Address) const;
 
   // Search for CO-RE relocation information for a specific address.
   // Return nullptr if no information found.
   // If information is present, return a pointer to object
   // owned by this class.
-  LLVM_ABI const BTF::BPFFieldReloc *
-  findFieldReloc(SectionedAddress Address) const;
+  const BTF::BPFFieldReloc *findFieldReloc(SectionedAddress Address) const;
 
   // Return a human readable representation of the CO-RE relocation
   // record, this is for display purpose only.
   // See implementation for details.
-  LLVM_ABI void symbolize(const BTF::BPFFieldReloc *Reloc,
-                          SmallVectorImpl<char> &Result) const;
+  void symbolize(const BTF::BPFFieldReloc *Reloc,
+                 SmallVectorImpl<char> &Result) const;
 
   // Lookup BTF type definition with a specific index.
   // Return nullptr if no information found.
   // If information is present, return a pointer to object
   // owned by this class.
-  LLVM_ABI const BTF::CommonType *findType(uint32_t Id) const;
+  const BTF::CommonType *findType(uint32_t Id) const;
 
   // Return total number of known BTF types.
   size_t typesCount() const { return Types.size(); }
@@ -122,11 +120,11 @@ public:
   // - state of the BTFParser might be incomplete but is not invalid,
   //   queries might be run against it, but some (or all) information
   //   might be unavailable;
-  LLVM_ABI Error parse(const ObjectFile &Obj, const ParseOptions &Opts);
+  Error parse(const ObjectFile &Obj, const ParseOptions &Opts);
   Error parse(const ObjectFile &Obj) { return parse(Obj, {true, true, true}); }
 
   // Return true if `Obj` has .BTF and .BTF.ext sections.
-  LLVM_ABI static bool hasBTFSections(const ObjectFile &Obj);
+  static bool hasBTFSections(const ObjectFile &Obj);
 };
 
 } // namespace llvm

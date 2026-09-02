@@ -92,7 +92,7 @@ void UseUsingCheck::check(const MatchFinder::MatchResult &Result) {
   const LangOptions &LO = getLangOpts();
 
   // Match CXXRecordDecl only to store the range of the last non-implicit full
-  // declaration, to later check whether it's within the typedef itself.
+  // declaration, to later check whether it's within the typdef itself.
   const auto *MatchedTagDecl = Result.Nodes.getNodeAs<TagDecl>(TagDeclName);
   if (MatchedTagDecl) {
     // It is not sufficient to just track the last TagDecl that we've seen,
@@ -119,8 +119,7 @@ void UseUsingCheck::check(const MatchFinder::MatchResult &Result) {
   if (StartLoc.isMacroID() && IgnoreMacros)
     return;
 
-  static constexpr llvm::StringLiteral UseUsingWarning =
-      "use 'using' instead of 'typedef'";
+  static const char *UseUsingWarning = "use 'using' instead of 'typedef'";
 
   // Warn at StartLoc but do not fix if there is macro or array.
   if (MatchedDecl->getUnderlyingType()->isArrayType() || StartLoc.isMacroID()) {
@@ -152,7 +151,7 @@ void UseUsingCheck::check(const MatchFinder::MatchResult &Result) {
     StringRef ExtraReference = "";
     if (MainTypeEndLoc.isValid() && TypeRange.fullyContains(MainTypeEndLoc)) {
       // Each type introduced in a typedef can specify being a reference or
-      // pointer type separately, so we need to figure out if the new using-decl
+      // pointer type seperately, so we need to sigure out if the new using-decl
       // needs to be to a reference or pointer as well.
       const SourceLocation Tok = utils::lexer::findPreviousAnyTokenKind(
           MatchedDecl->getLocation(), SM, LO, tok::TokenKind::star,

@@ -40,7 +40,7 @@ private:
 
   void test_one_input(RoundToIntegerFunc func, F input, I expected,
                       bool expectError) {
-    libc_errno = 0;
+    LIBC_NAMESPACE::libc_errno = 0;
     LIBC_NAMESPACE::fputil::clear_except(FE_ALL_EXCEPT);
 
     ASSERT_EQ(func(input), expected);
@@ -113,8 +113,7 @@ public:
   }
 
   void testSubnormalRange(RoundToIntegerFunc func) {
-    // Arbitrary, trades off completeness with testing time (esp. on failure)
-    constexpr int COUNT = 1'000;
+    constexpr int COUNT = 1'000'001;
     constexpr StorageType STEP = LIBC_NAMESPACE::cpp::max(
         static_cast<StorageType>((MAX_SUBNORMAL - MIN_SUBNORMAL) / COUNT),
         StorageType(1));

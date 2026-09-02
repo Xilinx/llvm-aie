@@ -9,7 +9,6 @@ clang_target_link_libraries(clang-doc
   clangAST
   clangASTMatchers
   clangBasic
-  clangDocSupport
   clangFrontend
   clangTooling
   clangToolingCore

@@ -382,10 +382,9 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
           &FAM.getResult<BlockFrequencyAnalysis>(*(CB->getCaller())),
           &FAM.getResult<BlockFrequencyAnalysis>(Callee));
 
-      InlineResult IR = InlineFunction(
-          *CB, IFI, /*MergeAttributes=*/true,
-          &FAM.getResult<AAManager>(*CB->getCaller()), true, nullptr,
-          &FAM.getResult<OptimizationRemarkEmitterAnalysis>(*CB->getCaller()));
+      InlineResult IR =
+          InlineFunction(*CB, IFI, /*MergeAttributes=*/true,
+                         &FAM.getResult<AAManager>(*CB->getCaller()));
       if (!IR.isSuccess()) {
         Advice->recordUnsuccessfulInlining(IR);
         continue;

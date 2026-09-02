@@ -69,7 +69,8 @@ ModularizeUtilities *ModularizeUtilities::createModularizeUtilities(
 // Load all header lists and dependencies.
 std::error_code ModularizeUtilities::loadAllHeaderListsAndDependencies() {
   // For each input file.
-  for (llvm::StringRef InputPath : InputFilePaths) {
+  for (auto I = InputFilePaths.begin(), E = InputFilePaths.end(); I != E; ++I) {
+    llvm::StringRef InputPath = *I;
     // If it's a module map.
     if (InputPath.ends_with(".modulemap")) {
       // Load the module map.

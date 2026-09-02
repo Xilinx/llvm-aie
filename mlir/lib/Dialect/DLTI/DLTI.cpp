@@ -17,6 +17,8 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/TypeSwitch.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace mlir;
 
@@ -424,12 +426,6 @@ StringAttr DataLayoutSpecAttr::getFunctionPointerAlignmentIdentifier(
       DLTIDialect::kDataLayoutFunctionPointerAlignmentKey);
 }
 
-StringAttr
-DataLayoutSpecAttr::getLegalIntWidthsIdentifier(MLIRContext *context) const {
-  return Builder(context).getStringAttr(
-      DLTIDialect::kDataLayoutLegalIntWidthsKey);
-}
-
 /// Parses an attribute with syntax:
 ///   dl-spec-attr ::= `#dlti.` `dl_spec` `<` entry-list `>`
 ///   entry-list ::= | entry | entry `,` entry-list
@@ -636,7 +632,6 @@ public:
         entryName == DLTIDialect::kDataLayoutGlobalMemorySpaceKey ||
         entryName == DLTIDialect::kDataLayoutStackAlignmentKey ||
         entryName == DLTIDialect::kDataLayoutFunctionPointerAlignmentKey ||
-        entryName == DLTIDialect::kDataLayoutLegalIntWidthsKey ||
         entryName == DLTIDialect::kDataLayoutManglingModeKey)
       return success();
     return emitError(loc) << "unknown data layout entry name: " << entryName;

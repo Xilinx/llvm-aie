@@ -15,7 +15,6 @@
 #include "llvm/DebugInfo/CodeView/DebugSubsection.h"
 #include "llvm/Support/BinaryStreamArray.h"
 #include "llvm/Support/BinaryStreamRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
@@ -38,8 +37,8 @@ template <> struct VarStreamArrayExtractor<codeview::CrossModuleImportItem> {
 public:
   using ContextType = void;
 
-  LLVM_ABI Error operator()(BinaryStreamRef Stream, uint32_t &Len,
-                            codeview::CrossModuleImportItem &Item);
+  Error operator()(BinaryStreamRef Stream, uint32_t &Len,
+                   codeview::CrossModuleImportItem &Item);
 };
 
 namespace codeview {
@@ -58,8 +57,8 @@ public:
     return S->kind() == DebugSubsectionKind::CrossScopeImports;
   }
 
-  LLVM_ABI Error initialize(BinaryStreamReader Reader);
-  LLVM_ABI Error initialize(BinaryStreamRef Stream);
+  Error initialize(BinaryStreamReader Reader);
+  Error initialize(BinaryStreamRef Stream);
 
   Iterator begin() const { return References.begin(); }
   Iterator end() const { return References.end(); }
@@ -68,8 +67,7 @@ private:
   ReferenceArray References;
 };
 
-class LLVM_ABI DebugCrossModuleImportsSubsection final
-    : public DebugSubsection {
+class DebugCrossModuleImportsSubsection final : public DebugSubsection {
 public:
   explicit DebugCrossModuleImportsSubsection(
       DebugStringTableSubsection &Strings)

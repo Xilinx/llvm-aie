@@ -22,7 +22,6 @@ libc_test_library(
         "//libc:__support_macros_properties_types",
         "//libc:__support_osutil_io",
         "//libc:__support_uint128",
-        "//libc:hdr_stdint_proxy",
         "//libc:func_aligned_alloc",
         "//libc:func_free",
         "//libc:func_malloc",
@@ -59,13 +58,11 @@ libc_test_library(
         "//libc:__support_fputil_fp_bits",
         "//libc:__support_fputil_fpbits_str",
         "//libc:__support_fputil_rounding_mode",
-        "//libc:__support_libc_errno",
         "//libc:__support_macros_config",
         "//libc:__support_macros_properties_architectures",
         "//libc:__support_macros_properties_types",
         "//libc:__support_stringutil",
         "//libc:__support_uint128",
-        "//libc:hdr_stdint_proxy",
         "//libc:errno",
         "//libc:func_aligned_alloc",
         "//libc:func_free",
@@ -74,9 +71,6 @@ libc_test_library(
         "//libc:llvm_libc_macros_stdfix_macros",
         "//llvm:Support",
     ],
-    # Force linking in this library's `main()` to surface
-    # a duplicate symbol error if a test defines its own main.
-    alwayslink = True,
 )
 
 libc_test_library(
@@ -86,7 +80,6 @@ libc_test_library(
     ],
     deps = [
         ":LibcUnitTest",
-        "//libc:__support_libc_errno",
         "//libc:__support_macros_config",
         "//libc:errno",
     ],
@@ -123,7 +116,6 @@ libc_test_library(
         "//libc:__support_macros_properties_architectures",
         "//libc:hdr_fenv_macros",
         "//libc:hdr_math_macros",
-        "//libc:hdr_stdint_proxy",
         "//libc:types_fenv_t",
     ],
 )
@@ -160,7 +152,6 @@ libc_test_library(
         ":string_utils",
         "//libc:__support_fputil_fp_bits",
         "//libc:__support_macros_config",
-        "//libc:hdr_stdint_proxy",
         "//libc:printf_core_structs",
     ],
 )

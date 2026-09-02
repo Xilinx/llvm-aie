@@ -1,4 +1,4 @@
-; RUN: opt %s -S -passes=dse -o - | FileCheck %s --implicit-check-not="#dbg_"
+; RUN: opt %s -S -passes=dse -o - | FileCheck %s --implicit-check-not="call void @llvm.dbg"
 
 ;; Based on the test shorten.ll with some adjustments.
 ;;

@@ -1,12 +1,6 @@
-; RUN: not llc -mtriple=amdgcn -amdgpu-enable-lower-module-lds=false < %s 2> %t.err | FileCheck %s
-; RUN: FileCheck -check-prefix=ERROR %s < %t.err
+; RUN: not --crash llc -mtriple=amdgcn -verify-machineinstrs -amdgpu-enable-lower-module-lds=false < %s 2>&1 | FileCheck -check-prefix=ERROR %s
 
-; ERROR: error: unsupported expression in static initializer: addrspacecast (ptr addrspace(3) @lds.arr to ptr addrspace(4))
-
-; CHECK: gv_flatptr_from_lds:
-; CHECK-NEXT: .quad 0+32
-; CHECK-NEXT: .size gv_flatptr_from_lds, 8
-
+; ERROR: LLVM ERROR: Unsupported expression in static initializer: addrspacecast (ptr addrspace(3) @lds.arr to ptr addrspace(4))
 
 @lds.arr = unnamed_addr addrspace(3) global [256 x i32] poison, align 4
 

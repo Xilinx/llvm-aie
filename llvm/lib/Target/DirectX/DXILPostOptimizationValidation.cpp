@@ -9,7 +9,6 @@
 #include "DXILPostOptimizationValidation.h"
 #include "DXILShaderFlags.h"
 #include "DirectX.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Analysis/DXILMetadataAnalysis.h"
 #include "llvm/Analysis/DXILResource.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -51,57 +50,15 @@ static void reportInvalidDirection(Module &M, DXILResourceMap &DRM) {
   }
 }
 
-static void reportOverlappingError(Module &M, ResourceInfo R1,
-                                   ResourceInfo R2) {
-  SmallString<128> Message;
-  raw_svector_ostream OS(Message);
-  OS << "resource " << R1.getName() << " at register "
-     << R1.getBinding().LowerBound << " overlaps with resource " << R2.getName()
-     << " at register " << R2.getBinding().LowerBound << " in space "
-     << R2.getBinding().Space;
-  M.getContext().diagnose(DiagnosticInfoGeneric(Message));
-}
-
-static void reportOverlappingBinding(Module &M, DXILResourceMap &DRM) {
-  if (DRM.empty())
-    return;
-
-  for (const auto &ResList :
-       {DRM.srvs(), DRM.uavs(), DRM.cbuffers(), DRM.samplers()}) {
-    if (ResList.empty())
-      continue;
-    const ResourceInfo *PrevRI = &*ResList.begin();
-    for (auto *I = ResList.begin() + 1; I != ResList.end(); ++I) {
-      const ResourceInfo *CurrentRI = &*I;
-      const ResourceInfo *RI = CurrentRI;
-      while (RI != ResList.end() &&
-             PrevRI->getBinding().overlapsWith(RI->getBinding())) {
-        reportOverlappingError(M, *PrevRI, *RI);
-        RI++;
-      }
-      PrevRI = CurrentRI;
-    }
-  }
-}
-
-static void reportErrors(Module &M, DXILResourceMap &DRM,
-                         DXILResourceBindingInfo &DRBI) {
-  if (DRM.hasInvalidCounterDirection())
-    reportInvalidDirection(M, DRM);
-
-  if (DRBI.hasOverlappingBinding())
-    reportOverlappingBinding(M, DRM);
-
-  assert(!DRBI.hasImplicitBinding() && "implicit bindings should be handled in "
-                                       "DXILResourceImplicitBinding pass");
-}
 } // namespace
 
 PreservedAnalyses
 DXILPostOptimizationValidation::run(Module &M, ModuleAnalysisManager &MAM) {
   DXILResourceMap &DRM = MAM.getResult<DXILResourceAnalysis>(M);
-  DXILResourceBindingInfo &DRBI = MAM.getResult<DXILResourceBindingAnalysis>(M);
-  reportErrors(M, DRM, DRBI);
+
+  if (DRM.hasInvalidCounterDirection())
+    reportInvalidDirection(M, DRM);
+
   return PreservedAnalyses::all();
 }
 
@@ -111,9 +68,10 @@ public:
   bool runOnModule(Module &M) override {
     DXILResourceMap &DRM =
         getAnalysis<DXILResourceWrapperPass>().getResourceMap();
-    DXILResourceBindingInfo &DRBI =
-        getAnalysis<DXILResourceBindingWrapperPass>().getBindingInfo();
-    reportErrors(M, DRM, DRBI);
+
+    if (DRM.hasInvalidCounterDirection())
+      reportInvalidDirection(M, DRM);
+
     return false;
   }
   StringRef getPassName() const override {
@@ -124,9 +82,7 @@ public:
   static char ID; // Pass identification.
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
     AU.addRequired<DXILResourceWrapperPass>();
-    AU.addRequired<DXILResourceBindingWrapperPass>();
     AU.addPreserved<DXILResourceWrapperPass>();
-    AU.addPreserved<DXILResourceBindingWrapperPass>();
     AU.addPreserved<DXILMetadataAnalysisWrapperPass>();
     AU.addPreserved<ShaderFlagsAnalysisWrapper>();
   }
@@ -136,7 +92,6 @@ char DXILPostOptimizationValidationLegacy::ID = 0;
 
 INITIALIZE_PASS_BEGIN(DXILPostOptimizationValidationLegacy, DEBUG_TYPE,
                       "DXIL Post Optimization Validation", false, false)
-INITIALIZE_PASS_DEPENDENCY(DXILResourceBindingWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DXILResourceTypeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DXILResourceWrapperPass)
 INITIALIZE_PASS_END(DXILPostOptimizationValidationLegacy, DEBUG_TYPE,

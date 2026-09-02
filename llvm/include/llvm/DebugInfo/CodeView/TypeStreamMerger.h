@@ -11,7 +11,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -43,9 +42,9 @@ struct PCHMergerInfo {
 ///
 /// \returns Error::success() if the operation succeeded, otherwise an
 /// appropriate error code.
-LLVM_ABI Error mergeTypeRecords(MergingTypeTableBuilder &Dest,
-                                SmallVectorImpl<TypeIndex> &SourceToDest,
-                                const CVTypeArray &Types);
+Error mergeTypeRecords(MergingTypeTableBuilder &Dest,
+                       SmallVectorImpl<TypeIndex> &SourceToDest,
+                       const CVTypeArray &Types);
 
 /// Merge one set of id records into another.  This method assumes
 /// that all records are id records, and there are no Type records present.
@@ -68,10 +67,9 @@ LLVM_ABI Error mergeTypeRecords(MergingTypeTableBuilder &Dest,
 ///
 /// \returns Error::success() if the operation succeeded, otherwise an
 /// appropriate error code.
-LLVM_ABI Error mergeIdRecords(MergingTypeTableBuilder &Dest,
-                              ArrayRef<TypeIndex> Types,
-                              SmallVectorImpl<TypeIndex> &SourceToDest,
-                              const CVTypeArray &Ids);
+Error mergeIdRecords(MergingTypeTableBuilder &Dest, ArrayRef<TypeIndex> Types,
+                     SmallVectorImpl<TypeIndex> &SourceToDest,
+                     const CVTypeArray &Ids);
 
 /// Merge a unified set of type and id records, splitting them into
 /// separate output streams.
@@ -88,30 +86,29 @@ LLVM_ABI Error mergeIdRecords(MergingTypeTableBuilder &Dest,
 ///
 /// \returns Error::success() if the operation succeeded, otherwise an
 /// appropriate error code.
-LLVM_ABI Error mergeTypeAndIdRecords(MergingTypeTableBuilder &DestIds,
-                                     MergingTypeTableBuilder &DestTypes,
-                                     SmallVectorImpl<TypeIndex> &SourceToDest,
-                                     const CVTypeArray &IdsAndTypes,
-                                     std::optional<PCHMergerInfo> &PCHInfo);
+Error mergeTypeAndIdRecords(MergingTypeTableBuilder &DestIds,
+                            MergingTypeTableBuilder &DestTypes,
+                            SmallVectorImpl<TypeIndex> &SourceToDest,
+                            const CVTypeArray &IdsAndTypes,
+                            std::optional<PCHMergerInfo> &PCHInfo);
 
-LLVM_ABI Error mergeTypeAndIdRecords(GlobalTypeTableBuilder &DestIds,
-                                     GlobalTypeTableBuilder &DestTypes,
-                                     SmallVectorImpl<TypeIndex> &SourceToDest,
-                                     const CVTypeArray &IdsAndTypes,
-                                     ArrayRef<GloballyHashedType> Hashes,
-                                     std::optional<PCHMergerInfo> &PCHInfo);
+Error mergeTypeAndIdRecords(GlobalTypeTableBuilder &DestIds,
+                            GlobalTypeTableBuilder &DestTypes,
+                            SmallVectorImpl<TypeIndex> &SourceToDest,
+                            const CVTypeArray &IdsAndTypes,
+                            ArrayRef<GloballyHashedType> Hashes,
+                            std::optional<PCHMergerInfo> &PCHInfo);
 
-LLVM_ABI Error mergeTypeRecords(GlobalTypeTableBuilder &Dest,
-                                SmallVectorImpl<TypeIndex> &SourceToDest,
-                                const CVTypeArray &Types,
-                                ArrayRef<GloballyHashedType> Hashes,
-                                std::optional<PCHMergerInfo> &PCHInfo);
+Error mergeTypeRecords(GlobalTypeTableBuilder &Dest,
+                       SmallVectorImpl<TypeIndex> &SourceToDest,
+                       const CVTypeArray &Types,
+                       ArrayRef<GloballyHashedType> Hashes,
+                       std::optional<PCHMergerInfo> &PCHInfo);
 
-LLVM_ABI Error mergeIdRecords(GlobalTypeTableBuilder &Dest,
-                              ArrayRef<TypeIndex> Types,
-                              SmallVectorImpl<TypeIndex> &SourceToDest,
-                              const CVTypeArray &Ids,
-                              ArrayRef<GloballyHashedType> Hashes);
+Error mergeIdRecords(GlobalTypeTableBuilder &Dest, ArrayRef<TypeIndex> Types,
+                     SmallVectorImpl<TypeIndex> &SourceToDest,
+                     const CVTypeArray &Ids,
+                     ArrayRef<GloballyHashedType> Hashes);
 
 } // end namespace codeview
 } // end namespace llvm

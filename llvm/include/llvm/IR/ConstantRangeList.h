@@ -18,7 +18,6 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/ConstantRange.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include <cstddef>
 #include <cstdint>
@@ -42,8 +41,8 @@ public:
   }
 
   // Return true if the ranges are non-overlapping and increasing.
-  LLVM_ABI static bool isOrderedRanges(ArrayRef<ConstantRange> RangesRef);
-  LLVM_ABI static std::optional<ConstantRangeList>
+  static bool isOrderedRanges(ArrayRef<ConstantRange> RangesRef);
+  static std::optional<ConstantRangeList>
   getConstantRangeList(ArrayRef<ConstantRange> RangesRef);
 
   ArrayRef<ConstantRange> rangesRef() const { return Ranges; }
@@ -68,21 +67,21 @@ public:
   size_t size() const { return Ranges.size(); }
 
   /// Insert a new range to Ranges and keep the list ordered.
-  LLVM_ABI void insert(const ConstantRange &NewRange);
+  void insert(const ConstantRange &NewRange);
   void insert(int64_t Lower, int64_t Upper) {
     insert(ConstantRange(APInt(64, Lower, /*isSigned=*/true),
                          APInt(64, Upper, /*isSigned=*/true)));
   }
 
-  LLVM_ABI void subtract(const ConstantRange &SubRange);
+  void subtract(const ConstantRange &SubRange);
 
   /// Return the range list that results from the union of this
   /// ConstantRangeList with another ConstantRangeList, "CRL".
-  LLVM_ABI ConstantRangeList unionWith(const ConstantRangeList &CRL) const;
+  ConstantRangeList unionWith(const ConstantRangeList &CRL) const;
 
   /// Return the range list that results from the intersection of this
   /// ConstantRangeList with another ConstantRangeList, "CRL".
-  LLVM_ABI ConstantRangeList intersectWith(const ConstantRangeList &CRL) const;
+  ConstantRangeList intersectWith(const ConstantRangeList &CRL) const;
 
   /// Return true if this range list is equal to another range list.
   bool operator==(const ConstantRangeList &CRL) const {
@@ -93,7 +92,7 @@ public:
   }
 
   /// Print out the ranges to a stream.
-  LLVM_ABI void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump() const;

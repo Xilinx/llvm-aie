@@ -50,13 +50,6 @@ class APINotesManager {
   /// source file from which an entity was declared.
   bool ImplicitAPINotes;
 
-  /// Whether to apply all APINotes as optionally-applied versioned
-  /// entities. This means that when building a Clang module,
-  /// we capture every note on a given decl wrapped in a SwiftVersionedAttr
-  /// (with an empty version field for unversioned notes), and have the
-  /// client apply the relevant version's notes.
-  bool VersionIndependentSwift;
-
   /// The Swift version to use when interpreting versioned API notes.
   llvm::VersionTuple SwiftVersion;
 
@@ -174,8 +167,6 @@ public:
 
   /// Find the API notes readers that correspond to the given source location.
   llvm::SmallVector<APINotesReader *, 2> findAPINotes(SourceLocation Loc);
-
-  bool captureVersionIndependentSwift() { return VersionIndependentSwift; }
 };
 
 } // end namespace api_notes

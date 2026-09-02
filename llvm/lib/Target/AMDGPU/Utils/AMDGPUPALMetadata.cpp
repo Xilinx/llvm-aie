@@ -44,7 +44,6 @@ static const char *getStageName(CallingConv::ID CC) {
   case CallingConv::AMDGPU_LS:
     return ".ls";
   case CallingConv::AMDGPU_Gfx:
-  case CallingConv::AMDGPU_Gfx_WholeWave:
     llvm_unreachable("Callable shader has no hardware stage");
   default:
     return ".cs";
@@ -899,7 +898,7 @@ bool AMDGPUPALMetadata::setFromString(StringRef S) {
         errs() << "Unrecognized PAL metadata register key '" << S << "'\n";
         continue;
       }
-      Key = MsgPackDoc.getNode(Val);
+      Key = MsgPackDoc.getNode(uint64_t(Val));
     }
     Registers.getMap()[Key] = I.second;
   }

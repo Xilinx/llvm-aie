@@ -15,7 +15,6 @@
 #define LLVM_DEBUGINFO_LOGICALVIEW_CORE_LVTYPE_H
 
 #include "llvm/DebugInfo/LogicalView/Core/LVElement.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace logicalview {
@@ -49,7 +48,7 @@ using LVTypeDispatch = std::map<LVTypeKind, LVTypeGetFunction>;
 using LVTypeRequest = std::vector<LVTypeGetFunction>;
 
 // Class to represent a DWARF Type.
-class LLVM_ABI LVType : public LVElement {
+class LVType : public LVElement {
   enum class Property { IsSubrangeCount, LastEntry };
 
   // Typed bitvector with kinds and properties for this type.
@@ -146,10 +145,14 @@ public:
 
   void print(raw_ostream &OS, bool Full = true) const override;
   void printExtra(raw_ostream &OS, bool Full = true) const override;
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+  void dump() const override { print(dbgs()); }
+#endif
 };
 
 // Class to represent DW_TAG_typedef_type.
-class LLVM_ABI LVTypeDefinition final : public LVType {
+class LVTypeDefinition final : public LVType {
 public:
   LVTypeDefinition() : LVType() {
     setIsTypedef();
@@ -172,7 +175,7 @@ public:
 };
 
 // Class to represent a DW_TAG_enumerator.
-class LLVM_ABI LVTypeEnumerator final : public LVType {
+class LVTypeEnumerator final : public LVType {
   // Index in the String pool representing any initial value.
   size_t ValueIndex = 0;
 
@@ -201,7 +204,7 @@ public:
 };
 
 // Class to represent DW_TAG_imported_module / DW_TAG_imported_declaration.
-class LLVM_ABI LVTypeImport final : public LVType {
+class LVTypeImport final : public LVType {
 public:
   LVTypeImport() : LVType() { setIncludeInPrint(); }
   LVTypeImport(const LVTypeImport &) = delete;
@@ -215,7 +218,7 @@ public:
 };
 
 // Class to represent a DWARF Template parameter holder (type or param).
-class LLVM_ABI LVTypeParam final : public LVType {
+class LVTypeParam final : public LVType {
   // Index in the String pool representing any initial value.
   size_t ValueIndex = 0;
 
@@ -244,7 +247,7 @@ public:
 };
 
 // Class to represent a DW_TAG_subrange_type.
-class LLVM_ABI LVTypeSubrange final : public LVType {
+class LVTypeSubrange final : public LVType {
   // Values describing the subrange bounds.
   int64_t LowerBound = 0; // DW_AT_lower_bound or DW_AT_count value.
   int64_t UpperBound = 0; // DW_AT_upper_bound value.

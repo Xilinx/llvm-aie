@@ -34,7 +34,8 @@ class FileBasedTest(TestFormat):
         if filename.startswith(".") or filename in localConfig.excludes:
             return
 
-        if any(filename.endswith(suffix) for suffix in localConfig.suffixes):
+        base, ext = os.path.splitext(filename)
+        if ext in localConfig.suffixes:
             yield lit.Test.Test(testSuite, path_in_suite, localConfig)
 
     def getTestsInDirectory(self, testSuite, path_in_suite, litConfig, localConfig):

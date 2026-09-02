@@ -21,6 +21,7 @@
 #include "mlir/Conversion/VectorToSPIRV/VectorToSPIRV.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/GPU/IR/GPUDialect.h"
+#include "mlir/Dialect/SPIRV/IR/SPIRVDialect.h"
 #include "mlir/Dialect/SPIRV/IR/SPIRVOps.h"
 #include "mlir/Dialect/SPIRV/Transforms/SPIRVConversion.h"
 #include "mlir/IR/PatternMatch.h"
@@ -144,12 +145,11 @@ void GPUToSPIRVPass::runOnOperation() {
     if (targetEnvSupportsKernelCapability(moduleOp)) {
       moduleOp.walk([&](gpu::GPUFuncOp funcOp) {
         builder.setInsertionPoint(funcOp);
-        auto newFuncOp =
-            func::FuncOp::create(builder, funcOp.getLoc(), funcOp.getName(),
-                                 funcOp.getFunctionType());
+        auto newFuncOp = builder.create<func::FuncOp>(
+            funcOp.getLoc(), funcOp.getName(), funcOp.getFunctionType());
         auto entryBlock = newFuncOp.addEntryBlock();
         builder.setInsertionPointToEnd(entryBlock);
-        func::ReturnOp::create(builder, funcOp.getLoc());
+        builder.create<func::ReturnOp>(funcOp.getLoc());
         newFuncOp->setAttr(gpu::GPUDialect::getKernelFuncAttrName(),
                            builder.getUnitAttr());
         funcOp.erase();

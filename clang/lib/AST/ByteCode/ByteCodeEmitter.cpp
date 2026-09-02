@@ -62,7 +62,7 @@ void ByteCodeEmitter::compileFunc(const FunctionDecl *FuncDecl,
                   (Func->hasThisPointer() && !Func->isThisPointerExplicit());
   for (auto ParamOffset : llvm::drop_begin(Func->ParamOffsets, Drop)) {
     const ParmVarDecl *PD = FuncDecl->parameters()[ParamIndex];
-    OptPrimType T = Ctx.classify(PD->getType());
+    std::optional<PrimType> T = Ctx.classify(PD->getType());
     this->Params.insert({PD, {ParamOffset, T != std::nullopt}});
     ++ParamIndex;
   }
@@ -176,8 +176,7 @@ static void emitSerialized(std::vector<std::byte> &Code, const T &Val,
   }
 
   // Access must be aligned!
-  assert(aligned(Code.size()));
-  size_t ValPos = Code.size();
+  size_t ValPos = align(Code.size());
   Size = align(Size);
   assert(aligned(ValPos + Size));
   Code.resize(ValPos + Size);

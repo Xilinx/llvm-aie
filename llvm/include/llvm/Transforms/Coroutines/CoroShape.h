@@ -14,7 +14,6 @@
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Coroutines/CoroInstr.h"
 
 namespace llvm {
@@ -79,20 +78,18 @@ struct Shape {
   }
 
   // Scan the function and collect the above intrinsics for later processing
-  LLVM_ABI void analyze(Function &F,
-                        SmallVectorImpl<CoroFrameInst *> &CoroFrames,
-                        SmallVectorImpl<CoroSaveInst *> &UnusedCoroSaves,
-                        CoroPromiseInst *&CoroPromise);
+  void analyze(Function &F, SmallVectorImpl<CoroFrameInst *> &CoroFrames,
+               SmallVectorImpl<CoroSaveInst *> &UnusedCoroSaves,
+               CoroPromiseInst *&CoroPromise);
   // If for some reason, we were not able to find coro.begin, bailout.
-  LLVM_ABI void
-  invalidateCoroutine(Function &F,
-                      SmallVectorImpl<CoroFrameInst *> &CoroFrames);
+  void invalidateCoroutine(Function &F,
+                           SmallVectorImpl<CoroFrameInst *> &CoroFrames);
   // Perform ABI related initial transformation
-  LLVM_ABI void initABI();
+  void initABI();
   // Remove orphaned and unnecessary intrinsics
-  LLVM_ABI void cleanCoroutine(SmallVectorImpl<CoroFrameInst *> &CoroFrames,
-                               SmallVectorImpl<CoroSaveInst *> &UnusedCoroSaves,
-                               CoroPromiseInst *CoroPromise);
+  void cleanCoroutine(SmallVectorImpl<CoroFrameInst *> &CoroFrames,
+                      SmallVectorImpl<CoroSaveInst *> &UnusedCoroSaves,
+                      CoroPromiseInst *CoroPromise);
 
   // Field indexes for special fields in the switch lowering.
   struct SwitchFieldIndex {
@@ -259,14 +256,12 @@ struct Shape {
   /// Allocate memory according to the rules of the active lowering.
   ///
   /// \param CG - if non-null, will be updated for the new call
-  LLVM_ABI Value *emitAlloc(IRBuilder<> &Builder, Value *Size,
-                            CallGraph *CG) const;
+  Value *emitAlloc(IRBuilder<> &Builder, Value *Size, CallGraph *CG) const;
 
   /// Deallocate memory according to the rules of the active lowering.
   ///
   /// \param CG - if non-null, will be updated for the new call
-  LLVM_ABI void emitDealloc(IRBuilder<> &Builder, Value *Ptr,
-                            CallGraph *CG) const;
+  void emitDealloc(IRBuilder<> &Builder, Value *Ptr, CallGraph *CG) const;
 
   Shape() = default;
   explicit Shape(Function &F) {

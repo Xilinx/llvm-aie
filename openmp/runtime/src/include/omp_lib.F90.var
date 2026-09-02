@@ -399,7 +399,7 @@
 
           function omp_get_cancellation() bind(c)
             use omp_lib_kinds
-            logical (kind=omp_logical_kind) omp_get_cancellation
+            integer (kind=omp_integer_kind) omp_get_cancellation
           end function omp_get_cancellation
 
           function omp_is_initial_device() bind(c)
@@ -937,8 +937,9 @@
             integer (kind=omp_integer_kind), value :: libnum
           end subroutine kmp_set_library
 
-          subroutine kmp_set_defaults(string)
-            character (len=*) :: string
+          subroutine kmp_set_defaults(string) bind(c)
+            use, intrinsic :: iso_c_binding
+            character (kind=c_char) :: string(*)
           end subroutine kmp_set_defaults
 
           function kmp_get_stacksize() bind(c)

@@ -24,6 +24,7 @@
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/Dialect/Vector/Transforms/VectorTransforms.h"
 #include "mlir/Interfaces/LoopLikeInterface.h"
+#include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "llvm/Support/Debug.h"
 
 using namespace mlir;
@@ -155,10 +156,9 @@ transform::MemRefAllocaToGlobalOp::apply(transform::TransformRewriter &rewriter,
       Type resultType = alloca.getResult().getType();
       OpBuilder builder(rewriter.getContext());
       // TODO: Add a better builder for this.
-      globalOp = memref::GlobalOp::create(
-          builder, loc, StringAttr::get(ctx, "alloca"),
-          StringAttr::get(ctx, "private"), TypeAttr::get(resultType),
-          Attribute{}, UnitAttr{}, IntegerAttr{});
+      globalOp = builder.create<memref::GlobalOp>(
+          loc, StringAttr::get(ctx, "alloca"), StringAttr::get(ctx, "private"),
+          TypeAttr::get(resultType), Attribute{}, UnitAttr{}, IntegerAttr{});
       symbolTable.insert(globalOp);
     }
 

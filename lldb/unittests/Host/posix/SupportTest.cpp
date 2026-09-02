@@ -10,12 +10,6 @@
 #include "llvm/Support/Threading.h"
 #include "gtest/gtest.h"
 
-#if defined(_AIX)
-#include "lldb/Host/aix/Support.h"
-#elif defined(__linux__)
-#include "lldb/Host/linux/Support.h"
-#endif
-
 using namespace lldb_private;
 
 #ifndef __APPLE__
@@ -25,17 +19,3 @@ TEST(Support, getProcFile_Pid) {
   ASSERT_TRUE(*BufferOrError);
 }
 #endif // #ifndef __APPLE__
-
-#if defined(_AIX) || defined(__linux__)
-TEST(Support, getProcFile_Tid) {
-  auto BufferOrError = getProcFile(getpid(), llvm::get_threadid(),
-#ifdef _AIX
-                                   "lwpstatus"
-#else
-                                   "status"
-#endif
-  );
-  ASSERT_TRUE(BufferOrError);
-  ASSERT_TRUE(*BufferOrError);
-}
-#endif // #if defined(_AIX) || defined(__linux__)

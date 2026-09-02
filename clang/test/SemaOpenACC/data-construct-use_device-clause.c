@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fopenacc -verify -Wopenacc-extension
+// RUN: %clang_cc1 %s -fopenacc -verify
 
 typedef struct IsComplete {
   struct S { int A; } CompositeMember;
@@ -23,7 +23,7 @@ void uses(int IntParam, short *PointerParam, float ArrayParam[5], Complete Compo
 #pragma acc host_data use_device(LocalComposite.ScalarMember, LocalComposite.ScalarMember)
   ;
 
-  // expected-warning@+1{{sub-array as a variable in 'use_device' clause is not a valid variable name or array name}}
+  // expected-error@+1{{OpenACC variable in 'use_device' clause is not a valid variable name or array name}}
 #pragma acc host_data use_device(LocalArray[2:1])
 
   // expected-error@+1{{OpenACC variable in 'use_device' clause is not a valid variable name or array name}}
@@ -35,12 +35,12 @@ void uses(int IntParam, short *PointerParam, float ArrayParam[5], Complete Compo
   ;
 
   // expected-error@+2{{OpenACC sub-array length is unspecified and cannot be inferred because the subscripted value is not an array}}
-  // expected-warning@+1{{sub-array as a variable in 'use_device' clause is not a valid variable name or array name}}
+  // expected-error@+1{{OpenACC variable in 'use_device' clause is not a valid variable name or array name}}
 #pragma acc host_data use_device(PointerParam[2:])
   ;
 
   // expected-error@+2{{OpenACC sub-array specified range [2:5] would be out of the range of the subscripted array size of 5}}
-  // expected-warning@+1{{sub-array as a variable in 'use_device' clause is not a valid variable name or array name}}
+  // expected-error@+1{{OpenACC variable in 'use_device' clause is not a valid variable name or array name}}
 #pragma acc host_data use_device(ArrayParam[2:5])
   ;
 

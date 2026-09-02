@@ -28,8 +28,6 @@
 
 namespace Fortran::runtime::io {
 
-RT_OFFLOAD_API_GROUP_BEGIN
-
 class ExternalFileUnit;
 class ChildIo;
 
@@ -83,9 +81,6 @@ public:
   // to interact with the state of the I/O statement in progress.
   // This design avoids virtual member functions and function pointers,
   // which may not have good support in some runtime environments.
-
-  RT_API_ATTRS const NonTbpDefinedIoTable *nonTbpDefinedIoTable() const;
-  RT_API_ATTRS void set_nonTbpDefinedIoTable(const NonTbpDefinedIoTable *);
 
   // CompleteOperation() is the last opportunity to raise an I/O error.
   // It is called by EndIoStatement(), but it can be invoked earlier to
@@ -366,13 +361,6 @@ public:
   using IoErrorHandler::IoErrorHandler;
 
   RT_API_ATTRS bool completedOperation() const { return completedOperation_; }
-  RT_API_ATTRS const NonTbpDefinedIoTable *nonTbpDefinedIoTable() const {
-    return nonTbpDefinedIoTable_;
-  }
-  RT_API_ATTRS void set_nonTbpDefinedIoTable(
-      const NonTbpDefinedIoTable *table) {
-    nonTbpDefinedIoTable_ = table;
-  }
 
   RT_API_ATTRS void CompleteOperation() { completedOperation_ = true; }
   RT_API_ATTRS int EndIoStatement() { return GetIoStat(); }
@@ -407,11 +395,6 @@ public:
 
 protected:
   bool completedOperation_{false};
-
-private:
-  // Original NonTbpDefinedIoTable argument to Input/OutputDerivedType,
-  // saved here so that it can also be used in child I/O statements.
-  const NonTbpDefinedIoTable *nonTbpDefinedIoTable_{nullptr};
 };
 
 // Common state for list-directed & NAMELIST I/O, both internal & external
@@ -645,10 +628,8 @@ class ChildIoStatementState : public IoStatementBase,
 public:
   RT_API_ATTRS ChildIoStatementState(
       ChildIo &, const char *sourceFile = nullptr, int sourceLine = 0);
-  RT_API_ATTRS const NonTbpDefinedIoTable *nonTbpDefinedIoTable() const;
-  RT_API_ATTRS void set_nonTbpDefinedIoTable(const NonTbpDefinedIoTable *);
   RT_API_ATTRS ChildIo &child() { return child_; }
-  RT_API_ATTRS MutableModes &mutableModes() { return mutableModes_; }
+  RT_API_ATTRS MutableModes &mutableModes();
   RT_API_ATTRS ConnectionState &GetConnectionState();
   RT_API_ATTRS ExternalFileUnit *GetExternalFileUnit() const;
   RT_API_ATTRS int EndIoStatement();
@@ -661,7 +642,6 @@ public:
 
 private:
   ChildIo &child_;
-  MutableModes mutableModes_;
 };
 
 template <Direction DIR, typename CHAR>
@@ -672,6 +652,7 @@ public:
   RT_API_ATTRS ChildFormattedIoStatementState(ChildIo &, const CharType *format,
       std::size_t formatLength, const Descriptor *formatDescriptor = nullptr,
       const char *sourceFile = nullptr, int sourceLine = 0);
+  RT_API_ATTRS MutableModes &mutableModes() { return mutableModes_; }
   RT_API_ATTRS void CompleteOperation();
   RT_API_ATTRS int EndIoStatement();
   RT_API_ATTRS bool AdvanceRecord(int = 1);
@@ -681,6 +662,7 @@ public:
   }
 
 private:
+  MutableModes mutableModes_;
   FormatControl<ChildFormattedIoStatementState> format_;
 };
 
@@ -856,7 +838,7 @@ private:
 };
 
 class InquireIOLengthState : public NoUnitIoStatementState,
-                             public IoDirectionState<Direction::Output> {
+                             public OutputStatementState {
 public:
   RT_API_ATTRS InquireIOLengthState(
       const char *sourceFile = nullptr, int sourceLine = 0);
@@ -897,8 +879,6 @@ private:
   ConnectionState connection_;
   ExternalFileUnit *unit_{nullptr};
 };
-
-RT_OFFLOAD_API_GROUP_END
 
 } // namespace Fortran::runtime::io
 #endif // FLANG_RT_RUNTIME_IO_STMT_H_

@@ -932,8 +932,7 @@ public:
   };
   unsigned getUnsigned(StringRef Key) const override {
     auto It = UnsignedValues.find(Key.str());
-    if (It == UnsignedValues.end())
-      return 0;
+    assert(It != UnsignedValues.end());
     return It->second;
   };
 

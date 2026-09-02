@@ -590,11 +590,6 @@ public:
   bool hasGISelPredicateCode() const;
   std::string getGISelPredicateCode() const;
 
-  // If true, indicates that GlobalISel-based C++ code was supplied for checking
-  // register operands.
-  bool hasGISelLeafPredicateCode() const;
-  std::string getGISelLeafPredicateCode() const;
-
 private:
   bool hasPredCode() const;
   bool hasImmCode() const;
@@ -747,8 +742,8 @@ public:
 
   /// hasChild - Return true if N is any of our children.
   bool hasChild(const TreePatternNode *N) const {
-    for (const TreePatternNodePtr &Child : Children)
-      if (Child.get() == N)
+    for (unsigned i = 0, e = Children.size(); i != e; ++i)
+      if (Children[i].get() == N)
         return true;
     return false;
   }
@@ -1171,9 +1166,9 @@ public:
   }
 
   const CodeGenIntrinsic &getIntrinsic(const Record *R) const {
-    for (const CodeGenIntrinsic &Intrinsic : Intrinsics)
-      if (Intrinsic.TheDef == R)
-        return Intrinsic;
+    for (unsigned i = 0, e = Intrinsics.size(); i != e; ++i)
+      if (Intrinsics[i].TheDef == R)
+        return Intrinsics[i];
     llvm_unreachable("Unknown intrinsic!");
   }
 
@@ -1280,8 +1275,8 @@ private:
 inline bool SDNodeInfo::ApplyTypeConstraints(TreePatternNode &N,
                                              TreePattern &TP) const {
   bool MadeChange = false;
-  for (const SDTypeConstraint &TypeConstraint : TypeConstraints)
-    MadeChange |= TypeConstraint.ApplyTypeConstraint(N, *this, TP);
+  for (unsigned i = 0, e = TypeConstraints.size(); i != e; ++i)
+    MadeChange |= TypeConstraints[i].ApplyTypeConstraint(N, *this, TP);
   return MadeChange;
 }
 

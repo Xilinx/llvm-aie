@@ -167,7 +167,7 @@ public:
       extents.push_back(builder.createIntegerConstant(loc, idxTy, extent));
     }
     if (!mayHaveNonDefaultLowerBounds(componentSym))
-      return fir::ShapeOp::create(builder, loc, extents);
+      return builder.create<fir::ShapeOp>(loc, extents);
 
     llvm::SmallVector<mlir::Value> lbounds;
     if (const auto *objDetails =
@@ -312,8 +312,8 @@ private:
     // hlfir.elemental_addr.
     if (auto elementalAddrOp = getVectorSubscriptElementAddrOp())
       builder.setInsertionPointToEnd(&elementalAddrOp->getBody().front());
-    auto designate = hlfir::DesignateOp::create(
-        builder, getLoc(), designatorType, partInfo.base.value().getBase(),
+    auto designate = builder.create<hlfir::DesignateOp>(
+        getLoc(), designatorType, partInfo.base.value().getBase(),
         partInfo.componentName, partInfo.componentShape, partInfo.subscripts,
         partInfo.substring, partInfo.complexPart, partInfo.resultShape,
         partInfo.typeParams, attributes);
@@ -344,7 +344,7 @@ private:
         mlir::Type refPtrType = builder.getRefType(
             fir::PointerType::get(fir::dyn_cast_ptrEleTy(ptrAddr.getType())));
         mlir::Value cast = builder.createConvert(loc, refPtrType, ptrAddr);
-        mlir::Value ptrVal = fir::LoadOp::create(builder, loc, cast);
+        mlir::Value ptrVal = builder.create<fir::LoadOp>(loc, cast);
 
         // Update the base_addr to the value of the Cray pointer.
         // This is a hacky way to do the update, and it may harm
@@ -442,9 +442,9 @@ private:
     } else {
       // Compute "len = max(ub-lb+1,0)" (Fortran 2018 9.4.1).
       mlir::Value one = builder.createIntegerConstant(loc, idxTy, 1);
-      auto boundsDiff = mlir::arith::SubIOp::create(
-          builder, loc, partInfo.substring[1], partInfo.substring[0]);
-      auto rawLen = mlir::arith::AddIOp::create(builder, loc, boundsDiff, one);
+      auto boundsDiff = builder.create<mlir::arith::SubIOp>(
+          loc, partInfo.substring[1], partInfo.substring[0]);
+      auto rawLen = builder.create<mlir::arith::AddIOp>(loc, boundsDiff, one);
       partInfo.typeParams[0] =
           fir::factory::genMaxWithZero(builder, loc, rawLen);
     }
@@ -803,10 +803,10 @@ private:
     mlir::Value one = builder.createIntegerConstant(loc, idxTy, 1);
     oneBasedIndex = builder.createConvert(loc, idxTy, oneBasedIndex);
     mlir::Value zeroBased =
-        mlir::arith::SubIOp::create(builder, loc, oneBasedIndex, one);
+        builder.create<mlir::arith::SubIOp>(loc, oneBasedIndex, one);
     mlir::Value offset =
-        mlir::arith::MulIOp::create(builder, loc, zeroBased, step);
-    return mlir::arith::AddIOp::create(builder, loc, lb, offset);
+        builder.create<mlir::arith::MulIOp>(loc, zeroBased, step);
+    return builder.create<mlir::arith::AddIOp>(loc, lb, offset);
   }
 
   /// Create an hlfir.element_addr operation to deal with vector subscripted
@@ -836,8 +836,8 @@ private:
     assert(partInfo.base.has_value() &&
            "vector subscripted part must have a base");
     mlir::Value mold = *partInfo.base;
-    auto elementalAddrOp = hlfir::ElementalAddrOp::create(
-        builder, loc, shape, mold, mlir::ValueRange{},
+    auto elementalAddrOp = builder.create<hlfir::ElementalAddrOp>(
+        loc, shape, mold, mlir::ValueRange{},
         /*isUnordered=*/true);
     setVectorSubscriptElementAddrOp(elementalAddrOp);
     builder.setInsertionPointToEnd(&elementalAddrOp.getBody().front());
@@ -881,7 +881,7 @@ private:
     builder.setInsertionPointToEnd(&elementalAddrOp.getBody().front());
     if (!elementAddr.isPolymorphic())
       elementalAddrOp.getMoldMutable().clear();
-    hlfir::YieldOp::create(builder, loc, elementAddr);
+    builder.create<hlfir::YieldOp>(loc, elementAddr);
     builder.setInsertionPointAfter(elementalAddrOp);
   }
 
@@ -1001,7 +1001,7 @@ HlfirDesignatorBuilder::convertVectorSubscriptedExprToElementalAddr(
     elementalAddrOp.getMoldMutable().clear();
   // Create the hlfir.yield terminator inside the hlfir.elemental_body.
   builder.setInsertionPointToEnd(&elementalAddrOp.getBody().front());
-  hlfir::YieldOp::create(builder, loc, elementAddrEntity);
+  builder.create<hlfir::YieldOp>(loc, elementAddrEntity);
   builder.setInsertionPointAfter(elementalAddrOp);
   // Reset the HlfirDesignatorBuilder state, in case it is used on a new
   // designator.
@@ -1034,7 +1034,7 @@ struct BinaryOp {};
                                                 rhs)};                         \
       } else {                                                                 \
         return hlfir::EntityWithAttributes{                                    \
-            GenBinFirOp::create(builder, loc, lhs, rhs)};                      \
+            builder.create<GenBinFirOp>(loc, lhs, rhs)};                       \
       }                                                                        \
     }                                                                          \
   };
@@ -1065,18 +1065,9 @@ struct BinaryOp<Fortran::evaluate::Divide<
                                          hlfir::Entity lhs, hlfir::Entity rhs) {
     mlir::Type ty = Fortran::lower::getFIRType(
         builder.getContext(), Fortran::common::TypeCategory::Complex, KIND,
-        /*params=*/{});
-
-    // TODO: Ideally, complex number division operations should always be
-    // lowered to MLIR. However, converting them to the runtime via MLIR causes
-    // ABI issues.
-    if (builder.getComplexDivisionToRuntimeFlag()) {
-      return hlfir::EntityWithAttributes{
-          fir::genDivC(builder, loc, ty, lhs, rhs)};
-    } else {
-      return hlfir::EntityWithAttributes{
-          mlir::complex::DivOp::create(builder, loc, lhs, rhs)};
-    }
+        /*params=*/std::nullopt);
+    return hlfir::EntityWithAttributes{
+        fir::genDivC(builder, loc, ty, lhs, rhs)};
   }
 };
 
@@ -1087,7 +1078,7 @@ struct BinaryOp<Fortran::evaluate::Power<Fortran::evaluate::Type<TC, KIND>>> {
                                          fir::FirOpBuilder &builder, const Op &,
                                          hlfir::Entity lhs, hlfir::Entity rhs) {
     mlir::Type ty = Fortran::lower::getFIRType(builder.getContext(), TC, KIND,
-                                               /*params=*/{});
+                                               /*params=*/std::nullopt);
     return hlfir::EntityWithAttributes{fir::genPow(builder, loc, ty, lhs, rhs)};
   }
 };
@@ -1101,7 +1092,7 @@ struct BinaryOp<
                                          fir::FirOpBuilder &builder, const Op &,
                                          hlfir::Entity lhs, hlfir::Entity rhs) {
     mlir::Type ty = Fortran::lower::getFIRType(builder.getContext(), TC, KIND,
-                                               /*params=*/{});
+                                               /*params=*/std::nullopt);
     return hlfir::EntityWithAttributes{fir::genPow(builder, loc, ty, lhs, rhs)};
   }
 };
@@ -1219,8 +1210,8 @@ struct BinaryOp<Fortran::evaluate::Relational<
                                          fir::FirOpBuilder &builder,
                                          const Op &op, hlfir::Entity lhs,
                                          hlfir::Entity rhs) {
-    auto cmp = mlir::arith::CmpIOp::create(
-        builder, loc, translateSignedRelational(op.opr), lhs, rhs);
+    auto cmp = builder.create<mlir::arith::CmpIOp>(
+        loc, translateSignedRelational(op.opr), lhs, rhs);
     return hlfir::EntityWithAttributes{cmp};
   }
 };
@@ -1241,8 +1232,8 @@ struct BinaryOp<Fortran::evaluate::Relational<
         mlir::IntegerType::SignednessSemantics::Signless);
     mlir::Value lhsSL = builder.createConvert(loc, signlessType, lhs);
     mlir::Value rhsSL = builder.createConvert(loc, signlessType, rhs);
-    auto cmp = mlir::arith::CmpIOp::create(
-        builder, loc, translateUnsignedRelational(op.opr), lhsSL, rhsSL);
+    auto cmp = builder.create<mlir::arith::CmpIOp>(
+        loc, translateUnsignedRelational(op.opr), lhsSL, rhsSL);
     return hlfir::EntityWithAttributes{cmp};
   }
 };
@@ -1256,8 +1247,8 @@ struct BinaryOp<Fortran::evaluate::Relational<
                                          fir::FirOpBuilder &builder,
                                          const Op &op, hlfir::Entity lhs,
                                          hlfir::Entity rhs) {
-    auto cmp = mlir::arith::CmpFOp::create(
-        builder, loc, translateFloatRelational(op.opr), lhs, rhs);
+    auto cmp = builder.create<mlir::arith::CmpFOp>(
+        loc, translateFloatRelational(op.opr), lhs, rhs);
     return hlfir::EntityWithAttributes{cmp};
   }
 };
@@ -1271,8 +1262,8 @@ struct BinaryOp<Fortran::evaluate::Relational<
                                          fir::FirOpBuilder &builder,
                                          const Op &op, hlfir::Entity lhs,
                                          hlfir::Entity rhs) {
-    auto cmp = fir::CmpcOp::create(builder, loc,
-                                   translateFloatRelational(op.opr), lhs, rhs);
+    auto cmp = builder.create<fir::CmpcOp>(
+        loc, translateFloatRelational(op.opr), lhs, rhs);
     return hlfir::EntityWithAttributes{cmp};
   }
 };
@@ -1313,16 +1304,16 @@ struct BinaryOp<Fortran::evaluate::LogicalOperation<KIND>> {
     switch (op.logicalOperator) {
     case Fortran::evaluate::LogicalOperator::And:
       return hlfir::EntityWithAttributes{
-          mlir::arith::AndIOp::create(builder, loc, i1Lhs, i1Rhs)};
+          builder.create<mlir::arith::AndIOp>(loc, i1Lhs, i1Rhs)};
     case Fortran::evaluate::LogicalOperator::Or:
       return hlfir::EntityWithAttributes{
-          mlir::arith::OrIOp::create(builder, loc, i1Lhs, i1Rhs)};
+          builder.create<mlir::arith::OrIOp>(loc, i1Lhs, i1Rhs)};
     case Fortran::evaluate::LogicalOperator::Eqv:
-      return hlfir::EntityWithAttributes{mlir::arith::CmpIOp::create(
-          builder, loc, mlir::arith::CmpIPredicate::eq, i1Lhs, i1Rhs)};
+      return hlfir::EntityWithAttributes{builder.create<mlir::arith::CmpIOp>(
+          loc, mlir::arith::CmpIPredicate::eq, i1Lhs, i1Rhs)};
     case Fortran::evaluate::LogicalOperator::Neqv:
-      return hlfir::EntityWithAttributes{mlir::arith::CmpIOp::create(
-          builder, loc, mlir::arith::CmpIPredicate::ne, i1Lhs, i1Rhs)};
+      return hlfir::EntityWithAttributes{builder.create<mlir::arith::CmpIOp>(
+          loc, mlir::arith::CmpIPredicate::ne, i1Lhs, i1Rhs)};
     case Fortran::evaluate::LogicalOperator::Not:
       // lib/evaluate expression for .NOT. is Fortran::evaluate::Not<KIND>.
       llvm_unreachable(".NOT. is not a binary operator");
@@ -1354,7 +1345,7 @@ struct BinaryOp<Fortran::evaluate::SetLength<KIND>> {
     // Fortran 2018 7.4.4.2 point 5.
     mlir::Value safeLength = fir::factory::genMaxWithZero(builder, loc, length);
     return hlfir::EntityWithAttributes{
-        hlfir::SetLengthOp::create(builder, loc, string, safeLength)};
+        builder.create<hlfir::SetLengthOp>(loc, string, safeLength)};
   }
   static void
   genResultTypeParams(mlir::Location, fir::FirOpBuilder &, hlfir::Entity,
@@ -1372,7 +1363,7 @@ struct BinaryOp<Fortran::evaluate::Concat<KIND>> {
                                   hlfir::Entity lhs, hlfir::Entity rhs) {
     assert(len && "genResultTypeParams must have been called");
     auto concat =
-        hlfir::ConcatOp::create(builder, loc, mlir::ValueRange{lhs, rhs}, len);
+        builder.create<hlfir::ConcatOp>(loc, mlir::ValueRange{lhs, rhs}, len);
     return hlfir::EntityWithAttributes{concat.getResult()};
   }
   void
@@ -1386,7 +1377,7 @@ struct BinaryOp<Fortran::evaluate::Concat<KIND>> {
     mlir::Type idxType = builder.getIndexType();
     mlir::Value lhsLen = builder.createConvert(loc, idxType, lengths[0]);
     mlir::Value rhsLen = builder.createConvert(loc, idxType, lengths[1]);
-    len = mlir::arith::AddIOp::create(builder, loc, lhsLen, rhsLen);
+    len = builder.create<mlir::arith::AddIOp>(loc, lhsLen, rhsLen);
     resultTypeParams.push_back(len);
   }
 
@@ -1410,7 +1401,7 @@ struct UnaryOp<Fortran::evaluate::Not<KIND>> {
     mlir::Value one = builder.createBool(loc, true);
     mlir::Value val = builder.createConvert(loc, builder.getI1Type(), lhs);
     return hlfir::EntityWithAttributes{
-        mlir::arith::XOrIOp::create(builder, loc, val, one)};
+        builder.create<mlir::arith::XOrIOp>(loc, val, one)};
   }
 };
 
@@ -1425,10 +1416,10 @@ struct UnaryOp<Fortran::evaluate::Negate<
     // Like LLVM, integer negation is the binary op "0 - value"
     mlir::Type type = Fortran::lower::getFIRType(
         builder.getContext(), Fortran::common::TypeCategory::Integer, KIND,
-        /*params=*/{});
+        /*params=*/std::nullopt);
     mlir::Value zero = builder.createIntegerConstant(loc, type, 0);
     return hlfir::EntityWithAttributes{
-        mlir::arith::SubIOp::create(builder, loc, zero, lhs)};
+        builder.create<mlir::arith::SubIOp>(loc, zero, lhs)};
   }
 };
 
@@ -1448,7 +1439,7 @@ struct UnaryOp<Fortran::evaluate::Negate<
     mlir::Value zero = builder.createIntegerConstant(loc, signlessType, 0);
     mlir::Value signless = builder.createConvert(loc, signlessType, lhs);
     mlir::Value negated =
-        mlir::arith::SubIOp::create(builder, loc, zero, signless);
+        builder.create<mlir::arith::SubIOp>(loc, zero, signless);
     return hlfir::EntityWithAttributes(
         builder.createConvert(loc, lhs.getType(), negated));
   }
@@ -1463,7 +1454,7 @@ struct UnaryOp<Fortran::evaluate::Negate<
                                          fir::FirOpBuilder &builder, const Op &,
                                          hlfir::Entity lhs) {
     return hlfir::EntityWithAttributes{
-        mlir::arith::NegFOp::create(builder, loc, lhs)};
+        builder.create<mlir::arith::NegFOp>(loc, lhs)};
   }
 };
 
@@ -1475,7 +1466,7 @@ struct UnaryOp<Fortran::evaluate::Negate<
   static hlfir::EntityWithAttributes gen(mlir::Location loc,
                                          fir::FirOpBuilder &builder, const Op &,
                                          hlfir::Entity lhs) {
-    return hlfir::EntityWithAttributes{fir::NegcOp::create(builder, loc, lhs)};
+    return hlfir::EntityWithAttributes{builder.create<fir::NegcOp>(loc, lhs)};
   }
 };
 
@@ -1499,9 +1490,9 @@ struct UnaryOp<Fortran::evaluate::Parentheses<T>> {
                                          const Op &op, hlfir::Entity lhs) {
     if (lhs.isVariable())
       return hlfir::EntityWithAttributes{
-          hlfir::AsExprOp::create(builder, loc, lhs)};
+          builder.create<hlfir::AsExprOp>(loc, lhs)};
     return hlfir::EntityWithAttributes{
-        hlfir::NoReassocOp::create(builder, loc, lhs.getType(), lhs)};
+        builder.create<hlfir::NoReassocOp>(loc, lhs.getType(), lhs)};
   }
 
   static void
@@ -1526,7 +1517,7 @@ struct UnaryOp<
       return hlfir::convertCharacterKind(loc, builder, lhs, KIND);
     }
     mlir::Type type = Fortran::lower::getFIRType(builder.getContext(), TC1,
-                                                 KIND, /*params=*/{});
+                                                 KIND, /*params=*/std::nullopt);
     mlir::Value res = builder.convertWithSemantics(loc, type, lhs);
     return hlfir::EntityWithAttributes{res};
   }
@@ -1670,7 +1661,7 @@ private:
     } else {
       elementType =
           Fortran::lower::getFIRType(builder.getContext(), R::category, R::kind,
-                                     /*params=*/{});
+                                     /*params=*/std::nullopt);
     }
     mlir::Value shape = hlfir::genShape(loc, builder, left);
     auto genKernel = [&op, &left, &unaryOp](
@@ -1708,7 +1699,7 @@ private:
     // Elemental expression.
     mlir::Type elementType =
         Fortran::lower::getFIRType(builder.getContext(), R::category, R::kind,
-                                   /*params=*/{});
+                                   /*params=*/std::nullopt);
     // TODO: "merge" shape, get cst shape from front-end if possible.
     mlir::Value shape;
     if (left.isArray()) {
@@ -1822,8 +1813,8 @@ private:
     // Allocate scalar temporary that will be initialized
     // with the values specified by the constructor.
     mlir::Value storagePtr = builder.createTemporary(loc, recTy);
-    auto varOp = hlfir::EntityWithAttributes{hlfir::DeclareOp::create(
-        builder, loc, storagePtr, "ctor.temp", /*shape=*/nullptr,
+    auto varOp = hlfir::EntityWithAttributes{builder.create<hlfir::DeclareOp>(
+        loc, storagePtr, "ctor.temp", /*shape=*/nullptr,
         /*typeparams=*/mlir::ValueRange{}, /*dummy_scope=*/nullptr,
         fir::FortranVariableFlagsAttr{})};
 
@@ -1855,8 +1846,8 @@ private:
         auto parentCompType = baseRecTy.getType(parentName);
         assert(parentCompType && "failed to retrieve parent component type");
         mlir::Type designatorType = builder.getRefType(parentCompType);
-        mlir::Value newParent = hlfir::DesignateOp::create(
-            builder, loc, designatorType, currentParent, parentName,
+        mlir::Value newParent = builder.create<hlfir::DesignateOp>(
+            loc, designatorType, currentParent, parentName,
             /*compShape=*/mlir::Value{}, hlfir::DesignateOp::Subscripts{},
             /*substring=*/mlir::ValueRange{},
             /*complexPart=*/std::nullopt,
@@ -1912,8 +1903,8 @@ private:
                                                     extraAttributeFlags);
 
       // Get the component designator.
-      auto lhs = hlfir::DesignateOp::create(
-          builder, loc, designatorType, baseOp, name, compShape,
+      auto lhs = builder.create<hlfir::DesignateOp>(
+          loc, designatorType, baseOp, name, compShape,
           hlfir::DesignateOp::Subscripts{},
           /*substring=*/mlir::ValueRange{},
           /*complexPart=*/std::nullopt,
@@ -1945,7 +1936,7 @@ private:
           fir::emitFatalError(loc, "pointer component designator could not be "
                                    "lowered to mutable box");
         Fortran::lower::associateMutableBox(converter, loc, *toBox, expr,
-                                            /*lbounds=*/{}, stmtCtx);
+                                            /*lbounds=*/std::nullopt, stmtCtx);
         continue;
       }
 
@@ -1997,10 +1988,10 @@ private:
         auto rhsCastAndCleanup =
             hlfir::genTypeAndKindConvert(loc, builder, rhs, lhs.getType(),
                                          /*preserveLowerBounds=*/allowRealloc);
-        hlfir::AssignOp::create(builder, loc, rhsCastAndCleanup.first, lhs,
-                                allowRealloc,
-                                allowRealloc ? keepLhsLength : false,
-                                /*temporary_lhs=*/true);
+        builder.create<hlfir::AssignOp>(loc, rhsCastAndCleanup.first, lhs,
+                                        allowRealloc,
+                                        allowRealloc ? keepLhsLength : false,
+                                        /*temporary_lhs=*/true);
         if (rhsCastAndCleanup.second)
           (*rhsCastAndCleanup.second)();
       };

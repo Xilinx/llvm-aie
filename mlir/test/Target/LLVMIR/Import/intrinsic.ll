@@ -874,12 +874,11 @@ define void @stack_restore(ptr %0, ptr addrspace(1) %1) {
 }
 
 ; CHECK-LABEL: llvm.func @lifetime
-define void @lifetime() {
-  %a = alloca [16 x i8]
+define void @lifetime(ptr %0) {
   ; CHECK: llvm.intr.lifetime.start 16, %{{.*}} : !llvm.ptr
-  call void @llvm.lifetime.start.p0(i64 16, ptr %a)
+  call void @llvm.lifetime.start.p0(i64 16, ptr %0)
   ; CHECK: llvm.intr.lifetime.end 32, %{{.*}} : !llvm.ptr
-  call void @llvm.lifetime.end.p0(i64 32, ptr %a)
+  call void @llvm.lifetime.end.p0(i64 32, ptr %0)
   ret void
 }
 

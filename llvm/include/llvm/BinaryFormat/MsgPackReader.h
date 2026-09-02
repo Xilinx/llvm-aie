@@ -38,7 +38,6 @@
 #ifndef LLVM_BINARYFORMAT_MSGPACKREADER_H
 #define LLVM_BINARYFORMAT_MSGPACKREADER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBufferRef.h"
 #include <cstdint>
@@ -105,9 +104,9 @@ struct Object {
 class Reader {
 public:
   /// Construct a reader, keeping a reference to the \p InputBuffer.
-  LLVM_ABI Reader(MemoryBufferRef InputBuffer);
+  Reader(MemoryBufferRef InputBuffer);
   /// Construct a reader, keeping a reference to the \p Input.
-  LLVM_ABI Reader(StringRef Input);
+  Reader(StringRef Input);
 
   Reader(const Reader &) = delete;
   Reader &operator=(const Reader &) = delete;
@@ -126,7 +125,7 @@ public:
   ///
   /// \returns true when object successfully read, false when at end of
   /// input (and so \p Obj was not updated), otherwise an error.
-  LLVM_ABI Expected<bool> read(Object &Obj);
+  Expected<bool> read(Object &Obj);
 
 private:
   MemoryBufferRef InputBuffer;

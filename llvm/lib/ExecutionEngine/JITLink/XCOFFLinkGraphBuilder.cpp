@@ -296,7 +296,7 @@ Error XCOFFLinkGraphBuilder::processCsectsAndSymbols() {
       if (!CsectSymbolAddr)
         return CsectSymbolAddr.takeError();
 
-      ArrayRef<char> SectionBuffer{*Data};
+      ArrayRef<char> SectionBuffer{Data->data(), Data->size()};
       auto Offset = *CsectSymbolAddr - SectionRef.getAddress();
 
       LLVM_DEBUG(dbgs() << "      symbol entry: offset = " << Offset

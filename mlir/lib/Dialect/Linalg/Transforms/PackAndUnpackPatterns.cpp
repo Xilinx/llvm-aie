@@ -7,10 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
-#include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Tensor/Transforms/Transforms.h"
 #include "mlir/Dialect/Utils/IndexingUtils.h"
-#include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/IR/PatternMatch.h"
 
 namespace mlir {
@@ -82,8 +81,9 @@ struct SimplifyPackToExpandShape : public OpRewritePattern<PackOp> {
                ArrayRef<ReassociationIndices> reassociation) const {
     if (operand.getType() == newOperandType)
       return operand;
-    return tensor::ExpandShapeOp::create(rewriter, loc, newOperandType, operand,
-                                         reassociation)
+    return rewriter
+        .create<tensor::ExpandShapeOp>(loc, newOperandType, operand,
+                                       reassociation)
         .getResult();
   }
 
@@ -143,8 +143,8 @@ struct SimplifyUnPackToCollapseShape : public OpRewritePattern<UnPackOp> {
                        Type newOperandType, ArrayAttr reassociation) const {
     if (operand.getType() == newOperandType)
       return operand;
-    return tensor::CollapseShapeOp::create(rewriter, loc, newOperandType,
-                                           operand, reassociation);
+    return rewriter.create<tensor::CollapseShapeOp>(loc, newOperandType,
+                                                    operand, reassociation);
   }
 
   /// Returns success() if it is unpacking on the innermost dimension.
@@ -197,19 +197,13 @@ struct SimplifyUnPackToCollapseShape : public OpRewritePattern<UnPackOp> {
 /// Fold a `pad` -> `pack` into `pack` if they have the same padding values and
 /// the pad op has zero low paddings, or if `pack` has no padding values.
 struct FoldPadWithPackOp : public OpRewritePattern<PackOp> {
-public:
-  FoldPadWithPackOp(MLIRContext *context, ControlFoldIntoPackUnpackFn controlFn)
-      : OpRewritePattern<PackOp>(context), controlFn(std::move(controlFn)) {}
+  using OpRewritePattern<PackOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(PackOp packOp,
                                 PatternRewriter &rewriter) const override {
     auto padOp = packOp.getSource().getDefiningOp<tensor::PadOp>();
 
     if (!padOp || padOp.getNofold() || !padOp.hasZeroLowPad())
-      return failure();
-
-    // User controlled folding function.
-    if (controlFn && !controlFn(&packOp.getSourceMutable()))
       return failure();
 
     Value constantPaddingValue = padOp.getConstantPaddingValue();
@@ -220,53 +214,19 @@ public:
       if (!isEqualConstantIntOrValue(paddingValue, constantPaddingValue))
         return failure();
 
-    // Folding is not allowed if it were to introduce artificial padding.
-    // Folding is also disabled in the case of dynamic dimensions and/or tile
-    // sizes - that is because it would be impossible to compute the padding
-    // size and hence to establish whether "artificial" padding would be
-    // created.
-    RankedTensorType unpackedType = packOp.getSourceType();
-    SmallVector<int64_t> outerShapeWithoutTranspose =
-        getPackedOuterShapeWithoutTransposition(packOp);
-    for (auto [pos, tileSize, high] :
-         llvm::zip_equal(packOp.getInnerDimsPos(), packOp.getStaticInnerTiles(),
-                         padOp.getMixedHighPad())) {
-      if (unpackedType.isDynamicDim(pos))
-        return failure();
-      if (ShapedType::isDynamic(outerShapeWithoutTranspose[pos]))
-        return failure();
-      if (ShapedType::isDynamic(tileSize))
-        return failure();
-      std::optional<int64_t> cstHigh = getConstantIntValue(high);
-      if (!cstHigh)
-        return failure();
-      int64_t paddingSize = outerShapeWithoutTranspose[pos] * tileSize -
-                            unpackedType.getDimSize(pos);
-      // Do not fold the op if it requires artificial padding.
-      if (paddingSize + cstHigh.value() >= tileSize)
-        return failure();
-    }
-
     rewriter.replaceOpWithNewOp<PackOp>(
         packOp, padOp.getSource(), packOp.getDest(), packOp.getInnerDimsPos(),
         packOp.getMixedTiles(), constantPaddingValue,
         packOp.getOuterDimsPerm());
     return success();
   }
-
-private:
-  ControlFoldIntoPackUnpackFn controlFn;
 };
 
 /// Fold a `unpack` -> `extract_slice` into the `unpack` since it already
 /// has extract_slice semantics.
 struct FoldUnpackWithExtractSliceOp
     : public OpRewritePattern<tensor::ExtractSliceOp> {
-public:
-  FoldUnpackWithExtractSliceOp(MLIRContext *context,
-                               ControlFoldIntoPackUnpackFn controlFn)
-      : OpRewritePattern<tensor::ExtractSliceOp>(context),
-        controlFn(std::move(controlFn)) {}
+  using OpRewritePattern<tensor::ExtractSliceOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(tensor::ExtractSliceOp sliceOp,
                                 PatternRewriter &rewriter) const override {
@@ -274,25 +234,27 @@ public:
     if (!unpackOp)
       return failure();
 
-    // User controlled folding function.
-    if (controlFn && !controlFn(&sliceOp.getSourceMutable()))
-      return failure();
+    if (sliceOp.getResultType().getRank() != unpackOp.getDestType().getRank()) {
+      return rewriter.notifyMatchFailure(
+          sliceOp, "rank-reduced folding is not supported");
+    }
 
-    if (!unpackOp.canFoldSliceOp(sliceOp))
-      return failure();
+    // Check all offsets are zeros, and all strides are ones.
+    if (!areAllConstantIntValue(sliceOp.getMixedOffsets(), 0) ||
+        !areAllConstantIntValue(sliceOp.getMixedStrides(), 1)) {
+      return rewriter.notifyMatchFailure(
+          sliceOp, "expects offsets to be 0s and strides to be 1s");
+    }
 
     // Create a new empty output tensor.
     Type elementType = unpackOp.getDestType().getElementType();
-    Value output = tensor::EmptyOp::create(
-        rewriter, sliceOp.getLoc(), sliceOp.getMixedSizes(), elementType);
+    Value output = rewriter.create<tensor::EmptyOp>(
+        sliceOp.getLoc(), sliceOp.getMixedSizes(), elementType);
     rewriter.replaceOpWithNewOp<UnPackOp>(
         sliceOp, unpackOp.getSource(), output, unpackOp.getInnerDimsPos(),
         unpackOp.getMixedTiles(), unpackOp.getOuterDimsPerm());
     return success();
   }
-
-private:
-  ControlFoldIntoPackUnpackFn controlFn;
 };
 
 // Applies 'permutation' on 'inVec' and stores the result in resVec.
@@ -322,22 +284,13 @@ static bool checkAndPermute(ArrayRef<int64_t> permutation,
 /// semantics.
 struct FoldProducerPackWithConsumerLinalgTransposeOp
     : public OpInterfaceRewritePattern<linalg::LinalgOp> {
-
-public:
-  FoldProducerPackWithConsumerLinalgTransposeOp(
-      MLIRContext *context, ControlFoldIntoPackUnpackFn controlFn)
-      : OpInterfaceRewritePattern<linalg::LinalgOp>(context),
-        controlFn(std::move(controlFn)) {}
+  using OpInterfaceRewritePattern<linalg::LinalgOp>::OpInterfaceRewritePattern;
 
   LogicalResult matchAndRewrite(linalg::LinalgOp linalgOp,
                                 PatternRewriter &rewriter) const override {
     auto packOp = linalgOp->getOperand(0).getDefiningOp<PackOp>();
 
     if (!packOp)
-      return failure();
-
-    // User controlled folding function.
-    if (controlFn && !controlFn(&linalgOp->getOpOperand(0)))
       return failure();
 
     FailureOr<SmallVector<int64_t>> maybePerm =
@@ -378,29 +331,18 @@ public:
 
     return success();
   }
-
-private:
-  ControlFoldIntoPackUnpackFn controlFn;
 };
 
 /// Fold 'transpose' -> 'pack' into 'pack' since 'pack' already has transpose
 /// semantics.
 struct FoldConsumerPackWithProducerLinalgTransposeOp
     : public OpRewritePattern<PackOp> {
-
-public:
-  FoldConsumerPackWithProducerLinalgTransposeOp(
-      MLIRContext *context, ControlFoldIntoPackUnpackFn controlFn)
-      : OpRewritePattern<PackOp>(context), controlFn(std::move(controlFn)) {}
+  using OpRewritePattern<PackOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(PackOp packOp,
                                 PatternRewriter &rewriter) const override {
     auto linalgOp = packOp.getSource().getDefiningOp<linalg::LinalgOp>();
     if (!linalgOp)
-      return failure();
-
-    // User controlled folding function.
-    if (controlFn && !controlFn(&packOp.getSourceMutable()))
       return failure();
 
     FailureOr<SmallVector<int64_t>> maybePerm =
@@ -433,31 +375,19 @@ public:
 
     return success();
   }
-
-private:
-  ControlFoldIntoPackUnpackFn controlFn;
 };
 
 /// Fold 'unpack' -> 'transpose' into 'unpack' since 'unpack' already has
 /// transpose semantics.
 struct FoldProducerUnPackWithConsumerLinalgTransposeOp
     : public OpInterfaceRewritePattern<linalg::LinalgOp> {
-
-public:
-  FoldProducerUnPackWithConsumerLinalgTransposeOp(
-      MLIRContext *context, ControlFoldIntoPackUnpackFn controlFn)
-      : OpInterfaceRewritePattern<linalg::LinalgOp>(context),
-        controlFn(std::move(controlFn)) {}
+  using OpInterfaceRewritePattern<linalg::LinalgOp>::OpInterfaceRewritePattern;
 
   LogicalResult matchAndRewrite(linalg::LinalgOp linalgOp,
                                 PatternRewriter &rewriter) const override {
     auto unPackOp = linalgOp->getOperand(0).getDefiningOp<UnPackOp>();
 
     if (!unPackOp)
-      return failure();
-
-    // User controlled folding function.
-    if (controlFn && !controlFn(&linalgOp->getOpOperand(0)))
       return failure();
 
     FailureOr<SmallVector<int64_t>> maybePerm =
@@ -486,9 +416,6 @@ public:
 
     return success();
   }
-
-private:
-  ControlFoldIntoPackUnpackFn controlFn;
 };
 
 /// Fold 'transpose' -> 'unpack' into 'unpack' since 'unpack' already has
@@ -497,19 +424,10 @@ struct FoldConsumerUnPackWithProducerLinalgTransposeOp
     : public OpRewritePattern<UnPackOp> {
   using OpRewritePattern<UnPackOp>::OpRewritePattern;
 
-public:
-  FoldConsumerUnPackWithProducerLinalgTransposeOp(
-      MLIRContext *context, ControlFoldIntoPackUnpackFn controlFn)
-      : OpRewritePattern<UnPackOp>(context), controlFn(std::move(controlFn)) {}
-
   LogicalResult matchAndRewrite(UnPackOp unPackOp,
                                 PatternRewriter &rewriter) const override {
     auto linalgOp = unPackOp.getSource().getDefiningOp<linalg::LinalgOp>();
     if (!linalgOp)
-      return failure();
-
-    // User controlled folding function.
-    if (controlFn && !controlFn(&unPackOp.getSourceMutable()))
       return failure();
 
     FailureOr<SmallVector<int64_t>> maybePerm =
@@ -547,8 +465,8 @@ public:
 
     auto elemType =
         cast<ShapedType>(unPackOp->getResultTypes()[0]).getElementType();
-    Value output = tensor::EmptyOp::create(rewriter, unPackOp->getLoc(),
-                                           unpackOpResultDims[0], elemType);
+    Value output = rewriter.create<tensor::EmptyOp>(
+        unPackOp->getLoc(), unpackOpResultDims[0], elemType);
 
     rewriter.replaceOpWithNewOp<UnPackOp>(
         unPackOp, linalgOp->getOperand(0), output, newInnerDimsPosVec,
@@ -556,9 +474,6 @@ public:
 
     return success();
   }
-
-private:
-  ControlFoldIntoPackUnpackFn controlFn;
 };
 
 /// tensor.empty does not define any tensor contents, so an unpadded pack
@@ -606,14 +521,13 @@ struct FoldEmptyTensorWithUnPackOp : public OpRewritePattern<UnPackOp> {
 
 } // namespace
 
-void populateFoldIntoPackAndUnpackPatterns(
-    RewritePatternSet &patterns, const ControlFoldIntoPackUnpackFn &controlFn) {
+void populateFoldIntoPackAndUnpackPatterns(RewritePatternSet &patterns) {
   patterns.insert<FoldUnpackWithExtractSliceOp, FoldPadWithPackOp,
                   FoldProducerPackWithConsumerLinalgTransposeOp,
                   FoldConsumerPackWithProducerLinalgTransposeOp,
                   FoldConsumerUnPackWithProducerLinalgTransposeOp,
                   FoldProducerUnPackWithConsumerLinalgTransposeOp>(
-      patterns.getContext(), controlFn);
+      patterns.getContext());
 }
 
 void populateSimplifyPackAndUnpackPatterns(RewritePatternSet &patterns) {

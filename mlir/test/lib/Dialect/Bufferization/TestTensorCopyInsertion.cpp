@@ -48,11 +48,7 @@ struct TestTensorCopyInsertionPass
       options.defaultMemorySpaceFn =
           [](TensorType t) -> std::optional<Attribute> { return std::nullopt; };
     }
-
-    bufferization::BufferizationState bufferizationState;
-
-    if (failed(bufferization::insertTensorCopies(getOperation(), options,
-                                                 bufferizationState)))
+    if (failed(bufferization::insertTensorCopies(getOperation(), options)))
       signalPassFailure();
   }
 

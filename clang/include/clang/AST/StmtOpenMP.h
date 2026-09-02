@@ -399,8 +399,9 @@ public:
 
   static llvm::iterator_range<used_clauses_child_iterator>
   used_clauses_children(ArrayRef<OMPClause *> Clauses) {
-    return {used_clauses_child_iterator(Clauses),
-            used_clauses_child_iterator(ArrayRef(Clauses.end(), (size_t)0))};
+    return {
+        used_clauses_child_iterator(Clauses),
+        used_clauses_child_iterator(llvm::ArrayRef(Clauses.end(), (size_t)0))};
   }
 
   /// Iterates over a filtered subrange of clauses applied to a
@@ -445,7 +446,7 @@ public:
   getClausesOfKind(ArrayRef<OMPClause *> Clauses) {
     return {specific_clause_iterator<SpecificClause>(Clauses),
             specific_clause_iterator<SpecificClause>(
-                ArrayRef(Clauses.end(), (size_t)0))};
+                llvm::ArrayRef(Clauses.end(), (size_t)0))};
   }
 
   template <typename SpecificClause>
@@ -1068,7 +1069,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
   MutableArrayRef<Expr *> getCounters() {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind())]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the private counters storage.
@@ -1076,7 +1077,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the updates storage.
@@ -1084,7 +1085,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              2 * getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the updates storage.
@@ -1092,7 +1093,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              3 * getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the final counter updates storage.
@@ -1100,7 +1101,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              4 * getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the dependent counters storage.
@@ -1108,7 +1109,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              5 * getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the dependent inits storage.
@@ -1116,7 +1117,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              6 * getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
   /// Get the finals conditions storage.
@@ -1124,7 +1125,7 @@ class OMPLoopDirective : public OMPLoopBasedDirective {
     auto **Storage = reinterpret_cast<Expr **>(
         &Data->getChildren()[getArraysOffset(getDirectiveKind()) +
                              7 * getLoopsNumber()]);
-    return {Storage, getLoopsNumber()};
+    return llvm::MutableArrayRef(Storage, getLoopsNumber());
   }
 
 protected:
@@ -5786,13 +5787,10 @@ class OMPReverseDirective final : public OMPLoopTransformationDirective {
     TransformedStmtOffset,
   };
 
-  explicit OMPReverseDirective(SourceLocation StartLoc, SourceLocation EndLoc,
-                               unsigned NumLoops)
+  explicit OMPReverseDirective(SourceLocation StartLoc, SourceLocation EndLoc)
       : OMPLoopTransformationDirective(OMPReverseDirectiveClass,
                                        llvm::omp::OMPD_reverse, StartLoc,
-                                       EndLoc, NumLoops) {
-    setNumGeneratedLoops(NumLoops);
-  }
+                                       EndLoc, 1) {}
 
   void setPreInits(Stmt *PreInits) {
     Data->getChildren()[PreInitsOffset] = PreInits;
@@ -5808,23 +5806,19 @@ public:
   /// \param C         Context of the AST.
   /// \param StartLoc  Location of the introducer (e.g. the 'omp' token).
   /// \param EndLoc    Location of the directive's end (e.g. the tok::eod).
-  /// \param NumLoops Number of affected loops
   /// \param AssociatedStmt  The outermost associated loop.
   /// \param TransformedStmt The loop nest after tiling, or nullptr in
   ///                        dependent contexts.
   /// \param PreInits   Helper preinits statements for the loop nest.
-  static OMPReverseDirective *Create(const ASTContext &C,
-                                     SourceLocation StartLoc,
-                                     SourceLocation EndLoc,
-                                     Stmt *AssociatedStmt, unsigned NumLoops,
-                                     Stmt *TransformedStmt, Stmt *PreInits);
+  static OMPReverseDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         Stmt *AssociatedStmt, Stmt *TransformedStmt, Stmt *PreInits);
 
   /// Build an empty '#pragma omp reverse' AST node for deserialization.
   ///
   /// \param C          Context of the AST.
-  /// \param NumLoops   Number of associated loops to allocate
-  static OMPReverseDirective *CreateEmpty(const ASTContext &C,
-                                          unsigned NumLoops);
+  /// \param NumClauses Number of clauses to allocate.
+  static OMPReverseDirective *CreateEmpty(const ASTContext &C);
 
   /// Gets/sets the associated loops after the transformation, i.e. after
   /// de-sugaring.
@@ -5863,7 +5857,7 @@ class OMPInterchangeDirective final : public OMPLoopTransformationDirective {
       : OMPLoopTransformationDirective(OMPInterchangeDirectiveClass,
                                        llvm::omp::OMPD_interchange, StartLoc,
                                        EndLoc, NumLoops) {
-    setNumGeneratedLoops(NumLoops);
+    setNumGeneratedLoops(3 * NumLoops);
   }
 
   void setPreInits(Stmt *PreInits) {

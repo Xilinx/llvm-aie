@@ -220,8 +220,8 @@ void CallStackRadixTreeBuilder<FrameIdTy>::build(
 }
 
 // Explicitly instantiate class with the utilized FrameIdTy.
-template class LLVM_EXPORT_TEMPLATE CallStackRadixTreeBuilder<FrameId>;
-template class LLVM_EXPORT_TEMPLATE CallStackRadixTreeBuilder<LinearFrameId>;
+template class CallStackRadixTreeBuilder<FrameId>;
+template class CallStackRadixTreeBuilder<LinearFrameId>;
 
 template <typename FrameIdTy>
 llvm::DenseMap<FrameIdTy, FrameStat>
@@ -241,11 +241,10 @@ computeFrameHistogram(llvm::MapVector<CallStackId, llvm::SmallVector<FrameIdTy>>
 }
 
 // Explicitly instantiate function with the utilized FrameIdTy.
-template LLVM_ABI llvm::DenseMap<FrameId, FrameStat>
-computeFrameHistogram<FrameId>(
+template llvm::DenseMap<FrameId, FrameStat> computeFrameHistogram<FrameId>(
     llvm::MapVector<CallStackId, llvm::SmallVector<FrameId>>
         &MemProfCallStackData);
-template LLVM_ABI llvm::DenseMap<LinearFrameId, FrameStat>
+template llvm::DenseMap<LinearFrameId, FrameStat>
 computeFrameHistogram<LinearFrameId>(
     llvm::MapVector<CallStackId, llvm::SmallVector<LinearFrameId>>
         &MemProfCallStackData);

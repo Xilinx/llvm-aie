@@ -123,11 +123,12 @@ bool CodeEmitterGen::addCodeToMergeInOperand(const Record *R,
   // operand number. Non-matching operands are assumed to be in
   // order.
   unsigned OpIdx;
-  if (auto SubOp = CGI.Operands.findSubOperandAlias(VarName)) {
-    OpIdx = CGI.Operands[SubOp->first].MIOperandNo + SubOp->second;
-  } else if (auto MayBeOpIdx = CGI.Operands.findOperandNamed(VarName)) {
+  std::pair<unsigned, unsigned> SubOp;
+  if (CGI.Operands.hasSubOperandAlias(VarName, SubOp)) {
+    OpIdx = CGI.Operands[SubOp.first].MIOperandNo + SubOp.second;
+  } else if (CGI.Operands.hasOperandNamed(VarName, OpIdx)) {
     // Get the machine operand number for the indicated operand.
-    OpIdx = CGI.Operands[*MayBeOpIdx].MIOperandNo;
+    OpIdx = CGI.Operands[OpIdx].MIOperandNo;
   } else {
     PrintError(R, Twine("No operand named ") + VarName + " in record " +
                       R->getName());
@@ -475,7 +476,7 @@ void CodeEmitterGen::run(raw_ostream &O) {
   Target.reverseBitsForLittleEndianEncoding();
 
   ArrayRef<const CodeGenInstruction *> NumberedInstructions =
-      Target.getInstructions();
+      Target.getInstructionsByEnumValue();
 
   if (Target.hasVariableLengthEncodings()) {
     emitVarLenCodeEmitter(Records, O);

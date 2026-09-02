@@ -94,7 +94,6 @@ static bool DeprecatedDriverCommand;
 static ResourceDirRecipeKind ResourceDirRecipe;
 static bool Verbose;
 static bool PrintTiming;
-static bool EmitVisibleModules;
 static llvm::BumpPtrAllocator Alloc;
 static llvm::StringSaver Saver{Alloc};
 static std::vector<const char *> CommandLine;
@@ -233,8 +232,6 @@ static void ParseArgs(int argc, char **argv) {
 
   PrintTiming = Args.hasArg(OPT_print_timing);
 
-  EmitVisibleModules = Args.hasArg(OPT_emit_visible_modules);
-
   Verbose = Args.hasArg(OPT_verbose);
 
   RoundTripArgs = Args.hasArg(OPT_round_trip_args);
@@ -356,16 +353,32 @@ static auto toJSONStrings(llvm::json::OStream &JOS, Container &&Strings) {
   };
 }
 
+static auto toJSONModuleID(llvm::json::OStream &JOS, StringRef ContextHash,
+                           StringRef ModuleName, bool Exported) {
+  return JOS.object([&] {
+    JOS.attribute("context-hash", StringRef(ContextHash));
+    JOS.attribute("module-name", StringRef(ModuleName));
+    if (Exported)
+      JOS.attribute("exported", StringRef("true"));
+  });
+}
+
 // Technically, we don't need to sort the dependency list to get determinism.
 // Leaving these be will simply preserve the import order.
 static auto toJSONSorted(llvm::json::OStream &JOS, std::vector<ModuleID> V) {
   llvm::sort(V);
   return [&JOS, V = std::move(V)] {
-    for (const ModuleID &MID : V)
-      JOS.object([&] {
-        JOS.attribute("context-hash", StringRef(MID.ContextHash));
-        JOS.attribute("module-name", StringRef(MID.ModuleName));
-      });
+    for (const auto &MID : V)
+      toJSONModuleID(JOS, MID.ContextHash, MID.ModuleName, false);
+  };
+}
+
+static auto toJSONSorted(llvm::json::OStream &JOS,
+                         std::vector<ModuleDeps::DepInfo> V) {
+  llvm::sort(V);
+  return [&JOS, V = std::move(V)] {
+    for (const ModuleDeps::DepInfo &MID : V)
+      toJSONModuleID(JOS, MID.ID.ContextHash, MID.ID.ModuleName, MID.Exported);
   };
 }
 
@@ -383,14 +396,6 @@ static auto toJSONSorted(llvm::json::OStream &JOS,
   };
 }
 
-static auto toJSONSorted(llvm::json::OStream &JOS, std::vector<std::string> V) {
-  llvm::sort(V);
-  return [&JOS, V = std::move(V)] {
-    for (const StringRef Entry : V)
-      JOS.value(Entry);
-  };
-}
-
 // Thread safe.
 class FullDeps {
 public:
@@ -404,10 +409,7 @@ public:
     ID.FileName = std::string(Input);
     ID.ContextHash = std::move(TUDeps.ID.ContextHash);
     ID.FileDeps = std::move(TUDeps.FileDeps);
-    ID.NamedModule = std::move(TUDeps.ID.ModuleName);
-    ID.NamedModuleDeps = std::move(TUDeps.NamedModuleDeps);
-    ID.ClangModuleDeps = std::move(TUDeps.ClangModuleDeps);
-    ID.VisibleModules = std::move(TUDeps.VisibleModules);
+    ID.ModuleDeps = std::move(TUDeps.ClangModuleDeps);
     ID.DriverCommandLine = std::move(TUDeps.DriverCommandLine);
     ID.Commands = std::move(TUDeps.Commands);
 
@@ -522,47 +524,27 @@ public:
                   JOS.object([&] {
                     JOS.attribute("clang-context-hash",
                                   StringRef(I.ContextHash));
-                    if (!I.NamedModule.empty())
-                      JOS.attribute("named-module", (I.NamedModule));
-                    if (!I.NamedModuleDeps.empty())
-                      JOS.attributeArray("named-module-deps", [&] {
-                        for (const auto &Dep : I.NamedModuleDeps)
-                          JOS.value(Dep);
-                      });
                     JOS.attributeArray("clang-module-deps",
-                                       toJSONSorted(JOS, I.ClangModuleDeps));
+                                       toJSONSorted(JOS, I.ModuleDeps));
                     JOS.attributeArray("command-line",
                                        toJSONStrings(JOS, Cmd.Arguments));
                     JOS.attribute("executable", StringRef(Cmd.Executable));
                     JOS.attributeArray("file-deps",
                                        toJSONStrings(JOS, I.FileDeps));
                     JOS.attribute("input-file", StringRef(I.FileName));
-                    if (EmitVisibleModules)
-                      JOS.attributeArray("visible-clang-modules",
-                                         toJSONSorted(JOS, I.VisibleModules));
                   });
                 }
               } else {
                 JOS.object([&] {
                   JOS.attribute("clang-context-hash", StringRef(I.ContextHash));
-                  if (!I.NamedModule.empty())
-                    JOS.attribute("named-module", (I.NamedModule));
-                  if (!I.NamedModuleDeps.empty())
-                    JOS.attributeArray("named-module-deps", [&] {
-                      for (const auto &Dep : I.NamedModuleDeps)
-                        JOS.value(Dep);
-                    });
                   JOS.attributeArray("clang-module-deps",
-                                     toJSONSorted(JOS, I.ClangModuleDeps));
+                                     toJSONSorted(JOS, I.ModuleDeps));
                   JOS.attributeArray("command-line",
                                      toJSONStrings(JOS, I.DriverCommandLine));
                   JOS.attribute("executable", "clang");
                   JOS.attributeArray("file-deps",
                                      toJSONStrings(JOS, I.FileDeps));
                   JOS.attribute("input-file", StringRef(I.FileName));
-                  if (EmitVisibleModules)
-                    JOS.attributeArray("visible-clang-modules",
-                                       toJSONSorted(JOS, I.VisibleModules));
                 });
               }
             });
@@ -611,10 +593,7 @@ private:
     std::string FileName;
     std::string ContextHash;
     std::vector<std::string> FileDeps;
-    std::string NamedModule;
-    std::vector<std::string> NamedModuleDeps;
-    std::vector<ModuleID> ClangModuleDeps;
-    std::vector<std::string> VisibleModules;
+    std::vector<ModuleID> ModuleDeps;
     std::vector<std::string> DriverCommandLine;
     std::vector<Command> Commands;
   };
@@ -642,12 +621,11 @@ static bool handleTranslationUnitResult(
   return false;
 }
 
-static bool handleModuleResult(StringRef ModuleName,
-                               llvm::Expected<TranslationUnitDeps> &MaybeTUDeps,
-                               FullDeps &FD, size_t InputIndex,
-                               SharedStream &OS, SharedStream &Errs) {
-  if (!MaybeTUDeps) {
-    llvm::handleAllErrors(MaybeTUDeps.takeError(),
+static bool handleModuleResult(
+    StringRef ModuleName, llvm::Expected<ModuleDepsGraph> &MaybeModuleGraph,
+    FullDeps &FD, size_t InputIndex, SharedStream &OS, SharedStream &Errs) {
+  if (!MaybeModuleGraph) {
+    llvm::handleAllErrors(MaybeModuleGraph.takeError(),
                           [&ModuleName, &Errs](llvm::StringError &Err) {
                             Errs.applyLocked([&](raw_ostream &OS) {
                               OS << "Error while scanning dependencies for "
@@ -657,7 +635,7 @@ static bool handleModuleResult(StringRef ModuleName,
                           });
     return true;
   }
-  FD.mergeDeps(std::move(MaybeTUDeps->ModuleGraph), InputIndex);
+  FD.mergeDeps(std::move(*MaybeModuleGraph), InputIndex);
   return false;
 }
 

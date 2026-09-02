@@ -16,8 +16,7 @@ class LinkDiagnosticInfo : public DiagnosticInfo {
   const Twine &Msg;
 
 public:
-  LinkDiagnosticInfo(DiagnosticSeverity Severity,
-                     const Twine &Msg LLVM_LIFETIME_BOUND);
+  LinkDiagnosticInfo(DiagnosticSeverity Severity, const Twine &Msg);
   void print(DiagnosticPrinter &DP) const override;
 };
 }

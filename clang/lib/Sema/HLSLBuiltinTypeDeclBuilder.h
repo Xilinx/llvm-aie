@@ -91,11 +91,10 @@ public:
   BuiltinTypeDeclBuilder &addConsumeMethod();
 
 private:
-  FieldDecl *getResourceHandleField() const;
+  FieldDecl *getResourceHandleField();
   QualType getFirstTemplateTypeParam();
   QualType getHandleElementType();
   Expr *getConstantIntExpr(int value);
-  HLSLAttributedResourceType::Attributes getResourceAttrs() const;
 };
 
 } // namespace hlsl

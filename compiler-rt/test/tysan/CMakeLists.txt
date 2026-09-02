@@ -21,7 +21,9 @@ foreach(arch ${TYSAN_TEST_ARCH})
 endforeach()
 
 set(TYSAN_TEST_DEPS ${SANITIZER_COMMON_LIT_TEST_DEPS})
-list(APPEND TYSAN_TEST_DEPS tysan)
+if(NOT COMPILER_RT_STANDALONE_BUILD)
+  list(APPEND TYSAN_TEST_DEPS tysan)
+endif()
 
 add_lit_testsuite(check-tysan "Running the TypeSanitizer tests"
   ${TYSAN_TESTSUITES}

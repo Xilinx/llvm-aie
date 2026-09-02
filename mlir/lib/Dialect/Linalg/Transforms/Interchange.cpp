@@ -18,9 +18,14 @@
 #include "mlir/Dialect/Utils/StructuredOpsUtils.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/IR/AffineExpr.h"
+#include "mlir/IR/Matchers.h"
 #include "mlir/IR/PatternMatch.h"
+#include "mlir/Pass/Pass.h"
 #include "mlir/Support/LLVM.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+#include <type_traits>
 
 #define DEBUG_TYPE "linalg-interchange"
 
@@ -88,8 +93,7 @@ mlir::linalg::interchangeGenericOp(RewriterBase &rewriter, GenericOp genericOp,
       allIndices.reserve(genericOp.getNumLoops());
       llvm::transform(llvm::seq<uint64_t>(0, genericOp.getNumLoops()),
                       std::back_inserter(allIndices), [&](uint64_t dim) {
-                        return IndexOp::create(rewriter, indexOp->getLoc(),
-                                               dim);
+                        return rewriter.create<IndexOp>(indexOp->getLoc(), dim);
                       });
       rewriter.replaceOpWithNewOp<affine::AffineApplyOp>(
           indexOp, permutationMap.getSubMap(indexOp.getDim()), allIndices);

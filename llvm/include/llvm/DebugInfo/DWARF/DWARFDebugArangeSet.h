@@ -11,7 +11,6 @@
 
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/BinaryFormat/Dwarf.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
 #include <vector>
@@ -47,7 +46,7 @@ public:
     uint64_t Length;
 
     uint64_t getEndAddress() const { return Address + Length; }
-    LLVM_ABI void dump(raw_ostream &OS, uint32_t AddressSize) const;
+    void dump(raw_ostream &OS, uint32_t AddressSize) const;
   };
 
 private:
@@ -61,10 +60,10 @@ private:
 public:
   DWARFDebugArangeSet() { clear(); }
 
-  LLVM_ABI void clear();
-  LLVM_ABI Error extract(DWARFDataExtractor data, uint64_t *offset_ptr,
-                         function_ref<void(Error)> WarningHandler = nullptr);
-  LLVM_ABI void dump(raw_ostream &OS) const;
+  void clear();
+  Error extract(DWARFDataExtractor data, uint64_t *offset_ptr,
+                function_ref<void(Error)> WarningHandler = nullptr);
+  void dump(raw_ostream &OS) const;
 
   uint64_t getCompileUnitDIEOffset() const { return HeaderData.CuOffset; }
 

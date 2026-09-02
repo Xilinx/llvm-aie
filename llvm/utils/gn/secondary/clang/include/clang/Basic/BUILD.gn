@@ -159,15 +159,7 @@ clang_tablegen("BuiltinsRISCV") {
   args = [ "-gen-clang-builtins" ]
 }
 
-clang_tablegen("BuiltinsSPIRVCommon") {
-  args = [ "-gen-clang-builtins" ]
-}
-
-clang_tablegen("BuiltinsSPIRVVK") {
-  args = [ "-gen-clang-builtins" ]
-}
-
-clang_tablegen("BuiltinsSPIRVCL") {
+clang_tablegen("BuiltinsSPIRV") {
   args = [ "-gen-clang-builtins" ]
 }
 

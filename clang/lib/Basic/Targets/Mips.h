@@ -129,7 +129,7 @@ public:
     LongWidth = LongAlign = 32;
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 32;
     PointerWidth = PointerAlign = 32;
-    PtrDiffType = IntPtrType = SignedInt;
+    PtrDiffType = SignedInt;
     SizeType = UnsignedInt;
     SuitableAlign = 64;
   }
@@ -155,7 +155,7 @@ public:
     IntMaxType = Int64Type;
     LongWidth = LongAlign = 64;
     PointerWidth = PointerAlign = 64;
-    PtrDiffType = IntPtrType = SignedLong;
+    PtrDiffType = SignedLong;
     SizeType = UnsignedLong;
   }
 
@@ -165,7 +165,7 @@ public:
     IntMaxType = Int64Type;
     LongWidth = LongAlign = 32;
     PointerWidth = PointerAlign = 32;
-    PtrDiffType = IntPtrType = SignedInt;
+    PtrDiffType = SignedInt;
     SizeType = UnsignedInt;
   }
 

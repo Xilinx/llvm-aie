@@ -31,7 +31,6 @@
 #include "llvm/IR/IntrinsicsR600.h"
 #include "llvm/IR/IntrinsicsRISCV.h"
 #include "llvm/IR/IntrinsicsS390.h"
-#include "llvm/IR/IntrinsicsSPIRV.h"
 #include "llvm/IR/IntrinsicsVE.h"
 #include "llvm/IR/IntrinsicsX86.h"
 #include "llvm/IR/IntrinsicsXCore.h"
@@ -651,20 +650,20 @@ static int lookupLLVMIntrinsicByName(ArrayRef<unsigned> NameOffsetTable,
       // `equal_range` requires the comparison to work with either side being an
       // offset or the value. Detect which kind each side is to set up the
       // compared strings.
-      const char *LHSStr;
-      if constexpr (std::is_integral_v<decltype(LHS)>)
-        LHSStr = IntrinsicNameTable.getCString(LHS);
-      else
+      StringRef LHSStr;
+      if constexpr (std::is_integral_v<decltype(LHS)>) {
+        LHSStr = IntrinsicNameTable[LHS];
+      } else {
         LHSStr = LHS;
-
-      const char *RHSStr;
-      if constexpr (std::is_integral_v<decltype(RHS)>)
-        RHSStr = IntrinsicNameTable.getCString(RHS);
-      else
+      }
+      StringRef RHSStr;
+      if constexpr (std::is_integral_v<decltype(RHS)>) {
+        RHSStr = IntrinsicNameTable[RHS];
+      } else {
         RHSStr = RHS;
-
-      return strncmp(LHSStr + CmpStart, RHSStr + CmpStart, CmpEnd - CmpStart) <
-             0;
+      }
+      return strncmp(LHSStr.data() + CmpStart, RHSStr.data() + CmpStart,
+                     CmpEnd - CmpStart) < 0;
     };
     LastLow = Low;
     std::tie(Low, High) = std::equal_range(Low, High, Name.data(), Cmp);

@@ -22,7 +22,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Transforms/Scalar.h"
 #include <memory>
@@ -37,8 +36,7 @@ static cl::opt<bool> EnableMachineCombinerPass(
     cl::init(true), cl::Hidden);
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeSystemZTarget() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSystemZTarget() {
   // Register the target.
   RegisterTargetMachine<SystemZTargetMachine> X(getTheSystemZTarget());
   auto &PR = *PassRegistry::getPassRegistry();
@@ -211,7 +209,8 @@ SystemZTargetMachine::getSubtargetImpl(const Function &F) const {
 
 ScheduleDAGInstrs *
 SystemZTargetMachine::createPostMachineScheduler(MachineSchedContext *C) const {
-  return createSchedPostRA<SystemZPostRASchedStrategy>(C);
+  return new ScheduleDAGMI(C, std::make_unique<SystemZPostRASchedStrategy>(C),
+                           /*RemoveKillFlags=*/true);
 }
 
 namespace {

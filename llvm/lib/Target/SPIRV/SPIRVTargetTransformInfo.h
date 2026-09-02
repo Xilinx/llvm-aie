@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/BasicTTIImpl.h"
 
 namespace llvm {
-class SPIRVTTIImpl final : public BasicTTIImplBase<SPIRVTTIImpl> {
+class SPIRVTTIImpl : public BasicTTIImplBase<SPIRVTTIImpl> {
   using BaseT = BasicTTIImplBase<SPIRVTTIImpl>;
   using TTI = TargetTransformInfo;
 
@@ -50,15 +50,14 @@ public:
   }
 
   unsigned getFlatAddressSpace() const override {
-    // Clang has 2 distinct address space maps. One where
+    if (ST->isVulkanEnv())
+      return 0;
+    // FIXME: Clang has 2 distinct address space maps. One where
     // default=4=Generic, and one with default=0=Function. This depends on the
-    // environment.
-    return ST->isShader() ? 0 : 4;
+    // environment. For OpenCL, we don't need to run the InferAddrSpace pass, so
+    // we can return -1, but we might want to fix this.
+    return -1;
   }
-  bool collectFlatAddressOperands(SmallVectorImpl<int> &OpIndexes,
-                                  Intrinsic::ID IID) const override;
-  Value *rewriteIntrinsicWithAddressSpace(IntrinsicInst *II, Value *OldV,
-                                          Value *NewV) const override;
 };
 
 } // namespace llvm

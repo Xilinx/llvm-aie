@@ -109,14 +109,15 @@ bool ModFileWriter::WriteAll() {
 }
 
 void ModFileWriter::WriteAll(const Scope &scope) {
-  for (const Scope &child : scope.children()) {
+  for (const auto &child : scope.children()) {
     WriteOne(child);
   }
 }
 
 void ModFileWriter::WriteOne(const Scope &scope) {
   if (scope.kind() == Scope::Kind::Module) {
-    if (const auto *symbol{scope.symbol()}) {
+    auto *symbol{scope.symbol()};
+    if (!symbol->test(Symbol::Flag::ModFile)) {
       Write(*symbol);
     }
     WriteAll(scope); // write out submodules
@@ -133,7 +134,7 @@ static std::string ModFileName(const SourceName &name,
 // Write the module file for symbol, which must be a module or submodule.
 void ModFileWriter::Write(const Symbol &symbol) {
   const auto &module{symbol.get<ModuleDetails>()};
-  if (symbol.test(Symbol::Flag::ModFile) || module.moduleFileHash()) {
+  if (module.moduleFileHash()) {
     return; // already written
   }
   const auto *ancestor{module.ancestor()};
@@ -142,22 +143,18 @@ void ModFileWriter::Write(const Symbol &symbol) {
   std::string path{context_.moduleDirectory() + '/' +
       ModFileName(symbol.name(), ancestorName, context_.moduleFileSuffix())};
 
-  std::set<std::string> hermeticModuleNames;
-  hermeticModuleNames.insert(symbol.name().ToString());
+  UnorderedSymbolSet hermeticModules;
+  hermeticModules.insert(symbol);
   UnorderedSymbolSet additionalModules;
   PutSymbols(DEREF(symbol.scope()),
       hermeticModuleFileOutput_ ? &additionalModules : nullptr);
   auto asStr{GetAsString(symbol)};
   while (!additionalModules.empty()) {
-    UnorderedSymbolSet nextPass{std::move(additionalModules)};
-    additionalModules.clear();
-    for (const Symbol &modSym : nextPass) {
-      if (!modSym.owner().IsIntrinsicModules() &&
-          hermeticModuleNames.find(modSym.name().ToString()) ==
-              hermeticModuleNames.end()) {
-        hermeticModuleNames.insert(modSym.name().ToString());
-        PutSymbols(DEREF(modSym.scope()), &additionalModules);
-        asStr += GetAsString(modSym);
+    for (auto ref : UnorderedSymbolSet{std::move(additionalModules)}) {
+      if (hermeticModules.insert(*ref).second &&
+          !ref->owner().IsIntrinsicModules()) {
+        PutSymbols(DEREF(ref->scope()), &additionalModules);
+        asStr += GetAsString(*ref);
       }
     }
   }
@@ -371,19 +368,16 @@ void ModFileWriter::PutSymbols(
   CollectSymbols(scope, sorted, uses, modules);
   // Write module files for dependencies first so that their
   // hashes are known.
-  for (const Symbol &mod : modules) {
+  for (auto ref : modules) {
     if (hermeticModules) {
-      hermeticModules->insert(mod);
+      hermeticModules->insert(*ref);
     } else {
-      Write(mod);
-      // It's possible that the module's file already existed and
-      // without its own hash due to being embedded in a hermetic
-      // module file.
-      if (auto hash{mod.get<ModuleDetails>().moduleFileHash()}) {
-        needs_ << ModHeader::need << CheckSumString(*hash)
-               << (mod.owner().IsIntrinsicModules() ? " i " : " n ")
-               << mod.name().ToString() << '\n';
-      }
+      Write(*ref);
+      needs_ << ModHeader::need
+             << CheckSumString(
+                    ref->get<ModuleDetails>().moduleFileHash().value())
+             << (ref->owner().IsIntrinsicModules() ? " i " : " n ")
+             << ref->name().ToString() << '\n';
     }
   }
   std::string buf; // stuff after CONTAINS in derived type
@@ -857,25 +851,25 @@ void CollectSymbols(const Scope &scope, SymbolVector &sorted,
   auto symbols{scope.GetSymbols()};
   std::size_t commonSize{scope.commonBlocks().size()};
   sorted.reserve(symbols.size() + commonSize);
-  for (const Symbol &symbol : symbols) {
-    const auto *generic{symbol.detailsIf<GenericDetails>()};
+  for (SymbolRef symbol : symbols) {
+    const auto *generic{symbol->detailsIf<GenericDetails>()};
     if (generic) {
       uses.insert(uses.end(), generic->uses().begin(), generic->uses().end());
-      for (const Symbol &used : generic->uses()) {
-        modules.insert(GetUsedModule(used.get<UseDetails>()));
+      for (auto ref : generic->uses()) {
+        modules.insert(GetUsedModule(ref->get<UseDetails>()));
       }
-    } else if (const auto *use{symbol.detailsIf<UseDetails>()}) {
+    } else if (const auto *use{symbol->detailsIf<UseDetails>()}) {
       modules.insert(GetUsedModule(*use));
     }
-    if (symbol.test(Symbol::Flag::ParentComp)) {
-    } else if (symbol.has<NamelistDetails>()) {
+    if (symbol->test(Symbol::Flag::ParentComp)) {
+    } else if (symbol->has<NamelistDetails>()) {
       namelist.push_back(symbol);
     } else if (generic) {
       if (generic->specific() &&
-          &generic->specific()->owner() == &symbol.owner()) {
+          &generic->specific()->owner() == &symbol->owner()) {
         sorted.push_back(*generic->specific());
       } else if (generic->derivedType() &&
-          &generic->derivedType()->owner() == &symbol.owner()) {
+          &generic->derivedType()->owner() == &symbol->owner()) {
         sorted.push_back(*generic->derivedType());
       }
       generics.push_back(symbol);
@@ -900,7 +894,6 @@ void ModFileWriter::PutEntity(llvm::raw_ostream &os, const Symbol &symbol) {
           [&](const ObjectEntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ProcEntityDetails &) { PutProcEntity(os, symbol); },
           [&](const TypeParamDetails &) { PutTypeParam(os, symbol); },
-          [&](const UserReductionDetails &) { PutUserReduction(os, symbol); },
           [&](const auto &) {
             common::die("PutEntity: unexpected details: %s",
                 DetailsToString(symbol.details()).c_str());
@@ -1048,28 +1041,6 @@ void ModFileWriter::PutTypeParam(llvm::raw_ostream &os, const Symbol &symbol) {
       symbol.attrs());
   PutInit(os, details.init());
   os << '\n';
-}
-
-void ModFileWriter::PutUserReduction(
-    llvm::raw_ostream &os, const Symbol &symbol) {
-  const auto &details{symbol.get<UserReductionDetails>()};
-  // The module content for a OpenMP Declare Reduction is the OpenMP
-  // declaration. There may be multiple declarations.
-  // Decls are pointers, so do not use a reference.
-  for (const auto decl : details.GetDeclList()) {
-    common::visit( //
-        common::visitors{//
-            [&](const parser::OpenMPDeclareReductionConstruct *d) {
-              Unparse(os, *d, context_.langOptions());
-            },
-            [&](const parser::OmpMetadirectiveDirective *m) {
-              Unparse(os, *m, context_.langOptions());
-            },
-            [&](const auto &) {
-              DIE("Unknown OpenMP DECLARE REDUCTION content");
-            }},
-        decl);
-  }
 }
 
 void PutInit(llvm::raw_ostream &os, const Symbol &symbol, const MaybeExpr &init,

@@ -11,8 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LanaiMCAsmInfo.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/Support/raw_ostream.h"
+
 #include "llvm/TargetParser/Triple.h"
 
 using namespace llvm;
@@ -38,27 +37,4 @@ LanaiMCAsmInfo::LanaiMCAsmInfo(const Triple & /*TheTriple*/,
   // Set the instruction alignment. Currently used only for address adjustment
   // in dwarf generation.
   MinInstAlignment = 4;
-}
-
-void LanaiMCAsmInfo::printSpecifierExpr(raw_ostream &OS,
-                                        const MCSpecifierExpr &Expr) const {
-  if (Expr.getSpecifier() == 0) {
-    printExpr(OS, *Expr.getSubExpr());
-    return;
-  }
-
-  switch (Expr.getSpecifier()) {
-  default:
-    llvm_unreachable("Invalid kind!");
-  case Lanai::S_ABS_HI:
-    OS << "hi";
-    break;
-  case Lanai::S_ABS_LO:
-    OS << "lo";
-    break;
-  }
-
-  OS << '(';
-  printExpr(OS, *Expr.getSubExpr());
-  OS << ')';
 }

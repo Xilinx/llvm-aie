@@ -8,7 +8,6 @@
 
 #include "TargetInfo/LoongArchTargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 Target &llvm::getTheLoongArch32Target() {
@@ -21,8 +20,7 @@ Target &llvm::getTheLoongArch64Target() {
   return TheLoongArch64Target;
 }
 
-extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
-LLVMInitializeLoongArchTargetInfo() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLoongArchTargetInfo() {
   RegisterTarget<Triple::loongarch32, /*HasJIT=*/false> X(
       getTheLoongArch32Target(), "loongarch32", "32-bit LoongArch",
       "LoongArch");

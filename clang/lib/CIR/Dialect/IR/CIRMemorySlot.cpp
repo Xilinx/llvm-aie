@@ -74,7 +74,7 @@ bool cir::LoadOp::canUsesBeRemoved(
     return false;
   Value blockingUse = (*blockingUses.begin())->get();
   return blockingUse == slot.ptr && getAddr() == slot.ptr &&
-         getType() == slot.elemType;
+         getResult().getType() == slot.elemType;
 }
 
 DeletionKind cir::LoadOp::removeBlockingUses(

@@ -26,7 +26,7 @@
 #include <ranges>
 #include <tuple>
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 template <class Base = int*>
 struct convertible_forward_sized_iterator {

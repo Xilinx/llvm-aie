@@ -44,7 +44,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   class AAResults;
@@ -68,7 +67,7 @@ namespace llvm {
   /// if successor edges for its source instruction. These sets are represented
   /// as singly-linked lists, with the "next" fields stored in the dependence
   /// itelf.
-  class LLVM_ABI Dependence {
+  class Dependence {
   protected:
     Dependence(Dependence &&) = default;
     Dependence &operator=(Dependence &&) = default;
@@ -229,7 +228,7 @@ namespace llvm {
   /// (for output, flow, and anti dependences), the dependence implies an
   /// ordering, where the source must precede the destination; in contrast,
   /// input dependences are unordered.
-  class LLVM_ABI FullDependence final : public Dependence {
+  class FullDependence final : public Dependence {
   public:
     FullDependence(Instruction *Source, Instruction *Destination,
                    const SCEVUnionPredicate &Assumes,
@@ -304,8 +303,8 @@ namespace llvm {
         : AA(AA), SE(SE), LI(LI), F(F) {}
 
     /// Handle transitive invalidation when the cached analysis results go away.
-    LLVM_ABI bool invalidate(Function &F, const PreservedAnalyses &PA,
-                             FunctionAnalysisManager::Invalidator &Inv);
+    bool invalidate(Function &F, const PreservedAnalyses &PA,
+                    FunctionAnalysisManager::Invalidator &Inv);
 
     /// depends - Tests for a dependence between the Src and Dst instructions.
     /// Returns NULL if no dependence; otherwise, returns a Dependence (or a
@@ -314,9 +313,8 @@ namespace llvm {
     /// solved at compilation time. By default UnderRuntimeAssumptions is false
     /// for a safe approximation of the dependence relation that does not
     /// require runtime checks.
-    LLVM_ABI std::unique_ptr<Dependence>
-    depends(Instruction *Src, Instruction *Dst,
-            bool UnderRuntimeAssumptions = false);
+    std::unique_ptr<Dependence> depends(Instruction *Src, Instruction *Dst,
+                                        bool UnderRuntimeAssumptions = false);
 
     /// getSplitIteration - Give a dependence that's splittable at some
     /// particular level, return the iteration that should be used to split
@@ -358,14 +356,13 @@ namespace llvm {
     ///
     /// breaks the dependence and allows us to vectorize/parallelize
     /// both loops.
-    LLVM_ABI const SCEV *getSplitIteration(const Dependence &Dep,
-                                           unsigned Level);
+    const SCEV *getSplitIteration(const Dependence &Dep, unsigned Level);
 
     Function *getFunction() const { return F; }
 
     /// getRuntimeAssumptions - Returns all the runtime assumptions under which
     /// the dependence test is valid.
-    LLVM_ABI SCEVUnionPredicate getRuntimeAssumptions() const;
+    SCEVUnionPredicate getRuntimeAssumptions() const;
 
   private:
     AAResults *AA;
@@ -445,51 +442,50 @@ namespace llvm {
 
       /// getX - If constraint is a point <X, Y>, returns X.
       /// Otherwise assert.
-      LLVM_ABI const SCEV *getX() const;
+      const SCEV *getX() const;
 
       /// getY - If constraint is a point <X, Y>, returns Y.
       /// Otherwise assert.
-      LLVM_ABI const SCEV *getY() const;
+      const SCEV *getY() const;
 
       /// getA - If constraint is a line AX + BY = C, returns A.
       /// Otherwise assert.
-      LLVM_ABI const SCEV *getA() const;
+      const SCEV *getA() const;
 
       /// getB - If constraint is a line AX + BY = C, returns B.
       /// Otherwise assert.
-      LLVM_ABI const SCEV *getB() const;
+      const SCEV *getB() const;
 
       /// getC - If constraint is a line AX + BY = C, returns C.
       /// Otherwise assert.
-      LLVM_ABI const SCEV *getC() const;
+      const SCEV *getC() const;
 
       /// getD - If constraint is a distance, returns D.
       /// Otherwise assert.
-      LLVM_ABI const SCEV *getD() const;
+      const SCEV *getD() const;
 
       /// getAssociatedLoop - Returns the loop associated with this constraint.
-      LLVM_ABI const Loop *getAssociatedLoop() const;
+      const Loop *getAssociatedLoop() const;
 
       /// setPoint - Change a constraint to Point.
-      LLVM_ABI void setPoint(const SCEV *X, const SCEV *Y,
-                             const Loop *CurrentLoop);
+      void setPoint(const SCEV *X, const SCEV *Y, const Loop *CurrentLoop);
 
       /// setLine - Change a constraint to Line.
-      LLVM_ABI void setLine(const SCEV *A, const SCEV *B, const SCEV *C,
-                            const Loop *CurrentLoop);
+      void setLine(const SCEV *A, const SCEV *B,
+                   const SCEV *C, const Loop *CurrentLoop);
 
       /// setDistance - Change a constraint to Distance.
-      LLVM_ABI void setDistance(const SCEV *D, const Loop *CurrentLoop);
+      void setDistance(const SCEV *D, const Loop *CurrentLoop);
 
       /// setEmpty - Change a constraint to Empty.
-      LLVM_ABI void setEmpty();
+      void setEmpty();
 
       /// setAny - Change a constraint to Any.
-      LLVM_ABI void setAny(ScalarEvolution *SE);
+      void setAny(ScalarEvolution *SE);
 
       /// dump - For debugging purposes. Dumps the constraint
       /// out to OS.
-      LLVM_ABI void dump(raw_ostream &OS) const;
+      void dump(raw_ostream &OS) const;
     };
 
     /// establishNestingLevels - Examines the loop nesting of the Src and Dst
@@ -993,10 +989,10 @@ namespace llvm {
   class DependenceAnalysis : public AnalysisInfoMixin<DependenceAnalysis> {
   public:
     typedef DependenceInfo Result;
-    LLVM_ABI Result run(Function &F, FunctionAnalysisManager &FAM);
+    Result run(Function &F, FunctionAnalysisManager &FAM);
 
   private:
-    LLVM_ABI static AnalysisKey Key;
+    static AnalysisKey Key;
     friend struct AnalysisInfoMixin<DependenceAnalysis>;
   }; // class DependenceAnalysis
 
@@ -1007,7 +1003,7 @@ namespace llvm {
                                   bool NormalizeResults = false)
         : OS(OS), NormalizeResults(NormalizeResults) {}
 
-    LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
+    PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
 
     static bool isRequired() { return true; }
 
@@ -1017,7 +1013,7 @@ namespace llvm {
   }; // class DependenceAnalysisPrinterPass
 
   /// Legacy pass manager pass to access dependence information
-  class LLVM_ABI DependenceAnalysisWrapperPass : public FunctionPass {
+  class DependenceAnalysisWrapperPass : public FunctionPass {
   public:
     static char ID; // Class identification, replacement for typeinfo
     DependenceAnalysisWrapperPass();
@@ -1034,7 +1030,7 @@ namespace llvm {
 
   /// createDependenceAnalysisPass - This creates an instance of the
   /// DependenceAnalysis wrapper pass.
-  LLVM_ABI FunctionPass *createDependenceAnalysisWrapperPass();
+  FunctionPass *createDependenceAnalysisWrapperPass();
 
 } // namespace llvm
 

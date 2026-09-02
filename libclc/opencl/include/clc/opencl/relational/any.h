@@ -6,11 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_RELATIONAL_ANY_H__
-#define __CLC_OPENCL_RELATIONAL_ANY_H__
-
-#include <clc/opencl/opencl-base.h>
-
 #define _CLC_ANY_DECL(TYPE) _CLC_OVERLOAD _CLC_DECL int any(TYPE v);
 
 #define _CLC_VECTOR_ANY_DECL(TYPE)                                             \
@@ -28,5 +23,3 @@ _CLC_VECTOR_ANY_DECL(long)
 
 #undef _CLC_ANY_DECL
 #undef _CLC_VECTOR_ANY_DECL
-
-#endif // __CLC_OPENCL_RELATIONAL_ANY_H__

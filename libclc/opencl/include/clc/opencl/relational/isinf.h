@@ -6,11 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_RELATIONAL_ISINF_H__
-#define __CLC_OPENCL_RELATIONAL_ISINF_H__
-
-#include <clc/opencl/opencl-base.h>
-
 #define _CLC_ISINF_DECL(RET_TYPE, ARG_TYPE)                                    \
   _CLC_OVERLOAD _CLC_DECL RET_TYPE isinf(ARG_TYPE);
 
@@ -36,5 +31,3 @@ _CLC_VECTOR_ISINF_DECL(short, half)
 
 #undef _CLC_ISINF_DECL
 #undef _CLC_VECTOR_ISINF_DECL
-
-#endif // __CLC_OPENCL_RELATIONAL_ISINF_H__

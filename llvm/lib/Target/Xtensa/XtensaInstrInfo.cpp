@@ -151,15 +151,11 @@ void XtensaInstrInfo::getLoadStoreOpcodes(const TargetRegisterClass *RC,
                                           unsigned &LoadOpcode,
                                           unsigned &StoreOpcode,
                                           int64_t offset) const {
-  if (RC == &Xtensa::ARRegClass) {
-    LoadOpcode = Xtensa::L32I;
-    StoreOpcode = Xtensa::S32I;
-  } else if (RC == &Xtensa::FPRRegClass) {
-    LoadOpcode = Xtensa::LSI;
-    StoreOpcode = Xtensa::SSI;
-  } else {
-    llvm_unreachable("Unsupported regclass to load or store");
-  }
+  assert((RC == &Xtensa::ARRegClass) &&
+         "Unsupported regclass to load or store");
+
+  LoadOpcode = Xtensa::L32I;
+  StoreOpcode = Xtensa::S32I;
 }
 
 void XtensaInstrInfo::loadImmediate(MachineBasicBlock &MBB,
@@ -261,12 +257,6 @@ bool XtensaInstrInfo::reverseBranchCondition(
   case Xtensa::BGEZ:
     Cond[0].setImm(Xtensa::BLTZ);
     return false;
-  case Xtensa::BF:
-    Cond[0].setImm(Xtensa::BT);
-    return false;
-  case Xtensa::BT:
-    Cond[0].setImm(Xtensa::BF);
-    return false;
   default:
     report_fatal_error("Invalid branch condition!");
   }
@@ -299,9 +289,6 @@ XtensaInstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
   case Xtensa::BNEZ:
   case Xtensa::BLTZ:
   case Xtensa::BGEZ:
-    return MI.getOperand(1).getMBB();
-  case Xtensa::BT:
-  case Xtensa::BF:
     return MI.getOperand(1).getMBB();
   default:
     llvm_unreachable("Unknown branch opcode");
@@ -338,10 +325,6 @@ bool XtensaInstrInfo::isBranchOffsetInRange(unsigned BranchOp,
   case Xtensa::BGEZ:
     BrOffset -= 4;
     return isIntN(12, BrOffset);
-  case Xtensa::BT:
-  case Xtensa::BF:
-    BrOffset -= 4;
-    return isIntN(8, BrOffset);
   default:
     llvm_unreachable("Unknown branch opcode");
   }
@@ -537,10 +520,8 @@ void XtensaInstrInfo::insertIndirectBranch(MachineBasicBlock &MBB,
     JumpToMBB = &RestoreBB;
   }
 
-  unsigned LabelId = XtensaFI->createCPLabelId();
-
   XtensaConstantPoolValue *C = XtensaConstantPoolMBB::Create(
-      MF->getFunction().getContext(), JumpToMBB, LabelId);
+      MF->getFunction().getContext(), JumpToMBB, 0);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align(4));
   L32R.addOperand(MachineOperand::CreateCPI(Idx, 0));
 
@@ -592,10 +573,6 @@ unsigned XtensaInstrInfo::insertConstBranchAtInst(
   case Xtensa::BNEZ:
   case Xtensa::BLTZ:
   case Xtensa::BGEZ:
-    MI = BuildMI(MBB, I, DL, get(BR_C)).addImm(offset).addReg(Cond[1].getReg());
-    break;
-  case Xtensa::BT:
-  case Xtensa::BF:
     MI = BuildMI(MBB, I, DL, get(BR_C)).addImm(offset).addReg(Cond[1].getReg());
     break;
   default:
@@ -658,10 +635,6 @@ unsigned XtensaInstrInfo::insertBranchAtInst(MachineBasicBlock &MBB,
   case Xtensa::BGEZ:
     MI = BuildMI(MBB, I, DL, get(BR_C)).addReg(Cond[1].getReg()).addMBB(TBB);
     break;
-  case Xtensa::BT:
-  case Xtensa::BF:
-    MI = BuildMI(MBB, I, DL, get(BR_C)).addReg(Cond[1].getReg()).addMBB(TBB);
-    break;
   default:
     report_fatal_error("Invalid branch type!");
   }
@@ -706,12 +679,6 @@ bool XtensaInstrInfo::isBranch(const MachineBasicBlock::iterator &MI,
   case Xtensa::BNEZ:
   case Xtensa::BLTZ:
   case Xtensa::BGEZ:
-    Cond[0].setImm(OpCode);
-    Target = &MI->getOperand(1);
-    return true;
-
-  case Xtensa::BT:
-  case Xtensa::BF:
     Cond[0].setImm(OpCode);
     Target = &MI->getOperand(1);
     return true;

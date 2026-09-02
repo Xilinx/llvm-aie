@@ -545,7 +545,7 @@ private:
     case MachONegDelta64:
       return "MachONegDelta64";
     default:
-      return getGenericEdgeKindName(R);
+      return getGenericEdgeKindName(static_cast<Edge::Kind>(R));
     }
   }
 

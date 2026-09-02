@@ -24,7 +24,8 @@ namespace coro {
 
 bool isSuspendBlock(BasicBlock *BB);
 bool declaresAnyIntrinsic(const Module &M);
-bool declaresIntrinsics(const Module &M, ArrayRef<Intrinsic::ID> List);
+bool declaresIntrinsics(const Module &M,
+                        const std::initializer_list<StringRef>);
 void replaceCoroFree(CoroIdInst *CoroId, bool Elide);
 
 /// Replaces all @llvm.coro.alloc intrinsics calls associated with a given
@@ -34,11 +35,14 @@ void suppressCoroAllocs(CoroIdInst *CoroId);
 void suppressCoroAllocs(LLVMContext &Context,
                         ArrayRef<CoroAllocInst *> CoroAllocs);
 
-/// Attempts to rewrite the location operand of debug records in terms of
+/// Attempts to rewrite the location operand of debug intrinsics in terms of
 /// the coroutine frame pointer, folding pointer offsets into the DIExpression
 /// of the intrinsic.
 /// If the frame pointer is an Argument, store it into an alloca to enhance the
 /// debugability.
+void salvageDebugInfo(
+    SmallDenseMap<Argument *, AllocaInst *, 4> &ArgToAllocaMap,
+    DbgVariableIntrinsic &DVI, bool IsEntryPoint);
 void salvageDebugInfo(
     SmallDenseMap<Argument *, AllocaInst *, 4> &ArgToAllocaMap,
     DbgVariableRecord &DVR, bool UseEntryValue);

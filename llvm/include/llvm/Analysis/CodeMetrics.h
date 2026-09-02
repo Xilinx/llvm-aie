@@ -15,7 +15,6 @@
 #define LLVM_ANALYSIS_CODEMETRICS_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstructionCost.h"
 
 namespace llvm {
@@ -78,22 +77,19 @@ struct CodeMetrics {
   unsigned NumRets = 0;
 
   /// Add information about a block to the current state.
-  LLVM_ABI void
-  analyzeBasicBlock(const BasicBlock *BB, const TargetTransformInfo &TTI,
-                    const SmallPtrSetImpl<const Value *> &EphValues,
-                    bool PrepareForLTO = false, const Loop *L = nullptr);
+  void analyzeBasicBlock(const BasicBlock *BB, const TargetTransformInfo &TTI,
+                         const SmallPtrSetImpl<const Value *> &EphValues,
+                         bool PrepareForLTO = false, const Loop *L = nullptr);
 
   /// Collect a loop's ephemeral values (those used only by an assume
   /// or similar intrinsics in the loop).
-  LLVM_ABI static void
-  collectEphemeralValues(const Loop *L, AssumptionCache *AC,
-                         SmallPtrSetImpl<const Value *> &EphValues);
+  static void collectEphemeralValues(const Loop *L, AssumptionCache *AC,
+                                     SmallPtrSetImpl<const Value *> &EphValues);
 
   /// Collect a functions's ephemeral values (those used only by an
   /// assume or similar intrinsics in the function).
-  LLVM_ABI static void
-  collectEphemeralValues(const Function *L, AssumptionCache *AC,
-                         SmallPtrSetImpl<const Value *> &EphValues);
+  static void collectEphemeralValues(const Function *L, AssumptionCache *AC,
+                                     SmallPtrSetImpl<const Value *> &EphValues);
 };
 
 }

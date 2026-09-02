@@ -21,7 +21,6 @@
 #include "llvm/IR/ProfileSummary.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/BlockFrequency.h"
-#include "llvm/Support/Compiler.h"
 #include <memory>
 #include <optional>
 
@@ -66,7 +65,7 @@ public:
 
   /// If a summary is provided as argument, use that. Otherwise,
   /// if the `Summary` member is null, attempt to refresh.
-  LLVM_ABI void refresh(std::unique_ptr<ProfileSummary> &&Other = nullptr);
+  void refresh(std::unique_ptr<ProfileSummary> &&Other = nullptr);
 
   /// Returns true if profile summary is available.
   bool hasProfileSummary() const { return Summary != nullptr; }
@@ -101,15 +100,15 @@ public:
   }
 
   /// Returns the profile count for \p CallInst.
-  LLVM_ABI std::optional<uint64_t>
-  getProfileCount(const CallBase &CallInst, BlockFrequencyInfo *BFI,
-                  bool AllowSynthetic = false) const;
+  std::optional<uint64_t> getProfileCount(const CallBase &CallInst,
+                                          BlockFrequencyInfo *BFI,
+                                          bool AllowSynthetic = false) const;
   /// Returns true if module \c M has partial-profile sample profile.
-  LLVM_ABI bool hasPartialSampleProfile() const;
+  bool hasPartialSampleProfile() const;
   /// Returns true if the working set size of the code is considered huge.
-  LLVM_ABI bool hasHugeWorkingSetSize() const;
+  bool hasHugeWorkingSetSize() const;
   /// Returns true if the working set size of the code is considered large.
-  LLVM_ABI bool hasLargeWorkingSetSize() const;
+  bool hasLargeWorkingSetSize() const;
   /// Returns true if \p F has hot function entry. If it returns false, it
   /// either means it is not hot or it is unknown whether it is hot or not (for
   /// example, no profile data is available).
@@ -142,7 +141,7 @@ public:
     return false;
   }
   /// Returns true if \p F has cold function entry.
-  LLVM_ABI bool isFunctionEntryCold(const Function *F) const;
+  bool isFunctionEntryCold(const Function *F) const;
   /// Returns true if \p F contains only cold code.
   template <typename FuncT, typename BFIT>
   bool isFunctionColdInCallGraph(const FuncT *F, BFIT &BFI) const {
@@ -162,7 +161,7 @@ public:
     return true;
   }
   /// Returns true if the hotness of \p F is unknown.
-  LLVM_ABI bool isFunctionHotnessUnknown(const Function &F) const;
+  bool isFunctionHotnessUnknown(const Function &F) const;
   /// Returns true if \p F contains hot code with regard to a given hot
   /// percentile cutoff value.
   template <typename FuncT, typename BFIT>
@@ -180,20 +179,19 @@ public:
         PercentileCutoff, F, BFI);
   }
   /// Returns true if count \p C is considered hot.
-  LLVM_ABI bool isHotCount(uint64_t C) const;
+  bool isHotCount(uint64_t C) const;
   /// Returns true if count \p C is considered cold.
-  LLVM_ABI bool isColdCount(uint64_t C) const;
+  bool isColdCount(uint64_t C) const;
   /// Returns true if count \p C is considered hot with regard to a given
   /// hot percentile cutoff value.
   /// PercentileCutoff is encoded as a 6 digit decimal fixed point number, where
   /// the first two digits are the whole part. E.g. 995000 for 99.5 percentile.
-  LLVM_ABI bool isHotCountNthPercentile(int PercentileCutoff, uint64_t C) const;
+  bool isHotCountNthPercentile(int PercentileCutoff, uint64_t C) const;
   /// Returns true if count \p C is considered cold with regard to a given
   /// cold percentile cutoff value.
   /// PercentileCutoff is encoded as a 6 digit decimal fixed point number, where
   /// the first two digits are the whole part. E.g. 995000 for 99.5 percentile.
-  LLVM_ABI bool isColdCountNthPercentile(int PercentileCutoff,
-                                         uint64_t C) const;
+  bool isColdCountNthPercentile(int PercentileCutoff, uint64_t C) const;
 
   /// Returns true if BasicBlock \p BB is considered hot.
   template <typename BBType, typename BFIT>
@@ -246,17 +244,15 @@ public:
                                                       BlockFreq, BFI);
   }
   /// Returns true if the call site \p CB is considered hot.
-  LLVM_ABI bool isHotCallSite(const CallBase &CB,
-                              BlockFrequencyInfo *BFI) const;
+  bool isHotCallSite(const CallBase &CB, BlockFrequencyInfo *BFI) const;
   /// Returns true if call site \p CB is considered cold.
-  LLVM_ABI bool isColdCallSite(const CallBase &CB,
-                               BlockFrequencyInfo *BFI) const;
+  bool isColdCallSite(const CallBase &CB, BlockFrequencyInfo *BFI) const;
   /// Returns HotCountThreshold if set. Recompute HotCountThreshold
   /// if not set.
-  LLVM_ABI uint64_t getOrCompHotCountThreshold() const;
+  uint64_t getOrCompHotCountThreshold() const;
   /// Returns ColdCountThreshold if set. Recompute HotCountThreshold
   /// if not set.
-  LLVM_ABI uint64_t getOrCompColdCountThreshold() const;
+  uint64_t getOrCompColdCountThreshold() const;
   /// Returns HotCountThreshold if set.
   uint64_t getHotCountThreshold() const {
     return HotCountThreshold.value_or(0);
@@ -355,7 +351,7 @@ ProfileSummaryInfo::getEntryCount<MachineFunction>(
     const MachineFunction *F) const;
 
 /// An analysis pass based on legacy pass manager to deliver ProfileSummaryInfo.
-class LLVM_ABI ProfileSummaryInfoWrapperPass : public ImmutablePass {
+class ProfileSummaryInfoWrapperPass : public ImmutablePass {
   std::unique_ptr<ProfileSummaryInfo> PSI;
 
 public:
@@ -378,11 +374,11 @@ class ProfileSummaryAnalysis
 public:
   typedef ProfileSummaryInfo Result;
 
-  LLVM_ABI Result run(Module &M, ModuleAnalysisManager &);
+  Result run(Module &M, ModuleAnalysisManager &);
 
 private:
   friend AnalysisInfoMixin<ProfileSummaryAnalysis>;
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 };
 
 /// Printer pass that uses \c ProfileSummaryAnalysis.
@@ -392,7 +388,7 @@ class ProfileSummaryPrinterPass
 
 public:
   explicit ProfileSummaryPrinterPass(raw_ostream &OS) : OS(OS) {}
-  LLVM_ABI PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 

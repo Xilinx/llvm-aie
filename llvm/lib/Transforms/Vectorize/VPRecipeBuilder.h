@@ -24,14 +24,13 @@ struct HistogramInfo;
 struct VFRange;
 
 /// A chain of instructions that form a partial reduction.
-/// Designed to match either:
-///   reduction_bin_op (extend (A), accumulator), or
-///   reduction_bin_op (bin_op (extend (A), (extend (B))), accumulator).
+/// Designed to match: reduction_bin_op (bin_op (extend (A), (extend (B))),
+/// accumulator).
 struct PartialReductionChain {
   PartialReductionChain(Instruction *Reduction, Instruction *ExtendA,
-                        Instruction *ExtendB, Instruction *ExtendUser)
-      : Reduction(Reduction), ExtendA(ExtendA), ExtendB(ExtendB),
-        ExtendUser(ExtendUser) {}
+                        Instruction *ExtendB, Instruction *BinOp)
+      : Reduction(Reduction), ExtendA(ExtendA), ExtendB(ExtendB), BinOp(BinOp) {
+  }
   /// The top-level binary operation that forms the reduction to a scalar
   /// after the loop body.
   Instruction *Reduction;
@@ -39,8 +38,8 @@ struct PartialReductionChain {
   Instruction *ExtendA;
   Instruction *ExtendB;
 
-  /// The user of the extends that is then reduced.
-  Instruction *ExtendUser;
+  /// The binary operation using the extends that is then reduced.
+  Instruction *BinOp;
 };
 
 /// Helper class to create VPRecipies from IR instructions.

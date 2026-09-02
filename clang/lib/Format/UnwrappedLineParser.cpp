@@ -14,6 +14,7 @@
 
 #include "UnwrappedLineParser.h"
 #include "FormatToken.h"
+#include "FormatTokenLexer.h"
 #include "FormatTokenSource.h"
 #include "Macros.h"
 #include "TokenAnnotator.h"
@@ -24,6 +25,7 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <algorithm>
 #include <utility>
 
 #define DEBUG_TYPE "format-parser"
@@ -269,7 +271,7 @@ void UnwrappedLineParser::parseFile() {
   bool MustBeDeclaration = !Line->InPPDirective && !Style.isJavaScript();
   ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
                                           MustBeDeclaration);
-  if (Style.isTextProto() || (Style.isJson() && FormatTok->IsFirst))
+  if (Style.isTextProto())
     parseBracedList();
   else
     parseLevel();
@@ -340,7 +342,7 @@ bool UnwrappedLineParser::precededByCommentOrPPDirective() const {
          (Previous->IsMultiline || Previous->NewlinesBefore > 0);
 }
 
-/// Parses a level, that is ???.
+/// \brief Parses a level, that is ???.
 /// \param OpeningBrace Opening brace (\p nullptr if absent) of that level.
 /// \param IfKind The \p if statement kind in the level.
 /// \param IfLeftBrace The left brace of the \p if block in the level.
@@ -2574,39 +2576,35 @@ bool UnwrappedLineParser::parseBracedList(bool IsAngleBracket, bool IsEnum) {
   return false;
 }
 
-/// Parses a pair of parentheses (and everything between them).
+/// \brief Parses a pair of parentheses (and everything between them).
 /// \param AmpAmpTokenType If different than TT_Unknown sets this type for all
 /// double ampersands. This applies for all nested scopes as well.
 ///
 /// Returns whether there is a `=` token between the parentheses.
-bool UnwrappedLineParser::parseParens(TokenType AmpAmpTokenType,
-                                      bool InMacroCall) {
+bool UnwrappedLineParser::parseParens(TokenType AmpAmpTokenType) {
   assert(FormatTok->is(tok::l_paren) && "'(' expected.");
   auto *LParen = FormatTok;
-  auto *Prev = FormatTok->Previous;
   bool SeenComma = false;
   bool SeenEqual = false;
   bool MightBeFoldExpr = false;
   nextToken();
   const bool MightBeStmtExpr = FormatTok->is(tok::l_brace);
-  if (!InMacroCall && Prev && Prev->is(TT_FunctionLikeMacro))
-    InMacroCall = true;
   do {
     switch (FormatTok->Tok.getKind()) {
     case tok::l_paren:
-      if (parseParens(AmpAmpTokenType, InMacroCall))
+      if (parseParens(AmpAmpTokenType))
         SeenEqual = true;
       if (Style.isJava() && FormatTok->is(tok::l_brace))
         parseChildBlock();
       break;
     case tok::r_paren: {
+      auto *Prev = LParen->Previous;
       auto *RParen = FormatTok;
       nextToken();
       if (Prev) {
         auto OptionalParens = [&] {
-          if (MightBeStmtExpr || MightBeFoldExpr || SeenComma || InMacroCall ||
-              Line->InMacroBody ||
-              Style.RemoveParentheses == FormatStyle::RPS_Leave ||
+          if (MightBeStmtExpr || MightBeFoldExpr || Line->InMacroBody ||
+              SeenComma || Style.RemoveParentheses == FormatStyle::RPS_Leave ||
               RParen->getPreviousNonComment() == LParen) {
             return false;
           }
@@ -3442,7 +3440,7 @@ void UnwrappedLineParser::parseAccessSpecifier() {
   addUnwrappedLine();
 }
 
-/// Parses a requires, decides if it is a clause or an expression.
+/// \brief Parses a requires, decides if it is a clause or an expression.
 /// \pre The current token has to be the requires keyword.
 /// \returns true if it parsed a clause.
 bool UnwrappedLineParser::parseRequires(bool SeenEqual) {
@@ -3489,7 +3487,6 @@ bool UnwrappedLineParser::parseRequires(bool SeenEqual) {
   case tok::r_paren:
   case tok::kw_noexcept:
   case tok::kw_const:
-  case tok::star:
   case tok::amp:
     // This is a requires clause.
     parseRequiresClause(RequiresToken);
@@ -3586,7 +3583,7 @@ bool UnwrappedLineParser::parseRequires(bool SeenEqual) {
   return true;
 }
 
-/// Parses a requires clause.
+/// \brief Parses a requires clause.
 /// \param RequiresToken The requires keyword token, which starts this clause.
 /// \pre We need to be on the next token after the requires keyword.
 /// \sa parseRequiresExpression
@@ -3616,7 +3613,7 @@ void UnwrappedLineParser::parseRequiresClause(FormatToken *RequiresToken) {
     FormatTok->Previous->ClosesRequiresClause = true;
 }
 
-/// Parses a requires expression.
+/// \brief Parses a requires expression.
 /// \param RequiresToken The requires keyword token, which starts this clause.
 /// \pre We need to be on the next token after the requires keyword.
 /// \sa parseRequiresClause
@@ -3640,7 +3637,7 @@ void UnwrappedLineParser::parseRequiresExpression(FormatToken *RequiresToken) {
   }
 }
 
-/// Parses a constraint expression.
+/// \brief Parses a constraint expression.
 ///
 /// This is the body of a requires clause. It returns, when the parsing is
 /// complete, or the expression is incorrect.
@@ -4605,7 +4602,7 @@ void UnwrappedLineParser::addUnwrappedLine(LineLevel AdjustLevel) {
   } else {
     // At the top level we only get here when no unexpansion is going on, or
     // when conditional formatting led to unfinished macro reconstructions.
-    assert(!Reconstruct || (CurrentLines != &Lines) || !PPStack.empty());
+    assert(!Reconstruct || (CurrentLines != &Lines) || PPStack.size() > 0);
     CurrentLines->push_back(std::move(*Line));
   }
   Line->Tokens.clear();

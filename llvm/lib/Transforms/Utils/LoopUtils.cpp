@@ -44,7 +44,6 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -758,6 +757,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
 
   // Use a map to unique and a vector to guarantee deterministic ordering.
   llvm::SmallDenseSet<DebugVariable, 4> DeadDebugSet;
+  llvm::SmallVector<DbgVariableIntrinsic *, 4> DeadDebugInst;
   llvm::SmallVector<DbgVariableRecord *, 4> DeadDbgVariableRecords;
 
   if (ExitBlock) {
@@ -784,19 +784,29 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
           U.set(Poison);
         }
 
-        // For one of each variable encountered, preserve a debug record (set
+        // RemoveDIs: do the same as below for DbgVariableRecords.
+        if (Block->IsNewDbgInfoFormat) {
+          for (DbgVariableRecord &DVR : llvm::make_early_inc_range(
+                   filterDbgVars(I.getDbgRecordRange()))) {
+            DebugVariable Key(DVR.getVariable(), DVR.getExpression(),
+                              DVR.getDebugLoc().get());
+            if (!DeadDebugSet.insert(Key).second)
+              continue;
+            // Unlinks the DVR from it's container, for later insertion.
+            DVR.removeFromParent();
+            DeadDbgVariableRecords.push_back(&DVR);
+          }
+        }
+
+        // For one of each variable encountered, preserve a debug intrinsic (set
         // to Poison) and transfer it to the loop exit. This terminates any
         // variable locations that were set during the loop.
-        for (DbgVariableRecord &DVR :
-             llvm::make_early_inc_range(filterDbgVars(I.getDbgRecordRange()))) {
-          DebugVariable Key(DVR.getVariable(), DVR.getExpression(),
-                            DVR.getDebugLoc().get());
-          if (!DeadDebugSet.insert(Key).second)
-            continue;
-          // Unlinks the DVR from it's container, for later insertion.
-          DVR.removeFromParent();
-          DeadDbgVariableRecords.push_back(&DVR);
-        }
+        auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I);
+        if (!DVI)
+          continue;
+        if (!DeadDebugSet.insert(DebugVariable(DVI)).second)
+          continue;
+        DeadDebugInst.push_back(DVI);
       }
 
     // After the loop has been deleted all the values defined and modified
@@ -811,6 +821,9 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
     assert(InsertDbgValueBefore != ExitBlock->end() &&
            "There should be a non-PHI instruction in exit block, else these "
            "instructions will have no parent.");
+
+    for (auto *DVI : DeadDebugInst)
+      DVI->moveBefore(*ExitBlock, InsertDbgValueBefore);
 
     // Due to the "head" bit in BasicBlock::iterator, we're going to insert
     // each DbgVariableRecord right at the start of the block, wheras dbg.values
@@ -1090,10 +1103,8 @@ constexpr Intrinsic::ID llvm::getReductionIntrinsicID(RecurKind RK) {
   case RecurKind::UMin:
     return Intrinsic::vector_reduce_umin;
   case RecurKind::FMax:
-  case RecurKind::FMaxNum:
     return Intrinsic::vector_reduce_fmax;
   case RecurKind::FMin:
-  case RecurKind::FMinNum:
     return Intrinsic::vector_reduce_fmin;
   case RecurKind::FMaximum:
     return Intrinsic::vector_reduce_fmaximum;
@@ -1191,10 +1202,8 @@ Intrinsic::ID llvm::getMinMaxReductionIntrinsicOp(RecurKind RK) {
   case RecurKind::SMax:
     return Intrinsic::smax;
   case RecurKind::FMin:
-  case RecurKind::FMinNum:
     return Intrinsic::minnum;
   case RecurKind::FMax:
-  case RecurKind::FMaxNum:
     return Intrinsic::maxnum;
   case RecurKind::FMinimum:
     return Intrinsic::minimum;
@@ -1252,9 +1261,9 @@ Value *llvm::createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
                             Value *Right) {
   Type *Ty = Left->getType();
   if (Ty->isIntOrIntVectorTy() ||
-      (RK == RecurKind::FMinNum || RK == RecurKind::FMaxNum ||
-       RK == RecurKind::FMinimum || RK == RecurKind::FMaximum ||
+      (RK == RecurKind::FMinimum || RK == RecurKind::FMaximum ||
        RK == RecurKind::FMinimumNum || RK == RecurKind::FMaximumNum)) {
+    // TODO: Add float minnum/maxnum support when FMF nnan is set.
     Intrinsic::ID Id = getMinMaxReductionIntrinsicOp(RK);
     return Builder.CreateIntrinsic(Ty, Id, {Left, Right}, nullptr,
                                    "rdx.minmax");
@@ -1327,7 +1336,7 @@ Value *llvm::getShuffleReduction(IRBuilderBase &Builder, Value *Src,
     SmallVector<int, 32> ShuffleMask(VF);
     for (unsigned stride = 1; stride < VF; stride <<= 1) {
       // Initialise the mask with undef.
-      llvm::fill(ShuffleMask, -1);
+      std::fill(ShuffleMask.begin(), ShuffleMask.end(), -1);
       for (unsigned j = 0; j < VF; j += stride << 1) {
         ShuffleMask[j] = j + stride;
       }
@@ -1350,7 +1359,12 @@ Value *llvm::getShuffleReduction(IRBuilderBase &Builder, Value *Src,
 }
 
 Value *llvm::createAnyOfReduction(IRBuilderBase &Builder, Value *Src,
-                                  Value *InitVal, PHINode *OrigPhi) {
+                                  const RecurrenceDescriptor &Desc,
+                                  PHINode *OrigPhi) {
+  assert(
+      RecurrenceDescriptor::isAnyOfRecurrenceKind(Desc.getRecurrenceKind()) &&
+      "Unexpected reduction kind");
+  Value *InitVal = Desc.getRecurrenceStartValue();
   Value *NewVal = nullptr;
 
   // First use the original phi to determine the new value we're trying to
@@ -1380,13 +1394,14 @@ Value *llvm::createAnyOfReduction(IRBuilderBase &Builder, Value *Src,
 }
 
 Value *llvm::createFindLastIVReduction(IRBuilderBase &Builder, Value *Src,
-                                       RecurKind RdxKind, Value *Start,
-                                       Value *Sentinel) {
-  bool IsSigned = RecurrenceDescriptor::isSignedRecurrenceKind(RdxKind);
-  bool IsMaxRdx = RecurrenceDescriptor::isFindLastIVRecurrenceKind(RdxKind);
+                                       Value *Start,
+                                       const RecurrenceDescriptor &Desc) {
+  assert(RecurrenceDescriptor::isFindLastIVRecurrenceKind(
+             Desc.getRecurrenceKind()) &&
+         "Unexpected reduction kind");
+  Value *Sentinel = Desc.getSentinelValue();
   Value *MaxRdx = Src->getType()->isVectorTy()
-                      ? (IsMaxRdx ? Builder.CreateIntMaxReduce(Src, IsSigned)
-                                  : Builder.CreateIntMinReduce(Src, IsSigned))
+                      ? Builder.CreateIntMaxReduce(Src, true)
                       : Src;
   // Correct the final reduction result back to the start value if the maximum
   // reduction is sentinel value.
@@ -1464,8 +1479,6 @@ Value *llvm::createSimpleReduction(IRBuilderBase &Builder, Value *Src,
   case RecurKind::UMin:
   case RecurKind::FMax:
   case RecurKind::FMin:
-  case RecurKind::FMinNum:
-  case RecurKind::FMaxNum:
   case RecurKind::FMinimum:
   case RecurKind::FMaximum:
   case RecurKind::FMinimumNum:
@@ -1481,19 +1494,18 @@ Value *llvm::createSimpleReduction(IRBuilderBase &Builder, Value *Src,
   }
 }
 
-Value *llvm::createSimpleReduction(IRBuilderBase &Builder, Value *Src,
-                                   RecurKind Kind, Value *Mask, Value *EVL) {
+Value *llvm::createSimpleReduction(VectorBuilder &VBuilder, Value *Src,
+                                   RecurKind Kind) {
   assert(!RecurrenceDescriptor::isAnyOfRecurrenceKind(Kind) &&
-         !RecurrenceDescriptor::isFindIVRecurrenceKind(Kind) &&
-         "AnyOf and FindIV reductions are not supported.");
+         !RecurrenceDescriptor::isFindLastIVRecurrenceKind(Kind) &&
+         "AnyOf or FindLastIV reductions are not supported.");
   Intrinsic::ID Id = getReductionIntrinsicID(Kind);
-  auto VPID = VPIntrinsic::getForIntrinsic(Id);
-  assert(VPReductionIntrinsic::isVPReduction(VPID) &&
-         "No VPIntrinsic for this reduction");
-  auto *EltTy = cast<VectorType>(Src->getType())->getElementType();
-  Value *Iden = getRecurrenceIdentity(Kind, EltTy, Builder.getFastMathFlags());
-  Value *Ops[] = {Iden, Src, Mask, EVL};
-  return Builder.CreateIntrinsic(EltTy, VPID, Ops);
+  auto *SrcTy = cast<VectorType>(Src->getType());
+  Type *SrcEltTy = SrcTy->getElementType();
+  Value *Iden =
+      getRecurrenceIdentity(Kind, SrcEltTy, VBuilder.getFastMathFlags());
+  Value *Ops[] = {Iden, Src};
+  return VBuilder.createSimpleReduction(Id, SrcTy, Ops);
 }
 
 Value *llvm::createOrderedReduction(IRBuilderBase &B, RecurKind Kind,
@@ -1506,21 +1518,17 @@ Value *llvm::createOrderedReduction(IRBuilderBase &B, RecurKind Kind,
   return B.CreateFAddReduce(Start, Src);
 }
 
-Value *llvm::createOrderedReduction(IRBuilderBase &Builder, RecurKind Kind,
-                                    Value *Src, Value *Start, Value *Mask,
-                                    Value *EVL) {
+Value *llvm::createOrderedReduction(VectorBuilder &VBuilder, RecurKind Kind,
+                                    Value *Src, Value *Start) {
   assert((Kind == RecurKind::FAdd || Kind == RecurKind::FMulAdd) &&
          "Unexpected reduction kind");
   assert(Src->getType()->isVectorTy() && "Expected a vector type");
   assert(!Start->getType()->isVectorTy() && "Expected a scalar type");
 
   Intrinsic::ID Id = getReductionIntrinsicID(RecurKind::FAdd);
-  auto VPID = VPIntrinsic::getForIntrinsic(Id);
-  assert(VPReductionIntrinsic::isVPReduction(VPID) &&
-         "No VPIntrinsic for this reduction");
-  auto *EltTy = cast<VectorType>(Src->getType())->getElementType();
-  Value *Ops[] = {Start, Src, Mask, EVL};
-  return Builder.CreateIntrinsic(EltTy, VPID, Ops);
+  auto *SrcTy = cast<VectorType>(Src->getType());
+  Value *Ops[] = {Start, Src};
+  return VBuilder.createSimpleReduction(Id, SrcTy, Ops);
 }
 
 void llvm::propagateIRFlags(Value *I, ArrayRef<Value *> VL, Value *OpValue,
@@ -1974,11 +1982,10 @@ void llvm::appendLoopsToWorklist(RangeT &&Loops,
   appendReversedLoopsToWorklist(reverse(Loops), Worklist);
 }
 
-template LLVM_EXPORT_TEMPLATE void
-llvm::appendLoopsToWorklist<ArrayRef<Loop *> &>(
+template void llvm::appendLoopsToWorklist<ArrayRef<Loop *> &>(
     ArrayRef<Loop *> &Loops, SmallPriorityWorklist<Loop *, 4> &Worklist);
 
-template LLVM_EXPORT_TEMPLATE void
+template void
 llvm::appendLoopsToWorklist<Loop &>(Loop &L,
                                     SmallPriorityWorklist<Loop *, 4> &Worklist);
 

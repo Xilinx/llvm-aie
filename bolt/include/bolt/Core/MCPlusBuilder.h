@@ -405,7 +405,7 @@ public:
 
   bool equals(const MCExpr &A, const MCExpr &B, CompFuncTy Comp) const;
 
-  virtual bool equals(const MCSpecifierExpr &A, const MCSpecifierExpr &B,
+  virtual bool equals(const MCTargetExpr &A, const MCTargetExpr &B,
                       CompFuncTy Comp) const;
 
   virtual bool isBranch(const MCInst &Inst) const {
@@ -428,17 +428,6 @@ public:
 
   virtual bool isIndirectBranch(const MCInst &Inst) const {
     return Analysis->isIndirectBranch(Inst);
-  }
-
-  /// Returns true if the instruction unconditionally transfers the control to
-  /// another program point, interrupting sequential code execution, e.g. by a
-  /// call, return, or unconditional jump. This explicitly leaves out
-  /// conditional branches as they may not be taken, but does allow transferring
-  /// the control to the next instruction (zero-displacement jump/call).
-  bool isUnconditionalControlTransfer(const MCInst &Inst) const {
-    const MCInstrDesc &Desc = Info->get(Inst.getOpcode());
-    // barrier captures returns and unconditional branches
-    return Desc.isBarrier() || Desc.isCall();
   }
 
   /// Returns true if the instruction is memory indirect call or jump
@@ -1404,7 +1393,7 @@ public:
       return getTargetSymbol(BinaryExpr->getLHS());
 
     auto *SymbolRefExpr = dyn_cast<const MCSymbolRefExpr>(Expr);
-    if (SymbolRefExpr && SymbolRefExpr->getSpecifier() == 0)
+    if (SymbolRefExpr && SymbolRefExpr->getKind() == MCSymbolRefExpr::VK_None)
       return &SymbolRefExpr->getSymbol();
 
     return nullptr;

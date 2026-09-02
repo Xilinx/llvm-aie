@@ -33,28 +33,18 @@ x:
 ; CHECK: rjmp .Ltmp6+4094+2 ; encoding: [A,0b1100AAAA]
 
 ; INST-LABEL: <foo>:
+; INST-NEXT: 01 c0      rjmp  .+2
 ; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0x4
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0x2
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0x10
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0xc
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0xc
+; INST-NEXT: fd cf      rjmp  .-6
+; INST-NEXT: 04 c0      rjmp  .+8
+; INST-NEXT: 01 c0      rjmp  .+2
+; INST-NEXT: 00 c0      rjmp  .+0
 ; INST-EMPTY:
 ; INST-LABEL: <end>:
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0xa
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0xa
+; INST-NEXT: fe cf      rjmp  .-4
+; INST-NEXT: fd cf      rjmp  .-6
 ; INST-EMPTY:
 ; INST-LABEL: <x>:
 ; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0x10
 ; INST-NEXT: 0f c0      rjmp  .+30
-; INST-NEXT: ff cf      rjmp  .-2
-; INST-NEXT: R_AVR_13_PCREL .text+0x1014
+; INST-NEXT: ff c7      rjmp  .+4094

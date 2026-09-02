@@ -12,6 +12,7 @@ add_lldb_library(lldbPluginProcessMacOSXKernel PLUGIN
   ProcessKDPLog.cpp
   RegisterContextKDP_arm.cpp
   RegisterContextKDP_arm64.cpp
+  RegisterContextKDP_i386.cpp
   RegisterContextKDP_x86_64.cpp
   ThreadKDP.cpp
 

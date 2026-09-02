@@ -322,8 +322,7 @@ private:
   template <bool IsLoadChain>
   bool isSafeToMove(
       Instruction *ChainElem, Instruction *ChainBegin,
-      const DenseMap<Instruction *, APInt /*OffsetFromLeader*/> &ChainOffsets,
-      BatchAAResults &BatchAA);
+      const DenseMap<Instruction *, APInt /*OffsetFromLeader*/> &ChainOffsets);
 
   /// Merges the equivalence classes if they have underlying objects that differ
   /// by one level of indirection (i.e., one is a getelementptr and the other is
@@ -544,10 +543,6 @@ std::vector<Chain> Vectorizer::splitChainByMayAliasInstrs(Chain &C) {
   for (const auto &E : C)
     ChainOffsets.insert({&*E.Inst, E.OffsetFromLeader});
 
-  // Across a single invocation of this function the IR is not changing, so
-  // using a batched Alias Analysis is safe and can reduce compile time.
-  BatchAAResults BatchAA(AA);
-
   // Loads get hoisted up to the first load in the chain.  Stores get sunk
   // down to the last store in the chain.  Our algorithm for loads is:
   //
@@ -574,7 +569,7 @@ std::vector<Chain> Vectorizer::splitChainByMayAliasInstrs(Chain &C) {
     NewChain.emplace_back(*ChainBegin);
     for (auto ChainIt = std::next(ChainBegin); ChainIt != ChainEnd; ++ChainIt) {
       if (isSafeToMove<IsLoad>(ChainIt->Inst, NewChain.front().Inst,
-                               ChainOffsets, BatchAA)) {
+                               ChainOffsets)) {
         LLVM_DEBUG(dbgs() << "LSV: No intervening may-alias instrs; can merge "
                           << *ChainIt->Inst << " into " << *ChainBegin->Inst
                           << "\n");
@@ -1004,8 +999,7 @@ bool Vectorizer::vectorizeChain(Chain &C) {
 template <bool IsLoadChain>
 bool Vectorizer::isSafeToMove(
     Instruction *ChainElem, Instruction *ChainBegin,
-    const DenseMap<Instruction *, APInt /*OffsetFromLeader*/> &ChainOffsets,
-    BatchAAResults &BatchAA) {
+    const DenseMap<Instruction *, APInt /*OffsetFromLeader*/> &ChainOffsets) {
   LLVM_DEBUG(dbgs() << "LSV: isSafeToMove(" << *ChainElem << " -> "
                     << *ChainBegin << ")\n");
 
@@ -1072,8 +1066,7 @@ bool Vectorizer::isSafeToMove(
         LLVM_DEBUG({
           // Double check that AA also sees this alias.  If not, we probably
           // have a bug.
-          ModRefInfo MR =
-              BatchAA.getModRefInfo(I, MemoryLocation::get(ChainElem));
+          ModRefInfo MR = AA.getModRefInfo(I, MemoryLocation::get(ChainElem));
           assert(IsLoadChain ? isModSet(MR) : isModOrRefSet(MR));
           dbgs() << "LSV: Found alias in chain: " << *I << "\n";
         });
@@ -1084,7 +1077,7 @@ bool Vectorizer::isSafeToMove(
     }
 
     LLVM_DEBUG(dbgs() << "LSV: Querying AA for " << *I << "\n");
-    ModRefInfo MR = BatchAA.getModRefInfo(I, MemoryLocation::get(ChainElem));
+    ModRefInfo MR = AA.getModRefInfo(I, MemoryLocation::get(ChainElem));
     if (IsLoadChain ? isModSet(MR) : isModOrRefSet(MR)) {
       LLVM_DEBUG(dbgs() << "LSV: Found alias in chain:\n"
                         << "  Aliasing instruction:\n"
@@ -1276,8 +1269,8 @@ std::optional<APInt> Vectorizer::getConstantOffsetComplexAddrs(
     // When computing known bits, use the GEPs as context instructions, since
     // they likely are in the same BB as the load/store.
     KnownBits Known(BitWidth);
-    computeKnownBits((IdxDiff.sge(0) ? ValA : OpB), Known, DL, &AC, ContextInst,
-                     &DT);
+    computeKnownBits((IdxDiff.sge(0) ? ValA : OpB), Known, DL, 0, &AC,
+                     ContextInst, &DT);
     APInt BitsAllowedToBeSet = Known.Zero.zext(IdxDiff.getBitWidth());
     if (Signed)
       BitsAllowedToBeSet.clearBit(BitWidth - 1);

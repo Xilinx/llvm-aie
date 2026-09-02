@@ -102,12 +102,11 @@ namespace ns {
 }
 
 #elif TEST13
-// expected-no-diagnostics
 extern "C++" {
-  int main();
+  int main(); // expected-warning {{'main' should not be 'extern "C++"'}}
 }
 
-extern "C++" int main();
+extern "C++" int main(); // expected-warning {{'main' should not be 'extern "C++"'}}
 
 namespace ns1 {
   extern "C++" int main(); // ok

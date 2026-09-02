@@ -11,7 +11,6 @@
 
 include "mlir/Dialect/MPI/IR/MPI.td"
 include "mlir/Dialect/MPI/IR/MPITypes.td"
-include "mlir/Interfaces/SideEffectInterfaces.td"
 
 class MPI_Op<string mnemonic, list<Trait> traits = []>
     : Op<MPI_Dialect, mnemonic, traits>;
@@ -42,7 +41,7 @@ def MPI_InitOp : MPI_Op<"init", []> {
 // CommWorldOp
 //===----------------------------------------------------------------------===//
 
-def MPI_CommWorldOp : MPI_Op<"comm_world", [Pure]> {
+def MPI_CommWorldOp : MPI_Op<"comm_world", []> {
   let summary = "Get the World communicator, equivalent to `MPI_COMM_WORLD`";
   let description = [{
     This operation returns the predefined MPI_COMM_WORLD communicator.
@@ -57,7 +56,7 @@ def MPI_CommWorldOp : MPI_Op<"comm_world", [Pure]> {
 // CommRankOp
 //===----------------------------------------------------------------------===//
 
-def MPI_CommRankOp : MPI_Op<"comm_rank", [Pure]> {
+def MPI_CommRankOp : MPI_Op<"comm_rank", []> {
   let summary = "Get the current rank, equivalent to "
                 "`MPI_Comm_rank(comm, &rank)`";
   let description = [{
@@ -73,14 +72,13 @@ def MPI_CommRankOp : MPI_Op<"comm_rank", [Pure]> {
   );
 
   let assemblyFormat = "`(` $comm `)` attr-dict `:` type(results)";
-  let hasCanonicalizer = 1;
 }
 
 //===----------------------------------------------------------------------===//
 // CommSizeOp
 //===----------------------------------------------------------------------===//
 
-def MPI_CommSizeOp : MPI_Op<"comm_size", [Pure]> {
+def MPI_CommSizeOp : MPI_Op<"comm_size", []> {
   let summary = "Get the size of the group associated to the communicator, "
                 "equivalent to `MPI_Comm_size(comm, &size)`";
   let description = [{
@@ -102,7 +100,7 @@ def MPI_CommSizeOp : MPI_Op<"comm_size", [Pure]> {
 // CommSplitOp
 //===----------------------------------------------------------------------===//
 
-def MPI_CommSplitOp : MPI_Op<"comm_split", [Pure]> {
+def MPI_CommSplitOp : MPI_Op<"comm_split", []> {
   let summary = "Partition the group associated with the given communicator into "
                 "disjoint subgroups";
   let description = [{
@@ -283,7 +281,7 @@ def MPI_AllReduceOp : MPI_Op<"allreduce", []> {
   let arguments = (
     ins AnyMemRef : $sendbuf,
     AnyMemRef : $recvbuf,
-    MPI_ReductionOpEnum : $op,
+    MPI_OpClassEnum : $op,
     MPI_Comm : $comm
   );
 

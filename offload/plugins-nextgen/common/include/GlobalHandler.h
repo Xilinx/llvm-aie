@@ -37,8 +37,6 @@ using namespace llvm::object;
 /// Common abstraction for globals that live on the host and device.
 /// It simply encapsulates the symbol name, symbol size, and symbol address
 /// (which might be host or device depending on the context).
-/// Both size and address may be absent (signified by 0/nullptr), and can be
-/// populated with getGlobalMetadataFromDevice/Image.
 class GlobalTy {
   // NOTE: Maybe we can have a pointer to the offload entry name instead of
   // holding a private copy of the name as a std::string.
@@ -47,7 +45,7 @@ class GlobalTy {
   void *Ptr;
 
 public:
-  GlobalTy(const std::string &Name, uint32_t Size = 0, void *Ptr = nullptr)
+  GlobalTy(const std::string &Name, uint32_t Size, void *Ptr = nullptr)
       : Name(Name), Size(Size), Ptr(Ptr) {}
 
   const std::string &getName() const { return Name; }
@@ -82,7 +80,6 @@ struct GPUProfGlobals {
 
   void dump() const;
   Error write() const;
-  bool empty() const;
 };
 
 /// Subclass of GlobalTy that holds the memory for a global of \p Ty.
@@ -141,11 +138,8 @@ public:
   bool isSymbolInImage(GenericDeviceTy &Device, DeviceImageTy &Image,
                        StringRef SymName);
 
-  /// Get the address and size of a global in the image. Address is
-  /// returned in \p ImageGlobal and the global name is passed in \p
-  /// ImageGlobal. If no size is present in \p ImageGlobal, then the size of the
-  /// global will be stored there. If it is present, it will be validated
-  /// against the real size of the global.
+  /// Get the address and size of a global in the image. Address and size are
+  /// return in \p ImageGlobal, the global name is passed in \p ImageGlobal.
   Error getGlobalMetadataFromImage(GenericDeviceTy &Device,
                                    DeviceImageTy &Image, GlobalTy &ImageGlobal);
 
@@ -154,11 +148,9 @@ public:
   Error readGlobalFromImage(GenericDeviceTy &Device, DeviceImageTy &Image,
                             const GlobalTy &HostGlobal);
 
-  /// Get the address and size of a global from the device. Address is
-  /// returned in \p ImageGlobal and the global name is passed in \p
-  /// ImageGlobal. If no size is present in \p ImageGlobal, then the size of the
-  /// global will be stored there. If it is present, it will be validated
-  /// against the real size of the global.
+  /// Get the address and size of a global from the device. Address is return in
+  /// \p DeviceGlobal, the global name and expected size are passed in
+  /// \p DeviceGlobal.
   virtual Error getGlobalMetadataFromDevice(GenericDeviceTy &Device,
                                             DeviceImageTy &Image,
                                             GlobalTy &DeviceGlobal) = 0;
@@ -199,6 +191,9 @@ public:
     return moveGlobalBetweenDeviceAndHost(Device, Image, HostGlobal,
                                           /*D2H=*/false);
   }
+
+  /// Checks whether a given image contains profiling globals.
+  bool hasProfilingGlobals(GenericDeviceTy &Device, DeviceImageTy &Image);
 
   /// Reads profiling data from a GPU image to supplied profdata struct.
   /// Iterates through the image symbol table and stores global values

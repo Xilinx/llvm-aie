@@ -74,13 +74,9 @@ getTilingParameters(ArrayRef<AffineForOp> band,
 }
 
 void TestAffineLoopParametricTiling::runOnOperation() {
-  // Get maximal perfect nest of 'affine.for' ops at the top-level.
+  // Bands of loops to tile.
   std::vector<SmallVector<AffineForOp, 6>> bands;
-  for (AffineForOp forOp : getOperation().getOps<AffineForOp>()) {
-    SmallVector<AffineForOp, 6> band;
-    getPerfectlyNestedLoops(band, forOp);
-    bands.push_back(band);
-  }
+  getTileableBands(getOperation(), &bands);
 
   // Tile each band.
   for (MutableArrayRef<AffineForOp> band : bands) {

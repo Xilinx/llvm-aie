@@ -310,8 +310,8 @@ void Disassembler::PrintInstructions(Debugger &debugger, const ArchSpec &arch,
   const FormatEntity::Entry *disassembly_format = nullptr;
   FormatEntity::Entry format;
   if (exe_ctx.HasTargetScope()) {
-    format = exe_ctx.GetTargetRef().GetDebugger().GetDisassemblyFormat();
-    disassembly_format = &format;
+    disassembly_format =
+        exe_ctx.GetTargetRef().GetDebugger().GetDisassemblyFormat();
   } else {
     FormatEntity::Parse("${addr}: ", format);
     disassembly_format = &format;
@@ -685,11 +685,9 @@ void Instruction::Dump(lldb_private::Stream *s, uint32_t max_opcode_byte_size,
     }
   }
   const size_t opcode_pos = ss.GetSizeOfLastLine();
-  std::string &opcode_name = show_color ? m_markup_opcode_name : m_opcode_name;
+  const std::string &opcode_name =
+      show_color ? m_markup_opcode_name : m_opcode_name;
   const std::string &mnemonics = show_color ? m_markup_mnemonics : m_mnemonics;
-
-  if (opcode_name.empty())
-    opcode_name = "<unknown>";
 
   // The default opcode size of 7 characters is plenty for most architectures
   // but some like arm can pull out the occasional vqrshrun.s16.  We won't get
@@ -1039,8 +1037,8 @@ void InstructionList::Dump(Stream *s, bool show_address, bool show_bytes,
   const FormatEntity::Entry *disassembly_format = nullptr;
   FormatEntity::Entry format;
   if (exe_ctx && exe_ctx->HasTargetScope()) {
-    format = exe_ctx->GetTargetRef().GetDebugger().GetDisassemblyFormat();
-    disassembly_format = &format;
+    disassembly_format =
+        exe_ctx->GetTargetRef().GetDebugger().GetDisassemblyFormat();
   } else {
     FormatEntity::Parse("${addr}: ", format);
     disassembly_format = &format;

@@ -16,7 +16,7 @@
 
 #include "test_iterators.h"
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 template <class T>
 struct ForwardView : std::ranges::view_base {

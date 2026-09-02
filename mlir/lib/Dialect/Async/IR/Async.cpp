@@ -9,7 +9,9 @@
 #include "mlir/Dialect/Async/IR/Async.h"
 
 #include "mlir/IR/DialectImplementation.h"
+#include "mlir/IR/IRMapping.h"
 #include "mlir/Interfaces/FunctionImplementation.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/TypeSwitch.h"
 
 using namespace mlir;
@@ -97,7 +99,7 @@ void ExecuteOp::build(OpBuilder &builder, OperationState &result,
   // expected result is empty. Otherwise, leave this to the caller
   // because we don't know which values to return from the execute op.
   if (resultTypes.empty() && !bodyBuilder) {
-    async::YieldOp::create(builder, result.location, ValueRange());
+    builder.create<async::YieldOp>(result.location, ValueRange());
   } else if (bodyBuilder) {
     bodyBuilder(builder, result.location, bodyBlock->getArguments());
   }
@@ -307,7 +309,7 @@ void FuncOp::build(OpBuilder &builder, OperationState &state, StringRef name,
     return;
   assert(type.getNumInputs() == argAttrs.size());
   call_interface_impl::addArgAndResultAttrs(
-      builder, state, argAttrs, /*resultAttrs=*/{},
+      builder, state, argAttrs, /*resultAttrs=*/std::nullopt,
       getArgAttrsAttrName(state.name), getResAttrsAttrName(state.name));
 }
 

@@ -23,27 +23,7 @@
 #include "../../../test_compare.h"
 #include "test_allocator.h"
 
-template <template <class...> class KeyContainer>
-constexpr void test() {
-  using C = test_less<int>;
-  KeyContainer<int, test_allocator<int>> ks({1, 3, 5}, test_allocator<int>(6));
-  using M = std::flat_set<int, C, decltype(ks)>;
-  auto mo = M(ks, C(5));
-  auto m  = M(mo, test_allocator<int>(3));
-
-  assert(m.key_comp() == C(5));
-  assert(std::ranges::equal(m, ks));
-  auto keys = std::move(m).extract();
-  assert(keys.get_allocator() == test_allocator<int>(3));
-
-  // mo is unchanged
-  assert(mo.key_comp() == C(5));
-  assert(std::ranges::equal(mo, ks));
-  auto keys2 = std::move(mo).extract();
-  assert(keys2.get_allocator() == test_allocator<int>(6));
-}
-
-constexpr bool test() {
+void test() {
   {
     // The constructors in this subclause shall not participate in overload
     // resolution unless uses_allocator_v<container_type, Alloc> is true.
@@ -60,21 +40,28 @@ constexpr bool test() {
     static_assert(!std::is_constructible_v<M1, const M1&, const A2&>);
     static_assert(!std::is_constructible_v<M2, const M2&, const A1&>);
   }
+  {
+    using C = test_less<int>;
+    std::vector<int, test_allocator<int>> ks({1, 3, 5}, test_allocator<int>(6));
+    using M = std::flat_set<int, C, decltype(ks)>;
+    auto mo = M(ks, C(5));
+    auto m  = M(mo, test_allocator<int>(3));
 
-  test<std::vector>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test<std::deque>();
+    assert(m.key_comp() == C(5));
+    assert(std::ranges::equal(m, ks));
+    auto keys = std::move(m).extract();
+    assert(keys.get_allocator() == test_allocator<int>(3));
 
-  return true;
+    // mo is unchanged
+    assert(mo.key_comp() == C(5));
+    assert(std::ranges::equal(mo, ks));
+    auto keys2 = std::move(mo).extract();
+    assert(keys2.get_allocator() == test_allocator<int>(6));
+  }
 }
 
 int main(int, char**) {
   test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

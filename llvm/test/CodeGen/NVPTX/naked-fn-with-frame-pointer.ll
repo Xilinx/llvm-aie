@@ -11,7 +11,10 @@ define dso_local void @naked() naked "frame-pointer"="all" {
 ; CHECK-32-EMPTY:
 ; CHECK-32-NEXT:  // %bb.0:
 ; CHECK-32-NEXT:    { // callseq 0, 0
-; CHECK-32-NEXT:    call.uni main, ();
+; CHECK-32-NEXT:    call.uni
+; CHECK-32-NEXT:    main,
+; CHECK-32-NEXT:    (
+; CHECK-32-NEXT:    );
 ; CHECK-32-NEXT:    } // callseq 0
 ; CHECK-32-NEXT:    // begin inline asm
 ; CHECK-32-NEXT:    exit;
@@ -23,7 +26,10 @@ define dso_local void @naked() naked "frame-pointer"="all" {
 ; CHECK-64-EMPTY:
 ; CHECK-64-NEXT:  // %bb.0:
 ; CHECK-64-NEXT:    { // callseq 0, 0
-; CHECK-64-NEXT:    call.uni main, ();
+; CHECK-64-NEXT:    call.uni
+; CHECK-64-NEXT:    main,
+; CHECK-64-NEXT:    (
+; CHECK-64-NEXT:    );
 ; CHECK-64-NEXT:    } // callseq 0
 ; CHECK-64-NEXT:    // begin inline asm
 ; CHECK-64-NEXT:    exit;
@@ -39,7 +45,10 @@ define dso_local void @normal() "frame-pointer"="all" {
 ; CHECK-32-EMPTY:
 ; CHECK-32-NEXT:  // %bb.0:
 ; CHECK-32-NEXT:    { // callseq 1, 0
-; CHECK-32-NEXT:    call.uni main, ();
+; CHECK-32-NEXT:    call.uni
+; CHECK-32-NEXT:    main,
+; CHECK-32-NEXT:    (
+; CHECK-32-NEXT:    );
 ; CHECK-32-NEXT:    } // callseq 1
 ; CHECK-32-NEXT:    // begin inline asm
 ; CHECK-32-NEXT:    exit;
@@ -51,7 +60,10 @@ define dso_local void @normal() "frame-pointer"="all" {
 ; CHECK-64-EMPTY:
 ; CHECK-64-NEXT:  // %bb.0:
 ; CHECK-64-NEXT:    { // callseq 1, 0
-; CHECK-64-NEXT:    call.uni main, ();
+; CHECK-64-NEXT:    call.uni
+; CHECK-64-NEXT:    main,
+; CHECK-64-NEXT:    (
+; CHECK-64-NEXT:    );
 ; CHECK-64-NEXT:    } // callseq 1
 ; CHECK-64-NEXT:    // begin inline asm
 ; CHECK-64-NEXT:    exit;

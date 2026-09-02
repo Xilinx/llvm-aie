@@ -329,9 +329,9 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   // statement and we are aligning lambda blocks to their signatures.
   if (Previous.is(tok::l_brace) && State.Stack.size() > 1 &&
       State.Stack[State.Stack.size() - 2].NestedBlockInlined &&
-      State.Stack[State.Stack.size() - 2].HasMultipleNestedBlocks) {
-    return Style.isCpp() &&
-           Style.LambdaBodyIndentation == FormatStyle::LBI_OuterScope;
+      State.Stack[State.Stack.size() - 2].HasMultipleNestedBlocks &&
+      Style.LambdaBodyIndentation == FormatStyle::LBI_Signature) {
+    return false;
   }
 
   // Don't break after very short return types (e.g. "void") as that is often
@@ -560,7 +560,6 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
         return true;
     }
   } else if (Current.is(TT_BinaryOperator) && Current.CanBreakBefore &&
-             Current.getPrecedence() != prec::Assignment &&
              CurrentState.BreakBeforeParameter) {
     return true;
   }
@@ -707,48 +706,42 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   const FormatToken &Previous = *State.NextToken->Previous;
   auto &CurrentState = State.Stack.back();
 
-  // Deal with lambda arguments in C++. The aim here is to ensure that we don't
-  // over-indent lambda function bodies when lambdas are passed as arguments to
-  // function calls. We do this by ensuring that either all arguments (including
-  // any lambdas) go on the same line as the function call, or we break before
-  // the first argument.
-  auto DisallowLineBreaks = [&] {
-    if (!Style.isCpp() ||
-        Style.LambdaBodyIndentation == FormatStyle::LBI_OuterScope) {
-      return false;
-    }
+  bool DisallowLineBreaksOnThisLine =
+      Style.LambdaBodyIndentation == FormatStyle::LBI_Signature &&
+      // Deal with lambda arguments in C++. The aim here is to ensure that we
+      // don't over-indent lambda function bodies when lambdas are passed as
+      // arguments to function calls. We do this by ensuring that either all
+      // arguments (including any lambdas) go on the same line as the function
+      // call, or we break before the first argument.
+      Style.isCpp() && [&] {
+        // For example, `/*Newline=*/false`.
+        if (Previous.is(TT_BlockComment) && Current.SpacesRequiredBefore == 0)
+          return false;
+        const auto *PrevNonComment = Current.getPreviousNonComment();
+        if (!PrevNonComment || PrevNonComment->isNot(tok::l_paren))
+          return false;
+        if (Current.isOneOf(tok::comment, tok::l_paren, TT_LambdaLSquare))
+          return false;
+        auto BlockParameterCount = PrevNonComment->BlockParameterCount;
+        if (BlockParameterCount == 0)
+          return false;
 
-    // For example, `/*Newline=*/false`.
-    if (Previous.is(TT_BlockComment) && Current.SpacesRequiredBefore == 0)
-      return false;
+        // Multiple lambdas in the same function call.
+        if (BlockParameterCount > 1)
+          return true;
 
-    if (Current.isOneOf(tok::comment, tok::l_paren, TT_LambdaLSquare))
-      return false;
+        // A lambda followed by another arg.
+        if (!PrevNonComment->Role)
+          return false;
+        auto Comma = PrevNonComment->Role->lastComma();
+        if (!Comma)
+          return false;
+        auto Next = Comma->getNextNonComment();
+        return Next &&
+               !Next->isOneOf(TT_LambdaLSquare, tok::l_brace, tok::caret);
+      }();
 
-    const auto *Prev = Current.getPreviousNonComment();
-    if (!Prev || Prev->isNot(tok::l_paren))
-      return false;
-
-    if (Prev->BlockParameterCount == 0)
-      return false;
-
-    // Multiple lambdas in the same function call.
-    if (Prev->BlockParameterCount > 1)
-      return true;
-
-    // A lambda followed by another arg.
-    if (!Prev->Role)
-      return false;
-
-    const auto *Comma = Prev->Role->lastComma();
-    if (!Comma)
-      return false;
-
-    const auto *Next = Comma->getNextNonComment();
-    return Next && !Next->isOneOf(TT_LambdaLSquare, tok::l_brace, tok::caret);
-  };
-
-  if (DisallowLineBreaks())
+  if (DisallowLineBreaksOnThisLine)
     State.NoLineBreak = true;
 
   if (Current.is(tok::equal) &&
@@ -1725,8 +1718,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   }
   if (Previous && (Previous->isOneOf(TT_BinaryOperator, TT_ConditionalExpr) ||
                    (Previous->isOneOf(tok::l_paren, tok::comma, tok::colon) &&
-                    !Previous->isOneOf(TT_DictLiteral, TT_ObjCMethodExpr,
-                                       TT_CtorInitializerColon)))) {
+                    !Previous->isOneOf(TT_DictLiteral, TT_ObjCMethodExpr)))) {
     CurrentState.NestedBlockInlined =
         !Newline && hasNestedBlockInlined(Previous, Current, Style);
   }
@@ -1931,15 +1923,6 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
     return;
   }
 
-  const bool EndsInComma = [](const FormatToken *Tok) {
-    if (!Tok)
-      return false;
-    const auto *Prev = Tok->getPreviousNonComment();
-    if (!Prev)
-      return false;
-    return Prev->is(tok::comma);
-  }(Current.MatchingParen);
-
   unsigned NewIndent;
   unsigned LastSpace = CurrentState.LastSpace;
   bool AvoidBinPacking;
@@ -1959,6 +1942,9 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
       NewIndent = CurrentState.LastSpace + Style.ContinuationIndentWidth;
     }
     const FormatToken *NextNonComment = Current.getNextNonComment();
+    bool EndsInComma = Current.MatchingParen &&
+                       Current.MatchingParen->Previous &&
+                       Current.MatchingParen->Previous->is(tok::comma);
     AvoidBinPacking = EndsInComma || Current.is(TT_DictLiteral) ||
                       Style.isProto() || !Style.BinPackArguments ||
                       (NextNonComment && NextNonComment->isOneOf(
@@ -1991,6 +1977,11 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
       NewIndent = std::max(NewIndent, CurrentState.Indent);
       LastSpace = std::max(LastSpace, CurrentState.Indent);
     }
+
+    bool EndsInComma =
+        Current.MatchingParen &&
+        Current.MatchingParen->getPreviousNonComment() &&
+        Current.MatchingParen->getPreviousNonComment()->is(tok::comma);
 
     // If ObjCBinPackProtocolList is unspecified, fall back to BinPackParameters
     // for backwards compatibility.
@@ -2257,6 +2248,7 @@ unsigned ContinuationIndenter::reformatRawStringLiteral(
       /*Status=*/nullptr);
 
   auto NewCode = applyAllReplacements(RawText, Fixes.first);
+  tooling::Replacements NoFixes;
   if (!NewCode)
     return addMultilineToken(Current, State);
   if (!DryRun) {

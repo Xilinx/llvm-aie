@@ -418,6 +418,44 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
   return !llvm::is_contained(MI->params(), II);
 }
 
+/// isNextPPTokenLParen - Determine whether the next preprocessor token to be
+/// lexed is a '('.  If so, consume the token and return true, if not, this
+/// method should have no observable side-effect on the lexed tokens.
+bool Preprocessor::isNextPPTokenLParen() {
+  // Do some quick tests for rejection cases.
+  unsigned Val;
+  if (CurLexer)
+    Val = CurLexer->isNextPPTokenLParen();
+  else
+    Val = CurTokenLexer->isNextTokenLParen();
+
+  if (Val == 2) {
+    // We have run off the end.  If it's a source file we don't
+    // examine enclosing ones (C99 5.1.1.2p4).  Otherwise walk up the
+    // macro stack.
+    if (CurPPLexer)
+      return false;
+    for (const IncludeStackInfo &Entry : llvm::reverse(IncludeMacroStack)) {
+      if (Entry.TheLexer)
+        Val = Entry.TheLexer->isNextPPTokenLParen();
+      else
+        Val = Entry.TheTokenLexer->isNextTokenLParen();
+
+      if (Val != 2)
+        break;
+
+      // Ran off the end of a source file?
+      if (Entry.ThePPLexer)
+        return false;
+    }
+  }
+
+  // Okay, if we know that the token is a '(', lex it and return.  Otherwise we
+  // have found something that isn't a '(' or we found the end of the
+  // translation unit.  In either case, return false.
+  return Val == 1;
+}
+
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
 bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
@@ -1461,7 +1499,8 @@ static IdentifierInfo *ExpectFeatureIdentifierInfo(Token &Tok,
 
 /// Implements the __is_target_arch builtin macro.
 static bool isTargetArch(const TargetInfo &TI, const IdentifierInfo *II) {
-  llvm::Triple Arch(II->getName().lower() + "--");
+  std::string ArchName = II->getName().lower() + "--";
+  llvm::Triple Arch(ArchName);
   const llvm::Triple &TT = TI.getTriple();
   if (TT.isThumb()) {
     // arm matches thumb or thumbv7. armv7 matches thumbv7.
@@ -1490,7 +1529,9 @@ static bool isTargetVendor(const TargetInfo &TI, const IdentifierInfo *II) {
 
 /// Implements the __is_target_os builtin macro.
 static bool isTargetOS(const TargetInfo &TI, const IdentifierInfo *II) {
-  llvm::Triple OS(llvm::Twine("unknown-unknown-") + II->getName().lower());
+  std::string OSName =
+      (llvm::Twine("unknown-unknown-") + II->getName().lower()).str();
+  llvm::Triple OS(OSName);
   if (OS.getOS() == llvm::Triple::Darwin) {
     // Darwin matches macos, ios, etc.
     return TI.getTriple().isOSDarwin();
@@ -1501,11 +1542,12 @@ static bool isTargetOS(const TargetInfo &TI, const IdentifierInfo *II) {
 /// Implements the __is_target_environment builtin macro.
 static bool isTargetEnvironment(const TargetInfo &TI,
                                 const IdentifierInfo *II) {
-  llvm::Triple Env(llvm::Twine("---") + II->getName().lower());
+  std::string EnvName = (llvm::Twine("---") + II->getName().lower()).str();
+  llvm::Triple Env(EnvName);
   // The unknown environment is matched only if
   // '__is_target_environment(unknown)' is used.
   if (Env.getEnvironment() == llvm::Triple::UnknownEnvironment &&
-      Env.getEnvironmentName() != "unknown")
+      EnvName != "---unknown")
     return false;
   return TI.getTriple().getEnvironment() == Env.getEnvironment();
 }
@@ -1517,7 +1559,9 @@ static bool isTargetVariantOS(const TargetInfo &TI, const IdentifierInfo *II) {
     if (!VariantTriple)
       return false;
 
-    llvm::Triple OS(llvm::Twine("unknown-unknown-") + II->getName().lower());
+    std::string OSName =
+        (llvm::Twine("unknown-unknown-") + II->getName().lower()).str();
+    llvm::Triple OS(OSName);
     if (OS.getOS() == llvm::Triple::Darwin) {
       // Darwin matches macos, ios, etc.
       return VariantTriple->isOSDarwin();
@@ -1534,7 +1578,8 @@ static bool isTargetVariantEnvironment(const TargetInfo &TI,
     const llvm::Triple *VariantTriple = TI.getDarwinTargetVariantTriple();
     if (!VariantTriple)
       return false;
-    llvm::Triple Env(llvm::Twine("---") + II->getName().lower());
+    std::string EnvName = (llvm::Twine("---") + II->getName().lower()).str();
+    llvm::Triple Env(EnvName);
     return VariantTriple->getEnvironment() == Env.getEnvironment();
   }
   return false;
@@ -1760,8 +1805,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
               Tok, *this, diag::err_feature_check_malformed);
           if (!II)
             return false;
-          unsigned BuiltinID = II->getBuiltinID();
-          if (BuiltinID != 0) {
+          else if (II->getBuiltinID() != 0) {
             switch (II->getBuiltinID()) {
             case Builtin::BI__builtin_cpu_is:
               return getTargetInfo().supportsCpuIs();
@@ -1775,11 +1819,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
               // usual allocation and deallocation functions. Required by libc++
               return 201802;
             default:
-              // __has_builtin should return false for aux builtins.
-              if (getBuiltinInfo().isAuxBuiltinID(BuiltinID))
-                return false;
               return Builtin::evaluateRequiredTargetFeatures(
-                  getBuiltinInfo().getRequiredFeatures(BuiltinID),
+                  getBuiltinInfo().getRequiredFeatures(II->getBuiltinID()),
                   getTargetInfo().getTargetOpts().FeatureMap);
             }
             return true;

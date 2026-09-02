@@ -65,17 +65,6 @@ class AtomicExpandImpl {
   const DataLayout *DL = nullptr;
 
 private:
-  void handleFailure(Instruction &FailedInst, const Twine &Msg) const {
-    LLVMContext &Ctx = FailedInst.getContext();
-
-    // TODO: Do not use generic error type.
-    Ctx.emitError(&FailedInst, Msg);
-
-    if (!FailedInst.getType()->isVoidTy())
-      FailedInst.replaceAllUsesWith(PoisonValue::get(FailedInst.getType()));
-    FailedInst.eraseFromParent();
-  }
-
   bool bracketInstWithFences(Instruction *I, AtomicOrdering Order);
   IntegerType *getCorrespondingIntegerType(Type *T, const DataLayout &DL);
   LoadInst *convertAtomicLoadToIntegerType(LoadInst *LI);
@@ -1581,12 +1570,12 @@ bool AtomicExpandImpl::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 }
 
 bool AtomicExpandImpl::isIdempotentRMW(AtomicRMWInst *RMWI) {
-  // TODO: Add floating point support.
   auto C = dyn_cast<ConstantInt>(RMWI->getValOperand());
   if (!C)
     return false;
 
-  switch (RMWI->getOperation()) {
+  AtomicRMWInst::BinOp Op = RMWI->getOperation();
+  switch (Op) {
   case AtomicRMWInst::Add:
   case AtomicRMWInst::Sub:
   case AtomicRMWInst::Or:
@@ -1594,14 +1583,7 @@ bool AtomicExpandImpl::isIdempotentRMW(AtomicRMWInst *RMWI) {
     return C->isZero();
   case AtomicRMWInst::And:
     return C->isMinusOne();
-  case AtomicRMWInst::Min:
-    return C->isMaxValue(true);
-  case AtomicRMWInst::Max:
-    return C->isMinValue(true);
-  case AtomicRMWInst::UMin:
-    return C->isMaxValue(false);
-  case AtomicRMWInst::UMax:
-    return C->isMinValue(false);
+  // FIXME: we could also treat Min/Max/UMin/UMax by the INT_MIN/INT_MAX/...
   default:
     return false;
   }
@@ -1755,7 +1737,7 @@ void AtomicExpandImpl::expandAtomicLoadToLibcall(LoadInst *I) {
       I, Size, I->getAlign(), I->getPointerOperand(), nullptr, nullptr,
       I->getOrdering(), AtomicOrdering::NotAtomic, Libcalls);
   if (!expanded)
-    handleFailure(*I, "unsupported atomic load");
+    report_fatal_error("expandAtomicOpToLibcall shouldn't fail for Load");
 }
 
 void AtomicExpandImpl::expandAtomicStoreToLibcall(StoreInst *I) {
@@ -1768,7 +1750,7 @@ void AtomicExpandImpl::expandAtomicStoreToLibcall(StoreInst *I) {
       I, Size, I->getAlign(), I->getPointerOperand(), I->getValueOperand(),
       nullptr, I->getOrdering(), AtomicOrdering::NotAtomic, Libcalls);
   if (!expanded)
-    handleFailure(*I, "unsupported atomic store");
+    report_fatal_error("expandAtomicOpToLibcall shouldn't fail for Store");
 }
 
 void AtomicExpandImpl::expandAtomicCASToLibcall(AtomicCmpXchgInst *I) {
@@ -1783,7 +1765,7 @@ void AtomicExpandImpl::expandAtomicCASToLibcall(AtomicCmpXchgInst *I) {
       I->getCompareOperand(), I->getSuccessOrdering(), I->getFailureOrdering(),
       Libcalls);
   if (!expanded)
-    handleFailure(*I, "unsupported cmpxchg");
+    report_fatal_error("expandAtomicOpToLibcall shouldn't fail for CAS");
 }
 
 static ArrayRef<RTLIB::Libcall> GetRMWLibcall(AtomicRMWInst::BinOp Op) {

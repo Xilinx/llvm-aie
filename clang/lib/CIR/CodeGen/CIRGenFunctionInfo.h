@@ -76,8 +76,10 @@ class CIRGenFunctionInfo final
 
   unsigned numArgs;
 
-  CanQualType *getArgTypes() { return getTrailingObjects(); }
-  const CanQualType *getArgTypes() const { return getTrailingObjects(); }
+  CanQualType *getArgTypes() { return getTrailingObjects<CanQualType>(); }
+  const CanQualType *getArgTypes() const {
+    return getTrailingObjects<CanQualType>();
+  }
 
   CIRGenFunctionInfo() : required(RequiredArgs::All) {}
 

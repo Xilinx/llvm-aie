@@ -22,7 +22,6 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_linux.h"
-#include "sanitizer_common/sanitizer_platform_interceptors.h"
 #include "sanitizer_common/sanitizer_platform_limits_netbsd.h"
 #include "sanitizer_common/sanitizer_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_posix.h"
@@ -748,41 +747,6 @@ TSAN_INTERCEPTOR(void, free, void *p) {
   user_free(thr, pc, p);
 }
 
-#  if SANITIZER_INTERCEPT_FREE_SIZED
-TSAN_INTERCEPTOR(void, free_sized, void *p, uptr size) {
-  if (UNLIKELY(!p))
-    return;
-  if (in_symbolizer())
-    return InternalFree(p);
-  if (DlsymAlloc::PointerIsMine(p))
-    return DlsymAlloc::Free(p);
-  invoke_free_hook(p);
-  SCOPED_INTERCEPTOR_RAW(free_sized, p, size);
-  user_free(thr, pc, p);
-}
-#    define TSAN_MAYBE_INTERCEPT_FREE_SIZED INTERCEPT_FUNCTION(free_sized)
-#  else
-#    define TSAN_MAYBE_INTERCEPT_FREE_SIZED
-#  endif
-
-#  if SANITIZER_INTERCEPT_FREE_ALIGNED_SIZED
-TSAN_INTERCEPTOR(void, free_aligned_sized, void *p, uptr alignment, uptr size) {
-  if (UNLIKELY(!p))
-    return;
-  if (in_symbolizer())
-    return InternalFree(p);
-  if (DlsymAlloc::PointerIsMine(p))
-    return DlsymAlloc::Free(p);
-  invoke_free_hook(p);
-  SCOPED_INTERCEPTOR_RAW(free_aligned_sized, p, alignment, size);
-  user_free(thr, pc, p);
-}
-#    define TSAN_MAYBE_INTERCEPT_FREE_ALIGNED_SIZED \
-      INTERCEPT_FUNCTION(free_aligned_sized)
-#  else
-#    define TSAN_MAYBE_INTERCEPT_FREE_ALIGNED_SIZED
-#  endif
-
 TSAN_INTERCEPTOR(void, cfree, void *p) {
   if (UNLIKELY(!p))
     return;
@@ -799,9 +763,6 @@ TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
   SCOPED_INTERCEPTOR_RAW(malloc_usable_size, p);
   return user_alloc_usable_size(p);
 }
-#else
-#  define TSAN_MAYBE_INTERCEPT_FREE_SIZED
-#  define TSAN_MAYBE_INTERCEPT_FREE_ALIGNED_SIZED
 #endif
 
 TSAN_INTERCEPTOR(char *, strcpy, char *dst, const char *src) {
@@ -2888,12 +2849,12 @@ TSAN_INTERCEPTOR(void, _lwp_exit) {
 #endif
 
 #if SANITIZER_FREEBSD
-TSAN_INTERCEPTOR(void, thr_exit, ThreadID *state) {
+TSAN_INTERCEPTOR(void, thr_exit, tid_t *state) {
   SCOPED_TSAN_INTERCEPTOR(thr_exit, state);
   DestroyThreadState();
   REAL(thr_exit(state));
 }
-#  define TSAN_MAYBE_INTERCEPT_THR_EXIT TSAN_INTERCEPT(thr_exit)
+#define TSAN_MAYBE_INTERCEPT_THR_EXIT TSAN_INTERCEPT(thr_exit)
 #else
 #define TSAN_MAYBE_INTERCEPT_THR_EXIT
 #endif
@@ -3002,8 +2963,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(realloc);
   TSAN_INTERCEPT(reallocarray);
   TSAN_INTERCEPT(free);
-  TSAN_MAYBE_INTERCEPT_FREE_SIZED;
-  TSAN_MAYBE_INTERCEPT_FREE_ALIGNED_SIZED;
   TSAN_INTERCEPT(cfree);
   TSAN_INTERCEPT(munmap);
   TSAN_MAYBE_INTERCEPT_MEMALIGN;
@@ -3126,10 +3085,6 @@ void InitializeInterceptors() {
 #if !SANITIZER_ANDROID
   TSAN_INTERCEPT(dl_iterate_phdr);
 #endif
-
-  // Symbolization indirectly calls dl_iterate_phdr
-  ready_to_symbolize = true;
-
   TSAN_MAYBE_INTERCEPT_ON_EXIT;
   TSAN_INTERCEPT(__cxa_atexit);
   TSAN_INTERCEPT(_exit);

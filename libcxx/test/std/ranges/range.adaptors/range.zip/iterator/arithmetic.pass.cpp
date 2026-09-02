@@ -25,7 +25,7 @@
 #include <concepts>
 #include <functional>
 
-#include "../../range_adaptor_types.h"
+#include "../types.h"
 
 template <class T, class U>
 concept canPlusEqual = requires(T& t, U& u) { t += u; };

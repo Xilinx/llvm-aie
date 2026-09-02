@@ -21,7 +21,7 @@
 #include "../flat_helpers.h"
 #include "test_macros.h"
 
-constexpr bool test() {
+bool test() {
   using M = std::flat_set<TrackCopyMove>;
   {
     M m;
@@ -43,9 +43,6 @@ constexpr bool test() {
 
 int main(int, char**) {
   test();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

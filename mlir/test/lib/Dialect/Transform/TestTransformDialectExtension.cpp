@@ -796,8 +796,8 @@ DiagnosedSilenceableFailure mlir::test::TestProduceInvalidIR::applyToOne(
     transform::TransformState &state) {
   // Provide some IR that does not verify.
   rewriter.setInsertionPointToStart(&target->getRegion(0).front());
-  TestDummyPayloadOp::create(rewriter, target->getLoc(), TypeRange(),
-                             ValueRange(), /*failToVerify=*/true);
+  rewriter.create<TestDummyPayloadOp>(target->getLoc(), TypeRange(),
+                                      ValueRange(), /*failToVerify=*/true);
   return DiagnosedSilenceableFailure::success();
 }
 
@@ -877,8 +877,7 @@ public:
                                        Location loc) -> Value {
       if (inputs.size() != 1)
         return Value();
-      return UnrealizedConversionCastOp::create(builder, loc, resultType,
-                                                inputs)
+      return builder.create<UnrealizedConversionCastOp>(loc, resultType, inputs)
           .getResult(0);
     };
     addSourceMaterialization(unrealizedCastConverter);

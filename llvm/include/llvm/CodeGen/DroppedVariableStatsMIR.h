@@ -16,14 +16,13 @@
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/IR/DroppedVariableStats.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
 /// A class to collect and print dropped debug information due to MIR
 /// optimization passes. After every MIR pass is run, it will print how many
 /// #DBG_VALUEs were dropped due to that pass.
-class LLVM_ABI DroppedVariableStatsMIR : public DroppedVariableStats {
+class DroppedVariableStatsMIR : public DroppedVariableStats {
 public:
   DroppedVariableStatsMIR() : DroppedVariableStats(false) {}
 

@@ -25,7 +25,6 @@ namespace {
 
 class AMDGPUInsertDelayAlu {
 public:
-  const GCNSubtarget *ST;
   const SIInstrInfo *SII;
   const TargetRegisterInfo *TRI;
 
@@ -50,32 +49,21 @@ public:
 
   static bool instructionWaitsForSGPRWrites(const MachineInstr &MI) {
     // These instruction types wait for VA_SDST==0 before issuing.
-    uint64_t MIFlags = MI.getDesc().TSFlags;
-    if (MIFlags & SIInstrFlags::SMRD)
-      return true;
+    const uint64_t VA_SDST_0 = SIInstrFlags::SALU | SIInstrFlags::SMRD;
 
-    if (MIFlags & SIInstrFlags::SALU) {
-      for (auto &Op : MI.operands()) {
-        if (Op.isReg())
-          return true;
-      }
-    }
-    return false;
+    return MI.getDesc().TSFlags & VA_SDST_0;
   }
 
   // Types of delay that can be encoded in an s_delay_alu instruction.
   enum DelayType { VALU, TRANS, SALU, OTHER };
 
-  // Get the delay type for a MachineInstr.
-  DelayType getDelayType(const MachineInstr &MI) {
-    if (SIInstrInfo::isTRANS(MI))
+  // Get the delay type for an instruction with the specified TSFlags.
+  static DelayType getDelayType(uint64_t TSFlags) {
+    if (TSFlags & SIInstrFlags::TRANS)
       return TRANS;
-    // WMMA XDL ops are treated the same as TRANS.
-    if (AMDGPU::isGFX1250(*ST) && SII->isXDLWMMA(MI))
-      return TRANS;
-    if (SIInstrInfo::isVALU(MI))
+    if (TSFlags & SIInstrFlags::VALU)
       return VALU;
-    if (SIInstrInfo::isSALU(MI))
+    if (TSFlags & SIInstrFlags::SALU)
       return SALU;
     return OTHER;
   }
@@ -160,9 +148,10 @@ public:
       SALUCycles = std::max(SALUCycles, RHS.SALUCycles);
     }
 
-    // Update this DelayInfo after issuing an instruction of the specified type.
-    // Cycles is the number of cycles it takes to issue the instruction.  Return
-    // true if there is no longer any useful delay info.
+    // Update this DelayInfo after issuing an instruction. IsVALU should be 1
+    // when issuing a (non-TRANS) VALU, else 0. IsTRANS should be 1 when issuing
+    // a TRANS, else 0. Cycles is the number of cycles it takes to issue the
+    // instruction.  Return true if there is no longer any useful delay info.
     bool advance(DelayType Type, unsigned Cycles) {
       bool Erase = true;
 
@@ -372,7 +361,7 @@ public:
         continue;
       }
 
-      DelayType Type = getDelayType(MI);
+      DelayType Type = getDelayType(MI.getDesc().TSFlags);
 
       if (instructionWaitsForSGPRWrites(MI)) {
         auto It = State.find(LastSGPRFromVALU);
@@ -460,12 +449,12 @@ public:
     LLVM_DEBUG(dbgs() << "AMDGPUInsertDelayAlu running on " << MF.getName()
                       << "\n");
 
-    ST = &MF.getSubtarget<GCNSubtarget>();
-    if (!ST->hasDelayAlu())
+    const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
+    if (!ST.hasDelayAlu())
       return false;
 
-    SII = ST->getInstrInfo();
-    TRI = ST->getRegisterInfo();
+    SII = ST.getInstrInfo();
+    TRI = ST.getRegisterInfo();
     SchedModel = &SII->getSchedModel();
 
     // Calculate the delay state for each basic block, iterating until we reach

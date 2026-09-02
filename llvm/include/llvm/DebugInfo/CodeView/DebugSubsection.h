@@ -10,7 +10,6 @@
 #define LLVM_DEBUGINFO_CODEVIEW_DEBUGSUBSECTION_H
 
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 #include <cstdint>
@@ -19,7 +18,7 @@ namespace llvm {
 class BinaryStreamWriter;
 namespace codeview {
 
-class LLVM_ABI DebugSubsectionRef {
+class DebugSubsectionRef {
 public:
   explicit DebugSubsectionRef(DebugSubsectionKind Kind) : Kind(Kind) {}
   virtual ~DebugSubsectionRef();
@@ -32,7 +31,7 @@ protected:
   DebugSubsectionKind Kind;
 };
 
-class LLVM_ABI DebugSubsection {
+class DebugSubsection {
 public:
   explicit DebugSubsection(DebugSubsectionKind Kind) : Kind(Kind) {}
   virtual ~DebugSubsection();

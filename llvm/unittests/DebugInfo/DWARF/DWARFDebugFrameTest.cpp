@@ -13,7 +13,6 @@
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
-#include "llvm/DebugInfo/DWARF/DWARFUnwindTablePrinter.h"
 #include "llvm/Testing/Support/Error.h"
 #include "gtest/gtest.h"
 
@@ -466,9 +465,9 @@ TEST(DWARFDebugFrame, UnwindTableEmptyRows) {
   EXPECT_THAT_ERROR(parseCFI(TestCIE, {}), Succeeded());
   EXPECT_TRUE(TestCIE.cfis().empty());
 
-  // Verify dwarf::createUnwindTable() won't result in errors and
+  // Verify dwarf::UnwindTable::create() won't result in errors and
   // and empty rows are not added to CIE UnwindTable.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestCIE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestCIE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const size_t ExpectedNumOfRows = 0;
   EXPECT_EQ(RowsOrErr->size(), ExpectedNumOfRows);
@@ -487,9 +486,9 @@ TEST(DWARFDebugFrame, UnwindTableEmptyRows) {
   EXPECT_THAT_ERROR(parseCFI(TestFDE, {}), Succeeded());
   EXPECT_TRUE(TestFDE.cfis().empty());
 
-  // Verify dwarf::createUnwindTable() won't result in errors and
+  // Verify dwarf::UnwindTable::create() won't result in errors and
   // and empty rows are not added to FDE UnwindTable.
-  RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   EXPECT_EQ(RowsOrErr->size(), ExpectedNumOfRows);
 }
@@ -505,9 +504,9 @@ TEST(DWARFDebugFrame, UnwindTableEmptyRows_NOPs) {
   EXPECT_THAT_ERROR(parseCFI(TestCIE, {dwarf::DW_CFA_nop}), Succeeded());
   EXPECT_TRUE(!TestCIE.cfis().empty());
 
-  // Verify dwarf::createUnwindTable() won't result in errors and
+  // Verify dwarf::UnwindTable::create() won't result in errors and
   // and empty rows are not added to CIE UnwindTable.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestCIE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestCIE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const size_t ExpectedNumOfRows = 0;
   EXPECT_EQ(RowsOrErr->size(), ExpectedNumOfRows);
@@ -526,9 +525,9 @@ TEST(DWARFDebugFrame, UnwindTableEmptyRows_NOPs) {
   EXPECT_THAT_ERROR(parseCFI(TestFDE, {dwarf::DW_CFA_nop}), Succeeded());
   EXPECT_TRUE(!TestFDE.cfis().empty());
 
-  // Verify dwarf::createUnwindTable() won't result in errors and
+  // Verify dwarf::UnwindTable::create() won't result in errors and
   // and empty rows are not added to FDE UnwindTable.
-  RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   EXPECT_EQ(RowsOrErr->size(), ExpectedNumOfRows);
 }
@@ -568,7 +567,7 @@ TEST(DWARFDebugFrame, UnwindTableErrorNonAscendingFDERows) {
       Succeeded());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(),
                     FailedWithMessage("DW_CFA_set_loc with adrress 0x1000 which"
                                       " must be greater than the current row "
@@ -604,7 +603,7 @@ TEST(DWARFDebugFrame, UnwindTableError_DW_CFA_restore_state) {
                     Succeeded());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(),
                     FailedWithMessage("DW_CFA_restore_state without a matching "
                                       "previous DW_CFA_remember_state"));
@@ -640,7 +639,7 @@ TEST(DWARFDebugFrame, UnwindTableError_DW_CFA_GNU_window_save) {
                     Succeeded());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(),
                     FailedWithMessage("DW_CFA opcode 0x2d is not supported for "
                                       "architecture x86_64"));
@@ -675,7 +674,7 @@ TEST(DWARFDebugFrame, UnwindTableError_DW_CFA_def_cfa_offset) {
                     Succeeded());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(),
                     FailedWithMessage("DW_CFA_def_cfa_offset found when CFA "
                                       "rule was not RegPlusOffset"));
@@ -710,7 +709,7 @@ TEST(DWARFDebugFrame, UnwindTableDefCFAOffsetSFCFAError) {
                     Succeeded());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(),
                     FailedWithMessage("DW_CFA_def_cfa_offset_sf found when CFA "
                                       "rule was not RegPlusOffset"));
@@ -746,7 +745,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_def_cfa_register) {
   EXPECT_THAT_ERROR(parseCFI(TestFDE, {}), Succeeded());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -818,7 +817,7 @@ TEST(DWARFDebugFrame, UnwindTableRowPushingOpcodes) {
       Reg, dwarf::UnwindLocation::createIsRegisterPlusOffset(InReg, 0));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   ASSERT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 6u);
@@ -893,7 +892,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_restore) {
       Reg, dwarf::UnwindLocation::createIsRegisterPlusOffset(InReg, 0));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 2u);
@@ -956,7 +955,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_restore_extended) {
       Reg, dwarf::UnwindLocation::createIsRegisterPlusOffset(InReg, 0));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 2u);
@@ -1017,7 +1016,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_offset) {
       Reg3, dwarf::UnwindLocation::createAtCFAPlusOffset(8));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1069,7 +1068,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_val_offset) {
       Reg2, dwarf::UnwindLocation::createIsCFAPlusOffset(8));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1114,7 +1113,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_nop) {
       Reg1, dwarf::UnwindLocation::createAtCFAPlusOffset(-8));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1204,7 +1203,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_remember_state) {
       Reg3, dwarf::UnwindLocation::createAtCFAPlusOffset(-24));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 5u);
@@ -1271,7 +1270,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_undefined) {
                                  dwarf::UnwindLocation::createUndefined());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1315,7 +1314,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_same_value) {
   VerifyLocs.setRegisterLocation(Reg1, dwarf::UnwindLocation::createSame());
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1361,7 +1360,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_register) {
       Reg, dwarf::UnwindLocation::createIsRegisterPlusOffset(InReg, 0));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1413,7 +1412,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_expression) {
       Reg, dwarf::UnwindLocation::createAtDWARFExpression(Expr));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1465,7 +1464,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_val_expression) {
       Reg, dwarf::UnwindLocation::createIsDWARFExpression(Expr));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 1u);
@@ -1528,7 +1527,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_def_cfa) {
       Reg, dwarf::UnwindLocation::createIsRegisterPlusOffset(InReg, 0));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 5u);
@@ -1626,7 +1625,7 @@ TEST(DWARFDebugFrame, UnwindTable_DW_CFA_LLVM_def_aspace_cfa) {
       Reg, dwarf::UnwindLocation::createIsRegisterPlusOffset(InReg, 0));
 
   // Verify we catch state machine error.
-  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::createUnwindTable(&TestFDE);
+  Expected<dwarf::UnwindTable> RowsOrErr = dwarf::UnwindTable::create(&TestFDE);
   EXPECT_THAT_ERROR(RowsOrErr.takeError(), Succeeded());
   const dwarf::UnwindTable &Rows = RowsOrErr.get();
   EXPECT_EQ(Rows.size(), 5u);

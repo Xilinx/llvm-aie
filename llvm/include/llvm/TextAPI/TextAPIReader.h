@@ -9,7 +9,6 @@
 #ifndef LLVM_TEXTAPI_TEXTAPIREADER_H
 #define LLVM_TEXTAPI_TEXTAPIREADER_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -30,13 +29,13 @@ public:
   ///
   /// \param InputBuffer Buffer holding contents of TAPI text file.
   /// \return The file format version of TAPI text file.
-  LLVM_ABI static Expected<FileType> canRead(MemoryBufferRef InputBuffer);
+  static Expected<FileType> canRead(MemoryBufferRef InputBuffer);
 
   /// Parse and get an InterfaceFile that represents the full
   /// library.
   ///
   /// \param InputBuffer Buffer holding contents of TAPI text file.
-  LLVM_ABI static Expected<std::unique_ptr<InterfaceFile>>
+  static Expected<std::unique_ptr<InterfaceFile>>
   get(MemoryBufferRef InputBuffer);
 
   TextAPIReader() = delete;

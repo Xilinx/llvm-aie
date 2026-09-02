@@ -445,6 +445,7 @@ private:
   bool optimizeSwitchInst(SwitchInst *SI);
   bool optimizeExtractElementInst(Instruction *Inst);
   bool dupRetToEnableTailCallOpts(BasicBlock *BB, ModifyDT &ModifiedDT);
+  bool fixupDbgValue(Instruction *I);
   bool fixupDbgVariableRecord(DbgVariableRecord &I);
   bool fixupDbgVariableRecordsOnInst(Instruction &I);
   bool placeDbgValues(Function &F);
@@ -895,7 +896,12 @@ BasicBlock *CodeGenPrepare::findDestBlockOfMergeableEmptyBlock(BasicBlock *BB) {
   BasicBlock::iterator BBI = BI->getIterator();
   if (BBI != BB->begin()) {
     --BBI;
-    if (!isa<PHINode>(BBI))
+    while (isa<DbgInfoIntrinsic>(BBI)) {
+      if (BBI == BB->begin())
+        break;
+      --BBI;
+    }
+    if (!isa<DbgInfoIntrinsic>(BBI) && !isa<PHINode>(BBI))
       return nullptr;
   }
 
@@ -2095,10 +2101,6 @@ static bool isRemOfLoopIncrementWithLoopInvariant(
   if (!L->isLoopInvariant(RemAmt))
     return false;
 
-  // Only works if the AddOffset is a loop invaraint
-  if (AddOffset && !L->isLoopInvariant(AddOffset))
-    return false;
-
   // Is the PHI a loop increment?
   auto LoopIncrInfo = getIVIncrement(PN, LI);
   if (!LoopIncrInfo)
@@ -2765,6 +2767,9 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, ModifyDT &ModifiedDT) {
     case Intrinsic::fshl:
     case Intrinsic::fshr:
       return optimizeFunnelShift(II);
+    case Intrinsic::dbg_assign:
+    case Intrinsic::dbg_value:
+      return fixupDbgValue(II);
     case Intrinsic::masked_gather:
       return optimizeGatherScatterInst(II, II->getArgOperand(0));
     case Intrinsic::masked_scatter:
@@ -2976,9 +2981,10 @@ bool CodeGenPrepare::dupRetToEnableTailCallOpts(BasicBlock *BB,
   // Make sure there are no instructions between the first instruction
   // and return.
   BasicBlock::const_iterator BI = BB->getFirstNonPHIIt();
-  // Skip over pseudo-probes and the bitcast.
-  while (&*BI == BCI || &*BI == EVI || isa<PseudoProbeInst>(BI) ||
-         isLifetimeEndOrBitCastFor(&*BI) || isFakeUse(&*BI))
+  // Skip over debug and the bitcast.
+  while (isa<DbgInfoIntrinsic>(BI) || &*BI == BCI || &*BI == EVI ||
+         isa<PseudoProbeInst>(BI) || isLifetimeEndOrBitCastFor(&*BI) ||
+         isFakeUse(&*BI))
     BI = std::next(BI);
   if (&*BI != RetI)
     return false;
@@ -3015,7 +3021,7 @@ bool CodeGenPrepare::dupRetToEnableTailCallOpts(BasicBlock *BB,
         //   %phi = phi ptr [ %0, %bb0 ], [ %2, %entry ]
         if (PredBB && PredBB->getSingleSuccessor() == BB)
           CI = dyn_cast_or_null<CallInst>(
-              PredBB->getTerminator()->getPrevNode());
+              PredBB->getTerminator()->getPrevNonDebugInstruction(true));
 
         if (CI && CI->use_empty() &&
             isIntrinsicOrLFToBeTailCalled(TLInfo, CI) &&
@@ -3032,7 +3038,7 @@ bool CodeGenPrepare::dupRetToEnableTailCallOpts(BasicBlock *BB,
     for (BasicBlock *Pred : predecessors(BB)) {
       if (!VisitedBBs.insert(Pred).second)
         continue;
-      if (Instruction *I = Pred->rbegin()->getPrevNode()) {
+      if (Instruction *I = Pred->rbegin()->getPrevNonDebugInstruction(true)) {
         CallInst *CI = dyn_cast<CallInst>(I);
         if (CI && CI->use_empty() && TLI->mayBeEmittedAsTailCall(CI) &&
             attributesPermitTailCall(F, CI, RetI, *TLI)) {
@@ -3329,7 +3335,8 @@ class TypePromotionTransaction {
 
       // Record where we would have to re-insert the instruction in the sequence
       // of DbgRecords, if we ended up reinserting.
-      BeforeDbgRecord = Inst->getDbgReinsertionPosition();
+      if (BB->IsNewDbgInfoFormat)
+        BeforeDbgRecord = Inst->getDbgReinsertionPosition();
 
       if (HasPrevInstruction) {
         Point.PrevInst = std::prev(Inst->getIterator());
@@ -3554,6 +3561,8 @@ class TypePromotionTransaction {
     /// Keep track of the original uses (pair Instruction, Index).
     SmallVector<InstructionAndIdx, 4> OriginalUses;
     /// Keep track of the debug users.
+    SmallVector<DbgValueInst *, 1> DbgValues;
+    /// And non-instruction debug-users too.
     SmallVector<DbgVariableRecord *, 1> DbgVariableRecords;
 
     /// Keep track of the new value so that we can undo it by replacing
@@ -3575,7 +3584,7 @@ class TypePromotionTransaction {
       }
       // Record the debug uses separately. They are not in the instruction's
       // use list, but they are replaced by RAUW.
-      findDbgValues(Inst, DbgVariableRecords);
+      findDbgValues(DbgValues, Inst, &DbgVariableRecords);
 
       // Now, we can replace the uses.
       Inst->replaceAllUsesWith(New);
@@ -3589,7 +3598,11 @@ class TypePromotionTransaction {
       // RAUW has replaced all original uses with references to the new value,
       // including the debug uses. Since we are undoing the replacements,
       // the original debug uses must also be reinstated to maintain the
-      // correctness and utility of debug value records.
+      // correctness and utility of debug value instructions.
+      for (auto *DVI : DbgValues)
+        DVI->replaceVariableLocationOp(New, Inst);
+      // Similar story with DbgVariableRecords, the non-instruction
+      // representation of dbg.values.
       for (DbgVariableRecord *DVR : DbgVariableRecords)
         DVR->replaceVariableLocationOp(New, Inst);
     }
@@ -5434,17 +5447,11 @@ bool AddressingModeMatcher::matchAddr(Value *Addr, unsigned Depth) {
       TPT.getRestorationPoint();
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Addr)) {
     if (CI->getValue().isSignedIntN(64)) {
-      // Check if the addition would result in a signed overflow.
-      int64_t Result;
-      bool Overflow =
-          AddOverflow(AddrMode.BaseOffs, CI->getSExtValue(), Result);
-      if (!Overflow) {
-        // Fold in immediates if legal for the target.
-        AddrMode.BaseOffs = Result;
-        if (TLI.isLegalAddressingMode(DL, AddrMode, AccessTy, AddrSpace))
-          return true;
-        AddrMode.BaseOffs -= CI->getSExtValue();
-      }
+      // Fold in immediates if legal for the target.
+      AddrMode.BaseOffs += CI->getSExtValue();
+      if (TLI.isLegalAddressingMode(DL, AddrMode, AccessTy, AddrSpace))
+        return true;
+      AddrMode.BaseOffs -= CI->getSExtValue();
     }
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(Addr)) {
     // If this is a global variable, try to fold it into the addressing mode.
@@ -5932,17 +5939,8 @@ bool CodeGenPrepare::optimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   // The current BB may be optimized multiple times, we can't guarantee the
   // reuse of Addr happens later, call findInsertPos to find an appropriate
   // insert position.
-  auto InsertPos = findInsertPos(Addr, MemoryInst, SunkAddr);
-
-  // TODO: Adjust insert point considering (Base|Scaled)Reg if possible.
-  if (!SunkAddr) {
-    auto &DT = getDT(*MemoryInst->getFunction());
-    if ((AddrMode.BaseReg && !DT.dominates(AddrMode.BaseReg, &*InsertPos)) ||
-        (AddrMode.ScaledReg && !DT.dominates(AddrMode.ScaledReg, &*InsertPos)))
-      return Modified;
-  }
-
-  IRBuilder<> Builder(MemoryInst->getParent(), InsertPos);
+  IRBuilder<> Builder(MemoryInst->getParent(),
+                      findInsertPos(Addr, MemoryInst, SunkAddr));
 
   if (SunkAddr) {
     LLVM_DEBUG(dbgs() << "CGP: Reusing nonlocal addrmode: " << AddrMode
@@ -6086,13 +6084,6 @@ bool CodeGenPrepare::optimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
       }
 
       if (!ResultIndex) {
-        auto PtrInst = dyn_cast<Instruction>(ResultPtr);
-        // We know that we have a pointer without any offsets. If this pointer
-        // originates from a different basic block than the current one, we
-        // must be able to recreate it in the current basic block.
-        // We do not support the recreation of any instructions yet.
-        if (PtrInst && PtrInst->getParent() != MemoryInst->getParent())
-          return Modified;
         SunkAddr = ResultPtr;
       } else {
         if (ResultPtr->getType() != I8PtrTy)
@@ -7322,7 +7313,7 @@ bool CodeGenPrepare::optimizeLoadExt(LoadInst *Load) {
       !TLI->isLoadExtLegal(ISD::ZEXTLOAD, LoadResultVT, TruncVT))
     return false;
 
-  IRBuilder<> Builder(Load->getNextNode());
+  IRBuilder<> Builder(Load->getNextNonDebugInstruction());
   auto *NewAnd = cast<Instruction>(
       Builder.CreateAnd(Load, ConstantInt::get(Ctx, DemandBits)));
   // Mark this instruction as "inserted by CGP", so that other
@@ -8927,6 +8918,32 @@ bool CodeGenPrepare::optimizeBlock(BasicBlock &BB, ModifyDT &ModifiedDT) {
   return MadeChange;
 }
 
+// Some CGP optimizations may move or alter what's computed in a block. Check
+// whether a dbg.value intrinsic could be pointed at a more appropriate operand.
+bool CodeGenPrepare::fixupDbgValue(Instruction *I) {
+  assert(isa<DbgValueInst>(I));
+  DbgValueInst &DVI = *cast<DbgValueInst>(I);
+
+  // Does this dbg.value refer to a sunk address calculation?
+  bool AnyChange = false;
+  SmallDenseSet<Value *> LocationOps(DVI.location_ops().begin(),
+                                     DVI.location_ops().end());
+  for (Value *Location : LocationOps) {
+    WeakTrackingVH SunkAddrVH = SunkAddrs[Location];
+    Value *SunkAddr = SunkAddrVH.pointsToAliveValue() ? SunkAddrVH : nullptr;
+    if (SunkAddr) {
+      // Point dbg.value at locally computed address, which should give the best
+      // opportunity to be accurately lowered. This update may change the type
+      // of pointer being referred to; however this makes no difference to
+      // debugging information, and we can't generate bitcasts that may affect
+      // codegen.
+      DVI.replaceVariableLocationOp(Location, SunkAddr);
+      AnyChange = true;
+    }
+  }
+  return AnyChange;
+}
+
 bool CodeGenPrepare::fixupDbgVariableRecordsOnInst(Instruction &I) {
   bool AnyChange = false;
   for (DbgVariableRecord &DVR : filterDbgVars(I.getDbgRecordRange()))
@@ -8959,6 +8976,14 @@ bool CodeGenPrepare::fixupDbgVariableRecord(DbgVariableRecord &DVR) {
     }
   }
   return AnyChange;
+}
+
+static void DbgInserterHelper(DbgValueInst *DVI, BasicBlock::iterator VI) {
+  DVI->removeFromParent();
+  if (isa<PHINode>(VI))
+    DVI->insertBefore(VI->getParent()->getFirstInsertionPt());
+  else
+    DVI->insertAfter(VI);
 }
 
 static void DbgInserterHelper(DbgVariableRecord *DVR, BasicBlock::iterator VI) {
@@ -9025,8 +9050,15 @@ bool CodeGenPrepare::placeDbgValues(Function &F) {
 
   for (BasicBlock &BB : F) {
     for (Instruction &Insn : llvm::make_early_inc_range(BB)) {
-      // Process any DbgVariableRecord records attached to this
-      // instruction.
+      // Process dbg.value intrinsics.
+      DbgValueInst *DVI = dyn_cast<DbgValueInst>(&Insn);
+      if (DVI) {
+        DbgProcessor(DVI, DVI);
+        continue;
+      }
+
+      // If this isn't a dbg.value, process any attached DbgVariableRecord
+      // records attached to this instruction.
       for (DbgVariableRecord &DVR : llvm::make_early_inc_range(
                filterDbgVars(Insn.getDbgRecordRange()))) {
         if (DVR.Type != DbgVariableRecord::LocationType::Value)

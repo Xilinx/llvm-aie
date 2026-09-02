@@ -16,7 +16,7 @@
 
 using namespace llvm;
 
-const MCAsmInfo::AtSpecifier atSpecifiers[] = {
+const MCAsmInfo::VariantKindDesc variantKindDescs[] = {
     {HexagonMCExpr::VK_DTPREL, "DTPREL"}, {HexagonMCExpr::VK_GD_GOT, "GDGOT"},
     {HexagonMCExpr::VK_GD_PLT, "GDPLT"},  {HexagonMCExpr::VK_GOT, "GOT"},
     {HexagonMCExpr::VK_GOTREL, "GOTREL"}, {HexagonMCExpr::VK_IE, "IE"},
@@ -38,7 +38,6 @@ HexagonMCAsmInfo::HexagonMCAsmInfo(const Triple &TT) {
   LCOMMDirectiveAlignmentType = LCOMM::ByteAlignment;
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
-  UsesSetToEquateSymbol = true;
   ZeroDirective = "\t.space\t";
   AscizDirective = "\t.string\t";
 
@@ -47,5 +46,5 @@ HexagonMCAsmInfo::HexagonMCAsmInfo(const Triple &TT) {
   ExceptionsType = ExceptionHandling::DwarfCFI;
   UseLogicalShr = false;
 
-  initializeAtSpecifiers(atSpecifiers);
+  initializeVariantKinds(variantKindDescs);
 }

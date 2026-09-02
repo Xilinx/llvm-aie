@@ -66,8 +66,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts,
   // at the start of the statement. Thus, we're not using MaybeParseAttributes
   // here because we don't want to allow arbitrary orderings.
   ParsedAttributes CXX11Attrs(AttrFactory);
-  bool HasStdAttr =
-      MaybeParseCXX11Attributes(CXX11Attrs, /*MightBeObjCMessageSend*/ true);
+  MaybeParseCXX11Attributes(CXX11Attrs, /*MightBeObjCMessageSend*/ true);
   ParsedAttributes GNUOrMSAttrs(AttrFactory);
   if (getLangOpts().OpenCL)
     MaybeParseGNUAttributes(GNUOrMSAttrs);
@@ -83,13 +82,6 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts,
 
   assert((CXX11Attrs.empty() || Res.isInvalid() || Res.isUsable()) &&
          "attributes on empty statement");
-
-  if (HasStdAttr && getLangOpts().C23 &&
-      (StmtCtx & ParsedStmtContext::AllowDeclarationsInC) ==
-          ParsedStmtContext{} &&
-      isa_and_present<NullStmt>(Res.get()))
-    Diag(CXX11Attrs.Range.getBegin(), diag::warn_attr_in_secondary_block)
-        << CXX11Attrs.Range;
 
   if (CXX11Attrs.empty() || Res.isInvalid())
     return Res;
@@ -544,8 +536,7 @@ StmtResult Parser::ParseExprStatement(ParsedStmtContext StmtCtx) {
   }
 
   Token *CurTok = nullptr;
-  // If the semicolon is missing at the end of REPL input, we want to print
-  // the result. Note we shouldn't eat the token since the callback needs it.
+  // Note we shouldn't eat the token since the callback needs it.
   if (Tok.is(tok::annot_repl_input_end))
     CurTok = &Tok;
   else
@@ -614,7 +605,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
   {
     ParseScopeFlags FilterScope(this, getCurScope()->getFlags() |
                                           Scope::SEHFilterScope);
-    FilterExpr = ParseExpression();
+    FilterExpr = Actions.CorrectDelayedTyposInExpr(ParseExpression());
   }
 
   if (getLangOpts().Borland) {
@@ -844,12 +835,10 @@ StmtResult Parser::ParseCaseStatement(ParsedStmtContext StmtCtx,
           << "'case'" << tok::colon
           << FixItHint::CreateReplacement(ColonLoc, ":");
     } else {
-      SourceLocation ExpectedLoc = getEndOfPreviousToken();
-
+      SourceLocation ExpectedLoc = PP.getLocForEndOfToken(PrevTokLocation);
       Diag(ExpectedLoc, diag::err_expected_after)
           << "'case'" << tok::colon
           << FixItHint::CreateInsertion(ExpectedLoc, ":");
-
       ColonLoc = ExpectedLoc;
     }
 
@@ -1339,7 +1328,7 @@ struct MisleadingIndentationChecker {
     if (ColNo == 0 || TabStop == 1)
       return ColNo;
 
-    FileIDAndOffset FIDAndOffset = SM.getDecomposedLoc(Loc);
+    std::pair<FileID, unsigned> FIDAndOffset = SM.getDecomposedLoc(Loc);
 
     bool Invalid;
     StringRef BufData = SM.getBufferData(FIDAndOffset.first, &Invalid);
@@ -1843,7 +1832,11 @@ StmtResult Parser::ParseDoStatement() {
 
   SourceLocation Start = Tok.getLocation();
   ExprResult Cond = ParseExpression();
-  if (!Cond.isUsable()) {
+  // Correct the typos in condition before closing the scope.
+  if (Cond.isUsable())
+    Cond = Actions.CorrectDelayedTyposInExpr(Cond, /*InitDecl=*/nullptr,
+                                             /*RecoverUncorrectedTypos=*/true);
+  else {
     if (!Tok.isOneOf(tok::r_paren, tok::r_square, tok::r_brace))
       SkipUntil(tok::semi);
     Cond = Actions.CreateRecoveryExpr(
@@ -2025,7 +2018,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     }
   } else {
     ProhibitAttributes(attrs);
-    Value = ParseExpression();
+    Value = Actions.CorrectDelayedTyposInExpr(ParseExpression());
 
     ForEach = isTokIdentifier_in();
 
@@ -2184,10 +2177,12 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   StmtResult ForEachStmt;
 
   if (ForRangeInfo.ParsedForRangeDecl()) {
+    ExprResult CorrectedRange =
+        Actions.CorrectDelayedTyposInExpr(ForRangeInfo.RangeExpr.get());
     ForRangeStmt = Actions.ActOnCXXForRangeStmt(
         getCurScope(), ForLoc, CoawaitLoc, FirstPart.get(),
-        ForRangeInfo.LoopVar.get(), ForRangeInfo.ColonLoc,
-        ForRangeInfo.RangeExpr.get(), T.getCloseLocation(), Sema::BFRK_Build,
+        ForRangeInfo.LoopVar.get(), ForRangeInfo.ColonLoc, CorrectedRange.get(),
+        T.getCloseLocation(), Sema::BFRK_Build,
         ForRangeInfo.LifetimeExtendTemps);
   } else if (ForEach) {
     // Similarly, we need to do the semantic analysis for a for-range
@@ -2357,8 +2352,8 @@ StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts,
     ArgsUnion ArgHints[] = {Hint.PragmaNameLoc, Hint.OptionLoc, Hint.StateLoc,
                             ArgsUnion(Hint.ValueExpr), Hint.ValueIdentLoc};
     TempAttrs.addNew(Hint.PragmaNameLoc->getIdentifierInfo(), Hint.Range,
-                     AttributeScopeInfo(), ArgHints, /*numArgs=*/5,
-                     ParsedAttr::Form::Pragma());
+                     /*scopeName=*/nullptr, Hint.PragmaNameLoc->getLoc(),
+                     ArgHints, /*numArgs=*/5, ParsedAttr::Form::Pragma());
   }
 
   // Get the next statement.

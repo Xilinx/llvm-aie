@@ -13,7 +13,6 @@
 #include "MipsInstPrinter.h"
 #include "Mips.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -139,7 +138,7 @@ void MipsInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 
   assert(Op.isExpr() && "unknown operand kind in printOperand");
-  MAI.printExpr(O, *Op.getExpr());
+  Op.getExpr()->print(O, &MAI);
 }
 
 void MipsInstPrinter::printJumpOperand(const MCInst *MI, unsigned OpNo,

@@ -6,22 +6,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "src/errno/libc_errno.h"
 #include "src/sys/select/select.h"
 #include "src/unistd/read.h"
-#include "test/UnitTest/ErrnoCheckingTest.h"
-#include "test/UnitTest/ErrnoSetterMatcher.h"
 #include "test/UnitTest/Test.h"
 
 #include <sys/select.h>
 #include <unistd.h>
 
-using namespace LIBC_NAMESPACE::testing::ErrnoSetterMatcher;
-using LlvmLibcSelectTest = LIBC_NAMESPACE::testing::ErrnoCheckingTest;
-
 // This test is not be run automatically as part of the libc testsuite.
 // Instead, one has to run it manually and press a key on the keyboard
 // to make the test succeed.
-TEST_F(LlvmLibcSelectTest, ReadStdinAfterSelect) {
+TEST(LlvmLibcSelectTest, ReadStdinAfterSelect) {
+  LIBC_NAMESPACE::libc_errno = 0;
   constexpr int STDIN_FD = 0;
   fd_set set;
   FD_ZERO(&set);
@@ -35,20 +32,19 @@ TEST_F(LlvmLibcSelectTest, ReadStdinAfterSelect) {
 
   // Zero timeout means we don't wait for input. So, select should return
   // immediately.
-  ASSERT_THAT(
-      LIBC_NAMESPACE::select(STDIN_FD + 1, &set, nullptr, nullptr, &zero),
-      Succeeds(0));
+  int count =
+      LIBC_NAMESPACE::select(STDIN_FD + 1, &set, nullptr, nullptr, &zero);
   // The set should indicate that stdin is NOT ready for reading.
   ASSERT_EQ(0, FD_ISSET(STDIN_FD, &set));
 
   FD_SET(STDIN_FD, &set);
   // Wait for an hour and give the user a chance to hit a key.
-  ASSERT_THAT(LIBC_NAMESPACE::select(STDIN_FD + 1, &set, nullptr, nullptr, &hr),
-              Succeeds(1));
+  count = LIBC_NAMESPACE::select(STDIN_FD + 1, &set, nullptr, nullptr, &hr);
+  ASSERT_EQ(count, 1);
   // The set should indicate that stdin is ready for reading.
   ASSERT_EQ(1, FD_ISSET(STDIN_FD, &set));
 
   // Verify that atleast one character can be read.
   char c;
-  ASSERT_THAT(LIBC_NAMESPACE::read(STDIN_FD, &c, 1), Succeeds(ssize_t(1)));
+  ASSERT_EQ(LIBC_NAMESPACE::read(STDIN_FD, &c, 1), ssize_t(1));
 }

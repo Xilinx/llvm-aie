@@ -1103,7 +1103,8 @@ class CGObjCGNUstep2 : public CGObjCGNUstep {
     bool isNamed = !isNonASCII;
     if (isNamed) {
       StringName = ".objc_str_";
-      for (unsigned char c : Str) {
+      for (int i=0,e=Str.size() ; i<e ; ++i) {
+        unsigned char c = Str[i];
         if (isalnum(c))
           StringName += c;
         else if (c == ' ')
@@ -1942,9 +1943,8 @@ class CGObjCGNUstep2 : public CGObjCGNUstep {
     // struct objc_class *sibling_class
     classFields.addNullPointer(PtrTy);
     // struct objc_protocol_list *protocols;
-    auto RuntimeProtocols =
-        GetRuntimeProtocolList(classDecl->all_referenced_protocol_begin(),
-                               classDecl->all_referenced_protocol_end());
+    auto RuntimeProtocols = GetRuntimeProtocolList(classDecl->protocol_begin(),
+                                                   classDecl->protocol_end());
     SmallVector<llvm::Constant *, 16> Protocols;
     for (const auto *I : RuntimeProtocols)
       Protocols.push_back(GenerateProtocolRef(I));
@@ -2560,9 +2560,10 @@ llvm::Value *CGObjCGNU::GetTypedSelector(CodeGenFunction &CGF, Selector Sel,
   SmallVectorImpl<TypedSelector> &Types = SelectorTable[Sel];
   llvm::GlobalAlias *SelValue = nullptr;
 
-  for (const TypedSelector &Type : Types) {
-    if (Type.first == TypeEncoding) {
-      SelValue = Type.second;
+  for (SmallVectorImpl<TypedSelector>::iterator i = Types.begin(),
+      e = Types.end() ; i!=e ; i++) {
+    if (i->first == TypeEncoding) {
+      SelValue = i->second;
       break;
     }
   }
@@ -3332,12 +3333,13 @@ CGObjCGNU::GenerateProtocolList(ArrayRef<std::string> Protocols) {
   ProtocolList.addInt(LongTy, Protocols.size());
 
   auto Elements = ProtocolList.beginArray(PtrToInt8Ty);
-  for (const std::string &Protocol : Protocols) {
+  for (const std::string *iter = Protocols.begin(), *endIter = Protocols.end();
+      iter != endIter ; iter++) {
     llvm::Constant *protocol = nullptr;
-    llvm::StringMap<llvm::Constant *>::iterator value =
-        ExistingProtocols.find(Protocol);
+    llvm::StringMap<llvm::Constant*>::iterator value =
+      ExistingProtocols.find(*iter);
     if (value == ExistingProtocols.end()) {
-      protocol = GenerateEmptyProtocol(Protocol);
+      protocol = GenerateEmptyProtocol(*iter);
     } else {
       protocol = value->getValue();
     }

@@ -17,6 +17,9 @@
 #include "mlir/Dialect/Async/IR/Async.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/IR/ImplicitLocOpBuilder.h"
+#include "mlir/IR/PatternMatch.h"
+#include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "llvm/ADT/SmallSet.h"
 
 namespace mlir {
@@ -48,7 +51,7 @@ static LogicalResult dropRefIfNoUses(Value value, unsigned count = 1) {
   else
     b.setInsertionPointToStart(value.getParentBlock());
 
-  RuntimeDropRefOp::create(b, value.getLoc(), value, b.getI64IntegerAttr(1));
+  b.create<RuntimeDropRefOp>(value.getLoc(), value, b.getI64IntegerAttr(1));
   return success();
 }
 
@@ -309,7 +312,7 @@ LogicalResult AsyncRuntimeRefCountingPass::addDropRefAfterLastUse(Value value) {
 
     // Add a drop_ref immediately after the last user.
     builder.setInsertionPointAfter(lastUser);
-    RuntimeDropRefOp::create(builder, loc, value, builder.getI64IntegerAttr(1));
+    builder.create<RuntimeDropRefOp>(loc, value, builder.getI64IntegerAttr(1));
   }
 
   return success();
@@ -327,7 +330,7 @@ AsyncRuntimeRefCountingPass::addAddRefBeforeFunctionCall(Value value) {
     // Add a reference before the function call to pass the value at `+1`
     // reference to the function entry block.
     builder.setInsertionPoint(user);
-    RuntimeAddRefOp::create(builder, loc, value, builder.getI64IntegerAttr(1));
+    builder.create<RuntimeAddRefOp>(loc, value, builder.getI64IntegerAttr(1));
   }
 
   return success();
@@ -411,12 +414,12 @@ AsyncRuntimeRefCountingPass::addDropRefInDivergentLivenessSuccessor(
         refCountingBlock = &successor->getParent()->emplaceBlock();
         refCountingBlock->moveBefore(successor);
         OpBuilder builder = OpBuilder::atBlockEnd(refCountingBlock);
-        cf::BranchOp::create(builder, value.getLoc(), successor);
+        builder.create<cf::BranchOp>(value.getLoc(), successor);
       }
 
       OpBuilder builder = OpBuilder::atBlockBegin(refCountingBlock);
-      RuntimeDropRefOp::create(builder, value.getLoc(), value,
-                               builder.getI64IntegerAttr(1));
+      builder.create<RuntimeDropRefOp>(value.getLoc(), value,
+                                       builder.getI64IntegerAttr(1));
 
       // No need to update the terminator operation.
       if (successor == refCountingBlock)
@@ -507,13 +510,13 @@ AsyncRuntimePolicyBasedRefCountingPass::addRefCounting(Value value) {
       // Create `add_ref` operation before the operand owner.
       if (cnt > 0) {
         b.setInsertionPoint(operand.getOwner());
-        RuntimeAddRefOp::create(b, loc, value, b.getI64IntegerAttr(cnt));
+        b.create<RuntimeAddRefOp>(loc, value, b.getI64IntegerAttr(cnt));
       }
 
       // Create `drop_ref` operation after the operand owner.
       if (cnt < 0) {
         b.setInsertionPointAfter(operand.getOwner());
-        RuntimeDropRefOp::create(b, loc, value, b.getI64IntegerAttr(-cnt));
+        b.create<RuntimeDropRefOp>(loc, value, b.getI64IntegerAttr(-cnt));
       }
     }
   }

@@ -8,29 +8,20 @@
 # throwing an exception. We expect this to fail immediately, rather than
 # timeout.
 
-# lit should return immediately once it fails to execute the non-existent file.
-# This will take a variable amount of time depending on process scheduling, but
-# it should always be significantly less than the hard timeout, which is the
-# point where lit would cancel the test.
-# DEFINE: %{grace_period}=5
-# DEFINE: %{hard_timeout}=15
+# DEFINE: %{timeout}=1
 
 # RUN: not %{lit} %{inputs}/timeout-hang/run-nonexistent.txt \
-# RUN: --timeout=%{hard_timeout} --param external=0 | %{python} %s %{grace_period}
+# RUN: --timeout=%{timeout} --param external=0 | %{python} %s %{timeout}
 
 import sys
 import re
 
-grace_time = float(sys.argv[1])
+timeout_time = float(sys.argv[1])
 testing_time = float(re.search(r"Testing Time: (.*)s", sys.stdin.read()).group(1))
 
-if testing_time <= grace_time:
-    print("Testing finished within the grace period")
+if testing_time < timeout_time:
+    print("Testing took less than timeout")
     sys.exit(0)
 else:
-    print(
-        "Testing took {}s, which is beyond the grace period of {}s".format(
-            testing_time, grace_time
-        )
-    )
+    print("Testing took as long or longer than timeout")
     sys.exit(1)

@@ -75,8 +75,8 @@ public:
 
 // Options
 static StringRef ToolName;
-static std::string OutputFilename = "-";
-static std::string Filename;
+static StringRef OutputFilename = "-";
+static StringRef Filename;
 static bool ShowCGDataVersion;
 static bool SkipTrim;
 static CGDataAction Action;

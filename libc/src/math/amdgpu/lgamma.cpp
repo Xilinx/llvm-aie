@@ -9,11 +9,11 @@
 #include "src/math/lgamma.h"
 #include "src/__support/common.h"
 
+#include "declarations.h"
 #include "src/__support/macros/config.h"
 
 namespace LIBC_NAMESPACE_DECL {
 
-// TODO: Implement this.
-LLVM_LIBC_FUNCTION(double, lgamma, (double)) { return 0.0; }
+LLVM_LIBC_FUNCTION(double, lgamma, (double x)) { return __ocml_lgamma_f64(x); }
 
 } // namespace LIBC_NAMESPACE_DECL

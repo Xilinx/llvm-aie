@@ -24,13 +24,14 @@ namespace llvm {
 template <unsigned N>
 class Graph {
 private:
+  // Disable copying.
+  Graph(const Graph&);
+  Graph& operator=(const Graph&);
+
   static void ValidateIndex(unsigned Idx) {
     assert(Idx < N && "Invalid node index!");
   }
 public:
-  // Disable copying.
-  Graph(const Graph &) = delete;
-  Graph &operator=(const Graph &) = delete;
 
   /// NodeSubset - A subset of the graph's nodes.
   class NodeSubset {
@@ -168,12 +169,11 @@ public:
     /// yet been visited.
     NodeSubset Children;
 
+    ChildIterator(); // Disable default constructor.
   protected:
     ChildIterator(NodeType *F, NodeSubset C) : FirstNode(F), Children(C) {}
 
   public:
-    ChildIterator() = delete; // Disable default constructor.
-
     /// ChildIterator - Copy constructor.
     ChildIterator(const ChildIterator &other) = default;
     ChildIterator &operator=(const ChildIterator &other) = default;

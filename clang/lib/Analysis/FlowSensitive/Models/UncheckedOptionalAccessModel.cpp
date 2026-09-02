@@ -31,9 +31,12 @@
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
+#include <memory>
 #include <optional>
+#include <utility>
 
 namespace clang {
 namespace dataflow {

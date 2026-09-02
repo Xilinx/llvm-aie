@@ -7,8 +7,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "FileIndexRecord.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
 
 using namespace clang;

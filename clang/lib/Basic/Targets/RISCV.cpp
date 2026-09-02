@@ -222,7 +222,7 @@ void RISCVTargetInfo::getTargetDefines(const LangOptions &Opts,
   // Currently we support the v1.0 RISC-V V intrinsics.
   Builder.defineMacro("__riscv_v_intrinsic", Twine(getVersionValue(1, 0)));
 
-  auto VScale = getVScaleRange(Opts, ArmStreamingKind::NotStreaming);
+  auto VScale = getVScaleRange(Opts, false);
   if (VScale && VScale->first && VScale->first == VScale->second)
     Builder.defineMacro("__riscv_v_fixed_vlen",
                         Twine(VScale->first * llvm::RISCV::RVVBitsPerBlock));
@@ -367,7 +367,7 @@ bool RISCVTargetInfo::initFeatureMap(
 
 std::optional<std::pair<unsigned, unsigned>>
 RISCVTargetInfo::getVScaleRange(const LangOptions &LangOpts,
-                                ArmStreamingKind IsArmStreamingFunction,
+                                bool IsArmStreamingFunction,
                                 llvm::StringMap<bool> *FeatureMap) const {
   // RISCV::RVVBitsPerBlock is 64.
   unsigned VScaleMin = ISAInfo->getMinVLen() / llvm::RISCV::RVVBitsPerBlock;
@@ -568,8 +568,7 @@ ParsedTargetAttr RISCVTargetInfo::parseTargetAttr(StringRef Features) const {
   return Ret;
 }
 
-llvm::APInt
-RISCVTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
+uint64_t RISCVTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
   // Priority is explicitly specified on RISC-V unlike on other targets, where
   // it is derived by all the features of a specific version. Therefore if a
   // feature contains the priority string, then return it immediately.
@@ -581,12 +580,12 @@ RISCVTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
       Feature = RHS;
     else
       continue;
-    unsigned Priority;
+    uint64_t Priority;
     if (!Feature.getAsInteger(0, Priority))
-      return llvm::APInt(32, Priority);
+      return Priority;
   }
   // Default Priority is zero.
-  return llvm::APInt::getZero(32);
+  return 0;
 }
 
 TargetInfo::CallingConvCheckResult

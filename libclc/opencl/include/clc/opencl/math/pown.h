@@ -6,14 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __CLC_OPENCL_MATH_POWN_H__
-#define __CLC_OPENCL_MATH_POWN_H__
-
-#define FUNCTION pown
-#define __CLC_BODY <clc/shared/binary_decl_with_int_second_arg.inc>
+#define __CLC_FUNCTION pown
+#define __CLC_BODY <clc/math/binary_decl_with_int_second_arg.inc>
 
 #include <clc/math/gentype.inc>
 
-#undef FUNCTION
-
-#endif // __CLC_OPENCL_MATH_POWN_H__
+#undef __CLC_FUNCTION

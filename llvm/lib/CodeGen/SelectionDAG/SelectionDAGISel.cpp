@@ -349,7 +349,7 @@ bool SelectionDAGISelLegacy::runOnMachineFunction(MachineFunction &MF) {
 
   // Do some sanity-checking on the command-line options.
   if (EnableFastISelAbort && !Selector->TM.Options.EnableFastISel)
-    reportFatalUsageError("-fast-isel-abort > 0 requires -fast-isel");
+    report_fatal_error("-fast-isel-abort > 0 requires -fast-isel");
 
   // Decide what flavour of variable location debug-info will be used, before
   // we change the optimisation level.
@@ -386,7 +386,10 @@ SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, CodeGenOptLevel OL)
   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 }
 
-SelectionDAGISel::~SelectionDAGISel() { delete CurDAG; }
+SelectionDAGISel::~SelectionDAGISel() {
+  delete CurDAG;
+  delete SwiftError;
+}
 
 void SelectionDAGISelLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
   CodeGenOptLevel OptLevel = Selector->OptLevel;
@@ -396,7 +399,9 @@ void SelectionDAGISelLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<StackProtector>();
   AU.addPreserved<GCModuleInfo>();
   AU.addRequired<TargetLibraryInfoWrapperPass>();
+#ifndef NDEBUG
   AU.addRequired<TargetTransformInfoWrapperPass>();
+#endif
   AU.addRequired<AssumptionCacheTracker>();
   if (UseMBPI && OptLevel != CodeGenOptLevel::None)
       AU.addRequired<BranchProbabilityInfoWrapperPass>();
@@ -419,7 +424,7 @@ SelectionDAGISelPass::run(MachineFunction &MF,
 
   // Do some sanity-checking on the command-line options.
   if (EnableFastISelAbort && !Selector->TM.Options.EnableFastISel)
-    reportFatalUsageError("-fast-isel-abort > 0 requires -fast-isel");
+    report_fatal_error("-fast-isel-abort > 0 requires -fast-isel");
 
   // Decide what flavour of variable location debug-info will be used, before
   // we change the optimisation level.
@@ -480,10 +485,7 @@ void SelectionDAGISel::initializeAnalysisResults(
   MachineModuleInfo &MMI =
       MAMP.getCachedResult<MachineModuleAnalysis>(*Fn.getParent())->getMMI();
 
-  TTI = &FAM.getResult<TargetIRAnalysis>(Fn);
-
-  CurDAG->init(*MF, *ORE, MFAM, LibInfo, UA, PSI, BFI, MMI, FnVarLocs,
-               TTI->hasBranchDivergence(&Fn));
+  CurDAG->init(*MF, *ORE, MFAM, LibInfo, UA, PSI, BFI, MMI, FnVarLocs);
 
   // Now get the optional analyzes if we want to.
   // This is based on the possibly changed OptLevel (after optnone is taken
@@ -501,6 +503,10 @@ void SelectionDAGISel::initializeAnalysisResults(
     BatchAA = std::nullopt;
 
   SP = &FAM.getResult<SSPLayoutAnalysis>(Fn);
+
+#if !defined(NDEBUG) && LLVM_ENABLE_ABI_BREAKING_CHECKS
+  TTI = &FAM.getResult<TargetIRAnalysis>(Fn);
+#endif
 }
 
 void SelectionDAGISel::initializeAnalysisResults(MachineFunctionPass &MFP) {
@@ -536,10 +542,7 @@ void SelectionDAGISel::initializeAnalysisResults(MachineFunctionPass &MFP) {
   MachineModuleInfo &MMI =
       MFP.getAnalysis<MachineModuleInfoWrapperPass>().getMMI();
 
-  TTI = &MFP.getAnalysis<TargetTransformInfoWrapperPass>().getTTI(Fn);
-
-  CurDAG->init(*MF, *ORE, &MFP, LibInfo, UA, PSI, BFI, MMI, FnVarLocs,
-               TTI->hasBranchDivergence(&Fn));
+  CurDAG->init(*MF, *ORE, &MFP, LibInfo, UA, PSI, BFI, MMI, FnVarLocs);
 
   // Now get the optional analyzes if we want to.
   // This is based on the possibly changed OptLevel (after optnone is taken
@@ -558,6 +561,10 @@ void SelectionDAGISel::initializeAnalysisResults(MachineFunctionPass &MFP) {
     BatchAA = std::nullopt;
 
   SP = &MFP.getAnalysis<StackProtector>().getLayoutInfo();
+
+#if !defined(NDEBUG) && LLVM_ENABLE_ABI_BREAKING_CHECKS
+  TTI = &MFP.getAnalysis<TargetTransformInfoWrapperPass>().getTTI(Fn);
+#endif
 }
 
 bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
@@ -790,7 +797,7 @@ static void reportFastISelFailure(MachineFunction &MF,
     R << (" (in function: " + MF.getName() + ")").str();
 
   if (ShouldAbort)
-    reportFatalUsageError(Twine(R.getMsg()));
+    report_fatal_error(Twine(R.getMsg()));
 
   ORE.emit(R);
   LLVM_DEBUG(dbgs() << R.getMsg() << "\n");
@@ -1503,6 +1510,7 @@ static bool isFoldedOrDeadInstruction(const Instruction *I,
                                       const FunctionLoweringInfo &FuncInfo) {
   return !I->mayWriteToMemory() && // Side-effecting instructions aren't folded.
          !I->isTerminator() &&     // Terminators aren't folded.
+         !isa<DbgInfoIntrinsic>(I) && // Debug instructions aren't folded.
          !I->isEHPad() &&             // EH pad instructions aren't folded.
          !FuncInfo.isExportedInst(I); // Exported instrs must be computed.
 }
@@ -1588,6 +1596,10 @@ static bool processDbgDeclare(FunctionLoweringInfo &FuncInfo,
 /// in case the declarations refer to arguments.
 static void processDbgDeclares(FunctionLoweringInfo &FuncInfo) {
   for (const auto &I : instructions(*FuncInfo.Fn)) {
+    const auto *DI = dyn_cast<DbgDeclareInst>(&I);
+    if (DI && processDbgDeclare(FuncInfo, DI->getAddress(), DI->getExpression(),
+                                DI->getVariable(), DI->getDebugLoc()))
+      FuncInfo.PreprocessedDbgDeclares.insert(DI);
     for (const DbgVariableRecord &DVR : filterDbgVars(I.getDbgRecordRange())) {
       if (DVR.Type == DbgVariableRecord::LocationType::Declare &&
           processDbgDeclare(FuncInfo, DVR.getVariableLocationOp(0),
@@ -1868,7 +1880,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
     if (SP->shouldEmitSDCheck(*LLVMBB)) {
       bool FunctionBasedInstrumentation =
-          TLI->getSSPStackGuardCheck(*Fn.getParent()) && Fn.hasMinSize();
+          TLI->getSSPStackGuardCheck(*Fn.getParent());
       SDB->SPDescriptor.initialize(LLVMBB, FuncInfo->getMBB(LLVMBB),
                                    FunctionBasedInstrumentation);
     }
@@ -1941,7 +1953,8 @@ SelectionDAGISel::FinishBasicBlock() {
 
     // Add load and check to the basicblock.
     FuncInfo->MBB = ParentMBB;
-    FuncInfo->InsertPt = findSplitPointForStackProtector(ParentMBB, *TII);
+    FuncInfo->InsertPt =
+        findSplitPointForStackProtector(ParentMBB, *TII);
     SDB->visitSPDescriptorParent(SDB->SPDescriptor, ParentMBB);
     CurDAG->setRoot(SDB->getRoot());
     SDB->clear();
@@ -1963,7 +1976,8 @@ SelectionDAGISel::FinishBasicBlock() {
         findSplitPointForStackProtector(ParentMBB, *TII);
 
     // Splice the terminator of ParentMBB into SuccessMBB.
-    SuccessMBB->splice(SuccessMBB->end(), ParentMBB, SplitPoint,
+    SuccessMBB->splice(SuccessMBB->end(), ParentMBB,
+                       SplitPoint,
                        ParentMBB->end());
 
     // Add compare/jump on neq/jump to the parent BB.
@@ -2456,25 +2470,11 @@ void SelectionDAGISel::Select_READ_REGISTER(SDNode *Op) {
 
   EVT VT = Op->getValueType(0);
   LLT Ty = VT.isSimple() ? getLLTForMVT(VT.getSimpleVT()) : LLT();
-
-  const MachineFunction &MF = CurDAG->getMachineFunction();
-  Register Reg = TLI->getRegisterByName(RegStr->getString().data(), Ty, MF);
-
-  SDValue New;
-  if (!Reg) {
-    const Function &Fn = MF.getFunction();
-    Fn.getContext().diagnose(DiagnosticInfoGenericWithLoc(
-        "invalid register \"" + Twine(RegStr->getString().data()) +
-            "\" for llvm.read_register",
-        Fn, Op->getDebugLoc()));
-    New =
-        SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0);
-    ReplaceUses(SDValue(Op, 1), Op->getOperand(0));
-  } else {
-    New =
-        CurDAG->getCopyFromReg(Op->getOperand(0), dl, Reg, Op->getValueType(0));
-  }
-
+  Register Reg =
+      TLI->getRegisterByName(RegStr->getString().data(), Ty,
+                             CurDAG->getMachineFunction());
+  SDValue New = CurDAG->getCopyFromReg(
+                        Op->getOperand(0), dl, Reg, Op->getValueType(0));
   New->setNodeId(-1);
   ReplaceUses(Op, New.getNode());
   CurDAG->RemoveDeadNode(Op);
@@ -2488,23 +2488,12 @@ void SelectionDAGISel::Select_WRITE_REGISTER(SDNode *Op) {
   EVT VT = Op->getOperand(2).getValueType();
   LLT Ty = VT.isSimple() ? getLLTForMVT(VT.getSimpleVT()) : LLT();
 
-  const MachineFunction &MF = CurDAG->getMachineFunction();
-  Register Reg = TLI->getRegisterByName(RegStr->getString().data(), Ty, MF);
-
-  if (!Reg) {
-    const Function &Fn = MF.getFunction();
-    Fn.getContext().diagnose(DiagnosticInfoGenericWithLoc(
-        "invalid register \"" + Twine(RegStr->getString().data()) +
-            "\" for llvm.write_register",
-        Fn, Op->getDebugLoc()));
-    ReplaceUses(SDValue(Op, 0), Op->getOperand(0));
-  } else {
-    SDValue New =
-        CurDAG->getCopyToReg(Op->getOperand(0), dl, Reg, Op->getOperand(2));
-    New->setNodeId(-1);
-    ReplaceUses(Op, New.getNode());
-  }
-
+  Register Reg = TLI->getRegisterByName(RegStr->getString().data(), Ty,
+                                        CurDAG->getMachineFunction());
+  SDValue New = CurDAG->getCopyToReg(
+                        Op->getOperand(0), dl, Reg, Op->getOperand(2));
+  New->setNodeId(-1);
+  ReplaceUses(Op, New.getNode());
   CurDAG->RemoveDeadNode(Op);
 }
 

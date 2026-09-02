@@ -1096,9 +1096,7 @@ private:
 
     // The first executable statement in the subprogram is preceded by a
     // branch to the entry point, so it starts a new block.
-    // OpenMP directives can generate code around the nested evaluations.
-    if (initialEval->hasNestedEvaluations() &&
-        !initialEval->isOpenMPDirective())
+    if (initialEval->hasNestedEvaluations())
       initialEval = &initialEval->getFirstNestedEvaluation();
     else if (initialEval->isA<Fortran::parser::EntryStmt>())
       initialEval = initialEval->lexicalSuccessor;
@@ -1472,8 +1470,8 @@ bool Fortran::lower::definedInCommonBlock(const semantics::Symbol &sym) {
 
 /// Is the symbol `sym` a global?
 bool Fortran::lower::symbolIsGlobal(const semantics::Symbol &sym) {
-  return (semantics::IsSaved(sym) && semantics::CanCUDASymbolBeGlobal(sym)) ||
-         lower::definedInCommonBlock(sym) || semantics::IsNamedConstant(sym);
+  return semantics::IsSaved(sym) || lower::definedInCommonBlock(sym) ||
+         semantics::IsNamedConstant(sym);
 }
 
 namespace {

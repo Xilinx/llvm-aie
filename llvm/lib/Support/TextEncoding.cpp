@@ -17,6 +17,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertEBCDIC.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <limits>
 #include <system_error>
 
 #if HAVE_ICU
@@ -271,7 +274,7 @@ TextEncodingConverterIconv::convertString(StringRef Source,
     // Setup the input. Use nullptr to reset iconv state if input length is
     // zero.
     size_t InputLength = Source.size();
-    char *Input = const_cast<char *>(InputLength ? Source.data() : "");
+    char *Input = InputLength ? const_cast<char *>(Source.data()) : "";
     Ret = iconv(ConvDesc, &Input, &InputLength, &Output, &OutputLength);
     if (Ret != 0) {
       if (auto EC = HandleError(Ret))

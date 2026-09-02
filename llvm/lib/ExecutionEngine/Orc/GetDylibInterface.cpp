@@ -41,8 +41,7 @@ Expected<SymbolNameSet> getDylibInterfaceFromDylib(ExecutionSession &ES,
   else if (auto *MachOUni =
                dyn_cast<object::MachOUniversalBinary>(BinFile->get())) {
     for (auto &O : MachOUni->objects()) {
-      if (O.getCPUType() == *CPUType &&
-          (O.getCPUSubType() & ~MachO::CPU_SUBTYPE_MASK) == *CPUSubType) {
+      if (O.getCPUType() == *CPUType && O.getCPUSubType() == *CPUSubType) {
         if (auto Obj = O.getAsObjectFile())
           MachOFile = std::move(*Obj);
         else

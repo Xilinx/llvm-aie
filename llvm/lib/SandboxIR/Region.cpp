@@ -51,13 +51,12 @@ Region::~Region() {
   Ctx.unregisterEraseInstrCallback(EraseInstCB);
 }
 
-void Region::addImpl(Instruction *I, bool IgnoreCost) {
+void Region::add(Instruction *I) {
   Insts.insert(I);
   // TODO: Consider tagging instructions lazily.
   cast<llvm::Instruction>(I->Val)->setMetadata(MDKind, RegionMDN);
-  if (!IgnoreCost)
-    // Keep track of the instruction cost.
-    Scoreboard.add(I);
+  // Keep track of the instruction cost.
+  Scoreboard.add(I);
 }
 
 void Region::setAux(ArrayRef<Instruction *> Aux) {
@@ -70,8 +69,6 @@ void Region::setAux(ArrayRef<Instruction *> Aux) {
            "Instruction already in Aux!");
     cast<llvm::Instruction>(I->Val)->setMetadata(
         AuxMDKind, MDNode::get(LLVMCtx, ConstantAsMetadata::get(IdxC)));
-    // Aux instrs should always be in a region.
-    addImpl(I, /*DontTrackCost=*/true);
   }
 }
 
@@ -87,8 +84,6 @@ void Region::setAux(unsigned Idx, Instruction *I) {
       Aux[Idx] = nullptr;
   }
   Aux[Idx] = I;
-  // Aux instrs should always be in a region.
-  addImpl(I, /*DontTrackCost=*/true);
 }
 
 void Region::dropAuxMetadata(Instruction *I) {
@@ -156,8 +151,8 @@ Region::createRegionsFromMD(Function &F, TargetTransformInfo &TTI) {
   for (BasicBlock &BB : F) {
     for (Instruction &Inst : BB) {
       auto *LLVMI = cast<llvm::Instruction>(Inst.Val);
-      Region *R = nullptr;
       if (auto *MDN = LLVMI->getMetadata(MDKind)) {
+        Region *R = nullptr;
         auto [It, Inserted] = MDNToRegion.try_emplace(MDN);
         if (Inserted) {
           Regions.push_back(std::make_unique<Region>(Ctx, TTI));
@@ -166,17 +161,14 @@ Region::createRegionsFromMD(Function &F, TargetTransformInfo &TTI) {
         } else {
           R = It->second;
         }
-        R->addImpl(&Inst, /*IgnoreCost=*/true);
-      }
-      if (auto *AuxMDN = LLVMI->getMetadata(AuxMDKind)) {
-        llvm::Constant *IdxC =
-            dyn_cast<ConstantAsMetadata>(AuxMDN->getOperand(0))->getValue();
-        auto Idx = cast<llvm::ConstantInt>(IdxC)->getSExtValue();
-        if (R == nullptr) {
-          errs() << "No region specified for Aux: '" << *LLVMI << "'\n";
-          exit(1);
+        R->add(&Inst);
+
+        if (auto *AuxMDN = LLVMI->getMetadata(AuxMDKind)) {
+          llvm::Constant *IdxC =
+              dyn_cast<ConstantAsMetadata>(AuxMDN->getOperand(0))->getValue();
+          auto Idx = cast<llvm::ConstantInt>(IdxC)->getSExtValue();
+          R->setAux(Idx, &Inst);
         }
-        R->setAux(Idx, &Inst);
       }
     }
   }

@@ -25,7 +25,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Use.h"
 #include "llvm/InitializePasses.h"
@@ -69,9 +68,7 @@ struct PreISelIntrinsicLowering {
 
   static bool shouldExpandMemIntrinsicWithSize(Value *Size,
                                                const TargetTransformInfo &TTI);
-  bool
-  expandMemIntrinsicUses(Function &F,
-                         DenseMap<Constant *, GlobalVariable *> &CMap) const;
+  bool expandMemIntrinsicUses(Function &F) const;
   bool lowerIntrinsics(Module &M) const;
 };
 
@@ -136,22 +133,17 @@ static CallInst::TailCallKind getOverridingTailCallKind(const Function &F) {
   return CallInst::TCK_None;
 }
 
-static bool lowerObjCCall(Function &F, RTLIB::LibcallImpl NewFn,
+static bool lowerObjCCall(Function &F, const char *NewFn,
                           bool setNonLazyBind = false) {
   assert(IntrinsicInst::mayLowerToFunctionCall(F.getIntrinsicID()) &&
          "Pre-ISel intrinsics do lower into regular function calls");
   if (F.use_empty())
     return false;
 
-  // FIXME: When RuntimeLibcalls is an analysis, check if the function is really
-  // supported, and go through RTLIB::Libcall.
-  const char *NewFnName = RTLIB::RuntimeLibcallsInfo::getLibcallImplName(NewFn);
-
   // If we haven't already looked up this function, check to see if the
   // program already contains a function with this name.
   Module *M = F.getParent();
-  FunctionCallee FCache =
-      M->getOrInsertFunction(NewFnName, F.getFunctionType());
+  FunctionCallee FCache = M->getOrInsertFunction(NewFn, F.getFunctionType());
 
   if (Function *Fn = dyn_cast<Function>(FCache.getCallee())) {
     Fn->setLinkage(F.getLinkage());
@@ -239,14 +231,6 @@ static bool canEmitLibcall(const TargetMachine *TM, Function *F,
   return TLI->getLibcallName(LC) != nullptr;
 }
 
-static bool canEmitMemcpy(const TargetMachine *TM, Function *F) {
-  // TODO: Should this consider the address space of the memcpy?
-  if (!TM)
-    return true;
-  const TargetLowering *TLI = TM->getSubtargetImpl(*F)->getTargetLowering();
-  return TLI->getMemcpyName() != nullptr;
-}
-
 // Return a value appropriate for use with the memset_pattern16 libcall, if
 // possible and if we know how. (Adapted from equivalent helper in
 // LoopIdiomRecognize).
@@ -303,8 +287,7 @@ static Constant *getMemSetPattern16Value(MemSetPatternInst *Inst,
 
 // TODO: Handle atomic memcpy and memcpy.inline
 // TODO: Pass ScalarEvolution
-bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
-    Function &F, DenseMap<Constant *, GlobalVariable *> &CMap) const {
+bool PreISelIntrinsicLowering::expandMemIntrinsicUses(Function &F) const {
   Intrinsic::ID ID = F.getIntrinsicID();
   bool Changed = false;
 
@@ -317,7 +300,8 @@ bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
       Function *ParentFunc = Memcpy->getFunction();
       const TargetTransformInfo &TTI = LookupTTI(*ParentFunc);
       if (shouldExpandMemIntrinsicWithSize(Memcpy->getLength(), TTI)) {
-        if (UseMemIntrinsicLibFunc && canEmitMemcpy(TM, ParentFunc))
+        if (UseMemIntrinsicLibFunc &&
+            canEmitLibcall(TM, ParentFunc, RTLIB::MEMCPY))
           break;
 
         // TODO: For optsize, emit the loop into a separate function
@@ -420,20 +404,13 @@ bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
       // global.
       assert(Memset->getRawDest()->getType()->getPointerAddressSpace() == 0 &&
              "Should have skipped if non-zero AS");
-      GlobalVariable *GV;
-      auto It = CMap.find(PatternValue);
-      if (It != CMap.end()) {
-        GV = It->second;
-      } else {
-        GV = new GlobalVariable(
-            *M, PatternValue->getType(), /*isConstant=*/true,
-            GlobalValue::PrivateLinkage, PatternValue, ".memset_pattern");
-        GV->setUnnamedAddr(
-            GlobalValue::UnnamedAddr::Global); // Ok to merge these.
-        // TODO: Consider relaxing alignment requirement.
-        GV->setAlignment(Align(16));
-        CMap[PatternValue] = GV;
-      }
+      GlobalVariable *GV = new GlobalVariable(
+          *M, PatternValue->getType(), /*isConstant=*/true,
+          GlobalValue::PrivateLinkage, PatternValue, ".memset_pattern");
+      GV->setUnnamedAddr(
+          GlobalValue::UnnamedAddr::Global); // Ok to merge these.
+      // TODO: Consider relaxing alignment requirement.
+      GV->setAlignment(Align(16));
       Value *PatternPtr = GV;
       Value *NumBytes = Builder.CreateMul(
           TLI.getAsSizeT(DL.getTypeAllocSize(Memset->getValue()->getType()),
@@ -462,8 +439,6 @@ bool PreISelIntrinsicLowering::expandMemIntrinsicUses(
 }
 
 bool PreISelIntrinsicLowering::lowerIntrinsics(Module &M) const {
-  // Map unique constants to globals.
-  DenseMap<Constant *, GlobalVariable *> CMap;
   bool Changed = false;
   for (Function &F : M) {
     switch (F.getIntrinsicID()) {
@@ -475,7 +450,7 @@ bool PreISelIntrinsicLowering::lowerIntrinsics(Module &M) const {
     case Intrinsic::memset:
     case Intrinsic::memset_inline:
     case Intrinsic::experimental_memset_pattern:
-      Changed |= expandMemIntrinsicUses(F, CMap);
+      Changed |= expandMemIntrinsicUses(F);
       break;
     case Intrinsic::load_relative:
       Changed |= lowerLoadRelative(F);
@@ -507,83 +482,82 @@ bool PreISelIntrinsicLowering::lowerIntrinsics(Module &M) const {
       });
       break;
     case Intrinsic::objc_autorelease:
-      Changed |= lowerObjCCall(F, RTLIB::objc_autorelease);
+      Changed |= lowerObjCCall(F, "objc_autorelease");
       break;
     case Intrinsic::objc_autoreleasePoolPop:
-      Changed |= lowerObjCCall(F, RTLIB::objc_autoreleasePoolPop);
+      Changed |= lowerObjCCall(F, "objc_autoreleasePoolPop");
       break;
     case Intrinsic::objc_autoreleasePoolPush:
-      Changed |= lowerObjCCall(F, RTLIB::objc_autoreleasePoolPush);
+      Changed |= lowerObjCCall(F, "objc_autoreleasePoolPush");
       break;
     case Intrinsic::objc_autoreleaseReturnValue:
-      Changed |= lowerObjCCall(F, RTLIB::objc_autoreleaseReturnValue);
+      Changed |= lowerObjCCall(F, "objc_autoreleaseReturnValue");
       break;
     case Intrinsic::objc_copyWeak:
-      Changed |= lowerObjCCall(F, RTLIB::objc_copyWeak);
+      Changed |= lowerObjCCall(F, "objc_copyWeak");
       break;
     case Intrinsic::objc_destroyWeak:
-      Changed |= lowerObjCCall(F, RTLIB::objc_destroyWeak);
+      Changed |= lowerObjCCall(F, "objc_destroyWeak");
       break;
     case Intrinsic::objc_initWeak:
-      Changed |= lowerObjCCall(F, RTLIB::objc_initWeak);
+      Changed |= lowerObjCCall(F, "objc_initWeak");
       break;
     case Intrinsic::objc_loadWeak:
-      Changed |= lowerObjCCall(F, RTLIB::objc_loadWeak);
+      Changed |= lowerObjCCall(F, "objc_loadWeak");
       break;
     case Intrinsic::objc_loadWeakRetained:
-      Changed |= lowerObjCCall(F, RTLIB::objc_loadWeakRetained);
+      Changed |= lowerObjCCall(F, "objc_loadWeakRetained");
       break;
     case Intrinsic::objc_moveWeak:
-      Changed |= lowerObjCCall(F, RTLIB::objc_moveWeak);
+      Changed |= lowerObjCCall(F, "objc_moveWeak");
       break;
     case Intrinsic::objc_release:
-      Changed |= lowerObjCCall(F, RTLIB::objc_release, true);
+      Changed |= lowerObjCCall(F, "objc_release", true);
       break;
     case Intrinsic::objc_retain:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retain, true);
+      Changed |= lowerObjCCall(F, "objc_retain", true);
       break;
     case Intrinsic::objc_retainAutorelease:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retainAutorelease);
+      Changed |= lowerObjCCall(F, "objc_retainAutorelease");
       break;
     case Intrinsic::objc_retainAutoreleaseReturnValue:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retainAutoreleaseReturnValue);
+      Changed |= lowerObjCCall(F, "objc_retainAutoreleaseReturnValue");
       break;
     case Intrinsic::objc_retainAutoreleasedReturnValue:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retainAutoreleasedReturnValue);
+      Changed |= lowerObjCCall(F, "objc_retainAutoreleasedReturnValue");
       break;
     case Intrinsic::objc_claimAutoreleasedReturnValue:
-      Changed |= lowerObjCCall(F, RTLIB::objc_claimAutoreleasedReturnValue);
+      Changed |= lowerObjCCall(F, "objc_claimAutoreleasedReturnValue");
       break;
     case Intrinsic::objc_retainBlock:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retainBlock);
+      Changed |= lowerObjCCall(F, "objc_retainBlock");
       break;
     case Intrinsic::objc_storeStrong:
-      Changed |= lowerObjCCall(F, RTLIB::objc_storeStrong);
+      Changed |= lowerObjCCall(F, "objc_storeStrong");
       break;
     case Intrinsic::objc_storeWeak:
-      Changed |= lowerObjCCall(F, RTLIB::objc_storeWeak);
+      Changed |= lowerObjCCall(F, "objc_storeWeak");
       break;
     case Intrinsic::objc_unsafeClaimAutoreleasedReturnValue:
-      Changed |=
-          lowerObjCCall(F, RTLIB::objc_unsafeClaimAutoreleasedReturnValue);
+      Changed |= lowerObjCCall(F, "objc_unsafeClaimAutoreleasedReturnValue");
       break;
     case Intrinsic::objc_retainedObject:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retainedObject);
+      Changed |= lowerObjCCall(F, "objc_retainedObject");
       break;
     case Intrinsic::objc_unretainedObject:
-      Changed |= lowerObjCCall(F, RTLIB::objc_unretainedObject);
+      Changed |= lowerObjCCall(F, "objc_unretainedObject");
       break;
     case Intrinsic::objc_unretainedPointer:
-      Changed |= lowerObjCCall(F, RTLIB::objc_unretainedPointer);
+      Changed |= lowerObjCCall(F, "objc_unretainedPointer");
       break;
     case Intrinsic::objc_retain_autorelease:
-      Changed |= lowerObjCCall(F, RTLIB::objc_retain_autorelease);
+      Changed |= lowerObjCCall(F, "objc_retain_autorelease");
       break;
     case Intrinsic::objc_sync_enter:
-      Changed |= lowerObjCCall(F, RTLIB::objc_sync_enter);
+      Changed |= lowerObjCCall(F, "objc_sync_enter");
       break;
     case Intrinsic::objc_sync_exit:
-      Changed |= lowerObjCCall(F, RTLIB::objc_sync_exit);
+      Changed |= lowerObjCCall(F, "objc_sync_exit");
       break;
     case Intrinsic::exp:
     case Intrinsic::exp2:

@@ -105,7 +105,8 @@ namespace {
     };
 
     LatticeCell() : Kind(Top), Size(0), IsSpecial(false) {
-      llvm::fill(Values, nullptr);
+      for (const Constant *&Value : Values)
+        Value = nullptr;
     }
 
     bool meet(const LatticeCell &L);
@@ -1005,7 +1006,7 @@ bool MachineConstPropagator::rewrite(MachineFunction &MF) {
       SmallVector<MachineBasicBlock*,2> ToRemove;
       for (MachineBasicBlock *SB : B->successors()) {
         if (!Targets.count(SB))
-          ToRemove.push_back(SB);
+          ToRemove.push_back(const_cast<MachineBasicBlock*>(SB));
         Targets.remove(SB);
       }
       for (MachineBasicBlock *MBB : ToRemove)

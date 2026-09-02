@@ -62,17 +62,17 @@ void fir::runtime::genMain(
   llvm::SmallVector<mlir::Value, 4> args(block->getArguments());
   args.push_back(env);
 
-  fir::CallOp::create(builder, loc, startFn, args);
+  builder.create<fir::CallOp>(loc, startFn, args);
 
   if (initCuda) {
     auto initFn = builder.createFunction(
         loc, RTNAME_STRING(CUFInit), mlir::FunctionType::get(context, {}, {}));
-    fir::CallOp::create(builder, loc, initFn);
+    builder.create<fir::CallOp>(loc, initFn);
   }
 
-  fir::CallOp::create(builder, loc, qqMainFn);
-  fir::CallOp::create(builder, loc, stopFn);
+  builder.create<fir::CallOp>(loc, qqMainFn);
+  builder.create<fir::CallOp>(loc, stopFn);
 
   mlir::Value ret = builder.createIntegerConstant(loc, argcTy, 0);
-  mlir::func::ReturnOp::create(builder, loc, ret);
+  builder.create<mlir::func::ReturnOp>(loc, ret);
 }

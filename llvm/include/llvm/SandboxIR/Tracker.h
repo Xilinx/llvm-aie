@@ -46,8 +46,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/SandboxIR/Use.h"
-#include "llvm/SandboxIR/Value.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include <memory>
 
@@ -151,7 +149,7 @@ public:
 #endif
 };
 
-class LLVM_ABI PHIRemoveIncoming : public IRChangeBase {
+class PHIRemoveIncoming : public IRChangeBase {
   PHINode *PHI;
   unsigned RemovedIdx;
   Value *RemovedV;
@@ -167,7 +165,7 @@ public:
 #endif
 };
 
-class LLVM_ABI PHIAddIncoming : public IRChangeBase {
+class PHIAddIncoming : public IRChangeBase {
   PHINode *PHI;
   unsigned Idx;
 
@@ -181,7 +179,7 @@ public:
 #endif
 };
 
-class LLVM_ABI CmpSwapOperands : public IRChangeBase {
+class CmpSwapOperands : public IRChangeBase {
   CmpInst *Cmp;
 
 public:
@@ -212,7 +210,7 @@ public:
 #endif
 };
 
-class LLVM_ABI EraseFromParent : public IRChangeBase {
+class EraseFromParent : public IRChangeBase {
   /// Contains all the data we need to restore an "erased" (i.e., detached)
   /// instruction: the instruction itself and its operands in order.
   struct InstrAndOperands {
@@ -244,7 +242,7 @@ public:
 #endif
 };
 
-class LLVM_ABI RemoveFromParent : public IRChangeBase {
+class RemoveFromParent : public IRChangeBase {
   /// The instruction that is about to get removed.
   Instruction *RemovedI = nullptr;
   /// This is either the next instr, or the parent BB if at the end of the BB.
@@ -329,7 +327,7 @@ public:
 #endif
 };
 
-class LLVM_ABI CatchSwitchAddHandler : public IRChangeBase {
+class CatchSwitchAddHandler : public IRChangeBase {
   CatchSwitchInst *CSI;
   unsigned HandlerIdx;
 
@@ -346,7 +344,7 @@ public:
 #endif // NDEBUG
 };
 
-class LLVM_ABI SwitchAddCase : public IRChangeBase {
+class SwitchAddCase : public IRChangeBase {
   SwitchInst *Switch;
   ConstantInt *Val;
 
@@ -361,7 +359,7 @@ public:
 #endif // NDEBUG
 };
 
-class LLVM_ABI SwitchRemoveCase : public IRChangeBase {
+class SwitchRemoveCase : public IRChangeBase {
   SwitchInst *Switch;
   struct Case {
     ConstantInt *Val;
@@ -380,7 +378,7 @@ public:
 #endif // NDEBUG
 };
 
-class LLVM_ABI MoveInstr : public IRChangeBase {
+class MoveInstr : public IRChangeBase {
   /// The instruction that moved.
   Instruction *MovedI;
   /// This is either the next instruction in the block, or the parent BB if at
@@ -397,7 +395,7 @@ public:
 #endif // NDEBUG
 };
 
-class LLVM_ABI InsertIntoBB final : public IRChangeBase {
+class InsertIntoBB final : public IRChangeBase {
   Instruction *InsertedI = nullptr;
 
 public:
@@ -410,7 +408,7 @@ public:
 #endif // NDEBUG
 };
 
-class LLVM_ABI CreateAndInsertInst final : public IRChangeBase {
+class CreateAndInsertInst final : public IRChangeBase {
   Instruction *NewI = nullptr;
 
 public:
@@ -423,7 +421,7 @@ public:
 #endif
 };
 
-class LLVM_ABI ShuffleVectorSetMask final : public IRChangeBase {
+class ShuffleVectorSetMask final : public IRChangeBase {
   ShuffleVectorInst *SVI;
   SmallVector<int, 8> PrevMask;
 
@@ -474,7 +472,7 @@ public:
   {
   }
 
-  LLVM_ABI ~Tracker();
+  ~Tracker();
   Context &getContext() const { return Ctx; }
   /// \Returns true if there are no changes tracked.
   bool empty() const { return Changes.empty(); }
@@ -508,11 +506,11 @@ public:
   /// \Returns the current state of the tracker.
   TrackerState getState() const { return State; }
   /// Turns on IR tracking.
-  LLVM_ABI void save();
+  void save();
   /// Stops tracking and accept changes.
-  LLVM_ABI void accept();
+  void accept();
   /// Stops tracking and reverts to saved state.
-  LLVM_ABI void revert();
+  void revert();
 
 #ifndef NDEBUG
   void dump(raw_ostream &OS) const;

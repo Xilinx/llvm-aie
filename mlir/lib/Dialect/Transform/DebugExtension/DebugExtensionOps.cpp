@@ -8,7 +8,9 @@
 
 #include "mlir/Dialect/Transform/DebugExtension/DebugExtensionOps.h"
 
+#include "mlir/Dialect/Transform/IR/TransformDialect.h"
 #include "mlir/Dialect/Transform/IR/TransformTypes.h"
+#include "mlir/IR/OpImplementation.h"
 #include "llvm/Support/InterleavedRange.h"
 
 using namespace mlir;
@@ -17,9 +19,9 @@ using namespace mlir;
 #include "mlir/Dialect/Transform/DebugExtension/DebugExtensionOps.cpp.inc"
 
 DiagnosedSilenceableFailure
-transform::EmitRemarkAtOp::apply(transform::TransformRewriter &rewriter,
-                                 transform::TransformResults &results,
-                                 transform::TransformState &state) {
+transform::DebugEmitRemarkAtOp::apply(transform::TransformRewriter &rewriter,
+                                      transform::TransformResults &results,
+                                      transform::TransformState &state) {
   if (isa<TransformHandleTypeInterface>(getAt().getType())) {
     auto payload = state.getPayloadOps(getAt());
     for (Operation *op : payload)
@@ -50,10 +52,9 @@ transform::EmitRemarkAtOp::apply(transform::TransformRewriter &rewriter,
   return DiagnosedSilenceableFailure::success();
 }
 
-DiagnosedSilenceableFailure
-transform::EmitParamAsRemarkOp::apply(transform::TransformRewriter &rewriter,
-                                      transform::TransformResults &results,
-                                      transform::TransformState &state) {
+DiagnosedSilenceableFailure transform::DebugEmitParamAsRemarkOp::apply(
+    transform::TransformRewriter &rewriter,
+    transform::TransformResults &results, transform::TransformState &state) {
   std::string str;
   llvm::raw_string_ostream os(str);
   if (getMessage())

@@ -46,7 +46,7 @@ static_assert(!CanInsert<NonTransparentSet, NonConvertibleTransparent<int>>);
 static_assert(!CanInsert<NonTransparentSet, NonTransparentSetIter, NonConvertibleTransparent<int>>);
 
 template <class KeyContainer>
-constexpr void test_one() {
+void test_one() {
   using Key = typename KeyContainer::value_type;
   using M   = std::flat_set<Key, TransparentComparator, KeyContainer>;
 
@@ -105,12 +105,9 @@ constexpr void test_one() {
   }
 }
 
-constexpr bool test() {
+void test() {
   test_one<std::vector<int>>();
-#ifndef __cpp_lib_constexpr_deque
-  if (!TEST_IS_CONSTANT_EVALUATED)
-#endif
-    test_one<std::deque<int>>();
+  test_one<std::deque<int>>();
   test_one<MinSequenceContainer<int>>();
   test_one<std::vector<int, min_allocator<int>>>();
 
@@ -126,16 +123,6 @@ constexpr bool test() {
     ASSERT_SAME_TYPE(decltype(m.insert(m.begin(), Evil())), M::iterator);
     ASSERT_SAME_TYPE(decltype(m.insert(m.begin(), m.end())), void);
   }
-  {
-    // LWG4239 std::string and C string literal
-    using M = std::flat_set<std::string, std::less<>>;
-    M m{"alpha", "beta", "epsilon", "eta", "gamma"};
-    auto [iter, inserted] = m.insert("beta");
-    assert(!inserted);
-    assert(iter == m.begin() + 1);
-  }
-
-  return true;
 }
 
 void test_exception() {
@@ -158,9 +145,6 @@ void test_exception() {
 int main(int, char**) {
   test();
   test_exception();
-#if TEST_STD_VER >= 26
-  static_assert(test());
-#endif
 
   return 0;
 }

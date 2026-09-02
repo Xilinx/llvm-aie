@@ -25,7 +25,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -52,32 +51,32 @@ public:
   ///
   /// Instructions that do not have integer or vector of integer type are
   /// accepted, but will always produce a mask with all bits set.
-  LLVM_ABI APInt getDemandedBits(Instruction *I);
+  APInt getDemandedBits(Instruction *I);
 
   /// Return the bits demanded from use U.
-  LLVM_ABI APInt getDemandedBits(Use *U);
+  APInt getDemandedBits(Use *U);
 
   /// Return true if, during analysis, I could not be reached.
-  LLVM_ABI bool isInstructionDead(Instruction *I);
+  bool isInstructionDead(Instruction *I);
 
   /// Return whether this use is dead by means of not having any demanded bits.
-  LLVM_ABI bool isUseDead(Use *U);
+  bool isUseDead(Use *U);
 
-  LLVM_ABI void print(raw_ostream &OS);
+  void print(raw_ostream &OS);
 
   /// Compute alive bits of one addition operand from alive output and known
   /// operand bits
-  LLVM_ABI static APInt determineLiveOperandBitsAdd(unsigned OperandNo,
-                                                    const APInt &AOut,
-                                                    const KnownBits &LHS,
-                                                    const KnownBits &RHS);
+  static APInt determineLiveOperandBitsAdd(unsigned OperandNo,
+                                           const APInt &AOut,
+                                           const KnownBits &LHS,
+                                           const KnownBits &RHS);
 
   /// Compute alive bits of one subtraction operand from alive output and known
   /// operand bits
-  LLVM_ABI static APInt determineLiveOperandBitsSub(unsigned OperandNo,
-                                                    const APInt &AOut,
-                                                    const KnownBits &LHS,
-                                                    const KnownBits &RHS);
+  static APInt determineLiveOperandBitsSub(unsigned OperandNo,
+                                           const APInt &AOut,
+                                           const KnownBits &LHS,
+                                           const KnownBits &RHS);
 
 private:
   void performAnalysis();
@@ -104,7 +103,7 @@ private:
 class DemandedBitsAnalysis : public AnalysisInfoMixin<DemandedBitsAnalysis> {
   friend AnalysisInfoMixin<DemandedBitsAnalysis>;
 
-  LLVM_ABI static AnalysisKey Key;
+  static AnalysisKey Key;
 
 public:
   /// Provide the result type for this analysis pass.
@@ -112,7 +111,7 @@ public:
 
   /// Run the analysis pass over a function and produce demanded bits
   /// information.
-  LLVM_ABI DemandedBits run(Function &F, FunctionAnalysisManager &AM);
+  DemandedBits run(Function &F, FunctionAnalysisManager &AM);
 };
 
 /// Printer pass for DemandedBits
@@ -122,7 +121,7 @@ class DemandedBitsPrinterPass : public PassInfoMixin<DemandedBitsPrinterPass> {
 public:
   explicit DemandedBitsPrinterPass(raw_ostream &OS) : OS(OS) {}
 
-  LLVM_ABI PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 
   static bool isRequired() { return true; }
 };

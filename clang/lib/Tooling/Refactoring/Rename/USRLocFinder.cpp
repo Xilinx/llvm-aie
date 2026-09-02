@@ -45,7 +45,8 @@ bool IsValidEditLoc(const clang::SourceManager& SM, clang::SourceLocation Loc) {
   if (Loc.isInvalid())
     return false;
   const clang::FullSourceLoc FullLoc(Loc, SM);
-  auto FileIdAndOffset = FullLoc.getSpellingLoc().getDecomposedLoc();
+  std::pair<clang::FileID, unsigned> FileIdAndOffset =
+      FullLoc.getSpellingLoc().getDecomposedLoc();
   return SM.getFileEntryForID(FileIdAndOffset.first) != nullptr;
 }
 

@@ -12,8 +12,7 @@ declare i64 @llvm.bitreverse.i64(i64)
 
 define i16 @test_bswap_i16(i16 %a) nounwind {
 ; XTENSA-LABEL: test_bswap_i16:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    l32r a8, .LCPI0_0
+; XTENSA:         l32r a8, .LCPI0_0
 ; XTENSA-NEXT:    and a8, a2, a8
 ; XTENSA-NEXT:    srli a8, a8, 8
 ; XTENSA-NEXT:    slli a9, a2, 8
@@ -25,8 +24,7 @@ define i16 @test_bswap_i16(i16 %a) nounwind {
 
 define i32 @test_bswap_i32(i32 %a) nounwind {
 ; XTENSA-LABEL: test_bswap_i32:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 8
+; XTENSA:         srli a8, a2, 8
 ; XTENSA-NEXT:    l32r a9, .LCPI1_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    extui a10, a2, 24, 8
@@ -43,8 +41,7 @@ define i32 @test_bswap_i32(i32 %a) nounwind {
 
 define i64 @test_bswap_i64(i64 %a) nounwind {
 ; XTENSA-LABEL: test_bswap_i64:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a3, 8
+; XTENSA:         srli a8, a3, 8
 ; XTENSA-NEXT:    l32r a9, .LCPI2_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    extui a10, a3, 24, 8
@@ -71,8 +68,7 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 
 define i8 @test_bitreverse_i8(i8 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_i8:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    movi a8, 15
+; XTENSA:         movi a8, 15
 ; XTENSA-NEXT:    and a8, a2, a8
 ; XTENSA-NEXT:    slli a8, a8, 4
 ; XTENSA-NEXT:    movi a9, 240
@@ -98,8 +94,7 @@ define i8 @test_bitreverse_i8(i8 %a) nounwind {
 
 define i16 @test_bitreverse_i16(i16 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_i16:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    l32r a8, .LCPI4_0
+; XTENSA:         l32r a8, .LCPI4_0
 ; XTENSA-NEXT:    and a8, a2, a8
 ; XTENSA-NEXT:    srli a8, a8, 8
 ; XTENSA-NEXT:    slli a9, a2, 8
@@ -129,8 +124,7 @@ define i16 @test_bitreverse_i16(i16 %a) nounwind {
 
 define i32 @test_bitreverse_i32(i32 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_i32:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 8
+; XTENSA:         srli a8, a2, 8
 ; XTENSA-NEXT:    l32r a9, .LCPI5_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    extui a10, a2, 24, 8
@@ -165,8 +159,7 @@ define i32 @test_bitreverse_i32(i32 %a) nounwind {
 
 define i64 @test_bitreverse_i64(i64 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_i64:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a3, 8
+; XTENSA:         srli a8, a3, 8
 ; XTENSA-NEXT:    l32r a9, .LCPI6_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    extui a10, a3, 24, 8
@@ -226,8 +219,7 @@ define i64 @test_bitreverse_i64(i64 %a) nounwind {
 
 define i16 @test_bswap_bitreverse_i16(i16 %a) nounwind {
 ; XTENSA-LABEL: test_bswap_bitreverse_i16:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 4
+; XTENSA:         srli a8, a2, 4
 ; XTENSA-NEXT:    l32r a9, .LCPI7_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    and a9, a2, a9
@@ -253,8 +245,7 @@ define i16 @test_bswap_bitreverse_i16(i16 %a) nounwind {
 
 define i32 @test_bswap_bitreverse_i32(i32 %a) nounwind {
 ; XTENSA-LABEL: test_bswap_bitreverse_i32:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 4
+; XTENSA:         srli a8, a2, 4
 ; XTENSA-NEXT:    l32r a9, .LCPI8_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    and a9, a2, a9
@@ -280,8 +271,7 @@ define i32 @test_bswap_bitreverse_i32(i32 %a) nounwind {
 
 define i64 @test_bswap_bitreverse_i64(i64 %a) nounwind {
 ; XTENSA-LABEL: test_bswap_bitreverse_i64:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 4
+; XTENSA:         srli a8, a2, 4
 ; XTENSA-NEXT:    l32r a9, .LCPI9_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    and a10, a2, a9
@@ -322,8 +312,7 @@ define i64 @test_bswap_bitreverse_i64(i64 %a) nounwind {
 
 define i16 @test_bitreverse_bswap_i16(i16 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_bswap_i16:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 4
+; XTENSA:         srli a8, a2, 4
 ; XTENSA-NEXT:    l32r a9, .LCPI10_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    and a9, a2, a9
@@ -349,8 +338,7 @@ define i16 @test_bitreverse_bswap_i16(i16 %a) nounwind {
 
 define i32 @test_bitreverse_bswap_i32(i32 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_bswap_i32:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 4
+; XTENSA:         srli a8, a2, 4
 ; XTENSA-NEXT:    l32r a9, .LCPI11_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    and a9, a2, a9
@@ -376,8 +364,7 @@ define i32 @test_bitreverse_bswap_i32(i32 %a) nounwind {
 
 define i64 @test_bitreverse_bswap_i64(i64 %a) nounwind {
 ; XTENSA-LABEL: test_bitreverse_bswap_i64:
-; XTENSA:       # %bb.0:
-; XTENSA-NEXT:    srli a8, a2, 4
+; XTENSA:         srli a8, a2, 4
 ; XTENSA-NEXT:    l32r a9, .LCPI12_0
 ; XTENSA-NEXT:    and a8, a8, a9
 ; XTENSA-NEXT:    and a10, a2, a9

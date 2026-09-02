@@ -488,9 +488,9 @@ mlir::Operation *ToyDialect::materializeConstant(mlir::OpBuilder &builder,
                                                  mlir::Type type,
                                                  mlir::Location loc) {
   if (isa<StructType>(type))
-    return StructConstantOp::create(builder, loc, type,
+    return builder.create<StructConstantOp>(loc, type,
                                             cast<mlir::ArrayAttr>(value));
-  return ConstantOp::create(builder, loc, type,
+  return builder.create<ConstantOp>(loc, type,
                                     cast<mlir::DenseElementsAttr>(value));
 }
 ```

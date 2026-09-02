@@ -18,7 +18,6 @@
 #include "llvm/Support/Regex.h"
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace llvm {
@@ -70,7 +69,6 @@ class FileSystem;
 /// ---
 class SpecialCaseList {
 public:
-  static constexpr std::pair<unsigned, unsigned> NotFound = {0, 0};
   /// Parses the special case list entries from files. On failure, returns
   /// 0 and writes an error message to string.
   LLVM_ABI static std::unique_ptr<SpecialCaseList>
@@ -95,17 +93,17 @@ public:
   LLVM_ABI bool inSection(StringRef Section, StringRef Prefix, StringRef Query,
                           StringRef Category = StringRef()) const;
 
-  /// Returns the file index and the line number <FileIdx, LineNo> corresponding
-  /// to the special case list entry if the special case list contains a line
+  /// Returns the line number corresponding to the special case list entry if
+  /// the special case list contains a line
   /// \code
   ///   @Prefix:<E>=@Category
   /// \endcode
   /// where @Query satisfies the glob <E> in a given @Section.
-  /// Returns (zero, zero) if there is no exclusion entry corresponding to this
+  /// Returns zero if there is no exclusion entry corresponding to this
   /// expression.
-  LLVM_ABI std::pair<unsigned, unsigned>
-  inSectionBlame(StringRef Section, StringRef Prefix, StringRef Query,
-                 StringRef Category = StringRef()) const;
+  LLVM_ABI unsigned inSectionBlame(StringRef Section, StringRef Prefix,
+                                   StringRef Query,
+                                   StringRef Category = StringRef()) const;
 
 protected:
   // Implementations of the create*() functions that can also be used by derived
@@ -144,24 +142,21 @@ protected:
   using SectionEntries = StringMap<StringMap<Matcher>>;
 
   struct Section {
-    Section(StringRef Str, unsigned FileIdx)
-        : SectionStr(Str), FileIdx(FileIdx) {};
+    Section(std::unique_ptr<Matcher> M) : SectionMatcher(std::move(M)) {};
+    Section() : Section(std::make_unique<Matcher>()) {};
 
-    std::unique_ptr<Matcher> SectionMatcher = std::make_unique<Matcher>();
+    std::unique_ptr<Matcher> SectionMatcher;
     SectionEntries Entries;
     std::string SectionStr;
-    unsigned FileIdx;
   };
 
   std::vector<Section> Sections;
 
-  LLVM_ABI Expected<Section *> addSection(StringRef SectionStr,
-                                          unsigned FileIdx, unsigned LineNo,
+  LLVM_ABI Expected<Section *> addSection(StringRef SectionStr, unsigned LineNo,
                                           bool UseGlobs = true);
 
   /// Parses just-constructed SpecialCaseList entries from a memory buffer.
-  LLVM_ABI bool parse(unsigned FileIdx, const MemoryBuffer *MB,
-                      std::string &Error);
+  LLVM_ABI bool parse(const MemoryBuffer *MB, std::string &Error);
 
   // Helper method for derived classes to search by Prefix, Query, and Category
   // once they have already resolved a section entry.

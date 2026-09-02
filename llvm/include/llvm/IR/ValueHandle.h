@@ -17,7 +17,6 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 
 namespace llvm {
@@ -106,7 +105,7 @@ protected:
   }
 
   /// Remove this ValueHandle from its current use list.
-  LLVM_ABI void RemoveFromUseList();
+  void RemoveFromUseList();
 
   /// Clear the underlying pointer without clearing the use list.
   ///
@@ -116,8 +115,8 @@ protected:
 
 public:
   // Callbacks made from Value.
-  LLVM_ABI static void ValueIsDeleted(Value *V);
-  LLVM_ABI static void ValueIsRAUWd(Value *Old, Value *New);
+  static void ValueIsDeleted(Value *V);
+  static void ValueIsRAUWd(Value *Old, Value *New);
 
 private:
   // Internal implementation details.
@@ -129,13 +128,13 @@ private:
   ///
   /// List is the address of either the head of the list or a Next node within
   /// the existing use list.
-  LLVM_ABI void AddToExistingUseList(ValueHandleBase **List);
+  void AddToExistingUseList(ValueHandleBase **List);
 
   /// Add this ValueHandle to the use list after Node.
   void AddToExistingUseListAfter(ValueHandleBase *Node);
 
   /// Add this ValueHandle to the use list for V.
-  LLVM_ABI void AddToUseList();
+  void AddToUseList();
 };
 
 /// A nullable Value handle that is nullable.
@@ -381,7 +380,7 @@ public:
 /// class can be used as the key of a map, as long as the user takes it out of
 /// the map before calling setValPtr() (since the map has to rearrange itself
 /// when the pointer changes).  Unlike ValueHandleBase, this class has a vtable.
-class LLVM_ABI CallbackVH : public ValueHandleBase {
+class CallbackVH : public ValueHandleBase {
   virtual void anchor();
 protected:
   ~CallbackVH() = default;

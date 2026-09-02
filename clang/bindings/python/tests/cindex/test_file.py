@@ -9,7 +9,6 @@ import unittest
 
 inputs_dir = os.path.join(os.path.dirname(__file__), "INPUTS")
 
-
 class TestFile(unittest.TestCase):
     def test_file(self):
         index = Index.create()

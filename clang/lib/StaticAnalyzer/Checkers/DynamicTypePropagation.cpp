@@ -49,19 +49,15 @@ REGISTER_MAP_WITH_PROGRAMSTATE(MostSpecializedTypeArgsMap, SymbolRef,
                                const ObjCObjectPointerType *)
 
 namespace {
-class DynamicTypePropagation
-    : public CheckerFamily<check::PreCall, check::PostCall, check::DeadSymbols,
-                           check::PostStmt<CastExpr>,
-                           check::PostStmt<CXXNewExpr>, check::PreObjCMessage,
-                           check::PostObjCMessage> {
-public:
-  // This checker family implements only one frontend, but -- unlike a simple
-  // Checker -- its backend can be enabled (by the checker DynamicTypeChecker
-  // which depends on it) without enabling the frontend.
-  CheckerFrontendWithBugType ObjCGenericsChecker{
-      "Generics", categories::CoreFoundationObjectiveC};
+class DynamicTypePropagation:
+    public Checker< check::PreCall,
+                    check::PostCall,
+                    check::DeadSymbols,
+                    check::PostStmt<CastExpr>,
+                    check::PostStmt<CXXNewExpr>,
+                    check::PreObjCMessage,
+                    check::PostObjCMessage > {
 
-private:
   /// Return a better dynamic type if one can be derived from the cast.
   const ObjCObjectPointerType *getBetterObjCType(const Expr *CastE,
                                                  CheckerContext &C) const;
@@ -69,6 +65,13 @@ private:
   ExplodedNode *dynamicTypePropagationOnCasts(const CastExpr *CE,
                                               ProgramStateRef &State,
                                               CheckerContext &C) const;
+
+  mutable std::unique_ptr<BugType> ObjCGenericsBugType;
+  void initBugType() const {
+    if (!ObjCGenericsBugType)
+      ObjCGenericsBugType.reset(new BugType(
+          GenericCheckName, "Generics", categories::CoreFoundationObjectiveC));
+  }
 
   class GenericsBugVisitor : public BugReporterVisitor {
   public:
@@ -103,8 +106,9 @@ public:
   void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
 
-  /// Identifies this checker family for debugging purposes.
-  StringRef getDebugTag() const override { return "DynamicTypePropagation"; }
+  /// This value is set to true, when the Generics checker is turned on.
+  bool CheckGenerics = false;
+  CheckerNameRef GenericCheckName;
 };
 
 bool isObjCClassType(QualType Type) {
@@ -670,16 +674,9 @@ void DynamicTypePropagation::checkPostStmt(const CastExpr *CE,
   if (TrackedType &&
       !ASTCtxt.canAssignObjCInterfaces(DestObjectPtrType, *TrackedType) &&
       !ASTCtxt.canAssignObjCInterfaces(*TrackedType, DestObjectPtrType)) {
-    // This distinct program point tag is needed because `State` can be
-    // identical to the state of the node `AfterTypeProp`, and in that case
-    // `generateNonFatalErrorNode` would "cache out" and return nullptr
-    // (instead of re-creating an already existing node).
-    static SimpleProgramPointTag IllegalConv("DynamicTypePropagation",
-                                             "IllegalConversion");
-    ExplodedNode *N =
-        C.generateNonFatalErrorNode(State, AfterTypeProp, &IllegalConv);
-    if (N)
-      reportGenericsBug(*TrackedType, DestObjectPtrType, N, Sym, C);
+    static CheckerProgramPointTag IllegalConv(this, "IllegalConversion");
+    ExplodedNode *N = C.addTransition(State, AfterTypeProp, &IllegalConv);
+    reportGenericsBug(*TrackedType, DestObjectPtrType, N, Sym, C);
     return;
   }
 
@@ -888,7 +885,8 @@ void DynamicTypePropagation::checkPreObjCMessage(const ObjCMethodCall &M,
     // Warn when argument is incompatible with the parameter.
     if (!ASTCtxt.canAssignObjCInterfaces(ParamObjectPtrType,
                                          ArgObjectPtrType)) {
-      ExplodedNode *N = C.generateNonFatalErrorNode(State);
+      static CheckerProgramPointTag Tag(this, "ArgTypeMismatch");
+      ExplodedNode *N = C.addTransition(State, &Tag);
       reportGenericsBug(ArgObjectPtrType, ParamObjectPtrType, N, Sym, C, Arg);
       return;
     }
@@ -1022,9 +1020,10 @@ void DynamicTypePropagation::reportGenericsBug(
     const ObjCObjectPointerType *From, const ObjCObjectPointerType *To,
     ExplodedNode *N, SymbolRef Sym, CheckerContext &C,
     const Stmt *ReportedNode) const {
-  if (!ObjCGenericsChecker.isEnabled())
+  if (!CheckGenerics)
     return;
 
+  initBugType();
   SmallString<192> Buf;
   llvm::raw_svector_ostream OS(Buf);
   OS << "Conversion from value of type '";
@@ -1032,7 +1031,7 @@ void DynamicTypePropagation::reportGenericsBug(
   OS << "' to incompatible type '";
   QualType::print(To, Qualifiers(), OS, C.getLangOpts(), llvm::Twine());
   OS << "'";
-  auto R = std::make_unique<PathSensitiveBugReport>(ObjCGenericsChecker,
+  auto R = std::make_unique<PathSensitiveBugReport>(*ObjCGenericsBugType,
                                                     OS.str(), N);
   R->markInteresting(Sym);
   R->addVisitor(std::make_unique<GenericsBugVisitor>(Sym));
@@ -1097,22 +1096,20 @@ PathDiagnosticPieceRef DynamicTypePropagation::GenericsBugVisitor::VisitNode(
 }
 
 /// Register checkers.
-void ento::registerObjCGenericsChecker(CheckerManager &Mgr) {
-  Mgr.getChecker<DynamicTypePropagation>()->ObjCGenericsChecker.enable(Mgr);
+void ento::registerObjCGenericsChecker(CheckerManager &mgr) {
+  DynamicTypePropagation *checker = mgr.getChecker<DynamicTypePropagation>();
+  checker->CheckGenerics = true;
+  checker->GenericCheckName = mgr.getCurrentCheckerName();
 }
 
-bool ento::shouldRegisterObjCGenericsChecker(const CheckerManager &) {
+bool ento::shouldRegisterObjCGenericsChecker(const CheckerManager &mgr) {
   return true;
 }
 
-void ento::registerDynamicTypePropagation(CheckerManager &Mgr) {
-  // The checker 'core.DynamicTypeChecker' relies on the modeling implemented
-  // in the class 'DynamicTypePropagation', so this "modeling checker" can
-  // register the 'DynamicTypePropagation' backend for its callbacks without
-  // enabling its frontend.
-  Mgr.getChecker<DynamicTypePropagation>();
+void ento::registerDynamicTypePropagation(CheckerManager &mgr) {
+  mgr.registerChecker<DynamicTypePropagation>();
 }
 
-bool ento::shouldRegisterDynamicTypePropagation(const CheckerManager &) {
+bool ento::shouldRegisterDynamicTypePropagation(const CheckerManager &mgr) {
   return true;
 }

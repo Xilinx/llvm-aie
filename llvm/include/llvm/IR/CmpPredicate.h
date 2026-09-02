@@ -14,7 +14,6 @@
 #define LLVM_IR_CMPPREDICATE_H
 
 #include "llvm/IR/InstrTypes.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 /// An abstraction over a floating-point predicate, and a pack of an integer
@@ -55,14 +54,14 @@ public:
   ///   samesign ult + slt -> slt
   ///   ult + ult -> ult
   ///   ult + slt -> std::nullopt
-  LLVM_ABI static std::optional<CmpPredicate> getMatching(CmpPredicate A,
-                                                          CmpPredicate B);
+  static std::optional<CmpPredicate> getMatching(CmpPredicate A,
+                                                 CmpPredicate B);
 
   /// Attempts to return a signed CmpInst::Predicate from the CmpPredicate. If
   /// the CmpPredicate has samesign, return ICmpInst::getSignedPredicate,
   /// dropping samesign information. Otherwise, return the predicate, dropping
   /// samesign information.
-  LLVM_ABI CmpInst::Predicate getPreferredSignedPredicate() const;
+  CmpInst::Predicate getPreferredSignedPredicate() const;
 
   /// An operator== on the underlying Predicate.
   bool operator==(CmpInst::Predicate P) const { return Pred == P; }
@@ -75,13 +74,13 @@ public:
 
   /// Do a ICmpInst::getCmpPredicate() or CmpInst::getPredicate(), as
   /// appropriate.
-  LLVM_ABI static CmpPredicate get(const CmpInst *Cmp);
+  static CmpPredicate get(const CmpInst *Cmp);
 
   /// Get the swapped predicate of a CmpPredicate.
-  LLVM_ABI static CmpPredicate getSwapped(CmpPredicate P);
+  static CmpPredicate getSwapped(CmpPredicate P);
 
   /// Get the swapped predicate of a CmpInst.
-  LLVM_ABI static CmpPredicate getSwapped(const CmpInst *Cmp);
+  static CmpPredicate getSwapped(const CmpInst *Cmp);
 };
 } // namespace llvm
 

@@ -34,25 +34,25 @@ void fir::runtime::genRaggedArrayAllocate(mlir::Location loc,
   auto eleTy = fir::unwrapSequenceType(fir::unwrapRefType(header.getType()));
   auto ptrTy =
       builder.getRefType(mlir::cast<mlir::TupleType>(eleTy).getType(1));
-  auto ptr = fir::CoordinateOp::create(builder, loc, ptrTy, header, one);
-  auto heap = fir::LoadOp::create(builder, loc, ptr);
+  auto ptr = builder.create<fir::CoordinateOp>(loc, ptrTy, header, one);
+  auto heap = builder.create<fir::LoadOp>(loc, ptr);
   auto cmp = builder.genIsNullAddr(loc, heap);
   builder.genIfThen(loc, cmp)
       .genThen([&]() {
         auto asHeadersVal = builder.createIntegerConstant(loc, i1Ty, asHeaders);
         auto rankVal = builder.createIntegerConstant(loc, i64Ty, rank);
-        auto buff = fir::AllocMemOp::create(builder, loc, extentTy);
+        auto buff = builder.create<fir::AllocMemOp>(loc, extentTy);
         // Convert all the extents to i64 and pack them in a buffer on the heap.
         for (auto i : llvm::enumerate(extents)) {
           auto offset = builder.createIntegerConstant(loc, i32Ty, i.index());
           auto addr =
-              fir::CoordinateOp::create(builder, loc, refTy, buff, offset);
+              builder.create<fir::CoordinateOp>(loc, refTy, buff, offset);
           auto castVal = builder.createConvert(loc, i64Ty, i.value());
-          fir::StoreOp::create(builder, loc, castVal, addr);
+          builder.create<fir::StoreOp>(loc, castVal, addr);
         }
         auto args = fir::runtime::createArguments(
             builder, loc, fTy, header, asHeadersVal, rankVal, eleSize, buff);
-        fir::CallOp::create(builder, loc, func, args);
+        builder.create<fir::CallOp>(loc, func, args);
       })
       .end();
 }
@@ -64,5 +64,5 @@ void fir::runtime::genRaggedArrayDeallocate(mlir::Location loc,
       loc, builder);
   auto fTy = func.getFunctionType();
   auto args = fir::runtime::createArguments(builder, loc, fTy, header);
-  fir::CallOp::create(builder, loc, func, args);
+  builder.create<fir::CallOp>(loc, func, args);
 }

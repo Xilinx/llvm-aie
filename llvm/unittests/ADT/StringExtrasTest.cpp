@@ -144,7 +144,6 @@ TEST(StringExtrasTest, ToAndFromHex) {
 }
 
 TEST(StringExtrasTest, UINT64ToHex) {
-  EXPECT_EQ(utohexstr(0x0u, false, 2), "00");
   EXPECT_EQ(utohexstr(0xA0u), "A0");
   EXPECT_EQ(utohexstr(0xA0u, false, 4), "00A0");
   EXPECT_EQ(utohexstr(0xA0u, false, 8), "000000A0");

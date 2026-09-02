@@ -10,7 +10,6 @@
 #define LLVM_DEBUGINFO_DWARF_DWARFDEBUGRANGELIST_H
 
 #include "llvm/DebugInfo/DWARF/DWARFAddressRange.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdint>
 #include <vector>
 
@@ -52,7 +51,7 @@ public:
     /// 2. An address, which defines the appropriate base address for
     /// use in interpreting the beginning and ending address offsets of
     /// subsequent entries of the location list.
-    LLVM_ABI bool isBaseAddressSelectionEntry(uint8_t AddressSize) const;
+    bool isBaseAddressSelectionEntry(uint8_t AddressSize) const;
   };
 
 private:
@@ -64,15 +63,15 @@ private:
 public:
   DWARFDebugRangeList() { clear(); }
 
-  LLVM_ABI void clear();
-  LLVM_ABI void dump(raw_ostream &OS) const;
-  LLVM_ABI Error extract(const DWARFDataExtractor &data, uint64_t *offset_ptr);
+  void clear();
+  void dump(raw_ostream &OS) const;
+  Error extract(const DWARFDataExtractor &data, uint64_t *offset_ptr);
   const std::vector<RangeListEntry> &getEntries() { return Entries; }
 
   /// getAbsoluteRanges - Returns absolute address ranges defined by this range
   /// list. Has to be passed base address of the compile unit referencing this
   /// range list.
-  LLVM_ABI DWARFAddressRangesVector
+  DWARFAddressRangesVector
   getAbsoluteRanges(std::optional<object::SectionedAddress> BaseAddr) const;
 };
 

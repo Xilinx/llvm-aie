@@ -6,10 +6,30 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <clc/clcmacro.h>
 #include <clc/internal/clc.h>
 
-#define FUNCTION __clc_copysign
-#define __IMPL_FUNCTION(x) __builtin_elementwise_copysign
-#define __CLC_BODY <clc/shared/binary_def.inc>
+_CLC_DEFINE_BINARY_BUILTIN_NO_SCALARIZE(float, __clc_copysign,
+                                        __builtin_elementwise_copysign, float,
+                                        float)
 
-#include <clc/math/gentype.inc>
+#ifdef cl_khr_fp64
+
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+_CLC_DEFINE_BINARY_BUILTIN_NO_SCALARIZE(double, __clc_copysign,
+                                        __builtin_elementwise_copysign, double,
+                                        double)
+
+#endif
+
+#ifdef cl_khr_fp16
+
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
+_CLC_DEFINE_BINARY_BUILTIN_NO_SCALARIZE(half, __clc_copysign,
+                                        __builtin_elementwise_copysign, half,
+                                        half)
+
+#endif
+

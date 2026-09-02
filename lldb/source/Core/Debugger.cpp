@@ -16,7 +16,6 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Progress.h"
-#include "lldb/Core/ProtocolServer.h"
 #include "lldb/Core/StreamAsynchronousIO.h"
 #include "lldb/Core/Telemetry.h"
 #include "lldb/DataFormatters/DataVisualization.h"
@@ -295,19 +294,19 @@ bool Debugger::GetAutoConfirm() const {
       idx, g_debugger_properties[idx].default_uint_value != 0);
 }
 
-FormatEntity::Entry Debugger::GetDisassemblyFormat() const {
+const FormatEntity::Entry *Debugger::GetDisassemblyFormat() const {
   constexpr uint32_t idx = ePropertyDisassemblyFormat;
-  return GetPropertyAtIndexAs<FormatEntity::Entry>(idx, {});
+  return GetPropertyAtIndexAs<const FormatEntity::Entry *>(idx);
 }
 
-FormatEntity::Entry Debugger::GetFrameFormat() const {
+const FormatEntity::Entry *Debugger::GetFrameFormat() const {
   constexpr uint32_t idx = ePropertyFrameFormat;
-  return GetPropertyAtIndexAs<FormatEntity::Entry>(idx, {});
+  return GetPropertyAtIndexAs<const FormatEntity::Entry *>(idx);
 }
 
-FormatEntity::Entry Debugger::GetFrameFormatUnique() const {
+const FormatEntity::Entry *Debugger::GetFrameFormatUnique() const {
   constexpr uint32_t idx = ePropertyFrameFormatUnique;
-  return GetPropertyAtIndexAs<FormatEntity::Entry>(idx, {});
+  return GetPropertyAtIndexAs<const FormatEntity::Entry *>(idx);
 }
 
 uint64_t Debugger::GetStopDisassemblyMaxSize() const {
@@ -351,14 +350,14 @@ void Debugger::SetPrompt(llvm::StringRef p) {
   GetCommandInterpreter().UpdatePrompt(new_prompt);
 }
 
-FormatEntity::Entry Debugger::GetThreadFormat() const {
+const FormatEntity::Entry *Debugger::GetThreadFormat() const {
   constexpr uint32_t idx = ePropertyThreadFormat;
-  return GetPropertyAtIndexAs<FormatEntity::Entry>(idx, {});
+  return GetPropertyAtIndexAs<const FormatEntity::Entry *>(idx);
 }
 
-FormatEntity::Entry Debugger::GetThreadStopFormat() const {
+const FormatEntity::Entry *Debugger::GetThreadStopFormat() const {
   constexpr uint32_t idx = ePropertyThreadStopFormat;
-  return GetPropertyAtIndexAs<FormatEntity::Entry>(idx, {});
+  return GetPropertyAtIndexAs<const FormatEntity::Entry *>(idx);
 }
 
 lldb::ScriptLanguage Debugger::GetScriptLanguage() const {
@@ -493,9 +492,9 @@ bool Debugger::GetShowStatusline() const {
       idx, g_debugger_properties[idx].default_uint_value != 0);
 }
 
-FormatEntity::Entry Debugger::GetStatuslineFormat() const {
+const FormatEntity::Entry *Debugger::GetStatuslineFormat() const {
   constexpr uint32_t idx = ePropertyStatuslineFormat;
-  return GetPropertyAtIndexAs<FormatEntity::Entry>(idx, {});
+  return GetPropertyAtIndexAs<const FormatEntity::Entry *>(idx);
 }
 
 bool Debugger::SetStatuslineFormat(const FormatEntity::Entry &format) {
@@ -507,18 +506,6 @@ bool Debugger::SetStatuslineFormat(const FormatEntity::Entry &format) {
 
 llvm::StringRef Debugger::GetSeparator() const {
   constexpr uint32_t idx = ePropertySeparator;
-  return GetPropertyAtIndexAs<llvm::StringRef>(
-      idx, g_debugger_properties[idx].default_cstr_value);
-}
-
-llvm::StringRef Debugger::GetDisabledAnsiPrefix() const {
-  const uint32_t idx = ePropertyShowDisabledAnsiPrefix;
-  return GetPropertyAtIndexAs<llvm::StringRef>(
-      idx, g_debugger_properties[idx].default_cstr_value);
-}
-
-llvm::StringRef Debugger::GetDisabledAnsiSuffix() const {
-  const uint32_t idx = ePropertyShowDisabledAnsiSuffix;
   return GetPropertyAtIndexAs<llvm::StringRef>(
       idx, g_debugger_properties[idx].default_cstr_value);
 }
@@ -1445,13 +1432,6 @@ bool Debugger::PopIOHandler(const IOHandlerSP &pop_reader_sp) {
   return true;
 }
 
-void Debugger::RefreshIOHandler() {
-  std::lock_guard<std::recursive_mutex> guard(m_io_handler_stack.GetMutex());
-  IOHandlerSP reader_sp(m_io_handler_stack.Top());
-  if (reader_sp)
-    reader_sp->Refresh();
-}
-
 StreamUP Debugger::GetAsyncOutputStream() {
   return std::make_unique<StreamAsynchronousIO>(*this,
                                                 StreamAsynchronousIO::STDOUT);
@@ -1556,11 +1536,8 @@ bool Debugger::FormatDisassemblerAddress(const FormatEntity::Entry *format,
   FormatEntity::Entry format_entry;
 
   if (format == nullptr) {
-    if (exe_ctx != nullptr && exe_ctx->HasTargetScope()) {
-      format_entry =
-          exe_ctx->GetTargetRef().GetDebugger().GetDisassemblyFormat();
-      format = &format_entry;
-    }
+    if (exe_ctx != nullptr && exe_ctx->HasTargetScope())
+      format = exe_ctx->GetTargetRef().GetDebugger().GetDisassemblyFormat();
     if (format == nullptr) {
       FormatEntity::Parse("${addr}: ", format_entry);
       format = &format_entry;

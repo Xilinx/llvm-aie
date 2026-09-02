@@ -16,7 +16,6 @@
 
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/TrackingMDRef.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -26,22 +25,7 @@ namespace llvm {
   class DILocation;
   class Function;
 
-#if LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
-#if LLVM_ENABLE_DEBUGLOC_TRACKING_ORIGIN
-  struct DbgLocOrigin {
-    static constexpr unsigned long MaxDepth = 16;
-    using StackTracesTy =
-        SmallVector<std::pair<int, std::array<void *, MaxDepth>>, 0>;
-    StackTracesTy StackTraces;
-    DbgLocOrigin(bool ShouldCollectTrace);
-    void addTrace();
-    const StackTracesTy &getOriginStackTraces() const { return StackTraces; };
-  };
-#else
-  struct DbgLocOrigin {
-    DbgLocOrigin(bool) {}
-  };
-#endif
+#if LLVM_ENABLE_DEBUGLOC_COVERAGE_TRACKING
   // Used to represent different "kinds" of DebugLoc, expressing that the
   // instruction it is part of is either normal and should contain a valid
   // DILocation, or otherwise describing the reason why the instruction does
@@ -70,29 +54,22 @@ namespace llvm {
     Temporary
   };
 
-  // Extends TrackingMDNodeRef to also store a DebugLocKind and Origin,
-  // allowing Debugify to ignore intentionally-empty DebugLocs and display the
-  // code responsible for generating unintentionally-empty DebugLocs.
-  // Currently we only need to track the Origin of this DILoc when using a
-  // DebugLoc that is not annotated (i.e. has DebugLocKind::Normal) and has a
-  // null DILocation, so only collect the origin stacktrace in those cases.
-  class DILocAndCoverageTracking : public TrackingMDNodeRef,
-                                   public DbgLocOrigin {
+  // Extends TrackingMDNodeRef to also store a DebugLocKind, allowing Debugify
+  // to ignore intentionally-empty DebugLocs.
+  class DILocAndCoverageTracking : public TrackingMDNodeRef {
   public:
     DebugLocKind Kind;
     // Default constructor for empty DebugLocs.
     DILocAndCoverageTracking()
-        : TrackingMDNodeRef(nullptr), DbgLocOrigin(true),
-          Kind(DebugLocKind::Normal) {}
-    // Valid or nullptr MDNode*, no annotative DebugLocKind.
+        : TrackingMDNodeRef(nullptr), Kind(DebugLocKind::Normal) {}
+    // Valid or nullptr MDNode*, normal DebugLocKind.
     DILocAndCoverageTracking(const MDNode *Loc)
-        : TrackingMDNodeRef(const_cast<MDNode *>(Loc)), DbgLocOrigin(!Loc),
+        : TrackingMDNodeRef(const_cast<MDNode *>(Loc)),
           Kind(DebugLocKind::Normal) {}
-    LLVM_ABI DILocAndCoverageTracking(const DILocation *Loc);
+    DILocAndCoverageTracking(const DILocation *Loc);
     // Explicit DebugLocKind, which always means a nullptr MDNode*.
     DILocAndCoverageTracking(DebugLocKind Kind)
-        : TrackingMDNodeRef(nullptr),
-          DbgLocOrigin(Kind == DebugLocKind::Normal), Kind(Kind) {}
+        : TrackingMDNodeRef(nullptr), Kind(Kind) {}
   };
   template <> struct simplify_type<DILocAndCoverageTracking> {
     using SimpleType = MDNode *;
@@ -112,7 +89,7 @@ namespace llvm {
   using DebugLocTrackingRef = DILocAndCoverageTracking;
 #else
   using DebugLocTrackingRef = TrackingMDNodeRef;
-#endif // LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
+#endif // LLVM_ENABLE_DEBUGLOC_COVERAGE_TRACKING
 
   /// A debug info location.
   ///
@@ -129,7 +106,7 @@ namespace llvm {
     DebugLoc() = default;
 
     /// Construct from an \a DILocation.
-    LLVM_ABI DebugLoc(const DILocation *L);
+    DebugLoc(const DILocation *L);
 
     /// Construct from an \a MDNode.
     ///
@@ -137,14 +114,14 @@ namespace llvm {
     /// accessors will crash.  However, construction from other nodes is
     /// supported in order to handle forward references when reading textual
     /// IR.
-    LLVM_ABI explicit DebugLoc(const MDNode *N);
+    explicit DebugLoc(const MDNode *N);
 
-#if LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
+#if LLVM_ENABLE_DEBUGLOC_COVERAGE_TRACKING
     DebugLoc(DebugLocKind Kind) : Loc(Kind) {}
     DebugLocKind getKind() const { return Loc.Kind; }
 #endif
 
-#if LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
+#if LLVM_ENABLE_DEBUGLOC_COVERAGE_TRACKING
     static inline DebugLoc getTemporary() {
       return DebugLoc(DebugLocKind::Temporary);
     }
@@ -162,71 +139,13 @@ namespace llvm {
     static inline DebugLoc getUnknown() { return DebugLoc(); }
     static inline DebugLoc getCompilerGenerated() { return DebugLoc(); }
     static inline DebugLoc getDropped() { return DebugLoc(); }
-#endif // LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
-
-    /// When two instructions are combined into a single instruction we also
-    /// need to combine the original locations into a single location.
-    /// When the locations are the same we can use either location.
-    /// When they differ, we need a third location which is distinct from
-    /// either. If they share a common scope, use this scope and compare the
-    /// line/column pair of the locations with the common scope:
-    /// * if both match, keep the line and column;
-    /// * if only the line number matches, keep the line and set the column as
-    /// 0;
-    /// * otherwise set line and column as 0.
-    /// If they do not share a common scope the location is ambiguous and can't
-    /// be represented in a line entry. In this case, set line and column as 0
-    /// and use the scope of any location.
-    ///
-    /// \p LocA \p LocB: The locations to be merged.
-    LLVM_ABI static DebugLoc getMergedLocation(DebugLoc LocA, DebugLoc LocB);
-
-    /// Try to combine the vector of locations passed as input in a single one.
-    /// This function applies getMergedLocation() repeatedly left-to-right.
-    ///
-    /// \p Locs: The locations to be merged.
-    LLVM_ABI static DebugLoc getMergedLocations(ArrayRef<DebugLoc> Locs);
-
-    /// If this DebugLoc is non-empty, returns this DebugLoc; otherwise, selects
-    /// \p Other.
-    /// In coverage-tracking builds, this also accounts for whether this or
-    /// \p Other have an annotative DebugLocKind applied, such that if both are
-    /// empty but exactly one has an annotation, we prefer that annotated
-    /// location.
-    DebugLoc orElse(DebugLoc Other) const {
-      if (*this)
-        return *this;
-#if LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
-      if (Other)
-        return Other;
-      if (getKind() != DebugLocKind::Normal)
-        return *this;
-      if (Other.getKind() != DebugLocKind::Normal)
-        return Other;
-      return *this;
-#else
-      return Other;
-#endif // LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE
-    }
-
-#if LLVM_ENABLE_DEBUGLOC_TRACKING_ORIGIN
-    const DbgLocOrigin::StackTracesTy &getOriginStackTraces() const {
-      return Loc.getOriginStackTraces();
-    }
-    DebugLoc getCopied() const {
-      DebugLoc NewDL = *this;
-      NewDL.Loc.addTrace();
-      return NewDL;
-    }
-#else
-    DebugLoc getCopied() const { return *this; }
-#endif
+#endif // LLVM_ENABLE_DEBUGLOC_COVERAGE_TRACKING
 
     /// Get the underlying \a DILocation.
     ///
     /// \pre !*this or \c isa<DILocation>(getAsMDNode()).
     /// @{
-    LLVM_ABI DILocation *get() const;
+    DILocation *get() const;
     operator DILocation *() const { return get(); }
     DILocation *operator->() const { return get(); }
     DILocation &operator*() const { return *get(); }
@@ -247,9 +166,9 @@ namespace llvm {
     /// Rebuild the entire inlined-at chain for this instruction so that the top of
     /// the chain now is inlined-at the new call site.
     /// \param   InlinedAt    The new outermost inlined-at in the chain.
-    LLVM_ABI static DebugLoc
-    appendInlinedAt(const DebugLoc &DL, DILocation *InlinedAt, LLVMContext &Ctx,
-                    DenseMap<const MDNode *, MDNode *> &Cache);
+    static DebugLoc appendInlinedAt(const DebugLoc &DL, DILocation *InlinedAt,
+                                    LLVMContext &Ctx,
+                                    DenseMap<const MDNode *, MDNode *> &Cache);
 
     /// Return true if the source locations match, ignoring isImplicitCode and
     /// source atom info.
@@ -261,19 +180,19 @@ namespace llvm {
              getInlinedAt() == Other.getInlinedAt();
     }
 
-    LLVM_ABI unsigned getLine() const;
-    LLVM_ABI unsigned getCol() const;
-    LLVM_ABI MDNode *getScope() const;
-    LLVM_ABI DILocation *getInlinedAt() const;
+    unsigned getLine() const;
+    unsigned getCol() const;
+    MDNode *getScope() const;
+    DILocation *getInlinedAt() const;
 
     /// Get the fully inlined-at scope for a DebugLoc.
     ///
     /// Gets the inlined-at scope for a DebugLoc.
-    LLVM_ABI MDNode *getInlinedAtScope() const;
+    MDNode *getInlinedAtScope() const;
 
     /// Rebuild the entire inline-at chain by replacing the subprogram at the
     /// end of the chain with NewSP.
-    LLVM_ABI static DebugLoc
+    static DebugLoc
     replaceInlinedAtSubprogram(const DebugLoc &DL, DISubprogram &NewSP,
                                LLVMContext &Ctx,
                                DenseMap<const MDNode *, MDNode *> &Cache);
@@ -285,22 +204,22 @@ namespace llvm {
     ///
     /// FIXME: Remove this.  Users should use DILocation/DILocalScope API to
     /// find the subprogram, and then DILocation::get().
-    LLVM_ABI DebugLoc getFnDebugLoc() const;
+    DebugLoc getFnDebugLoc() const;
 
     /// Return \c this as a bar \a MDNode.
     MDNode *getAsMDNode() const { return Loc; }
 
     /// Check if the DebugLoc corresponds to an implicit code.
-    LLVM_ABI bool isImplicitCode() const;
-    LLVM_ABI void setImplicitCode(bool ImplicitCode);
+    bool isImplicitCode() const;
+    void setImplicitCode(bool ImplicitCode);
 
     bool operator==(const DebugLoc &DL) const { return Loc == DL.Loc; }
     bool operator!=(const DebugLoc &DL) const { return Loc != DL.Loc; }
 
-    LLVM_ABI void dump() const;
+    void dump() const;
 
     /// prints source location /path/to/file.exe:line:col @[inlined at]
-    LLVM_ABI void print(raw_ostream &OS) const;
+    void print(raw_ostream &OS) const;
   };
 
 } // end namespace llvm

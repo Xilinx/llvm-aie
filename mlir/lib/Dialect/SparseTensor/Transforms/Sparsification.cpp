@@ -14,10 +14,12 @@
 #include "Utils/CodegenUtils.h"
 #include "Utils/LoopEmitter.h"
 
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.h"
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Utils/Utils.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
@@ -28,6 +30,10 @@
 #include "mlir/Dialect/SparseTensor/Transforms/Passes.h"
 #include "mlir/Dialect/SparseTensor/Utils/Merger.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/IR/AffineExprVisitor.h"
+#include "mlir/IR/Matchers.h"
+#include "mlir/IR/TensorEncoding.h"
+#include "llvm/ADT/SmallBitVector.h"
 
 #include <optional>
 
@@ -316,8 +322,8 @@ static void genBuffers(CodegenEnv &env, OpBuilder &builder) {
         if (!isInit) {
           Value zero = constantZero(builder, loc,
                                     getElementTypeOrSelf(tensor.getType()));
-          linalg::FillOp::create(builder, loc, ValueRange{zero},
-                                 ValueRange{init});
+          builder.create<linalg::FillOp>(loc, ValueRange{zero},
+                                         ValueRange{init});
         }
         return init;
       },
@@ -379,7 +385,7 @@ static Value genInsertionLoad(CodegenEnv &env, OpBuilder &builder,
   }
   // Load from expanded access pattern.
   Value index = genIndex(env, t);
-  return memref::LoadOp::create(builder, loc, env.getExpandValues(), index);
+  return builder.create<memref::LoadOp>(loc, env.getExpandValues(), index);
 }
 
 /// Generates insertion code to implement dynamic tensor load for reduction.
@@ -395,22 +401,22 @@ static Value genInsertionLoadReduce(CodegenEnv &env, OpBuilder &builder,
   Value values = env.getExpandValues();
   Value filled = env.getExpandFilled();
   Value index = genIndex(env, t);
-  Value isFilled = memref::LoadOp::create(builder, loc, filled, index);
-  Value valAtIndex = memref::LoadOp::create(builder, loc, values, index);
-  return arith::SelectOp::create(builder, loc, isFilled, valAtIndex, identity);
+  Value isFilled = builder.create<memref::LoadOp>(loc, filled, index);
+  Value valAtIndex = builder.create<memref::LoadOp>(loc, values, index);
+  return builder.create<arith::SelectOp>(loc, isFilled, valAtIndex, identity);
 }
 
 static Value genConditionalInsert(Location loc, OpBuilder &builder, Value cond,
                                   Value sparseOut, ValueRange ivs, Value v) {
   scf::IfOp condInsert =
-      scf::IfOp::create(builder, loc, sparseOut.getType(), cond, true);
+      builder.create<scf::IfOp>(loc, sparseOut.getType(), cond, true);
   // True branch.
   builder.setInsertionPointToStart(condInsert.thenBlock());
-  Value res = tensor::InsertOp::create(builder, loc, v, sparseOut, ivs);
-  scf::YieldOp::create(builder, loc, res);
+  Value res = builder.create<tensor::InsertOp>(loc, v, sparseOut, ivs);
+  builder.create<scf::YieldOp>(loc, res);
   // False branch.
   builder.setInsertionPointToStart(condInsert.elseBlock());
-  scf::YieldOp::create(builder, loc, sparseOut);
+  builder.create<scf::YieldOp>(loc, sparseOut);
   // Value assignment.
   builder.setInsertionPointAfter(condInsert);
   return condInsert.getResult(0);
@@ -447,7 +453,7 @@ static void genInsertionStore(CodegenEnv &env, OpBuilder &builder, OpOperand *t,
         Value nz = genIsNonzero(builder, loc, rhs);
         sparseOut = genConditionalInsert(loc, builder, nz, chain, ivs, rhs);
       } else {
-        sparseOut = tensor::InsertOp::create(builder, loc, rhs, chain, ivs);
+        sparseOut = builder.create<tensor::InsertOp>(loc, rhs, chain, ivs);
       }
       // Generates regular insertion chain.
       env.updateInsertionChain(sparseOut);
@@ -468,25 +474,25 @@ static void genInsertionStore(CodegenEnv &env, OpBuilder &builder, OpOperand *t,
   Value fval = constantI1(builder, loc, false);
   Value tval = constantI1(builder, loc, true);
   // If statement.
-  Value isFilled = memref::LoadOp::create(builder, loc, filled, index);
-  Value cond = arith::CmpIOp::create(builder, loc, arith::CmpIPredicate::eq,
-                                     isFilled, fval);
-  scf::IfOp ifOp = scf::IfOp::create(builder, loc, builder.getIndexType(), cond,
-                                     /*else=*/true);
+  Value isFilled = builder.create<memref::LoadOp>(loc, filled, index);
+  Value cond = builder.create<arith::CmpIOp>(loc, arith::CmpIPredicate::eq,
+                                             isFilled, fval);
+  scf::IfOp ifOp = builder.create<scf::IfOp>(loc, builder.getIndexType(), cond,
+                                             /*else=*/true);
   // True branch.
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
-  memref::StoreOp::create(builder, loc, tval, filled, index);
-  memref::StoreOp::create(builder, loc, index, added, count);
+  builder.create<memref::StoreOp>(loc, tval, filled, index);
+  builder.create<memref::StoreOp>(loc, index, added, count);
   Value one = constantIndex(builder, loc, 1);
-  Value add = arith::AddIOp::create(builder, loc, count, one);
-  scf::YieldOp::create(builder, loc, add);
+  Value add = builder.create<arith::AddIOp>(loc, count, one);
+  builder.create<scf::YieldOp>(loc, add);
   // False branch.
   builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
-  scf::YieldOp::create(builder, loc, count);
+  builder.create<scf::YieldOp>(loc, count);
   builder.setInsertionPointAfter(ifOp);
   // Value assignment.
   env.updateExpandCount(ifOp.getResult(0));
-  memref::StoreOp::create(builder, loc, rhs, values, index);
+  builder.create<memref::StoreOp>(loc, rhs, values, index);
 }
 
 /// Generates a load on a dense or sparse tensor.
@@ -516,10 +522,9 @@ static Value genTensorLoad(CodegenEnv &env, OpBuilder &builder, ExprId exp) {
   if (llvm::isa<TensorType>(ptr.getType())) {
     assert(env.options().sparseEmitStrategy ==
            SparseEmitStrategy::kSparseIterator);
-    return ExtractValOp::create(builder, loc, ptr,
-                                llvm::getSingleElement(args));
+    return builder.create<ExtractValOp>(loc, ptr, llvm::getSingleElement(args));
   }
-  return memref::LoadOp::create(builder, loc, ptr, args);
+  return builder.create<memref::LoadOp>(loc, ptr, args);
 }
 
 /// Generates a store on a dense or sparse tensor.
@@ -546,7 +551,7 @@ static void genTensorStore(CodegenEnv &env, OpBuilder &builder, ExprId exp,
   if (!env.isSparseOutput(t)) {
     SmallVector<Value> args;
     Value ptr = genSubscript(env, builder, t, args);
-    memref::StoreOp::create(builder, loc, rhs, ptr, args);
+    builder.create<memref::StoreOp>(loc, rhs, ptr, args);
     return;
   }
   // Store during sparse insertion.
@@ -557,7 +562,7 @@ static void genTensorStore(CodegenEnv &env, OpBuilder &builder, ExprId exp,
   // Select operation insertion.
   Value chain = env.getInsertionChain();
   scf::IfOp ifOp =
-      scf::IfOp::create(builder, loc, chain.getType(), rhs, /*else=*/true);
+      builder.create<scf::IfOp>(loc, chain.getType(), rhs, /*else=*/true);
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   // Existing value was preserved to be used here.
   assert(env.exp(exp).val);
@@ -566,10 +571,10 @@ static void genTensorStore(CodegenEnv &env, OpBuilder &builder, ExprId exp,
   env.merger().clearExprValue(exp);
   // Yield modified insertion chain along true branch.
   Value mchain = env.getInsertionChain();
-  scf::YieldOp::create(builder, op.getLoc(), mchain);
+  builder.create<scf::YieldOp>(op.getLoc(), mchain);
   // Yield original insertion chain along false branch.
   builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
-  scf::YieldOp::create(builder, loc, chain);
+  builder.create<scf::YieldOp>(loc, chain);
   // Done with if statement.
   env.updateInsertionChain(ifOp->getResult(0));
   builder.setInsertionPointAfter(ifOp);
@@ -598,7 +603,7 @@ static Value relinkBranch(CodegenEnv &env, RewriterBase &rewriter, Block *block,
       assert(!getSparseTensorType(t->get()).hasEncoding()); // dense!
       SmallVector<Value> args;
       Value ptr = genSubscript(env, rewriter, t, args);
-      return memref::LoadOp::create(rewriter, op.getLoc(), ptr, args);
+      return rewriter.create<memref::LoadOp>(op.getLoc(), ptr, args);
     }
   } else if (Operation *def = e.getDefiningOp()) {
     // Handle index computation.
@@ -769,8 +774,7 @@ static void genExpand(CodegenEnv &env, OpBuilder &builder, LoopId curr,
     Type t2 = MemRefType::get(dynShape, builder.getI1Type());
     Type t3 = MemRefType::get(dynShape, builder.getIndexType());
     Type t4 = builder.getIndexType();
-    auto r =
-        ExpandOp::create(builder, loc, TypeRange({t1, t2, t3, t4}), tensor);
+    auto r = builder.create<ExpandOp>(loc, TypeRange({t1, t2, t3, t4}), tensor);
     assert(r.getNumResults() == 4);
     env.startExpand(r.getResult(0), r.getResult(1), r.getResult(2),
                     r.getResult(3));
@@ -783,8 +787,8 @@ static void genExpand(CodegenEnv &env, OpBuilder &builder, LoopId curr,
     Value added = env.getExpandAdded();
     Value count = env.getExpandCount();
     Value chain = env.getInsertionChain();
-    Value compress = CompressOp::create(builder, loc, values, filled, added,
-                                        count, chain, indices);
+    Value compress = builder.create<CompressOp>(loc, values, filled, added,
+                                                count, chain, indices);
     env.updateInsertionChain(compress);
     env.endExpand();
   }
@@ -891,7 +895,7 @@ static void finalizeWhileOp(CodegenEnv &env, OpBuilder &builder,
         env.updateInsertionChain(ifOp->getResult(y++));
       }
       assert(y == yields.size());
-      scf::YieldOp::create(builder, loc, yields);
+      builder.create<scf::YieldOp>(loc, yields);
       builder.setInsertionPointAfter(ifOp);
     }
   }
@@ -944,14 +948,13 @@ static scf::IfOp genIf(CodegenEnv &env, OpBuilder &builder, LoopId curr,
           assert(lvl.has_value());
           const Value crd = env.emitter().getCoord(tid, *lvl);
           const Value lvar = env.getLoopVar(curr);
-          clause = arith::CmpIOp::create(builder, loc, arith::CmpIPredicate::eq,
-                                         crd, lvar);
+          clause = builder.create<arith::CmpIOp>(loc, arith::CmpIPredicate::eq,
+                                                 crd, lvar);
         } else {
           assert(lt.hasDenseSemantic() || isUndefLT(lt));
           clause = constantI1(builder, loc, true);
         }
-        cond =
-            cond ? arith::AndIOp::create(builder, loc, cond, clause) : clause;
+        cond = cond ? builder.create<arith::AndIOp>(loc, cond, clause) : clause;
       });
   if (env.isReduc()) {
     types.push_back(env.getReduc().getType());
@@ -962,7 +965,7 @@ static scf::IfOp genIf(CodegenEnv &env, OpBuilder &builder, LoopId curr,
     types.push_back(builder.getIndexType());
   if (env.getInsertionChain())
     types.push_back(env.getInsertionChain().getType());
-  scf::IfOp ifOp = scf::IfOp::create(builder, loc, types, cond, /*else=*/true);
+  scf::IfOp ifOp = builder.create<scf::IfOp>(loc, types, cond, /*else=*/true);
   builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   return ifOp;
 }
@@ -990,7 +993,7 @@ static void endIf(CodegenEnv &env, OpBuilder &builder, scf::IfOp ifOp,
     env.updateInsertionChain(insInput);
   }
   if (!operands.empty())
-    scf::YieldOp::create(builder, env.op().getLoc(), operands);
+    builder.create<scf::YieldOp>(env.op().getLoc(), operands);
   builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
 }
 
@@ -1304,7 +1307,7 @@ static void genStmt(CodegenEnv &env, RewriterBase &rewriter, ExprId exp,
           genStmt(env, rewriter, ej, curr + 1);
           // TODO: handle yield values.
           assert(reduc.empty() && "Not Implemented");
-          sparse_tensor::YieldOp::create(rewriter, env.op().getLoc());
+          rewriter.create<sparse_tensor::YieldOp>(env.op().getLoc());
           return std::nullopt;
         });
         // endIf(env, rewriter, ifOp, redInput, cntInput, insInput, validIns);

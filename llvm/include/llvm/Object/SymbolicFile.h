@@ -16,7 +16,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/Object/Binary.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBufferRef.h"
@@ -143,7 +142,7 @@ public:
 
 using basic_symbol_iterator = content_iterator<BasicSymbolRef>;
 
-class LLVM_ABI SymbolicFile : public Binary {
+class SymbolicFile : public Binary {
 public:
   SymbolicFile(unsigned int Type, MemoryBufferRef Source);
   ~SymbolicFile() override;

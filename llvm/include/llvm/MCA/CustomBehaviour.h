@@ -24,7 +24,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MCA/SourceMgr.h"
 #include "llvm/MCA/View.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 namespace mca {
@@ -64,7 +63,7 @@ public:
 /// them properly.
 /// If you implement this class for your target, make sure to also implement
 /// a target specific InstrPostProcess class as well.
-class LLVM_ABI CustomBehaviour {
+class CustomBehaviour {
 protected:
   const MCSubtargetInfo &STI;
   const mca::SourceMgr &SrcMgr;
@@ -139,7 +138,7 @@ using UniqueInstrument = std::unique_ptr<Instrument>;
 /// This class allows targets to optionally customize the logic that resolves
 /// scheduling class IDs. Targets can use information encoded in Instrument
 /// objects to make more informed scheduling decisions.
-class LLVM_ABI InstrumentManager {
+class InstrumentManager {
 protected:
   const MCSubtargetInfo &STI;
   const MCInstrInfo &MCII;

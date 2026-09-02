@@ -19,7 +19,6 @@
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/Support/BinaryStreamArray.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include <cstdint>
 #include <vector>
@@ -177,21 +176,6 @@ public:
   uint32_t RecordOffset = 0;
 };
 
-class HotPatchFuncSym : public SymbolRecord {
-public:
-  explicit HotPatchFuncSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  HotPatchFuncSym(uint32_t RecordOffset)
-      : SymbolRecord(SymbolRecordKind::HotPatchFuncSym),
-        RecordOffset(RecordOffset) {}
-
-  // This is an ItemID in the IPI stream, which points to an LF_FUNC_ID or
-  // LF_MFUNC_ID record.
-  TypeIndex Function;
-  StringRef Name;
-
-  uint32_t RecordOffset = 0;
-};
-
 struct DecodedAnnotation {
   StringRef Name;
   ArrayRef<uint8_t> Bytes;
@@ -240,7 +224,8 @@ private:
     if (Annotations.empty())
       return -1;
 
-    uint8_t FirstByte = Annotations.consume_front();
+    uint8_t FirstByte = Annotations.front();
+    Annotations = Annotations.drop_front();
 
     if ((FirstByte & 0x80) == 0x00)
       return FirstByte;
@@ -248,7 +233,8 @@ private:
     if (Annotations.empty())
       return -1;
 
-    uint8_t SecondByte = Annotations.consume_front();
+    uint8_t SecondByte = Annotations.front();
+    Annotations = Annotations.drop_front();
 
     if ((FirstByte & 0xC0) == 0x80)
       return ((FirstByte & 0x3F) << 8) | SecondByte;
@@ -256,12 +242,14 @@ private:
     if (Annotations.empty())
       return -1;
 
-    uint8_t ThirdByte = Annotations.consume_front();
+    uint8_t ThirdByte = Annotations.front();
+    Annotations = Annotations.drop_front();
 
     if (Annotations.empty())
       return -1;
 
-    uint8_t FourthByte = Annotations.consume_front();
+    uint8_t FourthByte = Annotations.front();
+    Annotations = Annotations.drop_front();
 
     if ((FirstByte & 0xE0) == 0xC0)
       return ((FirstByte & 0x1F) << 24) | (SecondByte << 16) |
@@ -1035,8 +1023,8 @@ public:
   uint32_t RecordOffset = 0;
 };
 
-LLVM_ABI Expected<CVSymbol> readSymbolFromStream(BinaryStreamRef Stream,
-                                                 uint32_t Offset);
+Expected<CVSymbol> readSymbolFromStream(BinaryStreamRef Stream,
+                                        uint32_t Offset);
 
 } // end namespace codeview
 } // end namespace llvm

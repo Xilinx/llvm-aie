@@ -207,9 +207,13 @@ FormatStringConverter::FormatStringConverter(
       ArgsOffset(FormatArgOffset + 1), LangOpts(LO) {
   assert(ArgsOffset <= NumArgs);
   FormatExpr = llvm::dyn_cast<StringLiteral>(
-      Args[FormatArgOffset]->IgnoreUnlessSpelledInSource());
+      Args[FormatArgOffset]->IgnoreImplicitAsWritten());
 
-  assert(FormatExpr && FormatExpr->isOrdinary());
+  if (!FormatExpr || !FormatExpr->isOrdinary()) {
+    // Function must have a narrow string literal as its first argument.
+    conversionNotPossible("first argument is not a narrow string literal");
+    return;
+  }
 
   if (const std::optional<StringRef> MaybeMacroName =
           formatStringContainsUnreplaceableMacro(Call, FormatExpr, SM, PP);

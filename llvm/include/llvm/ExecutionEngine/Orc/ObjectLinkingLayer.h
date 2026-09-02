@@ -19,7 +19,6 @@
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/Layer.h"
 #include "llvm/ExecutionEngine/Orc/LinkGraphLinkingLayer.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Error.h"
 
 #include <memory>
@@ -39,9 +38,8 @@ namespace orc {
 /// Clients can use this class to add relocatable object files to an
 /// ExecutionSession, and it typically serves as the base layer (underneath
 /// a compiling layer like IRCompileLayer) for the rest of the JIT.
-class LLVM_ABI ObjectLinkingLayer
-    : public LinkGraphLinkingLayer,
-      public RTTIExtends<ObjectLinkingLayer, ObjectLayer> {
+class ObjectLinkingLayer : public LinkGraphLinkingLayer,
+                           public RTTIExtends<ObjectLinkingLayer, ObjectLayer> {
 private:
   using BaseObjectLayer = RTTIExtends<ObjectLinkingLayer, ObjectLayer>;
 

@@ -27,6 +27,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -1511,7 +1512,7 @@ ObjCTypeParamList::ObjCTypeParamList(SourceLocation lAngleLoc,
                                      ArrayRef<ObjCTypeParamDecl *> typeParams,
                                      SourceLocation rAngleLoc)
     : Brackets(lAngleLoc, rAngleLoc), NumParams(typeParams.size()) {
-  llvm::copy(typeParams, begin());
+  std::copy(typeParams.begin(), typeParams.end(), begin());
 }
 
 ObjCTypeParamList *ObjCTypeParamList::create(

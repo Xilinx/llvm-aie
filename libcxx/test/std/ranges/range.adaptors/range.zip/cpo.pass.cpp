@@ -18,7 +18,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "../range_adaptor_types.h"
+#include "types.h"
 
 static_assert(std::is_invocable_v<decltype((std::views::zip))>);
 static_assert(!std::is_invocable_v<decltype((std::views::zip)), int>);

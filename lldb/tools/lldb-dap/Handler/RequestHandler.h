@@ -334,6 +334,9 @@ class RestartRequestHandler : public LegacyRequestHandler {
 public:
   using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "restart"; }
+  FeatureSet GetSupportedFeatures() const override {
+    return {protocol::eAdapterFeatureRestartRequest};
+  }
   void operator()(const llvm::json::Object &request) const override;
 };
 
@@ -353,15 +356,14 @@ public:
   llvm::Error Run(const protocol::StepInArguments &args) const override;
 };
 
-class StepInTargetsRequestHandler
-    : public RequestHandler<
-          protocol::StepInTargetsArguments,
-          llvm::Expected<protocol::StepInTargetsResponseBody>> {
+class StepInTargetsRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "stepInTargets"; }
-  llvm::Expected<protocol::StepInTargetsResponseBody>
-  Run(const protocol::StepInTargetsArguments &args) const override;
+  FeatureSet GetSupportedFeatures() const override {
+    return {protocol::eAdapterFeatureStepInTargetsRequest};
+  }
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class StepOutRequestHandler : public RequestHandler<protocol::StepOutArguments,
@@ -387,21 +389,14 @@ public:
   Run(const protocol::SetBreakpointsArguments &args) const override;
 };
 
-class SetExceptionBreakpointsRequestHandler
-    : public RequestHandler<
-          protocol::SetExceptionBreakpointsArguments,
-          llvm::Expected<protocol::SetExceptionBreakpointsResponseBody>> {
+class SetExceptionBreakpointsRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "setExceptionBreakpoints"; }
   FeatureSet GetSupportedFeatures() const override {
-    /// Prefer the `filterOptions` feature over the `exceptionOptions`.
-    /// exceptionOptions is not supported in VSCode, while `filterOptions` is
-    /// supported.
-    return {protocol::eAdapterFeatureExceptionFilterOptions};
+    return {protocol::eAdapterFeatureExceptionOptions};
   }
-  llvm::Expected<protocol::SetExceptionBreakpointsResponseBody>
-  Run(const protocol::SetExceptionBreakpointsArguments &args) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class SetFunctionBreakpointsRequestHandler
@@ -466,17 +461,14 @@ public:
   void operator()(const llvm::json::Object &request) const override;
 };
 
-class ModulesRequestHandler final
-    : public RequestHandler<std::optional<protocol::ModulesArguments>,
-                            llvm::Expected<protocol::ModulesResponseBody>> {
+class ModulesRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "modules"; }
   FeatureSet GetSupportedFeatures() const override {
     return {protocol::eAdapterFeatureModulesRequest};
   }
-  llvm::Expected<protocol::ModulesResponseBody>
-  Run(const std::optional<protocol::ModulesArguments> &args) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class PauseRequestHandler : public LegacyRequestHandler {
@@ -530,24 +522,18 @@ public:
   }
 };
 
-class ThreadsRequestHandler
-    : public RequestHandler<protocol::ThreadsArguments,
-                            llvm::Expected<protocol::ThreadsResponseBody>> {
+class ThreadsRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "threads"; }
-  llvm::Expected<protocol::ThreadsResponseBody>
-  Run(const protocol::ThreadsArguments &) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
-class VariablesRequestHandler
-    : public RequestHandler<protocol::VariablesArguments,
-                            llvm::Expected<protocol::VariablesResponseBody>> {
+class VariablesRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "variables"; }
-  llvm::Expected<protocol::VariablesResponseBody>
-  Run(const protocol::VariablesArguments &) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class LocationsRequestHandler : public LegacyRequestHandler {
@@ -570,17 +556,14 @@ public:
   Run(const protocol::DisassembleArguments &args) const override;
 };
 
-class ReadMemoryRequestHandler final
-    : public RequestHandler<protocol::ReadMemoryArguments,
-                            llvm::Expected<protocol::ReadMemoryResponseBody>> {
+class ReadMemoryRequestHandler : public LegacyRequestHandler {
 public:
-  using RequestHandler::RequestHandler;
+  using LegacyRequestHandler::LegacyRequestHandler;
   static llvm::StringLiteral GetCommand() { return "readMemory"; }
   FeatureSet GetSupportedFeatures() const override {
     return {protocol::eAdapterFeatureReadMemoryRequest};
   }
-  llvm::Expected<protocol::ReadMemoryResponseBody>
-  Run(const protocol::ReadMemoryArguments &args) const override;
+  void operator()(const llvm::json::Object &request) const override;
 };
 
 class CancelRequestHandler : public RequestHandler<protocol::CancelArguments,
@@ -605,19 +588,6 @@ public:
     return "_testGetTargetBreakpoints";
   }
   void operator()(const llvm::json::Object &request) const override;
-};
-
-class WriteMemoryRequestHandler final
-    : public RequestHandler<protocol::WriteMemoryArguments,
-                            llvm::Expected<protocol::WriteMemoryResponseBody>> {
-public:
-  using RequestHandler::RequestHandler;
-  static llvm::StringLiteral GetCommand() { return "writeMemory"; }
-  FeatureSet GetSupportedFeatures() const override {
-    return {protocol::eAdapterFeatureWriteMemoryRequest};
-  }
-  llvm::Expected<protocol::WriteMemoryResponseBody>
-  Run(const protocol::WriteMemoryArguments &args) const override;
 };
 
 } // namespace lldb_dap

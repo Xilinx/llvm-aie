@@ -23,7 +23,6 @@ class PassManager:
         print_after_change: bool = False,
         print_after_failure: bool = False,
         large_elements_limit: int | None = None,
-        large_resource_limit: int | None = None,
         enable_debug_info: bool = False,
         print_generic_op_form: bool = False,
         tree_printing_dir_path: str | None = None,

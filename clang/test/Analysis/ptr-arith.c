@@ -221,7 +221,12 @@ void comparisons_imply_size(int *lhs, int *rhs) {
   }
 
   clang_analyzer_eval(lhs <= rhs); // expected-warning{{TRUE}}
+// FIXME: In Z3ConstraintManager, ptrdiff_t is mapped to signed bitvector. However, this does not directly imply the unsigned comparison.
+#ifdef ANALYZER_CM_Z3
+  clang_analyzer_eval((rhs - lhs) >= 0); // expected-warning{{UNKNOWN}}
+#else
   clang_analyzer_eval((rhs - lhs) >= 0); // expected-warning{{TRUE}}
+#endif
   clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{UNKNOWN}}
 
   if (lhs >= rhs) {
@@ -231,7 +236,11 @@ void comparisons_imply_size(int *lhs, int *rhs) {
 
   clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
   clang_analyzer_eval(lhs < rhs); // expected-warning{{TRUE}}
+#ifdef ANALYZER_CM_Z3
+  clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{UNKNOWN}}
+#else
   clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{TRUE}}
+#endif
 }
 
 void size_implies_comparison(int *lhs, int *rhs) {
@@ -242,7 +251,11 @@ void size_implies_comparison(int *lhs, int *rhs) {
     return;
   }
 
+#ifdef ANALYZER_CM_Z3
+  clang_analyzer_eval(lhs <= rhs); // expected-warning{{UNKNOWN}}
+#else
   clang_analyzer_eval(lhs <= rhs); // expected-warning{{TRUE}}
+#endif
   clang_analyzer_eval((rhs - lhs) >= 0); // expected-warning{{TRUE}}
   clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{UNKNOWN}}
 
@@ -252,7 +265,11 @@ void size_implies_comparison(int *lhs, int *rhs) {
   }
 
   clang_analyzer_eval(lhs == rhs); // expected-warning{{FALSE}}
+#ifdef ANALYZER_CM_Z3
+  clang_analyzer_eval(lhs < rhs); // expected-warning{{UNKNOWN}}
+#else
   clang_analyzer_eval(lhs < rhs); // expected-warning{{TRUE}}
+#endif
   clang_analyzer_eval((rhs - lhs) > 0); // expected-warning{{TRUE}}
 }
 

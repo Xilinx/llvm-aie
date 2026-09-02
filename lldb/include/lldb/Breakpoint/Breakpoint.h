@@ -397,12 +397,16 @@ public:
   /// Set the breakpoint's condition.
   ///
   /// \param[in] condition
-  ///    The condition to evaluate when the breakpoint is hit.
-  ///    Pass in an empty condition to clear the condition.
-  void SetCondition(StopCondition condition);
+  ///    The condition expression to evaluate when the breakpoint is hit.
+  ///    Pass in nullptr to clear the condition.
+  void SetCondition(const char *condition);
 
-  /// Return the breakpoint condition.
-  const StopCondition &GetCondition() const;
+  /// Return a pointer to the text of the condition expression.
+  ///
+  /// \return
+  ///    A pointer to the condition expression text, or nullptr if no
+  //     condition has been set.
+  const char *GetConditionText() const;
 
   // The next section are various utility functions.
 
@@ -514,8 +518,6 @@ public:
                       lldb::break_id_t bp_loc_id);
 
   bool IsHardware() const { return m_hardware; }
-
-  llvm::Error SetIsHardware(bool is_hardware);
 
   lldb::BreakpointResolverSP GetResolver() { return m_resolver_sp; }
 

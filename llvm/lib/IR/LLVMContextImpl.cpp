@@ -15,6 +15,7 @@
 
 #include "LLVMContextImpl.h"
 #include "AttributeImpl.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringMapEntry.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/IR/DiagnosticHandler.h"

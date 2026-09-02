@@ -61,11 +61,10 @@ entry:
 
 declare i64 @llvm.aarch64.udiv.i64.i64(i64, i64)
 
-define void @test_free_intrinsics(i64 %x) {
+define void @test_free_intrinsics(i64 %x, ptr %ptr) {
 ; CHECK-LABEL: @test_free_intrinsics(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[PTR:%.*]] = alloca i8, align 1
-; CHECK-NEXT:    call void @llvm.lifetime.start.p0(i64 100000000032, ptr [[PTR]])
+; CHECK-NEXT:    call void @llvm.lifetime.start.p0(i64 100000000032, ptr [[PTR:%.*]])
 ; CHECK-NEXT:    call void @llvm.lifetime.start.p0(i64 100000000064, ptr [[PTR]])
 ; CHECK-NEXT:    call void @llvm.lifetime.end.p0(i64 100000000128, ptr [[PTR]])
 ; CHECK-NEXT:    [[I:%.*]] = call ptr @llvm.invariant.start.p0(i64 100000000256, ptr [[PTR]])
@@ -73,7 +72,6 @@ define void @test_free_intrinsics(i64 %x) {
 ; CHECK-NEXT:    ret void
 ;
 entry:
-  %ptr = alloca i8
   call void @llvm.lifetime.start.p0(i64 100000000032, ptr %ptr)
   call void @llvm.lifetime.start.p0(i64 100000000064, ptr %ptr)
   call void @llvm.lifetime.end.p0(i64 100000000128, ptr %ptr)

@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIX.h"
-#include "clang/Driver/CommonArgs.h"
+#include "CommonArgs.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/SanitizerArgs.h"

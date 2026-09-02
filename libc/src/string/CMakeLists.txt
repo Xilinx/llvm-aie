@@ -15,9 +15,10 @@ add_header_library(
   HDRS
     string_utils.h
   DEPENDS
+    .memory_utils.inline_bzero
+    .memory_utils.inline_memcpy
     libc.hdr.types.size_t
-    libc.hdr.limits_macros
-    libc.hdr.stdint_proxy
+    libc.include.stdlib
     libc.src.__support.CPP.bitset
     libc.src.__support.CPP.type_traits
     libc.src.__support.common
@@ -88,6 +89,7 @@ add_entrypoint_object(
   HDRS
     stpcpy.h
   DEPENDS
+    .mempcpy
     .string_utils
 )
 
@@ -108,6 +110,7 @@ add_entrypoint_object(
   HDRS
     strcat.h
   DEPENDS
+    .strcpy
     .string_utils
     libc.include.llvm-libc-types.size_t
 )
@@ -264,6 +267,7 @@ add_entrypoint_object(
   HDRS
     strncat.h
   DEPENDS
+    .strncpy
     .string_utils
     libc.include.llvm-libc-types.size_t
 )
@@ -438,7 +442,7 @@ function(add_memcmp memcmp_name)
   )
 endfunction()
 
-if(${LIBC_TARGET_ARCHITECTURE_IS_X86_64})
+if(${LIBC_TARGET_ARCHITECTURE_IS_X86})
   add_memcmp(memcmp_x86_64_opt_sse2   COMPILE_OPTIONS -march=k8             REQUIRE SSE2)
   add_memcmp(memcmp_x86_64_opt_sse4   COMPILE_OPTIONS -march=nehalem        REQUIRE SSE4_2)
   add_memcmp(memcmp_x86_64_opt_avx2   COMPILE_OPTIONS -march=haswell        REQUIRE AVX2)
@@ -470,7 +474,7 @@ function(add_memcpy memcpy_name)
   )
 endfunction()
 
-if(${LIBC_TARGET_ARCHITECTURE_IS_X86_64})
+if(${LIBC_TARGET_ARCHITECTURE_IS_X86})
   add_memcpy(memcpy_x86_64_opt_sse2   COMPILE_OPTIONS -march=k8             REQUIRE SSE2)
   add_memcpy(memcpy_x86_64_opt_sse4   COMPILE_OPTIONS -march=nehalem        REQUIRE SSE4_2)
   add_memcpy(memcpy_x86_64_opt_avx    COMPILE_OPTIONS -march=sandybridge    REQUIRE AVX)
@@ -506,7 +510,7 @@ function(add_memmove memmove_name)
   )
 endfunction()
 
-if(${LIBC_TARGET_ARCHITECTURE_IS_X86_64})
+if(${LIBC_TARGET_ARCHITECTURE_IS_X86})
   add_memmove(memmove_x86_64_opt_sse2   COMPILE_OPTIONS -march=k8             REQUIRE SSE2)
   add_memmove(memmove_x86_64_opt_sse4   COMPILE_OPTIONS -march=nehalem        REQUIRE SSE4_2)
   add_memmove(memmove_x86_64_opt_avx2   COMPILE_OPTIONS -march=haswell        REQUIRE AVX2)
@@ -540,7 +544,7 @@ function(add_memset memset_name)
   )
 endfunction()
 
-if(${LIBC_TARGET_ARCHITECTURE_IS_X86_64})
+if(${LIBC_TARGET_ARCHITECTURE_IS_X86})
   add_memset(memset_x86_64_opt_sse2   COMPILE_OPTIONS -march=k8             REQUIRE SSE2)
   add_memset(memset_x86_64_opt_sse4   COMPILE_OPTIONS -march=nehalem        REQUIRE SSE4_2)
   add_memset(memset_x86_64_opt_avx2   COMPILE_OPTIONS -march=haswell        REQUIRE AVX2)

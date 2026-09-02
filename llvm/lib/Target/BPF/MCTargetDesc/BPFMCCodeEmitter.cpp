@@ -14,7 +14,6 @@
 #include "MCTargetDesc/BPFMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCCodeEmitter.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
@@ -34,12 +33,11 @@ namespace {
 class BPFMCCodeEmitter : public MCCodeEmitter {
   const MCRegisterInfo &MRI;
   bool IsLittleEndian;
-  MCContext &Ctx;
 
 public:
   BPFMCCodeEmitter(const MCInstrInfo &, const MCRegisterInfo &mri,
-                   bool IsLittleEndian, MCContext &ctx)
-      : MRI(mri), IsLittleEndian(IsLittleEndian), Ctx(ctx) {}
+                   bool IsLittleEndian)
+      : MRI(mri), IsLittleEndian(IsLittleEndian) { }
   BPFMCCodeEmitter(const BPFMCCodeEmitter &) = delete;
   void operator=(const BPFMCCodeEmitter &) = delete;
   ~BPFMCCodeEmitter() override = default;
@@ -69,17 +67,12 @@ public:
 
 MCCodeEmitter *llvm::createBPFMCCodeEmitter(const MCInstrInfo &MCII,
                                             MCContext &Ctx) {
-  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), true, Ctx);
+  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), true);
 }
 
 MCCodeEmitter *llvm::createBPFbeMCCodeEmitter(const MCInstrInfo &MCII,
                                               MCContext &Ctx) {
-  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), false, Ctx);
-}
-
-static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
-                     const MCExpr *Value, uint16_t Kind, bool PCRel = false) {
-  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
+  return new BPFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), false);
 }
 
 unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
@@ -88,16 +81,8 @@ unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCSubtargetInfo &STI) const {
   if (MO.isReg())
     return MRI.getEncodingValue(MO.getReg());
-  if (MO.isImm()) {
-    uint64_t Imm = MO.getImm();
-    uint64_t High32Bits = Imm >> 32, High33Bits = Imm >> 31;
-    if (MI.getOpcode() != BPF::LD_imm64 && High32Bits != 0 &&
-        High33Bits != 0x1FFFFFFFFULL) {
-      Ctx.reportWarning(MI.getLoc(),
-                        "immediate out of range, shall fit in 32 bits");
-    }
-    return static_cast<unsigned>(Imm);
-  }
+  if (MO.isImm())
+    return static_cast<unsigned>(MO.getImm());
 
   assert(MO.isExpr());
 
@@ -107,14 +92,14 @@ unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
   if (MI.getOpcode() == BPF::JAL)
     // func call name
-    addFixup(Fixups, 0, Expr, FK_Data_4, true);
+    Fixups.push_back(MCFixup::create(0, Expr, FK_PCRel_4));
   else if (MI.getOpcode() == BPF::LD_imm64)
-    addFixup(Fixups, 0, Expr, FK_SecRel_8);
+    Fixups.push_back(MCFixup::create(0, Expr, FK_SecRel_8));
   else if (MI.getOpcode() == BPF::JMPL)
-    addFixup(Fixups, 0, Expr, BPF::FK_BPF_PCRel_4, true);
+    Fixups.push_back(MCFixup::create(0, Expr, (MCFixupKind)BPF::FK_BPF_PCRel_4));
   else
     // bb label
-    addFixup(Fixups, 0, Expr, FK_Data_2, true);
+    Fixups.push_back(MCFixup::create(0, Expr, FK_PCRel_2));
 
   return 0;
 }
