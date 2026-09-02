@@ -552,6 +552,7 @@ std::unique_ptr<GenericCombiner> PostIncCombiner::clone() const {
 // group and the post-increments are strictly better, so they are left alone.
 bool PostIncCombiner::chainingForcesExtraCursor() const {
   const MachineInstr *PtrMod = getPtrInc();
+  const MachineBasicBlock *LoopMBB = PtrMod->getParent();
   auto InputPtrIdx = TII->getInputPtrIdx(*PtrMod, *MRI);
   if (!InputPtrIdx)
     return false;
@@ -575,8 +576,7 @@ bool PostIncCombiner::chainingForcesExtraCursor() const {
   const MachineInstr *RootDef =
       Root.isVirtual() ? MRI->getVRegDef(Root) : nullptr;
   const auto *Phi = dyn_cast_or_null<GPhi>(RootDef);
-  if (!Phi || Phi->getParent() != PtrMod->getParent() ||
-      Phi->getNumIncomingValues() > 2)
+  if (!Phi || Phi->getParent() != LoopMBB || Phi->getNumIncomingValues() > 2)
     return false;
 
   auto GetIncomingReg =
@@ -588,7 +588,7 @@ bool PostIncCombiner::chainingForcesExtraCursor() const {
     return std::nullopt;
   };
 
-  std::optional<Register> IncReg = GetIncomingReg(*Phi, Phi->getParent());
+  std::optional<Register> IncReg = GetIncomingReg(*Phi, LoopMBB);
   if (!IncReg)
     return false;
 
@@ -598,13 +598,26 @@ bool PostIncCombiner::chainingForcesExtraCursor() const {
   if (Carried == Root)
     return false;
 
-  // Restrict this to an add.2d/3d advance. A G_PTR_ADD advance is a
-  // post-increment candidate on this same root, so it would just absorb the
-  // increment we declined and nothing would flatten.
+  // Flattening the chain leaves the advance as the only pointer modifier, so it
+  // gets folded into an access, which then has to wait for the stride:
+  //
+  //   %s        = compute ...           <- recomputed every iteration
+  //   %v, %next = POSTINC_LOAD %p, %s   <- pulled onto the critical path
+  //
+  // A stride defined outside the loop is ready on entry, so the fold is free.
+  //
+  // TODO: an add.2d/3d advance can hit the same problem when its dimension
+  // operands are computed in the loop instead of set up before it. Those
+  // operands are not checked here.
   const MachineInstr *AdvanceMI =
       Carried.isVirtual() ? MRI->getVRegDef(Carried) : nullptr;
-  if (AdvanceMI && AdvanceMI->getOpcode() == TargetOpcode::G_PTR_ADD)
-    return false;
+  if (AdvanceMI && AdvanceMI->getOpcode() == TargetOpcode::G_PTR_ADD) {
+    Register Stride = AdvanceMI->getOperand(2).getReg();
+    const MachineInstr *StrideDef =
+        Stride.isVirtual() ? MRI->getVRegDef(Stride) : nullptr;
+    if (!StrideDef || StrideDef->getParent() == LoopMBB)
+      return false;
+  }
   return true;
 }
 
