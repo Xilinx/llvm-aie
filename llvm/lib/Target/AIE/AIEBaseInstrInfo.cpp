@@ -996,15 +996,15 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
   if (Kind == SDep::Data) {
     // Typical bypass case: data from a producer is available earlier for a
     // consumer.
-    SrcCycleVal -= getNumBypassedCycles(ItinData, SrcMI, SrcClass, SrcOpIdx,
-                                        DstMI, DstClass, DstOpIdx);
+    SrcCycleVal -=
+        getNumBypassedCycles(ItinData, SrcClass, SrcOpIdx, DstClass, DstOpIdx);
   }
   if (Kind == SDep::Anti) {
     // "Reverse" case: we need to penalize WAR dependencies, because if the
     // bypass is taken by the write, then the read could get the newly-written
     // value, not respecting the WAR edge. See negative_latencies/bypass.mir
-    DstCycleVal -= getNumBypassedCycles(ItinData, DstMI, DstClass, DstOpIdx,
-                                        SrcMI, SrcClass, SrcOpIdx);
+    DstCycleVal -=
+        getNumBypassedCycles(ItinData, DstClass, DstOpIdx, SrcClass, SrcOpIdx);
   }
 
   int Diff = SrcCycleVal - DstCycleVal;
@@ -1013,8 +1013,7 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
 }
 
 unsigned AIEBaseInstrInfo::getNumBypassedCycles(
-    const InstrItineraryData *ItinData, const MachineInstr &DefMI,
-    unsigned DefSchedClass, unsigned DefIdx, const MachineInstr &UseMI,
+    const InstrItineraryData *ItinData, unsigned DefSchedClass, unsigned DefIdx,
     unsigned UseSchedClass, unsigned UseIdx) const {
 
   // FIXME: This assumes one cycle benefit for every pipeline forwarding.
