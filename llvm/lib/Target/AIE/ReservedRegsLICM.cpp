@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -17,6 +17,7 @@
 
 #include "AIE.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -86,6 +87,19 @@ struct CandidateInfo {
   CandidateInfo(MCPhysReg DefinedReg) : DefinedReg(DefinedReg) {}
   MCPhysReg DefinedReg = MCRegister::NoRegister;
   MachineInstr *HoistCandidate = nullptr;
+};
+
+/// Describes a matched save/restore bracket for a reserved register:
+///   save:    vreg = COPY $reserved_reg   (first use in latch, before set)
+///   set:     $reserved_reg = <imm>       (loop-invariant, immediately after)
+///   restore: $reserved_reg = COPY vreg   (last def in latch)
+/// The transformation hoists save+set to the preheader and sinks restore to
+/// the exit block, so the loop body always sees the loop-invariant value.
+struct SaveRestoreBracket {
+  MachineInstr *Save = nullptr;
+  MachineInstr *Set = nullptr;
+  MachineInstr *Restore = nullptr;
+  MCPhysReg Reg = MCRegister::NoRegister;
 };
 
 /// Used to collect candidates for hoisting/sinking
@@ -163,6 +177,19 @@ private:
   /// Hoist \p Cand to \p L's preheader if it is safe to do so.
   bool tryHoistToPreHeader(const CandidateInfo &Cand, MachineLoop &L);
 
+  /// Detect and transform a save/restore bracket in \p L's latch block.
+  /// A bracket has the form:
+  ///   vreg = COPY $reserved_reg   (save)
+  ///   $reserved_reg = <imm>       (set, loop-invariant)
+  ///   ...uses of $reserved_reg...
+  ///   $reserved_reg = COPY vreg   (restore)
+  /// Returns the matched bracket, or std::nullopt if not found.
+  std::optional<SaveRestoreBracket> findSaveRestoreBracket(MachineLoop &L);
+
+  /// Apply the save/restore bracket transformation: hoist save+set to the
+  /// preheader and sink restore to the exit block.
+  bool processSaveRestoreBracket(MachineLoop &L);
+
   /// Verify if \p Cand is loop invariant and can be safely hoisted.
   /// \pre Cand->DefinedReg has a unique live value within the loop. This is
   /// verified by processForExitSink() or processForPreheaderHoist().
@@ -208,27 +235,75 @@ bool ReservedRegsLICM::runOnMachineFunction(MachineFunction &MF) {
 }
 
 BitVector ReservedRegsLICM::collectLoopReservedLiveins(const MachineLoop &L) {
-  const MachineBasicBlock &Header = *L.getHeader();
-  LivePhysRegs LiveRegs(*TRI);
+  // Compute the live-in set at the loop header using a backward dataflow
+  // worklist algorithm. A flat sequential backward walk over all loop blocks
+  // is incorrect for multi-block loops with conditional paths: a def in one
+  // branch can incorrectly kill a register that is used (without a preceding
+  // def) in a sibling branch, making the register appear to not be a livein.
+  //
+  // The worklist algorithm propagates liveness backward through the CFG until
+  // a fixed point is reached, correctly handling all control-flow shapes.
 
-  // Conservativaly assume reserved reserved regs are all liveouts
+  // Conservative liveout assumption: all candidate reserved regs are live at
+  // the exit of the loop (they may be used by code after the loop).
+  BitVector InitLive(TRI->getNumRegs());
   for (MCPhysReg PhysReg : MRI->getReservedRegs().set_bits()) {
     if (MRI->canSimplifyPhysReg(PhysReg)) {
-      LiveRegs.addReg(PhysReg);
+      InitLive.set(PhysReg);
     }
   }
 
-  // Traverse instructions to remove defs
-  for (const MachineInstr &MI : reverse(Header))
-    LiveRegs.stepBackward(MI);
+  // live_in[MBB] = set of reserved registers live at the entry of MBB.
+  // Initialised to empty; the worklist grows these sets monotonically.
+  DenseMap<MachineBasicBlock *, BitVector> LiveIn;
+  for (MachineBasicBlock *MBB : L.getBlocks())
+    LiveIn[MBB] = BitVector(TRI->getNumRegs());
 
-  BitVector ReservedLiveins(TRI->getNumRegs());
-  for (MCRegister Reg : LiveRegs) {
-    if (MRI->isReserved(Reg)) {
-      ReservedLiveins.set(Reg);
+  // Seed the worklist with every block in the loop.
+  SmallPtrSet<MachineBasicBlock *, 8> InWorklist;
+  SmallVector<MachineBasicBlock *, 8> Worklist;
+  for (MachineBasicBlock *MBB : L.getBlocks()) {
+    Worklist.push_back(MBB);
+    InWorklist.insert(MBB);
+  }
+
+  while (!Worklist.empty()) {
+    MachineBasicBlock *MBB = Worklist.pop_back_val();
+    InWorklist.erase(MBB);
+
+    // live-out(MBB) = union of live-in of successors.
+    // For successors outside the loop use InitLive conservatively.
+    LivePhysRegs LiveRegs(*TRI);
+    for (MachineBasicBlock *Succ : MBB->successors()) {
+      const BitVector &SuccLive = L.contains(Succ) ? LiveIn[Succ] : InitLive;
+      for (unsigned Reg : SuccLive.set_bits())
+        LiveRegs.addReg(Reg);
+    }
+
+    // Walk backward through MBB to compute live-in. stepBackward handles
+    // regmask operands (calls) correctly.
+    for (const MachineInstr &MI : reverse(*MBB))
+      LiveRegs.stepBackward(MI);
+
+    // Convert to a BitVector, keeping only reserved registers.
+    BitVector NewLiveIn(TRI->getNumRegs());
+    for (MCRegister Reg : LiveRegs)
+      if (MRI->isReserved(Reg))
+        NewLiveIn.set(Reg);
+
+    // If the live-in set grew, re-process all in-loop predecessors.
+    if (NewLiveIn != LiveIn[MBB]) {
+      LiveIn[MBB] = NewLiveIn;
+      for (MachineBasicBlock *Pred : MBB->predecessors()) {
+        if (L.contains(Pred) && !InWorklist.count(Pred)) {
+          Worklist.push_back(Pred);
+          InWorklist.insert(Pred);
+        }
+      }
     }
   }
-  return ReservedLiveins;
+
+  return LiveIn[L.getHeader()];
 }
 
 /// Walk the specified region of the CFG and hoist loop invariants out to the
@@ -241,9 +316,8 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
     return;
   }
 
-  // TODO: Handle simple multi-BB loops.
-  if (L.getNumBlocks() != 1) {
-    LLVM_DEBUG(dbgs() << "  Loop has multiple blocks.\n");
+  if (!L.getLoopLatch()) {
+    LLVM_DEBUG(dbgs() << "  Loop has no single latch.\n");
     return;
   }
   const MachineBasicBlock *LoopBlock = L.getExitingBlock();
@@ -257,26 +331,54 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
   BitVector ReservedLiveins = collectLoopReservedLiveins(L);
   processForExitSink(L, ReservedLiveins);
   processForPreheaderHoist(L, ReservedLiveins);
+  Changed |= processSaveRestoreBracket(L);
 }
+
+// Forward declaration — defined after processForPreheaderHoist.
+static void moveInstruction(const CandidateInfo &Cand,
+                            MachineBasicBlock::iterator InsertBefore,
+                            MachineBasicBlock &InsertMBB);
 
 void ReservedRegsLICM::processForExitSink(MachineLoop &L,
                                           const BitVector &ReservedLiveins) {
+  // Sink candidates must come from the exiting block (the block that has the
+  // edge to the exit block), not the latch. When the latch and the exiting
+  // block differ, instructions in the latch are not on the exit path: sinking
+  // them to the exit block would insert a def that was never executed on that
+  // path, corrupting the register's exit value.
+  MachineBasicBlock *ExitingBlock = L.getExitingBlock();
+  assert(ExitingBlock);
+
+  // Pre-compute what's live at the entry of the exiting block by walking it
+  // fully backward. For multi-block loops with conditional paths, a candidate
+  // register may be defined in some branches but not others, making it live at
+  // the exiting block entry on those paths. If the register is live at the
+  // exiting block entry (i.e., used before its first def in the exiting block,
+  // possibly carrying a value from a conditional path that skips the def),
+  // sinking its last def to the exit block would expose the wrong value.
+  LivePhysRegs ExitingBlockEntryLive(*TRI);
+  for (const MachineInstr &MI : reverse(*ExitingBlock))
+    ExitingBlockEntryLive.stepBackward(MI);
+
   RegDefMap PhysRegChanged(*TRI);
   LivePhysRegs LiveRegs(*TRI);
   Candidates SinkCandidates;
 
-  // Walk the entire region, track defs for each register, and
+  // Walk the exiting block, track defs for each register, and
   // collect potential LICM candidates.
-  assert(L.getNumBlocks() == 1 && L.getLoopLatch());
-  for (MachineInstr &MI : reverse(*L.getLoopLatch())) {
+  for (MachineInstr &MI : reverse(*ExitingBlock)) {
     CandidateInfo *CandInfo = SinkCandidates.getInfo(MI);
 
     // First time we meet a reserved reg definition while iterating upwards.
-    // If that def is not a loop livein and it isn't used in this block either,
-    // then one can move the instruction to the exit BB of the loop.
+    // If that def is not a loop livein, it isn't used in this block after the
+    // def, and it isn't live at the exiting block entry (which would indicate
+    // it is used before its def in the exiting block, possibly carrying a
+    // value from a conditional path that skips the def), then one can move
+    // the instruction to the exit BB of the loop.
     if (CandInfo && !PhysRegChanged.hasChanged(CandInfo->DefinedReg) &&
         !ReservedLiveins.test(CandInfo->DefinedReg) &&
-        !LiveRegs.contains(CandInfo->DefinedReg)) {
+        !LiveRegs.contains(CandInfo->DefinedReg) &&
+        !ExitingBlockEntryLive.contains(CandInfo->DefinedReg)) {
       assert(!CandInfo->HoistCandidate);
       CandInfo->HoistCandidate = &MI;
     }
@@ -291,16 +393,158 @@ void ReservedRegsLICM::processForExitSink(MachineLoop &L,
   }
 }
 
+std::optional<SaveRestoreBracket>
+ReservedRegsLICM::findSaveRestoreBracket(MachineLoop &L) {
+  MachineBasicBlock *Latch = L.getLoopLatch();
+  assert(Latch);
+
+  for (MachineInstr &SaveMI : *Latch) {
+    // Look for: vreg = COPY $reserved_reg
+    if (!SaveMI.isCopy())
+      continue;
+    Register SaveDst = SaveMI.getOperand(0).getReg();
+    Register SaveSrc = SaveMI.getOperand(1).getReg();
+    if (!SaveDst.isVirtual() || !SaveSrc.isPhysical())
+      continue;
+    MCPhysReg PhysReg = SaveSrc.asMCReg();
+    if (!TRI->isSimplifiableReservedReg(PhysReg))
+      continue;
+
+    // The saved vreg must have exactly one non-debug use (the restore).
+    if (!MRI->hasOneNonDBGUse(SaveDst))
+      continue;
+
+    // Helper: does MI use PhysReg?
+    auto UsesPhysReg = [&](const MachineInstr &MI) {
+      return any_of(MI.operands(), [&](const MachineOperand &MO) {
+        return MO.isReg() && MO.isUse() && MO.getReg() == PhysReg;
+      });
+    };
+
+    // No uses of PhysReg before the save. Instructions before the save
+    // rely on the original value of PhysReg; hoisting the set would make
+    // them see the loop-invariant value instead.
+    auto BeforeSave =
+        make_range(Latch->begin(), MachineBasicBlock::iterator(SaveMI));
+    if (any_of(BeforeSave, UsesPhysReg))
+      continue;
+
+    // Find the set: the next def of PhysReg after the save.
+    // No use of PhysReg is allowed between the save and the set.
+    MachineInstr *SetMI = nullptr;
+    bool PhysRegUsedBeforeSet = false;
+    for (MachineInstr *Next = SaveMI.getNextNode(); Next;
+         Next = Next->getNextNode()) {
+      if (getSinglePhysRegDef(*Next) == PhysReg) {
+        SetMI = Next;
+        break;
+      }
+      if (UsesPhysReg(*Next)) {
+        PhysRegUsedBeforeSet = true;
+        break;
+      }
+    }
+    if (!SetMI || PhysRegUsedBeforeSet)
+      continue;
+
+    // The set must be loop-invariant (e.g. MOVX imm).
+    CandidateInfo SetCand(PhysReg);
+    SetCand.HoistCandidate = SetMI;
+    if (!isLoopInvariantInst(SetCand, L))
+      continue;
+
+    // Find the restore: the last def of PhysReg in the latch.
+    // It must be: $reserved_reg = COPY SaveDst.
+    MachineInstr *RestoreMI = nullptr;
+    for (MachineInstr &MI2 : reverse(*Latch)) {
+      if (getSinglePhysRegDef(MI2) == PhysReg) {
+        if (MI2.isCopy() && MI2.getOperand(1).getReg() == SaveDst)
+          RestoreMI = &MI2;
+        break;
+      }
+    }
+    if (!RestoreMI)
+      continue;
+
+    // No uses of PhysReg after the restore. Once the restore is sinked to
+    // the exit block, instructions after the restore position in the loop
+    // body would see the loop-invariant value (from the set) instead of
+    // the restored value.
+    auto AfterRestore = make_range(
+        std::next(MachineBasicBlock::iterator(RestoreMI)), Latch->end());
+    if (any_of(AfterRestore, UsesPhysReg))
+      continue;
+
+    // PhysReg must not be used in any non-latch block of the loop.
+    // If it were, those uses might see the wrong value after we hoist
+    // the set to the preheader.
+    if (any_of(L.getBlocks(), [&](MachineBasicBlock *MBB) {
+          return MBB != Latch && any_of(*MBB, UsesPhysReg);
+        }))
+      continue;
+
+    return SaveRestoreBracket{&SaveMI, SetMI, RestoreMI, PhysReg};
+  }
+  return std::nullopt;
+}
+
+bool ReservedRegsLICM::processSaveRestoreBracket(MachineLoop &L) {
+  std::optional<SaveRestoreBracket> BracketOpt = findSaveRestoreBracket(L);
+  if (!BracketOpt)
+    return false;
+
+  const SaveRestoreBracket &Bracket = *BracketOpt;
+  MachineBasicBlock *Preheader = L.getLoopPreheader();
+  MachineBasicBlock *ExitMBB = L.getExitBlock();
+  assert(Preheader && ExitMBB);
+
+  // Ensure the exit block is a dedicated exit (single predecessor).
+  // runOnLoop already verified that the critical edge can be split if needed.
+  if (!ExitMBB->getSinglePredecessor()) {
+    MachineBasicBlock *ExitingBlock = L.getExitingBlock();
+    ExitMBB = ExitingBlock->SplitCriticalEdge(ExitMBB, *this);
+    assert(ExitMBB);
+    LLVM_DEBUG(dbgs() << "Created dedicated exit: "
+                      << printMBBReference(*ExitMBB) << "\n");
+  }
+
+  LLVM_DEBUG(dbgs() << "Save/restore bracket for " << TRI->getName(Bracket.Reg)
+                    << ":\n"
+                    << "  Save:    " << *Bracket.Save << "  Set:     "
+                    << *Bracket.Set << "  Restore: " << *Bracket.Restore);
+
+  // Move save + set to the preheader (save first so it captures the
+  // pre-loop value before the set overwrites it).
+  auto InsertPt = Preheader->getFirstTerminator();
+  CandidateInfo SaveCand(Bracket.Reg);
+  SaveCand.HoistCandidate = Bracket.Save;
+  moveInstruction(SaveCand, InsertPt, *Preheader);
+
+  CandidateInfo SetCand(Bracket.Reg);
+  SetCand.HoistCandidate = Bracket.Set;
+  moveInstruction(SetCand, InsertPt, *Preheader);
+
+  // Sink restore to the exit block.
+  CandidateInfo RestoreCand(Bracket.Reg);
+  RestoreCand.HoistCandidate = Bracket.Restore;
+  moveInstruction(RestoreCand, ExitMBB->getFirstNonPHI(), *ExitMBB);
+
+  return true;
+}
+
 void ReservedRegsLICM::processForPreheaderHoist(
     MachineLoop &L, const BitVector &ReservedLiveins) {
   Candidates HoistCandidates;
 
-  // Walk the entire loop to find unique defs and LICM candidates
-  assert(L.getNumBlocks() == 1 && L.getHeader());
+  // Walk all blocks in the loop to find unique defs and LICM candidates.
+  // RegDefMap::addChangedRegs handles regmask (calls clear UniqueDefs).
+  assert(L.getHeader());
   RegDefMap PhysRegChanged(*TRI);
-  for (MachineInstr &MI : *L.getHeader()) {
-    PhysRegChanged.addChangedRegs(MI);
-    HoistCandidates.getInfo(MI);
+  for (MachineBasicBlock *MBB : L.getBlocks()) {
+    for (MachineInstr &MI : *MBB) {
+      PhysRegChanged.addChangedRegs(MI);
+      HoistCandidates.getInfo(MI);
+    }
   }
 
   for (auto &[Reg, CandInfo] : HoistCandidates) {
@@ -316,9 +560,9 @@ void ReservedRegsLICM::processForPreheaderHoist(
 /// When an instruction is found to only use loop invariant operands that is
 /// safe to hoist/sink, this function is called to actually move the MI out of
 /// the loop.
-void moveInstruction(const CandidateInfo &Cand,
-                     MachineBasicBlock::iterator InsertBefore,
-                     MachineBasicBlock &InsertMBB) {
+static void moveInstruction(const CandidateInfo &Cand,
+                            MachineBasicBlock::iterator InsertBefore,
+                            MachineBasicBlock &InsertMBB) {
   MachineInstr &MI = *Cand.HoistCandidate;
   LLVM_DEBUG(dbgs() << "Moving to " << printMBBReference(InsertMBB) << " from "
                     << printMBBReference(*MI.getParent()) << ": " << MI);
