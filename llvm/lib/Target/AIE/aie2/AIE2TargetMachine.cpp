@@ -172,6 +172,16 @@ static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
   return AIE2::eMRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 
+void AIE2PassConfig::addRegRewritePasses() {
+  if (EnableWAWRegRewrite)
+    addPass(createAIEWawRegRewriter());
+  if (EnableEpilogueRegRewrite)
+    addPass(createAIEEpilogueRegRewriter());
+  if (EnableWAWRegRewrite)
+    addPass(createGreedyRegisterAllocator());
+  addPass(createVirtRegRewriter());
+}
+
 bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
 
   // Pre-RA scheduling might have exposed simplifiable copies.
@@ -197,13 +207,7 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
-  if (EnableWAWRegRewrite)
-    addPass(createAIEWawRegRewriter());
-  if (EnableEpilogueRegRewrite)
-    addPass(createAIEEpilogueRegRewriter());
-  if (EnableWAWRegRewrite || EnableEpilogueRegRewrite)
-    addPass(createGreedyRegisterAllocator());
-  addPass(createVirtRegRewriter());
+  addRegRewritePasses();
 
   return true;
 }

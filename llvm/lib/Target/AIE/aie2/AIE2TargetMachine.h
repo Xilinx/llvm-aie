@@ -69,6 +69,9 @@ public:
   void addPreGlobalInstructionSelect() override;
   void addISelPrepare() override;
   bool addILPOpts() override;
+
+protected:
+  void addRegRewritePasses();
 };
 
 } // namespace llvm
