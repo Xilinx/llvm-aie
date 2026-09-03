@@ -275,6 +275,7 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
   // through S16, so S16 has to survive as the low half of a GPR.
   getActionDefinitionsBuilder(G_ANYEXT)
       .legalFor({{S32, S20}, {S32, S16}})
+      .customIf(all(typeIs(0, V2S16), typeIs(1, V2S8)))
       .clampScalar(0, S32, S32);
   getActionDefinitionsBuilder(G_SEXT)
       .legalFor({{S32, S20}})
@@ -309,6 +310,7 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
   getActionDefinitionsBuilder(G_BSWAP).lower();
 
   getActionDefinitionsBuilder(G_TRUNC)
+      .customIf(all(typeIs(0, V2S8), typeIs(1, V2S16)))
       .legalIf([=](const LegalityQuery &Query) {
         const LLT &SrcTy = Query.Types[1];
         const LLT &DstTy = Query.Types[0];
@@ -888,8 +890,9 @@ bool AIE2PSLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_SELECT(Helper, MI, /* MaxBitSize */ 512);
   case TargetOpcode::G_CONCAT_VECTORS:
     return AIEHelper.legalizeG_CONCAT_VECTORS(Helper, MI);
+  case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_ZEXT:
-    return AIEHelper.legalizeG_ZEXT(Helper, MI);
+    return AIEHelper.legalizeG_ZEXT_G_ANYEXT(Helper, MI);
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB:
   case TargetOpcode::G_XOR:

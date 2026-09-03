@@ -221,6 +221,7 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
   // through S16, so S16 has to survive as the low half of a GPR.
   getActionDefinitionsBuilder(G_ANYEXT)
       .legalFor({{S32, S20}, {S32, S16}})
+      .customIf(all(typeIs(0, V2S16), typeIs(1, V2S8)))
       .clampScalar(0, S32, S32);
   getActionDefinitionsBuilder(G_SEXT)
       .legalFor({{S32, S20}})
@@ -250,7 +251,9 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
 
-  getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
+  getActionDefinitionsBuilder(G_TRUNC)
+      .customIf(all(typeIs(0, V2S8), typeIs(1, V2S16)))
+      .alwaysLegal();
 
   getActionDefinitionsBuilder(G_SELECT)
       .legalFor({{S32, S32}, {P0, S32}})
@@ -596,8 +599,11 @@ bool AIE2LegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);
   case TargetOpcode::G_SEXT_INREG:
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
+  case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_ZEXT:
-    return AIEHelper.legalizeG_ZEXT(Helper, MI);
+    return AIEHelper.legalizeG_ZEXT_G_ANYEXT(Helper, MI);
+  case TargetOpcode::G_TRUNC:
+    return AIEHelper.legalizeG_TRUNC(Helper, MI);
   case TargetOpcode::G_SELECT:
     return AIEHelper.legalizeG_SELECT(Helper, MI, /* MaxBitSize */ 512);
   }
