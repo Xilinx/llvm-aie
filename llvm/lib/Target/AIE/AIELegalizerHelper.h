@@ -89,7 +89,7 @@ public:
   bool legalizeG_FMUL(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_SELECT(LegalizerHelper &Helper, MachineInstr &MI,
                         const unsigned MaxBitSize = 512) const;
-  bool legalizeG_ZEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_ZEXT_G_ANYEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeLoopDecrement(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
                                 MachineInstr &MI) const;

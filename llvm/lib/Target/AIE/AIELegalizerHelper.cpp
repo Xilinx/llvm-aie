@@ -1868,23 +1868,30 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
   return true;
 }
 
-bool AIELegalizerHelper::legalizeG_ZEXT(LegalizerHelper &Helper,
-                                        MachineInstr &MI) const {
+bool AIELegalizerHelper::legalizeG_ZEXT_G_ANYEXT(LegalizerHelper &Helper,
+                                                 MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
 
   const auto [DstReg, DstTy, SrcReg, SrcTy] = MI.getFirst2RegLLTs();
   assert(DstTy == V2S16 && SrcTy == V2S8 &&
-         "Expected to legalize G_ZEXT of <2 x s8>");
+         "Expected to legalize an extension of <2 x s8>");
 
   // <2 x s8> keeps its two elements packed in the low half of a GPR, so
   // widening the elements has to move the high byte up to bit 16.
   auto Packed =
       MIRBuilder.buildAnyExt(S32, MIRBuilder.buildBitcast(S16, SrcReg));
-  auto HighElt = MIRBuilder.buildAnd(
-      S32, MIRBuilder.buildShl(S32, Packed, MIRBuilder.buildConstant(S32, 8)),
-      MIRBuilder.buildConstant(S32, 0xFF0000));
-  auto LowElt =
-      MIRBuilder.buildAnd(S32, Packed, MIRBuilder.buildConstant(S32, 0xFF));
+  auto HighElt =
+      MIRBuilder.buildShl(S32, Packed, MIRBuilder.buildConstant(S32, 8));
+  Register LowElt = Packed.getReg(0);
+  // G_ANYEXT leaves the high byte of each lane undefined, so only G_ZEXT has
+  // to clear the byte the shift moved into the other lane.
+  if (MI.getOpcode() == TargetOpcode::G_ZEXT) {
+    HighElt = MIRBuilder.buildAnd(S32, HighElt,
+                                  MIRBuilder.buildConstant(S32, 0xFF0000));
+    LowElt =
+        MIRBuilder.buildAnd(S32, Packed, MIRBuilder.buildConstant(S32, 0xFF))
+            .getReg(0);
+  }
   MIRBuilder.buildBitcast(DstReg, MIRBuilder.buildOr(S32, LowElt, HighElt));
 
   MI.eraseFromParent();
@@ -2050,6 +2057,23 @@ bool AIELegalizerHelper::legalizeG_TRUNC(LegalizerHelper &Helper,
 
   const auto [DstReg, DstVecTy, SrcReg, SrcVecTy] = MI.getFirst2RegLLTs();
   const unsigned SrcVecSize = SrcVecTy.getSizeInBits();
+
+  // <2 x s8> keeps its two elements packed in the low half of a GPR, so
+  // narrowing the elements has to bring the high one down to bit 8.
+  if (DstVecTy == V2S8) {
+    assert(SrcVecTy == V2S16 && "Expected <2 x s16> to narrow into <2 x s8>!");
+    auto Lanes = MIRBuilder.buildBitcast(S32, SrcReg);
+    auto HighElt = MIRBuilder.buildAnd(
+        S32, MIRBuilder.buildLShr(S32, Lanes, MIRBuilder.buildConstant(S32, 8)),
+        MIRBuilder.buildConstant(S32, 0xFF00));
+    auto LowElt =
+        MIRBuilder.buildAnd(S32, Lanes, MIRBuilder.buildConstant(S32, 0xFF));
+    MIRBuilder.buildBitcast(
+        DstReg,
+        MIRBuilder.buildTrunc(S16, MIRBuilder.buildOr(S32, LowElt, HighElt)));
+    MI.eraseFromParent();
+    return true;
+  }
 
   assert(SrcVecSize == 256 && "Expected G_TRUNC input vector size is 256!");
 
