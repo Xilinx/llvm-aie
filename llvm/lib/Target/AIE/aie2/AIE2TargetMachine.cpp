@@ -53,6 +53,7 @@ extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableWAWRegRewrite;
+extern cl::opt<bool> EnableSiblingLoopRegAlign;
 extern cl::opt<bool> EnableAIEIfConversion;
 
 extern bool AIEDumpArtifacts;
@@ -200,6 +201,8 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIEWawRegRewriter());
     addPass(createGreedyRegisterAllocator());
   }
+  if (EnableSiblingLoopRegAlign)
+    addPass(createAIESiblingLoopRegAligner());
   addPass(createVirtRegRewriter());
 
   return true;
