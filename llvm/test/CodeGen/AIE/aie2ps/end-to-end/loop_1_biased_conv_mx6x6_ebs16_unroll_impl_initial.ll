@@ -71,7 +71,7 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; REMARKS-NEXT:   - NS:              '4'
 ; REMARKS-NEXT:   - Loop:            bb.2.steady.stage1.inner.for.body15.i
 ; REMARKS-NEXT:   - Prologue:        bb.1.steady.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '16'
+; REMARKS-NEXT:   - PrologueBundles: '6'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '22'
 ; REMARKS-NEXT: ...
@@ -86,13 +86,13 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; REMARKS-NEXT:   - NS:              '4'
 ; REMARKS-NEXT:   - Loop:            bb.5.lastiter.stage1.inner.for.body15.i
 ; REMARKS-NEXT:   - Prologue:        bb.4.lastiter.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '16'
+; REMARKS-NEXT:   - PrologueBundles: '6'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '24'
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddxm [sp], #64; nopb ; nopx
+; ASM-NEXT:    paddxm [sp], #64; nopxm
 ; ASM-NEXT:    mova m0, #-68; st p6, [sp, #-64] // 4-byte Folded Spill
 ; ASM-NEXT:    vlda bmll0, [p1, #0]; mov p6, sp
 ; ASM-NEXT:    padda [p6], m0
@@ -122,10 +122,7 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; ASM-NEXT:    lda dj7, [p6], #-4; movs dc2, r4; movx r25, #0; mov r4, dn3
 ; ASM-NEXT:    lda dn3, [p6, #0]; movs dc3, r5; lshl r4, r4, r6; vmov cmh0, cml0
 ; ASM-NEXT:    lda dn7, [p6, #-4]; movs m4, r4; or r24, r3, r3; mov p6, p0
-; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
-; ASM-NEXT:    // =>This Loop Header: Depth=1
-; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    nopa ; nopb ; nops ; nopx ; mov p0, p4; nopv
+; ASM-NEXT:    mov p0, p4
 ; ASM-NEXT:    vldb.fill [p0, lf0, r24]
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
 ; ASM-NEXT:    vldb.pop fex6, [p0, lf0, r24]
@@ -135,9 +132,12 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
 ; ASM-NEXT:    vldb.pop fex6, [p0, lf0, r24]
 ; ASM-NEXT:    vldb.pop.3d fex2, [p0, lf0, r24, d0]
-; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; movxm ls, #.LBB0_2; vmov.d dm3, dm0
-; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; movxm le, #.L_LEnd1; vmov.d dm1, dm0
-; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vshuffle fex8, fex6, fex2, r2; vmov.d dm2, dm0
+; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
+; ASM-NEXT:    // =>This Loop Header: Depth=1
+; ASM-NEXT:    // Child Loop BB0_2 Depth 2
+; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; nopb ; nops ; movxm ls, #.LBB0_2; vmov.d dm3, dm0
+; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; nops ; movxm le, #.L_LEnd1; vmov.d dm1, dm0
+; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; nops ; nopx ; vshuffle fex8, fex6, fex2, r2; vmov.d dm2, dm0
 ; ASM-NEXT:    nopa ; vldb.pop fex6, [p0, lf0, r24]; nops ; add.nc lc, r7, #-3; vshuffle fex0, fex8, fex2, r16; nopv
 ; ASM-NEXT:    nopa ; vldb.pop.3d fex2, [p0, lf0, r24, d0]; nops ; nopx ; vmov fewl2, fewh8; vmac.f dm3, dm3, fex8, fey2, r8
 ; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; nopb ; nops ; nopx ; vmov fewl0, fewh0; vmac.f dm1, dm1, fex0, fey2, r8
@@ -152,10 +152,10 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; nopb ; nops ; nopx ; vmov fewl0, fewh0; vmac.f dm1, dm1, fex0, fey2, r8
 ; ASM-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; paddb.3d [p7], d3; nopx ; padds.3d [p6], d1; vmac.f dm2, dm2, fex2, fey2, r8
+; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; paddb.3d [p7], d3; padds.3d [p6], d1; nopxm ; vmac.f dm2, dm2, fex2, fey2, r8
 ; ASM-NEXT:    mova r25, #0; paddb.3d [p4], d2; movs p1, p6; nopx ; vshuffle fex8, fex6, fex2, r2; vmac.f dm0, dm0, fex0, fey2, r8
 ; ASM-NEXT:    vldb.fill [p1, lf1, r25]; vshuffle fex0, fex8, fex2, r16
-; ASM-NEXT:    vmov fewl2, fewh8; vmac.f dm3, dm3, fex8, fey2, r8
+; ASM-NEXT:    nopx ; vmov fewl2, fewh8; vmac.f dm3, dm3, fex8, fey2, r8
 ; ASM-NEXT:    vmov fewl0, fewh0; vmac.f dm1, dm1, fex0, fey2, r8
 ; ASM-NEXT:    vmac.f dm2, dm2, fex2, fey2, r8
 ; ASM-NEXT:    vshuffle fex8, fex6, fex2, r2; vmac.f dm0, dm0, fex0, fey2, r8
@@ -164,27 +164,17 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; ASM-NEXT:    vmov fewl0, fewh0; vmac.f dm1, dm1, fex0, fey2, r8
 ; ASM-NEXT:    vmac.f dm2, dm2, fex2, fey2, r8
 ; ASM-NEXT:    vmac.f dm0, dm0, fex0, fey2, r8
-; ASM-NEXT:    vlda bmll0, [p7, #0]
-; ASM-NEXT:    nop
-; ASM-NEXT:    vst.conv.bf16.fp32 cml3, [p2], #64
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh3, [p2], m4
-; ASM-NEXT:    vst.conv.bf16.fp32 cml2, [p3], #64; jnzd r1, r1, p5
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh2, [p3], m4 // Delay Slot 5
-; ASM-NEXT:    vst.conv.bf16.fp32 cml0, [p3], #64 // Delay Slot 4
-; ASM-NEXT:    vst.conv.bf16.fp32 cml1, [p2], #64; vmov bmlh0, bmll0 // Delay Slot 3
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh1, [p2], #64 // Delay Slot 2
-; ASM-NEXT:    vst.conv.bf16.fp32 cmh0, [p3], #64; vmov cmh0, cml0 // Delay Slot 1
-; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
-; ASM-NEXT:    mov p0, p4
+; ASM-NEXT:    vlda bmll0, [p7, #0]; mov p0, p4
 ; ASM-NEXT:    vldb.fill [p0, lf0, r24]
-; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
-; ASM-NEXT:    vldb.pop fex6, [p0, lf0, r24]
-; ASM-NEXT:    vldb.pop.3d fex2, [p0, lf0, r24, d0]
-; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]
-; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
-; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]
-; ASM-NEXT:    vldb.pop fex6, [p0, lf0, r24]
-; ASM-NEXT:    vldb.pop.3d fex2, [p0, lf0, r24, d0]
+; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vst.conv.bf16.fp32 cml3, [p2], #64
+; ASM-NEXT:    vldb.pop fex6, [p0, lf0, r24]; vst.conv.bf16.fp32 cmh3, [p2], m4
+; ASM-NEXT:    vst.conv.bf16.fp32 cml2, [p3], #64; vldb.pop.3d fex2, [p0, lf0, r24, d0]; jnzd r1, r1, p5
+; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; vst.conv.bf16.fp32 cmh2, [p3], m4 // Delay Slot 5
+; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vst.conv.bf16.fp32 cml0, [p3], #64 // Delay Slot 4
+; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vst.conv.bf16.fp32 cml1, [p2], #64; vmov bmlh0, bmll0 // Delay Slot 3
+; ASM-NEXT:    vldb.pop fex6, [p0, lf0, r24]; vst.conv.bf16.fp32 cmh1, [p2], #64 // Delay Slot 2
+; ASM-NEXT:    vst.conv.bf16.fp32 cmh0, [p3], #64; vldb.pop.3d fex2, [p0, lf0, r24, d0]; vmov cmh0, cml0 // Delay Slot 1
+; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; ASM-NEXT:    vlda.pop fex4, [p1, lf1, r25]; movxm ls, #.LBB0_5; vmov.d dm3, dm0
 ; ASM-NEXT:    vlda.pop fex5, [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; movxm le, #.L_LEnd0; vmov.d dm1, dm0
 ; ASM-NEXT:    vlda.fill [p1, lf1, r25]; vldb.fill [p0, lf0, r24]; vshuffle fex8, fex6, fex2, r2; vmov.d dm2, dm0
