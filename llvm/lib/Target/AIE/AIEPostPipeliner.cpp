@@ -157,26 +157,19 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   }
 
   // 4. We need to peel stages and be left with a positive tripcount.
+  // Note: The default min trip count is 1, guaranteed by the ZOL requirement.
   // This is just a minimum check to save useless work; the real stage
   // count is checked before accepting the schedule.
   using namespace AIELoopUtils;
   auto ParsedMinTripCount = getMinTripCount(LoopBlock);
-  MinTripCount = ParsedMinTripCount.value_or(0);
+  MinTripCount = ParsedMinTripCount.value_or(1);
 
   IsVersionGuarded = isLoopVersioned(LoopBlock);
   LLVM_DEBUG(if (IsVersionGuarded) dbgs()
              << " PostPipeliner: " << printMBBReference(LoopBlock)
              << " is loop versioned; its runtime guard supplies the minimum "
-                "trip count, so the static gate below is skipped and the "
-                "guard threshold is patched in updateVersionGuard\n");
-  if (!IsVersionGuarded && !ParsedMinTripCount) {
-    LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
-    return false;
-  }
-  if (!IsVersionGuarded && MinTripCount < 2) {
-    LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
-    return false;
-  }
+                "trip count, and the guard threshold is patched in "
+                "updateVersionGuard\n");
 
   if (PresetII) {
     TargetII = PresetII;
