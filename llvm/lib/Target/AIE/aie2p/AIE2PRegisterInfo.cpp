@@ -227,7 +227,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // indexed form would encode cleanly and write to a truncated address.
     // <9,4> is sub_fifo's field, the tightest of the three.
     const bool Aligned = Offset % 64 == 0;
-    assert(Aligned && "ePSRFLdF composite spill needs a 64-byte aligned offset");
+    assert(Aligned &&
+           "ePSRFLdF composite spill needs a 64-byte aligned offset");
     if (!Aligned || isEncodableAsNegativeInt<9, 4>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
