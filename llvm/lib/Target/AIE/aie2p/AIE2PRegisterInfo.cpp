@@ -220,33 +220,15 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
   case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::VST_PLFR_SPILL: {
-    // The ePSRFLdF composite spills as three sub-spills laid out in the slot as
-    //   [sub_fifo (128B)] [sub_avail (4B)] [sub_ptr (4B)].
-    // sub_fifo is stored/reloaded through the FIFO (dmx fifohl) path, whose SP
-    // offset must be a multiple of 64 (c16n_step64); the two scalar halves use
-    // the step-4 scalar path. ePSRFLdF's spill alignment is 64 bytes by
-    // TableGen (AIE2PVector1076FifoRegisterClass = AIE2PRegisterClass<1088,
-    // 512, ...>), so a register-allocated slot always keeps sub_fifo's offset
-    // a multiple of 64, the same invariant VST_dmx_sts_x_spill relies on
-    // above. A misaligned offset means the frame object is wrong and is left
-    // for the code emitter to reject: routing it to indexed addressing would
-    // not fix it, since the FIFO store's underlying 512-bit access truncates
-    // a misaligned hardware address instead of faulting
-    // (aie_api/detail/ld_st.hpp vector_ldst_align is keyed on access width,
-    // not on which port supplies the data), so it would silently write to the
-    // wrong 64-byte-aligned address rather than encode-time fault. Only the
-    // reach is not guaranteed: isEncodableAsNegativeInt<9,4> is the tightest
-    // of the three sub-spill ranges (sub_avail/sub_ptr sit at Offset+128/+132
-    // on the scalar step-4 path), so a frame that pushes the composite out of
-    // that range still needs the register-offset fallback.
-    // Deliberately not a condition: gating the immediate path on alignment
-    // would send a misaligned offset down the indexed path in a -DNDEBUG
-    // build, which is the silent wrong-address write this comment rules out.
-    // The emitter rejects it instead ("immediate operand value is not a
-    // multiple of 64").
-    assert(Offset % 64 == 0 &&
-           "ePSRFLdF composite spill needs a 64-byte aligned frame offset");
-    if (isEncodableAsNegativeInt<9, 4>(Offset)) {
+    // Slot layout: [sub_fifo 128B][sub_avail 4B][sub_ptr 4B]. sub_fifo moves
+    // through the FIFO path, whose SP offset must be a multiple of 64, and
+    // ePSRFLdF's spill alignment guarantees it -- so a misaligned offset means
+    // a wrong frame object, and must reach the emitter, which rejects it. The
+    // indexed form would encode cleanly and write to a truncated address.
+    // <9,4> is sub_fifo's field, the tightest of the three.
+    const bool Aligned = Offset % 64 == 0;
+    assert(Aligned && "ePSRFLdF composite spill needs a 64-byte aligned offset");
+    if (!Aligned || isEncodableAsNegativeInt<9, 4>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     } else {
