@@ -76,9 +76,19 @@ void AIE2PFrameLowering::adjustSPReg(MachineBasicBlock &MBB,
         .addImm(StackPtrIncr)
         .setMIFlag(Flag);
   } else {
-    LLVM_DEBUG(dbgs() << "Adjust Stack by " << StackPtrIncr << " bytes\n.");
-    report_fatal_error(
-        "adjustSPReg cannot yet handle adjustments > +-2^18 bytes");
+    // The sp_imm form cannot encode an offset this large. Materialize it in a
+    // modifier register and use the register form of the SP pointer add, which
+    // is the sibling of the sp_imm instruction used above. The register
+    // scavenger resolves the virtual register using the emergency slots that
+    // processFunctionBeforeFrameFinalized() reserves for large stack frames.
+    MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+    Register ModReg = MRI.createVirtualRegister(&AIE2P::eMRegClass);
+    BuildMI(MBB, MBBI, DL, TII->get(AIE2P::MOVXM), ModReg)
+        .addImm(StackPtrIncr)
+        .setMIFlag(Flag);
+    BuildMI(MBB, MBBI, DL, TII->get(AIE2P::PADDXM_pstm_sp))
+        .addReg(ModReg)
+        .setMIFlag(Flag);
   }
 }
 void AIE2PFrameLowering::determineCalleeSaves(MachineFunction &MF,
