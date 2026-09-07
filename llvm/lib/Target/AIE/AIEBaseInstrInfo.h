@@ -126,12 +126,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     // SetLoopCount has the same operands as LoopStart.
     unsigned SetLoopCountOpcode;
     Register LCRegister;
+    Register LSRegister;
+    Register LERegister;
 
     // SetLoop{Start,End} takes an address and writes it to a loop register
     unsigned SetLoopStartOpcode;
     unsigned SetLoopEndOpcode;
-    std::optional<Register> LSRegister;
-    std::optional<Register> LERegister;
+    // Optional PC-relative loop start/end setup opcodes. When present, they
+    // provide an alternative to the (absolute) SetLoop{Start,End}Opcode above.
+    std::optional<unsigned> SetLoopStartPCRelOpcode;
+    std::optional<unsigned> SetLoopEndPCRelOpcode;
     // The distance between setup and the start of the loop, in units
     // of bundles.
     unsigned LoopSetupDistance;

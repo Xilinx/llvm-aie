@@ -394,14 +394,8 @@ bool AIEBaseInstrInfo::isZeroOverheadLoopSetupInstr(
   }
 
   return isZOLTripCountDef(MI) ||
-         ((MI.getOpcode() == ZOLSupport->SetLoopStartOpcode ||
-           MI.getOpcode() == ZOLSupport->SetLoopEndOpcode) &&
-          ((!ZOLSupport->LSRegister.has_value() &&
-            !ZOLSupport->LERegister.has_value()) ||
-           (ZOLSupport->LSRegister.has_value() &&
-            MI.getOperand(0).getReg() == *ZOLSupport->LSRegister) ||
-           (ZOLSupport->LERegister.has_value() &&
-            MI.getOperand(0).getReg() == *ZOLSupport->LERegister)));
+         MI.definesRegister(ZOLSupport->LSRegister, /*TRI=*/nullptr) ||
+         MI.definesRegister(ZOLSupport->LERegister, /*TRI=*/nullptr);
 }
 
 const MachineInstr *
