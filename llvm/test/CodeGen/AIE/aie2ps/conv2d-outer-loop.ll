@@ -137,7 +137,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_9 Depth 2
 ; CHECK-NEXT:    nopa ; vldb x1, [p1, #64]; nops ; nopx ; mov r0, dc6; nopv
-; CHECK-NEXT:    vlda x10, [p1, #0]; vldb.popx x4, [p0, lf0, r24]; lshl r0, r0, r2; mov dc4, dc3; nops
+; CHECK-NEXT:    vlda x10, [p1, #0]; vldb.popx x4, [p0, lf0, r24]; nops ; lshl r0, r0, r2; mov dc4, dc3; nopv
 ; CHECK-NEXT:    vlda.pop.3d x6, [p0, lf0, r24, d0]; or r20, r0, r16; mov dj3, r0
 ; CHECK-NEXT:    vldb.128 wl2, [p2, dj3]; mov dj3, r20
 ; CHECK-NEXT:    vldb.128 wl8, [p2, dj3]
@@ -146,9 +146,9 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p6], #64; vldb.pop.3d x8, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6], #64; vldb.popx x10, [p0, lf0, r24]; mov p7, p1
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]
-; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; add.nc lc, r18, #-6; vshuffle x2, x4, x6, r6; vmul dm2, x0, x2, r10
-; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; movxm ls, #.LBB0_9; vmul dm3, x0, x8, r10
-; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; movxm le, #.L_LEnd0; vaddmac dm1, dm1, dm2, x2, x10, r12
+; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopx ; vshuffle x2, x4, x6, r6; vmul dm2, x0, x2, r10
+; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; add.nc lc, r18, #-6; vmul dm3, x0, x8, r10
+; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_9; vaddmac dm1, dm1, dm2, x2, x10, r12
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; vaddmac dm0, dm0, dm3, x2, x1, r12
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r6; nopv

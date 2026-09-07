@@ -187,13 +187,13 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:  .LBB0_6: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_7 Depth 2
-; ASM-NEXT:    nopa ; vldb.popx x10, [p0, lf0, r24]; nops ; nopxm ; nopv
+; ASM-NEXT:    vldb.popx x10, [p0, lf0, r24]
 ; ASM-NEXT:    vldb.pop.3d x8, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vldb.popx x10, [p0, lf0, r24]; mov p2, p1
 ; ASM-NEXT:    vlda x6, [p2, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; vmul dm2, x0, x2, r12
-; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; add.nc lc, r18, #-6; padds [p2], #128; vmul dm3, x0, x4, r12
-; ASM-NEXT:    vlda x6, [p2, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; movxm ls, #.LBB0_7; vaddmac dm1, dm1, dm2, x10, x8, r10
-; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p2], #128; movxm le, #.L_LEnd1; vaddmac dm0, dm0, dm3, x10, x6, r10
+; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p2], #128; vmul dm3, x0, x4, r12
+; ASM-NEXT:    vlda x6, [p2, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; add.nc lc, r18, #-6; vaddmac dm1, dm1, dm2, x10, x8, r10
+; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p2], #128; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB0_7; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; ASM-NEXT:    vlda x6, [p2, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p2], #128; nopxm ; nopv
 ; ASM-NEXT:    vlda x6, [p2, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r4; nopv
@@ -209,8 +209,8 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:    // in Loop: Header=BB0_6 Depth=1
 ; ASM-NEXT:    vlda x4, [p2, #192]; paddb.3d [p0], d1; padds [p2], #128; nopx ; mov dc4, dc3; vmac dm0, dm0, x2, x4, r8
 ; ASM-NEXT:    vlda x6, [p2, #128]; paddb [p1], m3; nops ; nopx ; vshuffle x2, x10, x8, r4; vmac dm1, dm1, x2, x6, r8
-; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; nopx ; padds [p2], #128; vmac dm0, dm0, x2, x4, r8
-; ASM-NEXT:    vlda.pop.3d x1, [p0, lf0, r24, d0]; paddb.3d [p1], d2; vshuffle x2, x10, x8, r4; vmac dm1, dm1, x2, x6, r8
+; ASM-NEXT:    vlda x4, [p2, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p2], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    vlda.pop.3d x1, [p0, lf0, r24, d0]; paddb.3d [p1], d2; nopx ; vshuffle x2, x10, x8, r4; vmac dm1, dm1, x2, x6, r8
 ; ASM-NEXT:    vldb x8, [p1, #0]; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
 ; ASM-NEXT:    vldb x6, [p1, #64]; lshl r0, r0, r2; vshuffle x2, x10, x8, r4; vmac dm1, dm1, x2, x6, r8
 ; ASM-NEXT:    movs dj3, r0; movxm p2, #.LBB0_6; vmac dm0, dm0, x2, x4, r8
@@ -231,9 +231,9 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]
 ; ASM-NEXT:    vlda x4, [p1, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]
-; ASM-NEXT:    vlda x2, [p1, #192]; vldb.popx x8, [p0, lf0, r24]; add.nc lc, r18, #-6; padds [p1], #128; vmul dm2, x0, x2, r12
-; ASM-NEXT:    vlda x4, [p1, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; movxm ls, #.LBB0_10; vmul dm3, x0, x4, r12
-; ASM-NEXT:    vlda x2, [p1, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p1], #128; movxm le, #.L_LEnd0; vaddmac dm1, dm1, dm2, x10, x8, r10
+; ASM-NEXT:    vlda x2, [p1, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p1], #128; vmul dm2, x0, x2, r12
+; ASM-NEXT:    vlda x4, [p1, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; add.nc lc, r18, #-6; vmul dm3, x0, x4, r12
+; ASM-NEXT:    vlda x2, [p1, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p1], #128; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_10; vaddmac dm1, dm1, dm2, x10, x8, r10
 ; ASM-NEXT:    vlda x4, [p1, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopxm ; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; ASM-NEXT:    vlda x2, [p1, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p1], #128; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p1, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x0, x8, x6, r4; nopv

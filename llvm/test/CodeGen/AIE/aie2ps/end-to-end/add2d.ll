@@ -48,12 +48,12 @@ define dso_local void @add2d.for.body(i32 %unroll_iter, ptr addrspace(5) %0, ptr
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: add2d.for.body:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddxm [sp], #64
+; ASM-NEXT:    paddxm [sp], #64; nopb ; nopxm
 ; ASM-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
-; ASM-NEXT:    mova m1, #-68; or r5, r8, r8; mov p6, sp
-; ASM-NEXT:    padda [p6], m1; add r0, r0, #-2; mov r8, r3
-; ASM-NEXT:    lda dn4, [p6], #-4; movxm ls, #.LBB0_1
-; ASM-NEXT:    movs m0, p2; movxm le, #.L_LEnd0
+; ASM-NEXT:    mova m1, #-68; mov p6, sp
+; ASM-NEXT:    padda [p6], m1; mov r5, r8
+; ASM-NEXT:    lda dn4, [p6], #-4; add.nc ls, pc, #.LBB0_1; mov r8, r3
+; ASM-NEXT:    movs m0, p2; add r0, r0, #-2; addm.nc le, pc, #.L_LEnd0
 ; ASM-NEXT:    mova dc0, #0; movs dj0, p3; movx crsrsmode, #0; mov s0, r1
 ; ASM-NEXT:    mova r6, #-1; movs dj4, p4; movx crupsmode, #0; mov s1, #8
 ; ASM-NEXT:    lda p2, [p6], #-4; movs dn0, p5; lshl r0, r0, r6; mov srssign0, r4

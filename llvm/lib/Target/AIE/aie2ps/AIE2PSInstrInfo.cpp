@@ -1210,12 +1210,22 @@ AIE2PSInstrInfo::getZOLSupport() const {
   Result.LoopStartOpcode = AIE2PS::LoopStart;
   Result.LoopEndOpcode = AIE2PS::PseudoLoopEnd;
   Result.SetLoopCountOpcode = AIE2PS::ADD_NC_add_lc_ri;
+
+  // Absolute addressing for ZOL setup (default behavior).
   Result.SetLoopStartOpcode = AIE2PS::MOVXM_lng_cg_ls_abs;
   Result.SetLoopEndOpcode = AIE2PS::MOVXM_lng_cg_le_abs;
+
+  // Optional PC-relative setup opcodes (multi-slot pseudos that can be
+  // scheduled into ALU or MV slots).
+  Result.SetLoopStartPCRelOpcode = AIE2PS::SET_LS_REL_pseudo;
+  Result.SetLoopEndPCRelOpcode = AIE2PS::SET_LE_REL_pseudo;
+
   // We need a 112 bytes distance from the loop setup to the loop end label,
   // which requires 7 bundles of 16 bytes.
   Result.LoopSetupDistance = 7;
   Result.LCRegister = AIE2PS::lc;
+  Result.LSRegister = AIE2PS::ls;
+  Result.LERegister = AIE2PS::le;
 
   return Result;
 }

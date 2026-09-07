@@ -41,7 +41,7 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    movxm r8, #50332476 // Delay Slot 3
 ; CHECK-NEXT:    movs p6, p0; vbcst.16 x0, r2 // Delay Slot 2
 ; CHECK-NEXT:    mova r10, #1; movs p7, p1; add r1, r0, #-2; mov r9, p2 // Delay Slot 1
-; CHECK-NEXT:    nopa ; nopb ; nopx ; vinsert.32 x2, x0, #0, r0
+; CHECK-NEXT:    vinsert.32 x2, x0, #0, r0
 ; CHECK-NEXT:    vmov bmll0, x2
 ; CHECK-NEXT:    mova m0, #24; mov p0, r9
 ; CHECK-NEXT:    lda.u16 r26, [p0], m0; vconv.bf16.fp32 wl2, bmll0
@@ -54,9 +54,9 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    lda.s8 r20, [p0], #1; vldb x6, [p6], #64
 ; CHECK-NEXT:    lda.s8 r24, [p0], #1; vldb x8, [p6], #64
 ; CHECK-NEXT:    lda.s8 r28, [p0], #1; vldb x10, [p6], #64; mov m1, r22
-; CHECK-NEXT:    vlda x7, [p6], m1; vconv.bf16.fp32 x2, cml0; movxm ls, #.LBB0_1
+; CHECK-NEXT:    vlda x7, [p6], m1; vconv.bf16.fp32 x2, cml0
 ; CHECK-NEXT:    vlda x10, [p6], #64; mov m0, #-9
-; CHECK-NEXT:    lda.s8 r30, [p0], m0; movxm le, #.L_LEnd0
+; CHECK-NEXT:    lda.s8 r30, [p0], m0
 ; CHECK-NEXT:    lda.s16 r1, [p0], #-6; vextbcst.16 x2, x2, #0
 ; CHECK-NEXT:    lshl r0, r6, r10; vshuffle x1, x4, x6, r2
 ; CHECK-NEXT:    lshl r6, r16, r10; vshuffle x3, x4, x6, r4
@@ -83,8 +83,8 @@ define weak_odr dso_local void @_Z9avgpool2dILh1E8bfloat16Qsr5mllib5utilsE11is_o
 ; CHECK-NEXT:    vshift x4, x4, x1, r22
 ; CHECK-NEXT:    vshift x3, x3, x6, r24; vmac.f cml7, cml7, x11, x0, r8
 ; CHECK-NEXT:    vshuffle x6, x8, x1, r2
-; CHECK-NEXT:    vshuffle x5, x8, x1, r4; vmac.f cml6, cml6, x3, x2, r8
-; CHECK-NEXT:    vshuffle x9, x7, x10, r2; vmac.f cml7, cml7, x4, x2, r8
+; CHECK-NEXT:    add.nc ls, pc, #.LBB0_1; vshuffle x5, x8, x1, r4; vmac.f cml6, cml6, x3, x2, r8
+; CHECK-NEXT:    add.nc le, pc, #.L_LEnd0; vshuffle x9, x7, x10, r2; vmac.f cml7, cml7, x4, x2, r8
 ; CHECK-NEXT:    add.nc lc, r26, #-1; vshift x8, x5, x9, r18
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

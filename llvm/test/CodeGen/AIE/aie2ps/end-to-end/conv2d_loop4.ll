@@ -136,13 +136,13 @@ define dso_local void @conv2d.for.body.i190(i32 %0, ptr %add.ptr4, ptr addrspace
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    nopa ; vldb.popx x10, [p1, lf1, r25]; nops ; nopxm ; nopv
+; ASM-NEXT:    vldb.popx x10, [p1, lf1, r25]
 ; ASM-NEXT:    vldb.pop.3d x8, [p1, lf1, r25, d0]
 ; ASM-NEXT:    vldb.popx x10, [p1, lf1, r25]; mov p0, p7
 ; ASM-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; vmul dm2, x0, x2, r12
-; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; add.nc lc, r4, #-6; padds [p0], #128; vmul dm3, x0, x4, r12
-; ASM-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; movxm ls, #.LBB0_2; vaddmac dm1, dm1, dm2, x10, x8, r10
-; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; movxm le, #.L_LEnd1; vaddmac dm0, dm0, dm3, x10, x6, r10
+; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; vmul dm3, x0, x4, r12
+; ASM-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; add.nc lc, r4, #-6; vaddmac dm1, dm1, dm2, x10, x8, r10
+; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB0_2; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; ASM-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; nopxm ; nopv
 ; ASM-NEXT:    vlda x6, [p0, #128]; vldb.pop.3d x8, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x2, x10, x8, r2; nopv
@@ -158,8 +158,8 @@ define dso_local void @conv2d.for.body.i190(i32 %0, ptr %add.ptr4, ptr addrspace
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    vlda x4, [p0, #192]; paddb.3d [p1], d1; padds [p0], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
 ; ASM-NEXT:    vlda x6, [p0, #128]; paddb [p7], m3; nops ; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
-; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; nopx ; padds [p0], #128; vmac dm0, dm0, x2, x4, r8
-; ASM-NEXT:    vlda.pop.3d x1, [p1, lf1, r25, d0]; paddb.3d [p7], d2; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
+; ASM-NEXT:    vlda x4, [p0, #192]; vldb.popx x10, [p1, lf1, r25]; padds [p0], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
+; ASM-NEXT:    vlda.pop.3d x1, [p1, lf1, r25, d0]; paddb.3d [p7], d2; nopx ; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; ASM-NEXT:    vldb x8, [p7, #0]; mov r0, dc6; vmac dm0, dm0, x2, x4, r8
 ; ASM-NEXT:    vldb x6, [p7, #64]; lshl r0, r0, r16; vshuffle x2, x10, x8, r2; vmac dm1, dm1, x2, x6, r8
 ; ASM-NEXT:    movs dj3, r0; movxm p0, #.LBB0_1; vmac dm0, dm0, x2, x4, r8
@@ -180,9 +180,9 @@ define dso_local void @conv2d.for.body.i190(i32 %0, ptr %add.ptr4, ptr addrspace
 ; ASM-NEXT:    vldb.pop.3d x6, [p1, lf1, r25, d0]
 ; ASM-NEXT:    vldb.popx x8, [p1, lf1, r25]
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]
-; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p1, lf1, r25]; add.nc lc, r4, #-6; padds [p7], #128; vmul dm2, x0, x2, r12
-; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]; movxm ls, #.LBB0_5; vmul dm3, x0, x4, r12
-; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p1, lf1, r25]; padds [p7], #128; movxm le, #.L_LEnd0; vaddmac dm1, dm1, dm2, x10, x8, r10
+; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p1, lf1, r25]; padds [p7], #128; vmul dm2, x0, x2, r12
+; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]; add.nc lc, r4, #-6; vmul dm3, x0, x4, r12
+; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p1, lf1, r25]; padds [p7], #128; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_5; vaddmac dm1, dm1, dm2, x10, x8, r10
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]; nops ; nopxm ; vaddmac dm0, dm0, dm3, x10, x6, r10
 ; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p1, lf1, r25]; padds [p7], #128; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle x0, x8, x6, r2; nopv

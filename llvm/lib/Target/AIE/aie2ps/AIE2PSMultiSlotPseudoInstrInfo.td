@@ -375,3 +375,25 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
 }
+
+// Multi-slot pseudos for Zero-Overhead Loop (ZOL) relative addressing.
+// These allow the loop start (ls) and loop end (le) setup instructions to be
+// scheduled into either the ALU or MV slot, providing more scheduling flexibility.
+// The c11u operand is a PC-relative offset to the loop label.
+let hasSideEffects = false, mayLoad = false, mayStore = false in {
+  // Loop Start (ls) relative addressing pseudo.
+  // Can materialize to: ADD_NC_alu_cg_or_alu_cg_ls_rel (ALU slot) or
+  //                     ADDM_NC_mv_cg_or_mv_cg_ls_rel (MV slot)
+  let Itinerary = II_ADD_NC_alu_cg_or_alu_cg_ls_rel, Defs = [ls], Uses = [pc] in
+  def SET_LS_REL_pseudo : MultiSlot_Pseudo<(outs), (ins c11u:$i),
+      "set_ls_rel_pseudo", "ls, pc, #$i",
+      [ADD_NC_alu_cg_or_alu_cg_ls_rel, ADDM_NC_mv_cg_or_mv_cg_ls_rel]>;
+
+  // Loop End (le) relative addressing pseudo.
+  // Can materialize to: ADD_NC_alu_cg_or_alu_cg_le_rel (ALU slot) or
+  //                     ADDM_NC_mv_cg_or_mv_cg_le_rel (MV slot)
+  let Itinerary = II_ADD_NC_alu_cg_or_alu_cg_le_rel, Defs = [le], Uses = [pc] in
+  def SET_LE_REL_pseudo : MultiSlot_Pseudo<(outs), (ins c11u:$i),
+      "set_le_rel_pseudo", "le, pc, #$i",
+      [ADD_NC_alu_cg_or_alu_cg_le_rel, ADDM_NC_mv_cg_or_mv_cg_le_rel]>;
+}
