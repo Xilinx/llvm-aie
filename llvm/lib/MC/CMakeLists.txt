@@ -1,4 +1,5 @@
 add_llvm_component_library(LLVMMC
+  AIERelocationPatch.cpp
   ConstantPools.cpp
   DXContainerPSVInfo.cpp
   DXContainerRootSignature.cpp
