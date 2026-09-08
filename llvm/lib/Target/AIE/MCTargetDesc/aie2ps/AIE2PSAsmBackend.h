@@ -32,6 +32,18 @@ public:
 
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
+
+  void applyFixup(const MCFragment &Fragment, const MCFixup &Fixup,
+                  const MCValue &Target, MutableArrayRef<char> Data,
+                  uint64_t Value, bool IsResolved) override;
+
+private:
+  /// Try to apply a PC-relative fixup with split 11-bit encoding.
+  /// Returns true if the fixup was handled, false if it's not a PC-relative
+  /// fixup.
+  bool tryApplyPCRelativeFixup(MCFixupKind Kind, MutableArrayRef<char> Data,
+                               unsigned Offset, uint64_t Value,
+                               const MCFixup &Fixup) const;
 };
 } // namespace llvm
 

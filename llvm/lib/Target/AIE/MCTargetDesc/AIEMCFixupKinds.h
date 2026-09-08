@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,13 +14,14 @@
 #include "AIEMCFormats.h"
 #include "AIEMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Transforms/Utils/ASanStackFrameLayout.h"
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <set>
 
 namespace llvm {
@@ -50,9 +51,15 @@ struct FixupField {
   }
 };
 
-/// Flag of the fixup indicating whether there is an additionnal signedness
-/// criterion to consider when choosing a particular fixup.
-enum class FixupFlag { Unrestricted, isDataSigned, isDataUnsigned };
+/// Flag of the fixup indicating whether there is an additional criterion
+/// to consider when choosing a particular fixup. Used to disambiguate
+/// fixups that share the same field layout and format size.
+enum class FixupFlag {
+  Unrestricted,
+  isDataSigned,
+  isDataUnsigned,
+  isPCRelative
+};
 
 /// Main interface (AIE version agnostic) which implement the logic for
 /// Fixup translation in the MCCodeEmitter. It is based on 5 tables (whose 4 of
@@ -90,8 +97,30 @@ public:
         FixupFieldsMapper(FixupFieldsMapper), FixupFormatSize(FixupFormatSize),
         FixupFlagMap(FixupFlagMap), InstrFixupFlags(InstrFixupFlags) {}
 
+  virtual ~AIEMCFixupKinds() = default;
+
   static bool isTargetFixup(MCFixupKind Kind) {
     return Kind >= FirstTargetFixupKind;
+  }
+
+  /// Return true if \p Kind denotes a PC-relative fixup. This has to be
+  /// recorded on every MCFixup at creation time, as MCFixupKindInfo no longer
+  /// carries a flag for it.
+  virtual bool isPCRelFixup(MCFixupKind Kind) const { return false; }
+
+  /// Override in subclass to provide corrected fixup fields for specific
+  /// opcodes whose sub-instruction standalone encoding produces fields that
+  /// don't match the fixup table. This is called by findFixupfromFixupFields()
+  /// when the default FixupFieldsMapper lookup fails.
+  ///
+  /// Returns std::nullopt to indicate no correction is available (default).
+  /// When a correction is returned, findFixupfromFixupFields() also applies
+  /// relaxed FormatSize matching since the standalone format size may differ
+  /// from any fixup table entry.
+  virtual std::optional<SmallVector<FixupField>>
+  resolveSubInstFixupFields(unsigned Opcode,
+                            const SmallVector<FixupField> &Fields) const {
+    return std::nullopt;
   }
 
   /// Convert the Offsets of the field location into a vector of FixupField
@@ -107,7 +136,7 @@ public:
   /// NOTE: FormatSize is the size of the VLIW instruction, which is not
   /// necessarily the size of the instruction represented by the InstrDesc
   /// of Inst (as it could be a standalone instruction).
-  MCFixupKind
+  virtual MCFixupKind
   findFixupfromFixupFields(const MCInst &Inst, unsigned FormatSize,
                            const SmallVector<FixupField> &Fields) const;
 
