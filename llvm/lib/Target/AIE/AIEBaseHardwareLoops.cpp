@@ -399,6 +399,41 @@ bool AIEBaseHardwareLoops::processLoop(MachineLoop *ML) {
   return true;
 }
 
+// Return true if the loop \p ML is small enough that the ZOL setup can use
+// PC-relative addressing.
+//
+// The ZOL PC-relative offset is an unsigned 11-bit field, so the byte distance
+// from the setup instruction to the loop-end label must fit in [0, 2047]. We
+// must decide this here, early in codegen, before the loop has been packed into
+// VLIW bundles, so we use a deliberately pessimistic bound: assume every
+// instruction ends up in its own full bundle of the maximum bundle size
+// (\p MaxBundleSizeBytes). In practice the real size is much smaller:
+//   - the software pipeliner combines many instructions into far fewer bundles,
+//     and
+//   - the code aligner only pads enough to satisfy alignment, not full bundles
+//     everywhere.
+// If this worst-case bound fits, the real distance is guaranteed to fit.
+//
+// Note: we count the loop-body instructions only; we do NOT explicitly model
+// the loop-setup instructions. We add the fixed LoopSetupDistance slack for the
+// setup->loop gap, and the setup sequence itself is small and bounded, so it is
+// subsumed by this conservative estimate.
+static bool loopFitsZOLPCRel(const MachineLoop &ML, unsigned LoopSetupDistance,
+                             unsigned MaxBundleSizeBytes) {
+  // Unsigned 11-bit PC-relative field.
+  static constexpr unsigned ZOLPcRelMaxBytes = (1u << 11) - 1; // 2047
+
+  unsigned NumInstrs = 0;
+  for (const MachineBasicBlock *MBB : ML.getBlocks())
+    for (const MachineInstr &MI : *MBB)
+      if (!MI.isMetaInstruction() && !MI.isDebugInstr())
+        ++NumInstrs;
+
+  const unsigned EstimatedBytes =
+      (NumInstrs + LoopSetupDistance) * MaxBundleSizeBytes;
+  return EstimatedBytes <= ZOLPcRelMaxBytes;
+}
+
 void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   LLVM_DEBUG(dbgs() << "AIE Loops: Expanding LoopStart.\n");
 
@@ -427,7 +462,15 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
       LoweringData->SetLoopEndPCRelOpcode.has_value();
   MachineBasicBlock *LoopMBB = LoLoop.LoopEnd->getParent();
   AIE::LoopOptionOverrides Overrides(*LoopMBB);
-  const bool UsePCRel = HasPCRelOpcodes && Overrides.get(EnablePCRelativeZOL);
+  // Only use PC-relative setup when the loop is small enough for the 11-bit
+  // offset to reach the loop-end label. getMachineBlockAlignmentBytes() gives
+  // the target's maximum bundle size in bytes, which is exactly the per-bundle
+  // upper bound used by the worst-case "one instruction per full bundle"
+  // estimate in loopFitsZOLPCRel.
+  const bool UsePCRel =
+      HasPCRelOpcodes && Overrides.get(EnablePCRelativeZOL) &&
+      loopFitsZOLPCRel(LoLoop.ML, LoweringData->LoopSetupDistance,
+                       TII->getMachineBlockAlignmentBytes());
 
   const unsigned SetLoopStartOpc = UsePCRel
                                        ? *LoweringData->SetLoopStartPCRelOpcode
