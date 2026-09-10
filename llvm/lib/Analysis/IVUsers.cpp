@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements bookkeeping for "interesting" users of expressions
@@ -18,6 +21,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/DataLayout.h"
@@ -35,7 +39,7 @@ AnalysisKey IVUsersAnalysis::Key;
 
 IVUsers IVUsersAnalysis::run(Loop &L, LoopAnalysisManager &AM,
                              LoopStandardAnalysisResults &AR) {
-  return IVUsers(&L, &AR.AC, &AR.LI, &AR.DT, &AR.SE);
+  return IVUsers(&L, &AR.AC, &AR.LI, &AR.DT, &AR.SE, &AR.TTI);
 }
 
 char IVUsersWrapperPass::ID = 0;
@@ -45,6 +49,7 @@ INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(IVUsersWrapperPass, "iv-users", "Induction Variable Users",
                     false, true)
 
@@ -130,12 +135,28 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Value *Operand,
   return true;
 }
 
+std::optional<bool> IVUsers::addLookThroughGEPUsers(Instruction *I) {
+  SmallVector<GetElementPtrInst *> GEPsToProcess =
+      TTI->getIVUsersLookThroughCandidates(I, L);
+  if (GEPsToProcess.empty())
+    return std::nullopt;
+
+  LLVM_DEBUG(dbgs() << "Looking through instruction: " << *I << '\n');
+  bool AnyInteresting = false;
+  // Candidate GEPs may have pointer types whose index width is not a legal
+  // integer width, even though the target has approved their index recurrence.
+  // Bypass the width check only for these GEPs; recursive traversal validates
+  // all other users normally.
+  for (GetElementPtrInst *GEP : GEPsToProcess)
+    if (AddUsersIfInteresting(GEP, /*BypassWidthCheck=*/true))
+      AnyInteresting = true;
+  return AnyInteresting;
+}
+
 /// Inspect the specified instruction.  If it is a reducible SCEV, recursively
 /// add its users to the IVUsesByStride set and return true.  Otherwise, return
 /// false.
-bool IVUsers::AddUsersIfInteresting(Instruction *I) {
-  const DataLayout &DL = I->getDataLayout();
-
+bool IVUsers::AddUsersIfInteresting(Instruction *I, bool BypassWidthCheck) {
   // Add this IV user to the Processed set before returning false to ensure that
   // all IV users are members of the set. See IVUsers::isIVUserOrOperand.
   if (!Processed.insert(I).second)
@@ -150,11 +171,9 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   if (!isa<PHINode>(I) && !isSafeToSpeculativelyExecute(I))
     return false;
 
-  // LSR is not APInt clean, do not touch integers bigger than 64-bits.
-  // Also avoid creating IVs of non-native types. For example, we don't want a
-  // 64-bit IV in 32-bit code just because the loop has one 64-bit cast.
-  uint64_t Width = SE->getTypeSizeInBits(I->getType());
-  if (Width > 64 || !DL.isLegalInteger(Width))
+  // LSR is not APInt clean and avoids non-native IV types; targets widen the
+  // valid set (e.g. AIE 20-bit pointers) via isValidIVUserType.
+  if (!BypassWidthCheck && !TTI->isValidIVUserType(I->getType()))
     return false;
 
   // Don't attempt to promote ephemeral values to indvars. They will be removed
@@ -169,6 +188,11 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   // call this a user.
   if (!isInteresting(ISE, I, L, SE, LI))
     return false;
+
+  // Let targets look through an instruction (e.g. a trunc to index size) and
+  // collect its GEP users instead, so LSR can build pointer PHIs.
+  if (std::optional<bool> Interesting = addLookThroughGEPUsers(I))
+    return *Interesting;
 
   SmallPtrSet<Instruction *, 4> UniqueUsers;
   for (Use &U : I->uses()) {
@@ -249,8 +273,8 @@ IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
 }
 
 IVUsers::IVUsers(Loop *L, AssumptionCache *AC, LoopInfo *LI, DominatorTree *DT,
-                 ScalarEvolution *SE)
-    : L(L), AC(AC), LI(LI), DT(DT), SE(SE) {
+                 ScalarEvolution *SE, const TargetTransformInfo *TTI)
+    : L(L), AC(AC), LI(LI), DT(DT), SE(SE), TTI(TTI) {
   // Collect ephemeral values so that AddUsersIfInteresting skips them.
   EphValues.clear();
   CodeMetrics::collectEphemeralValues(L, AC, EphValues);
@@ -304,6 +328,7 @@ void IVUsersWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
   AU.setPreservesAll();
 }
 
@@ -313,8 +338,10 @@ bool IVUsersWrapperPass::runOnLoop(Loop *L, LPPassManager &LPM) {
   auto *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   auto *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  auto *TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+      *L->getHeader()->getParent());
 
-  IU.reset(new IVUsers(L, AC, LI, DT, SE));
+  IU.reset(new IVUsers(L, AC, LI, DT, SE, TTI));
   return false;
 }
 

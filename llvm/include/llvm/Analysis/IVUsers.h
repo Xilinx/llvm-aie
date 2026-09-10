@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements bookkeeping for "interesting" users of expressions
@@ -19,6 +22,7 @@
 #include "llvm/Analysis/ScalarEvolutionNormalization.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/ValueHandle.h"
+#include <optional>
 
 namespace llvm {
 
@@ -26,6 +30,7 @@ class AssumptionCache;
 class DominatorTree;
 class ScalarEvolution;
 class SCEV;
+class TargetTransformInfo;
 class IVUsers;
 
 /// IVStrideUse - Keep track of one use of a strided induction variable.
@@ -95,6 +100,7 @@ class IVUsers {
   LoopInfo *LI;
   DominatorTree *DT;
   ScalarEvolution *SE;
+  const TargetTransformInfo *TTI;
   SmallPtrSet<Instruction*, 16> Processed;
 
   /// IVUses - A list of all tracked IV uses of induction variable expressions
@@ -106,11 +112,11 @@ class IVUsers {
 
 public:
   IVUsers(Loop *L, AssumptionCache *AC, LoopInfo *LI, DominatorTree *DT,
-          ScalarEvolution *SE);
+          ScalarEvolution *SE, const TargetTransformInfo *TTI);
 
   IVUsers(IVUsers &&X)
       : L(std::move(X.L)), AC(std::move(X.AC)), DT(std::move(X.DT)),
-        SE(std::move(X.SE)), Processed(std::move(X.Processed)),
+        SE(std::move(X.SE)), TTI(X.TTI), Processed(std::move(X.Processed)),
         IVUses(std::move(X.IVUses)), EphValues(std::move(X.EphValues)) {
     for (IVStrideUse &U : IVUses)
       U.Parent = this;
@@ -124,7 +130,9 @@ public:
   /// AddUsersIfInteresting - Inspect the specified Instruction.  If it is a
   /// reducible SCEV, recursively add its users to the IVUsesByStride set and
   /// return true.  Otherwise, return false.
-  bool AddUsersIfInteresting(Instruction *I);
+  /// \p BypassWidthCheck skips isValidIVUserType for \p I, for target-selected
+  /// GEPs whose pointer index width need not be a legal integer width.
+  bool AddUsersIfInteresting(Instruction *I, bool BypassWidthCheck = false);
 
   IVStrideUse &AddUser(Instruction *User, Value *Operand);
 
@@ -156,6 +164,13 @@ public:
 
   /// dump - This method is used for debugging.
   void dump() const;
+
+private:
+  /// Collect the GEP users the target wants processed instead of \p I (e.g. a
+  /// trunc to index size), returning whether any of them was interesting.
+  /// Returns std::nullopt if the target selects none, so that \p I is
+  /// traversed normally.
+  std::optional<bool> addLookThroughGEPUsers(Instruction *I);
 };
 
 Pass *createIVUsersPass();
