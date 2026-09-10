@@ -130,12 +130,12 @@ body:             |
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:mxs = COPY $x0
+  ; CHECK-NEXT:   $packsign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $packsign0 = COPY [[COPY2]]
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -148,11 +148,11 @@ body:             |
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.4(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $packsign0 = MOV_scalar_imm11_pseudo 0
   ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   $packsign0 = MOV_scalar_imm11_pseudo 0
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0:
     liveins: $p0, $r0, $r1, $x0
