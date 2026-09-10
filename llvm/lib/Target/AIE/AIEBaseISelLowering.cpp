@@ -63,6 +63,7 @@ AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
     MaxStoresPerMemmove = 32;
     MaxStoresPerMemmoveOptSize = 16;
   }
+  setJumpIsExpensive(true);
 }
 
 static bool AllocateSplitArg(CCState &State, ArrayRef<MCPhysReg> RegList) {
