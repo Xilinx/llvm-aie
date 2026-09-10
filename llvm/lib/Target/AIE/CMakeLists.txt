@@ -114,6 +114,7 @@ add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
    AIEAddressSpaceFlattening.cpp
+   AIESwitchLowering.cpp
    AIEBaseAliasAnalysis.cpp
    AIEBaseAsmPrinter.cpp
    AIEBaseFrameLowering.cpp

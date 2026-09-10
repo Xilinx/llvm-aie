@@ -78,6 +78,16 @@ TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AIE2PassConfig(*this, PM);
 }
 
+void AIE2PassConfig::addCodeGenPrepare() {
+  TargetPassConfig::addCodeGenPrepare();
+  // Branches are expensive on AIE2 and later (mandatory delay slots). Rewrite
+  // switches whose case values reach a small number of destinations into
+  // OR-of-icmp chains so that (together with setJumpIsExpensive) IRTranslator
+  // emits a single conditional branch per destination instead of one per case
+  // cluster.
+  addPass(createAIESwitchLowering());
+}
+
 bool AIE2PassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     if (!DisableInnerLoopVersioning)

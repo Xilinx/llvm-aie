@@ -36,6 +36,7 @@
 ; AIE-O0-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0-NEXT:      Expand reduction intrinsics
+; AIE-O0-NEXT:      AIE Switch to OR-of-icmp Lowering
 ; AIE-O0-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O0-NEXT:      AIE outline Memory GEP
@@ -152,6 +153,7 @@
 ; AIE-O1-NEXT:      Scalar Evolution Analysis
 ; AIE-O1-NEXT:      GPU Load and Store Vectorizer
 ; AIE-O1-NEXT:      CodeGen Prepare
+; AIE-O1-NEXT:      AIE Switch to OR-of-icmp Lowering
 ; AIE-O1-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O1-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O1-NEXT:      AIE outline Memory GEP
@@ -387,6 +389,7 @@
 ; AIE-O23-NEXT:      GPU Load and Store Vectorizer
 ; AIE-O3-NEXT:      TLS Variable Hoist
 ; AIE-O23-NEXT:      CodeGen Prepare
+; AIE-O23-NEXT:      AIE Switch to OR-of-icmp Lowering
 ; AIE-O23-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O23-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O23-NEXT:      AIE outline Memory GEP
