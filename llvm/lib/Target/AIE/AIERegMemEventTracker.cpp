@@ -165,7 +165,7 @@ int AIERegMemEventTracker::getMaxAliasingMemCycle(const MachineInstr &MI,
                                                   bool IsStore) const {
   const auto &MemMap =
       IsStore ? MemoryCycleToStoreInstrs : MemoryCycleToLoadInstrs;
-  int MaxCycle = IsStore ? 0 : INT_MIN;
+  int MaxCycle = INT_MIN;
 
   for (const auto &[Cycle, MemOps] : MemMap) {
     for (const MachineInstr *MemOp : MemOps) {
@@ -178,7 +178,7 @@ int AIERegMemEventTracker::getMaxAliasingMemCycle(const MachineInstr &MI,
       }
     }
   }
-  return (MaxCycle == INT_MIN) ? 0 : MaxCycle;
+  return MaxCycle;
 }
 
 int AIERegMemEventTracker::checkMemoryDependency(int CurrentMax,

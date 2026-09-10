@@ -57,14 +57,14 @@ define void @void_stream_write_no_anchor(ptr %a, ptr %c, i32 %n, i32 %m) {
 ; REMARKS-NEXT: Function:        void_stream_write_no_anchor
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - String:          Schedule found
-; REMARKS-NEXT:   - Pipeliner:       ''
-; REMARKS-NEXT:   - II:              '4'
+; REMARKS-NEXT:   - Pipeliner:       postpipeliner
+; REMARKS-NEXT:   - II:              '1'
 ; REMARKS-NEXT:   - NS:              '1'
 ; REMARKS-NEXT:   - Loop:            bb.3.inner.header
 ; REMARKS-NEXT:   - Prologue:        bb.2.outer.header
-; REMARKS-NEXT:   - PrologueBundles: '8'
+; REMARKS-NEXT:   - PrologueBundles: '9'
 ; REMARKS-NEXT:   - Epilogue:        bb.4.outer.latch
-; REMARKS-NEXT:   - EpilogueBundles: '7'
+; REMARKS-NEXT:   - EpilogueBundles: '8'
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: define void @void_stream_write_no_anchor(
 ; CHECK:       outer.header:

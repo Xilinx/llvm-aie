@@ -19,7 +19,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-LABEL: conv2d_bfp16.for.body90.i:
 ; CHECK:       // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-64]; nopx // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
 ; CHECK-NEXT:    vlda bmhh4, [p6, #192]
@@ -42,19 +42,19 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda m1, [p6], #-12
 ; CHECK-NEXT:    mova r25, #0
-; CHECK-NEXT:    lda p5, [p6], #-4; vldb.fill.512 [p1, lf1, r25]; movs dn0, p3; mov dj0, p4
-; CHECK-NEXT:    lda p4, [p6], #-4; vldb.fill.512 [p1, lf1, r25]; movx r24, #0; mov dc4, #0; movs dn4, p5
+; CHECK-NEXT:    movs dn0, p3; vldb.fill.512 [p1, lf1, r25]; mov dj0, p4
+; CHECK-NEXT:    lda p5, [p6], #-4; vldb.fill.512 [p1, lf1, r25]; movx r24, #0; mov dc4, #0; movs dn4, p5
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex9, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]
-; CHECK-NEXT:    lda p3, [p6, #0]; vldb.fill.512 [p1, lf1, r25]
+; CHECK-NEXT:    lda p4, [p6], #-4; vldb.fill.512 [p1, lf1, r25]
 ; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vldb.fill.512 [p1, lf1, r25]
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex9, [p1, lf1, r25]
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; add r1, r6, #-1
-; CHECK-NEXT:    lda p2, [p6, #-4]; vldb.fill.512 [p1, lf1, r25]; movxm ls, #.LBB0_1
+; CHECK-NEXT:    lda p3, [p6, #0]; vldb.fill.512 [p1, lf1, r25]; movxm ls, #.LBB0_1
 ; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vldb.fill.512 [p1, lf1, r25]; movxm le, #.L_LEnd0
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex9, [p1, lf1, r25]; nops ; nopx ; add.nc lc, r1, #-4; nopv
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle ex11, ex9, ex7, r4; nopv
-; CHECK-NEXT:    mova r0, #780; vldb.fill.512 [p1, lf1, r25]; nops ; nopx ; vshuffle ex1, ex9, ex7, r5; nopv
+; CHECK-NEXT:    lda p2, [p6, #-4]; vldb.fill.512 [p1, lf1, r25]; nops ; movx r0, #780; vshuffle ex1, ex9, ex7, r5; nopv
 ; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vldb.fill.512 [p1, lf1, r25]; vmac.f dm2, dm2, ex11, ex5, r0
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex9, [p1, lf1, r25]; vmac.f dm1, dm1, ex1, ex5, r0
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; vshuffle ex11, ex9, ex7, r4; vmac.f dm0, dm0, ex11, ex3, r0
