@@ -1,0 +1,33 @@
+name: AIEngine LLVM Build - Windows
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'aie-public'
+  pull_request:
+    branches:
+      - 'aie-public'
+
+concurrency:
+  # A PR number if a pull request and otherwise the commit hash. This cancels
+  # queued and in-progress runs for the same PR (presubmit) or commit
+  # (postsubmit).
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  build:
+    if: github.repository_owner == 'Xilinx'
+    name: Build AIE
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: ""  # empty to indicate default target build
+      projects: clang;lld
+      cache-key: amd-aie
+      extra_cmake_args: '-C clang/cmake/caches/Peano-AIE.cmake'
+      os_list: '["windows-2019"]'
