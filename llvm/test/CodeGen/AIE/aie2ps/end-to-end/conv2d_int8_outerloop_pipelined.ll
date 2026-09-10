@@ -85,6 +85,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; REMARKS-NEXT:   - PrologueBundles: '10'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup158.i
 ; REMARKS-NEXT:   - EpilogueBundles: '26'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_14_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -100,6 +102,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; REMARKS-NEXT:   - PrologueBundles: '10'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '21'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_14_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d:
 ; ASM:       // %bb.0: // %newFuncRoot

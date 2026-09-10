@@ -81,6 +81,8 @@ define dso_local void @conv2d.for.body.i80(i32 %0, ptr %add.ptr.i.i48, ptr addrs
 ; REMARKS-NEXT:   - PrologueBundles: '10'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '18'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -96,6 +98,8 @@ define dso_local void @conv2d.for.body.i80(i32 %0, ptr %add.ptr.i.i48, ptr addrs
 ; REMARKS-NEXT:   - PrologueBundles: '11'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '21'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d.for.body.i80:
 ; ASM:       // %bb.0: // %newFuncRoot

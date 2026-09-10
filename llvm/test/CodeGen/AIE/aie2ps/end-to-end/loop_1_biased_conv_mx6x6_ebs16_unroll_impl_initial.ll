@@ -74,6 +74,8 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; REMARKS-NEXT:   - PrologueBundles: '16'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '22'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum_Run2
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -89,6 +91,8 @@ define dso_local void @loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial(i32 %c
 ; REMARKS-NEXT:   - PrologueBundles: '16'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '24'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum_Run2
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: loop_1_biased_conv_mx6x6_ebs16_unroll_impl_initial:
 ; ASM:       // %bb.0: // %newFuncRoot

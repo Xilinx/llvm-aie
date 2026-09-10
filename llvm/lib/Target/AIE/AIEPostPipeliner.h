@@ -308,6 +308,16 @@ class PostPipeliner {
   /// The pipeliner mode passed from InterBlockScheduling.
   PostPipelinerMode Mode = PostPipelinerMode::None;
 
+  /// Name of the most recently attempted scheduling strategy. Updated at the
+  /// start of every scheduleWithStrategy() call, so it always reflects the
+  /// winning strategy on success.
+  std::string CurrentStrategyName;
+
+  /// Name of the most recently attempted register-allocation scoring strategy.
+  /// Updated before each tryAllocate() call, so it reflects the winning
+  /// strategy on success.
+  std::string CurrentAllocStrategyName;
+
   /// Place SU in cycle Cycle; update Earliest of successors and Latest
   /// of predecessors.
   void scheduleNode(SUnit &SU, int Cycle, PostPipelinerStrategy &Strategy);
@@ -412,6 +422,20 @@ public:
 
   // Quick query for the achieved initiation interval.
   int getII() const { return II; }
+
+  // Quick query for the pipeliner mode used.
+  PostPipelinerMode getMode() const { return Mode; }
+
+  // The name of the scheduling strategy that produced the final schedule.
+  // Only meaningful after a successful schedule() call.
+  const std::string &getStrategyName() const { return CurrentStrategyName; }
+
+  // The name of the register-allocation scoring strategy that succeeded.
+  // Only meaningful after a successful schedule() call in virtual-register
+  // mode.
+  const std::string &getAllocStrategyName() const {
+    return CurrentAllocStrategyName;
+  }
 
   // After scheduling, interpret the results and call the appropriate methods
   // in the Visitor interface object.

@@ -987,7 +987,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
 
   const bool Success = checkStages();
   DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
-                       << Strategy.name() << "====\n");
+                       << CurrentStrategyName << "====\n");
   DEBUG_SUMMARY(dumpCycles(Info, II));
   return Success;
 }
@@ -1171,7 +1171,9 @@ bool PostPipeliner::tryScarceRangePacking() {
 }
 
 bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
-  DEBUG_SUMMARY(dbgs() << "Starting " << S.name() << "\n");
+  // Always update so the name is correct on the first successful return.
+  CurrentStrategyName = S.name();
+  DEBUG_SUMMARY(dbgs() << "Starting " << CurrentStrategyName << "\n");
   if (!scheduleFirstIteration(S)) {
     return false;
   }
@@ -1223,6 +1225,8 @@ public:
 // It still checks latencies and resources
 class CheckFixedSchedule : public PostPipelinerStrategy {
   std::vector<int> Schedule;
+  std::string Name;
+
   // We schedule in strict top-down order, and we leave only one cycle
   // to schedule it in.
   bool better(const SUnit &A, const SUnit &B) override {
@@ -1247,9 +1251,11 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
 
 public:
   CheckFixedSchedule(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                     std::vector<int> Schedule)
-      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule) {}
-  std::string name() override { return "CheckFixedSchedule"; }
+                     std::vector<int> Schedule,
+                     std::string Name = "CheckFixedSchedule")
+      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule),
+        Name(std::move(Name)) {}
+  std::string name() override { return Name; }
 };
 
 // This strategy is specifically to have a high chance of success in peeling
@@ -1610,8 +1616,9 @@ bool MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
     DEBUG_SUMMARY(dbgs() << "--- Strategy " << name() << " run=" << Run
                          << " trying II=" << PP.II << "\n");
     if (PP.scheduleWithStrategy(*this)) {
-      DEBUG_SUMMARY(dbgs() << "    Strategy " << name() << " found NS="
-                           << PP.NStages << " II=" << PP.II << "\n");
+      DEBUG_SUMMARY(dbgs() << "    Strategy " << PP.CurrentStrategyName
+                           << " found NS=" << PP.NStages << " II=" << PP.II
+                           << "\n");
       return true;
     }
     if (!nextRun())
@@ -1654,8 +1661,13 @@ bool PostPipeliner::tryApproaches() {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << " trying II=" << II << "\n");
       if (scheduleWithStrategy(S)) {
+        // Record the run number so the remark distinguishes between runs
+        // of the same strategy. Single-run strategies (Runs==1) always
+        // succeed on run 0, so the suffix adds no information there.
+        if (Config.Runs > 1)
+          CurrentStrategyName += "_Run" + std::to_string(Run);
         DEBUG_SUMMARY(dbgs()
-                      << "    Strategy " << S.name() << " run=" << Run
+                      << "    Strategy " << CurrentStrategyName
                       << " found NS=" << NStages << " II=" << II << "\n");
         return true;
       }
@@ -1771,12 +1783,12 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
                                                 : Schedule) dbgs()
                                            << C << ", ";
                 dbgs() << "\n";);
-  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule};
+  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule, "Solver"};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
   if (scheduleWithStrategy(S)) {
-    DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " found II=" << II
-                         << "\n");
+    DEBUG_SUMMARY(dbgs() << "    Strategy " << CurrentStrategyName
+                         << " found II=" << II << "\n");
     return true;
   }
 
@@ -1833,6 +1845,10 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 }
 
 bool PostPipeliner::tryAllocateRegisters() {
+  // Clear the alloc strategy name so a stale name from a previous VirtReg
+  // attempt does not bleed into a subsequent physical-mode success.
+  CurrentAllocStrategyName.clear();
+
   // In physical mode, registers are not virtualized and no allocation is
   // needed.
   if (!RegTracker.areRegistersVirtualized()) {
@@ -1859,8 +1875,9 @@ bool PostPipeliner::tryAllocateRegisters() {
 
   // Perform register allocation.
   DenseMap<Register, MCRegister> VRegToPhysReg;
-  const bool Success = AIEPostRegAlloc::allocate(
-      LiveLanesByLRIndex, II, RegTracker, *TRI, VRegToPhysReg);
+  const bool Success =
+      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI,
+                                VRegToPhysReg, CurrentAllocStrategyName);
 
   if (!Success) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
