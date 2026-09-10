@@ -244,7 +244,6 @@ bool AIECallLowering::lowerReturnVal(
     MachineIRBuilder &MIRBuilder, const Value *Val, ArrayRef<Register> VRegs,
     FunctionLoweringInfo::SavedRetCCState &RetAssignments,
     MachineInstrBuilder &Ret) const {
-  assert(RetAssignments.RetVal == Val);
   if (!Val)
     // Nothing to do here.
     return true;
@@ -271,7 +270,7 @@ bool AIECallLowering::preLowerReturn(const Value *RetVal,
                                      ArrayRef<Register> VRegs,
                                      FunctionLoweringInfo &FLI) const {
   if (!RetVal) {
-    FLI.PreDeterminedRetAssignments = {RetVal, /*AssignedRegs=*/{},
+    FLI.PreDeterminedRetAssignments = {/*AssignedRegs=*/{},
                                        /*ReservedStackSize=*/0};
     return true;
   }
@@ -286,8 +285,9 @@ bool AIECallLowering::preLowerReturn(const Value *RetVal,
   }
 
   // Save the return assignments so they can be picked up when lowering
-  // formal arguments.
-  FLI.PreDeterminedRetAssignments = {RetVal, AA.getAssignedRegisters(),
+  // formal arguments. Assignments only depend on the return type, so they are
+  // valid for every return instruction of the function.
+  FLI.PreDeterminedRetAssignments = {AA.getAssignedRegisters(),
                                      AA.getAssignedStackSize()};
   return true;
 }
