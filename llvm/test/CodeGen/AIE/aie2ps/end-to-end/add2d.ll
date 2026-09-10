@@ -37,7 +37,7 @@ define dso_local void @add2d.for.body(i32 %unroll_iter, ptr addrspace(5) %0, ptr
 ; REMARKS-NEXT: Function:        add2d.for.body
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - String:          Schedule found
-; REMARKS-NEXT:   - Pipeliner:       ''
+; REMARKS-NEXT:   - Pipeliner:       loop-aware
 ; REMARKS-NEXT:   - II:              '34'
 ; REMARKS-NEXT:   - NS:              '1'
 ; REMARKS-NEXT:   - Loop:            bb.1.for.body
