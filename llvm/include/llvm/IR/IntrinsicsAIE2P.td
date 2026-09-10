@@ -101,13 +101,13 @@ class AIE2PAcc64V32I512I  : DefaultAttrsIntrinsic<[llvm_v32i64_ty],
 class AIE2PV16AccFloatToV16Bf : DefaultAttrsIntrinsic<[llvm_v16bf16_ty],
                                           [llvm_v16f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIE2PV16BfToV16AccFloat : Intrinsic<[llvm_v16f32_ty], [llvm_v16bf16_ty], [IntrNoMem]>;
+class AIE2PV16BfToV16AccFloat : DefaultAttrsIntrinsic<[llvm_v16f32_ty], [llvm_v16bf16_ty], [IntrNoMem]>;
 
 // v32accfloat to v32bfloat16
 class AIE2PV32AccFloatToV32Bf : DefaultAttrsIntrinsic<[llvm_v32bf16_ty],
                                           [llvm_v32f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIE2PV32BfToV32AccFloat : Intrinsic<[llvm_v32f32_ty], [llvm_v32bf16_ty], [IntrNoMem]>;
+class AIE2PV32BfToV32AccFloat : DefaultAttrsIntrinsic<[llvm_v32f32_ty], [llvm_v32bf16_ty], [IntrNoMem]>;
 
 // v16accfloat to v8float
 class AIE2PV16AccFloatToV8Float : DefaultAttrsIntrinsic<[llvm_v8f32_ty],
