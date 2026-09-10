@@ -65,7 +65,7 @@ define dso_local i32 @dot(ptr addrspace(6) nocapture readonly %a, ptr addrspace(
 ; PLAIN-NEXT: Function:        dot
 ; PLAIN-NEXT: Args:
 ; PLAIN-NEXT:   - String:          Schedule found
-; PLAIN-NEXT:   - Pipeliner:       ''
+; PLAIN-NEXT:   - Pipeliner:       loop-aware
 ; PLAIN-NEXT:   - II:              '11'
 ; PLAIN-NEXT:   - NS:              '1'
 ; PLAIN-NEXT:   - Loop:            bb.2.for.body

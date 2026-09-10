@@ -35,6 +35,8 @@ body:             |
   ; CONSERVATIVE-NEXT:   - PrologueBundles: '22'
   ; CONSERVATIVE-NEXT:   - Epilogue:        bb.4
   ; CONSERVATIVE-NEXT:   - EpilogueBundles: '15'
+  ; CONSERVATIVE-NEXT:   - VregMode:        Physical
+  ; CONSERVATIVE-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
   ; CONSERVATIVE-NEXT: ...
   ; OPTIMISTIC: --- !Passed
   ; OPTIMISTIC-NEXT: Pass:            pipeliner
@@ -50,6 +52,8 @@ body:             |
   ; OPTIMISTIC-NEXT:   - PrologueBundles: '22'
   ; OPTIMISTIC-NEXT:   - Epilogue:        bb.4
   ; OPTIMISTIC-NEXT:   - EpilogueBundles: '15'
+  ; OPTIMISTIC-NEXT:   - VregMode:        Physical
+  ; OPTIMISTIC-NEXT:   - SchedHeuristic:  Config_20_1_0_NodeNum
   ; OPTIMISTIC-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.3(0x30000000), %bb.1(0x50000000)

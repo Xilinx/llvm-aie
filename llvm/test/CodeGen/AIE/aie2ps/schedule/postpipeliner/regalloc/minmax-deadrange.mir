@@ -68,6 +68,9 @@ body:             |
   ; CHECK-NEXT:   - PrologueBundles: '8'
   ; CHECK-NEXT:   - Epilogue:        bb.2.exit
   ; CHECK-NEXT:   - EpilogueBundles: '8'
+  ; CHECK-NEXT:   - VregMode:        Virtual
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_10_1_0_NodeNum
+  ; CHECK-NEXT:   - AllocHeuristic:  scarce register class scoring
   ; CHECK-NEXT: ...
   bb.0.preheader:
     successors: %bb.1
