@@ -19,6 +19,8 @@
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "MCTargetDesc/aie2ps/AIE2PSMCTargetDesc.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/MC/MCRegister.h"
 using namespace llvm;
@@ -931,4 +933,12 @@ MVT AIEBaseTargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
     return MVT::i32;
 
   return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+}
+
+bool AIEBaseTargetLowering::mayBeEmittedAsTailCall(const CallInst *CI) const {
+  // Intrinsics are lowered away and never emit an actual call, so treating them
+  // as tail calls only leads to needless return duplication.
+  if (CI->getIntrinsicID() != Intrinsic::not_intrinsic)
+    return false;
+  return CI->isTailCall();
 }

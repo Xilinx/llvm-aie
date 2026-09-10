@@ -81,6 +81,8 @@ public:
                                             CallingConv::ID CC,
                                             EVT VT) const override;
 
+  bool mayBeEmittedAsTailCall(const CallInst *CI) const override;
+
 protected:
   bool isEligibleForTailCallOptimization(
       CCState &CCInfo, CallLoweringInfo &CLI, MachineFunction &MF,
