@@ -14,7 +14,7 @@
 define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %ofm, ptr nonnull align 64 dereferenceable(384) %conv2d_params, ptr noalias %psum_0_tdm, ptr noalias %psum_1_tdm) #0 {
 ; CHECK-LABEL: conv2d_outer_loop:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova dj0, #92; nopb ; nopxm ; nops
+; CHECK-NEXT:    mova dj0, #92; nopb ; nopxm
 ; CHECK-NEXT:    lda r4, [p3, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj1, #18
@@ -25,30 +25,24 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    mova r0, #-24; add r18, r4, r0
 ; CHECK-NEXT:    lshl r22, r18, r0
 ; CHECK-NEXT:    ltu r2, r2, r18
-; CHECK-NEXT:    paddxm [sp], #64; ltu r16, r22, r20
-; CHECK-NEXT:    lda.u8 r26, [p3, #7]; eq r24, r22, r20
+; CHECK-NEXT:    ltu r16, r22, r20
+; CHECK-NEXT:    lda.u8 r24, [p3, #7]; eq r26, r22, r20
 ; CHECK-NEXT:    mova r0, #0; and r27, r2, r16; mov r6, #3
 ; CHECK-NEXT:    mova r16, #1; sel.nez r2, r6, r0, r27
-; CHECK-NEXT:    st p6, [sp, #-64]; eq r26, r22, r16 // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #96; st p7, [sp, #-60]; lshl r28, r24, r16 // 4-byte Folded Spill
-; CHECK-NEXT:    mova m0, #-20; paddb [p3], m0; or r26, r28, r26; st r18, [p3, dj0]
-; CHECK-NEXT:    st.s8 r18, [p3], m0; add r2, r26, r2
-; CHECK-NEXT:    ne r26, r26, r16
-; CHECK-NEXT:    jnz r26, #.LBB0_2
+; CHECK-NEXT:    paddxm [sp], #64; eq r24, r22, r16
+; CHECK-NEXT:    st p6, [sp, #-64]; lshl r28, r26, r16 // 4-byte Folded Spill
+; CHECK-NEXT:    mova m0, #96; st p7, [sp, #-60]; or r24, r28, r24 // 4-byte Folded Spill
+; CHECK-NEXT:    mova m0, #-20; paddb [p3], m0; add r2, r24, r2; st r18, [p3, dj0]
+; CHECK-NEXT:    st.s8 r18, [p3], m0; eq r24, r24, r16
+; CHECK-NEXT:    and r30, r24, r26
+; CHECK-NEXT:    jnz r30, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    ltu r27, r16, r20 // Delay Slot 4
-; CHECK-NEXT:    sel.nez r18, r2, r0, r27 // Delay Slot 3
-; CHECK-NEXT:    ltu r28, r16, r18; mov r7, r8 // Delay Slot 2
-; CHECK-NEXT:    mova r2, #5; st r28, [p3, #0]; or r17, r10, r10; mov r19, r12 // Delay Slot 1
-; CHECK-NEXT:  // %bb.1: // %entry
-; CHECK-NEXT:    jnz r24, #.LBB0_3
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mova r26, #3; movx r28, #1 // Delay Slot 1
-; CHECK-NEXT:  .LBB0_2: // %if.else.i
-; CHECK-NEXT:    mova dj0, #-48; nopx
+; CHECK-NEXT:    ltu r27, r16, r20; mov r7, r8 // Delay Slot 4
+; CHECK-NEXT:    sel.nez r18, r2, r0, r27; mov r17, r10 // Delay Slot 3
+; CHECK-NEXT:    ltu r28, r16, r18; mov r19, r12 // Delay Slot 2
+; CHECK-NEXT:    mova r26, #3; st r28, [p3, #0]; movx r24, #1; mov r2, #5 // Delay Slot 1
+; CHECK-NEXT:  // %bb.1: // %if.else.i
+; CHECK-NEXT:    mova dj0, #-48
 ; CHECK-NEXT:    lda.s8 r24, [p3, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -65,41 +59,41 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    mova r28, #4; and r26, r28, r26
 ; CHECK-NEXT:    lshl r24, r24, r28
 ; CHECK-NEXT:    and r27, r30, r26
-; CHECK-NEXT:    and r26, r18, r2
-; CHECK-NEXT:    sel.nez r24, r24, r0, r27
-; CHECK-NEXT:    nez r28, r26
-; CHECK-NEXT:    or r26, r24, r18
-; CHECK-NEXT:  .LBB0_3: // %if.end.i
+; CHECK-NEXT:    sel.nez r26, r24, r0, r27
+; CHECK-NEXT:    and r24, r18, r2
+; CHECK-NEXT:    nez r24, r24
+; CHECK-NEXT:    or r26, r26, r18
+; CHECK-NEXT:  .LBB0_2: // %if.end.i
 ; CHECK-NEXT:    mova m0, #4; nopx
 ; CHECK-NEXT:    padda [p3], m0; ne r20, r22, r20
-; CHECK-NEXT:    st r28, [p3], #24; jnz r20, #.LBB0_5
+; CHECK-NEXT:    st r24, [p3], #24; jnz r20, #.LBB0_4
 ; CHECK-NEXT:    st.s8 r26, [p3, #0] // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  // %bb.4: // %if.then87.i
+; CHECK-NEXT:  // %bb.3: // %if.then87.i
 ; CHECK-NEXT:    movxm r20, #16777215
 ; CHECK-NEXT:    and r4, r4, r20
 ; CHECK-NEXT:    st r4, [p3, #-12]
-; CHECK-NEXT:  .LBB0_5: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
+; CHECK-NEXT:  .LBB0_4: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
 ; CHECK-NEXT:    nopa ; nopb ; extend.u8 r4, r26; nopm ; nops
 ; CHECK-NEXT:    eq r6, r4, r6
-; CHECK-NEXT:    jnz r6, #.LBB0_7
+; CHECK-NEXT:    jnz r6, #.LBB0_6
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova m0, #-20 // Delay Slot 4
 ; CHECK-NEXT:    mova m0, #36; paddb [p3], m0 // Delay Slot 3
 ; CHECK-NEXT:    lda r20, [p3], m0 // Delay Slot 2
 ; CHECK-NEXT:    lda r24, [p3, #0] // Delay Slot 1
-; CHECK-NEXT:  // %bb.6: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
+; CHECK-NEXT:  // %bb.5: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
 ; CHECK-NEXT:    ne r4, r4, r16
-; CHECK-NEXT:    jnz r4, #.LBB0_11
+; CHECK-NEXT:    jnz r4, #.LBB0_10
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB0_7: // %sw.bb14
+; CHECK-NEXT:  .LBB0_6: // %sw.bb14
 ; CHECK-NEXT:    mova m0, #-8; nopxm
 ; CHECK-NEXT:    mova m0, #-104; paddb [p3], m0
 ; CHECK-NEXT:    lda r4, [p3], m0
@@ -133,9 +127,9 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    mova r16, #16; movs p2, p1; add r18, r26, #-1; mov r30, #63
 ; CHECK-NEXT:    padda [p2], m3; movs dc0, dc3; or r24, r0, r0; mov m3, r28
 ; CHECK-NEXT:    lda dj6, [p3, #0]; movs p3, p4; or r12, r8, r5; mov s1, r1
-; CHECK-NEXT:  .LBB0_8: // %for.body.i68
+; CHECK-NEXT:  .LBB0_7: // %for.body.i68
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
-; CHECK-NEXT:    // Child Loop BB0_9 Depth 2
+; CHECK-NEXT:    // Child Loop BB0_8 Depth 2
 ; CHECK-NEXT:    nopa ; vldb x1, [p1, #64]; nops ; nopx ; mov r0, dc6; nopv
 ; CHECK-NEXT:    vlda x10, [p1, #0]; vldb.popx x4, [p0, lf0, r24]; lshl r0, r0, r2; mov dc4, dc3; nops
 ; CHECK-NEXT:    vlda.pop.3d x6, [p0, lf0, r24, d0]; or r20, r0, r16; mov dj3, r0
@@ -147,21 +141,21 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p6], #64; vldb.popx x10, [p0, lf0, r24]; mov p7, p1
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; add.nc lc, r18, #-6; vshuffle x2, x4, x6, r6; vmul dm2, x0, x2, r10
-; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; movxm ls, #.LBB0_9; vmul dm3, x0, x8, r10
+; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; movxm ls, #.LBB0_8; vmul dm3, x0, x8, r10
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; movxm le, #.L_LEnd0; vaddmac dm1, dm1, dm2, x2, x10, r12
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; vaddmac dm0, dm0, dm3, x2, x1, r12
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r6; nopv
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; nopv
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
-; CHECK-NEXT:  .LBB0_9: // %for.body55.i82
-; CHECK-NEXT:    // Parent Loop BB0_8 Depth=1
+; CHECK-NEXT:  .LBB0_8: // %for.body55.i82
+; CHECK-NEXT:    // Parent Loop BB0_7 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
 ; CHECK-NEXT:    vlda x4, [p7, #192]; vldb.popx x10, [p0, lf0, r24]; padds [p7], #128; nopxm ; vmac dm0, dm0, x2, x4, r8
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda x6, [p7, #128]; vldb.pop.3d x8, [p0, lf0, r24, d0]; nops ; nopx ; vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
-; CHECK-NEXT:  // %bb.10: // %for.cond.cleanup54.i89
-; CHECK-NEXT:    // in Loop: Header=BB0_8 Depth=1
+; CHECK-NEXT:  // %bb.9: // %for.cond.cleanup54.i89
+; CHECK-NEXT:    // in Loop: Header=BB0_7 Depth=1
 ; CHECK-NEXT:    vlda x4, [p7, #192]; paddb [p1], m3; add r4, r4, #-1; padds [p7], #128; vmac dm0, dm0, x2, x4, r8
 ; CHECK-NEXT:    vlda x6, [p7, #128]; paddb.3d [p1], d2; padds.3d [p0], d1; nopx ; vshuffle x2, x10, x8, r6; vmac dm1, dm1, x2, x6, r8
 ; CHECK-NEXT:    vlda x4, [p7, #192]; padds [p7], #128; vmac dm0, dm0, x2, x4, r8
@@ -175,13 +169,13 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    vmac dm0, dm0, x2, x4, r8
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    jnz r4, #.LBB0_8
+; CHECK-NEXT:    jnz r4, #.LBB0_7
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vst.srs.2x cml1, s1, srssign1, [p3], #64 // Delay Slot 4
 ; CHECK-NEXT:    vst.srs.2x cml0, s1, srssign1, [p5], #64 // Delay Slot 3
 ; CHECK-NEXT:    vst.srs.2x cmh1, s1, srssign1, [p3], #64 // Delay Slot 2
 ; CHECK-NEXT:    vst.srs.2x cmh0, s1, srssign1, [p5], #64 // Delay Slot 1
-; CHECK-NEXT:  .LBB0_11: // %sw.epilog
+; CHECK-NEXT:  .LBB0_10: // %sw.epilog
 ; CHECK-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-64] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
