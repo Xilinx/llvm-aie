@@ -59,6 +59,8 @@ define dso_local void @loop_4_biased_conv_mx6x6_ebs16_unroll_impl_s2_accumulate(
 ; REMARKS-NEXT:   - PrologueBundles: '29'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup81.i
 ; REMARKS-NEXT:   - EpilogueBundles: '27'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_32_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: loop_4_biased_conv_mx6x6_ebs16_unroll_impl_s2_accumulate:
 ; ASM:       // %bb.0: // %newFuncRoot

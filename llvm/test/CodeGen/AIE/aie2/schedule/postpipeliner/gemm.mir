@@ -77,6 +77,9 @@ body:             |
   ; CHECK-NEXT:   - PrologueBundles: '20'
   ; CHECK-NEXT:   - Epilogue:        bb.4.for.cond.cleanup
   ; CHECK-NEXT:   - EpilogueBundles: '40'
+  ; CHECK-NEXT:   - VregMode:        Virtual
+  ; CHECK-NEXT:   - SchedHeuristic:  Config_51_0_0_NodeNum
+  ; CHECK-NEXT:   - AllocHeuristic:  scarce register class scoring
   ; CHECK-NEXT: ...
   bb.0.entry (align 16):
     successors: %bb.1(0x50000000), %bb.3(0x30000000)
