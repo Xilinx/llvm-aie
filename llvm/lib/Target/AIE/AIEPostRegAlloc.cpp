@@ -557,7 +557,8 @@ void AIEPostRegAlloc::dumpVRegMetrics(
 bool AIEPostRegAlloc::allocate(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex, int II,
     const RegLiveRangeTracker &RegTracker, const TargetRegisterInfo &TRI,
-    DenseMap<Register, MCRegister> &OutAssign) {
+    DenseMap<Register, MCRegister> &OutAssign,
+    std::string &OutWinningStrategyName) {
 
   LLVM_DEBUG(dbgs() << "AIEPostRegAlloc::allocate for "
                     << LiveLanesByLRIndex.size() << " live ranges, II=" << II
@@ -613,6 +614,7 @@ bool AIEPostRegAlloc::allocate(
                                      State, Strategy.ScoreFn, OutAssign);
 
     if (Result) {
+      OutWinningStrategyName = Strategy.Name;
       LLVM_DEBUG(dbgs() << "Allocation succeeded with " << Strategy.Name
                         << "\n");
       return true;

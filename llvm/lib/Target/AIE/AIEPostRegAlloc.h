@@ -197,12 +197,15 @@ public:
   /// \param RegTracker RegLiveRangeTracker providing register information.
   /// \param TRI Target register info.
   /// \param OutAssign Output map from virtual to physical registers.
+  /// \param OutWinningStrategyName Updated before each scoring attempt; holds
+  ///        the name of the scoring strategy that succeeded on return.
   /// \return True if allocation succeeded, false if no solution found.
   static bool
   allocate(const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
            int II, const RegLiveRangeTracker &RegTracker,
            const TargetRegisterInfo &TRI,
-           DenseMap<Register, MCRegister> &OutAssign);
+           DenseMap<Register /*VReg*/, MCRegister /*Phys*/> &OutAssign,
+           std::string &OutWinningStrategyName);
 
 private:
   /// Try to allocate using a specific scoring function for ordering.

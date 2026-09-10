@@ -363,14 +363,16 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
 }
 
 /// Emit a loop scheduling optimization remark with pipeliner kind, II, NS,
-/// loop name, and prologue/epilogue MBB names and bundle counts.
-static void emitPipelinerRemark(MachineOptimizationRemarkEmitter &More,
-                                const char *Pipeliner,
-                                MachineBasicBlock *LoopBB, int II, unsigned NS,
-                                const BlockState *PrologueBS,
-                                unsigned PrologueBundles,
-                                const BlockState *EpilogueBS,
-                                unsigned EpilogueBundles) {
+/// loop name, prologue/epilogue MBB names and bundle counts, and optional
+/// scheduling and register-allocation heuristic names.
+static void
+emitPipelinerRemark(MachineOptimizationRemarkEmitter &More,
+                    const char *Pipeliner, MachineBasicBlock *LoopBB, int II,
+                    unsigned NS, const BlockState *PrologueBS,
+                    unsigned PrologueBundles, const BlockState *EpilogueBS,
+                    unsigned EpilogueBundles, StringRef VregMode = {},
+                    StringRef SchedHeuristic = {},
+                    StringRef AllocHeuristic = {}) {
   const auto DbgLoc = LoopBB->begin()->getDebugLoc();
   auto MBBLabel = [](const MachineBasicBlock *MBB) {
     // return "bb.<N>.<irname>" when an IR name is present, or "bb.<N>".
@@ -390,6 +392,12 @@ static void emitPipelinerRemark(MachineOptimizationRemarkEmitter &More,
     if (EpilogueBS)
       R << ore::NV("Epilogue", MBBLabel(EpilogueBS->TheBlock))
         << ore::NV("EpilogueBundles", EpilogueBundles);
+    if (!VregMode.empty())
+      R << ore::NV("VregMode", VregMode);
+    if (!SchedHeuristic.empty())
+      R << ore::NV("SchedHeuristic", SchedHeuristic);
+    if (!AllocHeuristic.empty())
+      R << ore::NV("AllocHeuristic", AllocHeuristic);
     return R;
   });
 }
@@ -434,19 +442,30 @@ void InterBlockScheduling::emitLoopRemarks() {
     // we keep the field name "II" for tooling compatibility.
     int II = BS.getScheduleLength();
     unsigned NS = 1;
+    StringRef VregMode;
+    StringRef SchedHeuristic;
+    StringRef AllocHeuristic;
     if (BS.isPipelined()) {
       Pipeliner = "postpipeliner";
       const auto &SWP = BS.getPostSWP();
       II = SWP.getII();
       NS = SWP.getStageCount();
+      VregMode = getPostPipelinerModeName(SWP.getMode());
+      SchedHeuristic = SWP.getStrategyName();
+      AllocHeuristic = SWP.getAllocStrategyName();
     } else if (auto SWP_NS = AIELoopUtils::getSWPStageCount(*LoopBB, *TII)) {
       Pipeliner = "prepipeliner";
       NS = *SWP_NS;
     }
+    // A loop scheduled with loop-aware scheduling but not pipelined has NS=1
+    // and II equal to the loop body length.
+    if (!Pipeliner)
+      Pipeliner = "loop-aware";
 
     emitPipelinerRemark(More, Pipeliner, LoopBB, II, NS, &PrologueBS,
                         PrologueBS.getScheduleLength(), &EpilogueBS,
-                        EpilogueBS.getScheduleLength());
+                        EpilogueBS.getScheduleLength(), VregMode,
+                        SchedHeuristic, AllocHeuristic);
   }
 }
 
