@@ -107,7 +107,6 @@ v64int8 test_get_scd_v64int8(int en) { return get_scd_v64int8(en); }
 //
 v64uint8 test_get_scd_v64uint8(int en) { return get_scd_v64uint8(en); }
 
-//
 // AIE2P-LABEL: @_Z21test_get_scd_v32int16i(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2p.scd.read.vec(i32 [[EN:%.*]])
@@ -148,7 +147,6 @@ v32uint16 test_get_scd_v32uint16(int en) { return get_scd_v32uint16(en); }
 //
 v16int32 test_get_scd_v16int32(int en) { return get_scd_v16int32(en); }
 
-//
 // AIE2P-LABEL: @_Z22test_get_scd_v16uint32i(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.scd.read.vec(i32 [[EN:%.*]])
@@ -161,6 +159,7 @@ v16int32 test_get_scd_v16int32(int en) { return get_scd_v16int32(en); }
 //
 v16uint32 test_get_scd_v16uint32(int en) { return get_scd_v16uint32(en); }
 
+//
 // AIE2P-LABEL: @_Z24test_get_scd_v32bfloat16i(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2p.scd.read.vec(i32 [[EN:%.*]])
@@ -175,6 +174,7 @@ v16uint32 test_get_scd_v16uint32(int en) { return get_scd_v16uint32(en); }
 //
 v32bfloat16 test_get_scd_v32bfloat16(int en) { return get_scd_v32bfloat16(en); }
 
+//
 // AIE2P-LABEL: @_Z21test_get_scd_v16acc32v(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.scd.read.acc32(i32 1)
@@ -285,7 +285,6 @@ v64uint8 test_get_scd_v64uint8() { return get_scd_v64uint8(); }
 //
 v32int16 test_get_scd_v32int16() { return get_scd_v32int16(); }
 
-//
 // AIE2P-LABEL: @_Z22test_get_scd_v32uint16v(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2p.scd.read.vec(i32 1)
@@ -808,7 +807,6 @@ v16acc64 test_get_scd_v16acc64_lo() { return get_scd_v16acc64_lo(); }
 //
 v16acc64 test_get_scd_v16acc64_hi() { return get_scd_v16acc64_hi(); }
 
-//
 // AIE2P-LABEL: @_Z12test_put_mcdDv16_u7__acc32i(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x i32> [[A:%.*]] to <8 x i64>
@@ -823,7 +821,6 @@ v16acc64 test_get_scd_v16acc64_hi() { return get_scd_v16acc64_hi(); }
 //
 void test_put_mcd(v16acc32 a, int en) { put_mcd(a, en); }
 
-//
 // AIE2P-LABEL: @_Z12test_put_mcdDv8_u7__acc64i(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    tail call void @llvm.aie2p.mcd.write.acc32(<8 x i64> [[A:%.*]], i32 [[EN:%.*]])
@@ -1554,16 +1551,16 @@ void test_put_ms(int val) { put_ms(val); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[VAL:%.*]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2:![0-9]+]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2:![0-9]+]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbiiRb(
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[VAL:%.*]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2:![0-9]+]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2:![0-9]+]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(int val, int tlast, bool &success) {
@@ -1574,16 +1571,16 @@ void test_put_ms_nb(int val, int tlast, bool &success) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[VAL:%.*]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbiRb(
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[VAL:%.*]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(int val, bool &success) { put_ms_nb(val, success); }
@@ -1616,16 +1613,16 @@ void test_put_ms(unsigned int val) { put_ms(val); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[VAL:%.*]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbjiRb(
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[VAL:%.*]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(unsigned int val, int tlast, bool &success) {
@@ -1636,16 +1633,16 @@ void test_put_ms_nb(unsigned int val, int tlast, bool &success) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[VAL:%.*]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbjRb(
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[VAL:%.*]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP0]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(unsigned int val, bool &success) {
@@ -1685,8 +1682,8 @@ void test_put_ms(v8int4 val) { put_ms(val); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_DB8_iRb(
@@ -1694,8 +1691,8 @@ void test_put_ms(v8int4 val) { put_ms(val); }
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v8int4 val, int tlast, bool &success) {
@@ -1707,8 +1704,8 @@ void test_put_ms_nb(v8int4 val, int tlast, bool &success) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_DB8_Rb(
@@ -1716,8 +1713,8 @@ void test_put_ms_nb(v8int4 val, int tlast, bool &success) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v8int4 val, bool &success) { put_ms_nb(val, success); }
@@ -1755,8 +1752,8 @@ void test_put_ms(v8uint4 val) { put_ms(val); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_DU8_iRb(
@@ -1764,8 +1761,8 @@ void test_put_ms(v8uint4 val) { put_ms(val); }
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v8uint4 val, int tlast, bool &success) {
@@ -1777,8 +1774,8 @@ void test_put_ms_nb(v8uint4 val, int tlast, bool &success) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_DU8_Rb(
@@ -1786,8 +1783,8 @@ void test_put_ms_nb(v8uint4 val, int tlast, bool &success) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v8uint4 val, bool &success) { put_ms_nb(val, success); }
@@ -1825,8 +1822,8 @@ void test_put_ms(v4int8 val) { put_ms(val); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_aiRb(
@@ -1834,8 +1831,8 @@ void test_put_ms(v4int8 val) { put_ms(val); }
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v4int8 val, int tlast, bool &success) {
@@ -1847,8 +1844,8 @@ void test_put_ms_nb(v4int8 val, int tlast, bool &success) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_aRb(
@@ -1856,8 +1853,8 @@ void test_put_ms_nb(v4int8 val, int tlast, bool &success) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v4int8 val, bool &success) { put_ms_nb(val, success); }
@@ -1895,8 +1892,8 @@ void test_put_ms(v4uint8 val) { put_ms(val); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_hiRb(
@@ -1904,8 +1901,8 @@ void test_put_ms(v4uint8 val) { put_ms(val); }
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v4uint8 val, int tlast, bool &success) {
@@ -1917,8 +1914,8 @@ void test_put_ms_nb(v4uint8 val, int tlast, bool &success) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv4_hRb(
@@ -1926,8 +1923,8 @@ void test_put_ms_nb(v4uint8 val, int tlast, bool &success) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v4uint8 val, bool &success) { put_ms_nb(val, success); }
@@ -1965,8 +1962,8 @@ void test_put_ms(v2int16 val) { put_ms(val); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv2_siRb(
@@ -1974,8 +1971,8 @@ void test_put_ms(v2int16 val) { put_ms(val); }
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v2int16 val, int tlast, bool &success) {
@@ -1987,8 +1984,8 @@ void test_put_ms_nb(v2int16 val, int tlast, bool &success) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv2_sRb(
@@ -1996,8 +1993,8 @@ void test_put_ms_nb(v2int16 val, int tlast, bool &success) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v2int16 val, bool &success) { put_ms_nb(val, success); }
@@ -2035,8 +2032,8 @@ void test_put_ms(v2uint16 val) { put_ms(val); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv2_tiRb(
@@ -2044,8 +2041,8 @@ void test_put_ms(v2uint16 val) { put_ms(val); }
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST:%.*]])
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v2uint16 val, int tlast, bool &success) {
@@ -2057,8 +2054,8 @@ void test_put_ms_nb(v2uint16 val, int tlast, bool &success) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2p.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2P-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret void
 //
 // AIE2PS-LABEL: @_Z14test_put_ms_nbDv2_tRb(
@@ -2066,8 +2063,8 @@ void test_put_ms_nb(v2uint16 val, int tlast, bool &success) {
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[VAL:%.*]] to i32
 // AIE2PS-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
 // AIE2PS-NEXT:    [[TOBOOL_I:%.*]] = icmp ne i32 [[TMP1]], 0
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = zext i1 [[TOBOOL_I]] to i8
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret void
 //
 void test_put_ms_nb(v2uint16 val, bool &success) { put_ms_nb(val, success); }
@@ -4961,8 +4958,8 @@ int test_get_ss() { return get_ss(); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z11test_get_ssRb(
@@ -4971,8 +4968,8 @@ int test_get_ss() { return get_ss(); }
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 int test_get_ss(bool &tlast) { return get_ss(tlast); }
@@ -4984,8 +4981,8 @@ int test_get_ss(bool &tlast) { return get_ss(tlast); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z14test_get_ss_nbRb(
@@ -4995,8 +4992,8 @@ int test_get_ss(bool &tlast) { return get_ss(tlast); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 int test_get_ss_nb(bool &success) { return get_ss_nb(success); }
@@ -5007,11 +5004,11 @@ int test_get_ss_nb(bool &success) { return get_ss_nb(success); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z14test_get_ss_nbRbS_(
@@ -5020,11 +5017,11 @@ int test_get_ss_nb(bool &success) { return get_ss_nb(success); }
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 int test_get_ss_nb(bool &success, bool &tlast) {
@@ -5051,8 +5048,8 @@ int test_get_ss_int() { return get_ss_int(); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z15test_get_ss_intRb(
@@ -5061,8 +5058,8 @@ int test_get_ss_int() { return get_ss_int(); }
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 int test_get_ss_int(bool &tlast) { return get_ss_int(tlast); }
@@ -5074,8 +5071,8 @@ int test_get_ss_int(bool &tlast) { return get_ss_int(tlast); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z18test_get_ss_nb_intRb(
@@ -5085,8 +5082,8 @@ int test_get_ss_int(bool &tlast) { return get_ss_int(tlast); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 int test_get_ss_nb_int(bool &success) { return get_ss_nb_int(success); }
@@ -5097,11 +5094,11 @@ int test_get_ss_nb_int(bool &success) { return get_ss_nb_int(success); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z18test_get_ss_nb_intRbS_(
@@ -5110,11 +5107,11 @@ int test_get_ss_nb_int(bool &success) { return get_ss_nb_int(success); }
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 int test_get_ss_nb_int(bool &success, bool &tlast) {
@@ -5141,8 +5138,8 @@ unsigned int test_get_ss_uint() { return get_ss_uint(); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z16test_get_ss_uintRb(
@@ -5151,8 +5148,8 @@ unsigned int test_get_ss_uint() { return get_ss_uint(); }
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 unsigned int test_get_ss_uint(bool &tlast) { return get_ss_uint(tlast); }
@@ -5164,8 +5161,8 @@ unsigned int test_get_ss_uint(bool &tlast) { return get_ss_uint(tlast); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z19test_get_ss_nb_uintRb(
@@ -5175,8 +5172,8 @@ unsigned int test_get_ss_uint(bool &tlast) { return get_ss_uint(tlast); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 unsigned int test_get_ss_nb_uint(bool &success) {
@@ -5189,11 +5186,11 @@ unsigned int test_get_ss_nb_uint(bool &success) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret i32 [[TMP2]]
 //
 // AIE2PS-LABEL: @_Z19test_get_ss_nb_uintRbS_(
@@ -5202,11 +5199,11 @@ unsigned int test_get_ss_nb_uint(bool &success) {
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP3]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP3]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP4:%.*]] = lshr i8 [[TMP3]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 unsigned int test_get_ss_nb_uint(bool &success, bool &tlast) {
@@ -5236,8 +5233,8 @@ v8int4 test_get_ss_v8int4() { return get_ss_v8int4(); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z18test_get_ss_v8int4Rb(
@@ -5247,8 +5244,8 @@ v8int4 test_get_ss_v8int4() { return get_ss_v8int4(); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v8int4 test_get_ss_v8int4(bool &tlast) { return get_ss_v8int4(tlast); }
@@ -5261,8 +5258,8 @@ v8int4 test_get_ss_v8int4(bool &tlast) { return get_ss_v8int4(tlast); }
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z21test_get_ss_nb_v8int4Rb(
@@ -5273,8 +5270,8 @@ v8int4 test_get_ss_v8int4(bool &tlast) { return get_ss_v8int4(tlast); }
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v8int4 test_get_ss_nb_v8int4(bool &success) {
@@ -5288,11 +5285,11 @@ v8int4 test_get_ss_nb_v8int4(bool &success) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z21test_get_ss_nb_v8int4RbS_(
@@ -5302,11 +5299,11 @@ v8int4 test_get_ss_nb_v8int4(bool &success) {
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v8int4 test_get_ss_nb_v8int4(bool &success, bool &tlast) {
@@ -5336,8 +5333,8 @@ v8uint4 test_get_ss_v8uint4() { return get_ss_v8uint4(); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z19test_get_ss_v8uint4Rb(
@@ -5347,8 +5344,8 @@ v8uint4 test_get_ss_v8uint4() { return get_ss_v8uint4(); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v8uint4 test_get_ss_v8uint4(bool &tlast) { return get_ss_v8uint4(tlast); }
@@ -5361,8 +5358,8 @@ v8uint4 test_get_ss_v8uint4(bool &tlast) { return get_ss_v8uint4(tlast); }
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z22test_get_ss_nb_v8uint4Rb(
@@ -5373,8 +5370,8 @@ v8uint4 test_get_ss_v8uint4(bool &tlast) { return get_ss_v8uint4(tlast); }
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v8uint4 test_get_ss_nb_v8uint4(bool &success) {
@@ -5388,11 +5385,11 @@ v8uint4 test_get_ss_nb_v8uint4(bool &success) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z22test_get_ss_nb_v8uint4RbS_(
@@ -5402,11 +5399,11 @@ v8uint4 test_get_ss_nb_v8uint4(bool &success) {
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v8uint4 test_get_ss_nb_v8uint4(bool &success, bool &tlast) {
@@ -5436,8 +5433,8 @@ v4int8 test_get_ss_v4int8() { return get_ss_v4int8(); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z18test_get_ss_v4int8Rb(
@@ -5447,8 +5444,8 @@ v4int8 test_get_ss_v4int8() { return get_ss_v4int8(); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v4int8 test_get_ss_v4int8(bool &tlast) { return get_ss_v4int8(tlast); }
@@ -5461,8 +5458,8 @@ v4int8 test_get_ss_v4int8(bool &tlast) { return get_ss_v4int8(tlast); }
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z21test_get_ss_nb_v4int8Rb(
@@ -5473,8 +5470,8 @@ v4int8 test_get_ss_v4int8(bool &tlast) { return get_ss_v4int8(tlast); }
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v4int8 test_get_ss_nb_v4int8(bool &success) {
@@ -5488,11 +5485,11 @@ v4int8 test_get_ss_nb_v4int8(bool &success) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z21test_get_ss_nb_v4int8RbS_(
@@ -5502,11 +5499,11 @@ v4int8 test_get_ss_nb_v4int8(bool &success) {
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v4int8 test_get_ss_nb_v4int8(bool &success, bool &tlast) {
@@ -5536,8 +5533,8 @@ v4uint8 test_get_ss_v4uint8() { return get_ss_v4uint8(); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z19test_get_ss_v4uint8Rb(
@@ -5547,8 +5544,8 @@ v4uint8 test_get_ss_v4uint8() { return get_ss_v4uint8(); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v4uint8 test_get_ss_v4uint8(bool &tlast) { return get_ss_v4uint8(tlast); }
@@ -5561,8 +5558,8 @@ v4uint8 test_get_ss_v4uint8(bool &tlast) { return get_ss_v4uint8(tlast); }
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z22test_get_ss_nb_v4uint8Rb(
@@ -5573,8 +5570,8 @@ v4uint8 test_get_ss_v4uint8(bool &tlast) { return get_ss_v4uint8(tlast); }
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v4uint8 test_get_ss_nb_v4uint8(bool &success) {
@@ -5588,11 +5585,11 @@ v4uint8 test_get_ss_nb_v4uint8(bool &success) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <4 x i8> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z22test_get_ss_nb_v4uint8RbS_(
@@ -5602,11 +5599,11 @@ v4uint8 test_get_ss_nb_v4uint8(bool &success) {
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <4 x i8>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <4 x i8> [[TMP3]]
 //
 v4uint8 test_get_ss_nb_v4uint8(bool &success, bool &tlast) {
@@ -5636,8 +5633,8 @@ v2int16 test_get_ss_v2int16() { return get_ss_v2int16(); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <2 x i16> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z19test_get_ss_v2int16Rb(
@@ -5647,8 +5644,8 @@ v2int16 test_get_ss_v2int16() { return get_ss_v2int16(); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <2 x i16> [[TMP3]]
 //
 v2int16 test_get_ss_v2int16(bool &tlast) { return get_ss_v2int16(tlast); }
@@ -5661,8 +5658,8 @@ v2int16 test_get_ss_v2int16(bool &tlast) { return get_ss_v2int16(tlast); }
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <2 x i16> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z22test_get_ss_nb_v2int16Rb(
@@ -5673,8 +5670,8 @@ v2int16 test_get_ss_v2int16(bool &tlast) { return get_ss_v2int16(tlast); }
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <2 x i16> [[TMP3]]
 //
 v2int16 test_get_ss_nb_v2int16(bool &success) {
@@ -5688,11 +5685,11 @@ v2int16 test_get_ss_nb_v2int16(bool &success) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <2 x i16> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z22test_get_ss_nb_v2int16RbS_(
@@ -5702,11 +5699,11 @@ v2int16 test_get_ss_nb_v2int16(bool &success) {
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <2 x i16> [[TMP3]]
 //
 v2int16 test_get_ss_nb_v2int16(bool &success, bool &tlast) {
@@ -5736,8 +5733,8 @@ v2uint16 test_get_ss_v2uint16() { return get_ss_v2uint16(); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <2 x i16> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z20test_get_ss_v2uint16Rb(
@@ -5747,8 +5744,8 @@ v2uint16 test_get_ss_v2uint16() { return get_ss_v2uint16(); }
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <2 x i16> [[TMP3]]
 //
 v2uint16 test_get_ss_v2uint16(bool &tlast) { return get_ss_v2uint16(tlast); }
@@ -5761,8 +5758,8 @@ v2uint16 test_get_ss_v2uint16(bool &tlast) { return get_ss_v2uint16(tlast); }
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <2 x i16> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z23test_get_ss_nb_v2uint16Rb(
@@ -5773,8 +5770,8 @@ v2uint16 test_get_ss_v2uint16(bool &tlast) { return get_ss_v2uint16(tlast); }
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <2 x i16> [[TMP3]]
 //
 v2uint16 test_get_ss_nb_v2uint16(bool &success) {
@@ -5788,11 +5785,11 @@ v2uint16 test_get_ss_nb_v2uint16(bool &success) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2P-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2P-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2P-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2P-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2P-NEXT:    ret <2 x i16> [[TMP3]]
 //
 // AIE2PS-LABEL: @_Z23test_get_ss_nb_v2uint16RbS_(
@@ -5802,11 +5799,11 @@ v2uint16 test_get_ss_nb_v2uint16(bool &success) {
 // AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP0]], 0
 // AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast i32 [[TMP2]] to <2 x i16>
 // AIE2PS-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP1]] to i8
-// AIE2PS-NEXT:    [[FROMBOOL_I:%.*]] = and i8 [[TMP4]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV_I:%.*]] = and i8 [[TMP4]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV_I]], ptr [[TLAST:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    [[TMP5:%.*]] = lshr i8 [[TMP4]], 1
-// AIE2PS-NEXT:    [[FROMBOOL3_I:%.*]] = and i8 [[TMP5]], 1
-// AIE2PS-NEXT:    store i8 [[FROMBOOL3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    [[STOREDV3_I:%.*]] = and i8 [[TMP5]], 1
+// AIE2PS-NEXT:    store i8 [[STOREDV3_I]], ptr [[SUCCESS:%.*]], align 1, !tbaa [[TBAA2]]
 // AIE2PS-NEXT:    ret <2 x i16> [[TMP3]]
 //
 v2uint16 test_get_ss_nb_v2uint16(bool &success, bool &tlast) {
@@ -9956,50 +9953,46 @@ v64acc32 test_get_scd_expand_v64acc32(int en, int pos) {
 }
 // AIE2P-LABEL: @_Z33test_get_scd_expand_v32acc32_incriRi(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = load i20, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6:![0-9]+]]
-// AIE2P-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[TMP0]] to ptr
-// AIE2P-NEXT:    [[TMP2:%.*]] = tail call { <16 x i64>, i32 } @llvm.aie2p.scd.expand.ACC1024.incr(i32 [[EN:%.*]], ptr [[TMP1]])
-// AIE2P-NEXT:    [[TMP3:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP2]], 1
-// AIE2P-NEXT:    store i32 [[TMP3]], ptr [[POS]], align 4
-// AIE2P-NEXT:    [[TMP4:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP2]], 0
-// AIE2P-NEXT:    [[TMP5:%.*]] = bitcast <16 x i64> [[TMP4]] to <32 x i32>
-// AIE2P-NEXT:    ret <32 x i32> [[TMP5]]
+// AIE2P-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6:![0-9]+]]
+// AIE2P-NEXT:    [[TMP1:%.*]] = tail call { <16 x i64>, i32 } @llvm.aie2p.scd.expand.ACC1024.incr(i32 [[EN:%.*]], ptr [[TMP0]])
+// AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP1]], 1
+// AIE2P-NEXT:    store i32 [[TMP2]], ptr [[POS]], align 4
+// AIE2P-NEXT:    [[TMP3:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP1]], 0
+// AIE2P-NEXT:    [[TMP4:%.*]] = bitcast <16 x i64> [[TMP3]] to <32 x i32>
+// AIE2P-NEXT:    ret <32 x i32> [[TMP4]]
 //
 // AIE2PS-LABEL: @_Z33test_get_scd_expand_v32acc32_incriRi(
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load i20, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6:![0-9]+]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[TMP0]] to ptr
-// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <16 x i64>, i32 } @llvm.aie2ps.scd.expand.ACC1024.incr(i32 [[EN:%.*]], ptr [[TMP1]])
-// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP2]], 1
-// AIE2PS-NEXT:    store i32 [[TMP3]], ptr [[POS]], align 4
-// AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP2]], 0
-// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <16 x i64> [[TMP4]] to <32 x i32>
-// AIE2PS-NEXT:    ret <32 x i32> [[TMP5]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6:![0-9]+]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call { <16 x i64>, i32 } @llvm.aie2ps.scd.expand.ACC1024.incr(i32 [[EN:%.*]], ptr [[TMP0]])
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP1]], 1
+// AIE2PS-NEXT:    store i32 [[TMP2]], ptr [[POS]], align 4
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <16 x i64>, i32 } [[TMP1]], 0
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <16 x i64> [[TMP3]] to <32 x i32>
+// AIE2PS-NEXT:    ret <32 x i32> [[TMP4]]
 //
 v32acc32 test_get_scd_expand_v32acc32_incr(int en, int &pos) {
   return get_scd_expand_v32acc32_incr(en, pos);
 }
 // AIE2P-LABEL: @_Z33test_get_scd_expand_v64acc32_incriRi(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = load i20, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6]]
-// AIE2P-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[TMP0]] to ptr
-// AIE2P-NEXT:    [[TMP2:%.*]] = tail call { <32 x i64>, i32 } @llvm.aie2p.scd.expand.ACC2048.incr(i32 [[EN:%.*]], ptr [[TMP1]])
-// AIE2P-NEXT:    [[TMP3:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP2]], 1
-// AIE2P-NEXT:    store i32 [[TMP3]], ptr [[POS]], align 4
-// AIE2P-NEXT:    [[TMP4:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP2]], 0
-// AIE2P-NEXT:    [[TMP5:%.*]] = bitcast <32 x i64> [[TMP4]] to <64 x i32>
-// AIE2P-NEXT:    ret <64 x i32> [[TMP5]]
+// AIE2P-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6]]
+// AIE2P-NEXT:    [[TMP1:%.*]] = tail call { <32 x i64>, i32 } @llvm.aie2p.scd.expand.ACC2048.incr(i32 [[EN:%.*]], ptr [[TMP0]])
+// AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP1]], 1
+// AIE2P-NEXT:    store i32 [[TMP2]], ptr [[POS]], align 4
+// AIE2P-NEXT:    [[TMP3:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP1]], 0
+// AIE2P-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[TMP3]] to <64 x i32>
+// AIE2P-NEXT:    ret <64 x i32> [[TMP4]]
 //
 // AIE2PS-LABEL: @_Z33test_get_scd_expand_v64acc32_incriRi(
 // AIE2PS-NEXT:  entry:
-// AIE2PS-NEXT:    [[TMP0:%.*]] = load i20, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6]]
-// AIE2PS-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[TMP0]] to ptr
-// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <32 x i64>, i32 } @llvm.aie2ps.scd.expand.ACC2048.incr(i32 [[EN:%.*]], ptr [[TMP1]])
-// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP2]], 1
-// AIE2PS-NEXT:    store i32 [[TMP3]], ptr [[POS]], align 4
-// AIE2PS-NEXT:    [[TMP4:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP2]], 0
-// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <32 x i64> [[TMP4]] to <64 x i32>
-// AIE2PS-NEXT:    ret <64 x i32> [[TMP5]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[POS:%.*]], align 4, !tbaa [[TBAA6]]
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call { <32 x i64>, i32 } @llvm.aie2ps.scd.expand.ACC2048.incr(i32 [[EN:%.*]], ptr [[TMP0]])
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP1]], 1
+// AIE2PS-NEXT:    store i32 [[TMP2]], ptr [[POS]], align 4
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <32 x i64>, i32 } [[TMP1]], 0
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[TMP3]] to <64 x i32>
+// AIE2PS-NEXT:    ret <64 x i32> [[TMP4]]
 //
 v64acc32 test_get_scd_expand_v64acc32_incr(int en, int &pos) {
   return get_scd_expand_v64acc32_incr(en, pos);
