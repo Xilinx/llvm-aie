@@ -39,9 +39,9 @@ define void @caller_pack_two_bytes(i16 %a, i16 %b, ptr %p) {
 ; AIE2P-LABEL: caller_pack_two_bytes:
 ; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; jl #callee_bitcast_to_i16; nopv
-; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 5
 ; AIE2P-NEXT:    paddxm [sp], #64 // Delay Slot 4
-; AIE2P-NEXT:    mova r2, #16; st lr, [sp, #-64]; extend.u16 r0, r0 // 4-byte Folded Spill Delay Slot 3
+; AIE2P-NEXT:    mova r2, #8; st lr, [sp, #-64]; extend.u8 r0, r0 // 4-byte Folded Spill Delay Slot 3
 ; AIE2P-NEXT:    st p6, [sp, #-60]; lshl r1, r1, r2 // 4-byte Folded Spill Delay Slot 2
 ; AIE2P-NEXT:    or r1, r0, r1; mov p6, p0 // Delay Slot 1
 ; AIE2P-NEXT:    st.s16 r0, [p6, #0]; nopb ; nops ; nopxm ; nopv
@@ -68,10 +68,10 @@ define void @caller_pack_two_bytes(i16 %a, i16 %b, ptr %p) {
 ; AIE2PS-LABEL: caller_pack_two_bytes:
 ; AIE2PS:       // %bb.0: // %entry
 ; AIE2PS-NEXT:    nopa ; nopb ; nops ; jl #callee_bitcast_to_i16; nopv
-; AIE2PS-NEXT:    nopa ; nopx // Delay Slot 5
-; AIE2PS-NEXT:    paddxm [sp], #64 // Delay Slot 4
-; AIE2PS-NEXT:    mova r2, #16; st lr, [sp, #-64]; extend.u16 r0, r0 // 4-byte Folded Spill Delay Slot 3
-; AIE2PS-NEXT:    st p6, [sp, #-60]; lshl r2, r1, r2 // 4-byte Folded Spill Delay Slot 2
+; AIE2PS-NEXT:    nopx // Delay Slot 5
+; AIE2PS-NEXT:    paddxm [sp], #64; extend.u8 r2, r1 // Delay Slot 4
+; AIE2PS-NEXT:    mova r4, #8; st lr, [sp, #-64]; extend.u8 r0, r0 // 4-byte Folded Spill Delay Slot 3
+; AIE2PS-NEXT:    st p6, [sp, #-60]; lshl r2, r2, r4 // 4-byte Folded Spill Delay Slot 2
 ; AIE2PS-NEXT:    or r1, r0, r2; mov p6, p0 // Delay Slot 1
 ; AIE2PS-NEXT:    st.s16 r0, [p6, #0]; nopb ; nops ; nopxm ; nopv
 ; AIE2PS-NEXT:    nopx
@@ -105,20 +105,20 @@ entry:
 define <2 x i8> @bitcast_i16_to_v2i8(i16 %v) {
 ; AIE2P-LABEL: bitcast_i16_to_v2i8:
 ; AIE2P:       // %bb.0: // %entry
-; AIE2P-NEXT:    nopa ; ret lr
-; AIE2P-NEXT:    mova r0, #8; movxm r2, #16711680 // Delay Slot 5
-; AIE2P-NEXT:    lshl r0, r1, r0 // Delay Slot 4
-; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 3
-; AIE2P-NEXT:    and r0, r0, r2 // Delay Slot 2
+; AIE2P-NEXT:    mova r0, #-8; ret lr; nopm
+; AIE2P-NEXT:    lshl r0, r1, r0 // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 4
+; AIE2P-NEXT:    mova r2, #8; extend.u8 r0, r0 // Delay Slot 3
+; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 2
 ; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 1
 ;
 ; AIE2PS-LABEL: bitcast_i16_to_v2i8:
 ; AIE2PS:       // %bb.0: // %entry
-; AIE2PS-NEXT:    nopa ; ret lr
-; AIE2PS-NEXT:    mova r0, #8; movxm r2, #16711680 // Delay Slot 5
+; AIE2PS-NEXT:    nopa ; nopb ; ret lr
+; AIE2PS-NEXT:    mova r0, #-8; extend.u8 r2, r1 // Delay Slot 5
 ; AIE2PS-NEXT:    lshl r0, r1, r0 // Delay Slot 4
-; AIE2PS-NEXT:    and r0, r0, r2 // Delay Slot 3
-; AIE2PS-NEXT:    extend.u8 r2, r1 // Delay Slot 2
+; AIE2PS-NEXT:    mova r4, #8; extend.u8 r0, r0 // Delay Slot 3
+; AIE2PS-NEXT:    lshl r0, r0, r4 // Delay Slot 2
 ; AIE2PS-NEXT:    or r0, r2, r0 // Delay Slot 1
 entry:
   %r = bitcast i16 %v to <2 x i8>
@@ -128,55 +128,6 @@ entry:
 define i8 @extract_elt0(<2 x i8> %v) {
 ; AIE2P-LABEL: extract_elt0:
 ; AIE2P:       // %bb.0: // %entry
-; AIE2P-NEXT:    mova r0, #-16; ret lr; nopm
-; AIE2P-NEXT:    lshl r0, r1, r0 // Delay Slot 5
-; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 4
-; AIE2P-NEXT:    mova r2, #8; extend.u8 r0, r0 // Delay Slot 3
-; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 2
-; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 1
-;
-; AIE2PS-LABEL: extract_elt0:
-; AIE2PS:       // %bb.0: // %entry
-; AIE2PS-NEXT:    nopa ; nopb ; ret lr
-; AIE2PS-NEXT:    mova r0, #-16; extend.u8 r2, r1 // Delay Slot 5
-; AIE2PS-NEXT:    lshl r0, r1, r0 // Delay Slot 4
-; AIE2PS-NEXT:    mova r4, #8; extend.u8 r0, r0 // Delay Slot 3
-; AIE2PS-NEXT:    lshl r0, r0, r4 // Delay Slot 2
-; AIE2PS-NEXT:    or r0, r2, r0 // Delay Slot 1
-entry:
-  %r = extractelement <2 x i8> %v, i64 0
-  ret i8 %r
-}
-
-define i8 @extract_elt1(<2 x i8> %v) {
-; AIE2P-LABEL: extract_elt1:
-; AIE2P:       // %bb.0: // %entry
-; AIE2P-NEXT:    mova r0, #-16; nopb ; nops ; nopxm ; nopv
-; AIE2P-NEXT:    lshl r0, r1, r0
-; AIE2P-NEXT:    ret lr
-; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 5
-; AIE2P-NEXT:    mova r2, #8; extend.u8 r0, r0 // Delay Slot 4
-; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 3
-; AIE2P-NEXT:    mova r1, #-8; or r0, r1, r0 // Delay Slot 2
-; AIE2P-NEXT:    lshl r0, r0, r1 // Delay Slot 1
-;
-; AIE2PS-LABEL: extract_elt1:
-; AIE2PS:       // %bb.0: // %entry
-; AIE2PS-NEXT:    nopa ; nopb ; nops ; extend.u8 r2, r1; nopm ; nopv
-; AIE2PS-NEXT:    mova r0, #-16; nopb ; ret lr
-; AIE2PS-NEXT:    lshl r0, r1, r0 // Delay Slot 5
-; AIE2PS-NEXT:    mova r4, #8; extend.u8 r0, r0 // Delay Slot 4
-; AIE2PS-NEXT:    lshl r0, r0, r4 // Delay Slot 3
-; AIE2PS-NEXT:    mova r2, #-8; or r0, r2, r0 // Delay Slot 2
-; AIE2PS-NEXT:    lshl r0, r0, r2 // Delay Slot 1
-entry:
-  %r = extractelement <2 x i8> %v, i64 1
-  ret i8 %r
-}
-
-define <2 x i8> @trunc_v2i16_to_v2i8(<2 x i16> %v) {
-; AIE2P-LABEL: trunc_v2i16_to_v2i8:
-; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -184,7 +135,7 @@ define <2 x i8> @trunc_v2i16_to_v2i8(<2 x i16> %v) {
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    mov r0, r1 // Delay Slot 1
 ;
-; AIE2PS-LABEL: trunc_v2i16_to_v2i8:
+; AIE2PS-LABEL: extract_elt0:
 ; AIE2PS:       // %bb.0: // %entry
 ; AIE2PS-NEXT:    ret lr
 ; AIE2PS-NEXT:    nop // Delay Slot 5
@@ -193,6 +144,52 @@ define <2 x i8> @trunc_v2i16_to_v2i8(<2 x i16> %v) {
 ; AIE2PS-NEXT:    nop // Delay Slot 2
 ; AIE2PS-NEXT:    mov r0, r1 // Delay Slot 1
 entry:
+  %r = extractelement <2 x i8> %v, i64 0
+  ret i8 %r
+}
+
+define i8 @extract_elt1(<2 x i8> %v) {
+; AIE2P-LABEL: extract_elt1:
+; AIE2P:       // %bb.0: // %entry
+; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
+; AIE2P-NEXT:    mova r0, #-8 // Delay Slot 2
+; AIE2P-NEXT:    lshl r0, r1, r0 // Delay Slot 1
+;
+; AIE2PS-LABEL: extract_elt1:
+; AIE2PS:       // %bb.0: // %entry
+; AIE2PS-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2PS-NEXT:    nopx // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    nop // Delay Slot 3
+; AIE2PS-NEXT:    mova r0, #-8 // Delay Slot 2
+; AIE2PS-NEXT:    lshl r0, r1, r0 // Delay Slot 1
+entry:
+  %r = extractelement <2 x i8> %v, i64 1
+  ret i8 %r
+}
+
+define <2 x i8> @trunc_v2i16_to_v2i8(<2 x i16> %v) {
+; AIE2P-LABEL: trunc_v2i16_to_v2i8:
+; AIE2P:       // %bb.0: // %entry
+; AIE2P-NEXT:    mova r0, #-16; ret lr; nopm
+; AIE2P-NEXT:    lshl r0, r1, r0 // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 4
+; AIE2P-NEXT:    mova r2, #8; extend.u8 r0, r0 // Delay Slot 3
+; AIE2P-NEXT:    lshl r0, r0, r2 // Delay Slot 2
+; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 1
+;
+; AIE2PS-LABEL: trunc_v2i16_to_v2i8:
+; AIE2PS:       // %bb.0: // %entry
+; AIE2PS-NEXT:    nopa ; nopb ; ret lr
+; AIE2PS-NEXT:    mova r0, #-16; extend.u8 r2, r1 // Delay Slot 5
+; AIE2PS-NEXT:    lshl r0, r1, r0 // Delay Slot 4
+; AIE2PS-NEXT:    mova r4, #8; extend.u8 r0, r0 // Delay Slot 3
+; AIE2PS-NEXT:    lshl r0, r0, r4 // Delay Slot 2
+; AIE2PS-NEXT:    or r0, r2, r0 // Delay Slot 1
+entry:
   %r = trunc <2 x i16> %v to <2 x i8>
   ret <2 x i8> %r
 }
@@ -200,24 +197,48 @@ entry:
 define <2 x i16> @zext_v2i8_to_v2i16(<2 x i8> %v) {
 ; AIE2P-LABEL: zext_v2i8_to_v2i16:
 ; AIE2P:       // %bb.0: // %entry
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    movxm r0, #16711935 // Delay Slot 2
-; AIE2P-NEXT:    and r0, r1, r0 // Delay Slot 1
+; AIE2P-NEXT:    nopa ; ret lr
+; AIE2P-NEXT:    mova r0, #8; movxm r2, #16711680 // Delay Slot 5
+; AIE2P-NEXT:    lshl r0, r1, r0 // Delay Slot 4
+; AIE2P-NEXT:    extend.u8 r1, r1 // Delay Slot 3
+; AIE2P-NEXT:    and r0, r0, r2 // Delay Slot 2
+; AIE2P-NEXT:    or r0, r1, r0 // Delay Slot 1
 ;
 ; AIE2PS-LABEL: zext_v2i8_to_v2i16:
 ; AIE2PS:       // %bb.0: // %entry
-; AIE2PS-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2PS-NEXT:    nop // Delay Slot 5
-; AIE2PS-NEXT:    nop // Delay Slot 4
-; AIE2PS-NEXT:    nop // Delay Slot 3
-; AIE2PS-NEXT:    movxm r0, #16711935 // Delay Slot 2
-; AIE2PS-NEXT:    and r0, r1, r0 // Delay Slot 1
+; AIE2PS-NEXT:    nopa ; ret lr
+; AIE2PS-NEXT:    mova r0, #8; movxm r2, #16711680 // Delay Slot 5
+; AIE2PS-NEXT:    lshl r0, r1, r0 // Delay Slot 4
+; AIE2PS-NEXT:    and r0, r0, r2 // Delay Slot 3
+; AIE2PS-NEXT:    extend.u8 r2, r1 // Delay Slot 2
+; AIE2PS-NEXT:    or r0, r2, r0 // Delay Slot 1
 entry:
   %r = zext <2 x i8> %v to <2 x i16>
   ret <2 x i16> %r
+}
+
+define <2 x i8> @build_v2i8_from_scalars(i8 %a, i8 %b) {
+; AIE2P-LABEL: build_v2i8_from_scalars:
+; AIE2P:       // %bb.0: // %entry
+; AIE2P-NEXT:    nopa ; nopb ; ret lr; nopm
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r0, r1 // Delay Slot 4
+; AIE2P-NEXT:    mova r2, #8; extend.u8 r1, r2 // Delay Slot 3
+; AIE2P-NEXT:    lshl r1, r1, r2 // Delay Slot 2
+; AIE2P-NEXT:    or r0, r0, r1 // Delay Slot 1
+;
+; AIE2PS-LABEL: build_v2i8_from_scalars:
+; AIE2PS:       // %bb.0: // %entry
+; AIE2PS-NEXT:    nopa ; nopb ; ret lr; nopm
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    extend.u8 r0, r1 // Delay Slot 4
+; AIE2PS-NEXT:    mova r4, #8; extend.u8 r2, r2 // Delay Slot 3
+; AIE2PS-NEXT:    lshl r2, r2, r4 // Delay Slot 2
+; AIE2PS-NEXT:    or r0, r0, r2 // Delay Slot 1
+entry:
+  %v0 = insertelement <2 x i8> poison, i8 %a, i64 0
+  %v1 = insertelement <2 x i8> %v0, i8 %b, i64 1
+  ret <2 x i8> %v1
 }
 
 define <32 x i16> @insert_bitcast_v2i8(<32 x i16> %vec, i32 %idx, <2 x i8> %b) {
@@ -242,6 +263,31 @@ entry:
   %e = bitcast <2 x i8> %b to i16
   %r = insertelement <32 x i16> %vec, i16 %e, i32 %idx
   ret <32 x i16> %r
+}
+
+define i16 @insert_then_bitcast(i8 %a, i8 %b) {
+; AIE2P-LABEL: insert_then_bitcast:
+; AIE2P:       // %bb.0: // %entry
+; AIE2P-NEXT:    nopa ; nopb ; ret lr; nopm
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    extend.u8 r0, r1 // Delay Slot 4
+; AIE2P-NEXT:    mova r2, #8; extend.u8 r1, r2 // Delay Slot 3
+; AIE2P-NEXT:    lshl r1, r1, r2 // Delay Slot 2
+; AIE2P-NEXT:    or r0, r0, r1 // Delay Slot 1
+;
+; AIE2PS-LABEL: insert_then_bitcast:
+; AIE2PS:       // %bb.0: // %entry
+; AIE2PS-NEXT:    nopa ; nopb ; ret lr; nopm
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    extend.u8 r0, r1 // Delay Slot 4
+; AIE2PS-NEXT:    mova r4, #8; extend.u8 r2, r2 // Delay Slot 3
+; AIE2PS-NEXT:    lshl r2, r2, r4 // Delay Slot 2
+; AIE2PS-NEXT:    or r0, r0, r2 // Delay Slot 1
+entry:
+  %v0 = insertelement <2 x i8> poison, i8 %a, i64 0
+  %v1 = insertelement <2 x i8> %v0, i8 %b, i64 1
+  %r = bitcast <2 x i8> %v1 to i16
+  ret i16 %r
 }
 
 define i8 @insert_then_dynamic_extract(i8 %a, i8 %b, i32 %i) {

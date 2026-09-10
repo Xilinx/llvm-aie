@@ -312,13 +312,10 @@ entry:
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iDv2_S_(<64 x i8> noundef %v, i32 noundef %idx, <2 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DU8_iDv2_S_:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #-16; nopb ; nopxm ; nops
-; CHECK-NEXT:    lshl r2, r1, r2
-; CHECK-NEXT:    extend.u8 r1, r1
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r3, #8; extend.u8 r2, r2 // Delay Slot 5
-; CHECK-NEXT:    lshl r2, r2, r3 // Delay Slot 4
-; CHECK-NEXT:    or r1, r1, r2; mov r29, r0 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.8 x0, x2, r29, r1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

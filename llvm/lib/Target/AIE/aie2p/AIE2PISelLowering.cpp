@@ -196,5 +196,11 @@ AIE2PTargetLowering::getPreferredVectorAction(MVT VT) const {
   if (VT.is128BitVector())
     return TypeWidenVector;
 
+  // Keep sub-register vectors packed, e.g. v2i8 widens to v4i8 rather than
+  // being element-promoted to v2i16, matching aie2 and the in-memory layout.
+  if (VT.isFixedLengthVector() && VT.getScalarSizeInBits() >= 8 &&
+      VT.getFixedSizeInBits() < 32)
+    return TypeWidenVector;
+
   return TargetLoweringBase::getPreferredVectorAction(VT);
 }

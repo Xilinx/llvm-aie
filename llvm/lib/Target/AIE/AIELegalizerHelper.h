@@ -34,6 +34,8 @@ class AIELegalizerHelper {
   const LLT S64 = LLT::scalar(64);
   const LLT S20 = LLT::scalar(20);
   const LLT P0_20 = LLT::pointer(0, 20);
+  const LLT V2S8 = LLT::fixed_vector(2, 8);
+  const LLT V4S8 = LLT::fixed_vector(4, 8);
   const LLT V2S16 = LLT::fixed_vector(2, 16);
   const LLT V2S32 = LLT::fixed_vector(2, 32);
   const LLT V8ACC64 = LLT::fixed_vector(8, 64);
@@ -87,7 +89,7 @@ public:
   bool legalizeG_FMUL(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_SELECT(LegalizerHelper &Helper, MachineInstr &MI,
                         const unsigned MaxBitSize = 512) const;
-  bool legalizeG_BITCAST(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_ZEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeLoopDecrement(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
                                 MachineInstr &MI) const;

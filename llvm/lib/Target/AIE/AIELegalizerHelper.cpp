@@ -73,7 +73,7 @@ static Register emitPadUndefVector(MachineRegisterInfo &MRI,
   return NewSrcReg;
 }
 
-// Pack 32 bit or 64 bit vectors
+// Pack sub-register, 32 bit or 64 bit vectors
 bool AIELegalizerHelper::packVector(LegalizerHelper &Helper, MachineInstr &MI,
                                     Register SourceReg) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -82,8 +82,8 @@ bool AIELegalizerHelper::packVector(LegalizerHelper &Helper, MachineInstr &MI,
   const LLT SourceRegTy = MRI.getType(SourceReg);
   const unsigned SourceRegSize = SourceRegTy.getSizeInBits();
   const Register DstReg = MI.getOperand(0).getReg();
-  assert((SourceRegSize == 32 || SourceRegSize == 64) &&
-         "cannot pack vectors other than 32-bit or 64-bit");
+  assert((SourceRegSize == 16 || SourceRegSize == 32 || SourceRegSize == 64) &&
+         "cannot pack vectors other than 16-bit, 32-bit or 64-bit");
 
   // Skip the destination operand since that is where we are writing to.
   MachineOperand *Operand = MI.operands_begin() + 1,
@@ -104,7 +104,8 @@ bool AIELegalizerHelper::packVector(LegalizerHelper &Helper, MachineInstr &MI,
     Register DstCastReg = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildConstant(DstCastReg, 0);
 
-    while (Offset != 32) {
+    // A sub-register vector runs out of operands before filling a chunk.
+    while (Offset != 32 && Operand != OperandEnd) {
       Register DestinationOperand = Operand->getReg();
       const LLT DstOpTy = MRI.getType(DestinationOperand);
 
@@ -136,10 +137,13 @@ bool AIELegalizerHelper::packVector(LegalizerHelper &Helper, MachineInstr &MI,
   }
 
   // The target is little-endian, so the first chunk holds the low lanes.
-  const Register PackedReg =
+  Register PackedReg =
       Chunks.size() == 1
           ? Chunks[0]
           : MIRBuilder.buildMergeLikeInstr(S64, Chunks).getReg(0);
+  // A sub-register vector reaches its vector form through S16.
+  if (SourceRegSize == 16)
+    PackedReg = MIRBuilder.buildTrunc(S16, PackedReg).getReg(0);
   MIRBuilder.buildBitcast(DstReg, PackedReg);
   MI.eraseFromParent();
   return true;
@@ -215,12 +219,14 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
 
   assert((EltSize == 8 || EltSize == 16 || EltSize == 32 || EltSize == 64) &&
          "non-existent integer size");
-  assert(DstVecSize >= 32 && DstVecSize <= 1024 &&
+
+  assert(DstVecSize >= 16 && DstVecSize <= 1024 &&
          "non-native vectors are not supported");
   assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
 
-  // 32-bit and 64-bit vectors have no native build instruction, but they live
-  // in a scalar register, so we can store them as a packed integer.
+  // Sub-register, 32-bit and 64-bit vectors have no native build instruction,
+  // but they live in a scalar register, so we can store them as a packed
+  // integer.
   if (DstVecSize <= 64)
     return packVector(Helper, MI, DstReg);
 
@@ -395,6 +401,24 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
   if ((ST.isAIE2P() || ST.isAIE2PS()) && FirstTy.isVector() &&
       FirstTy.getSizeInBits() == 128 && LastTy.getSizeInBits() == 256)
     return legalizeG_UNMERGE_VALUES_128bit(Helper, MI);
+
+  // Splitting a 32-bit vector into two 16-bit halves, e.g. <4 x s8> into two
+  // <2 x s8>. The halves are produced by bitcasting the corresponding 16 bits
+  // of the source; a G_BUILD_VECTOR of the source elements would instead be
+  // folded straight back into this G_UNMERGE_VALUES by the artifact combiner.
+  if (FirstTy.isVector() && LastTy.isVector() && MI.getNumOperands() == 3 &&
+      FirstTy.getElementType() == LastTy.getElementType() &&
+      FirstTy.getSizeInBits() == 16 && LastTy.getSizeInBits() == 32) {
+    auto Bits = MIRBuilder.buildBitcast(S32, LastReg);
+    auto HighBits =
+        MIRBuilder.buildLShr(S32, Bits, MIRBuilder.buildConstant(S32, 16));
+    MIRBuilder.buildBitcast(MI.getOperand(0).getReg(),
+                            MIRBuilder.buildTrunc(S16, Bits));
+    MIRBuilder.buildBitcast(MI.getOperand(1).getReg(),
+                            MIRBuilder.buildTrunc(S16, HighBits));
+    MI.eraseFromParent();
+    return true;
+  }
 
   assert(LastTy.isVector() &&
          (FirstTy.getScalarSizeInBits() * (MI.getNumOperands() - 1)) ==
@@ -767,6 +791,16 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   }
 
   switch (SrcVecSize) {
+  case 16: {
+    assert(SrcVecTy == V2S8 && "Unexpected 16bit vector!");
+    // Widening to <4 x s8> only reinterprets the register, since a packed
+    // sub-register vector reaches its scalar form through S16.
+    auto Scalar =
+        MIRBuilder.buildAnyExt(S32, MIRBuilder.buildBitcast(S16, SrcVecReg));
+    MIRBuilder.buildExtractVectorElement(
+        DstReg, MIRBuilder.buildBitcast(V4S8, Scalar), IdxReg);
+    break;
+  }
   case 64: {
     assert(SrcVecTy == V2S32 && "Unexpected 64bit vector!");
     const Register Reg0 = MRI.createGenericVirtualRegister(S32);
@@ -1834,43 +1868,24 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
   return true;
 }
 
-bool AIELegalizerHelper::legalizeG_BITCAST(LegalizerHelper &Helper,
-                                           MachineInstr &MI) const {
+bool AIELegalizerHelper::legalizeG_ZEXT(LegalizerHelper &Helper,
+                                        MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register SrcReg = MI.getOperand(1).getReg();
+  const auto [DstReg, DstTy, SrcReg, SrcTy] = MI.getFirst2RegLLTs();
+  assert(DstTy == V2S16 && SrcTy == V2S8 &&
+         "Expected to legalize G_ZEXT of <2 x s8>");
 
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT SrcTy = MRI.getType(SrcReg);
-  assert(DstTy.getSizeInBits() == 16 && SrcTy.getSizeInBits() == 16 &&
-         "Expected to legalize 16-bit G_BITCAST");
-  if (DstTy.isVector()) {
-    const Register TmpReg32A = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildAnyExt({TmpReg32A}, {SrcReg});
-    const Register TmpReg32B = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildShl(TmpReg32B, TmpReg32A, MIRBuilder.buildConstant(S32, 8));
-    const Register TmpReg32C = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildAnd(TmpReg32C, TmpReg32B,
-                        MIRBuilder.buildConstant(S32, 0xFF0000));
-    const Register TmpReg32D = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildAnd(TmpReg32D, TmpReg32A,
-                        MIRBuilder.buildConstant(S32, 0xFF));
-    const Register TmpReg32E = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildOr(TmpReg32E, TmpReg32D, TmpReg32C);
-
-    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(V2S16);
-    MIRBuilder.buildBitcast({TmpReg2x16}, {TmpReg32E});
-    MIRBuilder.buildTrunc(DstReg, TmpReg2x16);
-
-  } else {
-    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(V2S16);
-    MIRBuilder.buildAnyExt({TmpReg2x16}, {SrcReg});
-    const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildBitcast({TmpReg32}, {TmpReg2x16});
-    MIRBuilder.buildTrunc(DstReg, TmpReg32);
-  }
+  // <2 x s8> keeps its two elements packed in the low half of a GPR, so
+  // widening the elements has to move the high byte up to bit 16.
+  auto Packed =
+      MIRBuilder.buildAnyExt(S32, MIRBuilder.buildBitcast(S16, SrcReg));
+  auto HighElt = MIRBuilder.buildAnd(
+      S32, MIRBuilder.buildShl(S32, Packed, MIRBuilder.buildConstant(S32, 8)),
+      MIRBuilder.buildConstant(S32, 0xFF0000));
+  auto LowElt =
+      MIRBuilder.buildAnd(S32, Packed, MIRBuilder.buildConstant(S32, 0xFF));
+  MIRBuilder.buildBitcast(DstReg, MIRBuilder.buildOr(S32, LowElt, HighElt));
 
   MI.eraseFromParent();
   return true;
