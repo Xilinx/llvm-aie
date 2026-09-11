@@ -21,6 +21,7 @@
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "Utils/AIELoopOptionOverrides.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIEMachineBundleUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
@@ -86,6 +87,11 @@ static cl::opt<int> PostPipelinerMaxTryII(
 static cl::opt<bool> PostSchedIgnoreMemoryDeps(
     "aie-safe-to-ignore-memory-deps", cl::init(false),
     cl::desc("Ignore memory deps when we know that it is safe."));
+
+static cl::opt<bool> OptimizeSiblingLoops(
+    "aie-optimize-sibling-loops", cl::init(true),
+    cl::desc("[AIE] Optimize sibling loops by merging matching prologue "
+             "bundles into epilogue"));
 
 namespace llvm::AIE {
 
@@ -222,6 +228,183 @@ MachineInstr *checkResourceConflictsTopDown(
   }
 
   return ConflictMI;
+}
+
+/// Calculate how many cycles of slack exist between Epilogue and Prologue.
+/// Builds an inter-block DAG and computes min(Distance - Latency) for all
+/// cross-boundary edges. Returns the maximum safe overlap (0 if none).
+static int calculateSchedulingSlack(const Region &EpilogueRegion,
+                                    const BlockState &PrologueBS,
+                                    const MachineSchedContext &Context) {
+  const Region &PrologueRegion = PrologueBS.getTop();
+  const auto &EpilogueBundles = EpilogueRegion.Bundles;
+  const auto &PrologueBundles = PrologueRegion.Bundles;
+  const int PrologueLength = PrologueBundles.size();
+
+  DEBUG_BLOCKS(dbgs() << "    calculateSchedulingSlack: EpilogueLen="
+                      << EpilogueBundles.size()
+                      << " PrologueLen=" << PrologueLength << "\n");
+
+  if (EpilogueBundles.empty() || PrologueBundles.empty())
+    return 0;
+
+  // Build an InterBlockEdges DAG from Epilogue -> Prologue
+  InterBlockEdges Edges(Context);
+
+  // Map prologue instructions to their scheduled cycle positions
+  std::map<const MachineInstr *, int> PrologueCycles;
+  int Cycle = 0;
+  for (const auto &Bundle : PrologueBundles) {
+    for (MachineInstr *MI : Bundle.getInstrs()) {
+      PrologueCycles[MI] = Cycle;
+    }
+    ++Cycle;
+  }
+
+  // Add pre-boundary nodes (Epilogue instructions in semantic order)
+  for (MachineInstr *MI : EpilogueRegion.getFreeInstructions()) {
+    Edges.addNode(MI);
+  }
+
+  Edges.markBoundary();
+
+  // Add post-boundary nodes (Prologue instructions in semantic order)
+  for (MachineInstr *MI : PrologueRegion.getFreeInstructions()) {
+    Edges.addNode(MI);
+  }
+
+  // Add post-boundary nodes from BottomInsertSemanticOrder (SWP prologue
+  // clones)
+  for (MachineInstr *MI : PrologueBS.BottomInsertSemanticOrder) {
+    Edges.addNode(MI);
+  }
+
+  Edges.buildEdges();
+
+  // Compute min(Distance - Latency) for all cross-boundary edges
+  // Start with a large slack (no constraint means infinite overlap possible)
+  int MinSlack = INT_MAX;
+
+  // For each pre-boundary instruction (in Epilogue), from end to start
+  int Height = 1;
+  for (const auto &Bundle : reverse(EpilogueBundles)) {
+    for (MachineInstr *PreBoundaryMI : Bundle.getInstrs()) {
+      const SUnit *Pred = Edges.getPreBoundaryNode(PreBoundaryMI);
+      if (!Pred)
+        continue;
+
+      for (const auto &SDep : Pred->Succs) {
+        SUnit *Succ = SDep.getSUnit();
+
+        // Only consider cross-boundary edges (to post-boundary nodes)
+        if (!Edges.isPostBoundaryNode(Succ))
+          continue;
+
+        const MachineInstr *PostBoundaryMI = Succ->getInstr();
+
+        // Get prologue depth (cycle position of post-boundary instruction)
+        int Depth;
+        if (PostBoundaryMI) {
+          auto It = PrologueCycles.find(PostBoundaryMI);
+          if (It != PrologueCycles.end())
+            Depth = It->second;
+          else
+            Depth = PrologueLength; // Instruction not in prologue bundles
+        } else {
+          // ExitSU - use prologue length as depth
+          Depth = PrologueLength;
+        }
+
+        // Distance = Height + Depth (total cycles between them)
+        const int Distance = Height + Depth;
+        const int Latency = SDep.getSignedLatency();
+        const int EdgeSlack = Distance - Latency;
+
+        DEBUG_BLOCKS(dbgs()
+                     << "      Edge: Height=" << Height << " Depth=" << Depth
+                     << " Lat=" << Latency << " Slack=" << EdgeSlack << "\n");
+
+        MinSlack = std::min(MinSlack, EdgeSlack);
+      }
+    }
+    ++Height;
+  }
+
+  // If no cross-boundary edges were found, return 0 (conservative)
+  if (MinSlack == INT_MAX) {
+    DEBUG_BLOCKS(dbgs() << "    No cross-boundary edges found\n");
+    return 0;
+  }
+
+  DEBUG_BLOCKS(dbgs() << "    Computed slack: " << MinSlack << "\n");
+
+  return std::max(0, MinSlack);
+}
+
+/// Check how many leading bundles from PrologueBundles can be merged into
+/// trailing bundles of EpilogueBundles without resource conflicts.
+/// \param EpilogueBundles The epilogue bundles to merge into
+/// \param PrologueBundles The prologue bundles to merge from
+/// \param OptimizationLimit Maximum number of bundles to try merging
+/// \param HR Hazard recognizer for resource checking
+/// \param SelectedAltDescs Selected alternate descriptors
+/// \returns The maximum number of bundles that can be merged without conflicts
+static int
+checkResourceMergeability(ArrayRef<MachineBundle> EpilogueBundles,
+                          ArrayRef<MachineBundle> PrologueBundles,
+                          int OptimizationLimit, const AIEHazardRecognizer &HR,
+                          const AIEAlternateDescriptors &SelectedAltDescs) {
+
+  const int EpilogueSize = EpilogueBundles.size();
+  const int PrologueSize = PrologueBundles.size();
+
+  // Can't merge more bundles than exist in either region
+  const int MaxMerge =
+      std::min({OptimizationLimit, EpilogueSize, PrologueSize});
+  if (MaxMerge <= 0)
+    return 0;
+
+  // Build ONE scoreboard from ALL epilogue bundles (top-down).
+  // This gives us the resource state after executing the entire epilogue.
+  // We use delta cycles to check conflicts at different positions.
+  ResourceScoreboard<FuncUnitWrapper> Scoreboard =
+      createTopDownScoreboard(EpilogueBundles, HR, SelectedAltDescs);
+
+  DEBUG_BLOCKS(dbgs() << "    checkResourceMergeability: EpilogueSize="
+                      << EpilogueSize << " PrologueSize=" << PrologueSize
+                      << " MaxMerge=" << MaxMerge << "\n");
+
+  // Try mergeCount from MaxMerge down to 1
+  for (int MergeCount = MaxMerge; MergeCount >= 1; --MergeCount) {
+    DEBUG_BLOCKS(dbgs() << "    Trying MergeCount=" << MergeCount << "\n");
+
+    bool HasConflict = false;
+
+    // Check ALL prologue bundles with a unified delta formula:
+    // Delta = I - MergeCount
+    // - For I < MergeCount: negative deltas (merged/overlapping bundles)
+    // - For I >= MergeCount: non-negative deltas (bundles after epilogue)
+    for (int I = 0; I < PrologueSize && !HasConflict; ++I) {
+      const int Delta = I - MergeCount;
+      for (MachineInstr *MI : PrologueBundles[I].getInstrs()) {
+        if (HR.getHazardType(Scoreboard, MI, Delta)) {
+          DEBUG_BLOCKS(dbgs() << "      Conflict at bundle " << I
+                              << " (delta=" << Delta << "): " << *MI);
+          HasConflict = true;
+          break;
+        }
+      }
+    }
+
+    if (!HasConflict) {
+      DEBUG_BLOCKS(dbgs() << "    Resource mergeability check passed with "
+                          << MergeCount << " bundles\n");
+      return MergeCount;
+    }
+  }
+
+  DEBUG_BLOCKS(dbgs() << "    No bundles can be merged without conflicts\n");
+  return 0;
 }
 
 InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
@@ -405,8 +588,152 @@ void InterBlockScheduling::emitLoopRemarks() {
   }
 }
 
+unsigned InterBlockScheduling::getNumberOfMergeableBundles(
+    const BlockState &EpilogueBS, const BlockState &SteadyTopBS,
+    const BlockState &LastIterTopBS) {
+  // Get the prologue bundles from both regions
+  const auto &SteadyPrologue = SteadyTopBS.getTop().Bundles;
+  const auto &LastIterPrologue = LastIterTopBS.getTop().Bundles;
+
+  // Create filter to stop at loop setup instructions
+  auto LoopSetupFilter = [this](const MachineInstr &MI) {
+    return TII->isZeroOverheadLoopSetupInstr(MI);
+  };
+
+  // Count matching leading bundles, stopping at loop setup instructions
+  const unsigned MatchingBundles =
+      AIEMachineBundleUtils::countMatchingLeadingBundles(
+          SteadyPrologue, LastIterPrologue, LoopSetupFilter);
+
+  if (MatchingBundles == 0) {
+    DEBUG_BLOCKS(dbgs() << "  No matching bundles between prologues\n");
+    return 0;
+  }
+
+  DEBUG_BLOCKS(dbgs() << "  Found " << MatchingBundles
+                      << " matching bundles\n");
+
+  // Get the epilogue bundles
+  const Region &EpilogueRegion = EpilogueBS.getTop();
+  const auto &EpilogueBundles = EpilogueRegion.Bundles;
+
+  // Calculate scheduling slack for Epilogue -> SteadyPrologue
+  const int SlackToSteady =
+      calculateSchedulingSlack(EpilogueRegion, SteadyTopBS, *Context);
+  DEBUG_BLOCKS(dbgs() << "  Slack (Epilogue->SteadyPrologue): " << SlackToSteady
+                      << " cycles\n");
+  if (SlackToSteady == 0) {
+    DEBUG_BLOCKS(dbgs() << "  No slack to steady prologue, skipping\n");
+    return 0;
+  }
+
+  // Calculate scheduling slack for Epilogue -> LastIterPrologue
+  const int SlackToLastIter =
+      calculateSchedulingSlack(EpilogueRegion, LastIterTopBS, *Context);
+  DEBUG_BLOCKS(dbgs() << "  Slack (Epilogue->LastIterPrologue): "
+                      << SlackToLastIter << " cycles\n");
+  if (SlackToLastIter == 0) {
+    DEBUG_BLOCKS(dbgs() << "  No slack to last iter prologue, skipping\n");
+    return 0;
+  }
+
+  // Check resource mergeability (for correctness, do last)
+  const int MaxPossibleMerge = std::min(
+      {static_cast<int>(MatchingBundles), SlackToSteady, SlackToLastIter});
+  const int MergeableBundles = checkResourceMergeability(
+      EpilogueBundles, SteadyPrologue, MaxPossibleMerge, *HR, SelectedAltDescs);
+
+  if (MergeableBundles == 0) {
+    DEBUG_BLOCKS(dbgs() << "  Resource mergeability check failed\n");
+    return 0;
+  }
+
+  DEBUG_BLOCKS(dbgs() << "  Can merge " << MergeableBundles
+                      << " bundles into epilogue\n");
+  return MergeableBundles;
+}
+
+void InterBlockScheduling::mergeBundles(BlockState &EntryBS,
+                                        BlockState &SteadyTopBS,
+                                        BlockState &EpilogueBS,
+                                        BlockState &LastIterTopBS,
+                                        unsigned NumBundles) {
+  const auto &SteadyPrologue = SteadyTopBS.getTop().Bundles;
+  const auto &LastIterPrologue = LastIterTopBS.getTop().Bundles;
+  const auto &EpilogueBundles = EpilogueBS.getTop().Bundles;
+
+  // Merge prologue into epilogue and update BlockState
+  auto MergedBundles = AIEMachineBundleUtils::mergeBundlesIntoMBB(
+      *EpilogueBS.TheBlock, EpilogueBundles, SteadyPrologue, NumBundles, *TII);
+  EpilogueBS.getTop().Bundles = std::move(MergedBundles);
+
+  // Transfer leading bundles from SteadyTop to Entry (OuterPreheader)
+  auto [TransferredBundles, RemainingSteady] =
+      AIEMachineBundleUtils::transferLeadingBundles(
+          *EntryBS.TheBlock, *SteadyTopBS.TheBlock, SteadyPrologue, NumBundles,
+          *TII);
+
+  // Update BlockStates: append transferred bundles to entry, assign remaining
+  // to steady top
+  auto &EntryBundles = EntryBS.getTop().Bundles;
+  llvm::append_range(EntryBundles, std::move(TransferredBundles));
+  SteadyTopBS.getTop().Bundles = std::move(RemainingSteady);
+
+  // Remove leading bundles from LastIterTop and update BlockState
+  auto RemainingLastIter = AIEMachineBundleUtils::removeLeadingBundles(
+      *LastIterTopBS.TheBlock, LastIterPrologue, NumBundles, *TII);
+  LastIterTopBS.getTop().Bundles = std::move(RemainingLastIter);
+
+  DEBUG_BLOCKS(dbgs() << "  Sibling loop optimization complete: moved "
+                      << NumBundles << " bundles\n");
+}
+
+void InterBlockScheduling::tryMergePrologues(BlockState &EntryBS,
+                                             BlockState &SteadyTopBS,
+                                             BlockState &EpilogueBS,
+                                             BlockState &LastIterTopBS) {
+  unsigned NumBundles =
+      getNumberOfMergeableBundles(EpilogueBS, SteadyTopBS, LastIterTopBS);
+  if (NumBundles == 0)
+    return;
+  mergeBundles(EntryBS, SteadyTopBS, EpilogueBS, LastIterTopBS, NumBundles);
+}
+
+void InterBlockScheduling::optimizeSiblingLoops() {
+  for (auto &[BB, BS] : Blocks) {
+    if (!BS.getOuterLoopContext())
+      continue;
+
+    const auto &OLS = *BS.getOuterLoopContext();
+    if (OLS.Speculative)
+      continue;
+
+    DEBUG_BLOCKS(dbgs() << "optimizeSiblingLoops: Processing outer loop latch "
+                        << BB->getNumber() << "\n");
+
+    BlockState &EntryBS = getBlockState(OLS.OuterPreheader);
+    BlockState &SteadyTopBS = getBlockState(OLS.SteadyTop);
+    BlockState &LastIterTopBS = getBlockState(OLS.PeeledIterTop);
+
+    // Verify BS is the epilogue (SteadyBottom)
+    assert(BS.TheBlock == OLS.SteadyBottom && "BS must match OLS.SteadyBottom");
+
+    // Validate all required regions and bundles exist
+    assert(!SteadyTopBS.getRegions().empty() &&
+           !LastIterTopBS.getRegions().empty() &&
+           "Empty regions in prologue blocks");
+    assert(!SteadyTopBS.getTop().Bundles.empty() &&
+           !LastIterTopBS.getTop().Bundles.empty() && "Empty prologue bundles");
+    assert(!BS.getRegions().empty() && "Empty epilogue region");
+
+    tryMergePrologues(EntryBS, SteadyTopBS, BS, LastIterTopBS);
+  }
+}
+
 void InterBlockScheduling::leaveFunction() {
   DEBUG_BLOCKS(dbgs() << "<< leaveFunction\n");
+  if (OptimizeSiblingLoops)
+    optimizeSiblingLoops();
   emitLoopRemarks();
   Blocks.clear();
 }
@@ -1520,10 +1847,11 @@ void BlockState::clearSchedule() {
 }
 
 void BlockState::setBlockProperties() {
-  // We use the classification engine as a place to determine if this block
-  // is the epilogue of an outerloop pipelined loop.
-  IsEpilogueOfOuterPipelinedLoop =
-      AIELoopUtils::isOuterLoopPipelined(*TheBlock);
+  // Try to build OuterLoopContext if this block is an outer-loop pipelined
+  // loop latch. This also determines if it's an epilogue of an outer-pipelined
+  // loop.
+  OuterLoopContext = AIELoopUtils::OuterLoopStructure::tryBuildFrom(*TheBlock);
+  IsEpilogueOfOuterPipelinedLoop = OuterLoopContext.has_value();
 
   // We never skip AA check. Except for epilogues of outer-pipelined loops.
   // This is a pre-condition of the optimization (sometimes restrict information

@@ -55,7 +55,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; REMARKS-NEXT:   - NS:              '7'
 ; REMARKS-NEXT:   - Loop:            bb.7.steady.stage1.inner.for.body55.i
 ; REMARKS-NEXT:   - Prologue:        bb.6.steady.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - PrologueBundles: '8'
 ; REMARKS-NEXT:   - Epilogue:        bb.8.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '17'
 ; REMARKS-NEXT: ...
@@ -70,7 +70,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; REMARKS-NEXT:   - NS:              '7'
 ; REMARKS-NEXT:   - Loop:            bb.10.lastiter.stage1.inner.for.body55.i
 ; REMARKS-NEXT:   - Prologue:        bb.9.lastiter.stage1.top
-; REMARKS-NEXT:   - PrologueBundles: '12'
+; REMARKS-NEXT:   - PrologueBundles: '8'
 ; REMARKS-NEXT:   - Epilogue:        bb.11.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '20'
 ; REMARKS-NEXT: ...
@@ -147,7 +147,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    and r4, r4, r20
 ; ASM-NEXT:    st r4, [p3, #-12]
 ; ASM-NEXT:  .LBB0_5: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
-; ASM-NEXT:    mova m0, #-20; nopb ; nopx
+; ASM-NEXT:    mova m0, #-20
 ; ASM-NEXT:    mova m0, #36; paddb [p3], m0
 ; ASM-NEXT:    lda r22, [p3], m0
 ; ASM-NEXT:    mova m0, #100
@@ -197,15 +197,15 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p5], #64; vldb.128 wl2, [p3, dj7]; add r18, r3, #-1; addm.nc r3, r0, #-1; movs dc1, dc7
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; vldb.128 wl4, [p1, #16]; movx crupsmode, #0; mov s1, r6; movs dj3, r19
 ; ASM-NEXT:    mova r16, #16; vldb x6, [p3, #64]; movx crsrsmode, #0; vshuffle x10, x10, x1, r4; movs m5, r21
-; ASM-NEXT:  .LBB0_6: // %steady.stage1.top
-; ASM-NEXT:    // =>This Loop Header: Depth=1
-; ASM-NEXT:    // Child Loop BB0_7 Depth 2
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]
 ; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; mov p7, p3
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]
-; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p0, lf0, r24]; add.nc lc, r18, #-6; padds [p7], #128; vmul dm3, x0, x2, r12
-; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; movxm ls, #.LBB0_7; vmul dm2, x0, x4, r12
+; ASM-NEXT:  .LBB0_6: // %steady.stage1.top
+; ASM-NEXT:    // =>This Loop Header: Depth=1
+; ASM-NEXT:    // Child Loop BB0_7 Depth 2
+; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p7], #128; add.nc lc, r18, #-6; nopm ; vmul dm3, x0, x2, r12
+; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; movxm ls, #.LBB0_7; vmul dm2, x0, x4, r12
 ; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p7], #128; movxm le, #.L_LEnd1; vaddmac dm1, dm1, dm3, x10, x8, r10
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; nops ; nopxm ; vaddmac dm0, dm0, dm2, x10, x6, r10
 ; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p7], #128; nopxm ; nopv
@@ -224,7 +224,7 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    vlda x4, [p7, #128]; paddb [p3], m4; movs dc4, dc7; nopx ; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    vlda x2, [p7, #192]; paddb.3d [p3], d2; padds [p7], #128; nopx ; mov srssign0, r1; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    nopa ; vldb x8, [p3, #0]; nops ; nopx ; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
-; ASM-NEXT:    vlda x6, [p3, #64]; vldb.popx x10, [p0, lf0, r24]; mov r0, dc6; vmac dm0, dm0, x10, x2, r8
+; ASM-NEXT:    vlda x6, [p3, #64]; vldb.popx x10, [p0, lf0, r24]; nops ; nopx ; mov r0, dc6; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vldb.pop.3d x1, [p0, lf0, r24, d0]; lshl r0, r0, r2; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
 ; ASM-NEXT:    or r20, r0, r16; mov dj7, r0; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    movs dj7, r20; vldb.128 wl2, [p1, dj7]; vshuffle x10, x8, x6, r4; vmac dm1, dm1, x10, x4, r8
@@ -233,15 +233,11 @@ define void @conv2d_opt_outerloop_out_mode_0(
 ; ASM-NEXT:    vlda.ups.2x cmh1, s0, upssign1, [p4], #64; vmac dm0, dm0, x10, x2, r8
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p5], #64; jnzd r3, r3, p6
 ; ASM-NEXT:    nop // Delay Slot 5
-; ASM-NEXT:    vshuffle x10, x10, x1, r4 // Delay Slot 4
-; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    vst.srs.4x dm1, s1, srssign0, [p2], m5 // Delay Slot 2
-; ASM-NEXT:    vst.2d.srs.4x dm0, s1, srssign0, [p2], d3; movx srssign0, #0 // Delay Slot 1
+; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; vshuffle x10, x10, x1, r4 // Delay Slot 4
+; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0] // Delay Slot 3
+; ASM-NEXT:    vst.srs.4x dm1, s1, srssign0, [p2], m5; vldb.popx x8, [p0, lf0, r24]; mov p7, p3 // Delay Slot 2
+; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; movx srssign0, #0; vst.2d.srs.4x dm0, s1, srssign0, [p2], d3 // Delay Slot 1
 ; ASM-NEXT:  // %bb.9: // %lastiter.stage1.top
-; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]
-; ASM-NEXT:    vldb.pop.3d x6, [p0, lf0, r24, d0]
-; ASM-NEXT:    vldb.popx x8, [p0, lf0, r24]; mov p7, p3
-; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]
 ; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p0, lf0, r24]; add.nc lc, r18, #-6; padds [p7], #128; vmul dm3, x0, x2, r12
 ; ASM-NEXT:    vlda x4, [p7, #128]; vldb.pop.3d x6, [p0, lf0, r24, d0]; movxm ls, #.LBB0_10; vmul dm2, x0, x4, r12
 ; ASM-NEXT:    vlda x2, [p7, #192]; vldb.popx x8, [p0, lf0, r24]; padds [p7], #128; movxm le, #.L_LEnd0; vaddmac dm1, dm1, dm3, x10, x8, r10
