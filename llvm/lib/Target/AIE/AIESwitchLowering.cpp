@@ -109,6 +109,47 @@ char AIESwitchLowering::ID = 0;
 INITIALIZE_PASS(AIESwitchLowering, DEBUG_TYPE,
                 "AIE Switch to OR-of-icmp Lowering", false, false)
 
+/// Rewire the PHIs of a successor \p Succ that was reached from the switch
+/// block \p BB so that the (single) incoming edge now originates from \p Pred.
+/// A switch may reference the same successor from several case values, which
+/// creates several predecessor edges (and therefore several incoming PHI
+/// entries) for BB. After this transform there is exactly one edge, so we keep
+/// one entry (retargeted to Pred) and drop the duplicates. The duplicated
+/// entries are required by the verifier to carry the same value, so dropping
+/// them preserves semantics.
+static void rewirePHIs(BasicBlock *BB, BasicBlock *Succ, BasicBlock *Pred) {
+  for (PHINode &PN : Succ->phis()) {
+    bool KeptOne = false;
+    for (int I = PN.getNumIncomingValues() - 1; I >= 0; --I) {
+      if (PN.getIncomingBlock(I) != BB)
+        continue;
+      if (!KeptOne) {
+        PN.setIncomingBlock(I, Pred);
+        KeptOne = true;
+      } else {
+        PN.removeIncomingValue(I, /*DeletePHIIfEmpty=*/false);
+      }
+    }
+  }
+}
+
+/// Collect the switches in \p F that are candidates for OR-of-icmp lowering.
+/// Only reasonably small switches are considered; larger ones are better left
+/// to the generic bisected compare-tree lowering (see MaxCasesForOrChain for
+/// the linear-chain vs. bisection trade-off).
+static SmallVector<SwitchInst *, 4> collectCandidates(Function &F) {
+  SmallVector<SwitchInst *, 4> Candidates;
+  for (BasicBlock &BB : F) {
+    auto *SI = dyn_cast<SwitchInst>(BB.getTerminator());
+    if (!SI)
+      continue;
+    if (SI->getNumCases() == 0 || SI->getNumCases() > MaxCasesForOrChain)
+      continue;
+    Candidates.push_back(SI);
+  }
+  return Candidates;
+}
+
 /// Rewrite a single \p SI into an OR-of-icmp chain. Returns true on success.
 static bool lowerSwitch(SwitchInst *SI) {
   BasicBlock *BB = SI->getParent();
@@ -154,30 +195,6 @@ static bool lowerSwitch(SwitchInst *SI) {
   // block; we fix them up below as we recreate the edges.
   SI->eraseFromParent();
 
-  // Rewire the PHIs of a successor \p Succ that was reached from the switch
-  // block \p BB so that the (single) incoming edge now originates from \p Pred.
-  // A switch may reference the same successor from several case values, which
-  // creates several predecessor edges (and therefore several incoming PHI
-  // entries) for BB. After this transform there is exactly one edge, so we keep
-  // one entry (retargeted to Pred) and drop the duplicates. The duplicated
-  // entries are required by the verifier to carry the same value, so dropping
-  // them preserves semantics.
-  auto RewirePHIs = [&](BasicBlock *Succ, BasicBlock *Pred) {
-    for (PHINode &PN : Succ->phis()) {
-      bool KeptOne = false;
-      for (int I = PN.getNumIncomingValues() - 1; I >= 0; --I) {
-        if (PN.getIncomingBlock(I) != BB)
-          continue;
-        if (!KeptOne) {
-          PN.setIncomingBlock(I, Pred);
-          KeptOne = true;
-        } else {
-          PN.removeIncomingValue(I, /*DeletePHIIfEmpty=*/false);
-        }
-      }
-    }
-  };
-
   BasicBlock *CondBB = BB;
   const unsigned NumGroups = Groups.size();
   for (unsigned Idx = 0; Idx != NumGroups; ++Idx) {
@@ -206,7 +223,7 @@ static bool lowerSwitch(SwitchInst *SI) {
     // case weight; the fall-through inherits the remaining destinations plus
     // the default weight. Weights are saturated to the uint32 metadata range.
     if (HasProf) {
-      uint64_t TrueW = DestWeight.lookup(Dest);
+      const uint64_t TrueW = DestWeight.lookup(Dest);
       uint64_t FalseW = DefaultWeight;
       for (unsigned J = Idx + 1; J != NumGroups; ++J)
         FalseW += DestWeight.lookup(Groups[J].first);
@@ -218,11 +235,11 @@ static bool lowerSwitch(SwitchInst *SI) {
     }
 
     // The predecessor edge for Dest now comes from CondBB (was BB).
-    RewirePHIs(Dest, CondBB);
+    rewirePHIs(BB, Dest, CondBB);
 
     // On the last group, the default block is reached from CondBB (was BB).
     if (IsLast)
-      RewirePHIs(DefaultBB, CondBB);
+      rewirePHIs(BB, DefaultBB, CondBB);
 
     CondBB = FalseBB;
   }
@@ -236,18 +253,7 @@ bool AIESwitchLowering::runOnFunction(Function &F) {
     return false;
 
   // Collect candidate switches first; lowering mutates the CFG.
-  SmallVector<SwitchInst *, 4> Candidates;
-  for (BasicBlock &BB : F) {
-    auto *SI = dyn_cast<SwitchInst>(BB.getTerminator());
-    if (!SI)
-      continue;
-    // Only handle reasonably small switches; larger ones are better left to the
-    // generic bisected compare-tree lowering (see MaxCasesForOrChain above for
-    // the linear-chain vs. bisection trade-off).
-    if (SI->getNumCases() == 0 || SI->getNumCases() > MaxCasesForOrChain)
-      continue;
-    Candidates.push_back(SI);
-  }
+  SmallVector<SwitchInst *, 4> Candidates = collectCandidates(F);
 
   bool Changed = false;
   for (SwitchInst *SI : Candidates)
