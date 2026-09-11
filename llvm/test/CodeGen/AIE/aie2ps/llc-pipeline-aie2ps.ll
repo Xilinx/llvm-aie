@@ -63,6 +63,7 @@
 ; AIE-O0-NEXT:      Local Stack Slot Allocation
 ; AIE-O0-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O0-NEXT:      AIE sub-reg constrainer
+; AIE-O0-NEXT:      AIE sibling loop pre-RA register alignment
 ; AIE-O0-NEXT:      Two-Address instruction pass
 ; AIE-O0-NEXT:      Fast Register Allocator
 ; AIE-O0-NEXT:      Remove Redundant DEBUG_VALUE analysis
@@ -248,6 +249,7 @@
 ; AIE-O1-NEXT:      Live Variable Analysis
 ; AIE-O1-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O1-NEXT:      AIE sub-reg constrainer
+; AIE-O1-NEXT:      AIE sibling loop pre-RA register alignment
 ; AIE-O1-NEXT:      Two-Address instruction pass
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Slot index numbering
@@ -495,6 +497,7 @@
 ; AIE-O23-NEXT:      Machine Natural Loop Construction
 ; AIE-O23-NEXT:      Eliminate PHI nodes for register allocation
 ; AIE-O23-NEXT:      AIE sub-reg constrainer
+; AIE-O23-NEXT:      AIE sibling loop pre-RA register alignment
 ; AIE-O23-NEXT:      Two-Address instruction pass
 ; AIE-O23-NEXT:      Slot index numbering
 ; AIE-O23-NEXT:      Live Interval Analysis
