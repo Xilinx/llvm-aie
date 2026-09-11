@@ -142,11 +142,11 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:  .LBB0_1: // %for.body.i
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
+; ASM-NEXT:    nopa ; vldb.popx x6, [p0, lf0, r24]; nopx
 ; ASM-NEXT:    padds.3d [p0], d2; mov p3, p4
-; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; add.nc lc, r2, #-5
-; ASM-NEXT:    vlda x2, [p3], #64; padds.3d [p0], d2; movxm ls, #.LBB0_2
-; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; movxm le, #.L_LEnd1; nopv
+; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]
+; ASM-NEXT:    vlda x2, [p3], #64; padds.3d [p0], d2; add.nc lc, r2, #-5
+; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; add.nc le, pc, #.L_LEnd1; addm.nc ls, pc, #.LBB0_2; nopv
 ; ASM-NEXT:    vlda x2, [p3], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p3], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopxm ; nopv
 ; ASM-NEXT:    vlda x2, [p3], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv
@@ -161,10 +161,10 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:  // %bb.3: // %for.cond.cleanup158.i
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    vlda x4, [p3], #64; nopb ; movs m0, r29; add r0, r0, #-1; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; ASM-NEXT:    vlda x2, [p3], #64; nopb ; movs dj0, r22; nopx ; mov srssign0, r4; vmac dm0, dm0, x0, x2, r8
-; ASM-NEXT:    nopa ; nopb ; movs p3, p2; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
-; ASM-NEXT:    padda [p3], m0; nopb ; movs dc4, r7; nopx ; mov m6, r22; vmac dm0, dm0, x0, x2, r8
-; ASM-NEXT:    movs dn4, r26; nopx ; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
+; ASM-NEXT:    vlda x2, [p3], #64; movs dj0, r22; mov srssign0, r4; vmac dm0, dm0, x0, x2, r8
+; ASM-NEXT:    movs p3, p2; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
+; ASM-NEXT:    padda [p3], m0; movs dc4, r7; mov m6, r22; vmac dm0, dm0, x0, x2, r8
+; ASM-NEXT:    movs dn4, r26; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    movs dj4, r28; vmac dm0, dm0, x0, x2, r8
 ; ASM-NEXT:    movs m0, r21; vshuffle x0, x6, x6, r6; vmac dm1, dm1, x0, x4, r8
 ; ASM-NEXT:    vmac dm0, dm0, x0, x2, r8
@@ -189,9 +189,9 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:  // %bb.4: // %lastiter.stage1.top
 ; ASM-NEXT:    vldb.popx x6, [p0, lf0, r24]
 ; ASM-NEXT:    padds.3d [p0], d2
-; ASM-NEXT:    vlda x4, [p4], #64; vldb.popx x6, [p0, lf0, r24]; add.nc lc, r2, #-5
-; ASM-NEXT:    vlda x2, [p4], #64; padds.3d [p0], d2; movxm ls, #.LBB0_5
-; ASM-NEXT:    vlda x4, [p4], #64; vldb.popx x6, [p0, lf0, r24]; nops ; movxm le, #.L_LEnd0; nopv
+; ASM-NEXT:    vlda x4, [p4], #64; vldb.popx x6, [p0, lf0, r24]
+; ASM-NEXT:    vlda x2, [p4], #64; padds.3d [p0], d2; add.nc lc, r2, #-5
+; ASM-NEXT:    vlda x4, [p4], #64; vldb.popx x6, [p0, lf0, r24]; nops ; add.nc le, pc, #.L_LEnd0; addm.nc ls, pc, #.LBB0_5; nopv
 ; ASM-NEXT:    vlda x2, [p4], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv
 ; ASM-NEXT:    vlda x4, [p4], #64; vldb.popx x6, [p0, lf0, r24]; nops ; nopxm ; nopv
 ; ASM-NEXT:    vlda x2, [p4], #64; nopb ; padds.3d [p0], d2; nopxm ; nopv

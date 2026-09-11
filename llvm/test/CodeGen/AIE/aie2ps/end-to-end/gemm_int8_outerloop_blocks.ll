@@ -144,15 +144,15 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:  .LBB0_1: // %steady.stage1.top
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    vldb x9, [p1], m4; nopx
+; ASM-NEXT:    vldb x9, [p1], m4; nopxm
 ; ASM-NEXT:    vlda.3d x7, [p1], d1
 ; ASM-NEXT:    vldb x5, [p0], #64; vmul dm4, x0, x4, r12
 ; ASM-NEXT:    vlda.3d x3, [p0], d0
 ; ASM-NEXT:    vldb x9, [p1], m4; vaddmac dm3, dm3, dm4, x6, x1, r10
-; ASM-NEXT:    vlda.3d x7, [p1], d1; movxm ls, #.LBB0_2; vmul dm4, x0, x2, r12
-; ASM-NEXT:    vldb x5, [p0], #64; movxm le, #.L_LEnd1; vaddmac dm2, dm2, dm4, x8, x1, r10
-; ASM-NEXT:    vlda.3d x3, [p0], d0; vshuffle x1, x9, x0, r7; vaddmac dm1, dm1, dm4, x6, x10, r10
-; ASM-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x10, x1, x0, r16; vaddmac dm0, dm0, dm4, x8, x10, r10
+; ASM-NEXT:    vlda.3d x7, [p1], d1; vmul dm4, x0, x2, r12
+; ASM-NEXT:    vldb x5, [p0], #64; add.nc lc, r6, #-3; vaddmac dm2, dm2, dm4, x8, x1, r10
+; ASM-NEXT:    vlda.3d x3, [p0], d0; add.nc ls, pc, #.LBB0_2; vshuffle x1, x9, x0, r7; vaddmac dm1, dm1, dm4, x6, x10, r10
+; ASM-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc le, pc, #.L_LEnd1; vshuffle x10, x1, x0, r16; vaddmac dm0, dm0, dm4, x8, x10, r10
 ; ASM-NEXT:    vlda.3d x7, [p1], d1; nopb ; nops ; nopx ; vshuffle x8, x7, x0, r18; nopv
 ; ASM-NEXT:    nopa ; vldb x5, [p0], #64; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; ASM-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
@@ -167,8 +167,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    nopa ; paddb.2d [p4], d3; nops ; nopx ; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
-; ASM-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
-; ASM-NEXT:    vldb.128 wl10, [p4, #0]; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; ASM-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; nops ; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; ASM-NEXT:    vldb.128 wl10, [p4, #0]; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; ASM-NEXT:    vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x3, [p1], m4; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb.3d x5, [p1], d1; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
@@ -188,10 +188,10 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; ASM-NEXT:    vldb x10, [p0], #64
 ; ASM-NEXT:    vlda.3d x8, [p0], d0; vaddmac dm3, dm3, dm4, x6, x1, r10
 ; ASM-NEXT:    vldb x3, [p1], m4; vmul dm4, x0, x2, r12
-; ASM-NEXT:    vlda.3d x1, [p1], d1; movxm ls, #.LBB0_5; vaddmac dm2, dm2, dm4, x8, x1, r10
-; ASM-NEXT:    vldb x10, [p0], #64; movxm le, #.L_LEnd0; vaddmac dm1, dm1, dm4, x6, x10, r10
-; ASM-NEXT:    vlda.3d x8, [p0], d0; vshuffle x6, x3, x0, r7; vaddmac dm0, dm0, dm4, x8, x10, r10
-; ASM-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x4, x6, x0, r16; nopv
+; ASM-NEXT:    vlda.3d x1, [p1], d1; vaddmac dm2, dm2, dm4, x8, x1, r10
+; ASM-NEXT:    vldb x10, [p0], #64; add.nc lc, r6, #-3; vaddmac dm1, dm1, dm4, x6, x10, r10
+; ASM-NEXT:    vlda.3d x8, [p0], d0; add.nc ls, pc, #.LBB0_5; vshuffle x6, x3, x0, r7; vaddmac dm0, dm0, dm4, x8, x10, r10
+; ASM-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc le, pc, #.L_LEnd0; vshuffle x4, x6, x0, r16; nopv
 ; ASM-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; ASM-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; ASM-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
@@ -266,15 +266,15 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:  .LBB0_1: // %steady.stage1.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // =>This Loop Header: Depth=1
 ; NO-PROLOGUE-SPLIT-NEXT:    // Child Loop BB0_2 Depth 2
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x9, [p1], m4; nopx
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x9, [p1], m4; nopxm
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x7, [p1], d1
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x5, [p0], #64
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x3, [p0], d0
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x9, [p1], m4
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x7, [p1], d1; movxm ls, #.LBB0_2
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x5, [p0], #64; movxm le, #.L_LEnd1
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x3, [p0], d0; vshuffle x1, x9, x0, r7
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x10, x1, x0, r16; nopv
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x7, [p1], d1
+; NO-PROLOGUE-SPLIT-NEXT:    vldb x5, [p0], #64; add.nc lc, r6, #-3
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x3, [p0], d0; add.nc ls, pc, #.LBB0_2; vshuffle x1, x9, x0, r7
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc le, pc, #.L_LEnd1; vshuffle x10, x1, x0, r16; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x7, [p1], d1; nopb ; nops ; nopx ; vshuffle x8, x7, x0, r18; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x5, [p0], #64; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
@@ -288,8 +288,8 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; NO-PROLOGUE-SPLIT-NEXT:  // %bb.3: // %steady.stage1.bottom.and.stage0.top
 ; NO-PROLOGUE-SPLIT-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p1], m4; paddb.2d [p4], d7; nopx ; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x8, [p0], #64; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    vlda x1, [p1], m4; paddb.2d [p4], d7; nops ; nopx ; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x8, [p0], #64; nopx ; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb.3d x10, [p0], d0; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb.3d x5, [p1], d1; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb.128 wl6, [p4, #0]; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
@@ -316,10 +316,10 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x10, [p0], #64
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x8, [p0], d0
 ; NO-PROLOGUE-SPLIT-NEXT:    vldb x3, [p1], m4
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x1, [p1], d1; movxm ls, #.LBB0_5
-; NO-PROLOGUE-SPLIT-NEXT:    vldb x10, [p0], #64; movxm le, #.L_LEnd0
-; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x8, [p0], d0; vshuffle x6, x3, x0, r7
-; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x4, x6, x0, r16; nopv
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x1, [p1], d1
+; NO-PROLOGUE-SPLIT-NEXT:    vldb x10, [p0], #64; add.nc lc, r6, #-3
+; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x8, [p0], d0; add.nc ls, pc, #.LBB0_5; vshuffle x6, x3, x0, r7
+; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc le, pc, #.L_LEnd0; vshuffle x4, x6, x0, r16; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; NO-PROLOGUE-SPLIT-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; NO-PROLOGUE-SPLIT-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8
@@ -391,15 +391,15 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-JNZD-NEXT:  .LBB0_1: // %steady.stage1.top
 ; NO-JNZD-NEXT:    // =>This Loop Header: Depth=1
 ; NO-JNZD-NEXT:    // Child Loop BB0_2 Depth 2
-; NO-JNZD-NEXT:    nopa ; vldb x9, [p1], m4; nops ; nopxm ; nopv
-; NO-JNZD-NEXT:    vlda.3d x7, [p1], d1; nopx ; vmul dm4, x0, x4, r12
+; NO-JNZD-NEXT:    vldb x9, [p1], m4; nopx
+; NO-JNZD-NEXT:    vlda.3d x7, [p1], d1; vmul dm4, x0, x4, r12
 ; NO-JNZD-NEXT:    vldb x5, [p0], #64
 ; NO-JNZD-NEXT:    vlda.3d x3, [p0], d0; vaddmac dm3, dm3, dm4, x6, x10, r10
 ; NO-JNZD-NEXT:    vldb x9, [p1], m4; vmul dm4, x0, x2, r12
-; NO-JNZD-NEXT:    vlda.3d x7, [p1], d1; movxm ls, #.LBB0_2; vaddmac dm2, dm2, dm4, x8, x10, r10
-; NO-JNZD-NEXT:    vldb x5, [p0], #64; movxm le, #.L_LEnd1; vaddmac dm1, dm1, dm4, x6, x1, r10
-; NO-JNZD-NEXT:    vlda.3d x3, [p0], d0; vshuffle x1, x9, x0, r7; vaddmac dm0, dm0, dm4, x8, x1, r10
-; NO-JNZD-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x10, x1, x0, r16; nopv
+; NO-JNZD-NEXT:    vlda.3d x7, [p1], d1; vaddmac dm2, dm2, dm4, x8, x10, r10
+; NO-JNZD-NEXT:    vldb x5, [p0], #64; add.nc lc, r6, #-3; vaddmac dm1, dm1, dm4, x6, x1, r10
+; NO-JNZD-NEXT:    vlda.3d x3, [p0], d0; add.nc ls, pc, #.LBB0_2; vshuffle x1, x9, x0, r7; vaddmac dm0, dm0, dm4, x8, x1, r10
+; NO-JNZD-NEXT:    nopa ; vldb x9, [p1], m4; nops ; add.nc le, pc, #.L_LEnd1; vshuffle x10, x1, x0, r16; nopv
 ; NO-JNZD-NEXT:    vlda.3d x7, [p1], d1; nopb ; nops ; nopx ; vshuffle x8, x7, x0, r18; nopv
 ; NO-JNZD-NEXT:    nopa ; vldb x5, [p0], #64; nops ; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; NO-JNZD-NEXT:    vlda.3d x3, [p0], d0; nopb ; nops ; nopx ; vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
@@ -415,7 +415,7 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-JNZD-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; NO-JNZD-NEXT:    nopa ; paddb.2d [p4], d3; nops ; add r0, r0, #-1; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
 ; NO-JNZD-NEXT:    nopa ; vldb.128 wl1, [p4, #16]; nops ; ne r26, r0, r22; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
-; NO-JNZD-NEXT:    vldb.128 wl10, [p4, #0]; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
+; NO-JNZD-NEXT:    vldb.128 wl10, [p4, #0]; nopx ; vshuffle x6, x8, x0, r20; vmac dm3, dm3, x5, x10, r8
 ; NO-JNZD-NEXT:    vshuffle x1, x9, x0, r7; vmac dm2, dm2, x3, x10, r8
 ; NO-JNZD-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p2], #64; vldb x3, [p1], m4; vshuffle x10, x1, x0, r16; vmac dm1, dm1, x5, x6, r8
 ; NO-JNZD-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p2], #64; vldb.3d x5, [p1], d1; vshuffle x8, x7, x0, r18; vmac dm0, dm0, x3, x6, r8
@@ -441,10 +441,10 @@ define dso_local void @gemm(i32 %0, ptr addrspace(5) %1, ptr addrspace(5) %2, pt
 ; NO-JNZD-NEXT:    vldb x10, [p0], #64; vaddmac dm3, dm3, dm4, x6, x10, r10
 ; NO-JNZD-NEXT:    vlda.3d x8, [p0], d0; vmul dm4, x0, x2, r12
 ; NO-JNZD-NEXT:    vldb x3, [p1], m4; vaddmac dm2, dm2, dm4, x8, x10, r10
-; NO-JNZD-NEXT:    vlda.3d x1, [p1], d1; movxm ls, #.LBB0_5; vaddmac dm1, dm1, dm4, x6, x1, r10
-; NO-JNZD-NEXT:    vldb x10, [p0], #64; movxm le, #.L_LEnd0; vaddmac dm0, dm0, dm4, x8, x1, r10
-; NO-JNZD-NEXT:    vlda.3d x8, [p0], d0; vshuffle x6, x3, x0, r7
-; NO-JNZD-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc lc, r6, #-3; vshuffle x4, x6, x0, r16; nopv
+; NO-JNZD-NEXT:    vlda.3d x1, [p1], d1; vaddmac dm1, dm1, dm4, x6, x1, r10
+; NO-JNZD-NEXT:    vldb x10, [p0], #64; add.nc lc, r6, #-3; vaddmac dm0, dm0, dm4, x8, x1, r10
+; NO-JNZD-NEXT:    vlda.3d x8, [p0], d0; add.nc ls, pc, #.LBB0_5; vshuffle x6, x3, x0, r7
+; NO-JNZD-NEXT:    nopa ; vldb x3, [p1], m4; nops ; add.nc le, pc, #.L_LEnd0; vshuffle x4, x6, x0, r16; nopv
 ; NO-JNZD-NEXT:    vlda.3d x1, [p1], d1; nopb ; nops ; nopx ; vshuffle x2, x1, x0, r18; nopv
 ; NO-JNZD-NEXT:    nopa ; vldb x10, [p0], #64; nops ; nopx ; vshuffle x0, x2, x0, r20; vmac dm3, dm3, x10, x4, r8
 ; NO-JNZD-NEXT:    vlda.3d x8, [p0], d0; nopb ; nops ; nopx ; vshuffle x6, x3, x0, r7; vmac dm2, dm2, x8, x4, r8

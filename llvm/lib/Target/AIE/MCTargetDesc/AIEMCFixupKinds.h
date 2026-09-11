@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -90,9 +90,16 @@ public:
         FixupFieldsMapper(FixupFieldsMapper), FixupFormatSize(FixupFormatSize),
         FixupFlagMap(FixupFlagMap), InstrFixupFlags(InstrFixupFlags) {}
 
+  virtual ~AIEMCFixupKinds() = default;
+
   static bool isTargetFixup(MCFixupKind Kind) {
     return Kind >= FirstTargetFixupKind;
   }
+
+  /// Return true if \p Kind denotes a PC-relative fixup. This has to be
+  /// recorded on every MCFixup at creation time, as MCFixupKindInfo no longer
+  /// carries a flag for it.
+  virtual bool isPCRelFixup(MCFixupKind Kind) const { return false; }
 
   /// Convert the Offsets of the field location into a vector of FixupField
   static SmallVector<FixupField>
@@ -107,7 +114,7 @@ public:
   /// NOTE: FormatSize is the size of the VLIW instruction, which is not
   /// necessarily the size of the instruction represented by the InstrDesc
   /// of Inst (as it could be a standalone instruction).
-  MCFixupKind
+  virtual MCFixupKind
   findFixupfromFixupFields(const MCInst &Inst, unsigned FormatSize,
                            const SmallVector<FixupField> &Fields) const;
 

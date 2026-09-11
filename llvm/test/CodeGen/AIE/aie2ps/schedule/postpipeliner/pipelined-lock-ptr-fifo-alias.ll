@@ -38,7 +38,7 @@ declare { ptr, <32 x i32>, i32 }
 define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_same:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r2, [p0, #4]
+; CHECK-NEXT:    lda r2, [p0, #4]; nopxm
 ; CHECK-NEXT:    lda r4, [p0, #8]
 ; CHECK-NEXT:    lda r27, [p0, #12]
 ; CHECK-NEXT:    nop
@@ -49,9 +49,9 @@ define void @pipelined_acquire_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r4, #-1; sel.eqz r2, r2, r4, r27
 ; CHECK-NEXT:    acq r0, r4
-; CHECK-NEXT:    mova r24, #0; movxm ls, #.LBB0_1
-; CHECK-NEXT:    paddxm [sp], #64; movxm le, #.L_LEnd0
-; CHECK-NEXT:    mova r30, #63; movx r3, #16; mov p1, sp
+; CHECK-NEXT:    mova r24, #0
+; CHECK-NEXT:    paddxm [sp], #64; add.nc ls, pc, #.LBB0_1; mov r3, #16
+; CHECK-NEXT:    mova r30, #63; add.nc le, pc, #.L_LEnd0; mov p1, sp
 ; CHECK-NEXT:    padda [p1], #-64; nopb ; nops ; add.nc lc, r3, #0; mov p0, r2; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -114,11 +114,11 @@ for.exit:
 define void @pipelined_acquire_ptr_fifo_disjoint(ptr noalias %lock_io, ptr noalias %in_port, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_acquire_ptr_fifo_disjoint:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #-1; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r2, #-1
 ; CHECK-NEXT:    acq r0, r2
-; CHECK-NEXT:    movxm ls, #.LBB1_1
-; CHECK-NEXT:    paddxm [sp], #64; movxm le, #.L_LEnd1
-; CHECK-NEXT:    mova r3, #16; movs p0, p1; movx r24, #0; mov p1, sp
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    paddxm [sp], #64; add.nc ls, pc, #.LBB1_1; mov r24, #0
+; CHECK-NEXT:    mova r3, #16; movs p0, p1; add.nc le, pc, #.L_LEnd1; mov p1, sp
 ; CHECK-NEXT:    padda [p1], #-64; nopb ; nops ; add.nc lc, r3, #0; mov r30, #63; nopv
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -183,11 +183,11 @@ for.exit:
 define void @pipelined_release_ptr_fifo_same(ptr noalias %io, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_release_ptr_fifo_same:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    lda r2, [p0, #4]; nopb ; nopx
-; CHECK-NEXT:    lda r4, [p0, #8]
-; CHECK-NEXT:    lda r27, [p0, #12]; movxm ls, #.LBB2_1
-; CHECK-NEXT:    mova r1, #16; movxm le, #.L_LEnd2
-; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; nopm ; nopv
+; CHECK-NEXT:    lda r2, [p0, #4]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda r4, [p0, #8]; nopx
+; CHECK-NEXT:    lda r27, [p0, #12]
+; CHECK-NEXT:    mova r1, #16; add.nc ls, pc, #.LBB2_1
+; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; addm.nc le, pc, #.L_LEnd2; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movx r6, #-1; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r6; nopm ; nopv
@@ -241,9 +241,8 @@ for.exit:
 define void @pipelined_release_ptr_fifo_disjoint(ptr noalias %lock_io, ptr noalias %out_port, i32 %lock_id) {
 ; CHECK-LABEL: pipelined_release_ptr_fifo_disjoint:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    movxm ls, #.LBB3_1
-; CHECK-NEXT:    mova r1, #16; movxm le, #.L_LEnd3
-; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; nopm ; nopv
+; CHECK-NEXT:    mova r1, #16; nopb ; nops ; add.nc ls, pc, #.LBB3_1; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; add.nc lc, r1, #0; addm.nc le, pc, #.L_LEnd3; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #-1; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; acq r0, r4; nopm ; nopv

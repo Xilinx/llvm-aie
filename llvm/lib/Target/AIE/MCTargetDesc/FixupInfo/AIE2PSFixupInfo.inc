@@ -162,6 +162,40 @@ enum Fixups {
   fixup_aie2ps_136,                      /* => R_AIE2PS_136 (dmword) */
   fixup_aie2ps_137,                      /* => R_AIE2PS_137 (dmword) */
   fixup_aie2ps_138,                      /* => R_AIE2PS_138 (dmword) */
+  fixup_aie2ps_139,                      /* => R_AIE2PS_139 (iword) */
+  fixup_aie2ps_140,                      /* => R_AIE2PS_140 (iword) */
+  fixup_aie2ps_141,                      /* => R_AIE2PS_141 (iword) */
+  fixup_aie2ps_142,                      /* => R_AIE2PS_142 (iword) */
+  fixup_aie2ps_143,                      /* => R_AIE2PS_143 (iword) */
+  fixup_aie2ps_144,                      /* => R_AIE2PS_144 (iword) */
+  fixup_aie2ps_145,                      /* => R_AIE2PS_145 (iword) */
+  fixup_aie2ps_146,                      /* => R_AIE2PS_146 (iword) */
+  fixup_aie2ps_147,                      /* => R_AIE2PS_147 (iword) */
+  fixup_aie2ps_148,                      /* => R_AIE2PS_148 (iword) */
+  fixup_aie2ps_149,                      /* => R_AIE2PS_149 (iword) */
+  fixup_aie2ps_150,                      /* => R_AIE2PS_150 (iword) */
+  fixup_aie2ps_151,                      /* => R_AIE2PS_151 (iword) */
+  fixup_aie2ps_152,                      /* => R_AIE2PS_152 (iword) */
+  fixup_aie2ps_153,                      /* => R_AIE2PS_153 (iword) */
+  fixup_aie2ps_154,                      /* => R_AIE2PS_154 (iword) */
+  fixup_aie2ps_155,                      /* => R_AIE2PS_155 (iword) */
+  fixup_aie2ps_156,                      /* => R_AIE2PS_156 (iword) */
+  fixup_aie2ps_157,                      /* => R_AIE2PS_157 (iword) */
+  fixup_aie2ps_158,                      /* => R_AIE2PS_158 (iword) */
+  fixup_aie2ps_159,                      /* => R_AIE2PS_159 (iword) */
+  fixup_aie2ps_160,                      /* => R_AIE2PS_160 (iword) */
+  fixup_aie2ps_161,                      /* => R_AIE2PS_161 (iword) */
+  fixup_aie2ps_162,                      /* => R_AIE2PS_162 (iword) */
+  fixup_aie2ps_163,                      /* => R_AIE2PS_163 (iword) */
+  fixup_aie2ps_164,                      /* => R_AIE2PS_164 (iword) */
+  fixup_aie2ps_165,                      /* => R_AIE2PS_165 (iword) */
+  fixup_aie2ps_166,                      /* => R_AIE2PS_166 (iword) */
+  fixup_aie2ps_167,                      /* => R_AIE2PS_167 (iword) */
+  fixup_aie2ps_168,                      /* => R_AIE2PS_168 (iword) */
+  fixup_aie2ps_169,                      /* => R_AIE2PS_169 (iword) */
+  fixup_aie2ps_170,                      /* => R_AIE2PS_170 (iword) */
+  fixup_aie2ps_171,                      /* => R_AIE2PS_171 (iword) */
+  fixup_aie2ps_172,                      /* => R_AIE2PS_172 (iword) */
 
   // fixup_invalid - used as a sentinel and a marker, must be last fixup
   fixup_invalid,
@@ -411,7 +445,75 @@ const std::map<unsigned, SmallVector<FixupField>> AIE2PSFixupFieldsInfos = {
     {AIE2PS::fixup_aie2ps_133,
      {{/*Offset=*/17, /*Size=*/5}, {/*Offset=*/28, /*Size=*/6}}},
     {AIE2PS::fixup_aie2ps_134,
-     {{/*Offset=*/38, /*Size=*/5}, {/*Offset=*/49, /*Size=*/6}}}};
+     {{/*Offset=*/38, /*Size=*/5}, {/*Offset=*/49, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_139,
+     {{/*Offset=*/22, /*Size=*/4}, {/*Offset=*/15, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_140,
+     {{/*Offset=*/39, /*Size=*/4}, {/*Offset=*/32, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_141,
+     {{/*Offset=*/14, /*Size=*/4}, {/*Offset=*/7, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_142,
+     {{/*Offset=*/93, /*Size=*/4}, {/*Offset=*/86, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_143,
+     {{/*Offset=*/0, /*Size=*/5}, {/*Offset=*/11, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_144,
+     {{/*Offset=*/77, /*Size=*/4}, {/*Offset=*/70, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_145,
+     {{/*Offset=*/34, /*Size=*/4}, {/*Offset=*/27, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_146,
+     {{/*Offset=*/18, /*Size=*/4}, {/*Offset=*/11, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_147,
+     {{/*Offset=*/14, /*Size=*/4}, {/*Offset=*/7, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_148,
+     {{/*Offset=*/31, /*Size=*/4}, {/*Offset=*/24, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_149,
+     {{/*Offset=*/31, /*Size=*/4}, {/*Offset=*/24, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_150,
+     {{/*Offset=*/42, /*Size=*/5}, {/*Offset=*/53, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_151,
+     {{/*Offset=*/42, /*Size=*/5}, {/*Offset=*/53, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_152,
+     {{/*Offset=*/56, /*Size=*/4}, {/*Offset=*/49, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_153,
+     {{/*Offset=*/76, /*Size=*/4}, {/*Offset=*/69, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_154,
+     {{/*Offset=*/59, /*Size=*/5}, {/*Offset=*/70, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_155,
+     {{/*Offset=*/43, /*Size=*/5}, {/*Offset=*/54, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_156,
+     {{/*Offset=*/5, /*Size=*/5}, {/*Offset=*/16, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_157,
+     {{/*Offset=*/10, /*Size=*/5}, {/*Offset=*/21, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_158,
+     {{/*Offset=*/17, /*Size=*/5}, {/*Offset=*/28, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_159,
+     {{/*Offset=*/21, /*Size=*/5}, {/*Offset=*/32, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_160,
+     {{/*Offset=*/21, /*Size=*/5}, {/*Offset=*/32, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_161,
+     {{/*Offset=*/38, /*Size=*/5}, {/*Offset=*/49, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_162,
+     {{/*Offset=*/38, /*Size=*/5}, {/*Offset=*/49, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_163,
+     {{/*Offset=*/35, /*Size=*/4}, {/*Offset=*/28, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_164,
+     {{/*Offset=*/45, /*Size=*/4}, {/*Offset=*/38, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_165,
+     {{/*Offset=*/19, /*Size=*/4}, {/*Offset=*/12, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_166,
+     {{/*Offset=*/53, /*Size=*/5}, {/*Offset=*/64, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_167,
+     {{/*Offset=*/35, /*Size=*/4}, {/*Offset=*/28, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_168,
+     {{/*Offset=*/60, /*Size=*/4}, {/*Offset=*/53, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_169,
+     {{/*Offset=*/52, /*Size=*/4}, {/*Offset=*/45, /*Size=*/7}}},
+    {AIE2PS::fixup_aie2ps_170,
+     {{/*Offset=*/0, /*Size=*/5}, {/*Offset=*/11, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_171,
+     {{/*Offset=*/26, /*Size=*/5}, {/*Offset=*/37, /*Size=*/6}}},
+    {AIE2PS::fixup_aie2ps_172,
+     {{/*Offset=*/1, /*Size=*/5}, {/*Offset=*/12, /*Size=*/6}}}};
 
 /// This structure maps a set of fields to the corresponding set of Fixups,
 /// which are dispatched according to the Format size they target.
@@ -453,94 +555,49 @@ const std::map<SmallVector<FixupField>, std::set<unsigned>>
         {{{/*Offset=*/4, /*Size=*/9}, {/*Offset=*/20, /*Size=*/2}},
          {AIE2PS::fixup_aie2ps_9 /*(FormatSize=4, Flag=Unrestricted)*/}},
         {{{/*Offset=*/59, /*Size=*/5}, {/*Offset=*/70, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_15 /*(FormatSize=16, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_49 /*(FormatSize=16, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_122 /*(FormatSize=16, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_154 /*(FormatSize=16, Flag=Unrestricted)*/}},
         {{{/*Offset=*/5, /*Size=*/5}, {/*Offset=*/16, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_16 /*(FormatSize=4, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_50 /*(FormatSize=4, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_123 /*(FormatSize=4, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_156 /*(FormatSize=4, Flag=Unrestricted)*/}},
         {{{/*Offset=*/21, /*Size=*/5}, {/*Offset=*/32, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_17 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_25 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_51 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_59 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_124 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_132 /*(FormatSize=12, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_159 /*(FormatSize=6, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_160 /*(FormatSize=12, Flag=Unrestricted)*/}},
         {{{/*Offset=*/0, /*Size=*/5}, {/*Offset=*/11, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_18 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_52 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_125 /*(FormatSize=6, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_143 /*(FormatSize=4, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_170 /*(FormatSize=6, Flag=Unrestricted)*/}},
         {{{/*Offset=*/10, /*Size=*/5}, {/*Offset=*/21, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_19 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_53 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_126 /*(FormatSize=8, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_157 /*(FormatSize=8, Flag=Unrestricted)*/}},
         {{{/*Offset=*/38, /*Size=*/5}, {/*Offset=*/49, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_20 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_27 /*(FormatSize=14, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_54 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_61 /*(FormatSize=14, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_127 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_134 /*(FormatSize=14, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_161 /*(FormatSize=8, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_162 /*(FormatSize=14, Flag=Unrestricted)*/}},
         {{{/*Offset=*/53, /*Size=*/5}, {/*Offset=*/64, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_21 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_55 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_128 /*(FormatSize=10, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_166 /*(FormatSize=10, Flag=Unrestricted)*/}},
         {{{/*Offset=*/26, /*Size=*/5}, {/*Offset=*/37, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_22 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_56 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_129 /*(FormatSize=10, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_171 /*(FormatSize=10, Flag=Unrestricted)*/}},
         {{{/*Offset=*/1, /*Size=*/5}, {/*Offset=*/12, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_23 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_57 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_130 /*(FormatSize=10, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_172 /*(FormatSize=10, Flag=Unrestricted)*/}},
         {{{/*Offset=*/43, /*Size=*/5}, {/*Offset=*/54, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_24 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_58 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_131 /*(FormatSize=12, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_155 /*(FormatSize=12, Flag=Unrestricted)*/}},
         {{{/*Offset=*/17, /*Size=*/5}, {/*Offset=*/28, /*Size=*/6}},
-         {AIE2PS::fixup_aie2ps_26 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_60 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_133 /*(FormatSize=12, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_158 /*(FormatSize=12, Flag=Unrestricted)*/}},
         {{{/*Offset=*/93, /*Size=*/4}, {/*Offset=*/86, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_28 /*(FormatSize=16, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_62 /*(FormatSize=16, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_109 /*(FormatSize=16, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_142 /*(FormatSize=16, Flag=Unrestricted)*/}},
         {{{/*Offset=*/18, /*Size=*/4}, {/*Offset=*/11, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_29 /*(FormatSize=4, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_63 /*(FormatSize=4, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_110 /*(FormatSize=4, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_146 /*(FormatSize=4, Flag=Unrestricted)*/}},
         {{{/*Offset=*/35, /*Size=*/4}, {/*Offset=*/28, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_30 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_35 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_64 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_69 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_111 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_116 /*(FormatSize=10, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_163 /*(FormatSize=6, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_167 /*(FormatSize=10, Flag=Unrestricted)*/}},
         {{{/*Offset=*/34, /*Size=*/4}, {/*Offset=*/27, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_31 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_65 /*(FormatSize=6, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_112 /*(FormatSize=6, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_145 /*(FormatSize=6, Flag=Unrestricted)*/}},
         {{{/*Offset=*/45, /*Size=*/4}, {/*Offset=*/38, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_32 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_66 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_113 /*(FormatSize=8, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_164 /*(FormatSize=8, Flag=Unrestricted)*/}},
         {{{/*Offset=*/19, /*Size=*/4}, {/*Offset=*/12, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_33 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_67 /*(FormatSize=8, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_114 /*(FormatSize=8, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_165 /*(FormatSize=8, Flag=Unrestricted)*/}},
         {{{/*Offset=*/60, /*Size=*/4}, {/*Offset=*/53, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_34 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_68 /*(FormatSize=10, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_115 /*(FormatSize=10, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_168 /*(FormatSize=10, Flag=Unrestricted)*/}},
         {{{/*Offset=*/77, /*Size=*/4}, {/*Offset=*/70, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_36 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_70 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_117 /*(FormatSize=12, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_144 /*(FormatSize=12, Flag=Unrestricted)*/}},
         {{{/*Offset=*/52, /*Size=*/4}, {/*Offset=*/45, /*Size=*/7}},
-         {AIE2PS::fixup_aie2ps_37 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_71 /*(FormatSize=12, Flag=Unrestricted)*/,
-          AIE2PS::fixup_aie2ps_118 /*(FormatSize=12, Flag=Unrestricted)*/}},
+         {AIE2PS::fixup_aie2ps_169 /*(FormatSize=12, Flag=Unrestricted)*/}},
         {{{/*Offset=*/55, /*Size=*/4}, {/*Offset=*/48, /*Size=*/7}},
          {AIE2PS::fixup_aie2ps_38 /*(FormatSize=12, Flag=Unrestricted)*/,
           AIE2PS::fixup_aie2ps_72 /*(FormatSize=12, Flag=Unrestricted)*/,
@@ -617,7 +674,32 @@ const std::map<SmallVector<FixupField>, std::set<unsigned>>
         {{{/*Offset=*/49, /*Size=*/8}},
          {AIE2PS::fixup_aie2ps_107 /*(FormatSize=12, Flag=Unrestricted)*/}},
         {{{/*Offset=*/70, /*Size=*/8}},
-         {AIE2PS::fixup_aie2ps_108 /*(FormatSize=14, Flag=Unrestricted)*/}}};
+         {AIE2PS::fixup_aie2ps_108 /*(FormatSize=14, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/22, /*Size=*/4}, {/*Offset=*/15, /*Size=*/7}},
+         {AIE2PS::fixup_aie2ps_139 /*(FormatSize=8, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/39, /*Size=*/4}, {/*Offset=*/32, /*Size=*/7}},
+         {AIE2PS::fixup_aie2ps_140 /*(FormatSize=10, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/7, /*Size=*/11}},
+         {AIE2PS::fixup_aie2ps_141 /*(FormatSize=4, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/86, /*Size=*/11}},
+         {AIE2PS::fixup_aie2ps_142 /*(FormatSize=16, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/70, /*Size=*/11}},
+         {AIE2PS::fixup_aie2ps_144 /*(FormatSize=12, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/27, /*Size=*/11}},
+         {AIE2PS::fixup_aie2ps_145 /*(FormatSize=6, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/14, /*Size=*/4}, {/*Offset=*/7, /*Size=*/7}},
+         {AIE2PS::fixup_aie2ps_146 /*(FormatSize=4, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_147 /*(FormatSize=8, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/31, /*Size=*/4}, {/*Offset=*/24, /*Size=*/7}},
+         {AIE2PS::fixup_aie2ps_148 /*(FormatSize=6, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_149 /*(FormatSize=10, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/42, /*Size=*/5}, {/*Offset=*/53, /*Size=*/6}},
+         {AIE2PS::fixup_aie2ps_150 /*(FormatSize=10, Flag=Unrestricted)*/,
+          AIE2PS::fixup_aie2ps_151 /*(FormatSize=12, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/56, /*Size=*/4}, {/*Offset=*/49, /*Size=*/7}},
+         {AIE2PS::fixup_aie2ps_152 /*(FormatSize=10, Flag=Unrestricted)*/}},
+        {{{/*Offset=*/76, /*Size=*/4}, {/*Offset=*/69, /*Size=*/7}},
+         {AIE2PS::fixup_aie2ps_153 /*(FormatSize=12, Flag=Unrestricted)*/}}};
 
 /// Size of the (instruction) Format targeted by each AIE2PS fixups
 const std::map<unsigned, unsigned> AIE2PSFixupFormatSize = {
@@ -688,7 +770,24 @@ const std::map<unsigned, unsigned> AIE2PSFixupFormatSize = {
     {AIE2PS::fixup_aie2ps_128, 10}, {AIE2PS::fixup_aie2ps_129, 10},
     {AIE2PS::fixup_aie2ps_130, 10}, {AIE2PS::fixup_aie2ps_131, 12},
     {AIE2PS::fixup_aie2ps_132, 12}, {AIE2PS::fixup_aie2ps_133, 12},
-    {AIE2PS::fixup_aie2ps_134, 14}};
+    {AIE2PS::fixup_aie2ps_134, 14}, {AIE2PS::fixup_aie2ps_139, 8},
+    {AIE2PS::fixup_aie2ps_140, 10}, {AIE2PS::fixup_aie2ps_141, 4},
+    {AIE2PS::fixup_aie2ps_142, 16}, {AIE2PS::fixup_aie2ps_143, 4},
+    {AIE2PS::fixup_aie2ps_144, 12}, {AIE2PS::fixup_aie2ps_145, 6},
+    {AIE2PS::fixup_aie2ps_146, 4},  {AIE2PS::fixup_aie2ps_147, 8},
+    {AIE2PS::fixup_aie2ps_148, 6},  {AIE2PS::fixup_aie2ps_149, 10},
+    {AIE2PS::fixup_aie2ps_150, 10}, {AIE2PS::fixup_aie2ps_151, 12},
+    {AIE2PS::fixup_aie2ps_152, 10}, {AIE2PS::fixup_aie2ps_153, 12},
+    {AIE2PS::fixup_aie2ps_154, 16}, {AIE2PS::fixup_aie2ps_155, 12},
+    {AIE2PS::fixup_aie2ps_156, 4},  {AIE2PS::fixup_aie2ps_157, 8},
+    {AIE2PS::fixup_aie2ps_158, 12}, {AIE2PS::fixup_aie2ps_159, 6},
+    {AIE2PS::fixup_aie2ps_160, 12}, {AIE2PS::fixup_aie2ps_161, 8},
+    {AIE2PS::fixup_aie2ps_162, 14}, {AIE2PS::fixup_aie2ps_163, 6},
+    {AIE2PS::fixup_aie2ps_164, 8},  {AIE2PS::fixup_aie2ps_165, 8},
+    {AIE2PS::fixup_aie2ps_166, 10}, {AIE2PS::fixup_aie2ps_167, 10},
+    {AIE2PS::fixup_aie2ps_168, 10}, {AIE2PS::fixup_aie2ps_169, 12},
+    {AIE2PS::fixup_aie2ps_170, 6},  {AIE2PS::fixup_aie2ps_171, 10},
+    {AIE2PS::fixup_aie2ps_172, 10}};
 
 /// Map between each supported fixup and a flag indicating the signedness
 const std::map<unsigned, FixupFlag> AIE2PSFixupFlagMap = {
@@ -826,13 +925,51 @@ const std::map<unsigned, FixupFlag> AIE2PSFixupFlagMap = {
     {AIE2PS::fixup_aie2ps_131, FixupFlag::Unrestricted},
     {AIE2PS::fixup_aie2ps_132, FixupFlag::Unrestricted},
     {AIE2PS::fixup_aie2ps_133, FixupFlag::Unrestricted},
-    {AIE2PS::fixup_aie2ps_134, FixupFlag::Unrestricted}};
+    {AIE2PS::fixup_aie2ps_134, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_139, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_140, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_141, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_142, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_143, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_144, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_145, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_146, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_147, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_148, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_149, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_150, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_151, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_152, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_153, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_154, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_155, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_156, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_157, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_158, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_159, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_160, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_161, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_162, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_163, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_164, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_165, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_166, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_167, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_168, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_169, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_170, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_171, FixupFlag::Unrestricted},
+    {AIE2PS::fixup_aie2ps_172, FixupFlag::Unrestricted}};
 
+// Allow custom factory to override (e.g., to add isPCRelFixup for ZOL
+// subclass)
+#ifndef AIE2PS_CUSTOM_FIXUP_KINDS
 std::unique_ptr<AIEMCFixupKinds> llvm::createAIE2PSMCFixupKinds() {
   return std::make_unique<AIEMCFixupKinds>(
       AIE2PSFixupFieldsInfos, AIE2PSFixupFieldsMapper, AIE2PSFixupFormatSize,
       AIE2PSFixupFlagMap, AIE2PSInstrFixupFlags);
 }
+#endif // AIE2PS_CUSTOM_FIXUP_KINDS
 
 #endif // GET_MCFIXUPKINDS_IMPLEM
 
