@@ -91,6 +91,7 @@
 ; AIE-O123-NEXT:      Scalar Evolution Analysis
 ; AIE-O123-NEXT:      GPU Load and Store Vectorizer
 ; AIE-O123-NEXT:      CodeGen Prepare
+; AIE-O0123-NEXT:      AIE Switch to OR-of-icmp Lowering
 
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0123-NEXT:      Remove unreachable blocks from the CFG

@@ -56,6 +56,7 @@ public:
   }
 
   bool addPreISel() override;
+  void addCodeGenPrepare() override;
   void addPreEmitPass() override;
   bool addGlobalInstructionSelect() override;
   void addPreRegAlloc() override;
