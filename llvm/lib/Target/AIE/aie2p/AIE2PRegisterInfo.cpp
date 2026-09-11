@@ -200,14 +200,36 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_EX_SPILL:
   case AIE2P::VST_E_SPILL:
   case AIE2P::VLDA_E_SPILL:
-  case AIE2P::VLDA_EX_SPILL:
-  case AIE2P::VLDA_PLFR_SPILL:
-  case AIE2P::VST_PLFR_SPILL: {
+  case AIE2P::VLDA_EX_SPILL: {
     // When a pseudo instruction expands to multiple instructions, this case
     // looks for the smallest encodable offset that can be used.
     // The stack grows upward so if Offset is in range, the offsets of its
     // sub-register spills should also be fine.
     if (isEncodableAsNegativeInt<9, 4>(Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    } else {
+      Register SPReg =
+          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
+      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+          .addReg(getStackPointerRegister());
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                             Offset);
+    }
+    return true;
+  }
+  case AIE2P::VLDA_PLFR_SPILL:
+  case AIE2P::VST_PLFR_SPILL: {
+    // Slot layout: [sub_fifo 128B][sub_avail 4B][sub_ptr 4B]. sub_fifo moves
+    // through the FIFO path, whose SP offset must be a multiple of 64, and
+    // ePSRFLdF's spill alignment guarantees it -- so a misaligned offset means
+    // a wrong frame object, and must reach the emitter, which rejects it. The
+    // indexed form would encode cleanly and write to a truncated address.
+    // <9,4> is sub_fifo's field, the tightest of the three.
+    const bool Aligned = Offset % 64 == 0;
+    assert(Aligned &&
+           "ePSRFLdF composite spill needs a 64-byte aligned offset");
+    if (!Aligned || isEncodableAsNegativeInt<9, 4>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     } else {
