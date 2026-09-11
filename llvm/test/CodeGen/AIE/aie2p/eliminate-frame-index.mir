@@ -570,3 +570,166 @@ body:             |
     VST_E_SPILL $e0, %stack.0, implicit $sp
     ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
 ...
+
+# The offsets below are past what each spill's immediate field can encode
+# (a 9-bit negative field scaled by the access size), so they must be rewritten
+# to the indexed form instead of reaching the MC encoder, which aborts on them.
+
+---
+name:            test_scl_bigstack
+tracksRegLiveness: true
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4000, alignment: 4 }
+body:             |
+  bb.0 (align 16):
+    liveins: $r2
+    ; CHECK-LABEL: name: test_scl_bigstack
+    ; CHECK: liveins: $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 4032, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -4032
+    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -4032
+    ; CHECK-NEXT: ST_dms_sts_idx $r2, killed $p0, killed $dj0
+    $r2 = LDA_dms_lda_spill %stack.0, implicit $sp
+    ST_dms_sts_spill $r2, %stack.0, implicit $sp
+...
+
+---
+name:            test_vec128_bigstack
+tracksRegLiveness: true
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 12000, alignment: 16 }
+body:             |
+  bb.0 (align 16):
+    liveins: $wh0
+    ; CHECK-LABEL: name: test_vec128_bigstack
+    ; CHECK: liveins: $wh0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 12032, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -12032
+    ; CHECK-NEXT: $wh0 = VLDA_128_dmv_lda_w_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -12032
+    ; CHECK-NEXT: VST_128_dmv_sts_w_idx $wh0, killed $p0, killed $dj0
+    $wh0 = VLDA_128_dmv_lda_w_spill %stack.0, implicit $sp
+    VST_128_dmv_sts_w_spill $wh0, %stack.0, implicit $sp
+...
+
+---
+name:            test_vec256_bigstack
+tracksRegLiveness: true
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 20000, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+    liveins: $wl1
+    ; CHECK-LABEL: name: test_vec256_bigstack
+    ; CHECK: liveins: $wl1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 20032, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -20032
+    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -20032
+    ; CHECK-NEXT: VST_dmw_sts_w_idx $wl1, killed $p0, killed $dj0
+    $wl1 = VLDA_dmw_lda_w_spill %stack.0, implicit $sp
+    VST_dmw_sts_w_spill $wl1, %stack.0, implicit $sp
+...
+
+---
+name:            test_acc512_bigstack
+tracksRegLiveness: true
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 40000, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+    liveins: $bmll1
+    ; CHECK-LABEL: name: test_acc512_bigstack
+    ; CHECK: liveins: $bmll1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 40064, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: $bmll1 = VLDA_dmx_lda_bm_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx $bmll1, killed $p0, killed $dj0
+    $bmll1 = VLDA_dmx_lda_bm_spill %stack.0, implicit $sp
+    VST_dmx_sts_bm_spill $bmll1, %stack.0, implicit $sp
+...
+
+# The composed pseudos are retagged to a concrete opcode in expandPostRAPseudo,
+# after this pass, so eliminateFrameIndex has to resolve them to know which
+# field the offset lands in.
+---
+name:            test_composed512_bigstack
+tracksRegLiveness: true
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 40000, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+    liveins: $x0
+    ; CHECK-LABEL: name: test_composed512_bigstack
+    ; CHECK: liveins: $x0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 40064, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: $x0 = VLDA_dmx_lda_x_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: VST_dmx_sts_x_idx $x0, killed $p0, killed $dj0
+    $x0 = VLDA_512_COMPOSED_REG_SPILL %stack.0, implicit $sp
+    VST_512_COMPOSED_REG_SPILL $x0, %stack.0, implicit $sp
+...
+
+# A pseudo that expands into several 64-byte sub-register spills: the first
+# sub-offset is the one that has to fit, the rest run towards zero.
+---
+name:            test_acc1024_bigstack
+tracksRegLiveness: true
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 40000, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+    liveins: $cml3
+    ; CHECK-LABEL: name: test_acc1024_bigstack
+    ; CHECK: liveins: $cml3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 40064, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: $bmll3 = VLDA_dmx_lda_bm_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM -40000
+    ; CHECK-NEXT: $bmlh3 = VLDA_dmx_lda_bm_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM -40064
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx $bmll3, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM -40000
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx $bmlh3, killed $p0, killed $dj0
+    $cml3 = VLDA_CM_SPILL %stack.0, implicit $sp
+    VST_CM_SPILL $cml3, %stack.0, implicit $sp
+...
