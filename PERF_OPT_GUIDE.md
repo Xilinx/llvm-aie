@@ -1,3 +1,4 @@
+<!-- Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved. -->
 ---
 name: aie-kernel-perf-optimization
 description: "Performance optimization guide for custom AIE kernel development with Peano. Covers restrict pointers, DM bank annotations, loop pragmas, loop hints, software pipelining (pre-RA vs post-RA), loop versioning, function structure, pointer increments, sub-32-bit limitations, vector alignment, type conversion chains, and reading backend optimization hints from the compiler (remarks via -Rpass*/-fsave-optimization-record and warnings such as -Wpass-failed and the aie-multi-slot-pseudo missing-memory-bank hint). Consult when writing or reviewing AIE kernel C++ code for throughput, when diagnosing pipelining failures or high II, or when interpreting build-log warnings and missed-opportunity remarks from the AIE backend."
