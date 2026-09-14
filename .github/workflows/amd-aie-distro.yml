@@ -89,7 +89,7 @@ jobs:
             LLVM_AIE_PROJECT_COMMIT="${{ inputs.LLVM_AIE_COMMIT }}"
           fi
           echo "LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT}" | tee -a $GITHUB_OUTPUT
-          DATETIME=$(date +"%Y%m%d%H")
+          DATETIME=$(date +"%Y%m%d%H%M")
           echo "DATETIME=${DATETIME}" | tee -a $GITHUB_OUTPUT
 
   settings:
@@ -282,7 +282,7 @@ jobs:
       run: |
         pip install pkginfo
         WHL=$(ls wheelhouse/llvm_aie-*whl)
-        echo "LLVM_AIE_WHEEL_VERSION=$(python -c "import pkginfo; w = pkginfo.Wheel('$WHL'); print(w.version.split('+')[0] + '+' + w.version.split('+')[1].rsplit('.', 1)[-1])")" | tee -a $GITHUB_OUTPUT
+        echo "LLVM_AIE_WHEEL_VERSION=$(python -c "import pkginfo; print(pkginfo.Wheel('$WHL').version)")" | tee -a $GITHUB_OUTPUT
 
     - name: Download cache from container ubuntu
       if: contains(matrix.OS, 'ubuntu') && contains(matrix.ARCH, 'x86_64') && (success() || failure())
