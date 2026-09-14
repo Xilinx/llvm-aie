@@ -82,6 +82,18 @@ cl::opt<bool> EnableGEPAddressSpaceCanon(
         "Enable GEP address space canonicalization to PHI's address space"),
     cl::init(true), cl::Hidden);
 
+cl::opt<bool> EnablePhiNormalization(
+    "aie-enable-phi-normalization",
+    cl::desc("Enable pre-increment phi normalization to load-base form "
+             "(standalone loops only)"),
+    cl::init(true), cl::Hidden);
+
+cl::opt<bool> EnablePostIncChain(
+    "aie-enable-post-inc-chain",
+    cl::desc("Enable post-increment GEP chain building for direct phi uses "
+             "(standalone loops only)"),
+    cl::init(true), cl::Hidden);
+
 //===----------------------------------------------------------------------===//
 // Helper Functions
 //===----------------------------------------------------------------------===//
@@ -703,6 +715,8 @@ private:
   bool linkGEPChains(LoopStructure &LS);
   bool hoistGEPsToTop(LoopStructure &LS);
   bool canonicalizeGEPAddressSpace(LoopStructure &LS);
+  bool normalizePhiToLoadBase(LoopStructure &LS);
+  bool buildPostIncChain(LoopStructure &LS);
 };
 
 } // end anonymous namespace
@@ -791,6 +805,17 @@ bool AIELoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
   // Optimization 3: Hoist GEPs from bottom to top
   if (EnableGEPHoisting)
     Changed |= hoistGEPsToTop(LS);
+
+  // Optimizations 4 & 5: Post-increment chain building (standalone only).
+  // These two passes convert pre-increment phi patterns (Pattern 1) into
+  // direct-phi-use patterns (Pattern 2) and then reposition GEPs after loads
+  // to enable post-increment load instruction selection.
+  if (LS.isStandalone()) {
+    if (EnablePhiNormalization)
+      Changed |= normalizePhiToLoadBase(LS);
+    if (EnablePostIncChain)
+      Changed |= buildPostIncChain(LS);
+  }
 
   return Changed;
 }
@@ -1087,6 +1112,238 @@ bool AIELoopPointerOptimizer::canonicalizeGEPAddressSpace(LoopStructure &LS) {
     }
   }
 
+  return Changed;
+}
+
+//===----------------------------------------------------------------------===//
+// Standalone-loop Post-Increment Helpers
+//===----------------------------------------------------------------------===//
+
+/// Collect loads/stores that directly use V, or that use an addrspacecast of V.
+/// This covers both bare-pointer and cast-pointer memory patterns.
+SmallVector<Instruction *, 4> collectMemUsers(Value *V) {
+  SmallVector<Instruction *, 4> MemUsers;
+  for (User *U : V->users()) {
+    if (isa<LoadInst>(U) || isa<StoreInst>(U)) {
+      MemUsers.push_back(cast<Instruction>(U));
+    } else if (auto *ASC = dyn_cast<AddrSpaceCastInst>(U)) {
+      for (User *UU : ASC->users())
+        if (isa<LoadInst>(UU) || isa<StoreInst>(UU))
+          MemUsers.push_back(cast<Instruction>(UU));
+    }
+  }
+  return MemUsers;
+}
+
+/// Return the instruction from Insns that appears textually LAST inside BB.
+/// Returns nullptr if none of the instructions belong to BB.
+Instruction *findLastInBlock(ArrayRef<Instruction *> Insns, BasicBlock *BB) {
+  // Build a set for O(1) membership tests, then do a single forward scan.
+  const SmallPtrSet<Instruction *, 8> InsnSet(Insns.begin(), Insns.end());
+  Instruction *Last = nullptr;
+  for (Instruction &I : *BB)
+    if (InsnSet.contains(&I))
+      Last = &I;
+  return Last;
+}
+
+/// Normalize a pre-increment pointer PHI to load-base form (standalone loops).
+///
+/// Detects the pattern where the PHI is pre-incremented before any loads:
+///   preheader: init
+///   loop header:
+///     phi      = [init | BackGEP]       ; carries the PRE-incremented pointer
+///     BackGEP  = phi + Stride           ; advance before loads
+///     load1    = *BackGEP               ; loads at phi + Stride
+///     load2    = *(BackGEP + W)         ; loads at phi + Stride + W
+///
+/// Transforms to load-base form so phi arrives AT the first load address:
+///   preheader: new_init = init + Stride ; one-time shift
+///   loop header:
+///     phi_new  = [new_init | new_back]  ; phi now points to first load
+///     load1    = *phi_new               ; unchanged load address
+///     load2    = *(phi_new + W)         ; unchanged load address
+///     new_back = phi_new + Stride       ; back-edge, placed at end of latch
+///
+/// Safety conditions (any violation -- skip the phi):
+///   - phi must have no direct load/store/addrcast uses (pre-increment form)
+///   - phi must not be live-out of the loop
+///   - BackGEP must not be live-out of the loop
+bool AIELoopPointerOptimizer::normalizePhiToLoadBase(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Normalizing pre-increment PHIs to load base\n");
+
+  BasicBlock *const Header = LS.getTop();
+  BasicBlock *const Latch = LS.getBottom();
+  BasicBlock *const Preheader = LS.getPreheader();
+  Loop *const L = LS.getLoop();
+  Type *const Int8Ty = Type::getInt8Ty(Header->getContext());
+  bool Changed = false;
+
+  // Returns true when V has at least one user outside the loop.
+  auto isLiveOut = [&](Value *V) {
+    return llvm::any_of(V->users(), [&](User *U) {
+      auto *I = dyn_cast<Instruction>(U);
+      return I && !L->contains(I->getParent());
+    });
+  };
+
+  for (PHINode &Phi : Header->phis()) {
+    if (!Phi.getType()->isPointerTy())
+      continue;
+
+    // --- Structural check ---
+    // Back-edge value must be a constant-stride i8 GEP directly off the phi.
+    Value *const BackVal = Phi.getIncomingValueForBlock(Latch);
+    auto *BackGEP = dyn_cast<GetElementPtrInst>(BackVal);
+    if (!BackGEP || BackGEP->getPointerOperand() != &Phi)
+      continue;
+    int64_t Stride = 0;
+    if (!isChainLinkCandidate(BackGEP, Stride))
+      continue;
+
+    // --- Pattern check ---
+    // Phi must NOT be used directly as a memory address or addrcast source.
+    // Direct uses mean loads already use phi (Pattern 2) -- skip.
+    const bool HasDirectMemUse = llvm::any_of(Phi.users(), [](const User *U) {
+      return isa<LoadInst>(U) || isa<StoreInst>(U) || isa<AddrSpaceCastInst>(U);
+    });
+    if (HasDirectMemUse) {
+      LLVM_DEBUG(dbgs() << "LPO:   Skip phi (already Pattern 2): " << Phi
+                        << "\n");
+      continue;
+    }
+
+    // --- Safety checks ---
+    if (isLiveOut(&Phi)) {
+      LLVM_DEBUG(dbgs() << "LPO:   Skip phi (live-out): " << Phi << "\n");
+      continue;
+    }
+    if (isLiveOut(BackGEP)) {
+      LLVM_DEBUG(dbgs() << "LPO:   Skip phi (back-edge GEP live-out): " << Phi
+                        << "\n");
+      continue;
+    }
+
+    LLVM_DEBUG(dbgs() << "LPO:   Normalizing phi: " << Phi
+                      << "\n           stride = " << Stride << "\n");
+
+    // --- Transform ---
+    Type *const IdxTy = BackGEP->getOperand(1)->getType();
+    Value *const StrideVal = ConstantInt::get(IdxTy, Stride);
+
+    // Insert  new_init = phi_init + Stride  in the preheader (one-time shift).
+    Value *const PhiInit = Phi.getIncomingValueForBlock(Preheader);
+    IRBuilder<> PreheaderBuilder(Preheader->getTerminator());
+    Value *const NewInit = PreheaderBuilder.CreateGEP(
+        Int8Ty, PhiInit, StrideVal, Phi.getName() + ".shifted.init");
+    Phi.setIncomingValueForBlock(Preheader, NewInit);
+
+    // Phi now lands at the same address BackGEP used to compute.
+    // Replace all BackGEP uses with Phi so loads use Phi directly.
+    BackGEP->replaceAllUsesWith(&Phi);
+    BackGEP->eraseFromParent();
+
+    // Insert the new back-edge advancement at the END of the latch.
+    // Placing it last lets buildPostIncChain later reposition it after loads.
+    IRBuilder<> LatchBuilder(Latch->getTerminator());
+    GetElementPtrInst *const NewBack =
+        cast<GetElementPtrInst>(LatchBuilder.CreateGEP(
+            Int8Ty, &Phi, StrideVal, Phi.getName() + ".back"));
+    NewBack->setIsInBounds(true);
+    Phi.setIncomingValueForBlock(Latch, NewBack);
+
+    LLVM_DEBUG(dbgs() << "LPO:   Inserted new back-edge GEP: " << *NewBack
+                      << "\n");
+    Changed = true;
+  }
+  return Changed;
+}
+
+/// Reposition post-increment GEPs to follow their last memory user
+/// (standalone loops, Pattern 2).
+///
+/// For each pointer PHI that is used directly as a memory address, the
+/// post-increment GEP chain is:
+///   phi -> GEP1 (phi+d1) -> GEP2 (GEP1+d2) -> ...
+///
+/// Each GEP is moved to appear immediately after the last load/store that
+/// uses the preceding chain node.  This creates the (load, ptr+=delta)
+/// adjacency that allows the backend to select a single post-increment load
+/// instruction.
+///
+/// Example (single-level chain):
+///   Before:
+///     %gep1 = phi + 64      ; placed early by earlier passes or front-end
+///     %load1 = load *phi
+///     %load2 = load *gep1
+///     store  *phi
+///
+///   After:
+///     %load1 = load *phi
+///     %load2 = load *gep1
+///     store  *phi
+///     %gep1 = phi + 64      ; now follows the last mem-user of phi (store)
+bool AIELoopPointerOptimizer::buildPostIncChain(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Building post-increment GEP chains\n");
+
+  BasicBlock *const Header = LS.getTop();
+  bool Changed = false;
+
+  for (PHINode &Phi : Header->phis()) {
+    if (!Phi.getType()->isPointerTy())
+      continue;
+
+    // Only handle PHIs with direct memory uses (Pattern 2).
+    SmallVector<Instruction *, 4> ChainNodeMemUsers = collectMemUsers(&Phi);
+    if (ChainNodeMemUsers.empty())
+      continue;
+
+    LLVM_DEBUG(dbgs() << "LPO:   Processing phi with direct mem uses: " << Phi
+                      << "\n");
+
+    // Walk the GEP chain: Phi -> GEP1 -> GEP2 -> ...
+    // At each step, move the next GEP to after the last mem-user of the
+    // current node, then advance to the next node.
+    Value *ChainNode = &Phi;
+
+    while (true) {
+      // Find the unique chain-link GEP that advances from the current node.
+      // In a well-formed post-increment chain there is at most one such GEP.
+      GetElementPtrInst *NextChainGEP = nullptr;
+      for (User *U : ChainNode->users()) {
+        auto *GEP = dyn_cast<GetElementPtrInst>(U);
+        if (!GEP || GEP->getParent() != Header)
+          continue;
+        int64_t Off = 0;
+        if (!isChainLinkCandidate(GEP, Off))
+          continue;
+        NextChainGEP = GEP;
+        break;
+      }
+      if (!NextChainGEP)
+        break;
+
+      // Locate the last instruction that reads/writes through the current node.
+      Instruction *const LastMemUser =
+          findLastInBlock(ChainNodeMemUsers, Header);
+      if (!LastMemUser)
+        break;
+
+      // Reposition the GEP to immediately after the last memory user so the
+      // backend can see (load, gep) or (store, gep) as an adjacent pair.
+      if (NextChainGEP->comesBefore(LastMemUser)) {
+        LLVM_DEBUG(dbgs() << "LPO:   Moving GEP after last mem user:\n"
+                          << "         GEP:   " << *NextChainGEP << "\n"
+                          << "         After: " << *LastMemUser << "\n");
+        NextChainGEP->moveAfter(LastMemUser);
+        Changed = true;
+      }
+
+      // Advance to the next link in the chain.
+      ChainNode = NextChainGEP;
+      ChainNodeMemUsers = collectMemUsers(NextChainGEP);
+    }
+  }
   return Changed;
 }
 
