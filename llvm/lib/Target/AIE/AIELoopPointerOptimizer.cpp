@@ -76,6 +76,12 @@ cl::opt<bool>
                       cl::desc("Enable hoisting GEPs from bottom to top block"),
                       cl::init(true), cl::Hidden);
 
+cl::opt<bool> EnableInnerPhiBackEdgeFolding(
+    "aie-enable-inner-phi-backedge-folding",
+    cl::desc("Fold redundant GEPs in epilogue that duplicate the inner loop's "
+             "back-edge GEP (nested loops only)"),
+    cl::init(true), cl::Hidden);
+
 cl::opt<bool> EnableGEPAddressSpaceCanon(
     "aie-enable-gep-addrspace-canon",
     cl::desc(
@@ -712,6 +718,7 @@ private:
   bool canonicalizeGEPsInBlock(
       BasicBlock *BB, LoopStructure &LS,
       DenseMap<std::pair<Value *, uint64_t>, Value *> &PreheaderMuls);
+  bool foldInnerPhiBackEdgeGEPs(LoopStructure &LS);
   bool linkGEPChains(LoopStructure &LS);
   bool hoistGEPsToTop(LoopStructure &LS);
   bool canonicalizeGEPAddressSpace(LoopStructure &LS);
@@ -798,7 +805,12 @@ bool AIELoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
   if (EnableGEPCanonicalization)
     Changed |= canonicalizeGEPs(LS);
 
-  // Optimization 2: Link GEP chains for post-increment addressing
+  // Optimization 2a: Fold redundant inner-phi GEPs in epilogue (nested only).
+  // Must run before chain linking so the chain is rooted at the back-edge GEP.
+  if (!LS.isStandalone() && EnableInnerPhiBackEdgeFolding)
+    Changed |= foldInnerPhiBackEdgeGEPs(LS);
+
+  // Optimization 2b: Link GEP chains for post-increment addressing
   if (EnableGEPChainLinking)
     Changed |= linkGEPChains(LS);
 
@@ -888,6 +900,74 @@ bool AIELoopPointerOptimizer::canonicalizeGEPsInBlock(
   return Changed;
 }
 
+/// Fold GEPs in the epilogue (Bottom block) that duplicate the inner loop's
+/// back-edge GEP, replacing them with the back-edge GEP directly.
+///
+/// In a nested loop, the inner loop's back-edge often advances the pointer:
+///   inner:
+///     %phi = phi ptr [%init, Top] [%back, inner]
+///     %back = getelementptr i8, ptr %phi, i20 <stride>   ; back-edge GEP
+///
+/// If the epilogue (Bottom block) contains an identical GEP:
+///     %dup = getelementptr i8, ptr %phi, i20 <stride>    ; same as %back!
+///
+/// Then %dup is redundant because %back already computes the same value and
+/// dominates Bottom (it is defined in the inner block which exits to Bottom).
+/// Replacing %dup with %back eliminates the GEP instruction and, importantly,
+/// allows the backend to use the pointer register that naturally holds %back
+/// after the inner loop exits — removing the need for a separate post-advance
+/// (paddb/padda) instruction in the epilogue.
+///
+/// This also enables linkGEPChains to chain subsequent epilogue GEPs (e.g.,
+/// phi+2*stride, phi+3*stride) off %back rather than off the now-deleted %dup.
+bool AIELoopPointerOptimizer::foldInnerPhiBackEdgeGEPs(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Folding inner-phi back-edge GEPs in epilogue\n");
+
+  BasicBlock *const Inner = LS.getInner();
+  BasicBlock *const Bottom = LS.getBottom();
+  bool Changed = false;
+
+  // Collect GEPs in Bottom that may be foldable (snapshot to avoid iterator
+  // invalidation when we erase instructions during RAUW).
+  SmallVector<GetElementPtrInst *, 8> BottomGEPs = collectGEPs(Bottom);
+
+  for (GetElementPtrInst *GEP : BottomGEPs) {
+    // Must be a simple i8 GEP with a positive constant offset.
+    int64_t Offset = 0;
+    if (!isChainLinkCandidate(GEP, Offset))
+      continue;
+
+    // Base must be an inner-loop PHI.
+    PHINode *BasePHI = dyn_cast<PHINode>(GEP->getPointerOperand());
+    if (!BasePHI || BasePHI->getParent() != Inner)
+      continue;
+
+    // Get the back-edge value of the phi (the value from the inner block).
+    Value *BackEdgeVal = BasePHI->getIncomingValueForBlock(Inner);
+    auto *BackGEP = dyn_cast<GetElementPtrInst>(BackEdgeVal);
+    if (!BackGEP)
+      continue;
+
+    // The back-edge GEP must have the same base (BasePHI) and same offset.
+    int64_t BackOffset = 0;
+    if (!isChainLinkCandidate(BackGEP, BackOffset))
+      continue;
+    // For now we catch this simple case.
+    if (BackGEP->getPointerOperand() != BasePHI || BackOffset != Offset)
+      continue;
+
+    LLVM_DEBUG(dbgs() << "LPO:   Folding epilogue GEP:\n"
+                      << "         Redundant: " << *GEP << "\n"
+                      << "         Back-edge: " << *BackGEP << "\n");
+
+    GEP->replaceAllUsesWith(BackGEP);
+    GEP->eraseFromParent();
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 /// Link GEP chains to enable post-increment addressing.
 /// This creates complete chains of GEPs that share the same base pointer.
 /// Each GEP in the chain uses the previous GEP as its base, enabling
@@ -952,8 +1032,35 @@ bool AIELoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
       if (IsValidPHI || isa<Argument>(Base)) {
         BaseChains[Base] = {GEP, CurrentOffset};
         LLVM_DEBUG(dbgs() << "LPO:   Start chain for base: " << *GEP << "\n");
+        continue;
       }
-      continue;
+
+      // For GEPs in Bottom whose base is an Inner-loop PHI: seed the chain
+      // from the back-edge GEP (which foldInnerPhiBackEdgeGEPs may have
+      // already used to replace the first epilogue GEP with the same offset).
+      // This allows subsequent epilogue GEPs (phi+2*stride, phi+3*stride) to
+      // chain off the back-edge GEP rather than starting fresh from phi.
+      BasicBlock *Inner = LS.getInner();
+      if (Inner && BasePHI && BasePHI->getParent() == Inner &&
+          GEP->getParent() == Bottom) {
+        Value *BackVal = BasePHI->getIncomingValueForBlock(Inner);
+        if (auto *BackGEP = dyn_cast<GetElementPtrInst>(BackVal)) {
+          int64_t BackOffset = 0;
+          if (isChainLinkCandidate(BackGEP, BackOffset) &&
+              BackGEP->getPointerOperand() == BasePHI &&
+              CurrentOffset > BackOffset && DT->dominates(BackGEP, GEP)) {
+            // Seed chain at BackGEP so this GEP (with larger offset) links off.
+            BaseChains[Base] = {BackGEP, BackOffset};
+            It = BaseChains.find(Base); // re-acquire iterator
+            LLVM_DEBUG(dbgs()
+                       << "LPO:   Seed inner-phi chain from back-edge: "
+                       << *BackGEP << " (offset " << BackOffset << ")\n");
+            // Fall through to chain linking below.
+          }
+        }
+      }
+      if (It == BaseChains.end())
+        continue;
     }
 
     // Try to link to the existing chain
