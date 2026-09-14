@@ -64,6 +64,8 @@ public:
 
   virtual void setAliasAnalysisOpts();
 
+  virtual void setMemorySSAOpts();
+
   virtual void setPipelinerOpts();
 };
 
