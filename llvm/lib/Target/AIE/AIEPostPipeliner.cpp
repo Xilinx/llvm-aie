@@ -13,7 +13,14 @@
 
 #include "AIEPostPipeliner.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEDataDependenceHelper.h"
+#include "AIELiveRangeUtils.h"
+#include "AIEMachineScheduler.h"
+#include "AIEPostRegAlloc.h"
+#include "AIERegDefUseTracker.h"
 #include "AIESWPSolver.h"
+#include "AIEScarceRegScheduling.h"
+#include "AIEScheduleInterpreter.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "Utils/AIEMachineInstrPrint.h"
@@ -25,6 +32,7 @@
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
@@ -112,8 +120,10 @@ public:
 // The latency state is maintained in an 'Earliest' entry for each SUnit,
 // which is updated whenvever we schedule a predecessor of that SUnit.
 
-PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr)
-    : HR(HR), NInstr(NInstr) {}
+PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
+                             RegLiveRangeTracker &RegTracker,
+                             const MachineFunction &MF)
+    : HR(HR), RegTracker(RegTracker), Interpreter(MF), NInstr(NInstr) {}
 
 bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // We leave the single-block loop criterion to our caller. It is fulfilled
@@ -537,6 +547,67 @@ void PostPipeliner::computeEffectiveHeight() {
   }
 }
 
+int PostPipeliner::computeScarceRegMII() {
+  int ScarceRegMII = 0;
+
+  // Group scarce live ranges by their base register.
+  DenseMap<MCRegister, SmallVector<const RegLiveRange *, 4>> ScarceRangesByReg;
+  for (const auto &LR : RegTracker.getLiveRanges()) {
+    // Only consider ranges that are marked as scarce.
+    if (!LR.isScarce()) {
+      continue;
+    }
+
+    MCRegister BaseReg = LR.getBaseReg();
+    assert(BaseReg != MCRegister::NoRegister);
+    ScarceRangesByReg[BaseReg].push_back(&LR);
+  }
+
+  // For each register with multiple competing scarce ranges, compute the sum
+  // of minimal live lengths.
+  DEBUG_WITH_TYPE("aie-reg-liverange", {
+    dbgs() << "\n=== Scarce Register Analysis (II=" << II << ") ===\n";
+  });
+
+  for (const auto &[Reg, Ranges] : ScarceRangesByReg) {
+    // Only consider registers with multiple competing ranges.
+    if (Ranges.size() <= 1)
+      continue;
+
+    unsigned TotalLength = 0;
+    DEBUG_WITH_TYPE("aie-reg-liverange", {
+      const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
+      dbgs() << "Register " << TRI->getName(Reg) << " has " << Ranges.size()
+             << " competing ranges (1 available):\n";
+    });
+
+    for (const RegLiveRange *LR : Ranges) {
+      const unsigned MinLength =
+          AIE::computeMinimalSchedule(*LR, *DAG, HR, Interpreter);
+      TotalLength += MinLength;
+
+      DEBUG_WITH_TYPE("aie-reg-liverange", {
+        dbgs() << "  Range with " << LR->getNumDefs() << " defs, "
+               << LR->getNumUses() << " uses: minimal length = " << MinLength
+               << "\n";
+      });
+    }
+
+    DEBUG_WITH_TYPE("aie-reg-liverange",
+                    { dbgs() << "  Total length: " << TotalLength << "\n"; });
+
+    ScarceRegMII = std::max(ScarceRegMII, static_cast<int>(TotalLength));
+  }
+
+  DEBUG_WITH_TYPE("aie-reg-liverange", {
+    dbgs() << "ScarceRegMII=" << ScarceRegMII << "\n";
+    dbgs() << "============================\n\n";
+  });
+
+  LLVM_DEBUG(dbgs() << "ScarceRegMII=" << ScarceRegMII << "\n");
+  return ScarceRegMII;
+}
+
 bool PostPipeliner::computeLoopCarriedParameters() {
 
   // Initialize slot counts.
@@ -849,6 +920,7 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
 
 void PostPipeliner::resetSchedule(bool FullReset) {
   Scoreboard.clear();
+  EventSched.clear();
   int K = 0;
   for (auto &N : Info.Nodes) {
     N.reset(FullReset);
@@ -889,7 +961,6 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       return false;
     }
     const int Actual = *OptCycle;
-    Strategy.selected(SU);
     const int ModCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     const MemoryObjectPair ObjectBits = HR.getMemoryObjectsBits(MI);
@@ -902,6 +973,13 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
 
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
+
+    // Notify the strategy after the node is fully committed, so that
+    // Info[N].Cycle and Info[N].Scheduled are valid inside selected().
+    Strategy.selected(SU);
+
+    // Populate event schedule for this representative instruction
+    Interpreter.addInstructionEvents(*SU.getInstr(), Actual, EventSched);
 
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
@@ -950,6 +1028,7 @@ int computeEarliestFromPreds(const SUnit &SU, const ScheduleInfo &Info) {
   return Earliest;
 }
 #endif
+
 } // namespace
 
 bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
@@ -1049,6 +1128,47 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
   return true;
 }
 
+bool PostPipeliner::tryScarceRangePacking() {
+  // Check applicability: get the cached most promising scarce range set.
+  const auto &ScarceRangePtrs = RegTracker.getMostPromisingScarceRanges();
+
+  // If no scarce ranges found, this approach is not applicable.
+  if (ScarceRangePtrs.empty()) {
+    return false;
+  }
+
+  // Build ScarceRange objects from the RegLiveRange pointers.
+  std::vector<ScarceRange> ScarceRanges;
+  ScarceRanges.reserve(ScarceRangePtrs.size());
+  for (const RegLiveRange *LR : ScarceRangePtrs) {
+    ScarceRanges.emplace_back(*LR, *DAG);
+  }
+
+  // Build the scarce-only DAG.
+  buildScarceDAG(ScarceRanges, Info, *DAG);
+
+  // The scarce-only DAG must be acyclic by construction (strict ordering of
+  // uses/defs on the same physreg).
+  assert(checkAcyclic(ScarceRanges) &&
+         "Scarce-only DAG must be acyclic by construction");
+
+  // Create the strategy once (precomputes predecessors and members).
+  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II);
+
+  // Enumerate orders and try scheduling with different orderings.
+  return enumerateRangeOrders(
+      ScarceRanges, [this, &Strategy](const SmallVector<int, 4> &Order) {
+        // Reset before each attempt.
+        resetSchedule(/*FullReset=*/false);
+
+        // Initialize the strategy with this order.
+        Strategy.init(Order);
+
+        // Try scheduling with this strategy.
+        return scheduleWithStrategy(Strategy);
+      });
+}
+
 bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   DEBUG_SUMMARY(dbgs() << "Starting " << S.name() << "\n");
   if (!scheduleFirstIteration(S)) {
@@ -1067,6 +1187,11 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   Info.applyRotation(II);
   Info.resetRotation();
 
+  if (!tryAllocateRegisters()) {
+    DEBUG_SUMMARY(dbgs() << "   Register allocation failed\n");
+    return false;
+  }
+  DEBUG_SUMMARY(dbgs() << "   Register allocation successful\n");
   return true;
 }
 
@@ -1428,6 +1553,15 @@ bool PostPipelinerStrategy::isEnabled() {
 
 bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+
+  // Try scarce range packing approach (VRegMode only).
+  if (RegTracker.areRegistersVirtualized()) {
+    if (tryScarceRangePacking()) {
+      DEBUG_SUMMARY(dbgs() << "    Scarce range packing succeeded\n");
+      return true;
+    }
+  }
+
   int HeuristicIndex = 0;
   for (const auto &Config : Heuristics) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
@@ -1564,9 +1698,11 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   return false;
 }
 
-bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
+bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
+                             PostPipelinerMode PipelinerMode) {
 
   II = InitiationInterval;
+  Mode = PipelinerMode;
   DAG = &TheDAG;
 
   // Configure a modulo scoreboard of size II. Pipeline residuals that cross
@@ -1582,10 +1718,24 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 
   computeLoopCarriedParameters();
 
-  LLVM_DEBUG(dumpGraph(Info, DAG, "PostPipeliner_II" + std::to_string(II)));
+  LLVM_DEBUG({
+    std::string GraphId = "PostPipeliner_II" + std::to_string(II) + "_" +
+                          getPostPipelinerModeName(Mode);
+    dumpGraph(Info, DAG, GraphId);
+  });
 
   if (II < RecMII) {
     return false;
+  }
+
+  // Check scarce register MII (VRegMode only).
+  if (RegTracker.areRegistersVirtualized()) {
+    const int ScarceRegMII = computeScarceRegMII();
+    if (II < ScarceRegMII) {
+      LLVM_DEBUG(dbgs() << format("Scarce register MII=%d does not fit II=%d.",
+                                  ScarceRegMII, II));
+      return false;
+    }
   }
   LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
   if (!tryApproaches()) {
@@ -1594,6 +1744,57 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   }
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
+  return true;
+}
+
+bool PostPipeliner::tryAllocateRegisters() {
+  // In physical mode, registers are not virtualized and no allocation is needed
+  // This is a trivial allocation that always succeeds
+  if (!RegTracker.areRegistersVirtualized()) {
+    LLVM_DEBUG(
+        dbgs() << "PostPipeliner: Physical mode - no allocation needed\n");
+    return true;
+  }
+
+  auto &MF = *DAG->getBB()->getParent();
+  auto &MRI = MF.getRegInfo();
+  const auto &ST = MF.getSubtarget();
+  const auto *TRI = ST.getRegisterInfo();
+
+  // Compute modulo live lanes from the event schedule populated during
+  // scheduling
+  auto LiveLanesByVirtReg = Interpreter.buildLiveLanes(EventSched, II);
+
+  // Debug dump if requested.
+  DEBUG_WITH_TYPE("aie-postregalloc", {
+    dbgs() << "\n=== Live Intervals ===\n";
+    Interpreter.dumpEventSchedule(EventSched, dbgs());
+    dbgs() << "\n";
+    Interpreter.dumpLiveLanes(LiveLanesByVirtReg, II, dbgs());
+    dbgs() << "=================================\n\n";
+  });
+
+  // Perform register allocation.
+  DenseMap<Register, MCRegister> VRegToPhysReg;
+  const bool Success = AIEPostRegAlloc::allocate(
+      LiveLanesByVirtReg, II, RegTracker, MF, *TRI, MRI, VRegToPhysReg);
+
+  if (!Success) {
+    LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
+                    << VRegToPhysReg.size() << " assignments\n");
+
+  // Apply the register assignments through RegTracker
+  // This properly handles the virtualization state and updates the
+  // MachineFunction
+  RegTracker.rewriteToPhysRegs(VRegToPhysReg);
+
+  LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "
+                       "RegTracker\n");
+
   return true;
 }
 
