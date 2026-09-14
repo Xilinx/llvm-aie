@@ -1,0 +1,62 @@
+# NOTE: Test for AIERegDefUseTracker - simple def-use chains
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Test 1: def-use def-use on the same simple register leads to two live ranges
+# CHECK-DAG: Live Range {{.*}} for r0:
+# CHECK-DAG: Live Range {{.*}} for r0:
+
+--- |
+  define void @test_simple_def_use() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_simple_def_use
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $p6, $r0, $r2, $r4
+    
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.1
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p6, $r2, $r4
+    
+    ; First def-use chain
+    $r0 = MOV_alu_mv_mv_mv_scl $p6
+    $r1 = ADD_NC_mv_add_rr $r0, $r2
+    
+    ; Second def-use chain on same register
+    $r0 = MOV_alu_mv_mv_mv_scl $p6
+    $r3 = ADD_NC_mv_add_rr $r0, $r4
+    
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
