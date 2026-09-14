@@ -2063,9 +2063,13 @@ bool AIELegalizerHelper::legalizeG_TRUNC(LegalizerHelper &Helper,
   if (DstVecTy == V2S8) {
     assert(SrcVecTy == V2S16 && "Expected <2 x s16> to narrow into <2 x s8>!");
     auto Lanes = MIRBuilder.buildBitcast(S32, SrcReg);
-    auto HighElt = MIRBuilder.buildAnd(
-        S32, MIRBuilder.buildLShr(S32, Lanes, MIRBuilder.buildConstant(S32, 8)),
-        MIRBuilder.buildConstant(S32, 0xFF00));
+    // Keep the shift in its own statement: nesting it in the buildAnd call
+    // leaves the emission order of the shift and the mask constant up to the
+    // host compiler's argument evaluation order.
+    auto Shifted =
+        MIRBuilder.buildLShr(S32, Lanes, MIRBuilder.buildConstant(S32, 8));
+    auto HighElt = MIRBuilder.buildAnd(S32, Shifted,
+                                       MIRBuilder.buildConstant(S32, 0xFF00));
     auto LowElt =
         MIRBuilder.buildAnd(S32, Lanes, MIRBuilder.buildConstant(S32, 0xFF));
     MIRBuilder.buildBitcast(
