@@ -4,17 +4,18 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=true \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=true \
 ; RUN:     -aie-enable-gep-canonicalization=true \
-; RUN:     -stop-after=aie-outer-loop-pointer-optimizer \
+; RUN:     -stop-after=aie-loop-pointer-optimizer \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
-; Test loop structure detection: validates the expected loop pattern
+; Test loop structure detection: validates the expected loop patterns.
 ;
-; Required structure:
-;   preheader -> top (prologue) -> inner (single block) -> bottom (epilogue)
+; Two shapes are supported:
+;   1. Nested: preheader -> top (prologue) -> inner (single block) -> bottom (epilogue)
+;   2. Standalone: preheader -> top (header) [-> bottom (latch)]
 ;
-; Pass should ONLY apply to loops matching this pattern.
+; Pass should apply to loops matching either pattern.
 
 ; ============================================================================
 ; Test 1: Valid loop structure - should be optimized
@@ -62,16 +63,18 @@ exit:
 }
 
 ; ============================================================================
-; Test 2: Simple loop without inner loop - should NOT be optimized
+; Test 2: Standalone loop (no inner loop) - should be optimized (Phase 1)
 ;
-; Expected: GEP stays as-is because there's no matching loop structure
+; Expected: GEP is canonicalized to i8-based. %offset is loop-invariant so
+; the mul is hoisted to the preheader created by loop-simplify.
 ; ============================================================================
 
 ; CHECK-LABEL: define void @test_simple_loop_no_inner
-; No optimization - GEP remains with original type
+; Standalone loop - GEP is canonicalized to i8
+; CHECK: loop.preheader:
+; CHECK:   %byte_offset = mul i20 %offset, 64
 ; CHECK: loop:
-; CHECK:   getelementptr inbounds <32 x bfloat>, ptr %base, i20 %offset
-; CHECK-NOT: mul{{.*}}64
+; CHECK:   getelementptr inbounds i8, ptr %base, i20 %byte_offset
 
 define void @test_simple_loop_no_inner(ptr noalias %base, ptr noalias %out,
                                         i32 %N, i20 %offset) {
@@ -82,7 +85,7 @@ entry:
 loop:
   %iv = phi i32 [ %N, %entry ], [ %iv.next, %loop ]
   %ptr = phi ptr [ %base, %entry ], [ %ptr.next, %loop ]
-  ; No inner loop - should NOT be optimized
+  ; Standalone loop - GEP should be canonicalized to i8-based
   %ptr.next = getelementptr inbounds <32 x bfloat>, ptr %base, i20 %offset
   %v = load <32 x bfloat>, ptr %ptr, align 64
   store <32 x bfloat> %v, ptr %out, align 64

@@ -135,10 +135,12 @@ extern llvm::cl::opt<bool> DisableInnerLoopVersioning;
 void initializeAIEInnerLoopVersioningPass(PassRegistry &);
 llvm::FunctionPass *createAIEInnerLoopVersioningPass();
 
-// Outer Loop Pointer Optimizer (IR-level, runs before Outer Loop Pipeliner)
-extern char &AIEOuterLoopPointerOptimizerID;
-void initializeAIEOuterLoopPointerOptimizerPass(PassRegistry &);
-llvm::FunctionPass *createAIEOuterLoopPointerOptimizerPass();
+// Loop Pointer Optimizer (IR-level, runs before Outer Loop Pipeliner)
+// Optimizes pointer chains in both standalone (leaf) loops and nested loops
+// (outer loop with single-block inner loop).
+extern char &AIELoopPointerOptimizerID;
+void initializeAIELoopPointerOptimizerPass(PassRegistry &);
+llvm::FunctionPass *createAIELoopPointerOptimizerPass();
 } // namespace llvm
 
 #endif

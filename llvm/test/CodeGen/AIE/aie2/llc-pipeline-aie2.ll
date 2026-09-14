@@ -110,7 +110,7 @@
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O123-NEXT:      Optimization Remark Emitter
 ; AIE-O123-NEXT:      Hardware Loop Insertion
-; AIE-O123-NEXT:      AIE Outer Loop Pointer Optimizer
+; AIE-O123-NEXT:      AIE Loop Pointer Optimizer
 ; AIE-O123-NEXT:      Scalar Evolution Analysis
 ; AIE-O123-NEXT:      AIE Outer Loop Pipeliner
 ; AIE-O123-NEXT:      Dominator Tree Construction

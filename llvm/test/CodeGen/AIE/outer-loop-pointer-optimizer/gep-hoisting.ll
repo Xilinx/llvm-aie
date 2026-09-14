@@ -4,11 +4,11 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=true \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=true \
 ; RUN:     -aie-enable-gep-canonicalization=false \
 ; RUN:     -aie-enable-gep-chain-linking=false \
 ; RUN:     -aie-enable-gep-hoisting=true \
-; RUN:     -stop-after=aie-outer-loop-pointer-optimizer \
+; RUN:     -stop-after=aie-loop-pointer-optimizer \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
 ; Test GEP hoisting: moves GEPs from bottom (epilogue) to top (prologue).

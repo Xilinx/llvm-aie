@@ -1,4 +1,4 @@
-//===-- AIEOuterLoopPointerOptimizer.cpp - Pointer chain optimization -----===//
+//===-- AIELoopPointerOptimizer.cpp - Pointer chain optimization -----===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,8 +8,18 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass optimizes pointer chains in outer loops that follow a specific
-// structure: prologue -> single-block inner loop -> epilogue.
+// This pass optimizes pointer chains in loops. Two loop shapes are supported:
+//
+// 1. Nested loop shape (outer + single-block inner):
+//      preheader -> top (prologue) -> inner (single block) -> bottom (epilogue)
+//
+// 2. Standalone loop shape (leaf loop, no subloops):
+//      preheader -> top (header) [-> bottom (latch)]
+//    where top == bottom for single-block loops.
+//
+// Standalone loops are processed in Phase 1, nested loops in Phase 2.
+// This ordering ensures that inner loops benefit from pointer optimizations
+// before their enclosing loop is processed.
 //
 // Optimizations:
 // 1. GEP Address Space Canonicalization: Keep GEPs in the PHI's canonical
@@ -19,10 +29,10 @@
 //    This makes pointer arithmetic explicit and helps later optimizations.
 // 3. GEP Chain Linking: Link consecutive GEPs with the same base pointer to
 //    enable post-increment addressing patterns.
-// 4. GEP Hoisting: Move GEPs from bottom (epilogue) to top (prologue) block
-//    when safe, reducing code in the epilogue and improving scheduling. We try
-//    to avoid stand-alone pointer updates by grouping them with related memory
-//    operations.
+// 4. GEP Hoisting: Move GEPs from bottom (epilogue/latch) to top
+//    (prologue/header) block when safe, reducing code in the bottom block and
+//    improving scheduling. We try to avoid stand-alone pointer updates by
+//    grouping them with related memory operations.
 //
 //===----------------------------------------------------------------------===//
 
@@ -43,14 +53,13 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "aie-outer-loop-pointer-optimizer"
+#define DEBUG_TYPE "aie-loop-pointer-optimizer"
 
 namespace {
 
-cl::opt<bool> EnableOuterLoopPointerOpt(
-    "aie-enable-outer-loop-pointer-opt",
-    cl::desc("Enable outer loop pointer optimization"), cl::init(true),
-    cl::Hidden);
+cl::opt<bool> EnableLoopPointerOpt("aie-enable-loop-pointer-opt",
+                                   cl::desc("Enable loop pointer optimization"),
+                                   cl::init(true), cl::Hidden);
 
 cl::opt<bool> EnableGEPCanonicalization(
     "aie-enable-gep-canonicalization",
@@ -100,7 +109,7 @@ bool isSimpleI8GEP(const GetElementPtrInst *GEP) {
 /// Returns Index unchanged if ElemSize is 1.
 Value *
 getByteOffset(Value *Index, uint64_t ElemSize, Instruction *InsertBefore,
-              Loop *OuterLoop, BasicBlock *Preheader,
+              Loop *TheLoop, BasicBlock *Preheader,
               DenseMap<std::pair<Value *, uint64_t>, Value *> &PreheaderMuls,
               DenseMap<std::pair<Value *, uint64_t>, Value *> &LocalMuls) {
   // No scaling needed for byte-sized elements
@@ -108,7 +117,7 @@ getByteOffset(Value *Index, uint64_t ElemSize, Instruction *InsertBefore,
     return Index;
 
   const auto Key = std::make_pair(Index, ElemSize);
-  const bool IsLoopInvariant = OuterLoop->isLoopInvariant(Index);
+  const bool IsLoopInvariant = TheLoop->isLoopInvariant(Index);
 
   // Select map and insertion point based on loop invariance
   DenseMap<std::pair<Value *, uint64_t>, Value *> &MulMap =
@@ -119,7 +128,7 @@ getByteOffset(Value *Index, uint64_t ElemSize, Instruction *InsertBefore,
   // CSE lookup
   auto It = MulMap.find(Key);
   if (It != MulMap.end()) {
-    LLVM_DEBUG(dbgs() << "OLPO:   Reusing mul for index " << *Index << " * "
+    LLVM_DEBUG(dbgs() << "LPO:   Reusing mul for index " << *Index << " * "
                       << ElemSize << "\n");
     return It->second;
   }
@@ -129,7 +138,7 @@ getByteOffset(Value *Index, uint64_t ElemSize, Instruction *InsertBefore,
   Value *Scale = ConstantInt::get(Index->getType(), ElemSize);
   Value *ByteOffset = Builder.CreateMul(Index, Scale, "byte_offset");
   MulMap[Key] = ByteOffset;
-  LLVM_DEBUG(dbgs() << "OLPO:   Created mul: " << *ByteOffset << "\n");
+  LLVM_DEBUG(dbgs() << "LPO:   Created mul: " << *ByteOffset << "\n");
   return ByteOffset;
 }
 
@@ -251,10 +260,10 @@ bool hasValidHoistableBase(GetElementPtrInst *GEP, BasicBlock *Top) {
 }
 
 /// Check if hoisting would interfere with post-increment folding.
-/// Returns true if the pointer is NOT used by memory ops in Bottom.
-bool canHoistInterfereWithPostIncFolding(GetElementPtrInst *GEP,
-                                         BasicBlock *Bottom,
-                                         BasicBlock *Inner) {
+/// Returns true if hoisting is safe (no interference detected).
+/// Inner may be nullptr for standalone loops (no inner loop exists).
+bool canHoistWithoutInterference(GetElementPtrInst *GEP, BasicBlock *Bottom,
+                                 BasicBlock *Inner) {
   Value *PtrOp = GEP->getPointerOperand();
   Instruction *PtrInst = cast<Instruction>(PtrOp);
 
@@ -262,11 +271,14 @@ bool canHoistInterfereWithPostIncFolding(GetElementPtrInst *GEP,
   if (hasMemoryUseInBlock(PtrInst, Bottom))
     return false;
 
-  // Check for uses in Inner loop (would extend live range)
-  for (const User *U : PtrInst->users()) {
-    if (const Instruction *UI = dyn_cast<Instruction>(U)) {
-      if (UI->getParent() == Inner)
-        return false;
+  // Check for uses in Inner loop (would extend live range).
+  // Only applicable when an inner loop exists (nested loop shape).
+  if (Inner) {
+    for (const User *U : PtrInst->users()) {
+      if (const Instruction *UI = dyn_cast<Instruction>(U)) {
+        if (UI->getParent() == Inner)
+          return false;
+      }
     }
   }
   return true;
@@ -285,6 +297,7 @@ bool areIndicesAvailableInTop(GetElementPtrInst *GEP, BasicBlock *Top,
 }
 
 /// Check if a GEP can be hoisted from Bottom to Top block.
+/// Inner may be nullptr for standalone loops.
 bool canHoistGEP(GetElementPtrInst *GEP, BasicBlock *Top, BasicBlock *Inner,
                  BasicBlock *Bottom, DominatorTree *DT) {
   // Condition 1: Valid hoistable base
@@ -292,7 +305,7 @@ bool canHoistGEP(GetElementPtrInst *GEP, BasicBlock *Top, BasicBlock *Inner,
     return false;
 
   // Condition 2: No memory interference
-  if (!canHoistInterfereWithPostIncFolding(GEP, Bottom, Inner))
+  if (!canHoistWithoutInterference(GEP, Bottom, Inner))
     return false;
 
   // Condition 3: Indices available
@@ -389,7 +402,7 @@ bool processGEPUser(User *GEPUser, GetElementPtrInst *OldGEP, Value *NewGEP,
   // Case 1: Round-trip cast back to canonical AS -> eliminate
   if (AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(GEPUser)) {
     if (ASC->getDestAddressSpace() == CanonicalAS) {
-      LLVM_DEBUG(dbgs() << "OLPO:     Eliminating round-trip cast: " << *ASC
+      LLVM_DEBUG(dbgs() << "LPO:     Eliminating round-trip cast: " << *ASC
                         << "\n");
       ASC->replaceAllUsesWith(NewGEP);
       State.ToErase.push_back(ASC);
@@ -414,7 +427,7 @@ bool processGEPUser(User *GEPUser, GetElementPtrInst *OldGEP, Value *NewGEP,
     if (UI->getOperand(OpIdx) != OldGEP)
       continue;
     insertCastAtUse(UI, OpIdx, NewGEP, TargetAS);
-    LLVM_DEBUG(dbgs() << "OLPO:     Inserted cast at use for operand " << OpIdx
+    LLVM_DEBUG(dbgs() << "LPO:     Inserted cast at use for operand " << OpIdx
                       << "\n");
     Modified = true;
   }
@@ -429,7 +442,7 @@ bool processGEP(GetElementPtrInst *GEP, unsigned TargetAS, unsigned CanonicalAS,
   // Get the new base pointer from replacement map
   auto It = State.ReplacementMap.find(OldBase);
   if (It == State.ReplacementMap.end()) {
-    LLVM_DEBUG(dbgs() << "OLPO:     Skip GEP (base not in map): " << *GEP
+    LLVM_DEBUG(dbgs() << "LPO:     Skip GEP (base not in map): " << *GEP
                       << "\n");
     return false;
   }
@@ -437,7 +450,7 @@ bool processGEP(GetElementPtrInst *GEP, unsigned TargetAS, unsigned CanonicalAS,
 
   // Rebuild GEP in canonical address space
   Value *NewGEP = rebuildGEPWithNewBase(GEP, NewBase);
-  LLVM_DEBUG(dbgs() << "OLPO:     Rebuilt GEP in canonical AS: " << *NewGEP
+  LLVM_DEBUG(dbgs() << "LPO:     Rebuilt GEP in canonical AS: " << *NewGEP
                     << "\n");
   State.ReplacementMap[GEP] = NewGEP;
 
@@ -461,7 +474,7 @@ bool processRootCast(PHINode &PHI, AddrSpaceCastInst *RootCast) {
   const unsigned TargetAS = RootCast->getDestAddressSpace();
   BasicBlock *const BB = RootCast->getParent();
 
-  LLVM_DEBUG(dbgs() << "OLPO:   Found cast away from canonical: " << *RootCast
+  LLVM_DEBUG(dbgs() << "LPO:   Found cast away from canonical: " << *RootCast
                     << "\n"
                     << "         Target AS: " << TargetAS << "\n");
 
@@ -500,65 +513,82 @@ bool processRootCast(PHINode &PHI, AddrSpaceCastInst *RootCast) {
 // LoopStructure
 //===----------------------------------------------------------------------===//
 
-/// Represents the structure of a target loop:
-///   preheader -> top (prologue) -> inner (single block) -> bottom (epilogue)
+/// Represents the structure of a target loop. Two shapes are supported:
 ///
-/// Detects loops with a single-block inner loop nested inside an outer loop,
-/// where the outer loop header serves as prologue and the latch as epilogue.
+/// Nested shape:
+///   preheader -> Top (prologue) -> Inner (single block) -> Bottom (epilogue)
+///   InnerLoop != nullptr, InnerHeader != nullptr, Top != Bottom.
+///
+/// Standalone shape (leaf loop, no subloops):
+///   preheader -> Top (header) [-> Bottom (latch)]
+///   InnerLoop == nullptr, InnerHeader == nullptr.
+///   Top == Bottom for single-block loops (header is also the latch).
 class LoopStructure {
-  // Outer loop header (prologue)
+  // Top block: loop header (nested) or loop header (standalone)
   BasicBlock *Top = nullptr;
-  // Single-block inner loop
+  // Single-block inner loop (nested shape only, nullptr for standalone)
   BasicBlock *InnerHeader = nullptr;
-  // Outer loop latch (epilogue)
+  // Bottom block: loop latch (nested) or loop latch (standalone)
   BasicBlock *Bottom = nullptr;
-  Loop *OuterLoop = nullptr;
+  Loop *TheLoop = nullptr;
   Loop *InnerLoop = nullptr;
 
 public:
-  /// Try to build a LoopStructure from the given outer loop.
-  /// Returns std::nullopt if the loop doesn't match the expected pattern.
+  /// Try to build a LoopStructure for a nested loop (outer + single-block
+  /// inner). Returns std::nullopt if the loop doesn't match.
   static std::optional<LoopStructure> tryBuildFrom(Loop *L, LoopInfo &LI);
+
+  /// Try to build a LoopStructure for a standalone (leaf) loop with no
+  /// subloops. Returns std::nullopt if the loop doesn't match.
+  static std::optional<LoopStructure> tryBuildFromStandalone(Loop *L,
+                                                             LoopInfo &LI);
 
   BasicBlock *getTop() const { return Top; }
   BasicBlock *getInner() const { return InnerHeader; }
   BasicBlock *getBottom() const { return Bottom; }
   BasicBlock *getPreheader() const {
-    return OuterLoop ? OuterLoop->getLoopPreheader() : nullptr;
+    return TheLoop ? TheLoop->getLoopPreheader() : nullptr;
   }
-  Loop *getOuterLoop() const { return OuterLoop; }
+  Loop *getLoop() const { return TheLoop; }
   Loop *getInnerLoop() const { return InnerLoop; }
+
+  /// Returns true for standalone loops (no inner loop).
+  bool isStandalone() const { return InnerLoop == nullptr; }
+
+  /// Returns true when the loop body is a single block (Top == Bottom).
+  /// Only meaningful for standalone loops.
+  bool isSingleBlock() const { return Top == Bottom; }
 };
 
 std::optional<LoopStructure> LoopStructure::tryBuildFrom(Loop *L,
                                                          LoopInfo &LI) {
   LoopStructure LS;
-  LS.OuterLoop = L;
+  LS.TheLoop = L;
 
   // Check for single subloop
   auto &SubLoops = L->getSubLoops();
   if (SubLoops.size() != 1) {
-    LLVM_DEBUG(dbgs() << "OLPO: Outer loop doesn't have exactly one subloop\n");
+    LLVM_DEBUG(dbgs() << "LPO: Loop doesn't have exactly one subloop\n");
     return std::nullopt;
   }
   LS.InnerLoop = SubLoops.front();
 
-  // Check outer loop has a single latch
+  // Check loop has a single latch
   BasicBlock *const Latch = L->getLoopLatch();
   if (!Latch) {
-    LLVM_DEBUG(dbgs() << "OLPO: Outer loop doesn't have a single latch\n");
+    LLVM_DEBUG(dbgs() << "LPO: Loop doesn't have a single latch\n");
     return std::nullopt;
   }
 
-  // Check outer loop has a preheader
+  // Check loop has a preheader
   if (!L->getLoopPreheader()) {
-    LLVM_DEBUG(dbgs() << "OLPO: Outer loop doesn't have a preheader\n");
+    LLVM_DEBUG(dbgs() << "LPO: Loop doesn't have a preheader\n");
     return std::nullopt;
   }
 
   // Inner loop must be a single block
   if (LS.InnerLoop->getNumBlocks() != 1) {
-    LLVM_DEBUG(dbgs() << "OLPO: Inner loop is not a single block\n");
+    LLVM_DEBUG(dbgs() << "LPO: Inner loop is not a single block\n");
     return std::nullopt;
   }
 
@@ -567,14 +597,14 @@ std::optional<LoopStructure> LoopStructure::tryBuildFrom(Loop *L,
   // Inner loop must have a single exit block
   BasicBlock *const InnerExit = LS.InnerLoop->getExitBlock();
   if (!InnerExit) {
-    LLVM_DEBUG(dbgs() << "OLPO: Inner loop doesn't have a single exit block\n");
+    LLVM_DEBUG(dbgs() << "LPO: Inner loop doesn't have a single exit block\n");
     return std::nullopt;
   }
 
   // Inner loop must have a preheader
   BasicBlock *const InnerPreheader = LS.InnerLoop->getLoopPreheader();
   if (!InnerPreheader) {
-    LLVM_DEBUG(dbgs() << "OLPO: Inner loop doesn't have a preheader\n");
+    LLVM_DEBUG(dbgs() << "LPO: Inner loop doesn't have a preheader\n");
     return std::nullopt;
   }
 
@@ -584,20 +614,19 @@ std::optional<LoopStructure> LoopStructure::tryBuildFrom(Loop *L,
   // Bottom = inner exit (epilogue)
   LS.Bottom = InnerExit;
 
-  // Verify top is the outer loop header
+  // Verify top is the loop header
   if (LS.Top != L->getHeader()) {
-    LLVM_DEBUG(
-        dbgs() << "OLPO: Inner preheader is not the outer loop header\n");
+    LLVM_DEBUG(dbgs() << "LPO: Inner preheader is not the loop header\n");
     return std::nullopt;
   }
 
-  // Verify bottom is the outer loop latch
+  // Verify bottom is the loop latch
   if (LS.Bottom != Latch) {
-    LLVM_DEBUG(dbgs() << "OLPO: Inner exit is not the outer loop latch\n");
+    LLVM_DEBUG(dbgs() << "LPO: Inner exit is not the loop latch\n");
     return std::nullopt;
   }
 
-  LLVM_DEBUG(dbgs() << "OLPO: Found valid loop structure:\n"
+  LLVM_DEBUG(dbgs() << "LPO: Found valid nested loop structure:\n"
                     << "  Top (prologue): " << LS.Top->getName() << "\n"
                     << "  Inner: " << LS.InnerHeader->getName() << "\n"
                     << "  Bottom (epilogue): " << LS.Bottom->getName() << "\n");
@@ -605,10 +634,48 @@ std::optional<LoopStructure> LoopStructure::tryBuildFrom(Loop *L,
   return LS;
 }
 
-class AIEOuterLoopPointerOptimizer : public FunctionPass {
+std::optional<LoopStructure>
+LoopStructure::tryBuildFromStandalone(Loop *L, LoopInfo &LI) {
+  LoopStructure LS;
+  LS.TheLoop = L;
+  LS.InnerLoop = nullptr;
+  LS.InnerHeader = nullptr;
+
+  // Must have no subloops (leaf loop)
+  if (!L->getSubLoops().empty()) {
+    LLVM_DEBUG(dbgs() << "LPO: Loop has subloops, not standalone\n");
+    return std::nullopt;
+  }
+
+  // Must have a preheader
+  if (!L->getLoopPreheader()) {
+    LLVM_DEBUG(dbgs() << "LPO: Standalone loop doesn't have a preheader\n");
+    return std::nullopt;
+  }
+
+  // Must have a single latch
+  BasicBlock *const Latch = L->getLoopLatch();
+  if (!Latch) {
+    LLVM_DEBUG(dbgs() << "LPO: Standalone loop doesn't have a single latch\n");
+    return std::nullopt;
+  }
+
+  LS.Top = L->getHeader();
+  LS.Bottom = Latch;
+
+  LLVM_DEBUG(dbgs() << "LPO: Found valid standalone loop structure:\n"
+                    << "  Top (header): " << LS.Top->getName() << "\n"
+                    << "  Bottom (latch): " << LS.Bottom->getName() << "\n"
+                    << "  Single-block: " << (LS.isSingleBlock() ? "yes" : "no")
+                    << "\n");
+
+  return LS;
+}
+
+class AIELoopPointerOptimizer : public FunctionPass {
 public:
   static char ID;
-  AIEOuterLoopPointerOptimizer() : FunctionPass(ID) {}
+  AIELoopPointerOptimizer() : FunctionPass(ID) {}
 
   bool runOnFunction(Function &F) override;
 
@@ -620,7 +687,7 @@ public:
   }
 
   StringRef getPassName() const override {
-    return "AIE Outer Loop Pointer Optimizer";
+    return "AIE Loop Pointer Optimizer";
   }
 
 private:
@@ -628,7 +695,6 @@ private:
   DominatorTree *DT = nullptr;
   const DataLayout *DL = nullptr;
 
-  bool runOnLoop(Loop *L);
   bool tryOptimizeLoop(LoopStructure &LS);
   bool canonicalizeGEPs(LoopStructure &LS);
   bool canonicalizeGEPsInBlock(
@@ -641,64 +707,71 @@ private:
 
 } // end anonymous namespace
 
-char AIEOuterLoopPointerOptimizer::ID = 0;
+char AIELoopPointerOptimizer::ID = 0;
 
-char &llvm::AIEOuterLoopPointerOptimizerID = AIEOuterLoopPointerOptimizer::ID;
+char &llvm::AIELoopPointerOptimizerID = AIELoopPointerOptimizer::ID;
 
-INITIALIZE_PASS_BEGIN(AIEOuterLoopPointerOptimizer, DEBUG_TYPE,
-                      "AIE Outer Loop Pointer Optimizer", false, false)
+INITIALIZE_PASS_BEGIN(AIELoopPointerOptimizer, DEBUG_TYPE,
+                      "AIE Loop Pointer Optimizer", false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(AIEOuterLoopPointerOptimizer, DEBUG_TYPE,
-                    "AIE Outer Loop Pointer Optimizer", false, false)
+INITIALIZE_PASS_END(AIELoopPointerOptimizer, DEBUG_TYPE,
+                    "AIE Loop Pointer Optimizer", false, false)
 
-bool AIEOuterLoopPointerOptimizer::runOnFunction(Function &F) {
-  if (!EnableOuterLoopPointerOpt)
+bool AIELoopPointerOptimizer::runOnFunction(Function &F) {
+  if (!EnableLoopPointerOpt)
     return false;
 
-  LLVM_DEBUG(dbgs() << "OLPO: Running on function " << F.getName() << "\n");
+  LLVM_DEBUG(dbgs() << "LPO: Running on function " << F.getName() << "\n");
 
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DL = &F.getDataLayout();
 
+  // Collect all loops in DFS order (outer-to-inner).
+  SmallVector<Loop *, 8> AllLoops;
+  {
+    SmallVector<Loop *, 8> Stack;
+    for (Loop *L : *LI)
+      Stack.push_back(L);
+    while (!Stack.empty()) {
+      Loop *L = Stack.pop_back_val();
+      for (Loop *SubL : *L)
+        Stack.push_back(SubL);
+      AllLoops.push_back(L);
+    }
+  }
+
   bool Changed = false;
 
-  // Process all loops via depth-first traversal starting from top-level loops
-  SmallVector<Loop *, 8> Worklist;
-  for (Loop *L : *LI)
-    Worklist.push_back(L);
+  // Phase 1: Standalone (non-nested / leaf) loops.
+  // Processing these first ensures inner loops are optimized before the
+  // loop optimizer (Phase 2) sees the enclosing nested structure.
+  LLVM_DEBUG(dbgs() << "LPO: Phase 1 - Standalone (leaf) loops\n");
+  for (Loop *L : AllLoops) {
+    if (!L->getSubLoops().empty())
+      continue; // Handled in Phase 2
+    LLVM_DEBUG(dbgs() << "LPO: Analyzing standalone loop with header "
+                      << L->getHeader()->getName() << "\n");
+    if (auto LS = LoopStructure::tryBuildFromStandalone(L, *LI))
+      Changed |= tryOptimizeLoop(*LS);
+  }
 
-  while (!Worklist.empty()) {
-    Loop *L = Worklist.pop_back_val();
-    // Add subloops to worklist
-    for (Loop *SubL : *L)
-      Worklist.push_back(SubL);
-
-    // Try to optimize this loop
-    Changed |= runOnLoop(L);
+  // Phase 2: Nested loops (loop enclosing a single-block inner loop).
+  LLVM_DEBUG(dbgs() << "LPO: Phase 2 - Nested loops\n");
+  for (Loop *L : AllLoops) {
+    LLVM_DEBUG(dbgs() << "LPO: Analyzing loop with header "
+                      << L->getHeader()->getName() << "\n");
+    if (auto LS = LoopStructure::tryBuildFrom(L, *LI))
+      Changed |= tryOptimizeLoop(*LS);
   }
 
   return Changed;
 }
 
-bool AIEOuterLoopPointerOptimizer::runOnLoop(Loop *L) {
-  LLVM_DEBUG(dbgs() << "OLPO: Analyzing loop with header "
-                    << L->getHeader()->getName() << "\n");
-
-  // Try to build the loop structure
-  std::optional<LoopStructure> LS = LoopStructure::tryBuildFrom(L, *LI);
-  if (!LS) {
-    LLVM_DEBUG(dbgs() << "OLPO: Loop doesn't match target structure\n");
-    return false;
-  }
-
-  return tryOptimizeLoop(*LS);
-}
-
-bool AIEOuterLoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
-  LLVM_DEBUG(dbgs() << "OLPO: Attempting optimization on loop with header "
-                    << LS.getOuterLoop()->getHeader()->getName() << "\n");
+bool AIELoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Attempting optimization on loop with header "
+                    << LS.getLoop()->getHeader()->getName() << "\n");
 
   bool Changed = false;
 
@@ -728,25 +801,27 @@ bool AIEOuterLoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
 /// To:
 ///   %byte_offset = mul i20 %idx, 64  ; 64 = sizeof(<32 x bfloat>)
 ///   getelementptr i8, ptr %p, i20 %byte_offset
-bool AIEOuterLoopPointerOptimizer::canonicalizeGEPs(LoopStructure &LS) {
-  LLVM_DEBUG(dbgs() << "OLPO: Canonicalizing GEPs in top and bottom blocks\n");
+bool AIELoopPointerOptimizer::canonicalizeGEPs(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Canonicalizing GEPs in top and bottom blocks\n");
 
-  // Map from (index_value, element_size) to the mul instruction for CSE
-  // This is used for loop-invariant indices that can be hoisted to preheader
+  // Map from (index_value, element_size) to the mul instruction for CSE.
+  // Used for loop-invariant indices that can be hoisted to preheader.
   DenseMap<std::pair<Value *, uint64_t>, Value *> PreheaderMuls;
 
   bool Changed = false;
 
-  // Process top (prologue) block
+  // Process top block
   Changed |= canonicalizeGEPsInBlock(LS.getTop(), LS, PreheaderMuls);
 
-  // Process bottom (epilogue) block
-  Changed |= canonicalizeGEPsInBlock(LS.getBottom(), LS, PreheaderMuls);
+  // Process bottom block only if distinct from top (avoid double-processing
+  // single-block standalone loops where top == bottom).
+  if (LS.getBottom() != LS.getTop())
+    Changed |= canonicalizeGEPsInBlock(LS.getBottom(), LS, PreheaderMuls);
 
   return Changed;
 }
 
-bool AIEOuterLoopPointerOptimizer::canonicalizeGEPsInBlock(
+bool AIELoopPointerOptimizer::canonicalizeGEPsInBlock(
     BasicBlock *BB, LoopStructure &LS,
     DenseMap<std::pair<Value *, uint64_t>, Value *> &PreheaderMuls) {
 
@@ -762,7 +837,7 @@ bool AIEOuterLoopPointerOptimizer::canonicalizeGEPsInBlock(
   }
 
   bool Changed = false;
-  Loop *const OuterLoop = LS.getOuterLoop();
+  Loop *const TheLoop = LS.getLoop();
   BasicBlock *const Preheader = LS.getPreheader();
 
   for (GetElementPtrInst *GEP : GEPsToProcess) {
@@ -771,14 +846,14 @@ bool AIEOuterLoopPointerOptimizer::canonicalizeGEPsInBlock(
     const uint64_t ElemSize = DL->getTypeAllocSize(SrcElemTy);
 
     // Compute byte offset (returns Index unchanged if ElemSize == 1)
-    Value *ByteOffset = getByteOffset(Index, ElemSize, GEP, OuterLoop,
-                                      Preheader, PreheaderMuls, LocalMuls);
+    Value *ByteOffset = getByteOffset(Index, ElemSize, GEP, TheLoop, Preheader,
+                                      PreheaderMuls, LocalMuls);
 
     // Create new i8-based GEP
     Value *NewGEP = buildNewGEPWithI8Based(GEP, ByteOffset);
 
-    LLVM_DEBUG(dbgs() << "OLPO:   Replaced: " << *GEP << "\n"
-                      << "OLPO:   With:     " << *NewGEP << "\n");
+    LLVM_DEBUG(dbgs() << "LPO:   Replaced: " << *GEP << "\n"
+                      << "LPO:   With:     " << *NewGEP << "\n");
 
     GEP->replaceAllUsesWith(NewGEP);
     GEP->eraseFromParent();
@@ -805,8 +880,8 @@ bool AIEOuterLoopPointerOptimizer::canonicalizeGEPsInBlock(
 ///   %ptr192 = getelementptr i8, ptr %ptr128, i20 64  ; uses previous
 ///
 /// This enables post-increment loads: load ptr, ptr += offset
-bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
-  LLVM_DEBUG(dbgs() << "OLPO: Linking GEP chains for post-increment\n");
+bool AIELoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Linking GEP chains for post-increment\n");
 
   bool Changed = false;
   BasicBlock *const Top = LS.getTop();
@@ -818,9 +893,11 @@ bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
   // Track GEPs to erase after processing.
   SmallPtrSet<GetElementPtrInst *, 8> ToErase;
 
-  // Collect GEPs in program order from Top and Bottom
+  // Collect GEPs in program order from Top and Bottom.
+  // When Top == Bottom (single-block standalone loop), only collect once.
   SmallVector<GetElementPtrInst *, 16> AllGEPs = collectGEPs(Top);
-  AllGEPs.append(collectGEPs(Bottom));
+  if (Bottom != Top)
+    AllGEPs.append(collectGEPs(Bottom));
 
   // Process GEPs in order
   for (GetElementPtrInst *GEP : AllGEPs) {
@@ -831,7 +908,7 @@ bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
     // Check if this GEP is a candidate for chain linking
     int64_t CurrentOffset;
     if (!isChainLinkCandidate(GEP, CurrentOffset)) {
-      LLVM_DEBUG(dbgs() << "OLPO:   Skip (not a chain candidate): " << *GEP
+      LLVM_DEBUG(dbgs() << "LPO:   Skip (not a chain candidate): " << *GEP
                         << "\n");
       continue;
     }
@@ -842,14 +919,14 @@ bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
     auto It = BaseChains.find(Base);
     if (It == BaseChains.end()) {
       // Start a new chain from:
-      // - PHI in Top: loop-carried pointer from outer loop header
+      // - PHI in Top: loop-carried pointer from loop header
       // - Argument: reading/writing scalar parameters, chaining leads to
       //   small encodable offsets
       PHINode *BasePHI = dyn_cast<PHINode>(Base);
       const bool IsValidPHI = BasePHI && BasePHI->getParent() == Top;
       if (IsValidPHI || isa<Argument>(Base)) {
         BaseChains[Base] = {GEP, CurrentOffset};
-        LLVM_DEBUG(dbgs() << "OLPO:   Start chain for base: " << *GEP << "\n");
+        LLVM_DEBUG(dbgs() << "LPO:   Start chain for base: " << *GEP << "\n");
       }
       continue;
     }
@@ -859,12 +936,12 @@ bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
     GetElementPtrInst *NewGEP = tryLinkToChain(GEP, State, CurrentOffset, DT);
 
     if (!NewGEP) {
-      LLVM_DEBUG(dbgs() << "OLPO:   Skip (cannot link to chain): " << *GEP
+      LLVM_DEBUG(dbgs() << "LPO:   Skip (cannot link to chain): " << *GEP
                         << "\n");
       continue;
     }
 
-    LLVM_DEBUG(dbgs() << "OLPO:   Linked GEP to chain:\n"
+    LLVM_DEBUG(dbgs() << "LPO:   Linked GEP to chain:\n"
                       << "         Prev: " << *State.LastGEP << " (offset "
                       << State.LastOffset << ")\n"
                       << "         Curr: " << *GEP << " (offset "
@@ -896,30 +973,25 @@ bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
 /// 2. That operand must NOT be used by any memory operation (load/store)
 ///    in Bottom - to preserve post-increment folding opportunities
 ///
-/// Example:
-///   top:
-///     %add.ptr = getelementptr i8, ptr %base, i20 64   ; PRODUCED in Top
-///     ...
-///     br label %inner
-///   inner:
-///     ; ...
-///     br label %bottom
-///   bottom:
-///     %next = getelementptr i8, ptr %add.ptr, i20 128  ; candidate
-///     ; IF %add.ptr has no memory use in bottom → HOIST
-///
-/// After:
-///   top:
-///     %add.ptr = getelementptr i8, ptr %base, i20 64
-///     %next = getelementptr i8, ptr %add.ptr, i20 128  ; MOVED here
-///     ...
-bool AIEOuterLoopPointerOptimizer::hoistGEPsToTop(LoopStructure &LS) {
-  LLVM_DEBUG(dbgs() << "OLPO: Hoisting GEPs from bottom to top\n");
+/// For standalone loops:
+/// - When Top == Bottom (single-block): nothing to hoist, skip.
+/// - When Top != Bottom (multi-block): same conditions apply; the inner-loop
+///   interference check is skipped since there is no inner loop.
+bool AIELoopPointerOptimizer::hoistGEPsToTop(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Hoisting GEPs from bottom to top\n");
 
-  bool Changed = false;
   BasicBlock *const Top = LS.getTop();
   BasicBlock *const Bottom = LS.getBottom();
-  BasicBlock *const Inner = LS.getInner();
+
+  // Nothing to hoist when top and bottom are the same block (single-block
+  // standalone loop).
+  if (Top == Bottom) {
+    LLVM_DEBUG(dbgs() << "LPO:   Skip hoisting: top == bottom\n");
+    return false;
+  }
+
+  bool Changed = false;
+  BasicBlock *const Inner = LS.getInner(); // nullptr for standalone loops
 
   // Collect GEPs from Bottom that can be hoisted
   SmallVector<GetElementPtrInst *, 8> GEPsToHoist;
@@ -931,11 +1003,11 @@ bool AIEOuterLoopPointerOptimizer::hoistGEPsToTop(LoopStructure &LS) {
 
     // Use helper to check all hoisting conditions
     if (!canHoistGEP(GEP, Top, Inner, Bottom, DT)) {
-      LLVM_DEBUG(dbgs() << "OLPO:   Skip (cannot hoist): " << *GEP << "\n");
+      LLVM_DEBUG(dbgs() << "LPO:   Skip (cannot hoist): " << *GEP << "\n");
       continue;
     }
 
-    LLVM_DEBUG(dbgs() << "OLPO:   Can hoist GEP: " << *GEP << "\n");
+    LLVM_DEBUG(dbgs() << "LPO:   Can hoist GEP: " << *GEP << "\n");
     GEPsToHoist.push_back(GEP);
   }
 
@@ -943,7 +1015,7 @@ bool AIEOuterLoopPointerOptimizer::hoistGEPsToTop(LoopStructure &LS) {
   const BasicBlock::iterator InsertPoint = Top->getTerminator()->getIterator();
 
   for (GetElementPtrInst *GEP : GEPsToHoist) {
-    LLVM_DEBUG(dbgs() << "OLPO:   Hoisting to top: " << *GEP << "\n");
+    LLVM_DEBUG(dbgs() << "LPO:   Hoisting to top: " << *GEP << "\n");
     GEP->moveBefore(InsertPoint);
     Changed = true;
   }
@@ -980,21 +1052,22 @@ bool AIEOuterLoopPointerOptimizer::hoistGEPsToTop(LoopStructure &LS) {
 ///
 /// This enables better GEP chain optimization by keeping GEPs in a
 /// consistent (PHI-defined) address space.
-bool AIEOuterLoopPointerOptimizer::canonicalizeGEPAddressSpace(
-    LoopStructure &LS) {
-  LLVM_DEBUG(dbgs() << "OLPO: Canonicalizing GEP address spaces to PHI's AS\n");
+bool AIELoopPointerOptimizer::canonicalizeGEPAddressSpace(LoopStructure &LS) {
+  LLVM_DEBUG(dbgs() << "LPO: Canonicalizing GEP address spaces to PHI's AS\n");
 
   BasicBlock *const Top = LS.getTop();
   BasicBlock *const Bottom = LS.getBottom();
 
   bool Changed = false;
 
-  // Single pass over PHIs in Top, processing casts in both Top and Bottom
+  // Single pass over PHIs in Top, processing casts in both Top and Bottom.
+  // For standalone loops the loop PHIs live in Top (the header), so this
+  // correctly finds all loop-carried pointer PHIs.
   for (PHINode &PHI : Top->phis()) {
     if (!PHI.getType()->isPointerTy())
       continue;
 
-    LLVM_DEBUG(dbgs() << "OLPO:   Processing PHI: " << PHI << "\n"
+    LLVM_DEBUG(dbgs() << "LPO:   Processing PHI: " << PHI << "\n"
                       << "         Canonical AS: "
                       << PHI.getType()->getPointerAddressSpace() << "\n");
 
@@ -1004,18 +1077,21 @@ bool AIEOuterLoopPointerOptimizer::canonicalizeGEPAddressSpace(
     for (AddrSpaceCastInst *RootCast : TopCasts)
       Changed |= processRootCast(PHI, RootCast);
 
-    // Process casts in Bottom block
-    SmallVector<AddrSpaceCastInst *, 4> BottomCasts =
-        findRootCastsFromPHI(PHI, Bottom);
-    for (AddrSpaceCastInst *RootCast : BottomCasts)
-      Changed |= processRootCast(PHI, RootCast);
+    // Process casts in Bottom block only if distinct from Top (avoid
+    // double-processing single-block standalone loops where top == bottom).
+    if (Bottom != Top) {
+      SmallVector<AddrSpaceCastInst *, 4> BottomCasts =
+          findRootCastsFromPHI(PHI, Bottom);
+      for (AddrSpaceCastInst *RootCast : BottomCasts)
+        Changed |= processRootCast(PHI, RootCast);
+    }
   }
 
   return Changed;
 }
 
 namespace llvm {
-FunctionPass *createAIEOuterLoopPointerOptimizerPass() {
-  return new AIEOuterLoopPointerOptimizer();
+FunctionPass *createAIELoopPointerOptimizerPass() {
+  return new AIELoopPointerOptimizer();
 }
 } // namespace llvm
