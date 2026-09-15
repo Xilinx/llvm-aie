@@ -251,7 +251,7 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
       .libcallFor({S32, S64});
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
-      .legalFor({AccV64S32})
+      .legalFor({AccV32S32, AccV64S32})
       .clampScalar(0, S32, S64)
       .customFor({S32})
       .libcallFor({S64});

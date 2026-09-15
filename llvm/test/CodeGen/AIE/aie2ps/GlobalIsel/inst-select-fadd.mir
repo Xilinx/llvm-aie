@@ -10,14 +10,38 @@
 
 
 ---
-name:            test_fadd
+name:            test_fadd_1024
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $cml0, $cml1
+    ; CHECK-LABEL: name: test_fadd_1024
+    ; CHECK: liveins: $cml0, $cml1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ecml = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ecml = COPY $cml1
+    ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:mrv8 = MOVXM_lng_cg 60
+    ; CHECK-NEXT: [[VADD_f_vacc_half_fp:%[0-9]+]]:ecml = VADD_f_vacc_half_fp [[COPY]], [[COPY1]], [[MOVXM_lng_cg]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $cml0 = COPY [[VADD_f_vacc_half_fp]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cml0
+    %0:accregbank(<32 x s32>) = COPY $cml0
+    %1:accregbank(<32 x s32>) = COPY $cml1
+    %2:accregbank(<32 x s32>) = G_FADD %0, %1
+    $cml0 = COPY %2:accregbank(<32 x s32>)
+    PseudoRET implicit $lr, implicit $cml0
+...
+
+---
+name:            test_fadd_2048
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body:             |
   bb.1.entry:
     liveins: $dm0, $dm1
-    ; CHECK-LABEL: name: test_fadd
+    ; CHECK-LABEL: name: test_fadd_2048
     ; CHECK: liveins: $dm0, $dm1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
