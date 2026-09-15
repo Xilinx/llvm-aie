@@ -186,6 +186,7 @@ tools.extend(
         "llvm-ar",
         "llvm-as",
         "llvm-addr2line",
+        "llvm-aie-run",
         "llvm-bcanalyzer",
         "llvm-bitcode-strip",
         "llvm-cgdata",
