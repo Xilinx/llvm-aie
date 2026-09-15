@@ -582,13 +582,14 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
       .bitcastIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
-            return Ty.isVector() &&
-                   (Ty.getSizeInBits() == 64 || Ty.getSizeInBits() == 32);
+            const unsigned Size = Ty.getSizeInBits();
+            return Ty.isVector() && (Size == 16 || Size == 32 || Size == 64);
           },
           [=](const LegalityQuery &Query) {
             const LLT Ty = Query.Types[0];
             const unsigned Size = Ty.getSizeInBits();
-            assert(Size % 32 == 0);
+            assert((Size == 16 || Size == 32 || Size == 64) &&
+                   "Unexpected vector size");
             return std::pair(0, LLT::scalar(Size));
           })
       .clampScalar(0, S32, S32)
