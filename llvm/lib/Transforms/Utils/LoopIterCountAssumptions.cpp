@@ -38,6 +38,24 @@ std::string getFunctionAndBlockNames(const BasicBlock &BB) {
   return BB.getParent()->getName().str() + " " + BB.getName().str();
 }
 
+/// Return the exiting block whose condition decides whether \p CurrentLoop is
+/// entered at all, or nullptr if no such block can be identified.
+///
+/// A unique exiting block is that block. Failing that, the header serves:
+/// callers have already established that the loop is unrotated, so the header
+/// carries the entry test. Further exiting blocks are `break`s, and a declared
+/// minimum iteration count already promises that none of them fires early --
+/// a loop whose body runs at least N times cannot leave by any route before
+/// iteration N. Refusing such loops would give up on every counted loop with
+/// a `break` in it, which is the common shape in AIE kernels.
+BasicBlock *getEntryTestBlock(const Loop &CurrentLoop) {
+  if (BasicBlock *Unique = CurrentLoop.getExitingBlock())
+    return Unique;
+
+  BasicBlock *Header = CurrentLoop.getHeader();
+  return CurrentLoop.isLoopExiting(Header) ? Header : nullptr;
+}
+
 /// Return the Branch Compare Instruction of CurrentLoop if the Loop is well
 /// formed and this pass can process the Predicate
 ICmpInst *getLoopCmpInst(const Loop &CurrentLoop) {
@@ -48,11 +66,12 @@ ICmpInst *getLoopCmpInst(const Loop &CurrentLoop) {
     return nullptr;
   }
 
-  /// Check that the loop has a single Exiting Block. If the CurrentLoop
-  /// has multiple Exiting Blocks, ExitBB will be a nullptr
-  auto *ExitBB = CurrentLoop.getExitingBlock();
-  if (!ExitBB)
+  auto *ExitBB = getEntryTestBlock(CurrentLoop);
+  if (!ExitBB) {
+    LLVM_DEBUG(dbgs() << "No identifiable loop entry test. Will not add Loop "
+                         "Iteration Count assumptions.\n");
     return nullptr;
+  }
 
   BranchInst *BI = dyn_cast<BranchInst>(ExitBB->getTerminator());
   if (!BI)
@@ -166,9 +185,11 @@ void tryInsertIterationAssumption(ICmpInst &LoopCmpInstr, Loop &CurrentLoop,
   // If the false-branch-target is to the Loop Body, inverse the
   // predicate, since the Loop Condition is inversed to remain in the Loop
   CmpInst::Predicate Pred = LoopCmpInstr.getPredicate();
-  if (!CurrentLoop.contains(
-          dyn_cast<BranchInst>(CurrentLoop.getExitingBlock()->getTerminator())
-              ->getSuccessor(0)))
+  // Same block getLoopCmpInst read the condition from, so the branch and the
+  // predicate belong together.
+  auto *EntryTestBI =
+      cast<BranchInst>(getEntryTestBlock(CurrentLoop)->getTerminator());
+  if (!CurrentLoop.contains(EntryTestBI->getSuccessor(0)))
     Pred = LoopCmpInstr.getInversePredicate();
 
   Value *Cmp = Builder.CreateICmp(Pred, LHS, RHS);
