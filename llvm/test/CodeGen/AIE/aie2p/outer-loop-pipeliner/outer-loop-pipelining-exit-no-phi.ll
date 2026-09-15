@@ -36,26 +36,28 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[COPY]], [[C2]](s20)
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY2]], [[C]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.2, %20(s32), %bb.5
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(p0) = G_PHI [[COPY]](p0), %bb.2, %14(p0), %bb.5
-  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(p0) = G_PHI [[COPY1]](p0), %bb.2, %15(p0), %bb.5
-  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.2, %19(s32), %bb.5
-  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.2, %22(s32), %bb.5
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.2, %22(s32), %bb.5
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(p0) = G_PHI [[COPY]](p0), %bb.2, %15(p0), %bb.5
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(p0) = G_PHI [[COPY1]](p0), %bb.2, %17(p0), %bb.5
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.2, %21(s32), %bb.5
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.2, %24(s32), %bb.5
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:_(p0) = G_PHI [[PTR_ADD]](p0), %bb.2, %26(p0), %bb.5
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C3]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.4(0x7c000000), %bb.5(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.3, %17(s32), %bb.4
-  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[PHI5]], [[PHI4]]
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.3, %19(s32), %bb.4
+  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[PHI6]], [[PHI4]]
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.5
@@ -67,7 +69,9 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
   ; CHECK-NEXT:   [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[PHI]], [[C]]
   ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s1) = G_ICMP intpred(slt), [[ADD2]](s32), [[SUB]]
-  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32) from %ir.a.ptr.next.steady)
+  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PHI5]](p0) :: (load (s32) from %ir.a.ptr.next.steady.phi)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI5]], [[C4]](s20)
   ; CHECK-NEXT:   G_BRCOND [[ICMP]](s1), %bb.3
   ; CHECK-NEXT:   G_BR %bb.6
   ; CHECK-NEXT: {{  $}}
@@ -75,15 +79,14 @@ define i32 @exit_uses_latch_def(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) 
   ; CHECK-NEXT:   successors: %bb.7(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
-  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   %24:_(p0) = nuw nusw G_PTR_ADD %14, [[C3]](s20)
-  ; CHECK-NEXT:   %25:_(p0) = nuw nusw G_PTR_ADD %15, [[C3]](s20)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PTR_ADD1]], [[C5]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.7(0x7c000000), %bb.8(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.6, %27(s32), %bb.7
-  ; CHECK-NEXT:   [[ADD3:%[0-9]+]]:_(s32) = G_ADD [[PHI6]], [[LOAD1]]
+  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.6, %30(s32), %bb.7
+  ; CHECK-NEXT:   [[ADD3:%[0-9]+]]:_(s32) = G_ADD [[PHI7]], [[LOAD1]]
   ; CHECK-NEXT:   [[INT1:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.7
   ; CHECK-NEXT:   G_BR %bb.8

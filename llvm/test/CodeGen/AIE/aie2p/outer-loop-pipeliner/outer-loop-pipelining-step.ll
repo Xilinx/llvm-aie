@@ -55,7 +55,7 @@
 ; CHECK:   %iv.next.steady = add i32 %iv.steady, -2
 ; CHECK:   %outer.cond.steady = icmp eq i32 %iv.next.steady, 2
 ; CHECK:   %v0.steady.bottom = load i32
-; CHECK-NEXT:   br i1 %outer.cond.steady, label %lastiter.stage1.top, label %steady.stage1.top
+; CHECK:   br i1 %outer.cond.steady, label %lastiter.stage1.top, label %steady.stage1.top
 
 define void @decrement_step2(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
 entry:

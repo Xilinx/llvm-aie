@@ -22,20 +22,20 @@
 
 ; Test foldInnerPhiBackEdgeGEPs Phase 2 and Optimization 2c.
 ;
-; Phase 2 — full-trip match using a constant inner loop trip count:
+; Phase 2 -- full-trip match using a constant inner loop trip count:
 ;   Top:    call @llvm.set.loop.iterations(N)   ; N must be a compile-time constant
 ;           %init = <Top-incoming of the inner PHI>
 ;   Inner:  %phi  = phi ptr [%init, Top] [%back, Inner]
 ;           %back = gep %phi, stride
 ;   Bottom: %full = gep %init, N*stride         ; equals %back at exit -> fold
 ;
-; Optimization 2c — second invocation of foldInnerPhiBackEdgeGEPs after
+; Optimization 2c -- second invocation of foldInnerPhiBackEdgeGEPs after
 ; linkGEPChains:  linkGEPChains may rewrite the init GEP in Top and create a
 ; corresponding chained epilogue GEP in Bottom.  The second call lets Phase 2
 ; see those chained GEPs and fold them.
 
 ; ===========================================================================
-; Test 1: Phase 2 basic fold — inner PHI init is the outer-loop PHI directly.
+; Test 1: Phase 2 basic fold -- inner PHI init is the outer-loop PHI directly.
 ;
 ; N=4 (constant), stride=64.  Full offset = 4x64 = 256.
 ; %full = gep(%outer_ptr, 256) in Bottom equals %back at exit.
@@ -46,7 +46,7 @@
 ; NOCHAIN: inner:
 ; NOCHAIN:   %back = getelementptr inbounds i8, ptr %phi, i20 64
 ; NOCHAIN: bottom:
-; Full-trip GEP is folded — store uses %back directly.
+; Full-trip GEP is folded -- store uses %back directly.
 ; NOCHAIN-NOT: getelementptr{{.*}} %outer_ptr{{.*}} i20 256
 
 ; CHAIN-LABEL: define void @test_phase2_outer_phi_init
@@ -90,7 +90,7 @@ exit:
 }
 
 ; ===========================================================================
-; Test 2: Phase 2 NOT triggered — no @llvm.set.loop.iterations.
+; Test 2: Phase 2 NOT triggered -- no @llvm.set.loop.iterations.
 ;
 ; Without a constant trip count, Phase 2 cannot compute Nxstride and must
 ; leave the epilogue GEP untouched.
@@ -98,7 +98,7 @@ exit:
 
 ; NOCHAIN-LABEL: define void @test_phase2_no_trip_count
 ; NOCHAIN: bottom:
-; No trip count -> Phase 2 skipped — epilogue GEP survives.
+; No trip count -> Phase 2 skipped -- epilogue GEP survives.
 ; NOCHAIN:   getelementptr{{.*}} i20 256
 
 ; CHAIN-LABEL: define void @test_phase2_no_trip_count
@@ -137,7 +137,7 @@ exit:
 }
 
 ; ===========================================================================
-; Test 3: Phase 2 NOT triggered — epilogue GEP offset != Nxstride.
+; Test 3: Phase 2 NOT triggered -- epilogue GEP offset != Nxstride.
 ;
 ; N=4, stride=64 -> FullOffset=256. Epilogue has offset=320 (!=256).
 ; Must NOT be folded.
@@ -145,7 +145,7 @@ exit:
 
 ; NOCHAIN-LABEL: define void @test_phase2_offset_mismatch
 ; NOCHAIN: bottom:
-; Offset mismatch (320 != 4*64=256) — epilogue GEP survives.
+; Offset mismatch (320 != 4*64=256) -- epilogue GEP survives.
 ; NOCHAIN:   getelementptr{{.*}} i20 320
 
 ; CHAIN-LABEL: define void @test_phase2_offset_mismatch
@@ -185,7 +185,7 @@ exit:
 }
 
 ; ===========================================================================
-; Test 4: Optimization 2c — Phase 2 fires in the SECOND call (after
+; Test 4: Optimization 2c -- Phase 2 fires in the SECOND call (after
 ; linkGEPChains), not in the first call.
 ;
 ; %init = gep(%outer_ptr4, 128) is an intermediate GEP in Top, used as the
