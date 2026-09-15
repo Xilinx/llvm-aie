@@ -8,31 +8,70 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass optimizes pointer chains in loops. Two loop shapes are supported:
+// This pass optimizes pointer chains in nested and standalone loops.
+// Two loop shapes are supported:
 //
 // 1. Nested loop shape (outer + single-block inner):
-//      preheader -> top (prologue) -> inner (single block) -> bottom (epilogue)
+//      preheader -> Top (prologue) -> Inner (single block) -> Bottom (epilogue)
 //
 // 2. Standalone loop shape (leaf loop, no subloops):
-//      preheader -> top (header) [-> bottom (latch)]
-//    where top == bottom for single-block loops.
+//      preheader -> Top (header) [-> Bottom (latch)]
+//    where Top == Bottom for single-block loops.
 //
-// Standalone loops are processed in Phase 1, nested loops in Phase 2.
-// This ordering ensures that inner loops benefit from pointer optimizations
-// before their enclosing loop is processed.
+// All leaf (standalone) loops are processed before their enclosing nested
+// loops, ensuring inner-loop pointer patterns are resolved first.
 //
-// Optimizations:
-// 1. GEP Address Space Canonicalization: Keep GEPs in the PHI's canonical
-//    address space. This moves addrspacecast from before GEPs to point-of-use,
-//    enabling better GEP chain optimization.
-// 2. GEP Canonicalization: Convert non-i8 GEPs to i8-based GEPs for uniformity.
-//    This makes pointer arithmetic explicit and helps later optimizations.
-// 3. GEP Chain Linking: Link consecutive GEPs with the same base pointer to
-//    enable post-increment addressing patterns.
-// 4. GEP Hoisting: Move GEPs from bottom (epilogue/latch) to top
-//    (prologue/header) block when safe, reducing code in the bottom block and
-//    improving scheduling. We try to avoid stand-alone pointer updates by
-//    grouping them with related memory operations.
+// Optimizations (in execution order):
+//
+//   0. GEP Address Space Canonicalization [both shapes]
+//      Move addrspacecast instructions from before GEPs to point-of-use,
+//      keeping GEPs in the PHI's canonical address space.  This enables
+//      uniform chain detection across the subsequent passes.
+//
+//   1. GEP Canonicalization [both shapes]
+//      Convert non-i8 GEPs to i8-based GEPs so that all pointer arithmetic
+//      is expressed as explicit byte offsets.
+//
+//   2a. Inner-phi Back-edge Folding -- first call [nested only]
+//      Fold redundant epilogue GEPs that duplicate the inner loop's exit
+//      pointer.  Two sub-phases run within a single function call:
+//
+//      Phase 1 -- single-stride match:
+//        gep(inner_phi, stride)  in Bottom  =>  replaced by back-edge GEP.
+//
+//      Phase 2 -- full-trip match (requires constant trip count N from
+//        @llvm.set.loop.iterations in Top):
+//        gep(init, N*stride)  in Bottom  =>  replaced by back-edge GEP.
+//
+//      Running Phase 2 before chain-linking handles GEPs whose base is
+//      directly the Top-incoming value of an inner PHI.
+//
+//   2b. GEP Chain Linking [both shapes]
+//      Rewrite consecutive GEPs that share the same base pointer into a
+//      chain where each GEP uses the previous GEP as its base, enabling
+//      post-increment addressing (e.g. "load ptr; ptr += stride").
+//      linkGEPChains may create new chained GEPs in Bottom whose base is a
+//      chained GEP produced in Top; these are handled by pass 2c below.
+//
+//   2c. Inner-phi Back-edge Folding -- second call [nested only]
+//      Re-invoke foldInnerPhiBackEdgeGEPs after chain-linking so that Phase 2
+//      can fold the newly-created chained epilogue GEPs (e.g.
+//      "%.chained3 = gep %.chained, N*stride" where %.chained is the
+//      Top-incoming of an inner PHI).  Phase 1 is idempotent in this call.
+//
+//   3. GEP Hoisting [both shapes]
+//      Move GEPs from the Bottom block to the Top block when safe, reducing
+//      live ranges in the epilogue/latch and improving scheduling.
+//
+//   4. PHI Normalization to Load-base Form [standalone only]
+//      Detect pre-increment pointer PHIs (the PHI is advanced before any
+//      memory access) and shift the initial value forward by one stride so
+//      that the PHI lands directly at the first load address.
+//
+//   5. Post-increment GEP Chain Building [standalone only]
+//      Reposition the post-increment GEP to appear immediately after the
+//      last memory user of its base, creating (load, ptr+=delta) adjacency
+//      that the backend can select as a single post-increment instruction.
 //
 //===----------------------------------------------------------------------===//
 
@@ -830,7 +869,7 @@ bool AIELoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
     Changed |= canonicalizeGEPs(LS);
 
   // Optimization 2a: Fold redundant inner-phi GEPs in epilogue (nested only).
-  // Phase 1 (gep(inner_phi, stride) → back-edge GEP) must run first so that
+  // Phase 1 (gep(inner_phi, stride) -> back-edge GEP) must run first so that
   // linkGEPChains can root chains at the back-edge GEP instead of a redundant
   // duplicate. Phase 2 (full-trip match using InnerTripCount) also runs here
   // for GEPs whose base is already the direct Top-incoming of an Inner PHI.
@@ -943,7 +982,7 @@ bool AIELoopPointerOptimizer::canonicalizeGEPsInBlock(
 /// Fold GEPs in the epilogue (Bottom block) that duplicate the inner loop's
 /// back-edge GEP, replacing them with the back-edge GEP directly.
 ///
-/// **Phase 1 — single-stride match** (base = inner PHI, offset = stride):
+/// **Phase 1 -- single-stride match** (base = inner PHI, offset = stride):
 ///
 ///   inner:
 ///     %phi = phi ptr [%init, Top] [%back, inner]
@@ -952,19 +991,19 @@ bool AIELoopPointerOptimizer::canonicalizeGEPsInBlock(
 ///   epilogue:
 ///     %dup = getelementptr i8, ptr %phi, i20 <stride>   ; same as %back!
 ///
-///   → Replace %dup with %back (the inner loop's last-iteration back-edge).
+///   -> Replace %dup with %back (the inner loop's last-iteration back-edge).
 ///
-/// **Phase 2 — full-trip match** (base = init value, offset = N × stride):
+/// **Phase 2 -- full-trip match** (base = init value, offset = N x stride):
 ///
 ///   When the inner loop trip count N is known (from @llvm.set.loop.iterations
-///   in Top), the pointer after N iterations equals init + N × stride.
+///   in Top), the pointer after N iterations equals init + N x stride.
 ///   Any epilogue GEP with that exact (base, offset) pair is therefore the
 ///   same as the back-edge GEP's final value:
 ///
 ///   epilogue:
 ///     %full = getelementptr i8, ptr %init, i20 <N * stride>  ; = %back_last!
 ///
-///   → Replace %full with %back.
+///   -> Replace %full with %back.
 ///
 /// Both phases allow the backend to use the register that naturally holds the
 /// inner loop's exit pointer, eliminating standalone pointer-advance
@@ -981,7 +1020,7 @@ bool AIELoopPointerOptimizer::foldInnerPhiBackEdgeGEPs(LoopStructure &LS) {
   SmallVector<GetElementPtrInst *, 8> BottomGEPs = collectGEPs(Bottom);
 
   // -----------------------------------------------------------------------
-  // Phase 1: Fold gep(inner_phi, stride) → BackGEP.
+  // Phase 1: Fold gep(inner_phi, stride) -> BackGEP.
   // -----------------------------------------------------------------------
   for (GetElementPtrInst *GEP : BottomGEPs) {
     int64_t Offset = 0;
@@ -1017,7 +1056,7 @@ bool AIELoopPointerOptimizer::foldInnerPhiBackEdgeGEPs(LoopStructure &LS) {
   }
 
   // -----------------------------------------------------------------------
-  // Phase 2: Fold gep(init_val, N×stride) → BackGEP, using the inner loop
+  // Phase 2: Fold gep(init_val, Nxstride) -> BackGEP, using the inner loop
   // trip count N stored in LoopStructure (from @llvm.set.loop.iterations).
   // -----------------------------------------------------------------------
   std::optional<uint64_t> MaybeTripCount = LS.getInnerTripCount();
@@ -1453,7 +1492,7 @@ bool AIELoopPointerOptimizer::normalizePhiToLoadBase(LoopStructure &LS) {
   bool Changed = false;
 
   // Returns true when V has at least one user outside the loop.
-  auto isLiveOut = [&](Value *V) {
+  auto IsLiveOut = [&](Value *V) {
     return llvm::any_of(V->users(), [&](User *U) {
       auto *I = dyn_cast<Instruction>(U);
       return I && !L->contains(I->getParent());
@@ -1487,11 +1526,11 @@ bool AIELoopPointerOptimizer::normalizePhiToLoadBase(LoopStructure &LS) {
     }
 
     // --- Safety checks ---
-    if (isLiveOut(&Phi)) {
+    if (IsLiveOut(&Phi)) {
       LLVM_DEBUG(dbgs() << "LPO:   Skip phi (live-out): " << Phi << "\n");
       continue;
     }
-    if (isLiveOut(BackGEP)) {
+    if (IsLiveOut(BackGEP)) {
       LLVM_DEBUG(dbgs() << "LPO:   Skip phi (back-edge GEP live-out): " << Phi
                         << "\n");
       continue;
