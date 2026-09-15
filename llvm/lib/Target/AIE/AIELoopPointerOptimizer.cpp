@@ -550,6 +550,9 @@ class LoopStructure {
   BasicBlock *Bottom = nullptr;
   Loop *TheLoop = nullptr;
   Loop *InnerLoop = nullptr;
+  // Constant inner loop trip count, if discoverable from
+  // @llvm.set.loop.iterations in the Top (inner preheader) block.
+  std::optional<uint64_t> InnerTripCount;
 
 public:
   /// Try to build a LoopStructure for a nested loop (outer + single-block
@@ -569,6 +572,10 @@ public:
   }
   Loop *getLoop() const { return TheLoop; }
   Loop *getInnerLoop() const { return InnerLoop; }
+
+  /// Returns the constant inner loop trip count if it could be determined
+  /// from an @llvm.set.loop.iterations call in Top, std::nullopt otherwise.
+  std::optional<uint64_t> getInnerTripCount() const { return InnerTripCount; }
 
   /// Returns true for standalone loops (no inner loop).
   bool isStandalone() const { return InnerLoop == nullptr; }
@@ -642,6 +649,23 @@ std::optional<LoopStructure> LoopStructure::tryBuildFrom(Loop *L,
   if (LS.Bottom != Latch) {
     LLVM_DEBUG(dbgs() << "LPO: Inner exit is not the loop latch\n");
     return std::nullopt;
+  }
+
+  // Try to extract the inner loop trip count from @llvm.set.loop.iterations*
+  // called in the Top (inner preheader) block.
+  for (Instruction &I : *LS.Top) {
+    auto *CB = dyn_cast<CallBase>(&I);
+    if (!CB || !CB->getCalledFunction())
+      continue;
+    if (!CB->getCalledFunction()->getName().starts_with(
+            "llvm.set.loop.iterations"))
+      continue;
+    if (auto *C = dyn_cast<ConstantInt>(CB->getArgOperand(0))) {
+      LS.InnerTripCount = C->getZExtValue();
+      LLVM_DEBUG(dbgs() << "LPO:   Found inner trip count: "
+                        << *LS.InnerTripCount << "\n");
+    }
+    break;
   }
 
   LLVM_DEBUG(dbgs() << "LPO: Found valid nested loop structure:\n"
@@ -806,13 +830,29 @@ bool AIELoopPointerOptimizer::tryOptimizeLoop(LoopStructure &LS) {
     Changed |= canonicalizeGEPs(LS);
 
   // Optimization 2a: Fold redundant inner-phi GEPs in epilogue (nested only).
-  // Must run before chain linking so the chain is rooted at the back-edge GEP.
+  // Phase 1 (gep(inner_phi, stride) → back-edge GEP) must run first so that
+  // linkGEPChains can root chains at the back-edge GEP instead of a redundant
+  // duplicate. Phase 2 (full-trip match using InnerTripCount) also runs here
+  // for GEPs whose base is already the direct Top-incoming of an Inner PHI.
   if (!LS.isStandalone() && EnableInnerPhiBackEdgeFolding)
     Changed |= foldInnerPhiBackEdgeGEPs(LS);
 
-  // Optimization 2b: Link GEP chains for post-increment addressing
+  // Optimization 2b: Link GEP chains for post-increment addressing.
+  // linkGEPChains may create new chained GEPs in Bottom whose base is a
+  // chained GEP in Top (e.g., %.chained3 = gep %.chained, N*stride).
+  // The Inner PHI for these chained GEPs will now reference the chained base
+  // (e.g., phi [%.chained, Top] [%76, Inner]), so Phase 2 of
+  // foldInnerPhiBackEdgeGEPs can match them.
   if (EnableGEPChainLinking)
     Changed |= linkGEPChains(LS);
+
+  // Optimization 2c: Re-run Phase 2 of inner-phi back-edge folding to catch
+  // chained GEPs created by linkGEPChains above (e.g., the pattern
+  // %.chained3 = gep %.chained, N*stride where %.chained is the Top-incoming
+  // of an Inner PHI). Phase 1 is idempotent here (all simple-stride GEPs were
+  // already folded in 2a).
+  if (!LS.isStandalone() && EnableInnerPhiBackEdgeFolding)
+    Changed |= foldInnerPhiBackEdgeGEPs(LS);
 
   // Optimization 3: Hoist GEPs from bottom to top
   if (EnableGEPHoisting)
@@ -903,66 +943,170 @@ bool AIELoopPointerOptimizer::canonicalizeGEPsInBlock(
 /// Fold GEPs in the epilogue (Bottom block) that duplicate the inner loop's
 /// back-edge GEP, replacing them with the back-edge GEP directly.
 ///
-/// In a nested loop, the inner loop's back-edge often advances the pointer:
+/// **Phase 1 — single-stride match** (base = inner PHI, offset = stride):
+///
 ///   inner:
 ///     %phi = phi ptr [%init, Top] [%back, inner]
-///     %back = getelementptr i8, ptr %phi, i20 <stride>   ; back-edge GEP
+///     %back = getelementptr i8, ptr %phi, i20 <stride>
 ///
-/// If the epilogue (Bottom block) contains an identical GEP:
-///     %dup = getelementptr i8, ptr %phi, i20 <stride>    ; same as %back!
+///   epilogue:
+///     %dup = getelementptr i8, ptr %phi, i20 <stride>   ; same as %back!
 ///
-/// Then %dup is redundant because %back already computes the same value and
-/// dominates Bottom (it is defined in the inner block which exits to Bottom).
-/// Replacing %dup with %back eliminates the GEP instruction and, importantly,
-/// allows the backend to use the pointer register that naturally holds %back
-/// after the inner loop exits — removing the need for a separate post-advance
-/// (paddb/padda) instruction in the epilogue.
+///   → Replace %dup with %back (the inner loop's last-iteration back-edge).
 ///
-/// This also enables linkGEPChains to chain subsequent epilogue GEPs (e.g.,
-/// phi+2*stride, phi+3*stride) off %back rather than off the now-deleted %dup.
+/// **Phase 2 — full-trip match** (base = init value, offset = N × stride):
+///
+///   When the inner loop trip count N is known (from @llvm.set.loop.iterations
+///   in Top), the pointer after N iterations equals init + N × stride.
+///   Any epilogue GEP with that exact (base, offset) pair is therefore the
+///   same as the back-edge GEP's final value:
+///
+///   epilogue:
+///     %full = getelementptr i8, ptr %init, i20 <N * stride>  ; = %back_last!
+///
+///   → Replace %full with %back.
+///
+/// Both phases allow the backend to use the register that naturally holds the
+/// inner loop's exit pointer, eliminating standalone pointer-advance
+/// (paddb/padda) instructions from the epilogue.
 bool AIELoopPointerOptimizer::foldInnerPhiBackEdgeGEPs(LoopStructure &LS) {
   LLVM_DEBUG(dbgs() << "LPO: Folding inner-phi back-edge GEPs in epilogue\n");
 
   BasicBlock *const Inner = LS.getInner();
   BasicBlock *const Bottom = LS.getBottom();
+  BasicBlock *const Top = LS.getTop();
   bool Changed = false;
 
-  // Collect GEPs in Bottom that may be foldable (snapshot to avoid iterator
-  // invalidation when we erase instructions during RAUW).
+  // Collect GEPs in Bottom (snapshot to avoid iterator invalidation).
   SmallVector<GetElementPtrInst *, 8> BottomGEPs = collectGEPs(Bottom);
 
+  // -----------------------------------------------------------------------
+  // Phase 1: Fold gep(inner_phi, stride) → BackGEP.
+  // -----------------------------------------------------------------------
   for (GetElementPtrInst *GEP : BottomGEPs) {
-    // Must be a simple i8 GEP with a positive constant offset.
     int64_t Offset = 0;
     if (!isChainLinkCandidate(GEP, Offset))
       continue;
 
-    // Base must be an inner-loop PHI.
     PHINode *BasePHI = dyn_cast<PHINode>(GEP->getPointerOperand());
     if (!BasePHI || BasePHI->getParent() != Inner)
       continue;
 
-    // Get the back-edge value of the phi (the value from the inner block).
     Value *BackEdgeVal = BasePHI->getIncomingValueForBlock(Inner);
     auto *BackGEP = dyn_cast<GetElementPtrInst>(BackEdgeVal);
     if (!BackGEP)
       continue;
 
-    // The back-edge GEP must have the same base (BasePHI) and same offset.
     int64_t BackOffset = 0;
     if (!isChainLinkCandidate(BackGEP, BackOffset))
       continue;
     // For now we catch this simple case.
     if (BackGEP->getPointerOperand() != BasePHI || BackOffset != Offset)
       continue;
+    // Dominance is guaranteed by the loop structure: Inner always dominates
+    // Bottom (the epilogue is only reachable through the inner loop's exit),
+    // so BackGEP (defined in Inner) always dominates GEP (in Bottom).
 
-    LLVM_DEBUG(dbgs() << "LPO:   Folding epilogue GEP:\n"
+    LLVM_DEBUG(dbgs() << "LPO:   [Ph1] Folding epilogue GEP:\n"
                       << "         Redundant: " << *GEP << "\n"
                       << "         Back-edge: " << *BackGEP << "\n");
 
     GEP->replaceAllUsesWith(BackGEP);
     GEP->eraseFromParent();
     Changed = true;
+  }
+
+  // -----------------------------------------------------------------------
+  // Phase 2: Fold gep(init_val, N×stride) → BackGEP, using the inner loop
+  // trip count N stored in LoopStructure (from @llvm.set.loop.iterations).
+  // -----------------------------------------------------------------------
+  std::optional<uint64_t> MaybeTripCount = LS.getInnerTripCount();
+  if (!MaybeTripCount) {
+    LLVM_DEBUG(dbgs() << "LPO:   [Ph2] No trip count available, skipping\n");
+    return Changed;
+  }
+  const uint64_t N = *MaybeTripCount;
+  LLVM_DEBUG(dbgs() << "LPO:   [Ph2] Inner trip count = " << N << "\n");
+
+  // Re-collect Bottom GEPs (Phase 1 may have erased some).
+  BottomGEPs = collectGEPs(Bottom);
+
+  // For each epilogue GEP G = gep(Base, Offset), search Base's users for an
+  // Inner PHI of the form  phi [Base, Top] [BackGEP, Inner]  with
+  //   BackGEP = gep phi_inner, Stride   and   Offset == N * Stride.
+  // Searching through users of Base (rather than scanning Inner->phis())
+  // avoids fragility against value renumbering introduced by Phase 1.
+  for (GetElementPtrInst *GEP : BottomGEPs) {
+    int64_t Offset = 0;
+    if (!isChainLinkCandidate(GEP, Offset)) {
+      LLVM_DEBUG(dbgs() << "LPO:   [Ph2] Skip GEP (not candidate): " << *GEP
+                        << "\n");
+      continue;
+    }
+    LLVM_DEBUG(dbgs() << "LPO:   [Ph2] Checking GEP offset=" << Offset << ": "
+                      << *GEP << "\n");
+
+    Value *Base = GEP->getPointerOperand();
+
+    // Walk users of Base looking for an Inner PHI whose Top-incoming is Base.
+    for (User *U : Base->users()) {
+      auto *InnerPHI = dyn_cast<PHINode>(U);
+      if (!InnerPHI) {
+        LLVM_DEBUG(dbgs() << "LPO:   [Ph2]   user not PHI: " << *U << "\n");
+        continue;
+      }
+      LLVM_DEBUG(dbgs() << "LPO:   [Ph2]   PHI user: " << *InnerPHI
+                        << " in block " << InnerPHI->getParent()->getName()
+                        << " Inner=" << Inner->getName() << "\n");
+      if (InnerPHI->getParent() != Inner)
+        continue;
+      Value *IncomingFromTop = InnerPHI->getIncomingValueForBlock(Top);
+      LLVM_DEBUG(
+          dbgs() << "LPO:   [Ph2]   incomingFromTop="
+                 << (IncomingFromTop ? IncomingFromTop->getName() : "null")
+                 << " Base=" << Base->getName() << "\n");
+      if (IncomingFromTop != Base)
+        continue;
+
+      Value *BackEdgeVal = InnerPHI->getIncomingValueForBlock(Inner);
+      auto *BackGEP = dyn_cast<GetElementPtrInst>(BackEdgeVal);
+      if (!BackGEP) {
+        LLVM_DEBUG(dbgs() << "LPO:   [Ph2]   back-edge not GEP\n");
+        continue;
+      }
+
+      int64_t Stride = 0;
+      if (!isChainLinkCandidate(BackGEP, Stride)) {
+        LLVM_DEBUG(dbgs() << "LPO:   [Ph2]   BackGEP not candidate: "
+                          << *BackGEP << "\n");
+        continue;
+      }
+      if (BackGEP->getPointerOperand() != InnerPHI) {
+        LLVM_DEBUG(dbgs() << "LPO:   [Ph2]   BackGEP base != InnerPHI\n");
+        continue;
+      }
+
+      const int64_t FullOffset = static_cast<int64_t>(N) * Stride;
+      LLVM_DEBUG(dbgs() << "LPO:   [Ph2]   Offset=" << Offset
+                        << " FullOffset=" << FullOffset << " (N=" << N
+                        << " stride=" << Stride << ")\n");
+      if (Offset != FullOffset)
+        continue;
+
+      // Dominance is guaranteed by the loop structure: Inner always dominates
+      // Bottom, so BackGEP (defined in Inner) always dominates GEP (in Bottom).
+
+      LLVM_DEBUG(dbgs() << "LPO:   [Ph2] Folding full-trip epilogue GEP:\n"
+                        << "         Redundant: " << *GEP << "\n"
+                        << "         Inner phi: " << *InnerPHI << "\n"
+                        << "         Back-edge: " << *BackGEP << " (N=" << N
+                        << " stride=" << Stride << ")\n");
+
+      GEP->replaceAllUsesWith(BackGEP);
+      GEP->eraseFromParent();
+      Changed = true;
+      break; // GEP is gone; move to next
+    }
   }
 
   return Changed;
@@ -1056,6 +1200,28 @@ bool AIELoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
                        << "LPO:   Seed inner-phi chain from back-edge: "
                        << *BackGEP << " (offset " << BackOffset << ")\n");
             // Fall through to chain linking below.
+          }
+        }
+      }
+      // For GEPs in Bottom whose base is an Inner-block GEP that is itself
+      // the back-edge of an Inner PHI: seed the chain from that back-edge GEP.
+      // This handles GEPs such as %.chained5 = gep %76, 128 that appear after
+      // foldInnerPhiBackEdgeGEPs replaces gep(init, N*stride) with %76.
+      if (Inner && !BasePHI && GEP->getParent() == Bottom) {
+        if (auto *BaseGEP = dyn_cast<GetElementPtrInst>(Base)) {
+          if (BaseGEP->getParent() == Inner) {
+            if (auto *InnerPHI =
+                    dyn_cast<PHINode>(BaseGEP->getPointerOperand())) {
+              if (InnerPHI->getParent() == Inner &&
+                  InnerPHI->getIncomingValueForBlock(Inner) == BaseGEP &&
+                  DT->dominates(BaseGEP, GEP)) {
+                BaseChains[Base] = {GEP, CurrentOffset};
+                LLVM_DEBUG(dbgs()
+                           << "LPO:   Start chain from inner back-edge GEP: "
+                           << *GEP << "\n");
+                continue;
+              }
+            }
           }
         }
       }
