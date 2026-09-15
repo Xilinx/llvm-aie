@@ -306,6 +306,11 @@ def : Pat<(v64f32 (fadd ACC2048:$acc1, ACC2048:$acc2)),
 def : Pat<(v64f32 (fsub ACC2048:$acc1, ACC2048:$acc2)),
           (VSUB_f_vacc_fp ACC2048:$acc1, ACC2048:$acc2, (i32 accfp32_vecconf.ConfBits))>;
 
+def : Pat<(v32f32 (fadd ACC1024:$acc1, ACC1024:$acc2)),
+          (VADD_f_vacc_half_fp ACC1024:$acc1, ACC1024:$acc2, (i32 accfp32_vecconf.ConfBits))>;
+def : Pat<(v32f32 (fsub ACC1024:$acc1, ACC1024:$acc2)),
+          (VSUB_f_vacc_half_fp ACC1024:$acc1, ACC1024:$acc2, (i32 accfp32_vecconf.ConfBits))>;
+
 // MUL
 def : Pat<(v64bf16 (fmul v64bf16:$vec1, v64bf16:$vec2)),
           (v64bf16 (REG_SEQUENCE VEC1024,

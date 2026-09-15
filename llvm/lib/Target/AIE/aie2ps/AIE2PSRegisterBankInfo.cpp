@@ -1216,6 +1216,18 @@ void AIE2PSRegisterBankInfo::setAIEGenericInstrMapping(
     OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType);
     break;
   }
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB: {
+    // Floating-point vector add/sub are implemented by the vadd.f/vsub.f
+    // instructions, which operate on the accumulator register bank.
+    LLT DstType = MRI.getType(MI.getOperand(0).getReg());
+    if (DstType.isVector() && DstType.getSizeInBits() == 1024) {
+      OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
+      OpRegBankIdx[1] = getAccPartialMappingIdx(DstType);
+      OpRegBankIdx[2] = getAccPartialMappingIdx(DstType);
+    }
+    break;
+  }
   }
 }
 
