@@ -1243,6 +1243,26 @@ bool AIELoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
       PHINode *BasePHI = dyn_cast<PHINode>(Base);
       const bool IsValidPHI = BasePHI && BasePHI->getParent() == Top;
       if (IsValidPHI || isa<Argument>(Base)) {
+        // Skip chain if any external user of the base PHI is a GEP: linking
+        // GEPs inside the loop when an external GEP also uses the PHI would
+        // leave that external GEP as a standalone computation, creating an
+        // extra pointer-copy instruction and interfering with the global
+        // combiner.  Non-GEP external uses (loads, stores, etc.) do not
+        // cause this problem and are allowed.
+        if (IsValidPHI) {
+          Loop *const TheLoop = LS.getLoop();
+          const bool HasExternalGEPUser =
+              llvm::any_of(BasePHI->users(), [&](const User *U) {
+                const auto *UI = dyn_cast<GetElementPtrInst>(U);
+                return UI && !TheLoop->contains(UI->getParent());
+              });
+          if (HasExternalGEPUser) {
+            LLVM_DEBUG(dbgs()
+                       << "LPO:   Skip chain (PHI has external GEP user): "
+                       << *BasePHI << "\n");
+            continue;
+          }
+        }
         BaseChains[Base] = {GEP, CurrentOffset};
         LLVM_DEBUG(dbgs() << "LPO:   Start chain for base: " << *GEP << "\n");
         continue;
