@@ -982,16 +982,25 @@ bool AIELoopPointerOptimizer::canonicalizeGEPsInBlock(
 /// Fold GEPs in the epilogue (Bottom block) that duplicate the inner loop's
 /// back-edge GEP, replacing them with the back-edge GEP directly.
 ///
-/// **Phase 1 -- single-stride match** (base = inner PHI, offset = stride):
+/// **Phase 1 -- chain-total match** (base = inner PHI, offset = sum of chain):
+///
+///   The inner loop may advance the pointer through a chain of GEPs rather
+///   than a single GEP.  Phase 1 walks backward from the back-edge GEP to
+///   the inner PHI, accumulates the total byte offset, and folds any epilogue
+///   GEP whose offset equals that total:
 ///
 ///   inner:
-///     %phi = phi ptr [%init, Top] [%back, inner]
-///     %back = getelementptr i8, ptr %phi, i20 <stride>
+///     %phi   = phi ptr [%init, Top] [%back2, inner]
+///     %back1 = getelementptr i8, ptr %phi,  i20 <d1>       ; step 1
+///     %back2 = getelementptr i8, ptr %back1, i20 <d2>      ; step 2
+///     (back-edge)
 ///
 ///   epilogue:
-///     %dup = getelementptr i8, ptr %phi, i20 <stride>   ; same as %back!
+///     %dup = getelementptr i8, ptr %phi, i20 <d1+d2>       ; same as %back2!
 ///
-///   -> Replace %dup with %back (the inner loop's last-iteration back-edge).
+///   -> Replace %dup with %back2 (the inner loop's last-iteration back-edge).
+///
+///   The single-GEP case (chain length 1, d1 == stride) is a special case.
 ///
 /// **Phase 2 -- full-trip match** (base = init value, offset = N x stride):
 ///
@@ -1036,19 +1045,40 @@ bool AIELoopPointerOptimizer::foldInnerPhiBackEdgeGEPs(LoopStructure &LS) {
     if (!BackGEP)
       continue;
 
-    int64_t BackOffset = 0;
-    if (!isChainLinkCandidate(BackGEP, BackOffset))
+    // Walk backward from BackGEP through the inner-loop GEP chain to
+    // BasePHI, accumulating the total offset.  This handles both the
+    // single-step case (BackGEP directly off BasePHI) and multi-step chains.
+    int64_t TotalOffset = 0;
+    GetElementPtrInst *Cur = BackGEP;
+    bool ReachesPHI = false;
+    while (Cur && Cur->getParent() == Inner) {
+      int64_t Delta = 0;
+      if (!isChainLinkCandidate(Cur, Delta))
+        break;
+      TotalOffset += Delta;
+      // All deltas are positive; once we exceed Offset the total can only
+      // grow further, so stop early.
+      if (TotalOffset > Offset)
+        break;
+      Value *Base = Cur->getPointerOperand();
+      if (Base == BasePHI) {
+        ReachesPHI = true;
+        break;
+      }
+      Cur = dyn_cast<GetElementPtrInst>(Base);
+    }
+
+    if (!ReachesPHI || TotalOffset != Offset)
       continue;
-    // For now we catch this simple case.
-    if (BackGEP->getPointerOperand() != BasePHI || BackOffset != Offset)
-      continue;
+
     // Dominance is guaranteed by the loop structure: Inner always dominates
     // Bottom (the epilogue is only reachable through the inner loop's exit),
     // so BackGEP (defined in Inner) always dominates GEP (in Bottom).
 
     LLVM_DEBUG(dbgs() << "LPO:   [Ph1] Folding epilogue GEP:\n"
-                      << "         Redundant: " << *GEP << "\n"
-                      << "         Back-edge: " << *BackGEP << "\n");
+                      << "         Redundant:    " << *GEP << "\n"
+                      << "         Back-edge:    " << *BackGEP << "\n"
+                      << "         TotalOffset:  " << TotalOffset << "\n");
 
     GEP->replaceAllUsesWith(BackGEP);
     GEP->eraseFromParent();

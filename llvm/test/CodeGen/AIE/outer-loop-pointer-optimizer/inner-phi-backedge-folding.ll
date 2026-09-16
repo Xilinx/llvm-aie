@@ -267,6 +267,73 @@ exit:
   ret void
 }
 
+; ===========================================================================
+; Test 5: Phase 1 chain-walk fold -- inner loop advances through a 2-step GEP
+; chain and the epilogue GEP matches the total cumulative offset.
+;
+; Inner loop:
+;   %phi5   = phi ptr [%outer_ptr5, top] [%back5b, inner]
+;   %back5a = gep i8, ptr %phi5,   i20 64   ; step 1, cumulative = 64
+;   %back5b = gep i8, ptr %back5a, i20 64   ; step 2, cumulative = 128 (back-edge)
+;
+; Epilogue:
+;   %chain_dup5 = gep i8, ptr %phi5, i20 128   ; == %back5b at loop exit
+;
+; Expected: Phase 1 walks the chain backward (back5b -> back5a -> phi5),
+; finds TotalOffset = 128 == Offset, and replaces %chain_dup5 with %back5b.
+; ===========================================================================
+
+; NOCHAIN-LABEL: define void @test_chain_walk_fold
+; NOCHAIN: inner:
+; Both chain steps are kept.
+; NOCHAIN:   %back5a = getelementptr inbounds i8, ptr %phi5, i20 64
+; NOCHAIN:   %back5b = getelementptr inbounds i8, ptr %back5a, i20 64
+; NOCHAIN: bottom:
+; Epilogue GEP (total offset 128) is folded away -- %back5b is used directly.
+; NOCHAIN-NOT: getelementptr{{.*}} %phi5{{.*}} i20 128
+
+; CHAIN-LABEL: define void @test_chain_walk_fold
+; CHAIN: inner:
+; CHAIN:   %back5a = getelementptr inbounds i8, ptr %phi5, i20 64
+; CHAIN:   %back5b = getelementptr inbounds i8, ptr %back5a, i20 64
+; CHAIN: bottom:
+; Phase 1 folded the epilogue GEP; nothing with base %phi5 and offset 128 remains.
+; CHAIN-NOT: getelementptr{{.*}} %phi5{{.*}} i20 128
+
+define void @test_chain_walk_fold(ptr noalias %base5, ptr noalias %out5,
+                                   i32 %N5, i32 %M5) {
+entry:
+  br label %top
+
+top:
+  %outer_iv5 = phi i32 [ %N5, %entry ], [ %outer_iv5.next, %bottom ]
+  %outer_ptr5 = phi ptr [ %base5, %entry ], [ %outer_ptr5.next, %bottom ]
+  call void @llvm.set.loop.iterations.i32(i32 %M5)
+  br label %inner
+
+inner:
+  %phi5 = phi ptr [ %outer_ptr5, %top ], [ %back5b, %inner ]
+  %val5 = load <32 x bfloat>, ptr %phi5, align 64
+  ; Two-step back-edge chain: total advance = 64 + 64 = 128.
+  %back5a = getelementptr inbounds i8, ptr %phi5, i20 64
+  %back5b = getelementptr inbounds i8, ptr %back5a, i20 64
+  %inner_cond5 = call i1 @llvm.loop.decrement.i32(i32 1)
+  br i1 %inner_cond5, label %inner, label %bottom, !llvm.loop !1
+
+bottom:
+  ; Epilogue GEP: base = %phi5, offset = 128 = total chain.
+  ; Phase 1 should fold this to %back5b.
+  %chain_dup5 = getelementptr inbounds i8, ptr %phi5, i20 128
+  store <32 x bfloat> %val5, ptr %chain_dup5, align 64
+  %outer_ptr5.next = getelementptr inbounds i8, ptr %outer_ptr5, i20 512
+  %outer_iv5.next = add i32 %outer_iv5, -1
+  %outer_cond5 = icmp eq i32 %outer_iv5.next, 0
+  br i1 %outer_cond5, label %exit, label %top, !llvm.loop !0
+
+exit:
+  ret void
+}
+
 declare void @llvm.set.loop.iterations.i32(i32)
 declare i1 @llvm.loop.decrement.i32(i32)
 
