@@ -437,15 +437,15 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
     Register ChosenPhys = Register();
     for (Register PhysReg : Candidates) {
-      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI));
+      LLVM_DEBUG(dbgs() << "  Trying " << printReg(PhysReg, &TRI) << " ");
       if (State.canPlace(PhysReg, VRegMasks)) {
         LLVM_DEBUG(dbgs() << "\n");
         ChosenPhys = PhysReg;
         break;
       }
-      LLVM_DEBUG(dbgs() << " Reject\n");
     }
 
+    LLVM_DEBUG(dbgs() << "\n");
     if (!ChosenPhys.isValid()) {
       LLVM_DEBUG(dbgs() << "  Failed to find suitable physreg!\n");
       return AllocResult(/*InfeasibleSchedule=*/false);
