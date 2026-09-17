@@ -265,7 +265,7 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
                                  PostPipelinerStrategy &Strategy) {
   LLVM_DEBUG(dbgs() << "PostPipelined SU" << SU.NodeNum << " in cycle " << Cycle
-                    << ": " << *SU.getInstr());
+                    << ": " << NoDebug(*SU.getInstr()) << "\n");
   Info[SU.NodeNum].Cycle = Cycle;
 
   LLVM_DEBUG(dbgs() << "  Pushed succs Earliest: ");
