@@ -10,8 +10,9 @@
 
 ; The peeled last iteration drops every latch load, because a prefetch for an
 ; iteration that never runs is dead. That only holds when nothing outliving the
-; peel reads the loaded value: the clone of a reader keeps pointing at the
-; original load, which collapses to poison once the original loop is deleted.
+; peel reads the loaded value, so check that such a load is kept: the clone of
+; a reader would otherwise keep pointing at the original load, which collapses
+; to poison once the original loop is deleted.
 
 declare void @llvm.set.loop.iterations.i32(i32)
 declare i1 @llvm.loop.decrement.i32(i32)
@@ -22,8 +23,8 @@ define void @latch_load_with_latch_user(ptr noalias %a, ptr noalias %c, i32 %n,
                                         i32 %m) {
 ; CHECK-LABEL: define void @latch_load_with_latch_user(
 ; CHECK:       lastiter.stage1.bottom:
-; FIXME: The load is elided and %latch.use.lastiter reads poison.
-; CHECK:         %latch.use.lastiter = add i32 poison, %acc.next.lastiter
+; CHECK:         %[[LOAD:.*]] = load i32, ptr %a.ptr.next.lastiter
+; CHECK-NEXT:    %latch.use.lastiter = add i32 %[[LOAD]], %acc.next.lastiter
 ; CHECK-NEXT:    store i32 %latch.use.lastiter, ptr %c.ptr.next.steady
 entry:
   %has.work = icmp sgt i32 %n, 1
@@ -62,9 +63,10 @@ exit:
 define void @latch_load_live_out(ptr noalias %a, ptr noalias %c, i32 %n,
                                  i32 %m) {
 ; CHECK-LABEL: define void @latch_load_live_out(
+; CHECK:       lastiter.stage1.bottom:
+; CHECK:         %[[LOAD:.*]] = load i32, ptr %a.ptr.next.lastiter
 ; CHECK:       exit:
-; FIXME: The load is elided and the live-out reaching the exit is poison.
-; CHECK:         %out = phi i32 [ 0, %entry ], [ poison, %lastiter.stage1.bottom ]
+; CHECK:         %out = phi i32 [ 0, %entry ], [ %[[LOAD]], %lastiter.stage1.bottom ]
 entry:
   %has.work = icmp sgt i32 %n, 1
   br i1 %has.work, label %outer.header, label %exit

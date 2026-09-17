@@ -1498,12 +1498,25 @@ void AIEOuterLoopPipeliner::populateLastIterBottom(
   // JNZD hardware loop the steady counter/limit are also already erased, so it
   // MUST be elided.)
 
+  BasicBlock *OrigBottom = OrigLS.getBottom();
+  const auto IsInLoop = [&OrigLS](const Instruction *I) {
+    return OrigLS.topRegion().contains(I) ||
+           OrigLS.bottomRegion().contains(I) ||
+           is_contained(OrigLS.getInnerBlocks(), I->getParent());
+  };
+
+  const auto OutlivesPeel = [&](const Instruction *U) {
+    return !IsInLoop(U) || U->getParent() == OrigBottom;
+  };
+
   SmallVector<Instruction *, 16> OrigBottomInsts;
-  for (Instruction &I : *OrigLS.getBottom()) {
+  for (Instruction &I : *OrigBottom) {
     if (I.isTerminator())
       break;
-    // No prefetch in the last-iteration.
-    if (isa<LoadInst>(&I))
+    if (isa<LoadInst>(&I) && none_of(I.users(), [&](const User *U) {
+          const auto *UI = dyn_cast<Instruction>(U);
+          return UI && OutlivesPeel(UI);
+        }))
       continue;
     if (&I == Bound.Counter || &I == Bound.Cmp)
       continue;
