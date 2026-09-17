@@ -1353,6 +1353,18 @@ void OrigLoopStructure::removeFromCFG() const {
     new UnreachableInst(BB->getContext(), BB);
   }
 
+#ifndef NDEBUG
+  // Every use that survives must have been remapped to a clone:
+  // DeleteDeadBlocks turns whatever is left into poison.
+  for (BasicBlock *BB : Dead)
+    for (Instruction &I : *BB)
+      for (User *U : I.users()) {
+        auto *UI = dyn_cast<Instruction>(U);
+        assert((!UI || DeadSet.contains(UI->getParent())) &&
+               "surviving use of an original-loop value would become poison");
+      }
+#endif
+
   DeleteDeadBlocks(Dead);
 }
 
