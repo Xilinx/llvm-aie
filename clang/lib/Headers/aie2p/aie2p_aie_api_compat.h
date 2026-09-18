@@ -11,6 +11,16 @@
 #ifndef __AIE2P_AIE_API_COMPAT_H
 #define __AIE2P_AIE_API_COMPAT_H
 
+struct bfp16ebs8 {
+  char m[8];
+  char exp;
+};
+
+struct bfp16ebs16 {
+  char m[16];
+  char exp;
+};
+
 struct acc16 {};
 struct acc24 {};
 struct acc40 {};
@@ -60,9 +70,6 @@ struct v128bfp16ebs16_sparse {};
 struct v128bfp16ebs8_sparse {};
 struct v64bfp16ebs16_sparse {};
 struct v64bfp16ebs8_sparse {};
-
-struct bfp16ebs8 {};
-struct bfp16ebs16 {};
 
 inline __attribute__((always_inline)) int32_t as_int32(float a) {
   return *(int32_t *)&a;
