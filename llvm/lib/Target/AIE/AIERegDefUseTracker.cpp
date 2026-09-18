@@ -1066,6 +1066,21 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
       if (getSubRegIndex(Reg, CurrentBase) == 0 &&
           getSubRegIndex(CurrentBase, Reg) != 0) {
         LiveRanges[LRIdx].expandBaseToInclude(Reg, TRI);
+        // Update LiveRegs to use the new super-register as the key.
+        // The old key (CurrentBase, e.g. x1) covers only one slice of the
+        // super-register. Sibling sub-registers (e.g. x0) do not alias
+        // CurrentBase in TRI, so they would miss this live range in future
+        // overlap searches and create spurious separate ranges.  Replace the
+        // entry with the super-register key and all-lanes-live so that every
+        // subsequent sub-register access finds this live range correctly.
+        // Lane masks are progressively narrowed as each sub-register is
+        // defined during the backward scan.
+        auto OldIt = State.LiveRegs.find(CurrentBase);
+        if (OldIt != State.LiveRegs.end()) {
+          const int StoredLRIdx = OldIt->second.first;
+          State.LiveRegs.erase(OldIt);
+          State.LiveRegs[Reg] = {StoredLRIdx, LaneBitmask::getAll()};
+        }
       }
 
       return LRIdx;
