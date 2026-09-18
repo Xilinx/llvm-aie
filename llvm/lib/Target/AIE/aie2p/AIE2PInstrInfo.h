@@ -179,8 +179,8 @@ public:
 
   /// Concrete opcode a 512-bit composed spill pseudo takes, selected from the
   /// register class of its data operand \p Reg. expandPostRAPseudo retags the
-  /// pseudo with it; eliminateFrameIndex needs the same answer earlier, to know
-  /// which immediate field the frame offset will be encoded in.
+  /// pseudo with it, and eliminateFrameIndex needs the same answer earlier --
+  /// see getSpillImmOffsetStep in AIE2PRegisterInfo.cpp.
   unsigned getComposed512SpillOpcode(unsigned PseudoOpc, Register Reg) const;
 
   // Implement MIR serialization of target flags
@@ -195,8 +195,7 @@ public:
   std::optional<const AbstractOp>
   parseAbstractOp(const MachineInstr &MI) const override;
 
-  // Public because eliminateFrameIndex also needs the register-offset form, to
-  // fall back to it when a frame offset does not fit the spill's immediate.
+  // Public because eliminateFrameIndex uses it as the out-of-range fallback.
   AIERegOffsetSpillInstrInfo
   getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;
 
