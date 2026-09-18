@@ -55,6 +55,8 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; REMARKS-NEXT:   - PrologueBundles: '38'
 ; REMARKS-NEXT:   - Epilogue:        bb.4.bb90
 ; REMARKS-NEXT:   - EpilogueBundles: '49'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_64_0_0_Critical_LcdLatest_Run1
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: nested_vmac_loop:
 ; ASM:       // %bb.0: // %bb

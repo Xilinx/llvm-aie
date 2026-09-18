@@ -76,6 +76,8 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; REMARKS-NEXT:   - PrologueBundles: '16'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '26'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_24_1_0_Latest
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -91,6 +93,8 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; REMARKS-NEXT:   - PrologueBundles: '16'
 ; REMARKS-NEXT:   - Epilogue:        bb.6.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '26'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_24_1_0_Latest
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm.if.then5:
 ; ASM:       // %bb.0: // %newFuncRoot

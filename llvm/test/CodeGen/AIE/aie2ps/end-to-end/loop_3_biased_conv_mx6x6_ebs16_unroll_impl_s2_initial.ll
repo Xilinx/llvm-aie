@@ -60,6 +60,8 @@ define dso_local void @loop_3_biased_conv_mx6x6_ebs16_unroll_impl_s2_initial(i32
 ; REMARKS-NEXT:   - PrologueBundles: '18'
 ; REMARKS-NEXT:   - Epilogue:        bb.3.for.cond.cleanup18.i
 ; REMARKS-NEXT:   - EpilogueBundles: '27'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_32_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: loop_3_biased_conv_mx6x6_ebs16_unroll_impl_s2_initial:
 ; ASM:       // %bb.0: // %newFuncRoot

@@ -13,7 +13,14 @@
 
 #include "AIEPostPipeliner.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEDataDependenceHelper.h"
+#include "AIELiveRangeUtils.h"
+#include "AIEMachineScheduler.h"
+#include "AIEPostRegAlloc.h"
+#include "AIERegDefUseTracker.h"
 #include "AIESWPSolver.h"
+#include "AIEScarceRegScheduling.h"
+#include "AIEScheduleInterpreter.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "Utils/AIEMachineInstrPrint.h"
@@ -25,6 +32,7 @@
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
@@ -112,8 +120,10 @@ public:
 // The latency state is maintained in an 'Earliest' entry for each SUnit,
 // which is updated whenvever we schedule a predecessor of that SUnit.
 
-PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr)
-    : HR(HR), NInstr(NInstr) {}
+PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
+                             RegLiveRangeTracker &RegTracker,
+                             const MachineFunction &MF)
+    : HR(HR), RegTracker(RegTracker), Interpreter(MF), NInstr(NInstr) {}
 
 bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // We leave the single-block loop criterion to our caller. It is fulfilled
@@ -255,7 +265,7 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
                                  PostPipelinerStrategy &Strategy) {
   LLVM_DEBUG(dbgs() << "PostPipelined SU" << SU.NodeNum << " in cycle " << Cycle
-                    << ": " << *SU.getInstr());
+                    << ": " << NoDebug(*SU.getInstr()) << "\n");
   Info[SU.NodeNum].Cycle = Cycle;
 
   LLVM_DEBUG(dbgs() << "  Pushed succs Earliest: ");
@@ -535,6 +545,67 @@ void PostPipeliner::computeEffectiveHeight() {
     LLVM_DEBUG(dbgs() << "SU" << K << " EffectiveHeight="
                       << Info[K].EffectiveHeight << "\n");
   }
+}
+
+int PostPipeliner::computeScarceRegMII() {
+  int ScarceRegMII = 0;
+
+  // Group scarce live ranges by their base register.
+  DenseMap<MCRegister, SmallVector<const RegLiveRange *, 4>> ScarceRangesByReg;
+  for (const auto &LR : RegTracker.getLiveRanges()) {
+    // Only consider ranges that are marked as scarce.
+    if (!LR.isScarce()) {
+      continue;
+    }
+
+    MCRegister BaseReg = LR.getBaseReg();
+    assert(BaseReg != MCRegister::NoRegister);
+    ScarceRangesByReg[BaseReg].push_back(&LR);
+  }
+
+  // For each register with multiple competing scarce ranges, compute the sum
+  // of minimal live lengths.
+  DEBUG_WITH_TYPE("aie-reg-liverange", {
+    dbgs() << "\n=== Scarce Register Analysis (II=" << II << ") ===\n";
+  });
+
+  for (const auto &[Reg, Ranges] : ScarceRangesByReg) {
+    // Only consider registers with multiple competing ranges.
+    if (Ranges.size() <= 1)
+      continue;
+
+    unsigned TotalLength = 0;
+    DEBUG_WITH_TYPE("aie-reg-liverange", {
+      const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
+      dbgs() << "Register " << TRI->getName(Reg) << " has " << Ranges.size()
+             << " competing ranges (1 available):\n";
+    });
+
+    for (const RegLiveRange *LR : Ranges) {
+      const unsigned MinLength =
+          AIE::computeMinimalSchedule(*LR, *DAG, HR, Interpreter);
+      TotalLength += MinLength;
+
+      DEBUG_WITH_TYPE("aie-reg-liverange", {
+        dbgs() << "  Range with " << LR->getNumDefs() << " defs, "
+               << LR->getNumUses() << " uses: minimal length = " << MinLength
+               << "\n";
+      });
+    }
+
+    DEBUG_WITH_TYPE("aie-reg-liverange",
+                    { dbgs() << "  Total length: " << TotalLength << "\n"; });
+
+    ScarceRegMII = std::max(ScarceRegMII, static_cast<int>(TotalLength));
+  }
+
+  DEBUG_WITH_TYPE("aie-reg-liverange", {
+    dbgs() << "ScarceRegMII=" << ScarceRegMII << "\n";
+    dbgs() << "============================\n\n";
+  });
+
+  LLVM_DEBUG(dbgs() << "ScarceRegMII=" << ScarceRegMII << "\n");
+  return ScarceRegMII;
 }
 
 bool PostPipeliner::computeLoopCarriedParameters() {
@@ -849,6 +920,7 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
 
 void PostPipeliner::resetSchedule(bool FullReset) {
   Scoreboard.clear();
+  EventSched.clear();
   int K = 0;
   for (auto &N : Info.Nodes) {
     N.reset(FullReset);
@@ -889,7 +961,6 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       return false;
     }
     const int Actual = *OptCycle;
-    Strategy.selected(SU);
     const int ModCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     const MemoryObjectPair ObjectBits = HR.getMemoryObjectsBits(MI);
@@ -903,12 +974,20 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
 
+    // Notify the strategy after the node is fully committed, so that
+    // Info[N].Cycle and Info[N].Scheduled are valid inside selected().
+    Strategy.selected(SU);
+
+    // Populate event schedule for this representative instruction.
+    Interpreter.addInstructionEvents(*SU.getInstr(), Actual, EventSched,
+                                     RegTracker);
+
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
 
   const bool Success = checkStages();
   DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
-                       << Strategy.name() << "====\n");
+                       << CurrentStrategyName << "====\n");
   DEBUG_SUMMARY(dumpCycles(Info, II));
   return Success;
 }
@@ -950,6 +1029,7 @@ int computeEarliestFromPreds(const SUnit &SU, const ScheduleInfo &Info) {
   return Earliest;
 }
 #endif
+
 } // namespace
 
 bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
@@ -978,10 +1058,10 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
 
     // All iterations following the first one should fit exactly
     if (Earliest > Insert) {
-      LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
-                        << Insert << " (Earliest=" << Earliest
-                        << " ModuloNode=SU" << N - NInstr << ")\n";
-                 dumpEarliestChain(Info, N));
+      DEBUG_SUMMARY(dbgs() << "Latency not met for SU" << N << " in cycle "
+                           << Insert << " (Earliest=" << Earliest
+                           << " ModuloNode=SU" << N - NInstr << ")\n";
+                    dumpEarliestChain(Info, N));
       // Check whether the modulo node can be delayed to resolve the
       // violation. HasScheduleSlack means the current schedule still
       // has room. CanPlaceLaterInOriginalInterval means scheduling
@@ -1049,8 +1129,51 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
   return true;
 }
 
+bool PostPipeliner::tryScarceRangePacking() {
+  // Check applicability: get the cached most promising scarce range set.
+  const auto &ScarceRangePtrs = RegTracker.getMostPromisingScarceRanges();
+
+  // If no scarce ranges found, this approach is not applicable.
+  if (ScarceRangePtrs.empty()) {
+    return false;
+  }
+
+  // Build ScarceRange objects from the RegLiveRange pointers.
+  std::vector<ScarceRange> ScarceRanges;
+  ScarceRanges.reserve(ScarceRangePtrs.size());
+  for (const RegLiveRange *LR : ScarceRangePtrs) {
+    ScarceRanges.emplace_back(*LR, *DAG);
+  }
+
+  // Build the scarce-only DAG.
+  buildScarceDAG(ScarceRanges, Info, *DAG);
+
+  // The scarce-only DAG must be acyclic by construction (strict ordering of
+  // uses/defs on the same physreg).
+  assert(checkAcyclic(ScarceRanges) &&
+         "Scarce-only DAG must be acyclic by construction");
+
+  // Create the strategy once (precomputes predecessors and members).
+  BurstMostUrgentStrategy Strategy(*DAG, Info, ScarceRanges, MinLength + II);
+
+  // Enumerate orders and try scheduling with different orderings.
+  return enumerateRangeOrders(
+      ScarceRanges, [this, &Strategy](const SmallVector<int, 4> &Order) {
+        // Reset before each attempt.
+        resetSchedule(/*FullReset=*/false);
+
+        // Initialize the strategy with this order.
+        Strategy.init(Order);
+
+        // Try scheduling with this strategy.
+        return scheduleWithStrategy(Strategy);
+      });
+}
+
 bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
-  DEBUG_SUMMARY(dbgs() << "Starting " << S.name() << "\n");
+  // Always update so the name is correct on the first successful return.
+  CurrentStrategyName = S.name();
+  DEBUG_SUMMARY(dbgs() << "Starting " << CurrentStrategyName << "\n");
   if (!scheduleFirstIteration(S)) {
     return false;
   }
@@ -1067,6 +1190,11 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   Info.applyRotation(II);
   Info.resetRotation();
 
+  if (!tryAllocateRegisters()) {
+    DEBUG_SUMMARY(dbgs() << "   Register allocation failed\n");
+    return false;
+  }
+  DEBUG_SUMMARY(dbgs() << "   Register allocation successful\n");
   return true;
 }
 
@@ -1097,6 +1225,8 @@ public:
 // It still checks latencies and resources
 class CheckFixedSchedule : public PostPipelinerStrategy {
   std::vector<int> Schedule;
+  std::string Name;
+
   // We schedule in strict top-down order, and we leave only one cycle
   // to schedule it in.
   bool better(const SUnit &A, const SUnit &B) override {
@@ -1121,9 +1251,11 @@ class CheckFixedSchedule : public PostPipelinerStrategy {
 
 public:
   CheckFixedSchedule(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
-                     std::vector<int> Schedule)
-      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule) {}
-  std::string name() override { return "CheckFixedSchedule"; }
+                     std::vector<int> Schedule,
+                     std::string Name = "CheckFixedSchedule")
+      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule),
+        Name(std::move(Name)) {}
+  std::string name() override { return Name; }
 };
 
 // This strategy is specifically to have a high chance of success in peeling
@@ -1354,24 +1486,22 @@ public:
   }
 
   // Apply placement modifiers to adjust the cycle chosen for SU.
-  // Currently supports DeferNonCritical, which nudges non-critical
-  // nodes one cycle later so their earliest modulo slot stays free
-  // for critical-path nodes.
+  // DeferNonCritical nudges non-critical (EffH=0) nodes one cycle later.
   std::optional<int>
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
-    const bool ShouldDefer = llvm::is_contained(Modifiers, DeferNonCritical) &&
-                             Info[SU.NodeNum].EffectiveHeight == 0;
-    if (ShouldDefer && Earliest + 1 <= Latest) {
+    const bool ShouldDeferOne =
+        llvm::is_contained(Modifiers, DeferNonCritical) &&
+        Info[SU.NodeNum].EffectiveHeight == 0;
+    if (ShouldDeferOne && Earliest + 1 <= Latest) {
       // Try the deferred range [Earliest+1, Latest] first. If no
       // resource-free cycle exists there, fall back to the original
-      // range so the node is never left unscheduled.
+      // earliest so the node is never left unscheduled.
       auto Result = PostPipelinerStrategy::fitInInterval(
           SU, Earliest + 1, Latest, II, HR, Scoreboard);
       if (Result)
         return Result;
-      // No need to retry [Earliest+1, Latest]
       return PostPipelinerStrategy::fitInInterval(SU, Earliest, Earliest, II,
                                                   HR, Scoreboard);
     }
@@ -1421,6 +1551,84 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}, {}}, // pure bottom up
 };
 
+/// Spreads independent instructions apart by deferring one instruction per
+/// run to first-fit+1, cycling through all NodeNums in scheduling order.
+/// Construction initializes state for the first run (DeferAt=0). nextRun()
+/// increments the deferred node index and returns true until all instructions
+/// have been tried. Lone-root nodes (sole Depth=0 entry point) are skipped.
+class DeferNthNodeStrategy : public MultiRunPostPipelinerStrategy {
+  unsigned DeferAt = 0;
+  const unsigned NInstr;
+  unsigned NumRoots = 0;
+
+  bool fromTop() override { return true; }
+
+  bool better(const SUnit &A, const SUnit &B) override {
+    return A.NodeNum < B.NodeNum;
+  }
+
+public:
+  std::string name() override { return "DeferNth_" + std::to_string(DeferAt); }
+
+  DeferNthNodeStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                       unsigned NInstr)
+      : MultiRunPostPipelinerStrategy(DAG, Info, Length), NInstr(NInstr) {
+    for (const SUnit &SU : DAG.SUnits)
+      if (SU.getDepth() == 0)
+        NumRoots++;
+  }
+
+  bool nextRun() override {
+    ++DeferAt;
+    return DeferAt < NInstr;
+  }
+
+  std::optional<int>
+  fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
+                const AIEHazardRecognizer &HR,
+                ResourceScoreboard<FuncUnitWrapper> &Scoreboard) override {
+    const bool IsLoneRoot = (SU.getDepth() == 0 && NumRoots == 1);
+    if (SU.NodeNum == DeferAt && !IsLoneRoot) {
+      // Find the first admissible cycle, then try to place the node after
+      // that first fit. The intention is to leave a gap in the resource usage
+      // that can be exploited by later stages of the pipeline.
+      // nextRun() ensures DeferAt changes only between
+      // runs, never mid-run. Falls back to the first-fit if Latest is exceeded.
+      auto FirstFit = PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest,
+                                                           II, HR, Scoreboard);
+      if (!FirstFit)
+        return std::nullopt;
+      std::optional<int> LaterFit;
+      if (*FirstFit + 1 <= Latest)
+        LaterFit = PostPipelinerStrategy::fitInInterval(
+            SU, *FirstFit + 1, Latest, II, HR, Scoreboard);
+      return LaterFit ? LaterFit : FirstFit;
+    }
+    return PostPipelinerStrategy::fitInInterval(SU, Earliest, Latest, II, HR,
+                                                Scoreboard);
+  }
+};
+
+bool MultiRunPostPipelinerStrategy::scheduleAllRuns(PostPipeliner &PP,
+                                                    int MaxRuns) {
+  PP.resetSchedule(/*FullReset=*/true);
+  for (int Run = 0; Run < MaxRuns; ++Run) {
+    DEBUG_SUMMARY(dbgs() << "--- Strategy " << name() << " run=" << Run
+                         << " trying II=" << PP.II << "\n");
+    if (PP.scheduleWithStrategy(*this)) {
+      DEBUG_SUMMARY(dbgs() << "    Strategy " << PP.CurrentStrategyName
+                           << " found NS=" << PP.NStages << " II=" << PP.II
+                           << "\n");
+      return true;
+    }
+    if (!nextRun())
+      break;
+    PP.resetSchedule(/*FullReset=*/false);
+  }
+  DEBUG_SUMMARY(dbgs() << "    Strategy " << name() << " failed\n");
+  return false;
+}
+
 bool PostPipelinerStrategy::isEnabled() {
   return DisabledStrategyPrefix.empty() ||
          !StringRef(name()).starts_with(DisabledStrategyPrefix);
@@ -1428,6 +1636,15 @@ bool PostPipelinerStrategy::isEnabled() {
 
 bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+
+  // Try scarce range packing approach (VRegMode only).
+  if (RegTracker.areRegistersVirtualized()) {
+    if (tryScarceRangePacking()) {
+      DEBUG_SUMMARY(dbgs() << "    Scarce range packing succeeded\n");
+      return true;
+    }
+  }
+
   int HeuristicIndex = 0;
   for (const auto &Config : Heuristics) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
@@ -1444,8 +1661,13 @@ bool PostPipeliner::tryApproaches() {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << " trying II=" << II << "\n");
       if (scheduleWithStrategy(S)) {
+        // Record the run number so the remark distinguishes between runs
+        // of the same strategy. Single-run strategies (Runs==1) always
+        // succeed on run 0, so the suffix adds no information there.
+        if (Config.Runs > 1)
+          CurrentStrategyName += "_Run" + std::to_string(Run);
         DEBUG_SUMMARY(dbgs()
-                      << "    Strategy " << S.name() << " run=" << Run
+                      << "    Strategy " << CurrentStrategyName
                       << " found NS=" << NStages << " II=" << II << "\n");
         return true;
       }
@@ -1463,6 +1685,15 @@ bool PostPipeliner::tryApproaches() {
     if (scheduleWithStrategy(Relaxed)) {
       return true;
     }
+  }
+
+  // DeferNthNode: try deferring each instruction one cycle after its first-fit
+  // slot, one instruction per run. Runs after all standard heuristics and
+  // IterCountSlackStrategy to avoid short-circuiting them.
+  {
+    DeferNthNodeStrategy S(*DAG, Info, MinLength + II, NInstr);
+    if (S.isEnabled() && S.scheduleAllRuns(*this, HeuristicRuns))
+      return true;
   }
 
   // TargetII is the OK from the user to spend some time reaching this II.
@@ -1552,21 +1783,23 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
                                                 : Schedule) dbgs()
                                            << C << ", ";
                 dbgs() << "\n";);
-  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule};
+  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule, "Solver"};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
   if (scheduleWithStrategy(S)) {
-    DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " found II=" << II
-                         << "\n");
+    DEBUG_SUMMARY(dbgs() << "    Strategy " << CurrentStrategyName
+                         << " found II=" << II << "\n");
     return true;
   }
 
   return false;
 }
 
-bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
+bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
+                             PostPipelinerMode PipelinerMode) {
 
   II = InitiationInterval;
+  Mode = PipelinerMode;
   DAG = &TheDAG;
 
   // Configure a modulo scoreboard of size II. Pipeline residuals that cross
@@ -1582,10 +1815,24 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 
   computeLoopCarriedParameters();
 
-  LLVM_DEBUG(dumpGraph(Info, DAG, "PostPipeliner_II" + std::to_string(II)));
+  LLVM_DEBUG({
+    std::string GraphId = "PostPipeliner_II" + std::to_string(II) + "_" +
+                          getPostPipelinerModeName(Mode);
+    dumpGraph(Info, DAG, GraphId);
+  });
 
   if (II < RecMII) {
     return false;
+  }
+
+  // Check scarce register MII (VRegMode only).
+  if (RegTracker.areRegistersVirtualized()) {
+    const int ScarceRegMII = computeScarceRegMII();
+    if (II < ScarceRegMII) {
+      LLVM_DEBUG(dbgs() << format("Scarce register MII=%d does not fit II=%d.",
+                                  ScarceRegMII, II));
+      return false;
+    }
   }
   LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
   if (!tryApproaches()) {
@@ -1594,6 +1841,58 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   }
 
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
+  return true;
+}
+
+bool PostPipeliner::tryAllocateRegisters() {
+  // Clear the alloc strategy name so a stale name from a previous VirtReg
+  // attempt does not bleed into a subsequent physical-mode success.
+  CurrentAllocStrategyName.clear();
+
+  // In physical mode, registers are not virtualized and no allocation is
+  // needed.
+  if (!RegTracker.areRegistersVirtualized()) {
+    LLVM_DEBUG(
+        dbgs() << "PostPipeliner: Physical mode - no allocation needed\n");
+    return true;
+  }
+
+  const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
+
+  // Compute modulo live lanes from the event schedule populated during
+  // scheduling, keyed by RegLiveRange::getIndex().
+  auto LiveLanesByLRIndex =
+      Interpreter.buildLiveLanes(EventSched, II, RegTracker);
+
+  // Debug dump if requested.
+  DEBUG_WITH_TYPE("aie-postregalloc", {
+    dbgs() << "\n=== Live Intervals ===\n";
+    Interpreter.dumpEventSchedule(EventSched, RegTracker, dbgs());
+    dbgs() << "\n";
+    Interpreter.dumpLiveLanes(LiveLanesByLRIndex, II, dbgs());
+    dbgs() << "=================================\n\n";
+  });
+
+  // Perform register allocation.
+  DenseMap<Register, MCRegister> VRegToPhysReg;
+  const bool Success =
+      AIEPostRegAlloc::allocate(LiveLanesByLRIndex, II, RegTracker, *TRI,
+                                VRegToPhysReg, CurrentAllocStrategyName);
+
+  if (!Success) {
+    LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation failed\n");
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "PostPipeliner: Register allocation succeeded with "
+                    << VRegToPhysReg.size() << " assignments\n");
+
+  // Apply the register assignments through RegTracker.
+  RegTracker.rewriteToPhysRegs(VRegToPhysReg);
+
+  LLVM_DEBUG(dbgs() << "PostPipeliner: Applied register allocation through "
+                       "RegTracker\n");
+
   return true;
 }
 

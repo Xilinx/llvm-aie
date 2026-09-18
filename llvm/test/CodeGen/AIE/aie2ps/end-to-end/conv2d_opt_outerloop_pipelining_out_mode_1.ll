@@ -58,6 +58,8 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; REMARKS-NEXT:   - PrologueBundles: '12'
 ; REMARKS-NEXT:   - Epilogue:        bb.7.steady.stage1.bottom.and.stage0.top
 ; REMARKS-NEXT:   - EpilogueBundles: '19'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_14_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; REMARKS: --- !Passed
 ; REMARKS-NEXT: Pass:            pipeliner
@@ -73,6 +75,8 @@ define void @conv2d_opt_outerloop_out_mode_1(
 ; REMARKS-NEXT:   - PrologueBundles: '12'
 ; REMARKS-NEXT:   - Epilogue:        bb.10.lastiter.stage1.bottom
 ; REMARKS-NEXT:   - EpilogueBundles: '22'
+; REMARKS-NEXT:   - VregMode:        Physical
+; REMARKS-NEXT:   - SchedHeuristic:  Config_14_1_0_NodeNum
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d_opt_outerloop_out_mode_1:
 ; ASM:       // %bb.0: // %entry

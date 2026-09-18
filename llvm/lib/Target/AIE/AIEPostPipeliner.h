@@ -15,6 +15,9 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTPIPELINER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIERegDefUseTracker.h"
+#include "AIEScheduleInterpreter.h"
+#include "AIESchedulingTypes.h"
 #include "AIESlotCounts.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
@@ -24,9 +27,11 @@
 namespace llvm {
 class MachineInstr;
 class AIEHazardRecognizer;
+class RegLiveRangeTracker;
 } // namespace llvm
 
 namespace llvm::AIE {
+
 namespace Solver {
 class SolverData;
 class SWPSolver;
@@ -199,8 +204,10 @@ public:
   virtual int mobility(const SUnit &N) { return latest(N) - earliest(N); }
   // Select from top or from bottom.
   virtual bool fromTop() { return true; }
-  // Report a final selection. This marks the start of selecting a new node.
-  // fromTop() should be invariant between calls to selected()
+  // Report a fully committed node. Called after scheduleNode() and
+  // commitCycle(), so Info[N.NodeNum].Scheduled is true and
+  // Info[N.NodeNum].Cycle holds the assigned cycle.
+  // fromTop() should be invariant between calls to selected().
   virtual void selected(const SUnit &N) {};
 
   // Decide a cycle in [Earliest, Latest] to insert MI, based on resource
@@ -211,6 +218,25 @@ public:
   fitInInterval(const SUnit &SU, int Earliest, int Latest, int II,
                 const AIEHazardRecognizer &HR,
                 ResourceScoreboard<FuncUnitWrapper> &Scoreboard);
+};
+
+class PostPipeliner; // Forward declaration for scheduleAllRuns.
+
+/// Extension of PostPipelinerStrategy for heuristics that need multiple runs
+/// with per-run state. Construction initializes state for the first run.
+/// nextRun() carries state forward and returns true if another run should
+/// follow; returning false terminates the run loop.
+class MultiRunPostPipelinerStrategy : public PostPipelinerStrategy {
+public:
+  using PostPipelinerStrategy::PostPipelinerStrategy;
+  // Advance state for the next run. Returns true if another run should be
+  // attempted, false when all variations have been exhausted.
+  virtual bool nextRun() { return false; }
+
+  // Execute all runs against \p PP, up to \p MaxRuns. Resets the schedule
+  // before the first run and between subsequent runs. Returns true on the
+  // first successful schedule, false if all runs fail.
+  bool scheduleAllRuns(PostPipeliner &PP, int MaxRuns);
 };
 
 class PipelineScheduleVisitor {
@@ -226,9 +252,18 @@ public:
 };
 
 class PostPipeliner {
+  friend class MultiRunPostPipelinerStrategy;
+
   const AIEHazardRecognizer &HR;
+  RegLiveRangeTracker &RegTracker;
   ScheduleDAGMI *DAG = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
+
+  // Schedule interpreter for computing modulo live ranges
+  AIEScheduleInterpreter Interpreter;
+
+  // Event schedule populated during scheduling
+  EventSchedule EventSched;
 
   int FirstUnscheduled = 0;
   int LastUnscheduled = -1;
@@ -270,6 +305,19 @@ class PostPipeliner {
   int NStages = 0;
   int NPrologueStages = 0;
 
+  /// The pipeliner mode passed from InterBlockScheduling.
+  PostPipelinerMode Mode = PostPipelinerMode::None;
+
+  /// Name of the most recently attempted scheduling strategy. Updated at the
+  /// start of every scheduleWithStrategy() call, so it always reflects the
+  /// winning strategy on success.
+  std::string CurrentStrategyName;
+
+  /// Name of the most recently attempted register-allocation scoring strategy.
+  /// Updated before each tryAllocate() call, so it reflects the winning
+  /// strategy on success.
+  std::string CurrentAllocStrategyName;
+
   /// Place SU in cycle Cycle; update Earliest of successors and Latest
   /// of predecessors.
   void scheduleNode(SUnit &SU, int Cycle, PostPipelinerStrategy &Strategy);
@@ -300,6 +348,7 @@ class PostPipeliner {
   bool computeBackward();
   void computeRecMII();
   void computeEffectiveHeight();
+  int computeScarceRegMII();
 
   /// Given Earliest and Latest of each node in the first iteration,
   /// compute the smallest length of the linear schedule that is feasible.
@@ -335,13 +384,24 @@ class PostPipeliner {
   /// Top level strategy scheduler
   bool scheduleWithStrategy(PostPipelinerStrategy &Strategy);
 
+  /// Try to schedule scarce ranges by enumerating orders and using
+  /// BurstMostUrgentStrategy.
+  /// Checks applicability, finds scarce ranges, and attempts scheduling.
+  /// Returns true if scheduling succeeded, false otherwise.
+  bool tryScarceRangePacking();
+
   /// Reset dynamic scheduling data.
   /// If FullReset is set, also reset information collected from earlier
   /// data mining scheduling rounds.
   void resetSchedule(bool FullReset);
 
+  /// Try to allocate registers for the current schedule
+  /// Returns true if register allocation succeeds
+  bool tryAllocateRegisters();
+
 public:
-  PostPipeliner(const AIEHazardRecognizer &HR, int NInstr);
+  PostPipeliner(const AIEHazardRecognizer &HR, int NInstr,
+                RegLiveRangeTracker &RegTracker, const MachineFunction &MF);
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
   /// leaves some useful information.
@@ -351,15 +411,31 @@ public:
   /// \pre isPostPipelineCandidate has returned true
   int getResMII(MachineBasicBlock &LoopBlock);
 
-  // Schedule using the given InitiationInterval. Return true when successful.
-  // In that case calls to the query methods below are legitimate.
-  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval);
+  /// Schedule using the given InitiationInterval. Return true when successful.
+  /// In that case calls to the query methods below are legitimate.
+  /// \param PipelinerMode The mode the postpipeliner is operating in.
+  bool schedule(ScheduleDAGMI &DAG, int InitiationInterval,
+                PostPipelinerMode PipelinerMode);
 
   // Quick query for the stage count.
   int getStageCount() const { return NStages; }
 
   // Quick query for the achieved initiation interval.
   int getII() const { return II; }
+
+  // Quick query for the pipeliner mode used.
+  PostPipelinerMode getMode() const { return Mode; }
+
+  // The name of the scheduling strategy that produced the final schedule.
+  // Only meaningful after a successful schedule() call.
+  const std::string &getStrategyName() const { return CurrentStrategyName; }
+
+  // The name of the register-allocation scoring strategy that succeeded.
+  // Only meaningful after a successful schedule() call in virtual-register
+  // mode.
+  const std::string &getAllocStrategyName() const {
+    return CurrentAllocStrategyName;
+  }
 
   // After scheduling, interpret the results and call the appropriate methods
   // in the Visitor interface object.

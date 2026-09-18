@@ -102,6 +102,9 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
                       LiveIntervals &LIS) const override;
 
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override;
+
+  bool hasPhysRegProperty(MCRegister PhysReg,
+                          PhysRegProperty Prop) const override;
 };
 } // namespace llvm
 
