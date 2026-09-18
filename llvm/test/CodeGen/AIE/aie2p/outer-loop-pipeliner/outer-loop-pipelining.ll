@@ -5,13 +5,13 @@
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
-; RUN:     -aie-enable-outer-loop-pointer-opt=false \
+; RUN:     -aie-enable-loop-pointer-opt=false \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
 
 ; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pipelining \
-; RUN:     -aie-enable-outer-loop-pointer-opt=false \
+; RUN:     -aie-enable-loop-pointer-opt=false \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
 ; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
 
@@ -75,17 +75,21 @@
 ; Steady-state header: PHI nodes for pipelined values + set.loop.iterations stays
 ; CHECK: steady.stage1.top:
 ; CHECK:   phi i32 [ %i.next.steady, %steady.stage1.bottom.and.stage0.top ], [ 0, %stage0.top ]
-; CHECK:   phi ptr [ %a.ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
+; CHECK:   phi ptr [ %a.ptr.next.steady.phi, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
 ; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK:   %a.ptr.next.steady.phi = phi ptr [ %a.ptr.next.steady.top, %stage0.top ], [ %a.ptr.next.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK:   %b.ptr.next.steady.phi = phi ptr [ %b.ptr.next.steady.top, %stage0.top ], [ %b.ptr.next.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %steady.stage1.inner.inner.header
 
-; Steady-state bottom: stores + loads for NEXT iteration (uses a.ptr.next.steady, b.ptr.next.steady)
+; Steady-state bottom: stores + loads for NEXT iteration (uses a.ptr.next.steady.phi, b.ptr.next.steady.phi)
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
-; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
-; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady.phi, align 4
+; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady.phi, align 4
+; CHECK:   %a.ptr.next.steady.bottom = getelementptr inbounds i32, ptr %a.ptr.next.steady.phi, i32 1
+; CHECK:   %b.ptr.next.steady.bottom = getelementptr inbounds i32, ptr %b.ptr.next.steady.phi, i32 1
 ; CHECK:   br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
 ; Last-iteration top: set.loop.iterations for last iteration
@@ -179,6 +183,8 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   %v1.steady.phi = phi i32 [ %v1.steady.top, %stage0.top ], [ %v1.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   %init_acc.steady.phi = phi i32 [ %init_acc.steady.top, %stage0.top ], [ %init_acc.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK:   %a.ptr.next.steady.phi = phi ptr [ %a.ptr.next.steady.top, %stage0.top ], [ %a.ptr.next.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; CHECK:   %b.ptr.next.steady.phi = phi ptr [ %b.ptr.next.steady.top, %stage0.top ], [ %b.ptr.next.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; CHECK:   call void @llvm.set.loop.iterations.i32(i32 %M)
 ; CHECK:   br label %steady.stage1.inner.inner.header
 
@@ -189,9 +195,11 @@ declare i1 @llvm.loop.decrement.i32(i32)
 ; Steady-state bottom: next-iteration loads + dependent computation
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
-; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
-; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady.phi, align 4
+; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady.phi, align 4
 ; CHECK:   %init_acc.steady.bottom = mul i32 %v0.steady.bottom, %v1.steady.bottom
+; CHECK:   %a.ptr.next.steady.bottom = getelementptr inbounds i32, ptr %a.ptr.next.steady.phi, i32 1
+; CHECK:   %b.ptr.next.steady.bottom = getelementptr inbounds i32, ptr %b.ptr.next.steady.phi, i32 1
 ; CHECK:   br i1 %outer.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
 ; Last-iteration: inner loop uses last steady-bottom's init_acc value
@@ -329,4 +337,3 @@ exit:
 !10 = !{!"llvm.loop.mustprogress"}
 !11 = !{!"llvm.loop.itercount.range", i32 2}
 !12 = !{!"llvm.loop.itercount.range", i32 8}
-

@@ -5,7 +5,7 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=irtranslator \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
@@ -14,7 +14,6 @@
 ; peels the last outer iteration into lastiter.stage1.bottom, so that block must (1)
 ; recompute the latch accumulation and (2) feed it to the exit live-out —
 ; otherwise the returned sum drops the final iteration's contribution.
-
 
 define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 %M) {
   ; CHECK-LABEL: name: latch_accumulate_return
@@ -39,26 +38,28 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.a)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[COPY]], [[C2]](s20)
   ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY2]], [[C]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.steady.stage1.top:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %21(s32), %bb.6, [[C1]](s32), %bb.3
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(p0) = G_PHI %15(p0), %bb.6, [[COPY]](p0), %bb.3
-  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(p0) = G_PHI %16(p0), %bb.6, [[COPY1]](p0), %bb.3
-  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s32) = G_PHI %20(s32), %bb.6, [[C1]](s32), %bb.3
-  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.3, %23(s32), %bb.6
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %23(s32), %bb.6, [[C1]](s32), %bb.3
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(p0) = G_PHI %16(p0), %bb.6, [[COPY]](p0), %bb.3
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(p0) = G_PHI %18(p0), %bb.6, [[COPY1]](p0), %bb.3
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s32) = G_PHI %22(s32), %bb.6, [[C1]](s32), %bb.3
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.3, %25(s32), %bb.6
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:_(p0) = G_PHI [[PTR_ADD]](p0), %bb.3, %27(p0), %bb.6
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI1]], [[C2]](s20)
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C2]](s20)
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI2]], [[C3]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5.steady.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.5(0x7c000000), %bb.6(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.4, %18(s32), %bb.5
-  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[PHI5]], [[PHI4]]
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.4, %20(s32), %bb.5
+  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[PHI6]], [[PHI4]]
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; CHECK-NEXT:   G_BRCOND [[INT]](s1), %bb.5
   ; CHECK-NEXT:   G_BR %bb.6
@@ -70,7 +71,9 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[PHI3]], [[ADD]]
   ; CHECK-NEXT:   [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[PHI]], [[C]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s1) = G_ICMP intpred(slt), [[ADD2]](s32), [[SUB]]
-  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32) from %ir.a.ptr.next.steady)
+  ; CHECK-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PHI5]](p0) :: (load (s32) from %ir.a.ptr.next.steady.phi)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PHI5]], [[C4]](s20)
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.4
   ; CHECK-NEXT:   G_BR %bb.7
   ; CHECK-NEXT: {{  $}}
@@ -78,15 +81,14 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   successors: %bb.8(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY3]](s32)
-  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; CHECK-NEXT:   %25:_(p0) = nuw nusw G_PTR_ADD %15, [[C3]](s20)
-  ; CHECK-NEXT:   %26:_(p0) = nuw nusw G_PTR_ADD %16, [[C3]](s20)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw nusw G_PTR_ADD [[PTR_ADD1]], [[C5]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.8.lastiter.stage1.inner.inner.header:
   ; CHECK-NEXT:   successors: %bb.8(0x7c000000), %bb.9(0x04000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.7, %28(s32), %bb.8
-  ; CHECK-NEXT:   [[ADD3:%[0-9]+]]:_(s32) = G_ADD [[PHI6]], [[LOAD1]]
+  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.7, %31(s32), %bb.8
+  ; CHECK-NEXT:   [[ADD3:%[0-9]+]]:_(s32) = G_ADD [[PHI7]], [[LOAD1]]
   ; CHECK-NEXT:   [[INT1:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; CHECK-NEXT:   G_BRCOND [[INT1]](s1), %bb.8
   ; CHECK-NEXT:   G_BR %bb.9
@@ -103,8 +105,8 @@ define i32 @latch_accumulate_return(ptr noalias %a, ptr noalias %c, i32 %N, i32 
   ; CHECK-NEXT:   [[ADD5:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ADD3]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.11.exit:
-  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD5]](s32), %bb.10
-  ; CHECK-NEXT:   $r0 = COPY [[PHI7]](s32)
+  ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, [[ADD5]](s32), %bb.10
+  ; CHECK-NEXT:   $r0 = COPY [[PHI8]](s32)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
 entry:
   %cmp.outer = icmp sgt i32 %N, 1

@@ -1030,60 +1030,68 @@ void OrigLoopStructure::collectDerivedPointerUpdates(
     return GetPointerBase(I) != nullptr;
   };
 
-  // Iterate over outer loop header PHIs to find pointer update instructions.
-  for (PHINode &PHI : getTop()->phis()) {
-    // Get the backedge value (incoming from bottom block).
-    int BottomIdx = PHI.getBasicBlockIndex(getBottom());
-    if (BottomIdx < 0)
-      continue;
+  // The address operands of stage-0 loads (typically loop-carried outer PHIs).
+  // A GEP chain whose base bottoms out on one of these values is "based on
+  // stage 0" even though the PHI itself is not in Stage0Set.
+  SmallPtrSet<Value *, 8> Stage0LoadBases;
+  for (Instruction *I : Stage0Insts)
+    if (auto *Ld = dyn_cast<LoadInst>(I))
+      Stage0LoadBases.insert(Ld->getPointerOperand());
 
-    Value *BackedgeVal = PHI.getIncomingValue(BottomIdx);
-
-    // Check if the backedge value is a pointer update instruction in top block.
-    auto *PtrUpdateInst = dyn_cast<Instruction>(BackedgeVal);
-    if (!PtrUpdateInst || !isInTop(PtrUpdateInst) ||
-        !IsPointerUpdate(PtrUpdateInst))
-      continue;
-
-    // Check if this instruction is already in stage-0.
-    if (Stage0Set.count(PtrUpdateInst))
-      continue;
-
-    // Check if the instruction's base pointer (or its transitive base) is in
-    // stage-0. Walk the chain to find if any base is in stage-0.
-    SmallVector<Instruction *, 4> PtrUpdateChain;
+  // Walk the pointer-update chain rooted at PtrUpdateInst upward through
+  // operand edges; return true if the chain base is a stage-0 instruction or
+  // the address operand of a stage-0 load, collecting the chain along the way.
+  auto CheckChain = [&](Instruction *PtrUpdateInst,
+                        SmallVector<Instruction *, 4> &Chain) -> bool {
     Instruction *Current = PtrUpdateInst;
-    bool BasedOnStage0 = false;
-
     while (Current) {
-      PtrUpdateChain.push_back(Current);
+      Chain.push_back(Current);
       Value *Base = GetPointerBase(Current);
-
-      // If the base is a stage-0 instruction, we found a connection.
       if (auto *BaseInst = dyn_cast<Instruction>(Base)) {
-        if (Stage0Set.count(BaseInst)) {
-          BasedOnStage0 = true;
-          break;
-        }
-        // Continue walking if the base is also a pointer update in top block.
-        if (isInTop(BaseInst) && IsPointerUpdate(BaseInst)) {
-          Current = BaseInst;
-        } else {
-          Current = nullptr;
-        }
+        if (Stage0Set.count(BaseInst) || Stage0LoadBases.count(BaseInst))
+          return true;
+        // Continue walking if the base is also a pointer update in the top.
+        Current = (isInTop(BaseInst) && IsPointerUpdate(BaseInst)) ? BaseInst
+                                                                   : nullptr;
       } else {
-        Current = nullptr;
+        // Non-instruction base (function argument, constant, …).
+        return Stage0LoadBases.count(Base) != 0;
       }
     }
+    return false;
+  };
 
-    if (BasedOnStage0) {
-      // Add all instructions in the chain to be promoted.
-      for (Instruction *I : PtrUpdateChain) {
+  // Process one PHI: if the value incoming on the EntryBlock edge is a
+  // top-block pointer update based on stage-0, schedule its chain for
+  // promotion.
+  auto ProcessPHI = [&](PHINode &PHI, BasicBlock *EntryBlock) {
+    int Idx = PHI.getBasicBlockIndex(EntryBlock);
+    if (Idx < 0)
+      return;
+    Value *Val = PHI.getIncomingValue(Idx);
+    auto *PtrUpdateInst = dyn_cast<Instruction>(Val);
+    if (!PtrUpdateInst || !isInTop(PtrUpdateInst) ||
+        Stage0Set.count(PtrUpdateInst) || !IsPointerUpdate(PtrUpdateInst))
+      return;
+    SmallVector<Instruction *, 4> Chain;
+    if (CheckChain(PtrUpdateInst, Chain))
+      for (Instruction *I : Chain)
         if (!Stage0Set.count(I))
           ToPromote.insert(I);
-      }
-    }
-  }
+  };
+
+  // Case 1: outer loop header PHIs whose back-edge value (incoming from the
+  // bottom block) is a top-block GEP — arises after
+  // liftBottomPointerUpdatesToTop has moved a GEP up from the latch.
+  for (PHINode &PHI : getTop()->phis())
+    ProcessPHI(PHI, getBottom());
+
+  // Case 2: inner loop header PHIs whose preheader-entry value (incoming from
+  // the top block) is a top-block GEP — naturally present GEPs that initialise
+  // the inner loop's pointer (e.g. GEP(outer_ptr, stride) feeding the inner
+  // loop's pointer PHI).
+  for (PHINode &PHI : getInnerHeader()->phis())
+    ProcessPHI(PHI, getTop());
 
   if (ToPromote.empty())
     return;

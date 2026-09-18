@@ -4,15 +4,15 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=true \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=true \
 ; RUN:     -aie-enable-gep-canonicalization=true \
 ; RUN:     -aie-enable-gep-chain-linking=false \
 ; RUN:     -aie-enable-gep-hoisting=false \
-; RUN:     -stop-after=aie-outer-loop-pointer-optimizer \
+; RUN:     -stop-after=aie-loop-pointer-optimizer \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false \
-; RUN:     -stop-after=aie-outer-loop-pointer-optimizer \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false \
+; RUN:     -stop-after=aie-loop-pointer-optimizer \
 ; RUN:     -o - %s 2>&1 | FileCheck %s --check-prefix=DISABLED
 
 ; Test GEP canonicalization: converts non-i8 GEPs to i8-based GEPs.

@@ -4,48 +4,52 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
 ; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
 
-; Verify pointer live-outs when a lifted pointer update feeds an outer-header
-; PHI and is also used outside the loop.
+; Verify pointer live-outs when a pointer update feeds an outer-header PHI
+; and is also used outside the loop.
 ;
 ; For N iterations:
 ;   - Original: ptr stored to %out is %a + N*4.
 ;   - The stored ptr must be %a + N*4, not %a + (N+1)*4.
 ;
-; In non-speculative mode, the final peeled iteration must recreate the lifted
-; GEP so that the exit stores the final pointer. Storing the value avoids the
-; AIE backend's unsupported pointer return lowering.
+; The GEP is promoted to stage0.top and tracked via PHI as %ptr.next.steady.phi.
+; The bottom block computes %ptr.next.steady.bottom for the next iteration's
+; prefetch; after the last steady bottom this value equals %a + N*4.
 
 ; CHECK-LABEL: define void @speculative_ptr_liveout
 
-; The pointer update is lifted into the steady-state header.
+; Stage-0 top: load + promoted GEP for the pointer pipeline.
+; CHECK: stage0.top:
+; CHECK:   %loaded.steady.top = load i32, ptr %a, align 4
+; CHECK:   %ptr.next.steady.top = getelementptr inbounds i32, ptr %a, i32 1
+
+; Steady-state header: ptr.steady tracks current iteration's base,
+; ptr.next.steady.phi tracks next iteration's base (pipeline value).
 ; CHECK: steady.stage1.top:
-; CHECK:   %ptr.steady = phi ptr [ %ptr.next.steady, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
-; CHECK:   %ptr.next.steady = getelementptr inbounds i32, ptr %ptr.steady, i32 1
+; CHECK:   %ptr.steady = phi ptr [ %ptr.next.steady.phi, %steady.stage1.bottom.and.stage0.top ], [ %a, %stage0.top ]
+; CHECK:   %ptr.next.steady.phi = phi ptr [ %ptr.next.steady.top, %stage0.top ], [ %ptr.next.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 
-; The lifted GEP is NOT in the steady-state bottom block.
+; Steady-state bottom: load from ptr.next.steady.phi, then advance the pointer
+; pipeline by one more step for the subsequent iteration.
 ; CHECK: steady.stage1.bottom.and.stage0.top:
-; CHECK-NOT: getelementptr
-; CHECK:   %loaded.steady.bottom = load i32, ptr %ptr.next.steady, align 4
+; CHECK:   %loaded.steady.bottom = load i32, ptr %ptr.next.steady.phi, align 4
+; CHECK:   %ptr.next.steady.bottom = getelementptr inbounds i32, ptr %ptr.next.steady.phi, i32 1
 
-; The peeled last iteration recreates the lifted GEP so the live-out is defined.
-; CHECK: lastiter.stage1.top:
-; CHECK:   %ptr.next.lastiter = getelementptr inbounds i32, ptr %ptr.next.steady, i32 1
-
-; The last iteration stores through the pointer of its own iteration.
+; The last iteration does NOT need to recreate the GEP: the exit uses
+; ptr.next.steady.bottom from the last steady-bottom block.
 ; CHECK: lastiter.stage1.bottom:
-; CHECK:   store i32 %result.next.lastiter, ptr %ptr.next.steady, align 4
+; CHECK:   store i32 %result.next.lastiter, ptr %ptr.next.steady.phi, align 4
 
-; The exit stores the recreated pointer, not poison and not the steady-state one.
+; The exit stores ptr.next.steady.bottom (= %a + N*4), not poison.
 ; CHECK: exit:
-; CHECK:   store ptr %ptr.next.lastiter, ptr %out, align 4
+; CHECK:   store ptr %ptr.next.steady.bottom, ptr %out, align 4
 
 ; The early exit is untouched.
 ; CHECK: exit.early:

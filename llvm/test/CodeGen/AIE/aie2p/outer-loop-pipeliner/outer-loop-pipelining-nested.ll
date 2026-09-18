@@ -4,11 +4,11 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -stop-after=aie-outer-loop-pipeliner \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
 
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -stop-after=aie-outer-loop-pipeliner -o - %s \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -stop-after=aie-outer-loop-pipeliner -o - %s \
 ; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
 
 ; Test for the AIE Outer Loop Pipelining pass with nested loop structures.
@@ -49,10 +49,11 @@
 ; CHECK:   br label %steady.stage1.inner.innermost.header
 
 ; Steady-state bottom should have stores + loads for NEXT iteration
+; (loads use .phi suffix since GEPs are promoted to stage0.top and tracked via PHI)
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
-; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
-; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady, align 4
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady.phi, align 4
+; CHECK:   %v1.steady.bottom = load i32, ptr %b.ptr.next.steady.phi, align 4
 ; CHECK:   br i1 %middle.cond.steady, label %steady.stage1.top, label %lastiter.stage1.top
 
 ; Last-iteration top should have set.loop.iterations cloned

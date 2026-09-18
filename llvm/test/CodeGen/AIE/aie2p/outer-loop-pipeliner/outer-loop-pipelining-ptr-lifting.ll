@@ -4,12 +4,12 @@
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner \
 ; RUN:     -o - %s 2>&1 | FileCheck %s
 
 
-; RUN: llc -mtriple=aie2p -O2 -aie-enable-outer-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
+; RUN: llc -mtriple=aie2p -O2 -aie-enable-loop-pointer-opt=false -aie-enable-outer-loop-pipelining \
 ; RUN:     -stop-after=aie-outer-loop-pipeliner -o - %s \
 ; RUN:   | llc -mtriple=aie2p -x mir -run-pass=none -o /dev/null
 
@@ -36,32 +36,34 @@
 
 ; CHECK-LABEL: define void @ptr_lifting_basic
 
-; Stage-0 top block: loads only, plus hardware loop setup
+; Stage-0 top block: load + promoted pointer GEP, plus hardware loop setup
 ; CHECK: stage0.top:
 ; CHECK:   %v0.steady.top = load i32, ptr %a, align 4
+; CHECK:   %a.ptr.next.steady.top = getelementptr inbounds i8, ptr %a, i64 128
 ; CHECK:   %outer.jnzd.tc = sub i32 %N, 1
 ; CHECK:   %outer.ctr.init = call i32 @llvm.start.loop.iterations.i32(i32 %outer.jnzd.tc)
 ; CHECK:   br label %steady.stage1.top
 
-; Steady-state header: GEPs are lifted here (no epilogue uses)
+; Steady-state header: a.ptr.next is promoted to stage0.top and tracked via PHI;
+; c.ptr.next (not feeding a load) stays as a GEP here.
 ; CHECK: steady.stage1.top:
 ; CHECK:   %a.ptr.steady = phi ptr
 ; CHECK:   %c.ptr.steady = phi ptr
 ; CHECK:   %v0.steady.phi = phi i32 [ %v0.steady.top, %stage0.top ], [ %v0.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
+; Promoted GEP PHI for a.ptr.next (feeds the next-iteration load, before outer.ctr)
+; CHECK:   %a.ptr.next.steady.phi = phi ptr [ %a.ptr.next.steady.top, %stage0.top ], [ %a.ptr.next.steady.bottom, %steady.stage1.bottom.and.stage0.top ]
 ; Hardware loop counter PHI (replaces software %iv)
 ; CHECK:   %outer.ctr = phi i32
-; GEPs lifted from epilogue (no epilogue uses - stores use c.ptr, not c.ptr.next)
-; CHECK:   %a.ptr.next.steady = getelementptr inbounds i8, ptr %a.ptr.steady, i64 128
+; c.ptr.next GEP stays in the header (feeds no load, only store)
 ; CHECK:   %c.ptr.next.steady = getelementptr inbounds i8, ptr %c.ptr.steady, i64 128
 ; CHECK:   br label %steady.stage1.inner.inner.header
 
-; Steady-state bottom: GEPs are NOT here (lifted), hardware loop counter replaces software iv
+; Steady-state bottom: prefetch next-iteration load via promoted PHI pointer,
+; then advance pointer pipeline. Hardware loop counter replaces software iv.
 ; CHECK: steady.stage1.bottom.and.stage0.top:
 ; CHECK:   store i32
-; GEPs are NOT here (they were lifted)
-; CHECK-NOT: getelementptr{{.*}}128
-; Hardware loop counter update (replaces software %iv.next and icmp eq)
-; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady, align 4
+; CHECK:   %v0.steady.bottom = load i32, ptr %a.ptr.next.steady.phi, align 4
+; CHECK:   %a.ptr.next.steady.bottom = getelementptr inbounds i8, ptr %a.ptr.next.steady.phi, i64 128
 ; CHECK:   %outer.ctr.next = call i32 @llvm.loop.decrement.reg.i32
 ; CHECK:   %outer.loop.cond = icmp ne i32 %outer.ctr.next, 0
 
