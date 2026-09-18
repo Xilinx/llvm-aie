@@ -1,0 +1,90 @@
+# NOTE: Test for AIERegDefUseTracker - two xreg defs feeding a composite yreg use,
+#       with an additional leaf xreg use appearing after the composite use in
+#       program order (i.e., processed first in the backward liveness scan).
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Pattern (forward program order):
+#   x0  = VLD ...      ; def x0 (lower half of y0)
+#   x1  = VLD ...      ; def x1 (upper half of y0)
+#   dm0 = VMUL y0, ... ; composite use of y0 (= {x0, x1})
+#   x2, = VMAX x1, x10 ; leaf xreg use of x1 AFTER the composite use
+#
+# In the backward liveness scan, VMAX is processed first, creating a live range
+# for x1. When VMUL is then processed it finds x1 in LiveRegs and expands the
+# base from x1 to y0.  The bug is that LiveRegs still maps "x1" as the key
+# rather than "y0", so when the def of x0 (the sibling subreg) is processed,
+# it does not find y0 in LiveRegs (x0 and x1 are siblings - they do not alias)
+# and creates a separate live range for x0.
+#
+# Expected correct behavior: one live range for y0 with two xreg defs (x0, x1)
+# and one yreg use (y0).
+#
+# CHECK: Live Range {{.*}} for y0:
+# CHECK:   Definitions (2):
+# CHECK-DAG:     Register: x0
+# CHECK-DAG:     Register: x1
+# CHECK:   Uses (2):
+# CHECK-DAG:     Register: x1 (SubRegIdx: {{.*}})
+# CHECK-DAG:     Register: y0
+
+--- |
+  define void @test_subreg_defs_composite_use_with_leaf() {
+  entry:
+    br label %loop
+  loop:
+    br label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_subreg_defs_composite_use_with_leaf
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $p0, $r0, $r8, $x10, $r1
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $p0, $r0, $r8, $x10
+
+    ; Define x0 (lower half of y0 = {x0, x1})
+    $x0, $p0 = VLD_x_pstm_nrm_imm_pseudo $p0, 64 :: (load (<32 x s16>), addrspace 5)
+
+    ; Define x1 (upper half of y0 = {x0, x1})
+    $x1 = VLD_x_idx_imm_pseudo $p0, 64 :: (load (<32 x s16>), addrspace 5)
+
+    ; Composite use: reads y0 (= {x0, x1}) as a whole
+    $dm0 = VMUL_f_vmul_bf_vmul_bf_core_Y_R $y0, $r0, $r8, implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+
+    ; Leaf xreg use of x1 (sub-register of y0) - appears AFTER the composite
+    ; use in forward order, so is processed FIRST in the backward scan.
+    $x2, dead $r16 = VMAX_LT_bf16 $x1, $x10, implicit $crbf8conf, implicit $crfp8conf
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
