@@ -219,12 +219,31 @@ LivenessVector LivenessVector::operator-(const LivenessVector &Other) const {
   return Result;
 }
 
-bool LivenessVector::overlaps(const LivenessVector &Other) const {
+bool LivenessVector::anySlotOverlap(const LivenessVector &Other) const {
+  // Check if both vectors have non-zero occupancy at the same slot,
+  // independent of lane-mask domain. This is the correct comparison when
+  // physical register aliasing has already been confirmed (e.g., via
+  // RegUnit iteration) but the two live ranges live in different register
+  // class hierarchies whose lane-bit domains do not overlap.
   const size_t MinSize = std::min(Elements.size(), Other.Elements.size());
   for (size_t I = 0; I < MinSize; ++I) {
-    if (Elements[I].conflictsWith(Other.Elements[I])) {
+    if (Elements[I].any() && Other.Elements[I].any())
       return true;
-    }
+  }
+  return false;
+}
+
+bool LivenessVector::overlaps(const LivenessVector &Other) const {
+  // Check if both vectors have non-zero occupancy at the same slot.
+  // This is intentionally lane-domain agnostic: two physically aliasing
+  // registers (confirmed via RegUnit sharing) interfere if they are both
+  // live at any common modulo slot, regardless of which lane-bit domain
+  // they belong to. A future improvement will restore sub-lane precision
+  // when the lane representations are made domain-compatible.
+  const size_t MinSize = std::min(Elements.size(), Other.Elements.size());
+  for (size_t I = 0; I < MinSize; ++I) {
+    if (Elements[I].any() && Other.Elements[I].any())
+      return true;
   }
   return false;
 }
