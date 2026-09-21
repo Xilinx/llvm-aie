@@ -119,6 +119,32 @@ bool AIE2PAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   MCInst *Inst = getContext().createMCInst();
   LLVM_DEBUG(dbgs() << "Emitting...\t"
                     << "instruction ending with" << getTok().getString());
+
+  // `event #0` and `event #1` spell the immediate inside their AsmString
+  // instead of carrying an operand, so the matcher has nothing to match the
+  // parsed `#0` against and rejects the line. Choose the opcode from the
+  // immediate. An immediate that is neither falls through to the matcher and
+  // gets its usual diagnostic. event.warning and event.error are separate
+  // mnemonics and need none of this.
+  if (Operands.size() >= 2) {
+    StringRef Mnemonic = ((AIE2POperand &)*Operands[0]).getToken();
+    if (Mnemonic == "event") {
+      for (unsigned I = 1; I < Operands.size(); ++I) {
+        AIE2POperand &Op = (AIE2POperand &)*Operands[I];
+        if (!Op.isImm())
+          continue;
+        if (const auto *CE = dyn_cast<MCConstantExpr>(Op.getImm())) {
+          if (CE->getValue() == 0 || CE->getValue() == 1) {
+            Inst->setOpcode(CE->getValue() == 0 ? AIE2P::EVENT_event0
+                                                : AIE2P::EVENT_event1);
+            return processMatchedInstruction(IDLoc, Operands, Out, Inst);
+          }
+        }
+        break;
+      }
+    }
+  }
+
   auto MatchResult =
       MatchInstructionImpl(Operands, *Inst, ErrorInfo, MatchingInlineAsm);
   switch (MatchResult) {
