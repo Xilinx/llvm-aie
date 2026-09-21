@@ -623,6 +623,9 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
   // The enhanced mergeFrom() automatically computes the smallest common
   // super-register that contains all operands from both ranges.
   for (unsigned LRIdx : ToMerge) {
+    LLVM_DEBUG(dbgs() << "LR#" << TargetLR.getID() << " + LR#"
+                      << LiveRanges[LRIdx].getID() << " -> LR#"
+                      << TargetLR.getID() << "\n");
     if (!TargetLR.mergeFrom(LiveRanges[LRIdx], TRI)) {
       TargetLR.clear();
       LiveRanges[LRIdx].clear();
@@ -1090,6 +1093,9 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
   // Create a new live range.
   const unsigned NewLRIdx = LiveRanges.size();
   LiveRanges.emplace_back(NextLiveRangeID++, Reg, IsReserved);
+  LLVM_DEBUG(dbgs() << "LR#" << LiveRanges[NewLRIdx].getID()
+                    << (MO->isDef() ? " Def " : " Use ") << TRI->getName(Reg)
+                    << "\n");
   State.LiveRegs[Reg] = {static_cast<int>(NewLRIdx), LaneBitmask::getAll()};
   State.OperandToLiveRange[MO] = NewLRIdx;
   return NewLRIdx;
