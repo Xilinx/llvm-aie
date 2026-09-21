@@ -33,7 +33,6 @@ void AIEPostRegAlloc::AllocState::init(
     const DenseMap<unsigned, AIE::LivenessVector> &LiveLanesByLRIndex,
     const RegLiveRangeTracker *RegTracker) {
   this->RegUnitOccupancy.clear();
-  this->PhysOccupancy.clear();
   this->TRI = InTRI;
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();
@@ -80,7 +79,14 @@ bool AIEPostRegAlloc::AllocState::canPlace(
     unsigned Unit = *Units;
     auto It = RegUnitOccupancy.find(Unit);
     if (It != RegUnitOccupancy.end()) {
-      if (VRegMasks.overlaps(It->second))
+      // Use anySlotOverlap instead of overlaps: when two live ranges
+      // alias via a RegUnit but belong to different register class
+      // hierarchies (e.g., eL pair vs. mLockId_reg scalar), their lane
+      // masks live in incompatible bit domains and overlaps() returns
+      // false even when they are simultaneously live. anySlotOverlap
+      // checks temporal overlap independent of lane-bit domain, which
+      // is correct here because physical aliasing is already confirmed.
+      if (VRegMasks.anySlotOverlap(It->second))
         return false;
     }
   }
@@ -92,9 +98,6 @@ bool AIEPostRegAlloc::AllocState::canPlace(
 void AIEPostRegAlloc::AllocState::place(Register VReg, Register PhysReg,
                                         const AIE::LivenessVector &VRegMasks,
                                         const TargetRegisterClass *RC) {
-
-  // Update lane mask occupancy for the specific register (for compatibility).
-  PhysOccupancy[PhysReg] |= VRegMasks;
 
   // Update RegUnit occupancy - this automatically handles aliasing.
   unsigned NumUnits = 0;
@@ -297,7 +300,6 @@ AIEPostRegAlloc::AllocResult AIEPostRegAlloc::tryAllocate(
 
   // Clear per-attempt state.
   State.RegUnitOccupancy.clear();
-  State.PhysOccupancy.clear();
   OutAssign.clear();
 
   const auto &AvailableRegs = RegTracker->getAvailablePhysRegs();

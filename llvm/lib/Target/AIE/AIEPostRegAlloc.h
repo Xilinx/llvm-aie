@@ -152,10 +152,6 @@ private:
     /// Two registers interfere if they share any RegUnits.
     DenseMap<unsigned /*RegUnit*/, AIE::LivenessVector> RegUnitOccupancy;
 
-    /// Physical register occupancy - tracks lane masks for each allocated
-    /// physical register (kept for compatibility with existing code).
-    DenseMap<Register, AIE::LivenessVector> PhysOccupancy;
-
     /// Pre-computed interference graphs (reused across scoring attempts).
     WeightedAsymmetricGraph RCInterferenceGraph;
     WeightedSymmetricGraph VRegInterferenceGraph;
