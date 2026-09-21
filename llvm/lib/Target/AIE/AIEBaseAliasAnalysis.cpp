@@ -227,35 +227,57 @@ struct IntrinsicArgsInfo {
   SmallVector<const Value *, 5> CounterArgs;
 };
 
+//===----------------------------------------------------------------------===//
+// Comparing two pointer cursors across loop iterations
+//
+// Both accesses of a query are reached by walking a cursor from the PHI that
+// enters the loop to the value handed back on the backedge. What that walk can
+// establish depends on how the cursor is advanced.
+//
+// AIE 2D/3D addressing intrinsics move a pointer by an AGU pattern whose
+// displacement is not a compile-time constant. Byte distances are therefore
+// unavailable, and the only comparable quantity is the *number* of updates
+// each cursor has undergone: two cursors driven by the same pattern, standing
+// at different update counts, are at least one update apart.
+//
+// That inference assumes every access fits within a single update. Nothing
+// here checks it; it is a property of the model, not something it derives.
+//===----------------------------------------------------------------------===//
+
+/// Where an access sits in the update sequence of the cursor addressing it.
 struct PtrUpdateChainInfo {
-  // Calls up to a specific point.
-  unsigned PointerUpdates = 0;
-  // Total calls across the loop.
-  unsigned TotalPointerUpdates = 0;
-  // All parameters.
-  IntrinsicArgsInfo IntrinsicParameters;
-  // Constant chain (always the same index).
-  SmallVector<const Value *, 2> GEPIndexes;
+  /// Updates applied to the cursor before the access, within one iteration.
+  unsigned UpdatesBeforeAccess = 0;
+  /// Updates applied to the cursor over a whole iteration.
+  unsigned UpdatesPerIteration = 0;
+  /// Constant arguments and counters of the addressing intrinsic driving the
+  /// cursor. Only present for intrinsic chains.
+  std::optional<IntrinsicArgsInfo> IntrinsicParameters;
+  /// Index operands of the getelementptr chain driving the cursor. Only
+  /// present for getelementptr chains.
+  std::optional<SmallVector<const Value *, 2>> GEPIndexes;
 
-  // Same GEP Indexes.
-  bool hasSameGEPIndexes(const PtrUpdateChainInfo &Other) const {
-    return GEPIndexes == Other.GEPIndexes;
+  /// Update count reached by the access in loop iteration \p Iteration.
+  unsigned updatesAt(unsigned Iteration) const {
+    return UpdatesBeforeAccess + Iteration * UpdatesPerIteration;
   }
 
-  // Same number of call until the point of interest.
-  bool hasSameNumberOfUpdates(const PtrUpdateChainInfo &Other) const {
-    return PointerUpdates == Other.PointerUpdates;
+  /// Do both cursors advance by the same amount, whatever that amount is?
+  /// Only then are their update counts expressed in a common unit.
+  bool advancesLike(const PtrUpdateChainInfo &Other) const {
+    if (UpdatesPerIteration != Other.UpdatesPerIteration ||
+        GEPIndexes != Other.GEPIndexes ||
+        IntrinsicParameters.has_value() !=
+            Other.IntrinsicParameters.has_value())
+      return false;
+    return !IntrinsicParameters || IntrinsicParameters->ConstantArgs ==
+                                       Other.IntrinsicParameters->ConstantArgs;
   }
 
-  // Same number of calls across the loop.
-  bool hasSameTotalNumberOfUpdates(const PtrUpdateChainInfo &Other) const {
-    return TotalPointerUpdates == Other.TotalPointerUpdates;
-  }
-
-  // Check for the same constant parameters.
-  bool hasSameParameters(const PtrUpdateChainInfo &Other) const {
-    return IntrinsicParameters.ConstantArgs ==
-           Other.IntrinsicParameters.ConstantArgs;
+  ArrayRef<const Value *> counterArgs() const {
+    if (!IntrinsicParameters)
+      return {};
+    return IntrinsicParameters->CounterArgs;
   }
 
   // Check for the same initial values for the counters.
@@ -265,13 +287,13 @@ struct PtrUpdateChainInfo {
       return Phi->getIncomingBlock(0) == Phi->getParent() ? 1 : 0;
     };
 
-    for (const Value *CountA : IntrinsicParameters.CounterArgs) {
+    for (const Value *CountA : counterArgs()) {
       // Some truncation can be expected.
       CountA = skipCast(CountA);
       if (auto *PhiA = dyn_cast<PHINode>(CountA)) {
         const Value *ExtPhiValA =
             PhiA->getIncomingValue(GetExternalIndex(PhiA));
-        for (const Value *CountB : Other.IntrinsicParameters.CounterArgs) {
+        for (const Value *CountB : Other.counterArgs()) {
           CountB = skipCast(CountB);
           if (auto *PhiB = dyn_cast<PHINode>(CountB)) {
             const Value *ExtPhiValB =
@@ -288,36 +310,25 @@ struct PtrUpdateChainInfo {
     }
     return true;
   }
-
-  bool mayOverlap(const PtrUpdateChainInfo &Other) const {
-    // Different number of updates in the chain.
-    // * but maybe with consistent updates (same steps)
-    if (!hasSameTotalNumberOfUpdates(Other))
-      return true;
-
-    // Different parameters.
-    if (!hasSameParameters(Other))
-      return true;
-
-    // Every counter must start equally.
-    if (!hasSameStartingCounters(Other))
-      return true;
-
-    // Check for different steps of calculation.
-    if (hasSameNumberOfUpdates(Other))
-      return true;
-
-    // Check for different GEP index.
-    if (!hasSameGEPIndexes(Other))
-      return true;
-
-    return false;
-  }
-
-  void bumpIteration(const unsigned VirtIteration) {
-    PointerUpdates += VirtIteration * TotalPointerUpdates;
-  }
 };
+
+/// Can the access described by \p A, executed in iteration \p IterA, and the
+/// one described by \p B, executed in iteration \p IterB, touch the same
+/// bytes?
+///
+/// Both cursors must run the same update pattern from the same starting
+/// counters, otherwise their update counts are not comparable at all. Given
+/// that, the accesses are separated whenever they stand at different counts.
+static bool mayOverlap(const PtrUpdateChainInfo &A, unsigned IterA,
+                       const PtrUpdateChainInfo &B, unsigned IterB) {
+  if (!A.advancesLike(B))
+    return true;
+
+  if (!A.hasSameStartingCounters(B))
+    return true;
+
+  return A.updatesAt(IterA) == B.updatesAt(IterB);
+}
 
 static IntrinsicArgsInfo collectIntrinsicOperands(const Value *V) {
   const auto *Extract = dyn_cast<ExtractValueInst>(V);
@@ -392,7 +403,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
     // This information is crucial to calculate the number
     // of pointer updates before TargetPointer.
     if (LastUpdate == TargetPointer)
-      LastCalls = ChainInfo.TotalPointerUpdates;
+      LastCalls = ChainInfo.UpdatesPerIteration;
 
     if (!LastUpdate->getType()->isPointerTy())
       return std::nullopt; // not a pointer.
@@ -422,7 +433,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
           return std::nullopt;
         }
 
-        ChainInfo.TotalPointerUpdates++;
+        ChainInfo.UpdatesPerIteration++;
         FoundGEPChain = true;
       }
 
@@ -432,9 +443,12 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
     } else if (isa<PHINode>(LastUpdate)) {
       // Reached final destination.
       if (LastCalls) {
-        ChainInfo.PointerUpdates = ChainInfo.TotalPointerUpdates - *LastCalls;
-        ChainInfo.IntrinsicParameters = IntrinsicParameters;
-        ChainInfo.GEPIndexes = GEPIndexes;
+        ChainInfo.UpdatesBeforeAccess =
+            ChainInfo.UpdatesPerIteration - *LastCalls;
+        if (FoundIntrinsicChain)
+          ChainInfo.IntrinsicParameters = IntrinsicParameters;
+        if (FoundGEPChain)
+          ChainInfo.GEPIndexes = GEPIndexes;
         return ChainInfo;
       }
       return std::nullopt; // The object was not found.
@@ -476,7 +490,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
       IntrinsicParameters.ConstantArgs = NewArgs.ConstantArgs;
 
       LastUpdate = AIEObject;
-      ChainInfo.TotalPointerUpdates++;
+      ChainInfo.UpdatesPerIteration++;
       FoundIntrinsicChain = true;
     }
   }
@@ -618,16 +632,10 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
   if (!BTracking) // Non uniform address update accross the loop.
     return AliasResult::MayAlias;
 
-  // If we are in PostRA SWP, we need to increase the count
-  // by the number of unrolls x complete number of pointer
-  // updates for every completed iteration. In this way,
-  // we will have the notion of distance between different
-  // iterations and associated instructions.
-  ATracking->bumpIteration(VirtUnrollLevelA);
-  BTracking->bumpIteration(VirtUnrollLevelB);
-
-  // If there is no overlap, NoAlias
-  if (ATracking->mayOverlap(*BTracking))
+  // Under PostRA SWP the two accesses come from different iterations, so each
+  // cursor is evaluated at its own virtual unroll level. That is what gives us
+  // a notion of distance between instructions of different iterations.
+  if (mayOverlap(*ATracking, VirtUnrollLevelA, *BTracking, VirtUnrollLevelB))
     return AliasResult::MayAlias;
 
   return AliasResult::NoAlias;
