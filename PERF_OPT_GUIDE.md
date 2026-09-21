@@ -625,6 +625,18 @@ for (int i = 0; i < param.count; i++) { ... }
 If you set the minimum too low, the pipeliner may produce suboptimal code. If you set it too high
 (higher than the actual runtime count), the program will be incorrect.
 
+The minimum bounds how many stages a schedule may use, since the loop
+has to run at least NS times. A low minimum therefore rules out high
+stage counts, and the pipeliner responds by trying a higher II with
+fewer stages rather than refusing the loop. That is not purely a loss:
+fewer stages mean a smaller prologue and epilogue, so a modest minimum
+limits code bloat. Raising it trades program memory for a lower II.
+
+When the trip count is a runtime value you cannot bound, you can still
+establish a minimum for part of the iteration space: a runtime guard
+splits the loop so that one copy has a known minimum and the other
+takes the short counts. See [Section 8](#8-loop-versioning).
+
 ### Suggesting a target II
 `AIE_TRY_INITIATION_INTERVAL(N)` tells the postpipeliner to try
 harder to reach II = N. Normally the pipeliner tries a sequence of
@@ -668,26 +680,84 @@ count genuinely varies below the pipelining threshold at runtime.
 
 ### Automatic versioning: the aie-loop-versioning hint
 
-`AIE_LOOP_HINT(aie-loop-versioning, 1)` asks the compiler to version the
+`AIE_LOOP_HINT(aie-loop-versioning, N)` asks the compiler to version the
 loop for you, leaving it written as an ordinary `for`:
 
 ```cpp
 AIE_LOOP_HINT(aie-loop-versioning, 1)
-AIE_PREPARE_FOR_POSTPIPELINING
 for (int i = 0; i < param.inner_loop_count; i++) {
     // loop body
 }
 ```
 
-The backend splits the loop into a pipelined copy and a verbatim fallback
-behind a runtime trip-count guard, and the post-pipeliner then sets the
-guard threshold to the stage count it actually achieved. There is no
-`MinIters` to choose: the split lands exactly where pipelining starts
-paying off.
+The compiler rewrites that into two copies of the loop behind a runtime
+guard on the trip count:
 
-If the compiler cannot version the loop it reports why under
-`-Rpass-missed=aie-inner-loop-versioning`, and the loop is left untouched.
-Use `VERSIONED_LOOP` below in that case.
+```cpp
+if (param.inner_loop_count < threshold) {
+    for (int i = 0; i < param.inner_loop_count; i++) {
+        // loop body, left exactly as written
+    }
+} else {
+    AIE_LOOP_RANGE(threshold,)   // established by the guard, not by you
+    for (int i = 0; i < param.inner_loop_count; i++) {
+        // loop body
+    }
+}
+```
+
+The second copy is the point of the exercise: it carries a minimum
+iteration count, so it can be optimized as if the loop were known to be
+long. The first keeps short trip counts correct.
+
+With a fixed threshold that `AIE_LOOP_RANGE` is literally what you would
+write by hand when versioning a loop yourself. The difference is that
+here the guard is what establishes it, so you get it on one copy of the
+loop without having to guarantee it for every call.
+
+`threshold` is the only thing the hint's value decides:
+
+| value | effect |
+| ----- | ------ |
+| `0` | no versioning |
+| `1` | version, and leave `threshold` to be filled in later |
+| `2` to `100` | version, with `threshold` fixed at that value |
+
+A value above `100` is refused and treated as `1`, with a remark under
+`-Rpass-missed=aie-inner-loop-versioning`. It is a precondition of the
+hint, not a clamp: the loop is still versioned, but the threshold you
+asked for is not the one you get.
+
+If the compiler cannot version the loop at all it likewise reports why
+under `-Rpass-missed=aie-inner-loop-versioning`, and the loop is left
+untouched. Use `VERSIONED_LOOP` below in that case.
+
+#### Deferring the threshold, or fixing it
+
+Leaving the threshold to be filled in (`1`) lets whichever optimization
+consumes the fast copy choose where the split falls, once it knows what
+that copy actually needs. Nothing is committed up front, so the split
+lands where the optimization starts paying off. The cost is that the
+fast copy has no minimum iteration count until then, which rules out
+any transformation that needs one decided earlier.
+
+Fixing the threshold (`2` to `100`) is authoritative: the guard holds
+your value, and the fast copy declares it as a minimum iteration count
+from the start. Any later transformation, whether pipelining, unrolling
+or peeling, can build on it.
+
+Tune a fixed value to the distribution of iteration counts you expect
+at runtime, not to the loop body. The value decides how much of that
+distribution reaches the fast copy, and how much falls back to code
+left as written. Setting it higher than most of your traffic wastes the
+fast copy; setting it near the bottom of the distribution sends short
+trip counts into code optimized for long ones, where the setup can cost
+more than it saves.
+
+The minimum a fixed threshold establishes behaves exactly like one
+declared with `AIE_LOOP_RANGE`; see [Trip count and
+AIE_LOOP_RANGE](#trip-count-and-aie_loop_range) for what a minimum buys
+and what it costs.
 
 ### Limitations of the aie-loop-versioning hint
 
