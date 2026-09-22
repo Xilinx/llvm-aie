@@ -639,7 +639,7 @@ define fastcc void @shuffle_match_extracted_load_idx_non_zero() {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vbcst.16 x0, r0 // Delay Slot 4
-; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
+; CHECK-NEXT:    mov p0, #0 // Delay Slot 3
 ; CHECK-NEXT:    vst x0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

@@ -26,11 +26,11 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:    lda r14, [p1, #0]; st r0, [sp, #-56]; movx r16, #0; mov p4, #0 // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    lda r8, [p1, #-4]; st r1, [sp, #-52]; vbcst.32 x0, r16 // 4-byte Folded Spill
 ; FINE-GRAINED-NEXT:    st r2, [sp, #-48]; jl p4 // 4-byte Folded Spill
-; FINE-GRAINED-NEXT:    vst x0, [sp, #-192] // 64-byte Folded Spill Delay Slot 5
-; FINE-GRAINED-NEXT:    vst x0, [sp, #-128]; mov p3, p0 // 64-byte Folded Spill Delay Slot 4
+; FINE-GRAINED-NEXT:    vst x0, [sp, #-192]; mov p3, p0 // 64-byte Folded Spill Delay Slot 5
+; FINE-GRAINED-NEXT:    vst x0, [sp, #-128]; mov r9, p3 // 64-byte Folded Spill Delay Slot 4
 ; FINE-GRAINED-NEXT:    mova p0, #0; st dj0, [sp, #-64]; or r15, r3, r3; mov r10, r4 // 4-byte Folded Spill Delay Slot 3
 ; FINE-GRAINED-NEXT:    mova p2, #0; st dj0, [sp, #-60]; or r11, r5, r5; mov r12, r6 // 4-byte Folded Spill Delay Slot 2
-; FINE-GRAINED-NEXT:    mova p1, #0; or r13, r7, r7; mov r9, p3 // Delay Slot 1
+; FINE-GRAINED-NEXT:    or r13, r7, r7; mov p1, #0 // Delay Slot 1
 ; FINE-GRAINED-NEXT:    lda r19, [sp, #-64]; nopb ; nopxm ; nops // 4-byte Folded Reload
 ; FINE-GRAINED-NEXT:    mova dc0, #0; movs dn3, r12; mov dj3, r10
 ; FINE-GRAINED-NEXT:    mova dn1, #0; movs m3, r15; mov dj7, r11
@@ -73,8 +73,8 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:    movs dn1, dn3; mov dj1, dj3
 ; FINE-GRAINED-NEXT:    movs dn5, dn7; mov dj5, dj7
 ; FINE-GRAINED-NEXT:    mova p0, #0; movs dc0, r6; mov dj4, r5
-; FINE-GRAINED-NEXT:    movs dc4, m5; paddb.3d [p0], d3; mov dj3, r19
-; FINE-GRAINED-NEXT:    movs dj7, r20; mov m3, m5
+; FINE-GRAINED-NEXT:    movs dj3, r19; paddb.3d [p0], d3; mov dc4, m5
+; FINE-GRAINED-NEXT:    movs m3, m5; mov dj7, r20
 ; FINE-GRAINED-NEXT:    movs dn3, m5; mov dc5, dc7
 ; FINE-GRAINED-NEXT:    movs dc1, dc3; xor r17, r14, r7; mov dc3, r17
 ; FINE-GRAINED-NEXT:    movs dc7, r22; and r6, r17, r7; mov r22, m5

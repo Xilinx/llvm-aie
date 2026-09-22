@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 -verify-machineinstrs --issue-limit=1 %s -o - | FileCheck %s
 
 define <8 x i32> @test_extract_bottom_half(<16 x i32> noundef %a) {
@@ -257,7 +257,7 @@ define <16 x i32> @test_concat_vector(<8 x i32> noundef %a, <8 x i32> noundef %b
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r11 // Delay Slot 4
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r13 // Delay Slot 3
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r15 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r24 // Delay Slot 1
+; CHECK-NEXT:    or r16, r24, r24 // Delay Slot 1
 entry:
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   ret <16 x i32> %shuffle
@@ -303,7 +303,7 @@ define <16 x i32> @test_set_vector(i32 noundef %idx, <8 x i32> noundef %a) {
 ; CHECK-NEXT:    vpush.hi.32 x2, x2, r0 // Delay Slot 4
 ; CHECK-NEXT:    vpush.hi.32 x2, x2, r0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r9 // Delay Slot 1
+; CHECK-NEXT:    or r16, r9, r9 // Delay Slot 1
 entry:
   %cmp = icmp eq i32 %idx, 0
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -316,11 +316,11 @@ define i32 @test_extract_elem(<8 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_extract_elem:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r2, r16 // Delay Slot 5
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 4
-; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r2, r16 // Delay Slot 4
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 3
+; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2 // Delay Slot 1
 entry:
   %vecext = extractelement <8 x i32> %a, i32 %idx
   ret i32 %vecext

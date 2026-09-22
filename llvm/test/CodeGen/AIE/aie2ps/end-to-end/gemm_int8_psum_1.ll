@@ -84,31 +84,27 @@ define weak_odr dso_local void @gemm_int8_psum_1(ptr noalias %p_a, ptr noalias %
 ; REMARKS-NEXT: ...
 ; CHECK-LABEL: gemm_int8_psum_1:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova dj0, #37; nopb ; nopxm ; nops
-; CHECK-NEXT:    lda.u8 r0, [p5, dj0]; mov m0, #48
-; CHECK-NEXT:    padda [p5], m0
+; CHECK-NEXT:    mova m0, #48; nopb ; nops ; nopx ; mov dj0, #37; nopv
+; CHECK-NEXT:    lda.u8 r0, [p5, dj0]; paddb [p5], m0; nopm
 ; CHECK-NEXT:    lda.u8 r5, [p5], #4; mov m0, #-48
-; CHECK-NEXT:    lda.u8 r24, [p5], m0
-; CHECK-NEXT:    mova m0, #68
+; CHECK-NEXT:    lda.u8 r24, [p5], m0; mov m0, #68
 ; CHECK-NEXT:    lda r26, [p5], m0
 ; CHECK-NEXT:    lda m0, [p5], #-8
 ; CHECK-NEXT:    lda dn0, [p5], #-8
 ; CHECK-NEXT:    lda dj0, [p5], #12
 ; CHECK-NEXT:    lda dn4, [p5], #-8; mov m1, #-44
-; CHECK-NEXT:    lda dj4, [p5], m1
-; CHECK-NEXT:    mova m1, #76
+; CHECK-NEXT:    lda dj4, [p5], m1; mov m1, #76
 ; CHECK-NEXT:    lda m3, [p5], m1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda m1, [p5], #-8
-; CHECK-NEXT:    lda dn1, [p5], #-8
-; CHECK-NEXT:    lda dj1, [p5], #12; movx r28, #0; mov m2, #-40
-; CHECK-NEXT:    lda dn5, [p5], #-8; movxm p2, ##_ShuffleMode
-; CHECK-NEXT:    lda dj5, [p5], m2; sub r2, r28, r0
-; CHECK-NEXT:    mova m2, #15; and r27, r0, r2
-; CHECK-NEXT:    lda.u8 r30, [p5], m2; clz r0, r27; mov r1, #32
-; CHECK-NEXT:    mova m2, #-47; sel.eqz r0, r1, r0, r27; mov r2, #31
-; CHECK-NEXT:    lda.u8 r7, [p5], m2; sub r0, r2, r0; mov m4, #120
-; CHECK-NEXT:    lda r1, [p5], m4; movx r2, #3
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda m1, [p5], #-8; mov m2, #-40
+; CHECK-NEXT:    lda dn1, [p5], #-8; movx r28, #0; mov m4, #120
+; CHECK-NEXT:    lda dj1, [p5], #12; movxm p2, ##_ShuffleMode
+; CHECK-NEXT:    lda dn5, [p5], #-8; sub r2, r28, r0; mov r1, #32
+; CHECK-NEXT:    lda dj5, [p5], m2; and r27, r0, r2; mov m2, #15
+; CHECK-NEXT:    lda.u8 r30, [p5], m2; clz r0, r27; mov m2, #-47
+; CHECK-NEXT:    lda.u8 r7, [p5], m2; sel.eqz r0, r1, r0, r27; mov r2, #31
+; CHECK-NEXT:    lda r1, [p5], m4; sub r0, r2, r0; mov r2, #3
 ; CHECK-NEXT:    lda m2, [p5], #-4; lshl r0, r0, r2
 ; CHECK-NEXT:    lda dn2, [p5, #0]; mov m4, r0
 ; CHECK-NEXT:    lda dj2, [p5, #-4]; paddb [p2], m4

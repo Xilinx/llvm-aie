@@ -94,7 +94,7 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm.if.then5:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddxm [sp], #64
+; ASM-NEXT:    paddxm [sp], #64; nopx
 ; ASM-NEXT:    mova m0, #92; movxm p2, ##(param+24)
 ; ASM-NEXT:    padda [p2], m0
 ; ASM-NEXT:    lda r2, [p2], #12
@@ -107,18 +107,16 @@ define dso_local void @gemm.if.then5(ptr %add.ptr, ptr %tdm1, i32 %cond3) #5 {
 ; ASM-NEXT:    vlda bmll1, [p6, #0]
 ; ASM-NEXT:    lda m0, [p2], #-16
 ; ASM-NEXT:    lda dn0, [p2], #4
-; ASM-NEXT:    lda dj0, [p2], #4
-; ASM-NEXT:    lda dn4, [p2], #4; mov m1, #104
-; ASM-NEXT:    lda dj4, [p2], m1
-; ASM-NEXT:    mova m1, #-72
-; ASM-NEXT:    lda m4, [p2], m1; paddb [p6], m5
-; ASM-NEXT:    vlda bmll0, [p6, #0]
-; ASM-NEXT:    lda m1, [p2], #-16
-; ASM-NEXT:    lda dn1, [p2], #4; mov r6, r8
-; ASM-NEXT:    lda dj1, [p2], #4; movxm p3, #475136
-; ASM-NEXT:    lda dn5, [p2], #4; movx r4, #772; mov m6, #44
-; ASM-NEXT:    lda dj5, [p2], m6; movs p4, p0; movxm p0, #491520
-; ASM-NEXT:    mova m6, #-64; movs p5, p1; or r8, r0, r4; mov p1, p0
+; ASM-NEXT:    lda dj0, [p2], #4; paddb [p6], m5
+; ASM-NEXT:    vlda bmll0, [p6, #0]; mov m1, #104
+; ASM-NEXT:    lda dn4, [p2], #4
+; ASM-NEXT:    lda dj4, [p2], m1; mov m1, #-72
+; ASM-NEXT:    lda m4, [p2], m1
+; ASM-NEXT:    lda m1, [p2], #-16; movxm p3, #475136
+; ASM-NEXT:    lda dn1, [p2], #4; movs p4, p0; movxm p0, #491520
+; ASM-NEXT:    lda dj1, [p2], #4; or r6, r8, r8; mov m6, #44
+; ASM-NEXT:    lda dn5, [p2], #4; movx r4, #772; mov p5, p1
+; ASM-NEXT:    lda dj5, [p2], m6; movs p1, p0; or r8, r0, r4; mov m6, #-64
 ; ASM-NEXT:    lda dc2, [p2], m6; movs p0, p4; movxm p4, #.LBB0_1
 ; ASM-NEXT:    lda dc0, [p2], #4; add r0, r2, #-1; vmov bmlh1, bmll1
 ; ASM-NEXT:    lda dc4, [p2], #24; or r7, r10, r10; addm.nc r3, r0, #-1

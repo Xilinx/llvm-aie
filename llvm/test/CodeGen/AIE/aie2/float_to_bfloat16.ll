@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
 
 define bfloat @float_to_bf16_test(float %v) {
@@ -13,13 +13,12 @@ define bfloat @float_to_bf16_test(float %v) {
 ; CHECK-NEXT:    nopb ; mova r16, #0; nops ; nopx ; mov r2, r16; nopv
 ; CHECK-NEXT:    mov r29, r16
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
-; CHECK-NEXT:    vmov bmh0, x0
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    ret lr ; vmov bmh0, x0
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2 // Delay Slot 1
   %cvt = fptrunc float %v to bfloat
   ret bfloat %cvt
 }

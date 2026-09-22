@@ -62,13 +62,13 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ;
 ; ASM-LABEL: convert_bf16_to_bfp16:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    lda r0, [p2, #0]; mov m0, #4
-; ASM-NEXT:    padda [p2], m0
+; ASM-NEXT:    mova m0, #4
+; ASM-NEXT:    lda r0, [p2, #0]; paddb [p2], m0
 ; ASM-NEXT:    lda dn0, [p2], #4
 ; ASM-NEXT:    lda m1, [p2, #0]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    movx r24, #0
+; ASM-NEXT:    mova r24, #0
 ; ASM-NEXT:    mova dj0, #0; mov r26, r24
 ; ASM-NEXT:    vldb.fill.512 [p0, lf0, r24]; mov dj1, dj0
 ; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movs dc1, dj0; mov dn1, dn0

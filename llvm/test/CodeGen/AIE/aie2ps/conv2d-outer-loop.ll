@@ -42,7 +42,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r7, r8 // Delay Slot 3
 ; CHECK-NEXT:    ltu r28, r16, r18; mov r17, r10 // Delay Slot 2
-; CHECK-NEXT:    mova r2, #5; st r28, [p3, #0]; movx r24, #1; mov r19, r12 // Delay Slot 1
+; CHECK-NEXT:    mova r2, #5; st r28, [p3, #0]; or r19, r12, r12; mov r24, #1 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
 ; CHECK-NEXT:    mova dj0, #-48
 ; CHECK-NEXT:    lda.s8 r22, [p3, dj0]
@@ -79,7 +79,7 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    and r4, r4, r6
 ; CHECK-NEXT:    st r4, [p3, #-12]
 ; CHECK-NEXT:  .LBB0_4: // %_Z24setup_conv2d_iter_paramsR13conv2d_params.exit
-; CHECK-NEXT:    mova r4, #253; nopb ; nopxm
+; CHECK-NEXT:    mova r4, #253; nopxm
 ; CHECK-NEXT:    mova r6, #1; and r4, r22, r4
 ; CHECK-NEXT:    ne r4, r4, r6
 ; CHECK-NEXT:    jnz r4, #.LBB0_9
@@ -98,24 +98,24 @@ define void @conv2d_outer_loop(ptr noalias %ifm, ptr noalias %wts, ptr noalias %
 ; CHECK-NEXT:    lda.u8 r28, [p3], #1; mov m0, #131
 ; CHECK-NEXT:    lda.s8 r20, [p3], m0
 ; CHECK-NEXT:    lda m0, [p3], #-8
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda dn0, [p3], #-8
-; CHECK-NEXT:    lda dj0, [p3], #12
-; CHECK-NEXT:    lda dn4, [p3], #-8; mov m1, #188
-; CHECK-NEXT:    lda dj4, [p3], m1
-; CHECK-NEXT:    mova m1, #-284
-; CHECK-NEXT:    lda r6, [p3], m1
-; CHECK-NEXT:    mova m1, #76
-; CHECK-NEXT:    lda r30, [p3], m1
-; CHECK-NEXT:    mova m1, #52
+; CHECK-NEXT:    lda dj0, [p3], #12; mov m1, #188
+; CHECK-NEXT:    lda dn4, [p3], #-8
+; CHECK-NEXT:    lda dj4, [p3], m1; mov m1, #-284
+; CHECK-NEXT:    lda r6, [p3], m1; mov m1, #76
+; CHECK-NEXT:    lda r30, [p3], m1; mov m1, #52
 ; CHECK-NEXT:    lda r26, [p3], m1
 ; CHECK-NEXT:    lda m1, [p3], #-8
-; CHECK-NEXT:    lda dn1, [p3], #-8; movx crupsmode, #0
-; CHECK-NEXT:    lda dj1, [p3], #12; movx crsrsmode, #0; mov r1, #2
-; CHECK-NEXT:    lda dn5, [p3], #-8; lshl r5, r22, r1; mov m2, #32
-; CHECK-NEXT:    lda dj5, [p3], m2; lshl r24, r24, r1
-; CHECK-NEXT:    lda m2, [p3], #-8; add r24, r5, r24
-; CHECK-NEXT:    lda dn2, [p3], #-8; geu r5, r16, r18
-; CHECK-NEXT:    lda dj2, [p3], #12; movx r16, #0; mov dj3, #-158
+; CHECK-NEXT:    lda dn1, [p3], #-8
+; CHECK-NEXT:    lda dj1, [p3], #12; movx crupsmode, #0; mov m2, #32
+; CHECK-NEXT:    lda dn5, [p3], #-8; movx crsrsmode, #0; mov r1, #2
+; CHECK-NEXT:    lda dj5, [p3], m2; lshl r5, r22, r1
+; CHECK-NEXT:    lda m2, [p3], #-8; lshl r24, r24, r1
+; CHECK-NEXT:    lda dn2, [p3], #-8; add r24, r5, r24; mov dj3, #-158
+; CHECK-NEXT:    lda dj2, [p3], #12; geu r5, r16, r18; mov r16, #0
 ; CHECK-NEXT:    lda dn6, [p3], #-8; sub r16, r16, r22; mov dc3, #0
 ; CHECK-NEXT:    lda.s8 r3, [p3, dj3]; lshl r22, r5, r28; mov p6, p5
 ; CHECK-NEXT:    mova r18, #9; movs dc6, dc3; lshl r16, r16, r1; mov m3, r24

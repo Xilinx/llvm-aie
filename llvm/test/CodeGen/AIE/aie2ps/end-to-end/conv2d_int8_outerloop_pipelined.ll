@@ -136,8 +136,8 @@ define dso_local void @conv2d(i32 %0, ptr %add.ptr3, ptr %cond, ptr %cond.i, ptr
 ; ASM-NEXT:    lda dn6, [p6, #-4]; movs dc0, dj4; mov r1, m2
 ; ASM-NEXT:    padda [p1], m7; movs dc1, dj4; mov dj1, r16
 ; ASM-NEXT:    padda [p1], m2; movs dc5, dj4; add r0, r0, #-1; mov dj5, r18
-; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; movs dc3, dj4; or r30, r5, r5; mov r5, dj4
-; ASM-NEXT:    padda [p1], m7; movs dc7, dj4; or r8, r7, r7; mov r7, dj4
+; ASM-NEXT:    movs dc3, dj4; or r30, r5, r5; mov r5, dj4
+; ASM-NEXT:    vlda.ups.2x cml0, s0, upssign1, [p1, #0]; paddb [p1], m7; or r8, r7, r7; mov r7, dj4; movs dc7, dj4
 ; ASM-NEXT:    vlda.ups.2x cmh0, s0, upssign1, [p1, #0]; movs m1, r27; movx crsrsmode, #0; mov dj7, r20
 ; ASM-NEXT:  .LBB0_1: // %for.body.i
 ; ASM-NEXT:    // =>This Loop Header: Depth=1

@@ -99,7 +99,7 @@ define dso_local void @conv2d.for.body.i80(i32 %0, ptr %add.ptr.i.i48, ptr addrs
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: conv2d.for.body.i80:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddxm [sp], #64; nopb ; movs m4, p5; nopx ; mov p5, p3; nopv
+; ASM-NEXT:    paddxm [sp], #64; nopb ; movs p5, p3; nopx ; mov m4, p5; nopv
 ; ASM-NEXT:    mova m0, #-68; nopb ; nopxm ; st p6, [sp, #-64] // 4-byte Folded Spill
 ; ASM-NEXT:    vlda.ups.2x cml3, s0, upssign1, [p5], #64; mov p6, sp
 ; ASM-NEXT:    vlda.ups.2x cmh3, s0, upssign1, [p5], #64; paddb [p6], m0

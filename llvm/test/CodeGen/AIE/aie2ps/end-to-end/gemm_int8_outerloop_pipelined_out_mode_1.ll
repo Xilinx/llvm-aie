@@ -81,30 +81,26 @@ define dso_local void @gemm_int8_1(ptr noalias %p_a, ptr noalias %p_b, ptr noali
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: gemm_int8_1:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    mova dj0, #37; nopb ; nopx
-; ASM-NEXT:    lda.u8 r2, [p5, dj0]; mov m0, #48
-; ASM-NEXT:    padda [p5], m0
+; ASM-NEXT:    mova m0, #48; nopb ; nopx ; mov dj0, #37; nops
+; ASM-NEXT:    lda.u8 r2, [p5, dj0]; paddb [p5], m0
 ; ASM-NEXT:    lda.u8 r7, [p5], #4; mov m0, #-48
-; ASM-NEXT:    lda.u8 r24, [p5], m0
-; ASM-NEXT:    mova m0, #68
+; ASM-NEXT:    lda.u8 r24, [p5], m0; mov m0, #68
 ; ASM-NEXT:    lda r30, [p5], m0
 ; ASM-NEXT:    lda m0, [p5], #-8
 ; ASM-NEXT:    lda dn0, [p5], #-8
 ; ASM-NEXT:    lda dj0, [p5], #12
 ; ASM-NEXT:    lda dn4, [p5], #-8; mov m1, #-44
-; ASM-NEXT:    lda dj4, [p5], m1
-; ASM-NEXT:    mova m1, #76
+; ASM-NEXT:    lda dj4, [p5], m1; mov m1, #76
 ; ASM-NEXT:    lda m3, [p5], m1
 ; ASM-NEXT:    nop
-; ASM-NEXT:    lda m1, [p5], #-8; movx r0, #0
-; ASM-NEXT:    lda dn1, [p5], #-8; movxm p2, ##_ShuffleMode
-; ASM-NEXT:    lda dj1, [p5], #12; sub r4, r0, r2
-; ASM-NEXT:    lda dn5, [p5], #-8; and r27, r2, r4; mov m2, #-40
-; ASM-NEXT:    lda dj5, [p5], m2; clz r2, r27; mov r1, #32
-; ASM-NEXT:    mova m2, #15; sel.eqz r2, r1, r2, r27; mov r4, #31
-; ASM-NEXT:    lda.u8 r28, [p5], m2; sub r2, r4, r2
-; ASM-NEXT:    mova m2, #-47; movx r4, #3
-; ASM-NEXT:    lda.u8 r17, [p5], m2; lshl r2, r2, r4; mov m4, #120
+; ASM-NEXT:    mova r0, #0; movxm p2, ##_ShuffleMode
+; ASM-NEXT:    lda m1, [p5], #-8; sub r4, r0, r2; mov m2, #-40
+; ASM-NEXT:    lda dn1, [p5], #-8; and r27, r2, r4; mov r1, #32
+; ASM-NEXT:    lda dj1, [p5], #12; clz r2, r27; mov m4, #120
+; ASM-NEXT:    lda dn5, [p5], #-8; sel.eqz r2, r1, r2, r27; mov r4, #31
+; ASM-NEXT:    lda dj5, [p5], m2; sub r2, r4, r2; mov m2, #15
+; ASM-NEXT:    lda.u8 r28, [p5], m2; movx r4, #3; mov m2, #-47
+; ASM-NEXT:    lda.u8 r17, [p5], m2; lshl r2, r2, r4
 ; ASM-NEXT:    lda r1, [p5], m4; mov m4, r2
 ; ASM-NEXT:    lda m2, [p5], #-4; paddb [p2], m4
 ; ASM-NEXT:    lda r16, [p2, #0]

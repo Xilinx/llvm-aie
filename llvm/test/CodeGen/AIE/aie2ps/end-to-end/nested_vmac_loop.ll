@@ -58,7 +58,7 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; REMARKS-NEXT: ...
 ; ASM-LABEL: nested_vmac_loop:
 ; ASM:       // %bb.0: // %bb
-; ASM-NEXT:    mova dj0, #36; nopx
+; ASM-NEXT:    mova dj0, #36; nopxm
 ; ASM-NEXT:    lda r0, [p5, dj0]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
@@ -77,31 +77,26 @@ define weak_odr dso_local void @nested_vmac_loop(ptr noalias %arg, ptr noalias %
 ; ASM-NEXT:    mova m0, #12
 ; ASM-NEXT:    padda [p5], m0
 ; ASM-NEXT:    lda r27, [p5], #-4; mov m0, #184
-; ASM-NEXT:    lda r2, [p5], m0; mov dj1, #-144
-; ASM-NEXT:    lda m2, [p5, dj1]; mov dj0, #-48
-; ASM-NEXT:    lda m0, [p5, dj0]
+; ASM-NEXT:    lda r2, [p5], m0; mov dj0, #-48
+; ASM-NEXT:    lda m0, [p5, dj0]; mov dj1, #-144
+; ASM-NEXT:    lda m2, [p5, dj1]
+; ASM-NEXT:    lda dj5, [p5, #-24]
 ; ASM-NEXT:    lda r6, [p5, #0]
 ; ASM-NEXT:    lda m1, [p5, #-20]
 ; ASM-NEXT:    lda dn5, [p5, #-28]
-; ASM-NEXT:    lda dc1, [p5, #-16]
-; ASM-NEXT:    lda dj5, [p5, #-24]
-; ASM-NEXT:    lda dc5, [p5, #-12]; mov dj0, #-64
-; ASM-NEXT:    lda dn0, [p5, dj0]; mov dj1, #-152
-; ASM-NEXT:    lda r1, [p5, dj1]
-; ASM-NEXT:    mova dj1, #-56
-; ASM-NEXT:    lda dn4, [p5, dj1]; mov dj0, #-60
-; ASM-NEXT:    lda dj0, [p5, dj0]
-; ASM-NEXT:    mova dj1, #-52
-; ASM-NEXT:    lda dj4, [p5, dj1]
-; ASM-NEXT:    mova dj1, #-36
-; ASM-NEXT:    lda dn1, [p5, dj1]
-; ASM-NEXT:    mova dj1, #-44; movx r22, #0
-; ASM-NEXT:    lda dc0, [p5, dj1]; movx r4, #2; mov r18, #972
-; ASM-NEXT:    mova dj1, #-40; lshl r2, r2, r4; mov r3, #0
+; ASM-NEXT:    lda dc1, [p5, #-16]; mov dj0, #-64
+; ASM-NEXT:    lda dc5, [p5, #-12]; mov dj1, #-152
+; ASM-NEXT:    lda dn0, [p5, dj0]
+; ASM-NEXT:    lda r1, [p5, dj1]; mov dj1, #-56
+; ASM-NEXT:    lda dn4, [p5, dj1]; movx r4, #2; mov dj0, #-60
+; ASM-NEXT:    lda dj0, [p5, dj0]; movx r22, #0; mov dj1, #-52
+; ASM-NEXT:    lda dj4, [p5, dj1]; movx r18, #972; mov dj1, #-36
+; ASM-NEXT:    lda dn1, [p5, dj1]; movx r3, #0; mov dj1, #-44
+; ASM-NEXT:    lda dc0, [p5, dj1]; lshl r2, r2, r4; mov dj1, #-40
 ; ASM-NEXT:    lda dc4, [p5, dj1]; sel.eqz r16, r22, r2, r27; mov r24, r22
 ; ASM-NEXT:    lda dj1, [p5, #-32]; or r25, r22, r22; mov m3, r16
-; ASM-NEXT:    padda [p1], m3; movs p2, p0; eqz r20, r6; mov r4, #22
-; ASM-NEXT:    mova r6, #23; movs p5, p4; movx r2, #106; mov p0, p1
+; ASM-NEXT:    padda [p1], m3; movs p2, p0; movx r4, #22; mov p5, p4
+; ASM-NEXT:    mova r6, #23; movs p0, p1; eqz r20, r6; mov r2, #106
 ; ASM-NEXT:    mova m3, #-288; movs p1, p2; or r16, r20, r18; mov p2, p3
 ; ASM-NEXT:  .LBB0_2: // %bb61
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
