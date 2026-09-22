@@ -73,16 +73,13 @@ exit:
   ret void
 }
 
-; An i64 exit count whose range fits in 32 bits. The trip count is evaluated in
-; i65, but the profitability gate looks at its range, which needs only 10 bits,
-; so versioning applies: the trip count is expanded in i65 and the guard
-; truncates it back to the i32 it compares in, losslessly.
+; The same i64 exit count as above, but with a range that fits 32 bits: the
+; gate is on the exit count's type, so a narrow range does not rescue it.
+; Deliberate, the high copy could not have become a zero-overhead loop off an
+; i64 counter anyway. See the FIXME in getGuardTripCount() to relax this.
 ; CHECK-LABEL: define void @narrow_range_i64_trip_count
-; CHECK: %[[UMAX:.*]] = call i65 @llvm.umax.i65
-; CHECK: %[[THR:.*]] = call i32 @llvm.aie2.loop.version.threshold(i32 -1)
-; CHECK: %[[TC:.*]] = trunc i65 %[[UMAX]] to i32
-; CHECK: icmp ult i32 %[[TC]], %[[THR]]
-; CHECK: loop.lver.high:
+; CHECK-NOT: icmp ult i32
+; CHECK-NOT: lver
 define void @narrow_range_i64_trip_count(ptr noalias %a, ptr noalias %b,
                                          i64 %n) {
 entry:
@@ -103,13 +100,12 @@ exit:
 }
 
 ; The candidate and profitability gates are pure SCEV and LoopInfo reasoning,
-; so the four cases below are covered for aie2 only.
+; so the six cases below are covered for aie2 only.
 ;
-; An i16 induction variable gives an i17 trip count, which fits i32 with room
-; to spare. Versioning applies, and the guard widens the trip count instead of
-; truncating it.
+; An i16 exit count is narrower than the guard, so the +1 cannot overflow and
+; folds into the smax, leaving a plain widening to the guard's type.
 ; CHECK-LABEL: define void @narrow_trip_count
-; CHECK: %[[TC:.*]] = zext i17 %{{.*}} to i32
+; CHECK: %[[TC:.*]] = zext nneg i16 %{{.*}} to i32
 ; CHECK: icmp ult i32 %[[TC]]
 define void @narrow_trip_count(ptr noalias %a, ptr noalias %b, i16 %n) {
 entry:
@@ -129,13 +125,13 @@ exit:
   ret void
 }
 
-; An unsigned "i != n" loop has an exit count of up to UINT32_MAX, so its trip
-; count needs 33 bits even though the exit count is i32. The guard could not
-; hold it, so versioning bails. A check on the exit count's type width would
-; have accepted this loop.
+; An unsigned "i != n" loop wraps its trip count to 0 for n == 0. Versioning
+; still applies: the guard is a selector, not a bound, so the wrapped case just
+; runs the fallback copy. Rejecting it would also reject every rotated
+; "i < n" loop, which is the shape guarded_unsigned_trip_count covers below.
 ; CHECK-LABEL: define void @unsigned_wrapping_trip_count
-; CHECK-NOT: icmp ult
-; CHECK-NOT: lver
+; CHECK: %[[THR:.*]] = call i32 @llvm.aie2.loop.version.threshold(i32 -1)
+; CHECK: icmp ult i32 %n, %[[THR]]
 define void @unsigned_wrapping_trip_count(ptr noalias %a, ptr noalias %b,
                                           i32 %n) {
 entry:
@@ -154,9 +150,62 @@ exit:
   ret void
 }
 
+; The rotated shape clang produces for "for (int i = 0; i < n / 64; ++i)": an
+; exit count of (n /u 64) - 1. Versioned for the same reason as
+; unsigned_wrapping_trip_count above, the +1 evaluated in i32 folds into the
+; division; neither the division nor the entry guard is what makes it fold.
+; Kept because this is the kernel shape the fix was reported against.
+; CHECK-LABEL: define void @guarded_unsigned_trip_count
+; CHECK: %[[DIV:.*]] = lshr i32 %{{.*}}, 6
+; CHECK: %[[THR:.*]] = call i32 @llvm.aie2.loop.version.threshold(i32 -1)
+; CHECK: icmp ult i32 %[[DIV]], %[[THR]]
+; CHECK: loop.lver.high:
+define void @guarded_unsigned_trip_count(ptr noalias %a, ptr noalias %b,
+                                         i32 %n) {
+entry:
+  %div = lshr i32 %n, 6
+  %empty = icmp ult i32 %n, 64
+  br i1 %empty, label %exit, label %loop
+loop:
+  %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
+  %pa = getelementptr i32, ptr %a, i32 %i
+  %x = load i32, ptr %pa, align 4
+  %y = mul i32 %x, 1234
+  %pb = getelementptr i32, ptr %b, i32 %i
+  store i32 %y, ptr %pb, align 4
+  %i.next = add nuw nsw i32 %i, 1
+  %c = icmp eq i32 %i.next, %div
+  br i1 %c, label %exit, label %loop, !llvm.loop !10
+exit:
+  ret void
+}
+
+; "do { ... } while (++i != 0)" runs exactly 2^32 times, wrapping the trip count
+; to a constant 0. Unlike unsigned_wrapping_trip_count the wrap is certain, not
+; merely possible, so the high copy could never be selected: versioning bails.
+; CHECK-LABEL: define void @wraparound_trip_count
+; CHECK-NOT: icmp ult
+; CHECK-NOT: lver
+define void @wraparound_trip_count(ptr noalias %a, ptr noalias %b) {
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
+  %pa = getelementptr i32, ptr %a, i32 %i
+  %x = load i32, ptr %pa, align 4
+  %y = mul i32 %x, 1234
+  %pb = getelementptr i32, ptr %b, i32 %i
+  store i32 %y, ptr %pb, align 4
+  %i.next = add i32 %i, 1
+  %c = icmp ne i32 %i.next, 0
+  br i1 %c, label %loop, label %exit, !llvm.loop !11
+exit:
+  ret void
+}
+
 ; A data-dependent exit leaves SCEV with no backedge count at all, so there is
 ; no trip count to build a guard on. This is the profitability gate's other
-; rejection, the one the wide and wrapping cases above do not reach.
+; rejection, the one the wide case above does not reach.
 ; CHECK-LABEL: define void @unknown_trip_count
 ; CHECK-NOT: icmp ult
 ; CHECK-NOT: lver
@@ -254,3 +303,5 @@ exit:
 !7 = distinct !{!7, !1}
 !8 = distinct !{!8, !1}
 !9 = distinct !{!9, !1}
+!10 = distinct !{!10, !1}
+!11 = distinct !{!11, !1}
