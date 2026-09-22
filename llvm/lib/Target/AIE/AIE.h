@@ -139,6 +139,10 @@ llvm::FunctionPass *createAIEInnerLoopVersioningPass();
 extern char &AIEOuterLoopPointerOptimizerID;
 void initializeAIEOuterLoopPointerOptimizerPass(PassRegistry &);
 llvm::FunctionPass *createAIEOuterLoopPointerOptimizerPass();
+
+extern char &AIEInnerLoopPointerOptimizerID;
+void initializeAIEInnerLoopPointerOptimizerPass(PassRegistry &);
+llvm::FunctionPass *createAIEInnerLoopPointerOptimizerPass();
 } // namespace llvm
 
 #endif
