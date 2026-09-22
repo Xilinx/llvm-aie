@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+; Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 ; affiliates
 
 ; RUN: opt -passes=instcombine -S < %s | FileCheck %s
@@ -15,8 +15,7 @@ target datalayout = "p:32:32:32"
 define ptr @test1(ptr %x) {
 ; CHECK-LABEL: @test1(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[B1:%.*]] = load i32, ptr [[X:%.*]], align 4
-; CHECK-NEXT:    [[C:%.*]] = inttoptr i32 [[B1]] to ptr
+; CHECK-NEXT:    [[C:%.*]] = load ptr, ptr [[X:%.*]], align 4
 ; CHECK-NEXT:    ret ptr [[C]]
 ;
 entry:
