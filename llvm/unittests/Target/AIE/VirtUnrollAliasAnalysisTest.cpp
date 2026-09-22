@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,6 +37,9 @@ std::unique_ptr<TargetMachine> createTargetMachine() {
 class VirtUnrollAliasAnalysisTest : public testing::Test {
 protected:
   static const char *MIRString;
+  static const char *DifferentStepsMIRString;
+  static const char *MMOOffsetMIRString;
+  static const char *PAddCollapseMIRString;
   LLVMContext Context;
   std::unique_ptr<TargetMachine> TM;
   std::unique_ptr<MachineModuleInfo> MMI;
@@ -49,10 +52,11 @@ protected:
     LLVMInitializeAIETargetMC();
   }
 
-  void SetUp() override {
+  void SetUp() override { parse(MIRString); }
+
+  void parse(const char *MIR) {
     TM = createTargetMachine();
-    std::unique_ptr<MemoryBuffer> MBuffer =
-        MemoryBuffer::getMemBuffer(MIRString);
+    std::unique_ptr<MemoryBuffer> MBuffer = MemoryBuffer::getMemBuffer(MIR);
     Parser = createMIRParser(std::move(MBuffer), Context);
     if (!Parser)
       report_fatal_error("null MIRParser");
@@ -121,6 +125,104 @@ TEST_F(VirtUnrollAliasAnalysisTest, TestSameIterators) {
   // updating the pointer after the last load and store (post. inc.).
   EXPECT_TRUE(AIE::aliasAcrossVirtualUnrolls(Store1, Load3, 3, 2) ==
               AliasResult::MayAlias);
+}
+
+// An in-place narrowing conversion: both pointers start at %p, the load
+// advances 8 bytes per iteration and reads 4, the store advances 4 and writes
+// 2. The chains are rooted together but run at different rates, so the
+// update-count model cannot compare them and the byte intervals must be used.
+//
+// Addresses, with n the iteration index:
+//   load  [8n, 8n+4)
+//   store [4n, 4n+2)
+//
+// The store trails the load and can never reach a later load, but a load can
+// be caught by a later store (load at n=1 covers [8,12), store at n=2 covers
+// [8,10)). The two directions must therefore get different answers.
+TEST_F(VirtUnrollAliasAnalysisTest, TestDifferentSteps) {
+  parse(DifferentStepsMIRString);
+  const MachineFunction *F = getMachineFunction(M.get(), "inplace_narrow");
+  const MachineBasicBlock *MBB = F->getBlockNumbered(1);
+  std::vector<const MachineInstr *> Instr;
+  getInstructions(MBB, Instr);
+  const MachineInstr *Load = Instr[0];
+  const MachineInstr *Store = Instr[1];
+
+  // Same iteration: load [0,4) and store [0,2) overlap.
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Load, Store, 0, 0),
+            AliasResult::MayAlias);
+
+  // The store of one iteration never reaches the load of a later one. This is
+  // the edge that otherwise pins RecMII to the length of the loop body.
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Store, Load, 0, 1),
+            AliasResult::NoAlias);
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Store, Load, 0, 4),
+            AliasResult::NoAlias);
+
+  // The opposite direction does overlap and must be kept. Answering this one
+  // from a single iteration would be wrong: the two accesses are disjoint at
+  // n=0 and only collide from n=1 onwards.
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Load, Store, 0, 1),
+            AliasResult::MayAlias);
+
+  // A load never reaches another load, whatever the distance.
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Load, Load, 0, 1),
+            AliasResult::NoAlias);
+}
+
+// Same loop as above, but the store is the part of a wider access that sits 8
+// bytes past the address of its IR Value, as left behind by splitting a wide
+// store. The MachineMemOperand offset must be part of the byte address.
+//
+//   load  [8n, 8n+4)
+//   store [4n+8, 4n+10)
+//
+// Without the offset the store at n=0 would be [0,2), which a load of the next
+// iteration [8,12) never reaches. With it, the store covers [8,10) and does.
+TEST_F(VirtUnrollAliasAnalysisTest, TestMMOOffset) {
+  parse(MMOOffsetMIRString);
+  const MachineFunction *F = getMachineFunction(M.get(), "offset_narrow");
+  const MachineBasicBlock *MBB = F->getBlockNumbered(1);
+  std::vector<const MachineInstr *> Instr;
+  getInstructions(MBB, Instr);
+  const MachineInstr *Load = Instr[0];
+  const MachineInstr *Store = Instr[1];
+
+  EXPECT_EQ(Store->memoperands().front()->getOffset(), 8);
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Store, Load, 0, 1),
+            AliasResult::MayAlias);
+  // Two iterations later the store [8,10) is still behind the load [16,20) and
+  // keeps falling further behind, so a distance that is large enough is clear.
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Store, Load, 0, 4),
+            AliasResult::NoAlias);
+}
+
+// The store goes through %off = %ps + 4, with a size equal to that offset and
+// an add.2d user of %ps. aliasAcrossVirtualUnrolls then queries the store as
+// %ps, the base of a wider padd access. The 4 bytes that %off added must still
+// be part of the byte address.
+//
+//   load  [8n+4, 8n+8)
+//   store [8n+4, 8n+8)
+//
+// Without those 4 bytes the store would be [8n, 8n+4), seemingly clear of the
+// load it actually overlaps.
+TEST_F(VirtUnrollAliasAnalysisTest, TestPAddCollapsedOffset) {
+  parse(PAddCollapseMIRString);
+  const MachineFunction *F = getMachineFunction(M.get(), "padd_collapse");
+  const MachineBasicBlock *MBB = F->getBlockNumbered(1);
+  std::vector<const MachineInstr *> Instr;
+  getInstructions(MBB, Instr);
+  const MachineInstr *Load = Instr[0];
+  const MachineInstr *Store = Instr[1];
+
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Load, Store, 0, 0),
+            AliasResult::MayAlias);
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Store, Load, 0, 0),
+            AliasResult::MayAlias);
+  // One iteration apart the accesses are a full stride away and stay so.
+  EXPECT_EQ(AIE::aliasAcrossVirtualUnrolls(Store, Load, 0, 1),
+            AliasResult::NoAlias);
 }
 
 const char *VirtUnrollAliasAnalysisTest::MIRString = R"MIR(
@@ -247,6 +349,198 @@ body:             |
     renamable $r0 = MOV_RLC_imm10_pseudo 0
     RET implicit $lr
     DelayedSchedBarrier implicit $r0
+
+...
+)MIR";
+
+const char *VirtUnrollAliasAnalysisTest::DifferentStepsMIRString = R"MIR(
+--- |
+  define void @inplace_narrow(ptr noalias %p, i32 %n) {
+  entry:
+    %umax = call i32 @llvm.umax.i32(i32 %n, i32 1)
+    call void @llvm.set.loop.iterations.i32(i32 %umax)
+    br label %loop
+
+  loop:                                             ; preds = %loop, %entry
+    %pl = phi ptr [ %p, %entry ], [ %pl.next, %loop ]
+    %ps = phi ptr [ %p, %entry ], [ %ps.next, %loop ]
+    %v = load i32, ptr %pl, align 4
+    %w = trunc i32 %v to i16
+    store i16 %w, ptr %ps, align 2
+    %pl.next = getelementptr inbounds i8, ptr %pl, i20 8
+    %ps.next = getelementptr inbounds i8, ptr %ps, i20 4
+    %0 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %0, label %loop, label %exit
+
+  exit:                                             ; preds = %loop
+    ret void
+  }
+
+  declare i32 @llvm.umax.i32(i32, i32)
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+...
+---
+name:            inplace_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $r0
+
+    renamable $r1 = MOV_RLC_imm10_pseudo 1
+    renamable $r27 = LTU renamable $r1, renamable $r0
+    renamable $r0 = SELNEZ killed renamable $r0, killed renamable $r1, killed renamable $r27
+    $lc = ADD_NC $r0, 0
+    $ls = MOVXM_lng_cg %bb.1
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+    $p1 = MOV_mv_scl $p0
+
+  bb.1.loop:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1
+
+    renamable $r0, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 8 :: (load (s32) from %ir.pl)
+    renamable $p1 = ST_S16_ag_pstm_nrm_imm killed renamable $r0, killed renamable $p1, 4 :: (store (s16) into %ir.ps)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
+)MIR";
+
+const char *VirtUnrollAliasAnalysisTest::MMOOffsetMIRString = R"MIR(
+--- |
+  define void @offset_narrow(ptr noalias %p, i32 %n) {
+  entry:
+    %umax = call i32 @llvm.umax.i32(i32 %n, i32 1)
+    call void @llvm.set.loop.iterations.i32(i32 %umax)
+    br label %loop
+
+  loop:                                             ; preds = %loop, %entry
+    %pl = phi ptr [ %p, %entry ], [ %pl.next, %loop ]
+    %ps = phi ptr [ %p, %entry ], [ %ps.next, %loop ]
+    %v = load i32, ptr %pl, align 4
+    %w = trunc i32 %v to i16
+    store i16 %w, ptr %ps, align 2
+    %pl.next = getelementptr inbounds i8, ptr %pl, i20 8
+    %ps.next = getelementptr inbounds i8, ptr %ps, i20 4
+    %0 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %0, label %loop, label %exit
+
+  exit:                                             ; preds = %loop
+    ret void
+  }
+
+  declare i32 @llvm.umax.i32(i32, i32)
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+...
+---
+name:            offset_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $r0
+
+    renamable $r1 = MOV_RLC_imm10_pseudo 1
+    renamable $r27 = LTU renamable $r1, renamable $r0
+    renamable $r0 = SELNEZ killed renamable $r0, killed renamable $r1, killed renamable $r27
+    $lc = ADD_NC $r0, 0
+    $ls = MOVXM_lng_cg %bb.1
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+    $p1 = MOV_mv_scl $p0
+
+  bb.1.loop:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1
+
+    renamable $r0, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 8 :: (load (s32) from %ir.pl)
+    renamable $p1 = ST_S16_ag_pstm_nrm_imm killed renamable $r0, killed renamable $p1, 4 :: (store (s16) into %ir.ps + 8)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
+)MIR";
+
+const char *VirtUnrollAliasAnalysisTest::PAddCollapseMIRString = R"MIR(
+--- |
+  define void @padd_collapse(ptr noalias %p, i32 %n, i32 %x) {
+  entry:
+    %umax = call i32 @llvm.umax.i32(i32 %n, i32 1)
+    call void @llvm.set.loop.iterations.i32(i32 %umax)
+    br label %loop
+
+  loop:                                             ; preds = %loop, %entry
+    %pl = phi ptr [ %p, %entry ], [ %pl.next, %loop ]
+    %ps = phi ptr [ %p, %entry ], [ %ps.next, %loop ]
+    %pl.mid = getelementptr inbounds i8, ptr %pl, i20 4
+    %v = load i32, ptr %pl.mid, align 4
+    %off = getelementptr inbounds i8, ptr %ps, i20 4
+    store i32 %x, ptr %off, align 4
+    %unused = call { ptr, i20 } @llvm.aie2.add.2d(ptr %ps, i20 0, i20 1, i20 2, i20 0)
+    %pl.next = getelementptr inbounds i8, ptr %pl.mid, i20 4
+    %ps.next = getelementptr inbounds i8, ptr %ps, i20 8
+    %0 = call i1 @llvm.loop.decrement.i32(i32 1)
+    br i1 %0, label %loop, label %exit
+
+  exit:                                             ; preds = %loop
+    ret void
+  }
+
+  declare { ptr, i20 } @llvm.aie2.add.2d(ptr, i20, i20, i20, i20)
+  declare i32 @llvm.umax.i32(i32, i32)
+  declare void @llvm.set.loop.iterations.i32(i32)
+  declare i1 @llvm.loop.decrement.i32(i32)
+
+...
+---
+name:            padd_collapse
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $r0, $r1
+
+    renamable $r2 = MOV_RLC_imm10_pseudo 1
+    renamable $r27 = LTU renamable $r2, renamable $r0
+    renamable $r0 = SELNEZ killed renamable $r0, killed renamable $r2, killed renamable $r27
+    $lc = ADD_NC $r0, 0
+    $ls = MOVXM_lng_cg %bb.1
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+    $p1 = MOV_mv_scl $p0
+
+  bb.1.loop:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1, $r1
+
+    renamable $r0 = LDA_dms_lda_idx_imm renamable $p0, 4 :: (load (s32) from %ir.pl.mid)
+    ST_dms_sts_idx_imm renamable $r1, renamable $p1, 4 :: (store (s32) into %ir.off)
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit:
+    RET implicit $lr
+    DelayedSchedBarrier
 
 ...
 )MIR";
