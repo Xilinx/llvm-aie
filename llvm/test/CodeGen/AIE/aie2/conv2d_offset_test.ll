@@ -25,10 +25,10 @@ define dso_local noundef i32 @_Z3foov() #0 {
 ; CHECK-NEXT:    paddb [p0], #8
 ; CHECK-NEXT:    lda r0, [p0], #88
 ; CHECK-NEXT:    lda.u8 r1, [p0], m0
-; CHECK-NEXT:    mova m0, #12
+; CHECK-NEXT:    mov m0, #12
 ; CHECK-NEXT:    lda r1, [p0], #-68
 ; CHECK-NEXT:    lda.u16 r1, [p0], m0
-; CHECK-NEXT:    mova m0, #60
+; CHECK-NEXT:    mov m0, #60
 ; CHECK-NEXT:    lda.u8 r1, [p0], m0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r1, [p0], #76

@@ -15,6 +15,8 @@
 # RUN:   --aie-wawreg-rewrite=0 \
 # RUN:   --aie-preassign-multi-slot-instr=1 \
 # RUN:   --aie-materialize-pipeline=0 \
+# RUN:   --aie-materialize-pipeline=0 \
+# RUN:   --aie-war-slot-avoidance=0 \
 # RUN:   --aie-postpipeliner-maxii=7 \
 # RUN:   --debug-only=aie-postregalloc \
 # RUN:   -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=METRICS

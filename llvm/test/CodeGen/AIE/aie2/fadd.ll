@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
 
@@ -12,7 +12,7 @@ define bfloat @test_fadd_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_fadd_bfloat:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r16, #0; nops ; movx r0, #16; mov r3, r16; nopv
-; CHECK-NEXT:    nopa ; lshl r1, r1, r0; mov r29, r16
+; CHECK-NEXT:    nopa ; nopb ; lshl r1, r1, r0; mov r29, r16
 ; CHECK-NEXT:    lshl r0, r2, r0; vinsert.32 x0, x0, r29, r1
 ; CHECK-NEXT:    vinsert.32 x2, x0, r29, r0
 ; CHECK-NEXT:    mova r0, #28; vmov bmh0, x0
@@ -20,13 +20,12 @@ define bfloat @test_fadd_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r3, r3 // Delay Slot 1
 entry:
   %fadd = fadd bfloat %a, %b
   ret bfloat %fadd
@@ -35,7 +34,7 @@ entry:
 define float @test_fadd_float(float %a, float %b) {
 ; CHECK-LABEL: test_fadd_float:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r16, #0; nopb ; nopx ; mov r3, r16
+; CHECK-NEXT:    mova r16, #0; nopb ; nopx ; mov r3, r16; nops
 ; CHECK-NEXT:    mov r29, r16
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
 ; CHECK-NEXT:    vinsert.32 x2, x0, r29, r2
@@ -43,13 +42,12 @@ define float @test_fadd_float(float %a, float %b) {
 ; CHECK-NEXT:    vmov bmh1, x2; vadd.f bmh0, bmh0, bmh1, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vmov x0, bmh0 // Delay Slot 4
-; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vmov x0, bmh0 // Delay Slot 3
+; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r3, r3 // Delay Slot 1
 entry:
   %fadd = fadd float %a, %b
   ret float %fadd

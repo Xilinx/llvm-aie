@@ -367,6 +367,12 @@ void AIEHazardRecognizer::Reset() {
 
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
+  return getHazardType(SU, DeltaCycles, /*AvoidSlots=*/SlotBits(0));
+}
+
+ScheduleHazardRecognizer::HazardType
+AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles,
+                                   SlotBits AvoidSlots) {
   MachineInstr *MI = SU->getInstr();
   assert(!MI->isBundled() &&
          "Unexpected bundled instruction when checking hazards.");
@@ -388,19 +394,29 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
-    for (const auto AltInstOpcode : *AlternateInsts) {
-      ScheduleHazardRecognizer::HazardType Haz =
-          getHazardType(Scoreboard, MI, TII->get(AltInstOpcode), DeltaCycles);
-      // Check if there is NoHazard, If there is a Hazard or NoopHazard check
-      // for the next possible Opcode.
-      if (Haz == NoHazard) {
-        SelectedAltDescs.setAlternateDescriptor(MI, AltInstOpcode);
-        return NoHazard;
+    const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+
+    // Two passes over the alternates:
+    //   1. Prefer slots not in AvoidSlots (most restrictive).
+    //   2. Accept any slot (original fallback, no restriction).
+    // When AvoidSlots == 0 both passes are identical; the first pass will
+    // always find a winner (if one exists) and we return before the second.
+    for (const SlotBits Mask : {AvoidSlots, SlotBits(0)}) {
+      for (const unsigned AltInstOpcode : *AlternateInsts) {
+        const MCSlotKind AltSlotKind = Formats->getSlotKind(AltInstOpcode);
+        if (AltSlotKind != MCSlotKind()) {
+          const MCSlotInfo *const AltSlotInfo =
+              Formats->getSlotInfo(AltSlotKind);
+          if (AltSlotInfo && (AltSlotInfo->getSlotSet() & Mask))
+            continue; // This slot conflicts with an avoid-slot
+        }
+        if (getHazardType(Scoreboard, MI, TII->get(AltInstOpcode),
+                          DeltaCycles) == NoHazard) {
+          SelectedAltDescs.setAlternateDescriptor(MI, AltInstOpcode);
+          return NoHazard;
+        }
       }
     }
-    // In the above loop we are trying to find the best one where there is
-    // NoHazard, if the loop is not able to find such case it will be a
-    // NoopHazard only.
     return NoopHazard;
   }
 

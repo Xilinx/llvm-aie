@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 --mtriple=aie2 --filetype=asm -o - %s | FileCheck %s
 
 define void @test(i8 %a, i32 %b) {
@@ -18,8 +18,8 @@ define void @test(i8 %a, i32 %b) {
 ; CHECK-NEXT:    xor r3, r1, r2
 ; CHECK-NEXT:    lshl r3, r3, r2
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r1, [p0, #0]
-; CHECK-NEXT:    mova r3, #0; extend.u8 r0, r0
+; CHECK-NEXT:    st.s8 r1, [p0, #0]; extend.u8 r0, r0
+; CHECK-NEXT:    movx r3, #0
 ; CHECK-NEXT:    ltu r0, r3, r0
 ; CHECK-NEXT:    and r1, r1, r0
 ; CHECK-NEXT:    xor r1, r1, r2

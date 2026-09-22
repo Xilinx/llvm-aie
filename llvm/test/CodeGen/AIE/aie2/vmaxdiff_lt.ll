@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 
 
@@ -12,14 +12,14 @@ define <64 x i8> @test_vmaxdiff_lt_v64int8(<64 x i8> %a, <64 x i8>  %b, i1 %sgn,
 ; CHECK-LABEL: test_vmaxdiff_lt_v64int8:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; and r0, r0, r1
+; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmaxdiff_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
 ; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmaxdiff.lt8(<64 x i8> %a, <64 x i8>  %b, i32 %conv.i)
@@ -66,13 +66,13 @@ entry:
 define <32 x i16> @test_vmaxdiff_lt_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %b, i1 %sgn, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v32uint16_tbRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmaxdiff_lt.d16 x0, r16, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
@@ -121,13 +121,13 @@ entry:
 define <16 x i32> @test_vmaxdiff_lt_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %sgn, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v16int32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmaxdiff_lt.d32 x0, r16, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:

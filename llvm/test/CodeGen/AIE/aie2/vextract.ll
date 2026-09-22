@@ -4,20 +4,20 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 
 define dso_local noundef signext i32 @_Z15test_ext_v2int4Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_ext_v2int4Dv16_iii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
+; CHECK-NEXT:    mov r1, r16
 ; CHECK-NEXT:    mova r16, #63
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
 ; CHECK-NEXT:    vextract.d8 r0, x0, r16 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i32> %v to <64 x i8>
   %1 = tail call i32 @llvm.aie2.vextract.elem8.I512(<64 x i8> %0, i32 63, i32 %sign)
@@ -28,14 +28,14 @@ entry:
 define dso_local noundef signext i32 @_Z15test_ext_v4int4Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_ext_v4int4Dv16_iii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
+; CHECK-NEXT:    mov r1, r16
 ; CHECK-NEXT:    mova r16, #50
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
 ; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i32> %v to <32 x i16>
   %1 = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> %0, i32 50, i32 %sign)
@@ -46,14 +46,14 @@ entry:
 define dso_local noundef i32 @_Z15test_ext_v8int4Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_ext_v8int4Dv16_iii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
+; CHECK-NEXT:    mov r1, r16
 ; CHECK-NEXT:    mova r16, #10
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
 ; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vextract.elem32.I512(<16 x i32> %v, i32 10, i32 %sign)
   ret i32 %0
@@ -64,11 +64,11 @@ define dso_local noundef signext i32 @_Z21test_ext_v2int4_sign1Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign1Dv16_ii:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #6 // Delay Slot 4
-; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
+; CHECK-NEXT:    mova r16, #6 // Delay Slot 3
+; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i32> %v to <64 x i8>
   %1 = tail call i32 @llvm.aie2.vextract.elem8.I512(<64 x i8> %0, i32 6, i32 1)
@@ -80,11 +80,11 @@ define dso_local noundef signext i32 @_Z21test_ext_v4int4_sign1Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v4int4_sign1Dv16_ii:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #5 // Delay Slot 4
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
+; CHECK-NEXT:    mova r16, #5 // Delay Slot 3
+; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i32> %v to <32 x i16>
   %1 = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> %0, i32 5, i32 1)
@@ -96,11 +96,11 @@ define dso_local noundef i32 @_Z21test_ext_v8int4_sign1Dv16_ii(<16 x i32> nounde
 ; CHECK-LABEL: _Z21test_ext_v8int4_sign1Dv16_ii:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
-; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
+; CHECK-NEXT:    mova r16, #1 // Delay Slot 3
+; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vextract.elem32.I512(<16 x i32> %v, i32 1, i32 1)
   ret i32 %0
@@ -111,11 +111,11 @@ define dso_local noundef signext i32 @_Z21test_ext_v2int4_sign0Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign0Dv16_ii:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #16 // Delay Slot 4
-; CHECK-NEXT:    vextract.d8 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
+; CHECK-NEXT:    mova r16, #16 // Delay Slot 3
+; CHECK-NEXT:    vextract.d8 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i32> %v to <64 x i8>
   %1 = tail call i32 @llvm.aie2.vextract.elem8.I512(<64 x i8> %0, i32 16, i32 0)
@@ -127,11 +127,11 @@ define dso_local noundef signext i32 @_Z21test_ext_v4int4_sign0Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v4int4_sign0Dv16_ii:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #51 // Delay Slot 4
-; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
+; CHECK-NEXT:    mova r16, #51 // Delay Slot 3
+; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = bitcast <16 x i32> %v to <32 x i16>
   %1 = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> %0, i32 51, i32 0)
@@ -143,11 +143,11 @@ define dso_local noundef i32 @_Z21test_ext_v8int4_sign0Dv16_ii(<16 x i32> nounde
 ; CHECK-LABEL: _Z21test_ext_v8int4_sign0Dv16_ii:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #41 // Delay Slot 4
-; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
+; CHECK-NEXT:    mova r16, #41 // Delay Slot 3
+; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vextract.elem32.I512(<16 x i32> %v, i32 41, i32 0)
   ret i32 %0
@@ -156,12 +156,12 @@ entry:
 define dso_local noundef <8 x i8> @_Z16test_ext_v16int4Dv64_DB8_ii(<64 x i8> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z16test_ext_v16int4Dv64_DB8_ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 5
 ; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d64 r17:r16, x0, r16 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %v to <16 x i32>
   %1 = tail call <2 x i32> @llvm.aie2.vextract.elem64.I512(<16 x i32> %0, i32 1, i32 %sign)
@@ -172,14 +172,14 @@ entry:
 define dso_local noundef i64 @_Z12test_ext_u64Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_ext_u64Dv16_iii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r4, r16; nops
-; CHECK-NEXT:    mov r16, r2
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r4, r16
+; CHECK-NEXT:    or r16, r2, r2
 ; CHECK-NEXT:    mov crVaddSign, r3
 ; CHECK-NEXT:    vextract.d64 r25:r24, x0, r16
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
-; CHECK-NEXT:    mov r16, r4 // Delay Slot 3
+; CHECK-NEXT:    movxm crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    or r16, r4, r4 // Delay Slot 3
 ; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
 ; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
 entry:

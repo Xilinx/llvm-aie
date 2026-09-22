@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
 
 define dso_local noundef <64 x i8> @test_vaddsub_s8(<64 x i8> noundef %a, <64 x i8> noundef %b, i64 noundef %s) local_unnamed_addr #0 {
@@ -57,9 +57,9 @@ define dso_local noundef <32 x i16> @test_vaddsub_s16(<32 x i16> noundef %a, <32
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16; mov r16, r0 // Delay Slot 3
+; CHECK-NEXT:    or r16, r0, r0; mov r1, r16 // Delay Slot 3
 ; CHECK-NEXT:    vaddsub.16 x0, x2, x4, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call <32 x i16> @llvm.aie2.vaddsub16(<32 x i16> %a, <32 x i16> %b, i32 %s)
   ret <32 x i16> %0
@@ -71,9 +71,9 @@ define dso_local noundef <16 x i32> @test_vaddsub_s32(<16 x i32> noundef %a, <16
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16; mov r16, r0 // Delay Slot 3
+; CHECK-NEXT:    or r16, r0, r0; mov r1, r16 // Delay Slot 3
 ; CHECK-NEXT:    vaddsub.32 x0, x2, x4, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1 // Delay Slot 1
 entry:
   %0 = tail call <16 x i32> @llvm.aie2.vaddsub32(<16 x i32> %a, <16 x i32> %b, i32 %s)
   ret <16 x i32> %0
