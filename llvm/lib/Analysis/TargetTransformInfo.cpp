@@ -481,6 +481,16 @@ TargetTransformInfo::getPreferredAddressingMode(const Loop *L,
   return TTIImpl->getPreferredAddressingMode(L, SE);
 }
 
+SmallVector<GetElementPtrInst *>
+TargetTransformInfo::getIVUsersLookThroughCandidates(Instruction *I,
+                                                     const Loop *L) const {
+  return TTIImpl->getIVUsersLookThroughCandidates(I, L);
+}
+
+bool TargetTransformInfo::isValidIVUserType(Type *Ty) const {
+  return TTIImpl->isValidIVUserType(Ty);
+}
+
 bool TargetTransformInfo::isLegalMaskedStore(Type *DataType, Align Alignment,
                                              unsigned AddressSpace) const {
   return TTIImpl->isLegalMaskedStore(DataType, Alignment, AddressSpace);

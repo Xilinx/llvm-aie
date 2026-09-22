@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 -stop-after=irtranslator --enable-aie-hardware-loops --enable-aie-zero-overhead-loops \
 ; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2
@@ -25,7 +25,6 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
   ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
   ; AIE2-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-  ; AIE2-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; AIE2-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.out)
   ; AIE2-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY2]](s32)
   ; AIE2-NEXT:   G_BR %bb.3
@@ -36,17 +35,13 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
   ; AIE2-NEXT: bb.3.for.body:
   ; AIE2-NEXT:   successors: %bb.3(0x7c000000), %bb.2(0x04000000)
   ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.1, %12(s32), %bb.3
-  ; AIE2-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, %14(s32), %bb.3
-  ; AIE2-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI1]](s32)
-  ; AIE2-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; AIE2-NEXT:   [[MUL:%[0-9]+]]:_(s20) = G_MUL [[TRUNC]], [[C2]]
-  ; AIE2-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[MUL]](s20)
-  ; AIE2-NEXT:   [[COPY3:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
-  ; AIE2-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[COPY3]](p0) :: (load (s32) from %ir.arrayidx)
-  ; AIE2-NEXT:   [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[PHI]], [[LOAD1]]
+  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:_(p0) = G_PHI %9(p0), %bb.3, [[COPY1]](p0), %bb.1
+  ; AIE2-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.1, %7(s32), %bb.3
+  ; AIE2-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PHI]](p0) :: (load (s32) from %ir.lsr.iv1)
+  ; AIE2-NEXT:   [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[PHI1]], [[LOAD1]]
   ; AIE2-NEXT:   G_STORE [[ADD]](s32), [[COPY]](p0) :: (store (s32) into %ir.out)
-  ; AIE2-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = nuw nsw G_ADD [[PHI1]], [[C]]
+  ; AIE2-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; AIE2-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[PHI]], [[C1]](s20)
   ; AIE2-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; AIE2-NEXT:   G_BRCOND [[INT]](s1), %bb.3
   ; AIE2-NEXT:   G_BR %bb.2
@@ -60,7 +55,6 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
   ; AIE2p-NEXT:   [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
   ; AIE2p-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
   ; AIE2p-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-  ; AIE2p-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; AIE2p-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.out)
   ; AIE2p-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY2]](s32)
   ; AIE2p-NEXT:   G_BR %bb.3
@@ -71,17 +65,13 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
   ; AIE2p-NEXT: bb.3.for.body:
   ; AIE2p-NEXT:   successors: %bb.3(0x7c000000), %bb.2(0x04000000)
   ; AIE2p-NEXT: {{  $}}
-  ; AIE2p-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.1, %12(s32), %bb.3
-  ; AIE2p-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[C1]](s32), %bb.1, %14(s32), %bb.3
-  ; AIE2p-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI1]](s32)
-  ; AIE2p-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; AIE2p-NEXT:   [[MUL:%[0-9]+]]:_(s20) = G_MUL [[TRUNC]], [[C2]]
-  ; AIE2p-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[MUL]](s20)
-  ; AIE2p-NEXT:   [[COPY3:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
-  ; AIE2p-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[COPY3]](p0) :: (load (s32) from %ir.arrayidx)
-  ; AIE2p-NEXT:   [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[PHI]], [[LOAD1]]
+  ; AIE2p-NEXT:   [[PHI:%[0-9]+]]:_(p0) = G_PHI %9(p0), %bb.3, [[COPY1]](p0), %bb.1
+  ; AIE2p-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[LOAD]](s32), %bb.1, %7(s32), %bb.3
+  ; AIE2p-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PHI]](p0) :: (load (s32) from %ir.lsr.iv1)
+  ; AIE2p-NEXT:   [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[PHI1]], [[LOAD1]]
   ; AIE2p-NEXT:   G_STORE [[ADD]](s32), [[COPY]](p0) :: (store (s32) into %ir.out)
-  ; AIE2p-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = nuw nsw G_ADD [[PHI1]], [[C]]
+  ; AIE2p-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; AIE2p-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[PHI]], [[C1]](s20)
   ; AIE2p-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; AIE2p-NEXT:   G_BRCOND [[INT]](s1), %bb.3
   ; AIE2p-NEXT:   G_BR %bb.2
