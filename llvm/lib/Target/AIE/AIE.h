@@ -148,6 +148,10 @@ void initializeAIEOuterLoopPointerOptimizerPass(PassRegistry &);
 // Passing nullptr selects the default policy.
 llvm::FunctionPass *createAIEOuterLoopPointerOptimizerPass(
     std::unique_ptr<const AIEOLPOTargetConfig> Config = nullptr);
+
+extern char &AIEInnerLoopPointerOptimizerID;
+void initializeAIEInnerLoopPointerOptimizerPass(PassRegistry &);
+llvm::FunctionPass *createAIEInnerLoopPointerOptimizerPass();
 } // namespace llvm
 
 #endif
