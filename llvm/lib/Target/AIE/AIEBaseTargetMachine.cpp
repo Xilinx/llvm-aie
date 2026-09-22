@@ -205,6 +205,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIESplitInstrReplacerPass(*PR);
   initializeAIERegClassConstrainerPass(*PR);
   initializeReservedRegsLICMPass(*PR);
+  initializeAIEInnerLoopPointerOptimizerPass(*PR);
   initializeAIEOuterLoopPointerOptimizerPass(*PR);
   initializeAIEOuterLoopPipelinerPass(*PR);
   initializeAIEInnerLoopVersioningPass(*PR);
