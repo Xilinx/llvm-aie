@@ -47,7 +47,8 @@
 // Preconditions, per candidate loop, in the order they are checked:
 //  - it carries the versioning request hint (a positive integer value);
 //  - it is innermost, so versioning it cannot clone another hinted loop;
-//  - its trip count is computable by SCEV and fits i32;
+//  - its exit count is computable by SCEV and at most 32 bits wide, and the
+//    resulting trip count is not the constant zero a 2^32 loop wraps to;
 //  - it reaches simplify + LCSSA form via on-demand canonicalization, with a
 //    unique exiting block and a unique exit block;
 //  - that trip count is expandable into the preheader.
@@ -154,16 +155,25 @@ private:
   /// later bail can still report the IR as changed.
   bool IsCanonicalized = false;
 
-  /// Whether the trip count can be computed and held by the runtime guard.
-  /// Read-only: decided solely from the trip-count SCEV.
-  bool hasVersionableTripCount() const;
+  /// A trip count the runtime guard can hold, or the reason it cannot.
+  struct GuardTripCount {
+    /// The trip count in the i32 the guard compares in, null when unusable.
+    const SCEV *TC;
+    /// Remark name and user-facing reason, set only when TC is null.
+    StringRef RemarkName;
+    StringRef RejectionReason;
+  };
+
+  /// The trip count the guard compares, or why the guard cannot hold it.
+  /// Mutates nothing, so a rejection costs no IR churn.
+  GuardTripCount getGuardTripCount() const;
   /// Bring the loop into simplify + LCSSA form and check its structure supports
   /// versioning. Returns the unique exit block on success, or nullptr if the
   /// loop is unsuitable. Mutates the loop either way.
   BasicBlock *canonicalizeAndCheckStructure();
-  /// Materialize the loop trip count at InsertPt, or nullptr if it cannot be
-  /// computed / expanded there.
-  Value *expandTripCount(Instruction *InsertPt) const;
+  /// Materialize \p TC at \p InsertPt, or nullptr if it cannot be expanded
+  /// there.
+  Value *expandTripCount(const SCEV *TC, Instruction *InsertPt) const;
   /// Emit the guard condition into \p GuardBB, which it also renames: true
   /// when \p TripCount is below the placeholder threshold, i.e. when the
   /// low-trip-count copy must run.
@@ -286,27 +296,46 @@ bool AIEInnerLoopVersioning::runOnFunction(Function &F) {
   return Changed;
 }
 
-Value *AIELoopVersioner::expandTripCount(Instruction *InsertPt) const {
-  // hasVersionableTripCount() already guaranteed the trip count is computable
-  // and fits i32.
-  const SCEV *BEC = SE.getBackedgeTakenCount(&L);
-  const SCEV *TC = SE.getTripCountFromExitCount(BEC);
+Value *AIELoopVersioner::expandTripCount(const SCEV *TC,
+                                         Instruction *InsertPt) const {
   SCEVExpander Exp(SE, InsertPt->getDataLayout(), "lver.tc");
   if (!Exp.isSafeToExpandAt(TC, InsertPt))
     return nullptr;
   return Exp.expandCodeFor(TC, TC->getType(), InsertPt);
 }
 
-bool AIELoopVersioner::hasVersionableTripCount() const {
+AIELoopVersioner::GuardTripCount AIELoopVersioner::getGuardTripCount() const {
+  const SCEV *BEC = SE.getBackedgeTakenCount(&L);
+  if (isa<SCEVCouldNotCompute>(BEC))
+    return {nullptr, "UnknownTripCount", "its trip count is not computable"};
+
   // The runtime guard compares the trip count in i32, and the pipelined
   // high-trip-count copy can only become a zero-overhead loop if its trip count
   // fits in a 32-bit register (see AIETTICommon::isHardwareLoopProfitable).
-  const SCEV *BEC = SE.getBackedgeTakenCount(&L);
-  if (isa<SCEVCouldNotCompute>(BEC))
-    return false;
+  // Gate on the exit count's type, not its range: truncating an exit count that
+  // can exceed UINT32_MAX aliases a huge trip count onto a large i32 that
+  // passes the guard, running the high copy with a wrong ZOL count.
+  // FIXME: Wide exit counts of narrow range could be versioned again, provided
+  // a range check replaces this type check; see narrow_range_i64_trip_count in
+  // inner-loop-versioning.ll.
+  if (SE.getTypeSizeInBits(BEC->getType()) > 32)
+    return {nullptr, "WideTripCount", "its trip count does not fit 32 bits"};
 
-  const SCEV *TripCount = SE.getTripCountFromExitCount(BEC);
-  return SE.getUnsignedRangeMax(TripCount).getActiveBits() <= 32;
+  // Evaluate the +1 in i32. SCEV's default evaluation type is always one bit
+  // wider than the exit count, and when the exit count's range covers all-ones
+  // (as the rotated `i < n` count of n - 1 does) the i33 result really needs
+  // that top bit, so the guard could not hold it. Wrapping in i32 instead costs
+  // only the single trip count of 2^32, which the guard routes to the fallback.
+  const SCEV *TC = SE.getTripCountFromExitCount(
+      BEC, Type::getInt32Ty(L.getHeader()->getContext()), &L);
+
+  // An always-zero trip count is one that wrapped: 2^32 iterations. It sits
+  // below every threshold, so the high copy would be unreachable.
+  if (SE.getUnsignedRangeMax(TC).isZero())
+    return {nullptr, "WrappedTripCount",
+            "its trip count of 2^32 wraps to zero in the 32-bit guard"};
+
+  return {TC, {}, {}};
 }
 
 BasicBlock *AIELoopVersioner::canonicalizeAndCheckStructure() {
@@ -334,11 +363,12 @@ BasicBlock *AIELoopVersioner::canonicalizeAndCheckStructure() {
 bool AIELoopVersioner::tryVersionLoop() {
   // Read-only gate first, so an unsuitable loop is rejected without any IR
   // mutation.
-  if (!hasVersionableTripCount()) {
+  const GuardTripCount Guard = getGuardTripCount();
+  if (!Guard.TC) {
     LLVM_DEBUG(dbgs() << "  No versionable trip count for ";
-               L.getHeader()->printAsOperand(dbgs()); dbgs() << "\n");
-    remarkNotVersioned(ORE, L, "NoVersionableTripCount",
-                       "its trip count is unknown or does not fit 32 bits");
+               L.getHeader()->printAsOperand(dbgs());
+               dbgs() << ": " << Guard.RejectionReason << "\n");
+    remarkNotVersioned(ORE, L, Guard.RemarkName, Guard.RejectionReason);
     return false;
   }
 
@@ -352,7 +382,7 @@ bool AIELoopVersioner::tryVersionLoop() {
   BasicBlock *GuardBB = L.getLoopPreheader();
   BasicBlock *HeaderBB = L.getHeader();
 
-  Value *TripCount = expandTripCount(GuardBB->getTerminator());
+  Value *TripCount = expandTripCount(Guard.TC, GuardBB->getTerminator());
   if (!TripCount) {
     LLVM_DEBUG(dbgs() << "  Trip count not expandable\n");
     remarkNotVersioned(ORE, L, "TripCountNotExpandable",
@@ -402,6 +432,9 @@ bool AIELoopVersioner::tryVersionLoop() {
 
 Value *AIELoopVersioner::emitGuardCondition(BasicBlock &GuardBB,
                                             Value *TripCount) const {
+  assert(TripCount->getType() == Type::getInt32Ty(GuardBB.getContext()) &&
+         "trip count must be expanded in the type the guard compares in");
+
   // The threshold is a placeholder from the thin intrinsic, patched later by
   // the postpipeliner (see the file header for the fail-safe rationale). Seed
   // it with -1 (UINT32_MAX): besides failing safe, -1 fits the narrow
@@ -414,11 +447,6 @@ Value *AIELoopVersioner::emitGuardCondition(BasicBlock &GuardBB,
   Value *Threshold =
       Builder.CreateIntrinsic(ThresholdIID, {}, {Builder.getInt32(-1)},
                               /*FMFSource=*/nullptr, "lver.threshold");
-  // Exact in both directions: hasVersionableTripCount() bounded the trip count
-  // to 32 bits.
-  Type *I32Ty = Builder.getInt32Ty();
-  if (TripCount->getType() != I32Ty)
-    TripCount = Builder.CreateZExtOrTrunc(TripCount, I32Ty, "lver.tc.i32");
   GuardBB.setName(L.getHeader()->getName() + ".lver.guard");
   return Builder.CreateICmpULT(TripCount, Threshold, "lver.low");
 }
