@@ -142,4 +142,49 @@ bool isUpperPartOfResultDiscarded(IntrinsicInst &II) {
   return true;
 }
 
+//===----------------------------------------------------------------------===//
+// GEP / Pointer Utilities
+//===----------------------------------------------------------------------===//
+
+bool isSimpleGEP(const GetElementPtrInst *GEP) {
+  return GEP->getNumIndices() == 1;
+}
+
+bool isSimpleI8GEP(const GetElementPtrInst *GEP) {
+  return isSimpleGEP(GEP) && GEP->getSourceElementType()->isIntegerTy(8);
+}
+
+bool isChainLinkCandidate(GetElementPtrInst *GEP, int64_t &OutOffset) {
+  if (!isSimpleI8GEP(GEP))
+    return false;
+  const ConstantInt *ConstIdx = dyn_cast<ConstantInt>(GEP->getOperand(1));
+  if (!ConstIdx)
+    return false;
+  OutOffset = ConstIdx->getSExtValue();
+  return OutOffset > 0;
+}
+
+SmallVector<Instruction *, 4> collectMemUsers(Value *V) {
+  SmallVector<Instruction *, 4> MemUsers;
+  for (User *U : V->users()) {
+    if (isa<LoadInst>(U) || isa<StoreInst>(U)) {
+      MemUsers.push_back(cast<Instruction>(U));
+    } else if (auto *ASC = dyn_cast<AddrSpaceCastInst>(U)) {
+      for (User *UU : ASC->users())
+        if (isa<LoadInst>(UU) || isa<StoreInst>(UU))
+          MemUsers.push_back(cast<Instruction>(UU));
+    }
+  }
+  return MemUsers;
+}
+
+Instruction *findLastInBlock(ArrayRef<Instruction *> Insns, BasicBlock *BB) {
+  const SmallPtrSet<Instruction *, 8> InsnSet(Insns.begin(), Insns.end());
+  Instruction *Last = nullptr;
+  for (Instruction &I : *BB)
+    if (InsnSet.contains(&I))
+      Last = &I;
+  return Last;
+}
+
 } // namespace llvm::AIEIRUtils
