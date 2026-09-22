@@ -103,8 +103,9 @@ bool AIE2PassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     if (!DisableInnerLoopVersioning)
       addPass(createAIEInnerLoopVersioningPass());
-    addPass(createHardwareLoopsLegacyPass());
+    addPass(createAIEInnerLoopPointerOptimizerPass());
     addPass(createAIEOuterLoopPointerOptimizerPass(getOLPOConfig()));
+    addPass(createHardwareLoopsLegacyPass());
     addPass(createAIEOuterLoopPipelinerPass(getOLPConfig()));
   }
   return false;
