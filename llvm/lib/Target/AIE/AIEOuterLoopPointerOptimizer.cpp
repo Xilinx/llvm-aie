@@ -30,6 +30,7 @@
 
 #include "AIE.h"
 #include "AIEOuterLoopPointerOptimizerConfig.h"
+#include "Utils/AIEIRUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -92,16 +93,6 @@ SmallVector<GetElementPtrInst *, 16> collectGEPs(BasicBlock *BB) {
   return GEPs;
 }
 
-/// Check if a GEP has a single index (simple GEP).
-bool isSimpleGEP(const GetElementPtrInst *GEP) {
-  return GEP->getNumIndices() == 1;
-}
-
-/// Check if a GEP is i8-based with a single index.
-bool isSimpleI8GEP(const GetElementPtrInst *GEP) {
-  return isSimpleGEP(GEP) && GEP->getSourceElementType()->isIntegerTy(8);
-}
-
 /// Compute the byte offset for a GEP index with CSE support.
 /// Returns Index unchanged if ElemSize is 1.
 Value *
@@ -160,7 +151,7 @@ bool needsI8Canonicalization(GetElementPtrInst *GEP) {
   if (GEP->getSourceElementType()->isIntegerTy(8))
     return false;
   // We only handle simple GEPs with a single index
-  return isSimpleGEP(GEP);
+  return AIEIRUtils::isSimpleGEP(GEP);
 }
 
 //===----------------------------------------------------------------------===//
@@ -172,21 +163,6 @@ struct GEPChainState {
   GetElementPtrInst *LastGEP = nullptr;
   int64_t LastOffset = 0;
 };
-
-/// Check if a GEP is a valid candidate for chain linking.
-/// Must be i8-based with a single positive constant index.
-bool isChainLinkCandidate(GetElementPtrInst *GEP, int64_t &OutOffset) {
-  if (!isSimpleI8GEP(GEP))
-    return false;
-
-  ConstantInt *ConstIdx = dyn_cast<ConstantInt>(GEP->getOperand(1));
-  if (!ConstIdx)
-    return false;
-
-  OutOffset = ConstIdx->getSExtValue();
-  // Must be positive offset
-  return OutOffset > 0;
-}
 
 /// Try to link a GEP to an existing chain, rewriting it to use delta offset.
 /// Returns the new GEP if linked, nullptr otherwise.
@@ -844,7 +820,8 @@ bool AIEOuterLoopPointerOptimizer::linkBottomGEPsToInnerExitPointers(
 
   DenseMap<Instruction *, SmallVector<MatchInfo, 4>> Matches;
   for (GetElementPtrInst *GEP : collectGEPs(Bottom)) {
-    if (!isSimpleI8GEP(GEP) || !isa<ConstantInt>(GEP->getOperand(1)))
+    if (!AIEIRUtils::isSimpleI8GEP(GEP) ||
+        !isa<ConstantInt>(GEP->getOperand(1)))
       continue;
 
     const SCEV *GEPSCEV = SE->getSCEVAtScope(GEP, OuterLoop);
@@ -973,7 +950,7 @@ bool AIEOuterLoopPointerOptimizer::linkGEPChains(LoopStructure &LS) {
 
     // Check if this GEP is a candidate for chain linking
     int64_t CurrentOffset;
-    if (!isChainLinkCandidate(GEP, CurrentOffset)) {
+    if (!AIEIRUtils::isChainLinkCandidate(GEP, CurrentOffset)) {
       LLVM_DEBUG(dbgs() << "OLPO:   Skip (not a chain candidate): " << *GEP
                         << "\n");
       continue;
