@@ -12,17 +12,21 @@
 #define LLVM_LIB_TARGET_AIE_UTILS_AIEIRUTILS_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Intrinsics.h"
 #include <optional>
 
 namespace llvm {
+class BasicBlock;
+class GetElementPtrInst;
 class Instruction;
 class IntrinsicInst;
 class Type;
 class InstCombiner;
 class Triple;
 class Loop;
+class Value;
 } // namespace llvm
 
 namespace llvm::AIEIRUtils {
@@ -61,6 +65,30 @@ Intrinsic::ID getLoopVersionThresholdIntrinsic(const Triple &TT);
 /// Rebuild \p L's loop id, dropping every metadata entry whose string key is in
 /// \p KeysToDrop. A no-op if the loop has no loop id or nothing is requested.
 void dropLoopMetadata(Loop &L, ArrayRef<StringRef> KeysToDrop);
+
+//===----------------------------------------------------------------------===//
+// GEP / Pointer Utilities
+// Shared between AIEOuterLoopPointerOptimizer and AIEInnerLoopPointerOptimizer.
+//===----------------------------------------------------------------------===//
+
+/// True if GEP has exactly one index (simple GEP).
+bool isSimpleGEP(const GetElementPtrInst *GEP);
+
+/// True if GEP has exactly one index and the source element type is i8.
+bool isSimpleI8GEP(const GetElementPtrInst *GEP);
+
+/// True if GEP is a valid chain-link candidate:
+///   - i8-based with a single positive constant index.
+/// Sets \p OutOffset to the signed byte offset on success.
+bool isChainLinkCandidate(GetElementPtrInst *GEP, int64_t &OutOffset);
+
+/// Collect loads/stores that directly use \p V, or that use an addrspacecast
+/// of \p V.  Covers both bare-pointer and cast-pointer memory patterns.
+SmallVector<Instruction *, 4> collectMemUsers(Value *V);
+
+/// Return the instruction from \p Insns that appears textually last inside
+/// \p BB.  Returns nullptr if none of the instructions belong to \p BB.
+Instruction *findLastInBlock(ArrayRef<Instruction *> Insns, BasicBlock *BB);
 
 } // namespace llvm::AIEIRUtils
 
