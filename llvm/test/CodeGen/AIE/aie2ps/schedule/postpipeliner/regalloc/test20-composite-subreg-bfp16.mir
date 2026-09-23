@@ -1,0 +1,84 @@
+# NOTE: Test for AIERegDefUseTracker - BFP16 composite sub-register merging.
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -verify-machineinstrs --mtriple=aie2ps -O2 \
+# RUN:   --start-before=postmisched %s \
+# RUN:   --aie-postpipeliner-vreg-mode=1 \
+# RUN:   --aie-postpipeliner-phys-mode=0 \
+# RUN:   --debug-only=aie-reg-liverange \
+# RUN:   --aie-test-regdefuse-tracker \
+# RUN:   -o /dev/null 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# Pattern: two separate defs of the two halves of a composite BFP16 register
+# followed by one tied use of both halves in the same VMAC instruction.
+#
+#   ewl2 = VMOV $ewl0   ; def of sub_bfp320_lo of ex2
+#   ewh2 = VMOV $ewh0   ; def of sub_bfp320_hi of ex2
+#   dm0  = VMAC_f_vmac_bfp16 dm0, ewl2, ey3, ey0, ewh2, r8
+#
+# VMAC_f_vmac_bfp16 has a use-use tied group (DstOps empty in getTiedRegInfo)
+# linking OpIdx 2 (ewl2, sub_bfp320_lo) and OpIdx 5 (ewh2, sub_bfp320_hi) as
+# the two halves of the composite ex2 register.  Without mergeCompositeSubregLRs,
+# the backward scan would create two independent live ranges (one for ewl2, one
+# for ewh2) that could be independently virtualized, causing PostRegAlloc to
+# assign halves from incompatible composites.  With the fix, the two live ranges
+# are merged into one composite ex2 LR with both defs and both uses.
+#
+# CHECK: FINAL LIVE RANGES
+# CHECK: Total live ranges: 1
+# CHECK: Live Range {{.*}} for ex2:
+# CHECK:   Definitions (2):
+# CHECK-DAG:     Register: ewh2 {{.*}} $ewh2 = VMOV_alu_mv_mv_mv_egw $ewh0
+# CHECK-DAG:     Register: ewl2 {{.*}} $ewl2 = VMOV_alu_mv_mv_mv_egw $ewl0
+# CHECK:   Uses (2):
+# CHECK-DAG:     Register: ewl2 {{.*}} $dm0 = VMAC_f_vmac_bfp16
+# CHECK-DAG:     Register: ewh2 {{.*}} $dm0 = VMAC_f_vmac_bfp16
+
+--- |
+  define void @test_bfp16_composite_subreg_merge() {
+  entry:
+    br label %loop
+  loop:
+    br i1 undef, label %loop, label %exit
+  exit:
+    ret void
+  }
+...
+---
+name:            test_bfp16_composite_subreg_merge
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r1, $r8, $ewl0, $ewh0, $ey3, $ey0, $dm0
+
+    $lc = ADD_NC_add_lc_ri $r1, 0
+    MOVXM_lng_cg_ls_abs %bb.1, implicit-def $ls
+    MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le
+
+  bb.1.loop (align 16):
+    successors: %bb.1, %bb.2
+    liveins: $r8, $ewl0, $ewh0, $ey3, $ey0, $dm0
+
+    ; Two separate defs of the sub_bfp320_lo and sub_bfp320_hi halves of ex2.
+    ; These model the scenario where each half is produced by its own instruction.
+    $ewl2 = VMOV_alu_mv_mv_mv_egw $ewl0
+    $ewh2 = VMOV_alu_mv_mv_mv_egw $ewh0
+
+    ; Tied use: VMAC reads ewl2 (sub_bfp320_lo, stage 1) and ewh2
+    ; (sub_bfp320_hi, stage 2) as the two halves of the composite ex2 register.
+    $dm0 = VMAC_f_vmac_bfp16 killed $dm0, $ewl2, $ey3, $ey0, $ewh2, $r8, implicit-def $srfpflags, implicit $crfpmask
+
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2.exit (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+
+...
