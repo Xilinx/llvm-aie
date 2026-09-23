@@ -30,13 +30,13 @@
 # CHECK: FINAL LIVE RANGES
 # CHECK: Total live ranges: 3
 #
-# CHECK: Live Range #0 for cml4:
+# CHECK: Live Range #1 for cml4:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: cml4 $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 32
 # CHECK-NEXT:   Uses (1):
 # CHECK-NEXT:     [0] Register: cml4 VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml4, $p0
 # CHECK-EMPTY:
-# CHECK-NEXT: Live Range #7 for dm4:
+# CHECK-NEXT: Live Range #8 for dm4:
 # CHECK-NEXT:   Definitions (1):
 # CHECK-NEXT:     [0] Register: cml4 (SubRegIdx: 10) $cml4 = VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm $p7, 0
 # CHECK-NEXT:   Uses (1):
