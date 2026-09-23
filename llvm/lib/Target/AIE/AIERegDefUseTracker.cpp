@@ -12,7 +12,8 @@
 // MachineBasicBlock. The tracker performs the following:
 // - Identifies register definitions and uses that form live ranges
 // - Merges aliasing register accesses into unified live ranges
-// - Filters out unsafe ranges (tied operands, live-in/out, implicit uses)
+// - Filters out unsafe ranges (tied operands, live-in/out)
+// - Marks ranges with implicit operands as non-virtualizable
 // - Computes appropriate register classes for each live range
 // - Optionally replaces physical registers with virtual registers for testing
 //
@@ -977,8 +978,11 @@ void RegLiveRangeTracker::buildInstructionOrderAndCollectOperands(
         continue;
       }
       if (MO.isImplicit()) {
-        // Track implicit registers - we won't create live ranges for these
-        // but will use them to invalidate explicit ranges.
+        // Track implicit registers in ImplicitRegs so that
+        // addUnusedCallerSavedRegs can exclude them from the unused
+        // caller-saved register pool. Implicit operands are not added to
+        // AllPhysRegOperands because full-coverage pruning applies only to
+        // explicit operands.
         const MCRegister Reg = MO.getReg().asMCReg();
 
         // Add all aliases.
@@ -1103,8 +1107,12 @@ unsigned RegLiveRangeTracker::getOrCreateLiveRangeForOperand(
 
 void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
                                                    LivenessScanState &State) {
-  for (MachineOperand &MO : MI.defs()) {
+  // Process all def operands — both explicit and implicit. Implicit defs
+  // produce non-virtualizable live ranges used for scheduling relaxation.
+  for (MachineOperand &MO : MI.operands()) {
     if (!MO.isReg() || !MO.getReg().isPhysical())
+      continue;
+    if (!MO.isDef())
       continue;
 
     const MCRegister Reg = MO.getReg().asMCReg();
@@ -1123,8 +1131,12 @@ void RegLiveRangeTracker::processDefsInInstruction(MachineInstr &MI,
 
 void RegLiveRangeTracker::processUsesInInstruction(MachineInstr &MI,
                                                    LivenessScanState &State) {
-  for (MachineOperand &MO : MI.uses()) {
+  // Process all use operands — both explicit and implicit. Implicit uses
+  // produce non-virtualizable live ranges used for scheduling relaxation.
+  for (MachineOperand &MO : MI.operands()) {
     if (!MO.isReg() || !MO.getReg().isPhysical())
+      continue;
+    if (MO.isDef())
       continue;
 
     const MCRegister Reg = MO.getReg().asMCReg();
