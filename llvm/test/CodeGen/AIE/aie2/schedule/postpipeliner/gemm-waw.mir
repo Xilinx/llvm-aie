@@ -5,7 +5,7 @@
 #
 # (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -pass-remarks-output=- -pass-remarks-filter=pipeliner -pass-remarks-output=- -pass-remarks-filter=pipeliner -o /dev/null | FileCheck %s
+# RUN: llc --aie-postpipeliner-vreg-mode=1 --mtriple=aie2 -O2 --start-before=postmisched %s -pass-remarks-output=- -pass-remarks-filter=pipeliner -pass-remarks-output=- -pass-remarks-filter=pipeliner -o /dev/null | FileCheck %s
 
 # derived from gemm_bf16_0
 # This test make sure we respect WAW deps between top-fixed and free instructions

@@ -99,9 +99,11 @@ cl::opt<bool> SimplifyReservedRegs(
     cl::desc("Remove anti and output dependencies on simplifiable reserved "
              "registers to give the scheduler maximum freedom"));
 
-// Option for enabling virtual register mode in the postpipeliner
+// Option for enabling virtual register mode in the postpipeliner.
+// Off by default; loops opt in with
+// #pragma clang loop hint(aie-postpipeliner-vreg-mode, 1)
 static cl::opt<bool> PostPipelinerVRegMode(
-    "aie-postpipeliner-vreg-mode", cl::Hidden, cl::init(true),
+    "aie-postpipeliner-vreg-mode", cl::Hidden, cl::init(false),
     cl::desc("[AIE] Enable virtual register mode for the postpipeliner "
              "(replaces filtered physical registers with virtual registers)"));
 
@@ -819,15 +821,16 @@ SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
   return updatePipelining(BS);
 }
 
-// Get the first pipeliner mode to try based on command line options.
-static PostPipelinerMode firstPipelinerMode() {
-  if (PostPipelinerPhysMode) {
+// Get the first pipeliner mode to try, honoring the per-loop hints of \p BS.
+static PostPipelinerMode firstPipelinerMode(const BlockState &BS) {
+  const auto &Overrides = BS.getLoopOptionOverrides();
+  if (Overrides.get(PostPipelinerPhysMode)) {
     return PostPipelinerMode::Physical;
   }
-  if (PostPipelinerVRegMode) {
+  if (Overrides.get(PostPipelinerVRegMode)) {
     return PostPipelinerMode::Virtual;
   }
-  if (PostPipelinerVRegReservedMode) {
+  if (Overrides.get(PostPipelinerVRegReservedMode)) {
     return PostPipelinerMode::ReservedVirtual;
   }
   return PostPipelinerMode::None;
@@ -835,13 +838,16 @@ static PostPipelinerMode firstPipelinerMode() {
 
 // Get the next pipeliner mode to try after the current one.
 // Returns None when past the last mode.
-static PostPipelinerMode nextPipelinerMode(PostPipelinerMode Current) {
-  if (Current == PostPipelinerMode::Physical && PostPipelinerVRegMode) {
+static PostPipelinerMode nextPipelinerMode(const BlockState &BS,
+                                           PostPipelinerMode Current) {
+  const auto &Overrides = BS.getLoopOptionOverrides();
+  if (Current == PostPipelinerMode::Physical &&
+      Overrides.get(PostPipelinerVRegMode)) {
     return PostPipelinerMode::Virtual;
   }
   if ((Current == PostPipelinerMode::Physical ||
        Current == PostPipelinerMode::Virtual) &&
-      PostPipelinerVRegReservedMode) {
+      Overrides.get(PostPipelinerVRegReservedMode)) {
     return PostPipelinerMode::ReservedVirtual;
   }
   return PostPipelinerMode::None;
@@ -922,7 +928,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
     auto &PostSWP = BS.getPostSWP();
     if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
       // Determine which pipelining mode to use
-      BS.FixPoint.PipelinerMode = firstPipelinerMode();
+      BS.FixPoint.PipelinerMode = firstPipelinerMode(BS);
       if (BS.FixPoint.PipelinerMode == PostPipelinerMode::None) {
         return SchedulingStage::SchedulingDone;
       }
@@ -955,7 +961,7 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
 
   // Try the next mode at the same II.
   const PostPipelinerMode NextMode =
-      nextPipelinerMode(BS.FixPoint.PipelinerMode);
+      nextPipelinerMode(BS, BS.FixPoint.PipelinerMode);
   if (NextMode != PostPipelinerMode::None) {
     BS.FixPoint.PipelinerMode = NextMode;
     DEBUG_LOOPAWARE(dbgs() << "Trying next mode at II=" << BS.FixPoint.II
@@ -968,7 +974,7 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
   // We cut off at larger IIs to prevent excessive compilation time.
   if (++BS.FixPoint.II <= PostPipelinerMaxII &&
       ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
-    BS.FixPoint.PipelinerMode = firstPipelinerMode();
+    BS.FixPoint.PipelinerMode = firstPipelinerMode(BS);
     if (BS.FixPoint.PipelinerMode != PostPipelinerMode::None) {
       return SchedulingStage::Pipelining;
     }
@@ -1696,7 +1702,7 @@ void BlockState::setBlockProperties() {
   // We never skip AA check. Except for epilogues of outer-pipelined loops.
   // This is a pre-condition of the optimization (sometimes restrict information
   // may not help).
-  auto Overrides = AIE::LoopOptionOverrides(*TheBlock);
+  Overrides = AIE::LoopOptionOverrides(*TheBlock);
   IsSafeToIgnoreMemDeps = IsEpilogueOfOuterPipelinedLoop
                               ? true
                               : Overrides.get(PostSchedIgnoreMemoryDeps);
@@ -1740,9 +1746,8 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
                                               *TheBlock->getParent());
 
     // Only proceed if at least one pipelining mode is enabled.
-    const bool PipeliningEnabled = PostPipelinerVRegMode ||
-                                   PostPipelinerPhysMode ||
-                                   PostPipelinerVRegReservedMode;
+    const bool PipeliningEnabled =
+        firstPipelinerMode(*this) != PostPipelinerMode::None;
     const bool IsPipelineCandidate =
         PipeliningEnabled && PostSWP->isPostPipelineCandidate(*TheBlock);
 

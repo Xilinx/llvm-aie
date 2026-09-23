@@ -5,7 +5,7 @@
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN: llc --aie-postpipeliner-vreg-mode=1 -verify-machineinstrs --mtriple=aie2p -O2 \
 # RUN:   --start-before=postmisched %s \
 # RUN:   --aie-addrspace-none-is-safe=1	--aie-postpipeliner-maxtry-ii=10 \
 # RUN:   -pass-remarks-output=- -pass-remarks-filter=pipeliner \

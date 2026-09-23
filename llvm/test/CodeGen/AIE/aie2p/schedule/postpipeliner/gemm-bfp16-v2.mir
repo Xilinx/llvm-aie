@@ -5,7 +5,7 @@
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 --start-before=postmisched %s -pass-remarks-output=- -pass-remarks-filter=pipeliner -o /dev/null | FileCheck %s
+# RUN: llc --aie-postpipeliner-vreg-mode=1 -verify-machineinstrs --mtriple=aie2p -O2 --start-before=postmisched %s -pass-remarks-output=- -pass-remarks-filter=pipeliner -o /dev/null | FileCheck %s
 
 
 # derived from GEMM_Bfp16_opt_0
