@@ -12,7 +12,7 @@
   ; getSubClassWithSubReg, to avoid a spurious null intersection that would
   ; incorrectly reject the live range from virtualization.
   ;
-  ; With the fix, the VMOV no longer causes a schedule class mismatch. LR#1
+  ; With the fix, the VMOV no longer causes a schedule class mismatch. LR#2
   ; passes safety filtering and refinement, then is correctly rejected by the
   ; coverage pruning step (because VADDMAC's tied dm0 def is uncovered once
   ; its own tied-operand LR#0 is removed).

@@ -512,6 +512,25 @@ void RegLiveRangeTracker::pruneByFullCoverage() {
 #endif
 }
 
+bool RegLiveRangeTracker::absorbLiveRange(
+    unsigned TargetIdx, unsigned SrcIdx,
+    DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
+    DenseMap<MachineOperand *, unsigned> &OperandToLiveRange) {
+  assert(TargetIdx != SrcIdx && "Cannot absorb a range into itself");
+  if (!LiveRanges[TargetIdx].mergeFrom(LiveRanges[SrcIdx], TRI))
+    return false;
+  LiveRanges[SrcIdx].clear();
+  for (auto &[LiveReg, Info] : LiveRegs) {
+    if (Info.first == static_cast<int>(SrcIdx))
+      Info.first = static_cast<int>(TargetIdx);
+  }
+  for (auto &Entry : OperandToLiveRange) {
+    if (Entry.second == SrcIdx)
+      Entry.second = TargetIdx;
+  }
+  return true;
+}
+
 void RegLiveRangeTracker::mergeAliasingLiveRanges(
     unsigned DefLRIdx, MCRegister DefReg,
     DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
@@ -620,34 +639,17 @@ void RegLiveRangeTracker::mergeAliasingLiveRanges(
     }
   }
 
-  // Incrementally merge all other live ranges into the target.
-  // The enhanced mergeFrom() automatically computes the smallest common
-  // super-register that contains all operands from both ranges.
+  // Incrementally merge all other live ranges into the target using
+  // absorbLiveRange, which handles clearing the source LR and updating
+  // the OperandToLiveRange and LiveRegs maps.
   for (unsigned LRIdx : ToMerge) {
     LLVM_DEBUG(dbgs() << "LR#" << TargetLR.getID() << " + LR#"
                       << LiveRanges[LRIdx].getID() << " -> LR#"
                       << TargetLR.getID() << "\n");
-    if (!TargetLR.mergeFrom(LiveRanges[LRIdx], TRI)) {
+    if (!absorbLiveRange(DefLRIdx, LRIdx, LiveRegs, OperandToLiveRange)) {
       TargetLR.clear();
       LiveRanges[LRIdx].clear();
       return;
-    }
-
-    // Clear the source range (mark as invalid).
-    LiveRanges[LRIdx].clear();
-
-    // Update all LiveRegs entries that pointed to the merged range.
-    for (auto &[LiveReg, Info] : LiveRegs) {
-      if (Info.first == static_cast<int>(LRIdx)) {
-        Info.first = static_cast<int>(DefLRIdx);
-      }
-    }
-
-    // Update OperandToLiveRange.
-    for (auto &Entry : OperandToLiveRange) {
-      if (Entry.second == LRIdx) {
-        Entry.second = DefLRIdx;
-      }
     }
   }
 
@@ -1146,6 +1148,77 @@ void RegLiveRangeTracker::processUsesInInstruction(MachineInstr &MI,
     const MCRegister CurrentBase = LiveRanges[LRIdx].getBaseReg();
     const unsigned SubRegIdx = getSubRegIndex(Reg, CurrentBase);
     LiveRanges[LRIdx].addUse(&MO, SubRegIdx);
+  }
+  // Merge composite sub-register LRs: use-use tied groups encode sub-registers
+  // of the same composite physical register that must be allocated together.
+  mergeCompositeSubregLRs(MI, State);
+}
+
+void RegLiveRangeTracker::mergeCompositeSubregLRs(MachineInstr &MI,
+                                                  LivenessScanState &State) {
+  for (const TiedRegOperands &TiedSet : TII->getTiedRegInfo(MI)) {
+    // Use-use tied groups (DstOps empty) represent sub-registers of the same
+    // composite physical register appearing as separate explicit use operands.
+    // Merge their per-sub-register LRs into one so that PostRegAlloc assigns
+    // both halves from the same composite physical register.
+    if (!TiedSet.DstOps.empty())
+      continue;
+    if (TiedSet.SrcOps.size() < 2)
+      continue;
+
+    // Collect (LRIndex, PhysReg) for each operand in the tied group.
+    SmallVector<std::pair<unsigned, MCRegister>, 4> SubRegLRs;
+    for (const OperandSubRegMapping &SrcOp : TiedSet.SrcOps) {
+      if (SrcOp.OpIdx >= MI.getNumOperands())
+        continue;
+      const MachineOperand &SubMO = MI.getOperand(SrcOp.OpIdx);
+      if (!SubMO.isReg() || !SubMO.getReg().isPhysical())
+        continue;
+      auto It =
+          State.OperandToLiveRange.find(const_cast<MachineOperand *>(&SubMO));
+      if (It == State.OperandToLiveRange.end())
+        continue;
+      SubRegLRs.push_back({It->second, SubMO.getReg().asMCReg()});
+    }
+
+    if (SubRegLRs.size() < 2)
+      continue;
+
+    const unsigned TargetIdx = SubRegLRs.front().first;
+    if (llvm::all_of(SubRegLRs, [TargetIdx](const auto &P) {
+          return P.first == TargetIdx;
+        }))
+      continue;
+
+    bool MergeFailed = false;
+    for (size_t I = 1; I < SubRegLRs.size(); ++I) {
+      const unsigned SrcIdx = SubRegLRs[I].first;
+      if (SrcIdx == TargetIdx)
+        continue;
+      if (!absorbLiveRange(TargetIdx, SrcIdx, State.LiveRegs,
+                           State.OperandToLiveRange)) {
+        MergeFailed = true;
+        break;
+      }
+    }
+
+    if (MergeFailed) {
+      LiveRanges[TargetIdx].clear();
+      continue;
+    }
+
+    // Update LiveRegs: replace individual sub-register entries with the
+    // composite so that subsequent def instructions for those sub-registers
+    // find the merged LR and add their defs to it correctly.
+    const MCRegister CompositeReg = LiveRanges[TargetIdx].getBaseReg();
+    for (const auto &[Idx, SubReg] : SubRegLRs)
+      State.LiveRegs.erase(SubReg);
+    State.LiveRegs[CompositeReg] = {static_cast<int>(TargetIdx),
+                                    LaneBitmask::getAll()};
+
+    LLVM_DEBUG(dbgs() << "Merged composite sub-reg LRs into LR#"
+                      << LiveRanges[TargetIdx].getID()
+                      << " base=" << TRI->getName(CompositeReg) << "\n");
   }
 }
 

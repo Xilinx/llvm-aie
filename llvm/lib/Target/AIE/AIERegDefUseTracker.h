@@ -384,6 +384,24 @@ class RegLiveRangeTracker {
   /// Process use operands for a single instruction (reverse pass).
   void processUsesInInstruction(MachineInstr &MI, LivenessScanState &State);
 
+  /// Absorb SrcIdx into TargetIdx: merge the two live ranges and redirect
+  /// all OperandToLiveRange and LiveRegs entries from SrcIdx to TargetIdx.
+  /// Clears LR[SrcIdx] on success.  Returns false if the merge fails, in
+  /// which case neither range is modified.
+  bool
+  absorbLiveRange(unsigned TargetIdx, unsigned SrcIdx,
+                  DenseMap<MCRegister, std::pair<int, LaneBitmask>> &LiveRegs,
+                  DenseMap<MachineOperand *, unsigned> &OperandToLiveRange);
+
+  /// Merge the per-sub-register live ranges of a composite physical register
+  /// into a single LR.  Called at the end of use processing for each
+  /// instruction: any use-use tied operand group (DstOps empty in
+  /// getTiedRegInfo) represents sub-registers of the same composite register
+  /// that must be allocated together.  Without this merge, sub-registers
+  /// defined by separate instructions would be virtualized independently and
+  /// PostRegAlloc could assign incompatible halves.
+  void mergeCompositeSubregLRs(MachineInstr &MI, LivenessScanState &State);
+
   /// Perform the liveness scan over all instructions.
   void performLivenessScan(ArrayRef<MachineInstr *> SemanticOrder,
                            LivenessScanState &State);
